@@ -421,8 +421,15 @@ export class PostingService {
    * balance/period gates are irrelevant because no Posting is created.
    *
    * Idempotent on the HUMAN externalRef (T7 — the NF-e access key, never a sourceId): a re-attach of
-   * the same fiscal document to the same entry finds the existing link and returns its SourceDocument,
-   * so exactly ONE SourceDocument exists per (entry, externalRef).
+   * the same fiscal document to the same entry finds the existing link and returns its SourceDocument.
+   *
+   * HONEST LIMIT of that idempotency (do not read more into it than the code gives): the existence check
+   * runs INSIDE `runTransaction` with the tx handle propagated (authoritative-gate-inside-tx), which is
+   * what a SEQUENTIAL re-attach needs; but there is NO `@@unique(journalEntryId, externalRef)` behind
+   * it, so two CONCURRENT attaches of the same key can still both miss and create two SourceDocuments
+   * (SQLite's default isolation does not serialize the read against the other tx's uncommitted insert).
+   * Closing that fully requires the unique index (a migration). Sequentially — the real operator flow —
+   * exactly one SourceDocument exists per (entry, externalRef).
    */
   async attachSourceDocument(
     scope: AccountingScope,
@@ -440,23 +447,25 @@ export class PostingService {
       throw new NotFoundError(`Lançamento '${entryId}' não foi encontrado.`);
     }
 
-    // IDEMPOTENCY (read side, T7) — keyed on the human externalRef. A prior attach of the SAME
-    // access key to this entry short-circuits; no second SourceDocument is created.
-    if (doc.externalRef) {
-      const existingLinks = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id);
-      const already = existingLinks.find((l) => l.sourceDocument.externalRef === doc.externalRef);
-      if (already) {
-        logger.info('attachSourceDocument skipped — provenance already recorded', {
-          entryId: entry.id,
-          externalRef: doc.externalRef,
-        });
-        return already.sourceDocument;
-      }
-    }
-
     const sourceType = doc.sourceType ?? entry.sourceType;
 
     return this.postingRepo.runTransaction(async (tx) => {
+      // IDEMPOTENCY (T7) — keyed on the human externalRef, re-checked INSIDE the tx with `tx`
+      // propagated to the repo (authoritative-gate-inside-tx). Reading it before opening the tx left a
+      // window in which two sequential-but-interleaved requests both passed the check and created two
+      // SourceDocuments; the gate now shares the transaction with the write it guards.
+      if (doc.externalRef) {
+        const existingLinks = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id, tx);
+        const already = existingLinks.find((l) => l.sourceDocument.externalRef === doc.externalRef);
+        if (already) {
+          logger.info('attachSourceDocument skipped — provenance already recorded', {
+            entryId: entry.id,
+            externalRef: doc.externalRef,
+          });
+          return already.sourceDocument;
+        }
+      }
+
       const sourceDocument = await this.sourceProvenanceRepo.createSourceDocument(
         {
           userId,

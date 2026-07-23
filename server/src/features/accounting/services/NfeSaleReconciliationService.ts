@@ -125,9 +125,11 @@ export class NfeSaleReconciliationService {
       description: `NF-e ${nfe.ide.numero}/${nfe.ide.serie}`,
     });
 
-    // Evento do cruzamento (B-4). Só ids + centavos-como-string: a chave de acesso NÃO entra
-    // (posições 7-20 são o CNPJ do emitente — PII fiscal de terceiro, T8/LGPD); ela permanece
-    // no `SourceDocument.externalRef` apontado por `sourceDocumentId`.
+    // Evento do cruzamento (B-4). Só ids + centavos-como-string. A chave de acesso não se repete AQUI
+    // porque seria cópia redundante — e não porque fique fora do trilho: o `attachSourceDocument` acima
+    // já a gravou na MESMA cadeia como `entry.source_recorded.externalRef` (allowlistado), além de
+    // `SourceDocument.externalRef`. Se a chave for um dia classificada como PII de terceiro (dígitos
+    // 7-20 = CNPJ do emitente), é aquele evento — não esta lista — que precisa mudar.
     await this.auditService.appendInOwnTransaction(scope, {
       actorUserId: scope.actorUserId,
       eventType:   'nfe.sale_matched',
@@ -144,10 +146,13 @@ export class NfeSaleReconciliationService {
       },
     });
 
+    // Log operacional: SEM a chave de acesso. Ela é o dado que este mesmo arquivo trata como sensível
+    // (dígitos 7-20 = CNPJ do emitente) e o log de aplicação não é o trilho imutável — sai do texto
+    // corrido e permanece resolvível por `sourceDocumentId` → `SourceDocument.externalRef`.
     logger.info('NF-e de venda reconciliada (sem lançamento)', {
       saleId: input.saleId,
       journalEntryId: anchor.id,
-      chaveAcesso: nfe.chaveAcesso,
+      sourceDocumentId: sourceDocument.id,
       totalMatches,
       differenceCents,
     });

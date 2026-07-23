@@ -22,6 +22,7 @@ jest.mock('../../../../lib/logger', () => ({
   default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
 
+import logger from '../../../../lib/logger';
 import { parseNfe } from '../../../../lib/nfe';
 const parseNfeMock = parseNfe as jest.MockedFunction<typeof parseNfe>;
 
@@ -211,11 +212,28 @@ describe('NfeSaleReconciliationService.reconcileSale', () => {
       totalMatches: 'true',
     });
 
-    // PII (T8/LGPD): a chave de acesso carrega o CNPJ do emitente nas posições 7-20 — fica no
-    // SourceDocument, nunca na trilha imutável.
+    // A chave de acesso não se REPETE neste payload (seria cópia redundante): ela já está no
+    // SourceDocument e no `entry.source_recorded.externalRef` da mesma cadeia, gravado pelo seam.
     const serialized = JSON.stringify(event.payload);
     expect(serialized).not.toContain('35240600000000000000550010000000011000000017');
     expect(serialized).not.toContain('00000000000191');
+  });
+
+  // H — a chave de acesso é tratada como sensível NESTE arquivo; o log de aplicação (texto corrido,
+  // sem retenção controlada) não é lugar para ela.
+  it('NÃO loga a chave de acesso — mantém apenas ids úteis', async () => {
+    const { svc } = build();
+    await svc.reconcileSale(scope, { saleId: 'sale-1', xml: '<xml/>' });
+
+    const infoCalls = (logger.info as jest.Mock).mock.calls;
+    expect(infoCalls.length).toBeGreaterThan(0);
+    expect(JSON.stringify(infoCalls)).not.toContain('35240600000000000000550010000000011000000017');
+    // Os ids que tornam o log útil continuam lá (a nota segue resolvível pelo SourceDocument).
+    expect(infoCalls.some(([, meta]) =>
+      meta?.saleId === 'sale-1' &&
+      meta?.journalEntryId === 'entry-sale-1' &&
+      meta?.sourceDocumentId === 'srcdoc-42',
+    )).toBe(true);
   });
 
   it('o eventType emitido está na PAYLOAD_ALLOWLIST', () => {

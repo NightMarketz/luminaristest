@@ -1387,7 +1387,21 @@ describe('PostingService', () => {
       expect(sd).toEqual(expect.objectContaining({ id: 'srcdoc-prior' }));
       expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
       expect(sourceProvenanceRepo.linkEntry).not.toHaveBeenCalled();
-      expect($transaction).not.toHaveBeenCalled();
+      // The tx IS opened now (the gate moved inside it) but NOTHING is written in it.
+      expect($transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-checks the existing-provenance gate INSIDE the tx, with `tx` propagated to the repo', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+
+      await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      // authoritative-gate-inside-tx: reading the existing links BEFORE opening the tx left a window
+      // where two requests both saw "none" and both created a SourceDocument. The read must share the
+      // transaction of the write it guards — i.e. carry the same tx handle.
+      expect(sourceProvenanceRepo.findSourcesByEntry).toHaveBeenCalledWith(scope, 'entry-sale-1', txHandle);
     });
 
     it('missing target entry → NotFoundError, nothing written', async () => {

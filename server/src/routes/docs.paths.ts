@@ -2951,7 +2951,7 @@
  *   /api/nfe/purchase:
  *     post:
  *       summary: Import a purchase NF-e (XML) as one payable plus its stock inbounds
- *       description: 'Multipart upload of an authorized NF-e 4.00 (cStat 100/150, modelo 55). The note is valued by the acquisition cost formula (vProd menos vDesc mais vFrete, vOutro, vIPI and vST; ICMS próprio is NOT deducted) and rateado across the itens with the rounding residue on the last line, so the shares sum EXACTLY to the total. Books ONE payable for the whole note (débito 1.1.6 Estoques, crédito 2.1.2) plus one stock inbound per item — every cent through createPayable, never a direct posting. The 44-digit chave de acesso is the business key, so a re-import of the same note is rejected instead of minting a second liability. Every item needs an operator-confirmed cProd to productRef mapping; an unmapped item rejects the whole import.'
+ *       description: 'Multipart upload of an authorized NF-e 4.00 (cStat 100/150, modelo 55). The note is valued by the acquisition cost formula (vProd menos vDesc mais vFrete, vOutro, vIPI and vST; ICMS próprio is NOT deducted) and rateado across the itens with the rounding residue on the last line, so the shares sum EXACTLY to the total. Books ONE payable for the whole note (débito 1.1.6 Estoques, crédito 2.1.2) plus one stock inbound per SKU (two lines resolving to the same product are folded into a single inbound carrying the summed quantity and cost, so the subledger receives the whole note) — every cent through createPayable, never a direct posting. The 44-digit chave de acesso is the business key, so a re-import of the same note is rejected instead of minting a second liability. Every item needs an operator-confirmed cProd to productRef mapping; an unmapped item rejects the whole import.'
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2968,7 +2968,7 @@
  *                 itemMappings:   { type: string, description: 'JSON array of { cProd, productRef } confirmed by the operator, sent as a string because multipart fields are flat' }
  *                 file:           { type: string, format: binary, description: 'the NF-e XML' }
  *       responses:
- *         '201': { description: 'the created payable (the note liability)' }
+ *         '201': { description: 'object with payable (the note liability) and ignoredItems (lines with indTot 0, which do not compose the note total and are neither costed nor received)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

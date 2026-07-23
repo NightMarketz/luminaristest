@@ -62,8 +62,10 @@ function decodeItemMappings(raw: unknown): unknown {
 
 /**
  * POST /api/nfe/purchase — multipart import of a purchase NF-e (XML + operator confirmations).
- * Returns the created Payable (201). Rejects loud on cStat, unmapped item, unconfirmed counterparty
- * or re-import (the chave de acesso is the @@unique business key).
+ * Returns `{ payable, ignoredItems }` (201) — `ignoredItems` lists the note lines that do NOT compose
+ * the total (`indTot='0'`) and were therefore neither costed nor received, so an ignored line is
+ * visible to the operator instead of silently dropped. Rejects loud on cStat, unmapped item,
+ * unconfirmed counterparty or re-import (the chave de acesso is the @@unique business key).
  */
 export const importNfePurchase = async (req: Request, res: Response) => {
   try {

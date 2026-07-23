@@ -3,7 +3,7 @@ import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../fixtures/ChartOfAccountsFixture';
-import { INVENTORY_INBOUND_SOURCE_TYPE } from '../models/Inventory.model';
+import { aggregateInventoryItems, INVENTORY_INBOUND_SOURCE_TYPE } from '../models/Inventory.model';
 import {
   AP_PAYABLE_SOURCE_TYPE,
   AP_PAYMENT_SOURCE_TYPE,
@@ -199,10 +199,12 @@ export class PayableService {
     //     the note total. Reconcile can re-drive this from the row.
     //   - MULTI-ITEM (NF-e): the per-SKU breakdown lives in `dto.inventoryItems` (NOT on the row) → N
     //     receiveStock, each keyed on sourceId=payableId with its rateio share. Σ shares === amountCents
-    //     (the DTO tie-out gate proved it), so Σ subledger value ties out to the 1.1.6 recognition debit.
+    //     (the DTO tie-out gate proved it), so Σ subledger value ties out to the 1.1.6 recognition debit
+    //     — PROVIDED duplicate productRefs are folded first (receiveInventoryItems does it) and each
+    //     item's failure is isolated, else a repeated SKU or one bad line loses cents in silence.
     if (inventoryPurchase) {
-      try {
-        if (hasSingleInventorySku(dto)) {
+      if (hasSingleInventorySku(dto)) {
+        try {
           await this.inventoryService!.receiveStock(scope, {
             productRef: dto.inventoryProductRef!,
             qty: dto.inventoryQty!,
@@ -212,27 +214,93 @@ export class PayableService {
             sourceId: payable.id,
             description: dto.description,
           });
-        } else if (dto.inventoryItems && dto.inventoryItems.length > 0) {
-          for (const item of dto.inventoryItems) {
-            await this.inventoryService!.receiveStock(scope, {
-              productRef: item.productRef,
-              qty: item.qty,
-              totalValueCents: item.valueCents,
-              occurredAt: new Date(dto.issueDate),
-              sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
-              sourceId: payable.id,
-              description: item.description ?? dto.description,
-            });
-          }
+        } catch (error) {
+          logger.warn('AP createPayable: inventory INBOUND failed — reconcile will re-drive', {
+            payableId: payable.id,
+            error,
+          });
         }
-      } catch (error) {
-        logger.warn('AP createPayable: inventory INBOUND failed — reconcile will re-drive', {
+      } else if (dto.inventoryItems && dto.inventoryItems.length > 0) {
+        // MULTI-ITEM: per-item isolation lives inside receiveInventoryItems — one failing SKU must not
+        // keep the remaining SKUs out of the subledger (a loop-wide catch used to swallow the rest).
+        await this.receiveInventoryItems(scope, {
           payableId: payable.id,
-          error,
+          occurredAt: new Date(dto.issueDate),
+          description: dto.description,
+          items: dto.inventoryItems,
         });
       }
     }
     return payable;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Multi-item inventory receipt (NF-e) — aggregation + per-item isolation + re-drive
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Drive the per-SKU StockMovement INBOUNDs of a MULTI-ITEM inventory purchase (BE-INCR-NFE F-NFE7→a).
+   *
+   * TWO invariants this method owns, both money-load-bearing:
+   *
+   * 1. AGGREGATION BY `productRef` (mirrors `InventoryService.aggregateLines`, which folds a sale's
+   *    lines before the baixa). `receiveStock` is READ-FIRST idempotent on
+   *    `(inventoryItemId, kind, sourceType, sourceId)` and the whole note shares ONE `sourceId`
+   *    (=payableId) — so two note lines resolving to the SAME `productRef` would make the second call
+   *    look like a REPLAY and return without incrementing: the razão would debit 1.1.6 with the full
+   *    note while the subledger received less, SILENTLY. A NF-e may legitimately repeat a `cProd`
+   *    across `<det>` lines, so the shares are folded per SKU (qty and cents summed) BEFORE driving —
+   *    Σ INBOUND then equals Σ shares equals the 1.1.6 debit.
+   * 2. PER-ITEM ERROR ISOLATION: a failure on one SKU is logged and the remaining SKUs still enter.
+   *
+   * RE-RUNNABLE: every call is idempotent per SKU on `sourceId=payableId`, so calling this again with
+   * the SAME breakdown completes whatever a partial run left missing and re-values nothing. Returns the
+   * outcome so the caller can report/log what is still absent.
+   */
+  async receiveInventoryItems(
+    scope: AccountingScope,
+    params: {
+      payableId: string;
+      occurredAt: Date;
+      description: string;
+      items: NonNullable<CreatePayableInput['inventoryItems']>;
+    },
+  ): Promise<{ received: number; failed: Array<{ productRef: string; error: unknown }> }> {
+    if (!this.policy.canManagePayable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para receber estoque de compras.');
+    }
+    if (!this.inventoryService) {
+      throw new ValidationError(
+        'Compra de estoque requer o serviço de estoque configurado (wiring de inventário pendente).',
+      );
+    }
+
+    const failed: Array<{ productRef: string; error: unknown }> = [];
+    let received = 0;
+    for (const item of aggregateInventoryItems(params.items)) {
+      try {
+        await this.inventoryService.receiveStock(scope, {
+          productRef: item.productRef,
+          qty: item.qty,
+          totalValueCents: item.valueCents,
+          occurredAt: params.occurredAt,
+          sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
+          sourceId: params.payableId,
+          description: item.description ?? params.description,
+        });
+        received += 1;
+      } catch (error) {
+        // Isolated: this SKU is missing from the subledger, the others still enter. A later re-drive
+        // with the same breakdown completes it (receiveStock is idempotent per SKU on payableId).
+        failed.push({ productRef: item.productRef, error });
+        logger.warn('AP inventory INBOUND failed for one SKU — other itens unaffected, re-drive pending', {
+          payableId: params.payableId,
+          productRef: item.productRef,
+          error,
+        });
+      }
+    }
+    return { received, failed };
   }
 
   // ---------------------------------------------------------------------------
@@ -505,12 +573,15 @@ export class PayableService {
             await this.posting.postEntry(scope, this.buildRecognitionInputFromRow(scope, payable, null));
             recognitionsPosted += 1;
           }
-          // SINGLE-SKU only: the row carries the one product+qty to re-receive. A MULTI-ITEM NF-e
-          // purchase (BE-INCR-NFE) keeps its per-SKU breakdown OUTSIDE the row, so reconcile cannot
-          // reconstruct the N receiveStock from the Payable alone — it re-drives the RECOGNITION (above,
-          // the money invariant) but not the subledger detail. The N INBOUND are each idempotent by
-          // sourceId=payableId and driven at import; a mid-import stock crash is a known residual, not a
-          // dangling-recognition bug (the 1.1.6 debit is the tie-out anchor and IS re-driven here).
+          // SINGLE-SKU only, and this is a LIMIT OF THE DATA, not a policy: the row carries the one
+          // product+qty to re-receive, while a MULTI-ITEM NF-e purchase keeps its per-SKU breakdown
+          // OUTSIDE the row (and nowhere else persisted). Reconcile therefore CANNOT reconstruct the N
+          // receiveStock from the Payable alone — it re-drives the RECOGNITION (above, the money
+          // invariant / tie-out anchor) but not the subledger detail. The re-drive of a partially
+          // received multi-item note is `receiveInventoryItems` (public, idempotent per SKU on
+          // sourceId=payableId), which the holder of the breakdown (the NF-e import) can call again with
+          // the SAME items. Closing this fully inside reconcile would require PERSISTING the breakdown
+          // (a migration — out of scope here); until then the residual is named, not hidden.
           if (this.inventoryService && hasSingleInventorySku(payable)) {
             await this.inventoryService.receiveStock(scope, {
               productRef: payable.inventoryProductRef!,

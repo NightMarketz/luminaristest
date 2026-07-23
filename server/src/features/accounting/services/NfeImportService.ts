@@ -27,7 +27,11 @@ import type { Payable } from 'generated/prisma';
  *   plan §6 / ADR §6.1; the tie-out validates DISTRIBUTION, not regime).
  * - Rateio (Gate 1, ACC-014/T4): each item's share is `floor(total × vProd_item / Σ vProd)`, with the
  *   rounding residue absorbed by the LAST line → `Σ shares === custoTotalCents`. Integer-cent arithmetic
- *   only; no float boundary is crossed.
+ *   only; no float boundary is crossed — the `total × vProd_item` PRODUCT is computed in `BigInt`
+ *   (`Number` multiplication of two large cent values can exceed 2^53 and silently lose precision).
+ * - `indTot` (MOC I17b, layout transcription §I17b): a line with `indTot === '0'` does NOT compose the
+ *   note total (`vNF`), so it carries NO acquisition cost — it is excluded from the rateio WEIGHT and
+ *   from the stock entry, and REPORTED back in `ignoredItems` (never a silent drop).
  * - Idempotency (Gate 2, T7): the business key is `documentNumber = chaveAcesso` (the 44-digit access key —
  *   the HUMAN externalRef, NEVER a `sourceId`). A re-import trips the `Payable` @@unique and `createPayable`
  *   rejects loud — so the note can never mint a second passivo/estoque. The rejection is NOT swallowed
@@ -36,9 +40,28 @@ import type { Payable } from 'generated/prisma';
  *   is re-scoped here and must be a live SUPPLIER of this unit; absent, the payable keeps only the
  *   `supplierName` snapshot (mirrors ordinary payables). A `cStat`/`mod`/`tpAmb` failure is rejected inside
  *   `parseNfe` (D5) before any of this runs.
- * - Item→produto (D6): EVERY note item must carry an operator mapping `cProd → productRef`; an unmapped
- *   item rejects loud (never a silent skip, never an auto-created product).
+ * - Item→produto (D6): EVERY COSTED note item must carry an operator mapping `cProd → productRef`; an
+ *   unmapped item rejects loud (never a silent skip, never an auto-created product). Lines excluded by
+ *   `indTot='0'` never reach the subledger, so they need no mapping.
  */
+/**
+ * A note line the import DID NOT cost/receive. Today the only reason is `indTot === '0'` (the line does
+ * not compose the note total, MOC I17b). Reported back to the operator so an ignored line is a VISIBLE
+ * decision, never a silent drop (param-aceito-e-ignorado-e-bug).
+ */
+export interface NfeIgnoredItem {
+  nItem: number;
+  cProd: string;
+  xProd: string;
+  reason: 'indTot-0';
+}
+
+/** Result of a purchase import: the created liability + the lines that were deliberately ignored. */
+export interface NfePurchaseImportResult {
+  payable: Payable;
+  ignoredItems: NfeIgnoredItem[];
+}
+
 export class NfeImportService {
   constructor(
     private readonly payableService: PayableService,
@@ -54,14 +77,15 @@ export class NfeImportService {
   /**
    * Import a purchase NF-e: parse → cost D3 → rateio → ONE createPayable (multi-item) carrying the total
    * liability + N StockMovement INBOUND (driven inside createPayable, sourceId=payableId). Returns the
-   * created `Payable`. Rejects loud on any gate failure (unauthorized cStat, unmapped item, unconfirmed
-   * counterparty, MAX_CENTS overflow, re-import).
+   * created `Payable` PLUS the lines that did not compose the note total (`indTot='0'`) and were
+   * therefore neither costed nor received. Rejects loud on any gate failure (unauthorized cStat,
+   * unmapped item, unconfirmed counterparty, MAX_CENTS overflow, re-import).
    */
   async importPurchase(
     scope: AccountingScope,
     xml: string | Buffer,
     dto: ImportNfePurchaseInput,
-  ): Promise<Payable> {
+  ): Promise<NfePurchaseImportResult> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para importar notas de compra.');
     }
@@ -90,7 +114,7 @@ export class NfeImportService {
         `NF-e de compra excede o teto de centavos suportado (${custoTotalCents} > ${MAX_CENTS}).`,
       );
     }
-    const inventoryItems = this.allocate(nfe.itens, custoTotalCents, mappingByCProd);
+    const { inventoryItems, ignoredItems } = this.allocate(nfe.itens, custoTotalCents, mappingByCProd);
 
     const issueDate = nfe.ide.dhEmiDate; // YYYY-MM-DD (reslice literal from the parser)
 
@@ -111,9 +135,11 @@ export class NfeImportService {
 
     const payable = await this.payableService.createPayable(scope, input);
 
-    // Fiscal ingestion act (B-4). Ids + counts + money-as-string only — NEVER the emitente's
-    // razão social/CNPJ nor the chave de acesso (which embeds the CNPJ); the note stays resolvable
-    // through `payable.documentNumber`. Appended AFTER the money tx committed, in its own tx: a
+    // Fiscal ingestion act (B-4). Ids + counts + money-as-string only — no razão social/CNPJ as a field
+    // of its own. The chave de acesso is not repeated here because it would be REDUNDANT, not because
+    // it stays out of the trail: it is `payable.documentNumber` AND it already entered the same audit
+    // chain as `entry.source_recorded.externalRef` when createPayable posted the recognition with its
+    // sourceDocument. Appended AFTER the money tx committed, in its own tx: a
     // failure here rejects loud rather than being swallowed (the payable itself is already audited
     // by `payable.created`, so the trail is never blind to the money).
     await this.auditService.appendInOwnTransaction(scope, {
@@ -130,7 +156,7 @@ export class NfeImportService {
       },
     });
 
-    return payable;
+    return { payable, ignoredItems };
   }
 
   // ---------------------------------------------------------------------------
@@ -146,22 +172,51 @@ export class NfeImportService {
   /**
    * Rateia `custoTotalCents` across the note items proportional to each item's `vProdCents`, with the
    * rounding residue on the LAST line so `Σ shares === custoTotalCents` (Gate 1). Floor for all-but-last
-   * keeps every share ≤ its proportional value, so the last (residue) line is always ≥ 0. Every item must
-   * have an operator mapping (D6) — an unmapped `cProd` rejects loud.
+   * keeps every share ≤ its proportional value, so the last (residue) line is always ≥ 0. Every costed
+   * item must have an operator mapping (D6) — an unmapped `cProd` rejects loud.
+   *
+   * `indTot === '0'` (MOC I17b) marks a line that does NOT compose the note total: it has no share of the
+   * acquisition cost, so it is excluded from the WEIGHT and from the stock entry, and returned in
+   * `ignoredItems` for the operator (an ignored line is reported, never silently dropped). Such a line
+   * needs no cProd→productRef mapping — it never reaches the subledger.
+   *
+   * The rateio stays PER NOTE LINE (that is what ties Σ shares to the note total); the per-SKU
+   * AGGREGATION of duplicate `productRef`s happens at the stock step (`PayableService`), where the
+   * INBOUNDs are driven.
+   *
+   * The `custoTotalCents × vProd_item` product is computed in `BigInt`: both factors are cents and their
+   * `Number` product can exceed `Number.MAX_SAFE_INTEGER` (e.g. 2e9 × 1e9), which would silently drift.
+   * BigInt division truncates toward zero — identical to `Math.floor` for these non-negative values.
    */
   private allocate(
     itens: NfeItem[],
     custoTotalCents: number,
     mappingByCProd: Map<string, string>,
-  ): NonNullable<CreatePayableInput['inventoryItems']> {
-    const totalWeight = itens.reduce((acc, it) => acc + it.vProdCents, 0);
+  ): {
+    inventoryItems: NonNullable<CreatePayableInput['inventoryItems']>;
+    ignoredItems: NfeIgnoredItem[];
+  } {
+    const ignoredItems: NfeIgnoredItem[] = itens
+      .filter((it) => it.indTot === '0')
+      .map((it) => ({ nItem: it.nItem, cProd: it.cProd, xProd: it.xProd, reason: 'indTot-0' as const }));
+
+    const costed = itens.filter((it) => it.indTot !== '0');
+    if (costed.length === 0) {
+      throw new ValidationError(
+        'NF-e de compra sem nenhum item que componha o total (todos com indTot=0) — rejeitada.',
+      );
+    }
+
+    const totalWeight = costed.reduce((acc, it) => acc + it.vProdCents, 0);
     if (totalWeight <= 0) {
       throw new ValidationError('NF-e de compra sem valor de produtos (Σ vProd = 0) — rejeitada.');
     }
+    const totalWeightBig = BigInt(totalWeight);
+    const custoTotalBig = BigInt(custoTotalCents);
 
     let allocated = 0;
-    const lastIdx = itens.length - 1;
-    return itens.map((it, idx) => {
+    const lastIdx = costed.length - 1;
+    const inventoryItems = costed.map((it, idx) => {
       const productRef = mappingByCProd.get(it.cProd);
       if (!productRef) {
         throw new ValidationError(
@@ -170,7 +225,7 @@ export class NfeImportService {
       }
       const share = idx === lastIdx
         ? custoTotalCents - allocated
-        : Math.floor((custoTotalCents * it.vProdCents) / totalWeight);
+        : Number((custoTotalBig * BigInt(it.vProdCents)) / totalWeightBig);
       allocated += share;
       return {
         productRef,
@@ -179,6 +234,8 @@ export class NfeImportService {
         description: it.xProd,
       };
     });
+
+    return { inventoryItems, ignoredItems };
   }
 
   /**

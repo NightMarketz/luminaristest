@@ -93,12 +93,17 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
   'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
   // BE-INCR-NFE — fiscal NF-e ingestion. Ids + counts + money-as-string ONLY.
-  // The `chaveAcesso` (44-digit access key) is DELIBERATELY absent from both payloads: positions
-  // 7-20 of the key ARE the emitter's CNPJ, so allowlisting it would smuggle third-party fiscal PII
-  // into the immutable trail (T8/LGPD) — exactly what the AP/AR events avoid by dropping
-  // `supplierName`/`customerName`. The note identity stays resolvable through the row the event
-  // points at (`payables.documentNumber` / the linked `SourceDocument.externalRef`).
-  // Neither event carries razão social, endereço, CNPJ or CPF.
+  // The `chaveAcesso` (44-digit access key) is absent from BOTH payloads, but do NOT read that as the
+  // key being kept out of the audit trail — it is NOT. The key is this system's canonical HUMAN
+  // externalRef for the note (the INCR-8/AP/AR pattern), so it already enters the same hash-chain via
+  // `entry.source_recorded.externalRef` (PostingService.attachSourceDocument), which IS allowlisted,
+  // and it is persisted verbatim in `payables.documentNumber` / `SourceDocument.externalRef`.
+  // What these two events omit is therefore a REDUNDANT copy: the note identity is already reachable
+  // from the row/entry each event points at, so repeating the key here would add trail bytes without
+  // adding trail information. Whether the key counts as third-party PII (positions 7-20 are the
+  // emitter's CNPJ) or as a plain human document reference is an OPEN decision for the owner — if it
+  // is ever ruled PII, `entry.source_recorded` is the site that must change, not just this list.
+  // Neither event carries razão social, endereço, CNPJ or CPF as a FIELD of its own.
   'nfe.purchase_imported': ['payableId', 'counterpartyId', 'itemCount', 'amountCents', 'issueDate'],
   'nfe.sale_matched':      ['saleId', 'journalEntryId', 'sourceDocumentId', 'nfeTotalCents', 'saleTotalCents', 'differenceCents', 'totalMatches'],
 };

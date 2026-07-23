@@ -29,3 +29,35 @@ export type InventoryItemStatus = (typeof INVENTORY_ITEM_STATUSES)[number];
  */
 export const INVENTORY_COGS_SOURCE_TYPE = 'salon.sale.cogs';
 export const INVENTORY_INBOUND_SOURCE_TYPE = 'inventory.inbound';
+
+/** One received SKU of a multi-item purchase (the shape `PayableService` drives `receiveStock` with). */
+export interface InventoryReceiptLine {
+  productRef: string;
+  qty: number;
+  valueCents: number;
+  description?: string;
+}
+
+/**
+ * Fold receipt lines per `productRef` (qty and cents summed), preserving first-appearance order.
+ *
+ * SAME technique as `InventoryService.aggregateLines` on the sale side, and for the SAME reason: the
+ * whole document shares ONE idempotency `sourceId`, and `receiveStock`/`recordSaleCogs` are READ-FIRST
+ * idempotent on `(inventoryItemId, kind, sourceType, sourceId)` — so a second line for a SKU already
+ * moved under that key reads as a REPLAY and returns WITHOUT moving stock. Two document lines resolving
+ * to the same SKU (a NF-e may repeat a `cProd` across `<det>`) must therefore become ONE call carrying
+ * the summed qty/value, else the subledger silently receives less than the ledger booked.
+ */
+export function aggregateInventoryItems(lines: InventoryReceiptLine[]): InventoryReceiptLine[] {
+  const byProduct = new Map<string, InventoryReceiptLine>();
+  for (const line of lines) {
+    const current = byProduct.get(line.productRef);
+    if (!current) {
+      byProduct.set(line.productRef, { ...line });
+      continue;
+    }
+    current.qty += line.qty;
+    current.valueCents += line.valueCents;
+  }
+  return [...byProduct.values()];
+}
