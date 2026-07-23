@@ -21,6 +21,10 @@ export interface CreatePayableData {
   expenseAccountId: string | null;
   inventoryProductRef: string | null;
   inventoryQty: number | null;
+  // BE-INCR-NFE F0-1b (F-NFE7→a): true for a multi-item NF-e purchase (debit 1.1.6, SKUs live in the
+  // driven StockMovements, not on the row). null/false otherwise. Discriminator that lets
+  // isInventoryPurchase() route the debit without a sentinel inventoryProductRef.
+  inventoryMultiItem: boolean | null;
   status: string;
   createdById: string | null;
 }

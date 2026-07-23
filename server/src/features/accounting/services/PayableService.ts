@@ -8,6 +8,7 @@ import {
   AP_PAYABLE_SOURCE_TYPE,
   AP_PAYMENT_SOURCE_TYPE,
   deletedDocumentNumber,
+  hasSingleInventorySku,
   isInventoryPurchase,
   resolvePaymentMethodAccount,
 } from '../models/Payable.model';
@@ -147,6 +148,7 @@ export class PayableService {
             expenseAccountId: expenseAccount?.id ?? null,
             inventoryProductRef: dto.inventoryProductRef ?? null,
             inventoryQty: dto.inventoryQty ?? null,
+            inventoryMultiItem: dto.inventoryMultiItem ?? false,
             status: 'OPEN',
             createdById: scope.actorUserId,
           },
@@ -185,23 +187,44 @@ export class PayableService {
       throw error;
     }
 
-    // Inventory INBOUND (D3(b)) — AFTER the recognition is booked (D 1.1.6 / C 2.1.2), value the SKU.
-    // receiveStock is READ-FIRST idempotent on sourceId=payableId, so this same purchase can never
-    // double-value with a seed of the same lot (Gate 4). It runs in its OWN tx; the recognition is
-    // already committed, so a failure here must NOT compensate the (valid) recognition — leave the
-    // payable OPEN and let reconcilePayables re-drive the missing INBOUND (Gap 2/Gate 8), converging
-    // like the AP settlement crash window. Best-effort: log and return; reconcile is the net.
+    // Inventory INBOUND (D3(b) + BE-INCR-NFE F-NFE7→a) — AFTER the recognition is booked (D 1.1.6 / C
+    // 2.1.2), value the SKU(s). receiveStock is READ-FIRST idempotent on (item, sourceId=payableId), so
+    // this same purchase can never double-value with a seed of the same lot (Gate 4). It runs in its OWN
+    // tx; the recognition is already committed, so a failure here must NOT compensate the (valid)
+    // recognition — leave the payable OPEN and let reconcilePayables re-drive the missing INBOUND (Gap
+    // 2/Gate 8), converging like the AP settlement crash window. Best-effort: log and return.
+    //
+    // Two shapes debit 1.1.6 (isInventoryPurchase):
+    //   - SINGLE-SKU (INCR-INVENTORY): the row's inventoryProductRef/inventoryQty → ONE receiveStock at
+    //     the note total. Reconcile can re-drive this from the row.
+    //   - MULTI-ITEM (NF-e): the per-SKU breakdown lives in `dto.inventoryItems` (NOT on the row) → N
+    //     receiveStock, each keyed on sourceId=payableId with its rateio share. Σ shares === amountCents
+    //     (the DTO tie-out gate proved it), so Σ subledger value ties out to the 1.1.6 recognition debit.
     if (inventoryPurchase) {
       try {
-        await this.inventoryService!.receiveStock(scope, {
-          productRef: dto.inventoryProductRef!,
-          qty: dto.inventoryQty!,
-          totalValueCents: dto.amountCents,
-          occurredAt: new Date(dto.issueDate),
-          sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
-          sourceId: payable.id,
-          description: dto.description,
-        });
+        if (hasSingleInventorySku(dto)) {
+          await this.inventoryService!.receiveStock(scope, {
+            productRef: dto.inventoryProductRef!,
+            qty: dto.inventoryQty!,
+            totalValueCents: dto.amountCents,
+            occurredAt: new Date(dto.issueDate),
+            sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
+            sourceId: payable.id,
+            description: dto.description,
+          });
+        } else if (dto.inventoryItems && dto.inventoryItems.length > 0) {
+          for (const item of dto.inventoryItems) {
+            await this.inventoryService!.receiveStock(scope, {
+              productRef: item.productRef,
+              qty: item.qty,
+              totalValueCents: item.valueCents,
+              occurredAt: new Date(dto.issueDate),
+              sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
+              sourceId: payable.id,
+              description: item.description ?? dto.description,
+            });
+          }
+        }
       } catch (error) {
         logger.warn('AP createPayable: inventory INBOUND failed — reconcile will re-drive', {
           payableId: payable.id,
@@ -482,7 +505,13 @@ export class PayableService {
             await this.posting.postEntry(scope, this.buildRecognitionInputFromRow(scope, payable, null));
             recognitionsPosted += 1;
           }
-          if (this.inventoryService) {
+          // SINGLE-SKU only: the row carries the one product+qty to re-receive. A MULTI-ITEM NF-e
+          // purchase (BE-INCR-NFE) keeps its per-SKU breakdown OUTSIDE the row, so reconcile cannot
+          // reconstruct the N receiveStock from the Payable alone — it re-drives the RECOGNITION (above,
+          // the money invariant) but not the subledger detail. The N INBOUND are each idempotent by
+          // sourceId=payableId and driven at import; a mid-import stock crash is a known residual, not a
+          // dangling-recognition bug (the 1.1.6 debit is the tie-out anchor and IS re-driven here).
+          if (this.inventoryService && hasSingleInventorySku(payable)) {
             await this.inventoryService.receiveStock(scope, {
               productRef: payable.inventoryProductRef!,
               qty: payable.inventoryQty!,
