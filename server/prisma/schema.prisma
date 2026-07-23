@@ -865,6 +865,15 @@ model Payable {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   deletedAt        DateTime?
+  // BE-INCR-NFE F0-1b (F-NFE7→a): discriminator for a MULTI-ITEM NF-e PURCHASE = ONE Payable carrying
+  // the total liability (debit 1.1.6 Estoques / credit 2.1.2) with the per-SKU breakdown living OUTSIDE
+  // the row (N StockMovement INBOUND, sourceId=payableId). true → isInventoryPurchase() routes the debit
+  // to 1.1.6 WITHOUT a sentinel inventoryProductRef (which stays null — no single SKU); null/false → not
+  // multi-item. NULLABLE (not NOT-NULL-DEFAULT) on purpose: Prisma emits a plain `ALTER TABLE ADD COLUMN`
+  // for a nullable column, but a NOT-NULL-with-default forces a full table REBUILD on SQLite — and a
+  // botched rebuild silently drops FKs/indexes (lesson expenseAccountId RESTRICT→SET NULL). null = legacy
+  // rows (pre-migration) = not multi-item; the create path writes an explicit boolean.
+  inventoryMultiItem Boolean?
   payments         PayablePayment[]
 
   // Business key (D3): one live payable per supplier × document. rename-on-delete
