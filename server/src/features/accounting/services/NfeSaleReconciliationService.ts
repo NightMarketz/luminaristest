@@ -4,6 +4,7 @@ import { parseNfe } from '../../../lib/nfe';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostingService } from './PostingService';
+import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 /**
@@ -26,7 +27,8 @@ import type { AccountingScope } from '../scope/AccountingScope';
 /** O sourceType da receita da venda de salão — a chave de negócio da âncora (D2b). */
 const SALE_SOURCE_TYPE = 'salon.sale.finalized';
 
-/** Entrada do serviço: `saleId` (validado por `ImportNfeSaleSchema`, F-NFE8) + o XML cru da NF-e. */
+/** Entrada do serviço: `saleId` (validado por `ImportNfeSaleSchema` em `dtos/NfeDto.ts`, F-NFE8) +
+ *  o XML cru da NF-e. */
 export interface NfeSaleReconciliationInput {
   saleId: string;
   xml: string | Buffer;
@@ -65,6 +67,10 @@ export class NfeSaleReconciliationService {
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly postingService: PostingService,
     private readonly policy: IAccountingPolicy,
+    // Emite `nfe.sale_matched` (B-4). Este serviço não escreve nada próprio — a proveniência é
+    // gravada (e auditada como `entry.source_recorded`) DENTRO da tx do dono do seam — então o
+    // evento do cruzamento é anexado em tx própria logo depois.
+    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -117,6 +123,25 @@ export class NfeSaleReconciliationService {
       externalRef: nfe.chaveAcesso,
       documentDate: nfe.ide.dhEmiDate,
       description: `NF-e ${nfe.ide.numero}/${nfe.ide.serie}`,
+    });
+
+    // Evento do cruzamento (B-4). Só ids + centavos-como-string: a chave de acesso NÃO entra
+    // (posições 7-20 são o CNPJ do emitente — PII fiscal de terceiro, T8/LGPD); ela permanece
+    // no `SourceDocument.externalRef` apontado por `sourceDocumentId`.
+    await this.auditService.appendInOwnTransaction(scope, {
+      actorUserId: scope.actorUserId,
+      eventType:   'nfe.sale_matched',
+      targetType:  'journal_entry',
+      targetId:    anchor.id,
+      payload: {
+        saleId:           input.saleId,
+        journalEntryId:   anchor.id,
+        sourceDocumentId: sourceDocument.id,
+        nfeTotalCents:    String(nfeTotalCents),
+        saleTotalCents:   String(saleTotalCents),
+        differenceCents:  String(differenceCents),
+        totalMatches:     String(totalMatches),
+      },
     });
 
     logger.info('NF-e de venda reconciliada (sem lançamento)', {

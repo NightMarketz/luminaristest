@@ -12,6 +12,7 @@
  */
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
 import { NfeSaleReconciliationService } from '../NfeSaleReconciliationService';
+import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import type { ParsedNfe } from '../../../../lib/nfe';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
@@ -88,7 +89,9 @@ function anchorEntry(totalCents = 10000) {
   };
 }
 
-function build(over: { journalEntryRepo?: any; postingService?: any; policy?: any } = {}) {
+function build(
+  over: { journalEntryRepo?: any; postingService?: any; policy?: any; auditService?: any } = {},
+) {
   const journalEntryRepo = {
     findBySource: jest.fn(async () => anchorEntry()),
     ...over.journalEntryRepo,
@@ -102,12 +105,17 @@ function build(over: { journalEntryRepo?: any; postingService?: any; policy?: an
     canReconcile: jest.fn(() => true),
     ...over.policy,
   };
+  const auditService = {
+    appendInOwnTransaction: jest.fn(async () => undefined),
+    ...over.auditService,
+  };
   const svc = new NfeSaleReconciliationService(
     journalEntryRepo as any,
     postingService as any,
     policy as any,
+    auditService as any,
   );
-  return { svc, journalEntryRepo, postingService, policy };
+  return { svc, journalEntryRepo, postingService, policy, auditService };
 }
 
 describe('NfeSaleReconciliationService.reconcileSale', () => {
@@ -182,6 +190,36 @@ describe('NfeSaleReconciliationService.reconcileSale', () => {
     });
     const report = await svc.reconcileSale(scope, { saleId: 'sale-1', xml: '<xml/>' });
     expect(report.nfeItemCount).toBe(3);
+  });
+
+  // B-4 — o evento tem de ser EMITIDO (a allowlist só cobre evento emitido) e sem PII.
+  it('emite nfe.sale_matched com ids/centavos — nunca a chave de acesso nem CNPJ', async () => {
+    const { svc, auditService } = build();
+    await svc.reconcileSale(scope, { saleId: 'sale-1', xml: '<xml/>' });
+
+    expect(auditService.appendInOwnTransaction).toHaveBeenCalledTimes(1);
+    const [, event] = (auditService.appendInOwnTransaction as jest.Mock).mock.calls[0];
+    expect(event.eventType).toBe('nfe.sale_matched');
+    expect(event.targetType).toBe('journal_entry');
+    expect(event.payload).toEqual({
+      saleId: 'sale-1',
+      journalEntryId: 'entry-sale-1',
+      sourceDocumentId: 'srcdoc-42',
+      nfeTotalCents: '10000',
+      saleTotalCents: '10000',
+      differenceCents: '0',
+      totalMatches: 'true',
+    });
+
+    // PII (T8/LGPD): a chave de acesso carrega o CNPJ do emitente nas posições 7-20 — fica no
+    // SourceDocument, nunca na trilha imutável.
+    const serialized = JSON.stringify(event.payload);
+    expect(serialized).not.toContain('35240600000000000000550010000000011000000017');
+    expect(serialized).not.toContain('00000000000191');
+  });
+
+  it('o eventType emitido está na PAYLOAD_ALLOWLIST', () => {
+    expect(PAYLOAD_ALLOWLIST['nfe.sale_matched']).toBeDefined();
   });
 
   it('policy nega → ForbiddenError, sem tocar repo/seam', async () => {

@@ -2,7 +2,10 @@ import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
 
 /**
- * NfeDto — request schemas for fiscal NF-e ingestion (BE-INCR-NFE / A2). The XML itself is parsed by
+ * NfeDto — request schemas for fiscal NF-e ingestion (BE-INCR-NFE): `ImportNfePurchaseSchema` (A2,
+ * compra) and `ImportNfeSaleSchema` (A3, venda). Both live here per the impl plan §2 (A2-1); the sale
+ * schema was born in its own file only so the A2 ∥ A3 write-sets stayed disjoint (PAR-002) and was
+ * folded back in Fase B. The XML itself is parsed by
  * the PURE `lib/nfe.ts` into a `ParsedNfe`; THIS DTO validates only the operator-supplied request body
  * that accompanies the upload. Every schema is `.strict()` so a typo'd field fails loud instead of being
  * silently dropped.
@@ -55,3 +58,33 @@ export const ImportNfePurchaseSchema = z
   .strict();
 
 export type ImportNfePurchaseInput = z.infer<typeof ImportNfePurchaseSchema>;
+
+/**
+ * NF-e de VENDA (A3 / D2b) — F-NFE8 → (a) (ADR-INCR-NFE §9, ratificado 2026-07-22): the NF-e XML does
+ * NOT carry the Luminaris `saleId`, so a value+date heuristic would attach the note to the WRONG sale
+ * in a salon with several same-ticket sales on the same day. The operator therefore supplies the anchor
+ * EXPLICITLY — `saleId` is required. The service confirms total/date and SIGNALS divergence WITHOUT
+ * posting (0 new journal entries); a sale with no booked anchor is rejected.
+ *
+ * The raw XML travels as a multipart file (controller boundary), not in this body — this schema only
+ * governs the JSON fields.
+ *
+ * @openapi
+ * components:
+ *   schemas:
+ *     ImportNfeSaleInput:
+ *       type: object
+ *       required: [unitId, saleId]
+ *       properties:
+ *         unitId: { type: string }
+ *         saleId: { type: string, description: "Âncora EXPLÍCITA do operador (F-NFE8) — o XML da NF-e não carrega o saleId do Luminaris; nunca inferido por heurística de valor/data" }
+ */
+export const ImportNfeSaleSchema = z
+  .object({
+    unitId: z.string().min(1),
+    // F-NFE8 → (a): explicit operator anchor. The XML has no saleId — never inferred by heuristic.
+    saleId: z.string().min(1),
+  })
+  .strict();
+
+export type ImportNfeSaleInput = z.infer<typeof ImportNfeSaleSchema>;

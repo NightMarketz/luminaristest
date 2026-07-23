@@ -92,6 +92,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // never the file bytes or account balances (PII-safe).
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
   'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
+  // BE-INCR-NFE — fiscal NF-e ingestion. Ids + counts + money-as-string ONLY.
+  // The `chaveAcesso` (44-digit access key) is DELIBERATELY absent from both payloads: positions
+  // 7-20 of the key ARE the emitter's CNPJ, so allowlisting it would smuggle third-party fiscal PII
+  // into the immutable trail (T8/LGPD) — exactly what the AP/AR events avoid by dropping
+  // `supplierName`/`customerName`. The note identity stays resolvable through the row the event
+  // points at (`payables.documentNumber` / the linked `SourceDocument.externalRef`).
+  // Neither event carries razão social, endereço, CNPJ or CPF.
+  'nfe.purchase_imported': ['payableId', 'counterpartyId', 'itemCount', 'amountCents', 'issueDate'],
+  'nfe.sale_matched':      ['saleId', 'journalEntryId', 'sourceDocumentId', 'nfeTotalCents', 'saleTotalCents', 'differenceCents', 'totalMatches'],
 };
 
 /**

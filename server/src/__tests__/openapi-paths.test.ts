@@ -28,7 +28,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (INCR-AGING): GET /api/accounting/reports/aging.
 // +2 (PR #139 review residual): POST /api/dashboard-layout/{id}/activate + baseline catch-up;
 //    dashboard-layout/structured-data docs moved from docs.paths.ts into their controllers.
-const BASELINE = 137;
+// +2 (BE-INCR-NFE Fase B): POST /api/nfe/purchase + POST /api/nfe/sale.
+const BASELINE = 139;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

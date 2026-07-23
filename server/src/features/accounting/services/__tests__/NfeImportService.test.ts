@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { NfeImportService } from '../NfeImportService';
+import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import type { CreatePayableInput } from '../../dtos/PayableDto';
@@ -63,7 +64,10 @@ function build(opts: Opts = {}) {
     findById: jest.fn(async () => (opts.counterparty === undefined ? defaultCp : opts.counterparty)),
   };
   const policy = { canManagePayable: () => opts.canManage ?? true };
-  const auditService = { append: jest.fn(async () => undefined) };
+  const auditService = {
+    append: jest.fn(async () => undefined),
+    appendInOwnTransaction: jest.fn(async () => undefined),
+  };
 
   const service = new NfeImportService(
     payableService as never,
@@ -182,5 +186,36 @@ describe('NfeImportService.importPurchase', () => {
     const denegada = PURCHASE_XML.replace('<cStat>100</cStat>', '<cStat>110</cStat>');
     await expect(service.importPurchase(scope, denegada, dto())).rejects.toThrow(ValidationError);
     expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  // B-4 — the audit event is EMITTED (the allowlist only covers emitted events) and carries NO PII.
+  it('emits nfe.purchase_imported with ids/cents only — never CNPJ, razão social or chave de acesso', async () => {
+    const { service, auditService } = build();
+    await service.importPurchase(scope, PURCHASE_XML, dto({ counterpartyId: 'cp-sup' }));
+
+    expect(auditService.appendInOwnTransaction).toHaveBeenCalledTimes(1);
+    const [, event] = (auditService.appendInOwnTransaction as jest.Mock).mock.calls[0];
+    expect(event.eventType).toBe('nfe.purchase_imported');
+    expect(event.targetType).toBe('payable');
+    expect(event.targetId).toBe('pay-nfe-1');
+    expect(event.payload).toEqual({
+      payableId: 'pay-nfe-1',
+      counterpartyId: 'cp-sup',
+      itemCount: '3',
+      amountCents: String(CUSTO_TOTAL),
+      issueDate: '2025-07-10',
+    });
+
+    // PII gate (T8/LGPD): no emitente identity anywhere in the payload — not the CNPJ, not the razão
+    // social, and not the chave de acesso (whose digits 7-20 ARE the CNPJ).
+    const serialized = JSON.stringify(event.payload);
+    expect(serialized).not.toContain('12345678000190'); // emitente CNPJ (fixture)
+    expect(serialized).not.toContain(CHAVE);
+    expect(serialized.toLowerCase()).not.toContain('cnpj');
+  });
+
+  // The allowlist must actually COVER the emitted event, else canonicalizeAuditPayload throws in-tx.
+  it('the emitted event type is present in PAYLOAD_ALLOWLIST', () => {
+    expect(PAYLOAD_ALLOWLIST['nfe.purchase_imported']).toBeDefined();
   });
 });

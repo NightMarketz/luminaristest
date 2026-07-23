@@ -44,11 +44,10 @@ export class NfeImportService {
     private readonly payableService: PayableService,
     private readonly counterpartyRepo: ICounterpartyRepository,
     private readonly policy: IAccountingPolicy,
-    // Held for the `nfe.purchase_imported` domain event wired in Fase B (B-4 owns the audit canonical
-    // allowlist). The MONEY trail is already append-only audited by the reused createPayable
-    // (`payable.created`) and receiveStock (`inventory.received`) — this service adds no ledger write of
-    // its own, so it emits no canonical event in this slice (mirrors the optional-pre-wiring precedent
-    // PayableService.inventoryService).
+    // Emits `nfe.purchase_imported` (B-4). The MONEY trail is already append-only audited IN-TX by the
+    // reused createPayable (`payable.created`) and receiveStock (`inventory.received`); this service
+    // owns no write of its own, so its event records the fiscal INGESTION ACT and is appended in its
+    // own tx right after the money commits (`appendInOwnTransaction`).
     private readonly auditService: AuditService,
   ) {}
 
@@ -110,7 +109,28 @@ export class NfeImportService {
       inventoryItems,
     };
 
-    return this.payableService.createPayable(scope, input);
+    const payable = await this.payableService.createPayable(scope, input);
+
+    // Fiscal ingestion act (B-4). Ids + counts + money-as-string only — NEVER the emitente's
+    // razão social/CNPJ nor the chave de acesso (which embeds the CNPJ); the note stays resolvable
+    // through `payable.documentNumber`. Appended AFTER the money tx committed, in its own tx: a
+    // failure here rejects loud rather than being swallowed (the payable itself is already audited
+    // by `payable.created`, so the trail is never blind to the money).
+    await this.auditService.appendInOwnTransaction(scope, {
+      actorUserId: scope.actorUserId,
+      eventType:   'nfe.purchase_imported',
+      targetType:  'payable',
+      targetId:    payable.id,
+      payload: {
+        payableId:      payable.id,
+        counterpartyId: counterpartyId ?? undefined,
+        itemCount:      String(inventoryItems.length),
+        amountCents:    String(custoTotalCents),
+        issueDate,
+      },
+    });
+
+    return payable;
   }
 
   // ---------------------------------------------------------------------------
