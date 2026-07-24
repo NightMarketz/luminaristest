@@ -107,21 +107,6 @@ export class AuditService {
   }
 
   /**
-   * Append ONE event in a transaction of its own (BE-INCR-NFE Fase B).
-   *
-   * NARROW USE — only for an INTEGRATION service that performs NO ledger/row write of its own and
-   * therefore has no transaction to join: it records the *act* (a fiscal document was ingested),
-   * while the MONEY trail is already appended in-tx by the service that actually wrote it
-   * (`payable.created` inside `createPayable`, `entry.source_recorded` inside
-   * `attachSourceDocument`). Any mutation that DOES own a tx must keep calling `append(tx, …)` —
-   * appending a mutation's event outside its tx would let the row commit while the trail rolls back
-   * (Q10). The failure is never swallowed here: it propagates so a broken chain is loud.
-   */
-  async appendInOwnTransaction(scope: AccountingScope, input: AuditEventInput): Promise<void> {
-    await this.postingRepo.runTransaction((tx) => this.append(tx, scope, input));
-  }
-
-  /**
    * Verify the full audit chain for this scope.
    * Diagnostic only — does NOT repair the chain.
    */

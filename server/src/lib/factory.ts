@@ -629,13 +629,11 @@ export class ApplicationFactory {
         payableService,
         this.repositories.counterparty,
         this.policies.accounting,
-        auditService,
       ),
       nfeSaleReconciliation: new NfeSaleReconciliationService(
         this.repositories.journalEntry,
         postingService,
         this.policies.accounting,
-        auditService,
       ),
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,

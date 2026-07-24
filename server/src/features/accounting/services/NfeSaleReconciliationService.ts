@@ -4,7 +4,6 @@ import { parseNfe } from '../../../lib/nfe';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostingService } from './PostingService';
-import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 /**
@@ -67,10 +66,6 @@ export class NfeSaleReconciliationService {
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly postingService: PostingService,
     private readonly policy: IAccountingPolicy,
-    // Emite `nfe.sale_matched` (B-4). Este serviço não escreve nada próprio — a proveniência é
-    // gravada (e auditada como `entry.source_recorded`) DENTRO da tx do dono do seam — então o
-    // evento do cruzamento é anexado em tx própria logo depois.
-    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -125,26 +120,10 @@ export class NfeSaleReconciliationService {
       description: `NF-e ${nfe.ide.numero}/${nfe.ide.serie}`,
     });
 
-    // Evento do cruzamento (B-4). Só ids + centavos-como-string. A chave de acesso não se repete AQUI
-    // porque seria cópia redundante — e não porque fique fora do trilho: o `attachSourceDocument` acima
-    // já a gravou na MESMA cadeia como `entry.source_recorded.externalRef` (allowlistado), além de
-    // `SourceDocument.externalRef`. Se a chave for um dia classificada como PII de terceiro (dígitos
-    // 7-20 = CNPJ do emitente), é aquele evento — não esta lista — que precisa mudar.
-    await this.auditService.appendInOwnTransaction(scope, {
-      actorUserId: scope.actorUserId,
-      eventType:   'nfe.sale_matched',
-      targetType:  'journal_entry',
-      targetId:    anchor.id,
-      payload: {
-        saleId:           input.saleId,
-        journalEntryId:   anchor.id,
-        sourceDocumentId: sourceDocument.id,
-        nfeTotalCents:    String(nfeTotalCents),
-        saleTotalCents:   String(saleTotalCents),
-        differenceCents:  String(differenceCents),
-        totalMatches:     String(totalMatches),
-      },
-    });
+    // Sem evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX, e o cruzamento não escreve nada
+    // próprio — a proveniência já foi auditada IN-TX como `entry.source_recorded` (com a chave de acesso
+    // como externalRef) DENTRO da tx do dono do seam (`attachSourceDocument`, O-1). Um evento em 2ª tx
+    // poderia falhar após a proveniência commitar, deixando trilho e evento fora de sincronia.
 
     // Log operacional: SEM a chave de acesso. Ela é o dado que este mesmo arquivo trata como sensível
     // (dígitos 7-20 = CNPJ do emitente) e o log de aplicação não é o trilho imutável — sai do texto

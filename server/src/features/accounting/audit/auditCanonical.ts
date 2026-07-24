@@ -92,20 +92,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // never the file bytes or account balances (PII-safe).
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
   'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
-  // BE-INCR-NFE — fiscal NF-e ingestion. Ids + counts + money-as-string ONLY.
-  // The `chaveAcesso` (44-digit access key) is absent from BOTH payloads, but do NOT read that as the
-  // key being kept out of the audit trail — it is NOT. The key is this system's canonical HUMAN
-  // externalRef for the note (the INCR-8/AP/AR pattern), so it already enters the same hash-chain via
-  // `entry.source_recorded.externalRef` (PostingService.attachSourceDocument), which IS allowlisted,
-  // and it is persisted verbatim in `payables.documentNumber` / `SourceDocument.externalRef`.
-  // What these two events omit is therefore a REDUNDANT copy: the note identity is already reachable
-  // from the row/entry each event points at, so repeating the key here would add trail bytes without
-  // adding trail information. Whether the key counts as third-party PII (positions 7-20 are the
-  // emitter's CNPJ) or as a plain human document reference is an OPEN decision for the owner — if it
-  // is ever ruled PII, `entry.source_recorded` is the site that must change, not just this list.
-  // Neither event carries razão social, endereço, CNPJ or CPF as a FIELD of its own.
-  'nfe.purchase_imported': ['payableId', 'counterpartyId', 'itemCount', 'amountCents', 'issueDate'],
-  'nfe.sale_matched':      ['saleId', 'journalEntryId', 'sourceDocumentId', 'nfeTotalCents', 'saleTotalCents', 'differenceCents', 'totalMatches'],
+  // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
+  // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
+  // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
 };
 
 /**

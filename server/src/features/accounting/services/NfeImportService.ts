@@ -5,7 +5,6 @@ import { MAX_CENTS } from '../models/money';
 import type { CreatePayableInput } from '../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../dtos/NfeDto';
 import type { PayableService } from './PayableService';
-import type { AuditService } from './AuditService';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -22,9 +21,9 @@ import type { Payable } from 'generated/prisma';
  * the proved `createPayable` path (NUNCA `postEntry` direto).
  *
  * Invariants:
- * - Cost D3 (F-NFE6): `vProd − vDesc + vFrete + vOutro + vIPI + vST` from the note totals; ICMS próprio
- *   (`vICMS`) is NOT subtracted (MVP = tenant não-contribuinte, molde salão — the ALTO risk named in the
- *   plan §6 / ADR §6.1; the tie-out validates DISTRIBUTION, not regime).
+ * - Cost D3 (F-NFE6): `vProd − vDesc + vFrete + vSeg + vOutro + vIPI + vST` from the note totals; ICMS
+ *   próprio (`vICMS`) is NOT subtracted (MVP = tenant não-contribuinte, molde salão — the ALTO risk named
+ *   in the plan §6 / ADR §6.1; the tie-out validates DISTRIBUTION, not regime).
  * - Rateio (Gate 1, ACC-014/T4): each item's share is `floor(total × vProd_item / Σ vProd)`, with the
  *   rounding residue absorbed by the LAST line → `Σ shares === custoTotalCents`. Integer-cent arithmetic
  *   only; no float boundary is crossed — the `total × vProd_item` PRODUCT is computed in `BigInt`
@@ -67,11 +66,6 @@ export class NfeImportService {
     private readonly payableService: PayableService,
     private readonly counterpartyRepo: ICounterpartyRepository,
     private readonly policy: IAccountingPolicy,
-    // Emits `nfe.purchase_imported` (B-4). The MONEY trail is already append-only audited IN-TX by the
-    // reused createPayable (`payable.created`) and receiveStock (`inventory.received`); this service
-    // owns no write of its own, so its event records the fiscal INGESTION ACT and is appended in its
-    // own tx right after the money commits (`appendInOwnTransaction`).
-    private readonly auditService: AuditService,
   ) {}
 
   /**
@@ -135,27 +129,13 @@ export class NfeImportService {
 
     const payable = await this.payableService.createPayable(scope, input);
 
-    // Fiscal ingestion act (B-4). Ids + counts + money-as-string only — no razão social/CNPJ as a field
-    // of its own. The chave de acesso is not repeated here because it would be REDUNDANT, not because
-    // it stays out of the trail: it is `payable.documentNumber` AND it already entered the same audit
-    // chain as `entry.source_recorded.externalRef` when createPayable posted the recognition with its
-    // sourceDocument. Appended AFTER the money tx committed, in its own tx: a
-    // failure here rejects loud rather than being swallowed (the payable itself is already audited
-    // by `payable.created`, so the trail is never blind to the money).
-    await this.auditService.appendInOwnTransaction(scope, {
-      actorUserId: scope.actorUserId,
-      eventType:   'nfe.purchase_imported',
-      targetType:  'payable',
-      targetId:    payable.id,
-      payload: {
-        payableId:      payable.id,
-        counterpartyId: counterpartyId ?? undefined,
-        itemCount:      String(inventoryItems.length),
-        amountCents:    String(custoTotalCents),
-        issueDate,
-      },
-    });
-
+    // Sem evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX, e este serviço de integração não
+    // possui transação própria para anexar um evento. A ingestão fiscal já está no trilho imutável,
+    // gravada IN-TX pela escrita que de fato ocorreu — `payable.created` (dentro de createPayable),
+    // `inventory.received` por item, e a chave de acesso como `entry.source_recorded.externalRef` (o
+    // externalRef HUMANO). Um evento em 2ª tx poderia falhar DEPOIS do dinheiro commitar → `Payable`
+    // sem evento e sem reemissão possível (bate no @@unique no reimport). O que se perde é só o
+    // `itemCount` informativo, recuperável do próprio `Payable`.
     return { payable, ignoredItems };
   }
 
@@ -163,10 +143,12 @@ export class NfeImportService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  /** Cost D3 (F-NFE6): `vProd − vDesc + vFrete + vOutro + vIPI + vST` (integer cents; ICMS próprio NOT
-   *  subtracted — the named ALTO risk). Ties out to `vNF` for a fully-taxed não-contribuinte note. */
+  /** Cost D3 (F-NFE6): `vProd − vDesc + vFrete + vSeg + vOutro + vIPI + vST` (integer cents; ICMS próprio
+   *  NOT subtracted — the named ALTO risk). `vSeg` (seguro) É custo de aquisição e compõe o `vNF` (decisão
+   *  E): sem ele, uma nota com seguro criaria passivo MENOR que a nota e o pagamento full-balance quitaria
+   *  a menos. Ties out to `vNF` for a fully-taxed não-contribuinte note. */
   private acquisitionCost(t: NfeTotais): number {
-    return t.vProdCents - t.vDescCents + t.vFreteCents + t.vOutroCents + t.vIPICents + t.vSTCents;
+    return t.vProdCents - t.vDescCents + t.vFreteCents + t.vSegCents + t.vOutroCents + t.vIPICents + t.vSTCents;
   }
 
   /**

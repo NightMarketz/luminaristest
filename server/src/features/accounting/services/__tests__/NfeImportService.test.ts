@@ -1,7 +1,6 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { NfeImportService } from '../NfeImportService';
-import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import type { CreatePayableInput } from '../../dtos/PayableDto';
@@ -64,18 +63,13 @@ function build(opts: Opts = {}) {
     findById: jest.fn(async () => (opts.counterparty === undefined ? defaultCp : opts.counterparty)),
   };
   const policy = { canManagePayable: () => opts.canManage ?? true };
-  const auditService = {
-    append: jest.fn(async () => undefined),
-    appendInOwnTransaction: jest.fn(async () => undefined),
-  };
 
   const service = new NfeImportService(
     payableService as never,
     counterpartyRepo as never,
     policy as never,
-    auditService as never,
   );
-  return { service, createPayable, counterpartyRepo, auditService };
+  return { service, createPayable, counterpartyRepo };
 }
 
 function dto(over: Partial<ImportNfePurchaseInput> = {}): ImportNfePurchaseInput {
@@ -89,7 +83,7 @@ function dto(over: Partial<ImportNfePurchaseInput> = {}): ImportNfePurchaseInput
  */
 function inlineNfe(
   items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string }>,
-  totals: { vProd: string; vFrete?: string; vDesc?: string; vIPI?: string; vNF: string },
+  totals: { vProd: string; vFrete?: string; vSeg?: string; vDesc?: string; vIPI?: string; vNF: string },
 ): string {
   const chave = '35250712345678000190550010000000021000000025';
   const dets = items
@@ -124,7 +118,7 @@ ${dets}
           <vFrete>${totals.vFrete ?? '0.00'}</vFrete>
           <vDesc>${totals.vDesc ?? '0.00'}</vDesc>
           <vIPI>${totals.vIPI ?? '0.00'}</vIPI>
-          <vST>0.00</vST><vSeg>0.00</vSeg><vOutro>0.00</vOutro><vICMS>0.00</vICMS>
+          <vST>0.00</vST><vSeg>${totals.vSeg ?? '0.00'}</vSeg><vOutro>0.00</vOutro><vICMS>0.00</vICMS>
           <vNF>${totals.vNF}</vNF>
         </ICMSTot>
       </total>
@@ -245,36 +239,25 @@ describe('NfeImportService.importPurchase', () => {
     await expect(service.importPurchase(scope, denegada, dto())).rejects.toThrow(ValidationError);
     expect(createPayable).not.toHaveBeenCalled();
   });
+});
 
-  // B-4 — the audit event is EMITTED (the allowlist only covers emitted events) and carries NO PII.
-  it('emits nfe.purchase_imported with ids/cents only — never CNPJ, razão social or chave de acesso', async () => {
-    const { service, auditService } = build();
-    await service.importPurchase(scope, PURCHASE_XML, dto({ counterpartyId: 'cp-sup' }));
-
-    expect(auditService.appendInOwnTransaction).toHaveBeenCalledTimes(1);
-    const [, event] = (auditService.appendInOwnTransaction as jest.Mock).mock.calls[0];
-    expect(event.eventType).toBe('nfe.purchase_imported');
-    expect(event.targetType).toBe('payable');
-    expect(event.targetId).toBe('pay-nfe-1');
-    expect(event.payload).toEqual({
-      payableId: 'pay-nfe-1',
-      counterpartyId: 'cp-sup',
-      itemCount: '3',
-      amountCents: String(CUSTO_TOTAL),
-      issueDate: '2025-07-10',
-    });
-
-    // PII gate (T8/LGPD): no emitente identity anywhere in the payload — not the CNPJ, not the razão
-    // social, and not the chave de acesso (whose digits 7-20 ARE the CNPJ).
-    const serialized = JSON.stringify(event.payload);
-    expect(serialized).not.toContain('12345678000190'); // emitente CNPJ (fixture)
-    expect(serialized).not.toContain(CHAVE);
-    expect(serialized.toLowerCase()).not.toContain('cnpj');
-  });
-
-  // The allowlist must actually COVER the emitted event, else canonicalizeAuditPayload throws in-tx.
-  it('the emitted event type is present in PAYLOAD_ALLOWLIST', () => {
-    expect(PAYLOAD_ALLOWLIST['nfe.purchase_imported']).toBeDefined();
+// ── vSeg (seguro) compõe o custo D3 (decisão E) ──────────────────────────────────────────────────
+// Seguro é custo de aquisição e compõe o vNF. Sem ele o passivo nasceria menor que a nota e o
+// pagamento full-balance quitaria a menos.
+describe('NfeImportService.importPurchase — vSeg entra no custo D3 (decisão E)', () => {
+  it('inclui o seguro no passivo: custo casa com vNF quando a nota tem vSeg', async () => {
+    // vProd 100,00 + vFrete 10,00 + vSeg 5,00 = vNF 115,00. Sem vSeg o passivo daria 11000 (< nota).
+    const xml = inlineNfe(
+      [{ cProd: 'SEG-1', xProd: 'Item com seguro', qCom: '1', vProd: '100.00' }],
+      { vProd: '100.00', vFrete: '10.00', vSeg: '5.00', vNF: '115.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(
+      scope, xml, dto({ itemMappings: [{ cProd: 'SEG-1', productRef: 'prod-seg' }] }),
+    );
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    // 10000 (vProd) + 1000 (vFrete) + 500 (vSeg) = 11500 = vNF. Sem a correção (E) daria 11000.
+    expect(input.amountCents).toBe(11500);
   });
 });
 
