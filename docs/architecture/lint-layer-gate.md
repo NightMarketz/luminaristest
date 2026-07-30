@@ -21,10 +21,9 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
   ```bash
   rg -n 'prisma\.[a-zA-Z$]+' server/src -g '!**/{controllers,services,repositories,__tests__}/**' -g '!**/*.test.ts' -g '!**/lib/prisma.ts' -g '!*.md'
   ```
-  (Note o `$` na classe: sem ele o padrão perde `$queryRawUnsafe`/`$disconnect` e devolve um número **menor e plausível** — foi assim que uma redação anterior desta linha registrou "7 acessos" quando eram 10, em 5 arquivos e não 3. Instrumento que erra em silêncio: `[OPS-003]`.) Consequência: **o backlog mede a dívida de R1, não a dívida do contrato §2** — ampliar o glob, ou marcar esses sites, é fatia própria.
-- **Dívida viva (supressão inline `DEBT: prisma`) — 3 sites** (medido em `dc7fd12`, 2026-07-30):
-  `server/src/controllers/dashboardController.ts:6`, `server/src/features/chat/services/ChatService.ts:13`,
-  `server/src/features/reports/services/ReportService.ts:6`.
+  (Note o `$` na classe: sem ele o padrão perde `$queryRawUnsafe`/`$disconnect` e devolve um número **menor e plausível** — foi assim que uma redação anterior desta linha registrou "7 acessos" quando eram 10, em 5 arquivos e não 3. Instrumento que erra em silêncio: `[OPS-003]`.) Consequência: **o bloco `debt-ledger` mede a dívida de R1, não a dívida do contrato §2** — ampliar o glob, ou marcar esses sites, é fatia própria.
+- **Dívida viva:** enumerada no [bloco `debt-ledger`](#backlog-mensurável-bloco-debt-ledger), não aqui — lista em
+  dois lugares diverge, foi o que aconteceu neste próprio spec.
   **Pago desde a redação original:** `authController` e `userController`/`features/users/**` não importam mais
   `lib/prisma` (o único acesso em `features/users/` é `UserRepository.ts`, que é a camada permitida). A lista caiu
   de 5 → 3 por **pagamento de dívida**, não por supressão removida com violação viva — `npx eslint src` verde confirma.
@@ -36,7 +35,7 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 
 ### R2 — `apiClient` confinado a `lib/services` (frontend)
 - `no-restricted-imports` do path `**/api/api-client` fora de `lib/services/**` e `lib/api/**`.
-- **Dívida viva: ZERO** (medido em `dc7fd12`, 2026-07-30). Nenhuma supressão `DEBT: apiClient` existe no repo.
+- **Dívida viva: ZERO** — ver o [bloco `debt-ledger`](#backlog-mensurável-bloco-debt-ledger).
   `TotalControlSetup.tsx` e `QuickSetup.tsx` continuam existindo em `my-app/features/interview/setup/`, mas já
   consomem `SetupService` (`lib/services/setup.service`) em vez de `api/api-client`. Varredura
   `rg -l "api/api-client" my-app` retorna só `lib/services/**` (+ config de lint e docs).
@@ -55,6 +54,64 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 - **server**: step `npm run lint` (`eslint src`) entre typecheck e test.
 - **my-app**: step `npm run lint:gate` (`eslint . --config eslint.gate.config.mjs`). Usa um config **separado** do `eslint.config.mjs` (next/dev): o frontend nunca foi lintado (`ignoreDuringBuilds: true`) e o ruleset next produz ~6000 erros pré-existentes — adotá-lo é iniciativa própria, não esta fatia. O gate roda isolado, só as regras de camada.
 - **zinc-guard** (job próprio, repo-root): a base tem ~33 `zinc-` vivos (o contrato §4 dizia "base é neutral" — falso). Em vez de reprovar nelas, o job é **diff-scoped**: falha só quando a mudança INTRODUZ `zinc-` novo. Mesmo princípio do layer-gate (barra regressão, não força refactor). Backlog: `grep -rn "zinc-" my-app/{features,lib,components,pages,styles}`.
+- **debt-ledger**: `node ../scripts/debt-ledger-check.mjs --root <server|my-app>`, como **passo dos jobs `server` e `frontend`** — não job próprio. Motivo duplo: ali o `node_modules` já está instalado (o script roda o próprio ESLint), e o gate herda o *required status check* daqueles dois contextos em vez de precisar ser adicionado à branch protection separadamente. Ver a seção seguinte.
+
+## Backlog mensurável (bloco `debt-ledger`)
+
+Esta é a **única** enumeração da dívida neste documento; as seções R1/R2 apontam para cá de propósito.
+Lista escrita em dois lugares diverge — foi exatamente o que aconteceu aqui (o spec declarou 5 `DEBT: prisma`
+e 2 `DEBT: apiClient` por semanas depois de a dívida ter caído para 3 e 0, PR #154).
+
+O bloco é lido por `scripts/debt-ledger-check.mjs`, que roda como passo dos jobs `server` e `frontend` do CI
+(ali o `node_modules` já existe). Origem: dimensão **C5** do instrumento `AV-L1` (`docs/audit/bancada.html`).
+
+**O script não procura texto — ele pergunta ao ESLint.** Duas rodadas de review adversarial reprovaram
+versões que varriam o código com regex: regex não distingue comentário de string, não conhece as **duas**
+famílias de diretiva (`eslint-disable*` **e** `/* eslint <regra>: "off" */`) e não sabe quais arquivos o
+linter olha — cada lacuna virou um bypass verde com violação viva. O desenho atual são dois passes:
+
+| Passe | Comando | Responde |
+|---|---|---|
+| A | `eslint --format json` | o que foi **suprimido**, com a `justification` já parseada pelo ESLint |
+| B | `eslint --no-inline-config --format json` | **toda** violação real, inclusive a silenciada por inline config |
+
+Violação em B sem supressão correspondente em A = regra desligada por caminho que não deixa marcador → falha.
+É assim que `/* eslint no-restricted-imports: "off" */` é pego; nenhuma regex conseguiria, porque no passe A
+o ESLint sequer reporta a violação. Como quem escolhe os arquivos é o próprio linter, arquivo de teste (onde
+o config desliga a regra de propósito) não exige marcador, e prosa que menciona `eslint-disable` não derruba
+o gate.
+
+A contagem é por **ocorrência**, não por arquivo: um arquivo já listado não é depósito ilimitado de dívida
+invisível. Só pode existir **um** bloco neste documento — dois blocos são duas listas, e uma seria ignorada
+em silêncio (o script falha se achar mais de um).
+
+<!-- debt-ledger:start -->
+```json
+{
+  "DEBT: prisma": {
+    "server/src/controllers/dashboardController.ts": 1,
+    "server/src/features/chat/services/ChatService.ts": 1,
+    "server/src/features/reports/services/ReportService.ts": 1
+  },
+  "DEBT: apiClient": {},
+  "SANCTIONED": {
+    "server/src/features/dynamicTables/services/DynamicTableService.ts": 1
+  }
+}
+```
+<!-- debt-ledger:end -->
+
+**Direção da correção — não é simétrica.** A dívida real são os marcadores **no código**; este bloco só os
+espelha. Divergência é bug **do bloco**, e fecha-se editando-o:
+
+| CI acusa | Significa | O que fazer |
+|---|---|---|
+| spec declara site que o código não tem | dívida **paga** (se o lint está verde) | remova do bloco |
+| idem, mas **lint vermelho** naquele arquivo | supressão apagada com a violação viva | conserte o **código** |
+| código tem supressão que o spec não declara | dívida nova entrou fora do backlog | adicione ao bloco, ou pague e remova a supressão |
+
+Nunca adicione supressão no código para casar com o bloco — isso inverte a fonte de verdade e transforma
+um gate de governança em teatro.
 
 ## Gate de aceitação (verificável)
 > Os números abaixo são **medidos**, não declarados — reconfira antes de citá-los (última medição: `dc7fd12`, 2026-07-30).
@@ -62,18 +119,22 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 > Sem o `tr`, em win32, o filtro casa zero e a lista inteira vira falso positivo. Regra geral e o auto-probe
 > ("o `-v` removeu alguma linha?"): `[OPS-003]` em `.claude/skills/_OPERATING-GATES.md`.
 
-1. `server`: `npx eslint src` verde; os únicos acessos ao singleton em controller/service são os **4 sites suprimidos**
-   (3 `DEBT: prisma` + 1 `SANCTIONED` em `DynamicTableService`) e **nada além**; `tsc` segue verde.
+**Nenhum item abaixo repete a contagem da dívida.** Esta seção lista *como checar*; *quanto* é a dívida está
+só no bloco `debt-ledger`. Uma redação anterior deste gate afirmava "esta é a única enumeração" e mantinha
+duas contagens hard-coded aqui — o bug 5-vs-3 reintroduzido no mesmo commit que o declarava resolvido.
+
+1. `server`: `npx eslint src` verde; os únicos acessos ao singleton em `controllers/**` e `**/services/**` são
+   os suprimidos e declarados no bloco, e **nada além**; `tsc` segue verde. (Fora desses globs, ver o ponto
+   cego declarado em R1 — o gate não os cobre.)
 2. `my-app`: `npx eslint . --config eslint.gate.config.mjs` verde; **zero** import de apiClient fora de
-   `lib/services/**`/`lib/api/**` (nenhuma supressão necessária) e **zero** import direto de
-   recharts/dnd-kit/fullcalendar fora do allowlist; build segue verde.
+   `lib/services/**`/`lib/api/**` e **zero** import direto de recharts/dnd-kit/fullcalendar fora do
+   allowlist; build segue verde.
 3. CI: jobs `lint` adicionados; zinc-guard **diff-scoped** verde (a base tem `zinc-` vivos — ver R4; o gate falha só
    quando o diff INTRODUZ `zinc-` novo, não pela base).
-4. `grep "DEBT: prisma"` retorna a lista exata da dívida aberta de R1 (hoje 3 sites) e `grep "DEBT: apiClient"`
-   retorna **vazio** (R2 sem dívida). Backlog mensurável **de R1/R2** = o que o grep devolve, não o que este
-   spec afirma;
-   divergência entre os dois é bug **do spec**, e fechá-la é atualizar o texto — nunca adicionar supressão
-   para casar com a lista.
+4. `node scripts/debt-ledger-check.mjs` verde: todo marcador do código está no bloco, com a quantidade certa,
+   e todo item do bloco ainda existe no código. Backlog mensurável **de R1/R2** = o que o script mede, não o
+   que este spec afirma em prosa; divergência é bug **do bloco**, e fechá-la é atualizar o bloco — nunca
+   adicionar supressão para casar com a lista.
 
 ## Linha que esta fatia não cruza
 - Não refatora os sites de dívida (isso é trabalho de domínio, fatia própria; a lista de supressões `DEBT:` **no código**
