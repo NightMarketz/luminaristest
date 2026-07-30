@@ -17,7 +17,12 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 ### R1 — `prisma` singleton confinado a Repository (server)
 - **Onde:** `server/eslint.config.mjs`, `no-restricted-imports` do path `@/lib/prisma` / `*/lib/prisma` em `controllers/**` e `**/services/**`.
 - **Trabalho:** barra regressão (novo `prisma` em controller/service = erro) + inventaria dívida viva.
-- **Dívida viva (supressão inline `DEBT: prisma`):** `authController`, `dashboardController`, `userController`, `ChatService`, `ReportService`.
+- **Dívida viva (supressão inline `DEBT: prisma`) — 3 sites** (medido em `dc7fd12`, 2026-07-30):
+  `server/src/controllers/dashboardController.ts:6`, `server/src/features/chat/services/ChatService.ts:13`,
+  `server/src/features/reports/services/ReportService.ts:6`.
+  **Pago desde a redação original:** `authController` e `userController`/`features/users/**` não importam mais
+  `lib/prisma` (o único acesso em `features/users/` é `UserRepository.ts`, que é a camada permitida). A lista caiu
+  de 5 → 3 por **pagamento de dívida**, não por supressão removida com violação viva — `npx eslint src` verde confirma.
 - **Exceção sancionada (supressão inline `SANCTIONED`):** `DynamicTableService` — orquestração de `prisma.$transaction` documentada no contrato §2.
 - `import type` de `generated/prisma` **não** é alvo (tipo, não acesso a dados).
 
@@ -26,7 +31,14 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 
 ### R2 — `apiClient` confinado a `lib/services` (frontend)
 - `no-restricted-imports` do path `**/api/api-client` fora de `lib/services/**` e `lib/api/**`.
-- **Dívida viva (supressão inline `DEBT: apiClient`):** `TotalControlSetup.tsx`, `QuickSetup.tsx`.
+- **Dívida viva: ZERO** (medido em `dc7fd12`, 2026-07-30). Nenhuma supressão `DEBT: apiClient` existe no repo.
+  `TotalControlSetup.tsx` e `QuickSetup.tsx` continuam existindo em `my-app/features/interview/setup/`, mas já
+  consomem `SetupService` (`lib/services/setup.service`) em vez de `api/api-client`. Varredura
+  `rg -l "api/api-client" my-app` retorna só `lib/services/**` (+ config de lint e docs).
+- **A regra mudou de natureza.** Foi escrita como *"converte dívida oculta em dívida marcada"* (§Princípio, 3º caso),
+  premissa que exigia violação viva pré-existente. Sem dívida aberta, R2 hoje é **barra ilha** (1º caso): o
+  confinamento em `lib/services` já é o estado correto e o `error` só impede a próxima regressão — mesmo trabalho
+  que R3a faz para `recharts`, e mesmo estado que R1b sempre teve. Reclassifique-a assim ao reler o spec.
 
 ### R3a — `recharts` confinado (frontend, **barra ilha**)
 - `error`; allowlist por glob: `**/analytics/charts/**`, `**/analytics/kpi/**`, `components/widgets/analytics/GoldKpiWidgetView.tsx`. Qualquer outro import = erro.
@@ -40,12 +52,25 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 - **zinc-guard** (job próprio, repo-root): a base tem ~33 `zinc-` vivos (o contrato §4 dizia "base é neutral" — falso). Em vez de reprovar nelas, o job é **diff-scoped**: falha só quando a mudança INTRODUZ `zinc-` novo. Mesmo princípio do layer-gate (barra regressão, não força refactor). Backlog: `grep -rn "zinc-" my-app/{features,lib,components,pages,styles}`.
 
 ## Gate de aceitação (verificável)
-1. `server`: eslint roda; flagra exatamente os 6 sites de prisma (5 DEBT suprimidos + 1 SANCTIONED suprimido) e **nada além**; `tsc` segue verde.
-2. `my-app`: eslint flagra os 2 sites de apiClient (suprimidos) e **zero** import direto de recharts/dnd-kit/fullcalendar fora do allowlist; build segue verde.
-3. CI: jobs `lint` adicionados; `grep zinc-` presente e verde (base atual já é `neutral`).
-4. `grep "DEBT: prisma"` e `grep "DEBT: apiClient"` retornam a lista exata de dívida aberta (backlog mensurável).
+> Os números abaixo são **medidos**, não declarados — reconfira antes de citá-los (última medição: `dc7fd12`, 2026-07-30).
+> Ao medir, normalize o caminho antes de filtrar — `rg -l "api/api-client" my-app | tr '\\' '/' | rg -v "lib/services/"`.
+> Sem o `tr`, em win32, o filtro casa zero e a lista inteira vira falso positivo. Regra geral e o auto-probe
+> ("o `-v` removeu alguma linha?"): `[OPS-003]` em `.claude/skills/_OPERATING-GATES.md`.
+
+1. `server`: `npx eslint src` verde; os únicos acessos ao singleton em controller/service são os **4 sites suprimidos**
+   (3 `DEBT: prisma` + 1 `SANCTIONED` em `DynamicTableService`) e **nada além**; `tsc` segue verde.
+2. `my-app`: `npx eslint . --config eslint.gate.config.mjs` verde; **zero** import de apiClient fora de
+   `lib/services/**`/`lib/api/**` (nenhuma supressão necessária) e **zero** import direto de
+   recharts/dnd-kit/fullcalendar fora do allowlist; build segue verde.
+3. CI: jobs `lint` adicionados; zinc-guard **diff-scoped** verde (a base tem `zinc-` vivos — ver R4; o gate falha só
+   quando o diff INTRODUZ `zinc-` novo, não pela base).
+4. `grep "DEBT: prisma"` retorna a lista exata da dívida aberta de R1 (hoje 3 sites) e `grep "DEBT: apiClient"`
+   retorna **vazio** (R2 sem dívida). Backlog mensurável = o que o grep devolve, não o que este spec afirma;
+   divergência entre os dois é bug **do spec**, e fechá-la é atualizar o texto — nunca adicionar supressão
+   para casar com a lista.
 
 ## Linha que esta fatia não cruza
-- Não refatora os 5 sites de dívida (isso é trabalho de domínio, fatia própria; a lista de supressões `DEBT:` é o backlog).
+- Não refatora os sites de dívida (isso é trabalho de domínio, fatia própria; a lista de supressões `DEBT:` **no código**
+  é o backlog — este documento só a espelha, e quando os dois divergem quem manda é o código).
 - Não constrói wrapper canônico para dnd-kit/fullcalendar (usos sancionados ≠ ilha).
 - Não rebaixa nenhuma regra para `warn` (warn não tem dente no CI).
