@@ -17,7 +17,11 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 ### R1 — `prisma` singleton confinado a Repository (server)
 - **Onde:** `server/eslint.config.mjs`, `no-restricted-imports` dos **três** patterns `@/lib/prisma` / `**/lib/prisma` / `*/lib/prisma`, em `controllers/**` e `**/services/**`. O do meio é o que casa a forma relativa (`'../../../lib/prisma'`), que é a maioria dos sites — não o omita ao citar a regra.
 - **Trabalho:** barra regressão (novo `prisma` em controller/service = erro) + inventaria dívida viva.
-- **PONTO CEGO DECLARADO — o gate é mais estreito que o contrato.** O contrato §2 é categórico (*"Repository: único lugar com `prisma.*`"*), mas os globs cobrem só `controllers/**` e `**/services/**`. Fora deles há **7 acessos `prisma.*` vivos, sem supressão e sem erro de lint** — `server/src/jobs/**` (`accountingSyncReconcile.job.ts`, `PurgeDeletedRecords.ts`) e `server/src/server.ts`. Verificável por probe: um `src/jobs/zz.job.ts` importando o singleton **não** produz erro. Consequência: **o grep de `DEBT:` mede a dívida de R1, não a dívida do contrato §2** — ampliar o glob (ou marcar esses sites) é fatia própria.
+- **PONTO CEGO DECLARADO — o gate é mais estreito que o contrato.** O contrato §2 é categórico (*"Repository: único lugar com `prisma.*`"*), mas os globs cobrem só `controllers/**` e `**/services/**`. Fora deles há acesso ao singleton **vivo, sem supressão e sem erro de lint** — `server/src/app.ts`, `server/src/server.ts` e `server/src/jobs/**`. Verificável por probe: um `src/jobs/zz.job.ts` importando o singleton **não** produz erro. **Não grave aqui a contagem — meça:**
+  ```bash
+  rg -n 'prisma\.[a-zA-Z$]+' server/src -g '!**/{controllers,services,repositories,__tests__}/**' -g '!**/*.test.ts' -g '!**/lib/prisma.ts' -g '!*.md'
+  ```
+  (Note o `$` na classe: sem ele o padrão perde `$queryRawUnsafe`/`$disconnect` e devolve um número **menor e plausível** — foi assim que uma redação anterior desta linha registrou "7 acessos" quando eram 10, em 5 arquivos e não 3. Instrumento que erra em silêncio: `[OPS-003]`.) Consequência: **o backlog mede a dívida de R1, não a dívida do contrato §2** — ampliar o glob, ou marcar esses sites, é fatia própria.
 - **Dívida viva (supressão inline `DEBT: prisma`) — 3 sites** (medido em `dc7fd12`, 2026-07-30):
   `server/src/controllers/dashboardController.ts:6`, `server/src/features/chat/services/ChatService.ts:13`,
   `server/src/features/reports/services/ReportService.ts:6`.
