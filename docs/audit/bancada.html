@@ -242,7 +242,7 @@
   <header class="masthead">
     <p class="eyebrow">Luminaris · descobrir · decidir · despachar · consolidar · triar</p>
     <h1>Bancada de<br>Auditoria</h1>
-    <p class="thesis">Semeada com o perfil medido em <b>dc7fd12</b>. Vinte e três campos técnicos já vêm do repositório; <strong>nove são decisão sua</strong> e a página não os preenche. Os comandos saem com a assimetria do monorepo e o client gerado já excluídos.</p>
+    <p class="thesis" id="thesis">Semeada com o perfil medido no commit declarado no seed. Os campos técnicos vêm do repositório; o restante é decisão sua e a página não os preenche. Os comandos saem com a assimetria do monorepo e o client gerado já excluídos.</p>
   </header>
   <div class="state" id="state"></div>
   <div class="bench">
@@ -303,20 +303,20 @@
   },
   "provenance": {
     "project":      { "source": "medido", "method": "diretório raiz do repositório", "evidence": "Luminaris (worktree incr-inventory-smoke-test-4cfa1c)" },
-    "exts":         { "source": "medido", "method": "find | sed | uniq -c | sort -rn", "evidence": "ts 804 · tsx 264 · json 95 · sql 28 (md 336 = prosa, excluído)" },
-    "langs":        { "source": "inferido", "method": "duas maiores extensões de código são TypeScript", "evidence": "1068 arquivos ts+tsx; zero .py/.go/.rs" },
+    "exts":         { "source": "medido", "method": "find | sed | uniq -c | sort -rn, em checkout LIMPO (sem server/generated)", "evidence": "ts 797 · tsx 264 · json 94 · sql 28 (md 336 = prosa, excluído). ATENÇÃO: a 1ª medição saiu 804/95 porque o worktree tinha o client Prisma gerado — os mesmos caminhos que excludeText manda excluir. Reproduza sempre em checkout sem server/generated, senão a evidência contradiz o próprio recorte." },
+    "langs":        { "source": "inferido", "method": "duas maiores extensões de código são TypeScript", "evidence": "1061 arquivos ts+tsx em checkout limpo; zero .py/.go/.rs" },
     "grepTool":     { "source": "medido", "method": "command -v rg", "evidence": "rg: sim" },
     "rootDomain":   { "source": "inferido", "method": "lógica de negócio com baixa densidade de cliente de banco", "evidence": "features/*/services 20 de 107 tocam prisma; policies 0/29, dtos 0/54, models 0/27" },
-    "rootInfra":    { "source": "inferido", "method": "maior concentração do cliente de banco", "evidence": "server/ 93 arquivos vs docs/ governance/ my-app/ reports/ = 0; repositories 51/74 (69%)" },
+    "rootInfra":    { "source": "inferido", "method": "maior concentração do cliente de banco", "evidence": "server/ 91 arquivos (checkout limpo; 93 com o client gerado presente) vs docs/ governance/ my-app/ reports/ = 0; repositories 51/74 (69%)" },
     "rootUI":       { "source": "medido", "method": "ls my-app", "evidence": "pages/ components/ features/ styles/ next.config.js — 482 arquivos" },
     "rootTest":     { "source": "medido", "method": "find -type d -name __tests__", "evidence": "71 diretórios (63 server, 8 my-app); 153 arquivos *.test.*; 10 de integração" },
     "migPath":      { "source": "medido", "method": "ls -d */prisma/migrations", "evidence": "server/prisma/migrations — 29 entradas; sem alembic" },
-    "docPath":      { "source": "medido", "method": "ls docs", "evidence": "141 arquivos: accounting, adr, architecture, operating-manual, runbooks, wiki…" },
+    "docPath":      { "source": "medido", "method": "find docs -type f", "evidence": "141 arquivos antes desta bancada, 142 depois que docs/audit/bancada.html foi versionado — o próprio instrumento move o número que ele mede. Trate contagem de docs como ordem de grandeza, nunca como sinal." },
     "outdir":       { "source": "inferido", "method": "padrão do contrato, verificado que não colide", "evidence": "docs/audit não existia antes desta bancada" },
     "pkg":          { "source": "medido", "method": "ls de locks", "evidence": "server/package-lock.json + my-app/package-lock.json; sem pnpm/yarn/uv/poetry" },
     "db":           { "source": "medido", "method": "bloco datasource do schema", "evidence": "provider = \"sqlite\"; zero arquivo casa postgres|postgresql" },
-    "orm":          { "source": "medido", "method": "grep PrismaClient + schema.prisma", "evidence": "93 arquivos em server/ usam PrismaClient|prisma." },
-    "ci":           { "source": "medido", "method": "cat .github/workflows/ci.yml", "evidence": "5 jobs além de lint: tsc ×2, jest, next build, vitest TZ-pinned, skill-audit, governance-presence, zinc-guard" },
+    "orm":          { "source": "medido", "method": "grep PrismaClient + schema.prisma, checkout limpo", "evidence": "91 arquivos em server/ usam PrismaClient|prisma. (93 se o client gerado estiver presente)" },
+    "ci":           { "source": "medido", "method": "cat .github/workflows/ci.yml", "evidence": "5 JOBS (server, frontend, skill-governance, governance-presence, zinc-guard) — os passos dentro deles são tsc ×2, lint, jest, tripwire de handle vazado, lint:gate, next build, vitest TZ-pinned. Job ≠ passo: não conte a lista de passos como se fosse número de jobs." },
     "hasNode":      { "source": "medido", "method": "command -v node/npx", "evidence": "node: sim · npx: sim" },
     "hasJscpd":     { "source": "medido", "method": "ls node_modules/.bin nos 3 roots", "evidence": "ausente em raiz, server e my-app" },
     "hasMadge":     { "source": "medido", "method": "ls node_modules/.bin nos 3 roots", "evidence": "ausente em raiz, server e my-app" },
@@ -329,16 +329,16 @@
     "deployed":     { "source": "perguntar", "method": "artefato existe, ambiente não comprovado", "evidence": "docker-compose.yml + 2 Dockerfile; nenhum host, domínio ou URL" },
     "users":        { "source": "perguntar", "method": "não determinável por comando", "evidence": "postura de negócio" },
     "paid":         { "source": "perguntar", "method": "não determinável por comando", "evidence": "nenhum gateway de pagamento no código; ausência não prova ausência de cliente" },
-    "dataCats":     { "source": "medido", "method": "grep em *.prisma/*.sql + leitura de User e Counterparty + DTOs SPED", "evidence": "User.email/username/password; SpedEcdDto:23-24 e SpedEcfDto:22-23 validam CPF/CNPJ; Document + DocumentChunk" },
+    "dataCats":     { "source": "medido", "method": "grep em *.prisma/*.sql + leitura de User e Counterparty + DTOs SPED", "evidence": "User.email/username/password; server/src/features/accounting/dtos/SpedEcdDto.ts:23-24 e SpedEcfDto.ts:22-23 validam CPF/CNPJ; Document + DocumentChunk" },
     "regulated":    { "source": "perguntar", "method": "há indício forte, a regulação vinculante é declaração do dono", "evidence": "lib/sped.ts, lib/ecf.ts, PRIVACY.md na raiz" },
     "irreversible": { "source": "perguntar", "method": "candidatas por concentração de termos de risco por arquivo", "evidence": "ver as propostas clicáveis no passo 2" },
-    "agent":        { "source": "medido", "method": "leitura das definições de ferramenta", "evidence": "LuminarisAgentService.ts linhas 34, 42, 56, 71, 86" },
+    "agent":        { "source": "medido", "method": "leitura das definições de ferramenta", "evidence": "server/src/features/chat/services/LuminarisAgentService.ts linhas 34, 42, 56, 71, 86" },
     "agentTools":   { "source": "medido", "method": "grep de name: em LuminarisAgentService.ts", "evidence": "5 ferramentas, 2 de escrita (request_record_creation/update)" },
     "humanGate":    { "source": "perguntar", "method": "o ponto existe; se gate o EFEITO ou a linha é julgamento seu", "evidence": "ChatDto:18-19 confirmedProposalId · ChatService:126-129 executeProposal · ChatService:39-40 instrui a NÃO confirmar por texto" },
     "persistentMem":{ "source": "medido", "method": "env + compose + schema", "evidence": "QDRANT_URL/API_KEY; service qdrant com volume qdrant_data; model KnowledgeGraph" },
-    "aiComps":      { "source": "medido", "method": "grep em config/ e lib/", "evidence": "OpenAIService.ts:5-6 MAX_TOKENS_CHAT/AGENT; factory.ts:251 EmbeddingService; factory.ts:483 ReportService" },
+    "aiComps":      { "source": "medido", "method": "grep em config/ e lib/", "evidence": "server/src/lib/openai/OpenAIService.ts:5-6 MAX_TOKENS_CHAT/AGENT (:7 MAX_TOKENS_EXTRACTION, 3º caminho de modelo); server/src/lib/factory.ts:251 EmbeddingService; server/src/lib/factory.ts:483 ReportService" },
     "histWindow":   { "source": "inferido", "method": "histórico concentrado no último ano", "evidence": "572 commits totais, 572 em 12m, 0 entre 12 e 24m; primeiro commit 2026-06-11" },
-    "budget":       { "source": "inferido", "method": "padrão mantido, justificado pelo porte", "evidence": "1068 ts/tsx + 174 rotas + 153 testes" },
+    "budget":       { "source": "inferido", "method": "padrão mantido, justificado pelo porte", "evidence": "1061 ts/tsx + 173 rotas + 153 testes (checkout limpo)" },
     "parallel":     { "source": "inferido", "method": "padrão mantido", "evidence": "instrumentos majoritariamente de leitura estática" },
     "maxFindings":  { "source": "inferido", "method": "padrão mantido", "evidence": "teto 3 + triagem AV-00 já controlam volume" },
     "worktree":     { "source": "medido", "method": "diretório de trabalho corrente", "evidence": "o projeto já opera em .claude/worktrees/" },
@@ -890,12 +890,24 @@ const DECIS=[
 const PENDING=DECIS.map(d=>d.k);
 let PROV=null,ASK=[],NMIMP=[],IMPMETA=null,STEP=2;
 
+/* Conta as procedências lendo o provenance na hora. Nenhum total de campo é digitado
+   em lugar nenhum desta página — se o seed mudar, o texto muda junto. */
+function provCount(pv){const c={fields_measured:0,fields_inferred:0,fields_to_ask:0,fields_total:0};
+  Object.keys(pv||{}).forEach(k=>{const s=(pv[k]||{}).source;c.fields_total++;
+    if(s==="medido")c.fields_measured++;else if(s==="inferido")c.fields_inferred++;
+    else if(s==="perguntar")c.fields_to_ask++;});return c;}
+const scTech=()=>{const c=(IMPMETA&&IMPMETA.sc)||{};
+  return (c.fields_measured||0)+(c.fields_inferred||0);};
+
 (function seed(){
   try{const S=JSON.parse(T("seed"));
     Object.keys(S.profile||{}).forEach(k=>{const v=S.profile[k];P[k]=v==null?"":String(v);});
     PROV=S.provenance||null;ASK=S.ask_owner||[];NMIMP=S.not_measure||[];
+    /* Contagem DERIVADA do próprio provenance, nunca escrita à mão. O valor congelado
+       aqui era 22/11/9 quando o provenance dizia 24/10/9 — a bancada carregando a mesma
+       classe de número envelhecido que ela existe para pegar. Agora envelhece junto. */
     IMPMETA={at:S.discovered_at,commit:(S.repo||{}).commit,commits:(S.repo||{}).commits_total,
-      sc:{fields_measured:22,fields_inferred:11,fields_to_ask:9},seeded:true};
+      sc:provCount(PROV),seeded:true};
   }catch(e){STEP=1;}
 })();
 
@@ -938,9 +950,16 @@ function vendorList(){return P.vendorsText.split(",").map(v=>v.trim()).filter(Bo
 function ormCtors(){const m={prisma:"PrismaClient",supabase:"SupabaseClient|createClient",
   typeorm:"DataSource",sqlalchemy:"create_engine",none:"Client"};return m[P.orm]||"Client";}
 function dbConstraintCmd(){
-  if(P.db==="sqlite")return `${GT()==="rg"?"rg -n":"grep -rniE"} "CHECK ?\\(|CREATE TRIGGER|UNIQUE ?\\(" ${P.migPath} 2>/dev/null | wc -l
-# SQLite: CHECK e UNIQUE existem, ALTER TABLE ADD CONSTRAINT não. Se der 0, a invariante só
-# vive na aplicação — registre como escolha declarada, não como limitação da tecnologia.
+  if(P.db==="sqlite")return `# (a) unicidade — é ASSIM que o Prisma emite @@unique em SQLite:
+${GT()==="rg"?"rg -ni":"grep -rniE"} "CREATE UNIQUE INDEX" ${P.migPath} | wc -l
+# (b) CHECK e TRIGGER escritos à mão (migração editada):
+${GT()==="rg"?"rg -ni":"grep -rniE"} "CHECK ?\\(|CREATE TRIGGER" ${P.migPath} | wc -l
+# ARMADILHA MEDIDA (dc7fd12): o padrão "UNIQUE ?\\(" devolve 0 e "CREATE UNIQUE INDEX"
+# devolve 40. Contar só o primeiro e concluir "a invariante só vive na aplicação" é o
+# erro que este comando existe para evitar. Some (a)+(b) antes de pontuar.
+# SQLite: CHECK e UNIQUE existem, ALTER TABLE ADD CONSTRAINT não. Se (a)+(b) der 0, aí
+# sim a invariante só vive na aplicação — registre como escolha declarada, não como
+# limitação da tecnologia.
 # AVISO: @@unique NÃO fecha invariante MUTÁVEL (período, saldo, status). Para essas, a
 # barreira é re-checagem dentro de runTransaction — conte-as separado.`;
   if(P.db==="postgres")return `${GT()==="rg"?"rg -n":"grep -rniE"} "CHECK ?\\(|CREATE TRIGGER|EXCLUDE USING|UNIQUE ?\\(" ${P.migPath} 2>/dev/null | wc -l`;
@@ -957,18 +976,38 @@ function missingTools(){const m=[];
   NMIMP.forEach(n=>{if(!m.find(x=>x.id===n.id))m.push(n);});
   return m;}
 
+/* Preflight de ferramenta. MOTIVO MEDIDO: quase todo contador destes blocos termina em
+   `2>/dev/null | wc -l`. Se o binário faltar, o erro vai para /dev/null e o contador
+   imprime 0 — e 0 lido como "não há ocorrência" é exatamente o que o contrato proíbe
+   ("ferramenta ausente vira não medido, nunca estimativa"). Reproduzido: com rg fora do
+   PATH, a tabela de espalhamento de fornecedores saiu 0 para os 7, sem uma linha de erro. */
+function preflight(){return [
+  `# PREFLIGHT — rode ANTES de qualquer contador deste bloco.`,
+  `# Contador que termina em "2>/dev/null | wc -l" imprime 0 quando o binário falta.`,
+  `# 0 por ausência é indistinguível de 0 por limpeza: prove que dá para medir.`,
+  `for t in ${GT()} git awk sed; do command -v "$t" >/dev/null 2>&1 || echo "AUSENTE: $t -> PARE, emita not_measured e nao emita 0"; done`,
+  `${GT()} --version | head -1; git rev-parse --short HEAD`,
+  ``].join("\n");}
+
 /* ---- Fase 1 · AV-11 ---- */
 function fase1AV11(){
   const L=[`# BLOCO DE FASE 1 · AV-11 · gerado do perfil (${P.langs}, ${GT()}, janela ${P.histWindow}m)`,
   `# Exclusões ativas: ${exList().join(", ")}`,
+  preflight(),
   `git rev-list --count HEAD`,`\n# 1. frequência de alteração`,
-  `git log --since="${period()}" --name-only --pretty=format: \\\n  | grep -v '^$' | grep -vE '^(${exList().join("|").replace(/\./g,"\\.")})' \\\n  | sort | uniq -c | sort -rn | head -40`,
+  `git log --since="${period()}" --name-only --pretty=format: \\\n  | grep -v '^$' | grep -vE '^(${exList().join("|").replace(/\./g,"\\.")})' \\\n  | grep -E '\\.(${extList().join("|")})$' \\\n  | sort | uniq -c | sort -rn | head -40`,
+  `# O filtro de extensão é do perfil (exts=${P.exts}) e é obrigatório aqui: sem ele o topo`,
+  `# vem dominado por prosa e artefato gerado. Medido em dc7fd12: 3 dos 8 primeiros eram`,
+  `# ACCOUNTING-MASTER-MAP.md, openapi.json e adr/INDEX.md — e a Fase 2 manda LER os 8.`,
+  `# Rode também SEM o filtro: doc que muda toda semana é sinal de governança, não de custo`,
+  `# de manutenção de código. Reporte nos dois eixos, sem misturar.`,
   `\n# 2. tamanho dos 20 mais alterados`,
-  `git log --since="${period()}" --name-only --pretty=format: \\\n  | grep -v '^$' | grep -vE '^(${exList().join("|").replace(/\./g,"\\.")})' \\\n  | sort | uniq -c | sort -rn | head -20 \\\n  | awk '{print $2}' | xargs wc -l 2>/dev/null | sort -rn`,
+  `git log --since="${period()}" --name-only --pretty=format: \\\n  | grep -v '^$' | grep -vE '^(${exList().join("|").replace(/\./g,"\\.")})' \\\n  | grep -E '\\.(${extList().join("|")})$' \\\n  | sort | uniq -c | sort -rn | head -20 \\\n  | awk '{print $2}' | xargs wc -l | sort -rn`,
+  `# (sem 2>/dev/null: arquivo renomeado/apagado precisa aparecer como erro, não sumir.)`,
   `\n# 3. mascaramento de erro (padrão de ${P.langs})`,g(catchPat())+" | head -40",
   `\n# 3b. Q8 deste repo: skip por classe base em ponte best-effort`,
   g('"catch\\s*\\([^)]*\\)\\s*\\{[^}]*ValidationError"')+" | head -20",
-  `# Skip legítimo morde um \\\`code\\\` específico. Catch da classe base esconde bug real.`,
+  `# Skip legítimo morde um \`code\` específico. Catch da classe base esconde bug real.`,
   `\n# 4. refatoração — proxy por renomeação`,
   `git log --since="${period()}" --diff-filter=R --name-status --pretty=format: | grep -c '^R'`,
   `\n# 5. pendências agrupadas`,
@@ -996,7 +1035,8 @@ function fase1AV10(){
   const L=[`# BLOCO DE FASE 1 · AV-10 · perfil ${P.langs}/${GT()}/${P.orm}/${P.db}`,
   `# MONOREPO: dois roots npm. server/ tem node_modules; my-app/ NÃO tem.`,
   `# Exclusões ativas: ${exList().join(", ")}`,
-  `git rev-list --count HEAD`,`ls -d */ 2>/dev/null`,`\n# 1. tamanho de cada área`,
+  preflight(),
+  `git rev-list --count HEAD`,`ls -d */`,`\n# 1. tamanho de cada área`,
   `for d in */ ; do printf "%s " "$d"; find "$d" -type f ${findExt()} -not -path "*/node_modules/*" 2>/dev/null | wc -l; done`,
   `\n# 2. centro de gravidade`,
   g(importPat(),"-o")+` 2>/dev/null \\\n  | sed "s/.*from ['\\"]//;s/['\\"].*//" | sort | uniq -c | sort -rn | head -30`];
@@ -1021,7 +1061,11 @@ function fase1AV10(){
     `grep -rniE "drop (table|column)|alter table .* drop" ${P.migPath} 2>/dev/null | head -20`,
     `find ${P.migPath} -iname "*down*" 2>/dev/null | wc -l`,dbConstraintCmd(),
     `\n# 9. eixos de crescimento — este repo tem adições equivalentes com histórico`,
-    `for eixo in INCR-AP INCR-AR INCR-DIM INCR-INVENTORY; do printf "\\n== %s ==\\n" "$eixo"; \\\n  git log --name-only --pretty=format: --grep="$eixo" -i | grep -v '^$' | sort -u | wc -l; done`,
+    `for eixo in INCR-AP INCR-AR INCR-DIM INCR-INVENTORY; do printf "\\n== %s ==\\n" "$eixo"; \\\n  git log --name-only --pretty=format: -E --grep="$eixo([^A-Za-z0-9-]|$)" | grep -v '^$' | sort -u | wc -l; done`,
+    `# A ÂNCORA DE FRONTEIRA NÃO É ENFEITE: --grep="INCR-AP" cru também casa INCR-APPROVAL`,
+    `# (a torre de aprovação, outro incremento). Medido em dc7fd12: 65 arquivos cru × 35 com`,
+    `# âncora. O eixo do "teste de mudança" é a peça central do AV-10 — inflar por substring`,
+    `# transforma a peça central em ficção. Rode os dois e reporte o ancorado.`,
     `# AVISO: em merge, git show --name-only devolve vazio. Use git diff <sha>^1 <sha> --name-only.`,
     `\n# 10. escopo declarado — o roadmap real deste projeto`,
     `ls ${P.docPath}/accounting 2>/dev/null | head -20`,
@@ -1040,6 +1084,7 @@ function fase1AVL1(){
   `# Exclusões ativas: ${exList().join(", ")}   ·   tooling: cwd=server`,
   `# Nenhum comando abaixo remede o que o eslint já barra (R1, R1b, R2, R3a, R3b).`,
   ``,
+  preflight(),
   `# ATENÇÃO WINDOWS: rg emite caminho com BARRA INVERTIDA. Todo filtro por caminho`,
   `# ( | rg -v "lib/services" ) falha em silêncio. Normalize antes: | tr '\\\\\\\\' '/' | rg -v ...`,
   `# Isto já produziu falso positivo nesta bancada. Não é detalhe cosmético.`,
@@ -1050,8 +1095,12 @@ function fase1AVL1(){
   `# Verde = a fronteira é barrada, não só convencionada. Nível 4 possível nesta dimensão.`,
   `# Agora confirme que o teste ainda DISCRIMINA (gate que não morde é gate morto):`,
   `rg -n "FORBIDDEN" server/src/features/dynamicTables/__tests__/no-accounting-imports.boundary.test.ts`,
-  `# Leia o padrão. Ele cobre PostingService/AccountingSync — cobre também Payable,`,
-  `# Receivable, Inventory, Sped? O que o padrão não nomeia, o teste não barra.`,
+  `# Leia o padrão INTEIRO antes de concluir lacuna. Ele tem DOIS braços: nomes`,
+  `# (PostingService|AccountingSyncService|AccountingSyncPort) E caminho (from '…features/`,
+  `# accounting…'). O braço de caminho já cobre Payable/Receivable/Inventory/Sped porque`,
+  `# esses serviços moram em server/src/features/accounting/services/ — confirme com`,
+  `# \`ls server/src/features/accounting/services\` antes de reportar "o teste não nomeia X".`,
+  `# A lacuna real seria um serviço com invariante contábil FORA de features/accounting.`,
   ``,
   `# C1b — varredura de reforço, com comentário e teste FORA (senão é 100% ruído)`,
   NOCOM(q("(Posting|Payroll|Payable|Receivable|Journal|Accounting|Sped|Ecf|Inventory)\\\\w*Service",
@@ -1067,7 +1116,19 @@ function fase1AVL1(){
   | rg -v "tx"`
    :`grep -rn -A 14 "runTransaction(" ${inc()} server/src/features \\
   | grep -E "this\\\\.\\\\w*[Rr]epo\\\\w*\\\\.(create|update|delete|upsert|post)" | grep -v tx`,
-  `# Hit = transação APARENTE: o bloco abre, a escrita sai por fora. Leia o arquivo inteiro.`,
+  `# NÃO É ACHADO AINDA. Cada linha é CANDIDATO: o filtro é por LINHA, e a chamada de repo`,
+  `# costuma passar \`tx\` numa linha SEGUINTE do mesmo parêntese — o que o rg -v "tx" não vê.`,
+  `# MEDIDO em dc7fd12: 20 candidatos brutos · 20 falsos positivos · 0 violações reais.`,
+  `# Reportar candidato como violação queima o orçamento inteiro de leitura em ruído.`,
+  `# CONFIRMAÇÃO OBRIGATÓRIA por candidato <ARQ>:<LINHA> — janela limitada pela própria`,
+  `# chamada (para na linha que fecha o parêntese), não por -A fixo:`,
+  `awk -v s=<LINHA> 'NR>=s{print; if ($0 ~ /^[[:space:]]*\\}?\\)[;,]?[[:space:]]*$/) exit}' <ARQ> \\
+  | ${R?"rg":"grep"} -c "[^A-Za-z_]tx[^A-Za-z_]"`,
+  `# Saída vazia/0 = a chamada NÃO recebe tx → violação real, leia o arquivo inteiro.`,
+  `# Saída >= 1 = tx propagado na mesma chamada → descarte o candidato, não é achado.`,
+  `# CONTROLE (o filtro discrimina?): esta confirmação foi testada contra um par sintético`,
+  `# — bloco sem tx e bloco com tx em linha seguinte — e separou os dois. Filtro que não`,
+  `# separa é filtro morto: se todos os seus candidatos caírem do mesmo lado, desconfie.`,
   `# AVISO: -A 14 pode atravessar o fim do bloco. Confirme o escopo antes de contar.`,
   ``,
   `# C2b — gate de invariante mutável avaliado ANTES do bloco`,
@@ -1097,13 +1158,22 @@ function fase1AVL1(){
   R?`rg -n "Dívida viva" docs/architecture/lint-layer-gate.md`
    :`grep -n "Dívida viva" docs/architecture/lint-layer-gate.md`,
   `# Histórico (dc7fd12, 2026-07-30): o spec declarava 5 DEBT: prisma e 2 DEBT: apiClient;`,
-  `# o grep media 3 e 0 — dívida paga em 4 de 7 sites, spec parado. Reconciliado no PR #154.`,
+  `# o grep media 3 e 0 — dívida paga em 4 de 7 sites, spec parado. Há um PR de reconciliação`,
+  `# (#154) que em dc7fd12 NÃO estava na main: \`git branch -a --contains\` do commit dele não`,
+  `# lista origin/main. Trate como ABERTO até você mesmo confirmar; "já foi reconciliado" é`,
+  `# exatamente o tipo de fato que caduca entre escrever o instrumento e rodá-lo.`,
   `# Confirme os dois lados antes de reportar — divergência para menos pode ser`,
   `# dívida paga (bom, spec obsoleto) OU supressão removida com a violação viva (ruim):`,
-  R?`rg -n "lib/prisma" server/src/controllers/authController.ts server/src/features/users 2>/dev/null || echo "authController/users: não importam prisma → dívida paga"`
-   :`grep -rn "lib/prisma" server/src/controllers/authController.ts server/src/features/users`,
-  R?`rg -l "api/api-client" my-app --glob '!node_modules' | tr '\\\\\\\\' '/' | rg -v "lib/services/|lib/api/" || echo "R2 limpo: apiClient confinado"`
-   :`grep -rl "api/api-client" my-app --exclude-dir=node_modules`,
+  `# Aponte para os ARQUIVOS que o spec nomeia, um a um. NÃO varra o diretório da feature:`,
+  `# server/src/features/users/repositories/UserRepository.ts importa prisma LEGALMENTE`,
+  `# (repository é a camada que pode), e uma varredura de diretório devolve esse hit como`,
+  `# se fosse dívida viva. Falso positivo medido em dc7fd12.`,
+  R?`rg -n "lib/prisma" server/src/controllers/authController.ts server/src/controllers/userController.ts || echo "authController/userController: não importam prisma → dívida paga, spec parado"`
+   :`grep -n "lib/prisma" server/src/controllers/authController.ts server/src/controllers/userController.ts`,
+  `# R2 — o filtro de extensão NÃO é opcional: sem ele o comando casa ARCHITECTURE.md,`,
+  `# lib/README.md e o próprio eslint.gate.config.mjs (3 falsos positivos medidos em dc7fd12).`,
+  R?`rg -l "api/api-client" my-app -g '*.ts' -g '*.tsx' -g '!node_modules/**' | tr '\\\\\\\\' '/' | rg -v "lib/services/|lib/api/" || echo "R2 limpo: apiClient confinado"`
+   :`grep -rl "api/api-client" my-app --include="*.ts" --include="*.tsx" --exclude-dir=node_modules`,
   `# Se o lint está verde E o site sumiu, a dívida foi paga: o achado é o SPEC parado,`,
   `# não o código. Backlog mensurável que aponta para nada é backlog que ninguém lê.`,
   ``,
@@ -1187,7 +1257,15 @@ my-app  · eslint gate R2: apiClient fora de lib/services · R3a/R3b: recharts, 
 CI      · zinc- NOVO é barrado (diff-scoped). O ESTOQUE existente NÃO é — esse é medível.
 CI      · skill-audit, governance-presence, tripwire de handle vazado.
 Exceção SANCIONADA: DynamicTableService orquestra prisma.$transaction (contrato §2).
-Supressões \`DEBT: prisma\` (5 sites) e \`DEBT: apiClient\` (2) são backlog declarado, não achado.
+Supressões \`DEBT: prisma\` e \`DEBT: apiClient\` são backlog declarado, não achado.
+NÃO confie em nenhum número de sites escrito aqui — CONTE na hora, os dois lados:
+  ${GT()==="rg"?'rg -c "DEBT: prisma" server/src ; rg -c "DEBT: apiClient" my-app'
+              :'grep -rc "DEBT: prisma" server/src ; grep -rc "DEBT: apiClient" my-app'}
+  ${GT()==="rg"?'rg -n "Dívida viva" docs/architecture/lint-layer-gate.md'
+              :'grep -n "Dívida viva" docs/architecture/lint-layer-gate.md'}
+Em dc7fd12 o spec listava 5 e 2 e o código tinha 3 e 0: divergência é ACHADO DE GOVERNANÇA
+(spec parado), não licença para ignorar site nenhum. Um número congelado neste bloco seria
+a segunda cópia da mesma mentira que o AV-L1 existe para pegar.
 
 MONOREPO — dois roots npm, instalação assimétrica
 server/  tem node_modules → npx/tsc/jest disponíveis com cwd=server.
@@ -1455,8 +1533,8 @@ function stepper(){
 function step1(){
   return `${IMPMETA&&IMPMETA.seeded?`<div class="banner ok"><b>Perfil semeado do repositório</b><br>
     commit ${esc(IMPMETA.commit)} · ${esc(IMPMETA.commits)} commits · medido em ${esc(IMPMETA.at)}<br>
-    23 campos medidos ou inferidos · 9 decisões suas em aberto. Não é preciso importar nada
-    para usar a bancada — só se o commit mudou.</div>`:""}
+    ${scTech()} campos medidos ou inferidos · ${PENDING.length} decisões suas em aberto. Não é preciso
+    importar nada para usar a bancada — só se o commit mudou.</div>`:""}
   <div class="drop">
     <p>Reavaliou o perfil num commit novo? Rode o prompt <b>PERFIL</b> e cole aqui o <span class="mono">perfil/1.0</span> para substituir a semente.</p>
     <textarea class="big" id="pj" placeholder='{ "schema": "perfil/1.0", "profile": { ... } }'></textarea>
@@ -1590,7 +1668,7 @@ function stickyBar(){
 function conductorHTML(){
   return stepper()+`<div id="cbody">${STEP===1?step1():(STEP===2?step2():deck())}</div>`+
     `<div id="sbar">${stickyBar()}</div>
-    <p class="note">Nove campos são decisão sua e a página nunca os preenche por você. Os demais vieram medidos do repositório em dc7fd12 e ficam recolhidos — abra só para corrigir.</p>`;}
+    <p class="note">${PENDING.length} campos são decisão sua e a página nunca os preenche por você. Os demais vieram medidos do repositório em ${esc((IMPMETA&&IMPMETA.commit)||"—")} e ficam recolhidos — abra só para corrigir.</p>`;}
 
 function payloadBy(k){const app=applicability();
   return ({perfil:payloadPerfil,regencia:()=>payloadRegencia(app),f10:fase1AV10,f11:fase1AV11,
@@ -1709,6 +1787,13 @@ CAT.filter(c=>!["AV-10","AV-11","AV-L1"].includes(c.code)).forEach(c=>{
 const FAMS=["Regência","Contrato Luminaris","Método","Relatório","Arquitetura e código",
   "Escopo","Verificação","Segurança","Operação","IA e entrega"];
 const avsAll=ITEMS.filter(i=>i.code.startsWith("AV-")&&i.code!=="AV-00");
+/* Tese preenchida na hora a partir do seed: nenhum total de campo nem commit digitado no HTML. */
+(function(){const t=el("thesis");if(!t||!IMPMETA)return;
+  t.innerHTML=`Semeada com o perfil medido em <b>${esc(IMPMETA.commit||"?")}</b>. `+
+    `<b>${scTech()}</b> campos técnicos já vêm do repositório `+
+    `(${(IMPMETA.sc||{}).fields_measured||0} medidos, ${(IMPMETA.sc||{}).fields_inferred||0} inferidos); `+
+    `<strong>${PENDING.length} são decisão sua</strong> e a página não os preenche. `+
+    `Os comandos saem com a assimetria do monorepo e o client gerado já excluídos.`;})();
 el("state").innerHTML=`<b>Estado</b>
   <span><i class="dot d-lum"></i>${avsAll.filter(i=>i.ver==="lum").length} local</span>
   <span><i class="dot d-v3"></i>${avsAll.filter(i=>i.ver==="v3").length} em v3</span>
