@@ -92,8 +92,18 @@ Normalize **antes** de filtrar caminho:
 rg -l "api/api-client" my-app | tr '\\' '/' | rg -v "lib/services/|lib/api/"
 ```
 
-**Teste barato, aplicável a qualquer filtro:** se o `-v` não removeu **nenhuma** linha, ele não casou nada
-— trate como instrumento quebrado, não como achado. O recíproco vale para o filtro positivo que voltou vazio.
+**Teste barato, aplicável a qualquer filtro — sinal de suspeita, NÃO veredito.** Se o `-v` não removeu
+**nenhuma** linha, há duas causas possíveis e elas são opostas: (a) o padrão não casou nada — instrumento
+quebrado; (b) os conjuntos são legitimamente disjuntos — filtro certo, resposta certa. **Discrimine rodando
+o mesmo padrão na forma positiva:** se `rg "<padrão>"` também volta vazio, é (a); se volta com linhas, é (b)
+e o resultado vale. O recíproco vale para o filtro positivo que voltou vazio.
+
+> Esta regra já falhou em si mesma. A primeira redação dizia *"trate como instrumento quebrado, não como
+> achado"* — veredito, não suspeita. Contra-exemplo executado pelo revisor independente:
+> `rg -l "DEBT: prisma" server/src | tr '\\' '/' | rg -v "repositories/"` remove **zero** linhas **e** a
+> lista é verdadeira (os 3 sites reais). Seguir a redação original ao pé da letra descartaria o backlog
+> real como lixo. Um teste de suspeita escrito como teste decisivo é a mesma falha que a regra descreve:
+> um instrumento devolvendo veredito onde só cabia um sinal.
 
 **Evidência própria:** memória `rg-win32-backslash-quebra-filtro-de-caminho`; na varredura da R2 do
 `docs/architecture/lint-layer-gate.md` (2026-07-30) o filtro não-normalizado devolveria **19** arquivos

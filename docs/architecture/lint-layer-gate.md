@@ -1,6 +1,6 @@
 # Spec — Lint Layer-Gate (fatia P1 · higiene determinística)
 
-> **Status:** em implementação. **Tipo:** build-gate determinístico (núcleo rígido da metodologia reuse-vs-divergência). **Escopo:** *config de lint + CI*, **não** pagamento de dívida nem construção de wrappers.
+> **Status:** implementada e no CI — `server` roda `npm run lint`, `my-app` roda `npm run lint:gate`, e o `zinc-guard` é job próprio (verificado em `.github/workflows/ci.yml`). **Tipo:** build-gate determinístico (núcleo rígido da metodologia reuse-vs-divergência). **Escopo:** *config de lint + CI*, **não** pagamento de dívida nem construção de wrappers.
 
 Esta fatia transforma três regras hoje **convenção-apenas** (contrato `.claude/skills/_ARCHITECTURE-CONTRACT.md`) em **gate lintável determinístico**, sem depender de triggering de skill. O contrato continua sendo o bar de qualidade; este gate é o subconjunto *mecanizável* dele.
 
@@ -15,8 +15,9 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 ## Regras
 
 ### R1 — `prisma` singleton confinado a Repository (server)
-- **Onde:** `server/eslint.config.mjs`, `no-restricted-imports` do path `@/lib/prisma` / `*/lib/prisma` em `controllers/**` e `**/services/**`.
+- **Onde:** `server/eslint.config.mjs`, `no-restricted-imports` dos **três** patterns `@/lib/prisma` / `**/lib/prisma` / `*/lib/prisma`, em `controllers/**` e `**/services/**`. O do meio é o que casa a forma relativa (`'../../../lib/prisma'`), que é a maioria dos sites — não o omita ao citar a regra.
 - **Trabalho:** barra regressão (novo `prisma` em controller/service = erro) + inventaria dívida viva.
+- **PONTO CEGO DECLARADO — o gate é mais estreito que o contrato.** O contrato §2 é categórico (*"Repository: único lugar com `prisma.*`"*), mas os globs cobrem só `controllers/**` e `**/services/**`. Fora deles há **7 acessos `prisma.*` vivos, sem supressão e sem erro de lint** — `server/src/jobs/**` (`accountingSyncReconcile.job.ts`, `PurgeDeletedRecords.ts`) e `server/src/server.ts`. Verificável por probe: um `src/jobs/zz.job.ts` importando o singleton **não** produz erro. Consequência: **o grep de `DEBT:` mede a dívida de R1, não a dívida do contrato §2** — ampliar o glob (ou marcar esses sites) é fatia própria.
 - **Dívida viva (supressão inline `DEBT: prisma`) — 3 sites** (medido em `dc7fd12`, 2026-07-30):
   `server/src/controllers/dashboardController.ts:6`, `server/src/features/chat/services/ChatService.ts:13`,
   `server/src/features/reports/services/ReportService.ts:6`.
@@ -65,7 +66,8 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
 3. CI: jobs `lint` adicionados; zinc-guard **diff-scoped** verde (a base tem `zinc-` vivos — ver R4; o gate falha só
    quando o diff INTRODUZ `zinc-` novo, não pela base).
 4. `grep "DEBT: prisma"` retorna a lista exata da dívida aberta de R1 (hoje 3 sites) e `grep "DEBT: apiClient"`
-   retorna **vazio** (R2 sem dívida). Backlog mensurável = o que o grep devolve, não o que este spec afirma;
+   retorna **vazio** (R2 sem dívida). Backlog mensurável **de R1/R2** = o que o grep devolve, não o que este
+   spec afirma;
    divergência entre os dois é bug **do spec**, e fechá-la é atualizar o texto — nunca adicionar supressão
    para casar com a lista.
 
