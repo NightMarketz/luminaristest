@@ -131,10 +131,15 @@ duas contagens hard-coded aqui — o bug 5-vs-3 reintroduzido no mesmo commit qu
    allowlist; build segue verde.
 3. CI: jobs `lint` adicionados; zinc-guard **diff-scoped** verde (a base tem `zinc-` vivos — ver R4; o gate falha só
    quando o diff INTRODUZ `zinc-` novo, não pela base).
-4. `node scripts/debt-ledger-check.mjs` verde: todo marcador do código está no bloco, com a quantidade certa,
-   e todo item do bloco ainda existe no código. Backlog mensurável **de R1/R2** = o que o script mede, não o
-   que este spec afirma em prosa; divergência é bug **do bloco**, e fechá-la é atualizar o bloco — nunca
-   adicionar supressão para casar com a lista.
+4. As **duas metades** do gate C5 verdes — o `cwd` importa, porque o script roda o ESLint daquela raiz:
+   ```bash
+   cd server && node ../scripts/debt-ledger-check.mjs --root server
+   cd my-app && node ../scripts/debt-ledger-check.mjs --root my-app
+   ```
+   Todo marcador está no bloco com a quantidade certa, todo item do bloco ainda existe, nenhuma regra de
+   camada em `warn` e nenhuma entrada com caminho fora das raízes. Backlog mensurável **de R1/R2** = o que o
+   script mede, não o que este spec afirma em prosa; divergência é bug **do bloco**, e fechá-la é atualizar o
+   bloco — nunca adicionar supressão para casar com a lista.
 
 ## Linha que esta fatia não cruza
 - Não refatora os sites de dívida (isso é trabalho de domínio, fatia própria; a lista de supressões `DEBT:` **no código**
