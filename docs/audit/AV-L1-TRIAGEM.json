@@ -162,11 +162,12 @@
   "new_findings_raised": [
     {
       "_note": "AV-00 §5: 'problema maior vira achado novo'. Levantado durante a correção do F2 e NÃO consertado — `test/jest.setupEnv.ts` está fora dos caminhos de evidence do F2. Entra como candidato para a próxima rodada do instrumento, não como item desta triagem.",
-      "candidate": "Nenhum teste de integração do backend consegue construir a ApplicationFactory",
-      "measured": "Na árvore LIMPA (sem o diff do F2), a suíte de integração fecha com 9 suítes e 68 testes falhando de 30 suítes / 331 testes. `test/jest.setupEnv.ts` define DATABASE_URL, NODE_ENV e JWT_SECRET, mas não a chave da OpenAI; `new ApplicationFactory` constrói OpenAIService, que lança sem ela.",
-      "why_it_matters": "Toda rota servida por factory — que é a maioria — só pode ser testada até a fronteira. O teste do F2 passa justamente porque o DTO rejeita ANTES de tocar a factory; o caso de corpo válido não pôde assertar status por causa disso.",
-      "already_known": "Os próprios relatórios do repo (BACKEND_HARDENING_PROGRESS.md) mencionam chaves dummy para o module-load, então isto é dívida conhecida, não descoberta.",
-      "cost_hint": "Uma linha no setupEnv, no mesmo padrão do JWT_SECRET dummy. Não feito aqui de propósito."
+      "candidate": "A suíte de teste do backend dá resultados diferentes local e no CI",
+      "measured": "Rodar `npm test` em `server/` numa árvore LIMPA falha 9 suítes de integração e 68 testes (de 30 suítes / 331 testes). `test/jest.setupEnv.ts` define DATABASE_URL, NODE_ENV e JWT_SECRET, mas não a chave da OpenAI, e `new ApplicationFactory` constrói OpenAIService, que lança sem ela. O CI passa porque `.github/workflows/ci.yml` injeta `OPENAI_API_KEY: ci-dummy-openai-key` no nível do JOB, junto com JWT_SECRET e DATABASE_URL dummies, e depois roda `npm test`.",
+      "why_it_matters": "Não é buraco de cobertura — no CI as rotas servidas por factory SÃO exercitadas. É divergência de ambiente: quem roda a suíte localmente vê 68 vermelhos que o CI chama de verde, e o caminho barato de interpretar isso é 'a suíte está quebrada, ignore'. O risco é uma falha real se esconder no meio do ruído esperado.",
+      "correction_of_my_own_claim": "A primeira redação desta entrada dizia 'nenhum teste de integração do backend consegue construir a ApplicationFactory'. FALSO — verdadeiro só num shell local nu. Escrevi isso a partir do resultado local sem ler o workflow do CI, que resolve o problema desde sempre e explica o porquê num comentário. O erro é o mesmo padrão do `barrier_kind` do F3: afirmar ausência sem procurar.",
+      "already_known": "O comentário no próprio ci.yml documenta a escolha ('Dummy values so module-load and Prisma generate succeed in CI'), e BACKEND_HARDENING_PROGRESS.md também. Dívida conhecida e deliberada no CI; o que ninguém fechou foi o lado local.",
+      "cost_hint": "Uma linha no setupEnv, no mesmo padrão do JWT_SECRET dummy que já está lá. Não feito aqui de propósito."
     }
   ],
 
