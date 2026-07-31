@@ -45,6 +45,14 @@
       "owner": "Desenvolvedor Luminaris",
       "due": "2026-08-07",
       "due_is_proposal": true,
+      "already_addressed_by": {
+        "pr": 154,
+        "title": "docs(architecture): reconcilia lint-layer-gate com o código + promove regra de instrumento a OPS-003",
+        "state": "OPEN",
+        "verified_how": "Lido o diff do PR 154 em docs/architecture/lint-layer-gate.md: a lista `DEBT: prisma` vai de 5 sites para 3 medidos em dc7fd12, com authController e userController nomeados como pagos; a lista `DEBT: apiClient` vai para ZERO com TotalControlSetup.tsx e QuickSetup.tsx explicitamente citados como não importadores; e o item 4 do gate de aceitação e reescrito. São as quatro entradas mortas que o F3 reporta.",
+        "consequence": "O dono NAO deve abrir trabalho novo para o F3. Mergear o 154 fecha o achado; a acao que resta e reexecutar o falsificador depois do merge e confirmar que ele deixa de reproduzir.",
+        "note": "Registrado porque uma triagem que manda consertar o que ja esta consertado repete dentro de si o defeito exato que o F3 descreve — backlog apontando para divida ja paga."
+      },
       "accepted_reason": null,
       "review_trigger": null,
       "accepted_by": null,
