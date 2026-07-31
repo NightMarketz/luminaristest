@@ -79,6 +79,18 @@
       "owner": "Desenvolvedor Luminaris",
       "due": "2026-08-14",
       "due_is_proposal": true,
+      "status": "corrigido_e_barrado",
+      "status_evidence": {
+        "commit": "396a389",
+        "branch": "claude/av-l1-f2-analytics-dto",
+        "merged": false,
+        "note": "Ramificada do tip do main (dc7fd12), NÃO desta branch de auditoria — a correção do F2 não está no PR 155. O gate segue bloqueia_primeiro_cliente até mergear.",
+        "what_changed": "Novo `features/analytics/dtos/AnalyticsDefinitionDto.ts` (Create + Update partial, `.strict()`, campos com defaultValue do preset opcionais porque DynamicTableService aplica `.default()`); duas guardas `safeParse` no controller, colocadas ANTES do lookup da tabela CORE para que os dois 400 sejam distinguíveis; passa `parsed.data` e não `req.body`.",
+        "barrier_proved_by_mutation": "9 casos de integração HTTP assertando a FORMA do erro (`fieldErrors` do flatten × string do branch da tabela), não só o status. Revertido o controller ao pré-correção, 6 dos 9 morrem; os 3 sobreviventes são os corretos (dois 401 de autenticação e o control de corpo válido).",
+        "falsifier_reexecuted": "Deixou de reproduzir: `rg -c \"safeParse|\\.parse\\(\"` devolve 2 onde antes caía no ramo 'sem parse — achado vivo'.",
+        "gates": "tsc limpo; eslint limpo nos dois arquivos; unit 1498/1498; integração 21→22 suítes verdes com as 9 falhas pré-existentes inalteradas (68 antes, 68 depois), medido rodando a suíte na árvore limpa antes de comparar.",
+        "review_pending": "AV-00 §5 exige revisão de agente separado; nenhuma foi feita. PASS emitido pela própria sequência que implementou é rejeitado pelo protocolo."
+      },
       "accepted_reason": null,
       "review_trigger": null,
       "accepted_by": null,
@@ -144,6 +156,17 @@
       "what_happened": "O F1 foi corrigido antes desta triagem formal existir, no turno anterior, quando `deployed` ainda estava pendente e portanto nenhum portão era derivável.",
       "mitigation": "A exigência substantiva de §0 foi cumprida: o falsificador do F1 FOI executado antes da correção, e reexecutado depois. O que faltou foi a ordem da Fase 1 (verificar → triar → aceitar → corrigir). Esta triagem confirma a posteriori o portão que o achado teria recebido — bloqueia_primeiro_cliente, o mesmo que o relatório sugeria em caráter provisório — então a correção não se antecipou a uma decisão que teria sido diferente.",
       "cost_if_it_had_gone_wrong": "Se o dono tivesse respondido `produção com pagantes`, o F1 (exposição apos_deploy) continuaria em bloqueia_primeiro_cliente; se tivesse respondido de modo a promovê-lo, teríamos corrigido na ordem certa por acidente e não por método. O risco era de processo, não de resultado — nesta rodada."
+    }
+  ],
+
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: 'problema maior vira achado novo'. Levantado durante a correção do F2 e NÃO consertado — `test/jest.setupEnv.ts` está fora dos caminhos de evidence do F2. Entra como candidato para a próxima rodada do instrumento, não como item desta triagem.",
+      "candidate": "Nenhum teste de integração do backend consegue construir a ApplicationFactory",
+      "measured": "Na árvore LIMPA (sem o diff do F2), a suíte de integração fecha com 9 suítes e 68 testes falhando de 30 suítes / 331 testes. `test/jest.setupEnv.ts` define DATABASE_URL, NODE_ENV e JWT_SECRET, mas não a chave da OpenAI; `new ApplicationFactory` constrói OpenAIService, que lança sem ela.",
+      "why_it_matters": "Toda rota servida por factory — que é a maioria — só pode ser testada até a fronteira. O teste do F2 passa justamente porque o DTO rejeita ANTES de tocar a factory; o caso de corpo válido não pôde assertar status por causa disso.",
+      "already_known": "Os próprios relatórios do repo (BACKEND_HARDENING_PROGRESS.md) mencionam chaves dummy para o module-load, então isto é dívida conhecida, não descoberta.",
+      "cost_hint": "Uma linha no setupEnv, no mesmo padrão do JWT_SECRET dummy. Não feito aqui de propósito."
     }
   ],
 
