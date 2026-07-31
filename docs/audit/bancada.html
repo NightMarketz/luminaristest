@@ -690,6 +690,17 @@ C5 · Dívida marcada × dívida oculta — as supressões DEBT: são backlog de
 O achado é a violação SEM supressão, ou a supressão que não corresponde mais a nada.
 C6 · Cadeia de camadas medida por acesso, não por diretório — a fronteira que existe só no
 nome do diretório é a que quebra na próxima mudança.
+C7 · ABSORVIDO por C10. Era rotas ÷ policies: razão plausível com o órfão dentro dela.
+C8 · DTO Zod na fronteira HTTP — não há middleware de validação neste projeto, o safeParse
+é inline no controller. Duas falhas distintas: controller que lê req.* sem parse nenhum, e
+safeParse cujo .success ninguém checa (validação que não valida).
+C9 · Soft-delete nos DOIS sentidos. Escrita: hard delete de model que tem deletedAt —
+lembrando que o job de expurgo é o PAR do soft-delete, não a violação dele. Leitura: query
+que esquece deletedAt e deixa linha morta vazar para a tela. O segundo dói mais e é o menos
+procurado, porque a escrita errada quebra teste e a leitura errada só mostra lixo.
+C10 · Três toques de rota. Os toques 1 e 2 (arquivo de rota, montagem em index) já são
+barrados pelo gate de wiring — aqui valem como controle. O toque 3, injeção via Factory,
+não é barrado por nada: é a dimensão real. Controle verde não é dimensão medida.
 
 ## 6 · Checklist
 [ ] Rodei todos os comandos e colei a saída crua
@@ -699,6 +710,10 @@ nome do diretório é a que quebra na próxima mudança.
 [ ] Todo achado tem arquivo:linha
 [ ] Cada achado C1/C2 teve o arquivo lido na íntegra
 [ ] Declarei o estoque de zinc- como número, não como achado novo
+[ ] Em C8b, apliquei o filtro de comentário ANTES de comparar as contagens
+[ ] Em C9a, classifiquei expurgo e cascata-do-dono como sancionados, não como achado
+[ ] Em C9b, passei os candidatos pelos DOIS estágios antes de chamar de violação
+[ ] Em C10, distingui no relatório o que é controle verde do que foi medido
 [ ] Rodei a auto-verificação e o encerramento v3
 
 ## 7 · Template
@@ -716,6 +731,13 @@ Teto 3 em qualquer dimensão sem gate: convenção respeitada não é convençã
 4. Achado sem arquivo:linha? Remova.
 5. Chamei de violação uma exceção sancionada? Remova e cite onde está sancionada.
 6. Movimento que é reescrita de camada? Substitua por um que caiba num diff.
+7. Vários arquivos divergindo pelo MESMO delta? É assinatura de padrão de texto, não de
+   bug. Reconfira o comando antes de reportar — foi assim que C8b produziu 5 falsos
+   positivos com a palavra safeParse num cabeçalho JSDoc.
+8. Contei um controle verde como dimensão medida? Rebaixe. Em C10, "rota montada" passar
+   não diz nada sobre o toque da Factory, que é o único não gated.
+9. Reportei os candidatos de C9 sem passar pelos dois estágios? Volte e passe — o padrão
+   "const where" acima da chamada derruba a maioria deles.
 </script>
 
 <script type="text/plain" id="t-av11">
@@ -1184,12 +1206,126 @@ function fase1AVL1(){
   `# confere com o spec; use-o como controle: se ele divergir, desconfie do seu comando`,
   `# antes de desconfiar do código.`,
   ``,
-  `# C7 — rota registrada sem os 3 toques (rota + factory + policy)`,
-  R?`rg -l ${inc()} "router\\\\.(get|post|put|patch|delete)" server/src/routes | wc -l`
-   :`grep -rl "router\\\\.(get|post|put|patch|delete)" ${inc()} server/src/routes | wc -l`,
-  `ls server/src/features/*/policies/*.ts 2>/dev/null | wc -l`,
-  `# Não é razão 1:1 — é ordem de grandeza. Rota nova sem policy correspondente é o padrão`,
-  `# que o gate de wiring pega; aqui você só confirma que o gate ainda está mordendo.`,
+  `# C7 — ABSORVIDO POR C10. Era contagem de ordem de grandeza (rotas ÷ policies) e nunca`,
+  `# localizava o órfão: razão plausível com o órfão dentro dela. Numeração mantida com o`,
+  `# buraco de propósito — remover o número esconderia que a dimensão mudou de forma.`,
+  ``,
+  `# C8 — DTO ZOD NA ENTRADA (contrato §3: validação na fronteira HTTP)`,
+  `# NÃO há middleware de validação neste projeto: server/src/middleware tem só auth.ts.`,
+  `# O safeParse é INLINE no controller. Logo "arquivo sem parse" é candidato FORTE.`,
+  `for f in server/src/controllers/*.ts; do \\`,
+  `  rg -q "req\\.(body|query|params)" "$f" || continue; \\`,
+  `  rg -q "safeParse|\\.parse\\(" "$f" || echo "SEM PARSE: $f"; \\`,
+  `done`,
+  `# MEDIDO em ae8d18b: 1 de 34 controllers. A convenção é forte — por isso o hit isolado`,
+  `# vale leitura, não estatística.`,
+  `# ANTES DE REPORTAR: abra o arquivo. Ler req.user (auth) não é entrada, e o controller`,
+  `# pode delegar a um service que valida. Ausência de parse não é ausência de validação.`,
+  ``,
+  `# C8b — validação que NÃO valida: safeParse cujo .success ninguém checa`,
+  `for f in server/src/controllers/*.ts; do \\`,
+  `  s=$(rg -n "safeParse" "$f" | rg -vc "^[0-9]+:[[:space:]]*(\\*|//)" || echo 0); \\`,
+  `  k=$(rg -c "\\.success" "$f" || echo 0); \\`,
+  `  s=\${s:-0}; k=\${k:-0}; \\`,
+  `  [ "$s" -gt 0 ] && [ "$k" -lt "$s" ] && echo "$f: parse=$s success=$k"; \\`,
+  `done`,
+  `# A guarda ":-0" NÃO é enfeite: rg -c com zero acertos não imprime NADA e sai 1, então`,
+  `# sem ela o teste vira [ "" -gt 0 ] e o shell cospe "integer expected" por arquivo.`,
+  `# Erro em stderr no meio de um laço é o jeito mais fácil de um contador parecer limpo.`,
+  `# O FILTRO DE COMENTÁRIO NÃO É OPCIONAL. Sem ele, 5 controllers "falham" por delta de`,
+  `# exatamente 1 — e o quinto safeParse é a PALAVRA no cabeçalho JSDoc do arquivo`,
+  `# ("auth -> Zod safeParse -> resolve"). MEDIDO em ae8d18b: com filtro, ZERO.`,
+  `# Delta UNIFORME em vários arquivos é assinatura de padrão de texto, não de bug.`,
+  `# Quando vir o mesmo desvio repetido, suspeite do comando antes de suspeitar do código.`,
+  ``,
+  `# C9 — SOFT-DELETE (contrato §2). A lista de models é DERIVADA do schema, não digitada:`,
+  `awk '/^model /{m=$2; inb=1} inb && /deletedAt/{print m; inb=0} /^}/{inb=0}' server/prisma/schema.prisma | sort -u`,
+  `# MEDIDO em ae8d18b: 14 models. Se o schema mudar, a lista muda sozinha — é esse o ponto.`,
+  `# A guarda "inb" NÃO é enfeite. A versão ingênua ('/^model /{m=$2} /deletedAt/{print m}')`,
+  `# atravessa o fecha-chaves e atribui ao ÚLTIMO model visto qualquer "deletedAt" solto no`,
+  `# arquivo. Na primeira rodada ela classificou ReferentialMapping como tendo o campo — e a`,
+  `# linha que a enganou era um COMENTÁRIO dizendo "SEM deletedAt:". A palavra que declara a`,
+  `# AUSÊNCIA do campo virou prova da presença dele. Derivar do schema só vale se a derivação`,
+  `# respeitar a fronteira do bloco.`,
+  ``,
+  `# C9a — hard delete de model que TEM deletedAt`,
+  `awk '/^model /{m=$2; inb=1} inb && /deletedAt/{print m; inb=0} /^}/{inb=0}' server/prisma/schema.prisma | sort -u \\`,
+  `| while read m; do c=$(printf '%s' "$m" | sed 's/^\\(.\\)/\\L\\1/'); \\`,
+  `     rg -n --no-heading -g '*.ts' -g '!**/__tests__/**' "\\.$c\\.delete(Many)?\\(" server/src; \\`,
+  `   done`,
+  `# MEDIDO em ae8d18b: 3 hits — e NENHUM é achado:`,
+  `#  · jobs/PurgeDeletedRecords.ts — expurgo após retenção. É o PAR do soft-delete, não a`,
+  `#    violação dele; um sistema com soft-delete e SEM expurgo é que estaria errado.`,
+  `#  · DynamicTableRepository e TransactionalDynamicTableRepository, deleteAllDataByUserId`,
+  `#    — cascata na exclusão do dono. O MESMO arquivo faz deleteData() com update+deletedAt:`,
+  `#    a convenção é conhecida ali e a exceção é deliberada.`,
+  `# Se você achar 3 e reportar 3, você errou. O achado é hit NOVO fora destes três.`,
+  ``,
+  `# C9b — o lado que dói mais: leitura que ESQUECE deletedAt (linha morta vaza para a tela)`,
+  `# Funil de DOIS estágios. Um estágio só mente: o where costuma vir de variável acima.`,
+  `# Primeiro o universo bruto (para você ver o denominador):`,
+  `awk '/^model /{m=$2; inb=1} inb && /deletedAt/{print m; inb=0} /^}/{inb=0}' server/prisma/schema.prisma | sort -u \\`,
+  `| while read m; do c=$(printf '%s' "$m" | sed 's/^\\(.\\)/\\L\\1/'); \\`,
+  `     rg -n --no-heading -g '*.ts' -g '!**/__tests__/**' "\\.$c\\.(findMany|findFirst)\\(" server/src; \\`,
+  `   done | wc -l`,
+  `# Agora o funil completo, em pipeline único (sem arquivo temporário: a única escrita`,
+  `# permitida nesta auditoria é ${P.outdir}/ — a regra vale para o instrumento também):`,
+  `awk '/^model /{m=$2; inb=1} inb && /deletedAt/{print m; inb=0} /^}/{inb=0}' server/prisma/schema.prisma | sort -u \\`,
+  `| while read m; do c=$(printf '%s' "$m" | sed 's/^\\(.\\)/\\L\\1/'); \\`,
+  `     rg -n --no-heading -g '*.ts' -g '!**/__tests__/**' "\\.$c\\.(findMany|findFirst)\\(" server/src; \\`,
+  `   done \\`,
+  `| while IFS=: read -r arq lin resto; do \\`,
+  `    n=$(awk -v s="$lin" 'NR>=s{print; if ($0 ~ /^[[:space:]]*\\}?\\)[;,]?[[:space:]]*$/) exit}' "$arq" \\`,
+  `        | grep -c deletedAt); \\`,
+  `    [ "$n" -ne 0 ] && continue; \\`,
+  `    ini=$((lin-12)); [ $ini -lt 1 ] && ini=1; \\`,
+  `    m2=$(awk -v a="$ini" -v b="$lin" 'NR>=a && NR<=b' "$arq" | grep -c deletedAt); \\`,
+  `    [ "$m2" -eq 0 ] && echo "SOBREVIVE: $arq:$lin"; \\`,
+  `  done`,
+  `# Estágio 1 = janela da própria chamada (mesma técnica do C2, para no fecha-parêntese).`,
+  `# Estágio 2 = descarta o padrão "const where = {... deletedAt: null ...}" 12 linhas acima.`,
+  `# MEDIDO em ae8d18b: 52 candidatos brutos -> 2 sobreviventes (DimensionRepository:31,:80).`,
+  `# PROVA de que os dois estágios discriminam: PayableRepository:51 cai no estágio 2 (tem`,
+  `# o where montado acima com deletedAt: null) e DimensionRepository:31 sobrevive (o where`,
+  `# é literal e de fato não filtra). Se TODOS caírem do mesmo lado, o filtro está morto.`,
+  `# E os 2 sobreviventes foram REFUTADOS na leitura: findValueById devolve arquivado DE`,
+  `# PROPÓSITO para dimensionTagging.ts:41 rejeitar por status !== 'ACTIVE' com mensagem`,
+  `# precisa ("está arquivado") em vez de "não existe". Filtrar no repo PIORARIA o erro.`,
+  `# Lição que vale para todo C9b: o filtro pode estar uma camada acima. Ache o CHAMADOR`,
+  `# antes de chamar de vazamento — sobrevivente é fila de leitura, não achado.`,
+  ``,
+  `# C10 — 3 TOQUES DE ROTA (rota montada + injeção via Factory + policy)`,
+  `# O gate de wiring do skill-audit cobre "rota montada" e órfão de KPI/preset. NÃO cobre`,
+  `# o toque da FACTORY. É esse o buraco que C10 mede; o resto abaixo são CONTROLES.`,
+  ``,
+  `# Toques 1+2 — já barrados por gate. Rode como controle, não como medição:`,
+  `node .claude/skills/skill-audit/skill-audit.mjs wiring`,
+  `for r in server/src/routes/*.ts; do b=$(basename "$r" .ts); \\`,
+  `  case "$b" in index|docs.paths) continue;; esac; \\`,
+  `  rg -q "from '\\./$b'" server/src/routes/index.ts || echo "ROTA NÃO MONTADA: $b"; \\`,
+  `done`,
+  `# MEDIDO em ae8d18b: vazio nos dois. Controle verde significa que o gate ainda morde.`,
+  `# Se ESTE laço acusar e o skill-audit não, quem quebrou foi o gate, não o código.`,
+  ``,
+  `# Toque 3 — injeção via Factory. NÃO case por nome de controller: accountingController`,
+  `# usa PostingService, e o proxy por prefixo devolveu 18 falsos positivos de 34 arquivos.`,
+  `# Meça por FEATURE (controle), e o buraco pelo COMPORTAMENTO (medição):`,
+  `for d in server/src/features/*/; do f=$(basename "$d"); [ -d "$d/services" ] || continue; \\`,
+  `  rg -q "features/$f/" server/src/lib/factory.ts || echo "FEATURE FORA DA FACTORY: $f"; \\`,
+  `done`,
+  `# MEDIDO em ae8d18b: vazio. Toda feature com services aparece na factory.`,
+  ``,
+  `# O buraco REAL: quem constrói o próprio serviço em vez de pedir à factory.`,
+  `rg -n --no-heading -g '*.ts' "new [A-Z]\\w*(Service|Repository)\\(" server/src/controllers \\`,
+  `  | rg -v "^\\S+:[0-9]+:[[:space:]]*(\\*|//)"`,
+  `for f in server/src/controllers/*.ts; do \\`,
+  `  rg -q "getFactory\\(\\)" "$f" || echo "NUNCA USA FACTORY: $(basename "$f")"; \\`,
+  `done`,
+  `# MEDIDO em ae8d18b: 1 instanciação direta (documentsController.ts:317,`,
+  `# new DocumentProcessingService()) e 1 controller que nunca chama a factory`,
+  `# (interviewController.ts). CANDIDATOS: pode haver razão — leia antes de reportar.`,
+  `# Esta é a ÚNICA parte de C10 que discrimina hoje. Dizer "3 toques OK" apoiado nos`,
+  `# controles verdes seria confundir gate que passa com dimensão que foi medida.`,
   ``,
   `# VERIFICAÇÃO DO PRÓPRIO INSTRUMENTO — rode antes de reportar qualquer coisa`,
   `cd server && npx tsc --noEmit && echo "tsc verde: a base compila, hits não são erro de tipo"`,
