@@ -46,6 +46,12 @@
 |---|---|---|---|---|
 | [CRM-LEAD-OPP](ADR-CRM-lead-opportunity-model.md) | Modelo de produto Lead × Opportunity no molde salão (quantas pipelines de valor; portadora de fechamento) | **Draft — PRE-ADR, ratificação humana PENDENTE (§5.1)**; devolvido ao dono pelo board v3 (D3: 4 defer + 1 abstain); recomendação = interino reversível (ocultar 2ª pipeline sem deletar código) | 2026-07-20 | PRODUTO / MODELAGEM DE MOLDE (DynamicTable) |
 
+## Plataforma (não-contábil)
+
+| ADR | Título | Status | Data | Classe |
+|---|---|---|---|---|
+| [ANALYTICS-DEFS](ADR-ANALYTICS-DEFS-write-unblock.md) | Escrita de definições de analytics — destravar × apagar as rotas × manter congelado (forks F-AD0..F-AD6) | **Accepted (parcial) — F-AD0 → (c) MANTER CONGELADO, ratificado 2026-08-01**; barreira implementada e mutation-testada (`DynamicTableService.systemTableWriteLock.test.ts`, 8 casos). **F-AD5 (a tela) e F-AD6 (`custom-kpis` órfão) seguem ABERTOS**; F-AD1..F-AD4 dormentes. Origem: achado N1 da revisão independente do PR #157 (`6500249`) | 2026-08-01 | DECISÃO ARQUITETURAL (DynamicTable / policy) |
+
 ## Fora-de-ADR — decisões de módulo que vivem em outro lugar
 
 Nem todo incremento tem ADR próprio; alguns foram documentados por brief ou ainda estão pré-ADR.
