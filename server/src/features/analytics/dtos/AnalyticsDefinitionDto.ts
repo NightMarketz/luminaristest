@@ -18,11 +18,15 @@ import { z } from 'zod';
  * `.strict()` per repo convention — a typo'd field fails loud instead of being silently dropped.
  *
  * KNOWN, DELIBERATE DIVERGENCE from the engine: the engine makes every non-required field
- * `.nullable()` (DynamicTableService.ts:1068-1072) and types `json` as `z.any()`, so it accepts an
+ * `.nullable()` (DynamicTableService.ts:1067-1072) and types `json` as `z.any()`, so it accepts an
  * explicit `null` where this schema accepts only absence, and accepts a bare primitive for
  * `pipeline`/`options`/`access` where this one requires an object or array. That is a boundary
  * deliberately tighter than the engine, not an oversight — but it is the one place this file does
  * NOT mirror the preset, so it is written down rather than left to be rediscovered.
+ *
+ * The rule is UNIFORM: every optional field here rejects an explicit `null`. Keeping it uniform is
+ * what forced `DateTimeField` below to guard its input — a plain `z.coerce.date()` would have made
+ * these two fields the exception, and silently, by turning `null` into the epoch instead of 400.
  *
  * No `@openapi` block here. Note the glob DOES cover this file — swagger-jsdoc reads
  * `src/features/**\/dtos/*.ts` (`routes/docs.ts:30` and `scripts/generate-openapi.js`), so a block
@@ -36,6 +40,16 @@ const SCOPES = ['global', 'preset', 'table'] as const;
 
 /** A preset `type: 'json'` field: object or array, never a bare primitive and never null. */
 const JsonBlock = z.union([z.record(z.string(), z.unknown()), z.array(z.unknown())]);
+
+/**
+ * A preset `type: 'datetime'` field. The engine maps it to `z.coerce.date()`, but bare coercion
+ * cannot be used at a boundary: `new Date(null)` is `1970-01-01`, so `{"createdAt": null}` would be
+ * ACCEPTED and silently rewritten to the epoch — a wrong value written quietly, where every other
+ * optional field in this schema answers 400. The union runs first, so `null`, booleans and arrays
+ * are rejected before `new Date()` ever sees them; a numeric `0` still means the epoch, which is a
+ * real timestamp the caller asked for and not an accident.
+ */
+const DateTimeField = z.union([z.string(), z.number(), z.date()]).pipe(z.coerce.date());
 
 export const CreateAnalyticsDefinitionSchema = z
   .object({
@@ -52,12 +66,13 @@ export const CreateAnalyticsDefinitionSchema = z
     tableKey: z.string().optional(),
     options: JsonBlock.optional(),
     access: JsonBlock.optional(),
-    // Mirror the engine's own mapping for these types, so a bad value dies at the boundary instead
-    // of two layers deeper: `relation` → `z.string().cuid()`, `datetime` → `z.coerce.date()`
-    // (DynamicTableService.ts:1033-1045; 'datetime' is normalised to 'date' before the switch).
+    // Follow the engine's own mapping for these types, so a bad value dies at the boundary instead
+    // of two layers deeper: `relation` → `z.string().cuid()` and `datetime` → date coercion
+    // (DynamicTableService.ts:1035/1039; 'datetime' is normalised to 'date' at :970). The datetime
+    // side is `DateTimeField`, NOT a bare `z.coerce.date()` — see its comment for why.
     createdBy: z.string().cuid().optional(),
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    createdAt: DateTimeField.optional(),
+    updatedAt: DateTimeField.optional(),
   })
   .strict();
 export type CreateAnalyticsDefinitionInput = z.infer<typeof CreateAnalyticsDefinitionSchema>;

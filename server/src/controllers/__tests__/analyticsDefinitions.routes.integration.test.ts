@@ -101,6 +101,22 @@ describe('POST /api/analytics/definitions', () => {
     expect(res.body.error.fieldErrors).toHaveProperty('createdAt');
   });
 
+  it('400s at the DTO when a datetime field is an explicit null, instead of coercing it to the epoch', async () => {
+    // Regression guard. A plain `z.coerce.date()` ACCEPTS null and rewrites it to 1970-01-01,
+    // because `new Date(null)` is the epoch and `.optional()` only excuses `undefined`. That turned
+    // a loud 400 into a quietly wrong stored value. If this case ever goes green with a 2xx, the
+    // input guard in `DateTimeField` has been simplified away.
+    const u = await seedUser({ username: 'u' });
+    const res = await request(app)
+      .post('/api/analytics/definitions')
+      .set(authHeader({ id: u.id, username: u.username }))
+      .send({ ...VALID_BODY, createdAt: null });
+
+    expect(res.status).toBe(400);
+    expect(isDtoRejection(res.body)).toBe(true);
+    expect(res.body.error.fieldErrors).toHaveProperty('createdAt');
+  });
+
   it('400s at the DTO when a relation field is not a cuid', async () => {
     const u = await seedUser({ username: 'u' });
     const res = await request(app)
@@ -113,8 +129,15 @@ describe('POST /api/analytics/definitions', () => {
     expect(res.body.error.fieldErrors).toHaveProperty('createdBy');
   });
 
-  it('CONTROL: well-formed datetime and cuid values are NOT rejected', async () => {
-    // Pairs with the two cases above — proves they reject bad values, not the fields themselves.
+  it('CONTROL: well-formed datetime and cuid values clear the DTO (format only, not existence)', async () => {
+    // Pairs with the cases above — proves they reject bad values, not the fields themselves.
+    //
+    // Two honest limits. (1) `createdBy` is a `relation` to the EMPLOYEES table, so a real value is
+    // the id of a DynamicTableData row, not of a User; `u.id` is right in FORMAT and wrong in
+    // meaning, and passes only because nothing downstream checks that the relation exists. (2) it
+    // is a cuid only because Prisma mints cuids today — if the schema moved to uuid this would go
+    // red, and so would the DTO and the engine, since both hardcode `.cuid()`. The red would be
+    // real; the test name is where the confusion would be, so it says so here.
     const u = await seedUser({ username: 'u' });
     const res = await request(app)
       .post('/api/analytics/definitions')
