@@ -83,8 +83,11 @@
       "status_evidence": {
         "commit": "396a389",
         "branch": "claude/av-l1-f2-analytics-dto",
-        "merged": false,
-        "note": "Ramificada do tip do main (dc7fd12), NÃO desta branch de auditoria — a correção do F2 não está no PR 155. O gate segue bloqueia_primeiro_cliente até mergear.",
+        "merged": true,
+        "merge_commit": "6500249",
+        "merged_at": "2026-08-01",
+        "pr": 157,
+        "note": "Ramificada do tip do main (dc7fd12), NÃO desta branch de auditoria — a correção do F2 nunca esteve no PR 155. MERGEADA em separado pelo PR 157 (6500249) depois de três passadas de revisão independente, que acrescentaram N2/N4/N5 e depois N9/N10/N11/N12 aos commits df523a6 e 09ba73f. O gate bloqueia_primeiro_cliente está satisfeito.",
         "what_changed": "Novo `features/analytics/dtos/AnalyticsDefinitionDto.ts` (Create + Update partial, `.strict()`, campos com defaultValue do preset opcionais porque DynamicTableService aplica `.default()`); duas guardas `safeParse` no controller, colocadas ANTES do lookup da tabela CORE para que os dois 400 sejam distinguíveis; passa `parsed.data` e não `req.body`.",
         "barrier_proved_by_mutation": "9 casos de integração HTTP assertando a FORMA do erro (`fieldErrors` do flatten × string do branch da tabela), não só o status. Revertido o controller ao pré-correção, 6 dos 9 morrem; os 3 sobreviventes são os corretos (dois 401 de autenticação e o control de corpo válido).",
         "falsifier_reexecuted": "Deixou de reproduzir: `rg -c \"safeParse|\\.parse\\(\"` devolve 2 onde antes caía no ramo 'sem parse — achado vivo'.",
