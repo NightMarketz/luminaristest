@@ -86,6 +86,44 @@ describe('POST /api/analytics/definitions', () => {
     expect(res.body.error.fieldErrors).toHaveProperty('pipeline');
   });
 
+  it('400s at the DTO when a datetime field is not a date', async () => {
+    // Was the residue of the F2 class: `createdAt`/`updatedAt` are `datetime` in the preset but were
+    // typed `z.string()` here, so garbage cleared the boundary and died in the engine — the exact
+    // "error from the wrong layer" this finding exists to remove.
+    const u = await seedUser({ username: 'u' });
+    const res = await request(app)
+      .post('/api/analytics/definitions')
+      .set(authHeader({ id: u.id, username: u.username }))
+      .send({ ...VALID_BODY, createdAt: 'banana' });
+
+    expect(res.status).toBe(400);
+    expect(isDtoRejection(res.body)).toBe(true);
+    expect(res.body.error.fieldErrors).toHaveProperty('createdAt');
+  });
+
+  it('400s at the DTO when a relation field is not a cuid', async () => {
+    const u = await seedUser({ username: 'u' });
+    const res = await request(app)
+      .post('/api/analytics/definitions')
+      .set(authHeader({ id: u.id, username: u.username }))
+      .send({ ...VALID_BODY, createdBy: 'not-a-cuid' });
+
+    expect(res.status).toBe(400);
+    expect(isDtoRejection(res.body)).toBe(true);
+    expect(res.body.error.fieldErrors).toHaveProperty('createdBy');
+  });
+
+  it('CONTROL: well-formed datetime and cuid values are NOT rejected', async () => {
+    // Pairs with the two cases above — proves they reject bad values, not the fields themselves.
+    const u = await seedUser({ username: 'u' });
+    const res = await request(app)
+      .post('/api/analytics/definitions')
+      .set(authHeader({ id: u.id, username: u.username }))
+      .send({ ...VALID_BODY, createdAt: '2026-07-31T12:00:00.000Z', createdBy: u.id });
+
+    expect(isDtoRejection(res.body)).toBe(false);
+  });
+
   it('400s at the DTO on an unknown field (.strict) instead of dropping it silently', async () => {
     const u = await seedUser({ username: 'u' });
     const res = await request(app)

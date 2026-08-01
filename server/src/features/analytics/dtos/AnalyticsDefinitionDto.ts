@@ -10,15 +10,25 @@ import { z } from 'zod';
  * a malformed body travelled two layers deep before dying, and the resulting error came from the
  * engine instead of the boundary.
  *
- * Shape mirrors the `analyticsDefinitions` preset in `presets/systems/CoreSystemPreset.ts`. Fields
- * the preset marks `required` but ALSO gives a `defaultValue` (`scope`, `version`, `published`) are
- * optional here on purpose: `DynamicTableService` applies `defaultValue` via zod `.default()`, so
- * demanding them at the boundary would reject bodies the engine accepts.
+ * Shape mirrors the `analyticsDefinitions` preset in `presets/systems/CoreSystemPreset.ts`.
+ * `scope` and `published` are preset-`required` but carry a `defaultValue`, and `version` is
+ * preset-optional; all three are optional here because `DynamicTableService` applies `defaultValue`
+ * via zod `.default()`, so demanding them at the boundary would reject bodies the engine accepts.
  *
  * `.strict()` per repo convention — a typo'd field fails loud instead of being silently dropped.
  *
- * No `@openapi` block: the swagger glob scans only `controllers/` and `routes/`, so an annotation
- * here would be documentation that never renders.
+ * KNOWN, DELIBERATE DIVERGENCE from the engine: the engine makes every non-required field
+ * `.nullable()` (DynamicTableService.ts:1068-1072) and types `json` as `z.any()`, so it accepts an
+ * explicit `null` where this schema accepts only absence, and accepts a bare primitive for
+ * `pipeline`/`options`/`access` where this one requires an object or array. That is a boundary
+ * deliberately tighter than the engine, not an oversight — but it is the one place this file does
+ * NOT mirror the preset, so it is written down rather than left to be rediscovered.
+ *
+ * No `@openapi` block here. Note the glob DOES cover this file — swagger-jsdoc reads
+ * `src/features/**\/dtos/*.ts` (`routes/docs.ts:30` and `scripts/generate-openapi.js`), so a block
+ * would render. It is omitted because `docs.paths.ts` already documents both request bodies as a
+ * generic `{ type: object }` with no `$ref`, so nothing dangles; introducing a component schema and
+ * repointing those paths at it is its own change, not part of this fix.
  */
 
 const CHART_TYPES = ['bar', 'line', 'area', 'pie', 'donut', 'table'] as const;
@@ -42,9 +52,12 @@ export const CreateAnalyticsDefinitionSchema = z
     tableKey: z.string().optional(),
     options: JsonBlock.optional(),
     access: JsonBlock.optional(),
-    createdBy: z.string().optional(),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
+    // Mirror the engine's own mapping for these types, so a bad value dies at the boundary instead
+    // of two layers deeper: `relation` → `z.string().cuid()`, `datetime` → `z.coerce.date()`
+    // (DynamicTableService.ts:1033-1045; 'datetime' is normalised to 'date' before the switch).
+    createdBy: z.string().cuid().optional(),
+    createdAt: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
   })
   .strict();
 export type CreateAnalyticsDefinitionInput = z.infer<typeof CreateAnalyticsDefinitionSchema>;
