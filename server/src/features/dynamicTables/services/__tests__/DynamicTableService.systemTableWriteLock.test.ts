@@ -20,10 +20,14 @@
  * só é derivado 15 linhas depois (`:529`), a serviço de `enforceNoOverlap`/`runRules`/`readOnly` —
  * nunca de autorização. Quem tentar "destravar via isSystem" descobre aqui, não em produção.
  *
- * Sem DB, sem HTTP, sem factory: o caminho HTTP não alcança a policy neste ambiente — `getFactory()`
- * constrói OpenAIService e estoura sem a chave, o que faz o POST responder 500 antes da policy (já
- * documentado em `controllers/__tests__/analyticsDefinitions.routes.integration.test.ts:161-177`).
- * Por isso a barreira mora na camada de service, com repositório falso e policy de verdade.
+ * Sem DB, sem HTTP, sem factory — porque um teste de rota assertando 403 passaria VERDE PELO MOTIVO
+ * ERRADO, e por motivos diferentes em cada ambiente: num shell local o POST responde 500 antes da
+ * policy (`getFactory()` constrói OpenAIService e estoura sem a chave — ver
+ * `controllers/__tests__/analyticsDefinitions.routes.integration.test.ts:161-177`), e no CI, que
+ * injeta `OPENAI_API_KEY: ci-dummy-openai-key` no job (`.github/workflows/ci.yml:23`), o factory
+ * constrói normalmente mas o controller morre em 400 no lookup da tabela CORE, porque `seedUser` não
+ * instala preset nenhum. Produzir um 403 real ali exigiria um helper de instalação de preset que não
+ * existe em `test/helpers/`. A camada de service contorna os dois. Detalhe no ADR §4.2.
  *
  * Roda no projeto `unit` (`npm run test:unit`).
  */

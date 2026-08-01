@@ -78,12 +78,12 @@ e `getAllTableData:585` re-checa por dentro. **Verificado site a site.** Logo:
 
 ### 2.3 O gatilho do N1 **não está** registrado em `AV-L1-TRIAGEM.json`
 
-Buscado na branch `claude/repo-profile-audit-plan-56e928` (PR #155): os quatro achados do arquivo são
-F1–F4; nenhuma ocorrência de `"N1"`, `canManageData` ou `presentation.*system` em `AV-L1-TRIAGEM.json`,
-`AV-L1.json` ou `AV-L1.md`. O `"aceito com gatilho"` que existe no JSON é o **F4** (`documentsController`
-bypassa factory), não o N1. **Consequência:** hoje o gatilho *"quando existir tela para autorar definições"*
-não tem registro durável — este ADR é o registro. Se a intenção era registrá-lo na triagem, isso é uma
-edição pendente na branch do PR #155, não algo que já aconteceu.
+**PR #155 foi mergeado** (`55838da`) — a triagem está em `main`, não mais numa branch. Re-verificado em
+`origin/main` **depois** do merge: os quatro achados do arquivo são F1–F4; **zero** ocorrências de `"N1"`,
+`canManageData` ou `presentation.*system` em `AV-L1-TRIAGEM.json`. O `"aceito com gatilho"` que existe no
+JSON é o **F4** (`documentsController` bypassa factory), não o N1. **Consequência:** o gatilho *"quando
+existir tela para autorar definições"* não tem registro durável na triagem — **este ADR é o registro**.
+Registrá-lo também lá é uma edição em `main`, não algo que já aconteceu.
 
 ---
 
@@ -211,7 +211,7 @@ worktree/merge — **fatiar em paralelo aqui seria cerimônia, não velocidade.*
 | **2** | `backend-policy-generator` | Reversão conforme **F-AD1**; reescrita dos **4** artefatos de E6 (`presets/README.md`, `dynamicTables/README.md`, `DynamicTablePolicy.spec.ts`, comentário do `CoreSystemPreset.ts`) | `DynamicTablePolicy.spec.ts` afirma a regra **nova** (não a antiga); teste de rota: dono faz `POST` e recebe **201**, não-dono recebe **403** |
 | **3** | `backend-service-generator` | **F-AD4(a)** (posse na escrita) + fechamento do oráculo de §2.2; barreira de uma linha para a invalidação de cache de §2.1 | Teste: definição criada aparece no `GET /analytics/...` seguinte **sem** esperar TTL |
 | **4** | `frontend-api-service-generator` → `frontend-table-screen-generator` → `frontend-modal-generator` → **`frontend-design-system`** (obrigatória junto) | A tela conforme **F-AD5**. **Antes de gerar:** responder `_REUSE-CRITERION.md` (shape+posse) e localizar o canônico por `search_graph`/`SIMILAR_TO` — se F-AD5=(b), **risco de ilha declarado** | `cd my-app && npx tsc --noEmit`; verificação em **build de produção** (a tela fica atrás de `withAuth`); `neutral-*`, `rounded-2xl` |
-| **5** | `learning-log` | Linha no `docs/adr/INDEX.md`; registro das decisões não-óbvias; nota sobre §2.3 na branch do PR #155 | INDEX.md com a linha; ledger/memória atualizados |
+| **5** | `learning-log` | Linha no `docs/adr/INDEX.md`; registro das decisões não-óbvias; nota sobre §2.3 em `main` (PR #155 já mergeado) | INDEX.md com a linha; ledger/memória atualizados |
 
 **Revisão:** ao fim das fatias 1–4, delegar a `luminaris-reviewer` em **agente isolado / worktree próprio**.
 PASS emitido pela mesma sequência que implementou é rejeitado por regra (memória
@@ -230,12 +230,24 @@ PASS emitido pela mesma sequência que implementou é rejeitado por regra (memó
 
 ### 4.2 A barreira implementada (fatia de F-AD0=(c))
 
-**Onde ela NÃO pôde morar, e por quê.** A barreira natural seria um teste de rota exigindo 403 do dono —
-e ela é **impossível neste ambiente**: o controller chama `getFactory()` já em `getCoreTableId`, o factory
-constrói `OpenAIService`, e `test/jest.setupEnv.ts` define só `DATABASE_URL`/`NODE_ENV`/`JWT_SECRET`. O POST
-responde **500 antes de chegar à policy** — fato já documentado no teste de integração do PR #157
-(`analyticsDefinitions.routes.integration.test.ts:161-177`). Um teste de rota assertando 403 seria
-**vacuoso**. Por isso a barreira mora na camada de **service**, com repositório falso e **policy real**.
+**Onde ela NÃO pôde morar, e por quê.** A barreira natural seria um teste de rota exigindo 403 do dono.
+Ela é **vacuosa nos dois ambientes**, por motivos *diferentes* — e essa diferença é a armadilha:
+
+| Ambiente | O que o POST do dono responde | Por quê |
+|---|---|---|
+| Shell local nu | **500**, antes da policy | `getCoreTableId` chama `getFactory()`, que constrói `OpenAIService`; `test/jest.setupEnv.ts` define só `DATABASE_URL`/`NODE_ENV`/`JWT_SECRET` |
+| CI | **400** (`CORE analyticsDefinitions table not found`), antes da policy | `.github/workflows/ci.yml:23` injeta `OPENAI_API_KEY: ci-dummy-openai-key` no nível do job, então o factory **constrói normalmente** — mas `seedUser` não instala preset nenhum, e o controller morre no lookup da tabela CORE |
+
+Ou seja: um teste de rota assertando 403 passaria **verde pelo motivo errado** em qualquer um dos dois.
+Para produzir um 403 de verdade ali seria preciso primeiro **instalar o `CoreSystemPreset` para o usuário
+semeado** — helper que não existe em `test/helpers/` (só `seedUser`/`seedDocument`/`seedDashboardLayout`/
+`seedChatInstance`). Não é impossível; é caro e **frágil ao ambiente**. A camada de **service**, com
+repositório falso e **policy real**, contorna os dois problemas e prende exatamente os elos que importam.
+
+> Correção registrada: a primeira redação desta seção dizia só "o POST responde 500" e tratava isso como
+> propriedade do repo. É propriedade do **shell local**. O CI injeta a chave (medido em `origin/main` @
+> `5621c38`, que corrige o mesmo erro na triagem AV-L1 — "afirmei ausência sem procurar"). A conclusão
+> — barreira no service — não muda; a justificativa, sim.
 
 **O que ela prende que já não estava preso.** `DynamicTablePolicy.spec.ts` já afirma
 `canManageData === false` para `presentation: 'system'` — mas sobre uma tabela **fabricada à mão**. Ele
@@ -283,6 +295,8 @@ mutações o CONTROLE permaneceu verde — que é o esperado, e é o que mostra 
 ## 7. Relacionados
 
 - PR #157 (`6500249`) — DTO Zod na fronteira (AV-L1 F2). Este ADR nasce do N1 da revisão daquele PR.
-- PR #155 (branch `claude/repo-profile-audit-plan-56e928`) — `docs/audit/AV-L1-TRIAGEM.json`; ver **§2.3**.
+- PR #155 (**mergeado**, `55838da`) — `docs/audit/AV-L1-TRIAGEM.json` agora em `main`; ver **§2.3**.
+- `5621c38` — a correção "o CI JÁ injeta a chave dummy" na própria triagem. É a evidência de §4.2 e o
+  precedente do mesmo erro que corrigi ali: afirmar ausência de ambiente sem ler o workflow.
 - Memória `isSystem-nao-driba-canManageData` — a armadilha de E4, confirmada.
 - `.claude/skills/_REUSE-CRITERION.md` — obrigatório na fatia 4 e em F-AD6(c).
