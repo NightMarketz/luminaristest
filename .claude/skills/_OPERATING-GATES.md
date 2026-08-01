@@ -72,6 +72,45 @@ Reafirmar um *assumido* não o torna *verificado* — só evidência promove gra
 comportamental do **[CBM-001]**: o grafo localiza, o código decide; grau *verificado* exige código,
 teste ou execução — nunca só o grafo, nunca só memória.
 
+### Instrumento que erra em silêncio não produz *verificado*
+
+Rodar um comando **não** é evidência por si: só promove grau o instrumento que **falha visivelmente**
+quando mal-usado. Instrumento que devolve resultado *plausível* para um comando errado produz um
+**assumido com cara de verificado** — o pior grau, porque não há sinal de que precisa ser checado.
+
+**Caso concreto (win32 · `rg`).** O `rg` emite caminho com **barra invertida** (`my-app\lib\services\x.ts`),
+então todo filtro escrito com barra normal casa **zero**, nas duas direções:
+
+| Filtro | Casa zero ⇒ | Efeito |
+|---|---|---|
+| `\| rg -v "lib/services"` | nada é excluído | **falso positivo**: a lista inteira parece violação |
+| `\| rg "lib/services"` | nada é incluído | **falso negativo**: parece limpo |
+
+Normalize **antes** de filtrar caminho:
+
+```bash
+rg -l "api/api-client" my-app | tr '\\' '/' | rg -v "lib/services/|lib/api/"
+```
+
+**Teste barato, aplicável a qualquer filtro — sinal de suspeita, NÃO veredito.** Se o `-v` não removeu
+**nenhuma** linha, há duas causas possíveis e elas são opostas: (a) o padrão não casou nada — instrumento
+quebrado; (b) os conjuntos são legitimamente disjuntos — filtro certo, resposta certa. **Discrimine rodando
+o mesmo padrão na forma positiva:** se `rg "<padrão>"` também volta vazio, é (a); se volta com linhas, é (b)
+e o resultado vale. O recíproco vale para o filtro positivo que voltou vazio.
+
+> Esta regra já falhou em si mesma. A primeira redação dizia *"trate como instrumento quebrado, não como
+> achado"* — veredito, não suspeita. Contra-exemplo executado pelo revisor independente:
+> `rg -l "DEBT: prisma" server/src | tr '\\' '/' | rg -v "repositories/"` remove **zero** linhas **e** a
+> lista é verdadeira (os 3 sites reais). Seguir a redação original ao pé da letra descartaria o backlog
+> real como lixo. Um teste de suspeita escrito como teste decisivo é a mesma falha que a regra descreve:
+> um instrumento devolvendo veredito onde só cabia um sinal.
+
+**Evidência própria:** memória `rg-win32-backslash-quebra-filtro-de-caminho`; na varredura da R2 do
+`docs/architecture/lint-layer-gate.md` (2026-07-30) o filtro não-normalizado devolveria **19** arquivos
+como violação de camada, quando a resposta correta é **zero** — 16 são `lib/services/**` (a camada
+permitida) e 3 nem são fonte (`ARCHITECTURE.md`, `lib/README.md` e o próprio `eslint.gate.config.mjs`).
+O que separou o achado do lixo foi o `tr '\\' '/'`, não releitura.
+
 ---
 
 ## [OPS-004] Risco silencioso primeiro
@@ -132,7 +171,7 @@ tabela de passos); ela não tem representação de fila, gate ou merge. Seu úni
 |---|---|---|
 | OPS-001 | checklist do `luminaris-reviewer` + este doc sempre referenciado no CLAUDE.md | não é hook automático — depende do reviewer independente |
 | OPS-002 | disciplina do agente + revisor checa "pergunta aberta explícita" em relatórios | sinais são auto-reportados |
-| OPS-003 | CBM-001 já enforça a metade estrutural; revisor rejeita claim comportamental sem fonte | prosa livre não é lintável |
+| OPS-003 | CBM-001 já enforça a metade estrutural; revisor rejeita claim comportamental sem fonte. Sub-regra *instrumento que erra em silêncio*: auto-probe barato (o `-v` removeu alguma linha?) executável na hora | prosa livre não é lintável; e o auto-probe é **auto-reportado** — ninguém vê o comando que o agente rodou, só a conclusão. O revisor independente pega isto **apenas** se o relatório colar o comando junto do resultado |
 | OPS-004 | item 5 vira artefato obrigatório do relatório (FAIL de forma se ausente) | passos 1–4 são processo, não gate |
 | OPS-005 | **probe objetivo** (`gh pr list --state open` — a única OPS com fonte externa, não auto-reportada); estado da fila vira artefato do relatório | o revisor independente **não** vê a fila (revisa um diff, não o estado de PRs do repo) — quem abre a frente é quem conta |
 
