@@ -1,0 +1,185 @@
+{
+  "schema": "triagem/1.0",
+  "source_run": {
+    "instrument": "AV-L1",
+    "instrument_version": "v3",
+    "title": "Contrato de Camadas — o que o gate não vê",
+    "project": "Luminaris",
+    "repo_commit": "ae8d18b",
+    "generated_at": "2026-07-31",
+    "reduced_mode": true,
+    "verification_commit": "64e1776",
+    "verification_note": "Os falsificadores foram executados contra 64e1776 (tip de claude/repo-profile-audit-plan-56e928), não contra ae8d18b. MEDIDO, não assumido: `git diff --stat ae8d18b..64e1776` toca 6 arquivos — os 3 do F1 (Lead360Modal.tsx, dates.ts, dates.test.ts) e 3 de documentação da própria bancada (AV-L1.json, AV-L1.md, bancada.html). Nenhum arquivo de evidence do F2 (analyticsDefinitionsController.ts), do F3 (lint-layer-gate.md, ChatService.ts, QuickSetup.tsx) ou do F4 (documentsController.ts, DocumentProcessingService.ts) está no diff, então o resultado dos três vale para o commit do relatório."
+  },
+  "triage_at": "2026-07-31",
+  "triaged_by": "Desenvolvedor Luminaris (dono — decisões de perfil `deployed` e `irreversible`) · claude-opus-5 (execução dos falsificadores e derivação mecânica de portão)",
+
+  "profile_decision": {
+    "_note": "Extensão aditiva ao triagem/1.0, no precedente da EXTENSÃO LOCAL do contrato auditoria/1.1. Registrada porque TODO portão abaixo deriva destes dois valores; sem ela a triagem não é reexecutável.",
+    "deployed": "interno",
+    "deployed_answered_at": "2026-07-31",
+    "deployed_consequence": "Teto de nível 3. Mapeamento: ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy → bloqueia_deploy SÓ se irreversível · com_volume → aceitavel_com_registro.",
+    "irreversible": [
+      "Geração e entrega de SPED ECD / ECF ao fisco",
+      "Encerramento de período / exercício contábil",
+      "Escrita no razão com trilha append-only (postEntry / AuditEvent)",
+      "Baixa/pagamento de conta a pagar",
+      "Registro de pagamento de venda (liquidação)",
+      "Exclusão de usuário com cascata + purga de vetores",
+      "Delete em lote de linhas de DynamicTable",
+      "Execução de proposta de ação do agente"
+    ],
+    "irreversible_source": "As 8 candidatas propostas com evidência no perfil da bancada foram TODAS confirmadas pelo dono. Nenhuma foi inferida por agente, conforme bancada.html:389 e o campo `irreversible` do passo 2.",
+    "irreversible_consequence": "Sob deployed=interno, a irreversibilidade é o único caminho que promove um achado de exposição `apos_deploy` a bloqueia_deploy. Nenhum dos quatro achados intersecta qualquer uma das 8 operações — por isso a contagem de bloqueia_deploy é zero, e não por ausência de lista."
+  },
+
+  "items": [
+    {
+      "fingerprint": "avl1-spec-layergate-divida-paga",
+      "damage": 2,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado. O spec (docs/architecture/lint-layer-gate.md:20) declara 5 supressões `DEBT: prisma`; existem 3 (ReportService, ChatService, dashboardController) — authController e userController já foram pagos. O spec (:29) declara 2 supressões `DEBT: apiClient` (TotalControlSetup.tsx, QuickSetup.tsx); nenhum .tsx importa mais `api/api-client` — os 3 hits restantes são ARCHITECTURE.md, eslint.gate.config.mjs e lib/README.md, todos documentação ou o próprio gate. Total: 4 entradas mortas, exatamente o que o achado afirma. O item 4 do gate de aceitação do próprio spec (:46) está portanto falso. Filtro de caminho normalizado com `tr` antes do rg — sem isso o win32 devolve backslash e o `rg -v` casa zero.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "deployed=interno → ja_exposto mapeia direto para bloqueia_primeiro_cliente. SOBRESCREVE o suggested_gate `aceito_com_registro` do relatório, que era PROVISÓRIO por depender desta decisão. É o item de maior risco removido por esforço da lista: custo é só documentação.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-07",
+      "due_is_proposal": true,
+      "already_addressed_by": {
+        "pr": 154,
+        "title": "docs(architecture): reconcilia lint-layer-gate com o código + promove regra de instrumento a OPS-003",
+        "state": "OPEN",
+        "verified_how": "Lido o diff do PR 154 em docs/architecture/lint-layer-gate.md: a lista `DEBT: prisma` vai de 5 sites para 3 medidos em dc7fd12, com authController e userController nomeados como pagos; a lista `DEBT: apiClient` vai para ZERO com TotalControlSetup.tsx e QuickSetup.tsx explicitamente citados como não importadores; e o item 4 do gate de aceitação e reescrito. São as quatro entradas mortas que o F3 reporta.",
+        "consequence": "O dono NAO deve abrir trabalho novo para o F3. Mergear o 154 fecha o achado; a acao que resta e reexecutar o falsificador depois do merge e confirmar que ele deixa de reproduzir.",
+        "note": "Registrado porque uma triagem que manda consertar o que ja esta consertado repete dentro de si o defeito exato que o F3 descreve — backlog apontando para divida ja paga."
+      },
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "Gate C5 no CI: `scripts/debt-ledger-check.mjs` compara os marcadores `DEBT:`/`SANCTIONED` do código contra o bloco `debt-ledger` do spec, NAS DUAS DIREÇÕES, em contagem e por arquivo, e falha o build quando divergem. Classificado como `teste_de_fronteira` e não `conjunto_de_avaliacao` porque é teste no pipeline sobre a fronteira código × spec, não um conjunto de casos que reprova um gate que mede errado.",
+      "barrier_status": "EXISTE, NÃO MERGEADO — PR 156 (feat(ci): extrai a dimensão C5 do AV-L1 como gate de governança), OPEN e MERGEABLE, tocando .github/workflows/ci.yml, docs/architecture/lint-layer-gate.md e scripts/debt-ledger-check.mjs.",
+      "barrier_correction": {
+        "previous_value": "nenhuma_conhecida",
+        "previous_note": "Nenhuma barreira em ferramenta. O item 4 do gate de aceitação do próprio spec já é a barreira correta e precisa ser reexecutado quando a dívida mudar.",
+        "why_it_was_wrong": "A barreira já existia num PR aberto, e o cabeçalho do próprio script descreve este achado quase palavra por palavra: 'o ponto cego era a supressão que não corresponde mais a nada E O SPEC QUE DECLARA DÍVIDA JÁ PAGA'. O erro não foi de julgamento sobre qual barreira caberia — foi emitir `nenhuma_conhecida` como se fosse resultado de busca quando era resultado de não ter buscado.",
+        "how_it_surfaced": "Saída de um `grep -ril \"AV-L1\"` em .claude/worktrees disparado por outro motivo, que só retornou depois do commit. Foi acaso, não método. O método que teria pego isso é procurar barreira já existente ANTES de escrever `nenhuma_conhecida` — vale para os outros itens desta triagem e para as próximas rodadas.",
+        "corrected_at": "2026-07-31"
+      },
+      "merge_order_note": "PR 154 e PR 156 editam o MESMO arquivo (docs/architecture/lint-layer-gate.md) e devem conflitar. O 154 conserta a prosa das listas de dívida; o 156 conserta E cria o gate que impede a divergência de voltar. Pelo AV-00 §6 ('correção sem barreira não passa de nível 2'), o 156 é o conserto completo e o 154 o parcial. NÃO VERIFICADO: se o texto do 154 contém algo que o 156 não cobre — exigiria ler os dois diffs inteiros."
+    },
+    {
+      "fingerprint": "avl1-analyticsdefs-sem-parse-runtime",
+      "damage": 2,
+      "exposure": "apos_deploy",
+      "verification": "confirmado",
+      "verification_note": "Executado. `rg -c \"safeParse|\\.parse\\(\"` no arquivo devolve vazio; as linhas 40 e 57 passam `{ data: req.body }` cru ao DynamicTableService. Dois controles rodados contra o plausível-e-errado: (1) o arquivo existe e tem 81 linhas, então o vazio não é arquivo-inexistente; (2) o MESMO comando em accountingController.ts devolve 21 — o falsificador discrimina, não retorna vazio para todo mundo. Continua valendo o enfraquecimento registrado no relatório: o service valida campos contra o schema do preset por baixo, então o dano é camada-de-erro-errada, não escrita não validada.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "deployed=interno → apos_deploy vira bloqueia_deploy SÓ se irreversível. O caminho é create/update de definições de analytics; não é `delete em lote de DynamicTable` nem qualquer outra das 8 operações declaradas. Não promove. Fica em bloqueia_primeiro_cliente.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-14",
+      "due_is_proposal": true,
+      "status": "corrigido_e_barrado",
+      "status_evidence": {
+        "commit": "396a389",
+        "branch": "claude/av-l1-f2-analytics-dto",
+        "merged": true,
+        "merge_commit": "6500249",
+        "merged_at": "2026-08-01",
+        "pr": 157,
+        "note": "Ramificada do tip do main (dc7fd12), NÃO desta branch de auditoria — a correção do F2 nunca esteve no PR 155. MERGEADA em separado pelo PR 157 (6500249) depois de três passadas de revisão independente, que acrescentaram N2/N4/N5 e depois N9/N10/N11/N12 aos commits df523a6 e 09ba73f. O gate bloqueia_primeiro_cliente está satisfeito.",
+        "what_changed": "Novo `features/analytics/dtos/AnalyticsDefinitionDto.ts` (Create + Update partial, `.strict()`, campos com defaultValue do preset opcionais porque DynamicTableService aplica `.default()`); duas guardas `safeParse` no controller, colocadas ANTES do lookup da tabela CORE para que os dois 400 sejam distinguíveis; passa `parsed.data` e não `req.body`.",
+        "barrier_proved_by_mutation": "9 casos de integração HTTP assertando a FORMA do erro (`fieldErrors` do flatten × string do branch da tabela), não só o status. Revertido o controller ao pré-correção, 6 dos 9 morrem; os 3 sobreviventes são os corretos (dois 401 de autenticação e o control de corpo válido).",
+        "falsifier_reexecuted": "Deixou de reproduzir: `rg -c \"safeParse|\\.parse\\(\"` devolve 2 onde antes caía no ramo 'sem parse — achado vivo'.",
+        "gates": "tsc limpo; eslint limpo nos dois arquivos; unit 1498/1498; integração 21→22 suítes verdes com as 9 falhas pré-existentes inalteradas (68 antes, 68 depois), medido rodando a suíte na árvore limpa antes de comparar.",
+        "review_pending": "AV-00 §5 exige revisão de agente separado; nenhuma foi feita. PASS emitido pela própria sequência que implementou é rejeitado pelo protocolo."
+      },
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente: teste que POSTa corpo inválido em /analytics-definitions e exige 400 originado no controller. Sem ele o achado volta na próxima rota nova. Buscado antes de propor: `rg -l -i \"analytics.?definitions\"` em server/src filtrado por teste não devolve nada, e nem o PR 154 nem o 156 tocam analyticsDefinitionsController.ts — a barreira precisa ser escrita junto com o conserto."
+    },
+    {
+      "fingerprint": "avl1-lead360-dateonly-utc-shift",
+      "damage": 3,
+      "exposure": "apos_deploy",
+      "verification": "confirmado",
+      "verification_note": "Executado antes da correção: com TZ=America/Sao_Paulo o parse UTC devolveu 07 de julho contra 08 de julho do parse local (exit 0 = achado vivo). Depois da correção (64e1776) o falsificador de varredura não reproduz — o modal saiu da lista e não tem mais nenhum `new Date`. A guarda foi provada por mutação: revertido o parse ao estado pré-correção, 5 dos 8 casos de dates.test.ts falham, incluindo 3 dos 4 novos, enquanto o caso de datetime segue verde como deve.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "deployed=interno → apos_deploy vira bloqueia_deploy SÓ se irreversível. É defeito de LEITURA/exibição (formatação de data no modal); não escreve e não toca nenhuma das 8 operações declaradas. Não promove.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-07-31",
+      "due_is_proposal": false,
+      "status": "corrigido_e_barrado",
+      "status_evidence": "Commit 64e1776 em claude/repo-profile-audit-plan-56e928: Lead360Modal.tsx (1 linha de call site + import), dates.ts (parâmetros options/locale opcionais, uma linha de comportamento), dates.test.ts (+38 linhas). tsc --noEmit limpo, suíte do frontend 122/122, lint:gate limpo.",
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira"
+    },
+    {
+      "fingerprint": "avl1-documentscontroller-bypassa-factory",
+      "damage": 1,
+      "exposure": "apenas_teorico",
+      "verification": "confirmado",
+      "verification_note": "Executado. Uma única ocorrência em 34 controllers: documentsController.ts:317, `new DocumentProcessingService()`. O gatilho de revisão também foi medido agora, não assumido: `rg -n \"constructor\"` na classe sai vazio — segue stateless, sem dependência injetável. A checagem adversarial que DERRUBOU a gravidade no relatório continua valendo.",
+      "gate": "aceito_com_registro",
+      "gate_derivation": "Exposição apenas_teorico não promove sob nenhum ramo de deployed. Aceite, não conserto: o custo de corrigir (uma linha) não cresce com o tempo, então adiar não acumula juros.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": null,
+      "due_is_proposal": false,
+      "accepted_reason": "Desvio do contrato de injeção via Factory sem consequência de runtime enquanto DocumentProcessingService permanecer stateless. Isolado (1 de 34), custo de correção constante no tempo.",
+      "review_trigger": "DocumentProcessingService passar a declarar construtor com dependência — observável por `rg -n \"constructor\" server/src/features/documents/services/DocumentProcessingService.ts` deixar de sair vazio. A partir daí o bypass passa a construir uma instância com dependências erradas e o aceite morre.",
+      "accepted_by": "Desenvolvedor Luminaris",
+      "barrier_kind": "nenhuma_conhecida",
+      "barrier_note": "`nenhuma_conhecida` aqui é resultado de BUSCA, não de omissão — a distinção existe porque no F3 foi o contrário. Procurado e não encontrado: nenhum job do ci.yml barra `new XService()` em controller (os 19 passos cobrem typecheck, lint layer-gate, testes, skill-audit, operating-gates e zinc-guard), e nenhum dos PRs abertos (154, 156) toca documentsController.ts. O aceite se apoia no `review_trigger`, não numa barreira."
+    }
+  ],
+
+  "refuted": [],
+
+  "gates_summary": {
+    "bloqueia_deploy": 0,
+    "bloqueia_primeiro_cliente": 3,
+    "aceito_com_registro": 1,
+    "descartado": 0,
+    "note": "Zero em bloqueia_deploy é resultado derivado, não lista vazia por omissão: sob deployed=interno o único caminho de promoção é a irreversibilidade, a lista de irreversíveis foi declarada com as 8 operações, e nenhum dos quatro achados intersecta qualquer uma delas. A afirmação é falsificável — bastaria um achado cujo evidence tocasse SpedGenerationService, PayableService, postEntry/AuditEvent, encerramento, liquidação, exclusão de usuário, delete em lote de DynamicTable ou execução de proposta do agente para virar bloqueia_deploy."
+  },
+
+  "ordering": {
+    "criterion": "risco removido por esforço, conforme AV-00 §3",
+    "sequence": ["avl1-spec-layergate-divida-paga", "avl1-analyticsdefs-sem-parse-runtime", "avl1-lead360-dateonly-utc-shift", "avl1-documentscontroller-bypassa-factory"],
+    "note": "F1 aparece em terceiro por já estar corrigido e barrado, não por ser menos urgente — pelo damage 3 ele lideraria a fila se estivesse aberto."
+  },
+
+  "deviations": [
+    {
+      "rule": "AV-00 §0 — proibido corrigir achado não triado",
+      "what_happened": "O F1 foi corrigido antes desta triagem formal existir, no turno anterior, quando `deployed` ainda estava pendente e portanto nenhum portão era derivável.",
+      "mitigation": "A exigência substantiva de §0 foi cumprida: o falsificador do F1 FOI executado antes da correção, e reexecutado depois. O que faltou foi a ordem da Fase 1 (verificar → triar → aceitar → corrigir). Esta triagem confirma a posteriori o portão que o achado teria recebido — bloqueia_primeiro_cliente, o mesmo que o relatório sugeria em caráter provisório — então a correção não se antecipou a uma decisão que teria sido diferente.",
+      "cost_if_it_had_gone_wrong": "Se o dono tivesse respondido `produção com pagantes`, o F1 (exposição apos_deploy) continuaria em bloqueia_primeiro_cliente; se tivesse respondido de modo a promovê-lo, teríamos corrigido na ordem certa por acidente e não por método. O risco era de processo, não de resultado — nesta rodada."
+    }
+  ],
+
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: 'problema maior vira achado novo'. Levantado durante a correção do F2 e NÃO consertado — `test/jest.setupEnv.ts` está fora dos caminhos de evidence do F2. Entra como candidato para a próxima rodada do instrumento, não como item desta triagem.",
+      "candidate": "A suíte de teste do backend dá resultados diferentes local e no CI",
+      "measured": "Rodar `npm test` em `server/` numa árvore LIMPA falha 9 suítes de integração e 68 testes (de 30 suítes / 331 testes). `test/jest.setupEnv.ts` define DATABASE_URL, NODE_ENV e JWT_SECRET, mas não a chave da OpenAI, e `new ApplicationFactory` constrói OpenAIService, que lança sem ela. O CI passa porque `.github/workflows/ci.yml` injeta `OPENAI_API_KEY: ci-dummy-openai-key` no nível do JOB, junto com JWT_SECRET e DATABASE_URL dummies, e depois roda `npm test`.",
+      "why_it_matters": "Não é buraco de cobertura — no CI as rotas servidas por factory SÃO exercitadas. É divergência de ambiente: quem roda a suíte localmente vê 68 vermelhos que o CI chama de verde, e o caminho barato de interpretar isso é 'a suíte está quebrada, ignore'. O risco é uma falha real se esconder no meio do ruído esperado.",
+      "correction_of_my_own_claim": "A primeira redação desta entrada dizia 'nenhum teste de integração do backend consegue construir a ApplicationFactory'. FALSO — verdadeiro só num shell local nu. Escrevi isso a partir do resultado local sem ler o workflow do CI, que resolve o problema desde sempre e explica o porquê num comentário. O erro é o mesmo padrão do `barrier_kind` do F3: afirmar ausência sem procurar.",
+      "already_known": "O comentário no próprio ci.yml documenta a escolha ('Dummy values so module-load and Prisma generate succeed in CI'), e BACKEND_HARDENING_PROGRESS.md também. Dívida conhecida e deliberada no CI; o que ninguém fechou foi o lado local.",
+      "cost_hint": "Uma linha no setupEnv, no mesmo padrão do JWT_SECRET dummy que já está lá. Não feito aqui de propósito."
+    }
+  ],
+
+  "self_check": {
+    "falsifiers_executed": 4,
+    "falsifiers_total": 4,
+    "items_without_owner": 0,
+    "minimum_required": "AV-00 §2 exige os três maiores damage e todos os damage 5. Damages são 3/2/2/1 e não há nenhum damage 5; os três maiores seriam F1, F2 e F3. Os quatro foram executados, excedendo o mínimo.",
+    "barriers_searched": "Os quatro `barrier_kind` foram reemitidos APÓS busca por barreira já existente — procedimento que faltou na primeira emissão e produziu o erro do F3 (ver items[0].barrier_correction). Resultado: F3 tem barreira real e não mergeada (PR 156); F2 não tem e a proposta precisa ser escrita junto com o conserto; F4 não tem e o aceite se apoia em gatilho; F1 tem e já está mergeada com a correção. A lição operacional é que `nenhuma_conhecida` só pode ser emitido depois de procurar, senão é 'não procurei' com nome de veredito.",
+    "own_bias_named": "Executei os falsificadores do F2, F3 e F4 sem ter escrito esses comandos, o que é bom; mas o do F1 eu já havia rodado no turno em que corrigi o achado, então nesse caso sou verificador da minha própria correção — a mutação (5 de 8 casos mortos ao reverter o parse) existe justamente porque um teste verde escrito por quem corrigiu não é evidência de que ele morde. O viés que sobra é de fonte: as decisões de perfil que produzem TODOS os portões vieram do dono numa escolha de lista feita por mim, e eu redigi as opções — a redação de uma opção influencia qual é escolhida, e não há aqui nenhum controle contra isso."
+  }
+}

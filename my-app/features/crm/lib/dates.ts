@@ -15,23 +15,34 @@ export function formatTimestamp(value: unknown): string {
  * Date only (no time), locale-formatted. Falls back to the raw value if unparseable.
  *
  * Deliberately NOT delegated to the canonical `formatDateNumericBR`
- * (dashboard/shared/utils/formatters.ts): that symbol forces `pt-BR`, whereas
- * this formatter renders in the **browser-default locale** (no locale arg) — the
- * long-standing behavior of every CRM caller. The only change here is the parse:
+ * (dashboard/shared/utils/formatters.ts): that symbol forces `pt-BR` AND a numeric
+ * shape, whereas this formatter defaults to the **browser-default locale** with the
+ * default numeric shape — the long-standing behavior of every CRM caller. The parse:
  * a date-only ISO (`YYYY-MM-DD`, e.g. the value LeadTasksPanel feeds from an
- * `<input type="date">`) is now parsed as LOCAL midnight (`+ 'T00:00:00'`)
- * instead of UTC midnight, so it no longer shifts a day back in UTC-3. Datetime
- * strings don't match the regex and keep the original `new Date(raw)` parse; the
- * raw-string fallback for unparseable input is preserved.
+ * `<input type="date">`) is parsed as LOCAL midnight (`+ 'T00:00:00'`) instead of
+ * UTC midnight, so it never shifts a day back in UTC-3. Datetime strings don't match
+ * the regex and keep the original `new Date(raw)` parse; the raw-string fallback for
+ * unparseable input is preserved.
+ *
+ * `options`/`locale` are OPTIONAL and exist so a caller needing a different SHAPE
+ * (e.g. Lead360Modal's `pt-BR` long-month rendering of the proposal ETA) reuses this
+ * parse instead of re-inlining `new Date(raw)` — the re-inlined technique is exactly
+ * how the UTC-shift came back after the class was first fixed. Omitting both is
+ * byte-identical to the previous no-arg behavior: `toLocaleDateString(undefined,
+ * undefined)` === `toLocaleDateString()`.
  */
-export function formatDate(value: unknown): string {
+export function formatDate(
+  value: unknown,
+  options?: Intl.DateTimeFormatOptions,
+  locale?: string,
+): string {
   const raw = String(value ?? '');
   if (!raw) return '—';
   // Date-only ISO → parse as local midnight (never shifts a day in UTC-3);
   // anything else (datetimes) keeps the correct UTC→local conversion.
   const d = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(raw + 'T00:00:00') : new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
-  return d.toLocaleDateString();
+  return d.toLocaleDateString(locale, options);
 }
 
 type TFn = (key: string, fallback: string) => string;
