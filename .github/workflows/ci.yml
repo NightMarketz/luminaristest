@@ -56,6 +56,16 @@ jobs:
       - name: Lint (layer-gate)
         run: npm run lint
 
+      # Gate de governança C5 — dívida SUPRIMIDA (medida pelo ESLint) × dívida DECLARADA
+      # (bloco debt-ledger do spec). O passo acima barra violação SEM supressão; este barra
+      # a supressão que não corresponde mais a nada, o spec que declara dívida já paga, e a
+      # violação silenciada por inline config (`/* eslint <regra>: "off" */`), que não deixa
+      # marcador nenhum. Roda AQUI e não em job próprio: precisa do node_modules que este job
+      # já instalou, e assim herda o required status check deste contexto.
+      # Origem: dimensão C5 do instrumento AV-L1 (docs/audit/bancada.html).
+      - name: Debt ledger matches spec (governance C5)
+        run: node ../scripts/debt-ledger-check.mjs --root server
+
       - name: Run tests
         run: npm test
 
@@ -99,6 +109,10 @@ jobs:
 
       - name: Lint (layer-gate)
         run: npm run lint:gate
+
+      # Metade frontend do gate C5 — ver o comentário no job `server`.
+      - name: Debt ledger matches spec (governance C5)
+        run: node ../scripts/debt-ledger-check.mjs --root my-app
 
       - name: Build
         run: npm run build
