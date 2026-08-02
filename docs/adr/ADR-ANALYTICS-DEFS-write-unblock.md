@@ -4,8 +4,10 @@
 - **Status:** **Accepted (parcial) — RATIFICADO POR SINAL HUMANO 2026-08-01: `F-AD0 → (c) manter
   congelado`.** `F-AD5` (a tela) fica **explicitamente aberto** — e é ele que reabre este ADR.
   `F-AD1`, `F-AD2`, `F-AD3`, `F-AD4` ficam **dormentes** (só existem sob `F-AD0=(a)`).
-  **`F-AD6` continua sem decisão** (o irmão órfão `custom-kpis` segue de pé — escolha consciente de
-  manter duas portas fechadas em vez de uma). Barreira implementada e verificada: **§4.2**.
+  **`F-AD6` ANALISADO 2026-08-01 (emenda): recomendação `(b) deletar`, aguardando ratificação** — a
+  premissa que este ADR deu para `F-AD6=(c)` foi **falsificada** por leitura de código (**§2.4**);
+  a análise **não depende de `F-AD5`** e a justificativa está em **§3/F-AD6**. Barreira implementada
+  e verificada: **§4.2**.
 - **Autores:** `luminaris-orchestrator` (roteamento, ORCH-001 — não implementa, não aprova) sobre
   evidência lida em código (CBM-001: nada aqui se apoia em grafo ou em memória sem leitura).
 - **Origem:** achado **N1** da revisão independente do PR #157 (mergeado, `6500249`), que fechou o
@@ -21,6 +23,12 @@ baseline `0db3961` — **por desenho**, e o desenho está escrito em 4 lugares; 
 que a linha de policy sugere. O risco principal **não** é a policy: é que **não existe consumidor nenhum**
 (zero chamadores no `my-app`, e o endpoint irmão `/analytics/custom-kpis` também é órfão), então destravar
 sem decidir a tela produz uma superfície de escrita que ninguém usa e todo mundo precisa manter.
+
+**Emenda de F-AD6 (2 linhas):** o irmão órfão `custom-kpis` **não** é "a mesma capacidade por outra
+porta" — `KpiDefinition` e `PipelineSpec` divergem em **shape e em posse**, então o `_REUSE-CRITERION.md`
+**não** obriga convergência (§2.4); e ele nunca esteve vivo (nasceu numa varredura de auditoria, sem
+frontend, sem teste, sem OpenAPI, sem gate que o enxergue — E13–E17). Recomendação: **(b) deletar**;
+o risco de errar é uma restauração de um commit (`54b1839`), não a perda de uma capacidade.
 
 ---
 
@@ -43,9 +51,26 @@ Tudo abaixo foi **lido no arquivo**, não inferido de grafo nem de memória.
 | E11 | `isNavigable` esconde tabelas `'system'` do dashboard — o rótulo i18n de E10 está **morto** hoje | **verificado** | `my-app/features/dashboard/category-views/shared/utils/presentationUtils.ts:31-33` |
 | E12 | Existe um **segundo** caminho de analytics autorado pelo usuário, vivo e sem 403: `POST /api/analytics/custom-kpis` (stateless, Zod completo, valida campo contra o schema da tabela) — e ele **também** tem zero chamadores no `my-app` | **verificado** | `routes/analytics.ts:16` → `controllers/customKpiController.ts` (todo o arquivo); `grep custom-kpis my-app/` vazio |
 
-## 2. Três correções à premissa de entrada
+### 1.1 Evidência adicional da emenda de F-AD6 (2026-08-01)
 
-Registradas porque **removem trabalho do plano** (T5: input que só confirma não vira texto; estes três
+Mesma regra: tudo lido no arquivo ou medido em `git`, nada inferido de grafo.
+
+| # | Claim | Grau | Evidência |
+|---|---|---|---|
+| E13 | `custom-kpis` **não existia no baseline** `0db3961`: nasceu ~6h depois, no commit de **varredura de auditoria** `54b1839` (`feat(analytics): custom KPI … (sec6)`), que criou 3 arquivos + 4 linhas de rota e **zero** arquivo de frontend, **zero** teste, **zero** bloco `@openapi` | **verificado** | `git show --stat 54b1839`; baseline `0db3961` = 2026-06-11 15:57, `54b1839` = 2026-06-11 21:41 |
+| E14 | Desde o nascimento os 3 arquivos só foram tocados por **duas varreduras mecânicas** de eliminação de `any` (`bb85ef4`, `70f8927`) — nenhuma mudança de comportamento em ~2 meses | **verificado** | `git log --all --oneline -- customKpiController.ts KpiSchema.ts CustomKpiExecutor.ts` = 3 commits |
+| E15 | In-degree **1** no server e **zero teste**: o único importador de `executeCustomKpisHandler` é `routes/analytics.ts:16`; `KpiSchema`/`CustomKpiExecutor` só são importados pelo próprio controller; **nenhum** arquivo de teste importa qualquer um dos três | **verificado** | `grep -rn "KpiSchema\|CustomKpiExecutor\|executeCustomKpis\|customKpiController" server/src server/test` — 7 hits, todos nos 2 arquivos acima |
+| E16 | A rota **não está no OpenAPI**: `server/public/openapi.json` tem 137 paths, 10 sob `analytics`, e **nenhum** `custom-kpis`; `docs.paths.ts` documenta `discover/{tableId}`, `definitions` e `definitions/{id}` — não este | **verificado** | `openapi.json` (contagem por `Object.keys(paths)`); `routes/docs.paths.ts:914,995,1017` |
+| E17 | **Nenhum gate existente pegaria E16.** `openapi-paths.test.ts` é um **piso** (`pathCount >= BASELINE`) sobre paths **documentados** — uma rota Express sem bloco `@openapi` é invisível para ele, e os outros dois guards (junk keys, `$ref` pendurado) também. Rota que nasce sem doc fica sem doc para sempre | **verificado** | `server/src/__tests__/openapi-paths.test.ts:31,36-39,45-51` |
+| E18 | A superfície **viva** de "KPI sobre tabela do usuário" no produto é `GET /analytics/discover/:tableId` — **2 chamadores** no `my-app`. As duas portas de **autoria** (`custom-kpis` e `definitions`) têm **zero** | **verificado** | `my-app/lib/services/analytics.service.ts:10`; `my-app/features/dashboard/category-views/finance/services/FinanceService.ts:74` |
+| E19 | `custom-kpis` **fecha posse** (`getTableById` → `canView`) **e não tem o oráculo de §2.2**: o `catch` devolve **404 uniforme** para "não existe" e para "não é seu". Em compensação chama `getAllTableData` → `findMany` **sem `take`** — N KPIs sobre **todas** as linhas da tabela em memória, no processo | **verificado** | `customKpiController.ts:89-97,124`; `DynamicTableService.ts:584-587`; `DynamicTableRepository.ts:131-136` |
+
+## 2. Quatro correções à premissa
+
+**§2.1–§2.3 corrigem o briefing de entrada. §2.4 corrige _este ADR_** (T3: a regra que eu escrevo se
+aplica primeiro a mim).
+
+Registradas porque **removem trabalho do plano** (T5: input que só confirma não vira texto; estas
 contradizem).
 
 ### 2.1 A invalidação de cache **já existe** — a frente 2 do briefing não é trabalho
@@ -84,6 +109,64 @@ e `getAllTableData:585` re-checa por dentro. **Verificado site a site.** Logo:
 JSON é o **F4** (`documentsController` bypassa factory), não o N1. **Consequência:** o gatilho *"quando
 existir tela para autorar definições"* não tem registro durável na triagem — **este ADR é o registro**.
 Registrá-lo também lá é uma edição em `main`, não algo que já aconteceu.
+
+### 2.4 A premissa de `F-AD6(c)` está **errada**: `KpiDefinition` e `PipelineSpec` **não** são o mesmo objeto
+
+A v1 deste ADR escreveu, em `F-AD6(c)`, que reconciliar os dois *"são duas formas diferentes para o mesmo
+objeto de domínio, o gatilho exato do `_REUSE-CRITERION.md`"*. Isso foi afirmado **sem rodar o critério**.
+Rodado agora, com os dois arquivos abertos lado a lado, ele responde o contrário.
+
+#### Etapa 1 — DETECTOR: é o mesmo objeto? (shape **E** derivação/posse)
+
+**Shape** — `KpiDefinition` (`features/analytics/schemas/KpiSchema.ts:22-28`) × `PipelineSpec`
+(`features/analytics/core/pipeline/Pipeline.ts:67-75`):
+
+| Eixo | `KpiDefinition` | `PipelineSpec` |
+|---|---|---|
+| medidas | exatamente **1** (`measure` + `field`) | `measures: Measure[]` — **1..n** |
+| agrupamento | **nenhum** — o resultado é um escalar | `dimensions?: Dimension[]` (`field` \| `period`), 0..n |
+| fonte | `tableId: string` **cru** | `source: DataRef` **discriminado** (`presetTable` \| `tableId`) |
+| joins / sort / limit | não existem | `joins?: JoinRef[]`, `sort?: Sort`, `limit?: number` |
+| vocabulário de medida | `sum`, `avg`, `count`, **`min`**, **`max`** | `sum`, `count`, `avg`, **`formula`** |
+| operadores de filtro | `eq`, `gt`, `lt`, `gte`, `lte`, **`contains`** | `eq`, **`ne`**, **`in`**, **`nin`**, `gt`, `gte`, `lt`, `lte` |
+| chave do operador no filtro | `operator` | `op` |
+| identidade | carrega `name` (rótulo do resultado) | **não** carrega — o rótulo mora fora, no `title`/`key` da linha |
+| saída | **um número** por KPI | **série** (dimensão × medida) |
+
+**Nenhum dos dois é projeção do outro**, e a prova é **bidirecional**: `min`/`max` existem só no primeiro,
+`formula` só no segundo; `contains` só no primeiro, `ne`/`in`/`nin` só no segundo. Convergir, portanto,
+**não é estreitar** — é **unir dois vocabulários**: perde-se capacidade de um lado ou crescem os dois.
+
+**Posse** — o segundo eixo do critério, e aqui o mais decisivo:
+
+- `KpiDefinition` chega **no corpo da requisição**, por chamada, e **nunca é persistida**
+  (`customKpiController.ts:73-82,137` — parse, executa, devolve). Quem possui a definição é **o cliente**.
+  Resolução: `tableId` cru → `getTableById` → `getAllTableData`, uma tabela, agregação em JS no processo.
+- `PipelineSpec` é uma **linha persistida** da tabela CORE `analyticsDefinitions`. Quem possui é o
+  **servidor** — é exatamente disso que o 403 trata. Lida de volta por `AnalyticsService` sobre a própria
+  tabela CORE e resolvida pelo `AnalyticsResolver`, que entende `@@PRESET_TABLE_KEY::` e joins.
+
+Isto é, literalmente, o **sinal barato** que o critério manda usar: um é **prop-driven** (recebe a spec
+inteira por requisição), o outro é **self-derived** (o servidor lê a própria tabela). O critério trata
+essa diferença como *diferente em espécie*, não como clone.
+
+> **Veredito da Etapa 1: DIFERENTE em espécie** — diverge em **shape** *e* em **posse**. O critério manda
+> **parar aqui**: divergência **sancionada**, a Etapa 2 **não roda** para a decisão de reuso.
+> **Consequência dura:** o `_REUSE-CRITERION.md` **não obriga** `F-AD6=(c)`. Convergir é trabalho
+> **opcional de produto**, não pagamento de dívida de reuso — e a frase da v1 sai do ar.
+
+#### Etapa 2 — rodada assim mesmo, por outro motivo
+
+A Etapa 2 não decide reuso aqui (Etapa 1 já parou), mas decide **(a) × (b)**, que é pergunta de **estado**:
+
+- **Lado `custom-kpis`:** in-degree 1, zero teste, zero doc, zero chamador de frontend, `change_count` 3 —
+  dos quais **2 são varreduras mecânicas do repo inteiro** (E13–E16). Pelos próprios sinais que o critério
+  lista para "legacy", ele é **morto de nascimento**: não é que tenha morrido, é que nunca esteve vivo.
+- **Lado `definitions`:** a **leitura** está viva e é carregada (todo dashboard passa por `AnalyticsService`);
+  a **escrita** está congelada por `F-AD0=(c)`.
+
+O critério manda **não clonar o morto** — e, quando o morto não tem sequer um vivo correspondente para
+herdar dele, sobra a pergunta de F-AD6, que é sobre **manter ou remover**, não sobre reusar.
 
 ---
 
@@ -177,19 +260,42 @@ uniformizar a resposta) é item pequeno e independente destes três.
 **(c) torna todo o resto deste ADR desnecessário**, porque o caminho de seed/sistema nunca passou por
 `canManageData`. Se a resposta for (c), F-AD0 deve fechar em (b) ou (c).
 
-### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — 🔓 **ABERTO**
+### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **ANALISADO 2026-08-01: recomendação (b); aguarda ratificação**
 
 Segundo caminho de analytics autorado pelo usuário: vivo, sem 403, com Zod completo **e** validação de
 campo contra o schema da tabela — e **zero chamadores no `my-app`**.
 
+**Duas correções ao que a v1 desta seção afirmou** (T5/T3 — só entram porque *contradizem*):
+
+1. **A premissa de (c) caiu.** Não são "duas formas para o mesmo objeto de domínio": divergem em shape
+   **e** em posse, e o `_REUSE-CRITERION.md` para na Etapa 1 com **divergência sancionada** (§2.4).
+   O critério não obriga convergência aqui — (c) virou trabalho opcional, não dívida.
+2. **A consequência de (b) estava enviesada.** *"Perde o único executor de KPI de usuário que **funciona**
+   hoje"* é enganoso: nada o consome (E15/E16), e a superfície viva para a mesma pergunta de produto é
+   `GET /analytics/discover/:tableId`, com 2 chamadores reais (E18). O que se perde não é uma capacidade
+   em uso — são ~400 linhas de vantagem inicial, recuperáveis de **um** commit.
+
 | Opção | Consequência | Custo |
 |---|---|---|
-| **(a) Deixar como está** | Duas superfícies de autoria, nenhuma usada; a próxima auditoria acha a mesma coisa por outro nome | 0 |
-| **(b) Deletar** | Menos superfície. Perde o único executor de KPI de usuário que **funciona** hoje | ~4 arquivos |
-| **(c) Convergir**: `custom-kpis` vira a execução *stateless* e `definitions` a persistência da mesma forma | Um só modelo mental de "KPI do usuário". Exige reconciliar `KpiDefinition` com `PipelineSpec` — são duas formas diferentes para o mesmo objeto de domínio, o gatilho exato do `_REUSE-CRITERION.md` | Investigação própria, provável ADR |
+| **(a) Deixar como está** | O custo **não é zero**, ao contrário do que a v1 registrou. Fica uma rota `POST` **viva** (sem 403), **sem doc** (E16), **sem teste** (E15), **sem gate capaz de enxergá-la** (E17) e que faz `findMany` **sem `take`** sobre a tabela alvo (E19). A próxima auditoria a reencontra — esta já é a segunda vez | 0 arquivos; **custo recorrente** de re-descoberta e de rota não observada |
+| **(b) Deletar** ⭐ **recomendada** | Fecha a porta de **execução** no mesmo estado em que `F-AD0=(c)` fechou a de **persistência** — é o que a própria v1 pediu ("duas portas fechadas em vez de uma"), agora fechando de verdade. **Não remove capacidade nenhuma do produto:** `discover` segue sendo a superfície viva (E18). Reversível a custo ~0: `54b1839` é commit autocontido, sem dependentes | **Baixo.** 3 deleções (`controllers/customKpiController.ts`, `features/analytics/engine/CustomKpiExecutor.ts`, `features/analytics/schemas/KpiSchema.ts`) + 2 linhas em `routes/analytics.ts`. **Zero** teste a atualizar, **zero** path de OpenAPI a limpar (E16) |
+| **(c) Convergir** | **Premissa falsificada** (§2.4). Convergir é **união lossy** de dois vocabulários (`min`/`max` × `formula`; `contains` × `ne`/`in`/`nin`) e **exige `F-AD5` decidido** para saber qual forma ganha: é o **único** ramo deste ADR que depende de produto | Alto e **bloqueado em `F-AD5`** — não decidível pelo agente |
 
-**Recomendação:** decidir **junto** com F-AD0, não depois. Qualquer que seja o veredito de F-AD0, deixar
-F-AD6 em (a) é escolher conscientemente manter duas portas fechadas em vez de uma.
+**Recomendação: (b) deletar.** E ela **não depende de `F-AD5`** — o caso adversarial que tentei contra
+essa conclusão foi exatamente esse: *"e se `F-AD5` voltar em semanas com o builder de pipeline reusando
+`KpiDefinition` inteiro?"*. **Não flipa:** nesse cenário a restauração é `git show 54b1839 | git apply`
+(4 arquivos, sem dependentes), contra o custo **garantido** de manter até lá uma rota viva não
+documentada, não testada e invisível para todo gate. O único cenário em que **(a)** ganha é o dono já
+saber que `F-AD5` fecha em (b) **e** que o builder nasce da forma **escalar** — informação que o agente
+não tem e **não vai presumir**.
+
+> **Viés declarado (T8):** simétrico ao de F-AD0 e por isso vale escrever. Lá o par tinha incentivo a
+> **congelar**; aqui tem incentivo a **deletar**, porque deleção é a recomendação que sempre parece
+> madura e nunca falha em review. O contrapeso honesto: se a tese "onboarding AI gera ERPs setoriais"
+> implicar autoria de KPI, `custom-kpis` é o **único** pedaço dessa capacidade que **já executa** — e eu
+> estou recomendando descartar trabalho já pago com base em "dá pra recuperar do git", o que é verdade
+> **só enquanto alguém lembrar que existe**. Por isso o SHA `54b1839` está no corpo desta seção, e não só
+> na história do repositório: este ADR é o que torna a reversibilidade real.
 
 ---
 
