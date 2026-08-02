@@ -78,11 +78,25 @@ mas a linha final subcontava o catálogo em mais de um terço. Agora o total é 
 `CAT` menos a lista de exclusão, e bate com `ITEMS.length` medido em execução.
 
 ### 3 · Triar o que já foi medido (AV-00 bloco 9)
-Nada foi triado. Emitir `triagem/1.0`, que nunca foi exercitado uma vez:
+Nenhum achado das rodadas v4 (R1, R2, R3) foi triado:
 - 4 achados do R1, 3 do R3 — verificar falsificador, atribuir portão, dono e data.
 - 110 obrigações do R2 — não são achados; decidir se viram fila de trabalho ou aceite.
 
 O bloco 9 proíbe corrigir achado não triado. **Nenhuma correção de código antes disto.**
+
+**CORREÇÃO — a versão anterior deste documento dizia que `triagem/1.0` "nunca foi
+exercitado uma vez". É falso, e conferir levou um comando.** `docs/audit/AV-L1-TRIAGEM.json`
+é um `triagem/1.0` completo da rodada AV-L1 (`ae8d18b`): 4 itens, 4 falsificadores
+executados, portão e dono em todos, zero item sem responsável. Não é começo do zero — é
+precedente, e um bom: aquele artefato traz três coisas que o contrato ainda NÃO exige e que
+valem copiar para a triagem do R1/R3:
+- `verification_note` declarando que os falsificadores rodaram contra um commit **diferente**
+  do relatório, com `git diff --stat` provando que nenhum arquivo de evidence estava no meio;
+- `barriers_searched` registrando que cada `barrier_kind` foi reemitido **depois** de
+  procurar barreira existente — a lição literal foi que `nenhuma_conhecida` só pode ser
+  emitido depois de procurar, senão é "não procurei" com nome de veredito;
+- `own_bias_named`, que nomeia o viés de quem triou (inclusive "sou verificador da minha
+  própria correção" no item onde isso valia).
 
 ### 4 · Os achados de maior dano, se e quando triados
 - **R3 F1 (dano 4)** — o caminho de escrita do razão não tem cobertura de integração. Nenhum teste de integração instancia `PostingService`; `PostingDimension.integration.test.ts:76` define um helper local `postEntry` que grava direto via `db.posting.create`.
@@ -145,9 +159,9 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
 2. **A reconstrução é autoria, não a v4 original.** O texto perdido não volta. Os blocos
    novos são fiéis ao que os três relatórios descrevem e satisfazem o gate, mas quem
    comparar com a v4 anterior vai achar diferenças de redação — não há como medir quantas.
-3. **Os itens 3 e 4 da fila não foram tocados.** Nada foi triado; `triagem/1.0` continua sem
-   ter sido exercitado uma única vez. Nenhum achado de código foi corrigido, e isso é
-   deliberado: o AV-00 bloco 9 proíbe corrigir o não triado.
+3. **Os itens 3 e 4 da fila não foram tocados.** Nenhum achado das rodadas v4 foi triado, e
+   nenhum foi corrigido — deliberado: o AV-00 bloco 9 proíbe corrigir o não triado.
+   (`triagem/1.0` já tem um precedente exercitado, o `AV-L1-TRIAGEM.json` — ver item 3.)
 4. **B10 continua aviso, não erro.** As três rodadas seguem sem revisão independente. O gate
    avisa e não bloqueia — decisão anterior, mantida, mas é a lacuna que o próprio §9.4 chama
    de rejeitável.
