@@ -30,35 +30,87 @@ const CustomKpiRequestSchema = z.object({
   kpis: z.array(KpiDefinitionSchema).min(1, 'At least one KPI definition is required'),
 });
 
+/**
+ * Upper bound on rows loaded into memory for a single request.
+ *
+ * `getAllTableData` is an unbounded `findMany` shared by 15 call sites — capping it there
+ * would silently truncate every analytics aggregate in the app. A bare `take` here would be
+ * just as wrong: truncating the input of a `sum`/`avg` returns a plausible WRONG number.
+ * So the guard refuses instead of truncating.
+ *
+ * ponytail: hard refusal above the cap; switch to `getTableDataStream` + incremental
+ * accumulators if a real table ever exceeds it.
+ */
+const MAX_KPI_ROWS = 50_000;
+
 // ---------------------------------------------------------------------------
 // Handler
 // ---------------------------------------------------------------------------
 
-/**
- * POST /api/analytics/custom-kpis
- *
- * Body:
- * ```json
- * {
- *   "tableId": "<tableId>",
- *   "kpis": [
- *     {
- *       "name": "Total Revenue",
- *       "tableId": "<tableId>",
- *       "measure": "sum",
- *       "field": "totalAmount",
- *       "filters": [{ "field": "status", "operator": "eq", "value": "paid" }]
- *     }
- *   ]
- * }
- * ```
- *
- * Returns:
- * - `400` if Zod validation fails or any KPI field does not exist in the schema.
- * - `404` if the table is not found.
- * - `200` with an array of KPI results, where each failed calculation produces
- *         `{ kpiName, value: null, error: "Calculation failed" }` instead of
- *         propagating and crashing the whole response.
+/** @openapi
+ * /api/analytics/custom-kpis:
+ *   post:
+ *     summary: Execute ad-hoc custom KPI definitions over a dynamic table
+ *     description: >-
+ *       Validates every KPI definition with Zod and against the target table's real column
+ *       list, then executes them. A KPI whose calculation throws yields a null value plus an
+ *       error string rather than failing the whole response. Refuses tables above 50000 rows
+ *       instead of truncating, because a truncated sum or avg is a plausible wrong number.
+ *     tags: [Analytics]
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [tableId, kpis]
+ *             properties:
+ *               tableId:
+ *                 type: string
+ *                 description: Dynamic table the KPIs are computed over
+ *               kpis:
+ *                 type: array
+ *                 minItems: 1
+ *                 items:
+ *                   type: object
+ *                   required: [name, tableId, measure, field]
+ *                   properties:
+ *                     name: { type: string, minLength: 1, maxLength: 100 }
+ *                     tableId:
+ *                       type: string
+ *                       description: Must equal the top-level tableId
+ *                     measure: { type: string, enum: [sum, avg, count, min, max] }
+ *                     field: { type: string, minLength: 1 }
+ *                     filters:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required: [field, operator]
+ *                         properties:
+ *                           field: { type: string, minLength: 1 }
+ *                           operator: { type: string, enum: [eq, gt, lt, gte, lte, contains] }
+ *                           value: {}
+ *     responses:
+ *       '200':
+ *         description: One result per submitted KPI, in request order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success: { type: boolean }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       kpiName: { type: string }
+ *                       value: { type: number, nullable: true }
+ *                       error: { type: string, nullable: true }
+ *       '400': { $ref: '#/components/responses/BadRequestError' }
+ *       '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *       '404': { $ref: '#/components/responses/NotFoundError' }
  */
 export async function executeCustomKpisHandler(req: Request, res: Response) {
   try {
@@ -80,6 +132,18 @@ export async function executeCustomKpisHandler(req: Request, res: Response) {
     }
 
     const { tableId, kpis } = parseResult.data;
+
+    // Every KpiDefinition carries its own `tableId`, but only the top-level one selects the
+    // table. Accepting a per-KPI value and silently ignoring it makes a mismatched request
+    // return numbers from the wrong table — reject instead.
+    const mismatched = kpis.filter((k) => k.tableId !== tableId).map((k) => k.name);
+    if (mismatched.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Every kpi.tableId must equal the top-level tableId',
+        details: mismatched,
+      });
+    }
 
     // -------------------------------------------------------------------
     // 2. Fetch table and its schema columns
@@ -119,8 +183,16 @@ export async function executeCustomKpisHandler(req: Request, res: Response) {
     }
 
     // -------------------------------------------------------------------
-    // 4. Fetch table data
+    // 4. Fetch table data (bounded — see MAX_KPI_ROWS)
     // -------------------------------------------------------------------
+    const { total } = await service.getTableData(ctx, tableId, 1, 1);
+    if (total > MAX_KPI_ROWS) {
+      return res.status(400).json({
+        success: false,
+        error: `Table has ${total} rows, above the ${MAX_KPI_ROWS}-row limit for custom KPI execution`,
+      });
+    }
+
     const rawRows = await service.getAllTableData(ctx, tableId);
     const rows = rawRows.map((r) => ({
       id: String(r.id),
