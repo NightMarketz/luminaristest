@@ -4,10 +4,12 @@
 - **Status:** **Accepted (parcial) — RATIFICADO POR SINAL HUMANO 2026-08-01: `F-AD0 → (c) manter
   congelado`.** `F-AD5` (a tela) fica **explicitamente aberto** — e é ele que reabre este ADR.
   `F-AD1`, `F-AD2`, `F-AD3`, `F-AD4` ficam **dormentes** (só existem sob `F-AD0=(a)`).
-  **`F-AD6` tem agora o `_REUSE-CRITERION.md` respondido com evidência (F-AD6.1): (c) está ELIMINADA;
-  o fork real é (a) × (b), com `(b) deletar` como default — pendente de UMA pergunta ao dono (F-AD6.3).**
-  Nada foi deletado: a emenda de 2026-08-02 é **só documento**, e passou por revisão adversarial
-  independente que corrigiu 6 pontos (registrados inline). Barreira implementada e verificada: **§4.2**.
+  **`F-AD6` → ✅ RATIFICADO POR SINAL HUMANO 2026-08-02: `(a) MANTER até F-AD5 fechar`** — o dono
+  confirmou que há superfície de execução ad-hoc de KPI no roadmap. `(c) convergir` fica **eliminada por
+  evidência** (`_REUSE-CRITERION.md` respondido em F-AD6.1). A decisão **ativa** os consertos de
+  **F-AD6.4** (E18, E19), que **não foram implementados** — a emenda de 2026-08-02 é **só documento**, e
+  passou por revisão adversarial independente que corrigiu 6 pontos (registrados inline).
+  Barreira implementada e verificada: **§4.2**.
 - **Autores:** `luminaris-orchestrator` (roteamento, ORCH-001 — não implementa, não aprova) sobre
   evidência lida em código (CBM-001: nada aqui se apoia em grafo ou em memória sem leitura).
 - **Origem:** achado **N1** da revisão independente do PR #157 (mergeado, `6500249`), que fechou o
@@ -225,7 +227,19 @@ uniformizar a resposta) é item pequeno e independente destes três.
 **(c) torna todo o resto deste ADR desnecessário**, porque o caminho de seed/sistema nunca passou por
 `canManageData`. Se a resposta for (c), F-AD0 deve fechar em (b) ou (c).
 
-### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — 🟡 **RECOMENDAÇÃO INSTRUÍDA: (b) deletar** — aguarda ratificação
+### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **DECIDIDO: (a) MANTER até F-AD5 fechar**
+
+> **RATIFICADO POR SINAL HUMANO 2026-08-02: `F-AD6 → (a) manter`.** O dono respondeu **SIM** à pergunta
+> de F-AD6.3 — *há superfície de execução ad-hoc de KPI no roadmap*. Isso resolve o único ramo contestado
+> e **inverte o default** que o par recomendava: com a categoria de E22 destinada a existir, `custom-kpis`
+> deixa de ser órfão-a-deletar e passa a ser **a única implementação existente dessa categoria**.
+>
+> **Consequência que a decisão ativa (é o que (a) custa):** `custom-kpis` sai da condição de curiosidade
+> e vira **dívida ativa**. Ver **F-AD6.4**.
+>
+> **O que a decisão NÃO reverte:** o veredito do `_REUSE-CRITERION.md` em F-AD6.1 continua de pé —
+> **(c) convergir segue eliminada**, e quando a superfície ad-hoc for construída ela deve executar
+> **`PipelineSpec`** (a forma viva), não `KpiDefinition`. Manter ≠ consagrar a segunda gramática.
 
 Segundo caminho de analytics autorado pelo usuário: vivo, sem 403, com Zod completo **e** validação de
 campo contra o schema da tabela — e **zero chamadores no `my-app`**.
@@ -357,6 +371,20 @@ desmentir" — **é a mais fraca**. Zero linhas num banco de dev é consistente 
 não com "o desenho impede escrita". Quem sustenta essa conclusão é **E16**, que é estática e exaustiva
 sobre todo caminho de escrita. E17 corrobora; não falsifica.
 
+#### F-AD6.4 — O que `(a) manter` ativa (pendente — **não implementado nesta emenda**)
+
+Com F-AD6=(a), os dois achados laterais deixam de ser observação e viram conserto. Nenhum foi feito aqui:
+esta emenda é só documento, e o primeiro tem um fork de desenho que não é do par.
+
+| Item | Evidência | O que fazer | Custo |
+|---|---|---|---|
+| **1. `KpiDefinition.tableId` exigido-e-ignorado** | E18 | Memória `param-aceito-e-ignorado-e-bug`: *"ou implementa, ou 400"*. **É um fork, não uma tarefa:** (i) **remover** o campo do schema (o `tableId` de topo do request já manda) — 1 linha, mas quebra qualquer cliente que o envie; (ii) **implementar** — cada KPI passa a poder apontar sua própria tabela, o que exige `getTableById` por KPI e re-checagem de posse por linha; (iii) **400** se `kpi.tableId !== tableId` de topo — 3 linhas, preserva a forma e fecha a mentira. **A escolha depende de F-AD5:** se a superfície ad-hoc for multi-tabela, (ii); se não, (iii) | 1–15 linhas conforme o ramo |
+| **2. Rota fora do `openapi.json`** | E19 | Adicionar o bloco de doc do `POST /api/analytics/custom-kpis` e regerar (`npm run docs:generate`). **Nota de gate:** o wiring gate (REV-006) **não pegou** uma rota registrada e ausente da spec — isso é um furo do próprio gate, não só deste endpoint | 1 bloco de DTO/doc + regeneração |
+| **3. (independente) Comentário mentiroso da policy** | E21 / §2.4 | Corrigir `DynamicTablePolicy.ts:28-29` — ele afirma um caminho de escrita de sistema que não existe, e é a origem provável do N1 | 1 linha |
+| **4. (adendo b′, segue adiado)** | E15 | `min`/`max`/`contains` na forma **viva** só quando houver autor de pipeline. Sob (a) isso fica ainda mais claramente pendurado em F-AD5 | ~6 linhas, 2 arquivos |
+
+**Item 3 não depende de nada** e pode ir sozinho. Itens 1 e 2 são a fatia de (a).
+
 **Achado da revisão que vale registrar:** `server/scripts/test-report-2026-06-12.html:587` contém uma
 linha `POST /api/analytics/custom-kpis` → `200` → *"sum / avg / count / min / max por tabela"*. É relatório
 estático, **não** chamador executável (nenhum script em `server/scripts/` referencia a rota) — a conclusão
@@ -404,8 +432,11 @@ PASS emitido pela mesma sequência que implementou é rejeitado por regra (memó
 - **F-AD0=(b) apagar:** deletar os 3 handlers de escrita + as 3 rotas + `AnalyticsDefinitionDto.ts` + o
   teste de integração; limpar `docs.paths.ts`; decidir F-AD6 na mesma fatia. Gate: `tsc` limpo nos dois
   lados + `npm run docs:generate` sem path órfão (memória `openapi-wiring-static-artifact`).
-- **F-AD6=(b) deletar `custom-kpis` — ⏸ RECOMENDADO, NÃO IMPLEMENTADO (aguarda ratificação).** Uma fatia,
-  toda deleção, independente de F-AD0 e de F-AD5 (F-AD6.3): remover `src/controllers/customKpiController.ts`,
+- **F-AD6=(a) manter — ✅ RATIFICADO 2026-08-02.** A fatia que isso ativa é a de **F-AD6.4** (E18 + E19),
+  **não implementada**. O plano de deleção abaixo fica registrado só como o custo de reabrir se F-AD5
+  fechar sem superfície ad-hoc.
+- **F-AD6=(b) deletar `custom-kpis` — ❌ NÃO ESCOLHIDO (registrado para reabertura).** Uma fatia,
+  toda deleção, independente de F-AD0 (F-AD6.3): remover `src/controllers/customKpiController.ts`,
   `src/features/analytics/engine/CustomKpiExecutor.ts`, `src/features/analytics/schemas/KpiSchema.ts` e as
   duas linhas de `src/routes/analytics.ts` (`:11` import, `:16` rota). Nenhum outro importador existe
   (**E23**). **Gates:** `cd server && npx tsc --noEmit` limpo; `npm run docs:generate` sem path órfão — e note
