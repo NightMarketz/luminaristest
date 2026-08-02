@@ -13,7 +13,9 @@
 > ### ⚠ Aviso de leitura — duas análises independentes, uma divergência real
 >
 > Este ADR foi emendado **duas vezes no mesmo dia por sessões que não se viram** (`a94309e` 01:40 →
-> PR #160; `be438e0` 02:01 → PR #161, mergeadas em sequência). As duas rodaram o
+> PR #160; `be438e0` 02:01 → PR #161, mergeadas em sequência) — e uma **terceira** sessão (`f6da605b`
+> 09:20 → PR #162) consertou o código do `custom-kpis` em paralelo, colidindo com a fatia da segunda
+> (ver a nota de colisão em **F-AD6.6**). As duas primeiras rodaram o
 > `_REUSE-CRITERION.md` sobre `KpiDefinition` × `PipelineSpec` e **chegaram a vereditos opostos na
 > Etapa 1**. Ambas estão preservadas de propósito:
 >
@@ -430,14 +432,25 @@ em `424bc56`; dois seguem abertos.
 
 | Item | Evidência | Estado |
 |---|---|---|
-| **1. `kpis[].tableId` exigido-e-ignorado** | E22 | 🔓 **ABERTO — é fork, não tarefa.** `param-aceito-e-ignorado-e-bug` manda *"ou implementa, ou 400"*: (i) **remover** do schema (1 linha, quebra cliente que o envie); (ii) **implementar** (cada KPI aponta sua tabela → `getTableById` por KPI + posse por linha); (iii) **400** se divergir do `tableId` de topo (3 linhas, preserva a forma). **O ramo certo depende de `F-AD5` ser multi-tabela.** A spec hoje **documenta** o comportamento real — torna a mentira visível, não a conserta |
-| **2. Rota fora do `openapi.json`** | E16 | ✅ **FEITO 2026-08-02** (`424bc56`). Bloco `@openapi` em `routes/docs.paths.ts`, junto dos 9 irmãos de analytics (125 dos 138 paths vivem lá; só 3 controllers colocam doc). Spec regerada: **137 → 138, +152 linhas, 0 deleções** — a checagem que importa, porque o bug do `: ` do swagger-jsdoc já removeu paths em silêncio 3×. `BASELINE` subido a 138 de propósito |
+| **1. `kpis[].tableId` exigido-e-ignorado** | E22 | ✅ **FECHADO por PR #162** (`f6da605b`). Resolvido no ramo **(iii) 400**: request com `kpis[].tableId` divergente do `tableId` de topo agora é rejeitado, em vez de devolver em silêncio números da tabela errada |
+| **2. Rota fora do `openapi.json`** | E16 | ✅ **FECHADO por PR #162** (`f6da605b`): bloco `@openapi` **no controller**, `BASELINE` 137→138, spec regerada. **Substituiu** a correção equivalente de `424bc56`, que punha o bloco em `routes/docs.paths.ts` — ver a nota de colisão abaixo |
 | **3. Comentário mentiroso da policy** | E23 / §2.5 | ✅ **FEITO 2026-08-02** (`424bc56`). O comentário agora diz o que o código faz — read-only para **todos**, inclusive dono, ADMIN e chamador interno — e nomeia as duas razões, apontando este ADR e a barreira. Write-lock 8/8, policy spec 11/11 |
 | **4. Furo do gate de wiring** | E17 | 🔓 **ABERTO — registrado, não construído.** Nenhum dos 3 guards de OpenAPI pega esta classe: um piso não sente falta de path que **nunca** foi contado, e os guards de junk/`$ref` só inspecionam o que a spec **já contém**. Pegar exige diff *tabela-de-rotas × spec*, que não existe. Anotado no próprio `openapi-paths.test.ts` |
-| **5. `findMany` sem `take`** | E19 | 🔓 **ABERTO.** Sob `(a)` a rota fica viva; N KPIs sobre **todas** as linhas em memória é dívida de performance real, não teórica |
+| **5. `findMany` sem `take`** | E19 | ✅ **FECHADO por PR #162** — e por um caminho **melhor do que "pôr `take`"**: teto por **recusa** (`400` acima de `MAX_KPI_ROWS = 50_000`, contando antes), porque `getAllTableData` é compartilhado por 15 call sites e um `take` local **truncaria a entrada de um `sum`/`avg`, devolvendo número plausível e ERRADO**. Upgrade path anotado no código |
+| **6. Cobertura de teste** | E15/E20 | ✅ **FECHADO por PR #162**: 6 testes de integração no arquivo que já cobria analytics — inclusive um `200` real que semeia 4 linhas (uma soft-deleted) e trava os valores |
 
-**Gates da fatia executada:** `cd server && npx tsc --noEmit` exit 0; suíte completa do server
-**154/154 suites, 1850/1850 testes** (unit 123/1506 + integration 31/344).
+> **Nota de colisão (3 sessões paralelas no mesmo fork).** Além da divergência de §2.4×§2.6, uma **terceira**
+> sessão (PR #162, 09:20) consertou `custom-kpis` de forma **mais completa** que a fatia de `424bc56`:
+> documentou **e** testou **e** limitou **e** fechou o `tableId`. As duas correções de OpenAPI colidiam de
+> modo perigoso — o mesmo path definido **duas vezes** (controller × `docs.paths.ts`), que o
+> `openapi-paths.test.ts` **não** pegaria, porque a contagem de paths não muda quando um bloco
+> sobrescreve o outro. **Resolvido descartando a versão de `424bc56`**: `docs.paths.ts` voltou ao estado
+> de `origin/main` e a spec regerada ficou **byte-idêntica** à do #162. É o `_REUSE-CRITERION.md` aplicado
+> ao próprio trabalho — entre dois impls do mesmo objeto, some com o pior, mesmo sendo o seu.
+
+**Gates:** `cd server && npx tsc --noEmit` exit 0; após a reconciliação, `openapi-paths` +
+`analytics.routes.integration` + `DynamicTablePolicy` + `systemTableWriteLock` = **33/33**. Antes da
+entrada do #162, a suíte completa do server rodou **154/154 suites, 1850/1850 testes**.
 
 ---
 
