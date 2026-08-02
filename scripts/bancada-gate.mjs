@@ -13,7 +13,8 @@
 // ele mesmo declara seguir).
 //
 // O QUE GARANTE:
-//   B1  todo srcId do catálogo resolve para um bloco <script id> presente
+//   B1  todo srcId do catálogo resolve para um bloco <script id> presente — e todo srcId
+//       do arquivo está preso a um item que o parser leu (guarda de cobertura)
 //   B2  todo bloco t-* é referenciado por algum item (sem fiação órfã)
 //   B3  todo centerpiece.type emitido está declarado no contrato, e vice-versa
 //   B4  todo JSON auditoria/1.1 carrega o envelope completo, sem `severity`
@@ -55,19 +56,80 @@ for (const m of html.matchAll(/<script type="text\/plain" id="([^"]+)">([\s\S]*?
 }
 
 // itens do catálogo: code + ver + srcId + v4patch, lidos das entradas literais
+//
+// POR QUE ISTO NÃO É UMA REGEX. A versão anterior usava
+//     /\{code:"…",\s*fam:"…",\s*ver:"…"[\s\S]*?\}/g
+// e o `[\s\S]*?\}` não-guloso parava no PRIMEIRO `}` do item. Item com objeto aninhado
+// (`demo:{seconds:12}`) perdia tudo que vinha depois — inclusive `srcId` e `v4patch`.
+// Como B1 (`if (it.srcId && …)`) e B9 (`if (… || !it.srcId) continue`) PULAM item sem
+// srcId, o efeito não era erro: era silêncio. Medido por mutação nesta bancada: com o
+// srcId escondido atrás de um objeto aninhado e o bloco 4b removido do t-av20, o gate
+// deixou de reprovar as duas coisas. Gate que não morde é teatro.
+//
+// Agora a varredura é por chaves balanceadas e ciente de string, e não depende da ordem
+// nem da vizinhança das chaves dentro do item.
+function fimDoObjeto(s, ini) {
+  let prof = 0, aspas = null;
+  for (let i = ini; i < s.length; i++) {
+    const c = s[i];
+    if (aspas) {
+      if (c === '\\') { i++; continue; }
+      if (c === aspas) aspas = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') { aspas = c; continue; }
+    if (c === '{') prof++;
+    else if (c === '}' && --prof === 0) return i;
+  }
+  return -1;
+}
+
 const itens = [];
-for (const m of html.matchAll(/\{code:"([^"]+)",\s*fam:"([^"]*)",\s*ver:"([^"]+)"[\s\S]*?\}/g)) {
-  const bloco = m[0];
-  const src = bloco.match(/srcId:"([^"]+)"/);
+for (const m of html.matchAll(/\{code:"/g)) {
+  const fim = fimDoObjeto(html, m.index);
+  if (fim < 0) continue;
+  const bloco = html.slice(m.index, fim + 1);
+  const fam = bloco.match(/\bfam:"([^"]*)"/);
+  if (!fam) continue; // entrada de CAT (code+title+ver, sem fam) — contada mais abaixo
+  const code = bloco.match(/^\{code:"([^"]+)"/);
+  const ver = bloco.match(/\bver:"([^"]+)"/);
+  if (!code || !ver) continue;
+  const src = bloco.match(/\bsrcId:"([^"]+)"/);
   itens.push({
-    code: m[1],
-    fam: m[2],
-    ver: m[3],
+    code: code[1],
+    fam: fam[1],
+    ver: ver[1],
     srcId: src ? src[1] : null,
     v4patch: /v4patch:\s*true/.test(bloco),
   });
 }
 if (!itens.length) err('B1', 'nenhum item de catálogo reconhecido — o parser do gate ficou cego ao formato');
+
+// GUARDA DE COBERTURA — a checagem que teria falhado se o defeito acima ainda existisse.
+// Todo `srcId:"…"` do arquivo tem de estar preso a um item que o parser leu. Se sobrar
+// srcId no arquivo, há fiação que o gate não enxerga, e B1/B9 estão passando por cegueira
+// e não por conformidade. É esta guarda, não a leitura da regex, que impede a classe
+// inteira de voltar com outra forma de item.
+{
+  const noArquivo = [...html.matchAll(/srcId:"([^"]+)"/g)].map((m) => m[1]);
+  const lidos = itens.map((i) => i.srcId).filter(Boolean);
+  if (noArquivo.length !== lidos.length) {
+    const perdidos = noArquivo.filter((x) => !lidos.includes(x));
+    err('B1', `parser cego: o arquivo tem ${noArquivo.length} srcId e o gate prendeu ${lidos.length} a itens` +
+      (perdidos.length ? ` — fora do alcance: ${[...new Set(perdidos)].join(', ')}` : ' — duplicata ou item repetido'));
+  }
+}
+
+// Itens DERIVADOS de CAT: existem no trilho, são criados por ITEMS.push com chave
+// abreviada (`fam` em vez de `fam:"…"`) e nenhum parser literal os vê. Nenhum deles recebe
+// srcId, então B1 e B9 não se aplicam — mas o total precisa ser honesto: sem esta conta a
+// linha final subcontava o catálogo em mais de um terço, e um número que ninguém confere
+// é exatamente o que esta bancada existe para não produzir.
+const catCodes = [...html.matchAll(/\{code:"(AV-[^"]+)",\s*title:"/g)].map((m) => m[1]);
+const excluidos = (html.match(/CAT\.filter\(c=>!\[([^\]]*)\]/) || [, ''])[1]
+  .split(',').map((s) => s.trim().replace(/^"|"$/g, '')).filter(Boolean);
+const derivados = catCodes.filter((c) => !excluidos.includes(c));
+if (!catCodes.length) warn('B1', 'nenhuma entrada de CAT reconhecida — o contador de itens derivados ficou cego');
 
 // ---------- B1 · srcId resolve ----------
 for (const it of itens) {
@@ -212,6 +274,9 @@ if (erros.length) {
   process.exit(1);
 }
 console.log(
-  `\nOK: ${itens.length} itens, ${blocos.size} blocos, ${relatorios.length} relatório(s) auditoria/1.1, ` +
+  `\nOK: ${itens.length + derivados.length} itens no catálogo ` +
+  `(${itens.length} literais, com ${itens.filter((i) => i.srcId).length} srcId prontos; ` +
+  `${derivados.length} derivados de CAT, sem srcId e fora de B1/B9), ` +
+  `${blocos.size} blocos, ${relatorios.length} relatório(s) auditoria/1.1, ` +
   `${tiposUsados.size} tipo(s) de peça central em uso, ${avisos.length} aviso(s).`,
 );
