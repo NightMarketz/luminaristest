@@ -29,7 +29,10 @@ const { options } = require('../../scripts/generate-openapi');
 // +2 (PR #139 review residual): POST /api/dashboard-layout/{id}/activate + baseline catch-up;
 //    dashboard-layout/structured-data docs moved from docs.paths.ts into their controllers.
 // +1 (custom-KPI wiring debt): POST /api/analytics/custom-kpis — route existed since 54b1839
-//    with no @openapi block, so no gate ever saw it.
+//    with no @openapi block, so no gate ever saw it. The class is still UNGUARDED: a floor test
+//    cannot miss a path that was never counted, and the junk/$ref guards only inspect what the
+//    spec DOES contain. Catching it needs a route-table-vs-spec diff (registered path+method
+//    with no matching spec entry). Not built — recorded in ADR-ANALYTICS-DEFS F-AD6.6 item 4.
 const BASELINE = 138;
 
 describe('OpenAPI @openapi path coverage', () => {

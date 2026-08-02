@@ -1,13 +1,35 @@
 # ADR-ANALYTICS-DEFS — Escrita de definições de analytics (destravar × apagar × congelar)
 
-- **Data:** 2026-08-01
+- **Data:** 2026-08-01 · **Emendas de F-AD6:** 2026-08-02 (duas análises independentes — ver aviso abaixo)
 - **Status:** **Accepted (parcial) — RATIFICADO POR SINAL HUMANO 2026-08-01: `F-AD0 → (c) manter
   congelado`.** `F-AD5` (a tela) fica **explicitamente aberto** — e é ele que reabre este ADR.
   `F-AD1`, `F-AD2`, `F-AD3`, `F-AD4` ficam **dormentes** (só existem sob `F-AD0=(a)`).
-  **`F-AD6` ANALISADO 2026-08-01 (emenda): recomendação `(b) deletar`, aguardando ratificação** — a
-  premissa que este ADR deu para `F-AD6=(c)` foi **falsificada** por leitura de código (**§2.4**);
-  a análise **não depende de `F-AD5`** e a justificativa está em **§3/F-AD6**. Barreira implementada
-  e verificada: **§4.2**.
+  **`F-AD6` → ✅ RATIFICADO POR SINAL HUMANO 2026-08-02: `(a) MANTER até F-AD5 fechar`** — o dono
+  confirmou que **há superfície de execução ad-hoc de KPI no roadmap**. Isso **supersede** a
+  recomendação `(b)` que a análise de §2.4/F-AD6 deixou pendente de sinal. **A objeção de (b) NÃO foi
+  vista pelo dono ao decidir e continua de pé — ver F-AD6.5**, que é o gatilho para reabrir. Barreira
+  implementada e verificada: **§4.2**.
+
+> ### ⚠ Aviso de leitura — duas análises independentes, uma divergência real
+>
+> Este ADR foi emendado **duas vezes no mesmo dia por sessões que não se viram** (`a94309e` 01:40 →
+> PR #160; `be438e0` 02:01 → PR #161, mergeadas em sequência) — e uma **terceira** sessão (`f6da605b`
+> 09:20 → PR #162) consertou o código do `custom-kpis` em paralelo, colidindo com a fatia da segunda
+> (ver a nota de colisão em **F-AD6.6**). As duas primeiras rodaram o
+> `_REUSE-CRITERION.md` sobre `KpiDefinition` × `PipelineSpec` e **chegaram a vereditos opostos na
+> Etapa 1**. Ambas estão preservadas de propósito:
+>
+> | Seção | Veredito Etapa 1 | Rota até o resultado |
+> |---|---|---|
+> | **§2.4** (1ª) | **DIFERENTE em espécie** — diverge em shape **e** em posse; o critério **para** na Etapa 1 | logo o critério **não obriga** (c) |
+> | **§2.6** (2ª) | **MESMO objeto** → Etapa 2 → um lado **morto** | logo *"reuse o vivo, não clone o morto"* **elimina** (c) |
+>
+> **Convergem no que decide:** o `_REUSE-CRITERION.md` **não sustenta (c)**, por dois caminhos
+> independentes. **§2.6 concede a §2.4** na leitura da Etapa 1 (ver a nota de concessão lá) — a §2.4 é
+> mais fiel à letra do critério, e a evidência que a §2.6 levantou (E15 da 1ª tabela: os vocabulários
+> divergem **nos dois sentidos**) é argumento **a favor** da §2.4, não dela mesma. Onde a §2.6 acrescenta
+> e a §2.4 não tinha: E20–E25 abaixo, o custo real de `F-AD5(c)` (§2.5) e os consertos executados
+> (F-AD6.6).
 - **Autores:** `luminaris-orchestrator` (roteamento, ORCH-001 — não implementa, não aprova) sobre
   evidência lida em código (CBM-001: nada aqui se apoia em grafo ou em memória sem leitura).
 - **Origem:** achado **N1** da revisão independente do PR #157 (mergeado, `6500249`), que fechou o
@@ -65,10 +87,32 @@ Mesma regra: tudo lido no arquivo ou medido em `git`, nada inferido de grafo.
 | E18 | A superfície **viva** de "KPI sobre tabela do usuário" no produto é `GET /analytics/discover/:tableId` — **2 chamadores** no `my-app`. As duas portas de **autoria** (`custom-kpis` e `definitions`) têm **zero** | **verificado** | `my-app/lib/services/analytics.service.ts:10`; `my-app/features/dashboard/category-views/finance/services/FinanceService.ts:74` |
 | E19 | `custom-kpis` **fecha posse** (`getTableById` → `canView`) **e não tem o oráculo de §2.2**: o `catch` devolve **404 uniforme** para "não existe" e para "não é seu". Em compensação chama `getAllTableData` → `findMany` **sem `take`** — N KPIs sobre **todas** as linhas da tabela em memória, no processo | **verificado** | `customKpiController.ts:89-97,124`; `DynamicTableService.ts:584-587`; `DynamicTableRepository.ts:131-136` |
 
-## 2. Quatro correções à premissa
+> **E16 está RESOLVIDO desde 2026-08-02** (commit `424bc56`): o bloco `@openapi` de
+> `POST /api/analytics/custom-kpis` entrou em `routes/docs.paths.ts` e a spec foi regerada —
+> **137 → 138 paths, +152 linhas, 0 deleções**, com o `BASELINE` do guard subido a 138 de propósito.
+> **E17 (o furo do gate) NÃO está resolvido** e continua valendo como classe: o piso não enxerga rota
+> que nunca teve doc. Ver F-AD6.6.
 
-**§2.1–§2.3 corrigem o briefing de entrada. §2.4 corrige _este ADR_** (T3: a regra que eu escrevo se
-aplica primeiro a mim).
+### 1.2 Evidência da 2ª análise independente (2026-08-02) — E20–E25
+
+Renumerada a partir de **E20** para não colidir com E13–E19 da 1ª análise. Só entram os itens que a
+1ª tabela **não** tinha; onde as duas mediram a mesma coisa (in-degree, ausência de teste, ausência de
+doc, `discover` como superfície viva), a 1ª tabela já cobre e a 2ª **confirma** — T5, não vira texto novo.
+
+| # | Claim | Grau | Evidência |
+|---|---|---|---|
+| E20 | **Nada, em lugar nenhum, escreve linha na tabela CORE `analyticsDefinitions`** — nem usuário (403, E1–E4) nem sistema. A família `*AsSystem` cobre **tabela/schema/preset**, nunca **dado**: **não existe `createTableDataAsSystem`** | **verificado** | `grep "AsSystem" server/src` → só `createTableAsSystem:193`, `updateTableSchemaAsSystem:208`, `updateTableAsSystem:252`, `installPresetAsSystem:278`, `deleteTableAsSystem:445`. O único write de dado "de sistema" é `createTableData(..., {isSystem:true})` — que E4 já mostrou **não** driblar a policy |
+| E21 | No **`dev.db` real** a tabela CORE `analyticsDefinitions` existe (instalada por preset) e tem **0 linhas** | **verificado por execução** | Probe via client Prisma contra `server/prisma/prisma/dev.db`: 1 tabela (`cmr2jy28z006gci1kqgp1vh7l`), `dynamicTableData.count({dynamicTableId})` → **0** (de 13 tabelas dinâmicas). **Peso baixo** — mede *um* banco de dev; quem sustenta a conclusão é E20, que é estática e exaustiva |
+| E22 | `KpiDefinition.tableId` é **exigido pelo Zod e nunca lido** — o controller usa só o `tableId` de topo; nem `validateKpiDefinition` nem `executeCustomKpis` tocam `kpi.tableId`. Classe `param-aceito-e-ignorado` | **verificado** | `customKpiController.ts:82,90,124` × `KpiSchema.ts:24` (exigido) e `:68-94` / `CustomKpiExecutor.ts` inteiro (zero referências) |
+| E23 | O comentário da própria policy **afirmava o contrário do código**: dizia que "*only internal system processes (`isSystem = true`) are authorised to write to them*", capacidade que E20 mostra não existir. **CORRIGIDO em `424bc56`** | **verificado** | `DynamicTablePolicy.ts` (comentário antigo × `:30-34`) × `DynamicTableService.ts:514` vs `:529` |
+| E24 | **Não existe rota nenhuma que execute um `PipelineSpec` fornecido pelo cliente.** `analyticsController.ts` não lê `req.body` em lugar algum; os únicos endpoints de analytics que aceitam corpo são os de `definitions` (403 para todos). `aggregatePipeline` só é alcançável por spec autorado **no servidor** | **verificado** | `controllers/analyticsController.ts` (arquivo inteiro, zero `req.body`); `routes/analytics.ts`; `routes/analyticsDefinitions.ts` + E1–E4 |
+| E25 | `discoverKPIsAsync` **sintetiza `PipelineSpec` a partir de um `tableId` cru** e emite KPIs escalares `sum`/`avg`/`count` com `dimensions: []`, como cards — mas **nenhum** dos 7 charts emite `filters`, e o `count` não leva `field`. A tradução que o repo já faz cobre só o caso **não-filtrado** | **verificado** | `AnalyticsService.ts:437-451`, `:454-467`, `:525-540`; zero ocorrências de `filters` no método |
+
+## 2. Seis correções à premissa
+
+**§2.1–§2.3 corrigem o briefing de entrada. §2.4–§2.6 corrigem _este ADR_** (T3: a regra que eu escrevo
+se aplica primeiro a mim) — e **§2.6 corrige a análise que a escreveu**, concedendo à §2.4 numa
+divergência entre as duas sessões (ver o aviso de leitura no topo).
 
 Registradas porque **removem trabalho do plano** (T5: input que só confirma não vira texto; estas
 contradizem).
@@ -168,6 +212,54 @@ A Etapa 2 não decide reuso aqui (Etapa 1 já parou), mas decide **(a) × (b)**,
 O critério manda **não clonar o morto** — e, quando o morto não tem sequer um vivo correspondente para
 herdar dele, sobra a pergunta de F-AD6, que é sobre **manter ou remover**, não sobre reusar.
 
+### 2.5 O caminho "seed/sistema escreve a definição" **não existe hoje** — `F-AD5(c)` é mais caro do que este ADR estimou
+
+*(2ª análise independente, 2026-08-02. Assunto distinto de §2.4 — não conflita com ela.)*
+
+`F-AD5(c)` ("sem tela — autoria por seed/onboarding AI") está escrito neste ADR como *"torna `F-AD0=(a)`
+desnecessário, porque o seed escreve via `*AsSystem`, sem policy"*, com custo **"0 no frontend"**.
+**A premissa é falsa** (E20):
+
+- A família `*AsSystem` tem **cinco** membros e todos operam sobre **tabela, schema ou preset**.
+  **Não existe `createTableDataAsSystem`.**
+- O único write de **dado** com sabor de sistema é `createTableData(user, tableId, dto, {isSystem:true})`
+  — e **E4** já provou que `canManageData` roda em `:514`, quinze linhas antes de `isSystem` ser derivado
+  (`:529`). Um seed que tentasse esse caminho tomaria **o mesmo 403**.
+- **E23**: o comentário da policy afirmava exatamente a capacidade inexistente. É a origem provável do
+  próprio N1 — quem leu o comentário concluiu, corretamente a partir dele e incorretamente a partir do
+  código, que havia caminho de sistema. **Corrigido em `424bc56`.**
+
+**Consequência para o dono (não decidida aqui):** se `F-AD5` fechar em **(c)**, ele **não** é "0 no
+frontend". Exige **primeiro construir o caminho de escrita de sistema que não existe** — seja um
+`createTableDataAsSystem`, seja passar `isSystem` a `canManageData`, seja o estado `'managed'` de
+`F-AD1(c)`. Ou seja: **`F-AD5(c)` implica `F-AD1`**, e não o contrário.
+
+### 2.6 A 2ª análise leu a Etapa 1 ao contrário — e **concede** à §2.4
+
+*(2ª análise independente, 2026-08-02. Registrada porque divergiu, e porque perdeu.)*
+
+Rodando o mesmo `_REUSE-CRITERION.md`, a 2ª análise concluiu **MESMO objeto de domínio** na Etapa 1 e
+seguiu para a Etapa 2, onde achou o lado `KpiDefinition` **morto** e aplicou *"reuse o vivo, não clone o
+morto"* para eliminar (c). O argumento era: mesma posse e mesma derivação — os dois leem linhas de **uma**
+`DynamicTable` do usuário pelo `DynamicTableService` sob `canView` — mais a corroboração de E25 (o repo
+já traduz o KPI escalar para `PipelineSpec` em `discoverKPIsAsync`).
+
+**Onde ela erra, e a §2.4 acerta:**
+
+1. **Shape.** O critério é explícito: *"DIFERENTE em espécie ⟺ difere no **shape** OU em quem possui o
+   dado"*. A tabela de §2.4 mostra divergência de shape em 9 eixos, e a própria 2ª análise documentou que
+   os vocabulários divergem **nos dois sentidos** (`min`/`max` × `formula`; `contains` × `ne`/`in`/`nin`).
+   **Essa evidência é argumento a favor de §2.4** — a 2ª análise a levantou e a leu contra si mesma.
+2. **Posse.** A 2ª análise mediu posse sobre **as linhas agregadas**; o critério mede posse sobre **o
+   artefato comparado** — a spec. E aí a §2.4 está certa: `KpiDefinition` chega **por requisição**
+   (prop-driven, cliente possui), `PipelineSpec` é **autorada pelo servidor** (self-derived). E24/E25
+   **reforçam** a §2.4: em *todo* caminho existente de `PipelineSpec` quem possui a spec é o servidor.
+
+**Veredito conciliado:** vale a Etapa 1 de **§2.4 — divergência sancionada**. A Etapa 2 da §2.6 não decide
+reuso (a Etapa 1 já parou), mas sobrevive como leitura de **estado**, e nisso as duas concordam:
+`custom-kpis` está morto. **As duas rotas matam (c) como obrigação de reuso** — é a convergência que
+importa, e ela é mais forte por ter vindo de dois caminhos que discordavam.
+
 ---
 
 ## 3. Forks para ratificação
@@ -260,7 +352,20 @@ uniformizar a resposta) é item pequeno e independente destes três.
 **(c) torna todo o resto deste ADR desnecessário**, porque o caminho de seed/sistema nunca passou por
 `canManageData`. Se a resposta for (c), F-AD0 deve fechar em (b) ou (c).
 
-### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **ANALISADO 2026-08-01: recomendação (b); aguarda ratificação**
+### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **DECIDIDO: (a) MANTER até F-AD5 fechar**
+
+> **RATIFICADO POR SINAL HUMANO 2026-08-02: `F-AD6 → (a) manter`.** Perguntado se **há superfície de
+> execução ad-hoc de KPI no roadmap** — preview de builder, painel "monte seu KPI", ferramenta de KPI do
+> agente AI — o dono respondeu **SIM**. Como E24 mostra que essa categoria está **vazia** no repo hoje,
+> `custom-kpis` passa a ser a única implementação existente dela, e a decisão foi mantê-la.
+>
+> **Isto supersede a recomendação `(b)` abaixo**, que foi escrita antes e deixada explicitamente
+> *"aguardando sinal humano"*. **A análise de (b) NÃO foi apagada** — ela continua correta no que mede,
+> e sua objeção mais forte sobreviveu à ratificação: **F-AD6.5**.
+>
+> **O que a decisão NÃO reverte:** (c) segue eliminada pelas duas rotas (§2.4 e §2.6). Quando a superfície
+> ad-hoc for construída, ela deve executar **`PipelineSpec`** — as duas análises concordam nisso.
+> Manter ≠ consagrar a segunda gramática.
 
 Segundo caminho de analytics autorado pelo usuário: vivo, sem 403, com Zod completo **e** validação de
 campo contra o schema da tabela — e **zero chamadores no `my-app`**.
@@ -297,6 +402,56 @@ não tem e **não vai presumir**.
 > **só enquanto alguém lembrar que existe**. Por isso o SHA `54b1839` está no corpo desta seção, e não só
 > na história do repositório: este ADR é o que torna a reversibilidade real.
 
+#### F-AD6.5 — A objeção de (b) que o dono **não viu** ao ratificar (gatilho de reabertura)
+
+Registrada porque é a única coisa que poderia flipar a decisão, e a ratificação aconteceu **sem ela na
+mesa** — as duas sessões correram em paralelo e a pergunta ao dono foi formulada pela 2ª, que não
+conhecia o texto da 1ª. Honestidade de processo, não reabertura por conta própria:
+
+- **O que o dono pesou:** *"a categoria de execução ad-hoc está vazia; `custom-kpis` é a única
+  implementação existente dela"* — verdadeiro (E24).
+- **O que ele não pesou:** essa implementação está na **gramática errada**, e **as duas análises
+  concordam** que a superfície ad-hoc deve executar `PipelineSpec`. Se isso vale, manter `custom-kpis`
+  **não é vantagem inicial** — é manter uma rota viva, não testada e (até `424bc56`) invisível para todo
+  gate, que ninguém vai reusar. A restauração, se um dia fizer falta, é `git show 54b1839 | git apply`:
+  **um commit autocontido, sem dependentes**.
+- **A própria seção de (b) antecipou o cenário e o qualificou de forma mais estreita do que a pergunta
+  feita:** *"o único cenário em que **(a)** ganha é o dono já saber que `F-AD5` fecha em (b) **e** que o
+  builder nasce da forma **escalar**"*. O "sim" do dono confirma a **primeira** metade; **não** a segunda.
+
+**Assimetria que torna (a) a escolha segura mesmo assim, e por isso nada foi desfeito:** `(a)` preserva
+tudo e é reversível a qualquer momento; `(b)` destrói e exige sinal novo. Ficar em `(a)` **não fecha** a
+porta de `(b)`. **Gatilho explícito:** se `F-AD5` fechar e a superfície ad-hoc nascer executando
+`PipelineSpec` — o que ambas as análises esperam — então `(b)` volta à mesa **automaticamente**, porque
+nesse momento `custom-kpis` deixa de ter qualquer justificativa e a decisão perde a premissa.
+
+#### F-AD6.6 — O que `(a)` ativa
+
+`(a)` tem custo, e ele está enumerado em §3/F-AD6 na linha da própria opção. Dois itens foram executados
+em `424bc56`; dois seguem abertos.
+
+| Item | Evidência | Estado |
+|---|---|---|
+| **1. `kpis[].tableId` exigido-e-ignorado** | E22 | ✅ **FECHADO por PR #162** (`f6da605b`). Resolvido no ramo **(iii) 400**: request com `kpis[].tableId` divergente do `tableId` de topo agora é rejeitado, em vez de devolver em silêncio números da tabela errada |
+| **2. Rota fora do `openapi.json`** | E16 | ✅ **FECHADO por PR #162** (`f6da605b`): bloco `@openapi` **no controller**, `BASELINE` 137→138, spec regerada. **Substituiu** a correção equivalente de `424bc56`, que punha o bloco em `routes/docs.paths.ts` — ver a nota de colisão abaixo |
+| **3. Comentário mentiroso da policy** | E23 / §2.5 | ✅ **FEITO 2026-08-02** (`424bc56`). O comentário agora diz o que o código faz — read-only para **todos**, inclusive dono, ADMIN e chamador interno — e nomeia as duas razões, apontando este ADR e a barreira. Write-lock 8/8, policy spec 11/11 |
+| **4. Furo do gate de wiring** | E17 | 🔓 **ABERTO — registrado, não construído.** Nenhum dos 3 guards de OpenAPI pega esta classe: um piso não sente falta de path que **nunca** foi contado, e os guards de junk/`$ref` só inspecionam o que a spec **já contém**. Pegar exige diff *tabela-de-rotas × spec*, que não existe. Anotado no próprio `openapi-paths.test.ts` |
+| **5. `findMany` sem `take`** | E19 | ✅ **FECHADO por PR #162** — e por um caminho **melhor do que "pôr `take`"**: teto por **recusa** (`400` acima de `MAX_KPI_ROWS = 50_000`, contando antes), porque `getAllTableData` é compartilhado por 15 call sites e um `take` local **truncaria a entrada de um `sum`/`avg`, devolvendo número plausível e ERRADO**. Upgrade path anotado no código |
+| **6. Cobertura de teste** | E15/E20 | ✅ **FECHADO por PR #162**: 6 testes de integração no arquivo que já cobria analytics — inclusive um `200` real que semeia 4 linhas (uma soft-deleted) e trava os valores |
+
+> **Nota de colisão (3 sessões paralelas no mesmo fork).** Além da divergência de §2.4×§2.6, uma **terceira**
+> sessão (PR #162, 09:20) consertou `custom-kpis` de forma **mais completa** que a fatia de `424bc56`:
+> documentou **e** testou **e** limitou **e** fechou o `tableId`. As duas correções de OpenAPI colidiam de
+> modo perigoso — o mesmo path definido **duas vezes** (controller × `docs.paths.ts`), que o
+> `openapi-paths.test.ts` **não** pegaria, porque a contagem de paths não muda quando um bloco
+> sobrescreve o outro. **Resolvido descartando a versão de `424bc56`**: `docs.paths.ts` voltou ao estado
+> de `origin/main` e a spec regerada ficou **byte-idêntica** à do #162. É o `_REUSE-CRITERION.md` aplicado
+> ao próprio trabalho — entre dois impls do mesmo objeto, some com o pior, mesmo sendo o seu.
+
+**Gates:** `cd server && npx tsc --noEmit` exit 0; após a reconciliação, `openapi-paths` +
+`analytics.routes.integration` + `DynamicTablePolicy` + `systemTableWriteLock` = **33/33**. Antes da
+entrada do #162, a suíte completa do server rodou **154/154 suites, 1850/1850 testes**.
+
 ---
 
 ## 4. Plano fatiado (**DORMENTE** — era condicional a F-AD0=(a))
@@ -328,6 +483,9 @@ PASS emitido pela mesma sequência que implementou é rejeitado por regra (memó
 - **F-AD0=(b) apagar:** deletar os 3 handlers de escrita + as 3 rotas + `AnalyticsDefinitionDto.ts` + o
   teste de integração; limpar `docs.paths.ts`; decidir F-AD6 na mesma fatia. Gate: `tsc` limpo nos dois
   lados + `npm run docs:generate` sem path órfão (memória `openapi-wiring-static-artifact`).
+- **F-AD6=(a) manter — ✅ RATIFICADO 2026-08-02.** A fatia que isso ativa está em **F-AD6.6**: itens 2 e 3
+  executados em `424bc56`; itens 1, 4 e 5 abertos. O plano de deleção de `(b)` fica registrado em
+  §3/F-AD6 como o custo de reabrir — gatilho em **F-AD6.5**.
 - **F-AD0=(c) congelar — ✅ IMPLEMENTADO 2026-08-01.**
   `server/src/features/dynamicTables/services/__tests__/DynamicTableService.systemTableWriteLock.test.ts`
   (1 arquivo, 8 casos, projeto `unit`, sem DB/HTTP). Detalhe em §4.2.
