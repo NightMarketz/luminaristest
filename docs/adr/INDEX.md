@@ -50,7 +50,7 @@
 
 | ADR | Título | Status | Data | Classe |
 |---|---|---|---|---|
-| [ANALYTICS-DEFS](ADR-ANALYTICS-DEFS-write-unblock.md) | Escrita de definições de analytics — destravar × apagar as rotas × manter congelado (forks F-AD0..F-AD6) | **Accepted (parcial) — F-AD0 → (c) MANTER CONGELADO, ratificado 2026-08-01**; barreira implementada e mutation-testada (`DynamicTableService.systemTableWriteLock.test.ts`, 8 casos). **F-AD5 (a tela) e F-AD6 (`custom-kpis` órfão) seguem ABERTOS**; F-AD1..F-AD4 dormentes. Origem: achado N1 da revisão independente do PR #157 (`6500249`) | 2026-08-01 | DECISÃO ARQUITETURAL (DynamicTable / policy) |
+| [ANALYTICS-DEFS](ADR-ANALYTICS-DEFS-write-unblock.md) | Escrita de definições de analytics — destravar × apagar as rotas × manter congelado (forks F-AD0..F-AD6) | **Accepted (parcial) — F-AD0 → (c) MANTER CONGELADO, ratificado 2026-08-01**; barreira implementada e mutation-testada (`DynamicTableService.systemTableWriteLock.test.ts`, 8 casos). **F-AD5 (a tela) segue ABERTO** (decisão de produto); **F-AD6 emendado 2026-08-02 — `_REUSE-CRITERION.md` respondido: (c) convergir ELIMINADA (é clonar o morto); fork real vira (a) × (b), default `(b) deletar custom-kpis`, pendente de 1 pergunta ao dono** (existe superfície de execução ad-hoc de KPI no roadmap? — hoje essa categoria está vazia no repo); F-AD1..F-AD4 dormentes. Origem: achado N1 da revisão independente do PR #157 (`6500249`) | 2026-08-01 (emenda 2026-08-02) | DECISÃO ARQUITETURAL (DynamicTable / policy) |
 
 ## Fora-de-ADR — decisões de módulo que vivem em outro lugar
 
