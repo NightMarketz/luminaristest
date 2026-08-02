@@ -1,0 +1,1018 @@
+{
+ "schema": "auditoria/1.1",
+ "run": {
+  "instrument": "AV-20",
+  "instrument_version": "v4.1",
+  "title": "Cobertura Ausente",
+  "project": "Luminaris",
+  "repo_commit": "643d2eb",
+  "generated_at": "2026-08-02",
+  "agent": "claude-opus-5",
+  "closing_block_version": "v3",
+  "scope": {
+   "included": [
+    "server/src"
+   ],
+   "excluded": [
+    "my-app",
+    "__tests__",
+    "*.d.ts"
+   ],
+   "period": null,
+   "budget_files": 12,
+   "files_read_full": 4
+  },
+  "reduced_mode": true,
+  "reduced_reason": "sem node_modules: nenhuma suite executada; leitura estrutural apenas",
+  "agent_authored_ratio": {
+   "value": 0.941,
+   "method": "AV-00 2.1, reaproveitado da rodada R1",
+   "identity_rule": "trailer Co-authored-by contendo Claude",
+   "measured": true
+  },
+  "confidence_ceiling": "media",
+  "review_of_this_run": null,
+  "reduced_capabilities": {
+   "tipos": false,
+   "build": false,
+   "suite": false,
+   "runtime": false
+  }
+ },
+ "centerpiece": {
+  "type": "missing_tests",
+  "title": "Obrigacoes de teste nao atendidas",
+  "columns": [
+   "unidade",
+   "papel",
+   "fanin",
+   "invariantes",
+   "linhas"
+  ],
+  "rows": [
+   [
+    "server/src/controllers/accountingController.ts",
+    "controller",
+    1,
+    "dinheiro+inquilino+autoriza",
+    625
+   ],
+   [
+    "server/src/features/accounting/repositories/CounterpartyRepository.ts",
+    "repository",
+    1,
+    "tx+inquilino+softdelete",
+    57
+   ],
+   [
+    "server/src/features/accounting/repositories/DimensionRepository.ts",
+    "repository",
+    1,
+    "tx+inquilino+softdelete",
+    143
+   ],
+   [
+    "server/src/features/accounting/repositories/ReferentialMappingRepository.ts",
+    "repository",
+    1,
+    "tx+inquilino+softdelete",
+    88
+   ],
+   [
+    "server/src/features/accounting/dtos/DimensionDto.ts",
+    "dto",
+    3,
+    "dinheiro+inquilino",
+    106
+   ],
+   [
+    "server/src/features/accounting/dtos/CounterpartyDto.ts",
+    "dto",
+    2,
+    "dinheiro+inquilino",
+    81
+   ],
+   [
+    "server/src/features/accounting/dtos/DocumentAttachmentDto.ts",
+    "dto",
+    1,
+    "inquilino+softdelete",
+    55
+   ],
+   [
+    "server/src/features/accounting/dtos/ReferentialCatalogDto.ts",
+    "dto",
+    1,
+    "inquilino+autoriza",
+    72
+   ],
+   [
+    "server/src/features/accounting/dtos/InventoryDto.ts",
+    "dto",
+    0,
+    "dinheiro+inquilino",
+    63
+   ],
+   [
+    "server/src/features/accounting/dtos/DataExchangeDto.ts",
+    "dto",
+    2,
+    "inquilino",
+    62
+   ],
+   [
+    "server/src/features/accounting/dtos/EntryApprovalDto.ts",
+    "dto",
+    2,
+    "inquilino",
+    126
+   ],
+   [
+    "server/src/features/accounting/dtos/ReferentialMappingDto.ts",
+    "dto",
+    2,
+    "inquilino",
+    197
+   ],
+   [
+    "server/src/features/chat/services/LuminarisAgentService.ts",
+    "service",
+    2,
+    "autoriza",
+    229
+   ],
+   [
+    "server/src/controllers/authUtilityController.ts",
+    "controller",
+    1,
+    "autoriza",
+    27
+   ],
+   [
+    "server/src/controllers/closingController.ts",
+    "controller",
+    1,
+    "inquilino",
+    34
+   ],
+   [
+    "server/src/controllers/counterpartyController.ts",
+    "controller",
+    1,
+    "inquilino",
+    78
+   ],
+   [
+    "server/src/controllers/dashboardController.ts",
+    "controller",
+    1,
+    "autoriza",
+    376
+   ],
+   [
+    "server/src/controllers/dataExchangeController.ts",
+    "controller",
+    1,
+    "inquilino",
+    172
+   ],
+   [
+    "server/src/controllers/dimensionController.ts",
+    "controller",
+    1,
+    "inquilino",
+    126
+   ],
+   [
+    "server/src/controllers/documentAttachmentController.ts",
+    "controller",
+    1,
+    "inquilino",
+    146
+   ],
+   [
+    "server/src/controllers/entryApprovalController.ts",
+    "controller",
+    1,
+    "inquilino",
+    129
+   ],
+   [
+    "server/src/controllers/packageBalanceController.ts",
+    "controller",
+    1,
+    "inquilino",
+    31
+   ],
+   [
+    "server/src/controllers/payableController.ts",
+    "controller",
+    1,
+    "inquilino",
+    148
+   ],
+   [
+    "server/src/controllers/receivableController.ts",
+    "controller",
+    1,
+    "inquilino",
+    148
+   ],
+   [
+    "server/src/controllers/reconciliationController.ts",
+    "controller",
+    1,
+    "inquilino",
+    281
+   ],
+   [
+    "server/src/controllers/referentialCatalogController.ts",
+    "controller",
+    1,
+    "inquilino",
+    90
+   ],
+   [
+    "server/src/controllers/referentialMappingController.ts",
+    "controller",
+    1,
+    "inquilino",
+    148
+   ],
+   [
+    "server/src/controllers/spedController.ts",
+    "controller",
+    1,
+    "inquilino",
+    57
+   ],
+   [
+    "server/src/controllers/userController.ts",
+    "controller",
+    1,
+    "autoriza",
+    122
+   ],
+   [
+    "server/src/features/accounting/dtos/aging.dto.ts",
+    "dto",
+    1,
+    "inquilino",
+    41
+   ],
+   [
+    "server/src/features/accounting/dtos/cashFlowReport.dto.ts",
+    "dto",
+    1,
+    "inquilino",
+    36
+   ],
+   [
+    "server/src/features/accounting/dtos/dailyJournal.dto.ts",
+    "dto",
+    1,
+    "inquilino",
+    37
+   ],
+   [
+    "server/src/features/accounting/repositories/AccountingPeriodRepository.ts",
+    "repository",
+    1,
+    "inquilino",
+    98
+   ],
+   [
+    "server/src/features/accounting/repositories/ReferentialAccountRepository.ts",
+    "repository",
+    1,
+    "tx",
+    75
+   ],
+   [
+    "server/src/features/accounting/sync/mappers/revenueSplit.ts",
+    "sync",
+    1,
+    "dinheiro",
+    57
+   ],
+   [
+    "server/src/features/dynamicTables/rules/plugins/ProductAutoStockPlugin.ts",
+    "rule",
+    1,
+    "inquilino",
+    71
+   ],
+   [
+    "server/src/features/dynamicTables/rules/plugins/UnitAutoStockPlugin.ts",
+    "rule",
+    1,
+    "inquilino",
+    67
+   ],
+   [
+    "server/src/features/dynamicTables/rules/plugins/sales/appointmentSync.ts",
+    "rule",
+    1,
+    "inquilino",
+    140
+   ],
+   [
+    "server/src/features/packages/dtos/PackageBalanceDto.ts",
+    "dto",
+    1,
+    "inquilino",
+    29
+   ],
+   [
+    "server/src/jobs/PurgeDeletedRecords.ts",
+    "job",
+    1,
+    "softdelete",
+    30
+   ],
+   [
+    "server/src/features/analytics/utils/CurrencyUtils.ts",
+    "outro",
+    8,
+    "-",
+    9
+   ],
+   [
+    "server/src/features/structuredData/models/StructuredData.model.ts",
+    "outro",
+    5,
+    "-",
+    246
+   ],
+   [
+    "server/src/lib/vector/extractors/ExcelStructuredExtractor.ts",
+    "lib",
+    5,
+    "-",
+    159
+   ],
+   [
+    "server/src/features/accounting/services/dataExchangeMappers.ts",
+    "service",
+    4,
+    "-",
+    71
+   ],
+   [
+    "server/src/features/analytics/core/engine/ExpressionEvaluator.ts",
+    "outro",
+    4,
+    "-",
+    163
+   ],
+   [
+    "server/src/features/documents/services/DocumentProcessingService.ts",
+    "service",
+    4,
+    "-",
+    150
+   ],
+   [
+    "server/src/features/analytics/core/pipeline/Compiler.ts",
+    "outro",
+    3,
+    "-",
+    84
+   ],
+   [
+    "server/src/features/dynamicTables/utils/TableFactory.ts",
+    "outro",
+    3,
+    "-",
+    55
+   ],
+   [
+    "server/src/features/interview/CustomizationService/CustomizationService.ts",
+    "service",
+    3,
+    "-",
+    478
+   ],
+   [
+    "server/src/features/accounting/services/dimensionTagging.ts",
+    "service",
+    2,
+    "-",
+    99
+   ],
+   [
+    "server/src/features/analytics/kpis/cost/ProductCostKpiProcessor.ts",
+    "outro",
+    2,
+    "-",
+    217
+   ],
+   [
+    "server/src/features/analytics/kpis/profit/ProfitByDimensionProcessor.ts",
+    "outro",
+    2,
+    "-",
+    234
+   ],
+   [
+    "server/src/features/analytics/schemas/KpiSchema.ts",
+    "outro",
+    2,
+    "-",
+    95
+   ],
+   [
+    "server/src/features/analytics/services/AnalyticsService.ts",
+    "service",
+    2,
+    "-",
+    558
+   ],
+   [
+    "server/src/features/chat/repositories/ActionProposalRepository.ts",
+    "repository",
+    2,
+    "-",
+    49
+   ],
+   [
+    "server/src/features/crm/dtos/CrmAnalyticsDto.ts",
+    "dto",
+    2,
+    "-",
+    19
+   ],
+   [
+    "server/src/features/crm/dtos/CrmOpportunityDto.ts",
+    "dto",
+    2,
+    "-",
+    68
+   ],
+   [
+    "server/src/features/crm/dtos/CrmPipelineDto.ts",
+    "dto",
+    2,
+    "-",
+    135
+   ],
+   [
+    "server/src/features/dynamicTables/services/PresetService.ts",
+    "service",
+    2,
+    "-",
+    58
+   ],
+   [
+    "server/src/features/dynamicTables/utils/ValidationUtils.ts",
+    "outro",
+    2,
+    "-",
+    94
+   ],
+   [
+    "server/src/features/interview/CustomizationService/StateManager.ts",
+    "outro",
+    2,
+    "-",
+    281
+   ],
+   [
+    "server/src/features/interview/InterviewService/InterviewService.ts",
+    "service",
+    2,
+    "-",
+    183
+   ],
+   [
+    "server/src/features/sales/dtos/SalesCancellationDto.ts",
+    "dto",
+    2,
+    "-",
+    35
+   ],
+   [
+    "server/src/features/savedViews/dtos/SavedTableViewDto.ts",
+    "dto",
+    2,
+    "-",
+    119
+   ],
+   [
+    "server/src/lib/vector/extractors/ExcelExtractor.ts",
+    "lib",
+    2,
+    "-",
+    95
+   ],
+   [
+    "server/src/controllers/analyticsController.ts",
+    "controller",
+    1,
+    "-",
+    166
+   ],
+   [
+    "server/src/controllers/analyticsDefinitionsController.ts",
+    "controller",
+    1,
+    "-",
+    95
+   ],
+   [
+    "server/src/controllers/attachmentsController.ts",
+    "controller",
+    1,
+    "-",
+    124
+   ],
+   [
+    "server/src/controllers/chatController.ts",
+    "controller",
+    1,
+    "-",
+    22
+   ],
+   [
+    "server/src/controllers/chatInstancesController.ts",
+    "controller",
+    1,
+    "-",
+    99
+   ],
+   [
+    "server/src/controllers/chatMessagesController.ts",
+    "controller",
+    1,
+    "-",
+    50
+   ],
+   [
+    "server/src/controllers/customKpiController.ts",
+    "controller",
+    1,
+    "-",
+    144
+   ],
+   [
+    "server/src/controllers/dashboardLayoutController.ts",
+    "controller",
+    1,
+    "-",
+    192
+   ],
+   [
+    "server/src/controllers/documentsController.ts",
+    "controller",
+    1,
+    "-",
+    331
+   ],
+   [
+    "server/src/controllers/interviewController.ts",
+    "controller",
+    1,
+    "-",
+    113
+   ],
+   [
+    "server/src/controllers/reportsController.ts",
+    "controller",
+    1,
+    "-",
+    60
+   ],
+   [
+    "server/src/controllers/salesController.ts",
+    "controller",
+    1,
+    "-",
+    56
+   ],
+   [
+    "server/src/controllers/savedViewsController.ts",
+    "controller",
+    1,
+    "-",
+    76
+   ],
+   [
+    "server/src/controllers/structuredDataController.ts",
+    "controller",
+    1,
+    "-",
+    90
+   ],
+   [
+    "server/src/features/accounting/dtos/periodComparison.dto.ts",
+    "dto",
+    1,
+    "-",
+    48
+   ],
+   [
+    "server/src/features/analytics/core/ProcessorRegistry.ts",
+    "outro",
+    1,
+    "-",
+    125
+   ],
+   [
+    "server/src/features/analytics/core/TemplateRegistry.ts",
+    "outro",
+    1,
+    "-",
+    75
+   ],
+   [
+    "server/src/features/analytics/dtos/AnalyticsDefinitionDto.ts",
+    "dto",
+    1,
+    "-",
+    90
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/AggregatePipelineProcessor.ts",
+    "outro",
+    1,
+    "-",
+    433
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/FormulaCalculationProcessor.ts",
+    "outro",
+    1,
+    "-",
+    130
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/MultiTableCalculationProcessor.ts",
+    "outro",
+    1,
+    "-",
+    195
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/StatusComparisonProcessor.ts",
+    "outro",
+    1,
+    "-",
+    67
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/StatusDistributionProcessor.ts",
+    "outro",
+    1,
+    "-",
+    83
+   ],
+   [
+    "server/src/features/analytics/dynamic/processors/TemporalAggregationProcessor.ts",
+    "outro",
+    1,
+    "-",
+    127
+   ],
+   [
+    "server/src/features/analytics/engine/AnalyticsResolver.ts",
+    "outro",
+    1,
+    "-",
+    852
+   ],
+   [
+    "server/src/features/analytics/engine/CustomKpiExecutor.ts",
+    "outro",
+    1,
+    "-",
+    176
+   ],
+   [
+    "server/src/features/analytics/engine/FieldMapper.ts",
+    "outro",
+    1,
+    "-",
+    70
+   ],
+   [
+    "server/src/features/analytics/services/AnalyticsValidator.ts",
+    "service",
+    1,
+    "-",
+    168
+   ],
+   [
+    "server/src/features/attachments/dtos/AttachmentDto.ts",
+    "dto",
+    1,
+    "-",
+    46
+   ],
+   [
+    "server/src/features/chat/repositories/KnowledgeGraphRepository.ts",
+    "repository",
+    1,
+    "-",
+    22
+   ],
+   [
+    "server/src/features/crm/services/CrmAnalyticsService.ts",
+    "service",
+    1,
+    "-",
+    88
+   ],
+   [
+    "server/src/features/documents/repositories/ChunkRepository.ts",
+    "repository",
+    1,
+    "-",
+    14
+   ],
+   [
+    "server/src/features/dynamicTables/presets/PresetManager.ts",
+    "preset",
+    1,
+    "-",
+    46
+   ],
+   [
+    "server/src/features/dynamicTables/presets/fields/FieldPresetKnowledgeBase.ts",
+    "preset",
+    1,
+    "-",
+    155
+   ],
+   [
+    "server/src/features/dynamicTables/rules/plugins/sales/customerMetrics.ts",
+    "rule",
+    1,
+    "-",
+    114
+   ],
+   [
+    "server/src/features/interview/CustomizationService/AIInteractions.ts",
+    "outro",
+    1,
+    "-",
+    162
+   ],
+   [
+    "server/src/features/interview/CustomizationService/TableExtractor.ts",
+    "outro",
+    1,
+    "-",
+    120
+   ],
+   [
+    "server/src/features/interview/FieldCustomizationService/FieldIntentParser.ts",
+    "outro",
+    1,
+    "-",
+    88
+   ],
+   [
+    "server/src/features/interview/FieldCustomizationService/FieldPresetMatcher.ts",
+    "outro",
+    1,
+    "-",
+    215
+   ],
+   [
+    "server/src/features/interview/FieldCustomizationService/FieldUpdater.ts",
+    "outro",
+    1,
+    "-",
+    133
+   ],
+   [
+    "server/src/features/interview/InterviewService/PresetMatcher.ts",
+    "outro",
+    1,
+    "-",
+    99
+   ],
+   [
+    "server/src/features/interview/InterviewService/StageHandlers.ts",
+    "outro",
+    1,
+    "-",
+    123
+   ],
+   [
+    "server/src/features/structuredData/types/StructuredData.types.ts",
+    "outro",
+    1,
+    "-",
+    46
+   ],
+   [
+    "server/src/lib/PromptSanitizer.ts",
+    "lib",
+    1,
+    "-",
+    20
+   ],
+   [
+    "server/src/lib/vector/qdrant-initializer.ts",
+    "lib",
+    1,
+    "-",
+    90
+   ]
+  ]
+ },
+ "signals": [
+  {
+   "id": "S1",
+   "label": "Funil de qualificacao",
+   "measured": true,
+   "method": "git ls-files + leitura do corpus de teste",
+   "unit": "unidades",
+   "rows": [
+    {
+     "key": "unidades no recorte",
+     "value": 476
+    },
+    {
+     "key": "nomeadas em algum teste",
+     "value": 269
+    },
+    {
+     "key": "sem codigo executavel",
+     "value": 88
+    },
+    {
+     "key": "orfas",
+     "value": 9
+    },
+    {
+     "key": "OBRIGACOES",
+     "value": 110
+    },
+    {
+     "key": "linhas sem teste",
+     "value": 14290
+    },
+    {
+     "key": "com invariante",
+     "value": 40
+    }
+   ]
+  }
+ ],
+ "not_measured": [
+  {
+   "id": "NM1",
+   "label": "cobertura indireta por teste de integracao",
+   "reason": "nao enumerada por unidade",
+   "consequence": "a lista diz que nenhum teste NOMEIA a unidade, nao que nenhum a executa"
+  },
+  {
+   "id": "NM2",
+   "label": "fan-in por CALLS no grafo",
+   "reason": "in_degree de Class vem ~0: instanciacao via factory nao e aresta CALLS (CBM-001)",
+   "consequence": "todo fan-in do relatorio e por IMPORTS medido no disco"
+  },
+  {
+   "id": "NM3",
+   "label": "no de articulacao",
+   "reason": "nao computado",
+   "consequence": "o sinal mais forte de G3 ficou de fora do ranking"
+  },
+  {
+   "id": "NM4",
+   "label": "my-app",
+   "reason": "fora do recorte",
+   "consequence": "o frontend nao foi enumerado"
+  }
+ ],
+ "orfaos": [
+  {
+   "unidade": "server/src/features/analytics/services/AnalyticsDefinitionValidator.ts",
+   "linhas": 86,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/features/dynamicTables/utils/RelationUtils.ts",
+   "linhas": 78,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/features/dynamicTables/utils/TableUtils.ts",
+   "linhas": 11,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/features/dynamicTables/validation/GovernanceEngine.ts",
+   "linhas": 279,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/features/structuredData/types/Sheet.types.ts",
+   "linhas": 43,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/scripts/audit-cashflow-kpi.ts",
+   "linhas": 106,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/scripts/audit-cost-kpi.ts",
+   "linhas": 100,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/scripts/audit-profit-kpi.ts",
+   "linhas": 95,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  },
+  {
+   "unidade": "server/src/scripts/audit-revenue-kpi.ts",
+   "linhas": 73,
+   "destino": "AV-11 — decidir entre remover e ligar"
+  }
+ ],
+ "scoreboard": [
+  {
+   "dimension": "AV-20",
+   "label": "Cobertura ausente",
+   "level": 3,
+   "max_possible": 3,
+   "ceiling_reason": "gate que reprove unidade nova com invariante e sem teste nao existe",
+   "justification": "obrigacoes enumeradas, priorizadas por invariante e fan-in, com a assercao exigida por linha",
+   "evidence": [
+    "110 obrigacoes",
+    "43 com invariante",
+    "31 de 34 controllers"
+   ]
+  }
+ ],
+ "findings": [],
+ "conventions": [
+  {
+   "claim": "toda funcao precisa de teste unitario",
+   "source": "pratica corrente",
+   "why_not_finding": "nenhuma mutacao foi aplicada para provar a lacuna — o AV-03 esta travado no teto 1",
+   "would_become_finding_if": "uma mutacao do AV-03 sobreviver por falta exatamente do teste apontado"
+  }
+ ],
+ "latent_bugs": [],
+ "cheapest_moves": [
+  {
+   "move": "um teste de fronteira por controller, do mesmo molde",
+   "closes": [
+    "31 controllers"
+   ],
+   "why": "maior lacuna de camada, menor custo unitario",
+   "effort": "medio"
+  },
+  {
+   "move": "os quatro do nivel 1 (accountingController + 3 repositorios tx/inquilino/soft-delete)",
+   "closes": [
+    "4 unidades de maior peso"
+   ],
+   "why": "sao as que quebram em silencio",
+   "effort": "medio"
+  },
+  {
+   "move": "os nove DTOs contabeis como teste de REJEICAO",
+   "closes": [
+    "9 DTOs"
+   ],
+   "why": "DTO se testa pelo que recusa; teste de aceitacao nao mata mutacao",
+   "effort": "baixo"
+  }
+ ],
+ "inquiry": [
+  {
+   "question": "Dos 31 controllers sem teste, quantos ja sao exercidos por um routes.integration.test de outra rota?",
+   "answerable_from": "rodar a suite com cobertura — hoje impossivel sem node_modules",
+   "why_it_matters": "e a diferenca entre 31 testes novos e talvez 12"
+  },
+  {
+   "question": "GovernanceEngine.ts tem 279 linhas e ninguem importa. Esta morto ou desligado?",
+   "answerable_from": "nenhum lugar do repositorio",
+   "why_it_matters": "teste para codigo morto e pagar para manter o que devia sumir"
+  },
+  {
+   "question": "Quando um DTO recusa um payload, alguem ja viu a mensagem que o usuario recebe?",
+   "answerable_from": "num teste de rejeicao — exatamente os que nao existem",
+   "why_it_matters": "a fronteira que recusa errado e pior que a que nao recusa"
+  }
+ ],
+ "self_check": {
+  "unidades_sem_executavel_na_lista": 0,
+  "classes_ranqueadas_por_in_degree": 0,
+  "conclusoes_so_do_grafo": 0,
+  "orfaos_separados": 9,
+  "defeitos_de_medicao_pegos_antes_de_publicar": 3,
+  "defeitos": [
+   "regex montada por string perdeu o escape: 454 de 476 era falso, real 110",
+   "fan-in cego ao alias @/: 181 imports perdidos, zerava o fan-in de todos os controllers",
+   "cobertura por nome de arquivo subconta: teste e nomeado pelo cenario"
+  ],
+  "independent_review": false
+ }
+}

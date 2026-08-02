@@ -1,0 +1,789 @@
+{
+ "schema": "auditoria/1.1",
+ "run": {
+  "instrument": "R1-CONSOLIDADO",
+  "instruments_included": [
+   "AV-03",
+   "AV-16",
+   "AV-17",
+   "AV-18",
+   "AV-19"
+  ],
+  "instrument_version": "v4",
+  "title": "Primeira rodada da bancada v4",
+  "project": "Luminaris",
+  "repo_commit": "643d2eb",
+  "generated_at": "2026-08-02",
+  "agent": "claude-opus-5",
+  "closing_block_version": "v3",
+  "scope": {
+   "included": [
+    "server/src",
+    "server/prisma",
+    "my-app",
+    "docker-compose.yml",
+    "*/Dockerfile",
+    ".github/workflows/ci.yml",
+    ".claude"
+   ],
+   "excluded": [
+    "node_modules",
+    "server/generated",
+    "my-app/.next"
+   ],
+   "period": "historia completa do repositorio (601 commits)",
+   "budget_files": 12,
+   "files_read_full": 7
+  },
+  "reduced_mode": true,
+  "reduced_reason": "nenhum dos tres roots tem node_modules: tipos, build, jest e vitest nao executaveis",
+  "agent_authored_ratio": {
+   "value": 0.941,
+   "method": "git log --no-merges --format trailers Co-authored-by sobre o recorte; 224 de 238",
+   "identity_rule": "commit conta como de agente quando tem trailer Co-authored-by contendo 'Claude'",
+   "measured": true
+  },
+  "confidence_ceiling": "media",
+  "review_of_this_run": null,
+  "review_gap": "AV-00 §9.4 exige revisao de agente separado; esta rodada foi produzida pela mesma sequencia que escreveu os instrumentos",
+  "reduced_capabilities": {
+   "tipos": false,
+   "build": false,
+   "suite": false,
+   "runtime": false
+  }
+ },
+ "signals": [
+  {
+   "id": "S1",
+   "label": "Origem do codigo no recorte",
+   "measured": true,
+   "method": "git log --no-merges + trailers",
+   "unit": "commits",
+   "rows": [
+    {
+     "key": "total",
+     "value": 238
+    },
+    {
+     "key": "agente",
+     "value": 224
+    },
+    {
+     "key": "ratio",
+     "value": 0.941
+    },
+    {
+     "key": "2026-06",
+     "value": "85/96"
+    },
+    {
+     "key": "2026-07",
+     "value": "136/139"
+    },
+    {
+     "key": "2026-08",
+     "value": "3/3"
+    }
+   ]
+  },
+  {
+   "id": "S2",
+   "label": "Linhas adicionadas por origem",
+   "measured": true,
+   "method": "git log --numstat agregado",
+   "unit": "linhas",
+   "rows": [
+    {
+     "key": "agente",
+     "value": 102069
+    },
+    {
+     "key": "humano",
+     "value": 96092
+    },
+    {
+     "key": "maior commit humano (0db3961 baseline)",
+     "value": 93662
+    },
+    {
+     "key": "pct agente com baseline",
+     "value": "51.5%"
+    },
+    {
+     "key": "pct agente sem baseline",
+     "value": "97.7%"
+    }
+   ]
+  },
+  {
+   "id": "S3",
+   "label": "Estrutura da suite (AV-03)",
+   "measured": true,
+   "method": "git ls-files + rg",
+   "unit": "arquivos/ocorrencias",
+   "rows": [
+    {
+     "key": "arquivos de teste",
+     "value": 180
+    },
+    {
+     "key": "assercoes",
+     "value": 3798
+    },
+    {
+     "key": "testes sem assercao",
+     "value": 0
+    },
+    {
+     "key": "skip/todo",
+     "value": 0
+    },
+    {
+     "key": "assercoes fracas",
+     "value": 47
+    }
+   ]
+  },
+  {
+   "id": "S4",
+   "label": "Trava de dependencias (AV-19)",
+   "measured": true,
+   "method": "node -e sobre package-lock.json",
+   "unit": "entradas",
+   "rows": [
+    {
+     "key": "server entradas",
+     "value": 806
+    },
+    {
+     "key": "my-app entradas",
+     "value": 810
+    },
+    {
+     "key": "sem integrity",
+     "value": 0
+    },
+    {
+     "key": "registros distintos",
+     "value": "registry.npmjs.org"
+    },
+    {
+     "key": "declarados sem entrada na trava",
+     "value": 0
+    },
+    {
+     "key": "lockfileVersion",
+     "value": 3
+    }
+   ]
+  },
+  {
+   "id": "S5",
+   "label": "Superficie de configuracao (AV-18)",
+   "measured": true,
+   "method": "grep em compose/Dockerfile/next.config",
+   "unit": "ocorrencias",
+   "rows": [
+    {
+     "key": "NEXT_PUBLIC_ distintas no codigo",
+     "value": 3
+    },
+    {
+     "key": "portas publicadas no compose",
+     "value": 5
+    },
+    {
+     "key": ".env versionado (inclui historico)",
+     "value": 0
+    },
+    {
+     "key": "permissions: no CI",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "id": "S6",
+   "label": "Forma dos merges (AV-17)",
+   "measured": true,
+   "method": "git log --merges + diff --shortstat entre os pais",
+   "unit": "merges de PR",
+   "rows": [
+    {
+     "key": "amostra",
+     "value": 24
+    },
+    {
+     "key": "intervalo mediano (min)",
+     "value": 10
+    },
+    {
+     "key": "intervalo minimo",
+     "value": 0
+    },
+    {
+     "key": "intervalo maximo",
+     "value": 1747
+    },
+    {
+     "key": "maior merge",
+     "value": "PR #139: 220 arquivos, +12187, intervalo 8min"
+    },
+    {
+     "key": "commits mencionando revisao",
+     "value": 37
+    },
+    {
+     "key": "revisoes independentes nomeadas",
+     "value": 8
+    },
+    {
+     "key": "merges totais no repositorio",
+     "value": 207
+    }
+   ]
+  },
+  {
+   "id": "S7",
+   "label": "Instrucao de agente versionada (AV-19 D5)",
+   "measured": true,
+   "method": "git ls-files .claude",
+   "unit": "arquivos",
+   "rows": [
+    {
+     "key": "arquivos rastreados em .claude",
+     "value": 235
+    },
+    {
+     "key": "settings.json versionado",
+     "value": "nao"
+    },
+    {
+     "key": "hooks versionados",
+     "value": "nenhum"
+    }
+   ]
+  }
+ ],
+ "not_measured": [
+  {
+   "id": "NM1",
+   "label": "mutation_score (AV-03)",
+   "reason": "nenhum root tem node_modules; jest e vitest nao executaveis",
+   "consequence": "a forca da suite e desconhecida; as 7 mutacoes do AV-03 nao foram aplicadas; placar travado no nivel 1"
+  },
+  {
+   "id": "NM2",
+   "label": "typecheck e build",
+   "reason": "mesma causa de NM1",
+   "consequence": "nenhum achado desta rodada foi confrontado com o compilador"
+  },
+  {
+   "id": "NM3",
+   "label": "bundle de producao do frontend",
+   "reason": "mesma causa de NM1",
+   "consequence": "F1 foi medido na fonte; segredo que entrasse no bundle por outro caminho passaria"
+  },
+  {
+   "id": "NM4",
+   "label": "configuracao do ambiente real (AV-18)",
+   "reason": "nunca implantado",
+   "consequence": "tudo em AV-18 e a configuracao declarada; o que rodaria pode divergir"
+  },
+  {
+   "id": "NM5",
+   "label": "npm audit (AV-19)",
+   "reason": "exige rede",
+   "consequence": "zero informacao sobre vulnerabilidade conhecida; nenhuma foi estimada"
+  },
+  {
+   "id": "NM6",
+   "label": "R1 por merge (AV-17)",
+   "reason": "nao existe artefato de revisao por merge",
+   "consequence": "e o proprio achado F4"
+  },
+  {
+   "id": "NM7",
+   "label": "hooks e servidores MCP locais (AV-19 D5)",
+   "reason": ".claude/settings.json nao e versionado",
+   "consequence": "235 arquivos de instrucao sao auditaveis; a configuracao que executa comandos nao e"
+  }
+ ],
+ "centerpiece": {
+  "type": "exposure_map",
+  "title": "Mapa de exposicao da configuracao de implantacao",
+  "columns": [
+   "Superficie",
+   "Onde esta configurado",
+   "Quem alcanca",
+   "Exigido",
+   "Medido",
+   "Veredito"
+  ],
+  "rows": [
+   [
+    "Base de API do frontend",
+    "docker-compose.yml:27 + my-app/next.config.js:23",
+    "o proprio container do frontend (errado)",
+    "o container do servidor",
+    "nome divergente, 0 ocorrencias no codigo",
+    "F1"
+   ],
+   [
+    "Banco vetorial",
+    "docker-compose.yml:34-37",
+    "qualquer um que alcance o host",
+    "so o processo do servidor",
+    "portas publicadas, nenhuma chave",
+    "F2"
+   ],
+   [
+    "Segredos do servidor",
+    "docker-compose.yml:11-12 via ${}",
+    "so o processo do servidor",
+    "idem",
+    "JWT_SECRET e OPENAI_API_KEY vem do ambiente, nao do arquivo",
+    "solido"
+   ],
+   [
+    "Arquivo .env",
+    "nenhum",
+    "ninguem",
+    "nunca versionado",
+    "0 em toda a historia do git",
+    "solido"
+   ],
+   [
+    "Variaveis do cliente",
+    "3 chaves NEXT_PUBLIC_",
+    "qualquer visitante",
+    "nenhum segredo",
+    "API base URL + 2 flags de seed dormente",
+    "solido"
+   ],
+   [
+    "Estatico servido",
+    "server/src/app.ts:55",
+    "qualquer um com o link",
+    "so a spec",
+    "server/public contem apenas openapi.json",
+    "solido"
+   ],
+   [
+    "Pipeline",
+    ".github/workflows/ci.yml",
+    "depende do default da organizacao",
+    "escopo minimo declarado",
+    "0 blocos permissions:",
+    "convencao C1"
+   ]
+  ]
+ },
+ "scoreboard": [
+  {
+   "dimension": "AV-03",
+   "label": "Forca da suite",
+   "level": 1,
+   "max_possible": 1,
+   "ceiling_reason": "sem dependencias instaladas nada executa; mutacao nao aplicavel",
+   "justification": "estrutura boa (180 arquivos, 3798 assercoes, 0 sem assercao, 0 skip) mas forca desconhecida",
+   "evidence": [
+    "git ls-files | grep -cE test|spec = 180",
+    "rg assercoes = 3798",
+    "ls node_modules = SEM-DEPS nos 3 roots"
+   ]
+  },
+  {
+   "dimension": "AV-16",
+   "label": "Divida de compreensao",
+   "level": 2,
+   "max_possible": 3,
+   "ceiling_reason": "nunca implantado",
+   "justification": "os tres maiores candidatos tem rastro; nenhum achado emitido",
+   "evidence": [
+    "ReconciliationPanel.tsx: commit feat(fe-incr7)",
+    "factory.ts: 51 commits",
+    "AnalyticsResolver.ts: baseline, sem porque"
+   ]
+  },
+  {
+   "dimension": "AV-17",
+   "label": "Revisao real",
+   "level": 1,
+   "max_possible": 3,
+   "ceiling_reason": "artefato de revisao ausente",
+   "justification": "a barreira do §9.4 existe como regra e nao deixa registro por merge",
+   "evidence": [
+    "37 commits mencionam revisao",
+    "5 nomeiam revisao independente",
+    "0 artefatos por merge"
+   ]
+  },
+  {
+   "dimension": "AV-18",
+   "label": "Configuracao de deploy",
+   "level": 2,
+   "max_possible": 3,
+   "ceiling_reason": "mede o repositorio, nao o ambiente",
+   "justification": "segredos e .env solidos; dois defeitos no mesmo arquivo de implantacao",
+   "evidence": [
+    "docker-compose.yml:27",
+    "docker-compose.yml:34-37",
+    "0 .env versionado"
+   ]
+  },
+  {
+   "dimension": "AV-19",
+   "label": "Cadeia de suprimento",
+   "level": 3,
+   "max_possible": 3,
+   "ceiling_reason": "gate que reprove divergencia nao existe",
+   "justification": "trava integra nos dois roots, registro unico, zero declarado-sem-trava; tres fantasmas no sentido inverso",
+   "evidence": [
+    "sem_integrity=0 nos dois roots",
+    "registros=[registry.npmjs.org]",
+    "3 imports sem declaracao"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "instrument": "AV-18",
+   "fingerprint": "compose-injeta-next-public-api-url-nome-divergente",
+   "title": "O docker-compose.yml injeta uma variavel que o codigo nao le",
+   "measured": "docker-compose.yml:27 define NEXT_PUBLIC_API_URL; o codigo le NEXT_PUBLIC_API_BASE_URL em 19 arquivos (30 ocorrencias); o nome do compose aparece 0 vezes",
+   "signals": [
+    "S5"
+   ],
+   "damage": 3,
+   "exposure": "apos_deploy",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "docker-compose.yml",
+     "line": 27,
+     "note": "NEXT_PUBLIC_API_URL: http://server:3001"
+    },
+    {
+     "path": "my-app/next.config.js",
+     "line": 23,
+     "note": "env block define o default NEXT_PUBLIC_API_BASE_URL"
+    },
+    {
+     "path": "my-app",
+     "line": null,
+     "note": "30 ocorrencias de NEXT_PUBLIC_API_BASE_URL em 19 arquivos"
+    }
+   ],
+   "cost_per_change": "uma linha do compose; se resolvido por build-arg, tambem o Dockerfile do frontend",
+   "business_impact": "o produto conteinerizado sobe e nao funciona: o frontend nao fala com o backend",
+   "falsifier_static": "cd my-app && rg -c -N -I NEXT_PUBLIC_API_BASE_URL -g '*.{ts,tsx,js}' . | wc -l && rg -c -N -I NEXT_PUBLIC_API_URL -g '*.{ts,tsx,js}' . 2>/dev/null | wc -l",
+   "falsifier_dynamic": "subir o compose e observar as chamadas de API do frontend falharem contra localhost",
+   "static_gap": null,
+   "demonstration": {
+    "command": "grep -n NEXT_PUBLIC docker-compose.yml my-app/next.config.js",
+    "expected_wrong_output": "os dois nomes lado a lado, diferentes",
+    "seconds": 12,
+    "needs": "nada"
+   },
+   "intent_source": "commit",
+   "intent_unknown": false,
+   "suggested_gate": "bloqueia_primeiro_cliente",
+   "gate_reason": "nunca implantado + exposicao apos_deploy nao irreversivel",
+   "suggested_barrier": "teste que falha se o conjunto de chaves NEXT_PUBLIC_ do compose nao for subconjunto das lidas no codigo",
+   "barrier_kind": "teste_de_fronteira",
+   "adversarial_checks": [
+    {
+     "check": "existe fallback que corrige em runtime?",
+     "result": "sobreviveu — o unico fallback e o default localhost do next.config.js, que dentro do container aponta para o proprio frontend"
+    },
+    {
+     "check": "NEXT_PUBLIC_ e runtime no Next?",
+     "result": "sobreviveu e agravou — e inlined em build time, entao environment: do compose nao aplicaria nem com o nome certo"
+    },
+    {
+     "check": "o nome do compose e usado em outro lugar (script, CI)?",
+     "result": "sobreviveu — 0 ocorrencias no codigo"
+    }
+   ],
+   "owner": null,
+   "verification_mode": "execucao",
+   "instrument_feedback": null
+  },
+  {
+   "id": "F2",
+   "instrument": "AV-18",
+   "fingerprint": "qdrant-publicado-sem-chave-embora-codigo-suporte",
+   "title": "O banco vetorial e publicado sem chave, embora o codigo ja saiba usar uma",
+   "measured": "docker-compose.yml publica 6333 e 6334; o servico qdrant nao recebe variavel de ambiente; o servico server nao recebe QDRANT_API_KEY; qdrant.ts:6 le process.env.QDRANT_API_KEY!",
+   "signals": [
+    "S5"
+   ],
+   "damage": 3,
+   "exposure": "apos_deploy",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "docker-compose.yml",
+     "line": 34,
+     "note": "servico qdrant: ports 6333 e 6334, nenhum environment"
+    },
+    {
+     "path": "server/src/lib/vector/qdrant.ts",
+     "line": 6,
+     "note": "apiKey: process.env.QDRANT_API_KEY! — assercao de nao-nulo"
+    },
+    {
+     "path": "server/.env.example",
+     "line": 8,
+     "note": "QDRANT_API_KEY= documentado vazio"
+    }
+   ],
+   "cost_per_change": "duas chaves no compose e um valor no ambiente",
+   "business_impact": "quem alcanca o host le e escreve o indice vetorial, que contem o conteudo dos documentos dos clientes",
+   "falsifier_static": "grep -A6 'qdrant:' docker-compose.yml | grep -qi 'api_key\\|environment' && echo 'tem config' || echo 'SEM CHAVE'",
+   "falsifier_dynamic": "subir o compose e fazer GET http://localhost:6333/collections sem cabecalho de autenticacao",
+   "static_gap": null,
+   "demonstration": null,
+   "demotion_reason": "dano pretendido 4; a demonstracao exigiria subir a stack com Docker, acima dos 120s do AV-00 §6b — rebaixado para 3",
+   "intent_source": "commit",
+   "intent_unknown": false,
+   "suggested_gate": "bloqueia_primeiro_cliente",
+   "gate_reason": "nunca implantado + exposicao apos_deploy; vira bloqueia_deploy assim que houver ambiente com dado real",
+   "suggested_barrier": "teste sobre o arquivo de implantacao que reprova servico de dado publicando porta sem exigir chave",
+   "barrier_kind": "teste_de_fronteira",
+   "adversarial_checks": [
+    {
+     "check": "o codigo ja exige a chave e falharia sem ela?",
+     "result": "enfraqueceu parcialmente — o ! e assercao de tipo, nao validacao de runtime; o cliente conecta com undefined"
+    },
+    {
+     "check": "existe rede interna do compose isolando o qdrant?",
+     "result": "sobreviveu — as portas estao publicadas no host, nao apenas expostas na rede interna"
+    },
+    {
+     "check": "o .env.example exige a chave?",
+     "result": "sobreviveu — documenta o campo vazio, que e o default sem chave"
+    }
+   ],
+   "owner": null,
+   "verification_mode": "execucao",
+   "instrument_feedback": null
+  },
+  {
+   "id": "F3",
+   "instrument": "AV-19",
+   "fingerprint": "tres-imports-sem-declaracao-no-manifesto",
+   "title": "Tres dependencias sao importadas sem estarem declaradas",
+   "measured": "dotenv (server), @dnd-kit/utilities e @fullcalendar/core (my-app) sao importados no codigo, ausentes dos manifestos e presentes na trava apenas como transitivos",
+   "signals": [
+    "S4"
+   ],
+   "damage": 2,
+   "exposure": "apenas_teorico",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "server/src/config/env",
+     "line": 3,
+     "note": "import dotenv from 'dotenv' — nao declarado em server/package.json"
+    },
+    {
+     "path": "my-app",
+     "line": null,
+     "note": "@dnd-kit/utilities importado em 3 componentes; manifesto declara so core e sortable"
+    },
+    {
+     "path": "my-app",
+     "line": null,
+     "note": "@fullcalendar/core importado para locales; manifesto declara react, daygrid, timegrid, list, interaction"
+    }
+   ],
+   "cost_per_change": "duas linhas, em dois manifestos",
+   "business_impact": "o build quebra sem aviso no dia em que uma dependencia pai mudar de versao, sem nenhuma alteracao no manifesto que sinalize",
+   "falsifier_static": "rg -o -N -I \"from ['\\\"]([a-z@][^'\\\"./][^'\\\"]*)['\\\"]\" -r '$1' -g '*.ts' -g '*.tsx' -g '!**/node_modules/**' -g '!server/generated/**' server/src my-app | sed 's#^\\(@[^/]*/[^/]*\\).*#\\1#; s#^\\([^@/][^/]*\\)/.*#\\1#' | sort -u | confrontar com os dois package.json",
+   "falsifier_dynamic": "npm ci em arvore limpa apos remover o pacote pai que traz o transitivo",
+   "static_gap": null,
+   "demonstration": {
+    "command": "node -e \"const p=require('./server/package.json');console.log('dotenv declarado:', !!{...p.dependencies,...p.devDependencies}.dotenv)\" && grep -rn \"from 'dotenv'\" server/src",
+    "expected_wrong_output": "false, seguido do import real",
+    "seconds": 8,
+    "needs": "nada"
+   },
+   "intent_source": null,
+   "intent_unknown": true,
+   "suggested_gate": "aceito_com_registro",
+   "gate_reason": "exposicao latente; gatilho observavel nomeado",
+   "review_trigger": "proxima regeneracao de package-lock.json em qualquer root",
+   "suggested_barrier": "teste que reprova import de pacote ausente do manifesto do proprio root",
+   "barrier_kind": "teste_de_fronteira",
+   "adversarial_checks": [
+    {
+     "check": "generated/prisma e fantasma?",
+     "result": "derrubou — alias em server/tsconfig.json:27"
+    },
+    {
+     "check": "@test/helpers e fantasma?",
+     "result": "derrubou — alias em server/tsconfig.test.json:11 e jest.config.js:14"
+    },
+    {
+     "check": "assistant e fantasma?",
+     "result": "derrubou — era prosa num comentario, casada pelo proprio padrao do comando 2.f do AV-19"
+    },
+    {
+     "check": "os tres restantes estao na trava?",
+     "result": "sobreviveu — estao, mas so como transitivos; nenhum e declarado"
+    }
+   ],
+   "instrument_feedback": "o enum exposure nao tem valor para 'latente ate a proxima atualizacao de dependencia'; apenas_teorico da o portao certo pela razao errada",
+   "owner": null,
+   "verification_mode": "execucao"
+  },
+  {
+   "id": "F4",
+   "instrument": "AV-17",
+   "fingerprint": "revisao-independente-sem-artefato-por-merge",
+   "title": "A revisao independente e a barreira declarada e nao deixa artefato auditavel",
+   "measured": "37 commits mencionam revisao; 8 nomeiam uma revisao independente especifica contra 207 merges; nenhum artefato por merge existe no repositorio",
+   "signals": [
+    "S6"
+   ],
+   "damage": 3,
+   "exposure": "ja_exposto",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": ".claude/skills/luminaris-reviewer/SKILL.md",
+     "line": null,
+     "note": "a skill de revisao existe; a saida dela nao e persistida"
+    },
+    {
+     "path": "docs/audit/AV-L1-TRIAGEM.json",
+     "line": 95,
+     "note": "o proprio repositorio ja registrou que PASS sem revisao separada e rejeitado"
+    },
+    {
+     "path": ".",
+     "line": null,
+     "note": "git log: 8 commits nomeiam revisao independente contra 207 merges"
+    }
+   ],
+   "cost_per_change": "um arquivo por PR, ou um campo estruturado na triagem",
+   "business_impact": "a barreira central do metodo nao e verificavel por ninguem de fora, e nao e reexecutavel na proxima rodada",
+   "falsifier_static": "git ls-files | grep -icE 'review|revisao' && git log --format=%s | grep -icE 'revisao independente|review independente'",
+   "falsifier_dynamic": null,
+   "static_gap": null,
+   "demonstration": {
+    "command": "git log --format=%s | grep -icE 'revisao independente|review independente' && git log --merges --oneline | wc -l",
+    "expected_wrong_output": "8 contra 207",
+    "seconds": 5,
+    "needs": "nada"
+   },
+   "intent_source": "adr",
+   "intent_unknown": false,
+   "suggested_gate": "bloqueia_primeiro_cliente",
+   "gate_reason": "exposicao ja_exposto; o mapeamento de portao para nunca-implantado nao cobre esse valor, atribuido por leitura mais proxima",
+   "suggested_barrier": "artefato de revisao por PR no repositorio, com o que foi checado e o que sobreviveu",
+   "barrier_kind": "alerta",
+   "adversarial_checks": [
+    {
+     "check": "identidade de git prova revisor distinto?",
+     "result": "derrubou a abordagem ingenua — autor e committer coincidem por desenho; o teste correto e o artefato, nao a identidade"
+    },
+    {
+     "check": "o intervalo curto prova ausencia de leitura?",
+     "result": "enfraqueceu — qualquer limiar de leitura viria de literatura, o que o bloco 4b proibe; o intervalo fica como sinal"
+    },
+    {
+     "check": "existe revisao registrada fora do git (PR do provedor)?",
+     "result": "sobreviveu como nao medido — sem rede nao da para ler os reviews do provedor; por isso R1 e 'nao medido', nunca 'nao houve'"
+    }
+   ],
+   "instrument_feedback": "gateMap para deployed=nao nao mapeia ja_exposto",
+   "owner": null,
+   "verification_mode": "execucao"
+  }
+ ],
+ "conventions": [
+  {
+   "claim": "todo workflow de CI deve declarar um bloco permissions: explicito",
+   "source": "pratica corrente de CI, nao medicao deste repositorio",
+   "why_not_finding": "ci.yml tem 0 ocorrencias de permissions:, mas a consequencia depende do default do GITHUB_TOKEN na organizacao, que nao e legivel daqui",
+   "would_become_finding_if": "o default de permissoes do GITHUB_TOKEN da organizacao for medido e for read-write"
+  },
+  {
+   "claim": "legacy-peer-deps=true enfraquece a resolucao de dependencias",
+   "source": "pratica corrente de npm",
+   "why_not_finding": "server/.npmrc tem a linha, mas nenhuma divergencia de peer real foi medida na arvore",
+   "would_become_finding_if": "uma incompatibilidade de peer real for medida na arvore instalada apos npm ci"
+  }
+ ],
+ "latent_bugs": [],
+ "cheapest_moves": [
+  {
+   "move": "corrigir o docker-compose.yml",
+   "closes": [
+    "F1",
+    "F2"
+   ],
+   "why": "fecha os dois maiores danos da rodada no mesmo arquivo; F1 e o maior dano",
+   "effort": "baixo"
+  },
+  {
+   "move": "declarar dotenv, @dnd-kit/utilities e @fullcalendar/core nos manifestos",
+   "closes": [
+    "F3"
+   ],
+   "why": "duas linhas eliminam uma classe inteira de quebra silenciosa de build",
+   "effort": "trivial"
+  },
+  {
+   "move": "persistir o artefato de revisao por PR",
+   "closes": [
+    "F4"
+   ],
+   "why": "da ao AV-17 o que medir na proxima rodada e transforma o §9.4 de regra em barreira",
+   "effort": "baixo"
+  }
+ ],
+ "inquiry": [
+  {
+   "question": "Quando o docker-compose.yml subiu funcionando pela ultima vez?",
+   "answerable_from": "nenhum lugar do repositorio",
+   "why_it_matters": "se nunca subiu inteiro, F1 e F2 nao sao regressoes: sao o estado original, e o arquivo documenta uma intencao que nunca rodou"
+  },
+  {
+   "question": "Se a suite inteira ficasse verde com o filtro de inquilino removido de uma consulta, voce saberia?",
+   "answerable_from": "um npm ci seguido do AV-03 completo",
+   "why_it_matters": "e a diferenca entre ter 3798 assercoes e ter garantia"
+  },
+  {
+   "question": "Das 5 revisoes independentes que deixaram traco, quantas houve de fato?",
+   "answerable_from": "nenhum lugar — e exatamente o F4",
+   "why_it_matters": "a diferenca entre 5 e 160 e a diferenca entre um metodo praticado e um metodo declarado"
+  }
+ ],
+ "self_check": {
+  "falsifiers_executed": 4,
+  "falsifiers_total": 4,
+  "findings_without_evidence": 0,
+  "findings_justified_by_citation": 0,
+  "damage_4_plus_without_demonstration": 1,
+  "damage_demoted_for_missing_demonstration": [
+   "F2"
+  ],
+  "adversarial_checks_that_killed_a_candidate": 3,
+  "confidence_above_ceiling": 0,
+  "independent_review": false,
+  "instrument_gaps_found": [
+   "enum exposure sem valor para 'latente ate a proxima atualizacao de dependencia' (F3)",
+   "gateMap para deployed=nao nao cobre ja_exposto (F4)"
+  ]
+ }
+}
