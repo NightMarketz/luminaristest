@@ -379,11 +379,15 @@ esta emenda é só documento, e o primeiro tem um fork de desenho que não é do
 | Item | Evidência | O que fazer | Custo |
 |---|---|---|---|
 | **1. `KpiDefinition.tableId` exigido-e-ignorado** | E18 | Memória `param-aceito-e-ignorado-e-bug`: *"ou implementa, ou 400"*. **É um fork, não uma tarefa:** (i) **remover** o campo do schema (o `tableId` de topo do request já manda) — 1 linha, mas quebra qualquer cliente que o envie; (ii) **implementar** — cada KPI passa a poder apontar sua própria tabela, o que exige `getTableById` por KPI e re-checagem de posse por linha; (iii) **400** se `kpi.tableId !== tableId` de topo — 3 linhas, preserva a forma e fecha a mentira. **A escolha depende de F-AD5:** se a superfície ad-hoc for multi-tabela, (ii); se não, (iii) | 1–15 linhas conforme o ramo |
-| **2. Rota fora do `openapi.json`** | E19 | Adicionar o bloco de doc do `POST /api/analytics/custom-kpis` e regerar (`npm run docs:generate`). **Nota de gate:** o wiring gate (REV-006) **não pegou** uma rota registrada e ausente da spec — isso é um furo do próprio gate, não só deste endpoint | 1 bloco de DTO/doc + regeneração |
-| **3. (independente) Comentário mentiroso da policy** | E21 / §2.4 | Corrigir `DynamicTablePolicy.ts:28-29` — ele afirma um caminho de escrita de sistema que não existe, e é a origem provável do N1 | 1 linha |
+| **2. Rota fora do `openapi.json`** — ✅ **FEITO 2026-08-02** | E19 | Bloco `@openapi` em `routes/docs.paths.ts` (junto dos 9 irmãos de analytics, não no controller — 125 dos 138 paths vivem lá), spec regerada: **137 → 138 paths, +152 linhas, 0 deleções**. Guard `openapi-paths.test.ts` com BASELINE subido a 138 **de propósito**; 3/3 verde. **Nota de gate que isto expôs:** nenhum dos três guards podia pegar este caso — um teste de piso não sente falta de um path que **nunca** foi contado, e os guards de junk/`$ref` só inspecionam o que a spec **já contém**. Pegar essa classe exige diff *tabela-de-rotas × spec*, que **não existe**. Registrado, **não construído** | feito |
+| **3. (independente) Comentário mentiroso da policy** — ✅ **FEITO 2026-08-02** | E21 / §2.4 | `DynamicTablePolicy.ts` — o comentário agora diz o que o código faz (read-only para **todos**, inclusive dono, ADMIN e chamador interno) e nomeia as duas razões (`isSystem` derivado 15 linhas depois do throw; inexistência de `createTableDataAsSystem`), apontando para este ADR e para a barreira. Write-lock 8/8 verde | feito |
 | **4. (adendo b′, segue adiado)** | E15 | `min`/`max`/`contains` na forma **viva** só quando houver autor de pipeline. Sob (a) isso fica ainda mais claramente pendurado em F-AD5 | ~6 linhas, 2 arquivos |
 
-**Item 3 não depende de nada** e pode ir sozinho. Itens 1 e 2 são a fatia de (a).
+**Estado:** itens **2 e 3 executados em 2026-08-02** (commit próprio; `tsc` limpo, 11/11 verdes entre o
+guard de OpenAPI e a barreira de write-lock). **Item 1 segue ABERTO** — é fork de desenho e o ramo certo
+depende de F-AD5 ser multi-tabela ou não; a spec agora **documenta o comportamento real** (`kpis[].tableId`
+exigido e não lido), o que torna a mentira visível em vez de silenciosa, mas não a conserta. **Item 4
+(b′) segue adiado.**
 
 **Achado da revisão que vale registrar:** `server/scripts/test-report-2026-06-12.html:587` contém uma
 linha `POST /api/analytics/custom-kpis` → `200` → *"sum / avg / count / min / max por tabela"*. É relatório

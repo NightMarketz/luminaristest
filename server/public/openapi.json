@@ -5128,6 +5128,158 @@
         }
       }
     },
+    "/api/analytics/custom-kpis": {
+      "post": {
+        "summary": "Execute ad-hoc KPI definitions against one dynamic table",
+        "description": "Stateless. Validates each KPI with Zod and against the target table's real column list, then computes them over the table rows and returns the results. Nothing is persisted. Each KPI is computed in its own try/catch, so one broken calculation yields a null value for that KPI instead of failing the whole response.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tableId",
+                  "kpis"
+                ],
+                "properties": {
+                  "tableId": {
+                    "type": "string",
+                    "format": "cuid",
+                    "description": "The table every KPI in this request is computed over"
+                  },
+                  "kpis": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "tableId",
+                        "measure",
+                        "field"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "tableId": {
+                          "type": "string",
+                          "description": "Required by the schema but NOT read by the server, which computes every KPI over the top-level tableId. Send the same value. See ADR-ANALYTICS-DEFS F-AD6.4 item 1."
+                        },
+                        "measure": {
+                          "type": "string",
+                          "enum": [
+                            "sum",
+                            "avg",
+                            "count",
+                            "min",
+                            "max"
+                          ]
+                        },
+                        "field": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Column the measure aggregates. Required even for count."
+                        },
+                        "filters": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "field",
+                              "operator",
+                              "value"
+                            ],
+                            "properties": {
+                              "field": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "operator": {
+                                "type": "string",
+                                "enum": [
+                                  "eq",
+                                  "gt",
+                                  "lt",
+                                  "gte",
+                                  "lte",
+                                  "contains"
+                                ]
+                              },
+                              "value": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per submitted KPI, in request order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kpiName": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "error": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "Calculation failed"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Zod validation failed",
+            "or a KPI references a column absent from the table schema": null
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
     "/api/analytics/presets/{presetKey}": {
       "get": {
         "summary": "Get analytics preset groups for a specific preset key",
