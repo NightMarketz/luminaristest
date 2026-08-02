@@ -2832,6 +2832,151 @@
         ]
       }
     },
+    "/api/analytics/custom-kpis": {
+      "post": {
+        "summary": "Execute ad-hoc custom KPI definitions over a dynamic table",
+        "description": "Validates every KPI definition with Zod and against the target table's real column list, then executes them. A KPI whose calculation throws yields a null value plus an error string rather than failing the whole response. Refuses tables above 50000 rows instead of truncating, because a truncated sum or avg is a plausible wrong number.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "tableId",
+                  "kpis"
+                ],
+                "properties": {
+                  "tableId": {
+                    "type": "string",
+                    "description": "Dynamic table the KPIs are computed over"
+                  },
+                  "kpis": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "tableId",
+                        "measure",
+                        "field"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 100
+                        },
+                        "tableId": {
+                          "type": "string",
+                          "description": "Must equal the top-level tableId"
+                        },
+                        "measure": {
+                          "type": "string",
+                          "enum": [
+                            "sum",
+                            "avg",
+                            "count",
+                            "min",
+                            "max"
+                          ]
+                        },
+                        "field": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "filters": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "field",
+                              "operator"
+                            ],
+                            "properties": {
+                              "field": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "operator": {
+                                "type": "string",
+                                "enum": [
+                                  "eq",
+                                  "gt",
+                                  "lt",
+                                  "gte",
+                                  "lte",
+                                  "contains"
+                                ]
+                              },
+                              "value": {}
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per submitted KPI, in request order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kpiName": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "error": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
     "/api/dashboard-layout": {
       "get": {
         "summary": "List all dashboard widget layouts for the current user",
