@@ -17,13 +17,35 @@
 //       do arquivo está preso a um item que o parser leu (guarda de cobertura)
 //   B2  todo bloco t-* é referenciado por algum item (sem fiação órfã)
 //   B3  todo centerpiece.type emitido está declarado no contrato, e vice-versa
-//   B4  todo JSON auditoria/1.1 carrega o envelope completo, sem `severity`
+//   B4  todo JSON auditoria/1.1 carrega o envelope completo, sem `severity` — e relatório
+//       de instrumento v4+ declara `run.review_of_this_run` (AV-00 §9.4)
 //   B5  todo achado tem evidence, falsificador (ou static_gap) e checagem adversarial
 //   B6  damage >= 4 exige demonstration, ou rebaixamento registrado (AV-00 §6b)
 //   B7  exposure e barrier_kind dentro das listas fechadas (inclui a emenda v4.1)
 //   B8  teto de confiança do AV-00 §2.2: ratio > 0.70 proíbe confiança alta por revisão
 //   B9  instrumento marcado v4 (ou v4.x) carrega os blocos 4b e 6b, ou se isenta por
 //       v4patch — e nesse caso a emenda compartilhada tem de existir e suprir os dois
+//   B10 rodada sem revisão independente aparece na saída — declarada OU omitida
+//   B11 o banner "Sem revisão independente" do visualizador dispara com a chave AUSENTE
+//
+// SEMÂNTICA DA AUSÊNCIA DE DIVULGAÇÃO DE REVISÃO (§9.4), e por que ela é assimétrica.
+// O §9.4 é explícito: "rodada que omite os dois campos está afirmando revisão que não pode
+// mostrar". Ou seja, omitir é PIOR que declarar `null` — e antes desta correção era mais
+// barato: `false` acendia um aviso, ausência não acendia nada, nos três lugares (B4, B10,
+// banner). Silêncio saía mais limpo que confissão. Mas a resposta NÃO é transformar toda
+// ausência em erro: o AV-R1 mede 8 revisões independentes nomeadas contra 207 merges, então
+// a ausência de revisão é o caso comum, e um erro que dispara em quase todo relatório é um
+// erro que se aprende a contornar. A linha fica onde o custo é assimétrico:
+//   · a REVISÃO ausente é o caso comum e continua legítima — nunca vira erro;
+//   · a DECLARAÇÃO custa uma linha (`review_of_this_run: null` + `review_gap`) e é o que o
+//     §9.4 prescreve, então em relatório v4+ (a versão do envelope que criou o campo)
+//     omiti-la é erro B4, igual às outras dez chaves obrigatórias de `run`;
+//   · relatório pré-v4 (AV-L1 é v3) não tinha o campo no contrato dele: retrofitar seria
+//     reescrever história, que o §9 proíbe mais do que proíbe silêncio. Fica em aviso.
+// E o aviso B10 passa a disparar nos três estados (ausente, null, false) porque o fato é o
+// mesmo — só a mensagem distingue quem declarou de quem calou. Motivo medido: este gate
+// imprime ~19 avisos, então aviso solitário não é barreira; a barreira de verdade é o erro
+// B4 para quem tem o campo no contrato, mais o banner no visualizador (B11).
 //
 // Uso:  node scripts/bancada-gate.mjs
 // Saída: exit 1 com ::error:: por problema; exit 0 com resumo.
@@ -212,6 +234,23 @@ for (const { f, j } of relatorios) {
   }
   if (j.centerpiece?.type) tiposUsados.add(j.centerpiece.type);
 
+  // ---------- B4/B10 · divulgação de revisão independente (AV-00 §9.4) ----------
+  // Racional da assimetria erro-×-aviso no cabeçalho deste arquivo. Aqui só o corte: o
+  // campo nasceu no envelope v4 (§8b), então v4+ deve declarar; v3 é anistiado com aviso.
+  const major = Number((/^v(\d+)/.exec(j.run?.instrument_version || '') || [])[1]);
+  const declarou = j.run?.review_of_this_run !== undefined;
+  if (!declarou && major >= 4) {
+    err('B4', `${f}: run.review_of_this_run ausente — instrumento ${j.run?.instrument_version} ` +
+      'carrega o campo no envelope (§8b) e o §9.4 lê a omissão como afirmação de revisão que ' +
+      'não pode mostrar; use null + review_gap para declarar que não houve');
+  }
+  if (!declarou || j.run.review_of_this_run === null || j.self_check?.independent_review === false) {
+    warn('B10', declarou
+      ? `${f}: rodada sem revisão independente (AV-00 §9.4)`
+      : `${f}: rodada OMITE review_of_this_run/review_gap — ausência de declaração, não ` +
+        `declaração de ausência (AV-00 §9.4)`);
+  }
+
   const ratio = j.run?.agent_authored_ratio?.value;
   const tetoAtivo = typeof ratio === 'number' && ratio > 0.7;
 
@@ -255,9 +294,6 @@ for (const { f, j } of relatorios) {
     }
   }
 
-  if (j.self_check?.independent_review === false) {
-    warn('B10', `${f}: rodada sem revisão independente (AV-00 §9.4)`);
-  }
 }
 
 // ---------- B3 · tipos de peça central ----------
@@ -300,6 +336,40 @@ for (const it of itens) {
   const txt = blocos.get(it.srcId) || '';
   if (!/conventions\[\]/.test(txt)) err('B9', `${it.code} é ${it.ver} e não carrega o bloco 4b (conventions[])`);
   if (!/demonstra(ç|c)ão|demonstration/i.test(txt)) err('B9', `${it.code} é ${it.ver} e não carrega o bloco 6b (demonstração)`);
+}
+
+// ---------- B11 · o banner de revisão enxerga chave AUSENTE ----------
+// Terceira perna da mesma fuga: o gate podia acender e a página continuar muda, porque o
+// teste do visualizador era `r.review_of_this_run===null` e chave ausente é `undefined`.
+// Este bloco não confere o TEXTO da condição — ele EXTRAI a expressão que a página usa e a
+// avalia contra os três estados. Voltar para `===` deixa o caso "chave ausente" em false e
+// reprova aqui, que é a checagem que teria falhado se eu estivesse errado sobre o efeito.
+{
+  const m = html.match(
+    /if\((r\.review_of_this_run[^\n)]*)\)\s*\n?\s*h\+=`<div class="banner"><b>Sem revisão independente/,
+  );
+  if (!m) {
+    err('B11', 'condição do banner "Sem revisão independente" não localizada no visualizador');
+  } else {
+    let cond;
+    try {
+      cond = new Function('r', `return !!(${m[1]});`);
+    } catch (e) {
+      err('B11', `condição do banner não avalia: ${e.message}`);
+    }
+    const casos = [
+      ['chave ausente', {}, true],
+      ['review_of_this_run: null', { review_of_this_run: null }, true],
+      ['revisão declarada', { review_of_this_run: 'revisao-independente#1' }, false],
+    ];
+    if (cond) {
+      for (const [nome, r, esperado] of casos) {
+        if (cond(r) !== esperado) {
+          err('B11', `banner do visualizador com ${nome}: esperado ${esperado ? 'acender' : 'não acender'}, obteve o contrário`);
+        }
+      }
+    }
+  }
 }
 
 // ---------- saída ----------

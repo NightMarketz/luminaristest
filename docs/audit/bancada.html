@@ -821,6 +821,14 @@ assina o veredito de quem rodou o instrumento.
     run.review_of_this_run é null quando não houve, e review_gap diz por quê. Rodada que
     omite os dois campos está afirmando revisão que não pode mostrar.
 
+    E isso agora é cheque, não parágrafo. A ausência de REVISÃO continua legítima — é o caso
+    comum medido acima e nunca vira erro. O que virou erro é a ausência de DECLARAÇÃO em
+    relatório de instrumento v4+, a versão do envelope que criou o campo (§8b): gate B4.
+    Relatório pré-v4 fica em aviso, porque retrofitar contrato antigo é reescrever história.
+    Nos três estados — ausente, null, false — o aviso B10 sai e o banner do visualizador
+    acende, com texto que separa quem declarou a ausência de quem calou. Antes desta emenda
+    o silêncio saía mais limpo que a confissão nos três lugares ao mesmo tempo.
+
 ## ANTI-PADRÕES
 Corrigir por facilidade. Corrigir sem executar o falsificador. Correção que toca dezenas
 de arquivos. Aceitar em silêncio. Aceite sem gatilho observável. Correção sem barreira.
@@ -3040,8 +3048,11 @@ function renderReport(){
     h+=`<div class="banner ${rt.value>0.7?"":"ok"}"><b>Origem do código · ${esc(rt.value)}</b><br>
       ${esc(rt.method||"")}<br><span class="hint">${esc(rt.identity_rule||"")}</span>
       ${rt.value>0.7?`<br>Teto do AV-00 §2.2 ATIVO${r.confidence_ceiling?" — teto "+esc(r.confidence_ceiling):""}: acima de 0,70 só <span class="mono">verification_mode: execucao</span> sustenta confiança alta.`:""}</div>`;}
-  if(r.review_of_this_run===null||r.review_gap)
-    h+=`<div class="banner"><b>Sem revisão independente</b><br>${esc(r.review_gap||"AV-00 §9.4: revisão vem de agente separado")}</div>`;
+  /* `==null` e não `===null`: chave AUSENTE é undefined, e o §9.4 lê omissão como afirmação
+     de revisão que não pode mostrar — o estado mais grave era justamente o que não acendia
+     banner nenhum. A mensagem distingue quem declarou a ausência de quem calou. */
+  if(r.review_of_this_run==null||r.review_gap)
+    h+=`<div class="banner"><b>Sem revisão independente</b><br>${esc(r.review_gap||(("review_of_this_run" in r)?"AV-00 §9.4: revisão vem de agente separado":"o relatório OMITE review_of_this_run e review_gap — AV-00 §9.4 lê a omissão como afirmação de revisão que não pode mostrar"))}</div>`;
   const nm=A.not_measured||[];
   h+= nm.length?`<div class="banner"><b>Não medido — ${nm.length}</b><ul>${nm.map(n=>`<li>${esc(n.label||n.id)}: ${esc(n.reason)} — consequência: ${esc(n.consequence)}</li>`).join("")}</ul></div>`
     :`<div class="banner ok"><b>Tudo medido</b></div>`;
