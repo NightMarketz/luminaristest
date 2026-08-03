@@ -12,8 +12,9 @@ sessão seguinte, que fechou os itens 1 e 2 da fila.
 | `docs/audit/AV-R1.md` + `.json` | rodada 1 · 4 achados · AV-16 a AV-19 |
 | `docs/audit/AV-R2-COBERTURA-AUSENTE.md` + `AV-R2.json` | rodada 2 · 110 obrigações de teste · AV-20 |
 | `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 · AV-03 |
-| `scripts/bancada-gate.mjs` | gate de 9 checagens · **passa** · as 9 com mordida provada |
-| `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos |
+| `scripts/bancada-gate.mjs` | gate de 15 checagens · **passa** · as 15 com mordida provada |
+| `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
+| `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos |
 
 ## O que foi perdido, e como (histórico — já resolvido)
 
@@ -94,12 +95,47 @@ de execução. Os 12 que faltavam são os empurrados por `ITEMS.push(...)` com c
 mas a linha final subcontava o catálogo em mais de um terço. Agora o total é derivado de
 `CAT` menos a lista de exclusão, e bate com `ITEMS.length` medido em execução.
 
-### 3 · Triar o que já foi medido (AV-00 bloco 9)
-Nenhum achado das rodadas v4 (R1, R2, R3) foi triado:
-- 4 achados do R1, 3 do R3 — verificar falsificador, atribuir portão, dono e data.
-- 110 obrigações do R2 — não são achados; decidir se viram fila de trabalho ou aceite.
+### 3 · Triar o que já foi medido (AV-00 bloco 9) — FEITO (`docs/audit/TRIAGEM-R1-R3.json`)
 
-O bloco 9 proíbe corrigir achado não triado. **Nenhuma correção de código antes disto.**
+Os 7 achados (4 do R1, 3 do R3) triados; os 7 falsificadores estáticos executados contra
+`ca33c745`, cinco deles com controle discriminante porque devolvem zero e zero é o resultado
+mais fácil de obter por acidente. **7 confirmados, 0 refutados** — resultado incomum, nomeado
+como suspeito em `self_check.own_bias_named` e não arredondado.
+
+Portões derivados por **convergência**, não por escolha: as duas fontes do repositório
+discordam sobre `deployed` (`interno` no AV-L1-TRIAGEM, respondido pelo dono em 2026-07-31;
+`nunca implantado` no AV-R1.md, 2026-08-02), e os dois ramos do `gateMap` dão o mesmo portão
+em 7 de 7. Resultado: 1 `bloqueia_deploy` (Qdrant, por divulgação irreversível — sobrescreve
+o relatório), 5 `bloqueia_primeiro_cliente` (um deles sobrescrevendo o `aceito_com_registro`
+sugerido para a fronteira de DTO), 1 `aceito_com_registro`.
+
+As **110 obrigações do R2 não são achados** e não foram triadas como se fossem: aceite
+coletivo com gatilho, com subfila de 4 ratificada (as únicas com três invariantes
+simultâneas), herdada pelo item de maior dano. A razão é medida: o `mutation_score` de 0,286
+mostra que cobertura por nome não move força de suíte.
+
+**Nenhuma correção de código foi feita** — o bloco 9 proíbe corrigir achado não triado, e a
+tentação era concreta (o item de rank 1 fecha com UMA asserção).
+
+### 3b · O gate passou a ler `triagem/1.0` — FEITO
+
+`if (j.schema !== 'auditoria/1.1') continue` tirava a triagem de todo o escopo do gate: o
+artefato que o AV-00 inteiro existe para produzir era o único do diretório sem checagem.
+Falsificador executado antes da correção: esvaziar `items` de um `triagem/1.0` → **exit 0**.
+
+Seis checagens novas — B11 envelope · B12 fingerprint copiado sem alteração da origem · B13
+`verification` de lista fechada · B14 portão de lista fechada, `owner`+`due` quando abre
+trabalho, aceite com `accepted_reason`+`accepted_by`+`review_trigger` **observável** (tem de
+nomear caminho que existe no disco) · B15 `self_check` conferido contra os itens · B16 os três
+campos do precedente. Todas promovidas ao `t-contrato` da bancada.
+
+**Mordida provada por 13 mutações**, cada uma de 1 linha (`git diff --numstat` conferido),
+todas revertidas de `.bak`. Duas delas rodaram contra o **precedente** `AV-L1-TRIAGEM.json` e
+o reprovaram — e o precedente, intacto, passa sem uma linha alterada. Esse é o único controle
+contra regra moldada ao próprio arquivo, e é declarado como único.
+
+**Limite declarado:** B11..B16 leem estrutura. Não medem se o falsificador rodou, se o portão
+foi bem derivado nem se o viés nomeado é o real; prosa vazia compra a saída em B16.
 
 **CORREÇÃO — a versão anterior deste documento dizia que `triagem/1.0` "nunca foi
 exercitado uma vez". É falso, e conferir levou um comando.** `docs/audit/AV-L1-TRIAGEM.json`
@@ -176,9 +212,18 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
 2. **A reconstrução é autoria, não a v4 original.** O texto perdido não volta. Os blocos
    novos são fiéis ao que os três relatórios descrevem e satisfazem o gate, mas quem
    comparar com a v4 anterior vai achar diferenças de redação — não há como medir quantas.
-3. **Os itens 3 e 4 da fila não foram tocados.** Nenhum achado das rodadas v4 foi triado, e
-   nenhum foi corrigido — deliberado: o AV-00 bloco 9 proíbe corrigir o não triado.
-   (`triagem/1.0` já tem um precedente exercitado, o `AV-L1-TRIAGEM.json` — ver item 3.)
+3. **O item 4 da fila não foi tocado.** Os 7 achados agora estão triados (item 3), e nenhum
+   foi corrigido — deliberado, e agora é a ordem certa: com portão, dono e data atribuídos, a
+   Fase de correção está liberada pelo bloco 9. A fila de correção, em ordem de risco removido
+   por esforço, está em `ordering.sequence` do `TRIAGEM-R1-R3.json`.
+7. **`deployed` continua sem resposta do dono.** A triagem contornou por convergência dos dois
+   valores plausíveis, e a convergência é real — mas ela evapora em três dos sete itens se a
+   resposta for `produção`. É uma pergunta de uma linha e vale fazê-la antes de corrigir.
+8. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
+   Medido: `grep -rn 'bancada-gate' .github/ package.json` devolve nada, enquanto o script
+   irmão `debt-ledger-check.mjs` está no CI em dois passos. É a mesma classe do F4 do R1
+   aplicada à própria bancada, e vale mais agora — seis regras novas atrás de gatilho manual.
+   Registrado como achado novo em `new_findings_raised` da triagem; não corrigido aqui.
 4. **B10 continua aviso, não erro.** As três rodadas seguem sem revisão independente. O gate
    avisa e não bloqueia — decisão anterior, mantida, mas é a lacuna que o próprio §9.4 chama
    de rejeitável.

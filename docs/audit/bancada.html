@@ -1498,6 +1498,47 @@ varredura vai até o fim do bloco. Por isso as duas linhas `ganhou` são as ÚLT
 contrato — prosa depois delas entraria na lista de tipos declarados como ruído. Medido: com
 a ordem invertida, 35 palavras de texto corrido viraram "tipo declarado e não usado".
 
+CONTRATO triagem/1.0 — o artefato de saída do AV-00 (bloco 9)
+Cobrado pelo gate em B11..B16. Antes desta emenda o schema saía de TODO o escopo dele: a
+linha `if (j.schema !== "auditoria/1.1") continue` tirava a triagem de vista, e uma triagem
+com items vazio passava verde. O artefato que este método existe para produzir era o único
+sem checagem.
+items[]                      não vazio; triagem sem item não tria nada
+items[].fingerprint          CÓPIA LITERAL do fingerprint do relatório de origem — é o elo
+                             entre relatório, triagem e próxima rodada; reescrevê-lo quebra
+                             o elo em silêncio
+items[].source_report        o arquivo auditoria/1.1 de onde o achado veio
+items[].verification         confirmado | refutado | inconclusivo | nao_executavel |
+                             nao_executado — lista fechada
+items[].gate                 bloqueia_deploy | bloqueia_primeiro_cliente |
+                             aceito_com_registro | descartado. A triagem SOBRESCREVE o
+                             suggested_gate do relatório e registra a derivação
+items[].owner e due          obrigatórios quando o portão abre trabalho (nem aceite nem
+                             descarte). Item sem os dois é backlog, não triagem
+aceite                       exige accepted_reason + accepted_by + review_trigger
+                             OBSERVÁVEL: o gatilho tem de nomear ao menos um caminho que
+                             existe no repositório, senão quem herdar o aceite não consegue
+                             reexecutá-lo
+self_check                   falsifiers_executed, falsifiers_total e items_without_owner
+                             são CONFERIDOS contra os itens, não declarados
+
+TRÊS CAMPOS PROMOVIDOS DO PRECEDENTE (docs/audit/AV-L1-TRIAGEM.json, rodada AV-L1)
+Estavam naquele arquivo sem o contrato os exigir. Cada um veio de um erro medido, não de gosto.
+source_run[].verification_note  quando os falsificadores rodam contra um commit DIFERENTE do
+                             relatório, declare isso e prove com git diff que nenhum arquivo
+                             de evidence está no meio
+self_check.barriers_searched todo barrier_kind é emitido DEPOIS de procurar barreira já
+                             existente. A lição literal do precedente: nenhuma_conhecida só
+                             vale depois de procurar, senão é "não procurei" com nome de
+                             veredito
+self_check.own_bias_named    nomeie o próprio viés, inclusive "sou verificador da minha
+                             própria correção" onde couber
+
+O QUE B11..B16 NÃO FAZEM, declarado em vez de prometido: elas leem ESTRUTURA. Nenhuma mede se
+o falsificador rodou de fato, se o portão foi bem derivado ou se o viés nomeado é o viés real.
+Prosa vazia compra a saída em B16. O que elas impedem é a triagem INCOMPLETA passar em
+silêncio — que era o estado anterior a esta emenda.
+
 EXTENSÃO v4 — tipos de peça central dos instrumentos escritos na v4
 centerpiece.type ganhou na v4:
     intent_trail | mutation_score | comprehension_gap | review_reality | exposure_map |
