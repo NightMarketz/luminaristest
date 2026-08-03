@@ -17,7 +17,8 @@
 //       do arquivo está preso a um item que o parser leu (guarda de cobertura)
 //   B2  todo bloco t-* é referenciado por algum item (sem fiação órfã)
 //   B3  todo centerpiece.type emitido está declarado no contrato, e vice-versa
-//   B4  todo JSON auditoria/1.1 carrega o envelope completo, sem `severity`
+//   B4  todo JSON auditoria/1.1 carrega o envelope completo, sem `severity` — e relatório
+//       de instrumento v4+ declara `run.review_of_this_run` (AV-00 §9.4)
 //   B5  todo achado tem evidence, falsificador (ou static_gap) e checagem adversarial
 //   B6  damage >= 4 exige demonstration, ou rebaixamento registrado (AV-00 §6b)
 //   B7  exposure e barrier_kind dentro das listas fechadas (inclui a emenda v4.1)
@@ -269,8 +270,21 @@ for (const { f, j } of relatorios) {
     }
   }
 
-  if (j.self_check?.independent_review === false) {
-    warn('B10', `${f}: rodada sem revisão independente (AV-00 §9.4)`);
+  // ---------- B4/B10 · divulgação de revisão independente (AV-00 §9.4) ----------
+  // Racional da assimetria erro-×-aviso no cabeçalho deste arquivo. Aqui só o corte: o
+  // campo nasceu no envelope v4 (§8b), então v4+ deve declarar; v3 é anistiado com aviso.
+  const major = Number((/^v(\d+)/.exec(j.run?.instrument_version || '') || [])[1]);
+  const declarou = j.run?.review_of_this_run !== undefined;
+  if (!declarou && major >= 4) {
+    err('B4', `${f}: run.review_of_this_run ausente — instrumento ${j.run?.instrument_version} ` +
+      'carrega o campo no envelope (§8b) e o §9.4 lê a omissão como afirmação de revisão que ' +
+      'não pode mostrar; use null + review_gap para declarar que não houve');
+  }
+  if (!declarou || j.run.review_of_this_run === null || j.self_check?.independent_review === false) {
+    warn('B10', declarou
+      ? `${f}: rodada sem revisão independente (AV-00 §9.4)`
+      : `${f}: rodada OMITE review_of_this_run/review_gap — ausência de declaração, não ` +
+        `declaração de ausência (AV-00 §9.4)`);
   }
 }
 
@@ -454,6 +468,41 @@ for (const { f, j } of triagens) {
     if (vazio(r.verification_note)) {
       err('B16', `${f}: source_run[${i}] (${r.instrument || '?'}) sem verification_note — ` +
         'a triagem não declara contra qual commit os falsificadores rodaram');
+    }
+  }
+}
+
+// ---------- B17 · o banner de revisão enxerga chave AUSENTE ----------
+// Terceira perna da mesma fuga: o gate podia acender e a página continuar muda, porque o
+// teste do visualizador era `r.review_of_this_run===null` e chave ausente é `undefined`.
+// Este bloco não confere o TEXTO da condição — ele EXTRAI a expressão que a página usa e a
+// avalia contra os três estados. Voltar para `===` deixa o caso "chave ausente" em false e
+// reprova aqui, que é a checagem que teria falhado se eu estivesse errado sobre o efeito.
+// (Era "B11" no branch de origem; renumerado para B17 na integração — ver NUMERAÇÃO acima.)
+{
+  const m = html.match(
+    /if\((r\.review_of_this_run[^\n)]*)\)\s*\n?\s*h\+=`<div class="banner"><b>Sem revisão independente/,
+  );
+  if (!m) {
+    err('B17', 'condição do banner "Sem revisão independente" não localizada no visualizador');
+  } else {
+    let cond;
+    try {
+      cond = new Function('r', `return !!(${m[1]});`);
+    } catch (e) {
+      err('B17', `condição do banner não avalia: ${e.message}`);
+    }
+    const casos = [
+      ['chave ausente', {}, true],
+      ['review_of_this_run: null', { review_of_this_run: null }, true],
+      ['revisão declarada', { review_of_this_run: 'revisao-independente#1' }, false],
+    ];
+    if (cond) {
+      for (const [nome, r, esperado] of casos) {
+        if (cond(r) !== esperado) {
+          err('B17', `banner do visualizador com ${nome}: esperado ${esperado ? 'acender' : 'não acender'}, obteve o contrário`);
+        }
+      }
     }
   }
 }
