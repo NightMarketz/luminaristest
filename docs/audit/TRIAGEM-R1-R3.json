@@ -1,0 +1,298 @@
+{
+  "schema": "triagem/1.0",
+  "_note": "Triagem dos achados das rodadas v4 R1 e R3, na ordem do AV-00 bloco 9 (verificar → triar → aceitar). NENHUMA correção de código foi feita: o bloco 9 proíbe corrigir achado não triado, e a proibição vale inclusive para o achado óbvio. Segue o precedente docs/AV-L1-TRIAGEM.json, inclusive nos três campos que o contrato ainda não exigia quando ele foi escrito — verification_note, barriers_searched e own_bias_named — que esta rodada promove ao contrato (bloco t-contrato da bancada) e passa a ser cobrada pelo gate (B11..B16).",
+
+  "source_runs": [
+    {
+      "instrument": "R1-CONSOLIDADO",
+      "instruments_included": ["AV-03", "AV-16", "AV-17", "AV-18", "AV-19"],
+      "instrument_version": "v4",
+      "file": "docs/audit/AV-R1.json",
+      "title": "Primeira rodada da bancada v4",
+      "project": "Luminaris",
+      "repo_commit": "643d2eb",
+      "generated_at": "2026-08-02",
+      "reduced_mode": true,
+      "verification_commit": "ca33c745",
+      "verification_note": "Os sete falsificadores foram executados contra ca33c745 (tip de claude/bancada-medicion-vs-opinion-b47dce), não contra 643d2eb. MEDIDO, não assumido: `git diff --name-only 643d2eb..ca33c745` devolve exatamente 9 arquivos, e os 9 são docs/audit/{AV-R1.json,AV-R1.md,AV-R2-COBERTURA-AUSENTE.md,AV-R2.json,AV-R3-FORCA-DA-SUITE.md,AV-R3.json,CONTINUACAO.md,bancada.html} e scripts/bancada-gate.mjs — os próprios artefatos da bancada. NENHUM arquivo de evidence de NENHUM dos 7 achados está no diff: docker-compose.yml, my-app/next.config.js, my-app/package.json, my-app/package-lock.json, server/package.json, server/src/config/env.ts, server/src/lib/vector/qdrant.ts, server/.env.example, server/src/features/accounting/** e server/src/controllers/** estão todos fora dele. Logo o resultado dos 7 vale para o commit dos relatórios. UMA EXCEÇÃO DECLARADA: o falsificador do F4 do R1 conta mensagens de commit (`git log --format=%s | grep -icE 'revisao independente'`), e portanto NÃO é invariante ao commit — ver items[5].verification_note."
+    },
+    {
+      "instrument": "AV-03",
+      "instrument_version": "v4.1",
+      "file": "docs/audit/AV-R3.json",
+      "title": "Força da Suíte — mutação executada",
+      "project": "Luminaris",
+      "repo_commit": "643d2eb",
+      "generated_at": "2026-08-02",
+      "reduced_mode": true,
+      "verification_commit": "ca33c745",
+      "verification_note": "Mesmo diff, mesma conclusão: `git diff --name-only 643d2eb..ca33c745` não toca server/src/features/accounting/services/PostingService.ts, PostingRepository.ts, JournalEntryRepository.ts, dtos/** nem __tests__/**. Os três falsificadores do R3 são todos contagens sobre server/src, e server/src inteiro está fora do diff — a verificação vale para 643d2eb sem ressalva."
+    }
+  ],
+
+  "triage_at": "2026-08-03",
+  "triaged_by": "claude-opus-5 (execução dos sete falsificadores, busca de barreira e derivação mecânica de portão). NENHUMA decisão de dono foi tomada nesta triagem: o campo `deployed` não foi respondido para as rodadas R1/R3, e o portão de cada item foi derivado por CONVERGÊNCIA dos dois valores plausíveis — ver profile_decision.",
+
+  "profile_decision": {
+    "_note": "Extensão aditiva ao triagem/1.0, no mesmo precedente do AV-L1-TRIAGEM. Registrada porque todo portão abaixo deriva do estado de implantação, e aqui esse estado está AMBÍGUO entre duas fontes. Sem esta seção a triagem não é reexecutável.",
+    "ambiguity_measured": "Duas fontes discordam. (a) docs/audit/AV-L1-TRIAGEM.json:19 registra `deployed: \"interno\"`, respondido pelo dono em 2026-07-31. (b) docs/audit/AV-R1.md:32 declara o perfil da rodada como `nunca implantado · zero usuários`, em 2026-08-02. Não perguntei ao dono e não escolhi por mim.",
+    "resolution": "CONVERGÊNCIA, não escolha. Os dois ramos do gateMap da bancada foram aplicados a cada um dos 7 achados e produzem o MESMO portão em 7 de 7. Por isso a ambiguidade não bloqueia esta triagem — e essa afirmação é falsificável item a item pelo campo `gate_derivation`, que cita os dois ramos.",
+    "branch_interno": "ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy → bloqueia_deploy SÓ se irreversível · com_volume → aceitavel_com_registro · latente_por_dependencia → aceitavel_com_registro com gatilho",
+    "branch_nunca_implantado": "irreversível ou perda de dado → bloqueia_deploy · ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy não irreversível → bloqueia_primeiro_cliente · latente_por_dependencia → aceitavel_com_registro com gatilho nomeado · com_volume e apenas_teorico → aceitavel_com_registro com gatilho",
+    "branch_source": "docs/audit/bancada.html, função gateMap() — lida no arquivo, não citada de memória.",
+    "irreversible_list_used": "A lista de 8 operações irreversíveis confirmada pelo dono em 2026-07-31 (AV-L1-TRIAGEM.json:22-31) foi reusada, porque nenhuma rodada posterior a alterou. Nenhum dos 7 achados intersecta uma das 8 — a única promoção a bloqueia_deploy desta triagem (item 2) vem do ramo `perda de dado`/divulgação irreversível, não da lista.",
+    "what_would_change_the_answer": "Se o dono responder `produção` (com ou sem pagantes), os dois achados `ja_exposto` do R3 (F1 e F2) e o F4 do R1 sobem de bloqueia_primeiro_cliente para bloqueia_deploy, e a convergência acima deixa de valer. É a única resposta que muda esta triagem, e ela é uma pergunta de uma linha."
+  },
+
+  "items": [
+    {
+      "rank": 1,
+      "fingerprint": "gate-de-createAccount-coberto-mas-nao-afirmado",
+      "source_report": "docs/audit/AV-R3.json",
+      "source_finding_id": "F2",
+      "damage": 3,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745. `grep -rn createAccount src --include=*.test.ts | grep -c Forbidden` devolve 0. Dois controles rodados contra o plausível-e-errado: (1) o mesmo grep SEM o filtro Forbidden devolve 7, então o zero não é 'createAccount não aparece nos testes'; (2) `grep -rln Forbidden src --include=*.test.ts` devolve 38 arquivos, então o filtro não devolve zero para todo mundo — ele discrimina. A guarda existe e foi lida no código: PostingService.ts:628 é `if (!this.policy.canManage(scope))` seguido de `throw new ForbiddenError`, exatamente a linha que o relatório aponta (aqui o número BATE, ao contrário dos dois achados de compose do R1).",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto. Ramo `interno`: ja_exposto → bloqueia_primeiro_cliente. Ramo `nunca implantado`: ja_exposto → bloqueia_primeiro_cliente. CONVERGEM. Confirma o suggested_gate do relatório, que era provisório.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-10",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_permissao",
+      "barrier_note": "PROPOSTA, não existente — e a proposta é literalmente uma linha: uma asserção de ForbiddenError no bloco `createAccount audit` que JÁ EXISTE em PostingService.test.ts:783. Buscado antes de emitir: (a) `grep -rn createAccount src --include=*.test.ts | grep -c Forbidden` = 0, então nenhum teste afirma a guarda hoje; (b) 38 arquivos de teste já usam `Forbidden`, então o molde da asserção existe no repositório e não precisa ser inventado; (c) nenhum dos 6 PRs abertos (135, 129, 117, 97, 87, 54) toca PostingService — medido com `gh pr diff --name-only` nos seis.",
+      "why_rank_1": "Maior risco removido por esforço da rodada, pelo critério do AV-00 §3: dano 3 sobre uma guarda de AUTORIZAÇÃO, fechado por uma asserção num teste que já existe. É o único item cujo custo é menor que o custo de discuti-lo."
+    },
+    {
+      "rank": 2,
+      "fingerprint": "qdrant-publicado-sem-chave-embora-codigo-suporte",
+      "source_report": "docs/audit/AV-R1.json",
+      "source_finding_id": "F2",
+      "damage": 3,
+      "damage_note": "Dano pretendido 4, rebaixado no relatório por falta de demonstração executável em 120s (AV-00 §6b). O rebaixamento é de PROCEDIMENTO — não mede que o dano seja menor. Mantido em 3 aqui porque a demonstração continua exigindo subir a stack, que continua acima do teto.",
+      "exposure": "apos_deploy",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745. `grep -A6 'qdrant:' docker-compose.yml | grep -qi 'api_key\\|environment'` cai no ramo SEM CHAVE. Controle rodado: o MESMO comando com `server:` no lugar de `qdrant:` devolve 'tem config' — o falsificador discrimina, não devolve 'sem chave' para todo serviço. Lido o arquivo: linhas 33-40 são o serviço qdrant, com `ports: 6333, 6334` publicados no host e nenhum bloco `environment`. Código confirmado em server/src/lib/vector/qdrant.ts:6 (`apiKey: process.env.QDRANT_API_KEY!`) e server/.env.example:8 (campo vazio). ACHADO NOVO NA VERIFICAÇÃO, que o relatório não registra e que ENFRAQUECE parcialmente sem derrubar: server/src/config/env.ts:112 declara `QDRANT_API_KEY: z.string().optional()` — ou seja, o próprio contrato de configuração do app trata a chave como opcional, então nada no boot recusaria subir sem ela. Isso remove a única defesa em profundidade que se poderia supor e reforça o achado em vez de enfraquecê-lo. PRECISÃO DO RELATÓRIO: o AV-R1 cita `docker-compose.yml:34-37`; o serviço começa em 33 e as portas estão em 35-37. Off-by-one, mesma direção do item 3 — ver instrument_feedback_from_triage.",
+      "gate": "bloqueia_deploy",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `bloqueia_primeiro_cliente` do relatório, que o próprio gate_reason marcava como provisório ('vira bloqueia_deploy assim que houver ambiente com dado real'). Ramo `nunca implantado`: a PRIMEIRA regra é `irreversível ou perda de dado → bloqueia_deploy`, e ela precede a regra de apos_deploy. Um Qdrant publicado sem chave dá LEITURA (divulgação do conteúdo de documentos de cliente, que não se desfaz) e ESCRITA/DELETE (perda de dado) a quem alcançar o host — os dois gatilhos da primeira regra. Ramo `interno`: apos_deploy → bloqueia_deploy só se irreversível; divulgação é irreversível. CONVERGEM em bloqueia_deploy. E a consequência prática é a que importa: este é um defeito do ARQUIVO DE IMPLANTAÇÃO, então ele fica vivo no exato instante do primeiro deploy — adiá-lo para 'primeiro cliente' seria adiar para depois do momento em que ele passa a valer.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-10",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Buscado antes de emitir, e o resultado foi um zero limpo: `grep -rln docker-compose` em todo .ts/.mjs/.js/.yml fora de node_modules devolve VAZIO — nenhum teste, script ou job de CI lê o arquivo de implantação. Os 19 passos do .github/workflows/ci.yml (typecheck, tsc de teste, npm audit advisory, lint layer-gate, debt-ledger-check, jest, tripwire de handles, skill-audit, OPS-001, zinc-guard, build e vitest do frontend) não incluem nenhum que leia compose. Nenhum dos 6 PRs abertos toca docker-compose.yml. A barreira precisa ser escrita junto com o conserto, e ela fecha o item 3 no mesmo arquivo.",
+      "why_rank_2": "É o único bloqueia_deploy da rodada e mora no mesmo arquivo do item 3 — dois danos fechados por um toque."
+    },
+    {
+      "rank": 3,
+      "fingerprint": "compose-injeta-next-public-api-url-nome-divergente",
+      "source_report": "docs/audit/AV-R1.json",
+      "source_finding_id": "F1",
+      "damage": 3,
+      "exposure": "apos_deploy",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745. Em my-app: `rg -c -N -I NEXT_PUBLIC_API_BASE_URL -g '*.{ts,tsx,js}' . | wc -l` = 19 arquivos; o mesmo para NEXT_PUBLIC_API_URL = 0. Como NEXT_PUBLIC_API_URL é PREFIXO de NEXT_PUBLIC_API_BASE_URL, o zero é o resultado forte possível: se a busca casasse por substring, ela teria devolvido ≥19, não 0 — o próprio par de comandos é o controle. Demonstração reexecutada: `grep -n NEXT_PUBLIC docker-compose.yml my-app/next.config.js` põe os dois nomes lado a lado, `docker-compose.yml:28` contra `my-app/next.config.js:23`. PRECISÃO DO RELATÓRIO: o AV-R1 cita `docker-compose.yml:27`; a linha real é 28 (27 é `environment:`). Off-by-one, e o arquivo NÃO mudou desde 643d2eb — está fora do diff. A segunda camada do achado (NEXT_PUBLIC_* é embutido em build time, então `environment:` não aplicaria nem com o nome certo) é leitura de comportamento do Next.js e NÃO foi executada aqui: fica como `nao_executado` dentro de um item confirmado, porque o achado se sustenta sem ela — o nome divergente já basta.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=apos_deploy. Ramo `nunca implantado`: apos_deploy não irreversível → bloqueia_primeiro_cliente; e não é irreversível — o produto conteinerizado simplesmente não funciona, o que é imediatamente visível e desfeito com uma linha, sem perda de dado nem divulgação. Ramo `interno`: apos_deploy → bloqueia_deploy só se irreversível; não promove. CONVERGEM. Confirma o suggested_gate provisório do relatório. CONTRASTE DELIBERADO COM O ITEM 2: os dois são apos_deploy no mesmo arquivo e recebem portões DIFERENTES — a diferença é irreversibilidade, não gravidade percebida, e é exatamente isso que o mapa existe para tirar das mãos do agente.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-10",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Mesma busca do item 2, mesmo zero: nenhum arquivo do repositório fora de node_modules lê docker-compose.yml, e nenhum passo do ci.yml o alcança. A barreira proposta pelo relatório — reprovar quando o conjunto de chaves NEXT_PUBLIC_* do compose não for subconjunto das lidas no código — fecharia os itens 2 e 3 no mesmo script.",
+      "why_rank_3": "Maior dano de disponibilidade da rodada e custo de uma linha, mas depende de decidir build-arg × environment, o que o item 2 não exige."
+    },
+    {
+      "rank": 4,
+      "fingerprint": "caminho-de-escrita-do-razao-sem-cobertura-de-integracao",
+      "source_report": "docs/audit/AV-R3.json",
+      "source_finding_id": "F1",
+      "damage": 4,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745. `grep -rln PostingService src --include=*.integration.test.ts | wc -l` = 0. DOIS controles contra o plausível-e-errado, porque um zero é o resultado mais fácil de obter por acidente: (1) `find src -name '*.integration.test.ts' | wc -l` = 31 — existem arquivos de integração, o zero não é glob vazio; (2) o MESMO comando com `PrismaClient` no lugar de PostingService = 10 — o comando enxerga conteúdo desses arquivos, então o zero é ausência real e não cegueira do padrão. Lido o código: PostingService.ts:300 e :499 fazem `this.postingRepo.create(` — é escrita real de perna, não caminho morto. Lido o teste: PostingDimension.integration.test.ts:76 define `async function postEntry(id, amount)` que grava com `db.journalEntry.create` e dois `db.posting.create` diretos, contornando o serviço — exatamente o que o relatório afirma, e o número da linha bate.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto nos dois ramos → bloqueia_primeiro_cliente. NÃO promove a bloqueia_deploy pela primeira regra do ramo `nunca implantado`: a ausência de teste não é ela mesma irreversível nem perde dado — ela remove a rede que pegaria um defeito irreversível. A distinção é fina e vale registrar: o que este achado mede é a AUSÊNCIA DE BARREIRA sobre `escrita no razão com trilha append-only`, que É uma das 8 operações irreversíveis declaradas pelo dono. Mantive bloqueia_primeiro_cliente porque promover 'ausência de teste sobre operação irreversível' a bloqueia_deploy transformaria toda lacuna de cobertura em bloqueio de deploy, e nenhuma regra do mapa autoriza isso. Se o dono discordar, este é o item onde discordar — é o de maior dano da rodada.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-17",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Buscado antes de emitir: (a) 0 de 31 arquivos de integração nomeiam PostingService; (b) nenhum dos 6 PRs abertos toca PostingService nem adiciona teste de integração de contabilidade — medido com `gh pr diff --name-only` nos seis, e o único arquivo relevante em PR aberto é `server/src/features/accounting/dtos/AccessControlDto.ts` no PR 117, que ACRESCENTA um DTO à população do item 7 em vez de barrar qualquer coisa; (c) a suíte unit existe e é grande (PostingService.test.ts, 1352 linhas) mas faz `jest.mock` de lib/prisma — ela afirma o mock, e foi isso que deixou M3 e M5 sobreviverem SEM SEREM EXECUTADAS. A barreira tem de morar na camada de integração; a unit não pode ser reforçada até fechá-la.",
+      "why_rank_4": "Maior dano da rodada (4), mas o único cujo conserto é um arquivo novo de teste de integração — esforço médio contra os três de cima, que são de uma a duas linhas."
+    },
+    {
+      "rank": 5,
+      "fingerprint": "fronteira-de-dto-quase-nao-testada",
+      "source_report": "docs/audit/AV-R3.json",
+      "source_finding_id": "F3",
+      "damage": 2,
+      "exposure": "apos_deploy",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745. `ls src/features/accounting/dtos/__tests__ | wc -l` = 4 e `ls src/features/accounting/dtos/*.ts | wc -l` = 21. Os quatro são PayableDto.test.ts, PostingDto.test.ts, ReceivableDto.test.ts e ReconciliationDto.test.ts — listados, não contados de cabeça. Verificada também a checagem adversarial do relatório que dizia que os dois DTOs das mutações sobreviventes já constavam do AV-R2: CONFIRMA — `InventoryDto.ts` e `aging.dto.ts` estão nas 110 linhas da peça central do AV-R2.json, lidos do JSON e não do texto.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `aceito_com_registro` do relatório. exposure=apos_deploy, dano 2. Ramo `nunca implantado`: apos_deploy não irreversível → bloqueia_primeiro_cliente — o mapa NÃO tem uma linha que rebaixe apos_deploy por dano baixo, e o relatório derivou o aceite do dano, não do mapa. Ramo `interno`: apos_deploy → bloqueia_deploy só se irreversível; não promove, logo bloqueia_primeiro_cliente. CONVERGEM. Este é o item que mostra a triagem fazendo o que o contrato diz que ela faz — `findings[].suggested_gate` é proposta, e a triagem sobrescreve.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-24",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "EXISTE PARCIALMENTE, e é a única barreira desta triagem que não é proposta do zero. Buscado antes de emitir: os 4 arquivos em dtos/__tests__ já são o molde de teste de rejeição por DTO — cobrem 4 de 21, e os dois DTOs cujas mutações sobreviveram (InventoryDto, aging.dto) estão entre os 17 sem molde. Não é `nenhuma_conhecida`: a barreira existe e é o alcance dela que é o achado. O PR 117 acrescenta AccessControlDto.ts, que nasce sem teste — o denominador cresce enquanto o numerador não.",
+      "why_rank_5": "Dano 2 e esforço baixo, mas os 4 moldes existentes tornam o conserto mecânico — vale mais fazer depois dos quatro de cima do que discutir."
+    },
+    {
+      "rank": 6,
+      "fingerprint": "revisao-independente-sem-artefato-por-merge",
+      "source_report": "docs/audit/AV-R1.json",
+      "source_finding_id": "F4",
+      "damage": 3,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745, e é o ÚNICO dos sete cujo falsificador não é invariante ao commit — declarado aqui em vez de escondido. Medido agora: `git ls-files | grep -icE 'review|revisao'` = 9; `git log --format=%s | grep -icE 'revisao independente|review independente'` = 9; `git log --merges --oneline | wc -l` = 207. O relatório (643d2eb) registrou 8 no segundo número. A diferença de 1 é AUTOCONTAMINAÇÃO MEDIDA: os três commits desta branch entre 643d2eb e ca33c745 (c203b6d4, 510c87fc, ca33c745) mencionam revisão independente nas mensagens, e um deles entrou na contagem. O achado não muda de direção — 9 contra 207 é o mesmo veredito que 8 contra 207 — mas a lição é que este falsificador MEDE O PRÓPRIO TRABALHO DE AUDITORIA junto com o repositório, e quem o reexecutar na próxima rodada vai ver o número subir sem que nada tenha melhorado. Verificada também a parte substantiva: os 9 arquivos que casam 'review|revisao' foram LISTADOS, e nenhum é artefato por merge — são a skill luminaris-reviewer e seus relatórios de skill-audit (5), REVIEW_BACKLOG.md, um documento de conselho e um orquestrador. QUASE-BARREIRA ENCONTRADA E DESCARTADA: REVIEW_BACKLOG.md é registro de revisão POR FEATURE, atualizado em 2026-06-25 e com 0 linhas de tabela citando PR — granularidade errada e desatualizado em ~5 semanas. Confirma o achado em vez de refutá-lo.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto nos dois ramos → bloqueia_primeiro_cliente. O relatório atribuiu o mesmo portão 'por leitura mais próxima' porque o gateMap da v4 não tinha linha para ja_exposto em sistema nunca implantado; a emenda v4.1 criou a linha, e agora a atribuição é derivada e não interpretada. É o mesmo valor pela razão certa.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-24",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "alerta",
+      "barrier_note": "PROPOSTA, não existente — mas com uma quase-barreira encontrada na busca, que é por isso que este campo não diz `nenhuma_conhecida`. Buscado: (a) os 9 arquivos rastreados que casam 'review|revisao', enumerados e classificados um a um (nenhum é por merge); (b) os 19 passos do ci.yml, nenhum dos quais exige artefato de revisão; (c) os 6 PRs abertos — 135 e 129 tocam .claude/skills/luminaris-reviewer/, ou seja, editam a SKILL que produz revisão, não o registro que ela deixaria. A barreira que falta é de registro, não de ferramenta. NOTA DE CIRCULARIDADE, declarada porque é desconfortável e verdadeira: este mesmo arquivo de triagem é o tipo de artefato que o F4 pede, e ele TAMBÉM não foi revisado por agente separado.",
+      "why_rank_6": "Dano 3 e custo unitário baixo, mas é o único item cujo custo é RECORRENTE (um artefato por PR, para sempre) em vez de pontual — pelo critério risco-removido-por-esforço do AV-00 §3, custo recorrente desce na fila mesmo com dano igual."
+    },
+    {
+      "rank": 7,
+      "fingerprint": "tres-imports-sem-declaracao-no-manifesto",
+      "source_report": "docs/audit/AV-R1.json",
+      "source_finding_id": "F3",
+      "damage": 2,
+      "exposure": "latente_por_dependencia",
+      "exposure_override": "O relatório emitiu `apenas_teorico` e o seu próprio instrument_feedback declarou por quê: 'o enum exposure nao tem valor para latente ate a proxima atualizacao de dependencia; apenas_teorico da o portao certo pela razao errada'. A emenda v4.1 CRIOU esse valor (`latente_por_dependencia`, já na lista fechada que o gate cobra em B7). Esta triagem reclassifica. O portão não muda; a razão passa a ser a certa, e a próxima rodada não herda o buraco.",
+      "verification": "confirmado",
+      "verification_note": "Executado em ca33c745, pacote a pacote, sem confiar na varredura agregada do relatório. `dotenv` declarado em server/package.json (deps+devDeps): false, e importado em server/src/config/env.ts:3. `@dnd-kit/utilities` declarado em my-app: false, enquanto `@dnd-kit/core` e `@dnd-kit/sortable` são true — o controle está no próprio comando: ele distingue irmãos do mesmo escopo. `@fullcalendar/core` declarado: false, enquanto `@fullcalendar/react` e `@fullcalendar/daygrid` são true. Os três presentes nas travas como transitivos, verificado por chave exata em package-lock.json (`node_modules/@dnd-kit/utilities`, `node_modules/@fullcalendar/core`, `node_modules/dotenv`): true nos três. DIVERGÊNCIA DE CONTAGEM COM O RELATÓRIO, registrada em vez de arredondada: ele diz '@dnd-kit/utilities importado em 3 componentes' e eu medi 4 (SortableTaskItem.tsx, SortableColumnItem.tsx, CrmPipelineBoard.tsx, OppPipelineBoard.tsx); ele diz '@fullcalendar/core importado para locales, 3 arquivos' e eu medi 2 (MeetingsCalendar.tsx, PlanningCalendar.tsx). As contagens divergem, o achado não: os três pacotes são importados e não declarados. Não investiguei a origem da divergência — provavelmente glob diferente — e por isso ela fica como divergência aberta, não como correção do relatório.",
+      "gate": "aceito_com_registro",
+      "gate_derivation": "exposure=latente_por_dependencia. Ramo `nunca implantado`: latente_por_dependencia → aceitavel_com_registro com gatilho NOMEADO. Ramo `interno`: latente_por_dependencia → aceitavel_com_registro com gatilho. CONVERGEM. Único aceite da rodada, e ele só é legítimo porque o gatilho abaixo é observável — sem gatilho o mapa não autoriza o aceite.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": null,
+      "due_is_proposal": false,
+      "accepted_reason": "Os três pacotes resolvem hoje porque o npm achata a árvore, e as três entradas estão nas travas com integrity. O custo de correção é constante no tempo (duas linhas, em dois manifestos) e não acumula juros enquanto as travas não forem regeneradas — adiar não piora. O que o aceite compra é não abrir trabalho num defeito cuja consequência é integralmente futura e cujo gatilho é conhecido.",
+      "review_trigger": "Regeneração de qualquer uma das duas travas. Observável por comando, não por impressão: `git log -1 --format=%H -- my-app/package-lock.json` e `git log -1 --format=%H -- server/package-lock.json` mudarem de valor. No instante em que qualquer um dos dois muda, reexecutar `node -e` sobre my-app/package.json e server/package.json confrontando com os três nomes — se um deles deixar de resolver, o aceite morre e o item volta como quebra de build.",
+      "accepted_by": "Desenvolvedor Luminaris",
+      "accepted_by_note": "Atribuído ao dono como responsável pelo aceite, conforme o precedente. O aceite foi DERIVADO do mapa, não escolhido: sob os dois ramos do gateMap, latente_por_dependencia com gatilho nomeado é aceitável com registro. Se o dono discordar, este é o item mais barato de reverter — o conserto são duas linhas.",
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente, e o aceite se apoia no GATILHO e não nela. Buscado antes de emitir: `grep -rn 'depcheck\\|knip\\|ts-prune'` em .github/, server/package.json e my-app/package.json devolve NADA — nenhuma ferramenta de import-não-declarado está instalada ou rodando. O `npm audit --audit-level=high` do ci.yml é sobre vulnerabilidade conhecida e é advisory; não mede declaração. Nenhum PR aberto toca os manifestos.",
+      "why_rank_7": "Último por ser o único aceite: nada a fazer até o gatilho disparar."
+    }
+  ],
+
+  "refuted": [],
+  "inconclusive": [],
+  "not_executed": [
+    {
+      "what": "Segunda camada do item 3 (R1 F1): 'NEXT_PUBLIC_* é embutido em build time, então environment: do compose não aplicaria nem com o nome certo'.",
+      "why": "É comportamento do Next.js, não medida deste repositório. Verificar exigiria um build de produção do frontend, e my-app segue sem npm ci.",
+      "consequence": "NENHUMA para o portão: o achado se sustenta só pelo nome divergente, que foi medido (19 arquivos contra 0). O que fica em aberto é se o conserto é uma linha (renomear) ou duas (renomear + build-arg) — questão de custo, não de existência."
+    },
+    {
+      "what": "Falsificadores dinâmicos dos itens 2 e 3 (subir o compose e observar).",
+      "why": "Exigem Docker e uma stack de pé; acima do teto de 120s do AV-00 §6b, que é o motivo registrado do rebaixamento de dano do item 2.",
+      "consequence": "Os dois itens ficam confirmados por falsificador ESTÁTICO. Nenhuma afirmação desta triagem depende do comportamento em runtime dos containers."
+    }
+  ],
+
+  "r2_decision": {
+    "_note": "As 110 linhas do AV-R2 NÃO são achados e não são triadas como se fossem — o AV-R2.json tem `findings: []` por desenho, medido e não suposto. O que segue é a decisão que o item 3 da fila pedia: fila de trabalho ou aceite.",
+    "what_it_is": "A peça central do AV-R2 (`centerpiece.type = missing_tests`) tem 110 linhas com as colunas [unidade, papel, fanin, invariantes, linhas]. Distribuição medida a partir do JSON, não do texto: controller 31, outro 29, dto 20, service 10, repository 8, rule 4, lib 4, preset 2, sync 1, job 1. Quarenta linhas carregam ao menos uma invariante nomeada (inquilino 33, autoriza 6, dinheiro 5, softdelete 5, tx 4); setenta carregam '-'.",
+    "decision": "ACEITE COLETIVO COM GATILHO, e NÃO uma fila de 110 itens de trabalho. Um subconjunto de 4 é ratificado como fila real, por herança dos itens já triados acima — não por decisão nova.",
+    "why_not_a_queue": "Não é economia de esforço, é uma medição que já existe: o AV-R3 mediu mutation_score 0,286 no MESMO commit. Cinco de sete mutações sobreviveram, duas delas SEM SEREM EXECUTADAS, e uma sexta (M6) sobreviveu com a linha executada. Isso mede que presença de teste não é força de teste. Uma fila de 110 obrigações do tipo 'escreva um teste que nomeie esta unidade' otimizaria exatamente a métrica que o AV-R2 mede — cobertura por nome — sem mover a que o AV-R3 mede. O caminho barato de tratar as 110 como backlog produz 110 testes verdes e um mutation_score inalterado, que é a forma mais cara possível de não melhorar nada.",
+    "ratified_subqueue": [
+      "server/src/controllers/accountingController.ts (dinheiro+inquilino+autoriza, 625 linhas)",
+      "server/src/features/accounting/repositories/CounterpartyRepository.ts (tx+inquilino+softdelete)",
+      "server/src/features/accounting/repositories/DimensionRepository.ts (tx+inquilino+softdelete)",
+      "server/src/features/accounting/repositories/ReferentialMappingRepository.ts (tx+inquilino+softdelete)"
+    ],
+    "ratified_subqueue_criterion": "São as 4 (de 110) linhas que carregam TRÊS invariantes nomeadas ao mesmo tempo — medido filtrando as linhas cujo campo `invariantes` tem 3+ termos. Coincidem com as duas classes de bug mais registradas na memória do projeto (tx não propagado; vazamento entre inquilinos), que são as mesmas que M3 e M5 do AV-R3 exercitaram e que sobreviveram sem execução. Não recebem portão próprio: entram como escopo do item 4 desta triagem (o teste de integração do caminho de escrita do razão), que é o achado triado que as cobre.",
+    "acceptance_of_the_other_106": "Aceito com registro. Não há dono e não há data para as 106 restantes, e isso é deliberado: atribuir dono e data a 106 linhas produziria um compromisso que ninguém pretende cumprir, que é o defeito que o F1 do AV-L1 descreve (backlog apontando para dívida que ninguém vai pagar).",
+    "review_trigger": "O aceite das 106 morre quando o mutation_score medido pelo AV-03 subir sem que a cobertura por nome mude, OU quando qualquer uma das 106 unidades aparecer como evidence de um achado de rodada futura. Observável: o campo `centerpiece.rows` de docs/audit/AV-R2.json comparado com o `centerpiece.rows` do próximo AV-R3, ambos versionados neste repositório.",
+    "accepted_by": "Desenvolvedor Luminaris",
+    "honest_limit": "Este aceite é uma decisão de PRIORIZAÇÃO tomada por agente sobre 106 unidades reais. Ele não afirma que as 106 estão testadas — afirma que testá-las por nome não é o próximo movimento. Se o dono quiser a fila, ela existe pronta no JSON: são as 110 linhas de `centerpiece.rows`."
+  },
+
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: 'problema maior vira achado novo'. Levantado durante ESTA triagem e não corrigido aqui. Não é item desta triagem — não veio de nenhuma das três rodadas e não tem fingerprint em relatório auditoria/1.1.",
+      "candidate": "O gate da bancada não roda em lugar nenhum além da mão de quem lembra de rodá-lo",
+      "measured": "`grep -rn 'bancada-gate' .github/ package.json` devolve NADA. Os 19 passos do .github/workflows/ci.yml não incluem `node scripts/bancada-gate.mjs`. O script irmão `scripts/debt-ledger-check.mjs` ESTÁ no CI, em dois passos (server e my-app), o que mostra que o caminho de fiação existe e é conhecido — não foi seguido para este.",
+      "why_it_matters": "É a mesma classe do F4 do R1 (barreira declarada que não deixa rastro executável) aplicada à própria bancada. Um gate que só roda quando alguém digita o comando não reprova nada no dia em que ninguém digita. Vale mais agora do que valia ontem, porque esta mesma sessão acrescentou seis checagens (B11..B16) sobre triagem/1.0 — seis regras novas atrás de um gatilho manual.",
+      "cost_hint": "Um passo no ci.yml, no molde exato dos dois de debt-ledger-check. Não feito aqui de propósito: mexer no CI está fora do escopo desta tarefa, e o bloco 9 proíbe corrigir o não triado.",
+      "gate_and_decision": "NÃO recebe portão desta triagem. `gates_summary` fica inalterado."
+    },
+    {
+      "_note": "AV-00 §5. Feedback de instrumento agregado dos sete, registrado aqui porque é sobre COMO medir e não sobre o que foi medido.",
+      "candidate": "Os números de linha do AV-R1 estão deslocados em um, nos dois achados que citam docker-compose.yml",
+      "measured": "O relatório cita `docker-compose.yml:27` para NEXT_PUBLIC_API_URL (linha real: 28) e `docker-compose.yml:34-37` para o serviço qdrant (real: serviço em 33, portas em 35-37). O arquivo NÃO mudou entre 643d2eb e ca33c745 — está fora do `git diff --name-only`. Os dois erram na mesma direção e na mesma magnitude. Em contraste, os números de linha do AV-R3 batem exatamente (PostingService.ts:628, PostingDimension.integration.test.ts:76), e os do AV-R1 que apontam para arquivos .ts também batem (qdrant.ts:6, .env.example:8).",
+      "why_it_matters": "Não muda nenhum veredito — o conteúdo citado está no arquivo nomeado, uma linha adiante. Importa porque a evidência de auditoria é feita para ser reexecutada por outra pessoa, e um off-by-one sistemático em UM tipo de arquivo (yml) sugere que aquela evidência foi contada por um caminho diferente dos outros. Vale medir na próxima rodada, não corrigir a mão aqui.",
+      "gate_and_decision": "NÃO recebe portão. É feedback de instrumento, não achado sobre o código."
+    }
+  ],
+
+  "gates_summary": {
+    "bloqueia_deploy": 1,
+    "bloqueia_primeiro_cliente": 5,
+    "aceito_com_registro": 1,
+    "descartado": 0,
+    "note": "O único bloqueia_deploy (item 2, Qdrant) NÃO vem da lista de 8 operações irreversíveis do dono — nenhum dos 7 achados intersecta uma delas. Vem da primeira regra do ramo `nunca implantado` do gateMap, `irreversível ou perda de dado`, aplicada à divulgação e à escrita no índice vetorial. A afirmação é falsificável: bastaria mostrar que o Qdrant do compose não é alcançável de fora do host, ou que o índice não contém conteúdo de documento de cliente, para o item cair para bloqueia_primeiro_cliente junto com o item 3. Zero em `descartado` também é resultado e não omissão: os sete falsificadores foram executados e os sete confirmaram — nenhum candidato morreu na verificação, o que é um resultado incomum e merece desconfiança, nomeada em self_check.own_bias_named."
+  },
+
+  "ordering": {
+    "criterion": "risco removido por esforço, conforme AV-00 §3",
+    "sequence": [
+      "gate-de-createAccount-coberto-mas-nao-afirmado",
+      "qdrant-publicado-sem-chave-embora-codigo-suporte",
+      "compose-injeta-next-public-api-url-nome-divergente",
+      "caminho-de-escrita-do-razao-sem-cobertura-de-integracao",
+      "fronteira-de-dto-quase-nao-testada",
+      "revisao-independente-sem-artefato-por-merge",
+      "tres-imports-sem-declaracao-no-manifesto"
+    ],
+    "note": "O achado de MAIOR dano (item 4, dano 4) aparece em quarto, e isso é o critério funcionando, não falhando: os três acima dele fecham dano 3 com uma a duas linhas cada, enquanto ele exige um arquivo de teste de integração novo. O item 6 (dano 3) desce até a sexta posição por ter custo RECORRENTE em vez de pontual — é o único da lista cujo conserto não termina."
+  },
+
+  "deviations": [
+    {
+      "rule": "AV-00 §9.4 — revisão vem de agente separado; PASS emitido pela mesma sequência que implementou é rejeitado",
+      "what_happened": "Esta triagem não foi revisada por agente separado. E há um agravante que não escondo: no MESMO passo em que triei, escrevi as checagens B11..B16 do gate sobre triagem/1.0 e as provei com mutações minhas — sou verificador da minha própria correção, e o artefato que o gate passa a checar é este arquivo.",
+      "mitigation": "Prova objetiva no lugar de revisão, que não substitui revisão: cada checagem nova reprovou uma mutação proposital, com `git diff --numstat` conferido e saída colada no relatório da sessão; e as seis rodam contra o PRECEDENTE (AV-L1-TRIAGEM.json), que foi escrito por outra sessão e passa sem alteração — se as regras tivessem sido moldadas ao redor deste arquivo, o precedente teria reprovado.",
+      "cost_if_it_had_gone_wrong": "Uma regra escrita para caber no que eu já tinha escrito passa verde e não barra nada. O controle contra isso é o precedente passar sem edição; não há segundo controle."
+    },
+    {
+      "rule": "AV-00 §0 / bloco 9 — proibido corrigir achado não triado",
+      "what_happened": "CUMPRIDO, e vale registrar porque a tentação era concreta: o item 1 fecha com UMA asserção e o item 7 com DUAS LINHAS em dois manifestos. Nenhum arquivo de código foi tocado nesta sessão — `git diff --name-only` da sessão toca apenas docs/audit/ e scripts/bancada-gate.mjs.",
+      "mitigation": "Não aplicável: nenhum desvio.",
+      "cost_if_it_had_gone_wrong": "Corrigir o item 5 antes de triar teria produzido um conserto para o portão errado — o relatório sugeria `aceito_com_registro` e a derivação pelo mapa deu `bloqueia_primeiro_cliente`. É o caso concreto, nesta rodada, de a ordem importar."
+    }
+  ],
+
+  "self_check": {
+    "falsifiers_executed": 7,
+    "falsifiers_total": 7,
+    "items_without_owner": 0,
+    "items_without_gate": 0,
+    "minimum_required": "AV-00 §2 exige os três maiores damage e todos os damage 5. Os damages são 4/3/3/3/3/2/2 e não há nenhum damage 5; o mínimo seriam os três maiores (R3 F1, e dois dos quatro empatados em 3). Os SETE foram executados, excedendo o mínimo — e os quatro empates em dano 3 tornavam a escolha de 'os três maiores' arbitrária, o que por si só já obrigava a rodar todos.",
+    "controls_run": "Cinco dos sete falsificadores devolvem ZERO ou um ramo negativo como resultado esperado, que é o resultado mais fácil de obter por acidente. Cada um levou um controle discriminante rodado no mesmo comando: item 1 (7 ocorrências sem o filtro; 38 arquivos usam Forbidden), item 2 (o mesmo grep no serviço `server:` devolve 'tem config'), item 3 (o par de nomes é prefixo um do outro — casamento por substring teria devolvido ≥19, não 0), item 4 (31 arquivos de integração existem; o mesmo comando com PrismaClient devolve 10), item 7 (irmãos do mesmo escopo npm devolvem `true` no mesmo comando). Sem esses controles, cinco dos sete 'confirmado' seriam indistinguíveis de comando quebrado.",
+    "barriers_searched": "Os sete `barrier_kind` foram emitidos DEPOIS de procurar barreira existente, no procedimento que o precedente do AV-L1 deixou como lição literal: `nenhuma_conhecida` só pode ser emitido depois de procurar, senão é 'não procurei' com nome de veredito. Onde se procurou, em todos os sete: (a) os 19 passos de .github/workflows/ci.yml, lidos; (b) scripts/, que tem exatamente dois arquivos (bancada-gate.mjs e debt-ledger-check.mjs); (c) `grep -rln docker-compose` em todo .ts/.mjs/.js/.yml fora de node_modules — vazio; (d) `grep -rn 'depcheck|knip|ts-prune'` nos dois manifestos e no CI — vazio; (e) os 6 PRs abertos (135, 129, 117, 97, 87, 54), com `gh pr diff --name-only` em cada um, cruzados contra os caminhos de evidence dos sete achados; (f) os 9 arquivos rastreados que casam 'review|revisao', enumerados e classificados. RESULTADO: nenhum item recebeu `nenhuma_conhecida`. Um (item 5) tem barreira que EXISTE parcialmente — os 4 moldes em dtos/__tests__ cobrindo 4 de 21 —, um (item 6) tem quase-barreira encontrada e descartada por granularidade errada e desatualização (REVIEW_BACKLOG.md, por feature, parado em 2026-06-25), e os cinco restantes são propostas que precisam ser escritas junto com o conserto. A busca é do repositório local e dos PRs abertos do provedor; revisões que vivam só na interface do provedor sem virar PR não foram alcançadas.",
+    "own_bias_named": "Quatro, nomeados em ordem de quanto me incomodam. (1) SOU VERIFICADOR DA MINHA PRÓPRIA CORREÇÃO na Parte 2 desta sessão: escrevi B11..B16 sobre triagem/1.0 e o artefato que elas passam a checar é este mesmo arquivo. O único controle é que as seis rodam contra o precedente escrito por outra sessão e ele passa sem uma linha alterada — se eu tivesse moldado as regras ao que já tinha escrito, o AV-L1-TRIAGEM teria reprovado. Não há segundo controle. (2) SETE DE SETE CONFIRMADOS, ZERO REFUTADOS. Isso é suspeito por construção: quem escreveu os falsificadores foi a sequência que emitiu os achados, e um falsificador escrito pelo autor do achado tende a ser o comando que ele já sabe que confirma. Meu contrapeso foi rodar um controle discriminante em cada um dos cinco que devolvem zero, e mesmo assim o resultado é que não derrubei nada — o que mede a minha independência, não a qualidade dos achados. (3) DECIDI QUE 106 UNIDADES DO AV-R2 VIRAM ACEITE, e essa decisão reduz drasticamente o trabalho que eu mesmo teria de organizar. O argumento (mutation_score 0,286 mostra que cobertura por nome não move força) é medido e eu continuo achando-o certo, mas ele é conveniente para mim, e conveniência é motivo para desconfiar de um argumento que se acerta sozinho. (4) NÃO PERGUNTEI O `deployed` AO DONO. Resolvi por convergência dos dois valores plausíveis, o que é honesto e é também a saída que me deixou seguir sem esperar. A convergência é real e verificável item a item, mas se o dono responder `produção` ela evapora em três dos sete — e eu escolhi as duas alternativas que testei."
+  }
+}
