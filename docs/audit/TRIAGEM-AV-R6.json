@@ -1,0 +1,245 @@
+{
+  "schema": "triagem/1.0",
+  "_note": "Triagem dos cinco achados da rodada AV-R6 (verificação em navegador da própria bancada), na ordem do AV-00 bloco 9: verificar → triar → aceitar. NENHUMA correção foi feita, e aqui a proibição custou mais do que de costume: o item de rank 1 é dano 4 com conserto provável de poucas linhas, e ele fica aberto. Segue o molde de docs/audit/TRIAGEM-R1-R3.json e o precedente docs/audit/AV-L1-TRIAGEM.json, inclusive nos três campos que aquele arquivo trouxe antes do contrato os exigir (verification_note, barriers_searched, own_bias_named), hoje cobrados pelo gate em B16.",
+  "source_runs": [
+    {
+      "instrument": "AV-R6",
+      "instrument_version": "v4.1",
+      "file": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "title": "Verificação em navegador da própria bancada — modos de falha de runtime",
+      "project": "Luminaris",
+      "repo_commit": "59c1eb9b",
+      "generated_at": "2026-08-03",
+      "reduced_mode": true,
+      "verification_commit": "59c1eb9b",
+      "verification_note": "MESMO COMMIT do relatório, ao contrário do precedente R1/R3 — e isso é mais fácil de provar do que um diff, mas não dispensa a prova. Medido: `git diff --name-only -- docs/audit/bancada.html` devolve VAZIO (zero linhas) enquanto os cinco falsificadores rodavam, e a única coisa não rastreada na árvore eram os dois artefatos desta própria rodada (AV-R6-VERIFICACAO-EM-NAVEGADOR.json e .md). O arquivo de evidence dos CINCO achados é um só — docs/audit/bancada.html — e ele não foi tocado por esta sessão em momento nenhum: nem para medir, nem para consertar. SEGUNDA DECLARAÇÃO, mais importante que a primeira: os cinco falsificadores não foram executados como eu os escrevi, e sim EXECUTADOS A PARTIR DO JSON RELIDO, com child_process, para que a string armazenada fosse a string rodada. Essa checagem pegou um defeito real — um patch pelo shell tinha comido as barras invertidas das regexes de F2, F3 e F5, e a versão gravada de F2 devolveria 16 no lugar de 0, na direção do próprio achado. As saídas coladas em cada item abaixo são as dessa execução."
+    }
+  ],
+  "triage_at": "2026-08-03",
+  "triaged_by": "claude-opus-5 — a MESMA sessão que mediu e emitiu a rodada AV-R6. Não há separação entre quem achou e quem triou, e isso está nomeado em self_check.own_bias_named como o defeito de método desta triagem, não como detalhe.",
+  "profile_decision": {
+    "_note": "Extensão aditiva ao triagem/1.0, no precedente do AV-L1-TRIAGEM e do TRIAGEM-R1-R3. Registrada porque todo portão abaixo deriva do estado de implantação — a diferença é que desta vez ele não é ambíguo.",
+    "deployed": "nao (nunca implantado)",
+    "deployed_source": "RESPONDIDO PELO DONO em 2026-08-03, registrado no item 5 de 'O que continua em aberto' de docs/audit/CONTINUACAO.md. Não é convergência nem inferência: é decisão do dono, e por isso esta triagem NÃO repete o exercício de dois ramos que o TRIAGEM-R1-R3 teve de fazer.",
+    "branch_used": "irreversível ou perda de dado → bloqueia_deploy · ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy não irreversível → bloqueia_primeiro_cliente · latente_por_dependencia → aceitavel_com_registro com gatilho nomeado · com_volume e apenas_teorico → aceitavel_com_registro com gatilho",
+    "branch_source": "docs/audit/bancada.html, função gateMap(), ramo final (emenda v4.1) — lido no arquivo, não citado de memória.",
+    "ceiling": "3. `ceiling()` na bancada devolve 4 só quando deployed === 'producao'; com 'nao', o teto é 3, e as cinco dimensões do placar do AV-R6 respeitam isso.",
+    "irreversible_list_used": "A lista de 8 operações irreversíveis confirmada pelo dono em 2026-07-31 (AV-L1-TRIAGEM.json:22-31), reusada porque nenhuma rodada posterior a alterou. NENHUM dos cinco achados intersecta uma delas — o alvo é um arquivo HTML de documentação que não escreve em lugar nenhum, não persiste decisão e não fala com rede. Por isso esta triagem não tem nenhum bloqueia_deploy, e o zero é resultado, não omissão.",
+    "what_would_change_the_answer": "Se o dono responder `produção` numa rodada futura, os quatro `ja_exposto` sobem de bloqueia_primeiro_cliente para bloqueia_deploy. É a única resposta que muda esta triagem — e ela é improvável no caso concreto, porque o artefato triado não é implantável: é um arquivo aberto por file://."
+  },
+  "scope_note": {
+    "_note": "Fricção real, declarada em vez de resolvida por dentro. O gateMap fala em 'bloqueia_deploy' e 'bloqueia_primeiro_cliente' — vocabulário de PRODUTO. O artefato triado aqui é docs/audit/bancada.html, um instrumento interno que não é implantado e não chega a cliente nenhum.",
+    "reading_adopted": "Os quatro `bloqueia_primeiro_cliente` são lidos como: consertar ANTES de a bancada ser usada para a triagem que decide o que bloqueia o primeiro cliente. A bancada é a ferramenta que produz esse julgamento; uma ferramenta que degrada no passo 2 e esconde os contadores durante o passo 2 corrompe o julgamento que ela existe para produzir. Sob essa leitura o portão tem consequência operacional real, e não é etiqueta emprestada.",
+    "what_was_NOT_done": "Não inventei valor de portão novo — a lista é fechada (B14) e criar um sexto valor por conveniência seria o mesmo erro B3 do lado da triagem. Não reinterpretei o mapa em silêncio: a leitura está escrita aqui e pode ser rejeitada pelo dono sem mexer em nenhum item.",
+    "instrument_consequence": "Registrado em new_findings_raised: falta ao catálogo um instrumento para artefato executável que não é o produto (a bancada, os scripts de gate, as skills). Os cinco itens desta triagem esbarraram na mesma fricção."
+  },
+  "items": [
+    {
+      "rank": 1,
+      "fingerprint": "listener-delegado-em-ficha-dobra-a-cada-decisao",
+      "source_report": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "source_finding_id": "F1",
+      "damage": 4,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Falsificador estático executado a partir do JSON, em 59c1eb9b. Saída: `2752`, `2769` e `2955` para os três sítios que pegam `el(\"ficha\")`; `2956` para `f.innerHTML=head+conductorHTML();wireConductor()`; `2774` para o handler de change que chama `select(\"REGÊNCIA\")`; e `0` para removeEventListener. Sai com código 1 porque o último grep -c devolve zero — a saída é o dado, não o código de saída. CONTROLE DISCRIMINANTE rodado, porque zero é o resultado mais fácil de obter por acidente: `grep -c addEventListener` devolve 17 no MESMO arquivo, então o padrão enxerga o arquivo e o zero é ausência real. A cadeia é fechada e foi lida no código, não inferida do grep: o nó de :256 sobrevive a todo render, `innerHTML` troca filhos e não o nó que escuta, e o handler reinvoca a função que o registrou. O comportamento foi medido duas vezes em instância limpa (2,4,8,16,32,64,128 handlers por evento) e 257 execuções da rotina de cópia em um clique.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` (respondido pelo dono) → bloqueia_primeiro_cliente. NÃO sobe pela primeira regra do ramo: não é irreversível e não perde dado — o pior caso é recarregar a aba, e a página não persiste decisão nenhuma (a triagem do visualizador vive só na memória da aba, e o perfil só sai por 'Exportar'). Confirma o suggested_gate do relatório.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-10",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente — e o hospedeiro dela existe, que é por isso que este campo não diz `nenhuma_conhecida`. Buscado antes de emitir: (a) `scripts/` tem exatamente DOIS arquivos, bancada-gate.mjs e debt-ledger-check.mjs, e o primeiro é o lugar natural da checagem; (b) `grep -rn 'bancada' .github/ package.json` devolve UMA ocorrência, e ela é um COMENTÁRIO em .github/workflows/ci.yml:65 citando a origem de uma dimensão de lint — nenhum passo roda o gate; (c) nenhuma das 17 checagens B1..B17 lê comportamento de página executando, verificado lendo o script inteiro. A barreira proposta é estática e cabe no gate: reprovar addEventListener sobre nó de id fixo dentro de função que o próprio handler reinvoca. Ela pegaria ESTE defeito por leitura de arquivo, sem navegador.",
+      "why_rank_1": "Maior dano da rodada (4) e o único que degrada o fluxo inteiro, com conserto provável de poucas linhas — melhor risco removido por esforço pelo critério do AV-00 §3. É também o item onde a proibição do bloco 9 mais dói nesta triagem, e ela foi cumprida."
+    },
+    {
+      "rank": 2,
+      "fingerprint": "barra-sticky-embrulhada-em-sbar-nunca-fixa",
+      "source_report": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "source_finding_id": "F2",
+      "damage": 2,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Falsificador estático executado a partir do JSON, em 59c1eb9b. Saída: `embrulhada em #sbar: true | stickyBar devolve um unico .sticky: true | seletores de ID no CSS, hex descontado: 0`. O terceiro número é o controle e ele quase virou falso positivo ao contrário: a varredura CRUA devolve 16 ocorrências de `#` na folha de estilo, e as dezesseis são cores hexadecimais (#C7CCC3, #fff, #F0BE10…). Sem descontar hexadecimal, o comando devolveria 16 e alguém leria 'existem regras de id' — ou, na primeira versão gravada, devolveria 16 por perda de escape e o falsificador mentiria na direção do achado. Descontado, o zero é forte: a folha NÃO usa seletor de id nenhum, logo #sbar não recebe altura, padding nem borda de lugar algum, e a igualdade de alturas medida em execução (59 e 59, curso 0) tem causa lida no arquivo.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. Não irreversível, não perde dado. Confirma o suggested_gate. NOTA DE CONTRASTE COM O ITEM 1, deliberada: dano 4 e dano 2 recebem o MESMO portão, e é o mapa funcionando — o portão sai da exposição, e a diferença de dano aparece na ordenação, não no portão.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-17",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Mesma busca do item 1 e mesmo resultado: dois scripts, nenhum passo de CI, nenhuma checagem que leia CSS ou layout. QUASE-BARREIRA ENCONTRADA E DESCARTADA: o B17 do gate já avalia uma EXPRESSÃO extraída da página (a condição do banner de revisão), então existe precedente de checagem que executa um pedaço do arquivo em vez de casar texto. Não serve aqui: B17 avalia uma condição pura, e curso de sticky exige motor de layout. A barreira viável é estrutural — reprovar elemento com position:sticky cujo pai no template não tenha outro filho — e é mais fraca que o defeito, o que está declarado no static_gap do relatório.",
+      "why_rank_2": "Dano 2 com conserto de uma linha, mas a linha exige uma decisão (mover o sticky para o #sbar sem quebrar o refreshMeta que reescreve o innerHTML dele). Fica atrás do item 1 por dano e à frente dos demais por consequência: são os contadores do passo em que o dono decide."
+    },
+    {
+      "rank": 3,
+      "fingerprint": "anel-de-foco-da-mesma-cor-do-fundo-no-item-selecionado",
+      "source_report": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "source_finding_id": "F5",
+      "damage": 1,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Falsificador estático executado a partir do JSON, em 59c1eb9b. Saída: `anel: --graphite | fundo: --graphite | iguais: true` — as duas regras resolvem a MESMA variável, e o comando é o mesmo que verificará o conserto. Confirmado também em execução, e aqui está o registro que importa mais que o veredito: a primeira medição usou `.focus()` por script e devolveu `rgb(243,244,240)`, 3px, offset 0 — o anel PADRÃO do navegador, que é bem visível. Se a verificação tivesse parado ali, este item sairia REFUTADO por engano. Só com Tab de teclado real, com `matches(':focus-visible')` conferido como true, a regra de :47 passou a valer e `outline-color` computou rgb(34,38,42) igual ao `background-color`. É o único item desta triagem em que o caminho errado foi rodado antes do certo, e o certo mudou o resultado.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. SEM rebaixamento por dano: o mapa não tem linha que rebaixe portão por dano baixo, e derivar aceite a partir do dano é exatamente o erro que o item 5 do TRIAGEM-R1-R3 corrigiu (lá o relatório sugeria `aceito_com_registro` por dano 2 e a derivação pelo mapa deu bloqueia_primeiro_cliente). O dano 1 aparece na ordenação, não no portão.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-24",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Buscado antes de emitir, e o zero é limpo: `grep -rn 'jsx-a11y\\|axe-core\\|pa11y\\|lighthouse'` em package.json, .eslintrc* e *.yml fora de node_modules devolve NADA — não existe nenhuma ferramenta de acessibilidade instalada ou rodando em lugar nenhum do repositório, nem para o my-app. A barreira proposta não precisa de ferramenta: é a mesma classe do falsificador — reprovar regra de foco cuja cor resolva para a mesma variável do fundo do estado que coexiste com ela. Cabe no bancada-gate em poucas linhas.",
+      "why_rank_3": "Dano 1, mas é o conserto mais barato dos cinco (uma cor de outline, e a página já usa --signal e --paper dentro do mesmo item selecionado) e atinge o próprio dono navegando por teclado. Sobe na frente do item 4 por consequência de uso contra consequência de leitura."
+    },
+    {
+      "rank": 4,
+      "fingerprint": "banner-de-origem-mistura-ponto-e-virgula-decimal",
+      "source_report": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "source_finding_id": "F3",
+      "damage": 1,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Falsificador estático executado a partir do JSON, em 59c1eb9b. Saída: `valor cru sem formatacao: true | limiar com virgula no mesmo banner: true` — os dois testes recortam a MESMA janela de 660 caracteres em volta de 'Origem do código', então a afirmação 'no mesmo banner' é do comando e não da minha leitura. Confirmado também em execução: o banner foi renderizado no visualizador da própria página, pelo caminho normal (colar JSON no campo, clicar em Renderizar), e o texto lido do DOM é 'Origem do código · 0.941 … acima de 0,70 só verification_mode: execucao sustenta confiança alta.'",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. ESTE É O ITEM DESCONFORTÁVEL DESTA TRIAGEM, e o desconforto fica registrado em vez de resolvido por conveniência: um separador decimal inconsistente recebe o mesmo portão de um vazamento de listener dano 4. Considerei rebaixar para aceito_com_registro e NÃO rebaixei, por duas razões medidas: (a) o mapa não tem linha que rebaixe por dano, e o precedente do item 5 do TRIAGEM-R1-R3 é exatamente o de sobrescrever um aceite derivado do dano; (b) rebaixar por 'parece pequeno' é a decisão de agente que o mapa existe para tirar das mãos dele. O que o dano 1 faz é decidir a POSIÇÃO na fila, e ele está em quarto de cinco.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-24",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente. Mesma busca dos itens 1 e 2 — dois scripts, nenhum passo de CI que rode o gate, nenhuma checagem sobre o visualizador além do B17. A barreira proposta é formatar todo número exibido por um único helper de locale e o gate reprovar interpolação crua de número no visualizador; é a única dos cinco que muda o CÓDIGO da página em vez de só acrescentar checagem, porque hoje não existe helper de locale nenhum no arquivo (verificado: `toLocaleString` não aparece na página).",
+      "why_rank_4": "Menor consequência dos quatro que abrem trabalho: um número mal formatado num banner que quem lê a bancada já sabe interpretar. Fica antes do item 5 só porque abre trabalho e o item 5 não."
+    },
+    {
+      "rank": 5,
+      "fingerprint": "aria-selected-em-role-button-nao-e-pareamento-valido",
+      "source_report": "docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json",
+      "source_finding_id": "F4",
+      "damage": 1,
+      "exposure": "apenas_teorico",
+      "verification": "confirmado",
+      "verification_note": "Falsificador estático executado a partir do JSON, em 59c1eb9b. Saída: `2` (os dois setAttribute de aria-selected, :2925 no nascimento e :2945 na alternância), `0` (nenhum role listbox/option/tab em lugar nenhum) e `2924` (os itens nascem como createElement(\"button\")). Confirmado também no DOM da página executando: 29 elementos com aria-selected, os 29 <button> sem role explícito, e zero elementos com papel de lista. O QUE ESTE 'confirmado' COBRE E O QUE NÃO COBRE, declarado: cobre a ESTRUTURA — o pareamento inválido existe e é medido. NÃO cobre a consequência: nenhuma tecnologia assistiva foi exercida, e a árvore de acessibilidade do painel devolveu 'página vazia, viewport 0x0' (NM2 do relatório). A afirmação de que aria-selected não é suportado em papel button vem da especificação ARIA 1.2, que é leitura, não medição deste repositório.",
+      "gate": "aceito_com_registro",
+      "gate_derivation": "exposure=apenas_teorico no ramo `nunca implantado` → aceitavel_com_registro COM GATILHO. É o único item da rodada que não é ja_exposto, e a diferença não é de gravidade: é que nenhum caminho de dano foi MEDIDO, porque nenhum usuário de tecnologia assistiva existe hoje e nenhum foi simulado. Emitir ja_exposto aqui seria promover leitura de especificação a medição — e o portão sairia diferente pela razão errada. O aceite só é legítimo porque o gatilho abaixo é observável; sem gatilho o mapa não o autoriza.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": null,
+      "due_is_proposal": false,
+      "accepted_reason": "O defeito é real e o custo de correção é constante no tempo — role=\"listbox\" no trilho e role=\"option\" nos itens, ou trocar aria-selected por aria-current. Ele não acumula juros: a bancada tem hoje um único usuário, que é o dono, e nenhum caminho de dano foi medido. O que o aceite compra é não abrir trabalho com dono e data sobre uma consequência que este instrumento não conseguiu observar (NM2), o que seria backlog com nome de triagem. O que o aceite NÃO afirma é que o pareamento é válido: ele é inválido, está medido, e volta no instante em que o gatilho disparar.",
+      "review_trigger": "Duas condições, qualquer uma delas, e as duas observáveis por comando em vez de por impressão. (1) O trilho de docs/audit/bancada.html ganhar qualquer role de lista — `grep -c 'role=\"listbox\"\\|role=\"option\"\\|role=\"tab\"' docs/audit/bancada.html` deixar de devolver 0, momento em que o pareamento passa a ser corrigível de graça junto com a mudança. (2) A bancada passar a ser usada por alguém além do dono, ou o repositório declarar acessibilidade como requisito — observável em docs/audit/CONTINUACAO.md, que é onde as decisões de dono desta bancada são registradas, e em scripts/bancada-gate.mjs, que é onde um requisito declarado vira checagem. No instante em que qualquer uma valer, a exposição sobe de apenas_teorico para ja_exposto e o mapa devolve bloqueia_primeiro_cliente sozinho — o aceite morre sem precisar de nova decisão.",
+      "accepted_by": "Desenvolvedor Luminaris",
+      "accepted_by_note": "Atribuído ao dono como responsável pelo aceite, conforme o precedente do AV-L1-TRIAGEM e do TRIAGEM-R1-R3. O aceite foi DERIVADO do mapa a partir do exposure medido, não escolhido por conveniência — e é o item mais barato de reverter caso o dono discorde: o conserto são dois atributos.",
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, não existente, e o aceite se apoia no GATILHO e não nela. Buscado antes de emitir: `grep -rn 'jsx-a11y\\|axe-core\\|pa11y\\|lighthouse'` em package.json, .eslintrc* e *.yml fora de node_modules devolve VAZIO — zero ferramenta de acessibilidade no repositório inteiro. Não é `nenhuma_conhecida` porque a checagem cabe no bancada-gate sem ferramenta nova: reprovar aria-selected em elemento cujo papel não o suporta é leitura de arquivo.",
+      "why_rank_5": "Último por ser o único aceite: nada a fazer até o gatilho disparar."
+    }
+  ],
+  "refuted": [],
+  "inconclusive": [],
+  "not_executed": [
+    {
+      "what": "A consequência de F4 (item 5) sob tecnologia assistiva.",
+      "why": "Nenhum leitor de tela disponível, e a árvore de acessibilidade do painel de preview devolveu 'página vazia, viewport 0x0' para este arquivo — medido, não suposto.",
+      "consequence": "O item fica confirmado na ESTRUTURA e com exposure apenas_teorico. É a razão do único aceite desta triagem, e o gatilho registrado é o que o converte em bloqueio no dia em que a consequência puder ser observada."
+    },
+    {
+      "what": "O congelamento do renderizador com as 9 decisões respondidas (item 1).",
+      "why": "A rodada AV-R6 parou no 9º evento, com 516 handlers e 996 ms. 'Trava' é palavra da sessão anterior, registrada em CONTINUACAO.md, e não foi reproduzida por esta.",
+      "consequence": "NENHUMA para o portão: o item já é dano 4 e ja_exposto pela curva medida (2→516 handlers, 30× de custo entre o 1º e o 9º evento). O que fica em aberto é o ponto exato em que a página para de responder, que é questão de grau."
+    },
+    {
+      "what": "Uma segunda engine independente (Gecko/WebKit, ou Chromium via puppeteer).",
+      "why": "Esta worktree não tem node_modules em lugar nenhum, logo não há puppeteer; instalar está fora do escopo.",
+      "consequence": "As cinco medições foram reproduzidas 2× na mesma engine, em instâncias limpas e viewports diferentes. Nenhum portão desta triagem depende de comportamento específico de engine: os cinco falsificadores que os sustentam são estáticos e rodam sem navegador."
+    }
+  ],
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: 'problema maior vira achado novo'. Levantado durante ESTA triagem e não corrigido aqui. Não é item desta triagem — não tem fingerprint em relatório auditoria/1.1.",
+      "candidate": "Nenhuma das 17 checagens do gate lê comportamento — a bancada não tem classe de checagem de runtime",
+      "measured": "`node scripts/bancada-gate.mjs` sai 0 com os cinco defeitos desta rodada vivos. Lido o script inteiro: B1..B9 leem estrutura de arquivo (srcId que resolve, bloco referenciado, tipo declarado, envelope de JSON, enum fechado); B11..B16 leem estrutura de JSON; B17 é a única que AVALIA algo — ela extrai a expressão da condição do banner e a roda contra três estados —, e ainda assim é uma condição pura, sem DOM.",
+      "why_it_matters": "Não é regra quebrada: nenhuma checagem alega ler runtime, e o cabeçalho do script diz explicitamente que ele valida estrutura resolvível e conteúdo emitido. Importa porque é a primeira vez que a bancada mede a própria distância entre 'gate verde' e 'ferramenta funcionando' — e porque três dos cinco defeitos (o listener, o aria-selected e o anel de foco) SÃO alcançáveis por leitura de arquivo, o que significa que a lacuna não é de tecnologia, é de classe de checagem que ninguém escreveu.",
+      "cost_hint": "Três checagens estáticas no bancada-gate fechariam três dos cinco. Não feito aqui de propósito: o bloco 9 proíbe corrigir o não triado, e escrever a barreira é parte do conserto, não da triagem.",
+      "gate_and_decision": "NÃO recebe portão desta triagem. `gates_summary` fica inalterado."
+    },
+    {
+      "_note": "AV-00 §5. Feedback de instrumento, registrado aqui porque é sobre COMO medir.",
+      "candidate": "Falsificador ARMAZENADO não é falsificador ESCRITO, e o contrato não exige executá-lo a partir do artefato",
+      "measured": "Um patch pelo shell comeu as barras invertidas das regexes dos comandos de F2, F3 e F5 ao gravá-los no JSON. A versão gravada de F2 devolveria 16 no lugar de 0 — na direção do próprio achado, o que é o pior tipo de erro possível num falsificador. Só apareceu porque as cinco strings foram relidas do arquivo e executadas com child_process, e não porque alguém releu o texto.",
+      "why_it_matters": "O contrato manda `findings[].falsifier_static executável agora` e não tem nada que exija executá-lo A PARTIR do artefato emitido. Um relatório pode passar em B5 (campo presente), passar em B12 (fingerprint copiado) e carregar cinco comandos que não rodam ou, pior, que rodam devolvendo outra coisa.",
+      "cost_hint": "Uma checagem que extraia cada falsifier_static do JSON e o execute é cara e perigosa (executa string de arquivo). Uma barata e segura: exigir `falsifier_static_expected` e registrar a saída obtida, que é o que este relatório passou a fazer por conta própria.",
+      "gate_and_decision": "NÃO recebe portão. É feedback de instrumento."
+    },
+    {
+      "_note": "AV-00 §5. Terceira, e a mais estrutural das três.",
+      "candidate": "Não existe instrumento para artefato executável que NÃO é o produto",
+      "measured": "Os 21 códigos AV-* do catálogo da bancada miram o produto (escopo, suíte, segurança, custo, dependências, implantação). Nenhum cobre 'executar a bancada, os scripts de gate ou as skills e medir o comportamento'. A rodada AV-R6 teve de emprestar o envelope v4.1 sem bloco de instrumento próprio, e por isso ela NÃO é reexecutável por outro agente a partir da bancada — não há prompt para copiar.",
+      "why_it_matters": "A fricção apareceu nos cinco itens desta triagem, no vocabulário de portão: 'bloqueia_primeiro_cliente' não tem significado natural quando o alvo é a ferramenta que decide o que bloqueia o primeiro cliente. A leitura adotada está em scope_note e é uma decisão de agente que devia ser regra.",
+      "cost_hint": "Um bloco de instrumento novo na bancada, com 4b e 6b próprios, e um centerpiece.type já declarado (failure_modes, que esta rodada estreou).",
+      "gate_and_decision": "NÃO recebe portão."
+    },
+    {
+      "_note": "Já levantado antes; registrado aqui por continuidade e explicitamente NÃO duplicado.",
+      "candidate": "O gate da bancada continua fora do CI",
+      "measured": "`grep -rn 'bancada' .github/ package.json` devolve uma única ocorrência, e é um COMENTÁRIO em .github/workflows/ci.yml:65. Nenhum dos passos nomeados do workflow roda `node scripts/bancada-gate.mjs`, enquanto o script irmão debt-ledger-check.mjs está no CI.",
+      "why_it_matters": "Mesmo estado registrado em new_findings_raised do TRIAGEM-R1-R3, e agora com dezessete checagens atrás de gatilho manual.",
+      "gate_and_decision": "NÃO recebe portão, e NÃO conta como achado novo: é o mesmo candidato já levantado no TRIAGEM-R1-R3. Repetir a contagem seria inflar o placar."
+    }
+  ],
+  "gates_summary": {
+    "bloqueia_deploy": 0,
+    "bloqueia_primeiro_cliente": 4,
+    "aceito_com_registro": 1,
+    "descartado": 0,
+    "note": "ZERO em bloqueia_deploy é resultado derivado, não omissão: a primeira regra do ramo `nunca implantado` é `irreversível ou perda de dado`, e o artefato triado é um arquivo HTML que não escreve, não persiste e não fala com rede — nenhum dos cinco intersecta a lista de 8 operações irreversíveis do dono. ZERO em descartado também é resultado: os cinco falsificadores foram executados e os cinco confirmaram. CINCO DE CINCO CONFIRMADOS é o mesmo resultado incomum que o TRIAGEM-R1-R3 teve com 7 de 7, e aqui é MAIS suspeito, não menos: lá quem triou pelo menos não tinha escrito os achados, e aqui eu escrevi os achados, os falsificadores e a triagem. Nomeado em self_check.own_bias_named. A afirmação é falsificável item a item: cada verification_note traz a saída do comando e, em três dos cinco, o controle discriminante que separa 'confirmado' de 'comando quebrado'."
+  },
+  "ordering": {
+    "criterion": "risco removido por esforço, conforme AV-00 §3",
+    "sequence": [
+      "listener-delegado-em-ficha-dobra-a-cada-decisao",
+      "barra-sticky-embrulhada-em-sbar-nunca-fixa",
+      "anel-de-foco-da-mesma-cor-do-fundo-no-item-selecionado",
+      "banner-de-origem-mistura-ponto-e-virgula-decimal",
+      "aria-selected-em-role-button-nao-e-pareamento-valido"
+    ],
+    "note": "Ao contrário do TRIAGEM-R1-R3, aqui o achado de MAIOR dano é também o primeiro: dano 4 com conserto de poucas linhas não tem concorrente pelo critério. A inversão interessante está entre os dois danos 1 — o anel de foco (rank 3) passa na frente do separador decimal (rank 4) porque atinge o uso da ferramenta e não a leitura dela, e porque é o conserto mais barato dos cinco. O único aceite fecha a fila."
+  },
+  "deviations": [
+    {
+      "rule": "AV-00 §9.4 — revisão vem de agente separado; PASS emitido pela mesma sequência que implementou é rejeitado",
+      "what_happened": "NÃO CUMPRIDO, e de forma mais completa do que nas rodadas anteriores: a mesma sessão mediu em navegador, emitiu o relatório AV-R6, escreveu os cinco falsificadores e triou os cinco achados. Não há nenhuma separação em nenhum dos quatro passos.",
+      "mitigation": "Prova objetiva no lugar de revisão, que não substitui revisão. (a) As cinco medições de runtime foram reproduzidas em instância limpa e independente, com viewports diferentes, e a série do item 1 saiu idêntica (potências de 2). (b) Os cinco falsificadores foram executados A PARTIR DO JSON RELIDO, e essa checagem pegou um defeito real de escape que teria feito um deles mentir na direção do achado. (c) Três dos cinco levaram controle discriminante. (d) O caminho errado foi rodado primeiro no item 3 (`.focus()` por script) e devolveu resultado CONTRÁRIO ao esperado, o que obrigou a refazer — é a única evidência desta sessão de que ela não estava só confirmando o que já sabia.",
+      "cost_if_it_had_gone_wrong": "Recebi três dos cinco achados prontos, em prosa, de uma sessão anterior. Um medidor que já sabe a resposta encontra a resposta: se algum dos três estivesse errado, o caminho mais provável era eu escrever o falsificador que confirma, e não o que refuta. O item 3 mostra que esse risco é concreto — lá o primeiro comando devolveu o contrário e teria fechado o item como refutado se eu tivesse parado nele."
+    },
+    {
+      "rule": "AV-00 §0 / bloco 9 — proibido corrigir achado não triado",
+      "what_happened": "CUMPRIDO, e vale registrar porque a tentação era a maior de todas as triagens desta bancada: o item 1 é dano 4 com conserto provável de poucas linhas, e eu estava com a página aberta e o mecanismo mapeado. Medido: `git diff --name-only -- docs/audit/bancada.html` devolve VAZIO — o arquivo alvo não foi tocado em momento nenhum, nem para medir. As três instâncias de medição foram iframes criados em tempo de execução, sem escrever no arquivo.",
+      "mitigation": "Não aplicável: nenhum desvio.",
+      "cost_if_it_had_gone_wrong": "Consertar o item 1 antes de triar teria produzido o conserto sem o portão, e sem o portão ninguém saberia que os outros quatro existem — a rodada inteira nasceu do fato de que os defeitos foram reportados em PROSA e não puderam ser triados, que é o custo que esta sessão existe para pagar."
+    },
+    {
+      "rule": "Armadilha registrada no CONTINUACAO.md — nunca `git checkout -- <arquivo rastreado>`",
+      "what_happened": "CUMPRIDO por não ser necessário: nenhuma mutação foi aplicada a nenhum arquivo rastreado nesta sessão, então não houve nada a reverter. Nenhuma cópia .bak precisou existir.",
+      "mitigation": "Não aplicável.",
+      "cost_if_it_had_gone_wrong": "É a armadilha que destruiu a bancada v4 uma vez. O custo já foi pago por outra sessão."
+    }
+  ],
+  "self_check": {
+    "falsifiers_executed": 5,
+    "falsifiers_total": 5,
+    "items_without_owner": 0,
+    "items_without_gate": 0,
+    "minimum_required": "O AV-00 §2 exige os três maiores damage e todos os damage 5. Os damages são 4/2/1/1/1 e não há nenhum 5; o mínimo seriam os três maiores. Os CINCO foram executados, excedendo o mínimo — e o empate triplo em dano 1 tornava 'os três maiores' arbitrário, o que por si só obrigava a rodar todos. Mesma situação do TRIAGEM-R1-R3, por razão diferente (lá o empate era em 3).",
+    "controls_run": "Três dos cinco falsificadores devolvem zero ou uma igualdade como resultado esperado, que é o resultado mais fácil de obter por acidente. Controles rodados no mesmo comando ou ao lado dele: item 1 — `grep -c removeEventListener` = 0 tem como controle `grep -c addEventListener` = 17 no mesmo arquivo, então o padrão enxerga o arquivo; item 2 — a contagem de seletores de ID desconta cor hexadecimal, e o bruto (16) contra o descontado (0) É o controle, porque mostra que o comando enxerga `#` no CSS e mesmo assim não acha seletor de id; item 3 — o controle foi rodar o caminho ERRADO primeiro (`.focus()` por script, que devolveu o anel padrão do navegador, visível) e só então o certo (Tab de teclado com `matches(':focus-visible')` conferido), o que é o único controle desta triagem que mudou um veredito. Sem esses três, três dos cinco 'confirmado' seriam indistinguíveis de comando quebrado ou de medição no estado errado.",
+    "barriers_searched": "Os cinco `barrier_kind` foram emitidos DEPOIS de procurar barreira existente, no procedimento que o precedente do AV-L1 deixou como lição literal: `nenhuma_conhecida` só pode ser emitido depois de procurar, senão é 'não procurei' com nome de veredito. Onde se procurou, nos cinco: (a) `scripts/`, que tem exatamente DOIS arquivos — bancada-gate.mjs e debt-ledger-check.mjs; (b) as 17 checagens de scripts/bancada-gate.mjs, lidas uma a uma no arquivo inteiro, procurando qualquer uma que leia comportamento — B17 é a única que avalia expressão, e ainda assim uma condição pura sem DOM; (c) `grep -rn 'bancada' .github/ package.json`, que devolve UMA ocorrência e ela é comentário (ci.yml:65), nenhum passo; (d) `grep -rn 'jsx-a11y|axe-core|pa11y|lighthouse'` em package.json, .eslintrc* e *.yml fora de node_modules, que devolve VAZIO — zero ferramenta de acessibilidade no repositório; (e) `grep -rln 'docs/audit'` em .ts/.tsx/.mjs/.js/.yml fora de node_modules, que devolve três arquivos: o ci.yml (comentário) e os dois scripts. RESULTADO: nenhum item recebeu `nenhuma_conhecida`, e a razão é a mesma nos cinco — o HOSPEDEIRO da barreira existe (o bancada-gate) e nenhuma checagem da classe necessária foi escrita. Uma quase-barreira foi encontrada e descartada com motivo: o B17 já executa um pedaço extraído da página, o que prova que a técnica existe no gate, mas ele avalia condição pura e não alcança layout (item 2). A busca é do repositório local; não alcança revisão que viva só na interface do provedor.",
+    "own_bias_named": "Quatro, em ordem de quanto me incomodam. (1) TRIEI OS MEUS PRÓPRIOS ACHADOS, NA MESMA SESSÃO EM QUE OS MEDI E EMITI. As rodadas anteriores desta bancada pelo menos separavam medir de triar por sessão; aqui os quatro passos — medir, emitir, escrever o falsificador, triar — são o mesmo agente na mesma sessão. Não há controle contra isso nesta triagem. O único fato a meu favor é externo: o item 3 rodou o caminho errado primeiro e devolveu o contrário do esperado, o que não acontece com quem só confirma. (2) RECEBI TRÊS DOS CINCO PRONTOS, EM PROSA, com números já escritos por outra sessão. Sabia o resultado antes de medir, o que é a pior condição possível para um verificador. Meu contrapeso foi medir do zero em instância limpa e RECUSAR dois números que não reproduzi — os 5477 ms e o travamento com 9 decisões estão marcados como herdados, e eu registrei 33 ms e 996 ms, que são piores para a força do achado. (3) EMITI E TRIEI COMO ACHADO os dois 'de menor porte' que a sessão anterior deliberadamente não chamou de quebra, e isso engorda meu resultado de 3 para 5. A justificativa está escrita e é falsificável (ambos têm falsificador que roda), mas a conveniência existe: cinco achados parecem mais minuciosos que três. (4) QUIS REBAIXAR O ITEM 4 E NÃO REBAIXEI. Um separador decimal com o mesmo portão de um vazamento de listener parece absurdo, e eu preferiria que a lista de bloqueios não tivesse essa linha — lista que grita por tudo deixa de ser lida. Segui o mapa porque a alternativa é derivar portão do dano, que é o erro que a triagem anterior corrigiu; mas registro que a minha preferência era outra, e que quem quiser derrubar esta triagem começa por aí.",
+    "gate_bite_proved": "O gate sair 0 com estes dois artefatos no diretorio nao prova que ele os LE. Provado por cinco mutacoes propositais, todas revertidas de copia .bak e conferidas byte a byte com cmp (a copia .bak porque `git checkout -- <rastreado>` ja destruiu a bancada v4 uma vez, e porque estes arquivos ainda nem sao rastreados). Sobre a TRIAGEM: (M1) alterar UM caractere de um fingerprint reprova [B12] `copia alterada ou origem errada`; (M2) esvaziar o owner de um item que abre trabalho reprova [B14] E [B15] ao mesmo tempo, porque o self_check deixa de bater com os itens; (M3) trocar o review_trigger do aceite por prosa sem caminho reprova [B14] `gatilho nao observavel`. Sobre o RELATORIO: (M4) remover a demonstration do achado dano 4 reprova [B6]; (M5) inventar um centerpiece.type reprova [B3]. As cinco saidas estao coladas no relatorio da sessao. LIMITE: isto prova que o gate le os dois artefatos, nao que a triagem esta certa — B11..B16 leem estrutura, e prosa vazia compra a saida em B16, como o proprio contrato declara."
+  }
+}
