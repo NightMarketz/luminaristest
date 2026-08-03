@@ -12,6 +12,10 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DATABASE_URL: file:/data/dev.db
       QDRANT_URL: http://qdrant:6333
+      # lib/vector/qdrant.ts monta o cliente com `apiKey: process.env.QDRANT_API_KEY!` —
+      # sem esta linha o cliente sobe sem credencial e o índice fica aberto a quem alcançar
+      # o host (as portas do serviço qdrant abaixo são publicadas).
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
     volumes:
       - sqlite_data:/data
     depends_on:
@@ -35,6 +39,13 @@ services:
     ports:
       - "6333:6333"
       - "6334:6334"
+    environment:
+      # As duas portas acima são publicadas no HOST. Sem esta variável o Qdrant sobe com a
+      # API aberta: leitura do conteúdo indexado (divulgação, que não se desfaz) e
+      # escrita/delete da coleção para quem alcançar a máquina. `:?` é deliberado — faz
+      # `docker compose up` RECUSAR subir sem chave, porque server/src/config/env.ts declara
+      # QDRANT_API_KEY como `.optional()` e portanto nada no boot da aplicação recusaria.
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?defina QDRANT_API_KEY no .env ao lado deste arquivo — o Qdrant publica 6333/6334 no host e sobe sem autenticacao nenhuma se ela faltar}
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
