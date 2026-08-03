@@ -200,6 +200,11 @@ const RUN_OBRIGATORIO = [
   'generated_at', 'agent', 'closing_block_version', 'scope', 'reduced_mode',
 ];
 const VERIF_MODOS = new Set(['execucao', 'revisao', 'leitura']);
+// Schemas conhecidos que NÃO são checados, nominalmente declarados. Vazio hoje: todo JSON
+// de docs/audit/ é auditoria/1.1 ou triagem/1.0. Acrescentar entrada aqui é decisão
+// explícita de deixar algo fora do gate — que é justamente o que não pode acontecer por
+// acidente. Ver o despacho abaixo.
+const SCHEMAS_FORA_DE_ESCOPO = new Set([]);
 
 const relatorios = [];
 const triagens = [];
@@ -211,9 +216,26 @@ for (const f of readdirSync(AUDIT_DIR).filter((x) => x.endsWith('.json'))) {
     err('B4', `${f} não é JSON válido: ${e.message}`);
     continue;
   }
+  // LISTA FECHADA, e não igualdade exata com escape silencioso.
+  //
+  // O QUE ESTAVA ERRADO, medido por revisão independente: o despacho era
+  //     if (schema === 'auditoria/1.1') … else if (schema === 'triagem/1.0') …
+  // com um comentário dizendo "demais schemas (legado) seguem fora do escopo". Trocar UM
+  // token — `triagem/1.0` → `triagem/1.1` — tirava o artefato de TODAS as checagens, em
+  // silêncio: a linha `OK:` caía de "2 triagem(ns) com 11 item(ns)" para "1 com 4" e o gate
+  // saía 0. Era a mesma classe que o cabeçalho deste arquivo afirma ter fechado no B11.
+  //
+  // Agora: schema fora da lista é ERRO. "Legado fora do escopo" continua possível, mas tem
+  // de ser DECLARADO aqui, num lugar que alguém lê, em vez de ser o comportamento padrão de
+  // qualquer string desconhecida.
   if (j.schema === 'auditoria/1.1') relatorios.push({ f, j });
   else if (j.schema === 'triagem/1.0') triagens.push({ f, j });
-  // demais schemas (legado) seguem fora do escopo
+  else if (SCHEMAS_FORA_DE_ESCOPO.has(j.schema)) continue; // legado, declarado nominalmente
+  else {
+    err('B4', `${f}: schema "${j.schema ?? '(ausente)'}" não está na lista fechada ` +
+      `(${['auditoria/1.1', 'triagem/1.0', ...SCHEMAS_FORA_DE_ESCOPO].join(', ')}) — ` +
+      'schema desconhecido sai de TODAS as checagens em silêncio; declare-o ou corrija-o');
+  }
 }
 
 const tiposUsados = new Set();
@@ -273,7 +295,22 @@ for (const { f, j } of relatorios) {
   // ---------- B4/B10 · divulgação de revisão independente (AV-00 §9.4) ----------
   // Racional da assimetria erro-×-aviso no cabeçalho deste arquivo. Aqui só o corte: o
   // campo nasceu no envelope v4 (§8b), então v4+ deve declarar; v3 é anistiado com aviso.
-  const major = Number((/^v(\d+)/.exec(j.run?.instrument_version || '') || [])[1]);
+  // FORMA DA VERSÃO ANTES DO CORTE DE VERSÃO.
+  //
+  // O corte `major >= 4` era lido por `/^v(\d+)/`, e tudo que não casasse virava `NaN` —
+  // com `NaN >= 4` sendo `false`, ou seja, ANISTIA. Medido por revisão independente: cinco
+  // formas escapavam ("4.1" sem v, null, "V4.1" maiúsculo, "" e "audit-v4"). A pior era
+  // `null`, que escapava nas DUAS pontas: a checagem de presença do RUN_OBRIGATORIO testa
+  // `=== undefined`, então `null` passa por lá também.
+  //
+  // Duas correções, e a primeira é a que importa: a versão tem de TER FORMA RECONHECÍVEL.
+  // Uma versão que o gate não sabe ler não pode significar "então tudo bem".
+  const versaoBruta = j.run?.instrument_version;
+  if (typeof versaoBruta !== 'string' || !/^v?\d/i.test(versaoBruta.trim())) {
+    err('B4', `${f}: run.instrument_version ${JSON.stringify(versaoBruta)} não tem forma de ` +
+      'versão (esperado v<N> ou <N>) — versão ilegível anistiava o corte do §9.4 em silêncio');
+  }
+  const major = Number((/v?(\d+)/i.exec(String(versaoBruta ?? '').trim()) || [])[1]);
   const declarou = j.run?.review_of_this_run !== undefined;
   if (!declarou && major >= 4) {
     err('B4', `${f}: run.review_of_this_run ausente — instrumento ${j.run?.instrument_version} ` +
@@ -371,7 +408,14 @@ for (const { f, j } of triagens) {
   }
   const runs = Array.isArray(j.source_runs) ? j.source_runs : (j.source_run ? [j.source_run] : []);
   if (!runs.length) err('B11', `${f}: sem source_run nem source_runs — a triagem não diz o que triou`);
-  if (!j.gates_summary) err('B11', `${f}: gates_summary ausente`);
+  // `!j.gates_summary` só testava truthiness: `{"x":1}` passava. O resumo de portões tem de
+  // conter portão — senão é um objeto com nome bonito ocupando o lugar do placar.
+  if (!j.gates_summary || typeof j.gates_summary !== 'object') {
+    err('B11', `${f}: gates_summary ausente`);
+  } else if (!Object.keys(j.gates_summary).some((k) => TRI_PORTOES.has(k))) {
+    err('B11', `${f}: gates_summary não tem nenhuma chave de portão ` +
+      `(${[...TRI_PORTOES].join(' | ')}) — objeto truthy não é placar`);
+  }
   if (!j.self_check) err('B11', `${f}: self_check ausente`);
 
   for (const [i, it] of (items || []).entries()) {
@@ -381,17 +425,49 @@ for (const { f, j } of triagens) {
     // O fingerprint é o que liga relatório, triagem e próxima rodada (contrato auditoria/1.1).
     // Reescrevê-lo na triagem quebra o elo em silêncio: os dois artefatos passam a falar de
     // achados diferentes sem que nada reclame.
+    // O RAMO GLOBAL SAIU. Ele lavava procedência: bastava OMITIR `source_report` para o
+    // fingerprint cair no conjunto de TODOS os relatórios, e um item podia declarar origem
+    // errada simplesmente não declarando origem nenhuma. Medido por revisão independente:
+    // apagar `source_report` de um item que apontava para o arquivo errado devolvia exit 0.
+    // Agora a origem é obrigatória — é ela que torna o elo verificável, não o fingerprint
+    // sozinho.
     if (vazio(it.fingerprint)) {
       err('B12', `${id}: sem fingerprint`);
-    } else if (!vazio(it.source_report)) {
+    } else if (vazio(it.source_report)) {
+      // SEM `source_report`, a origem é derivada do `source_run.instrument` da própria
+      // triagem — nunca do conjunto global.
+      //
+      // Por que não exigir o campo, como a revisão prescreveu: o precedente
+      // AV-L1-TRIAGEM.json não o tem, e ele é o artefato de CONTROLE — o único escrito por
+      // outra sessão, que é o que impede B11..B16 de serem regras talhadas para o artefato
+      // de quem as escreveu. Exigir o campo obrigaria a retrofitar história, que o AV-00 §9
+      // proíbe mais do que proíbe silêncio, ou a descartar o controle. As duas saídas são
+      // piores que o defeito.
+      //
+      // O defeito real que a revisão mediu era o conjunto GLOBAL: bastava omitir
+      // `source_report` para o fingerprint casar contra qualquer relatório. Isso fecha aqui
+      // sem campo novo — a origem passa a ser o relatório cujo `run.instrument` bate com o
+      // `source_run.instrument` declarado. Estritamente mais apertado que o global.
+      const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
+      const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
+      if (!instrumentos.size) {
+        err('B12', `${id}: sem source_report e sem source_run.instrument — não há como ` +
+          'localizar a origem, e o fingerprint casaria contra qualquer relatório');
+      } else if (!candidatos.length) {
+        err('B12', `${id}: source_run.instrument ${[...instrumentos].join('/')} não corresponde ` +
+          'a nenhum relatório auditoria/1.1 deste diretório');
+      } else if (!candidatos.some(({ f: cf }) => fpsPorArquivo.get(cf)?.has(it.fingerprint))) {
+        err('B12', `${id}: fingerprint não existe em nenhum relatório de ` +
+          `${[...instrumentos].join('/')} (${candidatos.map((c) => c.f).join(', ')}) — ` +
+          'cópia alterada ou origem errada');
+      }
+    } else {
       const alvo = it.source_report.replace(/^.*[/\\]/, '');
       if (!fpsPorArquivo.has(alvo)) {
         err('B12', `${id}: source_report "${it.source_report}" não é um relatório auditoria/1.1 lido deste diretório`);
       } else if (!fpsPorArquivo.get(alvo).has(it.fingerprint)) {
         err('B12', `${id}: fingerprint não existe em ${it.source_report} — cópia alterada ou origem errada`);
       }
-    } else if (!fpsTodos.has(it.fingerprint)) {
-      err('B12', `${id}: fingerprint não bate com nenhum achado de nenhum relatório auditoria/1.1`);
     }
 
     // ---------- B13 · verificação de lista fechada ----------
@@ -446,6 +522,27 @@ for (const { f, j } of triagens) {
   if (sc.falsifiers_executed !== undefined && sc.falsifiers_executed !== executados) {
     err('B15', `${f}: self_check.falsifiers_executed ${sc.falsifiers_executed} contra ${executados} ` +
       `item(ns) com verification executada (${[...TRI_EXECUTADAS].join('/')})`);
+  }
+  // COERÊNCIA NÃO É EXECUÇÃO. B15 só conferia que o placar batia com os itens — então virar
+  // os 7 `confirmado` em `nao_executado` (valor legítimo em B13) e zerar o contador dava
+  // exit 0, com a manchete "7 falsificadores executados" desmentida pelo próprio artefato e
+  // nenhuma linha do gate reclamando. Medido por revisão independente.
+  //
+  // O AV-00 §2 é explícito: "relatório cujo falsificador nunca rodou é lista de hipóteses".
+  // Uma triagem inteira sem um falsificador executado é exatamente isso, e agora reprova.
+  if (total > 0 && executados === 0) {
+    err('B15', `${f}: nenhum dos ${total} item(ns) tem falsificador executado ` +
+      `(${[...TRI_EXECUTADAS].join('/')}) — AV-00 §2: triagem sem falsificador rodado é lista de hipóteses`);
+  }
+  // E item que declara nao_executado/nao_executavel tem de dizer POR QUÊ: sem isso o valor
+  // legítimo vira a saída barata para não rodar nada.
+  for (const [i, it] of (items || []).entries()) {
+    if (TRI_EXECUTADAS.has(it.verification)) continue;
+    if (vazio(it.verification) || !TRI_VERIFICACOES.has(it.verification)) continue; // já é B13
+    if (vazio(it.verification_note)) {
+      err('B15', `${f}:${it.fingerprint || `item[${i}]`}: verification "${it.verification}" ` +
+        'sem verification_note — declarar que não rodou exige dizer por quê');
+    }
   }
   if (sc.falsifiers_total === undefined || sc.falsifiers_executed === undefined) {
     err('B15', `${f}: self_check sem falsifiers_executed/falsifiers_total — o placar da triagem não existe`);

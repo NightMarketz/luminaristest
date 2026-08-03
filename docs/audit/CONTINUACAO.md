@@ -401,7 +401,7 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
 6. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
    Medido: `grep -rn 'bancada-gate' .github/ package.json` devolve nada, enquanto o script
    irmão `debt-ledger-check.mjs` está no CI em dois passos. É a mesma classe do F4 do R1
-   aplicada à própria bancada, e vale mais agora — **dezesseis** checagens atrás de gatilho
+   aplicada à própria bancada, e vale mais agora — **dezessete** checagens atrás de gatilho
    manual. Registrado em `new_findings_raised` da triagem; não corrigido.
 
 7. **A reconstrução foi revisada; as correções que vieram da revisão, não.** Um agente
