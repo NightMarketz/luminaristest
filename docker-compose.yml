@@ -12,6 +12,10 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DATABASE_URL: file:/data/dev.db
       QDRANT_URL: http://qdrant:6333
+      # lib/vector/qdrant.ts monta o cliente com `apiKey: process.env.QDRANT_API_KEY!` —
+      # sem esta linha o cliente sobe sem credencial e o índice fica aberto a quem alcançar
+      # o host (as portas do serviço qdrant abaixo são publicadas).
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
     volumes:
       - sqlite_data:/data
     depends_on:
@@ -22,10 +26,22 @@ services:
     build:
       context: ./my-app
       dockerfile: Dockerfile
+      args:
+        # DUAS coisas estavam erradas aqui, e consertar só a primeira declararia vitória:
+        # (1) o nome. O código lê NEXT_PUBLIC_API_BASE_URL em 19 arquivos; ninguém lê
+        #     NEXT_PUBLIC_API_URL — medido, e um é prefixo do outro, então o zero é forte.
+        # (2) o momento. NEXT_PUBLIC_* é INLINADO no bundle em tempo de BUILD
+        #     (my-app/next.config.js:23 lê process.env quando `npm run build` roda, dentro
+        #     do estágio builder do Dockerfile). A chave `environment:` é RUNTIME: com o
+        #     nome certo e no lugar errado o valor continuaria sem efeito nenhum. Por isso
+        #     build-arg, e por isso o serviço não tem mais bloco `environment:`.
+        # O default abaixo é o MESMO de next.config.js:23 — não inventa topologia. Note que
+        # o valor precisa do sufixo /api (lib/services/document.service.ts:28 concatena
+        # `${BASE}/documents/upload`) e precisa ser resolvível PELO NAVEGADOR, não pela rede
+        # do compose: o `http://server:3001` que estava aqui falhava nos dois pontos.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api}
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://server:3001
     depends_on:
       - server
     restart: unless-stopped
@@ -35,6 +51,13 @@ services:
     ports:
       - "6333:6333"
       - "6334:6334"
+    environment:
+      # As duas portas acima são publicadas no HOST. Sem esta variável o Qdrant sobe com a
+      # API aberta: leitura do conteúdo indexado (divulgação, que não se desfaz) e
+      # escrita/delete da coleção para quem alcançar a máquina. `:?` é deliberado — faz
+      # `docker compose up` RECUSAR subir sem chave, porque server/src/config/env.ts declara
+      # QDRANT_API_KEY como `.optional()` e portanto nada no boot da aplicação recusaria.
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?defina QDRANT_API_KEY no .env ao lado deste arquivo — o Qdrant publica 6333/6334 no host e sobe sem autenticacao nenhuma se ela faltar}
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped

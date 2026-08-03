@@ -59,6 +59,18 @@
       "owner": "Desenvolvedor Luminaris",
       "due": "2026-08-10",
       "due_is_proposal": true,
+      "fix_commit": "7a7ec5d1",
+      "status": "corrigido_e_barrado",
+      "status_evidence": {
+        "commit": "7a7ec5d1",
+        "branch": "claude/admiring-turing-ec1528",
+        "merged": false,
+        "what_changed": "UMA asserção acrescentada ao bloco `createAccount audit` que já existia em PostingService.test.ts, no molde do teste irmão de `policy.canPost` (linha 353): policy.canManage=false → ForbiddenError, mais três negativas (sem accountRepo.create, sem auditService.append, sem $transaction) que afirmam que a guarda PRECEDE o tx. Nenhum arquivo de produção tocado.",
+        "falsifier_reexecuted": "Deixou de reproduzir. Antes: `grep -rn createAccount src --include=*.test.ts | grep -c Forbidden` = 0, com os dois controles do verification_note reconferidos no mesmo comando (7 sem o filtro; 38 arquivos usam Forbidden). Depois: 1, na linha 800 do arquivo.",
+        "barrier_proved_by_mutation": "M6 do AV-R3 reproduzida: a guarda trocada por `if (false)` em PostingService.ts (`git diff --numstat` = 1/1, revertida de .bak e não de git checkout). O teste novo falha com 'Received promise resolved instead of rejected'. Antes desta asserção a mesma mutação deixava a suíte inteira verde — que é o achado.",
+        "gates": "tsc limpo; unit 123 suítes / 1507 testes verdes (1506 antes); bancada-gate exit 0.",
+        "review_pending": "AV-00 §5/§9.4 exige revisão de agente separado; nenhuma foi feita. PASS emitido pela sequência que implementou é rejeitado pelo protocolo."
+      },
       "accepted_reason": null,
       "review_trigger": null,
       "accepted_by": null,
@@ -81,11 +93,24 @@
       "owner": "Desenvolvedor Luminaris",
       "due": "2026-08-10",
       "due_is_proposal": true,
+      "fix_commit": "29b8811f",
+      "status": "corrigido_e_barrado",
+      "status_evidence": {
+        "commit": "29b8811f",
+        "branch": "claude/admiring-turing-ec1528",
+        "merged": false,
+        "what_changed": "Só docker-compose.yml: `QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?…}` no serviço qdrant e `QDRANT_API_KEY: ${QDRANT_API_KEY}` no server. O `:?` é deliberado e a razão é o achado da verificação registrado acima — env.ts:112 declara a chave `.optional()`, então nada no boot da APLICAÇÃO recusaria subir sem ela; a recusa tem de morar no arquivo de implantação.",
+        "falsifier_reexecuted": "Deixou de reproduzir. `grep -A6 'qdrant:' docker-compose.yml | grep -qi 'api_key\\|environment'` caía no ramo SEM CHAVE antes e cai em 'tem config' depois.",
+        "barrier_proved_by_mutation": "Compose revertido ao pré-conserto (`git show HEAD:docker-compose.yml`, restaurado depois de .bak): 2 dos 3 casos de dockerCompose.qdrant.test.ts falham — a chave do qdrant e a do server — e o terceiro, o CONTROLE de que os dois serviços existem e são recortados, segue verde. É o resultado que distingue barreira de recorte vazio: um recorte quebrado reprovaria os três.",
+        "gates": "tsc limpo; unit 124 suítes / 1510 testes verdes; bancada-gate exit 0.",
+        "out_of_scope_by_rule": "AV-00 §5.1 (escopo restrito ao evidence): env.ts:112 continua `.optional()` e as portas 6333/6334 continuam publicadas no host. O primeiro é o achado-da-verificação registrado no verification_note deste item, sem portão próprio; o segundo é decisão de desenho que o achado não pede. Nenhum dos dois foi tocado 'de passagem'.",
+        "review_pending": "AV-00 §5/§9.4 exige revisão de agente separado; nenhuma foi feita."
+      },
       "accepted_reason": null,
       "review_trigger": null,
       "accepted_by": null,
       "barrier_kind": "teste_de_fronteira",
-      "barrier_note": "PROPOSTA, não existente. Buscado antes de emitir, e o resultado foi um zero limpo: `grep -rln docker-compose` em todo .ts/.mjs/.js/.yml fora de node_modules devolve VAZIO — nenhum teste, script ou job de CI lê o arquivo de implantação. Os 19 passos do .github/workflows/ci.yml (typecheck, tsc de teste, npm audit advisory, lint layer-gate, debt-ledger-check, jest, tripwire de handles, skill-audit, OPS-001, zinc-guard, build e vitest do frontend) não incluem nenhum que leia compose. Nenhum dos 6 PRs abertos toca docker-compose.yml. A barreira precisa ser escrita junto com o conserto, e ela fecha o item 3 no mesmo arquivo.",
+      "barrier_note": "PROPOSTA quando esta triagem foi escrita; ESCRITA no conserto (29b8811f) como server/src/config/__tests__/dockerCompose.qdrant.test.ts. Buscado antes de emitir, e o resultado foi um zero limpo: `grep -rln docker-compose` em todo .ts/.mjs/.js/.yml fora de node_modules devolve VAZIO — nenhum teste, script ou job de CI lê o arquivo de implantação. Os 19 passos do .github/workflows/ci.yml (typecheck, tsc de teste, npm audit advisory, lint layer-gate, debt-ledger-check, jest, tripwire de handles, skill-audit, OPS-001, zinc-guard, build e vitest do frontend) não incluem nenhum que leia compose. Nenhum dos 6 PRs abertos toca docker-compose.yml. A barreira precisa ser escrita junto com o conserto, e ela fecha o item 3 no mesmo arquivo.",
       "why_rank_2": "É o único bloqueia_deploy da rodada e mora no mesmo arquivo do item 3 — dois danos fechados por um toque."
     },
     {
@@ -102,11 +127,26 @@
       "owner": "Desenvolvedor Luminaris",
       "due": "2026-08-10",
       "due_is_proposal": true,
+      "fix_commit": "90f71a86",
+      "status": "corrigido_e_barrado",
+      "status_evidence": {
+        "commit": "90f71a86",
+        "branch": "claude/admiring-turing-ec1528",
+        "merged": false,
+        "what_changed": "docker-compose.yml (frontend passa a receber NEXT_PUBLIC_API_BASE_URL por `build.args` e PERDE o bloco `environment:`) + my-app/Dockerfile (ARG/ENV antes do `npm run build`). As duas camadas, não uma.",
+        "second_layer_now_executed": "A `not_executed[0]` desta triagem — 'NEXT_PUBLIC_* é embutido em build time, então environment: não aplicaria nem com o nome certo' — deixou de ser leitura de documentação e virou medida no repositório: my-app/Dockerfile roda `npm run build` no estágio builder e next.config.js:23 lê process.env nesse momento, então a chave `environment:` do compose (runtime) nunca alcança o bundle. A consequência que a triagem deixou aberta ('uma linha ou duas?') está respondida: DUAS, e a barreira reprova a de uma.",
+        "value_was_also_wrong": "Registrado porque o achado não o dizia e a medida é nova: `http://server:3001` errava além do nome — falta o sufixo /api (my-app/lib/services/document.service.ts:28 concatena `${BASE}/documents/upload`) e `server` é nome da rede do compose, inalcançável pelo NAVEGADOR, que é quem executa o bundle. O default passa a ser o MESMO de next.config.js:23, parametrizado — o conserto não inventa topologia de implantação.",
+        "falsifier_reexecuted": "Deixou de reproduzir. `grep -n NEXT_PUBLIC docker-compose.yml my-app/next.config.js` punha `NEXT_PUBLIC_API_URL` contra `NEXT_PUBLIC_API_BASE_URL`; agora as duas linhas trazem o mesmo nome.",
+        "barrier_proved_by_mutation": "Três mutações em my-app/lib/api/__tests__/nextPublicEnvWiring.test.ts, todas revertidas de .bak com `git diff --numstat` conferido. (A) frontend de volta ao pré-conserto → 2 de 3 falham e a saída NOMEIA 'NEXT_PUBLIC_API_URL'. (B) SÓ o nome corrigido, ainda em `environment:` → o caso do nome PASSA e o de build-arg FALHA. (C) compose certo, ARG removido do Dockerfile → falha em ARG-antes-do-build. A mutação B é a que justifica a barreira existir: é o meio-conserto que declararia vitória, e é o único defeito desta fila que uma checagem de nome sozinha deixaria passar.",
+        "gates": "tsc limpo nos dois lados; server unit 124 suítes / 1510 verdes; my-app vitest 27 arquivos / 125 testes verdes; bancada-gate exit 0.",
+        "honest_limit": "A barreira lê TEXTO do compose, do Dockerfile e do next.config.js. Não constrói a imagem e não prova que o valor chega ao bundle — `next build` de produção segue não rodado neste repositório (item 9 de CONTINUACAO.md). O limite está declarado no cabeçalho do próprio teste.",
+        "review_pending": "AV-00 §5/§9.4 exige revisão de agente separado; nenhuma foi feita."
+      },
       "accepted_reason": null,
       "review_trigger": null,
       "accepted_by": null,
       "barrier_kind": "teste_de_fronteira",
-      "barrier_note": "PROPOSTA, não existente. Mesma busca do item 2, mesmo zero: nenhum arquivo do repositório fora de node_modules lê docker-compose.yml, e nenhum passo do ci.yml o alcança. A barreira proposta pelo relatório — reprovar quando o conjunto de chaves NEXT_PUBLIC_* do compose não for subconjunto das lidas no código — fecharia os itens 2 e 3 no mesmo script.",
+      "barrier_note": "PROPOSTA quando esta triagem foi escrita; ESCRITA no conserto (90f71a86) como my-app/lib/api/__tests__/nextPublicEnvWiring.test.ts — em my-app e NÃO junto da barreira do item 2, porque o AV-00 §5 exige uma alteração por achado e cada barreira mora na metade do repositório que consome a variável. Mesma busca do item 2, mesmo zero: nenhum arquivo do repositório fora de node_modules lê docker-compose.yml, e nenhum passo do ci.yml o alcança. A barreira proposta pelo relatório — reprovar quando o conjunto de chaves NEXT_PUBLIC_* do compose não for subconjunto das lidas no código — fecharia os itens 2 e 3 no mesmo script.",
       "why_rank_3": "Maior dano de disponibilidade da rodada e custo de uma linha, mas depende de decidir build-arg × environment, o que o item 2 não exige."
     },
     {
@@ -245,6 +285,15 @@
       "measured": "O relatório cita `docker-compose.yml:27` para NEXT_PUBLIC_API_URL (linha real: 28) e `docker-compose.yml:34-37` para o serviço qdrant (real: serviço em 33, portas em 35-37). O arquivo NÃO mudou entre 643d2eb e ca33c745 — está fora do `git diff --name-only`. Os dois erram na mesma direção e na mesma magnitude. Em contraste, os números de linha do AV-R3 batem exatamente (PostingService.ts:628, PostingDimension.integration.test.ts:76), e os do AV-R1 que apontam para arquivos .ts também batem (qdrant.ts:6, .env.example:8).",
       "why_it_matters": "Não muda nenhum veredito — o conteúdo citado está no arquivo nomeado, uma linha adiante. Importa porque a evidência de auditoria é feita para ser reexecutada por outra pessoa, e um off-by-one sistemático em UM tipo de arquivo (yml) sugere que aquela evidência foi contada por um caminho diferente dos outros. Vale medir na próxima rodada, não corrigir a mão aqui.",
       "gate_and_decision": "NÃO recebe portão. É feedback de instrumento, não achado sobre o código."
+    },
+    {
+      "_note": "AV-00 §5. Levantado pela PRIMEIRA rodada de correção (itens 1..3, 2026-08-03), que é a primeira vez que alguém precisou escrever num triagem/1.0 que um achado FECHOU. É achado sobre o instrumento, não improviso de campo — e a distinção importa porque os campos abaixo foram preenchidos assim mesmo.",
+      "candidate": "O contrato triagem/1.0 não tem onde guardar o fechamento de um achado",
+      "measured": "Lido o `t-contrato` de bancada.html (bloco CONTRATO triagem/1.0, 14 linhas de campo): ele enumera items[]/fingerprint/source_report/verification/gate/owner/due/aceite/self_check e os três campos promovidos do precedente. NENHUM deles registra que o conserto aconteceu. `grep -rn 'fix_commit\\|status_evidence' scripts/bancada-gate.mjs` devolve NADA — B11..B16 não leem nem um nem outro. O único vestígio é bancada.html:3161, onde o payload gerado pelo visualizador emite `fix_commit:null` e `barrier:null` fixos: a CHAVE existe na forma do artefato e a SEMÂNTICA não existe no contrato, e o gate ignora as duas.",
+      "what_was_done_meanwhile": "Os três itens fechados receberam `fix_commit` (a chave que o payload do visualizador já emite) mais `status: corrigido_e_barrado` + `status_evidence` (a forma do PRECEDENTE docs/audit/AV-L1-TRIAGEM.json, que a usa em 2 dos 4 itens sem o contrato a exigir). Não é campo inventado nesta sessão: é a mesma promoção-por-precedente que gerou verification_note, barriers_searched e own_bias_named. Fica declarado que hoje ele é convenção e não contrato.",
+      "why_it_matters": "`verification` é o veredito do falsificador sobre o ACHADO e continua `confirmado` depois do conserto — o achado era real. Sem um campo próprio para o fechamento, a única forma de registrar 'corrigido' seria corromper `verification`, e a rodada seguinte leria a fila como se nada tivesse sido feito. Some-se a isto que o gate não lê o campo: `status: corrigido_e_barrado` pode ser escrito sem que nenhuma barreira exista, e nada reprova.",
+      "cost_hint": "Duas linhas no t-contrato (status de lista fechada + status_evidence obrigatório quando status ≠ aberto) e uma checagem B-nova. A checagem cara — provar que a barreira declarada existe e morde — não é escrivível como leitura de estrutura, e o limite declarado de B11..B16 já diz isso.",
+      "gate_and_decision": "NÃO recebe portão desta triagem. `gates_summary` fica inalterado — ele conta os 7 achados das rodadas R1/R3, não os defeitos do instrumento."
     }
   ],
 

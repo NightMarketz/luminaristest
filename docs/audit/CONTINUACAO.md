@@ -25,7 +25,9 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
 | `scripts/bancada-gate.mjs` | gate de **16** checagens · **passa** · as 16 com mordida provada |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
-| `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos |
+| `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos · **3 fechados** (§3c) |
+| `server/src/config/__tests__/dockerCompose.qdrant.test.ts` | barreira do item 2 · roda na suíte `unit`, que já está no CI |
+| `my-app/lib/api/__tests__/nextPublicEnvWiring.test.ts` | barreira do item 3 · roda no `vitest`, que já está no CI |
 
 ## O que foi perdido, e como (histórico — já resolvido)
 
@@ -165,6 +167,70 @@ valem copiar para a triagem do R1/R3:
 - `own_bias_named`, que nomeia o viés de quem triou (inclusive "sou verificador da minha
   própria correção" no item onde isso valia).
 
+### 3c · Os três primeiros da fila — CORRIGIDOS E BARRADOS
+
+Primeira rodada de **correção de código** de toda a linha de trabalho. Só foi legítima porque
+os 7 achados já estavam triados: o bloco 9 proibia isto até `TRIAGEM-R1-R3.json` existir.
+Um commit por achado, na ordem de `ordering.sequence`. Os itens 2 e 3 moram no MESMO arquivo
+e mesmo assim são **dois commits** — "aproveitar a passagem" é anti-padrão nomeado no §5.
+
+| # | Achado | Commit | Conserto | Barreira escrita |
+|---|---|---|---|---|
+| 1 | `gate-de-createAccount-coberto-mas-nao-afirmado` | `7a7ec5d1` | 1 asserção no bloco que já existia | `teste_de_permissao` no próprio `PostingService.test.ts` |
+| 2 | `qdrant-publicado-sem-chave-embora-codigo-suporte` | `29b8811f` | chave no compose, com `:?` que recusa subir sem ela | `server/src/config/__tests__/dockerCompose.qdrant.test.ts` |
+| 3 | `compose-injeta-next-public-api-url-nome-divergente` | `90f71a86` | `build.args` + `ARG` no Dockerfile (**duas** camadas) | `my-app/lib/api/__tests__/nextPublicEnvWiring.test.ts` |
+
+Os três falsificadores **deixaram de reproduzir**, e cada barreira teve a mordida provada por
+mutação revertida de `.bak` (nunca `git checkout`) — a de baixo é a que vale ler:
+
+- **Item 1** — M6 do AV-R3 reproduzida (`if (false)` na guarda, `numstat` 1/1): o teste novo
+  falha. Antes da asserção, a mesma mutação deixava a suíte **inteira** verde.
+- **Item 2** — compose revertido ao pré-conserto: 2 dos 3 casos falham, e o terceiro — o
+  **controle** de que os serviços existem e são recortados — segue verde. Um recorte
+  quebrado reprovaria os três; é assim que se distingue barreira de regex morto.
+- **Item 3** — três mutações. A decisiva é a do meio: **corrigir só o nome**, deixando o
+  valor em `environment:`. O caso do nome passa e o de build-arg **falha**. É exatamente o
+  meio-conserto que declararia vitória, e nenhuma checagem de nome sozinha o pegaria.
+
+**O que a correção mediu e a triagem não sabia** (registrado em `status_evidence`, não
+corrigido de passagem): o valor `http://server:3001` errava **além** do nome — falta o
+sufixo `/api` que `document.service.ts:28` concatena, e `server` é nome da rede do compose,
+inalcançável pelo **navegador**, que é quem executa o bundle. Com isso, a
+`not_executed[0]` da triagem ("NEXT_PUBLIC_* é build-time") deixou de ser leitura de
+documentação e virou medida no repositório.
+
+**Fora de escopo por regra, não por esquecimento** (§5.1, escopo restrito ao `evidence`):
+`env.ts:112` continua `.optional()` e as portas 6333/6334 continuam publicadas no host.
+
+**Gates**: `tsc` limpo nos dois lados · server unit **124 suítes / 1510 testes** verdes ·
+my-app vitest **27 arquivos / 125 testes** verdes · `bancada-gate` exit 0. `next build` de
+produção **segue não rodado**, e as duas barreiras de compose declaram esse limite no próprio
+cabeçalho: elas leem **texto**, não sobem a stack nem constroem a imagem.
+
+**Sem revisão independente** — os três consertos foram implementados e verificados pela mesma
+sequência, que o §9.4 rejeita. O que existe no lugar é prova de mordida, e prova de mordida
+não é revisão.
+
+### 3d · Achado sobre o INSTRUMENTO: o `triagem/1.0` não tem onde guardar um fechamento
+
+Perguntado antes de escrever, e a resposta é *quase não*. O `t-contrato` enumera 14 campos
+de `triagem/1.0` e **nenhum** registra que o conserto aconteceu; `grep -rn 'fix_commit\|status_evidence'
+scripts/bancada-gate.mjs` devolve **nada** — B11..B16 não leem nem um nem outro. O único
+vestígio é `bancada.html:3161`, onde o payload gerado emite `fix_commit:null` e `barrier:null`
+fixos: a **chave** existe na forma do artefato, a **semântica** não existe no contrato.
+
+Por que isso não é detalhe: `items[].verification` é o veredito do falsificador sobre o
+**achado**, e continua `confirmado` depois do conserto — o achado era real. Sem campo próprio
+para o fechamento, a única forma de registrar "corrigido" seria corromper `verification`, e a
+rodada seguinte leria a fila como se nada tivesse sido feito.
+
+O que foi feito enquanto isso: os três itens receberam `fix_commit` (a chave que o payload já
+emite) mais `status: corrigido_e_barrado` + `status_evidence`, que é a forma do **precedente**
+`AV-L1-TRIAGEM.json` — mesma promoção-por-precedente que gerou `verification_note`,
+`barriers_searched` e `own_bias_named`. **Hoje é convenção, não contrato**, e o gate não a
+cobra: `status: corrigido_e_barrado` pode ser escrito sem que barreira nenhuma exista.
+Registrado em `new_findings_raised` da triagem, sem portão.
+
 ### 4 · Os achados de maior dano, se e quando triados
 - **R3 F1 (dano 4)** — o caminho de escrita do razão não tem cobertura de integração. Nenhum teste de integração instancia `PostingService`; `PostingDimension.integration.test.ts:76` define um helper local `postEntry` que grava direto via `db.posting.create`.
 - **R1 F1 e F2 (dano 3)** — os dois no mesmo `docker-compose.yml`: nome de variável divergente e Qdrant sem chave.
@@ -248,9 +314,15 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    Nota sobre os números: `4/7` no frontend contra `2/7` no backend **não** ranqueia as
    suítes — são conjuntos de mutação diferentes, dirigidos a invariante, e o próprio AV-03
    declara que é amostra dirigida, não estimativa estatística.
-3. **A fila de correção está liberada e não foi tocada.** Os 7 achados estão triados, com
-   portão, dono e data; nenhum foi corrigido. A ordem, por risco removido por esforço, está
-   em `ordering.sequence` do `TRIAGEM-R1-R3.json`. Agora corrigir é legítimo — antes não era.
+3. **A fila de correção está aberta em 4 de 7.** Os itens 1, 2 e 3 de `ordering.sequence`
+   foram corrigidos **e barrados** — ver §3c. Restam, na ordem:
+   **4** `caminho-de-escrita-do-razao-sem-cobertura-de-integracao` (dano 4, o maior da fila,
+   e o único que exige um **arquivo de teste de integração novo** — tarefa própria, não
+   apêndice de outra), **5** `fronteira-de-dto-quase-nao-testada`, **6**
+   `revisao-independente-sem-artefato-por-merge` (único de custo **recorrente**), **7**
+   `tres-imports-sem-declaracao-no-manifesto` (aceito com gatilho — nada a fazer até as
+   travas serem regeneradas).
+   O item 4 herda a subfila de 4 unidades ratificada em `r2_decision.ratified_subqueue`.
 
 4. **Dois defeitos de runtime da própria bancada, medidos em navegador, NÃO triados.**
 
