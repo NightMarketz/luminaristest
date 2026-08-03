@@ -1,0 +1,629 @@
+{
+ "schema": "auditoria/1.1",
+ "run": {
+  "instrument": "AV-03",
+  "instrument_version": "v4.1",
+  "title": "Forca da Suite — my-app (frontend), mutacao executada",
+  "project": "Luminaris",
+  "repo_commit": "ca33c745",
+  "generated_at": "2026-08-03",
+  "agent": "claude-opus-5",
+  "closing_block_version": "v3",
+  "scope": {
+   "included": [
+    "my-app"
+   ],
+   "excluded": [
+    "server"
+   ],
+   "period": null,
+   "budget_files": 14,
+   "files_read_full": 9
+  },
+  "reduced_mode": true,
+  "reduced_reason": "next build de producao nao executado; runtime nao exercitado. Suite e tipos rodaram por completo no my-app",
+  "agent_authored_ratio": {
+   "value": 0.941,
+   "method": "AV-00 2.1, reaproveitado da rodada R1 — nao remedido nesta rodada",
+   "identity_rule": "trailer Co-authored-by contendo Claude",
+   "measured": true
+  },
+  "confidence_ceiling": "media",
+  "supersedes": "AV-R3 NM1 — my-app deixou de ser nao medido; o mutation_score do server (2/7) continua valendo pelo AV-R3 e NAO se soma a este",
+  "review_of_this_run": null,
+  "review_gap": "nenhum agente separado revisou esta rodada; AV-00 9.4 rejeita PASS emitido por quem executou",
+  "reduced_capabilities": {
+   "tipos": true,
+   "build": false,
+   "suite": true,
+   "runtime": false
+  }
+ },
+ "signals": [
+  {
+   "id": "S1",
+   "label": "Baseline da suite do frontend",
+   "measured": true,
+   "method": "npx vitest run apos npm ci (689 pacotes, 18 s)",
+   "unit": "testes",
+   "rows": [
+    {
+     "key": "arquivos de teste",
+     "value": 26
+    },
+    {
+     "key": "testes",
+     "value": 122
+    },
+    {
+     "key": "falhas",
+     "value": 0
+    },
+    {
+     "key": "duracao",
+     "value": "8.58 s"
+    },
+    {
+     "key": "runner",
+     "value": "vitest 3.2 jsdom"
+    },
+    {
+     "key": "tsc --noEmit",
+     "value": "exit 0"
+    }
+   ]
+  },
+  {
+   "id": "S2",
+   "label": "Placar de mutacao",
+   "measured": true,
+   "method": "mutacao dirigida aplicada a mao, revertida de copia .bak",
+   "unit": "mutacoes",
+   "rows": [
+    {
+     "key": "aplicadas",
+     "value": 7
+    },
+    {
+     "key": "mortas",
+     "value": 4
+    },
+    {
+     "key": "sobreviventes",
+     "value": 3
+    },
+    {
+     "key": "mutation_score",
+     "value": 0.571
+    },
+    {
+     "key": "sobreviventes sem execucao",
+     "value": 2
+    },
+    {
+     "key": "descartadas por nao compilar",
+     "value": 0
+    },
+    {
+     "key": "numstat de cada mutacao",
+     "value": "1 1 nas sete"
+    }
+   ]
+  },
+  {
+   "id": "S3",
+   "label": "Assercao real",
+   "measured": true,
+   "method": "varredura sobre os 26 arquivos de teste do my-app",
+   "unit": "ocorrencias",
+   "rows": [
+    {
+     "key": "expect(",
+     "value": 219
+    },
+    {
+     "key": "blocos it/test detectados",
+     "value": 111
+    },
+    {
+     "key": "blocos sem expect()",
+     "value": 0
+    },
+    {
+     "key": "skip/todo",
+     "value": 0
+    },
+    {
+     "key": "assercoes fracas (toBeDefined/not.toThrow/toBeTruthy)",
+     "value": 0
+    },
+    {
+     "key": "toBeInTheDocument",
+     "value": 81
+    },
+    {
+     "key": "toHaveBeenCalledWith",
+     "value": 3
+    },
+    {
+     "key": "arquivos que fazem vi.mock de um servico",
+     "value": "18 de 26"
+    }
+   ]
+  },
+  {
+   "id": "S4",
+   "label": "Fronteira coberta",
+   "measured": true,
+   "method": "contagem de modulos de fronteira com teste proprio",
+   "unit": "modulos",
+   "rows": [
+    {
+     "key": "adaptadores lib/services/*.service.ts",
+     "value": 17
+    },
+    {
+     "key": "adaptadores com teste proprio",
+     "value": 0
+    },
+    {
+     "key": "helpers features/*/lib",
+     "value": 7
+    },
+    {
+     "key": "helpers com teste proprio",
+     "value": 4
+    },
+    {
+     "key": "paginas atras de withAuth",
+     "value": 20
+    },
+    {
+     "key": "testes que citam withAuth",
+     "value": 0
+    }
+   ]
+  }
+ ],
+ "not_measured": [
+  {
+   "id": "NM1",
+   "label": "cobertura de linha",
+   "reason": "fora do escopo do instrumento por desenho",
+   "consequence": "nenhum percentual produzido nem citado como garantia"
+  },
+  {
+   "id": "NM2",
+   "label": "build de producao (next build)",
+   "reason": "orcamento — reduced_capabilities.build = false",
+   "consequence": "as telas atras de withAuth nao foram verificadas contra build de producao, como my-app/CLAUDE.md exige"
+  },
+  {
+   "id": "NM3",
+   "label": "mutacoes alem das 7",
+   "reason": "orcamento",
+   "consequence": "o placar e amostra dirigida a invariante, nao estimativa estatistica"
+  },
+  {
+   "id": "NM4",
+   "label": "gemeo nao-delegado de data-only em features/crm/lib/dates.ts",
+   "reason": "um invariante, um sitio por rodada",
+   "consequence": "nao se sabe se a segunda implementacao do mesmo invariante e defendida"
+  },
+  {
+   "id": "NM5",
+   "label": "server",
+   "reason": "fora do recorte desta rodada",
+   "consequence": "continua valendo o mutation_score 2/7 do AV-R3; as duas fracoes nao se somam"
+  }
+ ],
+ "centerpiece": {
+  "type": "mutation_score",
+  "title": "Placar de mutacao — my-app",
+  "columns": [
+   "mutacao",
+   "sitio",
+   "invariante",
+   "reagiu",
+   "teste que pegou",
+   "veredito"
+  ],
+  "rows": [
+   [
+    "M1 new Date(value + T00:00:00) para new Date(value)",
+    "features/dashboard/shared/utils/formatters.ts:103",
+    "data-only nao desloca um dia em UTC-3",
+    "sim (3 testes)",
+    "formatDateNumericBR > renders a date-only ISO string as the SAME calendar day (no UTC shift); formatDateBR > no longer shifts a date-only ISO back a day; finance formatDateBR > renders a date-only ISO as dd/mm/aaaa without the UTC shift",
+    "morta"
+   ],
+   [
+    "M2 tolerancia do ponto-decimal de {1,2} para {1,3}",
+    "features/accounting/lib/parseBrl.ts:17",
+    "ponto sem virgula e separador de milhar, nunca decimal",
+    "sim (1 teste)",
+    "parseBrl > integer cents > parseBrl(\"1.000\") === 100000",
+    "morta"
+   ],
+   [
+    "M3 isBalanced perde a igualdade debito === credito",
+    "features/accounting/components/JournalEntryModal.tsx:102",
+    "lancamento so sai balanceado",
+    "nao",
+    "-",
+    "sobreviveu COM A LINHA EXECUTADA"
+   ],
+   [
+    "M4 buildQuery({ unitId }) para buildQuery({})",
+    "lib/services/accounting.service.ts:527",
+    "isolamento por inquilino na chamada de API",
+    "nao",
+    "-",
+    "sobreviveu SEM SER EXECUTADA"
+   ],
+   [
+    "M5 guarda de papel do render para if (false)",
+    "lib/hoc/withAuth.tsx:99",
+    "usuario sem o papel exigido nao ve a tela",
+    "nao",
+    "-",
+    "sobreviveu SEM SER EXECUTADA"
+   ],
+   [
+    "M6 page <= lastPage para page < lastPage",
+    "lib/dynamicTableFetch.ts:23",
+    "busca TODAS as paginas — KPI nao trunca",
+    "sim (1 teste)",
+    "fetchAllRows > acumula linhas paginando ate totalPages",
+    "morta"
+   ],
+   [
+    "M7 cents / 100 para cents / 10",
+    "features/accounting/lib/formatCents.ts:3",
+    "centavos inteiros renderizados na escala certa",
+    "sim (10 testes em 8 arquivos)",
+    "TrialBalanceTable > renders each account row and the totals footer with formatted money; DFCPanel (string cents) > formats string-cents money (parseInt path, not \"NaN\"); BalanceSheetPanel > renders the BP sections and balanced badge after generating",
+    "morta"
+   ]
+  ]
+ },
+ "scoreboard": [
+  {
+   "dimension": "T1",
+   "label": "Forca",
+   "level": 1,
+   "max_possible": 3,
+   "ceiling_reason": "sem dado de producao (contrato auditoria/1.1); e nao existe gate que reprove build com sobrevivente",
+   "justification": "4 de 7 — mas as duas centrais de seguranca (isolamento de inquilino e autorizacao) sobreviveram",
+   "evidence": [
+    "mutation_score=0.571"
+   ]
+  },
+  {
+   "dimension": "T2",
+   "label": "Sobreviventes",
+   "level": 1,
+   "max_possible": 3,
+   "ceiling_reason": "idem",
+   "justification": "3 sobreviventes, 2 deles sem sequer executar (sonda de throw silenciosa em 122 testes)",
+   "evidence": [
+    "PROBE-M4 e PROBE-M5: Test Files 26 passed / Tests 122 passed",
+    "PROBE-M3: Tests 2 failed — executa"
+   ]
+  },
+  {
+   "dimension": "T3",
+   "label": "Assercao real",
+   "level": 2,
+   "max_possible": 3,
+   "ceiling_reason": "idem",
+   "justification": "0 blocos sem expect, 0 skip/todo, 0 assercoes fracas classicas — mas 81 toBeInTheDocument contra 3 toHaveBeenCalledWith: afirma-se o que apareceu na tela, nao o que foi enviado",
+   "evidence": [
+    "219 expect(",
+    "3 toHaveBeenCalledWith",
+    "18 de 26 arquivos mockam um servico"
+   ]
+  },
+  {
+   "dimension": "T4",
+   "label": "Fronteira coberta",
+   "level": 1,
+   "max_possible": 3,
+   "ceiling_reason": "idem",
+   "justification": "0 de 17 adaptadores de servico com teste proprio; 4 de 7 helpers de features/*/lib",
+   "evidence": [
+    "ls lib/services/*.ts = 17; lib/services/__tests__ nao existe"
+   ]
+  },
+  {
+   "dimension": "T6",
+   "label": "Determinismo",
+   "level": 3,
+   "max_possible": 3,
+   "ceiling_reason": "idem",
+   "justification": "3 execucoes completas na arvore limpa, 122/122 identicas, zero instaveis",
+   "evidence": [
+    "baseline + 2 repeticoes + 7 execucoes de campanha + 3 sondas"
+   ]
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "fingerprint": "camada-de-adaptadores-de-api-do-frontend-sem-execucao",
+   "title": "A camada de adaptadores de API do frontend nao e executada por teste nenhum",
+   "measured": "M4 removeu unitId da query de getAccounts e 122 testes ficaram verdes; a sonda de throw no mesmo sitio nao disparou em nenhum dos 122; lib/services tem 17 adaptadores e nenhum diretorio __tests__",
+   "signals": [
+    "S2",
+    "S3",
+    "S4"
+   ],
+   "damage": 4,
+   "exposure": "ja_exposto",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "my-app/lib/services/accounting.service.ts",
+     "line": 527,
+     "note": "buildQuery({ unitId }) — unico ponto do frontend onde o escopo de inquilino de getAccounts e montado"
+    },
+    {
+     "path": "my-app/features/accounting/AccountingView.tsx",
+     "line": 69,
+     "note": "um dos 7 chamadores de getAccounts — o alvo nao e codigo morto"
+    },
+    {
+     "path": "my-app/lib/services",
+     "line": null,
+     "note": "17 arquivos *.service.ts, nenhum __tests__"
+    },
+    {
+     "path": "my-app/features/accounting/components/__tests__/JournalEntryModal.test.tsx",
+     "line": 10,
+     "note": "vi.mock do accountingService — forma usada por 18 dos 26 arquivos de teste"
+    }
+   ],
+   "cost_per_change": "um arquivo de teste do adaptador",
+   "business_impact": "o filtro que separa os dados de um cliente dos de outro pode ser apagado do frontend sem que nenhum teste fique vermelho",
+   "falsifier_static": "cd my-app && ls lib/services/*.ts | wc -l && ls lib/services/__tests__ 2>/dev/null | wc -l",
+   "falsifier_dynamic": "aplicar M4 e carregar a tela de contas com duas unidades observando o vazamento entre elas",
+   "static_gap": null,
+   "demonstration": {
+    "command": "cd my-app && ls lib/services/*.ts | wc -l && ls lib/services/__tests__ 2>/dev/null | wc -l && grep -rn toHaveBeenCalledWith --include=*.test.ts --include=*.test.tsx . | grep -v node_modules | wc -l",
+    "expected_wrong_output": "17, depois 0, depois 3 — dezessete adaptadores, zero testes proprios, tres assercoes de argumento no corpus inteiro",
+    "seconds": 3,
+    "needs": "nada"
+   },
+   "intent_source": "commit",
+   "intent_unknown": false,
+   "suggested_gate": "bloqueia_primeiro_cliente",
+   "gate_reason": "exposicao ja_exposto num sistema nunca implantado — emenda v4.1 do gateMap",
+   "suggested_barrier": "teste do adaptador que afirme a query string construida, incluindo unitId",
+   "barrier_kind": "teste_de_fronteira",
+   "adversarial_checks": [
+    {
+     "check": "getAccounts e codigo morto?",
+     "result": "derrubou a hipotese — 7 chamadores reais (AccountingView, LedgerPanel, ChartOfAccountsPanel, ReconciliationPanel, AP e AR)"
+    },
+    {
+     "check": "os 39 unitId= que aparecem nos testes sao assercao sobre a query?",
+     "result": "derrubou a hipotese de cobertura — grep unitId= | grep -v 'unitId=\"' volta vazio: sao todos props JSX"
+    },
+    {
+     "check": "a sonda falhou por nao compilar (armadilha do bloco 3b)?",
+     "result": "sobreviveu — 26 suites verdes e Tests 0 failed com a sonda aplicada; sem quebra de carregamento"
+    },
+    {
+     "check": "o backend nao filtra por inquilino de qualquer forma?",
+     "result": "enfraqueceu parcialmente e o achado permanece — o filtro autoritativo e do backend, mas este e o unico ponto do frontend que monta o escopo e nenhum teste o cobre"
+    }
+   ],
+   "owner": null,
+   "verification_mode": "execucao",
+   "instrument_feedback": "o bloco 3b assume jest/TS com narrowing; no vitest o esbuild nao checa tipos, entao a armadilha da mutacao-que-nao-compila muda de forma: aqui so erro de sintaxe derruba o carregamento. A leitura pelo par (Suites, Testes) continua sendo a defesa certa"
+  },
+  {
+   "id": "F2",
+   "fingerprint": "withAuth-protege-20-paginas-e-nenhum-teste-o-toca",
+   "title": "20 paginas atras de withAuth e zero teste toca a HOC",
+   "measured": "M5 forcou a guarda de papel do caminho de render a conceder (if (false)) e 122 testes ficaram verdes; a sonda no mesmo sitio nao disparou; grep -rln withAuth pages/ devolve 20 e grep -rl withAuth nos testes devolve 0",
+   "signals": [
+    "S2",
+    "S4"
+   ],
+   "damage": 3,
+   "exposure": "ja_exposto",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "my-app/lib/hoc/withAuth.tsx",
+     "line": 99,
+     "note": "guarda de papel do caminho de render — retorna null quando o papel do usuario nao esta na lista"
+    },
+    {
+     "path": "my-app/lib/hoc/withAuth.tsx",
+     "line": 58,
+     "note": "guarda gemea do caminho de efeito (redirect) — tambem sem teste"
+    },
+    {
+     "path": "my-app/pages",
+     "line": null,
+     "note": "20 arquivos de pagina importam withAuth"
+    }
+   ],
+   "cost_per_change": "um teste de render da HOC",
+   "business_impact": "uma regressao na guarda que decide quais telas cada papel enxerga passa sem nenhum teste vermelho, em 20 telas de uma vez",
+   "falsifier_static": "cd my-app && grep -rln withAuth pages/ | wc -l && grep -rl withAuth --include=*.test.ts --include=*.test.tsx . | grep -v node_modules | wc -l",
+   "falsifier_dynamic": null,
+   "static_gap": null,
+   "demonstration": {
+    "command": "cd my-app && grep -rln withAuth pages/ | wc -l && grep -rl withAuth --include=*.test.ts --include=*.test.tsx . | grep -v node_modules | wc -l",
+    "expected_wrong_output": "20, depois 0",
+    "seconds": 2,
+    "needs": "nada"
+   },
+   "intent_source": "commit",
+   "intent_unknown": false,
+   "suggested_gate": "bloqueia_primeiro_cliente",
+   "gate_reason": "exposicao ja_exposto num sistema nunca implantado — emenda v4.1 do gateMap",
+   "suggested_barrier": "teste de render da HOC com papel insuficiente, afirmando que o componente embrulhado nao aparece",
+   "barrier_kind": "teste_de_permissao",
+   "adversarial_checks": [
+    {
+     "check": "a guarda do withAuth e a barreira autoritativa de autorizacao?",
+     "result": "enfraqueceu o achado, e por isso o dano e 3 e nao 4 — a barreira autoritativa e a policy do backend; esta e de superficie e de regressao herdada por 20 telas"
+    },
+    {
+     "check": "withAuth e codigo morto ou legado?",
+     "result": "derrubou a hipotese — 20 paginas o importam"
+    },
+    {
+     "check": "algum teste carrega a HOC indiretamente?",
+     "result": "sobreviveu — a sonda de throw no sitio nao disparou em nenhum dos 122 testes"
+    }
+   ],
+   "owner": null,
+   "verification_mode": "execucao",
+   "instrument_feedback": null
+  },
+  {
+   "id": "F3",
+   "fingerprint": "guarda-de-balanceamento-do-modal-executada-e-nao-afirmada",
+   "title": "A guarda de balanceamento do JournalEntryModal executa e ninguem a afirma",
+   "measured": "M3 tirou a igualdade debito === credito de isBalanced e 122 testes ficaram verdes, embora a sonda no mesmo sitio tenha derrubado os 2 testes do modal — a linha executa",
+   "signals": [
+    "S2"
+   ],
+   "damage": 2,
+   "exposure": "apos_deploy",
+   "confidence": "alta",
+   "reversibility": "reversivel",
+   "evidence": [
+    {
+     "path": "my-app/features/accounting/components/JournalEntryModal.tsx",
+     "line": 102,
+     "note": "isBalanced = totalDebit > 0 && totalDebit === totalCredit — consumido pelo handleSubmit e pelo estado do botao"
+    },
+    {
+     "path": "my-app/features/accounting/components/__tests__/JournalEntryModal.test.tsx",
+     "line": 44,
+     "note": "os 2 testes do modal cobrem so o seletor de dimensao; nenhum submete"
+    }
+   ],
+   "cost_per_change": "uma assercao num teste que ja existe",
+   "business_impact": "o usuario consegue enviar um lancamento desequilibrado e so descobre pelo erro do servidor, sem aviso na tela",
+   "falsifier_static": "cd my-app && grep -rn \"isBalanced\\|desequilibr\\|unbalanced\" --include=*.test.ts --include=*.test.tsx . | grep -v node_modules | wc -l",
+   "falsifier_dynamic": null,
+   "static_gap": null,
+   "intent_source": "commit",
+   "intent_unknown": false,
+   "suggested_gate": "aceitavel_com_registro",
+   "gate_reason": "exposicao apos_deploy, dano 2, nao irreversivel",
+   "review_trigger": "proximo modal de escrita contabil criado sem teste de submissao",
+   "suggested_barrier": "assercao de desequilibrio no teste do modal que ja existe",
+   "barrier_kind": "teste_de_fronteira",
+   "adversarial_checks": [
+    {
+     "check": "o backend aceita lancamento desequilibrado?",
+     "result": "enfraqueceu o achado, e por isso o dano e 2 — o PostingService rejeita, e o AV-R3 mediu isso: a mutacao M4 de la morreu"
+    },
+    {
+     "check": "a linha esta fora de alcance, como M4 e M5?",
+     "result": "derrubou a hipotese — a sonda PROBE-M3 derrubou os 2 testes do modal: executa e nao e afirmada"
+    }
+   ],
+   "owner": null,
+   "verification_mode": "execucao",
+   "instrument_feedback": null
+  }
+ ],
+ "conventions": [
+  {
+   "claim": "cobertura minima de X%",
+   "source": "pratica corrente",
+   "why_not_finding": "nenhuma cobertura foi medida; o instrumento a rebaixa a sinal secundario por desenho",
+   "would_become_finding_if": "um percentual alto conviver com mutacao sobrevivente medida"
+  },
+  {
+   "claim": "teste de componente nao deve mockar o servico",
+   "source": "pratica corrente",
+   "why_not_finding": "o mock nao e o defeito; a ausencia do par que exercita o adaptador e",
+   "would_become_finding_if": "existir o teste do adaptador e a mutacao do filtro de inquilino ainda assim sobreviver"
+  },
+  {
+   "claim": "componente de UI deve ter teste de render",
+   "source": "pratica corrente",
+   "why_not_finding": "os 26 arquivos ja fazem isso e foi o que matou M7; render sem assercao sobre argumento e o que esta medido em T3, nao a ausencia de render",
+   "would_become_finding_if": "um componente de escrita entrar sem teste de render nenhum e uma mutacao no seu caminho de submissao sobreviver"
+  }
+ ],
+ "latent_bugs": [],
+ "cheapest_moves": [
+  {
+   "move": "um teste do adaptador que afirme a query string construida, com unitId",
+   "closes": [
+    "F1"
+   ],
+   "why": "maior dano da rodada e unico ponto do frontend onde o escopo de inquilino e montado",
+   "effort": "baixo"
+  },
+  {
+   "move": "um teste de render do withAuth com papel insuficiente",
+   "closes": [
+    "F2"
+   ],
+   "why": "a HOC nao tem nenhum teste hoje e 20 telas a herdam",
+   "effort": "baixo"
+  },
+  {
+   "move": "uma assercao de desequilibrio no JournalEntryModal.test.tsx que ja existe",
+   "closes": [
+    "F3"
+   ],
+   "why": "a linha ja executa nos dois testes; fecha com uma linha",
+   "effort": "trivial"
+  }
+ ],
+ "inquiry": [
+  {
+   "question": "Quantos dos 122 testes atravessam algum adaptador de API real?",
+   "answerable_from": "repetindo a sonda adaptador a adaptador",
+   "why_it_matters": "por getAccounts a resposta e zero; se for zero em geral, a suite do frontend testa componentes contra mocks e nunca a costura com o backend"
+  },
+  {
+   "question": "O gemeo nao-delegado de data-only (features/crm/lib/dates.ts) sobrevive a mutacao que matou o canonico?",
+   "answerable_from": "uma oitava mutacao, nao feita nesta rodada",
+   "why_it_matters": "e a classe de bug que este repositorio ja viu voltar por re-inlining da tecnica"
+  },
+  {
+   "question": "server 2/7 e my-app 4/7 — a diferenca e forca de suite ou tamanho do alvo?",
+   "answerable_from": "nenhum lugar com as duas amostras dirigidas de hoje",
+   "why_it_matters": "as duas fracoes nao sao comparaveis como estao, e somar ou ranquear as duas seria inventar um numero"
+  }
+ ],
+ "self_check": {
+  "falsifiers_executed": 3,
+  "falsifiers_total": 3,
+  "mutacoes_aplicadas": 7,
+  "mutacoes_mortas": 4,
+  "mutation_score": 0.571,
+  "mutacoes_descartadas_por_nao_compilar": 0,
+  "sondas_invalidadas_por_quebra_de_compilacao": 0,
+  "sobreviventes_sem_execucao": 2,
+  "numstat_conferido_em_cada_mutacao": true,
+  "revertido_por_copia_bak": true,
+  "git_checkout_usado_para_reverter": false,
+  "arvore_limpa_ao_fim": true,
+  "cobertura_citada_como_garantia": false,
+  "achados_corrigidos": 0,
+  "independent_review": false,
+  "instrument_gaps_found": [
+   "o bloco 3b descreve a armadilha em termos de narrowing de tipo do jest/TS; no vitest o esbuild nao checa tipos, entao so erro de sintaxe derruba o carregamento — a armadilha existe, com outra causa",
+   "o bloco 2 do instrumento so traz os comandos do server; a fase 1 do frontend (npm ci + npx vitest run) nao esta escrita em lugar nenhum",
+   "a familia minima de 7 mutacoes do bloco 3 e escrita em vocabulario de backend (DTO, transacao, refine); o frontend precisa da traducao por invariante, que esta rodada teve de improvisar",
+   "o contrato manda max_possible 3 sem dado de producao e o AV-R3 emitiu 4 — divergencia registrada, nao corrigida aqui"
+  ]
+ }
+}

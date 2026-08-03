@@ -1,7 +1,17 @@
-# Continuação da bancada — estado em `e0dccad`
+# Continuação da bancada — estado após a integração das quatro rodadas paralelas
 
-Documento de retomada. Escrito ao fim da sessão que produziu o PR #164 e atualizado na
-sessão seguinte, que fechou os itens 1 e 2 da fila.
+Documento de retomada. Escrito ao fim da sessão que produziu o PR #164, atualizado pela
+sessão que fechou os itens 1 e 2 da fila, e de novo pela integração de quatro trabalhos
+que rodaram em paralelo (triagem + gate de `triagem/1.0`, divulgação §9.4, verificação em
+navegador, AV-03 no frontend).
+
+**Lição da integração, que vale para o próximo lote paralelo:** duas das quatro sessões
+escreveram um `B11` diferente no mesmo arquivo, cada uma correta isoladamente. O git acusa
+o conflito **textual**; a colisão de **numeração** ele resolveria em silêncio se os trechos
+não se tocassem — dois erros distintos com o mesmo rótulo, e a saída do gate deixaria de
+identificar o que falhou. Quem fatiar trabalho paralelo sobre este gate **reserva a faixa
+de numeração antes de despachar**, ou paga a renumeração no fim (aqui: B17 para o cheque do
+visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 
 ---
 
@@ -11,8 +21,9 @@ sessão seguinte, que fechou os itens 1 e 2 da fila.
 |---|---|
 | `docs/audit/AV-R1.md` + `.json` | rodada 1 · 4 achados · AV-16 a AV-19 |
 | `docs/audit/AV-R2-COBERTURA-AUSENTE.md` + `AV-R2.json` | rodada 2 · 110 obrigações de teste · AV-20 |
-| `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 · AV-03 |
-| `scripts/bancada-gate.mjs` | gate de 15 checagens · **passa** · as 15 com mordida provada |
+| `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 (backend) · AV-03 |
+| `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
+| `scripts/bancada-gate.mjs` | gate de **16** checagens · **passa** · as 16 com mordida provada |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
 | `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos |
 
@@ -37,19 +48,22 @@ gate foi afrouxada para isso — o commit da reconstrução não toca `scripts/b
 
 ### 1 · Reconstruir `bancada.html` até o gate passar — FEITO (`e0dccad`)
 
+Saída atual, já com tudo integrado:
+
 ```
 OK: 29 itens no catálogo (17 literais, com 15 srcId prontos; 12 derivados de CAT,
-sem srcId e fora de B1/B9), 15 blocos, 4 relatório(s) auditoria/1.1,
-4 tipo(s) de peça central em uso, 19 aviso(s).
+sem srcId e fora de B1/B9), 15 blocos, 5 relatório(s) auditoria/1.1,
+2 triagem(ns) 1.0 com 11 item(ns), 4 tipo(s) de peça central em uso, 21 aviso(s).
+Isenção 4b/6b pela emenda (3): AV-L1, AV-10, AV-11
 ```
 
-Os 19 avisos são todos `[B3] tipo declarado e ainda não usado` (12 tipos de `auditoria/1.1`
-+ 4 da v4 cujos instrumentos ainda não rodaram) e `[B10] rodada sem revisão independente`
-nos três relatórios. Aviso não bloqueia, e nenhum deles é dívida nova.
+Os avisos são `[B3] tipo declarado e ainda não usado` (os tipos de `auditoria/1.1` e os 3
+da v4 cujos instrumentos ainda não emitiram relatório próprio) e `[B10] rodada sem revisão
+independente`. Aviso não bloqueia, e nenhum é dívida nova.
 
-Verificação além do gate: a página foi exercitada num DOM stub (o script carrega, os três
-passos renderizam, os sete payloads saem não vazios, sem código duplicado no catálogo).
-**Não foi aberta em navegador de verdade** — ver "o que continua em aberto".
+Verificação além do gate: a página foi aberta em **navegador de verdade**, em duas engines
+independentes — ver item 1 de "o que continua em aberto", que agora registra o que isso
+achou em vez de registrar a ausência da verificação.
 
 ### 2 · Fechar o defeito B1 do gate — FEITO
 
@@ -191,7 +205,10 @@ valem copiar para a triagem do R1/R3:
 
 - `server`: `npm ci` feito nesta sessão (781 pacotes). `npx jest --selectProjects unit` ~42 s;
   `--selectProjects integration --runInBand` ~167 s, exige `OPENAI_API_KEY=ci-dummy-openai-key`.
-- `my-app`: **sem `npm ci`** — vitest nunca rodou, força da suíte do frontend desconhecida.
+- `my-app`: `npm ci` feito (689 pacotes, 18 s). Baseline **26 arquivos, 122 testes, verde**,
+  8,58 s; `npx tsc --noEmit` sai 0. A força da suíte do frontend **deixou de ser
+  desconhecida**: `mutation_score` **4/7** medido no AV-R5, que substitui o `NM1` do AV-R3.
+  `next build` de produção continua **não rodado**.
 - Grafo `codebase-memory` indexado como `C-Users-smurf-Downloads-Luminaris` (10.841 nós).
   Use-o para localizar, confirme sempre no código (CBM-001). `in_degree` de `Class` vem ~0
   por desenho — nunca ranqueie classe por ele.
@@ -203,40 +220,84 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
 
 ## O que continua em aberto — sem arredondar
 
-1. **A bancada não foi aberta em navegador de verdade.** O que existe é um smoke em DOM
-   stub: prova que o script carrega, que os três passos renderizam e que os payloads saem
-   não vazios. Não prova layout, CSS, foco, nem o comportamento de clique real. O painel de
-   preview desta sessão renderiza arquivo fora do projeto como snapshot estático, sem
-   executar JS — então o console ficou **inacessível**, e "abre sem erro de console" está
-   verificado só no que um stub alcança. Abrir no navegador continua pendente.
-2. **A reconstrução é autoria, não a v4 original.** O texto perdido não volta. Os blocos
-   novos são fiéis ao que os três relatórios descrevem e satisfazem o gate, mas quem
-   comparar com a v4 anterior vai achar diferenças de redação — não há como medir quantas.
-3. **O item 4 da fila não foi tocado.** Os 7 achados agora estão triados (item 3), e nenhum
-   foi corrigido — deliberado, e agora é a ordem certa: com portão, dono e data atribuídos, a
-   Fase de correção está liberada pelo bloco 9. A fila de correção, em ordem de risco removido
-   por esforço, está em `ordering.sequence` do `TRIAGEM-R1-R3.json`.
-7. **`deployed` continua sem resposta do dono.** A triagem contornou por convergência dos dois
-   valores plausíveis, e a convergência é real — mas ela evapora em três dos sete itens se a
-   resposta for `produção`. É uma pergunta de uma linha e vale fazê-la antes de corrigir.
-8. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
+1. **FECHADO — a bancada foi aberta em navegador de verdade**, em duas engines
+   independentes (painel de preview e Chromium via puppeteer). Console limpo nas duas, os 29
+   itens do trilho renderizam conteúdo distinto, os 3 passos navegam por clique real, os 7
+   payloads copiam (o clipboard do SO continha os 7335 chars do payload perfil), o
+   visualizador projeta todos os marcadores v4, quebra em 1 coluna exatamente em 900px sem
+   overflow, e o foco por `Tab` é visível.
+
+   **CORREÇÃO de uma afirmação minha que era falsa.** A versão anterior deste item dizia que
+   o painel de preview "renderiza arquivo fora do projeto como snapshot estático, **sem
+   executar JS**". Falso, e medido: o painel **executa JS normalmente**. O que ele não faz é
+   (a) compor frame para screenshot com o painel oculto e (b) **recarregar a mesma URL
+   `file://`** — `navigate` e `location.reload()` devolvem o mesmo documento, com o estado
+   anterior vivo. A segunda é a perigosa: ela contamina medição que dependa de estado
+   limpo, e só apareceu porque `STEP` sobreviveu a três "reloads". Quem for medir estado
+   nesta página usa iframe same-origin ou Chromium à parte.
+
+   O que substitui este item são dois defeitos de runtime que só o navegador mostra — D1 e
+   D2 abaixo. Não foram corrigidos: nada foi triado.
+2. **A costura entre R3 e AV-R5, que nenhum dos dois podia ver sozinho.** No backend, M3
+   (`tx` fora da transação) e M5 (filtro de inquilino) sobreviveram **sem executar**. No
+   frontend, M4 (`unitId` removido da query) e M5 (guarda de papel → `false`) sobreviveram
+   **sem executar**. Os dois lados da pilha, medidos por instrumentos que não se leram,
+   deixaram justamente as mutações de **isolamento e autorização** como as únicas sem teste
+   alcançável. Não é coincidência de amostra: é o mesmo buraco medido duas vezes. Material
+   da onda 3 (consolidação), que nunca rodou.
+   Nota sobre os números: `4/7` no frontend contra `2/7` no backend **não** ranqueia as
+   suítes — são conjuntos de mutação diferentes, dirigidos a invariante, e o próprio AV-03
+   declara que é amostra dirigida, não estimativa estatística.
+3. **A fila de correção está liberada e não foi tocada.** Os 7 achados estão triados, com
+   portão, dono e data; nenhum foi corrigido. A ordem, por risco removido por esforço, está
+   em `ordering.sequence` do `TRIAGEM-R1-R3.json`. Agora corrigir é legítimo — antes não era.
+
+4. **Dois defeitos de runtime da própria bancada, medidos em navegador, NÃO triados.**
+
+   **D1 (grave) — vazamento de listener.** `bancada.html:2727` registra o listener delegado
+   em `#ficha`, que é o mesmo nó em todo render e nunca é removido. Como o handler de
+   `change` chama `select("REGÊNCIA")` para os selects pendentes, cada decisão respondida
+   **dobra** a contagem. Medido em Chromium limpo, seguindo o fluxo do próprio dono:
+   `1 → 3 → 7 → 15 → 31 → 63 → 127 → 255`. Com 7 decisões, um clique em "Copiar" executa a
+   rotina **257 vezes / 5477 ms**; com as 9 respondidas o renderer trava (reproduzido 2×).
+   **Atribuição verificada: é código v3 pré-existente**, reproduzido sem alteração na
+   reconstrução — não foi introduzido por ela. O conserto provável é registrar o listener
+   uma vez fora de `wireConductor`, ou trocar `#ficha` por nó novo a cada render.
+
+   **D2 — a barra "fixa" nunca fixa.** `.sticky` é `position:sticky;bottom:0`
+   (`bancada.html:185`) mas está embrulhada em `<div id="sbar">` (`:2694`), cuja altura é
+   exatamente a da barra: curso de sticky igual a zero. Medido: o topo anda 1:1 com o
+   scroll (2642 → 1657 → 673 para scroll 0 → 985 → 1969). Os contadores ficam no fim de uma
+   página de 2869px, invisíveis justamente enquanto o dono preenche o passo 2.
+
+   **D3 (cosmético)** — o banner de origem imprime `0.941` com ponto três palavras depois de
+   `acima de 0,70` com vírgula, no mesmo banner.
+
+   Dois de menor porte, não classificados como quebra: `aria-selected` num `role=button`
+   não é pareamento ARIA válido (`:2876`), e no item selecionado o anel de foco tem a mesma
+   cor do fundo do botão — só o offset de 1px o separa.
+
+5. **`deployed` RESPONDIDO pelo dono em 2026-08-03: nunca implantado.** A convergência que a
+   triagem usou se confirma — os 7 portões ficam como estão e o teto de nível segue 3. A
+   semente do perfil em `bancada.html` **não foi alterada**: ela é o perfil medido em
+   `dc7fd12`, e `deployed` é por desenho um campo que a página nunca preenche sozinha. A
+   resposta é decisão do dono, registrada aqui e no passo 2 da bancada, não medição.
+
+6. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
    Medido: `grep -rn 'bancada-gate' .github/ package.json` devolve nada, enquanto o script
    irmão `debt-ledger-check.mjs` está no CI em dois passos. É a mesma classe do F4 do R1
-   aplicada à própria bancada, e vale mais agora — seis regras novas atrás de gatilho manual.
-   Registrado como achado novo em `new_findings_raised` da triagem; não corrigido aqui.
-4. **B10 continua aviso, não erro.** As três rodadas seguem sem revisão independente. O gate
-   avisa e não bloqueia — decisão anterior, mantida, mas é a lacuna que o próprio §9.4 chama
-   de rejeitável.
-   **Achado da revisão independente, não triado:** o B10 só dispara com
-   `self_check.independent_review === false`, e `run.review_of_this_run` não está em
-   `RUN_OBRIGATORIO`. Omitir as duas chaves faz a divulgação exigida pelo §9.4 sumir sem uma
-   linha de aviso — e no visualizador o teste `r.review_of_this_run===null||r.review_gap`
-   não pega chave **ausente** (`undefined`, não `null`). Falsificador: apagar as três chaves
-   de uma cópia do `AV-R1.json` e rodar o gate → exit 0.
-6. **A reconstrução foi revisada; a correção da revisão, não.** Um agente separado em
-   worktree isolado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias, das
-   quais duas (E e G) foram fechadas depois. Esse fechamento foi feito por quem implementou,
-   e **não passou por segunda revisão** — o que o §9.4 rejeita. O que existe no lugar é
-   prova objetiva: as mutações do revisor, reexecutadas, agora reprovam. Prova de mordida
-   não é revisão.
-5. **`my-app` segue sem `npm ci`.** A força da suíte do frontend continua desconhecida.
+   aplicada à própria bancada, e vale mais agora — **dezesseis** checagens atrás de gatilho
+   manual. Registrado em `new_findings_raised` da triagem; não corrigido.
+
+7. **A reconstrução foi revisada; as correções que vieram da revisão, não.** Um agente
+   separado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias; duas (E e G)
+   foram fechadas depois por quem implementou, **sem segunda revisão** — o que o §9.4
+   rejeita. O que existe no lugar é prova objetiva: as mutações do revisor, reexecutadas,
+   reprovam. **Prova de mordida não é revisão.** Idem para a triagem, o §9.4 e o AV-R5:
+   nenhum dos três passou por agente separado.
+
+8. **A reconstrução é autoria, não a v4 original.** O texto perdido não volta; diferenças de
+   redação contra a v4 anterior existem e não são mensuráveis.
+
+9. **`next build` de produção do `my-app` continua não rodado** — e é o gate que o projeto
+   exige para tela atrás de `withAuth`.
