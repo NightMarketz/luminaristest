@@ -23,7 +23,9 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R2-COBERTURA-AUSENTE.md` + `AV-R2.json` | rodada 2 · 110 obrigações de teste · AV-20 |
 | `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 (backend) · AV-03 |
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
-| `scripts/bancada-gate.mjs` | gate de **16** checagens · **passa** · as 16 com mordida provada |
+| `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` | rodada 6 · 5 achados de **runtime** da própria bancada · `failure_modes` · primeira com `runtime: true` |
+| `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
+| `scripts/bancada-gate.mjs` | gate de **17** checagens · **passa** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
 | `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos |
 
@@ -252,30 +254,71 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    portão, dono e data; nenhum foi corrigido. A ordem, por risco removido por esforço, está
    em `ordering.sequence` do `TRIAGEM-R1-R3.json`. Agora corrigir é legítimo — antes não era.
 
-4. **Dois defeitos de runtime da própria bancada, medidos em navegador, NÃO triados.**
+4. **FECHADO — os defeitos de runtime foram EMITIDOS e TRIADOS.** O que estava aberto aqui era
+   consequência medida de reportar em prosa: o B12 exige que todo `fingerprint` de uma
+   `triagem/1.0` seja cópia literal de um `fingerprint` de relatório `auditoria/1.1` emitido,
+   então sem rodada emitida os defeitos não podiam ser triados, e sem triagem o bloco 9
+   proibia corrigi-los. A ordem foi cumprida: emitir → triar → (não) corrigir.
 
-   **D1 (grave) — vazamento de listener.** `bancada.html:2727` registra o listener delegado
-   em `#ficha`, que é o mesmo nó em todo render e nunca é removido. Como o handler de
-   `change` chama `select("REGÊNCIA")` para os selects pendentes, cada decisão respondida
-   **dobra** a contagem. Medido em Chromium limpo, seguindo o fluxo do próprio dono:
-   `1 → 3 → 7 → 15 → 31 → 63 → 127 → 255`. Com 7 decisões, um clique em "Copiar" executa a
-   rotina **257 vezes / 5477 ms**; com as 9 respondidas o renderer trava (reproduzido 2×).
-   **Atribuição verificada: é código v3 pré-existente**, reproduzido sem alteração na
-   reconstrução — não foi introduzido por ela. O conserto provável é registrar o listener
-   uma vez fora de `wireConductor`, ou trocar `#ficha` por nó novo a cada render.
+   - `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` — `auditoria/1.1`, instrumento
+     v4.1, `centerpiece.type: failure_modes` (declarado no contrato e até então nunca usado),
+     `reduced_capabilities.runtime: true` pela primeira vez na bancada. **Cinco** achados: os
+     três abaixo mais os dois "de menor porte", que entraram como achado e não como
+     `conventions[]` — cada um tem falsificador estático que roda, e `conventions[]` é para
+     alegação de prática corrente, não para condição verificável do artefato.
+   - `docs/audit/TRIAGEM-AV-R6.json` — `triagem/1.0`, 5 itens, 5 falsificadores executados
+     **a partir do JSON relido** (e essa checagem pegou um defeito real: um patch pelo shell
+     tinha comido as barras invertidas de três comandos, e o de D2 devolveria 16 no lugar de 0,
+     na direção do próprio achado). Portões pelo ramo `nunca implantado` do `gateMap`, que o
+     dono respondeu em 2026-08-03: **4 `bloqueia_primeiro_cliente` · 1 `aceito_com_registro`**.
+   - **Nada foi corrigido.** O bloco 9 continua valendo, e a tentação era a maior de todas as
+     triagens desta bancada — D1 é dano 4 com conserto de poucas linhas.
 
-   **D2 — a barra "fixa" nunca fixa.** `.sticky` é `position:sticky;bottom:0`
-   (`bancada.html:185`) mas está embrulhada em `<div id="sbar">` (`:2694`), cuja altura é
-   exatamente a da barra: curso de sticky igual a zero. Medido: o topo anda 1:1 com o
-   scroll (2642 → 1657 → 673 para scroll 0 → 985 → 1969). Os contadores ficam no fim de uma
-   página de 2869px, invisíveis justamente enquanto o dono preenche o passo 2.
+   **Números de linha desta seção estavam defasados** e foram corrigidos abaixo: o listener é
+   `:2769` (não `:2727`), o `#sbar` é `:2743` (não `:2694`) e o `aria-selected` é `:2925`
+   (não `:2876`). O conteúdo apontado é o mesmo; quem pulava para a linha citada caía no lugar errado.
 
-   **D3 (cosmético)** — o banner de origem imprime `0.941` com ponto três palavras depois de
-   `acima de 0,70` com vírgula, no mesmo banner.
+   Os defeitos, como medidos:
 
-   Dois de menor porte, não classificados como quebra: `aria-selected` num `role=button`
-   não é pareamento ARIA válido (`:2876`), e no item selecionado o anel de foco tem a mesma
-   cor do fundo do botão — só o offset de 1px o separa.
+   **D1 · dano 4 · `bloqueia_primeiro_cliente` — vazamento de listener.** `bancada.html:2769`
+   registra os três listeners delegados em `#ficha` (`:256`), que é o mesmo nó em todo render
+   e nunca é removido — **zero** `removeEventListener` no arquivo, contra 17
+   `addEventListener`. O handler de `change` (`:2774`) chama `select("REGÊNCIA")`, e `select`
+   (`:2956`) troca o `innerHTML` e chama `wireConductor()` de novo: o laço fecha. Remedido
+   nesta rodada em instância limpa, contando invocações por evento: **2 → 4 → 8 → 16 → 32 →
+   64 → 128**, e 258 e 516 na 8ª e 9ª decisões (392 ms e 996 ms). Um clique em "Copiar" depois
+   de 7 decisões executa a rotina **257 vezes** — número idêntico ao da sessão anterior. Dois
+   números dela NÃO foram reproduzidos e estão marcados como herdados: os **5477 ms** (aqui o
+   mesmo clique custou 33 ms) e o travamento com 9 decisões (aqui, 996 ms, que é degradação
+   medida e não travamento). **Atribuição verificada: é código v3 pré-existente**, reproduzido
+   sem alteração na reconstrução.
+
+   **D2 · dano 2 · `bloqueia_primeiro_cliente` — a barra "fixa" nunca fixa.** `.sticky` é
+   `position:sticky;bottom:0` (`bancada.html:185`) mas está embrulhada em `<div id="sbar">`
+   (`:2743`), e `stickyBar()` devolve um único filho: alturas medidas em **59 px e 59 px**,
+   curso de sticky **zero**. O topo anda 1:1 com o scroll (4282 → 2377 → 473 para scroll
+   0 → 1905 → 3809, viewport 696 px, página 4505 px). O embrulho **não é gratuito** —
+   `refreshMeta()` (`:2751`) reescreve o `innerHTML` dele —, então o conserto é mover o
+   `position:sticky` para o `#sbar`, não apagar o `div`.
+
+   **D3 · dano 1 · `bloqueia_primeiro_cliente`** — o banner de origem imprime `0.941` com
+   ponto e `acima de 0,70` com vírgula, no mesmo `div.banner` (`:3089` e `:3091`). Confirmado
+   no DOM renderizado, não só no template. Dano 1 **não** rebaixa o portão: o `gateMap` não
+   tem linha que rebaixe por dano, e derivar aceite do dano é o erro que o item 5 do
+   `TRIAGEM-R1-R3.json` corrigiu. O dano decide a posição na fila (4º de 5), não o portão.
+
+   **D4 · dano 1 · `aceito_com_registro`** — `aria-selected` em 29 elementos de papel `button`
+   (`:2925`, `:2945`), com **zero** elementos de papel `listbox`/`option`/`tab` na página.
+   Único aceite da rodada, e o único item com exposure `apenas_teorico`: a estrutura foi
+   medida, a consequência **não** — nenhuma tecnologia assistiva foi exercida, e a árvore de
+   acessibilidade do painel devolveu página vazia. Gatilho observável registrado.
+
+   **D5 · dano 1 · `bloqueia_primeiro_cliente`** — no item selecionado, o anel de foco
+   (`:47`, `var(--graphite)`) tem a mesma cor do fundo (`:59`, `var(--graphite)`): ambos
+   computam `rgb(34,38,42)`, separados só pelo offset de 1px. **Armadilha de método que quase
+   inverteu o veredito:** `.focus()` por script **não ativa** `:focus-visible` em Chromium e
+   devolve o anel padrão do navegador, que é visível. Só com **Tab de teclado real**, com
+   `matches(':focus-visible')` conferido, a regra passa a valer.
 
 5. **`deployed` RESPONDIDO pelo dono em 2026-08-03: nunca implantado.** A convergência que a
    triagem usou se confirma — os 7 portões ficam como estão e o teto de nível segue 3. A
