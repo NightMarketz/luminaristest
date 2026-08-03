@@ -26,10 +26,22 @@ services:
     build:
       context: ./my-app
       dockerfile: Dockerfile
+      args:
+        # DUAS coisas estavam erradas aqui, e consertar só a primeira declararia vitória:
+        # (1) o nome. O código lê NEXT_PUBLIC_API_BASE_URL em 19 arquivos; ninguém lê
+        #     NEXT_PUBLIC_API_URL — medido, e um é prefixo do outro, então o zero é forte.
+        # (2) o momento. NEXT_PUBLIC_* é INLINADO no bundle em tempo de BUILD
+        #     (my-app/next.config.js:23 lê process.env quando `npm run build` roda, dentro
+        #     do estágio builder do Dockerfile). A chave `environment:` é RUNTIME: com o
+        #     nome certo e no lugar errado o valor continuaria sem efeito nenhum. Por isso
+        #     build-arg, e por isso o serviço não tem mais bloco `environment:`.
+        # O default abaixo é o MESMO de next.config.js:23 — não inventa topologia. Note que
+        # o valor precisa do sufixo /api (lib/services/document.service.ts:28 concatena
+        # `${BASE}/documents/upload`) e precisa ser resolvível PELO NAVEGADOR, não pela rede
+        # do compose: o `http://server:3001` que estava aqui falhava nos dois pontos.
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3001/api}
     ports:
       - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: http://server:3001
     depends_on:
       - server
     restart: unless-stopped
