@@ -22,7 +22,8 @@
 //   B6  damage >= 4 exige demonstration, ou rebaixamento registrado (AV-00 §6b)
 //   B7  exposure e barrier_kind dentro das listas fechadas (inclui a emenda v4.1)
 //   B8  teto de confiança do AV-00 §2.2: ratio > 0.70 proíbe confiança alta por revisão
-//   B9  instrumento marcado v4 carrega os blocos 4b e 6b, ou a emenda v4patch
+//   B9  instrumento marcado v4 (ou v4.x) carrega os blocos 4b e 6b, ou se isenta por
+//       v4patch — e nesse caso a emenda compartilhada tem de existir e suprir os dois
 //
 // Uso:  node scripts/bancada-gate.mjs
 // Saída: exit 1 com ::error:: por problema; exit 0 com resumo.
@@ -84,17 +85,22 @@ function fimDoObjeto(s, ini) {
   return -1;
 }
 
+// ASPAS DAS DUAS FORMAS. A primeira versão desta correção varria só `{code:"` e
+// `srcId:"…"`, e um revisor independente derrubou o comentário que dizia cobrir "a classe
+// inteira": item escrito com aspas simples — forma que a própria página usa em
+// `['pv-med','declarado']` — ficava invisível ao parser E à guarda de cobertura, e um item
+// v4 com srcId pendurado passava verde. O escape era da regra, não da forma do objeto.
 const itens = [];
-for (const m of html.matchAll(/\{code:"/g)) {
+for (const m of html.matchAll(/\{code:["']/g)) {
   const fim = fimDoObjeto(html, m.index);
   if (fim < 0) continue;
   const bloco = html.slice(m.index, fim + 1);
-  const fam = bloco.match(/\bfam:"([^"]*)"/);
+  const fam = bloco.match(/\bfam:["']([^"']*)["']/);
   if (!fam) continue; // entrada de CAT (code+title+ver, sem fam) — contada mais abaixo
-  const code = bloco.match(/^\{code:"([^"]+)"/);
-  const ver = bloco.match(/\bver:"([^"]+)"/);
+  const code = bloco.match(/^\{code:["']([^"']+)["']/);
+  const ver = bloco.match(/\bver:["']([^"']+)["']/);
   if (!code || !ver) continue;
-  const src = bloco.match(/\bsrcId:"([^"]+)"/);
+  const src = bloco.match(/\bsrcId:["']([^"']+)["']/);
   itens.push({
     code: code[1],
     fam: fam[1],
@@ -106,12 +112,17 @@ for (const m of html.matchAll(/\{code:"/g)) {
 if (!itens.length) err('B1', 'nenhum item de catálogo reconhecido — o parser do gate ficou cego ao formato');
 
 // GUARDA DE COBERTURA — a checagem que teria falhado se o defeito acima ainda existisse.
-// Todo `srcId:"…"` do arquivo tem de estar preso a um item que o parser leu. Se sobrar
-// srcId no arquivo, há fiação que o gate não enxerga, e B1/B9 estão passando por cegueira
-// e não por conformidade. É esta guarda, não a leitura da regex, que impede a classe
-// inteira de voltar com outra forma de item.
+// Todo `srcId` do arquivo tem de estar preso a um item que o parser leu. Se sobrar srcId,
+// há fiação que o gate não enxerga, e B1/B9 estão passando por cegueira e não por
+// conformidade.
+//
+// LIMITE DESTA GUARDA, declarado em vez de prometido: ela cobre o que a varredura de srcId
+// alcança. Aspas simples e duplas estão cobertas; uma forma de escrever srcId que nenhuma
+// das duas regexes veja (chave computada, concatenação, srcId montado em tempo de execução)
+// continua fora. A versão anterior deste comentário dizia "impede a classe inteira" e foi
+// refutada por mutação numa revisão independente — a promessa era maior que o cheque.
 {
-  const noArquivo = [...html.matchAll(/srcId:"([^"]+)"/g)].map((m) => m[1]);
+  const noArquivo = [...html.matchAll(/srcId:["']([^"']+)["']/g)].map((m) => m[1]);
   const lidos = itens.map((i) => i.srcId).filter(Boolean);
   if (noArquivo.length !== lidos.length) {
     const perdidos = noArquivo.filter((x) => !lidos.includes(x));
@@ -258,12 +269,37 @@ for (const t of tiposDeclarados) {
 }
 
 // ---------- B9 · instrumento v4 carrega 4b e 6b ----------
+// DUAS PORTAS DOS FUNDOS, as duas fechadas depois de uma revisão independente prová-las
+// com mutação que passava verde:
+//   1. `it.ver !== 'v4'` era casamento EXATO. A bancada se anuncia v4.1 no próprio título;
+//      o primeiro instrumento marcado ver:"v4.1" saía de B9 em silêncio. Agora é prefixo.
+//   2. `if (it.v4patch) continue` isentava sem nunca verificar que a emenda compartilhada
+//      existe e carrega o que ela promete suprir. Um token comprava a saída. Agora a
+//      isenção só vale se o bloco da emenda existir E carregar os dois blocos: emenda que
+//      não supre não isenta ninguém.
+//
+// O QUE ESTE CHEQUE NÃO FAZ, e é limite de desenho, não descuido: `v4patch` continua sendo
+// uma DECLARAÇÃO de autoria. A emenda diz que 4b e 6b valem por referência a ela, então um
+// instrumento se apoiar nela é escolha legítima — e nenhum comando distingue a escolha
+// legítima do instrumento que só não quis escrever os próprios blocos. O gate não mede
+// intenção. O que ele faz é (a) exigir lastro na emenda e (b) NOMEAR quem se isenta na
+// linha de saída, para que a isenção não cresça em silêncio. Se um dia a lista crescer sem
+// alguém decidir isso, o número está impresso onde quem lê o gate vai ver.
+const EMENDA = 't-v4patch';
+const emendaTxt = blocos.get(EMENDA) || '';
+const emendaSupre = /conventions\[\]/.test(emendaTxt) && /demonstra(ç|c)ão|demonstration/i.test(emendaTxt);
 for (const it of itens) {
-  if (it.ver !== 'v4' || !it.srcId) continue;
-  if (it.v4patch) continue; // a emenda compartilhada supre os dois blocos
+  if (!/^v4/.test(it.ver) || !it.srcId) continue;
+  if (it.v4patch) {
+    if (!emendaSupre) {
+      err('B9', `${it.code} se isenta por v4patch, mas o bloco "${EMENDA}" ` +
+        (blocos.has(EMENDA) ? 'não carrega 4b e 6b' : 'não existe') + ' — a isenção não tem lastro');
+    }
+    continue;
+  }
   const txt = blocos.get(it.srcId) || '';
-  if (!/conventions\[\]/.test(txt)) err('B9', `${it.code} é v4 e não carrega o bloco 4b (conventions[])`);
-  if (!/demonstra(ç|c)ão|demonstration/i.test(txt)) err('B9', `${it.code} é v4 e não carrega o bloco 6b (demonstração)`);
+  if (!/conventions\[\]/.test(txt)) err('B9', `${it.code} é ${it.ver} e não carrega o bloco 4b (conventions[])`);
+  if (!/demonstra(ç|c)ão|demonstration/i.test(txt)) err('B9', `${it.code} é ${it.ver} e não carrega o bloco 6b (demonstração)`);
 }
 
 // ---------- saída ----------
@@ -273,10 +309,13 @@ if (erros.length) {
   console.error(`\nFALHA: ${erros.length} problema(s). Bancada que não se aplica a si mesma é prosa.`);
   process.exit(1);
 }
+const isentos = itens.filter((i) => i.v4patch).map((i) => i.code);
 console.log(
   `\nOK: ${itens.length + derivados.length} itens no catálogo ` +
   `(${itens.length} literais, com ${itens.filter((i) => i.srcId).length} srcId prontos; ` +
   `${derivados.length} derivados de CAT, sem srcId e fora de B1/B9), ` +
   `${blocos.size} blocos, ${relatorios.length} relatório(s) auditoria/1.1, ` +
-  `${tiposUsados.size} tipo(s) de peça central em uso, ${avisos.length} aviso(s).`,
+  `${tiposUsados.size} tipo(s) de peça central em uso, ${avisos.length} aviso(s).` +
+  `\nIsenção 4b/6b pela emenda (${isentos.length}): ${isentos.join(', ') || 'nenhuma'} — ` +
+  'isenção é declaração de autoria, não medição; o gate exige lastro na emenda e imprime a lista.',
 );

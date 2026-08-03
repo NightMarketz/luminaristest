@@ -68,8 +68,25 @@ conferido em cada uma):
 |---|---|---|
 | A · `srcId` aponta para bloco inexistente | reprova `[B1]` | reprova `[B1]` |
 | B · idem, **atrás de objeto aninhado** | **B1 mudo** (só `[B2]` por sorte) | reprova `[B1]` |
-| C · `srcId` correto atrás de aninhado + 4b removido do bloco | **B9 mudo** | reprova `[B9]` no item certo |
-| D · item que o parser não enxerga, `srcId` intacto | mudo | `[B1] parser cego: … fora do alcance: t-av20` |
+| C · `srcId` correto atrás de aninhado + 4b removido do bloco | **B9 mudo** (só `[B2]` por sorte) | reprova `[B9]` no item certo |
+| D · item que o parser não enxerga, `srcId` intacto | **B1 mudo** (só `[B2]` por sorte) | `[B1] parser cego: … fora do alcance: t-av20` |
+| E · item escrito com **aspas simples**, `srcId` pendurado | passava **verde** | reprova `[B1]` + `[B9]` |
+| F · `v4patch:true` acrescentado + 4b removido | passava verde | **continua verde — limite de desenho, ver abaixo** |
+| G · `ver:"v4.1"` escapa do casamento exato + 4b removido | passava **verde** | reprova `[B9]` |
+| H · a emenda `t-v4patch` perde o 4b | passava verde | reprova `[B9]` nos 3 isentos |
+
+**CORREÇÃO — a linha D dizia só "mudo".** O gate antigo saía `exit 1` na mutação D, com
+`[B2] bloco "t-av20" existe e ninguém o referencia`: o mesmo acidente das linhas B e C, não
+silêncio. Pego por revisão independente; era imprecisão minha, não do gate.
+
+**E, F, G vieram da revisão independente**, que escreveu três mutações próprias e as três
+passaram verdes no gate já "corrigido". E e G foram fechadas (aspas simples nas duas
+varreduras; `ver` casado por prefixo). **F não foi fechada, e não deve ser:** `v4patch` é
+declaração de autoria — a emenda diz que 4b e 6b valem por referência a ela, então apoiar-se
+nela é escolha legítima, e nenhum comando distingue a escolha legítima do instrumento que só
+não quis escrever os próprios blocos. O que o gate passou a fazer é exigir **lastro** (H:
+emenda sem 4b/6b invalida toda isenção) e **imprimir a lista de isentos** na saída, para que
+a isenção não cresça em silêncio.
 
 Contagem, que era a pista: o parser reconhecia **17** itens; o catálogo tem **29** em tempo
 de execução. Os 12 que faltavam são os empurrados por `ITEMS.push(...)` com chave abreviada
@@ -165,4 +182,16 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
 4. **B10 continua aviso, não erro.** As três rodadas seguem sem revisão independente. O gate
    avisa e não bloqueia — decisão anterior, mantida, mas é a lacuna que o próprio §9.4 chama
    de rejeitável.
+   **Achado da revisão independente, não triado:** o B10 só dispara com
+   `self_check.independent_review === false`, e `run.review_of_this_run` não está em
+   `RUN_OBRIGATORIO`. Omitir as duas chaves faz a divulgação exigida pelo §9.4 sumir sem uma
+   linha de aviso — e no visualizador o teste `r.review_of_this_run===null||r.review_gap`
+   não pega chave **ausente** (`undefined`, não `null`). Falsificador: apagar as três chaves
+   de uma cópia do `AV-R1.json` e rodar o gate → exit 0.
+6. **A reconstrução foi revisada; a correção da revisão, não.** Um agente separado em
+   worktree isolado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias, das
+   quais duas (E e G) foram fechadas depois. Esse fechamento foi feito por quem implementou,
+   e **não passou por segunda revisão** — o que o §9.4 rejeita. O que existe no lugar é
+   prova objetiva: as mutações do revisor, reexecutadas, agora reprovam. Prova de mordida
+   não é revisão.
 5. **`my-app` segue sem `npm ci`.** A força da suíte do frontend continua desconhecida.
