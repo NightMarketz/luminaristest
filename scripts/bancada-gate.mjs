@@ -24,11 +24,23 @@
 //   B8  teto de confiança do AV-00 §2.2: ratio > 0.70 proíbe confiança alta por revisão
 //   B9  instrumento marcado v4 (ou v4.x) carrega os blocos 4b e 6b, ou se isenta por
 //       v4patch — e nesse caso a emenda compartilhada tem de existir e suprir os dois
+//   B11 todo triagem/1.0 tem items não vazio, source_run(s), gates_summary e self_check
+//   B12 todo fingerprint da triagem é cópia literal de um fingerprint de relatório emitido
+//   B13 todo item declara verification dentro da lista fechada
+//   B14 portão dentro da lista fechada; portão que não é aceite nem descarte exige owner e
+//       due; aceite exige accepted_reason, accepted_by e review_trigger OBSERVÁVEL
+//   B15 self_check.falsifiers_executed/total coerentes com os itens
+//   B16 os três campos do precedente AV-L1: verification_note, barriers_searched, own_bias_named
+//
+// POR QUE B11..B16 EXISTEM. O AV-00 inteiro existe para produzir UM artefato — a triagem — e
+// era o único sem nenhuma checagem: a linha `if (j.schema !== 'auditoria/1.1') continue`
+// tirava triagem/1.0 de todo o escopo do gate. Achado #4 da revisão independente do PR #164.
+// Falsificador que provou: esvaziar `items` de um triagem/1.0 e rodar o gate → exit 0.
 //
 // Uso:  node scripts/bancada-gate.mjs
 // Saída: exit 1 com ::error:: por problema; exit 0 com resumo.
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -189,6 +201,7 @@ const RUN_OBRIGATORIO = [
 const VERIF_MODOS = new Set(['execucao', 'revisao', 'leitura']);
 
 const relatorios = [];
+const triagens = [];
 for (const f of readdirSync(AUDIT_DIR).filter((x) => x.endsWith('.json'))) {
   let j;
   try {
@@ -197,8 +210,9 @@ for (const f of readdirSync(AUDIT_DIR).filter((x) => x.endsWith('.json'))) {
     err('B4', `${f} não é JSON válido: ${e.message}`);
     continue;
   }
-  if (j.schema !== 'auditoria/1.1') continue; // triagem/1.0 e legado saem do escopo
-  relatorios.push({ f, j });
+  if (j.schema === 'auditoria/1.1') relatorios.push({ f, j });
+  else if (j.schema === 'triagem/1.0') triagens.push({ f, j });
+  // demais schemas (legado) seguem fora do escopo
 }
 
 const tiposUsados = new Set();
@@ -302,6 +316,148 @@ for (const it of itens) {
   if (!/demonstra(ç|c)ão|demonstration/i.test(txt)) err('B9', `${it.code} é ${it.ver} e não carrega o bloco 6b (demonstração)`);
 }
 
+// ---------- B11..B16 · triagem/1.0 ----------
+// O artefato que o AV-00 inteiro existe para produzir. Antes destas checagens ele era o
+// ÚNICO do diretório sem nenhuma: uma triagem com `items: []` passava verde.
+//
+// O que estas checagens NÃO fazem, declarado em vez de prometido: elas leem ESTRUTURA
+// (lista fechada, campo presente, número que bate, caminho que existe no disco). Nenhuma
+// delas mede se o falsificador foi de fato executado, se o portão foi bem derivado ou se o
+// viés nomeado é o viés real — isso não é medível por comando, e um campo preenchido com
+// prosa vazia compra a saída em B16. O limite está aqui para que ninguém leia "gate verde"
+// como "triagem boa"; o que ele impede é a triagem INCOMPLETA passar em silêncio.
+const TRI_VERIFICACOES = new Set([
+  'confirmado', 'refutado', 'inconclusivo', 'nao_executavel', 'nao_executado',
+]);
+// verificação que representa falsificador EFETIVAMENTE rodado — as outras duas declaram
+// por que ele não rodou, e por isso não entram na conta de B15.
+const TRI_EXECUTADAS = new Set(['confirmado', 'refutado', 'inconclusivo']);
+const TRI_PORTOES = new Set([
+  'bloqueia_deploy', 'bloqueia_primeiro_cliente', 'aceito_com_registro', 'descartado',
+]);
+// portão que fecha o item sem abrir trabalho — não exige owner nem due
+const TRI_SEM_TRABALHO = new Set(['aceito_com_registro', 'descartado']);
+
+const vazio = (v) => typeof v !== 'string' || !v.trim();
+
+// fingerprints por relatório emitido, para B12
+const fpsPorArquivo = new Map();
+const fpsTodos = new Set();
+for (const { f, j } of relatorios) {
+  const s = new Set((j.findings || []).map((x) => x.fingerprint).filter(Boolean));
+  fpsPorArquivo.set(f, s);
+  for (const x of s) fpsTodos.add(x);
+}
+
+for (const { f, j } of triagens) {
+  // ---------- B11 · envelope da triagem ----------
+  const items = Array.isArray(j.items) ? j.items : null;
+  if (!items || !items.length) {
+    err('B11', `${f}: items ausente ou vazio — triagem sem item não tria nada`);
+  }
+  const runs = Array.isArray(j.source_runs) ? j.source_runs : (j.source_run ? [j.source_run] : []);
+  if (!runs.length) err('B11', `${f}: sem source_run nem source_runs — a triagem não diz o que triou`);
+  if (!j.gates_summary) err('B11', `${f}: gates_summary ausente`);
+  if (!j.self_check) err('B11', `${f}: self_check ausente`);
+
+  for (const [i, it] of (items || []).entries()) {
+    const id = `${f}:${it.fingerprint || `item[${i}]`}`;
+
+    // ---------- B12 · fingerprint copiado do relatório de origem ----------
+    // O fingerprint é o que liga relatório, triagem e próxima rodada (contrato auditoria/1.1).
+    // Reescrevê-lo na triagem quebra o elo em silêncio: os dois artefatos passam a falar de
+    // achados diferentes sem que nada reclame.
+    if (vazio(it.fingerprint)) {
+      err('B12', `${id}: sem fingerprint`);
+    } else if (!vazio(it.source_report)) {
+      const alvo = it.source_report.replace(/^.*[/\\]/, '');
+      if (!fpsPorArquivo.has(alvo)) {
+        err('B12', `${id}: source_report "${it.source_report}" não é um relatório auditoria/1.1 lido deste diretório`);
+      } else if (!fpsPorArquivo.get(alvo).has(it.fingerprint)) {
+        err('B12', `${id}: fingerprint não existe em ${it.source_report} — cópia alterada ou origem errada`);
+      }
+    } else if (!fpsTodos.has(it.fingerprint)) {
+      err('B12', `${id}: fingerprint não bate com nenhum achado de nenhum relatório auditoria/1.1`);
+    }
+
+    // ---------- B13 · verificação de lista fechada ----------
+    if (vazio(it.verification)) {
+      err('B13', `${id}: sem verification — o AV-00 exige o veredito do falsificador`);
+    } else if (!TRI_VERIFICACOES.has(it.verification)) {
+      err('B13', `${id}: verification "${it.verification}" fora da lista (${[...TRI_VERIFICACOES].join(' | ')})`);
+    }
+
+    // ---------- B14 · portão, dono e aceite ----------
+    if (vazio(it.gate)) {
+      err('B14', `${id}: sem gate`);
+      continue;
+    }
+    if (!TRI_PORTOES.has(it.gate)) {
+      err('B14', `${id}: gate "${it.gate}" fora da lista (${[...TRI_PORTOES].join(' | ')})`);
+      continue;
+    }
+    if (!TRI_SEM_TRABALHO.has(it.gate)) {
+      // item que abre trabalho sem dono e sem data é backlog, não triagem
+      if (vazio(it.owner)) err('B14', `${id}: gate "${it.gate}" abre trabalho e o item não tem owner`);
+      if (vazio(it.due)) err('B14', `${id}: gate "${it.gate}" abre trabalho e o item não tem due`);
+    }
+    if (it.gate === 'aceito_com_registro') {
+      if (vazio(it.accepted_reason)) err('B14', `${id}: aceite sem accepted_reason`);
+      if (vazio(it.accepted_by)) err('B14', `${id}: aceite sem accepted_by`);
+      if (vazio(it.review_trigger)) {
+        err('B14', `${id}: aceite sem review_trigger — aceite sem gatilho é o achado esquecido com outro nome`);
+      } else {
+        // OBSERVÁVEL, e não "escrito": o gatilho tem de nomear ao menos um caminho que
+        // existe no repositório hoje. É a checagem mais fraca desta seção e a que mais
+        // importa — um gatilho que não aponta para nada verificável não é reexecutável por
+        // quem herdar o aceite. Não mede se o gatilho é o CERTO; mede que ele aterrissa.
+        const caminhos = it.review_trigger.match(
+          /[\w@][\w@./-]*\.(?:ts|tsx|js|jsx|mjs|cjs|json|yml|yaml|md|html|prisma|sql)\b/g,
+        ) || [];
+        if (!caminhos.some((p) => existsSync(join(ROOT, p)))) {
+          err('B14', `${id}: review_trigger não nomeia nenhum caminho existente no repositório ` +
+            `— gatilho não observável${caminhos.length ? ` (tentados: ${[...new Set(caminhos)].join(', ')})` : ''}`);
+        }
+      }
+    }
+  }
+
+  // ---------- B15 · self_check coerente com os itens ----------
+  const sc = j.self_check || {};
+  const total = (items || []).length;
+  const executados = (items || []).filter((it) => TRI_EXECUTADAS.has(it.verification)).length;
+  if (sc.falsifiers_total !== undefined && sc.falsifiers_total !== total) {
+    err('B15', `${f}: self_check.falsifiers_total ${sc.falsifiers_total} contra ${total} item(ns)`);
+  }
+  if (sc.falsifiers_executed !== undefined && sc.falsifiers_executed !== executados) {
+    err('B15', `${f}: self_check.falsifiers_executed ${sc.falsifiers_executed} contra ${executados} ` +
+      `item(ns) com verification executada (${[...TRI_EXECUTADAS].join('/')})`);
+  }
+  if (sc.falsifiers_total === undefined || sc.falsifiers_executed === undefined) {
+    err('B15', `${f}: self_check sem falsifiers_executed/falsifiers_total — o placar da triagem não existe`);
+  }
+  if (sc.items_without_owner !== undefined) {
+    const semDono = (items || []).filter((it) => !TRI_SEM_TRABALHO.has(it.gate) && vazio(it.owner)).length;
+    if (sc.items_without_owner !== semDono) {
+      err('B15', `${f}: self_check.items_without_owner ${sc.items_without_owner} contra ${semDono} medido`);
+    }
+  }
+
+  // ---------- B16 · os três campos do precedente (AV-L1-TRIAGEM) ----------
+  // Promovidos ao contrato nesta rodada. A lição que os produziu é do próprio precedente:
+  // `nenhuma_conhecida` emitido sem procurar é "não procurei" com nome de veredito. Aqui o
+  // gate só consegue exigir que o campo EXISTA — declarado como limite logo acima.
+  for (const [k, onde] of [['barriers_searched', 'self_check'], ['own_bias_named', 'self_check']]) {
+    if (vazio((j[onde] || {})[k])) err('B16', `${f}: ${onde}.${k} ausente ou vazio (contrato triagem/1.0)`);
+  }
+  for (const [i, r] of runs.entries()) {
+    if (vazio(r.verification_note)) {
+      err('B16', `${f}: source_run[${i}] (${r.instrument || '?'}) sem verification_note — ` +
+        'a triagem não declara contra qual commit os falsificadores rodaram');
+    }
+  }
+}
+
 // ---------- saída ----------
 for (const a of avisos) console.log(`aviso: ${a}`);
 if (erros.length) {
@@ -315,6 +471,7 @@ console.log(
   `(${itens.length} literais, com ${itens.filter((i) => i.srcId).length} srcId prontos; ` +
   `${derivados.length} derivados de CAT, sem srcId e fora de B1/B9), ` +
   `${blocos.size} blocos, ${relatorios.length} relatório(s) auditoria/1.1, ` +
+  `${triagens.length} triagem(ns) 1.0 com ${triagens.reduce((n, t) => n + (t.j.items || []).length, 0)} item(ns), ` +
   `${tiposUsados.size} tipo(s) de peça central em uso, ${avisos.length} aviso(s).` +
   `\nIsenção 4b/6b pela emenda (${isentos.length}): ${isentos.join(', ') || 'nenhuma'} — ` +
   'isenção é declaração de autoria, não medição; o gate exige lastro na emenda e imprime a lista.',
