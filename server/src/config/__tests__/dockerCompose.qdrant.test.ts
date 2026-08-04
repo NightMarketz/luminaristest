@@ -23,13 +23,28 @@ import { join } from 'path';
  */
 const COMPOSE = readFileSync(join(__dirname, '../../../../docker-compose.yml'), 'utf8');
 
-/** Recorta um serviço do bloco `services:` — do `  nome:` até a próxima chave de 2 espaços. */
+/**
+ * Recorta um serviço do bloco `services:` — do `  nome:` até a próxima linha que saia do
+ * corpo dele.
+ *
+ * O CORTE É POR INDENTAÇÃO, e não pela próxima chave de 2 espaços. A versão anterior parava
+ * só em `/^ {2}\S/`, e `qdrant` é o ÚLTIMO serviço do arquivo: tudo depois dele com
+ * indentação 0 (`volumes:`, um `x-` de raiz) continuava "dentro do serviço". Medido por
+ * revisão independente — esvaziar a chave e escrever, num campo de extensão de raiz,
+ *     x-exemplo:
+ *         QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?exemplo}
+ * deixava os 3 casos VERDES com o Qdrant subindo sem autenticação. É a mesma classe do F4
+ * (recorte que atravessa fronteira), que tinha sido fechada só na barreira irmã.
+ *
+ * Corpo do serviço mora em indentação >= 4; qualquer linha não vazia com indentação <= 2
+ * está fora dele.
+ */
 function serviceBlock(name: string): string {
   const lines = COMPOSE.split(/\r?\n/);
   const start = lines.findIndex((l) => l === `  ${name}:`);
   if (start === -1) return '';
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((l) => /^ {2}\S/.test(l));
+  const end = rest.findIndex((l) => l.trim() !== '' && l.search(/\S/) <= 2);
   return rest.slice(0, end === -1 ? rest.length : end).join('\n');
 }
 
@@ -44,6 +59,15 @@ describe('docker-compose.yml · Qdrant não sobe sem chave', () => {
   it('os serviços qdrant e server existem e são recortados', () => {
     expect(serviceBlock('qdrant')).toContain('qdrant/qdrant');
     expect(serviceBlock('server')).toContain('QDRANT_URL');
+  });
+
+  // A checagem que teria falhado enquanto o recorte sangrava. `qdrant` é o último serviço:
+  // com o corte antigo, o bloco engolia `volumes:` e tudo o mais em indentação 0, e uma
+  // linha escrita LÁ satisfazia a asserção da chave. Sem este caso, o conserto acima seria
+  // invisível — e a regressão, silenciosa.
+  it('o recorte do último serviço não passa do fim do bloco services:', () => {
+    const qdrant = serviceBlock('qdrant');
+    expect(qdrant).not.toMatch(/^\S/m);
   });
 
   it('o serviço qdrant recebe a chave de API, e a recusa de subir sem ela é obrigatória', () => {

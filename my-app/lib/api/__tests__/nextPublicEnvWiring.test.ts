@@ -39,13 +39,19 @@ const composeKeys = [...new Set(composeDeclarations.match(/NEXT_PUBLIC_[A-Z0-9_]
  * Recorta UM serviço do compose. Sem isto, um regex com `[\s\S]*?` atravessa a fronteira
  * entre serviços e casa o que estiver no serviço seguinte — foi assim que a checagem de
  * build-arg passou a aceitar `args:` de um serviço e a chave de outro.
+ *
+ * Corte por INDENTAÇÃO, e não pela próxima chave de 2 espaços: parar só em `/^ {2}\S/` deixa
+ * o bloco correr para fora do mapeamento `services:` quando o serviço é o último do arquivo.
+ * `frontend` não é o último hoje, então aqui isto é preventivo — mas o defeito foi medido na
+ * barreira irmã (dockerCompose.qdrant.test.ts) e é a MESMA linha, então é varredura de
+ * classe, não conserto pontual.
  */
 function frontendBlock(): string {
   const lines = composeDeclarations.split(/\r?\n/);
   const start = lines.findIndex((l) => l === '  frontend:');
   if (start === -1) return '';
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((l) => /^ {2}\S/.test(l));
+  const end = rest.findIndex((l) => l.trim() !== '' && l.search(/\S/) <= 2);
   return rest.slice(0, end === -1 ? rest.length : end).join('\n');
 }
 
