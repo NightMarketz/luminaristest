@@ -49,6 +49,29 @@ function frontendBlock(): string {
   return rest.slice(0, end === -1 ? rest.length : end).join('\n');
 }
 
+/**
+ * O bloco `build.args` do frontend, e SÓ ele.
+ *
+ * Recortar o serviço não bastava: o casamento `args:[\s\S]*?<CHAVE>:` continuava
+ * atravessando de `build.args` para `environment:` DENTRO do mesmo serviço, que é
+ * precisamente o meio-conserto — chave declarada, e declarada em runtime. Medido: com a
+ * chave movida para `environment:` do próprio frontend, a versão recortada-por-serviço
+ * passava 4/4. O recorte tem de ser o bloco de argumentos.
+ */
+function frontendBuildArgs(): string {
+  const lines = frontendBlock().split(/\r?\n/);
+  const start = lines.findIndex((l) => /^\s*args:\s*$/.test(l));
+  if (start === -1) return '';
+  const indent = lines[start].search(/\S/);
+  const out: string[] = [];
+  for (const l of lines.slice(start + 1)) {
+    if (l.trim() === '') continue;
+    if (l.search(/\S/) <= indent) break;
+    out.push(l);
+  }
+  return out.join('\n');
+}
+
 describe('fiação NEXT_PUBLIC_* entre docker-compose.yml e o bundle', () => {
   // Controle: sem isto, um regex que parasse de casar faria os dois casos abaixo passarem
   // por lista vazia — o modo silencioso de a barreira morrer.
@@ -63,8 +86,9 @@ describe('fiação NEXT_PUBLIC_* entre docker-compose.yml e o bundle', () => {
 
   // Controle do recorte: se o bloco do frontend deixar de ser encontrado, os casos abaixo
   // passariam por vacuidade — o mesmo modo silencioso de morte do controle acima.
-  it('o serviço do frontend é recortado do compose', () => {
+  it('o serviço do frontend e o bloco build.args dele são recortados', () => {
     expect(frontendBlock()).toMatch(/build:/);
+    expect(frontendBuildArgs()).not.toEqual('');
   });
 
   it('as chaves NEXT_PUBLIC_* chegam por build arg, não por environment de runtime', () => {
@@ -74,10 +98,11 @@ describe('fiação NEXT_PUBLIC_* entre docker-compose.yml e o bundle', () => {
     // `environment:` do frontend — exatamente o meio-conserto que o bloco de comentário
     // deste arquivo nomeia como vitória declarada, passando verde. Medido por revisão
     // independente: `build.args` no `server` + chave no `environment:` do frontend → 3/3.
-    const frontend = frontendBlock();
+    const args = frontendBuildArgs();
     for (const k of composeKeys) {
-      // Declarada como argumento de build no compose, DENTRO do serviço que a consome…
-      expect(frontend).toMatch(new RegExp(`args:[\\s\\S]*?${k}:`));
+      // Declarada DENTRO do bloco build.args do serviço que a consome — não em algum
+      // `args:` do documento, e não num `environment:` do próprio serviço.
+      expect(args).toMatch(new RegExp(`^\\s*${k}:`, 'm'));
       // …e recebida pelo Dockerfile ANTES do build, senão o valor não entra no bundle.
       expect(DOCKERFILE).toMatch(new RegExp(`ARG ${k}\\b`));
       const argAt = DOCKERFILE.indexOf(`ARG ${k}`);
