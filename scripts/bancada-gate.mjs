@@ -208,7 +208,27 @@ const SCHEMAS_FORA_DE_ESCOPO = new Set([]);
 
 const relatorios = [];
 const triagens = [];
-for (const f of readdirSync(AUDIT_DIR).filter((x) => x.endsWith('.json'))) {
+// DESCOBERTA RECURSIVA E INSENSÍVEL A CAIXA.
+//
+// A fuga do schema foi fechada e ELA MUDOU DE CAMPO em vez de morrer: a varredura era
+// `readdirSync(AUDIT_DIR)` sem recursão, filtrando por `.endsWith('.json')` sensível a
+// caixa. Uma triagem com `items: []` — o falsificador que motivou B11..B16 — passava verde
+// em `docs/audit/sub/` ou nomeada `.JSON`. A lista fechada de schemas é sólida; ela
+// simplesmente nunca era consultada para esses arquivos. Medido por revisão independente.
+//
+// Lição que vale além daqui: fechar a checagem não fecha a classe enquanto o que ALIMENTA
+// a checagem continuar seletivo. O gate lê o que a varredura entrega.
+function jsonsDeAuditoria(dir, base = '') {
+  const saida = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${ent.name}` : ent.name;
+    if (ent.isDirectory()) saida.push(...jsonsDeAuditoria(join(dir, ent.name), rel));
+    else if (ent.name.toLowerCase().endsWith('.json')) saida.push(rel);
+  }
+  return saida;
+}
+
+for (const f of jsonsDeAuditoria(AUDIT_DIR)) {
   let j;
   try {
     j = JSON.parse(readFileSync(join(AUDIT_DIR, f), 'utf8'));
@@ -448,6 +468,27 @@ for (const { f, j } of triagens) {
       // `source_report` para o fingerprint casar contra qualquer relatório. Isso fecha aqui
       // sem campo novo — a origem passa a ser o relatório cujo `run.instrument` bate com o
       // `source_run.instrument` declarado. Estritamente mais apertado que o global.
+      // A DERIVAÇÃO SÓ VALE QUANDO RESOLVE PARA UM ÚNICO RELATÓRIO.
+      //
+      // A primeira versão desta correção derivava a origem do `source_run.instrument` e
+      // aceitava a UNIÃO dos candidatos. Uma segunda revisão independente derrubou isso com
+      // um contraexemplo que já existia no disco: `AV-R3.json` e
+      // `AV-R5-FORCA-DA-SUITE-FRONTEND.json` declaram os dois `run.instrument: "AV-03"` —
+      // duas rodadas do mesmo instrumento, o que é legítimo e não vai deixar de acontecer.
+      // Com a união, um item da triagem de R1/R3 carregava achado do frontend que ela nunca
+      // triou, verde. E cada `source_run` a mais alargava o conjunto: cinco declarações
+      // devolviam 6 dos 7 relatórios, reconstruindo o conjunto global que a correção dizia
+      // ter apagado.
+      //
+      // Por que não exigir `source_report` sempre, como as duas revisões prescreveram: o
+      // precedente AV-L1-TRIAGEM.json não o tem e é o artefato de CONTROLE. Mas a razão que
+      // eu tinha dado antes — "retrofitar história ou descartar o controle" — foi medida
+      // pela revisão e o custo real é 4 linhas: a premissa era certa, a conclusão não
+      // seguia. O que sustenta a anistia não é o custo, é que o precedente resolve SEM
+      // AMBIGUIDADE (instrumento AV-L1 → exatamente um relatório).
+      //
+      // Daí a regra: derivar é permitido enquanto não houver escolha a fazer. Havendo duas
+      // origens possíveis, o gate não adivinha — exige a declaração.
       const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
       const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
       if (!instrumentos.size) {
@@ -456,10 +497,13 @@ for (const { f, j } of triagens) {
       } else if (!candidatos.length) {
         err('B12', `${id}: source_run.instrument ${[...instrumentos].join('/')} não corresponde ` +
           'a nenhum relatório auditoria/1.1 deste diretório');
-      } else if (!candidatos.some(({ f: cf }) => fpsPorArquivo.get(cf)?.has(it.fingerprint))) {
-        err('B12', `${id}: fingerprint não existe em nenhum relatório de ` +
-          `${[...instrumentos].join('/')} (${candidatos.map((c) => c.f).join(', ')}) — ` +
-          'cópia alterada ou origem errada');
+      } else if (candidatos.length > 1) {
+        err('B12', `${id}: sem source_report e a origem é AMBÍGUA — ${[...instrumentos].join('/')} ` +
+          `resolve para ${candidatos.length} relatórios (${candidatos.map((c) => c.f).join(', ')}). ` +
+          'Derivação só vale quando há uma única origem possível; declare source_report');
+      } else if (!fpsPorArquivo.get(candidatos[0].f)?.has(it.fingerprint)) {
+        err('B12', `${id}: fingerprint não existe em ${candidatos[0].f} ` +
+          `(única origem de ${[...instrumentos].join('/')}) — cópia alterada ou origem errada`);
       }
     } else {
       const alvo = it.source_report.replace(/^.*[/\\]/, '');

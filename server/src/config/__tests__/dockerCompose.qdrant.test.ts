@@ -33,6 +33,11 @@ function serviceBlock(name: string): string {
   return rest.slice(0, end === -1 ? rest.length : end).join('\n');
 }
 
+/** Remove linhas comentadas. Ver o comentário no caso da chave: um `#` desarmava a barreira. */
+function semComentarios(bloco: string): string {
+  return bloco.split(/\r?\n/).filter((l) => !/^\s*#/.test(l)).join('\n');
+}
+
 describe('docker-compose.yml · Qdrant não sobe sem chave', () => {
   // Controle: se este falhar, os dois abaixo não medem nada — um recorte vazio "passaria"
   // em qualquer asserção de ausência e falharia em toda de presença por motivo errado.
@@ -42,7 +47,12 @@ describe('docker-compose.yml · Qdrant não sobe sem chave', () => {
   });
 
   it('o serviço qdrant recebe a chave de API, e a recusa de subir sem ela é obrigatória', () => {
-    const qdrant = serviceBlock('qdrant');
+    // COMENTÁRIO NÃO É DECLARAÇÃO. Sem esta linha a barreira era desarmável com um `#`:
+    // comentar a chave no compose deixava o texto no arquivo, o regex continuava casando e
+    // os três casos ficavam verdes enquanto o serviço voltava a subir sem autenticação.
+    // Medido por revisão independente; a barreira irmã (nextPublicEnvWiring) já filtrava
+    // comentários e esta não — mesma correção, duas datas.
+    const qdrant = semComentarios(serviceBlock('qdrant'));
     // Publicar porta no host sem autenticação é o achado. Enquanto as portas estiverem
     // publicadas, a chave é obrigatória; se um dia deixarem de estar, esta guarda relaxa
     // sozinha em vez de virar cerimônia.

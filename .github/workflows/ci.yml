@@ -184,7 +184,7 @@ jobs:
         with:
           node-version: 20
 
-      # Gate da BANCADA aplicada a si mesma — 16 checagens que reprovam (B1..B9 e B11..B17;
+      # Gate da BANCADA aplicada a si mesma — 17 checagens que reprovam (B1..B9 e B11..B17;
       # B10 só emite aviso) sobre
       # docs/audit/bancada.html e os JSON de docs/audit/ (envelope auditoria/1.1, triagem/1.0,
       # srcId que resolve, bloco órfão, isenção 4b/6b com lastro).
@@ -199,7 +199,7 @@ jobs:
       # Sem filtro de `paths`: uma mudança em scripts/ quebra o gate sem tocar docs/audit/, e
       # filtrar por caminho deixaria passar exatamente essa quebra. O workflow roda em todo
       # push/PR — mantido assim de propósito.
-      - name: Bancada aplicada a si mesma (AV-00 · 16 checagens)
+      - name: Bancada aplicada a si mesma (AV-00 · 17 checagens)
         run: node scripts/bancada-gate.mjs
 
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes

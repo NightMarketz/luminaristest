@@ -398,11 +398,18 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    `dc7fd12`, e `deployed` é por desenho um campo que a página nunca preenche sozinha. A
    resposta é decisão do dono, registrada aqui e no passo 2 da bancada, não medição.
 
-6. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
-   Medido: `grep -rn 'bancada-gate' .github/ package.json` devolve nada, enquanto o script
-   irmão `debt-ledger-check.mjs` está no CI em dois passos. É a mesma classe do F4 do R1
-   aplicada à própria bancada, e vale mais agora — **dezessete** checagens atrás de gatilho
-   manual. Registrado em `new_findings_raised` da triagem; não corrigido.
+6. **FECHADO — `scripts/bancada-gate.mjs` roda no CI** desde `7c6c35f2`, como passo do job
+   `governance-presence` (`grep -rn 'bancada-gate' .github/` devolve `ci.yml:203`). A escolha
+   do job está justificada no commit: o gate só usa builtins do Node, então não precisou ir
+   para dentro de `server`/`frontend` como o irmão `debt-ledger-check.mjs`, e pendurá-lo num
+   job com `npm ci` faria uma falha alheia mascará-lo. Sem filtro de `paths`, de propósito.
+
+   **CORREÇÃO — este item afirmou o contrário depois de deixar de ser verdade.** Numa
+   passagem anterior eu corrigi a CONTAGEM dentro deste parágrafo ("dezesseis" → "dezessete")
+   e deixei intacta a afirmação de que o grep "devolve nada", que já era falsa havia dois
+   commits — o próprio `7c6c35f2` é ancestral. Pego por revisão independente. É a classe
+   exata que esta bancada existe para pegar, dentro da edição de quem a mantém: número
+   conferido, alegação ao redor não.
 
 7. **A reconstrução foi revisada; as correções que vieram da revisão, não.** Um agente
    separado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias; duas (E e G)
