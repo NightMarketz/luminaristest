@@ -25,8 +25,11 @@
 //   B8  teto de confiança do AV-00 §2.2: ratio > 0.70 proíbe confiança alta por revisão
 //   B9  instrumento marcado v4 (ou v4.x) carrega os blocos 4b e 6b, ou se isenta por
 //       v4patch — e nesse caso a emenda compartilhada tem de existir e suprir os dois
-//   B11 todo triagem/1.0 tem items não vazio, source_run(s), gates_summary e self_check
-//   B12 todo fingerprint da triagem é cópia literal de um fingerprint de relatório emitido
+//   B11 todo triagem/1.0 tem items não vazio, source_run(s), gates_summary e self_check —
+//       e cada source_run.instrument declarado resolve para ao menos um relatório emitido
+//   B12 todo fingerprint da triagem é cópia literal de um fingerprint de relatório emitido,
+//       e o relatório de origem está DENTRO do escopo que a triagem declara ter triado —
+//       tanto quando a origem é derivada quanto quando é declarada em source_report
 //   B13 todo item declara verification dentro da lista fechada
 //   B14 portão dentro da lista fechada; portão que não é aceite nem descarte exige owner e
 //       due; aceite exige accepted_reason, accepted_by e review_trigger OBSERVÁVEL
@@ -454,6 +457,37 @@ for (const { f, j } of triagens) {
   }
   if (!j.self_check) err('B11', `${f}: self_check ausente`);
 
+  // ESCOPO DECLARADO DA TRIAGEM, computado uma vez e usado pelos DOIS ramos do B12.
+  //
+  // Estava dentro do laço de itens e só do lado derivado, e as duas coisas eram defeito:
+  //
+  //  · F-A5 — `source_run` que não resolve para relatório nenhum passava em silêncio quando
+  //    OUTRO run resolvia, porque o corte era `!candidatos.length` sobre a UNIÃO. Uma triagem
+  //    podia declarar ter triado `AV-99-QUE-NUNCA-EXISTIU` ao lado de `AV-R6` e sair exit 0,
+  //    afirmando um escopo que ela não tem. E, se todo item declarasse `source_report`, o
+  //    ramo derivado nem era alcançado: o campo nunca chegava a ser olhado.
+  //
+  //  · F-A2 — a conferência de escopo só existia no ramo derivado. O ramo com
+  //    `source_report` declarado casava contra QUALQUER relatório do diretório, então bastava
+  //    nomear o arquivo para uma triagem carregar achado de uma rodada que ela nunca triou —
+  //    exatamente o cenário que motivou o F1, sobrevivendo no ramo que aquela correção não
+  //    tocou. Fechar um ramo não fecha a classe enquanto o outro seguir global.
+  //
+  // As duas medidas por revisão independente, cada uma com mutação de 1 campo que saía verde.
+  const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
+  const semArquivo = (p) => p.replace(/^.*[/\\]/, '');
+  const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
+  const noEscopo = new Set(candidatos.map(({ f: cf }) => semArquivo(cf)));
+
+  // F-A5 · cada instrumento declarado tem de resolver, e a conta é POR INSTRUMENTO.
+  for (const inst of instrumentos) {
+    if (!relatorios.some(({ j: rj }) => rj.run?.instrument === inst)) {
+      err('B11', `${f}: source_run.instrument "${inst}" não corresponde a nenhum relatório ` +
+        'auditoria/1.1 deste diretório — a triagem declara ter triado uma rodada que não ' +
+        'foi emitida');
+    }
+  }
+
   for (const [i, it] of (items || []).entries()) {
     const id = `${f}:${it.fingerprint || `item[${i}]`}`;
 
@@ -505,14 +539,14 @@ for (const { f, j } of triagens) {
       //
       // Daí a regra: derivar é permitido enquanto não houver escolha a fazer. Havendo duas
       // origens possíveis, o gate não adivinha — exige a declaração.
-      const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
-      const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
+      // `instrumentos` e `candidatos` vêm do escopo da triagem (acima), não são recomputados
+      // por item.
       if (!instrumentos.size) {
         err('B12', `${id}: sem source_report e sem source_run.instrument — não há como ` +
           'localizar a origem, e o fingerprint casaria contra qualquer relatório');
       } else if (!candidatos.length) {
-        err('B12', `${id}: source_run.instrument ${[...instrumentos].join('/')} não corresponde ` +
-          'a nenhum relatório auditoria/1.1 deste diretório');
+        // Silêncio DELIBERADO: o B11 acima já reprovou, uma vez por instrumento que não
+        // resolve. Repetir por item transformaria um defeito de envelope em N linhas de erro.
       } else if (candidatos.length > 1) {
         err('B12', `${id}: sem source_report e a origem é AMBÍGUA — ${[...instrumentos].join('/')} ` +
           `resolve para ${candidatos.length} relatórios (${candidatos.map((c) => c.f).join(', ')}). ` +
@@ -522,9 +556,17 @@ for (const { f, j } of triagens) {
           `(única origem de ${[...instrumentos].join('/')}) — cópia alterada ou origem errada`);
       }
     } else {
-      const alvo = it.source_report.replace(/^.*[/\\]/, '');
+      const alvo = semArquivo(it.source_report);
       if (!fpsPorArquivo.has(alvo)) {
         err('B12', `${id}: source_report "${it.source_report}" não é um relatório auditoria/1.1 lido deste diretório`);
+      } else if (!noEscopo.has(alvo)) {
+        // F-A2 · declarar a origem não pode ser mais frouxo do que derivá-la. O ramo
+        // derivado só aceita relatório do instrumento que a triagem diz ter triado; sem esta
+        // linha, o ramo declarado aceitava QUALQUER relatório do diretório, e omitir o campo
+        // passou a ser mais restrito do que preenchê-lo — incentivo invertido.
+        err('B12', `${id}: source_report "${it.source_report}" é um relatório emitido, mas ` +
+          `FORA do escopo desta triagem — ela declara ter triado ${[...instrumentos].join('/')} ` +
+          `(${[...noEscopo].join(', ')}). Item de rodada não triada não entra pela porta do campo`);
       } else if (!fpsPorArquivo.get(alvo).has(it.fingerprint)) {
         err('B12', `${id}: fingerprint não existe em ${it.source_report} — cópia alterada ou origem errada`);
       }

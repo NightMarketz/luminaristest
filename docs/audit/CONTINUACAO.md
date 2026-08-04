@@ -155,6 +155,25 @@ contra regra moldada ao próprio arquivo, e é declarado como único.
 **Limite declarado:** B11..B16 leem estrutura. Não medem se o falsificador rodou, se o portão
 foi bem derivado nem se o viés nomeado é o real; prosa vazia compra a saída em B16.
 
+**O escopo da triagem passou a ser conferido nos DOIS ramos, e por instrumento** (F-A2 e
+F-A5 da terceira revisão independente, fechados juntos porque são a mesma função):
+
+- **B11** — todo `source_run.instrument` declarado tem de resolver para ao menos um relatório
+  emitido. O corte era `!candidatos.length` sobre a **união**, então um run fantasma passava
+  em silêncio desde que outro run resolvesse; e, se todo item declarasse `source_report`, o
+  campo nem chegava a ser olhado. Uma triagem podia afirmar ter triado uma rodada inexistente.
+- **B12** — o relatório de origem tem de estar **dentro** do escopo declarado, e agora isso
+  vale também quando a origem vem de `source_report`. O ramo declarado casava contra qualquer
+  relatório do diretório: bastava nomear o arquivo para uma triagem carregar achado de rodada
+  que nunca triou — o cenário do F1, vivo no ramo que aquela correção não tocou. **Omitir o
+  campo era mais restrito do que preenchê-lo**, que é o incentivo exatamente ao contrário.
+
+Mordida provada por 3 mutações mais 1 controle: as duas fugas reprovam com mensagem própria,
+o run fantasma reprova **também** com os `source_report` intactos (caso que o ramo derivado
+nunca alcançava), e a troca **legítima** de origem dentro do escopo segue verde — a regra
+não é "tudo vermelho". O precedente `AV-L1-TRIAGEM.json` continua passando sem uma linha
+alterada.
+
 **CORREÇÃO — a versão anterior deste documento dizia que `triagem/1.0` "nunca foi
 exercitado uma vez". É falso, e conferir levou um comando.** `docs/audit/AV-L1-TRIAGEM.json`
 é um `triagem/1.0` completo da rodada AV-L1 (`ae8d18b`): 4 itens, 4 falsificadores
