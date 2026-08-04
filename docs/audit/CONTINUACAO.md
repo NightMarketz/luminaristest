@@ -25,7 +25,7 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
 | `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` | rodada 6 · 5 achados de **runtime** da própria bancada · `failure_modes` · primeira com `runtime: true` |
 | `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
-| `scripts/bancada-gate.mjs` | gate de **17** checagens · **passa** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
+| `scripts/bancada-gate.mjs` | gate de **16** checagens que reprovam (B1..B9 e B11..B17; B10 só avisa) · **passa, e passa no CI** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
 | `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos · **3 fechados** (§3c) |
 | `server/src/config/__tests__/dockerCompose.qdrant.test.ts` | barreira do item 2 · roda na suíte `unit`, que já está no CI |
@@ -410,6 +410,13 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    commits — o próprio `7c6c35f2` é ancestral. Pego por revisão independente. É a classe
    exata que esta bancada existe para pegar, dentro da edição de quem a mantém: número
    conferido, alegação ao redor não.
+
+   **E a "correção" de contagem estava invertida.** Aquela passagem trocou **dezesseis por
+   dezessete**, e dezesseis era o certo: reprovam `B1..B9` (9) e `B11..B17` (7) = **16**;
+   `B10` só emite aviso. A enumeração ao lado do número — que ficou intacta em todas as
+   passagens — sempre disse 16, e passou dois commits contradizendo o número que a
+   acompanhava. Falsificador de uma linha, que nunca foi rodado:
+   `grep -o "err('B[0-9]*'" scripts/bancada-gate.mjs | sort -u | wc -l` → 16.
 
    **SEGUNDA CORREÇÃO — "roda no CI" não era "passa no CI", e o `grep` não distingue os
    dois.** A terceira revisão independente olhou a execução em vez do texto: as duas únicas
