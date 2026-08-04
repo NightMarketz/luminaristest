@@ -78,6 +78,37 @@ function frontendBuildArgs(): string {
   return out.join('\n');
 }
 
+/**
+ * O valor que o build recebe quando não há `.env` ao lado do compose — literal, ou o default
+ * de `${VAR:-default}`, ou string vazia para `${VAR}` puro.
+ *
+ * É esse valor que `next build` inlina no bundle. `undefined`/vazio vira a string "undefined"
+ * concatenada na URL, que é falha silenciosa em runtime, não erro de build.
+ */
+function valorEfetivo(chave: string): string | null {
+  const linha = frontendBuildArgs().split(/\r?\n/).find((l) => new RegExp(`^\\s*${chave}:`).test(l));
+  if (!linha) return null;
+  const bruto = linha.slice(linha.indexOf(':') + 1).trim();
+  const interp = bruto.match(/^\$\{[A-Z0-9_]+(?::-(.*))?\}$/);
+  return interp ? (interp[1] ?? '') : bruto;
+}
+
+/** Nomes de serviço do compose — hosts que existem SÓ na rede interna do docker. */
+function nomesDeServico(): string[] {
+  const lines = composeDeclarations.split(/\r?\n/);
+  const i = lines.findIndex((l) => /^services:\s*$/.test(l));
+  if (i === -1) return [];
+  return lines.slice(i + 1)
+    .filter((l) => /^ {2}\S/.test(l))
+    .map((l) => l.trim().replace(/:$/, ''));
+}
+
+/** O default que o próprio código declara — a origem canônica do valor. */
+function defaultDoNextConfig(chave: string): string | null {
+  const m = NEXT_CONFIG.match(new RegExp(`${chave}\\s*:\\s*process\\.env\\.${chave}\\s*\\|\\|\\s*['"\`]([^'"\`]+)['"\`]`));
+  return m ? m[1] : null;
+}
+
 describe('fiação NEXT_PUBLIC_* entre docker-compose.yml e o bundle', () => {
   // Controle: sem isto, um regex que parasse de casar faria os dois casos abaixo passarem
   // por lista vazia — o modo silencioso de a barreira morrer.
@@ -115,6 +146,38 @@ describe('fiação NEXT_PUBLIC_* entre docker-compose.yml e o bundle', () => {
       const buildAt = DOCKERFILE.indexOf('npm run build');
       expect(argAt).toBeGreaterThan(-1);
       expect(argAt).toBeLessThan(buildAt);
+    }
+  });
+
+  // NOME E POSIÇÃO NÃO ERAM O ACHADO INTEIRO. Os casos acima conferem que a chave se chama
+  // certo e chega em build-time, e nenhum deles olha o VALOR — então voltar a
+  // `http://server:3001`, que é o valor exato que o §3c mediu como errado DUAS vezes,
+  // deixava a barreira 4/4 verde. Medido por revisão independente.
+  //
+  // Os dois casos abaixo cobrem os dois erros que aquele valor tinha, e nenhum deles carrega
+  // URL escrita à mão: o esperado é derivado do repositório, senão a barreira vira mais um
+  // lugar para o valor errado morar.
+  it('o valor do build arg é o mesmo default que next.config.js declara', () => {
+    for (const k of composeKeys) {
+      const canonico = defaultDoNextConfig(k);
+      expect(canonico).not.toBeNull(); // o código tem de declarar o seu próprio default
+      const efetivo = valorEfetivo(k);
+      // Vazio é o caso perigoso: `next build` inlina a ausência e a URL vira "undefined/…".
+      expect(efetivo).not.toEqual('');
+      expect(efetivo).toEqual(canonico);
+    }
+  });
+
+  it('o host do valor não é um nome de serviço do compose — quem executa o bundle é o navegador', () => {
+    const servicos = nomesDeServico();
+    expect(servicos).toContain('frontend'); // controle: sem isto o caso passaria por lista vazia
+    for (const k of composeKeys) {
+      const efetivo = valorEfetivo(k) ?? '';
+      const host = (efetivo.match(/^[a-z]+:\/\/([^/:]+)/i) ?? [])[1];
+      expect(host).toBeTruthy();
+      // `http://server:3001` era alcançável pela rede do compose e por mais ninguém. O bundle
+      // roda no navegador do usuário, fora dessa rede.
+      expect(servicos).not.toContain(host);
     }
   });
 });

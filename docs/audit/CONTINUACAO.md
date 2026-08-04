@@ -213,6 +213,16 @@ mutação revertida de `.bak` (nunca `git checkout`) — a de baixo é a que val
   valor em `environment:`. O caso do nome passa e o de build-arg **falha**. É exatamente o
   meio-conserto que declararia vitória, e nenhuma checagem de nome sozinha o pegaria.
 
+**A barreira do item 3 passou a conferir o VALOR** (F-A4 da terceira revisão independente).
+Os casos originais liam nome e posição da chave e mais nada, então voltar a
+`http://server:3001` — o valor que o parágrafo abaixo mede como errado **duas vezes** —
+deixava a barreira 4/4 verde. Dois casos novos, e nenhum carrega URL escrita à mão: o valor
+efetivo do build arg tem de ser o **mesmo default que `next.config.js` declara** (pega o
+`/api` faltando e o vazio de `${VAR}` sem default), e o **host não pode ser nome de serviço
+do compose** (pega o host que só existe na rede interna). Mordida provada por 3 mutações mais
+1 controle — a troca **legítima** de topologia, feita nos dois lados, segue 6/6 verde, que é
+a diferença entre uma regra e uma URL decorada dentro do teste.
+
 **O que a correção mediu e a triagem não sabia** (registrado em `status_evidence`, não
 corrigido de passagem): o valor `http://server:3001` errava **além** do nome — falta o
 sufixo `/api` que `document.service.ts:28` concatena, e `server` é nome da rede do compose,
