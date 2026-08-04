@@ -55,9 +55,20 @@ const err = (b, m) => erros.push(`[${b}] ${m}`);
 const warn = (b, m) => avisos.push(`[${b}] ${m}`);
 
 // ---------- leitura da bancada ----------
+// NORMALIZAÇÃO DE FIM DE LINHA, e ela é o conserto de um defeito medido, não higiene.
+//
+// `bancada.html` é LF no repositório e CRLF no worktree Windows (`core.autocrlf=true`, e
+// `.gitattributes` não cobre este caminho). O gate lia bytes diferentes em cada lugar: verde
+// na máquina de quem edita, `exit 1` no runner Linux. As duas únicas execuções do passo no
+// GitHub Actions falharam com `[B3] centerpiece.type "layer_contract" … não declarado`
+// enquanto o `CONTINUACAO.md` declarava o item FECHADO.
+//
+// Normalizar aqui faz a execução local medir o MESMO artefato que o CI mede — sem isto,
+// nenhum "gate exit 0" desta máquina é evidência sobre o CI. É a regra do projeto de gate
+// que lê o app, não o texto, aplicada ao próprio gate.
 let html;
 try {
-  html = readFileSync(BANCADA, 'utf8');
+  html = readFileSync(BANCADA, 'utf8').replace(/\r\n/g, '\n');
 } catch {
   console.error(`::error::bancada não encontrada em ${BANCADA}`);
   process.exit(1);
@@ -178,7 +189,12 @@ const tiposDeclarados = new Set();
 {
   const bloco = contrato.match(/centerpiece\.type[\s\S]*?(?=\nscoreboard|\nfindings|$)/);
   const extra = contrato.match(/centerpiece\.type ganhou[\s\S]*?(?=\n[a-z]|\n\n|$)/g) || [];
-  const fonte = (bloco ? bloco[0] : '') + extra.join('\n');
+  // JUNTAR COM SEPARADOR, e não concatenar. O `bloco` termina exatamente no último tipo
+  // (o lookahead `(?=\nscoreboard)` para antes da quebra), então `bloco + extra` colava
+  // `layer_contract` em `centerpiece.type ganhou…` e produzia o token `layer_contractcenterpiece`.
+  // Com CRLF sobrava um `\r` no fim do bloco que separava os dois por acidente — era ele, e
+  // só ele, que fazia o último tipo declarado ser reconhecido.
+  const fonte = [bloco ? bloco[0] : '', ...extra].join('\n');
   for (const t of fonte.matchAll(/\b([a-z][a-z_]{3,})\b/g)) {
     const v = t[1];
     if (['centerpiece', 'type', 'ganhou', 'scoreboard', 'findings'].includes(v)) continue;

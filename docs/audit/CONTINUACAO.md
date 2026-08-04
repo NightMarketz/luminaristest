@@ -411,6 +411,21 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    exata que esta bancada existe para pegar, dentro da edição de quem a mantém: número
    conferido, alegação ao redor não.
 
+   **SEGUNDA CORREÇÃO — "roda no CI" não era "passa no CI", e o `grep` não distingue os
+   dois.** A terceira revisão independente olhou a execução em vez do texto: as duas únicas
+   runs que já executaram o passo (`30827967242` e `30827962578`, ambas em `17fe71e7`)
+   **reprovaram**, com `[B3] centerpiece.type "layer_contract" … não declarado`. Causa
+   medida: `bancada.html` é **LF no repositório e CRLF no worktree Windows**
+   (`core.autocrlf=true`; `.gitattributes` não cobre este caminho), e o extrator de tipos
+   colava o último tipo do bloco no texto seguinte quando não havia um `\r` para separá-los —
+   o verde local era artefato do sistema de arquivos de quem edita. Fechado normalizando a
+   leitura (local passa a medir o mesmo artefato do CI) e juntando `bloco`+`extra` com
+   separador explícito. Mordida provada: desfazer **só** o `join`, com o artefato em LF,
+   reproduz a mensagem do CI byte a byte.
+
+   A regra que fica: **`grep` prova o texto, execução prova o gate.** Nenhum "gate exit 0"
+   emitido de checkout Windows é evidência sobre o CI sem um run id verde ao lado.
+
 7. **A reconstrução foi revisada; as correções que vieram da revisão, não.** Um agente
    separado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias; duas (E e G)
    foram fechadas depois por quem implementou, **sem segunda revisão** — o que o §9.4
