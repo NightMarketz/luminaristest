@@ -1,9 +1,13 @@
 # Continuação da bancada — estado após a integração das quatro rodadas paralelas
 
 Documento de retomada. Escrito ao fim da sessão que produziu o PR #164, atualizado pela
-sessão que fechou os itens 1 e 2 da fila, e de novo pela integração de quatro trabalhos
-que rodaram em paralelo (triagem + gate de `triagem/1.0`, divulgação §9.4, verificação em
-navegador, AV-03 no frontend).
+sessão que fechou os itens 1 e 2 da fila, pela integração de quatro trabalhos que rodaram em
+paralelo (triagem + gate de `triagem/1.0`, divulgação §9.4, verificação em navegador, AV-03 no
+frontend), e pela sessão que **drenou a fila de correção** fechando os itens 5, 6 e 7 (§3f).
+
+**A fila de `TRIAGEM-R1-R3.json` está em 0 de 7 abertos.** O que sobra dela não é item de fila:
+é a subfila de 4 unidades de `r2_decision.ratified_subqueue`, que ficou **órfã** quando o item 4
+fechou e agora tem dono, data e gatilho próprios — ver item 3 de "o que continua em aberto".
 
 **Lição da integração, que vale para o próximo lote paralelo:** duas das quatro sessões
 escreveram um `B11` diferente no mesmo arquivo, cada uma correta isoladamente. O git acusa
@@ -27,9 +31,11 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
 | `scripts/bancada-gate.mjs` | gate de **16** checagens que reprovam (B1..B9 e B11..B17; B10 só avisa) · **passa, e passa no CI** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
-| `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos · **3 fechados** (§3c) |
+| `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos · **7 fechados** — 6 `corrigido_e_barrado` + 1 `aceite_reconfirmado` (§3c, §3e, §3f) |
 | `server/src/config/__tests__/dockerCompose.qdrant.test.ts` | barreira do item 2 · roda na suíte `unit`, que já está no CI |
 | `my-app/lib/api/__tests__/nextPublicEnvWiring.test.ts` | barreira do item 3 · roda no `vitest`, que já está no CI |
+| `server/src/features/accounting/dtos/__tests__/` (8 arquivos novos) | barreira do item 5 · roda na suíte `unit` · 4 → **12 de 21** DTOs com teste próprio |
+| `scripts/review-ledger-check.mjs` + `docs/audit/REVIEW-LEDGER.jsonl` | barreira do item 6 · **7** regras que reprovam (RL0..RL6) · passo do job `governance-presence` (`ci.yml:225`) |
 
 ## O que foi perdido, e como (histórico — já resolvido)
 
@@ -297,6 +303,99 @@ inquilino.
 **Fora de escopo, e declarado:** cobre `postEntry` e `reverseEntry`. Não cobre `approveEntry`,
 os bridges, nem as 4 unidades da subfila ratificada — ver o item 3 de "o que continua em aberto".
 
+### 3f · Os itens 5, 6 e 7 — a fila DRENADA
+
+| # | Achado | Commit | Fechamento |
+|---|---|---|---|
+| 5 | `fronteira-de-dto-quase-nao-testada` | `a4ffb8e4` | 8 arquivos de teste novos · `corrigido_e_barrado` |
+| 6 | `revisao-independente-sem-artefato-por-merge` | `974e8d4f` | gate de registro por PR no CI · `corrigido_e_barrado` |
+| 7 | `tres-imports-sem-declaracao-no-manifesto` | — | gatilho reverificado · `aceite_reconfirmado` |
+
+Um commit por achado, mais um commit de registro por achado. Os itens 5 e 7 têm evidência
+que mora no mesmo diretório e mesmo assim são commits separados — §5.
+
+**Item 5 · o escopo foi medido, e a primeira medida estava errada.** O achado é "4 de 21 DTOs
+têm teste". Cobrir os 17 restantes não era o pedido; cobrir "os que têm invariante nomeada"
+exige definir *qual* invariante, e a definição usada é: **dinheiro (`MAX_CENTS`) ou data-only
+(`isValidDateOnly`) fiada em CÓDIGO**. A primeira varredura devolveu 10 candidatos e estava
+contaminada: `grep MAX_CENTS` casou dentro de **comentário** em `CounterpartyDto.ts` e
+`DimensionDto.ts`, cujos cabeçalhos dizem literalmente *"NO money, NO dates … no MAX_CENTS /
+date-only concern here"* — os dois entraram na lista por prosa que afirma o **oposto** do que o
+grep concluiu. Refeita a medida removendo comentários antes do casamento: **8**. Denominador
+fechado: 4 já testados + 8 agora + 9 sem invariante de dinheiro/data = 21.
+
+Mordida provada pelas duas mutações **nomeadas** do AV-R3, cada uma revertida de `.bak` com
+`numstat` conferido antes de rodar:
+
+| Mutação | numstat | Resultado |
+|---|---|---|
+| **M2** `InventoryDto.ts:22` teto → `MAX_CENTS + 1` | 1/1 | morta e discriminante — 1 failed / 11 passed |
+| **M7** `aging.dto.ts:35` linha do `refine(isValidDateOnly)` removida | 0/1 | morta e discriminante — 2 failed / 6 passed |
+
+E o **"antes" foi medido, não citado do relatório**: com cada mutação aplicada, a suíte `unit`
+inteira (133 suítes) reprova em **exatamente um** arquivo — o novo. Nenhum teste pré-existente
+pega nenhuma das duas, que é literalmente o achado. As duas rodadas trazem `Tests: N failed`
+com N>0, então nenhuma cai no falso positivo da armadilha 5.
+
+**Fora de escopo, declarado:** os 9 DTOs restantes (`ClosingDto`, `CounterpartyDto`,
+`DimensionDto`, `DocumentAttachmentDto`, `ReceiptDto`, `ReferentialCatalogDto`,
+`ReferentialMappingDto`, `SpedEcfDto`, `tieOutDiagnostic.dto`) só declaram `.strict()` e/ou
+enum. Não estão cobertos e não são afirmados como cobertos.
+
+**Item 6 · o gate cobra DECLARAÇÃO, não aprovação — e é essa escolha que o torna honesto.**
+A barreira é `scripts/review-ledger-check.mjs` + `docs/audit/REVIEW-LEDGER.jsonl` (um veredito
+por PR), como passo do job `governance-presence`. A solução barata e errada era prosa num
+`CONTRIBUTING`; prosa em mensagem de commit é exatamente o estado que o achado mediu.
+
+O ponto de desenho que decidiu tudo: se o gate exigisse **aprovação**, este próprio PR — que não
+foi revisado por agente separado — só ficaria verde **fabricando** uma revisão inexistente. Por
+isso `sem_revisao_independente` é veredito **legítimo** da lista fechada, e o que o gate reprova
+é a **omissão**. É a diferença que a mensagem do B10 já fazia: *ausência de declaração* × *declaração
+de ausência*. O que ele **não** faz está escrito no cabeçalho dos dois arquivos: ele não prova que
+uma revisão aconteceu — ninguém prova um ato lendo um repositório.
+
+O que ele reprova, cada um com código próprio: `[RL0]` razão ausente · `[RL1]` linha malformada
+ou `commit` que não é sha · `[RL2]` PR duplicado · `[RL3]` veredito fora da lista · `[RL4]`
+`reviewer === implementer` (§9.4), `revisado_*` sem `artifact`, `artifact` apontando caminho que
+não existe no disco · `[RL5]` `sem_revisao_independente` sem `note` ou trazendo `reviewer` ·
+`[RL6]` PR do evento sem entrada. **Dez mutações reprovam e três controles seguem verdes**
+(declaração honesta de ausência; revisão legítima com revisor diferente e artefato existente;
+dois PRs distintos válidos) — sem os controles, "tudo vermelho" seria indistinguível de gate.
+
+**Desvio declarado:** a triagem emitiu `barrier_kind: alerta` e o gate entregue **reprova**. O
+desvio é para cima, está escrito no `status_evidence`, e se o dono preferir o alerta literal o
+conserto é uma linha.
+
+**Sem backfill, de propósito:** dos merges da história, 9 deixaram menção em prosa e o resto não
+deixou nada recuperável. Preencher por inferência produziria o registro falso que o achado
+descreve. A cobertura impressa pelo gate a cada run diz de quanto é o buraco.
+
+**O falsificador deste item mede o próprio branch, e me contaminou também.** A triagem já
+registrava a autocontaminação (8 → 9 porque commits da própria branch mencionavam revisão), e
+ela se repetiu por construção: os commits desta branch falam de revisão independente. É por isso
+que o gate conta **entradas estruturadas**, que texto de commit não move. Números não
+contaminados: `git log --merges` devolve **218** merges (a triagem mediu 207 — o denominador
+cresceu 11) contra **0** vereditos declarados antes da barreira.
+
+**Item 7 · o gatilho não disparou, então o aceite continua válido — e minha tentativa de
+reforçá-lo foi refutada.** O `review_trigger` é `git log -1 --format=%H -- <package-lock.json>`
+mudar de valor. Em `ca33c745` (triagem) e em `230a6095` os dois valores são idênticos
+(`4b65da7c` / `94911afe`), e `git diff --numstat` entre os dois commits nos dois locks é vazio.
+Controle discriminante, porque "não mudou" é fácil de obter por comando quebrado: o mesmo
+comando em `94911afe~1` devolve `2ba82e9a` — ele **muda** quando o arquivo muda.
+
+Levantei a hipótese de que declarar os pacotes sem regenerar a trava quebraria `npm ci`, o que
+faria o "conserto de duas linhas" custar mais do que o `accepted_reason` estima. **Refutada por
+execução:** `npm ci --dry-run --ignore-scripts` sai 0 no mutante *e* no controle — npm 10.9.2
+aceita, porque a versão é satisfeita por entrada transitiva já presente. E a primeira rodada
+dessa medição foi **inválida** (controle e mutante falharam juntos, `ERESOLVE`) porque eu não
+copiei `server/.npmrc`, que traz `legacy-peer-deps=true`; foi o **controle falhando** que expôs
+o probe quebrado. Resultado: o `accepted_reason` estava certo sobre o custo, e o argumento que
+eu tinha a favor do aceite não existe. O aceite fica pelo portão derivado do mapa, não por ele.
+
+**Sem revisão independente** (§9.4) nos três. O que existe no lugar é prova de mordida, e prova
+de mordida não é revisão — declarado no próprio razão do item 6, aplicado ao trabalho que o criou.
+
 ### 4 · Os achados de maior dano, se e quando triados
 - **R3 F1 (dano 4)** — o caminho de escrita do razão não tem cobertura de integração. Nenhum teste de integração instancia `PostingService`; `PostingDimension.integration.test.ts:76` define um helper local `postEntry` que grava direto via `db.posting.create`.
 - **R1 F1 e F2 (dano 3)** — os dois no mesmo `docker-compose.yml`: nome de variável divergente e Qdrant sem chave.
@@ -327,7 +426,28 @@ os bridges, nem as 4 unidades da subfila ratificada — ver o item 3 de "o que c
    das linhas `centerpiece.type ganhou`, **35 palavras de texto corrido viraram "tipo
    declarado"**. Por isso as duas linhas `ganhou` são as últimas do `t-contrato`. Antes de
    confiar num regex de fronteira de linha, confira o line ending do arquivo.
-8. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
+8. **Nome de invariante casa dentro de COMENTÁRIO que diz o contrário.** `grep MAX_CENTS` nos
+   DTOs contábeis devolveu `CounterpartyDto.ts` e `DimensionDto.ts`, cujos cabeçalhos dizem
+   *"NO money, NO dates … no MAX_CENTS / date-only concern here"* — a prosa que **nega** a
+   invariante põe o arquivo na lista de quem a tem. Inflou o escopo do item 5 de 8 para 10 antes
+   de a medida ser refeita removendo comentários de bloco e de linha. Mesma família da armadilha 7,
+   com o sinal invertido: lá a prosa virou declaração, aqui a **negação** virou declaração. Antes
+   de contar ocorrências de um símbolo, remova comentários — ou confira um caso conhecido.
+
+9. **`local x=$(cmd); code=$?` em bash devolve o status de `local`, não do comando.** A primeira
+   matriz de mutação do gate do item 6 imprimiu `EXIT=0` para as dez mutações que **estavam
+   corretas**: as mensagens de erro apareciam, então o resultado *parecia* bom, e um gate que só
+   imprimisse sem `exit 1` daria a saída idêntica. É a versão-harness de "todo caso negativo
+   precisa de controle": um harness quebrado passa por qualquer coisa. Capture o exit direto
+   (`cmd >out 2>&1; code=$?`) e confira que os **controles** ficam verdes no mesmo harness.
+
+10. **Cópia parcial de manifesto invalida o probe de `npm`.** Medir `npm ci` numa cópia isolada
+    de `package.json` + `package-lock.json` fez controle **e** mutante falharem juntos com
+    `ERESOLVE`, porque `server/.npmrc` (com `legacy-peer-deps=true`) não foi copiado. Foi o
+    **controle falhando** que expôs o probe; sem ele, o mutante vermelho teria sido lido como
+    mordida. Ao isolar um diretório para medir npm, copie `.npmrc` junto.
+
+11. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
    têm o mesmo cabeçalho `## 4b · conventions[]`. Uma mutação que pretendia atingir o
    `t-av20` caiu no `t-av03`, e o gate reprovou — corretamente — o item errado. Escope a
    mutação ao bloco (índice de `id="t-xxx"` até o `</script>`) antes de concluir qualquer
@@ -380,16 +500,42 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    Nota sobre os números: `4/7` no frontend contra `2/7` no backend **não** ranqueia as
    suítes — são conjuntos de mutação diferentes, dirigidos a invariante, e o próprio AV-03
    declara que é amostra dirigida, não estimativa estatística.
-3. **A fila de correção está aberta em 3 de 7.** Os itens 1, 2, 3 (§3c) e **4** (§3e) foram
-   corrigidos **e barrados**. Restam, na ordem:
-   **5** `fronteira-de-dto-quase-nao-testada`, **6**
-   `revisao-independente-sem-artefato-por-merge` (único de custo **recorrente**), **7**
-   `tres-imports-sem-declaracao-no-manifesto` (aceito com gatilho — nada a fazer até as
-   travas serem regeneradas).
-   **A subfila de 4 unidades de `r2_decision.ratified_subqueue` NÃO foi fechada junto** —
-   ela era herdada pelo item 4, e a barreira dele cobre `postEntry`/`reverseEntry`, não
-   `accountingController` nem os três repositórios de `tx+inquilino+softdelete`. Segue aberta,
-   agora sem item de fila que a carregue: quem retomar decide se vira item próprio ou aceite.
+3. **FECHADO — a fila de correção está DRENADA: 0 de 7 abertos.** Os itens 1, 2, 3 (§3c), **4**
+   (§3e) e **5, 6** (§3f) foram corrigidos **e barrados**; o **7** foi **reverificado e o aceite
+   reconfirmado** (§3f) — gatilho não disparou, os três pacotes seguem resolvendo, nenhum
+   arquivo de código tocado.
+
+   **O que NÃO fechou com ela, e por isso não sumiu junto: a subfila de 4 unidades de
+   `r2_decision.ratified_subqueue`.** Ela era herdada pelo item 4, e a barreira dele cobre
+   `postEntry`/`reverseEntry` — não `accountingController` nem os três repositórios de
+   `tx+inquilino+softdelete`. Ficou **órfã** em `d11b4716`: ratificada, aberta e sem nenhum item
+   de fila que a carregasse.
+
+   **DECISÃO tomada nesta sessão: fila PRÓPRIA, não aceite.** Dono `Desenvolvedor Luminaris`,
+   data proposta `2026-08-31`, gatilho observável (`grep -rl <unidade> server/src --include=*.integration.test.ts`
+   deixar de devolver 0 para qualquer uma das quatro). O argumento é medido, não de gosto: as 4
+   são as únicas de 110 com **três** invariantes nomeadas simultâneas, e duas delas (`inquilino`,
+   `tx`) são exatamente as que M5 e M3 do AV-R3 exercitaram e que sobreviveram **sem serem
+   executadas** — o mesmo buraco que o AV-R5 mediu do outro lado da pilha (item 2 abaixo).
+   Aceitá-las coletivamente seria aceitar a classe que esta bancada mediu duas vezes; o aceite
+   das outras 106 só é legítimo porque elas **não** têm essa propriedade.
+
+   Estado medido em `230a6095`, não herdado: as quatro seguem com **0** arquivos de teste que as
+   nomeiem (e 0 de integração). Controles no mesmo comando — `PostingService` devolve 10 arquivos,
+   `NaoExisteRepository` devolve 0 —, então os quatro zeros não são cegueira de padrão.
+
+   **Por que ela NÃO virou entrada em `items[]`, e isso é limite de contrato:** o **B12** exige
+   que todo `fingerprint` de item seja cópia literal de um `fingerprint` de relatório
+   `auditoria/1.1` **emitido**, e a subfila não tem nenhum — ela vem de `centerpiece.rows` do
+   `AV-R2.json`, cujo `findings` é `[]` por desenho (reconferido). Inventar um fingerprint aqui
+   seria criar achado de rodada que não o emitiu, que é o cenário que o próprio B12 fecha. Fica
+   registrada em `r2_decision`, com dono/data/gatilho no formato de um item. Quem quiser um item
+   de fila de verdade: o caminho previsto é **emitir uma rodada `auditoria/1.1` sobre essas 4
+   unidades e triar o que ela achar** — trabalho de rodada, não de registro.
+
+   `gates_summary` **não** foi alterado: ele conta os portões dos 7 achados (1 / 5 / 1), e a
+   subfila nunca teve portão próprio. Somá-la ali faria a contagem deixar de bater com `items[]`,
+   que é o que o B15 confere.
 
 4. **FECHADO — os defeitos de runtime foram EMITIDOS e TRIADOS.** O que estava aberto aqui era
    consequência medida de reportar em prosa: o B12 exige que todo `fingerprint` de uma
@@ -464,7 +610,12 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    resposta é decisão do dono, registrada aqui e no passo 2 da bancada, não medição.
 
 6. **FECHADO — `scripts/bancada-gate.mjs` roda no CI** desde `7c6c35f2`, como passo do job
-   `governance-presence` (`grep -rn 'bancada-gate' .github/` devolve `ci.yml:203`). A escolha
+   `governance-presence` (`grep -rn 'bancada-gate' .github/` devolve `ci.yml:209` — era `:203`
+   e **deslocou 6 linhas** quando o passo do item 6 da triagem e o `fetch-depth: 0` entraram no
+   mesmo job; número reconferido em vez de copiado, que é a lição do próprio parágrafo abaixo).
+   **O job ganhou um irmão:** `node scripts/review-ledger-check.mjs` em `ci.yml:225`, pela mesma
+   razão de alocação (só builtins do Node, não depende de `npm ci`, então nenhuma falha alheia o
+   mascara). A escolha
    do job está justificada no commit: o gate só usa builtins do Node, então não precisou ir
    para dentro de `server`/`frontend` como o irmão `debt-ledger-check.mjs`, e pendurá-lo num
    job com `npm ci` faria uma falha alheia mascará-lo. Sem filtro de `paths`, de propósito.
