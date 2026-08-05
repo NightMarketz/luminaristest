@@ -393,8 +393,26 @@ copiei `server/.npmrc`, que traz `legacy-peer-deps=true`; foi o **controle falha
 o probe quebrado. Resultado: o `accepted_reason` estava certo sobre o custo, e o argumento que
 eu tinha a favor do aceite não existe. O aceite fica pelo portão derivado do mapa, não por ele.
 
+**A mordida do gate do item 6 foi observada NO CI, com run id — não localmente.** É a regra do
+F-A1 aplicada a mim mesmo: `grep` prova o texto, execução prova o gate.
+
+| Momento | Evidência |
+|---|---|
+| **mordida** | Run **31044233435** (`pull_request`, PR #167, `333a5e26`): o job `Governance – OPS-001 layer present` **completou com `failure`**, mensagem `[RL6] PR 167 não tem entrada em docs/audit/REVIEW-LEDGER.jsonl`, `exit code 1` |
+| **verde depois da entrada** | Runs **31044403692** (`pull_request`) e **31044400374** (`push`), `1c2c38f8`: `success` nas duas, **5 de 5** jobs |
+
+**Precisão que não pode ser arredondada:** a *run* 31044233435 depois ficou com
+`conclusion=cancelled`, porque o grupo de `concurrency` do workflow a cancelou quando o push
+seguinte chegou. O **job** completou e reprovou; a **run** foi cancelada por outra causa. Dizer
+"a run reprovou" seria falso; dizer só "a run foi cancelada" esconderia a mordida.
+
+**Medida nova, para ninguém persegui-la:** a razão declarado/merges dá **219** no evento
+`pull_request` e **218** no `push` — o checkout de PR é um merge commit sintético que entra em
+`git log --merges`. A diferença é do **evento**, não do repositório.
+
 **Sem revisão independente** (§9.4) nos três. O que existe no lugar é prova de mordida, e prova
-de mordida não é revisão — declarado no próprio razão do item 6, aplicado ao trabalho que o criou.
+de mordida não é revisão — declarado no próprio razão do item 6, aplicado ao trabalho que o criou:
+a primeira entrada de `REVIEW-LEDGER.jsonl` é o PR #167 com `sem_revisao_independente`.
 
 ### 4 · Os achados de maior dano, se e quando triados
 - **R3 F1 (dano 4)** — o caminho de escrita do razão não tem cobertura de integração. Nenhum teste de integração instancia `PostingService`; `PostingDimension.integration.test.ts:76` define um helper local `postEntry` que grava direto via `db.posting.create`.
