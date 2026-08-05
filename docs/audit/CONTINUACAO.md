@@ -25,7 +25,7 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
 | `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` | rodada 6 · 5 achados de **runtime** da própria bancada · `failure_modes` · primeira com `runtime: true` |
 | `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
-| `scripts/bancada-gate.mjs` | gate de **17** checagens · **passa** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
+| `scripts/bancada-gate.mjs` | gate de **16** checagens que reprovam (B1..B9 e B11..B17; B10 só avisa) · **passa, e passa no CI** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
 | `docs/audit/TRIAGEM-R1-R3.json` | **triagem/1.0** · 7 itens · 7 falsificadores executados · portão, dono e data em todos · **3 fechados** (§3c) |
 | `server/src/config/__tests__/dockerCompose.qdrant.test.ts` | barreira do item 2 · roda na suíte `unit`, que já está no CI |
@@ -155,6 +155,25 @@ contra regra moldada ao próprio arquivo, e é declarado como único.
 **Limite declarado:** B11..B16 leem estrutura. Não medem se o falsificador rodou, se o portão
 foi bem derivado nem se o viés nomeado é o real; prosa vazia compra a saída em B16.
 
+**O escopo da triagem passou a ser conferido nos DOIS ramos, e por instrumento** (F-A2 e
+F-A5 da terceira revisão independente, fechados juntos porque são a mesma função):
+
+- **B11** — todo `source_run.instrument` declarado tem de resolver para ao menos um relatório
+  emitido. O corte era `!candidatos.length` sobre a **união**, então um run fantasma passava
+  em silêncio desde que outro run resolvesse; e, se todo item declarasse `source_report`, o
+  campo nem chegava a ser olhado. Uma triagem podia afirmar ter triado uma rodada inexistente.
+- **B12** — o relatório de origem tem de estar **dentro** do escopo declarado, e agora isso
+  vale também quando a origem vem de `source_report`. O ramo declarado casava contra qualquer
+  relatório do diretório: bastava nomear o arquivo para uma triagem carregar achado de rodada
+  que nunca triou — o cenário do F1, vivo no ramo que aquela correção não tocou. **Omitir o
+  campo era mais restrito do que preenchê-lo**, que é o incentivo exatamente ao contrário.
+
+Mordida provada por 3 mutações mais 1 controle: as duas fugas reprovam com mensagem própria,
+o run fantasma reprova **também** com os `source_report` intactos (caso que o ramo derivado
+nunca alcançava), e a troca **legítima** de origem dentro do escopo segue verde — a regra
+não é "tudo vermelho". O precedente `AV-L1-TRIAGEM.json` continua passando sem uma linha
+alterada.
+
 **CORREÇÃO — a versão anterior deste documento dizia que `triagem/1.0` "nunca foi
 exercitado uma vez". É falso, e conferir levou um comando.** `docs/audit/AV-L1-TRIAGEM.json`
 é um `triagem/1.0` completo da rodada AV-L1 (`ae8d18b`): 4 itens, 4 falsificadores
@@ -193,6 +212,16 @@ mutação revertida de `.bak` (nunca `git checkout`) — a de baixo é a que val
 - **Item 3** — três mutações. A decisiva é a do meio: **corrigir só o nome**, deixando o
   valor em `environment:`. O caso do nome passa e o de build-arg **falha**. É exatamente o
   meio-conserto que declararia vitória, e nenhuma checagem de nome sozinha o pegaria.
+
+**A barreira do item 3 passou a conferir o VALOR** (F-A4 da terceira revisão independente).
+Os casos originais liam nome e posição da chave e mais nada, então voltar a
+`http://server:3001` — o valor que o parágrafo abaixo mede como errado **duas vezes** —
+deixava a barreira 4/4 verde. Dois casos novos, e nenhum carrega URL escrita à mão: o valor
+efetivo do build arg tem de ser o **mesmo default que `next.config.js` declara** (pega o
+`/api` faltando e o vazio de `${VAR}` sem default), e o **host não pode ser nome de serviço
+do compose** (pega o host que só existe na rede interna). Mordida provada por 3 mutações mais
+1 controle — a troca **legítima** de topologia, feita nos dois lados, segue 6/6 verde, que é
+a diferença entre uma regra e uma URL decorada dentro do teste.
 
 **O que a correção mediu e a triagem não sabia** (registrado em `status_evidence`, não
 corrigido de passagem): o valor `http://server:3001` errava **além** do nome — falta o
@@ -398,11 +427,40 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    `dc7fd12`, e `deployed` é por desenho um campo que a página nunca preenche sozinha. A
    resposta é decisão do dono, registrada aqui e no passo 2 da bancada, não medição.
 
-6. **`scripts/bancada-gate.mjs` não roda em lugar nenhum além da mão de quem lembra.**
-   Medido: `grep -rn 'bancada-gate' .github/ package.json` devolve nada, enquanto o script
-   irmão `debt-ledger-check.mjs` está no CI em dois passos. É a mesma classe do F4 do R1
-   aplicada à própria bancada, e vale mais agora — **dezessete** checagens atrás de gatilho
-   manual. Registrado em `new_findings_raised` da triagem; não corrigido.
+6. **FECHADO — `scripts/bancada-gate.mjs` roda no CI** desde `7c6c35f2`, como passo do job
+   `governance-presence` (`grep -rn 'bancada-gate' .github/` devolve `ci.yml:203`). A escolha
+   do job está justificada no commit: o gate só usa builtins do Node, então não precisou ir
+   para dentro de `server`/`frontend` como o irmão `debt-ledger-check.mjs`, e pendurá-lo num
+   job com `npm ci` faria uma falha alheia mascará-lo. Sem filtro de `paths`, de propósito.
+
+   **CORREÇÃO — este item afirmou o contrário depois de deixar de ser verdade.** Numa
+   passagem anterior eu corrigi a CONTAGEM dentro deste parágrafo ("dezesseis" → "dezessete")
+   e deixei intacta a afirmação de que o grep "devolve nada", que já era falsa havia dois
+   commits — o próprio `7c6c35f2` é ancestral. Pego por revisão independente. É a classe
+   exata que esta bancada existe para pegar, dentro da edição de quem a mantém: número
+   conferido, alegação ao redor não.
+
+   **E a "correção" de contagem estava invertida.** Aquela passagem trocou **dezesseis por
+   dezessete**, e dezesseis era o certo: reprovam `B1..B9` (9) e `B11..B17` (7) = **16**;
+   `B10` só emite aviso. A enumeração ao lado do número — que ficou intacta em todas as
+   passagens — sempre disse 16, e passou dois commits contradizendo o número que a
+   acompanhava. Falsificador de uma linha, que nunca foi rodado:
+   `grep -o "err('B[0-9]*'" scripts/bancada-gate.mjs | sort -u | wc -l` → 16.
+
+   **SEGUNDA CORREÇÃO — "roda no CI" não era "passa no CI", e o `grep` não distingue os
+   dois.** A terceira revisão independente olhou a execução em vez do texto: as duas únicas
+   runs que já executaram o passo (`30827967242` e `30827962578`, ambas em `17fe71e7`)
+   **reprovaram**, com `[B3] centerpiece.type "layer_contract" … não declarado`. Causa
+   medida: `bancada.html` é **LF no repositório e CRLF no worktree Windows**
+   (`core.autocrlf=true`; `.gitattributes` não cobre este caminho), e o extrator de tipos
+   colava o último tipo do bloco no texto seguinte quando não havia um `\r` para separá-los —
+   o verde local era artefato do sistema de arquivos de quem edita. Fechado normalizando a
+   leitura (local passa a medir o mesmo artefato do CI) e juntando `bloco`+`extra` com
+   separador explícito. Mordida provada: desfazer **só** o `join`, com o artefato em LF,
+   reproduz a mensagem do CI byte a byte.
+
+   A regra que fica: **`grep` prova o texto, execução prova o gate.** Nenhum "gate exit 0"
+   emitido de checkout Windows é evidência sobre o CI sem um run id verde ao lado.
 
 7. **A reconstrução foi revisada; as correções que vieram da revisão, não.** Um agente
    separado emitiu **PASS COM RESSALVA** e escreveu três mutações próprias; duas (E e G)

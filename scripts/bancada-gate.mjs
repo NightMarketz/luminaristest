@@ -25,8 +25,11 @@
 //   B8  teto de confiança do AV-00 §2.2: ratio > 0.70 proíbe confiança alta por revisão
 //   B9  instrumento marcado v4 (ou v4.x) carrega os blocos 4b e 6b, ou se isenta por
 //       v4patch — e nesse caso a emenda compartilhada tem de existir e suprir os dois
-//   B11 todo triagem/1.0 tem items não vazio, source_run(s), gates_summary e self_check
-//   B12 todo fingerprint da triagem é cópia literal de um fingerprint de relatório emitido
+//   B11 todo triagem/1.0 tem items não vazio, source_run(s), gates_summary e self_check —
+//       e cada source_run.instrument declarado resolve para ao menos um relatório emitido
+//   B12 todo fingerprint da triagem é cópia literal de um fingerprint de relatório emitido,
+//       e o relatório de origem está DENTRO do escopo que a triagem declara ter triado —
+//       tanto quando a origem é derivada quanto quando é declarada em source_report
 //   B13 todo item declara verification dentro da lista fechada
 //   B14 portão dentro da lista fechada; portão que não é aceite nem descarte exige owner e
 //       due; aceite exige accepted_reason, accepted_by e review_trigger OBSERVÁVEL
@@ -55,9 +58,20 @@ const err = (b, m) => erros.push(`[${b}] ${m}`);
 const warn = (b, m) => avisos.push(`[${b}] ${m}`);
 
 // ---------- leitura da bancada ----------
+// NORMALIZAÇÃO DE FIM DE LINHA, e ela é o conserto de um defeito medido, não higiene.
+//
+// `bancada.html` é LF no repositório e CRLF no worktree Windows (`core.autocrlf=true`, e
+// `.gitattributes` não cobre este caminho). O gate lia bytes diferentes em cada lugar: verde
+// na máquina de quem edita, `exit 1` no runner Linux. As duas únicas execuções do passo no
+// GitHub Actions falharam com `[B3] centerpiece.type "layer_contract" … não declarado`
+// enquanto o `CONTINUACAO.md` declarava o item FECHADO.
+//
+// Normalizar aqui faz a execução local medir o MESMO artefato que o CI mede — sem isto,
+// nenhum "gate exit 0" desta máquina é evidência sobre o CI. É a regra do projeto de gate
+// que lê o app, não o texto, aplicada ao próprio gate.
 let html;
 try {
-  html = readFileSync(BANCADA, 'utf8');
+  html = readFileSync(BANCADA, 'utf8').replace(/\r\n/g, '\n');
 } catch {
   console.error(`::error::bancada não encontrada em ${BANCADA}`);
   process.exit(1);
@@ -178,7 +192,12 @@ const tiposDeclarados = new Set();
 {
   const bloco = contrato.match(/centerpiece\.type[\s\S]*?(?=\nscoreboard|\nfindings|$)/);
   const extra = contrato.match(/centerpiece\.type ganhou[\s\S]*?(?=\n[a-z]|\n\n|$)/g) || [];
-  const fonte = (bloco ? bloco[0] : '') + extra.join('\n');
+  // JUNTAR COM SEPARADOR, e não concatenar. O `bloco` termina exatamente no último tipo
+  // (o lookahead `(?=\nscoreboard)` para antes da quebra), então `bloco + extra` colava
+  // `layer_contract` em `centerpiece.type ganhou…` e produzia o token `layer_contractcenterpiece`.
+  // Com CRLF sobrava um `\r` no fim do bloco que separava os dois por acidente — era ele, e
+  // só ele, que fazia o último tipo declarado ser reconhecido.
+  const fonte = [bloco ? bloco[0] : '', ...extra].join('\n');
   for (const t of fonte.matchAll(/\b([a-z][a-z_]{3,})\b/g)) {
     const v = t[1];
     if (['centerpiece', 'type', 'ganhou', 'scoreboard', 'findings'].includes(v)) continue;
@@ -208,7 +227,27 @@ const SCHEMAS_FORA_DE_ESCOPO = new Set([]);
 
 const relatorios = [];
 const triagens = [];
-for (const f of readdirSync(AUDIT_DIR).filter((x) => x.endsWith('.json'))) {
+// DESCOBERTA RECURSIVA E INSENSÍVEL A CAIXA.
+//
+// A fuga do schema foi fechada e ELA MUDOU DE CAMPO em vez de morrer: a varredura era
+// `readdirSync(AUDIT_DIR)` sem recursão, filtrando por `.endsWith('.json')` sensível a
+// caixa. Uma triagem com `items: []` — o falsificador que motivou B11..B16 — passava verde
+// em `docs/audit/sub/` ou nomeada `.JSON`. A lista fechada de schemas é sólida; ela
+// simplesmente nunca era consultada para esses arquivos. Medido por revisão independente.
+//
+// Lição que vale além daqui: fechar a checagem não fecha a classe enquanto o que ALIMENTA
+// a checagem continuar seletivo. O gate lê o que a varredura entrega.
+function jsonsDeAuditoria(dir, base = '') {
+  const saida = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const rel = base ? `${base}/${ent.name}` : ent.name;
+    if (ent.isDirectory()) saida.push(...jsonsDeAuditoria(join(dir, ent.name), rel));
+    else if (ent.name.toLowerCase().endsWith('.json')) saida.push(rel);
+  }
+  return saida;
+}
+
+for (const f of jsonsDeAuditoria(AUDIT_DIR)) {
   let j;
   try {
     j = JSON.parse(readFileSync(join(AUDIT_DIR, f), 'utf8'));
@@ -418,6 +457,37 @@ for (const { f, j } of triagens) {
   }
   if (!j.self_check) err('B11', `${f}: self_check ausente`);
 
+  // ESCOPO DECLARADO DA TRIAGEM, computado uma vez e usado pelos DOIS ramos do B12.
+  //
+  // Estava dentro do laço de itens e só do lado derivado, e as duas coisas eram defeito:
+  //
+  //  · F-A5 — `source_run` que não resolve para relatório nenhum passava em silêncio quando
+  //    OUTRO run resolvia, porque o corte era `!candidatos.length` sobre a UNIÃO. Uma triagem
+  //    podia declarar ter triado `AV-99-QUE-NUNCA-EXISTIU` ao lado de `AV-R6` e sair exit 0,
+  //    afirmando um escopo que ela não tem. E, se todo item declarasse `source_report`, o
+  //    ramo derivado nem era alcançado: o campo nunca chegava a ser olhado.
+  //
+  //  · F-A2 — a conferência de escopo só existia no ramo derivado. O ramo com
+  //    `source_report` declarado casava contra QUALQUER relatório do diretório, então bastava
+  //    nomear o arquivo para uma triagem carregar achado de uma rodada que ela nunca triou —
+  //    exatamente o cenário que motivou o F1, sobrevivendo no ramo que aquela correção não
+  //    tocou. Fechar um ramo não fecha a classe enquanto o outro seguir global.
+  //
+  // As duas medidas por revisão independente, cada uma com mutação de 1 campo que saía verde.
+  const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
+  const semArquivo = (p) => p.replace(/^.*[/\\]/, '');
+  const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
+  const noEscopo = new Set(candidatos.map(({ f: cf }) => semArquivo(cf)));
+
+  // F-A5 · cada instrumento declarado tem de resolver, e a conta é POR INSTRUMENTO.
+  for (const inst of instrumentos) {
+    if (!relatorios.some(({ j: rj }) => rj.run?.instrument === inst)) {
+      err('B11', `${f}: source_run.instrument "${inst}" não corresponde a nenhum relatório ` +
+        'auditoria/1.1 deste diretório — a triagem declara ter triado uma rodada que não ' +
+        'foi emitida');
+    }
+  }
+
   for (const [i, it] of (items || []).entries()) {
     const id = `${f}:${it.fingerprint || `item[${i}]`}`;
 
@@ -448,23 +518,55 @@ for (const { f, j } of triagens) {
       // `source_report` para o fingerprint casar contra qualquer relatório. Isso fecha aqui
       // sem campo novo — a origem passa a ser o relatório cujo `run.instrument` bate com o
       // `source_run.instrument` declarado. Estritamente mais apertado que o global.
-      const instrumentos = new Set(runs.map((r) => r && r.instrument).filter(Boolean));
-      const candidatos = relatorios.filter(({ j: rj }) => instrumentos.has(rj.run?.instrument));
+      // A DERIVAÇÃO SÓ VALE QUANDO RESOLVE PARA UM ÚNICO RELATÓRIO.
+      //
+      // A primeira versão desta correção derivava a origem do `source_run.instrument` e
+      // aceitava a UNIÃO dos candidatos. Uma segunda revisão independente derrubou isso com
+      // um contraexemplo que já existia no disco: `AV-R3.json` e
+      // `AV-R5-FORCA-DA-SUITE-FRONTEND.json` declaram os dois `run.instrument: "AV-03"` —
+      // duas rodadas do mesmo instrumento, o que é legítimo e não vai deixar de acontecer.
+      // Com a união, um item da triagem de R1/R3 carregava achado do frontend que ela nunca
+      // triou, verde. E cada `source_run` a mais alargava o conjunto: cinco declarações
+      // devolviam 6 dos 7 relatórios, reconstruindo o conjunto global que a correção dizia
+      // ter apagado.
+      //
+      // Por que não exigir `source_report` sempre, como as duas revisões prescreveram: o
+      // precedente AV-L1-TRIAGEM.json não o tem e é o artefato de CONTROLE. Mas a razão que
+      // eu tinha dado antes — "retrofitar história ou descartar o controle" — foi medida
+      // pela revisão e o custo real é 4 linhas: a premissa era certa, a conclusão não
+      // seguia. O que sustenta a anistia não é o custo, é que o precedente resolve SEM
+      // AMBIGUIDADE (instrumento AV-L1 → exatamente um relatório).
+      //
+      // Daí a regra: derivar é permitido enquanto não houver escolha a fazer. Havendo duas
+      // origens possíveis, o gate não adivinha — exige a declaração.
+      // `instrumentos` e `candidatos` vêm do escopo da triagem (acima), não são recomputados
+      // por item.
       if (!instrumentos.size) {
         err('B12', `${id}: sem source_report e sem source_run.instrument — não há como ` +
           'localizar a origem, e o fingerprint casaria contra qualquer relatório');
       } else if (!candidatos.length) {
-        err('B12', `${id}: source_run.instrument ${[...instrumentos].join('/')} não corresponde ` +
-          'a nenhum relatório auditoria/1.1 deste diretório');
-      } else if (!candidatos.some(({ f: cf }) => fpsPorArquivo.get(cf)?.has(it.fingerprint))) {
-        err('B12', `${id}: fingerprint não existe em nenhum relatório de ` +
-          `${[...instrumentos].join('/')} (${candidatos.map((c) => c.f).join(', ')}) — ` +
-          'cópia alterada ou origem errada');
+        // Silêncio DELIBERADO: o B11 acima já reprovou, uma vez por instrumento que não
+        // resolve. Repetir por item transformaria um defeito de envelope em N linhas de erro.
+      } else if (candidatos.length > 1) {
+        err('B12', `${id}: sem source_report e a origem é AMBÍGUA — ${[...instrumentos].join('/')} ` +
+          `resolve para ${candidatos.length} relatórios (${candidatos.map((c) => c.f).join(', ')}). ` +
+          'Derivação só vale quando há uma única origem possível; declare source_report');
+      } else if (!fpsPorArquivo.get(candidatos[0].f)?.has(it.fingerprint)) {
+        err('B12', `${id}: fingerprint não existe em ${candidatos[0].f} ` +
+          `(única origem de ${[...instrumentos].join('/')}) — cópia alterada ou origem errada`);
       }
     } else {
-      const alvo = it.source_report.replace(/^.*[/\\]/, '');
+      const alvo = semArquivo(it.source_report);
       if (!fpsPorArquivo.has(alvo)) {
         err('B12', `${id}: source_report "${it.source_report}" não é um relatório auditoria/1.1 lido deste diretório`);
+      } else if (!noEscopo.has(alvo)) {
+        // F-A2 · declarar a origem não pode ser mais frouxo do que derivá-la. O ramo
+        // derivado só aceita relatório do instrumento que a triagem diz ter triado; sem esta
+        // linha, o ramo declarado aceitava QUALQUER relatório do diretório, e omitir o campo
+        // passou a ser mais restrito do que preenchê-lo — incentivo invertido.
+        err('B12', `${id}: source_report "${it.source_report}" é um relatório emitido, mas ` +
+          `FORA do escopo desta triagem — ela declara ter triado ${[...instrumentos].join('/')} ` +
+          `(${[...noEscopo].join(', ')}). Item de rodada não triada não entra pela porta do campo`);
       } else if (!fpsPorArquivo.get(alvo).has(it.fingerprint)) {
         err('B12', `${id}: fingerprint não existe em ${it.source_report} — cópia alterada ou origem errada`);
       }
