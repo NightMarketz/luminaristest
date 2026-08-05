@@ -7,6 +7,13 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+
+# NEXT_PUBLIC_* é inlinado no bundle AQUI, não no runtime: next.config.js lê process.env
+# durante `next build`. Sem este ARG/ENV, nenhum valor vindo do compose alcança o bundle e
+# a imagem sai com o default de desenvolvimento embutido, em silêncio.
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 RUN npm run build
 
 # ---- runner ----

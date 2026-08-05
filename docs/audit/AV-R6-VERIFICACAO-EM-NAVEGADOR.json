@@ -1,0 +1,779 @@
+{
+  "schema": "auditoria/1.1",
+  "run": {
+    "instrument": "AV-R6",
+    "instrument_version": "v4.1",
+    "title": "Verificação em navegador da própria bancada — modos de falha de runtime",
+    "project": "Luminaris",
+    "repo_commit": "59c1eb9b",
+    "generated_at": "2026-08-03",
+    "agent": "claude-opus-5",
+    "closing_block_version": "v3",
+    "scope": {
+      "included": [
+        "docs/audit/bancada.html"
+      ],
+      "excluded": [
+        "server",
+        "my-app",
+        "scripts"
+      ],
+      "period": null,
+      "budget_files": 3,
+      "files_read_full": 1
+    },
+    "reduced_mode": true,
+    "reduced_reason": "Rodada de RUNTIME por desenho: a página foi executada em navegador e medida em execução. Tipos, build e suíte não rodaram — esta worktree não tem node_modules em server/ nem em my-app/, e nada disso alcançaria um arquivo HTML solto de qualquer forma. É a primeira rodada da bancada com reduced_capabilities.runtime = true.",
+    "instrument_note": "AV-R6 NÃO é um instrumento do catálogo. Nenhum dos 21 códigos AV-* da bancada cobre 'executar um artefato HTML em navegador e medir o comportamento dele'. A rodada foi conduzida no molde do envelope v4.1 (perfil → medição → achado com falsificador → portão sugerido), sem bloco de instrumento próprio. A lacuna está registrada em inquiry[] e é feedback de instrumento, não licença.",
+    "agent_authored_ratio": {
+      "value": 0.941,
+      "method": "AV-00 §2.1, reaproveitado da rodada R1 — NÃO remedido nesta rodada. O alvo aqui é um único arquivo de docs/, e o ratio é do repositório.",
+      "identity_rule": "trailer Co-authored-by contendo Claude",
+      "measured": true
+    },
+    "confidence_ceiling": "media",
+    "review_of_this_run": null,
+    "review_gap": "Nenhum agente separado revisou esta rodada. O AV-00 §9.4 rejeita PASS emitido por quem executou, e é exatamente o caso: eu medi, eu emiti. O único contrapeso é que cada medição foi reproduzida uma segunda vez em instância limpa e independente, com o comando colado no relatório — prova de reprodutibilidade não é revisão.",
+    "reduced_capabilities": {
+      "tipos": false,
+      "build": false,
+      "suite": false,
+      "runtime": true
+    }
+  },
+  "signals": [
+    {
+      "id": "S1",
+      "label": "Acúmulo de handlers por decisão respondida",
+      "measured": true,
+      "method": "iframe same-origin criado dentro da própria página (`f.src='bancada.html'`), instância limpa; `wireConductor` embrulhado por contador ANTES de qualquer interação; sete eventos `change` despachados nos selects pendentes do passo 2, um por decisão, medindo invocações por evento",
+      "unit": "handlers disparados por evento change",
+      "rows": [
+        {
+          "key": "1ª decisão (deployed)",
+          "value": 2
+        },
+        {
+          "key": "2ª decisão (users)",
+          "value": 4
+        },
+        {
+          "key": "3ª decisão (paid)",
+          "value": 8
+        },
+        {
+          "key": "4ª decisão (humanGate)",
+          "value": 16
+        },
+        {
+          "key": "5ª decisão (rigor)",
+          "value": 32
+        },
+        {
+          "key": "6ª decisão (fpTol)",
+          "value": 64
+        },
+        {
+          "key": "7ª decisão (audience)",
+          "value": 128
+        },
+        {
+          "key": "ms do 7º evento",
+          "value": "187 ms (1ª execução) · 235 ms (2ª execução)"
+        },
+        {
+          "key": "8ª e 9ª decisões (continuação da mesma sessão)",
+          "value": "258 e 516 handlers · 392 ms e 996 ms"
+        },
+        {
+          "key": "removeEventListener no arquivo inteiro",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "label": "Custo de um clique em Copiar depois de 7 decisões",
+      "measured": true,
+      "method": "`payloadBy` embrulhado por contador; clique real (`btn.click()`) no primeiro botão `[data-pl]` do passo 3, na mesma instância de S1",
+      "unit": "execuções da rotina por clique",
+      "rows": [
+        {
+          "key": "execuções da rotina de payload por clique",
+          "value": 257
+        },
+        {
+          "key": "ms do clique nesta engine",
+          "value": 33
+        },
+        {
+          "key": "ms do mesmo clique medido pela sessão anterior em Chromium via puppeteer",
+          "value": 5477
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "label": "Geometria da barra fixa",
+      "measured": true,
+      "method": "`getComputedStyle` e `getBoundingClientRect` sobre `#sbar` e `#sbar .sticky`, com três posições de scroll na mesma instância",
+      "unit": "px",
+      "rows": [
+        {
+          "key": "position / bottom computados",
+          "value": "sticky / 0px"
+        },
+        {
+          "key": "altura de #sbar",
+          "value": 59
+        },
+        {
+          "key": "altura de .sticky",
+          "value": 59
+        },
+        {
+          "key": "curso de sticky disponível",
+          "value": 0
+        },
+        {
+          "key": "top da barra em scrollY 0",
+          "value": 4282
+        },
+        {
+          "key": "top da barra em scrollY 1905",
+          "value": 2377
+        },
+        {
+          "key": "top da barra em scrollY 3809",
+          "value": 473
+        },
+        {
+          "key": "altura do viewport",
+          "value": 696
+        },
+        {
+          "key": "altura da página",
+          "value": 4505
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "label": "Anel de foco no item selecionado do trilho",
+      "measured": true,
+      "method": "Tab de teclado REAL (não `.focus()` por script — `:focus-visible` só casa com modalidade de teclado, e foi conferido com `matches(':focus-visible') === true`), seguido do próprio handler de clique do botão focado; `getComputedStyle` lido depois",
+      "unit": "cor computada",
+      "rows": [
+        {
+          "key": ":focus-visible ativo no elemento medido",
+          "value": "true"
+        },
+        {
+          "key": "outline-color",
+          "value": "rgb(34, 38, 42)"
+        },
+        {
+          "key": "background-color do mesmo elemento",
+          "value": "rgb(34, 38, 42)"
+        },
+        {
+          "key": "outline-width / offset",
+          "value": "2px / 1px"
+        },
+        {
+          "key": "anel igual ao fundo",
+          "value": "true"
+        },
+        {
+          "key": "itens do trilho com aria-selected",
+          "value": 29
+        },
+        {
+          "key": "desses que são <button> sem role explícito",
+          "value": 29
+        },
+        {
+          "key": "elementos com role listbox/option/tab na página",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "label": "Carregamento e console",
+      "measured": true,
+      "method": "leitura do console do painel depois de carregar a página e três instâncias em iframe, com ~1500 re-renders forçados pelos eventos de S1",
+      "unit": "mensagens",
+      "rows": [
+        {
+          "key": "erros de console",
+          "value": 0
+        },
+        {
+          "key": "avisos de console",
+          "value": 0
+        },
+        {
+          "key": "mensagens de qualquer nível",
+          "value": 0
+        },
+        {
+          "key": "instâncias carregadas sem exceção",
+          "value": 4
+        }
+      ]
+    }
+  ],
+  "not_measured": [
+    {
+      "id": "NM1",
+      "label": "Segunda engine independente nesta rodada",
+      "reason": "Esta worktree não tem node_modules em lugar nenhum, logo não há puppeteer; instalar está fora do orçamento e do escopo",
+      "consequence": "As cinco medições foram reproduzidas DUAS VEZES, mas na MESMA engine (Chromium do painel de preview), em instâncias limpas e independentes, com larguras de viewport diferentes (900 px e 1200 px). A reprodução em segunda engine registrada em docs/audit/CONTINUACAO.md é da sessão anterior e é citada como tal, nunca como medição desta rodada."
+    },
+    {
+      "id": "NM2",
+      "label": "Comportamento sob tecnologia assistiva",
+      "reason": "Nenhum leitor de tela disponível; e a árvore de acessibilidade do painel não é legível para este arquivo — `read_page` devolveu 'página vazia, viewport 0x0', medido",
+      "consequence": "F4 (aria-selected em role=button) tem a ESTRUTURA medida e a CONSEQUÊNCIA derivada da especificação ARIA 1.2, não observada. É a razão de F4 sair com exposure apenas_teorico e confiança media, e não ja_exposto com confiança alta."
+    },
+    {
+      "id": "NM3",
+      "label": "Captura de tela / composição de quadro",
+      "reason": "O painel de preview não compõe quadro para screenshot deste arquivo — mesma limitação que a sessão anterior registrou",
+      "consequence": "Nenhuma afirmação visual desta rodada se apoia em imagem. Tudo que é dito sobre aparência foi medido por geometria e cor computada, que é a forma mais forte disponível aqui."
+    },
+    {
+      "id": "NM4",
+      "label": "Congelamento do renderizador com as 9 decisões respondidas",
+      "reason": "Não reproduzido por mim; parei no 9º evento com 516 handlers e 996 ms, que é degradação medida, não travamento",
+      "consequence": "A palavra 'trava' pertence à sessão anterior (CONTINUACAO.md, item 4) e não a este relatório. O que ESTA rodada mede é a curva: 2, 4, 8, 16, 32, 64, 128, 258, 516 — e uma curva que dobra chega ao travamento por aritmética, não por opinião."
+    },
+    {
+      "id": "NM5",
+      "label": "Outro sistema operacional, outro DPI, outro navegador de motor diferente (Gecko/WebKit)",
+      "reason": "Fora do alcance desta sessão",
+      "consequence": "S3 e S4 dependem de layout e de cor computada; os valores absolutos (59 px, 4505 px) variam com fonte e largura. O que NÃO varia é a relação medida — curso zero e anel igual ao fundo saem das mesmas duas declarações de CSS em qualquer engine."
+    }
+  ],
+  "centerpiece": {
+    "type": "failure_modes",
+    "title": "Modos de falha de runtime da bancada — o que só aparece com a página executando",
+    "columns": [
+      "modo",
+      "sítio",
+      "gatilho no fluxo do dono",
+      "o que foi medido",
+      "reproduzido",
+      "veredito"
+    ],
+    "rows": [
+      [
+        "D1 · listener delegado acumula a cada render",
+        "bancada.html:2769-2776 (registro) × :2956 (re-registro) × :256 (nó persistente)",
+        "responder as decisões do passo 2, uma a uma",
+        "2→4→8→16→32→64→128 handlers por evento; 257 execuções da rotina de cópia em um clique",
+        "2× em instâncias limpas (900 px e 1200 px)",
+        "confirmado"
+      ],
+      [
+        "D2 · a barra fixa nunca fixa",
+        "bancada.html:185 (.sticky) dentro de :2743 (#sbar)",
+        "preencher o passo 2 olhando os contadores",
+        "curso de sticky = 0; topo anda 1:1 com o scroll (4282→2377→473 para 0→1905→3809)",
+        "2× (medição repetida após novo carregamento)",
+        "confirmado"
+      ],
+      [
+        "D3 · separador decimal misturado no mesmo banner",
+        "bancada.html:3089 e :3091",
+        "abrir qualquer relatório no visualizador",
+        "banner renderizado: 'Origem do código · 0.941 … acima de 0,70 …'",
+        "2× (template estático + saída renderizada)",
+        "confirmado"
+      ],
+      [
+        "D4 · aria-selected em elemento de papel button",
+        "bancada.html:2925 e :2945",
+        "navegar o trilho com leitor de tela",
+        "29 de 29 itens são <button> sem role explícito; 0 elementos com role listbox/option/tab",
+        "2× (DOM medido + varredura estática)",
+        "confirmado na estrutura, consequência não observada"
+      ],
+      [
+        "D5 · anel de foco da cor do fundo no item selecionado",
+        "bancada.html:47 (outline) × :59 (background)",
+        "chegar ao item selecionado por Tab",
+        "outline-color rgb(34,38,42) igual a background-color rgb(34,38,42), separados por offset de 1px",
+        "2× (cor computada sob :focus-visible real + resolução das duas variáveis no CSS)",
+        "confirmado"
+      ]
+    ]
+  },
+  "scoreboard": [
+    {
+      "dimension": "R1",
+      "label": "Sobrevivência do fluxo do dono",
+      "level": 1,
+      "max_possible": 3,
+      "ceiling_reason": "sem dado de produção (contrato auditoria/1.1); a bancada não tem telemetria nem qualquer gate que leia o runtime dela",
+      "justification": "Os três passos completam e o console fica limpo, mas o custo do passo 2 dobra por decisão respondida: o 9º evento custa 30× o primeiro na mesma sessão",
+      "evidence": [
+        "S1: 2→516 handlers",
+        "S5: 0 erros de console"
+      ]
+    },
+    {
+      "dimension": "R2",
+      "label": "Legibilidade do estado enquanto se decide",
+      "level": 0,
+      "max_possible": 3,
+      "ceiling_reason": "idem",
+      "justification": "Os seis contadores da barra (perfil %, decisões, teto) existem e ficam fora da tela exatamente durante o passo em que servem — curso de sticky zero, medido",
+      "evidence": [
+        "S3: curso 0 px; barra a 4282 px do topo do viewport com a página no início"
+      ]
+    },
+    {
+      "dimension": "R3",
+      "label": "Higiene de listeners",
+      "level": 0,
+      "max_possible": 3,
+      "ceiling_reason": "idem",
+      "justification": "Zero removeEventListener no arquivo inteiro, contra 17 addEventListener; três deles em nó que sobrevive a todo render",
+      "evidence": [
+        "S1: removeEventListener = 0",
+        "grep -c addEventListener = 17"
+      ]
+    },
+    {
+      "dimension": "R4",
+      "label": "Acessibilidade do trilho",
+      "level": 1,
+      "max_possible": 3,
+      "ceiling_reason": "idem, e agravado por NM2 — nenhuma tecnologia assistiva foi exercida",
+      "justification": "Foco por Tab é visível nos 28 itens não selecionados, e some justamente no selecionado; o estado de seleção não tem expressão não visual válida",
+      "evidence": [
+        "S4: anel igual ao fundo; 29 aria-selected em <button>; 0 role de lista"
+      ]
+    },
+    {
+      "dimension": "R5",
+      "label": "Carregamento e erro silencioso",
+      "level": 3,
+      "max_possible": 3,
+      "ceiling_reason": "idem",
+      "justification": "Quatro instâncias carregadas, ~1500 re-renders forçados, zero mensagens de console de qualquer nível — nenhum dos cinco defeitos se anuncia por erro",
+      "evidence": [
+        "S5: 0 de 0"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "fingerprint": "listener-delegado-em-ficha-dobra-a-cada-decisao",
+      "title": "O listener delegado de #ficha dobra a cada decisão respondida e o custo do passo 2 explode",
+      "measured": "Medido em iframe same-origin limpo, com `wireConductor` contado antes de qualquer interação: cada evento `change` num select pendente do passo 2 dispara 2, 4, 8, 16, 32, 64, 128 handlers, e a 8ª e a 9ª decisões chegam a 258 e 516 (392 ms e 996 ms). Depois de 7 decisões, um clique em 'Copiar' executa a rotina de payload 257 vezes. Reproduzido em segunda instância limpa, viewport diferente: 2, 4, 8, 16, 32, 64, 128 — idêntico. Mecanismo lido no código, não inferido: `wireConductor` (:2769) registra input/change/click em `el('ficha')`, que é o mesmo nó de :256 em todo render; o handler de change (:2774) chama `select('REGÊNCIA')`; `select` (:2956) troca o innerHTML e chama `wireConductor()` de novo. O arquivo não tem nenhum `removeEventListener`.",
+      "signals": [
+        "S1",
+        "S2"
+      ],
+      "damage": 4,
+      "exposure": "ja_exposto",
+      "confidence": "alta",
+      "reversibility": "reversivel",
+      "evidence": [
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 256,
+          "note": "<main class=\"ficha\" id=\"ficha\"> — o nó que recebe os listeners e sobrevive a todo render"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2769,
+          "note": "const f=el(\"ficha\") dentro de wireConductor — os três addEventListener das linhas 2770, 2772 e 2776 penduram neste nó"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2774,
+          "note": "o handler de change chama select(\"REGÊNCIA\") quando o select é pendente e STEP===2 — é o laço"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2956,
+          "note": "select() faz f.innerHTML=... e chama wireConductor() de novo — o innerHTML troca os filhos, nunca o nó que carrega os listeners"
+        }
+      ],
+      "cost_per_change": "registrar os três listeners uma vez, fora de wireConductor",
+      "business_impact": "o dono responde as decisões do passo 2 e a página fica progressivamente mais lenta até parar de responder, no meio do único fluxo que a bancada existe para conduzir",
+      "falsifier_static": "cd docs/audit && grep -n 'const f=el(\"ficha\")' bancada.html; grep -n 'conductorHTML();wireConductor()' bancada.html; grep -n 'PENDING.includes(t.dataset.p)&&STEP===2' bancada.html; grep -c removeEventListener bancada.html",
+      "falsifier_static_expected": "O primeiro grep devolve TRES sitios que pegam o mesmo no (2752 refreshMeta, 2769 wireConductor, 2955 select) — o registro dos tres listeners e o de 2769; depois 2956 (select re-arma), 2774 (o handler chama select) e 0 (nenhuma remocao). O comando SAI 1, porque o ultimo grep -c devolve zero: a saida e o dado, o codigo de saida nao e o veredito. Se qualquer um dos tres sitios sumir, ou se a contagem de removeEventListener passar de zero, o mecanismo do achado cai.",
+      "falsifier_dynamic": "abrir a página, embrulhar wireConductor num contador e despachar change em dois selects pendentes do passo 2: se a segunda contagem não for o dobro da primeira, o achado cai",
+      "static_gap": null,
+      "demonstration": {
+        "command": "Abra docs/audit/bancada.html no navegador e cole no console:\nconst f=document.createElement('iframe');f.src='bancada.html';document.body.appendChild(f);f.onload=()=>{const W=f.contentWindow,D=W.document;W.__n=0;const o=W.wireConductor;W.wireConductor=function(){W.__n++;return o.apply(this,arguments)};W.select('REGÊNCIA');['deployed','users','paid'].forEach(k=>{const e=D.querySelector('#ficha select[data-p=\"'+k+'\"]');e.value=[...e.options].map(x=>x.value).filter(Boolean)[0];const b=W.__n;e.dispatchEvent(new W.Event('change',{bubbles:true}));console.log(k,W.__n-b)})}",
+        "expected_wrong_output": "deployed 2 · users 4 · paid 8 — dobra a cada decisão respondida, quando o esperado é 1 em todas",
+        "seconds": 20,
+        "needs": "um navegador com o arquivo aberto; nenhuma instalação"
+      },
+      "intent_source": "codigo",
+      "intent_unknown": false,
+      "attribution": "Código v3 PRÉ-EXISTENTE, reproduzido sem alteração na reconstrução da v4 (commit e0dccad). NÃO é regressão introduzida pela reconstrução — o registro em nó persistente e o laço change→select já eram a forma da página antes dela.",
+      "suggested_gate": "bloqueia_primeiro_cliente",
+      "gate_reason": "exposure ja_exposto no ramo `nunca implantado` do gateMap (emenda v4.1). Não sobe a bloqueia_deploy: não é irreversível e não perde dado — o pior caso é recarregar a aba, e nenhuma decisão é persistida.",
+      "suggested_barrier": "uma checagem no scripts/bancada-gate.mjs que reprove addEventListener sobre nó com id fixo dentro de função que o próprio handler reinvoca",
+      "barrier_kind": "teste_de_fronteira",
+      "adversarial_checks": [
+        {
+          "check": "o acúmulo é artefato do iframe ou do meu contador?",
+          "result": "derrubou a hipótese — reproduzido em SEGUNDA instância limpa, criada do zero, com viewport de largura diferente (1200 px contra 900 px): a série 2,4,8,16,32,64,128 saiu idêntica. E o contador embrulha `wireConductor`, que é a função da página, não um proxy meu de addEventListener."
+        },
+        {
+          "check": "os listeners velhos morrem porque innerHTML destrói os filhos?",
+          "result": "derrubou a hipótese — os três listeners estão no PRÓPRIO #ficha (:2769), não nos filhos. innerHTML troca descendentes; o nó que escuta é o de :256 e ele nunca é substituído. Confirmado no código e pelo comportamento medido."
+        },
+        {
+          "check": "o efeito só aparece com uso anormal (clicar muito no mesmo campo)?",
+          "result": "derrubou a hipótese — a série foi produzida respondendo SETE campos DIFERENTES, uma vez cada, que é literalmente o fluxo do passo 2 descrito pela própria página ('grava suas 9 decisões')."
+        },
+        {
+          "check": "reexecução do comando de origem, exigida pelo AV-00 para damage 4",
+          "result": "sobreviveu — a segunda execução completa, em instância nova, devolveu os mesmos sete números e 257 execuções por clique em Copiar na primeira. O único número que NÃO reproduzi é o 5477 ms da sessão anterior: aqui o mesmo clique custou 33 ms, e a diferença é de ambiente de clipboard, não do defeito."
+        }
+      ],
+      "owner": null,
+      "verification_mode": "execucao",
+      "instrument_feedback": "O gate da bancada saiu VERDE com este defeito vivo, e isso não é falha do gate: B1..B17 leem estrutura de arquivo (srcId que resolve, envelope de JSON, condição do banner avaliada). Nenhuma lê comportamento de página executando. A lacuna é de cobertura declarada, não de regra quebrada — mas ela significa que 'gate verde' nunca disse nada sobre a bancada funcionar."
+    },
+    {
+      "id": "F2",
+      "fingerprint": "barra-sticky-embrulhada-em-sbar-nunca-fixa",
+      "title": "A barra de contadores é declarada fixa e nunca fixa: o embrulho zera o curso do sticky",
+      "measured": "Medido na página executando: `#sbar` tem 59 px de altura e `#sbar .sticky` tem 59 px — curso de sticky disponível igual a ZERO, porque o elemento sticky nunca pode se deslocar dentro do próprio bloco contenedor. Consequência medida em três posições de scroll: o topo da barra vai de 4282 para 2377 para 473 enquanto o scroll vai de 0 para 1905 para 3809, ou seja, anda 1:1 com o scroll, exatamente como um elemento estático. Com viewport de 696 px, a barra só entra em tela no fim de uma página de 4505 px.",
+      "signals": [
+        "S3"
+      ],
+      "damage": 2,
+      "exposure": "ja_exposto",
+      "confidence": "alta",
+      "reversibility": "reversivel",
+      "evidence": [
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 185,
+          "note": ".sticky{position:sticky;bottom:0;...} — a declaração que promete a fixação"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2743,
+          "note": "<div id=\"sbar\">${stickyBar()}</div> — o embrulho cuja altura é exatamente a da barra"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2730,
+          "note": "stickyBar() devolve UM único <div class=\"sticky\">, então o embrulho não tem outro conteúdo que lhe dê altura"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2751,
+          "note": "refreshMeta() reescreve o innerHTML de #sbar — o embrulho existe para ser alvo de atualização, que é a razão provável de ele estar ali"
+        }
+      ],
+      "cost_per_change": "tirar o embrulho, ou dar altura ao embrulho, ou mover position:sticky para o #sbar",
+      "business_impact": "os contadores de progresso, decisões pendentes e teto ficam fora da tela justamente enquanto o dono preenche as decisões que os movem",
+      "falsifier_static": "node -e 'const h=require(\"fs\").readFileSync(\"docs/audit/bancada.html\",\"utf8\");const css=h.slice(h.indexOf(\"<style\"),h.indexOf(\"</style>\"));const ids=(css.match(/#[A-Za-z][\\w-]*/g)||[]).filter(x=>!/^#[0-9A-Fa-f]{3,8}$/.test(x));console.log(\"embrulhada em #sbar:\",/<div id=\"sbar\">\\$\\{stickyBar\\(\\)\\}<\\/div>/.test(h),\"| stickyBar devolve um unico .sticky:\",/return `<div class=\"sticky\">/.test(h),\"| seletores de ID no CSS, hex descontado:\",ids.length)'",
+      "falsifier_static_expected": "true | true | 0. A barra esta embrulhada, o embrulho contem so ela, e a folha de estilo nao tem NENHUM seletor de id depois de descontar cor hexadecimal — o bruto sao 16 ocorrencias de #, e as 16 sao cores (#C7CCC3, #fff, ...). O desconto e obrigatorio: sem ele o comando devolve 16 e o falsificador mente na propria direcao do achado. Se qualquer um dos tres virar, o achado cai.",
+      "falsifier_dynamic": "abrir a página e comparar getBoundingClientRect().height de #sbar e de #sbar .sticky: se diferirem, existe curso e o achado cai",
+      "static_gap": "O EFEITO geométrico — curso zero, topo andando 1:1 com o scroll — não é alcançável por comando estático: exige um motor de layout. O falsificador acima prova a CAUSA (embrulho de altura igual, zero regra de id no CSS) e é o mais forte que roda sem navegador; os números de S3 são de execução.",
+      "intent_source": "codigo",
+      "intent_unknown": false,
+      "suggested_gate": "bloqueia_primeiro_cliente",
+      "gate_reason": "exposure ja_exposto no ramo `nunca implantado` do gateMap. Não é irreversível e não perde dado.",
+      "suggested_barrier": "checagem no bancada-gate que reprove elemento com position:sticky cujo pai no template não tenha outro filho",
+      "barrier_kind": "teste_de_fronteira",
+      "adversarial_checks": [
+        {
+          "check": "a barra é invisível por outro motivo (overflow, transform, contain num ancestral)?",
+          "result": "derrubou a hipótese — position computado é `sticky` e bottom é `0px`, ou seja, a declaração está ATIVA e não foi anulada; o que falta é curso, e o curso é medido em 0 pela igualdade de alturas."
+        },
+        {
+          "check": "o embrulho é gratuito, e tirá-lo é seguro?",
+          "result": "enfraqueceu o conserto, não o achado — `#sbar` é alvo de `refreshMeta()` (:2751), que reescreve o innerHTML dele para atualizar os contadores sem tocar o resto da ficha. Remover o div quebra essa atualização; o conserto certo é dar o sticky ao próprio #sbar, e por isso este item NÃO é 'apagar uma linha'."
+        },
+        {
+          "check": "os números absolutos (59, 4505) valem em outra largura?",
+          "result": "sobreviveu com ressalva registrada em NM5 — os absolutos mudam com fonte e largura; a IGUALDADE das duas alturas não muda, porque decorre de o embrulho ter um único filho em fluxo e nenhuma regra de CSS."
+        }
+      ],
+      "owner": null,
+      "verification_mode": "execucao",
+      "instrument_feedback": null
+    },
+    {
+      "id": "F3",
+      "fingerprint": "banner-de-origem-mistura-ponto-e-virgula-decimal",
+      "title": "O banner de origem imprime 0.941 com ponto e 0,70 com vírgula, no mesmo banner",
+      "measured": "Renderizado no visualizador da própria página, com um relatório auditoria/1.1 mínimo carregado pelo caminho normal (colar no campo, clicar em Renderizar). O texto do banner, lido do DOM: 'Origem do código · 0.941 … acima de 0,70 só verification_mode: execucao sustenta confiança alta.' O valor sai de `${esc(rt.value)}` (:3089), que é o número JavaScript cru, e o limiar está escrito à mão com vírgula (:3091).",
+      "signals": [
+        "S5"
+      ],
+      "damage": 1,
+      "exposure": "ja_exposto",
+      "confidence": "alta",
+      "reversibility": "reversivel",
+      "evidence": [
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 3089,
+          "note": "<b>Origem do código · ${esc(rt.value)}</b> — número cru, sem formatação de locale"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 3091,
+          "note": "'acima de 0,70 só verification_mode: execucao sustenta confiança alta' — limiar escrito com vírgula, no MESMO div.banner"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 659,
+          "note": "o texto do instrumento também escreve '0,941' com vírgula — a página é consistente em prosa e inconsistente no que renderiza"
+        }
+      ],
+      "cost_per_change": "uma chamada de toLocaleString('pt-BR') no valor, ou o limiar reescrito com ponto",
+      "business_impact": "o número que decide o teto de confiança da auditoria aparece em duas convenções na mesma frase, e quem lê rápido pode ler 0.941 como novecentos e quarenta e um",
+      "falsifier_static": "node -e 'const h=require(\"fs\").readFileSync(\"docs/audit/bancada.html\",\"utf8\");const i=h.indexOf(\"Origem do c\\u00f3digo\");const b=h.slice(i-60,i+600);console.log(\"valor cru sem formatacao:\",/\\$\\{esc\\(rt\\.value\\)\\}/.test(b),\"| limiar com virgula no mesmo banner:\",/acima de 0,70/.test(b))'",
+      "falsifier_static_expected": "true | true. Se o valor passar por toLocaleString, ou se o limiar for reescrito com ponto, um dos dois vira false e o achado cai.",
+      "falsifier_dynamic": null,
+      "static_gap": null,
+      "intent_source": "codigo",
+      "intent_unknown": false,
+      "suggested_gate": "bloqueia_primeiro_cliente",
+      "gate_reason": "exposure ja_exposto no ramo `nunca implantado`. O gateMap NÃO tem linha que rebaixe portão por dano baixo, e derivar aceite a partir do dano é exatamente o erro que a triagem R1/R3 corrigiu no seu item 5. O portão sai do mapa; o dano 1 aparece na ordenação, não no portão.",
+      "suggested_barrier": "formatar todo número exibido por um único helper de locale, e o gate reprovar interpolação crua de número no visualizador",
+      "barrier_kind": "teste_de_fronteira",
+      "adversarial_checks": [
+        {
+          "check": "isto é preferência de estilo minha, não defeito?",
+          "result": "sobreviveu — a inconsistência é INTERNA ao mesmo banner e ao mesmo conceito (o ratio e o limiar do ratio). Não estou pedindo pt-BR; estou registrando que os dois números da mesma comparação não usam a mesma convenção."
+        },
+        {
+          "check": "o valor cru poderia ser deliberado, para casar com o JSON?",
+          "result": "enfraqueceu parcialmente e por isso o dano é 1 e não 2 — é defensável que o valor apareça como está no JSON. O que não é defensável é a frase seguinte, no mesmo banner, escrever o limiar de outro jeito."
+        }
+      ],
+      "owner": null,
+      "verification_mode": "execucao",
+      "instrument_feedback": null
+    },
+    {
+      "id": "F4",
+      "fingerprint": "aria-selected-em-role-button-nao-e-pareamento-valido",
+      "title": "aria-selected pendurado em 29 elementos de papel button — o estado de seleção do trilho não tem expressão válida",
+      "measured": "Medido no DOM da página executando: 29 elementos carregam `aria-selected`, e os 29 são `<button>` sem role explícito (papel implícito button). A mesma varredura conta ZERO elementos com role listbox, option, tab ou tablist na página inteira. `aria-selected` é suportado por gridcell, option, row, tab, columnheader, rowheader e treeitem — button não está na lista, e o atributo não vira estado. Por que este achado NÃO é 'confirmado por execução' na consequência: nenhuma tecnologia assistiva foi exercida (NM2), e a árvore de acessibilidade do painel devolveu página vazia.",
+      "signals": [
+        "S4"
+      ],
+      "damage": 1,
+      "exposure": "apenas_teorico",
+      "confidence": "media",
+      "reversibility": "reversivel",
+      "evidence": [
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2924,
+          "note": "document.createElement(\"button\") — os 29 itens do trilho nascem como button"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2925,
+          "note": "b.setAttribute(\"aria-selected\",\"false\") no nascimento"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 2945,
+          "note": "select() alterna aria-selected entre os itens — é o único sinal de estado além do CSS"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 59,
+          "note": ".item[aria-selected=\"true\"]{...} — o atributo é usado como gancho de ESTILO, o que funciona, e por isso o defeito é invisível a quem só olha a tela"
+        }
+      ],
+      "cost_per_change": "role=\"listbox\" no #rail e role=\"option\" nos itens, ou aria-current no lugar de aria-selected",
+      "business_impact": "quem depender de leitor de tela não recebe qual instrumento está aberto; para quem enxerga, nada muda",
+      "falsifier_static": "cd docs/audit && grep -c 'setAttribute(\"aria-selected\"' bancada.html; grep -c 'role=\"listbox\"\\|role=\"option\"\\|role=\"tab\"' bancada.html; grep -n 'createElement(\"button\")' bancada.html",
+      "falsifier_static_expected": "2 (nascimento em :2925 e alternancia em :2945) · 0 (nenhum papel de lista em lugar nenhum) · 2924 (os itens sao button). Sai 0 porque o ultimo comando da cadeia e o grep -n, que casa. Se aparecer role de lista, o pareamento passa a ser valido e o achado cai.",
+      "falsifier_dynamic": "abrir com leitor de tela e navegar o trilho: se o item aberto for anunciado como selecionado, o achado cai",
+      "static_gap": null,
+      "intent_source": "codigo",
+      "intent_unknown": false,
+      "suggested_gate": "aceito_com_registro",
+      "gate_reason": "exposure apenas_teorico no ramo `nunca implantado` do gateMap → aceitável com registro E COM GATILHO NOMEADO. apenas_teorico aqui NÃO quer dizer 'não é defeito': quer dizer que nenhum caminho de dano foi medido, porque nenhuma tecnologia assistiva foi exercida (NM2). No dia em que uma for, a exposição vira ja_exposto e o portão sobe.",
+      "suggested_barrier": "checagem no bancada-gate que reprove aria-selected em elemento cujo papel não o suporta",
+      "barrier_kind": "teste_de_fronteira",
+      "adversarial_checks": [
+        {
+          "check": "algum ancestral dá papel de lista aos itens e salva o pareamento?",
+          "result": "derrubou a hipótese — a varredura por role=listbox/option/tab/tablist na página inteira devolve 0, e o container #rail não declara papel nenhum."
+        },
+        {
+          "check": "o estado de seleção é comunicado por outro caminho acessível?",
+          "result": "sobreviveu — não há aria-current, nem aria-pressed, nem texto oculto; o único outro sinal é o CSS de :59, que é visual."
+        },
+        {
+          "check": "isto é regra de especificação sem consequência prática aqui, já que só o dono usa a página?",
+          "result": "ENFRAQUECEU, e é a razão do exposure apenas_teorico e da confiança media em vez de alta — não medi nenhum usuário de tecnologia assistiva nem consegui ler a árvore de acessibilidade. Emitir com confiança alta seria promover leitura de especificação a medição."
+        }
+      ],
+      "owner": null,
+      "verification_mode": "execucao",
+      "instrument_feedback": "O par (exposure, confidence) resolveu bem um caso que eu esperava que fosse resolver mal: estrutura medida e consequência não observada cabe em `apenas_teorico` + `media` sem precisar de campo novo. O que faltou foi um lugar para dizer QUE PARTE do achado é execução e qual é leitura — `verification_mode` é um valor só por achado."
+    },
+    {
+      "id": "F5",
+      "fingerprint": "anel-de-foco-da-mesma-cor-do-fundo-no-item-selecionado",
+      "title": "No item selecionado do trilho, o anel de foco tem a mesma cor do fundo do botão",
+      "measured": "Medido com foco de TECLADO real, não por script: Tab de verdade até um item do trilho (`matches(':focus-visible')` conferido como true), depois o próprio handler de clique do botão focado para selecioná-lo mantendo o foco. Com `:focus-visible` ativo, `outline-color` computa rgb(34,38,42) e `background-color` do MESMO elemento computa rgb(34,38,42) — idênticos, separados apenas pelo `outline-offset: 1px`. A causa está em duas declarações que apontam para a mesma variável: :47 usa var(--graphite) no outline e :59 usa var(--graphite) no fundo do selecionado.",
+      "signals": [
+        "S4"
+      ],
+      "damage": 1,
+      "exposure": "ja_exposto",
+      "confidence": "alta",
+      "reversibility": "reversivel",
+      "evidence": [
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 47,
+          "note": ".item:focus-visible{outline:2px solid var(--graphite);outline-offset:1px}"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 59,
+          "note": ".item[aria-selected=\"true\"]{background:var(--graphite);color:var(--paper)} — mesma variável, mesmo elemento, estados que coexistem"
+        },
+        {
+          "path": "docs/audit/bancada.html",
+          "line": 19,
+          "note": "--graphite:#22262A — a variável que as duas regras resolvem, medida como rgb(34,38,42) nas duas"
+        }
+      ],
+      "cost_per_change": "uma cor de outline própria para o estado selecionado (a página já tem --signal e --paper em uso no mesmo item)",
+      "business_impact": "quem navega por teclado perde o indicador de foco exatamente no item em que está trabalhando, entre 29 itens",
+      "falsifier_static": "node -e 'const h=require(\"fs\").readFileSync(\"docs/audit/bancada.html\",\"utf8\");const o=/\\.item:focus-visible\\{outline:[^;]*solid var\\((--[a-z0-9-]+)\\)/.exec(h);const b=/\\.item\\[aria-selected=\"true\"\\]\\{background:var\\((--[a-z0-9-]+)\\)/.exec(h);console.log(\"anel:\",o&&o[1],\"| fundo:\",b&&b[1],\"| iguais:\",!!o&&!!b&&o[1]===b[1])'",
+      "falsifier_static_expected": "anel: --graphite | fundo: --graphite | iguais: true. Se as duas regras deixarem de resolver a mesma variável, o achado cai — e o comando é o mesmo que verifica o conserto.",
+      "falsifier_dynamic": "Tab até o item selecionado e comparar outlineColor com backgroundColor computados: se diferirem, o achado cai",
+      "static_gap": null,
+      "intent_source": "codigo",
+      "intent_unknown": false,
+      "suggested_gate": "bloqueia_primeiro_cliente",
+      "gate_reason": "exposure ja_exposto no ramo `nunca implantado` do gateMap — o defeito atinge o próprio dono hoje, com teclado, e não depende de nenhum usuário hipotético. Sem rebaixamento por dano: o mapa não tem essa linha.",
+      "suggested_barrier": "checagem no bancada-gate que reprove regra de foco cuja cor resolva para a mesma variável do fundo do estado que coexiste com ela",
+      "barrier_kind": "teste_de_fronteira",
+      "adversarial_checks": [
+        {
+          "check": "o anel some mesmo, ou o offset de 1px basta para vê-lo?",
+          "result": "enfraqueceu parcialmente, e é por isso que o dano é 1 — o offset deixa 1 px de fundo claro entre o botão e o anel, então existe um fio visível. O que não existe é o anel: ele é da cor do que está atrás dele."
+        },
+        {
+          "check": "medi `:focus-visible` de verdade, ou li a regra e supus?",
+          "result": "derrubou a hipótese de suposição — `.focus()` por script NÃO ativou `:focus-visible` (a cor computada veio do anel padrão do navegador, rgb(243,244,240) 3px). Só com Tab de teclado real o `matches(':focus-visible')` virou true e a regra de :47 passou a valer. Se eu tivesse parado na primeira medição, teria emitido o achado ao contrário."
+        },
+        {
+          "check": "o problema atinge os 29 itens?",
+          "result": "derrubou o exagero — atinge UM item por vez, o selecionado. Nos outros 28 o anel grafite aparece sobre fundo claro e é perfeitamente visível."
+        }
+      ],
+      "owner": null,
+      "verification_mode": "execucao",
+      "instrument_feedback": "Este achado quase saiu errado por uma armadilha que merece bloco de instrumento: `.focus()` por script não ativa `:focus-visible` em Chromium, e a cor computada devolvida é a do anel padrão do navegador — que É visível. Medir estilo de foco exige modalidade de teclado real e a conferência de `matches(':focus-visible')`."
+    }
+  ],
+  "conventions": [
+    {
+      "claim": "re-render por innerHTML é prática ruim; a página deveria usar um framework",
+      "source": "prática corrente",
+      "why_not_finding": "o defeito medido (F1) é registro de listener em nó persistente, e ele existe com ou sem framework; trocar a forma de render não é o conserto e não foi medido como causa",
+      "would_become_finding_if": "um defeito medido depender da forma de render, e não do ponto de registro do listener"
+    },
+    {
+      "claim": "um arquivo único de 226 KB com HTML, CSS e JS misturados é dívida técnica",
+      "source": "prática corrente",
+      "why_not_finding": "a bancada é distribuída como arquivo único por desenho — abre sem servidor, sem instalação e sem build, que é a razão de ela funcionar nesta worktree sem node_modules; nada do que foi medido nesta rodada decorre do formato",
+      "would_become_finding_if": "um dos defeitos for rastreado à impossibilidade de testar o JS isoladamente, e não à lógica"
+    },
+    {
+      "claim": "página de auditoria deve ter teste automatizado de acessibilidade",
+      "source": "prática corrente",
+      "why_not_finding": "não existe ferramenta de a11y instalada em lugar nenhum do repositório (medido: zero ocorrências de jsx-a11y, axe-core, pa11y ou lighthouse), e exigir uma é decisão de escopo do dono, não achado desta rodada",
+      "would_become_finding_if": "o repositório passar a declarar acessibilidade como requisito e continuar sem nenhuma checagem"
+    }
+  ],
+  "latent_bugs": [],
+  "cheapest_moves": [
+    {
+      "move": "registrar os três listeners de #ficha uma única vez, fora de wireConductor",
+      "closes": [
+        "F1"
+      ],
+      "why": "maior dano da rodada e o único que degrada o fluxo inteiro; o resto de wireConductor (wireSteps, wireBar) já opera sobre nós recriados e não precisa mudar",
+      "effort": "baixo"
+    },
+    {
+      "move": "mover position:sticky do .sticky para o #sbar, mantendo o embrulho como alvo de refreshMeta",
+      "closes": [
+        "F2"
+      ],
+      "why": "devolve os contadores à tela durante o passo em que eles servem, sem quebrar a atualização parcial que o embrulho existe para permitir",
+      "effort": "baixo"
+    },
+    {
+      "move": "uma cor de anel própria para .item[aria-selected=true]:focus-visible",
+      "closes": [
+        "F5"
+      ],
+      "why": "uma linha de CSS, e a página já tem --signal e --paper em uso dentro do mesmo item selecionado",
+      "effort": "trivial"
+    }
+  ],
+  "inquiry": [
+    {
+      "question": "Quantos dos defeitos de runtime da bancada o gate atual poderia pegar, se alguém quisesse?",
+      "answerable_from": "escrever a checagem de F1 (addEventListener sobre id fixo em função reinvocada pelo handler) e ver se ela reprova sem falso positivo nos outros 16 sítios de addEventListener",
+      "why_it_matters": "os cinco achados desta rodada convivem com `node scripts/bancada-gate.mjs` saindo 0. Se nenhum for alcançável por leitura de arquivo, então a bancada precisa de uma segunda classe de gate — e essa é uma decisão de método, não um conserto."
+    },
+    {
+      "question": "Existe instrumento para 'artefato executável que não é o produto' — a própria bancada, os scripts de gate, as skills?",
+      "answerable_from": "nenhum lugar hoje: os 21 códigos AV-* do catálogo miram o produto, e esta rodada teve de emprestar o envelope sem bloco de instrumento",
+      "why_it_matters": "a bancada é a ferramenta que decide o que bloqueia o primeiro cliente. O vocabulário de portão que ela usa ('bloqueia_deploy', 'bloqueia_primeiro_cliente') não tem significado natural quando o alvo é ela mesma, e essa fricção apareceu em todos os cinco itens desta rodada."
+    },
+    {
+      "question": "Quantos outros sítios da página repetem o padrão de F1 (listener em nó que sobrevive ao render)?",
+      "answerable_from": "auditar os 17 addEventListener um a um contra a lista de nós que innerHTML não substitui",
+      "why_it_matters": "F1 mediu UM laço fechado (change→select→wireConductor). `wireBar` e `wireSteps` operam sobre nós recriados e por isso não acumulam, mas isso foi verificado por leitura, não por contagem — se houver um segundo laço, ele soma ao mesmo custo."
+    }
+  ],
+  "self_check": {
+    "falsifiers_executed": 5,
+    "falsifiers_total": 5,
+    "medicoes_reproduzidas": 5,
+    "reproducoes_em_instancia_limpa": true,
+    "engines_independentes_nesta_rodada": 1,
+    "achados_corrigidos": 0,
+    "arquivo_alvo_modificado": false,
+    "git_checkout_usado_para_reverter": false,
+    "arvore_limpa_ao_iniciar": true,
+    "independent_review": false,
+    "controls_run": "Três das cinco medições devolvem zero ou uma igualdade como resultado esperado, e zero é o resultado mais fácil de obter por acidente. Controles rodados: (a) `grep -c removeEventListener` = 0 tem como controle `grep -c addEventListener` = 17 no mesmo arquivo — o padrão enxerga o arquivo; (b) o falsificador de F2 conta os seletores de ID de TODA a folha de estilo e devolve 0, o que é mais forte que perguntar por #sbar: a folha não usa seletor de id nenhum, então a ausência não é da minha regex; (c) F5 teve o controle mais importante da rodada e ele quase derrubou o achado — `.focus()` por script devolveu anel rgb(243,244,240), visível; só com Tab real e `matches(':focus-visible')` conferido a cor virou a do fundo.",
+    "numeros_herdados_e_marcados": "Dois números deste relatório NÃO são meus e estão marcados como da sessão anterior em S2 e NM4: os 5477 ms do clique em Copiar e o travamento do renderizador com 9 decisões. Eu medi 33 ms e 996 ms respectivamente, e não arredondei a diferença nem adotei o número maior.",
+    "instrument_gaps_found": [
+      "Não existe instrumento no catálogo para verificar artefato executável que não é o produto; esta rodada emprestou o envelope v4.1 sem bloco próprio, o que significa que ela não tem 4b/6b escritos e não é reexecutável por outro agente a partir da bancada.",
+      "`verification_mode` é um valor único por achado, e F4 tem estrutura medida por execução com consequência derivada de especificação. Coube em exposure+confidence, mas por acomodação e não por desenho.",
+      "O contrato manda `max_possible 3 sem dado de produção` e as cinco dimensões desta rodada o respeitam — registro porque o AV-R3 emitiu 4 e a divergência segue aberta desde o AV-R5.",
+      "O gate (B1..B17) sai 0 com cinco defeitos de runtime vivos. Não é regra quebrada — nenhuma das 17 alega ler comportamento — mas é a primeira vez que a bancada mede a própria distância entre 'gate verde' e 'ferramenta funcionando'.",
+      "Falsificador ARMAZENADO nao e falsificador ESCRITO. Um patch pelo shell comeu as barras invertidas das regexes dos comandos de F2, F3 e F5, e as tres versoes gravadas no JSON teriam rodado devolvendo outra coisa — a de F2 devolveria 16 no lugar de 0, na direcao do proprio achado. So apareceu porque as cinco strings foram EXECUTADAS a partir do arquivo relido, com child_process. O contrato manda `falsifier_static executavel agora` e nao tem nada que exija executa-lo A PARTIR DO ARTEFATO; deveria ter, e o gate poderia cobrar isso."
+    ],
+    "own_bias_named": "Três. (1) MEDI A FERRAMENTA COM A PRÓPRIA FERRAMENTA: os iframes de medição vivem dentro da página medida, e o contador embrulha uma função dela. Se a página tivesse um defeito que corrompesse `wireConductor`, meu instrumento estaria contaminado pelo mesmo defeito — o contrapeso é que as duas execuções foram em instâncias independentes e a série é aritmética exata (potências de 2), que é difícil de produzir por contaminação. (2) RECEBI OS TRÊS PRIMEIROS ACHADOS PRONTOS, em prosa, de uma sessão anterior, e sabia o resultado esperado antes de medir. Isso é o pior viés desta rodada: um medidor que já sabe a resposta encontra a resposta. O que fiz contra isso foi rodar o falsificador de F5 no caminho errado primeiro (`.focus()`), o que produziu um resultado CONTRÁRIO ao esperado e me obrigou a refazer — se eu estivesse só confirmando, teria parado ali com o achado invertido. (3) EMITI OS DOIS 'DE MENOR PORTE' COMO ACHADOS, e a sessão anterior deliberadamente não os chamou de quebra. Emitir engorda meu resultado e é a escolha conveniente para quem quer parecer minucioso; a justificativa está escrita e é falsificável (ambos têm falsificador estático que roda), mas registro que a conveniência existe.",
+    "falsificadores_executados_a_partir_do_artefato": true
+  }
+}

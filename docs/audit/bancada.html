@@ -34,7 +34,7 @@
   .state b{color:var(--graphite);letter-spacing:.14em}
   .dot{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:50%}
   .d-v3{background:var(--verde)}.d-v2{background:var(--signal)}.d-pr{background:var(--aco-dk)}
-  .d-lum{background:var(--rust)}
+  .d-lum{background:var(--rust)}.d-v4{background:var(--graphite)}
   .bench{display:grid;grid-template-columns:284px 1fr}
   .rail{border-right:1px solid var(--graphite);padding:18px 18px 18px 0}
   .fam{margin-bottom:17px}
@@ -51,6 +51,11 @@
     border:1px solid currentColor;border-radius:2px}
   .vb.v3{color:var(--verde)}.vb.v2{color:var(--amber)}.vb.pr{color:var(--graphite-2)}
   .vb.tool{color:var(--rust)}.vb.lum{color:var(--rust)}
+  /* v4 é o padrão corrente: badge cheio, não contornado, para separar à vista o que já foi
+     reescrito do que ainda está em v3. A v4.1 não ganha badge própria — é emenda aditiva,
+     e um badge por micro-versão faria a trilha parecer maior do que a mudança. */
+  .vb.v4{color:var(--paper);background:var(--graphite);border-color:var(--graphite)}
+  .item[aria-selected="true"] .vb.v4{background:var(--signal);color:var(--graphite);border-color:var(--signal)}
   .item[aria-selected="true"]{background:var(--graphite);color:var(--paper)}
   .item[aria-selected="true"] .cd{color:var(--signal)}
   .item[aria-selected="true"] .vb{color:var(--paper)}
@@ -66,6 +71,7 @@
     text-transform:uppercase;line-height:1.1}
   .tag dd.plain{font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:500;text-transform:none}
   .st-v3{color:var(--verde)}.st-v2{color:var(--amber)}.st-pr{color:var(--graphite-2)}.st-tool{color:var(--rust)}
+  .st-v4{color:var(--graphite)}
   .ficha h2{font-family:"Barlow Condensed",sans-serif;font-weight:700;text-transform:uppercase;
     font-size:clamp(26px,4vw,40px);line-height:1;margin:0 0 6px}
   .lede{font-size:16px;max-width:64ch;margin:0 0 18px}
@@ -451,7 +457,32 @@ Todo campo do profile tem entrada em provenance. Campo sem procedência é erro.
 </script>
 
 <script type="text/plain" id="t-padrao">
-ESQUELETO v3 — nove blocos
+ESQUELETO v4 — nove blocos, mais 4b e 6b
+
+A v4 NÃO renumera nada. Os nove blocos da v3 continuam onde estavam; a v4 acrescenta dois
+blocos intercalados, e é por isso que eles se chamam 4b e 6b em vez de 10 e 11. Renumerar
+teria invalidado toda referência cruzada já escrita nos instrumentos v3 — o custo de
+"arrumar a numeração" seria pago por quem lê, não por quem escreve.
+
+4b · CONVENÇÕES QUE NÃO SÃO ACHADO — conventions[]
+Alegação que vem de prática corrente do mercado, e não de medição DESTE repositório, sai
+do bloco de achados e entra em conventions[], com quatro campos: claim, source,
+why_not_finding, would_become_finding_if. O último é obrigatório e tem de ser um evento
+observável — é ele que separa "não é achado" de "é achado e eu não quis brigar".
+POR QUE EXISTE: sem este bloco, toda regra plausível vira achado por gravidade própria.
+Medido: "todo workflow deve declarar permissions:" é verdade em geral e indecidível aqui,
+porque o default do GITHUB_TOKEN da organização não é legível do repositório.
+
+6b · DEMONSTRAÇÃO — o achado de dano alto tem de ser mostrável
+damage >= 4 exige demonstration { command, expected_wrong_output, seconds, needs } com
+seconds <= 120, ou demotion_reason registrando o rebaixamento. Não há terceira opção.
+POR QUE EXISTE: dano 4 e 5 são exatamente onde a pressa de quem lê é maior e a chance de
+conferir é menor. Se o defeito não cabe em dois minutos de comando, ou ele não é tão
+evidente quanto o texto diz, ou o texto está pedindo confiança em vez de dar prova.
+Rebaixar por falta de demonstração é resultado legítimo e frequente: F2 do R1 nasceu 4 e
+saiu 3 porque a demonstração exigia subir a stack Docker.
+
+ESQUELETO — nove blocos
 
 0 · IDENTIDADE E PROIBIÇÕES — no topo, vale toda a execução.
 1 · ORÇAMENTO E PARADA — quantos arquivos; parada dura sem insumo básico.
@@ -473,6 +504,11 @@ NESTE REPO: o esqueleto convive com [OPS-001]. Os cinco gates de envio do CLAUDE
 (objetivo × letra, grau de cada claim, caso adversarial tentado, checagem que teria
 falhado, verdade e risco nas duas primeiras linhas) são condição de fechamento do
 relatório, não substitutos da auto-verificação do bloco 7.
+
+EMENDA v4.1 — ver o item V4PATCH da bancada para o texto completo. Em uma linha: um
+instrumento v3 vira v4 acrescentando 4b e 6b, e a v4.1 acrescenta o enum
+latente_por_dependencia, findings[].verification_mode, run.reduced_capabilities e
+findings[].instrument_feedback. Nenhum campo da v3 foi removido nem renomeado.
 </script>
 
 <script type="text/plain" id="t-v3">
@@ -493,8 +529,16 @@ exclui server/generated/**.
 
 ### DANO E EXPOSIÇÃO, SEPARADOS
 damage 1–5: tamanho do estrago, independe de probabilidade.
-exposure: ja_exposto | apos_deploy | com_volume | com_dado_de_terceiro | apenas_teorico.
+exposure: ja_exposto | apos_deploy | com_volume | com_dado_de_terceiro | apenas_teorico |
+latente_por_dependencia (v4.1).
 Exposição decide portão; dano decide prioridade dentro do portão.
+
+latente_por_dependencia é a emenda v4.1 e existe por um caso medido: três pacotes
+importados sem estarem declarados resolvem HOJE porque o npm achata a árvore, e deixam de
+resolver no dia em que o pacote pai mudar de versão — sem nenhuma alteração no manifesto
+que avise. Isso não é apenas_teorico (o gatilho é uma atualização de rotina, não uma
+hipótese) e não é apos_deploy (quebra o build, não o ambiente). Antes da emenda o achado
+saía como apenas_teorico com gatilho nomeado: portão certo pela razão errada.
 
 ### PORTÃO E BARREIRA PROPOSTOS
 suggested_gate + gate_reason, segundo o mapeamento do perfil.
@@ -513,8 +557,13 @@ isso? o lint já barra isso e o CI estaria vermelho? o nome me fez inferir compo
 que não li? existe teste cobrindo isso que eu não procurei?
 Entrada: { "check":"", "result":"sobreviveu"|"derrubou"|"enfraqueceu" }.
 
-### reduced_mode DERIVADO
+### reduced_mode DERIVADO — e reduced_capabilities (v4.1)
 true se QUALQUER destes não foi executado: tipos, build, alguma suíte, qualquer runtime.
+reduced_mode sozinho é um booleano que esconde qual capacidade faltou. A v4.1 exige
+run.reduced_capabilities { tipos, build, suite, runtime } — quatro booleanos, true =
+executado. Foi o que permitiu ao R3 dizer "suíte rodou, tipos rodaram, runtime não" onde o
+R1 só conseguia dizer "reduzido", e é o que torna comparável uma rodada com npm ci feito
+contra uma sem.
 
 ### SELEÇÃO DOS MOVIMENTOS
 cheapest_moves máx. 3, por risco removido por esforço. O do maior damage entra sempre.
@@ -534,12 +583,50 @@ adversarial_checks[],owner }
 latent_bugs[] · cheapest_moves[] · self_check{...}
 
 severity SAI. Nenhuma chave omitida: use null ou [].
+
+---
+
+## 8b · O QUE A v4 E A v4.1 ACRESCENTAM AO ENVELOPE (aditivo, 1.1 continua válido)
+
+run ganha:
+  agent_authored_ratio { value, method, identity_rule, measured }   ← AV-00 §2.1
+  confidence_ceiling                                               ← AV-00 §2.2
+  reduced_capabilities { tipos, build, suite, runtime }            ← v4.1
+  review_of_this_run · review_gap                                  ← AV-00 §9.4
+  instruments_included[] quando a rodada junta instrumentos · supersedes quando substitui
+  o número de uma rodada anterior (o R3 supersede o "não medido" do R1).
+
+findings[] ganha:
+  demonstration { command, expected_wrong_output, seconds, needs } ou demotion_reason  ← 6b
+  verification_mode  execucao | revisao | leitura                  ← AV-00 §2.2
+  intent_source · intent_unknown                                   ← AV-16
+  instrument_feedback                                              ← v4.1
+
+topo ganha:
+  conventions[] { claim, source, why_not_finding, would_become_finding_if }  ← 4b
+  inquiry[] { question, answerable_from, why_it_matters }
+
+verification_mode NÃO é decoração: é o campo que torna o teto do §2.2 verificável de fora.
+Sem ele, "confiança alta" e "confiança alta porque eu reli o arquivo" ficam indistinguíveis
+no JSON, e a regra do teto vira texto que ninguém pode conferir.
+
+instrument_feedback é o achado que o achado produziu SOBRE O INSTRUMENTO: padrão que casou
+errado, dimensão que não existia, enum que faltou. Vai junto do achado, não numa seção de
+retrospectiva, porque separado dos dois ele não é acionável. Fica null quando o instrumento
+se comportou. Foi assim que o buraco do enum exposure apareceu — dentro do F3 do R1, não
+numa reflexão posterior.
 </script>
 
 <script type="text/plain" id="t-av00">
-# AV-00 · CONDUTA PÓS-RELATÓRIO
+# AV-00 · CONDUTA PÓS-RELATÓRIO · v4
 
 Regra: relatório cujo falsificador nunca rodou é lista de hipóteses.
+
+O que a v4 acrescenta, e por quê: a v3 governava o que fazer COM o achado. Ela não tinha
+nada a dizer sobre de onde vem o código auditado, sobre quanto vale a palavra de quem
+audita, nem sobre a forma da saída dos comandos que produzem os números. As três lacunas
+foram descobertas rodando, não pensando — e é por isso que os parágrafos §2.1, §2.2 e §2.2b
+existem, cada um com o caso medido que o originou.
 
 ## 0 · Proibições
 - Corrigir achado não triado. Sem exceção para achado "óbvio".
@@ -557,6 +644,64 @@ Falsificadores estáticos por ordem decrescente de damage. Mínimo: os três mai
 os damage 5. Registre confirmado | refutado | inconclusivo | nao_executavel |
 nao_executado. Refutado sai da lista e conserta o instrumento.
 
+## 2.1 · ORIGEM DO CÓDIGO — medir antes de julgar (v4)
+
+Primeira coisa da rodada, antes de qualquer instrumento: medir que fração do recorte foi
+escrita por agente. Não é curiosidade sociológica — é o insumo do teto do §2.2.
+
+    git log --no-merges --format="%H%x09%(trailers:key=Co-authored-by,valueonly)" -- <recorte>
+
+Regra de identidade, declarada no relatório: commit conta como de agente quando traz
+trailer Co-authored-by contendo "Claude". Emita em run.agent_authored_ratio
+{ value, method, identity_rule, measured }.
+
+MEÇA POR COMMIT, E CONFIRA POR LINHA. Medido neste repositório: 224 de 238 commits =
+0,941 por commit, mas só 51,5% das linhas — porque UM commit humano, o baseline do
+template, despejou 93.662 linhas de uma vez. Removido esse commit, os outros treze humanos
+somam 2.430 linhas e a proporção por linha sobe para 97,7%. Os dois números são verdadeiros
+e respondem a perguntas diferentes: quanto o projeto HERDOU × quanto o projeto ESCREVEU.
+Reportar só um dos dois é escolher a conclusão antes da medida.
+
+## 2.2 · TETO DE CONFIANÇA (v4)
+
+Se agent_authored_ratio > 0,70, nenhum achado da rodada sai com confiança alta apoiado em
+revisão ou leitura. Acima desse limiar, "eu revi e está certo" é a mesma população de texto
+revendo a si mesma. Só EXECUÇÃO sustenta alta.
+
+Operacionalização, e é ela que torna a regra verificável de fora: todo achado carrega
+findings[].verification_mode = execucao | revisao | leitura, e run.confidence_ceiling
+registra o teto derivado. Sem esse campo o §2.2 é prosa: dois achados com "confiança alta"
+ficam indistinguíveis no JSON, um verificado por comando e outro por releitura.
+
+O limiar 0,70 é convenção declarada, não medição — entra em conventions[] de qualquer
+relatório que se apoie nele, e vira achado no dia em que alguém medir a taxa de erro de
+revisão neste repositório e ela contradisser a escolha.
+
+## 2.2b · A FORMA DA SAÍDA É PARTE DA MEDIÇÃO (v4.1)
+
+Emenda escrita depois de três defeitos de medição pegos DENTRO de uma rodada, não numa
+retrospectiva. Todo número publicado passa antes por um caso de sanidade conhecido — um
+caso cuja resposta você já sabe. Se o contador erra nele, o total é lixo.
+
+1. REGEX MONTADA POR CONCATENAÇÃO PERDE O ESCAPE. new RegExp("\\b"+nome+"\\b") em JS vira
+   busca por caractere backspace: o padrão nunca casa. Resultado descartado: "454 de 476
+   unidades sem teste". Real: 110. Pego pelo caso de sanidade — PostingService, que tem
+   1.352 linhas de teste, aparecia como sem teste. Use literal, ou includes, nunca
+   concatenação sem sanidade.
+2. CONTAGEM TIRADA DE SAÍDA TRUNCADA NÃO É CONTAGEM. Um head -5 virou "5 revisões
+   independentes"; o total era 8. Contador termina em wc -l sobre a saída INTEIRA, ou não é
+   contador.
+3. FILTRO CEGO A UM DIALETO DA ENTRADA. Um contador de fan-in que resolvia só ./ e ../
+   perdia os 181 imports via alias @/ — zerava o fan-in de todos os controllers e teria
+   produzido uma lista de código morto falsa, com um arquivo de 852 linhas dentro.
+
+Corolário para win32, medido nesta bancada: rg emite caminho com barra invertida, então
+todo filtro por caminho ( | rg -v "lib/services" ) casa zero e o comando "passa" sem passar.
+Normalize com | tr '\\' '/' antes de filtrar, e declare que normalizou.
+
+Corolário para contadores que terminam em 2>/dev/null | wc -l: binário ausente imprime 0, e
+0 por ausência é indistinguível de 0 por limpeza. Rode o preflight antes.
+
 ## 3 · Triagem por portão
 bloqueia_deploy · bloqueia_primeiro_cliente · aceito_com_registro · descartado.
 Todo item precisa de owner (pessoa) e data, ou de aceite. Ordene por risco removido por
@@ -564,6 +709,26 @@ esforço.
 
 ## 4 · Aceite explícito
 accepted_reason, review_trigger (evento observável) e accepted_by.
+
+## 4b · CONVENÇÃO NÃO É ACHADO — conventions[] (v4)
+
+Alegação que vem de prática corrente do mercado, e não de medição deste repositório, não
+entra em findings[]. Vai para conventions[] com claim, source, why_not_finding e
+would_become_finding_if — este último obrigatoriamente um evento observável.
+
+O teste é uma pergunta só: EU MEDI A CONSEQUÊNCIA AQUI, ou estou importando a consequência
+de um contexto que não é este? Dois casos medidos, os dois legítimos e os dois fora de
+findings:
+- "todo workflow de CI deve declarar permissions:" — o ci.yml tem zero ocorrências, mas a
+  consequência depende do default do GITHUB_TOKEN da organização, que não é legível do
+  repositório. Vira achado se o default for medido e for read-write.
+- "cobertura mínima de X%" — nenhum percentual foi medido, e o instrumento rebaixa cobertura
+  a sinal secundário por desenho. Vira achado se um percentual alto conviver com mutação
+  sobrevivente medida.
+
+Sem este bloco, toda regra plausível vira achado por gravidade própria, e o relatório fica
+indistinguível de uma lista de boas práticas — que é exatamente o gênero que a bancada
+existe para não ser. Um relatório de opinião com números colados não vira medição.
 
 ## 5 · Conduta da correção — regras deste repositório
 Uma alteração por achado; escopo restrito à evidence; o falsificador vira teste; nenhuma
@@ -588,6 +753,25 @@ teste de corrida. Fronteira → teste no pipeline. Gate que mede errado → conj
 avaliação com caso que reprova. Sem detecção → alerta testado. Sem caminho de volta →
 ensaio de restauração datado. Permissão excessiva → teste que falha se for reaberta.
 
+## 6b · DEMONSTRAÇÃO — dano alto tem de ser mostrável (v4)
+
+damage >= 4 exige demonstration { command, expected_wrong_output, seconds, needs } com
+seconds <= 120. Não havendo demonstração dentro do teto, o dano é REBAIXADO e o
+rebaixamento é registrado em demotion_reason. Não existe terceira saída: nem manter o 4 sem
+prova, nem esconder o rebaixamento.
+
+O teto de 120 s não é rigor por rigor. Dano 4 e 5 são exatamente onde a pressa de quem lê é
+maior e a chance de conferir é menor — é onde um relatório consegue ser acreditado sem ser
+verificado. Se o defeito não cabe em dois minutos de comando, ou ele não é tão evidente
+quanto o texto afirma, ou o texto está pedindo confiança em vez de entregar prova.
+
+Rebaixar é resultado normal, não fracasso: um achado de banco vetorial publicado sem chave
+nasceu dano 4 e saiu 3, porque a demonstração exigia subir a stack Docker inteira. O achado
+continua verdadeiro; o que caiu foi a prioridade, que é o que o número significa.
+
+`needs` declara o que a demonstração exige (nada · node_modules · banco povoado · rede). É
+o campo que a triagem lê para saber se pode reexecutar hoje.
+
 ## 7 · Fechamento
 Re-rode e compare por fingerprint. A métrica que importa: quantos achados voltaram.
 
@@ -601,10 +785,669 @@ Re-rode e compare por fingerprint. A métrica que importa: quantos achados volta
   "gates_summary":{},
   "self_check":{"falsifiers_executed":0,"falsifiers_total":0,"items_without_owner":0} }
 
+## 9 · BLOCO 9 — NADA DE CORREÇÃO ANTES DA TRIAGEM (v4)
+
+Este bloco é o mais fácil de violar porque violá-lo parece produtividade.
+
+9.1 · Achado não triado NÃO é corrigido. Sem exceção para achado óbvio, pequeno, ou "eu já
+estava com o arquivo aberto". A triagem é o que separa achado de opinião com evidência: é
+lá que o falsificador roda, que o portão é atribuído e que alguém vira dono. Corrigir antes
+disso é corrigir na fé.
+
+9.2 · Achado refutado na verificação não é corrigido — ele CONSERTA O INSTRUMENTO. Um
+padrão que casou comentário, um filtro cego a alias, um contador que leu saída truncada:
+o defeito está no instrumento e é lá que ele é fechado, senão volta na próxima rodada com
+outro nome.
+
+9.3 · Uma alteração por achado, escopo restrito à evidence, o falsificador vira teste. O
+"aproveitar a passagem" é como um relatório de 4 achados vira um diff de 40 arquivos que
+ninguém consegue revisar — e aí o gate de revisão passa por cansaço.
+
+9.4 · REVISÃO VEM DE AGENTE SEPARADO. PASS emitido pela mesma sequência que implementou é
+rejeitado, e isso vale também para a rodada de auditoria: quem escreveu o instrumento não
+assina o veredito de quem rodou o instrumento.
+
+    Medido neste repositório, e é desconfortável: 37 commits mencionam revisão, 8 nomeiam
+    uma revisão independente específica, contra 207 merges. Não existe artefato por merge —
+    nem arquivo, nem registro estruturado. O único traço durável é a mensagem de commit da
+    correção, QUANDO a revisão encontrou algo; revisão que não encontrou nada não deixa
+    traço nenhum.
+
+    A leitura correta desse número é estreita, e o instrumento a impõe: não está medido que
+    a revisão não aconteceu. Está medido que ela NÃO É REEXECUTÁVEL NEM VERIFICÁVEL por
+    ninguém de fora. Converter "não medido" em "não houve" é o erro que este parágrafo
+    proíbe. A barreira declarada do método é, hoje, a menos auditável dele.
+
+    run.review_of_this_run é null quando não houve, e review_gap diz por quê. Rodada que
+    omite os dois campos está afirmando revisão que não pode mostrar.
+
+    E isso agora é cheque, não parágrafo. A ausência de REVISÃO continua legítima — é o caso
+    comum medido acima e nunca vira erro. O que virou erro é a ausência de DECLARAÇÃO em
+    relatório de instrumento v4+, a versão do envelope que criou o campo (§8b): gate B4.
+    Relatório pré-v4 fica em aviso, porque retrofitar contrato antigo é reescrever história.
+    Nos três estados — ausente, null, false — o aviso B10 sai e o banner do visualizador
+    acende, com texto que separa quem declarou a ausência de quem calou. Antes desta emenda
+    o silêncio saía mais limpo que a confissão nos três lugares ao mesmo tempo.
+
 ## ANTI-PADRÕES
 Corrigir por facilidade. Corrigir sem executar o falsificador. Correção que toca dezenas
 de arquivos. Aceitar em silêncio. Aceite sem gatilho observável. Correção sem barreira.
-Reescrever fingerprint na triagem.
+Reescrever fingerprint na triagem. Publicar número sem caso de sanidade (§2.2b). Emitir
+confiança alta por revisão acima do teto do §2.2. Chamar de achado o que é convenção (4b).
+Manter damage 4+ sem demonstração nem rebaixamento registrado (6b).
+</script>
+
+<script type="text/plain" id="t-av03">
+# AV-03 · FORÇA DA SUÍTE — MUTAÇÃO EXECUTADA · v4
+
+## 0 · Identidade e proibições
+Medir se a suíte DETECTA defeito, não se ela existe. Contagem de teste, contagem de
+asserção e percentual de cobertura são estrutura; estrutura não é garantia.
+Proibido:
+- Citar cobertura como garantia. Ela entra como sinal secundário, e só se medida.
+- Declarar mutação morta sem ver `Tests: N failed` com N > 0.
+- Deixar mutação aplicada na árvore. Ao fim, `git status` do recorte limpo — conferido.
+- Escolher sítio de mutação por conveniência. O sítio sai do invariante, não do arquivo
+  mais fácil de editar.
+- Reportar sobrevivente sem distinguir POR QUE sobreviveu (ver bloco 4).
+
+## 1 · Orçamento e parada
+Sem dependências instaladas, PARE: emita mutation_score não medido, trave o placar no nível
+1 e diga que a força da suíte é desconhecida. Não estime. Foi exatamente o que a primeira
+rodada fez, e a segunda substituiu o não-medido por 2/7 depois de `npm ci` — a lacuna
+declarada é o que tornou a substituição possível e rastreável (run.supersedes).
+
+## 2 · Fase 1 — baseline antes de qualquer mutação
+    cd server && npm ci
+    cd server && npx jest --selectProjects unit
+    cd server && npx jest --selectProjects integration --runInBand
+Registre suítes, testes, tempo. Baseline vermelho = pare; não se mede força de suíte
+quebrada. Cole a saída crua.
+
+## 3 · Fase 2 — as mutações, uma por invariante
+Uma mutação por invariante que o repositório DIZ proteger. Sete é o tamanho medido de uma
+rodada: amostra dirigida a invariante, nunca estimativa estatística — declare isso.
+
+Família mínima neste repositório:
+    M1  remover o gate de período de DENTRO da transação          (TOCTOU)
+    M2  teto MAX_CENTS -> MAX_CENTS + 1 num DTO de fronteira      (Int32)
+    M3  tirar uma perna do lançamento de dentro da transação      (atomicidade)
+    M4  trocar a comparação de balanceamento Σdébito !== Σcrédito (dinheiro)
+    M5  remover o filtro de inquilino de uma consulta             (isolamento)
+    M6  forçar a guarda de permissão a conceder                   (autorização)
+    M7  remover o refine de data-only de um DTO                   (calendário real)
+
+PROTOCOLO POR MUTAÇÃO — os quatro passos, na ordem:
+1. Aplique com a ferramenta mais estreita possível (`sed '35d'`, edição de uma linha).
+2. `git diff --numstat` ANTES de rodar. Mutação de uma linha que aparece como 79 não é
+   mutação: `perl -0pi` reescreveu as quebras de linha do arquivo inteiro. Descarte e refaça.
+3. Rode a suíte. Leia o resultado pelo par (Suites, Tests), nunca por uma linha só.
+4. Reverta de CÓPIA (.bak), não com `git checkout --`. Ver bloco 4, armadilha 3.
+
+## 3b · ARMADILHA DA MUTAÇÃO QUE NÃO COMPILA
+Um `throw` inserido como sonda de alcance quebrou o narrowing de tipo num `catch` 24 linhas
+adiante e derrubou 20 suítes de integração ao CARREGAR. Lido de relance: 20 mortes. A
+leitura correta:
+    Test Suites: falhou  +  Tests: 0 failed   =   resultado INVÁLIDO, não morte.
+Morte exige `Tests: N failed` com N > 0 e o nome do teste que pegou. A variante `if (true)`
+reproduziu o mesmo defeito — não é acidente de uma sintaxe.
+
+## 4 · Fase 3 — dimensões
+T1 força — mortas ÷ aplicadas.
+T2 sobreviventes — e a distinção que decide a correção: a linha NÃO EXECUTA, ou executa e a
+   asserção é fraca? Sonde com um `throw` no sítio; se nenhum teste dispara, o alvo está
+   fora de alcance. São achados diferentes: um pede teste novo, o outro pede uma asserção
+   a mais num teste que já existe.
+T3 asserção real — testes sem asserção, `skip`/`todo`, asserções fracas (toBeDefined,
+   not.toThrow) sobre o total.
+T4 fronteira coberta — DTOs com teste próprio ÷ DTOs. DTO se testa pelo que RECUSA.
+T5 cobertura — não medida por desenho. Se medida, é sinal secundário.
+T6 determinismo — a mesma suíte três vezes, zero instáveis.
+
+Escala: 0 nada morre · 1 mutações centrais sobrevivem · 2 as centrais morrem · 3 todas
+morrem com teste nomeado · 4 gate reprova o build quando uma sobrevive.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "cobertura mínima de X%" — nenhuma cobertura foi medida; vira achado se um percentual
+  alto conviver com mutação sobrevivente medida.
+- "teste unitário não deve mockar o repositório" — o mock não é o defeito; a AUSÊNCIA do
+  par de integração é. Vira achado se existir o teste de integração e a mutação ainda
+  sobreviver.
+
+## 5 · Checklist
+[ ] Baseline verde, colado cru
+[ ] `git diff --numstat` conferido em cada mutação
+[ ] Nenhuma morte contada sem `Tests: N failed` e nome do teste
+[ ] Sobrevivente classificado entre "não executa" e "asserção fraca"
+[ ] Árvore limpa ao fim (`git status` do recorte)
+[ ] mutation_score emitido como fração aplicada, não como estimativa
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Recorte e execução · ## Peça central: placar de mutação | mutação | sítio | invariante |
+suíte reagiu? | teste que pegou | veredito | · ## Achados · ## Placar · ## Não medido ·
+## Três movimentos mais baratos · ## Inquérito · ## Auto-verificação
+
+## 6b · Demonstração
+A demonstração natural deste instrumento é a própria mutação: comando que aplica, comando
+que roda, saída verde. Quase sempre passa de 120 s por causa da suíte — então o padrão aqui
+é demonstração ESTÁTICA do alcance, que cabe em segundos:
+    cd server && grep -rln "PostingService" src --include=*.integration.test.ts | wc -l
+Saída 0 enquanto o serviço é a escrita real do razão: dano demonstrado em 3 s, sem rodar
+suíte nenhuma. Passando do teto, rebaixe e registre demotion_reason.
+
+## 7 · Auto-verificação
+1. Citei cobertura como garantia? Remova. 2. Placar tem mutação que não foi aplicada de
+fato? Remova. 3. Sobrevivente que não virou achado? Vire ou explique. 4. Suíte declarada
+verde sem execução? Não emita. 5. Árvore suja? Limpe antes de publicar. 6. Contei morte sem
+`Tests: N failed`? Recontagem inteira.
+
+## 8 · Encerramento v4 — auditoria/1.1 com centerpiece.type "mutation_score"
+run.reduced_capabilities declara { tipos, build, suite, runtime } — esta rodada só vale
+alguma coisa com suite:true.
+</script>
+
+<script type="text/plain" id="t-av16">
+# AV-16 · DÍVIDA DE COMPREENSÃO — O QUE NINGUÉM SABE EXPLICAR · v4
+
+## 0 · Identidade e proibições
+Medir se a INTENÇÃO por trás do código é recuperável. Não é legibilidade, não é estilo, não
+é tamanho.
+Proibido:
+- Emitir achado por incômodo. Módulo grande, feio ou antigo não é achado enquanto nenhuma
+  CONSEQUÊNCIA for nomeada.
+- Chamar de "decisão errada" o que está marcado intent_unknown. Se a intenção não é
+  recuperável, o julgamento sobre ela também não é.
+- Preencher a coluna "alguém sabe explicar?" no lugar do dono. É a única informação deste
+  instrumento que nenhum comando produz.
+- Confundir ausência de comentário com ausência de rastro: o rastro pode estar no commit,
+  no ADR ou no teste.
+
+## 1 · Orçamento e parada
+Três a cinco candidatos, abertos na íntegra. Histórico inutilizável: pare e declare — sem
+`git log` este instrumento não tem sinal, só impressão.
+
+## 2 · Fase 1 — candidatos por concentração
+    # tamanho × densidade de comentário × número de toques
+    git log --since="<janela>" --name-only --pretty=format: | grep -E '\.(ts|tsx)$' \
+      | sort | uniq -c | sort -rn | head -30
+    wc -l <arquivo>; grep -c "^\s*\(//\|\*\)" <arquivo>
+Candidato = grande E pouco tocado E pouco comentado. Muito tocado é o oposto de dívida de
+compreensão: é módulo vivo e conhecido.
+
+## 3 · Fase 2 — a busca de rastro, nesta ordem
+1. `git log --pretty=format:"%s" -- <arquivo>` — a mensagem nomeia o incremento?
+2. `docs/adr/` e `docs/accounting/` — existe decisão escrita?
+3. O teste do módulo afirma o PORQUÊ, ou só o QUÊ?
+4. O cabeçalho do arquivo diz o quê, ou diz o porquê? Só o quê NÃO é rastro.
+Achou rastro em qualquer um dos quatro: intent_source preenchido, não é achado.
+Não achou em nenhum: intent_unknown = true — e mesmo assim só vira achado com consequência
+nomeada.
+
+Medido: dos três maiores candidatos, dois tinham rastro em commit e o terceiro veio do
+baseline do template com cabeçalho que dizia o quê e não o porquê. Zero achados, e a razão
+importa mais que o zero.
+
+## 4 · Dimensões
+I1 rastro de intenção por módulo (centerpiece intent_trail)
+I2 lacuna de compreensão com consequência nomeada (centerpiece comprehension_gap)
+I3 concentração de autoria — e a verificação obrigatória: o autor único é PESSOA ou
+   identidade de agente? Neste repositório o autor de commit é o mesmo em trabalho de
+   agente, então concentração de autoria NÃO é evidência de conhecimento concentrado numa
+   pessoa. Sem essa checagem, I3 mede o nome do committer, não o conhecimento.
+I4 a coluna do dono: "alguém sabe explicar este módulo?" — sai VAZIA do agente, sempre.
+
+Escala: 0 sem rastro e sem dono · 1 rastro só no código · 2 rastro em commit · 3 rastro em
+decisão escrita · 4 rastro verificável por gate.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "arquivo acima de N linhas deve ser quebrado" — limiar de literatura, não medição daqui.
+  Vira achado quando o tamanho for ligado a uma consequência medida neste repositório.
+- "código sem comentário é código não documentado" — comentário é uma das quatro fontes de
+  rastro, não a definição de rastro.
+
+## 5 · Checklist
+[ ] Candidatos escolhidos por comando, não por impressão
+[ ] Cada candidato passou pelas QUATRO fontes de rastro
+[ ] Nenhum achado sem consequência nomeada
+[ ] intent_unknown não foi tratado como julgamento
+[ ] I3 verificou se o autor é pessoa ou agente
+[ ] A coluna do dono ficou vazia
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Recorte · ## Candidatos | módulo | linhas | comentário | commits | rastro encontrado | ·
+## Peça central: rastro de intenção · ## Achados · ## Placar · ## Inquérito ·
+## Auto-verificação
+
+## 6b · Demonstração
+Para achado de dano >= 4: o comando que mostra a ausência de rastro nas quatro fontes ao
+mesmo tempo, em menos de 120 s —
+    git log --oneline -- <arquivo> | head; grep -rl "<módulo>" docs/ | head
+Saída esperada errada: nenhuma linha em nenhuma das duas. Não cabendo no teto, rebaixe e
+registre demotion_reason: dívida de compreensão raramente demonstra em dois minutos, e
+inflar o dano para compensar é o defeito que 6b existe para pegar.
+
+## 7 · Auto-verificação
+1. Achado sem consequência? Remova. 2. Chamei intent_unknown de erro? Reescreva. 3.
+Preenchi a coluna do dono? Apague. 4. Contei módulo muito tocado como dívida? Remova.
+5. Usei tamanho como achado? É conventions[].
+
+## 8 · Encerramento v4 — centerpiece.type "intent_trail" ou "comprehension_gap"
+</script>
+
+<script type="text/plain" id="t-av17">
+# AV-17 · REVISÃO REAL — A BARREIRA DECLARADA DEIXA ARTEFATO? · v4
+
+## 0 · Identidade e proibições
+Medir se a revisão independente que o método declara produz ARTEFATO auditável.
+Proibido:
+- Converter "não medido" em "não houve". É a proibição central deste instrumento. A
+  ausência de artefato não é prova de ausência de revisão, e o texto tem de dizer isso na
+  mesma frase em que dá o número.
+- Emitir veredito sobre suficiência de revisão a partir de tempo decorrido. Qualquer limiar
+  de "linhas por minuto que um revisor consegue ler" vem de literatura — é conventions[],
+  não achado.
+- Tratar mensagem de commit como artefato de revisão. É traço, e enviesado: só existe
+  quando a revisão ENCONTROU algo.
+
+## 1 · Orçamento e parada
+Sem histórico de merge, pare. Este instrumento é inteiramente histórico.
+
+## 2 · Fase 1
+    git ls-files | grep -icE "review|revisao"
+    git log --format=%s | grep -icE "revisao independente|review independente"
+    git log --format=%s | grep -icE "review|revis"
+    git log --merges --oneline | wc -l
+    # intervalo por PR: primeiro commit do ramo até o merge
+    git log --merges --format="%H %ct %s" | head -30
+CUIDADO (AV-00 §2.2b): nenhum destes contadores pode sair de saída truncada. `head -5` já
+virou "5 revisões independentes" quando o total era 8.
+
+## 3 · Fase 2 — leitura dirigida
+Amostra de merges de PR. Por PR: arquivos tocados, linhas inseridas, intervalo entre o
+primeiro commit do ramo e o merge. O intervalo CONTÉM a autoria — logo o tempo de revisão é
+sempre MENOR que ele. É um teto, nunca uma medida, e o relatório declara isso.
+
+## 4 · Dimensões
+R1 artefato de revisão por merge — existe arquivo ou registro estruturado? Esta é a
+   dimensão. Se a resposta é "só a mensagem de commit quando achou algo", o nível é 1.
+R2 o que a revisão checou — recuperável de fora?
+R3 revisão da própria rodada de auditoria (AV-00 §9.4) — quem escreveu o instrumento não
+   assina o veredito de quem o rodou.
+
+Escala: 0 sem revisão declarada · 1 declarada sem artefato · 2 artefato esparso · 3
+artefato por merge · 4 gate que reprova merge sem artefato.
+
+Medido: 37 commits mencionam revisão, 8 nomeiam uma revisão independente específica, contra
+207 merges. O achado é a AUSÊNCIA DE ARTEFATO, que é medida. O intervalo mediano de 10
+minutos é sinal, não veredito — e um PR de 220 arquivos fechado em 8 minutos de intervalo
+total é sinal forte, que continua não sendo veredito.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "revisão exige N minutos por K linhas" — literatura. Vira achado se este repositório
+  medir a própria taxa de defeito escapado por velocidade de revisão.
+- "todo PR precisa de aprovador humano" — postura de governança do dono, não medição.
+
+## 5 · Checklist
+[ ] Nenhum contador saiu de saída truncada
+[ ] Declarei que o intervalo contém a autoria
+[ ] Não converti "não medido" em "não houve"
+[ ] Nenhum veredito de suficiência por tempo
+[ ] Declarei se ESTA rodada teve revisão independente
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Recorte · ## Peça central: revisão declarada × revisão com artefato · ## Achados ·
+## Placar · ## Inquérito · ## Auto-verificação
+
+## 6b · Demonstração
+    git ls-files | grep -icE "review|revisao"
+Saída esperada errada: um número muito menor que o de merges — a barreira declarada não tem
+onde morar no repositório. Cabe em segundos, `needs: nada`.
+
+## 7 · Auto-verificação
+1. Disse "não houve revisão"? Reescreva para "não há artefato". 2. Usei tempo como
+veredito? Rebaixe a sinal. 3. Contei mensagem de commit como artefato? Corrija — é traço
+enviesado. 4. Esqueci de declarar a revisão desta rodada? Declare, inclusive a ausência.
+
+## 8 · Encerramento v4 — centerpiece.type "review_reality"
+</script>
+
+<script type="text/plain" id="t-av18">
+# AV-18 · CONFIGURAÇÃO DE IMPLANTAÇÃO — O QUE O ARQUIVO EXPÕE · v4
+
+## 0 · Identidade e proibições
+Medir o que os artefatos de implantação DECLARAM expor. Compose, Dockerfile, workflow, env
+de exemplo.
+Proibido:
+- Afirmar comportamento de ambiente. Este instrumento lê o repositório, não o host. O teto
+  é 3 por construção: mede a configuração declarada, e o que rodaria pode divergir.
+- Reportar segredo por nome de variável. `KEY` num `.env.example` vazio é documentação.
+- Ignorar a diferença entre tempo de BUILD e tempo de RUNTIME. É a fonte da metade dos
+  defeitos desta família.
+
+## 1 · Orçamento e parada
+Sem artefato de implantação, pare e declare o instrumento inaplicável.
+
+## 2 · Fase 1
+    ls docker-compose*.yml */Dockerfile .github/workflows/*.yml 2>/dev/null
+    grep -nE "^\s*(ports|environment|env_file|volumes):" -A6 docker-compose.yml
+    git log --all --name-only --pretty=format: | grep -E "(^|/)\.env$" | sort -u
+    grep -rn "NEXT_PUBLIC_" docker-compose.yml my-app/next.config.js
+
+## 3 · Fase 2 — as duas confrontações que produzem achado
+CONFRONTAÇÃO A · variável INJETADA × variável LIDA. Toda chave de `environment:` tem de
+aparecer no código. Conte os dois lados, com o filtro de extensão ligado:
+    cd my-app && rg -c -N -I NEXT_PUBLIC_API_BASE_URL -g '*.{ts,tsx,js}' . | wc -l
+    cd my-app && rg -c -N -I NEXT_PUBLIC_API_URL      -g '*.{ts,tsx,js}' . | wc -l
+Injetada com zero leituras = o container cai no default. Medido: o compose injeta
+`NEXT_PUBLIC_API_URL`, o código lê `NEXT_PUBLIC_API_BASE_URL`, e o default é
+`http://localhost:3001` — que dentro de um container aponta para o próprio container.
+
+SEGUNDA CAMADA, MESMO ACHADO: `NEXT_PUBLIC_*` no Next.js é embutido em tempo de BUILD; a
+chave `environment:` do compose é runtime. Mesmo corrigindo o nome, o valor não chegaria —
+teria de entrar como build-arg. Um achado que corrige o nome e para aí conserta metade e
+declara vitória.
+
+CONFRONTAÇÃO B · porta PUBLICADA × autenticação exigida. Serviço com `ports:` no host e sem
+credencial é exposição. O que separa defeito de limitação: o CÓDIGO JÁ SABE usar chave?
+    grep -A6 "qdrant:" docker-compose.yml | grep -qi "api_key\|environment" \
+      && echo "tem config" || echo "SEM CHAVE"
+    grep -rn "API_KEY" server/src/lib/vector/ server/.env.example
+Se o cliente lê `process.env.X_API_KEY` e a implantação não fornece, a capacidade existe e
+não é usada — isso é defeito de configuração, não limitação da tecnologia.
+
+## 4 · Dimensões
+D1 variável injetada × lida, e build-time × runtime
+D2 superfície publicada × autenticação exigida
+D3 segredo versionado — `.env` em qualquer ponto da história, não só no HEAD
+D4 imagem e usuário — root explícito, base sem tag fixa
+D5 permissões do pipeline — bloco `permissions:` no workflow (ver 4b: depende do default da
+   organização, que não é legível daqui)
+
+Escala: 0 exposto sem controle · 1 controle nominal · 2 correto por convenção · 3 correto e
+verificável no repositório · 4 barrado por gate que lê o artefato de implantação.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "todo workflow deve declarar permissions:" — zero ocorrências medidas, mas a consequência
+  depende do default do GITHUB_TOKEN da organização. Vira achado se esse default for medido
+  e for read-write.
+- "container não deve rodar como root" — vira achado quando houver montagem de volume do
+  host com escrita, que é quando a consequência é local e medível.
+
+## 5 · Checklist
+[ ] Contei os dois lados de cada variável (injetada × lida)
+[ ] Distingui build-time de runtime em toda variável embutida
+[ ] Verifiquei se o código já suporta a credencial ausente
+[ ] Procurei `.env` em toda a história, não só no HEAD
+[ ] Declarei que meço o repositório, não o ambiente (teto 3)
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Recorte · ## Peça central: mapa de exposição | superfície | publicada? | autenticada? |
+o código suporta? | consequência | · ## Achados · ## Placar · ## Inquérito ·
+## Auto-verificação
+
+## 6b · Demonstração
+    grep -n NEXT_PUBLIC docker-compose.yml my-app/next.config.js
+Saída esperada errada: os dois nomes lado a lado, diferentes. 12 s, `needs: nada`.
+Para D2, a demonstração honesta exigiria subir a stack — acima do teto de 120 s. Nesse caso
+o dano é REBAIXADO e o rebaixamento registrado em demotion_reason; foi o que aconteceu com
+o achado do banco vetorial, que nasceu 4 e saiu 3.
+
+## 7 · Auto-verificação
+1. Afirmei algo sobre o ambiente real? Rebaixe para "declarado". 2. Reportei nome de
+variável como segredo? Remova. 3. Corrigi só o nome de uma variável de build? Achado
+incompleto. 4. Achado que depende de default externo? conventions[].
+
+## 8 · Encerramento v4 — centerpiece.type "exposure_map"
+</script>
+
+<script type="text/plain" id="t-av19">
+# AV-19 · CADEIA DE SUPRIMENTO — DECLARADO × TRAVADO × IMPORTADO · v4
+
+## 0 · Identidade e proibições
+Medir a distância entre o que o manifesto declara, o que a trava fixa e o que o código
+importa. Três conjuntos que deveriam coincidir.
+Proibido:
+- Estimar vulnerabilidade. `npm audit` exige rede; sem rede é not_measured, nunca "nenhuma
+  conhecida".
+- Contar alias de tsconfig ou jest como dependência ausente. É a fonte número um de falso
+  positivo deste instrumento.
+- Chamar de import o que é substring dentro de comentário ou string.
+
+## 1 · Orçamento e parada
+Sem trava (`package-lock.json`), pare: a dimensão principal não existe.
+
+## 2 · Fase 1
+    for r in server my-app; do echo "== $r"; \
+      node -e "const p=require('./$r/package.json');console.log(Object.keys({...p.dependencies,...p.devDependencies}).length)"; done
+    ls server/package-lock.json my-app/package-lock.json
+    node -e "const l=require('./server/package-lock.json');console.log(l.lockfileVersion)"
+    git log --all --name-only --pretty=format: | grep -E "(^|/)\.env$" | sort -u
+    # 2.f — imports externos, um por linha, SEM truncar a saída
+    rg -o -N -I "from ['\"]([^'\".][^'\"]*)['\"]" -r '$1' -g '*.{ts,tsx}' \
+      -g '!**/node_modules/**' -g '!server/generated/**' server/src my-app | sort -u
+
+## 3 · Fase 2 — o funil de 2.f, e os três filtros que ele EXIGE
+O comando 2.f devolve candidatos, não achados. Subtraia, nesta ordem:
+1. Builtins do node (`fs`, `path`, `crypto`…).
+2. ALIASES declarados. Leia `tsconfig.json`, `tsconfig.test.json` e `jest.config.js` — os
+   três, não um. Medido: `generated/prisma` é alias de `server/tsconfig.json`; `@test/helpers`
+   está em `tsconfig.test.json` E em `jest.config.js`. Os dois teriam virado achado.
+3. Falso casamento do próprio padrão. Medido: `assistant` apareceu como pacote e era a frase
+   "Messages from 'assistant' or 'system'" dentro de um comentário — defeito do comando,
+   não do código, e vai para instrument_feedback.
+O que sobrevive aos três é confrontado com os DOIS manifestos do root correspondente.
+
+## 4 · Dimensões
+D1 integridade da trava — existe, versão, um registro único
+D2 declarado × travado — divergência de versão entre manifesto e trava
+D3 importado × declarado — pacote importado e não declarado. Resolve HOJE porque o npm
+   achata a árvore; deixa de resolver quando o pacote pai mudar de versão, sem nenhuma
+   alteração no manifesto que avise. Exposição: latente_por_dependencia (v4.1) — o gatilho é
+   uma atualização de rotina, não uma hipótese.
+D4 segredo versionado na história
+D5 configuração local de agente — hooks e MCP. Se `.claude/settings.json` não é versionado,
+   isto é LIMITE DA MEDIÇÃO e entra em not_measured, não em achado: os arquivos de
+   instrução estão auditáveis, a configuração que executa comandos não está.
+
+Escala: 0 sem trava · 1 trava presente e divergente · 2 coerente por convenção · 3 coerente
+e verificável · 4 barrado por gate que reprova import não declarado.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "legacy-peer-deps=true enfraquece a resolução" — a linha existe no `.npmrc`, e nenhuma
+  incompatibilidade de peer real foi medida na árvore. Vira achado quando uma for.
+- "dependência transitiva não deve ser importada diretamente" — é exatamente D3, e só é
+  achado com os três filtros aplicados; sem eles é ruído.
+
+## 5 · Checklist
+[ ] Saída de 2.f completa, nunca truncada (AV-00 §2.2b)
+[ ] Os três filtros aplicados, e os aliases lidos nos TRÊS arquivos
+[ ] Cada sobrevivente confrontado com os dois manifestos do root
+[ ] `npm audit` declarado não medido, sem estimativa
+[ ] Candidatos derrubados registrados no relatório, com a causa
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Recorte · ## Peça central: declarado × travado × importado | pacote | importado em |
+declarado? | na trava? | · ## Achados · ## Não medido · ## Placar · ## Inquérito ·
+## Auto-verificação
+
+## 6b · Demonstração
+    node -e "const p=require('./server/package.json');console.log(!!({...p.dependencies,...p.devDependencies}).dotenv)"
+    rg -n "from ['\"]dotenv['\"]" server/src
+Saída esperada errada: `false` na primeira e hits na segunda — importado e não declarado, em
+segundos, `needs: nada`.
+
+## 7 · Auto-verificação
+1. Contei alias como dependência ausente? Remova e cite o arquivo do alias. 2. Estimei
+vulnerabilidade? Remova. 3. Candidato derrubado ficou sem registro? Registre — dois dos três
+teriam virado achado. 4. O padrão casou comentário? instrument_feedback.
+
+## 8 · Encerramento v4 — centerpiece.type "dependency_trust"
+</script>
+
+<script type="text/plain" id="t-av20">
+# AV-20 · COBERTURA AUSENTE — A OBRIGAÇÃO DE TESTE NÃO ATENDIDA · v4.1
+
+## 0 · Identidade e proibições
+Responder a UMA pergunta: qual teste deveria existir e não existe. Este instrumento não mede
+cobertura de linha e não avalia a suíte que existe — isso é AV-03, e confundir os dois
+produz um relatório que não serve para nenhuma das duas coisas.
+Proibido:
+- Listar órfão como teste faltando. Fan-in zero, sem invariante e fora de fronteira =
+  candidato a REMOÇÃO. Escrever teste para código que ninguém chama é pagar para manter o
+  que deveria sumir. Vai para o AV-11 decidir entre remover e ligar.
+- Exigir teste de arquivo sem executável: interface, type, model declarativo, barrel.
+- Ordenar por tamanho de arquivo. Arquivo grande sem invariante e sem fan-in é dívida de
+  manutenção, não urgência de teste.
+- Dizer "nenhum teste a executa" quando o que foi medido é "nenhum teste a NOMEIA".
+- Ranquear classe por in_degree do grafo: vem ~0 por desenho (instanciação via factory e
+  composição JSX não são arestas CALLS). Fan-in é medido por IMPORTS, no disco.
+
+## 1 · Orçamento e parada
+Sem corpus de teste, pare. Sem grafo, o instrumento roda mais devagar mas roda: o grafo
+localiza, o disco confirma (CBM-001).
+
+## 2 · Fase 1 — o censo
+    find server/src -name '*.ts' -not -path '*/__tests__/*' -not -name '*.d.ts' | wc -l
+    find server/src -path '*/__tests__/*' -name '*.test.ts' | wc -l
+    # corpus concatenado, uma vez só
+    find server/src -path '*/__tests__/*' -name '*.test.ts' -exec cat {} + > <tmp fora do repo>
+
+## 3 · Fase 2 — o funil, e o caso de sanidade que o valida
+A pergunta de cobertura NÃO é "existe <Unidade>.test.ts?". Isso subconta grosseiramente:
+neste repositório o arquivo de teste é nomeado pelo CENÁRIO
+(`PostingRepository.concurrency.test.ts`, `AgingOutstanding.integration.test.ts`). A pergunta
+é: o NOME desta unidade aparece em algum lugar do corpus de teste?
+
+    unidades no recorte           476
+    - nomeadas em algum teste     269  -> 207   (includes no corpus)
+    - sem código executável        88  -> 119   (interface, type, barrel)
+    - órfãs (fan-in 0)              9  -> 110   (devolvidas ao AV-11)
+
+CASO DE SANIDADE OBRIGATÓRIO, ANTES DE PUBLICAR QUALQUER TOTAL: escolha uma unidade que
+você SABE que tem teste farto e confirme que ela cai fora da lista. Foi assim que o número
+"454 de 476 sem teste" foi pego e descartado — `PostingService`, com 1.352 linhas de teste,
+aparecia como sem teste, porque a regex montada por concatenação perdeu o escape do `\b`.
+O real era 110. Um relatório de 454 obrigações teria sido publicado com aparência perfeita.
+
+FAN-IN, e o segundo caso de sanidade: conte imports relativos E por alias. Medido: 1.535
+relativos + 181 via `@/`. Ignorar o alias zera o fan-in de todos os controllers e inventa
+uma lista de código morto — um arquivo de 852 linhas apareceria dentro dela.
+
+## 4 · Dimensões — ordenação por peso de invariante, depois fan-in
+Invariantes rastreados: dinheiro (centavos, teto), tx (propagação), inquilino (userId +
+unitId), soft-delete (nos DOIS sentidos), autoriza (guarda de permissão), período.
+G1 três invariantes ou mais — quebram em silêncio
+G2 dois invariantes — DTOs de fronteira e serviços
+G3 camada inteira sem menção — se 31 de 34 controllers não são nomeados, o achado é a
+   CAMADA, não cada arquivo
+G4 o resto, agregado por papel — declarado como agregado, não enumerado linha a linha
+
+Cada obrigação diz O QUE O TESTE DEVE AFIRMAR e QUAL MUTAÇÃO DO AV-03 ELE MATA. Linha que
+só diz "falta teste" não é obrigação, é reclamação — e não entra.
+
+Escala: 0 nenhuma fronteira coberta · 1 obrigações concentradas numa camada inteira · 2
+fronteiras cobertas por convenção · 3 obrigações fechadas e nomeadas · 4 gate que reprova
+unidade nova com invariante e sem teste.
+
+## 4b · conventions[] — o que NÃO é achado aqui
+- "toda unidade precisa de teste unitário" — a lista é dirigida por invariante e fronteira,
+  não por completude. Vira achado por unidade quando a unidade carregar invariante.
+- "cobertura de linha mínima" — não é este instrumento, e este instrumento não a produz.
+
+## 5 · Checklist
+[ ] Caso de sanidade rodado ANTES de publicar qualquer total
+[ ] Fan-in contou alias além de relativo
+[ ] Nenhuma unidade sem executável na lista (filtro verificado num arquivo concreto)
+[ ] Órfãos separados e devolvidos ao AV-11
+[ ] Nenhuma classe ranqueada por in_degree
+[ ] Declarei "nomeia" × "executa" em Não medido
+[ ] Toda obrigação diz o que afirmar e qual mutação mata
+[ ] Rodei a auto-verificação e o encerramento v4
+
+## 6 · Template
+## Estado do grafo e do recorte · ## Funil · ## Peça central: obrigações por peso de
+invariante | unidade | papel | fan-in | invariantes | o que o teste deve afirmar | mutação
+que mata | · ## Órfãos (não são lacuna) · ## Não medido · ## Inquérito · ## Auto-verificação
+
+## 6b · Demonstração
+    cd server && grep -rc "InventoryDto" $(find src -path '*/__tests__/*' -name '*.test.ts') | grep -v ':0' | wc -l
+Saída esperada errada: `0` — nenhum teste nomeia o DTO onde vive o teto MAX_CENTS. Segundos,
+`needs: nada`. Este instrumento raramente passa de dano 3, porque a obrigação de teste é
+lacuna, não defeito ativo: dano 4+ aqui exige que a mutação correspondente do AV-03 tenha
+sobrevivido de fato — senão é dano presumido, e presunção não demonstra.
+
+## 7 · Auto-verificação
+1. Órfão na lista de obrigações? Separe. 2. Total publicado sem caso de sanidade? Refaça.
+3. Ordenei por linhas? Reordene por invariante. 4. Disse "executa" onde medi "nomeia"?
+Corrija. 5. Obrigação sem o que afirmar? Remova.
+
+## 8 · Encerramento v4 — centerpiece.type "missing_tests"
+</script>
+
+<script type="text/plain" id="t-v4patch">
+EMENDA v4 / v4.1 — como um instrumento v3 vira v4 sem ser reescrito
+
+Esta emenda existe para não reescrever seis instrumentos v3 quando o que mudou cabe em dois
+blocos e quatro campos. Ela É a forma de os instrumentos AV-L1, AV-10 e AV-11 estarem em v4:
+os blocos 4b e 6b valem para eles por referência a este texto, e nada no corpo deles muda.
+Regra do projeto aplicada a si mesma: patch no que falta, nunca rewrite do que já funciona.
+
+## O QUE A v4 ACRESCENTA
+
+BLOCO 4b · conventions[] — alegação que vem de prática corrente do mercado, e não de
+medição deste repositório, sai de findings[] e entra em conventions[] com claim, source,
+why_not_finding e would_become_finding_if (evento observável, obrigatório).
+Sem 4b, toda regra plausível vira achado por gravidade própria.
+
+BLOCO 6b · demonstração — damage >= 4 exige demonstration { command, expected_wrong_output,
+seconds, needs } com seconds <= 120, ou demotion_reason registrando o rebaixamento.
+Sem 6b, dano alto é acreditado sem ser verificado, que é o mecanismo pelo qual um relatório
+de auditoria vira um relatório de opinião com números colados.
+
+## O QUE A v4.1 ACRESCENTA
+
+1. exposure ganha `latente_por_dependencia`. Existia um buraco: dependência importada e não
+   declarada não é apenas_teorico (o gatilho é uma atualização de rotina) nem apos_deploy
+   (quebra o build, não o ambiente). Antes da emenda o achado saía com o portão certo pela
+   razão errada — o que sobrevive à triagem, mas envenena a próxima rodada.
+
+2. findings[].verification_mode = execucao | revisao | leitura. É o campo que torna o teto do
+   AV-00 §2.2 VERIFICÁVEL. Sem ele a regra "acima de 0,70 só execução sustenta confiança
+   alta" é texto: dois achados com "confiança alta" ficam indistinguíveis no JSON.
+
+3. run.reduced_capabilities { tipos, build, suite, runtime }. reduced_mode é um booleano que
+   esconde QUAL capacidade faltou. Com os quatro, uma rodada com npm ci feito vira comparável
+   com uma sem — foi assim que o mutation_score medido pôde substituir, com rastro, o "não
+   medido" de uma rodada anterior (run.supersedes).
+
+4. findings[].instrument_feedback. O que o achado ensinou SOBRE o instrumento — padrão que
+   casou errado, dimensão que faltava, enum inexistente — viaja junto do achado, não numa
+   retrospectiva. Separado dos dois, não é acionável. Null quando o instrumento se comportou.
+
+5. gateMap para `nunca implantado` passa a cobrir ja_exposto e latente_por_dependencia. O
+   mapeamento anterior não tinha linha para "já exposto" num sistema nunca implantado, e a
+   atribuição saía por leitura mais próxima — decisão de agente onde devia haver regra.
+
+## O QUE A v4 NÃO FAZ
+
+Não renumera bloco. Não remove campo. Não renomeia chave. Não muda o schema: auditoria/1.1
+continua sendo o contrato, e tudo acima é aditivo. Um consumidor da v3 lê um relatório v4
+sem quebrar — ele apenas não enxerga os campos novos.
+
+## COMO SABER SE A EMENDA PEGOU
+
+O gate da bancada (`node scripts/bancada-gate.mjs`) checa a fiação, não a prosa:
+- todo instrumento marcado v4 carrega 4b e 6b, ou tem v4patch:true apontando para aqui;
+- todo centerpiece.type emitido está declarado no contrato;
+- exposure e barrier_kind dentro das listas fechadas, com a emenda incluída;
+- confiança alta acima do teto exige verification_mode "execucao".
+Gate que não reprova é teatro: cada checagem só conta depois de ter reprovado uma mutação
+proposital pelo menos uma vez.
 </script>
 
 <script type="text/plain" id="t-contrato">
@@ -637,6 +1480,79 @@ EXTENSÃO LOCAL (aditiva, não quebra 1.1)
 perfil/1.0 ganhou excludeText: caminhos gerados/vendorizados excluídos de toda busca.
 Sem ele, server/generated/prisma injeta 2348 falsos positivos na varredura de risco.
 vendorsText continua sendo fornecedores a RASTREAR — os dois campos não se misturam.
+
+CAMPOS NOVOS DA v4 / v4.1 (detalhe no bloco de encerramento, §8b)
+run.agent_authored_ratio      { value, method, identity_rule, measured } — AV-00 §2.1
+run.confidence_ceiling        derivado do ratio pelo §2.2
+run.reduced_capabilities      { tipos, build, suite, runtime } — quatro booleanos, v4.1
+run.review_of_this_run        null quando não houve; review_gap explica a lacuna
+findings[].verification_mode  execucao | revisao | leitura — torna o teto §2.2 verificável
+findings[].demonstration      obrigatória em damage >= 4, teto 120 s, ou demotion_reason
+findings[].intent_source      de onde veio a intenção; intent_unknown quando não recuperável
+findings[].instrument_feedback o que este achado ensinou SOBRE o instrumento; null se nada
+conventions[]                 bloco 4b — alegação de prática corrente que não é achado
+inquiry[]                     { question, answerable_from, why_it_matters }
+
+REGRA DURA DE TIPO: relatório não inventa centerpiece.type. Tipo usado e não declarado aqui
+é erro de gate, não licença — foi assim que a bancada revertida foi pega: os três relatórios
+citavam exposure_map, missing_tests e mutation_score, e o contrato, revertido, não os
+conhecia mais. Cada tipo abaixo é a peça central de exatamente um instrumento:
+    AV-16 rastro de intenção · AV-16 lacuna de compreensão · AV-17 revisão com artefato
+    AV-18 o que a implantação expõe · AV-19 declarado × travado × importado
+    AV-03 mortas sobre aplicadas · AV-20 obrigação de teste não atendida
+
+ONDE ESTA SEÇÃO É FRÁGIL, DECLARADO: o gate lê os nomes abaixo por padrão de palavra, e a
+varredura vai até o fim do bloco. Por isso as duas linhas `ganhou` são as ÚLTIMAS do
+contrato — prosa depois delas entraria na lista de tipos declarados como ruído. Medido: com
+a ordem invertida, 35 palavras de texto corrido viraram "tipo declarado e não usado".
+
+CONTRATO triagem/1.0 — o artefato de saída do AV-00 (bloco 9)
+Cobrado pelo gate em B11..B16. Antes desta emenda o schema saía de TODO o escopo dele: a
+linha `if (j.schema !== "auditoria/1.1") continue` tirava a triagem de vista, e uma triagem
+com items vazio passava verde. O artefato que este método existe para produzir era o único
+sem checagem.
+items[]                      não vazio; triagem sem item não tria nada
+items[].fingerprint          CÓPIA LITERAL do fingerprint do relatório de origem — é o elo
+                             entre relatório, triagem e próxima rodada; reescrevê-lo quebra
+                             o elo em silêncio
+items[].source_report        o arquivo auditoria/1.1 de onde o achado veio
+items[].verification         confirmado | refutado | inconclusivo | nao_executavel |
+                             nao_executado — lista fechada
+items[].gate                 bloqueia_deploy | bloqueia_primeiro_cliente |
+                             aceito_com_registro | descartado. A triagem SOBRESCREVE o
+                             suggested_gate do relatório e registra a derivação
+items[].owner e due          obrigatórios quando o portão abre trabalho (nem aceite nem
+                             descarte). Item sem os dois é backlog, não triagem
+aceite                       exige accepted_reason + accepted_by + review_trigger
+                             OBSERVÁVEL: o gatilho tem de nomear ao menos um caminho que
+                             existe no repositório, senão quem herdar o aceite não consegue
+                             reexecutá-lo
+self_check                   falsifiers_executed, falsifiers_total e items_without_owner
+                             são CONFERIDOS contra os itens, não declarados
+
+TRÊS CAMPOS PROMOVIDOS DO PRECEDENTE (docs/audit/AV-L1-TRIAGEM.json, rodada AV-L1)
+Estavam naquele arquivo sem o contrato os exigir. Cada um veio de um erro medido, não de gosto.
+source_run[].verification_note  quando os falsificadores rodam contra um commit DIFERENTE do
+                             relatório, declare isso e prove com git diff que nenhum arquivo
+                             de evidence está no meio
+self_check.barriers_searched todo barrier_kind é emitido DEPOIS de procurar barreira já
+                             existente. A lição literal do precedente: nenhuma_conhecida só
+                             vale depois de procurar, senão é "não procurei" com nome de
+                             veredito
+self_check.own_bias_named    nomeie o próprio viés, inclusive "sou verificador da minha
+                             própria correção" onde couber
+
+O QUE B11..B16 NÃO FAZEM, declarado em vez de prometido: elas leem ESTRUTURA. Nenhuma mede se
+o falsificador rodou de fato, se o portão foi bem derivado ou se o viés nomeado é o viés real.
+Prosa vazia compra a saída em B16. O que elas impedem é a triagem INCOMPLETA passar em
+silêncio — que era o estado anterior a esta emenda.
+
+EXTENSÃO v4 — tipos de peça central dos instrumentos escritos na v4
+centerpiece.type ganhou na v4:
+    intent_trail | mutation_score | comprehension_gap | review_reality | exposure_map |
+    dependency_trust
+centerpiece.type ganhou na v4.1:
+    missing_tests
 </script>
 
 <script type="text/plain" id="t-avL1">
@@ -1336,13 +2252,21 @@ function fase1AVL1(){
 /* ---- aplicabilidade, portão, teto ---- */
 const CAT=[
  {code:"AV-01",title:"Escopo e Arquitetura",ver:"v2"},{code:"AV-02",title:"Validação e Confirmação",ver:"v2"},
- {code:"AV-03",title:"Testes e Garantia Real",ver:"v2"},{code:"AV-04",title:"Segurança SaaS",ver:"v2",need:"saas"},
+ {code:"AV-03",title:"Força da Suíte",ver:"v4"},{code:"AV-04",title:"Segurança SaaS",ver:"v2",need:"saas"},
  {code:"AV-05",title:"Segurança Local",ver:"v2",need:"local"},{code:"AV-06",title:"Observabilidade",ver:"prop",deployBetter:true},
  {code:"AV-07",title:"Custo Unitário",ver:"prop",need:"paid"},{code:"AV-08",title:"Dados Pessoais",ver:"prop",need:"pii"},
  {code:"AV-09",title:"Continuidade",ver:"prop"},{code:"AV-10",title:"Capacidade de Mudança",ver:"v3",needGit:true},
  {code:"AV-11",title:"Manutenibilidade",ver:"v3",needGit:true},{code:"AV-12",title:"Segurança Agêntica",ver:"prop",need:"agent"},
  {code:"AV-13",title:"Avaliação de IA",ver:"prop",need:"ai"},{code:"AV-14",title:"Capacidade de Entrega",ver:"prop",needGit:true},
  {code:"AV-15",title:"Desempenho e Escala",ver:"prop",deployBetter:true},
+ /* AV-16 a AV-20 nasceram na v4: não são upgrade de instrumento v2, são instrumentos que
+    não existiam. AV-20 é o mais novo (v4.1) e é o único que depende do grafo para rodar
+    no orçamento — sem ele roda, mais devagar. */
+ {code:"AV-16",title:"Dívida de Compreensão",ver:"v4",needGit:true},
+ {code:"AV-17",title:"Revisão Real",ver:"v4",needGit:true},
+ {code:"AV-18",title:"Configuração de Implantação",ver:"v4"},
+ {code:"AV-19",title:"Cadeia de Suprimento",ver:"v4"},
+ {code:"AV-20",title:"Cobertura Ausente",ver:"v4"},
  {code:"AV-L1",title:"Contrato de Camadas",ver:"lum"}];
 
 function applicability(){
@@ -1360,6 +2284,15 @@ function applicability(){
     if(it.code==="AV-04"&&st==="sim"&&P.tenancy==="none"){st="parcial";why="sem modelo de inquilino: vira autorização simples";}
     if(it.code==="AV-04"&&st==="sim"&&P.tenancy==="app")why="inquilino por filtro na aplicação (userId+unitId); RLS impossível em SQLite — cada consulta é a fronteira";
     if(it.code==="AV-L1")why="invariantes declaradas em _ARCHITECTURE-CONTRACT.md fora do alcance do eslint";
+    /* Os cinco da v4 têm condição de execução própria, e AV-03 é o caso duro: sem
+       dependências instaladas ele não RODA — emite mutation_score não medido e trava o
+       placar no nível 1. Marcar "sim" aqui seria prometer medição que o ambiente não dá. */
+    if(it.code==="AV-03"&&st==="sim"&&P.hasDeps!=="sim"){st="parcial";
+      why="sem node_modules em todos os roots: mutação não executa, mutation_score sai não medido e o placar trava em 1";}
+    if(it.code==="AV-03"&&st==="sim")why="dependências instaladas: mutação executável, é a única rodada que mede força de suíte";
+    if(it.code==="AV-17"&&st!=="não")why="mede se a revisão independente do §9.4 deixa artefato — inteiramente histórico";
+    if(it.code==="AV-18"&&st==="sim")why="lê os artefatos de implantação declarados; teto 3 por construção — não mede o ambiente";
+    if(it.code==="AV-20"&&st==="sim")why="obrigação de teste não atendida; não mede cobertura de linha nem avalia a suíte que existe (isso é AV-03)";
     return {...it,st,why};});}
 
 function gateMap(){
@@ -1369,8 +2302,12 @@ function gateMap(){
   if(P.deployed==="producao")
     return "ja_exposto → bloqueia_deploy · apos_deploy → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · com_volume → aceitavel_com_registro";
   if(P.deployed==="interno")
-    return "ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy → bloqueia_deploy só se irreversível · com_volume → aceitavel_com_registro";
-  return "irreversível ou perda de dado → bloqueia_deploy · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy não irreversível → bloqueia_primeiro_cliente · com_volume e apenas_teorico → aceitavel_com_registro com gatilho";}
+    return "ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy → bloqueia_deploy só se irreversível · com_volume → aceitavel_com_registro · latente_por_dependencia → aceitavel_com_registro com gatilho";
+  /* EMENDA v4.1. O ramo "nunca implantado" não tinha linha para ja_exposto — e um achado
+     ja_exposto num sistema nunca implantado existe (a ausência de artefato de revisão é
+     um). Sem regra, a atribuição saía por leitura mais próxima do agente, que é exatamente
+     o julgamento que este mapa existe para tirar das mãos dele. */
+  return "irreversível ou perda de dado → bloqueia_deploy · ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy não irreversível → bloqueia_primeiro_cliente · latente_por_dependencia → aceitavel_com_registro com gatilho nomeado · com_volume e apenas_teorico → aceitavel_com_registro com gatilho";}
 function ceiling(){return P.deployed==="producao"?"4":"3";}
 
 /* ---- payloads ---- */
@@ -1868,23 +2805,29 @@ const ITEMS=[
   centro:"Três procedências por campo: medido, inferido ou perguntar. Campo sem procedência é erro.",
   limite:"Disponibilidade de ferramenta é testada por comando, nunca lida do package.json — e neste monorepo é testada nos três roots.",
   srcId:"t-perfil",btn:"Copiar prompt de redescoberta"},
- {code:"AV-L1",fam:"Contrato Luminaris",ver:"lum",kind:"text",title:"Contrato de Camadas",
-  file:"instrumento + perfil + Fase 1 + bloco v3",escopo:"Este repositório",
+ {code:"AV-L1",fam:"Contrato Luminaris",ver:"v4",v4patch:true,kind:"text",title:"Contrato de Camadas",
+  file:"instrumento + perfil + Fase 1 + bloco v4",escopo:"Este repositório",
   lede:"Mede as invariantes de arquitetura que o eslint não alcança — e só essas.",
   centro:"A tabela de contrato: por dimensão, o esperado, o medido, se há gate cobrindo e o veredito. Teto 3 onde a fronteira é só convenção.",
-  limite:"Não remede R1, R1b, R2, R3a nem R3b: são build-gate no CI. Se estivessem violados, o CI estaria vermelho.",
+  limite:"Não remede R1, R1b, R2, R3a nem R3b: são build-gate no CI. Se estivessem violados, o CI estaria vermelho. Está em v4 pela emenda compartilhada (V4PATCH), não por reescrita — o corpo do instrumento é o mesmo.",
   srcId:"t-avL1",f1:"avL1"},
  {code:"PADRÃO",fam:"Método",ver:"v3",kind:"text",title:"Esqueleto v3",file:"norma de autoria",
   escopo:"Aplica-se a todos",lede:"Os nove blocos e a razão de cada posição.",
   centro:"O esqueleto pronto para levar qualquer prompt v2 a v3.",
   limite:"Norma de autoria, não instrumento. Convive com os gates de envio [OPS-001] do CLAUDE.md.",
   srcId:"t-padrao",btn:"Copiar esqueleto"},
- {code:"AV-00",fam:"Método",ver:"v3",kind:"text",title:"Conduta Pós-Relatório",
+ {code:"AV-00",fam:"Método",ver:"v4",kind:"text",title:"Conduta Pós-Relatório",
   file:"av00-conduta-pos-relatorio.md",escopo:"Com o relatório em mãos",
   lede:"Governa o que acontece entre existir relatório e o código mudar.",
-  centro:"O contrato triagem/1.0, com falsificadores executados sobre o total.",
-  limite:"A Fase 5 carrega as regras deste repo: camada do contrato não é boilerplate a enxugar, e revisão vem de agente separado.",
+  centro:"O contrato triagem/1.0, com falsificadores executados sobre o total. Na v4, mais três parágrafos que a v3 não tinha: §2.1 origem do código, §2.2 teto de confiança e §2.2b a forma da saída é parte da medição.",
+  limite:"A Fase 5 carrega as regras deste repo: camada do contrato não é boilerplate a enxugar, e revisão vem de agente separado. O bloco 9 proíbe corrigir achado não triado — inclusive o óbvio.",
   srcId:"t-av00",btn:"Copiar AV-00",injectProfile:true},
+ {code:"V4PATCH",fam:"Método",ver:"v4",kind:"text",title:"Emenda v4 / v4.1",
+  file:"emenda compartilhada",escopo:"Todo instrumento v3",
+  lede:"Como um instrumento v3 vira v4 sem ser reescrito: dois blocos e quatro campos.",
+  centro:"Os blocos 4b (conventions[]) e 6b (demonstração) valem por referência a este texto — é o que sustenta AV-L1, AV-10 e AV-11 marcados v4 sem uma linha alterada no corpo deles.",
+  limite:"Emenda aditiva: nada é renumerado, removido ou renomeado. auditoria/1.1 continua sendo o contrato, e um consumidor da v3 lê um relatório v4 sem quebrar.",
+  srcId:"t-v4patch",btn:"Copiar emenda v4.1"},
  {code:"CONTRATO",fam:"Relatório",ver:"v3",kind:"text",title:"Contrato auditoria/1.1",
   file:"contrato-relatorio-json.md",escopo:"Envelope de todos",
   lede:"O JSON é a fonte de verdade; o HTML é projeção.",
@@ -1899,20 +2842,56 @@ const ITEMS=[
   srcId:"t-v3",btn:"Copiar bloco v3"},
  {code:"VISUAL",fam:"Relatório",ver:"tool",kind:"viewer",title:"Visualizador e triagem",
   escopo:"Cole o JSON emitido",lede:"Projeta o JSON e recebe a triagem. Exporta triagem/1.0."},
- {code:"AV-10",fam:"Arquitetura e código",ver:"v3",kind:"text",title:"Arquitetura — Capacidade de Mudança",
-  file:"instrumento + perfil + Fase 1 + bloco v3",escopo:"Janela de 12 meses",
+ {code:"AV-10",fam:"Arquitetura e código",ver:"v4",v4patch:true,kind:"text",title:"Arquitetura — Capacidade de Mudança",
+  file:"instrumento + perfil + Fase 1 + bloco v4",escopo:"Janela de 12 meses",
   lede:"Quanto custa a próxima mudança e onde vai doer.",
   centro:"Teste de mudança: três eixos, cada um MEDIDO ou ESTIMADO. Aqui há eixos prontos — os incrementos AP, AR, DIM, INVENTORY.",
-  limite:"Proibido recomendar arquitetura por nome, e proibido reportar SQLite como achado: é decisão tomada.",
+  limite:"Proibido recomendar arquitetura por nome, e proibido reportar SQLite como achado: é decisão tomada. Em v4 pela emenda compartilhada (V4PATCH).",
   srcId:"t-av10",f1:"av10"},
- {code:"AV-11",fam:"Arquitetura e código",ver:"v3",kind:"text",title:"Manutenibilidade — Onde o Custo Mora",
-  file:"instrumento + perfil + Fase 1 + bloco v3",escopo:"Janela de 12 meses",
+ {code:"AV-11",fam:"Arquitetura e código",ver:"v4",v4patch:true,kind:"text",title:"Manutenibilidade — Onde o Custo Mora",
+  file:"instrumento + perfil + Fase 1 + bloco v4",escopo:"Janela de 12 meses",
   lede:"Onde o dinheiro está sendo gasto.",
   centro:"Tabela de pontos quentes, última coluna em linguagem de negócio.",
-  limite:"Camada do contrato não é boilerplate. E autoria concentrada aqui não prova conhecimento concentrado: o autor de commit é o mesmo em trabalho de agente.",
-  srcId:"t-av11",f1:"av11"}
+  limite:"Camada do contrato não é boilerplate. E autoria concentrada aqui não prova conhecimento concentrado: o autor de commit é o mesmo em trabalho de agente. Em v4 pela emenda compartilhada (V4PATCH).",
+  srcId:"t-av11",f1:"av11"},
+ {code:"AV-16",fam:"Arquitetura e código",ver:"v4",kind:"text",title:"Dívida de Compreensão",
+  file:"instrumento + perfil + bloco v4",escopo:"Janela de 12 meses",
+  lede:"O que ninguém sabe explicar — e a diferença entre isso e código feio.",
+  centro:"Rastro de intenção por módulo: commit, decisão escrita, teste, cabeçalho. Achou em um dos quatro, não é achado.",
+  limite:"A coluna que decide o instrumento — alguém sabe explicar? — sai vazia do agente, sempre. Preenchê-la seria inventar a única informação que só o dono tem.",
+  srcId:"t-av16",btn:"Copiar AV-16",injectProfile:true},
+ {code:"AV-17",fam:"Método",ver:"v4",kind:"text",title:"Revisão Real",
+  file:"instrumento + perfil + bloco v4",escopo:"História de merges",
+  lede:"A barreira declarada do método deixa artefato auditável?",
+  centro:"Revisão declarada × revisão com artefato: 8 nomeiam uma revisão específica contra 207 merges.",
+  limite:"Não converte não medido em não houve. O que está medido é que a revisão não é reexecutável por ninguém de fora — não que ela não aconteceu.",
+  srcId:"t-av17",btn:"Copiar AV-17",injectProfile:true},
+ {code:"AV-18",fam:"Operação",ver:"v4",kind:"text",title:"Configuração de Implantação",
+  file:"instrumento + perfil + bloco v4",escopo:"Compose, Dockerfile, workflow",
+  lede:"O que os artefatos de implantação declaram expor.",
+  centro:"Mapa de exposição: superfície publicada × autenticação exigida × o código já suporta a credencial?",
+  limite:"Lê o repositório, não o host. Teto 3 por construção — a configuração declarada pode divergir da que rodaria.",
+  srcId:"t-av18",btn:"Copiar AV-18",injectProfile:true},
+ {code:"AV-19",fam:"Operação",ver:"v4",kind:"text",title:"Cadeia de Suprimento",
+  file:"instrumento + perfil + bloco v4",escopo:"Manifestos, travas, imports",
+  lede:"Declarado, travado e importado deveriam ser o mesmo conjunto.",
+  centro:"A tabela dos três conjuntos por pacote — e o funil de três filtros sem o qual ela é ruído.",
+  limite:"npm audit exige rede: vulnerabilidade conhecida é not_measured, nunca estimativa. Alias de tsconfig e jest não é dependência ausente.",
+  srcId:"t-av19",btn:"Copiar AV-19",injectProfile:true},
+ {code:"AV-03",fam:"Verificação",ver:"v4",kind:"text",title:"Força da Suíte",
+  file:"instrumento + perfil + bloco v4",escopo:"Suíte executável",
+  lede:"A suíte detecta defeito, ou só existe? Mutação executada, não contagem de teste.",
+  centro:"Placar de mutação: mortas sobre aplicadas, com o teste que pegou nomeado em cada morte.",
+  limite:"Sem node_modules não roda: emite mutation_score não medido e trava o placar em 1. Morte exige Tests: N failed — suíte que não carrega parece mutação morta.",
+  srcId:"t-av03",btn:"Copiar AV-03",injectProfile:true},
+ {code:"AV-20",fam:"Verificação",ver:"v4",kind:"text",title:"Cobertura Ausente",
+  file:"instrumento + perfil + bloco v4",escopo:"server/src",
+  lede:"Qual teste deveria existir e não existe — não é cobertura de linha.",
+  centro:"Obrigações ordenadas por peso de invariante, cada uma dizendo o que o teste deve afirmar e qual mutação do AV-03 ele mata.",
+  limite:"Mede quem NOMEIA a unidade, não quem a executa. Órfão de fan-in zero não é lacuna de teste: é candidato a remoção, e vai para o AV-11.",
+  srcId:"t-av20",btn:"Copiar AV-20",injectProfile:true}
 ];
-CAT.filter(c=>!["AV-10","AV-11","AV-L1"].includes(c.code)).forEach(c=>{
+CAT.filter(c=>!["AV-03","AV-10","AV-11","AV-16","AV-17","AV-18","AV-19","AV-20","AV-L1"].includes(c.code)).forEach(c=>{
   const fam=c.code==="AV-01"?"Escopo":(["AV-02","AV-03"].includes(c.code)?"Verificação":
     (["AV-04","AV-05"].includes(c.code)?"Segurança":
     (["AV-06","AV-07","AV-08","AV-09"].includes(c.code)?"Operação":"IA e entrega")));
@@ -1931,6 +2910,7 @@ const avsAll=ITEMS.filter(i=>i.code.startsWith("AV-")&&i.code!=="AV-00");
     `<strong>${PENDING.length} são decisão sua</strong> e a página não os preenche. `+
     `Os comandos saem com a assimetria do monorepo e o client gerado já excluídos.`;})();
 el("state").innerHTML=`<b>Estado</b>
+  <span><i class="dot d-v4"></i>${avsAll.filter(i=>i.ver==="v4").length} em v4</span>
   <span><i class="dot d-lum"></i>${avsAll.filter(i=>i.ver==="lum").length} local</span>
   <span><i class="dot d-v3"></i>${avsAll.filter(i=>i.ver==="v3").length} em v3</span>
   <span><i class="dot d-v2"></i>${avsAll.filter(i=>i.ver==="v2").length} em v2</span>
@@ -1943,7 +2923,7 @@ FAMS.forEach(f=>{const list=ITEMS.filter(i=>i.fam===f);if(!list.length)return;
   const h=document.createElement("div");h.className="fam-h";h.textContent=f;gg.appendChild(h);
   list.forEach(it=>{const b=document.createElement("button");
     b.className="item";b.type="button";b.setAttribute("aria-selected","false");b.dataset.code=it.code;
-    const cls=it.ver==="v3"?"v3":(it.ver==="v2"?"v2":(it.ver==="tool"?"tool":(it.ver==="lum"?"lum":"pr")));
+    const cls=it.ver==="v4"?"v4":(it.ver==="v3"?"v3":(it.ver==="v2"?"v2":(it.ver==="tool"?"tool":(it.ver==="lum"?"lum":"pr"))));
     const lbl=it.ver==="proposto"?"prop":(it.ver==="tool"?"ui":(it.ver==="lum"?"local":it.ver));
     b.innerHTML=`<span class="cd">${it.code}</span><span class="nm">${it.title}</span><span class="vb ${cls}">${lbl}</span>`;
     b.addEventListener("click",()=>select(it.code));gg.appendChild(b);});
@@ -1963,8 +2943,8 @@ function select(code){
   const it=ITEMS.find(i=>i.code===code);if(!it)return;
   document.querySelectorAll(".item").forEach(e=>
     e.setAttribute("aria-selected",e.dataset.code===code?"true":"false"));
-  const verLabel=it.ver==="proposto"?"Proposto":(it.ver==="tool"?"Interface":(it.ver==="lum"?"Local":it.ver));
-  const verCls=it.ver==="v3"?"st-v3":(it.ver==="v2"?"st-v2":(it.ver==="tool"||it.ver==="lum"?"st-tool":"st-pr"));
+  const verLabel=it.ver==="proposto"?"Proposto":(it.ver==="tool"?"Interface":(it.ver==="lum"?"Local":it.ver))+(it.v4patch?" · por emenda":"");
+  const verCls=it.ver==="v4"?"st-v4":(it.ver==="v3"?"st-v3":(it.ver==="v2"?"st-v2":(it.ver==="tool"||it.ver==="lum"?"st-tool":"st-pr")));
   const head=`<dl class="tag">
     <div><dt>Código</dt><dd>${esc(it.code)}</dd></div>
     <div><dt>Família</dt><dd class="plain">${esc(it.fam)}</dd></div>
@@ -2004,7 +2984,11 @@ function select(code){
 
 /* ================= visualizador + triagem ================= */
 let ownerView=false,triageOn=false,A=null,B=null,TR={};
-const EXPO={ja_exposto:0,apos_deploy:1,com_dado_de_terceiro:2,com_volume:3,apenas_teorico:4};
+/* Ordem de desempate no relatório, não escala de gravidade: latente_por_dependencia (v4.1)
+   entra acima de apenas_teorico porque o gatilho dele é uma atualização de rotina. */
+const EXPO={ja_exposto:0,apos_deploy:1,com_dado_de_terceiro:2,com_volume:3,
+  latente_por_dependencia:4,apenas_teorico:5};
+const VMODE={execucao:"verificado por execução",revisao:"verificado por revisão",leitura:"por leitura"};
 const GATES=["","bloqueia_deploy","bloqueia_primeiro_cliente","aceito_com_registro","descartado"];
 const VERIF=["nao_executado","confirmado","refutado","inconclusivo","nao_executavel"];
 const BARR=["","constraint","gate_dentro_da_tx","predicado_de_update","teste_de_fronteira",
@@ -2052,6 +3036,8 @@ function findCard(f,state){const d=dmg(f),ev=(f.evidence||[]).map(e=>`${e.path}$
       <span class="badge ${f.measured?"b-med":"b-est"}">${f.measured?"medido":"não medido"}</span>
       ${f.reversibility==="irreversible"?'<span class="badge b-irr">irreversível</span>':""}
       ${f.confidence&&f.confidence!=="high"?`<span class="badge b-low">confiança ${esc(f.confidence)}</span>`:""}
+      ${f.verification_mode?`<span class="badge ${f.verification_mode==="execucao"?"b-med":"b-low"}">${esc(VMODE[f.verification_mode]||f.verification_mode)}</span>`:""}
+      ${f.exposure==="latente_por_dependencia"?'<span class="badge b-low">latente até atualizar</span>':""}
       ${f.owner?`<span class="badge b-own">${esc(f.owner)}</span>`:""}
       ${f.suggested_gate?`<span class="badge b-own">propõe ${esc(f.suggested_gate)}</span>`:""}
       ${state==="new"?'<span class="pill">novo</span>':""}${state==="gone"?'<span class="pill">resolvido</span>':""}</div>
@@ -2064,6 +3050,10 @@ function findCard(f,state){const d=dmg(f),ev=(f.evidence||[]).map(e=>`${e.path}$
       ${!ownerView&&f.falsifier_dynamic?`<dt>Falsificador dinâmico — exige sistema de pé</dt><dd class="mono">${esc(f.falsifier_dynamic)}</dd>`:""}
       ${!ownerView&&f.suggested_barrier?`<dt>Barreira sugerida</dt><dd>${esc(f.suggested_barrier)}${f.barrier_kind?` <span class="mono">(${esc(f.barrier_kind)})</span>`:""}</dd>`:""}
       ${!ownerView&&f.adversarial_checks&&f.adversarial_checks.length?`<dt>Checagem adversarial</dt><dd>${f.adversarial_checks.map(c=>esc(c.check)+" → "+esc(c.result)).join("<br>")}</dd>`:""}
+      ${!ownerView&&f.demonstration?`<dt>Demonstração — ${esc(f.demonstration.seconds)}s · precisa de ${esc(f.demonstration.needs||"nada")}</dt><dd class="mono">${esc(f.demonstration.command)}<br>saída errada esperada: ${esc(f.demonstration.expected_wrong_output)}</dd>`
+        :(!ownerView&&f.demotion_reason?`<dt>Rebaixado por falta de demonstração (6b)</dt><dd class="gapwarn">${esc(f.demotion_reason)}</dd>`:"")}
+      ${!ownerView&&f.intent_unknown?`<dt>Intenção não recuperável</dt><dd class="gapwarn">intent_unknown — o instrumento proíbe chamar isto de decisão errada</dd>`:""}
+      ${!ownerView&&f.instrument_feedback?`<dt>O que este achado ensinou sobre o instrumento</dt><dd>${esc(f.instrument_feedback)}</dd>`:""}
     </dl>${triageOn&&state!=="gone"?triageBox(f):""}</div>`;}
 function counters(){const fs=A.findings||[];let exec=0,noOwner=0;
   const gs={bloqueia_deploy:0,bloqueia_primeiro_cliente:0,aceito_com_registro:0,descartado:0};
@@ -2088,7 +3078,22 @@ function renderReport(){
     <div><dt>Data</dt><dd class="plain mono">${esc(r.generated_at)}</dd></div>
     <div><dt>Bloco</dt><dd>${esc(r.closing_block_version||"v2")}</dd></div></dl>
     <p class="hint">Recorte: ${esc((sc.included||[]).join(", ")||"—")} · período ${esc(sc.period||"—")} · lidos ${esc(sc.files_read_full??"—")} de ${esc(sc.budget_files??"—")}</p>`;
-  if(r.reduced_mode)h+=`<div class="banner"><b>Relatório reduzido</b><br>${esc(r.reduced_reason||"insumo básico ausente")}</div>`;
+  /* reduced_capabilities (v4.1) diz QUAL capacidade faltou. Sem isso, "reduzido" é um
+     booleano que faz uma rodada com a suíte rodada parecer igual a uma sem. */
+  if(r.reduced_mode){const rc=r.reduced_capabilities;
+    h+=`<div class="banner"><b>Relatório reduzido</b><br>${esc(r.reduced_reason||"insumo básico ausente")}`+
+      (rc?`<br><span class="mono">`+["tipos","build","suite","runtime"]
+        .map(k=>`${k}: ${rc[k]?"executado":"NÃO"}`).join(" · ")+`</span>`:"")+`</div>`;}
+  if(r.agent_authored_ratio&&typeof r.agent_authored_ratio.value==="number"){
+    const rt=r.agent_authored_ratio;
+    h+=`<div class="banner ${rt.value>0.7?"":"ok"}"><b>Origem do código · ${esc(rt.value)}</b><br>
+      ${esc(rt.method||"")}<br><span class="hint">${esc(rt.identity_rule||"")}</span>
+      ${rt.value>0.7?`<br>Teto do AV-00 §2.2 ATIVO${r.confidence_ceiling?" — teto "+esc(r.confidence_ceiling):""}: acima de 0,70 só <span class="mono">verification_mode: execucao</span> sustenta confiança alta.`:""}</div>`;}
+  /* `==null` e não `===null`: chave AUSENTE é undefined, e o §9.4 lê omissão como afirmação
+     de revisão que não pode mostrar — o estado mais grave era justamente o que não acendia
+     banner nenhum. A mensagem distingue quem declarou a ausência de quem calou. */
+  if(r.review_of_this_run==null||r.review_gap)
+    h+=`<div class="banner"><b>Sem revisão independente</b><br>${esc(r.review_gap||(("review_of_this_run" in r)?"AV-00 §9.4: revisão vem de agente separado":"o relatório OMITE review_of_this_run e review_gap — AV-00 §9.4 lê a omissão como afirmação de revisão que não pode mostrar"))}</div>`;
   const nm=A.not_measured||[];
   h+= nm.length?`<div class="banner"><b>Não medido — ${nm.length}</b><ul>${nm.map(n=>`<li>${esc(n.label||n.id)}: ${esc(n.reason)} — consequência: ${esc(n.consequence)}</li>`).join("")}</ul></div>`
     :`<div class="banner ok"><b>Tudo medido</b></div>`;
@@ -2102,6 +3107,14 @@ function renderReport(){
   if(prev){const cur=new Set(fs.map(x=>x.fingerprint));
     const gone=(B.findings||[]).filter(x=>!cur.has(x.fingerprint));
     if(gone.length)h+=`<h4 class="sec">Resolvidos desde a rodada anterior</h4>`+gone.map(x=>findCard(x,"gone")).join("");}
+  /* 4b e o inquérito não são decoração: sem projetar conventions[] o leitor não vê o que o
+     instrumento DECIDIU não chamar de achado, e essa decisão é metade do rigor. */
+  if(A.conventions&&A.conventions.length)h+=`<h4 class="sec">Convenções · não são achados</h4>`+
+    tbl(["Alegação","Fonte","Por que não é achado","Vira achado se…"],
+      A.conventions.map(c=>[c.claim,c.source,c.why_not_finding,c.would_become_finding_if]));
+  if(!ownerView&&A.inquiry&&A.inquiry.length)h+=`<h4 class="sec">Inquérito</h4>`+
+    tbl(["Pergunta","Onde a resposta existiria","Por que importa"],
+      A.inquiry.map(q=>[q.question,q.answerable_from,q.why_it_matters]));
   if(A.latent_bugs&&A.latent_bugs.length)h+=`<h4 class="sec">Bug latente</h4>`+
     tbl(["Título","Onde","Por que latente"],A.latent_bugs.map(b=>[b.title||b.rule||"—",
       (b.path?b.path+(b.line?":"+b.line:""):(b.copy_a||"—")),b.why_latent||b.difference||"—"]));

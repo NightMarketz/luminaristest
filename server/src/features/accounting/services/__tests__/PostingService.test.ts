@@ -793,6 +793,16 @@ describe('PostingService', () => {
         });
       });
 
+      // AV-R3 M6: a mutação `if (false)` na guarda de PostingService.createAccount sobreviveu
+      // à suíte inteira porque nenhum teste afirmava a recusa — só o caminho autorizado.
+      it('throws ForbiddenError when policy.canManage is false (no repo write, no audit, no tx)', async () => {
+        const { svc, accountRepo, auditService } = buildService({ policy: { canManage: jest.fn(() => false) } });
+        await expect(svc.createAccount(scope, { code: '9.9', name: 'Teste', nature: 'Asset', acceptsEntries: true, unitId })).rejects.toBeInstanceOf(ForbiddenError);
+        expect(accountRepo.create).not.toHaveBeenCalled();
+        expect(auditService.append).not.toHaveBeenCalled();
+        expect($transaction).not.toHaveBeenCalled();
+      });
+
       it('P2002 on create → ValidationError thrown, no audit emitted', async () => {
         const p2002 = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
           code: 'P2002',
