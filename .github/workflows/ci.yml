@@ -163,7 +163,13 @@ jobs:
     name: Governance – OPS-001 layer present
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 — `review-ledger-check.mjs` imprime a razão declarado/merges, e
+      # `git log --merges` num checkout shallow devolveria um número ERRADO em silêncio (o
+      # script detecta shallow e OMITE o número em vez de estimar, mas a resposta certa é
+      # dar-lhe a história). Mesmo custo já aceito pelo job `zinc-guard` deste arquivo.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Assert operating-gates layer exists
         shell: bash
@@ -201,6 +207,22 @@ jobs:
       # push/PR — mantido assim de propósito.
       - name: Bancada aplicada a si mesma (AV-00 · 16 checagens)
         run: node scripts/bancada-gate.mjs
+
+      # Razão de revisão independente — um veredito declarado POR PR.
+      # Origem: achado R1 F4 `revisao-independente-sem-artefato-por-merge`
+      # (TRIAGEM-R1-R3.json, rank 6; 9 menções em prosa contra 207 merges). O `barrier_note`
+      # da triagem já concluía que «a barreira que falta é de REGISTRO, não de ferramenta»:
+      # nenhum passo deste arquivo exigia artefato de revisão.
+      # O gate NÃO exige aprovação — `sem_revisao_independente` é veredito legítimo da lista
+      # fechada. Ele converte AUSÊNCIA DE DECLARAÇÃO em DECLARAÇÃO DE AUSÊNCIA e reprova
+      # registro ambíguo (PR duplicado), auto-revisão (reviewer == implementer, §9.4) e
+      # artefato apontando caminho que não existe.
+      # Mora neste job pela mesma razão do irmão acima: só usa builtins do Node e lê
+      # docs/audit/ + git, então não depende de nenhum `npm ci` cuja falha o mascararia.
+      - name: Revisão independente declarada por PR (R1 F4)
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/review-ledger-check.mjs
 
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes
   # (contrato §4: superfícies dark = neutral-*). Em vez de reprovar nelas (refactor =

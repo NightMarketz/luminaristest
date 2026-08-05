@@ -1,0 +1,25 @@
+// Razão de revisão independente — um veredito declarado por PR. Cobrado por
+// scripts/review-ledger-check.mjs (passo do job `governance-presence` do ci.yml).
+//
+// Origem: achado R1 F4 `revisao-independente-sem-artefato-por-merge`
+// (docs/audit/TRIAGEM-R1-R3.json, rank 6). O achado mediu 9 menções a revisão independente em
+// mensagens de commit contra 207 merges: o registro existia em prosa, e prosa não é contável.
+//
+// FORMA (uma linha por PR, JSON):
+//   {"pr":<int>,"commit":"<sha>","implementer":"<quem escreveu>","verdict":"<lista fechada>",
+//    "reviewer":"<quem revisou|omitir>","artifact":"<caminho que existe|omitir>","note":"<por quê>"}
+//
+// VEREDITOS (lista fechada): revisado_pass · revisado_com_ressalva ·
+// revisado_reprovado_e_corrigido · sem_revisao_independente
+//
+// `sem_revisao_independente` é veredito LEGÍTIMO. O gate cobra DECLARAÇÃO, não aprovação — a
+// distinção entre «ausência de declaração» e «declaração de ausência» é a mesma que o B10 do
+// bancada-gate faz. Um veredito `revisado_*` exige revisor DIFERENTE do implementador (AV-00
+// §9.4) e um `artifact` cujo caminho exista no disco.
+//
+// SEM BACKFILL, e a razão é a mesma que este arquivo existe para atacar: dos 207 merges da
+// história, 9 deixaram menção em prosa e 198 não deixaram nada recuperável. Preencher os 198
+// a partir de inferência produziria exatamente o registro falso que o achado descreve. O razão
+// começa aqui, e a cobertura impressa pelo gate (declarado/merges) diz de quanto é o buraco em
+// vez de esconder que ele existe.
+{"pr":167,"commit":"333a5e26","implementer":"claude-opus-5 (sessao que fechou os itens 5, 6 e 7 da TRIAGEM-R1-R3)","verdict":"sem_revisao_independente","note":"AV-00 §9.4 exige revisao de agente separado e nenhuma foi feita: os tres itens foram implementados e verificados pela MESMA sequencia. O que existe no lugar e prova de mordida por mutacao (M2 e M7 do AV-R3 no item 5; dez mutacoes e tres controles no gate do item 6), e prova de mordida nao e revisao. Primeira entrada do razao, e ela declara ausencia sobre o proprio trabalho que criou o razao — a nota de circularidade do barrier_note do item 6 continua verdadeira e nao se resolve com esta barreira."}
