@@ -262,6 +262,41 @@ emite) mais `status: corrigido_e_barrado` + `status_evidence`, que é a forma do
 cobra: `status: corrigido_e_barrado` pode ser escrito sem que barreira nenhuma exista.
 Registrado em `new_findings_raised` da triagem, sem portão.
 
+### 3e · O item 4 da fila — CORRIGIDO E BARRADO (`d11b4716`)
+
+O de **maior dano** (4) e o único cujo conserto era um arquivo novo:
+`server/src/features/accounting/services/__tests__/PostingServiceLedgerWrite.integration.test.ts`
+— 5 casos contra SQLite real, serviço vindo do **factory** (não `new`), sem mock de prisma.
+O falsificador do achado deixou de reproduzir: o `grep` que devolvia **0** devolve **1**, e os
+dois controles do achado continuam válidos (31 → 32 arquivos de integração; 10 → 11 com
+`PrismaClient`), então nem o zero de antes nem o um de agora são cegueira de padrão.
+
+**As duas mutações do AV-R3 reexecutadas**, por linha (o arquivo é CRLF e a linha alvo do M5
+aparece 4×), cada uma revertida de `.bak` com `numstat` conferido:
+
+| Mutação | Antes (AV-R3, suíte mockada) | Agora |
+|---|---|---|
+| **M5** `JournalEntryRepository.ts:49` — filtro de inquilino | sobreviveu **sem ser executada** | **morta e discriminante** — 1 failed / 4 passed, falha o caso certo |
+| **M3** `PostingRepository.ts:20` — perna fora da tx | sobreviveu **sem ser executada** | **morta**, assinatura **total** — 5/5, timeout de 5000 ms por post |
+
+**A leitura honesta do M3:** em base real a perna escrita fora da tx **trava contra o lock da
+própria tx**. Não é o vazamento silencioso que o mock sugeria — é deadlock, e derruba os cinco
+casos. A discriminação vem do baseline 5/5 verde, não de um caso isolado; está declarada como
+limite em vez de vendida como precisão.
+
+**O que este item ensinou sobre o próprio AV-R3** (medido antes de escrever a barreira, com a
+mutação aplicada): **o M5 não é observável através de `reverseEntry`** — um segundo gate
+escopado a jusante devolve `NotFound` e derruba a tx, deixando 0 entries e 0 postings para o
+outro dono. O AV-R3 não podia saber disso, porque nunca executou a linha. Por isso o kill do M5
+mora no contrato do repositório, e o caso de estorno cross-tenant fica no arquivo como
+invariante de ponta a ponta — **não** como prova de mordida. Chamá-lo de barreira do M5 seria
+vitória declarada. O consumidor cujo ÚNICO gate é aquela linha está nomeado no teste:
+`DocumentAttachmentService.ts:92`, cujo próprio comentário diz que a FK prova existência e não
+inquilino.
+
+**Fora de escopo, e declarado:** cobre `postEntry` e `reverseEntry`. Não cobre `approveEntry`,
+os bridges, nem as 4 unidades da subfila ratificada — ver o item 3 de "o que continua em aberto".
+
 ### 4 · Os achados de maior dano, se e quando triados
 - **R3 F1 (dano 4)** — o caminho de escrita do razão não tem cobertura de integração. Nenhum teste de integração instancia `PostingService`; `PostingDimension.integration.test.ts:76` define um helper local `postEntry` que grava direto via `db.posting.create`.
 - **R1 F1 e F2 (dano 3)** — os dois no mesmo `docker-compose.yml`: nome de variável divergente e Qdrant sem chave.
@@ -345,15 +380,16 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    Nota sobre os números: `4/7` no frontend contra `2/7` no backend **não** ranqueia as
    suítes — são conjuntos de mutação diferentes, dirigidos a invariante, e o próprio AV-03
    declara que é amostra dirigida, não estimativa estatística.
-3. **A fila de correção está aberta em 4 de 7.** Os itens 1, 2 e 3 de `ordering.sequence`
-   foram corrigidos **e barrados** — ver §3c. Restam, na ordem:
-   **4** `caminho-de-escrita-do-razao-sem-cobertura-de-integracao` (dano 4, o maior da fila,
-   e o único que exige um **arquivo de teste de integração novo** — tarefa própria, não
-   apêndice de outra), **5** `fronteira-de-dto-quase-nao-testada`, **6**
+3. **A fila de correção está aberta em 3 de 7.** Os itens 1, 2, 3 (§3c) e **4** (§3e) foram
+   corrigidos **e barrados**. Restam, na ordem:
+   **5** `fronteira-de-dto-quase-nao-testada`, **6**
    `revisao-independente-sem-artefato-por-merge` (único de custo **recorrente**), **7**
    `tres-imports-sem-declaracao-no-manifesto` (aceito com gatilho — nada a fazer até as
    travas serem regeneradas).
-   O item 4 herda a subfila de 4 unidades ratificada em `r2_decision.ratified_subqueue`.
+   **A subfila de 4 unidades de `r2_decision.ratified_subqueue` NÃO foi fechada junto** —
+   ela era herdada pelo item 4, e a barreira dele cobre `postEntry`/`reverseEntry`, não
+   `accountingController` nem os três repositórios de `tx+inquilino+softdelete`. Segue aberta,
+   agora sem item de fila que a carregue: quem retomar decide se vira item próprio ou aceite.
 
 4. **FECHADO — os defeitos de runtime foram EMITIDOS e TRIADOS.** O que estava aberto aqui era
    consequência medida de reportar em prosa: o B12 exige que todo `fingerprint` de uma
