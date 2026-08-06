@@ -14,6 +14,23 @@ export interface AccountOption {
   acceptsEntries: boolean;
 }
 
+/** The legs + header this modal edits, in the on-the-wire shape (integer cents). */
+export interface JournalEntryDraftValue {
+  /** YYYY-MM-DD */
+  date: string;
+  description: string;
+  lines: Array<{ accountCode: string; debitCents: number; creditCents: number }>;
+}
+
+/** What the modal hands to its write command: the edited value plus the tenancy axis + dim tags. */
+export interface JournalEntrySubmitValue {
+  unitId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  description: string;
+  lines: Array<{ accountCode: string; debitCents: number; creditCents: number; dimensions?: string[] }>;
+}
+
 export interface JournalEntryModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,6 +39,22 @@ export interface JournalEntryModalProps {
   onSuccess: () => void;
   /** Active dimension axes + their values (INCR-DIM). Optional per-line tagging; empty = no picker. */
   dimensionCatalog?: DimensionCatalogEntry[];
+  /**
+   * Override the write command. Default: post STRAIGHT to the ledger
+   * (`accountingService.postEntry`). The maker-checker tower (ADR-INCR-APPROVAL) passes
+   * `createDraft`/`updateDraft` instead — same object (a journal entry and its legs), same
+   * source, different command, so this reuses the canonical editor per `_REUSE-CRITERION`
+   * rather than cloning it.
+   */
+  submit?: (value: JournalEntrySubmitValue) => Promise<unknown>;
+  /** Pre-fill (editing an existing draft). Read once at mount — remount via `key` to switch drafts. */
+  initial?: JournalEntryDraftValue;
+  /** Copy overrides for non-post commands (default copy is the "post now" wording). */
+  title?: string;
+  submitLabel?: string;
+  busyLabel?: string;
+  /** Contextual note rendered above the error slot (e.g. the edit-mode dimension caveat). */
+  notice?: string;
 }
 
 interface Line {
@@ -72,6 +105,22 @@ const DEFAULT_LINES: Line[] = [
   { id: '2', accountCode: '', side: 'CREDIT', amountBrl: '', dims: {} },
 ];
 
+/** Integer cents → the BR-decimal string this form edits (round-trips through `parseBrl`). */
+function centsToInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',');
+}
+
+/** Turn a pre-filled entry into editable rows. Dimension tags start empty — see `notice`. */
+function toLines(initial: JournalEntryDraftValue): Line[] {
+  return initial.lines.map((l, i) => ({
+    id: `i${i}`,
+    accountCode: l.accountCode,
+    side: l.debitCents > 0 ? ('DEBIT' as const) : ('CREDIT' as const),
+    amountBrl: centsToInput(l.debitCents > 0 ? l.debitCents : l.creditCents),
+    dims: {},
+  }));
+}
+
 export function JournalEntryModal({
   isOpen,
   onClose,
@@ -79,11 +128,17 @@ export function JournalEntryModal({
   accounts,
   onSuccess,
   dimensionCatalog = [],
+  submit,
+  initial,
+  title,
+  submitLabel,
+  busyLabel,
+  notice,
 }: JournalEntryModalProps) {
   const { t } = useTranslation('accounting');
-  const [date, setDate] = useState<string>(today);
-  const [description, setDescription] = useState('');
-  const [lines, setLines] = useState<Line[]>(DEFAULT_LINES);
+  const [date, setDate] = useState<string>(() => initial?.date ?? today());
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const [lines, setLines] = useState<Line[]>(() => (initial ? toLines(initial) : DEFAULT_LINES));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -173,7 +228,7 @@ export function JournalEntryModal({
 
     setIsSubmitting(true);
     try {
-      await accountingService.postEntry({
+      const payload = {
         date,
         description,
         unitId,
@@ -186,7 +241,9 @@ export function JournalEntryModal({
             ...(dimensions.length ? { dimensions } : {}),
           };
         }),
-      });
+      };
+      // Default command = post straight to the ledger; the approval tower injects its own.
+      await (submit ? submit(payload) : accountingService.postEntry(payload));
       // Reset form state before closing
       setDate(today());
       setDescription('');
@@ -208,7 +265,7 @@ export function JournalEntryModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('journalEntryModal.title', 'Novo Lançamento')}
+      title={title ?? t('journalEntryModal.title', 'Novo Lançamento')}
       maxWidth="max-w-2xl"
       isDirty={isDirty}
       themeColor="bg-emerald-600"
@@ -229,8 +286,8 @@ export function JournalEntryModal({
             className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting
-              ? t('journalEntryModal.button.posting', 'Postando…')
-              : t('journalEntryModal.button.post', 'Postar')}
+              ? (busyLabel ?? t('journalEntryModal.button.posting', 'Postando…'))
+              : (submitLabel ?? t('journalEntryModal.button.post', 'Postar'))}
           </button>
         </>
       }
@@ -404,6 +461,13 @@ export function JournalEntryModal({
             </span>
           )}
         </div>
+
+        {/* ── Contextual notice (approval tower: the edit-mode dimension caveat) ── */}
+        {notice && (
+          <div className="rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
+            {notice}
+          </div>
+        )}
 
         {/* ── Error ── */}
         {error && (

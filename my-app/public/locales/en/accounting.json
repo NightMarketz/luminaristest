@@ -27,7 +27,8 @@
       "conciliacao": "Reconciliation",
       "compliance": "Compliance",
       "dimensoes": "Dimensions",
-      "contrapartes": "Counterparties"
+      "contrapartes": "Counterparties",
+      "aprovacoes": "Approvals"
     },
     "error": {
       "units": "Failed to load units.",
@@ -1030,6 +1031,75 @@
       "confirm": "Confirm archiving",
       "archiving": "Archiving…",
       "note": "The counterparty stops appearing when creating new accounts. Existing entries and linked accounts remain intact."
+    }
+  },
+  "approvals": {
+    "heading": "Approvals",
+    "newDraft": "New Draft",
+    "loading": "Loading the queue…",
+    "viewPeriods": "View Periods",
+    "col": {
+      "expand": "Expand",
+      "date": "Date",
+      "description": "Description",
+      "amount": "Amount",
+      "legs": "Legs",
+      "actions": "Actions"
+    },
+    "postings": {
+      "account": "Account",
+      "debit": "Debit",
+      "credit": "Credit"
+    },
+    "drafts": {
+      "heading": "Drafts",
+      "note": "They do not touch the ledger or the statements yet. No entry number — it is born at approval.",
+      "empty": "No drafts in this unit."
+    },
+    "pending": {
+      "heading": "Awaiting approval",
+      "note": "Content frozen at submission. Approving posts to the ledger; rejecting sends it back to draft.",
+      "empty": "No entries awaiting approval."
+    },
+    "action": {
+      "edit": "Edit",
+      "editTitle": "Edit the draft",
+      "submit": "Submit",
+      "submitTitle": "Submit for approval",
+      "approve": "Approve",
+      "approveTitle": "Approve and post to the ledger",
+      "reject": "Reject",
+      "rejectTitle": "Reject back to draft"
+    },
+    "editor": {
+      "createTitle": "New Draft",
+      "editTitle": "Edit Draft",
+      "create": "Create draft",
+      "save": "Save draft",
+      "saving": "Saving…",
+      "dimensionsNotice": "Editing rewrites every leg. Dimension tags are not returned by the entry read — if this draft carried any, select them again before saving."
+    },
+    "actionModal": {
+      "cancel": "Back",
+      "optional": "(optional)",
+      "reasonLabel": "Reason",
+      "submitTitle": "Submit for approval",
+      "submitConfirm": "Submit",
+      "submitting": "Submitting…",
+      "submitNote": "The economic content (legs, date and memo) is frozen from here on. To change it, the entry must be rejected back to draft.",
+      "approveTitle": "Approve and post",
+      "approveConfirm": "Approve and post",
+      "approving": "Approving…",
+      "approveNote": "Approving POSTS the entry to the ledger and assigns the fiscal-year sequential number. After that, only a reversal corrects it.",
+      "rejectTitle": "Reject entry",
+      "rejectConfirm": "Confirm rejection",
+      "rejecting": "Rejecting…",
+      "rejectNote": "The entry goes back to draft and can be edited and resubmitted. No number is consumed."
+    },
+    "error": {
+      "load": "Failed to load the approval queue.",
+      "action": "Could not complete the operation.",
+      "conflict": "Someone changed this entry while this screen was open. The list was reloaded — review it and try again."
     }
   }
 }
