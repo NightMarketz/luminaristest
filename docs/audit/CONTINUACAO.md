@@ -28,6 +28,8 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 (backend) · AV-03 |
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
 | `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` | rodada 6 · 5 achados de **runtime** da própria bancada · `failure_modes` · primeira com `runtime: true` |
+| `docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.md` + `.json` | rodada 7 · AV-03 sobre as **4 unidades da subfila** · `mutation_score` **0/7** · 6 sobreviventes provadas **sem execução** por sonda com controle · 5 achados · **NÃO triada** |
+| `docs/audit/TRIAGEM-AV-R7.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · **5 bloqueiam, 0 aceites** · 3 `suggested_gate` sobrescritos |
 | `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
 | `scripts/bancada-gate.mjs` | gate de **16** checagens que reprovam (B1..B9 e B11..B17; B10 só avisa) · **passa, e passa no CI** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
@@ -465,7 +467,27 @@ a primeira entrada de `REVIEW-LEDGER.jsonl` é o PR #167 com `sem_revisao_indepe
     **controle falhando** que expôs o probe; sem ele, o mutante vermelho teria sido lido como
     mordida. Ao isolar um diretório para medir npm, copie `.npmrc` junto.
 
-11. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
+11. **Sonda de `throw` no topo de handler quebra o NARROWING do TypeScript.** A armadilha 5
+    desta lista descreve o `throw` que derruba suítes por quebrar narrowing num `catch`
+    distante. A AV-R7 achou o mesmo efeito por outro caminho: `throw` como **primeira**
+    instrução de um handler torna o corpo abaixo inalcançável, e **em código inalcançável o TS
+    não narrowa** — `parsed.error is possibly undefined`, `UserContext | null` não atribuível,
+    três erros de compilação onde o código original compila. Sonda que não compila é resultado
+    **inválido**, não morte. Em repositório (método de 1-3 linhas sem narrowing) a mesma sonda
+    compila e funciona: o problema é o **corpo que depende de narrowing**, não o `throw`.
+
+12. **Falsificador encadeado com `&&` esconde o próprio controle.** Duas causas distintas,
+    medidas juntas e separadas depois. (a) **`grep -c` sai 1 quando a contagem é zero** — então
+    `awk … | grep -c X && awk … | grep -c X` nunca chega ao segundo comando quando o primeiro
+    dá zero, que é justamente quando o achado é verdadeiro. Defeito do comando, e o F3 da AV-R7
+    o tem. (b) **`set -o pipefail` faz `grep | wc -l` sair 1 quando o grep não acha**, truncando
+    cadeias que rodam inteiras num shell padrão. Defeito do *wrapper de quem reexecuta*, não do
+    comando — foi o meu, e invalidou a primeira leitura de dois falsificadores.
+    O controle é a única coisa que distingue "o alvo não existe" de "meu comando está quebrado";
+    perdê-lo exatamente no caso positivo é o pior momento possível. Separe etapas de falsificador
+    com `;`, não com `&&`, e rode uma vez sem opções de shell antes de concluir.
+
+13. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
    têm o mesmo cabeçalho `## 4b · conventions[]`. Uma mutação que pretendia atingir o
    `t-av20` caiu no `t-av03`, e o gate reprovou — corretamente — o item errado. Escope a
    mutação ao bloco (índice de `id="t-xxx"` até o `</script>`) antes de concluir qualquer
@@ -554,6 +576,62 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    `gates_summary` **não** foi alterado: ele conta os portões dos 7 achados (1 / 5 / 1), e a
    subfila nunca teve portão próprio. Somá-la ali faria a contagem deixar de bater com `items[]`,
    que é o que o B15 confere.
+
+   **A RODADA FOI EMITIDA — `AV-R7-FORCA-DA-SUITE-SUBFILA` (`ec3e4feb`).** O caminho descrito
+   acima foi percorrido: a subfila agora tem relatório de origem, e os cinco `fingerprint` dela
+   existem num `auditoria/1.1` emitido, então **o B12 deixou de ser o obstáculo** para
+   promovê-la a `items[]`. O que falta é a **triagem**, e ela NÃO foi feita — o bloco 9 exige
+   emitir → triar → só então corrigir.
+
+   O que a rodada mediu: **`mutation_score` 0/7**. Sete mutações dirigidas a `tx`, `inquilino`,
+   `softdelete` e `autoriza` sobreviveram, e **seis foram provadas sem serem executadas** —
+   seis sondas de `throw` armadas de uma vez deixaram **165 suítes / 1945 testes 100% verdes**,
+   e o CONTROLE da sonda (o mesmo `throw` em `PostingRepository.create`) devolve
+   `Tests: 5 failed`. A subfila não tinha cobertura por **nome**; agora está medido que também
+   não tem cobertura **alcançável**, que é afirmação mais forte e a única que a mutação sustenta.
+
+   **O caso mais agudo é literal, e vale ler:** existe `ReferentialMapping.integration.test.ts`,
+   ele exercita `db.referentialMapping.deleteMany(...)` e depois **afirma isolamento por dono**.
+   A mutação M6 remove exatamente esse escopo do `deleteByAccountVersion` do repositório — e o
+   arquivo passa verde. **O teste que afirma a invariante não pode pegar a violação dela, porque
+   reimplementa o repositório em vez de chamá-lo.**
+
+   **E o critério de ratificação ficou mais fraco em 1 de 4, medido:** o achado F3 da AV-R7 mostra
+   que o model `ReferentialMapping` **não tem campo `deletedAt`** — o AV-R2 o etiquetou com
+   `softdelete` porque a única ocorrência da palavra no repositório é o comentário que a **nega**.
+   A decisão de fila própria **não cai** (ela se apoia em `inquilino` e `tx`, que valem nas
+   quatro), mas o número que a acompanha ganhou nota. É a **armadilha 8** desta lista, agora
+   encontrada num instrumento que não é o meu — primeira evidência de que ela é de classe e não
+   de sessão.
+
+   **A RODADA FOI TRIADA — `TRIAGEM-AV-R7.json` (`19c42857`), e a subfila deixou de ser registro
+   e virou fila com itens.** As 4 unidades estão cobertas por **dois** itens triados, com portão
+   derivado, dono e data: o **rank 4** (`repositorios-da-subfila-sem-cobertura-alcancavel`,
+   dano 4, due 2026-08-31) cobre os três repositórios; o **rank 3**
+   (`controller-de-contabilidade-sem-alcance-http`, dano 3, due 2026-08-24) cobre o
+   `accountingController`. `gates_summary`: **5 `bloqueia_primeiro_cliente`, 0 aceites.**
+
+   **Três `suggested_gate` meus foram sobrescritos.** O relatório sugeria `aceito_com_registro`
+   para F3, F4 e F5; a derivação pelo ramo único `nunca implantado` do `gateMap` dá
+   `bloqueia_primeiro_cliente` nos três, porque os cinco são `ja_exposto` e **o mapa não rebaixa
+   portão por custo nem por dano**. É o erro que o item 5 da `TRIAGEM-R1-R3` existia para
+   corrigir, cometido de novo por mim no relatório dois dias depois de escrever a correção — e
+   pego pela derivação mecânica, que é o único ponto desta linha de trabalho onde o processo
+   contradiz o autor.
+
+   **A execução a partir do JSON relido pegou um defeito que eu não sabia existir:** o
+   falsificador publicado do F3 **para antes do próprio controle** — `grep -c` imprime 0 e **sai
+   1** quando a contagem é zero, então o `&&` quebra a cadeia e o segundo `awk`, que É o
+   controle, nunca roda. O controle é inalcançável exatamente quando o achado é verdadeiro.
+   Rodado à parte devolve 2 e confirma; registrado em `new_findings_raised` e **não corrigido**,
+   pelo precedente da AV-R6 (editar o artefato de origem durante a triagem apaga a diferença
+   entre o que a rodada emitiu e o que a triagem verificou).
+
+   **E uma medição minha foi invalidada e refeita:** rodei os cinco sob `set -o pipefail`, e com
+   pipefail um `grep | wc -l` que não acha nada sai 1 e trunca a cadeia — F1 e F2 apareceram
+   **sem os controles**. Isolado (`grep|wc` sai 0 sem pipefail e 1 com): o defeito era do **meu
+   wrapper**, não do comando publicado. Por isso o F2 não gera achado sobre o instrumento e o
+   F3 gera. Virou a **armadilha 12** desta lista.
 
 4. **FECHADO — os defeitos de runtime foram EMITIDOS e TRIADOS.** O que estava aberto aqui era
    consequência medida de reportar em prosa: o B12 exige que todo `fingerprint` de uma
