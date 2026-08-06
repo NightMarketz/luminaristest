@@ -53,6 +53,9 @@ describe('AccountsPayablePanel (render)', () => {
     render(<AccountsPayablePanel unitId="u1" />);
 
     await waitFor(() => expect(screen.getByText(/Nenhuma conta a pagar registrada/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável: com `t` no dep array do fetch, o efeito re-dispara
+    // a cada render e esta contagem explode. Ver features/accounting/lib/useAccountingT.
+    expect(accountsPayableService.listPayables).toHaveBeenCalledTimes(1);
   });
 
   it('renders an OPEN payable with pay + cancel actions and no NaN money', async () => {

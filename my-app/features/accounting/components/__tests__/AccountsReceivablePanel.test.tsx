@@ -53,6 +53,8 @@ describe('AccountsReceivablePanel (render)', () => {
     render(<AccountsReceivablePanel unitId="u1" />);
 
     await waitFor(() => expect(screen.getByText(/Nenhuma conta a receber registrada/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(accountsReceivableService.listReceivables).toHaveBeenCalledTimes(1);
   });
 
   it('renders an OPEN receivable with receive + cancel actions and no NaN money', async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { FiChevronDown, FiChevronRight, FiPlusCircle, FiEdit2, FiSend, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import {
@@ -12,6 +12,7 @@ import { JournalEntryModal, type AccountOption, type JournalEntryDraftValue } fr
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -192,12 +193,8 @@ interface EntryApprovalsPanelProps {
  * off in single-user). This screen deliberately does not pre-block self-approval on the client.
  */
 export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriods }: EntryApprovalsPanelProps) {
-  const { t } = useTranslation('accounting');
-  // `t` gets a NEW identity on every render (verified: useTranslation does not memoize it here),
-  // so putting it in fetchAll's dep array would re-create the callback → re-fire the effect →
-  // setState → render → loop. Read it through a ref: the fetch depends only on `unitId`.
-  const tRef = useRef(t);
-  tRef.current = t;
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [drafts, setDrafts] = useState<ApprovalEntry[]>([]);
   const [pending, setPending] = useState<ApprovalEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -238,7 +235,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
     } finally {
       setLoading(false);
     }
-  }, [unitId]);
+  }, [unitId, tRef]);
 
   useEffect(() => {
     void fetchAll();

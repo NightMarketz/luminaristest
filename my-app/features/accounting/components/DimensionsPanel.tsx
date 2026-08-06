@@ -10,6 +10,7 @@ import {
 import { Modal } from '../../../components/ui/Modal';
 import { DimensionReports } from './DimensionReports';
 import { resolveError } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 
 // ── tree helpers ────────────────────────────────────────────────────────────────
@@ -73,7 +74,8 @@ type View = 'catalog' | 'reports';
  * dimensão). A dimension is metadata orthogonal to the ledger (ACC-024); nothing here posts money.
  */
 export function DimensionsPanel({ unitId }: DimensionsPanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [view, setView] = useState<View>('catalog');
   const [catalog, setCatalog] = useState<DimensionCatalogEntry[]>([]);
   const [includeArchived, setIncludeArchived] = useState(false);
@@ -100,11 +102,11 @@ export function DimensionsPanel({ unitId }: DimensionsPanelProps) {
     try {
       setCatalog(await dimensionsService.listCatalog({ unitId, includeArchived }));
     } catch (err: unknown) {
-      setError(resolveError(err, t('dimensions.error.load', 'Erro ao carregar as dimensões.')));
+      setError(resolveError(err, tRef.current('dimensions.error.load', 'Erro ao carregar as dimensões.')));
     } finally {
       setLoading(false);
     }
-  }, [unitId, includeArchived, t]);
+  }, [unitId, includeArchived, tRef]);
 
   useEffect(() => {
     void fetchCatalog();

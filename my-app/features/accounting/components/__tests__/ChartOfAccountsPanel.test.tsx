@@ -38,6 +38,8 @@ describe('ChartOfAccountsPanel (render)', () => {
     render(<ChartOfAccountsPanel unitId="u1" canManage={false} />);
 
     await waitFor(() => expect(screen.getByText('Caixa')).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(mockGetAccounts).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Receita de Serviços')).toBeInTheDocument();
     // No manage rights → no "Nova Conta" affordance.
     expect(screen.queryByRole('button', { name: /Nova Conta/ })).not.toBeInTheDocument();

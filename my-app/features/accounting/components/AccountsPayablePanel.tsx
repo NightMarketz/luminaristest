@@ -16,6 +16,7 @@ import { CreatePayableModal } from './CreatePayableModal';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -204,7 +205,8 @@ interface AccountsPayablePanelProps {
  * to the ledger via the AP command endpoints and refetch the trial balance.
  */
 export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties }: AccountsPayablePanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [payables, setPayables] = useState<PayableWithPayments[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -234,11 +236,11 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
       const result = await accountsPayableService.listPayables({ unitId, limit: 200 });
       setPayables(result.payables);
     } catch (err: unknown) {
-      setError(resolveErrorWithCode(err, t('contasAPagar.error.load', 'Erro ao carregar as contas a pagar.')).message);
+      setError(resolveErrorWithCode(err, tRef.current('contasAPagar.error.load', 'Erro ao carregar as contas a pagar.')).message);
     } finally {
       setLoading(false);
     }
-  }, [unitId, t]);
+  }, [unitId, tRef]);
 
   useEffect(() => {
     void fetchPayables();
