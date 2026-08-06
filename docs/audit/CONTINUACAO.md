@@ -28,6 +28,7 @@ visualizador). É a Fase B de registro serial do `_PARALLELIZATION-CONTRACT.md`.
 | `docs/audit/AV-R3-FORCA-DA-SUITE.md` + `.json` | rodada 3 · `mutation_score` 2/7 (backend) · AV-03 |
 | `docs/audit/AV-R5-FORCA-DA-SUITE-FRONTEND.md` + `.json` | rodada 5 · `mutation_score` 4/7 (frontend) · AV-03 |
 | `docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.md` + `.json` | rodada 6 · 5 achados de **runtime** da própria bancada · `failure_modes` · primeira com `runtime: true` |
+| `docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.md` + `.json` | rodada 7 · AV-03 sobre as **4 unidades da subfila** · `mutation_score` **0/7** · 6 sobreviventes provadas **sem execução** por sonda com controle · 5 achados · **NÃO triada** |
 | `docs/audit/TRIAGEM-AV-R6.json` | **triagem/1.0** · 5 itens · 5 falsificadores executados a partir do JSON · 4 bloqueiam, 1 aceite |
 | `scripts/bancada-gate.mjs` | gate de **16** checagens que reprovam (B1..B9 e B11..B17; B10 só avisa) · **passa, e passa no CI** · mordida provada, inclusive nos dois artefatos do AV-R6 (5 mutações) |
 | `docs/audit/bancada.html` | **v4/v4.1 reconstruída** · 29 itens · 15 blocos · contrato `triagem/1.0` no `t-contrato` |
@@ -465,7 +466,16 @@ a primeira entrada de `REVIEW-LEDGER.jsonl` é o PR #167 com `sem_revisao_indepe
     **controle falhando** que expôs o probe; sem ele, o mutante vermelho teria sido lido como
     mordida. Ao isolar um diretório para medir npm, copie `.npmrc` junto.
 
-11. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
+11. **Sonda de `throw` no topo de handler quebra o NARROWING do TypeScript.** A armadilha 5
+    desta lista descreve o `throw` que derruba suítes por quebrar narrowing num `catch`
+    distante. A AV-R7 achou o mesmo efeito por outro caminho: `throw` como **primeira**
+    instrução de um handler torna o corpo abaixo inalcançável, e **em código inalcançável o TS
+    não narrowa** — `parsed.error is possibly undefined`, `UserContext | null` não atribuível,
+    três erros de compilação onde o código original compila. Sonda que não compila é resultado
+    **inválido**, não morte. Em repositório (método de 1-3 linhas sem narrowing) a mesma sonda
+    compila e funciona: o problema é o **corpo que depende de narrowing**, não o `throw`.
+
+12. **`String.replace` com string troca só a PRIMEIRA ocorrência.** Os seis instrumentos v4
    têm o mesmo cabeçalho `## 4b · conventions[]`. Uma mutação que pretendia atingir o
    `t-av20` caiu no `t-av03`, e o gate reprovou — corretamente — o item errado. Escope a
    mutação ao bloco (índice de `id="t-xxx"` até o `</script>`) antes de concluir qualquer
@@ -554,6 +564,33 @@ rejeita. Os achados são candidatos verificados por execução, não triados nem
    `gates_summary` **não** foi alterado: ele conta os portões dos 7 achados (1 / 5 / 1), e a
    subfila nunca teve portão próprio. Somá-la ali faria a contagem deixar de bater com `items[]`,
    que é o que o B15 confere.
+
+   **A RODADA FOI EMITIDA — `AV-R7-FORCA-DA-SUITE-SUBFILA` (`ec3e4feb`).** O caminho descrito
+   acima foi percorrido: a subfila agora tem relatório de origem, e os cinco `fingerprint` dela
+   existem num `auditoria/1.1` emitido, então **o B12 deixou de ser o obstáculo** para
+   promovê-la a `items[]`. O que falta é a **triagem**, e ela NÃO foi feita — o bloco 9 exige
+   emitir → triar → só então corrigir.
+
+   O que a rodada mediu: **`mutation_score` 0/7**. Sete mutações dirigidas a `tx`, `inquilino`,
+   `softdelete` e `autoriza` sobreviveram, e **seis foram provadas sem serem executadas** —
+   seis sondas de `throw` armadas de uma vez deixaram **165 suítes / 1945 testes 100% verdes**,
+   e o CONTROLE da sonda (o mesmo `throw` em `PostingRepository.create`) devolve
+   `Tests: 5 failed`. A subfila não tinha cobertura por **nome**; agora está medido que também
+   não tem cobertura **alcançável**, que é afirmação mais forte e a única que a mutação sustenta.
+
+   **O caso mais agudo é literal, e vale ler:** existe `ReferentialMapping.integration.test.ts`,
+   ele exercita `db.referentialMapping.deleteMany(...)` e depois **afirma isolamento por dono**.
+   A mutação M6 remove exatamente esse escopo do `deleteByAccountVersion` do repositório — e o
+   arquivo passa verde. **O teste que afirma a invariante não pode pegar a violação dela, porque
+   reimplementa o repositório em vez de chamá-lo.**
+
+   **E o critério de ratificação ficou mais fraco em 1 de 4, medido:** o achado F3 da AV-R7 mostra
+   que o model `ReferentialMapping` **não tem campo `deletedAt`** — o AV-R2 o etiquetou com
+   `softdelete` porque a única ocorrência da palavra no repositório é o comentário que a **nega**.
+   A decisão de fila própria **não cai** (ela se apoia em `inquilino` e `tx`, que valem nas
+   quatro), mas o número que a acompanha ganhou nota. É a **armadilha 8** desta lista, agora
+   encontrada num instrumento que não é o meu — primeira evidência de que ela é de classe e não
+   de sessão.
 
 4. **FECHADO — os defeitos de runtime foram EMITIDOS e TRIADOS.** O que estava aberto aqui era
    consequência medida de reportar em prosa: o B12 exige que todo `fingerprint` de uma
