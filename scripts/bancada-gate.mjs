@@ -35,6 +35,10 @@
 //       due; aceite exige accepted_reason, accepted_by e review_trigger OBSERVÁVEL
 //   B15 self_check.falsifiers_executed/total coerentes com os itens
 //   B16 os três campos do precedente AV-L1: verification_note, barriers_searched, own_bias_named
+//   B17 a condição do banner "sem revisão independente" do visualizador acende quando deve
+//   B18 etiqueta `softdelete` em linha de centerpiece resolve para um model com deletedAt, ou
+//       está declarada em label_defects_registered com evidência — e o registro morre sozinho
+//       quando o deletedAt aparece (isenção que sobrevive ao motivo é dívida com outro nome)
 //
 // POR QUE B11..B16 EXISTEM. O AV-00 inteiro existe para produzir UM artefato — a triagem — e
 // era o único sem nenhuma checagem: a linha `if (j.schema !== 'auditoria/1.1') continue`

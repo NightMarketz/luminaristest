@@ -507,6 +507,16 @@ a primeira entrada de `REVIEW-LEDGER.jsonl` é o PR #167 com `sem_revisao_indepe
     `-e` com âncora), e quando dois comandos discordarem, desempate com um terceiro que leia o
     arquivo direto. Mesma família das armadilhas 2 e 7: o comando não erra, ele mede outra coisa.
 
+15. **Classe de caractere `[a-z_]` não casa chave com dígito, e o efeito é na chave VIZINHA.**
+    Um script que reescrevia o item `r2` da `TRIAGEM-AV-R7.json` procurava a última chave do
+    objeto com `/^\s+"([a-z_]+)":/` para tirar a vírgula final. A chave era `why_rank_2` — o
+    `2` não está na classe, o casamento falhou, e o laço seguiu para trás até `barrier_note` e
+    tirou a vírgula **dela**, deixando duas chaves sem separador. O JSON quebrou **numa linha
+    que o script nunca pretendeu tocar**, e a mensagem do parser aponta para `why_rank_2`, que
+    é a chave seguinte à estragada. Duas passagens perdidas antes de olhar a classe. Regra: em
+    varredura de chave de JSON use `[a-z0-9_]+` (ou `[^"]+`), e quando o erro apontar uma linha
+    que você não editou, suspeite da anterior — não da apontada.
+
 ## Ambiente
 
 - `server`: `npm ci` feito nesta sessão (781 pacotes). `npx jest --selectProjects unit` ~42 s;
