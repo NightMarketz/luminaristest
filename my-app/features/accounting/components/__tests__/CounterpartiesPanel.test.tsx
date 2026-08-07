@@ -44,6 +44,8 @@ describe('CounterpartiesPanel (render)', () => {
     render(<CounterpartiesPanel unitId="u1" />);
 
     await waitFor(() => expect(screen.getByText(/Nenhuma contraparte cadastrada/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(counterpartiesService.listCounterparties).toHaveBeenCalledTimes(1);
   });
 
   it('renders an active supplier with an archive action', async () => {

@@ -27,6 +27,7 @@ import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { ReconciliationMatchModal } from './ReconciliationMatchModal';
 import { resolveError } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 const STATEMENTS_PER_PAGE = 10;
 
@@ -315,7 +316,8 @@ interface StatementsSubViewProps {
 }
 
 function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }: StatementsSubViewProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [statements, setStatements] = useState<BankStatement[]>([]);
@@ -345,13 +347,13 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
       setStatements(result.statements);
       setTotal(result.total);
     } catch (e) {
-      setError(resolveError(e, t('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
+      setError(resolveError(e, tRef.current('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
       setStatements([]);
       setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, [unitId, page, t]);
+  }, [unitId, page, tRef]);
 
   useEffect(() => {
     void fetchStatements();
@@ -628,7 +630,8 @@ interface PendingSubViewProps {
 }
 
 function PendingSubView({ unitId, glAccountId, onLedgerChange }: PendingSubViewProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [report, setReport] = useState<PendingReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -653,12 +656,12 @@ function PendingSubView({ unitId, glAccountId, onLedgerChange }: PendingSubViewP
       });
       setReport(result);
     } catch (e) {
-      setError(resolveError(e, t('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
+      setError(resolveError(e, tRef.current('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
       setReport(null);
     } finally {
       setLoading(false);
     }
-  }, [unitId, glAccountId, from, to, t]);
+  }, [unitId, glAccountId, from, to, tRef]);
 
   useEffect(() => {
     void fetchReport();

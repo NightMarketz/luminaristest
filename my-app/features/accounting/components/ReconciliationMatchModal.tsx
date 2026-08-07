@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'next-i18next';
 import { FiLink } from 'react-icons/fi';
 import { Modal } from '../../../components/ui/Modal';
 import {
@@ -10,6 +9,7 @@ import {
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveError } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 
 interface ReconciliationMatchModalProps {
@@ -35,7 +35,8 @@ export function ReconciliationMatchModal({
   line,
   onMatched,
 }: ReconciliationMatchModalProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [suggestions, setSuggestions] = useState<RankedSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,12 +52,12 @@ export function ReconciliationMatchModal({
       const result = await accountingService.getLineSuggestions(line.id, unitId);
       setSuggestions(result);
     } catch (e) {
-      setError(resolveError(e, t('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
+      setError(resolveError(e, tRef.current('reconciliation.error.load', 'Erro ao carregar a conciliação.')));
       setSuggestions([]);
     } finally {
       setLoading(false);
     }
-  }, [line, unitId, t]);
+  }, [line, unitId, tRef]);
 
   useEffect(() => {
     if (isOpen && line) void load();

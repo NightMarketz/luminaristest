@@ -4,6 +4,7 @@ import { FiBookOpen, FiCheckCircle, FiAlertTriangle, FiPlusCircle } from 'react-
 import { useAccountingData } from './hooks/useAccountingData';
 import { TrialBalanceTable } from './components/TrialBalanceTable';
 import { JournalEntriesPanel } from './components/JournalEntriesPanel';
+import { EntryApprovalsPanel } from './components/EntryApprovalsPanel';
 import { ChartOfAccountsPanel } from './components/ChartOfAccountsPanel';
 import { PeriodsPanel } from './components/PeriodsPanel';
 import { LedgerPanel } from './components/LedgerPanel';
@@ -24,13 +25,14 @@ import { JournalEntryModal, type AccountOption } from './components/JournalEntry
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'contas-a-pagar' | 'contas-a-receber' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'compliance' | 'dimensoes';
+type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'compliance' | 'dimensoes';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'balancete',      labelKey: 'view.tabs.balancete',      label: 'Balancete' },
   { id: 'periodos',       labelKey: 'view.tabs.periodos',       label: 'Períodos' },
   { id: 'lancamentos',    labelKey: 'view.tabs.lancamentos',    label: 'Lançamentos' },
+  { id: 'aprovacoes',     labelKey: 'view.tabs.aprovacoes',     label: 'Aprovações' },
   { id: 'contas-a-pagar', labelKey: 'view.tabs.contasAPagar',   label: 'Contas a Pagar' },
   { id: 'contas-a-receber', labelKey: 'view.tabs.contasAReceber', label: 'Contas a Receber' },
   { id: 'contrapartes',   labelKey: 'view.tabs.contrapartes',   label: 'Contrapartes' },
@@ -197,6 +199,11 @@ export function AccountingView() {
       {/* ── Lançamentos tab ────────────────────────────────────────────────── */}
       {activeTab === 'lancamentos' && unitId && (
         <JournalEntriesPanel unitId={unitId} onReversalComplete={reload} onNavigateToPeriods={() => setActiveTab('periodos')} />
+      )}
+
+      {/* ── Aprovações (torre maker-checker) tab ───────────────────────────── */}
+      {activeTab === 'aprovacoes' && unitId && (
+        <EntryApprovalsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} />
       )}
 
       {/* ── Contas a Pagar tab ─────────────────────────────────────────────── */}

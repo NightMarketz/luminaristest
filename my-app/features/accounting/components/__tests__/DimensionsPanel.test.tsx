@@ -48,6 +48,8 @@ describe('DimensionsPanel (render)', () => {
     vi.mocked(dimensionsService.listCatalog).mockResolvedValue([]);
     render(<DimensionsPanel unitId="u1" />);
     await waitFor(() => expect(screen.getByText(/Nenhum eixo de dimensão cadastrado/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(dimensionsService.listCatalog).toHaveBeenCalledTimes(1);
   });
 
   it('renders an axis with its value and archive actions', async () => {
