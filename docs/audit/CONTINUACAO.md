@@ -493,6 +493,20 @@ a primeira entrada de `REVIEW-LEDGER.jsonl` é o PR #167 com `sem_revisao_indepe
    mutação ao bloco (índice de `id="t-xxx"` até o `</script>`) antes de concluir qualquer
    coisa sobre qual checagem mordeu.
 
+14. **No Git Bash, argumento que começa com `/` é convertido em caminho do Windows antes de
+    chegar ao `git`.** Medindo o fechamento do r3 da AV-R7, `git grep -l "/api/accounting" <rev>`
+    devolveu **0** enquanto `git grep -l "api/accounting" <rev>` devolveu **42** — e
+    `git show <rev>:<arquivo> | grep -c "api/accounting"` devolvia **13** no arquivo que o
+    primeiro comando jurava não existir. A causa não é o regex: o MSYS reescreve o argumento
+    `/api/accounting` como caminho (`C:/Program Files/...`) porque `git` é binário **nativo**,
+    e não o faz para `grep`, que é binário **MSYS**. Por isso a contradição só aparece quando se
+    mistura as duas ferramentas — o `grep -r` na árvore de trabalho estava certo o tempo todo.
+    O perigo é a direção do erro: o comando falso devolve **zero**, que é exatamente a forma de
+    "o achado ainda reproduz". Eu quase registrei um item fechado como aberto. Regra: em
+    falsificador que casa rota ou caminho, **não comece o padrão com `/`** (use `api/x`, ou
+    `-e` com âncora), e quando dois comandos discordarem, desempate com um terceiro que leia o
+    arquivo direto. Mesma família das armadilhas 2 e 7: o comando não erra, ele mede outra coisa.
+
 ## Ambiente
 
 - `server`: `npm ci` feito nesta sessão (781 pacotes). `npx jest --selectProjects unit` ~42 s;
