@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslation } from 'next-i18next';
+import { useStableT } from '../../../../lib/hooks/useStableT';
 import { fetchRelatedTableData, formatRelatedDisplayValue } from '../shared/relation-utils.client';
 
 interface RelationSelectorProps {
@@ -32,7 +32,8 @@ function RelationSelector({
   const [options, setOptions] = useState<{ value: string; label: string }[]>([]);
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { t } = useTranslation(['common']);
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `lib/hooks/useStableT`.
+  const { t, tRef } = useStableT(['common']);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -50,7 +51,7 @@ function RelationSelector({
     try {
       const relatedData = await fetchRelatedTableData(targetTable);
       if (!relatedData) {
-        setError(t('common:errorLoading', 'Failed to load data.'));
+        setError(tRef.current('common:errorLoading', 'Failed to load data.'));
         setIsLoading(false);
         return;
       }
@@ -59,11 +60,11 @@ function RelationSelector({
         label: formatRelatedDisplayValue(record)
       })));
     } catch (err) {
-      setError(t('common:errorLoading', 'Failed to load data.'));
+      setError(tRef.current('common:errorLoading', 'Failed to load data.'));
     } finally {
       setIsLoading(false);
     }
-  }, [targetTable, t]);
+  }, [targetTable, tRef]);
 
   useEffect(() => {
     loadRelatedData();

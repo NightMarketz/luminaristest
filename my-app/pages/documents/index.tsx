@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import withAuth from '../../lib/hoc/withAuth';
 import { useAuth } from '../../lib/context/AuthContext';
-import { useTranslation } from 'next-i18next';
+import { useStableT } from '../../lib/hooks/useStableT';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import type { DocumentResponseDto } from '../../features/documents/dtos/DocumentDto';
@@ -26,7 +26,8 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
 type ActiveTab = 'all' | 'data_analysis' | 'knowledge_base';
 
 function DocumentListPage() {
-  const { t } = useTranslation('common');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `lib/hooks/useStableT`.
+  const { t, tRef } = useStableT('common');
   const { user } = useAuth();
   const router = useRouter();
 
@@ -56,11 +57,11 @@ function DocumentListPage() {
         : (payload?.documents ?? []);
       setDocuments(list as typeof documents);
     } catch (e) {
-      setError(resolveErrorMessage(e, t));
+      setError(resolveErrorMessage(e, tRef.current));
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [tRef]);
 
   useEffect(() => {
     fetchDocuments();
