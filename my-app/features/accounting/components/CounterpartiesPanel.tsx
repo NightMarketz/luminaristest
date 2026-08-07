@@ -9,6 +9,7 @@ import {
 import { Modal } from '../../../components/ui/Modal';
 import { CreateCounterpartyModal } from './CreateCounterpartyModal';
 import { resolveError } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 
 // ── type badge ─────────────────────────────────────────────────────────────
@@ -41,7 +42,8 @@ interface CounterpartiesPanelProps {
  * AP/AR referencia por FK; não posta no razão.
  */
 export function CounterpartiesPanel({ unitId }: CounterpartiesPanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,11 +70,11 @@ export function CounterpartiesPanel({ unitId }: CounterpartiesPanelProps) {
       });
       setCounterparties(data);
     } catch (err: unknown) {
-      setError(resolveError(err, t('contrapartes.error.load', 'Erro ao carregar as contrapartes.')));
+      setError(resolveError(err, tRef.current('contrapartes.error.load', 'Erro ao carregar as contrapartes.')));
     } finally {
       setLoading(false);
     }
-  }, [unitId, typeFilter, includeArchived, t]);
+  }, [unitId, typeFilter, includeArchived, tRef]);
 
   useEffect(() => {
     void fetchCounterparties();

@@ -41,6 +41,8 @@ describe('JournalEntriesPanel (render)', () => {
     render(<JournalEntriesPanel unitId="u1" />);
 
     await waitFor(() => expect(screen.getByText(/Nenhum lançamento postado/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(accountingService.listEntries).toHaveBeenCalledTimes(1);
   });
 
   it('renders an entry row with its total and a reverse action', async () => {

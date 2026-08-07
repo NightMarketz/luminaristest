@@ -27,7 +27,8 @@
       "conciliacao": "Conciliação",
       "compliance": "Compliance",
       "dimensoes": "Dimensões",
-      "contrapartes": "Contrapartes"
+      "contrapartes": "Contrapartes",
+      "aprovacoes": "Aprovações"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -1030,6 +1031,75 @@
       "confirm": "Confirmar arquivamento",
       "archiving": "Arquivando…",
       "note": "A contraparte deixa de aparecer na seleção de novas contas. Os lançamentos e contas já vinculados permanecem intactos."
+    }
+  },
+  "approvals": {
+    "heading": "Aprovações",
+    "newDraft": "Novo Rascunho",
+    "loading": "Carregando a fila…",
+    "viewPeriods": "Ver Períodos",
+    "col": {
+      "expand": "Expandir",
+      "date": "Data",
+      "description": "Descrição",
+      "amount": "Valor",
+      "legs": "Partidas",
+      "actions": "Ações"
+    },
+    "postings": {
+      "account": "Conta",
+      "debit": "Débito",
+      "credit": "Crédito"
+    },
+    "drafts": {
+      "heading": "Rascunhos",
+      "note": "Ainda não afetam o razão nem os demonstrativos. Sem número de lançamento — ele nasce na aprovação.",
+      "empty": "Nenhum rascunho nesta unidade."
+    },
+    "pending": {
+      "heading": "Aguardando aprovação",
+      "note": "Conteúdo congelado na submissão. Aprovar posta no razão; rejeitar devolve para rascunho.",
+      "empty": "Nenhum lançamento aguardando aprovação."
+    },
+    "action": {
+      "edit": "Editar",
+      "editTitle": "Editar o rascunho",
+      "submit": "Enviar",
+      "submitTitle": "Enviar para aprovação",
+      "approve": "Aprovar",
+      "approveTitle": "Aprovar e postar no razão",
+      "reject": "Rejeitar",
+      "rejectTitle": "Rejeitar de volta para rascunho"
+    },
+    "editor": {
+      "createTitle": "Novo Rascunho",
+      "editTitle": "Editar Rascunho",
+      "create": "Criar rascunho",
+      "save": "Salvar rascunho",
+      "saving": "Salvando…",
+      "dimensionsNotice": "A edição reescreve todas as partidas. As etiquetas de dimensão não são devolvidas pela leitura do lançamento — se este rascunho tinha alguma, selecione-a novamente antes de salvar."
+    },
+    "actionModal": {
+      "cancel": "Voltar",
+      "optional": "(opcional)",
+      "reasonLabel": "Motivo",
+      "submitTitle": "Enviar para aprovação",
+      "submitConfirm": "Enviar",
+      "submitting": "Enviando…",
+      "submitNote": "O conteúdo econômico (partidas, data e histórico) fica congelado a partir daqui. Para alterá-lo, o lançamento precisa ser rejeitado de volta para rascunho.",
+      "approveTitle": "Aprovar e postar",
+      "approveConfirm": "Aprovar e postar",
+      "approving": "Aprovando…",
+      "approveNote": "Aprovar POSTA o lançamento no razão e atribui o número sequencial do exercício. Depois disso, só o estorno corrige.",
+      "rejectTitle": "Rejeitar lançamento",
+      "rejectConfirm": "Confirmar rejeição",
+      "rejecting": "Rejeitando…",
+      "rejectNote": "O lançamento volta para rascunho e pode ser editado e reenviado. Nenhum número é consumido."
+    },
+    "error": {
+      "load": "Erro ao carregar a fila de aprovação.",
+      "action": "Não foi possível concluir a operação.",
+      "conflict": "Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo."
     }
   }
 }

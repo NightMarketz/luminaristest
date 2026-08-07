@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'next-i18next';
+import { useAccountingT } from '../lib/useAccountingT';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { accountingService } from '../../../lib/services/accounting.service';
 import type { TrialBalanceReport } from '../../../lib/services/accounting.service';
@@ -25,7 +25,10 @@ interface RowLike {
  * coupling to DynamicTable — the accounting data itself is first-class Prisma).
  */
 export function useAccountingData() {
-  const { t } = useTranslation('accounting');
+  // Só `tRef` aqui: este hook não renderiza nada — todo uso de `t` está dentro de
+  // efeito/callback, e é exatamente aí que a identidade instável morde
+  // (ver `../lib/useAccountingT`).
+  const { tRef } = useAccountingT();
   const [units, setUnits] = useState<UnitOption[]>([]);
   const [unitId, setUnitId] = useState<string>('');
   const [report, setReport] = useState<TrialBalanceReport | null>(null);
@@ -62,7 +65,7 @@ export function useAccountingData() {
         }
       } catch {
         if (active) {
-          setError(t('view.error.units', 'Falha ao carregar as unidades.'));
+          setError(tRef.current('view.error.units', 'Falha ao carregar as unidades.'));
           setLoadingUnits(false);
         }
       }
@@ -70,7 +73,9 @@ export function useAccountingData() {
     return () => {
       active = false;
     };
-  }, [t]);
+    // Sem `t` nas deps: este efeito carrega as unidades UMA vez. Com `t` ele
+    // re-disparava a cada render sob i18next não-inicializado.
+  }, [tRef]);
 
   const loadReport = useCallback(async (uid: string) => {
     if (!uid) {
@@ -83,12 +88,12 @@ export function useAccountingData() {
       const r = await accountingService.getTrialBalance({ unitId: uid });
       setReport(r);
     } catch {
-      setError(t('view.error.report', 'Falha ao carregar o balancete.'));
+      setError(tRef.current('view.error.report', 'Falha ao carregar o balancete.'));
       setReport(null);
     } finally {
       setLoadingReport(false);
     }
-  }, [t]);
+  }, [tRef]);
 
   useEffect(() => {
     if (unitId) loadReport(unitId);

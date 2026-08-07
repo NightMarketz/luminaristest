@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'next-i18next';
 import { ConfirmModal } from '../../../components/ui/feedback/ConfirmModal';
 import { accountingService } from '../../../lib/services/accounting.service';
+import { useAccountingT } from '../lib/useAccountingT';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -67,7 +67,8 @@ const EMPTY_FORM = {
  * DynamicTable).
  */
 export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   // ── State ──────────────────────────────────────────────────────────────────
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,12 +93,12 @@ export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanel
       }).getAccounts(unitId);
       setAccounts(res.accounts);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t('chartOfAccounts.error.load', 'Erro ao carregar contas.');
+      const msg = err instanceof Error ? err.message : tRef.current('chartOfAccounts.error.load', 'Erro ao carregar contas.');
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [unitId, t]);
+  }, [unitId, tRef]);
 
   useEffect(() => {
     void fetchAccounts();

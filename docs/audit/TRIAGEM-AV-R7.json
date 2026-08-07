@@ -1,0 +1,219 @@
+{
+  "schema": "triagem/1.0",
+  "_note": "Triagem dos 5 achados da rodada AV-R7, na ordem do AV-00 bloco 9 (verificar → triar → aceitar). NENHUMA correcao de codigo foi feita: o bloco 9 proibe corrigir achado nao triado, e a tentacao era a maior de todas — o conserto do F1 e um arquivo de teste por repositorio, no molde que ja esta em main desde o item 4. Segue o precedente docs/audit/AV-L1-TRIAGEM.json e a pratica da TRIAGEM-AV-R6: os falsificadores foram executados A PARTIR DO JSON RELIDO, para que a string armazenada fosse a string rodada.",
+  "source_runs": [
+    {
+      "instrument": "AV-03",
+      "instrument_version": "v4.1",
+      "file": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "title": "Forca da Suite sobre a subfila ratificada — mutacao executada",
+      "project": "Luminaris",
+      "repo_commit": "40892baa",
+      "generated_at": "2026-08-05",
+      "reduced_mode": true,
+      "verification_commit": "60c945bc",
+      "verification_note": "Os cinco falsificadores foram executados contra 60c945bc (tip de main depois do merge do PR #168), nao contra 40892baa. MEDIDO, nao assumido: `git diff --name-only 40892baa..60c945bc` devolve exatamente 5 arquivos, e os 5 sao docs/audit/{AV-R7-FORCA-DA-SUITE-SUBFILA.json,AV-R7-FORCA-DA-SUITE-SUBFILA.md,CONTINUACAO.md,REVIEW-LEDGER.jsonl,TRIAGEM-R1-R3.json} — os proprios artefatos da bancada. NENHUM arquivo de evidence dos 5 achados esta no diff: server/src/**, server/prisma/schema.prisma, docs/audit/AV-R2.json, docs/audit/AV-R3.json, docs/audit/AV-R6-VERIFICACAO-EM-NAVEGADOR.json e scripts/bancada-gate.mjs estao todos fora dele (grep do diff por esses caminhos devolve 0). Logo o resultado de F1..F4 vale para o commit do relatorio. UMA EXCECAO DECLARADA: o falsificador do F5 conta commits e portanto NAO e invariante ao commit — ver items[4].verification_note. SEGUNDA DECLARACAO, no precedente da TRIAGEM-AV-R6: os falsificadores NAO foram executados como eu me lembro de te-los escrito, e sim extraidos do JSON relido e rodados verbatim. Essa checagem pegou um defeito real — ver new_findings_raised[0], o falsificador do F3 para antes do proprio controle."
+    }
+  ],
+  "triage_at": "2026-08-06",
+  "triaged_by": "claude-opus-5 — a MESMA sessao que mediu e emitiu a rodada AV-R7, e a mesma que decidiu, no PR anterior, que a subfila viraria fila propria. Nao ha separacao entre quem achou, quem triou e quem escolheu o escopo, e isso esta nomeado em self_check.own_bias_named como defeito de metodo desta triagem, nao como detalhe.",
+  "profile_decision": {
+    "_note": "Extensao aditiva ao triagem/1.0, no precedente do AV-L1-TRIAGEM. Registrada porque todo portao abaixo deriva do estado de implantacao.",
+    "ambiguity_measured": "NENHUMA, ao contrario da TRIAGEM-R1-R3. O campo `deployed` foi RESPONDIDO pelo dono em 2026-08-03 — `nunca implantado` — e esta registrado no item 5 de \"o que continua em aberto\" do CONTINUACAO.md. A TRIAGEM-AV-R6 ja usou esse mesmo ramo. Nao houve convergencia a derivar: ha um ramo so.",
+    "resolution": "Ramo unico `nunca implantado` do gateMap, LIDO da funcao gateMap() de docs/audit/bancada.html e nao citado de memoria.",
+    "branch_nunca_implantado": "irreversivel ou perda de dado → bloqueia_deploy · ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy nao irreversivel → bloqueia_primeiro_cliente · latente_por_dependencia → aceitavel_com_registro com gatilho nomeado · com_volume e apenas_teorico → aceitavel_com_registro com gatilho",
+    "branch_source": "docs/audit/bancada.html, funcao gateMap() — lida no arquivo nesta sessao.",
+    "what_would_change_the_answer": "Se o dono revisar `deployed` para `producao`, os CINCO achados sobem de bloqueia_primeiro_cliente para bloqueia_deploy, porque os cinco sao ja_exposto e nesse ramo ja_exposto → bloqueia_deploy. E a unica resposta que muda esta triagem, e ela muda TODA ela.",
+    "three_suggested_gates_overridden": "O relatorio sugeriu `aceito_com_registro` para F3, F4 e F5, e os tres foram SOBRESCRITOS para bloqueia_primeiro_cliente. A razao esta no proprio gate_reason que eu escrevi la: sugeri aceite POR CUSTO (\"o conserto e uma edicao de dado\"), e o mapa nao tem linha que rebaixe portao por custo nem por dano. E exatamente o erro que o item 5 da TRIAGEM-R1-R3 corrigiu, cometido de novo por mim, no relatorio, e pego aqui pela derivacao mecanica. `findings[].suggested_gate` e proposta; a triagem sobrescreve."
+  },
+  "items": [
+    {
+      "rank": 1,
+      "fingerprint": "agent-authored-ratio-sem-denominador-declarado",
+      "source_report": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "source_finding_id": "F5",
+      "damage": 2,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em 60c945bc a partir do JSON relido, e e o UNICO dos cinco cujo falsificador nao e invariante ao commit — declarado aqui em vez de escondido. Medido agora: 428/658 = 0,6505 com todos os commits e 419/438 = 0,9566 sem merges. O relatorio (40892baa) registrou 425/654 e 416/435. A diferenca e AUTOCONTAMINACAO MEDIDA: os quatro commits entre os dois pontos sao os tres desta linha de trabalho (que carregam o trailer Co-authored-by) mais o merge do PR #168 (que nao carrega), entao o numerador e o denominador subiram juntos. O achado nao muda de direcao — os dois ramos continuam caindo em lados OPOSTOS do teto de 0,70 (0,6505 nao ativa, 0,9566 ativa) —, mas a licao e que este falsificador mede o proprio trabalho de auditoria junto com o repositorio, e quem o reexecutar vai ver os numeros andarem sem que nada tenha melhorado. Verificada tambem a parte substantiva: o campo run.agent_authored_ratio.method do AV-R3 nao contem \"merge\" nem \"denominador\" (regex sobre o texto do campo devolve NAO), e o do AV-R6 diz apenas \"reaproveitado da rodada R1\".",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `aceito_com_registro` do relatorio. exposure=ja_exposto no ramo unico `nunca implantado` → bloqueia_primeiro_cliente. O relatorio derivou o aceite do CUSTO (\"o conserto e uma frase\"), e o mapa nao tem linha que rebaixe portao por custo. Registrado no relatorio que eu ja sabia disso e sugeri assim mesmo — o gate_reason dele diz \"registro que sugiro aceite por custo e que a triagem deriva do mapa e sobrescreve se quiser\". A triagem quis.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-12",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, nao existente, e a busca foi feita antes de emitir. `grep -n agent_authored_ratio scripts/bancada-gate.mjs` devolve DUAS linhas (291 e 327) e as duas sao o B8 lendo o VALOR — nenhuma le o `method`. Os 24 passos nomeados do .github/workflows/ci.yml foram listados e nenhum confere metadado de artefato de auditoria alem do proprio bancada-gate. Os 6 PRs abertos (135, 129, 117, 97, 87, 54) foram medidos com `gh pr diff --name-only` e nenhum toca scripts/ nem docs/audit/. A barreira e escrivivel como LEITURA DE ESTRUTURA, que e o que o gate sabe fazer: reprovar `agent_authored_ratio` cujo `method` nao nomeie o denominador. Nao e `nenhuma_conhecida` porque a barreira e possivel e barata, nao porque exista.",
+      "why_rank_1": "Maior risco removido por esforco da rodada. Custo trivial (uma frase no campo `method` mais o numero alternativo ao lado) e e o unico dos cinco que pode INVERTER uma decisao de gate ja automatizada: com 0,65 o B8 libera `confidence: alta` por leitura, com 0,96 exige execucao. Vem antes dos dois achados de produto porque e pre-requisito deles — o teto de confianca sob o qual F1 e F2 foram emitidos depende de qual denominador vale."
+    },
+    {
+      "rank": 2,
+      "fingerprint": "softdelete-etiquetado-em-unidade-que-nao-tem-soft-delete",
+      "source_report": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "source_finding_id": "F3",
+      "damage": 2,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em 60c945bc a partir do JSON relido. O comando gravado devolve 0 para `deletedAt` no bloco do model ReferentialMapping — e PARA AI, sem chegar ao proprio controle: `grep -c` sai 1 quando a contagem e zero, e o `&&` do comando publicado quebra a cadeia. Ver new_findings_raised[0]. O controle foi entao executado SEPARADAMENTE e confirma: o mesmo awk+grep no model Counterparty devolve 2, e o recorte do awk devolve 19 linhas para o bloco do ReferentialMapping, entao o zero nao e awk vazio. Confirmada tambem a etiqueta: a linha do AV-R2.json para essa unidade traz `tx+inquilino+softdelete`, lida do JSON e nao do texto. E o codigo: com comentarios removidos, `deletedAt` aparece 0 vez no ReferentialMappingRepository e 2 no CounterpartyRepository — a unica ocorrencia crua no primeiro e a frase do cabecalho que NEGA o soft-delete.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `aceito_com_registro` do relatorio, pela mesma razao do item 1: o aceite foi sugerido por custo, e o mapa nao rebaixa por custo. exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-12",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, nao existente. Buscado antes de emitir: `grep -rn \"invariantes\\|fanin\" scripts/*.mjs` devolve ZERO — nenhuma das tres checagens do diretorio (bancada-gate, debt-ledger-check, review-ledger-check) le a coluna `invariantes` de um centerpiece. Nenhum dos 24 passos do ci.yml o faz. Nenhum dos 6 PRs abertos toca docs/audit/ nem prisma/schema.prisma. A barreira e escrivivel e estrutural: toda etiqueta `softdelete` num centerpiece tem de resolver para um campo `deletedAt` no model correspondente de prisma/schema.prisma — duas leituras de arquivo, que e o que o gate ja faz. Nao e `nenhuma_conhecida` pela mesma razao do item 1.",
+      "why_rank_2": "Custo trivial (uma edicao de dado numa linha de centerpiece) e ele e pre-requisito do item 4: o `ratified_subqueue_criterion` selecionou ESTAS 4 unidades por \"tres invariantes simultaneas\", e uma delas tem duas. Enquanto isso nao for corrigido, o recorte que o F1 audita continua justificado por um numero que o proprio F1 mediu como errado."
+    },
+    {
+      "rank": 3,
+      "fingerprint": "controller-de-contabilidade-sem-alcance-http",
+      "source_report": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "source_finding_id": "F2",
+      "damage": 3,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em 60c945bc a partir do JSON relido, e a cadeia rodou INTEIRA (exit 0): 13 arquivos de integracao usam supertest, ZERO requisitam /api/accounting, e o CONTROLE devolve 2 para /api/users. PRIMEIRA EXECUCAO INVALIDADA E REFEITA: eu rodei os cinco sob `set -o pipefail`, e com pipefail um `grep | wc -l` que nao acha nada sai 1, o que quebrou a cadeia `&&` deste comando ANTES do controle — a saida foi \"13, 0\" sem o 2. O defeito era do MEU wrapper, nao do comando publicado (isolado: `grep|wc` sai 0 sem pipefail e 1 com), e por isso este item nao gera achado sobre o instrumento, ao contrario do item 2. Verificada tambem a parte substantiva: as 7 ocorrencias de /api/accounting no corpus de teste foram listadas uma a uma e nenhuma e requisicao ao handler — 4 sao do teste do MIDDLEWARE (auth.test.ts, deny-by-default) e 3 sao comentarios de contagem.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. Confirma o suggested_gate do relatorio. NAO promove a bloqueia_deploy: ausencia de teste de rota nao e irreversivel e nao perde dado por si.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-24",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, e o MOLDE EXISTE — esta e a barreira mais barata dos cinco. Buscado antes de emitir: 13 arquivos ja sobem o app com supertest (analytics.routes, analyticsDefinitions.routes, auth.endpoints, chat.routes, users.routes e outros), entao nao ha infraestrutura a inventar; falta um arquivo que aponte para /api/accounting. Nenhum dos 6 PRs abertos toca o controller nem acrescenta teste de rota de contabilidade. Nao e `nenhuma_conhecida`: a barreira existe como PADRAO no repositorio e o que falta e uma instancia dela.",
+      "why_rank_3": "Dano 3 com esforco baixo — um arquivo no molde de users.routes.integration.test.ts. Vem depois dos dois triviais e antes do item 4 porque remove menos risco absoluto que ele, mas por muito menos esforco."
+    },
+    {
+      "rank": 4,
+      "fingerprint": "repositorios-da-subfila-sem-cobertura-alcancavel",
+      "source_report": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "source_finding_id": "F1",
+      "damage": 4,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em 60c945bc a partir do JSON relido: `grep -rlE \"CounterpartyRepository|DimensionRepository|ReferentialMappingRepository\" src --include=*.test.ts | wc -l` devolve 0. TRES controles rodados contra o plausivel-e-errado, porque um zero e o resultado mais facil de obter por acidente: (1) `find src -name \"*.test.ts\" | wc -l` = 139, entao o glob nao esta vazio; (2) o MESMO comando com PostingRepository = 10, entao ele enxerga conteudo; (3) `ls` dos tres arquivos = 3, entao as unidades existem. A saida crua do comando publicado sai com exit 1 quando roda sob pipefail (grep que nao acha sai 1) — artefato do wrapper, nao do comando, e o numero impresso e o mesmo. NAO reexecutei a campanha de mutacao: as sete mutacoes e a sonda de alcance sao do relatorio, e os arquivos de evidence nao mudaram entre 40892baa e 60c945bc (medido no verification_note do source_run). O que esta triagem verificou e o falsificador ESTATICO, que e o que o contrato pede.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. NAO promove a bloqueia_deploy pela primeira regra do ramo, e a distincao e fina e vale registrar: o que o M6 do relatorio demonstra e que um `deleteMany` sem escopo APAGARIA de-para de outros donos, que E perda de dado. Mas o ACHADO nao e o deleteMany sem escopo — o codigo em main tem o escopo. O achado e a AUSENCIA DA REDE que pegaria a remocao desse escopo. Ausencia de teste nao e ela mesma irreversivel nem perde dado. E identico ao item 4 da TRIAGEM-R1-R3 (o teste de integracao do caminho de escrita do razao), que recebeu o mesmo portao pela mesma razao; manter a coerencia com o precedente importa mais do que a gravidade percebida. Se o dono discordar, este e o item onde discordar — e o de maior dano da rodada.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-31",
+      "due_is_proposal": true,
+      "due_note": "A data casa com a que `r2_decision.ratified_subqueue_due` ja registrava para a subfila, e nao por acaso: F1 e F2 SAO a subfila. Fechar os dois fecha as 4 unidades.",
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, e o MOLDE EXISTE — e o unico dos cinco cujo molde ja teve mordida provada. Buscado antes de emitir: `grep -rlE \"getFactory\\(\\)\" src --include=*.integration.test.ts` devolve DOIS arquivos, e um deles e PostingServiceLedgerWrite.integration.test.ts, escrito pelo item 4 da TRIAGEM-R1-R3, que matou as duas mutacoes do AV-R3 (M5 discriminante, M3 com assinatura total). Entao nao ha padrao a inventar: falta uma instancia por repositorio. Nenhum dos 6 PRs abertos toca os tres repositorios nem acrescenta teste de integracao de contabilidade. A suite unit existe e e grande, e nao pode ser reforcada para fechar isto: os testes de servico montam repositorio FALSO a mao, que e o mecanismo medido pelo qual as seis mutacoes sobreviveram sem executar.",
+      "why_rank_4": "Maior dano da rodada (4) e maior risco absoluto, mas o unico cujo conserto sao TRES arquivos novos de teste de integracao — esforco medio contra os tres de cima, que sao uma edicao de dado, uma edicao de dado e um arquivo. Pelo criterio risco-removido-por-esforco do AV-00 §3 ele desce; pelo criterio de risco absoluto ele seria o primeiro. A TENSAO ESTA DECLARADA em vez de resolvida em silencio: se o dono priorizar risco absoluto, este item sobe para o topo e os tres de cima descem, e nada mais nesta triagem muda."
+    },
+    {
+      "rank": 5,
+      "fingerprint": "fan-in-do-simbolo-concreto-le-um-sob-injecao-por-interface",
+      "source_report": "docs/audit/AV-R7-FORCA-DA-SUITE-SUBFILA.json",
+      "source_finding_id": "F4",
+      "damage": 1,
+      "exposure": "ja_exposto",
+      "verification": "confirmado",
+      "verification_note": "Executado em 60c945bc a partir do JSON relido, cadeia inteira, exit 0: os pares saem 1/3, 1/5 e 1/1 — o simbolo concreto le 1 nos tres repositorios e a interface le 3, 5 e 1. Identico ao que o relatorio registrou em 40892baa, o que era esperado porque server/src esta fora do diff entre os dois commites. CONTROLE do relatorio reconferido: PostingService, que nao tem interface, devolve fan-in 7 pelo mesmo padrao de busca, entao o comando nao devolve 1 para tudo. Lido tambem o unico importador das tres classes concretas: server/src/lib/factory.ts nos tres casos.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `aceito_com_registro` do relatorio. exposure=ja_exposto no ramo `nunca implantado` → bloqueia_primeiro_cliente. O dano 1 NAO rebaixa o portao: o mapa nao tem linha que rebaixe por dano, e derivar aceite do dano e o erro que o item 5 da TRIAGEM-R1-R3 corrigiu e que a TRIAGEM-AV-R6 repetiu como nota no item D3. O dano decide a POSICAO na fila (5o de 5), nao o portao.",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-12",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "alerta",
+      "barrier_note": "PROPOSTA, nao existente, e e a mais fraca dos cinco — declarado. Mesma busca do item 2, mesmo zero: nenhuma checagem de scripts/ le a coluna `fanin` de um centerpiece, nenhum passo do ci.yml, nenhum PR aberto. E `alerta` e nao `teste_de_fronteira` porque a checagem possivel e mais fraca do que nos outros: um gate consegue exigir que o relatorio DECLARE se o fan-in conta o simbolo concreto ou a interface, mas nao consegue distinguir um \"1\" que significa \"um consumidor\" de um \"1\" que significa \"todos passam pelo factory\". O que a barreira compra e que o leitor saiba qual dos dois esta lendo.",
+      "why_rank_5": "Menor dano da rodada (1) e nenhum efeito sobre o produto — e criterio de medicao. Custo trivial, mas o risco removido tambem e o menor: ele so morde quando alguem usar fan-in para ranquear, e nesta rodada ninguem usou (o recorte veio da coluna `invariantes`, nao da `fanin`)."
+    }
+  ],
+  "refuted": [],
+  "inconclusive": [],
+  "not_executed": [
+    {
+      "what": "Reexecucao da campanha de mutacao (as 7 mutacoes) e da sonda de alcance.",
+      "why": "Custo: ~40 min de suite por campanha mais ~10 por sonda, e o contrato da triagem pede o falsificador do achado, nao a repeticao da medicao que o produziu. Os arquivos de evidence nao mudaram entre 40892baa e 60c945bc, medido por `git diff --name-only`.",
+      "consequence": "Os cinco itens ficam confirmados pelo falsificador ESTATICO. As afirmacoes desta triagem sobre \"sobreviveu sem ser executada\" sao HERDADAS do relatorio, nao remedidas aqui — e ficam declaradas como herdadas em vez de reafirmadas como se fossem medida nova."
+    },
+    {
+      "what": "Falsificador dinamico do F1 (armar as seis sondas e rodar a suite).",
+      "why": "E a mesma execucao do item acima, e ela ja consta do relatorio com os numeros colados (165 suites / 1945 testes verdes; controle com Tests: 5 failed).",
+      "consequence": "Nenhuma afirmacao desta triagem depende de reexecuta-lo."
+    }
+  ],
+  "subqueue_resolution": {
+    "_note": "A razao pela qual esta triagem existe, registrada porque ela fecha um ciclo aberto em outro artefato.",
+    "what_was_open": "`r2_decision.ratified_subqueue` da TRIAGEM-R1-R3: 4 unidades ratificadas, orfas desde que o item 4 fechou (d11b4716), com dono e data mas SEM item de fila que as carregasse — porque o B12 exige que todo `fingerprint` de item venha de relatorio `auditoria/1.1` emitido, e o AV-R2 tem `findings: []` por desenho.",
+    "what_this_triage_does": "As 4 unidades passam a estar cobertas por DOIS itens triados desta triagem: o item de rank 4 (F1) cobre os tres repositorios, e o de rank 3 (F2) cobre o accountingController. Os dois tem portao derivado, dono e data. A subfila deixa de ser registro em `r2_decision` e passa a ser fila com itens.",
+    "what_it_does_not_do": "NAO altera a TRIAGEM-R1-R3. Aquele artefato e o registro daquela rodada, e reescrever `items[]` dele para importar achados de outra rodada seria misturar escopos — o B12 amarra item a relatorio de origem, e o relatorio de origem destes cinco e o AV-R7. O que a TRIAGEM-R1-R3 ganha e um ponteiro, no commit de registro deste PR.",
+    "criterion_note": "O criterio que ratificou a subfila (\"as 4 linhas com tres invariantes nomeadas simultaneas\") esta medido como errado em 1 de 4 pelo item de rank 2 desta triagem. A ratificacao NAO cai — ela se apoia em `inquilino` e `tx`, que valem nas quatro —, mas quem reexecutar o criterio pode encontrar um conjunto de 4 diferente. Esta na fila como item proprio, com dono e data."
+  },
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: \"problema maior vira achado novo\". Levantado durante ESTA triagem, pela execucao dos falsificadores a partir do JSON relido — que e a checagem que existe para isto. Nao e item desta triagem: e defeito do artefato AV-R7, nao achado sobre o codigo, e nao tem fingerprint em nenhum relatorio.",
+      "candidate": "O falsificador publicado do F3 para antes do proprio controle",
+      "measured": "O comando gravado e `awk ... | grep -c deletedAt && awk ... | grep -c deletedAt`. `grep -c` imprime 0 e SAI 1 quando a contagem e zero, entao o `&&` quebra a cadeia e o segundo awk (que E o controle) nunca roda. Medido em shell padrao, SEM pipefail: a saida e \"0\" e exit 1, sem o \"2\". Isolado do artefato do meu wrapper: F1 e F2 tambem saiam truncados sob `set -o pipefail`, mas rodam inteiros sem ele; o F3 trunca nos dois.",
+      "why_it_matters": "O controle e a unica coisa que distingue \"o campo nao existe\" de \"meu awk esta quebrado\", e ele e inalcancavel EXATAMENTE quando o achado e verdadeiro. Um reexecutor veria \"0\" e nada mais. O veredito nao muda — o controle foi rodado separadamente e devolve 2 —, mas o comando publicado nao demonstra o proprio controle, que e o que o §6b existe para garantir.",
+      "cost_hint": "Trocar `&&` por `;` no falsifier_static do F3. Uma edicao de um caractere no artefato emitido.",
+      "not_fixed_here_and_why": "NAO corrigido nesta passagem, seguindo o precedente da TRIAGEM-AV-R6, que achou a mesma classe (escapes comidos por patch de shell em tres falsificadores) e REGISTROU em vez de reescrever o relatorio emitido. Editar o artefato de origem durante a triagem apaga a diferenca entre o que a rodada emitiu e o que a triagem verificou.",
+      "gate_and_decision": "NAO recebe portao desta triagem. `gates_summary` fica inalterado."
+    },
+    {
+      "_note": "AV-00 §5. Feedback de instrumento sobre a propria triagem, nao sobre o codigo.",
+      "candidate": "Falsificador encadeado com `&&` sobre pipeline e sensivel a opcao de shell",
+      "measured": "Sob `set -o pipefail`, `grep -rlE ... | wc -l` que nao acha nada sai 1 e quebra a cadeia `&&`. Medido nos tres casos: F1 (uma so etapa, sem consequencia visivel alem do exit), F2 (o controle de /api/users nao roda) e F3 (o controle do Counterparty nao roda). Sem pipefail, F1 e F2 rodam inteiros. Isolamento: `grep -rlE \"NaoExiste\" ... ` sai 1; `grep ... | wc -l` sai 0 sem pipefail e 1 com.",
+      "why_it_matters": "O contrato quer falsificador REEXECUTAVEL POR OUTRA PESSOA, e outra pessoa roda no shell dela. Um comando cujo controle aparece ou desaparece conforme `set -o pipefail` nao e reexecutavel no sentido que importa. Isto NAO e defeito so do AV-R7: e uma propriedade de todo falsificador do diretorio que encadeie pipelines com `&&`, e nao foi medido nos outros relatorios.",
+      "cost_hint": "Convencao: separar etapas de falsificador com `;` em vez de `&&`, ou declarar as opcoes de shell assumidas. Vale para o instrumento, nao para um relatorio.",
+      "gate_and_decision": "NAO recebe portao. E feedback de instrumento, nao achado sobre o codigo."
+    }
+  ],
+  "gates_summary": {
+    "bloqueia_deploy": 0,
+    "bloqueia_primeiro_cliente": 5,
+    "aceito_com_registro": 0,
+    "descartado": 0,
+    "note": "CINCO de cinco no mesmo portao, e o numero merece a desconfianca que a distribuicao sugere. A razao e mecanica e verificavel item a item: os cinco achados sao `ja_exposto`, e no ramo unico `nunca implantado` do gateMap ja_exposto tem uma linha so. Nenhum foi promovido a bloqueia_deploy (a primeira regra do ramo pede irreversibilidade ou perda de dado, e ausencia de teste nao e nem uma nem outra) e nenhum foi rebaixado a aceite (o mapa nao rebaixa por custo nem por dano). Zero em `descartado` tambem e resultado e nao omissao: os cinco falsificadores rodaram e os cinco confirmaram — resultado incomum pela TERCEIRA vez nesta bancada, e nomeado em self_check.own_bias_named."
+  },
+  "ordering": {
+    "criterion": "risco removido por esforco, conforme AV-00 §3",
+    "sequence": [
+      "agent-authored-ratio-sem-denominador-declarado",
+      "softdelete-etiquetado-em-unidade-que-nao-tem-soft-delete",
+      "controller-de-contabilidade-sem-alcance-http",
+      "repositorios-da-subfila-sem-cobertura-alcancavel",
+      "fan-in-do-simbolo-concreto-le-um-sob-injecao-por-interface"
+    ],
+    "note": "O achado de MAIOR dano (rank 4, dano 4) aparece em quarto, e e o criterio funcionando e nao falhando — os tres acima dele sao duas edicoes de dado e um arquivo de teste, contra tres arquivos novos de integracao. Mesmo padrao do item 4 da TRIAGEM-R1-R3, que tambem foi o de maior dano em quarto lugar. HA UM ARGUMENTO A MAIS, alem do custo, para os dois primeiros: eles sao PRE-REQUISITOS. O rank 1 decide qual teto de confianca vale para os achados de produto; o rank 2 conserta o criterio que selecionou o recorte que o rank 4 audita. A TENSAO com o risco absoluto esta declarada no why_rank_4 em vez de resolvida em silencio."
+  },
+  "deviations": [
+    {
+      "rule": "AV-00 §9.4 — revisao vem de agente separado; PASS emitido pela mesma sequencia que implementou e rejeitado",
+      "what_happened": "Esta triagem nao foi revisada por agente separado, e o agravante e maior que na TRIAGEM-R1-R3: aqui a MESMA sessao (a) decidiu que a subfila viraria fila propria em vez de aceite, (b) escolheu as 4 unidades como recorte, (c) escolheu os 7 sitios de mutacao, (d) emitiu os 5 achados e (e) esta triando os 5. Sao cinco decisoes em serie sem nenhum ponto de corte externo.",
+      "mitigation": "Prova objetiva no lugar de revisao, que nao substitui revisao: os cinco falsificadores foram executados A PARTIR DO JSON RELIDO (nao da minha memoria do que escrevi), e essa checagem pegou um defeito real que eu nao sabia que existia — o falsificador do F3 nao alcanca o proprio controle. Alem disso a derivacao de portao SOBRESCREVEU tres sugestoes minhas, o que e o unico sinal nesta triagem de que o processo nao so confirma o autor.",
+      "cost_if_it_had_gone_wrong": "Cinco decisoes encadeadas por um so agente produzem um artefato coerente consigo mesmo e possivelmente errado do inicio ao fim. O controle contra isso e a derivacao mecanica de portao e a execucao a partir do artefato; nao ha segundo controle."
+    },
+    {
+      "rule": "AV-00 §0 / bloco 9 — proibido corrigir achado nao triado",
+      "what_happened": "CUMPRIDO, e vale registrar porque a tentacao era a maior de todas as triagens desta bancada: o conserto do rank 4 e um arquivo de teste por repositorio, no molde que ESTA EM MAIN e ja teve mordida provada; o do rank 3 e um arquivo no molde de outros 13; e os ranks 1, 2 e 5 sao edicoes de uma linha. `git diff --name-only origin/main..HEAD` do PR desta triagem toca apenas docs/audit/.",
+      "mitigation": "Nao aplicavel: nenhum desvio.",
+      "cost_if_it_had_gone_wrong": "Corrigir o rank 1 ou o rank 2 antes de triar teria produzido conserto para o portao errado — os dois foram emitidos no relatorio com `suggested_gate: aceito_com_registro`, e a derivacao pelo mapa deu bloqueia_primeiro_cliente nos dois. E o caso concreto, nesta rodada, de a ordem importar."
+    }
+  ],
+  "self_check": {
+    "falsifiers_executed": 5,
+    "falsifiers_total": 5,
+    "items_without_owner": 0,
+    "items_without_gate": 0,
+    "minimum_required": "AV-00 §2 exige os tres maiores damage e todos os damage 5. Os damages sao 4/3/2/2/1 e nao ha nenhum damage 5; o minimo seriam os tres maiores (4, 3 e um dos dois empatados em 2). Os CINCO foram executados, excedendo o minimo.",
+    "controls_run": "Os cinco falsificadores foram extraidos do JSON e rodados verbatim; QUATRO deles devolvem zero ou um ramo negativo como resultado esperado, que e o resultado mais facil de obter por acidente. Controles: rank 4 (139 arquivos de teste existem; PostingRepository devolve 10; os 3 arquivos existem), rank 3 (13 arquivos usam supertest; /api/users devolve 2), rank 2 (o model Counterparty devolve 2 e o awk recorta 19 linhas — rodado SEPARADAMENTE porque o comando publicado para antes dele), rank 5 (PostingService devolve 7), rank 1 (os dois ramos saem do mesmo comando com a unica diferenca sendo --no-merges). Sem esses controles, quatro dos cinco \"confirmado\" seriam indistinguiveis de comando quebrado.",
+    "barriers_searched": "Os cinco `barrier_kind` foram emitidos DEPOIS de procurar, no procedimento que o precedente do AV-L1 deixou como licao literal: `nenhuma_conhecida` so pode ser emitido depois de procurar. Onde se procurou, nos cinco: (a) os 24 passos nomeados de .github/workflows/ci.yml, listados; (b) scripts/, que tem exatamente tres arquivos (bancada-gate.mjs, debt-ledger-check.mjs, review-ledger-check.mjs); (c) `grep -rn \"invariantes\\|fanin\" scripts/*.mjs` — ZERO; (d) `grep -n agent_authored_ratio scripts/bancada-gate.mjs` — duas linhas, as duas lendo o VALOR e nenhuma o `method`; (e) `grep -rlE \"getFactory\\(\\)\" src --include=*.integration.test.ts` — DOIS arquivos, um deles o molde com mordida provada; (f) `grep -rlE \"supertest\" src --include=*.integration.test.ts` — 13 arquivos; (g) os 6 PRs abertos (135, 129, 117, 97, 87, 54), com `gh pr diff --name-only` em cada um, cruzados contra os caminhos de evidence — nenhum toca nenhum deles. RESULTADO: nenhum item recebeu `nenhuma_conhecida`. DOIS tem molde que EXISTE no repositorio e falta instanciar (ranks 3 e 4), tres sao checagens escriviveis que nao existem (ranks 1, 2 e 5). A busca e do repositorio local e dos PRs abertos do provedor; revisoes que vivam so na interface do provedor sem virar PR nao foram alcancadas.",
+    "own_bias_named": "Quatro, em ordem de quanto me incomodam. (1) CINCO DECISOES EM SERIE SEM CORTE EXTERNO: decidi que a subfila viraria fila propria, escolhi o recorte, escolhi os sitios de mutacao, emiti os achados e agora os trio. Cada passo herda o enquadramento do anterior, e um enquadramento errado no primeiro passo sobrevive intacto ate aqui. O unico contrapeso e que a derivacao de portao SOBRESCREVEU tres sugestoes minhas e que a execucao a partir do JSON relido pegou um defeito que eu nao sabia existir. (2) CINCO DE CINCO CONFIRMADOS, ZERO REFUTADOS — terceira vez consecutiva nesta bancada (7/7 na R1-R3, 5/5 na AV-R6, 5/5 aqui). Quem escreveu os falsificadores foi quem emitiu os achados, e um falsificador escrito pelo autor tende a ser o comando que ele ja sabe que confirma. Rodei controle em todos, e mesmo assim nao derrubei nada. (3) EU SUGERI ACEITE POR CUSTO EM TRES ACHADOS E A DERIVACAO ME SOBRESCREVEU. Isso e o processo funcionando, mas o que ele mede e que eu, escrevendo o relatorio, repeti exatamente o erro que o item 5 da TRIAGEM-R1-R3 existia para corrigir — dois dias depois de escrever a correcao. (4) A ORDENACAO ME FAVORECE: os dois primeiros lugares sao os itens triviais e sobre INSTRUMENTOS, e o item de maior dano — que exige tres arquivos de teste de verdade — fica em quarto. O argumento de pre-requisito e real e esta escrito, e ele tambem e conveniente para quem preferir fechar a fila com edicoes de uma linha."
+  }
+}

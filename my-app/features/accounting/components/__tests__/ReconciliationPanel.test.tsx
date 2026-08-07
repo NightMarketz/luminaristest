@@ -36,6 +36,8 @@ describe('ReconciliationPanel (render)', () => {
     expect(screen.getByRole('button', { name: 'Fila pendente' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Importar extrato/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Nenhum extrato importado/)).toBeInTheDocument());
+    // Guarda da classe `t`-instável — ver features/accounting/lib/useAccountingT.
+    expect(accountingService.listBankStatements).toHaveBeenCalledTimes(1);
   });
 
   it('switches to the Fila pendente sub-view', async () => {

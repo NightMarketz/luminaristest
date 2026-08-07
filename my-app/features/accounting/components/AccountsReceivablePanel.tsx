@@ -16,6 +16,7 @@ import { CreateReceivableModal } from './CreateReceivableModal';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
+import { useAccountingT } from '../lib/useAccountingT';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -204,7 +205,8 @@ interface AccountsReceivablePanelProps {
  * to the ledger via the AR command endpoints and refetch the trial balance.
  */
 export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties }: AccountsReceivablePanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [receivables, setReceivables] = useState<ReceivableWithReceipts[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -234,11 +236,11 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
       const result = await accountsReceivableService.listReceivables({ unitId, limit: 200 });
       setReceivables(result.receivables);
     } catch (err: unknown) {
-      setError(resolveErrorWithCode(err, t('contasAReceber.error.load', 'Erro ao carregar as contas a receber.')).message);
+      setError(resolveErrorWithCode(err, tRef.current('contasAReceber.error.load', 'Erro ao carregar as contas a receber.')).message);
     } finally {
       setLoading(false);
     }
-  }, [unitId, t]);
+  }, [unitId, tRef]);
 
   useEffect(() => {
     void fetchReceivables();

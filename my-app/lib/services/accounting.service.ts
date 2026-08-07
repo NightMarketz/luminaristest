@@ -50,7 +50,12 @@ export interface AccountLedgerQuery extends TrialBalanceQuery {
 }
 
 // ── Responses ─────────────────────────────────────────────────────────────────
-export type JournalEntryStatus = 'Draft' | 'Posted' | 'Reconciled' | 'Reversed';
+/**
+ * `PendingApproval` is the maker-checker staging state (ADR-INCR-APPROVAL). It is deliberately
+ * OUTSIDE `LEDGER_STATUSES` on the backend — a Draft/PendingApproval entry never reaches
+ * BP/DRE/SPED. It appears here only because `listEntries` returns every status.
+ */
+export type JournalEntryStatus = 'Draft' | 'PendingApproval' | 'Posted' | 'Reconciled' | 'Reversed';
 
 export interface Posting {
   id: string;
@@ -77,6 +82,14 @@ export interface JournalEntry {
   fiscalYear: number | null;
   /** Sequential entry number within the fiscal year (added INCR-3). Null for legacy. */
   entryNumber: number | null;
+  /** Optimistic-lock counter (ACC-023). Echoed back as `expectedVersion` on every approval command. */
+  version: number;
+  /** Economic-content hash frozen at submit (ACC-017/022). Null while Draft. */
+  contentHash: string | null;
+  /** Authorship trail (ADR-INCR-APPROVAL): maker, submitter, checker. */
+  createdById: string | null;
+  submittedById: string | null;
+  approvedById: string | null;
   createdAt: string;
   updatedAt: string;
   postings: Posting[];

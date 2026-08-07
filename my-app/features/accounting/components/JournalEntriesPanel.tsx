@@ -8,6 +8,7 @@ import {
 import { Modal } from '../../../components/ui/Modal';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
+import { useAccountingT } from '../lib/useAccountingT';
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -193,7 +194,8 @@ interface JournalEntriesPanelProps {
  * Supports reversal (estorno) with a confirmation modal.
  */
 export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPeriods }: JournalEntriesPanelProps) {
-  const { t } = useTranslation('accounting');
+  // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
+  const { t, tRef } = useAccountingT();
   const [entries, setEntries] = useState<JournalEntryWithFullPostings[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -211,12 +213,12 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
       const result = await accountingService.listEntries({ unitId });
       setEntries(result.entries);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t('journalEntries.error.load', 'Erro ao carregar lançamentos.');
+      const msg = err instanceof Error ? err.message : tRef.current('journalEntries.error.load', 'Erro ao carregar lançamentos.');
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [unitId, t]);
+  }, [unitId, tRef]);
 
   useEffect(() => {
     void fetchEntries();
