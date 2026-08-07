@@ -1,0 +1,513 @@
+{
+  "schema": "triagem/1.0",
+  "_note": "Triagem dos 10 achados da rodada AV-R8, na ordem do AV-00 bloco 9 (emitir → triar → so entao corrigir). NENHUMA correcao de codigo foi feita e NENHUM artefato de origem foi editado: docs/audit/AV-R8-*.json e .md, docs/audit/bancada.html, scripts/bancada-gate.mjs, scripts/review-ledger-check.mjs, os seis docs/audit/reviews/REVIEW-PR*.md e docs/audit/REVIEW-LEDGER.jsonl seguem byte-identicos — `git status --porcelain` mostra apenas este arquivo, untracked. O QUE ESTA TRIAGEM TEM DE DIFERENTE DAS QUATRO ANTERIORES esta em triaged_by e em exposure_audit_summary: ela nao emitiu a rodada que tria, e o primeiro trabalho dela foi AUDITAR o rotulo `exposure` de cada achado antes de aplicar o mapa sobre ele — porque a revisao independente do PR #169 mediu que, nas quatro triagens da bancada, toda variacao de portao sempre veio desse rotulo e nenhum gate o le.",
+  "source_runs": [
+    {
+      "instrument": "AV-17",
+      "instrument_version": "v4.1",
+      "file": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "title": "Revisao independente das seis — o que a rodada de revisao de 2026-08-07 de fato descobriu, reexecutado",
+      "project": "Luminaris",
+      "repo_commit": "ca99c9ae",
+      "generated_at": "2026-08-07",
+      "reduced_mode": true,
+      "verification_commit": "606a3c1f",
+      "verification_note": "Os dez falsificadores foram executados contra 606a3c1f, nao contra ca99c9ae, que e o `run.repo_commit` do relatorio. MEDIDO, nao assumido: `git merge-base --is-ancestor ca99c9ae HEAD` sai 0, e `git diff --name-only ca99c9ae..606a3c1f` devolve EXATAMENTE dois arquivos — docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json e o .md irmao, isto e o proprio artefato triado. NENHUM arquivo de evidence dos dez achados esta no diff: server/src/**, server/prisma/schema.prisma, my-app/**, docs/audit/AV-R2.json, docs/audit/TRIAGEM-R1-R3.json, docs/audit/TRIAGEM-AV-R7.json, docs/audit/REVIEW-LEDGER.jsonl, scripts/bancada-gate.mjs e scripts/review-ledger-check.mjs estao todos fora dele. Logo o resultado de F1..F10 vale para o commit do relatorio. UMA EXCECAO DECLARADA: o falsificador do F8 nao roda contra esta linha de historia de forma nenhuma — ele mede origin/main (30d28d86) materializado FORA do repositorio por `git archive`, porque o bloco B18 chegou pelo PR #173 e as duas linhas divergem em 18b14b12; declarado no proprio item e no NM8 do relatorio. SEGUNDA DECLARACAO, no precedente da TRIAGEM-AV-R6 e da TRIAGEM-AV-R7: os falsificadores NAO foram executados como eu me lembro de te-los lido, e sim extraidos do JSON relido por script (um arquivo por achado, com `<raiz>` substituido pelo caminho absoluto) e rodados verbatim. Essa checagem pegou coisa que a leitura do .md nao pegaria — ver new_findings_raised[0], duas citacoes de linha erradas por um, e new_findings_raised[2], dois contadores de prosa que ficaram na versao de nove achados."
+    }
+  ],
+  "triage_at": "2026-08-07",
+  "triaged_by": "claude-opus-5 — sessao TRIADORA ISOLADA, em worktree proprio (.claude/worktrees/tri-triagem, detached em 606a3c1f). ESTA SESSAO NAO EMITIU A RODADA AV-R8: outra sessao mediu, escolheu as dez classes e escreveu os dez `suggested_gate`. E o corte que faltava as quatro triagens anteriores — a TRIAGEM-AV-R7 declarou no proprio `deviations` que a mesma sessao decidiu o recorte, escolheu os sitios de mutacao, emitiu os achados e os triou, cinco decisoes em serie sem ponto de corte. Aqui o emissor escolheu o `exposure` e o triador auditou o rotulo e derivou o portao. O QUE ESTA SEPARACAO NAO COMPRA, declarado: somos o mesmo modelo e partilhamos vocabulario e pontos cegos, e esta triagem nao tem revisor proprio — a separacao remove a coincidencia de sessao, nao a de familia.",
+  "profile_decision": {
+    "_note": "Extensao aditiva ao triagem/1.0, no precedente do AV-L1-TRIAGEM e da TRIAGEM-AV-R7. Registrada porque todo portao abaixo deriva do estado de implantacao, e porque desta vez a derivacao foi EXECUTADA e nao citada.",
+    "deployed": "nao",
+    "deployed_answered_at": "2026-08-03",
+    "deployed_source": "Respondido pelo dono e registrado no item 5 de \"o que continua em aberto\" do docs/audit/CONTINUACAO.md. Nao ha ambiguidade a resolver e nao ha convergencia a derivar: ha um ramo so.",
+    "ambiguity_measured": "NENHUMA.",
+    "resolution": "Ramo unico `nunca implantado` do gateMap.",
+    "branch_nunca_implantado": "irreversível ou perda de dado → bloqueia_deploy · ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy não irreversível → bloqueia_primeiro_cliente · latente_por_dependencia → aceitavel_com_registro com gatilho nomeado · com_volume e apenas_teorico → aceitavel_com_registro com gatilho",
+    "branch_source": "docs/audit/bancada.html, funcao gateMap(). NAO citada de memoria e NAO transcrita: a funcao foi EXTRAIDA por fatia de texto (do indice de `function gateMap(){` ate o de `function ceiling()`, 1552 caracteres) e EXECUTADA por `new Function('P', src + 'return gateMap();')` com P.deployed nos quatro valores possiveis. A string acima e a saida literal do ramo `nao`.",
+    "derivation_executed": true,
+    "derivation_control": "A mesma tecnica de fatia+execucao aplicada a `ceiling()`, a funcao vizinha, devolve 3 para `nao` e 4 para `producao` — a extracao le funcao de verdade e nao texto morto, e os quatro ramos de gateMap devolvem quatro strings DISTINTAS, entao a fatia nao esta presa num ramo so. Sem esse controle, \"extrai e executei\" seria indistinguivel de ter colado a string.",
+    "branch_outputs_measured": {
+      "P.deployed = null": "PENDENTE — sem o estado de implantação, o mapeamento de portão não pode ser derivado.",
+      "P.deployed = \"nao\"": "o ramo usado acima",
+      "P.deployed = \"interno\"": "ja_exposto → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · apos_deploy → bloqueia_deploy só se irreversível · com_volume → aceitavel_com_registro · latente_por_dependencia → aceitavel_com_registro com gatilho",
+      "P.deployed = \"producao\"": "ja_exposto → bloqueia_deploy · apos_deploy → bloqueia_primeiro_cliente · com_dado_de_terceiro → bloqueia_primeiro_cliente · com_volume → aceitavel_com_registro"
+    },
+    "vocabulary_note": "O gateMap diz `aceitavel_com_registro` e a lista fechada do B14 diz `aceito_com_registro`. Sao o mesmo portao com dois nomes em dois artefatos, e a traducao e feita aqui em vez de em silencio. E, por si so, uma superficie onde uma derivacao automatica tropecaria — registrado em new_findings_raised.",
+    "what_would_change_the_answer": "Se o dono revisar `deployed` para `producao`, os NOVE itens `ja_exposto` sobem de bloqueia_primeiro_cliente para bloqueia_deploy, porque nesse ramo ja_exposto mapeia direto para bloqueia_deploy; o unico aceite (F8, apenas_teorico) nao tem linha propria no ramo de producao e teria de ser redecidido. E a unica resposta que muda esta triagem, e ela muda quase toda.",
+    "one_suggested_gate_overridden": "Dos dez `suggested_gate` do relatorio, NOVE foram CONFIRMADOS e UM foi SOBRESCRITO — o F9, de `aceito_com_registro` para `bloqueia_primeiro_cliente`. A sobrescrita NAO veio do mapa: veio da correcao do `exposure` que alimenta o mapa. Registro a assimetria com a TRIAGEM-AV-R7, que sobrescreveu tres por erro de DERIVACAO (aceite sugerido por custo): aqui o emissor derivou corretamente do rotulo em dez de dez casos, e o que estava errado era um rotulo. O degrau que falha mudou de lugar, e e exatamente o degrau que o F3 diz que nenhum gate le."
+  },
+  "exposure_audit_summary": {
+    "_note": "O trabalho que nenhuma das quatro triagens anteriores fez, e a razao de esta sessao existir. A revisao independente do PR #169 mediu que TODA variacao de portao nas quatro triagens veio do rotulo `exposure` e que `exposure` nao e lido por gate nenhum (confirmado por mim: `grep -n exposure scripts/bancada-gate.mjs` devolve duas linhas, uma de comentario e o B7, que so confere pertinencia a lista). Entao aplicar o mapa sobre o rotulo sem auditar o rotulo e derivar mecanicamente a partir de um palpite.",
+    "ruler_used": "O criterio operacional de `apenas_teorico` fixado pela TRIAGEM-AV-R6: \"nenhum caminho de dano foi MEDIDO\". Aplicado aos dez, um a um, ANTES do gateMap.",
+    "ruler_disagreement_found": "O relatorio aplicou a regua com uma clausula que ela nao tem — \"medido POR MIM\". A clausula de autoria transforma `exposure`, que descreve o SISTEMA, em funcao do que estava instalado no worktree do auditor, e o contrato ja tem campo para isso: `verification_mode`. Fundidos, um achado com dano medido por outra pessoa cai para aceite. Foi o que aconteceu com o F9.",
+    "corrected": 1,
+    "corrected_detail": "F9 (`retry-apos-conflito-de-versao-reenvia-a-versao-velha`): apenas_teorico → ja_exposto, portao aceito_com_registro → bloqueia_primeiro_cliente. Razao medida no material bruto: o revisor independente do #170 EXECUTOU o caminho de dano (Sonda A, assercao falha literal `expectedVersion:5` contra `expectedVersion:6`) e classificou o achado como \"Grau: verificado (executado)\"; o proprio F9 registra a execucao como herdada. Controle da leitura: o MESMO relatorio marca N1b e N4 como \"verificado por leitura\", entao o rotulo \"executado\" discrimina.",
+    "justification_replaced_without_changing_label": 1,
+    "justification_replaced_detail": "F7 (`strict-de-dto-neutralizado-pelo-unico-chamador`): o rotulo `ja_exposto` fica, mas a razao do relatorio cai. Ele deriva o rotulo de \"a rota aceita chave desconhecida hoje\", que e o `falsifier_dynamic` e nunca foi executado por ninguem. O rotulo sobrevive pela perna medida — cabecalho do DTO e teste do #167 afirmando propriedade que o unico chamador neutraliza, mais DocumentAttachmentDto.ts com zero `strict()`, com controle 0/2. Portao inalterado; fundamento trocado, porque portao certo apoiado em argumento errado e a classe que o F4 desta mesma rodada mede.",
+    "sustained": 8,
+    "sustained_note": "Oito rotulos se sustentam contra a regua. Os dois que eu mais tentei derrubar foram o F8 (o unico `apenas_teorico` que sobrou, e o unico aceite — testei indo medir na arvore de origin/main se a fuga do prefixo tem instancia viva: NAO tem, das cinco linhas etiquetadas softdelete nenhuma e `DocumentRepository.ts`) e o F1 (cuja instancia viva e RELATIVA A REF e evapora no merge com origin/main — sustentado hoje, com a fragilidade escrita no item em vez de escondida).",
+    "distribution_is_suspicious": true,
+    "distribution_analysis": "A distribuicao final e 9 bloqueia_primeiro_cliente / 1 aceito_com_registro, e ela E suspeita — pela quinta vez consecutiva esta bancada produz uma triagem quase inteira num portao so (7/7, 5/5, 5/5, 5/5, agora 9/1). Medido, porem, que a uniformidade e propriedade do MAPA e nao dos achados, e isso e falsificavel por comando: a lista fechada de `exposure` tem SEIS valores (`ja_exposto`, `apos_deploy`, `com_volume`, `com_dado_de_terceiro`, `apenas_teorico`, `latente_por_dependencia`, lidos de scripts/bancada-gate.mjs:209-212). Sob `deployed = nao`, dois deles sao estruturalmente inalcancaveis — `apos_deploy` e `com_volume` pressupoem implantacao e volume que nao existem —, e dos quatro restantes TRES mapeiam para bloqueia_primeiro_cliente e apenas dois valores (`apenas_teorico` e `latente_por_dependencia`) chegam a aceite. Ou seja: para um sistema nunca implantado, o mapa tem pouquissima capacidade de discriminar, e um portao uniforme carrega quase nenhuma informacao sobre a qualidade do julgamento. A CONCLUSAO QUE ISSO SUSTENTA e desconfortavel para esta triagem: o meu unico grau de liberdade real era mover achados entre `ja_exposto` e `apenas_teorico`, e eu movi UM — na direcao que ABRE trabalho, nao na que fecha, o que e o sentido em que o vies do triador costuma NAO puxar. Registrado em own_bias_named o inverso: um triador que quer parecer rigoroso tambem tem incentivo para promover."
+  },
+  "items": [
+    {
+      "rank": 1,
+      "fingerprint": "portao-da-triagem-nao-e-derivado-do-exposure-por-nenhum-gate",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F3",
+      "damage": 3,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto se sustenta contra a regua do AV-R6 porque ha caminho de dano MEDIDO e vivo no disco, e ele nao e nenhuma das tres mutacoes: e a TRIAGEM-AV-R7, publicada com gates_summary 5/0, cujo rank 5 carrega um `ja_exposto` que o criterio do proprio autor derruba. Medido com controle (1 de 5 declara \"ninguem usou\"). O rotulo nao depende da capacidade hipotetica do gate.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO (nao do .md nem da memoria), contra 606a3c1f. Saida: `grep -c gateMap scripts/bancada-gate.mjs` = 0; `grep -n exposure` = exatamente DUAS linhas, a 24 (comentario do cabecalho do B7) e a 316 (o proprio B7, que so confere pertinencia a lista); e a recontagem da TRIAGEM-AV-R7 devolve exposures {ja_exposto:5} com gates 0/5/0. CONTROLE declarado no falsifier_static_expected e AUSENTE do comando publicado — rodado por mim em separado: `grep -c barrier_kind` = 3 e `grep -c verification` = 21, entao o zero de gateMap nao e cegueira de padrao. DERIVACAO MECANICA CONFERIDA POR OUTRO CAMINHO: extrai a funcao gateMap() de docs/audit/bancada.html por fatia de texto (indexOf de `function gateMap(){` ate `function ceiling()`, 1552 chars) e a executei com `new Function`; os quatro ramos (null / nao / interno / producao) devolvem os quatro mapas distintos, e o ramo `nao` devolve o ramo unico usado abaixo. CONTROLE da extracao: a mesma tecnica aplicada a `ceiling()` devolve 3 para `nao` e 4 para `producao` — a fatia le funcao de verdade, nao texto morto. INSTANCIA VIVA reconferida com controle: dos cinco itens da TRIAGEM-AV-R7, apenas o rank 5 declara em `why_rank_5` que \"nesta rodada ninguem usou\"; os outros quatro nao declaram nada equivalente. Logo o criterio operacional que a TRIAGEM-AV-R6 fixou (`apenas_teorico` = nenhum caminho de dano foi MEDIDO) derruba o rotulo do rank 5 pelas palavras do proprio autor, e o gates_summary 5/0 publicado deveria ser 4/1.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate do relatorio, e a confirmacao aqui vale menos do que a derivacao: `deployed = nao` (respondido pelo dono em 2026-08-03, registrado no item 5 de \"o que continua em aberto\" do CONTINUACAO.md) cai no ramo unico do gateMap; nesse ramo `ja_exposto` tem uma linha so, e ela devolve bloqueia_primeiro_cliente. NAO promove a bloqueia_deploy: a primeira regra do ramo pede irreversibilidade ou perda de dado, e um portao mal derivado nao e nem uma nem outra. NAO rebaixa por custo: o mapa nao tem linha que rebaixe por custo nem por dano.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-14",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, NAO EXISTENTE, e a busca esta nos numeros e no alcance. Procurado em TRES superficies, nao em uma: (a) arvore desta rodada — `grep -c gateMap scripts/bancada-gate.mjs` = 0; (b) TODO ref do repositorio, local e remoto — `git log --all -S\"gateMap\" -- scripts/` devolve ZERO commit, entao nenhuma branch sem PR carrega a checagem (esta e a perna que o N3 da REVIEW-PR169 mediu como ausente na AV-R7); (c) os 7 PRs abertos (172, 135, 129, 117, 97, 87, 54), cruzados por `git diff --name-only <merge-base>..<ref>` contra `scripts/bancada-gate.mjs` — nenhum toca o arquivo. A barreira e escrivivel como LEITURA DE ESTRUTURA, que e o que o gate ja sabe fazer: recomputar o portao de cada item a partir do `exposure` pelo ramo de perfil vigente e reprovar divergencia sem `gate_override_reason`. Nao e `nenhuma_conhecida` porque a barreira e possivel e barata, nao porque exista.",
+      "why_rank_1": "Primeiro por risco removido por esforco E por ser pre-requisito de todo o resto: enquanto o portao nao for regra executada, nenhuma das outras nove decisoes desta triagem — nem as das quatro triagens anteriores — e reexecutavel por comando. O custo e uma checagem nova sobre campos que ja existem, e o revisor do #169 ja reimplementou o gateMap do zero, entao a derivacao esta provada como automatizavel. E o item onde esta triagem tem menos direito de se poupar: ela e a primeira a exercer a separacao emissor/triador que o achado pede, e mesmo assim derivou o portao a mao."
+    },
+    {
+      "rank": 2,
+      "fingerprint": "razao-de-revisao-aceita-declaracao-sem-confronto-com-o-repositorio",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F1",
+      "damage": 3,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO COM FRAGILIDADE DECLARADA",
+        "reason": "ja_exposto se sustenta: ha caminho de dano medido no disco de hoje — o razao declara veredito sobre commit ausente da linha de historia em que ele mesmo vive, e o gate esta verde. Mas registro o que nenhuma das quatro triagens anteriores registrou sobre um rotulo: ele e RELATIVO A REF. Fundida esta linha com origin/main, a instancia viva desaparece e o achado passa a se apoiar apenas nas seis mutacoes, que sao capacidade e nao instancia — e ai a regua do AV-R6 o levaria a apenas_teorico e o portao cairia para aceite. Isso NAO muda o portao hoje; muda o que o dono precisa reconferir depois do merge, e esta escrito em exposure_recheck_after_merge abaixo em vez de deixado implicito.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap.",
+        "recheck_after_merge": "Observavel por comando, e o comando e o proprio falsificador do item: quando esta linha for fundida com origin/main, reexecutar o falsifier_static do F1. Se `pr 173 fe27cc22 ancestral de HEAD` passar de NAO para SIM, a instancia viva sumiu e o item passa a se apoiar so nas seis mutacoes herdadas — capacidade, nao instancia — e a regua do AV-R6 o levaria a apenas_teorico com portao de aceite. O DONO NAO PRECISA DECIDIR ISSO AGORA: precisa saber que o portao deste item tem prazo de validade ligado a uma topologia de branch, o que nenhum outro dos dez tem."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f. Saida: pr 167 333a5e26 SIM · pr 170 9e675679 SIM · pr 168 9a3ef0c5 SIM · pr 169 a9f0ebc6 SIM · pr 171 13f3c6a5 SIM · pr 173 fe27cc22 NAO. Os cinco SIM sao o CONTROLE embutido no proprio comando, e sem eles o unico NAO seria indistinguivel de comando quebrado. NAO REEXECUTEI as seis mutacoes do razao: elas mutam docs/audit/REVIEW-LEDGER.jsonl, que esta na lista de arquivos que eu estou proibido de editar nesta sessao, e o contrato da triagem pede o falsificador do achado, nao a repeticao da campanha que o produziu. As seis fugas ficam HERDADAS do relatorio, declaradas como herdadas em vez de reafirmadas como medida minha. O que EU medi e a instancia viva, que e a perna que o revisor do #167 nao podia ver. LIMITE DA INSTANCIA VIVA, declarado porque ele e o unico ponto fragil do item: fe27cc22 E ancestral de origin/main (30d28d86), e as duas linhas divergem em 18b14b12 — a instancia viva vale para a linha de historia em que o razao vive hoje e evapora no dia em que esta linha for fundida com origin/main, como o proprio falsifier_static_expected declara.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → ramo unico → `ja_exposto` → bloqueia_primeiro_cliente, por derivacao mecanica do gateMap extraido da bancada.html e executado por fora. NAO promove a bloqueia_deploy: um registro de revisao aceito indevidamente nao e irreversivel nem perde dado. NAO rebaixa por custo, apesar de o conserto serem tres linhas.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-14",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, NAO EXISTENTE, procurada nas tres superficies. (a) arvore desta rodada: `scripts/review-ledger-check.mjs` confere o sha por FORMA (regex /^[0-9a-f]{7,40}$/, linha 90) e nunca contra o repositorio; (b) TODO ref: `git log --all -S\"merge-base\" -- scripts/review-ledger-check.mjs` e `git log --all -S\"cat-file\" -- scripts/review-ledger-check.mjs` devolvem ZERO commit — nenhuma branch, com PR ou sem, carrega a checagem; (c) os 7 PRs abertos nao tocam scripts/. A barreira e barata e usa campos que ja existem: `git cat-file -e <commit>`, `git merge-base --is-ancestor <commit> HEAD` e exigir que `artifact` seja arquivo regular nao vazio — fecha quatro das seis fugas medidas.",
+      "why_rank_2": "Segundo por risco removido por esforco: dano 3, conserto de tres linhas sobre campos que ja existem, e e o unico item da rodada com instancia viva no disco alem do F3. Vem depois do F3 porque o F3 e pre-requisito de todos os portoes, inclusive do dele."
+    },
+    {
+      "rank": 3,
+      "fingerprint": "jest-so-pendura-quando-o-teste-reprova-e-o-vermelho-vira-inconclusivo",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F10",
+      "damage": 2,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto se sustenta com folga contra a regua do AV-R6: o caminho de dano nao so foi medido, ele ja percorreu inteiro e deixou consequencia publicada — um rotulo SOBREVIVEU num placar de mordida, medido por outro caminho pelo F4 desta mesma rodada. E o achado com a evidencia de exposicao mais forte dos dez.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, com o teto de 240 s do proprio comando e o exit do WRAPPER reportado. LINHA 1 (arvore limpa, o CONTROLE): wrapper=0 e ZERO ocorrencias de \"did not exit one second\". LINHA 2 (com a regra publica match:prefix acrescentada, `git diff --numstat` conferido = `2 1` no meio da execucao, exatamente o numero que o relatorio declara): wrapper=124 — MORTO PELO TETO — com 1 ocorrencia de \"did not exit one second\" e o placar `Tests: 8 failed, 5 passed, 13 total` JA IMPRESSO. Restauracao de /tmp/auth.bak conferida: o `git diff --numstat` final do proprio comando saiu VAZIO e `git status --porcelain` do worktree tambem. O achado reproduz na perna DETERMINISTICA (handle aberto so na condicao de reprovacao) e na perna INTERMITENTE eu obtive 124 na unica execucao que fiz — 1 de 1, coerente com os 3 de 4 do relatorio e insuficiente sozinha para medir a intermitencia, e digo isso em vez de somar a minha passada as dele.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → `ja_exposto` → bloqueia_primeiro_cliente. NAO promove: nada aqui e irreversivel nem perde dado. NAO rebaixa por custo, embora o conserto seja uma flag de linha de comando.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-14",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "conjunto_de_avaliacao",
+      "barrier_note": "PARCIALMENTE EXISTENTE, e a distincao importa. Existe: `server/package.json:26` ja carrega `--forceExit` nos scripts de teste do projeto, entao a defesa esta escrita para quem roda `npm run test:integration`. NAO existe: nada obriga uma linha de comando de MEDICAO ad hoc a carrega-la, e e por ali que a campanha de mutacao passa. Procurado em todo ref por `git log --all -S\"--forceExit\"` restrito a scripts/ e ao ci.yml: nenhuma checagem cobra a flag de quem mede a mao. E `conjunto_de_avaliacao` e nao `teste_de_fronteira` porque o que falta nao e um teste sobre uma fronteira do produto: e uma regra sobre a CONDICAO DE MEDIDA de campanhas futuras, mais teto de tempo com o exit do wrapper registrado ao lado do placar.",
+      "why_rank_3": "Terceiro por ser pre-requisito de toda medicao futura por um custo proximo de zero: enquanto o harness pendurar so no vermelho, toda campanha de mutacao mede o inverso do que precisa — as inofensivas terminam limpas e as que matam viram inconclusivas. Fechar isto e mais barato do que qualquer conserto de produto e protege as proximas rodadas inteiras."
+    },
+    {
+      "rank": 4,
+      "fingerprint": "mordida-provada-em-superficie-que-o-app-nao-alcanca",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F4",
+      "damage": 3,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto: o numero errado esta publicado hoje em dois artefatos (TRIAGEM-R1-R3.json e REVIEW-LEDGER.jsonl) e ja foi herdado por um terceiro. O caminho de dano — placar de mordida lido como cobertura do app — foi percorrido e esta no disco, medido por mim na perna estatica com controle.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f, cadeia inteira (as etapas sao separadas por `;` e nao por `&&`, entao o controle e alcancavel — armadilha 12). Saida: 55 rotas registradas; NENHUMA linha para `router.post('/'`; a linha 84 de auth.ts confirmada verbatim (`rule.match === 'exact' ? pathname === rule.path : matchesSegmentPrefix(...)`), que e o ramo CERTO e nao o corpo do helper; e o trio ReceiveStockSchema 0 / CashFlowStatementQuerySchema 1 / ZZnaoExisteSchema 0. O par 1/0 e o CONTROLE: o comando conta consumidor quando existe e nao devolve 1 para tudo. NAO reexecutei a perna dinamica (as duas formas da regra publica contra a suite do controller): ela custa duas execucoes de suite e o F10, que EU executei, reproduziu a mesma mutacao de `auth.ts` com numstat conferido e placar impresso, o que corrobora que a superficie e alcancavel pelo harness. A perna dinamica fica HERDADA e declarada como herdada.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → `ja_exposto` → bloqueia_primeiro_cliente. NAO promove: a consequencia e sobre a escrituracao da medicao, nao sobre dado nem irreversibilidade.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-21",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "conjunto_de_avaliacao",
+      "barrier_note": "PROPOSTA, NAO EXISTENTE. Procurado: nenhuma das tres checagens de `scripts/` (bancada-gate, review-ledger-check, debt-ledger-check) le declaracao de mutacao de artefato nenhum — `git grep -l \"mordida\\|mutacao\" scripts/` nesta arvore e `git log --all -S\"prova de mordida\" -- scripts/` nao devolvem checagem; nenhum dos 7 PRs abertos toca scripts/. O kind e `conjunto_de_avaliacao` e nao `alerta` porque o que falta e um par por mutacao (sitio alcancado OU prova de vacuidade) sem o qual o verde nao entra em placar — e um criterio de aceitacao de medicao, nao um aviso.",
+      "why_rank_4": "Quarto: dano 3, mas o conserto e convencao sobre toda medicao futura, nao uma edicao. Vem depois do F10 porque os dois sao a mesma familia (o resultado publicado e propriedade da condicao de medida) e o F10 custa uma flag enquanto este custa disciplina em todo artefato. Vem antes dos consertos de dado porque ele e o que impede a classe de voltar."
+    },
+    {
+      "rank": 5,
+      "fingerprint": "numero-publicado-como-medido-sem-conferencia-contra-a-fonte",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F2",
+      "damage": 2,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto: os cinco numeros errados estao no disco hoje e ja produziram consequencia — a coluna `invariantes` do AV-R2 gerou o `ratified_subqueue_criterion` que escolheu as quatro unidades da subfila. Caminho de dano medido por mim, com controle.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f. Saida exata: `com lastro 5 | SEM lastro 5` e `linhas divergentes 108 de 110`. As duas linhas que BATEM sao o controle embutido: se a comparacao estivesse uniformemente quebrada, seriam 110 de 110. O controle POR EIXO que o falsifier_static_expected declara (CounterpartyRepository deletedAt cru 3 / limpo 2; PostingDto cents cru 22 / limpo 11) esta FORA do comando publicado e nao foi reexecutado por mim — declarado como herdado, nao como medido aqui. Reconferi de graca uma das cinco superficies, a mais barata: a linha 6 de CounterpartyDto.ts diz literalmente \"NO money, NO dates, so there is no MAX_CENTS\", e a linha do AV-R2 rotula a unidade como `dinheiro`.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → `ja_exposto` → bloqueia_primeiro_cliente. NAO rebaixa por custo (recontar duas colunas e corrigir tres frases nao muda o portao) nem por dano 2.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-21",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PARCIALMENTE EXISTENTE, e a parte que existe NAO esta nesta arvore. O B18 de origin/main (30d28d86) le a coluna `invariantes` de um centerpiece — e a primeira checagem do repositorio a fazer isso — mas so no eixo `softdelete` e so em linha cuja unidade termina em `Repository.ts`, limite que o proprio cabecalho dele declara. MEDIDO POR MIM na arvore materializada por `git archive origin/main` fora do repositorio: das cinco linhas do AV-R2 etiquetadas `softdelete`, tres sao cobertas (as tres `*Repository.ts`) e duas ficam fora por desenho (DocumentAttachmentDto.ts e PurgeDeletedRecords.ts). Nenhum eixo alem de `softdelete` tem cobertura, e a coluna `linhas` nao tem nenhuma. Procurado em todo ref: nenhuma branch sem PR estende o B18. A barreira e estender o que ja existe, nao cria-la.",
+      "why_rank_5": "Quinto: custo baixo (recontar por script duas colunas e corrigir tres frases de `measured`) contra risco real — o numero errado ja decidiu um recorte de fila e as proximas rodadas vao herda-lo. Ja esta aberto como rank 2 da TRIAGEM-AV-R7 numa fatia menor (uma unidade); aqui a fatia e a coluna inteira."
+    },
+    {
+      "rank": 6,
+      "fingerprint": "placar-de-mutacao-publicado-omite-uma-unidade-inteira",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F5",
+      "damage": 2,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto: o placar 13/9 esta publicado hoje em dois artefatos e contradiz os corpos dos quatro commits dos autores. Medido por mim com controle.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f. Saida: `Counterparty false` · `Dimension true` · `ReferentialMapping true` · `controller true`, e o grep no corpo de b1464747 devolve 1. As tres presencas sao o CONTROLE: procuro AUSENCIA, e se o recorte do regex estivesse quebrado as quatro dariam false. O `1` do grep no corpo do commit prova que as tres mutacoes ausentes do placar foram declaradas pelos proprios autores, entao o 16/12 nao e reconstrucao minha nem do emissor.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → `ja_exposto` → bloqueia_primeiro_cliente. O conserto e UMA LINHA e eu registro explicitamente que nao derivo o portao disso: derivar aceite do custo e o erro que o item 5 da TRIAGEM-R1-R3 corrigiu e que o autor da AV-R7 repetiu duas vezes.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-14",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "alerta",
+      "barrier_note": "PROPOSTA, NAO EXISTENTE, e e a mais fraca dos dez — declarado. Mesma busca das outras: nenhuma checagem de `scripts/` le bloco de placar de mutacao de artefato, em nenhum ref, e nenhum dos 7 PRs abertos toca scripts/. E `alerta` e nao `teste_de_fronteira` porque o gate consegue exigir que o bloco DECLARE a lista de unidades cobertas e que a soma por unidade bata com o total, mas nao consegue saber se a lista de unidades esta completa — so que ela e coerente consigo mesma.",
+      "why_rank_6": "Sexto: o conserto e uma linha, o menor esforco da fila depois da flag do F10, mas o risco removido tambem e pequeno — e um numero de escrituracao, nao um comportamento. Vem depois do F2 porque o F2 alimenta um criterio de selecao de fila e este alimenta um argumento de fechamento."
+    },
+    {
+      "rank": 7,
+      "fingerprint": "retry-apos-conflito-de-versao-reenvia-a-versao-velha",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F9",
+      "damage": 2,
+      "exposure_as_reported": "apenas_teorico",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "CORRIGIDO — apenas_teorico → ja_exposto",
+        "reason": "O criterio operacional que a TRIAGEM-AV-R6 fixou e \"nenhum caminho de dano foi MEDIDO\". O relatorio o aplicou como \"nenhum caminho de dano foi medido POR MIM\" — e a clausula de autoria nao esta no criterio. O caminho de dano FOI medido, por execucao, com assercao falha nomeada, pelo revisor independente do #170, e o proprio F9 registra isso (\"a execucao continua HERDADA da sonda do revisor do #170\"). Somar a clausula de autoria ao criterio confunde dois campos que o contrato mantem separados de proposito: `verification_mode` (que corretamente registra `leitura` — o emissor nao rodou) e `exposure` (que descreve o SISTEMA). Fundidos, `exposure` passa a ser funcao do que estava instalado no worktree do auditor, e o proprio emissor nomeou esse risco no instrument_feedback deste achado (\"a distribuicao dos achados vai espelhar o que estava instalado, e nao onde estao os defeitos\") sem notar que ele aterrissa exatamente aqui, no campo que decide o portao. CONTRA-CASO QUE EU TENTEI E QUE NAO ME DERRUBOU: se a regua exigisse dano observado em SISTEMA IMPLANTADO, F9 seria apenas_teorico — mas entao F1, F2, F3, F4, F5, F6, F7 e F10 tambem seriam, porque nada nesta rodada foi observado em runtime (NM7 do relatorio diz isso literalmente), e o ramo `nunca implantado` do gateMap deixaria de ter uso para `ja_exposto`, que a emenda v4.1 criou justamente para sistemas nunca implantados. A regua que sobrevive aos dois lados e a do AV-R6 sem a clausula de autoria. Confianca do achado permanece `media` e verification_mode permanece `leitura` — corrigir o exposure NAO promove nenhum dos dois.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f — e ele roda sem `my-app/node_modules`, que e a razao de o emissor te-lo escrito assim. Saida: primeiro numero 1 (o bloco inteiro do runAction tem `setAction(` — o caminho de sucesso), segundo numero 0 (o bloco do catch nao tem nenhum), e `275: const { entry } = action;`. O par e o CONTROLE: se os dois fossem zero, o padrao de busca estaria cego; se fossem iguais, o catch estaria tratando o estado. ALEM DO FALSIFICADOR, e o que muda o rotulo: fui ao material bruto e medi que o revisor do #170 EXECUTOU o caminho de dano — a Sonda A dele e um arquivo de teste temporario que produziu a assercao falha literal `expected { unitId:'u1', expectedVersion:5 } to deeply equal { …, expectedVersion:6 }`, e o achado N1 dele carrega \"Grau: verificado (executado)\". CONTROLE dessa leitura: o MESMO relatorio marca N1b e N4 como \"verificado por leitura\", entao o rotulo \"executado\" do N1 discrimina em vez de ser carimbo. Registro tambem o limite que o proprio revisor declarou contra si: a sonda roda sobre servico mockado e prova o CLIENTE, nao o sistema.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "SOBRESCREVE o suggested_gate `aceito_com_registro` do relatorio, e a sobrescrita vem do EXPOSURE corrigido e nao do mapa: corrigido `apenas_teorico` → `ja_exposto` (ver exposure_reason), `deployed = nao` → ramo unico → `ja_exposto` → bloqueia_primeiro_cliente. O mapa nao foi tocado; o que mudou foi a entrada dele. E a demonstracao pratica do F3 desta mesma rodada: a variavel que decide o portao e julgamento, e nenhum gate a confronta — trocando UM rotulo, o portao muda e o gates_summary publicado muda com ele.",
+      "suggested_gate_as_reported": "aceito_com_registro",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-21",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, NAO EXISTENTE, e o molde EXISTE. Procurado: `git log --all -S\"expectedVersion: 6\"` devolve ZERO commit em qualquer ref — nenhuma branch, com PR ou sem, carrega o teste de retry; a suite do frontend ja tem 29 arquivos de teste com mock de servico, entao nao ha infraestrutura a inventar; nenhum dos 7 PRs abertos toca EntryApprovalsPanel.tsx (o PR 172 toca useAccountingT.ts e outros dois arquivos, medido por `gh pr diff 172 --name-only`). Falta uma instancia: mockar 409 seguido de sucesso e afirmar que a segunda chamada carrega versao diferente da primeira — que e literalmente o falsificador do revisor do #170, escrito e depois apagado por ele porque estava proibido de corrigir.",
+      "why_rank_7": "Setimo. O conserto e uma linha (limpar ou reatribuir `action` no ramo CONFLICT depois do fetchAll) mais o teste que o revisor ja escreveu uma vez, entao o esforco e baixo; o risco removido tambem e — o servidor recusa e nao ha corrupcao. Vem aqui e nao no fim porque e o unico item de PRODUTO com esforco baixo, e porque foi o item cujo rotulo esta triagem corrigiu: deixa-lo no fim depois de sobrescrever o portao dele pareceria compensacao."
+    },
+    {
+      "rank": 8,
+      "fingerprint": "strict-de-dto-neutralizado-pelo-unico-chamador",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F7",
+      "damage": 2,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO POR OUTRA PERNA — a justificativa do relatorio cai",
+        "reason": "O `gate_reason` do relatorio deriva `ja_exposto` de \"a rota aceita chave desconhecida hoje\", e essa perna NAO foi medida por ninguem: e o `falsifier_dynamic`, que exige um chamador HTTP e nunca rodou. Aplicada a regua do AV-R6 a essa perna sozinha, o rotulo cairia para apenas_teorico. O rotulo sobrevive por OUTRA perna, essa sim medida por mim com controle: o cabecalho do DTO promete rejeicao de chave desconhecida na fronteira, um teste do #167 ratifica a promessa, e o unico chamador a neutraliza — prosa e teste no disco hoje afirmando propriedade que o sistema nao tem; mais a segunda superficie, DocumentAttachmentDto.ts com ZERO ocorrencias de `strict()` estando na lista dos que \"so declaram .strict()\", com controle 0/2. Registro a troca de fundamento em vez de deixar o portao certo apoiado no argumento errado — que e a classe que o F4 desta mesma rodada mede.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f, cadeia inteira. Saida: 11, depois 3, depois o literal de duas chaves nas linhas 347-350 (`PeriodComparisonSchema.safeParse({ asOfCurrent: req.query.asOfCurrent, asOfPrevious: req.query.asOfPrevious })`), depois 0 e 2. Os dois pares sao controles: 11/3 mostra que o literal e a excecao e nao o estilo do arquivo, e 0/2 (DocumentAttachmentDto x aging.dto) mostra que o zero nao e cegueira de padrao. Conferi tambem a linha 15 do periodComparison.dto.ts, que diz literalmente \"`.strict()` rejects unknown keys so a typo'd/extra query field surfaces as a 400\". O falsifier_dynamic — requisitar o relatorio com parametro extra e observar 200 — NAO foi executado por mim nem pelo emissor, e e disso que trata o exposure_reason.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o portao do relatorio e RECUSA a razao dele. `deployed = nao` → `ja_exposto` → bloqueia_primeiro_cliente. NAO promove: nada aqui e irreversivel nem perde dado.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-31",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, e o MOLDE EXISTE. Procurado nas tres superficies: nesta arvore, `accountingController.integration.test.ts` ja sobe o app contra o mount e exercita 4 rotas; em TODO ref (local e remoto), `git grep -l \"api/accounting\" -- \"*.integration.test.ts\"` devolve apenas esse mesmo arquivo em cada linha de historia — nenhuma branch sem PR acrescentou teste de rota de contabilidade; nenhum dos 7 PRs abertos toca `server/src/controllers/` nem `server/src/routes/`. Falta uma instancia: um teste que envie chave desconhecida ao relatorio de comparacao de periodos e exija 400.",
+      "why_rank_8": "Oitavo. Conserto pequeno (passar `req.query` ao schema movendo `unitId` para dentro dele, ou corrigir o cabecalho) mas o teste que o torna verificavel e o mesmo molde do item seguinte, e sozinho ele nao paga a montagem. Fechado junto com o F6 o custo marginal e quase zero — por isso os dois vizinhos."
+    },
+    {
+      "rank": 9,
+      "fingerprint": "handlers-de-contabilidade-fora-do-alcance-de-qualquer-teste-de-rota",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F6",
+      "damage": 4,
+      "exposure_as_reported": "ja_exposto",
+      "exposure": "ja_exposto",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO",
+        "reason": "ja_exposto: o caminho de dano foi medido — a mutacao identica mata 6 testes num handler e atravessa 398 no outro, e a razao alcancado/registrado (4 de 55) esta no disco e foi remedida por mim com controle. Nao e o dano em runtime que sustenta o rotulo (nada nesta rodada foi observado em runtime, NM7), e sim a ausencia de rede medida contra a suite que existe e roda hoje.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra 606a3c1f. Saida: 55 · 23 · 4 · 4. O ultimo 4 e o CONTROLE: o mesmo padrao aplicado a /api/users devolve rotas, entao o 4 do accounting nao e cegueira de padrao; e nenhum padrao comeca com barra isolada, entao a armadilha 2 (Git Bash reescrevendo padrao iniciado por `/` como caminho do Windows) nao se aplica. NAO REEXECUTEI o par discriminante de mutacao (dono trocado por literal em deleteAccount x em postEntry, com a suite de integracao INTEIRA nas duas pernas): sao duas execucoes completas a ~200 s cada mais restauracao, e o contrato da triagem pede o falsificador do achado. O par fica HERDADO do relatorio, declarado como herdado. O que EU acrescento e uma medida de corroboracao barata que o relatorio nao tem: rodei o F10 nesta mesma arvore e ele mostra que uma mutacao em `auth.ts` produz reprovacao seletiva no alvo do controller (8 failed / 5 passed), entao a suite REPROVA quando ha o que reprovar — o verde de 398 no deleteAccount nao pode ser lido como suite que nao roda.",
+      "gate": "bloqueia_primeiro_cliente",
+      "gate_derivation": "CONFIRMA o suggested_gate, e a nao-promocao e a decisao que merece o registro. `deployed = nao` → o ramo tem DUAS linhas candidatas: \"irreversivel ou perda de dado → bloqueia_deploy\" e \"ja_exposto → bloqueia_primeiro_cliente\". Apagar conta do plano contabil de outro dono E perda de dado — mas o ACHADO nao e o apagamento: o codigo em main tem o escopo. O achado e a AUSENCIA DA REDE que pegaria a remocao desse escopo, e ausencia de teste nao e ela mesma irreversivel nem perde dado. Identico ao item 4 da TRIAGEM-R1-R3 e ao rank 4 da TRIAGEM-AV-R7, os dois com o mesmo portao pela mesma razao. Manter coerencia com os dois precedentes importa mais do que a gravidade percebida; o dano 4 decide a POSICAO na fila, nao o portao. SE O DONO FOR DISCORDAR DE ALGUM PORTAO DESTA TRIAGEM, e deste — e o de maior dano dos dez.",
+      "suggested_gate_as_reported": "bloqueia_primeiro_cliente",
+      "owner": "Desenvolvedor Luminaris",
+      "due": "2026-08-31",
+      "due_is_proposal": true,
+      "accepted_reason": null,
+      "review_trigger": null,
+      "accepted_by": null,
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PROPOSTA, e o MOLDE EXISTE com mordida provada. Procurado nas tres superficies: nesta arvore o molde e `src/controllers/__tests__/accountingController.integration.test.ts` (13 casos, 4 rotas) e o F10 desta rodada prova que ele MORDE (8 failed sob mutacao); em TODO ref, `git grep -l \"api/accounting\" -- \"*.integration.test.ts\"` devolve exatamente esse arquivo e nada mais em cinco linhas de historia distintas, entao nenhuma branch sem PR ja escreveu o teste que falta; nenhum dos 7 PRs abertos toca controllers/ ou routes/. Nao e `nenhuma_conhecida`: a barreira existe como PADRAO e o que falta sao instancias — um arquivo por grupo de handlers de escrita, com caso de inquilino em cada.",
+      "why_rank_9": "Nono, e a tensao esta declarada em vez de resolvida em silencio. Maior dano da rodada (4) e maior risco absoluto, mas o unico cujo conserto sao varios arquivos novos de teste de integracao, contra edicoes de uma linha e checagens de gate acima dele. Pelo criterio risco-removido-por-esforco do AV-00 §3 ele desce; pelo criterio de risco absoluto ele seria o primeiro. Mesmo padrao do item 4 da TRIAGEM-R1-R3 e do rank 4 da TRIAGEM-AV-R7, que tambem foram os de maior dano em posicao baixa. Se o dono priorizar risco absoluto, este item sobe para o topo e nada mais nesta triagem muda."
+    },
+    {
+      "rank": 10,
+      "fingerprint": "campo-de-evidencia-de-gate-conferido-por-presenca-e-nao-por-conteudo",
+      "source_report": "docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json",
+      "source_finding_id": "F8",
+      "damage": 2,
+      "exposure_as_reported": "apenas_teorico",
+      "exposure": "apenas_teorico",
+      "exposure_audit": {
+        "verdict": "SUSTENTADO — auditado contra o disco, nao aceito do emissor",
+        "reason": "Este e o rotulo que eu mais tentei derrubar, porque F1, F3 e F8 sao a MESMA forma de achado (fuga de gate medida por mutacao) e dois deles saem `ja_exposto`. A diferenca declarada pelo emissor e a instancia viva, e eu fui medi-la em vez de acreditar. MEDIDO por mim na arvore materializada: das cinco linhas do AV-R2 etiquetadas `softdelete`, o B18 cobre tres (as `*Repository.ts`) e o registro real tem evidencia real; a fuga do PREFIXO — a mais grave, porque nao depende de ninguem escrever nada — exigiria uma linha nova para `DocumentRepository.ts` etiquetada `softdelete`, e ela NAO existe. O mecanismo de prefixo E exercido hoje, em `DocumentAttachmentDto.ts` (casa `Document` sem deletedAt e `DocumentAttachment` com), mas essa linha esta FORA do escopo do B18 por desenho declarado (so `*Repository.ts`), entao nem chega a ser avaliada. CONTROLE do meu proprio ceticismo: se a linha do DocumentRepository existisse, o rotulo viraria `ja_exposto` e o portao viraria bloqueio — e e exatamente isso que o review_trigger abaixo observa. Nenhum caminho de dano do F8 esta percorrido no disco; `apenas_teorico` se sustenta.",
+        "ruler": "TRIAGEM-AV-R6, items[].gate_derivation do unico aceite: `apenas_teorico` e quando \"nenhum caminho de dano foi MEDIDO\". Aplicada aqui aos dez, ANTES de aplicar o gateMap."
+      },
+      "verification": "confirmado",
+      "verification_note": "EXECUTADO POR MIM, verbatim a partir do JSON RELIDO, contra origin/main (30d28d86) materializado FORA do repositorio por `git archive origin/main | tar -x`, porque o B18 NAO existe na arvore desta rodada — a armadilha 15 e o NM8 do relatorio dizem isso e eu nao concluo nada sobre o B18 lendo o `scripts/bancada-gate.mjs` daqui. CONTROLE VERDE, arvore materializada intacta: exit 0 com a linha `Etiqueta softdelete sem lastro no schema, registrada ao lado (B18) (1): AV-R2.json:ReferentialMapping`. FUGA CENTRAL reproduzida: apagando o token `softdelete` da linha do centerpiece E a chave `label_defects_registered` na mesma passada, exit 0, com o model ReferentialMapping ainda sem deletedAt e a linha do B18 caindo para `(0): nenhuma`. CONTROLE VERMELHO pareado, para que exit 0 nao seja indistinguivel de gate morto: acrescentei `deletedAt DateTime?` ao model ReferentialMapping no schema materializado e o gate devolveu exit 1 com `[B18] ... registro obsoleto sobrevivendo ao proprio motivo`. SEGUNDO CONTROLE VERDE ao fim: restaurados AV-R2.json e schema.prisma por `git archive` do mesmo ref, exit 0 de novo. As sete fugas do relatorio ficam parcialmente herdadas — reexecutei a central e os dois controles, nao as cinco de campo por campo.",
+      "gate": "aceito_com_registro",
+      "gate_derivation": "CONFIRMA o suggested_gate. `deployed = nao` → ramo unico → `apenas_teorico` → aceitavel_com_registro COM GATILHO NOMEADO, que no vocabulario fechado do B14 e `aceito_com_registro`. NAO estou rebaixando por custo: o exposure foi auditado por mim contra o disco de origin/main (ver exposure_reason) e o portao segue dele. E o UNICO aceite dos dez, e o unico item onde o portao mais leve coincide com o achado mais caro de medir — o proprio emissor pediu desconfianca nessa coincidencia e eu a testei em vez de repeti-la.",
+      "suggested_gate_as_reported": "aceito_com_registro",
+      "owner": "Desenvolvedor Luminaris",
+      "due": null,
+      "due_is_proposal": false,
+      "accepted_reason": "O defeito do B18 e real e esta medido por mim com controle verde e controle vermelho, mas nenhum caminho de dano dele esta percorrido no disco: o registro que existe tem evidencia real, e a fuga que nao depende de ninguem escrever nada — a resolucao de model por prefixo concedendo lastro pelo irmao — exigiria uma linha de centerpiece que nao existe. `apenas_teorico` no ramo `nunca implantado` sai em aceite COM GATILHO. Aceitar aqui NAO e rebaixar por custo: o custo do conserto e baixo (duas mudancas de resolucao), e o que decide e o exposure auditado contra o disco. Acresce um limite de escopo que reforca o aceite em vez de o enfraquecer: o B18 nem esta nesta linha de historia, entao nada que esta triagem decida sobre ele tem efeito antes de a linha ser fundida com origin/main.",
+      "review_trigger": "DUAS condicoes, qualquer uma delas, as duas observaveis por comando e as duas apontando arquivo que existe no repositorio hoje. (1) Aparecer em docs/audit/AV-R2.json uma linha de centerpiece etiquetada `softdelete` cuja unidade termine em `Repository.ts` e cujo nome-base seja PREFIXO de mais de um model de server/prisma/schema.prisma com lastro divergente — hoje as tres linhas nessa forma sao CounterpartyRepository, DimensionRepository e ReferentialMappingRepository, e `DocumentRepository.ts` NAO esta entre elas; no instante em que estiver, a fuga do prefixo passa a ter instancia viva, o exposure sobe para ja_exposto e o mapa devolve bloqueia_primeiro_cliente sozinho. (2) O bloco B18 chegar a scripts/bancada-gate.mjs desta linha de historia — hoje `grep -c \"B18\" scripts/bancada-gate.mjs` devolve 0 aqui e 9 na arvore de origin/main —, momento em que o achado deixa de ser sobre codigo que esta noutro ramo e passa a ser sobre o gate que esta triagem roda em si mesma. Qualquer uma das duas mata o aceite sem precisar de nova decisao.",
+      "accepted_by": "claude-opus-5 (agente triador desta sessao) — ACEITE PROPOSTO, nao consentido. NENHUM ato humano foi registrado para este aceite, e escrever aqui o nome do dono seria fabricar consentimento, que e literalmente a primeira fuga que o F3 desta rodada mediu (accepted_by inventado passa verde no B14). O aceite vale como proposta ate o dono o ratificar; ate la, o que o sustenta e o gatilho observavel acima, nao a assinatura.",
+      "barrier_kind": "teste_de_fronteira",
+      "barrier_note": "PARCIALMENTE EXISTENTE, e nao nesta arvore. O B18 existe em origin/main e faz o que o F2 desta rodada precisava num eixo; o que falta e amarrar o registro pelo par (unidade, etiqueta) em vez de so pela unidade, e resolver o model por casamento exato antes de aceitar prefixo. Procurado em todo ref por `git log --all -S\"label_defects_registered\" -- scripts/`: o B18 aparece so na linha de origin/main; nenhuma branch sem PR o endurece. Nenhum dos 7 PRs abertos toca scripts/.",
+      "why_rank_10": "Decimo por ser o unico aceite: nao abre trabalho e por isso nao disputa posicao na fila com os nove que abrem. A posicao NAO reflete gravidade — reflete que a fila e de trabalho aberto.",
+      "accepted_by_is_proposal": true,
+      "human_consent_recorded": false
+    }
+  ],
+  "refuted": [],
+  "inconclusive": [],
+  "not_executed": [
+    {
+      "what": "As seis mutacoes do F1 sobre docs/audit/REVIEW-LEDGER.jsonl.",
+      "why": "O arquivo esta na lista dos que esta sessao esta proibida de editar, e o contrato da triagem pede o falsificador do achado e nao a repeticao da campanha que o produziu. O falsificador publicado do F1 nao muta nada — le o razao e confronta cada `commit` com `git merge-base` — e foi executado inteiro, com os cinco SIM como controle.",
+      "consequence": "As seis fugas ficam HERDADAS do relatorio, declaradas como herdadas em vez de reafirmadas como medida minha. A instancia viva, que e a perna que o revisor do #167 nao podia ver, foi medida por mim."
+    },
+    {
+      "what": "O par discriminante de mutacao do F6 (dono trocado por literal em deleteAccount e em postEntry, com a suite de integracao inteira nas duas pernas) e a perna dinamica do F4 (regra publica em `exact` x `prefix` contra a suite do controller).",
+      "why": "Custo: cada perna e uma execucao completa ou quase completa da suite de integracao, e o relatorio ja gastou oito delas. O contrato pede o falsificador do achado, e os dois falsificadores ESTATICOS foram executados inteiros com controle.",
+      "consequence": "Os dois pares ficam HERDADOS. A corroboracao que EU acrescento e indireta e esta declarada como indireta: o falsificador do F10, que eu rodei, aplica uma mutacao em `auth.ts` e produz `8 failed / 5 passed` no alvo do controller, o que prova que a suite REPROVA seletivamente nesta arvore — entao um verde de 398 nao pode ser lido como suite que nao roda."
+    },
+    {
+      "what": "As cinco fugas campo-a-campo do F8 (os cinco campos de evidencia trocados por \"x\", e `measured` := null / \"n/a\" / {} / false).",
+      "why": "Orcamento: cada uma exige mutar e restaurar a arvore materializada de origin/main. Reexecutei a FUGA CENTRAL (apagar o token da linha junto com a chave de registro) e os DOIS controles, verde e vermelho, que sao o que distingue exit 0 de gate morto.",
+      "consequence": "As cinco ficam herdadas. O veredito do item nao depende delas: a fuga central sozinha ja e a que o registro existe para impedir."
+    },
+    {
+      "what": "Reexecucao do falsificador do F10 mais de uma vez para medir a INTERMITENCIA.",
+      "why": "Cada passada custa ate 240 s de teto e a perna intermitente exige uma amostra, nao uma execucao. Rodei UMA vez e obtive wrapper 124.",
+      "consequence": "A perna deterministica (handle aberto so na condicao de reprovacao) esta confirmada por mim: 1 ocorrencia de \"did not exit\" na linha 2 contra 0 na linha 1. A perna intermitente (3 de 4) fica HERDADA — a minha unica passada e coerente com ela e nao a mede."
+    }
+  ],
+  "new_findings_raised": [
+    {
+      "_note": "AV-00 §5: \"problema maior vira achado novo\". Levantado durante ESTA triagem, pela conferencia mecanica de TODA citacao de linha do relatorio contra o arquivo citado — checagem que so existe porque o F2 da propria rodada mede essa classe em outro artefato. Nao e item desta triagem: e defeito do artefato AV-R8, nao achado sobre o codigo, e nao tem fingerprint em relatorio nenhum.",
+      "candidate": "Duas das vinte citacoes de linha do AV-R8 erram por um, e as duas estao no unico achado que ele nao executou",
+      "measured": "Script proprio sobre o JSON relido: para cada `evidence[]` com `line` nao nula, abrir o arquivo e imprimir a linha citada. VINTE citacoes tem linha. DEZOITO aterrissam exatamente no construto descrito — inclusive as tres do review-ledger-check (90, 104, 109), as duas do bancada-gate (316, 587), a 84 do auth.ts, as duas do accountingController do F6 (194 e 37, as duas `resolveAccountingScope`), as duas do F7 (347 e 313) e as duas do F10 (package.json:26 e auth.ts:41). DUAS erram, as duas em F9 e as duas por UM: `EntryApprovalsPanel.tsx:274` e citada para `const { entry } = action` e a linha 274 e `if (!action) return;` — o construto esta em 275; `:292` e citada para \"setAction(null) existe apenas no caminho de sucesso\" e a linha 292 e `await fetchAll();` — o `setAction(null)` esta em 291. As outras DUAS citacoes do mesmo achado (300 e 302) estao EXATAS, entao nao e deslocamento uniforme do arquivo. Os dezoito acertos sao o CONTROLE: sem eles, \"duas erradas\" seria indistinguivel de leitor quebrado.",
+      "why_it_matters": "Os dois erros caem no F9 e no F9 apenas — o unico achado da rodada com `verification_mode: leitura`, isto e o unico que ninguem executou. Nao muda o veredito: o mecanismo do F9 e inequivoco e o falsificador dele reproduz. O que a medicao mostra e mais util que o erro: a citacao de linha e o campo onde a diferenca entre LER e EXECUTAR aparece primeiro, e ela e barata de conferir por script. E a mesma classe que o F2 desta rodada mede no AV-R2 (108 de 110 linhas divergindo), aparecendo dentro do artefato que a mede.",
+      "cost_hint": "Duas edicoes de um digito no artefato emitido, ou um script de conferencia de citacao de linha no gate.",
+      "not_fixed_here_and_why": "NAO corrigido nesta passagem, no precedente que a TRIAGEM-AV-R6 estabeleceu e que a TRIAGEM-AV-R7 repetiu: editar o artefato de origem durante a triagem apaga a diferenca entre o que a rodada emitiu e o que a triagem verificou. A regra foi explicitada no encargo desta sessao e cumprida.",
+      "gate_and_decision": "NAO recebe portao desta triagem. `gates_summary` fica inalterado."
+    },
+    {
+      "_note": "AV-00 §5. Feedback de instrumento sobre o proprio contrato, nao sobre o codigo.",
+      "candidate": "O criterio de `exposure` nao existe por VALOR em lugar nenhum, e a unica definicao operacional que a bancada tem cobre um valor so",
+      "measured": "A lista fechada tem seis valores (scripts/bancada-gate.mjs:209-212). Procurado por definicao operacional de cada um: `grep -rn \"apenas_teorico\\|latente_por_dependencia\\|com_volume\\|apos_deploy\\|com_dado_de_terceiro\" docs/audit/*.json docs/audit/bancada.html` devolve os valores sendo USADOS e o gateMap mapeando-os para portoes, mas a unica frase que diz quando um valor SE APLICA e a da TRIAGEM-AV-R6 sobre `apenas_teorico` (\"nenhum caminho de dano foi MEDIDO\") — escrita dentro de um `gate_derivation` de um item, nao num contrato. Consequencia medida nesta triagem: o relatorio AV-R8 reaplicou essa mesma frase com uma clausula acrescentada (\"medido POR MIM\") e produziu um portao diferente, sem que nada notasse. Segunda superficie, menor e mecanica: o gateMap escreve `aceitavel_com_registro` e a lista fechada do B14 escreve `aceito_com_registro` — dois nomes para o mesmo portao em dois artefatos que uma derivacao automatica teria de reconciliar.",
+      "why_it_matters": "O F3 da rodada mede que nenhum gate deriva o portao do `exposure`. Isto e o degrau anterior: mesmo que alguem escreva a checagem, ela so consegue conferir que o portao SEGUE do rotulo — nao que o rotulo esta certo, porque nao ha texto normativo contra o qual conferi-lo. Uma derivacao mecanica sobre um rotulo sem definicao automatiza a propagacao do julgamento, nao a sua verificacao. A barreira escrivivel e barata: seis frases no `t-contrato`, uma por valor, mais a reconciliacao dos dois nomes do portao de aceite.",
+      "cost_hint": "Seis linhas no bloco `t-contrato` da bancada.html e um `aceito_com_registro` no gateMap.",
+      "gate_and_decision": "NAO recebe portao. E feedback de instrumento, e o achado sobre o gate ja esta triado como rank 1 (F3)."
+    },
+    {
+      "_note": "AV-00 §5. Defeito do artefato AV-R8, achado pela releitura do JSON.",
+      "candidate": "Dois numeros do envelope do AV-R8 ficaram na versao de NOVE achados, e um deles esta na frase que sustenta o teto de confianca",
+      "measured": "Recontagem mecanica sobre o JSON relido. `findings.length` = 10; `verification_mode` = {execucao: 9, leitura: 1}; `exposure` = {ja_exposto: 8, apenas_teorico: 2}. Contra isso: (a) `run.confidence_ceiling_note` diz \"Oito dos nove achados tem execucao\" e \"O nono (F9)\" — sao NOVE de DEZ, e o F9 e o DECIMO; (b) o `adversarial_checks` do F3 pergunta \"com 7 dos 9 achados em ja_exposto?\" e responde \"A distribuicao 7/2 e resultado do criterio\" — a distribuicao e 8/2 em 10. CONTROLE, e ele e o que torna isto medida em vez de impressao: tres contadores do MESMO artefato estao CERTOS — `self_check.classes_emitidas` = 10, `self_check.falsifiers_total` = 10 e a linha \"classes emitidas\" de signals.S1 = 10. Logo nao e o artefato inteiro estar defasado nem o meu parser estar quebrado: sao duas passagens de PROSA que sobreviveram a um decimo achado acrescentado depois.",
+      "why_it_matters": "A frase (a) e a que carrega o argumento do teto do §2.2 — quantos achados sustentam confianca alta por execucao. A substancia nao muda (nove de dez tem execucao, um tem leitura, e o teto continua satisfeito), e por isso isto nao vira item; mas e exatamente a classe que o F2 da propria rodada emite contra outros artefatos — numero publicado num campo que o leitor le como medido, divergindo da fonte que ele afirma medir. Que a classe apareca dentro do artefato que a mede e a evidencia mais forte de que ela e classe e nao descuido.",
+      "cost_hint": "Duas edicoes de prosa no artefato emitido; ou uma checagem que recompute os contadores do envelope a partir de `findings[]`.",
+      "not_fixed_here_and_why": "Mesmo precedente do item acima: a triagem nao edita o artefato de origem.",
+      "gate_and_decision": "NAO recebe portao. `gates_summary` fica inalterado."
+    },
+    {
+      "_note": "AV-00 §5. Sobre o metodo desta bancada, levantado pela posicao unica desta sessao.",
+      "candidate": "A separacao emissor/triador foi exercida pela primeira vez aqui, e ela mudou UM portao em dez — o que e pouco e precisa ser dito assim",
+      "measured": "Das cinco triagens da bancada, quatro foram emitidas e triadas pela mesma sessao (TRIAGEM-R1-R3, AV-L1 parcialmente, TRIAGEM-AV-R6 e TRIAGEM-AV-R7, esta ultima declarando cinco decisoes em serie no proprio `deviations`). Esta e a primeira com corte real. Resultado medido: dos dez `suggested_gate`, NOVE confirmados e UM sobrescrito, e a sobrescrita nao veio da derivacao (o emissor derivou certo do rotulo em dez de dez) e sim da AUDITORIA DO ROTULO, que e trabalho que nenhuma triagem anterior fez. Comparacao: a TRIAGEM-AV-R7, sem corte, sobrescreveu TRES de cinco — mas por erro de derivacao do proprio autor (aceite sugerido por custo), nao por auditoria de rotulo.",
+      "why_it_matters": "A leitura facil e \"a separacao funcionou, achou um erro\". A leitura honesta e que ela achou UM em dez, e que o unico degrau onde o corte teve efeito foi o degrau que NENHUM gate le. Se o valor da separacao e uma correcao de rotulo por rodada, ela e barata e vale; mas ela NAO substitui revisao independente desta triagem, que continua nao existindo — e a distincao importa porque a proxima sessao pode citar \"triada por sessao separada\" como se fosse revisao. Nao e: eu executei os falsificadores de outro agente e derivei portoes; ninguem reexecutou os meus.",
+      "cost_hint": "Nenhum. E declaracao de limite, e existe para que \"triado por sessao separada\" nao seja lido como \"revisado\".",
+      "gate_and_decision": "NAO recebe portao. E feedback de metodo."
+    }
+  ],
+  "gates_summary": {
+    "bloqueia_deploy": 0,
+    "bloqueia_primeiro_cliente": 9,
+    "aceito_com_registro": 1,
+    "descartado": 0,
+    "note": "NOVE de dez no mesmo portao e UM aceite. O numero merece a desconfianca que a distribuicao sugere, e a analise dela esta em exposure_audit_summary.distribution_analysis em vez de numa frase tranquilizadora: sob `deployed = nao`, dois dos seis valores de `exposure` sao estruturalmente inalcancaveis e tres dos quatro restantes caem no mesmo portao, entao o mapa quase nao discrimina e um placar uniforme carrega pouca informacao. Zero em `bloqueia_deploy` e resultado derivado, nao omissao: a primeira regra do ramo pede irreversibilidade ou perda de dado, e o item onde ela mais chega perto — o F6, dano 4, apagar conta de outro dono — e sobre a AUSENCIA da rede e nao sobre o apagamento, mesma razao dos dois precedentes (item 4 da TRIAGEM-R1-R3 e rank 4 da TRIAGEM-AV-R7). Zero em `descartado` tambem e resultado: os dez falsificadores rodaram e os dez confirmaram — quarta vez consecutiva nesta bancada, e nomeado em self_check.own_bias_named. O UNICO aceite (F8) esta marcado como PROPOSTO e nao consentido, com `human_consent_recorded: false`, porque fabricar `accepted_by` e a primeira fuga que o F3 desta rodada mediu."
+  },
+  "ordering": {
+    "criterion": "risco removido por esforco, conforme AV-00 §3",
+    "sequence": [
+      "portao-da-triagem-nao-e-derivado-do-exposure-por-nenhum-gate",
+      "razao-de-revisao-aceita-declaracao-sem-confronto-com-o-repositorio",
+      "jest-so-pendura-quando-o-teste-reprova-e-o-vermelho-vira-inconclusivo",
+      "mordida-provada-em-superficie-que-o-app-nao-alcanca",
+      "numero-publicado-como-medido-sem-conferencia-contra-a-fonte",
+      "placar-de-mutacao-publicado-omite-uma-unidade-inteira",
+      "retry-apos-conflito-de-versao-reenvia-a-versao-velha",
+      "strict-de-dto-neutralizado-pelo-unico-chamador",
+      "handlers-de-contabilidade-fora-do-alcance-de-qualquer-teste-de-rota",
+      "campo-de-evidencia-de-gate-conferido-por-presenca-e-nao-por-conteudo"
+    ],
+    "note": "Os tres primeiros sao METAINSTRUMENTO e nao produto (portao sem regra, razao sem confronto, harness que pendura so no vermelho), e isso e escolha declarada e nao acaso: os tres custam pouco e os tres sao PRE-REQUISITOS — enquanto o portao nao for regra, nenhuma decisao desta bancada e reexecutavel; enquanto o harness pendurar so no vermelho, toda campanha de mutacao futura mede o inverso. O de MAIOR dano (rank 9, dano 4) aparece em nono, e e o criterio funcionando e nao falhando — acima dele ha checagens de gate e edicoes de dado, contra varios arquivos novos de teste de integracao. Mesmo padrao do item 4 da TRIAGEM-R1-R3 e do rank 4 da TRIAGEM-AV-R7, os dois de maior dano em posicao baixa. A TENSAO ESTA DECLARADA no why_rank_9 em vez de resolvida em silencio: pelo criterio de risco absoluto o F6 seria o primeiro, e se o dono priorizar assim ele sobe e nada mais aqui muda. O aceite fecha a lista por nao abrir trabalho, nao por ser o menos grave."
+  },
+  "deviations": [
+    {
+      "rule": "AV-00 §9.4 — revisao vem de agente separado; PASS emitido pela mesma sequencia que implementou e rejeitado",
+      "what_happened": "Esta triagem NAO foi revisada por agente separado. O que ela tem, e que as quatro anteriores nao tinham, e separacao entre EMISSOR e TRIADOR: a rodada AV-R8 foi medida e escrita por outra sessao, e esta sessao so leu, auditou os rotulos, executou os falsificadores e derivou os portoes. Isso fecha o agravante que a TRIAGEM-AV-R7 declarou (cinco decisoes em serie) e NAO fecha o §9.4, que pede revisao dos meus proprios resultados.",
+      "mitigation": "Prova objetiva no lugar de revisao, que nao substitui revisao. (1) Os dez falsificadores foram extraidos do JSON RELIDO por script e rodados VERBATIM, e a checagem pegou dois defeitos que a leitura do .md nao pegaria (citacoes de linha erradas por um; contadores de prosa da versao de nove achados). (2) A derivacao de portao foi EXECUTADA — gateMap extraido da bancada.html e rodado com `new Function` nos quatro ramos, com a funcao vizinha `ceiling()` como controle da extracao. (3) O processo produziu resultado CONTRA o relatorio uma vez (o exposure do F9) e contra a JUSTIFICATIVA dele outra (o fundamento do F7), e contra MIM uma vez: eu tentei derrubar o `apenas_teorico` do F8 indo medir origin/main e a medicao me deu razao ao emissor, nao a mim. (4) `barriers_searched` foi feito em TRES superficies, incluindo todo ref sem PR, que e a perna que a revisao do #169 mediu como ausente na AV-R7.",
+      "cost_if_it_had_gone_wrong": "Um triador sem revisor produz um artefato coerente consigo mesmo e possivelmente errado — inclusive na direcao nova que esta sessao abriu: um triador que audita rotulos tem incentivo para achar rotulos errados, e a unica correcao que eu emiti ABRE trabalho. Se o F9 nao devesse ter subido, o custo e um item de bloqueio a mais numa fila de nove, o que e recuperavel; o custo maior seria o precedente de um triador reescrever rotulo alheio sem revisor."
+    },
+    {
+      "rule": "AV-00 §0 / bloco 9 — proibido corrigir achado nao triado",
+      "what_happened": "CUMPRIDO. Nenhuma linha de codigo foi tocada de forma persistente e nenhum artefato de origem foi editado. A tentacao nomeada no encargo era o item de dano 4 (F6), que fecha com arquivos de teste no molde que ja esta em main; nao foi escrito. As unicas escritas em arquivo rastreado desta sessao foram as mutacoes dos falsificadores publicados (F10 em server/src/middleware/auth.ts, com `cp` para .bak, `git diff --numstat` conferido em `2 1`, restauracao por `cp` de volta e numstat vazio depois) e as do F8, que ocorreram FORA do repositorio, numa arvore materializada por `git archive`. `git status --porcelain` mostra apenas este arquivo, untracked, e zero `.bak`.",
+      "mitigation": "Nao aplicavel: nenhum desvio.",
+      "cost_if_it_had_gone_wrong": "Consertar o F9 antes de triar teria produzido conserto para o portao errado: o relatorio o emitiu com `suggested_gate: aceito_com_registro` e a auditoria de rotulo devolveu bloqueia_primeiro_cliente. E o caso concreto, nesta rodada, de a ordem importar — e ele e o inverso do que a TRIAGEM-AV-R7 registrou, onde a ordem importou por derivacao errada em vez de rotulo errado."
+    },
+    {
+      "rule": "Contrato triagem/1.0 — `items[].accepted_by` no aceite",
+      "what_happened": "O campo esta preenchido com o nome do AGENTE e com a declaracao explicita de que nao ha ato humano, mais os campos aditivos `accepted_by_is_proposal: true` e `human_consent_recorded: false`. As triagens anteriores escreveram \"Desenvolvedor Luminaris\" em aceites que nenhum humano ratificou.",
+      "mitigation": "Isto e mais apertado que o precedente, nao mais frouxo — o B14 exige apenas que o campo nao seja vazio, e o F3 desta rodada mediu que um `accepted_by` INVENTADO passa verde. Repetir a forma do precedente seria instanciar o defeito dentro da triagem que o tria.",
+      "cost_if_it_had_gone_wrong": "Se o dono ja tiver ratificado este aceite por fora e eu nao souber, o campo subdeclara e ele corrige com uma edicao. O erro na outra direcao — declarar consentimento que nao houve — nao e corrigivel por leitura, porque o artefato passa a ser a evidencia."
+    }
+  ],
+  "gate_bite_matrix": {
+    "_note": "O gate passar nao prova que ele LEU o arquivo novo. Cinco execucoes: quatro mutacoes de UM campo neste proprio JSON, cada uma reprovando com um codigo DIFERENTE, mais um controle verde. Protocolo em todas: `cp TRIAGEM-AV-R8.json .bak` → mutar por JSON → rodar `node scripts/bancada-gate.mjs` → restaurar de .bak → conferir sha256 identico ao original → `rm .bak`. O arquivo e untracked, entao `git diff --numstat` nao o enxerga e a conferencia de restauracao e por sha256, nao por numstat — declarado porque e a diferenca em relacao ao protocolo usado nos arquivos rastreados.",
+    "harness_sai_diferente_de_zero_se_a_mutacao_nao_aplicar": true,
+    "harness_note": "O harness compara o sha256 DEPOIS de mutar contra o original e aborta com \"mutacao vacuosa, RESULTADO INVALIDO\" se forem iguais — sem isso, um exit 1 seria indistinguivel de mutacao que nao aplicou, e um exit 0 seria indistinguivel de gate morto. Nenhuma das seis passadas caiu nesse ramo.",
+    "controle_verde_antes": "exit 0",
+    "controle_verde_depois": "exit 0",
+    "sha256_do_artefato_antes_e_depois": "IDENTICO nas duas pontas de CADA uma das seis passadas, conferido por sha256 e nao por `git diff --numstat` (o arquivo e untracked e o numstat nao o enxerga — e a mesma armadilha que o self_check do relatorio declara). NAO gravo aqui o valor literal do hash, e a razao e propria deste campo: um hash do arquivo escrito DENTRO do arquivo so pode ser o hash de uma versao anterior, e publica-lo como se fosse o do artefato entregue seria a classe que o F2 e o F5 desta rodada medem. A campanha foi rodada DUAS vezes — uma contra a versao sem esta matriz e outra contra o artefato final, com os mesmos seis vereditos —, e quem quiser reconferir roda o comando abaixo.",
+    "reproducao": "cd <raiz> ; A=docs/audit/TRIAGEM-AV-R8.json ; S0=$(sha256sum $A) ; cp $A $A.bak ; node -e \"const fs=require('fs'),p='$A';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.items[0].fingerprint+='-x';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n')\" ; node scripts/bancada-gate.mjs ; echo \"EXIT=$?\" ; cp $A.bak $A ; sha256sum $A ; echo \"$S0\" ; rm $A.bak    (as etapas sao separadas por `;` e nunca por `&&`: `grep`/`node` que reprova sai !=0 e quebraria a cadeia justamente na passada que interessa — armadilha 12)",
+    "bak_restantes": 0,
+    "rows": [
+      {
+        "id": "M1",
+        "campo_mutado": "items[0].fingerprint  (sufixo \"-x\")",
+        "exit": 1,
+        "codigo": "B12",
+        "mensagem": "[B12] TRIAGEM-AV-R8.json:portao-da-triagem-nao-e-derivado-do-exposure-por-nenhum-gate-x: fingerprint não existe em docs/audit/AV-R8-REVISAO-INDEPENDENTE-DAS-SEIS.json — cópia alterada ou origem errada",
+        "prova": "o gate le o fingerprint DESTE arquivo e o confronta com o relatorio de origem — nao aceita a copia por semelhanca"
+      },
+      {
+        "id": "M2",
+        "campo_mutado": "items[4].verification := \"banana\"",
+        "exit": 1,
+        "codigo": "B13 (+B15 como efeito colateral)",
+        "mensagem": "[B13] ...: verification \"banana\" fora da lista (confirmado | refutado | inconclusivo | nao_executavel | nao_executado) · [B15] self_check.falsifiers_executed 10 contra 9 item(ns) com verification executada",
+        "prova": "o gate le o campo `verification` item a item; e o B15 recontou os executados sozinho, o que mostra que o placar e derivado dos itens e nao lido do self_check"
+      },
+      {
+        "id": "M3",
+        "campo_mutado": "items[8].due := null  (item que ABRE trabalho — F6, o de dano 4)",
+        "exit": 1,
+        "codigo": "B14",
+        "mensagem": "[B14] ...:handlers-de-contabilidade-fora-do-alcance-de-qualquer-teste-de-rota: gate \"bloqueia_primeiro_cliente\" abre trabalho e o item não tem due",
+        "prova": "o gate distingue portao que abre trabalho de portao que fecha, e cobra dono e data so no primeiro"
+      },
+      {
+        "id": "M4",
+        "campo_mutado": "self_check.falsifiers_executed := 7",
+        "exit": 1,
+        "codigo": "B15",
+        "mensagem": "[B15] TRIAGEM-AV-R8.json: self_check.falsifiers_executed 7 contra 10 item(ns) com verification executada",
+        "prova": "o placar e CONFERIDO contra os itens, nao declarado — e o numero que o gate imprime e o que ele mediu neste arquivo"
+      },
+      {
+        "id": "M5",
+        "campo_mutado": "self_check.own_bias_named := \"\"",
+        "exit": 1,
+        "codigo": "B16",
+        "mensagem": "[B16] TRIAGEM-AV-R8.json: self_check.own_bias_named ausente ou vazio (contrato triagem/1.0)",
+        "prova": "os tres campos promovidos do precedente AV-L1 sao cobrados neste arquivo. LIMITE, declarado pelo proprio gate: ele exige que o campo EXISTA, nunca que o vies nomeado seja o vies real"
+      },
+      {
+        "id": "M6",
+        "campo_mutado": "items[9].review_trigger := gatilho apontando docs/audit/ZZ-NAO-EXISTE.json",
+        "exit": 1,
+        "codigo": "B14",
+        "mensagem": "[B14] ...: review_trigger não nomeia nenhum caminho existente no repositório — gatilho não observável (tentados: docs/audit/ZZ-NAO-EXISTE.json)",
+        "prova": "a checagem de gatilho OBSERVAVEL do unico aceite desta triagem le o disco. E a checagem mais fraca do B14 e a que mais importa aqui, porque o aceite do F8 se apoia inteiramente no gatilho"
+      }
+    ],
+    "o_que_a_matriz_NAO_prova": "Que a triagem esta certa. Seis mutacoes de um campo reprovando com quatro codigos distintos provam que o gate LE este arquivo — nada mais. O proprio cabecalho do B11..B16 declara o limite: elas leem ESTRUTURA, e nenhuma mede se o falsificador rodou, se o portao foi bem derivado ou se o vies nomeado e o vies real. O F3 desta rodada mede a fuga que sobra: trocar `exposure` sem tocar `gate` passa VERDE — e esta triagem trocou um `exposure` (o do F9) e mudou o `gate` junto por disciplina, nao por regra."
+  },
+  "self_check": {
+    "falsifiers_executed": 10,
+    "falsifiers_total": 10,
+    "items_without_owner": 0,
+    "minimum_required": "AV-00 §2 exige os tres maiores damage e todos os damage 5. Os damages sao 4/3/3/3/2/2/2/2/2/2 e nao ha nenhum damage 5; o minimo seriam o de dano 4 e os tres de dano 3. Os DEZ foram executados, excedendo o minimo.",
+    "controls_run": "Os dez falsificadores foram extraidos do JSON e rodados verbatim, e OITO deles tem como resultado esperado um zero ou um ramo negativo, que e o resultado mais facil de obter por acidente. Controles executados: F1 (os cinco PRs que resolvem SIM, no mesmo comando); F2 (as 2 linhas que batem em wc -l dentro das 110); F3 (`grep -c barrier_kind` = 3 e `grep -c verification` = 21, rodados por mim SEPARADAMENTE porque o falsifier_static_expected os declara e o comando publicado nao os contem); F4 (CashFlowStatementQuerySchema 1 contra ReceiveStockSchema 0 e ZZnaoExisteSchema 0); F5 (as tres unidades presentes contra a ausente, e o grep no corpo de b1464747 = 1); F6 (/api/users devolvendo 4); F7 (11 contra 3, e aging.dto 2 contra DocumentAttachmentDto 0); F8 (controle VERDE antes, controle VERMELHO com `deletedAt` real no model = exit 1, controle VERDE depois); F9 (o par 1 no bloco inteiro contra 0 no catch); F10 (a LINHA 1, arvore limpa, wrapper 0 e zero \"did not exit\", contra a LINHA 2 com a mutacao). ALEM DOS FALSIFICADORES, tres controles proprios desta triagem: (a) a extracao do gateMap validada pela extracao da funcao vizinha `ceiling()`; (b) a conferencia de citacao de linha validada por 18 acertos em 20; (c) a recontagem do envelope do AV-R8 validada por tres contadores que BATEM contra dois que nao batem. Sem esses controles, oito dos dez \"confirmado\" seriam indistinguiveis de comando quebrado.",
+    "verification_note": "Os dez falsificadores rodaram contra 606a3c1f, que difere do `run.repo_commit` do relatorio (ca99c9ae) apenas pelos dois artefatos da propria rodada — medido por `git diff --name-only`, com os caminhos de evidence conferidos fora do diff. UMA EXCECAO: o do F8 rodou contra origin/main (30d28d86) materializado FORA do repositorio por `git archive`, porque o bloco B18 nao existe nesta linha de historia; declarado no item, no source_run e no NM8 do relatorio. Nenhum arquivo rastreado deste worktree foi alterado de forma persistente: a mutacao do F10 em server/src/middleware/auth.ts foi conferida em `2 1` e restaurada de .bak com `git diff --numstat` vazio, e `git status --porcelain` ao fim mostra apenas este arquivo, untracked, sem nenhum .bak.",
+    "barriers_searched": "Todo `barrier_kind` foi emitido DEPOIS de procurar, e a procura desta vez tem TRES superficies em vez de duas — porque o N3 da REVIEW-PR169 mediu que o `barriers_searched` da TRIAGEM-AV-R7 olhou apenas `origin/main` e os PRs abertos, e por isso declarou ausencia de barreiras que ja existiam em quatro branches SEM PR, forkadas da mesma base 9 a 23 horas antes. Onde se procurou: (a) ARVORE DESTA RODADA — `grep -c gateMap scripts/bancada-gate.mjs` = 0, `grep -n exposure` = 2 (comentario + B7), `grep -c B18` = 0, `server/package.json:26` ja carrega `--forceExit`; (b) TODO REF DO REPOSITORIO, local e remoto, incluindo branch sem PR: varredura de `git for-each-ref refs/heads refs/remotes` (mais de 100 refs) com `git diff --name-only <merge-base com origin/main>..<ref>` filtrado por scripts/bancada-gate.mjs, scripts/review-ledger-check.mjs e arquivos de teste de rota — SO DOIS refs aparecem, a propria linha desta rodada e `claude/varre-t-resto-do-app`, que toca apenas o REVIEW-LEDGER.jsonl; mais varredura por CONTEUDO com `git log --all -S` para `gateMap` (0 commits), `merge-base` e `cat-file` em review-ledger-check.mjs (0 commits), `expectedVersion: 6` (0 commits); mais `git grep -l \"api/accounting\" -- \"*.integration.test.ts\"` sobre todos os refs, que devolve exatamente o mesmo unico arquivo em cinco linhas de historia; (c) OS 7 PRs ABERTOS (172, 135, 129, 117, 97, 87, 54), listados por `gh pr list` e cruzados contra os caminhos de barreira — nenhum toca scripts/, controllers/, routes/ nem EntryApprovalsPanel.tsx (o 172 toca useAccountingT.ts, RelationSelector, useStableT e o REVIEW-LEDGER.jsonl, medido por `gh pr diff 172 --name-only`). RESULTADO: NENHUM item recebeu `nenhuma_conhecida`. TRES tem barreira que EXISTE PARCIALMENTE e precisa ser estendida ou instanciada (F2 e o B18 de origin/main; F6 e F7 e o molde de teste de rota com mordida provada; F10 e o `--forceExit` que o package.json ja usa e que nada cobra de quem mede a mao); os demais sao checagens escriviveis que nao existem em ref nenhum. A busca alcanca o repositorio local com todos os refs buscados e os PRs abertos do provedor; revisao que viva so na interface do provedor sem virar PR, e branch que exista so no disco de outra maquina, continuam fora do alcance — declarado.",
+    "own_bias_named": "Cinco, em ordem de quanto me incomodam. (1) EU FUI CONTRATADO PARA SER O CORTE, e um corte rende quando corta: o meu incentivo nao e concordar com o emissor, e sim achar que ele errou. Corrigi UM rotulo em dez, e a correcao ABRE trabalho (aceite → bloqueio), que e a direcao que faz um triador parecer rigoroso. O contrapeso e que eu tentei a correcao no sentido oposto tambem — fui medir na arvore de origin/main se o `apenas_teorico` do F8 tinha instancia viva, com a intencao de o promover, e a medicao me deu razao ao emissor. Registro isso porque e o unico lugar da sessao onde o resultado foi contra mim. (2) DEZ DE DEZ CONFIRMADOS, ZERO REFUTADOS — quarta vez consecutiva nesta bancada. Aqui o agravante e menor que nas anteriores, porque quem escreveu os falsificadores nao fui eu; mas o meu papel foi rodar comandos que outro agente escolheu, e um comando escolhido pelo autor tende a ser o que ele ja sabe que confirma. O contrapeso e fraco e eu digo que e fraco: rodei os controles e reconferi por caminho proprio o F1, o F3, o F8 e o F9. (3) EU AUDITEI O ROTULO E DEIXEI O RESTO PASSAR. O encargo mandou auditar `exposure`, e eu auditei `exposure` — nao auditei `damage`, que decide a POSICAO na fila e que eu copiei do relatorio nos dez casos sem uma linha de conferencia. Se o dano do F6 estiver superestimado, a ordem que eu publico esta errada e nada nesta triagem notaria. (4) A ORDENACAO ME FAVORECE, e da mesma forma que favoreceu a TRIAGEM-AV-R7: os tres primeiros lugares sao itens de INSTRUMENTO com conserto barato, e o de maior dano — que exige arquivos de teste de verdade — fica em nono. O argumento de pre-requisito e real e esta escrito; ele tambem e conveniente para quem preferir fechar fila com checagens de gate. (5) EU SOU A PRIMEIRA TRIAGEM COM CORTE E TENHO INTERESSE EM QUE O CORTE PARECA VALER. Um resultado de 9 confirmacoes e 1 correcao e um resultado modesto, e a leitura generosa dele — \"a separacao funcionou\" — e a que me credita. A leitura medida esta em new_findings_raised[3]: o corte teve efeito num degrau so, e esta triagem continua sem revisor proprio; ninguem reexecutou nada do que eu fiz aqui."
+  }
+}
