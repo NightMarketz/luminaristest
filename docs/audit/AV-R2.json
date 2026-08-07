@@ -39,6 +39,18 @@
    "runtime": false
   }
  },
+ "label_defects_registered": [
+   {
+     "unit": "server/src/features/accounting/repositories/ReferentialMappingRepository.ts",
+     "label_as_measured": "tx+inquilino+softdelete",
+     "defect": "A etiqueta `softdelete` nao tem lastro: o model ReferentialMapping do server/prisma/schema.prisma nao tem campo deletedAt, e a unica ocorrencia da palavra no repositorio e o comentario que a NEGA (\"No soft-delete (D5)\", coerente com o ADR-INCR9, que decidiu hard-delete + trilha no AuditEvent).",
+     "measured": "Reexecutado em 18b14b12: o awk sobre o bloco do model com grep -c deletedAt devolve 0. DOIS controles no mesmo comando, porque zero e o resultado mais facil de obter por acidente: o mesmo awk+grep no model Counterparty devolve 2 (o comando enxerga conteudo) e o recorte do awk sobre o bloco do ReferentialMapping devolve 19 linhas (o zero nao e awk vazio). As outras duas linhas de repository desta peca central resolvem: Counterparty tem deletedAt, e Dimension resolve por prefixo para DimensionDefinition e DimensionValue, que tem.",
+     "source_finding": "AV-R7-FORCA-DA-SUITE-SUBFILA.json F3 / TRIAGEM-AV-R7.json rank 2",
+     "row_not_rewritten_because": "DECISAO DO DONO em 2026-08-07, e ela repete a dos PRs #168/#169 para esta mesma informacao: registrar a fraqueza ao lado em vez de reescrever a linha. `centerpiece.rows` e o que foi MEDIDO no commit 643d2eb por um classificador que casa por forma de simbolo e nao le o schema; reescrever a linha apagaria o rastro de que o classificador erra, que e uma propriedade do INSTRUMENTO e vale mais registrada do que corrigida. A alternativa (corrigir a linha) foi apresentada ao dono e recusada.",
+     "consequence_for_the_criterion": "O `ratified_subqueue_criterion` da TRIAGEM-R1-R3 selecionou 4 unidades por \"tres invariantes simultaneas\", e esta carrega DUAS. A decisao de fila propria NAO cai: ela se apoia em `inquilino` e `tx`, que continuam valendo nas quatro e sao as que M5 e M3 do AV-R3 deixaram sobreviver sem execucao. O que cai e a limpeza do numero, ja registrada em r2_decision.ratified_subqueue_criterion_weakened_in_one_of_four.",
+     "barrier": "B18 do scripts/bancada-gate.mjs, que le esta lista e reprova (a) etiqueta `softdelete` sem lastro e sem registro, (b) registro sem os campos de evidencia e (c) registro OBSOLETO — se o deletedAt aparecer no model, este registro passa a ser falso e o gate reprova ate ele ser removido."
+   }
+ ],
  "centerpiece": {
   "type": "missing_tests",
   "title": "Obrigacoes de teste nao atendidas",
