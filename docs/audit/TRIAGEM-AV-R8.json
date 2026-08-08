@@ -303,7 +303,18 @@
       "accepted_by": null,
       "barrier_kind": "teste_de_fronteira",
       "barrier_note": "PROPOSTA, e o MOLDE EXISTE com mordida provada. Procurado nas tres superficies: nesta arvore o molde e `src/controllers/__tests__/accountingController.integration.test.ts` (13 casos, 4 rotas) e o F10 desta rodada prova que ele MORDE (8 failed sob mutacao); em TODO ref, `git grep -l \"api/accounting\" -- \"*.integration.test.ts\"` devolve exatamente esse arquivo e nada mais em cinco linhas de historia distintas, entao nenhuma branch sem PR ja escreveu o teste que falta; nenhum dos 7 PRs abertos toca controllers/ ou routes/. Nao e `nenhuma_conhecida`: a barreira existe como PADRAO e o que falta sao instancias — um arquivo por grupo de handlers de escrita, com caso de inquilino em cada.",
-      "why_rank_9": "Nono, e a tensao esta declarada em vez de resolvida em silencio. Maior dano da rodada (4) e maior risco absoluto, mas o unico cujo conserto sao varios arquivos novos de teste de integracao, contra edicoes de uma linha e checagens de gate acima dele. Pelo criterio risco-removido-por-esforco do AV-00 §3 ele desce; pelo criterio de risco absoluto ele seria o primeiro. Mesmo padrao do item 4 da TRIAGEM-R1-R3 e do rank 4 da TRIAGEM-AV-R7, que tambem foram os de maior dano em posicao baixa. Se o dono priorizar risco absoluto, este item sobe para o topo e nada mais nesta triagem muda."
+      "why_rank_9": "Nono, e a tensao esta declarada em vez de resolvida em silencio. Maior dano da rodada (4) e maior risco absoluto, mas o unico cujo conserto sao varios arquivos novos de teste de integracao, contra edicoes de uma linha e checagens de gate acima dele. Pelo criterio risco-removido-por-esforco do AV-00 §3 ele desce; pelo criterio de risco absoluto ele seria o primeiro. Mesmo padrao do item 4 da TRIAGEM-R1-R3 e do rank 4 da TRIAGEM-AV-R7, que tambem foram os de maior dano em posicao baixa. Se o dono priorizar risco absoluto, este item sobe para o topo e nada mais nesta triagem muda.",
+      "fix_commit": "eb23cfff",
+      "status": "corrigido_e_barrado_no_recorte",
+      "status_closes_item": false,
+      "status_evidence": "PARCIAL, e a palavra `no_recorte` esta no status porque `corrigido_e_barrado` sozinho afirmaria mais do que foi feito. BARREIRA: dois arquivos novos em server/src/controllers/__tests__/ (accountingController.chartOfAccounts.integration.test.ts, 3 casos; accountingController.periods.integration.test.ts, 5 casos), commit eb23cfff, no molde do irmao accountingController.integration.test.ts — createApp() de producao, JWT real, zero jest.mock de prisma, cada caso conferindo o BANCO (recurso do dono A + linha gemea do dono B + foto de contagens) e cada negativo com controle positivo na mesma rota e metodo. O QUE FECHOU: os 8 handlers de escrita do accountingController que tinham ZERO alcance de rota (createAccount, deleteAccount, setAccountRequiresDimension, seedYear, openPeriod, softClosePeriod, hardClosePeriod, reopenPeriod). Escrita do proprio controller: 2/10 -> 10/10 handlers. Rotas distintas exercitadas sobre o mount: 4/55 -> 12/55 (7% -> 22%). O QUE NAO FECHOU, e por isso `gate` e `due` ficam INTACTOS: o suggested_barrier do F6 pede um arquivo por grupo de handlers de escrita DO MOUNT, e 19 das 29 rotas de escrita do mount seguem com zero alcance — as dos outros cinco controllers montados aqui (anexos, conciliacao, data-exchange, de-para/catalogo, SPED/encerramento), mais os 13 handlers de leitura. O recorte foi restrito ao `evidence` do achado por §9.3, e essa escolha e do orquestrador, declarada antes de implementar, nao descoberta depois. MORDIDA, com a leitura que a revisao independente corrigiu: as 8 mutacoes de troca de dono no controller matam 8 de 8 com mapeamento 1:1, controle 8/8 verde e par discriminante reproduzindo o numero do achado (mesma mutacao em postEntry: 6 failed). MAS elas matam pelo CONTROLE POSITIVO — reconferido a mao em deleteAccount, a asercao que falha e `Expected: 200, Received: 404`, que e o dono fazendo a PROPRIA operacao. Isso prova ALCANCE, que e o que o achado mediu como ausente, e NAO prova que o teste assere a invariante de inquilino. A perna de INQUILINO foi provada pela revisao independente, com mutacoes proprias no REPOSITORIO (AccountRepository perdendo userId: 2 de 3 morrem com `Expected: 404, Received: 200`, ou seja o dono B apagou de fato a conta do A; AccountingPeriodRepository.findById: 4 de 5), e ela morde em 6 dos 8 — `createAccount` e `seedYear` NAO tem nenhuma mutacao conhecida que os mate pela invariante. ZERO codigo de producao tocado; zero bug de producao encontrado: a guarda existe nos 8, faltava a rede. GATES: tsc --noEmit exit 0 · integracao INTEIRA 38 suites / 406 testes com wrapper 0, medida pelo orquestrador no proprio worktree (o achado mediu 36/398, e +2 suites +8 testes e exatamente o que os arquivos acrescentam) · unit 133 suites / 1590 testes. LIMITE DESTE PROPRIO CAMPO, declarado porque a revisao do PR #173 o mediu: `status` NAO E LIDO POR GATE NENHUM — nem por B13/B14, que so tem lista fechada para `verification` e `gate`. Este registro e convencao, e um `corrigido_e_barrado` pode ser escrito aqui sem que barreira nenhuma exista. O que sustenta este e o commit eb23cfff e o artefato de revisao independente, nao o exit 0 do bancada-gate.",
+      "review": {
+        "verdict": "revisado_com_ressalva",
+        "reviewer": "claude-opus-5 (agente revisor independente, worktree rev-f6, sessao de 2026-08-07)",
+        "implementer": "claude-opus-5 (agente implementador, worktree fix-f6)",
+        "artifact": "docs/audit/reviews/REVIEW-BARREIRA-F6.md",
+        "headline": "Fecha o recorte, encosta o achado. A matriz de mordida do implementador mede ALCANCE e estava rotulada como perna de inquilino; a de inquilino veio do revisor e cobre 6 dos 8. Recontagem independente de 12/55 e 10/10 bate."
+      }
     },
     {
       "rank": 10,
@@ -394,6 +405,27 @@
       "why_it_matters": "A leitura facil e \"a separacao funcionou, achou um erro\". A leitura honesta e que ela achou UM em dez, e que o unico degrau onde o corte teve efeito foi o degrau que NENHUM gate le. Se o valor da separacao e uma correcao de rotulo por rodada, ela e barata e vale; mas ela NAO substitui revisao independente desta triagem, que continua nao existindo — e a distincao importa porque a proxima sessao pode citar \"triada por sessao separada\" como se fosse revisao. Nao e: eu executei os falsificadores de outro agente e derivei portoes; ninguem reexecutou os meus.",
       "cost_hint": "Nenhum. E declaracao de limite, e existe para que \"triado por sessao separada\" nao seja lido como \"revisado\".",
       "gate_and_decision": "NAO recebe portao. E feedback de metodo."
+    },
+    {
+      "raised_by": "revisao independente da barreira do F6 (docs/audit/reviews/REVIEW-BARREIRA-F6.md)",
+      "finding": "A barreira do F6 CODIFICA um defeito num teste verde: `ReopenPeriodSchema` exige por `.strict()` um `periodId` no corpo que o handler descarta em favor de `req.params.id`. O caso de inquilino manda o `periodId` de proposito (senao mediria o Zod em vez da guarda), e com isso o teste passa a documentar como correto um parametro aceito-e-ignorado. Classe ja nomeada no projeto.",
+      "falsifier": "cd server && grep -n 'periodId' src/features/accounting/dtos/*.ts src/controllers/accountingController.ts | grep -i reopen",
+      "gate": null,
+      "note": "Sem portao: achado sobre a barreira, levantado durante a revisao dela. Nao triado, nao corrigido."
+    },
+    {
+      "raised_by": "revisao independente da barreira do F6",
+      "finding": "`openPeriod` e o unico handler de escrita de periodo sem DTO Zod, e devolve 500 quando `unitId` chega como objeto em vez de string. Executado pelo revisor.",
+      "falsifier": "cd server && grep -n 'openPeriod' src/controllers/accountingController.ts",
+      "gate": null,
+      "note": "Sem portao. Nao triado, nao corrigido."
+    },
+    {
+      "raised_by": "orquestrador, ao medir a fracao da superficie apos a barreira",
+      "finding": "O `falsifier_static` do proprio F6 SUBCONTA a correcao dele: ele casa metodo + literal entre aspas simples e e cego a rota parametrizada por template literal. Rodado verbatim sobre a uniao dos tres arquivos devolve 5, quando as rotas distintas exercitadas sao 12 — so `POST /accounts` nao tem `:param`. Um falsificador que nao enxerga a propria correcao reportaria \"nao melhorou\" a quem o reexecutasse.",
+      "falsifier": "cd server && grep -oE \"\\.(get|post|put|patch|delete)\\('/api/accounting[^']*'\" src/controllers/__tests__/accountingController*.integration.test.ts | sed 's/[?].*//' | sort -u | wc -l  # devolve 5, nao 12",
+      "gate": null,
+      "note": "Sem portao. Achado sobre o INSTRUMENTO, na familia do F2 desta mesma rodada."
     }
   ],
   "gates_summary": {
