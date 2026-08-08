@@ -35,6 +35,10 @@
 //       due; aceite exige accepted_reason, accepted_by e review_trigger OBSERVÁVEL
 //   B15 self_check.falsifiers_executed/total coerentes com os itens
 //   B16 os três campos do precedente AV-L1: verification_note, barriers_searched, own_bias_named
+//   B17 a condição do banner "sem revisão independente" do visualizador acende quando deve
+//   B18 etiqueta `softdelete` em linha de centerpiece resolve para um model com deletedAt, ou
+//       está declarada em label_defects_registered com evidência — e o registro morre sozinho
+//       quando o deletedAt aparece (isenção que sobrevive ao motivo é dívida com outro nome)
 //
 // POR QUE B11..B16 EXISTEM. O AV-00 inteiro existe para produzir UM artefato — a triagem — e
 // era o único sem nenhuma checagem: a linha `if (j.schema !== 'auditoria/1.1') continue`
@@ -53,6 +57,7 @@ const BANCADA = join(ROOT, 'docs/audit/bancada.html');
 const AUDIT_DIR = join(ROOT, 'docs/audit');
 
 const erros = [];
+const isentosSoftdelete = [];
 const avisos = [];
 const err = (b, m) => erros.push(`[${b}] ${m}`);
 const warn = (b, m) => avisos.push(`[${b}] ${m}`);
@@ -706,6 +711,94 @@ for (const { f, j } of triagens) {
   }
 }
 
+// ---------- B18 · etiqueta `softdelete` de centerpiece tem de ter LASTRO no schema ----------
+//
+// Origem: AV-R7 F3 / TRIAGEM-AV-R7 rank 2 — a linha do `AV-R2.json` para
+// `ReferentialMappingRepository.ts` traz `tx+inquilino+softdelete`, e o model
+// `ReferentialMapping` não tem campo `deletedAt`. A etiqueta veio do classificador, que casa
+// por FORMA DE SÍMBOLO e não lê o schema; ninguém a conferiu porque nenhuma checagem lia a
+// coluna `invariantes` de um centerpiece (medido: `grep -rn "invariantes\|fanin" scripts/*.mjs`
+// = 0 antes desta).
+//
+// A ESCOLHA QUE DEFINE O DESENHO. O dono decidiu REGISTRAR a fraqueza ao lado em vez de
+// reescrever a linha — a mesma escolha dos PRs #168/#169 para a mesma informação, e pela mesma
+// razão: `centerpiece.rows` é o que foi MEDIDO naquele commit, e reescrever medição emitida
+// apaga o rastro de que o classificador erra. Então este gate não exige que toda etiqueta
+// resolva; exige que ela resolva OU esteja declarada em `label_defects_registered`, com
+// evidência. É a forma da isenção 4b/6b que já existe aqui: isenção declarada, com lastro
+// cobrado e a lista impressa, para não crescer em silêncio.
+//
+// E a isenção MORRE SOZINHA: se o `deletedAt` aparecer no model, o registro passa a ser falso
+// e o gate reprova. Isenção que sobrevive ao próprio motivo é dívida com nome de decisão.
+//
+// LIMITE DECLARADO: só vale para linha cuja unidade é `*Repository.ts`, onde a resolução
+// unidade→model é mecânica (nome do arquivo menos o sufixo, casando por prefixo — o
+// `DimensionRepository` resolve para `DimensionDefinition`/`DimensionValue`, que é por que a
+// derivação é por prefixo e não por igualdade). As linhas de `dto` e `job` que carregam a
+// etiqueta NÃO são cobertas: não há mapeamento mecânico de um DTO ou de um job para um model,
+// e inventar um produziria veredito sobre uma correspondência que o gate não sabe fazer.
+{
+  const SCHEMA_PRISMA = join(ROOT, 'server/prisma/schema.prisma');
+  const CAMPOS_DO_REGISTRO = ['unit', 'label_as_measured', 'defect', 'measured', 'source_finding',
+    'row_not_rewritten_because'];
+  if (!existsSync(SCHEMA_PRISMA)) {
+    err('B18', 'server/prisma/schema.prisma não encontrado — sem ele esta checagem passaria ' +
+      'em silêncio, que é o modo de falha que ela existe para fechar');
+  } else {
+    const src = readFileSync(SCHEMA_PRISMA, 'utf8');
+    const comDeletedAt = new Set();
+    const todosOsModels = new Set();
+    for (const m of src.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
+      todosOsModels.add(m[1]);
+      if (/\bdeletedAt\b/.test(m[2])) comDeletedAt.add(m[1]);
+    }
+    if (!todosOsModels.size) {
+      err('B18', 'nenhum `model` lido de schema.prisma — o recorte falhou e um conjunto vazio ' +
+        'faria toda etiqueta parecer sem lastro (ou, invertido, toda isenção parecer válida)');
+    }
+    for (const { f, j } of relatorios) {
+      const registros = j.label_defects_registered || [];
+      const usados = new Set();
+      for (const linha of j.centerpiece?.rows || []) {
+        if (!Array.isArray(linha)) continue;
+        const celulas = linha.filter((c) => typeof c === 'string');
+        if (!celulas.some((c) => c.toLowerCase().includes('softdelete'))) continue;
+        const unidade = celulas.find((c) => /Repository\.ts$/.test(c));
+        if (!unidade) continue; // dto/job — fora do limite declarado acima
+        const base = unidade.split(/[\\/]/).pop().replace(/Repository\.ts$/, '');
+        const resolvidos = [...todosOsModels].filter((n) => n === base || n.startsWith(base));
+        const temLastro = resolvidos.some((n) => comDeletedAt.has(n));
+        const registro = registros.find((r) => r && r.unit === unidade);
+        if (registro) usados.add(unidade);
+
+        if (temLastro && registro) {
+          err('B18', `${f}: ${unidade} está em label_defects_registered, mas a etiqueta ` +
+            `\`softdelete\` TEM lastro (${resolvidos.filter((n) => comDeletedAt.has(n)).join(', ')} ` +
+            'tem deletedAt) — registro obsoleto sobrevivendo ao próprio motivo; remova-o');
+        } else if (!temLastro && !registro) {
+          err('B18', `${f}: ${unidade} etiquetada \`softdelete\` e nenhum model resolvido ` +
+            `(${resolvidos.join(', ') || 'nenhum'}) tem deletedAt — corrija a etiqueta ou ` +
+            'declare o defeito em label_defects_registered com evidência');
+        } else if (!temLastro && registro) {
+          for (const k of CAMPOS_DO_REGISTRO) {
+            if (registro[k] === undefined || String(registro[k]).trim() === '') {
+              err('B18', `${f}: label_defects_registered de ${unidade} sem \`${k}\` — ` +
+                'registro sem evidência é a etiqueta errada com outro nome');
+            }
+          }
+          isentosSoftdelete.push(`${f}:${base}`);
+        }
+      }
+      for (const r of registros) {
+        if (r && r.unit && !usados.has(r.unit)) {
+          err('B18', `${f}: label_defects_registered aponta para "${r.unit}", que não é linha ` +
+            'de centerpiece etiquetada `softdelete` neste relatório — registro pendurado');
+        }
+      }
+    }
+  }
+}
+
 // ---------- saída ----------
 for (const a of avisos) console.log(`aviso: ${a}`);
 if (erros.length) {
@@ -722,5 +815,8 @@ console.log(
   `${triagens.length} triagem(ns) 1.0 com ${triagens.reduce((n, t) => n + (t.j.items || []).length, 0)} item(ns), ` +
   `${tiposUsados.size} tipo(s) de peça central em uso, ${avisos.length} aviso(s).` +
   `\nIsenção 4b/6b pela emenda (${isentos.length}): ${isentos.join(', ') || 'nenhuma'} — ` +
-  'isenção é declaração de autoria, não medição; o gate exige lastro na emenda e imprime a lista.',
+  'isenção é declaração de autoria, não medição; o gate exige lastro na emenda e imprime a lista.' +
+  `\nEtiqueta \`softdelete\` sem lastro no schema, registrada ao lado (B18) ` +
+  `(${isentosSoftdelete.length}): ${isentosSoftdelete.join(', ') || 'nenhuma'} — ` +
+  'o registro morre sozinho: se o deletedAt aparecer no model, o gate reprova.',
 );
