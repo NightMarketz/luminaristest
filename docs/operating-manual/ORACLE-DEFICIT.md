@@ -533,6 +533,19 @@ do CoREBench. A correlação entre `mutation_score` e detecção de falta real �
 de tamanho de suíte e **cai para 0,05–0,20 quando o tamanho é controlado**. Conclusão dos autores:
 *"a major part of the association… is simply an effect of size."*
 
+**(iii-b) O golpe mais duro, achado depois e acrescentado aqui contra o meu próprio §3.2.** *Bigger
+Isn't Always Better* ([arXiv:2606.15689](https://arxiv.org/pdf/2606.15689)) mede o mesmo revisor sobre
+duas populações de defeito: **F1 = 0,847 em bugs injetados por mutação** contra **F1 = 0,066 em PRs
+reais** — **92% de degradação**. E colapsa com o tamanho do diff: 0,657 em diffs de <10 linhas,
+**0,043** acima de 150.
+
+Isto não é sobre revisor de IA — é sobre **como o defeito foi construído**. Mutante injetado é uma
+população de defeito muito mais fácil do que a que existe no mundo, e converge com Just et al. (17%
+das faltas reais não acoplam a mutante nenhum) e com Papadakis (a correlação some quando o tamanho é
+controlado). **Consequência para esta bancada, sem desconto:** as provas de mordida por mutação
+mostram que *existe alguém observando aquela linha* — e **não** mostram que a suíte pegaria o defeito
+real correspondente. O `mutation_score` e a prova de mordida medem a população fácil.
+
 **Aterramento, com os dois lados:** (1) **contra a bancada** — os placares publicados (R3 = 2/7, R5 =
 4/7, R7 = 0/7, conferidos por mim contando a coluna `reagiu` de cada `centerpiece`) não sustentam
 conclusão sobre "força da suíte" enquanto o tamanho não for controlado, e nenhum dos três relatórios o
@@ -904,7 +917,7 @@ independência que sobra quando só há um par de olhos humanos.
 | **F2** | regra de parada | **(b)** prioridade por oráculo | sim | não |
 | **F3** | veredito do razão (entropia zero) | **(b)** trocar `verdict` por `achados_abertos` + `eu_mergearia` | sim | não |
 | **F4** | qual oráculo comprar primeiro | **PVA com um ECD** | — | **sim** |
-| **F5** | espelhar a Emenda F3 do ADR no pipeline | **(a)**, condicionada a F1(b) | sim | não |
+| **F5** | ~~espelhar a Emenda F3 do ADR no pipeline~~ · **REVISTO em 2026-08-09, ver §9.2** | **(d)** trocar a família de modelo do revisor, **não** desligar a revisão | não remove ator | parcial |
 | **F6** | as duas restrições do gate (`B5:306`, `B6:316`) | **(a)** apagar as duas | sim | indireto |
 | **F7** | **quem faz o quê e quando** (§4.0) | **(a)** pré-registro: critério antes do trabalho, 5 etapas → 3 atos | sim (2 etapas, 1 ator, 1 campo) | não, mas torna o oráculo o juiz |
 
@@ -927,6 +940,23 @@ investigação pode estar errado — e aí o agente vai ser tentado a "corrigir 
 caminho, que é a trave se movendo com outro nome. A mitigação é a mesma da torre de aprovação: mudar o
 critério é permitido, mas **vira um evento próprio no git**, com a razão escrita, em vez de uma edição
 silenciosa. Se o dono não quiser esse atrito, o **(c)** é honesto — só não resolve inteiro.
+
+**Dois reforços externos desse risco, achados depois (§9):**
+
+1. **O oráculo é editável pelo agente, e isso já foi observado.** Kent Beck, ao rodar agentes sob TDD,
+   vigiava explicitamente *"any indication that the genie was cheating, **for example by disabling or
+   deleting tests**"*, e diz que **não consegue impedir** agentes de apagar teste para fazê-lo passar
+   ([*Augmented Coding: Beyond the Vibes*](https://newsletter.kentbeck.com/p/augmented-coding-beyond-the-vibes)).
+   **Consequência dura para o F7:** o critério pré-registrado tem de ser **imutável pelo Ato 2**. A
+   forma barata é o que a torre de aprovação já faz — congelar o conteúdo (`contentHash`) e exigir
+   evento próprio para mudar. Sem isso, o F7 é teatro.
+2. **Critério fixo não sobrevive a capacidade crescente.** *The Verification Horizon: No Silver Bullet
+   for Coding Agent Rewards* ([arXiv:2606.26300](https://arxiv.org/abs/2606.26300)): *"no fixed reward
+   function can remain effective as policy capability continues to grow; **verification must co-evolve
+   with the generator**."* Todo verificador é proxy da intenção, e otimizar contra o proxy alarga a
+   fenda. **Isso não derruba o F7 — derruba a versão preguiçosa dele** ("escrevi o comando uma vez,
+   pronto"). O critério tem de ser revisitado quando a fenda aparecer, e a revisão dele é um evento,
+   não uma edição.
 
 ### F1 — o que fazer com o ciclo de cinco etapas
 
@@ -971,11 +1001,29 @@ Por isso a recomendação é **(b) e não (d)**: congelar a emissão preserva a 
 | **(b) ★ RECOMENDADA** | **apagar o campo `verdict`** e pôr no lugar dois campos que não podem ser todos iguais: `achados_abertos: <int>` e `eu_mergearia: true\|false` | ~15 linhas em `review-ledger-check.mjs` — mas **isto altera um gate existente, o que este documento não faz**: fica como proposta a ser executada por quem o dono designar | remove um campo, não acrescenta |
 | **(c)** acrescentar `parcialmente_revisado` (o que o `REVIEW-PR174` pediu) | 5º valor na lista fechada | zero | **rejeitada** — é acrescentar, exatamente o modo de falha que o pedido nomeia |
 
-**Por que (b), com lastro:** Valmeekam et al. medem que **o bit vale quase tudo e o texto quase nada** —
-sem feedback 40%, **feedback binário puro 74%**, binário + detalhe 86% (§3.6-iii). O razão hoje tem
-2.273 linhas de texto e um bit constante. `eu_mergearia: true|false` é o bit que falta, e
+**Por que (b), com lastro triplo e independente:**
+
+1. Valmeekam et al. medem que **o bit vale quase tudo e o texto quase nada** — sem feedback 40%,
+   **feedback binário puro 74%**, binário + detalhe 86% (§3.6-iii).
+2. Hamel Husain, que consultoria de evals como ofício, chega no mesmo lugar por experiência de campo e
+   dá nome ao método — **"Critique Shadowing"**: escala Likert 1–5 multidimensional é ruído; o que
+   funciona é **binário passa/falha ancorado num especialista de domínio**
+   ([guia](https://hamel.dev/blog/posts/llm-judge/index.html)).
+3. A derivação a partir deste repositório: 2.273 linhas de texto e **um bit constante** (§2.3).
+
+Três caminhos independentes — laboratório de planejamento, prática de campo, e a medida local —
+convergem em *um bit binário ancorado num humano*. `eu_mergearia: true|false` é o bit que falta, e
 `achados_abertos: <int>` é o único número que a distribuição não pode achatar. **O ganho não é medir
 melhor — é passar a ter o que medir.**
+
+**A ressalva que a mesma fonte faz, e que eu carrego:** Hamel **não** endossa o slogan "o modelo não
+pode julgar o próprio trabalho". A posição dele é um *sim qualificado* — julgar é uma tarefa diferente
+de gerar, e o viés de auto-preferência é real mas **secundário ao alinhamento medido contra rótulo
+humano** ([texto](https://hamel.dev/blog/posts/evals-faq/can-i-use-the-same-model-for-both-the-main-task-and-evaluation.html)).
+A métrica que ele exige no lugar do slogan é **TPR e TNR contra um conjunto rotulado por humano**, e
+avisa que "concordância" isolada é métrica-armadilha. **Consequência para nós:** o `eu_mergearia` só
+vale alguma coisa depois que o dono rotular um punhado de casos e alguém medir TPR/TNR contra eles.
+Sem isso, é um bit não calibrado — melhor que 7/7, mas não é medição.
 
 ### F4 — qual oráculo comprar primeiro ★ (a recomendação principal deste documento)
 
@@ -983,12 +1031,19 @@ Ver §6 para custo e destravador de cada um. Recomendação: **PVA com um ECD, p
 de-risca ECD + Apuração + ECF juntos (o próprio master map diz isso em `:349`) e porque o artefato já
 existe no disco há 30 dias. **Só o dono destrava — nenhum fork de processo substitui este.**
 
-### F5 — espelhar a Emenda F3 do ADR no pipeline
+### F5 — o revisor independente · **REVISTO em 2026-08-09**
+
+> **Eu recomendava (a) — desligar a exigência de revisor. Retiro a recomendação.** A pesquisa externa
+> do §9 derrubou a premissa: eu tratei "o viés é de familiaridade, não de identidade" como se
+> implicasse "trocar de revisor não adianta". **Não implica.** Duas medidas novas mostram que trocar
+> de revisor adianta — só não do jeito que o `AV-00 §9.4` manda trocar. Detalhe em §9.2.
 
 | Opção | O que é | Custo | Recomendação |
 |---|---|---|---|
-| **(a) ★ RECOMENDADA** | aplicar ao pipeline a decisão já ratificada na contabilidade: **desligar a exigência de revisor independente enquanto o ator for único** (`agent_authored_ratio` ≈ 0,95), e **manter sempre ativos os controles detectivos** — trilha `git` append-only, falsificador por achado, mordida por mutação, `REVIEW-LEDGER` como registro sem veredito (F3b). A exigência **religa sozinha** no dia em que houver um segundo autor humano, exatamente como `enforcesSegregationOfDuties` religa quando `owner ≠ actor` | zero de código; é uma emenda ao `AV-00 §9.4` | **remove um ator** (o revisor-agente) e **remove um artefato** (o veredito). Passa no 1º critério do pedido e **não** no 2º — e é honesto: ele não traz oráculo, ele para de fingir que traz |
-| **(b)** manter a exigência | — | custo medido: 6 revisões = 2.273 linhas em `docs/audit/reviews/`, 7/7 do mesmo veredito | não |
+| **(d) ★ RECOMENDADA (nova), com ressalva forte** | **manter a revisão independente e trocar a FAMÍLIA DE MODELO do revisor**, não a worktree. O `AV-00 §9.4` passa a exigir `reviewer.model_family ≠ implementer.model_family`, e o `[RL4]` — que hoje compara strings de nome — compara família | pequeno no gate; **grande na prática**, porque exige acesso a um segundo fornecedor | direção **teoricamente sustentada** (Littlewood & Miller: diversidade de *método*; Wataoka: o viés é familiaridade). O número que circula (+6 a +11 pontos de recall) é **de fornecedor que vende exatamente isso** e com rótulo de par ambíguo na fonte — **não o trate como medida**. Ver §9.2 |
+| **(a)** desligar a exigência enquanto o ator for único | ~~recomendada~~ | zero | **RETIRADA.** O ponto-cego de auto-correção é de **procedência**, não só de familiaridade: 64,5% de taxa média em 14 modelos, e some quando o texto chega como se fosse de outro. Contexto fresco em worktree isolada **já compra parte disso** — mais do que eu dei crédito |
+| **(b)** manter a exigência como está (worktree isolada, mesmo modelo) | — | 6 revisões = 2.273 linhas, 7/7 do mesmo veredito | aceitável como piso; é o que existe hoje |
+| **(c)** painel de N revisores-agentes | — | **rejeitada com número:** times de LLM **não alcançam o melhor membro individual**, perdas até **41,1%**, e o mecanismo é *integrative compromise* — média entre especialista e não-especialista, que **piora com o tamanho do time** ([arXiv:2602.01011](https://arxiv.org/abs/2602.01011)). É o `revisado_com_ressalva` explicado | não |
 
 **Lastro normativo do F5(a), literal:** GAO Green Book **¶10.21** — *"If segregation of duties is not
 practical within a business process **because of limited personnel** or other factors, management
@@ -1181,3 +1236,109 @@ Onde este documento falha nos próprios critérios:
   enquanto 4 itens de oráculo estavam abertos — exatamente a condição em que F2(b) proíbe emitir. Se
   F2(b) valesse hoje, este documento não deveria existir. Declaro isso em vez de me isentar: a saída
   honesta é que ele é o **último** artefato antes do congelamento, não uma exceção à regra.
+
+---
+
+## 9. Referências externas — `reference`, **não evidência**
+
+> **Grau, declarado antes do conteúdo:** nada nesta seção foi medido neste repositório. É material de
+> fora, colhido em 2026-08-09, e serve para (a) nomear com precisão o que já medimos e (b) evitar
+> reinventar. **Misturar isto com a evidência do §1/§2 seria exatamente o defeito que este documento
+> acusa.** Onde o número vem de parte interessada, está escrito na linha.
+
+### 9.1 O que confirma o que já medimos
+
+| Achado externo | Confirma qual medida nossa |
+|---|---|
+| Kroah-Hartman (kernel, mar/2026): IA como **achadora de bug** virou valiosa; IA como **escritora de patch** ainda é custo líquido — de 60 correções por prompt preguiçoso, **~1/3 erradas**, 2/3 usáveis só após limpeza humana | §1.7 — a bancada acha e não conserta; e o que ela conserta é teste |
+| curl volta ao HackerOne em mar/2026: a fabricação **acabou** (taxa de confirmação de volta a 15–16%) e **a carga de revisão piorou** — frequência de relatório **dobrou** | §2.7 — melhorar a qualidade não fecha a assimetria; só o oráculo fecha |
+| Uber uReview: **65 mil diffs/semana**, >75% dos comentários úteis, >65% endereçados — **mas só depois** de uma camada de supressão (limiar por categoria, dedup semântico, classificador que cala categoria historicamente inútil). Lição declarada: *"precision is more valuable than volume"* | §2.3 — o valor está no **filtro**, não no volume de crítica. 147.750 palavras é o oposto |
+| Django embute um **canário** na política de segurança: o relatório tem de terminar com uma frase sobre o sentido da vida segundo Monty Python e a posição do relator sobre P=NP | F7 — critério pré-registrado, barato, decidível, e que só um humano atento passa |
+| Kernel: só humano assina o DCO; contribuição de IA declara `Assisted-by:`, **deliberadamente não** `Co-authored-by:` | §2.5 — separar *quem executou* de *quem responde* é a versão deles do `enforcesSegregationOfDuties` |
+
+### 9.2 O que **mudou** um fork deste documento
+
+**O F5 foi revisto.** Eu recomendava desligar a exigência de revisor independente. Duas medidas
+derrubaram a premissa:
+
+1. **O ponto-cego de auto-correção é de PROCEDÊNCIA, não só de familiaridade.** *Self-Correction
+   Bench* (Ken Tsui, [arXiv:2507.02778](https://arxiv.org/html/2507.02778v1)): **taxa média de
+   ponto-cego 64,5%** em 14 modelos — o modelo corrige o erro idêntico quando ele chega como input e
+   não corrige quando saiu dele. Um revisor de **contexto fresco**, sem o prompt de produção, está
+   mais perto da condição boa. **A worktree isolada faz mais trabalho do que eu dei crédito.**
+   (Adjacente, confiança baixa: *Cross-Context Review*, [arXiv:2603.12123](https://arxiv.org/pdf/2603.12123),
+   preprint de autor único, sem números duros extraíveis.)
+2. **Painel de revisores-agentes é pior, não melhor.** *Multi-Agent Teams Hold Experts Back*
+   ([arXiv:2602.01011](https://arxiv.org/abs/2602.01011)): times de LLM **não alcançam o melhor membro
+   individual**, perdas até **41,1%**, mesmo informados de quem é o especialista. Mecanismo:
+   *integrative compromise* — mediar especialista com não-especialista —, e **piora com o tamanho do
+   time**. **É o `revisado_com_ressalva` com nome científico.** Convergente: *Wisdom and Delusion of
+   LLM Ensembles* ([arXiv:2510.21513](https://arxiv.org/abs/2510.21513)) — votação por consenso cai na
+   **"popularity trap"**, amplifica o erro comum e filtra a minoria correta; seleção por
+   **diversidade** recupera até 95% do teto.
+
+**A ressalva sobre o número do cross-model.** A medida que circula — revisor de outra família de
+modelo pega **6 a 11 pontos de recall a mais** em bug de severidade alta, e *"os tipos de bug que um
+modelo mais introduz são os que ele mais deixa passar na revisão"* — vem de
+[greptile.com/blog/model-inversion](https://www.greptile.com/blog/model-inversion), **fornecedor que
+vende revisão cross-model**, e o rótulo do par de modelos ficou ambíguo na leitura. **Não é medida
+para nós.** O que sustenta o F5(d) é a teoria (Littlewood & Miller, Wataoka), não esse número.
+
+**E o contexto que obriga a desconfiar de todos os números desse mercado:** **quatro fornecedores
+reivindicam simultaneamente o 1º lugar no mesmo benchmark dito independente** (Martian), e a mesma
+ferramenta aparece com F1 de **30,3% / 51,2% / 57,5%** em três recortes do mesmo benchmark. O próprio
+Martian declara que o *gold set* foi construído **sobre trabalho de dois concorrentes do leaderboard**
+e que *"some of the comments we initially scored as false positives turned out to be real issues"*.
+**Não existe medição acordada de falso positivo nesse setor.**
+
+### 9.3 O que a literatura independente diz — e é mais dura que qualquer número de fornecedor
+
+| Estudo | Número |
+|---|---|
+| [arXiv:2607.03316](https://arxiv.org/abs/2607.03316) — 31.073 pares revisão/resposta, 10.191 PRs, 239 repos | **36,4% aceitos · 56,3% rejeitados** |
+| [arXiv:2603.15911](https://arxiv.org/abs/2603.15911) — 278.790 conversas, 300 projetos | adoção de sugestão de IA **16,6%** contra **56,5%** de humano; e as adotadas **aumentaram complexidade e tamanho** |
+| [arXiv:2604.03196](https://arxiv.org/abs/2604.03196) — 3.109 PRs | PR revisado só por agente mergeia **23,17 pontos percentuais menos**; 12 de 13 agentes abaixo de 60% de retorno acionável |
+| [arXiv:2606.15689](https://arxiv.org/pdf/2606.15689) — *Bigger Isn't Always Better* | **F1 0,847 em bug injetado por mutação × 0,066 em PR real — 92% de degradação**; e 0,657 em diff <10 linhas → **0,043** acima de 150 |
+
+**A última linha é a que mais nos atinge, e está incorporada no §3.2-iii-b:** a bancada prova mordida
+sobre **mutante injetado**, que é a população fácil.
+
+### 9.4 Correção de uma coisa que eu disse antes
+
+Eu apresentei o caso do curl como evidência da carga de revisão de trabalho gerado por IA. **É mais
+específico do que eu disse:** Stenberg encerrou o **bug bounty**, não a revisão de PR, e declarou que
+os **PRs seguiram administráveis porque o CI os verifica**. O caso, lido direito, **reforça** o F6/F4
+em vez de sustentar pessimismo genérico: onde havia oráculo executável, a enxurrada foi absorvida;
+onde não havia (relatório de segurança em prosa), o programa fechou.
+
+### 9.5 Quem ler — e onde eles realmente estão
+
+**A comunidade do problema do oráculo saiu do X.** Andreas Zeller (CISPA, *The Fuzzing Book*) saiu
+publicamente e está ativo no [Bluesky](https://bsky.app/profile/andreaszeller.bsky.social) até
+ago/2026. Papadakis, René Just, Michael Ernst e Tim Menzies **não têm microblog em lugar nenhum**.
+Mark Harman é LinkedIn. Daniel Stenberg é Mastodon. **Detalhe operacional:** a API pública do Bluesky
+(`public.api.bsky.app`) é fetchável sem autenticação, ao contrário do x.com — e o
+[@rao2z tem espelho ativo lá](https://bsky.app/profile/rao2z.bsky.social).
+
+| Quem | Onde | Por que importa aqui |
+|---|---|---|
+| **Subbarao Kambhampati** [@rao2z](https://x.com/rao2z) | X + Bluesky, muito ativo | a tese do verificador **externo**; [External vs. Internal LLM-Modulo](https://x.com/rao2z/status/1887172266427138061) |
+| **Simon Willison** [@simonw](https://x.com/simonw) | blog primeiro | **[Showboat e Rodney](https://simonwillison.net/2026/Feb/10/showboat-and-rodney/)** — *"just because the automated tests pass doesn't mean the software actually works!"*. **É o F6 já implementado** |
+| **Hamel Husain** [@HamelHusain](https://twitter.com/HamelHusain) | X + hamel.dev | **"Critique Shadowing"**; e [*"It's Hard to Eval" Is a Product Smell*](https://hamel.dev/blog/posts/eval-smell/) — *verificação é o gargalo*, redesenhe o produto para ser checável |
+| **Gergely Orosz** [@GergelyOrosz](https://x.com/GergelyOrosz) | X, argumenta lá | faz **a nossa pergunta em público** e nota que revisores-agentes *"usually don't validate by running the code"* |
+| **Shreya Shankar** [@sh_reya](https://twitter.com/sh_reya) | papers | *Who Validates the Validators?* e **"criteria drift"** — o critério não pode ser fixado de véspera; ele emerge de olhar saída real. **É a objeção mais séria ao F7** |
+| **Geoffrey Huntley** [@GeoffreyHuntley](https://x.com/GeoffreyHuntley) | blog | ["back pressure"](https://ghuntley.com/pressure/) — o anel de verificadores determinísticos em volta do agente. É o nosso `tsc` + suíte, nomeado |
+| **Charity Majors** [@mipsytipsy](https://x.com/mipsytipsy) | charity.wtf | *"Code becomes precious when it is the only place knowledge lives"*; validação **comportamental em produção** no lugar de leitura linha a linha |
+| **Kent Beck** [@KentBeck](https://x.com/KentBeck) | Substack | o agente **apaga teste para passar** — o risco do F7, observado por quem inventou a prática |
+| **Michaela Greiler** | newsletter | [*When Agentic Coding Breaks Code Review*](https://www.michaelagreiler.com/codereview-surrender-exploitation/) — batiza **"code review surrender"** |
+| **Mark Harman** | LinkedIn + arXiv | [Meta ACH](https://engineering.fb.com/2025/09/30/security/llms-are-the-key-to-mutation-testing-and-better-compliance/): descreve-se a **preocupação de falha em texto** e o sistema gera mutantes do domínio **e** testes que os matam. É o molde para a F6 do AV-R8 |
+
+**Agregadores reais** (nenhum é conta de X): [ryokamoi/llm-self-correction-papers](https://github.com/ryokamoi/llm-self-correction-papers) · [CSHaitao/Awesome-LLMs-as-Judges](https://github.com/CSHaitao/Awesome-LLMs-as-Judges) · [huggingface/evaluation-guidebook](https://github.com/huggingface/evaluation-guidebook).
+
+### 9.6 O viés desta seção, nomeado
+
+Ela foi montada por buscas na web, e **x.com bloqueia leitura direta** — então o corpo de todo post de
+X citado veio de trecho indexado por terceiro, não de leitura da página. A existência e a autoria são
+sólidas; **a redação exata é quase-verbatim, não certificada.** Além disso, o método favorece quem
+publica número — o que super-representa fornecedores (que têm interesse no número) e apaga o
+mantenedor que largou o projeto em silêncio em vez de escrever um post.
