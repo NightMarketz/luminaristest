@@ -838,6 +838,64 @@ Convenção da casa: `Fn→(a)/(b)/(c)`, recomendação declarada, custo de cada
 acrescenta etapa, ator ou artefato novo.** Onde um fork falha nos dois critérios do pedido (remove? traz
 oráculo?), isso está escrito na própria linha.
 
+### 4.0 — A alocação: quem faz o quê e quando
+
+**A pergunta "quem faz o quê" não tem solução aqui, e insistir nela é o erro.** Há um ator de código
+(`agent_authored_ratio` = 0,954) e um ator humano. Não existe segundo revisor, e o §3.6-iv mede que
+inventar um agente-irmão não compra independência: o viés é de **familiaridade**, não de identidade.
+Toda energia gasta em "quem" produziu 7/7 do mesmo veredito.
+
+**O que tem solução é *quando*.** É literalmente a saída que o Green Book ¶10.21 prescreve — *"where
+such segregation is not practical, management designs **alternative control activities**"* — e a
+alternativa disponível a um ator só é **separação por ORDEM e por FONTE DE SINAL**, não por pessoa:
+
+> **Se o critério de aceite é registrado ANTES do trabalho e é decidível por máquina, não importa que o
+> mesmo ator escreva e rode — rodar deixa de ser julgamento.**
+
+É exatamente por isso que o `falsificador` desta casa funciona e o `status` não. O falsificador é
+decidível por máquina (*"precisa poder falhar"*, `bancada.html`); o `status` é julgamento, e
+`REVIEW-PR173.md:113` mediu que **nenhum gate o lê** (`grep status scripts/bancada-gate.mjs` = 0). O que
+falta não é a ferramenta — é a **ordem**: hoje o ciclo é `verificar → triar → aceitar → corrigir →
+barrar`, e o falsificador nasce **junto com o achado**, isto é, depois da investigação, quando o autor
+já sabe o que quer que ele diga.
+
+#### A alocação, em três atos
+
+| Ato | Quem | O quê | **Quando** | Como se decide |
+|---|---|---|---|---|
+| **1 · Registrar o critério** | agente | escreve **o comando que decide** ("fechado é quando `X` sair 0") e o comita | **antes** de investigar ou tocar código | ninguém decide — só se registra |
+| **2 · Fazer** | agente | investiga, conserta, escreve a barreira | depois do Ato 1 | ninguém decide |
+| **3 · Rodar o critério do Ato 1** | **a máquina** | executa o comando registrado | ao fechar | o **exit code** decide, não o agente |
+| **★ Ratificar** | **o dono** | só o que a máquina não decide: escopo, fork, "isto é aceitável?" | quando o Ato 1 não consegue virar comando | **uma frase** |
+| **★★ Contato com oráculo** | **o dono** | PVA / NF-e / contador / implantar | bloqueia emissão nova enquanto vencido | o oráculo decide |
+
+**O que isso remove** — e é o teste do pedido: remove a **etapa de revisão** (não há revisor no fluxo),
+remove o **ator revisor-agente**, remove o **artefato `verdict`**, e funde `verificar+triar+aceitar` num
+único ato de registro. Cinco etapas viram três.
+
+**O que isso resolve, concretamente.** O problema real de "mesmo ator" nunca foi ele *checar* o próprio
+trabalho — foi ele poder **mover a trave depois de ver onde a bola caiu**. Pré-registro fecha isso sem
+precisar de segunda pessoa. É o mesmo movimento do `contentHash` congelado no `submit` da torre de
+aprovação (`ADR-INCR-APPROVAL §3`): não se confia no ator, congela-se o conteúdo antes.
+
+#### Os três relógios
+
+Cada laço tem cadência própria, e misturá-los é o que trava a fila hoje:
+
+| Laço | Cadência | Gatilho de parada |
+|---|---|---|
+| **PR** (Atos 1→3) | por mudança | o comando do Ato 1 sai 0 |
+| **Oráculo** (só o dono) | **1 contato por vez**, e o mais velho primeiro | enquanto houver item de Bloco A vencido há >14 dias, **nenhuma rodada nova** (F2b) |
+| **Ratificação** (só o dono) | sob demanda, uma frase | a fila de forks abertos zera |
+
+#### O caso que não vira comando — e é onde o dono é insubstituível
+
+Nem todo critério é decidível por máquina. `"o DRE é o DRE que um contador assinaria"` não vira `exit 0`.
+Nesses casos o Ato 1 **não** produz um comando; produz **uma pergunta de uma frase para o dono**, e ela
+entra na fila de ratificação em vez de virar julgamento do agente. **É a diferença entre "o agente
+decidiu e declarou" e "o agente perguntou e registrou a resposta"** — e é a única forma de
+independência que sobra quando só há um par de olhos humanos.
+
 **Cédula, para ratificar um a um:**
 
 | Fork | Pergunta | Recomendo | Remove? | Oráculo? |
@@ -848,9 +906,27 @@ oráculo?), isso está escrito na própria linha.
 | **F4** | qual oráculo comprar primeiro | **PVA com um ECD** | — | **sim** |
 | **F5** | espelhar a Emenda F3 do ADR no pipeline | **(a)**, condicionada a F1(b) | sim | não |
 | **F6** | as duas restrições do gate (`B5:306`, `B6:316`) | **(a)** apagar as duas | sim | indireto |
+| **F7** | **quem faz o quê e quando** (§4.0) | **(a)** pré-registro: critério antes do trabalho, 5 etapas → 3 atos | sim (2 etapas, 1 ator, 1 campo) | não, mas torna o oráculo o juiz |
 
 Se só um for ratificado: **F4**. Se nenhum orçamento humano estiver disponível: **F6**, e depois
-**F1(b)**, que juntos param a sangria sem apagar o que a bancada tem de bom.
+**F1(b)**, que juntos param a sangria sem apagar o que a bancada tem de bom. **F7 é o que responde
+"quem faz o quê" — e a resposta dele é que a pergunta certa é "quando".**
+
+### F7 — a ordem: critério antes do trabalho
+
+Desenho completo em §4.0. As opções:
+
+| Opção | O que é | Custo | Remove? |
+|---|---|---|---|
+| **(a) ★ RECOMENDADA** | **pré-registro**: o Ato 1 comita o comando que decide o fechamento **antes** de investigar; o Ato 3 roda esse comando e o exit code fecha. `verificar+triar+aceitar` viram um ato de registro; a revisão sai do fluxo | zero de código para começar (é ordem, não ferramenta). Emenda ao bloco 9 do AV-00 + `B5` passa a exigir o falsificador **datado antes** do primeiro commit de conserto | **sim** — 2 etapas, o ator revisor, o campo `verdict` |
+| **(b)** manter a ordem atual (`verificar → triar → aceitar → corrigir → barrar`) | — | custo medido: o falsificador nasce depois da investigação, quando o autor já sabe o que quer que ele diga; e `status`, o campo que fecha o item, não é lido por gate nenhum | não |
+| **(c)** pré-registro só para achado de dano ≥ 3 | meio-termo | menor atrito, mas o `damage` também é julgamento do mesmo ator — o filtro herda o problema que o fork existe para resolver | parcial |
+
+**Risco declarado do (a), contra ele mesmo:** pré-registro **enrijece**. Um critério registrado antes da
+investigação pode estar errado — e aí o agente vai ser tentado a "corrigir o critério" no meio do
+caminho, que é a trave se movendo com outro nome. A mitigação é a mesma da torre de aprovação: mudar o
+critério é permitido, mas **vira um evento próprio no git**, com a razão escrita, em vez de uma edição
+silenciosa. Se o dono não quiser esse atrito, o **(c)** é honesto — só não resolve inteiro.
 
 ### F1 — o que fazer com o ciclo de cinco etapas
 
