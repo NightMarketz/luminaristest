@@ -1045,6 +1045,27 @@ existe no disco há 30 dias. **Só o dono destrava — nenhum fork de processo s
 | **(b)** manter a exigência como está (worktree isolada, mesmo modelo) | — | 6 revisões = 2.273 linhas, 7/7 do mesmo veredito | aceitável como piso; é o que existe hoje |
 | **(c)** painel de N revisores-agentes | — | **rejeitada com número:** times de LLM **não alcançam o melhor membro individual**, perdas até **41,1%**, e o mecanismo é *integrative compromise* — média entre especialista e não-especialista, que **piora com o tamanho do time** ([arXiv:2602.01011](https://arxiv.org/abs/2602.01011)). É o `revisado_com_ressalva` explicado | não |
 
+**A objeção do dono, respondida — "mas é outro agente com persona própria, não sou eu me verificando".**
+Procede, e o F5(d) existe justamente porque procede. Mas há três coisas distintas sendo somadas, e
+elas têm medidas diferentes:
+
+| O que a delegação troca | Compra independência? | Medida |
+|---|---|---|
+| **Contexto** (worktree isolada, sem o prompt de produção) | **sim, e bastante** | ponto-cego de auto-correção é de procedência: **64,5%** em 14 modelos, e some quando o texto chega como input (§9.2) |
+| **Persona** (instrução de papel: "refute", "ataque a alegação central") | **muda a mira, não a abertura** | o `MODEL-TUNING.md:32-35` já registra que instrução é seguida **literalmente** e move recall medido; e o `REVIEW-PR173.md:178` nomeia o efeito de dentro: *"um revisor instruído a refutar acha o que procura"* |
+| **Pesos** (mesma família de modelo) | **não** | Knight & Leveson: 27 versões, duas universidades, sem comunicação, individualmente >99% confiáveis → independência rejeitada a **z=100,51**. Aqui os "atores distintos" compartilham pesos e treino — são **menos** diversos que aqueles estudantes |
+
+**O que isso prevê, e o repositório confirma:** a delegação funcionou onde o defeito estava **no
+texto** — as seis revisões produziram 35 achados, e o `REVIEW-PR173` derrubou a alegação central do
+autor com a mutação **F1**. E falhou onde o defeito estava no **sistema rodando**: a quebra de
+inquilino em `deleteAccount` atravessou **as seis** revisões e morreu para uma mutação. Bate com a
+literatura — *improper access control* escapa de revisão em **≈88%** dos casos (§3.4-ii).
+
+**Conclusão do fork:** persona é boa e barata, e não é o que falta. O que muda o resultado é **trocar
+a família de modelo** (ataca a correlação de falha) e **trocar o método** — a única revisão que achou
+defeito de produto, a do PR #170, fez isso rodando `next build` de produção contra cópia do `dev.db`,
+não adotando uma persona mais afiada.
+
 **Lastro normativo do F5(a), literal:** GAO Green Book **¶10.21** — *"If segregation of duties is not
 practical within a business process **because of limited personnel** or other factors, management
 designs **alternative control activities** to mitigate the risk"* (§3.5). É a mesma frase que a Emenda
