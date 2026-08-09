@@ -1076,8 +1076,7 @@
       "editTitle": "Edit Draft",
       "create": "Create draft",
       "save": "Save draft",
-      "saving": "Saving…",
-      "dimensionsNotice": "Editing rewrites every leg. Dimension tags are not returned by the entry read — if this draft carried any, select them again before saving."
+      "saving": "Saving…"
     },
     "actionModal": {
       "cancel": "Back",

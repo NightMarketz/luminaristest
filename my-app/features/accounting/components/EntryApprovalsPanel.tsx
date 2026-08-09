@@ -20,7 +20,11 @@ function totalDebit(entry: ApprovalEntry): number {
   return entry.postings.reduce((s, p) => s + p.debitCents, 0);
 }
 
-/** The editable snapshot of a draft, rebuilt from its persisted legs. */
+/**
+ * The editable snapshot of a draft, rebuilt from its persisted legs — **tags included**.
+ * `updateDraft` rewrites every leg and `posting_dimensions` cascades on delete, so whatever
+ * is NOT carried here is destroyed on save.
+ */
 function toDraftValue(entry: ApprovalEntry): JournalEntryDraftValue {
   return {
     date: entry.date.slice(0, 10),
@@ -29,6 +33,7 @@ function toDraftValue(entry: ApprovalEntry): JournalEntryDraftValue {
       accountCode: p.account.code,
       debitCents: p.debitCents,
       creditCents: p.creditCents,
+      ...(p.dimensions?.length ? { dimensions: p.dimensions } : {}),
     })),
   };
 }
@@ -460,14 +465,6 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
               : t('approvals.editor.create', 'Criar rascunho')
           }
           busyLabel={t('approvals.editor.saving', 'Salvando…')}
-          notice={
-            editing.entry
-              ? t(
-                  'approvals.editor.dimensionsNotice',
-                  'A edição reescreve todas as partidas. As etiquetas de dimensão não são devolvidas pela leitura do lançamento — se este rascunho tinha alguma, selecione-a novamente antes de salvar.',
-                )
-              : undefined
-          }
           submit={async (value) => {
             const entry = editing.entry;
             if (entry) {

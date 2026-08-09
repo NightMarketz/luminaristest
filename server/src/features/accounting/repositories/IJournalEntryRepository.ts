@@ -39,8 +39,25 @@ export interface JournalEntryCasData {
 /** A JournalEntry with its postings eagerly loaded. */
 export type JournalEntryWithPostings = JournalEntry & { postings: Posting[] };
 
-/** A Posting with its account code and name (for list-entries response). */
-export type PostingWithAccount = Posting & { account: Pick<Account, 'code' | 'name'> };
+/**
+ * A Posting with its account code and name (for list-entries response), plus — when the
+ * read asked for them — the leg's dimension tags (INCR-DIM).
+ *
+ * `dimensions` is OPTIONAL on purpose: only the reads that feed an *editor* pay for the
+ * join (`findManyByUnit`, `findManyByStatus`). The export/report reads (`findManyForExport`)
+ * deliberately do not, because nothing downstream of them re-writes the legs.
+ *
+ * Why it exists at all: `EntryApprovalService.updateDraft` rewrites every leg
+ * (`deleteByEntryId` + `writeLegs`), and `PostingDimension.posting` is `onDelete: Cascade`.
+ * If the read does not return the tags, the editor cannot send them back and the edit
+ * silently DROPS them. The pair (not just the value) is returned because the client keys its
+ * picker by axis, and `definitionId` is already denormalized on the row for exactly this kind
+ * of use.
+ */
+export type PostingWithAccount = Posting & {
+  account: Pick<Account, 'code' | 'name'>;
+  dimensions?: Array<{ definitionId: string; valueId: string }>;
+};
 
 /** A JournalEntry with postings that include account info. */
 export type JournalEntryWithFullPostings = JournalEntry & { postings: PostingWithAccount[] };

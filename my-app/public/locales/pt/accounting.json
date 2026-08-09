@@ -1076,8 +1076,7 @@
       "editTitle": "Editar Rascunho",
       "create": "Criar rascunho",
       "save": "Salvar rascunho",
-      "saving": "Salvando…",
-      "dimensionsNotice": "A edição reescreve todas as partidas. As etiquetas de dimensão não são devolvidas pela leitura do lançamento — se este rascunho tinha alguma, selecione-a novamente antes de salvar."
+      "saving": "Salvando…"
     },
     "actionModal": {
       "cancel": "Voltar",

@@ -191,4 +191,57 @@ describe('EntryApprovalsPanel', () => {
       ),
     );
   });
+
+  // Regressão: editar um rascunho etiquetado APAGAVA as etiquetas de dimensão.
+  // `updateDraft` reescreve todas as pernas (`deleteByEntryId` + `writeLegs`) e
+  // `posting_dimensions` tem `onDelete: Cascade` — então o que a tela não devolve é destruído.
+  // A causa raiz era a LEITURA: `findManyByUnit` incluía só `account`, e sem a etiqueta no
+  // payload o editor não tinha como reenviá-la. Este teste falha se qualquer elo da cadeia
+  // (include do repo → tipo do serviço → `toDraftValue` → `toLines`) parar de carregar a tag.
+  it('an edit ROUND-TRIPS the legs dimension tags instead of dropping them', async () => {
+    const tagged = entry({ id: 'e-draft', status: 'Draft', version: 3 });
+    // Perna 1 etiquetada em dois eixos; perna 2 sem etiqueta (o caso misto é o que discrimina:
+    // um conserto que carimbasse todas as pernas com a mesma tag passaria num caso homogêneo).
+    tagged.postings[0].dimensions = [
+      { definitionId: 'cc', valueId: 'cc-vendas' },
+      { definitionId: 'proj', valueId: 'proj-alpha' },
+    ];
+
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [tagged], total: 1 });
+    vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(accountingService.getAccounts).mockResolvedValue({
+      accounts: [
+        { id: 'a1', code: '4.1.1', name: 'Aluguel', nature: 'Expense', acceptsEntries: true },
+        { id: 'a2', code: '1.1.1', name: 'Caixa', nature: 'Asset', acceptsEntries: true },
+      ],
+    });
+    vi.mocked(entryApprovalsService.updateDraft).mockResolvedValue(tagged);
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Editar')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Editar'));
+    await waitFor(() => expect(screen.getByText('Editar Rascunho')).toBeInTheDocument());
+
+    // Salva SEM tocar em nenhum seletor — é exatamente o gesto que perdia as etiquetas.
+    fireEvent.click(screen.getByText('Salvar rascunho'));
+
+    await waitFor(() =>
+      expect(entryApprovalsService.updateDraft).toHaveBeenCalledWith(
+        'e-draft',
+        expect.objectContaining({
+          lines: [
+            {
+              accountCode: '4.1.1',
+              debitCents: 150000,
+              creditCents: 0,
+              dimensions: ['cc-vendas', 'proj-alpha'],
+            },
+            // Perna sem etiqueta continua SEM a chave — o payload não inventa tag.
+            { accountCode: '1.1.1', debitCents: 0, creditCents: 150000 },
+          ],
+        }),
+      ),
+    );
+  });
 });
