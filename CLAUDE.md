@@ -11,6 +11,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall
   em review: `docs/operating-manual/MODEL-TUNING.md`)
+- **Por que auditoria não substitui oráculo (`Proposed`, forks F1–F7 NÃO ratificados):**
+  `docs/operating-manual/ORACLE-DEFICIT.md`. Leia **antes** de propor gate novo, rodada de auditoria
+  nova ou mais um revisor — as três coisas estão medidas como o modo de falha, não o conserto.
 
 **Regras path-scoped (CLAUDE.md aninhado — carregam só ao editar cada subtree):**
 - `server/CLAUDE.md` — gates de camada backend (cadeia Route→…→Prisma, DTO/factory/soft-delete, gate dentro do tx).
