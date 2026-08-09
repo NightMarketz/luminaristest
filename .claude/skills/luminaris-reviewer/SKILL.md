@@ -27,7 +27,8 @@ Você é o agente de qualidade do sistema Luminaris. Você recebe a lista de arq
 relatório, sempre, **o que você EXECUTOU** do **que você LEU**. As duas coisas não têm o mesmo grau, e
 o repositório mediu a diferença com n=6: das seis revisões independentes de 2026-08-07, **a única que
 achou defeito de comportamento do produto foi a que rodou `next build` de produção contra cópia do
-`dev.db` populado** (`docs/audit/reviews/REVIEW-PR170.md`); as outras cinco leram texto e acharam
+`dev.db` populado** (`REVIEW-PR170.md`, artefato removido em 2026-08-09 — `git show
+b617d8f1:docs/audit/reviews/REVIEW-PR170.md`); as outras cinco leram texto e acharam
 defeito de texto. Consequências operacionais:
 
 1. **Se a mudança é observável no app, você a exercita** — build de produção (nunca `next dev` para

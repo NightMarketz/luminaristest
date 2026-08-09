@@ -1,6 +1,36 @@
 # Déficit de oráculo — por que o ciclo de cinco etapas não converge
 
-- **Status:** `Proposed` — nada aqui está ratificado. Os forks do §4 esperam decisão do dono, um a um.
+> ## ⚠️ DECISÃO TOMADA — 2026-08-09: a bancada foi DESLIGADA (F1→(d))
+>
+> O dono ratificou o **F1 opção (d)** e o **F2 opção (b)**, depois de a objeção deste documento ter
+> sido registrada e reafirmada. Foram removidos: `scripts/bancada-gate.mjs`,
+> `scripts/review-ledger-check.mjs`, **todo o `docs/audit/`** (34 arquivos, 16.691 linhas — as 5
+> triagens, os 9 relatórios de rodada, os 8 relatórios de revisão, o `REVIEW-LEDGER.jsonl`, o
+> `CONTINUACAO.md` e o `bancada.html`) e os dois passos correspondentes do `ci.yml`.
+>
+> **Toda citação a `docs/audit/**`, a `bancada-gate.mjs` e a `review-ledger-check.mjs` neste
+> documento — e em comentário de teste, ADR ou doc de arquitetura — é HISTÓRICA a partir de agora.**
+> Os arquivos existem em `b617d8f1` e são recuperáveis por `git show b617d8f1:<caminho>`. Nenhum
+> número deste documento foi recalculado: eles valem para o commit em que foram medidos, e é assim
+> que devem ser lidos.
+>
+> **O que NÃO foi removido, de propósito:** as ~3.100 linhas de teste que a bancada produziu (elas são
+> proteção de produto, não instrumento de auditoria), os consertos de implantação (`docker-compose.yml`,
+> `my-app/Dockerfile`) e este documento.
+>
+> **Regra permanente que sobrevive ao desligamento (F2b):** enquanto houver item do Bloco A do
+> `ACCOUNTING-MASTER-MAP.md` com **oráculo externo** aberto há mais de 14 dias, **não se monta
+> aparato de auditoria novo** — nem gate, nem rodada, nem mais um revisor. Hoje são **4 de 4** abertos.
+>
+> **O custo desta decisão, declarado e não arredondado:** o §4/F1(d) avaliou e **rejeitou** esta opção,
+> e a razão continua verdadeira — a classe *quebra de inquilino / controle de acesso* escapa de revisão
+> de código em ~88% dos casos, e a única coisa que a pegou aqui foi mutação dirigida. **Essa capacidade
+> foi desligada.** Se ela voltar a ser necessária, o caminho é reconstruir a partir de `b617d8f1`, não
+> do zero.
+
+- **Status:** ~~`Proposed`~~ → **F1(d) e F2(b) RATIFICADOS em 2026-08-09**; F3, F5, F6 e F7 caducaram
+  junto com o aparato que eles emendavam; **F4 (comprar o oráculo) segue aberto e é a única coisa que
+  restou da proposta.**
 - **Data:** 2026-08-09 · **Commit da medição:** `7e22f9b0` (tip de `main` no momento em que tudo abaixo foi executado).
 - **Autor:** claude-opus-5, sessão de pesquisa e desenho. **Nenhum gate, teste ou artefato de auditoria
   foi alterado** — este documento é a única adição.

@@ -62,7 +62,7 @@ jobs:
       # violação silenciada por inline config (`/* eslint <regra>: "off" */`), que não deixa
       # marcador nenhum. Roda AQUI e não em job próprio: precisa do node_modules que este job
       # já instalou, e assim herda o required status check deste contexto.
-      # Origem: dimensão C5 do instrumento AV-L1 (docs/audit/bancada.html).
+      # Origem: dimensão C5 do instrumento AV-L1 (bancada removida em 2026-08-09; ver `b617d8f1`).
       - name: Debt ledger matches spec (governance C5)
         run: node ../scripts/debt-ledger-check.mjs --root server
 
@@ -163,13 +163,9 @@ jobs:
     name: Governance – OPS-001 layer present
     runs-on: ubuntu-latest
     steps:
-      # fetch-depth: 0 — `review-ledger-check.mjs` imprime a razão declarado/merges, e
-      # `git log --merges` num checkout shallow devolveria um número ERRADO em silêncio (o
-      # script detecta shallow e OMITE o número em vez de estimar, mas a resposta certa é
-      # dar-lhe a história). Mesmo custo já aceito pelo job `zinc-guard` deste arquivo.
+      # `fetch-depth: 0` foi removido em 2026-08-09 junto com a bancada: o único passo que
+      # precisava da história inteira era o `review-ledger-check.mjs`, que não existe mais.
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Assert operating-gates layer exists
         shell: bash
@@ -181,48 +177,6 @@ jobs:
           grep -q "Gates de envio OPS-001" .claude/skills/luminaris-implementer/SKILL.md || { echo "::error::implementer SKILL.md sem 'Gates de envio OPS-001'."; fail=1; }
           [ "$fail" = 0 ] && echo "OK: camada de governança OPS-001 presente."
           exit "$fail"
-
-      # Runtime para o passo seguinte. Este job era checkout+bash puro; `node` não estava
-      # garantido nele, e a convenção deste arquivo é pinar a versão em vez de herdar a da
-      # imagem do runner. Sem `cache: npm`: o gate abaixo não instala nada.
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # Gate da BANCADA aplicada a si mesma — 16 checagens que reprovam (B1..B9 e B11..B17;
-      # B10 só emite aviso) sobre
-      # docs/audit/bancada.html e os JSON de docs/audit/ (envelope auditoria/1.1, triagem/1.0,
-      # srcId que resolve, bloco órfão, isenção 4b/6b com lastro).
-      # Origem: item 6 de docs/audit/CONTINUACAO.md — o script existia e não rodava em lugar
-      # nenhum além da mão de quem lembra, que é a mesma classe do achado F4 do R1 (barreira
-      # declarada sem rastro executável) aplicada à própria bancada.
-      # Roda AQUI, e não junto do irmão `debt-ledger-check.mjs`: aquele mora nos jobs server/
-      # my-app porque PRECISA do node_modules que eles instalam — este só usa builtins do Node
-      # e lê docs/audit/ + scripts/, então prendê-lo a um `npm ci` de que não depende faria a
-      # falha de instalação alheia mascarar o gate. Este job é o mais barato do arquivo
-      # (checkout + bash) e já é um status check de governança.
-      # Sem filtro de `paths`: uma mudança em scripts/ quebra o gate sem tocar docs/audit/, e
-      # filtrar por caminho deixaria passar exatamente essa quebra. O workflow roda em todo
-      # push/PR — mantido assim de propósito.
-      - name: Bancada aplicada a si mesma (AV-00 · 16 checagens)
-        run: node scripts/bancada-gate.mjs
-
-      # Razão de revisão independente — um veredito declarado POR PR.
-      # Origem: achado R1 F4 `revisao-independente-sem-artefato-por-merge`
-      # (TRIAGEM-R1-R3.json, rank 6; 9 menções em prosa contra 207 merges). O `barrier_note`
-      # da triagem já concluía que «a barreira que falta é de REGISTRO, não de ferramenta»:
-      # nenhum passo deste arquivo exigia artefato de revisão.
-      # O gate NÃO exige aprovação — `sem_revisao_independente` é veredito legítimo da lista
-      # fechada. Ele converte AUSÊNCIA DE DECLARAÇÃO em DECLARAÇÃO DE AUSÊNCIA e reprova
-      # registro ambíguo (PR duplicado), auto-revisão (reviewer == implementer, §9.4) e
-      # artefato apontando caminho que não existe.
-      # Mora neste job pela mesma razão do irmão acima: só usa builtins do Node e lê
-      # docs/audit/ + git, então não depende de nenhum `npm ci` cuja falha o mascararia.
-      - name: Revisão independente declarada por PR (R1 F4)
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: node scripts/review-ledger-check.mjs
 
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes
   # (contrato §4: superfícies dark = neutral-*). Em vez de reprovar nelas (refactor =

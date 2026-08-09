@@ -11,9 +11,22 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall
   em review: `docs/operating-manual/MODEL-TUNING.md`)
-- **Por que auditoria não substitui oráculo (`Proposed`, forks F1–F7 NÃO ratificados):**
-  `docs/operating-manual/ORACLE-DEFICIT.md`. Leia **antes** de propor gate novo, rodada de auditoria
-  nova ou mais um revisor — as três coisas estão medidas como o modo de falha, não o conserto.
+- **Por que auditoria não substitui oráculo:** `docs/operating-manual/ORACLE-DEFICIT.md`.
+
+## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
+
+Removidos: `scripts/bancada-gate.mjs`, `scripts/review-ledger-check.mjs`, todo o `docs/audit/`
+(34 arquivos) e os dois passos do `ci.yml`. **Não os recrie.** Recuperáveis em `b617d8f1`.
+
+**Regra permanente:** enquanto houver item do Bloco A do `ACCOUNTING-MASTER-MAP.md` com **oráculo
+externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de auditoria novo** — nem
+gate, nem rodada, nem mais um revisor. A medida que fundamenta isso: 5 rodadas, 31 itens triados, **17
+sobre o próprio instrumento**, **0 linha de código de aplicação alterada** — contra 28 linhas de uma
+única sessão de navegador contra o `dev.db` real. O gargalo é PVA / NF-e real / contador / implantar,
+e nenhum deles se resolve com mais processo.
+
+**Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
+mais; use `git show b617d8f1:<caminho>` se precisar.
 
 **Regras path-scoped (CLAUDE.md aninhado — carregam só ao editar cada subtree):**
 - `server/CLAUDE.md` — gates de camada backend (cadeia Route→…→Prisma, DTO/factory/soft-delete, gate dentro do tx).

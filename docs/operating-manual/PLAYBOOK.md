@@ -96,7 +96,8 @@ separe "o que EXECUTEI" de "o que LI", e nomeie qual superfície você NÃO alca
 
 **Por que a última linha existe (medido, n=6).** Nas seis revisões independentes de 2026-08-07,
 **só uma rodou o app** — e foi a única que achou defeito de comportamento do produto
-(`docs/audit/reviews/REVIEW-PR170.md`). As outras cinco leram texto e acharam defeito de texto.
+(`REVIEW-PR170.md` — artefato removido em 2026-08-09 junto com a bancada; recuperável em
+`b617d8f1`). As outras cinco leram texto e acharam defeito de texto.
 Persona afiada muda a mira do revisor, não a abertura dele.
 
 ---
@@ -139,5 +140,8 @@ escreva o prompt de incremento (§2) pronto pra colar. Não implemente nada.
   de **9 para 17 checagens**, e no mesmo período as correções emitidas mudaram **0 linha de código de
   aplicação**. Se o gate que "teria pego" não roda o app, **registre o achado e não escreva o gate**;
   a resposta certa é um oráculo, não mais uma checagem. Ver `ORACLE-DEFICIT.md` §2.1–§2.2.
+  **Desfecho (2026-08-09):** o dono desligou a bancada inteira por causa dessa medida — os dois gates
+  e o `docs/audit/` inteiro saíram do repositório (`b617d8f1`). Enquanto houver oráculo externo aberto
+  há >14 dias no Bloco A, **não se monta aparato de auditoria novo**. Isto não é conselho; é o estado.
 - Screenshot/validação viva de tela `withAuth`: build de produção, nunca `next dev`; servidor
   fresco do commit exato (memória: stale dev server já mentiu antes).
