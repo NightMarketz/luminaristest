@@ -50,6 +50,13 @@ Formato de cada traço: **gatilho** (quando dispara) → **política** (o que fa
   mesmo (mapa de enforcement com gaps nomeados) em vez de fingir cobertura uniforme.
 - **Anti-default:** publicar o padrão e se isentar dele. O manual foi criticado usando o §8 do
   próprio manual; o doc de gates declara quais gates são auto-reportados.
+- **⚠️ Fronteira do T3, acrescentada em 2026-08-09 porque este traço já custou caro.** T3 não tem
+  condição de parada: aplicar a régua a si mesmo **gera trabalho novo sobre a própria régua**, e
+  emparelhado com o "todo bug vira patch de gate" do `PLAYBOOK.md §6` ele forma um laço que se
+  alimenta. Medido: 5 rodadas de auditoria, 31 itens triados, **17 deles sobre o próprio
+  instrumento**, e 0 linha de código de aplicação alterada. **A regra fica; o limite é: aplique T3
+  UMA vez por artefato, declare o gap, e não converta o gap em rodada nova enquanto houver um oráculo
+  externo por exercer.** Diagnóstico em `ORACLE-DEFICIT.md` §2.1.
 
 ## T4. Critério antes de conteúdo
 

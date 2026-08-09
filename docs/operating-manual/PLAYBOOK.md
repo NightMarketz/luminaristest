@@ -88,7 +88,17 @@ Leia apenas o diff, o handoff (se houver) e .claude/skills/luminaris-reviewer/SK
 Re-derive tudo (tsc server+my-app, wiring gate, checklists por camada). Sem handoff OPS-001
 rotulado = FAIL de forma. Cobertura antes de filtro: reporte TODO achado com confiança +
 severidade. Não corrija nada — reporte e devolva.
+
+SE a mudança for observável no app: RODE-A. Build de produção contra cópia do dev.db real
+(nunca `next dev` para tela atrás de withAuth), caminho feliz E caminho de erro. No relatório,
+separe "o que EXECUTEI" de "o que LI", e nomeie qual superfície você NÃO alcançou.
 ```
+
+**Por que a última linha existe (medido, n=6).** Nas seis revisões independentes de 2026-08-07,
+**só uma rodou o app** — e foi a única que achou defeito de comportamento do produto
+(`REVIEW-PR170.md` — artefato removido em 2026-08-09 junto com a bancada; recuperável em
+`b617d8f1`). As outras cinco leram texto e acharam defeito de texto.
+Persona afiada muda a mira do revisor, não a abertura dele.
 
 ---
 
@@ -124,6 +134,14 @@ escreva o prompt de incremento (§2) pronto pra colar. Não implemente nada.
   sessão DEPOIS de verificado).
 - Revisor nunca é a sessão que implementou (norma dura da casa).
 - Todo bug que escapar: pergunte "qual gate teria pego?" e transforme em patch de gate/skill —
-  foi assim que P3/P4 nasceram.
+  foi assim que P3/P4 nasceram. **Com uma condição, acrescentada em 2026-08-09 e medida:** só vale a
+  pena se o gate proposto **lê o APP**. Gate que lê texto sobre o app aumenta a superfície a auditar
+  sem mover o produto — entre 2026-08-02 e 08-08 o `bancada-gate.mjs` foi de **217 para 822 linhas** e
+  de **9 para 17 checagens**, e no mesmo período as correções emitidas mudaram **0 linha de código de
+  aplicação**. Se o gate que "teria pego" não roda o app, **registre o achado e não escreva o gate**;
+  a resposta certa é um oráculo, não mais uma checagem. Ver `ORACLE-DEFICIT.md` §2.1–§2.2.
+  **Desfecho (2026-08-09):** o dono desligou a bancada inteira por causa dessa medida — os dois gates
+  e o `docs/audit/` inteiro saíram do repositório (`b617d8f1`). Enquanto houver oráculo externo aberto
+  há >14 dias no Bloco A, **não se monta aparato de auditoria novo**. Isto não é conselho; é o estado.
 - Screenshot/validação viva de tela `withAuth`: build de produção, nunca `next dev`; servidor
   fresco do commit exato (memória: stale dev server já mentiu antes).

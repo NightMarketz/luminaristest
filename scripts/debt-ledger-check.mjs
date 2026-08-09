@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Gate C5 — dívida SUPRIMIDA (medida pelo ESLint) × dívida DECLARADA (bloco no spec).
 //
-// Origem: dimensão C5 do instrumento AV-L1 (docs/audit/bancada.html), extraída para CI.
+// Origem: dimensão C5 do instrumento AV-L1, extraída para CI. (A bancada que a originou foi
+// removida em 2026-08-09 — `git show b617d8f1:docs/audit/bancada.html`. Este script NÃO fazia
+// parte dela: mora nos jobs server/my-app, depende de node_modules e continua vivo.)
 //
 // POR QUE ESTE SCRIPT NÃO PROCURA TEXTO. Duas versões anteriores varriam o código atrás
 // de `-- DEBT:` com regex, e duas rodadas de review adversarial as reprovaram: regex não

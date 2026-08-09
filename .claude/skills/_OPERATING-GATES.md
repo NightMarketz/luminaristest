@@ -105,6 +105,28 @@ e o resultado vale. O recíproco vale para o filtro positivo que voltou vazio.
 > real como lixo. Um teste de suspeita escrito como teste decisivo é a mesma falha que a regra descreve:
 > um instrumento devolvendo veredito onde só cabia um sinal.
 
+### Mordida por mutação promove *observação*, não *captura*
+
+Matar um mutante prova que **existe pelo menos um teste que observa aquela linha**. Não prova que a
+suíte pegaria o defeito real correspondente — e a diferença é grande o bastante para mudar o grau:
+
+| Claim | Grau que a mordida sustenta |
+|---|---|
+| "esta linha está sob observação de algum teste" | **verificado** |
+| "a suíte pegaria um bug real aqui" | **inferido** — nunca `verificado` só pela mordida |
+
+Por quê, medido fora: **17% das faltas reais não acoplam a mutante nenhum** (dominadas por mudança de
+algoritmo e por *código que precisa ser deletado* — mutação só perturba o código que existe); a
+correlação entre `mutation_score` e detecção de falta real **cai de ~0,35–0,75 para ~0,05–0,20 quando o
+tamanho da suíte é controlado**; e o mesmo revisor mede **F1 0,847 sobre bug injetado por mutação
+contra 0,066 sobre PR real**. Referências em `docs/operating-manual/ORACLE-DEFICIT.md` §3.2.
+
+**Regra prática:** use mutação como **sonda de presença** (par discriminante: mata aqui, sobrevive
+ali) — que é uso correto e forte. **Não** publique `mutation_score` como "força da suíte" sem
+controlar tamanho, e **não** feche item de dano alto só com mordida: o defeito de omissão — a entrada
+que falta numa allowlist, a checagem que nunca foi escrita — não gera mutante para matar. Foi
+exatamente a classe do BUG-1 de `ACCOUNTING-MASTER-MAP.md §5.2`.
+
 **Evidência própria:** memória `rg-win32-backslash-quebra-filtro-de-caminho`; na varredura da R2 do
 `docs/architecture/lint-layer-gate.md` (2026-07-30) o filtro não-normalizado devolveria **19** arquivos
 como violação de camada, quando a resposta correta é **zero** — 16 são `lib/services/**` (a camada
