@@ -380,6 +380,14 @@ instruído a refutar, e um revisor instruído a refutar acha o que procura."* Re
 proibido de consertar, com vocabulário de um valor só: **o resultado 7/7 estava determinado antes da
 primeira revisão.**
 
+> **Nota de auto-aplicação, escrita depois de rodar o gate com a entrada deste próprio PR:** a
+> distribuição deixou de ser degenerada — `revisado_com_ressalva=7 · sem_revisao_independente=1`.
+> **Isso não refuta o argumento; ilustra-o.** O único jeito de o campo sair de 100% foi uma linha que
+> declara **ausência** de revisão — o ramo que o `[RL5]` proíbe justamente quando existe revisor. Ou
+> seja: entre os PRs *revisados*, a entropia continua zero, e o segundo valor só existe porque alguém
+> não foi revisado. Um campo que só discrimina quando o trabalho não é feito não é um campo de
+> veredito.
+
 E o §3.6 acrescenta a camada que este repositório não tinha como medir sozinho: a auto-preferência de
 juiz-LLM é dirigida por **familiaridade**, não por identidade — trocar de worktree não troca o viés — e
 o valor de um laço de crítica está quase todo no **bit de aceitar/rejeitar**, não no texto. Um razão com
