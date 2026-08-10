@@ -147,12 +147,37 @@ Para cada `Anti-exemplo: X (deletado)`:
 - **FAIL** se a contagem passou do baseline no STATE → algum gerador está cuspindo clone do canônico; aperta o checklist de reuso daquele gerador. (Pegou `formatTimestamp` ×3, `FinanceService` gêmeo.)
 
 ### G5 — §2.1 respeitado no canon (objetivo onde o grafo enxerga)
+
+> ⚠️ **NÃO ENFORÇADO (registro, 2026-08-10).** Este gate está **declarado, nunca executado**: o
+> `governance-check` só valida que a string do comando não está vazia (`skill-audit.mjs:318`), e o
+> runner nunca roda um `gates[].command`. O job `skill-governance` do CI passa sem exercê-lo.
+> Detalhe e decisão em [`governance/coverage.md`](../../../governance/coverage.md) (Matriz, nota).
+> **Não conserte isoladamente** — ver a nota do G6 abaixo.
+
 A única trava do §2.1 detectável no grafo/source é a **self-relation** (as outras três são design-time → P6). Baseline = **0** (nenhum preset hoje aponta relation pra própria tabela):
 - `search_code("targetTable: '@@PRESET_TABLE_KEY::", mode=content)` sobre `server/.../presets/modules/**` → para cada hit, comparar a `<internalName>` do `targetTable` com a tabela do módulo que o declara.
 - **FAIL** se algum preset referencia a **própria** tabela (self-relation embarcou no canon, apesar de não-suportada) → patch: trocar por hierarquia codificada (`code` prefix) + ajustar a skill `dynamic-table-preset` se foi ela que ensinou.
 - Sem baseline novo: qualquer self-relation > 0 é FAIL direto.
 
 ### G6 — §2.1 Metade-B: routing & injeção (a outra metade, que P6/G5 NÃO cobrem)
+
+> ⚠️ **NÃO ENFORÇADO (registro, 2026-08-10) — e o grep abaixo, como escrito, não discrimina.**
+> Dois defeitos independentes, medidos:
+> 1. **Nunca executado.** Igual ao G5: `governance-check` valida presença de string
+>    (`skill-audit.mjs:318`); o runner nunca roda um `gates[].command`. O CI nunca o exerceu.
+> 2. **Não discrimina.** Rodado hoje, o grep volta **1 hit**, e o hit é
+>    `server/src/features/dynamicTables/__tests__/no-accounting-imports.boundary.test.ts` — o
+>    próprio teste que enforça a regra, que nomeia os tokens proibidos de propósito. O gate como
+>    escrito reprovaria uma árvore limpa. O teste jest se auto-exclui (linha 34); o grep não.
+>
+> **Não conserte um sem o outro.** Corrigir só o grep produz um gate que parece consertado e segue
+> inerte (sai do radar); implementar só a execução liga um gate que reprova árvore limpa. Os dois
+> entram juntos, quando o Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 fechar (moratória do
+> `CLAUDE.md`). Decisão registrada em [`governance/coverage.md`](../../../governance/coverage.md).
+>
+> **A regra `AC-2.1-B1` não está desprotegida:** quem a guarda hoje é o teste jest acima, que roda
+> no job `Server – typecheck & test` e é gate mais forte que este grep jamais foi.
+
 P6/G5 cobrem só os **limites de plataforma** do §2.1 (money/self-relation/unique/delete). A metade de **routing & injeção** — onde o incidente real aconteceu — precisa de trava própria:
 - **Injeção no motor (objetivo):** `search_code("PostingService\|PayrollService\|FiscalService", mode=files)` restrito a `server/src/features/dynamicTables/**` + qualquer `RulePlugin`/`RuleContext`/`RuleTypes` → **deve ser vazio**. Qualquer hit = serviço Prisma first-class injetado no engine = **FAIL direto** (foi exatamente o incidente). Patch: mover a integração para controller/serviço de integração + remover a injeção.
 - **Mis-route do orquestrador (objetivo):** ler a tabela de sinais de `luminaris-orchestrator` → nenhuma linha pode rotear `"módulo ERP"`/invariante (contábil/folha/fiscal/RH) para `dynamic-table-preset-generator` sem o gate STEP 0. **FAIL** se "ERP" mapeia para o motor sem o teste binário §2.1. Patch: re-rotear para `fullstack-feature-generator`.

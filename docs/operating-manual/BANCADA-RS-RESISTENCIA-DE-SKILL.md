@@ -242,11 +242,46 @@ fronteira que enforça a regra** — o gate como escrito reprova uma árvore lim
 `grep -n "dynamicTables\|PostingService" skill-audit.mjs` → **vazio**: o G6 **não está implementado
 no CLI**, só no protocolo do agente, então o job `skill-governance` do CI nunca o exerceu.
 
-- **Grau:** verificado (os dois comandos acima, 2026-08-10).
-- **Patch proposto (1 linha, NÃO aplicado):** excluir `**/__tests__/**` do escopo do G6 em
-  `.claude/skills/skill-audit/SKILL.md:157`.
-- **Por que não apliquei:** é patch em instrumento existente, fora do pedido; e o próprio
-  `skill-audit` opera como "propõe, humano aprova". Fica como item de aprovação, não como commit.
+**O defeito é maior do que "o grep não discrimina" — são dois, e o segundo alcança o G5.** O
+`governance-check` **nunca executa** um `gates[].command`; ele valida que a string não está vazia:
+
+```js
+// skill-audit.mjs:318 — gateTargetExists()
+if (gate.type === 'command') return t.trim().length > 0; // comando: presença basta no check estrutural
+```
+
+`execSync` no runner aparece três vezes (`:161`, `:556`, `:833`) — `git rev-parse`,
+`git diff --name-only` e os scripts co-localizados. Nenhuma roda um gate declarado. Logo **todo
+gate `kind: executable` do repo está declarado e nunca exercido**: `skill-audit/G6` (`AC-2.1-B1`) e
+`skill-audit/G5` (`AC-2.2-3`). O ✅ "executável (grep)" de `governance/coverage.md` era presença de
+string vestida de cobertura executável.
+
+**Decisão do dono (2026-08-10): não aprovar o patch; marcar como NÃO ENFORÇADO.** Um patch de uma
+linha não resolve dois defeitos — consertar só o grep produz um gate que *parece* consertado e
+segue inerte (pior, porque sai do radar); implementar só a execução liga um gate que hoje reprova
+árvore limpa. Os dois entram juntos, quando o Bloco A fechar.
+
+Registro aplicado nesta branch (registro, não gate — não viola a moratória):
+
+| Arquivo | O que mudou |
+|---|---|
+| `governance/coverage.md` | `AC-2.1-B1` e `AC-2.2-3` saem de ✅ coberto para ⚠️ **NÃO ENFORÇADO**; nota explicando o que "executável (grep)" significa hoje; novo item na legenda; emenda à seção "A prova de que o modelo pega o drift" (ela provava captura de regra **órfã**, não de violação) |
+| `governance/coverage.md` (cabeçalho) | correção de proveniência: a página dizia "não é editado à mão, é projeção do `governance-check`" — falso, o runner só escreve `coverage-auto.md` e `INVENTORY.md` |
+| `skill-audit/SKILL.md` §G5, §G6 | bloco ⚠️ **NÃO ENFORÇADO** em cada gate, com os dois defeitos e o "não conserte um sem o outro". O grep **não** foi tocado |
+
+**A regra `AC-2.1-B1` não ficou desprotegida** — e isso importa para não ler "NÃO ENFORÇADO" como
+"regra sem guarda". Quem a enforça é `no-accounting-imports.boundary.test.ts`, que roda no job
+`Server – typecheck & test` e **se auto-exclui** (`:34`) — exatamente a discriminação que falta ao
+grep do G6. O gate nomeado está errado; a regra está guardada por algo melhor. Reapontar o campo
+`gate:` do `governance.md` é parte do patch diferido, não do registro.
+
+`AC-2.2-3` (self-relation) **não** tem cobertura substituta conhecida — está registrada como tal.
+
+- **Grau:** verificado. `skill-audit run` antes e depois do registro: saída **byte-idêntica**, 9
+  `CONTROL_FAILED` nos dois casos (`_ast-harness`/AST, pré-existentes — `server/node_modules`
+  ausente nesta sessão; o mesmo job passa verde no CI, que instala as deps). `self-check íntegro`,
+  zero `AUDITOR_SELF_CHECK_FAILED`/`GATE_TARGET_NOT_FOUND`/`BROKEN_REFERENCE`. O registro
+  introduziu **0 findings**.
 
 ---
 
@@ -288,10 +323,16 @@ Ordem de entrada quando desbloquear — **não** os 5 instrumentos, e **não** 5
 4. **Nunca 5 rodadas de tudo.** 5 rodadas valem para o instrumento cuja métrica é dispersão (RS-3).
    Para os demais, a primeira rodada honesta vale mais que cinco auto-administradas.
 
-**Alvo prioritário quando rodar:** a regra **CM-12** (`withAuth` contra build de produção). É a
-única da classe `OBSERVÁVEL: NENHUM` que guarda um modo de falha de produto — e o Bloco A item 4 já
-mostrou que o custo dessa classe é real (2 bugs de runtime achados na varredura de browser de
-2026-07-23, PR #151, contra 0 achados por instrumento no mesmo período).
+**Fura a fila, decisão do dono (2026-08-10): CM-12 vem antes de qualquer instrumento da bancada,
+inclusive do RS-3.** `withAuth` verificado contra build de produção é a única das 9 regras sem
+observável cuja falha é de **produto**, não de processo — *"um check de build vale mais que cinco
+provas sobre skills"*. O Bloco A item 4 já mediu o custo dessa classe: 2 bugs de runtime achados na
+varredura de browser de 2026-07-23 (PR #151), contra 0 achados por instrumento no mesmo período.
+Ordem final quando a moratória cair: **CM-12 → RS-3 → o resto, se ainda fizer sentido.**
+
+**Também diferido para essa janela** (agrupado porque é o mesmo trabalho): implementar a execução
+de `gates[].command` no runner **junto** com o fix do grep do G6 — os dois defeitos do §3.3, que
+não se consertam separados.
 
 ---
 
