@@ -251,15 +251,34 @@ if (gate.type === 'command') return t.trim().length > 0; // comando: presença b
 ```
 
 `execSync` no runner aparece três vezes (`:161`, `:556`, `:833`) — `git rev-parse`,
-`git diff --name-only` e os scripts co-localizados. Nenhuma roda um gate declarado. Logo **todo
-gate `kind: executable` do repo está declarado e nunca exercido**: `skill-audit/G6` (`AC-2.1-B1`) e
-`skill-audit/G5` (`AC-2.2-3`). O ✅ "executável (grep)" de `governance/coverage.md` era presença de
+`git diff --name-only` e os scripts co-localizados. Nenhuma roda um gate declarado.
+
+**É defeito de um *kind* inteiro, não de duas regras** — censo resolvido pelo próprio runner em
+`governance/coverage-auto.md` (269 mapeamentos, 34 `governance.md`): `eval:` **262**, `review:` **4**,
+`static:` **1**, `command:` **2**. Os dois `command:` são `AC-2.1-B1` (G6) e `AC-2.2-3` (G5) — ou
+seja, **2 de 2 gates executáveis do repo são inertes, 100% do kind**. "Executável" nunca significou
+executado, em nenhuma linha, desde sempre. O ✅ "executável (grep)" do `coverage.md` era presença de
 string vestida de cobertura executável.
 
 **Decisão do dono (2026-08-10): não aprovar o patch; marcar como NÃO ENFORÇADO.** Um patch de uma
 linha não resolve dois defeitos — consertar só o grep produz um gate que *parece* consertado e
 segue inerte (pior, porque sai do radar); implementar só a execução liga um gate que hoje reprova
-árvore limpa. Os dois entram juntos, quando o Bloco A fechar.
+árvore limpa.
+
+**Mas o débito real é UMA regra, e os dois consertos NÃO são um item só** (correção de 2026-08-10 —
+meu agrupamento anterior estava errado). Quase toda a classe é contabilidade:
+
+| Regra | Situação real | Conserto | Tamanho |
+|---|---|---|---|
+| `AC-2.1-B1` | **Guardada** pelo boundary test; o gate *nomeado* é que está errado | reapontar o campo `gate:` do `governance.md` para o teste que já roda | minutos — anda sozinho e cedo, é correção de registro errado, não aparato novo |
+| `AC-2.2-3` | **Descoberta**, sem substituto conhecido — **este é o débito** | verificador de verdade (teste, lint, ou execução no runner) | item próprio |
+
+Agrupá-los era erro de ordem de grandeza: reapontar é uma linha de frontmatter; fazer o runner
+executar `gates[].command` é **introduzir execução de comando arbitrário a partir de string parseada
+de markdown** — mecanismo novo, superfície própria, e exige decisão do dono sobre allowlist e sobre
+o que acontece quando o comando falha **por ambiente** e não por violação. Esse segundo caso não é
+hipotético: os 9 `CONTROL_FAILED` de `_ast-harness` numa sessão sem `server/node_modules` são
+exatamente ele. Agrupados, ou a janela incha ou a parte cara entra apressada atrás da barata.
 
 Registro aplicado nesta branch (registro, não gate — não viola a moratória):
 
@@ -330,9 +349,17 @@ provas sobre skills"*. O Bloco A item 4 já mediu o custo dessa classe: 2 bugs d
 varredura de browser de 2026-07-23 (PR #151), contra 0 achados por instrumento no mesmo período.
 Ordem final quando a moratória cair: **CM-12 → RS-3 → o resto, se ainda fizer sentido.**
 
-**Também diferido para essa janela** (agrupado porque é o mesmo trabalho): implementar a execução
-de `gates[].command` no runner **junto** com o fix do grep do G6 — os dois defeitos do §3.3, que
-não se consertam separados.
+**Os itens do §3.3, desagrupados** (não são o mesmo trabalho):
+
+| # | Item | Depende da moratória? | Ordem |
+|---|---|---|---|
+| i | Reapontar `gate:` de `AC-2.1-B1` para `no-accounting-imports.boundary.test.ts` | **Não** — corrige registro errado, não monta aparato | anda sozinho, cedo |
+| ii | **CM-12** — `withAuth` contra build de produção | sim | primeiro da janela |
+| iii | Execução de `gates[].command` no runner (+ fix do grep do G6, que só faz sentido junto) | sim | atrás do CM-12; exige decisão sobre allowlist e sobre falha-por-ambiente |
+| iv | RS-3 (lacuna injetada) | sim | depois do CM-12 |
+
+Corrigir só o grep do G6, isolado, segue proibido em qualquer ordem — produz gate que *parece*
+consertado e segue inerte.
 
 ---
 
