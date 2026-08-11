@@ -145,3 +145,38 @@ escreva o prompt de incremento (§2) pronto pra colar. Não implemente nada.
   há >14 dias no Bloco A, **não se monta aparato de auditoria novo**. Isto não é conselho; é o estado.
 - Screenshot/validação viva de tela `withAuth`: build de produção, nunca `next dev`; servidor
   fresco do commit exato (memória: stale dev server já mentiu antes).
+
+---
+
+## 7. Você não precisa ser o especialista (OPS-006)
+
+O dono deste repo não é dev sênior nem especialista em fiscal/contabilidade. Isso **não** é um limite
+do projeto — é uma divisão de trabalho que precisava estar escrita. A regra do agente está em
+`_OPERATING-GATES.md` **[OPS-006]**; o que muda do seu lado:
+
+**Três respostas que você sempre pode dar, e que fecham a pergunta:**
+
+1. **"Aceito o recomendado."** Toda pergunta tem de vir com recomendação. Isso é resposta completa,
+   não é abdicar.
+2. **"Não sei, isso é do contador."** Se a pergunta exige saber que conta debitar, qual CFOP, ou se
+   um aviso do PVA é grave — a pergunta foi mal formada. Devolver assim é o comportamento certo.
+3. **"Rodei e vi isto: `<cola o que apareceu>`."** Você fornece **observação**; o veredito é do
+   agente ou do contador. Nunca precisa julgar se o que você viu está certo.
+
+**Se você travar duas vezes na mesma frente, o problema é a fatia, não você.** Peça: *"reformula
+como consequência, não como opção técnica"*.
+
+### O que da fila trava em você — reclassificado
+
+Os quatro itens do Bloco A não têm o mesmo custo, e tratá-los como um bloco só é o que os manteve
+parados. Pela classificação do OPS-006 §1:
+
+| Bloco A | Tipo real | Precisa de especialista? |
+|---|---|---|
+| **4 — sign-offs de browser** (upload OFX/CNAB por clique, recibos PDF, carimbo final) | **acesso à realidade** — é clicar e olhar | **Não. Nenhum.** É o único item que você fecha sozinho hoje |
+| **5 — Chromium smoke-launch no deploy** | acesso à realidade | Não — só relevante no próximo deploy real |
+| **3 — sign-off no PVA** (ECD/Apuração/ECF) | **misto** — gerar+importar é seu; **julgar o que o PVA reclamar não é** | Só na 2ª metade. Sua parte: rodar e **colar a saída** |
+| **6 — arquivo oficial RFB "PJ em Geral"** | acesso à realidade (baixar um arquivo público) | **A verificar** — está registrado como "espera o contador", mas pode ser só um download. Vale confirmar antes de continuar esperando |
+
+**Ordem sugerida por isso:** 4 → 5 → 3 (só a metade que é sua) → 6. O item **4** é o que destrava
+mais e não exige nada que você não tenha.

@@ -6,7 +6,10 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
-- **Disciplina operacional do agente (OPS-001..004):** `.claude/skills/_OPERATING-GATES.md`
+- **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
+  (**[OPS-006]** — o dono não é dev sênior nem especialista fiscal/contábil: pergunta em
+  consequência, nunca em nome técnico; sempre com recomendação; conhecimento de domínio **não** se
+  pergunta a ele. Roteiro, nunca rótulo, em pedido de sign-off.)
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall

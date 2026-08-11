@@ -187,6 +187,62 @@ tabela de passos); ela não tem representação de fila, gate ou merge. Seu úni
 
 ---
 
+## [OPS-006] Pergunta decidível por quem decide
+
+O dono deste repo **não é dev sênior nem especialista em fiscal/contabilidade**. Toda pergunta
+formulada com o vocabulário do implementador transfere ao dono um custo que ele não tem como pagar —
+e o resultado não é uma decisão ruim, é uma **decisão adiada**. Metade do Bloco A está parada por
+isso, não por falta de código.
+
+**Regra:** uma pergunta ao dono só é válida se ele puder respondê-la **sem** o conhecimento que ele
+não tem. Se responder exige saber contabilidade, direito fiscal ou arquitetura interna, a pergunta
+está mal formada — reformule ou decida você e anote.
+
+### 1. Classifique o pedido antes de fazê-lo (é o passo que mais economiza)
+
+| Tipo | Exemplo | De quem é? |
+|---|---|---|
+| **Acesso à realidade** | uma NF-e real que a operação emitiu; o extrato do banco; o `dev.db`; clicar no upload | **Do dono — ninguém substitui.** É a contribuição única dele |
+| **Julgamento de negócio** | "a venda deve travar se faltar estoque?"; "cancelar devolve o dinheiro ou gera crédito?" | **Do dono.** Não exige domínio técnico, só saber como o negócio funciona |
+| **Conhecimento de domínio** | qual CFOP; que conta debitar; se o PVA reclamando X é grave | **NÃO é do dono.** É do contador, ou derivável de um artefato real. **Nunca pergunte isto a ele** |
+
+Domínio pedido ao dono volta como "não sei" ou, pior, como um palpite que vira decisão travada.
+
+### 2. Quatro partes obrigatórias em todo fork levado ao dono
+
+1. **A escolha em consequência, não em nome.** Nunca `F0→(a) ou (b)`. Diga o que muda para o
+   dinheiro, para o usuário da tela ou para o risco. O nome do fork vai entre parênteses, no fim.
+2. **Recomendação + uma linha de razão.** *"Aceito o recomendado"* é resposta válida e completa.
+3. **Custo de errar e reversibilidade.** Porta de mão única (migração destrutiva, arquivo fiscal
+   transmitido, dado real movido) → **pergunte**. Porta de mão dupla → **decida e anote**; é a
+   micro-autonomia já prescrita em `MODEL-TUNING.md §1`.
+4. **O que trava sem a resposta.** Se nada trava, não é pergunta — é nota de rodapé.
+
+### 3. Pedido de sign-off vira roteiro, nunca rótulo
+
+`"faça o sign-off de X"` não é acionável para quem não sabe o que X deveria mostrar. Formato obrigatório:
+
+```
+1. <comando ou clique exato, um por linha>
+2. ...
+Você deve ver: <o estado bom, descrito em português comum>
+Se vir outra coisa: cole aqui o que apareceu — o julgamento é meu, não seu.
+```
+
+A última linha é o ponto: o dono fornece **observação**, o agente (ou o contador) fornece **veredito**.
+Pedir que ele julgue é o erro de classificação do §1.
+
+### 4. Auto-aplicação (T3, uma vez, gap declarado)
+
+O observável desta regra é **presença**: um terceiro lê a pergunta e checa se as quatro partes estão
+lá e se o tipo do §1 foi declarado. Ninguém consegue verificar por fora se a *tradução* foi boa —
+isso só aparece quando o dono responde ou trava. **Portanto o sinal real é comportamental, não
+textual:** pergunta que voltou sem resposta por mais de uma sessão conta como OPS-006 violado,
+independentemente da forma. Se o dono responder "não sei" ou "você decide" duas vezes na mesma
+frente, a frente está mal fatiada — pare de perguntar e converta em decisão anotada.
+
+---
+
 ## Mapa regra → enforcement
 
 | Regra | O que enforça hoje | Gap conhecido |
@@ -196,6 +252,7 @@ tabela de passos); ela não tem representação de fila, gate ou merge. Seu úni
 | OPS-003 | CBM-001 já enforça a metade estrutural; revisor rejeita claim comportamental sem fonte. Sub-regra *instrumento que erra em silêncio*: auto-probe barato (o `-v` removeu alguma linha?) executável na hora | prosa livre não é lintável; e o auto-probe é **auto-reportado** — ninguém vê o comando que o agente rodou, só a conclusão. O revisor independente pega isto **apenas** se o relatório colar o comando junto do resultado |
 | OPS-004 | item 5 vira artefato obrigatório do relatório (FAIL de forma se ausente) | passos 1–4 são processo, não gate |
 | OPS-005 | **probe objetivo** (`gh pr list --state open` — a única OPS com fonte externa, não auto-reportada); estado da fila vira artefato do relatório | o revisor independente **não** vê a fila (revisa um diff, não o estado de PRs do repo) — quem abre a frente é quem conta |
+| OPS-006 | presença das 4 partes + do tipo (§1) no texto da pergunta; e o **sinal comportamental**: pergunta sem resposta há >1 sessão, ou dois "você decide" na mesma frente | a qualidade da *tradução* não é verificável por fora — só o dono travando revela. É a única OPS cujo sinal chega **depois** da falha, nunca antes |
 
 Gaps declarados de propósito (OPS-001 gate 5 aplicado a este próprio doc): a metade auto-reportada
 dessas regras só fecha com **review independente** (`reviewer-independence-separate-agent`) — que já é
