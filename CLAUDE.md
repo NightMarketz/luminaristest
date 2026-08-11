@@ -9,7 +9,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
   (**[OPS-006]** — o dono não é dev sênior nem especialista fiscal/contábil: pergunta em
   consequência, nunca em nome técnico; sempre com recomendação; conhecimento de domínio **não** se
-  pergunta a ele. Roteiro, nunca rótulo, em pedido de sign-off.)
+  pergunta a ele. Roteiro, nunca rótulo, em pedido de sign-off. **Toda decisão sai etiquetada
+  `C<n>·D<n>`** — categoria diz quem responde, nível diz quanta cerimônia; matriz completa em
+  `docs/operating-manual/DECISION-SCALE.md`.)
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall

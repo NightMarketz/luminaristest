@@ -166,6 +166,21 @@ do projeto — é uma divisão de trabalho que precisava estar escrita. A regra 
 **Se você travar duas vezes na mesma frente, o problema é a fatia, não você.** Peça: *"reformula
 como consequência, não como opção técnica"*.
 
+### O que o nível da pergunta significa pra você
+
+Toda pergunta chega etiquetada (`C<n> · D<n>` — escala em `DECISION-SCALE.md`). Você só precisa ler
+o **D**:
+
+| Etiqueta | O que se espera de você | Quanto tempo |
+|---|---|---|
+| **D1 · D2** | **Nada.** Não vira pergunta — eu decido e anoto. Se discordar depois, é barato reverter | 0 |
+| **D3** | Uma escolha, com recomendação pronta. *"Aceito o recomendado"* fecha | segundos |
+| **D4** | **Pare e leia.** Toca dado ou schema que já existe; desfazer é caro. Vem com ADR | minutos |
+| **D5** | **Nada sai daqui sem você.** Arquivo fiscal, dinheiro, dado a terceiro. Exige também um oráculo externo (contador/PVA) | o que precisar |
+
+E o **C** te diz de quem é a resposta — se vier **C3** (contábil/fiscal/legal), a pergunta está mal
+endereçada: é do contador, não sua. Devolver *"isso é C3, não é meu"* é o comportamento certo.
+
 ### O que da fila trava em você — reclassificado
 
 Os quatro itens do Bloco A não têm o mesmo custo, e tratá-los como um bloco só é o que os manteve

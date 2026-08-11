@@ -232,7 +232,31 @@ Se vir outra coisa: cole aqui o que apareceu — o julgamento é meu, não seu.
 A última linha é o ponto: o dono fornece **observação**, o agente (ou o contador) fornece **veredito**.
 Pedir que ele julgue é o erro de classificação do §1.
 
-### 4. Auto-aplicação (T3, uma vez, gap declarado)
+### 4. Escala — categoria (quem responde) × nível (quanta cerimônia)
+
+Versão comprimida; matriz completa, procedimento de classificação e exemplos em
+`docs/operating-manual/DECISION-SCALE.md`.
+
+| Categoria | Quem responde | | Nível (teste = reversibilidade) | Ação |
+|---|---|---|---|---|
+| **C1 Realidade** | dono — insubstituível | | **D5** sai do sistema (SPED/NF-e transmitida, dinheiro, terceiro) | para; confirmação nomeada **+ oráculo externo** |
+| **C2 Negócio** | dono | | **D4** toca dado/schema não-aditivo (migração destrutiva, `JournalEntry`/`Posting` postado) | para; **ADR + sinal humano** |
+| **C3 Domínio regulado** | **contador / fonte oficial — nunca o dono** | | **D3** aditivo mas visível (`ADD COLUMN` opcional, rota nova, validação nova) | propõe com recomendação; 1 pergunta |
+| **C4 Técnica** | agente, dentro do contrato | | **D2** reversível num commit, não toca dado | decide, anota e **mostra** |
+| **C5 Produto/UX** | agente em D1–D2, dono de D3 pra cima | | **D1** invisível, reversível em minutos | decide e anota (micro-autonomia) |
+
+Três regras que fazem a escala funcionar:
+1. **Na dúvida entre dois níveis, suba.** Errar pra cima custa uma pergunta; pra baixo, uma migração desfeita.
+2. **O nível é justificado por artefato nomeado, não asserido** — diga *o que* o diff toca. Nível sem
+   artefato é o defeito do OPS-003 (grau sem evidência).
+3. **C3 sem contador disponível** tem duas saídas, e nenhuma é perguntar ao dono: derivar de artefato
+   real (vira C1 — ele fornece, você lê a resposta nele), ou registrar como aberto com default
+   declarado. Nunca silenciosamente.
+
+> A célula **C3 × D4/D5** não tem saída interna — nem processo, nem gate, nem revisor a mais. É o
+> Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 e o diagnóstico do `ORACLE-DEFICIT.md`.
+
+### 5. Auto-aplicação (T3, uma vez, gap declarado)
 
 O observável desta regra é **presença**: um terceiro lê a pergunta e checa se as quatro partes estão
 lá e se o tipo do §1 foi declarado. Ninguém consegue verificar por fora se a *tradução* foi boa —
@@ -240,6 +264,12 @@ isso só aparece quando o dono responde ou trava. **Portanto o sinal real é com
 textual:** pergunta que voltou sem resposta por mais de uma sessão conta como OPS-006 violado,
 independentemente da forma. Se o dono responder "não sei" ou "você decide" duas vezes na mesma
 frente, a frente está mal fatiada — pare de perguntar e converta em decisão anotada.
+
+**Gap específico da escala (§4):** o **nível** é auditável — exige artefato nomeado, checável no
+diff por um terceiro. A **categoria** não é: ninguém verifica de fora que "isto é C4 técnica" quando
+era C2 negócio, e essa é a via pela qual a regra vira desculpa para não perguntar. Não há fechamento
+por instrumento; fecha com o dono dizendo *"isso era escolha minha"*. **Duas vezes = a categoria está
+sendo usada para evitar conversa, e a regra falhou.**
 
 ---
 
