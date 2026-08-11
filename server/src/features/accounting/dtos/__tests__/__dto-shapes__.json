@@ -1,0 +1,2564 @@
+{
+  "ClosingDto.ts": {
+    "CloseExerciseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "year"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "CounterpartyDto.ts": {
+    "CreateCounterpartySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "SUPPLIER",
+            "CUSTOMER"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "type",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ArchiveCounterpartySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListCounterpartiesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "SUPPLIER",
+            "CUSTOMER"
+          ]
+        },
+        "includeArchived": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "CounterpartyScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "DataExchangeDto.ts": {
+    "ExportRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "EXPORT_TRIAL_BALANCE",
+            "EXPORT_GENERAL_LEDGER",
+            "EXPORT_BALANCE_SHEET",
+            "EXPORT_INCOME_STATEMENT",
+            "EXPORT_TEMPLATE"
+          ]
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "csv",
+            "xlsx"
+          ]
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asOf": {
+          "type": "string"
+        },
+        "accountCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "templateKind": {
+          "type": "string",
+          "enum": [
+            "IMPORT_CHART_OF_ACCOUNTS",
+            "IMPORT_OPENING_BALANCES",
+            "IMPORT_JOURNAL_ENTRIES"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "format",
+        "unitId"
+      ]
+    },
+    "JobScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ImportUploadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "IMPORT_CHART_OF_ACCOUNTS",
+            "IMPORT_OPENING_BALANCES",
+            "IMPORT_JOURNAL_ENTRIES"
+          ]
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "unitId"
+      ]
+    },
+    "CommitImportSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "TemplateKindSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "IMPORT_CHART_OF_ACCOUNTS",
+        "IMPORT_OPENING_BALANCES",
+        "IMPORT_JOURNAL_ENTRIES"
+      ]
+    }
+  },
+  "DimensionDto.ts": {
+    "CreateDimensionDefinitionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "unitId",
+        "code",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "CreateDimensionValueSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "definitionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "parentId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "definitionId",
+        "code",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "ArchiveDimensionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListDimensionsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "includeArchived": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "DimensionReportQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "definitionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "definitionId"
+      ]
+    }
+  },
+  "DocumentAttachmentDto.ts": {
+    "UploadDocumentAttachmentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "targetType": {
+          "default": "JOURNAL_ENTRY",
+          "type": "string",
+          "const": "JOURNAL_ENTRY"
+        },
+        "targetId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "unitId",
+        "targetId"
+      ]
+    },
+    "ListDocumentAttachmentsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "targetType": {
+          "default": "JOURNAL_ENTRY",
+          "type": "string",
+          "const": "JOURNAL_ENTRY"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "DocumentAttachmentScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "EntryApprovalDto.ts": {
+    "CreateDraftEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "debitCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "creditCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "dimensions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "accountCode",
+              "debitCents",
+              "creditCents"
+            ]
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "date",
+        "description",
+        "lines"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateDraftEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "debitCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "creditCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "dimensions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "accountCode",
+              "debitCents",
+              "creditCents"
+            ]
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "expectedVersion",
+        "date",
+        "description",
+        "lines"
+      ],
+      "additionalProperties": false
+    },
+    "SubmitEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "unitId",
+        "expectedVersion"
+      ],
+      "additionalProperties": false
+    },
+    "ApproveEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "unitId",
+        "expectedVersion"
+      ],
+      "additionalProperties": false
+    },
+    "RejectEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "expectedVersion"
+      ],
+      "additionalProperties": false
+    },
+    "ListPendingApprovalQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "InventoryDto.ts": {
+    "ReceiveStockSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "qty": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "totalValueCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "occurredAt": {
+          "type": "string"
+        },
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "productRef",
+        "qty",
+        "totalValueCents",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    },
+    "ListInventoryQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "ARCHIVED"
+          ]
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "InventoryScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "PayableDto.ts": {
+    "CreatePayableSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supplierName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supplierRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "documentNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issueDate": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647
+        },
+        "expenseAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inventoryProductRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inventoryQty": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "attachmentId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "supplierName",
+        "description",
+        "issueDate",
+        "dueDate",
+        "amountCents"
+      ],
+      "additionalProperties": false
+    },
+    "RegisterPaymentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "Cash",
+            "Pix",
+            "TED",
+            "Boleto"
+          ]
+        },
+        "paidAt": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "unitId",
+        "method",
+        "paidAt",
+        "amountCents"
+      ],
+      "additionalProperties": false
+    },
+    "CancelPayableSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reversalDate": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "reversalDate"
+      ],
+      "additionalProperties": false
+    },
+    "CancelPaymentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reversalDate": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "reversalDate"
+      ],
+      "additionalProperties": false
+    },
+    "ListPayablesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "PAYING",
+            "PAID",
+            "CANCELLED"
+          ]
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "PayableScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "PostingDto.ts": {
+    "PostEntryLineSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "accountCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "debitCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "creditCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "accountCode",
+        "debitCents",
+        "creditCents"
+      ]
+    },
+    "PostEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceType": {
+          "default": "manual",
+          "type": "string"
+        },
+        "sourceId": {
+          "type": "string"
+        },
+        "sourceDocument": {
+          "type": "object",
+          "properties": {
+            "externalRef": {
+              "type": "string",
+              "minLength": 1
+            },
+            "documentDate": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attachmentId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rawJson": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "lines": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "debitCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "creditCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "dimensions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "accountCode",
+              "debitCents",
+              "creditCents"
+            ]
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "date",
+        "description",
+        "lines"
+      ]
+    },
+    "ReverseEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lancamentoId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reversalPostingDate": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "lancamentoId",
+        "reversalPostingDate"
+      ]
+    },
+    "ReportQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ListAccountsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ListEntriesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "CreateAccountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nature": {
+          "type": "string",
+          "enum": [
+            "Asset",
+            "Liability",
+            "Equity",
+            "Revenue",
+            "Expense"
+          ]
+        },
+        "acceptsEntries": {
+          "default": true,
+          "type": "boolean"
+        },
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "nature",
+        "unitId"
+      ]
+    },
+    "DeleteAccountQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "SetAccountRequiresDimensionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiresDimension": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId",
+        "requiresDimension"
+      ],
+      "additionalProperties": false
+    },
+    "PeriodStatusEnum": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "FUTURE",
+        "OPEN",
+        "SOFT_CLOSED",
+        "HARD_CLOSED"
+      ]
+    },
+    "SeedYearSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "year"
+      ],
+      "additionalProperties": false
+    },
+    "ClosePeriodSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ReopenPeriodSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "periodId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "periodId"
+      ],
+      "additionalProperties": false
+    },
+    "BalanceSheetQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asOf": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "asOf"
+      ]
+    },
+    "IncomeStatementQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asOf": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "asOf"
+      ]
+    }
+  },
+  "ReceiptDto.ts": {
+    "ReceiptRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entryId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "entryId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ReceivableDto.ts": {
+    "CreateReceivableSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "customerName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "customerRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "documentNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issueDate": {
+          "type": "string"
+        },
+        "dueDate": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647
+        },
+        "revenueAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attachmentId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "customerName",
+        "description",
+        "issueDate",
+        "dueDate",
+        "amountCents",
+        "revenueAccountId"
+      ],
+      "additionalProperties": false
+    },
+    "RegisterReceiptSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "Cash",
+            "Pix",
+            "TED",
+            "Boleto"
+          ]
+        },
+        "receivedAt": {
+          "type": "string"
+        },
+        "amountCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "unitId",
+        "method",
+        "receivedAt",
+        "amountCents"
+      ],
+      "additionalProperties": false
+    },
+    "CancelReceivableSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reversalDate": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "reversalDate"
+      ],
+      "additionalProperties": false
+    },
+    "CancelReceiptSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reversalDate": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "reversalDate"
+      ],
+      "additionalProperties": false
+    },
+    "ListReceivablesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "RECEIVING",
+            "RECEIVED",
+            "CANCELLED"
+          ]
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ReceivableScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "ReconciliationDto.ts": {
+    "ImportBankStatementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "glAccountId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "statementRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "periodStart": {
+          "type": "string"
+        },
+        "periodEnd": {
+          "type": "string"
+        },
+        "openingBalanceCents": {
+          "type": "integer",
+          "minimum": -2147483647,
+          "maximum": 2147483647
+        },
+        "closingBalanceCents": {
+          "type": "integer",
+          "minimum": -2147483647,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "unitId",
+        "glAccountId",
+        "periodStart",
+        "periodEnd",
+        "openingBalanceCents",
+        "closingBalanceCents"
+      ]
+    },
+    "AutoMatchStatementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "statementId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "unitId",
+        "statementId"
+      ]
+    },
+    "ManualMatchSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "statementLineId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "postingIds": {
+          "minItems": 1,
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "statementLineId",
+        "postingIds"
+      ]
+    },
+    "UnmatchSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "matchId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "matchId"
+      ]
+    },
+    "SetLineIgnoredSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "statementLineId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "ignored": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId",
+        "statementLineId",
+        "ignored"
+      ]
+    },
+    "ListStatementsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 10,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ListLinesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "UNMATCHED",
+            "MATCHED",
+            "IGNORED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ReconciliationScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "PendingReportQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "glAccountId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "glAccountId"
+      ]
+    }
+  },
+  "ReferentialCatalogDto.ts": {
+    "ImportReferentialCatalogSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "layoutVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "unitId",
+        "layoutVersion"
+      ],
+      "additionalProperties": false
+    },
+    "ReferentialCatalogQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "q": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "analyticOnly": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "version"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ReferentialMappingDto.ts": {
+    "SetReferentialMappingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "referentialCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "mappingVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "unitId",
+        "accountId",
+        "referentialCode",
+        "label",
+        "mappingVersion"
+      ],
+      "additionalProperties": false
+    },
+    "UnsetReferentialMappingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "mappingVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "unitId",
+        "accountId",
+        "mappingVersion"
+      ],
+      "additionalProperties": false
+    },
+    "ReferentialVersionQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "unitId",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "BatchSetReferentialMappingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "mappingVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "items": {
+          "minItems": 1,
+          "maxItems": 1000,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9_-]+$"
+              },
+              "referentialCode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            },
+            "required": [
+              "accountId",
+              "referentialCode",
+              "label"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "mappingVersion",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "CopyReferentialMappingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "fromVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "toVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      },
+      "required": [
+        "unitId",
+        "fromVersion",
+        "toVersion"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "SpedEcdDto.ts": {
+    "SpedEcdRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mappingVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        },
+        "declarant": {
+          "type": "object",
+          "properties": {
+            "nome": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "cnpj": {
+              "type": "string",
+              "pattern": "^\\d{14}$"
+            },
+            "uf": {
+              "type": "string",
+              "enum": [
+                "AC",
+                "AL",
+                "AM",
+                "AP",
+                "BA",
+                "CE",
+                "DF",
+                "ES",
+                "GO",
+                "MA",
+                "MG",
+                "MS",
+                "MT",
+                "PA",
+                "PB",
+                "PE",
+                "PI",
+                "PR",
+                "RJ",
+                "RN",
+                "RO",
+                "RR",
+                "RS",
+                "SC",
+                "SE",
+                "SP",
+                "TO"
+              ]
+            },
+            "ie": {
+              "type": "string"
+            },
+            "codMun": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "im": {
+              "type": "string"
+            },
+            "indSitEsp": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4"
+              ]
+            },
+            "indSitIniPer": {
+              "default": "0",
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "2"
+              ]
+            },
+            "indNire": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "indFinEsc": {
+              "default": "0",
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "codHashSub": {
+              "type": "string"
+            },
+            "indGrandePorte": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "tipEcd": {
+              "default": "0",
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "2"
+              ]
+            },
+            "codScp": {
+              "type": "string",
+              "pattern": "^\\d{14}$"
+            },
+            "identMf": {
+              "default": "N",
+              "type": "string",
+              "enum": [
+                "S",
+                "N"
+              ]
+            },
+            "indEscCons": {
+              "default": "N",
+              "type": "string",
+              "enum": [
+                "S",
+                "N"
+              ]
+            },
+            "indCentralizada": {
+              "default": "0",
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "indMudancPc": {
+              "default": "0",
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "codPlanRef": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10"
+              ]
+            }
+          },
+          "required": [
+            "nome",
+            "cnpj",
+            "uf",
+            "codMun",
+            "indNire",
+            "indGrandePorte"
+          ],
+          "additionalProperties": false
+        },
+        "book": {
+          "type": "object",
+          "properties": {
+            "numOrd": {
+              "type": "string",
+              "minLength": 1
+            },
+            "natLivr": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "nire": {
+              "type": "string"
+            },
+            "dtArq": {
+              "type": "string"
+            },
+            "dtArqConv": {
+              "type": "string"
+            },
+            "descMun": {
+              "type": "string"
+            },
+            "dtExSocial": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "numOrd",
+            "natLivr",
+            "dtExSocial"
+          ],
+          "additionalProperties": false
+        },
+        "signers": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "identNom": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identCpfCnpj": {
+                "type": "string",
+                "pattern": "^\\d{11}$|^\\d{14}$"
+              },
+              "identQualif": {
+                "type": "string",
+                "minLength": 1
+              },
+              "codAssin": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "indCrc": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "fone": {
+                "type": "string"
+              },
+              "ufCrc": {
+                "type": "string",
+                "enum": [
+                  "AC",
+                  "AL",
+                  "AM",
+                  "AP",
+                  "BA",
+                  "CE",
+                  "DF",
+                  "ES",
+                  "GO",
+                  "MA",
+                  "MG",
+                  "MS",
+                  "MT",
+                  "PA",
+                  "PB",
+                  "PE",
+                  "PI",
+                  "PR",
+                  "RJ",
+                  "RN",
+                  "RO",
+                  "RR",
+                  "RS",
+                  "SC",
+                  "SE",
+                  "SP",
+                  "TO"
+                ]
+              },
+              "numSeqCrc": {
+                "type": "string"
+              },
+              "dtCrc": {
+                "type": "string"
+              },
+              "indRespLegal": {
+                "type": "string",
+                "enum": [
+                  "S",
+                  "N"
+                ]
+              }
+            },
+            "required": [
+              "identNom",
+              "identCpfCnpj",
+              "identQualif",
+              "codAssin",
+              "indRespLegal"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "mappingVersion",
+        "year",
+        "declarant",
+        "book",
+        "signers"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "SpedEcfDto.ts": {
+    "SpedEcfRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "declarant": {
+          "type": "object",
+          "properties": {
+            "cnpj": {
+              "type": "string",
+              "pattern": "^\\d{14}$"
+            },
+            "nome": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "codNat": {
+              "type": "string",
+              "pattern": "^\\d{3,4}$"
+            },
+            "cnaeFiscal": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "endereco": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "num": {
+              "default": "S/N",
+              "type": "string",
+              "maxLength": 6
+            },
+            "compl": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "bairro": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "uf": {
+              "type": "string",
+              "enum": [
+                "AC",
+                "AL",
+                "AM",
+                "AP",
+                "BA",
+                "CE",
+                "DF",
+                "ES",
+                "GO",
+                "MA",
+                "MG",
+                "MS",
+                "MT",
+                "PA",
+                "PB",
+                "PE",
+                "PI",
+                "PR",
+                "RJ",
+                "RN",
+                "RO",
+                "RR",
+                "RS",
+                "SC",
+                "SE",
+                "SP",
+                "TO"
+              ]
+            },
+            "codMun": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "cep": {
+              "type": "string",
+              "pattern": "^\\d{8}$"
+            },
+            "numTel": {
+              "type": "string",
+              "maxLength": 15
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            }
+          },
+          "required": [
+            "cnpj",
+            "nome",
+            "codNat",
+            "cnaeFiscal",
+            "endereco",
+            "bairro",
+            "uf",
+            "codMun",
+            "cep",
+            "email"
+          ],
+          "additionalProperties": false
+        },
+        "fiscal": {
+          "default": {
+            "indAliqCsll": "1",
+            "indRecReceita": "2"
+          },
+          "type": "object",
+          "properties": {
+            "indAliqCsll": {
+              "default": "1",
+              "type": "string",
+              "enum": [
+                "1",
+                "4"
+              ]
+            },
+            "indRecReceita": {
+              "default": "2",
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "signers": {
+          "minItems": 1,
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "identNom": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identCpfCnpj": {
+                "type": "string",
+                "pattern": "^\\d{11}$|^\\d{14}$"
+              },
+              "identQualif": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "indCrc": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              },
+              "fone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 14
+              }
+            },
+            "required": [
+              "identNom",
+              "identCpfCnpj",
+              "identQualif",
+              "email",
+              "fone"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "year",
+        "declarant",
+        "signers"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "aging.dto.ts": {
+    "AgingReportQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "payable",
+            "receivable"
+          ]
+        },
+        "asOf": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "kind"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "cashFlowReport.dto.ts": {
+    "CashFlowStatementQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "asOf": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "asOf"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "dailyJournal.dto.ts": {
+    "DailyJournalRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "periodComparison.dto.ts": {
+    "PeriodComparisonSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "asOfCurrent": {
+          "type": "string"
+        },
+        "asOfPrevious": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "asOfCurrent",
+        "asOfPrevious"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "tieOutDiagnostic.dto.ts": {
+    "TieOutDiagnosticQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
