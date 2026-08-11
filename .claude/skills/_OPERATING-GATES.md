@@ -260,9 +260,13 @@ Cinco regras que fazem a escala funcionar:
 5. **D5: "externo" é relativo à categoria** — fora de quem tem o incentivo de seguir em frente.
    C1 → dono + gate mecânico · C2 → dono + dry-run do que vai sair · C4 → dono + smoke-gate sobre dado
    real · **C3 → contador/PVA obrigatório; a confirmação do dono NÃO substitui.**
-   **Anti-lavagem:** todo D5 que toca matéria fiscal, contábil ou legal é **C3 para efeito de
-   oráculo**, mesmo quando a decisão parece técnica (migração destrutiva em `JournalEntry` é decisão
-   C4 com conteúdo regulado ⇒ oráculo de C3).
+   **Anti-lavagem — os oráculos SOMAM, não trocam:** todo D5 que toca matéria fiscal, contábil ou
+   legal exige o oráculo de C3 **em acréscimo** ao da própria categoria. São ortogonais: o contador
+   valida correção regulatória e não enxerga corrupção de dado; o smoke-gate valida mecânica e não
+   opina sobre matéria fiscal. Migração destrutiva em `Posting` precisa dos **dois**.
+   **Especificado ≠ wired:** dos 4 oráculos, hoje só o smoke-migration-gate executa de verdade — e
+   **à mão**, sem script nem job de CI; o dry-run de saída (C2) **não existe**; o PVA nunca rodou.
+   Censo em `DECISION-SCALE.md §2.1`. **Escrever o oráculo não é tê-lo.**
 
 > A célula **C3 × D4/D5** não tem saída interna — nem processo, nem gate, nem revisor a mais. É o
 > Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 e o diagnóstico do `ORACLE-DEFICIT.md`. **A fronteira

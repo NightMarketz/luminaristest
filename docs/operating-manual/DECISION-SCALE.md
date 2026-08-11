@@ -108,20 +108,47 @@ o Bloco A deixaria de ser bloqueante por defeito de redação. Definição fecha
 > dono. **Para C3, o dono tem o mesmo déficit que o agente** — nenhum dos dois sabe se o resultado
 > está certo — então externo significa fora dos dois.
 
-| D5 na categoria | Confirmação nomeada | Oráculo externo exigido | Por quê |
+| D5 na categoria | Confirmação nomeada | Oráculo externo exigido | Por quê | **Status hoje** |
+|---|---|---|---|---|
+| **C1 Realidade** | dono | **gate mecânico** (smoke-gate / cópia do `dev.db` real) | O dono confirma que o artefato é o certo; a máquina confirma que a operação não corrompe | ⚠️ **roda, mas à mão** (§2.1) |
+| **C2 Negócio** | dono | **dry-run/preview do que exatamente vai sair** | O dono É a autoridade de negócio; o que falta é ele ver o efeito antes, não outra pessoa | ❌ **não existe** (§2.1) |
+| **C3 Domínio regulado** | dono | **contador ou validador oficial (PVA/SEFAZ) — obrigatório** | A confirmação do dono **não substitui**. É a célula do Bloco A | ❌ **nunca rodou** — Bloco A item 3 |
+| **C4 Técnica** | dono | **smoke-migration-gate sobre cópia do dado real** (norma T12) | Correção técnica é verificável por máquina; o dono autoriza, o gate prova | ⚠️ **roda, mas à mão** (§2.1) |
+| **C5 Produto** | — | — | C5 não tem D5 | — |
+
+**Regra anti-lavagem — os oráculos SOMAM, não se substituem.** A categoria de um D5 é determinada
+pelo **conteúdo do que sai**, não pela natureza da decisão. Uma migração destrutiva é decisão C4 —
+mas se a tabela é `JournalEntry`/`Posting`, o conteúdo é regulado e o oráculo de C3 **passa a ser
+exigido também**.
+
+> **Todo D5 que toca matéria fiscal, contábil ou legal exige o oráculo de C3 EM ACRÉSCIMO ao da sua
+> própria categoria — nunca no lugar dele.**
+
+Por que somam: **eles verificam coisas ortogonais.** O contador valida *correção regulatória* e não
+enxerga corrupção de dado; o smoke-migration-gate valida *mecânica da migração* e não tem opinião
+sobre matéria fiscal. Ler a escalação como troca reabriria exatamente o padrão que este repo já
+mediu uma vez — gate que existe na spec e nunca roda sob condição real (`governance/coverage.md`,
+G5/G6 NÃO ENFORÇADO). Uma migração destrutiva em `Posting` precisa dos **dois**: o gate prova que
+nenhuma linha se perdeu, o contador prova que o que sobrou está certo.
+
+### 2.1 Censo dos oráculos do D5 — especificado ≠ wired
+
+A tabela acima **especifica** quatro oráculos. Antes de contá-la como fechada, o mesmo censo que já
+pegou o G5/G6 (verificado 2026-08-11):
+
+| Oráculo | Existe? | Executa de verdade? | Evidência |
 |---|---|---|---|
-| **C1 Realidade** | dono | **gate mecânico** (smoke-gate / cópia do `dev.db` real) | O dono confirma que o artefato é o certo; a máquina confirma que a operação não corrompe |
-| **C2 Negócio** | dono | **dry-run/preview do que exatamente vai sair** | O dono É a autoridade de negócio; o que falta é ele ver o efeito antes, não outra pessoa |
-| **C3 Domínio regulado** | dono | **contador ou validador oficial (PVA/SEFAZ) — obrigatório** | A confirmação do dono **não substitui**. É a célula do Bloco A |
-| **C4 Técnica** | dono | **smoke-migration-gate sobre cópia do dado real** (norma T12) | Correção técnica é verificável por máquina; o dono autoriza, o gate prova |
-| **C5 Produto** | — | — | C5 não tem D5 |
+| **smoke-migration-gate** (C1 e C4) | sim | **Sim — mas humano, não mecanizado** | ~12 relatórios em `docs/accounting/SMOKE-MIGRATION-GATE-*.md` com evidência real: md5 e tamanho da cópia do `dev.db`, `PRAGMA integrity_check`, `foreign_key_check`, contagens contra baseline known-good. **Zero script em `scripts/`, zero job no `ci.yml`** |
+| **dry-run do que vai sair** (C2) | **não** | não | Existe `preview` no `DataExchangeImportService`, mas é de **importação** — mostra as linhas de um job que **entra**. Não há preview de nada que **sai** (SPED/NF-e). O oráculo de C2 é hoje **só especificação** |
+| **validador oficial PVA/SEFAZ** (C3) | externo | **nunca rodou** | Bloco A item 3, aberto |
 
-**Regra anti-lavagem (a que fecha o buraco):** a categoria de um D5 é determinada pelo **conteúdo do
-que sai**, não pela natureza da decisão. Uma migração destrutiva é decisão C4 — mas se a tabela é
-`JournalEntry`/`Posting`, o **conteúdo é regulado** e o oráculo exigido é o de C3. Formulação curta:
+**Leitura honesta:** este caso **não** é o do G5/G6. Lá o gate era declarado e nunca exercido; aqui o
+smoke-gate é exercido de verdade, com evidência forte, e o defeito é **não ser mecânico** — depende
+de alguém lembrar, e ninguém o vê quando é pulado. O que é G5/G6 puro é a linha do **C2**: nome no
+documento, nada atrás.
 
-> **Todo D5 que toca matéria fiscal, contábil ou legal é C3 para efeito de oráculo, mesmo quando a
-> decisão parece técnica.**
+**Consequência para esta escala:** a coluna "Status hoje" fica na tabela, e sai só quando o oráculo
+correspondente for demonstrado. **Escrever o oráculo não é tê-lo.**
 
 ---
 
