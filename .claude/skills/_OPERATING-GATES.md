@@ -245,16 +245,28 @@ Versão comprimida; matriz completa, procedimento de classificação e exemplos 
 | **C4 Técnica** | agente, dentro do contrato | | **D2** reversível num commit, não toca dado | decide, anota e **mostra** |
 | **C5 Produto/UX** | agente em D1–D2, dono de D3 pra cima | | **D1** invisível, reversível em minutos | decide e anota (micro-autonomia) |
 
-Três regras que fazem a escala funcionar:
+Cinco regras que fazem a escala funcionar:
 1. **Na dúvida entre dois níveis, suba.** Errar pra cima custa uma pergunta; pra baixo, uma migração desfeita.
 2. **O nível é justificado por artefato nomeado, não asserido** — diga *o que* o diff toca. Nível sem
    artefato é o defeito do OPS-003 (grau sem evidência).
-3. **C3 sem contador disponível** tem duas saídas, e nenhuma é perguntar ao dono: derivar de artefato
-   real (vira C1 — ele fornece, você lê a resposta nele), ou registrar como aberto com default
-   declarado. Nunca silenciosamente.
+3. **A categoria também carrega claim falsificável** (espelho da regra 2): C1 → o trecho literal do
+   artefato · C3 → **quem carimbou**, nomeado · C4 → **a negativa nomeada** (*"não muda comportamento
+   de negócio visível; muda a camada X"*) · C5 → a tela afetada. **C4 sem negativa nomeada é C4 não
+   classificado.**
+4. **Fronteira C1↔C3 — o teste literal.** A saída "derivar de artefato real vira C1" só vale se você
+   **consegue colar o trecho que contém a resposta**. Se entre o artefato e a resposta aparece um
+   **"logo"**, houve interpretação regulatória: é **C3 disfarçado de C1** → volta pra "aberto +
+   default declarado". Mesmo passando, resposta derivada é `assumido com lastro`, nunca `verificado`.
+5. **D5: "externo" é relativo à categoria** — fora de quem tem o incentivo de seguir em frente.
+   C1 → dono + gate mecânico · C2 → dono + dry-run do que vai sair · C4 → dono + smoke-gate sobre dado
+   real · **C3 → contador/PVA obrigatório; a confirmação do dono NÃO substitui.**
+   **Anti-lavagem:** todo D5 que toca matéria fiscal, contábil ou legal é **C3 para efeito de
+   oráculo**, mesmo quando a decisão parece técnica (migração destrutiva em `JournalEntry` é decisão
+   C4 com conteúdo regulado ⇒ oráculo de C3).
 
 > A célula **C3 × D4/D5** não tem saída interna — nem processo, nem gate, nem revisor a mais. É o
-> Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 e o diagnóstico do `ORACLE-DEFICIT.md`.
+> Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 e o diagnóstico do `ORACLE-DEFICIT.md`. **A fronteira
+> C1↔C3 (regra 4) é a trava invisível** — a visível ninguém atravessa por acidente.
 
 ### 5. Auto-aplicação (T3, uma vez, gap declarado)
 
