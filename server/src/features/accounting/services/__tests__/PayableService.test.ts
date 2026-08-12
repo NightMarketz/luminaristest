@@ -572,3 +572,50 @@ describe('PayableService.reconcilePayables — inventory crash-recovery (Gap 2 /
     expect(params).toMatchObject({ sourceId: 'pay-inv', totalValueCents: 30000, sourceType: INVENTORY_INBOUND_SOURCE_TYPE });
   });
 });
+
+/**
+ * BE-INCR-SUBLEDGER-FILTERS — a COSTURA serviço→repo. O teste de integração dirige o repositório e
+ * pula esta camada; sem o caso abaixo, apagar o repasse de um filtro em `listPayables` deixa tsc,
+ * unit e integração TODOS verdes (sonda do review independente). É a forma canônica do
+ * "param aceito-e-ignorado": `?q=Aluguel` devolveria a lista inteira.
+ */
+describe('PayableService.listPayables — repasse de filtros (BE-INCR-SUBLEDGER-FILTERS)', () => {
+  const query = {
+    unitId: 'unit-1',
+    status: 'OPEN' as const,
+    counterpartyId: 'cp-1',
+    dueFrom: '2026-03-01',
+    dueTo: '2026-03-31',
+    q: 'aluguel',
+    page: 2,
+    limit: 25,
+  };
+
+  it('entrega TODOS os filtros do DTO ao repositório, e converte page→skip', async () => {
+    const { service, payableRepo } = build();
+    await service.listPayables(scope, query);
+
+    expect(payableRepo.findManyByUnit).toHaveBeenCalledTimes(1);
+    const [recebeuScope, params] = payableRepo.findManyByUnit.mock.calls[0] as unknown[];
+    expect(recebeuScope).toBe(scope);
+    expect(params).toEqual({
+      status: 'OPEN',
+      counterpartyId: 'cp-1',
+      dueFrom: '2026-03-01',
+      dueTo: '2026-03-31',
+      q: 'aluguel',
+      skip: 25, // (page 2 - 1) * limit 25
+      limit: 25,
+    });
+  });
+
+  it('não inventa filtro quando a query só tem o obrigatório', async () => {
+    const { service, payableRepo } = build();
+    await service.listPayables(scope, { unitId: 'unit-1', page: 1, limit: 50 } as never);
+
+    const params = (payableRepo.findManyByUnit.mock.calls[0] as unknown[])[1] as Record<string, unknown>;
+    for (const chave of ['status', 'counterpartyId', 'dueFrom', 'dueTo', 'q']) {
+      expect(params[chave]).toBeUndefined();
+    }
+  });
+});

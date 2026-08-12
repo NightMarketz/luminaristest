@@ -138,7 +138,8 @@ export const ListReceivablesQuerySchema = z.object({
   // F4: faixa INCLUSIVA nos dois extremos; `isValidDateOnly` faz round-trip, não regex.
   dueFrom: z.string().refine(isValidDateOnly, 'dueFrom deve ser uma data real no formato YYYY-MM-DD').optional(),
   dueTo: z.string().refine(isValidDateOnly, 'dueTo deve ser uma data real no formato YYYY-MM-DD').optional(),
-  // F2: casa `description` OU `documentNumber`; caixa segue o limite do SQLite.
+  // F2: casa `description` OU `documentNumber`. LIMITE MEDIDO do LIKE do SQLite: dobra caixa em
+  // ASCII, NÃO em acentuado; `%` e `_` valem como curinga, não literal (espelho do AP).
   q: z.string().min(1).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),

@@ -180,8 +180,9 @@ export const ListPayablesQuerySchema = z.object({
   // rolaria para 03-02 em silêncio e distorceria a faixa.
   dueFrom: z.string().refine(isValidDateOnly, 'dueFrom deve ser uma data real no formato YYYY-MM-DD').optional(),
   dueTo: z.string().refine(isValidDateOnly, 'dueTo deve ser uma data real no formato YYYY-MM-DD').optional(),
-  // F2: casa `description` OU `documentNumber`. Caixa segue o limite do SQLite (o Prisma não oferece
-  // `mode: 'insensitive'` aqui) — mesmo contrato já declarado pelo catálogo referencial.
+  // F2: casa `description` OU `documentNumber`. LIMITE MEDIDO do LIKE do SQLite (o Prisma não
+  // oferece `mode:'insensitive'` neste provider): dobra caixa em ASCII ('ALUGUEL' casa 'Aluguel'),
+  // mas NÃO em acentuado ('MARÇO' não casa 'março'). `%` e `_` valem como curinga, não literal.
   q: z.string().min(1).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),

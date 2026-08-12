@@ -110,6 +110,19 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
           documentNumber: 'FAT-20', issueDate: dia('2026-03-01'), dueDate: dia('2026-04-01'),
           amountCents: 5_000, revenueAccountId: 'acc-rev-flt', status: 'OPEN', counterpartyId: CP2,
         },
+        // r3 — TUMBA do lado AR: casa todos os filtros de r1, só o deletedAt a separa.
+        {
+          id: 'r3', userId: DONO_A, unitId: UNIT, customerName: 'Cliente', description: 'Mensalidade março',
+          documentNumber: 'deleted:r3:FAT-10', issueDate: dia('2026-02-01'), dueDate: dia('2026-03-01'),
+          amountCents: 5_000, revenueAccountId: 'acc-rev-flt', status: 'OPEN', counterpartyId: CP1,
+          deletedAt: new Date(),
+        },
+        // r4 — OUTRO DONO com os mesmos valores de r1: só o escopo o separa.
+        {
+          id: 'r4', userId: DONO_B, unitId: UNIT, customerName: 'Cliente', description: 'Mensalidade março',
+          documentNumber: 'FAT-10', issueDate: dia('2026-02-01'), dueDate: dia('2026-03-01'),
+          amountCents: 5_000, revenueAccountId: 'acc-rev-flt', status: 'OPEN', counterpartyId: null,
+        },
       ],
     });
   }, 120000);
@@ -221,6 +234,19 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   // ------------------------------------------------ F6: AR é espelho literal
+
+  it('comportamento 6 no AR — a base do where vale igual: nem outro dono, nem tumba', async () => {
+    // r3 (tumba) e r4 (DONO_B) casam description, documentNumber e dueDate de r1. Sem estas duas
+    // linhas no fixture, remover `userId`+`deletedAt` da base do AR passava em TODA a suíte
+    // (sonda do review independente) — o AR era leitura, não medição.
+    for (const filtro of [{ q: 'Mensalidade março' }, { dueFrom: '2026-03-01', dueTo: '2026-03-01' }, { q: 'FAT-10' }, {}]) {
+      const ids = (await listarAr(filtro)).receivables.map((r) => r.id);
+      expect(ids).not.toContain('r3');
+      expect(ids).not.toContain('r4');
+    }
+    // Controle: o dono B enxerga a própria linha — a ausência acima é escopo, não base vazia.
+    expect((await listarAr({ q: 'FAT-10' }, DONO_B)).receivables.map((r) => r.id)).toEqual(['r4']);
+  });
 
   it('F6 — AR aceita os mesmos filtros com o mesmo significado', async () => {
     const porContraparte = await listarAr({ counterpartyId: CP1 });
