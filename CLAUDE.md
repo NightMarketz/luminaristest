@@ -12,6 +12,12 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall
   em review: `docs/operating-manual/MODEL-TUNING.md`)
 - **Por que auditoria não substitui oráculo:** `docs/operating-manual/ORACLE-DEFICIT.md`.
+- **As 4 sessões de trabalho (formulário por tipo):** `sessao-planejamento` (produz BRIEF, não
+  ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao` (teste-guarda que
+  falha pelo motivo certo) → `sessao-correcao` (fix mínimo). **Toda uma exige autorização citável do
+  dono** (ORCH-006) e recusa o que não é dela. **Gate humano** (PVA, sign-off de browser, deploy) e
+  **dado externo** (XML de NF-e, arquivo RFB) **não têm sessão** — são runbook do humano, e agente não
+  substitui oráculo. **Rebase/merge de branch pronta** também não tem template ainda.
 
 ## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
 
