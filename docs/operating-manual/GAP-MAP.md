@@ -120,7 +120,13 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 > **Falsificador:** manter a lista dos próximos 10 nesta seção; se <4 forem nível 3, a fila de
 > prioridade deste mapa está errada e o item "contrato de fronteira" desce.
 >
-> Registro (preencher conforme aparecem): _—_
+> Registro (preencher conforme aparecem):
+>
+> 1. **2026-08-11 — TOCTOU do `noOverlap` / double-booking de agendamento — Nível 4 (corrida de
+>    concorrência).** `enforceNoOverlap` decidia por scan na fase de validação, fora da transação do
+>    insert; N pedidos que lessem antes do primeiro commit persistiam todos. Achado pelo harness de
+>    concorrência da Fase 3 (`NoOverlapConcurrency.integration.test.ts`), que mediu `Expected: 1,
+>    Received: 5`.
 
 ## Fila corrigida (ordem por valor ÷ atrito, com a regra permanente aplicada)
 

@@ -17,13 +17,13 @@
  * escalonador, fixando o entrelaçamento que duas requisições HTTP reais podem produzir a
  * qualquer momento. Todo o resto (serviço, validação, tx, SQLite) é o caminho real.
  *
- * `it.failing` DE PROPÓSITO: o bug é real e o conserto é decisão à parte (o provável é o
- * padrão da casa `authoritative-gate-inside-tx`: re-checar o count DENTRO da tx do insert com
- * o repo tx-bound — que este harness NÃO intercepta, de propósito: o serviço constrói o
- * `TransactionalDynamicTableRepository` internamente, então um conserto in-tx re-conta sem
- * barreira, rejeita os perdedores, o corpo do teste passa a passar e o `it.failing` REPROVA
- * ("passing test marked as failing") — obrigando a remover o marcador. É a barreira de
- * regressão nascendo do próprio conserto, sem editar este arquivo.)
+ * CONSERTADO — o `it.failing` cumpriu o papel e virou `it`: o gate autoritativo do padrão da casa
+ * (`authoritative-gate-inside-tx`) foi acrescentado em `writeCreate`/`writeUpdate`, re-contando com o
+ * `TransactionalDynamicTableRepository` que o serviço constrói internamente — que este harness NÃO
+ * intercepta, de propósito. A re-contagem in-tx roda sem barreira, rejeita os perdedores, o corpo do
+ * teste passou a passar e o marcador REPROVOU ("passing test marked as failing"), obrigando a removê-lo.
+ * Daqui em diante este caso é barreira de regressão permanente: se alguém devolver a decisão para a
+ * fase de validação (fora da tx), ele volta a ficar vermelho.
  *
  * A suíte serial existente (`DynamicTableService.integration.test.ts §Governance: noOverlap`)
  * prova o caminho SEQUENCIAL; o CONTROLE abaixo o reprova aqui também, para que o desfecho do
@@ -129,7 +129,7 @@ describe('noOverlap sob concorrência (TOCTOU)', () => {
   });
 
   // O BUG: com as N leituras entrelaçadas antes do primeiro commit, todos persistem.
-  it.failing(`${N} pedidos SIMULTÂNEOS do mesmo slot: no máximo um persiste`, async () => {
+  it(`${N} pedidos SIMULTÂNEOS do mesmo slot: no máximo um persiste`, async () => {
     const service = new DynamicTableService(new BarrierRepo(N), new DynamicTablePolicy());
     await prisma.user.create({ data: { id: 'u-conc', username: 'u-conc', email: 'u-conc@test.co', password: 'x', role: Role.USER } });
     const t = await service.createTableAsSystem('u-conc', {
