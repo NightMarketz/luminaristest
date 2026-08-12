@@ -16,6 +16,7 @@
     "prisma:reset": "prisma migrate reset",
     "db:seed": "ts-node prisma/seed.ts",
     "docs:generate": "node ./scripts/generate-openapi.js",
+    "logs:errors": "node ./scripts/read-error-log.mjs",
     "accounting:reconcile": "node dist/jobs/accountingSyncReconcileCli.js",
     "smoke:migration": "node ../scripts/smoke-migration-gate.mjs",
     "lint": "eslint src",
