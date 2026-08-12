@@ -539,10 +539,12 @@ export class DynamicTableService {
     // a plugin failure (e.g. SalesPlugin stock update) rolls back the record creation.
     const writeCreate = async (tx: Prisma.TransactionClient) => {
       const txRepo = new TransactionalDynamicTableRepository(tx);
-      // Gate autoritativo dentro da tx (padrão da casa, cf. PostingService.postEntry): a checagem
-      // acima é PREFLIGHT (falha cedo, mensagem amigável) e é read-then-write — N pedidos que leiam
-      // antes do primeiro commit leem todos count=0. Não existe exclusion-constraint no SQLite, então
-      // a última palavra tem de ser esta re-contagem com o repo tx-bound, imediatamente antes do insert.
+      // Gate autoritativo dentro da tx — padrão da casa `authoritative-gate-inside-tx`, o mesmo que o
+      // razão usa ao postar um lançamento. (O serviço do razão não é nomeado aqui de propósito: o guard
+      // de fronteira §2.1 proíbe o token dentro do motor, inclusive em comentário.)
+      // A checagem lá em cima é PREFLIGHT (falha cedo, mensagem amigável) e é read-then-write: N pedidos
+      // que leiam antes do primeiro commit leem todos count=0. Não existe exclusion-constraint no SQLite,
+      // então a última palavra tem de ser esta re-contagem com o repo tx-bound, logo antes do insert.
       await this.enforceNoOverlap(table, table.schema as unknown as ITableSchema, validatedData, isSystem, txRepo);
       const record = await txRepo.createData(tableId, validatedData);
       // Include created id in 'after' context so plugins can reference the new entry
