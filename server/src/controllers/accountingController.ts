@@ -8,6 +8,7 @@ import {
   PostEntrySchema,
   ReverseEntrySchema,
   ReportQuerySchema,
+  LedgerQuerySchema,
   ListAccountsQuerySchema,
   ListEntriesQuerySchema,
   CreateAccountSchema,
@@ -78,16 +79,14 @@ export const getAccountLedger = async (req: Request, res: Response) => {
   try {
     const user = getUserContextFromRequest(req);
     if (!user) throw new UnauthorizedError();
-    const parsed = ReportQuerySchema.safeParse(req.query);
+    const parsed = LedgerQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const accountCode = req.query.accountCode;
-    if (typeof accountCode !== 'string' || accountCode.length === 0) {
-      throw new ValidationError('accountCode é obrigatório.');
-    }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const data = await getFactory().getAccountingReportService().accountLedger(scope, accountCode);
+    const data = await getFactory()
+      .getAccountingReportService()
+      .accountLedger(scope, parsed.data.accountCode);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

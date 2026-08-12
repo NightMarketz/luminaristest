@@ -8,6 +8,7 @@ import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ExportRequestSchema,
   JobScopeQuerySchema,
+  JobRowsQuerySchema,
   ImportUploadSchema,
   CommitImportSchema,
 } from '../features/accounting/dtos/DataExchangeDto';
@@ -104,12 +105,12 @@ export const listDataExchangeRows = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = JobScopeQuerySchema.safeParse(req.query);
+    const parsed = JobRowsQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const { status } = parsed.data;
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory()
       .getDataExchangeImportService()

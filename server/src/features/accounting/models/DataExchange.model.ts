@@ -85,7 +85,14 @@ export interface UpdateJobInput {
   committedAt?: Date | null;
 }
 
-export type RowStatus = 'VALID' | 'INVALID' | 'COMMITTED' | 'SKIPPED';
+/**
+ * Status de uma linha importada. Const em runtime (convenção deste arquivo, como
+ * IMPORT_KINDS/EXPORT_KINDS) para que o DTO de query possa validar o enum a partir da
+ * MESMA fonte do tipo — antes era união só-de-tipo, e o parâmetro `status` de
+ * `/jobs/:id/rows` chegava ao serviço como string crua, sem enum nenhum.
+ */
+export const ROW_STATUSES = ['VALID', 'INVALID', 'COMMITTED', 'SKIPPED'] as const;
+export type RowStatus = (typeof ROW_STATUSES)[number];
 
 /** A validated row produced by the import validators (pure, before persistence). */
 export interface ValidatedRow {
