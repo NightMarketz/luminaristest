@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IMPORT_KINDS } from '../models/DataExchange.model';
+import { IMPORT_KINDS, ROW_STATUSES } from '../models/DataExchange.model';
 import { isValidDateOnly } from '../models/dates';
 
 /**
@@ -44,8 +44,20 @@ export const ExportRequestSchema = z
 
 export type ExportRequestDto = z.infer<typeof ExportRequestSchema>;
 
-/** Query for job-scoped GET endpoints (job summary, artifact download, rows). */
+/** Query for job-scoped GET endpoints (job summary, artifact download). */
 export const JobScopeQuerySchema = z.object({ unitId: z.string().min(1) });
+
+/**
+ * Query de `GET /jobs/:jobId/rows` — o escopo MAIS o filtro `status`.
+ *
+ * `status` já era publicado no contrato (docs.paths.ts, enum de 4 valores) e consumido pelo
+ * serviço, mas era lido direto de `req.query` DEPOIS do parse, fora do DTO: chegava como
+ * string crua, sem validação de enum. Declarado aqui, ele volta para dentro da fronteira.
+ */
+export const JobRowsQuerySchema = JobScopeQuerySchema.extend({
+  status: z.enum(ROW_STATUSES).optional(),
+});
+export type JobRowsQueryDto = z.infer<typeof JobRowsQuerySchema>;
 
 /** Body fields for a multipart import upload (kind + unitId travel as form fields). */
 export const ImportUploadSchema = z.object({

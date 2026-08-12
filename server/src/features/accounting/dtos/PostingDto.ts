@@ -142,6 +142,19 @@ export const ReportQuerySchema = z.object({
   to: z.string().optional(),
 });
 
+/**
+ * Query de `GET /ledger` — o escopo do relatório MAIS `accountCode`, que é OBRIGATÓRIO.
+ *
+ * `accountCode` já era exigido pela rota e publicado como `required: true` no contrato, mas
+ * era lido direto de `req.query` DEPOIS do parse, fora do DTO, validado por um `if` solto:
+ * a fronteira declarava um contrato e a rota exigia outro. Declarado aqui, o parâmetro
+ * obrigatório passa a fazer parte do DTO que o `dtoShapeSnapshot` versiona.
+ */
+export const LedgerQuerySchema = ReportQuerySchema.extend({
+  accountCode: z.string().min(1, 'accountCode é obrigatório.'),
+});
+export type LedgerQueryInput = z.infer<typeof LedgerQuerySchema>;
+
 /** Query DTO for list-accounts and list-entries endpoints — unitId required. */
 export const ListAccountsQuerySchema = z.object({
   unitId: z.string().min(1),

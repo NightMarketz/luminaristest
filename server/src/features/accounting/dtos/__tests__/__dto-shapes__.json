@@ -177,6 +177,28 @@
         "unitId"
       ]
     },
+    "JobRowsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "VALID",
+            "INVALID",
+            "COMMITTED",
+            "SKIPPED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
     "ImportUploadSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1076,6 +1098,30 @@
       },
       "required": [
         "unitId"
+      ]
+    },
+    "LedgerQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "accountCode": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "accountCode"
       ]
     },
     "ListAccountsQuerySchema": {
