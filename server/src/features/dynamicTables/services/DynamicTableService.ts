@@ -539,6 +539,11 @@ export class DynamicTableService {
     // a plugin failure (e.g. SalesPlugin stock update) rolls back the record creation.
     const writeCreate = async (tx: Prisma.TransactionClient) => {
       const txRepo = new TransactionalDynamicTableRepository(tx);
+      // Gate autoritativo dentro da tx (padrão da casa, cf. PostingService.postEntry): a checagem
+      // acima é PREFLIGHT (falha cedo, mensagem amigável) e é read-then-write — N pedidos que leiam
+      // antes do primeiro commit leem todos count=0. Não existe exclusion-constraint no SQLite, então
+      // a última palavra tem de ser esta re-contagem com o repo tx-bound, imediatamente antes do insert.
+      await this.enforceNoOverlap(table, table.schema as unknown as ITableSchema, validatedData, isSystem, txRepo);
       const record = await txRepo.createData(tableId, validatedData);
       // Include created id in 'after' context so plugins can reference the new entry
       const afterWithId = { ...validatedData, id: record.id };
@@ -757,6 +762,10 @@ export class DynamicTableService {
     // a plugin failure (e.g. SalesPlugin stock/commission update) rolls back the record update.
     const writeUpdate = async (tx: Prisma.TransactionClient) => {
       const txRepo = new TransactionalDynamicTableRepository(tx);
+      // Gate autoritativo dentro da tx — mesmo motivo do createTableData: a checagem em :746 é
+      // preflight; a re-contagem tx-bound (com excludeId, para a linha não colidir consigo mesma)
+      // é o que fecha a janela read-then-write de um reagendamento concorrente.
+      await this.enforceNoOverlap(table, schema, mergedData, isSystem, txRepo, dataId);
       // Extract the (possibly mutated) data from afterWithId, stripping the synthetic id field.
       const { id: _afterId, ...persistedData } = afterWithId;
       const record = await txRepo.updateData(dataId, persistedData);
