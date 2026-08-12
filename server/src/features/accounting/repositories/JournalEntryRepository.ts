@@ -111,7 +111,13 @@ export class JournalEntryRepository implements IJournalEntryRepository {
         take,
         include: {
           postings: {
-            include: { account: { select: { code: true, name: true } } },
+            include: {
+              account: { select: { code: true, name: true } },
+              // INCR-DIM — the legs' tags travel with the read that feeds the editor.
+              // Without this, `updateDraft` (delete+rewrite legs, cascade on
+              // posting_dimensions) drops every tag the draft had.
+              dimensions: { select: { definitionId: true, valueId: true } },
+            },
           },
         },
       }),
@@ -164,7 +170,12 @@ export class JournalEntryRepository implements IJournalEntryRepository {
         take,
         include: {
           postings: {
-            include: { account: { select: { code: true, name: true } } },
+            include: {
+              account: { select: { code: true, name: true } },
+              // INCR-DIM — see findManyByStatus. This is the read the Drafts list uses,
+              // and the Drafts list is what the editor opens.
+              dimensions: { select: { definitionId: true, valueId: true } },
+            },
           },
         },
       }),

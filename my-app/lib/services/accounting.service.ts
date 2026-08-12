@@ -153,6 +153,12 @@ export interface Account {
 /** A Posting with its parent account's code and name (returned by listEntries). */
 export interface PostingWithAccount extends Posting {
   account: { code: string; name: string };
+  /**
+   * The leg's dimension tags (INCR-DIM), as `(eixo, valor)` pares. Present on the reads that
+   * feed an editor (`listEntries`, `listPending`) and absent elsewhere — the editor MUST send
+   * them back on `updateDraft`, because that command rewrites every leg and the tags cascade.
+   */
+  dimensions?: Array<{ definitionId: string; valueId: string }>;
 }
 
 /** A JournalEntry with full postings (account included) returned by listEntries. */

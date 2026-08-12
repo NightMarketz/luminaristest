@@ -19,7 +19,17 @@ export interface JournalEntryDraftValue {
   /** YYYY-MM-DD */
   date: string;
   description: string;
-  lines: Array<{ accountCode: string; debitCents: number; creditCents: number }>;
+  lines: Array<{
+    accountCode: string;
+    debitCents: number;
+    creditCents: number;
+    /**
+     * The leg's existing dimension tags, as `(eixo, valor)`. Omitted = untagged leg.
+     * Seeds the per-line picker so an edit ROUND-TRIPS the tags instead of dropping them —
+     * `updateDraft` rewrites every leg and `posting_dimensions` cascades on delete.
+     */
+    dimensions?: Array<{ definitionId: string; valueId: string }>;
+  }>;
 }
 
 /** What the modal hands to its write command: the edited value plus the tenancy axis + dim tags. */
@@ -53,8 +63,6 @@ export interface JournalEntryModalProps {
   title?: string;
   submitLabel?: string;
   busyLabel?: string;
-  /** Contextual note rendered above the error slot (e.g. the edit-mode dimension caveat). */
-  notice?: string;
 }
 
 interface Line {
@@ -110,14 +118,19 @@ function centsToInput(cents: number): string {
   return (cents / 100).toFixed(2).replace('.', ',');
 }
 
-/** Turn a pre-filled entry into editable rows. Dimension tags start empty — see `notice`. */
+/**
+ * Turn a pre-filled entry into editable rows, **carrying the leg's existing dimension tags**.
+ * `dims` is keyed by axis (`definitionId`) because `@@unique([postingId, definitionId])` makes
+ * at most one value per axis per leg — the same shape the picker edits and the submit flattens
+ * back to `valueId[]`.
+ */
 function toLines(initial: JournalEntryDraftValue): Line[] {
   return initial.lines.map((l, i) => ({
     id: `i${i}`,
     accountCode: l.accountCode,
     side: l.debitCents > 0 ? ('DEBIT' as const) : ('CREDIT' as const),
     amountBrl: centsToInput(l.debitCents > 0 ? l.debitCents : l.creditCents),
-    dims: {},
+    dims: Object.fromEntries((l.dimensions ?? []).map((d) => [d.definitionId, d.valueId])),
   }));
 }
 
@@ -133,7 +146,6 @@ export function JournalEntryModal({
   title,
   submitLabel,
   busyLabel,
-  notice,
 }: JournalEntryModalProps) {
   const { t } = useTranslation('accounting');
   const [date, setDate] = useState<string>(() => initial?.date ?? today());
@@ -461,13 +473,6 @@ export function JournalEntryModal({
             </span>
           )}
         </div>
-
-        {/* ── Contextual notice (approval tower: the edit-mode dimension caveat) ── */}
-        {notice && (
-          <div className="rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
-            {notice}
-          </div>
-        )}
 
         {/* ── Error ── */}
         {error && (
