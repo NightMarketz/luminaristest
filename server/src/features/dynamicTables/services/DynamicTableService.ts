@@ -18,6 +18,35 @@ import { TransactionalDynamicTableRepository } from '../repositories/Transaction
 import { Prisma } from 'generated/prisma';
 import type { PresetTableDefinition } from '../presets';
 
+/**
+ * Fila de escrita por tabela, usada só pelas tabelas que declaram `noOverlap`.
+ *
+ * O gate autoritativo dentro da tx só morde se a transação perdedora ABRIR depois que a vencedora
+ * COMMITOU — senão cada uma re-conta no próprio snapshot, todas leem 0, e as escritas colidem no
+ * lock do SQLite (o perdedor recebe um erro cru de banco em vez de "esse horário já está ocupado").
+ * Serializar a tx aqui transforma a corrida numa fila: a segunda re-conta já enxergando a primeira.
+ *
+ * ponytail: trava in-process, não distribuída — o teto é UM processo Node por arquivo SQLite, que é
+ * exatamente o desenho atual deste projeto. Se algum dia houver mais de um processo escrevendo o
+ * mesmo banco, isto deixa de bastar: o upgrade é constraint de exclusão no banco (Postgres
+ * `EXCLUDE USING gist`) ou um lock consultivo, não uma trava maior aqui.
+ */
+const tableWriteQueue = new Map<string, Promise<unknown>>();
+
+function withTableWriteLock<T>(tableId: string, fn: () => Promise<T>): Promise<T> {
+  const previous = tableWriteQueue.get(tableId) ?? Promise.resolve();
+  // `then(fn, fn)` — a fila anda mesmo quando o pedido anterior rejeita (ValidationError é o
+  // desfecho ESPERADO do perdedor; não pode travar quem vem atrás).
+  const run = previous.then(fn, fn);
+  const settled = run.catch(() => undefined);
+  tableWriteQueue.set(tableId, settled);
+  // Não deixa o Map crescer por tabela já drenada.
+  void settled.then(() => {
+    if (tableWriteQueue.get(tableId) === settled) tableWriteQueue.delete(tableId);
+  });
+  return run;
+}
+
 export class DynamicTableService {
   private repository: IDynamicTableRepository;
   private policy: IDynamicTablePolicy;
@@ -553,7 +582,9 @@ export class DynamicTableService {
       return record;
     };
     // Reuse the caller's transaction when composing an atomic multi-write (options.tx); otherwise open our own.
-    const created = options?.tx ? await writeCreate(options.tx) : await prisma.$transaction(writeCreate);
+    const created = options?.tx
+      ? await writeCreate(options.tx)
+      : await this.runSerializedIfNoOverlap(table, isSystem, () => prisma.$transaction(writeCreate));
 
     kpiCacheService.invalidate(table.userId);
     return created;
@@ -775,7 +806,9 @@ export class DynamicTableService {
       return record;
     };
     // Reuse the caller's transaction when composing an atomic multi-write (options.tx); otherwise open our own.
-    const updated = options?.tx ? await writeUpdate(options.tx) : await prisma.$transaction(writeUpdate);
+    const updated = options?.tx
+      ? await writeUpdate(options.tx)
+      : await this.runSerializedIfNoOverlap(table, isSystem, () => prisma.$transaction(writeUpdate));
 
     kpiCacheService.invalidate(table.userId);
     return updated;
@@ -1085,6 +1118,18 @@ export class DynamicTableService {
       shape[field.name] = zodField;
     }
     return z.object(shape);
+  }
+
+  /**
+   * Enfileira a transação de escrita quando a tabela declara `noOverlap`, para que o gate
+   * autoritativo in-tx tenha o que enxergar: a tx do perdedor só abre depois do commit do vencedor.
+   * Fora desse caso (tabela sem regra, ou escrita de sistema — que `enforceNoOverlap` ignora) a
+   * escrita segue direto, sem custo nenhum.
+   */
+  private runSerializedIfNoOverlap<T>(table: IDynamicTable, isSystem: boolean, write: () => Promise<T>): Promise<T> {
+    const rules = (table.schema as unknown as ITableSchema)?.noOverlap ?? [];
+    if (isSystem || rules.length === 0) return write();
+    return withTableWriteLock(table.id, write);
   }
 
   /**
