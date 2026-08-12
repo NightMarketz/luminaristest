@@ -84,8 +84,18 @@
           ]
         },
         "includeArchived": {
-          "default": false,
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
         }
       },
       "required": [
@@ -297,8 +307,18 @@
           "minLength": 1
         },
         "includeArchived": {
-          "default": false,
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
         }
       },
       "required": [
@@ -354,7 +374,8 @@
       "required": [
         "unitId",
         "targetId"
-      ]
+      ],
+      "additionalProperties": false
     },
     "ListDocumentAttachmentsQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -373,7 +394,8 @@
       },
       "required": [
         "unitId"
-      ]
+      ],
+      "additionalProperties": false
     },
     "DocumentAttachmentScopeQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -387,7 +409,8 @@
       },
       "required": [
         "unitId"
-      ]
+      ],
+      "additionalProperties": false
     }
   },
   "EntryApprovalDto.ts": {

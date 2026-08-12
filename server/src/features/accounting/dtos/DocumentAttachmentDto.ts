@@ -9,6 +9,12 @@ const idLike = z.string().min(1).regex(/^[A-Za-z0-9_-]+$/, 'invalid id');
  * Body of a multipart attachment upload. The file metadata (fileName, mimeType,
  * fileSize, sha256, storageKey) is derived server-side — never accepted from the client.
  *
+ * `.strict()` (mudança de contrato): campo desconhecido agora é 400 em vez de descarte
+ * silencioso. Multipart não é motivo para ficar aberto — o irmão multipart
+ * `ImportReferentialCatalogSchema` já era `.strict()`. Isto NÃO fecha a classe: 34 outros
+ * object-schemas de contabilidade seguem abertos (todo o PostingDto, todo o ReconciliationDto);
+ * fechá-los é decisão de política com raio de alcance em cliente vivo, não deste PR.
+ *
  * @openapi
  * components:
  *   schemas:
@@ -35,20 +41,26 @@ const idLike = z.string().min(1).regex(/^[A-Za-z0-9_-]+$/, 'invalid id');
  *         createdAt: { type: string, format: date-time }
  *         deletedAt: { type: string, format: date-time, nullable: true }
  */
-export const UploadDocumentAttachmentSchema = z.object({
-  unitId: idLike,
-  targetType: z.literal('JOURNAL_ENTRY').default('JOURNAL_ENTRY'),
-  targetId: idLike,
-});
+export const UploadDocumentAttachmentSchema = z
+  .object({
+    unitId: idLike,
+    targetType: z.literal('JOURNAL_ENTRY').default('JOURNAL_ENTRY'),
+    targetId: idLike,
+  })
+  .strict();
 export type UploadDocumentAttachmentDto = z.infer<typeof UploadDocumentAttachmentSchema>;
 
 /** Query for listing attachments of an entry (unitId is the tenant scope key). */
-export const ListDocumentAttachmentsQuerySchema = z.object({
-  unitId: idLike,
-  targetType: z.literal('JOURNAL_ENTRY').default('JOURNAL_ENTRY'),
-});
+export const ListDocumentAttachmentsQuerySchema = z
+  .object({
+    unitId: idLike,
+    targetType: z.literal('JOURNAL_ENTRY').default('JOURNAL_ENTRY'),
+  })
+  .strict();
 
 /** Query for by-id download/delete (scope key only; id comes from the path param). */
-export const DocumentAttachmentScopeQuerySchema = z.object({
-  unitId: idLike,
-});
+export const DocumentAttachmentScopeQuerySchema = z
+  .object({
+    unitId: idLike,
+  })
+  .strict();

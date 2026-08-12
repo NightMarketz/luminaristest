@@ -1,10 +1,12 @@
 import { z } from 'zod';
 import { COUNTERPARTY_TYPES } from '../models/Counterparty.model';
+import { queryBoolean } from './queryPrimitives';
 
 /**
  * CounterpartyDto — Contraparte (INCR-COUNTERPARTY / A1) request schemas. A counterparty is a
  * classification/identity record: NO money, NO dates, so there is no MAX_CENTS / date-only concern
- * here. Every schema is `.strict()` so a typo'd field fails loud instead of being silently dropped.
+ * here. Os schemas de CORPO são `.strict()` (campo com typo é 400, não descarte silencioso); os de
+ * QUERY não são — ver o levantamento no PR que introduziu o `queryPrimitives`.
  *
  * `type` is the SUPPLIER/CUSTOMER discriminator; `name` is the display identity (uniqueness is
  * `[userId,unitId,type,name]`, enforced at the DB + mapped to a ValidationError in the service).
@@ -61,7 +63,8 @@ export const ArchiveCounterpartySchema = z
 export const ListCounterpartiesQuerySchema = z.object({
   unitId: z.string().min(1),
   type: z.enum(COUNTERPARTY_TYPES).optional(),
-  includeArchived: z.coerce.boolean().optional().default(false),
+  // queryBoolean, não z.coerce.boolean(): `?includeArchived=false` devolvia as arquivadas.
+  includeArchived: queryBoolean(),
 });
 
 /** Query DTO for GET /counterparties/:id — unitId required. */
