@@ -728,6 +728,22 @@
               "CANCELLED"
             ]
           },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Filtra pela FK de contraparte (INCR-COUNTERPARTY)"
+          },
+          "dueFrom": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)"
+          },
+          "dueTo": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)"
+          },
+          "q": {
+            "type": "string",
+            "description": "Substring em description OU documentNumber"
+          },
           "page": {
             "type": "integer",
             "minimum": 1
@@ -1133,6 +1149,22 @@
               "RECEIVED",
               "CANCELLED"
             ]
+          },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Filtra pela FK de contraparte (INCR-COUNTERPARTY)"
+          },
+          "dueFrom": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)"
+          },
+          "dueTo": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)"
+          },
+          "q": {
+            "type": "string",
+            "description": "Substring em description OU documentNumber"
           },
           "page": {
             "type": "integer",

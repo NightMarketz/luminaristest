@@ -903,6 +903,20 @@
             "CANCELLED"
           ]
         },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dueFrom": {
+          "type": "string"
+        },
+        "dueTo": {
+          "type": "string"
+        },
+        "q": {
+          "type": "string",
+          "minLength": 1
+        },
         "page": {
           "default": 1,
           "type": "integer",
@@ -1510,6 +1524,20 @@
             "RECEIVED",
             "CANCELLED"
           ]
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dueFrom": {
+          "type": "string"
+        },
+        "dueTo": {
+          "type": "string"
+        },
+        "q": {
+          "type": "string",
+          "minLength": 1
         },
         "page": {
           "default": 1,

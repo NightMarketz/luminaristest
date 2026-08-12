@@ -75,7 +75,17 @@ export class PayableService {
       throw new ForbiddenError('Você não tem permissão para listar contas a pagar.');
     }
     const skip = (params.page - 1) * params.limit;
-    return this.payableRepo.findManyByUnit(scope, { status: params.status, skip, limit: params.limit });
+    // BE-INCR-SUBLEDGER-FILTERS §2: todo filtro declarado no DTO é repassado ao repo. Param aceito
+    // no DTO e não repassado aqui devolveria uma lista "filtrada" que não filtrou.
+    return this.payableRepo.findManyByUnit(scope, {
+      status: params.status,
+      counterpartyId: params.counterpartyId,
+      dueFrom: params.dueFrom,
+      dueTo: params.dueTo,
+      q: params.q,
+      skip,
+      limit: params.limit,
+    });
   }
 
   async getPayable(scope: AccountingScope, id: string): Promise<PayableWithPayments> {

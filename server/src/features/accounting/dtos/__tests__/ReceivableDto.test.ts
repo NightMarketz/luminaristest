@@ -1,4 +1,4 @@
-import { CreateReceivableSchema, RegisterReceiptSchema } from '../ReceivableDto';
+import { CreateReceivableSchema, ListReceivablesQuerySchema, RegisterReceiptSchema } from '../ReceivableDto';
 import { MAX_CENTS } from '../../models/money';
 
 const validCreate = {
@@ -44,5 +44,39 @@ describe('RegisterReceiptSchema', () => {
 
   it('rejects amountCents over MAX_CENTS', () => {
     expect(RegisterReceiptSchema.safeParse({ ...valid, amountCents: MAX_CENTS + 1 }).success).toBe(false);
+  });
+});
+
+/**
+ * BE-INCR-SUBLEDGER-FILTERS §2, comportamento 8 — espelho literal do AP (F6). A validação de data
+ * é a mesma `isValidDateOnly` (round-trip): '2026-02-30' rolaria para 03-02 em silêncio.
+ */
+describe('ListReceivablesQuerySchema — filtros (BE-INCR-SUBLEDGER-FILTERS)', () => {
+  const base = { unitId: 'u1' };
+
+  it('aceita a query sem nenhum filtro novo (todos opcionais)', () => {
+    expect(ListReceivablesQuerySchema.safeParse(base).success).toBe(true);
+  });
+
+  it('aceita os quatro filtros juntos', () => {
+    const r = ListReceivablesQuerySchema.safeParse({
+      ...base,
+      counterpartyId: 'cp-1',
+      dueFrom: '2026-03-01',
+      dueTo: '2026-03-31',
+      q: 'mensalidade',
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejeita data que a regex aceitaria mas o calendário não tem', () => {
+    expect(ListReceivablesQuerySchema.safeParse({ ...base, dueFrom: '2026-03-01' }).success).toBe(true);
+    expect(ListReceivablesQuerySchema.safeParse({ ...base, dueFrom: '2026-02-30' }).success).toBe(false);
+    expect(ListReceivablesQuerySchema.safeParse({ ...base, dueTo: '2026-06-31' }).success).toBe(false);
+  });
+
+  it('rejeita filtro de texto vazio (string vazia casaria tudo)', () => {
+    expect(ListReceivablesQuerySchema.safeParse({ ...base, q: '' }).success).toBe(false);
+    expect(ListReceivablesQuerySchema.safeParse({ ...base, counterpartyId: '' }).success).toBe(false);
   });
 });

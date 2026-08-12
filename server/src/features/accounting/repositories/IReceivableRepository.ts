@@ -51,9 +51,24 @@ export interface IReceivableRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<ReceivableWithReceipts | null>;
 
+  /**
+   * Lista paginada do subrazão. Espelho literal do AP (F6): filtros opcionais em AND que NUNCA
+   * substituem a base do `where` — escopo + `deletedAt: null` seguem aplicados sob qualquer
+   * combinação (comportamento 6). `total` conta o conjunto FILTRADO (comportamento 7).
+   */
   findManyByUnit(
     scope: AccountingScope,
-    params: { status?: string; skip: number; limit: number },
+    params: {
+      status?: string;
+      counterpartyId?: string;
+      /** Data-only YYYY-MM-DD, faixa inclusiva nos dois extremos (F4). */
+      dueFrom?: string;
+      dueTo?: string;
+      /** Substring em description OU documentNumber (F2). */
+      q?: string;
+      skip: number;
+      limit: number;
+    },
   ): Promise<{ receivables: ReceivableWithReceipts[]; total: number }>;
 
   /** All non-deleted receivables in scope (reconcile re-drive input). */

@@ -44,9 +44,45 @@ export class PayableRepository implements IPayableRepository {
 
   public async findManyByUnit(
     scope: AccountingScope,
-    params: { status?: string; skip: number; limit: number },
+    params: {
+      status?: string;
+      counterpartyId?: string;
+      dueFrom?: string;
+      dueTo?: string;
+      q?: string;
+      skip: number;
+      limit: number;
+    },
   ): Promise<{ payables: PayableWithPayments[]; total: number }> {
-    const where = { ...accountingScopeWhere(scope), deletedAt: null, ...(params.status ? { status: params.status } : {}) };
+    // BE-INCR-SUBLEDGER-FILTERS §2. A base (escopo + deletedAt) vem PRIMEIRO e nenhum filtro a
+    // substitui — os spreads seguintes só acrescentam chaves distintas (comportamento 6). O mesmo
+    // objeto alimenta findMany E count, então `total` conta o conjunto filtrado (comportamento 7).
+    const where = {
+      ...accountingScopeWhere(scope),
+      deletedAt: null,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.counterpartyId ? { counterpartyId: params.counterpartyId } : {}),
+      // Faixa INCLUSIVA (F4): `dueDate` é gravado como MEIA-NOITE UTC da data-calendário
+      // (`new Date('YYYY-MM-DD')` no create), logo `lte` no extremo inclui o próprio dia.
+      ...(params.dueFrom || params.dueTo
+        ? {
+            dueDate: {
+              ...(params.dueFrom ? { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } : {}),
+              ...(params.dueTo ? { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } : {}),
+            },
+          }
+        : {}),
+      // F2: description OU documentNumber. Tombstone de rename-on-delete
+      // (`deleted:<id>:<doc>`) nunca aparece porque `deletedAt: null` já o excluiu acima.
+      ...(params.q
+        ? {
+            OR: [
+              { description: { contains: params.q } },
+              { documentNumber: { contains: params.q } },
+            ],
+          }
+        : {}),
+    };
     const [payables, total] = await Promise.all([
       prisma.payable.findMany({
         where,

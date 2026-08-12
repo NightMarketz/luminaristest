@@ -74,7 +74,16 @@ export class ReceivableService {
       throw new ForbiddenError('Você não tem permissão para listar contas a receber.');
     }
     const skip = (params.page - 1) * params.limit;
-    return this.receivableRepo.findManyByUnit(scope, { status: params.status, skip, limit: params.limit });
+    // BE-INCR-SUBLEDGER-FILTERS §2 — espelho do AP (F6): todo filtro do DTO é repassado ao repo.
+    return this.receivableRepo.findManyByUnit(scope, {
+      status: params.status,
+      counterpartyId: params.counterpartyId,
+      dueFrom: params.dueFrom,
+      dueTo: params.dueTo,
+      q: params.q,
+      skip,
+      limit: params.limit,
+    });
   }
 
   async getReceivable(scope: AccountingScope, id: string): Promise<ReceivableWithReceipts> {

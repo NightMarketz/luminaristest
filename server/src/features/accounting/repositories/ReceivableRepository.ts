@@ -44,9 +44,43 @@ export class ReceivableRepository implements IReceivableRepository {
 
   public async findManyByUnit(
     scope: AccountingScope,
-    params: { status?: string; skip: number; limit: number },
+    params: {
+      status?: string;
+      counterpartyId?: string;
+      dueFrom?: string;
+      dueTo?: string;
+      q?: string;
+      skip: number;
+      limit: number;
+    },
   ): Promise<{ receivables: ReceivableWithReceipts[]; total: number }> {
-    const where = { ...accountingScopeWhere(scope), deletedAt: null, ...(params.status ? { status: params.status } : {}) };
+    // BE-INCR-SUBLEDGER-FILTERS §2 — espelho literal do AP (F6). A base (escopo + deletedAt) vem
+    // PRIMEIRO e nenhum filtro a substitui (comportamento 6); o mesmo objeto alimenta findMany E
+    // count, então `total` conta o conjunto filtrado (comportamento 7).
+    const where = {
+      ...accountingScopeWhere(scope),
+      deletedAt: null,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.counterpartyId ? { counterpartyId: params.counterpartyId } : {}),
+      // Faixa INCLUSIVA (F4): `dueDate` é meia-noite UTC da data-calendário, logo `lte` inclui o dia.
+      ...(params.dueFrom || params.dueTo
+        ? {
+            dueDate: {
+              ...(params.dueFrom ? { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } : {}),
+              ...(params.dueTo ? { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } : {}),
+            },
+          }
+        : {}),
+      // F2: description OU documentNumber; tombstone já excluído por `deletedAt: null`.
+      ...(params.q
+        ? {
+            OR: [
+              { description: { contains: params.q } },
+              { documentNumber: { contains: params.q } },
+            ],
+          }
+        : {}),
+    };
     const [receivables, total] = await Promise.all([
       prisma.receivable.findMany({
         where,
