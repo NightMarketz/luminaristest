@@ -1,9 +1,11 @@
 import { z } from 'zod';
+import { queryBoolean } from './queryPrimitives';
 
 /**
  * DimensionDto — Dimensões (INCR-DIM) request schemas. Catalog management (definitions + values) and
- * the report-query shapes. Every schema is `.strict()` so a typo'd field fails loud instead of being
- * silently dropped. A dimension carries NO money and NO dates — it is a classification label, so there
+ * the report-query shapes. Os schemas de CORPO são `.strict()` (campo com typo é 400, não descarte
+ * silencioso); os de QUERY não são — ver o levantamento no PR que introduziu o `queryPrimitives`.
+ * A dimension carries NO money and NO dates — it is a classification label, so there
  * is no MAX_CENTS / date-only concern here (ACC-024: the tag is not a ledger value).
  *
  * `code` is a stable machine key (uppercase-ish, no spaces enforced softly by min-length only — the
@@ -70,7 +72,8 @@ export const ArchiveDimensionSchema = z
 /** Query DTO for listing the catalog — unitId required; includeArchived optional. */
 export const ListDimensionsQuerySchema = z.object({
   unitId: z.string().min(1),
-  includeArchived: z.coerce.boolean().optional().default(false),
+  // queryBoolean, não z.coerce.boolean(): `?includeArchived=false` devolvia os arquivados.
+  includeArchived: queryBoolean(),
 });
 
 /** @openapi

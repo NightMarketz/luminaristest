@@ -8,18 +8,15 @@
  * DECLARAÇÃO não é o mesmo que provar a REJEIÇÃO: um `pattern` presente e uma barreira que
  * morde são fatos diferentes, e é o segundo que importa numa superfície de upload.
  *
- * DECLARAÇÃO SOBRE A AUSÊNCIA DE `.strict()` (achado reportado no PR, NÃO corrigido aqui):
- * os três schemas deste arquivo são os únicos DTOs de contabilidade sem `.strict()`. Não há
- * evidência de que seja deliberado — o arquivo nasceu assim em 35a3db2a (BE-INCR-5) e nunca
- * foi revisitado, e o irmão multipart `ImportReferentialCatalogSchema` É `.strict()`, o que
- * derruba "multipart" como justificativa. A severidade é BAIXA e não é mass-assignment: o Zod
- * DESCARTA a chave desconhecida (não repassa), e o controller monta a chamada de serviço campo
- * a campo (`documentAttachmentController.ts:55-61`), nunca espalhando `parsed.data`. O efeito
- * real é de ruído: um campo com typo é silenciosamente ignorado em vez de virar 400.
+ * `.strict()` — HISTÓRICO DA DECISÃO: este arquivo nasceu sem `.strict()` em 35a3db2a
+ * (BE-INCR-5) e nunca foi revisitado. O PR de teste PINOU o descarte silencioso sem sancioná-lo;
+ * o PR de contrato seguinte ligou `.strict()` (endpoint sem cliente vivo, e o irmão multipart
+ * `ImportReferentialCatalogSchema` já era `.strict()` — "é multipart" não sustentava a exceção).
  *
- * O teste abaixo PINA o comportamento atual (descarte silencioso) em vez de corrigi-lo, porque
- * ligar `.strict()` muda o shape e exige atualizar o `__dto-shapes__.json` — mudança de
- * contrato deliberada, que deve ser visível num PR próprio e não folder num PR de teste.
+ * NÃO era mass-assignment nem antes: o Zod descarta a chave desconhecida (não repassa) e o
+ * controller monta a chamada de serviço campo a campo (`documentAttachmentController.ts:55-61`),
+ * nunca espalhando `parsed.data`. O ganho é de ruído: campo com typo vira 400 em vez de silêncio.
+ * E NÃO fecha a classe — 34 outros object-schemas de contabilidade seguem abertos.
  */
 import {
   UploadDocumentAttachmentSchema,
@@ -78,30 +75,31 @@ describe('UploadDocumentAttachmentSchema — guarda anti-travessia (idLike)', ()
   });
 });
 
-describe('DocumentAttachmentDto — ausência de .strict() (comportamento PINADO, não sancionado)', () => {
-  it('DESCARTA a chave desconhecida em vez de rejeitar (divergência dos demais DTOs)', () => {
-    const parsed = UploadDocumentAttachmentSchema.safeParse({
-      ...validUpload,
-      targetTyp: 'JOURNAL_ENTRY', // typo: seria 400 em qualquer outro DTO de contabilidade
-      fileSize: 999,
-    });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      // O valor descartado NÃO chega ao serviço — por isso o achado é ruído, não mass-assignment.
-      expect(parsed.data).toEqual({ ...validUpload, targetType: 'JOURNAL_ENTRY' });
-    }
+describe('DocumentAttachmentDto — .strict() (mudança de contrato)', () => {
+  it('rejects chave desconhecida em vez de descartar (campo com typo é 400, não silêncio)', () => {
+    expect(
+      UploadDocumentAttachmentSchema.safeParse({ ...validUpload, targetTyp: 'JOURNAL_ENTRY' }).success,
+    ).toBe(false);
+    expect(UploadDocumentAttachmentSchema.safeParse({ ...validUpload, fileSize: 999 }).success).toBe(false);
   });
 
-  it('metadado de arquivo enviado pelo cliente é ignorado (é derivado no servidor)', () => {
-    const parsed = UploadDocumentAttachmentSchema.safeParse({
-      ...validUpload,
-      sha256: 'deadbeef'.repeat(8),
-      storageKey: '../../../etc/passwd',
-    });
-    expect(parsed.success).toBe(true);
-    if (parsed.success) {
-      expect(parsed.data).not.toHaveProperty('sha256');
-      expect(parsed.data).not.toHaveProperty('storageKey');
-    }
+  it('rejects metadado de arquivo vindo do cliente (é derivado no servidor, nunca aceito)', () => {
+    // Antes do .strict() estes campos eram silenciosamente descartados; agora a tentativa é
+    // um erro alto — o cliente descobre que o servidor não aceita, em vez de crer que aceitou.
+    expect(
+      UploadDocumentAttachmentSchema.safeParse({ ...validUpload, sha256: 'deadbeef'.repeat(8) }).success,
+    ).toBe(false);
+    expect(
+      UploadDocumentAttachmentSchema.safeParse({ ...validUpload, storageKey: '../../../etc/passwd' }).success,
+    ).toBe(false);
+  });
+
+  it('as duas queries também rejeitam chave desconhecida', () => {
+    expect(
+      ListDocumentAttachmentsQuerySchema.safeParse({ unitId: 'clx1unit0000abcd', page: '1' }).success,
+    ).toBe(false);
+    expect(
+      DocumentAttachmentScopeQuerySchema.safeParse({ unitId: 'clx1unit0000abcd', targetType: 'JOURNAL_ENTRY' }).success,
+    ).toBe(false);
   });
 });

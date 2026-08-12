@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { queryBoolean } from './queryPrimitives';
 
 /**
  * ReferentialCatalogDto — RFB referential CATALOG import + lookup inputs (BE-INCR-9B / ADR-INCR9B,
@@ -58,11 +59,8 @@ export const ReferentialCatalogQuerySchema = z
     unitId: idLike,
     version: shortText(32),
     q: z.string().trim().max(120).optional(),
-    // query strings arrive as text — coerce "true"/"false" to boolean.
-    analyticOnly: z
-      .union([z.boolean(), z.enum(['true', 'false'])])
-      .optional()
-      .transform((v) => v === true || v === 'true'),
+    // query strings arrive as text — coerce "true"/"false" to boolean (canônico compartilhado).
+    analyticOnly: queryBoolean(),
   })
   .strict();
 export type ReferentialCatalogQueryDto = z.infer<typeof ReferentialCatalogQuerySchema>;
