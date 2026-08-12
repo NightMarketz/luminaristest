@@ -76,7 +76,7 @@ declarado, sem executável · **[ABERTO]** sem instrumento · **[ORÁCULO]** só
 | Segurança | deny-by-default no auth (RISK-SEC-AUTH-001) + `lib/uploadSecurity` + testes de permissão; ~~semgrep~~ ausente | [PARCIAL] | `grep -i semgrep server/package.json` → vazio |
 | Camada / arquitetura | **lint-layer-gate** (`my-app/eslint.gate.config.mjs`, `npm run lint:gate` no CI) + zinc-guard diff-scoped — **instrumentos que o mapa original nem listava** | [PARCIAL] (confinamento prisma/apiClient; não cobre tudo do Contrato §2) | `grep -n "lint:gate" .github/workflows/ci.yml` |
 | Configuração de implantação | `dockerCompose.qdrant.test.ts` + `nextPublicEnvWiring.test.ts` — nasceram da triagem R1-R3; antes deles, **nenhum arquivo do repo lia o compose** | [PARCIAL] | `ls server/src/config/__tests__/dockerCompose.qdrant.test.ts` |
-| Observabilidade / falha silenciosa | logger JSON estruturado (134 `logger.error` em 48 arquivos) mas **sink = console, zero alerta/agregação**; `Metrics` é logger disfarçado | [ABERTO] | `grep -rn "console.error" server/src/lib/logger.ts` |
+| Observabilidade / falha silenciosa | logger JSON estruturado (133 `logger.error` em 47 arquivos não-teste — o 134/48 contava 1 teste) + **sink de arquivo NDJSON** (`server/logs/errors-YYYY-MM-DD.ndjson`, error+warn, retenção 14d), lido por `npm run logs:errors`. **Agrega, não alerta**; `Metrics` continua logger disfarçado | [ABERTO] → [PARCIAL] | `cd server && npm run logs:errors` |
 
 ---
 
@@ -127,8 +127,12 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 1. ~~Script do smoke-migration-gate~~ → **Fase 2 deste plano** (13 relatórios já são a spec; lê o app).
 2. ~~Harness de concorrência noOverlap~~ → **Fase 3** (`it.failing` expõe o TOCTOU; conserto é decisão à parte).
 3. ~~Snapshot de shape Zod~~ → **Fase 4** (evolução assimétrica server-side; sem dep nova, sem passo de CI).
-4. Observabilidade (transversal) — sink de verdade para os 134 `logger.error`; **precisa de decisão de
-   ferramenta do dono** (Sentry? arquivo? webhook?), não é só código.
+4. ~~Observabilidade (transversal)~~ → **decidido pelo dono em 2026-08-12: F1→(a)**, sink de arquivo
+   NDJSON + `npm run logs:errors`. Zero dependência nova, zero dado saindo do processo, sem acionar o
+   gate de LGPD. Razão de peso contra (b) Sentry: **o app nunca foi implantado** — alerta remoto compra
+   uma produção que não existe, e forçaria hoje a decisão de privacidade que o Bloco A lista como
+   oráculo aberto. **O que continua aberto:** agrega mas não *alerta*; alguém tem de rodar o comando.
+   Se houver data de implantação, a razão contra (b) cai e ele volta à fila.
 5. Censo AV / detector de regra sem lastro — **SUSPENSO** pela regra permanente até um oráculo do
    Bloco A fechar.
 6. Estado inconsistente intra-módulo — menor prioridade (1 caso no corpus, já consertado no #176-adjacente).
