@@ -42,7 +42,14 @@ function ctxFor(userId: string, role: Role = Role.USER): UserContext {
   return { id: userId, userId, name: 'u', username: userId, email: `${userId}@test.co`, userEmail: `${userId}@test.co`, role, userRole: role, createdAt: new Date(), updatedAt: new Date() };
 }
 
+// Ids semeados pela suíte — o afterEach limpa SÓ estes donos, nunca um deleteMany() global.
+// Mesma classe de colisão fechada em NoOverlapUpdateConcurrency.integration.test.ts: no
+// test:leaks todas as suítes compartilham o mesmo test-integration.db em --runInBand, e um
+// wipe sem where apaga dados de suíte alheia (ou morre em FK Restrict que não é seu).
+const seededUserIds = new Set<string>();
+
 async function seedUser(id: string, role: Role = Role.USER) {
+  seededUserIds.add(id);
   return prisma.user.create({ data: { id, username: id, email: `${id}@test.co`, password: 'x', role } });
 }
 
@@ -66,9 +73,10 @@ beforeAll(() => {
 }, 120000);
 
 afterEach(async () => {
-  await prisma.dynamicTableData.deleteMany();
-  await prisma.dynamicTable.deleteMany();
-  await prisma.user.deleteMany();
+  const ids = [...seededUserIds];
+  await prisma.dynamicTableData.deleteMany({ where: { dynamicTable: { userId: { in: ids } } } });
+  await prisma.dynamicTable.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.user.deleteMany({ where: { id: { in: ids } } });
 });
 
 afterAll(async () => {
