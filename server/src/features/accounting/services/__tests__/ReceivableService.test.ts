@@ -412,6 +412,7 @@ describe('ReceivableService.listReceivables — repasse de filtros (BE-INCR-SUBL
       dueFrom: '2026-03-01',
       dueTo: '2026-03-31',
       q: 'mensalidade',
+      overdue: true,
       page: 2,
       limit: 25,
     });
@@ -425,6 +426,7 @@ describe('ReceivableService.listReceivables — repasse de filtros (BE-INCR-SUBL
       dueFrom: '2026-03-01',
       dueTo: '2026-03-31',
       q: 'mensalidade',
+      overdue: true,
       skip: 25,
       limit: 25,
     });

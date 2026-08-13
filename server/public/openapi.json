@@ -744,6 +744,10 @@
             "type": "string",
             "description": "Substring em description OU documentNumber"
           },
+          "overdue": {
+            "type": "boolean",
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta"
+          },
           "page": {
             "type": "integer",
             "minimum": 1
@@ -1165,6 +1169,10 @@
           "q": {
             "type": "string",
             "description": "Substring em description OU documentNumber"
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta"
           },
           "page": {
             "type": "integer",
@@ -9643,6 +9651,15 @@
           },
           {
             "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)"
+          },
+          {
+            "in": "query",
             "name": "page",
             "required": false,
             "schema": {
@@ -10008,6 +10025,15 @@
               "type": "string"
             },
             "description": "Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga"
+          },
+          {
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)"
           },
           {
             "in": "query",

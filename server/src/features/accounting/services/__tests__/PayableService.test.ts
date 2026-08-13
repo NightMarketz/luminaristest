@@ -587,6 +587,7 @@ describe('PayableService.listPayables — repasse de filtros (BE-INCR-SUBLEDGER-
     dueFrom: '2026-03-01',
     dueTo: '2026-03-31',
     q: 'aluguel',
+    overdue: true,
     page: 2,
     limit: 25,
   };
@@ -604,6 +605,7 @@ describe('PayableService.listPayables — repasse de filtros (BE-INCR-SUBLEDGER-
       dueFrom: '2026-03-01',
       dueTo: '2026-03-31',
       q: 'aluguel',
+      overdue: true,
       skip: 25, // (page 2 - 1) * limit 25
       limit: 25,
     });

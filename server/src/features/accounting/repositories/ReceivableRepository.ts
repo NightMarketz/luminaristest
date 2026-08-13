@@ -3,6 +3,7 @@ import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { RECEIVABLE_OUTSTANDING_STATUSES } from '../models/Receivable.model';
+import { scopeToday } from '../models/dates';
 import type {
   CreateReceivableData,
   CreateReceiptData,
@@ -50,36 +51,42 @@ export class ReceivableRepository implements IReceivableRepository {
       dueFrom?: string;
       dueTo?: string;
       q?: string;
+      overdue?: boolean;
       skip: number;
       limit: number;
     },
   ): Promise<{ receivables: ReceivableWithReceipts[]; total: number }> {
-    // BE-INCR-SUBLEDGER-FILTERS §2 — espelho literal do AP (F6). A base (escopo + deletedAt) vem
-    // PRIMEIRO e nenhum filtro a substitui (comportamento 6); o mesmo objeto alimenta findMany E
-    // count, então `total` conta o conjunto filtrado (comportamento 7).
-    const where = {
+    // BE-INCR-SUBLEDGER-FILTERS §2 — espelho literal do AP (F6). Cada filtro é um BLOCO em `AND`
+    // (F10→(a)): `overdue` disputa `dueDate` com `dueTo` e `status` com o filtro de status, e por
+    // spread o último venceria em silêncio. Em `AND` os dois valem. A base (escopo + deletedAt)
+    // fica fora do alcance de qualquer filtro por construção (comportamento 6).
+    const filtros: Prisma.ReceivableWhereInput[] = [];
+    if (params.status) filtros.push({ status: params.status });
+    if (params.counterpartyId) filtros.push({ counterpartyId: params.counterpartyId });
+    // Faixa INCLUSIVA (F4): `dueDate` é meia-noite UTC da data-calendário, logo `lte` inclui o dia.
+    if (params.dueFrom) filtros.push({ dueDate: { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } });
+    if (params.dueTo) filtros.push({ dueDate: { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } });
+    // Vencido (F1): `<` e não `<=` — vencer HOJE não é estar vencido, espelhando o aging, onde
+    // `dueDate >= as_of` é "a vencer". `scopeToday(scope)` é a MESMA fonte do aging (F9 + ADR do
+    // fuso F-TZ1→(c)): hoje no fuso do escopo, nunca UTC.
+    if (params.overdue) {
+      filtros.push({
+        dueDate: { lt: new Date(`${scopeToday(scope)}T00:00:00.000Z`) },
+        status: { in: [...RECEIVABLE_OUTSTANDING_STATUSES] },
+      });
+    }
+    // F2: description OU documentNumber; tombstone já excluído pela base, fora do AND.
+    if (params.q) {
+      filtros.push({
+        OR: [{ description: { contains: params.q } }, { documentNumber: { contains: params.q } }],
+      });
+    }
+
+    // O mesmo objeto alimenta findMany E count, então `total` conta o conjunto filtrado (comp. 7).
+    const where: Prisma.ReceivableWhereInput = {
       ...accountingScopeWhere(scope),
       deletedAt: null,
-      ...(params.status ? { status: params.status } : {}),
-      ...(params.counterpartyId ? { counterpartyId: params.counterpartyId } : {}),
-      // Faixa INCLUSIVA (F4): `dueDate` é meia-noite UTC da data-calendário, logo `lte` inclui o dia.
-      ...(params.dueFrom || params.dueTo
-        ? {
-            dueDate: {
-              ...(params.dueFrom ? { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } : {}),
-              ...(params.dueTo ? { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } : {}),
-            },
-          }
-        : {}),
-      // F2: description OU documentNumber; tombstone já excluído por `deletedAt: null`.
-      ...(params.q
-        ? {
-            OR: [
-              { description: { contains: params.q } },
-              { documentNumber: { contains: params.q } },
-            ],
-          }
-        : {}),
+      ...(filtros.length ? { AND: filtros } : {}),
     };
     const [receivables, total] = await Promise.all([
       prisma.receivable.findMany({

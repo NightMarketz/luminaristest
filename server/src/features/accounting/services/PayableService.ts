@@ -83,6 +83,7 @@ export class PayableService {
       dueFrom: params.dueFrom,
       dueTo: params.dueTo,
       q: params.q,
+      overdue: params.overdue,
       skip,
       limit: params.limit,
     });

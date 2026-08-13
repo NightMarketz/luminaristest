@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { PAYMENT_METHODS } from '../models/Payable.model';
+import { queryBoolean } from './queryPrimitives';
 
 /**
  * PayableDto — Contas a Pagar (INCR-AP) request schemas. Money is INTEGER CENTS guarded by
@@ -168,6 +169,7 @@ export const CancelPaymentSchema = z
  *         dueFrom: { type: string, description: "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)" }
  *         dueTo:   { type: string, description: "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)" }
  *         q:      { type: string, description: "Substring em description OU documentNumber" }
+ *         overdue: { type: boolean, description: "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta" }
  *         page:   { type: integer, minimum: 1 }
  *         limit:  { type: integer, minimum: 1, maximum: 200 }
  */
@@ -184,6 +186,10 @@ export const ListPayablesQuerySchema = z.object({
   // oferece `mode:'insensitive'` neste provider): dobra caixa em ASCII ('ALUGUEL' casa 'Aluguel'),
   // mas NÃO em acentuado ('MARÇO' não casa 'março'). `%` e `_` valem como curinga, não literal.
   q: z.string().min(1).optional(),
+  // F1: vencido = `dueDate < hoje` E status em aberto. `queryBoolean()`, NUNCA
+  // `z.coerce.boolean()`: em query-string todo valor chega string e `Boolean('false') === true`,
+  // então `?overdue=false` ligaria o filtro. Ausente ⇒ `false` (não `undefined`).
+  overdue: queryBoolean(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });

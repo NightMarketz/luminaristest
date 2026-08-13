@@ -917,6 +917,20 @@
           "type": "string",
           "minLength": 1
         },
+        "overdue": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        },
         "page": {
           "default": 1,
           "type": "integer",
@@ -1538,6 +1552,20 @@
         "q": {
           "type": "string",
           "minLength": 1
+        },
+        "overdue": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
         },
         "page": {
           "default": 1,

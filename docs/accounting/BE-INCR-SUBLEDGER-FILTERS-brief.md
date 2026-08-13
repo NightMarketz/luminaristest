@@ -39,7 +39,7 @@ Cada um testável isoladamente. **AP e AR são espelhos literais** (F6) — todo
 |---|---|---|
 | 1 | `counterpartyId` filtra a lista pela FK de contraparte | ✅ implementável |
 | 2 | `dueFrom` / `dueTo` filtram por faixa de vencimento **inclusiva nos dois extremos** | ✅ implementável |
-| 3 | `overdue=true` devolve só os vencidos | ⛔ **BLOQUEADO — fork F9** |
+| 3 | `overdue=true` devolve só os vencidos | ✅ desbloqueado por F9(a)+F10(a) |
 | 4 | `q` casa substring em `description` **OU** `documentNumber` | ✅ implementável |
 | 5 | Filtros distintos combinam por **AND** | ✅ implementável |
 | 6 | Escopo (`accountingScopeWhere`) e `deletedAt: null` permanecem na base do `where` sob **qualquer** combinação de filtros | ✅ implementável |
@@ -86,7 +86,12 @@ do comportamento 7: `total` conta o conjunto filtrado.
 | **F7** | Ordenação | Não vira parâmetro — preserva a atual |
 | **F8** | FE | Fora; incremento separado |
 
-### RATIFICAÇÃO PENDENTE — fork novo, achado ao materializar os contratos
+### Ratificados pelo dono — 2026-08-13 (2ª rodada, forks achados durante a execução)
+
+| Fork | Decisão | Caminho ratificado |
+|---|---|---|
+| **F9** | Fonte do "hoje" | **(a)** Promover `utcToday()` para `models/dates.ts`; o aging passa a importá-la. Uma fonte só para lista e aging |
+| **F10** | Colisão de chave entre filtros | **(a)** Compor os filtros em `AND: [...]`, um bloco por filtro. `?overdue=true&status=PAID` vira conjunto vazio por composição honesta, não por sobrescrita silenciosa |
 
 **F9 — de onde vem o "hoje" do comportamento 3.** O F1 fixou a semântica, mas não a **fonte**. O aging já
 tem a sua: `utcToday()` em `AgingReportService.ts:52`, cujo próprio comentário a declara **"FONTE ÚNICA"**

@@ -1,14 +1,14 @@
 /**
  * CONTRATO dos filtros de lista dos subrazões AP/AR — integração contra SQLite REAL, sem mock.
  *
- * BE-INCR-SUBLEDGER-FILTERS §2 (comportamentos 1, 2, 4, 5, 6, 7). O comportamento 3 (`overdue`)
- * NÃO está aqui: está bloqueado pelo fork F9 do BRIEF (a fonte de "hoje" mora privada no
- * AgingReportService e promovê-la toca nó vizinho).
+ * BE-INCR-SUBLEDGER-FILTERS §2 — comportamentos 1 a 7. O `overdue` (comp. 3) usa `scopeToday(scope)` de
+ * `models/dates`, a MESMA fonte do aging (F9→(a)), e o teste importa de lá em vez de calcular a sua:
+ * duas noções de hoje fariam a suíte concordar consigo mesma e discordar do produto.
  *
- * POR QUE INTEGRAÇÃO, E NÃO UNIT. A suíte unit dos serviços injeta repositório FALSO — ela afirma o
- * fake. Nenhuma invariante deste arquivo é alcançável assim: a montagem do `where` é o objeto sob
- * teste, o vazamento entre inquilinos só existe com DOIS donos na mesma base, e a exclusão da tumba
- * de soft-delete só existe com linha realmente marcada. As asserções chamam o REPOSITÓRIO REAL
+ * POR QUE INTEGRAÇÃO, E NÃO UNIT. A suíte unit dos serviços injeta repositório FALSO — ela prova a
+ * COSTURA (serviço repassa o filtro), não o efeito. Nenhuma invariante deste arquivo é alcançável
+ * lá: a montagem do `where` é o objeto sob teste, o vazamento entre inquilinos só existe com DOIS
+ * donos na mesma base, e a exclusão da tumba só existe com linha realmente marcada. As asserções chamam o REPOSITÓRIO REAL
  * (`findManyByUnit`); o prisma só semeia.
  *
  * CADA FILTRO TEM CONTROLE POSITIVO E NEGATIVO. Um teste que espera lista vazia passa também quando
@@ -20,6 +20,10 @@ import { PayableRepository } from '@/features/accounting/repositories/PayableRep
 import { ReceivableRepository } from '@/features/accounting/repositories/ReceivableRepository';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { scopeToday } from '@/features/accounting/models/dates';
+
+/** Mesma fonte de "hoje" que o repositório usa (F9→(a)) — o teste não pode ter a sua. */
+const HOJE = scopeToday(resolveAccountingScope({ userId: 'u-flt-a' }, 'unit-flt'));
 
 const UNIT = 'unit-flt';
 const DONO_A = 'u-flt-a';
@@ -90,6 +94,11 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
         ap({ id: 'p4', description: 'Aluguel sala', documentNumber: 'deleted:p4:NF-100', dueDate: dia('2026-03-01'), counterpartyId: CP1, deletedAt: new Date() }),
         // p5 — FORA da faixa pelos dois lados (controle do gte/lte)
         ap({ id: 'p5', description: 'Fora da faixa', documentNumber: 'NF-500', dueDate: dia('2026-04-01'), counterpartyId: CP1 }),
+        // p7 — vence HOJE: controle do `<` contra `<=`. Pela regra do aging (dueDate >= as_of é "a
+        // vencer", atraso começa em 1), vencer hoje NÃO é estar vencido.
+        ap({ id: 'p7', description: 'Vence hoje', documentNumber: 'NF-700', dueDate: dia(HOJE), counterpartyId: null }),
+        // p8 — vencidíssima mas PAGA: controle do gate de status do overdue.
+        ap({ id: 'p8', description: 'Paga e velha', documentNumber: 'NF-800', dueDate: dia('2020-01-01'), counterpartyId: null, status: 'PAID' }),
       ],
     });
 
@@ -135,8 +144,8 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
 
   it('sem filtro devolve só as linhas vivas do dono (controle positivo)', async () => {
     const r = await listarAp();
-    expect(nomes(r)).toEqual(['Aluguel sala', 'Energia eletrica', 'Fora da faixa', 'Internet fibra']);
-    expect(r.total).toBe(4); // p4 (tumba) e p6 (outro dono) fora
+    expect(nomes(r)).toEqual(['Aluguel sala', 'Energia eletrica', 'Fora da faixa', 'Internet fibra', 'Paga e velha', 'Vence hoje']);
+    expect(r.total).toBe(6); // p4 (tumba) e p6 (outro dono) fora
   });
 
   // ------------------------------------------------- comportamento 1: contraparte
@@ -167,8 +176,8 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   it('comportamento 2 — extremo isolado funciona sem o par', async () => {
-    expect(nomes(await listarAp({ dueFrom: '2026-03-31' }))).toEqual(['Fora da faixa', 'Internet fibra']);
-    expect(nomes(await listarAp({ dueTo: '2026-03-01' }))).toEqual(['Aluguel sala']);
+    expect(nomes(await listarAp({ dueFrom: '2026-03-31' }))).toEqual(['Fora da faixa', 'Internet fibra', 'Vence hoje']);
+    expect(nomes(await listarAp({ dueTo: '2026-03-01' }))).toEqual(['Aluguel sala', 'Paga e velha']);
   });
 
   // ------------------------------------------------ comportamento 4: busca textual
@@ -199,6 +208,64 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
     expect(r.total).toBe(0);
   });
 
+  // ------------------------------------------ comportamento 3: vencido (F1/F9)
+
+  it('comportamento 3 — overdue traz só o que venceu ANTES de hoje e segue em aberto', async () => {
+    const r = await listarAp({ overdue: true });
+    // p1/p2/p3/p5 venceram e estão OPEN. p7 vence HOJE (não conta), p8 venceu mas está PAID.
+    expect(nomes(r)).toEqual(['Aluguel sala', 'Energia eletrica', 'Fora da faixa', 'Internet fibra']);
+    expect(r.total).toBe(4);
+  });
+
+  it('comportamento 3 — vencer HOJE não é estar vencido (`<`, não `<=`)', async () => {
+    // Espelha o aging, onde `dueDate >= as_of` é "a vencer" e o atraso começa em 1. Se o repo usasse
+    // `lte`, p7 apareceria — e a lista discordaria da tela de aging sobre a MESMA linha.
+    expect(nomes(await listarAp({ overdue: true }))).not.toContain('Vence hoje');
+    // Controle: p7 existe e é alcançável sem o filtro.
+    expect(nomes(await listarAp({ q: 'Vence hoje' }))).toEqual(['Vence hoje']);
+  });
+
+  it('comportamento 3 — o gate de status exclui o que já foi pago', async () => {
+    expect(nomes(await listarAp({ overdue: true }))).not.toContain('Paga e velha');
+    // Controle: p8 existe, venceu em 2020, e só o status a tira do overdue.
+    expect(nomes(await listarAp({ q: 'Paga e velha' }))).toEqual(['Paga e velha']);
+  });
+
+  it('comportamento 3 — overdue ausente ou false NÃO filtra (queryBoolean, não coerce)', async () => {
+    const semFlag = await listarAp();
+    const falso = await listarAp({ overdue: false });
+    expect(falso.total).toBe(semFlag.total);
+    expect(nomes(falso)).toEqual(nomes(semFlag));
+  });
+
+  // --------------------------- F10: dois filtros disputando a MESMA chave
+
+  it('F10 — overdue + status compõem em AND; não se sobrescrevem', async () => {
+    // `status: PAID` e o `status IN (OPEN,PAYING)` do overdue escrevem a MESMA chave. Por spread, o
+    // último venceria em silêncio e isto devolveria linha. Em AND o conjunto é vazio, que é a
+    // resposta honesta: nada pago está em aberto.
+    const r = await listarAp({ overdue: true, status: 'PAID' });
+    expect(r.payables).toHaveLength(0);
+    expect(r.total).toBe(0);
+    // Controle dos dois lados isolados — a lista vazia acima é composição, não filtro quebrado.
+    expect((await listarAp({ status: 'PAID' })).total).toBe(1);
+    expect((await listarAp({ overdue: true })).total).toBe(4);
+  });
+
+  it('F10 — overdue + dueTo compõem em AND na mesma chave `dueDate`', async () => {
+    // Ambos restringem `dueDate`. Em AND vale a interseção: vencidas E até 2026-03-01 ⇒ só p1
+    // (p8 tem dueDate 2020 mas está PAID, e o overdue a exclui pelo status).
+    const r = await listarAp({ overdue: true, dueTo: '2026-03-01' });
+    expect(nomes(r)).toEqual(['Aluguel sala']);
+  });
+
+  it('F10 — no AR o mesmo par compõe igual (F6)', async () => {
+    // r1 (03-01) e r2 (04-01) já venceram; ambos OPEN.
+    expect((await listarAr({ overdue: true })).total).toBe(2);
+    expect((await listarAr({ overdue: true, dueTo: '2026-03-01' })).receivables.map((r) => r.id)).toEqual(['r1']);
+    expect((await listarAr({ overdue: true, status: 'RECEIVED' })).receivables).toHaveLength(0);
+  });
+
   // ------------------------------- comportamento 6: base do where é intocável
 
   it('comportamento 6 — nenhum filtro alcança linha de OUTRO dono', async () => {
@@ -227,7 +294,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   it('comportamento 7 — total conta o conjunto FILTRADO, não o total da unidade', async () => {
     const semFiltro = await listarAp();
     const comFiltro = await listarAp({ counterpartyId: CP2 });
-    expect(semFiltro.total).toBe(4);
+    expect(semFiltro.total).toBe(6);
     expect(comFiltro.total).toBe(1);
     // O total tem de acompanhar a página, senão a paginação do FE mente.
     expect(comFiltro.total).toBe(comFiltro.payables.length);

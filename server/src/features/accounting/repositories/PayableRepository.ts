@@ -3,6 +3,7 @@ import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { PAYABLE_OUTSTANDING_STATUSES } from '../models/Payable.model';
+import { scopeToday } from '../models/dates';
 import type {
   CreatePayableData,
   CreatePaymentData,
@@ -50,38 +51,47 @@ export class PayableRepository implements IPayableRepository {
       dueFrom?: string;
       dueTo?: string;
       q?: string;
+      overdue?: boolean;
       skip: number;
       limit: number;
     },
   ): Promise<{ payables: PayableWithPayments[]; total: number }> {
-    // BE-INCR-SUBLEDGER-FILTERS §2. A base (escopo + deletedAt) vem PRIMEIRO e nenhum filtro a
-    // substitui — os spreads seguintes só acrescentam chaves distintas (comportamento 6). O mesmo
-    // objeto alimenta findMany E count, então `total` conta o conjunto filtrado (comportamento 7).
-    const where = {
+    // BE-INCR-SUBLEDGER-FILTERS §2. Cada filtro é um BLOCO em `AND` (F10→(a)), não um spread no
+    // objeto raiz: dois filtros podem escrever a MESMA chave (`overdue` e `dueTo` disputam
+    // `dueDate`; `overdue` e `status` disputam `status`) e, por spread, o último venceria EM
+    // SILÊNCIO. Em `AND` os dois valem — `?overdue=true&status=PAID` vira conjunto vazio por
+    // composição honesta. Efeito colateral desejado: a base (escopo + deletedAt) fica FORA do
+    // alcance de qualquer filtro por construção, não por convenção (comportamento 6).
+    const filtros: Prisma.PayableWhereInput[] = [];
+    if (params.status) filtros.push({ status: params.status });
+    if (params.counterpartyId) filtros.push({ counterpartyId: params.counterpartyId });
+    // Faixa INCLUSIVA (F4): `dueDate` é gravado como MEIA-NOITE UTC da data-calendário
+    // (`new Date('YYYY-MM-DD')` no create), logo `lte` no extremo inclui o próprio dia.
+    if (params.dueFrom) filtros.push({ dueDate: { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } });
+    if (params.dueTo) filtros.push({ dueDate: { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } });
+    // Vencido (F1): `dueDate < hoje` E status em aberto. O `<` (e não `<=`) espelha o aging, onde
+    // `dueDate >= as_of` é "a vencer" e o atraso começa em 1 — vencer HOJE não é estar vencido.
+    // `scopeToday(scope)` é a MESMA fonte do aging (F9 + ADR do fuso F-TZ1→(c)): hoje no FUSO DO
+    // ESCOPO, não em UTC — senão, das 21h às 23h59 BRT, conta que vence hoje apareceria vencida.
+    if (params.overdue) {
+      filtros.push({
+        dueDate: { lt: new Date(`${scopeToday(scope)}T00:00:00.000Z`) },
+        status: { in: [...PAYABLE_OUTSTANDING_STATUSES] },
+      });
+    }
+    // F2: description OU documentNumber. Tombstone de rename-on-delete (`deleted:<id>:<doc>`)
+    // nunca aparece porque `deletedAt: null` está na base, fora do AND.
+    if (params.q) {
+      filtros.push({
+        OR: [{ description: { contains: params.q } }, { documentNumber: { contains: params.q } }],
+      });
+    }
+
+    // O mesmo objeto alimenta findMany E count, então `total` conta o conjunto filtrado (comp. 7).
+    const where: Prisma.PayableWhereInput = {
       ...accountingScopeWhere(scope),
       deletedAt: null,
-      ...(params.status ? { status: params.status } : {}),
-      ...(params.counterpartyId ? { counterpartyId: params.counterpartyId } : {}),
-      // Faixa INCLUSIVA (F4): `dueDate` é gravado como MEIA-NOITE UTC da data-calendário
-      // (`new Date('YYYY-MM-DD')` no create), logo `lte` no extremo inclui o próprio dia.
-      ...(params.dueFrom || params.dueTo
-        ? {
-            dueDate: {
-              ...(params.dueFrom ? { gte: new Date(`${params.dueFrom}T00:00:00.000Z`) } : {}),
-              ...(params.dueTo ? { lte: new Date(`${params.dueTo}T00:00:00.000Z`) } : {}),
-            },
-          }
-        : {}),
-      // F2: description OU documentNumber. Tombstone de rename-on-delete
-      // (`deleted:<id>:<doc>`) nunca aparece porque `deletedAt: null` já o excluiu acima.
-      ...(params.q
-        ? {
-            OR: [
-              { description: { contains: params.q } },
-              { documentNumber: { contains: params.q } },
-            ],
-          }
-        : {}),
+      ...(filtros.length ? { AND: filtros } : {}),
     };
     const [payables, total] = await Promise.all([
       prisma.payable.findMany({

@@ -70,6 +70,8 @@ export interface IPayableRepository {
       dueTo?: string;
       /** Substring em description OU documentNumber (F2). */
       q?: string;
+      /** Vencido: `dueDate < hoje` E status em aberto (F1). Vencer HOJE não conta. */
+      overdue?: boolean;
       skip: number;
       limit: number;
     },

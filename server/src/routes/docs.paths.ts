@@ -2830,6 +2830,7 @@
  *         - { in: query, name: dueFrom, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO' }
  *         - { in: query, name: dueTo, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO' }
  *         - { in: query, name: q, required: false, schema: { type: string }, description: 'Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga' }
+ *         - { in: query, name: overdue, required: false, schema: { type: boolean }, description: 'Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)' }
  *         - { in: query, name: page, required: false, schema: { type: integer } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
  *       responses:
@@ -2964,6 +2965,7 @@
  *         - { in: query, name: dueFrom, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO' }
  *         - { in: query, name: dueTo, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO' }
  *         - { in: query, name: q, required: false, schema: { type: string }, description: 'Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga' }
+ *         - { in: query, name: overdue, required: false, schema: { type: boolean }, description: 'Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)' }
  *         - { in: query, name: page, required: false, schema: { type: integer } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
  *       responses:
