@@ -89,7 +89,19 @@ beforeAll(() => {
 afterAll(async () => {
   await prisma.dynamicTableData.deleteMany();
   await prisma.dynamicTable.deleteMany();
-  await prisma.user.deleteMany();
+  // Escopado ao 'u-upd' que ESTA suíte criou — nunca um deleteMany() global. Esta suíte
+  // NÃO apaga o arquivo no beforeAll (de propósito, ver comentário acima), então corre em
+  // QUALQUER ponto da fila --runInBand e herda o que outras suítes já tiverem escrito no
+  // mesmo test-integration.db. Um deleteMany() sem where tenta apagar TODO usuário
+  // existente; se alguma suíte de contabilidade (ex.: SubledgerFilters.integration.test.ts)
+  // já tiver semeado Account+Receivable (revenueAccountId é FK obrigatória, Restrict por
+  // padrão) e não limpou os próprios donos — o que é o padrão estabelecido no módulo de
+  // contabilidade, ver EntryApprovalDimensionRoundTrip.integration.test.ts —, o cascade de
+  // User apaga a Account antes da Receivable que ainda a referencia e a query inteira morre
+  // em "Foreign key constraint violated" (reproduzido: rode esta suíte depois de
+  // SubledgerFilters no mesmo processo). Apagar só o próprio dono nunca esbarra em FK que
+  // não é seu.
+  await prisma.user.deleteMany({ where: { id: 'u-upd' } });
   await prisma.$disconnect();
 });
 
