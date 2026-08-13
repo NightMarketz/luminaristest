@@ -2826,6 +2826,10 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: status, required: false, schema: { type: string, enum: [OPEN, PAYING, PAID, CANCELLED] } }
+ *         - { in: query, name: counterpartyId, required: false, schema: { type: string }, description: 'BE-INCR-SUBLEDGER-FILTERS — filtra pela FK de contraparte; o snapshot supplierName NÃO é casado' }
+ *         - { in: query, name: dueFrom, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO' }
+ *         - { in: query, name: dueTo, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO' }
+ *         - { in: query, name: q, required: false, schema: { type: string }, description: 'Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga' }
  *         - { in: query, name: page, required: false, schema: { type: integer } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
  *       responses:
@@ -2956,6 +2960,10 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: status, required: false, schema: { type: string, enum: [OPEN, RECEIVING, RECEIVED, CANCELLED] } }
+ *         - { in: query, name: counterpartyId, required: false, schema: { type: string }, description: 'BE-INCR-SUBLEDGER-FILTERS — filtra pela FK de contraparte; o snapshot customerName NÃO é casado' }
+ *         - { in: query, name: dueFrom, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO' }
+ *         - { in: query, name: dueTo, required: false, schema: { type: string, format: date }, description: 'YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO' }
+ *         - { in: query, name: q, required: false, schema: { type: string }, description: 'Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga' }
  *         - { in: query, name: page, required: false, schema: { type: integer } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
  *       responses:
