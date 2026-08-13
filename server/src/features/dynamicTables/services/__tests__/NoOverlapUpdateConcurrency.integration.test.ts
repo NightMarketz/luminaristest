@@ -87,9 +87,9 @@ beforeAll(() => {
 }, 120000);
 
 afterAll(async () => {
-  await prisma.dynamicTableData.deleteMany();
-  await prisma.dynamicTable.deleteMany();
-  // Escopado ao 'u-upd' que ESTA suíte criou — nunca um deleteMany() global. Esta suíte
+  await prisma.dynamicTableData.deleteMany({ where: { dynamicTable: { userId: 'u-upd' } } });
+  await prisma.dynamicTable.deleteMany({ where: { userId: 'u-upd' } });
+  // Escopado (as três queries acima e abaixo) ao 'u-upd' que ESTA suíte criou — nunca um deleteMany() global. Esta suíte
   // NÃO apaga o arquivo no beforeAll (de propósito, ver comentário acima), então corre em
   // QUALQUER ponto da fila --runInBand e herda o que outras suítes já tiverem escrito no
   // mesmo test-integration.db. Um deleteMany() sem where tenta apagar TODO usuário
