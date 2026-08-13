@@ -397,3 +397,48 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
     expect(postEntry).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * BE-INCR-SUBLEDGER-FILTERS — costura serviço→repo, espelho do AP (F6). Mesma razão: a integração
+ * dirige o repositório e pula esta camada.
+ */
+describe('ReceivableService.listReceivables — repasse de filtros (BE-INCR-SUBLEDGER-FILTERS)', () => {
+  it('entrega TODOS os filtros do DTO ao repositório, e converte page→skip', async () => {
+    const { service, receivableRepo } = build();
+    await service.listReceivables(scope, {
+      unitId: 'unit-1',
+      status: 'OPEN' as const,
+      counterpartyId: 'cp-1',
+      dueFrom: '2026-03-01',
+      dueTo: '2026-03-31',
+      q: 'mensalidade',
+      overdue: true,
+      page: 2,
+      limit: 25,
+    });
+
+    expect(receivableRepo.findManyByUnit).toHaveBeenCalledTimes(1);
+    const [recebeuScope, params] = receivableRepo.findManyByUnit.mock.calls[0] as unknown[];
+    expect(recebeuScope).toBe(scope);
+    expect(params).toEqual({
+      status: 'OPEN',
+      counterpartyId: 'cp-1',
+      dueFrom: '2026-03-01',
+      dueTo: '2026-03-31',
+      q: 'mensalidade',
+      overdue: true,
+      skip: 25,
+      limit: 25,
+    });
+  });
+
+  it('não inventa filtro quando a query só tem o obrigatório', async () => {
+    const { service, receivableRepo } = build();
+    await service.listReceivables(scope, { unitId: 'unit-1', page: 1, limit: 50 } as never);
+
+    const params = (receivableRepo.findManyByUnit.mock.calls[0] as unknown[])[1] as Record<string, unknown>;
+    for (const chave of ['status', 'counterpartyId', 'dueFrom', 'dueTo', 'q']) {
+      expect(params[chave]).toBeUndefined();
+    }
+  });
+});

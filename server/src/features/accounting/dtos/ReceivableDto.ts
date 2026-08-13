@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { RECEIPT_METHODS } from '../models/Receivable.model';
+import { queryBoolean } from './queryPrimitives';
 
 /**
  * ReceivableDto — Contas a Receber (INCR-AR) request schemas. MIRROR of PayableDto. Money is INTEGER
@@ -122,12 +123,29 @@ export const CancelReceiptSchema = z
  *       properties:
  *         unitId: { type: string }
  *         status: { type: string, enum: [OPEN, RECEIVING, RECEIVED, CANCELLED] }
+ *         counterpartyId: { type: string, description: "Filtra pela FK de contraparte (INCR-COUNTERPARTY)" }
+ *         dueFrom: { type: string, description: "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)" }
+ *         dueTo:   { type: string, description: "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)" }
+ *         q:      { type: string, description: "Substring em description OU documentNumber" }
+ *         overdue: { type: boolean, description: "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta" }
  *         page:   { type: integer, minimum: 1 }
  *         limit:  { type: integer, minimum: 1, maximum: 200 }
  */
 export const ListReceivablesQuerySchema = z.object({
   unitId: z.string().min(1),
   status: z.enum(['OPEN', 'RECEIVING', 'RECEIVED', 'CANCELLED']).optional(),
+  // BE-INCR-SUBLEDGER-FILTERS §2 — espelho literal do AP (F6). F3: só a FK; o customerName
+  // snapshot NÃO é casado aqui.
+  counterpartyId: z.string().min(1).optional(),
+  // F4: faixa INCLUSIVA nos dois extremos; `isValidDateOnly` faz round-trip, não regex.
+  dueFrom: z.string().refine(isValidDateOnly, 'dueFrom deve ser uma data real no formato YYYY-MM-DD').optional(),
+  dueTo: z.string().refine(isValidDateOnly, 'dueTo deve ser uma data real no formato YYYY-MM-DD').optional(),
+  // F2: casa `description` OU `documentNumber`. LIMITE MEDIDO do LIKE do SQLite: dobra caixa em
+  // ASCII, NÃO em acentuado; `%` e `_` valem como curinga, não literal (espelho do AP).
+  q: z.string().min(1).optional(),
+  // F1: espelho do AP. `queryBoolean()`, nunca `z.coerce.boolean()` — `?overdue=false` ligaria o
+  // filtro, porque `Boolean('false') === true`. Ausente ⇒ `false`.
+  overdue: queryBoolean(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });

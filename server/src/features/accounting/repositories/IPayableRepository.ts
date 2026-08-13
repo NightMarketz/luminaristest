@@ -55,9 +55,26 @@ export interface IPayableRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<PayableWithPayments | null>;
 
+  /**
+   * Lista paginada do subrazão. Os filtros opcionais (BE-INCR-SUBLEDGER-FILTERS §2) são AND entre si
+   * e NUNCA substituem a base do `where` — escopo + `deletedAt: null` seguem aplicados sob qualquer
+   * combinação (comportamento 6). `total` conta o conjunto FILTRADO (comportamento 7).
+   */
   findManyByUnit(
     scope: AccountingScope,
-    params: { status?: string; skip: number; limit: number },
+    params: {
+      status?: string;
+      counterpartyId?: string;
+      /** Data-only YYYY-MM-DD, faixa inclusiva nos dois extremos (F4). */
+      dueFrom?: string;
+      dueTo?: string;
+      /** Substring em description OU documentNumber (F2). */
+      q?: string;
+      /** Vencido: `dueDate < hoje` E status em aberto (F1). Vencer HOJE não conta. */
+      overdue?: boolean;
+      skip: number;
+      limit: number;
+    },
   ): Promise<{ payables: PayableWithPayments[]; total: number }>;
 
   /** All non-deleted payables in scope (reconcile re-drive input). */

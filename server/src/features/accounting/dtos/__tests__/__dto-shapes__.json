@@ -903,6 +903,34 @@
             "CANCELLED"
           ]
         },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dueFrom": {
+          "type": "string"
+        },
+        "dueTo": {
+          "type": "string"
+        },
+        "q": {
+          "type": "string",
+          "minLength": 1
+        },
+        "overdue": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        },
         "page": {
           "default": 1,
           "type": "integer",
@@ -1509,6 +1537,34 @@
             "RECEIVING",
             "RECEIVED",
             "CANCELLED"
+          ]
+        },
+        "counterpartyId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dueFrom": {
+          "type": "string"
+        },
+        "dueTo": {
+          "type": "string"
+        },
+        "q": {
+          "type": "string",
+          "minLength": 1
+        },
+        "overdue": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
           ]
         },
         "page": {

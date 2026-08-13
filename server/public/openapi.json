@@ -728,6 +728,26 @@
               "CANCELLED"
             ]
           },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Filtra pela FK de contraparte (INCR-COUNTERPARTY)"
+          },
+          "dueFrom": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)"
+          },
+          "dueTo": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)"
+          },
+          "q": {
+            "type": "string",
+            "description": "Substring em description OU documentNumber"
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta"
+          },
           "page": {
             "type": "integer",
             "minimum": 1
@@ -1133,6 +1153,26 @@
               "RECEIVED",
               "CANCELLED"
             ]
+          },
+          "counterpartyId": {
+            "type": "string",
+            "description": "Filtra pela FK de contraparte (INCR-COUNTERPARTY)"
+          },
+          "dueFrom": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)"
+          },
+          "dueTo": {
+            "type": "string",
+            "description": "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)"
+          },
+          "q": {
+            "type": "string",
+            "description": "Substring em description OU documentNumber"
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer hoje NÃO conta"
           },
           "page": {
             "type": "integer",
@@ -9573,6 +9613,53 @@
           },
           {
             "in": "query",
+            "name": "counterpartyId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "BE-INCR-SUBLEDGER-FILTERS — filtra pela FK de contraparte; o snapshot supplierName NÃO é casado"
+          },
+          {
+            "in": "query",
+            "name": "dueFrom",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO"
+          },
+          {
+            "in": "query",
+            "name": "dueTo",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO"
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga"
+          },
+          {
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)"
+          },
+          {
+            "in": "query",
             "name": "page",
             "required": false,
             "schema": {
@@ -9900,6 +9987,53 @@
                 "CANCELLED"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "counterpartyId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "BE-INCR-SUBLEDGER-FILTERS — filtra pela FK de contraparte; o snapshot customerName NÃO é casado"
+          },
+          {
+            "in": "query",
+            "name": "dueFrom",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "YYYY-MM-DD — início da faixa de vencimento, INCLUSIVO"
+          },
+          {
+            "in": "query",
+            "name": "dueTo",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "YYYY-MM-DD — fim da faixa de vencimento, INCLUSIVO"
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Substring em description OU documentNumber. LIKE do SQLite — dobra caixa em ASCII, não em acentuado; % e _ valem como curinga"
+          },
+          {
+            "in": "query",
+            "name": "overdue",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Vencidos: dueDate < hoje E status em aberto. Vencer HOJE nao conta (espelha o aging)"
           },
           {
             "in": "query",
