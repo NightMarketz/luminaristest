@@ -71,6 +71,16 @@ export interface PayableWithPayments extends Payable {
 export interface ListPayablesQuery {
   unitId: string;
   status?: PayableStatus;
+  /** FK filter — Counterparty(SUPPLIER) of this unit (BE-INCR-SUBLEDGER-FILTERS). */
+  counterpartyId?: string;
+  /** Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo). */
+  dueFrom?: string;
+  /** Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo). */
+  dueTo?: string;
+  /** Substring em description OU documentNumber (LIKE do SQLite — dobra caixa ASCII, não acento). */
+  q?: string;
+  /** Vencidos: dueDate < hoje E status em aberto. `true` para ligar; omitir (não `false`) para desligar. */
+  overdue?: boolean;
   page?: number;
   limit?: number;
 }
@@ -135,6 +145,13 @@ export const accountsPayableService = {
     const qs = buildQuery({
       unitId: query.unitId,
       status: query.status,
+      counterpartyId: query.counterpartyId,
+      dueFrom: query.dueFrom,
+      dueTo: query.dueTo,
+      q: query.q,
+      // REGRA DURA: omitir o param quando desligado, nunca `overdue=false` — String(enabled)
+      // mandaria 'false' que o buildQuery NÃO dropa (só dropa undefined/'').
+      overdue: query.overdue ? 'true' : undefined,
       page: query.page !== undefined ? String(query.page) : undefined,
       limit: query.limit !== undefined ? String(query.limit) : undefined,
     });
