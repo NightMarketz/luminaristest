@@ -5,6 +5,13 @@ Entradas mais novas no topo.
 
 ---
 
+### 2026-08-13 · pattern · Barra de filtro compartilhada entre painéis-espelho evita o 3º clone da mesma técnica
+- **Contexto:** FE-INCR-SUBLEDGER-FILTERS (C4) — expor no FE os 5 filtros que o backend já publicava (`counterpartyId`/`dueFrom`/`dueTo`/`q`/`overdue`, PR #190). `AccountsPayablePanel`/`AccountsReceivablePanel` são 83% idênticos (mesma estrutura de fetch/estado/modal, só o domínio muda: fornecedor×cliente, despesa×receita).
+- **Aprendizado:** quando dois arquivos já são clones estruturais reconhecidos, a peça NOVA que os dois vão precisar (aqui, a barra de filtros) não deve nascer duplicada uma terceira vez — isso seria promover o padrão "clone reconhecido" para "clone com 2 cópias mais uma cópia nova", o oposto de convergir. A escolha certa é extrair um componente **puramente controlado** (`value`/`onChange`, sem fetch próprio) que os dois painéis alimentam com seu próprio estado e sua própria lista de contrapartes (`counterpartiesService.listCounterparties({unitId, type})`, já usada por ambos para o modal de criação — reuso, não endpoint novo). O contrato mais fino do trio de filtros foi o toggle `overdue`: UI nunca emite `false`, só `true`/`undefined` — omitir o param é o contrato do backend (`?overdue=false` seria interpretado certo pelo `queryBoolean()`, mas a barra não deveria mandar o param quando desligado).
+- **Evidência:** `my-app/features/accounting/components/SubledgerFilterBar.tsx` (novo, consumido pelos dois painéis); `my-app/lib/services/__tests__/accountsPayable.service.test.ts`/`accountsReceivable.service.test.ts` (mockam `apiClient` direto, provam a URL nunca carrega `overdue=false`); `AccountsPayablePanel.tsx`/`AccountsReceivablePanel.tsx` — o fetch de contrapartes que só rodava dentro de `openCreate()` (lazy, ao abrir o modal) subiu para um `useEffect` no mount, porque agora alimenta a barra de filtro visível desde o carregamento do painel, não só o modal.
+- **Como aplicar:** antes de duplicar uma peça de UI num par (ou trio) de telas já reconhecidas como espelho, pergunte se a peça nova pertence ao componente compartilhado em vez de a cada tela — o critério de reuso (`_REUSE-CRITERION.md`) vale para peças novas tanto quanto para as existentes.
+- **Durável?** sim → reforça [[reuse-vs-divergence-criterion]] e fecha [[accounting-master-map-source-of-truth]] §7 Núcleo 2 (único resíduo estrutural do núcleo).
+
 ### 2026-08-13 · decision · RC — where-builder compartilhado AP×AR, escopado à fatia que é espelho literal
 - **Contexto:** item RC do plano de contabilidade (dossiê ratificado pelo dono 2026-08-13), pré-requisito
   de A2 Imobilizado / A3 Folha. O par AP×AR (`PayableRepository`/`ReceivableRepository`) é misto por

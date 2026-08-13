@@ -105,7 +105,13 @@ beforeAll(() => {
 afterAll(async () => {
   await prisma.dynamicTableData.deleteMany();
   await prisma.dynamicTable.deleteMany();
-  await prisma.user.deleteMany();
+  // Escopado aos donos que ESTA suíte criou ('u-seq', 'u-conc') — nunca um deleteMany()
+  // global. O beforeAll acima apaga o arquivo do banco antes de rodar, então hoje isto é
+  // sempre seguro por construção; mesmo assim, um deleteMany() sem where é a MESMA classe de
+  // bug fechada em NoOverlapUpdateConcurrency.integration.test.ts (FK Restrict de
+  // Receivable.revenueAccountId → Account, sob deleteMany global de outra suíte) — escopar
+  // aqui também é defesa em profundidade caso o wipe-no-beforeAll seja removido depois.
+  await prisma.user.deleteMany({ where: { id: { in: ['u-seq', 'u-conc'] } } });
   await prisma.$disconnect();
 });
 
