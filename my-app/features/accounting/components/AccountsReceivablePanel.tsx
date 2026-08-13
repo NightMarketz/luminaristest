@@ -13,6 +13,7 @@ import { accountingService, type Account } from '../../../lib/services/accountin
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
 import { Modal } from '../../../components/ui/Modal';
 import { CreateReceivableModal } from './CreateReceivableModal';
+import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
@@ -211,6 +212,9 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // filters (BE-INCR-SUBLEDGER-FILTERS / C4) — controlled by SubledgerFilterBar
+  const [filters, setFilters] = useState<SubledgerFilterValue>({});
+
   // create modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [revenueAccounts, setRevenueAccounts] = useState<Account[]>([]);
@@ -233,27 +237,46 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     try {
       // ponytail: single page of up to 200 (backend max). Add StandardPagination
       // if a unit ever carries more than 200 live receivables.
-      const result = await accountsReceivableService.listReceivables({ unitId, limit: 200 });
+      const result = await accountsReceivableService.listReceivables({
+        unitId,
+        limit: 200,
+        counterpartyId: filters.counterpartyId,
+        dueFrom: filters.dueFrom,
+        dueTo: filters.dueTo,
+        q: filters.q,
+        overdue: filters.overdue,
+      });
       setReceivables(result.receivables);
     } catch (err: unknown) {
       setError(resolveErrorWithCode(err, tRef.current('contasAReceber.error.load', 'Erro ao carregar as contas a receber.')).message);
     } finally {
       setLoading(false);
     }
-  }, [unitId, tRef]);
+  }, [unitId, tRef, filters]);
 
   useEffect(() => {
     void fetchReceivables();
   }, [fetchReceivables]);
 
+  // Customers feed both the filter bar's counterparty select and the create modal;
+  // a failed fetch must not block either — falls back to an empty list.
+  const fetchCounterparties = useCallback(async () => {
+    if (!unitId) return;
+    try {
+      const list = await counterpartiesService.listCounterparties({ unitId, type: 'CUSTOMER' });
+      setCounterparties(list);
+    } catch {
+      setCounterparties([]);
+    }
+  }, [unitId]);
+
+  useEffect(() => {
+    void fetchCounterparties();
+  }, [fetchCounterparties]);
+
   // ── create ─────────────────────────────────────────────────────────────────
   function openCreate() {
     if (!unitId) return;
-    // Customers are a best-effort convenience list; a failed fetch must not block the create modal.
-    counterpartiesService
-      .listCounterparties({ unitId, type: 'CUSTOMER' })
-      .then(setCounterparties)
-      .catch(() => setCounterparties([]));
     accountingService
       .getAccounts(unitId)
       .then((r) => setRevenueAccounts(r.accounts.filter((a) => a.nature === 'Revenue' && a.acceptsEntries)))
@@ -360,6 +383,14 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
           {t('contasAReceber.newReceivable', 'Nova Conta')}
         </button>
       </div>
+
+      {/* Filters (BE-INCR-SUBLEDGER-FILTERS / C4) */}
+      <SubledgerFilterBar
+        value={filters}
+        onChange={setFilters}
+        counterpartyOptions={counterparties}
+        t={t}
+      />
 
       {/* Error banner */}
       {error && (
