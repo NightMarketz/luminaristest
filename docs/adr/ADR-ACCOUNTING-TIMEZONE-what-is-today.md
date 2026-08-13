@@ -1,7 +1,7 @@
 # PRE-ADR-ACCOUNTING-TIMEZONE — O que a contabilidade chama de "hoje"
 
 - **Data:** 2026-08-13
-- **Status:** **PROPOSED — RATIFICAÇÃO PENDENTE.** F-TZ3 **auditado 2026-08-13** (ver §4): a máquina de período NÃO usa "hoje"; o audit achou um caminho estreito de bridge e um contra-achado que **restringe** como o F-TZ1 pode ser implementado. Nenhum fork abaixo se auto-ratifica. O agente que
+- **Status:** **ACCEPTED — RATIFICADO FORK-A-FORK PELO DONO 2026-08-13** (F-TZ1→b · F-TZ2→a · F-TZ3b→a; ver §4). **Implementação NÃO iniciada nesta sessão** — ver §8. F-TZ3 **auditado 2026-08-13** (ver §4): a máquina de período NÃO usa "hoje"; o audit achou um caminho estreito de bridge e um contra-achado que **restringe** como o F-TZ1 pode ser implementado. Nenhum fork abaixo se auto-ratifica. O agente que
   produziu este documento **não implementa** nada dele sem sinal humano fork-a-fork (ORCH-006).
 - **Origem:** achado do 2º review independente do `BE-INCR-SUBLEDGER-FILTERS` (delta `d082cd9..d529d8dd`),
   ataque (a). Severidade atribuída pelo revisor: **MAIOR como defeito de produto, não bloqueante para
@@ -73,7 +73,29 @@ Três razões, e a terceira é a que decide:
 
 ## 4. Forks
 
-### F-TZ1 — Qual é a fonte de "hoje"? **RATIFICAÇÃO PENDENTE**
+### ✅ RATIFICADOS FORK-A-FORK PELO DONO — 2026-08-13
+
+| Fork | Decisão | O que fica valendo |
+|---|---|---|
+| **F-TZ1** | **(b)** | "Hoje" resolve no fuso **fixo `America/Sao_Paulo`**, constante do módulo. O `timeZone` do `AccountingScope` **continua não sendo lido** — segue campo morto, e (c) fica como refino futuro, não retrabalho |
+| **F-TZ2** | **(a)** | Corrigir **aging e lista juntos**, aceitando que números de aging mudem na fronteira do dia. Nenhum saldo, lançamento ou SPED muda — só a faixa em que a linha aparece |
+| **F-TZ3b** | **(a)** | Bridge sem data na origem **não contabiliza**: registra e pula. Para de inventar a data de um fato contábil |
+
+**Restrição herdada do audit (§F-TZ3), vale para a implementação do F-TZ1(b):** o conserto é
+**cirúrgico na conversão instante → dia**. A leitura de data-only (`extractYearMonth`,
+`fiscalYearFrom`, `isValidDateOnly`) **permanece UTC** — mexer nela reintroduz o bug de ano fiscal
+que o ADR-INCR3 Emenda 3 já fechou.
+
+**Consequência mecânica a resolver na implementação (não é fork):** com o F-TZ1(b) o nome
+`utcToday()` passa a mentir — a função devolverá o hoje de São Paulo, não o de UTC. Renomear
+(`hojeLocal`/`todayLocal`) faz parte do escopo ratificado; deixar o nome antigo seria plantar a
+próxima confusão exatamente no ponto que este ADR existe para desfazer.
+
+**Consequência do F-TZ3b(a) a decidir na implementação (não é fork):** "registra e pula" precisa de um
+eventType/log específico, e a lição da casa é que catch de erro genérico em bridge best-effort esconde
+bug real — o skip tem de ser por condição própria (data ausente), nunca por `catch` largo.
+
+### F-TZ1 — Qual é a fonte de "hoje"? ✅ **RATIFICADO → (b)**
 
 | Perna | Caminho | Custo | Consequência |
 |---|---|---|---|
@@ -87,7 +109,7 @@ Justificativa: o campo já existe e já promete isso; (b) é (c) com o valor chu
 refino, não retrabalho. **(a) e (d) são as únicas que exigem decisão contrária à intenção já escrita
 no código.**
 
-### F-TZ2 — O que fazer com o aging já lido por humano? **RATIFICAÇÃO PENDENTE**
+### F-TZ2 — O que fazer com o aging já lido por humano? ✅ **RATIFICADO → (a)**
 
 | Perna | Caminho |
 |---|---|
@@ -152,7 +174,7 @@ depois, o lançamento ficou no período errado — e isso é materialmente pior 
 (2) a guarda é `typeof data.date === 'string'` — uma data gravada em tipo não-string dispara o
 fallback **mesmo existindo data**.
 
-### F-TZ3b — O que fazer com o fallback de data das bridges? **RATIFICAÇÃO PENDENTE** *(fork novo, nascido do audit)*
+### F-TZ3b — O que fazer com o fallback de data das bridges? ✅ **RATIFICADO → (a)** *(fork novo, nascido do audit)*
 
 | Perna | Caminho | Consequência |
 |---|---|---|
@@ -187,3 +209,23 @@ deve ser tocada**.
 - Chip de tarefa aberto pelo revisor: `task_332b21b6`.
 - Código herdado: `models/dates.ts` (`utcToday`, promovida em `d529d8dd` por F9→(a)).
 - Campo morto: `AccountingScope.ts:24`.
+
+---
+
+## 8. Estado da implementação — LEIA ANTES DE CODIFICAR
+
+**Nada deste ADR foi implementado na sessão que o escreveu.** No momento da ratificação havia uma
+sessão paralela em voo (chip `task_332b21b6`, aberta pelo 2º revisor **antes** deste ADR existir),
+trabalhando sobre o mesmo tema sem conhecer as pernas ratificadas.
+
+Riscos concretos de deixar as duas correrem juntas, nesta ordem de gravidade:
+
+1. **A sessão paralela pode violar a restrição do §F-TZ3** — ela não viu o contra-achado. Uma correção
+   que "converta tudo para São Paulo" reintroduz o bug de ano fiscal do ADR-INCR3 Emenda 3.
+2. **Ela pode ter escolhido outra perna** — (c), ler o `timeZone` do escopo, é a recomendação que este
+   documento fazia antes da ratificação; o dono escolheu (b).
+3. **Colisão de arquivo** em `models/dates.ts`, `AgingReportService.ts` e nas 5 bridges.
+
+**Sequência correta a partir daqui:** conferir o que a sessão paralela produziu → reconciliar contra
+as pernas ratificadas acima → só então instrumentar (§6) e corrigir. Implementar em paralelo é a única
+opção que garante retrabalho.
