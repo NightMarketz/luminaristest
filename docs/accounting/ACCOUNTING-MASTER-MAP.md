@@ -33,7 +33,19 @@
 > 5. **Resíduo estrutural do Núcleo 2 fixado com evidência** (§7): busca/filtros dos subledgers filtram
 >    **só por `status`** — verificado em [ReceivableRepository.ts:49](../../server/src/features/accounting/repositories/ReceivableRepository.ts:49)
 >    e no `PayableDto` (o único filtro de lista é o enum de status). É o **único nó de código do módulo
->    sem gate humano à frente**.
+>    sem gate humano à frente**. ✅ **FECHADO — ver atualização 2026-08-13 abaixo.**
+>
+> **Atualização 2026-08-13 — FE-INCR-SUBLEDGER-FILTERS fecha o item 5.** O backend já tinha mergeado em
+> `main` nesta mesma janela (`ea91f406`+`8d5aa337`, PR #190, HEAD `aba541da`): `PayableDto`/`ReceivableDto`
+> ganharam `counterpartyId`/`dueFrom`/`dueTo`/`q`/`overdue` (`queryBoolean()`, nunca `z.coerce.boolean()` —
+> lição `zod-coerce-boolean-inverte-query-string`). Faltava só o FE — `AccountsPayablePanel`/
+> `AccountsReceivablePanel` ainda buscavam com `listPayables({unitId, limit:200})`, sem UI de filtro nenhuma.
+> Fechado na branch `feat/fe-subledger-filters`: `SubledgerFilterBar` compartilhado pelos dois
+> painéis-espelho (83% idênticos — evitou o 3º clone da mesma técnica); contrato do toggle "vencidos" —
+> `overdue` só entra na query quando ligado, nunca `overdue=false` — provado por teste de query string
+> (`apiClient` mockado) e de wiring do painel. **Fecha o único nó de código do módulo sem gate humano à
+> frente** (ver §"Leitura em 2 linhas" e a régua de progresso Núcleo 2, ambas desatualizadas até esta
+> entrada). Residual: browser sign-off.
 >
 > Fold anterior (2026-07-23, HEAD `69ab527`) — mantido por rastreabilidade (inclui **PR #150** — PLAN/BRIEF
 > da NF-e + emenda do ADR — e **PR #151** — fix da allowlist de auditoria + seção CMV no DRE, achados na
@@ -374,12 +386,14 @@ mas **os increments contábeis estacionaram os endpoints de altíssimo valor** (
 smoke-gate DEPLOY-CLEARED PR #99 — ver T12). Nenhum risco de migração aberto; o reflexo permanece:
 toda migração que tocar `journal_entries` re-roda o smoke-migration-gate sobre cópia do dev.db real.
 
-**Leitura em 2 linhas (fold de 2026-08-12):** a fila de código ratificado **drenou de vez** — a NF-e, último
-item sequenciado, **está escrita e revisada** (branch `claude/nfe-fase-a`) e o que a segura é o XML real, de
-modo que **os 4 nós de entrada do módulo são todos humanos ou externos**: PVA, browser sign-off + deploy,
-NF-e real, arquivo RFB do contador. **O único código que um agente pode começar hoje sem gate é
-busca/filtros nos subledgers** (§7 Núcleo 2, evidência em `ReceivableRepository.ts:49`) — e a moratória do
-`CLAUDE.md` veda montar aparato de auditoria novo enquanto os 4 oráculos seguirem abertos.
+**Leitura em 2 linhas (fold de 2026-08-13 — supersede o fold de 2026-08-12):** a fila de código ratificado
+**drenou por completo** — a NF-e, último item sequenciado, **está escrita e revisada** (branch
+`claude/nfe-fase-a`) e o que a segura é o XML real; **e o último código sem gate, busca/filtros nos
+subledgers, fechou** (BE PR #190 `aba541da` + FE branch `feat/fe-subledger-filters`, ver atualização
+2026-08-13 no topo do documento). **Os 4 nós de entrada do módulo são todos humanos ou externos**: PVA,
+browser sign-off + deploy, NF-e real, arquivo RFB do contador — **não resta código nenhum sem gate**. A
+moratória do `CLAUDE.md` segue valendo (veda montar aparato de auditoria novo enquanto os 4 oráculos
+seguirem abertos), mas agora sem nenhuma frente de código paralela para preencher o tempo.
 
 **Leitura anterior (fold de 2026-07-22):** **o Bloco B de código ratificado DRENOU** — B1
 (contraparte), B2 (dimensão obrigatória), B3 (aging), estoque (#130) e o seam CRM→AR (#137) estão em `main`,
@@ -447,7 +461,7 @@ Antes de gerar "novo", reuse (Contrato §0). Confirmado por código:
 | Núcleo | Estado | % | Falta |
 |---|---|---|---|
 | **1 — Ledger confiável** | ✅ | ~95% | (nada estrutural; "permissões/aprovação" que o grafo mistura aqui são torre nova, não gap) |
-| **2 — Operação real** | 🟡 | ~90% | ~~subrazão AP~~ (✅ INCR-AP, PR #102 + FE #106); ~~aprovação~~ (✅ torre maker-checker/SoD, PR #108 + Emenda F3 SoD-off single-user); ~~subrazão AR~~ (✅ INCR-AR, PR #111 — par do subledger fechado); ~~dimensões~~ (✅ INCR-DIM, PR #113 `9a73392` — centro de custo/projeto, etiqueta ortogonal + DRE por dimensão + **FE #116**); ~~falta busca/filtros ricos~~ (parcial); ~~contraparte first-class~~ (✅ INCR-COUNTERPARTY A1, PR #119/#128); ~~etiqueta obrigatória por conta~~ (✅ INCR-DIM-COMPLETENESS B1, emenda F5, PR #120/#124); ~~aging por contraparte~~ (✅ INCR-AGING A1-F3, PR #127 + tie-out #143). **Fold 2026-07-22: os 3 increments que este mapa listava como "merge pendente" ESTÃO em `main`** — % sobe de ~80% para **~90%**; resta busca/filtros ricos nos subledgers + FE da torre de aprovação (`FE-INCR-APPROVAL`); ~~FE da torre de aprovação~~ (✅ **FE-INCR-APPROVAL, PR #170** — aba Aprovações, ciclo rascunho→enviar→aprovar/rejeitar por comando, reusando `JournalEntryModal`; exercitado no browser contra cópia do `dev.db` real até o lançamento **2026/0007 Postado**). **O % NÃO muda: o que fechou era interface, não estrutura** — o único resíduo estrutural do núcleo continua sendo **busca/filtros ricos nos subledgers**. **Fold 2026-08-12 — o gap agora tem evidência, não adjetivo:** a lista de AP/AR aceita **um único filtro, `status`** ([ReceivableRepository.ts:49](../../server/src/features/accounting/repositories/ReceivableRepository.ts:49) monta o `where` com `accountingScopeWhere` + `deletedAt: null` + `status` e nada mais; o `PayableDto` expõe só o enum `OPEN/PAYING/PAID/CANCELLED`). Não há filtro por **contraparte** (embora `counterpartyId` seja FK first-class desde #119), por **faixa de vencimento**, por **vencido-hoje**, por **faixa de valor** nem busca textual por descrição/nº de documento. Isso torna este o **único nó de código do módulo inteiro sem gate humano à frente** — todo o resto espera PVA, browser sign-off, XML de NF-e ou o arquivo do contador. |
+| **2 — Operação real** | ✅ | ~95% | ~~subrazão AP~~ (✅ INCR-AP, PR #102 + FE #106); ~~aprovação~~ (✅ torre maker-checker/SoD, PR #108 + Emenda F3 SoD-off single-user); ~~subrazão AR~~ (✅ INCR-AR, PR #111 — par do subledger fechado); ~~dimensões~~ (✅ INCR-DIM, PR #113 `9a73392` — centro de custo/projeto, etiqueta ortogonal + DRE por dimensão + **FE #116**); ~~contraparte first-class~~ (✅ INCR-COUNTERPARTY A1, PR #119/#128); ~~etiqueta obrigatória por conta~~ (✅ INCR-DIM-COMPLETENESS B1, emenda F5, PR #120/#124); ~~aging por contraparte~~ (✅ INCR-AGING A1-F3, PR #127 + tie-out #143); ~~FE da torre de aprovação~~ (✅ **FE-INCR-APPROVAL, PR #170** — aba Aprovações, ciclo rascunho→enviar→aprovar/rejeitar por comando, reusando `JournalEntryModal`; exercitado no browser contra cópia do `dev.db` real até o lançamento **2026/0007 Postado**). ~~busca/filtros ricos nos subledgers~~ **✅ FECHADO 2026-08-13** — BE (PR #190 `aba541da`: `counterpartyId`/`dueFrom`/`dueTo`/`q`/`overdue` no `PayableDto`/`ReceivableDto`, `queryBoolean()`) + FE (branch `feat/fe-subledger-filters`: `SubledgerFilterBar` compartilhado pelos dois painéis-espelho, contrato "nunca `overdue=false`" provado por teste de query string). Este era o **único resíduo estrutural do núcleo** e o **único nó de código do módulo inteiro sem gate humano à frente** — não resta mais nenhum. Residual do núcleo: browser sign-off nos incrementos já mergeados. |
 | **3 — Integração** | 🟡 | ~40% | ~~SourceDocument formal~~ (✅ BE-INCR-8, mergeado PR #43); inbox, outbox (só se sair de single-process) |
 | **4 — Gestão** | 🟡 | ~85% | ~~fluxo de caixa~~ (✅ DFC método indireto, `report-dfc-cashflow`); ~~variação mensal~~ (✅ balancete comparativo, `report-period-comparison`); ~~Livro Diário~~ (✅ registro cronológico read-only, `report-daily-journal`); ~~análise por dimensão~~ (✅ INCR-DIM backend PR #113 + **FE #116** — balancete + DRE recortados por centro de custo/projeto, rollup por parentId; caveat de completude: reconciliação Σ-por-dimensão == DRE total só é garantida se o eixo for obrigatório nas contas etiquetáveis — hoje opcional, ver ADR-B candidato §5.1) |
 | **5 — Compliance** | 🟡 | ~70% | ~~mapeamento referencial~~ (✅ BE-INCR-9, PR #58; ~~autoria em lote Track A~~ PR #71; ~~catálogo RFB + validação analytic-only Track B~~ PR #74, smoke-gate PR #75 — Fork 2/import do arquivo oficial = dado externo); ~~geração do arquivo ECD~~ (✅ BE-INCR-SPED-ECD, PR #62, merge `9deb928`); ~~apuração/encerramento (I350/I355)~~ (✅ BE-INCR-SPED-APURACAO, PR #63, merge `1465bae`; residual PVA); ~~split de receita por natureza (pré-req ECF-Presumido)~~ (✅ BE-INCR-REVENUE-SPLIT, PR #66); ~~ECF (arquivo fiscal) Fase 2~~ (✅ BE-INCR-SPED-ECF, PR #78, merge `70caa1c`; residual PVA); ~~CNAB 240~~ (✅ BE-INCR7-CNAB, PR #61, merge `1088e32`); ~~recibos/comprovantes~~ (✅ BE-RECIBOS Fase A+B, PR #84; comprovante de lançamento PDF via puppeteer, no-persist; ADR-RECIBOS-pdf-generation); ~~FE do referencial~~ (✅ A1a aba Compliance, PR #89 `b88f628`); falta ECF Fase 3 (pós sign-off PVA), pacotes; **gate humano dominante: sign-off PVA dos 3 SPEDs** (item 3 da fila §5.1) |
