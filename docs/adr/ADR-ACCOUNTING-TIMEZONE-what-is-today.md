@@ -77,7 +77,7 @@ Três razões, e a terceira é a que decide:
 
 | Fork | Decisão | O que fica valendo |
 |---|---|---|
-| **F-TZ1** | **(b)** | "Hoje" resolve no fuso **fixo `America/Sao_Paulo`**, constante do módulo. O `timeZone` do `AccountingScope` **continua não sendo lido** — segue campo morto, e (c) fica como refino futuro, não retrabalho |
+| **F-TZ1** | ~~(b)~~ → **(c)** | **EMENDADO 2026-08-13, mesma data.** Ratificado inicialmente (b) (fuso fixo); emendado para **(c)** ao constatar que a PR #189 já havia implementado (c) com qualidade — o `timeZone` do `AccountingScope` **passa a ser lido** e deixa de ser campo morto. O ADR já registrava que "(b) é (c) com o valor chumbado, então (b)→(c) é refino, não retrabalho"; aqui o refino chegou primeiro, e reduzir a (b) jogaria fora trabalho testado para chegar num estado menos capaz |
 | **F-TZ2** | **(a)** | Corrigir **aging e lista juntos**, aceitando que números de aging mudem na fronteira do dia. Nenhum saldo, lançamento ou SPED muda — só a faixa em que a linha aparece |
 | **F-TZ3b** | **(a)** | Bridge sem data na origem **não contabiliza**: registra e pula. Para de inventar a data de um fato contábil |
 
@@ -95,7 +95,7 @@ próxima confusão exatamente no ponto que este ADR existe para desfazer.
 eventType/log específico, e a lição da casa é que catch de erro genérico em bridge best-effort esconde
 bug real — o skip tem de ser por condição própria (data ausente), nunca por `catch` largo.
 
-### F-TZ1 — Qual é a fonte de "hoje"? ✅ **RATIFICADO → (b)**
+### F-TZ1 — Qual é a fonte de "hoje"? ✅ **RATIFICADO → (b), EMENDADO → (c)**
 
 | Perna | Caminho | Custo | Consequência |
 |---|---|---|---|
@@ -229,3 +229,24 @@ Riscos concretos de deixar as duas correrem juntas, nesta ordem de gravidade:
 **Sequência correta a partir daqui:** conferir o que a sessão paralela produziu → reconciliar contra
 as pernas ratificadas acima → só então instrumentar (§6) e corrigir. Implementar em paralelo é a única
 opção que garante retrabalho.
+
+### 8.1 Conferência da PR #189 (2026-08-13) — o que ela implementou, perna a perna
+
+A sessão paralela **terminou** e abriu a **PR #189** (branch `claude/heuristic-austin-7992d0`), baseada
+em `origin/main`. Conferida contra as pernas ratificadas:
+
+| Fork | Ratificado | O que a #189 fez | Situação |
+|---|---|---|---|
+| **F-TZ1** | (b) → emendado (c) | **(c)** — `scopeDay(scope, instant)` + `scopeToday(scope)`, lendo `scope.timeZone` | ✅ **Alinhado pela emenda.** Primeiro consumidor real do campo |
+| **F-TZ2** | (a) | Corrigiu o aging (`asOf` default e o teste `as_of_not_today`) | ✅ Alinhado — a lista vem desta branch; juntas fecham (a) |
+| **F-TZ3b** | **(a) falhar alto** | **(b)** — manteve o fallback e o converteu para o fuso local: `scopeDay(scope, typeof data.date === 'string' ? data.date : undefined)` resolve para o hoje local quando a origem não informou | ❌ **DIVERGENTE — decisão do dono pendente** |
+
+**A restrição do §F-TZ3 foi respeitada, e melhor do que o pedido.** A #189 não tocou `PostingService.ts`,
+e o `scopeDay` faz **short-circuit em string date-only** — devolve intacta o que já é dia-calendário,
+convertendo só instante de verdade. O doc dela cita explicitamente o `fiscalYearFrom` como razão. É a
+forma correta da distinção que o audit levantou.
+
+**A divergência do F-TZ3b, em uma frase:** o dono ratificou que bridge sem data **não contabiliza**;
+a #189 mantém a invenção da data, só que agora inventa o dia certo. A janela de 3h fecha, mas o fato
+contábil segue nascendo com uma data que ninguém informou. **Resolver isto é decisão do dono** — ou
+emenda o F-TZ3b para (b), ou a #189 ganha um follow-up que falha alto.
