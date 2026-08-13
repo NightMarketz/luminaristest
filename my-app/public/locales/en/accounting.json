@@ -35,6 +35,17 @@
       "report": "Failed to load trial balance."
     }
   },
+  "subledgerFilters": {
+    "searchLabel": "Search",
+    "searchPlaceholder": "Description or document no.…",
+    "searchHint": "Case-insensitive, but does not match accents (e.g. \"marco\" will not find \"março\").",
+    "counterpartyLabel": "Counterparty",
+    "counterpartyAll": "— all —",
+    "dueFromLabel": "Due from",
+    "dueToLabel": "Due to",
+    "overdueLabel": "Overdue only",
+    "clear": "Clear filters"
+  },
   "contasAPagar": {
     "heading": "Accounts Payable",
     "newPayable": "New Bill",
