@@ -22,6 +22,7 @@ import { AgingReportService, AGING_BUCKETS, NO_COUNTERPARTY_LABEL } from '../Agi
 import type { AgingBucketId } from '../AgingReportService';
 import { ForbiddenError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
+import { scopeToday } from '../../models/dates';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',
@@ -284,11 +285,15 @@ describe('AgingReportService.aging — AP × AR + guardas', () => {
 // ─── Tie-out subledger ↔ razão (F-AG4→b, EMENDA 2026-07-15) ─────────────────────
 
 /**
- * "Hoje" UTC — o tie-out SÓ é emitido quando `asOf == hoje`, então estas suítes usam a data corrente
- * de verdade, nunca uma constante congelada (com data fixa elas passariam hoje e cairiam no ramo
- * `as_of_not_today` amanhã, virando testes que não testam mais nada).
+ * "Hoje" NO FUSO DO ESCOPO — o tie-out SÓ é emitido quando `asOf == hoje`, então estas suítes usam a
+ * data corrente de verdade, nunca uma constante congelada (com data fixa elas passariam hoje e
+ * cairiam no ramo `as_of_not_today` amanhã, virando testes que não testam mais nada).
+ *
+ * Tem de ser o MESMO helper do serviço: com o `toISOString().slice(0,10)` que estava aqui, das 21h à
+ * meia-noite BRT o teste passaria uma data UTC-de-amanhã e a suíte inteira de tie-out quebraria —
+ * a suíte espelhava o bug em vez de o pegar.
  */
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = scopeToday(scope);
 
 /** Uma linha do balancete como balancesAsOf a devolve: `balanceCents` é o sinal CRU débito − crédito. */
 function balanceRow(accountId: string, rawBalanceCents: number) {
@@ -460,7 +465,7 @@ describe('AgingReportService.aging — tie-out OMITIDO (null + motivo, nunca um 
     expect(r.tieOutSkippedReason).toBe('as_of_not_today');
   });
 
-  it('as_of OMITIDA (default hoje) ⇒ tie-out É emitido — default e teste-de-hoje usam o MESMO utcToday', async () => {
+  it('as_of OMITIDA (default hoje) ⇒ tie-out É emitido — default e teste-de-hoje usam o MESMO scopeToday', async () => {
     const { svc } = buildService({
       payableRows: [line({ id: 'p1', dueDate: '2026-01-10', amountCents: 60000, counterpartyId: 'cp-A', name: 'Alfa' })],
       balanceRows: [balanceRow('acc-ap', -60000)],
@@ -469,6 +474,53 @@ describe('AgingReportService.aging — tie-out OMITIDO (null + motivo, nunca um 
     expect(r.asOf).toBe(TODAY);
     expect(r.tieOutSkippedReason).toBeNull();
     expect(r.tieOut!.tiesOut).toBe(true);
+  });
+
+  /**
+   * A consequência VISÍVEL do fuso, no relógio congelado às 00:05 UTC = 13/08 21:05 BRT — a janela em
+   * que o dia UTC já virou e o brasileiro ainda não. Com "hoje" em UTC este bloco falhava nas duas
+   * pernas: a conta que vence HOJE caía em `d1_30` (exibida como vencida 3h antes) e a chamada com a
+   * data BRT correta era recusada com `as_of_not_today`, suprimindo o tie-out.
+   */
+  describe('21:05 BRT (00:05 UTC do dia seguinte) — a janela do defeito de fuso', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-08-14T00:05:00.000Z'));
+    });
+    afterEach(() => jest.useRealTimers());
+
+    it('conta que vence HOJE (BRT) fica em `a_vencer`, com 0 dia de atraso — não em d1_30', async () => {
+      const { svc } = buildService({
+        payableRows: [line({ id: 'p1', dueDate: '2026-08-13', amountCents: 60000, counterpartyId: 'cp-A', name: 'Alfa' })],
+        balanceRows: [balanceRow('acc-ap', -60000)],
+      });
+      const r = await svc.aging(scope, { kind: 'payable' }); // sem asOf ⇒ default = hoje
+
+      expect(r.asOf).toBe('2026-08-13'); // com UTC seria '2026-08-14'
+      expect(r.buckets.a_vencer).toBe('60000');
+      expect(r.buckets.d1_30).toBe('0');
+      expect(r.groups[0].documents[0].daysOverdue).toBe(0);
+      expect(r.groups[0].documents[0].bucket).toBe('a_vencer');
+    });
+
+    it('a data BRT corrente passada explicitamente NÃO cai em as_of_not_today (o tie-out sobrevive)', async () => {
+      const { svc } = buildService({
+        payableRows: [line({ id: 'p1', dueDate: '2026-08-13', amountCents: 60000, counterpartyId: 'cp-A', name: 'Alfa' })],
+        balanceRows: [balanceRow('acc-ap', -60000)],
+      });
+      const r = await svc.aging(scope, { kind: 'payable', asOf: '2026-08-13' });
+      expect(r.tieOutSkippedReason).toBeNull();
+      expect(r.tieOut!.tiesOut).toBe(true);
+    });
+
+    it('e o dia UTC (amanhã em BRT) passa a ser as_of FUTURA ⇒ corretamente omitido', async () => {
+      const { svc } = buildService({
+        payableRows: [line({ id: 'p1', dueDate: '2026-08-13', amountCents: 60000, counterpartyId: 'cp-A', name: 'Alfa' })],
+        balanceRows: [balanceRow('acc-ap', -60000)],
+      });
+      const r = await svc.aging(scope, { kind: 'payable', asOf: '2026-08-14' });
+      expect(r.tieOutSkippedReason).toBe('as_of_not_today');
+    });
   });
 
   it('conta de controle AUSENTE no plano ⇒ tieOut null + control_account_missing (não um saldo 0 forjado)', async () => {

@@ -1,7 +1,7 @@
 import { AccountingPeriodNotOpenError, ValidationError } from '../../../../lib/errors';
 import logger from '../../../../lib/logger';
 import { MAX_CENTS } from '../../models/money';
-import { isValidDateOnly } from '../../models/dates';
+import { isValidDateOnly, scopeDay } from '../../models/dates';
 import type { Receivable } from 'generated/prisma';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { ReceivableService } from '../../services/ReceivableService';
@@ -112,7 +112,7 @@ export class CrmReceivableBridge {
     // Source-fact validation AFTER the idempotency guards (review L1): an already-booked
     // opportunity whose data was later corrupted classifies as booked instead of failing forever.
     const amountCents = this.toCents(fact);
-    const dateOnly = this.toDateOnly(fact);
+    const dateOnly = this.toDateOnly(scope, fact);
 
     // PERIOD PREFLIGHT (review R2): a deterministic period failure must NOT create the row —
     // otherwise every reconcile pass would mint row + audit + compensation tombstone without
@@ -258,9 +258,24 @@ export class CrmReceivableBridge {
     return amountCents;
   }
 
-  /** closedAt ISO → date-only via literal slice (never Date round-trip), round-trip validated. */
-  private toDateOnly(fact: WonOpportunityFact): string {
-    const dateOnly = fact.occurredAt.slice(0, 10);
+  /**
+   * closedAt → dia-calendário NO FUSO DO ESCOPO.
+   *
+   * Era `.slice(0, 10)`, que recorta o dia **UTC**: `CrmPipelineService` carimba
+   * `closedAt = new Date().toISOString()` (instante, não dia), então uma oportunidade ganha às 21h BRT
+   * abria a conta a receber com data de AMANHÃ — e na virada de mês, em outro período contábil.
+   * `scopeDay` devolve intacto o que já for date-only, então um `closedAt` histórico date-only não
+   * sofre deslocamento nenhum.
+   */
+  private toDateOnly(scope: AccountingScope, fact: WonOpportunityFact): string {
+    // scopeDay lança sozinho em instante inválido, mas com mensagem genérica; o catch preserva o
+    // opportunityId, que é o que torna o log acionável.
+    let dateOnly: string;
+    try {
+      dateOnly = scopeDay(scope, fact.occurredAt);
+    } catch {
+      dateOnly = '';
+    }
     if (!isValidDateOnly(dateOnly)) {
       throw new ValidationError(
         `Data de fechamento inválida para a oportunidade '${fact.opportunityId}': '${fact.occurredAt}'.`,

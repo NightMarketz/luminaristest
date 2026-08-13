@@ -100,6 +100,22 @@ describe('CrmReceivableBridge', () => {
     });
   });
 
+  /**
+   * `CrmPipelineService` carimba `closedAt = new Date().toISOString()` — um INSTANTE. O bridge usava
+   * `.slice(0, 10)`, que recorta o dia **UTC**: uma oportunidade ganha às 21h BRT abria a conta a
+   * receber com data de amanhã. Aqui a virada é de MÊS, então o erro também jogava o lançamento em
+   * outro período contábil.
+   */
+  it('oportunidade ganha às 21:05 BRT usa o dia BRT, não o dia UTC (nem o mês seguinte)', async () => {
+    const { bridge, createReceivable } = buildBridge();
+
+    await bridge.bookWonOpportunity(scope, fact({ occurredAt: '2026-09-01T00:05:00.000Z' }));
+
+    const [, input] = createReceivable.mock.calls[0]!;
+    expect(input.issueDate).toBe('2026-08-31'); // com .slice(0,10) seria '2026-09-01'
+    expect(input.dueDate).toBe('2026-08-31');
+  });
+
   it('legacy guard: an opportunity booked by the retired direct route is left alone', async () => {
     const { bridge, createReceivable } = buildBridge({
       findEntryBySource: jest.fn(async () => ({ id: 'entry-legacy' })),

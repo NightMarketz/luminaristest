@@ -75,7 +75,9 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
       unitId: 'unit-1',
       amount: 250,
       paymentMethod: 'Pix',
-      occurredAt: '2026-06-26T00:00:00.000Z', // paidAt, not date
+      // paidAt (não date), já resolvido em dia-calendário BRT: meia-noite UTC de 26/06 é 25/06 21:00
+      // em BRT. A precedência paidAt > date continua provada — o dia vem do paidAt, não do date.
+      occurredAt: '2026-06-25',
     });
   });
 

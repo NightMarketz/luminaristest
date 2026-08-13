@@ -22,6 +22,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { scopeDay } from '../../models/dates';
 import { buildSalonSaleSettledEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { isAllPackageSale } from './salonSaleItems';
 
@@ -109,12 +110,17 @@ export async function maybeSyncSalonSaleSettled(
       amount: totalAmount,
       currency: typeof data.currency === 'string' ? data.currency : 'BRL',
       // Date the settlement by paidAt (D1-Q2); fall back to the sale date, then now.
-      occurredAt:
+      // `paidAt` é 'datetime' no preset e RegisterPaymentService grava `new Date().toISOString()` —
+      // um INSTANTE, não um dia. Resolver o dia no fuso do escopo: um pagamento às 21h BRT
+      // liquidava em D+1, e na virada de mês caía em outro período contábil.
+      occurredAt: scopeDay(
+        scope,
         typeof data.paidAt === 'string'
           ? data.paidAt
           : typeof data.date === 'string'
             ? data.date
-            : new Date().toISOString(),
+            : undefined,
+      ),
       paymentMethod,
       label: `Liquidação ${row.id}`,
     });

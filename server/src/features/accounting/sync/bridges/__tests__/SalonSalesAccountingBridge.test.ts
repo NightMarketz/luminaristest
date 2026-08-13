@@ -64,7 +64,9 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 250,
-      occurredAt: '2026-06-25T00:00:00.000Z',
+      // A ponte agora resolve o INSTANTE em dia-calendário no fuso do escopo: meia-noite UTC de 25/06
+      // é 24/06 21:00 em BRT, logo a venda pertence ao dia 24 — a fixture antes fixava o dia UTC.
+      occurredAt: '2026-06-24',
     });
   });
 

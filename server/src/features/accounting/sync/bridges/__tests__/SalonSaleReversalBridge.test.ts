@@ -88,6 +88,29 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
       expect(sync).not.toHaveBeenCalled(); // a cancel is a reversal, never a new entry
     });
 
+    /**
+     * O estorno data por "agora" — não tem campo de origem para cair. Era
+     * `new Date().toISOString()`: um cancelamento às 21h BRT postava o estorno em D+1, e no dia 31 do
+     * mês em OUTRO período contábil (podendo bater no gate de período fechado). Também passava um
+     * TIMESTAMP onde PostEntrySchema.date exige date-only — a ponte driblava o contrato do DTO.
+     */
+    it('cancelamento às 21:05 BRT estorna com a data BRT (date-only), não com o dia UTC', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-09-01T00:05:00.000Z')); // 31/08 21:05 BRT
+      try {
+        findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
+          type === 'salon.sale.finalized' ? { id: 'entry-1' } : null,
+        );
+        await maybeReverseSalonSale(actor, SALES_TABLE_ID, cancelledRow());
+
+        const [, input] = reverseEntry.mock.calls[0];
+        // Com UTC seria '2026-09-01T00:05:00.000Z' — outro dia E outro mês/período.
+        expect(input.reversalPostingDate).toBe('2026-08-31');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('adaptive (D2-Q4): also reverses the settlement entry when one exists', async () => {
       findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
         type === 'salon.sale.finalized' ? { id: 'entry-1' } : type === 'salon.sale.settled' ? { id: 'settle-1' } : null,
