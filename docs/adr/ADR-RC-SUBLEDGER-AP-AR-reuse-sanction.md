@@ -1,8 +1,9 @@
 # ADR-RC — Reuso vs. divergência sancionada entre os subrazões AP × AR
 
+- **Data:** 2026-08-13
 - **Status:** Ratificado 2026-08-13 (dono, via sessão)
-- **Trilho:** RC — item do plano de contabilidade, pré-requisito de A2 Imobilizado / A3 Folha
-  (`docs/accounting/ACCOUNTING-MASTER-MAP.md` §5.1)
+- **Trilho:** RC — item do plano de contabilidade, pré-requisito dos diferidos Imobilizado e Folha
+  (`docs/accounting/ACCOUNTING-MASTER-MAP.md` §5 itens 12/13)
 - **Classe:** DECISÃO ARQUITETURAL (reuse-vs-bespoke, `_REUSE-CRITERION.md`)
 - **Escopo:** `PayableRepository`/`ReceivableRepository` (Contas a Pagar × Contas a Receber) —
   método `findManyByUnit()` e o resto do par (criação, liquidação, cancelamento)
