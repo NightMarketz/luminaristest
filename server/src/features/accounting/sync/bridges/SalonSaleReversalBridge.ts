@@ -22,6 +22,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { scopeDay, scopeToday } from '../../models/dates';
 import { buildSalonSaleReturnedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (update result). */
@@ -81,7 +82,7 @@ export async function maybeReverseSalonSale(
         await posting.reverseEntry(scope, {
           unitId,
           lancamentoId: revenue.id,
-          reversalPostingDate: new Date().toISOString(),
+          reversalPostingDate: scopeToday(scope),
           reason,
         });
       }
@@ -94,7 +95,7 @@ export async function maybeReverseSalonSale(
         await posting.reverseEntry(scope, {
           unitId,
           lancamentoId: settled.id,
-          reversalPostingDate: new Date().toISOString(),
+          reversalPostingDate: scopeToday(scope),
           reason,
         });
       }
@@ -116,12 +117,16 @@ export async function maybeReverseSalonSale(
       unitId,
       amount: totalAmount,
       currency: typeof data.currency === 'string' ? data.currency : 'BRL',
-      occurredAt:
+      // `returnedAt` é 'datetime' no preset (SalesModule) — um INSTANTE. Resolvê-lo em dia-calendário
+      // tem de ser no fuso do escopo: às 21h BRT o dia UTC já virou e a devolução postaria em D+1.
+      occurredAt: scopeDay(
+        scope,
         typeof data.returnedAt === 'string'
           ? data.returnedAt
           : typeof data.date === 'string'
             ? data.date
-            : new Date().toISOString(),
+            : undefined,
+      ),
       label: `Devolução ${row.id}`,
     });
     await getFactory().getAccountingSyncService().sync(scope, event);

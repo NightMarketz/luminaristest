@@ -16,6 +16,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { scopeDay } from '../../models/dates';
 import { buildSalonSaleCogsEvent, buildSalonSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadSalePackageInfo } from './salonSaleItems';
 import type { AccountingScope } from '../../scope/AccountingScope';
@@ -84,7 +85,10 @@ export async function maybeSyncSalonSaleFinalized(
     }
 
     const currency = typeof data.currency === 'string' ? data.currency : 'BRL';
-    const occurredAt = typeof data.date === 'string' ? data.date : new Date().toISOString();
+    // Scope resolvido ANTES da data: `scopeDay` precisa do fuso. `data.date` é 'date' no preset (já
+    // dia-calendário ⇒ passa intacto); o fallback é "agora", que sem fuso postaria em D+1 à noite.
+    const scope = resolveAccountingScope(actor, unitId);
+    const occurredAt = scopeDay(scope, typeof data.date === 'string' ? data.date : undefined);
     const event = buildSalonSaleFinalizedEvent({
       saleId: row.id,
       unitId,
@@ -94,7 +98,6 @@ export async function maybeSyncSalonSaleFinalized(
       label: `Venda ${row.id}`,
       revenueByNature: saleInfo.revenueByNature,
     });
-    const scope = resolveAccountingScope(actor, unitId);
     await getFactory().getAccountingSyncService().sync(scope, event);
 
     // SECOND emission (Body 2 / O-2): book the cost-of-goods for the sale's product lines. Runs

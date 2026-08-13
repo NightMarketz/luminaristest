@@ -4,7 +4,7 @@ import type { IReceivableRepository } from '../repositories/IReceivableRepositor
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
-import { isValidDateOnly } from '../models/dates';
+import { isValidDateOnly, scopeToday } from '../models/dates';
 import type { AccountingReportService } from './AccountingReportService';
 import { findMappingRule, applySign } from './StatementMappingFixture';
 import {
@@ -43,15 +43,15 @@ function dayNumberFromDateOnly(dateOnly: string): number {
 }
 
 /**
- * "Hoje" como date-only UTC. FONTE ÚNICA — usada TANTO para o default de `asOf` QUANTO para o teste
- * `asOf == hoje` do tie-out. Isto não é cosmético: se as duas noções de "hoje" divergissem, uma
- * chamada SEM `asOf` (que é, por definição, a posição de hoje) poderia cair no ramo
- * `as_of_not_today` e suprimir o tie-out justamente no único caso em que ele é sempre válido.
- * Com um helper só, "asOf omitido ⇒ tie-out calculado" vale por construção.
+ * NOTA: "hoje" é `scopeToday(scope)` (fuso do escopo, `models/dates.ts`) — FONTE ÚNICA usada TANTO
+ * para o default de `asOf` QUANTO para o teste `asOf == hoje` do tie-out. Isto não é cosmético: se as
+ * duas noções de "hoje" divergissem, uma chamada SEM `asOf` (que é, por definição, a posição de hoje)
+ * poderia cair no ramo `as_of_not_today` e suprimir o tie-out justamente no único caso em que ele é
+ * sempre válido. Com um helper só, "asOf omitido ⇒ tie-out calculado" vale por construção.
+ *
+ * O helper era local e UTC (`new Date().toISOString().slice(0,10)`); em UTC-3 isso adiantava o dia em
+ * 3h todas as noites — ver o bloco de doc de `scopeToday`.
  */
-function utcToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 /**
  * Classifica os dias de atraso (`as_of − dueDate`, inteiro com sinal) numa faixa. atraso ≤ 0 ⇒ `A vencer`
@@ -258,8 +258,8 @@ export class AgingReportService {
       );
     }
 
-    // as_of: default hoje (UTC date-only); se fornecido, precisa ser data real (defensivo — o DTO já valida).
-    const asOf = params.asOf ?? utcToday();
+    // as_of: default hoje NO FUSO DO ESCOPO; se fornecido, precisa ser data real (defensivo — o DTO já valida).
+    const asOf = params.asOf ?? scopeToday(scope);
     if (!isValidDateOnly(asOf)) {
       throw new ValidationError('asOf deve ser uma data real YYYY-MM-DD.');
     }
@@ -349,9 +349,9 @@ export class AgingReportService {
   ): Promise<{ tieOut: AgingTieOut | null; tieOutSkippedReason: TieOutSkippedReason | null }> {
     const skip = (reason: TieOutSkippedReason) => ({ tieOut: null, tieOutSkippedReason: reason });
 
-    // Só HOJE os dois lados (status atual × saldo histórico) falam da mesma data. Mesmo `utcToday()`
-    // que gera o default de `asOf` ⇒ chamada sem `asOf` NUNCA cai aqui.
-    if (asOf !== utcToday()) return skip('as_of_not_today');
+    // Só HOJE os dois lados (status atual × saldo histórico) falam da mesma data. Mesmo
+    // `scopeToday(scope)` que gera o default de `asOf` ⇒ chamada sem `asOf` NUNCA cai aqui.
+    if (asOf !== scopeToday(scope)) return skip('as_of_not_today');
 
     const code = AGING_CONTROL_ACCOUNT_CODE[kind];
     const account = await this.accountRepo.findByCode(scope, code);

@@ -19,6 +19,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
+import { scopeDay } from '../../models/dates';
 import { buildSalonPackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadSalePackageInfo } from './salonSaleItems';
 
@@ -72,15 +73,17 @@ export async function maybeSyncSalonPackageSold(
       return;
     }
 
+    // Scope resolvido ANTES da data: `scopeDay` precisa do fuso (o fallback "agora" postaria em D+1
+    // das 21h à meia-noite BRT). `data.date` é 'date' no preset ⇒ já é dia-calendário, passa intacto.
+    const scope = resolveAccountingScope(actor, unitId);
     const event = buildSalonPackageSoldEvent({
       saleId: row.id,
       unitId,
       amount: totalAmount,
       currency: typeof data.currency === 'string' ? data.currency : 'BRL',
-      occurredAt: typeof data.date === 'string' ? data.date : new Date().toISOString(),
+      occurredAt: scopeDay(scope, typeof data.date === 'string' ? data.date : undefined),
       label: `Pacote pré-pago — Venda ${row.id}`,
     });
-    const scope = resolveAccountingScope(actor, unitId);
     await getFactory().getAccountingSyncService().sync(scope, event);
 
     // Balance origin (P5): credit the customer's prepaid balance for the single package.
