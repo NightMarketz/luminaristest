@@ -22,8 +22,30 @@ import { resolveAccountingScope } from '@/features/accounting/scope/AccountingSc
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { scopeToday } from '@/features/accounting/models/dates';
 
-/** Mesma fonte de "hoje" que o repositório usa (F9→(a)) — o teste não pode ter a sua. */
-const HOJE = scopeToday(resolveAccountingScope({ userId: 'u-flt-a' }, 'unit-flt'));
+/**
+ * Mesma fonte de "hoje" que o repositório usa (ADR do fuso, F-TZ1→(c)) — o teste não pode ter a sua.
+ * Fixado no `beforeAll`, imediatamente antes de semear (ver `exigirMesmoDia`).
+ */
+let HOJE: string;
+
+/**
+ * Guarda de virada de dia. O fixture congela `HOJE` na semeadura; o repositório chama
+ * `scopeToday(scope)` de novo em cada query. Se a suíte atravessar a meia-noite NO FUSO DO ESCOPO,
+ * a linha semeada para vencer HOJE passa a vencer ONTEM, e os casos de `overdue` ficam vermelhos
+ * sem regressão nenhuma.
+ *
+ * Sem isto, o sintoma são 3 falhas confusas que somem ao rodar de novo — o pior tipo de flake,
+ * porque ensina a desconfiar do teste em vez do código. Com isto, é UMA falha que se explica.
+ */
+function exigirMesmoDia(): void {
+  const agora = scopeToday(escopo(DONO_A));
+  if (agora !== HOJE) {
+    throw new Error(
+      `A suíte atravessou a meia-noite do fuso do escopo durante a execução (semeou em ${HOJE}, consultou em ${agora}). ` +
+        'NÃO é regressão: a linha semeada para vencer hoje agora vence ontem. Rode de novo.',
+    );
+  }
+}
 
 const UNIT = 'unit-flt';
 const DONO_A = 'u-flt-a';
@@ -51,6 +73,9 @@ const nomes = (r: { payables: { description: string }[] }) => r.payables.map((x)
 
 describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)', () => {
   beforeAll(async () => {
+    // Fixado aqui, e não no carregamento do módulo: encurta a janela entre congelar `HOJE` e
+    // semear a linha que vence nele.
+    HOJE = scopeToday(escopo(DONO_A));
     pushTestSchema();
 
     for (const id of [DONO_A, DONO_B]) {
@@ -211,6 +236,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   // ------------------------------------------ comportamento 3: vencido (F1/F9)
 
   it('comportamento 3 — overdue traz só o que venceu ANTES de hoje e segue em aberto', async () => {
+    exigirMesmoDia();
     const r = await listarAp({ overdue: true });
     // p1/p2/p3/p5 venceram e estão OPEN. p7 vence HOJE (não conta), p8 venceu mas está PAID.
     expect(nomes(r)).toEqual(['Aluguel sala', 'Energia eletrica', 'Fora da faixa', 'Internet fibra']);
@@ -218,6 +244,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   it('comportamento 3 — vencer HOJE não é estar vencido (`<`, não `<=`)', async () => {
+    exigirMesmoDia();
     // Espelha o aging, onde `dueDate >= as_of` é "a vencer" e o atraso começa em 1. Se o repo usasse
     // `lte`, p7 apareceria — e a lista discordaria da tela de aging sobre a MESMA linha.
     expect(nomes(await listarAp({ overdue: true }))).not.toContain('Vence hoje');
@@ -226,12 +253,14 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   it('comportamento 3 — o gate de status exclui o que já foi pago', async () => {
+    exigirMesmoDia();
     expect(nomes(await listarAp({ overdue: true }))).not.toContain('Paga e velha');
     // Controle: p8 existe, venceu em 2020, e só o status a tira do overdue.
     expect(nomes(await listarAp({ q: 'Paga e velha' }))).toEqual(['Paga e velha']);
   });
 
   it('comportamento 3 — overdue ausente ou false NÃO filtra (queryBoolean, não coerce)', async () => {
+    exigirMesmoDia();
     const semFlag = await listarAp();
     const falso = await listarAp({ overdue: false });
     expect(falso.total).toBe(semFlag.total);
@@ -241,6 +270,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   // --------------------------- F10: dois filtros disputando a MESMA chave
 
   it('F10 — overdue + status compõem em AND; não se sobrescrevem', async () => {
+    exigirMesmoDia();
     // `status: PAID` e o `status IN (OPEN,PAYING)` do overdue escrevem a MESMA chave. Por spread, o
     // último venceria em silêncio e isto devolveria linha. Em AND o conjunto é vazio, que é a
     // resposta honesta: nada pago está em aberto.
@@ -253,6 +283,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   it('F10 — overdue + dueTo compõem em AND na mesma chave `dueDate`', async () => {
+    exigirMesmoDia();
     // Ambos restringem `dueDate`. Em AND vale a interseção: vencidas E até 2026-03-01 ⇒ só p1
     // (p8 tem dueDate 2020 mas está PAID, e o overdue a exclui pelo status).
     const r = await listarAp({ overdue: true, dueTo: '2026-03-01' });
@@ -260,6 +291,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
   });
 
   it('F10 — no AR o mesmo par compõe igual (F6)', async () => {
+    exigirMesmoDia();
     // r1 (03-01) e r2 (04-01) já venceram; ambos OPEN.
     expect((await listarAr({ overdue: true })).total).toBe(2);
     expect((await listarAr({ overdue: true, dueTo: '2026-03-01' })).receivables.map((r) => r.id)).toEqual(['r1']);
