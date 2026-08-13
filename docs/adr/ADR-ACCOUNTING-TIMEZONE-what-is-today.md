@@ -1,7 +1,7 @@
 # PRE-ADR-ACCOUNTING-TIMEZONE — O que a contabilidade chama de "hoje"
 
 - **Data:** 2026-08-13
-- **Status:** **PROPOSED — RATIFICAÇÃO PENDENTE.** Nenhum fork abaixo se auto-ratifica. O agente que
+- **Status:** **PROPOSED — RATIFICAÇÃO PENDENTE.** F-TZ3 **auditado 2026-08-13** (ver §4): a máquina de período NÃO usa "hoje"; o audit achou um caminho estreito de bridge e um contra-achado que **restringe** como o F-TZ1 pode ser implementado. Nenhum fork abaixo se auto-ratifica. O agente que
   produziu este documento **não implementa** nada dele sem sinal humano fork-a-fork (ORCH-006).
 - **Origem:** achado do 2º review independente do `BE-INCR-SUBLEDGER-FILTERS` (delta `d082cd9..d529d8dd`),
   ataque (a). Severidade atribuída pelo revisor: **MAIOR como defeito de produto, não bloqueante para
@@ -98,19 +98,71 @@ no código.**
 **Recomendação: (a)**. Nenhum saldo, lançamento ou arquivo SPED muda — só a faixa em que uma linha
 aparece, e só na janela de 3h. (b) é a única perna que o F9 já excluiu por argumento.
 
-### F-TZ3 — Isto alcança a resolução de PERÍODO? **RATIFICAÇÃO PENDENTE**
+### F-TZ3 — Isto alcança a resolução de PERÍODO? — ✅ **AUDITADO 2026-08-13. Resposta: NÃO pela máquina de período; SIM por um caminho estreito de bridge.**
 
-O comentário do campo diz *"for period resolution"*. Se período (INCR-1) também resolver "hoje" em
-UTC, o gate de postagem pode abrir/fechar 3h antes na virada de mês — o que é materialmente pior que
-o filtro de lista.
+**O que foi verificado em disco (não inferido):**
 
-| Perna | Caminho |
-|---|---|
-| **(a)** | Escopo desta ADR = aging + lista. Período é investigação separada |
-| **(b)** | Auditar o período **antes** de decidir F-TZ1, porque o resultado pode mudar a recomendação |
+| Pergunta | Resposta | Evidência |
+|---|---|---|
+| O gate de período deriva de "hoje"? | **Não** — deriva da **data do lançamento** | `PostingService.assertPeriodOpen(scope, dateStr)` → `extractYearMonth(dateStr)`; o gate autoritativo in-tx usa o mesmo `dateStr` |
+| O ano fiscal deriva de "hoje"? | **Não** | `fiscalYearFrom(dateStr)` = `new Date(dateStr).getUTCFullYear()` |
+| Abrir/fechar período usa mês corrente? | **Não** | `PeriodService` opera sobre `periodId`/`year` **explícitos**; nenhuma transição infere o período de agora |
+| Existe `new Date()` sem argumento no caminho de período? | Só carimbos de auditoria | `AccountingPeriodRepository.ts:71-72` (`openedAt`/`closedAt`) — instantes, corretos como instantes |
 
-**Recomendação: (b) primeiro, como verificação barata** — é um grep por `new Date()` no caminho de
-período. Se período não usa "hoje" (usa a data do lançamento, informada), então (a) e o escopo fica pequeno.
+**⚠️ CONTRA-ACHADO que EMENDA o F-TZ1 — leia antes de implementar qualquer perna.**
+
+`PostingService.fiscalYearFrom` carrega um comentário que documenta um **bug já corrigido, na direção
+oposta** (ADR-INCR3 Emenda 3):
+
+> *"Converting to America/Sao_Paulo here (as a prior version did) shifts UTC midnight on Jan 1 back to
+> Dec 31 21:00 BRT, so entries dated 2026-01-01 were numbered under fiscal year 2025 even though the
+> period gate correctly placed them in 2026-01 — the two disagreed on the fiscal year of the exact
+> same date."*
+
+Ou seja: **duas operações que se parecem são opostas**, e confundi-las já custou um bug aqui.
+
+| Operação | Fuso correto | Se errar |
+|---|---|---|
+| `agora` → dia-calendário do operador (`utcToday`) | **local** (é o que o F-TZ1 propõe) | conta vence "hoje" e aparece vencida às 21h |
+| string data-only informada → `Date` (`extractYearMonth`, `fiscalYearFrom`, `isValidDateOnly`) | **UTC** — e é assim hoje | `2026-01-01` volta para 2025; período e numeração discordam |
+
+**Restrição que qualquer implementação do F-TZ1 DEVE respeitar:** o conserto é cirúrgico na função que
+converte **instante → dia**. Nenhuma perna do F-TZ1 autoriza mexer na leitura de data-only. Uma
+implementação que "converta tudo para São Paulo" **reintroduz o bug de ano fiscal já fechado**.
+
+**O caminho estreito que o audit ACHOU — e que não estava em nenhum fork:**
+
+As bridges do salão inventam a data do fato quando a origem não a informou:
+
+```ts
+const occurredAt = typeof data.date === 'string' ? data.date : new Date().toISOString();
+```
+
+`SalonSalesAccountingBridge.ts:87` · `SalonPackageSoldBridge.ts:80` · `SalonSaleReversalBridge.ts:84,97,124`
+· `SalonSaleSettlementBridge.ts:117`
+
+E `occurredAt` **vira a data do lançamento**: os 5 mappers fazem `date: event.occurredAt`, que alimenta
+`postEntry` → gate de período **e** ano fiscal. **Consequência:** uma venda sem data, finalizada entre
+21h e 23h59 BRT do último dia do mês, é contabilizada **no mês seguinte**. Se o mês corrente fechar
+depois, o lançamento ficou no período errado — e isso é materialmente pior que um filtro de lista.
+
+**O que limita o dano (verificado):** o campo `date` é `required: true` no preset de vendas
+(`DatePresets.ts:17`, usado por `SalesModule`), então o fallback é defensivo, não o caminho comum.
+**O que NÃO limita:** (1) `required` de preset é validação de aplicação, não constraint de banco;
+(2) a guarda é `typeof data.date === 'string'` — uma data gravada em tipo não-string dispara o
+fallback **mesmo existindo data**.
+
+### F-TZ3b — O que fazer com o fallback de data das bridges? **RATIFICAÇÃO PENDENTE** *(fork novo, nascido do audit)*
+
+| Perna | Caminho | Consequência |
+|---|---|---|
+| **(a) — recomendada** | **Falhar alto**: sem data na origem, a bridge não contabiliza; registra e pula | Inventar a data de um fato contábil é a mesma classe de "param aceito-e-ignorado" que esta casa já proíbe. O evento fica visível em vez de silenciosamente no mês errado |
+| (b) | Manter o fallback, mas derivá-lo no fuso local | Reduz a janela de 3h para zero, mas segue inventando dado contábil |
+| (c) | Manter como está e documentar | Barato; mantém o único caminho onde "agora" move dinheiro de mês |
+
+**Veredito do audit sobre o F-TZ3 original:** a perna **(a)** vale — o escopo desta ADR fica em
+**aging + lista + o fallback das bridges (F-TZ3b)**. A máquina de período em si está correta e **não
+deve ser tocada**.
 
 ---
 
