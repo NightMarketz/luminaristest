@@ -79,7 +79,7 @@ Três razões, e a terceira é a que decide:
 |---|---|---|
 | **F-TZ1** | ~~(b)~~ → **(c)** | **EMENDADO 2026-08-13, mesma data.** Ratificado inicialmente (b) (fuso fixo); emendado para **(c)** ao constatar que a PR #189 já havia implementado (c) com qualidade — o `timeZone` do `AccountingScope` **passa a ser lido** e deixa de ser campo morto. O ADR já registrava que "(b) é (c) com o valor chumbado, então (b)→(c) é refino, não retrabalho"; aqui o refino chegou primeiro, e reduzir a (b) jogaria fora trabalho testado para chegar num estado menos capaz |
 | **F-TZ2** | **(a)** | Corrigir **aging e lista juntos**, aceitando que números de aging mudem na fronteira do dia. Nenhum saldo, lançamento ou SPED muda — só a faixa em que a linha aparece |
-| **F-TZ3b** | **(a)** | Bridge sem data na origem **não contabiliza**: registra e pula. Para de inventar a data de um fato contábil |
+| **F-TZ3b** | ~~(a)~~ → **(b)** | **EMENDADO 2026-08-13.** Ratificado inicialmente (a) (falhar alto); emendado para **(b)** — o fallback **permanece**, resolvido no fuso do escopo. Fecha a janela de 3h sem transformar em erro um caminho que hoje é defensivo (`date` é `required: true` no preset de vendas). Ver §4.1 para o que (b) aceita, nomeado |
 
 **Restrição herdada do audit (§F-TZ3), vale para a implementação do F-TZ1(b):** o conserto é
 **cirúrgico na conversão instante → dia**. A leitura de data-only (`extractYearMonth`,
@@ -174,7 +174,7 @@ depois, o lançamento ficou no período errado — e isso é materialmente pior 
 (2) a guarda é `typeof data.date === 'string'` — uma data gravada em tipo não-string dispara o
 fallback **mesmo existindo data**.
 
-### F-TZ3b — O que fazer com o fallback de data das bridges? ✅ **RATIFICADO → (a)** *(fork novo, nascido do audit)*
+### F-TZ3b — O que fazer com o fallback de data das bridges? ✅ **RATIFICADO → (a), EMENDADO → (b)** *(fork novo, nascido do audit)*
 
 | Perna | Caminho | Consequência |
 |---|---|---|
@@ -239,14 +239,30 @@ em `origin/main`. Conferida contra as pernas ratificadas:
 |---|---|---|---|
 | **F-TZ1** | (b) → emendado (c) | **(c)** — `scopeDay(scope, instant)` + `scopeToday(scope)`, lendo `scope.timeZone` | ✅ **Alinhado pela emenda.** Primeiro consumidor real do campo |
 | **F-TZ2** | (a) | Corrigiu o aging (`asOf` default e o teste `as_of_not_today`) | ✅ Alinhado — a lista vem desta branch; juntas fecham (a) |
-| **F-TZ3b** | **(a) falhar alto** | **(b)** — manteve o fallback e o converteu para o fuso local: `scopeDay(scope, typeof data.date === 'string' ? data.date : undefined)` resolve para o hoje local quando a origem não informou | ❌ **DIVERGENTE — decisão do dono pendente** |
+| **F-TZ3b** | (a) → emendado **(b)** | **(b)** — manteve o fallback e o converteu para o fuso local: `scopeDay(scope, typeof data.date === 'string' ? data.date : undefined)` | ✅ **Alinhado pela emenda de 2026-08-13** |
 
 **A restrição do §F-TZ3 foi respeitada, e melhor do que o pedido.** A #189 não tocou `PostingService.ts`,
 e o `scopeDay` faz **short-circuit em string date-only** — devolve intacta o que já é dia-calendário,
 convertendo só instante de verdade. O doc dela cita explicitamente o `fiscalYearFrom` como razão. É a
 forma correta da distinção que o audit levantou.
 
-**A divergência do F-TZ3b, em uma frase:** o dono ratificou que bridge sem data **não contabiliza**;
-a #189 mantém a invenção da data, só que agora inventa o dia certo. A janela de 3h fecha, mas o fato
-contábil segue nascendo com uma data que ninguém informou. **Resolver isto é decisão do dono** — ou
-emenda o F-TZ3b para (b), ou a #189 ganha um follow-up que falha alto.
+**Resolvido pela emenda de 2026-08-13:** o dono emendou o F-TZ3b para (b). A #189 fica **integralmente
+alinhada** às pernas ratificadas; nenhuma divergência permanece aberta.
+
+**Verificação adicional feita ao fechar (o `catch` que parecia largo, e não é):**
+`CrmReceivableBridge.toDateOnly` envolve o `scopeDay` num `try/catch` que atribui `dateOnly = ''` — o
+que à primeira vista é a classe "catch largo esconde bug real". **Não é:** a linha seguinte é
+`if (!isValidDateOnly(dateOnly)) throw new ValidationError(...)` **com o `opportunityId`**. O catch não
+engole; ele enriquece a mensagem, e o sentinela vazio garante que o throw aconteça. **Data inválida
+falha alto nas duas pontas** — o fallback de (b) cobre apenas data **ausente**.
+
+### 4.1 O que a perna (b) aceita — nomeado, para não virar surpresa
+
+1. **O fato contábil pode nascer com uma data que ninguém informou.** Mitigado, não eliminado: `date` é
+   `required: true` no preset de vendas (`DatePresets.ts:17`), logo o caminho é defensivo.
+2. **`required` de preset é validação de aplicação, não constraint de banco** — uma linha criada por
+   caminho que pule a validação não tem a garantia.
+3. **A guarda é `typeof data.date === 'string'`.** Uma data gravada em tipo não-string dispara o
+   fallback **mesmo existindo data** — e sob (b) isso passa a inventar o dia certo em vez do errado,
+   o que é melhor, mas continua sendo invenção. Se algum dia o store da DynamicTable passar a devolver
+   `Date` em vez de string neste campo, o fallback vira o caminho comum **em silêncio**.
