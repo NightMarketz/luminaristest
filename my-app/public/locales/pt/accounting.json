@@ -35,6 +35,17 @@
       "report": "Falha ao carregar o balancete."
     }
   },
+  "subledgerFilters": {
+    "searchLabel": "Buscar",
+    "searchPlaceholder": "Descrição ou nº do documento…",
+    "searchHint": "Não diferencia maiúsculas de minúsculas, mas não casa acentuação (ex.: \"marco\" não encontra \"março\").",
+    "counterpartyLabel": "Contraparte",
+    "counterpartyAll": "— todas —",
+    "dueFromLabel": "Vencimento de",
+    "dueToLabel": "Vencimento até",
+    "overdueLabel": "Só vencidos",
+    "clear": "Limpar filtros"
+  },
   "contasAPagar": {
     "heading": "Contas a Pagar",
     "newPayable": "Nova Conta",
