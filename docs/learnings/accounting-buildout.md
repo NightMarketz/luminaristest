@@ -12,6 +12,35 @@ Entradas mais novas no topo.
 - **Como aplicar:** antes de duplicar uma peça de UI num par (ou trio) de telas já reconhecidas como espelho, pergunte se a peça nova pertence ao componente compartilhado em vez de a cada tela — o critério de reuso (`_REUSE-CRITERION.md`) vale para peças novas tanto quanto para as existentes.
 - **Durável?** sim → reforça [[reuse-vs-divergence-criterion]] e fecha [[accounting-master-map-source-of-truth]] §7 Núcleo 2 (único resíduo estrutural do núcleo).
 
+### 2026-08-13 · decision · RC — where-builder compartilhado AP×AR, escopado à fatia que é espelho literal
+- **Contexto:** item RC do plano de contabilidade (dossiê ratificado pelo dono 2026-08-13), pré-requisito
+  de A2 Imobilizado / A3 Folha. O par AP×AR (`PayableRepository`/`ReceivableRepository`) é misto por
+  fatia: `findManyByUnit()` é espelho literal desde o próprio commit `ea91f406`
+  (BE-INCR-SUBLEDGER-FILTERS, "AP e AR sao espelho literal (F6)"); criação/liquidação diverge em posse
+  real (CAS 2-tx assimétrico, estoque só-AP, `CrmReceivableBridge` só-AR, pernas D/C invertidas).
+- **Aprendizado:** o `_REUSE-CRITERION.md` roda por FATIA, não pelo módulo inteiro — um par pode ter uma
+  fatia extraível e outra sancionada ao mesmo tempo, e o veredito certo é fazer as duas coisas na mesma
+  PR (extrair a que é gêmea + registrar por escrito por que a outra NÃO vira código compartilhado), não
+  escolher um lado só. `buildSubledgerFilterWhere()` ficou PURA por desenho: `today` do filtro `overdue`
+  entra por parâmetro (o repositório resolve via `scopeToday(scope)`, mesma fonte do aging) — o
+  compartilhado nunca decide "agora", só compõe. Efeito colateral do gate "zero `new Date(` no arquivo":
+  as datas de faixa passaram a trafegar como STRING ISO para o Prisma em vez de `Date` construído — o
+  `DateTimeFilter` do Prisma aceita `Date | string` e resolve para o mesmo epoch, então o comportamento
+  ficou byte-idêntico (comprovado pela suíte de integração pré-existente, não alterada).
+- **Evidência:** `server/src/features/accounting/repositories/subledgerFilters.ts` (função nova);
+  `PayableRepository.ts`/`ReceivableRepository.ts` (diff de `findManyByUnit()` ENCOLHEU nos dois, não
+  cresceu); `repositories/__tests__/SubledgerFilters.integration.test.ts` — 20/20 testes passam
+  IDÊNTICOS antes e depois do refactor (oráculo de regressão, não tocado); unit novo
+  `repositories/__tests__/subledgerFilters.test.ts` (15 testes) cobre a função pura isolada; ADR
+  [ADR-RC-SUBLEDGER-AP-AR-reuse-sanction](../adr/ADR-RC-SUBLEDGER-AP-AR-reuse-sanction.md) registra os 5
+  pontos sancionados + os 2 gatilhos de reversão adversariais.
+- **Como aplicar:** ao avaliar reuso entre dois módulos-espelho, rode o critério por fatia (listagem ×
+  escrita × liquidação separadamente) antes de decidir "extrai tudo" ou "não extrai nada"; se a função
+  compartilhada algum dia precisar de `if (lado === X)` por dentro, isso é o gatilho para REVERTER a
+  extração, não para adicionar o parâmetro condicional.
+- **Durável?** sim → ADR-RC + entrada nova em `_REUSE-CRITERION.md`-aplicado (referenciar este caso como
+  precedente de "extração por fatia" ao lado de `queryPrimitives.ts`).
+
 ### 2026-07-15 · pitfall · Memória descreve, só gate segura — 5 PRs empilhados sobre o próprio diagnóstico (→ OPS-005)
 - **Contexto:** Sessão longa de 2026-07-15. O debate de personas do **início** da sessão diagnosticou, e o dono aceitou: *"o gargalo é validação humana acumulada, não falta de código; não roteie código do Bloco B até o Bloco A drenar"*. O diagnóstico virou auto-memória ([[accounting-gargalo-is-human-validation]]). Ao longo da MESMA sessão, a cada "segue" do dono, o agente construiu e empilhou **5 PRs** em cima daquele diagnóstico (A1, B1, FE-A1, FE-B1, aging, + tie-out).
 - **Aprendizado:** **Memória descreve; só gate segura.** O diagnóstico existia, estava escrito, estava certo — e não impediu nada, porque **nada o consultava no momento de abrir a frente**. Três custos cresceram sozinhos: (1) **superfície de conflito** (#118×#119 em `auth.ts`; #119×#120 em `schema.prisma`/`factory.ts`); (2) **review envelhecendo** — um PASS vale contra a árvore revisada, e o rebase do pai o invalida **por transitividade** na pilha inteira; (3) **aposta empilhada** — a pilha A1→aging→tie-out chegou a 4 níveis apostando **4 PRs** num smoke-migration-gate **nunca rodado contra dado real** (o vão de `sintetico-nao-cobre-formato-de-dado-real`). Enquanto isso um fix de segurança **CRÍTICO e READY** (#118) ficou parado atrás de nada. **Achado estrutural:** a `luminaris-orchestrator` é **incapaz** de pegar isto — todo o vocabulário de saída dela é "quais skills geradoras rodar" (Phase 4 = tabela de passos); ela não tem representação de fila/gate/merge, e seu único freio (ORCH-006) é colisão com §1/§4 do master map. Rodada na pergunta "qual o próximo passo?", ela responde "não mapeia" (ORCH-005) — ou, pior, rotearia MAIS código. **Quem pegou foi uma persona com lente de sequenciamento em contexto independente**, não o ferramental.
