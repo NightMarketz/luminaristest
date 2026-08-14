@@ -856,8 +856,8 @@ model Payable {
   expenseAccount   Account?         @relation("PayableExpenseAccount", fields: [expenseAccountId], references: [id])
   inventoryProductRef String? // INCR-INVENTORY D3(b): set (with inventoryQty) when this Payable is a merchandise-for-resale purchase → routes the debit to 1.1.6 Estoques + emits a StockMovement INBOUND. XOR with expenseAccountId (DTO .superRefine).
   inventoryQty        Int? // INCR-INVENTORY D3(b): units received by this purchase; paired with inventoryProductRef. receiveStock gets amountCents as the TOTAL value (avoids per-unit rounding).
-  counterpartyId   String? // FK Counterparty (INCR-COUNTERPARTY / A1) — NULLABLE (SEC-A1-5: NOT NULL deferred to a 2nd migration after backfill proves coverage). Resolved RE-SCOPED inside createPayable (SEC-A1-1); supplierName stays the snapshot.
-  counterparty     Counterparty?    @relation(fields: [counterpartyId], references: [id])
+  counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createPayable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from supplierName, so there is no null branch left. supplierName stays the snapshot.
+  counterparty     Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
   status           String // OPEN | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
   createdById      String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById    String? // actor who cancelled; plain string
@@ -926,8 +926,8 @@ model Receivable {
   amountCents      Int // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
   revenueAccountId String // FK Account — contrapartida do reconhecimento, folha nature='Revenue' (gate D4, re-checked in the service)
   revenueAccount   Account             @relation("ReceivableRevenueAccount", fields: [revenueAccountId], references: [id])
-  counterpartyId   String? // FK Counterparty (INCR-COUNTERPARTY / A1) — NULLABLE (SEC-A1-5: NOT NULL deferred to a 2nd migration after backfill proves coverage). Resolved RE-SCOPED inside createReceivable (SEC-A1-1); customerName stays the snapshot.
-  counterparty     Counterparty?       @relation(fields: [counterpartyId], references: [id])
+  counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
+  counterparty     Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
   status           String // OPEN | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
   createdById      String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById    String? // actor who cancelled; plain string

@@ -600,7 +600,7 @@
           },
           "counterpartyId": {
             "type": "string",
-            "description": "FK opcional a uma Counterparty(SUPPLIER) desta unidade (INCR-COUNTERPARTY / A1); re-escopada no service (SEC-A1-1)"
+            "description": "FK a uma Counterparty(SUPPLIER) desta unidade (INCR-COUNTERPARTY / A1); re-escopada no service (SEC-A1-1). OPCIONAL no corpo, NOT NULL na linha (SEC-A1-5): omitir faz o service achar-ou-cunhar a contraparte pelo supplierName"
           },
           "documentNumber": {
             "type": "string",
@@ -1035,7 +1035,7 @@
           },
           "counterpartyId": {
             "type": "string",
-            "description": "FK opcional a uma Counterparty(CUSTOMER) desta unidade (INCR-COUNTERPARTY / A1); re-escopada no service (SEC-A1-1)"
+            "description": "FK a uma Counterparty(CUSTOMER) desta unidade (INCR-COUNTERPARTY / A1); re-escopada no service (SEC-A1-1). OPCIONAL no corpo, NOT NULL na linha (SEC-A1-5): omitir faz o service achar-ou-cunhar a contraparte pelo customerName"
           },
           "documentNumber": {
             "type": "string",

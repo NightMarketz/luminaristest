@@ -101,6 +101,24 @@ describe('CrmReceivableBridge', () => {
   });
 
   /**
+   * SEC-A1-5 / F-NN1(a). O bridge NÃO tem counterpartyId para passar — o CRM manda `fact.label`, não
+   * um id de catálogo. O `toEqual` acima já prova que a chave não vai no payload; este caso fixa o
+   * PORQUÊ, para que ninguém "conserte" o bridge quando a FK virar NOT NULL: quem garante a
+   * identidade é o `ReceivableService`, que resolve/cunha a partir do `customerName` (provado em
+   * `ReceivableService.test.ts` e em `CounterpartyResolution.integration.test.ts`). Se algum dia este
+   * caso exigir mudar o bridge, o fork F-NN1 foi decidido errado.
+   */
+  it('não passa counterpartyId — a identidade nasce do customerName no serviço (SEC-A1-5)', async () => {
+    const { bridge, createReceivable } = buildBridge();
+
+    await bridge.bookWonOpportunity(scope, fact());
+
+    const [, input] = createReceivable.mock.calls[0]!;
+    expect(input).not.toHaveProperty('counterpartyId');
+    expect(input.customerName).toBe('Acme — Projeto X'); // o nome É a âncora da identidade
+  });
+
+  /**
    * `CrmPipelineService` carimba `closedAt = new Date().toISOString()` — um INSTANTE. O bridge usava
    * `.slice(0, 10)`, que recorta o dia **UTC**: uma oportunidade ganha às 21h BRT abria a conta a
    * receber com data de amanhã. Aqui a virada é de MÊS, então o erro também jogava o lançamento em

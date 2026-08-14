@@ -28,6 +28,7 @@ import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
 
 /**
  * PayableService — Contas a Pagar (INCR-AP / ADR-INCR-AP). FIRST-CLASS PRISMA.
@@ -133,16 +134,14 @@ export class PayableService {
       );
     }
 
-    // Counterparty gate (SEC-A1-1 — IDOR #1): if a counterpartyId is supplied, RE-SCOPE it here
-    // (findById carries the scope), so a payable can never link to another tenant's counterparty. The
-    // DTO cannot know the scope, so this resolution lives in the service, never in Zod. Nullable this
-    // increment (SEC-A1-5): no counterpartyId → no link; supplierName stays the identity snapshot.
-    const counterpartyId = await this.resolveCounterpartyId(scope, dto.counterpartyId);
-
-    // tx1 — create the row (OPEN) + payable.created audit atomically (ACC-019). Mints payableId.
+    // tx1 — resolve/mint the counterparty, create the row (OPEN) and append payable.created
+    // atomically (ACC-019/ACC-012). The counterparty resolution moved INSIDE this tx with SEC-A1-5:
+    // it can now WRITE (mint a catalog identity), and a mint that survived a rolled-back payable
+    // would leave an orphan supplier in the catalog. Mints payableId.
     let payable: Payable;
     try {
       payable = await this.payableRepo.runTransaction(async (tx) => {
+        const counterpartyId = await this.resolveOrCreateCounterpartyId(scope, dto, tx);
         const created = await this.payableRepo.create(
           {
             userId,
@@ -600,24 +599,25 @@ export class PayableService {
   }
 
   /**
-   * Re-scope a body-supplied counterpartyId (SEC-A1-1). Returns null when none was supplied (the FK
-   * is nullable this increment, SEC-A1-5); otherwise the counterparty MUST exist IN THIS SCOPE and be
-   * a SUPPLIER — a cross-tenant id resolves to null via the scoped findById and is rejected here, so a
-   * payable can never point at another tenant's counterparty (IDOR #1) or at a CUSTOMER record.
+   * Resolve the SUPPLIER identity this payable links to — NEVER null (SEC-A1-5 / F-NN1(a)). A
+   * body-supplied counterpartyId is re-scoped (SEC-A1-1: a cross-tenant id resolves to null via the
+   * scoped findById and is rejected here) and must be a SUPPLIER; with no id, `supplierName` finds or
+   * mints the catalog identity. Shared with AR — see `counterpartyResolution.ts` for the invariants.
    */
-  private async resolveCounterpartyId(
+  private async resolveOrCreateCounterpartyId(
     scope: AccountingScope,
-    counterpartyId: string | undefined,
-  ): Promise<string | null> {
-    if (!counterpartyId) return null;
-    const counterparty = await this.counterpartyRepo.findById(scope, counterpartyId);
-    if (!counterparty) {
-      throw new ValidationError('Contraparte informada não existe nesta unidade.');
-    }
-    if (counterparty.type !== 'SUPPLIER') {
-      throw new ValidationError('A contraparte de uma conta a pagar deve ser um fornecedor (SUPPLIER).');
-    }
-    return counterparty.id;
+    dto: CreatePayableInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    return resolveOrCreateCounterpartyId(
+      { counterpartyRepo: this.counterpartyRepo, auditService: this.auditService },
+      scope,
+      'SUPPLIER',
+      dto.counterpartyId,
+      dto.supplierName,
+      'A contraparte de uma conta a pagar deve ser um fornecedor (SUPPLIER).',
+      tx,
+    );
   }
 
   private async resolveExpenseAccount(scope: AccountingScope, accountId: string): Promise<Account> {

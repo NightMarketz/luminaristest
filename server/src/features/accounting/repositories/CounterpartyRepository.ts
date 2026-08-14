@@ -25,6 +25,21 @@ export class CounterpartyRepository implements ICounterpartyRepository {
     });
   }
 
+  public async findByName(
+    scope: AccountingScope,
+    type: string,
+    name: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Counterparty | null> {
+    // LIVE rows only — an archived row carries the mangled `deleted:<id>:<name>`, so it can never
+    // match the original name here (SEC-A1-4). Exact match: the `@@unique` is case-sensitive on
+    // SQLite, so a case-insensitive read would hand back a row the constraint does not consider a
+    // duplicate, and the create-on-miss would then trip P2002 for a name the caller "found".
+    return (tx ?? prisma).counterparty.findFirst({
+      where: { ...accountingScopeWhere(scope), type, name, deletedAt: null },
+    });
+  }
+
   public async findManyByUnit(
     scope: AccountingScope,
     params: { type?: string; includeArchived: boolean },

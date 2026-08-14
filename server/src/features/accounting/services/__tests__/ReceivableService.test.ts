@@ -3,6 +3,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
+import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
@@ -42,6 +43,7 @@ interface Opts {
   findEntryBySource?: (type: string, id: string) => unknown;
   revenueAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
+  counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
 }
 
 function build(opts: Opts = {}) {
@@ -93,6 +95,9 @@ function build(opts: Opts = {}) {
   const defaultCp = { id: 'cp-cus', userId: 'owner-1', unitId: 'unit-1', type: 'CUSTOMER' };
   const counterpartyRepo = {
     findById: jest.fn(async () => (opts.counterparty === undefined ? defaultCp : opts.counterparty)),
+    // SEC-A1-5 find-or-create: `byName` undefined = catalog miss (⇒ mint); a row = hit (⇒ reuse).
+    findByName: jest.fn(async () => opts.counterpartyByName ?? null),
+    create: jest.fn(async (data: Record<string, unknown>) => ({ id: 'cp-minted', ref: null, ...data })),
   };
 
   const service = new ReceivableService(
@@ -162,7 +167,8 @@ describe('ReceivableService.createReceivable — counterparty link (INCR-COUNTER
   it('resolves counterpartyId RE-SCOPED and persists it on the row', async () => {
     const { service, receivableRepo, counterpartyRepo } = build();
     await service.createReceivable(scope, dtoWithCp as never);
-    expect(counterpartyRepo.findById).toHaveBeenCalledWith(scope, 'cp-cus');
+    // Carries the tx too — SEC-A1-5 moved the resolution inside tx1.
+    expect(counterpartyRepo.findById).toHaveBeenCalledWith(scope, 'cp-cus', expect.anything());
     const created = receivableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
     expect(created.counterpartyId).toBe('cp-cus');
     expect(created.customerName).toBe('Cliente XPTO'); // snapshot preserved alongside the FK
@@ -179,12 +185,59 @@ describe('ReceivableService.createReceivable — counterparty link (INCR-COUNTER
     await expect(service.createReceivable(scope, dtoWithCp as never)).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('leaves counterpartyId null when none is supplied (nullable this increment, SEC-A1-5)', async () => {
+  // ── SEC-A1-5 / F-NN1(a): the FK is NOT NULL, so "no counterpartyId" resolves from the name ──────
+
+  it('mints the CUSTOMER identity from customerName when no counterpartyId is supplied (comp. 2)', async () => {
     const { service, receivableRepo, counterpartyRepo } = build();
     await service.createReceivable(scope, createDto as never);
-    expect(counterpartyRepo.findById).not.toHaveBeenCalled();
+
+    expect(counterpartyRepo.findById).not.toHaveBeenCalled(); // no id in the body ⇒ name path
+    expect(counterpartyRepo.findByName).toHaveBeenCalledWith(scope, 'CUSTOMER', 'Cliente XPTO', expect.anything());
+    const minted = counterpartyRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(minted).toMatchObject({ type: 'CUSTOMER', name: 'Cliente XPTO', ref: null });
     const created = receivableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
-    expect(created.counterpartyId).toBeNull();
+    expect(created.counterpartyId).toBe('cp-minted'); // NEVER null
+    expect(created.customerName).toBe('Cliente XPTO'); // snapshot preserved alongside the FK
+  });
+
+  it('reuses the existing CUSTOMER of the same name instead of minting a duplicate (comp. 3)', async () => {
+    const existing = { id: 'cp-existing', userId: 'owner-1', unitId: 'unit-1', type: 'CUSTOMER' };
+    const { service, receivableRepo, counterpartyRepo } = build({ counterpartyByName: existing });
+    await service.createReceivable(scope, createDto as never);
+
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    const created = receivableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-existing');
+  });
+
+  it('emits counterparty.created for the implicit mint, in the SAME tx (T8 + comp. 7)', async () => {
+    const { service, receivableRepo, counterpartyRepo, auditService } = build();
+    await service.createReceivable(scope, createDto as never);
+
+    const mintTx = (counterpartyRepo.create.mock.calls as unknown as unknown[][])[0]![1];
+    const rowTx = (receivableRepo.create.mock.calls as unknown as unknown[][])[0]![1];
+    expect(mintTx).toBe(rowTx); // ACC-012 — mint and row roll back together
+
+    const mintAudit = (auditService.append.mock.calls as unknown as unknown[][]).find(
+      (c) => (c[2] as { eventType: string }).eventType === 'counterparty.created',
+    );
+    expect(mintAudit).toBeDefined();
+    expect(mintAudit![0]).toBe(rowTx); // append(tx, scope, event)
+  });
+
+  it('adopts the racer counterparty on P2002 instead of failing the receivable (comp. 8)', async () => {
+    const { service, receivableRepo, counterpartyRepo } = build();
+    counterpartyRepo.create.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'x' }),
+    );
+    counterpartyRepo.findByName
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 'cp-racer', userId: 'owner-1', unitId: 'unit-1', type: 'CUSTOMER' });
+
+    await service.createReceivable(scope, createDto as never);
+
+    const created = receivableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-racer');
   });
 });
 

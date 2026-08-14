@@ -53,6 +53,10 @@ describe('ReceivableRepository.claimForReceipt — real SQLite DB (INCR-AR D4)',
     await db.account.create({
       data: { id: 'acc-rev', userId: USER_ID, unitId: UNIT, code: '3.1', name: 'Receita', nature: 'Revenue', acceptsEntries: true },
     });
+    // FK NOT NULL desde SEC-A1-5; este arquivo é sobre o CAS de status, a contraparte é só cenário.
+    await db.counterparty.create({
+      data: { id: 'cp-claim', userId: USER_ID, unitId: UNIT, type: 'CUSTOMER', name: 'Cliente', createdById: USER_ID },
+    });
   }, 60000);
 
   afterAll(async () => {
@@ -67,7 +71,7 @@ describe('ReceivableRepository.claimForReceipt — real SQLite DB (INCR-AR D4)',
       data: {
         id, userId: USER_ID, unitId: UNIT, customerName: 'Cliente', documentNumber: `FAT-${id}`,
         description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-        amountCents: 50000, revenueAccountId: 'acc-rev', status: 'OPEN',
+        amountCents: 50000, revenueAccountId: 'acc-rev', counterpartyId: 'cp-claim', status: 'OPEN',
       },
     });
   }
@@ -104,7 +108,7 @@ describe('ReceivableRepository.claimForReceipt — real SQLite DB (INCR-AR D4)',
         data: {
           id: 'rec-dup2', userId: USER_ID, unitId: UNIT, customerName: 'Cliente', documentNumber: 'FAT-rec-dup',
           description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-          amountCents: 1, revenueAccountId: 'acc-rev', status: 'OPEN',
+          amountCents: 1, revenueAccountId: 'acc-rev', counterpartyId: 'cp-claim', status: 'OPEN',
         },
       }),
     ).rejects.toMatchObject({ code: 'P2002' });
@@ -113,7 +117,7 @@ describe('ReceivableRepository.claimForReceipt — real SQLite DB (INCR-AR D4)',
       data: {
         id: 'rec-dup3', userId: USER_ID, unitId: UNIT, customerName: 'Cliente', documentNumber: 'FAT-rec-dup',
         description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-        amountCents: 1, revenueAccountId: 'acc-rev', status: 'OPEN',
+        amountCents: 1, revenueAccountId: 'acc-rev', counterpartyId: 'cp-claim', status: 'OPEN',
       },
     });
     expect(recreated.id).toBe('rec-dup3');

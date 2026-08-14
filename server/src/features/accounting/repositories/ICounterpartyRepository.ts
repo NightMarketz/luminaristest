@@ -25,6 +25,21 @@ export interface ICounterpartyRepository {
   /** Scoped point lookup — returns null when the id is not in this scope (cross-tenant → null). */
   findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Counterparty | null>;
 
+  /**
+   * Scoped lookup by the BUSINESS key `[userId, unitId, type, name]` — the find half of the
+   * find-or-create that keeps `counterpartyId` NOT NULL (SEC-A1-5 / F-NN1(a)). Reads only LIVE rows
+   * (`deletedAt: null`): an archived counterparty had its name mangled to `deleted:<id>:<name>`
+   * (SEC-A1-4), so the original name is free and MUST mint a new identity instead of resurrecting the
+   * archived one. Scope-carrying like every other read — two tenants named "ACME" never cross
+   * (SEC-A1-2).
+   */
+  findByName(
+    scope: AccountingScope,
+    type: string,
+    name: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Counterparty | null>;
+
   findManyByUnit(
     scope: AccountingScope,
     params: { type?: string; includeArchived: boolean },

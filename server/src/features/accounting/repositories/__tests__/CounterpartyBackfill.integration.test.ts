@@ -21,6 +21,14 @@ import { PrismaClient } from 'generated/prisma';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
 
+/**
+ * A migração que endurece `counterpartyId` para NOT NULL (SEC-A1-5). É a ÚNICA omitida ao montar o
+ * banco deste teste: com ela aplicada, o estado PRÉ-backfill que aqui se encena — linha de subrazão
+ * com contraparte nula — deixa de ser representável. Cortar antes dela por data não serve: migrações
+ * posteriores (`requiresDimension`, p. ex.) trazem colunas que o Prisma Client atual exige.
+ */
+const NOTNULL_MIGRATION = '20260814120000_counterparty_notnull';
+
 const BACKFILL_SUPPLIERS_INSERT = `
 INSERT OR IGNORE INTO "counterparties" ("id", "userId", "unitId", "type", "name", "ref", "createdById", "createdAt", "updatedAt", "deletedAt")
 SELECT 'cp_' || lower(hex(randomblob(12))), "userId", "unitId", 'SUPPLIER', "supplierName", NULL, NULL,
@@ -60,11 +68,25 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
 
   beforeAll(async () => {
     dbPath = path.join(os.tmpdir(), `cp-backfill-${Date.now()}.db`);
-    execSync('npx prisma migrate deploy', {
-      cwd: SERVER_ROOT,
-      env: { ...process.env, DATABASE_URL: `file:${dbPath}` },
-      stdio: 'pipe',
-    });
+    // Monta o schema arquivo a arquivo, OMITINDO só a migração de NOT NULL (ver NOTNULL_MIGRATION).
+    // `prisma migrate deploy` aplicaria todas e tornaria este teste impossível de montar.
+    const migrationsDir = path.join(SERVER_ROOT, 'prisma', 'migrations');
+    const todas = fs
+      .readdirSync(migrationsDir)
+      .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
+      .sort();
+    const aplicar = todas.filter((d) => d !== NOTNULL_MIGRATION);
+    // Controle do harness: exatamente UMA migração foi omitida, e é a que se pretendia omitir. Sem
+    // isto, um rename do diretório passaria a aplicar TUDO (o teste quebraria por motivo obscuro) ou
+    // a omitir demais.
+    expect(todas).toContain(NOTNULL_MIGRATION);
+    expect(todas.length - aplicar.length).toBe(1);
+    for (const dir of aplicar) {
+      execSync(
+        `npx prisma db execute --file "${path.join(migrationsDir, dir, 'migration.sql')}" --url "file:${dbPath}"`,
+        { cwd: SERVER_ROOT, env: { ...process.env }, stdio: 'pipe' },
+      );
+    }
     db = new PrismaClient({
       datasources: { db: { url: `file:${dbPath}?socket_timeout=60&connection_limit=1` } },
     });
@@ -82,27 +104,38 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
       });
     }
 
-    const basePayable = (over: Record<string, unknown>) => ({
-      unitId: 'unit-1', description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-      amountCents: 1000, status: 'OPEN', ...over,
-    });
+    // As linhas de subrazão são semeadas por SQL, não pelo Prisma Client: o client é gerado do schema
+    // FINAL, onde `counterpartyId` é NOT NULL (SEC-A1-5), então `db.payable.create` passou a exigir a
+    // FK e não consegue mais encenar o estado pré-backfill. Datas em INTEGER ms-epoch — a mesma forma
+    // que o Prisma grava DateTime no SQLite (memória sintetico-nao-cobre-formato-de-dado-real); o
+    // backfill só lê userId/unitId/supplierName (TEXT), então nada aqui depende do encoding de data.
+    const MS = new Date('2026-06-10T00:00:00.000Z').getTime();
+    const MS_VENC = new Date('2026-07-10T00:00:00.000Z').getTime();
+    const seedPayable = (id: string, userId: string, supplierName: string, documentNumber: string, over: { status?: string; deletedAt?: number } = {}) =>
+      db.$executeRawUnsafe(
+        `INSERT INTO "payables" ("id","userId","unitId","supplierName","supplierRef","documentNumber","description","issueDate","dueDate","amountCents","expenseAccountId","inventoryProductRef","inventoryQty","counterpartyId","status","createdById","cancelledById","cancelReason","createdAt","updatedAt","deletedAt")
+         VALUES (?,?,'unit-1',?,NULL,?,'x',?,?,1000,?,NULL,NULL,NULL,?,NULL,NULL,NULL,?,?,?)`,
+        id, userId, supplierName, documentNumber, MS, MS_VENC, `exp-${userId}`, over.status ?? 'OPEN', MS, MS, over.deletedAt ?? null,
+      );
     // Tenant A: two "ACME" payables (dedupe within scope → 1 CP) + one "Beta" + one CANCELLED "ACME"
     // (soft-deleted rows must still backfill — supplierName is never mangled by rename-on-delete).
-    await db.payable.create({ data: basePayable({ id: 'p-a1', userId: 'u-A', supplierName: 'ACME', documentNumber: 'NF-1', expenseAccountId: 'exp-u-A' }) as never });
-    await db.payable.create({ data: basePayable({ id: 'p-a2', userId: 'u-A', supplierName: 'ACME', documentNumber: 'NF-2', expenseAccountId: 'exp-u-A' }) as never });
-    await db.payable.create({ data: basePayable({ id: 'p-a3', userId: 'u-A', supplierName: 'Beta', documentNumber: 'NF-3', expenseAccountId: 'exp-u-A' }) as never });
-    await db.payable.create({ data: basePayable({ id: 'p-a4', userId: 'u-A', supplierName: 'ACME', documentNumber: 'deleted:p-a4:NF-4', status: 'CANCELLED', deletedAt: new Date(), expenseAccountId: 'exp-u-A' }) as never });
+    await seedPayable('p-a1', 'u-A', 'ACME', 'NF-1');
+    await seedPayable('p-a2', 'u-A', 'ACME', 'NF-2');
+    await seedPayable('p-a3', 'u-A', 'Beta', 'NF-3');
+    await seedPayable('p-a4', 'u-A', 'ACME', 'deleted:p-a4:NF-4', { status: 'CANCELLED', deletedAt: MS });
     // Tenant B: one "ACME" payable (SAME name, DIFFERENT tenant → must be its own CP).
-    await db.payable.create({ data: basePayable({ id: 'p-b1', userId: 'u-B', supplierName: 'ACME', documentNumber: 'NF-1', expenseAccountId: 'exp-u-B' }) as never });
+    await seedPayable('p-b1', 'u-B', 'ACME', 'NF-1');
 
     // Receivables: tenant A has two "Cliente X" receivables (dedupe → 1 CP).
-    const baseRec = (over: Record<string, unknown>) => ({
-      unitId: 'unit-1', description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-      amountCents: 1000, status: 'OPEN', ...over,
-    });
-    await db.receivable.create({ data: baseRec({ id: 'r-a1', userId: 'u-A', customerName: 'Cliente X', documentNumber: 'FAT-1', revenueAccountId: 'rev-u-A' }) as never });
-    await db.receivable.create({ data: baseRec({ id: 'r-a2', userId: 'u-A', customerName: 'Cliente X', documentNumber: 'FAT-2', revenueAccountId: 'rev-u-A' }) as never });
-    await db.receivable.create({ data: baseRec({ id: 'r-b1', userId: 'u-B', customerName: 'Cliente X', documentNumber: 'FAT-1', revenueAccountId: 'rev-u-B' }) as never });
+    const seedReceivable = (id: string, userId: string, customerName: string, documentNumber: string) =>
+      db.$executeRawUnsafe(
+        `INSERT INTO "receivables" ("id","userId","unitId","customerName","customerRef","documentNumber","description","issueDate","dueDate","amountCents","revenueAccountId","counterpartyId","status","createdById","cancelledById","cancelReason","createdAt","updatedAt","deletedAt")
+         VALUES (?,?,'unit-1',?,NULL,?,'x',?,?,1000,?,NULL,'OPEN',NULL,NULL,NULL,?,?,NULL)`,
+        id, userId, customerName, documentNumber, MS, MS_VENC, `rev-${userId}`, MS, MS,
+      );
+    await seedReceivable('r-a1', 'u-A', 'Cliente X', 'FAT-1');
+    await seedReceivable('r-a2', 'u-A', 'Cliente X', 'FAT-2');
+    await seedReceivable('r-b1', 'u-B', 'Cliente X', 'FAT-1');
 
     await runBackfill(db);
   }, 60000);
