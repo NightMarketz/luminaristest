@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { COUNTERPARTY_TYPES } from '../models/Counterparty.model';
+import { COUNTERPARTY_NAME_MAX_LENGTH, COUNTERPARTY_TYPES } from '../models/Counterparty.model';
 import { queryBoolean } from './queryPrimitives';
 
 /**
@@ -29,7 +29,7 @@ export const CreateCounterpartySchema = z
   .object({
     unitId: z.string().min(1),
     type: z.enum(COUNTERPARTY_TYPES),
-    name: z.string().min(1).max(200),
+    name: z.string().min(1).max(COUNTERPARTY_NAME_MAX_LENGTH),
     ref: z.string().min(1).optional(),
   })
   .strict();

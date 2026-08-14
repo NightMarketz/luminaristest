@@ -3,6 +3,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
+import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';
 import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
@@ -44,6 +45,7 @@ interface Opts {
   revenueAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
+  canManageCounterparty?: boolean;
 }
 
 function build(opts: Opts = {}) {
@@ -90,6 +92,8 @@ function build(opts: Opts = {}) {
   const policy = {
     canManageReceivable: () => opts.canManage ?? true,
     canReadReceivable: () => opts.canRead ?? true,
+    // A cunhagem implícita ESCREVE no catálogo — logo passa pela policy do catálogo, não pela do AR.
+    canManageCounterparty: () => opts.canManageCounterparty ?? true,
   };
   // Default: a CUSTOMER counterparty in THIS scope. `null` simulates a cross-scope/absent id.
   const defaultCp = { id: 'cp-cus', userId: 'owner-1', unitId: 'unit-1', type: 'CUSTOMER' };
@@ -223,6 +227,38 @@ describe('ReceivableService.createReceivable — counterparty link (INCR-COUNTER
     );
     expect(mintAudit).toBeDefined();
     expect(mintAudit![0]).toBe(rowTx); // append(tx, scope, event)
+  });
+
+  // ── Achado C do review independente: espelho do AP. `customerName` não tem `.max`
+  // (ReceivableDto.ts:45), então a cunhagem escapava do limite do catálogo e da policy dele.
+
+  const nomeLongo = 'X'.repeat(COUNTERPARTY_NAME_MAX_LENGTH + 1);
+
+  it('recusa cunhar contraparte com nome acima do limite do catálogo (achado C)', async () => {
+    const { service, receivableRepo, counterpartyRepo } = build();
+
+    await expect(
+      service.createReceivable(scope, { ...createDto, customerName: nomeLongo } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(receivableRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('exige canManageCounterparty para cunhar — não basta canManageReceivable (achado C)', async () => {
+    const { service, counterpartyRepo, receivableRepo } = build({ canManageCounterparty: false });
+
+    await expect(service.createReceivable(scope, createDto as never)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(receivableRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('CONTROLE: sem canManageCounterparty mas com id explícito, o receivable passa (a guarda é da ESCRITA)', async () => {
+    const { service, receivableRepo } = build({ canManageCounterparty: false });
+
+    await service.createReceivable(scope, dtoWithCp as never);
+
+    const created = receivableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-cus');
   });
 
   it('adopts the racer counterparty on P2002 instead of failing the receivable (comp. 8)', async () => {

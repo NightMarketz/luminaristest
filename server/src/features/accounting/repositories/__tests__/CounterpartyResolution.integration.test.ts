@@ -37,7 +37,13 @@ const escopo = (userId: string, unitId: string = UNIT): AccountingScope =>
   resolveAccountingScope({ userId }, unitId);
 
 const repo = new CounterpartyRepository();
-const deps = { counterpartyRepo: repo, auditService: { append: async () => undefined } as never };
+const deps = {
+  counterpartyRepo: repo,
+  auditService: { append: async () => undefined } as never,
+  // Policy permissiva: a guarda de autorização da cunhagem tem caso próprio nas suítes de AP e AR
+  // (achado C). Aqui o alvo é a resolução da identidade contra SQLite real.
+  policy: { canManageCounterparty: () => true } as never,
+};
 
 /** Resolve dentro de uma tx real — é assim que os dois serviços chamam (dentro da tx1 da linha). */
 const resolverEmTx = (
@@ -222,7 +228,7 @@ describe('resolveOrCreateCounterpartyId — contrato em SQLite real (SEC-A1-5)',
 
     const id = await repo.runTransaction((tx) =>
       resolveOrCreateCounterpartyId(
-        { counterpartyRepo: repoComMiss, auditService: deps.auditService },
+        { counterpartyRepo: repoComMiss, auditService: deps.auditService, policy: deps.policy },
         escopo(DONO_A),
         'SUPPLIER',
         undefined,

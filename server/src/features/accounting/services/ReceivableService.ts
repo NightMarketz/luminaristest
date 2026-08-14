@@ -519,7 +519,7 @@ export class ReceivableService {
     tx: Prisma.TransactionClient,
   ): Promise<string> {
     return resolveOrCreateCounterpartyId(
-      { counterpartyRepo: this.counterpartyRepo, auditService: this.auditService },
+      { counterpartyRepo: this.counterpartyRepo, auditService: this.auditService, policy: this.policy },
       scope,
       'CUSTOMER',
       dto.counterpartyId,

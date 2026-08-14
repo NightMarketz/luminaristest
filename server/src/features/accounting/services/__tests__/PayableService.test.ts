@@ -5,6 +5,7 @@ import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../../fixtures/ChartOf
 import { INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
 import { AP_PAYABLE_SOURCE_TYPE, AP_PAYMENT_SOURCE_TYPE } from '../../models/Payable.model';
 import { CreatePayableSchema } from '../../dtos/PayableDto';
+import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';
 import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
@@ -47,6 +48,7 @@ interface Opts {
   expenseAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
+  canManageCounterparty?: boolean;
 }
 
 function build(opts: Opts = {}) {
@@ -93,6 +95,8 @@ function build(opts: Opts = {}) {
   const policy = {
     canManagePayable: () => opts.canManage ?? true,
     canReadPayable: () => opts.canRead ?? true,
+    // A cunhagem implícita ESCREVE no catálogo — logo passa pela policy do catálogo, não pela do AP.
+    canManageCounterparty: () => opts.canManageCounterparty ?? true,
   };
   // Default: a SUPPLIER counterparty in THIS scope. `null` simulates a cross-scope/absent id (findById
   // returns null because it carries the scope where-clause — SEC-A1-1).
@@ -132,7 +136,7 @@ function buildWithoutInventory() {
   };
   const accountRepo = { findById: jest.fn(async () => expenseAcc()) };
   const auditService = { append: jest.fn(async () => undefined) };
-  const policy = { canManagePayable: () => true, canReadPayable: () => true };
+  const policy = { canManagePayable: () => true, canReadPayable: () => true, canManageCounterparty: () => true };
   const counterpartyRepo = {
     findById: jest.fn(async () => null),
     findByName: jest.fn(async () => null),
@@ -269,6 +273,54 @@ describe('PayableService.createPayable — counterparty link (INCR-COUNTERPARTY 
       counterpartyId: 'cp-minted',
       type: 'SUPPLIER',
     });
+  });
+
+  // ── Achado C do review independente: a cunhagem implícita é uma ESCRITA no catálogo, e estava
+  // escapando das duas guardas do catálogo — o limite de tamanho do próprio DTO dele
+  // (CounterpartyDto: name .max(200)) e a policy canManageCounterparty. `supplierName` não tem `.max`
+  // (PayableDto.ts:48), então um nome de 201 caracteres nascia como identidade de catálogo inválida.
+
+  const nomeLongo = 'X'.repeat(COUNTERPARTY_NAME_MAX_LENGTH + 1);
+
+  it('recusa cunhar contraparte com nome acima do limite do catálogo (achado C)', async () => {
+    const { service, payableRepo, counterpartyRepo } = build();
+
+    await expect(
+      service.createPayable(scope, { ...createDto, supplierName: nomeLongo } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(payableRepo.create).not.toHaveBeenCalled(); // nada de linha órfã de identidade inválida
+  });
+
+  it('CONTROLE: nome longo com counterpartyId EXPLÍCITO passa — não há cunhagem para barrar', async () => {
+    const { service, payableRepo } = build();
+
+    await service.createPayable(scope, {
+      ...createDto,
+      supplierName: nomeLongo,
+      counterpartyId: 'cp-sup',
+    } as never);
+
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.supplierName).toBe(nomeLongo); // o snapshot do subrazão segue sem limite próprio
+    expect(created.counterpartyId).toBe('cp-sup');
+  });
+
+  it('exige canManageCounterparty para cunhar — não basta canManagePayable (achado C)', async () => {
+    const { service, counterpartyRepo, payableRepo } = build({ canManageCounterparty: false });
+
+    await expect(service.createPayable(scope, createDto as never)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(payableRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('CONTROLE: sem canManageCounterparty mas com id explícito, o payable passa (a guarda é da ESCRITA)', async () => {
+    const { service, payableRepo } = build({ canManageCounterparty: false });
+
+    await service.createPayable(scope, dtoWithCp as never);
+
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-sup');
   });
 
   it('adopts the racer counterparty on P2002 instead of failing the payable (comp. 8)', async () => {

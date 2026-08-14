@@ -1,7 +1,12 @@
 import { Prisma } from 'generated/prisma';
-import { ValidationError } from '../../../lib/errors';
-import { COUNTERPARTY_CREATED, type CounterpartyType } from '../models/Counterparty.model';
+import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import {
+  COUNTERPARTY_CREATED,
+  COUNTERPARTY_NAME_MAX_LENGTH,
+  type CounterpartyType,
+} from '../models/Counterparty.model';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
+import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
@@ -36,6 +41,8 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
 export interface CounterpartyResolutionDeps {
   counterpartyRepo: ICounterpartyRepository;
   auditService: AuditService;
+  /** Policy DO CATÁLOGO — a cunhagem implícita é escrita em `counterparties`, não em AP/AR. */
+  policy: IAccountingPolicy;
 }
 
 export async function resolveOrCreateCounterpartyId(
@@ -81,6 +88,24 @@ async function mintCounterparty(
   name: string,
   tx: Prisma.TransactionClient,
 ): Promise<string> {
+  // As duas guardas que a rota HTTP do catálogo aplica e que a cunhagem implícita não via (achado C
+  // do review independente de 2026-08-14). Este é um caminho de ESCRITA em `counterparties`:
+  //  • policy DO CATÁLOGO — `canManagePayable` autoriza criar a conta a pagar, não a criar identidade
+  //    de catálogo. Hoje as duas devolvem `!!actorUserId`, então não há mudança de comportamento; a
+  //    guarda existe para que o dia em que elas divergirem não abra um portal por baixo.
+  //  • limite de `name` — `supplierName`/`customerName` não têm `.max` próprio, então um nome de 201
+  //    caracteres nasceria como identidade que o DTO do catálogo recusaria. Recusar é a única saída
+  //    honesta: truncar fabricaria uma identidade que pode colidir com outro fornecedor.
+  if (!deps.policy.canManageCounterparty(scope)) {
+    throw new ForbiddenError('Você não tem permissão para criar contrapartes.');
+  }
+  if (name.length > COUNTERPARTY_NAME_MAX_LENGTH) {
+    throw new ValidationError(
+      `O nome da contraparte excede ${COUNTERPARTY_NAME_MAX_LENGTH} caracteres. ` +
+        'Informe uma contraparte existente ou encurte o nome.',
+    );
+  }
+
   const { userId, unitId } = accountingScopeWhere(scope);
 
   // O try abraça SÓ o create. Se abraçasse também o append, um P2002 da cadeia de auditoria
