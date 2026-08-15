@@ -9,6 +9,10 @@
   sobre o `dev.db` real; sobre uma cópia **semeada** ele reprova em **S6 por desenho** (o backfill MUDA
   uma coluna pré-existente — é o objetivo do incremento), e a verificação dirigida que substitui S6
   nesse caso passa em 10/10. Detalhe em §S6.
+- **Atualização 2026-08-15:** as duas execuções foram **re-medidas** sobre o commit `d89d900f` e a
+  verificação dirigida deixou de ser avulsa — virou o gate versionado
+  [`server/scripts/smoke-gate-incr-counterparty-notnull.mjs`](../../server/scripts/smoke-gate-incr-counterparty-notnull.mjs).
+  Ver §Gate versionado.
 
 > Por que o gate não era dispensável: `NOT NULL` no SQLite não é `ALTER COLUMN` — é rebuild da tabela
 > inteira, e rebuild malfeito dropa FK/índice/linha em silêncio (lição literal do relatório
@@ -87,11 +91,15 @@ contraparte do próprio escopo* — foi executada à parte, sobre a mesma cópia
 | V8 | índices preservados (3 AP / 3 AR) | OK |
 | V9 | `PRAGMA foreign_key_check` limpo | OK |
 
-> **Pendência para o dono (não decidida aqui):** o `scripts/smoke-migration-gate.mjs` não tem como
-> declarar "esta coluna muda de propósito". Ou o script ganha uma allowlist por coluna, ou migrações de
-> dado passam a exigir relatório manual como este. É emenda ao instrumento — fora do escopo deste
-> incremento (e sob a moratória de aparato de auditoria do `CLAUDE.md`, que manda não montar processo
-> novo enquanto houver oráculo externo aberto).
+> **Pendência para o dono — parcialmente resolvida em 2026-08-15.** O `scripts/smoke-migration-gate.mjs`
+> continua sem como declarar "esta coluna muda de propósito", e **não foi tocado**: S6 segue reprovando
+> esta migração, corretamente. O que mudou é que a verificação dirigida deixou de ser avulsa — virou
+> `server/scripts/smoke-gate-incr-counterparty-notnull.mjs`, terceiro irmão de
+> `smoke-gate-incr-counterparty.mjs` (A1) e `smoke-gate-incr-dim-completeness.mjs` (B1). Isso reusa a
+> forma que o projeto já tinha para migração de dado em vez de montar aparato novo, o que mantém a
+> moratória do `CLAUDE.md` de pé (ela veta gate sobre processo/texto; este lê o banco real).
+> **Segue com o dono:** se o genérico ganha allowlist por coluna, ou se o par "genérico + gate do
+> incremento" passa a ser a regra permanente para toda migração de dado.
 
 ## Falsificação da asserção SEC-A1-5
 
@@ -125,6 +133,34 @@ asserção correta, não com erro de tabela existente:
 **Consequência operacional:** se esta migração abortar em produção, o estado é *backfill aplicado, rebuild
 não*. É seguro (a coluna segue nullable, nada foi perdido) e o retry é idempotente — mas não é "nada
 aconteceu".
+
+## <a id="gate-versionado"></a>Gate versionado — `smoke-gate-incr-counterparty-notnull.mjs` (2026-08-15)
+
+A verificação dirigida de §S6 era um script avulso; agora é
+[`server/scripts/smoke-gate-incr-counterparty-notnull.mjs`](../../server/scripts/smoke-gate-incr-counterparty-notnull.mjs),
+com a mesma forma dos dois irmãos (`node:sqlite`, `check()`, `DEPLOY-CLEARED ✅` / exit 1).
+
+```bash
+node --experimental-sqlite scripts/smoke-gate-incr-counterparty-notnull.mjs <dev.db> [--keep] [--self-test]
+```
+
+Executado sobre `server/prisma/prisma/dev.db` (md5 `2bff49ef…`, intocado) no commit `d89d900f`:
+**V1–V10 PASS + falsificação PASS → DEPLOY-CLEARED ✅**.
+
+O que ele faz além do script avulso:
+
+| | |
+|---|---|
+| **Semeia os cantos na cópia** | o `dev.db` real tem AP/AR vazias; sem semear, V1/V2 passariam por vacuidade. Emite `⚠ AVISO` quando o banco não tinha AP/AR próprios — o PASS é sobre linhas semeadas |
+| **Escopo derivado do banco** | `SELECT userId, unitId, id FROM accounts LIMIT 1`; nada hardcoded, roda no `dev.db` de qualquer um |
+| **Lê o `migration.sql` do disco** | não espelha o SQL — espelho diverge da fonte em silêncio |
+| **V10** | a sonda `_sec_a1_5_probe` foi removida (importa porque o ABORT não reverte a migração — ver §ABORT) |
+| **`--self-test`** | adultera o snapshot PRÉ e **exige** que V1 reprove, provando as duas metades: pega mudança em coluna comum, continua cego para `counterpartyId` |
+
+**Limites deste gate, declarados:** só V1 tem falsificador — V2–V10 nunca foram observados vermelhos.
+A semeadura são os 5 cantos que o autor imaginou (vínculo pré-existente, órfão, órfão cancelado
+homônimo, órfão em outra unidade, órfão AR); um 6º canto não previsto passa sem ser visto. E, como o
+genérico, prova **banco**, não serviço.
 
 ## Limite declarado
 
