@@ -10,7 +10,9 @@ export interface CreatePayableData {
   unitId: string;
   supplierName: string;
   supplierRef: string | null;
-  counterpartyId: string | null;
+  // NOT NULL since SEC-A1-5: every payable carries a catalog identity. The service resolves it from a
+  // body-supplied id or mints it from supplierName — it never hands a null down here.
+  counterpartyId: string;
   documentNumber: string | null;
   description: string;
   issueDate: Date;

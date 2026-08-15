@@ -14,6 +14,14 @@ export const COUNTERPARTY_TYPES = ['SUPPLIER', 'CUSTOMER'] as const;
 export type CounterpartyType = (typeof COUNTERPARTY_TYPES)[number];
 
 /**
+ * Comprimento máximo de `name`. Mora aqui, e não só no `CounterpartyDto`, porque o catálogo tem DOIS
+ * caminhos de escrita: a rota HTTP (validada pelo DTO) e a cunhagem implícita da criação de AP/AR
+ * (SEC-A1-5), que recebe `supplierName`/`customerName` — campos SEM `.max` próprio. Um número
+ * repetido nos dois lugares divergiria no primeiro ajuste; o DTO importa desta constante.
+ */
+export const COUNTERPARTY_NAME_MAX_LENGTH = 200;
+
+/**
  * Audit event keys for catalog management (T8 — every state change is auditable). Creating and
  * archiving a counterparty are the only catalog mutations; the AP/AR link is written inside the
  * payable/receivable create flow (their own audit events already carry the counterpartyId).

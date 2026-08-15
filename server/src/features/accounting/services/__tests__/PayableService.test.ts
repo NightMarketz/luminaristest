@@ -5,6 +5,8 @@ import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../../fixtures/ChartOf
 import { INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
 import { AP_PAYABLE_SOURCE_TYPE, AP_PAYMENT_SOURCE_TYPE } from '../../models/Payable.model';
 import { CreatePayableSchema } from '../../dtos/PayableDto';
+import { COUNTERPARTY_NAME_MAX_LENGTH } from '../../models/Counterparty.model';
+import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import type { PostEntryInput } from '../../dtos/PostingDto';
 
@@ -45,6 +47,8 @@ interface Opts {
   findEntryBySource?: (type: string, id: string) => unknown;
   expenseAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
+  counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
+  canManageCounterparty?: boolean;
 }
 
 function build(opts: Opts = {}) {
@@ -91,12 +95,17 @@ function build(opts: Opts = {}) {
   const policy = {
     canManagePayable: () => opts.canManage ?? true,
     canReadPayable: () => opts.canRead ?? true,
+    // A cunhagem implícita ESCREVE no catálogo — logo passa pela policy do catálogo, não pela do AP.
+    canManageCounterparty: () => opts.canManageCounterparty ?? true,
   };
   // Default: a SUPPLIER counterparty in THIS scope. `null` simulates a cross-scope/absent id (findById
   // returns null because it carries the scope where-clause — SEC-A1-1).
   const defaultCp = { id: 'cp-sup', userId: 'owner-1', unitId: 'unit-1', type: 'SUPPLIER' };
   const counterpartyRepo = {
     findById: jest.fn(async () => (opts.counterparty === undefined ? defaultCp : opts.counterparty)),
+    // SEC-A1-5 find-or-create: `byName` undefined = catalog miss (⇒ mint); a row = hit (⇒ reuse).
+    findByName: jest.fn(async () => opts.counterpartyByName ?? null),
+    create: jest.fn(async (data: Record<string, unknown>) => ({ id: 'cp-minted', ref: null, ...data })),
   };
 
   // INCR-INVENTORY D3(b): the AP→estoque bridge (Body 3). Mocked here — the real subledger idempotency
@@ -127,8 +136,12 @@ function buildWithoutInventory() {
   };
   const accountRepo = { findById: jest.fn(async () => expenseAcc()) };
   const auditService = { append: jest.fn(async () => undefined) };
-  const policy = { canManagePayable: () => true, canReadPayable: () => true };
-  const counterpartyRepo = { findById: jest.fn(async () => null) };
+  const policy = { canManagePayable: () => true, canReadPayable: () => true, canManageCounterparty: () => true };
+  const counterpartyRepo = {
+    findById: jest.fn(async () => null),
+    findByName: jest.fn(async () => null),
+    create: jest.fn(async (data: Record<string, unknown>) => ({ id: 'cp-minted', ref: null, ...data })),
+  };
   const service = new PayableService(
     payableRepo as never,
     accountRepo as never,
@@ -198,7 +211,8 @@ describe('PayableService.createPayable — counterparty link (INCR-COUNTERPARTY 
     const { service, payableRepo, counterpartyRepo } = build();
     await service.createPayable(scope, dtoWithCp as never);
     // findById is the SCOPED resolver — proves the id was checked against this tenant, not trusted.
-    expect(counterpartyRepo.findById).toHaveBeenCalledWith(scope, 'cp-sup');
+    // It now carries the tx too (SEC-A1-5 moved the resolution inside tx1).
+    expect(counterpartyRepo.findById).toHaveBeenCalledWith(scope, 'cp-sup', expect.anything());
     const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
     expect(created.counterpartyId).toBe('cp-sup');
     expect(created.supplierName).toBe('ACME'); // snapshot preserved alongside the FK
@@ -215,12 +229,114 @@ describe('PayableService.createPayable — counterparty link (INCR-COUNTERPARTY 
     await expect(service.createPayable(scope, dtoWithCp as never)).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('leaves counterpartyId null when none is supplied (nullable this increment, SEC-A1-5)', async () => {
+  // ── SEC-A1-5 / F-NN1(a): the FK is NOT NULL, so "no counterpartyId" resolves from the name ──────
+
+  it('mints the SUPPLIER identity from supplierName when no counterpartyId is supplied (comp. 1)', async () => {
     const { service, payableRepo, counterpartyRepo } = build();
     await service.createPayable(scope, createDto as never);
-    expect(counterpartyRepo.findById).not.toHaveBeenCalled();
+
+    expect(counterpartyRepo.findById).not.toHaveBeenCalled(); // no id in the body ⇒ name path
+    expect(counterpartyRepo.findByName).toHaveBeenCalledWith(scope, 'SUPPLIER', 'ACME', expect.anything());
+    const minted = counterpartyRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(minted).toMatchObject({ type: 'SUPPLIER', name: 'ACME', ref: null, userId: 'owner-1', unitId: 'unit-1' });
     const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
-    expect(created.counterpartyId).toBeNull();
+    expect(created.counterpartyId).toBe('cp-minted'); // NEVER null — that is the whole increment
+    expect(created.supplierName).toBe('ACME'); // snapshot preserved alongside the FK
+  });
+
+  it('reuses the existing SUPPLIER of the same name instead of minting a duplicate (comp. 3)', async () => {
+    const existing = { id: 'cp-existing', userId: 'owner-1', unitId: 'unit-1', type: 'SUPPLIER' };
+    const { service, payableRepo, counterpartyRepo } = build({ counterpartyByName: existing });
+    await service.createPayable(scope, createDto as never);
+
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-existing');
+  });
+
+  it('emits counterparty.created for the implicit mint, in the SAME tx (T8 + comp. 7)', async () => {
+    const { service, payableRepo, counterpartyRepo, auditService } = build();
+    await service.createPayable(scope, createDto as never);
+
+    // The catalog mint and the payable row share ONE tx handle — a rolled-back payable can never
+    // leave an orphan supplier behind (ACC-012).
+    const mintTx = (counterpartyRepo.create.mock.calls as unknown as unknown[][])[0]![1];
+    const rowTx = (payableRepo.create.mock.calls as unknown as unknown[][])[0]![1];
+    expect(mintTx).toBe(rowTx);
+
+    const mintAudit = (auditService.append.mock.calls as unknown as unknown[][]).find(
+      (c) => (c[2] as { eventType: string }).eventType === 'counterparty.created',
+    );
+    expect(mintAudit).toBeDefined();
+    expect(mintAudit![0]).toBe(rowTx); // append(tx, scope, event) — same tx as the row (T8)
+    expect((mintAudit![2] as { payload: Record<string, unknown> }).payload).toMatchObject({
+      counterpartyId: 'cp-minted',
+      type: 'SUPPLIER',
+    });
+  });
+
+  // ── Achado C do review independente: a cunhagem implícita é uma ESCRITA no catálogo, e estava
+  // escapando das duas guardas do catálogo — o limite de tamanho do próprio DTO dele
+  // (CounterpartyDto: name .max(200)) e a policy canManageCounterparty. `supplierName` não tem `.max`
+  // (PayableDto.ts:48), então um nome de 201 caracteres nascia como identidade de catálogo inválida.
+
+  const nomeLongo = 'X'.repeat(COUNTERPARTY_NAME_MAX_LENGTH + 1);
+
+  it('recusa cunhar contraparte com nome acima do limite do catálogo (achado C)', async () => {
+    const { service, payableRepo, counterpartyRepo } = build();
+
+    await expect(
+      service.createPayable(scope, { ...createDto, supplierName: nomeLongo } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(payableRepo.create).not.toHaveBeenCalled(); // nada de linha órfã de identidade inválida
+  });
+
+  it('CONTROLE: nome longo com counterpartyId EXPLÍCITO passa — não há cunhagem para barrar', async () => {
+    const { service, payableRepo } = build();
+
+    await service.createPayable(scope, {
+      ...createDto,
+      supplierName: nomeLongo,
+      counterpartyId: 'cp-sup',
+    } as never);
+
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.supplierName).toBe(nomeLongo); // o snapshot do subrazão segue sem limite próprio
+    expect(created.counterpartyId).toBe('cp-sup');
+  });
+
+  it('exige canManageCounterparty para cunhar — não basta canManagePayable (achado C)', async () => {
+    const { service, counterpartyRepo, payableRepo } = build({ canManageCounterparty: false });
+
+    await expect(service.createPayable(scope, createDto as never)).rejects.toBeInstanceOf(ForbiddenError);
+    expect(counterpartyRepo.create).not.toHaveBeenCalled();
+    expect(payableRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('CONTROLE: sem canManageCounterparty mas com id explícito, o payable passa (a guarda é da ESCRITA)', async () => {
+    const { service, payableRepo } = build({ canManageCounterparty: false });
+
+    await service.createPayable(scope, dtoWithCp as never);
+
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-sup');
+  });
+
+  it('adopts the racer counterparty on P2002 instead of failing the payable (comp. 8)', async () => {
+    const { service, payableRepo, counterpartyRepo } = build();
+    // The catalog was empty at findByName time; a concurrent create won the unique key in between.
+    counterpartyRepo.create.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'x' }),
+    );
+    counterpartyRepo.findByName
+      .mockResolvedValueOnce(null) // first look: miss ⇒ we try to mint
+      .mockResolvedValueOnce({ id: 'cp-racer', userId: 'owner-1', unitId: 'unit-1', type: 'SUPPLIER' });
+
+    await service.createPayable(scope, createDto as never);
+
+    const created = payableRepo.create.mock.calls[0]![0] as Record<string, unknown>;
+    expect(created.counterpartyId).toBe('cp-racer'); // the loser adopts the winner, no P2002 surfaced
   });
 });
 

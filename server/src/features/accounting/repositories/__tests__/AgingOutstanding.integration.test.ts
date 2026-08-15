@@ -54,13 +54,19 @@ describe('findOutstanding (AP + AR) — real SQLite DB (INCR-AGING F-AG3)', () =
       data: { id: 'acc-rev', userId: USER_ID, unitId: UNIT, code: '3.1', name: 'Receitas', nature: 'Revenue', acceptsEntries: true },
     });
 
+    // Contraparte compartilhada: desde SEC-A1-5 a FK é NOT NULL. O aging agrupa por contraparte, e
+    // este arquivo é sobre STATUS/soft-delete — uma única contraparte mantém o agrupamento neutro.
+    await db.counterparty.create({
+      data: { id: 'cp-aging', userId: USER_ID, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Aging', createdById: USER_ID },
+    });
+
     // Payables covering every status + a soft-deleted row.
     const mkPayable = (id: string, status: string, deleted = false) =>
       db.payable.create({
         data: {
           id, userId: USER_ID, unitId: UNIT, supplierName: `Forn ${id}`, documentNumber: `NF-${id}`,
           description: 'x', issueDate: new Date('2026-06-01'), dueDate: new Date('2026-07-01'),
-          amountCents: 1000, expenseAccountId: 'acc-exp', status,
+          amountCents: 1000, expenseAccountId: 'acc-exp', counterpartyId: 'cp-aging', status,
           ...(deleted ? { deletedAt: new Date() } : {}),
         },
       });
@@ -75,7 +81,7 @@ describe('findOutstanding (AP + AR) — real SQLite DB (INCR-AGING F-AG3)', () =
         data: {
           id, userId: USER_ID, unitId: UNIT, customerName: `Cli ${id}`, documentNumber: `FT-${id}`,
           description: 'x', issueDate: new Date('2026-06-01'), dueDate: new Date('2026-07-01'),
-          amountCents: 2000, revenueAccountId: 'acc-rev', status,
+          amountCents: 2000, revenueAccountId: 'acc-rev', counterpartyId: 'cp-aging', status,
           ...(deleted ? { deletedAt: new Date() } : {}),
         },
       });

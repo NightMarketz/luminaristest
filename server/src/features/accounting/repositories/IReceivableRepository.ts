@@ -10,7 +10,9 @@ export interface CreateReceivableData {
   unitId: string;
   customerName: string;
   customerRef: string | null;
-  counterpartyId: string | null;
+  // NOT NULL since SEC-A1-5: every receivable carries a catalog identity. The service resolves it from
+  // a body-supplied id or mints it from customerName — it never hands a null down here.
+  counterpartyId: string;
   documentNumber: string | null;
   description: string;
   issueDate: Date;

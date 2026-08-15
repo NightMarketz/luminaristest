@@ -25,6 +25,7 @@ import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
 
 /**
  * ReceivableService — Contas a Receber (INCR-AR / ADR-INCR-AR). FIRST-CLASS PRISMA. MIRROR of
@@ -116,14 +117,14 @@ export class ReceivableService {
     // Revenue-account gate (D4): must be an existing, active, LEAF Revenue account of this scope.
     const revenueAccount = await this.resolveRevenueAccount(scope, dto.revenueAccountId);
 
-    // Counterparty gate (SEC-A1-1 — IDOR #1): if a counterpartyId is supplied, RE-SCOPE it here so an
-    // AR row can never link to another tenant's counterparty. Nullable this increment (SEC-A1-5).
-    const counterpartyId = await this.resolveCounterpartyId(scope, dto.counterpartyId);
-
-    // tx1 — create the row (OPEN) + receivable.created audit atomically (ACC-019). Mints receivableId.
+    // tx1 — resolve/mint the counterparty, create the row (OPEN) and append receivable.created
+    // atomically (ACC-019/ACC-012). The resolution moved INSIDE this tx with SEC-A1-5: it can now
+    // WRITE (mint a catalog identity), and a mint that survived a rolled-back receivable would leave
+    // an orphan customer in the catalog. Mints receivableId.
     let receivable: Receivable;
     try {
       receivable = await this.receivableRepo.runTransaction(async (tx) => {
+        const counterpartyId = await this.resolveOrCreateCounterpartyId(scope, dto, tx);
         const created = await this.receivableRepo.create(
           {
             userId,
@@ -505,23 +506,27 @@ export class ReceivableService {
   }
 
   /**
-   * Re-scope a body-supplied counterpartyId (SEC-A1-1). Returns null when none was supplied (nullable
-   * this increment, SEC-A1-5); otherwise the counterparty MUST exist IN THIS SCOPE and be a CUSTOMER
-   * — a cross-tenant id resolves to null via the scoped findById and is rejected here.
+   * Resolve the CUSTOMER identity this receivable links to — NEVER null (SEC-A1-5 / F-NN1(a)). A
+   * body-supplied counterpartyId is re-scoped (SEC-A1-1: a cross-tenant id resolves to null via the
+   * scoped findById and is rejected here) and must be a CUSTOMER; with no id, `customerName` finds or
+   * mints the catalog identity — which is how `CrmReceivableBridge`, that has no counterpartyId to
+   * pass, stops minting NULL rows without a single change of its own. Shared with AP — invariants in
+   * `counterpartyResolution.ts`.
    */
-  private async resolveCounterpartyId(
+  private async resolveOrCreateCounterpartyId(
     scope: AccountingScope,
-    counterpartyId: string | undefined,
-  ): Promise<string | null> {
-    if (!counterpartyId) return null;
-    const counterparty = await this.counterpartyRepo.findById(scope, counterpartyId);
-    if (!counterparty) {
-      throw new ValidationError('Contraparte informada não existe nesta unidade.');
-    }
-    if (counterparty.type !== 'CUSTOMER') {
-      throw new ValidationError('A contraparte de uma conta a receber deve ser um cliente (CUSTOMER).');
-    }
-    return counterparty.id;
+    dto: CreateReceivableInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<string> {
+    return resolveOrCreateCounterpartyId(
+      { counterpartyRepo: this.counterpartyRepo, auditService: this.auditService, policy: this.policy },
+      scope,
+      'CUSTOMER',
+      dto.counterpartyId,
+      dto.customerName,
+      'A contraparte de uma conta a receber deve ser um cliente (CUSTOMER).',
+      tx,
+    );
   }
 
   private async resolveRevenueAccount(scope: AccountingScope, accountId: string): Promise<Account> {

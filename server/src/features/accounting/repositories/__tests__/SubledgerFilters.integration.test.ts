@@ -53,6 +53,10 @@ const DONO_B = 'u-flt-b';
 
 const CP1 = 'cp-flt-1';
 const CP2 = 'cp-flt-2';
+// Contrapartes NEUTRAS: desde SEC-A1-5 nenhuma linha pode ficar sem contraparte, mas os controles de
+// overdue/status/escopo não são sobre contraparte. Elas existem para não mexer nas contagens de CP1/CP2.
+const CP_NEUTRA_A = 'cp-flt-neutra-a';
+const CP_NEUTRA_B = 'cp-flt-neutra-b';
 
 const apRepo = new PayableRepository();
 const arRepo = new ReceivableRepository();
@@ -89,11 +93,15 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
       data: { id: 'acc-rev-flt', userId: DONO_A, unitId: UNIT, code: '3.1', name: 'Receita', nature: 'Revenue', acceptsEntries: true },
     });
 
-    for (const [id, nome] of [[CP1, 'Contraparte Um'], [CP2, 'Contraparte Dois']]) {
+    for (const [id, nome] of [[CP1, 'Contraparte Um'], [CP2, 'Contraparte Dois'], [CP_NEUTRA_A, 'Contraparte Neutra']]) {
       await prisma.counterparty.create({
         data: { id, userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: nome, createdById: DONO_A },
       });
     }
+    // A neutra do OUTRO dono: a linha de p6/r6 aponta para contraparte do PRÓPRIO escopo (SEC-A1-3).
+    await prisma.counterparty.create({
+      data: { id: CP_NEUTRA_B, userId: DONO_B, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Neutra', createdById: DONO_B },
+    });
 
     const ap = (over: Record<string, unknown>) => ({
       userId: DONO_A,
@@ -104,6 +112,9 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
       dueDate: dia('2026-03-15'),
       amountCents: 10_000,
       status: 'OPEN',
+      // Default neutro (a FK é NOT NULL desde SEC-A1-5): quem quer entrar nas contagens de CP1/CP2
+      // sobrescreve. Linha nova que esquecer o campo cai no balde neutro em vez de mexer num total.
+      counterpartyId: CP_NEUTRA_A,
       ...over,
     });
 
@@ -121,15 +132,15 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
         ap({ id: 'p5', description: 'Fora da faixa', documentNumber: 'NF-500', dueDate: dia('2026-04-01'), counterpartyId: CP1 }),
         // p7 — vence HOJE: controle do `<` contra `<=`. Pela regra do aging (dueDate >= as_of é "a
         // vencer", atraso começa em 1), vencer hoje NÃO é estar vencido.
-        ap({ id: 'p7', description: 'Vence hoje', documentNumber: 'NF-700', dueDate: dia(HOJE), counterpartyId: null }),
+        ap({ id: 'p7', description: 'Vence hoje', documentNumber: 'NF-700', dueDate: dia(HOJE), counterpartyId: CP_NEUTRA_A }),
         // p8 — vencidíssima mas PAGA: controle do gate de status do overdue.
-        ap({ id: 'p8', description: 'Paga e velha', documentNumber: 'NF-800', dueDate: dia('2020-01-01'), counterpartyId: null, status: 'PAID' }),
+        ap({ id: 'p8', description: 'Paga e velha', documentNumber: 'NF-800', dueDate: dia('2020-01-01'), counterpartyId: CP_NEUTRA_A, status: 'PAID' }),
       ],
     });
 
     // p6 — OUTRO DONO, mesma unidade e mesmos valores: só o escopo o separa.
     await prisma.payable.create({
-      data: ap({ id: 'p6', userId: DONO_B, description: 'Aluguel sala', documentNumber: 'NF-100', dueDate: dia('2026-03-01'), counterpartyId: null }),
+      data: ap({ id: 'p6', userId: DONO_B, description: 'Aluguel sala', documentNumber: 'NF-100', dueDate: dia('2026-03-01'), counterpartyId: CP_NEUTRA_B }),
     });
 
     await prisma.receivable.createMany({
@@ -155,7 +166,7 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
         {
           id: 'r4', userId: DONO_B, unitId: UNIT, customerName: 'Cliente', description: 'Mensalidade março',
           documentNumber: 'FAT-10', issueDate: dia('2026-02-01'), dueDate: dia('2026-03-01'),
-          amountCents: 5_000, revenueAccountId: 'acc-rev-flt', status: 'OPEN', counterpartyId: null,
+          amountCents: 5_000, revenueAccountId: 'acc-rev-flt', status: 'OPEN', counterpartyId: CP_NEUTRA_B,
         },
       ],
     });

@@ -56,6 +56,10 @@ describe('PayableRepository.claimForPayment — real SQLite DB (INCR-AP D4)', ()
     await db.account.create({
       data: { id: 'acc-exp', userId: USER_ID, unitId: UNIT, code: '4.1', name: 'Despesas', nature: 'Expense', acceptsEntries: true },
     });
+    // FK NOT NULL desde SEC-A1-5; este arquivo é sobre o CAS de status, a contraparte é só cenário.
+    await db.counterparty.create({
+      data: { id: 'cp-claim', userId: USER_ID, unitId: UNIT, type: 'SUPPLIER', name: 'ACME', createdById: USER_ID },
+    });
   }, 60000);
 
   afterAll(async () => {
@@ -70,7 +74,7 @@ describe('PayableRepository.claimForPayment — real SQLite DB (INCR-AP D4)', ()
       data: {
         id, userId: USER_ID, unitId: UNIT, supplierName: 'ACME', documentNumber: `NF-${id}`,
         description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-        amountCents: 50000, expenseAccountId: 'acc-exp', status: 'OPEN',
+        amountCents: 50000, expenseAccountId: 'acc-exp', counterpartyId: 'cp-claim', status: 'OPEN',
       },
     });
   }
@@ -108,7 +112,7 @@ describe('PayableRepository.claimForPayment — real SQLite DB (INCR-AP D4)', ()
         data: {
           id: 'pay-dup2', userId: USER_ID, unitId: UNIT, supplierName: 'ACME', documentNumber: 'NF-pay-dup',
           description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-          amountCents: 1, expenseAccountId: 'acc-exp', status: 'OPEN',
+          amountCents: 1, expenseAccountId: 'acc-exp', counterpartyId: 'cp-claim', status: 'OPEN',
         },
       }),
     ).rejects.toMatchObject({ code: 'P2002' });
@@ -118,7 +122,7 @@ describe('PayableRepository.claimForPayment — real SQLite DB (INCR-AP D4)', ()
       data: {
         id: 'pay-dup3', userId: USER_ID, unitId: UNIT, supplierName: 'ACME', documentNumber: 'NF-pay-dup',
         description: 'x', issueDate: new Date('2026-06-10'), dueDate: new Date('2026-07-10'),
-        amountCents: 1, expenseAccountId: 'acc-exp', status: 'OPEN',
+        amountCents: 1, expenseAccountId: 'acc-exp', counterpartyId: 'cp-claim', status: 'OPEN',
       },
     });
     expect(recreated.id).toBe('pay-dup3');
