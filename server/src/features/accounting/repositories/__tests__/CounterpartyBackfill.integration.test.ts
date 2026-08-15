@@ -8,10 +8,14 @@
  *               row's OWN (userId, unitId).
  *   • idempotent — running the backfill a 2nd time is a no-op (no P2002, counts unchanged).
  *
- * The SQL below is the EXACT backfill of migrations/20260715060000_incr_counterparty/migration.sql
- * (mirrored here the way PayableClaim.integration.test mirrors claimForPayment). Rows are seeded via
- * the Prisma client (INTEGER ms-epoch dates — real app write shape), with counterpartyId left NULL to
- * simulate the pre-migration state.
+ * O SQL do backfill é LIDO DO DISCO (migrations/20260715060000_incr_counterparty/migration.sql), não
+ * espelhado aqui: um espelho passa a divergir da fonte em silêncio — o teste seguiria verde provando
+ * uma cópia que ninguém executa. Mesma técnica do gate irmão `smoke-gate-incr-counterparty.mjs`, que
+ * fatia a migração no marcador `-- SUPPLIERS from payables`.
+ *
+ * As linhas de subrazão são semeadas por SQL cru, não pelo Prisma Client: o client é gerado do schema
+ * FINAL, onde `counterpartyId` é NOT NULL (SEC-A1-5), então `db.payable.create` exige a FK e não
+ * consegue mais encenar o estado pré-backfill. Datas em INTEGER ms-epoch — a forma real de escrita.
  */
 import * as path from 'path';
 import * as os from 'os';
@@ -29,42 +33,38 @@ const SERVER_ROOT = path.join(__dirname, '../../../../../');
  */
 const NOTNULL_MIGRATION = '20260814120000_counterparty_notnull';
 
-const BACKFILL_SUPPLIERS_INSERT = `
-INSERT OR IGNORE INTO "counterparties" ("id", "userId", "unitId", "type", "name", "ref", "createdById", "createdAt", "updatedAt", "deletedAt")
-SELECT 'cp_' || lower(hex(randomblob(12))), "userId", "unitId", 'SUPPLIER', "supplierName", NULL, NULL,
-       (CAST(strftime('%s','now') AS INTEGER) * 1000), (CAST(strftime('%s','now') AS INTEGER) * 1000), NULL
-FROM "payables" GROUP BY "userId", "unitId", "supplierName";`;
+/** A migração de onde o backfill é lido, e o marcador onde ela começa (mesmo do gate irmão). */
+const BACKFILL_MIGRATION = '20260715060000_incr_counterparty';
+const BACKFILL_MARKER = '-- SUPPLIERS from payables';
+/** INSERT fornecedores · LINK payables · INSERT clientes · LINK receivables. */
+const BACKFILL_STATEMENTS = 4;
 
-const BACKFILL_SUPPLIERS_LINK = `
-UPDATE "payables" SET "counterpartyId" = (
-  SELECT "c"."id" FROM "counterparties" "c"
-  WHERE "c"."userId" = "payables"."userId" AND "c"."unitId" = "payables"."unitId"
-    AND "c"."type" = 'SUPPLIER' AND "c"."name" = "payables"."supplierName"
-) WHERE "counterpartyId" IS NULL;`;
+/**
+ * Fatia o backfill da migração REAL. Se o marcador sumir (migração reescrita), falha alto aqui em vez
+ * de rodar meio backfill e reprovar mais adiante por um motivo obscuro.
+ */
+function readBackfillStatements(): string[] {
+  const file = path.join(SERVER_ROOT, 'prisma', 'migrations', BACKFILL_MIGRATION, 'migration.sql');
+  const sql = fs.readFileSync(file, 'utf8');
+  const start = sql.indexOf(BACKFILL_MARKER);
+  if (start === -1) {
+    throw new Error(`marcador "${BACKFILL_MARKER}" não existe em ${file} — este teste perdeu a fonte do backfill`);
+  }
+  return sql
+    .slice(start)
+    .split(';')
+    .map((s) => s.trim())
+    .filter((s) => s.replace(/--[^\n]*/g, '').trim().length > 0);
+}
 
-const BACKFILL_CUSTOMERS_INSERT = `
-INSERT OR IGNORE INTO "counterparties" ("id", "userId", "unitId", "type", "name", "ref", "createdById", "createdAt", "updatedAt", "deletedAt")
-SELECT 'cp_' || lower(hex(randomblob(12))), "userId", "unitId", 'CUSTOMER', "customerName", NULL, NULL,
-       (CAST(strftime('%s','now') AS INTEGER) * 1000), (CAST(strftime('%s','now') AS INTEGER) * 1000), NULL
-FROM "receivables" GROUP BY "userId", "unitId", "customerName";`;
-
-const BACKFILL_CUSTOMERS_LINK = `
-UPDATE "receivables" SET "counterpartyId" = (
-  SELECT "c"."id" FROM "counterparties" "c"
-  WHERE "c"."userId" = "receivables"."userId" AND "c"."unitId" = "receivables"."unitId"
-    AND "c"."type" = 'CUSTOMER' AND "c"."name" = "receivables"."customerName"
-) WHERE "counterpartyId" IS NULL;`;
-
-async function runBackfill(db: PrismaClient): Promise<void> {
-  await db.$executeRawUnsafe(BACKFILL_SUPPLIERS_INSERT);
-  await db.$executeRawUnsafe(BACKFILL_SUPPLIERS_LINK);
-  await db.$executeRawUnsafe(BACKFILL_CUSTOMERS_INSERT);
-  await db.$executeRawUnsafe(BACKFILL_CUSTOMERS_LINK);
+async function runBackfill(db: PrismaClient, statements: string[]): Promise<void> {
+  for (const stmt of statements) await db.$executeRawUnsafe(stmt);
 }
 
 describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', () => {
   let db: PrismaClient;
   let dbPath: string;
+  let backfill: string[];
 
   beforeAll(async () => {
     dbPath = path.join(os.tmpdir(), `cp-backfill-${Date.now()}.db`);
@@ -81,6 +81,10 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     // a omitir demais.
     expect(todas).toContain(NOTNULL_MIGRATION);
     expect(todas.length - aplicar.length).toBe(1);
+    // Controle do harness, irmão do de cima: o backfill vem da migração real e tem de chegar inteiro.
+    // Sem isto, um `;` a mais num comentário partiria um statement e o teste provaria meio backfill.
+    backfill = readBackfillStatements();
+    expect(backfill).toHaveLength(BACKFILL_STATEMENTS);
     for (const dir of aplicar) {
       execSync(
         `npx prisma db execute --file "${path.join(migrationsDir, dir, 'migration.sql')}" --url "file:${dbPath}"`,
@@ -137,8 +141,11 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     await seedReceivable('r-a2', 'u-A', 'Cliente X', 'FAT-2');
     await seedReceivable('r-b1', 'u-B', 'Cliente X', 'FAT-1');
 
-    await runBackfill(db);
-  }, 60000);
+    await runBackfill(db, backfill);
+    // 60s era margem zero: o beforeAll spawna um `npx prisma db execute` POR migração. Medido em duas
+    // execuções seguidas da MESMA suíte: com npx frio estourou o timeout (suíte 78,9s), com cache
+    // quente passou (suíte 62,2s). Flake de ambiente, não de lógica — daí a folga.
+  }, 180000);
 
   afterAll(async () => {
     await db?.$disconnect();
@@ -190,7 +197,7 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
 
   it('is idempotent — a 2nd backfill run adds nothing and throws no P2002', async () => {
     const before = await db.counterparty.count();
-    await runBackfill(db); // must not throw
+    await runBackfill(db, backfill); // must not throw
     const after = await db.counterparty.count();
     expect(after).toBe(before);
   });
