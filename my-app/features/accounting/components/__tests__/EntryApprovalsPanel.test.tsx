@@ -133,8 +133,60 @@ describe('EntryApprovalsPanel', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Aprovar e postar' }));
 
     expect(await screen.findByText(/Alguém alterou este lançamento/)).toBeInTheDocument();
-    // The conflict path refetches so a retry carries a fresh version.
+    // This only proves the refetch fired. What the retry then SENDS is the next test.
     await waitFor(() => expect(entryApprovalsService.listPending).toHaveBeenCalledTimes(2));
+  });
+
+  it('the retry after a 409 carries the REFETCHED version, not the stale one', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    // The refetch is what makes the row fresh: v5 on load, v6 after someone else touched it.
+    vi.mocked(entryApprovalsService.listPending)
+      .mockResolvedValueOnce({ entries: [pending], total: 1 })
+      .mockResolvedValue({ entries: [entry({ id: 'e-pending', status: 'PendingApproval', version: 6, contentHash: 'abc', submittedById: 'o1' })], total: 1 });
+    vi.mocked(entryApprovalsService.approve)
+      .mockRejectedValueOnce({ code: 'CONFLICT', message: 'versão desatualizada', status: 409 })
+      .mockResolvedValue(pending);
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Aprovar'));
+    const confirm = await screen.findByRole('button', { name: 'Aprovar e postar' });
+    fireEvent.click(confirm);
+    await screen.findByText(/Alguém alterou este lançamento/);
+
+    // The modal stays open so the user can retry — and THAT retry must not resend v5.
+    fireEvent.click(await screen.findByRole('button', { name: 'Aprovar e postar' }));
+
+    await waitFor(() => expect(entryApprovalsService.approve).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(entryApprovalsService.approve).mock.calls[1]).toEqual([
+      'e-pending',
+      { unitId: 'u1', expectedVersion: 6 },
+    ]);
+  });
+
+  it('closes the modal when the conflicting row left the screen (someone else approved it)', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.listPending)
+      .mockResolvedValueOnce({ entries: [pending], total: 1 })
+      // The refetch comes back empty: the entry is Posted and no longer in the queue.
+      .mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.approve).mockRejectedValue({
+      code: 'CONFLICT',
+      message: 'versão desatualizada',
+      status: 409,
+    });
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Aprovar'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Aprovar e postar' }));
+
+    // The message survives at page level, and no confirm button is left to resend a dead version.
+    expect(await screen.findByText(/Alguém alterou este lançamento/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Aprovar e postar' })).toBeNull());
+    expect(entryApprovalsService.approve).toHaveBeenCalledTimes(1);
   });
 
   it('only approve moves the ledger (submit/reject must not refetch the trial balance)', async () => {
