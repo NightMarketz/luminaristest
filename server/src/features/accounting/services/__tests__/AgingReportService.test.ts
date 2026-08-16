@@ -237,10 +237,21 @@ describe('AgingReportService.aging — as_of overridável', () => {
     expect(later.groups[0].documents[0].bucket).toBe('d61_90');
   });
 
-  it('as_of default = hoje quando omitido; echo no envelope', async () => {
+  it('as_of default = hoje NO FUSO DO ESCOPO quando omitido; echo no envelope', async () => {
     const { svc } = buildService({ payableRows: [] });
     const r = await svc.aging(scope, { kind: 'payable' });
-    expect(r.asOf).toBe(new Date().toISOString().slice(0, 10));
+    // O oráculo é recomputado aqui pelo stdlib — NÃO se chama `scopeToday`, senão a asserção
+    // viraria tautologia (passaria mesmo se o helper voltasse a devolver UTC).
+    //
+    // Por que não `new Date().toISOString().slice(0,10)`: aquilo é a data em UTC, e o serviço
+    // resolve o default por `scopeToday(scope)` desde o #189 ("hoje" no fuso do escopo, não em
+    // UTC). As duas noções divergem TODO DIA entre 00:00 e 03:00 UTC, quando em America/Sao_Paulo
+    // (UTC-3) ainda é o dia anterior — a assertiva antiga deixava a suíte vermelha nessa janela
+    // de 3 horas, sem nada estar quebrado no código.
+    const hojeNoFusoDoEscopo = new Intl.DateTimeFormat('en-CA', { timeZone: scope.timeZone }).format(
+      new Date(),
+    );
+    expect(r.asOf).toBe(hojeNoFusoDoEscopo);
   });
 });
 
