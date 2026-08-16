@@ -218,8 +218,9 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
   const [actionPeriodError, setActionPeriodError] = useState(false);
 
   // ── fetch ──────────────────────────────────────────────────────────────────
+  // Returns the freshly read rows so a caller (the 409 path) can re-point at its own row.
   const fetchAll = useCallback(async () => {
-    if (!unitId) return;
+    if (!unitId) return null;
     setLoading(true);
     setError(null);
     try {
@@ -231,12 +232,15 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
         accountingService.listEntries({ unitId, limit: 200 }),
         entryApprovalsService.listPending({ unitId, limit: 200 }),
       ]);
-      setDrafts(all.entries.filter((e) => e.status === 'Draft'));
+      const nextDrafts = all.entries.filter((e) => e.status === 'Draft');
+      setDrafts(nextDrafts);
       setPending(queue.entries);
+      return { drafts: nextDrafts, pending: queue.entries };
     } catch (err: unknown) {
       setError(
         resolveErrorWithCode(err, tRef.current('approvals.error.load', 'Erro ao carregar a fila de aprovação.')).message,
       );
+      return null;
     } finally {
       setLoading(false);
     }
@@ -304,14 +308,25 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
       );
       if (code === 'CONFLICT') {
         // Stale expectedVersion (ACC-023): the row we read is no longer the row on the server.
-        // Say so specifically and refetch, so the retry carries the fresh version.
-        setActionError(
-          t(
-            'approvals.error.conflict',
-            'Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo.',
-          ),
+        // Refetching the LIST is not enough — this modal holds a SNAPSHOT of the row, so a retry
+        // would resend the same stale version and 409 forever. Re-point it at the refetched row.
+        const conflictMessage = t(
+          'approvals.error.conflict',
+          'Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo.',
         );
-        await fetchAll();
+        const fresh = await fetchAll();
+        // ponytail: the row may have changed STATUS too (someone else approved it). We don't
+        // re-derive whether the command still applies — the server owns the state machine and
+        // answers with its own error. We only guarantee the version is fresh.
+        const refreshed = fresh ? [...fresh.drafts, ...fresh.pending].find((e) => e.id === entry.id) : undefined;
+        if (refreshed) {
+          setAction({ ...action, entry: refreshed });
+          setActionError(conflictMessage);
+        } else {
+          // The row left this screen entirely — there is nothing left to retry here.
+          setAction(null);
+          setError(conflictMessage);
+        }
       } else {
         if (code === 'ACCOUNTING_PERIOD_NOT_OPEN') setActionPeriodError(true);
         setActionError(message);
