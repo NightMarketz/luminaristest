@@ -6,6 +6,22 @@
       "Bash(gh pr merge:*)",
       "Bash(prisma migrate:*)",
       "Bash(npx prisma migrate:*)"
+    ],
+    "deny": [
+      "Edit(.claude/skills/skill-audit/**)",
+      "Write(.claude/skills/skill-audit/**)",
+      "NotebookEdit(.claude/skills/skill-audit/**)",
+      "Edit(.claude/settings.json)",
+      "Write(.claude/settings.json)",
+      "NotebookEdit(.claude/settings.json)",
+      "Bash(sed -i*skill-audit*)",
+      "Bash(tee*skill-audit*)",
+      "Bash(mv *skill-audit*)",
+      "Bash(cp *skill-audit*)",
+      "Bash(sed -i*settings.json*)",
+      "Bash(tee*settings.json*)",
+      "Bash(mv *settings.json*)",
+      "Bash(cp *settings.json*)"
     ]
   }
 }
