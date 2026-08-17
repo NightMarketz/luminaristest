@@ -6,7 +6,7 @@ allowed-tools: Read, Grep, Glob, Write, Bash
 metadata:
   governance-skill-id: "SKL-SESS-PLAN"
   governance-version: "1.0.0"
-  governance-status: "draft"
+  governance-status: "validated"
   governance-owner: "engineering"
 ---
 
