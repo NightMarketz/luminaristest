@@ -17,7 +17,9 @@ async function main() {
     const admin = await prisma.user.upsert({
         where: { email: adminEmail },
         update: {
-            password: hashedPassword,
+            // Invariante: "nunca pode acontecer de rodar o seed mudar a senha de
+            // alguém que já existe." Reset legítimo de credencial não passa pelo
+            // seed — se precisar, apague a linha do usuário e rode o seed de novo.
             role: 'ADMIN',
         },
         create: {
