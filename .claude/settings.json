@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "defaultMode": "plan",
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(prisma migrate:*)",
+      "Bash(npx prisma migrate:*)"
+    ]
+  }
+}
