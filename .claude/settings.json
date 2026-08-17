@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(.claude/skills/skill-audit/**)",
+      "Write(.claude/skills/skill-audit/**)",
+      "NotebookEdit(.claude/skills/skill-audit/**)",
+      "Bash(sed -i*skill-audit*)",
+      "Bash(tee*skill-audit*)",
+      "Bash(mv *skill-audit*)",
+      "Bash(cp *skill-audit*)"
+    ]
+  }
+}
