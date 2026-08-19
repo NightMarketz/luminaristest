@@ -24,7 +24,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "generated/prisma": ["./generated/prisma"]
+      // Two targets on purpose: tsc resolves types via the 1st (relative to baseUrl);
+      // tsc-alias rewrites dist/ requires via the 2nd (it resolves ".."-paths relative to outDir,
+      // and dist/../generated/prisma is the real client — without it the rewrite truncates to dist/).
+      "generated/prisma": ["./generated/prisma", "../generated/prisma"]
     }
   },
   "include": [
