@@ -95,7 +95,7 @@ O ponytail (modo lazy, sempre ativo) e este projeto **concordam** no núcleo —
 recriar, YAGNI — e o codebase-memory é o que torna esse instinto fundamentado. Mas com uma fronteira clara:
 
 - **Padrões de camada NÃO são over-engineering.** A cadeia `Route → Controller → Service → Repository → Prisma`
-  (+ Policy), injeção via **Factory**, **DTO Zod**, **soft-delete** e **registro de rota em 3 toques** são
+  (+ Policy), injeção via **Factory**, **DTO Zod**, **soft-delete** e **registro de rota em 2 toques** (`index.ts` + `docs.paths.ts`; auth é deny-by-default no middleware) são
   *requisitos do projeto* (Contrato §2/§3). Caem na própria regra do ponytail de "nunca simplificar o que foi
   explicitamente pedido / segurança". **Não** inline uma policy, **não** pule um DTO, **não** corte o factory
   "pra ser enxuto".
