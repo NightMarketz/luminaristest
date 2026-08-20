@@ -5,8 +5,8 @@ argument-hint: "[linha da lacuna no GAP-MAP + comportamento correto esperado]"
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash
 metadata:
   governance-skill-id: "SKL-SESS-INSTR"
-  governance-version: "1.0.0"
-  governance-status: "draft"
+  governance-version: "1.1.0"
+  governance-status: "validated"
   governance-owner: "engineering"
 ---
 
@@ -123,6 +123,16 @@ main é stale) e um `.env` com `OPENAI_API_KEY=ci-dummy-openai-key` (integraçã
 
 **Ruído pré-existente conhecido:** há flake de saída do jest catalogado como ambiente, não diff. É
 exatamente o que o passo 1 manda registrar antes de escrever qualquer coisa.
+
+**O motivo certo inclui a condição certa.** Classe nomeada pelo dono (2026-08-17, terceira instância em
+dois dias): gate cujo predicado lê variável de ambiente que difere entre onde o teste roda e onde a
+lacuna morde — worktree×raiz, sessão autônoma×interativa, branch×detached HEAD (SG-005 dormia em CI de PR
+e só mordia em push na main — predicado corrigido no PR #203, o exemplo fica como registro da classe). Primos já catalogados no repo: Windows serializa SQLite (a CI Linux é o
+oráculo), janela UTC 00:00–03:00, fixture SQL grava TEXT × Prisma grava INTEGER. Se o predicado da
+lacuna lê branch, env var, cwd, SO, fuso ou modo de sessão, o teste-guarda deve reproduzir a CONDIÇÃO em
+que ela morde — vermelho/verde fora da condição não é evidência. Condição irreproduzível localmente é
+ACHADO: registre "a condição X só existe em Y; o push/CI é o teste" e não trate o resultado local como
+prova.
 
 **A classe mais cara é a de omissão.** O BUG-1 (13 eventTypes fora da allowlist do audit → 500 + rollback)
 sobreviveu a review independente e 1135 testes porque **os testes mockavam o colaborador**. Se a lacuna a

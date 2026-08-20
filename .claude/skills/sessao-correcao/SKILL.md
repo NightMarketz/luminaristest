@@ -5,8 +5,8 @@ argument-hint: "[linha da lacuna no GAP-MAP + caminho do teste-guarda que falha]
 allowed-tools: Read, Grep, Glob, Edit, Bash
 metadata:
   governance-skill-id: "SKL-SESS-FIX"
-  governance-version: "1.0.0"
-  governance-status: "draft"
+  governance-version: "1.1.0"
+  governance-status: "validated"
   governance-owner: "engineering"
 ---
 
@@ -108,3 +108,11 @@ minimalismo, é diff incompleto.
 **Cuidado com a classe do achado.** Bug de chave de idempotência, de data-only e de renderização de data
 são **classes** neste repo, não casos isolados — mas varrer a classe inteira é trabalho de outra sessão.
 Aqui: conserte o caso do teste-guarda, e registre a suspeita de classe em "Achados fora de escopo".
+
+**Fix que muda o predicado do gate, não o alvo, é fork de política.** Se o diff mínimo que faz o
+teste/gate passar consiste em mudar o rótulo, status, limiar ou config que o gate LÊ (ex.:
+`governance-status` draft→validated para calar SG-005) em vez do comportamento-alvo, isso não é correção
+— é mudança de política, e a regra 5 se aplica qualquer que seja o tamanho do diff: PARE e peça
+confirmação nomeada. Única exceção: precedente do dono já mergeado para a MESMA classe (ex.: `7520683b`,
+promoção de skill não-governada por SG-005) — aí cite o precedente no relatório em vez de tratar como
+decisão nova.

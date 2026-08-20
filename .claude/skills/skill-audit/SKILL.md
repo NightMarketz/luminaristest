@@ -344,6 +344,18 @@ discrimina. A partir daqui o auditor **barra drift**, não constrói baseline. R
    atual deixa passar. (`absent-code` nasceu de um falso-positivo de comentário real; o char-scanner, de URL/regex/template
    reais.) Sem evidência de falha, não expandir — YAGNI.
 
+> ⚠️ **Predicado sensível a ambiente (registro 2026-08-17; predicado CORRIGIDO no PR #203).** O item 2
+> teve uma exceção provada duas vezes (`7520683b` em 2026-07-01; runs 31930591236/31924190357 em
+> 2026-08-16): `onMainBranch()` lia só a branch do checkout — em CI de PR (detached `HEAD`) o SG-005
+> **dormia** e só mordia em push na main, onde nenhum PR o consertava. Desde `35a07c44` (PR #203) o
+> predicado pergunta **para onde isto vai**: além do checkout em `main`, considera main quando
+> `GITHUB_REF_NAME`/`GITHUB_BASE_REF` = main — a CI de PR morde (prova vermelho→verde: runs
+> 32040961935 → 32041668433). Lição de classe que permanece: gate com predicado de ambiente
+> (worktree×raiz, sessão autônoma×interativa) se prova **na condição que falha**; 0 findings local
+> fora dela não é evidência. Para skill não-governada, `validated` = "passa os gates que se aplicam a
+> ela" (SKILLS_STANDARD §15) — não alega REPORT/eval; promoção fundamentada em run 0-findings
+> (precedente `7520683b`).
+
 > **Contrato de fontes (o que decide o quê):** *skill define* (SKILL.md + contratos) · *governance relaciona* (governance.md:
 > regra→gate→eval) · *cbm localiza* (estrutural, não-autoritativo — CBM-001) · *código/testes confirmam* (verdade objetiva) ·
 > *skill-audit impede drift* (gate determinístico no CI + sweep comportamental human-run).
