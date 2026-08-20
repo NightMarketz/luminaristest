@@ -15,6 +15,11 @@ describe('parseBrl → integer cents', () => {
     ['1234.56', 123456], // US dot-decimal tolerated (no 100× error)
     ['19.99', 1999],
     ['1.5', 150],
+    // Both separators: the LAST one is the decimal. Reading US as BR booked 123.
+    ['1,234.56', 123456],
+    ['1,234,567.89', 123456789],
+    ['1,234,567', 123456700], // 2+ commas cannot be a decimal → thousands
+    ['1,234', 123], // single comma stays BR decimal (R$ 1,234), not US thousands
     ['', 0],
     ['   ', 0],
   ])('parseBrl(%j) === %i', (input, expected) => {

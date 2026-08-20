@@ -161,7 +161,11 @@ function onMainBranch() {
     try { _branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: REPO_ROOT, encoding: 'utf8' }).trim(); }
     catch { _branch = ''; }
   }
-  return _branch === 'main' || _branch === 'master';
+  // CI de PR faz checkout detached (rev-parse → "HEAD"); os envs do Actions dizem o alvo real:
+  // GITHUB_REF_NAME=main em push na main, GITHUB_BASE_REF=main em PR contra main.
+  return _branch === 'main' || _branch === 'master'
+    || process.env.GITHUB_REF_NAME === 'main'
+    || process.env.GITHUB_BASE_REF === 'main';
 }
 
 // gates documentados neste skill-audit (G1..Gn, P1..Pn) — para GATE_TARGET_NOT_FOUND
