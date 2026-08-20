@@ -17,6 +17,10 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   (teste-guarda que falha pelo motivo certo) → `sessao-correcao` (fix mínimo) · `sessao-integracao`
   (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
+  **O uso é pela natureza do trabalho, não pela frase-gatilho:** tarefa autorizada que É planejar /
+  implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
+  (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
+  escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada
   (nunca frase), desfecho em 3 estados, assinatura humana. **Agente pode preparar o runbook em branco;
@@ -107,6 +111,13 @@ recriar, YAGNI — e o codebase-memory é o que torna esse instinto fundamentado
 - `tsc` limpo é gate: `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.
 - `neutral-*`, **nunca** `zinc-*`; cards `rounded-2xl`/`3xl`; zero `any` evitável.
 - Telas atrás de `withAuth` → verifique contra **build de produção**, não `next dev`.
+- Tocou `.claude/skills/**` → `node .claude/skills/skill-audit/skill-audit.mjs run` antes de fechar
+  (0 findings é gate). **Predicado de ambiente:** desde o PR #203 o SG-005 pergunta o destino
+  (`GITHUB_REF_NAME`/`GITHUB_BASE_REF` = main na CI, além do checkout local em `main`) — a CI de PR
+  morde; 0 findings **local** fora dessas condições segue não provando o push com skill `draft`.
+  Classe geral: gate cujo predicado lê ambiente (branch, worktree, modo de sessão, fuso, SO) se prova
+  **na condição que falha**, ou declara-se "o push/CI é o teste" — nunca trate verde fora da condição
+  como evidência.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 

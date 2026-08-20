@@ -26,6 +26,14 @@ Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não e
 
 ### Subir o ambiente (build de produção)
 
+> ✅ **Bloqueador de boot RESOLVIDO (2026-08-19):** o pré-voo de agente encontrou o `npm run build`
+> emitindo `require('@/...')` literal (boot do dist morria em `Cannot find module '@/lib/factory'`);
+> o fix (`tsc-alias` no build + 2º alvo `../generated/prisma` no tsconfig, commit `556d1421`) foi
+> **mergeado na main via PR #204 em 2026-08-19, CI verde**. Esta sessão pode ser agendada.
+> O restante do caminho está ensaiado: sobre cópia do dev.db real, encerramento
+> (201 balanceado), ECD (com mapeamento placeholder: artefato 243 registros, Latin-1 confirmado) e
+> ECF (201 direto) geraram — o gerador funciona.
+
 ```bash
 cd server && npm run build && npm start
 ```
