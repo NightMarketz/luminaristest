@@ -734,6 +734,32 @@ describe('PostingService', () => {
         await expect(svc.postEntry(scope, balancedInput)).rejects.toThrow('audit append fail');
       });
 
+      // TRIAGEM-AUDIT-2026-08-15 A2, fork (b) — the audit payload allowlist keeps 'description'
+      // (auditCanonical.ts), but the append-only chain must never carry PII (e.g. supplier/customer
+      // name). auditDescription is the sanitized boundary a subledger caller (PayableService,
+      // ReceivableService) passes; the row's own `description` must stay untouched (ECD I250 hist).
+      it('uses auditDescription (not description) in the entry.posted payload when the caller supplies it', async () => {
+        const { svc, auditService, journalEntryRepo } = buildService();
+        await svc.postEntry(scope, {
+          ...balancedInput,
+          description: 'Contas a pagar — ACME Ltda (NF-100)',
+          auditDescription: 'Contas a pagar — NF NF-100',
+        });
+        const call = (auditService.append.mock.calls as any[])[0];
+        expect(call[2].payload.description).toBe('Contas a pagar — NF NF-100');
+        expect(call[2].payload.description).not.toContain('ACME');
+        // The row itself keeps the full, human-readable description — unaffected by the audit boundary.
+        const createdRow = (journalEntryRepo.create.mock.calls as any[])[0][0];
+        expect(createdRow.description).toBe('Contas a pagar — ACME Ltda (NF-100)');
+      });
+
+      it('falls back to description in the entry.posted payload when auditDescription is absent (manual posts)', async () => {
+        const { svc, auditService } = buildService();
+        await svc.postEntry(scope, balancedInput);
+        const call = (auditService.append.mock.calls as any[])[0];
+        expect(call[2].payload.description).toBe(balancedInput.description);
+      });
+
       it('ensureChartOfAccounts does NOT emit audit events', async () => {
         const { svc, auditService } = buildService({
           // force ensureChartOfAccounts to create an account

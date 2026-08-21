@@ -1,5 +1,5 @@
 import { PayableService } from '../PayableService';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
+import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { INVENTORY_INBOUND_SOURCE_TYPE } from '../../models/Inventory.model';
@@ -420,6 +420,34 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
   });
 });
 
+// TRIAGEM-AUDIT-2026-08-15 A2, fork (b) — the immutable audit chain (`entry.posted` payload,
+// auditCanonical.ts allowlist) must NEVER carry the supplier name; the row description (and the
+// ECD I250 hist that reads it) keeps the name for legibility. PostingService picks
+// `auditDescription ?? description` for the audit payload ONLY — this is the producer side.
+describe('PayableService — auditDescription is PII-clean, description keeps the supplier name (A2b)', () => {
+  it('createPayable: the recognition input carries an auditDescription without the supplier name', async () => {
+    const { service, postEntry } = build();
+    await service.createPayable(scope, createDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    // The row/ECD-facing description keeps the supplier name — unchanged behavior.
+    expect(input.description).toContain('ACME');
+    // The audit-facing field must exist and never contain the supplier name.
+    expect(input.auditDescription).toBeDefined();
+    expect(input.auditDescription).not.toContain('ACME');
+  });
+
+  it('registerPayment: the settlement input carries an auditDescription without the supplier name', async () => {
+    const { service, postEntry } = build();
+    await service.registerPayment(scope, 'pay-1', payDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.description).toContain('ACME');
+    expect(input.auditDescription).toBeDefined();
+    expect(input.auditDescription).not.toContain('ACME');
+  });
+});
+
 describe('PayableService.cancelPayable — reverse recognition (F6/ACC-018/D3)', () => {
   it('reverses the recognition and renames the business key (rename-on-delete)', async () => {
     const { service, reverseEntry, payableRepo } = build({
@@ -555,6 +583,45 @@ describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2
     const out = await service.reconcilePayables(scope);
     expect(out.recognitionsPosted).toBe(0);
     expect(postEntry).not.toHaveBeenCalled();
+  });
+});
+
+// TRIAGEM-AUDIT-2026-08-15 A4 — the base-class catch in reconcilePayables swallowed EVERY error
+// (skip-listed deterministic AND genuinely unexpected) into the same silent warn+continue, so
+// {recognitionsPosted:0, settlementsPosted:0, finalized:0} was indistinguishable from "a real bug
+// blocked every item this pass". `failed`/`blocked` must classify by the SAME discipline the sync
+// bridges already use (SYNC_SKIP_ERROR_CODES / erro-especifico-para-skip-em-job): a specific
+// deterministic code is `blocked` (non-retriable or transient-by-admin-action), anything else is
+// `failed` — and the pass must still complete the batch either way (fault-isolated, unchanged).
+describe('PayableService.reconcilePayables — failed vs blocked classification (A4)', () => {
+  it('an UNEXPECTED recognition re-drive error is counted in `failed` (not silently 0)', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findAllActive.mockResolvedValueOnce([payableRow({ id: 'pay-1', status: 'OPEN' })]);
+    postEntry.mockRejectedValueOnce(new Error('unexpected db outage'));
+    const out = await service.reconcilePayables(scope);
+    expect(out.recognitionsPosted).toBe(0);
+    expect(out.failed).toBe(1);
+    expect(out.blocked ?? 0).toBe(0);
+  });
+
+  it('a deterministic MAX_CENTS_EXCEEDED recognition re-drive error is `blocked`, never `failed`', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findAllActive.mockResolvedValueOnce([payableRow({ id: 'pay-1', status: 'OPEN' })]);
+    postEntry.mockRejectedValueOnce(new MaxCentsExceededError('4.1', 999999999, 1000000));
+    const out = await service.reconcilePayables(scope);
+    expect(out.recognitionsPosted).toBe(0);
+    expect(out.blocked).toBe(1);
+    expect(out.failed ?? 0).toBe(0);
+  });
+
+  it('an UNEXPECTED settlement re-drive error is counted in `failed` (not silently 0)', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findAllActivePayments.mockResolvedValueOnce([paymentRow({ id: 'paym-1', payableId: 'pay-1' })]);
+    postEntry.mockRejectedValueOnce(new Error('unexpected db outage'));
+    const out = await service.reconcilePayables(scope);
+    expect(out.settlementsPosted).toBe(0);
+    expect(out.failed).toBe(1);
+    expect(out.blocked ?? 0).toBe(0);
   });
 });
 

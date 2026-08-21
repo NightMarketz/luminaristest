@@ -14,6 +14,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
 }));
+import * as storage from '../../../../lib/attachmentStorage';
 
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
@@ -154,7 +155,7 @@ function buildService(m: Mocks = {}) {
   const service = new SpedGenerationService(
     accountRepo, postingRepo, journalEntryRepo, referential, reports, policy, repo, audit,
   );
-  return { service, createJob, groupByAccount, findManyForExport, append, policy };
+  return { service, createJob, updateJob, groupByAccount, findManyForExport, append, policy };
 }
 
 /** Decode the produced file back to its lines (latin1, CRLF). */
@@ -264,5 +265,20 @@ describe('SpedGenerationService.generate', () => {
     const i200 = lines.find((l) => l.startsWith('|I200|'))!.slice(1, -1).split('|');
     expect(i200[2]).toBe('15012026'); // DT_LCTO literal slice
     expect(i200[3]).toBe('500,00'); // VL_LCTO
+  });
+
+  // GUARD (A1, triagem 2026-08-20 ratificada): o job NÃO pode nascer 'EXPORTED'. O sucesso é
+  // gravado antes de `saveFile`, então uma falha de escrita deixa uma linha afirmando sucesso com
+  // storageKey nulo — e o executor do gate H1 (PVA) lê essa lista para saber o que baixar.
+  // Esperado: nascer PROCESSING, virar EXPORTED só depois do arquivo existir, e FAILED no erro.
+  it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
+    const { service, createJob, updateJob } = buildService();
+    (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('disk full');
+
+    expect(createJob).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'EXPORTED' }));
+    const statuses = updateJob.mock.calls.map((c) => (c[2] as { status?: string } | undefined)?.status);
+    expect(statuses).toContain('FAILED');
   });
 });

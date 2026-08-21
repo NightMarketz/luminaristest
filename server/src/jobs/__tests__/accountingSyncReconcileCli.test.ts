@@ -47,4 +47,17 @@ describe('accountingSyncReconcileCli.runCli', () => {
     await runCli();
     expect(runAccountingSyncReconcile).toHaveBeenCalledTimes(1);
   });
+
+  it('includes blocked in the cli_complete structured log and exits 0 (deliberate skip, not a failure) (A3)', async () => {
+    runAccountingSyncReconcile.mockResolvedValueOnce({ total: 3, synced: 1, idempotentHits: 0, failed: 0, blocked: 2 });
+    const code = await runCli();
+    expect(code).toBe(0);
+
+    const logger = jest.requireMock('../../lib/logger').default as { info: jest.Mock };
+    const complete = logger.info.mock.calls.find((c) => c[1]?.event === 'cli_complete')?.[1];
+    expect(complete).toMatchObject({ blocked: 2 });
+
+    const written = (process.stdout.write as jest.Mock).mock.calls[0][0] as string;
+    expect(JSON.parse(written)).toMatchObject({ blocked: 2 });
+  });
 });

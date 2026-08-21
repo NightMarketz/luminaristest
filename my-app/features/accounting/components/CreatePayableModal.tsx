@@ -8,6 +8,7 @@ import {
 import type { Account } from '../../../lib/services/accounting.service';
 import type { Counterparty } from '../../../lib/services/counterparties.service';
 import { parseBrl } from '../lib/parseBrl';
+import { formatCents } from '../lib/formatCents';
 import { resolveErrorWithCode } from '../lib/resolveError';
 
 export interface CreatePayableModalProps {
@@ -261,6 +262,9 @@ export function CreatePayableModal({
               placeholder="0,00"
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-right text-sm tabular-nums text-neutral-100 placeholder-neutral-600 focus:border-emerald-500 focus:outline-none"
             />
+            {amountCents > 0 && (
+              <p className="text-right text-xs tabular-nums text-neutral-500">= {formatCents(amountCents)}</p>
+            )}
           </div>
 
           {/* Issue date */}

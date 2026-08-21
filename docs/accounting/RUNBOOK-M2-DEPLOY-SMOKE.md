@@ -9,9 +9,32 @@ Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5
 Pré-condições (verificar antes de começar):
 - **Alvo de deploy decidido e provisionado** (host, forma de processo, onde vive o SQLite com
   WAL + busy_timeout — decisão do dono; hoje inexistente).
-- Backup do banco de produção-alvo feito ANTES de qualquer migração.
+- Backup do banco de produção-alvo feito ANTES de qualquer migração. **O backup É o rollback** —
+  ver o bloco A5 abaixo antes de rodar qualquer migração no alvo.
 - Branch a implantar integrada e CI verde (registrar o commit).
 - Chromium/dependências do puppeteer presentes no host (é o que este gate prova).
+- **O artefato de implantação NÃO sobe o schema** — ver A5 abaixo; decidir e registrar quem roda
+  `prisma migrate deploy` no alvo antes do primeiro boot.
+
+### A5 — o que a auditoria de 2026-08-15 mediu sobre voltar atrás (triagem ratificada 2026-08-20)
+
+Três fatos verificados em `main` `3a761812`. Não são recomendação de alvo; são o que o executor
+precisa saber **antes** de aplicar a primeira migração num banco que importa:
+
+1. **Não existe migração `down`.** `find server/prisma/migrations -iname "*down*"` = **0**. Voltar de
+   uma migração aplicada é restaurar o arquivo do banco — por isso o backup acima é pré-condição
+   dura, não higiene.
+2. **9 das 29 migrações fazem rebuild destrutivo de tabela** (padrão do SQLite: cria nova, copia,
+   dropa a velha) — re-medido em 2026-08-20: `ls -d prisma/migrations/*/ | wc -l` = 29 (o relatório
+   dizia 30) e `grep -rl "DROP TABLE" prisma/migrations` = 9. A **última migração da fila é uma
+   delas** (`20260814120000_counterparty_notnull`, nº 29/29) e **documenta no próprio SQL** que
+   o `RAISE(ABORT)` do guard **não reverte a migração** — pós-abort o backfill segue commitado
+   (classe já registrada: `migracao-sqlite-nao-e-transacional`).
+3. **Nenhum artefato executável roda `prisma migrate deploy`**: `grep "migrate deploy"` no repo =
+   0 hits fora de prosa de closeout; `docker-compose.yml` não tem `command`/`entrypoint`, o volume
+   `sqlite_data` nasce vazio e `server/Dockerfile` faz `COPY dist ./dist` com `dist/` no gitignore.
+   Consequência prática: **subir o compose no alvo dá um container sem schema** — a migração é passo
+   manual do executor até que alguém decida o contrário (decisão do dono, não do agente).
 
 ## Inventário do repo para o alvo (levantado 2026-08-19)
 

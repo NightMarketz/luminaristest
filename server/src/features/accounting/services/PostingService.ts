@@ -320,12 +320,18 @@ export class PostingService {
         }
 
         const postings = await this.postingRepo.findByEntryId(scope, created.id, tx);
+        // TRIAGEM-AUDIT-2026-08-15 A2(b) — the audit payload is PII-clean by construction: pick
+        // `auditDescription` when the caller supplied one (subledgers whose row `description` embeds
+        // a supplier/customer name — PayableService/ReceivableService), otherwise fall back to
+        // `description` (manual posts, machine writers with nothing to sanitize). The JournalEntry
+        // ROW created above always keeps the original `description` — this substitution touches ONLY
+        // the immutable hash-chained payload, never the ledger fact or the ECD I250 hist.
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
           eventType:   'entry.posted',
           targetType:  'journal_entry',
           targetId:    created.id,
-          payload:     { sourceType, sourceId: input.sourceId, description: input.description, sumDebitCents: String(sumDebit), lineCount: String(resolvedLines.length) },
+          payload:     { sourceType, sourceId: input.sourceId, description: input.auditDescription ?? input.description, sumDebitCents: String(sumDebit), lineCount: String(resolvedLines.length) },
         });
 
         // BE-INCR-8 — formal provenance (ADR-INCR8 D5). When the caller passes an origin

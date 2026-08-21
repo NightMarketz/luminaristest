@@ -98,7 +98,8 @@ export class AccountingSyncScheduler {
 
     try {
       const summary = await this.reconcile();
-      this.log.info(JOB, {
+      const blocked = summary.blocked ?? 0;
+      const completeContext = {
         job: JOB,
         runId,
         event: 'complete',
@@ -108,7 +109,15 @@ export class AccountingSyncScheduler {
         synced: summary.synced,
         idempotentHits: summary.idempotentHits,
         failed: summary.failed,
-      });
+        blocked,
+      };
+      // logger.ts only persists error|warn to the NDJSON sink (info is console-only) — a
+      // blocked or failed run must log at `warn` or the summary is invisible on disk.
+      if (blocked > 0 || summary.failed > 0) {
+        this.log.warn(JOB, completeContext);
+      } else {
+        this.log.info(JOB, completeContext);
+      }
       return summary;
     } catch (error) {
       this.log.error(JOB, {

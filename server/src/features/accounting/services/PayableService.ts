@@ -23,6 +23,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
+import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
@@ -467,13 +468,15 @@ export class PayableService {
    */
   async reconcilePayables(
     scope: AccountingScope,
-  ): Promise<{ recognitionsPosted: number; settlementsPosted: number; finalized: number }> {
+  ): Promise<{ recognitionsPosted: number; settlementsPosted: number; finalized: number; blocked: number; failed: number }> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para reconciliar contas a pagar.');
     }
     let recognitionsPosted = 0;
     let settlementsPosted = 0;
     let finalized = 0;
+    let blocked = 0;
+    let failed = 0;
 
     // 1. Every live, non-cancelled payable must carry its recognition entry.
     const payables = await this.payableRepo.findAllActive(scope);
@@ -504,7 +507,20 @@ export class PayableService {
             });
           }
         } catch (error) {
-          logger.warn('AP reconcile: inventory purchase re-drive failed', { payableId: payable.id, error });
+          // TRIAGEM-AUDIT-2026-08-15 A4 — a skip-listed deterministic code (period-closed /
+          // MAX_CENTS poison, same discipline as the sync bridges) is BLOCKED, never a bug; anything
+          // else is a genuinely unexpected FAILURE. Both used to collapse into the same silent warn,
+          // making {0,0,0} indistinguishable from "every item this pass hit a real error".
+          const skipCode = syncSkipErrorCode(error);
+          if (skipCode) {
+            blocked += 1;
+            logger.warn('AP reconcile: inventory purchase re-drive blocked — deterministic non-retriable code', {
+              payableId: payable.id, code: skipCode,
+            });
+          } else {
+            failed += 1;
+            logger.warn('AP reconcile: inventory purchase re-drive failed', { payableId: payable.id, error });
+          }
         }
         continue;
       }
@@ -523,7 +539,16 @@ export class PayableService {
         await this.posting.postEntry(scope, this.buildRecognitionInputFromRow(scope, payable, expenseAccount));
         recognitionsPosted += 1;
       } catch (error) {
-        logger.warn('AP reconcile: recognition re-drive failed', { payableId: payable.id, error });
+        const skipCode = syncSkipErrorCode(error);
+        if (skipCode) {
+          blocked += 1;
+          logger.warn('AP reconcile: recognition re-drive blocked — deterministic non-retriable code', {
+            payableId: payable.id, code: skipCode,
+          });
+        } else {
+          failed += 1;
+          logger.warn('AP reconcile: recognition re-drive failed', { payableId: payable.id, error });
+        }
       }
     }
 
@@ -580,12 +605,21 @@ export class PayableService {
           });
         }
       } catch (error) {
-        logger.warn('AP reconcile: settlement re-drive failed', { paymentId: payment.id, error });
+        const skipCode = syncSkipErrorCode(error);
+        if (skipCode) {
+          blocked += 1;
+          logger.warn('AP reconcile: settlement re-drive blocked — deterministic non-retriable code', {
+            paymentId: payment.id, code: skipCode,
+          });
+        } else {
+          failed += 1;
+          logger.warn('AP reconcile: settlement re-drive failed', { paymentId: payment.id, error });
+        }
       }
     }
 
-    logger.info('AP reconcile pass complete', { recognitionsPosted, settlementsPosted, finalized });
-    return { recognitionsPosted, settlementsPosted, finalized };
+    logger.info('AP reconcile pass complete', { recognitionsPosted, settlementsPosted, finalized, blocked, failed });
+    return { recognitionsPosted, settlementsPosted, finalized, blocked, failed };
   }
 
   // ---------------------------------------------------------------------------
@@ -658,6 +692,7 @@ export class PayableService {
       unitId: scope.unitId,
       date: dto.issueDate,
       description: this.recognitionDescription(payable),
+      auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
       sourceId: payable.id,
       sourceDocument: {
@@ -683,6 +718,7 @@ export class PayableService {
       unitId: scope.unitId,
       date: this.toDateOnly(payable.issueDate),
       description: this.recognitionDescription(payable),
+      auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
       sourceId: payable.id,
       sourceDocument: {
@@ -707,6 +743,7 @@ export class PayableService {
       unitId: scope.unitId,
       date: dto.paidAt,
       description: this.settlementDescription(payable),
+      auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
       sourceId: payment.id,
       lines: [
@@ -727,6 +764,7 @@ export class PayableService {
       unitId: scope.unitId,
       date: this.toDateOnly(payment.paidAt),
       description: this.settlementDescription(payable),
+      auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
       sourceId: payment.id,
       lines: [
@@ -744,6 +782,19 @@ export class PayableService {
   private settlementDescription(payable: Payable): string {
     const doc = payable.documentNumber ? ` (NF ${payable.documentNumber})` : '';
     return `Pagamento a fornecedor — ${payable.supplierName}${doc}`;
+  }
+
+  // TRIAGEM-AUDIT-2026-08-15 A2, fork (b) — PII-sanitized counterparts of the two descriptions
+  // above, fed to PostingService as `auditDescription` (never `description`). The row/ECD-facing
+  // description keeps `supplierName` for legibility; the immutable audit chain gets only the
+  // document reference (the counterparty identity is already carried, id-only, on the
+  // `payable.created`/`payable.payment_registered` domain events — never re-added here).
+  private recognitionAuditDescription(payable: Payable): string {
+    return `Contas a pagar — NF ${payable.documentNumber ?? 's/nº'}`;
+  }
+
+  private settlementAuditDescription(payable: Payable): string {
+    return `Pagamento a fornecedor — NF ${payable.documentNumber ?? 's/nº'}`;
   }
 
   /** DateTime → date-only YYYY-MM-DD (UTC, matching how postEntry parses date-only strings). */

@@ -45,7 +45,7 @@ declarado, sem executável · **[ABERTO]** sem instrumento · **[ORÁCULO]** só
 | Corrida de concorrência | Harness real existe para o razão: `PostingRepository.concurrency.test.ts` (50 escritores, `Promise.all`, SQLite WAL serializa). **Agendamentos (`noOverlap`) descobertos**: scan read-then-write sem constraint (`DynamicTableService.ts:1094-1120`), TOCTOU aberto, zero teste concorrente → Fase 3 deste plano o expõe como `it.failing` | [PARCIAL] | `grep -rln "Promise.all" server/src --include=*concurrency*.test.ts` |
 | Redelivery / rajada / fora de ordem | — (não há canal assíncrono exercido; scheduler é in-process) | [ABERTO] | — |
 | Rede degradada | ~~Toxiproxy~~ **não existe no repo** | [ABERTO] | `grep -ri toxiproxy . --include=package.json` → 0 |
-| Transação parcial | Parcial via harness de integração: mutações M3 (perna fora da tx trava contra o lock) provaram atomicidade em sites específicos; kill-no-meio sistemático, não | [PARCIAL] | `grep -ln "runTransaction" server/src/features/accounting/services/__tests__/*.integration.test.ts` |
+| Transação parcial | Parcial via harness de integração: mutações M3 (perna fora da tx trava contra o lock) provaram atomicidade em sites específicos; kill-no-meio sistemático, não. **+ guarda de estado-antes-do-efeito (A1)**: 3 testes-guarda injetam falha no `saveFile` e afirmam que o job não fica `EXPORTED` — instrumentados vermelhos e **FECHADOS em 2026-08-20** (job nasce `PROCESSING` → `EXPORTED` pós-arquivo, `FAILED` no catch; resíduo conhecido: falha do próprio `updateJob(FAILED)` mascara o erro original, mas a linha nunca mente sucesso) | [PARCIAL] | `grep -ln "runTransaction" server/src/features/accounting/services/__tests__/*.integration.test.ts` · `npx jest --selectProjects unit -t "claiming EXPORTED"` |
 | Caminho feliz ponta a ponta | ~~Playwright~~ **não instalado**; não há `e2e/`. O que existe: **supertest** (HTTP real, 3 arquivos de controller de accounting) + a varredura de browser de 2026-07-23 foi **sessão de agente, não instrumento** (achou os 2 bugs do §5.2) | [PARCIAL] | `ls playwright.config.* e2e/ 2>/dev/null` → vazio; `grep -l supertest server/package.json` |
 | Migração / integridade de dado | smoke-migration-gate: **13 relatórios manuais, zero script** → Fase 2 deste plano escreve `scripts/smoke-migration-gate.mjs` (roda contra cópia do dev.db real; não entra no CI — o dado real não existe lá) | [PAPEL] → [COBERTO] após F2 | `ls docs/accounting/SMOKE-MIGRATION-GATE-*.md \| wc -l` → 13; `ls scripts/smoke*` |
 
@@ -127,6 +127,25 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    insert; N pedidos que lessem antes do primeiro commit persistiam todos. Achado pelo harness de
 >    concorrência da Fase 3 (`NoOverlapConcurrency.integration.test.ts`), que mediu `Expected: 1,
 >    Received: 5`.
+>
+> 2. **2026-08-15 — estado de sucesso gravado antes do efeito (A1 da auditoria) — Nível 4 (transação
+>    parcial).** `createJob({status:'EXPORTED'})` antes de `saveFile`, em 3 sítios (ECD, ECF e o
+>    export CSV/XLSX, este último fora do relatório original); `'FAILED'` não é escrito por nenhum.
+>    Achado por leitura dirigida (AV-06), instrumentado em 2026-08-20 com 3 testes-guarda vermelhos.
+>
+> 3. **2026-08-15 — nome do fornecedor na trilha imutável (A2 da auditoria) — Nível 3 (contrato
+>    implícito).** O allowlist declara em comentário "NEVER the supplier name" e o `payable.created`
+>    obedece, mas `description` é allowlistado em `entry.posted` e o subrazão monta a descrição com o
+>    nome — regra escrita em prosa não é executável. Fork (b) ratificado pelo dono em 2026-08-20;
+>    a pausa inicial (a mesma `description` é o HISTÓRICO do I250 da ECD) foi resolvida na
+>    implementação pela **variante de fronteira**: campo interno `auditDescription` sanitizado só no
+>    payload de `entry.posted` — a row (e o I250) mantém o nome; fora do Zod de propósito (cliente
+>    não seta). **FECHADO 2026-08-20** com guardas em PayableService/ReceivableService/PostingService;
+>    review independente PASS (ver `docs/accounting/TRIAGEM-AUDIT-2026-08-15.md`).
+>
+> **Viés a declarar:** a entrada nº 3 é classificada como Nível 3, que é exatamente o que a aposta
+> acima prevê — classificação feita pela natureza do defeito (regra declarada × caminho real), não
+> para favorecer a aposta, mas o leitor deve saber que quem classificou conhecia a aposta.
 
 ## Fila corrigida (ordem por valor ÷ atrito, com a regra permanente aplicada)
 

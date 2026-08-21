@@ -43,7 +43,7 @@ function makeRepo() {
   });
   const runTransaction = jest.fn((fn: (tx: never) => Promise<unknown>) => fn({} as never));
   const repo = { createJob, findJobById, updateJob, runTransaction } as unknown as IDataExchangeRepository;
-  return { repo, createJob, findJobById };
+  return { repo, createJob, findJobById, updateJob };
 }
 
 function makeReports(): IReportReader {
@@ -126,5 +126,21 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       svc.export(noActor, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(createJob).not.toHaveBeenCalled();
+  });
+
+  // GUARD (A1, triagem 2026-08-20 ratificada) — terceiro sítio da classe; este NÃO estava no
+  // relatório da auditoria (ela nomeou só ECD e ECF). Ver a nota em SpedGenerationService.test.ts.
+  it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
+    const { repo, createJob, updateJob } = makeRepo();
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit);
+    (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(
+      svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' }),
+    ).rejects.toThrow('disk full');
+
+    expect(createJob).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'EXPORTED' }));
+    const statuses = updateJob.mock.calls.map((c) => (c[2] as { status?: string } | undefined)?.status);
+    expect(statuses).toContain('FAILED');
   });
 });
