@@ -47,6 +47,15 @@
 |---|---|---|---|---|
 | [CRM-LEAD-OPP](ADR-CRM-lead-opportunity-model.md) | Modelo de produto Lead × Opportunity no molde salão (quantas pipelines de valor; portadora de fechamento) | **Draft — PRE-ADR, ratificação humana PENDENTE (§5.1)**; devolvido ao dono pelo board v3 (D3: 4 defer + 1 abstain); recomendação = interino reversível (ocultar 2ª pipeline sem deletar código) | 2026-07-20 | PRODUTO / MODELAGEM DE MOLDE (DynamicTable) |
 
+## Fábrica de verticais (Parte B do roadmap — `docs/ROADMAP-PLATAFORMA.md`)
+
+| ADR | Título | Status | Data | Classe |
+|---|---|---|---|---|
+| [P1](ADR-P1-binding-press.md) | A Prensa — engine de binding em tempo de geração (1 intérprete fixo de runtime + N bindings compilados; substitui mappers à mão) | **Accepted — RATIFICADO FORK-A-FORK 2026-08-21** (via AskUserQuestion, após parecer independente [PARECER-ARCHITECT-ADR-P1](PARECER-ARCHITECT-ADR-P1.md)): F-P1-1→(b) 2 classes de arquétipo; F-P1-2→(b) tabela Prisma `AccountingBinding`; F-P1-3→(a) swap do salão pós-golden; F-P1-4→(a) dinheiro no intérprete + discriminador; F-P1-5→(a) papel→conta na compilação; F-P1-6→(b1) validate-only (emenda §8); F-P1-7→módulo irmão `features/accountingBinding/`; 6 emendas do parecer aceitas (§11); **pré-condição de PVA REVOGADA pelo dono** — impl. autorizada, nó ⏳ | 2026-08-21 | DECISÃO ARQUITETURAL (fronteira §2.1 / pipeline de geração) |
+| [P2](ADR-P2-second-vertical.md) | O segundo vertical — prova da prensa (setor novo sem diff em motor/ledger/intérprete; entrevista→ERP→fechamento→ECD própria; métrica *time-to-first-ECD*) | **Draft — F-P2-1 RATIFICADO 2026-08-21 → CLÍNICA ESTÉTICA** (corroborado por OQ-1 do dossiê: barbearia casaria o preset beautySalon existente e a prova seria vácua); F-P2-2..4 pendentes; parecer independente [PARECER-ARCHITECT-ADR-P2](PARECER-ARCHITECT-ADR-P2.md) pede 3 emendas de precisão (escopo do diff, prova SEM mappers Salon*, passo-0) antes das demais ratificações | 2026-08-21 | PROVA DE PRODUTO (preset + binding; zero código de motor) |
+
+Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/PLANO-MODULO-COMPLETO-REPLICAVEL.md`.
+
 ## Plataforma (não-contábil)
 
 | ADR | Título | Status | Data | Classe |
