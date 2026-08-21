@@ -13,6 +13,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
 }));
+import * as storage from '../../../../lib/attachmentStorage';
 
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
@@ -130,7 +131,7 @@ describe('SpedEcfGenerationService.generate', () => {
   });
 
   it('segregates receita bruta by activity per trimester and records an EXPORT_SPED_ECF job', async () => {
-    const { service, createJob, append } = buildService();
+    const { service, createJob, updateJob, append } = buildService();
     await service.generate(scope, makeDto());
 
     const lines = producedLines();
@@ -141,10 +142,15 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(lines).toContain('|P400|4||150000,00|');
     expect(lines).toContain('|P200|4||50000,00|');
     expect(lines).toContain('|P400|2||50000,00|');
-    // Job carries the ECF kind and the file metadata.
+    // Job carries the ECF kind and the file metadata. Nasce PROCESSING (A1) e só vira EXPORTED
+    // depois que o arquivo existe — a expectativa anterior (`status: 'EXPORTED'` no createJob)
+    // codificava o contrato defeituoso.
     expect(createJob).toHaveBeenCalledWith(expect.objectContaining({
-      kind: 'EXPORT_SPED_ECF', direction: 'EXPORT', status: 'EXPORTED', mimeType: 'text/plain',
+      kind: 'EXPORT_SPED_ECF', direction: 'EXPORT', status: 'PROCESSING', mimeType: 'text/plain',
     }));
+    expect(updateJob).toHaveBeenCalledWith(
+      scope, 'job-1', expect.objectContaining({ status: 'EXPORTED' }), expect.anything(),
+    );
     // Audit event in the same tx.
     expect(append).toHaveBeenCalledWith(
       expect.anything(), scope,
@@ -185,5 +191,18 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(groupByAccount).toHaveBeenCalled();
     // 1 year read (gate) + 4 quarter reads.
     expect(groupByAccount).toHaveBeenCalledTimes(5);
+  });
+
+  // GUARD (A1, triagem 2026-08-20 ratificada) — mesmo defeito do ECD, segundo sítio dos três.
+  // Ver a nota da classe em SpedGenerationService.test.ts.
+  it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
+    const { service, createJob, updateJob } = buildService();
+    (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('disk full');
+
+    expect(createJob).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'EXPORTED' }));
+    const statuses = updateJob.mock.calls.map((c) => (c[2] as { status?: string } | undefined)?.status);
+    expect(statuses).toContain('FAILED');
   });
 });

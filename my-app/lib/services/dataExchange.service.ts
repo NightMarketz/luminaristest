@@ -28,7 +28,7 @@ export interface DataExchangeJob {
   id: string;
   direction: string;
   kind: string;
-  status: string; // UPLOADED | VALIDATED | COMMITTING | COMMITTED | PARTIAL | FAILED | EXPORTED
+  status: string; // UPLOADED | VALIDATED | COMMITTING | PROCESSING | COMMITTED | PARTIAL | FAILED | EXPORTED
   fileName: string | null;
   mimeType: string | null;
   sizeBytes: number | null;

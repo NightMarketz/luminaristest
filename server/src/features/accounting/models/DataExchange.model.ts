@@ -35,6 +35,10 @@ export type DataExchangeStatus =
   | 'UPLOADED'
   | 'VALIDATED'
   | 'COMMITTING'
+  // In-flight EXPORT (A1): the job row is born PROCESSING and only becomes EXPORTED after the file
+  // exists on disk. Before this, the row claimed success before `saveFile` ran, so a write failure
+  // left a line saying EXPORTED with a null storageKey — and the PVA/H1 executor reads that list.
+  | 'PROCESSING'
   | 'COMMITTED'
   | 'PARTIAL'
   | 'FAILED'

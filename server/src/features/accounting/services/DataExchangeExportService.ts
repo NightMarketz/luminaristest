@@ -132,7 +132,7 @@ export class DataExchangeExportService {
       unitId: scope.unitId,
       direction: 'EXPORT',
       kind: dto.kind,
-      status: 'EXPORTED',
+      status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
       requestedById: scope.actorUserId,
       originalName: fileName,
       mimeType,
@@ -141,12 +141,19 @@ export class DataExchangeExportService {
       totalRows: table.rows.length,
     });
 
-    const { storageKey } = await storage.saveFile(
-      scope.ownerUserId, scope.unitId, job.id, fileName, buffer,
-    );
+    let storageKey: string;
+    try {
+      ({ storageKey } = await storage.saveFile(
+        scope.ownerUserId, scope.unitId, job.id, fileName, buffer,
+      ));
+    } catch (error) {
+      // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      throw error;
+    }
 
     const updated = await this.repo.runTransaction(async (tx) => {
-      const j = await this.repo.updateJob(scope, job.id, { storageKey }, tx);
+      const j = await this.repo.updateJob(scope, job.id, { storageKey, status: 'EXPORTED' }, tx);
       await this.audit.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'data_exchange.export_generated',

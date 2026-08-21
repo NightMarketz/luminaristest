@@ -223,7 +223,18 @@ export const SetAccountRequiresDimensionSchema = z
   })
   .strict();
 
-export type PostEntryInput = z.infer<typeof PostEntrySchema>;
+export type PostEntryInput = z.infer<typeof PostEntrySchema> & {
+  /**
+   * INTERNO — NÃO é campo da fronteira HTTP (TRIAGEM-AUDIT-2026-08-15 A2(b)). Descrição
+   * PII-sanitizada usada SOMENTE no payload imutável de `entry.posted`; a row do JournalEntry
+   * (e tudo que a lê, ex. o HIST do I250 da ECD) fica com `description`. Ausente ⇒ o payload cai
+   * em `description` (post manual não tem o que sanitizar). Subrazões cuja descrição embute nome
+   * de fornecedor/cliente (PayableService, ReceivableService) DEVEM passar este campo. Fica fora
+   * do PostEntrySchema de propósito: o parse do controller descarta a chave se um cliente a
+   * enviar — só código de serviço consegue setá-la, o cliente não descola trilha do lançamento.
+   */
+  auditDescription?: string;
+};
 export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema>;
 export type ReportQueryInput = z.infer<typeof ReportQuerySchema>;
 export type ListAccountsQueryInput = z.infer<typeof ListAccountsQuerySchema>;

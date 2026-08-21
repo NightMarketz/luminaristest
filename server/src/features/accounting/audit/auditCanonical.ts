@@ -10,6 +10,13 @@ export const CANONICAL_VERSION = 1;
  * Money values must be strings (never numbers) before calling this.
  */
 export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
+  // TRIAGEM-AUDIT-2026-08-15 A2(b) — 'description' here is NOT always JournalEntry.description
+  // verbatim: PostingService writes `auditDescription ?? description` into this payload (see
+  // postEntry). A subledger whose row description embeds third-party PII — PayableService
+  // (supplierName) / ReceivableService (customerName) — passes a sanitized `auditDescription`
+  // (document-number-only), so the hash-chained payload never carries the name even though the
+  // JournalEntry row and the ECD I250 hist keep it for legibility. Manual/machine posts with no
+  // PII in their description omit auditDescription and this field is the raw description.
   'entry.posted':    ['sourceType', 'sourceId', 'description', 'sumDebitCents', 'lineCount'],
   'entry.reversed':  ['originalId', 'reversalId', 'reason'],
   // BE-INCR-8 — formal provenance. Recorded in the same tx as the entry when an origin

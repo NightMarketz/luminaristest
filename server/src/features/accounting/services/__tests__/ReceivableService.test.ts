@@ -1,5 +1,5 @@
 import { ReceivableService } from '../ReceivableService';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
+import { ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { CLIENTES_A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { AR_RECEIVABLE_SOURCE_TYPE, AR_RECEIPT_SOURCE_TYPE } from '../../models/Receivable.model';
@@ -356,6 +356,30 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
   });
 });
 
+// TRIAGEM-AUDIT-2026-08-15 A2, fork (b) — MIRROR of the PayableService guard: the immutable audit
+// chain must NEVER carry the customer name; the row description (FE/reports) keeps it.
+describe('ReceivableService — auditDescription is PII-clean, description keeps the customer name (A2b)', () => {
+  it('createReceivable: the recognition input carries an auditDescription without the customer name', async () => {
+    const { service, postEntry } = build();
+    await service.createReceivable(scope, createDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.description).toContain('Cliente XPTO');
+    expect(input.auditDescription).toBeDefined();
+    expect(input.auditDescription).not.toContain('Cliente XPTO');
+  });
+
+  it('registerReceipt: the receipt input carries an auditDescription without the customer name', async () => {
+    const { service, postEntry } = build();
+    await service.registerReceipt(scope, 'rec-1', receiveDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.description).toContain('Cliente XPTO');
+    expect(input.auditDescription).toBeDefined();
+    expect(input.auditDescription).not.toContain('Cliente XPTO');
+  });
+});
+
 describe('ReceivableService.cancelReceivable — reverse recognition (F6/ACC-018/D3)', () => {
   it('reverses the recognition and renames the business key (rename-on-delete)', async () => {
     const { service, reverseEntry, receivableRepo } = build({
@@ -484,6 +508,41 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
     const out = await service.reconcileReceivables(scope);
     expect(out.recognitionsPosted).toBe(0);
     expect(postEntry).not.toHaveBeenCalled();
+  });
+});
+
+// TRIAGEM-AUDIT-2026-08-15 A4 — MIRROR of the PayableService guard: the base-class catch in
+// reconcileReceivables swallowed every error into the same silent warn+continue. `failed`/`blocked`
+// classify by the same SYNC_SKIP_ERROR_CODES discipline the sync bridges already use.
+describe('ReceivableService.reconcileReceivables — failed vs blocked classification (A4)', () => {
+  it('an UNEXPECTED recognition re-drive error is counted in `failed` (not silently 0)', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findAllActive.mockResolvedValueOnce([receivableRow({ id: 'rec-1', status: 'OPEN' })]);
+    postEntry.mockRejectedValueOnce(new Error('unexpected db outage'));
+    const out = await service.reconcileReceivables(scope);
+    expect(out.recognitionsPosted).toBe(0);
+    expect(out.failed).toBe(1);
+    expect(out.blocked ?? 0).toBe(0);
+  });
+
+  it('a deterministic MAX_CENTS_EXCEEDED recognition re-drive error is `blocked`, never `failed`', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findAllActive.mockResolvedValueOnce([receivableRow({ id: 'rec-1', status: 'OPEN' })]);
+    postEntry.mockRejectedValueOnce(new MaxCentsExceededError('3.1', 999999999, 1000000));
+    const out = await service.reconcileReceivables(scope);
+    expect(out.recognitionsPosted).toBe(0);
+    expect(out.blocked).toBe(1);
+    expect(out.failed ?? 0).toBe(0);
+  });
+
+  it('an UNEXPECTED receipt re-drive error is counted in `failed` (not silently 0)', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findAllActiveReceipts.mockResolvedValueOnce([receiptRow({ id: 'recp-1', receivableId: 'rec-1' })]);
+    postEntry.mockRejectedValueOnce(new Error('unexpected db outage'));
+    const out = await service.reconcileReceivables(scope);
+    expect(out.receiptsPosted).toBe(0);
+    expect(out.failed).toBe(1);
+    expect(out.blocked ?? 0).toBe(0);
   });
 });
 

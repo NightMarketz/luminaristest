@@ -21,6 +21,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
+import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -407,13 +408,15 @@ export class ReceivableService {
    */
   async reconcileReceivables(
     scope: AccountingScope,
-  ): Promise<{ recognitionsPosted: number; receiptsPosted: number; finalized: number }> {
+  ): Promise<{ recognitionsPosted: number; receiptsPosted: number; finalized: number; blocked: number; failed: number }> {
     if (!this.policy.canManageReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para reconciliar contas a receber.');
     }
     let recognitionsPosted = 0;
     let receiptsPosted = 0;
     let finalized = 0;
+    let blocked = 0;
+    let failed = 0;
 
     // 1. Every live, non-cancelled receivable must carry its recognition entry.
     const receivables = await this.receivableRepo.findAllActive(scope);
@@ -432,7 +435,18 @@ export class ReceivableService {
         await this.posting.postEntry(scope, this.buildRecognitionInputFromRow(scope, receivable, revenueAccount));
         recognitionsPosted += 1;
       } catch (error) {
-        logger.warn('AR reconcile: recognition re-drive failed', { receivableId: receivable.id, error });
+        // TRIAGEM-AUDIT-2026-08-15 A4 — MIRROR of PayableService: a skip-listed deterministic code
+        // is BLOCKED (never a bug), anything else is a genuinely unexpected FAILURE.
+        const skipCode = syncSkipErrorCode(error);
+        if (skipCode) {
+          blocked += 1;
+          logger.warn('AR reconcile: recognition re-drive blocked — deterministic non-retriable code', {
+            receivableId: receivable.id, code: skipCode,
+          });
+        } else {
+          failed += 1;
+          logger.warn('AR reconcile: recognition re-drive failed', { receivableId: receivable.id, error });
+        }
       }
     }
 
@@ -487,12 +501,21 @@ export class ReceivableService {
           });
         }
       } catch (error) {
-        logger.warn('AR reconcile: receipt re-drive failed', { receiptId: receipt.id, error });
+        const skipCode = syncSkipErrorCode(error);
+        if (skipCode) {
+          blocked += 1;
+          logger.warn('AR reconcile: receipt re-drive blocked — deterministic non-retriable code', {
+            receiptId: receipt.id, code: skipCode,
+          });
+        } else {
+          failed += 1;
+          logger.warn('AR reconcile: receipt re-drive failed', { receiptId: receipt.id, error });
+        }
       }
     }
 
-    logger.info('AR reconcile pass complete', { recognitionsPosted, receiptsPosted, finalized });
-    return { recognitionsPosted, receiptsPosted, finalized };
+    logger.info('AR reconcile pass complete', { recognitionsPosted, receiptsPosted, finalized, blocked, failed });
+    return { recognitionsPosted, receiptsPosted, finalized, blocked, failed };
   }
 
   // ---------------------------------------------------------------------------
@@ -553,6 +576,7 @@ export class ReceivableService {
       unitId: scope.unitId,
       date: dto.issueDate,
       description: this.recognitionDescription(receivable),
+      auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
       sourceId: receivable.id,
       sourceDocument: {
@@ -577,6 +601,7 @@ export class ReceivableService {
       unitId: scope.unitId,
       date: this.toDateOnly(receivable.issueDate),
       description: this.recognitionDescription(receivable),
+      auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
       sourceId: receivable.id,
       sourceDocument: {
@@ -601,6 +626,7 @@ export class ReceivableService {
       unitId: scope.unitId,
       date: dto.receivedAt,
       description: this.receiptDescription(receivable),
+      auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
       sourceId: receipt.id,
       lines: [
@@ -621,6 +647,7 @@ export class ReceivableService {
       unitId: scope.unitId,
       date: this.toDateOnly(receipt.receivedAt),
       description: this.receiptDescription(receivable),
+      auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
       sourceId: receipt.id,
       lines: [
@@ -638,6 +665,16 @@ export class ReceivableService {
   private receiptDescription(receivable: Receivable): string {
     const doc = receivable.documentNumber ? ` (Fatura ${receivable.documentNumber})` : '';
     return `Recebimento de cliente — ${receivable.customerName}${doc}`;
+  }
+
+  // TRIAGEM-AUDIT-2026-08-15 A2, fork (b) — MIRROR of PayableService: PII-sanitized counterparts fed
+  // to PostingService as `auditDescription`. The row/ECD-facing description keeps `customerName`.
+  private recognitionAuditDescription(receivable: Receivable): string {
+    return `Contas a receber — Fatura ${receivable.documentNumber ?? 's/nº'}`;
+  }
+
+  private receiptAuditDescription(receivable: Receivable): string {
+    return `Recebimento de cliente — Fatura ${receivable.documentNumber ?? 's/nº'}`;
   }
 
   /** DateTime → date-only YYYY-MM-DD (UTC, matching how postEntry parses date-only strings). */

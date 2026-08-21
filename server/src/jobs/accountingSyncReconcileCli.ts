@@ -26,9 +26,12 @@ export async function runCli(): Promise<number> {
       synced: summary.synced,
       idempotentHits: summary.idempotentHits,
       failed: summary.failed,
+      blocked: summary.blocked ?? 0,
     });
     // Operator-facing structured line on stdout.
     process.stdout.write(`${JSON.stringify({ job: JOB, ...summary })}\n`);
+    // Exit code stays failed-only: `blocked` is a deliberate, deterministic skip (not a retry-worthy
+    // failure), so it must not flip the CLI's exit code — only surface it in the summary above.
     return summary.failed === 0 ? 0 : 1;
   } catch (error) {
     logger.error(JOB, {

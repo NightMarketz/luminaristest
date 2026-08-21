@@ -51,6 +51,38 @@ describe('AccountingSyncScheduler', () => {
       expect(complete).toHaveProperty('startedAt');
     });
 
+    it('includes blocked in the complete summary and logs at warn when blocked>0 (A3)', async () => {
+      const { scheduler, log } = build(
+        jest.fn(async () => summary({ total: 3, synced: 1, idempotentHits: 0, failed: 0, blocked: 2 })),
+      );
+      await scheduler.runOnce();
+
+      // The complete event must not be silently dropped: with blocked>0 it has to be logged at
+      // `warn`, because logger.ts only persists error|warn to the NDJSON sink (info is console-only).
+      expect(log.info.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
+      const complete = log.warn.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(complete).toMatchObject({
+        job: 'accounting_sync_reconcile',
+        event: 'complete',
+        total: 3,
+        synced: 1,
+        idempotentHits: 0,
+        failed: 0,
+        blocked: 2,
+      });
+    });
+
+    it('logs complete at info (not warn) when blocked=0 and failed=0', async () => {
+      const { scheduler, log } = build(
+        jest.fn(async () => summary({ total: 1, synced: 1, idempotentHits: 0, failed: 0, blocked: 0 })),
+      );
+      await scheduler.runOnce();
+
+      const complete = log.info.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(complete).toMatchObject({ event: 'complete', blocked: 0 });
+      expect(log.warn.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
+    });
+
     it('skips an overlapping run (process-local lock) and logs skipped_due_to_lock', async () => {
       let release!: () => void;
       const gate = new Promise<void>((r) => {
