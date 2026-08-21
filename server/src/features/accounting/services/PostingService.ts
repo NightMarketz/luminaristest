@@ -23,6 +23,20 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 
 /**
+ * Uma linha de lançamento já resolvida (conta-folha + tags de dimensão), pré-tx — shape antes
+ * anônimo dentro de `postEntry`, nomeado aqui porque `resolveEntryLines` (F-P1-6b1) agora é
+ * compartilhado por `postEntry` e `validateEntry`.
+ */
+interface ResolvedPostingLine {
+  accountId: string;
+  accountCode: string;
+  requiresDimension: boolean;
+  debitCents: number;
+  creditCents: number;
+  dimensions: Array<{ definitionId: string; valueId: string }>;
+}
+
+/**
  * PostingService — double-entry posting engine, FIRST-CLASS PRISMA (no DynamicTable).
  *
  * All public methods receive an AccountingScope (resolved by the controller from the
@@ -158,29 +172,13 @@ export class PostingService {
   }
 
   /**
-   * Post a balanced double-entry journal entry. Creates a `journal_entries` row in
-   * status `Posted` plus its `postings` legs, atomically. Σdebit must EXACTLY equal
-   * Σcredit (integer cents) and be > 0. When `sourceId` is given, posting is idempotent.
+   * Cents choke-point guard (Council 1.5 / ACC-014) + Σdébito=Σcrédito balance invariant —
+   * EXTRACTED VERBATIM from the original `postEntry` body (F-P1-6b1, ADR-P1 §8 emenda) so
+   * `postEntry` and `validateEntry` can never drift on what counts as "balanced": both call this
+   * SAME function, same order (cents guard first, then the sum), same error types/messages.
+   * Pure/sync, throws on the first violation.
    */
-  async postEntry(scope: AccountingScope, input: PostEntryInput): Promise<JournalEntryWithPostings> {
-    if (!this.policy.canPost(scope)) {
-      throw new ForbiddenError('Você não tem permissão para postar lançamentos.');
-    }
-    const { userId, unitId } = accountingScopeWhere(scope);
-
-    // PERIOD GATE — preflight (fast rejection before tx); authoritative gate is inside the tx.
-    await this.assertPeriodOpen(scope, input.date);
-
-    await this.ensureChartOfAccounts(scope);
-
-    // CENTS CHOKE-POINT GUARD (Council 1.5 / ACC-014) — the write authority validates the cents
-    // themselves, not just the balance. Border guards (DTO Zod, import validators) keep the
-    // friendly-400 UX for direct API input, but bridge/mapper callers bypass every DTO — this is
-    // the single point ALL write paths cross. Two distinct rejections:
-    //   • non-integer/negative cents → ValidationError (malformed money can NEVER enter the ledger);
-    //   • integer above the Int32 storage ceiling → MaxCentsExceededError with its OWN code
-    //     ('MAX_CENTS_EXCEEDED', distinct from period-closed) so best-effort bridges and the
-    //     reconcile re-drive can skip it as a POISON event instead of retrying forever.
+  private assertCentsAndBalance(input: PostEntryInput): { sumDebit: number; sumCredit: number } {
     for (const line of input.lines) {
       if (
         !Number.isInteger(line.debitCents) ||
@@ -198,12 +196,81 @@ export class PostingService {
       }
     }
 
-    // BALANCE INVARIANT — integer cents, EXACT equality (no float/epsilon, Contract §2.1).
     const sumDebit = input.lines.reduce((acc, line) => acc + line.debitCents, 0);
     const sumCredit = input.lines.reduce((acc, line) => acc + line.creditCents, 0);
     if (sumDebit !== sumCredit || sumDebit <= 0) {
       throw new ValidationError('Lançamento desbalanceado: Σdébito deve igualar Σcrédito.');
     }
+    return { sumDebit, sumCredit };
+  }
+
+  /**
+   * Resolve every line's account (leaf-only) AND its dimension tags — EXTRACTED VERBATIM from
+   * the original `postEntry` body (F-P1-6b1). Read-only, no persistence. Shared by `postEntry`
+   * and `validateEntry` so a binding validated OK is guaranteed to resolve identically when the
+   * real post runs later.
+   */
+  private async resolveEntryLines(
+    scope: AccountingScope,
+    input: PostEntryInput,
+  ): Promise<ResolvedPostingLine[]> {
+    const resolvedLines: ResolvedPostingLine[] = [];
+    for (const line of input.lines) {
+      const account = await this.resolveLeafAccount(scope, line.accountCode);
+      const dimensions = line.dimensions?.length
+        ? await resolveLineDimensions(this.dimensionRepo, scope, line.dimensions)
+        : [];
+      resolvedLines.push({
+        accountId: account.id,
+        accountCode: account.code,
+        requiresDimension: account.requiresDimension,
+        debitCents: line.debitCents,
+        creditCents: line.creditCents,
+        dimensions,
+      });
+    }
+    return resolvedLines;
+  }
+
+  /**
+   * SEC-B1-1 mandatory-dimension gate wrapper — EXTRACTED VERBATIM from the original in-tx call
+   * (`if (sourceType !== CLOSING_SOURCE_TYPE) assertLegDimensions(...)`, F-P1-6b1). Pure function
+   * over already-resolved lines (the account's `requiresDimension` and each line's
+   * `dimensions.length` were already read by `resolveEntryLines`) — safe to call outside a
+   * transaction with the EXACT verdict a real post would reach in-tx, since nothing it reads is
+   * re-fetched from the DB at call time.
+   */
+  private assertDimensionGateForLines(sourceType: string, resolvedLines: ResolvedPostingLine[]): void {
+    if (sourceType !== CLOSING_SOURCE_TYPE) {
+      assertLegDimensions(
+        resolvedLines.map((l) => ({
+          accountCode: l.accountCode,
+          requiresDimension: l.requiresDimension,
+          dimensionCount: l.dimensions.length,
+        })),
+      );
+    }
+  }
+
+  /**
+   * Post a balanced double-entry journal entry. Creates a `journal_entries` row in
+   * status `Posted` plus its `postings` legs, atomically. Σdebit must EXACTLY equal
+   * Σcredit (integer cents) and be > 0. When `sourceId` is given, posting is idempotent.
+   */
+  async postEntry(scope: AccountingScope, input: PostEntryInput): Promise<JournalEntryWithPostings> {
+    if (!this.policy.canPost(scope)) {
+      throw new ForbiddenError('Você não tem permissão para postar lançamentos.');
+    }
+    const { userId, unitId } = accountingScopeWhere(scope);
+
+    // PERIOD GATE — preflight (fast rejection before tx); authoritative gate is inside the tx.
+    await this.assertPeriodOpen(scope, input.date);
+
+    await this.ensureChartOfAccounts(scope);
+
+    // CENTS CHOKE-POINT GUARD (Council 1.5 / ACC-014) + BALANCE INVARIANT — shared with
+    // validateEntry (F-P1-6b1); see assertCentsAndBalance above for the rejection rationale.
+    const { sumDebit } = this.assertCentsAndBalance(input);
 
     const sourceType = input.sourceType ?? 'manual';
 
@@ -222,29 +289,8 @@ export class PostingService {
 
     // Resolve every line's account (leaf-only) AND its dimension tags BEFORE opening the transaction.
     // Dimension resolution is metadata-only and runs AFTER the balance check above — it can NEVER
-    // change Σdébito=Σcrédito (ACC-024).
-    const resolvedLines: Array<{
-      accountId: string;
-      accountCode: string;
-      requiresDimension: boolean;
-      debitCents: number;
-      creditCents: number;
-      dimensions: Array<{ definitionId: string; valueId: string }>;
-    }> = [];
-    for (const line of input.lines) {
-      const account = await this.resolveLeafAccount(scope, line.accountCode);
-      const dimensions = line.dimensions?.length
-        ? await resolveLineDimensions(this.dimensionRepo, scope, line.dimensions)
-        : [];
-      resolvedLines.push({
-        accountId: account.id,
-        accountCode: account.code,
-        requiresDimension: account.requiresDimension,
-        debitCents: line.debitCents,
-        creditCents: line.creditCents,
-        dimensions,
-      });
-    }
+    // change Σdébito=Σcrédito (ACC-024). Shared with validateEntry (F-P1-6b1).
+    const resolvedLines = await this.resolveEntryLines(scope, input);
 
     try {
       // ATOMIC — entry header + all legs commit/roll back together.
@@ -266,15 +312,7 @@ export class PostingService {
         // no other machine writer needs the exemption. Boundary note: sourceType is caller-supplied,
         // but a caller forging 'closing' only skips a METADATA completeness gate (ACC-024 — no ledger
         // value) at the cost of mislabeling its entry as DRE-excluded — audited like every post.
-        if (sourceType !== CLOSING_SOURCE_TYPE) {
-          assertLegDimensions(
-            resolvedLines.map((l) => ({
-              accountCode: l.accountCode,
-              requiresDimension: l.requiresDimension,
-              dimensionCount: l.dimensions.length,
-            })),
-          );
-        }
+        this.assertDimensionGateForLines(sourceType, resolvedLines);
 
         const fiscalYear = this.fiscalYearFrom(input.date);
         const entryNumber = await this.postingRepo.nextEntryNumber(scope, fiscalYear, tx);
@@ -399,6 +437,52 @@ export class PostingService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Modo VALIDATE-ONLY de `postEntry` (BE-INCR-BINDING-PRESS, F-P1-6b1 — emenda §8 do
+   * ADR-P1-binding-press.md, ÚNICA refatoração interna permitida no núcleo imutável). Roda TODAS
+   * as validações que `postEntry` roda antes de gravar — policy (`canPost`), preflight de período,
+   * guarda de centavos + teto `MAX_CENTS`, invariante Σdébito=Σcrédito, resolução de conta-folha
+   * ativa por linha e o gate de dimensão obrigatória (SEC-B1-1) — reusando as MESMAS funções
+   * privadas que `postEntry` usa (`assertCentsAndBalance`/`resolveEntryLines`/
+   * `assertDimensionGateForLines`), então as duas rotas nunca podem divergir sobre o que é válido.
+   * NÃO PERSISTE: nenhuma transação é aberta, nenhuma `JournalEntry`/`Posting` é gravada, nenhum
+   * `AuditEvent` é emitido, nenhum `entryNumber` é consumido (a numeração só é obtida DENTRO da tx
+   * de `postEntry`, nunca aqui). Resolve `void` em sucesso; rejeita (throw) no primeiro erro, com
+   * o MESMO tipo/mensagem que `postEntry` lançaria para o mesmo input.
+   *
+   * Design source: `docs/accounting/P1-DOSSIER-validador.md` §2.2/§2.3 (opção A — reuso read-only
+   * das validações pré-tx, sem abrir transação nenhuma — compatível ao pé da letra com o
+   * não-objetivo §8 do ADR-P1: "não toca PostingService" lido como "não muda o contrato/
+   * comportamento público de `postEntry`", não como "zero linha do arquivo muda").
+   *
+   * Duas divergências DELIBERADAS em relação a `postEntry`, ambas necessárias para o contrato
+   * "sem persistir" e ambas rastreáveis ao dossiê:
+   *   1. NÃO chama `ensureChartOfAccounts` — o dossiê §2.2 não lista esse passo entre os que já
+   *      rodam pré-tx e são reaproveitáveis; ele GRAVA contas canônicas ausentes (efeito colateral
+   *      de escrita), o que violaria "sem persistir" se rodasse aqui. Consequência: uma conta
+   *      canônica ainda não semeada é reportada como erro de conta inexistente por este modo,
+   *      mesmo que um `postEntry` real a criasse sob demanda — aceitável porque o validador da
+   *      Prensa roda sobre o chart JÁ compilado do tenant (Corpo C do BRIEF), não sobre um tenant
+   *      vazio.
+   *   2. NÃO faz o check de idempotência (`journalEntryRepo.findBySource`) nem abre a tx que
+   *      fecha o TOCTOU de período (`assertPeriodOpenTx`) — nenhum dos dois é uma "validação" do
+   *      INPUT: o primeiro decide se retorna um lançamento já existente (irrelevante para "este
+   *      input validaria?"), o segundo só faz sentido dentro de uma transação de escrita real.
+   *      O `postEntry` real continua sendo a autoridade de período quando o binding compilado
+   *      roda em produção (T6 intocado) — o dossiê §2.2 trata isso como aceitável por desenho,
+   *      já que o validador roda no momento da compilação do binding, não a cada postagem.
+   */
+  async validateEntry(scope: AccountingScope, input: PostEntryInput): Promise<void> {
+    if (!this.policy.canPost(scope)) {
+      throw new ForbiddenError('Você não tem permissão para postar lançamentos.');
+    }
+    await this.assertPeriodOpen(scope, input.date);
+    this.assertCentsAndBalance(input);
+    const sourceType = input.sourceType ?? 'manual';
+    const resolvedLines = await this.resolveEntryLines(scope, input);
+    this.assertDimensionGateForLines(sourceType, resolvedLines);
   }
 
   /**
