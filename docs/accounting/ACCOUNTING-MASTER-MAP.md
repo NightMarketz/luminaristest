@@ -59,6 +59,21 @@
 > que a fila drenou (2026-08-13) — os 4 gates humanos do Bloco A **continuam abertos e continuam
 > sendo o caminho do "100% provado"** do vertical 1; a moratória de auditoria segue intacta.
 >
+> **Atualização 2026-08-22 — fold de higiene: BE-INCR-BINDING-PRESS MERGEADO; volta a não haver nó ⏳.**
+> A prensa de binding fechou em `main` (**PR #211**, commit de feature `04582d8a`): módulo irmão
+> `features/accountingBinding/` (catálogo de arquétipos, tabela `AccountingBinding` + validador
+> validate-only, intérprete fixo) e — o que muda **runtime** — **o swap do salão está ATIVO**:
+> [`factory.ts:174`](../../server/src/lib/factory.ts:174) monta os `IAccountingEventMapper` a partir de
+> `SALON_BINDING_V1` via `InterpretedEventMapper`; os 5 mappers escritos à mão saíram do factory
+> (verificado em disco, não neste doc). Gates de saída: golden test byte-idêntico
+> (`goldenPhase0.test.ts`/`goldenPhase1.test.ts`) + fronteira de import (`importBoundary.test.ts`).
+> **Consequência para o Bloco A:** o browser sign-off (item 4) ganhou alvo que o `RUNBOOK-H2` **não
+> cobria** — o runbook foi preparado em **2026-08-17**, quatro dias ANTES do swap, e seus 5 passos não
+> incluem nenhuma venda de salão. Os 5 eventos (`salon.sale.finalized`, `salon.sale.settled`,
+> `salon.sale.returned`, `salon.package.sold`, `salon.sale.cogs`) hoje nascem do intérprete, e
+> **byte-identidade em teste não é evidência de runtime** — emenda ao H2 aplicada no mesmo PR deste
+> fold. Fila de código: **vazia de novo**; os 4 gates humanos seguem abertos; moratória intacta.
+>
 > Fold anterior (2026-07-23, HEAD `69ab527`) — mantido por rastreabilidade (inclui **PR #150** — PLAN/BRIEF
 > da NF-e + emenda do ADR — e **PR #151** — fix da allowlist de auditoria + seção CMV no DRE, achados na
 > primeira sessão de browser sign-off, ver §5.2). Antes disso, `2a8d18c` trouxe o **smoke-migration-gate do
@@ -171,7 +186,7 @@ flowchart TD
 **Núcleo 1 (ledger confiável) — fechado.** Núcleo de operação/relatório/evidência/troca de dados — fechado.
 Ramo compliance/SPED em `main`: proveniência (INCR-8), mapeamento referencial (INCR-9/9B + FE A1a PR #89),
 **ECD**, **apuração/encerramento**, **split de receita**, **ECF Fase 2** e **CNAB 240** — todos mergeados.
-**INCR-AP (Contas a Pagar)** — primeira subrazão first-class — mergeado (§3; não há nó ⏳ corrente).
+**INCR-AP (Contas a Pagar)** — primeira subrazão first-class — mergeado (§3).
 Deploy-readiness: gates HELD de INCR-1/INCR-2 **fechados 2026-07-14** e `RISK-INCR3-MIGRATION-001`
 **fechado** (PR #98/#99, DEPLOY-CLEARED). Resíduos herdados consolidados na fila **§5.1 Bloco A** —
 todos gates humanos/dado externo: sign-off no browser (INCR-6 A–J, conciliação, uploads, recibos,
@@ -179,7 +194,24 @@ Contas a Pagar) e sign-off no PVA (ECD/Apuração/ECF). FE-INCR-AP fechou (PR #1
 
 ---
 
-## 3. Incremento corrente — ⏳ BE-INCR-NFE **implementado fora de `main`**, merge travado por dado externo
+## 3. Fila de integração — BE-INCR-NFE **implementado fora de `main`**, merge travado por dado externo
+
+> **NÃO é nó ⏳ (fold 2026-08-22).** Não existe incremento corrente: a prensa P1 fechou (PR #211) e a
+> fila de código está vazia. Este item é **fila de integração** — código pronto e revisado esperando
+> **dado externo**. Mapa de colisão do rebase, medido em 2026-08-22 (`merge-base` `dc7fd120`): a branch
+> toca **33 arquivos** e **16 colidem** com o que a `main` mudou desde a base. Por risco:
+> **(a) migração fora de ordem** — `20260723190934_nfe_multi_item_discriminator` ordena **antes** de duas
+> migrações já aplicadas (`20260814120000_counterparty_notnull`, `20260821090000_accounting_binding`);
+> renomear a pasta para timestamp posterior antes de rodar qualquer coisa (nomes = verificado; drift do
+> `migrate dev` = inferido, o smoke-gate é o oráculo); **(b) `factory.ts`** — hunks da NF-e em
+> `@@443/@@568/@@613` (2 serviços + extração da instância de AP) contra a região `@@85-186` reescrita
+> pelo P1: conflito mecânico, mas o **AP compartilhado** pede re-review; **(c) `PayableDto`** (+71 na
+> branch) contra os filtros de subledger da `main` → conflito real **e** regenerar
+> `__dto-shapes__.json`; **(d) `PostingService`** (+107) — maior delta de lógica; **(e) contrato**
+> (`openapi.json`, `docs.paths.ts`, `routes/index.ts`, `openapi-paths.test.ts`) → `npm run docs:generate`.
+> **Ordem da sessão de integração:** XML real PRIMEIRO (a trava do CI é deliberada; rebasear antes só
+> gera retrabalho) → renomear migração → rebase → `tsc`×2 → jest accounting → `docs:generate` →
+> snapshot de DTO → re-review de conflito → smoke-gate → merge.
 
 > **BE-INCR-NFE (item 11 da fila §5.1) — código PRONTO e REVISADO na branch `claude/nfe-fase-a`**
 > (HEAD `68df00f4`; verificado com `git branch --contains`, não neste doc). Não é "diferido sem código":
@@ -306,7 +338,7 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 | 1 | ~~`FE-INCR-AP` — UI de Contas a Pagar~~ | FE increment | ✅ **Mergeado 2026-07-14** (PR #106 `bdd78c0`, durante este mesmo fold): aba Contas a Pagar (14ª do painel) + `accountsPayable.service` + i18n pt/en + testes. Resíduo remanescente = browser sign-off → item 4. |
 | 2 | ~~Fold de higiene do master map (ORCH-007)~~ | docs | ✅ **Feito neste fold** (2026-07-14): cabeçalho re-referenciado a `b245825`, AP/Recibos no mermaid §2, `RISK-INCR3-MIGRATION-001` marcado fechado, esta fila registrada. |
 | 3 | **Sign-off humano no PVA** — ECD, Apuração, ECF | gate humano | Único jeito de provar os 3 SPEDs "de verdade"; bloqueia declarar Núcleo 5 fechado. Depende do humano (importar no validador oficial). |
-| 4 | **Sign-offs de browser pendentes** — INCR-6 A–J, conciliação, OFX/CNAB upload, recibos, i18n, Compliance A1a, **Contas a Pagar (FE-INCR-AP)**, **Contas a Receber (FE-INCR-AR)**, **Dimensões (FE-INCR-DIM)** | gate humano | **VARREDURA DE AGENTE FEITA 2026-07-23** sobre o `dev.db` real (cópia byte-idêntica, build de produção) — **achou e corrigiu 2 bugs reais de runtime, PR #151 mergeado (ver §5.2)**. Confirmado ao vivo (500→200): AP (ciclo criar→pagar), AR (criar→receber), Dimensões (eixo+valor+relatório), Conciliação (import de extrato + auto-match), Contrapartes, toggle de dimensão obrigatória, DRE com seção CMV, BP/DFC/Comparativo/Livro Diário/Compliance/Import-Export — **zero erro de console**. **Resíduo humano restante:** (a) o olho humano final de carimbo; (b) **upload de extrato POR CLIQUE** (OFX/CNAB) — o painel do agente não sobe arquivo, só o backend foi exercitado via fetch autenticado; (c) recibos PDF (puppeteer). Continua sendo o maior gargalo não-executado, mas agora **de-riscado** — as telas param de quebrar. |
+| 4 | **Sign-offs de browser pendentes** — INCR-6 A–J, conciliação, OFX/CNAB upload, recibos, i18n, Compliance A1a, **Contas a Pagar (FE-INCR-AP)**, **Contas a Receber (FE-INCR-AR)**, **Dimensões (FE-INCR-DIM)** | gate humano | **VARREDURA DE AGENTE FEITA 2026-07-23** sobre o `dev.db` real (cópia byte-idêntica, build de produção) — **achou e corrigiu 2 bugs reais de runtime, PR #151 mergeado (ver §5.2)**. Confirmado ao vivo (500→200): AP (ciclo criar→pagar), AR (criar→receber), Dimensões (eixo+valor+relatório), Conciliação (import de extrato + auto-match), Contrapartes, toggle de dimensão obrigatória, DRE com seção CMV, BP/DFC/Comparativo/Livro Diário/Compliance/Import-Export — **zero erro de console**. **Resíduo humano restante:** (a) o olho humano final de carimbo; (b) **upload de extrato POR CLIQUE** (OFX/CNAB) — o painel do agente não sobe arquivo, só o backend foi exercitado via fetch autenticado; (c) recibos PDF (puppeteer); **(d) NOVO desde o swap do salão (fold 2026-08-22)** — as 5 rotinas de salão (`sale.finalized`, `sale.settled`, `sale.returned`, `package.sold`, `sale.cogs`) passaram a nascer do intérprete de binding (PR #211); o `RUNBOOK-H2` é de 2026-08-17, ANTES do swap, e não as cobria — emenda aplicada. Continua sendo o maior gargalo não-executado, mas agora **de-riscado** — as telas param de quebrar. |
 | 5 | **Chromium smoke-launch-gate no deploy** (recibos/puppeteer) | gate de deploy | Só relevante no próximo deploy real; não bloqueia dev. |
 | 6 | **Import do arquivo oficial RFB "PJ em Geral"** (Fork 2 referencial) | dado externo | Ativa a validação analytic-only já preparada (conversor `rfb-referential-to-catalog.mjs` pronto). Espera o contador — não é trabalho de código. |
 
@@ -399,7 +431,14 @@ mas **os increments contábeis estacionaram os endpoints de altíssimo valor** (
 smoke-gate DEPLOY-CLEARED PR #99 — ver T12). Nenhum risco de migração aberto; o reflexo permanece:
 toda migração que tocar `journal_entries` re-roda o smoke-migration-gate sobre cópia do dev.db real.
 
-**Leitura em 2 linhas (fold de 2026-08-13 — supersede o fold de 2026-08-12):** a fila de código ratificado
+**Leitura em 2 linhas (fold de 2026-08-22 — supersede o fold de 2026-08-13):** a fila de código encheu
+uma vez (prensa de binding, Fase P1) e **drenou de novo** — `BE-INCR-BINDING-PRESS` está em `main`
+(PR #211) com o swap do salão **ativo**, e não há nó ⏳. **Os 4 nós de entrada seguem humanos/externos**
+(PVA, browser sign-off + deploy, NF-e real, arquivo RFB do contador) — e o swap acrescentou **alvo** ao
+browser sign-off, não código: byte-identidade provada em teste não substitui uma venda de salão feita
+na tela.
+
+**Leitura anterior (fold de 2026-08-13 — supersede o fold de 2026-08-12):** a fila de código ratificado
 **drenou por completo** — a NF-e, último item sequenciado, **está escrita e revisada** (branch
 `claude/nfe-fase-a`) e o que a segura é o XML real; **e o último código sem gate, busca/filtros nos
 subledgers, fechou** (BE PR #190 `aba541da` + FE branch `feat/fe-subledger-filters`, ver atualização
@@ -480,6 +519,13 @@ Antes de gerar "novo", reuse (Contrato §0). Confirmado por código:
 | **5 — Compliance** | 🟡 | ~70% | ~~mapeamento referencial~~ (✅ BE-INCR-9, PR #58; ~~autoria em lote Track A~~ PR #71; ~~catálogo RFB + validação analytic-only Track B~~ PR #74, smoke-gate PR #75 — Fork 2/import do arquivo oficial = dado externo); ~~geração do arquivo ECD~~ (✅ BE-INCR-SPED-ECD, PR #62, merge `9deb928`); ~~apuração/encerramento (I350/I355)~~ (✅ BE-INCR-SPED-APURACAO, PR #63, merge `1465bae`; residual PVA); ~~split de receita por natureza (pré-req ECF-Presumido)~~ (✅ BE-INCR-REVENUE-SPLIT, PR #66); ~~ECF (arquivo fiscal) Fase 2~~ (✅ BE-INCR-SPED-ECF, PR #78, merge `70caa1c`; residual PVA); ~~CNAB 240~~ (✅ BE-INCR7-CNAB, PR #61, merge `1088e32`); ~~recibos/comprovantes~~ (✅ BE-RECIBOS Fase A+B, PR #84; comprovante de lançamento PDF via puppeteer, no-persist; ADR-RECIBOS-pdf-generation); ~~FE do referencial~~ (✅ A1a aba Compliance, PR #89 `b88f628`); falta ECF Fase 3 (pós sign-off PVA), pacotes; **gate humano dominante: sign-off PVA dos 3 SPEDs** (item 3 da fila §5.1) |
 
 **Posição:** fundação (Núcleo 1) completa, Núcleo 2 mais da metade; ramo compliance bem avançado. Geração do arquivo ECD (BE-INCR-SPED-ECD) **mergeada** (PR #62), assim como a **apuração/encerramento** (BE-INCR-SPED-APURACAO, PR #63, residual PVA) e o **split de receita por natureza** (BE-INCR-REVENUE-SPLIT, PR #66). Os três pré-requisitos de dado da ECF (proveniência, mapeamento referencial, split de receita) estão em `main`. **ECF** (geração do arquivo fiscal, Fase 2, PR #78) e **CNAB 240** (PR #61) foram **mergeados** em `main` (2026-07-12). Três relatórios de gestão (Núcleo 4) — **DFC** (fluxo de caixa, método indireto), **balancete comparativo** (variação mensal) e **Livro Diário** (registro cronológico) — foram integrados em `main` em série (Fase B, 2026-07-12), read-only, first-class Prisma, zero migração. **Recibos/comprovantes** (comprovante de lançamento PDF, Fase A+B) **mergeado** em `main` (PR #84; residual = sign-off humano no browser + smoke-launch-gate do Chromium no deploy). **INCR-AP (Contas a Pagar)** — primeira subrazão first-class, padrão canônico p/ AR — **mergeado** (PR #102 + hardening #103/#105) **com FE** (aba Contas a Pagar, PR #106). Não há incremento ⏳ corrente. Os próximos passos estão **priorizados na fila §5.1**: no Bloco A não resta código — só gates humanos (PVA + browser sign-offs) e dado externo (arquivo RFB); Bloco B ordena as frentes novas ⚫ (aprovação → AR → dimensões…), cada uma via ADR + ratificação humana.
+
+**Atualização 2026-08-22 (fold):** a frase "Núcleo 2 mais da metade" acima está vencida — a própria
+linha do Núcleo 2 já registra o fechamento do último resíduo estrutural (busca/filtros dos subledgers,
+BE PR #190 + FE `feat/fe-subledger-filters`): resíduo do núcleo = browser sign-off, só. A prensa de
+binding (P1, PR #211) **não move nenhum destes 5 núcleos**: é camada de plataforma
+(`ROADMAP-PLATAFORMA.md` Fase P1), medida pelo `PLANO-MODULO-COMPLETO-REPLICAVEL.md` — Degrau 1
+fechado, Degrau 0 (4 oráculos) e Degrau 2 (forks F-P2-2..4) abertos.
 
 ---
 
