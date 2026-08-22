@@ -33,7 +33,9 @@ const { options } = require('../../scripts/generate-openapi');
 //    cannot miss a path that was never counted, and the junk/$ref guards only inspect what the
 //    spec DOES contain. Catching it needs a route-table-vs-spec diff (registered path+method
 //    with no matching spec entry). Not built — recorded in ADR-ANALYTICS-DEFS F-AD6.6 item 4.
-const BASELINE = 138;
+// +3 (BE-INCR-BINDING-PRESS, item 15 do BRIEF): POST /api/accounting-binding/{compile,validate},
+//    GET /api/accounting-binding.
+const BASELINE = 141;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

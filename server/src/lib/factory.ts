@@ -88,11 +88,21 @@ import { InventoryService } from '../features/accounting/services/InventoryServi
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
-import { SalonSaleFinalizedMapper } from '../features/accounting/sync/mappers/SalonSaleFinalizedMapper';
-import { SalonSaleCogsMapper } from '../features/accounting/sync/mappers/SalonSaleCogsMapper';
-import { SalonSaleReturnedMapper } from '../features/accounting/sync/mappers/SalonSaleReturnedMapper';
-import { SalonSaleSettledMapper } from '../features/accounting/sync/mappers/SalonSaleSettledMapper';
-import { SalonPackageSoldMapper } from '../features/accounting/sync/mappers/SalonPackageSoldMapper';
+// BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
+// o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
+// o intérprete fixo (`buildSalonAccountingMappers`, abaixo). As classes de mapper continuam
+// existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
+// só não são mais instanciadas em produção por este factory.
+import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
+import { SALON_BINDING_V1 } from '../features/accountingBinding/fixtures/salonBinding';
+import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
+// A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
+// POST /accounting-binding/compile|validate, GET /accounting-binding.
+import { AccountingBindingPolicy } from '../features/accountingBinding/policies/AccountingBindingPolicy';
+import { AccountingBindingRepository } from '../features/accountingBinding/repositories/AccountingBindingRepository';
+import { BindingCompileService } from '../features/accountingBinding/services/BindingCompileService';
+import type { IBindingAuditPort } from '../features/accountingBinding/services/BindingCompileService';
+import { BindingValidationService } from '../features/accountingBinding/services/BindingValidationService';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -125,6 +135,11 @@ import type { IAttachmentRepository } from '../features/attachments/repositories
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
+import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
+import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
+import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
+import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';
 import type { IAccountRepository } from '../features/accounting/repositories/IAccountRepository';
 import type { IJournalEntryRepository } from '../features/accounting/repositories/IJournalEntryRepository';
 import type { IPostingRepository } from '../features/accounting/repositories/IPostingRepository';
@@ -144,6 +159,108 @@ import type { IInventoryRepository } from '../features/accounting/repositories/I
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
+
+/**
+ * BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — constrói o array de `IAccountingEventMapper`
+ * do salão a partir do binding compilado (`fixtures/salonBinding.ts`, Corpo C) + o catálogo de
+ * arquétipos em código (`archetypes/catalog.ts`, Corpo A), via o intérprete fixo
+ * (`InterpretedEventMapper`, Corpo D) — em vez dos 5 mappers escritos à mão. Pré-condição deste
+ * swap: `goldenPhase1.test.ts` verde (item 12 do BRIEF) — a saída byte-idêntica está provada ANTES
+ * deste código existir, não depois. `AccountingSyncService` recebe exatamente o mesmo shape de
+ * array que recebia antes (`IAccountingEventMapper[]`) — zero linha tocada em
+ * `AccountingSyncPort`/`AccountingSyncService`/bridges.
+ */
+function buildSalonAccountingMappers(): IAccountingEventMapper[] {
+  return SALON_BINDING_V1.eventBindings.map((binding) => {
+    const archetype = archetypeCatalog.get(binding.archetypeKey);
+    if (!archetype) {
+      throw new Error(
+        `Binding do salão referencia o arquétipo '${binding.archetypeKey}' (eventKey ` +
+          `'${binding.eventKey}'), ausente do catálogo — fiação da Fase B quebrada.`,
+      );
+    }
+    return new InterpretedEventMapper(archetype, binding);
+  });
+}
+
+/**
+ * BE-INCR-BINDING-PRESS (item 15 do BRIEF, Fase B) — `BindingScope` (accountingBinding, própria,
+ * não importada de `features/accounting` — ver header de `IAccountingBindingRepository.ts`) tem os
+ * MESMOS 3 campos de `AccountingScope`, mais os 3 constantes de tenancy de ledger que o domínio
+ * contábil fixa hoje (`resolveAccountingScope`). Fora dos DOIS módulos (nem accountingBinding, nem
+ * accounting importam um ao outro além dos contratos nomeados) é o único lugar que pode traduzir
+ * um pro outro sem violar a fronteira do item 13.
+ */
+function bindingScopeToAccountingScope(scope: BindingScope): AccountingScope {
+  return {
+    ownerUserId: scope.ownerUserId,
+    actorUserId: scope.actorUserId,
+    unitId: scope.unitId,
+    ledgerCode: 'DEFAULT',
+    baseCurrencyCode: 'BRL',
+    timeZone: 'America/Sao_Paulo',
+  };
+}
+
+/**
+ * `ChartLookupPort` real (item 15 do BRIEF) — adapta `AccountRepository.findByCode` (contrato de
+ * `features/accounting`) para a porta que `BindingValidationService` (Corpo B) consome
+ * (`models/types.ts`, sem `scope` no parâmetro — o plano de contas É escopado por tenant, então o
+ * `scope` precisa estar fechado no adaptador ANTES da chamada, não vir por parâmetro). Só devolve
+ * `code/nature/acceptsEntries` — o resto do `Account` real (id, timestamps) não é do contrato.
+ */
+function buildAccountingBindingChartLookup(accountRepo: IAccountRepository, scope: AccountingScope): ChartLookupPort {
+  return {
+    async findLeafAccountByCode(code: string) {
+      const account = await accountRepo.findByCode(scope, code);
+      if (!account) return null;
+      return { code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries };
+    },
+  };
+}
+
+/**
+ * `PostingValidatePort` real (item 15 do BRIEF) — adapta `PostingService.validateEntry` (F-P1-6b1,
+ * modo validate-only de `postEntry`: roda TODAS as validações, não persiste nem grava audit —
+ * achado desta sessão de wiring: o método já existe em `PostingService.ts`, apesar do comentário
+ * de `BindingValidationService.ts` dizer "reservado, não acionado nesta fase" — a porta em si é
+ * real desde já, mesmo que `BindingValidationService.validate()` ainda não a chame; conectar a
+ * implementação real aqui é estritamente melhor que um stub inerte, e não muda nenhum
+ * comportamento hoje porque o consumidor não invoca o método). `scope` fechado no adaptador pela
+ * mesma razão do `ChartLookupPort` acima — `validateEntry(scope, input)` é escopado por tenant.
+ */
+function buildAccountingBindingPostingValidatePort(
+  postingService: PostingService,
+  scope: AccountingScope,
+): PostingValidatePort {
+  return {
+    async validateOnly(input: unknown) {
+      await postingService.validateEntry(scope, input as PostEntryInput);
+    },
+  };
+}
+
+/**
+ * `IBindingAuditPort` real (item 15 do BRIEF) — adapta `AuditService.append` (contrato de
+ * `features/accounting`) para a porta que `BindingCompileService` (Corpo C) consome
+ * (`services/BindingCompileService.ts`). `AuditService` é stateless sobre os 2 repos que recebe —
+ * uma instância local aqui é tão válida quanto a que os outros services do factory guardam em
+ * `auditService` (const do construtor, fora do alcance deste helper).
+ */
+function buildAccountingBindingAuditPort(auditRepo: IAuditRepository, postingRepo: IPostingRepository): IBindingAuditPort {
+  const auditService = new AuditService(auditRepo, postingRepo);
+  return {
+    async append(tx, scope, event) {
+      await auditService.append(tx, bindingScopeToAccountingScope(scope), {
+        actorUserId: scope.actorUserId,
+        eventType: event.eventType,
+        targetType: 'AccountingBinding',
+        targetId: event.targetId,
+        payload: event.payload,
+      });
+    },
+  };
+}
 
 export class ApplicationFactory {
   private static instance: ApplicationFactory;
@@ -399,13 +516,7 @@ export class ApplicationFactory {
     // engine). Depends on postingService (above); first non-controller consumer.
     // CRM Won deals no longer post directly (retired CrmOpportunityWonMapper) — they route
     // through the AR subledger via CrmReceivableBridge (ADR-CRM-AR-SEAM).
-    const accountingSyncService = new AccountingSyncService(postingService, [
-      new SalonSaleFinalizedMapper(),
-      new SalonSaleCogsMapper(),
-      new SalonSaleReturnedMapper(),
-      new SalonSaleSettledMapper(),
-      new SalonPackageSoldMapper(),
-    ]);
+    const accountingSyncService = new AccountingSyncService(postingService, buildSalonAccountingMappers());
 
     const accountingReportService = new AccountingReportService(
       this.repositories.account,
@@ -628,6 +739,33 @@ export class ApplicationFactory {
       ApplicationFactory.instance = new ApplicationFactory();
     }
     return ApplicationFactory.instance;
+  }
+
+  /**
+   * BE-INCR-BINDING-PRESS (item 15 do BRIEF, Fase B) — `BindingCompileService` por ESCOPO, não um
+   * singleton memoizado como o resto dos getters abaixo: `ChartLookupPort.findLeafAccountByCode`
+   * (porta que `BindingValidationService`, Corpo B, consome) não recebe `scope` por parâmetro —
+   * a leitura do plano de contas é escopada por tenant, então o adaptador só pode ser construído
+   * DEPOIS que o controller resolve o `scope` do request (ver comentário em
+   * `accountingBindingController.ts`, `AccountingBindingControllerDeps.buildCompileService`).
+   * `repo`/`policy` (stateless entre chamadas) poderiam ser memoizados, mas construí-los aqui de
+   * novo é barato e mantém este método com uma única responsabilidade (montar o grafo do escopo).
+   */
+  public getAccountingBindingCompileService(scope: BindingScope): BindingCompileService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    const chartLookup = buildAccountingBindingChartLookup(this.repositories.account, accountingScope);
+    const validationService = new BindingValidationService(
+      archetypeCatalog,
+      chartLookup,
+      buildAccountingBindingPostingValidatePort(this.services.posting, accountingScope),
+    );
+    const auditPort = buildAccountingBindingAuditPort(this.repositories.audit, this.repositories.posting);
+    return new BindingCompileService(
+      new AccountingBindingRepository(),
+      new AccountingBindingPolicy(),
+      validationService,
+      auditPort,
+    );
   }
 
   // Service Getters

@@ -47,6 +47,18 @@
 > frente** (ver §"Leitura em 2 linhas" e a régua de progresso Núcleo 2, ambas desatualizadas até esta
 > entrada). Residual: browser sign-off.
 >
+> **Atualização 2026-08-21 — ADR-P1 (Prensa de binding) RATIFICADO; novo nó ⏳.** O dono ratificou
+> fork-a-fork o [ADR-P1](../adr/ADR-P1-binding-press.md) (engine de binding em tempo de geração — Fase
+> P1 do `ROADMAP-PLATAFORMA.md`) após parecer independente, **revogou a pré-condição de PVA** para a
+> implementação, e ratificou **F-P2-1 → clínica estética** no [ADR-P2](../adr/ADR-P2-second-vertical.md)
+> (Draft). Incremento corrente ⏳ = **BE-INCR-BINDING-PRESS** (módulo irmão
+> `features/accountingBinding/`: catálogo de arquétipos 2 classes + tabela `AccountingBinding` +
+> validador com validate-only + intérprete fixo + golden test byte-idêntico + swap do salão
+> pós-golden). Dossiês de insumo em `docs/accounting/P1-DOSSIER-*.md` / `P2-DOSSIER-prova.md`;
+> pareceres em `docs/adr/PARECER-ARCHITECT-ADR-P{1,2}.md`. Este é o primeiro nó de código novo desde
+> que a fila drenou (2026-08-13) — os 4 gates humanos do Bloco A **continuam abertos e continuam
+> sendo o caminho do "100% provado"** do vertical 1; a moratória de auditoria segue intacta.
+>
 > Fold anterior (2026-07-23, HEAD `69ab527`) — mantido por rastreabilidade (inclui **PR #150** — PLAN/BRIEF
 > da NF-e + emenda do ADR — e **PR #151** — fix da allowlist de auditoria + seção CMV no DRE, achados na
 > primeira sessão de browser sign-off, ver §5.2). Antes disso, `2a8d18c` trouxe o **smoke-migration-gate do

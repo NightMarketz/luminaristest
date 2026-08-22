@@ -3340,4 +3340,97 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  */
+
+/**
+ * @openapi
+ * tags:
+ *   - name: AccountingBinding
+ *     description: >-
+ *       A Prensa (BE-INCR-BINDING-PRESS) — compilador + validador determinístico do binding
+ *       vertical→contabilidade (schema operacional do preset + plano de contas do tenant +
+ *       escolhas papel→conta → AccountingBindingV1 versionado). F-BP-2(b): sem bloqueante,
+ *       o compile auto-ativa; não há rota /activate separada.
+ *
+ * components:
+ *   schemas:
+ *     AccountingBindingChartAccountSnapshot:
+ *       type: object
+ *       required: [code, nature, acceptsEntries]
+ *       properties:
+ *         code:           { type: string }
+ *         nature:         { type: string }
+ *         acceptsEntries: { type: boolean }
+ *     AccountingBindingCompileRequest:
+ *       type: object
+ *       required: [unitId, sectorKey, operationalSchema, chart, eventBindings]
+ *       properties:
+ *         unitId:            { type: string }
+ *         sectorKey:         { type: string, description: "ex.: 'beautySalon' — casa com o preset instalado" }
+ *         operationalSchema: { type: object, description: "schema operacional do preset instalado, canonicalizado no hash de staleness" }
+ *         chart:
+ *           type: array
+ *           minItems: 1
+ *           items: { $ref: '#/components/schemas/AccountingBindingChartAccountSnapshot' }
+ *         eventBindings:
+ *           type: array
+ *           minItems: 1
+ *           items: { $ref: '#/components/schemas/AccountingBindingEventBinding' }
+ *
+ * paths:
+ *
+ *   # ─── ACCOUNTING BINDING (BE-INCR-BINDING-PRESS) ──────────────────────────
+ *
+ *   /api/accounting-binding/compile:
+ *     post:
+ *       summary: Compile a binding candidate — validates and persists (auto-activates on PASS)
+ *       description: >-
+ *         F-BP-2(b): sem issue bloqueante o validador determinístico aprova e a nova versão nasce
+ *         'Active' (a Active anterior, se houver, vira 'Superseded' atomicamente na mesma tx);
+ *         com bloqueante, a versão nasce 'Draft' e a Active vigente não é tocada. bindingVersion
+ *         é sempre monotônico — recompilar NUNCA edita uma versão existente (invariante 4).
+ *       tags: [AccountingBinding]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/AccountingBindingCompileRequest' }
+ *       responses:
+ *         '200': { description: 'binding + resultado de validação + status (Draft ou Active)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting-binding/validate:
+ *     post:
+ *       summary: Run the deterministic validator WITHOUT persisting (dry-run preview)
+ *       description: Mesmo corpo de /compile; devolve o candidato + o BindingValidationResult, nada é gravado.
+ *       tags: [AccountingBinding]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/AccountingBindingCompileRequest' }
+ *       responses:
+ *         '200': { description: 'candidate (AccountingBindingV1) + validation result — nunca persistido' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting-binding:
+ *     get:
+ *       summary: List the compiled bindings (versions) for a scope, most recent first
+ *       tags: [AccountingBinding]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: sectorKey, required: false, schema: { type: string } }
+ *         - { in: query, name: status, required: false, schema: { type: string, enum: [Draft, Active, Superseded] } }
+ *       responses:
+ *         '200': { description: 'array of AccountingBinding rows (payload is the serialized AccountingBindingV1)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ */
 export {};

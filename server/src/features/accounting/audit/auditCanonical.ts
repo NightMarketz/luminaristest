@@ -99,6 +99,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // never the file bytes or account balances (PII-safe).
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
   'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
+  // BE-INCR-BINDING-PRESS (item 15 do BRIEF) — A Prensa: compilação/ativação/reprovação de
+  // binding vertical→contabilidade. Emitido por `BindingCompileService` (features/accountingBinding,
+  // fora desta árvore — chega aqui via `IBindingAuditPort`, adaptado em `lib/factory.ts`). Só
+  // ids/versão/sectorKey/status/contagem — NUNCA nome/label (a compilação em si não carrega PII de
+  // terceiro, mas a disciplina do módulo é a mesma dos outros eventos: nada além do que está aqui).
+  'binding.compiled':          ['bindingId', 'sectorKey', 'bindingVersion', 'status'],
+  'binding.activated':         ['bindingId', 'sectorKey', 'bindingVersion'],
+  'binding.validation_failed': ['bindingId', 'sectorKey', 'bindingVersion', 'blockingCount'],
 };
 
 /**

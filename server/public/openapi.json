@@ -231,6 +231,62 @@
           }
         }
       },
+      "AccountingBindingChartAccountSnapshot": {
+        "type": "object",
+        "required": [
+          "code",
+          "nature",
+          "acceptsEntries"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "nature": {
+            "type": "string"
+          },
+          "acceptsEntries": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AccountingBindingCompileRequest": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "sectorKey",
+          "operationalSchema",
+          "chart",
+          "eventBindings"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "sectorKey": {
+            "type": "string",
+            "description": "ex.: 'beautySalon' — casa com o preset instalado"
+          },
+          "operationalSchema": {
+            "type": "object",
+            "description": "schema operacional do preset instalado, canonicalizado no hash de staleness"
+          },
+          "chart": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AccountingBindingChartAccountSnapshot"
+            }
+          },
+          "eventBindings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AccountingBindingEventBinding"
+            }
+          }
+        }
+      },
       "AgingReportQueryInput": {
         "type": "object",
         "required": [
@@ -1521,6 +1577,127 @@
         "properties": {
           "unitId": {
             "type": "string"
+          }
+        }
+      },
+      "AccountingBindingFieldSlot": {
+        "type": "object",
+        "required": [
+          "slotName",
+          "sourceField"
+        ],
+        "properties": {
+          "slotName": {
+            "type": "string"
+          },
+          "sourceField": {
+            "type": "string",
+            "description": "ex.: 'event.amount'"
+          },
+          "transform": {
+            "type": "string",
+            "enum": [
+              "cents_from_reais",
+              "identity"
+            ],
+            "default": "identity"
+          }
+        }
+      },
+      "AccountingBindingRoleSlot": {
+        "type": "object",
+        "required": [
+          "role",
+          "accountCode"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "AccountRole; papel com sub-chave usa 'papel:subChave' (ex.: caixa-por-metodo:Pix)"
+          },
+          "accountCode": {
+            "type": "string",
+            "description": "resolvido na compilação (F-P1-5a) — sempre literal"
+          }
+        }
+      },
+      "AccountingBindingEventBinding": {
+        "type": "object",
+        "required": [
+          "eventKey",
+          "archetypeKey",
+          "fieldSlots",
+          "roleSlots"
+        ],
+        "properties": {
+          "eventKey": {
+            "type": "string",
+            "description": "ex.: 'salon.sale.finalized' — mesma chave de AccountingEvent.sourceType"
+          },
+          "archetypeKey": {
+            "type": "string",
+            "enum": [
+              "revenue_recognition",
+              "settlement",
+              "reversal",
+              "performance_liability",
+              "cogs",
+              "subledger_command"
+            ]
+          },
+          "fieldSlots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AccountingBindingFieldSlot"
+            }
+          },
+          "roleSlots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AccountingBindingRoleSlot"
+            }
+          },
+          "descriptionTemplate": {
+            "type": "string",
+            "description": "texto setorial da descrição do lançamento, placeholder {sourceId} — opcional, default event.label"
+          }
+        }
+      },
+      "AccountingBindingV1": {
+        "type": "object",
+        "required": [
+          "sectorKey",
+          "bindingVersion",
+          "compiledAt",
+          "compiledFromHash",
+          "eventBindings"
+        ],
+        "properties": {
+          "sectorKey": {
+            "type": "string",
+            "description": "ex.: 'beautySalon' — casa com o preset instalado"
+          },
+          "bindingVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "monotônico; incrementa a CADA recompilação (invariante 4)"
+          },
+          "compiledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "compiledFromHash": {
+            "type": "string",
+            "description": "hash de (schema operacional + chart do tenant) na hora da compilação"
+          },
+          "eventBindings": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/AccountingBindingEventBinding"
+            }
           }
         }
       },
@@ -10991,6 +11168,140 @@
           }
         }
       }
+    },
+    "/api/accounting-binding/compile": {
+      "post": {
+        "summary": "Compile a binding candidate — validates and persists (auto-activates on PASS)",
+        "description": "F-BP-2(b): sem issue bloqueante o validador determinístico aprova e a nova versão nasce 'Active' (a Active anterior, se houver, vira 'Superseded' atomicamente na mesma tx); com bloqueante, a versão nasce 'Draft' e a Active vigente não é tocada. bindingVersion é sempre monotônico — recompilar NUNCA edita uma versão existente (invariante 4).",
+        "tags": [
+          "AccountingBinding"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountingBindingCompileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "binding + resultado de validação + status (Draft ou Active)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-binding/validate": {
+      "post": {
+        "summary": "Run the deterministic validator WITHOUT persisting (dry-run preview)",
+        "description": "Mesmo corpo de /compile; devolve o candidato + o BindingValidationResult, nada é gravado.",
+        "tags": [
+          "AccountingBinding"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountingBindingCompileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "candidate (AccountingBindingV1) + validation result — nunca persistido"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-binding": {
+      "get": {
+        "summary": "List the compiled bindings (versions) for a scope, most recent first",
+        "tags": [
+          "AccountingBinding"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sectorKey",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Draft",
+                "Active",
+                "Superseded"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "array of AccountingBinding rows (payload is the serialized AccountingBindingV1)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -11053,6 +11364,10 @@
     {
       "name": "Accounting",
       "description": "Double-entry accounting — journal entries, reversals, reports, chart of accounts (first-class Prisma)"
+    },
+    {
+      "name": "AccountingBinding",
+      "description": "A Prensa (BE-INCR-BINDING-PRESS) — compilador + validador determinístico do binding vertical→contabilidade (schema operacional do preset + plano de contas do tenant + escolhas papel→conta → AccountingBindingV1 versionado). F-BP-2(b): sem bloqueante, o compile auto-ativa; não há rota /activate separada."
     }
   ]
 }
