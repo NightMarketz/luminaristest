@@ -63,7 +63,8 @@ PRE-ADR escrito: [`docs/adr/ADR-P2-second-vertical.md`](adr/ADR-P2-second-vertic
 
 1. **Ratificar F-P2-1 (setor) cedo** — a escolha orienta o corpus do P1 (recomendação: anel 1,
    barbearia/clínica estética; anel 2 puxaria o módulo de Compras/AP operacional = P4).
-2. Após o P1 fechar: ratificar F-P2-2..4 → gerar o vertical pela entrevista (preset + binding
+2. Após o P1 fechar: ratificar F-P2-3/F-P2-4 (**F-P2-2 já ratificado em 2026-08-22 → tenant-fixture
+   sintético**, ver `docs/adr/ADR-P2-second-vertical.md`) → gerar o vertical pela entrevista (preset + binding
    compilado + contas por papel).
 3. **Prova:** tenant percorre entrevista → ERP operante → fechamento mensal → **gera a própria ECD**;
    `git diff` do motor/ledger/intérprete **vazio**; métrica *time-to-first-ECD* registrada.

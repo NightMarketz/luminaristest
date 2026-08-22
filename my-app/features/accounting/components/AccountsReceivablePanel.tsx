@@ -14,12 +14,18 @@ import { counterpartiesService, type Counterparty } from '../../../lib/services/
 import { Modal } from '../../../components/ui/Modal';
 import { CreateReceivableModal } from './CreateReceivableModal';
 import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
+import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+// Server-side page size (FRENTE 5 fix — was a single capped page of 200, silently
+// dropping data past the backend max; ListReceivablesQuerySchema caps `limit` at 200
+// but `total` comes back on every page so StandardPagination has what it needs).
+const RECEIVABLES_PER_PAGE = 50;
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -209,6 +215,8 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [receivables, setReceivables] = useState<ReceivableWithReceipts[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -235,11 +243,10 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setLoading(true);
     setError(null);
     try {
-      // ponytail: single page of up to 200 (backend max). Add StandardPagination
-      // if a unit ever carries more than 200 live receivables.
       const result = await accountsReceivableService.listReceivables({
         unitId,
-        limit: 200,
+        page,
+        limit: RECEIVABLES_PER_PAGE,
         counterpartyId: filters.counterpartyId,
         dueFrom: filters.dueFrom,
         dueTo: filters.dueTo,
@@ -247,12 +254,13 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
         overdue: filters.overdue,
       });
       setReceivables(result.receivables);
+      setTotal(result.total);
     } catch (err: unknown) {
       setError(resolveErrorWithCode(err, tRef.current('contasAReceber.error.load', 'Erro ao carregar as contas a receber.')).message);
     } finally {
       setLoading(false);
     }
-  }, [unitId, tRef, filters]);
+  }, [unitId, tRef, filters, page]);
 
   useEffect(() => {
     void fetchReceivables();
@@ -387,7 +395,12 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
       {/* Filters (BE-INCR-SUBLEDGER-FILTERS / C4) */}
       <SubledgerFilterBar
         value={filters}
-        onChange={setFilters}
+        onChange={(next) => {
+          setFilters(next);
+          // A new filter changes the result set — stay on a stale page number and the
+          // user can land on an empty "page 3" of a 1-page result.
+          setPage(1);
+        }}
         counterpartyOptions={counterparties}
         t={t}
       />
@@ -436,6 +449,14 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
               ))}
             </tbody>
           </table>
+          <StandardPagination
+            currentPage={page}
+            totalPages={Math.max(1, Math.ceil(total / RECEIVABLES_PER_PAGE))}
+            totalItems={total}
+            itemsPerPage={RECEIVABLES_PER_PAGE}
+            onPageChange={setPage}
+            scrollToTop={false}
+          />
         </div>
       )}
 
