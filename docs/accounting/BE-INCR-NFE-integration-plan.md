@@ -121,11 +121,36 @@ realmente divergir é inferido (depende do shape exato pós-merge) — o própri
   A NF-e reescreve a CONDIÇÃO do mesmo `if` para `this.inventoryService && hasSingleInventorySku(payable)`
   — uma nota multi-item não tenta `receiveStock` (o comentário da própria branch documenta a limitação: o
   re-drive do detalhe por SKU de uma nota multi-item não recebida por completo cai fora do reconcile,
-  fica a cargo de `receiveInventoryItems`). **O que falta decidir e este doc NÃO decide (ver §4):** quando
-  `hasSingleInventorySku(payable)` for `false` para um payable de nota multi-item, isso deveria contar como
-  `blocked`, como `failed`, ou como nenhum dos dois (silenciosamente pulado, do jeito que está hoje na
-  branch)? A composição textual dos dois diffs NÃO responde isso sozinha — é decisão de dono/reviewer na
-  re-review semântica (§3 passo 9).
+  fica a cargo de `receiveInventoryItems`).
+
+  > **DECIDIDO 2026-08-22 (dono, via AskUserQuestion): conta como `blocked`.** É exatamente o caso que
+  > `main` desenhou `blocked` para cobrir — pulo determinístico e esperado, não erro; `failed` viraria
+  > alarme falso permanente sobre uma limitação conhecida por desenho, e o pulo silencioso (nenhum dos
+  > dois, o comportamento de hoje na branch) cai na classe `[[param-aceito-e-ignorado-e-bug-silencioso]]`
+  > — o payable existe, ninguém recebe, ninguém é avisado.
+  >
+  > **Consequência de implementação para o passo 9** (verificado em `main` `dfaed751`,
+  > `server/src/features/accounting/services/PayableService.ts:492-526`): hoje `blocked` só nasce de um
+  > `catch (error)` (linha 509) classificando `syncSkipErrorCode(error)` contra
+  > `SYNC_SKIP_ERROR_CODES = ['ACCOUNTING_PERIOD_NOT_OPEN', 'MAX_CENTS_EXCEEDED']`
+  > (`server/src/features/accounting/sync/AccountingSyncPort.ts:91`) — um **throw classificado** dentro
+  > do `try` do bloco de compra (linhas 493-508, o `if (this.inventoryService) { await
+  > this.inventoryService.receiveStock(...) }`). A condição que a NF-e introduz
+  > (`this.inventoryService && hasSingleInventorySku(payable)`) é um **skip por CONDIÇÃO no `if`**, não
+  > um throw: quando `hasSingleInventorySku(payable)` é `false`, `receiveStock` simplesmente não é
+  > chamado — nenhum erro é lançado, o `catch` (linha 509) não roda, `blocked` não incrementa hoje.
+  > **O caso REAL: o `catch` atual NÃO serve** para esse skip — a resolução exige um caminho novo:
+  > (i) incrementar `blocked` direto no ramo que pula `receiveStock` (mais direto, sem inventar erro), ou
+  > (ii) introduzir um código de skip novo (ex. `'MULTI_ITEM_NOT_SINGLE_SKU'`) e lançá-lo através do mesmo
+  > `catch`/`syncSkipErrorCode` por uniformidade com o resto do método. Este doc não escolhe entre (i)/(ii)
+  > — é decisão de implementação do passo 9, não deste mapa; qualquer uma das duas fecha a decisão do
+  > dono acima.
+  >
+  > **Teste que asserta a forma de retorno (regravar/estender no passo 9):**
+  > `server/src/features/accounting/services/__tests__/PayableService.test.ts:596-626` (`describe`
+  > "failed vs blocked classification (A4)") — é onde a nova contagem para nota multi-item tem de
+  > aparecer como caso novo, ao lado dos dois já existentes (`failed` genérico via erro inesperado e
+  > `blocked` via `MaxCentsExceededError`).
 
 ### 2.5 Contrato — `openapi.json`/`docs.paths.ts`/`routes/index.ts`/`openapi-paths.test.ts`
 
@@ -175,7 +200,7 @@ verde no fim.
 | 6 | **`docs:generate`** | `cd server && npm run docs:generate` | PASSA: `openapi.json`/`docs.paths.ts` regravados sem erro, `git diff` mostra só as rotas novas de NF-e (mais o que já estava pendente de `main`). FALHA: erro no gerador → provável drop silencioso de path (achado histórico, ver comentário do teste em §2.5) |
 | 7 | **Guarda de contagem de paths** | `cd server && npx jest openapi-paths --silent` | PASSA: verde com o `BASELINE` atualizado para o número real pós-passo 6 (não assuma 143 — leia o número que o teste reporta e grave-o no `BASELINE`). FALHA: contagem abaixo do baseline anterior → path caiu, investigar antes de subir o número |
 | 8 | **Snapshot de shape do DTO** | `cd server && npx jest dtoShapeSnapshot -u` (revisar o diff do `__dto-shapes__.json` ANTES de commitar — `-u` regrava sem julgar) | PASSA: diff do snapshot contém só os campos que a NF-e realmente introduziu. FALHA: diff mexe em DTO que a NF-e não deveria tocar → sinal de merge mal resolvido em outro arquivo |
-| 9 | **Re-review dos conflitos semânticos** — §2.2 (instância compartilhada de `payableService`) e §2.4 (`PostingService` dois métodos novos concatenados + a decisão `blocked`/`failed`/nenhum para `reconcilePayables` sobre nota multi-item) | leitura humana/reviewer independente do diff final desses 2 arquivos, não delegável a lint | PASSA: reviewer confirma por escrito (no PR) que os dois pontos foram decididos, não só "compilou". FALHA: qualquer um dos dois pontos sem decisão explícita → não mergear |
+| 9 | **Re-review dos conflitos semânticos** — §2.2 (instância compartilhada de `payableService`) e §2.4 (`PostingService` dois métodos novos concatenados + implementar a decisão do dono 2026-08-22 — nota multi-item conta como `blocked` — escolhendo o caminho (i) ou (ii) do bloco "DECIDIDO" da §2.4) | leitura humana/reviewer independente do diff final desses 2 arquivos, não delegável a lint | PASSA: reviewer confirma por escrito (no PR) que os dois pontos foram implementados, com o teste de `PayableService.test.ts:596-626` estendido, não só "compilou". FALHA: qualquer um dos dois pontos sem decisão/implementação explícita → não mergear |
 | 10 | **Smoke-migration-gate** sobre cópia do `dev.db` real (padrão dos incrementos anteriores, não pular por causa da renomeação do passo 3) | seguir o padrão de `SMOKE-MIGRATION-GATE-INCR-INVENTORY.md`/`-AP.md` — cópia do `dev.db` real, `prisma migrate deploy`, checar integridade + FKs/índices | PASSA: rebuild preserva linhas de `payables`/`stock_movements` byte-a-byte, sem drop de FK/índice. FALHA: qualquer perda → a renomeação do passo 3 não bastou, investigar antes de aplicar em cima do `dev.db` real |
 | 11 | **Merge** | PR normal contra `main`, squash conforme convenção do repo | PASSA: CI (`Server – typecheck & test`, incluindo `nfe-fixture-provenance`) verde end-to-end. FALHA: qualquer check vermelho → não usar admin override |
 
@@ -184,9 +209,6 @@ verde no fim.
 ## 4. O que este documento NÃO decide
 
 - **O XML real em si** — só o dono traz (§1); este doc não pode antecipar o que ele contém.
-- **`blocked` vs `failed` vs nenhum** para uma nota multi-item que `reconcilePayables` pula por
-  `!hasSingleInventorySku` (§2.4) — é uma decisão de comportamento observável (o que a subrazão reporta
-  como pendente vs. como erro), cabe a review humano/dono no passo 9, não a este mapa.
 - **O timestamp exato** da migração renomeada (§2.1 passo 3) — depende de qual seja a última migração de
   `main` NO MOMENTO do rebase, que este doc não pode fixar hoje.
 - **O `BASELINE` final** do guard de paths (§2.5) — só o resultado real do passo 7 decide o número; este
