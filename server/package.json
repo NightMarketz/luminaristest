@@ -8,7 +8,7 @@
     "build": "npx prisma generate && tsc && tsc-alias",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",
-    "clean": "if exist dist rmdir /s /q dist",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "prebuild": "npm run clean",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",

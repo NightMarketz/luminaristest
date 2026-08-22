@@ -121,6 +121,32 @@ describe('AccountsReceivablePanel (render)', () => {
     });
   });
 
+  it('paginates server-side (FRENTE 5): page 2 requests page=2, and a filter change resets to page 1', async () => {
+    // total=60 > itemsPerPage(50) so StandardPagination renders and "Next" is enabled.
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 60 });
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    expect(accountsReceivableService.listReceivables).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, limit: 50 }),
+    );
+
+    fireEvent.click(screen.getByTitle('Next'));
+    await waitFor(() => {
+      expect(accountsReceivableService.listReceivables).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+      );
+    });
+
+    // A filter change on page 2 must not leave the user on a stale/empty page 2.
+    fireEvent.change(screen.getByLabelText('Contraparte'), { target: { value: 'cp1' } });
+    await waitFor(() => {
+      expect(accountsReceivableService.listReceivables).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1, counterpartyId: 'cp1' }),
+      );
+    });
+  });
+
   it('overdue toggled off never sends overdue: false to the service', async () => {
     vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [], total: 0 });
 

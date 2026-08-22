@@ -16,8 +16,24 @@ services:
       # sem esta linha o cliente sobe sem credencial e o índice fica aberto a quem alcançar
       # o host (as portas do serviço qdrant abaixo são publicadas).
       QDRANT_API_KEY: ${QDRANT_API_KEY}
+      # config/env.ts:163-164 lê ATTACHMENTS_DIR e cai em <cwd>/storage/attachments quando
+      # ausente — cwd do processo é o WORKDIR do Dockerfile (/app), então o default seria
+      # /app/storage/attachments: caminho dentro do FILESYSTEM DO CONTAINER, sem volume nenhum
+      # por baixo. Todo `docker compose up --build` recria a camada gravável e apaga os anexos
+      # (comprovante fiscal do módulo contábil incluído). Setar explícito ao mesmo valor que o
+      # default já resolve hoje, e montar o volume nesse caminho absoluto, elimina a dependência
+      # SILENCIOSA do cwd/WORKDIR — se o WORKDIR do Dockerfile mudar amanhã, o caminho montado
+      # aqui não muda junto por acidente.
+      ATTACHMENTS_DIR: /app/storage/attachments
+      # app.ts:27 lê ALLOWED_ORIGIN direto de process.env (fora do schema Zod de env.ts, que não
+      # a valida) com fallback para http://localhost:3000 — em produção isso não derruba o boot,
+      # só bloqueia silenciosamente todo request do frontend real. Igual ao QDRANT_API_KEY acima,
+      # `:?` força a decisão explícita no .env da instância em vez de deixar o default errado
+      # passar despercebido até o primeiro CORS-fail em produção.
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:?defina ALLOWED_ORIGIN no .env ao lado deste arquivo — sem ela o CORS cai no default http://localhost:3000 e bloqueia silenciosamente o frontend em qualquer host real}
     volumes:
       - sqlite_data:/data
+      - attachments_data:/app/storage/attachments
     depends_on:
       - qdrant
     restart: unless-stopped
@@ -65,3 +81,4 @@ services:
 volumes:
   sqlite_data:
   qdrant_data:
+  attachments_data:
