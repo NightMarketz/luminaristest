@@ -4,6 +4,15 @@
 > há UI nova prevista — o gap é 100% de boot/wiring). **Este documento NÃO ratifica fork nenhum** —
 > todo fork abaixo está `RATIFICAÇÃO PENDENTE`, decisão fora desta sessão (dono).
 
+> **Atualização 2026-08-22 — os 6 forks foram RATIFICADOS pelo dono** (`AskUserQuestion`, duas
+> rodadas, mesma data — evento separado desta sessão de planejamento). Nenhum fork abaixo continua
+> `RATIFICAÇÃO PENDENTE`; cada linha da tabela na §5 ganhou uma coluna de decisão preservando o texto
+> original de opções/recomendação. §2 (checklist, itens 3 e 7) e §3 (contrato esboçado) foram
+> ajustados para ficarem consistentes com as decisões — sem implementar nada, o BRIEF continua sendo
+> planejamento. F-FEEDER-1 decidiu **CONTRA** a recomendação original e nasceu **ADR próprio**:
+> [`docs/adr/ADR-INCR-BINDING-FEEDER.md`](../adr/ADR-INCR-BINDING-FEEDER.md) (em elaboração por outra
+> sessão neste momento — este documento só referencia o caminho, não o lê nem o cria).
+
 ## Contexto fixo
 
 - **Item:** BE-INCR-BINDING-FEEDER — o passo que falta depois de `BE-INCR-BINDING-PRESS` (P1,
@@ -37,6 +46,11 @@ Documento com: (1) checklist numerado de comportamentos testáveis individualmen
 entrada/saída esboçados (assinatura, não implementação); (3) lista de forks — cada um com caminhos,
 recomendação técnica marcada como recomendação, e status `RATIFICAÇÃO PENDENTE`. Nenhum fork abaixo
 está decidido por este documento.
+
+> **SUPERSEDIDO EM 2026-08-22 (mesma data):** este parágrafo descreve o estado do BRIEF **na sessão de
+> planejamento**. Os 6 forks foram ratificados pelo dono no mesmo dia, via `AskUserQuestion` em duas
+> rodadas — ver a coluna "Decisão RATIFICADA" na tabela de forks e o `docs/adr/ADR-INCR-BINDING-FEEDER.md`
+> (Accepted). O texto original fica como registro do que o BRIEF sozinho **não** decidiu.
 
 ---
 
@@ -106,6 +120,15 @@ está decidido por este documento.
    dado) montando o alimentador devem OU (a) ser mutuamente exclusivos por escopo (nunca colidem porque
    nunca coexistem no mesmo array — ver fork de resolução por scope abaixo) OU (b) o alimentador detecta
    e falha alto na colisão, nunca last-write-wins silencioso.
+   **DECIDIDO 2026-08-22 (F-FEEDER-3 → opção nova (c), nem (a) nem (b) do parágrafo acima):** o `Map`
+   de `AccountingSyncService` (`AccountingSyncService.ts:45`/`:51`) passa a ser chaveado por
+   `` `${event.unitId}:${event.sourceType}` `` em vez de só `event.sourceType`. Fecha a colisão POR
+   CONSTRUÇÃO: dois `Active` só colidem se tiverem o MESMO `unitId` **e** o MESMO `eventKey` — caso de
+   dado inválido dentro da mesma unidade, não mais o caminho padrão entre setores diferentes. Teste:
+   dois bindings `Active` de unidades diferentes emitindo o MESMO `eventKey` (ex.: as duas
+   `salon.sale.finalized`) coexistem sem colidir; dois bindings `Active` da MESMA unidade com o MESMO
+   `eventKey` continuam colidindo e devem falhar alto (o caso (b) do texto acima nunca foi descartado,
+   só deixou de ser o único jeito de fechar o comportamento).
 4. **Modo de falha: instância sobe sem NENHUM binding `Active`.** Hoje o import estático GARANTE que
    `buildSalonAccountingMappers()` sempre devolve 5 mappers — nunca zero. Lendo do banco, um banco sem
    seed (primeiro boot de um cliente novo, ou um teste de integração isolado) devolve **zero linhas**
@@ -133,40 +156,72 @@ está decidido por este documento.
    (fork F-FEEDER-5) precisa ter teste de que o servidor não aceita tráfego HTTP antes do alimentador
    estar pronto (se a opção escolhida for pré-boot), ou que o primeiro request tolera lazy-load
    (se a opção for lazy).
+   **DECIDIDO 2026-08-22 (F-FEEDER-5 → (a) PRÉ-BOOT):** `server.ts` aguarda a Promise do alimentador
+   ANTES de `app.listen()` — primeira vez que o bootstrap do projeto bloqueia o `listen()` numa
+   Promise (o precedente do `Qdrant` fire-and-forget, citado na §5, fica registrado como exceção
+   deliberada anterior, não revogado). Teste: o servidor não aceita tráfego HTTP antes do alimentador
+   estar pronto; a cláusula "primeiro request tolera lazy-load" NÃO se aplica — opção (b) não foi
+   escolhida.
 
 ---
 
 ## 3. Contratos esboçados (forma, não implementação)
 
+> **Atualizado 2026-08-22 pós-ratificação** — versão anterior deste contrato recebia `scopes:
+> BindingScope[]` por causa do fork F-FEEDER-3 então em aberto. F-FEEDER-3 decidiu uma opção nova
+> (nem (a) nem (b) da §5): chave composta no `Map` do singleton, sem parâmetro de escopo nenhum. O
+> esboço abaixo reflete essa decisão — a versão com `scopes` fica só na §5 como registro histórico da
+> opção (a) não escolhida.
+
 ```ts
 // Substituto/envelope de buildSalonAccountingMappers(), forma candidata — local exato
-// (factory.ts vs um serviço novo em accountingBinding) é o fork F-FEEDER-1/F-FEEDER-2.
+// (factory.ts vs um serviço novo em accountingBinding) é o fork F-FEEDER-1/F-FEEDER-2, RATIFICADO
+// 2026-08-22 → (b) ADR próprio (docs/adr/ADR-INCR-BINDING-FEEDER.md).
 async function buildAccountingMappersFromActiveBindings(
   repo: IAccountingBindingRepository,
   archetypeCatalog: ReadonlyMap<string, Archetype>,
-  scopes: BindingScope[], // fork F-FEEDER-3: lista explícita de escopos OU "todos os Active" global
+  // SEM parâmetro de escopo — RATIFICADO 2026-08-22 (F-FEEDER-3 → opção nova (c)): leitura é sempre
+  // global, todos os `Active` do banco. O singleton de AccountingSyncService é preservado.
 ): Promise<IAccountingEventMapper[]> {
-  // Lê Active por escopo (repo já tem essa forma — ver IAccountingBindingRepository, método de
-  // leitura "viva" citado no header do repo), resolve archetypeKey→Archetype (mesmo guard de erro
-  // hoje presente em buildSalonAccountingMappers — "fiação da Fase B quebrada"), detecta colisão de
-  // eventKey ANTES de montar o Map (comportamento 3), e lança alto se o resultado for vazio
-  // (comportamento 4 — decisão de QUÃO alto é o fork F-FEEDER-4).
+  // Lê TODOS os Active do banco (repo já tem essa forma), resolve archetypeKey→Archetype (mesmo
+  // guard de erro hoje presente em buildSalonAccountingMappers — "fiação da Fase B quebrada").
+  // Colisão (comportamento 3, F-FEEDER-3 → (c)): o Map de AccountingSyncService passa a ser
+  // chaveado por `${event.unitId}:${event.sourceType}` (hoje só `event.sourceType`,
+  // AccountingSyncService.ts:45/:51) — dois Active só colidem dentro do MESMO unitId; detectar e
+  // falhar alto continua sendo o comportamento para essa colisão restante.
+  // Zero bindings Active (comportamento 4, F-FEEDER-4 → (a)): lança alto ANTES de app.listen()
+  // (F-FEEDER-5 → (a), pré-boot) — o processo não sobe, não "sobe mudo e falha por evento".
 }
 ```
 
 - **Entrada:** repositório de binding (já existe, intocado), catálogo de arquétipos (já existe,
-  intocado), e OU uma lista de `BindingScope` a resolver OU nenhuma (leitura global — depende do fork
-  F-FEEDER-3).
-- **Saída:** `IAccountingEventMapper[]` — **mesmo shape que `AccountingSyncService` já recebe hoje**
-  (zero linha tocada em `AccountingSyncPort`/`AccountingSyncService`/bridges — mesma garantia que o
-  BRIEF do P1 já fez para o swap do salão).
-- **Modo de erro:** colisão de `eventKey` entre dois `Active` → erro nomeado explícito (não
+  intocado). **RATIFICADO 2026-08-22 (F-FEEDER-3 → (c)):** nenhum parâmetro de escopo — a leitura é
+  sempre global (todos os `Active` do banco); a opção (a) "lista explícita de `BindingScope`" NÃO foi
+  escolhida.
+- **Saída:** `IAccountingEventMapper[]` — mesmo shape que `AccountingSyncService` já recebe hoje no
+  construtor (zero linha tocada em `AccountingSyncPort`/bridges — mesma garantia que o BRIEF do P1 já
+  fez para o swap do salão). **Correção pós-ratificação:** a versão anterior desta frase incluía
+  `AccountingSyncService` na lista de "zero linha tocada" — isso não é mais exato. A decisão
+  F-FEEDER-3(c) muda a chave do `Map` interno de `AccountingSyncService` (~2 linhas,
+  `AccountingSyncService.ts:45`/`:51`); só `AccountingSyncPort`/bridges seguem intocados.
+- **Modo de erro:** colisão de `eventKey` **dentro da mesma chave composta** `unitId:sourceType` (dois
+  `Active` do MESMO `unitId` com o MESMO `eventKey` — caso de dado inválido; deixou de ser o caminho
+  padrão entre setores diferentes, que agora nunca colide) → erro nomeado explícito (não
   `ValidationError` genérica reaproveitada — precisa ser distinguível em log/alerta). Zero bindings
-  `Active` → erro nomeado explícito, DIFERENTE do de colisão (comportamento 4).
-- **Fora do esboço:** o mecanismo exato de scheduling (boot único vs relido periodicamente) — é o fork
-  F-FEEDER-5 combinado com o "gatilho de recompilação" já registrado como decorrência em F-BP-6 do
-  BRIEF do P1 (arquivo/versão nova só nasce por recompilação; nada hoje invalida um mapper JÁ
-  construído quando um novo binding é ativado — esse é o mesmo problema, um nível acima).
+  `Active` → **RATIFICADO 2026-08-22 (F-FEEDER-4 → (a)):** o BOOT falha (processo não sobe), erro
+  nomeado explícito DIFERENTE do de colisão, lançado antes de `app.listen()` (F-FEEDER-5 → (a),
+  pré-boot).
+- **Premissa a confirmar na implementação (F-FEEDER-3):** que `unitId` seja id de linha globalmente
+  único — hoje isso é só o que a documentação do campo indica (`AccountingScope.ts:18`, "Business
+  unit scoped string"), não algo provado por constraint de banco. A chave composta só fecha a colisão
+  por construção se essa premissa for verdadeira; a sessão de feature precisa confirmá-la (ou blindar
+  contra ela ser falsa) antes de tratar o comportamento 3 como fechado.
+- **Fora do esboço:** o mecanismo exato de scheduling (boot único vs relido periodicamente) — **F-
+  FEEDER-5 RATIFICADO → (a) pré-boot: leitura é boot único** (aguardada antes de `app.listen()`), não
+  relida periodicamente; releitura fica fora deste alimentador, combinada com o "gatilho de
+  recompilação" já registrado como decorrência em F-BP-6 do BRIEF do P1 (arquivo/versão nova só nasce
+  por recompilação; nada hoje invalida um mapper JÁ construído quando um novo binding é ativado —
+  esse é o mesmo problema, um nível acima).
 
 ---
 
@@ -185,16 +240,21 @@ Nenhuma das três está descartada aqui — é fork F-FEEDER-6 (abaixo).
 
 ---
 
-## 5. Forks pendentes — RATIFICAÇÃO PENDENTE (nenhum decidido)
+## 5. Forks — RATIFICADOS 2026-08-22 (dono, via `AskUserQuestion`, duas rodadas)
 
-| # | Fork | Opções | O que cada uma FECHA | Recomendação (não-vinculante) |
-|---|---|---|---|---|
-| **F-FEEDER-1** | Isto é resíduo do P1 (executa sem ADR novo, como emenda ao ADR-P1 já Accepted) ou incremento com ADR próprio? | (a) emenda ao `ADR-P1-binding-press.md` — o BRIEF do P1 já previu Fases 0/A/B/C implicitamente e este é "o resto da Fase B que ficou de fora do item 14/15" · (b) `ADR-INCR-BINDING-FEEDER` próprio, citando P1 como pré-requisito | (a) mantém tudo num documento só, evita fragmentar governança de uma decisão pequena; risco: o ADR-P1 já está "Accepted" e fechado no master map — reabri-lo para emenda pode confundir o fold de 2026-08-22 que o declarou mergeado. (b) cria rastreabilidade própria (mais fácil de citar/auditar depois), custo: mais um documento para um incremento que é, na prática, "terminar o item 14" | **(a)** — o gap é estritamente dentro do que o BRIEF do P1 já escopou como "swap do salão" (item 14); tratar como incremento novo com ADR próprio infla governança para o que é, tecnicamente, a metade que ficou faltando de uma decisão já ratificada (F-P1-3a). Mas a recomendação é fraca — se o dono achar que qualquer coisa que muda o boot do processo merece ADR próprio (dado o achado do timing síncrono, comportamento 7), (b) é defensável |
-| **F-FEEDER-2** | `factory.ts` entra ou sai do perímetro "zero-diff" da prova de saída do P2? | (a) dentro — todo diff em `factory.ts` entre vertical 1 e vertical 2 é falha da prensa · (b) fora — `factory.ts` pode mudar por vertical, a prova mede só `features/dynamicTables`+`features/accounting` núcleo+intérprete | Confirmado por leitura dos dois textos: `PARECER-ARCHITECT-ADR-P2.md` §1.5 (tabela) recomenda **explicitamente "INCLUIR"** `server/src/lib/factory.ts` no perímetro, citando as linhas hardcoded (`91-95/402-407`, hoje 97/173-182 pós-renumeração) como prova de acoplamento por vertical. O texto FINAL de `ADR-P2-second-vertical.md` §2 ("prova de saída") diz apenas *"git diff do motor (`features/dynamicTables`), do ledger (`features/accounting` núcleo) e do intérprete… é vazio"* — **`factory.ts` não é citado**, nem para incluir nem para excluir explicitamente. A emenda do parecer **não foi incorporada ao texto ratificado do ADR-P2**. Isso é exatamente a lacuna que este alimentador precisa fechar ANTES de a Fase P2 tentar rodar a prova — sem ele, `factory.ts` PRECISA mudar por vertical (import a mão), e (a) falharia trivialmente enquanto (b) validaria uma prova que o próprio parecer chama de risco de "falso positivo de zero-diff" | **(a)** — a recomendação do parecer é diretamente aplicável e o achado deste BRIEF (item 1) é a prova em código de que ela está certa: hoje `factory.ts` MUDARIA por vertical se nada for feito. Implementar o alimentador é precisamente o que torna (a) alcançável (o `factory.ts` para de listar classes por vertical); sem o alimentador, só (b) é fisicamente possível, o que o parecer já sinalizou como medir "quão parecido é o vertical 2", não "quão boa é a prensa" |
-| **F-FEEDER-3** | Resolução dos mappers é por ESCOPO (`userId`+`unitId`) ou GLOBAL (um array único, todos os `Active` do banco, chave `eventKey` compartilhada entre tenants) | (a) por escopo — o alimentador é chamado por `(userId,unitId)`, mirror do padrão já usado em `getAccountingBindingCompileService(scope)` (não memoizado, construído por chamada) · (b) global — um único array na construção do singleton, como hoje, só que lido do banco em vez da fixture | (a) resolve o comportamento 3 (colisão de `eventKey`) por CONSTRUÇÃO — dois tenants nunca compartilham o mesmo array, então nunca colidem entre si (colisão só é possível DENTRO do mesmo escopo, caso de dado inválido). Mas exige que `AccountingSyncService` deixe de ser singleton-por-processo e passe a ser resolvido por request/escopo — mudança de forma, não só de fonte de dado. (b) preserva a forma atual (singleton) mas reintroduz o risco do item 3 entre tenants diferentes SE a instância hospedar mais de um `unitId`/`userId` (ver §6 abaixo — ADR-M2 não impede isso) | **(a)** tecnicamente mais correta (fecha a colisão por desenho, não por teste), mas é a opção de MAIOR custo de implementação (singleton→por-escopo é uma mudança de forma no `AccountingSyncService`/factory, tocando as dezenas de call-sites de `ApplicationFactory.getInstance()`/`getFactory()` (`grep -rl "getInstance()\|getFactory()" server/src | wc -l` = 65 arquivos em 2026-08-22 — o número exato varia com o padrão do grep; o que importa é a ordem de grandeza) só indiretamente, mas exigindo decidir COMO o controller que dispara um evento contábil hoje obtém o `AccountingSyncService` já resolvido para o escopo certo). (b) é mais barata mas empurra o problema pro comportamento 3 nunca ser fechado por desenho — só por teste/detecção em runtime |
-| **F-FEEDER-4** | Modo de falha quando zero bindings `Active` | (a) falha o BOOT — processo não sobe, erro fatal no `server.ts` antes de `app.listen()` · (b) sobe, loga ERRO nível crítico (alerta), mas aceita tráfego — cada evento então falha individualmente (herda o `ValidationError` que `AccountingSyncService.sync()` já lança hoje por `sourceType` desconhecido) | (a) fecha o caso "produção rodando sem nenhum lançamento contábil acontecer, ninguém percebe até o fechamento do mês" — mas eleva o risco operacional de um deploy travar se o seed/migração (fork da §4) não rodou corretamente antes. (b) é mais tolerante a ordem de bootstrap (permite subir a API mesmo se o binding ainda não foi semeado) mas reintroduz exatamente o modo de falha silencioso que este item do checklist existe para vetar — só é "alto" se alguém está olhando o log de ERROR ativamente | **(a)** para o caso hoje conhecido (o salão, único vertical) — a app SEMPRE precisa ter pelo menos o binding do salão ativo para operar; um boot sem binding nenhum é, por definição, um ambiente mal-provisionado, e falhar cedo é mais barato que descobrir no fechamento mensal. Reavaliar para P2 se/quando existir um cenário legítimo de "app sobe antes do onboarding terminar" (não existe hoje, não verificado) |
-| **F-FEEDER-5** | Timing do boot — pré-carrega antes de aceitar tráfego, ou lazy no primeiro uso | (a) pré-boot — `server.ts` aguarda uma Promise de inicialização do alimentador ANTES de `app.listen()` (mudança de padrão: hoje NADA no bootstrap é `await`ado antes do listen) · (b) lazy — primeiro `sync()`/primeira resolução do escopo dispara a leitura do banco sob demanda, com cache | (a) fecha o comportamento 7 de forma auditável (o processo simplesmente não sobe até o alimentador estar pronto) mas MUDA o padrão de bootstrap do servidor pela primeira vez (`Qdrant` é fire-and-forget deliberadamente — precedente contrário) — precisa decidir timeout/retry se o banco não responde. (b) preserva o padrão atual (nada bloqueia o listen) mas a PRIMEIRA requisição contábil paga a latência da leitura + corre risco de concorrência (duas requisições simultâneas disparando a leitura antes do cache popular) | **(a)** combina melhor com F-FEEDER-4(a) — se o boot já pode falhar por binding ausente, falhar ali mesmo (síncrono ao operador, no log de start) é mais simples que descobrir a falha no primeiro request. Mas é a opção que mais diverge do padrão hoje estabelecido em `server.ts` — merece atenção extra na revisão |
-| **F-FEEDER-6** | Como `SALON_BINDING_V1` vira `Active` no banco (detalhe da tabela da §4) | (a) seed direto · (b) migração de dado via compilador real · (c) auto-compila no primeiro boot | Ver custo/risco de cada na tabela da §4 | **(b)** — é o único caminho que exercita o validador (Corpo B) contra o chart real, em vez de confiar cegamente no snapshot embutido na fixture; encaixa na decisão 4 do ADR-M2 (migração como etapa separada do deploy, já um "job próprio" a escrever, §7.3 do ADR-M2) — este seed poderia viajar no MESMO job |
+> Texto de "Opções"/"O que cada uma FECHA"/"Recomendação" preservado **como escrito nesta sessão de
+> planejamento** — o histórico importa, em especial no F-FEEDER-1 (o dono decidiu CONTRA a
+> recomendação) e no F-FEEDER-3 (a decisão é uma opção que este BRIEF não continha). A coluna
+> "Decisão" é a única adição pós-ratificação.
+
+| # | Fork | Opções | O que cada uma FECHA | Recomendação (não-vinculante) | Decisão RATIFICADA 2026-08-22 |
+|---|---|---|---|---|---|
+| **F-FEEDER-1** | Isto é resíduo do P1 (executa sem ADR novo, como emenda ao ADR-P1 já Accepted) ou incremento com ADR próprio? | (a) emenda ao `ADR-P1-binding-press.md` — o BRIEF do P1 já previu Fases 0/A/B/C implicitamente e este é "o resto da Fase B que ficou de fora do item 14/15" · (b) `ADR-INCR-BINDING-FEEDER` próprio, citando P1 como pré-requisito | (a) mantém tudo num documento só, evita fragmentar governança de uma decisão pequena; risco: o ADR-P1 já está "Accepted" e fechado no master map — reabri-lo para emenda pode confundir o fold de 2026-08-22 que o declarou mergeado. (b) cria rastreabilidade própria (mais fácil de citar/auditar depois), custo: mais um documento para um incremento que é, na prática, "terminar o item 14" | **(a)** — o gap é estritamente dentro do que o BRIEF do P1 já escopou como "swap do salão" (item 14); tratar como incremento novo com ADR próprio infla governança para o que é, tecnicamente, a metade que ficou faltando de uma decisão já ratificada (F-P1-3a). Mas a recomendação é fraca — se o dono achar que qualquer coisa que muda o boot do processo merece ADR próprio (dado o achado do timing síncrono, comportamento 7), (b) é defensável | **(b) ADR próprio** — o dono foi CONTRA a recomendação (a) registrada nesta linha. Razão dada: o alimentador muda o **BOOT** do processo (comportamento 7 — primeira vez que o bootstrap aguarda uma Promise antes do `listen()`), não é só trocar a fonte de dado de um binding já escopado pelo P1. ADR nascido: [`docs/adr/ADR-INCR-BINDING-FEEDER.md`](../adr/ADR-INCR-BINDING-FEEDER.md) (elaborado por sessão separada) |
+| **F-FEEDER-2** | `factory.ts` entra ou sai do perímetro "zero-diff" da prova de saída do P2? | (a) dentro — todo diff em `factory.ts` entre vertical 1 e vertical 2 é falha da prensa · (b) fora — `factory.ts` pode mudar por vertical, a prova mede só `features/dynamicTables`+`features/accounting` núcleo+intérprete | Confirmado por leitura dos dois textos: `PARECER-ARCHITECT-ADR-P2.md` §1.5 (tabela) recomenda **explicitamente "INCLUIR"** `server/src/lib/factory.ts` no perímetro, citando as linhas hardcoded (`91-95/402-407`, hoje 97/173-182 pós-renumeração) como prova de acoplamento por vertical. O texto FINAL de `ADR-P2-second-vertical.md` §2 ("prova de saída") diz apenas *"git diff do motor (`features/dynamicTables`), do ledger (`features/accounting` núcleo) e do intérprete… é vazio"* — **`factory.ts` não é citado**, nem para incluir nem para excluir explicitamente. A emenda do parecer **não foi incorporada ao texto ratificado do ADR-P2**. Isso é exatamente a lacuna que este alimentador precisa fechar ANTES de a Fase P2 tentar rodar a prova — sem ele, `factory.ts` PRECISA mudar por vertical (import a mão), e (a) falharia trivialmente enquanto (b) validaria uma prova que o próprio parecer chama de risco de "falso positivo de zero-diff" | **(a)** — a recomendação do parecer é diretamente aplicável e o achado deste BRIEF (item 1) é a prova em código de que ela está certa: hoje `factory.ts` MUDARIA por vertical se nada for feito. Implementar o alimentador é precisamente o que torna (a) alcançável (o `factory.ts` para de listar classes por vertical); sem o alimentador, só (b) é fisicamente possível, o que o parecer já sinalizou como medir "quão parecido é o vertical 2", não "quão boa é a prensa" | **(a) `factory.ts` DENTRO do perímetro zero-diff** — confirma a recomendação registrada nesta linha; nenhuma opção nova |
+| **F-FEEDER-3** | Resolução dos mappers é por ESCOPO (`userId`+`unitId`) ou GLOBAL (um array único, todos os `Active` do banco, chave `eventKey` compartilhada entre tenants) | (a) por escopo — o alimentador é chamado por `(userId,unitId)`, mirror do padrão já usado em `getAccountingBindingCompileService(scope)` (não memoizado, construído por chamada) · (b) global — um único array na construção do singleton, como hoje, só que lido do banco em vez da fixture · **(c) NOVA, ausente deste BRIEF na sessão de planejamento — chave composta `unitId:sourceType` no `Map` do singleton.** Mantém a forma GLOBAL de (b) (nenhuma mudança de `AccountingSyncService`/`getInstance()`/factory), mas o `Map` que hoje é `new Map(mappers.map(m => [m.sourceType, m]))` (confirmado em disco: `AccountingSyncService.ts:45`, lookup por `event.sourceType` na `AccountingSyncService.ts:51`) passa a ser chaveado por `` `${event.unitId}:${event.sourceType}` `` — usando o `unitId` que `AccountingEvent` já carrega. Custo ~2 linhas | (a) resolve o comportamento 3 (colisão de `eventKey`) por CONSTRUÇÃO — dois tenants nunca compartilham o mesmo array, então nunca colidem entre si (colisão só é possível DENTRO do mesmo escopo, caso de dado inválido). Mas exige que `AccountingSyncService` deixe de ser singleton-por-processo e passe a ser resolvido por request/escopo — mudança de forma, não só de fonte de dado. (b) preserva a forma atual (singleton) mas reintroduz o risco do item 3 entre tenants diferentes SE a instância hospedar mais de um `unitId`/`userId` (ver §6 abaixo — ADR-M2 não impede isso). **(c) fecha a mesma colisão que (a) fecha, por construção, sem o custo de forma de (a)** — e fecha exatamente a colisão que a MEDIÇÃO abaixo prova ser o caminho padrão, não um azar: a bridge de vendas acha a tabela por `findTableByInternalName(userId, 'sales')` (confirmado em disco: `SalonSalesAccountingBridge.ts:55`) — **cega a setor** —, então uma clínica emitiria `salon.sale.finalized`, chave IDÊNTICA à do salão; sem (c) [ou (a)], isso É uma colisão de `Map`, não uma hipótese | **(a)** tecnicamente mais correta (fecha a colisão por desenho, não por teste), mas é a opção de MAIOR custo de implementação (singleton→por-escopo é uma mudança de forma no `AccountingSyncService`/factory, tocando as dezenas de call-sites de `ApplicationFactory.getInstance()`/`getFactory()` (`grep -rl "getInstance()\|getFactory()" server/src \| wc -l` = 65 arquivos em 2026-08-22 — o número exato varia com o padrão do grep; o que importa é a ordem de grandeza) só indiretamente, mas exigindo decidir COMO o controller que dispara um evento contábil hoje obtém o `AccountingSyncService` já resolvido para o escopo certo). (b) é mais barata mas empurra o problema pro comportamento 3 nunca ser fechado por desenho — só por teste/detecção em runtime | **(c) chave composta `unitId:sourceType`** — nem (a) nem (b), opção que este BRIEF não continha na sessão de planejamento. Fecha a colisão por construção mantendo o singleton (evita o custo de forma de (a)); é mais barata que (a) e mais correta que (b) sozinho. **Medição que originou a opção, confirmada em disco nesta rodada:** `AccountingSyncService.ts:45` (`this.mappers = new Map(mappers.map((m) => [m.sourceType, m]))`) + `AccountingSyncService.ts:51` (`this.mappers.get(event.sourceType)`) e `SalonSalesAccountingBridge.ts:55` (`repo.findTableByInternalName(actor.userId, 'sales')`, cego a setor). **Premissa a confirmar na implementação:** que `unitId` seja id de linha globalmente único — hoje só documentado (`AccountingScope.ts:18`, "Business unit scoped string"), não provado por constraint. Contrato da §3 reescrito para refletir esta decisão |
+| **F-FEEDER-4** | Modo de falha quando zero bindings `Active` | (a) falha o BOOT — processo não sobe, erro fatal no `server.ts` antes de `app.listen()` · (b) sobe, loga ERRO nível crítico (alerta), mas aceita tráfego — cada evento então falha individualmente (herda o `ValidationError` que `AccountingSyncService.sync()` já lança hoje por `sourceType` desconhecido) | (a) fecha o caso "produção rodando sem nenhum lançamento contábil acontecer, ninguém percebe até o fechamento do mês" — mas eleva o risco operacional de um deploy travar se o seed/migração (fork da §4) não rodou corretamente antes. (b) é mais tolerante a ordem de bootstrap (permite subir a API mesmo se o binding ainda não foi semeado) mas reintroduz exatamente o modo de falha silencioso que este item do checklist existe para vetar — só é "alto" se alguém está olhando o log de ERROR ativamente | **(a)** para o caso hoje conhecido (o salão, único vertical) — a app SEMPRE precisa ter pelo menos o binding do salão ativo para operar; um boot sem binding nenhum é, por definição, um ambiente mal-provisionado, e falhar cedo é mais barato que descobrir no fechamento mensal. Reavaliar para P2 se/quando existir um cenário legítimo de "app sobe antes do onboarding terminar" (não existe hoje, não verificado) | **(a) o BOOT FALHA** com zero bindings `Active` — confirma a recomendação registrada nesta linha; nenhuma opção nova |
+| **F-FEEDER-5** | Timing do boot — pré-carrega antes de aceitar tráfego, ou lazy no primeiro uso | (a) pré-boot — `server.ts` aguarda uma Promise de inicialização do alimentador ANTES de `app.listen()` (mudança de padrão: hoje NADA no bootstrap é `await`ado antes do listen) · (b) lazy — primeiro `sync()`/primeira resolução do escopo dispara a leitura do banco sob demanda, com cache | (a) fecha o comportamento 7 de forma auditável (o processo simplesmente não sobe até o alimentador estar pronto) mas MUDA o padrão de bootstrap do servidor pela primeira vez (`Qdrant` é fire-and-forget deliberadamente — precedente contrário) — precisa decidir timeout/retry se o banco não responde. (b) preserva o padrão atual (nada bloqueia o listen) mas a PRIMEIRA requisição contábil paga a latência da leitura + corre risco de concorrência (duas requisições simultâneas disparando a leitura antes do cache popular) | **(a)** combina melhor com F-FEEDER-4(a) — se o boot já pode falhar por binding ausente, falhar ali mesmo (síncrono ao operador, no log de start) é mais simples que descobrir a falha no primeiro request. Mas é a opção que mais diverge do padrão hoje estabelecido em `server.ts` — merece atenção extra na revisão | **(a) PRÉ-BOOT** — confirma a recomendação registrada nesta linha; nenhuma opção nova. Primeira vez que o bootstrap do projeto bloqueia o `listen()` numa Promise |
+| **F-FEEDER-6** | Como `SALON_BINDING_V1` vira `Active` no banco (detalhe da tabela da §4) | (a) seed direto · (b) migração de dado via compilador real · (c) auto-compila no primeiro boot | Ver custo/risco de cada na tabela da §4 | **(b)** — é o único caminho que exercita o validador (Corpo B) contra o chart real, em vez de confiar cegamente no snapshot embutido na fixture; encaixa na decisão 4 do ADR-M2 (migração como etapa separada do deploy, já um "job próprio" a escrever, §7.3 do ADR-M2) — este seed poderia viajar no MESMO job | **(b) MIGRAÇÃO DE DADO via compilador real** — confirma a recomendação registrada nesta linha; nenhuma opção nova. Encaixa na etapa de migração já separada pelo ADR-M2 decisão 4 — ver nova §8 "Pré-condição de deploy" abaixo |
 
 ---
 
@@ -226,6 +286,11 @@ o problema). Mas **não** elimina a resolução por escopo **dentro** de uma ins
 tenancy do domínio contábil é `(userId, unitId)`, não "a instância". O fork F-FEEDER-3 continua sendo
 uma decisão real, não cosmética — a simplificação proposta na tarefa reduz o RAIO da colisão (de
 "qualquer cliente" para "unidades do mesmo cliente"), não a elimina.
+
+**RATIFICADO 2026-08-22 (F-FEEDER-3 → (c)):** a decisão real prevista acima aconteceu — a chave
+composta `unitId:sourceType` fecha exatamente o raio que esta seção prova não-eliminado por "uma
+instância por cliente": colisão **dentro** de uma instância entre `unitId`s diferentes do mesmo
+cliente (ex.: duas filiais, setores distintos). Ver §5 (F-FEEDER-3) e §3 (contrato revisado).
 
 ---
 
@@ -261,6 +326,30 @@ uma decisão real, não cosmética — a simplificação proposta na tarefa redu
    Isso não é um comportamento deste BRIEF (não está no checklist §2) — registrado aqui como risco
    ADJACENTE que o dono deveria saber que existe antes de tratar o alimentador como "P2 pronto para
    rodar assim que ligar".
+
+---
+
+## 8. Pré-condição de deploy — encadeamento com o ADR-M2
+
+**RATIFICADO 2026-08-22 — decorrência direta das decisões acima, não é fork novo:**
+
+1. **F-FEEDER-4 → (a):** o boot FALHA com zero bindings `Active` no banco.
+2. Um binding `Active` só existe depois de uma migração de dado rodar — **F-FEEDER-6 → (b)**:
+   `BindingCompileService.compile()` de verdade contra o chart de contas real do tenant, não seed
+   direto nem auto-compilação no boot.
+3. Logo: **chart de contas semeado → binding compilado (`Active`) → boot do processo** é ordem
+   OBRIGATÓRIA, não sugerida. Inverter qualquer par trava o boot (item 1) ou compila contra um chart
+   que ainda não existe (item 2).
+4. O script do F-FEEDER-6(b) **encaixa na etapa de migração já separada do deploy** — [ADR-M2
+   decisão 4](../adr/ADR-M2-deploy-topology.md) já fixou "migração é etapa SEPARADA do pipeline de
+   deploy, não acoplada" (ver §5.1 Bloco A item 5 do `ACCOUNTING-MASTER-MAP.md`). Este alimentador não
+   introduz uma etapa nova de deploy: ele torna a ordem chart→binding→boot uma **pré-condição dura**
+   que a etapa de migração do ADR-M2 já tinha o lugar certo para cumprir — o script do F-FEEDER-6(b) é
+   o candidato natural a viajar nela, no MESMO job.
+5. **Não decidido aqui** (fora do escopo deste BRIEF, decisão de implementação): o mecanismo exato que
+   garante essa ordem em produção — checagem no próprio script de migração, gate no pipeline de
+   deploy, ou uma mensagem de erro no boot que aponte para a causa em vez de só falhar mudo. Cabe à
+   sessão de feature.
 
 ## Pendente de validação externa
 

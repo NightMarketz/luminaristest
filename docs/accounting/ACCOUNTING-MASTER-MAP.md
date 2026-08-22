@@ -107,6 +107,25 @@
 > migração como etapa separada do pipeline — ver §5.1 Bloco A item 5 e
 > [ADR-M2-deploy-topology.md](../adr/ADR-M2-deploy-topology.md).
 >
+> **Atualização 2026-08-22 — BE-INCR-BINDING-FEEDER: BRIEF planejado + 6 forks RATIFICADOS + ADR
+> próprio (documentação apenas, nenhum código mudou).** O swap do salão (P1, fold acima) trocou os 5
+> mappers escritos-à-mão por um intérprete sobre `SALON_BINDING_V1` — mas essa fixture continua sendo
+> um **import estático em `factory.ts`**, nunca uma leitura de `prisma.accountingBinding`. O
+> alimentador que falta para a rota `POST /accounting-binding/compile` ter efeito real em produção
+> ganhou [BRIEF](BE-INCR-BINDING-FEEDER-brief.md) (sessão de planejamento) e, na mesma data, os 6
+> forks foram RATIFICADOS pelo dono (`AskUserQuestion`, duas rodadas): **F-FEEDER-1→(b)** ADR próprio
+> — `docs/adr/ADR-INCR-BINDING-FEEDER.md` (elaboração em curso) —, decisão CONTRA a recomendação (a)
+> do BRIEF; **F-FEEDER-2→(a)** `factory.ts` dentro do perímetro zero-diff da prova de saída do P2;
+> **F-FEEDER-3→(c)** opção NOVA (nem por-escopo nem global simples): chave composta
+> `unitId:sourceType` no `Map` de `AccountingSyncService`, fechando por construção a colisão que a
+> bridge de vendas cega-a-setor (`findTableByInternalName(userId, 'sales')`) tornaria o caminho padrão
+> entre setores; **F-FEEDER-4→(a)** o boot FALHA com zero bindings `Active`; **F-FEEDER-5→(a)**
+> pré-boot — primeira vez que o bootstrap do projeto aguarda uma Promise antes de `app.listen()`;
+> **F-FEEDER-6→(b)** migração de dado via `BindingCompileService.compile()` real, não seed direto. O
+> encadeamento F-FEEDER-4+6 vira **pré-condição dura de deploy** (chart de contas → binding compilado
+> → boot), encaixada na etapa de migração já separada pelo ADR-M2 decisão 4. **Este é o item novo de
+> código da fila §5.1** — implementação NÃO iniciada, segue para sessão de feature.
+>
 > Fold anterior (2026-07-23, HEAD `69ab527`) — mantido por rastreabilidade (inclui **PR #150** — PLAN/BRIEF
 > da NF-e + emenda do ADR — e **PR #151** — fix da allowlist de auditoria + seção CMV no DRE, achados na
 > primeira sessão de browser sign-off, ver §5.2). Antes disso, `2a8d18c` trouxe o **smoke-migration-gate do
@@ -361,6 +380,7 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 
 | # | Item | Tipo | Por quê nesta posição |
 |---|---|---|---|
+| 0 | **BE-INCR-BINDING-FEEDER** — o alimentador que falta para um `AccountingBinding` `Active` persistido no banco alcançar o `AccountingSyncService` em produção (hoje `factory.ts` monta os mappers a partir de um **import estático** de `SALON_BINDING_V1`, nunca de uma leitura de `prisma.accountingBinding`) | BE increment (planejado, código NÃO iniciado) | **NOVO 2026-08-22 — único item de CÓDIGO da fila (o resto do Bloco A é gate humano/dado externo).** [BRIEF](BE-INCR-BINDING-FEEDER-brief.md) pronto + **6 forks RATIFICADOS** pelo dono (`AskUserQuestion`, duas rodadas) — F-FEEDER-1→(b) ADR próprio (`docs/adr/ADR-INCR-BINDING-FEEDER.md`, elaboração em curso), F-FEEDER-2→(a) `factory.ts` no perímetro zero-diff do P2, F-FEEDER-3→(c) chave composta `unitId:sourceType` (opção nova, fecha colisão entre setores por construção), F-FEEDER-4→(a) boot falha sem binding `Active`, F-FEEDER-5→(a) pré-boot, F-FEEDER-6→(b) migração de dado via compilador real. **PRÉ-REQUISITO da prova de saída da Fase P2** (`ROADMAP-PLATAFORMA.md` ~linha 104: "`git diff` do motor/ledger/intérprete… é vazio") — sem o alimentador, `factory.ts` MUDA por vertical (import a mão do binding do 2º setor), e a prova sairia vazia por ninguém ter tentado o 2º vertical, não porque a prensa funcionou. |
 | 1 | ~~`FE-INCR-AP` — UI de Contas a Pagar~~ | FE increment | ✅ **Mergeado 2026-07-14** (PR #106 `bdd78c0`, durante este mesmo fold): aba Contas a Pagar (14ª do painel) + `accountsPayable.service` + i18n pt/en + testes. Resíduo remanescente = browser sign-off → item 4. |
 | 2 | ~~Fold de higiene do master map (ORCH-007)~~ | docs | ✅ **Feito neste fold** (2026-07-14): cabeçalho re-referenciado a `b245825`, AP/Recibos no mermaid §2, `RISK-INCR3-MIGRATION-001` marcado fechado, esta fila registrada. |
 | 3 | **Sign-off humano no PVA** — ECD, Apuração, ECF | gate humano | Único jeito de provar os 3 SPEDs "de verdade"; bloqueia declarar Núcleo 5 fechado. Depende do humano (importar no validador oficial). |
@@ -470,6 +490,13 @@ externos**: PVA, browser sign-off + deploy (agora incluindo o fluxo de venda de 
 §5.1 Bloco A item 4), NF-e real, arquivo RFB do contador — **não resta código nenhum sem gate**. A
 moratória do `CLAUDE.md` segue valendo (veda montar aparato de auditoria novo enquanto os 4 oráculos
 do Bloco A seguirem abertos há mais de 14 dias — hoje 4 de 4).
+
+**Correção, mesma data (2026-08-22) — a frase acima ficou superada em horas.** O BRIEF do
+BE-INCR-BINDING-FEEDER (planejado nesta mesma data) e a ratificação dos seus 6 forks **reabriram a
+fila de código**: o swap do salão está ativo, mas a fixture que o alimenta continua um **import
+estático** — a rota de compilação persiste um binding `Active` que hoje **não tem efeito nenhum** no
+runtime. "Não resta código nenhum sem gate" deixa de valer: **resta este um item** (§5.1 Bloco A item
+0), pré-requisito da prova de saída da Fase P2. Implementação NÃO iniciada.
 
 **Leitura anterior (fold de 2026-08-13 — supersede o fold de 2026-08-12):** a fila de código ratificado
 **drenou por completo** — a NF-e, último item sequenciado, **está escrita e revisada** (branch

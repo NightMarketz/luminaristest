@@ -16,6 +16,19 @@
 > falha da prensa. **F-P2-3 continua aberto POR DEPENDÊNCIA** (não por indecisão): depende do H1/PVA,
 > que ainda não rodou. F-P2-4 segue aberto.
 >
+> **EMENDA 2026-08-22 (dono, via AskUserQuestion) ao §2 — `factory.ts` entra no perímetro zero-diff.**
+> `server/src/lib/factory.ts` passa a fazer parte do perímetro da prova de saída (§2, item 2): todo
+> `git diff` nesse arquivo entre o vertical 1 e o vertical 2 conta como falha da prensa, no mesmo grau
+> que um diff em `features/dynamicTables` ou `features/accounting` núcleo. Esta é a emenda que o
+> `PARECER-ARCHITECT-ADR-P2.md` §1.5 já recomendava ("INCLUIR... ou provar que pós-P1 a composição é
+> genérica") e que nunca tinha sido incorporada ao texto ratificado — o texto anterior do §2 citava só
+> motor+ledger+intérprete, sem mencionar `factory.ts` nem para incluir nem para excluir. A emenda só é
+> **ALCANÇÁVEL** depois do alimentador (`ADR-INCR-BINDING-FEEDER.md`, Accepted 2026-08-22): antes dele,
+> `factory.ts` MUDARIA por vertical por construção (import estático + entrada no array de mappers por
+> setor), e exigir zero-diff nesse arquivo falharia trivialmente para qualquer vertical novo — não por
+> a prensa ter falhado, mas por o alimentador ainda não existir. Ver `ADR-INCR-BINDING-FEEDER.md` para
+> o achado, as seis decisões do alimentador e o que ele deixa aberto.
+>
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
 >
@@ -32,9 +45,10 @@ runtime** — só: preset do setor + binding compilado na geração + (se precis
 ## 2. Prova de saída (a definição de sucesso — objetiva e falseável)
 
 1. O tenant do setor 2 percorre **entrevista → ERP operante → fechamento mensal → gera a própria ECD**.
-2. `git diff` do motor (`features/dynamicTables`), do ledger (`features/accounting` núcleo) e do
-   intérprete entre antes e depois do vertical é **vazio**. Um diff não-vazio não é "ajuste" — é
-   defeito da prensa e volta para o P1 como lacuna (sessão de instrumentação → correção).
+2. `git diff` do motor (`features/dynamicTables`), do ledger (`features/accounting` núcleo), do
+   intérprete **e de `server/src/lib/factory.ts`** (**EMENDA 2026-08-22** — ver blocos de ratificação
+   acima) entre antes e depois do vertical é **vazio**. Um diff não-vazio não é "ajuste" — é defeito da
+   prensa e volta para o P1 como lacuna (sessão de instrumentação → correção).
 3. **Métrica instaurada: *time-to-first-ECD*** — do onboarding ao primeiro arquivo validável (análogo
    do "minutes to first sale" da Shopify). Registrada no runbook da prova.
 
