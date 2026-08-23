@@ -157,6 +157,18 @@ viajar no **mesmo job**, não precisa de infraestrutura própria.
    confiável (ver premissa aberta abaixo) — um `unitId` vazio ou default colidiria de volta ao problema
    original dentro da mesma unidade.
 
+
+**Correção 2026-08-23 (achado do review da implementação) — a ordem tem UM DEGRAU A MAIS.** O
+`compile()` roda o dry-run do validador (F-P1-6b1), que chama `PostingService.validateEntry` — e
+esse caminho exige um `AccountingPeriod` **OPEN no mês corrente**. Sem período aberto, o binding sai
+`Draft` (bloqueante "período fechado", `BindingValidationService.ts:42`) e a linha `Active` nunca
+nasce — logo o boot falha depois, com uma mensagem que aponta para o binding ausente e **não** para
+a causa real. Descoberto empiricamente: o `--self-check` de `scripts/activate-salon-binding.mjs`
+precisou semear um `AccountingPeriod` OPEN só para o caminho feliz passar.
+
+**Ordem real, obrigatória:** chart de contas semeado → **`AccountingPeriod` do mês corrente ABERTO**
+→ binding compilado (`Active`) → boot do processo.
+
 ## 9. Aberto (não decidido por este ADR)
 
 1. **Timeout e retry do pré-boot** (F-FEEDER-5) — se o banco não responder, quanto tempo o processo

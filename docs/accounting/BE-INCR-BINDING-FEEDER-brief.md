@@ -338,7 +338,18 @@ cliente (ex.: duas filiais, setores distintos). Ver §5 (F-FEEDER-3) e §3 (cont
    `BindingCompileService.compile()` de verdade contra o chart de contas real do tenant, não seed
    direto nem auto-compilação no boot.
 3. Logo: **chart de contas semeado → binding compilado (`Active`) → boot do processo** é ordem
-   OBRIGATÓRIA, não sugerida. Inverter qualquer par trava o boot (item 1) ou compila contra um chart
+   OBRIGATÓRIA, não sugerida.
+**Correção 2026-08-23 (achado do review da implementação) — a ordem tem UM DEGRAU A MAIS.** O
+`compile()` roda o dry-run do validador (F-P1-6b1), que chama `PostingService.validateEntry` — e
+esse caminho exige um `AccountingPeriod` **OPEN no mês corrente**. Sem período aberto, o binding sai
+`Draft` (bloqueante "período fechado", `BindingValidationService.ts:42`) e a linha `Active` nunca
+nasce — logo o boot falha depois, com uma mensagem que aponta para o binding ausente e **não** para
+a causa real. Descoberto empiricamente: o `--self-check` de `scripts/activate-salon-binding.mjs`
+precisou semear um `AccountingPeriod` OPEN só para o caminho feliz passar.
+
+**Ordem real, obrigatória:** chart de contas semeado → **`AccountingPeriod` do mês corrente ABERTO**
+→ binding compilado (`Active`) → boot do processo.
+ Inverter qualquer par trava o boot (item 1) ou compila contra um chart
    que ainda não existe (item 2).
 4. O script do F-FEEDER-6(b) **encaixa na etapa de migração já separada do deploy** — [ADR-M2
    decisão 4](../adr/ADR-M2-deploy-topology.md) já fixou "migração é etapa SEPARADA do pipeline de

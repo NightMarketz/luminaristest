@@ -100,6 +100,8 @@ import { InterpretedEventMapper } from '../features/accountingBinding/interprete
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
 import { AccountingBindingPolicy } from '../features/accountingBinding/policies/AccountingBindingPolicy';
 import { AccountingBindingRepository } from '../features/accountingBinding/repositories/AccountingBindingRepository';
+// BE-INCR-BINDING-FEEDER (FATIA A) — o alimentador; getter registrado abaixo (getAccountingBindingFeederService).
+import { AccountingBindingFeederService } from '../features/accountingBinding/services/AccountingBindingFeederService';
 import { BindingCompileService } from '../features/accountingBinding/services/BindingCompileService';
 import type { IBindingAuditPort } from '../features/accountingBinding/services/BindingCompileService';
 import { BindingValidationService } from '../features/accountingBinding/services/BindingValidationService';
@@ -516,6 +518,14 @@ export class ApplicationFactory {
     // engine). Depends on postingService (above); first non-controller consumer.
     // CRM Won deals no longer post directly (retired CrmOpportunityWonMapper) — they route
     // through the AR subledger via CrmReceivableBridge (ADR-CRM-AR-SEAM).
+    //
+    // BE-INCR-BINDING-FEEDER (Fatia B) — this is the SYNCHRONOUS BOOTSTRAP value only, built from
+    // the static SALON_BINDING_V1 fixture exactly as before this feature. In production,
+    // `server.ts` replaces `this.services.accountingSync` via `initializeAccountingSyncFromBindings()`
+    // (async, pre-boot, F-FEEDER-5) with the DB-backed instance BEFORE `app.listen()` — no request
+    // ever observes this bootstrap value. Kept here unchanged so every test/tool that constructs
+    // `ApplicationFactory` directly (not through `server.ts`) keeps working with zero diff — see
+    // `initializeAccountingSyncFromBindings()` below for the full design rationale.
     const accountingSyncService = new AccountingSyncService(postingService, buildSalonAccountingMappers());
 
     const accountingReportService = new AccountingReportService(
@@ -766,6 +776,59 @@ export class ApplicationFactory {
       validationService,
       auditPort,
     );
+  }
+
+  /**
+   * BE-INCR-BINDING-FEEDER (FATIA A, núcleo do alimentador) — getter do alimentador, seguindo o
+   * MESMO padrão de `getAccountingBindingCompileService` acima (construído a cada chamada, não
+   * memoizado — `repo`/`archetypeCatalog` são stateless entre chamadas, é barato reconstruir).
+   * Leitura GLOBAL (F-FEEDER-3 → (c)), por isso não recebe `scope`, ao contrário do getter acima.
+   */
+  public getAccountingBindingFeederService(): AccountingBindingFeederService {
+    return new AccountingBindingFeederService(new AccountingBindingRepository(), archetypeCatalog);
+  }
+
+  /**
+   * BE-INCR-BINDING-FEEDER (FATIA B, F-FEEDER-5 → PRÉ-BOOT). Único chamador pretendido:
+   * `server.ts`, ANTES de `app.listen()`. Lê os `AccountingBinding` `Active` do banco (via
+   * `getAccountingBindingFeederService()`) e SUBSTITUI `this.services.accountingSync` pela
+   * instância real — construída só com registros `{unitId, mapper}` (chave composta, F-FEEDER-3).
+   *
+   * DESENHO — por que isto NÃO é o construtor da classe (menor impacto, decisão desta fatia):
+   * `ApplicationFactory` tem construtor SÍNCRONO chamado em ~54 call-sites (`getInstance()`
+   * síncrono também) — inclusive toda suíte de teste que instancia a factory sem passar por
+   * `server.ts`. Tornar o CONSTRUTOR assíncrono vazaria `async` para todos esses call-sites (a
+   * exata mudança de forma que o BRIEF pediu para PARAR e reportar, não implementar). Em vez
+   * disso: o construtor continua construindo `accountingSyncService` do jeito de sempre —
+   * `buildSalonAccountingMappers()`, síncrono, inalterado — como valor de BOOTSTRAP; este método
+   * roda DEPOIS, assíncrono, e troca a referência. `this.services.accountingSync` não é
+   * `readonly` (só o objeto `services` em si é — `public readonly services: {...}` bloqueia
+   * `this.services = ...`, não a mutação de uma propriedade sua), então a troca é uma atribuição
+   * simples, sem mudar o TIPO de `services.accountingSync` nem o de nenhum getter.
+   *
+   * Por que o valor de bootstrap nunca "vaza" para produção: todo consumidor de
+   * `getAccountingSyncService()` é LAZY — `getFactory().getAccountingSyncService().sync(...)` só
+   * é chamado de dentro de um handler de request ou de um job (`SalonSalesAccountingBridge`,
+   * `AccountingSyncScheduler`, etc.), nunca no module-load. Como `server.ts` aguarda este método
+   * ANTES de `app.listen()`, nenhum request chega antes da troca — o valor de
+   * `buildSalonAccountingMappers()` (plain/global) nunca tem `sync()` chamado nele em produção.
+   *
+   * Esta garantia tem UMA dependência que não é óbvia e que o review pegou: o único consumidor
+   * que NÃO é disparado por request é o `AccountingSyncScheduler`. Se o `start()` dele rodasse no
+   * module-load, o relógio começaria a correr antes desta troca e um pré-boot lento (ou o delay
+   * inicial reduzido por env) faria o primeiro tick ler o valor de bootstrap. Por isso o `start()`
+   * vive DENTRO do callback de `app.listen()` em `server.ts` — mover de volta para o module-load
+   * quebra esta garantia em silêncio.
+   *
+   * Modo de falha (F-FEEDER-4): se `buildActiveMapperRegistrations()` lança
+   * `NoActiveAccountingBindingsError` (zero `Active` no banco) ou `AccountingEventMapperCollisionError`
+   * (colisão dentro da mesma unidade, do construtor de `AccountingSyncService`), a Promise
+   * REJEITA — `server.ts` propaga isso para `process.exit(1)` antes de `app.listen()`. Nada aqui
+   * engole o erro.
+   */
+  public async initializeAccountingSyncFromBindings(): Promise<void> {
+    const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
+    this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations);
   }
 
   // Service Getters

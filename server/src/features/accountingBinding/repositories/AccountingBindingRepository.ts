@@ -102,4 +102,12 @@ export class AccountingBindingRepository implements IAccountingBindingRepository
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }
+
+  public async findAllActive(tx?: Prisma.TransactionClient): Promise<AccountingBinding[]> {
+    // Leitura GLOBAL de propósito (F-FEEDER-3 → (c)) — nenhum `bindingScopeWhere`, ao contrário de
+    // todo outro método deste repositório. Único método sem escopo por desenho.
+    return (tx ?? prisma).accountingBinding.findMany({
+      where: { status: 'Active', deletedAt: null },
+    });
+  }
 }

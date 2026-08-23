@@ -103,4 +103,14 @@ export interface IAccountingBindingRepository {
 
   /** Roda `fn` dentro de uma tx do Prisma — único ponto de entrada de tx para o service. */
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
+
+  /**
+   * BE-INCR-BINDING-FEEDER (F-FEEDER-3 → (c), leitura GLOBAL — sem `BindingScope`). Todas as
+   * linhas `Active` vivas (não soft-deleted), de TODO `userId`/`unitId` — ao contrário de todo
+   * outro método desta interface, que é escopado. Único consumidor: o alimentador
+   * (`AccountingBindingFeederService`), que monta o array de `IAccountingEventMapper` do
+   * dispatcher a partir de QUALQUER binding ativo, não de um tenant específico (nós vizinhos:
+   * "só leitura nova" — BE-INCR-BINDING-FEEDER-brief.md, "Nós vizinhos").
+   */
+  findAllActive(tx?: Prisma.TransactionClient): Promise<AccountingBinding[]>;
 }

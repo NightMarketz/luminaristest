@@ -120,4 +120,47 @@ export class AccountingPeriodNotOpenError extends AppError {
     );
     Object.setPrototypeOf(this, AccountingPeriodNotOpenError.prototype);
   }
-} 
+}
+
+/**
+ * BE-INCR-BINDING-FEEDER (F-FEEDER-3 → composite key). Raised by `AccountingSyncService`'s
+ * constructor when two mapper registrations resolve to the SAME `unitId:sourceType` composite
+ * key — two `Active` bindings of the SAME business unit emitting the SAME `eventKey`. This is a
+ * data-integrity fault (invalid binding data within one unit), never the cross-unit/cross-sector
+ * path the composite key exists to keep collision-free by construction. Distinguishable in
+ * logs/alerts from `NoActiveAccountingBindingsError` — DIFFERENT failure mode, DIFFERENT code.
+ */
+export class AccountingEventMapperCollisionError extends AppError {
+  constructor(sourceType: string, unitId?: string) {
+    super(
+      unitId
+        ? `Dois mappers registrados para o evento '${sourceType}' na unidade '${unitId}' — ` +
+          `colisão de eventKey dentro do mesmo escopo (dado de binding inválido).`
+        : `Dois mappers registrados para o evento '${sourceType}' sem unidade (registro global) — ` +
+          `colisão de eventKey.`,
+      500,
+      'ACCOUNTING_EVENT_MAPPER_COLLISION',
+    );
+    Object.setPrototypeOf(this, AccountingEventMapperCollisionError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-BINDING-FEEDER (F-FEEDER-4 → boot falha sem binding Active). Raised by
+ * `AccountingBindingFeederService` when the global read of `Active` bindings returns ZERO rows.
+ * Vetoes the silent failure mode described in the BRIEF (comportamento 4): a boot with no binding
+ * at all must never come up mute and fail only per-event — it must fail LOUD, here, before any
+ * mapper is even attempted. Distinguishable in logs/alerts from
+ * `AccountingEventMapperCollisionError` — DIFFERENT failure mode, DIFFERENT code.
+ */
+export class NoActiveAccountingBindingsError extends AppError {
+  constructor() {
+    super(
+      'Nenhum AccountingBinding com status Active encontrado — o alimentador não tem nenhum ' +
+        'mapper para registrar (ambiente mal-provisionado: chart→binding precisa rodar antes do boot).',
+      500,
+      'NO_ACTIVE_ACCOUNTING_BINDINGS',
+    );
+    Object.setPrototypeOf(this, NoActiveAccountingBindingsError.prototype);
+  }
+}
