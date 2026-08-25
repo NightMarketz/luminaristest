@@ -151,8 +151,12 @@ describe('Guarda F-RN-3 — dado persistido sob salon.* precisa estar migrado pa
     // Comportamento correto esperado: a migração reescreveu a linha. Hoje ela não existe, então
     // esta asserção falha pela ausência da migração (a razão da lacuna) — não por setup: a linha
     // existe, só não foi tocada.
-    const row = await db.journalEntry.findFirst({ where: { userId: USER_ID, unitId: UNIT, sourceId: SOURCE_ID } });
-    expect(row?.sourceType).toBe('sale.finalized');
+    // findMany + toHaveLength(1): a migração deve reescrever EM LUGAR — um fix errado que
+    // inserisse uma linha sale.* nova deixaria a salon.* órfã e seria pego aqui (e findFirst
+    // sem orderBy dependeria da ordem do banco; achado da review independente).
+    const rows = await db.journalEntry.findMany({ where: { userId: USER_ID, unitId: UNIT, sourceId: SOURCE_ID } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].sourceType).toBe('sale.finalized');
 
     // Com a linha já sob o vocabulário novo, uma reemissão do MESMO fato sob 'sale.finalized'
     // deve colidir no índice de idempotência — a prova de que a migração não criou uma segunda
@@ -202,8 +206,10 @@ describe('Guarda F-RN-3 — dado persistido sob salon.* precisa estar migrado pa
 
     await applyIfPresent(db, /salon\.(sale|package)\./);
 
-    const row = await db.stockMovement.findFirst({ where: { inventoryItemId: ITEM_ID, sourceId: SOURCE_ID } });
-    expect(row?.sourceType).toBe('sale.cogs');
+    // Mesma disciplina do bloco JournalEntry: reescrita em-lugar, sem linha órfã.
+    const rows = await db.stockMovement.findMany({ where: { inventoryItemId: ITEM_ID, sourceId: SOURCE_ID } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].sourceType).toBe('sale.cogs');
 
     await expect(
       db.stockMovement.create({
