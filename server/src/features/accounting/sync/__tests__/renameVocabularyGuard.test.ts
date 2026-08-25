@@ -95,8 +95,13 @@ describe('rename salon.* -> sale.* — guarda de VOCABULÁRIO (F-RN-1/F-RN-2)', 
       const ratifiedTokens = Object.values(RATIFIED_VOCABULARY); // 5 valores sale.*
       const expectedOccurrences = ratifiedTokens.flatMap((token) => [token, token]).sort(); // 2× cada
       const escapeRegex = (s: string) => s.replace(/[.]/g, '\\.');
-      const pattern = new RegExp(`\\b(${ratifiedTokens.map(escapeRegex).join('|')})\\b`, 'g');
-      const actualOccurrences = (fixtureSource.match(pattern) ?? []).sort();
+      // Âncora nas ASPAS, não em \b: com \b, 'sale.finalized' casaria como substring de
+      // 'sale.sale.finalized' — o gaguejo da opção (a) que o F-RN-2 rejeitou passaria despercebido
+      // aqui (achado da review independente, verificado por execução).
+      const pattern = new RegExp(`['"](${ratifiedTokens.map(escapeRegex).join('|')})['"]`, 'g');
+      const actualOccurrences = (fixtureSource.match(pattern) ?? [])
+        .map((m) => m.slice(1, -1))
+        .sort();
       expect(actualOccurrences).toEqual(expectedOccurrences);
     });
   });
