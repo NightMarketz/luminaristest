@@ -35,7 +35,8 @@ const { options } = require('../../scripts/generate-openapi');
 //    with no matching spec entry). Not built — recorded in ADR-ANALYTICS-DEFS F-AD6.6 item 4.
 // +3 (BE-INCR-BINDING-PRESS, item 15 do BRIEF): POST /api/accounting-binding/{compile,validate},
 //    GET /api/accounting-binding.
-const BASELINE = 141;
+// +2 (BE-INCR-NFE, B-2): POST /api/nfe/purchase, POST /api/nfe/sale.
+const BASELINE = 143;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

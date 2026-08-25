@@ -2953,6 +2953,55 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   /api/nfe/purchase:
+ *     post:
+ *       summary: Import a purchase NF-e (XML) as one payable plus its stock inbounds
+ *       description: 'Multipart upload of an authorized NF-e 4.00 (cStat 100/150, modelo 55). The note is valued by the acquisition cost formula (vProd menos vDesc mais vFrete, vOutro, vIPI and vST; ICMS próprio is NOT deducted) and rateado across the itens with the rounding residue on the last line, so the shares sum EXACTLY to the total. Books ONE payable for the whole note (débito 1.1.6 Estoques, crédito 2.1.2) plus one stock inbound per SKU (two lines resolving to the same product are folded into a single inbound carrying the summed quantity and cost, so the subledger receives the whole note) — every cent through createPayable, never a direct posting. The 44-digit chave de acesso is the business key, so a re-import of the same note is rejected instead of minting a second liability. Every item needs an operator-confirmed cProd to productRef mapping; an unmapped item rejects the whole import.'
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               required: [unitId, itemMappings, file]
+ *               properties:
+ *                 unitId:         { type: string }
+ *                 counterpartyId: { type: string, description: 'optional id of the operator-confirmed SUPPLIER counterparty for the emitente (never auto-created)' }
+ *                 dueDate:        { type: string, format: date, description: 'YYYY-MM-DD; absent means the NF-e issue date' }
+ *                 itemMappings:   { type: string, description: 'JSON array of { cProd, productRef } confirmed by the operator, sent as a string because multipart fields are flat' }
+ *                 file:           { type: string, format: binary, description: 'the NF-e XML' }
+ *       responses:
+ *         '201': { description: 'object with payable (the note liability) and ignoredItems (lines with indTot 0, which do not compose the note total and are neither costed nor received)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/nfe/sale:
+ *     post:
+ *       summary: Cross a sale NF-e with the already-posted sale and attach provenance
+ *       description: 'Multipart upload of a sale NF-e plus the EXPLICIT saleId anchor (the XML carries no Luminaris sale id, and matching by value and date would attach the note to the wrong sale). Posts NOTHING — the revenue and CMV were already booked by the salon bridge, so re-posting would duplicate both. Attaches exactly one SourceDocument to the existing entry (the chave de acesso is the human externalRef) and returns a divergence report comparing the NF-e total with the booked total. A note whose sale was never booked is rejected.'
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               required: [unitId, saleId, file]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 saleId: { type: string, description: 'explicit operator anchor — the sale whose entry receives the provenance' }
+ *                 file:   { type: string, format: binary, description: 'the NF-e XML' }
+ *       responses:
+ *         '200': { description: 'reconciliation report (totals, difference, divergences, attached SourceDocument id)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
  *   /api/receivables:
  *     get:
  *       summary: List receivables for the unit (Contas a Receber, INCR-AR)

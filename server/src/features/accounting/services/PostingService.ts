@@ -1,7 +1,7 @@
 import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
-import type { Account } from 'generated/prisma';
+import type { Account, SourceDocument } from 'generated/prisma';
 import { CANONICAL_ACCOUNTS } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS } from '../models/money';
@@ -50,6 +50,22 @@ interface ResolvedPostingLine {
  *   accounts and @@unique([userId,unitId,sourceType,sourceId]) on journal entries) —
  *   P2002 unique violations are caught and resolved by re-fetch.
  */
+/**
+ * Descriptor for O-1 (BE-INCR-NFE) — attaching formal provenance to an ALREADY-POSTED entry.
+ * Mirrors the `sourceDocument` descriptor `postEntry` accepts, plus an optional `sourceType`
+ * (defaults to the target entry's own sourceType — the D5 "origin mirrors the entry" convention).
+ * `externalRef` is the HUMAN document reference (the NF-e access key), never an idempotency
+ * `sourceId` (T7). `documentDate` is a date-only string (YYYY-MM-DD).
+ */
+export interface AttachSourceDocumentInput {
+  externalRef?: string | null;
+  documentDate?: string | null;
+  description?: string | null;
+  attachmentId?: string | null;
+  rawJson?: string | null;
+  sourceType?: string | null;
+}
+
 export class PostingService {
   constructor(
     private readonly accountRepo: IAccountRepository,
@@ -483,6 +499,95 @@ export class PostingService {
     const sourceType = input.sourceType ?? 'manual';
     const resolvedLines = await this.resolveEntryLines(scope, input);
     this.assertDimensionGateForLines(sourceType, resolvedLines);
+  }
+
+  /**
+   * O-1 (BE-INCR-NFE) — attach formal provenance to an ALREADY-POSTED entry WITHOUT re-posting.
+   * Creates a SourceDocument + JournalEntrySource + audit event in ONE tx, reusing the exact seam
+   * `postEntry` uses (createSourceDocument/linkEntry). This is the SOLE writer of provenance over an
+   * already-posted entry: the NF-e sale reconciliation (D2b) crosses a fiscal document with a sale
+   * already booked and records the origin HERE instead of injecting ISourceProvenanceRepository into
+   * the NF-e service — keeping one owner for the seam. Writes NO ledger value; posts NOTHING; the
+   * balance/period gates are irrelevant because no Posting is created.
+   *
+   * Idempotent on the HUMAN externalRef (T7 — the NF-e access key, never a sourceId): a re-attach of
+   * the same fiscal document to the same entry finds the existing link and returns its SourceDocument.
+   *
+   * HONEST LIMIT of that idempotency (do not read more into it than the code gives): the existence check
+   * runs INSIDE `runTransaction` with the tx handle propagated (authoritative-gate-inside-tx), which is
+   * what a SEQUENTIAL re-attach needs; but there is NO `@@unique(journalEntryId, externalRef)` behind
+   * it, so two CONCURRENT attaches of the same key can still both miss and create two SourceDocuments
+   * (SQLite's default isolation does not serialize the read against the other tx's uncommitted insert).
+   * Closing that fully requires the unique index (a migration). Sequentially — the real operator flow —
+   * exactly one SourceDocument exists per (entry, externalRef).
+   */
+  async attachSourceDocument(
+    scope: AccountingScope,
+    entryId: string,
+    doc: AttachSourceDocumentInput,
+  ): Promise<SourceDocument> {
+    if (!this.policy.canPost(scope)) {
+      throw new ForbiddenError('Você não tem permissão para anexar proveniência a lançamentos.');
+    }
+    const { userId, unitId } = accountingScopeWhere(scope);
+
+    // Confirm the target entry exists within the scope before attaching (no orphan provenance).
+    const entry = await this.journalEntryRepo.findById(scope, entryId);
+    if (!entry) {
+      throw new NotFoundError(`Lançamento '${entryId}' não foi encontrado.`);
+    }
+
+    const sourceType = doc.sourceType ?? entry.sourceType;
+
+    return this.postingRepo.runTransaction(async (tx) => {
+      // IDEMPOTENCY (T7) — keyed on the human externalRef, re-checked INSIDE the tx with `tx`
+      // propagated to the repo (authoritative-gate-inside-tx). Reading it before opening the tx left a
+      // window in which two sequential-but-interleaved requests both passed the check and created two
+      // SourceDocuments; the gate now shares the transaction with the write it guards.
+      if (doc.externalRef) {
+        const existingLinks = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id, tx);
+        const already = existingLinks.find((l) => l.sourceDocument.externalRef === doc.externalRef);
+        if (already) {
+          logger.info('attachSourceDocument skipped — provenance already recorded', {
+            entryId: entry.id,
+            externalRef: doc.externalRef,
+          });
+          return already.sourceDocument;
+        }
+      }
+
+      const sourceDocument = await this.sourceProvenanceRepo.createSourceDocument(
+        {
+          userId,
+          unitId,
+          sourceType,
+          externalRef: doc.externalRef ?? null,
+          documentDate: doc.documentDate ? new Date(doc.documentDate) : null,
+          description: doc.description ?? null,
+          attachmentId: doc.attachmentId ?? null,
+          rawJson: doc.rawJson ?? null,
+          createdById: scope.actorUserId,
+        },
+        tx,
+      );
+      await this.sourceProvenanceRepo.linkEntry(
+        { userId, unitId, journalEntryId: entry.id, sourceDocumentId: sourceDocument.id },
+        tx,
+      );
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType:   'entry.source_recorded',
+        targetType:  'journal_entry',
+        targetId:    entry.id,
+        payload:     { journalEntryId: entry.id, sourceDocumentId: sourceDocument.id, externalRef: doc.externalRef, sourceType },
+      });
+      logger.info('Provenance attached to posted entry', {
+        entryId: entry.id,
+        sourceDocumentId: sourceDocument.id,
+        externalRef: doc.externalRef,
+      });
+      return sourceDocument;
+    });
   }
 
   /**

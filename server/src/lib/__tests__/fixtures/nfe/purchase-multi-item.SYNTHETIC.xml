@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC-FIXTURE-NOT-REAL: NF-e 4.00 de COMPRA construída à mão, ancorada campo-a-campo
+     em docs/accounting/BE-INCR-NFE-layout-transcription.md (F0-2). NÃO é uma nota real.
+     Prova a mecânica do parser, NÃO o leiaute (lição I052 / sintetico-nao-cobre-formato-de-dado-real).
+     O teste nfe-fixture-provenance.test.ts FALHA enquanto este marcador existir → trava o merge.
+     Substituir por 1 NF-e 4.00 real anonimizada (identidade trocada, números/estrutura preservados)
+     e remover este comentário para destravar. Valores escolhidos p/ que desconto+frete+IPI NÃO
+     dividam exato entre os 3 itens (exercita o gate 1 do rateio: Σ itens == total). -->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35250712345678000190550010000000011000000017" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cNF>00000001</cNF>
+        <natOp>COMPRA PARA COMERCIALIZACAO</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>1</nNF>
+        <dhEmi>2025-07-10T09:30:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>1</idDest>
+        <tpAmb>1</tpAmb>
+        <finNFe>1</finNFe>
+      </ide>
+      <emit>
+        <CNPJ>12345678000190</CNPJ>
+        <xNome>DISTRIBUIDORA DE COSMETICOS EXEMPLO LTDA</xNome>
+        <IE>111111111111</IE>
+      </emit>
+      <dest>
+        <CNPJ>98765432000155</CNPJ>
+        <xNome>SALAO EXEMPLO LTDA</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>SHAMP-500</cProd>
+          <cEAN>7891234567890</cEAN>
+          <xProd>Shampoo Profissional 500ml</xProd>
+          <NCM>33051000</NCM>
+          <CFOP>1102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>10.0000</qCom>
+          <vUnCom>10.0000000000</vUnCom>
+          <vProd>100.00</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS><ICMS00><vICMS>18.00</vICMS></ICMS00></ICMS>
+          <IPI><IPITrib><vIPI>3.00</vIPI></IPITrib></IPI>
+        </imposto>
+      </det>
+      <det nItem="2">
+        <prod>
+          <cProd>COND-500</cProd>
+          <cEAN>7891234567906</cEAN>
+          <xProd>Condicionador Profissional 500ml</xProd>
+          <NCM>33059000</NCM>
+          <CFOP>1102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>5.0000</qCom>
+          <vUnCom>10.0000000000</vUnCom>
+          <vProd>50.00</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS><ICMS00><vICMS>9.00</vICMS></ICMS00></ICMS>
+          <IPI><IPITrib><vIPI>1.50</vIPI></IPITrib></IPI>
+        </imposto>
+      </det>
+      <det nItem="3">
+        <prod>
+          <cProd>MASC-300</cProd>
+          <cEAN>7891234567913</cEAN>
+          <xProd>Mascara de Tratamento 300g</xProd>
+          <NCM>33051000</NCM>
+          <CFOP>1102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>3.0000</qCom>
+          <vUnCom>11.1100000000</vUnCom>
+          <vProd>33.33</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS><ICMS00><vICMS>6.00</vICMS></ICMS00></ICMS>
+          <IPI><IPITrib><vIPI>0.50</vIPI></IPITrib></IPI>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>183.33</vBC>
+          <vICMS>33.00</vICMS>
+          <vICMSDeson>0.00</vICMSDeson>
+          <vBCST>0.00</vBCST>
+          <vST>0.00</vST>
+          <vProd>183.33</vProd>
+          <vFrete>15.00</vFrete>
+          <vSeg>0.00</vSeg>
+          <vDesc>10.00</vDesc>
+          <vIPI>5.00</vIPI>
+          <vOutro>0.00</vOutro>
+          <vNF>193.33</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <tpAmb>1</tpAmb>
+      <verAplic>SP_NFE_PL_009</verAplic>
+      <chNFe>35250712345678000190550010000000011000000017</chNFe>
+      <dhRecbto>2025-07-10T09:31:12-03:00</dhRecbto>
+      <nProt>135250000000017</nProt>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

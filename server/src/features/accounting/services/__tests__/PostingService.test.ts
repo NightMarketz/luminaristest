@@ -1359,6 +1359,101 @@ describe('PostingService', () => {
     });
   });
 
+  // ── BE-INCR-NFE / O-1 — attach provenance to an ALREADY-POSTED entry (no re-post) ──────────
+  describe('attachSourceDocument (O-1, BE-INCR-NFE)', () => {
+    const posted = {
+      id: 'entry-sale-1',
+      sourceType: 'salon.sale.finalized',
+      postings: [
+        { id: 'p1', accountId: 'a1', debitCents: 10000, creditCents: 0 },
+        { id: 'p2', accountId: 'a2', debitCents: 0, creditCents: 10000 },
+      ],
+    };
+    const doc = { externalRef: 'CHAVE-ACESSO-44', documentDate: '2026-06-20', description: 'NF-e 1/1' };
+
+    it('creates SourceDocument + linkEntry + audit in ONE tx, mirroring the entry sourceType — NEVER posts', async () => {
+      const { svc, sourceProvenanceRepo, auditService, journalEntryRepo, postingRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+
+      const sd = await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      expect(sd).toEqual(expect.objectContaining({ id: 'srcdoc-1' }));
+      expect($transaction).toHaveBeenCalledTimes(1);
+      // No ledger write: the entry header/legs are NOT touched (only findById to validate + read type).
+      expect(journalEntryRepo.create).not.toHaveBeenCalled();
+      expect(postingRepo.create).not.toHaveBeenCalled();
+      expect(sourceProvenanceRepo.createSourceDocument).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          unitId,
+          sourceType: 'salon.sale.finalized', // mirrors the target entry (D5 convention)
+          externalRef: 'CHAVE-ACESSO-44',
+          documentDate: new Date('2026-06-20'),
+          description: 'NF-e 1/1',
+          createdById: 'u1',
+        }),
+        txHandle,
+      );
+      expect(sourceProvenanceRepo.linkEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u1', unitId, journalEntryId: 'entry-sale-1', sourceDocumentId: 'srcdoc-1' }),
+        txHandle,
+      );
+      expect(auditService.append).toHaveBeenCalledWith(
+        txHandle,
+        scope,
+        expect.objectContaining({
+          eventType: 'entry.source_recorded',
+          targetType: 'journal_entry',
+          targetId: 'entry-sale-1',
+          payload: expect.objectContaining({ journalEntryId: 'entry-sale-1', sourceDocumentId: 'srcdoc-1', externalRef: 'CHAVE-ACESSO-44' }),
+        }),
+      );
+    });
+
+    it('idempotent on the human externalRef — a prior attach of the same key short-circuits (no 2nd SourceDocument)', async () => {
+      const priorLink = { sourceDocument: { id: 'srcdoc-prior', externalRef: 'CHAVE-ACESSO-44' } };
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+        sourceProvenanceRepo: { findSourcesByEntry: jest.fn(async () => [priorLink]) },
+      });
+
+      const sd = await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      expect(sd).toEqual(expect.objectContaining({ id: 'srcdoc-prior' }));
+      expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
+      expect(sourceProvenanceRepo.linkEntry).not.toHaveBeenCalled();
+      // The tx IS opened now (the gate moved inside it) but NOTHING is written in it.
+      expect($transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-checks the existing-provenance gate INSIDE the tx, with `tx` propagated to the repo', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+
+      await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      // authoritative-gate-inside-tx: reading the existing links BEFORE opening the tx left a window
+      // where two requests both saw "none" and both created a SourceDocument. The read must share the
+      // transaction of the write it guards — i.e. carry the same tx handle.
+      expect(sourceProvenanceRepo.findSourcesByEntry).toHaveBeenCalledWith(scope, 'entry-sale-1', txHandle);
+    });
+
+    it('missing target entry → NotFoundError, nothing written', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => null) },
+      });
+      await expect(svc.attachSourceDocument(scope, 'nope', doc)).rejects.toBeInstanceOf(NotFoundError);
+      expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
+    });
+
+    it('is forbidden without canPost', async () => {
+      const { svc } = buildService({ policy: { canPost: jest.fn(() => false) } });
+      await expect(svc.attachSourceDocument(scope, 'entry-sale-1', doc)).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
   describe('setAccountRequiresDimension (INCR-DIM-COMPLETENESS SEC-B1-4)', () => {
     it('flips the flag + emits an AuditEvent, all in one tx', async () => {
       const accountRepo = {

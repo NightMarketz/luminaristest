@@ -85,6 +85,8 @@ import { DimensionReportService } from '../features/accounting/services/Dimensio
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
+import { NfeImportService } from '../features/accounting/services/NfeImportService';
+import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -358,6 +360,8 @@ export class ApplicationFactory {
     tieOutDiagnostic: TieOutDiagnosticService;
     counterparty: CounterpartyService;
     inventory: InventoryService;
+    nfeImport: NfeImportService;
+    nfeSaleReconciliation: NfeSaleReconciliationService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
     attachment: AttachmentService;
@@ -564,6 +568,20 @@ export class ApplicationFactory {
       this.policies.accounting,
     );
 
+    // Extracted from the literal so NfeImportService (below) drives the SAME AP instance — the NF-e
+    // de compra books every cent through the proved createPayable path, never postEntry directly.
+    const payableService = new PayableService(
+      this.repositories.payable,
+      this.repositories.account,
+      postingService,
+      auditService,
+      this.policies.accounting,
+      this.repositories.counterparty,
+      // OPTIONAL AP→estoque bridge (INCR-INVENTORY D3(b) / Body 3): an inventory purchase receives
+      // stock and its cancel reverses it, via the shared InventoryService instance built above.
+      inventoryService,
+    );
+
     // Extracted from the literal so CrmReceivableBridge (below) shares the same instance.
     const receivableService = new ReceivableService(
       this.repositories.receivable,
@@ -689,17 +707,7 @@ export class ApplicationFactory {
         postingService,
         this.policies.accounting,
       ),
-      payable: new PayableService(
-        this.repositories.payable,
-        this.repositories.account,
-        postingService,
-        auditService,
-        this.policies.accounting,
-        this.repositories.counterparty,
-        // OPTIONAL AP→estoque bridge (INCR-INVENTORY D3(b) / Body 3): an inventory purchase receives
-        // stock and its cancel reverses it, via the shared InventoryService instance built above.
-        inventoryService,
-      ),
+      payable: payableService,
       receivable: receivableService,
       // CRM → AR seam (ADR-CRM-AR-SEAM): post-commit integration bridge, same altitude as
       // AccountingSync — never injected into the DynamicTable engine (§2.1).
@@ -734,6 +742,20 @@ export class ApplicationFactory {
         this.policies.accounting,
       ),
       inventory: inventoryService,
+      // BE-INCR-NFE — fiscal ingestion. INTEGRATION services (Contract §2.1 / T10): they live outside
+      // the DynamicTable engine, own no table, and never postEntry. Compra reuses the SAME
+      // PayableService instance (all money through createPayable); venda reads the ledger and attaches
+      // provenance through the seam owner (PostingService.attachSourceDocument, O-1).
+      nfeImport: new NfeImportService(
+        payableService,
+        this.repositories.counterparty,
+        this.policies.accounting,
+      ),
+      nfeSaleReconciliation: new NfeSaleReconciliationService(
+        this.repositories.journalEntry,
+        postingService,
+        this.policies.accounting,
+      ),
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -877,6 +899,9 @@ export class ApplicationFactory {
   public getTieOutDiagnosticService = (): TieOutDiagnosticService => this.services.tieOutDiagnostic;
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
   public getInventoryService = (): InventoryService => this.services.inventory;
+  public getNfeImportService = (): NfeImportService => this.services.nfeImport;
+  public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>
+    this.services.nfeSaleReconciliation;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
