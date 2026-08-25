@@ -13,17 +13,17 @@ import { BindingValidationService } from '../BindingValidationService';
 import type { Archetype, ArchetypeCatalog, ChartAccountLookup, ChartLookupPort, PostingValidatePort } from '../../models/types';
 import type { AccountingBindingV1 } from '../../dtos/AccountingBindingDto';
 import { archetypeCatalog } from '../../archetypes/catalog';
-import { SALON_BINDING_V1 } from '../../fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 
 // ---------------------------------------------------------------------------------------------
-// Arquétipo fixture — 1:1 com o "reconhecimento-receita" real (SalonSaleFinalizedMapper): débito
+// Arquétipo fixture — 1:1 com o "reconhecimento-receita" real (SaleFinalizedMapper): débito
 // controle-recebível, crédito receita-serviço + receita-revenda opcional. Suficiente para exercitar
 // TODAS as checagens sem depender do catálogo real do Corpo A (que ainda não existe neste worktree).
 // ---------------------------------------------------------------------------------------------
 const revenueRecognitionArchetype: Archetype = {
   kind: 'postEntry',
   name: 'reconhecimento-receita',
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   slots: [
     { name: 'amountCents', type: 'moneyCentsExact', guards: ['isSafeInteger', 'gtZero'] },
   ],
@@ -37,7 +37,7 @@ const revenueRecognitionArchetype: Archetype = {
 const cogsArchetype: Archetype = {
   kind: 'postEntry',
   name: 'cmv',
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   slots: [{ name: 'cogsCents', type: 'moneyCentsExact', guards: ['isSafeInteger', 'gtZero'] }],
   lines: [
     { role: 'custo-mercadoria-vendida', side: 'debit', amountSlot: 'cogsCents' },
@@ -81,7 +81,7 @@ function validBinding(over: Partial<AccountingBindingV1['eventBindings'][number]
     compiledFromHash: 'sha256:abc',
     eventBindings: [
       {
-        eventKey: 'salon.sale.finalized',
+        eventKey: 'sale.finalized',
         archetypeKey: 'revenue_recognition',
         fieldSlots: [{ slotName: 'amountCents', sourceField: 'event.amount', transform: 'identity' }],
         roleSlots: [
@@ -374,10 +374,10 @@ describe('createSubledgerRecord — arquétipo classe-2 não declara papéis exi
 // CORREÇÃO (review independente, finding high) — o papel `caixa-por-metodo` é resolvido por
 // sub-chave (`"caixa-por-metodo:<método>"`, convenção de `dtos/CompileBindingDto.ts` §header,
 // espelhada por `interpreter/interpret.ts:166-171`). O binding real do salão
-// (`fixtures/salonBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
+// (`fixtures/saleBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
 // o validador rejeitava o próprio binding de referência. Testes abaixo provam, com o arquétipo
 // REAL (`settlementArchetype`, via `archetypeCatalog`) e — no último teste — o BINDING real
-// (`SALON_BINDING_V1`), que isso não acontece mais.
+// (`SALE_BINDING_V1`), que isso não acontece mais.
 // -------------------------------------------------------------------------------------------
 describe('CORREÇÃO — papel com sub-chave caixa-por-metodo:<método> (finding high do review)', () => {
   function buildSettlementBinding(
@@ -441,7 +441,7 @@ describe('CORREÇÃO — papel com sub-chave caixa-por-metodo:<método> (finding
     );
   });
 
-  it('verde: SALON_BINDING_V1 (fixture real, Corpo C) valida OK contra o catálogo REAL (Corpo A) com todas as contas presentes e corretas — reprodução exata do finding do review', async () => {
+  it('verde: SALE_BINDING_V1 (fixture real, Corpo C) valida OK contra o catálogo REAL (Corpo A) com todas as contas presentes e corretas — reprodução exata do finding do review', async () => {
     const chart = buildChart({
       '1.1.1': { code: '1.1.1', nature: 'Asset', acceptsEntries: true },
       '1.1.2': { code: '1.1.2', nature: 'Asset', acceptsEntries: true },
@@ -455,7 +455,7 @@ describe('CORREÇÃO — papel com sub-chave caixa-por-metodo:<método> (finding
       '4.2': { code: '4.2', nature: 'Expense', acceptsEntries: true },
     });
     const svc = new BindingValidationService(archetypeCatalog, chart, fakePostingValidatePort());
-    const result = await svc.validate(SALON_BINDING_V1);
+    const result = await svc.validate(SALE_BINDING_V1);
     expect(result.blocking).toEqual([]);
     expect(result.ok).toBe(true);
   });

@@ -90,11 +90,11 @@ describe('InventoryRepository.decrementForCogs — real SQLite DB (INCR-INVENTOR
   it('the @@unique([inventoryItemId,kind,sourceType,sourceId]) rejects a duplicate COGS movement (D-b backstop)', async () => {
     await seedItem('it-mov', 10, 1000);
     await db.stockMovement.create({
-      data: { inventoryItemId: 'it-mov', kind: 'COGS', qtyDelta: -1, valueCentsDelta: -100, occurredAt: new Date('2026-07-10'), sourceType: 'salon.sale.cogs', sourceId: 'sale-1' },
+      data: { inventoryItemId: 'it-mov', kind: 'COGS', qtyDelta: -1, valueCentsDelta: -100, occurredAt: new Date('2026-07-10'), sourceType: 'sale.cogs', sourceId: 'sale-1' },
     });
     await expect(
       db.stockMovement.create({
-        data: { inventoryItemId: 'it-mov', kind: 'COGS', qtyDelta: -1, valueCentsDelta: -100, occurredAt: new Date('2026-07-10'), sourceType: 'salon.sale.cogs', sourceId: 'sale-1' },
+        data: { inventoryItemId: 'it-mov', kind: 'COGS', qtyDelta: -1, valueCentsDelta: -100, occurredAt: new Date('2026-07-10'), sourceType: 'sale.cogs', sourceId: 'sale-1' },
       }),
     ).rejects.toMatchObject({ code: 'P2002' });
   }, 30000);

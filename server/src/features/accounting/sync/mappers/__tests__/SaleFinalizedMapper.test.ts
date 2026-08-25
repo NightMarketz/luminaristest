@@ -1,16 +1,16 @@
-import { SalonSaleFinalizedMapper } from '../SalonSaleFinalizedMapper';
+import { SaleFinalizedMapper } from '../SaleFinalizedMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleFinalizedMapper — the money boundary + chart-of-accounts mapping for
+ * SaleFinalizedMapper — the money boundary + chart-of-accounts mapping for
  * Incremento C. Verifies float→cents conversion guards and that the produced legs are
  * balanced against the canonical leaf accounts (1.1.2 debit / 3.1 credit) — the same
  * accounts as CRM revenue recognition, by ADR-C01.
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.finalized',
+    sourceType: 'sale.finalized',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -21,11 +21,11 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleFinalizedMapper', () => {
-  const mapper = new SalonSaleFinalizedMapper();
+describe('SaleFinalizedMapper', () => {
+  const mapper = new SaleFinalizedMapper();
 
-  it('declares the salon.sale.finalized sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.finalized');
+  it('declares the sale.finalized sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.finalized');
   });
 
   it('converts totalAmount reais (float) to integer cents with Math.round', () => {
@@ -49,7 +49,7 @@ describe('SalonSaleFinalizedMapper', () => {
 
   it('preserves sourceType, sourceId and the sale unitId, and derives the description from saleId', () => {
     const input = mapper.map(event({ sourceId: 'sale-XYZ', unitId: 'unit-9' }));
-    expect(input.sourceType).toBe('salon.sale.finalized');
+    expect(input.sourceType).toBe('sale.finalized');
     expect(input.sourceId).toBe('sale-XYZ');
     expect(input.unitId).toBe('unit-9');
     expect(input.description).toBe('Receita salão — Venda sale-XYZ');
@@ -158,7 +158,7 @@ describe('SalonSaleFinalizedMapper', () => {
       const input = mapper.map(
         event({ sourceId: 'sale-Z', revenueByNature: { serviceReais: 10, productReais: 90 } }),
       );
-      expect(input.sourceType).toBe('salon.sale.finalized');
+      expect(input.sourceType).toBe('sale.finalized');
       expect(input.sourceId).toBe('sale-Z');
     });
   });

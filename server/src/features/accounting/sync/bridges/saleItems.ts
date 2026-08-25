@@ -1,5 +1,5 @@
 /**
- * Shared sale-item classifier for the salon accounting bridges (Incremento G P4/P5).
+ * Shared sale-item classifier for the sale accounting bridges (Incremento G P4/P5).
  *
  * The all-Package routing decision MUST be proven from the actual `saleItems`, not
  * inferred from the sale header. Both the anti-revenue gate (in the finalized bridge)

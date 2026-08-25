@@ -5,11 +5,11 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.sale.cogs` → cost-of-goods entry (INCR-INVENTORY, Body 2 / O-2):
+ * Maps `sale.cogs` → cost-of-goods entry (INCR-INVENTORY, Body 2 / O-2):
  *   Débito  4.2   (Custo das Mercadorias Vendidas / Expense) = costCents
  *   Crédito 1.1.6 (Estoques / Asset)                          = costCents
  *
- * The razão (ledger) leg of a sale's CMV. It mirrors `SalonSaleFinalizedMapper`, with ONE
+ * The razão (ledger) leg of a sale's CMV. It mirrors `SaleFinalizedMapper`, with ONE
  * deliberate difference at the money boundary: the value arrives ALREADY IN INTEGER CENTS
  * (`event.costCents`), computed by `InventoryService.recordSaleCogs` from the moving-average
  * subledger (D5/D6). There is NO float→cents conversion here — the cents are exact by
@@ -19,11 +19,11 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  *
  * The subledger baixa (tx1, InventoryService) and this post (tx2, PostingService) are DIFFERENT
  * commits — the razão is idempotent on @@unique([userId,unitId,sourceType,sourceId]) with
- * sourceType='salon.sale.cogs', so a reconcile re-drive posts at most once (never colliding with
- * the revenue entry, which is sourceType='salon.sale.finalized' for the same saleId).
+ * sourceType='sale.cogs', so a reconcile re-drive posts at most once (never colliding with
+ * the revenue entry, which is sourceType='sale.finalized' for the same saleId).
  */
-export class SalonSaleCogsMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.cogs' as const;
+export class SaleCogsMapper implements IAccountingEventMapper {
+  public readonly sourceType = 'sale.cogs' as const;
 
   /** Leaf account codes (canonical chart — ChartOfAccountsFixture, Fase 0). */
   private static readonly DEBIT_ACCOUNT = '4.2'; // Custo das Mercadorias Vendidas (Expense)
@@ -57,8 +57,8 @@ export class SalonSaleCogsMapper implements IAccountingEventMapper {
       sourceType: event.sourceType,
       sourceId: event.sourceId,
       lines: [
-        { accountCode: SalonSaleCogsMapper.DEBIT_ACCOUNT, debitCents: costCents, creditCents: 0 },
-        { accountCode: SalonSaleCogsMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: costCents },
+        { accountCode: SaleCogsMapper.DEBIT_ACCOUNT, debitCents: costCents, creditCents: 0 },
+        { accountCode: SaleCogsMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: costCents },
       ],
     };
   }

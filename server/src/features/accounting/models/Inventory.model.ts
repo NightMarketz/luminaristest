@@ -22,10 +22,10 @@ export type InventoryItemStatus = (typeof INVENTORY_ITEM_STATUSES)[number];
 
 /**
  * Source-type discriminators for `StockMovement.sourceType` (idempotency key part, D-b). A COGS
- * baixa driven by a salon sale keys on the sale; an INBOUND keys on the receipt (payableId for an
+ * baixa driven by a sale keys on the sale; an INBOUND keys on the receipt (payableId for an
  * AP purchase, a seed id for a manual load). These pair with `sourceId` to form the read-first
  * idempotency lookup (`findMovementBySource`) and the `@@unique([inventoryItemId,kind,sourceType,
  * sourceId])` backstop.
  */
-export const INVENTORY_COGS_SOURCE_TYPE = 'salon.sale.cogs';
+export const INVENTORY_COGS_SOURCE_TYPE = 'sale.cogs';
 export const INVENTORY_INBOUND_SOURCE_TYPE = 'inventory.inbound';

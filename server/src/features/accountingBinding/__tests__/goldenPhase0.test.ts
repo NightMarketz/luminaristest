@@ -1,10 +1,10 @@
 import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
 import { MAX_CENTS } from '../../accounting/models/money';
-import { SalonPackageSoldMapper } from '../../accounting/sync/mappers/SalonPackageSoldMapper';
-import { SalonSaleCogsMapper } from '../../accounting/sync/mappers/SalonSaleCogsMapper';
-import { SalonSaleFinalizedMapper } from '../../accounting/sync/mappers/SalonSaleFinalizedMapper';
-import { SalonSaleReturnedMapper } from '../../accounting/sync/mappers/SalonSaleReturnedMapper';
-import { SalonSaleSettledMapper } from '../../accounting/sync/mappers/SalonSaleSettledMapper';
+import { SalePackageSoldMapper } from '../../accounting/sync/mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
+import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
+import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
+import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
 import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
 
 /**
@@ -70,7 +70,7 @@ function canonicalizePostEntryInput(input: PostEntryInput): string {
 
 function finalizedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.finalized',
+    sourceType: 'sale.finalized',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -83,7 +83,7 @@ function finalizedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function settledEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.settled',
+    sourceType: 'sale.settled',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 250,
@@ -97,7 +97,7 @@ function settledEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function returnedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.returned',
+    sourceType: 'sale.returned',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -110,7 +110,7 @@ function returnedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function packageSoldEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.package.sold',
+    sourceType: 'sale.package.sold',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 500,
@@ -123,7 +123,7 @@ function packageSoldEvent(over: Partial<AccountingEvent> = {}): AccountingEvent 
 
 function cogsEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.cogs',
+    sourceType: 'sale.cogs',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 0,
@@ -135,14 +135,14 @@ function cogsEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-const finalizedMapper = new SalonSaleFinalizedMapper();
-const settledMapper = new SalonSaleSettledMapper();
-const returnedMapper = new SalonSaleReturnedMapper();
-const packageSoldMapper = new SalonPackageSoldMapper();
-const cogsMapper = new SalonSaleCogsMapper();
+const finalizedMapper = new SaleFinalizedMapper();
+const settledMapper = new SaleSettledMapper();
+const returnedMapper = new SaleReturnedMapper();
+const packageSoldMapper = new SalePackageSoldMapper();
+const cogsMapper = new SaleCogsMapper();
 
 const CASES: ReadonlyArray<{ name: string; build: () => PostEntryInput }> = [
-  // --- reconhecimento-receita (SalonSaleFinalizedMapper) ---
+  // --- reconhecimento-receita (SaleFinalizedMapper) ---
   { name: 'finalized: sem breakdown', build: () => finalizedMapper.map(finalizedEvent({ amount: 200 })) },
   {
     name: 'finalized: split misto 100/100',
@@ -178,20 +178,20 @@ const CASES: ReadonlyArray<{ name: string; build: () => PostEntryInput }> = [
   },
   { name: 'finalized: arredondamento round-half-up no limite (0,005)', build: () => finalizedMapper.map(finalizedEvent({ amount: 0.005 })) },
 
-  // --- liquidacao (SalonSaleSettledMapper) — matriz D1-QMAP ---
+  // --- liquidacao (SaleSettledMapper) — matriz D1-QMAP ---
   { name: 'settled: Cash', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Cash', amount: 200 })) },
   { name: 'settled: Pix', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Pix', amount: 200 })) },
   { name: 'settled: Debit Card', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Debit Card', amount: 200 })) },
   { name: 'settled: Credit Card', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Credit Card', amount: 200 })) },
   { name: 'settled: Package Balance', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Package Balance', amount: 200 })) },
 
-  // --- estorno-origem (SalonSaleReturnedMapper) ---
+  // --- estorno-origem (SaleReturnedMapper) ---
   { name: 'returned: base', build: () => returnedMapper.map(returnedEvent({ amount: 200 })) },
 
-  // --- passivo-performance (SalonPackageSoldMapper) ---
+  // --- passivo-performance (SalePackageSoldMapper) ---
   { name: 'packageSold: base', build: () => packageSoldMapper.map(packageSoldEvent({ amount: 200 })) },
 
-  // --- cmv (SalonSaleCogsMapper) ---
+  // --- cmv (SaleCogsMapper) ---
   { name: 'cogs: base', build: () => cogsMapper.map(cogsEvent({ costCents: 20000 })) },
   { name: 'cogs: fronteira MAX_CENTS', build: () => cogsMapper.map(cogsEvent({ costCents: MAX_CENTS })) },
 ];
@@ -217,37 +217,37 @@ describe('golden Fase 0 — corpus canônico dos mappers-à-mão (pré-P1)', () 
  */
 const GOLDEN_FIXTURES: Readonly<Record<string, string>> = {
   'finalized: sem breakdown':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":20000}]}',
   'finalized: split misto 100/100':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":10000},{"accountCode":"3.3","debitCents":0,"creditCents":10000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":10000},{"accountCode":"3.3","debitCents":0,"creditCents":10000}]}',
   'finalized: rateio de desconto de header (180 sobre itens 100+100)':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":18000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":9000},{"accountCode":"3.3","debitCents":0,"creditCents":9000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":18000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":9000},{"accountCode":"3.3","debitCents":0,"creditCents":9000}]}',
   'finalized: resíduo de arredondamento 1:2 sobre 10001¢':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":10001,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":3334},{"accountCode":"3.3","debitCents":0,"creditCents":6667}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":10001,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":3334},{"accountCode":"3.3","debitCents":0,"creditCents":6667}]}',
   'finalized: só-serviço (sem linha 3.3 zerada)':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":15000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":15000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":15000,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":15000}]}',
   'finalized: só-produto (sem linha 3.1 zerada)':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":15000,"creditCents":0},{"accountCode":"3.3","debitCents":0,"creditCents":15000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":15000,"creditCents":0},{"accountCode":"3.3","debitCents":0,"creditCents":15000}]}',
   'finalized: idempotência preservada sob split':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-Z","sourceType":"salon.sale.finalized","sourceId":"sale-Z","lines":[{"accountCode":"1.1.2","debitCents":150050,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":15005},{"accountCode":"3.3","debitCents":0,"creditCents":135045}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-Z","sourceType":"sale.finalized","sourceId":"sale-Z","lines":[{"accountCode":"1.1.2","debitCents":150050,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":15005},{"accountCode":"3.3","debitCents":0,"creditCents":135045}]}',
   'finalized: arredondamento round-half-up no limite (0,005)':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"salon.sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":1,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":1}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Receita salão — Venda sale-1","sourceType":"sale.finalized","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":1,"creditCents":0},{"accountCode":"3.1","debitCents":0,"creditCents":1}]}',
   'settled: Cash':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"salon.sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.3","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.3","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'settled: Pix':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"salon.sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.1","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.1","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'settled: Debit Card':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"salon.sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.4","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.4","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'settled: Credit Card':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"salon.sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.4","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"sale.settled","sourceId":"sale-1","lines":[{"accountCode":"1.1.4","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'settled: Package Balance':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"salon.sale.settled","sourceId":"sale-1","lines":[{"accountCode":"2.1.1","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Liquidação salão — Venda sale-1","sourceType":"sale.settled","sourceId":"sale-1","lines":[{"accountCode":"2.1.1","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'returned: base':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Devolução salão — Venda sale-1","sourceType":"salon.sale.returned","sourceId":"sale-1","lines":[{"accountCode":"3.2","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"Devolução salão — Venda sale-1","sourceType":"sale.returned","sourceId":"sale-1","lines":[{"accountCode":"3.2","debitCents":20000,"creditCents":0},{"accountCode":"1.1.2","debitCents":0,"creditCents":20000}]}',
   'packageSold: base':
-    '{"unitId":"unit-1","date":"2026-06-26T00:00:00.000Z","description":"Origem de pacote pré-pago — Venda sale-1","sourceType":"salon.package.sold","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"2.1.1","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-26T00:00:00.000Z","description":"Origem de pacote pré-pago — Venda sale-1","sourceType":"sale.package.sold","sourceId":"sale-1","lines":[{"accountCode":"1.1.2","debitCents":20000,"creditCents":0},{"accountCode":"2.1.1","debitCents":0,"creditCents":20000}]}',
   'cogs: base':
-    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"CMV salão — Venda sale-1","sourceType":"salon.sale.cogs","sourceId":"sale-1","lines":[{"accountCode":"4.2","debitCents":20000,"creditCents":0},{"accountCode":"1.1.6","debitCents":0,"creditCents":20000}]}',
+    '{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"CMV salão — Venda sale-1","sourceType":"sale.cogs","sourceId":"sale-1","lines":[{"accountCode":"4.2","debitCents":20000,"creditCents":0},{"accountCode":"1.1.6","debitCents":0,"creditCents":20000}]}',
   'cogs: fronteira MAX_CENTS':
-    `{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"CMV salão — Venda sale-1","sourceType":"salon.sale.cogs","sourceId":"sale-1","lines":[{"accountCode":"4.2","debitCents":${MAX_CENTS},"creditCents":0},{"accountCode":"1.1.6","debitCents":0,"creditCents":${MAX_CENTS}}]}`,
+    `{"unitId":"unit-1","date":"2026-06-25T00:00:00.000Z","description":"CMV salão — Venda sale-1","sourceType":"sale.cogs","sourceId":"sale-1","lines":[{"accountCode":"4.2","debitCents":${MAX_CENTS},"creditCents":0},{"accountCode":"1.1.6","debitCents":0,"creditCents":${MAX_CENTS}}]}`,
 };

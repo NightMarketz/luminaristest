@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 
 /**
- * dynamicTablesController → SalonSalesAccountingBridge wiring (Incremento C).
+ * dynamicTablesController → SaleSalesAccountingBridge wiring (Incremento C).
  * Proves the bridge is invoked POST-COMMIT on BOTH the create and update seams
  * (a sale may be born Finalized), with the route tableId and the persisted row,
  * and that it runs AFTER the DynamicTable write returns.
  */
 const createTableData = jest.fn();
 const updateTableData = jest.fn();
-const maybeSyncSalonSaleFinalized = jest.fn();
+const maybeSyncSaleFinalized = jest.fn();
 const getUserContextFromRequest = jest.fn(() => ({ id: 'u1', userId: 'u1' }));
 const handleApiError = jest.fn();
 
@@ -26,9 +26,9 @@ jest.mock('@/lib/factory', () => ({
     getDynamicTableService: () => ({ createTableData, updateTableData }),
   }),
 }));
-jest.mock('@/features/accounting/sync/bridges/SalonSalesAccountingBridge', () => ({
+jest.mock('@/features/accounting/sync/bridges/SaleSalesAccountingBridge', () => ({
   __esModule: true,
-  maybeSyncSalonSaleFinalized: (...a: unknown[]) => maybeSyncSalonSaleFinalized(...a),
+  maybeSyncSaleFinalized: (...a: unknown[]) => maybeSyncSaleFinalized(...a),
 }));
 
 import {
@@ -46,7 +46,7 @@ function mockRes(): Response {
   return res;
 }
 
-describe('dynamicTablesController salon-bridge wiring', () => {
+describe('dynamicTablesController sale-bridge wiring', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('createTableData calls the bridge post-commit with (ctx, tableId, created)', async () => {
@@ -57,11 +57,11 @@ describe('dynamicTablesController salon-bridge wiring', () => {
 
     await createHandler(req, res);
 
-    expect(maybeSyncSalonSaleFinalized).toHaveBeenCalledTimes(1);
-    expect(maybeSyncSalonSaleFinalized).toHaveBeenCalledWith({ id: 'u1', userId: 'u1' }, TABLE_ID, created);
+    expect(maybeSyncSaleFinalized).toHaveBeenCalledTimes(1);
+    expect(maybeSyncSaleFinalized).toHaveBeenCalledWith({ id: 'u1', userId: 'u1' }, TABLE_ID, created);
     // ordering: write committed BEFORE the bridge runs
     expect(createTableData.mock.invocationCallOrder[0]).toBeLessThan(
-      maybeSyncSalonSaleFinalized.mock.invocationCallOrder[0],
+      maybeSyncSaleFinalized.mock.invocationCallOrder[0],
     );
     expect(res.status).toHaveBeenCalledWith(201);
   });
@@ -77,10 +77,10 @@ describe('dynamicTablesController salon-bridge wiring', () => {
 
     await updateHandler(req, res);
 
-    expect(maybeSyncSalonSaleFinalized).toHaveBeenCalledTimes(1);
-    expect(maybeSyncSalonSaleFinalized).toHaveBeenCalledWith({ id: 'u1', userId: 'u1' }, TABLE_ID, updated);
+    expect(maybeSyncSaleFinalized).toHaveBeenCalledTimes(1);
+    expect(maybeSyncSaleFinalized).toHaveBeenCalledWith({ id: 'u1', userId: 'u1' }, TABLE_ID, updated);
     expect(updateTableData.mock.invocationCallOrder[0]).toBeLessThan(
-      maybeSyncSalonSaleFinalized.mock.invocationCallOrder[0],
+      maybeSyncSaleFinalized.mock.invocationCallOrder[0],
     );
     expect(res.json).toHaveBeenCalledWith({ success: true, data: updated });
   });

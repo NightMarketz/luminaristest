@@ -19,7 +19,7 @@ import type { IAccountingPeriodRepository } from '../../repositories/IAccounting
  * settlement fact exists), the bridge creates a Receivable in the AR-formal subledger.
  * ReceivableService then books recognition (D 1.1.5 / C 3.1) and the payment FACT enters the
  * system where AR already defines it: a human registers the receipt (aging + settlement +
- * 1.1.5 tie-out come for free). Same altitude as the Salon*Bridges: invoked POST-COMMIT from
+ * 1.1.5 tie-out come for free). Same altitude as the Sale*Bridges: invoked POST-COMMIT from
  * the CRM controller / reconcile job, never inside the DynamicTable engine (§2.1).
  *
  * Idempotency (two guards, both re-checked every pass; review-hardened):

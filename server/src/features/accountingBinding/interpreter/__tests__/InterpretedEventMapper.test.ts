@@ -1,29 +1,29 @@
 import { cogsArchetype } from '../../archetypes/CogsArchetype';
 import { subledgerCreateReceivableArchetype } from '../../archetypes/SubledgerCreateReceivableArchetype';
 import type { EventBinding } from '../../dtos/AccountingBindingDto';
-import { SALON_BINDING_V1 } from '../../fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 import type { AccountingEventLike } from '../interpret';
 import { InterpretedEventMapper } from '../InterpretedEventMapper';
 
 /**
  * `InterpretedEventMapper` (BE-INCR-BINDING-PRESS, Corpo D, item 11 do BRIEF) — adaptador fino
  * `IAccountingEventMapper`, exercitado contra o arquétipo REAL (`CogsArchetype`, Corpo A) e o
- * binding REAL do salão (`fixtures/salonBinding.ts`, Corpo C). Verifica o que o dossiê §b promete:
+ * binding REAL do salão (`fixtures/saleBinding.ts`, Corpo C). Verifica o que o dossiê §b promete:
  * `sourceType` vem do `binding.eventKey`, `map()` delega a `interpret()`, e a fiação errada
  * (arquétipo classe 2) falha na CONSTRUÇÃO, não no runtime de um evento.
  */
-const cogsBinding = SALON_BINDING_V1.eventBindings.find((eb) => eb.eventKey === 'salon.sale.cogs')!;
+const cogsBinding = SALE_BINDING_V1.eventBindings.find((eb) => eb.eventKey === 'sale.cogs')!;
 
 describe('InterpretedEventMapper', () => {
   it('sourceType vem de binding.eventKey — a mesma chave de registro do AccountingSyncService', () => {
     const mapper = new InterpretedEventMapper(cogsArchetype, cogsBinding);
-    expect(mapper.sourceType).toBe('salon.sale.cogs');
+    expect(mapper.sourceType).toBe('sale.cogs');
   });
 
-  it('map() delega a interpret() e devolve um PostEntryInput byte-idêntico ao SalonSaleCogsMapper', () => {
+  it('map() delega a interpret() e devolve um PostEntryInput byte-idêntico ao SaleCogsMapper', () => {
     const mapper = new InterpretedEventMapper(cogsArchetype, cogsBinding);
     const event: AccountingEventLike = {
-      sourceType: 'salon.sale.cogs',
+      sourceType: 'sale.cogs',
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 0,
@@ -37,7 +37,7 @@ describe('InterpretedEventMapper', () => {
       { accountCode: '4.2', debitCents: 20000, creditCents: 0 },
       { accountCode: '1.1.6', debitCents: 0, creditCents: 20000 },
     ]);
-    expect(input.sourceType).toBe('salon.sale.cogs');
+    expect(input.sourceType).toBe('sale.cogs');
     expect(input.sourceId).toBe('sale-1');
   });
 

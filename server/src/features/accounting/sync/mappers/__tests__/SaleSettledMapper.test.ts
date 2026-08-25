@@ -1,16 +1,16 @@
-import { SalonSaleSettledMapper } from '../SalonSaleSettledMapper';
+import { SaleSettledMapper } from '../SaleSettledMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleSettledMapper — the money boundary + chart mapping for Incremento D / D1 (settlement).
+ * SaleSettledMapper — the money boundary + chart mapping for Incremento D / D1 (settlement).
  * A settlement clears A Receber (credit 1.1.2) and debits the account where the money landed,
  * chosen by paymentMethod. Verifies the per-method debit account (5 cases), gross value,
  * float→cents guards, and that it never collides with the finalized/returned sourceTypes.
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.settled',
+    sourceType: 'sale.settled',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 250,
@@ -22,11 +22,11 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleSettledMapper', () => {
-  const mapper = new SalonSaleSettledMapper();
+describe('SaleSettledMapper', () => {
+  const mapper = new SaleSettledMapper();
 
-  it('declares the salon.sale.settled sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.settled');
+  it('declares the sale.settled sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.settled');
   });
 
   // --- D1-QMAP: each paymentMethod → the correct debit account (case by case) ---
@@ -85,8 +85,8 @@ describe('SalonSaleSettledMapper', () => {
 
   it('uses a DISTINCT sourceType from the finalized revenue entry (no @@unique collision)', () => {
     const input = mapper.map(event());
-    expect(input.sourceType).toBe('salon.sale.settled');
-    expect(input.sourceType).not.toBe('salon.sale.finalized');
+    expect(input.sourceType).toBe('sale.settled');
+    expect(input.sourceType).not.toBe('sale.finalized');
     expect(input.sourceId).toBe('sale-1'); // same saleId, different sourceType → coexist
   });
 

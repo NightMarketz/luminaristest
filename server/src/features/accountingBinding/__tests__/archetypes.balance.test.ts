@@ -78,32 +78,32 @@ describe('Arquétipos classe 1 (postEntry) — balanceamento por construção', 
   it('cada arquétipo tem exatamente os sourceType/roles esperados do corpus (grounding contra o dossiê)', () => {
     const byName = new Map(lancamentoArchetypes.map((a) => [a.name, a]));
 
-    expect(byName.get('reconhecimento-receita')?.sourceType).toBe('salon.sale.finalized');
+    expect(byName.get('reconhecimento-receita')?.sourceType).toBe('sale.finalized');
     expect(byName.get('reconhecimento-receita')?.lines.map((l) => l.role)).toEqual([
       'controle-recebível',
       'receita-serviço',
       'receita-revenda',
     ]);
 
-    expect(byName.get('liquidacao')?.sourceType).toBe('salon.sale.settled');
+    expect(byName.get('liquidacao')?.sourceType).toBe('sale.settled');
     expect(byName.get('liquidacao')?.lines.map((l) => l.role)).toEqual([
       'caixa-por-metodo',
       'controle-recebível',
     ]);
 
-    expect(byName.get('estorno-origem')?.sourceType).toBe('salon.sale.returned');
+    expect(byName.get('estorno-origem')?.sourceType).toBe('sale.returned');
     expect(byName.get('estorno-origem')?.lines.map((l) => l.role)).toEqual([
       'contra-receita',
       'controle-recebível',
     ]);
 
-    expect(byName.get('passivo-performance')?.sourceType).toBe('salon.package.sold');
+    expect(byName.get('passivo-performance')?.sourceType).toBe('sale.package.sold');
     expect(byName.get('passivo-performance')?.lines.map((l) => l.role)).toEqual([
       'controle-recebível',
       'passivo-diferido',
     ]);
 
-    expect(byName.get('cmv')?.sourceType).toBe('salon.sale.cogs');
+    expect(byName.get('cmv')?.sourceType).toBe('sale.cogs');
     expect(byName.get('cmv')?.lines.map((l) => l.role)).toEqual([
       'custo-mercadoria-vendida',
       'estoque',

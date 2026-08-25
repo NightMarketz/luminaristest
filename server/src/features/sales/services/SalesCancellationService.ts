@@ -3,11 +3,11 @@ import { NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
-import { maybeReverseSalonSale } from '../../accounting/sync/bridges/SalonSaleReversalBridge';
+import { maybeReverseSale } from '../../accounting/sync/bridges/SaleReversalBridge';
 import type { CancelSaleInput, ReturnSaleInput } from '../dtos/SalesCancellationDto';
 
 /**
- * SalesCancellationService — server-side orchestration of the salon-sale Cancelled / Returned
+ * SalesCancellationService — server-side orchestration of the sale Cancelled / Returned
  * transitions (Incremento D), in the backend-workflow-transition-generator pattern (mirrors
  * CrmPipelineService.advanceStage/advanceOpportunity).
  *
@@ -18,7 +18,7 @@ import type { CancelSaleInput, ReturnSaleInput } from '../dtos/SalesCancellation
  *
  * Layering (Contract §2 orchestration variant): no Repository/Policy of its own — every read/
  * write goes through DynamicTableService, which already enforces `canManageData` on writes.
- * The accounting effect (estorno / devolução) is applied POST-COMMIT via SalonSaleReversalBridge
+ * The accounting effect (estorno / devolução) is applied POST-COMMIT via SaleReversalBridge
  * — never inside the DynamicTable engine (§2.1 / G1) and never inside a transaction (it opens
  * its own root tx). A bridge failure is non-fatal: the transition stands and reconciliation
  * re-drives the accounting idempotently.
@@ -48,7 +48,7 @@ export class SalesCancellationService {
     input: CancelSaleInput | ReturnSaleInput,
     target: 'Cancelled' | 'Returned',
   ) {
-    // Resolve THIS tenant's salon `sales` table (tenant-scoped via user.userId → NotFoundError).
+    // Resolve THIS tenant's `sales` table (tenant-scoped via user.userId → NotFoundError).
     const salesTable = await this.repository.findTableByInternalName(user.userId, 'sales');
     if (!salesTable) {
       throw new NotFoundError(`Sales table 'sales' is not installed for this user.`);
@@ -87,7 +87,7 @@ export class SalesCancellationService {
       { isSystem: true },
     );
 
-    logger.info('Salon sale status transitioned', {
+    logger.info('Sale status transitioned', {
       saleId: input.saleId,
       from: 'Finalized',
       to: target,
@@ -96,7 +96,7 @@ export class SalesCancellationService {
     // POST-COMMIT accounting effect (§2.1: integration above the engine, not inside it).
     // Best-effort and non-fatal — the transition is already committed; reconciliation re-drives
     // a failed reversal/return idempotently. salesTable.id is authoritative (verified above).
-    await maybeReverseSalonSale(user, salesTable.id, updated);
+    await maybeReverseSale(user, salesTable.id, updated);
 
     return updated;
   }

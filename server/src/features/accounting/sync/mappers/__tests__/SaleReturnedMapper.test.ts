@@ -1,16 +1,16 @@
-import { SalonSaleReturnedMapper } from '../SalonSaleReturnedMapper';
+import { SaleReturnedMapper } from '../SaleReturnedMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleReturnedMapper — the money boundary + chart mapping for Incremento D (devolução).
+ * SaleReturnedMapper — the money boundary + chart mapping for Incremento D (devolução).
  * A return books a CONTRA-revenue entry on 3.2 (debit) / 1.1.2 (credit) — distinct from the
  * finalized entry (1.1.2 debit / 3.1 credit), so net revenue is reduced. Verifies float→cents
  * guards and the balanced legs on the canonical leaves.
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.returned',
+    sourceType: 'sale.returned',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -21,11 +21,11 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleReturnedMapper', () => {
-  const mapper = new SalonSaleReturnedMapper();
+describe('SaleReturnedMapper', () => {
+  const mapper = new SaleReturnedMapper();
 
-  it('declares the salon.sale.returned sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.returned');
+  it('declares the sale.returned sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.returned');
   });
 
   it('converts totalAmount reais (float) to integer cents with Math.round', () => {
@@ -54,7 +54,7 @@ describe('SalonSaleReturnedMapper', () => {
 
   it('preserves sourceType/sourceId/unitId and derives the description from saleId', () => {
     const input = mapper.map(event({ sourceId: 'sale-XYZ', unitId: 'unit-9' }));
-    expect(input.sourceType).toBe('salon.sale.returned');
+    expect(input.sourceType).toBe('sale.returned');
     expect(input.sourceId).toBe('sale-XYZ');
     expect(input.unitId).toBe('unit-9');
     expect(input.description).toBe('Devolução salão — Venda sale-XYZ');

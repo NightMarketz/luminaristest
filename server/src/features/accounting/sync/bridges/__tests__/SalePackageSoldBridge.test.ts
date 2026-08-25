@@ -2,7 +2,7 @@ import type { AccountingScope } from '../../../scope/AccountingScope';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 // Mock the bridge's collaborators (factory + logger). resolveAccountingScope,
-// buildSalonPackageSoldEvent and classifySaleItems are real (classify reads via the
+// buildSalePackageSoldEvent and classifySaleItems are real (classify reads via the
 // mocked repository).
 const findTableByInternalName = jest.fn();
 const findRowsByFieldValue = jest.fn();
@@ -24,7 +24,7 @@ jest.mock('../../../../../lib/logger', () => ({
   default: { info: jest.fn(), warn: (...a: unknown[]) => loggerWarn(...a), error: (...a: unknown[]) => loggerError(...a), debug: jest.fn() },
 }));
 
-import { maybeSyncSalonPackageSold } from '../SalonPackageSoldBridge';
+import { maybeSyncSalePackageSold } from '../SalePackageSoldBridge';
 
 const SALES_TABLE_ID = 'tbl-sales-1';
 const actor = { userId: 'u1' };
@@ -41,7 +41,7 @@ function finalizedRow(over: Record<string, unknown> = {}) {
 const packageItems = [{ data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } }];
 const productItems = [{ data: { type: 'Product', productId: 'p-1', saleId: 'sale-1' } }];
 
-describe('SalonPackageSoldBridge.maybeSyncSalonPackageSold', () => {
+describe('SalePackageSoldBridge.maybeSyncSalePackageSold', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     findTableByInternalName.mockResolvedValue(salesTable());
@@ -50,13 +50,13 @@ describe('SalonPackageSoldBridge.maybeSyncSalonPackageSold', () => {
     creditFromSale.mockResolvedValue(undefined);
   });
 
-  it('syncs an all-Package Finalized sale with salon.package.sold (origin), correct scope/event', async () => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+  it('syncs an all-Package Finalized sale with sale.package.sold (origin), correct scope/event', async () => {
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).toHaveBeenCalledTimes(1);
     const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
     expect(scope).toMatchObject({ ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' });
     expect(event).toMatchObject({
-      sourceType: 'salon.package.sold',
+      sourceType: 'sale.package.sold',
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 500,
@@ -64,7 +64,7 @@ describe('SalonPackageSoldBridge.maybeSyncSalonPackageSold', () => {
   });
 
   it('credits the customer balance for the single package (origin), cents-converted', async () => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(creditFromSale).toHaveBeenCalledTimes(1);
     const [, cmd] = creditFromSale.mock.calls[0];
     expect(cmd).toEqual({ customerId: 'cust-1', packageId: 'pkg-1', saleId: 'sale-1', amountCents: 50000 });
@@ -75,60 +75,60 @@ describe('SalonPackageSoldBridge.maybeSyncSalonPackageSold', () => {
       { data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } },
       { data: { type: 'Package', packageId: 'pkg-2', saleId: 'sale-1' } },
     ]);
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).toHaveBeenCalledTimes(1); // accounting origin still books
     expect(creditFromSale).not.toHaveBeenCalled(); // but balance credit is skipped + warned
     expect(loggerWarn).toHaveBeenCalled();
   });
 
   it('skips the balance credit when the sale has no customerId', async () => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow({ customerId: undefined }));
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ customerId: undefined }));
     expect(creditFromSale).not.toHaveBeenCalled();
   });
 
   it.each(['Draft', 'Cancelled', 'Returned'])('does NOT sync a sale in status %s', async (status) => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow({ status }));
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ status }));
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('ignores a table that is not the tenant sales table (id mismatch)', async () => {
-    await maybeSyncSalonPackageSold(actor, 'some-other-table', finalizedRow());
+    await maybeSyncSalePackageSold(actor, 'some-other-table', finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('ignores when the tenant has no sales table', async () => {
     findTableByInternalName.mockResolvedValueOnce(null);
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('does NOT sync a Product/Service sale (not all-Package)', async () => {
     findRowsByFieldValue.mockResolvedValue(productItems);
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('does NOT sync when the sale has no items (Empty)', async () => {
     findRowsByFieldValue.mockResolvedValue([]);
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('skips (no sync) and warns when an all-Package sale has no unitId', async () => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow({ unitId: undefined }));
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ unitId: undefined }));
     expect(sync).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalled();
   });
 
   it.each([0, -10, NaN, 'x'])('skips (no sync) when totalAmount is invalid (%s)', async (totalAmount) => {
-    await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow({ totalAmount }));
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ totalAmount }));
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('is NON-FATAL: a sync failure does not throw and is logged for reconciliation', async () => {
     sync.mockRejectedValueOnce(new Error('posting down'));
     await expect(
-      maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow()),
+      maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow()),
     ).resolves.toBeUndefined();
     expect(loggerError).toHaveBeenCalled();
   });

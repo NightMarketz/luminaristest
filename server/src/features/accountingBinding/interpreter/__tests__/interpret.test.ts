@@ -8,13 +8,13 @@ import { cogsArchetype } from '../../archetypes/CogsArchetype';
 import { subledgerCreateReceivableArchetype } from '../../archetypes/SubledgerCreateReceivableArchetype';
 import type { EventBinding } from '../../dtos/AccountingBindingDto';
 import type { LancamentoArchetype } from '../../models/types';
-import { SALON_BINDING_V1 } from '../../fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 import type { AccountingEventLike } from '../interpret';
 import { interpret, isSubledgerCommand } from '../interpret';
 
 /**
  * `interpret()` (BE-INCR-BINDING-PRESS, Corpo D, item 11 do BRIEF) — exercitado contra os
- * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`fixtures/salonBinding.ts`,
+ * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`fixtures/saleBinding.ts`,
  * Corpo C), não fixtures inventadas por este corpo. Isto é uma prévia de integração (não substitui a
  * Fase 1 do golden, que é da Fase B): compara `interpret()` byte-a-byte, campo a campo, contra os
  * mesmos números que `goldenPhase0.test.ts` já congelou como saída dos mappers-à-mão — se
@@ -22,7 +22,7 @@ import { interpret, isSubledgerCommand } from '../interpret';
  */
 
 function eventBindingFor(eventKey: string): EventBinding {
-  const found = SALON_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey);
+  const found = SALE_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey);
   if (!found) throw new Error(`fixture do salão sem eventBinding para '${eventKey}'`);
   return found;
 }
@@ -36,13 +36,13 @@ const baseEvent = {
 };
 
 // -----------------------------------------------------------------------------------------------
-// reconhecimento-receita — mesma matemática de SalonSaleFinalizedMapper (goldenPhase0.test.ts)
+// reconhecimento-receita — mesma matemática de SaleFinalizedMapper (goldenPhase0.test.ts)
 // -----------------------------------------------------------------------------------------------
 describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () => {
-  const binding = eventBindingFor('salon.sale.finalized');
+  const binding = eventBindingFor('sale.finalized');
 
   it('sem breakdown: débito 1.1.2 / crédito único 3.1 — bate o golden Fase 0', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.finalized', amount: 200 };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.finalized', amount: 200 };
     const result = interpret({ archetype: revenueRecognitionArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines).toEqual([
@@ -54,7 +54,7 @@ describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () =>
   it('split misto 100/100 sobre total 200 — bate o golden Fase 0', () => {
     const event: AccountingEventLike = {
       ...baseEvent,
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       amount: 200,
       revenueByNature: { serviceReais: 100, productReais: 100 },
     };
@@ -70,7 +70,7 @@ describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () =>
   it('resíduo de arredondamento 1:2 sobre 10001¢ — bate o golden Fase 0', () => {
     const event: AccountingEventLike = {
       ...baseEvent,
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       amount: 100.01,
       revenueByNature: { serviceReais: 1, productReais: 2 },
     };
@@ -86,7 +86,7 @@ describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () =>
   it('só-serviço: nenhuma linha 3.3 zerada é emitida', () => {
     const event: AccountingEventLike = {
       ...baseEvent,
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       amount: 150,
       revenueByNature: { serviceReais: 150, productReais: 0 },
     };
@@ -96,24 +96,24 @@ describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () =>
   });
 
   it('sourceType/sourceId/unitId/date/description — passthrough byte-idêntico (emenda 5)', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.finalized', sourceId: 'sale-Z', amount: 200 };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.finalized', sourceId: 'sale-Z', amount: 200 };
     const result = interpret({ archetype: revenueRecognitionArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
-    expect(result.sourceType).toBe('salon.sale.finalized');
+    expect(result.sourceType).toBe('sale.finalized');
     expect(result.sourceId).toBe('sale-Z');
     expect(result.unitId).toBe('unit-1');
     expect(result.date).toBe('2026-06-25T00:00:00.000Z');
   });
 
   it('rejeita amount inválido (NaN)', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.finalized', amount: NaN };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.finalized', amount: NaN };
     expect(() => interpret({ archetype: revenueRecognitionArchetype, binding, event })).toThrow(ValidationError);
   });
 
   it('sem fieldSlot para o slot opcional de dimensão: NÃO trava (emenda 2)', () => {
     // A fixture real do salão não mapeia `dimension` para nenhum eventKey — exatamente o caso que a
     // emenda 2 exige não travar.
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.finalized', amount: 200 };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.finalized', amount: 200 };
     expect(() => interpret({ archetype: revenueRecognitionArchetype, binding, event })).not.toThrow();
   });
 });
@@ -122,7 +122,7 @@ describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () =>
 // liquidacao (settlement) — matriz D1-QMAP + guard Package Balance
 // -----------------------------------------------------------------------------------------------
 describe('interpret — settlement (arquétipo + binding REAIS)', () => {
-  const binding = eventBindingFor('salon.sale.settled');
+  const binding = eventBindingFor('sale.settled');
 
   it.each([
     ['Cash', '1.1.3'],
@@ -131,7 +131,7 @@ describe('interpret — settlement (arquétipo + binding REAIS)', () => {
     ['Credit Card', '1.1.4'],
     ['Package Balance', '2.1.1'],
   ])('%s → débito %s, crédito sempre 1.1.2 — bate o golden Fase 0', (method, debitCode) => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.settled', amount: 200, paymentMethod: method };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.settled', amount: 200, paymentMethod: method };
     const result = interpret({ archetype: settlementArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines).toEqual([
@@ -141,7 +141,7 @@ describe('interpret — settlement (arquétipo + binding REAIS)', () => {
   });
 
   it('Package Balance: o binding real não declara passivo-adiantamento — guard não trava (gap registrado)', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.settled', amount: 200, paymentMethod: 'Package Balance' };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.settled', amount: 200, paymentMethod: 'Package Balance' };
     expect(() => interpret({ archetype: settlementArchetype, binding, event })).not.toThrow();
   });
 
@@ -150,14 +150,14 @@ describe('interpret — settlement (arquétipo + binding REAIS)', () => {
       ...binding,
       roleSlots: [...binding.roleSlots, { role: 'passivo-adiantamento', accountCode: '9.9.9' }],
     };
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.settled', amount: 200, paymentMethod: 'Package Balance' };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.settled', amount: 200, paymentMethod: 'Package Balance' };
     expect(() => interpret({ archetype: settlementArchetype, binding: brokenBinding, event })).toThrow(
       /blocked_missing_prepaid_liability_account/,
     );
   });
 
   it('rejeita paymentMethod desconhecido sem default silencioso', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.settled', amount: 200, paymentMethod: 'Boleto' };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.settled', amount: 200, paymentMethod: 'Boleto' };
     expect(() => interpret({ archetype: settlementArchetype, binding, event })).toThrow(ValidationError);
   });
 });
@@ -167,8 +167,8 @@ describe('interpret — settlement (arquétipo + binding REAIS)', () => {
 // -----------------------------------------------------------------------------------------------
 describe('interpret — reversal (arquétipo + binding REAIS)', () => {
   it('débito 3.2 / crédito 1.1.2 — bate o golden Fase 0', () => {
-    const binding = eventBindingFor('salon.sale.returned');
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.returned', amount: 200 };
+    const binding = eventBindingFor('sale.returned');
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.returned', amount: 200 };
     const result = interpret({ archetype: reversalArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines).toEqual([
@@ -183,8 +183,8 @@ describe('interpret — reversal (arquétipo + binding REAIS)', () => {
 // -----------------------------------------------------------------------------------------------
 describe('interpret — performance_liability (arquétipo + binding REAIS)', () => {
   it('débito 1.1.2 / crédito 2.1.1 — bate o golden Fase 0', () => {
-    const binding = eventBindingFor('salon.package.sold');
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.package.sold', amount: 200 };
+    const binding = eventBindingFor('sale.package.sold');
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.package.sold', amount: 200 };
     const result = interpret({ archetype: performanceLiabilityArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines).toEqual([
@@ -198,10 +198,10 @@ describe('interpret — performance_liability (arquétipo + binding REAIS)', () 
 // cmv (moneyCentsExact) — bate o golden Fase 0
 // -----------------------------------------------------------------------------------------------
 describe('interpret — cogs (arquétipo + binding REAIS)', () => {
-  const binding = eventBindingFor('salon.sale.cogs');
+  const binding = eventBindingFor('sale.cogs');
 
   it('lê costCents diretamente, sem Math.round — bate o golden Fase 0', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.cogs', amount: 0, costCents: 20000 };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.cogs', amount: 0, costCents: 20000 };
     const result = interpret({ archetype: cogsArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines).toEqual([
@@ -211,14 +211,14 @@ describe('interpret — cogs (arquétipo + binding REAIS)', () => {
   });
 
   it('fronteira MAX_CENTS: aceita exatamente o teto — bate o golden Fase 0', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.cogs', amount: 0, costCents: MAX_CENTS };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.cogs', amount: 0, costCents: MAX_CENTS };
     const result = interpret({ archetype: cogsArchetype, binding, event });
     if (isSubledgerCommand(result)) throw new Error('esperava PostEntryInput');
     expect(result.lines[0].debitCents).toBe(MAX_CENTS);
   });
 
   it('rejeita costCents float não-inteiro', () => {
-    const event: AccountingEventLike = { ...baseEvent, sourceType: 'salon.sale.cogs', amount: 0, costCents: 123.45 };
+    const event: AccountingEventLike = { ...baseEvent, sourceType: 'sale.cogs', amount: 0, costCents: 123.45 };
     expect(() => interpret({ archetype: cogsArchetype, binding, event })).toThrow(ValidationError);
   });
 });
@@ -228,7 +228,7 @@ describe('interpret — cogs (arquétipo + binding REAIS)', () => {
 // -----------------------------------------------------------------------------------------------
 describe('interpret — dispatch por kind (subledgerCreateReceivableArchetype REAL)', () => {
   // A fixture do salão (Corpo C) não cobre a classe 2 (fora do escopo v1 do binding do salão — ver
-  // fixtures/salonBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
+  // fixtures/saleBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
   const binding: EventBinding = {
     eventKey: 'crm.opportunity.won',
     archetypeKey: 'subledger_command',

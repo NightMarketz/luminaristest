@@ -1,17 +1,17 @@
-import { SalonSaleCogsMapper } from '../SalonSaleCogsMapper';
+import { SaleCogsMapper } from '../SaleCogsMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import { MAX_CENTS } from '../../../models/money';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleCogsMapper — the razão leg of a sale's cost-of-goods (INCR-INVENTORY, Body 2). Unlike
+ * SaleCogsMapper — the razão leg of a sale's cost-of-goods (INCR-INVENTORY, Body 2). Unlike
  * the revenue mapper it does NOT convert a float: `costCents` arrives ALREADY in integer cents from
  * `InventoryService.recordSaleCogs` (D5/D6). Verifies the Int guards and that the produced legs are
  * balanced on the canonical leaf accounts (4.2 debit / 1.1.6 credit).
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.cogs',
+    sourceType: 'sale.cogs',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 0, // unused for this event kind
@@ -23,11 +23,11 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleCogsMapper', () => {
-  const mapper = new SalonSaleCogsMapper();
+describe('SaleCogsMapper', () => {
+  const mapper = new SaleCogsMapper();
 
-  it('declares the salon.sale.cogs sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.cogs');
+  it('declares the sale.cogs sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.cogs');
   });
 
   it('produces BALANCED legs on the canonical leaf accounts 4.2 (debit CMV) / 1.1.6 (credit Estoques)', () => {
@@ -52,7 +52,7 @@ describe('SalonSaleCogsMapper', () => {
 
   it('preserves sourceType, sourceId and the sale unitId, and derives the description from saleId', () => {
     const input = mapper.map(event({ sourceId: 'sale-XYZ', unitId: 'unit-9' }));
-    expect(input.sourceType).toBe('salon.sale.cogs');
+    expect(input.sourceType).toBe('sale.cogs');
     expect(input.sourceId).toBe('sale-XYZ');
     expect(input.unitId).toBe('unit-9');
     expect(input.description).toBe('CMV salão — Venda sale-XYZ');

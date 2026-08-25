@@ -332,11 +332,11 @@ type DefensiveGuard = (
 
 /**
  * F-BP-5(a) — caso-fronteira permitido, guard EQUIVALENTE (não byte-a-byte) a
- * `SalonSaleSettledMapper.ts:85-89` (P1-DOSSIER-interprete.md §a; ADR-P1 §11 emenda).
+ * `SaleSettledMapper.ts:85-89` (P1-DOSSIER-interprete.md §a; ADR-P1 §11 emenda).
  *
  * CORREÇÃO DE RÓTULO (review independente, achado 2): o BRIEF (item 11, fork F-BP-5a) descreve esta
  * migração como "verbatim", mas não é literalmente — o original compara a conta resolvida contra
- * uma CONSTANTE hardcoded na classe (`SalonSaleSettledMapper.PREPAID_LIABILITY_ACCOUNT = '2.1.1'`);
+ * uma CONSTANTE hardcoded na classe (`SaleSettledMapper.PREPAID_LIABILITY_ACCOUNT = '2.1.1'`);
  * esta versão não tem acesso a constantes de conta do mapper (o intérprete nunca guarda código de
  * conta em código — só papel, F-P1-5a) e por isso compara contra o `roleSlot` `passivo-adiantamento`
  * do binding em vez da constante. A INTENÇÃO do guard original — "se `Package Balance` resolveu para
@@ -347,7 +347,7 @@ type DefensiveGuard = (
  * (defesa do invariante D1-Q10).
  *
  * GAP REGISTRADO (não inventado silenciosamente — ver notas de retorno desta sessão): o binding real
- * do salão (`fixtures/salonBinding.ts`, Corpo C) resolve `caixa-por-metodo:Package Balance`
+ * do salão (`fixtures/saleBinding.ts`, Corpo C) resolve `caixa-por-metodo:Package Balance`
  * DIRETAMENTE para `2.1.1`, sem declarar um `roleSlot` separado `passivo-adiantamento` como segunda
  * fonte de verdade — a checagem cruzada original (duas constantes independentes no mapper) não tem
  * hoje um segundo dado independente para comparar dentro do binding compilado. Este guard fica
@@ -422,7 +422,7 @@ function interpretPostEntry(
 /**
  * Achado do golden test Fase 1 (item 12 do BRIEF): os 5 mappers-à-mão NÃO usam `event.label` na
  * descrição — cada um monta um texto fixo próprio do arquétipo (setorial, ex.
- * `SalonSaleSettledMapper.ts:94`). `binding.descriptionTemplate` (dado, `AccountingBindingDto.ts`)
+ * `SaleSettledMapper.ts:94`). `binding.descriptionTemplate` (dado, `AccountingBindingDto.ts`)
  * carrega esse texto por evento, com o único placeholder suportado `{sourceId}` — substituição de
  * string por LOOKUP/troca de token, não decisão sobre conteúdo do evento (permitido pelo dossiê
  * §a). Binding sem `descriptionTemplate` (todo binding hoje exceto a fixture do salão corrigida

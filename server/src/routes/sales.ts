@@ -3,7 +3,7 @@ import { cancelSale, returnSale, registerPayment } from '../controllers/salesCon
 
 const router = Router();
 
-// Salon-sale lifecycle transitions (Incremento D) — server-orchestrated state moves out of
+// Sale lifecycle transitions (Incremento D) — server-orchestrated state moves out of
 // the Finalized terminal state, each followed by a post-commit accounting effect.
 router.post('/cancel', cancelSale);
 router.post('/return', returnSale);

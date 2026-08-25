@@ -13,12 +13,12 @@ import { ACCOUNTING_BINDING_STATUSES } from '../models/accountingBindingStatus';
  * feitas por quem chama; o compilador não resolve papel→conta, só VALIDA o que foi escolhido
  * contra o plano de contas via o port injetado — ver `services/BindingCompileService.ts`).
  *
- * Papel com sub-chave (`caixa-por-metodo`, `SalonSaleSettledMapper.ts:36-42`): o `role` da linha
+ * Papel com sub-chave (`caixa-por-metodo`, `SaleSettledMapper.ts:36-42`): o `role` da linha
  * carrega a sub-chave embutida como `"<papel>:<subChave>"` (ex.: `'caixa-por-metodo:Pix'`) — o
  * campo `role` de `RoleSlotSchema` já é string livre (não um enum fechado no nível Zod; o
  * catálogo de 9 papéis do BRIEF item 3 é fechado em `models/types.ts`, não aqui), então este é
  * o encaixe mais simples dentro do shape JÁ COMMITADO pela Fase 0 (`AccountingBindingDto.ts`) sem
- * tocar nele — decisão local deste arquivo, documentada aqui para quem ler `fixtures/salonBinding.ts`
+ * tocar nele — decisão local deste arquivo, documentada aqui para quem ler `fixtures/saleBinding.ts`
  * (mesma convenção) e para o Corpo D consumir sem surpresa.
  */
 

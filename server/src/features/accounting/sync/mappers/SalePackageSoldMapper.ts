@@ -4,25 +4,25 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.package.sold` → prepaid-package ORIGIN entry (Incremento G P4):
+ * Maps `sale.package.sold` → prepaid-package ORIGIN entry (Incremento G P4):
  *   Débito  1.1.2 (A Receber)            = amountCents
  *   Crédito 2.1.1 (Pacotes Pré-pagos)    = amountCents
  *
  * Selling a prepaid package is NOT revenue — it creates a LIABILITY (deferred revenue).
  * Revenue is recognized later, at consumption (a future sale paid with Package Balance).
  * The settlement of THIS receivable (A Receber → Caixa/Banco/Cartão) reuses the existing
- * `salon.sale.settled` flow. Distinct sourceType keeps it isolated from the gated-out
- * `salon.sale.finalized` revenue entry on the @@unique idempotency key.
+ * `sale.settled` flow. Distinct sourceType keeps it isolated from the gated-out
+ * `sale.finalized` revenue entry on the @@unique idempotency key.
  */
-export class SalonPackageSoldMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.package.sold' as const;
+export class SalePackageSoldMapper implements IAccountingEventMapper {
+  public readonly sourceType = 'sale.package.sold' as const;
 
   /** Leaf account codes (canonical chart). */
   private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber
   private static readonly CREDIT_ACCOUNT = '2.1.1'; // Pacotes Pré-pagos (liability)
 
   public map(event: AccountingEvent): PostEntryInput {
-    // MONEY BOUNDARY (Contract §2.1). The salon `totalAmount` is a JSON float in reais;
+    // MONEY BOUNDARY (Contract §2.1). The sale `totalAmount` is a JSON float in reais;
     // accounting stores integer cents. Convert here, exactly once, with hard guards.
     const amount = event.amount;
     if (typeof amount !== 'number' || !Number.isFinite(amount)) {
@@ -49,8 +49,8 @@ export class SalonPackageSoldMapper implements IAccountingEventMapper {
       sourceType: event.sourceType,
       sourceId: event.sourceId,
       lines: [
-        { accountCode: SalonPackageSoldMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
-        { accountCode: SalonPackageSoldMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
+        { accountCode: SalePackageSoldMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
+        { accountCode: SalePackageSoldMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
       ],
     };
   }

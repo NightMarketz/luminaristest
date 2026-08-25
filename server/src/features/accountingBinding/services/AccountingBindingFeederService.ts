@@ -25,8 +25,8 @@ export interface AccountingBindingMapperRegistration {
  * BE-INCR-BINDING-FEEDER (FATIA A, núcleo do alimentador) — o passo que faltava depois de
  * `BE-INCR-BINDING-PRESS` (ADR-P1, PR #211): monta o array de `IAccountingEventMapper` que
  * alimenta `AccountingSyncService` a partir dos `AccountingBinding` `Active` **persistidos no
- * banco**, em vez do import estático `SALON_BINDING_V1` que `lib/factory.ts`
- * (`buildSalonAccountingMappers()`) usa hoje.
+ * banco**, em vez do import estático `SALE_BINDING_V1` que `lib/factory.ts`
+ * (`buildSaleAccountingMappers()`) usa hoje.
  *
  * Onde esta classe vive — decisão de camada (Contrato §2/§3, `_ARCHITECTURE-CONTRACT.md:57`):
  * "Injeção de dependências via Factory. Service recebe repo + policy por construtor... Registrar
@@ -44,7 +44,7 @@ export interface AccountingBindingMapperRegistration {
  * muda, a classe em si segue intocada).
  *
  * FORA DE ESCOPO desta fatia (Fatia B): ninguém chama este serviço ainda. `lib/factory.ts`
- * continua construindo `AccountingSyncService` com `buildSalonAccountingMappers()` (o import
+ * continua construindo `AccountingSyncService` com `buildSaleAccountingMappers()` (o import
  * estático) — trocar essa chamada por este serviço é o timing de boot (F-FEEDER-5, pré-boot em
  * `server.ts`), que é da Fatia B, não desta.
  */
@@ -64,7 +64,7 @@ export class AccountingBindingFeederService {
    *   - Zero linhas `Active`: `NoActiveAccountingBindingsError` — falha ALTA, nunca array vazio
    *     silencioso (comportamento 4 do BRIEF: "sobe mudo e falha só por evento" é o modo vetado).
    *   - `archetypeKey` sem correspondente no catálogo: `Error` simples (mesmo padrão de
-   *     `buildSalonAccountingMappers()`, `lib/factory.ts` — "fiação da Fase B quebrada"; não é um
+   *     `buildSaleAccountingMappers()`, `lib/factory.ts` — "fiação da Fase B quebrada"; não é um
    *     dos dois erros nomeados desta fatia, é fiação, igual ao código que já existe).
    *
    * Colisão de `eventKey` (F-FEEDER-3/comportamento 3) NÃO é detectada aqui — é

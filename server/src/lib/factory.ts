@@ -90,11 +90,11 @@ import { AccountingSyncService } from '../features/accounting/sync/AccountingSyn
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
 // o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
-// o intérprete fixo (`buildSalonAccountingMappers`, abaixo). As classes de mapper continuam
+// o intérprete fixo (`buildSaleAccountingMappers`, abaixo). As classes de mapper continuam
 // existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
 import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
-import { SALON_BINDING_V1 } from '../features/accountingBinding/fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../features/accountingBinding/fixtures/saleBinding';
 import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
 // A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
@@ -164,7 +164,7 @@ import type { IPackageBalancePolicy } from '../features/packages/policies/IPacka
 
 /**
  * BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — constrói o array de `IAccountingEventMapper`
- * do salão a partir do binding compilado (`fixtures/salonBinding.ts`, Corpo C) + o catálogo de
+ * do salão a partir do binding compilado (`fixtures/saleBinding.ts`, Corpo C) + o catálogo de
  * arquétipos em código (`archetypes/catalog.ts`, Corpo A), via o intérprete fixo
  * (`InterpretedEventMapper`, Corpo D) — em vez dos 5 mappers escritos à mão. Pré-condição deste
  * swap: `goldenPhase1.test.ts` verde (item 12 do BRIEF) — a saída byte-idêntica está provada ANTES
@@ -172,8 +172,8 @@ import type { IPackageBalancePolicy } from '../features/packages/policies/IPacka
  * array que recebia antes (`IAccountingEventMapper[]`) — zero linha tocada em
  * `AccountingSyncPort`/`AccountingSyncService`/bridges.
  */
-function buildSalonAccountingMappers(): IAccountingEventMapper[] {
-  return SALON_BINDING_V1.eventBindings.map((binding) => {
+function buildSaleAccountingMappers(): IAccountingEventMapper[] {
+  return SALE_BINDING_V1.eventBindings.map((binding) => {
     const archetype = archetypeCatalog.get(binding.archetypeKey);
     if (!archetype) {
       throw new Error(
@@ -458,16 +458,16 @@ export class ApplicationFactory {
       this.repositories.dynamicTable
     );
 
-    // Salon-sale cancellation/return transitions (Incremento D) — orchestration over
+    // Sale cancellation/return transitions (Incremento D) — orchestration over
     // DynamicTableService (no own Repository/Policy); the post-commit accounting effect is
-    // applied inside the service via SalonSaleReversalBridge.
+    // applied inside the service via SaleReversalBridge.
     const salesCancellationService = new SalesCancellationService(
       dynamicTableService,
       this.repositories.dynamicTable
     );
 
-    // Salon-sale payment transition (Incremento D / D1) — same orchestration shape as
-    // salesCancellationService; the post-commit settlement is applied via SalonSaleSettlementBridge.
+    // Sale payment transition (Incremento D / D1) — same orchestration shape as
+    // salesCancellationService; the post-commit settlement is applied via SaleSettlementBridge.
     const packageBalanceService = new PackageBalanceService(
       this.repositories.packageBalance,
       this.policies.packageBalance
@@ -520,13 +520,13 @@ export class ApplicationFactory {
     // through the AR subledger via CrmReceivableBridge (ADR-CRM-AR-SEAM).
     //
     // BE-INCR-BINDING-FEEDER (Fatia B) — this is the SYNCHRONOUS BOOTSTRAP value only, built from
-    // the static SALON_BINDING_V1 fixture exactly as before this feature. In production,
+    // the static SALE_BINDING_V1 fixture exactly as before this feature. In production,
     // `server.ts` replaces `this.services.accountingSync` via `initializeAccountingSyncFromBindings()`
     // (async, pre-boot, F-FEEDER-5) with the DB-backed instance BEFORE `app.listen()` — no request
     // ever observes this bootstrap value. Kept here unchanged so every test/tool that constructs
     // `ApplicationFactory` directly (not through `server.ts`) keeps working with zero diff — see
     // `initializeAccountingSyncFromBindings()` below for the full design rationale.
-    const accountingSyncService = new AccountingSyncService(postingService, buildSalonAccountingMappers());
+    const accountingSyncService = new AccountingSyncService(postingService, buildSaleAccountingMappers());
 
     const accountingReportService = new AccountingReportService(
       this.repositories.account,
@@ -800,7 +800,7 @@ export class ApplicationFactory {
    * `server.ts`. Tornar o CONSTRUTOR assíncrono vazaria `async` para todos esses call-sites (a
    * exata mudança de forma que o BRIEF pediu para PARAR e reportar, não implementar). Em vez
    * disso: o construtor continua construindo `accountingSyncService` do jeito de sempre —
-   * `buildSalonAccountingMappers()`, síncrono, inalterado — como valor de BOOTSTRAP; este método
+   * `buildSaleAccountingMappers()`, síncrono, inalterado — como valor de BOOTSTRAP; este método
    * roda DEPOIS, assíncrono, e troca a referência. `this.services.accountingSync` não é
    * `readonly` (só o objeto `services` em si é — `public readonly services: {...}` bloqueia
    * `this.services = ...`, não a mutação de uma propriedade sua), então a troca é uma atribuição
@@ -808,10 +808,10 @@ export class ApplicationFactory {
    *
    * Por que o valor de bootstrap nunca "vaza" para produção: todo consumidor de
    * `getAccountingSyncService()` é LAZY — `getFactory().getAccountingSyncService().sync(...)` só
-   * é chamado de dentro de um handler de request ou de um job (`SalonSalesAccountingBridge`,
+   * é chamado de dentro de um handler de request ou de um job (`SaleSalesAccountingBridge`,
    * `AccountingSyncScheduler`, etc.), nunca no module-load. Como `server.ts` aguarda este método
    * ANTES de `app.listen()`, nenhum request chega antes da troca — o valor de
-   * `buildSalonAccountingMappers()` (plain/global) nunca tem `sync()` chamado nele em produção.
+   * `buildSaleAccountingMappers()` (plain/global) nunca tem `sync()` chamado nele em produção.
    *
    * Esta garantia tem UMA dependência que não é óbvia e que o review pegou: o único consumidor
    * que NÃO é disparado por request é o `AccountingSyncScheduler`. Se o `start()` dele rodasse no

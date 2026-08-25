@@ -36,7 +36,7 @@ import { computeCompiledFromHash } from '../services/BindingCompileService';
 
 /** Snapshot dos códigos do `ChartOfAccountsFixture.ts` efetivamente usados pelos 5 arquétipos do
  *  salão — natureza/`acceptsEntries` citados de lá, não reinventados. */
-const SALON_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
+const SALE_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
   { code: '1.1.1', nature: 'Asset', acceptsEntries: true }, // Banco
   { code: '1.1.2', nature: 'Asset', acceptsEntries: true }, // A Receber
   { code: '1.1.3', nature: 'Asset', acceptsEntries: true }, // Caixa
@@ -57,14 +57,14 @@ const SALON_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
  * `BindingValidationService.ts`), então é seguro para o script de migração de dado
  * (`server/src/jobs/activateAccountingBindingCli.ts`) reusar — ele descreve o SHAPE do evento por
  * versão de binding, não dado do tenant (o `chart`, esse sim, o script lê do banco REAL, nunca
- * daqui — ver `SALON_CHART_SNAPSHOT` acima, que continua interno/não exportado).
+ * daqui — ver `SALE_CHART_SNAPSHOT` acima, que continua interno/não exportado).
  */
-export const SALON_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
-  'salon.sale.finalized': ['amount', 'revenueByNature', 'dimension'],
-  'salon.sale.settled': ['amount', 'paymentMethod', 'dimension'],
-  'salon.sale.returned': ['amount', 'dimension'],
-  'salon.package.sold': ['amount', 'dimension'],
-  'salon.sale.cogs': ['costCents', 'dimension'],
+export const SALE_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
+  'sale.finalized': ['amount', 'revenueByNature', 'dimension'],
+  'sale.settled': ['amount', 'paymentMethod', 'dimension'],
+  'sale.returned': ['amount', 'dimension'],
+  'sale.package.sold': ['amount', 'dimension'],
+  'sale.cogs': ['costCents', 'dimension'],
 };
 
 const BINDING_VERSION = 1;
@@ -74,13 +74,13 @@ const candidate: AccountingBindingV1 = {
   sectorKey: 'beautySalon',
   bindingVersion: BINDING_VERSION,
   compiledAt: COMPILED_AT,
-  compiledFromHash: computeCompiledFromHash(SALON_OPERATIONAL_SCHEMA_SNAPSHOT, SALON_CHART_SNAPSHOT),
+  compiledFromHash: computeCompiledFromHash(SALE_OPERATIONAL_SCHEMA_SNAPSHOT, SALE_CHART_SNAPSHOT),
   eventBindings: [
-    // 2.1 Reconhecimento de Receita — SalonSaleFinalizedMapper.ts
+    // 2.1 Reconhecimento de Receita — SaleFinalizedMapper.ts
     {
-      eventKey: 'salon.sale.finalized',
+      eventKey: 'sale.finalized',
       archetypeKey: 'revenue_recognition',
-      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleFinalizedMapper.ts:56.
+      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SaleFinalizedMapper.ts:56.
       descriptionTemplate: 'Receita salão — Venda {sourceId}',
       fieldSlots: [
         { slotName: 'amount', sourceField: 'event.amount', transform: 'cents_from_reais' },
@@ -88,7 +88,7 @@ const candidate: AccountingBindingV1 = {
         { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
       ],
       roleSlots: [
-        // D 1.1.2 (A Receber) — SalonSaleFinalizedMapper.ts:22
+        // D 1.1.2 (A Receber) — SaleFinalizedMapper.ts:22
         { role: 'controle-recebível', accountCode: '1.1.2' },
         // C 3.1 (Receita de Serviços) — revenueSplit.ts:22 (SERVICE_REVENUE_ACCOUNT)
         { role: 'receita-serviço', accountCode: '3.1' },
@@ -96,11 +96,11 @@ const candidate: AccountingBindingV1 = {
         { role: 'receita-revenda', accountCode: '3.3' },
       ],
     },
-    // 2.2 Liquidação — SalonSaleSettledMapper.ts (D <método>-role = total · C controle-recebível)
+    // 2.2 Liquidação — SaleSettledMapper.ts (D <método>-role = total · C controle-recebível)
     {
-      eventKey: 'salon.sale.settled',
+      eventKey: 'sale.settled',
       archetypeKey: 'settlement',
-      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleSettledMapper.ts:94.
+      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SaleSettledMapper.ts:94.
       descriptionTemplate: 'Liquidação salão — Venda {sourceId}',
       fieldSlots: [
         { slotName: 'amount', sourceField: 'event.amount', transform: 'cents_from_reais' },
@@ -108,7 +108,7 @@ const candidate: AccountingBindingV1 = {
         { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
       ],
       roleSlots: [
-        // D <método>-role — DEBIT_ACCOUNT_BY_METHOD, SalonSaleSettledMapper.ts:36-42. `caixa-por-metodo`
+        // D <método>-role — DEBIT_ACCOUNT_BY_METHOD, SaleSettledMapper.ts:36-42. `caixa-por-metodo`
         // resolve por SUB-CHAVE (o `paymentMethod` do evento) — o shape `{role,accountCode}` já
         // commitado pela Fase 0 (`AccountingBindingDto.ts`) só carrega 1 código por entrada, então a
         // sub-chave entra embutida no próprio `role` como `"caixa-por-metodo:<paymentMethod>"` (convenção
@@ -119,58 +119,58 @@ const candidate: AccountingBindingV1 = {
         { role: 'caixa-por-metodo:Debit Card', accountCode: '1.1.4' }, // A Receber Cartão / Adquirente
         { role: 'caixa-por-metodo:Credit Card', accountCode: '1.1.4' }, // A Receber Cartão / Adquirente
         { role: 'caixa-por-metodo:Package Balance', accountCode: '2.1.1' }, // Pacotes Pré-pagos — NUNCA cash (D1-Q10)
-        // C 1.1.2 (A Receber) — SalonSaleSettledMapper.ts:27 (CREDIT_ACCOUNT)
+        // C 1.1.2 (A Receber) — SaleSettledMapper.ts:27 (CREDIT_ACCOUNT)
         { role: 'controle-recebível', accountCode: '1.1.2' },
       ],
     },
-    // 2.3 Estorno de Origem (devolução, NÃO é reversedById — emenda 1 do ADR §11) — SalonSaleReturnedMapper.ts
+    // 2.3 Estorno de Origem (devolução, NÃO é reversedById — emenda 1 do ADR §11) — SaleReturnedMapper.ts
     {
-      eventKey: 'salon.sale.returned',
+      eventKey: 'sale.returned',
       archetypeKey: 'reversal',
-      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleReturnedMapper.ts:52.
+      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SaleReturnedMapper.ts:52.
       descriptionTemplate: 'Devolução salão — Venda {sourceId}',
       fieldSlots: [
         { slotName: 'amount', sourceField: 'event.amount', transform: 'cents_from_reais' },
         { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
       ],
       roleSlots: [
-        // D 3.2 (Devoluções de Vendas) — SalonSaleReturnedMapper.ts:21
+        // D 3.2 (Devoluções de Vendas) — SaleReturnedMapper.ts:21
         { role: 'contra-receita', accountCode: '3.2' },
-        // C 1.1.2 (A Receber) — SalonSaleReturnedMapper.ts:22
+        // C 1.1.2 (A Receber) — SaleReturnedMapper.ts:22
         { role: 'controle-recebível', accountCode: '1.1.2' },
       ],
     },
-    // 2.4 Passivo de Performance (pacote pré-pago) — SalonPackageSoldMapper.ts
+    // 2.4 Passivo de Performance (pacote pré-pago) — SalePackageSoldMapper.ts
     {
-      eventKey: 'salon.package.sold',
+      eventKey: 'sale.package.sold',
       archetypeKey: 'performance_liability',
-      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonPackageSoldMapper.ts:48.
+      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalePackageSoldMapper.ts:48.
       descriptionTemplate: 'Origem de pacote pré-pago — Venda {sourceId}',
       fieldSlots: [
         { slotName: 'amount', sourceField: 'event.amount', transform: 'cents_from_reais' },
         { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
       ],
       roleSlots: [
-        // D 1.1.2 (A Receber) — SalonPackageSoldMapper.ts:21
+        // D 1.1.2 (A Receber) — SalePackageSoldMapper.ts:21
         { role: 'controle-recebível', accountCode: '1.1.2' },
-        // C 2.1.1 (Pacotes Pré-pagos) — SalonPackageSoldMapper.ts:22
+        // C 2.1.1 (Pacotes Pré-pagos) — SalePackageSoldMapper.ts:22
         { role: 'passivo-diferido', accountCode: '2.1.1' },
       ],
     },
-    // 2.5 CMV — SalonSaleCogsMapper.ts (custo JÁ em centavos exatos — moneyCentsExact, sem conversão)
+    // 2.5 CMV — SaleCogsMapper.ts (custo JÁ em centavos exatos — moneyCentsExact, sem conversão)
     {
-      eventKey: 'salon.sale.cogs',
+      eventKey: 'sale.cogs',
       archetypeKey: 'cogs',
-      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleCogsMapper.ts:56.
+      // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SaleCogsMapper.ts:56.
       descriptionTemplate: 'CMV salão — Venda {sourceId}',
       fieldSlots: [
         { slotName: 'costCents', sourceField: 'event.costCents', transform: 'identity' },
         { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
       ],
       roleSlots: [
-        // D 4.2 (Custo das Mercadorias Vendidas) — SalonSaleCogsMapper.ts:29
+        // D 4.2 (Custo das Mercadorias Vendidas) — SaleCogsMapper.ts:29
         { role: 'custo-mercadoria-vendida', accountCode: '4.2' },
-        // C 1.1.6 (Estoques) — SalonSaleCogsMapper.ts:30
+        // C 1.1.6 (Estoques) — SaleCogsMapper.ts:30
         { role: 'estoque', accountCode: '1.1.6' },
       ],
     },
@@ -179,4 +179,4 @@ const candidate: AccountingBindingV1 = {
 
 // Falha alto no import se algum dia divergir do shape que a própria Fase 0 fechou — este módulo é
 // insumo de golden test; um fixture inválido não pode passar silenciosamente para o Corpo D.
-export const SALON_BINDING_V1: AccountingBindingV1 = AccountingBindingV1Schema.parse(candidate);
+export const SALE_BINDING_V1: AccountingBindingV1 = AccountingBindingV1Schema.parse(candidate);

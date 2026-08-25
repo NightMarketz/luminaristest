@@ -5,7 +5,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
 import { splitRevenueCredit } from './revenueSplit';
 
 /**
- * Maps `salon.sale.finalized` → revenue recognition entry (Incremento C):
+ * Maps `sale.finalized` → revenue recognition entry (Incremento C):
  *   Débito  1.1.2 (A Receber)             = amountCents
  *   Crédito 3.1   (Receita de Serviços)   = serviceCents
  *   Crédito 3.3   (Receita de Revenda)    = productCents   (ADR-INCR-REVENUE-SPLIT)
@@ -15,14 +15,14 @@ import { splitRevenueCredit } from './revenueSplit';
  * paymentStatus is ignored here: even a `Paid` sale posts to A Receber; the settlement
  * (A Receber → Caixa/Banco) is a separate Incremento D.
  */
-export class SalonSaleFinalizedMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.finalized' as const;
+export class SaleFinalizedMapper implements IAccountingEventMapper {
+  public readonly sourceType = 'sale.finalized' as const;
 
   /** Leaf account code (canonical chart). Credit codes live in revenueSplit.ts. */
   private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber
 
   public map(event: AccountingEvent): PostEntryInput {
-    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1). The salon `totalAmount` is a JSON float
+    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1). The sale `totalAmount` is a JSON float
     // in reais (SalesModule: numberFormat:'currency'); accounting stores integer cents.
     // Convert here, exactly once, with hard guards — this is the single point where float
     // imprecision could re-enter the exact-integer money path.
@@ -57,7 +57,7 @@ export class SalonSaleFinalizedMapper implements IAccountingEventMapper {
       sourceType: event.sourceType,
       sourceId: event.sourceId,
       lines: [
-        { accountCode: SalonSaleFinalizedMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
+        { accountCode: SaleFinalizedMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
         ...creditLines,
       ],
     };

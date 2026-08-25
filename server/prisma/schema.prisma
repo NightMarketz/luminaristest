@@ -739,7 +739,7 @@ model SourceDocument {
   id           String               @id @default(cuid())
   userId       String // AccountingScope.ownerUserId (plain scope key; SEM FK User — D7)
   unitId       String // business unit (scoped string, not a FK)
-  sourceType   String // taxonomia viva: crm.opportunity.won | salon.sale.* | IMPORT_JOURNAL_ENTRIES | ...
+  sourceType   String // taxonomia viva: crm.opportunity.won | sale.* | IMPORT_JOURNAL_ENTRIES | ...
   externalRef  String? // referência HUMANA do documento (NF nº X, boleto nº Y) — separada do sourceId/idempotência (D6)
   documentDate DateTime? // data do documento de origem, quando distinta da data de lançamento
   description  String? // rótulo curto da origem (display/drill-down)
@@ -906,10 +906,10 @@ model PayablePayment {
 }
 
 // Contas a Receber (INCR-AR / ADR-INCR-AR). MIRROR of Payable — the receivable subledger for
-// MANUALLY-entered customer invoices (avulsas). NOT for salon sales: the salon bridge already
-// books those to 1.1.2 A Receber (SalonSaleFinalizedMapper); a Receivable is a separate, distinct
+// MANUALLY-entered customer invoices (avulsas). NOT for sales: the sale bridge already
+// books those to 1.1.2 A Receber (SaleFinalizedMapper); a Receivable is a separate, distinct
 // record. Control account = the DEDICATED 1.1.5 Clientes a Receber (F7) so Σ open receivables
-// ties out to saldo(1.1.5) — a shared 1.1.2 would mix salon + avulsas and break the tie-out.
+// ties out to saldo(1.1.5) — a shared 1.1.2 would mix sales + avulsas and break the tie-out.
 // status: OPEN → RECEIVING → RECEIVED | CANCELLED (RECEIVING is the transient DB race-gate of the
 // double-receipt guard, D4; CANCELLED terminal). Business key dedupes the human record only; the
 // accounting idempotency lives in JournalEntry.@@unique([userId,unitId,sourceType,sourceId]).
@@ -1143,7 +1143,7 @@ model StockMovement {
   qtyDelta        Int // signed unit delta (+inbound / −cogs)
   valueCentsDelta Int // signed valued-cost delta in integer cents
   occurredAt      DateTime // event date (date-only competência)
-  sourceType      String // origin discriminator: inventory.inbound | salon.sale.cogs | ap.payable | …
+  sourceType      String // origin discriminator: inventory.inbound | sale.cogs | ap.payable | …
   sourceId        String // origin key (payableId | saleId | reversalEventId | seed id)
   entryId         String? // journal entry id when the movement has a ledger counterpart (denormalized convenience)
   createdAt       DateTime      @default(now())
