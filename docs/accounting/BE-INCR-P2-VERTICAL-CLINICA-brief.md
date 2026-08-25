@@ -1,5 +1,10 @@
-> **BRIEF (sessão de planejamento)** — checklist + contratos esboçados + forks **PENDENTES DE
-> RATIFICAÇÃO**. Não é ADR e não ratifica nada (ORCH-006). Nenhuma linha de código de aplicação foi
+> **BRIEF (sessão de planejamento)** — checklist + contratos esboçados. **ATUALIZAÇÃO 2026-08-25: os
+> 8 forks foram RATIFICADOS pelo dono** (`AskUserQuestion`, três rodadas) — o registro canônico das
+> decisões é o [ADR-P2 §3](../adr/ADR-P2-second-vertical.md); as §§0 e 6 abaixo preservam o texto
+> original da sessão de planejamento, quando ainda estavam abertos. **O ADR-P2 segue `Draft`** (a
+> pré-condição §5.2 continua insatisfeita), então **este BRIEF ainda não é executável** — e o
+> incremento do rename `salon.*` → `sale.*` (F-P2-6b) entra na frente dele.
+> Não é ADR e não ratifica nada (ORCH-006). Nenhuma linha de código de aplicação foi
 > escrita nesta sessão. Gerado por agente em 2026-08-25, sobre `origin/main` @ `166d09a2`.
 
 # BRIEF — BE-INCR-P2-VERTICAL-CLINICA (Fase P2: o segundo vertical prova a prensa)
@@ -303,9 +308,23 @@ interface BindingCoverageReport {
 | **F-P2-2** → (a) tenant-fixture interno sintético | tenant da prova | 2026-08-22 |
 | **Emenda §2** → `factory.ts` dentro do perímetro zero-diff | escopo do diff | 2026-08-22 |
 
-## 6. Forks PENDENTES DE RATIFICAÇÃO
+## 6. Forks — ✅ TODOS RATIFICADOS EM 2026-08-25
 
-Dois herdados do ADR-P2, seis novos deste BRIEF. **Nenhum se auto-ratifica.**
+> **Texto original da sessão de planejamento preservado abaixo** (recomendações como foram escritas,
+> antes da decisão). **As decisões do dono estão no [ADR-P2 §3](../adr/ADR-P2-second-vertical.md)** —
+> é o registro canônico. Resumo: **F-P2-3 → (b)** · **F-P2-4 → (b)** · **F-P2-5 → híbrido** (prova por
+> módulo novo; `FieldCustomizationService` vira incremento próprio) · **F-P2-6 → (b)** + ciclo próprio
+> antes do P2 + gate na geração · **F-P2-7 → (a)** · **F-P2-8 → (a)** · **F-P2-9 → (a)** ·
+> **F-P2-10 → (c)**. **Quatro contrariaram a recomendação** (F-P2-3, F-P2-4, F-P2-6, F-P2-9).
+>
+> **Duas correções a este BRIEF, apuradas na ratificação:** (1) o §8 insumo 2 diz que a entrevista está
+> "sem controller/rota" — **errado**: `interviewController.postChatInterview` existe e está roteado por
+> `routes/dashboard.ts`; o buraco real é que o **`FieldCustomizationService` não tem chamador nenhum**.
+> (2) O achado do binding incompleto (§ comportamento 5) descreve `logger.warn`; o ramo de mapper
+> ausente cai em `logger.error(... 'left for reconciliation')` e **existe job de reconciliação** — o
+> risco é real, mas menor do que "perda silenciosa".
+
+Dois herdados do ADR-P2, seis novos deste BRIEF. **Nenhum se auto-ratificou.**
 
 | # | Pergunta | Caminhos | Recomendação (não-vinculante) |
 |---|---|---|---|
