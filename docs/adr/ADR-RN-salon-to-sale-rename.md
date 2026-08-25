@@ -148,7 +148,7 @@ referem ao vertical 1, que continua sendo, de fato, um salão.
   `SALON_BINDING_V1`, nomes de arquivo) acompanham o rename do `eventKey` — é fork (BRIEF F-RN-1).
 - **Não** decide o mapeamento exato de string por `eventKey` (`sale.finalized` vs `sale.sale.finalized`)
   — é fork (BRIEF F-RN-2).
-- **Não** decide o que fazer com `JournalEntry`/`InventoryCostLayer` já persistidos com `sourceType`
+- **Não** decide o que fazer com `JournalEntry`/`StockMovement` já persistidos com `sourceType`
   antigo em bancos existentes (dev.db) — é fork (BRIEF F-RN-3).
 - **Não** implementa nada. Não roteia sozinho (ORCH-006) — a execução é sessão separada, com sinal
   humano próprio sobre os forks ratificados.
