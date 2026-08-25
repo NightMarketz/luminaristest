@@ -1,8 +1,11 @@
 # ADR-RN — Renomear o vocabulário de evento `salon.*` → `sale.*`
 
 - **Data:** 2026-08-25
-- **Status:** **Proposed.** Nenhum fork deste ADR está ratificado — a ratificação é do dono (ORCH-006).
-  Este documento nasce de sessão de planejamento; não escreve código, não decide fork.
+- **Status:** **Proposed** — **forks F-RN-1..4 RATIFICADOS 2026-08-25** (dono, via `AskUserQuestion`,
+  4/4 na recomendação: **(b)/(b)/(b)/(a)** — identificadores acompanham · colapsar segmento · migrar
+  dado · atômico; detalhe no BRIEF §6). Promoção a Accepted e o sinal da `sessao-instrumentacao`
+  seguem sendo atos do dono (ORCH-006). Este documento nasce de sessão de planejamento; não escreve
+  código.
 - **Autores:** agente B1 do lote paralelo de 2026-08-25 (`sessao-planejamento`).
 - **Autorização citada:**
   1. **Autorização de conteúdo (por quê esta frente existe):**
@@ -154,7 +157,8 @@ referem ao vertical 1, que continua sendo, de fato, um salão.
 ## 7. Sequência de governança
 
 1. ~~ADR-RN (este documento) + BRIEF-RN (`sessao-planejamento`).~~ ✅ Este commit.
-2. Ratificação dos forks F-RN-1..F-RN-4 pelo dono (ORCH-006, fora desta sessão).
+2. ~~Ratificação dos forks F-RN-1..F-RN-4 pelo dono.~~ ✅ 2026-08-25, cédula única via
+   `AskUserQuestion`: (b)/(b)/(b)/(a) — registro no cabeçalho e no BRIEF §6.
 3. `sessao-instrumentacao` — teste-guarda que falha pelo motivo certo (asserção do vocabulário
    `sale.*` onde hoje o código emite `salon.*`; ou teste de cobertura do binding, se F-RN a tratar como
    tal).

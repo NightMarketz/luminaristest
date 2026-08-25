@@ -216,7 +216,16 @@ Nenhuma — este incremento não tem dependência de regra contábil/fiscal/lega
 interno, não de arquétipo nem de plano de contas). O que ele **preserva** (T5/T7/T8, ADR-RN §5) já tem
 artefato de origem citado no próprio ADR.
 
-## 6. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido nesta sessão)
+## 6. Forks — ✅ RATIFICADOS 2026-08-25 (dono, via `AskUserQuestion`)
+
+> **RATIFICAÇÃO 2026-08-25 (dono, via `AskUserQuestion`, cédula única, 4/4 na recomendação):**
+> **F-RN-1 → (b)** identificadores de código acompanham (`Salon*` → `Sale*`, com `git mv`) ·
+> **F-RN-2 → (b)** colapsar o segmento redundante — mapeamento exato da opção (b) da tabela:
+> `sale.finalized` / `sale.settled` / `sale.returned` / `sale.cogs` / `sale.package.sold` · **F-RN-3 → (b)** migrar o dado persistido (nunca deployado; prólogo
+> idempotente obrigatório — migração SQLite não é transacional) · **F-RN-4 → (a)** atômico (código +
+> recompilação/reativação do binding no mesmo incremento; a correção verifica explicitamente se há
+> binding `Active` com `eventKey` antigo, não assume que não há).
+> A tabela original segue abaixo por rastreabilidade.
 
 | # | Pergunta | Opções | Recomendação (não-vinculante) |
 |---|---|---|---|
