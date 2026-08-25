@@ -41,7 +41,7 @@ import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
  * Control account = the DEDICATED 1.1.5 (F7), distinct from the salon's 1.1.2, so the subledger
  * ties out to the GL. AR-formal takes MANUAL customer invoices (avulsas) and, since
  * ADR-CRM-AR-SEAM, CRM Won deals fed by CrmReceivableBridge (documentNumber `CRM-<oppId>`) —
- * never salon sales (those settle via their own salon.sale.settled events on 1.1.2).
+ * never salon sales (those settle via their own sale.settled events on 1.1.2).
  *
  * Key invariants (mirror the AP module):
  * - postEntry opens its OWN root tx (SQLite has no nesting), so the AR-row write and the ledger write

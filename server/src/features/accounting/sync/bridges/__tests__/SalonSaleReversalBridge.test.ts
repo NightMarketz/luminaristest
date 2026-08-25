@@ -75,11 +75,11 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
   describe('Cancelled → reverse', () => {
     it('reverses the finalized revenue entry, passing the reason', async () => {
       findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized' ? { id: 'entry-1' } : null,
+        type === 'sale.finalized' ? { id: 'entry-1' } : null,
       );
       await maybeReverseSalonSale(actor, SALES_TABLE_ID, cancelledRow());
 
-      expect(findEntryBySource).toHaveBeenCalledWith(expect.any(Object), 'salon.sale.finalized', 'sale-1');
+      expect(findEntryBySource).toHaveBeenCalledWith(expect.any(Object), 'sale.finalized', 'sale-1');
       expect(reverseEntry).toHaveBeenCalledTimes(1);
       const [scope, input] = reverseEntry.mock.calls[0];
       expect(scope).toMatchObject({ ownerUserId: 'u1', unitId: 'unit-1' });
@@ -99,7 +99,7 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
       jest.setSystemTime(new Date('2026-09-01T00:05:00.000Z')); // 31/08 21:05 BRT
       try {
         findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
-          type === 'salon.sale.finalized' ? { id: 'entry-1' } : null,
+          type === 'sale.finalized' ? { id: 'entry-1' } : null,
         );
         await maybeReverseSalonSale(actor, SALES_TABLE_ID, cancelledRow());
 
@@ -113,7 +113,7 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
 
     it('adaptive (D2-Q4): also reverses the settlement entry when one exists', async () => {
       findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized' ? { id: 'entry-1' } : type === 'salon.sale.settled' ? { id: 'settle-1' } : null,
+        type === 'sale.finalized' ? { id: 'entry-1' } : type === 'sale.settled' ? { id: 'settle-1' } : null,
       );
       await maybeReverseSalonSale(actor, SALES_TABLE_ID, cancelledRow());
 
@@ -132,7 +132,7 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
     it('cancelling twice yields a single reversal (engine idempotency, no bridge pre-check)', async () => {
       let reversed = false;
       findEntryBySource.mockImplementation(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized' ? { id: 'entry-1' } : null,
+        type === 'sale.finalized' ? { id: 'entry-1' } : null,
       );
       reverseEntry.mockImplementation(async () => {
         const isNew = !reversed;
@@ -149,7 +149,7 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
   });
 
   describe('Returned → contra-revenue entry', () => {
-    it('books a NEW salon.sale.returned entry (NOT a reversal) with the sale amount', async () => {
+    it('books a NEW sale.returned entry (NOT a reversal) with the sale amount', async () => {
       await maybeReverseSalonSale(actor, SALES_TABLE_ID, returnedRow());
 
       expect(reverseEntry).not.toHaveBeenCalled();
@@ -157,7 +157,7 @@ describe('SalonSaleReversalBridge.maybeReverseSalonSale', () => {
       const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
       expect(scope).toMatchObject({ ownerUserId: 'u1', unitId: 'unit-1' });
       expect(event).toMatchObject({
-        sourceType: 'salon.sale.returned',
+        sourceType: 'sale.returned',
         sourceId: 'sale-1',
         unitId: 'unit-1',
         amount: 250,

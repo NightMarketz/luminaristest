@@ -37,12 +37,12 @@ const POS_FEEDER_SOURCE_TYPE_MAP: Record<
   true
 > = {
   [CRM_LEGACY_SOURCE_TYPE]: true,
-  'salon.sale.finalized': true,
-  'salon.sale.returned': true,
-  'salon.sale.settled': true,
-  'salon.package.sold': true,
+  'sale.finalized': true,
+  'sale.returned': true,
+  'sale.settled': true,
+  'sale.package.sold': true,
   // CMV (INCR-INVENTORY): movimenta 4.2/1.1.6, nunca a 1.1.2 — presença aqui é só exaustividade.
-  'salon.sale.cogs': true,
+  'sale.cogs': true,
 };
 
 export const POS_FEEDER_SOURCE_TYPES = Object.keys(POS_FEEDER_SOURCE_TYPE_MAP) as Array<
@@ -107,7 +107,7 @@ export interface TieOutDiagnosticReport {
  *
  *  (iii) `1.1.2 A Receber` (PDV): o razão da 1.1.2 deve ser INTEIRAMENTE explicado pelo agregado
  *       (salão + CRM) — o board confirma que o CRM também debita 1.1.2, então o lado "subrazão"
- *       é o líquido das partidas cujos entries têm sourceType de feeder PDV (salon.* + crm.*),
+ *       é o líquido das partidas cujos entries têm sourceType de feeder PDV (sale.* + crm.*),
  *       computado como `saldo total − saldo excluindo feeders` (reusa o excludeSourceTypes que o
  *       repositório já tem — nenhum método novo). Divergência = partidas estranhas na
  *       conta-controle (ex.: lançamento manual em 1.1.2), exatamente o que o tie-out deve ACUSAR.

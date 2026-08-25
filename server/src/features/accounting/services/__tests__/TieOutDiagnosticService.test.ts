@@ -198,11 +198,11 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     expect([...excluded].sort()).toEqual(
       [
         'crm.opportunity.won',
-        'salon.package.sold',
-        'salon.sale.cogs',
-        'salon.sale.finalized',
-        'salon.sale.returned',
-        'salon.sale.settled',
+        'sale.package.sold',
+        'sale.cogs',
+        'sale.finalized',
+        'sale.returned',
+        'sale.settled',
       ].sort(),
     );
     // E a lista exportada é a mesma (fonte única).

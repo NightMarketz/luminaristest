@@ -10,7 +10,7 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.returned',
+    sourceType: 'sale.returned',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -24,8 +24,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
 describe('SalonSaleReturnedMapper', () => {
   const mapper = new SalonSaleReturnedMapper();
 
-  it('declares the salon.sale.returned sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.returned');
+  it('declares the sale.returned sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.returned');
   });
 
   it('converts totalAmount reais (float) to integer cents with Math.round', () => {
@@ -54,7 +54,7 @@ describe('SalonSaleReturnedMapper', () => {
 
   it('preserves sourceType/sourceId/unitId and derives the description from saleId', () => {
     const input = mapper.map(event({ sourceId: 'sale-XYZ', unitId: 'unit-9' }));
-    expect(input.sourceType).toBe('salon.sale.returned');
+    expect(input.sourceType).toBe('sale.returned');
     expect(input.sourceId).toBe('sale-XYZ');
     expect(input.unitId).toBe('unit-9');
     expect(input.description).toBe('Devolução salão — Venda sale-XYZ');

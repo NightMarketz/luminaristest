@@ -15,7 +15,7 @@ import type { LancamentoArchetype } from '../models/types';
 export const performanceLiabilityArchetype: LancamentoArchetype = {
   kind: 'postEntry',
   name: 'passivo-performance',
-  sourceType: 'salon.package.sold',
+  sourceType: 'sale.package.sold',
   slots: [
     {
       name: 'amount',

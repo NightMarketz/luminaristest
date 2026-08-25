@@ -70,7 +70,7 @@ describe('ApplicationFactory.initializeAccountingSyncFromBindings — SQLite rea
 
     const sync = factory.getAccountingSyncService();
     const baseEvent: AccountingEvent = {
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       sourceId: 'sale-feeder-boot-1',
       unitId: UNIDADE_SEM_BINDING, // unidade SEM binding próprio — o caso que F-FEEDER-3 fecha
       amount: 100,

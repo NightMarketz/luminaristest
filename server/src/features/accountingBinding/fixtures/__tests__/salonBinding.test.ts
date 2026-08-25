@@ -26,11 +26,11 @@ describe('SALON_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do 
   it('cobre exatamente os 5 sourceTypes dos mappers de produção — nem a mais nem a menos', () => {
     expect(eventKeys.sort()).toEqual(
       [
-        'salon.package.sold',
-        'salon.sale.cogs',
-        'salon.sale.finalized',
-        'salon.sale.returned',
-        'salon.sale.settled',
+        'sale.package.sold',
+        'sale.cogs',
+        'sale.finalized',
+        'sale.returned',
+        'sale.settled',
       ].sort(),
     );
   });
@@ -46,13 +46,13 @@ describe('SALON_BINDING_V1 — accountCodes citados dos mappers, por eventKey', 
     SALON_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey)!;
   const codes = (eventKey: string) => byEvent(eventKey).roleSlots.map((r) => r.accountCode);
 
-  it('salon.sale.finalized — 1.1.2 (D) / 3.1+3.3 (C), SalonSaleFinalizedMapper.ts + revenueSplit.ts', () => {
-    expect(codes('salon.sale.finalized').sort()).toEqual(['1.1.2', '3.1', '3.3']);
-    expect(byEvent('salon.sale.finalized').archetypeKey).toBe('revenue_recognition');
+  it('sale.finalized — 1.1.2 (D) / 3.1+3.3 (C), SalonSaleFinalizedMapper.ts + revenueSplit.ts', () => {
+    expect(codes('sale.finalized').sort()).toEqual(['1.1.2', '3.1', '3.3']);
+    expect(byEvent('sale.finalized').archetypeKey).toBe('revenue_recognition');
   });
 
-  it('salon.sale.settled — os 4 códigos de DEBIT_ACCOUNT_BY_METHOD + 1.1.2, SalonSaleSettledMapper.ts:36-42', () => {
-    const settled = byEvent('salon.sale.settled');
+  it('sale.settled — os 4 códigos de DEBIT_ACCOUNT_BY_METHOD + 1.1.2, SalonSaleSettledMapper.ts:36-42', () => {
+    const settled = byEvent('sale.settled');
     const byRole = Object.fromEntries(settled.roleSlots.map((r) => [r.role, r.accountCode]));
     expect(byRole['caixa-por-metodo:Cash']).toBe('1.1.3');
     expect(byRole['caixa-por-metodo:Pix']).toBe('1.1.1');
@@ -64,20 +64,20 @@ describe('SALON_BINDING_V1 — accountCodes citados dos mappers, por eventKey', 
     expect(settled.archetypeKey).toBe('settlement');
   });
 
-  it('salon.sale.returned — 3.2 (D) / 1.1.2 (C), SalonSaleReturnedMapper.ts', () => {
-    expect(codes('salon.sale.returned').sort()).toEqual(['1.1.2', '3.2']);
-    expect(byEvent('salon.sale.returned').archetypeKey).toBe('reversal');
+  it('sale.returned — 3.2 (D) / 1.1.2 (C), SalonSaleReturnedMapper.ts', () => {
+    expect(codes('sale.returned').sort()).toEqual(['1.1.2', '3.2']);
+    expect(byEvent('sale.returned').archetypeKey).toBe('reversal');
   });
 
-  it('salon.package.sold — 1.1.2 (D) / 2.1.1 (C), SalonPackageSoldMapper.ts', () => {
-    expect(codes('salon.package.sold').sort()).toEqual(['1.1.2', '2.1.1']);
-    expect(byEvent('salon.package.sold').archetypeKey).toBe('performance_liability');
+  it('sale.package.sold — 1.1.2 (D) / 2.1.1 (C), SalonPackageSoldMapper.ts', () => {
+    expect(codes('sale.package.sold').sort()).toEqual(['1.1.2', '2.1.1']);
+    expect(byEvent('sale.package.sold').archetypeKey).toBe('performance_liability');
   });
 
-  it('salon.sale.cogs — 4.2 (D) / 1.1.6 (C), SalonSaleCogsMapper.ts — costCents já em centavos', () => {
-    expect(codes('salon.sale.cogs').sort()).toEqual(['1.1.6', '4.2']);
-    expect(byEvent('salon.sale.cogs').archetypeKey).toBe('cogs');
-    expect(byEvent('salon.sale.cogs').fieldSlots[0]).toMatchObject({
+  it('sale.cogs — 4.2 (D) / 1.1.6 (C), SalonSaleCogsMapper.ts — costCents já em centavos', () => {
+    expect(codes('sale.cogs').sort()).toEqual(['1.1.6', '4.2']);
+    expect(byEvent('sale.cogs').archetypeKey).toBe('cogs');
+    expect(byEvent('sale.cogs').fieldSlots[0]).toMatchObject({
       slotName: 'costCents',
       transform: 'identity', // NÃO cents_from_reais — já é inteiro exato (moneyCentsExact)
     });
@@ -128,11 +128,11 @@ describe('SALON_BINDING_V1 — compiledFromHash é determinístico', () => {
   it('SALON_BINDING_V1.compiledFromHash bate com um recálculo independente do MESMO snapshot', () => {
     const recomputed = computeCompiledFromHash(
       {
-        'salon.sale.finalized': ['amount', 'revenueByNature', 'dimension'],
-        'salon.sale.settled': ['amount', 'paymentMethod', 'dimension'],
-        'salon.sale.returned': ['amount', 'dimension'],
-        'salon.package.sold': ['amount', 'dimension'],
-        'salon.sale.cogs': ['costCents', 'dimension'],
+        'sale.finalized': ['amount', 'revenueByNature', 'dimension'],
+        'sale.settled': ['amount', 'paymentMethod', 'dimension'],
+        'sale.returned': ['amount', 'dimension'],
+        'sale.package.sold': ['amount', 'dimension'],
+        'sale.cogs': ['costCents', 'dimension'],
       },
       [
         { code: '1.1.1', nature: 'Asset', acceptsEntries: true },

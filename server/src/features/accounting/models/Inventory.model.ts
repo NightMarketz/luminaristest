@@ -27,5 +27,5 @@ export type InventoryItemStatus = (typeof INVENTORY_ITEM_STATUSES)[number];
  * idempotency lookup (`findMovementBySource`) and the `@@unique([inventoryItemId,kind,sourceType,
  * sourceId])` backstop.
  */
-export const INVENTORY_COGS_SOURCE_TYPE = 'salon.sale.cogs';
+export const INVENTORY_COGS_SOURCE_TYPE = 'sale.cogs';
 export const INVENTORY_INBOUND_SOURCE_TYPE = 'inventory.inbound';

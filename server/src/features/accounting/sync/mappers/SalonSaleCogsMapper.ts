@@ -5,7 +5,7 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.sale.cogs` → cost-of-goods entry (INCR-INVENTORY, Body 2 / O-2):
+ * Maps `sale.cogs` → cost-of-goods entry (INCR-INVENTORY, Body 2 / O-2):
  *   Débito  4.2   (Custo das Mercadorias Vendidas / Expense) = costCents
  *   Crédito 1.1.6 (Estoques / Asset)                          = costCents
  *
@@ -19,11 +19,11 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  *
  * The subledger baixa (tx1, InventoryService) and this post (tx2, PostingService) are DIFFERENT
  * commits — the razão is idempotent on @@unique([userId,unitId,sourceType,sourceId]) with
- * sourceType='salon.sale.cogs', so a reconcile re-drive posts at most once (never colliding with
- * the revenue entry, which is sourceType='salon.sale.finalized' for the same saleId).
+ * sourceType='sale.cogs', so a reconcile re-drive posts at most once (never colliding with
+ * the revenue entry, which is sourceType='sale.finalized' for the same saleId).
  */
 export class SalonSaleCogsMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.cogs' as const;
+  public readonly sourceType = 'sale.cogs' as const;
 
   /** Leaf account codes (canonical chart — ChartOfAccountsFixture, Fase 0). */
   private static readonly DEBIT_ACCOUNT = '4.2'; // Custo das Mercadorias Vendidas (Expense)

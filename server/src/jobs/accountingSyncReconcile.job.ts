@@ -270,7 +270,7 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
       summary.failed++;
       logger.error('Reconcile failed for salon sale — continuing', {
         event: 'reconcile_item_failed',
-        sourceType: 'salon.sale.finalized',
+        sourceType: 'sale.finalized',
         sourceId: sale.saleId,
         saleId: sale.saleId,
         unitId: sale.unitId,
@@ -291,9 +291,9 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
 // (SalesCancellationService, post-commit) is best-effort; these passes re-drive any
 // transition whose accounting effect failed, idempotently.
 //
-//  • reconcileSalonCancellations: status Cancelled whose 'salon.sale.finalized' entry is
+//  • reconcileSalonCancellations: status Cancelled whose 'sale.finalized' entry is
 //    still 'Posted' (not 'Reversed') → re-fire reverseEntry.
-//  • reconcileSalonReturns: status Returned with no 'salon.sale.returned' entry → re-fire sync.
+//  • reconcileSalonReturns: status Returned with no 'sale.returned' entry → re-fire sync.
 // ───────────────────────────────────────────────────────────────────────────
 
 /** A `Cancelled` salon sale normalized from its DynamicTable row, with its owning tenant. */
@@ -336,7 +336,7 @@ export async function reconcileSalonCancellations(
 
       let didReverse = false;
       // Revenue + (adaptive D2-Q4) settlement: reverse each that is still Posted.
-      for (const sourceType of ['salon.sale.finalized', 'salon.sale.settled']) {
+      for (const sourceType of ['sale.finalized', 'sale.settled']) {
         const entry = await deps.findEntry(scope, sourceType, sale.saleId);
         if (entry && entry.status === 'Posted') {
           await deps.reverse(scope, sale.unitId, entry.id);
@@ -404,7 +404,7 @@ export interface SalonReturnReconcileDeps {
 }
 
 /**
- * Re-drive every Returned salon sale lacking a 'salon.sale.returned' contra-revenue entry.
+ * Re-drive every Returned salon sale lacking a 'sale.returned' contra-revenue entry.
  * Mirrors reconcileSalonSales (sync of a new entry, not a reversal). Idempotent and
  * fault-isolated.
  */
@@ -472,7 +472,7 @@ export interface SettledSale {
   currency: string;
   occurredAt: string;
   paymentMethod: string;
-  /** True for an all-Package sale — its A Receber opening is 'salon.package.sold', not revenue. */
+  /** True for an all-Package sale — its A Receber opening is 'sale.package.sold', not revenue. */
   isAllPackage?: boolean;
 }
 
@@ -487,12 +487,12 @@ export interface SalonSettlementReconcileDeps {
 }
 
 /**
- * Re-drive every Finalized+Paid salon sale lacking a 'salon.sale.settled' entry — the durability
+ * Re-drive every Finalized+Paid salon sale lacking a 'sale.settled' entry — the durability
  * net for the post-commit SalonSaleSettlementBridge (and the only coverage for a sale born
  * Finalized+Paid). Mirrors reconcileSalonSales (sync of a new entry, not a reversal).
  *
  * ORDERING: the settlement clears A Receber, which only exists if the revenue entry was booked. A
- * sale Finalized+Paid whose 'salon.sale.finalized' entry is still missing is counted as BLOCKED
+ * sale Finalized+Paid whose 'sale.finalized' entry is still missing is counted as BLOCKED
  * (deferred), NOT failed — a later run settles it once the revenue pass has booked the receivable.
  * Idempotent and fault-isolated: an isolated failure is logged and the batch continues.
  */
@@ -516,7 +516,7 @@ export async function reconcileSalonSettlements(
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
 
       // Already settled? idempotent hit (sync stays the authority even if a race slips past).
-      const exists = await deps.hasExistingEntry(scope, 'salon.sale.settled', sale.saleId);
+      const exists = await deps.hasExistingEntry(scope, 'sale.settled', sale.saleId);
       if (exists) {
         summary.idempotentHits++;
         continue;
@@ -524,8 +524,8 @@ export async function reconcileSalonSettlements(
 
       // Ordering gate: without the A Receber opening entry there is nothing to clear — defer
       // (blocked), do NOT fail the batch. The opening is the revenue entry for a normal sale, or
-      // the prepaid origin ('salon.package.sold') for an all-Package sale (Incremento G P6).
-      const openingSourceType = sale.isAllPackage ? 'salon.package.sold' : 'salon.sale.finalized';
+      // the prepaid origin ('sale.package.sold') for an all-Package sale (Incremento G P6).
+      const openingSourceType = sale.isAllPackage ? 'sale.package.sold' : 'sale.finalized';
       const hasOpening = await deps.hasExistingEntry(scope, openingSourceType, sale.saleId);
       if (!hasOpening) {
         summary.blocked = (summary.blocked ?? 0) + 1;
@@ -583,7 +583,7 @@ export async function reconcileSalonSettlements(
 // subledger baixa (tx1) then posts the razão (tx2, D 4.2 / C 1.1.6); if the process
 // crashes between the two commits the baixa is durable but the razão is missing. This
 // pass re-drives every Finalized non-package sale with product lines that has no
-// 'salon.sale.cogs' entry: recordSaleCogs is READ-FIRST idempotent (a replay returns
+// 'sale.cogs' entry: recordSaleCogs is READ-FIRST idempotent (a replay returns
 // the already-booked cents WITHOUT a second decrement), so re-driving posts the razão
 // at most once and never double-baixa's stock.
 // ───────────────────────────────────────────────────────────────────────────
@@ -615,7 +615,7 @@ export interface SalonCogsReconcileDeps {
 }
 
 /**
- * Re-drive every Finalized non-package sale (with product lines) lacking a 'salon.sale.cogs' entry:
+ * Re-drive every Finalized non-package sale (with product lines) lacking a 'sale.cogs' entry:
  * run the read-first idempotent baixa, then post the razão. Idempotent and fault-isolated — an
  * isolated failure (insufficient stock, period closed, posting down) is logged and the batch
  * continues. A zero-cost result posts nothing (counted as an idempotent hit, not a failure).
@@ -637,8 +637,8 @@ export async function reconcileSalonCogs(deps: SalonCogsReconcileDeps): Promise<
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
 
       // Already booked CMV? idempotent hit. sync() stays the authority even if a race slips past
-      // this check — postEntry dedupes on ('salon.sale.cogs', saleId).
-      const exists = await deps.hasExistingEntry(scope, 'salon.sale.cogs', sale.saleId);
+      // this check — postEntry dedupes on ('sale.cogs', saleId).
+      const exists = await deps.hasExistingEntry(scope, 'sale.cogs', sale.saleId);
       if (exists) {
         summary.idempotentHits++;
         continue;
@@ -714,7 +714,7 @@ export interface SalonPackageOriginReconcileDeps {
 }
 
 /**
- * Re-drive every all-Package Finalized sale: book its 'salon.package.sold' origin (D 1.1.2 /
+ * Re-drive every all-Package Finalized sale: book its 'sale.package.sold' origin (D 1.1.2 /
  * C 2.1.1) if missing, AND credit the prepaid balance if the credit movement is missing. Both
  * idempotent; fault-isolated. The credit needs a customerId and exactly one packageId — without
  * them it is skipped (warn), never inferred.
@@ -733,7 +733,7 @@ export async function reconcileSalonPackageOrigin(
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
 
       // (1) Origin posting (C 2.1.1) — idempotent on (sourceType, sourceId).
-      const hasOrigin = await deps.hasExistingEntry(scope, 'salon.package.sold', sale.saleId);
+      const hasOrigin = await deps.hasExistingEntry(scope, 'sale.package.sold', sale.saleId);
       if (hasOrigin) {
         summary.idempotentHits++;
       } else {
@@ -1119,7 +1119,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
   });
 
   // Salon CMV (INCR-INVENTORY Body 2) — re-drive the cost-of-goods razão for every Finalized
-  // non-package sale with product lines whose 'salon.sale.cogs' entry is missing (Gap 2 recovery).
+  // non-package sale with product lines whose 'sale.cogs' entry is missing (Gap 2 recovery).
   const cogs = await reconcileSalonCogs({
     listCogsSales: async () =>
       classifiedFinalized

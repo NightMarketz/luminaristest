@@ -60,7 +60,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
     const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
     expect(scope).toMatchObject({ ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' });
     expect(event).toMatchObject({
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 250,
@@ -159,7 +159,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
 
   // --- Anti-revenue gate (Incremento G P4) ---
   describe('anti-revenue gate for all-Package sales', () => {
-    it('does NOT recognize revenue for an all-Package Finalized sale (no salon.sale.finalized)', async () => {
+    it('does NOT recognize revenue for an all-Package Finalized sale (no sale.finalized)', async () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } },
       ]);
@@ -167,13 +167,13 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       expect(sync).not.toHaveBeenCalled();
     });
 
-    it('STILL recognizes revenue for a Product sale (salon.sale.finalized books normally)', async () => {
+    it('STILL recognizes revenue for a Product sale (sale.finalized books normally)', async () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { type: 'Product', productId: 'p-1', saleId: 'sale-1' } },
       ]);
       await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(sync).toHaveBeenCalledTimes(1);
-      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('salon.sale.finalized');
+      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
     });
 
     it('STILL recognizes revenue for a Service sale', async () => {
@@ -218,8 +218,8 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       const first = sync.mock.calls[0][1] as AccountingEvent;
       const second = sync.mock.calls[1][1] as AccountingEvent;
       // distinct sourceType, SAME saleId
-      expect(first.sourceType).toBe('salon.sale.finalized');
-      expect(second.sourceType).toBe('salon.sale.cogs');
+      expect(first.sourceType).toBe('sale.finalized');
+      expect(second.sourceType).toBe('sale.cogs');
       expect(first.sourceId).toBe('sale-1');
       expect(second.sourceId).toBe('sale-1');
       // CMV carries the integer cents from recordSaleCogs (never a float)
@@ -246,7 +246,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(recordSaleCogs).not.toHaveBeenCalled();
       expect(sync).toHaveBeenCalledTimes(1);
-      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('salon.sale.finalized');
+      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
     });
 
     it('books NEITHER revenue nor CMV for an all-Package sale (anti-revenue gate is first)', async () => {
@@ -273,11 +273,11 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
         maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
       ).resolves.toBeUndefined();
       expect(sync).toHaveBeenCalledTimes(1); // revenue succeeded, was not undone
-      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('salon.sale.finalized');
+      expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
       expect(loggerError).toHaveBeenCalled();
     });
 
-    it('ISOLATES a CMV posting failure (the salon.sale.cogs sync) from the revenue', async () => {
+    it('ISOLATES a CMV posting failure (the sale.cogs sync) from the revenue', async () => {
       withProductLine();
       recordSaleCogs.mockResolvedValue({ totalCogsCents: 3000 });
       // revenue sync ok, CMV sync throws

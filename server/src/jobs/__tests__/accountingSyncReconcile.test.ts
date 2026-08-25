@@ -230,7 +230,7 @@ describe('reconcileSalonSales', () => {
     expect(scope.ownerUserId).toBe('owner-A');
     expect(scope.actorUserId).toBe('owner-A'); // owner-as-actor in the system re-drive
     expect(scope.unitId).toBe('unit-A'); // unit of the SOURCE record, not crossed
-    expect(event.sourceType).toBe('salon.sale.finalized');
+    expect(event.sourceType).toBe('sale.finalized');
     expect(event.sourceId).toBe('sale-A');
     expect(event.amount).toBe(99.99); // raw float; mapper converts to cents
   });
@@ -289,7 +289,7 @@ function buildCancelDeps(over: Partial<SalonCancellationReconcileDeps> = {}): Sa
     listCancelledSales: jest.fn(async () => [cancelled()]),
     // default: the finalized entry is still Posted (reversible); settlement absent.
     findEntry: jest.fn(async (_s: AccountingScope, type: string) =>
-      type === 'salon.sale.finalized' ? { id: 'entry-1', status: 'Posted' } : null,
+      type === 'sale.finalized' ? { id: 'entry-1', status: 'Posted' } : null,
     ),
     reverse: jest.fn(async () => undefined),
     ...over,
@@ -315,7 +315,7 @@ describe('reconcileSalonCancellations', () => {
   it('treats an already-reversed entry as an idempotent hit (does NOT reverse)', async () => {
     const deps = buildCancelDeps({
       findEntry: jest.fn(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized' ? { id: 'entry-1', status: 'Reversed' } : null,
+        type === 'sale.finalized' ? { id: 'entry-1', status: 'Reversed' } : null,
       ),
     });
     const summary = await reconcileSalonCancellations(deps);
@@ -327,7 +327,7 @@ describe('reconcileSalonCancellations', () => {
   it('INCR4-B: a RECONCILED entry blocks the reversal as a FAILURE, never an idempotent hit', async () => {
     const deps = buildCancelDeps({
       findEntry: jest.fn(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized' ? { id: 'entry-1', status: 'Reconciled' } : null,
+        type === 'sale.finalized' ? { id: 'entry-1', status: 'Reconciled' } : null,
       ),
     });
     const summary = await reconcileSalonCancellations(deps);
@@ -340,9 +340,9 @@ describe('reconcileSalonCancellations', () => {
   it('adaptive (D2-Q4): also reverses a Posted settlement entry', async () => {
     const deps = buildCancelDeps({
       findEntry: jest.fn(async (_s: AccountingScope, type: string) =>
-        type === 'salon.sale.finalized'
+        type === 'sale.finalized'
           ? { id: 'entry-1', status: 'Posted' }
-          : type === 'salon.sale.settled'
+          : type === 'sale.settled'
             ? { id: 'settle-1', status: 'Posted' }
             : null,
       ),
@@ -408,7 +408,7 @@ describe('reconcileSalonReturns', () => {
 
     expect(deps.sync).toHaveBeenCalledTimes(1);
     const [, event] = (deps.sync as jest.Mock).mock.calls[0] as [AccountingScope, AccountingEvent];
-    expect(event.sourceType).toBe('salon.sale.returned');
+    expect(event.sourceType).toBe('sale.returned');
     expect(event.sourceId).toBe('sale-1');
     expect(summary).toEqual({ total: 1, synced: 1, idempotentHits: 0, failed: 0 });
   });
@@ -462,10 +462,10 @@ function buildSettlementDeps(
 ): SalonSettlementReconcileDeps {
   return {
     listSettledSales: jest.fn(async () => [settled()]),
-    // sourceType-aware: not settled yet ('salon.sale.settled' → false), but the A Receber opening
-    // exists ('salon.sale.finalized'/'salon.package.sold' → true). The ordering gate (P6) checks
+    // sourceType-aware: not settled yet ('sale.settled' → false), but the A Receber opening
+    // exists ('sale.finalized'/'sale.package.sold' → true). The ordering gate (P6) checks
     // the right opening per sale.isAllPackage.
-    hasExistingEntry: jest.fn(async (_s, sourceType) => sourceType !== 'salon.sale.settled'),
+    hasExistingEntry: jest.fn(async (_s, sourceType) => sourceType !== 'sale.settled'),
     sync: jest.fn(async () => ({ entryId: 'settle-1' })),
     ...over,
   };
@@ -480,7 +480,7 @@ describe('reconcileSalonSettlements', () => {
 
     expect(deps.sync).toHaveBeenCalledTimes(1);
     const [, event] = (deps.sync as jest.Mock).mock.calls[0] as [AccountingScope, AccountingEvent];
-    expect(event.sourceType).toBe('salon.sale.settled');
+    expect(event.sourceType).toBe('sale.settled');
     expect(event.sourceId).toBe('sale-1');
     expect(event.paymentMethod).toBe('Pix');
     expect(summary).toEqual({ total: 1, synced: 1, idempotentHits: 0, failed: 0, blocked: 0 });
@@ -497,9 +497,9 @@ describe('reconcileSalonSettlements', () => {
   it('counts a sale whose opening (revenue) entry is missing as BLOCKED (deferred), not failed', async () => {
     const deps = buildSettlementDeps({
       listSettledSales: jest.fn(async () => [settled({ saleId: 'no-rev' }), settled({ saleId: 'ok' })]),
-      // settled: never; opening (salon.sale.finalized): only for 'ok'.
+      // settled: never; opening (sale.finalized): only for 'ok'.
       hasExistingEntry: jest.fn(async (_s, sourceType, sourceId) =>
-        sourceType === 'salon.sale.settled' ? false : sourceId === 'ok',
+        sourceType === 'sale.settled' ? false : sourceId === 'ok',
       ),
     });
     const summary = await reconcileSalonSettlements(deps);
@@ -508,18 +508,18 @@ describe('reconcileSalonSettlements', () => {
     expect(summary).toEqual({ total: 2, synced: 1, idempotentHits: 0, failed: 0, blocked: 1 });
   });
 
-  it('an all-Package settled sale settles against salon.package.sold (not revenue)', async () => {
+  it('an all-Package settled sale settles against sale.package.sold (not revenue)', async () => {
     const deps = buildSettlementDeps({
       listSettledSales: jest.fn(async () => [settled({ isAllPackage: true })]),
       // opening exists ONLY as the prepaid origin, never as revenue.
-      hasExistingEntry: jest.fn(async (_s, sourceType) => sourceType === 'salon.package.sold'),
+      hasExistingEntry: jest.fn(async (_s, sourceType) => sourceType === 'sale.package.sold'),
     });
     const summary = await reconcileSalonSettlements(deps);
     expect(deps.sync).toHaveBeenCalledTimes(1);
     expect(summary).toEqual({ total: 1, synced: 1, idempotentHits: 0, failed: 0, blocked: 0 });
   });
 
-  it('an all-Package settled sale is BLOCKED when salon.package.sold is missing', async () => {
+  it('an all-Package settled sale is BLOCKED when sale.package.sold is missing', async () => {
     const deps = buildSettlementDeps({
       listSettledSales: jest.fn(async () => [settled({ isAllPackage: true })]),
       hasExistingEntry: jest.fn(async () => false),
@@ -567,7 +567,7 @@ describe('reconcileSalonSales — anti-revenue gate (P6)', () => {
     occurredAt: '2026-06-26T00:00:00.000Z', ...over,
   });
 
-  it('skips an all-Package sale (no salon.sale.finalized)', async () => {
+  it('skips an all-Package sale (no sale.finalized)', async () => {
     const sync = jest.fn(async () => ({ entryId: 'e' }));
     const deps: SalonReconcileDeps = {
       listFinalizedSales: jest.fn(async () => [finalized({ isAllPackage: true })]),
@@ -578,7 +578,7 @@ describe('reconcileSalonSales — anti-revenue gate (P6)', () => {
     expect(sync).not.toHaveBeenCalled();
   });
 
-  it('still books a Product/Service sale (salon.sale.finalized)', async () => {
+  it('still books a Product/Service sale (sale.finalized)', async () => {
     const sync = jest.fn(async () => ({ entryId: 'e' }));
     const deps: SalonReconcileDeps = {
       listFinalizedSales: jest.fn(async () => [finalized({ isAllPackage: false })]),
@@ -587,7 +587,7 @@ describe('reconcileSalonSales — anti-revenue gate (P6)', () => {
     };
     await reconcileSalonSales(deps);
     expect(sync).toHaveBeenCalledTimes(1);
-    expect(((sync as jest.Mock).mock.calls[0][1] as AccountingEvent).sourceType).toBe('salon.sale.finalized');
+    expect(((sync as jest.Mock).mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
   });
 });
 
@@ -606,10 +606,10 @@ describe('reconcileSalonPackageOrigin', () => {
     ...over,
   });
 
-  it('books salon.package.sold AND credits balance when both are missing', async () => {
+  it('books sale.package.sold AND credits balance when both are missing', async () => {
     const d = deps();
     const s = await reconcileSalonPackageOrigin(d);
-    expect((d.sync as jest.Mock).mock.calls[0][1].sourceType).toBe('salon.package.sold');
+    expect((d.sync as jest.Mock).mock.calls[0][1].sourceType).toBe('sale.package.sold');
     expect(d.creditBalance).toHaveBeenCalledWith(expect.anything(), {
       customerId: 'cust-1', packageId: 'pkg-1', saleId: 'sale-1', amountCents: 50000,
     });

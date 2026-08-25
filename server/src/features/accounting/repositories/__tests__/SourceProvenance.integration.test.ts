@@ -82,7 +82,7 @@ describe('SourceDocument / JournalEntrySource — real SQLite DB (BE-INCR-8)', (
     const entry = await createEntry(db, 'entry-drill');
     const sd = await db.sourceDocument.create({
       data: {
-        userId: scope.userId, unitId: scope.unitId, sourceType: 'salon.sale.finalized',
+        userId: scope.userId, unitId: scope.unitId, sourceType: 'sale.finalized',
         externalRef: 'NF-DRILL', description: 'Venda', attachmentId: 'att-drill',
       },
     });

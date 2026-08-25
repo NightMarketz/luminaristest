@@ -17,7 +17,7 @@ import type { LancamentoArchetype } from '../models/types';
 export const settlementArchetype: LancamentoArchetype = {
   kind: 'postEntry',
   name: 'liquidacao',
-  sourceType: 'salon.sale.settled',
+  sourceType: 'sale.settled',
   slots: [
     {
       name: 'amount',

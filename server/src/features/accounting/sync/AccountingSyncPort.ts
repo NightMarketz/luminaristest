@@ -26,11 +26,11 @@ export type AccountingEvent = {
    *  now create a Contas a Receber via CrmReceivableBridge instead of posting directly; the
    *  string survives only as CRM_LEGACY_SOURCE_TYPE (legacy-era guard + old ledger entries). */
   sourceType:
-    | 'salon.sale.finalized'
-    | 'salon.sale.cogs'
-    | 'salon.sale.returned'
-    | 'salon.sale.settled'
-    | 'salon.package.sold';
+    | 'sale.finalized'
+    | 'sale.cogs'
+    | 'sale.returned'
+    | 'sale.settled'
+    | 'sale.package.sold';
   /** The source record id. JournalEntry.sourceId (idempotency axis 2). */
   sourceId: string;
   /** Tenancy unit of the SOURCE record — never defaulted or inferred elsewhere. */
@@ -52,12 +52,12 @@ export type AccountingEvent = {
   /**
    * Revenue-recognition events only (ADR-INCR-REVENUE-SPLIT): raw per-nature line subtotals
    * (reais), so the mapper can split the credit across `3.1 Receita de Serviços` and
-   * `3.3 Receita de Revenda`. Carried by 'salon.sale.finalized'. When absent (or both zero),
+   * `3.3 Receita de Revenda`. Carried by 'sale.finalized'. When absent (or both zero),
    * the mapper falls back to a single `3.1` credit (backwards-compatible).
    */
   revenueByNature?: { serviceReais: number; productReais: number };
   /**
-   * Cost-of-goods only (INCR-INVENTORY, `salon.sale.cogs`): the sale's total CMV, ALREADY in
+   * Cost-of-goods only (INCR-INVENTORY, `sale.cogs`): the sale's total CMV, ALREADY in
    * integer cents (computed by `InventoryService.recordSaleCogs` from the moving-average
    * subledger — D5/D6). Undefined for every other event kind. `SalonSaleCogsMapper` reads THIS
    * (never `amount`); the value never crosses a float boundary.
@@ -130,7 +130,7 @@ export function buildSalonSaleFinalizedEvent(fields: {
   revenueByNature?: { serviceReais: number; productReais: number };
 }): AccountingEvent {
   return {
-    sourceType: 'salon.sale.finalized',
+    sourceType: 'sale.finalized',
     sourceId: fields.saleId,
     unitId: fields.unitId,
     amount: fields.amount,
@@ -149,8 +149,8 @@ export function buildSalonSaleFinalizedEvent(fields: {
  * only validates the Int. `amount` is unused for this event kind (set to 0), mirroring how
  * `paymentMethod`/`revenueByNature` are event-specific and read only by their own mapper.
  *
- * Uses a DISTINCT sourceType ('salon.sale.cogs') so the CMV entry (D 4.2 / C 1.1.6) never collides
- * with the revenue entry ('salon.sale.finalized') on @@unique([userId,unitId,sourceType,sourceId])
+ * Uses a DISTINCT sourceType ('sale.cogs') so the CMV entry (D 4.2 / C 1.1.6) never collides
+ * with the revenue entry ('sale.finalized') on @@unique([userId,unitId,sourceType,sourceId])
  * — revenue and CMV coexist for the same saleId. occurredAt should match the sale's date (the same
  * accounting date used for the revenue entry).
  */
@@ -163,7 +163,7 @@ export function buildSalonSaleCogsEvent(fields: {
   label: string;
 }): AccountingEvent {
   return {
-    sourceType: 'salon.sale.cogs',
+    sourceType: 'sale.cogs',
     sourceId: fields.saleId,
     unitId: fields.unitId,
     // amount is unused for this event kind — the mapper reads costCents (integer cents), never a float.
@@ -192,7 +192,7 @@ export function buildSalonSaleReturnedEvent(fields: {
   label: string;
 }): AccountingEvent {
   return {
-    sourceType: 'salon.sale.returned',
+    sourceType: 'sale.returned',
     sourceId: fields.saleId,
     unitId: fields.unitId,
     amount: fields.amount,
@@ -209,8 +209,8 @@ export function buildSalonSaleReturnedEvent(fields: {
  * `paymentMethod` (the mapper needs it to pick the debit account); the mapper converts to cents.
  *
  * The settlement is recognized on status === 'Finalized' && paymentStatus === 'Paid' (D1-Q1).
- * It uses a DISTINCT sourceType ('salon.sale.settled') so it never collides with the revenue
- * entry ('salon.sale.finalized') on @@unique([userId,unitId,sourceType,sourceId]) — revenue and
+ * It uses a DISTINCT sourceType ('sale.settled') so it never collides with the revenue
+ * entry ('sale.finalized') on @@unique([userId,unitId,sourceType,sourceId]) — revenue and
  * settlement coexist for the same saleId. occurredAt should be the sale's paidAt (D1-Q2).
  */
 export function buildSalonSaleSettledEvent(fields: {
@@ -223,7 +223,7 @@ export function buildSalonSaleSettledEvent(fields: {
   label: string;
 }): AccountingEvent {
   return {
-    sourceType: 'salon.sale.settled',
+    sourceType: 'sale.settled',
     sourceId: fields.saleId,
     unitId: fields.unitId,
     amount: fields.amount,
@@ -242,7 +242,7 @@ export function buildSalonSaleSettledEvent(fields: {
  *
  * An all-Package sale is prepaid: selling it does NOT recognize revenue (that is deferred to
  * consumption). It books the OBLIGATION instead — D 1.1.2 A Receber / C 2.1.1 Pacotes
- * Pré-pagos — under a DISTINCT sourceType ('salon.package.sold') so it never collides with the
+ * Pré-pagos — under a DISTINCT sourceType ('sale.package.sold') so it never collides with the
  * (gated-out) revenue entry on @@unique([userId,unitId,sourceType,sourceId]).
  */
 export function buildSalonPackageSoldEvent(fields: {
@@ -254,7 +254,7 @@ export function buildSalonPackageSoldEvent(fields: {
   label: string;
 }): AccountingEvent {
   return {
-    sourceType: 'salon.package.sold',
+    sourceType: 'sale.package.sold',
     sourceId: fields.saleId,
     unitId: fields.unitId,
     amount: fields.amount,

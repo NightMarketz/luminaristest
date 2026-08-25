@@ -11,7 +11,7 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.cogs',
+    sourceType: 'sale.cogs',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 0, // unused for this event kind
@@ -26,8 +26,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
 describe('SalonSaleCogsMapper', () => {
   const mapper = new SalonSaleCogsMapper();
 
-  it('declares the salon.sale.cogs sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.cogs');
+  it('declares the sale.cogs sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.cogs');
   });
 
   it('produces BALANCED legs on the canonical leaf accounts 4.2 (debit CMV) / 1.1.6 (credit Estoques)', () => {
@@ -52,7 +52,7 @@ describe('SalonSaleCogsMapper', () => {
 
   it('preserves sourceType, sourceId and the sale unitId, and derives the description from saleId', () => {
     const input = mapper.map(event({ sourceId: 'sale-XYZ', unitId: 'unit-9' }));
-    expect(input.sourceType).toBe('salon.sale.cogs');
+    expect(input.sourceType).toBe('sale.cogs');
     expect(input.sourceId).toBe('sale-XYZ');
     expect(input.unitId).toBe('unit-9');
     expect(input.description).toBe('CMV salão — Venda sale-XYZ');

@@ -4,13 +4,13 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.sale.settled` → the receivable-settlement entry (Incremento D / D1):
+ * Maps `sale.settled` → the receivable-settlement entry (Incremento D / D1):
  *   Débito  <conta por paymentMethod>  = amountCents   (where the money landed)
  *   Crédito 1.1.2 (A Receber)          = amountCents   (clear the receivable)
  *
  * The settlement is a SEPARATE entry from the revenue recognition (D 1.1.2 / C 3.1, sourceType
- * 'salon.sale.finalized'): revenue books A Receber when the sale is Finalized; settlement clears
- * it when the sale is Paid. Distinct sourceType ('salon.sale.settled') ⇒ the two coexist for the
+ * 'sale.finalized'): revenue books A Receber when the sale is Finalized; settlement clears
+ * it when the sale is Paid. Distinct sourceType ('sale.settled') ⇒ the two coexist for the
  * same saleId without colliding on @@unique([userId,unitId,sourceType,sourceId]).
  *
  * Chart mapping (D1-QMAP, ratified in D0) — debit by paymentMethod:
@@ -21,7 +21,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  *   Package Balance → 2.1.1 (Pacotes Pré-pagos, Liability)   ← NEVER cash (D1-Q10)
  */
 export class SalonSaleSettledMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.settled' as const;
+  public readonly sourceType = 'sale.settled' as const;
 
   /** A settlement always credits the receivable leaf — symmetric to the revenue debit. */
   private static readonly CREDIT_ACCOUNT = '1.1.2'; // A Receber

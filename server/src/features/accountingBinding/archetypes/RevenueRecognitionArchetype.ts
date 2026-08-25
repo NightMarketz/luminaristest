@@ -26,7 +26,7 @@ import type { LancamentoArchetype } from '../models/types';
 export const revenueRecognitionArchetype: LancamentoArchetype = {
   kind: 'postEntry',
   name: 'reconhecimento-receita',
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   slots: [
     {
       name: 'amount',

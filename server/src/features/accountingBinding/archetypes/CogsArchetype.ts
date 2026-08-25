@@ -17,7 +17,7 @@ import type { LancamentoArchetype } from '../models/types';
 export const cogsArchetype: LancamentoArchetype = {
   kind: 'postEntry',
   name: 'cmv',
-  sourceType: 'salon.sale.cogs',
+  sourceType: 'sale.cogs',
   slots: [
     {
       name: 'costCents',

@@ -739,7 +739,7 @@ model SourceDocument {
   id           String               @id @default(cuid())
   userId       String // AccountingScope.ownerUserId (plain scope key; SEM FK User — D7)
   unitId       String // business unit (scoped string, not a FK)
-  sourceType   String // taxonomia viva: crm.opportunity.won | salon.sale.* | IMPORT_JOURNAL_ENTRIES | ...
+  sourceType   String // taxonomia viva: crm.opportunity.won | sale.* | IMPORT_JOURNAL_ENTRIES | ...
   externalRef  String? // referência HUMANA do documento (NF nº X, boleto nº Y) — separada do sourceId/idempotência (D6)
   documentDate DateTime? // data do documento de origem, quando distinta da data de lançamento
   description  String? // rótulo curto da origem (display/drill-down)
@@ -1143,7 +1143,7 @@ model StockMovement {
   qtyDelta        Int // signed unit delta (+inbound / −cogs)
   valueCentsDelta Int // signed valued-cost delta in integer cents
   occurredAt      DateTime // event date (date-only competência)
-  sourceType      String // origin discriminator: inventory.inbound | salon.sale.cogs | ap.payable | …
+  sourceType      String // origin discriminator: inventory.inbound | sale.cogs | ap.payable | …
   sourceId        String // origin key (payableId | saleId | reversalEventId | seed id)
   entryId         String? // journal entry id when the movement has a ledger counterpart (denormalized convenience)
   createdAt       DateTime      @default(now())

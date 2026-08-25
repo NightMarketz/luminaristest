@@ -7,7 +7,7 @@ import type { LancamentoArchetype } from '../models/types';
  *
  * EMENDA 1 do ADR §11 (legenda T5 corrigida): este arquétipo é uma DEVOLUÇÃO — um lançamento novo
  * e separado que debita a conta de contra-receita — e NÃO o mecanismo `reversedById` do núcleo
- * (`reverseEntry`, fora do catálogo de arquétipos e fora do golden test). O `salon.sale.finalized`
+ * (`reverseEntry`, fora do catálogo de arquétipos e fora do golden test). O `sale.finalized`
  * original permanece `Posted`; nenhuma edição/reversão acontece aqui.
  *
  *   Débito  contra-receita       = amount   (SalonSaleReturnedMapper.ts:21)
@@ -16,7 +16,7 @@ import type { LancamentoArchetype } from '../models/types';
 export const reversalArchetype: LancamentoArchetype = {
   kind: 'postEntry',
   name: 'estorno-origem',
-  sourceType: 'salon.sale.returned',
+  sourceType: 'sale.returned',
   slots: [
     {
       name: 'amount',

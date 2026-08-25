@@ -4,18 +4,18 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.sale.returned` → contra-revenue entry (Incremento D / devolução):
+ * Maps `sale.returned` → contra-revenue entry (Incremento D / devolução):
  *   Débito  3.2   (Devoluções de Vendas) = amountCents
  *   Crédito 1.1.2 (A Receber)            = amountCents
  *
  * This is NOT a reversal of the finalized revenue entry (D2-Q5: distinct effect). The
- * original `salon.sale.finalized` entry (D 1.1.2 / C 3.1) stays Posted; the return books a
+ * original `sale.finalized` entry (D 1.1.2 / C 3.1) stays Posted; the return books a
  * SEPARATE entry that debits the 3.2 contra-revenue leaf — so net revenue
  * (Σ crédito − débito over Revenue accounts) is reduced by the return, and A Receber is
  * cleared symmetrically. A cancellation, by contrast, reverses the finalized entry outright.
  */
 export class SalonSaleReturnedMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.returned' as const;
+  public readonly sourceType = 'sale.returned' as const;
 
   /** Leaf account codes (canonical chart). */
   private static readonly DEBIT_ACCOUNT = '3.2'; //  Devoluções de Vendas (contra-revenue)

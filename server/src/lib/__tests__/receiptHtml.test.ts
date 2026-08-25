@@ -9,7 +9,7 @@ function makeData(over: Partial<ReceiptData> = {}): ReceiptData {
     status: 'Posted',
     date: new Date('2026-07-10T00:00:00.000Z'),
     description: 'Venda de serviço',
-    sourceType: 'salon.sale.finalized',
+    sourceType: 'sale.finalized',
     sourceId: 'sale-123',
     lines: [
       { code: '1.1.1', name: 'Caixa', debitCents: 123456, creditCents: 0 },
@@ -36,7 +36,7 @@ describe('renderReceiptHtml', () => {
     const html = renderReceiptHtml(makeData(), GENERATED_AT);
     expect(html).toContain('Lançamento nº 7/2026');
     expect(html).toContain('Posted');
-    expect(html).toContain('salon.sale.finalized — ref. sale-123');
+    expect(html).toContain('sale.finalized — ref. sale-123');
   });
 
   it('omits the ref when there is no sourceId', () => {

@@ -128,7 +128,7 @@ export async function maybeSyncSalonSaleFinalized(
 /**
  * Book the cost-of-goods (CMV) for a finalized sale's product lines (Body 2 / O-2). Runs the
  * subledger baixa (tx1, `InventoryService.recordSaleCogs` — moving-average, atomic CAS) and, if it
- * yields cost, emits `salon.sale.cogs` so `SalonSaleCogsMapper` posts the razão (tx2, D 4.2 / C
+ * yields cost, emits `sale.cogs` so `SalonSaleCogsMapper` posts the razão (tx2, D 4.2 / C
  * 1.1.6). SELF-CONTAINED try/catch and non-fatal: a CMV failure (insufficient stock, period closed,
  * posting down) is logged for the reconcile job and NEVER propagates to unwind the revenue entry
  * that already committed.

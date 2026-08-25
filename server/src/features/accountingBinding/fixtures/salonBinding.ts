@@ -60,11 +60,11 @@ const SALON_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
  * daqui — ver `SALON_CHART_SNAPSHOT` acima, que continua interno/não exportado).
  */
 export const SALON_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
-  'salon.sale.finalized': ['amount', 'revenueByNature', 'dimension'],
-  'salon.sale.settled': ['amount', 'paymentMethod', 'dimension'],
-  'salon.sale.returned': ['amount', 'dimension'],
-  'salon.package.sold': ['amount', 'dimension'],
-  'salon.sale.cogs': ['costCents', 'dimension'],
+  'sale.finalized': ['amount', 'revenueByNature', 'dimension'],
+  'sale.settled': ['amount', 'paymentMethod', 'dimension'],
+  'sale.returned': ['amount', 'dimension'],
+  'sale.package.sold': ['amount', 'dimension'],
+  'sale.cogs': ['costCents', 'dimension'],
 };
 
 const BINDING_VERSION = 1;
@@ -78,7 +78,7 @@ const candidate: AccountingBindingV1 = {
   eventBindings: [
     // 2.1 Reconhecimento de Receita — SalonSaleFinalizedMapper.ts
     {
-      eventKey: 'salon.sale.finalized',
+      eventKey: 'sale.finalized',
       archetypeKey: 'revenue_recognition',
       // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleFinalizedMapper.ts:56.
       descriptionTemplate: 'Receita salão — Venda {sourceId}',
@@ -98,7 +98,7 @@ const candidate: AccountingBindingV1 = {
     },
     // 2.2 Liquidação — SalonSaleSettledMapper.ts (D <método>-role = total · C controle-recebível)
     {
-      eventKey: 'salon.sale.settled',
+      eventKey: 'sale.settled',
       archetypeKey: 'settlement',
       // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleSettledMapper.ts:94.
       descriptionTemplate: 'Liquidação salão — Venda {sourceId}',
@@ -125,7 +125,7 @@ const candidate: AccountingBindingV1 = {
     },
     // 2.3 Estorno de Origem (devolução, NÃO é reversedById — emenda 1 do ADR §11) — SalonSaleReturnedMapper.ts
     {
-      eventKey: 'salon.sale.returned',
+      eventKey: 'sale.returned',
       archetypeKey: 'reversal',
       // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleReturnedMapper.ts:52.
       descriptionTemplate: 'Devolução salão — Venda {sourceId}',
@@ -142,7 +142,7 @@ const candidate: AccountingBindingV1 = {
     },
     // 2.4 Passivo de Performance (pacote pré-pago) — SalonPackageSoldMapper.ts
     {
-      eventKey: 'salon.package.sold',
+      eventKey: 'sale.package.sold',
       archetypeKey: 'performance_liability',
       // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonPackageSoldMapper.ts:48.
       descriptionTemplate: 'Origem de pacote pré-pago — Venda {sourceId}',
@@ -159,7 +159,7 @@ const candidate: AccountingBindingV1 = {
     },
     // 2.5 CMV — SalonSaleCogsMapper.ts (custo JÁ em centavos exatos — moneyCentsExact, sem conversão)
     {
-      eventKey: 'salon.sale.cogs',
+      eventKey: 'sale.cogs',
       archetypeKey: 'cogs',
       // Achado do golden Fase 1 (item 12 do BRIEF) — texto citado de SalonSaleCogsMapper.ts:56.
       descriptionTemplate: 'CMV salão — Venda {sourceId}',

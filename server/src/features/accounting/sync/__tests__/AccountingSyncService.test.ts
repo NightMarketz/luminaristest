@@ -38,7 +38,7 @@ const scope: AccountingScope = {
 // Generic fixture event: the salon finalized sale ('crm.opportunity.won' was retired —
 // CRM Won deals route through CrmReceivableBridge, ADR-CRM-AR-SEAM).
 const finalizedEvent: AccountingEvent = {
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   sourceId: 'sale-1',
   unitId: 'unit-1',
   amount: 1000,
@@ -78,7 +78,7 @@ describe('AccountingSyncService', () => {
     const [passedScope, input] = postEntry.mock.calls[0]!;
     expect(passedScope).toBe(scope); // scope passed through UNCHANGED (no unit substitution)
     expect(input).toMatchObject({
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       sourceId: 'sale-1',
       unitId: 'unit-1',
     });
@@ -172,7 +172,7 @@ describe('AccountingSyncService', () => {
       retryDelayMs: 0,
     });
     const settledEvent: AccountingEvent = {
-      sourceType: 'salon.sale.settled',
+      sourceType: 'sale.settled',
       sourceId: 'sale-pkg',
       unitId: 'unit-1',
       amount: 200,
@@ -205,8 +205,8 @@ describe('AccountingSyncService', () => {
   describe('composite-key mapper registration (F-FEEDER-3)', () => {
     it('two registrations of the SAME unitId + sourceType collide — fails loud at construction, never last-write-wins', () => {
       const postingService = { postEntry: jest.fn() } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
-      const mapperA = markedMapper('salon.sale.finalized', 'A');
-      const mapperB = markedMapper('salon.sale.finalized', 'B');
+      const mapperA = markedMapper('sale.finalized', 'A');
+      const mapperB = markedMapper('sale.finalized', 'B');
 
       expect(
         () =>
@@ -227,8 +227,8 @@ describe('AccountingSyncService', () => {
     it('two registrations of DIFFERENT unitIds with the SAME sourceType coexist — each event routes to its OWN unit mapper, no overwrite', async () => {
       const postEntry = jest.fn(okEntry);
       const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
-      const mapperA = markedMapper('salon.sale.finalized', 'unit-a-marker');
-      const mapperB = markedMapper('salon.sale.finalized', 'unit-b-marker');
+      const mapperA = markedMapper('sale.finalized', 'unit-a-marker');
+      const mapperB = markedMapper('sale.finalized', 'unit-b-marker');
       const svc = new AccountingSyncService(
         postingService,
         [
@@ -265,7 +265,7 @@ describe('AccountingSyncService', () => {
     it('an instance built ONLY from scoped entries never falls back to a DIFFERENT unit\'s mapper — an unregistered unit fails cleanly', async () => {
       const postEntry = jest.fn(okEntry);
       const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
-      const mapperA = markedMapper('salon.sale.finalized', 'unit-a-marker');
+      const mapperA = markedMapper('sale.finalized', 'unit-a-marker');
       // Only unit-a is registered — no plain/global entry anywhere in this array.
       const svc = new AccountingSyncService(postingService, [{ unitId: 'unit-a', mapper: mapperA }], {
         maxAttempts: 3,

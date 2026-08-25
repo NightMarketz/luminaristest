@@ -13,7 +13,7 @@
  * has NO idempotency pre-check (G3).
  *
  * ORDERING (revenue precedes settlement): the settlement clears A Receber, which only exists if
- * the revenue entry was booked. Before posting, the bridge confirms the 'salon.sale.finalized'
+ * the revenue entry was booked. Before posting, the bridge confirms the 'sale.finalized'
  * entry exists; if not, it does NOT settle (blocked_missing_revenue_entry) and leaves the sale for
  * reconcile to re-drive once the revenue is present. findEntryBySource only LOCATES the prerequisite
  * — it is not an idempotency check on the settlement itself.
@@ -87,12 +87,12 @@ export async function maybeSyncSalonSaleSettled(
     const scope = resolveAccountingScope(actor, unitId);
 
     // ORDERING GATE: the A Receber opening entry must exist before we clear it. For a normal sale
-    // that is the revenue entry ('salon.sale.finalized'); for an all-Package sale it is the prepaid
-    // origin ('salon.package.sold' — Incremento G P6), since an all-Package sale recognizes no
+    // that is the revenue entry ('sale.finalized'); for an all-Package sale it is the prepaid
+    // origin ('sale.package.sold' — Incremento G P6), since an all-Package sale recognizes no
     // revenue. If the opening is missing, do NOT settle now — reconcile re-drives once it is booked.
     const openingSourceType = (await isAllPackageSale(actor.userId, row.id))
-      ? 'salon.package.sold'
-      : 'salon.sale.finalized';
+      ? 'sale.package.sold'
+      : 'sale.finalized';
     const opening = await getFactory()
       .getPostingService()
       .findEntryBySource(scope, openingSourceType, row.id);

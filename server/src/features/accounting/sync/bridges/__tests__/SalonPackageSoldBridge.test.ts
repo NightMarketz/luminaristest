@@ -50,13 +50,13 @@ describe('SalonPackageSoldBridge.maybeSyncSalonPackageSold', () => {
     creditFromSale.mockResolvedValue(undefined);
   });
 
-  it('syncs an all-Package Finalized sale with salon.package.sold (origin), correct scope/event', async () => {
+  it('syncs an all-Package Finalized sale with sale.package.sold (origin), correct scope/event', async () => {
     await maybeSyncSalonPackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).toHaveBeenCalledTimes(1);
     const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
     expect(scope).toMatchObject({ ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' });
     expect(event).toMatchObject({
-      sourceType: 'salon.package.sold',
+      sourceType: 'sale.package.sold',
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 500,

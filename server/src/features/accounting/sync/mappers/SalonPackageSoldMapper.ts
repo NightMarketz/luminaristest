@@ -4,18 +4,18 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 
 /**
- * Maps `salon.package.sold` → prepaid-package ORIGIN entry (Incremento G P4):
+ * Maps `sale.package.sold` → prepaid-package ORIGIN entry (Incremento G P4):
  *   Débito  1.1.2 (A Receber)            = amountCents
  *   Crédito 2.1.1 (Pacotes Pré-pagos)    = amountCents
  *
  * Selling a prepaid package is NOT revenue — it creates a LIABILITY (deferred revenue).
  * Revenue is recognized later, at consumption (a future sale paid with Package Balance).
  * The settlement of THIS receivable (A Receber → Caixa/Banco/Cartão) reuses the existing
- * `salon.sale.settled` flow. Distinct sourceType keeps it isolated from the gated-out
- * `salon.sale.finalized` revenue entry on the @@unique idempotency key.
+ * `sale.settled` flow. Distinct sourceType keeps it isolated from the gated-out
+ * `sale.finalized` revenue entry on the @@unique idempotency key.
  */
 export class SalonPackageSoldMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.package.sold' as const;
+  public readonly sourceType = 'sale.package.sold' as const;
 
   /** Leaf account codes (canonical chart). */
   private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber

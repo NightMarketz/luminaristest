@@ -1533,7 +1533,7 @@
  *         The only sanctioned path to move a Finalized sale to Paid. Performs a whitelisted
  *         isSystem write (paymentStatus/paymentMethod/paidAt/paidByUserId/paymentReference) and,
  *         post-commit, books D <account by paymentMethod> / C 1.1.2 A Receber (sourceType
- *         salon.sale.settled). Settlement is deferred if the revenue entry does not yet exist.
+ *         sale.settled). Settlement is deferred if the revenue entry does not yet exist.
  *       tags: [Sales]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:

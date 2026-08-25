@@ -5,7 +5,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
 import { splitRevenueCredit } from './revenueSplit';
 
 /**
- * Maps `salon.sale.finalized` → revenue recognition entry (Incremento C):
+ * Maps `sale.finalized` → revenue recognition entry (Incremento C):
  *   Débito  1.1.2 (A Receber)             = amountCents
  *   Crédito 3.1   (Receita de Serviços)   = serviceCents
  *   Crédito 3.3   (Receita de Revenda)    = productCents   (ADR-INCR-REVENUE-SPLIT)
@@ -16,7 +16,7 @@ import { splitRevenueCredit } from './revenueSplit';
  * (A Receber → Caixa/Banco) is a separate Incremento D.
  */
 export class SalonSaleFinalizedMapper implements IAccountingEventMapper {
-  public readonly sourceType = 'salon.sale.finalized' as const;
+  public readonly sourceType = 'sale.finalized' as const;
 
   /** Leaf account code (canonical chart). Credit codes live in revenueSplit.ts. */
   private static readonly DEBIT_ACCOUNT = '1.1.2'; // A Receber

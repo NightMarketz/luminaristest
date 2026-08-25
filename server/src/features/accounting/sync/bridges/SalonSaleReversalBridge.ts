@@ -77,7 +77,7 @@ export async function maybeReverseSalonSale(
       // Reverse the revenue recognition entry, if one was ever booked. findEntryBySource only
       // LOCATES the entry to reverse (reverseEntry needs the id); it is NOT an idempotency
       // pre-check — reverseEntry itself owns idempotency.
-      const revenue = await posting.findEntryBySource(scope, 'salon.sale.finalized', row.id);
+      const revenue = await posting.findEntryBySource(scope, 'sale.finalized', row.id);
       if (revenue) {
         await posting.reverseEntry(scope, {
           unitId,
@@ -88,9 +88,9 @@ export async function maybeReverseSalonSale(
       }
 
       // Adaptive (D2-Q4): if a settlement entry exists, reverse it too. This branch sleeps
-      // until D-settlement books 'salon.sale.settled' entries — coded now so a cancellation
+      // until D-settlement books 'sale.settled' entries — coded now so a cancellation
       // is whole the day settlement lands.
-      const settled = await posting.findEntryBySource(scope, 'salon.sale.settled', row.id);
+      const settled = await posting.findEntryBySource(scope, 'sale.settled', row.id);
       if (settled) {
         await posting.reverseEntry(scope, {
           unitId,

@@ -81,7 +81,7 @@ function canonicalizePostEntryInput(input: PostEntryInput): string {
 
 function finalizedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.finalized',
+    sourceType: 'sale.finalized',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -94,7 +94,7 @@ function finalizedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function settledEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.settled',
+    sourceType: 'sale.settled',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 250,
@@ -108,7 +108,7 @@ function settledEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function returnedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.returned',
+    sourceType: 'sale.returned',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 1500.5,
@@ -121,7 +121,7 @@ function returnedEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 
 function packageSoldEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.package.sold',
+    sourceType: 'sale.package.sold',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 500,
@@ -134,7 +134,7 @@ function packageSoldEvent(over: Partial<AccountingEvent> = {}): AccountingEvent 
 
 function cogsEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.cogs',
+    sourceType: 'sale.cogs',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 0,
@@ -178,11 +178,11 @@ function buildInterpreterFor(eventKey: string): IAccountingEventMapper {
 }
 
 const interpreters = {
-  finalized: buildInterpreterFor('salon.sale.finalized'),
-  settled: buildInterpreterFor('salon.sale.settled'),
-  returned: buildInterpreterFor('salon.sale.returned'),
-  packageSold: buildInterpreterFor('salon.package.sold'),
-  cogs: buildInterpreterFor('salon.sale.cogs'),
+  finalized: buildInterpreterFor('sale.finalized'),
+  settled: buildInterpreterFor('sale.settled'),
+  returned: buildInterpreterFor('sale.returned'),
+  packageSold: buildInterpreterFor('sale.package.sold'),
+  cogs: buildInterpreterFor('sale.cogs'),
 };
 
 // -------------------------------------------------------------------------------------------

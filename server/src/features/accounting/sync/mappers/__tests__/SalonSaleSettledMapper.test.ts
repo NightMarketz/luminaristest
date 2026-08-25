@@ -10,7 +10,7 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
  */
 function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   return {
-    sourceType: 'salon.sale.settled',
+    sourceType: 'sale.settled',
     sourceId: 'sale-1',
     unitId: 'unit-1',
     amount: 250,
@@ -25,8 +25,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
 describe('SalonSaleSettledMapper', () => {
   const mapper = new SalonSaleSettledMapper();
 
-  it('declares the salon.sale.settled sourceType', () => {
-    expect(mapper.sourceType).toBe('salon.sale.settled');
+  it('declares the sale.settled sourceType', () => {
+    expect(mapper.sourceType).toBe('sale.settled');
   });
 
   // --- D1-QMAP: each paymentMethod → the correct debit account (case by case) ---
@@ -85,8 +85,8 @@ describe('SalonSaleSettledMapper', () => {
 
   it('uses a DISTINCT sourceType from the finalized revenue entry (no @@unique collision)', () => {
     const input = mapper.map(event());
-    expect(input.sourceType).toBe('salon.sale.settled');
-    expect(input.sourceType).not.toBe('salon.sale.finalized');
+    expect(input.sourceType).toBe('sale.settled');
+    expect(input.sourceType).not.toBe('sale.finalized');
     expect(input.sourceId).toBe('sale-1'); // same saleId, different sourceType → coexist
   });
 

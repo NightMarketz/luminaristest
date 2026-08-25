@@ -63,14 +63,14 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
 
     expect(findEntryBySource).toHaveBeenCalledWith(
       expect.objectContaining({ ownerUserId: 'u1', unitId: 'unit-1' }),
-      'salon.sale.finalized',
+      'sale.finalized',
       'sale-1',
     );
     expect(sync).toHaveBeenCalledTimes(1);
     const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
     expect(scope).toMatchObject({ ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1' });
     expect(event).toMatchObject({
-      sourceType: 'salon.sale.settled',
+      sourceType: 'sale.settled',
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 250,
@@ -106,12 +106,12 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
     );
   });
 
-  it('ORDERING GATE (all-Package): checks salon.package.sold as the opening, not revenue', async () => {
+  it('ORDERING GATE (all-Package): checks sale.package.sold as the opening, not revenue', async () => {
     findRowsByFieldValue.mockResolvedValue([{ data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } }]);
     await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow());
     expect(findEntryBySource).toHaveBeenCalledWith(
       expect.objectContaining({ unitId: 'unit-1' }),
-      'salon.package.sold',
+      'sale.package.sold',
       'sale-1',
     );
     expect(sync).toHaveBeenCalledTimes(1); // opening (origin) exists → settles
