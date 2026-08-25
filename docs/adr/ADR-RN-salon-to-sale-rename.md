@@ -159,12 +159,18 @@ referem ao vertical 1, que continua sendo, de fato, um salão.
 1. ~~ADR-RN (este documento) + BRIEF-RN (`sessao-planejamento`).~~ ✅ Este commit.
 2. ~~Ratificação dos forks F-RN-1..F-RN-4 pelo dono.~~ ✅ 2026-08-25, cédula única via
    `AskUserQuestion`: (b)/(b)/(b)/(a) — registro no cabeçalho e no BRIEF §6.
-3. `sessao-instrumentacao` — teste-guarda que falha pelo motivo certo (asserção do vocabulário
-   `sale.*` onde hoje o código emite `salon.*`; ou teste de cobertura do binding, se F-RN a tratar como
-   tal).
-4. `sessao-correcao` — diff mínimo que faz o teste-guarda passar, escopo travado ao inventário do
-   BRIEF §2, sem tocar nada fora dele.
-5. Review independente (branch/worktree separado) + `tsc` limpo × 2 + suíte completa verde.
-6. Integração (`sessao-integracao`) para `main`.
-7. Isto libera a pré-condição §5 item 4 do ADR-P2 — o P2 pode então avançar (sujeito às suas próprias
-   pré-condições restantes, §5 itens 2/3).
+3. ~~`sessao-instrumentacao`.~~ ✅ 2026-08-25 — 2 sessões paralelas (I1 vocabulário, I2 dado+binding):
+   3 guardas / 15 asserções vermelhas pelo motivo certo (`renameVocabularyGuard.test.ts`,
+   `renameDataMigrationGuard.test.ts`, `renameBindingSyncGuard.integration.test.ts`), review
+   independente com 2 rodadas de endurecimento (âncora em aspas contra `sale.sale.*`; I2 refeito para
+   as guardas serem alcançáveis pelo fix ratificado — 1º draft levou FAIL estrutural).
+4. ~~`sessao-correcao`.~~ ✅ 2026-08-25 — autorização "Correção autorizada": literais colapsados
+   (F-RN-2b), 23 arquivos `git mv` + 35 identificadores (F-RN-1b, identidade `beautySalon`
+   preservada), migração idempotente única `20260825120000_rename_salon_to_sale_vocabulary`
+   (F-RN-3b/4a). Achados de caminho: `INVENTORY_COGS_SOURCE_TYPE` vivo e teste de arquétipo
+   auto-comparante — corrigidos.
+5. ~~Review independente + gates.~~ ✅ PASS (6 critérios): 15/15 guardas, unit 163/2022, integração
+   48/470, `tsc` limpo, `importBoundary` verde, resíduo `salon` categorizado.
+6. ~~Integração para `main`.~~ ✅ **PR #222** (`aff170a0`), CI verde.
+7. ✅ **Pré-condição §5 item 4 do ADR-P2 LIBERADA** — o P2 depende agora só dos gates humanos do
+   vertical 1 (§5 item 2) e da promoção a Accepted (§5/§6 do ADR-P2).
