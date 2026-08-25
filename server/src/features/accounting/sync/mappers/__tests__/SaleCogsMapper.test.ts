@@ -1,10 +1,10 @@
-import { SalonSaleCogsMapper } from '../SalonSaleCogsMapper';
+import { SaleCogsMapper } from '../SaleCogsMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import { MAX_CENTS } from '../../../models/money';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleCogsMapper — the razão leg of a sale's cost-of-goods (INCR-INVENTORY, Body 2). Unlike
+ * SaleCogsMapper — the razão leg of a sale's cost-of-goods (INCR-INVENTORY, Body 2). Unlike
  * the revenue mapper it does NOT convert a float: `costCents` arrives ALREADY in integer cents from
  * `InventoryService.recordSaleCogs` (D5/D6). Verifies the Int guards and that the produced legs are
  * balanced on the canonical leaf accounts (4.2 debit / 1.1.6 credit).
@@ -23,8 +23,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleCogsMapper', () => {
-  const mapper = new SalonSaleCogsMapper();
+describe('SaleCogsMapper', () => {
+  const mapper = new SaleCogsMapper();
 
   it('declares the sale.cogs sourceType', () => {
     expect(mapper.sourceType).toBe('sale.cogs');

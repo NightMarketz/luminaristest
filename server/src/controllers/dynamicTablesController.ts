@@ -9,9 +9,9 @@ import {
   CreateDynamicTableDataDto,
   UpdateDynamicTableDataDto,
 } from '@/features/dynamicTables/dtos/DynamicTable.dto';
-import { maybeSyncSalonSaleFinalized } from '@/features/accounting/sync/bridges/SalonSalesAccountingBridge';
-import { maybeSyncSalonPackageSold } from '@/features/accounting/sync/bridges/SalonPackageSoldBridge';
-import { maybeSyncSalonSaleSettled } from '@/features/accounting/sync/bridges/SalonSaleSettlementBridge';
+import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
+import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
+import { maybeSyncSaleSettled } from '@/features/accounting/sync/bridges/SaleSettlementBridge';
 
 const cuidSchema = z.string().cuid();
 
@@ -116,9 +116,9 @@ export async function createTableData(req: Request, res: Response) {
     // requires the revenue entry, which the awaited finalize call books just above.
     // Finalize is anti-revenue-gated for all-Package sales (Incremento G P4); the package-sold
     // bridge books their origin (D 1.1.2 / C 2.1.1) instead. Exactly one of the two acts.
-    await maybeSyncSalonSaleFinalized(ctx, req.params.tableId, created);
-    await maybeSyncSalonPackageSold(ctx, req.params.tableId, created);
-    await maybeSyncSalonSaleSettled(ctx, req.params.tableId, created);
+    await maybeSyncSaleFinalized(ctx, req.params.tableId, created);
+    await maybeSyncSalePackageSold(ctx, req.params.tableId, created);
+    await maybeSyncSaleSettled(ctx, req.params.tableId, created);
 
     return res.status(201).json({ success: true, data: created });
   } catch (error) {
@@ -145,8 +145,8 @@ export async function updateTableData(req: Request, res: Response) {
     // idempotent. tableId comes from the route param of PUT /:tableId/data/:dataId.
     // Finalize is anti-revenue-gated for all-Package sales (Incremento G P4); the package-sold
     // bridge books their origin instead. Exactly one of the two acts.
-    await maybeSyncSalonSaleFinalized(ctx, req.params.tableId, updated);
-    await maybeSyncSalonPackageSold(ctx, req.params.tableId, updated);
+    await maybeSyncSaleFinalized(ctx, req.params.tableId, updated);
+    await maybeSyncSalePackageSold(ctx, req.params.tableId, updated);
 
     return res.json({ success: true, data: updated });
   } catch (error) {

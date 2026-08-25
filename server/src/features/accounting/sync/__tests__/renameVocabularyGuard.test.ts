@@ -12,8 +12,8 @@
  *
  * Escopo desta guarda (fatia F-RN-1/F-RN-2, "vocabulário"): os 3 lugares onde o namespace de
  * evento é uma STRING LITERAL hoje —
- *   (1) a fixture do binding (`salonBinding.ts`: `eventKey` dos 5 `eventBindings` + as chaves de
- *       `SALON_OPERATIONAL_SCHEMA_SNAPSHOT`),
+ *   (1) a fixture do binding (`saleBinding.ts`: `eventKey` dos 5 `eventBindings` + as chaves de
+ *       `SALE_OPERATIONAL_SCHEMA_SNAPSHOT`),
  *   (2) a propriedade `sourceType` de cada um dos 5 mappers "legado" (golden-only),
  *   (3) o `sourceType` retornado pelos 5 event-builders de `AccountingSyncPort.ts` — que é o que as
  *       bridges de fato emitem (as bridges não têm literal `sourceType` próprio; chamam os builders
@@ -33,7 +33,7 @@
  * NÃO cobertos por esta guarda (achados fora de escopo, registrados no relatório da sessão):
  *   - F-RN-1 (identificadores de código acompanham: `Salon*` -> `Sale*`, `git mv`) — nenhuma
  *     asserção de nome de classe/arquivo aqui; os `import ... as` abaixo usam o nome ATUAL da
- *     classe (`SalonSaleFinalizedMapper` etc.) porque é o nome que existe hoje no disco, e o
+ *     classe (`SaleFinalizedMapper` etc.) porque é o nome que existe hoje no disco, e o
  *     formulário da sessão não sancionou forçar uma asserção de identificador numa guarda de
  *     vocabulário.
  *   - F-RN-3 (migração do dado já persistido) e F-RN-4 (reativação atômica do binding `Active` no
@@ -45,17 +45,17 @@
  */
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { SalonSaleFinalizedMapper } from '../mappers/SalonSaleFinalizedMapper';
-import { SalonSaleSettledMapper } from '../mappers/SalonSaleSettledMapper';
-import { SalonSaleReturnedMapper } from '../mappers/SalonSaleReturnedMapper';
-import { SalonPackageSoldMapper } from '../mappers/SalonPackageSoldMapper';
-import { SalonSaleCogsMapper } from '../mappers/SalonSaleCogsMapper';
+import { SaleFinalizedMapper } from '../mappers/SaleFinalizedMapper';
+import { SaleSettledMapper } from '../mappers/SaleSettledMapper';
+import { SaleReturnedMapper } from '../mappers/SaleReturnedMapper';
+import { SalePackageSoldMapper } from '../mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../mappers/SaleCogsMapper';
 import {
-  buildSalonSaleFinalizedEvent,
-  buildSalonSaleSettledEvent,
-  buildSalonSaleReturnedEvent,
-  buildSalonPackageSoldEvent,
-  buildSalonSaleCogsEvent,
+  buildSaleFinalizedEvent,
+  buildSaleSettledEvent,
+  buildSaleReturnedEvent,
+  buildSalePackageSoldEvent,
+  buildSaleCogsEvent,
 } from '../AccountingSyncPort';
 
 /** F-RN-2->(b), tabela exata do BRIEF §6 (a recomendação ratificada, não a opção (a) do swap
@@ -78,10 +78,10 @@ const sampleFields = {
 };
 
 describe('rename salon.* -> sale.* — guarda de VOCABULÁRIO (F-RN-1/F-RN-2)', () => {
-  describe('fixture do binding (accountingBinding/fixtures/salonBinding.ts, lida como texto — ver nota de fronteira acima)', () => {
+  describe('fixture do binding (accountingBinding/fixtures/saleBinding.ts, lida como texto — ver nota de fronteira acima)', () => {
     // FIXTURE_PATH é montado com segmentos separados (join de strings soltas) — não é uma
     // declaração de import TypeScript, é só leitura de arquivo (fs.readFileSync).
-    const FIXTURE_PATH = join(__dirname, '..', '..', '..', 'accountingBinding', 'fixtures', 'salonBinding.ts');
+    const FIXTURE_PATH = join(__dirname, '..', '..', '..', 'accountingBinding', 'fixtures', 'saleBinding.ts');
     const fixtureSource = readFileSync(FIXTURE_PATH, 'utf8');
 
     it('não deveria mais conter nenhum literal do namespace legado salon.(sale|package).*', () => {
@@ -107,40 +107,40 @@ describe('rename salon.* -> sale.* — guarda de VOCABULÁRIO (F-RN-1/F-RN-2)', 
   });
 
   describe('mappers "legado" (golden-only) — propriedade sourceType da classe', () => {
-    it('SalonSaleFinalizedMapper.sourceType', () => {
-      expect(new SalonSaleFinalizedMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.finalized']);
+    it('SaleFinalizedMapper.sourceType', () => {
+      expect(new SaleFinalizedMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.finalized']);
     });
-    it('SalonSaleSettledMapper.sourceType', () => {
-      expect(new SalonSaleSettledMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.settled']);
+    it('SaleSettledMapper.sourceType', () => {
+      expect(new SaleSettledMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.settled']);
     });
-    it('SalonSaleReturnedMapper.sourceType', () => {
-      expect(new SalonSaleReturnedMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.returned']);
+    it('SaleReturnedMapper.sourceType', () => {
+      expect(new SaleReturnedMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.returned']);
     });
-    it('SalonPackageSoldMapper.sourceType', () => {
-      expect(new SalonPackageSoldMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.package.sold']);
+    it('SalePackageSoldMapper.sourceType', () => {
+      expect(new SalePackageSoldMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.package.sold']);
     });
-    it('SalonSaleCogsMapper.sourceType', () => {
-      expect(new SalonSaleCogsMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.cogs']);
+    it('SaleCogsMapper.sourceType', () => {
+      expect(new SaleCogsMapper().sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.cogs']);
     });
   });
 
   describe('AccountingSyncPort — sourceType emitido pelos 5 event-builders (o que as bridges emitem)', () => {
-    it('buildSalonSaleFinalizedEvent', () => {
-      expect(buildSalonSaleFinalizedEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.finalized']);
+    it('buildSaleFinalizedEvent', () => {
+      expect(buildSaleFinalizedEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.finalized']);
     });
-    it('buildSalonSaleSettledEvent', () => {
-      expect(buildSalonSaleSettledEvent({ ...sampleFields, paymentMethod: 'Cash' }).sourceType).toBe(
+    it('buildSaleSettledEvent', () => {
+      expect(buildSaleSettledEvent({ ...sampleFields, paymentMethod: 'Cash' }).sourceType).toBe(
         RATIFIED_VOCABULARY['salon.sale.settled'],
       );
     });
-    it('buildSalonSaleReturnedEvent', () => {
-      expect(buildSalonSaleReturnedEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.returned']);
+    it('buildSaleReturnedEvent', () => {
+      expect(buildSaleReturnedEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.sale.returned']);
     });
-    it('buildSalonPackageSoldEvent', () => {
-      expect(buildSalonPackageSoldEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.package.sold']);
+    it('buildSalePackageSoldEvent', () => {
+      expect(buildSalePackageSoldEvent(sampleFields).sourceType).toBe(RATIFIED_VOCABULARY['salon.package.sold']);
     });
-    it('buildSalonSaleCogsEvent', () => {
-      expect(buildSalonSaleCogsEvent({ ...sampleFields, costCents: 100 }).sourceType).toBe(
+    it('buildSaleCogsEvent', () => {
+      expect(buildSaleCogsEvent({ ...sampleFields, costCents: 100 }).sourceType).toBe(
         RATIFIED_VOCABULARY['salon.sale.cogs'],
       );
     });

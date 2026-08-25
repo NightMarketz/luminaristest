@@ -1,9 +1,9 @@
-import { SalonSaleSettledMapper } from '../SalonSaleSettledMapper';
+import { SaleSettledMapper } from '../SaleSettledMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleSettledMapper — the money boundary + chart mapping for Incremento D / D1 (settlement).
+ * SaleSettledMapper — the money boundary + chart mapping for Incremento D / D1 (settlement).
  * A settlement clears A Receber (credit 1.1.2) and debits the account where the money landed,
  * chosen by paymentMethod. Verifies the per-method debit account (5 cases), gross value,
  * float→cents guards, and that it never collides with the finalized/returned sourceTypes.
@@ -22,8 +22,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleSettledMapper', () => {
-  const mapper = new SalonSaleSettledMapper();
+describe('SaleSettledMapper', () => {
+  const mapper = new SaleSettledMapper();
 
   it('declares the sale.settled sourceType', () => {
     expect(mapper.sourceType).toBe('sale.settled');

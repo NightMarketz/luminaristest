@@ -7,13 +7,13 @@ import { MAX_CENTS } from '../../accounting/models/money';
  * binding). Fonte: `docs/accounting/P1-DOSSIER-interprete.md` §c — migração VERBATIM das duas
  * variantes de guard hoje duplicadas/divergentes nos 5 mappers de `features/accounting/sync/mappers`.
  *
- * `centsFromReais` — Variante 1, verbatim de `SalonSaleFinalizedMapper.ts:31-47` (idêntica, comentário
- * a comentário, em `SalonSaleSettledMapper.ts:51-67`, `SalonSaleReturnedMapper.ts:31-47` e
- * `SalonPackageSoldMapper.ts:27-43`): `typeof===number && Number.isFinite` → `Math.round(v*100)` →
+ * `centsFromReais` — Variante 1, verbatim de `SaleFinalizedMapper.ts:31-47` (idêntica, comentário
+ * a comentário, em `SaleSettledMapper.ts:51-67`, `SaleReturnedMapper.ts:31-47` e
+ * `SalePackageSoldMapper.ts:27-43`): `typeof===number && Number.isFinite` → `Math.round(v*100)` →
  * `Number.isSafeInteger` → `>0`. Propositalmente SEM teto `MAX_CENTS` — o único teto desta variante é
  * `Number.isSafeInteger`, mais alto que `MAX_CENTS`.
  *
- * `assertCentsInRange` — Variante 2, verbatim de `SalonSaleCogsMapper.ts:36-51`: `Number.isSafeInteger`
+ * `assertCentsInRange` — Variante 2, verbatim de `SaleCogsMapper.ts:36-51`: `Number.isSafeInteger`
  * → `>0` → `<=MAX_CENTS` (import de contrato público, `features/accounting/models/money` — o teto de
  * persistência compartilhado, ACC-HARDEN-POST-CENTS-001).
  *

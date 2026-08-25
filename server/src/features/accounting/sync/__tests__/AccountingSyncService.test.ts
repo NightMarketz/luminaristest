@@ -1,7 +1,7 @@
 import { Prisma } from 'generated/prisma';
 import { AccountingSyncService } from '../AccountingSyncService';
-import { SalonSaleFinalizedMapper } from '../mappers/SalonSaleFinalizedMapper';
-import { SalonSaleSettledMapper } from '../mappers/SalonSaleSettledMapper';
+import { SaleFinalizedMapper } from '../mappers/SaleFinalizedMapper';
+import { SaleSettledMapper } from '../mappers/SaleSettledMapper';
 import { AccountingEventMapperCollisionError, MaxCentsExceededError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { AccountingEvent } from '../AccountingSyncPort';
@@ -35,7 +35,7 @@ const scope: AccountingScope = {
   timeZone: 'America/Sao_Paulo',
 };
 
-// Generic fixture event: the salon finalized sale ('crm.opportunity.won' was retired —
+// Generic fixture event: the finalized sale ('crm.opportunity.won' was retired —
 // CRM Won deals route through CrmReceivableBridge, ADR-CRM-AR-SEAM).
 const finalizedEvent: AccountingEvent = {
   sourceType: 'sale.finalized',
@@ -57,7 +57,7 @@ function p2024(): Prisma.PrismaClientKnownRequestError {
 function buildService(postEntry: jest.Mock) {
   const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
   // retryDelayMs:0 keeps the retry tests instant.
-  const svc = new AccountingSyncService(postingService, [new SalonSaleFinalizedMapper()], {
+  const svc = new AccountingSyncService(postingService, [new SaleFinalizedMapper()], {
     maxAttempts: 3,
     retryDelayMs: 0,
   });
@@ -167,7 +167,7 @@ describe('AccountingSyncService', () => {
       throw new ValidationError("Conta '2.1.1' não existe no plano de contas.");
     });
     const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
-    const svc = new AccountingSyncService(postingService, [new SalonSaleSettledMapper()], {
+    const svc = new AccountingSyncService(postingService, [new SaleSettledMapper()], {
       maxAttempts: 3,
       retryDelayMs: 0,
     });
@@ -247,7 +247,7 @@ describe('AccountingSyncService', () => {
     });
 
     it('a global (unscoped) registration still matches an event of ANY unitId — backward-compatible with every pre-feeder call site', async () => {
-      // Exactly today's shape: lib/factory.ts's buildSalonAccountingMappers() and every existing
+      // Exactly today's shape: lib/factory.ts's buildSaleAccountingMappers() and every existing
       // test pass plain IAccountingEventMapper[] with no unitId — zero diff for those call sites.
       const { svc, postEntry } = buildService(jest.fn(okEntry));
 

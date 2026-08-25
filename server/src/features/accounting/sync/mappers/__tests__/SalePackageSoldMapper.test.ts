@@ -1,9 +1,9 @@
-import { SalonPackageSoldMapper } from '../SalonPackageSoldMapper';
+import { SalePackageSoldMapper } from '../SalePackageSoldMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonPackageSoldMapper — the money boundary + chart mapping for the prepaid-package
+ * SalePackageSoldMapper — the money boundary + chart mapping for the prepaid-package
  * ORIGIN (Incremento G P4). Selling a package books a LIABILITY, not revenue:
  * D 1.1.2 A Receber / C 2.1.1 Pacotes Pré-pagos.
  */
@@ -20,8 +20,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonPackageSoldMapper', () => {
-  const mapper = new SalonPackageSoldMapper();
+describe('SalePackageSoldMapper', () => {
+  const mapper = new SalePackageSoldMapper();
 
   it('declares the sale.package.sold sourceType', () => {
     expect(mapper.sourceType).toBe('sale.package.sold');

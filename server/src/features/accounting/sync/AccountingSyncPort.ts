@@ -45,7 +45,7 @@ export type AccountingEvent = {
   label: string;
   /**
    * Settlement only (Incremento D / D1): the sale's paymentMethod, used by
-   * SalonSaleSettledMapper to pick the debit account (Caixa/Banco/A Receber Cartão/Pacotes
+   * SaleSettledMapper to pick the debit account (Caixa/Banco/A Receber Cartão/Pacotes
    * Pré-pagos). Undefined for every other event kind — the mapper that needs it validates it.
    */
   paymentMethod?: string;
@@ -59,7 +59,7 @@ export type AccountingEvent = {
   /**
    * Cost-of-goods only (INCR-INVENTORY, `sale.cogs`): the sale's total CMV, ALREADY in
    * integer cents (computed by `InventoryService.recordSaleCogs` from the moving-average
-   * subledger — D5/D6). Undefined for every other event kind. `SalonSaleCogsMapper` reads THIS
+   * subledger — D5/D6). Undefined for every other event kind. `SaleCogsMapper` reads THIS
    * (never `amount`); the value never crosses a float boundary.
    */
   costCents?: number;
@@ -112,13 +112,13 @@ export interface AccountingSyncPort {
 }
 
 /**
- * Pure builder for the salon "sale finalized" event (Incremento C) — shared by the
+ * Pure builder for the "sale finalized" event (Incremento C) — shared by the
  * bridge (live trigger, post-commit) and the reconciliation job (re-drive) so both
  * emit identical events. Carries the raw float `totalAmount`; the mapper converts to
  * cents. The accounting fact is recognized on sale.status === 'Finalized' regardless
  * of paymentStatus (revenue → A Receber); settlement is a separate Incremento D.
  */
-export function buildSalonSaleFinalizedEvent(fields: {
+export function buildSaleFinalizedEvent(fields: {
   saleId: string;
   unitId: string;
   amount: number;
@@ -142,7 +142,7 @@ export function buildSalonSaleFinalizedEvent(fields: {
 }
 
 /**
- * Pure builder for the salon "sale cost-of-goods" event (INCR-INVENTORY, Body 2 / O-2) — shared by
+ * Pure builder for the "sale cost-of-goods" event (INCR-INVENTORY, Body 2 / O-2) — shared by
  * the finalized-sale bridge (live trigger, post-commit, 2nd emission after revenue) and the
  * reconciliation job (re-drive) so both emit identical events. Carries the CMV ALREADY in integer
  * cents (`costCents`, from `InventoryService.recordSaleCogs`); the mapper does NOT reconvert — it
@@ -154,7 +154,7 @@ export function buildSalonSaleFinalizedEvent(fields: {
  * — revenue and CMV coexist for the same saleId. occurredAt should match the sale's date (the same
  * accounting date used for the revenue entry).
  */
-export function buildSalonSaleCogsEvent(fields: {
+export function buildSaleCogsEvent(fields: {
   saleId: string;
   unitId: string;
   costCents: number;
@@ -176,14 +176,14 @@ export function buildSalonSaleCogsEvent(fields: {
 }
 
 /**
- * Pure builder for the salon "sale returned" event (Incremento D, devolução) — shared by
+ * Pure builder for the "sale returned" event (Incremento D, devolução) — shared by
  * the reversal bridge (live trigger, post-commit) and the reconciliation job (re-drive) so
  * both emit identical events. Carries the raw float `totalAmount`; the mapper converts to
  * cents. A return is NOT a reversal of the finalized entry: it books a SEPARATE contra-revenue
  * entry (D 3.2 Devoluções / C 1.1.2 A Receber), so the original revenue stays posted and net
  * revenue is reduced by the return (D2-Q5: distinct effect from a cancellation).
  */
-export function buildSalonSaleReturnedEvent(fields: {
+export function buildSaleReturnedEvent(fields: {
   saleId: string;
   unitId: string;
   amount: number;
@@ -203,7 +203,7 @@ export function buildSalonSaleReturnedEvent(fields: {
 }
 
 /**
- * Pure builder for the salon "sale settled" event (Incremento D / D1, baixa de A Receber) —
+ * Pure builder for the "sale settled" event (Incremento D / D1, baixa de A Receber) —
  * shared by the settlement bridge (live trigger, post-commit) and the reconciliation job
  * (re-drive) so both emit identical events. Carries the raw float `totalAmount` AND the
  * `paymentMethod` (the mapper needs it to pick the debit account); the mapper converts to cents.
@@ -213,7 +213,7 @@ export function buildSalonSaleReturnedEvent(fields: {
  * entry ('sale.finalized') on @@unique([userId,unitId,sourceType,sourceId]) — revenue and
  * settlement coexist for the same saleId. occurredAt should be the sale's paidAt (D1-Q2).
  */
-export function buildSalonSaleSettledEvent(fields: {
+export function buildSaleSettledEvent(fields: {
   saleId: string;
   unitId: string;
   amount: number;
@@ -235,7 +235,7 @@ export function buildSalonSaleSettledEvent(fields: {
 }
 
 /**
- * Pure builder for the salon "package sold" event (Incremento G P4, origem) — shared by
+ * Pure builder for the "package sold" event (Incremento G P4, origem) — shared by
  * the package-sold bridge (live trigger, post-commit) and the reconciliation job (re-drive)
  * so both emit identical events. Carries the raw float `totalAmount`; the mapper converts to
  * cents.
@@ -245,7 +245,7 @@ export function buildSalonSaleSettledEvent(fields: {
  * Pré-pagos — under a DISTINCT sourceType ('sale.package.sold') so it never collides with the
  * (gated-out) revenue entry on @@unique([userId,unitId,sourceType,sourceId]).
  */
-export function buildSalonPackageSoldEvent(fields: {
+export function buildSalePackageSoldEvent(fields: {
   saleId: string;
   unitId: string;
   amount: number;

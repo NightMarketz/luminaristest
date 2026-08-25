@@ -26,7 +26,7 @@
  */
 import { ApplicationFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
-import { SALON_BINDING_V1, SALON_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/salonBinding';
+import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/saleBinding';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 
 export interface ActivateBindingArgs {
@@ -58,7 +58,7 @@ export function parseArgs(argv: string[]): ActivateBindingArgs {
     ownerUserId,
     unitId,
     actorUserId: readFlag(argv, '--actor-user-id') || ownerUserId,
-    sectorKey: readFlag(argv, '--sector-key') || SALON_BINDING_V1.sectorKey,
+    sectorKey: readFlag(argv, '--sector-key') || SALE_BINDING_V1.sectorKey,
   };
 }
 
@@ -118,9 +118,9 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
     const compileService = ApplicationFactory.getInstance().getAccountingBindingCompileService(scope);
     const result = await compileService.compile(scope, {
       sectorKey: args.sectorKey,
-      operationalSchema: SALON_OPERATIONAL_SCHEMA_SNAPSHOT,
+      operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT,
       chart,
-      eventBindings: SALON_BINDING_V1.eventBindings,
+      eventBindings: SALE_BINDING_V1.eventBindings,
     });
 
     if (result.status !== 'Active') {

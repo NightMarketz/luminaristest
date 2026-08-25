@@ -95,7 +95,7 @@ export const EventBindingSchema = z
     /**
      * Achado do golden test Fase 1 (BE-INCR-BINDING-PRESS, item 12 do BRIEF): os 5 mappers-à-mão de
      * produção NÃO usam `event.label` na descrição do lançamento — cada um monta uma string FIXA
-     * própria do arquétipo, com um texto setorial embutido (ex.: `SalonSaleSettledMapper.ts:94`,
+     * própria do arquétipo, com um texto setorial embutido (ex.: `SaleSettledMapper.ts:94`,
      * `` `Liquidação salão — Venda ${event.sourceId}` ``). Esse texto é dado de SETOR (um vertical
      * de clínica não diria "salão"), não passthrough puro do evento (emenda 5 do ADR §11 cobre só
      * `sourceType`/`sourceId`) — então o único lugar coerente para ele é o binding compilado, não o

@@ -2,13 +2,13 @@ import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
 import { MAX_CENTS } from '../../accounting/models/money';
 import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
 import type { IAccountingEventMapper } from '../../accounting/sync/mappers/IAccountingEventMapper';
-import { SalonPackageSoldMapper } from '../../accounting/sync/mappers/SalonPackageSoldMapper';
-import { SalonSaleCogsMapper } from '../../accounting/sync/mappers/SalonSaleCogsMapper';
-import { SalonSaleFinalizedMapper } from '../../accounting/sync/mappers/SalonSaleFinalizedMapper';
-import { SalonSaleReturnedMapper } from '../../accounting/sync/mappers/SalonSaleReturnedMapper';
-import { SalonSaleSettledMapper } from '../../accounting/sync/mappers/SalonSaleSettledMapper';
+import { SalePackageSoldMapper } from '../../accounting/sync/mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
+import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
+import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
+import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
 import { archetypeCatalog } from '../archetypes/catalog';
-import { SALON_BINDING_V1 } from '../fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../fixtures/saleBinding';
 import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
 
 /**
@@ -21,7 +21,7 @@ import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
  * eventos, mesmos valores; o dossiê fala em prosa "15 casos", o arquivo irmão real tem 17 — ver
  * nota na asserção de contagem abaixo), gera o `PostEntryInput` de DUAS formas:
  *   1. mapper-à-mão de produção (`server/src/features/accounting/sync/mappers/*`) — a REFERÊNCIA;
- *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`fixtures/salonBinding.ts`,
+ *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`fixtures/saleBinding.ts`,
  *      Corpo C) + o catálogo de arquétipos em código (`archetypes/catalog.ts`, Corpo A).
  *
  * As duas saídas são serializadas pelo MESMO canonicalizador (ordem de chave fixa, `undefined`
@@ -151,11 +151,11 @@ function cogsEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
 // -------------------------------------------------------------------------------------------
 
 const handMappers = {
-  finalized: new SalonSaleFinalizedMapper(),
-  settled: new SalonSaleSettledMapper(),
-  returned: new SalonSaleReturnedMapper(),
-  packageSold: new SalonPackageSoldMapper(),
-  cogs: new SalonSaleCogsMapper(),
+  finalized: new SaleFinalizedMapper(),
+  settled: new SaleSettledMapper(),
+  returned: new SaleReturnedMapper(),
+  packageSold: new SalePackageSoldMapper(),
+  cogs: new SaleCogsMapper(),
 };
 
 // -------------------------------------------------------------------------------------------
@@ -166,7 +166,7 @@ const handMappers = {
 // -------------------------------------------------------------------------------------------
 
 function buildInterpreterFor(eventKey: string): IAccountingEventMapper {
-  const binding = SALON_BINDING_V1.eventBindings.find((b) => b.eventKey === eventKey);
+  const binding = SALE_BINDING_V1.eventBindings.find((b) => b.eventKey === eventKey);
   if (!binding) {
     throw new Error(`Binding do salão não tem eventBinding para '${eventKey}' — fixture incompleta.`);
   }

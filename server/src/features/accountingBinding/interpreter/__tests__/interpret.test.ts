@@ -8,13 +8,13 @@ import { cogsArchetype } from '../../archetypes/CogsArchetype';
 import { subledgerCreateReceivableArchetype } from '../../archetypes/SubledgerCreateReceivableArchetype';
 import type { EventBinding } from '../../dtos/AccountingBindingDto';
 import type { LancamentoArchetype } from '../../models/types';
-import { SALON_BINDING_V1 } from '../../fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 import type { AccountingEventLike } from '../interpret';
 import { interpret, isSubledgerCommand } from '../interpret';
 
 /**
  * `interpret()` (BE-INCR-BINDING-PRESS, Corpo D, item 11 do BRIEF) — exercitado contra os
- * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`fixtures/salonBinding.ts`,
+ * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`fixtures/saleBinding.ts`,
  * Corpo C), não fixtures inventadas por este corpo. Isto é uma prévia de integração (não substitui a
  * Fase 1 do golden, que é da Fase B): compara `interpret()` byte-a-byte, campo a campo, contra os
  * mesmos números que `goldenPhase0.test.ts` já congelou como saída dos mappers-à-mão — se
@@ -22,7 +22,7 @@ import { interpret, isSubledgerCommand } from '../interpret';
  */
 
 function eventBindingFor(eventKey: string): EventBinding {
-  const found = SALON_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey);
+  const found = SALE_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey);
   if (!found) throw new Error(`fixture do salão sem eventBinding para '${eventKey}'`);
   return found;
 }
@@ -36,7 +36,7 @@ const baseEvent = {
 };
 
 // -----------------------------------------------------------------------------------------------
-// reconhecimento-receita — mesma matemática de SalonSaleFinalizedMapper (goldenPhase0.test.ts)
+// reconhecimento-receita — mesma matemática de SaleFinalizedMapper (goldenPhase0.test.ts)
 // -----------------------------------------------------------------------------------------------
 describe('interpret — revenue_recognition (arquétipo + binding REAIS)', () => {
   const binding = eventBindingFor('sale.finalized');
@@ -228,7 +228,7 @@ describe('interpret — cogs (arquétipo + binding REAIS)', () => {
 // -----------------------------------------------------------------------------------------------
 describe('interpret — dispatch por kind (subledgerCreateReceivableArchetype REAL)', () => {
   // A fixture do salão (Corpo C) não cobre a classe 2 (fora do escopo v1 do binding do salão — ver
-  // fixtures/salonBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
+  // fixtures/saleBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
   const binding: EventBinding = {
     eventKey: 'crm.opportunity.won',
     archetypeKey: 'subledger_command',

@@ -9,7 +9,7 @@ jest.mock('../../../../../lib/factory', () => ({
   }),
 }));
 
-import { loadSalePackageInfo } from '../salonSaleItems';
+import { loadSalePackageInfo } from '../saleItems';
 
 const ITEMS_TABLE_ID = 'tbl-items-1';
 

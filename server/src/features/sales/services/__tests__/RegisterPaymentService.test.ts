@@ -1,9 +1,9 @@
 // Mock the post-commit settlement bridge so the service test stays at the orchestration layer
 // (the bridge has its own suite). We assert the service fires it AFTER the isSystem write.
-const maybeSyncSalonSaleSettled = jest.fn(async (..._a: unknown[]) => undefined);
-jest.mock('../../../accounting/sync/bridges/SalonSaleSettlementBridge', () => ({
+const maybeSyncSaleSettled = jest.fn(async (..._a: unknown[]) => undefined);
+jest.mock('../../../accounting/sync/bridges/SaleSettlementBridge', () => ({
   __esModule: true,
-  maybeSyncSalonSaleSettled: (...a: unknown[]) => maybeSyncSalonSaleSettled(...a),
+  maybeSyncSaleSettled: (...a: unknown[]) => maybeSyncSaleSettled(...a),
 }));
 jest.mock('../../../../lib/logger', () => ({
   __esModule: true,
@@ -96,8 +96,8 @@ describe('RegisterPaymentService.registerPayment', () => {
     const { svc } = buildService({ dts: { updateTableData: jest.fn(async () => updated) } });
     await svc.registerPayment(user, baseInput);
 
-    expect(maybeSyncSalonSaleSettled).toHaveBeenCalledTimes(1);
-    expect(maybeSyncSalonSaleSettled).toHaveBeenCalledWith(user, SALES_TABLE_ID, updated);
+    expect(maybeSyncSaleSettled).toHaveBeenCalledTimes(1);
+    expect(maybeSyncSaleSettled).toHaveBeenCalledWith(user, SALES_TABLE_ID, updated);
   });
 
   it('is idempotent: an already-Paid sale is NOT re-written (still re-fires the dedup-safe bridge)', async () => {
@@ -110,7 +110,7 @@ describe('RegisterPaymentService.registerPayment', () => {
     expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
     expect(result).toBe(paidRow);
     // The bridge is still fired so a previously-failed settlement re-drives (postEntry dedupes).
-    expect(maybeSyncSalonSaleSettled).toHaveBeenCalledWith(user, SALES_TABLE_ID, paidRow);
+    expect(maybeSyncSaleSettled).toHaveBeenCalledWith(user, SALES_TABLE_ID, paidRow);
   });
 
   describe('guards', () => {
@@ -120,7 +120,7 @@ describe('RegisterPaymentService.registerPayment', () => {
       });
       await expect(svc.registerPayment(user, baseInput)).rejects.toBeInstanceOf(ValidationError);
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
-      expect(maybeSyncSalonSaleSettled).not.toHaveBeenCalled();
+      expect(maybeSyncSaleSettled).not.toHaveBeenCalled();
     });
 
     it('sales table not installed → NotFoundError', async () => {
@@ -184,7 +184,7 @@ describe('RegisterPaymentService.registerPayment', () => {
       });
       await expect(svc.registerPayment(user, pbInput)).rejects.toBeInstanceOf(ValidationError);
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
-      expect(maybeSyncSalonSaleSettled).not.toHaveBeenCalled();
+      expect(maybeSyncSaleSettled).not.toHaveBeenCalled();
       expect(packageBalanceService.debitForConsumption).not.toHaveBeenCalled();
     });
 

@@ -14,7 +14,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  * (Σ crédito − débito over Revenue accounts) is reduced by the return, and A Receber is
  * cleared symmetrically. A cancellation, by contrast, reverses the finalized entry outright.
  */
-export class SalonSaleReturnedMapper implements IAccountingEventMapper {
+export class SaleReturnedMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.returned' as const;
 
   /** Leaf account codes (canonical chart). */
@@ -22,8 +22,8 @@ export class SalonSaleReturnedMapper implements IAccountingEventMapper {
   private static readonly CREDIT_ACCOUNT = '1.1.2'; // A Receber
 
   public map(event: AccountingEvent): PostEntryInput {
-    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1) — identical to SalonSaleFinalizedMapper. The
-    // salon `totalAmount` is a JSON float in reais; accounting stores integer cents. Convert
+    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1) — identical to SaleFinalizedMapper. The
+    // sale `totalAmount` is a JSON float in reais; accounting stores integer cents. Convert
     // here, exactly once, with hard guards — the single point where float imprecision could
     // re-enter the exact-integer money path.
     // ponytail: Math.round(reais*100) is the ceiling; if sales ever store cents natively,
@@ -53,8 +53,8 @@ export class SalonSaleReturnedMapper implements IAccountingEventMapper {
       sourceType: event.sourceType,
       sourceId: event.sourceId,
       lines: [
-        { accountCode: SalonSaleReturnedMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
-        { accountCode: SalonSaleReturnedMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
+        { accountCode: SaleReturnedMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
+        { accountCode: SaleReturnedMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
       ],
     };
   }

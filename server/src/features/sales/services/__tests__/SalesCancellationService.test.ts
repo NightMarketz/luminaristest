@@ -1,9 +1,9 @@
 // Mock the post-commit accounting bridge so the service test stays at the orchestration layer
 // (the bridge has its own suite). We assert the service fires it AFTER the isSystem write.
-const maybeReverseSalonSale = jest.fn(async (..._a: unknown[]) => undefined);
-jest.mock('../../../accounting/sync/bridges/SalonSaleReversalBridge', () => ({
+const maybeReverseSale = jest.fn(async (..._a: unknown[]) => undefined);
+jest.mock('../../../accounting/sync/bridges/SaleReversalBridge', () => ({
   __esModule: true,
-  maybeReverseSalonSale: (...a: unknown[]) => maybeReverseSalonSale(...a),
+  maybeReverseSale: (...a: unknown[]) => maybeReverseSale(...a),
 }));
 jest.mock('../../../../lib/logger', () => ({
   __esModule: true,
@@ -66,8 +66,8 @@ describe('SalesCancellationService', () => {
       const { svc } = buildService({ dts: { updateTableData: jest.fn(async () => updated) } });
       await svc.cancel(user, baseInput);
 
-      expect(maybeReverseSalonSale).toHaveBeenCalledTimes(1);
-      expect(maybeReverseSalonSale).toHaveBeenCalledWith(user, SALES_TABLE_ID, updated);
+      expect(maybeReverseSale).toHaveBeenCalledTimes(1);
+      expect(maybeReverseSale).toHaveBeenCalledWith(user, SALES_TABLE_ID, updated);
     });
   });
 
@@ -91,7 +91,7 @@ describe('SalesCancellationService', () => {
       });
       await expect(svc.cancel(user, baseInput)).rejects.toBeInstanceOf(ValidationError);
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
-      expect(maybeReverseSalonSale).not.toHaveBeenCalled();
+      expect(maybeReverseSale).not.toHaveBeenCalled();
     });
 
     it('sales table not installed → NotFoundError', async () => {

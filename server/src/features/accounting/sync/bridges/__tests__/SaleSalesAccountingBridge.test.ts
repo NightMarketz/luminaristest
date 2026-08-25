@@ -2,7 +2,7 @@ import type { AccountingScope } from '../../../scope/AccountingScope';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 // --- Mock the bridge's collaborators (factory + logger). resolveAccountingScope and
-// buildSalonSaleFinalizedEvent are pure and left real. ---
+// buildSaleFinalizedEvent are pure and left real. ---
 const findTableByInternalName = jest.fn();
 const findRowsByFieldValue = jest.fn();
 const sync = jest.fn();
@@ -23,14 +23,14 @@ jest.mock('../../../../../lib/logger', () => ({
   default: { info: jest.fn(), warn: (...a: unknown[]) => loggerWarn(...a), error: (...a: unknown[]) => loggerError(...a), debug: jest.fn() },
 }));
 
-import { maybeSyncSalonSaleFinalized } from '../SalonSalesAccountingBridge';
+import { maybeSyncSaleFinalized } from '../SaleSalesAccountingBridge';
 import { AccountingPeriodNotOpenError, MaxCentsExceededError } from '../../../../../lib/errors';
 import { MAX_CENTS } from '../../../models/money';
 
 const SALES_TABLE_ID = 'tbl-sales-1';
 const actor = { userId: 'u1' };
 
-/** A salon `sales` table owned by the actor. */
+/** A `sales` table owned by the actor. */
 function salesTable(over: Record<string, unknown> = {}) {
   return { id: SALES_TABLE_ID, internalName: 'sales', category: 'finance', ...over };
 }
@@ -43,7 +43,7 @@ function finalizedRow(over: Record<string, unknown> = {}) {
   };
 }
 
-describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
+describe('SaleSalesAccountingBridge.maybeSyncSaleFinalized', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     findTableByInternalName.mockResolvedValue(salesTable());
@@ -54,7 +54,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
   });
 
   it('syncs ONLY a Finalized sale, with the correct event and scope (sale unit, not crossed)', async () => {
-    await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
 
     expect(sync).toHaveBeenCalledTimes(1);
     const [scope, event] = sync.mock.calls[0] as [AccountingScope, AccountingEvent];
@@ -73,35 +73,35 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
   it.each(['Draft', 'Cancelled', 'Returned', 'Open'])(
     'does NOT sync a sale in status %s',
     async (status) => {
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ status }));
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ status }));
       expect(sync).not.toHaveBeenCalled();
     },
   );
 
   it('does not even look up the table for a non-Finalized sale (status gate is first)', async () => {
-    await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ status: 'Draft' }));
+    await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ status: 'Draft' }));
     expect(findTableByInternalName).not.toHaveBeenCalled();
   });
 
   it('ignores a table that is not the tenant sales table (id mismatch)', async () => {
-    await maybeSyncSalonSaleFinalized(actor, 'some-other-table', finalizedRow());
+    await maybeSyncSaleFinalized(actor, 'some-other-table', finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('ignores when the tenant has no sales table', async () => {
     findTableByInternalName.mockResolvedValueOnce(null);
-    await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('ignores a same-named table outside the finance category', async () => {
     findTableByInternalName.mockResolvedValueOnce(salesTable({ category: 'crm' }));
-    await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+    await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('skips (no sync) and warns when a Finalized sale has no unitId', async () => {
-    await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ unitId: undefined }));
+    await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ unitId: undefined }));
     expect(sync).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalled();
   });
@@ -109,7 +109,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
   it.each([0, -10, NaN, Infinity, 'x'])(
     'skips (no sync) when totalAmount is invalid (%s)',
     async (totalAmount) => {
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ totalAmount }));
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow({ totalAmount }));
       expect(sync).not.toHaveBeenCalled();
     },
   );
@@ -117,7 +117,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
   it('is NON-FATAL: a sync failure does not throw and is logged for reconciliation', async () => {
     sync.mockRejectedValueOnce(new Error('posting down'));
     await expect(
-      maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+      maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
     ).resolves.toBeUndefined();
     expect(loggerError).toHaveBeenCalled();
   });
@@ -129,7 +129,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
     it('skips ACCOUNTING_PERIOD_NOT_OPEN (period-closed is not a reconciliation failure)', async () => {
       sync.mockRejectedValueOnce(new AccountingPeriodNotOpenError(2026, 6));
       await expect(
-        maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
       ).resolves.toBeUndefined();
       expect(loggerWarn).toHaveBeenCalledWith(
         expect.any(String),
@@ -141,7 +141,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
     it('skips MAX_CENTS_EXCEEDED (poison event — retrying can never succeed)', async () => {
       sync.mockRejectedValueOnce(new MaxCentsExceededError('1.1.2', MAX_CENTS + 1, MAX_CENTS));
       await expect(
-        maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
       ).resolves.toBeUndefined();
       expect(loggerWarn).toHaveBeenCalledWith(
         expect.any(String),
@@ -152,7 +152,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
 
     it('does NOT skip an arbitrary AppError-free failure (stays a loud error for reconciliation)', async () => {
       sync.mockRejectedValueOnce(new Error('SQLITE_BUSY forever'));
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(loggerError).toHaveBeenCalled();
     });
   });
@@ -163,7 +163,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(sync).not.toHaveBeenCalled();
     });
 
@@ -171,7 +171,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { type: 'Product', productId: 'p-1', saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(sync).toHaveBeenCalledTimes(1);
       expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
     });
@@ -180,7 +180,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { type: 'Service', serviceId: 's-1', saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(sync).toHaveBeenCalledTimes(1);
     });
   });
@@ -193,7 +193,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
         { data: { serviceId: 's-1', quantity: 1, unitPrice: 100, saleId: 'sale-1' } },
         { data: { productId: 'p-1', quantity: 2, unitPrice: 50, saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       const event = sync.mock.calls[0][1] as AccountingEvent;
       expect(event.revenueByNature).toEqual({ serviceReais: 100, productReais: 100 });
     });
@@ -212,7 +212,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       withProductLine();
       recordSaleCogs.mockResolvedValue({ totalCogsCents: 3000 });
 
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
 
       expect(sync).toHaveBeenCalledTimes(2);
       const first = sync.mock.calls[0][1] as AccountingEvent;
@@ -230,7 +230,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       withProductLine();
       recordSaleCogs.mockResolvedValue({ totalCogsCents: 3000 });
 
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
 
       expect(recordSaleCogs).toHaveBeenCalledTimes(1);
       const [scope, params] = recordSaleCogs.mock.calls[0] as [AccountingScope, Record<string, unknown>];
@@ -243,7 +243,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { serviceId: 's-1', quantity: 1, unitPrice: 100, saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(recordSaleCogs).not.toHaveBeenCalled();
       expect(sync).toHaveBeenCalledTimes(1);
       expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
@@ -253,7 +253,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       findRowsByFieldValue.mockResolvedValue([
         { data: { packageId: 'pkg-1', quantity: 1, saleId: 'sale-1' } },
       ]);
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(sync).not.toHaveBeenCalled();
       expect(recordSaleCogs).not.toHaveBeenCalled();
     });
@@ -261,7 +261,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
     it('does NOT emit a CMV entry when recordSaleCogs yields zero cost (replay/no cost)', async () => {
       withProductLine();
       recordSaleCogs.mockResolvedValue({ totalCogsCents: 0 });
-      await maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
+      await maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow());
       expect(recordSaleCogs).toHaveBeenCalledTimes(1);
       expect(sync).toHaveBeenCalledTimes(1); // revenue only
     });
@@ -270,7 +270,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       withProductLine();
       recordSaleCogs.mockRejectedValueOnce(new Error('estoque insuficiente'));
       await expect(
-        maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
       ).resolves.toBeUndefined();
       expect(sync).toHaveBeenCalledTimes(1); // revenue succeeded, was not undone
       expect((sync.mock.calls[0][1] as AccountingEvent).sourceType).toBe('sale.finalized');
@@ -283,7 +283,7 @@ describe('SalonSalesAccountingBridge.maybeSyncSalonSaleFinalized', () => {
       // revenue sync ok, CMV sync throws
       sync.mockResolvedValueOnce({ entryId: 'entry-rev' }).mockRejectedValueOnce(new Error('posting down'));
       await expect(
-        maybeSyncSalonSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
+        maybeSyncSaleFinalized(actor, SALES_TABLE_ID, finalizedRow()),
       ).resolves.toBeUndefined();
       expect(sync).toHaveBeenCalledTimes(2);
       expect(loggerError).toHaveBeenCalled();

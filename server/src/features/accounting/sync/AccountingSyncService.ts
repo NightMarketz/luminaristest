@@ -21,7 +21,7 @@ export interface ScopedAccountingMapperEntry {
 
 /**
  * An entry accepted by `AccountingSyncService`'s constructor: either a PLAIN mapper (today's
- * shape, every existing call site — `lib/factory.ts`'s `buildSalonAccountingMappers()` and the
+ * shape, every existing call site — `lib/factory.ts`'s `buildSaleAccountingMappers()` and the
  * unit tests) registered GLOBALLY (matches an event of ANY `unitId`, backward-compatible with the
  * single-fixture/single-vertical behavior that predates the feeder), or a `ScopedAccountingMapperEntry`
  * registered for exactly one `unitId`. Discriminated by the presence of `sourceType` (only a plain
@@ -110,7 +110,7 @@ export class AccountingSyncService implements AccountingSyncPort {
     // para só-escopado — uma mudança de FORMA além do que F-FEEDER-3 decidiu (o ADR fecha a
     // colisão via chave composta, não via proibir entrada plain); isso seria fork, não
     // implementação desta fatia. (2) o valor de BOOTSTRAP síncrono de `lib/factory.ts`
-    // (`buildSalonAccountingMappers()`, plain) — nunca observado por um `sync()` real, porque todo
+    // (`buildSaleAccountingMappers()`, plain) — nunca observado por um `sync()` real, porque todo
     // consumidor é lazy e `server.ts` só chama `app.listen()` DEPOIS do pré-boot substituir a
     // instância (ver `initializeAccountingSyncFromBindings()`).
     const mapper = this.mappers.get(`${event.unitId}:${event.sourceType}`) ?? this.mappers.get(event.sourceType);

@@ -22,11 +22,11 @@ import { resolveAccountingScope } from '../features/accounting/scope/AccountingS
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
 import { LEDGER_STATUSES } from '../features/accounting/models/ledgerStatus';
 import {
-  buildSalonSaleFinalizedEvent,
-  buildSalonSaleCogsEvent,
-  buildSalonSaleReturnedEvent,
-  buildSalonSaleSettledEvent,
-  buildSalonPackageSoldEvent,
+  buildSaleFinalizedEvent,
+  buildSaleCogsEvent,
+  buildSaleReturnedEvent,
+  buildSaleSettledEvent,
+  buildSalePackageSoldEvent,
 } from '../features/accounting/sync/AccountingSyncPort';
 import type {
   CrmBridgeOutcome,
@@ -36,8 +36,8 @@ import type { AccountingEvent, SyncResult } from '../features/accounting/sync/Ac
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
-import { loadSalePackageInfo } from '../features/accounting/sync/bridges/salonSaleItems';
-import type { ProductLine } from '../features/accounting/sync/bridges/salonSaleItems';
+import { loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
+import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
 
 /** A `Won` opportunity normalized from its DynamicTable row, with its owning tenant. */
 export interface WonOpportunity {
@@ -166,13 +166,13 @@ export async function reconcileCrmReceivables(
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Salon sales pass (Incremento C, ADR-C01) — re-drive every Finalized salon sale
+// Sale finalized pass (Incremento C, ADR-C01) — re-drive every Finalized sale
 // that has no journal entry yet. Same durability contract as the CRM pass: the
 // live trigger (DynamicTable controller, post-commit) is best-effort; this job is
 // the safety net (and the only coverage for a sale born Finalized via create).
 // ───────────────────────────────────────────────────────────────────────────
 
-/** A `Finalized` salon sale normalized from its DynamicTable row, with its owning tenant. */
+/** A `Finalized` sale normalized from its DynamicTable row, with its owning tenant. */
 export interface FinalizedSale {
   /** Tenant that owns the source table — becomes owner AND actor in the re-drive. */
   ownerUserId: string;
@@ -188,7 +188,7 @@ export interface FinalizedSale {
   revenueByNature?: { serviceReais: number; productReais: number };
 }
 
-export interface SalonReconcileDeps {
+export interface SaleReconcileDeps {
   listFinalizedSales: () => Promise<FinalizedSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -199,12 +199,12 @@ export interface SalonReconcileDeps {
 }
 
 /**
- * Re-drive every Finalized salon sale lacking a journal entry. Idempotent and
+ * Re-drive every Finalized sale lacking a journal entry. Idempotent and
  * fault-isolated: an isolated failure is logged and the batch continues. Mirrors the
  * per-source pass shape (see reconcileCrmReceivables); kept as a separate core so each
  * source stays independently testable.
  */
-export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<ReconcileSummary> {
+export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<ReconcileSummary> {
   const sales = await deps.listFinalizedSales();
   const summary: ReconcileSummary = {
     total: sales.length,
@@ -227,7 +227,7 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
       // Owner-as-actor: no HTTP user in a job. The scope is built from the SOURCE
       // record's tenant + unit only — never crossing tenants or units.
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
-      const event = buildSalonSaleFinalizedEvent({
+      const event = buildSaleFinalizedEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
         amount: sale.amount,
@@ -247,7 +247,7 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
 
       const result = await deps.sync(scope, event);
       summary.synced++;
-      logger.info('Reconcile booked salon sale', {
+      logger.info('Reconcile booked sale', {
         saleId: sale.saleId,
         entryId: result.entryId,
       });
@@ -256,7 +256,7 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
-        logger.warn('Reconcile blocked for salon sale — deterministic non-retriable code, skipping', {
+        logger.warn('Reconcile blocked for sale — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
           error: error instanceof Error ? error.message : String(error),
@@ -268,7 +268,7 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
       // (e.g. venda sem unitId) re-surfaces every cycle; `failedSoFar` makes a stuck item visible.
       const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
-      logger.error('Reconcile failed for salon sale — continuing', {
+      logger.error('Reconcile failed for sale — continuing', {
         event: 'reconcile_item_failed',
         sourceType: 'sale.finalized',
         sourceId: sale.saleId,
@@ -281,29 +281,29 @@ export async function reconcileSalonSales(deps: SalonReconcileDeps): Promise<Rec
     }
   }
 
-  logger.info('Salon sales reconcile complete', { ...summary });
+  logger.info('Sale finalized reconcile complete', { ...summary });
   return summary;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Salon reversals pass (Incremento D) — the durability net for the post-commit
-// SalonSaleReversalBridge. Same contract as the finalize passes: the live trigger
+// Sale reversals pass (Incremento D) — the durability net for the post-commit
+// SaleReversalBridge. Same contract as the finalize passes: the live trigger
 // (SalesCancellationService, post-commit) is best-effort; these passes re-drive any
 // transition whose accounting effect failed, idempotently.
 //
-//  • reconcileSalonCancellations: status Cancelled whose 'sale.finalized' entry is
+//  • reconcileSaleCancellations: status Cancelled whose 'sale.finalized' entry is
 //    still 'Posted' (not 'Reversed') → re-fire reverseEntry.
-//  • reconcileSalonReturns: status Returned with no 'sale.returned' entry → re-fire sync.
+//  • reconcileSaleReturns: status Returned with no 'sale.returned' entry → re-fire sync.
 // ───────────────────────────────────────────────────────────────────────────
 
-/** A `Cancelled` salon sale normalized from its DynamicTable row, with its owning tenant. */
+/** A `Cancelled` sale normalized from its DynamicTable row, with its owning tenant. */
 export interface CancelledSale {
   ownerUserId: string;
   saleId: string;
   unitId: string;
 }
 
-export interface SalonCancellationReconcileDeps {
+export interface SaleCancellationReconcileDeps {
   listCancelledSales: () => Promise<CancelledSale[]>;
   /** Locate an entry by source within the scope (returns its id + status, or null). */
   findEntry: (
@@ -316,13 +316,13 @@ export interface SalonCancellationReconcileDeps {
 }
 
 /**
- * Re-drive every Cancelled salon sale whose revenue (and, when present, settlement) entry is
+ * Re-drive every Cancelled sale whose revenue (and, when present, settlement) entry is
  * still Posted. reverseEntry is the idempotency authority, so a sale already reversed is a
  * no-op classified as an idempotent hit. Fault-isolated: an isolated failure is logged and the
  * batch continues.
  */
-export async function reconcileSalonCancellations(
-  deps: SalonCancellationReconcileDeps,
+export async function reconcileSaleCancellations(
+  deps: SaleCancellationReconcileDeps,
 ): Promise<ReconcileSummary> {
   const sales = await deps.listCancelledSales();
   const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
@@ -379,11 +379,11 @@ export async function reconcileSalonCancellations(
     }
   }
 
-  logger.info('Salon cancellations reconcile complete', { ...summary });
+  logger.info('Sale cancellations reconcile complete', { ...summary });
   return summary;
 }
 
-/** A `Returned` salon sale normalized from its DynamicTable row, with its owning tenant. */
+/** A `Returned` sale normalized from its DynamicTable row, with its owning tenant. */
 export interface ReturnedSale {
   ownerUserId: string;
   saleId: string;
@@ -393,7 +393,7 @@ export interface ReturnedSale {
   occurredAt: string;
 }
 
-export interface SalonReturnReconcileDeps {
+export interface SaleReturnReconcileDeps {
   listReturnedSales: () => Promise<ReturnedSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -404,11 +404,11 @@ export interface SalonReturnReconcileDeps {
 }
 
 /**
- * Re-drive every Returned salon sale lacking a 'sale.returned' contra-revenue entry.
- * Mirrors reconcileSalonSales (sync of a new entry, not a reversal). Idempotent and
+ * Re-drive every Returned sale lacking a 'sale.returned' contra-revenue entry.
+ * Mirrors reconcileSaleSales (sync of a new entry, not a reversal). Idempotent and
  * fault-isolated.
  */
-export async function reconcileSalonReturns(deps: SalonReturnReconcileDeps): Promise<ReconcileSummary> {
+export async function reconcileSaleReturns(deps: SaleReturnReconcileDeps): Promise<ReconcileSummary> {
   const sales = await deps.listReturnedSales();
   const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
 
@@ -418,7 +418,7 @@ export async function reconcileSalonReturns(deps: SalonReturnReconcileDeps): Pro
         throw new Error(`Venda '${sale.saleId}' sem unitId — não reconciliável.`);
       }
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
-      const event = buildSalonSaleReturnedEvent({
+      const event = buildSaleReturnedEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
         amount: sale.amount,
@@ -437,13 +437,13 @@ export async function reconcileSalonReturns(deps: SalonReturnReconcileDeps): Pro
 
       const result = await deps.sync(scope, event);
       summary.synced++;
-      logger.info('Reconcile booked salon return', { saleId: sale.saleId, entryId: result.entryId });
+      logger.info('Reconcile booked sale return', { saleId: sale.saleId, entryId: result.entryId });
     } catch (error) {
       // Poison/defer (Council 1.5): skip-listed deterministic code → BLOCKED, not failed.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
-        logger.warn('Reconcile blocked for salon return — deterministic non-retriable code, skipping', {
+        logger.warn('Reconcile blocked for sale return — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
           error: error instanceof Error ? error.message : String(error),
@@ -451,7 +451,7 @@ export async function reconcileSalonReturns(deps: SalonReturnReconcileDeps): Pro
         continue;
       }
       summary.failed++;
-      logger.error('Reconcile failed for salon return — continuing', {
+      logger.error('Reconcile failed for sale return — continuing', {
         saleId: sale.saleId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -459,11 +459,11 @@ export async function reconcileSalonReturns(deps: SalonReturnReconcileDeps): Pro
     }
   }
 
-  logger.info('Salon returns reconcile complete', { ...summary });
+  logger.info('Sale returns reconcile complete', { ...summary });
   return summary;
 }
 
-/** A `Finalized` + `Paid` salon sale normalized from its DynamicTable row, with its owning tenant. */
+/** A `Finalized` + `Paid` sale normalized from its DynamicTable row, with its owning tenant. */
 export interface SettledSale {
   ownerUserId: string;
   saleId: string;
@@ -476,7 +476,7 @@ export interface SettledSale {
   isAllPackage?: boolean;
 }
 
-export interface SalonSettlementReconcileDeps {
+export interface SaleSettlementReconcileDeps {
   listSettledSales: () => Promise<SettledSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -487,17 +487,17 @@ export interface SalonSettlementReconcileDeps {
 }
 
 /**
- * Re-drive every Finalized+Paid salon sale lacking a 'sale.settled' entry — the durability
- * net for the post-commit SalonSaleSettlementBridge (and the only coverage for a sale born
- * Finalized+Paid). Mirrors reconcileSalonSales (sync of a new entry, not a reversal).
+ * Re-drive every Finalized+Paid sale lacking a 'sale.settled' entry — the durability
+ * net for the post-commit SaleSettlementBridge (and the only coverage for a sale born
+ * Finalized+Paid). Mirrors reconcileSaleSales (sync of a new entry, not a reversal).
  *
  * ORDERING: the settlement clears A Receber, which only exists if the revenue entry was booked. A
  * sale Finalized+Paid whose 'sale.finalized' entry is still missing is counted as BLOCKED
  * (deferred), NOT failed — a later run settles it once the revenue pass has booked the receivable.
  * Idempotent and fault-isolated: an isolated failure is logged and the batch continues.
  */
-export async function reconcileSalonSettlements(
-  deps: SalonSettlementReconcileDeps,
+export async function reconcileSaleSettlements(
+  deps: SaleSettlementReconcileDeps,
 ): Promise<ReconcileSummary> {
   const sales = await deps.listSettledSales();
   const summary: ReconcileSummary = {
@@ -536,7 +536,7 @@ export async function reconcileSalonSettlements(
         continue;
       }
 
-      const event = buildSalonSaleSettledEvent({
+      const event = buildSaleSettledEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
         amount: sale.amount,
@@ -548,7 +548,7 @@ export async function reconcileSalonSettlements(
 
       const result = await deps.sync(scope, event);
       summary.synced++;
-      logger.info('Reconcile booked salon settlement', {
+      logger.info('Reconcile booked sale settlement', {
         saleId: sale.saleId,
         entryId: result.entryId,
       });
@@ -557,7 +557,7 @@ export async function reconcileSalonSettlements(
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
-        logger.warn('Reconcile blocked for salon settlement — deterministic non-retriable code, skipping', {
+        logger.warn('Reconcile blocked for sale settlement — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
           error: error instanceof Error ? error.message : String(error),
@@ -565,7 +565,7 @@ export async function reconcileSalonSettlements(
         continue;
       }
       summary.failed++;
-      logger.error('Reconcile failed for salon settlement — continuing', {
+      logger.error('Reconcile failed for sale settlement — continuing', {
         saleId: sale.saleId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -573,13 +573,13 @@ export async function reconcileSalonSettlements(
     }
   }
 
-  logger.info('Salon settlements reconcile complete', { ...summary });
+  logger.info('Sale settlements reconcile complete', { ...summary });
   return summary;
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Salon CMV pass (INCR-INVENTORY Body 2, Gap 2 crash-recovery) — the durability net
-// for the post-commit CMV seam (maybeSyncSalonSaleCogs). The live emission runs the
+// Sale CMV pass (INCR-INVENTORY Body 2, Gap 2 crash-recovery) — the durability net
+// for the post-commit CMV seam (maybeSyncSaleCogs). The live emission runs the
 // subledger baixa (tx1) then posts the razão (tx2, D 4.2 / C 1.1.6); if the process
 // crashes between the two commits the baixa is durable but the razão is missing. This
 // pass re-drives every Finalized non-package sale with product lines that has no
@@ -588,7 +588,7 @@ export async function reconcileSalonSettlements(
 // at most once and never double-baixa's stock.
 // ───────────────────────────────────────────────────────────────────────────
 
-/** A `Finalized` non-package salon sale with product lines needing a CMV entry. */
+/** A `Finalized` non-package sale with product lines needing a CMV entry. */
 export interface CogsSale {
   ownerUserId: string;
   saleId: string;
@@ -599,7 +599,7 @@ export interface CogsSale {
   productLines: ProductLine[];
 }
 
-export interface SalonCogsReconcileDeps {
+export interface SaleCogsReconcileDeps {
   listCogsSales: () => Promise<CogsSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -620,7 +620,7 @@ export interface SalonCogsReconcileDeps {
  * isolated failure (insufficient stock, period closed, posting down) is logged and the batch
  * continues. A zero-cost result posts nothing (counted as an idempotent hit, not a failure).
  */
-export async function reconcileSalonCogs(deps: SalonCogsReconcileDeps): Promise<ReconcileSummary> {
+export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<ReconcileSummary> {
   const sales = await deps.listCogsSales();
   const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
 
@@ -658,7 +658,7 @@ export async function reconcileSalonCogs(deps: SalonCogsReconcileDeps): Promise<
         continue;
       }
 
-      const event = buildSalonSaleCogsEvent({
+      const event = buildSaleCogsEvent({
         saleId: sale.saleId,
         unitId: sale.unitId,
         costCents: totalCogsCents,
@@ -668,10 +668,10 @@ export async function reconcileSalonCogs(deps: SalonCogsReconcileDeps): Promise<
       });
       const result = await deps.sync(scope, event);
       summary.synced++;
-      logger.info('Reconcile booked salon CMV', { saleId: sale.saleId, entryId: result.entryId });
+      logger.info('Reconcile booked sale CMV', { saleId: sale.saleId, entryId: result.entryId });
     } catch (error) {
       summary.failed++;
-      logger.error('Reconcile failed for salon CMV — continuing', {
+      logger.error('Reconcile failed for sale CMV — continuing', {
         saleId: sale.saleId,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -679,7 +679,7 @@ export async function reconcileSalonCogs(deps: SalonCogsReconcileDeps): Promise<
     }
   }
 
-  logger.info('Salon CMV reconcile complete', { ...summary });
+  logger.info('Sale CMV reconcile complete', { ...summary });
   return summary;
 }
 
@@ -702,7 +702,7 @@ export interface PackageOriginSale {
   packageId: string;
 }
 
-export interface SalonPackageOriginReconcileDeps {
+export interface SalePackageOriginReconcileDeps {
   listPackageSales: () => Promise<PackageOriginSale[]>;
   hasExistingEntry: (scope: AccountingScope, sourceType: string, sourceId: string) => Promise<boolean>;
   sync: (scope: AccountingScope, event: AccountingEvent) => Promise<SyncResult>;
@@ -719,8 +719,8 @@ export interface SalonPackageOriginReconcileDeps {
  * idempotent; fault-isolated. The credit needs a customerId and exactly one packageId — without
  * them it is skipped (warn), never inferred.
  */
-export async function reconcileSalonPackageOrigin(
-  deps: SalonPackageOriginReconcileDeps,
+export async function reconcileSalePackageOrigin(
+  deps: SalePackageOriginReconcileDeps,
 ): Promise<ReconcileSummary> {
   const sales = await deps.listPackageSales();
   const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0 };
@@ -737,7 +737,7 @@ export async function reconcileSalonPackageOrigin(
       if (hasOrigin) {
         summary.idempotentHits++;
       } else {
-        const event = buildSalonPackageSoldEvent({
+        const event = buildSalePackageSoldEvent({
           saleId: sale.saleId,
           unitId: sale.unitId,
           amount: sale.amount,
@@ -788,7 +788,7 @@ export async function reconcileSalonPackageOrigin(
     }
   }
 
-  logger.info('Salon package origin reconcile complete', { ...summary });
+  logger.info('Sale package origin reconcile complete', { ...summary });
   return summary;
 }
 
@@ -803,7 +803,7 @@ export interface PackageConsumptionSale {
   paidWithPackageId: string;
 }
 
-export interface SalonPackageConsumptionReconcileDeps {
+export interface SalePackageConsumptionReconcileDeps {
   listPackageConsumptions: () => Promise<PackageConsumptionSale[]>;
   hasDebitMovement: (scope: AccountingScope, saleId: string) => Promise<boolean>;
   debitBalance: (
@@ -819,8 +819,8 @@ export interface SalonPackageConsumptionReconcileDeps {
  * atomic decrement keeps balanceCents >= 0, so an insufficient balance fails this item (logged) and
  * the batch continues — it never produces a negative balance.
  */
-export async function reconcileSalonPackageConsumption(
-  deps: SalonPackageConsumptionReconcileDeps,
+export async function reconcileSalePackageConsumption(
+  deps: SalePackageConsumptionReconcileDeps,
 ): Promise<ReconcileSummary> {
   const sales = await deps.listPackageConsumptions();
   const summary: ReconcileSummary = { total: sales.length, synced: 0, idempotentHits: 0, failed: 0, blocked: 0 };
@@ -866,7 +866,7 @@ export async function reconcileSalonPackageConsumption(
     }
   }
 
-  logger.info('Salon package consumption reconcile complete', { ...summary });
+  logger.info('Sale package consumption reconcile complete', { ...summary });
   return summary;
 }
 
@@ -921,7 +921,7 @@ export async function reconcilePackageBalanceVsLiability(
   return { checked: rows.length, divergences };
 }
 
-/** Sum two summaries into one (the job runs CRM + salon passes and reports the total). */
+/** Sum two summaries into one (the job runs CRM + sale passes and reports the total). */
 function mergeSummaries(a: ReconcileSummary, b: ReconcileSummary): ReconcileSummary {
   return {
     total: a.total + b.total,
@@ -957,7 +957,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     });
   };
 
-  /** Normalize the salon `sales` rows of a given status across every tenant. */
+  /** Normalize the sale `sales` rows of a given status across every tenant. */
   const listSalesByStatus = async (status: string) => {
     const tables = await prisma.dynamicTable.findMany({
       where: { internalName: 'sales' },
@@ -1045,7 +1045,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     book: (scope, fact) => factory.getCrmReceivableBridge().bookWonOpportunity(scope, fact),
   });
 
-  const salon = await reconcileSalonSales({
+  const sale = await reconcileSaleSales({
     listFinalizedSales: async () =>
       classifiedFinalized.map(({ ownerUserId, row, isAllPackage, revenueByNature }) => ({
         ownerUserId,
@@ -1061,7 +1061,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     sync: doSync,
   });
 
-  const cancellations = await reconcileSalonCancellations({
+  const cancellations = await reconcileSaleCancellations({
     listCancelledSales: async () => {
       const found = await listSalesByStatus('Cancelled');
       return found.map(({ ownerUserId, row }) => ({
@@ -1074,7 +1074,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     reverse,
   });
 
-  const returns = await reconcileSalonReturns({
+  const returns = await reconcileSaleReturns({
     listReturnedSales: async () => {
       const found = await listSalesByStatus('Returned');
       return found.map(({ ownerUserId, row }) => ({
@@ -1095,7 +1095,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     sync: doSync,
   });
 
-  const settlements = await reconcileSalonSettlements({
+  const settlements = await reconcileSaleSettlements({
     listSettledSales: async () =>
       classifiedFinalized
         .filter(({ row }) => row.data.paymentStatus === 'Paid')
@@ -1118,9 +1118,9 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     sync: doSync,
   });
 
-  // Salon CMV (INCR-INVENTORY Body 2) — re-drive the cost-of-goods razão for every Finalized
+  // Sale CMV (INCR-INVENTORY Body 2) — re-drive the cost-of-goods razão for every Finalized
   // non-package sale with product lines whose 'sale.cogs' entry is missing (Gap 2 recovery).
-  const cogs = await reconcileSalonCogs({
+  const cogs = await reconcileSaleCogs({
     listCogsSales: async () =>
       classifiedFinalized
         .filter(({ isAllPackage, productLines }) => !isAllPackage && productLines.length > 0)
@@ -1138,7 +1138,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
   });
 
   // Package origin (C 2.1.1 + balance credit) for every all-Package Finalized sale.
-  const packageOrigin = await reconcileSalonPackageOrigin({
+  const packageOrigin = await reconcileSalePackageOrigin({
     listPackageSales: async () =>
       classifiedFinalized
         .filter(({ isAllPackage }) => isAllPackage)
@@ -1159,7 +1159,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
   });
 
   // Package consumption (balance debit) for every Finalized+Paid Package-Balance sale.
-  const packageConsumption = await reconcileSalonPackageConsumption({
+  const packageConsumption = await reconcileSalePackageConsumption({
     listPackageConsumptions: async () =>
       classifiedFinalized
         .filter(
@@ -1209,7 +1209,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     },
   });
 
-  return [crm, salon, cancellations, returns, settlements, cogs, packageOrigin, packageConsumption].reduce(
+  return [crm, sale, cancellations, returns, settlements, cogs, packageOrigin, packageConsumption].reduce(
     mergeSummaries,
   );
 }

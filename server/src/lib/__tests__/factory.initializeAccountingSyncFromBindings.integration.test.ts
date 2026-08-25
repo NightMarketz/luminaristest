@@ -21,7 +21,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
 import { NoActiveAccountingBindingsError, ValidationError } from '@/lib/errors';
-import { SALON_BINDING_V1 } from '@/features/accountingBinding/fixtures/salonBinding';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
 import type { AccountingEvent } from '@/features/accounting/sync/AccountingSyncPort';
 
 const DONO = 'u-feeder-boot';
@@ -55,11 +55,11 @@ describe('ApplicationFactory.initializeAccountingSyncFromBindings — SQLite rea
       data: {
         userId: DONO,
         unitId: UNIDADE_COM_BINDING,
-        sectorKey: SALON_BINDING_V1.sectorKey,
+        sectorKey: SALE_BINDING_V1.sectorKey,
         bindingVersion: 1,
         compiledAt: new Date(),
         compiledFromHash: 'sha256:teste-feeder-boot',
-        payload: JSON.stringify(SALON_BINDING_V1),
+        payload: JSON.stringify(SALE_BINDING_V1),
         status: 'Active',
         createdById: DONO,
       },

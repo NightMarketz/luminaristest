@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 /**
- * SalesCancellationDto — inputs for the salon-sale cancellation / return transitions
+ * SalesCancellationDto — inputs for the sale cancellation / return transitions
  * (Incremento D). Both transitions move a `sales` row out of the `Finalized` terminal state
  * via a dedicated server-orchestrated service (isSystem write); the accounting effect is
- * applied POST-COMMIT by SalonSaleReversalBridge.
+ * applied POST-COMMIT by SaleReversalBridge.
  *
- * `tableId` is the DynamicTable id of the salon `sales` table; the service re-asserts it
+ * `tableId` is the DynamicTable id of the `sales` table; the service re-asserts it
  * against the row's authoritative parent table (cross-tenant guard) before acting.
  */
 export const CancelSaleSchema = z

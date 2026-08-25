@@ -1,9 +1,9 @@
 /**
- * SalonPackageSoldBridge — Incremento G P4 origin seam.
+ * SalePackageSoldBridge — Incremento G P4 origin seam.
  *
- * Turns a finalized ALL-PACKAGE salon sale into the prepaid-package origin journal entry
+ * Turns a finalized ALL-PACKAGE sale into the prepaid-package origin journal entry
  * (D 1.1.2 A Receber / C 2.1.1 Pacotes Pré-pagos) via AccountingSync. It is the package
- * counterpart of maybeSyncSalonSaleFinalized and follows the same rules: it lives in the
+ * counterpart of maybeSyncSaleFinalized and follows the same rules: it lives in the
  * accounting (Prisma first-class) world, is invoked POST-COMMIT from the DynamicTable
  * controller, NEVER inside DynamicTableService/RuleContext/RulePlugin (§2.1), is best-effort
  * and non-fatal (reconcile re-drives), and delegates idempotency entirely to PostingService
@@ -20,8 +20,8 @@ import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { scopeDay } from '../../models/dates';
-import { buildSalonPackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { loadSalePackageInfo } from './salonSaleItems';
+import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
+import { loadSalePackageInfo } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -34,7 +34,7 @@ interface SaleRow {
  * prepaid-package origin. Returns silently for every non-applicable case and swallows
  * sync errors (non-fatal; reconcile re-drives idempotently).
  */
-export async function maybeSyncSalonPackageSold(
+export async function maybeSyncSalePackageSold(
   actor: { userId: string },
   tableId: string,
   row: SaleRow,
@@ -45,7 +45,7 @@ export async function maybeSyncSalonPackageSold(
     // Trigger gate: origin is recognized on Finalized (mirrors revenue recognition timing).
     if (data.status !== 'Finalized') return;
 
-    // Boundary gate: confirm tableId is THIS tenant's salon `sales` table (no engine access).
+    // Boundary gate: confirm tableId is THIS tenant's `sales` table (no engine access).
     const repo = getFactory().getDynamicTableRepository();
     const salesTable = await repo.findTableByInternalName(actor.userId, 'sales');
     if (!salesTable || salesTable.id !== tableId || salesTable.category !== 'finance') return;
@@ -76,7 +76,7 @@ export async function maybeSyncSalonPackageSold(
     // Scope resolvido ANTES da data: `scopeDay` precisa do fuso (o fallback "agora" postaria em D+1
     // das 21h à meia-noite BRT). `data.date` é 'date' no preset ⇒ já é dia-calendário, passa intacto.
     const scope = resolveAccountingScope(actor, unitId);
-    const event = buildSalonPackageSoldEvent({
+    const event = buildSalePackageSoldEvent({
       saleId: row.id,
       unitId,
       amount: totalAmount,
@@ -119,7 +119,7 @@ export async function maybeSyncSalonPackageSold(
       });
       return;
     }
-    logger.error('AccountingSync (salon package sold) failed — left for reconciliation', {
+    logger.error('AccountingSync (sale package sold) failed — left for reconciliation', {
       saleId: row.id,
       error: syncError instanceof Error ? syncError.message : String(syncError),
     });

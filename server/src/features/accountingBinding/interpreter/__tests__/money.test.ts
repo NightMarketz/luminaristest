@@ -5,8 +5,8 @@ import { assertCentsInRange, centsFromReais } from '../money';
 /**
  * `centsFromReais`/`assertCentsInRange` (BE-INCR-BINDING-PRESS, Corpo D, item 11 do BRIEF) —
  * migração VERBATIM das duas variantes de guard de dinheiro dos mappers atuais (dossiê §c). Estes
- * testes replicam, um a um, os casos de `SalonSaleFinalizedMapper.test.ts` (Variante 1) e
- * `SalonSaleCogsMapper.test.ts` (Variante 2) — se um guard aqui divergir da lógica original, o caso
+ * testes replicam, um a um, os casos de `SaleFinalizedMapper.test.ts` (Variante 1) e
+ * `SaleCogsMapper.test.ts` (Variante 2) — se um guard aqui divergir da lógica original, o caso
  * correspondente falha (não é um teste que só espelha a implementação).
  */
 describe('centsFromReais — Variante 1 verbatim (float reais → centavos)', () => {

@@ -53,20 +53,20 @@ import type { AccountingEventLike } from '../interpreter/interpret';
  * REAL dos 5 mappers de produção (evidência, não memória — `ADR-P1-binding-press.md:44-51` +
  * `P1-DOSSIER-arquetipos.md` §2), não por invenção:
  *
- *  - `controle-recebível`         → Asset   (`1.1.2`, `SalonSaleFinalizedMapper.ts:22`)
+ *  - `controle-recebível`         → Asset   (`1.1.2`, `SaleFinalizedMapper.ts:22`)
  *  - `receita-serviço`            → Revenue (`3.1`, `revenueSplit.ts:22`)
  *  - `receita-revenda`            → Revenue (`3.3`, `revenueSplit.ts:23`)
  *  - `contra-receita`             → Revenue (`3.2` é Revenue na `ChartOfAccountsFixture.ts` — a
  *                                    linha É de débito, mas a CONTA em si tem natureza Revenue,
  *                                    "Devoluções de Vendas")
- *  - `passivo-diferido`           → Liability (`2.1.1`, `SalonPackageSoldMapper.ts:22`)
- *  - `custo-mercadoria-vendida`   → Expense (`4.2`, `SalonSaleCogsMapper.ts:29`)
- *  - `estoque`                    → Asset   (`1.1.6`, `SalonSaleCogsMapper.ts:30`)
- *  - `caixa-por-metodo`           → Asset **E** Liability — NÃO é 1:1. `SalonSaleSettledMapper.ts`
+ *  - `passivo-diferido`           → Liability (`2.1.1`, `SalePackageSoldMapper.ts:22`)
+ *  - `custo-mercadoria-vendida`   → Expense (`4.2`, `SaleCogsMapper.ts:29`)
+ *  - `estoque`                    → Asset   (`1.1.6`, `SaleCogsMapper.ts:30`)
+ *  - `caixa-por-metodo`           → Asset **E** Liability — NÃO é 1:1. `SaleSettledMapper.ts`
  *                                    resolve por sub-chave de `paymentMethod`: Cash/Pix/Card caem em
  *                                    contas Asset (`1.1.1`/`1.1.3`/`1.1.4`), mas 'Package Balance'
  *                                    resolve para `2.1.1` (Liability, "Pacotes Pré-pagos") —
- *                                    `SalonSaleSettledMapper.ts:16-20,85-89` (guard nomeado, D1-Q10:
+ *                                    `SaleSettledMapper.ts:16-20,85-89` (guard nomeado, D1-Q10:
  *                                    "Package Balance → 2.1.1, Liability ← NEVER cash"). Preservado
  *                                    verbatim por decorrência do fork F-BP-5 (ADR-P1 §11, "guard
  *                                    permitido no intérprete, verbatim" — a mesma divergência de
@@ -98,11 +98,11 @@ const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[]>> = {
 /**
  * CORREÇÃO (review independente, finding high) — extrai o papel-base de um `roleSlot.role` que
  * pode carregar sub-chave embutida na convenção `"<papel>:<subChave>"`. Hoje só o papel
- * `caixa-por-metodo` usa essa convenção (`SalonSaleSettledMapper.ts:36-42`, resolvido por
+ * `caixa-por-metodo` usa essa convenção (`SaleSettledMapper.ts:36-42`, resolvido por
  * `paymentMethod`) — documentada em `dtos/CompileBindingDto.ts:16-22` ("decisão local... não um
  * fork do ADR") e ESPELHADA por `interpreter/interpret.ts:166-171,179-190`, que já consome
  * exatamente essa convenção (`roleToAccount.get('caixa-por-metodo:' + methodValue)`). O binding
- * real do salão (`fixtures/salonBinding.ts:105-109`) grava uma `roleSlot` por sub-chave
+ * real do salão (`fixtures/saleBinding.ts:105-109`) grava uma `roleSlot` por sub-chave
  * (`'caixa-por-metodo:Cash'`, `'caixa-por-metodo:Pix'`, ...) — o validador precisa reconhecer essas
  * entradas como o MESMO papel `caixa-por-metodo` do arquétipo (`SettlementArchetype.ts:47`), senão
  * rejeita o próprio binding de referência com `SLOT_UNFILLED`/`SLOT_ORPHAN` falsos-positivos e a

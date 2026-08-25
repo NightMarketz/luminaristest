@@ -64,7 +64,7 @@ export interface ReverseStockForReceiptParams {
  * PRISMA, SUBLEDGER-ONLY.
  *
  * This service owns ONLY the subledger (`InventoryItem` valuation + append-only `StockMovement`); it
- * NEVER posts to the ledger. The CMV/razão leg is booked by the `SalonSaleCogsMapper` at the
+ * NEVER posts to the ledger. The CMV/razão leg is booked by the `SaleCogsMapper` at the
  * post-commit seam (Body 2, O-2 reconciliation) — `recordSaleCogs` runs tx1 (the CAS baixa, returns
  * the cents) and the mapper runs tx2 (the `D 4.2 / C 1.1.6` post). Because postEntry opens its OWN
  * root tx (SQLite has no nesting), the subledger baixa and the ledger post are DIFFERENT commits —
@@ -206,7 +206,7 @@ export class InventoryService implements IInventoryService {
   /**
    * Book cost-of-goods for a finalized sale: per product, baixa the stock at the current moving
    * average via the atomic CAS and append a COGS movement. Does NOT post the ledger — returns the
-   * total CMV cents for the `SalonSaleCogsMapper` to book `D 4.2 / C 1.1.6` (Body 2).
+   * total CMV cents for the `SaleCogsMapper` to book `D 4.2 / C 1.1.6` (Body 2).
    *
    * Per-line READ-FIRST idempotency (Gap 3 / Gate 5): a replay of the same `saleId` finds each COGS
    * movement and reuses its cents WITHOUT a second decrement — even a PARTIAL replay (some lines

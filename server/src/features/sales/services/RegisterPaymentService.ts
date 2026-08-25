@@ -3,13 +3,13 @@ import { NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
-import { maybeSyncSalonSaleSettled } from '../../accounting/sync/bridges/SalonSaleSettlementBridge';
+import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettlementBridge';
 import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
 
 /**
- * RegisterPaymentService — server-side orchestration of the salon-sale payment transition
+ * RegisterPaymentService — server-side orchestration of the sale payment transition
  * (Incremento D / D1), in the backend-workflow-transition-generator pattern (mirrors
  * SalesCancellationService and CrmPipelineService.advanceStage).
  *
@@ -21,7 +21,7 @@ import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
  *
  * Layering (Contract §2 orchestration variant): no Repository/Policy of its own — every write goes
  * through DynamicTableService, which already enforces `canManageData`. The settlement entry (baixa
- * de A Receber) is booked POST-COMMIT via SalonSaleSettlementBridge — never inside the DynamicTable
+ * de A Receber) is booked POST-COMMIT via SaleSettlementBridge — never inside the DynamicTable
  * engine (§2.1 / G1) and never inside a transaction (it opens its own root tx). A bridge failure is
  * non-fatal: the payment stands and reconciliation re-drives the settlement idempotently.
  */
@@ -39,7 +39,7 @@ export class RegisterPaymentService {
    * settlement still books.
    */
   async registerPayment(user: UserContext, input: RegisterPaymentInput) {
-    // Resolve THIS tenant's salon `sales` table (tenant-scoped via user.userId → NotFoundError).
+    // Resolve THIS tenant's `sales` table (tenant-scoped via user.userId → NotFoundError).
     const salesTable = await this.repository.findTableByInternalName(user.userId, 'sales');
     if (!salesTable) {
       throw new NotFoundError(`Sales table 'sales' is not installed for this user.`);
@@ -72,10 +72,10 @@ export class RegisterPaymentService {
     // the posting engine dedupes) so a previously-failed settlement still books. The balance debit is
     // also re-driven (idempotent per (saleId,'debit')) in case it failed the first time, then return.
     if (data.paymentStatus === 'Paid') {
-      logger.info('Salon sale already Paid — payment registration is idempotent', {
+      logger.info('Sale already Paid — payment registration is idempotent', {
         saleId: input.saleId,
       });
-      await maybeSyncSalonSaleSettled(user, salesTable.id, saleRow);
+      await maybeSyncSaleSettled(user, salesTable.id, saleRow);
       if (isPackageBalance) {
         await this.debitPackageBalanceBestEffort(user, {
           unitId,
@@ -125,7 +125,7 @@ export class RegisterPaymentService {
       { isSystem: true },
     );
 
-    logger.info('Salon sale payment registered', {
+    logger.info('Sale payment registered', {
       saleId: input.saleId,
       paymentMethod: input.paymentMethod,
     });
@@ -133,7 +133,7 @@ export class RegisterPaymentService {
     // POST-COMMIT settlement (§2.1: integration above the engine, not inside it). Best-effort and
     // non-fatal — the payment is already committed; reconciliation re-drives a failed settlement
     // idempotently. salesTable.id is authoritative (verified above).
-    await maybeSyncSalonSaleSettled(user, salesTable.id, updated);
+    await maybeSyncSaleSettled(user, salesTable.id, updated);
 
     // POST-COMMIT balance debit (P5): draws the prepaid balance for a Package Balance consumption.
     // Best-effort and non-fatal — the payment is committed; reconcile re-drives a missing debit.

@@ -2,7 +2,7 @@ import type { AccountingScope } from '../../../scope/AccountingScope';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 // --- Mock the bridge's collaborators (factory + logger). resolveAccountingScope and
-// buildSalonSaleSettledEvent are pure and left real. ---
+// buildSaleSettledEvent are pure and left real. ---
 const findTableByInternalName = jest.fn();
 const findRowsByFieldValue = jest.fn();
 const sync = jest.fn();
@@ -23,7 +23,7 @@ jest.mock('../../../../../lib/logger', () => ({
   default: { info: jest.fn(), warn: (...a: unknown[]) => loggerWarn(...a), error: (...a: unknown[]) => loggerError(...a), debug: jest.fn() },
 }));
 
-import { maybeSyncSalonSaleSettled } from '../SalonSaleSettlementBridge';
+import { maybeSyncSaleSettled } from '../SaleSettlementBridge';
 
 const SALES_TABLE_ID = 'tbl-sales-1';
 const actor = { userId: 'u1' };
@@ -49,7 +49,7 @@ function settledRow(over: Record<string, unknown> = {}) {
   };
 }
 
-describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
+describe('SaleSettlementBridge.maybeSyncSaleSettled', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     findTableByInternalName.mockResolvedValue(salesTable());
@@ -59,7 +59,7 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
   });
 
   it('settles ONLY a Finalized+Paid sale, with paymentMethod + paidAt carried on the event', async () => {
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow());
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow());
 
     expect(findEntryBySource).toHaveBeenCalledWith(
       expect.objectContaining({ ownerUserId: 'u1', unitId: 'unit-1' }),
@@ -87,18 +87,18 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
     ['Cancelled', 'Paid'],
     ['Returned', 'Paid'],
   ])('does NOT settle status=%s paymentStatus=%s', async (status, paymentStatus) => {
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow({ status, paymentStatus }));
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow({ status, paymentStatus }));
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('does not even look up the table when the trigger gate fails (gate is first)', async () => {
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow({ paymentStatus: 'Pending' }));
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow({ paymentStatus: 'Pending' }));
     expect(findTableByInternalName).not.toHaveBeenCalled();
   });
 
   it('ORDERING GATE: does NOT settle when the opening entry is missing (blocked_missing_opening_entry)', async () => {
     findEntryBySource.mockResolvedValueOnce(null);
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow());
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow());
     expect(sync).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalledWith(
       expect.stringContaining('blocked_missing_opening_entry'),
@@ -108,7 +108,7 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
 
   it('ORDERING GATE (all-Package): checks sale.package.sold as the opening, not revenue', async () => {
     findRowsByFieldValue.mockResolvedValue([{ data: { type: 'Package', packageId: 'pkg-1', saleId: 'sale-1' } }]);
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow());
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow());
     expect(findEntryBySource).toHaveBeenCalledWith(
       expect.objectContaining({ unitId: 'unit-1' }),
       'sale.package.sold',
@@ -118,24 +118,24 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
   });
 
   it('ignores a table that is not the tenant sales table (id mismatch)', async () => {
-    await maybeSyncSalonSaleSettled(actor, 'some-other-table', settledRow());
+    await maybeSyncSaleSettled(actor, 'some-other-table', settledRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('ignores a same-named table outside the finance category', async () => {
     findTableByInternalName.mockResolvedValueOnce(salesTable({ category: 'crm' }));
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow());
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow());
     expect(sync).not.toHaveBeenCalled();
   });
 
   it('skips (no sync) and warns when a Paid sale has no unitId', async () => {
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow({ unitId: undefined }));
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow({ unitId: undefined }));
     expect(sync).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalled();
   });
 
   it('skips (no sync) and warns when a Paid sale has no paymentMethod', async () => {
-    await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow({ paymentMethod: undefined }));
+    await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow({ paymentMethod: undefined }));
     expect(sync).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalled();
   });
@@ -143,7 +143,7 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
   it.each([0, -10, NaN, Infinity, 'x'])(
     'skips (no sync) when totalAmount is invalid (%s)',
     async (totalAmount) => {
-      await maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow({ totalAmount }));
+      await maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow({ totalAmount }));
       expect(sync).not.toHaveBeenCalled();
     },
   );
@@ -151,7 +151,7 @@ describe('SalonSaleSettlementBridge.maybeSyncSalonSaleSettled', () => {
   it('is NON-FATAL: a sync failure does not throw and is logged for reconciliation', async () => {
     sync.mockRejectedValueOnce(new Error('posting down'));
     await expect(
-      maybeSyncSalonSaleSettled(actor, SALES_TABLE_ID, settledRow()),
+      maybeSyncSaleSettled(actor, SALES_TABLE_ID, settledRow()),
     ).resolves.toBeUndefined();
     expect(loggerError).toHaveBeenCalled();
   });

@@ -1,10 +1,10 @@
 import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
 import { MAX_CENTS } from '../../accounting/models/money';
-import { SalonPackageSoldMapper } from '../../accounting/sync/mappers/SalonPackageSoldMapper';
-import { SalonSaleCogsMapper } from '../../accounting/sync/mappers/SalonSaleCogsMapper';
-import { SalonSaleFinalizedMapper } from '../../accounting/sync/mappers/SalonSaleFinalizedMapper';
-import { SalonSaleReturnedMapper } from '../../accounting/sync/mappers/SalonSaleReturnedMapper';
-import { SalonSaleSettledMapper } from '../../accounting/sync/mappers/SalonSaleSettledMapper';
+import { SalePackageSoldMapper } from '../../accounting/sync/mappers/SalePackageSoldMapper';
+import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
+import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
+import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
+import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
 import type { AccountingEvent } from '../../accounting/sync/AccountingSyncPort';
 
 /**
@@ -135,14 +135,14 @@ function cogsEvent(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-const finalizedMapper = new SalonSaleFinalizedMapper();
-const settledMapper = new SalonSaleSettledMapper();
-const returnedMapper = new SalonSaleReturnedMapper();
-const packageSoldMapper = new SalonPackageSoldMapper();
-const cogsMapper = new SalonSaleCogsMapper();
+const finalizedMapper = new SaleFinalizedMapper();
+const settledMapper = new SaleSettledMapper();
+const returnedMapper = new SaleReturnedMapper();
+const packageSoldMapper = new SalePackageSoldMapper();
+const cogsMapper = new SaleCogsMapper();
 
 const CASES: ReadonlyArray<{ name: string; build: () => PostEntryInput }> = [
-  // --- reconhecimento-receita (SalonSaleFinalizedMapper) ---
+  // --- reconhecimento-receita (SaleFinalizedMapper) ---
   { name: 'finalized: sem breakdown', build: () => finalizedMapper.map(finalizedEvent({ amount: 200 })) },
   {
     name: 'finalized: split misto 100/100',
@@ -178,20 +178,20 @@ const CASES: ReadonlyArray<{ name: string; build: () => PostEntryInput }> = [
   },
   { name: 'finalized: arredondamento round-half-up no limite (0,005)', build: () => finalizedMapper.map(finalizedEvent({ amount: 0.005 })) },
 
-  // --- liquidacao (SalonSaleSettledMapper) — matriz D1-QMAP ---
+  // --- liquidacao (SaleSettledMapper) — matriz D1-QMAP ---
   { name: 'settled: Cash', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Cash', amount: 200 })) },
   { name: 'settled: Pix', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Pix', amount: 200 })) },
   { name: 'settled: Debit Card', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Debit Card', amount: 200 })) },
   { name: 'settled: Credit Card', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Credit Card', amount: 200 })) },
   { name: 'settled: Package Balance', build: () => settledMapper.map(settledEvent({ paymentMethod: 'Package Balance', amount: 200 })) },
 
-  // --- estorno-origem (SalonSaleReturnedMapper) ---
+  // --- estorno-origem (SaleReturnedMapper) ---
   { name: 'returned: base', build: () => returnedMapper.map(returnedEvent({ amount: 200 })) },
 
-  // --- passivo-performance (SalonPackageSoldMapper) ---
+  // --- passivo-performance (SalePackageSoldMapper) ---
   { name: 'packageSold: base', build: () => packageSoldMapper.map(packageSoldEvent({ amount: 200 })) },
 
-  // --- cmv (SalonSaleCogsMapper) ---
+  // --- cmv (SaleCogsMapper) ---
   { name: 'cogs: base', build: () => cogsMapper.map(cogsEvent({ costCents: 20000 })) },
   { name: 'cogs: fronteira MAX_CENTS', build: () => cogsMapper.map(cogsEvent({ costCents: MAX_CENTS })) },
 ];

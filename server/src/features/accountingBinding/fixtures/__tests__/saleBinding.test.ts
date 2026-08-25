@@ -1,27 +1,27 @@
 import { AccountingBindingV1Schema } from '../../dtos/AccountingBindingDto';
 import { computeCompiledFromHash } from '../../services/BindingCompileService';
-import { SALON_BINDING_V1 } from '../salonBinding';
+import { SALE_BINDING_V1 } from '../saleBinding';
 
 /**
  * Gate do fixture (Corpo C, item 10 do BRIEF) — insumo do golden test do Corpo D. Não repete a
  * asserção de shape genérico (`AccountingBindingV1Schema` já é testado em
  * `dtos/__tests__/AccountingBindingDto.test.ts`); prova o que É específico deste dado: os 5
  * sourceTypes classe-1, os accountCodes citados dos mappers, e que `caixa-por-metodo` cobre os 5
- * métodos que `SalonSaleSettledMapper.DEBIT_ACCOUNT_BY_METHOD` mapeia hoje.
+ * métodos que `SaleSettledMapper.DEBIT_ACCOUNT_BY_METHOD` mapeia hoje.
  */
-describe('SALON_BINDING_V1 — CONTROLE', () => {
+describe('SALE_BINDING_V1 — CONTROLE', () => {
   it('valida contra o AccountingBindingV1Schema — não é vacuidade, o módulo já falharia no import se não validasse', () => {
-    expect(AccountingBindingV1Schema.safeParse(SALON_BINDING_V1).success).toBe(true);
+    expect(AccountingBindingV1Schema.safeParse(SALE_BINDING_V1).success).toBe(true);
   });
 
   it('sectorKey é beautySalon e bindingVersion é 1 (fixture de referência, não versão real)', () => {
-    expect(SALON_BINDING_V1.sectorKey).toBe('beautySalon');
-    expect(SALON_BINDING_V1.bindingVersion).toBe(1);
+    expect(SALE_BINDING_V1.sectorKey).toBe('beautySalon');
+    expect(SALE_BINDING_V1.bindingVersion).toBe(1);
   });
 });
 
-describe('SALON_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do BRIEF)', () => {
-  const eventKeys = SALON_BINDING_V1.eventBindings.map((eb) => eb.eventKey);
+describe('SALE_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do BRIEF)', () => {
+  const eventKeys = SALE_BINDING_V1.eventBindings.map((eb) => eb.eventKey);
 
   it('cobre exatamente os 5 sourceTypes dos mappers de produção — nem a mais nem a menos', () => {
     expect(eventKeys.sort()).toEqual(
@@ -36,22 +36,22 @@ describe('SALON_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do 
   });
 
   it('NÃO inclui subledger_command — a classe 2 (CrmReceivableBridge) fica fora do escopo v1 do salão', () => {
-    const archetypeKeys = SALON_BINDING_V1.eventBindings.map((eb) => eb.archetypeKey);
+    const archetypeKeys = SALE_BINDING_V1.eventBindings.map((eb) => eb.archetypeKey);
     expect(archetypeKeys).not.toContain('subledger_command');
   });
 });
 
-describe('SALON_BINDING_V1 — accountCodes citados dos mappers, por eventKey', () => {
+describe('SALE_BINDING_V1 — accountCodes citados dos mappers, por eventKey', () => {
   const byEvent = (eventKey: string) =>
-    SALON_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey)!;
+    SALE_BINDING_V1.eventBindings.find((eb) => eb.eventKey === eventKey)!;
   const codes = (eventKey: string) => byEvent(eventKey).roleSlots.map((r) => r.accountCode);
 
-  it('sale.finalized — 1.1.2 (D) / 3.1+3.3 (C), SalonSaleFinalizedMapper.ts + revenueSplit.ts', () => {
+  it('sale.finalized — 1.1.2 (D) / 3.1+3.3 (C), SaleFinalizedMapper.ts + revenueSplit.ts', () => {
     expect(codes('sale.finalized').sort()).toEqual(['1.1.2', '3.1', '3.3']);
     expect(byEvent('sale.finalized').archetypeKey).toBe('revenue_recognition');
   });
 
-  it('sale.settled — os 4 códigos de DEBIT_ACCOUNT_BY_METHOD + 1.1.2, SalonSaleSettledMapper.ts:36-42', () => {
+  it('sale.settled — os 4 códigos de DEBIT_ACCOUNT_BY_METHOD + 1.1.2, SaleSettledMapper.ts:36-42', () => {
     const settled = byEvent('sale.settled');
     const byRole = Object.fromEntries(settled.roleSlots.map((r) => [r.role, r.accountCode]));
     expect(byRole['caixa-por-metodo:Cash']).toBe('1.1.3');
@@ -64,17 +64,17 @@ describe('SALON_BINDING_V1 — accountCodes citados dos mappers, por eventKey', 
     expect(settled.archetypeKey).toBe('settlement');
   });
 
-  it('sale.returned — 3.2 (D) / 1.1.2 (C), SalonSaleReturnedMapper.ts', () => {
+  it('sale.returned — 3.2 (D) / 1.1.2 (C), SaleReturnedMapper.ts', () => {
     expect(codes('sale.returned').sort()).toEqual(['1.1.2', '3.2']);
     expect(byEvent('sale.returned').archetypeKey).toBe('reversal');
   });
 
-  it('sale.package.sold — 1.1.2 (D) / 2.1.1 (C), SalonPackageSoldMapper.ts', () => {
+  it('sale.package.sold — 1.1.2 (D) / 2.1.1 (C), SalePackageSoldMapper.ts', () => {
     expect(codes('sale.package.sold').sort()).toEqual(['1.1.2', '2.1.1']);
     expect(byEvent('sale.package.sold').archetypeKey).toBe('performance_liability');
   });
 
-  it('sale.cogs — 4.2 (D) / 1.1.6 (C), SalonSaleCogsMapper.ts — costCents já em centavos', () => {
+  it('sale.cogs — 4.2 (D) / 1.1.6 (C), SaleCogsMapper.ts — costCents já em centavos', () => {
     expect(codes('sale.cogs').sort()).toEqual(['1.1.6', '4.2']);
     expect(byEvent('sale.cogs').archetypeKey).toBe('cogs');
     expect(byEvent('sale.cogs').fieldSlots[0]).toMatchObject({
@@ -84,7 +84,7 @@ describe('SALON_BINDING_V1 — accountCodes citados dos mappers, por eventKey', 
   });
 });
 
-describe('SALON_BINDING_V1 — slot `dimension` presente em todo eventBinding', () => {
+describe('SALE_BINDING_V1 — slot `dimension` presente em todo eventBinding', () => {
   /**
    * Os 5 arquétipos de código (`archetypes/*.ts`, Corpo A) declaram um slot `dimension` em TODO
    * arquétipo (emenda 2, ADR §11) e `interpret.ts` (`resolveSlotValues`, Corpo D) lança
@@ -94,10 +94,10 @@ describe('SALON_BINDING_V1 — slot `dimension` presente em todo eventBinding', 
    * `interpret()`/à checagem #2 do validador real — não é redundância, é o que faz este dado ser
    * consumível de ponta a ponta pelos Corpos A/B/D.
    */
-  it.each(SALON_BINDING_V1.eventBindings.map((eb) => eb.eventKey))(
+  it.each(SALE_BINDING_V1.eventBindings.map((eb) => eb.eventKey))(
     '%s carrega fieldSlot "dimension"',
     (eventKey) => {
-      const eb = SALON_BINDING_V1.eventBindings.find((e) => e.eventKey === eventKey)!;
+      const eb = SALE_BINDING_V1.eventBindings.find((e) => e.eventKey === eventKey)!;
       const dimensionSlot = eb.fieldSlots.find((s) => s.slotName === 'dimension');
       expect(dimensionSlot).toBeDefined();
       expect(dimensionSlot!.transform).toBe('identity');
@@ -105,7 +105,7 @@ describe('SALON_BINDING_V1 — slot `dimension` presente em todo eventBinding', 
   );
 });
 
-describe('SALON_BINDING_V1 — compiledFromHash é determinístico', () => {
+describe('SALE_BINDING_V1 — compiledFromHash é determinístico', () => {
   it('recalcular o hash do mesmo snapshot canônico produz o MESMO valor — controle de não-vacuidade incluso', () => {
     // Controle primeiro: dois inputs DIFERENTES produzem hashes DIFERENTES — sem isto, uma função
     // que sempre devolve a mesma string passaria no teste positivo abaixo por vacuidade.
@@ -125,7 +125,7 @@ describe('SALON_BINDING_V1 — compiledFromHash é determinístico', () => {
     expect(h1).toBe(h2);
   });
 
-  it('SALON_BINDING_V1.compiledFromHash bate com um recálculo independente do MESMO snapshot', () => {
+  it('SALE_BINDING_V1.compiledFromHash bate com um recálculo independente do MESMO snapshot', () => {
     const recomputed = computeCompiledFromHash(
       {
         'sale.finalized': ['amount', 'revenueByNature', 'dimension'],
@@ -147,6 +147,6 @@ describe('SALON_BINDING_V1 — compiledFromHash é determinístico', () => {
         { code: '4.2', nature: 'Expense', acceptsEntries: true },
       ],
     );
-    expect(SALON_BINDING_V1.compiledFromHash).toBe(recomputed);
+    expect(SALE_BINDING_V1.compiledFromHash).toBe(recomputed);
   });
 });

@@ -3,10 +3,10 @@ import type { LancamentoArchetype } from '../models/types';
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `revenue_recognition`
  * ('reconhecimento-receita' no dossiê). Extraído 1:1 de
- * `server/src/features/accounting/sync/mappers/SalonSaleFinalizedMapper.ts` +
+ * `server/src/features/accounting/sync/mappers/SaleFinalizedMapper.ts` +
  * `revenueSplit.ts` (`P1-DOSSIER-arquetipos.md` §2.1).
  *
- *   Débito  controle-recebível   = amount            (SalonSaleFinalizedMapper.ts:22,60)
+ *   Débito  controle-recebível   = amount            (SaleFinalizedMapper.ts:22,60)
  *   Crédito receita-serviço      = amount (split)     (revenueSplit.ts:22,50)
  *   Crédito receita-revenda      = amount (split, opcional se cair a zero) (revenueSplit.ts:23,53)
  *
@@ -31,7 +31,7 @@ export const revenueRecognitionArchetype: LancamentoArchetype = {
     {
       name: 'amount',
       type: 'moneyReais',
-      // Guards do mapper original (SalonSaleFinalizedMapper.ts:32-47) — nomeados aqui, aplicados
+      // Guards do mapper original (SaleFinalizedMapper.ts:32-47) — nomeados aqui, aplicados
       // pelo intérprete fixo (F-P1-4a): número finito → round(*100) → safe-integer → > 0.
       guards: ['isFinite', 'round', 'isSafeInteger', 'positive'],
     },

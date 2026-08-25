@@ -17,7 +17,7 @@ import { CRM_LEGACY_SOURCE_TYPE } from '../sync/AccountingSyncPort';
 
 /**
  * `1.1.2 A Receber` — conta-controle do contas-a-receber de PDV (salão). Os mappers do
- * AccountingSync a referenciam por código (SalonSale*Mapper / SalonPackageSoldMapper);
+ * AccountingSync a referenciam por código (Sale*Mapper / SalePackageSoldMapper);
  * resolvida aqui por LOOKUP no plano (findByCode), nunca por id.
  */
 export const POS_RECEIVABLE_CODE = '1.1.2';

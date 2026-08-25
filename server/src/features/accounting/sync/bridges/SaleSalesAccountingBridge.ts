@@ -1,7 +1,7 @@
 /**
- * SalonSalesAccountingBridge — Incremento C integration seam (ADR-C01).
+ * SaleSalesAccountingBridge — Incremento C integration seam (ADR-C01).
  *
- * Turns a finalized salon sale (a DynamicTable `sales` row) into a revenue journal
+ * Turns a finalized sale (a DynamicTable `sales` row) into a revenue journal
  * entry via AccountingSync. It lives in the accounting (Prisma first-class) world and
  * is invoked POST-COMMIT from the DynamicTable controller (create/update handlers) —
  * NEVER inside DynamicTableService, RuleContext or a RulePlugin (§2.1 boundary). No
@@ -17,10 +17,10 @@ import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { scopeDay } from '../../models/dates';
-import { buildSalonSaleCogsEvent, buildSalonSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { loadSalePackageInfo } from './salonSaleItems';
+import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
+import { loadSalePackageInfo } from './saleItems';
 import type { AccountingScope } from '../../scope/AccountingScope';
-import type { ProductLine } from './salonSaleItems';
+import type { ProductLine } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -29,14 +29,14 @@ interface SaleRow {
 }
 
 /**
- * If `row` is a finalized sale in the BeautySalon `sales` table, book its revenue.
+ * If `row` is a finalized sale in the `sales` table, book its revenue.
  * Returns silently (no throw) for every non-applicable case and swallows sync errors.
  *
  * @param actor  authenticated user context (owner === actor today; tenancy unchanged)
  * @param tableId the DynamicTable id the row was written to (from the route param)
  * @param row    the created/updated data row (id = saleId, data = the sale fields)
  */
-export async function maybeSyncSalonSaleFinalized(
+export async function maybeSyncSaleFinalized(
   actor: { userId: string },
   tableId: string,
   row: SaleRow,
@@ -48,7 +48,7 @@ export async function maybeSyncSalonSaleFinalized(
     // ignored. Cancelled/Returned are out of scope (Incremento D).
     if (data.status !== 'Finalized') return;
 
-    // Boundary gate: confirm this tableId is THIS tenant's salon `sales` table, without
+    // Boundary gate: confirm this tableId is THIS tenant's `sales` table, without
     // touching the DynamicTable engine — one indexed lookup by internalName, then id
     // match (so we never act on an unrelated table the user happens to own).
     const repo = getFactory().getDynamicTableRepository();
@@ -68,7 +68,7 @@ export async function maybeSyncSalonSaleFinalized(
     // Never default/infer the unit — only post within the sale's own unit (§2 tenancy).
     const unitId = typeof data.unitId === 'string' ? data.unitId : '';
     if (!unitId) {
-      logger.warn('Salon sale Finalized without unitId — accounting sync skipped', {
+      logger.warn('Sale Finalized without unitId — accounting sync skipped', {
         saleId: row.id,
       });
       return;
@@ -78,7 +78,7 @@ export async function maybeSyncSalonSaleFinalized(
     // to integer cents; guarding here keeps obviously-bad rows out of the error path.
     const totalAmount = data.totalAmount;
     if (typeof totalAmount !== 'number' || !Number.isFinite(totalAmount) || totalAmount <= 0) {
-      logger.warn('Salon sale Finalized with invalid totalAmount — accounting sync skipped', {
+      logger.warn('Sale Finalized with invalid totalAmount — accounting sync skipped', {
         saleId: row.id,
       });
       return;
@@ -89,7 +89,7 @@ export async function maybeSyncSalonSaleFinalized(
     // dia-calendário ⇒ passa intacto); o fallback é "agora", que sem fuso postaria em D+1 à noite.
     const scope = resolveAccountingScope(actor, unitId);
     const occurredAt = scopeDay(scope, typeof data.date === 'string' ? data.date : undefined);
-    const event = buildSalonSaleFinalizedEvent({
+    const event = buildSaleFinalizedEvent({
       saleId: row.id,
       unitId,
       amount: totalAmount,
@@ -104,7 +104,7 @@ export async function maybeSyncSalonSaleFinalized(
     // AFTER revenue succeeds, in its OWN try/catch — a CMV failure must NOT undo or re-drive the
     // already-posted revenue (the reconcile job re-drives CMV independently, idempotent by
     // read-first + @@unique). Only product lines carry COGS; a pure-service sale has none.
-    await maybeSyncSalonSaleCogs(scope, row.id, unitId, currency, occurredAt, saleInfo.productLines);
+    await maybeSyncSaleCogs(scope, row.id, unitId, currency, occurredAt, saleInfo.productLines);
   } catch (syncError) {
     // Skip ONLY on the shared specific-code list (period-closed / MAX_CENTS poison) — never on a
     // base error class. syncSkipErrorCode reads AppError.errorCode; the old inline check read a
@@ -118,7 +118,7 @@ export async function maybeSyncSalonSaleFinalized(
       });
       return;
     }
-    logger.error('AccountingSync (salon sale finalized) failed — left for reconciliation', {
+    logger.error('AccountingSync (sale finalized) failed — left for reconciliation', {
       saleId: row.id,
       error: syncError instanceof Error ? syncError.message : String(syncError),
     });
@@ -128,14 +128,14 @@ export async function maybeSyncSalonSaleFinalized(
 /**
  * Book the cost-of-goods (CMV) for a finalized sale's product lines (Body 2 / O-2). Runs the
  * subledger baixa (tx1, `InventoryService.recordSaleCogs` — moving-average, atomic CAS) and, if it
- * yields cost, emits `sale.cogs` so `SalonSaleCogsMapper` posts the razão (tx2, D 4.2 / C
+ * yields cost, emits `sale.cogs` so `SaleCogsMapper` posts the razão (tx2, D 4.2 / C
  * 1.1.6). SELF-CONTAINED try/catch and non-fatal: a CMV failure (insufficient stock, period closed,
  * posting down) is logged for the reconcile job and NEVER propagates to unwind the revenue entry
  * that already committed.
  *
  * No emission when there are no product lines (a pure-service sale) or the computed cost is 0.
  */
-async function maybeSyncSalonSaleCogs(
+async function maybeSyncSaleCogs(
   scope: AccountingScope,
   saleId: string,
   unitId: string,
@@ -155,7 +155,7 @@ async function maybeSyncSalonSaleCogs(
       });
     if (totalCogsCents <= 0) return; // replay/zero cost → nothing to post.
 
-    const cogsEvent = buildSalonSaleCogsEvent({
+    const cogsEvent = buildSaleCogsEvent({
       saleId,
       unitId,
       costCents: totalCogsCents,
@@ -173,7 +173,7 @@ async function maybeSyncSalonSaleCogs(
       });
       return;
     }
-    logger.error('AccountingSync (salon sale CMV) failed — left for reconciliation', {
+    logger.error('AccountingSync (sale CMV) failed — left for reconciliation', {
       saleId,
       error: cogsError instanceof Error ? cogsError.message : String(cogsError),
     });

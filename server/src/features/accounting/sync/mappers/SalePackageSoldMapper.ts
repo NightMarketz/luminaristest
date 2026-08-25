@@ -14,7 +14,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  * `sale.settled` flow. Distinct sourceType keeps it isolated from the gated-out
  * `sale.finalized` revenue entry on the @@unique idempotency key.
  */
-export class SalonPackageSoldMapper implements IAccountingEventMapper {
+export class SalePackageSoldMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.package.sold' as const;
 
   /** Leaf account codes (canonical chart). */
@@ -22,7 +22,7 @@ export class SalonPackageSoldMapper implements IAccountingEventMapper {
   private static readonly CREDIT_ACCOUNT = '2.1.1'; // Pacotes Pré-pagos (liability)
 
   public map(event: AccountingEvent): PostEntryInput {
-    // MONEY BOUNDARY (Contract §2.1). The salon `totalAmount` is a JSON float in reais;
+    // MONEY BOUNDARY (Contract §2.1). The sale `totalAmount` is a JSON float in reais;
     // accounting stores integer cents. Convert here, exactly once, with hard guards.
     const amount = event.amount;
     if (typeof amount !== 'number' || !Number.isFinite(amount)) {
@@ -49,8 +49,8 @@ export class SalonPackageSoldMapper implements IAccountingEventMapper {
       sourceType: event.sourceType,
       sourceId: event.sourceId,
       lines: [
-        { accountCode: SalonPackageSoldMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
-        { accountCode: SalonPackageSoldMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
+        { accountCode: SalePackageSoldMapper.DEBIT_ACCOUNT, debitCents: amountCents, creditCents: 0 },
+        { accountCode: SalePackageSoldMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
       ],
     };
   }

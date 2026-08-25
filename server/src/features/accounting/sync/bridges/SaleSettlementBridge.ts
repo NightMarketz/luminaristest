@@ -1,13 +1,13 @@
 /**
- * SalonSaleSettlementBridge — Incremento D / D1 integration seam (baixa de A Receber).
+ * SaleSettlementBridge — Incremento D / D1 integration seam (baixa de A Receber).
  *
- * Turns a Finalized + Paid salon sale (a DynamicTable `sales` row) into the settlement journal
+ * Turns a Finalized + Paid sale (a DynamicTable `sales` row) into the settlement journal
  * entry via AccountingSync. It lives in the accounting (Prisma first-class) world and is invoked
  * POST-COMMIT from RegisterPaymentService (the pay transition) and from the DynamicTable controller
  * `create` handler (a sale born Finalized+Paid) — NEVER inside DynamicTableService, RuleContext or
  * a RulePlugin (§2.1 boundary). No accounting code crosses into features/dynamicTables.
  *
- * Mirrors maybeSyncSalonSaleFinalized (seam C): best-effort and non-fatal — a sync failure must
+ * Mirrors maybeSyncSaleFinalized (seam C): best-effort and non-fatal — a sync failure must
  * NOT undo the payment; the reconciliation pass re-drives it idempotently. Idempotency is
  * delegated entirely to PostingService (@@unique[userId,unitId,sourceType,sourceId]); this bridge
  * has NO idempotency pre-check (G3).
@@ -23,8 +23,8 @@ import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { scopeDay } from '../../models/dates';
-import { buildSalonSaleSettledEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { isAllPackageSale } from './salonSaleItems';
+import { buildSaleSettledEvent, syncSkipErrorCode } from '../AccountingSyncPort';
+import { isAllPackageSale } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -40,7 +40,7 @@ interface SaleRow {
  * @param tableId the DynamicTable id the row belongs to (authoritative — from the caller)
  * @param row     the created/updated data row (id = saleId, data = the sale fields)
  */
-export async function maybeSyncSalonSaleSettled(
+export async function maybeSyncSaleSettled(
   actor: { userId: string },
   tableId: string,
   row: SaleRow,
@@ -52,7 +52,7 @@ export async function maybeSyncSalonSaleSettled(
     // (still Pending, or not Finalized) is out of scope and never even hits the table lookup.
     if (data.status !== 'Finalized' || data.paymentStatus !== 'Paid') return;
 
-    // Boundary gate (identical to seam C): confirm this tableId is THIS tenant's salon `sales`
+    // Boundary gate (identical to seam C): confirm this tableId is THIS tenant's `sales`
     // table, without touching the DynamicTable engine — one indexed lookup by internalName, then
     // id + category match.
     const repo = getFactory().getDynamicTableRepository();
@@ -62,14 +62,14 @@ export async function maybeSyncSalonSaleSettled(
     // Never default/infer the unit — only post within the sale's own unit (§2 tenancy).
     const unitId = typeof data.unitId === 'string' ? data.unitId : '';
     if (!unitId) {
-      logger.warn('Salon sale settled without unitId — accounting sync skipped', { saleId: row.id });
+      logger.warn('Sale settled without unitId — accounting sync skipped', { saleId: row.id });
       return;
     }
 
     // totalAmount must be a finite positive number. The mapper re-validates and converts to cents.
     const totalAmount = data.totalAmount;
     if (typeof totalAmount !== 'number' || !Number.isFinite(totalAmount) || totalAmount <= 0) {
-      logger.warn('Salon sale settled with invalid totalAmount — accounting sync skipped', {
+      logger.warn('Sale settled with invalid totalAmount — accounting sync skipped', {
         saleId: row.id,
       });
       return;
@@ -78,7 +78,7 @@ export async function maybeSyncSalonSaleSettled(
     // paymentMethod chooses the debit account in the mapper — a Paid sale without it cannot settle.
     const paymentMethod = typeof data.paymentMethod === 'string' ? data.paymentMethod : '';
     if (!paymentMethod) {
-      logger.warn('Salon sale settled without paymentMethod — accounting sync skipped', {
+      logger.warn('Sale settled without paymentMethod — accounting sync skipped', {
         saleId: row.id,
       });
       return;
@@ -104,7 +104,7 @@ export async function maybeSyncSalonSaleSettled(
       return;
     }
 
-    const event = buildSalonSaleSettledEvent({
+    const event = buildSaleSettledEvent({
       saleId: row.id,
       unitId,
       amount: totalAmount,
@@ -138,7 +138,7 @@ export async function maybeSyncSalonSaleSettled(
       });
       return;
     }
-    logger.error('AccountingSync (salon sale settled) failed — left for reconciliation', {
+    logger.error('AccountingSync (sale settled) failed — left for reconciliation', {
       saleId: row.id,
       error: syncError instanceof Error ? syncError.message : String(syncError),
     });

@@ -20,7 +20,7 @@ import type { IAccountingEventMapper } from './IAccountingEventMapper';
  *   Credit Card     → 1.1.4 (A Receber Cartão / Adquirente)  ← acquirer fee is Incremento F
  *   Package Balance → 2.1.1 (Pacotes Pré-pagos, Liability)   ← NEVER cash (D1-Q10)
  */
-export class SalonSaleSettledMapper implements IAccountingEventMapper {
+export class SaleSettledMapper implements IAccountingEventMapper {
   public readonly sourceType = 'sale.settled' as const;
 
   /** A settlement always credits the receivable leaf — symmetric to the revenue debit. */
@@ -38,11 +38,11 @@ export class SalonSaleSettledMapper implements IAccountingEventMapper {
     Pix: '1.1.1', // Banco
     'Debit Card': '1.1.4', // A Receber Cartão / Adquirente
     'Credit Card': '1.1.4', // A Receber Cartão / Adquirente
-    'Package Balance': SalonSaleSettledMapper.PREPAID_LIABILITY_ACCOUNT,
+    'Package Balance': SaleSettledMapper.PREPAID_LIABILITY_ACCOUNT,
   };
 
   public map(event: AccountingEvent): PostEntryInput {
-    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1) — identical to SalonSaleFinalizedMapper. The salon
+    // MONEY BOUNDARY (Contract §2.1 / AC-2.2-1) — identical to SaleFinalizedMapper. The sale
     // `totalAmount` is a JSON float in reais; accounting stores integer cents. Convert here, exactly
     // once, with hard guards — the single point where float imprecision could re-enter the
     // exact-integer money path.
@@ -74,7 +74,7 @@ export class SalonSaleSettledMapper implements IAccountingEventMapper {
         `Liquidação sem forma de pagamento (venda '${event.sourceId}') — não é possível escolher a conta de débito.`,
       );
     }
-    const debitAccount = SalonSaleSettledMapper.DEBIT_ACCOUNT_BY_METHOD[method];
+    const debitAccount = SaleSettledMapper.DEBIT_ACCOUNT_BY_METHOD[method];
     if (!debitAccount) {
       throw new ValidationError(
         `Forma de pagamento '${method}' não mapeada para conta de débito (venda '${event.sourceId}').`,
@@ -82,7 +82,7 @@ export class SalonSaleSettledMapper implements IAccountingEventMapper {
     }
     // Defensive (D1-Q10): Package Balance must resolve to the prepaid liability, never anything
     // else. If the constant is ever cleared, fail loudly instead of mis-booking to cash.
-    if (method === 'Package Balance' && debitAccount !== SalonSaleSettledMapper.PREPAID_LIABILITY_ACCOUNT) {
+    if (method === 'Package Balance' && debitAccount !== SaleSettledMapper.PREPAID_LIABILITY_ACCOUNT) {
       throw new ValidationError(
         `blocked_missing_prepaid_liability_account: liquidação de Package Balance exige a conta de passivo de adiantamento (venda '${event.sourceId}').`,
       );
@@ -96,7 +96,7 @@ export class SalonSaleSettledMapper implements IAccountingEventMapper {
       sourceId: event.sourceId,
       lines: [
         { accountCode: debitAccount, debitCents: amountCents, creditCents: 0 },
-        { accountCode: SalonSaleSettledMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
+        { accountCode: SaleSettledMapper.CREDIT_ACCOUNT, debitCents: 0, creditCents: amountCents },
       ],
     };
   }

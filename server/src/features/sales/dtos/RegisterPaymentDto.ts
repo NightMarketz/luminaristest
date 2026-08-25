@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 /**
- * RegisterPaymentDto — input for the salon-sale payment transition (Incremento D / D1).
+ * RegisterPaymentDto — input for the sale payment transition (Incremento D / D1).
  *
  * This is the ONLY legitimate way to move a Finalized sale to paymentStatus='Paid': a dedicated
  * server-orchestrated service performs an isSystem write of a STRICT whitelist (paymentStatus,
  * paymentMethod, paidAt, paidByUserId, paymentReference). The settlement entry is booked POST-COMMIT
- * by SalonSaleSettlementBridge.
+ * by SaleSettlementBridge.
  *
  * `.strict()` is deliberate (trust boundary, G2): the request may carry ONLY these keys. Any attempt
  * to smuggle a frozen field (status/unitId/customerId/totalAmount/subtotal/discountAmount/taxAmount/

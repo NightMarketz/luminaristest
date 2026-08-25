@@ -906,10 +906,10 @@ model PayablePayment {
 }
 
 // Contas a Receber (INCR-AR / ADR-INCR-AR). MIRROR of Payable — the receivable subledger for
-// MANUALLY-entered customer invoices (avulsas). NOT for salon sales: the salon bridge already
-// books those to 1.1.2 A Receber (SalonSaleFinalizedMapper); a Receivable is a separate, distinct
+// MANUALLY-entered customer invoices (avulsas). NOT for sales: the sale bridge already
+// books those to 1.1.2 A Receber (SaleFinalizedMapper); a Receivable is a separate, distinct
 // record. Control account = the DEDICATED 1.1.5 Clientes a Receber (F7) so Σ open receivables
-// ties out to saldo(1.1.5) — a shared 1.1.2 would mix salon + avulsas and break the tie-out.
+// ties out to saldo(1.1.5) — a shared 1.1.2 would mix sales + avulsas and break the tie-out.
 // status: OPEN → RECEIVING → RECEIVED | CANCELLED (RECEIVING is the transient DB race-gate of the
 // double-receipt guard, D4; CANCELLED terminal). Business key dedupes the human record only; the
 // accounting idempotency lives in JournalEntry.@@unique([userId,unitId,sourceType,sourceId]).

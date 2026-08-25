@@ -134,7 +134,7 @@ async function maybeSyncOpportunityWon(
     const scope = resolveAccountingScope(user, unitId);
     await getFactory().getCrmReceivableBridge().bookWonOpportunity(scope, fact);
   } catch (syncError) {
-    // Same specific-code skip-list as the salon bridges (period-closed / MAX_CENTS poison) —
+    // Same specific-code skip-list as the sale bridges (period-closed / MAX_CENTS poison) —
     // never a base-class catch. The bridge's R2 period preflight surfaces here as a clean,
     // row-free defer. Anything else stays a loud error left for reconciliation.
     const skipCode = syncSkipErrorCode(syncError);

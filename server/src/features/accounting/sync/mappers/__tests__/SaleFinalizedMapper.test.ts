@@ -1,9 +1,9 @@
-import { SalonSaleFinalizedMapper } from '../SalonSaleFinalizedMapper';
+import { SaleFinalizedMapper } from '../SaleFinalizedMapper';
 import { ValidationError } from '../../../../../lib/errors';
 import type { AccountingEvent } from '../../AccountingSyncPort';
 
 /**
- * SalonSaleFinalizedMapper — the money boundary + chart-of-accounts mapping for
+ * SaleFinalizedMapper — the money boundary + chart-of-accounts mapping for
  * Incremento C. Verifies float→cents conversion guards and that the produced legs are
  * balanced against the canonical leaf accounts (1.1.2 debit / 3.1 credit) — the same
  * accounts as CRM revenue recognition, by ADR-C01.
@@ -21,8 +21,8 @@ function event(over: Partial<AccountingEvent> = {}): AccountingEvent {
   };
 }
 
-describe('SalonSaleFinalizedMapper', () => {
-  const mapper = new SalonSaleFinalizedMapper();
+describe('SaleFinalizedMapper', () => {
+  const mapper = new SaleFinalizedMapper();
 
   it('declares the sale.finalized sourceType', () => {
     expect(mapper.sourceType).toBe('sale.finalized');
