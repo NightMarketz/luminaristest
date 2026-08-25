@@ -77,7 +77,7 @@ de rodar; se o script não existir, é **BLOQUEADO**, não falha deste runbook.)
 
 Resultado esperado: saída indicando **zero arquivos** no perímetro (`features/dynamicTables/{services,
 repositories, policies, rules, validation, dtos, models, utils}`, `presets/PresetManager.ts`,
-`presets/ai/`, `presets/fields/`, núcleo de `features/accounting`, `features/accounting/sync/`,
+`presets/fields/`, núcleo de `features/accounting`, `features/accounting/sync/`,
 `features/accountingBinding/{archetypes,interpreter,models}`, `server/src/lib/factory.ts`,
 `server/src/controllers/dynamicTablesController.ts`) entre o commit pré-P2 e o commit atual.
 `presets/ai/PresetKnowledgeBase.ts` **fica fora** do zero-diff estrito (F-P2-10 → (c) — ele
