@@ -62,6 +62,18 @@
 > ativação é um **segundo caminho de escrita** (F-P2-7 → (a) o mantém vivo com registry), e gate só na
 > geração **não cobre** binding que nasce por CLI ou por migração. Decidir na execução do P2.
 >
+> **EMENDA 2026-08-25 (dono, via `AskUserQuestion`) — T0 da métrica DEFINIDO (pré-trabalho do
+> F-P2-4b, §6 passo 4).** O T0 do *time-to-first-ECD* é um **marco explícito persistido na mesma
+> transação do `installPresetAsSystem`** (ex.: coluna/evento `onboardingCompletedAt`) — o único fim
+> automático e one-shot do wizard hoje: `useAiInterview` dispara a criação do sistema quando
+> `nextStage === 'COMPLETED'`, e o `dashboardController` barra reinstalação com 403. Rejeitados no
+> levantamento (agente B4, read-only): `MIN(DynamicTable.createdAt)` (dedução implícita — quebra em
+> silêncio se nascer outro caminho de escrita na tabela), `User.createdAt` (o signup redireciona para
+> login, não para o wizard — mediria tempo ocioso que a fixture sintética do F-P2-2a jamais exporia) e
+> binding-ativo / primeiro período OPEN (CLI/bootstrap manual fora do wizard — mede o motor, não o
+> usuário). Nome e shape exatos do marco são decisão da execução do P2; a **âncora semântica está
+> fechada**.
+>
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
 >
@@ -91,7 +103,8 @@ runtime** — só: preset do setor + binding compilado na geração + (se precis
    produto**, não só no runbook — timestamp de onboarding → timestamp do 1º `EXPORT_SPED_ECD`,
    persistidos. **Pré-trabalho obrigatório:** o evento de T0 **não existe** hoje (o wizard termina em
    `COMPLETED` sem persistir marco nenhum) — criá-lo faz parte do P2, e o que conta como T0 tem de ser
-   definido antes de instrumentar.
+   definido antes de instrumentar. **DEFINIDO 2026-08-25 (dono):** marco explícito persistido na mesma
+   transação do `installPresetAsSystem` — ver emenda no cabeçalho.
 4. **EMENDA 2026-08-25 (F-P2-3 → (b)): a prova só fecha com import PVA-limpo da ECD do vertical 2.**
    Gerar o arquivo e passar os gates internos **não basta** — o PVA é o único oráculo que falseia a
    ECD. Consequência aceita pelo dono: o P2 passa a depender de **mais uma rodada humana de PVA**,
@@ -150,7 +163,8 @@ do dono) — o agente prepara o runbook em branco, não o preenche.
    item 2 e destrava a promoção deste ADR a **Accepted**.
 3. **Promover a Accepted** — decisão do dono. Alternativa conhecida: revogar a pré-condição por
    ratificação explícita, como já foi feito no ADR-P1 §9. **NÃO feito por padrão.**
-4. **Definir o T0 da métrica** (pré-trabalho do F-P2-4b, §2 item 3) antes de instrumentar.
+4. ✅ FEITO 2026-08-25 — **Definir o T0 da métrica** (pré-trabalho do F-P2-4b, §2 item 3): marco
+   explícito na tx do `installPresetAsSystem` (emenda no cabeçalho).
 5. Parecer do `luminaris-accounting-architect` quando o preset do setor esboçar contas novas por papel.
 6. Execução do P2 (sessão de feature) → runbooks humanos: prova + **PVA da ECD do vertical 2**
    (F-P2-3b) + o incremento diferido de plugar o `FieldCustomizationService` (F-P2-5, ADR próprio).
