@@ -39,7 +39,7 @@ critério que a prova mede.
 ## 1. Contexto e motivação
 
 O binding do vertical 1 (salão) vincula 5 `eventKey` no namespace `salon.*`
-([`salonBinding.ts:63-67,81,101,128,145,162`](../../server/src/features/accountingBinding/fixtures/salonBinding.ts)):
+([`salonBinding.ts:81,101,128,145,162`](../../server/src/features/accountingBinding/fixtures/salonBinding.ts)):
 
 | `eventKey` atual | Arquétipo | Emitido por |
 |---|---|---|
@@ -56,10 +56,13 @@ específicas do salão**: leem a tabela `sales`/`saleItems` por `internalName`
 citado no BRIEF do P2), então rodam **para qualquer preset** que use essas tabelas — inclusive o
 vertical 2 (`aestheticClinic`). Consequência verificada: se o binding da clínica não redeclarar
 literalmente `eventKey: 'salon.sale.finalized'`, o dispatcher não acha mapper e lança
-`ValidationError` — a ponte então **engole** esse erro e só loga `warn`
-([`SalonSalesAccountingBridge.ts:108`](../../server/src/features/accounting/sync/bridges/SalonSalesAccountingBridge.ts:108),
+`ValidationError` — a ponte então **engole** esse erro e loga em nível `error` (não `warn`: um
+`ValidationError` de mapper ausente não bate nenhum código de `SYNC_SKIP_ERROR_CODES` em
+[`AccountingSyncPort.ts:91`](../../server/src/features/accounting/sync/AccountingSyncPort.ts:91) —
+só `ACCOUNTING_PERIOD_NOT_OPEN`/`MAX_CENTS_EXCEEDED` caem no ramo `warn`; o catch está em
+[`SalonSalesAccountingBridge.ts:108-125`](../../server/src/features/accounting/sync/bridges/SalonSalesAccountingBridge.ts:108),
 achado do BRIEF do P2, comportamento 5) — a venda grava, o lançamento contábil não nasce, o HTTP
-devolve 200. Um vocabulário `salon.*` sobrevivendo no vertical 2 não é cosmético: é uma ECD
+devolve 200, e fica "left for reconciliation". Um vocabulário `salon.*` sobrevivendo no vertical 2 não é cosmético: é uma ECD
 silenciosamente incompleta por construção.
 
 **Por que agora, e não dentro do P2:** `features/accounting/sync/**` é um dos quatro caminhos do
