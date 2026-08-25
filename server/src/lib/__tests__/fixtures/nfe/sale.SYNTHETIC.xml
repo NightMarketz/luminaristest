@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC-FIXTURE-NOT-REAL: NF-e 4.00 de VENDA construída à mão, ancorada em F0-2.
+     NÃO é uma nota real. Serve ao caminho de reconciliação de venda (cruza com a venda de
+     salão já lançada por saleId explícito; NÃO re-lança). Substituir por nota real anonimizada
+     e remover este marcador para destravar o merge (ver nfe-fixture-provenance.test.ts). -->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe>
+    <infNFe Id="NFe35250798765432000155550010000000021000000025" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cNF>00000002</cNF>
+        <natOp>VENDA DE MERCADORIA</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>2</nNF>
+        <dhEmi>2025-07-11T14:05:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+        <idDest>1</idDest>
+        <tpAmb>1</tpAmb>
+        <finNFe>1</finNFe>
+      </ide>
+      <emit>
+        <CNPJ>98765432000155</CNPJ>
+        <xNome>SALAO EXEMPLO LTDA</xNome>
+        <IE>222222222222</IE>
+      </emit>
+      <dest>
+        <CPF>18564071878</CPF>
+        <xNome>CONSUMIDOR EXEMPLO</xNome>
+      </dest>
+      <det nItem="1">
+        <prod>
+          <cProd>SHAMP-500</cProd>
+          <cEAN>7891234567890</cEAN>
+          <xProd>Shampoo Profissional 500ml</xProd>
+          <NCM>33051000</NCM>
+          <CFOP>5102</CFOP>
+          <uCom>UN</uCom>
+          <qCom>1.0000</qCom>
+          <vUnCom>29.9000000000</vUnCom>
+          <vProd>29.90</vProd>
+          <indTot>1</indTot>
+        </prod>
+        <imposto>
+          <ICMS><ICMS00><vICMS>5.38</vICMS></ICMS00></ICMS>
+        </imposto>
+      </det>
+      <total>
+        <ICMSTot>
+          <vBC>29.90</vBC>
+          <vICMS>5.38</vICMS>
+          <vICMSDeson>0.00</vICMSDeson>
+          <vBCST>0.00</vBCST>
+          <vST>0.00</vST>
+          <vProd>29.90</vProd>
+          <vFrete>0.00</vFrete>
+          <vSeg>0.00</vSeg>
+          <vDesc>0.00</vDesc>
+          <vIPI>0.00</vIPI>
+          <vOutro>0.00</vOutro>
+          <vNF>29.90</vNF>
+        </ICMSTot>
+      </total>
+    </infNFe>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <tpAmb>1</tpAmb>
+      <verAplic>SP_NFE_PL_009</verAplic>
+      <chNFe>35250798765432000155550010000000021000000025</chNFe>
+      <dhRecbto>2025-07-11T14:06:03-03:00</dhRecbto>
+      <nProt>135250000000025</nProt>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

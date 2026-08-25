@@ -27,14 +27,34 @@ export const PAYMENT_STATUSES = ['ACTIVE', 'CANCELLED'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 /**
- * Inventory-purchase predicate (INCR-INVENTORY D3(b)). A Payable is a merchandise-for-resale purchase
- * when it carries BOTH `inventoryProductRef` and `inventoryQty` (the DTO XOR gate guarantees these
- * arrive together and mutually exclusive with `expenseAccountId`). Such a payable debits `1.1.6
- * Estoques` instead of an expense leaf and drives a `StockMovement` INBOUND at `amountCents`. The
- * service branches every posting path (create, reconcile re-drive, cancel) on this predicate so the
- * `expenseAccountId=null` row is never treated as a dangling expense payable.
+ * Inventory-purchase predicate (INCR-INVENTORY D3(b) + BE-INCR-NFE F0-1b). A Payable debits `1.1.6
+ * Estoques` (instead of an expense leaf) when it is EITHER:
+ *   - a SINGLE-SKU inventory purchase — carries BOTH `inventoryProductRef` and `inventoryQty` (the
+ *     original INCR-INVENTORY shape; one StockMovement INBOUND at `amountCents`), OR
+ *   - a MULTI-ITEM NF-e purchase (F-NFE7→a) — carries `inventoryMultiItem = true`; the total liability
+ *     lives on the row while the per-SKU breakdown lives OUTSIDE it (N StockMovement INBOUND driven by
+ *     the create path, sourceId=payableId). In this mode `inventoryProductRef`/`inventoryQty` are null
+ *     (there is no single SKU), so the flag — not a sentinel productRef — is what routes the debit.
+ * Either way the recognition debit is 1.1.6 and `expenseAccountId` is null. The service branches every
+ * posting path (create, reconcile re-drive, cancel) on this predicate so an `expenseAccountId=null`
+ * inventory row is never treated as a dangling expense payable. Use `hasSingleInventorySku` to tell the
+ * two inventory shapes apart where the single-SKU columns are actually consumed.
  */
 export function isInventoryPurchase(payable: {
+  inventoryProductRef?: string | null;
+  inventoryQty?: number | null;
+  inventoryMultiItem?: boolean | null;
+}): boolean {
+  return hasSingleInventorySku(payable) || payable.inventoryMultiItem === true;
+}
+
+/**
+ * SINGLE-SKU inventory shape (INCR-INVENTORY D3(b)): the row itself carries the one product+qty that
+ * the create/reconcile paths receive as a single StockMovement. FALSE for a multi-item NF-e purchase
+ * (whose SKUs live in the driven movements, not on the row) — so a multi-item row is never fed to
+ * `receiveStock` with a null `inventoryProductRef`.
+ */
+export function hasSingleInventorySku(payable: {
   inventoryProductRef?: string | null;
   inventoryQty?: number | null;
 }): boolean {

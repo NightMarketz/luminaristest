@@ -43,7 +43,8 @@ const { options } = require('../../scripts/generate-openapi');
 // `AuditService.verifyAuditChain`, path novo dedicado (142 → 143).
 // +1 (BE-INCR-SPED-ECF-FASE3, esqueleto — Fork 1→(b) rota dedicada): POST
 //    /api/accounting/sped/ecf/real/generate (143 → 144).
-const BASELINE = 144;
+// +2 (BE-INCR-NFE, B-2): POST /api/nfe/purchase, POST /api/nfe/sale (144 → 146).
+const BASELINE = 146;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
