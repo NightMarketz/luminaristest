@@ -49,9 +49,17 @@ const SALON_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
   { code: '4.2', nature: 'Expense', acceptsEntries: true }, // Custo das Mercadorias Vendidas
 ];
 
-/** Schema operacional representativo — só os campos que algum `fieldSlot` abaixo referencia
- *  (`event.*`, mesmo caminho que os mappers leem de `AccountingEvent`). */
-const SALON_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
+/**
+ * Schema operacional representativo — só os campos que algum `fieldSlot` abaixo referencia
+ * (`event.*`, mesmo caminho que os mappers leem de `AccountingEvent`). EXPORTADO (BE-INCR-
+ * BINDING-FEEDER, F-FEEDER-6b) — `BindingValidationService.validate()` não lê este campo (só
+ * alimenta `computeCompiledFromHash`, confirmado em disco: nenhum `operationalSchema` aparece em
+ * `BindingValidationService.ts`), então é seguro para o script de migração de dado
+ * (`server/src/jobs/activateAccountingBindingCli.ts`) reusar — ele descreve o SHAPE do evento por
+ * versão de binding, não dado do tenant (o `chart`, esse sim, o script lê do banco REAL, nunca
+ * daqui — ver `SALON_CHART_SNAPSHOT` acima, que continua interno/não exportado).
+ */
+export const SALON_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
   'salon.sale.finalized': ['amount', 'revenueByNature', 'dimension'],
   'salon.sale.settled': ['amount', 'paymentMethod', 'dimension'],
   'salon.sale.returned': ['amount', 'dimension'],

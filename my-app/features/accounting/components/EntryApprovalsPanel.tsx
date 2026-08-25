@@ -9,12 +9,19 @@ import { accountingService, type Account } from '../../../lib/services/accountin
 import { dimensionsService, type DimensionCatalogEntry } from '../../../lib/services/dimensions.service';
 import { Modal } from '../../../components/ui/Modal';
 import { JournalEntryModal, type AccountOption, type JournalEntryDraftValue } from './JournalEntryModal';
+import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
+
+// Server-side page size for the "Aguardando aprovação" queue (FRENTE 5 fix). This
+// section has its own status-scoped endpoint (`/entry-approvals/pending`,
+// findManyByStatus) with a real per-status `total`, so it CAN be paginated safely.
+// "Rascunhos" below is a DIFFERENT case — see the ponytail note at its fetch site.
+const PENDING_PER_PAGE = 50;
 
 function totalDebit(entry: ApprovalEntry): number {
   return entry.postings.reduce((s, p) => s + p.debitCents, 0);
@@ -122,9 +129,11 @@ interface SectionProps {
   emptyLabel: string;
   entries: ApprovalEntry[];
   renderActions: (entry: ApprovalEntry) => React.ReactNode;
+  /** Optional server-side pagination control, rendered under the table (mirrors AP/AR). */
+  pagination?: React.ReactNode;
 }
 
-function EntrySection({ heading, note, emptyLabel, entries, renderActions }: SectionProps) {
+function EntrySection({ heading, note, emptyLabel, entries, renderActions, pagination }: SectionProps) {
   const { t } = useTranslation('accounting');
   return (
     <section className="space-y-2">
@@ -155,6 +164,7 @@ function EntrySection({ heading, note, emptyLabel, entries, renderActions }: Sec
               ))}
             </tbody>
           </table>
+          {pagination}
         </div>
       )}
     </section>
@@ -202,6 +212,8 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
   const { t, tRef } = useAccountingT();
   const [drafts, setDrafts] = useState<ApprovalEntry[]>([]);
   const [pending, setPending] = useState<ApprovalEntry[]>([]);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [pendingPage, setPendingPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -224,17 +236,23 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
     setLoading(true);
     setError(null);
     try {
-      // The pending queue has its own endpoint; drafts do NOT — `/entry-approvals/pending` is
-      // PendingApproval-only, so the drafts come from the general entry list filtered client-side.
-      // ponytail: one page of 200 (backend max). Ceiling — a unit with >200 entries can push an
-      // old draft off this page; upgrade path is a `status` filter on GET /accounting/entries.
+      // The pending queue has its own status-scoped endpoint (`/entry-approvals/pending`,
+      // findManyByStatus) with a real per-status `total` — paginated below via StandardPagination.
+      // Drafts do NOT have that: GET /accounting/entries has no `status` filter and its `total`
+      // counts ALL statuses, not just Draft (PostingDto.ts ListEntriesQuerySchema; PostingService
+      // .listEntries → journalEntryRepo.findManyByUnit). ponytail: one page of 200 (backend max)
+      // remains for drafts — a unit with >200 entries can push an old draft off this page.
+      // Upgrade path: add a `status` filter to GET /accounting/entries (the repository already
+      // has a status-scoped read, `findManyByStatus` — JournalEntryRepository.ts:99 — it just
+      // isn't wired to this endpoint yet) so drafts can get their own total and be paginated too.
       const [all, queue] = await Promise.all([
         accountingService.listEntries({ unitId, limit: 200 }),
-        entryApprovalsService.listPending({ unitId, limit: 200 }),
+        entryApprovalsService.listPending({ unitId, page: pendingPage, limit: PENDING_PER_PAGE }),
       ]);
       const nextDrafts = all.entries.filter((e) => e.status === 'Draft');
       setDrafts(nextDrafts);
       setPending(queue.entries);
+      setPendingTotal(queue.total);
       return { drafts: nextDrafts, pending: queue.entries };
     } catch (err: unknown) {
       setError(
@@ -244,7 +262,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
     } finally {
       setLoading(false);
     }
-  }, [unitId, tRef]);
+  }, [unitId, tRef, pendingPage]);
 
   useEffect(() => {
     void fetchAll();
@@ -298,7 +316,15 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
         });
       }
       setAction(null);
-      await fetchAll();
+      // approve/reject REMOVE the row from the pending queue (unlike submit, which only adds
+      // to it) — if it was the last page's only row, refetching the same page returns empty
+      // even though earlier pages still hold real rows. Step back a page instead, mirroring
+      // ReconciliationPanel's handleConfirmDelete.
+      if ((action.type === 'approve' || action.type === 'reject') && pending.length === 1 && pendingPage > 1) {
+        setPendingPage((p) => p - 1);
+      } else {
+        await fetchAll();
+      }
       // approve == post (F5): only that command moves the ledger.
       if (action.type === 'approve') onLedgerChange?.();
     } catch (err: unknown) {
@@ -434,6 +460,16 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
             )}
             emptyLabel={t('approvals.pending.empty', 'Nenhum lançamento aguardando aprovação.')}
             entries={pending}
+            pagination={
+              <StandardPagination
+                currentPage={pendingPage}
+                totalPages={Math.max(1, Math.ceil(pendingTotal / PENDING_PER_PAGE))}
+                totalItems={pendingTotal}
+                itemsPerPage={PENDING_PER_PAGE}
+                onPageChange={setPendingPage}
+                scrollToTop={false}
+              />
+            }
             renderActions={(entry) => (
               <>
                 <button

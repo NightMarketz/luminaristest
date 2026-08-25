@@ -296,4 +296,54 @@ describe('EntryApprovalsPanel', () => {
       ),
     );
   });
+
+  // FRENTE 5: the pending queue now has real server-side pagination — it has its own
+  // status-scoped endpoint with a per-status `total` (unlike drafts, which stay on the
+  // single capped page — see the ponytail note at the fetch site).
+  it('paginates the pending queue server-side: "Next" requests page=2', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [pending], total: 51 });
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument());
+    expect(entryApprovalsService.listPending).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, limit: 50 }),
+    );
+
+    fireEvent.click(screen.getByTitle('Next'));
+
+    await waitFor(() =>
+      expect(entryApprovalsService.listPending).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+      ),
+    );
+  });
+
+  it('approving the last row on a page beyond page 1 steps back a page instead of showing a false empty state', async () => {
+    const pendingPage2 = entry({ id: 'e-pending-2', status: 'PendingApproval', version: 1, submittedById: 'o1' });
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.listPending)
+      .mockResolvedValueOnce({ entries: [pending], total: 51 }) // page 1
+      .mockResolvedValueOnce({ entries: [pendingPage2], total: 51 }) // page 2 (its only row)
+      .mockResolvedValue({ entries: [pending], total: 50 }); // back on page 1 after approve
+    vi.mocked(entryApprovalsService.approve).mockResolvedValue(pendingPage2);
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTitle('Next'));
+    await waitFor(() => expect(entryApprovalsService.listPending).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByText('Aprovar'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Aprovar e postar' }));
+
+    await waitFor(() => expect(entryApprovalsService.approve).toHaveBeenCalledTimes(1));
+    // The 3rd fetch must ask for page 1 again — never resend page 2 (which would come back
+    // empty and read as "no pending entries" even though page 1 still has real rows).
+    await waitFor(() =>
+      expect(entryApprovalsService.listPending).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 1 }),
+      ),
+    );
+  });
 });

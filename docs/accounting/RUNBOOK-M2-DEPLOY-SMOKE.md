@@ -1,20 +1,29 @@
 # RUNBOOK: M2 — 1º deploy real + Chromium smoke-launch-gate
 
 > Preparado por agente em 2026-08-17 (runbook EM BRANCO — `docs/operating-manual/RUNBOOK-FORMAT.md`).
-> Este é o único item do Bloco A que depende de uma DECISÃO ainda não tomada (alvo de deploy).
-> Sem alvo decidido, o desfecho honesto é BLOQUEADO — e o Bloco A não fecha sem ele.
+> **Atualizado 2026-08-22** — o dono ratificou a topologia de deploy via `AskUserQuestion`
+> (`docs/adr/ADR-M2-deploy-topology.md`, Status: Accepted). A pré-condição de alvo abaixo deixou de
+> ser "decisão inexistente"; falta só o provisionamento concreto — ver o item atualizado.
 
 Executor: [nome — humano]           Data: [____]
-Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5.1 Bloco A item 5.
+Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5.1 Bloco A item 5 +
+`ADR-M2-deploy-topology.md` (topologia ratificada 2026-08-22).
 Pré-condições (verificar antes de começar):
-- **Alvo de deploy decidido e provisionado** (host, forma de processo, onde vive o SQLite com
-  WAL + busy_timeout — decisão do dono; hoje inexistente).
+- **Alvo de deploy: CLASSE decidida, host concreto ainda por PROVISIONAR.** `ADR-M2-deploy-topology.md`
+  ratificou: VPS própria (com encaixe CLEAN para PaaS), uma instância por cliente (um SQLite + uma env
+  por cliente), WAL + `busy_timeout` aplicados pela aplicação (`server/src/lib/prisma.ts:23-24`) —
+  qualquer host escolhido precisa oferecer disco LOCAL real (sem NFS/EFS/objeto-storage, ver ADR §4.b).
+  **Falta:** qual VPS/provedor concreto (item explicitamente ABERTO no ADR) — isso continua decisão do
+  dono, não do agente.
 - Backup do banco de produção-alvo feito ANTES de qualquer migração. **O backup É o rollback** —
   ver o bloco A5 abaixo antes de rodar qualquer migração no alvo.
 - Branch a implantar integrada e CI verde (registrar o commit).
 - Chromium/dependências do puppeteer presentes no host (é o que este gate prova).
-- **O artefato de implantação NÃO sobe o schema** — ver A5 abaixo; decidir e registrar quem roda
-  `prisma migrate deploy` no alvo antes do primeiro boot.
+- **O artefato de implantação NÃO sobe o schema** — ver A5 abaixo. **Quem roda `prisma migrate
+  deploy` tem resposta:** `ADR-M2-deploy-topology.md` §2 decisão 4 — etapa SEPARADA do pipeline de
+  deploy (job próprio, antes do swap de container), nunca passo manual e nunca entrypoint que migra
+  no boot. O job em si ainda não existe em código (ADR §7 item 3) — precisa existir antes deste
+  runbook poder ser executado até o fim.
 
 ### A5 — o que a auditoria de 2026-08-15 mediu sobre voltar atrás (triagem ratificada 2026-08-20)
 
@@ -24,10 +33,13 @@ precisa saber **antes** de aplicar a primeira migração num banco que importa:
 1. **Não existe migração `down`.** `find server/prisma/migrations -iname "*down*"` = **0**. Voltar de
    uma migração aplicada é restaurar o arquivo do banco — por isso o backup acima é pré-condição
    dura, não higiene.
-2. **9 das 29 migrações fazem rebuild destrutivo de tabela** (padrão do SQLite: cria nova, copia,
-   dropa a velha) — re-medido em 2026-08-20: `ls -d prisma/migrations/*/ | wc -l` = 29 (o relatório
-   dizia 30) e `grep -rl "DROP TABLE" prisma/migrations` = 9. A **última migração da fila é uma
-   delas** (`20260814120000_counterparty_notnull`, nº 29/29) e **documenta no próprio SQL** que
+2. **9 das 30 migrações fazem rebuild destrutivo de tabela** (padrão do SQLite: cria nova, copia,
+   dropa a velha) — re-medido em 2026-08-22 (pós PR #211): `ls -d prisma/migrations/*/ | wc -l` = **30**
+   e `grep -rl "DROP TABLE" prisma/migrations` = 9. **Correção da medição de 2026-08-20:** à época
+   eram 29 e a última da fila era destrutiva; o merge do P1 acrescentou
+   `20260821090000_accounting_binding` (nº 30/30), que é **aditiva pura** (1 `CREATE TABLE` + 2
+   `CREATE INDEX`, sem `DROP TABLE` nem `RAISE`). Logo a destrutiva com guard passou a ser a
+   **penúltima** (`20260814120000_counterparty_notnull`, nº 29/30) — ela **documenta no próprio SQL** que
    o `RAISE(ABORT)` do guard **não reverte a migração** — pós-abort o backfill segue commitado
    (classe já registrada: `migracao-sqlite-nao-e-transacional`).
 3. **Nenhum artefato executável roda `prisma migrate deploy`**: `grep "migrate deploy"` no repo =

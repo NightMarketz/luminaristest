@@ -2,10 +2,21 @@ import { Prisma } from 'generated/prisma';
 import { AccountingSyncService } from '../AccountingSyncService';
 import { SalonSaleFinalizedMapper } from '../mappers/SalonSaleFinalizedMapper';
 import { SalonSaleSettledMapper } from '../mappers/SalonSaleSettledMapper';
-import { MaxCentsExceededError, ValidationError } from '../../../../lib/errors';
+import { AccountingEventMapperCollisionError, MaxCentsExceededError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { AccountingEvent } from '../AccountingSyncPort';
+import type { IAccountingEventMapper } from '../mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../../dtos/PostingDto';
+
+/** Fake mapper — its `map()` output carries a `marker` so a test can prove WHICH registration a
+ *  given event resolved to (BE-INCR-BINDING-FEEDER, F-FEEDER-3 composite key: two Active bindings
+ *  of different units sharing a `sourceType` must never last-write-wins to a single mapper). */
+function markedMapper(sourceType: AccountingEvent['sourceType'], marker: string): IAccountingEventMapper {
+  return {
+    sourceType,
+    map: () => ({ marker }) as unknown as PostEntryInput,
+  };
+}
 
 /** Typed postEntry stub so mock.calls is a [scope, input] tuple (not []). */
 const okEntry = (_s: AccountingScope, _i: PostEntryInput) => Promise.resolve({ id: 'entry-1' });
@@ -188,5 +199,84 @@ describe('AccountingSyncService', () => {
     const [passedScope, input] = postEntry.mock.calls[0]!;
     expect(passedScope.unitId).toBe('unit-9');
     expect(input.unitId).toBe('unit-9');
+  });
+
+  // BE-INCR-BINDING-FEEDER (FATIA A) — F-FEEDER-3, chave composta unitId:sourceType.
+  describe('composite-key mapper registration (F-FEEDER-3)', () => {
+    it('two registrations of the SAME unitId + sourceType collide — fails loud at construction, never last-write-wins', () => {
+      const postingService = { postEntry: jest.fn() } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+      const mapperA = markedMapper('salon.sale.finalized', 'A');
+      const mapperB = markedMapper('salon.sale.finalized', 'B');
+
+      expect(
+        () =>
+          new AccountingSyncService(postingService, [
+            { unitId: 'unit-1', mapper: mapperA },
+            { unitId: 'unit-1', mapper: mapperB },
+          ]),
+      ).toThrow(AccountingEventMapperCollisionError);
+      expect(
+        () =>
+          new AccountingSyncService(postingService, [
+            { unitId: 'unit-1', mapper: mapperA },
+            { unitId: 'unit-1', mapper: mapperB },
+          ]),
+      ).toThrow(expect.objectContaining({ errorCode: 'ACCOUNTING_EVENT_MAPPER_COLLISION' }));
+    });
+
+    it('two registrations of DIFFERENT unitIds with the SAME sourceType coexist — each event routes to its OWN unit mapper, no overwrite', async () => {
+      const postEntry = jest.fn(okEntry);
+      const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+      const mapperA = markedMapper('salon.sale.finalized', 'unit-a-marker');
+      const mapperB = markedMapper('salon.sale.finalized', 'unit-b-marker');
+      const svc = new AccountingSyncService(
+        postingService,
+        [
+          { unitId: 'unit-a', mapper: mapperA },
+          { unitId: 'unit-b', mapper: mapperB },
+        ],
+        { maxAttempts: 3, retryDelayMs: 0 },
+      );
+
+      await svc.sync({ ...scope, unitId: 'unit-a' }, { ...finalizedEvent, unitId: 'unit-a' });
+      await svc.sync({ ...scope, unitId: 'unit-b' }, { ...finalizedEvent, unitId: 'unit-b' });
+
+      expect(postEntry).toHaveBeenCalledTimes(2);
+      expect(postEntry.mock.calls[0]![1]).toMatchObject({ marker: 'unit-a-marker' });
+      expect(postEntry.mock.calls[1]![1]).toMatchObject({ marker: 'unit-b-marker' });
+    });
+
+    it('a global (unscoped) registration still matches an event of ANY unitId — backward-compatible with every pre-feeder call site', async () => {
+      // Exactly today's shape: lib/factory.ts's buildSalonAccountingMappers() and every existing
+      // test pass plain IAccountingEventMapper[] with no unitId — zero diff for those call sites.
+      const { svc, postEntry } = buildService(jest.fn(okEntry));
+
+      await svc.sync({ ...scope, unitId: 'unit-9' }, { ...finalizedEvent, unitId: 'unit-9' });
+
+      expect(postEntry).toHaveBeenCalledTimes(1);
+    });
+
+    // BE-INCR-BINDING-FEEDER (Fatia B) — decisão sobre o fallback global de sync(): mantido no
+    // código (ver comentário em AccountingSyncService.ts, sync()), mas provado INALCANÇÁVEL na
+    // forma que AccountingBindingFeederService.buildActiveMapperRegistrations() produz em
+    // produção — SÓ entradas escopadas, nunca uma mistura escopada+plain. Este teste é o artefato
+    // checável dessa afirmação: uma instância construída SÓ com registros escopados nunca deixa
+    // uma unidade sem binding próprio "pegar emprestado" o mapper de outra unidade.
+    it('an instance built ONLY from scoped entries never falls back to a DIFFERENT unit\'s mapper — an unregistered unit fails cleanly', async () => {
+      const postEntry = jest.fn(okEntry);
+      const postingService = { postEntry } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+      const mapperA = markedMapper('salon.sale.finalized', 'unit-a-marker');
+      // Only unit-a is registered — no plain/global entry anywhere in this array.
+      const svc = new AccountingSyncService(postingService, [{ unitId: 'unit-a', mapper: mapperA }], {
+        maxAttempts: 3,
+        retryDelayMs: 0,
+      });
+
+      // unit-b has NO registration of its own — must fail loud, never silently reuse unit-a's mapper.
+      await expect(
+        svc.sync({ ...scope, unitId: 'unit-b' }, { ...finalizedEvent, unitId: 'unit-b' }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      expect(postEntry).not.toHaveBeenCalled();
+    });
   });
 });
