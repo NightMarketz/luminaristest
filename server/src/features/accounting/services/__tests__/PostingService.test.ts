@@ -962,7 +962,7 @@ describe('PostingService', () => {
   describe('postEntry — provenance (BE-INCR-8 / ADR-INCR8)', () => {
     const withDoc = {
       ...balancedInput,
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       sourceId: 'sale-1',
       sourceDocument: {
         externalRef: 'NF-123',
@@ -982,7 +982,7 @@ describe('PostingService', () => {
         expect.objectContaining({
           userId: 'u1',
           unitId,
-          sourceType: 'salon.sale.finalized', // origin sourceType mirrors the entry (D5)
+          sourceType: 'sale.finalized', // origin sourceType mirrors the entry (D5)
           externalRef: 'NF-123',
           documentDate: new Date('2026-06-20'), // date-only string → Date
           description: 'Venda salão',
@@ -1007,7 +1007,7 @@ describe('PostingService', () => {
             journalEntryId: 'entry-1',
             sourceDocumentId: 'srcdoc-1',
             externalRef: 'NF-123',
-            sourceType: 'salon.sale.finalized',
+            sourceType: 'sale.finalized',
           }),
         }),
       );
@@ -1030,7 +1030,7 @@ describe('PostingService', () => {
       });
       const result = await svc.postEntry(scope, withDoc);
       expect(result).toBe(existing);
-      expect(journalEntryRepo.findBySource).toHaveBeenCalledWith(scope, 'salon.sale.finalized', 'sale-1');
+      expect(journalEntryRepo.findBySource).toHaveBeenCalledWith(scope, 'sale.finalized', 'sale-1');
       expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
       expect(sourceProvenanceRepo.linkEntry).not.toHaveBeenCalled();
     });
@@ -1297,7 +1297,7 @@ describe('PostingService', () => {
       unitId,
       date: '2026-06-23',
       description: 'Venda gigante',
-      sourceType: 'salon.sale.finalized',
+      sourceType: 'sale.finalized',
       sourceId: 'sale-big',
       lines: [
         { accountCode: '1.1.2', debitCents: MAX_CENTS + 1, creditCents: 0 },

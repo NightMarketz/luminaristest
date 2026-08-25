@@ -23,7 +23,7 @@ import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 const revenueRecognitionArchetype: Archetype = {
   kind: 'postEntry',
   name: 'reconhecimento-receita',
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   slots: [
     { name: 'amountCents', type: 'moneyCentsExact', guards: ['isSafeInteger', 'gtZero'] },
   ],
@@ -37,7 +37,7 @@ const revenueRecognitionArchetype: Archetype = {
 const cogsArchetype: Archetype = {
   kind: 'postEntry',
   name: 'cmv',
-  sourceType: 'salon.sale.finalized',
+  sourceType: 'sale.finalized',
   slots: [{ name: 'cogsCents', type: 'moneyCentsExact', guards: ['isSafeInteger', 'gtZero'] }],
   lines: [
     { role: 'custo-mercadoria-vendida', side: 'debit', amountSlot: 'cogsCents' },
@@ -81,7 +81,7 @@ function validBinding(over: Partial<AccountingBindingV1['eventBindings'][number]
     compiledFromHash: 'sha256:abc',
     eventBindings: [
       {
-        eventKey: 'salon.sale.finalized',
+        eventKey: 'sale.finalized',
         archetypeKey: 'revenue_recognition',
         fieldSlots: [{ slotName: 'amountCents', sourceField: 'event.amount', transform: 'identity' }],
         roleSlots: [
