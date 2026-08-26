@@ -147,7 +147,10 @@ do dono) — o agente prepara o runbook em branco, não o preenche.
    incremento próprio.** Enquanto as pontes emitirem `salon.*`, o binding da clínica vincularia um
    vocabulário errado por construção. O rename toca `features/accounting/sync/**`, que está **dentro**
    do perímetro zero-diff — por isso corre ANTES, com ciclo próprio de instrumentação → correção,
-   e não dentro do P2.
+   e não dentro do P2. ✅ **SATISFEITA 2026-08-25 — PR #222 mergeado** (`aff170a0`): ciclo completo
+   instrumentação → correção com review independente PASS em cada etapa; F-RN-1..4 implementados
+   conforme ratificados. Detalhe no `ADR-RN-salon-to-sale-rename.md` §7. **A promoção deste ADR a
+   Accepted agora depende só do item 2** (gates humanos do vertical 1).
 
 ## 6. Próximos passos de governança
 
@@ -157,8 +160,8 @@ do dono) — o agente prepara o runbook em branco, não o preenche.
 
 **Passos restantes, na ordem (atualizado 2026-08-25):**
 
-1. **Incremento do rename `salon.*` → `sale.*`** — pré-condição §5 item 4, ciclo próprio
-   (instrumentação → correção). **Entra na frente do P2.** Exige ADR/BRIEF próprio e sinal humano.
+1. ✅ FEITO 2026-08-25 — **Incremento do rename `salon.*` → `sale.*`** (pré-condição §5 item 4):
+   ADR-RN/BRIEF (PR #220, forks ratificados) → instrumentação → correção → **PR #222 mergeado**.
 2. **Gates humanos do vertical 1** (PVA + browser sign-off) — são o que satisfaz a pré-condição §5
    item 2 e destrava a promoção deste ADR a **Accepted**.
 3. **Promover a Accepted** — decisão do dono. Alternativa conhecida: revogar a pré-condição por
