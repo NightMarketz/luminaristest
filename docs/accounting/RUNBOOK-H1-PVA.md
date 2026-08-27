@@ -16,6 +16,7 @@ Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
 |---|---|---|---|
 | P1 | Código = `main` `f14dc262` ou posterior | `git log origin/main --oneline -1` | [ ] |
 | P2 | **Backup do `dev.db` real feito** — o passo 1 ESCREVE no razão | copiar `server/prisma/prisma/dev.db` (o populado; `server/prisma/dev.db` é isca de 0 byte) | [ ] |
+| **P2b** | **[EMENDA 2026-08-27] Migrações pendentes aplicadas + binding `Active` no banco** — sem isso o `npm start` do P3 **aborta com exit 1** e nada abaixo é executável | ver "P0 de boot" abaixo | [ ] |
 | P3 | Server e app rodando em **build de produção** do commit exato (nunca `next dev`; servidor de dev longo serve código velho) | ver "Subir o ambiente" abaixo | [ ] |
 | P4 | PVA da **ECD** e PVA da **ECF** instalados (versão vigente, site do SPED/Receita Federal) | abrir cada validador | [ ] |
 | P5 | Mapeamento referencial com cobertura pronta + **nome da versão** em mãos (a ECD exige `mappingVersion`) | aba **Compliance** → painel de mapeamento; ou `GET /api/accounting/referential/coverage?unitId=…` | [ ] |
@@ -23,6 +24,23 @@ Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
 | P7 | Dezembro do ano-calendário **OPEN** no controle de períodos (o encerramento tem gate de período) | aba **Períodos** | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
+
+### P0 de boot (EMENDA 2026-08-27 — fazer ANTES de "Subir o ambiente")
+
+> **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
+> `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
+> antes do `app.listen()` e **mata o processo com exit 1** se houver zero `AccountingBinding`
+> `Active` (F-FEEDER-4/5). **Medido em 2026-08-27 sobre cópia do `dev.db` real: a tabela
+> `accounting_bindings` NÃO EXISTE** — 29 das 31 migrações aplicadas, faltando
+> `20260821090000_accounting_binding` e `20260825120000_rename_salon_to_sale_vocabulary`.
+>
+> Ordem obrigatória (ADR-INCR-BINDING-FEEDER §8: chart de contas → binding compilado → boot), a
+> mesma do P0 do [RUNBOOK-H2](RUNBOOK-H2-BROWSER-SIGNOFF.md), onde está o detalhe completo:
+> 1. `node scripts/smoke-migration-gate.mjs` sobre cópia (S1 garante o original intocado) — só siga com PASS.
+> 2. Backup + `prisma migrate deploy` no `dev.db` real — escreve em dado real, decisão do dono.
+> 3. `node scripts/activate-salon-binding.mjs` — a tabela nasce vazia; migrar não basta.
+>
+> Fechou quando `npm start` imprime `Luminaris Server running on ...` em vez de `Boot ABORTADO`.
 
 ### Subir o ambiente (build de produção)
 

@@ -22,6 +22,30 @@
 Executor: [nome — humano]           Data: [____]
 Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5.1 Bloco A item 4.
 Pré-condições (verificar antes de começar):
+- **[EMENDA 2026-08-27 — P0, BLOQUEIA O `npm start`; verificar ANTES de tudo]** Desde o PR #213
+  (`cd853d2e`, 2026-08-25 — depois de este runbook ser escrito), `bootstrap()` em
+  [server.ts:36](../../server/src/server.ts:36) **aguarda o alimentador de bindings antes do
+  `app.listen()` e mata o processo com exit 1** se houver zero `AccountingBinding` `Active`
+  (F-FEEDER-4/5). **Medido em 2026-08-27 sobre cópia do `dev.db` real: a tabela
+  `accounting_bindings` NÃO EXISTE** — o banco tem 29 das 31 migrações, faltando
+  `20260821090000_accounting_binding` e `20260825120000_rename_salon_to_sale_vocabulary`. Sem o P0
+  abaixo, o passo 1 morre no boot e **nenhum passo deste runbook é executável**. Ordem obrigatória
+  (ADR-INCR-BINDING-FEEDER §8: chart de contas → binding compilado → boot):
+  1. **Smoke-migration-gate sobre cópia** — `node scripts/smoke-migration-gate.mjs` (o próprio
+     script garante por md5, gate S1, que o original não é tocado). Só siga com PASS.
+     *Nota de contexto (medida por consulta read-only sobre cópia do banco real em 2026-08-27 —
+     **não** por uma rodada deste gate, que segue por executar):* `journal_entries` tem 15 linhas e **nenhuma** com
+     sourceType `salon.*` (`IMPORT_JOURNAL_ENTRIES` ×9, `ACCOUNTING_OPENING_BALANCE_IMPORT` ×3,
+     `manual` ×2, `reversal` ×1) e `stock_movements` está vazia ⇒ a metade de reescrita de dado da
+     migração RN é **no-op** neste banco, e o gate S6 não reprova por backfill nesta rodada.
+  2. **Backup do `dev.db` real + `prisma migrate deploy`** — aplica as 2 pendentes. Escreve em dado
+     real: exige decisão do dono, não é passo de agente.
+  3. **`node scripts/activate-salon-binding.mjs`** — a tabela nasce VAZIA, então migrar não basta;
+     sem esta ativação o boot segue abortando. Compila `SALON_BINDING_V1` contra o chart real pelo
+     compilador real (seed direto é proibido pelo ADR §7); é idempotente (2ª execução = no-op) e
+     falha limpo se o chart ainda não existir.
+  Confirmação de que o P0 fechou: `npm start` imprime `Luminaris Server running on ...` em vez de
+  `Boot ABORTADO`. [ ]
 - Build de produção dos DOIS lados, reiniciado do commit exato (servidor de dev longo serve
   código velho): `cd server && npm run build && npm start` · `cd my-app && npx next build && npx next start`.
 - `dev.db` REAL em `server/prisma/prisma/dev.db`; login com a conta admin.
