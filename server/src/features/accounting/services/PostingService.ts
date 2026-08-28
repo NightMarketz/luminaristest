@@ -1,7 +1,7 @@
 import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
-import type { Account } from 'generated/prisma';
+import type { Account, SourceDocument } from 'generated/prisma';
 import { CANONICAL_ACCOUNTS } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS } from '../models/money';
@@ -15,7 +15,10 @@ import type {
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
-import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
+import type {
+  ISourceProvenanceRepository,
+  JournalEntrySourceWithDocument,
+} from '../repositories/ISourceProvenanceRepository';
 import type { IDimensionRepository } from '../repositories/IDimensionRepository';
 import type { AuditService } from './AuditService';
 import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
@@ -27,6 +30,26 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
  * anônimo dentro de `postEntry`, nomeado aqui porque `resolveEntryLines` (F-P1-6b1) agora é
  * compartilhado por `postEntry` e `validateEntry`.
  */
+/**
+ * Descriptor for BE-INCR-PROVENANCE-ATTACH (NFE-X) — attaching formal provenance to an
+ * ALREADY-POSTED entry. Mirrors the `sourceDocument` descriptor `postEntry` accepts, plus an
+ * optional `sourceType` (defaults to the target entry's own sourceType — the D5 "origin mirrors
+ * the entry" convention).
+ *
+ * `externalRef` is the HUMAN document reference (the NF-e access key), never an idempotency
+ * `sourceId` (T7). `documentDate` is a date-only string (YYYY-MM-DD) already validated at the
+ * DTO boundary by `isValidDateOnly` — the bare regex accepts `2026-02-30`, which `new Date()`
+ * silently rolls to 02-mar (class-fix `date-only-regex-nao-valida-calendario`).
+ */
+export interface AttachSourceDocumentInput {
+  externalRef?: string | null;
+  documentDate?: string | null;
+  description?: string | null;
+  attachmentId?: string | null;
+  rawJson?: string | null;
+  sourceType?: string | null;
+}
+
 interface ResolvedPostingLine {
   accountId: string;
   accountCode: string;
@@ -679,6 +702,120 @@ export class PostingService {
   ): Promise<JournalEntryWithPostings | null> {
     if (!this.policy.canRead(scope)) return null;
     return this.journalEntryRepo.findBySource(scope, sourceType, sourceId);
+  }
+
+  /**
+   * BE-INCR-PROVENANCE-ATTACH (NFE-X) — attach formal provenance to an ALREADY-POSTED entry
+   * WITHOUT re-posting. Creates a SourceDocument + JournalEntrySource + audit event in ONE tx,
+   * reusing the exact seam `postEntry` uses (createSourceDocument/linkEntry). Writes NO ledger
+   * value; posts NOTHING; the balance/period gates are irrelevant because no Posting is created.
+   *
+   * PERMISSION (F-PA1→(b), ratified 2026-08-28): gated by `canManage`, NOT `canPost`. Attaching
+   * evidence to an entry is not a ledger write — `canPost` in this codebase gates only the
+   * writers of VALUE (postEntry, ExerciseClosingService). The sibling that attaches evidence to
+   * the same target (DocumentAttachmentService) already uses `canManage` to write and `canRead`
+   * to list; this keeps ONE rule for both ways of attaching evidence to a journal entry.
+   *
+   * Idempotent on the HUMAN externalRef (T7 — the NF-e access key, never a sourceId): a
+   * re-attach of the same fiscal document to the same entry finds the existing link and returns
+   * its SourceDocument.
+   *
+   * HONEST LIMIT of that idempotency (do not read more into it than the code gives): the
+   * existence check runs INSIDE `runTransaction` with the tx handle propagated
+   * (authoritative-gate-inside-tx), which is what a SEQUENTIAL re-attach needs; but there is NO
+   * `@@unique(journalEntryId, externalRef)` behind it, so two CONCURRENT attaches of the same
+   * key can still both miss and create two SourceDocuments (SQLite's default isolation does not
+   * serialize the read against the other tx's uncommitted insert). Closing that fully requires
+   * the unique index (a migration) — DELIBERATELY NOT DONE HERE: F-D4→(b), declared debt, ratified
+   * by the owner 2026-08-28. The `postEntry` variant above carries the SAME exposure today.
+   * Sequentially — the real operator flow — exactly one SourceDocument exists per (entry, externalRef).
+   */
+  async attachSourceDocument(
+    scope: AccountingScope,
+    entryId: string,
+    doc: AttachSourceDocumentInput,
+  ): Promise<SourceDocument> {
+    if (!this.policy.canManage(scope)) {
+      throw new ForbiddenError('Você não tem permissão para anexar proveniência a lançamentos.');
+    }
+    const { userId, unitId } = accountingScopeWhere(scope);
+
+    // Confirm the target entry exists within the scope before attaching (no orphan provenance).
+    const entry = await this.journalEntryRepo.findById(scope, entryId);
+    if (!entry) {
+      throw new NotFoundError(`Lançamento '${entryId}' não foi encontrado.`);
+    }
+
+    const sourceType = doc.sourceType ?? entry.sourceType;
+
+    return this.postingRepo.runTransaction(async (tx) => {
+      // IDEMPOTENCY (T7) — keyed on the human externalRef, re-checked INSIDE the tx with `tx`
+      // propagated to the repo (authoritative-gate-inside-tx). Reading it before opening the tx
+      // leaves a window in which two sequential-but-interleaved requests both pass the check and
+      // create two SourceDocuments; the gate shares the transaction with the write it guards.
+      if (doc.externalRef) {
+        const existingLinks = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id, tx);
+        const already = existingLinks.find((l) => l.sourceDocument.externalRef === doc.externalRef);
+        if (already) {
+          logger.info('attachSourceDocument skipped — provenance already recorded', {
+            entryId: entry.id,
+            externalRef: doc.externalRef,
+          });
+          return already.sourceDocument;
+        }
+      }
+
+      const sourceDocument = await this.sourceProvenanceRepo.createSourceDocument(
+        {
+          userId,
+          unitId,
+          sourceType,
+          externalRef: doc.externalRef ?? null,
+          documentDate: doc.documentDate ? new Date(doc.documentDate) : null,
+          description: doc.description ?? null,
+          attachmentId: doc.attachmentId ?? null,
+          rawJson: doc.rawJson ?? null,
+          createdById: scope.actorUserId,
+        },
+        tx,
+      );
+      await this.sourceProvenanceRepo.linkEntry(
+        { userId, unitId, journalEntryId: entry.id, sourceDocumentId: sourceDocument.id },
+        tx,
+      );
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType:   'entry.source_recorded',
+        targetType:  'journal_entry',
+        targetId:    entry.id,
+        payload:     { journalEntryId: entry.id, sourceDocumentId: sourceDocument.id, externalRef: doc.externalRef, sourceType },
+      });
+      logger.info('Provenance attached to posted entry', {
+        entryId: entry.id,
+        sourceDocumentId: sourceDocument.id,
+        externalRef: doc.externalRef,
+      });
+      return sourceDocument;
+    });
+  }
+
+  /**
+   * Drill-down read of the origin documents linked to an entry (BE-INCR-PROVENANCE-ATTACH, NFE-X).
+   *
+   * Thin by design: it exists so the HTTP edge honours the layer chain
+   * `Route → Controller → Service → Repository` (Contrato §2/§3) instead of the controller
+   * reaching into `ISourceProvenanceRepository` directly. Gated by `canRead`, mirroring
+   * `DocumentAttachmentService.listByTarget` — the same precedent that put `canManage` on the
+   * write above.
+   */
+  async listSourceDocuments(
+    scope: AccountingScope,
+    entryId: string,
+  ): Promise<JournalEntrySourceWithDocument[]> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler a proveniência de lançamentos.');
+    }
+    return this.sourceProvenanceRepo.findSourcesByEntry(scope, entryId);
   }
 
   /**

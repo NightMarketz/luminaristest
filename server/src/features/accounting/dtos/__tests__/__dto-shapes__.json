@@ -2064,6 +2064,63 @@
       "additionalProperties": false
     }
   },
+  "SourceDocumentDto.ts": {
+    "AttachSourceDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "externalRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "documentDate": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "attachmentId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "rawJson": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListSourceDocumentsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "SpedEcdDto.ts": {
     "SpedEcdRequestSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
