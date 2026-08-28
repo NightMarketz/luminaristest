@@ -1359,6 +1359,143 @@ describe('PostingService', () => {
     });
   });
 
+  /**
+   * BE-INCR-PROVENANCE-ATTACH (NFE-X), item 15 do §4.3 do BRIEF.
+   *
+   * ⚠️ LIMITE DESTE BLOCO, declarado: estes 5 casos NÃO provam a idempotência do
+   * `attachSourceDocument`. O fake `findSourcesByEntry` do `buildService` devolve `[]` SEMPRE —
+   * ele não acumula estado entre chamadas —, então duas chamadas reais em sequência criariam
+   * DOIS SourceDocuments e nenhuma asserção aqui falharia. O caso "idempotente" abaixo
+   * PRÉ-SEMEIA um vínculo existente e chama UMA vez: ele exercita o RAMO do curto-circuito,
+   * não a sequência.
+   *
+   * Quem prova a idempotência é o teste de integração em
+   * `repositories/__tests__/SourceProvenance.integration.test.ts` (item 14), que chama DUAS
+   * vezes contra SQLite real. Não declare a idempotência "testada" com base neste arquivo.
+   */
+  describe('attachSourceDocument (BE-INCR-PROVENANCE-ATTACH / NFE-X)', () => {
+    const posted = {
+      id: 'entry-sale-1',
+      sourceType: 'sale.finalized',
+      postings: [
+        { id: 'p1', accountId: 'a1', debitCents: 10000, creditCents: 0 },
+        { id: 'p2', accountId: 'a2', debitCents: 0, creditCents: 10000 },
+      ],
+    };
+    const doc = { externalRef: 'CHAVE-ACESSO-44', documentDate: '2026-06-20', description: 'NF-e 1/1' };
+
+    it('creates SourceDocument + linkEntry + audit in ONE tx, mirroring the entry sourceType — NEVER posts', async () => {
+      const { svc, sourceProvenanceRepo, auditService, journalEntryRepo, postingRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+
+      const sd = await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      expect(sd).toEqual(expect.objectContaining({ id: 'srcdoc-1' }));
+      expect($transaction).toHaveBeenCalledTimes(1);
+      // No ledger write: the entry header/legs are NOT touched (only findById to validate + read type).
+      expect(journalEntryRepo.create).not.toHaveBeenCalled();
+      expect(postingRepo.create).not.toHaveBeenCalled();
+      expect(sourceProvenanceRepo.createSourceDocument).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          unitId,
+          sourceType: 'sale.finalized', // mirrors the target entry (D5 convention)
+          externalRef: 'CHAVE-ACESSO-44',
+          documentDate: new Date('2026-06-20'),
+          description: 'NF-e 1/1',
+          createdById: 'u1',
+        }),
+        txHandle,
+      );
+      expect(sourceProvenanceRepo.linkEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u1', unitId, journalEntryId: 'entry-sale-1', sourceDocumentId: 'srcdoc-1' }),
+        txHandle,
+      );
+      expect(auditService.append).toHaveBeenCalledWith(
+        txHandle,
+        scope,
+        expect.objectContaining({
+          eventType: 'entry.source_recorded',
+          targetType: 'journal_entry',
+          targetId: 'entry-sale-1',
+          payload: expect.objectContaining({ journalEntryId: 'entry-sale-1', sourceDocumentId: 'srcdoc-1', externalRef: 'CHAVE-ACESSO-44' }),
+        }),
+      );
+    });
+
+    it('short-circuits when the same externalRef is ALREADY linked (ramo, não sequência — ver nota do describe)', async () => {
+      const priorLink = { sourceDocument: { id: 'srcdoc-prior', externalRef: 'CHAVE-ACESSO-44' } };
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+        sourceProvenanceRepo: { findSourcesByEntry: jest.fn(async () => [priorLink]) },
+      });
+
+      const sd = await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      expect(sd).toEqual(expect.objectContaining({ id: 'srcdoc-prior' }));
+      expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
+      expect(sourceProvenanceRepo.linkEntry).not.toHaveBeenCalled();
+      // The tx IS opened (the gate lives inside it) but NOTHING is written in it.
+      expect($transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('re-checks the existing-provenance gate INSIDE the tx, with `tx` propagated to the repo', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+
+      await svc.attachSourceDocument(scope, 'entry-sale-1', doc);
+
+      // authoritative-gate-inside-tx: reading the existing links BEFORE opening the tx leaves a
+      // window where two requests both see "none" and both create a SourceDocument. The read must
+      // share the transaction of the write it guards — i.e. carry the same tx handle.
+      expect(sourceProvenanceRepo.findSourcesByEntry).toHaveBeenCalledWith(scope, 'entry-sale-1', txHandle);
+    });
+
+    it('missing target entry → NotFoundError, nothing written', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => null) },
+      });
+      await expect(svc.attachSourceDocument(scope, 'nope', doc)).rejects.toBeInstanceOf(NotFoundError);
+      expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
+    });
+
+    // F-PA1→(b): o gate é canManage, NÃO canPost. Precedente do DocumentAttachmentService, que
+    // anexa evidência ao mesmo alvo. canPost neste código gateia só quem escreve VALOR.
+    it('is forbidden without canManage', async () => {
+      const { svc } = buildService({ policy: { canManage: jest.fn(() => false) } });
+      await expect(svc.attachSourceDocument(scope, 'entry-sale-1', doc)).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it('canPost=false does NOT block the attach (prova que o gate trocou de canPost para canManage)', async () => {
+      const { svc } = buildService({
+        policy: { canPost: jest.fn(() => false), canManage: jest.fn(() => true) },
+        journalEntryRepo: { findById: jest.fn(async () => posted) },
+      });
+      await expect(svc.attachSourceDocument(scope, 'entry-sale-1', doc)).resolves.toEqual(
+        expect.objectContaining({ id: 'srcdoc-1' }),
+      );
+    });
+  });
+
+  describe('listSourceDocuments (BE-INCR-PROVENANCE-ATTACH / NFE-X)', () => {
+    it('delegates to the repo when canRead', async () => {
+      const links = [{ sourceDocument: { id: 'srcdoc-1' } }];
+      const { svc, sourceProvenanceRepo } = buildService({
+        sourceProvenanceRepo: { findSourcesByEntry: jest.fn(async () => links) },
+      });
+      await expect(svc.listSourceDocuments(scope, 'entry-sale-1')).resolves.toEqual(links);
+      expect(sourceProvenanceRepo.findSourcesByEntry).toHaveBeenCalledWith(scope, 'entry-sale-1');
+    });
+
+    it('is forbidden without canRead', async () => {
+      const { svc, sourceProvenanceRepo } = buildService({ policy: { canRead: jest.fn(() => false) } });
+      await expect(svc.listSourceDocuments(scope, 'entry-sale-1')).rejects.toBeInstanceOf(ForbiddenError);
+      expect(sourceProvenanceRepo.findSourcesByEntry).not.toHaveBeenCalled();
+    });
+  });
+
   describe('setAccountRequiresDimension (INCR-DIM-COMPLETENESS SEC-B1-4)', () => {
     it('flips the flag + emits an AuditEvent, all in one tx', async () => {
       const accountRepo = {

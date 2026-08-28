@@ -32,6 +32,10 @@ import {
   deleteDocumentAttachment,
 } from '../controllers/documentAttachmentController';
 import {
+  attachSourceDocument,
+  listSourceDocuments,
+} from '../controllers/sourceDocumentController';
+import {
   bankStatementUpload,
   importBankStatement,
   listBankStatements,
@@ -102,6 +106,12 @@ router.post('/attachments', documentAttachmentUpload, createDocumentAttachment);
 router.get('/attachments/:id', downloadDocumentAttachment);
 router.delete('/attachments/:id', deleteDocumentAttachment);
 router.get('/journal-entries/:journalEntryId/attachments', listDocumentAttachments);
+
+// Formal provenance on an already-posted entry (BE-INCR-PROVENANCE-ATTACH / NFE-X).
+// Distinct from /attachments above: that one stores a FILE; this one records the FISCAL
+// DOCUMENT identity (SourceDocument + JournalEntrySource + audit), writing no ledger value.
+router.post('/journal-entries/:entryId/source-documents', attachSourceDocument);
+router.get('/journal-entries/:entryId/source-documents', listSourceDocuments);
 
 // Data Exchange — CSV/XLSX import + report export (BE-INCR-6).
 router.post('/data-exchange/exports', createDataExchangeExport);

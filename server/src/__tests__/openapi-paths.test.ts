@@ -35,7 +35,11 @@ const { options } = require('../../scripts/generate-openapi');
 //    with no matching spec entry). Not built — recorded in ADR-ANALYTICS-DEFS F-AD6.6 item 4.
 // +3 (BE-INCR-BINDING-PRESS, item 15 do BRIEF): POST /api/accounting-binding/{compile,validate},
 //    GET /api/accounting-binding.
-const BASELINE = 141;
+// 141 → 142 com o BE-INCR-PROVENANCE-ATTACH (NFE-X): POST e GET de
+// /api/accounting/journal-entries/{entryId}/source-documents compartilham o MESMO path — são
+// +1 path e +2 OPERAÇÕES (141→142 paths, 167→169 operations, medido com docs:generate). O BRIEF
+// §4.3 dizia "141→143" tratando operação como path; 143 aqui reprovaria o próprio guard.
+const BASELINE = 142;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

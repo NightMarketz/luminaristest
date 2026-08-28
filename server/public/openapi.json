@@ -1569,6 +1569,81 @@
           }
         }
       },
+      "AttachSourceDocument": {
+        "type": "object",
+        "required": [
+          "unitId"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "externalRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "referência humana do documento (chave de acesso da NF-e)"
+          },
+          "documentDate": {
+            "type": "string",
+            "description": "date-only YYYY-MM-DD (data real, validada)"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "attachmentId": {
+            "type": "string"
+          },
+          "rawJson": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "omitido, espelha o sourceType do lançamento-alvo"
+          }
+        }
+      },
+      "SourceDocument": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "cuid"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "externalRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "attachmentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "TieOutDiagnosticQueryInput": {
         "type": "object",
         "required": [
@@ -3427,6 +3502,90 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/journal-entries/{entryId}/source-documents": {
+      "post": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Anexa proveniência formal a um lançamento já postado",
+        "description": "Cria um SourceDocument e o vincula ao lançamento, sem repostar e sem escrever valor no razão. Idempotente pela `externalRef` humana (a chave de acesso da NF-e): reanexar o mesmo documento ao mesmo lançamento devolve o SourceDocument existente.\n",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entryId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachSourceDocument"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Proveniência anexada"
+          },
+          "400": {
+            "description": "Corpo inválido"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão para anexar proveniência"
+          },
+          "404": {
+            "description": "Lançamento não encontrado no escopo"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Accounting"
+        ],
+        "summary": "Lista os documentos de origem vinculados a um lançamento",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entryId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de vínculos com seus SourceDocuments"
+          },
+          "400": {
+            "description": "Query inválida"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão de leitura"
           }
         }
       }
