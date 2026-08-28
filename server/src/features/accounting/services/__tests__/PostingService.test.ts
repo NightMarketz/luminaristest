@@ -1370,8 +1370,13 @@ describe('PostingService', () => {
    * não a sequência.
    *
    * Quem prova a idempotência é o teste de integração em
-   * `repositories/__tests__/SourceProvenance.integration.test.ts` (item 14), que chama DUAS
-   * vezes contra SQLite real. Não declare a idempotência "testada" com base neste arquivo.
+   * `services/__tests__/ProvenanceAttachIdempotency.integration.test.ts` (item 14), que chama
+   * DUAS vezes contra SQLite real e assere a CONTAGEM no banco. Não declare a idempotência
+   * "testada" com base neste arquivo.
+   *
+   * (O BRIEF pedia o caso em `repositories/__tests__/SourceProvenance.integration.test.ts`;
+   * não é possível — aquele arquivo usa um `PrismaClient` dedicado e os repositórios concretos
+   * falam pelo singleton `@/lib/prisma`. O desvio está declarado no cabeçalho do arquivo novo.)
    */
   describe('attachSourceDocument (BE-INCR-PROVENANCE-ATTACH / NFE-X)', () => {
     const posted = {
