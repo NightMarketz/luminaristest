@@ -191,15 +191,54 @@ já as renomeou.
 
 ## 8. O que esta spec deliberadamente NÃO carrega
 
-O código em si, as ~985 linhas de teste e os 2 fixtures sintéticos. Enquanto a branch existir eles saem de
-`git show claude/nfe-fase-b:<caminho>`; se ela for apagada, de `git show 8c4a24b9:<caminho>` (o commit
-sobrevive à branch enquanto não houver gc). O relatório do smoke-gate
-(`SMOKE-MIGRATION-GATE-INCR-NFE.md`) **só existe na branch** — quem for apagá-la deve trazê-lo antes ou
-aceitar perdê-lo.
+O código em si, as **1.018 linhas de teste** (medidas em 2026-08-28 com
+`git diff --numstat c1b4db84..5b6243a6 -- '*test.ts'` → `add=1018 del=1`; a estimativa de *~985* desta
+spec era por baixo) e os 2 fixtures sintéticos.
+
+**Como recuperá-los — use a TAG, não o SHA solto:**
+
+```bash
+git show nfe-fase-b-preserved:<caminho>
+```
+
+> **Emenda 2026-08-28.** O texto anterior remetia a `git show 8c4a24b9:<caminho>` *"enquanto não houver
+> gc"* — verdadeiro **e com prazo**, que a spec não dizia. Medido naquela data: **nenhuma tag protegia o
+> commit** (`git tag --contains 8c4a24b9` vinha vazio) e o `gc` está nos **defaults**, que podam objeto
+> inalcançável em **~2 semanas**. Apagada a branch, `8c4a24b9` ficaria inalcançável e as 1.018 linhas de
+> teste seriam perdidas por volta de **2026-09-11**. Com o dono ratificando **F-D1→(a) apagar e refazer**
+> ([destino-brief](BE-INCR-NFE-destino-brief.md)), isso deixou de ser hipótese.
+>
+> **Fechado:** tag anotada **`nfe-fase-b-preserved` → `5b6243a6`**, criada **e empurrada para `origin`**
+> (`git ls-remote --tags origin` confere). O commit está alcançável por referência própria — a poda do
+> `gc` não o atinge mais, e apagar a branch **deixou de ser irreversível**. Prefira a tag ao SHA: ela
+> sobrevive à branch, ao clone e ao `gc`.
+
+**Artefatos não-código que viviam só na branch — todos já resgatados** (a varredura fechou em
+2026-08-28; antes dela o README de fixtures ainda estava órfão):
+
+| Artefato | Onde vive agora |
+|---|---|
+| Relatório do smoke-gate | [SMOKE-MIGRATION-GATE-INCR-NFE.md](SMOKE-MIGRATION-GATE-INCR-NFE.md) (`afdab682`) |
+| Runbook de anonimização do XML real | [BE-INCR-NFE-fixtures-README.md](BE-INCR-NFE-fixtures-README.md) — **é o procedimento do único gate que destrava o item** |
 
 **Sequência de reconstrução, se for refeita do zero a partir de `main`:** dependência
 (`fast-xml-parser`) → parser + testes → migração `ADD COLUMN` nullable → `Payable.model`/`PayableDto`/
-`IPayableRepository` → `PayableService` (fold + isolamento + `blocked`) → `PostingService.attachSourceDocument`
+`IPayableRepository` → `PayableService` (fold + isolamento + `blocked`) → ~~`PostingService.attachSourceDocument`~~
 → os 2 serviços de NF-e → DTO → controller/rotas/`docs.paths` → `factory` → fixtures + a trava de
 proveniência. **O gate final continua sendo o XML real anonimizado** — sem ele, todo teste verde prova o
 entendimento do leiaute, não o leiaute.
+
+> **Emenda 2026-08-28 — dois ajustes na sequência acima:**
+>
+> 1. **`PostingService.attachSourceDocument` SAI desta lista.** Por **F-D2→(a)** ele vira incremento
+>    próprio (item **NFE-X** do Bloco A do [master map](ACCOUNTING-MASTER-MAP.md)) e entra em `main`
+>    **antes** de a branch ser apagada — logo, quando a reconstrução rodar, ele **já existe**. Refazê-lo
+>    aqui duplicaria o seam.
+> 2. **A migração deve nascer com timestamp POSTERIOR a `20260825120000`.** A da branch
+>    (`20260825120000_nfe_multi_item_discriminator`) tem timestamp **idêntico** ao do rename já mergeado
+>    (`20260825120000_rename_salon_to_sale_vocabulary`) e ordena **antes** dele lexicograficamente.
+>    Copiar a pasta da tag sem renomear reintroduz uma migração "no passado" em qualquer ambiente que já
+>    rodou o rename.
+>
+> **E reconstrua já em vocabulário `sale.*`** — a árvore da tag é **pré-RN** (§7). O rebase que aplicaria
+> essa regra **não vai acontecer**: F-D1 foi ratificado em **(a) apagar e refazer**, não em (b).
