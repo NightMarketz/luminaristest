@@ -6,7 +6,9 @@
 > **O que este documento NÃO é:** não abre frente nova (ORCH-006 — frente nova nasce de ADR + sinal
 > humano), não ratifica nada, não implementa nada, não propõe aparato de auditoria novo (regra
 > permanente do `CLAUDE.md`: 4 de 4 itens do Bloco A travados em oráculo externo há mais de 14 dias).
-> **Nenhum fork abaixo se auto-ratifica.** Todos saem com **RATIFICAÇÃO PENDENTE**.
+> **Nenhum fork abaixo se auto-ratifica.** Saíram todos com **RATIFICAÇÃO PENDENTE**.
+> **Atualização no mesmo dia:** o dono ratificou o **F-Q5 → (b)** e a ação foi executada (§5.4).
+> **F-Q1 a F-Q4 seguem PENDENTES.** A ratificação veio do dono, não deste documento.
 >
 > **Insumos lidos (e só estes, por moratória):** `ACCOUNTING-MASTER-MAP.md` §5.1 + Bloco A ·
 > `ADR-P2-second-vertical.md` · `BE-INCR-NFE-destino-brief.md` §11 · `BE-INCR-PROVENANCE-ATTACH-brief.md` §11.
@@ -323,7 +325,31 @@ uma migração cujo timestamp a decisão já invalidou.
 > decisão que só existe no diff intermediário da `review-nfe`, minha medida **não veria**. É exatamente o que
 > (b) protege por um comando.
 
-**RATIFICAÇÃO PENDENTE. Não apaguei nenhuma.**
+**RATIFICADO E EXECUTADO 2026-08-28 — o dono escolheu (b).**
+
+```
+git tag -a nfe-fase-a-preserved 68df00f4   # anotada, mensagem com as medidas
+git push origin nfe-fase-a-preserved       # [new tag]
+git branch -D  claude/nfe-a2-import claude/nfe-a3-sale review-nfe claude/nfe-fase-a
+```
+
+**Ordem seguida: tagar → empurrar → *verificar* → só então apagar.** Verificado **antes** do
+apagamento: a tag em `origin` dereferencia para `68df00f4`; `lib/nfe.ts` (320L),
+`NfeImportService.ts` (275L), `NfeSaleReconciliationService.ts` (153L) e a migração exclusiva
+`20260723190934` legíveis **pela tag**; os três ancestrais (`91f6699d`, `fd978cfe`, `000f5fc4`)
+alcançáveis a partir dela. Verificado **depois**: as 4 refs sumiram, as **duas** tags
+(`nfe-fase-a-preserved` → `68df00f4`, `nfe-fase-b-preserved` → `5b6243a6`) resolvem em `origin`, e os
+**4 commits originais seguem alcançáveis**.
+
+⚠️ **`-d` recusou as quatro** ("not fully merged") e o `-D` foi necessário — **diferente da `fase-b`**,
+que o `-d` aceitou. A causa é estrutural, não um sinal de perigo: a `fase-b` tinha
+`origin/claude/nfe-fase-b` como upstream, então o `-d` tinha contra o que validar; **estas quatro eram
+locais, sem upstream nenhum**, então o `-d` não tem como reconhecer preservação — e preservação por
+**tag** nunca foi o que o `-d` mede. Foi exatamente para cobrir essa lacuna que a ordem começou por
+tagar e verificar.
+
+⛔ **Duas tags a não apagar agora:** `nfe-fase-a-preserved` e `nfe-fase-b-preserved`. São a única cópia
+das duas implementações; o gc poda inalcançável.
 
 ---
 
@@ -331,8 +357,9 @@ uma migração cujo timestamp a decisão já invalidou.
 
 1. **Se a `fase-a` carrega valor não-textual.** Medi conteúdo (blobs idênticos, 49/50 linhas de fiação
    presentes na tag). **Não** medi mensagens de commit, histórico de review, nem raciocínio embutido em diffs
-   intermediários. Um artefato de *decisão* que só exista aí passaria batido. É o motivo de eu recomendar
-   tagar antes de apagar (F-Q5b) em vez de apagar direto.
+   intermediários. Um artefato de *decisão* que só exista aí passaria batido. ✅ **Este limite deixou de ser
+   um risco aberto:** o dono ratificou F-Q5(b) e a tag `nfe-fase-a-preserved` foi criada em `origin` antes do
+   apagamento — o que a minha medida não veria, a tag preserva de qualquer jeito.
 2. **Quanto tempo o gargalo humano vai durar.** Toda a força da recomendação (a) do F-Q1 depende disso, e
    é justamente o que não sei. Se o PVA e os sign-offs levarem meses, minha recomendação envelhece mal —
    declaro a dependência em vez de escondê-la.
