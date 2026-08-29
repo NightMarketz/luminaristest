@@ -80,23 +80,37 @@ Nenhuma se auto-ratifica. Estão formuladas com recomendação na
 | Fork | Decisão | Minha recomendação | Custo de não decidir |
 |---|---|---|---|
 | **F-Q1** | Promover **ADR-P2** a `Accepted` agora, ou esperar os gates humanos? | **(a) esperar** | Baixo — o P2 já está bloqueado pelo item 2 de qualquer forma |
-| **F-Q2** | Cliente Prisma stale entre worktrees: dívida declarada ou item de fila? | **(a) dívida declarada** | Baixo — custa ~minutos de diagnóstico quando reaparece |
-| **F-Q3** | `resetDb()` não limpa **nenhuma** das 29 tabelas de contabilidade | **(a) item de fila, escopo apertado** | ⚠️ **Alto e crescente** — todo teste de integração contábil novo nasce com a armadilha |
-| **F-Q4** | Corrigir a spec da NF-e (chama de ausente um seam que agora existe) | **(a) corrigir agora** | Médio — cresce com o tempo até o XML chegar |
+| **F-Q2** | Cliente Prisma stale entre worktrees | ✅ **ratificado (a) e executado** — PR #230 | — |
+| **F-Q3** | `resetDb()` não limpava **nenhuma** das 31 tabelas de contabilidade | ✅ **ratificado (a) e executado** — PR #231, blast radius medido = zero | — |
+| **F-Q4** | Corrigir a spec da NF-e (chamava de ausente um seam que existe) | ✅ **ratificado (a) e executado** — PR #230 | — |
 | — | **ADR-P2 §6 item 5:** parecer do `luminaris-accounting-architect` quando o preset da clínica esboçar contas novas | (não é meu fork) | — |
 
-**Se for decidir só um, decida o F-Q3.** É o único cujo custo **aumenta** com o tempo: o modo de falha
-é teste que passa por ordem de execução ou passa vacuosamente, e cada suíte de integração contábil nova
-herda o problema sem que ninguém perceba.
+~~**Se for decidir só um, decida o F-Q3.**~~ ✅ Decidido e executado em 2026-08-29 (registro no §4).
+**Único fork ainda aberto: F-Q1** — e a recomendação (a) segue: esperar os gates humanos do §2.
 
 ---
 
-## 4. Pipeline de agentes — Sonnets em sequência, armado, aguardando ratificação
+## 4. Pipeline de agentes — Sonnets em sequência — ✅ EXECUTADO em 2026-08-29
 
-**Nada disto está autorizado hoje** (ORCH-006). Mas o trabalho ratificável cabe num pipeline serial de
-agentes Sonnet que roda inteiro com **uma única mensagem citável sua**:
+> **Registro de execução.** Ratificação citável do dono em 2026-08-28: *"Ratifico F-Q4(a), F-Q2(a) e
+> F-Q3(a); execute o pipeline do §4"*. Pipeline rodou serial, um Sonnet por estágio, cada um em
+> worktree isolado:
+>
+> | Estágio | Resultado |
+> |---|---|
+> | **S1** doc-sweep | ✅ PR #230 (squash `84ba6740`) — F-Q4(a): 2 ocorrências na spec (§2 e §4, não §8) corrigidas; F-Q2(a): 5 linhas no `server/CLAUDE.md` |
+> | **S2** instrumentação | ✅ teste-guarda vermelho pelo motivo certo (`resetDb.accounting.integration.test.ts`); `AuditChainHead`+`AccountingPeriod` escolhidas por NÃO terem FK a `User` (anti-vacuidade) |
+> | **S3** correção | ✅ PR #231 — `resetDb()` cobre as **31** tabelas contábeis (a contagem "29" deste doc estava errada), ordem FK-safe, self-relations zeradas antes do delete, guarda derivada do `schema.prisma` com falsificador rodado |
+> | **S4** review independente | ✅ **PASS** 9/9 claims; re-enumerou tabelas/FKs pelo SQL de migração ANTES de ler o diff; falsificador análogo com tabela diferente |
+> | **S5** merge | ✅ squash `4b522ed5` em `main`, CI verde (2 runs) |
+>
+> **Inventário de vermelhos: VAZIO.** Integração completa 50 suítes / 478 testes, 0 FAIL, reproduzido
+> pelo revisor. O blast radius temido do F-Q3 era **zero** — nenhuma suíte dependia do estado vazado.
+> Achado não-bloqueante do S4 pendente: comentário stale em
+> `ProvenanceAttachIdempotency.integration.test.ts:90-101` afirma que o `resetDb()` não cobre
+> contabilidade — deixou de ser verdade; fix cosmético separado.
 
-> *"Ratifico F-Q4(a), F-Q2(a) e F-Q3(a); execute o pipeline do §4."*
+O texto abaixo é o desenho original do pipeline, mantido como referência.
 
 O pipeline roda **em paralelo aos runbooks humanos do §2** — agente e humano não competem pelo mesmo
 recurso, então ratificar isto não atrasa o gargalo real em nada.
@@ -157,11 +171,11 @@ Para a NF-e: a `nfe-fixture-provenance.test.ts` **falha de propósito** enquanto
 ## 6. Ordem recomendada
 
 1. ~~Mergear o #229~~ ✅ feito (`3db7725f`).
-2. **Ratificar F-Q4(a) + F-Q2(a) + F-Q3(a) numa mensagem citável** → dispara o pipeline do §4
-   (S1–S5). Depois disso o pipeline não precisa da sua atenção até o inventário de vermelhos do S3.
-3. **Executar os runbooks H1 e H2** (§2) **em paralelo ao pipeline** — é o gargalo real, destrava o
-   P2, e não compete com os agentes por nada.
-4. Decidir F-Q1 quando conveniente — não é urgente (F-Q2/F-Q4 já entram no passo 2).
+2. ~~Ratificar F-Q4(a) + F-Q2(a) + F-Q3(a) → pipeline §4~~ ✅ ratificado 2026-08-28, executado
+   2026-08-29 (PRs #230 e #231, registro no §4).
+3. **Executar os runbooks H1 e H2** (§2) — **é o único trabalho restante além do F-Q1**, é o gargalo
+   real, e destrava o P2.
+4. Decidir F-Q1 quando conveniente — não é urgente.
 5. **P2** só depois do passo 3 — disparo manual seu, fora do pipeline.
 
 ---
@@ -182,9 +196,8 @@ Para a NF-e: a `nfe-fixture-provenance.test.ts` **falha de propósito** enquanto
 
 1. **Quanto tempo os gates humanos vão levar.** É a variável que governa a ordem do §6 inteira e a
    recomendação (a) do F-Q1. Se levarem meses, vale reabrir o F-Q1.
-2. **Quais suítes ficariam vermelhas com o `resetDb()` corrigido.** Sei o mecanismo (29 tabelas não
-   limpas, `AuditChainHead` persistindo); **não** rodei as suítes com o fix. O custo do F-Q3(a) é
-   **estimado, não medido** — e essa estimativa é a parte mais fraca da minha recomendação de priorizá-lo.
-   O **inventário de vermelhos do S3 (§4)** foi desenhado exatamente para converter isto em medido.
+2. ~~**Quais suítes ficariam vermelhas com o `resetDb()` corrigido.**~~ ✅ **FECHADO em 2026-08-29,
+   medido:** integração completa com o fix = 50 suítes / 478 testes / **0 vermelhos**, reproduzido
+   por revisor independente. O blast radius era zero. (Correção de fato: eram **31** tabelas, não 29.)
 3. **Se existe trabalho executável fora dos artefatos que li.** Por moratória, não varri o repo além da
    §5.1, do ADR-P2 e dos briefs da NF-e. Registro como **insumo ausente**, não como "não existe".
