@@ -16,7 +16,7 @@
 |---|---|
 | **NFE-X** (`attachSourceDocument` extraído para `main`) | ✅ PR #228, merge `9335c4cb`, review independente PASS |
 | **Higiene de branches NF-e** — 7 branches apagadas | ✅ `nfe-fase-b` · `nfe-fase-a` · `nfe-a2-import` · `nfe-a3-sale` · `review-nfe` · `nfe-x-brief` · `nfe-x-provenance-attach` |
-| Fold do mapa + leitura da fila | ⏳ **PR #229 aberto, CI verde, mergeable** |
+| Fold do mapa + leitura da fila | ✅ **PR #229 mergeado** (`3db7725f`) |
 
 **Não sobrou nenhuma branch `nfe`** além da de trabalho do #229.
 
@@ -35,16 +35,10 @@ e voltou a ser depois que ele saiu.
 
 ---
 
-## 1. Passo imediato — mergear o PR #229
+## 1. ~~Passo imediato — mergear o PR #229~~ ✅ FEITO
 
-**Dono:** você. **Bloqueio:** nenhum.
-
-O #229 carrega o fold do NFE-X, o registro dos apagamentos e a leitura da fila. Enquanto ele não
-mergear, o mapa em `main` ainda descreve o NFE-X como pendente e a `nfe-fase-b` como viva.
-
-```bash
-gh pr merge 229 --squash
-```
+Mergeado em `main` como `3db7725f`. O mapa em `main` já descreve o NFE-X como concluído e registra
+os apagamentos. Nada mais pendente nesta seção.
 
 ---
 
@@ -97,21 +91,51 @@ herda o problema sem que ninguém perceba.
 
 ---
 
-## 4. O que um agente pode executar — assim que você ratificar
+## 4. Pipeline de agentes — Sonnets em sequência, armado, aguardando ratificação
 
-Nada disto está autorizado hoje. Ordenado por valor/risco:
+**Nada disto está autorizado hoje** (ORCH-006). Mas o trabalho ratificável cabe num pipeline serial de
+agentes Sonnet que roda inteiro com **uma única mensagem citável sua**:
 
-1. **F-Q3(a)** — estender `resetDb()` ([server/test/helpers/db.ts:31](../../server/test/helpers/db.ts:31))
-   às 29 tabelas de contabilidade, filhas antes de pais, mais um teste-guarda contra o `schema.prisma`.
-   ⚠️ **Blast radius real:** suítes que hoje dependem (sem saber) do estado vazado podem ficar vermelhas.
-   Isso é **achado**, não regressão — mas custa a sessão. Sessão apropriada: `sessao-correcao`, se
-   precedida de instrumentação; ou fix direto, se você preferir tratar como dívida técnica pontual.
-2. **F-Q4(a)** — corrigir 1 parágrafo da [spec §8](BE-INCR-NFE-fase-b-spec.md): o seam vira insumo
-   existente e sai do delta a reconstruir. Diff de minutos.
-3. **F-Q2(a)** — registrar sintoma→causa do cliente Prisma stale no `server/CLAUDE.md`. Sem código.
-4. **P2 (vertical clínica estética)** — `sessao-feature` sobre o [BRIEF](BE-INCR-P2-VERTICAL-CLINICA-brief.md),
-   **8/8 forks já ratificados**. ⛔ **Só depois do §2 deste documento** — a pré-condição do ADR é o gate
-   humano, e ratificar fork ≠ autorizar execução.
+> *"Ratifico F-Q4(a), F-Q2(a) e F-Q3(a); execute o pipeline do §4."*
+
+O pipeline roda **em paralelo aos runbooks humanos do §2** — agente e humano não competem pelo mesmo
+recurso, então ratificar isto não atrasa o gargalo real em nada.
+
+**Por que sequência, e não fan-out paralelo:**
+
+1. S2→S3 é sequencial por definição — a `sessao-correcao` exige o teste-guarda já vermelho.
+2. O blast radius do F-Q3 (suítes que dependem do estado vazado) sujaria o resultado de teste de
+   qualquer branch paralela.
+3. Squash-merge quebra PR empilhado — merges seriais, cada branch nasce de `main` fresco.
+4. Windows serializa o SQLite: verde local em teste de concorrência **não é evidência**; a CI de cada
+   PR é o oráculo, um PR por vez.
+
+**Preparo obrigatório de cada worktree novo (setup, não agente):** `npm ci` + `npx prisma generate` —
+worktree novo não herda `node_modules` nem `.env`, e cliente Prisma stale é exatamente o sintoma
+que o F-Q2 documenta.
+
+| # | Agente (Sonnet) | Sessão | Faz | Gate de saída | Entrega ao próximo |
+|---|---|---|---|---|---|
+| **S1** | doc-sweep | — (doc-only; não é nenhum dos 5 tipos de sessão) | **F-Q4(a):** corrige o parágrafo da [spec §8](BE-INCR-NFE-fase-b-spec.md) (o seam `attachSourceDocument` agora existe em `main`). **F-Q2(a):** sintoma→causa do Prisma stale no `server/CLAUDE.md` | diff só em `.md`; zero código | PR mergeado; base limpa |
+| **S2** | instrumentador | `sessao-instrumentacao` | teste-guarda que **FALHA** provando o vazamento: `AuditChainHead` (e ≥1 tabela contábil de outro grupo) sobrevivendo ao `resetDb()` entre suítes | teste vermelho **pelo motivo certo**; zero código de aplicação tocado | branch com teste vermelho + lacuna descrita |
+| **S3** | corretor | `sessao-correcao` | estende `resetDb()` ([db.ts:31](../../server/test/helpers/db.ts:31)) às 29 tabelas, filhas antes de pais, + guarda derivada do `schema.prisma` (tabela contábil nova sem limpeza = vermelho) | teste-guarda verde; `tsc` limpo; `npm run test:integration` (`--runInBand`) rodado **inteiro** | branch + **inventário de vermelhos** (ver regra abaixo) |
+| **S4** | revisor | — (agente **separado**; nunca a sequência que implementou) | review independente da branch do S3 em worktree próprio; **re-julga** a classificação achado×regressão do inventário | PASS explícito; FAIL devolve ao S3 com item citável | veredito |
+| **S5** | integrador | merge pós-PASS (padrão do loop); `sessao-integracao` só se houver conflito de transporte | leva a branch a `main` | CI verde no PR; squash | `main` atualizado |
+
+**Regras duras do pipeline:**
+
+- **S3 não conserta suíte vermelha que não seja o teste-guarda.** Vermelho novo é **achado**, não
+  regressão: entra no inventário classificado (suíte, causa provável, achado × regressão) e **fecha o
+  "não sei" nº 2 do §8** — o custo do F-Q3 sai de estimado para medido. Consertá-lo ali é violação de
+  escopo da `sessao-correcao`; cada achado vira item de fila novo, decidido por você.
+- **Cada estágio recusa o que não é dele** (formulário da sessão) e para no primeiro gate vermelho.
+  Parar é desfecho válido; blefar continuidade não é.
+- **Sonnet basta em todos os estágios** — são spec-driven/mecânicos. O único julgamento real é a
+  classificação achado×regressão do S3, e é por isso que o S4 a re-julga de forma independente.
+- **P2 (vertical clínica estética) fica FORA do pipeline.** É o estágio armado seguinte —
+  `sessao-feature` sobre o [BRIEF](BE-INCR-P2-VERTICAL-CLINICA-brief.md), 8/8 forks ratificados — mas o
+  disparo é **manual e seu, somente após H1+H2 assinados** (§2). Ratificar fork ≠ autorizar execução, e
+  nenhum verde de pipeline substitui assinatura humana.
 
 ---
 
@@ -132,11 +156,13 @@ Para a NF-e: a `nfe-fixture-provenance.test.ts` **falha de propósito** enquanto
 
 ## 6. Ordem recomendada
 
-1. **Mergear o #229** (§1) — destranca o registro.
-2. **Decidir o F-Q3** (§3) — é o único fork cujo custo cresce.
-3. **Executar os runbooks H1 e H2** (§2) — é o gargalo real, e destrava o P2.
-4. Decidir F-Q1/F-Q2/F-Q4 quando conveniente — nenhum é urgente.
-5. **P2** só depois do passo 3.
+1. ~~Mergear o #229~~ ✅ feito (`3db7725f`).
+2. **Ratificar F-Q4(a) + F-Q2(a) + F-Q3(a) numa mensagem citável** → dispara o pipeline do §4
+   (S1–S5). Depois disso o pipeline não precisa da sua atenção até o inventário de vermelhos do S3.
+3. **Executar os runbooks H1 e H2** (§2) **em paralelo ao pipeline** — é o gargalo real, destrava o
+   P2, e não compete com os agentes por nada.
+4. Decidir F-Q1 quando conveniente — não é urgente (F-Q2/F-Q4 já entram no passo 2).
+5. **P2** só depois do passo 3 — disparo manual seu, fora do pipeline.
 
 ---
 
@@ -159,5 +185,6 @@ Para a NF-e: a `nfe-fixture-provenance.test.ts` **falha de propósito** enquanto
 2. **Quais suítes ficariam vermelhas com o `resetDb()` corrigido.** Sei o mecanismo (29 tabelas não
    limpas, `AuditChainHead` persistindo); **não** rodei as suítes com o fix. O custo do F-Q3(a) é
    **estimado, não medido** — e essa estimativa é a parte mais fraca da minha recomendação de priorizá-lo.
+   O **inventário de vermelhos do S3 (§4)** foi desenhado exatamente para converter isto em medido.
 3. **Se existe trabalho executável fora dos artefatos que li.** Por moratória, não varri o repo além da
    §5.1, do ADR-P2 e dos briefs da NF-e. Registro como **insumo ausente**, não como "não existe".
