@@ -33,9 +33,12 @@ export function pushTestSchema(): void {
  * Covers the accounting module (AccountingPeriod … AccountingBinding in schema.prisma) in
  * addition to the original 11 tables — F-Q3 (pipeline S3): resetDb() used to leave all ~31
  * accounting tables untouched, so accounting state leaked between test files under
- * --runInBand (see resetDb.accounting.integration.test.ts and
- * ProvenanceAttachIdempotency.integration.test.ts:90-101). Order below is a hardcoded FK-safe
- * topological sort (children before parents) derived from schema.prisma; the two self-relations
+ * --runInBand. LIVE guard: resetDb.accounting.integration.test.ts (derived from schema.prisma).
+ * The historical symptom was the local cleanup block ProvenanceAttachIdempotency.integration.test.ts
+ * carried; it was REMOVED once this function covered those tables, so it is cited WITHOUT a line
+ * range on purpose — a pointer at code that no longer exists is the dead-pointer class (8c30f7c8).
+ * Order below is a hardcoded FK-safe topological sort (children before parents) derived from
+ * schema.prisma; the two self-relations
  * (JournalEntry.reversedById, DimensionValue.parentId) are nulled out just before their table's
  * deleteMany() so a single-table self-referencing pair never trips SQLite's FK check mid-delete.
  */

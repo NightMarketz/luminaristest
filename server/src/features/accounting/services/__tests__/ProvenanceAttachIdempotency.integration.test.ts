@@ -87,23 +87,10 @@ describe('attachSourceDocument — idempotência pela externalRef, SQLite real',
     scope = resolveAccountingScope({ userId: OWNER }, UNIT);
   }, 120000);
 
-  /**
-   * Limpeza LOCAL das tabelas de contabilidade.
-   *
-   * O `resetDb()` do helper compartilhado NÃO cobre nenhuma delas — ele limpa DynamicTable,
-   * chat, documentos e `user`, e só. Sem esta limpeza os `SourceDocument`/`AuditEvent` de um caso
-   * vazam para o seguinte e as contagens deixam de significar o que afirmam (visto na prática:
-   * a cadeia de auditoria chegou a `seq 7` num arquivo de 6 casos).
-   *
-   * Não altero o `resetDb` — é helper compartilhado por outras suítes e mexer nele é tocar
-   * vizinho. Ordem FK-safe: filhos antes dos pais. `auditEvent` não tem FK para `user`
-   * (trilha é evidência, não cascateia — ACC-020), por isso precisa de delete explícito.
-   */
+  // Desde o PR #231 o `resetDb()` cobre as 31 tabelas de contabilidade (guarda derivada do
+  // schema em `test/helpers/__tests__/resetDb.accounting.integration.test.ts`), então a limpeza
+  // local que este arquivo carregava ficou redundante e foi removida.
   afterEach(async () => {
-    await prisma.journalEntrySource.deleteMany();
-    await prisma.sourceDocument.deleteMany();
-    await prisma.auditEvent.deleteMany();
-    await prisma.journalEntry.deleteMany();
     await resetDb();
   });
 
