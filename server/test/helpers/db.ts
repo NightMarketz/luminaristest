@@ -27,8 +27,60 @@ export function pushTestSchema(): void {
   });
 }
 
-/** Deletes every row, children before parents, so tests start from a clean slate. */
+/**
+ * Deletes every row, children before parents, so tests start from a clean slate.
+ *
+ * Covers the accounting module (AccountingPeriod … AccountingBinding in schema.prisma) in
+ * addition to the original 11 tables — F-Q3 (pipeline S3): resetDb() used to leave all ~31
+ * accounting tables untouched, so accounting state leaked between test files under
+ * --runInBand (see resetDb.accounting.integration.test.ts and
+ * ProvenanceAttachIdempotency.integration.test.ts:90-101). Order below is a hardcoded FK-safe
+ * topological sort (children before parents) derived from schema.prisma; the two self-relations
+ * (JournalEntry.reversedById, DimensionValue.parentId) are nulled out just before their table's
+ * deleteMany() so a single-table self-referencing pair never trips SQLite's FK check mid-delete.
+ */
 export async function resetDb(): Promise<void> {
+  // Accounting — leaf tables first (nothing else references them).
+  await prisma.postingDimension.deleteMany();
+  await prisma.reconciliationMatch.deleteMany();
+  await prisma.documentAttachment.deleteMany();
+  await prisma.journalEntrySource.deleteMany();
+  await prisma.accountingDataExchangeRow.deleteMany();
+  await prisma.accountingPeriodTransition.deleteMany();
+  await prisma.payablePayment.deleteMany();
+  await prisma.receivableReceipt.deleteMany();
+  await prisma.stockMovement.deleteMany();
+  await prisma.referentialMapping.deleteMany();
+  await prisma.auditEvent.deleteMany();
+  await prisma.auditChainHead.deleteMany();
+  await prisma.referentialAccount.deleteMany();
+  await prisma.journalEntrySequence.deleteMany();
+  await prisma.customerPackageBalance.deleteMany();
+  await prisma.packageBalanceMovement.deleteMany();
+  await prisma.accountingBinding.deleteMany();
+
+  // Accounting — now safe: their own children are gone.
+  await prisma.posting.deleteMany();
+  await prisma.bankStatementLine.deleteMany();
+  await prisma.dimensionValue.updateMany({ data: { parentId: null } }); // break self-relation
+  await prisma.dimensionValue.deleteMany();
+  await prisma.accountingDataExchangeJob.deleteMany();
+  await prisma.sourceDocument.deleteMany();
+  await prisma.accountingPeriod.deleteMany();
+  await prisma.payable.deleteMany();
+  await prisma.receivable.deleteMany();
+  await prisma.inventoryItem.deleteMany();
+
+  // Accounting — one more layer up.
+  await prisma.journalEntry.updateMany({ data: { reversedById: null } }); // break self-relation
+  await prisma.journalEntry.deleteMany();
+  await prisma.bankStatement.deleteMany();
+  await prisma.dimensionDefinition.deleteMany();
+  await prisma.counterparty.deleteMany();
+
+  // Accounting — root of the module's FK tree (only User still references it).
+  await prisma.account.deleteMany();
+
   await prisma.dynamicTableData.deleteMany();
   await prisma.dynamicTable.deleteMany();
   await prisma.dashboardLayout.deleteMany();

@@ -48,7 +48,7 @@ o merge. **Só o XML real anonimizado destrava.**
 | `server/src/controllers/nfeController.ts` | +133 | Borda HTTP multipart + `nfeUpload` (multer). |
 | `server/src/routes/nfe.ts` + `routes/index.ts` | +20 / +2 | Registro em **2 toques**; auth deny-by-default, sem 3º toque de allowlist. |
 | `server/src/routes/docs.paths.ts` | +49 | OpenAPI dos 2 paths (nunca jsdoc na prosa de `routes/`). |
-| `server/src/features/accounting/services/PostingService.ts` | +107 | **`attachSourceDocument` — seam NOVO, não existe em `main`** (§4). |
+| `server/src/features/accounting/services/PostingService.ts` | ~~+107~~ | ~~`attachSourceDocument` — seam NOVO, não existe em `main`~~ — **já existe em `main`** (extraído via PR #228 / NFE-X, 2026-08-28); sai do delta a reconstruir (§4, §8). |
 | `server/src/features/accounting/services/PayableService.ts` | +146 | Drive dos N INBOUND multi-item + `receiveInventoryItems` público. |
 | `server/src/features/accounting/dtos/PayableDto.ts` | +71 | Porta XOR vira **porta de 3 modos** + tie-out Σ itens == `amountCents`. |
 | `server/src/features/accounting/models/Payable.model.ts` | +32 | `isInventoryPurchase` vs **`hasSingleInventorySku`** (novo). |
@@ -86,8 +86,9 @@ o merge. **Só o XML real anonimizado destrava.**
   ambos (risco ALTO nomeado). O serviço só compara `vNF` × Σ débito do lançamento e devolve
   `divergences[]` — **sinaliza, não bloqueia**, e anexa a proveniência mesmo com divergência.
 - **A proveniência é escrita pelo DONO DO SEAM**, `PostingService.attachSourceDocument` (O-1) — o
-  serviço de NF-e **não injeta** `ISourceProvenanceRepository`. Esse método **não existe em `main`**:
-  é parte da reconstrução, não uma chamada a código já mergeado.
+  serviço de NF-e **não injeta** `ISourceProvenanceRepository`. **Emenda 2026-08-28:** esse método
+  **já existe em `main`** (extraído e mergeado via PR #228 / NFE-X — commits 22af653c/8c30f7c8, merge
+  9335c4cb): é **insumo existente**, uma chamada a código já mergeado — não parte da reconstrução.
   - Cria `SourceDocument` + `JournalEntrySource` + `AuditEvent 'entry.source_recorded'` **numa tx só**.
   - Idempotente pelo `externalRef` **humano** (a chave de acesso, nunca um `sourceId` — T7), re-checado
     **DENTRO** do `runTransaction` com o `tx` propagado ao repo (`authoritative-gate-inside-tx`).
