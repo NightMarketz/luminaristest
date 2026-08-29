@@ -29,6 +29,8 @@
  * erro de import, FK ou setup. Extensão para as demais ~27 tabelas é trabalho do S3 (correção de
  * `resetDb()`), não desta sessão.
  */
+import fs from 'fs';
+import path from 'path';
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers/db';
 
@@ -78,5 +80,60 @@ describe('resetDb() — guarda de vazamento de tabelas de contabilidade (F-Q3)',
     expect({ survivingHeads, survivingPeriods }).toEqual(
       { survivingHeads: 0, survivingPeriods: 0 },
     );
+  });
+});
+
+/**
+ * GUARDA DERIVADA DO SCHEMA (pipeline S3, escopo ratificado) — enumera os models de
+ * contabilidade a partir do `schema.prisma` (não de uma lista hardcoded aqui) e falha se
+ * `resetDb()` não referenciar algum deles. Objetivo: tabela contábil nova sem limpeza vira
+ * teste vermelho automático, sem exigir lembrar de atualizar este arquivo.
+ *
+ * DISCRIMINADOR ESCOLHIDO: o comentário de banner `// ── Accounting (deterministic
+ * double-entry module) ──…` (schema.prisma:295) marca o INÍCIO da seção; como não existe
+ * nenhum outro banner de MÓDULO (mesmo estilo `// ── …`) depois dele no arquivo — os sete
+ * banners restantes (Bank reconciliation, Formal provenance, Prepaid packages, Dimensões,
+ * Contraparte, Estoque, A Prensa) são sub-seções DENTRO do módulo de contabilidade — a seção
+ * roda do banner até o FIM DO ARQUIVO. Isso é mais robusto que hardcodear "de AccountingPeriod
+ * até AccountingBinding" por nome: um model novo ACRESCENTADO ao final do arquivo entra na
+ * varredura automaticamente, sem precisar que ninguém saiba o nome do último model atual.
+ * LIMITE conhecido e aceito: se um dia alguém inserir um banner de um módulo NÃO-contábil
+ * depois da linha 295 (ainda antes do fim do arquivo), os models dali pra frente cairiam
+ * (incorretamente) na lista de "contabilidade" — não há hoje essa seção, e o teste falharia
+ * de forma ruidosa (não silenciosa) se isso acontecer, o que ainda cumpre o objetivo de pegar
+ * tabela nova sem cobertura.
+ */
+describe('resetDb() cobre todo model de contabilidade do schema.prisma (guarda derivada, F-Q3)', () => {
+  const SCHEMA_PATH = path.resolve(__dirname, '../../../prisma/schema.prisma');
+  const DB_HELPER_PATH = path.resolve(__dirname, '../db.ts');
+
+  function accountingModelNames(): string[] {
+    const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
+    const bannerMatch = schema.match(/^\/\/ ── Accounting \(deterministic double-entry module\)/m);
+    if (!bannerMatch || bannerMatch.index === undefined) {
+      throw new Error(
+        'Banner "// ── Accounting (deterministic double-entry module)" não encontrado em ' +
+          'schema.prisma — discriminador da guarda quebrou; atualize esta busca.',
+      );
+    }
+    const accountingSection = schema.slice(bannerMatch.index);
+    const modelMatches = [...accountingSection.matchAll(/^model (\w+) \{/gm)];
+    return modelMatches.map((m) => m[1]);
+  }
+
+  it('todo model de contabilidade do schema tem deleteMany() em resetDb()', () => {
+    const models = accountingModelNames();
+    // Sanidade do próprio discriminador — se isto falhar, a regex do banner ou o schema mudaram
+    // de um jeito que quebra a premissa acima, não que falta cobertura no resetDb().
+    expect(models.length).toBeGreaterThanOrEqual(29);
+
+    const dbHelperSource = fs.readFileSync(DB_HELPER_PATH, 'utf8');
+    const uncovered = models.filter((modelName) => {
+      const clientPropertyName = modelName.charAt(0).toLowerCase() + modelName.slice(1);
+      const deleteManyCall = new RegExp(`prisma\\.${clientPropertyName}\\.deleteMany\\(`);
+      return !deleteManyCall.test(dbHelperSource);
+    });
+
+    expect(uncovered).toEqual([]);
   });
 });
