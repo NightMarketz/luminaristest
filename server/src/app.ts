@@ -10,6 +10,7 @@ import path from 'path';
 // Routes
 import { router as routes } from './routes';
 import { authMiddleware } from './middleware/auth';
+import { httpTimingMiddleware } from './middleware/httpTiming';
 import { handleApiError } from './lib/apiUtils';
 import prisma from './lib/prisma';
 
@@ -33,6 +34,9 @@ export function createApp(): express.Express {
       return compression.filter(req, res);
     }
   }));
+  // BRIEF-W2-D (F4, layer 2 / F-W2D-2): measures the WHOLE route — body parsing, auth, and the
+  // route handler — so it must sit before json()/urlencoded()/authMiddleware/routes, not after.
+  app.use(httpTimingMiddleware);
   app.use(json());
   app.use(urlencoded({ extended: true }));
 

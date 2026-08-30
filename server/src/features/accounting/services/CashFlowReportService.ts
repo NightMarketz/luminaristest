@@ -1,4 +1,6 @@
 import { ForbiddenError } from '../../../lib/errors';
+import { metrics } from '../../../lib/monitoring';
+import { REPORT_WARN_THRESHOLDS_MS } from '../../../lib/reportThresholds';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -183,120 +185,130 @@ export class CashFlowReportService {
       throw new ForbiddenError('Você não tem permissão para ler o fluxo de caixa.');
     }
 
-    const asOfIso = asOf.toISOString().slice(0, 10);
-    const fromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1)); // 1 Jan UTC
-    const fromIso = fromDate.toISOString().slice(0, 10);
-    // Prior year-end (opening cash boundary) — same shape as balanceSheet.priorRows.
-    const priorYearEnd = new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999));
+    // BRIEF-W2-D (F4, layer 3) — see AccountingReportService.trialBalance() for why this starts
+    // after the policy gate.
+    const endTimer = metrics.startTimer('report_cashFlowStatement');
+    try {
+      const asOfIso = asOf.toISOString().slice(0, 10);
+      const fromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1)); // 1 Jan UTC
+      const fromIso = fromDate.toISOString().slice(0, 10);
+      // Prior year-end (opening cash boundary) — same shape as balanceSheet.priorRows.
+      const priorYearEnd = new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999));
 
-    // Chart is fetched ONCE and joined to each aggregate (nature '?' marks an orphan).
-    const accounts = await this.accountRepo.findManyByUnit(scope);
-    const accountById = new Map(accounts.map((a) => [a.id, a]));
-    const toRows = (
-      totals: { accountId: string; debitCents: number; creditCents: number }[],
-    ): CashBalanceRow[] =>
-      totals.map((t) => {
-        const a = accountById.get(t.accountId);
-        return {
-          accountId: t.accountId,
-          code: a?.code ?? '?',
-          name: a?.name ?? '(conta removida)',
-          nature: a?.nature ?? '?',
-          balanceCents: t.debitCents - t.creditCents,
-        };
-      });
+      // Chart is fetched ONCE and joined to each aggregate (nature '?' marks an orphan).
+      const accounts = await this.accountRepo.findManyByUnit(scope);
+      const accountById = new Map(accounts.map((a) => [a.id, a]));
+      const toRows = (
+        totals: { accountId: string; debitCents: number; creditCents: number }[],
+      ): CashBalanceRow[] =>
+        totals.map((t) => {
+          const a = accountById.get(t.accountId);
+          return {
+            accountId: t.accountId,
+            code: a?.code ?? '?',
+            name: a?.name ?? '(conta removida)',
+            nature: a?.nature ?? '?',
+            balanceCents: t.debitCents - t.creditCents,
+          };
+        });
 
-    const [windowedTotals, openingTotals, closingTotals, incomeStatement] = await Promise.all([
-      // Windowed sections: exclude the closing entry (operational, DRE-aligned).
-      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
-        from: fromDate,
-        to: asOf,
-        excludeSourceTypes: [CLOSING_SOURCE_TYPE],
-      }),
-      // Opening / closing cash: cumulative, full history (closing entry has no cash leg).
-      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: priorYearEnd }),
-      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: asOf }),
-      this.reportService.incomeStatement(scope, asOf),
-    ]);
+      const [windowedTotals, openingTotals, closingTotals, incomeStatement] = await Promise.all([
+        // Windowed sections: exclude the closing entry (operational, DRE-aligned).
+        this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
+          from: fromDate,
+          to: asOf,
+          excludeSourceTypes: [CLOSING_SOURCE_TYPE],
+        }),
+        // Opening / closing cash: cumulative, full history (closing entry has no cash leg).
+        this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: priorYearEnd }),
+        this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: asOf }),
+        this.reportService.incomeStatement(scope, asOf),
+      ]);
 
-    const windowedRows = toRows(windowedTotals);
-    const openingCashCents = this.sumCash(toRows(openingTotals));
-    const closingCashCents = this.sumCash(toRows(closingTotals));
+      const windowedRows = toRows(windowedTotals);
+      const openingCashCents = this.sumCash(toRows(openingTotals));
+      const closingCashCents = this.sumCash(toRows(closingTotals));
 
-    // Classify every NON-CASH account's cash contribution (−balanceCents) into a section.
-    const section: Record<CashFlowSectionId, { accounts: CashFlowLine[]; total: number }> = {
-      operating: { accounts: [], total: 0 },
-      investing: { accounts: [], total: 0 },
-      financing: { accounts: [], total: 0 },
-    };
-    const warnings: string[] = [];
-    let orphanNonZero = 0;
+      // Classify every NON-CASH account's cash contribution (−balanceCents) into a section.
+      const section: Record<CashFlowSectionId, { accounts: CashFlowLine[]; total: number }> = {
+        operating: { accounts: [], total: 0 },
+        investing: { accounts: [], total: 0 },
+        financing: { accounts: [], total: 0 },
+      };
+      const warnings: string[] = [];
+      let orphanNonZero = 0;
 
-    for (const row of windowedRows) {
-      if (isCashAccount(row.code)) continue; // cash IS the reconciliation target
-      if (row.balanceCents === 0) continue; // no movement → no line
-      if (row.nature === '?') orphanNonZero += 1;
-      const contributionCents = -row.balanceCents;
-      const target = section[classifyCashFlowSection(row.nature, row.code)];
-      target.accounts.push({
-        accountId: row.accountId,
-        code: row.code,
-        name: row.name,
-        nature: row.nature,
-        amountCents: String(contributionCents),
-      });
-      target.total += contributionCents;
+      for (const row of windowedRows) {
+        if (isCashAccount(row.code)) continue; // cash IS the reconciliation target
+        if (row.balanceCents === 0) continue; // no movement → no line
+        if (row.nature === '?') orphanNonZero += 1;
+        const contributionCents = -row.balanceCents;
+        const target = section[classifyCashFlowSection(row.nature, row.code)];
+        target.accounts.push({
+          accountId: row.accountId,
+          code: row.code,
+          name: row.name,
+          nature: row.nature,
+          amountCents: String(contributionCents),
+        });
+        target.total += contributionCents;
+      }
+
+      // Deterministic order within each section (by account code).
+      for (const id of ['operating', 'investing', 'financing'] as CashFlowSectionId[]) {
+        section[id].accounts.sort((a, b) => a.code.localeCompare(b.code));
+      }
+
+      const netResultCents = parseInt(incomeStatement.netResult.amountCents, 10);
+      const operatingTotal = section.operating.total;
+      const sectionsTotalCents = operatingTotal + section.investing.total + section.financing.total;
+      const computedClosingCents = openingCashCents + sectionsTotalCents;
+      const reconciles = computedClosingCents === closingCashCents; // EXACT integer equality
+
+      if (orphanNonZero > 0) {
+        warnings.push(`${orphanNonZero} conta(s) removida(s) com saldo não-zero classificada(s) em Operacional.`);
+      }
+
+      let reportStatus: CashFlowStatementReport['reportStatus'] = 'OK';
+      if (!reconciles) reportStatus = 'INVALID';
+      else if (warnings.length > 0) reportStatus = 'WARNING';
+
+      const report: CashFlowStatementReport = {
+        unitId: scope.unitId,
+        method: 'indirect',
+        periodSemantics: 'year_to_date',
+        fromDate: fromIso,
+        toDate: asOfIso,
+        mappingVersion: STATEMENT_MAPPING_VERSION,
+        operating: {
+          accounts: section.operating.accounts,
+          netResultCents: String(netResultCents),
+          adjustmentsCents: String(operatingTotal - netResultCents),
+          totalCents: String(operatingTotal),
+        },
+        investing: {
+          accounts: section.investing.accounts,
+          totalCents: String(section.investing.total),
+        },
+        financing: {
+          accounts: section.financing.accounts,
+          totalCents: String(section.financing.total),
+        },
+        openingCashCents: String(openingCashCents),
+        closingCashCents: String(closingCashCents),
+        reconciliation: {
+          sectionsTotalCents: String(sectionsTotalCents),
+          computedClosingCents: String(computedClosingCents),
+          reconciles,
+        },
+        reportStatus,
+        warnings,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.cashFlowStatement, unitId: scope.unitId });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.cashFlowStatement, unitId: scope.unitId });
+      throw error;
     }
-
-    // Deterministic order within each section (by account code).
-    for (const id of ['operating', 'investing', 'financing'] as CashFlowSectionId[]) {
-      section[id].accounts.sort((a, b) => a.code.localeCompare(b.code));
-    }
-
-    const netResultCents = parseInt(incomeStatement.netResult.amountCents, 10);
-    const operatingTotal = section.operating.total;
-    const sectionsTotalCents = operatingTotal + section.investing.total + section.financing.total;
-    const computedClosingCents = openingCashCents + sectionsTotalCents;
-    const reconciles = computedClosingCents === closingCashCents; // EXACT integer equality
-
-    if (orphanNonZero > 0) {
-      warnings.push(`${orphanNonZero} conta(s) removida(s) com saldo não-zero classificada(s) em Operacional.`);
-    }
-
-    let reportStatus: CashFlowStatementReport['reportStatus'] = 'OK';
-    if (!reconciles) reportStatus = 'INVALID';
-    else if (warnings.length > 0) reportStatus = 'WARNING';
-
-    return {
-      unitId: scope.unitId,
-      method: 'indirect',
-      periodSemantics: 'year_to_date',
-      fromDate: fromIso,
-      toDate: asOfIso,
-      mappingVersion: STATEMENT_MAPPING_VERSION,
-      operating: {
-        accounts: section.operating.accounts,
-        netResultCents: String(netResultCents),
-        adjustmentsCents: String(operatingTotal - netResultCents),
-        totalCents: String(operatingTotal),
-      },
-      investing: {
-        accounts: section.investing.accounts,
-        totalCents: String(section.investing.total),
-      },
-      financing: {
-        accounts: section.financing.accounts,
-        totalCents: String(section.financing.total),
-      },
-      openingCashCents: String(openingCashCents),
-      closingCashCents: String(closingCashCents),
-      reconciliation: {
-        sectionsTotalCents: String(sectionsTotalCents),
-        computedClosingCents: String(computedClosingCents),
-        reconciles,
-      },
-      reportStatus,
-      warnings,
-    };
   }
 }

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
+import { metrics } from '../../../lib/monitoring';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -127,6 +128,13 @@ export class SpedGenerationService {
       totalRows: lines.length,
     });
 
+    // BRIEF-W2-D (F4, layer 1): spans job PROCESSING -> the return below, or the throw in the
+    // catch FAILED right after. No warnThresholdMs (F-W2D-1 residual: the brief's checklist
+    // points to "ver contrato" for this layer's threshold, but reportThresholds.ts only carries
+    // numbers for the HTTP middleware and the 6 report methods — none for the 3 generation job
+    // timers, so none is invented here; see "Lacunas de spec" in the PR).
+    const endTimer = metrics.startTimer('sped_ecd_generation');
+
     let storageKey: string;
     try {
       ({ storageKey } = await storage.saveFile(
@@ -151,6 +159,7 @@ export class SpedGenerationService {
         errorName: error instanceof Error ? error.name : 'UnknownError',
         errorMessage: error instanceof Error ? error.message : String(error),
       });
+      endTimer({ success: false, jobId: job.id, kind: job.kind, unitId: scope.unitId });
       throw error;
     }
 
@@ -173,6 +182,7 @@ export class SpedGenerationService {
       return j;
     });
 
+    endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });
     return toJobResponse(updated);
   }
 

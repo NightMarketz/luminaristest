@@ -20,6 +20,7 @@
  */
 import { DailyJournalReportService } from '../DailyJournalReportService';
 import { ForbiddenError } from '../../../../lib/errors';
+import { logger } from '../../../../lib/logger';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
 const scope: AccountingScope = {
@@ -229,5 +230,18 @@ describe('DailyJournalReportService.dailyJournal', () => {
       svc.dailyJournal(scope, { from: '2026-01-01', to: '2026-01-31' }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(journalEntryRepo.findManyForExport).not.toHaveBeenCalled();
+  });
+
+  it('logs Metric: report_dailyJournal at info with a numeric duration on success (BRIEF-W2-D)', async () => {
+    const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    const { svc } = buildService();
+    await svc.dailyJournal(scope, { from: '2026-01-01', to: '2026-01-31' });
+
+    const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_dailyJournal');
+    expect(call).toBeDefined();
+    const ctx = call![1] as Record<string, unknown>;
+    expect(typeof ctx.duration).toBe('number');
+    expect(ctx.status).toBe('success');
+    infoSpy.mockRestore();
   });
 });

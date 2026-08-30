@@ -1,4 +1,6 @@
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
+import { metrics } from '../../../lib/monitoring';
+import { REPORT_WARN_THRESHOLDS_MS } from '../../../lib/reportThresholds';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
@@ -324,22 +326,35 @@ export class AccountingReportService {
       throw new ForbiddenError('Você não tem permissão para ler o balancete.');
     }
 
-    const rows = await this.getAccountBalances(scope);
+    // BRIEF-W2-D (F4, layer 3): starts AFTER the policy gate — measures the report's own read
+    // cost, not an authorization decision (a 403 would otherwise log a near-zero-duration
+    // "failure" on every denied request, which is noise, not a slow-report signal). Mirrors the
+    // canonical try/catch pattern already in DocumentProcessingService (extends
+    // Metrics.startTimer, not a new helper).
+    const endTimer = metrics.startTimer('report_trialBalance');
+    try {
+      const rows = await this.getAccountBalances(scope);
 
-    const grandDebit = rows.reduce((acc, r) => acc + r.debitCents, 0);
-    const grandCredit = rows.reduce((acc, r) => acc + r.creditCents, 0);
+      const grandDebit = rows.reduce((acc, r) => acc + r.debitCents, 0);
+      const grandCredit = rows.reduce((acc, r) => acc + r.creditCents, 0);
 
-    return {
-      unitId: scope.unitId,
-      rows,
-      totals: {
-        debitCents: grandDebit,
-        creditCents: grandCredit,
-        balanceCents: grandDebit - grandCredit,
-      },
-      // EXACT integer equality (Contract §2.1) — never float/epsilon.
-      balanced: grandDebit === grandCredit,
-    };
+      const report: TrialBalanceReport = {
+        unitId: scope.unitId,
+        rows,
+        totals: {
+          debitCents: grandDebit,
+          creditCents: grandCredit,
+          balanceCents: grandDebit - grandCredit,
+        },
+        // EXACT integer equality (Contract §2.1) — never float/epsilon.
+        balanced: grandDebit === grandCredit,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.trialBalance, unitId: scope.unitId });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.trialBalance, unitId: scope.unitId });
+      throw error;
+    }
   }
 
   /**
@@ -365,63 +380,72 @@ export class AccountingReportService {
       throw new ForbiddenError('Você não tem permissão para ler o razão.');
     }
 
-    const account = await this.accountRepo.findByCode(scope, accountCode);
-    if (!account) {
-      throw new NotFoundError(`Conta '${accountCode}' não foi encontrada.`);
-    }
-
-    // This account's raw legs (tenant+unit scoped), then hydrate each parent entry for
-    // date/description/status and drop Draft entries (keep Posted + Reversed so reversals net).
-    const postings = await this.postingRepo.findByAccount(scope, account.id);
-    const entryCache = new Map<string, { date: Date; description: string; status: string }>();
-
-    const hydrated: Array<{
-      postingId: string;
-      entryId: string;
-      date: Date;
-      description: string;
-      status: string;
-      debitCents: number;
-      creditCents: number;
-    }> = [];
-    for (const p of postings) {
-      let entry = entryCache.get(p.entryId);
-      if (!entry) {
-        const head = await this.journalEntryRepo.findById(scope, p.entryId);
-        if (!head || !LEDGER_STATUSES.includes(head.status)) continue;
-        entry = { date: head.date, description: head.description, status: head.status };
-        entryCache.set(p.entryId, entry);
+    // BRIEF-W2-D (F4, layer 3) — see trialBalance() for why this starts after the policy gate.
+    const endTimer = metrics.startTimer('report_accountLedger');
+    try {
+      const account = await this.accountRepo.findByCode(scope, accountCode);
+      if (!account) {
+        throw new NotFoundError(`Conta '${accountCode}' não foi encontrada.`);
       }
-      hydrated.push({
-        postingId: p.id,
-        entryId: p.entryId,
-        date: entry.date,
-        description: entry.description,
-        status: entry.status,
-        debitCents: p.debitCents,
-        creditCents: p.creditCents,
+
+      // This account's raw legs (tenant+unit scoped), then hydrate each parent entry for
+      // date/description/status and drop Draft entries (keep Posted + Reversed so reversals net).
+      const postings = await this.postingRepo.findByAccount(scope, account.id);
+      const entryCache = new Map<string, { date: Date; description: string; status: string }>();
+
+      const hydrated: Array<{
+        postingId: string;
+        entryId: string;
+        date: Date;
+        description: string;
+        status: string;
+        debitCents: number;
+        creditCents: number;
+      }> = [];
+      for (const p of postings) {
+        let entry = entryCache.get(p.entryId);
+        if (!entry) {
+          const head = await this.journalEntryRepo.findById(scope, p.entryId);
+          if (!head || !LEDGER_STATUSES.includes(head.status)) continue;
+          entry = { date: head.date, description: head.description, status: head.status };
+          entryCache.set(p.entryId, entry);
+        }
+        hydrated.push({
+          postingId: p.id,
+          entryId: p.entryId,
+          date: entry.date,
+          description: entry.description,
+          status: entry.status,
+          debitCents: p.debitCents,
+          creditCents: p.creditCents,
+        });
+      }
+
+      hydrated.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      let running = 0;
+      const rows: AccountLedgerRow[] = hydrated.map((leg) => {
+        running += leg.debitCents - leg.creditCents;
+        return { ...leg, runningBalanceCents: running };
       });
+
+      const report: AccountLedgerReport = {
+        unitId: scope.unitId,
+        account: {
+          accountId: account.id,
+          code: account.code,
+          name: account.name,
+          nature: account.nature,
+        },
+        rows,
+        closingBalanceCents: running,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.accountLedger, unitId: scope.unitId, accountCode });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.accountLedger, unitId: scope.unitId, accountCode });
+      throw error;
     }
-
-    hydrated.sort((a, b) => a.date.getTime() - b.date.getTime());
-
-    let running = 0;
-    const rows: AccountLedgerRow[] = hydrated.map((leg) => {
-      running += leg.debitCents - leg.creditCents;
-      return { ...leg, runningBalanceCents: running };
-    });
-
-    return {
-      unitId: scope.unitId,
-      account: {
-        accountId: account.id,
-        code: account.code,
-        name: account.name,
-        nature: account.nature,
-      },
-      rows,
-      closingBalanceCents: running,
-    };
   }
 
   /**
@@ -438,55 +462,64 @@ export class AccountingReportService {
       throw new ForbiddenError('Você não tem permissão para ler o balanço patrimonial.');
     }
 
-    const asOfIso = asOf.toISOString().slice(0, 10);
-    const dreFromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1)); // 1 Jan UTC
-    const dreFromIso = dreFromDate.toISOString().slice(0, 10);
+    // BRIEF-W2-D (F4, layer 3) — see trialBalance() for why this starts after the policy gate.
+    const endTimer = metrics.startTimer('report_balanceSheet');
+    try {
+      const asOfIso = asOf.toISOString().slice(0, 10);
+      const dreFromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1)); // 1 Jan UTC
+      const dreFromIso = dreFromDate.toISOString().slice(0, 10);
 
-    // BP = toda a história até asOf; DRE = year_to_date com mesma janela
-    const [allRows, dreRows, priorRows] = await Promise.all([
-      this.getAccountBalances(scope, undefined, asOf),
-      this.getAccountBalances(scope, dreFromDate, asOf),
-      this.getAccountBalances(
-        scope,
-        undefined,
-        new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999)),
-      ),
-    ]);
+      // BP = toda a história até asOf; DRE = year_to_date com mesma janela
+      const [allRows, dreRows, priorRows] = await Promise.all([
+        this.getAccountBalances(scope, undefined, asOf),
+        this.getAccountBalances(scope, dreFromDate, asOf),
+        this.getAccountBalances(
+          scope,
+          undefined,
+          new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999)),
+        ),
+      ]);
 
-    const assets = this.buildSection(allRows, 'BP', 'assets');
-    const liabilities = this.buildSection(allRows, 'BP', 'liabilities');
-    const equity = this.buildSection(allRows, 'BP', 'equity');
+      const assets = this.buildSection(allRows, 'BP', 'assets');
+      const liabilities = this.buildSection(allRows, 'BP', 'liabilities');
+      const equity = this.buildSection(allRows, 'BP', 'equity');
 
-    const { netCents: dreNetCents } = this.computeDreNet(dreRows);
-    const { netCents: priorNetCents } = this.computeDreNet(priorRows);
+      const { netCents: dreNetCents } = this.computeDreNet(dreRows);
+      const { netCents: priorNetCents } = this.computeDreNet(priorRows);
 
-    const assetsCents = parseInt(assets.totalCents, 10);
-    const liabilitiesCents = parseInt(liabilities.totalCents, 10);
-    const equityCents = parseInt(equity.totalCents, 10);
-    // balanced: A = P + PL + Resultado do Exercício (inteiro exato)
-    const balanced = assetsCents === liabilitiesCents + equityCents + dreNetCents;
+      const assetsCents = parseInt(assets.totalCents, 10);
+      const liabilitiesCents = parseInt(liabilities.totalCents, 10);
+      const equityCents = parseInt(equity.totalCents, 10);
+      // balanced: A = P + PL + Resultado do Exercício (inteiro exato)
+      const balanced = assetsCents === liabilitiesCents + equityCents + dreNetCents;
 
-    const { diagnostics, reportStatus } = this.buildDiagnostics(allRows, 'BP', priorNetCents);
+      const { diagnostics, reportStatus } = this.buildDiagnostics(allRows, 'BP', priorNetCents);
 
-    return {
-      unitId: scope.unitId,
-      periodSemantics: 'as_of',
-      asOf: asOfIso,
-      mappingVersion: STATEMENT_MAPPING_VERSION,
-      assets,
-      liabilities,
-      equity,
-      netResultLine: {
-        amountCents: String(dreNetCents),
-        isComputed: true,
-        computation: 'income_statement_net_result',
-        fromDate: dreFromIso,
-        toDate: asOfIso,
-      },
-      balanced,
-      reportStatus,
-      diagnostics,
-    };
+      const report: BalanceSheetReport = {
+        unitId: scope.unitId,
+        periodSemantics: 'as_of',
+        asOf: asOfIso,
+        mappingVersion: STATEMENT_MAPPING_VERSION,
+        assets,
+        liabilities,
+        equity,
+        netResultLine: {
+          amountCents: String(dreNetCents),
+          isComputed: true,
+          computation: 'income_statement_net_result',
+          fromDate: dreFromIso,
+          toDate: asOfIso,
+        },
+        balanced,
+        reportStatus,
+        diagnostics,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.balanceSheet, unitId: scope.unitId });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.balanceSheet, unitId: scope.unitId });
+      throw error;
+    }
   }
 
   /**
@@ -498,51 +531,60 @@ export class AccountingReportService {
       throw new ForbiddenError('Você não tem permissão para ler a DRE.');
     }
 
-    const asOfIso = asOf.toISOString().slice(0, 10);
-    const dreFromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1));
-    const dreFromIso = dreFromDate.toISOString().slice(0, 10);
+    // BRIEF-W2-D (F4, layer 3) — see trialBalance() for why this starts after the policy gate.
+    const endTimer = metrics.startTimer('report_incomeStatement');
+    try {
+      const asOfIso = asOf.toISOString().slice(0, 10);
+      const dreFromDate = new Date(Date.UTC(asOf.getUTCFullYear(), 0, 1));
+      const dreFromIso = dreFromDate.toISOString().slice(0, 10);
 
-    // DRE = performance operacional do exercício ⇒ EXCLUI o lançamento de encerramento
-    // (BE-INCR-SPED-APURACAO D3): sem isso, um encerramento em 31/12 zera cada conta de
-    // resultado na janela e a DRE se auto-cancela. priorRows fica closing-INCLUSIVE de
-    // propósito: um exercício anterior encerrado tem resultado 0 (não gera o warning de
-    // "resultado anterior não encerrado").
-    const [dreRows, priorRows] = await Promise.all([
-      this.getAccountBalances(scope, dreFromDate, asOf, [CLOSING_SOURCE_TYPE]),
-      this.getAccountBalances(
-        scope,
-        undefined,
-        new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999)),
-      ),
-    ]);
+      // DRE = performance operacional do exercício ⇒ EXCLUI o lançamento de encerramento
+      // (BE-INCR-SPED-APURACAO D3): sem isso, um encerramento em 31/12 zera cada conta de
+      // resultado na janela e a DRE se auto-cancela. priorRows fica closing-INCLUSIVE de
+      // propósito: um exercício anterior encerrado tem resultado 0 (não gera o warning de
+      // "resultado anterior não encerrado").
+      const [dreRows, priorRows] = await Promise.all([
+        this.getAccountBalances(scope, dreFromDate, asOf, [CLOSING_SOURCE_TYPE]),
+        this.getAccountBalances(
+          scope,
+          undefined,
+          new Date(Date.UTC(asOf.getUTCFullYear() - 1, 11, 31, 23, 59, 59, 999)),
+        ),
+      ]);
 
-    const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue');
-    const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions');
-    const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold');
-    const expenses = this.buildSection(dreRows, 'DRE', 'expenses');
+      const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue');
+      const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions');
+      const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold');
+      const expenses = this.buildSection(dreRows, 'DRE', 'expenses');
 
-    const { netCents: dreNetCents } = this.computeDreNet(dreRows);
-    const { netCents: priorNetCents } = this.computeDreNet(priorRows);
+      const { netCents: dreNetCents } = this.computeDreNet(dreRows);
+      const { netCents: priorNetCents } = this.computeDreNet(priorRows);
 
-    const { diagnostics, reportStatus } = this.buildDiagnostics(dreRows, 'DRE', priorNetCents);
+      const { diagnostics, reportStatus } = this.buildDiagnostics(dreRows, 'DRE', priorNetCents);
 
-    return {
-      unitId: scope.unitId,
-      periodSemantics: 'year_to_date',
-      fromDate: dreFromIso,
-      toDate: asOfIso,
-      mappingVersion: STATEMENT_MAPPING_VERSION,
-      grossRevenue,
-      revenueDeductions,
-      costOfGoodsSold,
-      expenses,
-      netResult: {
-        amountCents: String(dreNetCents),
-        isComputed: true,
-        computation: 'income_statement_net_result',
-      },
-      reportStatus,
-      diagnostics,
-    };
+      const report: IncomeStatementReport = {
+        unitId: scope.unitId,
+        periodSemantics: 'year_to_date',
+        fromDate: dreFromIso,
+        toDate: asOfIso,
+        mappingVersion: STATEMENT_MAPPING_VERSION,
+        grossRevenue,
+        revenueDeductions,
+        costOfGoodsSold,
+        expenses,
+        netResult: {
+          amountCents: String(dreNetCents),
+          isComputed: true,
+          computation: 'income_statement_net_result',
+        },
+        reportStatus,
+        diagnostics,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.incomeStatement, unitId: scope.unitId });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.incomeStatement, unitId: scope.unitId });
+      throw error;
+    }
   }
 }

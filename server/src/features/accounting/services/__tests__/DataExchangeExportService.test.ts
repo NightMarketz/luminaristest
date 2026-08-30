@@ -6,6 +6,7 @@ import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { parseTable } from '../../../../lib/spreadsheet';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
+import { logger } from '../../../../lib/logger';
 import type { AccountingDataExchangeJob } from 'generated/prisma';
 
 jest.mock('../../../../lib/attachmentStorage', () => ({
@@ -170,5 +171,40 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
         errorMessage: 'disk full',
       }),
     );
+  });
+
+  describe('duration metric (BRIEF-W2-D, layer 1 — extends Metrics.startTimer, no warnThresholdMs for this layer)', () => {
+    it('logs Metric: data_exchange_export at info with a numeric duration on success', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const { repo } = makeRepo();
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
+
+      const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: data_exchange_export');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(typeof ctx.duration).toBe('number');
+      expect(ctx.status).toBe('success');
+      infoSpy.mockRestore();
+    });
+
+    it('logs Metric: data_exchange_export at warn on the FAILED (saveFile) path', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+      const { repo } = makeRepo();
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit);
+      (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+      await expect(
+        svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' }),
+      ).rejects.toThrow('disk full');
+
+      const call = warnSpy.mock.calls.find((c) => c[0] === 'Metric: data_exchange_export');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(ctx.status).toBe('failure');
+      expect(typeof ctx.duration).toBe('number');
+      warnSpy.mockRestore();
+    });
   });
 });
