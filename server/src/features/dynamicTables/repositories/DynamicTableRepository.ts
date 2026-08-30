@@ -346,6 +346,34 @@ export class DynamicTableRepository implements IDynamicTableRepository {
     return rows;
   }
 
+  /**
+   * `findRowsByFieldValue` + a mandatory `updatedAt >= updatedAtFrom` floor (BRIEF-W2-F —
+   * accountingSyncReconcile job's trailing watermark). Sibling method, not an optional param
+   * on `findRowsByFieldValue`, so its 15+ other call sites are untouched. `updatedAtFrom` MUST
+   * be passed as a `Date` — Prisma's raw-query parameter binding serializes it to match the
+   * column's actual SQLite storage (NUMERIC affinity, ms-epoch integer); a literal ISO string
+   * compares as text against that integer and silently matches zero rows.
+   */
+  async findRowsByFieldValueSince(
+    tableId: string,
+    fieldName: string,
+    value: string,
+    updatedAtFrom: Date,
+  ): Promise<IDynamicTableData[]> {
+    const jsonFieldPath = `$.${fieldName}`;
+    const rows: IDynamicTableData[] = await this.client.$queryRaw(
+      Prisma.sql`
+        SELECT * FROM "dynamic_table_data"
+        WHERE "dynamicTableId" = ${tableId}
+          AND "deletedAt" IS NULL
+          AND json_extract(data, ${jsonFieldPath}) = ${value}
+          AND "updatedAt" >= ${updatedAtFrom}
+        ORDER BY "createdAt" DESC
+      `
+    );
+    return rows;
+  }
+
   async existsByIdInTable(dataId: string, tableId: string): Promise<boolean> {
     const count = await this.client.dynamicTableData.count({
       where: {

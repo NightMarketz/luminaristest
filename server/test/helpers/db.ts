@@ -84,6 +84,7 @@ export async function resetDb(): Promise<void> {
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();
 
+  await prisma.jobWatermark.deleteMany();
   await prisma.dynamicTableData.deleteMany();
   await prisma.dynamicTable.deleteMany();
   await prisma.dashboardLayout.deleteMany();

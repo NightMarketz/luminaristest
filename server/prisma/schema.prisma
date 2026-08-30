@@ -292,6 +292,28 @@ model ActionProposal {
   @@map("action_proposals")
 }
 
+// Trailing watermark for background jobs that need to avoid re-scanning their whole source
+// population every tick (BE-INCR / BRIEF-W2-F, accountingSyncReconcile.job.ts). Singleton PER
+// JOB NAME (not per-tenant — this job already scans every tenant in one tick, so a per-tenant
+// cursor would add complexity with no benefit, F-W2F-2). NOT an accounting-domain table (job
+// infra reused by the DynamicTable-scanning reconcile job) — deliberately placed BEFORE the
+// accounting banner below, so it stays out of the accounting section the resetDb() schema guard
+// sweeps (test/helpers/__tests__/resetDb.accounting.integration.test.ts); it still gets an
+// explicit resetDb() entry for test isolation, just not because that guard requires it.
+//
+// `watermarkAt` is the START of the previous run's window, minus OVERLAP_MS (never the newest
+// `updatedAt` SEEN in that run's rows) — see accountingSyncReconcile.job.ts's design note for why
+// a "max value seen" cursor loses rows under SQLite's busy_timeout write-lock queue. Absence of a
+// row (first run post-deploy) is read by the job as "scan everything", matching the pre-watermark
+// behavior exactly — no backfill INSERT needed at migration time.
+model JobWatermark {
+  job         String   @id
+  watermarkAt DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@map("job_watermarks")
+}
+
 // ── Accounting (deterministic double-entry module) ─────────────────────────────
 // First-class Prisma tables (NOT DynamicTable): the chart-of-accounts / journal /
 // ledger structure is identical across companies, so it is modeled directly with
