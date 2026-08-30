@@ -614,6 +614,18 @@ export const accountingService = {
     return res.data;
   },
 
+  /**
+   * Close the result of a fiscal year (encerramento do exercício, BE-INCR-SPED-APURACAO).
+   * Posts a real closing entry zeroing Revenue/Expense against Retained Earnings (2.3.1).
+   * Idempotent per (unitId, year) on the backend — a re-close returns the SAME entry, always
+   * HTTP 201, with no flag distinguishing "closed now" from "already closed".
+   */
+  async closeExercise(unitId: string, year: number): Promise<JournalEntry> {
+    const res = await apiClient.post<ApiEnvelope<JournalEntry>>('/accounting/closing/exercise', { unitId, year });
+    notify('Exercício encerrado.', 'success', 'Contabilidade');
+    return res.data;
+  },
+
   /** Transition a period to OPEN. */
   async openPeriod(periodId: string, unitId: string): Promise<AccountingPeriod> {
     const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/open`, { unitId });

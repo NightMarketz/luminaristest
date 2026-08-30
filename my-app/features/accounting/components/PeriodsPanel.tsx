@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
-import { accountingService, type AccountingPeriod, type PeriodStatus } from '../../../lib/services/accounting.service';
+import { accountingService, type AccountingPeriod, type JournalEntry, type PeriodStatus } from '../../../lib/services/accounting.service';
+import { CloseExerciseModal } from './CloseExerciseModal';
 
 // Fallback pt-BR labels; rendered via t(`periods.months.<n>`) / t(`periods.status.<status>`)
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -24,6 +25,7 @@ export function PeriodsPanel({ unitId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [reasonInput, setReasonInput] = useState<{ periodId: string; action: string; value: string } | null>(null);
   const [acting, setActing] = useState(false);
+  const [closeExerciseOpen, setCloseExerciseOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!unitId) return;
@@ -101,6 +103,17 @@ export function PeriodsPanel({ unitId }: Props) {
             {acting ? t('periods.seeding', 'Criando…') : t('periods.seedYear', 'Semear {{year}}', { year })}
           </button>
         )}
+
+        {/* Always visible — the backend is the authority on the period gate (assertPeriodOpen);
+            duplicating that check here would just create a second copy that can drift. A closed
+            December surfaces as a legible 422 from accountingService.closeExercise. */}
+        <button
+          type="button"
+          onClick={() => setCloseExerciseOpen(true)}
+          className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+        >
+          {t('periods.closeExercise.button', 'Encerrar exercício {{year}}', { year })}
+        </button>
       </div>
 
       {error && (
@@ -208,6 +221,14 @@ export function PeriodsPanel({ unitId }: Props) {
           </div>
         </div>
       )}
+
+      <CloseExerciseModal
+        isOpen={closeExerciseOpen}
+        onClose={() => setCloseExerciseOpen(false)}
+        unitId={unitId}
+        year={year}
+        onSuccess={(_entry: JournalEntry) => {}}
+      />
     </div>
   );
 }

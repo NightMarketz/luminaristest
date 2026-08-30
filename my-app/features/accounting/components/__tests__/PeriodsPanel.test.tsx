@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // JSX compiles to bare `React.createElement` with React expected in scope. Unlike the
 // panels that `import React`, this one doesn't — expose it globally for the render.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { PeriodsPanel } from '../PeriodsPanel';
 import { accountingService, type AccountingPeriod } from '../../../../lib/services/accounting.service';
 
@@ -17,6 +17,7 @@ vi.mock('../../../../lib/services/accounting.service', () => ({
     softClosePeriod: vi.fn(),
     hardClosePeriod: vi.fn(),
     reopenPeriod: vi.fn(),
+    closeExercise: vi.fn(),
   },
 }));
 
@@ -50,5 +51,25 @@ describe('PeriodsPanel (render)', () => {
     expect(screen.getByText('Jan')).toBeInTheDocument();
     expect(screen.getByText('Dez')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Fechar parcial/ })).toBeInTheDocument();
+  });
+
+  it('shows "Encerrar exercício" always — even with no periods created (FORK 1: no client-side period gate)', async () => {
+    vi.mocked(accountingService.listPeriods).mockResolvedValue([]);
+
+    render(<PeriodsPanel unitId="u1" />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Encerrar exercício/ })).toBeInTheDocument());
+  });
+
+  it('opens the CloseExerciseModal on click, without calling closeExercise until confirmed', async () => {
+    vi.mocked(accountingService.listPeriods).mockResolvedValue([period(1, 'OPEN')]);
+
+    render(<PeriodsPanel unitId="u1" />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Encerrar exercício/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Encerrar exercício/ }));
+
+    expect(await screen.findByText(/zera as contas de Receita e Despesa/)).toBeInTheDocument();
+    expect(accountingService.closeExercise).not.toHaveBeenCalled();
   });
 });
