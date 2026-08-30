@@ -15,7 +15,7 @@
  *  - flip D5: derived, in the same tx, audited; 0-row flip → rollback (TOCTOU);
  *  - delete guard: active matches block statement soft-delete.
  */
-import { ReconciliationService, RECONCILE_WINDOW_DAYS } from '../ReconciliationService';
+import { ReconciliationService, RECONCILE_WINDOW_DAYS, RECONCILE_CHUNK_SIZE } from '../ReconciliationService';
 import { ForbiddenError, NotFoundError, ServiceError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
@@ -330,6 +330,115 @@ describe('ReconciliationService.autoMatchStatement (D6)', () => {
       TX,
     );
     expect(repo.createMatch).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReconciliationService.autoMatchStatement — chunked batches (BE-W2E)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  /** N lines, each with a UNIQUE amountCents so each gets exactly 1 (matching) candidate. */
+  function buildManyLines(n: number) {
+    return Array.from({ length: n }, (_, i) => {
+      const lineNumber = i + 1;
+      return {
+        id: `l-${lineNumber}`,
+        statementId: 'st1',
+        status: 'UNMATCHED',
+        amountCents: 1000 + lineNumber, // unique per line
+        lineNumber,
+        date: new Date('2026-06-15T00:00:00.000Z'),
+      };
+    });
+  }
+
+  /** Repo mocks that page findLinesByStatement by (status, take, afterLineNumber) over a fixed pool. */
+  function buildChunkedRepo(lines: ReturnType<typeof buildManyLines>) {
+    const byId = new Map(lines.map((l) => [l.id, l]));
+    const findLinesByStatement = jest.fn(
+      async (
+        _scope: unknown,
+        _statementId: string,
+        status?: string,
+        _tx?: unknown,
+        opts?: { take?: number; afterLineNumber?: number },
+      ) => {
+        let pool = status ? lines.filter((l) => l.status === status) : lines.slice();
+        if (opts?.afterLineNumber != null) {
+          pool = pool.filter((l) => l.lineNumber > opts.afterLineNumber!);
+        }
+        pool = pool.slice().sort((a, b) => a.lineNumber - b.lineNumber);
+        return opts?.take != null ? pool.slice(0, opts.take) : pool;
+      },
+    );
+    const findLineById = jest.fn(async (_scope: unknown, id: string) => byId.get(id) ?? null);
+    const findCandidatePostings = jest.fn(async (_scope: unknown, query: { amountCents: number; side: string }) => [
+      {
+        id: `p-${query.amountCents}`,
+        accountId: 'acc-bank',
+        debitCents: query.side === 'debit' ? query.amountCents : 0,
+        creditCents: query.side === 'credit' ? query.amountCents : 0,
+        entry: { id: `je-${query.amountCents}`, date: new Date('2026-06-16T00:00:00.000Z'), status: 'Posted' },
+      },
+    ]);
+    return {
+      findLinesByStatement,
+      findLineById,
+      findCandidatePostings,
+      findActiveMatchByPosting: jest.fn(async () => null),
+      findMatchByLineAndPosting: jest.fn(async () => null),
+      createMatch: jest.fn(async () => ({ id: 'm-x' })),
+      updateLineStatus: jest.fn(async () => 1),
+      findEntryPostingsReconciliationState: jest.fn(async () => [
+        { postingId: 'p-x', accountId: 'acc-bank', hasActiveMatch: true },
+      ]),
+      findScopeBankAccountIds: jest.fn(async () => ['acc-bank']),
+      updateEntryStatus: jest.fn(async () => 1),
+    };
+  }
+
+  it('extrato com mais linhas que RECONCILE_CHUNK_SIZE processa TODOS os lotes; summary bate com o total', async () => {
+    const total = RECONCILE_CHUNK_SIZE * 2 + 50; // 3 batches: CHUNK, CHUNK, 50
+    const lines = buildManyLines(total);
+    const { svc, repo } = buildService({ repo: buildChunkedRepo(lines) });
+
+    const summary = await svc.autoMatchStatement(scope, 'st1');
+
+    expect(summary).toEqual({ processed: total, matched: total, zeroCandidates: 0, ambiguous: 0 });
+    // 2 full chunks + 1 short (final) chunk that signals "done" by returning < take.
+    expect(repo.runTransaction).toHaveBeenCalledTimes(3);
+    expect(repo.createMatch).toHaveBeenCalledTimes(total);
+    // Deterministic order between batches (orderBy lineNumber asc, seek cursor).
+    const seenLineNumbers = (repo.findLineById as jest.Mock).mock.calls.map((c) => Number(String(c[1]).slice(2)));
+    expect(new Set(seenLineNumbers).size).toBe(total); // no line visited twice, none skipped
+  });
+
+  it('statement soft-deletado ENTRE lotes → o lote seguinte lança NotFoundError; matches do lote 1 permanecem', async () => {
+    const total = RECONCILE_CHUNK_SIZE + 50; // 2 batches: CHUNK, 50
+    const lines = buildManyLines(total);
+    const chunkedRepo = buildChunkedRepo(lines);
+
+    // batchIndex counts runTransaction invocations (1 per chunk); commitMatch
+    // ALSO re-reads the statement in-tx (its own ACC-011 gate), so every
+    // findStatementById call — top-of-batch AND per-line — must agree on
+    // "still alive" for the WHOLE of batch 1, and "gone" from batch 2 on.
+    // batchIndex is the correct discriminator (not a raw call counter).
+    let batchIndex = 0;
+    const runTransaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => {
+      batchIndex++;
+      return fn(TX);
+    });
+    const findStatementById = jest.fn(async () => (batchIndex <= 1 ? { ...statement } : null));
+    const { svc, repo } = buildService({
+      repo: { ...chunkedRepo, findStatementById, runTransaction },
+    });
+
+    await expect(svc.autoMatchStatement(scope, 'st1')).rejects.toBeInstanceOf(NotFoundError);
+
+    // Batch 1 already ran its OWN (already-resolved) tx before batch 2 started —
+    // its matches are NOT reverted by batch 2's failure (F-W2E-2: no silent
+    // partial success, but no rollback of already-committed batches either).
+    expect(repo.createMatch).toHaveBeenCalledTimes(RECONCILE_CHUNK_SIZE);
+    expect(repo.runTransaction).toHaveBeenCalledTimes(2);
   });
 });
 

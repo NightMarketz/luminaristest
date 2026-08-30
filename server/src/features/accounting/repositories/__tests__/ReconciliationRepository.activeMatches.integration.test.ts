@@ -5,6 +5,12 @@
  * maps the entry summary that labels the undo (D3/D7), returns [] for UNMATCHED lines, is
  * ordered by lineNumber, honours the status filter, and NEVER leaks another tenant's matches.
  *
+ * Also covers findLinesByStatement's `opts.take` / `opts.afterLineNumber` (BE-W2E, added
+ * for ReconciliationService.autoMatchStatement's chunked batches) against the SAME real
+ * DB — the mocked ReconciliationService.automatch.test.ts proves the service-level loop
+ * logic, but only a real Prisma query proves `take`/`lineNumber: { gt }` actually compile
+ * to the intended SQL (the mocked tests never touch prisma.*).
+ *
  * Mirrors the dedicated-client pattern of SourceProvenance.integration.test.ts. The repo
  * method is exercised by passing the test client as its `tx` arg — the singleton `prisma`
  * is never touched (no global override needed).
@@ -122,5 +128,87 @@ describe('ReconciliationRepository.findLinesWithActiveMatches — real SQLite DB
     const otherScope: AccountingScope = { ...scope, unitId: 'unit-other' };
     const lines = await repo.findLinesWithActiveMatches(otherScope, 'st1', undefined, asTx());
     expect(lines).toEqual([]);
+  });
+});
+
+describe('ReconciliationRepository.findLinesByStatement — take/afterLineNumber (BE-W2E)', () => {
+  let db: PrismaClient;
+  let dbPath: string;
+  const repo = new ReconciliationRepository();
+  const asTx = () => db as unknown as Prisma.TransactionClient;
+
+  beforeAll(async () => {
+    dbPath = path.join(os.tmpdir(), `incr7-chunk-${Date.now()}.db`);
+    execSync('npx prisma migrate deploy', {
+      cwd: SERVER_ROOT,
+      env: { ...process.env, DATABASE_URL: `file:${dbPath}` },
+      stdio: 'pipe',
+    });
+    db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}?connection_limit=1` } } });
+    await db.$connect();
+
+    await db.user.create({
+      data: { id: 'u-recon', name: 'Recon', username: 'reconuser', email: 'recon@test.local', password: 'x', role: 'USER' },
+    });
+    await db.account.create({
+      data: { id: 'acc-bank', userId: 'u-recon', unitId: 'unit-recon', code: '1.1.1', name: 'Banco', nature: 'Asset', acceptsEntries: true },
+    });
+    await db.bankStatement.create({
+      data: {
+        id: 'st1', userId: 'u-recon', unitId: 'unit-recon', glAccountId: 'acc-bank',
+        periodStart: new Date('2026-06-01T00:00:00.000Z'), periodEnd: new Date('2026-06-30T00:00:00.000Z'), sha256: 'hash-chunk',
+      },
+    });
+    // 5 lines, lineNumber 1..5 — l2 is MATCHED (removed from the UNMATCHED cursor), rest UNMATCHED.
+    for (let n = 1; n <= 5; n++) {
+      await db.bankStatementLine.create({
+        data: {
+          id: `l${n}`, userId: 'u-recon', unitId: 'unit-recon', statementId: 'st1', lineNumber: n,
+          date: new Date('2026-06-15T00:00:00.000Z'), amountCents: 1000 + n, description: `linha ${n}`,
+          status: n === 2 ? 'MATCHED' : 'UNMATCHED', rawJson: '[]',
+        },
+      });
+    }
+  }, 60000);
+
+  afterAll(async () => {
+    await db.$disconnect();
+    for (const suffix of ['', '-wal', '-shm']) {
+      try { fs.unlinkSync(dbPath + suffix); } catch { /* ignore */ }
+    }
+  });
+
+  it('opts.take bounds the page size, ordered by lineNumber asc', async () => {
+    const page = await repo.findLinesByStatement(scope, 'st1', undefined, asTx(), { take: 2 });
+    expect(page.map((l) => l.lineNumber)).toEqual([1, 2]);
+  });
+
+  it('opts.afterLineNumber seeks past already-visited lines, take+afterLineNumber compose', async () => {
+    const page1 = await repo.findLinesByStatement(scope, 'st1', undefined, asTx(), { take: 2 });
+    expect(page1.map((l) => l.lineNumber)).toEqual([1, 2]);
+    const page2 = await repo.findLinesByStatement(scope, 'st1', undefined, asTx(), {
+      take: 2,
+      afterLineNumber: page1[page1.length - 1].lineNumber,
+    });
+    expect(page2.map((l) => l.lineNumber)).toEqual([3, 4]);
+    const page3 = await repo.findLinesByStatement(scope, 'st1', undefined, asTx(), {
+      take: 2,
+      afterLineNumber: page2[page2.length - 1].lineNumber,
+    });
+    expect(page3.map((l) => l.lineNumber)).toEqual([5]); // short page — the "done" signal
+  });
+
+  it('status filter + afterLineNumber compose (the actual autoMatchStatement query shape)', async () => {
+    // status=UNMATCHED excludes l2 (MATCHED) regardless of lineNumber order.
+    const page = await repo.findLinesByStatement(scope, 'st1', 'UNMATCHED', asTx(), {
+      take: 200,
+      afterLineNumber: 0,
+    });
+    expect(page.map((l) => l.lineNumber)).toEqual([1, 3, 4, 5]);
+  });
+
+  it('no opts → unbounded, unchanged pre-existing behaviour', async () => {
+    const all = await repo.findLinesByStatement(scope, 'st1', undefined, asTx());
+    expect(all).toHaveLength(5);
   });
 });
