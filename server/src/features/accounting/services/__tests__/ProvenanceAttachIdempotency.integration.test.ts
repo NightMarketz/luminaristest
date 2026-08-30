@@ -55,7 +55,7 @@ function buildRealService(): PostingService {
     postingRepo,
     new AccountingPolicy(),
     new AccountingPeriodRepository(),
-    new AuditService(new AuditRepository(), postingRepo),
+    new AuditService(new AuditRepository(), postingRepo, new AccountingPolicy()),
     new SourceProvenanceRepository(),
     new DimensionRepository(),
   );

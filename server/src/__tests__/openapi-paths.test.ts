@@ -39,7 +39,9 @@ const { options } = require('../../scripts/generate-openapi');
 // /api/accounting/journal-entries/{entryId}/source-documents compartilham o MESMO path — são
 // +1 path e +2 OPERAÇÕES (141→142 paths, 167→169 operations, medido com docs:generate). O BRIEF
 // §4.3 dizia "141→143" tratando operação como path; 143 aqui reprovaria o próprio guard.
-const BASELINE = 142;
+// +1 (BRIEF-W1-A): GET /api/accounting/audit/verify-chain — chamador de produção para
+// `AuditService.verifyAuditChain`, path novo dedicado (142 → 143).
+const BASELINE = 143;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
