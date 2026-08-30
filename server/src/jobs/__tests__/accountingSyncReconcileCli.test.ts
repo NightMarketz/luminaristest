@@ -66,6 +66,28 @@ describe('accountingSyncReconcileCli.runCli', () => {
     expect(JSON.parse(written)).toMatchObject({ blocked: 2 });
   });
 
+  describe('durationMs (BRIEF-W2-D, layer 1)', () => {
+    it('includes a numeric durationMs in the cli_complete structured log', async () => {
+      runAccountingSyncReconcile.mockResolvedValueOnce({ total: 1, synced: 1, idempotentHits: 0, failed: 0 });
+      await runCli();
+
+      const logger = jest.requireMock('../../lib/logger').default as { info: jest.Mock };
+      const complete = logger.info.mock.calls.find((c) => c[1]?.event === 'cli_complete')?.[1];
+      expect(typeof complete.durationMs).toBe('number');
+      expect(complete.durationMs).toBeGreaterThanOrEqual(0);
+    });
+
+    it('includes a numeric durationMs in the cli_failed structured log', async () => {
+      runAccountingSyncReconcile.mockRejectedValueOnce(new Error('db down'));
+      await runCli();
+
+      const logger = jest.requireMock('../../lib/logger').default as { error: jest.Mock };
+      const failed = logger.error.mock.calls.find((c) => c[1]?.event === 'cli_failed')?.[1];
+      expect(typeof failed.durationMs).toBe('number');
+      expect(failed.durationMs).toBeGreaterThanOrEqual(0);
+    });
+  });
+
   describe('alert webhook (F-W2C-2 — same criterion as the scheduler: blocked>0 || failed>0)', () => {
     it('does not call the webhook when failed=0 and blocked=0', async () => {
       runAccountingSyncReconcile.mockResolvedValueOnce({ total: 2, synced: 2, idempotentHits: 0, failed: 0 });

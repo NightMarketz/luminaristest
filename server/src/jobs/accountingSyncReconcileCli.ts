@@ -18,6 +18,7 @@ const JOB = 'accounting_sync_reconcile';
  * Always disconnects Prisma in `finally`. Never calls process.exit (testable).
  */
 export async function runCli(): Promise<number> {
+  const startedAtMs = Date.now();
   try {
     const summary = await runAccountingSyncReconcile();
     const blocked = summary.blocked ?? 0;
@@ -29,6 +30,7 @@ export async function runCli(): Promise<number> {
       idempotentHits: summary.idempotentHits,
       failed: summary.failed,
       blocked,
+      durationMs: Date.now() - startedAtMs,
     };
     logger.info(JOB, completeContext);
     // Operator-facing structured line on stdout.
@@ -54,6 +56,7 @@ export async function runCli(): Promise<number> {
       event: 'cli_failed',
       errorName: error instanceof Error ? error.name : 'UnknownError',
       errorMessage: error instanceof Error ? error.message : String(error),
+      durationMs: Date.now() - startedAtMs,
     });
     return 1;
   } finally {

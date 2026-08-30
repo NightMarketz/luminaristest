@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
+import { metrics } from '../../../lib/monitoring';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -174,6 +175,10 @@ export class SpedEcfGenerationService {
       totalRows: lines.length,
     });
 
+    // BRIEF-W2-D (F4, layer 1): spans job PROCESSING -> the return below, or the throw in the
+    // catch FAILED right after. No warnThresholdMs — see SpedGenerationService.generate() for why.
+    const endTimer = metrics.startTimer('sped_ecf_generation');
+
     let storageKey: string;
     try {
       ({ storageKey } = await storage.saveFile(
@@ -198,6 +203,7 @@ export class SpedEcfGenerationService {
         errorName: error instanceof Error ? error.name : 'UnknownError',
         errorMessage: error instanceof Error ? error.message : String(error),
       });
+      endTimer({ success: false, jobId: job.id, kind: job.kind, unitId: scope.unitId });
       throw error;
     }
 
@@ -219,6 +225,7 @@ export class SpedEcfGenerationService {
       return j;
     });
 
+    endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });
     return toJobResponse(updated);
   }
 }

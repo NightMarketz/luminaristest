@@ -22,6 +22,7 @@ import type { IJournalEntryRepository } from '../../repositories/IJournalEntryRe
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import { AccountingReportService } from '../AccountingReportService';
 import { STATEMENT_MAPPING_VERSION } from '../StatementMappingFixture';
+import { logger } from '../../../../lib/logger';
 
 // ─── Minimal mock builders ────────────────────────────────────────────────────
 
@@ -276,6 +277,20 @@ describe('balanceSheet', () => {
     expect(report.diagnostics.hasUnclosedPriorYearResult).toBe(true);
     expect(report.diagnostics.priorYearResultCents).toBe(1000);
   });
+
+  it('logs Metric: report_balanceSheet at info with a numeric duration on success (BRIEF-W2-D)', async () => {
+    const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    const accounts = [makeAccount({ code: '1.1', nature: 'Asset' })];
+    const { svc } = buildService(accounts, []);
+    await svc.balanceSheet(SCOPE, AS_OF);
+
+    const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_balanceSheet');
+    expect(call).toBeDefined();
+    const ctx = call![1] as Record<string, unknown>;
+    expect(typeof ctx.duration).toBe('number');
+    expect(ctx.status).toBe('success');
+    infoSpy.mockRestore();
+  });
 });
 
 // ─── incomeStatement ─────────────────────────────────────────────────────────
@@ -501,6 +516,19 @@ describe('incomeStatement', () => {
 
     expect(report.reportStatus).toBe('OK');
     expect(report.diagnostics.unmappedAccounts).toEqual([]);
+  });
+
+  it('logs Metric: report_incomeStatement at info with a numeric duration on success (BRIEF-W2-D)', async () => {
+    const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    const { svc } = buildService([], []);
+    await svc.incomeStatement(SCOPE, AS_OF);
+
+    const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_incomeStatement');
+    expect(call).toBeDefined();
+    const ctx = call![1] as Record<string, unknown>;
+    expect(typeof ctx.duration).toBe('number');
+    expect(ctx.status).toBe('success');
+    infoSpy.mockRestore();
   });
 });
 

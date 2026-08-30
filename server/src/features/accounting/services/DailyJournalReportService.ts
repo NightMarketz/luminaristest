@@ -1,4 +1,6 @@
 import { ForbiddenError } from '../../../lib/errors';
+import { metrics } from '../../../lib/monitoring';
+import { REPORT_WARN_THRESHOLDS_MS } from '../../../lib/reportThresholds';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -77,51 +79,61 @@ export class DailyJournalReportService {
       throw new ForbiddenError('Você não tem permissão para ler o Livro Diário.');
     }
 
-    const window = {
-      from: new Date(`${range.from}T00:00:00.000Z`),
-      to: new Date(`${range.to}T23:59:59.999Z`),
-    };
-
-    // Entries come back scope-filtered and ordered (date ASC, entryNumber ASC) by the
-    // repository — the chronological/tie-break contract lives there, not here.
-    const rawEntries = await this.journalEntryRepo.findManyForExport(
-      scope,
-      LEDGER_STATUSES,
-      window,
-    );
-
-    const entries: DailyJournalEntry[] = rawEntries.map((e) => {
-      const lines: DailyJournalLine[] = e.postings.map((p) => ({
-        accountCode: p.account.code,
-        accountName: p.account.name,
-        debitCents: p.debitCents,
-        creditCents: p.creditCents,
-      }));
-
-      let debitTotal = 0;
-      let creditTotal = 0;
-      for (const l of lines) {
-        debitTotal += l.debitCents;
-        creditTotal += l.creditCents;
-      }
-
-      return {
-        // LEDGER_STATUSES (Posted/Reconciled/Reversed) are always numbered — a Draft/PendingApproval
-        // entry (nullable entryNumber, ADR-INCR-APPROVAL) can never reach this filtered read.
-        entryNumber: e.entryNumber ?? 0,
-        date: e.date.toISOString().slice(0, 10),
-        description: e.description,
-        lines,
-        // EXACT integer equality (Contract §2.1) — never float/epsilon.
-        balanced: debitTotal === creditTotal,
+    // BRIEF-W2-D (F4, layer 3) — see AccountingReportService.trialBalance() for why this starts
+    // after the policy gate.
+    const endTimer = metrics.startTimer('report_dailyJournal');
+    try {
+      const window = {
+        from: new Date(`${range.from}T00:00:00.000Z`),
+        to: new Date(`${range.to}T23:59:59.999Z`),
       };
-    });
 
-    return {
-      unitId: scope.unitId,
-      from: range.from,
-      to: range.to,
-      entries,
-    };
+      // Entries come back scope-filtered and ordered (date ASC, entryNumber ASC) by the
+      // repository — the chronological/tie-break contract lives there, not here.
+      const rawEntries = await this.journalEntryRepo.findManyForExport(
+        scope,
+        LEDGER_STATUSES,
+        window,
+      );
+
+      const entries: DailyJournalEntry[] = rawEntries.map((e) => {
+        const lines: DailyJournalLine[] = e.postings.map((p) => ({
+          accountCode: p.account.code,
+          accountName: p.account.name,
+          debitCents: p.debitCents,
+          creditCents: p.creditCents,
+        }));
+
+        let debitTotal = 0;
+        let creditTotal = 0;
+        for (const l of lines) {
+          debitTotal += l.debitCents;
+          creditTotal += l.creditCents;
+        }
+
+        return {
+          // LEDGER_STATUSES (Posted/Reconciled/Reversed) are always numbered — a Draft/PendingApproval
+          // entry (nullable entryNumber, ADR-INCR-APPROVAL) can never reach this filtered read.
+          entryNumber: e.entryNumber ?? 0,
+          date: e.date.toISOString().slice(0, 10),
+          description: e.description,
+          lines,
+          // EXACT integer equality (Contract §2.1) — never float/epsilon.
+          balanced: debitTotal === creditTotal,
+        };
+      });
+
+      const report: DailyJournalReport = {
+        unitId: scope.unitId,
+        from: range.from,
+        to: range.to,
+        entries,
+      };
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.dailyJournal, unitId: scope.unitId });
+      return report;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.dailyJournal, unitId: scope.unitId });
+      throw error;
+    }
   }
 }

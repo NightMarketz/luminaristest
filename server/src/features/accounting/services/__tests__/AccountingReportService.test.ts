@@ -14,6 +14,8 @@
  */
 import { AccountingReportService } from '../AccountingReportService';
 import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
+import { logger } from '../../../../lib/logger';
+import { REPORT_WARN_THRESHOLDS_MS } from '../../../../lib/reportThresholds';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
 const scope: AccountingScope = {
@@ -237,6 +239,48 @@ describe('AccountingReportService.trialBalance', () => {
     const devolucoes = report.rows.find((r) => r.code === '3.2')!;
     expect(devolucoes.balanceCents).toBe(3000); // debit − credit > 0 (debit balance)
   });
+
+  describe('duration metric (BRIEF-W2-D, layer 3)', () => {
+    it('logs Metric: report_trialBalance at info with a numeric duration on success', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const { svc } = buildService({ postingRepo: { groupByAccount: jest.fn(async () => []) } });
+      await svc.trialBalance(scope);
+
+      const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_trialBalance');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(typeof ctx.duration).toBe('number');
+      expect(ctx.status).toBe('success');
+      infoSpy.mockRestore();
+    });
+
+    it('logs at warn when the read takes longer than REPORT_WARN_THRESHOLDS_MS.trialBalance (fake timers)', async () => {
+      jest.useFakeTimers();
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const { svc } = buildService({
+        postingRepo: {
+          groupByAccount: jest.fn(() =>
+            new Promise((resolve) => setTimeout(() => resolve([]), REPORT_WARN_THRESHOLDS_MS.trialBalance + 500)),
+          ),
+        },
+      });
+
+      const pending = svc.trialBalance(scope);
+      await jest.advanceTimersByTimeAsync(REPORT_WARN_THRESHOLDS_MS.trialBalance + 500);
+      await pending;
+
+      const call = warnSpy.mock.calls.find((c) => c[0] === 'Metric: report_trialBalance');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(ctx.status).toBe('success'); // still a success — only the log level moved to warn
+      expect(infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_trialBalance')).toBeUndefined();
+
+      warnSpy.mockRestore();
+      infoSpy.mockRestore();
+      jest.useRealTimers();
+    });
+  });
 });
 
 describe('AccountingReportService.accountLedger', () => {
@@ -286,5 +330,47 @@ describe('AccountingReportService.accountLedger', () => {
     for (const r of report.rows) {
       expect(Number.isInteger(r.runningBalanceCents)).toBe(true);
     }
+  });
+
+  describe('duration metric (BRIEF-W2-D, layer 3)', () => {
+    it('logs Metric: report_accountLedger at info with a numeric duration on success', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const account = { id: 'acc-1.1.1', code: '1.1.1', name: 'Banco', nature: 'Asset' };
+      const { svc } = buildService({ accountRepo: { findByCode: jest.fn(async () => account) } });
+      await svc.accountLedger(scope, '1.1.1');
+
+      const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_accountLedger');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(typeof ctx.duration).toBe('number');
+      expect(ctx.status).toBe('success');
+      infoSpy.mockRestore();
+    });
+
+    it('logs Metric: report_accountLedger at warn (failure) when the account is not found', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+      const { svc } = buildService({ accountRepo: { findByCode: jest.fn(async () => null) } });
+
+      await expect(svc.accountLedger(scope, '9.9.9')).rejects.toBeInstanceOf(NotFoundError);
+
+      const call = warnSpy.mock.calls.find((c) => c[0] === 'Metric: report_accountLedger');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(ctx.status).toBe('failure');
+      warnSpy.mockRestore();
+    });
+
+    it('does NOT log the metric on ForbiddenError (timer starts after the policy gate)', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const { svc } = buildService({ policy: { canRead: jest.fn(() => false) } });
+
+      await expect(svc.accountLedger(scope, '1.1.1')).rejects.toBeInstanceOf(ForbiddenError);
+
+      expect(warnSpy.mock.calls.find((c) => c[0] === 'Metric: report_accountLedger')).toBeUndefined();
+      expect(infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_accountLedger')).toBeUndefined();
+      warnSpy.mockRestore();
+      infoSpy.mockRestore();
+    });
   });
 });

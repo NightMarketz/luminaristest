@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { SpedGenerationService } from '../SpedGenerationService';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
+import { logger } from '../../../../lib/logger';
 import type { SpedEcdRequestDto } from '../../dtos/SpedEcdDto';
 import type { Account, AccountingDataExchangeJob } from 'generated/prisma';
 
@@ -306,5 +307,35 @@ describe('SpedGenerationService.generate', () => {
         errorMessage: 'disk full',
       }),
     );
+  });
+
+  describe('duration metric (BRIEF-W2-D, layer 1 — extends Metrics.startTimer, no warnThresholdMs for this layer)', () => {
+    it('logs Metric: sped_ecd_generation at info with a numeric duration on success', async () => {
+      const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+      const { service } = buildService();
+      await service.generate(scope, makeDto());
+
+      const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: sped_ecd_generation');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(typeof ctx.duration).toBe('number');
+      expect(ctx.status).toBe('success');
+      infoSpy.mockRestore();
+    });
+
+    it('logs Metric: sped_ecd_generation at warn on the FAILED (saveFile) path', async () => {
+      const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
+      const { service } = buildService();
+      (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+      await expect(service.generate(scope, makeDto())).rejects.toThrow('disk full');
+
+      const call = warnSpy.mock.calls.find((c) => c[0] === 'Metric: sped_ecd_generation');
+      expect(call).toBeDefined();
+      const ctx = call![1] as Record<string, unknown>;
+      expect(ctx.status).toBe('failure');
+      expect(typeof ctx.duration).toBe('number');
+      warnSpy.mockRestore();
+    });
   });
 });

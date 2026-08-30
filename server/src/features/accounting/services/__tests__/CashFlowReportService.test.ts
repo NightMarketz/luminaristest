@@ -17,6 +17,7 @@
  */
 import { CashFlowReportService } from '../CashFlowReportService';
 import { ForbiddenError } from '../../../../lib/errors';
+import { logger } from '../../../../lib/logger';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
 const scope: AccountingScope = {
@@ -300,5 +301,18 @@ describe('CashFlowReportService.cashFlowStatement — empty period & signs', () 
     await expect(svc.cashFlowStatement(scope, asOf)).rejects.toBeInstanceOf(ForbiddenError);
     expect(gba).not.toHaveBeenCalled();
     expect(reportService.incomeStatement).not.toHaveBeenCalled();
+  });
+
+  it('logs Metric: report_cashFlowStatement at info with a numeric duration on success (BRIEF-W2-D)', async () => {
+    const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
+    const { svc } = buildService({ groupByAccount: makeGroupByAccount([], [], []) });
+    await svc.cashFlowStatement(scope, asOf);
+
+    const call = infoSpy.mock.calls.find((c) => c[0] === 'Metric: report_cashFlowStatement');
+    expect(call).toBeDefined();
+    const ctx = call![1] as Record<string, unknown>;
+    expect(typeof ctx.duration).toBe('number');
+    expect(ctx.status).toBe('success');
+    infoSpy.mockRestore();
   });
 });
