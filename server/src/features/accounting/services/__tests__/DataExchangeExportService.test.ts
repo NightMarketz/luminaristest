@@ -14,6 +14,11 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   deleteFile: jest.fn(async () => undefined),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
+const sendAlertWebhook = jest.fn();
+jest.mock('../../../../lib/alertWebhook', () => ({
+  __esModule: true,
+  sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
+}));
 
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
@@ -142,5 +147,28 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     expect(createJob).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'EXPORTED' }));
     const statuses = updateJob.mock.calls.map((c) => (c[2] as { status?: string } | undefined)?.status);
     expect(statuses).toContain('FAILED');
+  });
+
+  it('fires the alert webhook (source=data_exchange_export) alongside the FAILED status, before the throw (F-W2C-1)', async () => {
+    const { repo } = makeRepo();
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit);
+    (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(
+      svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' }),
+    ).rejects.toThrow('disk full');
+
+    expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+    expect(sendAlertWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'data_exchange_export',
+        event: 'generation_failed',
+        jobId: 'job-1',
+        kind: 'EXPORT_TRIAL_BALANCE',
+        unitId: 'unit-1',
+        errorName: 'Error',
+        errorMessage: 'disk full',
+      }),
+    );
   });
 });

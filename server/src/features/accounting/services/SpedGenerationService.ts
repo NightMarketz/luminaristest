@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
+import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -138,6 +139,18 @@ export class SpedGenerationService {
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
       await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
+      // ALERT_WEBHOOK_URL is unset.
+      sendAlertWebhook({
+        source: 'sped_ecd',
+        event: 'generation_failed',
+        timestamp: new Date().toISOString(),
+        jobId: job.id,
+        kind: job.kind,
+        unitId: scope.unitId,
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
 

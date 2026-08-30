@@ -6,6 +6,11 @@ jest.mock('../accountingSyncReconcile.job', () => ({
   __esModule: true,
   runAccountingSyncReconcile: jest.fn(),
 }));
+const sendAlertWebhook = jest.fn();
+jest.mock('../../lib/alertWebhook', () => ({
+  __esModule: true,
+  sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
+}));
 
 function summary(over: Partial<ReconcileSummary> = {}): ReconcileSummary {
   return { total: 1, synced: 1, idempotentHits: 0, failed: 0, ...over };
@@ -81,6 +86,49 @@ describe('AccountingSyncScheduler', () => {
       const complete = log.info.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
       expect(complete).toMatchObject({ event: 'complete', blocked: 0 });
       expect(log.warn.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
+    });
+
+    describe('alert webhook (F-W2C-2: same blocked>0 || failed>0 criterion as the warn branch)', () => {
+      it('fires the webhook with the same completeContext payload when blocked>0', async () => {
+        const { scheduler } = build(
+          jest.fn(async () => summary({ total: 3, synced: 1, idempotentHits: 0, failed: 0, blocked: 2 })),
+        );
+        await scheduler.runOnce();
+
+        expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+        expect(sendAlertWebhook).toHaveBeenCalledWith(
+          expect.objectContaining({
+            source: 'accounting_sync_reconcile',
+            event: 'reconcile_summary',
+            job: 'accounting_sync_reconcile',
+            runId: 'run-fixed',
+            blocked: 2,
+            failed: 0,
+          }),
+        );
+      });
+
+      it('fires the webhook when failed>0', async () => {
+        const { scheduler } = build(
+          jest.fn(async () => summary({ total: 2, synced: 1, idempotentHits: 0, failed: 1, blocked: 0 })),
+        );
+        await scheduler.runOnce();
+
+        expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+        expect(sendAlertWebhook).toHaveBeenCalledWith(expect.objectContaining({ failed: 1 }));
+      });
+
+      it('does NOT fire the webhook when blocked=0 and failed=0', async () => {
+        const { scheduler } = build();
+        await scheduler.runOnce();
+        expect(sendAlertWebhook).not.toHaveBeenCalled();
+      });
+
+      it('does not fire the webhook on an exception (no summary to alert on)', async () => {
+        const { scheduler } = build(jest.fn().mockRejectedValueOnce(new Error('boom')));
+        await expect(scheduler.runOnce()).rejects.toThrow('boom');
+        expect(sendAlertWebhook).not.toHaveBeenCalled();
+      });
     });
 
     it('skips an overlapping run (process-local lock) and logs skipped_due_to_lock', async () => {

@@ -14,6 +14,7 @@
  */
 import { randomUUID } from 'crypto';
 import logger from '../lib/logger';
+import { sendAlertWebhook } from '../lib/alertWebhook';
 import { runAccountingSyncReconcile } from './accountingSyncReconcile.job';
 import type { ReconcileSummary } from './accountingSyncReconcile.job';
 
@@ -115,6 +116,14 @@ export class AccountingSyncScheduler {
       // blocked or failed run must log at `warn` or the summary is invisible on disk.
       if (blocked > 0 || summary.failed > 0) {
         this.log.warn(JOB, completeContext);
+        // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
+        // ALERT_WEBHOOK_URL is unset.
+        sendAlertWebhook({
+          ...completeContext,
+          source: 'accounting_sync_reconcile',
+          event: 'reconcile_summary',
+          timestamp: new Date(this.now()).toISOString(),
+        });
       } else {
         this.log.info(JOB, completeContext);
       }

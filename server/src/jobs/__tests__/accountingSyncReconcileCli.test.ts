@@ -13,6 +13,11 @@ jest.mock('../../lib/logger', () => ({
   __esModule: true,
   default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
 }));
+const sendAlertWebhook = jest.fn();
+jest.mock('../../lib/alertWebhook', () => ({
+  __esModule: true,
+  sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
+}));
 
 import { runCli } from '../accountingSyncReconcileCli';
 
@@ -59,5 +64,44 @@ describe('accountingSyncReconcileCli.runCli', () => {
 
     const written = (process.stdout.write as jest.Mock).mock.calls[0][0] as string;
     expect(JSON.parse(written)).toMatchObject({ blocked: 2 });
+  });
+
+  describe('alert webhook (F-W2C-2 — same criterion as the scheduler: blocked>0 || failed>0)', () => {
+    it('does not call the webhook when failed=0 and blocked=0', async () => {
+      runAccountingSyncReconcile.mockResolvedValueOnce({ total: 2, synced: 2, idempotentHits: 0, failed: 0 });
+      await runCli();
+      expect(sendAlertWebhook).not.toHaveBeenCalled();
+    });
+
+    it('calls the webhook with the reconcile_summary payload when failed>0', async () => {
+      runAccountingSyncReconcile.mockResolvedValueOnce({ total: 3, synced: 2, idempotentHits: 0, failed: 1 });
+      await runCli();
+
+      expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+      expect(sendAlertWebhook).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: 'accounting_sync_reconcile',
+          event: 'reconcile_summary',
+          job: 'accounting_sync_reconcile',
+          failed: 1,
+          blocked: 0,
+        }),
+      );
+    });
+
+    it('calls the webhook when blocked>0 even though failed=0 and the exit code stays 0 — alert criterion is NOT the exit code', async () => {
+      runAccountingSyncReconcile.mockResolvedValueOnce({ total: 3, synced: 1, idempotentHits: 0, failed: 0, blocked: 2 });
+      const code = await runCli();
+
+      expect(code).toBe(0);
+      expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+      expect(sendAlertWebhook).toHaveBeenCalledWith(expect.objectContaining({ blocked: 2, failed: 0 }));
+    });
+
+    it('does not call the webhook when the job throws (no summary to report)', async () => {
+      runAccountingSyncReconcile.mockRejectedValueOnce(new Error('db down'));
+      await runCli();
+      expect(sendAlertWebhook).not.toHaveBeenCalled();
+    });
   });
 });

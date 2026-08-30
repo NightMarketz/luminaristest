@@ -8,6 +8,7 @@
  */
 import prisma from '../lib/prisma';
 import logger from '../lib/logger';
+import { sendAlertWebhook } from '../lib/alertWebhook';
 import { runAccountingSyncReconcile } from './accountingSyncReconcile.job';
 
 const JOB = 'accounting_sync_reconcile';
@@ -19,17 +20,31 @@ const JOB = 'accounting_sync_reconcile';
 export async function runCli(): Promise<number> {
   try {
     const summary = await runAccountingSyncReconcile();
-    logger.info(JOB, {
+    const blocked = summary.blocked ?? 0;
+    const completeContext = {
       job: JOB,
       event: 'cli_complete',
       total: summary.total,
       synced: summary.synced,
       idempotentHits: summary.idempotentHits,
       failed: summary.failed,
-      blocked: summary.blocked ?? 0,
-    });
+      blocked,
+    };
+    logger.info(JOB, completeContext);
     // Operator-facing structured line on stdout.
     process.stdout.write(`${JSON.stringify({ job: JOB, ...summary })}\n`);
+    // Alert criterion mirrors the scheduler (F-W2C-2: `blocked>0 || failed>0`), not the exit
+    // code below — the exit code stays failed-only (blocked is a deliberate, deterministic
+    // skip, not a retry-worthy failure), but the alert is about "something needs a human", which
+    // blocked rows also signal.
+    if (blocked > 0 || summary.failed > 0) {
+      sendAlertWebhook({
+        ...completeContext,
+        source: 'accounting_sync_reconcile',
+        event: 'reconcile_summary',
+        timestamp: new Date().toISOString(),
+      });
+    }
     // Exit code stays failed-only: `blocked` is a deliberate, deterministic skip (not a retry-worthy
     // failure), so it must not flip the CLI's exit code — only surface it in the summary above.
     return summary.failed === 0 ? 0 : 1;
