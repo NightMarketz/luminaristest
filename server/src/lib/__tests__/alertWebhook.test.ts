@@ -139,6 +139,25 @@ describe('sendAlertWebhook', () => {
     expect(warnSpy.mock.calls[0][1]).toMatchObject({ errorName: 'AbortError' });
   });
 
+  it('never throws when the payload has a circular reference — collapses to a single logger.warn', () => {
+    process.env.ALERT_WEBHOOK_URL = 'https://alerts.example.com/hook';
+    fetchSpy = jest.spyOn(global, 'fetch');
+
+    const circular: Record<string, unknown> = payload();
+    circular.self = circular; // JSON.stringify throws synchronously on this
+
+    expect(() => sendAlertWebhook(circular as unknown as AlertPayload)).not.toThrow();
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0][0]).toBe('alert webhook failed');
+    expect(warnSpy.mock.calls[0][1]).toMatchObject({
+      url: 'https://alerts.example.com/hook',
+      source: 'accounting_sync_reconcile',
+      event: 'reconcile_summary',
+    });
+  });
+
   it('does not abort (and does not warn) when the response arrives before the timeout', async () => {
     jest.useFakeTimers();
     process.env.ALERT_WEBHOOK_URL = 'https://alerts.example.com/hook';

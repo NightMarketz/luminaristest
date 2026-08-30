@@ -34,30 +34,51 @@ export function sendAlertWebhook(payload: AlertPayload): void {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ALERT_WEBHOOK_TIMEOUT_MS);
 
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    signal: controller.signal,
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error(`alert webhook responded with status ${res.status}`);
+  // The whole synchronous assembly below — JSON.stringify(payload) and the fetch() call itself —
+  // can throw before any promise exists to catch it (e.g. a circular payload throws a sync
+  // TypeError). Wrapping it keeps the "never throws" contract even in that case.
+  try {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
     })
-    .catch((error) => {
-      // AbortController.abort() rejects fetch with a DOMException — which, in Node, does NOT
-      // extend Error — so `instanceof Error` alone would mislabel every timeout as
-      // 'UnknownError' and lose its message. Read name/message structurally instead.
-      const hasNameAndMessage =
-        typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
-      logger.warn('alert webhook failed', {
-        url,
-        source: payload.source,
-        event: payload.event,
-        errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
-        errorMessage: hasNameAndMessage
-          ? String((error as { message: unknown }).message)
-          : String(error),
-      });
-    })
-    .finally(() => clearTimeout(timeoutId));
+      .then((res) => {
+        if (!res.ok) throw new Error(`alert webhook responded with status ${res.status}`);
+      })
+      .catch((error) => {
+        // fetch() can reject with heterogeneous error shapes depending on the failure mode —
+        // a DOMException on abort, a TypeError on network failure, or a plain object. Reading
+        // name/message structurally is a safe superset that doesn't depend on any one prototype
+        // chain, rather than asserting `instanceof Error`.
+        const hasNameAndMessage =
+          typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+        logger.warn('alert webhook failed', {
+          url,
+          source: payload.source,
+          event: payload.event,
+          errorName: hasNameAndMessage
+            ? String((error as { name: unknown }).name)
+            : 'UnknownError',
+          errorMessage: hasNameAndMessage
+            ? String((error as { message: unknown }).message)
+            : String(error),
+        });
+      })
+      .finally(() => clearTimeout(timeoutId));
+  } catch (error) {
+    clearTimeout(timeoutId);
+    const hasNameAndMessage =
+      typeof error === 'object' && error !== null && 'name' in error && 'message' in error;
+    logger.warn('alert webhook failed', {
+      url,
+      source: payload.source,
+      event: payload.event,
+      errorName: hasNameAndMessage ? String((error as { name: unknown }).name) : 'UnknownError',
+      errorMessage: hasNameAndMessage
+        ? String((error as { message: unknown }).message)
+        : String(error),
+    });
+  }
 }
