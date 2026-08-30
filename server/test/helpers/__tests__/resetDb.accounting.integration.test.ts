@@ -10,9 +10,12 @@
  * 11 tabelas (dynamicTableData, dynamicTable, dashboardLayout, chatMessage, chatInstance,
  * structuredData, chunk, document, actionProposal, knowledgeGraph, user) e ZERO das tabelas do
  * módulo de contabilidade (`server/prisma/schema.prisma`, modelos a partir de `AccountingPeriod`
- * até `AccountingBinding`). Sintoma já observado por outra suíte (comentário em
- * `ProvenanceAttachIdempotency.integration.test.ts:90-101`): sem limpeza manual local, o estado
- * contábil vaza de um arquivo de teste para o outro sob `--runInBand`.
+ * até `AccountingBinding`). Sintoma já observado por outra suíte: o bloco de limpeza manual local
+ * que `ProvenanceAttachIdempotency.integration.test.ts` carregava — citado SEM faixa de linha de
+ * propósito, porque esse bloco foi REMOVIDO depois que este `resetDb()` passou a cobrir essas
+ * tabelas, e apontar linha para código que não existe mais é a classe de ponteiro morto
+ * (`8c30f7c8`, a mesma que este PR conserta em `db.ts`). Sem aquela limpeza manual local, o
+ * estado contábil vazava de um arquivo de teste para o outro sob `--runInBand`.
  *
  * ESCOLHA DAS DUAS TABELAS DA ASSERÇÃO — não é arbitrária, evita falso-negativo por cascade:
  *   - `AuditChainHead`: zero FK (scopeUserId/unitId são strings soltas, comentário no schema
