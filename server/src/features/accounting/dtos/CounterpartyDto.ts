@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { COUNTERPARTY_NAME_MAX_LENGTH, COUNTERPARTY_TYPES } from '../models/Counterparty.model';
+import { COUNTERPARTY_NAME_MAX_LENGTH, COUNTERPARTY_TYPES, normalizeTaxId } from '../models/Counterparty.model';
 import { queryBoolean } from './queryPrimitives';
 
 /**
@@ -8,9 +8,15 @@ import { queryBoolean } from './queryPrimitives';
  * here. Os schemas de CORPO são `.strict()` (campo com typo é 400, não descarte silencioso); os de
  * QUERY não são — ver o levantamento no PR que introduziu o `queryPrimitives`.
  *
- * `type` is the SUPPLIER/CUSTOMER discriminator; `name` is the display identity (uniqueness is
- * `[userId,unitId,type,name]`, enforced at the DB + mapped to a ValidationError in the service).
- * `ref` is an OPTIONAL scoped link to a DynamicTable row (plain string, not a FK).
+ * `type` is the SUPPLIER/CUSTOMER discriminator; `name` is the display value — `.trim()`'d at the
+ * edge (BRIEF-W2-A comp. 2/5) so the `.max(COUNTERPARTY_NAME_MAX_LENGTH)` check runs on the TRIMMED
+ * value (leading/trailing padding no longer counts toward the limit). The business key moved from
+ * `name` to the derived `nameNormalized` (`[userId,unitId,type,nameNormalized]`, enforced at the DB +
+ * mapped to a ValidationError in the service) — this DTO does not compute `nameNormalized` itself,
+ * that stays a service-layer concern (not duplicated here, per the reuse gate). `taxId` is OPTIONAL,
+ * normalized to digits-only via the SAME `normalizeTaxId` the model exposes (not re-implemented here) —
+ * no checksum, no fixed length (fork F-W2A-4). `ref` is an OPTIONAL scoped link to a DynamicTable row
+ * (plain string, not a FK).
  */
 
 /** @openapi
@@ -22,14 +28,23 @@ import { queryBoolean } from './queryPrimitives';
  *       properties:
  *         unitId: { type: string }
  *         type:   { type: string, enum: [SUPPLIER, CUSTOMER], description: "Fornecedor (AP) ou cliente (AR)" }
- *         name:   { type: string, description: "Nome de exibição — chave de negócio por [unidade, tipo, nome]" }
+ *         name:   { type: string, description: "Nome de exibição — a chave de negócio é o nameNormalized derivado (trim + fold de caixa + colapso de espaços)" }
+ *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado para só-dígitos — discriminador informacional, fora da chave de unicidade" }
  *         ref:    { type: string, description: "Ref opcional escopada a uma linha de DynamicTable (não é FK)" }
  */
 export const CreateCounterpartySchema = z
   .object({
     unitId: z.string().min(1),
     type: z.enum(COUNTERPARTY_TYPES),
-    name: z.string().min(1).max(COUNTERPARTY_NAME_MAX_LENGTH),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(COUNTERPARTY_NAME_MAX_LENGTH),
+    taxId: z
+      .string()
+      .transform((v) => normalizeTaxId(v))
+      .optional(),
     ref: z.string().min(1).optional(),
   })
   .strict();

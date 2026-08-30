@@ -10,6 +10,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { execSync } from 'child_process';
 import { PrismaClient } from 'generated/prisma';
+import { normalizeCounterpartyName } from '../../models/Counterparty.model';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
 const USER_ID = 'u-ar';
@@ -55,7 +56,7 @@ describe('ReceivableRepository.claimForReceipt — real SQLite DB (INCR-AR D4)',
     });
     // FK NOT NULL desde SEC-A1-5; este arquivo é sobre o CAS de status, a contraparte é só cenário.
     await db.counterparty.create({
-      data: { id: 'cp-claim', userId: USER_ID, unitId: UNIT, type: 'CUSTOMER', name: 'Cliente', createdById: USER_ID },
+      data: { id: 'cp-claim', userId: USER_ID, unitId: UNIT, type: 'CUSTOMER', name: 'Cliente', nameNormalized: normalizeCounterpartyName('Cliente'), createdById: USER_ID },
     });
   }, 60000);
 

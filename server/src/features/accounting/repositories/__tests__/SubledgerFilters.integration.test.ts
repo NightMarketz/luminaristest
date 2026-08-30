@@ -21,6 +21,7 @@ import { ReceivableRepository } from '@/features/accounting/repositories/Receiva
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { scopeToday } from '@/features/accounting/models/dates';
+import { normalizeCounterpartyName } from '@/features/accounting/models/Counterparty.model';
 
 /**
  * Mesma fonte de "hoje" que o repositório usa (ADR do fuso, F-TZ1→(c)) — o teste não pode ter a sua.
@@ -95,12 +96,12 @@ describe('Filtros de lista AP/AR — SQLite real (BE-INCR-SUBLEDGER-FILTERS §2)
 
     for (const [id, nome] of [[CP1, 'Contraparte Um'], [CP2, 'Contraparte Dois'], [CP_NEUTRA_A, 'Contraparte Neutra']]) {
       await prisma.counterparty.create({
-        data: { id, userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: nome, createdById: DONO_A },
+        data: { id, userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: nome, nameNormalized: normalizeCounterpartyName(nome), createdById: DONO_A },
       });
     }
     // A neutra do OUTRO dono: a linha de p6/r6 aponta para contraparte do PRÓPRIO escopo (SEC-A1-3).
     await prisma.counterparty.create({
-      data: { id: CP_NEUTRA_B, userId: DONO_B, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Neutra', createdById: DONO_B },
+      data: { id: CP_NEUTRA_B, userId: DONO_B, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Neutra', nameNormalized: normalizeCounterpartyName('Contraparte Neutra'), createdById: DONO_B },
     });
 
     const ap = (over: Record<string, unknown>) => ({

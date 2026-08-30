@@ -24,7 +24,12 @@ import { getFactory } from '@/lib/factory';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { deletedCounterpartyName } from '@/features/accounting/models/Counterparty.model';
+import {
+  deletedCounterpartyName,
+  deletedCounterpartyNameNormalized,
+  normalizeCounterpartyName,
+} from '@/features/accounting/models/Counterparty.model';
+import { ValidationError } from '@/lib/errors';
 
 const UNIT = 'unit-cp';
 const UNIT_OUTRA = 'unit-cp-outra';
@@ -38,7 +43,7 @@ const repo = new CounterpartyRepository();
 
 /** Cria direto pelo repositório (sem passar pela regra de negócio) e devolve a linha. */
 const criar = (userId: string, unitId: string, name: string, type = 'SUPPLIER') =>
-  repo.create({ userId, unitId, type, name, ref: null, createdById: userId });
+  repo.create({ userId, unitId, type, name, nameNormalized: normalizeCounterpartyName(name), ref: null, createdById: userId });
 
 describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada, unidade 2/4)', () => {
   beforeAll(async () => {
@@ -138,7 +143,7 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
     await expect(
       repo.runTransaction(async (tx) => {
         await repo.create(
-          { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: 'Vai Abortar', ref: null, createdById: DONO_A },
+          { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: 'Vai Abortar', nameNormalized: normalizeCounterpartyName('Vai Abortar'), ref: null, createdById: DONO_A },
           tx,
         );
         throw new Error('aborta a tx DEPOIS da escrita');
@@ -152,7 +157,7 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
     // (que nunca grava nada) satisfaria a contagem acima e o teste chamaria pane de atomicidade.
     const comitada = await repo.runTransaction((tx) =>
       repo.create(
-        { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: 'Vai Comitar', ref: null, createdById: DONO_A },
+        { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: 'Vai Comitar', nameNormalized: normalizeCounterpartyName('Vai Comitar'), ref: null, createdById: DONO_A },
         tx,
       ),
     );
@@ -167,7 +172,7 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
   it('tx: findById com o handle da tx enxerga a escrita in-tx (gate dentro da tx é legível)', async () => {
     const visto = await repo.runTransaction(async (tx) => {
       const criada = await repo.create(
-        { userId: DONO_A, unitId: UNIT, type: 'CUSTOMER', name: 'Visível In-Tx', ref: null, createdById: DONO_A },
+        { userId: DONO_A, unitId: UNIT, type: 'CUSTOMER', name: 'Visível In-Tx', nameNormalized: normalizeCounterpartyName('Visível In-Tx'), ref: null, createdById: DONO_A },
         tx,
       );
       return repo.findById(escopo(DONO_A), criada.id, tx);
@@ -191,11 +196,12 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
   });
 
   /**
-   * `@@unique([userId, unitId, type, name])` COBRE A LINHA SOFT-DELETADA — classe de bug registrada
-   * (`unique-de-idempotencia-x-soft-delete`): arquivar sem liberar a chave transforma
+   * `@@unique([userId, unitId, type, nameNormalized])` COBRE A LINHA SOFT-DELETADA — classe de bug
+   * registrada (`unique-de-idempotencia-x-soft-delete`): arquivar sem liberar a chave transforma
    * arquivar→recriar-com-o-mesmo-nome em P2002. Duas metades, e a primeira é o controle da segunda:
    *   (a) arquivar SÓ com deletedAt deixa a chave ocupada — o re-create colide de verdade;
-   *   (b) o arquivamento do serviço renomeia na MESMA tx (SEC-A1-4) e por isso libera a chave.
+   *   (b) o arquivamento do serviço renomeia AS DUAS colunas (name + nameNormalized, BRIEF-W2-A comp.
+   *       4) na MESMA tx (SEC-A1-4) e por isso libera a chave.
    * Sem (a), (b) passaria mesmo que o unique não cobrisse tumbas — e o teste estaria provando nada.
    */
   it('softdelete × @@unique: tumba ocupa a chave (a) e a renomeação do arquivamento a libera (b)', async () => {
@@ -204,10 +210,13 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
     await prisma.counterparty.update({ where: { id: tumba.id }, data: { deletedAt: new Date() } });
     await expect(criar(DONO_A, UNIT, 'Chave Disputada', 'CUSTOMER')).rejects.toMatchObject({ code: 'P2002' });
 
-    // (b) arquivamento de verdade, pelo serviço: deletedAt + rename-on-key na mesma tx
+    // (b) arquivamento de verdade, pelo serviço: deletedAt + rename-on-key nas DUAS colunas, na mesma tx
     await prisma.counterparty.update({
       where: { id: tumba.id },
-      data: { name: deletedCounterpartyName(tumba.id, 'Chave Disputada') },
+      data: {
+        name: deletedCounterpartyName(tumba.id, 'Chave Disputada'),
+        nameNormalized: deletedCounterpartyNameNormalized(tumba.id, tumba.nameNormalized),
+      },
     });
     const recriada = await criar(DONO_A, UNIT, 'Chave Disputada', 'CUSTOMER');
     expect(recriada.id).not.toBe(tumba.id);
@@ -228,6 +237,10 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
 
     expect(arquivada.deletedAt).not.toBeNull();
     expect(arquivada.name).toBe(deletedCounterpartyName(criada.id, 'Ciclo Completo'));
+    // BRIEF-W2-A comp. 4: nameNormalized — a coluna que o `@@unique` REALMENTE constrange agora —
+    // também tem de ser mutilada, senão a chave nunca é liberada (SEC-A1-4, ponto que o BRIEF marcou
+    // como não-errável).
+    expect(arquivada.nameNormalized).toBe(`deleted:${criada.id}:ciclo completo`);
 
     // O nome original está livre: recriar não colide (era o P2002 da classe registrada).
     const recriada = await service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: 'Ciclo Completo' });
@@ -239,5 +252,36 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
       orderBy: { seq: 'asc' },
     });
     expect(eventos.map((e) => e.eventType)).toEqual(['counterparty.created', 'counterparty.archived']);
+  });
+
+  // ------------------------------------------------------------------ BRIEF-W2-A comp. 9 — P2002 pelo serviço
+  it('serviço pelo factory: " Padaria X" e "padaria x" fundem — a 2ª create bate em P2002→ValidationError', async () => {
+    const service = getFactory().getCounterpartyService();
+    const scope = escopo(DONO_A);
+
+    await service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: ' Padaria X' });
+    await expect(
+      service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: 'padaria x' }),
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    // Controle: nomes GENUINAMENTE diferentes não colidem — sem isto, um catch de P2002 amplo demais
+    // (ou uma normalização quebrada que colapsasse tudo) passaria pelo teste acima também.
+    await expect(
+      service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: 'Padaria Y' }),
+    ).resolves.toMatchObject({ name: 'Padaria Y' });
+  });
+
+  it('serviço pelo factory: archive libera a chave para uma VARIANTE de caixa/espaço do mesmo nome (não só o literal idêntico)', async () => {
+    const service = getFactory().getCounterpartyService();
+    const scope = escopo(DONO_A);
+
+    const criada = await service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: 'Chave Variante' });
+    await service.archiveCounterparty(scope, criada.id, { unitId: UNIT });
+
+    // Recria com um nome que só DIFERE por caixa/espaço do original — se nameNormalized não tivesse
+    // sido liberado, esta create também bateria em P2002 (a tumba ocuparia a MESMA chave folded).
+    const recriada = await service.createCounterparty(scope, { unitId: UNIT, type: 'SUPPLIER', name: '  chave variante  ' });
+    expect(recriada.id).not.toBe(criada.id);
+    expect(recriada.deletedAt).toBeNull();
   });
 });

@@ -26,12 +26,23 @@ import { PrismaClient } from 'generated/prisma';
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
 
 /**
- * A migração que endurece `counterpartyId` para NOT NULL (SEC-A1-5). É a ÚNICA omitida ao montar o
- * banco deste teste: com ela aplicada, o estado PRÉ-backfill que aqui se encena — linha de subrazão
- * com contraparte nula — deixa de ser representável. Cortar antes dela por data não serve: migrações
- * posteriores (`requiresDimension`, p. ex.) trazem colunas que o Prisma Client atual exige.
+ * A migração que endurece `counterpartyId` para NOT NULL (SEC-A1-5). Omitida ao montar o banco deste
+ * teste: com ela aplicada, o estado PRÉ-backfill que aqui se encena — linha de subrazão com contraparte
+ * nula — deixa de ser representável. Cortar antes dela por data não serve: migrações posteriores
+ * (`requiresDimension`, p. ex.) trazem colunas que o Prisma Client atual exige.
  */
 const NOTNULL_MIGRATION = '20260814120000_counterparty_notnull';
+
+/**
+ * BRIEF-W2-A — a migração que adiciona `nameNormalized` NOT NULL a `counterparties`. TAMBÉM omitida,
+ * pelo MESMO motivo do NOTNULL_MIGRATION acima: o INSERT do backfill lido de `BACKFILL_MIGRATION`
+ * (20260715060000) grava só as 10 colunas que existiam NAQUELE momento — sem `nameNormalized`. Se esta
+ * migração já tivesse rodado, `counterparties` exigiria a coluna, e o `INSERT OR IGNORE` do backfill
+ * antigo faria o INSERT ser silenciosamente descartado pela violação de NOT NULL (SQLite: `OR IGNORE`
+ * engole NOT NULL igual a UNIQUE) — o teste passaria vácuo (0 linhas), não vermelho, escondendo a causa.
+ * A migração desta fase tem cobertura PRÓPRIA em `CounterpartyIdentityNormalization.integration.test.ts`.
+ */
+const W2A_MIGRATION = '20260830160349_counterparty_identity_normalization';
 
 /** A migração de onde o backfill é lido, e o marcador onde ela começa (mesmo do gate irmão). */
 const BACKFILL_MIGRATION = '20260715060000_incr_counterparty';
@@ -75,12 +86,13 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
       .readdirSync(migrationsDir)
       .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
       .sort();
-    const aplicar = todas.filter((d) => d !== NOTNULL_MIGRATION);
-    // Controle do harness: exatamente UMA migração foi omitida, e é a que se pretendia omitir. Sem
-    // isto, um rename do diretório passaria a aplicar TUDO (o teste quebraria por motivo obscuro) ou
-    // a omitir demais.
+    const aplicar = todas.filter((d) => d !== NOTNULL_MIGRATION && d !== W2A_MIGRATION);
+    // Controle do harness: exatamente DUAS migrações foram omitidas, e são as que se pretendia omitir.
+    // Sem isto, um rename do diretório passaria a aplicar TUDO (o teste quebraria por motivo obscuro)
+    // ou a omitir demais.
     expect(todas).toContain(NOTNULL_MIGRATION);
-    expect(todas.length - aplicar.length).toBe(1);
+    expect(todas).toContain(W2A_MIGRATION);
+    expect(todas.length - aplicar.length).toBe(2);
     // Controle do harness, irmão do de cima: o backfill vem da migração real e tem de chegar inteiro.
     // Sem isto, um `;` a mais num comentário partiria um statement e o teste provaria meio backfill.
     backfill = readBackfillStatements();
@@ -154,31 +166,53 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     }
   });
 
+  // BRIEF-W2-A: este dev.db omite (propositalmente, ver W2A_MIGRATION acima) a migração que adiciona
+  // `nameNormalized` a `counterparties` — a tabela real, nesta suíte, genuinamente NÃO tem essa coluna.
+  // O Prisma Client TIPADO é gerado do schema FINAL (que já a exige) e projeta TODAS as colunas do
+  // model numa query normal — `db.counterparty.findMany/count` e qualquer `include: { counterparty }`
+  // quebrariam com "column does not exist", não por bug, mas por descompasso client×schema-do-teste.
+  // Por isso as asserções abaixo usam `$queryRawUnsafe`, como o guard cross-scope já fazia.
+
   it('SEC-A1-2: dedupes SUPPLIERS by (userId, unitId, name) — two tenants "ACME" stay two rows', async () => {
-    const acme = await db.counterparty.findMany({ where: { type: 'SUPPLIER', name: 'ACME' } });
+    const acme = await db.$queryRawUnsafe<{ id: string; userId: string }[]>(
+      `SELECT "id", "userId" FROM "counterparties" WHERE "type" = 'SUPPLIER' AND "name" = 'ACME'`,
+    );
     expect(acme).toHaveLength(2); // one for u-A, one for u-B — NOT collapsed
     expect(new Set(acme.map((c) => c.userId))).toEqual(new Set(['u-A', 'u-B']));
 
     // Within u-A the two "ACME" payables (+ the cancelled one) share ONE counterparty.
-    const aAcme = await db.counterparty.count({ where: { userId: 'u-A', type: 'SUPPLIER', name: 'ACME' } });
-    expect(aAcme).toBe(1);
-    const aTotal = await db.counterparty.count({ where: { userId: 'u-A', type: 'SUPPLIER' } });
-    expect(aTotal).toBe(2); // ACME + Beta
+    const aAcme = await db.$queryRawUnsafe<{ n: number }[]>(
+      `SELECT COUNT(*) AS n FROM "counterparties" WHERE "userId" = 'u-A' AND "type" = 'SUPPLIER' AND "name" = 'ACME'`,
+    );
+    expect(Number(aAcme[0].n)).toBe(1);
+    const aTotal = await db.$queryRawUnsafe<{ n: number }[]>(
+      `SELECT COUNT(*) AS n FROM "counterparties" WHERE "userId" = 'u-A' AND "type" = 'SUPPLIER'`,
+    );
+    expect(Number(aTotal[0].n)).toBe(2); // ACME + Beta
   });
 
   it('SEC-A1-2: dedupes CUSTOMERS by scope too', async () => {
-    const x = await db.counterparty.findMany({ where: { type: 'CUSTOMER', name: 'Cliente X' } });
+    const x = await db.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT "id" FROM "counterparties" WHERE "type" = 'CUSTOMER' AND "name" = 'Cliente X'`,
+    );
     expect(x).toHaveLength(2); // u-A + u-B
   });
 
   it('SEC-A1-3: every payable/receivable links to a counterparty of its OWN scope (zero cross-scope)', async () => {
-    const payables = await db.payable.findMany({ include: { counterparty: true } });
-    expect(payables.every((p) => p.counterpartyId !== null)).toBe(true);
+    const payables = await db.$queryRawUnsafe<
+      { userId: string; unitId: string; supplierName: string; counterpartyId: string | null; cUserId: string; cUnitId: string; cType: string; cName: string }[]
+    >(
+      `SELECT p."userId" AS "userId", p."unitId" AS "unitId", p."supplierName" AS "supplierName", p."counterpartyId" AS "counterpartyId",
+              c."userId" AS "cUserId", c."unitId" AS "cUnitId", c."type" AS "cType", c."name" AS "cName"
+       FROM "payables" p JOIN "counterparties" c ON p."counterpartyId" = c."id"`,
+    );
+    const totalPayables = await db.$queryRawUnsafe<{ n: number }[]>(`SELECT COUNT(*) AS n FROM "payables" WHERE "counterpartyId" IS NULL`);
+    expect(Number(totalPayables[0].n)).toBe(0);
     for (const p of payables) {
-      expect(p.counterparty!.userId).toBe(p.userId);
-      expect(p.counterparty!.unitId).toBe(p.unitId);
-      expect(p.counterparty!.type).toBe('SUPPLIER');
-      expect(p.counterparty!.name).toBe(p.supplierName);
+      expect(p.cUserId).toBe(p.userId);
+      expect(p.cUnitId).toBe(p.unitId);
+      expect(p.cType).toBe('SUPPLIER');
+      expect(p.cName).toBe(p.supplierName);
     }
     // Cross-scope raw guard (the exact smoke-gate assertion): no link crosses a tenant boundary.
     const crossScope = await db.$queryRawUnsafe<{ n: number }[]>(
@@ -187,18 +221,25 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     );
     expect(Number(crossScope[0].n)).toBe(0);
 
-    const receivables = await db.receivable.findMany({ include: { counterparty: true } });
+    const receivables = await db.$queryRawUnsafe<
+      { userId: string; customerName: string; cUserId: string; cType: string; cName: string }[]
+    >(
+      `SELECT r."userId" AS "userId", r."customerName" AS "customerName",
+              c."userId" AS "cUserId", c."type" AS "cType", c."name" AS "cName"
+       FROM "receivables" r JOIN "counterparties" c ON r."counterpartyId" = c."id"`,
+    );
     for (const r of receivables) {
-      expect(r.counterparty!.userId).toBe(r.userId);
-      expect(r.counterparty!.type).toBe('CUSTOMER');
-      expect(r.counterparty!.name).toBe(r.customerName);
+      expect(r.cUserId).toBe(r.userId);
+      expect(r.cType).toBe('CUSTOMER');
+      expect(r.cName).toBe(r.customerName);
     }
   });
 
   it('is idempotent — a 2nd backfill run adds nothing and throws no P2002', async () => {
-    const before = await db.counterparty.count();
+    const countCp = async () => Number((await db.$queryRawUnsafe<{ n: number }[]>(`SELECT COUNT(*) AS n FROM "counterparties"`))[0].n);
+    const before = await countCp();
     await runBackfill(db, backfill); // must not throw
-    const after = await db.counterparty.count();
+    const after = await countCp();
     expect(after).toBe(before);
   });
 });

@@ -3,6 +3,7 @@ import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import {
   COUNTERPARTY_CREATED,
   COUNTERPARTY_NAME_MAX_LENGTH,
+  normalizeCounterpartyName,
   type CounterpartyType,
 } from '../models/Counterparty.model';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
@@ -120,10 +121,18 @@ async function mintCounterparty(
         unitId,
         type,
         name,
+        // BRIEF-W2-A comp. 7: the implicit mint is a WRITE path too — it must derive nameNormalized
+        // the SAME way createCounterparty does, or a name minted here could silently diverge from the
+        // fold the catalog's own create path enforces (e.g. two AP rows for " Padaria X" / "padaria x"
+        // would otherwise mint TWO catalog identities instead of resolving to one).
+        nameNormalized: normalizeCounterpartyName(name),
         // ref stays null: the backfill of 20260715060000 minted every historical counterparty with
         // ref=NULL, and supplierRef/customerRef are the SUBLEDGER's own DynamicTable pointer (F1(c)),
         // not the catalog's. Populating it here would invent data the spec does not ask for.
         ref: null,
+        // taxId stays null: the snapshot this path mints from (supplierName/customerName) carries no
+        // tax document — populating it here would invent data the AP/AR body never supplied.
+        taxId: null,
         createdById: scope.actorUserId,
       },
       tx,
