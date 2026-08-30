@@ -5,6 +5,8 @@ import {
   COUNTERPARTY_ARCHIVED,
   COUNTERPARTY_CREATED,
   deletedCounterpartyName,
+  deletedCounterpartyNameNormalized,
+  normalizeCounterpartyName,
 } from '../models/Counterparty.model';
 import type {
   ArchiveCounterpartyInput,
@@ -26,11 +28,13 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
  * catalog reads/writes.
  *
  * Invariants proved here:
- * - SEC-A1-2: the business key is `[userId, unitId, type, name]` (dedupe per SCOPE) — a P2002 maps to
- *   a ValidationError, never a raw crash. Two tenants named "ACME" are two distinct rows.
- * - SEC-A1-4: archive is soft (deletedAt + rename-on-key `name → deleted:<id>:<name>`) so the unique
- *   key is freed and an archive+recreate of the same name never trips P2002. Historical AP/AR links
- *   stay intact (the FK id is stable; the mangled name lives only on the archived row).
+ * - SEC-A1-2: the business key is `[userId, unitId, type, nameNormalized]` (dedupe per SCOPE, folded —
+ *   BRIEF-W2-A/F1(b)) — a P2002 maps to a ValidationError, never a raw crash. Two tenants named "ACME"
+ *   are two distinct rows; " Padaria X" and "padaria x" within the SAME scope are the SAME row.
+ * - SEC-A1-4: archive is soft (deletedAt + rename-on-key on BOTH `name → deleted:<id>:<name>` and
+ *   `nameNormalized → deleted:<id>:<nameNormalized>`) so the unique key is freed and an archive+recreate
+ *   of the same name never trips P2002. Historical AP/AR links stay intact (the FK id is stable; the
+ *   mangled name lives only on the archived row).
  * - Every catalog state change emits an AuditEvent in the SAME tx (T8).
  */
 export class CounterpartyService {
@@ -77,7 +81,9 @@ export class CounterpartyService {
             unitId,
             type: dto.type,
             name: dto.name,
+            nameNormalized: normalizeCounterpartyName(dto.name),
             ref: dto.ref ?? null,
+            taxId: dto.taxId ?? null,
             createdById: scope.actorUserId,
           },
           tx,
@@ -123,7 +129,15 @@ export class CounterpartyService {
       const archived = await this.counterpartyRepo.update(
         scope,
         id,
-        { deletedAt: new Date(), name: deletedCounterpartyName(id, counterparty.name) },
+        {
+          deletedAt: new Date(),
+          name: deletedCounterpartyName(id, counterparty.name),
+          // BRIEF-W2-A comp. 4: mangle nameNormalized TOO — the `@@unique` constrains it now, not
+          // `name`. Without this, the rename-on-delete frees `name` but leaves `nameNormalized`
+          // occupied, and an archive+recreate of the same name trips P2002 again (SEC-A1-4, memória
+          // unique-de-idempotencia-x-soft-delete).
+          nameNormalized: deletedCounterpartyNameNormalized(id, counterparty.nameNormalized),
+        },
         tx,
       );
       await this.auditService.append(tx, scope, {

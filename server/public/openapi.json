@@ -376,7 +376,11 @@
           },
           "name": {
             "type": "string",
-            "description": "Nome de exibição — chave de negócio por [unidade, tipo, nome]"
+            "description": "Nome de exibição — a chave de negócio é o nameNormalized derivado (trim + fold de caixa + colapso de espaços)"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "CPF/CNPJ opcional, normalizado para só-dígitos — discriminador informacional, fora da chave de unicidade"
           },
           "ref": {
             "type": "string",

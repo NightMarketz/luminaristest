@@ -16,6 +16,7 @@ import { PrismaClient } from 'generated/prisma';
 import { PayableRepository } from '../PayableRepository';
 import { ReceivableRepository } from '../ReceivableRepository';
 import type { AccountingScope } from '../../scope/AccountingScope';
+import { normalizeCounterpartyName } from '../../models/Counterparty.model';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
 const USER_ID = 'u-aging';
@@ -57,7 +58,7 @@ describe('findOutstanding (AP + AR) — real SQLite DB (INCR-AGING F-AG3)', () =
     // Contraparte compartilhada: desde SEC-A1-5 a FK é NOT NULL. O aging agrupa por contraparte, e
     // este arquivo é sobre STATUS/soft-delete — uma única contraparte mantém o agrupamento neutro.
     await db.counterparty.create({
-      data: { id: 'cp-aging', userId: USER_ID, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Aging', createdById: USER_ID },
+      data: { id: 'cp-aging', userId: USER_ID, unitId: UNIT, type: 'SUPPLIER', name: 'Contraparte Aging', nameNormalized: normalizeCounterpartyName('Contraparte Aging'), createdById: USER_ID },
     });
 
     // Payables covering every status + a soft-deleted row.

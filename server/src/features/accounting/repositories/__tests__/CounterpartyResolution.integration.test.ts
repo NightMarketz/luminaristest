@@ -25,7 +25,11 @@ import { CounterpartyRepository } from '@/features/accounting/repositories/Count
 import { resolveOrCreateCounterpartyId } from '@/features/accounting/services/counterpartyResolution';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
-import { deletedCounterpartyName } from '@/features/accounting/models/Counterparty.model';
+import {
+  deletedCounterpartyName,
+  deletedCounterpartyNameNormalized,
+  normalizeCounterpartyName,
+} from '@/features/accounting/models/Counterparty.model';
 import { ValidationError } from '@/lib/errors';
 
 const UNIT = 'unit-cpr';
@@ -107,6 +111,33 @@ describe('resolveOrCreateCounterpartyId — contrato em SQLite real (SEC-A1-5)',
     expect(cliente).not.toBe(fornecedor);
   });
 
+  // ------------------------------------------------------------------ BRIEF-W2-A comp. 9 — trim/fold merge (F1(b))
+  it('" Padaria X", "Padaria X" e "padaria x" fundem na MESMA identidade (trim + fold de caixa)', async () => {
+    const primeiro = await resolverEmTx(escopo(DONO_A), ' Padaria X');
+    const segundo = await resolverEmTx(escopo(DONO_A), 'Padaria X');
+    const terceiro = await resolverEmTx(escopo(DONO_A), 'padaria x');
+
+    expect(segundo).toBe(primeiro);
+    expect(terceiro).toBe(primeiro);
+    const quantas = await prisma.counterparty.count({
+      where: { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', nameNormalized: 'padaria x' },
+    });
+    expect(quantas).toBe(1);
+    // A identidade gravada preserva o PRIMEIRO `name` de exibição recebido — variantes seguintes não
+    // renomeiam a linha existente (resolução é find-or-create, não upsert-de-display).
+    const gravada = await prisma.counterparty.findUnique({ where: { id: primeiro } });
+    expect(gravada!.name).toBe(' Padaria X');
+  });
+
+  // Controle negativo do teste acima: sem ele, uma normalização quebrada que colapsasse TUDO passaria
+  // pelo positivo também — é o par que separa "o fold mordeu certo" de "nada distingue mais nada".
+  it('CONTROLE negativo: "Padaria X" e "Padaria Y" continuam identidades DISTINTAS (fold não colapsa tudo)', async () => {
+    const x = await resolverEmTx(escopo(DONO_A), 'Padaria X');
+    const y = await resolverEmTx(escopo(DONO_A), 'Padaria Y');
+
+    expect(y).not.toBe(x);
+  });
+
   // ------------------------------------------------------------------ comp. 4 — SEC-A1-2
   it('dois donos com o MESMO nome recebem identidades distintas (SEC-A1-2, sem colapso)', async () => {
     const doA = await resolverEmTx(escopo(DONO_A), 'ACME');
@@ -131,10 +162,17 @@ describe('resolveOrCreateCounterpartyId — contrato em SQLite real (SEC-A1-5)',
   // ------------------------------------------------------------------ comp. 6 — SEC-A1-4
   it('nome ARQUIVADO não é ressuscitado: cunha identidade nova e a tumba fica arquivada', async () => {
     const original = await resolverEmTx(escopo(DONO_A), 'Arquivavel');
-    // Arquivamento = soft-delete + rename-on-key, exatamente como CounterpartyService.archive.
+    const linhaOriginal = await prisma.counterparty.findUniqueOrThrow({ where: { id: original } });
+    // Arquivamento = soft-delete + rename-on-key NAS DUAS colunas (BRIEF-W2-A comp. 4), exatamente
+    // como CounterpartyService.archive — mangling só de `name` deixaria nameNormalized="arquivavel"
+    // preso na tumba, e a nova cunhagem abaixo colidiria em P2002 em vez de mintar limpo.
     await prisma.counterparty.update({
       where: { id: original },
-      data: { deletedAt: new Date(), name: deletedCounterpartyName(original, 'Arquivavel') },
+      data: {
+        deletedAt: new Date(),
+        name: deletedCounterpartyName(original, 'Arquivavel'),
+        nameNormalized: deletedCounterpartyNameNormalized(original, linhaOriginal.nameNormalized),
+      },
     });
 
     const novo = await resolverEmTx(escopo(DONO_A), 'Arquivavel');
@@ -210,7 +248,7 @@ describe('resolveOrCreateCounterpartyId — contrato em SQLite real (SEC-A1-5)',
     const nome = 'Corredora';
     // Encena o intervalo da corrida: a linha nasce por FORA, depois que um findByName teria dado miss.
     const vencedora = await prisma.counterparty.create({
-      data: { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: nome, ref: null, createdById: DONO_A },
+      data: { userId: DONO_A, unitId: UNIT, type: 'SUPPLIER', name: nome, nameNormalized: normalizeCounterpartyName(nome), ref: null, createdById: DONO_A },
     });
 
     // Força o caminho do P2002: um repo cujo primeiro findByName MENTE dizendo que não achou nada,

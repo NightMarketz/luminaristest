@@ -1078,21 +1078,23 @@ model PostingDimension {
 //   AuditEvent), so deleting a user removes their counterparties. The linked payables/receivables
 //   carry counterpartyId NULLABLE (SEC-A1-5: NOT NULL deferred to a 2nd migration).
 model Counterparty {
-  id          String       @id @default(cuid())
-  userId      String // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data; trail = AuditEvent, T8)
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId      String // business unit (scoped string, not a FK)
-  type        String // SUPPLIER | CUSTOMER (see COUNTERPARTY_TYPES)
-  name        String // display name; the varying part of the business key (rename-on-delete frees it, SEC-A1-4)
-  ref         String? // OPTIONAL scoped ref to a DynamicTable row (plain string, NOT a FK — precedent Payable.supplierRef)
-  createdById String? // actor (AccountingScope.actorUserId); plain string
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime? // set when archived (soft)
-  payables    Payable[] // linked AP rows (FK counterpartyId, nullable)
-  receivables Receivable[] // linked AR rows (FK counterpartyId, nullable)
+  id             String       @id @default(cuid())
+  userId         String       // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data; trail = AuditEvent, T8)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId         String       // business unit (scoped string, not a FK)
+  type           String       // SUPPLIER | CUSTOMER (see COUNTERPARTY_TYPES)
+  name           String       // display name only — NOT constrained (BRIEF-W2-A comp. 1); the business key moved to nameNormalized
+  nameNormalized String       // derived from `name` (trim + case-fold + collapse of internal whitespace, F1(b)); NOT NULL, recomputed on every write that touches `name`
+  ref            String?      // OPTIONAL scoped ref to a DynamicTable row (plain string, NOT a FK — precedent Payable.supplierRef)
+  taxId          String?      // OPTIONAL digit-only CPF/CNPJ (BRIEF-W2-A comp. 3); informational discriminator, OUTSIDE the unique key (F-W2A-4), no checksum this phase
+  createdById    String? // actor (AccountingScope.actorUserId); plain string
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime? // set when archived (soft)
+  payables       Payable[] // linked AP rows (FK counterpartyId, nullable)
+  receivables    Receivable[] // linked AR rows (FK counterpartyId, nullable)
 
-  @@unique([userId, unitId, type, name]) // one live counterparty per (scope, type, name) — dedupe by SCOPE (SEC-A1-2)
+  @@unique([userId, unitId, type, nameNormalized]) // one live counterparty per (scope, type, nameNormalized) — dedupe by SCOPE + FOLDED NAME (SEC-A1-2, F1(b))
   @@index([userId, unitId, type])
   @@index([deletedAt])
   @@map("counterparties")
