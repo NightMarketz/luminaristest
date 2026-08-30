@@ -2,6 +2,10 @@ version: "3.9"
 
 services:
   server:
+    # Schema aplicado por `npm run deploy:migrate` (server/package.json → scripts/migrate-deploy.mjs)
+    # ANTES deste `docker compose up`/swap de container — NUNCA por este serviço. ADR-M2-deploy-
+    # topology.md §2 decisão 4 (ratificada pelo dono): migração é etapa SEPARADA do pipeline, nunca
+    # entrypoint/CMD que migra no boot — não reintroduza essa chamada aqui.
     build:
       context: ./server
       dockerfile: Dockerfile

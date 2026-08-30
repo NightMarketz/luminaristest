@@ -20,6 +20,7 @@
     "accounting:reconcile": "node dist/jobs/accountingSyncReconcileCli.js",
     "smoke:migration": "node ../scripts/smoke-migration-gate.mjs",
     "db:backup": "node ./scripts/db-backup.mjs",
+    "deploy:migrate": "node ../scripts/migrate-deploy.mjs",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write .",

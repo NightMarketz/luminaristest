@@ -96,6 +96,29 @@ agente a partir dos fatos de código**, não ditada por ele. Sujeita a correçã
 | Nenhum job de migração declarado em nenhum artefato — decisão 4 diz "etapa separada", mas o "job próprio" ainda não existe em código/CI | sem esse job, o primeiro deploy em qualquer alvo (VPS ou PaaS) sobe um container sem schema — não é específico de PaaS, mas bloqueia a portabilidade igual | antes do primeiro deploy real (é a própria pré-condição do runbook, não uma dívida de "depois") | `docker-compose.yml` sem `command`/`entrypoint`; grep de `"migrate deploy"` = 0 fora de teste/gate local | verificado |
 | `QDRANT_URL: http://qdrant:6333` aponta para o nome do serviço do compose | um PaaS que não orquestra os 3 serviços juntos (ex.: Qdrant como serviço gerenciado à parte) exige essa URL virar env externa — hoje é hardcoded no compose, não no `.env` | ao decidir se o Qdrant vira gerenciado (item explicitamente ABERTO neste ADR, ver cabeçalho) | `docker-compose.yml:14` | verificado |
 
+**Correção factual desta Wave (2026-08-30, agente — Wave 1 item B-3, `claude/w1d-deploy-migrate`):**
+duas linhas da tabela acima ficaram stale desde que este ADR foi escrito (2026-08-22); nenhuma
+decisão do dono muda — só o fato de código.
+
+- **`COPY dist ./dist` (linha 2 da tabela):** OBSOLETA. `server/Dockerfile` é multi-stage desde o
+  commit `f869294e` ("feat(deploy,accounting-fe): 5 frentes do replanejamento…", mesmo dia
+  2026-08-22, mesclado em `main` antes deste ADR ser escrito — a tabela não tinha sido atualizada
+  contra o próprio commit-irmão). Hoje: estágio `builder` roda `npm run build` dentro da imagem
+  (`prisma generate && tsc && tsc-alias`) e o estágio `runner` copia `dist/` + `generated/prisma` +
+  `node_modules` do builder (`server/Dockerfile:1-30`, comentários no próprio arquivo citam este
+  ADR). Um PaaS que builda a partir do git já funciona hoje sem trabalho adicional nesse ponto.
+- **"Nenhum job de migração declarado… ainda não existe em código" (linha 4 da tabela):** TAMBÉM
+  stale, e pela mesma causa — o mesmo commit `f869294e` já tinha criado `scripts/migrate-deploy.mjs`
+  (backup via `wal_checkpoint(TRUNCATE)` → `prisma migrate deploy` → `integrity_check` +
+  `foreign_key_check` + contagem de linha pós-migração → exit code; `--self-check` cobre caminho
+  feliz e falha forjada sem tocar banco do projeto). O script **existia mas não estava wireado** a
+  nenhum comando nomeado — nem `server/package.json`, nem `docker-compose.yml` (por desenho: não
+  deve estar), nem citado no `RUNBOOK-M2-DEPLOY-SMOKE.md`. Fechado nesta Wave: `npm run deploy:migrate`
+  (`server/package.json`) chama `node ../scripts/migrate-deploy.mjs`, comentário no
+  `docker-compose.yml` junto do serviço `server` documenta a ordem, e o `RUNBOOK-M2-DEPLOY-SMOKE.md`
+  foi emendado. O item 3 de §7 abaixo e o parágrafo de §6 sobre o "job próprio" seguem citando o
+  estado de 2026-08-22 tal como escrito (histórico, não reescrito) — esta nota é a correção vigente.
+
 ## 5. O que a topologia por cliente custa
 
 Decisão 2 (uma instância por cliente) compra o BYOK de graça (decisão 3) e isolamento total de dado

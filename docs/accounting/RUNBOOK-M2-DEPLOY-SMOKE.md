@@ -22,8 +22,11 @@ Pré-condições (verificar antes de começar):
 - **O artefato de implantação NÃO sobe o schema** — ver A5 abaixo. **Quem roda `prisma migrate
   deploy` tem resposta:** `ADR-M2-deploy-topology.md` §2 decisão 4 — etapa SEPARADA do pipeline de
   deploy (job próprio, antes do swap de container), nunca passo manual e nunca entrypoint que migra
-  no boot. O job em si ainda não existe em código (ADR §7 item 3) — precisa existir antes deste
-  runbook poder ser executado até o fim.
+  no boot. **Atualizado 2026-08-30 (Wave 1, item B-3):** o job existe — `npm run deploy:migrate`
+  (`server/package.json` → `scripts/migrate-deploy.mjs`; backup com `wal_checkpoint(TRUNCATE)` →
+  `prisma migrate deploy` → `integrity_check`/`foreign_key_check`/contagem de linha pós-migração →
+  exit code, com `--self-check` cobrindo caminho feliz e falha forjada sem tocar banco do projeto).
+  Falta só o pipeline de CI/CD concreto que o dispare no host provisionado (ADR §7 item 1, aberto).
 
 ### A5 — o que a auditoria de 2026-08-15 mediu sobre voltar atrás (triagem ratificada 2026-08-20)
 
@@ -47,6 +50,12 @@ precisa saber **antes** de aplicar a primeira migração num banco que importa:
    `sqlite_data` nasce vazio e `server/Dockerfile` faz `COPY dist ./dist` com `dist/` no gitignore.
    Consequência prática: **subir o compose no alvo dá um container sem schema** — a migração é passo
    manual do executor até que alguém decida o contrário (decisão do dono, não do agente).
+   **Atualizado 2026-08-30:** o job existe agora (`npm run deploy:migrate` — ver pré-condição acima);
+   o resto do parágrafo continua verdadeiro — o compose segue sem `command`/`entrypoint` por desenho
+   (decisão 4 do ADR), o volume nasce vazio, e o executor precisa rodar `deploy:migrate` por fora
+   antes do swap de container. A citação a `COPY dist ./dist` está OBSOLETA desde `f869294e`
+   (`server/Dockerfile` virou multi-stage) — ver `ADR-M2-deploy-topology.md` §4.b para a correção
+   completa; não repetida aqui em detalhe para não duplicar a fonte.
 
 ## Inventário do repo para o alvo (levantado 2026-08-19)
 
