@@ -249,8 +249,12 @@ function buildAccountingBindingPostingValidatePort(
  * uma instância local aqui é tão válida quanto a que os outros services do factory guardam em
  * `auditService` (const do construtor, fora do alcance deste helper).
  */
-function buildAccountingBindingAuditPort(auditRepo: IAuditRepository, postingRepo: IPostingRepository): IBindingAuditPort {
-  const auditService = new AuditService(auditRepo, postingRepo);
+function buildAccountingBindingAuditPort(
+  auditRepo: IAuditRepository,
+  postingRepo: IPostingRepository,
+  policy: IAccountingPolicy,
+): IBindingAuditPort {
+  const auditService = new AuditService(auditRepo, postingRepo, policy);
   return {
     async append(tx, scope, event) {
       await auditService.append(tx, bindingScopeToAccountingScope(scope), {
@@ -332,6 +336,7 @@ export class ApplicationFactory {
     salesCancellation: SalesCancellationService;
     registerPayment: RegisterPaymentService;
     posting: PostingService;
+    audit: AuditService;
     entryApproval: EntryApprovalService;
     period: PeriodService;
     accountingSync: AccountingSyncService;
@@ -482,6 +487,7 @@ export class ApplicationFactory {
     const auditService = new AuditService(
       this.repositories.audit,
       this.repositories.posting,
+      this.policies.accounting,
     );
 
     const postingService = new PostingService(
@@ -612,6 +618,7 @@ export class ApplicationFactory {
       salesCancellation: salesCancellationService,
       registerPayment: registerPaymentService,
       posting: postingService,
+      audit: auditService,
       entryApproval: entryApprovalService,
       period: periodService,
       accountingSync: accountingSyncService,
@@ -769,7 +776,11 @@ export class ApplicationFactory {
       chartLookup,
       buildAccountingBindingPostingValidatePort(this.services.posting, accountingScope),
     );
-    const auditPort = buildAccountingBindingAuditPort(this.repositories.audit, this.repositories.posting);
+    const auditPort = buildAccountingBindingAuditPort(
+      this.repositories.audit,
+      this.repositories.posting,
+      this.policies.accounting,
+    );
     return new BindingCompileService(
       new AccountingBindingRepository(),
       new AccountingBindingPolicy(),
@@ -849,6 +860,7 @@ export class ApplicationFactory {
   public getSalesCancellationService = (): SalesCancellationService => this.services.salesCancellation;
   public getRegisterPaymentService = (): RegisterPaymentService => this.services.registerPayment;
   public getPostingService = (): PostingService => this.services.posting;
+  public getAuditService = (): AuditService => this.services.audit;
   public getEntryApprovalService = (): EntryApprovalService => this.services.entryApproval;
   public getPeriodService = (): PeriodService => this.services.period;
   public getAccountingSyncService = (): AccountingSyncService => this.services.accountingSync;

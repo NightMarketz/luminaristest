@@ -92,7 +92,13 @@ function buildChain(n: number): AuditEvent[] {
   return events;
 }
 
-function buildService(headState: AuditChainHead | null, events: AuditEvent[]) {
+// Fake IAccountingPolicy — canRead permissivo por padrão (o gate em si tem describe próprio
+// abaixo, F-A1: parâmetro obrigatório no construtor, decidido pelo orquestrador).
+function makeFakePolicy(canRead = true) {
+  return { canRead: jest.fn(() => canRead) } as any;
+}
+
+function buildService(headState: AuditChainHead | null, events: AuditEvent[], policy = makeFakePolicy()) {
   let head = headState;
 
   const auditRepo = {
@@ -109,8 +115,8 @@ function buildService(headState: AuditChainHead | null, events: AuditEvent[]) {
     runTransaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn({})),
   };
 
-  const svc = new AuditService(auditRepo as any, postingRepo as any);
-  return { svc, auditRepo, postingRepo };
+  const svc = new AuditService(auditRepo as any, postingRepo as any, policy);
+  return { svc, auditRepo, postingRepo, policy };
 }
 
 const baseAppendInput = {
@@ -276,5 +282,15 @@ describe('AuditService.verifyAuditChain', () => {
     const result = await svc.verifyAuditChain(scope);
     expect(result.ok).toBe(false);
     expect(result.failure?.reason).toBe('HEAD_MISMATCH');
+  });
+
+  // F-A1 (fork decidido pelo orquestrador): policy passa a ser 3º parâmetro OBRIGATÓRIO do
+  // construtor, gateando verifyAuditChain como todo o resto do módulo (`canRead` dentro do
+  // service, nunca no controller).
+  it('policy.canRead nega → ForbiddenError, sem ler o repositório', async () => {
+    const { svc, auditRepo, policy } = buildService(makeHead(1n, GENESIS_HASH, 0), [], makeFakePolicy(false));
+    await expect(svc.verifyAuditChain(scope)).rejects.toThrow('permissão');
+    expect(policy.canRead).toHaveBeenCalledWith(scope);
+    expect(auditRepo.listByScope).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,9 @@
 import { randomUUID } from 'crypto';
 import type { Prisma } from 'generated/prisma';
+import { ForbiddenError } from '../../../lib/errors';
 import type { IAuditRepository } from '../repositories/IAuditRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
+import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import {
   GENESIS_HASH,
@@ -41,6 +43,7 @@ export class AuditService {
   constructor(
     private readonly auditRepo: IAuditRepository,
     private readonly postingRepo: IPostingRepository,
+    private readonly policy: IAccountingPolicy,
   ) {}
 
   /**
@@ -111,6 +114,10 @@ export class AuditService {
    * Diagnostic only — does NOT repair the chain.
    */
   async verifyAuditChain(scope: AccountingScope): Promise<VerifyResult> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler a trilha de auditoria.');
+    }
+
     const events = await this.auditRepo.listByScope(scope);
 
     if (events.length === 0) {

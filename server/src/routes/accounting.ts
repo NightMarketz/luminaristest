@@ -11,6 +11,7 @@ import {
   getDailyJournal,
   getAging,
   getTieOutDiagnostic,
+  getVerifyAuditChain,
   listAccounts,
   listEntries,
   getEntryReceipt,
@@ -90,6 +91,7 @@ router.get('/reports/period-comparison', getPeriodComparison);
 router.get('/reports/daily-journal', getDailyJournal);
 router.get('/reports/aging', getAging);
 router.get('/reports/tie-out', getTieOutDiagnostic);
+router.get('/audit/verify-chain', getVerifyAuditChain);
 
 // Chart of accounts management.
 router.get('/accounts', listAccounts);

@@ -26,6 +26,7 @@ import { PeriodComparisonSchema } from '../features/accounting/dtos/periodCompar
 import { DailyJournalRequestSchema } from '../features/accounting/dtos/dailyJournal.dto';
 import { AgingReportQuerySchema } from '../features/accounting/dtos/aging.dto';
 import { TieOutDiagnosticQuerySchema } from '../features/accounting/dtos/tieOutDiagnostic.dto';
+import { VerifyAuditChainQuerySchema } from '../features/accounting/dtos/AuditDto';
 
 export const postEntry = async (req: Request, res: Response) => {
   try {
@@ -440,6 +441,41 @@ export const getTieOutDiagnostic = async (req: Request, res: Response) => {
     }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getTieOutDiagnosticService().tieOut(scope);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * GET /api/accounting/audit/verify-chain — BRIEF-W1-A. `@openapi` block lives in
+ * `routes/docs.paths.ts` (não inline, ao contrário de `getTieOutDiagnostic` acima — decisão
+ * explícita do BRIEF, item 7).
+ *
+ * F-A2 (fork decidido pelo orquestrador): `VerifyResult.firstSeq`/`lastSeq`/`failure.seq` são
+ * `bigint` — `JSON.stringify` lança `TypeError` em runtime sobre `bigint`, então o controller
+ * serializa cada um para `string` (mantendo `null` quando ausente) ANTES do `res.json`.
+ */
+export const getVerifyAuditChain = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) throw new UnauthorizedError();
+    const parsed = VerifyAuditChainQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const result = await getFactory().getAuditService().verifyAuditChain(scope);
+    const data = {
+      ok:            result.ok,
+      checkedEvents: result.checkedEvents,
+      firstSeq:      result.firstSeq === null ? null : result.firstSeq.toString(),
+      lastSeq:       result.lastSeq === null ? null : result.lastSeq.toString(),
+      headHash:      result.headHash,
+      ...(result.failure
+        ? { failure: { seq: result.failure.seq.toString(), reason: result.failure.reason } }
+        : {}),
+    };
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
