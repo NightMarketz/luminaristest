@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { AccountingDataExchangeJob } from 'generated/prisma';
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
+import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { serializeTable, type OutTable } from '../../../lib/spreadsheet';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -149,6 +150,18 @@ export class DataExchangeExportService {
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
       await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
+      // ALERT_WEBHOOK_URL is unset.
+      sendAlertWebhook({
+        source: 'data_exchange_export',
+        event: 'generation_failed',
+        timestamp: new Date().toISOString(),
+        jobId: job.id,
+        kind: job.kind,
+        unitId: scope.unitId,
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
       throw error;
     }
 

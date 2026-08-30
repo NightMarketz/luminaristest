@@ -14,6 +14,11 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
+const sendAlertWebhook = jest.fn();
+jest.mock('../../../../lib/alertWebhook', () => ({
+  __esModule: true,
+  sendAlertWebhook: (...a: unknown[]) => sendAlertWebhook(...a),
+}));
 
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
@@ -102,6 +107,7 @@ function producedLines(): string[] {
 
 beforeEach(() => {
   savedBuffers.length = 0;
+  sendAlertWebhook.mockClear();
 });
 
 describe('SpedEcfGenerationService.generate', () => {
@@ -204,5 +210,25 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(createJob).not.toHaveBeenCalledWith(expect.objectContaining({ status: 'EXPORTED' }));
     const statuses = updateJob.mock.calls.map((c) => (c[2] as { status?: string } | undefined)?.status);
     expect(statuses).toContain('FAILED');
+  });
+
+  it('fires the alert webhook (source=sped_ecf) alongside the FAILED status, before the throw (F-W2C-1)', async () => {
+    const { service } = buildService();
+    (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('disk full');
+
+    expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+    expect(sendAlertWebhook).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'sped_ecf',
+        event: 'generation_failed',
+        jobId: 'job-1',
+        kind: 'EXPORT_SPED_ECF',
+        unitId: 'unit-1',
+        errorName: 'Error',
+        errorMessage: 'disk full',
+      }),
+    );
   });
 });
