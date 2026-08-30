@@ -401,7 +401,25 @@
     "reasonPlaceholder": "Justificativa…",
     "wait": "Aguarde…",
     "confirm": "Confirmar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "closeExercise": {
+      "button": "Encerrar exercício {{year}}",
+      "modal": {
+        "title": "Encerrar exercício {{year}}",
+        "description": "Esta operação lança um encerramento real no razão: zera as contas de Receita e Despesa do exercício {{year}} contra Lucros ou Prejuízos Acumulados (conta 2.3.1).",
+        "confirm": "Encerrar",
+        "cancel": "Cancelar"
+      },
+      "submitting": "Encerrando…",
+      "success": {
+        "title": "Exercício encerrado.",
+        "entryInfo": "Lançamento nº {{entryNumber}} — exercício {{fiscalYear}}",
+        "close": "Fechar"
+      },
+      "error": {
+        "generic": "Erro ao encerrar o exercício."
+      }
+    }
   },
   "ledger": {
     "accountLabel": "Conta",
