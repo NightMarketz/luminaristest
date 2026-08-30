@@ -165,14 +165,17 @@ export class ReconciliationRepository implements IReconciliationRepository {
     statementId: string,
     status?: BankStatementLineStatus,
     tx?: Prisma.TransactionClient,
+    opts?: { take?: number; afterLineNumber?: number },
   ): Promise<BankStatementLine[]> {
     return (tx ?? prisma).bankStatementLine.findMany({
       where: {
         ...accountingScopeWhere(scope),
         statementId,
         ...(status ? { status } : {}),
+        ...(opts?.afterLineNumber != null ? { lineNumber: { gt: opts.afterLineNumber } } : {}),
       },
       orderBy: { lineNumber: 'asc' },
+      ...(opts?.take != null ? { take: opts.take } : {}),
     });
   }
 

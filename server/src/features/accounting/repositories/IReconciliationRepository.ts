@@ -95,13 +95,22 @@ export interface IReconciliationRepository {
 
   /**
    * Lists the lines of a statement (optionally by status), ordered by
-   * lineNumber asc. Unpaginated — a statement is one bounded file.
+   * lineNumber asc. Unbounded by default — a statement is one bounded file.
+   *
+   * `opts.take` bounds the page size (BE-W2E chunked auto-match — see
+   * ReconciliationService.autoMatchStatement). `opts.afterLineNumber` is a
+   * seek cursor (lineNumber is immutable, unlike status): it guarantees
+   * forward progress across chunks of the SAME call even when a line stays
+   * UNMATCHED forever (0 or >1 candidates, D6 abstains) — the status filter
+   * alone is only a safe cursor ACROSS separate autoMatchStatement() calls
+   * (a MATCHED line drops out of scope), not within one chunked call.
    */
   findLinesByStatement(
     scope: AccountingScope,
     statementId: string,
     status?: BankStatementLineStatus,
     tx?: Prisma.TransactionClient,
+    opts?: { take?: number; afterLineNumber?: number },
   ): Promise<BankStatementLine[]>;
 
   /**

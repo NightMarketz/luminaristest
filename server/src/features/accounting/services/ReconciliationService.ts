@@ -24,6 +24,15 @@ import type {
 /** D6 matching window in days around the line date. ponytail: configurável depois. */
 export const RECONCILE_WINDOW_DAYS = 3;
 
+/**
+ * Batch size for autoMatchStatement's chunked interactive transactions
+ * (BE-W2E, F-W2E-1). Replaces the old single-tx-for-the-whole-statement design
+ * (Prisma default interactive-tx timeout is 5s). 200 is a starting point, NOT
+ * a measured number — no real-statement timing exists yet for SQLite here;
+ * treat as configurable and revisit after production measurement.
+ */
+export const RECONCILE_CHUNK_SIZE = 200;
+
 /** Required import columns (same integer-cents convention as the INCR-6 templates). */
 const REQUIRED_COLS = ['date', 'amountCents', 'description'] as const;
 const OPTIONAL_REF_COL = 'externalRef';
@@ -231,6 +240,31 @@ export class ReconciliationService {
   }
 
   // ── Auto-match (§4.2, D6) ─────────────────────────────────────────────────
+  /**
+   * BE-W2E: chunked into one independent interactive tx per batch (upgrade
+   * from the former single-tx-for-the-whole-statement design — Prisma's
+   * default interactive-tx timeout is 5s). Each batch:
+   *   - re-checks statement liveness IN-TX (ACC-011) — a concurrent
+   *     deleteStatement between batch N and batch N+1 makes batch N+1 throw
+   *     NotFoundError, and batches already committed (1..N) are NOT rolled
+   *     back — each is its own already-closed tx (F-W2E-2: propagate the raw
+   *     NotFoundError, never mask a mid-run disappearance as a silent
+   *     partial success — the `param-aceito-e-ignorado-e-bug` class);
+   *   - keeps the exact per-line semantics of the old single-tx loop (single
+   *     candidate commits, 0/​>1 abstain, D6) — chunking changes only how the
+   *     work is split into transactions, never the match decision.
+   *
+   * Cursor: `status: 'UNMATCHED'` is what makes RE-RUNNING this whole method
+   * safe (a MATCHED line drops out of scope on the next call — no separate
+   * cursor needed there). WITHIN one call, though, status alone can stall: a
+   * line that stays UNMATCHED forever (0 or >1 candidates, D6 abstains) would
+   * keep occupying the front of an unbounded window and starve every line
+   * after it. `afterLineNumber` is an ephemeral, in-call-only seek cursor
+   * (lineNumber is immutable, unlike status) that guarantees forward progress
+   * batch to batch regardless of match outcome; it is never persisted, so a
+   * FRESH call always starts at 0 and legitimately re-visits every
+   * still-UNMATCHED line — unchanged re-run idempotency (D6).
+   */
   async autoMatchStatement(scope: AccountingScope, statementId: string): Promise<AutoMatchSummary> {
     if (!this.policy.canReconcile(scope)) {
       throw new ForbiddenError('Você não tem permissão para conciliar.');
@@ -238,32 +272,57 @@ export class ReconciliationService {
     const preflight = await this.repo.findStatementById(scope, statementId);
     if (!preflight) throw new NotFoundError('Extrato não encontrado.');
 
-    // ponytail: one interactive tx for the whole statement (Prisma default 5s) —
-    // chunk per N lines if real statements ever hit the timeout.
-    return this.repo.runTransaction(async (tx) => {
-      // Liveness re-check in-tx (ACC-011): a concurrent deleteStatement must not
-      // interleave matches under a soft-deleted statement.
-      const statement = await this.repo.findStatementById(scope, statementId, tx);
-      if (!statement) throw new NotFoundError('Extrato não encontrado.');
-      const lines = await this.repo.findLinesByStatement(scope, statementId, 'UNMATCHED', tx);
-      const summary: AutoMatchSummary = { processed: 0, matched: 0, zeroCandidates: 0, ambiguous: 0 };
+    const summary: AutoMatchSummary = { processed: 0, matched: 0, zeroCandidates: 0, ambiguous: 0 };
+    let afterLineNumber: number | undefined;
 
-      for (const line of lines) {
-        summary.processed++;
-        const candidates = await this.findCandidates(scope, statement, line, tx);
-        if (candidates.length === 1) {
-          // Único candidato — comita (D6). Abster no empate é o que torna o
-          // re-run idempotente por construção: nunca há escolha entre candidatos.
-          await this.commitMatch(tx, scope, line, candidates[0], 'AUTO');
-          summary.matched++;
-        } else if (candidates.length === 0) {
-          summary.zeroCandidates++;
-        } else {
-          summary.ambiguous++;
+    for (;;) {
+      const batch = await this.repo.runTransaction(async (tx) => {
+        // Liveness re-check in-tx (ACC-011), EVERY batch: a concurrent
+        // deleteStatement must not interleave matches under a soft-deleted
+        // statement, no matter which batch is running.
+        const statement = await this.repo.findStatementById(scope, statementId, tx);
+        if (!statement) throw new NotFoundError('Extrato não encontrado.');
+        const lines = await this.repo.findLinesByStatement(scope, statementId, 'UNMATCHED', tx, {
+          take: RECONCILE_CHUNK_SIZE,
+          afterLineNumber,
+        });
+        const batchSummary: AutoMatchSummary = { processed: 0, matched: 0, zeroCandidates: 0, ambiguous: 0 };
+
+        for (const line of lines) {
+          batchSummary.processed++;
+          const candidates = await this.findCandidates(scope, statement, line, tx);
+          if (candidates.length === 1) {
+            // Único candidato — comita (D6). Abster no empate é o que torna o
+            // re-run idempotente por construção: nunca há escolha entre candidatos.
+            await this.commitMatch(tx, scope, line, candidates[0], 'AUTO');
+            batchSummary.matched++;
+          } else if (candidates.length === 0) {
+            batchSummary.zeroCandidates++;
+          } else {
+            batchSummary.ambiguous++;
+          }
         }
-      }
-      return summary;
-    });
+        return {
+          ...batchSummary,
+          count: lines.length,
+          lastLineNumber: lines.length > 0 ? lines[lines.length - 1].lineNumber : undefined,
+        };
+      });
+
+      summary.processed += batch.processed;
+      summary.matched += batch.matched;
+      summary.zeroCandidates += batch.zeroCandidates;
+      summary.ambiguous += batch.ambiguous;
+
+      // A page shorter than the requested chunk means there is nothing left
+      // to fetch — stop WITHOUT another round-trip. (A page returning EXACTLY
+      // RECONCILE_CHUNK_SIZE rows still loops once more; the following batch
+      // then legitimately returns 0 rows and stops there.)
+      if (batch.count < RECONCILE_CHUNK_SIZE) break;
+      afterLineNumber = batch.lastLineNumber;
+    }
+
+    return summary;
   }
 
   /** Ranked suggestions for one UNMATCHED line (D6 ranking: |Δdias| asc, postingId asc). */
