@@ -5,6 +5,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { isValidDateOnly, scopeToday } from '../models/dates';
+import { centsFromDb } from '../models/money';
 import type { AccountingReportService } from './AccountingReportService';
 import { findMappingRule, applySign } from './StatementMappingFixture';
 import {
@@ -408,7 +409,7 @@ export class AgingReportService {
         id: r.id,
         documentNumber: r.documentNumber,
         dueDate: r.dueDate,
-        amountCents: r.amountCents,
+        amountCents: centsFromDb(r.amountCents),
         counterpartyId: r.counterpartyId,
         counterpartyName: r.supplierName,
       }));
@@ -418,7 +419,7 @@ export class AgingReportService {
       id: r.id,
       documentNumber: r.documentNumber,
       dueDate: r.dueDate,
-      amountCents: r.amountCents,
+      amountCents: centsFromDb(r.amountCents),
       counterpartyId: r.counterpartyId,
       counterpartyName: r.customerName,
     }));

@@ -30,12 +30,12 @@ function entryRow(over: Partial<JournalEntry> = {}): JournalEntry {
 function leg(over: Partial<Posting> = {}): Posting {
   return {
     id: 'p-1', userId: 'maker-1', unitId: 'unit-1', entryId: 'entry-1', accountId: 'acc-1',
-    debitCents: 10000, creditCents: 0, createdAt: new Date(), updatedAt: new Date(), ...over,
+    debitCents: 10000n, creditCents: 0n, createdAt: new Date(), updatedAt: new Date(), ...over,
   } as Posting;
 }
 
-const twoLegs: Posting[] = [leg({ id: 'p-1', accountId: 'acc-1', debitCents: 10000, creditCents: 0 }),
-  leg({ id: 'p-2', accountId: 'acc-2', debitCents: 0, creditCents: 10000 })];
+const twoLegs: Posting[] = [leg({ id: 'p-1', accountId: 'acc-1', debitCents: 10000n, creditCents: 0n }),
+  leg({ id: 'p-2', accountId: 'acc-2', debitCents: 0n, creditCents: 10000n })];
 
 interface Opts {
   entry?: Partial<JournalEntry>;
@@ -172,7 +172,11 @@ describe('EntryApprovalService.submitForApproval', () => {
     expect(casData.version).toBe(2);
     // The stored hash must equal a hash computed over the SAME legs+date+description (ACC-022).
     expect(casData.contentHash).toBe(
-      computeEntryContentHash({ date: new Date('2026-06-10'), description: 'Lançamento manual', postings: twoLegs }),
+      computeEntryContentHash({
+        date: new Date('2026-06-10'),
+        description: 'Lançamento manual',
+        postings: twoLegs.map((p) => ({ accountId: p.accountId, debitCents: Number(p.debitCents), creditCents: Number(p.creditCents) })),
+      }),
     );
     expect((auditService.append.mock.calls[0] as unknown[])[2]).toMatchObject({ eventType: 'entry.submitted' });
   });
@@ -195,7 +199,11 @@ describe('EntryApprovalService.submitForApproval', () => {
 describe('EntryApprovalService.approveEntry — the money moment', () => {
   const pending = {
     status: 'PendingApproval', version: 2, createdById: 'maker-1', submittedById: 'maker-1',
-    contentHash: computeEntryContentHash({ date: new Date('2026-06-10'), description: 'Lançamento manual', postings: twoLegs }),
+    contentHash: computeEntryContentHash({
+        date: new Date('2026-06-10'),
+        description: 'Lançamento manual',
+        postings: twoLegs.map((p) => ({ accountId: p.accountId, debitCents: Number(p.debitCents), creditCents: Number(p.creditCents) })),
+      }),
   };
 
   it('SoD ENFORCED: the creator cannot approve their own entry (server-side, not just UI)', async () => {

@@ -5,8 +5,9 @@ import { INVENTORY_ITEM_STATUSES } from '../models/Inventory.model';
 
 /**
  * InventoryDto — Estoque (INCR-INVENTORY) request schemas. Mirror of `PayableDto.ts`. Money is
- * INTEGER CENTS guarded by `MAX_CENTS` (the Int32 persistence ceiling shared with the ledger,
- * D5/ACC-014); dates are date-only validated by `isValidDateOnly` (regex + round-trip). Every
+ * INTEGER CENTS guarded by `MAX_CENTS` (the policy ceiling shared with the ledger — persistence is
+ * BigInt since BE-INCR-MONEY-BIGINT, F-W2B-1/2a; D5/ACC-014); dates are date-only validated by
+ * `isValidDateOnly` (regex + round-trip). Every
  * schema is `.strict()` so a typo'd field fails loud instead of being silently dropped.
  *
  * Valuation is booked in cents (`totalValueCents` = the TOTAL valued cost of the receipt — the

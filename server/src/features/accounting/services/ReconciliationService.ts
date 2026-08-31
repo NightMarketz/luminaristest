@@ -9,7 +9,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AuditService } from './AuditService';
-import { MAX_CENTS } from '../models/money';
+import { MAX_CENTS, centsFromDb } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import type {
   CandidatePosting,
@@ -335,7 +335,7 @@ export class ReconciliationService {
     // Statement must exist AND be active — lines of a soft-deleted statement are dead.
     const statement = await this.repo.findStatementById(scope, line.statementId);
     if (!statement) throw new NotFoundError('Extrato não encontrado.');
-    if (line.status !== 'UNMATCHED' || line.amountCents === 0) return [];
+    if (line.status !== 'UNMATCHED' || centsFromDb(line.amountCents) === 0) return [];
 
     const candidates = await this.findCandidates(scope, statement, line);
     return candidates
@@ -361,7 +361,7 @@ export class ReconciliationService {
       {
         glAccountId: statement.glAccountId,
         side: line.amountCents > 0 ? 'debit' : 'credit',
-        amountCents: Math.abs(line.amountCents),
+        amountCents: Math.abs(centsFromDb(line.amountCents)),
         dateFrom: new Date(line.date.getTime() - windowMs),
         dateTo: new Date(line.date.getTime() + windowMs),
       },
@@ -408,11 +408,12 @@ export class ReconciliationService {
     // Gate 4 — direction always; exact cents for single matches (integer equality,
     // no epsilon — ACC-014). Manual AGGREGATION (N postings ↔ 1 line, D3) skips the
     // per-posting equality: manualMatch enforces Σ(side amounts) === |line| instead.
-    const sideAmount = freshLine.amountCents > 0 ? posting.debitCents : posting.creditCents;
-    if (freshLine.amountCents === 0 || sideAmount <= 0) {
+    const sideAmount =
+      freshLine.amountCents > 0 ? centsFromDb(posting.debitCents) : centsFromDb(posting.creditCents);
+    if (centsFromDb(freshLine.amountCents) === 0 || sideAmount <= 0) {
       throw new ValidationError('Direção do posting não confere com a linha do extrato.');
     }
-    if (!options?.skipExactAmountCheck && sideAmount !== Math.abs(freshLine.amountCents)) {
+    if (!options?.skipExactAmountCheck && sideAmount !== Math.abs(centsFromDb(freshLine.amountCents))) {
       throw new ValidationError('Valor do posting não confere com a linha do extrato.');
     }
 
@@ -565,10 +566,11 @@ export class ReconciliationService {
         postings.push(posting);
       }
       const side = line.amountCents > 0 ? 'debitCents' : 'creditCents';
-      const sum = postings.reduce((acc, p) => acc + p[side], 0);
-      if (sum !== Math.abs(line.amountCents)) {
+      const sum = postings.reduce((acc, p) => acc + centsFromDb(p[side]), 0);
+      const lineAbsCents = Math.abs(centsFromDb(line.amountCents));
+      if (sum !== lineAbsCents) {
         throw new ValidationError(
-          `Σ dos postings (${sum}) não confere com a linha (${Math.abs(line.amountCents)}) — agregação deve fechar exata (centavos).`,
+          `Σ dos postings (${sum}) não confere com a linha (${lineAbsCents}) — agregação deve fechar exata (centavos).`,
         );
       }
       for (const posting of postings) {
@@ -686,10 +688,23 @@ export class ReconciliationService {
     if (!account) throw new NotFoundError('Conta contábil não encontrada.');
 
     const window = query.from || query.to ? { from: query.from, to: query.to } : undefined;
-    const [unmatchedLines, unmatchedPostings] = await Promise.all([
+    const [rawUnmatchedLines, rawUnmatchedPostings] = await Promise.all([
       this.repo.findUnmatchedLinesByAccount(scope, query.glAccountId, window),
       this.repo.findUnmatchedBankPostings(scope, query.glAccountId, window),
     ]);
+
+    // F-W2B-3: res.json() throws on a raw bigint — convert every `*Cents` field back to `number`
+    // at this read boundary before the rows leave the service (the controller does a bare
+    // `res.json({ success: true, data })`, never re-serializing field-by-field).
+    const unmatchedLines = rawUnmatchedLines.map((line) => ({
+      ...line,
+      amountCents: centsFromDb(line.amountCents),
+    }));
+    const unmatchedPostings = rawUnmatchedPostings.map((posting) => ({
+      ...posting,
+      debitCents: centsFromDb(posting.debitCents),
+      creditCents: centsFromDb(posting.creditCents),
+    }));
 
     let lineTotalCents = 0;
     for (const line of unmatchedLines) lineTotalCents += line.amountCents;

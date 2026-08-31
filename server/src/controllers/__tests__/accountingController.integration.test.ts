@@ -106,18 +106,19 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
     // Lido da BASE, não do corpo da resposta — é a persistência que está sob teste.
     const pernas = await prisma.posting.findMany({ where: { entryId: res.body.data.id } });
     expect(pernas).toHaveLength(2);
-    expect(pernas.reduce((n, p) => n + p.debitCents, 0)).toBe(12345);
-    expect(pernas.reduce((n, p) => n + p.creditCents, 0)).toBe(12345);
-    expect(pernas.every((p) => Number.isInteger(p.debitCents) && Number.isInteger(p.creditCents))).toBe(true);
+    expect(pernas.reduce((n, p) => n + Number(p.debitCents), 0)).toBe(12345);
+    expect(pernas.reduce((n, p) => n + Number(p.creditCents), 0)).toBe(12345);
+    expect(pernas.every((p) => Number.isInteger(Number(p.debitCents)) && Number.isInteger(Number(p.creditCents)))).toBe(true);
     expect(pernas.every((p) => p.userId === donoA.id && p.unitId === UNIT)).toBe(true);
   });
 
   // ══════════════════════════════════════════════════════════ DINHEIRO
   /**
-   * O TETO É DE PERSISTÊNCIA, e é por isso que ele tem de morder NA BORDA. `Posting.debitCents` é
-   * `Int` do Prisma (Int32 assinado): acima de MAX_CENTS a escrita falha lá no fundo, no commit,
-   * como erro opaco. O DTO barra antes (ACC-HARDEN-POST-CENTS-001) para que o cliente receba 400
-   * com mensagem, não 500 sem explicação — e para que NADA chegue a ser escrito.
+   * O TETO ERA DE PERSISTÊNCIA (`Posting.debitCents` era `Int32` — acima de MAX_CENTS a escrita
+   * falhava lá no fundo, no commit, como erro opaco). Pós BE-INCR-MONEY-BIGINT (F-W2B-1/F-W2B-2a)
+   * a coluna é `BigInt` — sem teto de persistência — e MAX_CENTS virou teto de POLÍTICA de negócio,
+   * mordendo na MESMA borda de antes (o DTO, ACC-HARDEN-POST-CENTS-001) para que o cliente continue
+   * recebendo 400 com mensagem em vez de um valor sem controle nenhum.
    *
    * O controle no teto EXATO é o que impede a guarda de virar off-by-one: um `< MAX_CENTS` no lugar
    * de `<= MAX_CENTS` passaria num teste que só empurra o valor estourado.
@@ -135,7 +136,7 @@ describe('accountingController — contrato HTTP em SQLite real (subfila ratific
     const noTeto = await post(donoA, lancamento('exatamente no teto', MAX_CENTS));
     expect(noTeto.status).toBe(201);
     const pernas = await prisma.posting.findMany({ where: { entryId: noTeto.body.data.id } });
-    expect(Math.max(...pernas.map((p) => p.debitCents))).toBe(MAX_CENTS);
+    expect(Math.max(...pernas.map((p) => Number(p.debitCents)))).toBe(MAX_CENTS);
   });
 
   /**

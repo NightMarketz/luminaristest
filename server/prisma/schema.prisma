@@ -654,8 +654,8 @@ model Posting {
   entry                 JournalEntry          @relation(fields: [entryId], references: [id], onDelete: Cascade)
   accountId             String
   account               Account               @relation(fields: [accountId], references: [id])
-  debitCents            Int                   @default(0)
-  creditCents           Int                   @default(0)
+  debitCents            BigInt                @default(0)
+  creditCents           BigInt                @default(0)
   createdAt             DateTime              @default(now())
   updatedAt             DateTime?             @updatedAt
   reconciliationMatches ReconciliationMatch[] @relation("PostingReconciliationMatches")
@@ -684,8 +684,8 @@ model BankStatement {
   statementRef        String? // bank-provided statement id/label (display)
   periodStart         DateTime
   periodEnd           DateTime
-  openingBalanceCents Int? // optional control totals (|v| <= MAX_CENTS)
-  closingBalanceCents Int?
+  openingBalanceCents BigInt? // optional control totals (|v| <= MAX_CENTS)
+  closingBalanceCents BigInt?
   sha256              String // file hash — re-import idempotency (D1/ACC-013)
   attachmentId        String? // DocumentAttachment of the raw file (INCR-5)
   importedById        String? // actor (AccountingScope.actorUserId); plain string
@@ -709,7 +709,7 @@ model BankStatementLine {
   statement   BankStatement         @relation(fields: [statementId], references: [id], onDelete: Cascade)
   lineNumber  Int // 1-based, source order
   date        DateTime
-  amountCents Int // SIGNED: >0 inflow (statement credit), <0 outflow. |v| <= MAX_CENTS (ACC-014)
+  amountCents BigInt // SIGNED: >0 inflow (statement credit), <0 outflow. |v| <= MAX_CENTS (ACC-014)
   description String
   externalRef String? // bank transaction/document id, when present
   status      String                @default("UNMATCHED") // UNMATCHED | MATCHED | IGNORED
@@ -821,7 +821,7 @@ model CustomerPackageBalance {
   unitId       String // business unit (DynamicTable row id; scoped string, not a FK)
   customerId   String // customer (DynamicTable row id; scoped string, not a FK)
   packageId    String // package from the catalog (DynamicTable row id; scoped string, not a FK)
-  balanceCents Int       @default(0)
+  balanceCents BigInt    @default(0)
   expiresAt    DateTime? // reserved for future expiry; NOT enforced in the G MVP
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -846,7 +846,7 @@ model PackageBalanceMovement {
   packageId  String
   saleId     String // the sale (DynamicTable row id) that originated this movement
   kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption)
-  deltaCents Int // always > 0; direction is given by `kind`
+  deltaCents BigInt // always > 0; direction is given by `kind`
   createdAt  DateTime @default(now())
 
   @@unique([userId, unitId, saleId, kind]) // closes double-apply on reconcile re-drive
@@ -875,7 +875,7 @@ model Payable {
   description      String
   issueDate        DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
   dueDate          DateTime // date-only (vencimento; aging is a later increment — F3)
-  amountCents      Int // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
+  amountCents      BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
   expenseAccountId String? // FK Account — contrapartida do reconhecimento, folha nature='Expense' (gate D4). NULLABLE (INCR-INVENTORY D3(b)): an inventory PURCHASE debits 1.1.6 Estoques instead of an expense leaf, so expenseAccountId is null and inventoryProductRef/inventoryQty are set (DTO XOR gate). The service re-checks the branch via isInventoryPurchase.
   expenseAccount   Account?         @relation("PayableExpenseAccount", fields: [expenseAccountId], references: [id])
   inventoryProductRef String? // INCR-INVENTORY D3(b): set (with inventoryQty) when this Payable is a merchandise-for-resale purchase → routes the debit to 1.1.6 Estoques + emits a StockMovement INBOUND. XOR with expenseAccountId (DTO .superRefine).
@@ -915,7 +915,7 @@ model PayablePayment {
   unitId       String // business unit (scoped string, not a FK)
   payableId    String
   payable      Payable  @relation(fields: [payableId], references: [id], onDelete: Cascade)
-  amountCents  Int // integer cents; MAX_CENTS guarded at the DTO
+  amountCents  BigInt // integer cents; MAX_CENTS guarded at the DTO
   method       String // Cash | Pix | TED | Boleto — closed map to the credit account (unknown rejects, D2)
   paidAt       DateTime // date-only — EFFECTIVE bank-debit date (D9), NOT the click date; validated by isValidDateOnly
   paidByUserId String? // actor who registered the payment; plain string
@@ -947,7 +947,7 @@ model Receivable {
   description      String
   issueDate        DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
   dueDate          DateTime // date-only (vencimento; aging is a later increment — F3)
-  amountCents      Int // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
+  amountCents      BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
   revenueAccountId String // FK Account — contrapartida do reconhecimento, folha nature='Revenue' (gate D4, re-checked in the service)
   revenueAccount   Account             @relation("ReceivableRevenueAccount", fields: [revenueAccountId], references: [id])
   counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
@@ -983,7 +983,7 @@ model ReceivableReceipt {
   unitId           String // business unit (scoped string, not a FK)
   receivableId     String
   receivable       Receivable @relation(fields: [receivableId], references: [id], onDelete: Cascade)
-  amountCents      Int // integer cents; MAX_CENTS guarded at the DTO
+  amountCents      BigInt // integer cents; MAX_CENTS guarded at the DTO
   method           String // Cash | Pix | TED | Boleto — closed map to the debit account (unknown rejects, D2)
   receivedAt       DateTime // date-only — EFFECTIVE bank-credit date (D9), NOT the click date; validated by isValidDateOnly
   receivedByUserId String? // actor who registered the receipt; plain string
@@ -1141,7 +1141,7 @@ model InventoryItem {
   productRef      String // scoped ref to a DynamicTable product row (F-INV5; plain string, NOT a FK — precedent AR.customerRef)
   description     String? // display label snapshot (optional)
   qtyOnHand       Int             @default(0) // units in hand (integer; fractional units are OUT of MVP)
-  totalValueCents Int             @default(0) // total valued cost in integer cents — the source-of-truth of the moving average (D6/ACC-014)
+  totalValueCents BigInt          @default(0) // total valued cost in integer cents — the source-of-truth of the moving average (D6/ACC-014)
   status          String          @default("ACTIVE") // ACTIVE | ARCHIVED (see INVENTORY_ITEM_STATUSES)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -1166,7 +1166,7 @@ model StockMovement {
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
   kind            String // INBOUND | COGS | ADJUSTMENT | REVERSAL (see STOCK_MOVEMENT_KINDS)
   qtyDelta        Int // signed unit delta (+inbound / −cogs)
-  valueCentsDelta Int // signed valued-cost delta in integer cents
+  valueCentsDelta BigInt // signed valued-cost delta in integer cents
   occurredAt      DateTime // event date (date-only competência)
   sourceType      String // origin discriminator: inventory.inbound | sale.cogs | ap.payable | …
   sourceId        String // origin key (payableId | saleId | reversalEventId | seed id)

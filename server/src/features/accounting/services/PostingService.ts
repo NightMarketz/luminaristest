@@ -4,7 +4,7 @@ import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
 import { CANONICAL_ACCOUNTS } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
-import { MAX_CENTS } from '../models/money';
+import { MAX_CENTS, centsFromDb } from '../models/money';
 import type { CreateAccountInput, PostEntryInput, ReverseEntryInput } from '../dtos/PostingDto';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type {
@@ -562,8 +562,8 @@ export class PostingService {
     }
 
     // Re-assert the original is balanced before mirroring.
-    const origDebit = original.postings.reduce((acc, p) => acc + p.debitCents, 0);
-    const origCredit = original.postings.reduce((acc, p) => acc + p.creditCents, 0);
+    const origDebit = original.postings.reduce((acc, p) => acc + centsFromDb(p.debitCents), 0);
+    const origCredit = original.postings.reduce((acc, p) => acc + centsFromDb(p.creditCents), 0);
     if (origDebit !== origCredit || origDebit <= 0) {
       throw new ValidationError(
         `Lançamento '${original.id}' está desbalanceado ou sem partidas — estorno abortado.`,
@@ -616,8 +616,8 @@ export class PostingService {
               entryId: reversal.id,
               accountId: leg.accountId,
               // SWAP: a debit leg becomes a credit leg and vice-versa.
-              debitCents: leg.creditCents,
-              creditCents: leg.debitCents,
+              debitCents: centsFromDb(leg.creditCents),
+              creditCents: centsFromDb(leg.debitCents),
             },
             tx,
           );

@@ -22,7 +22,8 @@ const NATURES = new Set(['Asset', 'Liability', 'Equity', 'Revenue', 'Expense']);
 // isValidDateOnly (models/dates.ts) = regex + calendar round-trip — a regex alone lets
 // '2026-02-30' import and silently shift to 03-02 downstream (class-fix).
 
-// MAX_CENTS (Int32 storage ceiling) is shared with the direct /post DTO — see models/money.ts.
+// MAX_CENTS (policy ceiling — persistence is BigInt since BE-INCR-MONEY-BIGINT, F-W2B-1/2a) is
+// shared with the direct /post DTO — see models/money.ts.
 // Guarding here makes the import preview reject an over-ceiling value with a clear message
 // instead of a late opaque POST_FAILED at commit (ACC-INCR6-J-001).
 

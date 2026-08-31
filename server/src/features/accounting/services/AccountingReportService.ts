@@ -7,6 +7,7 @@ import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepos
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { centsFromDb } from '../models/money';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import {
   STATEMENT_MAPPING_VERSION,
@@ -416,8 +417,8 @@ export class AccountingReportService {
           date: entry.date,
           description: entry.description,
           status: entry.status,
-          debitCents: p.debitCents,
-          creditCents: p.creditCents,
+          debitCents: centsFromDb(p.debitCents),
+          creditCents: centsFromDb(p.creditCents),
         });
       }
 

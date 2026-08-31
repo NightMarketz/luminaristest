@@ -61,6 +61,7 @@ import { getFactory } from '../lib/factory';
 import { resolveAccountingScope } from '../features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
 import { LEDGER_STATUSES } from '../features/accounting/models/ledgerStatus';
+import { centsFromDb } from '../features/accounting/models/money';
 import {
   buildSaleFinalizedEvent,
   buildSaleCogsEvent,
@@ -1290,7 +1291,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         return grouped.map((g) => ({
           ownerUserId: g.userId,
           unitId: g.unitId,
-          balanceCents: g._sum.balanceCents ?? 0,
+          balanceCents: centsFromDb(g._sum.balanceCents ?? 0n),
         }));
       },
       getLiabilityCents: async (scope: AccountingScope) => {
@@ -1306,7 +1307,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
           _sum: { debitCents: true, creditCents: true },
         });
         // 2.1.1 is a liability (credit-normal): balance = Σcredit − Σdebit.
-        return (agg._sum.creditCents ?? 0) - (agg._sum.debitCents ?? 0);
+        return centsFromDb(agg._sum.creditCents ?? 0n) - centsFromDb(agg._sum.debitCents ?? 0n);
       },
     });
 

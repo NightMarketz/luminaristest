@@ -87,15 +87,18 @@ describe('PostingService — caminho de escrita do razão em SQLite real (AV-R3 
     const entry = await posting().postEntry(scopeDe(DONO_A), lancamento('venda à vista', 12345));
 
     expect(entry.postings).toHaveLength(2);
-    const somaDebito = entry.postings.reduce((n, p) => n + p.debitCents, 0);
-    const somaCredito = entry.postings.reduce((n, p) => n + p.creditCents, 0);
+    const somaDebito = entry.postings.reduce((n, p) => n + Number(p.debitCents), 0);
+    const somaCredito = entry.postings.reduce((n, p) => n + Number(p.creditCents), 0);
     expect(somaDebito).toBe(12345);
     expect(somaCredito).toBe(12345);
 
     // Lido de volta da BASE, não do retorno do serviço — é a persistência que está sob teste.
     const naBase = await prisma.posting.findMany({ where: { entryId: entry.id } });
     expect(naBase).toHaveLength(2);
-    expect(naBase.every((p) => Number.isInteger(p.debitCents) && Number.isInteger(p.creditCents))).toBe(true);
+    // debitCents/creditCents are BigInt columns (BE-INCR-MONEY-BIGINT) — a bigint can never carry a
+    // fractional part, but the check still round-trips through `number` here to prove the value is
+    // ALSO representable without precision loss (well under Number.MAX_SAFE_INTEGER for this amount).
+    expect(naBase.every((p) => Number.isInteger(Number(p.debitCents)) && Number.isInteger(Number(p.creditCents)))).toBe(true);
   });
 
   // ---------------------------------------------------------------- M3 · atomicidade
@@ -219,7 +222,7 @@ describe('PostingService — caminho de escrita do razão em SQLite real (AV-R3 
 
     expect(reversal.postings).toHaveLength(2);
     // O estorno espelha invertido: o débito de 4400 vira crédito de 4400.
-    expect(reversal.postings.reduce((n, p) => n + p.creditCents, 0)).toBe(4400);
+    expect(reversal.postings.reduce((n, p) => n + Number(p.creditCents), 0)).toBe(4400);
     expect(reversal.userId).toBe(DONO_A);
     const original = await prisma.journalEntry.findUnique({ where: { id: doA.id } });
     expect(original!.reversedById).toBe(reversal.id);

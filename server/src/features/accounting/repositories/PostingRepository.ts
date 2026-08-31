@@ -8,10 +8,13 @@ import type {
   CreatePostingInput,
   IPostingRepository,
 } from './IPostingRepository';
+import { centsFromDb } from '../models/money';
 
 /**
  * Prisma-backed repository for ledger lines (`postings`). Money is INTEGER CENTS
- * (Int columns) — groupByAccount sums those Int columns exactly, never floats.
+ * (BigInt columns, BE-INCR-MONEY-BIGINT/F-W2B-1) — groupByAccount sums those columns exactly,
+ * never floats. Every aggregate/read here converts back to `number` at this boundary
+ * (`centsFromDb`, F-W2B-3) so nothing above the repository ever touches a raw `bigint`.
  * (ReconciliationRepository also READS prisma.posting for its domain queries —
  * BE-INCR-7; this repo remains the only WRITE surface for postings.)
  */
@@ -77,8 +80,8 @@ export class PostingRepository implements IPostingRepository {
 
     return grouped.map((row) => ({
       accountId: row.accountId,
-      debitCents: row._sum.debitCents ?? 0,
-      creditCents: row._sum.creditCents ?? 0,
+      debitCents: centsFromDb(row._sum.debitCents ?? 0n),
+      creditCents: centsFromDb(row._sum.creditCents ?? 0n),
     }));
   }
 
@@ -115,8 +118,8 @@ export class PostingRepository implements IPostingRepository {
       const valueId = p.dimensions[0]?.valueId ?? null;
       const key = `${p.accountId}::${valueId ?? '__NONE__'}`;
       const cur = map.get(key) ?? { accountId: p.accountId, valueId, debitCents: 0, creditCents: 0 };
-      cur.debitCents += p.debitCents;
-      cur.creditCents += p.creditCents;
+      cur.debitCents += centsFromDb(p.debitCents);
+      cur.creditCents += centsFromDb(p.creditCents);
       map.set(key, cur);
     }
     return [...map.values()];

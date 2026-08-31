@@ -44,6 +44,20 @@ const NOTNULL_MIGRATION = '20260814120000_counterparty_notnull';
  */
 const W2A_MIGRATION = '20260830160349_counterparty_identity_normalization';
 
+/**
+ * BE-INCR-MONEY-BIGINT (F-W2B-1) — `Payable.amountCents`/`Receivable.amountCents` Int→BigInt.
+ * TAMBÉM omitida, e pelo MESMO motivo estrutural do NOTNULL_MIGRATION/W2A_MIGRATION acima, ainda que
+ * esta migração não toque `counterpartyId` na intenção: SQLite não tem `ALTER COLUMN TYPE`, então
+ * QUALQUER mudança de tipo de coluna vira um `RedefineTables` — um `CREATE TABLE new_payables (...)`
+ * inteiro, gerado a partir do schema.prisma ATUAL (não um diff da coluna). Isso inclui
+ * `"counterpartyId" TEXT NOT NULL` de brinde, porque essa é a forma da coluna HOJE — mesmo que
+ * NOTNULL_MIGRATION (a migração que introduziu esse NOT NULL) tenha sido omitida acima. Sem omitir
+ * esta também, o `payables`/`receivables` pré-backfill que este teste monta "esqueceria" a omissão do
+ * NOT NULL no meio do caminho, e o INSERT sem `counterpartyId` do passo seguinte falharia com
+ * `NOT NULL constraint failed` em vez de reproduzir o estado pré-SEC-A1-5 pretendido.
+ */
+const BIGINT_MIGRATION = '20260831032258_int_to_bigint_cents';
+
 /** A migração de onde o backfill é lido, e o marcador onde ela começa (mesmo do gate irmão). */
 const BACKFILL_MIGRATION = '20260715060000_incr_counterparty';
 const BACKFILL_MARKER = '-- SUPPLIERS from payables';
@@ -86,13 +100,16 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
       .readdirSync(migrationsDir)
       .filter((d) => fs.existsSync(path.join(migrationsDir, d, 'migration.sql')))
       .sort();
-    const aplicar = todas.filter((d) => d !== NOTNULL_MIGRATION && d !== W2A_MIGRATION);
-    // Controle do harness: exatamente DUAS migrações foram omitidas, e são as que se pretendia omitir.
+    const aplicar = todas.filter(
+      (d) => d !== NOTNULL_MIGRATION && d !== W2A_MIGRATION && d !== BIGINT_MIGRATION,
+    );
+    // Controle do harness: exatamente TRÊS migrações foram omitidas, e são as que se pretendia omitir.
     // Sem isto, um rename do diretório passaria a aplicar TUDO (o teste quebraria por motivo obscuro)
     // ou a omitir demais.
     expect(todas).toContain(NOTNULL_MIGRATION);
     expect(todas).toContain(W2A_MIGRATION);
-    expect(todas.length - aplicar.length).toBe(2);
+    expect(todas).toContain(BIGINT_MIGRATION);
+    expect(todas.length - aplicar.length).toBe(3);
     // Controle do harness, irmão do de cima: o backfill vem da migração real e tem de chegar inteiro.
     // Sem isto, um `;` a mais num comentário partiria um statement e o teste provaria meio backfill.
     backfill = readBackfillStatements();

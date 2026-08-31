@@ -3,6 +3,7 @@ import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
 import { CLIENTES_A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { centsFromDb } from '../models/money';
 import {
   AR_RECEIVABLE_SOURCE_TYPE,
   AR_RECEIPT_SOURCE_TYPE,
@@ -206,7 +207,7 @@ export class ReceivableService {
     }
 
     // Full-receipt guard (F2 MVP): the amount must settle the whole remaining balance.
-    const remaining = receivable.amountCents - this.sumActiveReceipts(receivable);
+    const remaining = centsFromDb(receivable.amountCents) - this.sumActiveReceipts(receivable);
     if (dto.amountCents !== remaining) {
       throw new ValidationError(
         `Recebimento parcial não é suportado: informe o saldo integral (${remaining} centavos).`,
@@ -525,7 +526,7 @@ export class ReceivableService {
   private sumActiveReceipts(receivable: ReceivableWithReceipts): number {
     return receivable.receipts
       .filter((r) => r.status === 'ACTIVE')
-      .reduce((acc, r) => acc + r.amountCents, 0);
+      .reduce((acc, r) => acc + centsFromDb(r.amountCents), 0);
   }
 
   /**
@@ -609,8 +610,8 @@ export class ReceivableService {
         documentDate: this.toDateOnly(receivable.issueDate),
       },
       lines: [
-        { accountCode: CLIENTES_A_RECEBER_CODE, debitCents: receivable.amountCents, creditCents: 0 },
-        { accountCode: revenueAccount.code, debitCents: 0, creditCents: receivable.amountCents },
+        { accountCode: CLIENTES_A_RECEBER_CODE, debitCents: centsFromDb(receivable.amountCents), creditCents: 0 },
+        { accountCode: revenueAccount.code, debitCents: 0, creditCents: centsFromDb(receivable.amountCents) },
       ],
     };
   }
@@ -651,8 +652,8 @@ export class ReceivableService {
       sourceType: AR_RECEIPT_SOURCE_TYPE,
       sourceId: receipt.id,
       lines: [
-        { accountCode: debitCode, debitCents: receipt.amountCents, creditCents: 0 },
-        { accountCode: CLIENTES_A_RECEBER_CODE, debitCents: 0, creditCents: receipt.amountCents },
+        { accountCode: debitCode, debitCents: centsFromDb(receipt.amountCents), creditCents: 0 },
+        { accountCode: CLIENTES_A_RECEBER_CODE, debitCents: 0, creditCents: centsFromDb(receipt.amountCents) },
       ],
     };
   }

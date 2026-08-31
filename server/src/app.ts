@@ -12,6 +12,7 @@ import { router as routes } from './routes';
 import { authMiddleware } from './middleware/auth';
 import { httpTimingMiddleware } from './middleware/httpTiming';
 import { handleApiError } from './lib/apiUtils';
+import { jsonBigintReplacer } from './lib/jsonBigintReplacer';
 import prisma from './lib/prisma';
 
 /**
@@ -21,6 +22,12 @@ import prisma from './lib/prisma';
  */
 export function createApp(): express.Express {
   const app = express();
+
+  // BE-INCR-MONEY-BIGINT (F-W2B-3) — last-resort net so a raw bigint `*Cents` value reaching
+  // res.json() (any CRUD passthrough that didn't already convert at a service read boundary)
+  // gets converted to `number` (safe-integer guarded) instead of crashing JSON.stringify.
+  // Express feeds this straight into its own `JSON.stringify` call — no extra tree-walk.
+  app.set('json replacer', jsonBigintReplacer);
 
   // Middleware
   app.use(helmet());

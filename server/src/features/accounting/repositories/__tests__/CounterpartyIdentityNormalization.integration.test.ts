@@ -33,18 +33,29 @@ function readTargetMigrationSql(): string {
   return fs.readFileSync(file, 'utf8');
 }
 
-/** Monta um dev.db novo aplicando toda migração EXCETO `TARGET_MIGRATION` (o estado pré-BRIEF-W2-A). */
+/**
+ * Monta um dev.db novo aplicando toda migração ANTERIOR a `TARGET_MIGRATION` (o estado
+ * pré-BRIEF-W2-A) — um PREFIXO da lista ordenada, não "tudo exceto o nome exato do alvo".
+ *
+ * BE-INCR-MONEY-BIGINT (F-W2B-1, PR seguinte a este no pipeline W2) adicionou uma migração NOVA
+ * DEPOIS de `TARGET_MIGRATION` no diretório — a versão anterior deste harness comparava por nome
+ * exato (`d !== TARGET_MIGRATION`) e por isso passaria a aplicar TAMBÉM essa migração futura (ela
+ * não é === TARGET_MIGRATION), contaminando o estado "pré-migração" com colunas que não existiam
+ * quando BRIEF-W2-A foi escrito — e o guard-rail original (`todas[todas.length-1] === TARGET_MIGRATION`)
+ * capturava exatamente isso, mas de um jeito que quebra para QUALQUER migração futura, não só uma
+ * incorreta. Fatiar pelo ÍNDICE de `TARGET_MIGRATION` (prefixo estrito) preserva a garantia real —
+ * "aplicar" é sempre todo o histórico ANTES do alvo, nunca depois — sem exigir que o alvo continue
+ * sendo o mais recente do repositório.
+ */
 function buildPreMigrationDb(dbPath: string): void {
   const todas = fs
     .readdirSync(MIGRATIONS_DIR)
     .filter((d) => fs.existsSync(path.join(MIGRATIONS_DIR, d, 'migration.sql')))
     .sort();
-  const aplicar = todas.filter((d) => d !== TARGET_MIGRATION);
-  // Controle do harness: exatamente uma migração omitida, e é a que se pretendia omitir — E ela é a
-  // ÚLTIMA da lista ordenada (garante que "todas as outras" == "todo o histórico anterior a esta").
-  expect(todas).toContain(TARGET_MIGRATION);
-  expect(todas.length - aplicar.length).toBe(1);
-  expect(todas[todas.length - 1]).toBe(TARGET_MIGRATION);
+  const targetIdx = todas.indexOf(TARGET_MIGRATION);
+  expect(targetIdx).toBeGreaterThanOrEqual(0); // TARGET_MIGRATION existe no diretório
+  const aplicar = todas.slice(0, targetIdx); // prefixo estrito — nunca inclui o alvo nem nada depois dele
+  expect(aplicar).not.toContain(TARGET_MIGRATION);
   for (const dir of aplicar) {
     execSync(
       `npx prisma db execute --file "${path.join(MIGRATIONS_DIR, dir, 'migration.sql')}" --url "file:${dbPath}"`,

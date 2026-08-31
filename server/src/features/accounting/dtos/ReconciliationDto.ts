@@ -15,7 +15,8 @@ import { isValidDateOnly } from '../models/dates';
 // cuid charset (alphanumerics, underscore, hyphen) — same guard as DocumentAttachmentDto.
 const idLike = z.string().min(1).regex(/^[A-Za-z0-9_-]+$/, 'invalid id');
 
-/** Signed control-total in cents, bounded by the Int32 storage ceiling (ACC-014). */
+/** Signed control-total in cents, bounded by the `MAX_CENTS` policy ceiling — persistence is
+ *  BigInt since BE-INCR-MONEY-BIGINT (F-W2B-1/2a), ACC-014. */
 const signedCents = z.coerce
   .number()
   .int()

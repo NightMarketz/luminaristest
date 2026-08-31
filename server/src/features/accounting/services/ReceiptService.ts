@@ -5,6 +5,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
+import { centsFromDb } from '../models/money';
 
 /** Metadata + bytes for streaming a generated receipt. */
 export interface ReceiptArtifact {
@@ -55,8 +56,8 @@ export class ReceiptService {
         return {
           code: acc?.code ?? '—',
           name: acc?.name ?? '(conta removida)',
-          debitCents: p.debitCents,
-          creditCents: p.creditCents,
+          debitCents: centsFromDb(p.debitCents),
+          creditCents: centsFromDb(p.creditCents),
         };
       }),
     );

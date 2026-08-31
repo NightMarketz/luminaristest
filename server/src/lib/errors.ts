@@ -89,7 +89,7 @@ export class ServiceError extends AppError {
 }
 
 /**
- * Raised when a posting leg exceeds the Int32 cents ceiling (MAX_CENTS, ACC-014).
+ * Raised when a posting leg exceeds the MAX_CENTS policy ceiling (ACC-014).
  * Thrown by the PostingService choke-point guard (Council 1.5) with its OWN code,
  * DISTINCT from ACCOUNTING_PERIOD_NOT_OPEN: bridges/reconcile treat both as
  * skip+log, but period-closed is transient (reopens) while this one is a POISON

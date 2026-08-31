@@ -119,17 +119,17 @@ describe('PostingDimension — real SQLite DB (INCR-DIM ACC-024/025)', () => {
       where: { userId: USER_ID, unitId: UNIT, accountId: 'acc-exp', entry: { status: { in: LEDGER_STATUSES } } },
       select: { debitCents: true, dimensions: { where: { definitionId: 'def-cc' }, select: { valueId: true } } },
     });
-    const byValue = new Map<string | null, number>();
+    const byValue = new Map<string | null, bigint>();
     for (const l of legs) {
       const vId = l.dimensions[0]?.valueId ?? null;
-      byValue.set(vId, (byValue.get(vId) ?? 0) + l.debitCents);
+      byValue.set(vId, (byValue.get(vId) ?? 0n) + l.debitCents);
     }
     // Σ buckets (incl. the untagged null bucket) == the plain account total — nothing lost/double-counted.
-    const totalByDim = [...byValue.values()].reduce((s, v) => s + v, 0);
+    const totalByDim = [...byValue.values()].reduce((s, v) => s + v, 0n);
     const plain = (await groupByAccount()).find((r) => r.accountId === 'acc-exp')!;
     expect(totalByDim).toBe(plain._sum.debitCents);
-    expect(byValue.get('v2')).toBe(2000);
-    expect(byValue.get(null) ?? 0).toBeGreaterThanOrEqual(1000); // e6 untagged
+    expect(byValue.get('v2')).toBe(2000n);
+    expect(byValue.get(null) ?? 0n).toBeGreaterThanOrEqual(1000n); // e6 untagged
     expect(byValue.has('v1')).toBe(true);
   }, 60000);
 });

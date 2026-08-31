@@ -5,6 +5,7 @@ import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepos
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { centsFromDb } from '../models/money';
 
 // ─── Report shapes (money in INTEGER CENTS) ────────────────────────────────────
 
@@ -100,8 +101,8 @@ export class DailyJournalReportService {
         const lines: DailyJournalLine[] = e.postings.map((p) => ({
           accountCode: p.account.code,
           accountName: p.account.name,
-          debitCents: p.debitCents,
-          creditCents: p.creditCents,
+          debitCents: centsFromDb(p.debitCents),
+          creditCents: centsFromDb(p.creditCents),
         }));
 
         let debitTotal = 0;
