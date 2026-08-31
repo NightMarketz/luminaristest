@@ -50,12 +50,15 @@ import { isValidDateOnly } from '../models/dates';
 export const PostEntryLineSchema = z
   .object({
     accountCode: z.string().min(1),
-    // Cap at MAX_CENTS (Int32 storage ceiling, shared with the import validators —
-    // ACC-HARDEN-POST-CENTS-001): Posting.debitCents/creditCents are Prisma `Int`, so a larger
-    // value would pass the DTO but fail late at the repository as an opaque write error. Guard it
-    // here so the manual /post path rejects it as a clear 400 before PostingService is called —
-    // the same protection the import preview got (ACC-INCR6-J-001). This tighter bound also stays
-    // well under 2^53-1, so the Σdébito===Σcrédito integer sum keeps exact precision (Contract §2.1).
+    // Cap at MAX_CENTS — a POLICY ceiling since BE-INCR-MONEY-BIGINT (F-W2B-1/F-W2B-2a):
+    // Posting.debitCents/creditCents are now `BigInt` (no storage-side width limit left), but the
+    // choke-point still rejects anything above this business ceiling as a clear 400 BEFORE
+    // PostingService is called — the same protection the import preview got (ACC-INCR6-J-001,
+    // now closed). The value stays `number` end to end here (Prisma's generated Create/Update
+    // input types accept `number | bigint` for a BigInt column, so no bigint conversion is needed
+    // in this DTO — see `models/money.ts` `centsFromDb` for the read-side bigint->number bridge).
+    // This bound also stays well under 2^53-1, so the Σdébito===Σcrédito integer sum keeps exact
+    // precision (Contract §2.1).
     debitCents: z.number().int().min(0).max(MAX_CENTS, { message: `debitCents excede o limite suportado (máx ${MAX_CENTS}).` }),
     creditCents: z.number().int().min(0).max(MAX_CENTS, { message: `creditCents excede o limite suportado (máx ${MAX_CENTS}).` }),
     // INCR-DIM: optional dimension VALUE ids tagging this leg. Metadata only — never enters the

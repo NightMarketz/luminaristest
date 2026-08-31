@@ -15,6 +15,7 @@ import type { AccountingReportService } from './AccountingReportService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcdRequestDto } from '../dtos/SpedEcdDto';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { centsFromDb } from '../models/money';
 import {
   buildEcdFile,
   serializeEcd,
@@ -281,14 +282,22 @@ export class SpedGenerationService {
     });
     const entries: EcdEntry[] = rawEntries.map((e) => {
       const legs = [...e.postings]
-        .sort((a, b) => a.account.code.localeCompare(b.account.code) || (b.debitCents - a.debitCents))
-        .map((p) => ({
-          codCta: p.account.code,
-          vlCents: p.debitCents > 0 ? p.debitCents : p.creditCents,
-          indDc: (p.debitCents > 0 ? 'D' : 'C') as 'D' | 'C',
-          hist: e.description,
-        }));
-      const vlLctoCents = e.postings.reduce((s, p) => s + p.debitCents, 0);
+        .sort(
+          (a, b) =>
+            a.account.code.localeCompare(b.account.code) ||
+            centsFromDb(b.debitCents) - centsFromDb(a.debitCents),
+        )
+        .map((p) => {
+          const debitCents = centsFromDb(p.debitCents);
+          const creditCents = centsFromDb(p.creditCents);
+          return {
+            codCta: p.account.code,
+            vlCents: debitCents > 0 ? debitCents : creditCents,
+            indDc: (debitCents > 0 ? 'D' : 'C') as 'D' | 'C',
+            hist: e.description,
+          };
+        });
+      const vlLctoCents = e.postings.reduce((s, p) => s + centsFromDb(p.debitCents), 0);
       return {
         entry: {
           numLcto: String(e.entryNumber),

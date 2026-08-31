@@ -40,7 +40,7 @@ export class ExerciseClosingService {
   /**
    * Close the result of `year`: post the encerramento entry dated `year-12-31`. Idempotent
    * per exercise. Throws ValidationError if there is no result balance to close, or if any
-   * leg magnitude exceeds the Int32 cents ceiling (MAX_CENTS, ACC-014). The period gate
+   * leg magnitude exceeds the MAX_CENTS policy ceiling (ACC-014). The period gate
    * (dezembro OPEN) is enforced by postEntry — surfaced honestly if closed.
    */
   public async closeExercise(scope: AccountingScope, year: number): Promise<JournalEntryWithPostings> {
@@ -115,9 +115,9 @@ export class ExerciseClosingService {
     return this.posting.postEntry(scope, input);
   }
 
-  /** Int32 cents ceiling guard (ACC-014): an accumulated result balance can exceed the per-
-   * posting cap, and the closing leg is a single Int column — reject loudly, not as an opaque
-   * write error. */
+  /** MAX_CENTS policy ceiling guard (ACC-014): an accumulated result balance can exceed the
+   * per-posting cap even though persistence (BigInt, BE-INCR-MONEY-BIGINT) has no width limit
+   * left — reject loudly at the business ceiling, not silently accept an unbounded value. */
   private assertUnderCeiling(magnitudeCents: number, accountCode: string): void {
     if (magnitudeCents > MAX_CENTS) {
       throw new ValidationError(

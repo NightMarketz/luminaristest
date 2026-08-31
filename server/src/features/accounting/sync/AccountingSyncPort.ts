@@ -84,7 +84,7 @@ export const CRM_LEGACY_SOURCE_TYPE = 'crm.opportunity.won';
  * ONLY on a specific code, never on a base error class — anything else stays a loud failure
  * left for reconciliation.
  *   • ACCOUNTING_PERIOD_NOT_OPEN — transient by admin action (period reopens later);
- *   • MAX_CENTS_EXCEEDED — POISON: the source amount exceeds the Int32 ledger ceiling and the
+ *   • MAX_CENTS_EXCEEDED — POISON: the source amount exceeds the MAX_CENTS policy ceiling and the
  *     event can NEVER succeed until the source itself is fixed; retrying it every cycle is the
  *     infinite poison-loop Council 1.5 names.
  */

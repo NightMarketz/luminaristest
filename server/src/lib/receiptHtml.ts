@@ -37,8 +37,10 @@ function escapeHtml(s: string): string {
 }
 
 // ponytail: display-only money via integer split (no float) + manual thousands grouping
-// (NOT toLocaleString — it silently drops the separator on a small-ICU Node). cents are Int32
-// (models/money.ts MAX_CENTS). Promote to a shared server-side formatter only if a 2nd
+// (NOT toLocaleString — it silently drops the separator on a small-ICU Node). cents arrive here
+// as plain `number` (BE-INCR-MONEY-BIGINT/F-W2B-3: the bigint->number conversion — guarded by
+// `centsFromDb`, models/money.ts — already happened at the repository/service read boundary
+// before this function is ever called). Promote to a shared server-side formatter only if a 2nd
 // consumer appears (memory reuse-criterion-blind-to-reinlined-technique).
 function centsToBRL(cents: number): string {
   const neg = cents < 0;

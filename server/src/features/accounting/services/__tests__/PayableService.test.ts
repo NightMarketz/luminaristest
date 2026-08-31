@@ -738,7 +738,7 @@ describe('PayableService.reconcilePayables — inventory crash-recovery (Gap 2 /
   it('posts the missing 1.1.6 debit for an inventory payable (NOT skipped on expenseAccountId=null) and re-drives the INBOUND', async () => {
     const { service, payableRepo, postEntry, inventoryService } = build();
     payableRepo.findAllActive.mockResolvedValueOnce([
-      payableRow({ id: 'pay-inv', status: 'OPEN', expenseAccountId: null, inventoryProductRef: 'prod-shampoo', inventoryQty: 10, amountCents: 30000 }),
+      payableRow({ id: 'pay-inv', status: 'OPEN', expenseAccountId: null, inventoryProductRef: 'prod-shampoo', inventoryQty: 10, amountCents: 30000n }),
     ]);
     // findEntryBySource returns null → recognition missing (the crash window).
     const out = await service.reconcilePayables(scope);

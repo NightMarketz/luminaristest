@@ -4,6 +4,7 @@ import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment } from 'generated/prisma';
 import { ESTOQUES_CODE, FORNECEDORES_A_PAGAR_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { INVENTORY_INBOUND_SOURCE_TYPE } from '../models/Inventory.model';
+import { centsFromDb } from '../models/money';
 import {
   AP_PAYABLE_SOURCE_TYPE,
   AP_PAYMENT_SOURCE_TYPE,
@@ -251,7 +252,7 @@ export class PayableService {
     }
 
     // Full-payment guard (F2 MVP): the amount must settle the whole remaining balance.
-    const remaining = payable.amountCents - this.sumActivePayments(payable);
+    const remaining = centsFromDb(payable.amountCents) - this.sumActivePayments(payable);
     if (dto.amountCents !== remaining) {
       throw new ValidationError(
         `Pagamento parcial não é suportado: informe o saldo integral (${remaining} centavos).`,
@@ -499,7 +500,7 @@ export class PayableService {
             await this.inventoryService.receiveStock(scope, {
               productRef: payable.inventoryProductRef!,
               qty: payable.inventoryQty!,
-              totalValueCents: payable.amountCents,
+              totalValueCents: centsFromDb(payable.amountCents),
               occurredAt: payable.issueDate,
               sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
               sourceId: payable.id,
@@ -629,7 +630,7 @@ export class PayableService {
   private sumActivePayments(payable: PayableWithPayments): number {
     return payable.payments
       .filter((p) => p.status === 'ACTIVE')
-      .reduce((acc, p) => acc + p.amountCents, 0);
+      .reduce((acc, p) => acc + centsFromDb(p.amountCents), 0);
   }
 
   /**
@@ -726,8 +727,8 @@ export class PayableService {
         documentDate: this.toDateOnly(payable.issueDate),
       },
       lines: [
-        { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: payable.amountCents, creditCents: 0 },
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: payable.amountCents },
+        { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: centsFromDb(payable.amountCents), creditCents: 0 },
+        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: centsFromDb(payable.amountCents) },
       ],
     };
   }
@@ -768,8 +769,8 @@ export class PayableService {
       sourceType: AP_PAYMENT_SOURCE_TYPE,
       sourceId: payment.id,
       lines: [
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: payment.amountCents, creditCents: 0 },
-        { accountCode: creditCode, debitCents: 0, creditCents: payment.amountCents },
+        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: centsFromDb(payment.amountCents), creditCents: 0 },
+        { accountCode: creditCode, debitCents: 0, creditCents: centsFromDb(payment.amountCents) },
       ],
     };
   }

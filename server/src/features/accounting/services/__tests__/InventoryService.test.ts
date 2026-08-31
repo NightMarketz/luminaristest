@@ -47,7 +47,7 @@ class FakeInventoryRepo implements IInventoryRepository {
       productRef: data.productRef,
       description: data.description,
       qtyOnHand: data.qtyOnHand,
-      totalValueCents: data.totalValueCents,
+      totalValueCents: BigInt(data.totalValueCents),
       status: data.status,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -92,7 +92,7 @@ class FakeInventoryRepo implements IInventoryRepository {
     const it = this.items.get(id);
     if (!it) throw new Error('not found');
     if (typeof data.qtyOnHand === 'number') it.qtyOnHand = data.qtyOnHand;
-    if (typeof data.totalValueCents === 'number') it.totalValueCents = data.totalValueCents;
+    if (typeof data.totalValueCents === 'number') it.totalValueCents = BigInt(data.totalValueCents);
     it.updatedAt = new Date();
     return this.snapshotItem(it);
   }
@@ -107,7 +107,7 @@ class FakeInventoryRepo implements IInventoryRepository {
       inventoryItemId: data.inventoryItemId,
       kind: data.kind,
       qtyDelta: data.qtyDelta,
-      valueCentsDelta: data.valueCentsDelta,
+      valueCentsDelta: BigInt(data.valueCentsDelta),
       occurredAt: data.occurredAt,
       sourceType: data.sourceType,
       sourceId: data.sourceId,
@@ -142,7 +142,7 @@ class FakeInventoryRepo implements IInventoryRepository {
       return 0;
     }
     it.qtyOnHand -= qty;
-    it.totalValueCents -= valueCentsDelta;
+    it.totalValueCents -= BigInt(valueCentsDelta);
     return 1;
   }
 
@@ -150,7 +150,7 @@ class FakeInventoryRepo implements IInventoryRepository {
     const it = this.items.get(id);
     if (!it || it.userId !== s.ownerUserId || it.unitId !== s.unitId || it.deletedAt) return 0;
     it.qtyOnHand += qty;
-    it.totalValueCents += valueCentsDelta;
+    it.totalValueCents += BigInt(valueCentsDelta);
     return 1;
   }
 
@@ -198,7 +198,7 @@ describe('InventoryService.receiveStock — INBOUND + moving average (D3/D6)', (
     });
     expect(res.valueCents).toBe(1000);
     const item = await repo.findByProductRef(scope, 'sku-1');
-    expect(item).toMatchObject({ qtyOnHand: 10, totalValueCents: 1000 });
+    expect(item).toMatchObject({ qtyOnHand: 10, totalValueCents: 1000n });
     expect(repo.movements.filter((m) => m.kind === 'INBOUND')).toHaveLength(1);
     expect(auditService.append).toHaveBeenCalledTimes(1);
   });
@@ -230,7 +230,7 @@ describe('Gate 2 / D6 — tie-out over non-exact costs', () => {
     await service.recordSaleCogs(scope, { saleId: 'sale-3', unitId: 'unit-1', occurredAt: D, lines: [{ productRef: 'sku', qty: 4 }] });
 
     const item = await repo.findByProductRef(scope, 'sku');
-    const sumValue = repo.movements.reduce((a, m) => a + m.valueCentsDelta, 0);
+    const sumValue = repo.movements.reduce((a, m) => a + m.valueCentsDelta, 0n);
     const sumQty = repo.movements.reduce((a, m) => a + m.qtyDelta, 0);
     expect(sumValue).toBe(item!.totalValueCents); // tie-out holds despite rounding residue
     expect(sumQty).toBe(item!.qtyOnHand);
@@ -267,7 +267,7 @@ describe('Gate 5 / Gap 3 — idempotency by replay (no second decrement/incremen
     expect(first.valueCents).toBe(500);
     expect(replay.valueCents).toBe(500);
     const item = await repo.findByProductRef(scope, 'sku');
-    expect(item).toMatchObject({ qtyOnHand: 5, totalValueCents: 500 }); // valued ONCE
+    expect(item).toMatchObject({ qtyOnHand: 5, totalValueCents: 500n }); // valued ONCE
     expect(repo.movements.filter((m) => m.kind === 'INBOUND')).toHaveLength(1);
     expect(auditService.append).toHaveBeenCalledTimes(1); // no second inventory.received
   });
@@ -323,7 +323,7 @@ describe('Gate 6 / D8 — estorno re-credits at ORIGINAL baixa cost', () => {
     expect(rev.totalReversedCents).toBe(400); // ORIGINAL 400, not the cheaper current average
 
     const reversal = repo.movements.find((m) => m.kind === 'REVERSAL');
-    expect(reversal).toMatchObject({ qtyDelta: 4, valueCentsDelta: 400 });
+    expect(reversal).toMatchObject({ qtyDelta: 4, valueCentsDelta: 400n });
     expect(auditService.append).toHaveBeenCalledWith(
       expect.anything(),
       scope,
@@ -351,10 +351,10 @@ describe('reconcileInventory — tie-out safety net (D6)', () => {
     // Corrupt the snapshot behind the service's back; reconcile rebuilds it from Σ movements.
     const item = [...repo.items.values()][0];
     item.qtyOnHand = 999;
-    item.totalValueCents = 999999;
+    item.totalValueCents = 999999n;
     const repaired = await service.reconcileInventory(scope);
     expect(repaired).toEqual({ itemsChecked: 1, itemsRepaired: 1 });
     const fixed = await repo.findByProductRef(scope, 'sku');
-    expect(fixed).toMatchObject({ qtyOnHand: 10, totalValueCents: 1000 });
+    expect(fixed).toMatchObject({ qtyOnHand: 10, totalValueCents: 1000n });
   });
 });

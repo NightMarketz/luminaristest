@@ -2,7 +2,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/err
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { InventoryItem } from 'generated/prisma';
-import { MAX_CENTS } from '../models/money';
+import { MAX_CENTS, centsFromDb } from '../models/money';
 import {
   INVENTORY_COGS_SOURCE_TYPE,
   INVENTORY_INBOUND_SOURCE_TYPE,
@@ -152,7 +152,7 @@ export class InventoryService implements IInventoryService {
       );
       if (existing) {
         // Replay — do NOT mutate; return the cents already booked (Gap 3).
-        return { valueCents: existing.valueCentsDelta };
+        return { valueCents: centsFromDb(existing.valueCentsDelta) };
       }
 
       const applied = await this.inventoryRepo.incrementForInbound(
@@ -239,7 +239,7 @@ export class InventoryService implements IInventoryService {
         );
         if (existing) {
           // Replay of this line — reuse the cents already booked, no second decrement (Gap 3).
-          totalCogsCents += -existing.valueCentsDelta;
+          totalCogsCents += -centsFromDb(existing.valueCentsDelta);
           continue;
         }
 
@@ -247,7 +247,7 @@ export class InventoryService implements IInventoryService {
           throw new ValidationError(`Estoque insuficiente para o produto '${productRef}'.`);
         }
         // Moving average derived in-tx; residue absorbed (D6). Never a persisted per-unit float.
-        const valueDelta = Math.round((item.totalValueCents * qty) / item.qtyOnHand);
+        const valueDelta = Math.round((centsFromDb(item.totalValueCents) * qty) / item.qtyOnHand);
 
         // Atomic CAS (D4): decrement qty+value ONLY if enough stock. count===1 wins; a loser (or a
         // concurrent baixa that drained the SKU) gets 0 and is rejected — qtyOnHand never negative.
@@ -314,13 +314,13 @@ export class InventoryService implements IInventoryService {
           tx,
         );
         if (existing) {
-          totalReversedCents += existing.valueCentsDelta;
+          totalReversedCents += centsFromDb(existing.valueCentsDelta);
           continue;
         }
 
         // Invert the ORIGINAL deltas (original COGS is −qty / −value).
         const qtyBack = -original.qtyDelta;
-        const valueBack = -original.valueCentsDelta;
+        const valueBack = -centsFromDb(original.valueCentsDelta);
 
         const applied = await this.inventoryRepo.incrementForInbound(
           scope,
@@ -415,16 +415,17 @@ export class InventoryService implements IInventoryService {
         );
         if (existing) {
           // Replay — the REVERSAL is negative; report the (positive) cents removed.
-          totalReversedCents += -existing.valueCentsDelta;
+          totalReversedCents += -centsFromDb(existing.valueCentsDelta);
           continue;
         }
 
         // Original INBOUND is +qty / +value; undo exactly that amount (original cost).
+        const originalValueCents = centsFromDb(original.valueCentsDelta);
         const won = await this.inventoryRepo.decrementForCogs(
           scope,
           original.inventoryItemId,
           original.qtyDelta,
-          original.valueCentsDelta,
+          originalValueCents,
           tx,
         );
         if (won !== 1) {
@@ -438,7 +439,7 @@ export class InventoryService implements IInventoryService {
             inventoryItemId: original.inventoryItemId,
             kind: 'REVERSAL',
             qtyDelta: -original.qtyDelta,
-            valueCentsDelta: -original.valueCentsDelta,
+            valueCentsDelta: -originalValueCents,
             occurredAt: params.reversalDate,
             sourceType: params.sourceType,
             sourceId: params.reversalEventId,
@@ -446,7 +447,7 @@ export class InventoryService implements IInventoryService {
           },
           tx,
         );
-        totalReversedCents += original.valueCentsDelta;
+        totalReversedCents += originalValueCents;
         mutated = true;
       }
 
@@ -495,8 +496,8 @@ export class InventoryService implements IInventoryService {
       try {
         const movements = await this.inventoryRepo.findMovementsByItem(scope, item.id);
         const sumQty = movements.reduce((acc, m) => acc + m.qtyDelta, 0);
-        const sumValue = movements.reduce((acc, m) => acc + m.valueCentsDelta, 0);
-        if (sumQty !== item.qtyOnHand || sumValue !== item.totalValueCents) {
+        const sumValue = movements.reduce((acc, m) => acc + centsFromDb(m.valueCentsDelta), 0);
+        if (sumQty !== item.qtyOnHand || sumValue !== centsFromDb(item.totalValueCents)) {
           await this.inventoryRepo.updateItem(scope, item.id, {
             qtyOnHand: sumQty,
             totalValueCents: sumValue,

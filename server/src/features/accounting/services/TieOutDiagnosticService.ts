@@ -6,6 +6,7 @@ import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { centsFromDb } from '../models/money';
 import {
   CLIENTES_A_RECEBER_CODE,
   FORNECEDORES_A_PAGAR_CODE,
@@ -150,7 +151,7 @@ export class TieOutDiagnosticService {
       ]);
 
     // (i) AR em aberto vs 1.1.5 (Asset: débito − crédito).
-    const arOpenCents = openReceivables.reduce((acc, r) => acc + r.amountCents, 0);
+    const arOpenCents = openReceivables.reduce((acc, r) => acc + centsFromDb(r.amountCents), 0);
     const arLedgerCents = arAccount ? debitBalance(totals, arAccount.id) : 0;
     const arCheck = buildCheck({
       id: 'receivables',
@@ -163,7 +164,7 @@ export class TieOutDiagnosticService {
     });
 
     // (ii) AP em aberto vs 2.1.2 (Liability: crédito − débito).
-    const apOpenCents = openPayables.reduce((acc, p) => acc + p.amountCents, 0);
+    const apOpenCents = openPayables.reduce((acc, p) => acc + centsFromDb(p.amountCents), 0);
     const apLedgerCents = apAccount ? creditBalance(totals, apAccount.id) : 0;
     const apCheck = buildCheck({
       id: 'payables',

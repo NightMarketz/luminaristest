@@ -67,7 +67,7 @@ describe('InventoryRepository.decrementForCogs — real SQLite DB (INCR-INVENTOR
     const row = await db.inventoryItem.findUnique({ where: { id: 'it-race' } });
     expect(row?.qtyOnHand).toBe(1); // 10 − 9, never below zero
     expect(row?.qtyOnHand).toBeGreaterThanOrEqual(0);
-    expect(row?.totalValueCents).toBe(100); // 1000 − 3×300, decremented in lockstep (tie-out)
+    expect(row?.totalValueCents).toBe(100n); // 1000 − 3×300, decremented in lockstep (tie-out)
   }, 60000);
 
   it('two concurrent baixas of qty 6 on a 10-unit SKU → exactly one wins', async () => {

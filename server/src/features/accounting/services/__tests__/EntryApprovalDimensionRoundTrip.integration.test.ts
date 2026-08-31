@@ -92,8 +92,8 @@ describe('etiqueta de dimensão no read que alimenta o editor (SQLite real)', ()
     const lido = entries.find((e) => e.id === draft.id);
     expect(lido).toBeDefined();
 
-    const pernaEtiquetada = lido!.postings.find((p) => p.debitCents === 150000);
-    const pernaLimpa = lido!.postings.find((p) => p.creditCents === 150000);
+    const pernaEtiquetada = lido!.postings.find((p) => p.debitCents === 150000n);
+    const pernaLimpa = lido!.postings.find((p) => p.creditCents === 150000n);
 
     // POSITIVO — o par (eixo, valor) chega ao consumidor.
     expect(pernaEtiquetada!.dimensions).toEqual([{ definitionId: 'def-cc', valueId: 'val-loja-a' }]);

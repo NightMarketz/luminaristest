@@ -1,7 +1,8 @@
 import { AccountingPeriodNotOpenError, AppError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { Account, Prisma } from 'generated/prisma';
-import { computeEntryContentHash } from '../models/entryContentHash';
+import { computeEntryContentHash, type HashablePosting } from '../models/entryContentHash';
+import { centsFromDb } from '../models/money';
 import type {
   ApproveEntryInput,
   CreateDraftEntryInput,
@@ -175,11 +176,12 @@ export class EntryApprovalService {
       throw new ValidationError('Apenas rascunhos podem ser submetidos para aprovação.');
     }
     // Re-assert balance at the boundary (the legs are the source of truth, not the create-time DTO).
-    this.assertBalancedPostings(entry.postings);
+    const hashablePostings = this.toHashablePostings(entry.postings);
+    this.assertBalancedPostings(hashablePostings);
     const contentHash = computeEntryContentHash({
       date: entry.date,
       description: entry.description,
-      postings: entry.postings,
+      postings: hashablePostings,
     });
     const newVersion = dto.expectedVersion + 1;
 
@@ -252,7 +254,7 @@ export class EntryApprovalService {
       const recomputed = computeEntryContentHash({
         date: entry.date,
         description: entry.description,
-        postings: currentPostings,
+        postings: this.toHashablePostings(currentPostings),
       });
       if (recomputed !== entry.contentHash) {
         throw new ValidationError('O conteúdo do lançamento mudou após a submissão — reenvie para aprovação.');
@@ -386,6 +388,19 @@ export class EntryApprovalService {
       throw new ValidationError('Lançamento desbalanceado: Σdébito deve igualar Σcrédito.');
     }
     return sumDebit;
+  }
+
+  /** Converts raw (bigint) posting legs read from Prisma to the `number` shape every consumer
+   *  here expects (F-W2B-3 read boundary) — used before balance re-assertion AND before hashing,
+   *  so the frozen `contentHash` keeps hashing the exact same `number` values it always did. */
+  private toHashablePostings(
+    postings: Array<{ accountId: string; debitCents: bigint; creditCents: bigint }>,
+  ): HashablePosting[] {
+    return postings.map((p) => ({
+      accountId: p.accountId,
+      debitCents: centsFromDb(p.debitCents),
+      creditCents: centsFromDb(p.creditCents),
+    }));
   }
 
   private assertBalancedPostings(postings: Array<{ debitCents: number; creditCents: number }>): void {

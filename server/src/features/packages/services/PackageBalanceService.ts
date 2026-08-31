@@ -2,6 +2,7 @@ import { Prisma } from 'generated/prisma';
 import type { CustomerPackageBalance } from 'generated/prisma';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
+import { centsFromDb } from '../../accounting/models/money';
 import type { IPackageBalanceRepository } from '../repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../policies/IPackageBalancePolicy';
 
@@ -134,7 +135,7 @@ export class PackageBalanceService {
     }
     this.assertAmount(amountCents);
     const balance = await this.repo.findBalance(scope, customerId, packageId);
-    const current = balance?.balanceCents ?? 0;
+    const current = centsFromDb(balance?.balanceCents ?? 0n);
     if (current < amountCents) {
       throw new ValidationError(
         `Saldo de pacote insuficiente: disponível ${current}, requerido ${amountCents} (cliente ${customerId}, pacote ${packageId}).`,
@@ -152,7 +153,7 @@ export class PackageBalanceService {
       throw new ForbiddenError('Sem permissão para ler saldo de pacote.');
     }
     const balance = await this.repo.findBalance(scope, customerId, packageId);
-    return balance?.balanceCents ?? 0;
+    return centsFromDb(balance?.balanceCents ?? 0n);
   }
 
   /** Lists balances under the scope, optionally filtered to one customer. */

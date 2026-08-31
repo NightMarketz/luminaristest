@@ -6,7 +6,8 @@ import { queryBoolean } from './queryPrimitives';
 
 /**
  * PayableDto — Contas a Pagar (INCR-AP) request schemas. Money is INTEGER CENTS guarded by
- * `MAX_CENTS` (the Int32 persistence ceiling shared with the ledger, ACC-014); dates are
+ * `MAX_CENTS` (the policy ceiling shared with the ledger — persistence is BigInt since
+ * BE-INCR-MONEY-BIGINT, F-W2B-1/2a; ACC-014); dates are
  * date-only validated by `isValidDateOnly` (regex + round-trip — `new Date('2026-02-30')`
  * silently rolls to 03-02, class-fix `date-only-regex-nao-valida-calendario`). Every schema is
  * `.strict()` so a typo'd field fails loud instead of being silently dropped.
