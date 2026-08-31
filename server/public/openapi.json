@@ -690,7 +690,9 @@
           },
           "amountCents": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico."
           },
           "expenseAccountId": {
             "type": "string",
@@ -739,7 +741,8 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "description": "MVP: deve igualar o saldo do payable (pagamento integral único)"
+            "maximum": 2147483647,
+            "description": "MVP: deve igualar o saldo do payable (pagamento integral único). Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400."
           }
         }
       },
@@ -863,11 +866,15 @@
           },
           "debitCents": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "Integer cents. POLICY ceiling (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): above this the API returns 400. Guards against a fat-finger/order-of-magnitude typo, not a storage constraint."
           },
           "creditCents": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 2147483647,
+            "description": "Integer cents. Same POLICY ceiling as debitCents (see above)."
           },
           "dimensions": {
             "type": "array",
@@ -1125,7 +1132,9 @@
           },
           "amountCents": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 2147483647,
+            "description": "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico."
           },
           "revenueAccountId": {
             "type": "string",
@@ -1165,7 +1174,8 @@
           "amountCents": {
             "type": "integer",
             "minimum": 1,
-            "description": "MVP: deve igualar o saldo do receivable (recebimento integral único)"
+            "maximum": 2147483647,
+            "description": "MVP: deve igualar o saldo do receivable (recebimento integral único). Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400."
           }
         }
       },
@@ -1287,11 +1297,17 @@
           },
           "openingBalanceCents": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "minimum": -2147483647,
+            "maximum": 2147483647,
+            "description": "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400."
           },
           "closingBalanceCents": {
             "type": "integer",
-            "nullable": true
+            "nullable": true,
+            "minimum": -2147483647,
+            "maximum": 2147483647,
+            "description": "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)."
           },
           "file": {
             "type": "string",

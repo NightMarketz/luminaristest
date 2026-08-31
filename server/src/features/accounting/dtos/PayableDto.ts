@@ -37,7 +37,7 @@ const dateOnly = (field: string) =>
  *         description:         { type: string }
  *         issueDate:           { type: string, description: "Data-only YYYY-MM-DD — competência do reconhecimento" }
  *         dueDate:             { type: string, description: "Data-only YYYY-MM-DD — vencimento" }
- *         amountCents:         { type: integer, minimum: 1 }
+ *         amountCents:         { type: integer, minimum: 1, maximum: 2147483647, description: "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico." }
  *         expenseAccountId:    { type: string, description: "Id de uma conta-folha nature=Expense (contrapartida do reconhecimento). XOR com inventoryProductRef+inventoryQty (INCR-INVENTORY D3(b))." }
  *         inventoryProductRef: { type: string, description: "Compra de estoque (INCR-INVENTORY D3(b)): ref DynamicTable do produto; débito vai a 1.1.6 Estoques + emite StockMovement INBOUND. Exige inventoryQty; XOR com expenseAccountId." }
  *         inventoryQty:        { type: integer, minimum: 1, description: "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)." }
@@ -108,7 +108,7 @@ export const CreatePayableSchema = z
  *         unitId:      { type: string }
  *         method:      { type: string, enum: [Cash, Pix, TED, Boleto] }
  *         paidAt:      { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do débito bancário (D9), não a data do clique" }
- *         amountCents: { type: integer, minimum: 1, description: "MVP: deve igualar o saldo do payable (pagamento integral único)" }
+ *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "MVP: deve igualar o saldo do payable (pagamento integral único). Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
  */
 export const RegisterPaymentSchema = z
   .object({
