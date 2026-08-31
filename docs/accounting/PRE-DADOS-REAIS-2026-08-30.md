@@ -9,11 +9,12 @@
 mergeado `2026-08-31T00:40:18-03:00`.
 
 **As 2 linhas (OPS-001 §5):** de 16 itens do inventário, **11 fecharam via PR mergeado** (SHAs
-confirmados 1:1 contra `origin/main`), **1 está em andamento sem nenhum commit ainda** (A-3/BigInt),
-**2 são decisão do dono não-código** (B-2, e o não-fold do mapa), e **5 continuam gate humano ou
-diferido**. O risco principal: os documentos-fonte (`BRIEFS-WAVE1-*.md`, `BRIEFS-WAVE2-*.md`)
-citados em TODOS os 11 corpos de PR **não existem em `origin/main`** — o que este doc registra vem
-só do que sobreviveu nos corpos de PR mergeados, nunca dos BRIEFs originais.
+confirmados 1:1 contra `origin/main`), **1 segue em andamento com trabalho ativo não-commitado**
+(A-3/BigInt), **2 são decisão do dono não-código** (B-2, e o não-fold do mapa), e **5 continuam gate
+humano ou diferido**. O risco principal agora: **A-3 é o único item vivo fora do controle deste
+registro** — o executor W2-B segue escrevendo enquanto este doc existe (worktree de agente com
+15+ arquivos modificados no momento em que este registro foi corrigido), então qualquer fold que
+trate a linha A-3 como definitiva fica stale assim que a branch for commitada/pushada.
 
 ---
 
@@ -23,7 +24,7 @@ só do que sobreviveu nos corpos de PR mergeados, nunca dos BRIEFs originais.
 |---|---|---|---|
 | A-1 | Contraparte: `nameNormalized` assume `@@unique` + `taxId` opcional | ✅ **FECHADO** | PR #241, `ed71d6a3669b9b3dd5bc88056fcb8c5396deb642` |
 | A-2 | `verifyAuditChain` sem chamador de produção | ✅ **FECHADO** | PR #237, `13367a2de0cd9da9a63755380fb8c5bdfef342ee` |
-| A-3 | Teto Int32 → BigInt (13 colunas) | 🟡 **EM ANDAMENTO** | branches locais `claude/w2b-bigint-cents` / `-v2`, ambas em `ed71d6a3` (= ponta de #241) — **zero commit próprio**, não pushada, sem PR aberto |
+| A-3 | Teto Int32 → BigInt (13 colunas) | 🟡 **EM ANDAMENTO** | trabalho ativo, não-commitado, no worktree do executor W2-B (`agent-a60fd31afa0a89379`, branch `claude/w2b-bigint-cents`) — sem push a `origin`, sem PR aberto; desfecho entra em registro/fold posterior |
 | B-1 | Backup do `dev.db` | ✅ **FECHADO** | PR #235, `b37ca9ec47213f358eb43fcedabf29ef4320e35d` |
 | B-2 | Sem migração *down* | ⚪ **DIFERIDO por decisão** | não virou código: o backup (B-1) **é** o rollback — já emendado no `RUNBOOK-M2-DEPLOY-SMOKE.md` (item A5-3, PR #236) |
 | B-3 | Artefato de deploy sem schema wireado | ✅ **FECHADO** | PR #236, `bcb94131286b6ce12e000fae00a6f791317ca1e7` (reuso de `scripts/migrate-deploy.mjs` já existente, ver §3) |
@@ -49,35 +50,45 @@ fechamento é textual (RUNBOOK-M2, item A5-3) e não de código, como o pedido j
 
 ---
 
-## 2. A-3 (BigInt) — o que existe e o que não existe
+## 2. A-3 (BigInt) — em andamento, trabalho ativo em worktree de agente
 
-Duas branches locais apontam para o **mesmo commit** de partida (`ed71d6a3`, a ponta de #241/A-1) e
-nenhuma delas tem um commit próprio além disso:
+**Correção sobre a primeira versão deste registro.** A primeira leitura (2026-08-30) só via duas
+branches locais paradas no mesmo commit de partida (`ed71d6a3`, a ponta de #241/A-1), sem push a
+`origin` e sem PR — e essa leitura ficou datada assim que o executor W2-B voltou a escrever. O
+estado real no momento desta correção (2026-08-31): o worktree
+`C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-a60fd31afa0a89379` (branch local
+`claude/w2b-bigint-cents`) tem **15+ arquivos modificados, não-commitados** — verificado pelo
+orquestrador; o isolamento de worktree impede este agente de rodar `git status` diretamente contra
+esse diretório (git bloqueado fora do próprio worktree). Artefatos correlatos no scratchpad da
+sessão de planejamento (`tsc-baseline.log`, `tsc2.log`, `tsc3.log`, `job-diff.txt`, mtimes
+2026-08-30 23:29–23:33) são consistentes com iterações reais de `tsc --noEmit` em curso — sinal de
+trabalho ativo, não de branch abandonada.
 
-```
-claude/w2b-bigint-cents     ed71d6a3669b9b3dd5bc88056fcb8c5396deb642
-claude/w2b-bigint-cents-v2  ed71d6a3669b9b3dd5bc88056fcb8c5396deb642
-```
+Continua verdade, e não é sinal de falha: nenhuma das branches (`claude/w2b-bigint-cents` /
+`-v2`) foi pushada a `origin` e não há PR aberto com "bigint" no título. Isso é o estado normal de
+uma sessão ainda em execução, antes do primeiro commit — **não** leia a ausência de push como
+branch parada ou trabalho estagnado.
 
-`git log origin/main..claude/w2b-bigint-cents` (e o `-v2`) → **vazio**. `git ls-remote origin
-'refs/heads/claude/w2b*'` → **vazio** (não pushada). Não existe PR aberto com "bigint" no título
-(`gh pr list --search bigint --state all` só retorna PRs antigos não-relacionados, #27/#28/#29).
-
-**Fork citado no pedido como já ratificado:** F-W2B-1 ("tudo de uma vez") — não há evidência no repo
-de qual das 13 colunas o trabalho cobre, porque não há diff ainda. Registro honesto: **EM ANDAMENTO
-sem desfecho**, exatamente como o pedido instruiu.
+**Desfecho:** EM ANDAMENTO. Sem branch pushada e sem diff estável para ler, não há base para avaliar
+cobertura das 13 colunas nem para especular sobre o resultado — nenhuma tentativa de prever é feita
+aqui. O fold real deste item (F-W2B-1 incluso) entra num registro posterior, quando a branch fechar
+(commit + push + PR + revisão).
 
 ---
 
 ## 3. Forks ratificados pelo dono em 2026-08-30
 
-Citados nos corpos dos 11 PRs mergeados (nenhum documento `BRIEFS-WAVE*.md` sobrevive em
-`origin/main` para citação direta — ver nota na abertura):
+Citados nos corpos dos 11 PRs mergeados **e agora também nos 4 documentos-fonte, commitados
+verbatim nesta mesma branch** (ratificação do dono, 2026-08-31): `docs/accounting/BRIEFS-WAVE1.md`,
+`BRIEFS-WAVE2-SCHEMA.md`, `BRIEFS-WAVE2-BACKEND.md`, `BRIEFS-WAVE2-FE.md` — cada um com uma nota de
+registrador no topo apontando de volta para este documento como a fonte de desfecho real. São
+registro histórico congelado: o status de fork e os "pendentes" ali refletem o momento da execução
+(2026-08-30), não o resultado final — este §3 e o §1 são a leitura atualizada.
 
 | Fork | Decisão | Onde aparece |
 |---|---|---|
 | **F1(b)** | `nameNormalized` = trim + fold de caixa + colapso de espaço (SEM accent-folding) | PR #241 |
-| **F2 / F-W2B-1** | BigInt "tudo de uma vez" (as 13 colunas numa sessão) | citado no pedido; sem evidência de execução (ver §2) |
+| **F2 / F-W2B-1** | BigInt "tudo de uma vez" (as 13 colunas numa sessão) | citado no pedido; execução em andamento, sem branch pushada ainda (ver §2) |
 | **F3(a)** | Webhook de alerta mínimo, fire-and-forget | PR #239 |
 | **F4 (ampla)** | Instrumentação de tempo nas 3 camadas (job/HTTP/relatórios), não só 1 | PR #242 |
 | **F5(a)** | `autoMatch` em lotes (chunk) de tamanho fixo | PR #240 |
