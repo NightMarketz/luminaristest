@@ -5,6 +5,12 @@
 -- job como "escaneie tudo" (watermark = epoch), preservando o comportamento pré-migração até o
 -- segundo tick sem precisar de dado semeado nesta migração.
 
+-- F-W2F-3 (aceito pelo dono, 2026-08-30): a janela-com-overlap fecha o modo de falha de commit
+-- atrasado sob contenção, MAS assume que nenhuma escrita externa a este processo (import direto
+-- no banco, script administrativo, réplica futura) seta `updatedAt` para uma data ANTERIOR ao
+-- watermark no momento em que a escrita se torna visível. Hoje isso é garantido pela AUSÊNCIA
+-- de `$executeRaw` sobre `dynamic_table_data`, não por constraint de schema nesta tabela.
+
 -- CreateTable
 CREATE TABLE "job_watermarks" (
     "job" TEXT NOT NULL PRIMARY KEY,

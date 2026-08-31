@@ -46,6 +46,13 @@
  * re-touched — worth a human decision (periodic full rescan? exempt failed items from the
  * watermark filter?) once real failure-recurrence data exists. Out of this BRIEF's authorized
  * scope (F6 = the watermark only) — implemented as specified, not redesigned.
+ *
+ * F-W2F-3 (accepted by the owner, 2026-08-30): the window-with-overlap design closes the
+ * delayed-commit-under-contention failure mode above, but it assumes no write EXTERNAL to
+ * this process (a direct DB import, an admin script, a future read replica) ever sets
+ * `updatedAt` to a moment BEFORE the watermark at the instant that write becomes visible here.
+ * Today that assumption holds only by the ABSENCE of any `$executeRaw` against
+ * `dynamic_table_data` in this codebase — it is not enforced by a schema constraint.
  */
 
 import prisma from '../lib/prisma';
