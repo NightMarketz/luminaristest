@@ -4,10 +4,11 @@
 > `PROXIMOS-PASSOS-2026-08-28.md` — fold desses é decisão do dono. Autorização citável: "Pode
 > disparar" (dono, 2026-08-30).
 
-**Data do registro:** 2026-08-30, atualizado 2026-08-31 (2×: A-3 primeiro em andamento, depois
-fechado). **Base (`git log -1 origin/main`):** `0bea6755f45c77f933890c64d862b4f0fc0e9755` — PR #245,
-`feat(accounting): BRIEF-W2-B — teto de persistência Int32 -> BigInt nas 13 colunas *Cents
-(F-W2B-1/2/3)`, mergeado `2026-08-31T14:56:42Z`.
+**Data do registro:** 2026-08-30, atualizado 2026-08-31 (3×: A-3 em andamento -> fechado ->
+documentacao do teto no OpenAPI via #246). **Base (`git log -1 origin/main`):**
+`4ff859bd66c3151a513782ae766e5daa31b35079` — PR #246,
+`docs(accounting): documenta teto MAX_CENTS no OpenAPI + doc dedicado`, mergeado sobre `0bea6755`
+(#245, ainda a base funcional deste registro para A-3/BigInt).
 
 **As 2 linhas (OPS-001 §5):** de 16 itens do inventário, **12 fecharam via PR mergeado** (SHAs
 confirmados 1:1 contra `origin/main`, A-3/#245 incluso — o item entra fechado nesta versão), **1 é
@@ -189,6 +190,16 @@ Cada um abaixo foi **relido no arquivo fonte**, não só extraído do corpo do P
   capacidade nova na API. **Decisão do dono, 2026-08-31: MANTER o teto como política** — guarda de
   sanidade contra erro de digitação, sobe quando um cliente real precisar. O docstring do próprio
   `money.ts` já registra essa reclassificação ("MAX_CENTS is a POLICY ceiling only (F-W2B-2a)").
+  **Atualização 2026-08-31 — a decisão foi DOCUMENTADA:** PR #246 mergeado
+  (`4ff859bd66c3151a513782ae766e5daa31b35079`, confirmado em `origin/main`) criou
+  [`docs/accounting/LIMITE-MAX-CENTS.md`](./LIMITE-MAX-CENTS.md) (57 linhas, arquivo confirmado
+  presente em `origin/main`) e anotou `maximum: 2147483647` (+ `minimum: -2147483647` nos campos
+  bilaterais) em 6 campos de dinheiro do contrato OpenAPI (`PostingDto` debit/credit,
+  `PayableDto` ×2, `ReceivableDto` ×2, `ReconciliationDto` — saldo bilateral ±). Antes do #246,
+  `server/public/openapi.json` tinha **0 ocorrências** de `2147483647`; depois, **10** — confirmado
+  por `grep -o "2147483647" server/public/openapi.json | wc -l` rodado nos dois commits
+  (`0bea6755` = 0, `origin/main` atual = 10). Quem integra pelo contrato agora vê o teto declarado,
+  não só descobre via 400 em runtime.
 - **#245 — `jsonBigintReplacer` tem alcance GLOBAL, não só contabilidade.** Confirmado por leitura
   de `server/src/app.ts`: `app.set('json replacer', jsonBigintReplacer)` roda uma única vez dentro
   de `createApp()`, antes de qualquer `app.use()` de rota — vale para TODA resposta JSON do
@@ -213,6 +224,17 @@ Cada um abaixo foi **relido no arquivo fonte**, não só extraído do corpo do P
   (1294, 1310) — não é um bug, é uma imprecisão de escopo na descrição do PR. Registrado aqui
   porque a próxima pessoa que procurar "todo `_sum` de `*Cents`" pelo texto do PR erraria a
   contagem.
+- **`ACCOUNTING-MASTER-MAP.md` T4 (linha 256) está stale desde o #245 — pendência de fold do dono,
+  não corrigida por mim.** Confirmado por leitura: a linha diz "Dinheiro = centavo inteiro `Int`,
+  teto Int32 compartilhado (`MAX_CENTS`)... Upgrade a `BigInt` só quando um leg real passar de ~R$
+  21,47M" — descreve o upgrade a `BigInt` como evento FUTURO condicional, quando na verdade já
+  aconteceu (#245, mergeado). O achado é do executor do #246 (documentado no próprio PR como fora de
+  escopo, não consertado ali) — correto não consertar: master map é **Decisão TRAVADA**, exige ADR +
+  sinal humano (ORCH-006), e este documento REGISTRADOR não edita `ACCOUNTING-MASTER-MAP.md`. Fica
+  registrado aqui como pendência de fold explícita para o dono: a linha T4 precisa de uma emenda que
+  separe os dois eixos que #245 desacoplou — persistência (`BigInt`, já feito) vs. teto de política
+  da API (`MAX_CENTS = 2_147_483_647`, mantido por decisão, ver achado acima) — hoje T4 trata os dois
+  como um só número com um só destino.
 
 ---
 
@@ -269,7 +291,7 @@ achado real.** A mensagem que motivou esta seção afirmava que o passo "Assert 
 
 **Conclusão:** o gate cobre a classe, inclusive em PR. O que é verdade — e é o achado estrutural
 real, mais estreito do que o originalmente relatado — é que o passo **re-executa a suíte inteira sob
-`--detectOpenHandles`, sem escopo por diff**, então todo PR paga o custo total de tempo (this passo
+`--detectOpenHandles`, sem escopo por diff**, então todo PR paga o custo total de tempo (esse passo
 sozinho não tem medição própria no log, mas o job inteiro levou 12-15 min nos runs inspecionados) e
 herda qualquer flake de concorrência pré-existente na suíte inteira, não só nos arquivos que o PR
 tocou. Isso não é proposto para solução aqui — é registro para o dono decidir, incluindo se vale a
