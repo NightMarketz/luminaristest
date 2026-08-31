@@ -61,8 +61,8 @@ const dateOnly = z
  *         statementRef: { type: string, nullable: true }
  *         periodStart: { type: string, format: date }
  *         periodEnd: { type: string, format: date }
- *         openingBalanceCents: { type: integer, nullable: true }
- *         closingBalanceCents: { type: integer, nullable: true }
+ *         openingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400." }
+ *         closingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)." }
  *         file: { type: string, format: binary }
  */
 export const ImportBankStatementSchema = z

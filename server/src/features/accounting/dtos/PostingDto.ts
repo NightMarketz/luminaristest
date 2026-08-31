@@ -19,8 +19,8 @@ import { isValidDateOnly } from '../models/dates';
  *       required: [accountCode, debitCents, creditCents]
  *       properties:
  *         accountCode: { type: string, description: "Code of a leaf account (acceptsEntries=true)" }
- *         debitCents:  { type: integer, minimum: 0 }
- *         creditCents: { type: integer, minimum: 0 }
+ *         debitCents:  { type: integer, minimum: 0, maximum: 2147483647, description: "Integer cents. POLICY ceiling (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): above this the API returns 400. Guards against a fat-finger/order-of-magnitude typo, not a storage constraint." }
+ *         creditCents: { type: integer, minimum: 0, maximum: 2147483647, description: "Integer cents. Same POLICY ceiling as debitCents (see above)." }
  *         dimensions:
  *           type: array
  *           description: "Optional dimension VALUE ids tagging this leg (INCR-DIM). At most one value per axis (the axis is derived from the value; a second value of the same axis is rejected). Metadata only — does NOT affect Σdébito=Σcrédito (ACC-024)."
