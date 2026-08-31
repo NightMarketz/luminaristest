@@ -22,6 +22,11 @@ import {
   type SettledSale,
   type PackageOriginSale,
   type PackageConsumptionSale,
+  withReconcileWatermark,
+  RECONCILE_WATERMARK_EPOCH,
+  OVERLAP_MS,
+  RECONCILE_WATERMARK_JOB,
+  type ReconcileWatermarkDeps,
 } from '../accountingSyncReconcile.job';
 import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
 import type { AccountingEvent } from '../../features/accounting/sync/AccountingSyncPort';
@@ -704,5 +709,73 @@ describe('reconcilePackageBalanceVsLiability (warn-only)', () => {
     };
     const r = await reconcilePackageBalanceVsLiability(deps);
     expect(r).toEqual({ checked: 1, divergences: 0 });
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// withReconcileWatermark (BRIEF-W2-F, F6) — the pure watermark orchestration core. The
+// naive-vs-proposed cursor falsificador (item 5 of the BRIEF) lives in the companion
+// integration test (DynamicTableRepository.findRowsByFieldValueSince.integration.test.ts),
+// because it needs a REAL SQLite `updatedAt` column (NUMERIC/ms-epoch affinity) to prove the
+// query-level failure/fix — this suite proves the orchestration guard around it: watermark
+// read/EPOCH-fallback, and the "a round that throws never advances the watermark" invariant.
+// ───────────────────────────────────────────────────────────────────────────
+describe('withReconcileWatermark', () => {
+  const summary = { total: 1, synced: 1, idempotentHits: 0, failed: 0 };
+
+  function buildDeps(over: Partial<ReconcileWatermarkDeps> = {}): ReconcileWatermarkDeps {
+    return {
+      getWatermark: jest.fn(async () => null),
+      setWatermark: jest.fn(async () => {}),
+      now: jest.fn(() => new Date('2026-08-30T12:00:00.000Z')),
+      ...over,
+    };
+  }
+
+  it('uses RECONCILE_WATERMARK_EPOCH (full scan) when no watermark was ever persisted', async () => {
+    const deps = buildDeps({ getWatermark: jest.fn(async () => null) });
+    const runPasses = jest.fn(async () => summary);
+
+    await withReconcileWatermark(deps, runPasses);
+
+    expect(runPasses).toHaveBeenCalledWith(RECONCILE_WATERMARK_EPOCH);
+  });
+
+  it('passes the persisted watermark straight through to runPasses, unmodified', async () => {
+    const persisted = new Date('2026-08-30T09:00:00.000Z');
+    const deps = buildDeps({ getWatermark: jest.fn(async () => persisted) });
+    const runPasses = jest.fn(async () => summary);
+
+    await withReconcileWatermark(deps, runPasses);
+
+    expect(runPasses).toHaveBeenCalledWith(persisted);
+  });
+
+  it('advances the watermark to runStartAt - OVERLAP_MS ONLY after runPasses resolves', async () => {
+    const runStartAt = new Date('2026-08-30T12:00:00.000Z');
+    const deps = buildDeps({ now: jest.fn(() => runStartAt) });
+    const runPasses = jest.fn(async () => summary);
+
+    const result = await withReconcileWatermark(deps, runPasses);
+
+    expect(result).toEqual(summary);
+    expect(deps.setWatermark).toHaveBeenCalledTimes(1);
+    expect(deps.setWatermark).toHaveBeenCalledWith(new Date(runStartAt.getTime() - OVERLAP_MS));
+  });
+
+  it('GUARD: a round that throws mid-way never advances the watermark — the next run must re-scan', async () => {
+    const deps = buildDeps();
+    const boom = new Error('reconcile pass exploded mid-round');
+    const runPasses = jest.fn(async () => {
+      throw boom;
+    });
+
+    await expect(withReconcileWatermark(deps, runPasses)).rejects.toThrow(boom);
+
+    expect(deps.setWatermark).not.toHaveBeenCalled();
+  });
+
+  it('RECONCILE_WATERMARK_JOB is a stable, non-empty job key (production wiring\'s singleton row id)', () => {
+    expect(RECONCILE_WATERMARK_JOB).toBe('accounting_sync_reconcile');
   });
 });

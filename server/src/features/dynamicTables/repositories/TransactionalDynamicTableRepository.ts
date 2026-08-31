@@ -295,6 +295,28 @@ export class TransactionalDynamicTableRepository implements IDynamicTableReposit
     return rows;
   }
 
+  /** Interface parity with DynamicTableRepository — see its JSDoc (BRIEF-W2-F). */
+  async findRowsByFieldValueSince(
+    tableId: string,
+    fieldName: string,
+    value: string,
+    updatedAtFrom: Date,
+  ): Promise<IDynamicTableData[]> {
+    const jsonFieldPath = `$.${fieldName}`;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prisma InputJsonValue: $queryRaw not exposed on TransactionClient type
+    const rows: IDynamicTableData[] = await (this.tx as any).$queryRaw(
+      Prisma.sql`
+        SELECT * FROM "dynamic_table_data"
+        WHERE "dynamicTableId" = ${tableId}
+          AND "deletedAt" IS NULL
+          AND json_extract(data, ${jsonFieldPath}) = ${value}
+          AND "updatedAt" >= ${updatedAtFrom}
+        ORDER BY "createdAt" DESC
+      `
+    );
+    return rows;
+  }
+
   async existsByIdInTable(dataId: string, tableId: string): Promise<boolean> {
     const count = await this.tx.dynamicTableData.count({
       where: { id: dataId, dynamicTableId: tableId, deletedAt: null },

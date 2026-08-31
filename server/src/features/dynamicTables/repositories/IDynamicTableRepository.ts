@@ -42,6 +42,21 @@ export interface IDynamicTableRepository {
     excludeId?: string,
   ): Promise<number>;
   findRowsByFieldValue(tableId: string, fieldName: string, value: string): Promise<IDynamicTableData[]>;
+  /**
+   * Same as `findRowsByFieldValue`, plus a mandatory `updatedAtFrom` floor (`updatedAt >=
+   * updatedAtFrom`) — a SIBLING method, not an optional param on the existing one, so the
+   * 15+ existing call sites of `findRowsByFieldValue` are untouched (BRIEF-W2-F). Used by the
+   * accountingSyncReconcile job's trailing watermark — pass a `Date` object (not an ISO
+   * string): SQLite stores `updatedAt` with NUMERIC affinity (Prisma writes DateTime as a
+   * ms-epoch integer), so a `Date` parameter round-trips correctly through Prisma's raw-query
+   * type mapping while a literal ISO string compares as text and silently matches nothing.
+   */
+  findRowsByFieldValueSince(
+    tableId: string,
+    fieldName: string,
+    value: string,
+    updatedAtFrom: Date,
+  ): Promise<IDynamicTableData[]>;
   existsByIdInTable(dataId: string, tableId: string): Promise<boolean>;
 
   /**
