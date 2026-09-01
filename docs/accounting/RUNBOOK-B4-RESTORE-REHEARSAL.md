@@ -24,8 +24,16 @@ Rastreio a atualizar no fim: [linha do master map / plano-mãe que este runbook 
 | P4 | Porta 3001 (server) e 3000 (app) livres para o boot do passo 3 | `netstat -ano \| grep ":3001\|:3000"` sem processo Luminaris já ativo | [ ] |
 | P5 | Duas leituras de referência do banco ORIGINAL anotadas ANTES de restaurar (balancete e uma
 listagem — comparar depois contra o restaurado) | ver "Leituras de referência" abaixo | [ ] |
+| P6 | `OPENAI_API_KEY` presente em `server/.env`, qualquer valor não vazio — sem ela `new OpenAIService()` lança na construção do factory e o boot aborta ANTES de tocar no banco (verificado); nenhum passo deste runbook exercita IA, então um valor dummy serve só para este ensaio | `grep OPENAI_API_KEY server/.env` — se vazio/ausente, acrescente uma linha como `OPENAI_API_KEY=sk-rehearsal-dummy-nao-real` | [ ] |
+| P7 | `unitId` da unidade a testar, resolvido ANTES de P5 (os curls de P5 e do passo 4 exigem `unitId`, e não é um valor óbvio) | ver "Como descobrir o unitId" abaixo | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
+
+### Como descobrir o `unitId` (P7)
+
+Caminho mais simples — tela **Contabilidade** do app (`/accounting`, componente `my-app/features/accounting/AccountingView.tsx`): o dropdown "Unidade" no cabeçalho lista as unidades pelo nome amigável, mas o `unitId` (o valor interno que os curls precisam) não aparece na tela — só no DOM/na rede. Abra o DevTools do navegador (F12) → aba Network, entre na tela e selecione a unidade; qualquer request para `/api/accounting/...` que dispare mostra `unitId=<valor>` na query string — copie esse valor.
+
+Sem acesso à tela (ex.: ambiente sem frontend rodando): `cd server && npx prisma studio` (script já existe em `package.json`), abra a tabela `JournalEntry` e leia a coluna `unitId` de qualquer linha — todos os lançamentos da mesma unidade compartilham o valor.
 
 ### Leituras de referência (P5) — tirar ANTES do passo 1
 
@@ -115,9 +123,25 @@ Em vez disso, edite `server/.env` temporariamente:
 4. Ao final do passo 4, reverta a linha `DATABASE_URL` do `.env` para o valor original.
 
 Resultado esperado: log de boot chegando em `Luminaris Server running on ...` (não
-`Boot ABORTADO`) — se o boot exigir `AccountingBinding` `Active` e o backup restaurado não tiver
-um, isso é achado do próprio ensaio, não falha de script; registre e trate como **FALHOU** ou
-**BLOQUEADO** conforme o caso.
+`Boot ABORTADO`).
+
+> **Dois motivos de `Boot ABORTADO` que NÃO significam "o backup está corrompido"** — os dois
+> travam o boot antes de `app.listen()` com uma mensagem que, sob pressão, lê como "a
+> restauração falhou", mas são estado do AMBIENTE/dado, não do arquivo restaurado em si.
+> Distinga pela mensagem, não assuma corrupção:
+>
+> - **Migração pendente** — erro Prisma `P2021` ("The table `main.<tabela>` does not exist in
+>   the current database"). O arquivo restaurado carrega o schema de quando o backup foi
+>   tirado, que pode ser anterior ao schema do código atual (verificado no pré-ensaio: 6
+>   migrações pendentes num snapshot). Confira ANTES do boot com `cd server && npx prisma
+>   migrate status` (mesmo `DATABASE_URL` do passo 3.2, apontando pro restaurado) — se houver
+>   pendência, é achado do ensaio (dado desatualizado), não falha de script; registre e trate
+>   como **FALHOU** ou **BLOQUEADO**. Não aplique a migração no arquivo restaurado como parte
+>   deste runbook — isso muda o artefato que você está tentando validar.
+> - **`AccountingBinding` `Active` ausente** — erro `NoActiveAccountingBindingsError`
+>   ("Nenhum AccountingBinding com status Active encontrado"), ver
+>   `docs/adr/ADR-INCR-BINDING-FEEDER.md` §5/§8. Também achado do próprio ensaio, não falha de
+>   script; registre e trate como **FALHOU** ou **BLOQUEADO** conforme o caso.
 
 EVIDÊNCIA: [colar as linhas de log do boot até "running on", e a linha `DATABASE_URL` usada no
 `.env` durante o teste]
