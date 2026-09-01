@@ -156,6 +156,36 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    enquanto o campo não for tocado (backend decide via `scopeToday`), input preenchido com
 >    `report.asOf` — ratificado pelo dono e **FECHADO 2026-09-01** no mesmo dia (ciclo
 >    instrumentação→correção; teste-guarda verde, 183/183, `tsc` limpo).
+> 5. **2026-09-01 — varredura da classe `date-only-utc-shift` no frontend — Nível 1 (borda de
+>    entrada; mesma classe do nº 4/AgingPanel, FECHADO no PR #250, mergeado em 2026-09-02).** Mapeada pelo dono (mensagem 2026-09-01, a mesma que fechou o
+>    AgingPanel). 13 sites confirmados que mordem na janela 21h-00h BRT, todos derivando default
+>    de data via `toISOString()` (UTC): **5 read-paths** cujo DTO exige a data e o backend não tem
+>    default próprio — BP, DRE e DFC (nos 3 o dano cresce em 31/12: a janela year-to-date vira o
+>    ano SEGUINTE, relatório vazio), comparativo (`asOfCurrent`) e Livro Diário (`Até`) — e
+>    **8 write-paths** que gravam o dia errado em silêncio (verificado: nenhuma checagem de hoje
+>    no backend fora do `as_of_not_today` do aging): data do lançamento manual (JournalEntryModal),
+>    do estorno (JournalEntriesPanel), da baixa AP e AR (`actionDate`, re-derivada no clique),
+>    emissão+vencimento dos 2 modais de criação, data da venda (`useSalesWizard` → ponte contábil
+>    reconhece receita no dia errado) e o botão "Hoje" do DynamicForm (rótulo promete hoje, grava
+>    amanhã). **Instrumentado vermelho em 2026-09-01**: 13 testes-guarda "guarda: … janela
+>    21h-00h BRT …" (instante fixado por fake timers, determinístico — armadilha
+>    teste-de-hoje-quebra-em-janela-utc), suíte 182 verdes pré-existentes + 13 vermelhos pela
+>    asserção final; em `my-app/features/accounting/components/__tests__/` (BalanceSheetPanel,
+>    IncomeStatementPanel, Nucleo4Panels ×3, JournalEntryModal, JournalEntriesPanel,
+>    AccountsPayablePanel, AccountsReceivablePanel, CreatePayableReceivableModal.echo ×2) +
+>    `features/dashboard/category-views/finance/hooks/sales/__tests__/useSalesWizard.dateDefault.test.ts`
+>    + `features/dashboard/components/forms/__tests__/DynamicForm.todayButton.test.tsx`.
+>    **Não mordem:** seeds de dev (fixture, datas relativas intencionais);
+>    `EditRecordButton.tsx:48` é classe ADJACENTE (rendering round-trip via `new Date(raw)`,
+>    morde só se o valor armazenado for datetime — não instrumentado nesta varredura).
+>    **Forks abertos e RATIFICADOS pelo dono em 2026-09-02** (`docs/accounting/FE-FIX-DATEONLY-UTC-brief.md`):
+>    **F1(a)** read-paths espelham o #250 — DTO `asOf` opcional + default `scopeDay(scope)` no Service;
+>    **F2(b)** write-paths corrigem no FE (omitir não é simétrico: `dueDate` não tem default legítimo);
+>    **F3(b)** o FE deriva com a constante espelhada de `AccountingScope.timeZone`, NÃO com o
+>    `x-user-timezone` (que o `middleware/auth.ts` declara sem autoridade); **F4(b)** o botão "Hoje"
+>    do DynamicForm SAI do lote (blast radius é o dashboard, não a contabilidade) e vira item próprio,
+>    levando junto o teste-guarda dele — o lote da correção é de **12 sites**; **F5(a)** #250 primeiro,
+>    rebase por cima, os dois registros mantidos (esta resolução).
 >
 > **Viés a declarar:** a entrada nº 3 é classificada como Nível 3, que é exatamente o que a aposta
 > acima prevê — classificação feita pela natureza do defeito (regra declarada × caminho real), não

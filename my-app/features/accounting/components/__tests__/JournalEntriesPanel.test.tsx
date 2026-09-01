@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // JSX compiles to bare `React.createElement` with React expected in scope. Unlike the
 // panels that `import React`, this one doesn't — expose it globally for the render.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { JournalEntriesPanel } from '../JournalEntriesPanel';
 import {
   accountingService,
@@ -57,5 +57,36 @@ describe('JournalEntriesPanel (render)', () => {
     expect(screen.getByRole('button', { name: /Estornar/ })).toBeInTheDocument();
     expect(container.textContent).toContain('1.000,00');
     expect(container.textContent).not.toContain('NaN');
+  });
+
+  // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+  // `reversalDate` (JournalEntriesPanel.tsx:204) nasce de `new Date().toISOString().slice(0,10)`
+  // (UTC) no initializer do mount: entre 21h-00h BRT o dia UTC já virou e o ESTORNO default
+  // nasce datado do "amanhã" do escopo — write-path: reverseEntry aceita a data em silêncio
+  // e o estorno grava o dia errado (na última noite do mês, o período seguinte).
+  // Comportamento correto (fork-agnóstico): o default afirma o HOJE do escopo — ou vazio.
+  // Determinismo: o instante é FIXADO com fake timers só durante o mount (o initializer
+  // roda aí); o waitFor posterior usa o clock real (fake timers travariam o waitFor).
+  it('guarda: default da data do estorno na janela 21h-00h BRT é o hoje do escopo, não o amanhã UTC', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [entry], total: 1 });
+
+    vi.useFakeTimers();
+    let container: HTMLElement;
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      ({ container } = render(<JournalEntriesPanel unitId="u1" />));
+    } finally {
+      vi.useRealTimers(); // o initializer do useState já rodou no mount
+    }
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Estornar/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Estornar/ }));
+
+    expect(screen.getByText('Data do estorno')).toBeInTheDocument(); // sanidade: o modal abriu
+    const input = container.querySelector('input[type="date"]') as HTMLInputElement;
+    expect(
+      ['', '2026-08-31'],
+      'default da data do estorno às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o estorno default grava o razão no dia errado',
+    ).toContain(input.value);
   });
 });

@@ -165,4 +165,35 @@ describe('AccountsPayablePanel (render)', () => {
       expect(last).not.toHaveProperty('overdue', false);
     });
   });
+
+  // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+  // `openAction` (AccountsPayablePanel.tsx:306) re-deriva `actionDate` com `today()`
+  // (`toISOString()`, UTC) no CLIQUE: entre 21h-00h BRT o dia UTC já virou e a BAIXA
+  // default nasce datada do "amanhã" do escopo — write-path: `paidAt`/`reversalDate` vão
+  // ao backend sem checagem de hoje e o pagamento grava o dia errado em silêncio (na
+  // última noite do mês, o período seguinte). Comportamento correto (fork-agnóstico):
+  // o default afirma o HOJE do escopo — ou vazio, se a correção delegar. Determinismo:
+  // a lista carrega com clock real; o instante é FIXADO só em volta do clique (é aí que
+  // o default é derivado), então o resultado independe da hora/fuso da máquina.
+  it('guarda: default da data do pagamento na janela 21h-00h BRT é o hoje do escopo, não o amanhã UTC', async () => {
+    vi.mocked(accountsPayableService.listPayables).mockResolvedValue({ payables: [openPayable], total: 1 });
+
+    render(<AccountsPayablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Fornecedor X')).toBeInTheDocument());
+
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      fireEvent.click(screen.getByRole('button', { name: /Pagar/ }));
+
+      const label = screen.getByText('Data do pagamento'); // sanidade: o modal abriu
+      const input = label.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(
+        ['', '2026-08-31'],
+        'default de paidAt às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o pagamento default grava a baixa no dia errado, em silêncio',
+      ).toContain(input.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
