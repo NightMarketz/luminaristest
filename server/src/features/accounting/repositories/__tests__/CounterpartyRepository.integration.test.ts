@@ -254,6 +254,37 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
     expect(eventos.map((e) => e.eventType)).toEqual(['counterparty.created', 'counterparty.archived']);
   });
 
+  /**
+   * Ratificação do dono (AskUserQuestion, 2026-08-31, "trocar por referência"): o payload PERSISTIDO
+   * dos dois eventos de contraparte nunca carrega `name` (dado pessoal para PF numa trilha sem
+   * deletedAt/cascade/conserto retroativo) — só `counterpartyId` (que resolve para a linha, essa sim
+   * apagável/mascarável). Não-regressão da CADEIA (não só do payload): create+archive tem de continuar
+   * verificando ok:true — a mudança de forma do payload muda o hash dos eventos NOVOS (esperado), mas
+   * não pode quebrar `verifyAuditChain` para os eventos que ela mesma acabou de escrever.
+   */
+  it('trilha real: payload de counterparty.created/archived nunca carrega name, e a cadeia verifica ok:true (dono 2026-08-31)', async () => {
+    const service = getFactory().getCounterpartyService();
+    const auditService = getFactory().getAuditService();
+    const scope = escopo(DONO_A);
+
+    const criada = await service.createCounterparty(scope, { unitId: UNIT, type: 'CUSTOMER', name: 'Fulano de Tal' });
+    await service.archiveCounterparty(scope, criada.id, { unitId: UNIT });
+
+    const eventos = await prisma.auditEvent.findMany({
+      where: { scopeUserId: DONO_A, unitId: UNIT, targetId: criada.id },
+      orderBy: { seq: 'asc' },
+    });
+    expect(eventos).toHaveLength(2);
+    for (const ev of eventos) {
+      const payload = JSON.parse(ev.payload) as Record<string, unknown>;
+      expect(payload).not.toHaveProperty('name');
+      expect(payload.counterpartyId).toBe(criada.id);
+    }
+
+    const result = await auditService.verifyAuditChain(scope);
+    expect(result.ok).toBe(true);
+  });
+
   // ------------------------------------------------------------------ BRIEF-W2-A comp. 9 — P2002 pelo serviço
   it('serviço pelo factory: " Padaria X" e "padaria x" fundem — a 2ª create bate em P2002→ValidationError', async () => {
     const service = getFactory().getCounterpartyService();
