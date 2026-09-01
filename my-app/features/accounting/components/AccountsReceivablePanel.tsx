@@ -202,6 +202,14 @@ interface AccountsReceivablePanelProps {
   onNavigateToPeriods?: () => void;
   /** Navigate to the Contrapartes tab (from the create modal when none is registered). */
   onNavigateToCounterparties?: () => void;
+  /**
+   * Optional SEED for the filter bar's initial value (F-AGING-5(b) — cross-navigation from
+   * AgingPanel). Read ONLY once, as the `useState` initializer — a later change to this prop
+   * does NOT re-apply the filter (no `useEffect` syncing it), so a caller must remount this
+   * component (new key, or unmount/mount via conditional render) for a new seed to take effect.
+   * Callers that never pass it get today's behavior unchanged (`{}`).
+   */
+  initialFilters?: SubledgerFilterValue;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -211,7 +219,7 @@ interface AccountsReceivablePanelProps {
  * the recognition posting; per-row commands (receive / cancel / undo receipt) each post
  * to the ledger via the AR command endpoints and refetch the trial balance.
  */
-export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties }: AccountsReceivablePanelProps) {
+export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters }: AccountsReceivablePanelProps) {
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [receivables, setReceivables] = useState<ReceivableWithReceipts[]>([]);
@@ -220,8 +228,9 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // filters (BE-INCR-SUBLEDGER-FILTERS / C4) — controlled by SubledgerFilterBar
-  const [filters, setFilters] = useState<SubledgerFilterValue>({});
+  // filters (BE-INCR-SUBLEDGER-FILTERS / C4) — controlled by SubledgerFilterBar. `initialFilters`
+  // (F-AGING-5(b)) seeds the initial value ONLY — the lazy initializer runs once at mount.
+  const [filters, setFilters] = useState<SubledgerFilterValue>(() => initialFilters ?? {});
 
   // create modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);

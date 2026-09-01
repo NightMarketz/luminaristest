@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { FiBookOpen, FiCheckCircle, FiAlertTriangle, FiPlusCircle } from 'react-icons/fi';
 import { useAccountingData } from './hooks/useAccountingData';
@@ -19,13 +19,14 @@ import { PeriodComparisonPanel } from './components/PeriodComparisonPanel';
 import { DailyJournalPanel } from './components/DailyJournalPanel';
 import { AccountsPayablePanel } from './components/AccountsPayablePanel';
 import { AccountsReceivablePanel } from './components/AccountsReceivablePanel';
+import { AgingPanel } from './components/AgingPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'compliance' | 'dimensoes';
+type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'compliance' | 'dimensoes';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -35,6 +36,10 @@ const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'aprovacoes',     labelKey: 'view.tabs.aprovacoes',     label: 'Aprovações' },
   { id: 'contas-a-pagar', labelKey: 'view.tabs.contasAPagar',   label: 'Contas a Pagar' },
   { id: 'contas-a-receber', labelKey: 'view.tabs.contasAReceber', label: 'Contas a Receber' },
+  // F-AGING-1(b) ratificado: aba própria entre "Contas a Receber" e "Contrapartes" — cobre AMBOS
+  // AP e AR via toggle único (F-AGING-2), então é seu próprio relatório de posição (análogo a
+  // DFC/Comparativo/Diário), na ordem lógica documento → posição agregada → cadastro.
+  { id: 'aging',          labelKey: 'view.tabs.aging',          label: 'Aging' },
   { id: 'contrapartes',   labelKey: 'view.tabs.contrapartes',   label: 'Contrapartes' },
   { id: 'razao',          labelKey: 'view.tabs.razao',          label: 'Razão' },
   { id: 'plano-de-contas',labelKey: 'view.tabs.planoDeContas',  label: 'Plano de Contas' },
@@ -63,6 +68,24 @@ export function AccountingView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAccounts, setModalAccounts] = useState<AccountOption[]>([]);
   const [modalDimensionCatalog, setModalDimensionCatalog] = useState<DimensionCatalogEntry[]>([]);
+
+  // F-AGING-5(b): navegação cruzada contraparte → subledger filtrado. Guarda o
+  // counterpartyId clicado no AgingPanel só até o painel-alvo (recém-montado, ver troca de
+  // aba abaixo) consumir o valor como SEED do seu próprio `useState` de filtros — nunca como
+  // prop sincronizada. Limpo logo em seguida (efeito abaixo) para que uma revisita MANUAL à
+  // mesma aba (que desmonta/remonta o painel, pois o render é condicional por `activeTab`)
+  // não reaplique um filtro de uma navegação anterior.
+  const [pendingCounterpartyFilter, setPendingCounterpartyFilter] = useState<{
+    target: 'contas-a-pagar' | 'contas-a-receber';
+    counterpartyId: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!pendingCounterpartyFilter) return;
+    // O painel-alvo já capturou o valor como SEED no mesmo commit (useState lazy initializer
+    // roda durante o render, antes de qualquer efeito) — consumo de uso único.
+    setPendingCounterpartyFilter(null);
+  }, [pendingCounterpartyFilter]);
 
   function openNewEntryModal() {
     if (!unitId) return;
@@ -208,12 +231,56 @@ export function AccountingView() {
 
       {/* ── Contas a Pagar tab ─────────────────────────────────────────────── */}
       {activeTab === 'contas-a-pagar' && unitId && (
-        <AccountsPayablePanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} onNavigateToCounterparties={() => setActiveTab('contrapartes')} />
+        <AccountsPayablePanel
+          unitId={unitId}
+          onLedgerChange={reload}
+          onNavigateToPeriods={() => setActiveTab('periodos')}
+          onNavigateToCounterparties={() => setActiveTab('contrapartes')}
+          // F-AGING-5(b): SEED de uma só vez vindo do clique num grupo do AgingPanel — `undefined`
+          // (nunca reaplicado) numa visita manual à aba, porque o efeito acima já limpou o pending.
+          initialFilters={
+            pendingCounterpartyFilter?.target === 'contas-a-pagar'
+              ? { counterpartyId: pendingCounterpartyFilter.counterpartyId }
+              : undefined
+          }
+        />
       )}
 
       {/* ── Contas a Receber tab ───────────────────────────────────────────── */}
       {activeTab === 'contas-a-receber' && unitId && (
-        <AccountsReceivablePanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} onNavigateToCounterparties={() => setActiveTab('contrapartes')} />
+        <AccountsReceivablePanel
+          unitId={unitId}
+          onLedgerChange={reload}
+          onNavigateToPeriods={() => setActiveTab('periodos')}
+          onNavigateToCounterparties={() => setActiveTab('contrapartes')}
+          // F-AGING-5(b): mesmo SEED de uso único do lado de Contas a Receber.
+          initialFilters={
+            pendingCounterpartyFilter?.target === 'contas-a-receber'
+              ? { counterpartyId: pendingCounterpartyFilter.counterpartyId }
+              : undefined
+          }
+        />
+      )}
+
+      {/* ── Aging tab (posição por contraparte × faixa de vencimento) ───────── */}
+      {activeTab === 'aging' && unitId && (
+        // F-AGING-5(b) — COMPLETO (escopo estendido pelo orquestrador 2026-09-01): o clique num
+        // grupo guarda o counterpartyId + a aba-alvo em `pendingCounterpartyFilter` e troca de
+        // aba; o painel recém-montado consome o valor como seed do seu próprio filtro
+        // (`initialFilters`, ver AccountsPayablePanel/AccountsReceivablePanel). O efeito acima
+        // limpa o pending logo após a montagem — uma revisita manual à mesma aba (tab bar)
+        // desmonta/remonta o painel sem seed.
+        <AgingPanel
+          unitId={unitId}
+          onNavigateToPayable={(counterpartyId) => {
+            setPendingCounterpartyFilter({ target: 'contas-a-pagar', counterpartyId });
+            setActiveTab('contas-a-pagar');
+          }}
+          onNavigateToReceivable={(counterpartyId) => {
+            setPendingCounterpartyFilter({ target: 'contas-a-receber', counterpartyId });
+            setActiveTab('contas-a-receber');
+          }}
+        />
       )}
 
       {/* ── Contrapartes tab ───────────────────────────────────────────────── */}

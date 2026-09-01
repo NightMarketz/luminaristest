@@ -462,6 +462,66 @@ export interface DailyJournalReport {
   entries: DailyJournalEntry[]; // chronological (date ASC, entryNumber ASC)
 }
 
+// ── Aging (INCR-AGING) — posição por contraparte × faixa de vencimento ─────────
+// Read-only, first-class Prisma (AgingReportService, mergeado PR #127 + tie-out
+// #143). Money is STRING cents (like BP/DRE/DFC) — the UI always parseInt's before
+// formatCents. Types are LOCAL (never imported from the backend).
+
+export type AgingKind = 'payable' | 'receivable';
+export type AgingBucketId = 'a_vencer' | 'd1_30' | 'd31_60' | 'd61_90' | 'd90_plus';
+
+export interface AgingDocumentLine {
+  id: string;
+  documentNumber: string | null;
+  /** date-only YYYY-MM-DD */
+  dueDate: string;
+  /** as_of − dueDate, em dias; ≤0 = a vencer. */
+  daysOverdue: number;
+  bucket: AgingBucketId;
+  amountCents: string;
+}
+
+export interface AgingCounterpartyGroup {
+  /** null = grupo "(Sem contraparte)" — o rótulo de exibição vem do FE (i18n), não do backend. */
+  counterpartyId: string | null;
+  counterpartyName: string;
+  buckets: Record<AgingBucketId, string>;
+  totalCents: string;
+  documents: AgingDocumentLine[];
+}
+
+export type TieOutSkippedReason =
+  | 'as_of_not_today'
+  | 'control_account_missing'
+  | 'control_account_not_balance_sheet_nature';
+
+export interface AgingTieOut {
+  controlAccountCode: string;
+  subledgerTotalCents: string;
+  controlAccountBalanceCents: string;
+  differenceCents: string;
+  tiesOut: boolean;
+}
+
+export interface AgingReport {
+  unitId: string;
+  kind: AgingKind;
+  asOf: string;
+  buckets: Record<AgingBucketId, string>;
+  totalCents: string;
+  groups: AgingCounterpartyGroup[];
+  /** null quando não emitível — aí `tieOutSkippedReason` diz por quê (mutuamente exclusivos). */
+  tieOut: AgingTieOut | null;
+  tieOutSkippedReason: TieOutSkippedReason | null;
+}
+
+export interface AgingQuery {
+  unitId: string;
+  kind: AgingKind;
+  /** YYYY-MM-DD; omitido = hoje no fuso do escopo (backend decide). */
+  asOf?: string;
+}
+
 // Multipart import bypasses apiClient (which forces application/json) — same
 // direct-fetch pattern as dataExchange.service.importFile.
 function reconBaseUrl(): string {
@@ -821,6 +881,15 @@ export const accountingService = {
       to: query.to,
     });
     const res = await apiClient.get<ApiEnvelope<PendingReport>>(`/accounting/reconciliation/pending${qs}`);
+    return res.data;
+  },
+
+  // ── Aging (INCR-AGING) ───────────────────────────────────────────────────────
+
+  /** Aging report (posição por contraparte × faixa de vencimento) — read-only. */
+  async getAging(query: AgingQuery): Promise<AgingReport> {
+    const qs = buildQuery({ unitId: query.unitId, kind: query.kind, asOf: query.asOf });
+    const res = await apiClient.get<ApiEnvelope<AgingReport>>(`/accounting/reports/aging${qs}`);
     return res.data;
   },
 };

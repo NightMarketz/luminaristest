@@ -16,6 +16,7 @@
       "lancamentos": "Journal Entries",
       "contasAPagar": "Accounts Payable",
       "contasAReceber": "Accounts Receivable",
+      "aging": "Aging",
       "razao": "Ledger",
       "planoDeContas": "Chart of Accounts",
       "bp": "BS",
@@ -226,6 +227,52 @@
       "undoConfirm": "Confirm",
       "undoing": "Undoing…",
       "undoNote": "The receipt will be reversed and the invoice will return to “Open”."
+    }
+  },
+  "aging": {
+    "title": "Aging (Payable/Receivable)",
+    "controls": {
+      "kind": {
+        "payable": "Payable",
+        "receivable": "Receivable"
+      },
+      "asOf": "Position as of",
+      "generate": "Generate",
+      "generating": "Generating…"
+    },
+    "empty": "Select the type and the date and click \"Generate\" to view the aging position.",
+    "error": {
+      "load": "Failed to load the aging report."
+    },
+    "buckets": {
+      "aVencer": "Not yet due",
+      "d1_30": "1-30 days",
+      "d31_60": "31-60 days",
+      "d61_90": "61-90 days",
+      "d90Plus": "+90 days"
+    },
+    "group": {
+      "none": "(No counterparty)",
+      "total": "Total"
+    },
+    "total": "Total",
+    "document": {
+      "number": "Document",
+      "dueDate": "Due date",
+      "daysOverdue": "Days overdue"
+    },
+    "tieOut": {
+      "title": "Subledger × ledger tie-out",
+      "subledgerTotal": "Subledger total",
+      "controlBalance": "Control account balance",
+      "difference": "Difference",
+      "tiesOut": "OK",
+      "mismatch": "Mismatch",
+      "skipped": {
+        "as_of_not_today": "Tie-out is only available for today's position.",
+        "control_account_missing": "Control account not found in the chart of accounts.",
+        "control_account_not_balance_sheet_nature": "Control account has a nature outside the Balance Sheet."
+      }
     }
   },
   "compliance": {
