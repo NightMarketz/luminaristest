@@ -778,4 +778,60 @@ describe('withReconcileWatermark', () => {
   it('RECONCILE_WATERMARK_JOB is a stable, non-empty job key (production wiring\'s singleton row id)', () => {
     expect(RECONCILE_WATERMARK_JOB).toBe('accounting_sync_reconcile');
   });
+
+  // F-W2F-4 (Cédula de decisão 2026-08-31, seção B — ratificada 2026-09-01: "Ratifico o F-W2F-4 na
+  // opção 1, dispara instrumentação e correção"; ver F-W2F-3-DOSSIE.md para a evidência completa).
+  // Scan operator confirmado em DynamicTableRepository.findRowsByFieldValueSince
+  // (server/src/features/dynamicTables/repositories/DynamicTableRepository.ts:370):
+  // `"updatedAt" >= ${updatedAtFrom}` — logo um item permanece na janela do PRÓXIMO scan sse
+  // `watermarkAt_novo <= item.updatedAt`. Opção 1 ratificada: a marca persistida deve ser
+  // `min(runStartAt - OVERLAP_MS, updatedAt da falha não resolvida mais antiga da rodada)`.
+  it(
+    'F-W2F-4: mantém um item fault-isolated que falhou DENTRO da janela do próximo scan ' +
+      '(watermark novo <= updatedAt do item falho), em vez de avançar por cima dele',
+    async () => {
+      // T: updatedAt do item que falha isolado dentro do pass — deliberadamente bem mais antigo
+      // que runStartAt - OVERLAP_MS, para que a marca hoje sempre calculada (runStartAt - OVERLAP_MS)
+      // fique inequivocamente à frente de T, não por coincidência de timing.
+      const failedItemUpdatedAt = new Date('2026-08-30T00:00:00.000Z');
+      const runStartAt = new Date('2026-08-30T12:00:00.000Z');
+
+      let persistedWatermark: Date | null = null;
+      const deps = buildDeps({
+        now: jest.fn(() => runStartAt),
+        setWatermark: jest.fn(async (watermarkAt: Date) => {
+          persistedWatermark = watermarkAt;
+        }),
+      });
+
+      // runPasses REAL: um dos 8 passes (reconcileCrmReceivables) com deps stub — exatamente 1 item
+      // falha isolado (throw dentro do try/catch do pass — summary.failed++, continue), os demais
+      // passam. withReconcileWatermark recebe este runPasses diretamente, como em produção.
+      const crmDeps: CrmReceivableReconcileDeps = {
+        listWonOpportunities: async () => [
+          opp({ opportunityId: 'opp-failed', occurredAt: failedItemUpdatedAt.toISOString() }),
+          opp({ opportunityId: 'opp-ok' }),
+        ],
+        book: async (_scope, fact) => {
+          if (fact.opportunityId === 'opp-failed') {
+            throw new Error('reconcile item boom — falha isolada simulada');
+          }
+          return { outcome: 'created' as const, receivableId: 'recv-ok' };
+        },
+      };
+      const runPasses = (_updatedAtFrom: Date) => reconcileCrmReceivables(crmDeps);
+
+      const summary = await withReconcileWatermark(deps, runPasses);
+
+      // Sanity — a lacuna só existe porque o fault isolation funciona: a rodada inteira NÃO lança
+      // (senão o GUARD acima já protegeria), o item falho é só contado, e o batch continua.
+      expect(summary.failed).toBe(1);
+
+      // Comportamento correto (opção 1 ratificada): a marca persistida não pode ultrapassar o
+      // updatedAt do item falho — do contrário `updatedAt >= watermarkAt` o exclui permanentemente
+      // do próximo scan, sem nenhum caminho de re-varredura (F-W2F-3-DOSSIE.md, seção c).
+      expect(persistedWatermark).not.toBeNull();
+      expect(persistedWatermark!.getTime()).toBeLessThanOrEqual(failedItemUpdatedAt.getTime());
+    },
+  );
 });
