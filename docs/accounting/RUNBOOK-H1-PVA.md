@@ -64,21 +64,120 @@ Server em `http://localhost:3001`, app em `http://localhost:3000`. Logue na apli
 **Contabilidade → aba Compliance**; escolha a unidade no seletor. Para o `unitId` do passo 1, abra
 DevTools → Network e leia o parâmetro `unitId=` de qualquer request da tela.
 
-### Dados que o contador precisa fornecer (P6) — formatos validados pelo backend
+### Dados que precisam ser levantados antes de gerar ECD/ECF (P6) — formatos validados pelo backend
 
-**ECD — declarante:** `nome` (≤150), `uf` (sigla), `codMun` (7 dígitos IBGE), `ie`/`im` (opcionais),
-`indNire` (0/1), `indGrandePorte` (0/1), `indSitIniPer` (0/1/2), `indFinEsc` (0=Original),
-`tipEcd` (0/1/2), `codPlanRef` (1–10, opcional).
-**ECD — livro:** `numOrd`, `natLivr` (≤80), `nire` (opcional), `dtExSocial`.
-**ECD — signatários** (regra J930, o backend rejeita fora disso): **exatamente um** com
-`indRespLegal = S`; **pelo menos um contador** (`codAssin = 900`) **e pelo menos um não-contador**.
-Cada um: `identNom`, `identCpfCnpj`, `codAssin`.
+> **[CORREÇÃO 2026-09-01]** A versão anterior desta seção divergia dos DTOs reais em 5 pontos — a
+> pior: `identQualif` do signatário da ECD é **obrigatório** no backend e estava **ausente** daqui,
+> o que levava a coletar dado incompleto do contador. Fonte de verdade, releia se o backend mudar:
+> [SpedEcdDto.ts](../../server/src/features/accounting/dtos/SpedEcdDto.ts) e
+> [SpedEcfDto.ts](../../server/src/features/accounting/dtos/SpedEcfDto.ts). Campo **obrigatório**
+> sem default → a geração recusa com 400 se faltar; campo com **default** pode ficar de fora do
+> formulário, o backend preenche sozinho.
 
-**ECF — declarante:** `nome`, `codNat` (3–4 dígitos), `cnaeFiscal` (7 dígitos), `endereco`, `num`,
-`bairro`, `uf`, `codMun` (7 dígitos), `cep` (8 dígitos, só números), `email` válido, `numTel` (opc.).
-**ECF — fiscal:** `indAliqCsll` (1 ou 4), `indRecReceita` (1 ou 2).
-**ECF — signatários:** **1 ou 2** (máximo 2); pelo menos um com `identQualif = 900` (contador, exige
-CRC) e pelo menos um não-900. Cada um: `identNom`, `identCpfCnpj`, `identQualif` (3 dígitos), `email`, `fone`.
+**Separe por origem antes de escrever para o contador** — o formulário da tela mistura os dois, mas
+pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-volta desnecessária:
+- 🏢 **Do dono/empresa** — está no cartão CNPJ, contrato social ou já cadastrado no sistema.
+- 📗 **Do contador** — classificação técnica/SPED; exige julgamento contábil, peça a ele.
+
+#### ECD — declarante (registro 0000)
+
+| Campo | Origem | Formato | Obrigatório / default |
+|---|---|---|---|
+| `cnpj` | 🏢 dono | 14 dígitos | **obrigatório** |
+| `nome` | 🏢 dono | texto ≤150 | **obrigatório** |
+| `uf` | 🏢 dono | sigla UF | **obrigatório** |
+| `codMun` | 🏢 dono | 7 dígitos (IBGE) | **obrigatório** |
+| `ie` | 🏢 dono | texto | opcional |
+| `im` | 🏢 dono | texto | opcional |
+| `indNire` | 🏢 dono | `0`/`1` | **obrigatório** (sem default) |
+| `indGrandePorte` | 📗 contador | `0`/`1` | **obrigatório** (sem default) |
+| `indSitEsp` | 📗 contador | `1`–`4` (cisão/fusão/incorp./extinção) | opcional |
+| `indSitIniPer` | 📗 contador | `0`/`1`/`2` | opcional — **default `'0'`** |
+| `indFinEsc` | 📗 contador | `0`/`1` | opcional — **default `'0'` (Original)** |
+| `tipEcd` | 📗 contador | `0`/`1`/`2` | opcional — **default `'0'`** |
+| `codHashSub` | 📗 contador | texto | opcional |
+| `codScp` | 📗 contador | CNPJ, 14 dígitos | opcional |
+| `identMf` | 📗 contador | `S`/`N` | opcional — **default `'N'`** |
+| `indEscCons` | 📗 contador | `S`/`N` | opcional — **default `'N'`** |
+| `indCentralizada` | 📗 contador | `0`/`1` | opcional — **default `'0'`** |
+| `indMudancPc` | 📗 contador | `0`/`1` | opcional — **default `'0'`** |
+| `codPlanRef` | 📗 contador | `1`–`10` | opcional |
+
+#### ECD — livro (I030/J900)
+
+| Campo | Origem | Formato | Obrigatório / default |
+|---|---|---|---|
+| `numOrd` | 📗 contador | texto | **obrigatório** |
+| `natLivr` | 📗 contador | texto ≤80 | **obrigatório** |
+| `dtExSocial` | 📗 contador | `YYYY-MM-DD` | **obrigatório** |
+| `nire` | 📗 contador | texto | opcional |
+| `dtArq` | 📗 contador | `YYYY-MM-DD` | opcional |
+| `dtArqConv` | 📗 contador | `YYYY-MM-DD` | opcional |
+| `descMun` | 📗 contador | texto | opcional |
+
+#### ECD — signatários (J930; lista, mínimo 1)
+
+⚠️ `identQualif` é **obrigatório** e estava **ausente** na versão anterior — sem ele o backend
+rejeita a geração (400). Regra do backend (rejeita fora disso —
+[SpedEcdDto.ts:96-116](../../server/src/features/accounting/dtos/SpedEcdDto.ts)): **exatamente um**
+signatário com `indRespLegal = 'S'`; **pelo menos um** com `codAssin = '900'` (contador) **e pelo
+menos um** com `codAssin` diferente de `'900'`.
+
+| Campo | Formato | Obrigatório / default |
+|---|---|---|
+| `identNom` | texto | **obrigatório** |
+| `identCpfCnpj` | CPF (11) ou CNPJ (14) dígitos | **obrigatório** |
+| `identQualif` | texto (descrição da qualificação) | **obrigatório** |
+| `codAssin` | 3 dígitos | **obrigatório** |
+| `indRespLegal` | `S`/`N` | **obrigatório** |
+| `indCrc` | texto | opcional (o DTO da ECD não exige CRC nem do signatário contador) |
+| `email` | texto | opcional |
+| `fone` | texto | opcional |
+| `ufCrc` | sigla UF | opcional |
+| `numSeqCrc` | texto | opcional |
+| `dtCrc` | `YYYY-MM-DD` | opcional |
+
+#### ECF — declarante (registros 0000/0030)
+
+| Campo | Origem | Formato | Obrigatório / default |
+|---|---|---|---|
+| `cnpj` | 🏢 dono | 14 dígitos | **obrigatório** |
+| `nome` | 🏢 dono | texto ≤150 | **obrigatório** |
+| `codNat` | 🏢 dono | 3–4 dígitos (natureza jurídica) | **obrigatório** |
+| `cnaeFiscal` | 🏢 dono | 7 dígitos | **obrigatório** |
+| `endereco` | 🏢 dono | texto ≤150 | **obrigatório** |
+| `bairro` | 🏢 dono | texto ≤50 | **obrigatório** |
+| `uf` | 🏢 dono | sigla UF | **obrigatório** |
+| `codMun` | 🏢 dono | 7 dígitos (IBGE) | **obrigatório** |
+| `cep` | 🏢 dono | 8 dígitos, só números | **obrigatório** |
+| `email` | 🏢 dono | e-mail válido | **obrigatório** |
+| `num` | 🏢 dono | texto ≤6 | opcional — **default `'S/N'`** |
+| `compl` | 🏢 dono | texto ≤50 | opcional |
+| `numTel` | 🏢 dono | texto ≤15 | opcional |
+
+#### ECF — parâmetros fiscais (0010/0020)
+
+O bloco inteiro pode ficar de fora do request — se omitido, o backend assume
+`indAliqCsll: '1'`, `indRecReceita: '2'`.
+
+| Campo | Origem | Formato | Obrigatório / default |
+|---|---|---|---|
+| `indAliqCsll` | 📗 contador | `1` (9%) ou `4` (15%) | opcional — **default `'1'`** |
+| `indRecReceita` | 📗 contador | `1` ou `2` (Regime de Competência) | opcional — **default `'2'`** |
+
+#### ECF — signatários (0930; lista, 1 a 2)
+
+Regra do backend: **pelo menos um** com `identQualif = '900'` (contador — exige `identCpfCnpj` de
+11 dígitos **e** `indCrc` preenchido) **e pelo menos um** não-`900`.
+
+| Campo | Formato | Obrigatório / default |
+|---|---|---|
+| `identNom` | texto | **obrigatório** |
+| `identCpfCnpj` | CPF (11) ou CNPJ (14) dígitos | **obrigatório** |
+| `identQualif` | 3 dígitos | **obrigatório** |
+| `email` | e-mail válido | **obrigatório** |
+| `fone` | texto ≤14 | **obrigatório** |
+| `indCrc` | texto | opcional — **na prática obrigatório se `identQualif = '900'`** |
 
 ---
 
