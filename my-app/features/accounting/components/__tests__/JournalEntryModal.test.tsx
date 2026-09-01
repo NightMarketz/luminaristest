@@ -65,3 +65,35 @@ describe('JournalEntryModal dimension tagging', () => {
     expect(screen.queryByText('Dimensões')).toBeNull();
   });
 });
+
+// ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+// `today()` (JournalEntryModal.tsx:105-107) deriva o default da DATA DO LANÇAMENTO via
+// `toISOString()` (UTC): entre 21h-00h BRT o dia UTC já virou e o lançamento manual
+// default nasce datado do "amanhã" do escopo — este é um WRITE-PATH: postEntry aceita a
+// data em silêncio (nenhuma checagem de hoje fora do aging) e o razão grava o dia errado;
+// na última noite do mês o default cai no PERÍODO SEGUINTE. Comportamento correto
+// (fork-agnóstico): o default afirma o HOJE do escopo — ou vazio, se a correção delegar.
+// Instante FIXADO com fake timers na janela que morde (determinístico em qualquer fuso).
+describe('JournalEntryModal — default de data (classe date-only UTC shift)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('guarda: default da data do lançamento na janela 21h-00h BRT é o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      const { container } = render(
+        <JournalEntryModal isOpen onClose={() => {}} unitId="u1" accounts={accounts} onSuccess={() => {}} />,
+      );
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(
+        ['', '2026-08-31'],
+        'default da data do lançamento às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o lançamento manual default grava o razão no dia errado (e no fim do mês, no período seguinte)',
+      ).toContain(input.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
