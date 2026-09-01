@@ -324,3 +324,64 @@ Este documento **não** entra na fila §5.1 do `ACCOUNTING-MASTER-MAP.md` nem do
 `PROXIMOS-PASSOS-2026-08-28.md`. Fold é decisão do dono (ORCH-006) — este registro só organiza o que
 já está em `origin/main` mais o que ainda falta, para essa decisão ser tomada com o inventário
 completo na mão.
+
+---
+
+## 9. Emenda 2026-08-31 — quatro correções de fato sobre este registro
+
+Este é um registro **datado**: as seções acima não foram reescritas. O que se apurou no dia seguinte,
+lendo os runbooks e o código em vez do resumo:
+
+### 9.1 E-1 / X2 nunca dependeu de terceiro
+
+O §1 classifica o X2 como espera pelo contador. O próprio `RUNBOOK-X2-RFB-REFERENCIAL.md` sempre deu a
+fonte alternativa — "contador **ou portal SPED/RFB**" — e o arquivo foi baixado em 2026-08-31 de
+<http://sped.rfb.gov.br/arquivo/download/8002>:
+`Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx`, 1.724.077 bytes.
+
+Duas ressalvas que só apareceram ao abrir o arquivo, ambas registradas na emenda do próprio X2:
+
+1. **O arquivo oficial é XLSX; o conversor lê texto com pipe.** O passo 1 do runbook, como estava, não
+   aceitava o arquivo que a pré-condição mandava baixar. Ou se pula o conversor (a rota de import já
+   aceita XLSX e só exige `code`,`name`,`isAnalytic`), ou se corrigem os índices para
+   `--tipo 4 --parent 5` — o default veio de um leiaute de fornecedor, não da RFB.
+2. **O arquivo é do ano-calendário 2025**, não "de 2026". Se o encerramento executado no H1 for de outro
+   exercício, esta não é a tabela.
+
+**Efeito na fila:** o item 6 do Bloco A (§5.1 do master map) deixa de ser *dado externo em espera* e
+passa a *executável*. Emendado lá.
+
+### 9.2 São seis runbooks em branco, não cinco
+
+Além dos cinco nomeados no `RUNBOOK-FORMAT.md`, existe `RUNBOOK-H3-P2-CLINICA.md` (prova do P2, vertical
+clínica estética), preparado em 2026-08-25 e igualmente sem assinatura. O próprio cabeçalho dele registra
+que ainda não está na tabela dos cinco e que a linha depende de o dono promover o ADR-P2.
+
+Conferência de 2026-08-31: `grep -c "[x]"` = **0** nos **seis**.
+
+### 9.3 B-4 é pré-condição de E-2, não um item paralelo
+
+A pré-condição **P2** do `RUNBOOK-H1-PVA.md` exige backup do `dev.db` real porque o passo 1 do H1
+**escreve no razão**. Sem B-4 executado, o H1 começa em desfecho BLOQUEADO. A ordem **B-4 → H1** é
+imposta pelo runbook, não é preferência de execução. Registrado como linha própria no Bloco A.
+
+### 9.4 Lacuna nova, registrada e não aberta: apuração de tributos
+
+O item **G** deste inventário lista o que está diferido **por decisão**. A apuração de tributos não estava
+nem aí: o mapa registra o *subrazão* de fiscal/tributos e o `ADR-INCR-NFE` para o *documento fiscal*, mas
+**nada calcula** o que se paga por mês ou trimestre. Hoje o sistema não computa tributo algum — a ECF só
+segrega receita bruta e o PVA aplica a presunção, por decisão ratificada em ADR — e ECD/ECF são obrigações
+**anuais**.
+
+Varredura em `server/src` (2026-08-31): **0** ocorrências de `PIS`, `COFINS`, `ICMS`, `DARF`,
+`Simples Nacional`, `NFS-e`; `ISS` aparece 2× e apenas como *string* de categoria de despesa em script
+de auditoria de KPI.
+
+**Foi registrado no §5 do master map como diferido, não aberto.** Abrir exige ADR + sinal humano
+(ORCH-006), e o desenho depende de uma pergunta ainda sem resposta: **o regime tributário do primeiro
+cliente real**. Optante do Simples é dispensado de ECD/ECF mas paga DAS todo mês — o que inverteria a
+prioridade entre esta lacuna e o Núcleo 5.
+
+> Nada nesta emenda muda a ordem dos gates humanos: **B-4 → H1 → H2 → M2** segue de pé, e nenhum deles
+> fica mais barato depois. Um agente preparou e emendou estes runbooks; **evidência, desfecho e
+> assinatura continuam sendo do executor humano**.

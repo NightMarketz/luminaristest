@@ -21,6 +21,42 @@ Pré-condições (verificar antes de começar):
   (coluna `tipo` = `S` sintética / `A` analítica — qualquer outro token é erro duro, sem linha
   gravada).
 
+> ## [EMENDA 2026-08-31] — fonte confirmada e formato real do arquivo oficial
+>
+> **A pré-condição não depende de contador.** Portal SPED → ECD → Manuais → *Tabelas Dinâmicas e Planos
+> de Contas Referenciais*: item do Leiaute 12 em <http://sped.rfb.gov.br/item/show/8002>, download direto
+> em <http://sped.rfb.gov.br/arquivo/download/8002>. O host **recusa HTTPS** — é `http://` mesmo.
+> Baixado em 2026-08-31: `Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx`,
+> 1.724.077 bytes.
+>
+> **Ano-calendário — confira ANTES de importar.** O nome diz `AC_2025_SIT_ESP_2026`: ano-calendário
+> **2025** mais situações especiais de 2026. É a tabela certa para escriturar o exercício **2025**. Se o
+> encerramento executado no H1 for de outro ano, **esta não é a tabela**. Há ainda duas datas
+> concorrentes para o mesmo Leiaute 12 — o portal SPED lista *28/05/2026* e a página do gov.br anuncia
+> *25/07/2026*; confira qual está corrente e registre versão/vigência (o passo 2 pede `layoutVersion`).
+>
+> **O arquivo oficial é XLSX; o conversor lê TEXTO com pipe.** O passo 1 abaixo, como está escrito, **não
+> aceita** o arquivo que a pré-condição manda baixar. Duas saídas:
+>
+> **(a) Pular o conversor — caminho mais curto.** A rota do passo 2 aceita XLSX e exige apenas
+> `code`, `name`, `isAnalytic` (+ `parentCode` opcional). Abas a usar, conferidas no arquivo baixado:
+>
+> | Aba | Cobre | Linhas de dado | Sintéticas / Analíticas |
+> |---|---|---|---|
+> | `L100A` | patrimoniais, PJ em Geral | 732 | 101 S / 631 A |
+> | `L300A` | resultado, PJ em Geral | 391 | 47 S / 344 A |
+>
+> Colunas idênticas nas duas abas: `A CÓDIGO · B DESCRIÇÃO · C DT_INI · D DT_FIM · E TIPO ·
+> F CONTA SUPERIOR · G NÍVEL · H NATUREZA` (+ `I ORIENTAÇÕES`). Mapeie `CÓDIGO→code`,
+> `DESCRIÇÃO→name`, `TIPO→isAnalytic` (`A`=true, `S`=false), `CONTA SUPERIOR→parentCode`.
+> As contas trazem `DT_INI = 01012015` e `DT_FIM` vazio — continuam vigentes.
+>
+> **(b) Usar o conversor** — exportando a aba para texto pipe primeiro e **corrigindo os índices**. O
+> default (`--tipo 5 --parent 6`) veio do leiaute Senior F043RFB, que tem um campo extra na posição 4.
+> No arquivo da RFB o certo é **`--tipo 4 --parent 5`**. Com o default, o script lê o código da
+> conta-pai como tipo, não reconhece `S`/`A` e **aborta com exit 1 sem gravar nada** — comportamento
+> correto (all-or-nothing), não defeito.
+
 ## Passos
 
 1. Rodar o conversor sobre o arquivo oficial (comando exato — ajuste `--in`/`--out` para os
