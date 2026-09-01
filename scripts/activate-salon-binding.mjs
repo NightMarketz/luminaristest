@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // activate-salon-binding.mjs — BE-INCR-BINDING-FEEDER, F-FEEDER-6 → migração de dado do ADR
-// (docs/adr/ADR-INCR-BINDING-FEEDER.md §7): como `SALON_BINDING_V1` vira uma linha `Active` de
+// (docs/adr/ADR-INCR-BINDING-FEEDER.md §7): como `SALE_BINDING_V1` vira uma linha `Active` de
 // `accounting_bindings` no banco, DEPOIS que o boot passa a ser alimentado exclusivamente pelo
 // banco (F-FEEDER-4/F-FEEDER-5 — ver server/src/server.ts).
 //
