@@ -70,32 +70,57 @@ EVIDÊNCIA: [colar a saída completa do comando, incluindo o path do backup gera
 
 ### 2. Restaurar em path alternativo
 
-Copie o arquivo de backup do passo 1 para um path alternativo, fora de `server/prisma/` (para não
-colidir com o `dev.db` real que o `.env` aponta):
+Volte à raiz do repo antes de copiar — o passo 1 te deixou dentro de `server/` por causa do
+`cd server &&`, e um `cp` com destino relativo `server/restored-<data>.db` executado de dentro de
+`server/` tenta escrever em `server/server/...` e falha (`No such file or directory`;
+verificado). Rode `cd ..` se necessário. Use um path **absoluto**, fora de `server/prisma/` (para
+não colidir com o `dev.db` real que o `.env` aponta) — o path absoluto é exigido pelo passo 3, veja
+a nota lá sobre como o Prisma resolve `file:` relativo:
 
 ```bash
-cp "<path do backup do passo 1>" "server/restored-<data>.db"
+cp "<path do backup do passo 1>" "<path absoluto fora do repo>/restored-<data>.db"
 ```
 
 Resultado esperado: arquivo copiado, mesmo tamanho em bytes do backup de origem.
 
-EVIDÊNCIA: [colar `ls -la` do arquivo restaurado, com tamanho em bytes]
+EVIDÊNCIA: [colar `ls -la` do arquivo restaurado com tamanho em bytes, e o path absoluto usado]
 
 ### 3. Subir o server apontando para a restauração
 
-**Nunca `next dev`** — mesma ressalva de build de produção do `RUNBOOK-H1-PVA.md`. Em uma sessão de
-shell separada, com `DATABASE_URL` apontando para o arquivo restaurado do passo 2:
+**Nunca em modo de desenvolvimento** (`npm run dev` / `ts-node-dev`) — só build de produção, mesma
+ressalva do `RUNBOOK-H1-PVA.md` (lá é sobre `next dev` do frontend; aqui o equivalente é `npm run
+dev`, que também serve código instrumentado/velho).
 
-```bash
-cd server && DATABASE_URL="file:./restored-<data>.db" npm run build && DATABASE_URL="file:./restored-<data>.db" npm start
-```
+**Não use `DATABASE_URL=... npm start` na mesma linha — não funciona quando `server/.env` existe.**
+`server/src/config/env.ts` carrega `server/.env` com `dotenv.config({ override: true })` sempre que
+`NODE_ENV !== 'test'`, e `npm start` não seta `NODE_ENV` — então o `.env` sobrescreve
+silenciosamente qualquer `DATABASE_URL` passada na frente do comando (verificado contra o
+`dist/config/env.js` real: `DATABASE_URL=file:./restored-X.db` na frente do comando virou
+`file:./prisma/dev.db` depois do load do `.env`). O boot sobe contra o `dev.db` normal, não contra
+a restauração — e o passo 4 bateria com a referência por estar lendo o banco de sempre, dando
+**PASSOU falso** sem nunca ter validado a restauração.
+
+Em vez disso, edite `server/.env` temporariamente:
+
+1. Anote a linha `DATABASE_URL` atual do `server/.env` (para reverter depois).
+2. Troque por um path **absoluto** apontando para o arquivo do passo 2 — estilo Windows `C:/...`,
+   não `/c/...` de git-bash (o Prisma/SQLite não abre `/c/...`; verificado):
+   `DATABASE_URL=file:C:/caminho/absoluto/restored-<data>.db`
+   Path **relativo não funciona** aqui mesmo apontando para o arquivo certo: o Prisma resolve
+   `file:` relativo à pasta de `schema.prisma` (`server/prisma/`), não ao cwd do `npm start` nem ao
+   path usado no passo 2 — um `file:./restored-<data>.db` te deixaria lendo (ou criando vazio, sem
+   erro claro — mesma classe de armadilha do `dev.db` "isca de 0 byte") um arquivo em
+   `server/prisma/restored-<data>.db`, que não é onde o passo 2 colocou o arquivo.
+3. `cd server && npm run build && npm start`
+4. Ao final do passo 4, reverta a linha `DATABASE_URL` do `.env` para o valor original.
 
 Resultado esperado: log de boot chegando em `Luminaris Server running on ...` (não
 `Boot ABORTADO`) — se o boot exigir `AccountingBinding` `Active` e o backup restaurado não tiver
 um, isso é achado do próprio ensaio, não falha de script; registre e trate como **FALHOU** ou
 **BLOQUEADO** conforme o caso.
 
-EVIDÊNCIA: [colar as linhas de log do boot até "running on"]
+EVIDÊNCIA: [colar as linhas de log do boot até "running on", e a linha `DATABASE_URL` usada no
+`.env` durante o teste]
 
 ### 4. Conferência — 2 a 3 leituras contra a restauração
 
@@ -118,9 +143,10 @@ de referência" (P5) contra o banco original.
 
 EVIDÊNCIA: [colar as duas respostas + confirmação lado a lado com P5 — iguais ou diferença exata]
 
-> **Encerrar o server do passo 3 e apagar `server/restored-<data>.db` ao final do ensaio** —
-> arquivo de teste, não deve sobreviver no working tree nem ser commitado (já coberto pelo
-> `.gitignore` global `*.db`, mas apague por higiene).
+> **Encerrar o server do passo 3, reverter o `DATABASE_URL` do `server/.env` (passo 3.4) e apagar o
+> `restored-<data>.db` do path absoluto do passo 2 ao final do ensaio** — arquivo de teste, não deve
+> sobreviver fora do descarte combinado (já coberto pelo `.gitignore` global `*.db` se ficar dentro
+> do repo, mas apague por higiene de qualquer forma).
 
 ---
 
