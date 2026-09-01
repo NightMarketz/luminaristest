@@ -41,7 +41,7 @@ const customerOptions = [
 ];
 
 const openReceivable: ReceivableWithReceipts = {
-  id: 'ar1', userId: 'o1', unitId: 'u1', customerName: 'Cliente X', customerRef: null,
+  id: 'ar1', userId: 'o1', unitId: 'u1', customerName: 'Cliente X', customerRef: null, counterpartyId: null,
   documentNumber: 'NF-1', description: 'Serviço', issueDate: '2026-06-01', dueDate: '2026-06-10',
   amountCents: 150000, revenueAccountId: 'acc1', status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
