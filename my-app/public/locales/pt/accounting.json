@@ -16,6 +16,7 @@
       "lancamentos": "Lançamentos",
       "contasAPagar": "Contas a Pagar",
       "contasAReceber": "Contas a Receber",
+      "aging": "Aging",
       "razao": "Razão",
       "planoDeContas": "Plano de Contas",
       "bp": "BP",
@@ -226,6 +227,52 @@
       "undoConfirm": "Confirmar",
       "undoing": "Desfazendo…",
       "undoNote": "O recebimento será estornado e a conta voltará para “Em aberto”."
+    }
+  },
+  "aging": {
+    "title": "Aging (Pagar/Receber)",
+    "controls": {
+      "kind": {
+        "payable": "Pagar",
+        "receivable": "Receber"
+      },
+      "asOf": "Posição em",
+      "generate": "Gerar",
+      "generating": "Gerando…"
+    },
+    "empty": "Selecione o tipo e a data e clique em \"Gerar\" para visualizar a posição de aging.",
+    "error": {
+      "load": "Erro ao carregar o relatório de aging."
+    },
+    "buckets": {
+      "aVencer": "A vencer",
+      "d1_30": "1-30 dias",
+      "d31_60": "31-60 dias",
+      "d61_90": "61-90 dias",
+      "d90Plus": "+90 dias"
+    },
+    "group": {
+      "none": "(Sem contraparte)",
+      "total": "Total"
+    },
+    "total": "Total",
+    "document": {
+      "number": "Documento",
+      "dueDate": "Vencimento",
+      "daysOverdue": "Dias em atraso"
+    },
+    "tieOut": {
+      "title": "Tie-out subrazão × razão",
+      "subledgerTotal": "Total do subrazão",
+      "controlBalance": "Saldo da conta de controle",
+      "difference": "Diferença",
+      "tiesOut": "OK",
+      "mismatch": "Discrepância",
+      "skipped": {
+        "as_of_not_today": "Tie-out disponível apenas para a posição de hoje.",
+        "control_account_missing": "Conta de controle não encontrada no plano de contas.",
+        "control_account_not_balance_sheet_nature": "Conta de controle com natureza fora do Balanço Patrimonial."
+      }
     }
   },
   "compliance": {
