@@ -13,10 +13,6 @@ import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveError } from '../lib/resolveError';
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 /** Ordem fixa de exibição — espelha `AGING_BUCKETS` do backend (AgingReportService.ts). Nunca reordenar. */
 const AGING_BUCKETS: AgingBucketId[] = ['a_vencer', 'd1_30', 'd31_60', 'd61_90', 'd90_plus'];
 
@@ -59,17 +55,28 @@ interface Props {
 export function AgingPanel({ unitId, onNavigateToPayable, onNavigateToReceivable }: Props) {
   const { t } = useTranslation('accounting');
   const [kind, setKind] = useState<AgingKind>('payable');
-  const [asOf, setAsOf] = useState(today());
+  // Campo não tocado ⇒ `asOf` omitido e o backend decide "hoje" via `scopeToday` (fuso do
+  // escopo) — nunca derivar "hoje" aqui: em UTC o default adiantava o dia entre 21h-00h BRT
+  // e o backend suprimia o tie-out (`as_of_not_today`) na posição default. Fork (a)
+  // ratificado 2026-09-01 (GAP-MAP, registro de predição nº 4).
+  const [asOf, setAsOf] = useState('');
+  const [asOfTouched, setAsOfTouched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<AgingReport | null>(null);
 
   async function generate() {
-    if (!unitId || !asOf) return;
+    if (!unitId) return;
     setLoading(true);
     setError(null);
     try {
-      setReport(await accountingService.getAging({ unitId, kind, asOf }));
+      const next = await accountingService.getAging({
+        unitId,
+        kind,
+        asOf: asOfTouched && asOf ? asOf : undefined,
+      });
+      setReport(next);
+      if (!asOfTouched) setAsOf(next.asOf); // exibe o dia que o backend usou
     } catch (err: unknown) {
       setError(resolveError(err, t('aging.error.load', 'Erro ao carregar o relatório de aging.')));
       setReport(null);
@@ -117,7 +124,10 @@ export function AgingPanel({ unitId, onNavigateToPayable, onNavigateToReceivable
           <input
             type="date"
             value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
+            onChange={(e) => {
+              setAsOf(e.target.value);
+              setAsOfTouched(true);
+            }}
             className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none"
           />
         </label>
@@ -125,7 +135,7 @@ export function AgingPanel({ unitId, onNavigateToPayable, onNavigateToReceivable
         <button
           type="button"
           onClick={() => void generate()}
-          disabled={loading || !asOf}
+          disabled={loading || (asOfTouched && !asOf)}
           className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
         >
           {loading ? t('aging.controls.generating', 'Gerando…') : t('aging.controls.generate', 'Gerar')}

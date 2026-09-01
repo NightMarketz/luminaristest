@@ -143,6 +143,20 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    não seta). **FECHADO 2026-08-20** com guardas em PayableService/ReceivableService/PostingService;
 >    review independente PASS (ver `docs/accounting/TRIAGEM-AUDIT-2026-08-15.md`).
 >
+> 4. **2026-09-01 — default de `asOf` do AgingPanel derivado em UTC — Nível 1 (borda de entrada,
+>    classe `date-only-utc-shift`, mesma do `lead360-dateonly-utc-shift`).** `today()`
+>    (`AgingPanel.tsx:16-18`) usa `toISOString()` e `generate()` sempre envia `asOf`; entre 21h-00h BRT
+>    a posição default pedida é o "amanhã" do escopo e o backend (já corrigido para si via `scopeToday`)
+>    responde `as_of_not_today`, suprimindo o tie-out exatamente na posição default. Mapeado pelo dono
+>    (mensagem 2026-09-01); adjacência Nível 3 declarada (o FE ignora o contrato `asOf?` opcional), mas
+>    a natureza do defeito é derivação de data no fuso errado — conta como Nível 1 para a aposta.
+>    **Instrumentado vermelho** em 2026-09-01: `my-app/features/accounting/components/__tests__/AgingPanel.test.tsx`,
+>    caso "guarda: default de asOf na janela 21h-00h BRT pede o hoje do escopo, não o amanhã UTC"
+>    (instante fixado por fake timers — determinístico fora da janela). Fork (a) — omitir `asOf`
+>    enquanto o campo não for tocado (backend decide via `scopeToday`), input preenchido com
+>    `report.asOf` — ratificado pelo dono e **FECHADO 2026-09-01** no mesmo dia (ciclo
+>    instrumentação→correção; teste-guarda verde, 183/183, `tsc` limpo).
+>
 > **Viés a declarar:** a entrada nº 3 é classificada como Nível 3, que é exatamente o que a aposta
 > acima prevê — classificação feita pela natureza do defeito (regra declarada × caminho real), não
 > para favorecer a aposta, mas o leitor deve saber que quem classificou conhecia a aposta.

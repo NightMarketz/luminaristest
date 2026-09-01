@@ -107,6 +107,42 @@ describe('AgingPanel (render)', () => {
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
   });
 
+  // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+  // Lacuna: `today()` (AgingPanel.tsx:16-18) deriva o default de `asOf` via
+  // `toISOString()` (UTC) e `generate()` SEMPRE o envia. Entre 21:00 e 00:00 BRT o dia
+  // UTC já virou, então a posição default pedida é o "amanhã" do escopo — o backend
+  // (AgingReportService, fonte única `scopeToday`) responde `tieOut: null` +
+  // `as_of_not_today`, suprimindo o tie-out exatamente na posição default.
+  // Comportamento correto (fork-agnóstico): na posição default o request deve pedir o
+  // HOJE do escopo — `asOf` omitido (backend decide) ou igual ao hoje do escopo.
+  // Determinismo (armadilha teste-de-hoje-quebra-em-janela-utc): o instante é FIXADO
+  // com fake timers dentro da janela que morde — 2026-09-01T02:30Z = 23:30 BRT de
+  // 2026-08-31 — em vez de depender do relógio real; o resultado independe da hora e
+  // do fuso da máquina que roda a suíte.
+  it('guarda: default de asOf na janela 21h-00h BRT pede o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      // getAging nunca resolve: só interessa o request; nada de state update pós-teste.
+      vi.mocked(accountingService.getAging).mockImplementation(() => new Promise(() => {}));
+
+      render(<AgingPanel unitId="u1" />);
+      // `today()` roda no initializer do useState — o clock pode voltar ao real daqui em diante.
+      vi.useRealTimers();
+
+      fireEvent.click(screen.getByRole('button', { name: /Gerar/ }));
+
+      expect(accountingService.getAging).toHaveBeenCalledTimes(1);
+      const { asOf } = vi.mocked(accountingService.getAging).mock.calls[0][0];
+      expect(
+        [undefined, '2026-08-31'],
+        'posição default às 23:30 BRT de 2026-08-31 deve pedir o hoje do escopo (ou omitir asOf) — receber 2026-09-01 é o "amanhã" UTC que suprime o tie-out (as_of_not_today)',
+      ).toContain(asOf);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the resolved error message on a policy (403) failure', async () => {
     vi.mocked(accountingService.getAging).mockRejectedValue({ error: 'Forbidden', status: 403 });
 
