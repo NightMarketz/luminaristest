@@ -170,11 +170,16 @@ Cada um abaixo foi **relido no arquivo fonte**, não só extraído do corpo do P
   ainda diz `@@unique([userId,unitId,type,name])` — a chave real, desde este PR, é
   `(userId,unitId,type,nameNormalized)`. Comentário morto, confirmado por leitura; não afeta
   comportamento (é só doc inline).
-- **#243 — resíduo F-W2F-3 documentado no job e na migração.** Confirmado em dois lugares:
+- **#243 — resíduo F-W2F-4 documentado no job e na migração.** *(Renumerado de "F-W2F-3" em
+  2026-09-01 — aquele rótulo já pertencia ao fork de escrita externa do `BRIEFS-WAVE2-BACKEND.md`
+  §F-W2F-3; a colisão está registrada na seção A da `CEDULA-DECISAO-2026-08-31.md`.)*
+  Confirmado em dois lugares:
   `server/src/jobs/accountingSyncReconcile.job.ts` (busca por `KNOWN RESIDUAL` retorna hit) e
   `server/prisma/migrations/20260830130000_add_job_watermark/migration.sql`. O resíduo: um item que
   falha isolado (fault-isolated) some do scan da marca depois de `OVERLAP_MS` sem ser retocado — troca
-  retry-infinito por retry-com-janela; decisão do dono pendente sobre rescan periódico.
+  retry-infinito por retry-com-janela. **FECHADO em 2026-09-01**: opção 1 do F-W2F-4 ratificada
+  (marca congela no valor antigo quando a rodada tem `failed > 0`), ciclo
+  instrumentação→correção na cédula seção B.
 - **#235 — runbook B-4 registra ausência de linha no mapa.** Grep por `B-1|B-4` em
   `docs/accounting/ACCOUNTING-MASTER-MAP.md` → **0 ocorrências**, confirmando o que o PR já
   registrava: não há linha "B-1"/"B-4" no mapa mestre; o runbook aponta isso no campo de rastreio

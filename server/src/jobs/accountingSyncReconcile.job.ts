@@ -35,17 +35,15 @@
  * Absent watermark (first run post-deploy, or the row was never created) = EPOCH = full scan,
  * byte-identical to the pre-watermark behavior.
  *
- * KNOWN RESIDUAL (flagged during BRIEF-W2-F implementation, not one of its ratified forks):
- * an item that fails in isolation (`summary.failed++`, batch continues — see each pass' catch
- * block) keeps re-surfacing every tick under the OLD unbounded scan. Under the watermark, it
- * only re-surfaces while its row's `updatedAt` is still inside `[watermarkAt, now]` — roughly
- * `OVERLAP_MS` after the row was last written, it silently drops out of every future scan
- * unless something else touches that row again. This does not violate the invariant the BRIEF
- * closes (no row is skipped BEFORE it is ever seen once), but it does change a
- * previously-infinite retry into a time-boxed one for a row that failed and was never
- * re-touched — worth a human decision (periodic full rescan? exempt failed items from the
- * watermark filter?) once real failure-recurrence data exists. Out of this BRIEF's authorized
- * scope (F6 = the watermark only) — implemented as specified, not redesigned.
+ * KNOWN RESIDUAL — CLOSED by F-W2F-4 (ratified 2026-09-01, opção 1): an item that fails in
+ * isolation (`summary.failed++`, batch continues — see each pass' catch block) used to
+ * silently drop out of every future scan once the OLD unbounded-scan retry window closed
+ * (roughly `OVERLAP_MS` after the row was last written), because the persisted watermark
+ * advanced right past it regardless of the failure. `withReconcileWatermark` now holds the
+ * watermark at its OLD value for the whole round whenever `summary.failed > 0` — see that
+ * function's JSDoc for the proof that this is a safe instance of the ratified
+ * `min(runStartAt - OVERLAP_MS, updatedAt da falha mais antiga)` formula. A fault-isolated
+ * item therefore stays inside every future scan's window until it stops failing.
  *
  * F-W2F-3 (accepted by the owner, 2026-08-30): the window-with-overlap design closes the
  * delayed-commit-under-contention failure mode above, but it assumes no write EXTERNAL to
@@ -161,14 +159,29 @@ export interface ReconcileWatermarkDeps {
 /**
  * Wraps one reconciliation round with the trailing watermark. Reads the persisted watermark
  * (EPOCH on the first run), runs `runPasses(watermarkAt)`, and — ONLY if it resolves without
- * throwing — advances the watermark to `runStartAt - OVERLAP_MS`. The new value is always
- * `>=` the previous one by construction of the process's monotonic clock, so no `max(...)`
- * clamp against the prior watermark is needed.
+ * throwing — advances the watermark, UNLESS the round reports a fault-isolated item failure
+ * (F-W2F-4, see below), in which case it stays at `watermarkAt`.
  *
  * GUARD: if `runPasses` throws (a whole-round failure — not the per-item fault isolation each
  * pass already does internally), `setWatermark` is never called: the watermark stays exactly
  * where it was, so the NEXT run re-scans the same `[watermarkAt, now]` window instead of
  * silently skipping whatever the failed round never reached.
+ *
+ * F-W2F-4 (ratified 2026-09-01, opção 1 — `min(runStartAt - OVERLAP_MS, updatedAt da falha não
+ * resolvida mais antiga da rodada)`): when `summary.failed > 0`, the watermark is held at the
+ * OLD `watermarkAt` instead of advancing to `runStartAt - OVERLAP_MS`. This is a provably-safe
+ * instance of the ratified `min(...)` formula, not an approximation of it: every row that can
+ * reach `summary.failed` — the 8 merged passes all list via
+ * `updatedAt >= watermarkAt` (the scan operator, `DynamicTableRepository.findRowsByFieldValueSince`
+ * :370; the balance-vs-liability check inside `runPasses` scans unfiltered, but its result never
+ * feeds the merged summary) — so `watermarkAt <= failedItem.updatedAt` holds for EVERY failed
+ * item by construction, with no need to plumb the failing item's actual `updatedAt` back out of
+ * any of the 8 passes (none of their per-item types carry the source row's real `updatedAt`
+ * today; threading it through all 8 passes would be a larger, riskier diff for the same
+ * invariant). The trade-off versus the literal per-item minimum: the
+ * round-level watermark does not creep forward AT ALL while any single item anywhere in the
+ * round keeps failing (rows already synced this round get redundantly, harmlessly rescanned
+ * next tick too) — conservative, but never drops a failed item out of the window.
  */
 export async function withReconcileWatermark(
   deps: ReconcileWatermarkDeps,
@@ -177,7 +190,9 @@ export async function withReconcileWatermark(
   const watermarkAt = (await deps.getWatermark()) ?? RECONCILE_WATERMARK_EPOCH;
   const runStartAt = deps.now();
   const summary = await runPasses(watermarkAt);
-  await deps.setWatermark(new Date(runStartAt.getTime() - OVERLAP_MS));
+  const nextWatermarkAt =
+    summary.failed > 0 ? watermarkAt : new Date(runStartAt.getTime() - OVERLAP_MS);
+  await deps.setWatermark(nextWatermarkAt);
   return summary;
 }
 
