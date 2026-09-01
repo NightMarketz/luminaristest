@@ -18,6 +18,7 @@
  * CADA CASO NEGATIVO TEM O SEU CONTROLE. Um teste que espera `null`/erro passa também quando tudo
  * está quebrado; o par positivo/negativo é o que separa "a guarda mordeu" de "nada funciona aqui".
  */
+import { randomUUID } from 'crypto';
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { getFactory } from '@/lib/factory';
@@ -25,6 +26,8 @@ import { CounterpartyRepository } from '@/features/accounting/repositories/Count
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import {
+  COUNTERPARTY_ARCHIVED,
+  COUNTERPARTY_CREATED,
   deletedCounterpartyName,
   deletedCounterpartyNameNormalized,
   normalizeCounterpartyName,
@@ -252,6 +255,107 @@ describe('CounterpartyRepository — contrato em SQLite real (subfila ratificada
       orderBy: { seq: 'asc' },
     });
     expect(eventos.map((e) => e.eventType)).toEqual(['counterparty.created', 'counterparty.archived']);
+  });
+
+  /**
+   * Ratificação do dono (AskUserQuestion, 2026-08-31, "trocar por referência"): o payload PERSISTIDO
+   * dos dois eventos de contraparte nunca carrega `name` (dado pessoal para PF numa trilha sem
+   * deletedAt/cascade/conserto retroativo) — só `counterpartyId` (que resolve para a linha, essa sim
+   * apagável/mascarável). Não-regressão da CADEIA (não só do payload): create+archive tem de continuar
+   * verificando ok:true — a mudança de forma do payload muda o hash dos eventos NOVOS (esperado), mas
+   * não pode quebrar `verifyAuditChain` para os eventos que ela mesma acabou de escrever.
+   */
+  it('trilha real: payload de counterparty.created/archived nunca carrega name, e a cadeia verifica ok:true (dono 2026-08-31)', async () => {
+    const service = getFactory().getCounterpartyService();
+    const auditService = getFactory().getAuditService();
+    const scope = escopo(DONO_A);
+
+    const criada = await service.createCounterparty(scope, { unitId: UNIT, type: 'CUSTOMER', name: 'Fulano de Tal' });
+    await service.archiveCounterparty(scope, criada.id, { unitId: UNIT });
+
+    const eventos = await prisma.auditEvent.findMany({
+      where: { scopeUserId: DONO_A, unitId: UNIT, targetId: criada.id },
+      orderBy: { seq: 'asc' },
+    });
+    expect(eventos).toHaveLength(2);
+    for (const ev of eventos) {
+      const payload = JSON.parse(ev.payload) as Record<string, unknown>;
+      expect(payload).not.toHaveProperty('name');
+      expect(payload.counterpartyId).toBe(criada.id);
+    }
+
+    const result = await auditService.verifyAuditChain(scope);
+    expect(result.ok).toBe(true);
+  });
+
+  /**
+   * BARREIRA REAL — achado do review adversarial no PR #255, reproduzido antes deste teste existir:
+   * alargar `PAYLOAD_ALLOWLIST['counterparty.created'/'counterparty.archived']` para admitir `name`
+   * mantinha os 3 testes ORIGINAIS do PR verdes. Motivo: nenhum deles passa por
+   * `canonicalizeAuditPayload` com um payload que carregue `name` — os 2 unit mockam
+   * `AuditService.append` inteiro (nunca canonicalizam nada), e o teste de integração acima
+   * ("trilha real…") passa pelo `CounterpartyService`, cujo call-site (já limpo por este mesmo PR)
+   * nunca monta `name` no payload — não há o que a allowlist alargada deixasse vazar.
+   *
+   * Este par de testes fecha essa lacuna chamando `AuditService.append()` DIRETO — bypassando
+   * CounterpartyService — com um payload BRUTO que carrega `name`, contra o banco de integração
+   * real, e afirma sobre o `AuditEvent` PERSISTIDO. O componente sob teste passa a ser a
+   * ALLOWLIST, não o call-site: mesmo que um call-site futuro (ou um bug) monte `name` no payload,
+   * este teste prova que `canonicalizeAuditPayload` o descarta antes de chegar ao banco.
+   *
+   * Gate do conserto (mesmo experimento, invertido) — confirmado manualmente antes de escrever
+   * este teste: com a allowlist como está em `main`, os dois `it` abaixo passam; adicionando
+   * `'name'` às duas entradas da allowlist, os dois falham (a assertiva `not.toHaveProperty('name')`
+   * quebra porque o payload persistido passa a carregar o campo).
+   */
+  it('barreira real: AuditService.append() aplica a allowlist mesmo com payload BRUTO contendo name (counterparty.created)', async () => {
+    const auditService = getFactory().getAuditService();
+    const scope = escopo(DONO_A);
+    const targetId = randomUUID();
+
+    await repo.runTransaction((tx) =>
+      auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: COUNTERPARTY_CREATED,
+        targetType: 'counterparty',
+        targetId,
+        // Payload BRUTO — como se um call-site (bugado ou futuro) tivesse injetado a PII direto.
+        // A barreira sob teste é a allowlist, não a disciplina do chamador.
+        payload: { counterpartyId: targetId, type: 'SUPPLIER', ref: null, name: 'Nome Vazado Direto' },
+      }),
+    );
+
+    const evento = await prisma.auditEvent.findFirst({
+      where: { scopeUserId: DONO_A, unitId: UNIT, eventType: COUNTERPARTY_CREATED, targetId },
+    });
+    expect(evento).not.toBeNull();
+    const payload = JSON.parse(evento!.payload) as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('name');
+    expect(payload.counterpartyId).toBe(targetId);
+  });
+
+  it('barreira real: AuditService.append() aplica a allowlist mesmo com payload BRUTO contendo name (counterparty.archived)', async () => {
+    const auditService = getFactory().getAuditService();
+    const scope = escopo(DONO_A);
+    const targetId = randomUUID();
+
+    await repo.runTransaction((tx) =>
+      auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: COUNTERPARTY_ARCHIVED,
+        targetType: 'counterparty',
+        targetId,
+        payload: { counterpartyId: targetId, type: 'CUSTOMER', name: 'Nome Vazado Direto' },
+      }),
+    );
+
+    const evento = await prisma.auditEvent.findFirst({
+      where: { scopeUserId: DONO_A, unitId: UNIT, eventType: COUNTERPARTY_ARCHIVED, targetId },
+    });
+    expect(evento).not.toBeNull();
+    const payload = JSON.parse(evento!.payload) as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('name');
+    expect(payload.counterpartyId).toBe(targetId);
   });
 
   // ------------------------------------------------------------------ BRIEF-W2-A comp. 9 — P2002 pelo serviço

@@ -93,7 +93,11 @@ export class CounterpartyService {
           eventType: COUNTERPARTY_CREATED,
           targetType: 'counterparty',
           targetId: created.id,
-          payload: { counterpartyId: created.id, type: created.type, name: created.name, ref: created.ref },
+          // name is third-party PII on a hash-chained trail with no deletedAt/cascade/retroactive
+          // fix (dono decision 2026-08-31, AskUserQuestion "trocar por referência") — counterpartyId
+          // resolves to the row, which stays deletable/maskable. Mirrors the implicit-mint payload in
+          // counterpartyResolution.ts and matches PAYLOAD_ALLOWLIST['counterparty.created'] already.
+          payload: { counterpartyId: created.id, type: created.type, ref: created.ref },
         });
         return created;
       });
@@ -145,7 +149,9 @@ export class CounterpartyService {
         eventType: COUNTERPARTY_ARCHIVED,
         targetType: 'counterparty',
         targetId: id,
-        payload: { counterpartyId: id, type: counterparty.type, name: counterparty.name },
+        // name dropped for the same reason as counterparty.created above — reference, not PII, on
+        // the immutable trail; matches PAYLOAD_ALLOWLIST['counterparty.archived'] already.
+        payload: { counterpartyId: id, type: counterparty.type },
       });
       return archived;
     });

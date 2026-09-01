@@ -39,7 +39,9 @@ function build(opts: Opts = {}) {
     update: jest.fn(async (_s, id: string, data: Record<string, unknown>) => cpRow({ id, ...data } as Partial<Counterparty>)),
     runTransaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
   };
-  const auditService = { append: jest.fn(async () => undefined) };
+  const auditService = {
+    append: jest.fn(async (_tx: unknown, _scope: unknown, _input: { payload: Record<string, unknown> }) => undefined),
+  };
   const policy = {
     canManageCounterparty: () => opts.canManage ?? true,
     canReadCounterparty: () => opts.canRead ?? true,
@@ -63,6 +65,20 @@ describe('CounterpartyService.createCounterparty', () => {
     expect(auditService.append).toHaveBeenCalledWith(
       {}, scope, expect.objectContaining({ eventType: COUNTERPARTY_CREATED }),
     );
+  });
+
+  // Dono ratificação 2026-08-31 (AskUserQuestion, "trocar por referência"): counterparty.created é
+  // uma trilha append-only hash-encadeada sem deletedAt/cascade/conserto retroativo — o payload NUNCA
+  // pode carregar o `name` (dado pessoal para PF), só a referência (counterpartyId) que resolve para
+  // a linha apagável/mascarável. Mesma técnica de PayableService.recognitionAuditDescription (A2).
+  it('NUNCA grava o name da contraparte no payload do audit event — só a referência (counterpartyId)', async () => {
+    const { service, auditService } = build();
+    await service.createCounterparty(scope, { unitId: 'unit-1', type: 'SUPPLIER', name: 'Fulano de Tal' });
+    const call = auditService.append.mock.calls[0]!;
+    const input = call[2] as { payload: Record<string, unknown> };
+    expect(input.payload).not.toHaveProperty('name');
+    expect(input.payload.counterpartyId).toBe('cp-new');
+    expect(input.payload.type).toBe('SUPPLIER');
   });
 
   it('derives nameNormalized via trim + case-fold + whitespace collapse even from an UN-trimmed name (BRIEF-W2-A comp. 2, F1(b))', async () => {
@@ -134,6 +150,19 @@ describe('CounterpartyService.archiveCounterparty — soft-delete + rename-on-ke
     expect(auditService.append).toHaveBeenCalledWith(
       {}, scope, expect.objectContaining({ eventType: COUNTERPARTY_ARCHIVED }),
     );
+  });
+
+  // Par do teste-guarda de createCounterparty acima, mesma ratificação (dono, 2026-08-31).
+  it('NUNCA grava o name da contraparte no payload de counterparty.archived — só a referência', async () => {
+    const { service, auditService } = build({
+      found: cpRow({ id: 'cp-1', name: 'Fulano de Tal', nameNormalized: normalizeCounterpartyName('Fulano de Tal') }),
+    });
+    await service.archiveCounterparty(scope, 'cp-1', { unitId: 'unit-1' });
+    const call = auditService.append.mock.calls[0]!;
+    const input = call[2] as { payload: Record<string, unknown> };
+    expect(input.payload).not.toHaveProperty('name');
+    expect(input.payload.counterpartyId).toBe('cp-1');
+    expect(input.payload.type).toBe('SUPPLIER');
   });
 
   it('is idempotent on an already-archived counterparty (no second write)', async () => {
