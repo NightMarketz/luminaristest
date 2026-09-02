@@ -204,6 +204,9 @@ Artefato único que resolveria os 8 itens: **Manual de Orientação do Leiaute 1
 ao ano-calendário-alvo) — seções dos Blocos L, M e N (Lucro Real)**, com a matriz de obrigatoriedade
 coluna "Real". Lista completa (com o fork que cada um decide) está no ADR §5; resumida aqui:
 
+> **Versão a usar [EMENDA 2026-09-02]:** **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Ao transcrever as seções L/M/N (padrão "Passo A" da
+> Fase 2 do Presumido), registrar no cabeçalho do doc irmão a data de atualização lida no PDF.
+
 1. Matriz de obrigatoriedade por regime, coluna Real (quais registros de L/M/N são obrigatórios).
 2. Layout campo-a-campo L100/L200/L210/L300.
 3. Layout campo-a-campo M010/M300/M350/M500 + mecânica de Parte A vs Parte B.

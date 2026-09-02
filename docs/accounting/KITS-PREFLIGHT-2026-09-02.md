@@ -228,11 +228,8 @@ fontes; nenhuma menção cruzada encontrada). §1 confirma: "nenhum gate de 1 a 
   Prisma Client gerado). Comando de checagem (leitura, não aplica): `cd server && npx prisma migrate status`.
 - **[DONO confere] Confirmar qual das duas abas do arquivo oficial usar, e preparar o arquivo de
   entrada** — ver achado abaixo sobre 1 planilha por vez.
-- **[DONO confere] Resolver a data do Leiaute 12** (28/05/2026 vs 25/07/2026 — §6 item 4 da fila):
-  nenhum doc ou código do repo registra qual das duas está vigente; é preciso olhar o metadado
-  interno do arquivo baixado (`Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx`)
-  ou a página do gov.br no momento do import, e registrar a versão escolhida no campo
-  `layoutVersion` do passo 2.
+- ~~**[DONO confere] Resolver a data do Leiaute 12** (28/05/2026 vs 25/07/2026 — §6 item 4 da fila)~~
+  **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Registrar a versão conferida no campo `layoutVersion` do passo 2.
 - **[DONO confere] Confirmar que o ano-calendário 2025 do arquivo bate com o exercício que o H1 vai
   encerrar** — a emenda do runbook já avisa; é decisão de domínio, não checagem de código.
 
@@ -293,8 +290,8 @@ campo preenchido, nenhum `[x]` marcado):
    que dependam do catálogo antigo (versão anterior de `layoutVersion`, se houver) — não explorei
    `referential_accounts`/`referential_mappings` no `dev.db` real porque isso exigiria abrir o banco,
    e a tarefa restringe leitura só ao necessário; não achei motivo para abrir.
-3. Qual das duas datas do Leiaute 12 (28/05/2026 ou 25/07/2026) é a vigente — item aberto no
-   próprio §6.4 da fila, decisão do dono no momento do import.
+3. ~~Qual das duas datas do Leiaute 12 (28/05/2026 ou 25/07/2026) é a vigente~~ — **resolvido em
+   2026-09-02** (23/07/2026, fonte secundária; ver a pré-condição riscada acima e o §6.4 da fila).
 
 **Caso adversarial que tentei contra a minha própria conclusão e o que aconteceu:** supus que o
 caminho (a) da emenda ("pular o conversor, a rota já aceita XLSX") fosse literalmente "subir o
