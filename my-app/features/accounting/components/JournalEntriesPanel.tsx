@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiRotateCcw } from 'react-icons/fi';
+import { FiChevronDown, FiChevronRight, FiFileText, FiRotateCcw } from 'react-icons/fi';
 import {
   accountingService,
   type JournalEntryWithFullPostings,
@@ -9,6 +9,7 @@ import { Modal } from '../../../components/ui/Modal';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { useAccountingT } from '../lib/useAccountingT';
+import { resolveError } from '../lib/resolveError';
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
@@ -117,15 +118,19 @@ function PostingsDrawer({ entry }: PostingsDrawerProps) {
 interface JournalEntryRowProps {
   entry: JournalEntryWithFullPostings;
   onReverseClick: (id: string) => void;
+  onReceiptClick: (id: string) => void;
+  /** id of the entry whose receipt is currently downloading, or null. */
+  receiptBusyId: string | null;
 }
 
-function JournalEntryRow({ entry, onReverseClick }: JournalEntryRowProps) {
+function JournalEntryRow({ entry, onReverseClick, onReceiptClick, receiptBusyId }: JournalEntryRowProps) {
   const { t } = useTranslation('accounting');
   const [expanded, setExpanded] = useState(false);
 
   const totalDebitCents = entry.postings.reduce((s, p) => s + p.debitCents, 0);
   const totalCreditCents = entry.postings.reduce((s, p) => s + p.creditCents, 0);
   const canReverse = !entry.reversedById && entry.status !== 'Reversed';
+  const isDownloadingReceipt = receiptBusyId === entry.id;
 
   return (
     <>
@@ -159,17 +164,34 @@ function JournalEntryRow({ entry, onReverseClick }: JournalEntryRowProps) {
           className="px-4 py-2.5"
           onClick={(e) => e.stopPropagation()} // don't toggle expand when clicking action
         >
-          <button
-            disabled={!canReverse}
-            onClick={() => onReverseClick(entry.id)}
-            title={canReverse
-              ? t('journalEntries.reverseAction.enabledTitle', 'Estornar este lançamento')
-              : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-red-700 hover:bg-red-900/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
-          >
-            <FiRotateCcw size={12} />
-            {t('journalEntries.reverseAction.label', 'Estornar')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={isDownloadingReceipt}
+              onClick={() => onReceiptClick(entry.id)}
+              title={t('journalEntries.receiptAction.title', 'Baixar recibo em PDF deste lançamento')}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-blue-700 hover:bg-blue-900/30 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
+            >
+              {isDownloadingReceipt ? (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-neutral-500/40 border-t-neutral-300" />
+              ) : (
+                <FiFileText size={12} />
+              )}
+              {isDownloadingReceipt
+                ? t('journalEntries.receiptAction.downloading', 'Baixando…')
+                : t('journalEntries.receiptAction.label', 'Recibo (PDF)')}
+            </button>
+            <button
+              disabled={!canReverse}
+              onClick={() => onReverseClick(entry.id)}
+              title={canReverse
+                ? t('journalEntries.reverseAction.enabledTitle', 'Estornar este lançamento')
+                : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-red-700 hover:bg-red-900/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
+            >
+              <FiRotateCcw size={12} />
+              {t('journalEntries.reverseAction.label', 'Estornar')}
+            </button>
+          </div>
         </td>
       </tr>
       {expanded && <PostingsDrawer entry={entry} />}
@@ -203,6 +225,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [confirmReverseId, setConfirmReverseId] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [isReversing, setIsReversing] = useState(false);
+  const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
 
   // ── fetch ──────────────────────────────────────────────────────────────────
   const fetchEntries = useCallback(async () => {
@@ -251,6 +274,22 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
     }
   };
 
+  // ── receipt (H2 passo 4) ──────────────────────────────────────────────────────
+  const handleDownloadReceipt = async (entryId: string) => {
+    setReceiptBusyId(entryId);
+    setError(null);
+    try {
+      await accountingService.downloadReceipt(entryId, unitId);
+    } catch (err: unknown) {
+      // `downloadReceipt` throws the same plain-object shape as apiClient (reconParseError) —
+      // `resolveError` is the canonical extractor (features/accounting/lib/resolveError.ts);
+      // `err instanceof Error` (used elsewhere in this older file) would never match it.
+      setError(resolveError(err, t('journalEntries.error.receipt', 'Erro ao baixar recibo.')));
+    } finally {
+      setReceiptBusyId(null);
+    }
+  };
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
@@ -295,6 +334,8 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
                   key={entry.id}
                   entry={entry}
                   onReverseClick={(id) => setConfirmReverseId(id)}
+                  onReceiptClick={(id) => void handleDownloadReceipt(id)}
+                  receiptBusyId={receiptBusyId}
                 />
               ))}
             </tbody>

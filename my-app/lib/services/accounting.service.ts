@@ -548,6 +548,28 @@ async function reconParseError(response: Response): Promise<Record<string, unkno
   return body;
 }
 
+/**
+ * Stream a binary GET (e.g. the PDF receipt) to a browser download via a transient
+ * object URL. Same technique as `dataExchangeService`'s `streamDownload` (BE-INCR-6) —
+ * reuses the `recon*` fetch helpers above instead of duplicating them.
+ */
+async function reconStreamDownload(url: string, fileName: string): Promise<void> {
+  const response = await fetch(url, { method: 'GET', headers: reconAuthHeaders() });
+  if (!response.ok) throw await reconParseError(response);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = fileName || 'download';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 /** Build a `?a=x&b=y` query string, dropping undefined/empty values and encoding. */
 function buildQuery(params: Record<string, string | undefined>): string {
   const pairs = Object.entries(params)
@@ -891,5 +913,21 @@ export const accountingService = {
     const qs = buildQuery({ unitId: query.unitId, kind: query.kind, asOf: query.asOf });
     const res = await apiClient.get<ApiEnvelope<AgingReport>>(`/accounting/reports/aging${qs}`);
     return res.data;
+  },
+
+  // ── Receipts (H2 passo 4) ────────────────────────────────────────────────────
+
+  /**
+   * Download the PDF receipt (comprovante) of a single posted journal entry —
+   * `GET /accounting/journal-entries/:entryId/receipt` (puppeteer-rendered on the
+   * backend). Binary response, so it bypasses `apiClient` like the other blob
+   * downloads in this file.
+   */
+  async downloadReceipt(entryId: string, unitId: string): Promise<void> {
+    const qs = buildQuery({ unitId });
+    await reconStreamDownload(
+      `${reconBaseUrl()}/accounting/journal-entries/${encodeURIComponent(entryId)}/receipt${qs}`,
+      `recibo-${entryId}.pdf`,
+    );
   },
 };
