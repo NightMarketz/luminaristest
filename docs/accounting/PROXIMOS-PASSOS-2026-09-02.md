@@ -27,7 +27,7 @@
 | 2 | **X2** — import do referencial RFB | `RUNBOOK-X2-RFB-REFERENCIAL.md` | Inalterado. Arquivo oficial já baixado; ressalvas de XLSX × conversor pipe e ano-calendário 2025 na emenda do próprio runbook. |
 | 3 | **H1** — PVA, **em Lucro Presumido** | `RUNBOOK-H1-PVA.md` | **Emendado 2026-09-02.** Roda em Presumido *de propósito* — é o que o serializer emite; prova a cadeia ECD + encerramento + ECF contra o validador oficial. Oráculo do **módulo**. |
 | 4 | **H2** — sign-off de browser | `RUNBOOK-H2-BROWSER-SIGNOFF.md` | **Pré-condição LAC-A: CUMPRIDA** (#259). O fluxo de salão pós-swap agora tem Pagar/Cancelar/Devolver pela tela. |
-| 5 | **ECF Fase 3 — Lucro Real** | ADR + `sessao-planejamento` (**não autorizada ainda**) | **NOVA.** Blocos L (balanço/DRE), M (e-Lalur/e-Lacs), N (IRPJ/CSLL), `HASH_ECF_ANTERIOR` e `0010` parametrizável. Delta medido no §5.1 Bloco B item 10 do master map. |
+| 5 | **ECF Fase 3 — Lucro Real** | ~~ADR + `sessao-planejamento` (**não autorizada ainda**)~~ **[EMENDA 2026-09-02] ADR escrito, Forks 1/5 ratificados, esqueleto MERGEADO (`02fc802b`, PR #263); falta o conteúdo de L/M/N (Forks 2/3/4, dependentes do Manual)** | **NOVA.** Blocos L (balanço/DRE), M (e-Lalur/e-Lacs), N (IRPJ/CSLL), `HASH_ECF_ANTERIOR` e `0010` parametrizável. Delta medido no §5.1 Bloco B item 10 do master map. |
 | 6 | **H1 — 2ª passada, em Lucro Real** | `RUNBOOK-H1-PVA.md` (reexecução) | **NOVA. Obrigatória antes de operar cliente real.** É ela que prova a ECF do regime-alvo; o passo 3 não prova. |
 | 7 | **M2** — provisionar host + 1º deploy | `RUNBOOK-M2-DEPLOY-SMOKE.md` | **Adiado por decisão do dono** — última tarefa antes de operar cliente real. Topologia ratificada (VPS própria, 1 instância/cliente, disco local) **continua valendo**; o adiamento é de provedor concreto. |
 
@@ -58,8 +58,8 @@ e nenhum depende da ECF Fase 3.
 
 | Item | Ciclo | Estado |
 |---|---|---|
-| **ECF Fase 3 — Lucro Real** | ADR + `sessao-planejamento` | **Alvo e ordem ratificados; execução NÃO autorizada** (ORCH-006). Primeiro passo é o ADR, não código. |
-| **PRs abertas** — [#250](https://github.com/NightMarketz/luminaristest/pull/250), [#252](https://github.com/NightMarketz/luminaristest/pull/252), [#254](https://github.com/NightMarketz/luminaristest/pull/254) | `sessao-integracao` / `sessao-correcao` | ⚠️ A **#254** são 13 testes-guarda **vermelhos por desenho** (varredura date-only UTC shift): não pode entrar em `main` sem os fixes correspondentes. A #250 é um desses fixes. |
+| **ECF Fase 3 — Lucro Real** | ~~ADR + `sessao-planejamento`~~ `sessao-feature` (restante) | ~~**Alvo e ordem ratificados; execução NÃO autorizada** (ORCH-006). Primeiro passo é o ADR, não código.~~ **[EMENDA 2026-09-02]** ADR `Accepted` parcial, Forks **1** (endpoint dedicado) e **5** (trimestral) ratificados, `FORMA_TRIB` default `'1'` ratificado, e o **esqueleto foi implementado e mergeado** (`02fc802b`): 14 dos 18 itens do BRIEF. **Os 4 restantes seguem pausados** — Forks 2/3/4 exigem as seções L/M/N do Manual do Leiaute 12, que não está no repo. |
+| **PRs abertas** — ~~[#250](https://github.com/NightMarketz/luminaristest/pull/250)~~ **[EMENDA 2026-09-02: #250 MERGEADA (`64d8e675`)]**, [#252](https://github.com/NightMarketz/luminaristest/pull/252), [#254](https://github.com/NightMarketz/luminaristest/pull/254) | `sessao-integracao` / `sessao-correcao` | ⚠️ A **#254** são 13 testes-guarda **vermelhos por desenho** (varredura date-only UTC shift): não pode entrar em `main` sem os fixes correspondentes. A #250 é um desses fixes. |
 
 Fora isso, **nada passa nas quatro condições** (autorizado · especificado · não é gate humano · não
 bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depende do H1/H2.
