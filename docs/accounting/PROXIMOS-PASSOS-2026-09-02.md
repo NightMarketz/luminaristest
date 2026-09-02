@@ -59,7 +59,7 @@ e nenhum depende da ECF Fase 3.
 | Item | Ciclo | Estado |
 |---|---|---|
 | **ECF Fase 3 — Lucro Real** | ~~ADR + `sessao-planejamento`~~ `sessao-feature` (restante) | ~~**Alvo e ordem ratificados; execução NÃO autorizada** (ORCH-006). Primeiro passo é o ADR, não código.~~ **[EMENDA 2026-09-02]** ADR `Accepted` parcial, Forks **1** (endpoint dedicado) e **5** (trimestral) ratificados, `FORMA_TRIB` default `'1'` ratificado, e o **esqueleto foi implementado e mergeado** (`02fc802b`): 14 dos 18 itens do BRIEF. **Os 4 restantes seguem pausados** — Forks 2/3/4 exigem as seções L/M/N do Manual do Leiaute 12, que não está no repo. |
-| **PRs abertas** — ~~[#250](https://github.com/NightMarketz/luminaristest/pull/250)~~ **[EMENDA 2026-09-02: #250 MERGEADA (`64d8e675`)]**, [#252](https://github.com/NightMarketz/luminaristest/pull/252), [#254](https://github.com/NightMarketz/luminaristest/pull/254) | `sessao-integracao` / `sessao-correcao` | ⚠️ A **#254** são 13 testes-guarda **vermelhos por desenho** (varredura date-only UTC shift): não pode entrar em `main` sem os fixes correspondentes. A #250 é um desses fixes. |
+| **PRs abertas** — ~~[#250](https://github.com/NightMarketz/luminaristest/pull/250)~~ **[EMENDA 2026-09-02: #250 MERGEADA (`64d8e675`)]**, [#252](https://github.com/NightMarketz/luminaristest/pull/252), [#254](https://github.com/NightMarketz/luminaristest/pull/254) | `sessao-integracao` / `sessao-correcao` | ~~⚠️ A **#254** são 13 testes-guarda **vermelhos por desenho** (varredura date-only UTC shift): não pode entrar em `main` sem os fixes correspondentes. A #250 é um desses fixes.~~ **[EMENDA 2026-09-02: caracterização OBSOLETA.** Às 18:45Z a #254 deixou de ser só instrumentação — passou a carregar o ciclo completo (`fecha a classe date-only-utc-shift no frontend — 12 sites, forks F1..F5 ratificados`, +753/-110, 6 commits) e está **verde na CI** (10/10 checks `SUCCESS`). O que a bloqueia hoje é `mergeable: CONFLICTING` / `mergeStateStatus: DIRTY`, não teste vermelho: precisa de **rebase sobre `main`**, não dos fixes de terceiros.**] |
 
 Fora isso, **nada passa nas quatro condições** (autorizado · especificado · não é gate humano · não
 bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depende do H1/H2.
@@ -82,7 +82,13 @@ bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depend
   externo aberto há mais de 14 dias.
 - **Não abrir a ECF Fase 3 sem ADR + autorização de sessão.** A ratificação fixou **alvo e ordem**,
   não execução.
-- **Não mergear a #254 sozinha** — os 13 testes são vermelhos por desenho.
+- ~~**Não mergear a #254 sozinha** — os 13 testes são vermelhos por desenho.~~ **[EMENDA 2026-09-02:
+  REGRA OBSOLETA — não se aplica mais.** Verificado por `gh pr view 254` nesta data: a PR agora
+  contém os fixes (12 sites) além dos guardas, está **verde na CI**, e o único bloqueio é conflito
+  com `main`. A restrição vigente é outra: **rebasear a #254 antes de mergear** — a superfície de
+  conflito é `JournalEntriesPanel.tsx` (+ teste), `accounting.service.ts`, `openapi.json` e
+  `__dto-shapes__.json`; os dois últimos se resolvem por regeneração (`npm run docs:generate`,
+  `UPDATE_DTO_SNAPSHOT=1`), nunca à mão.**]
 - **Não apagar** `nfe-fase-a-preserved` nem `nfe-fase-b-preserved`.
 - **Não tratar runbook preenchido por agente como sign-off.** Nulo por desenho.
 - **Não pular a 2ª passada do H1** antes de cliente real: o passo 3 prova o módulo, não o regime-alvo.
