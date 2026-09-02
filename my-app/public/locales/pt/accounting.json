@@ -570,9 +570,15 @@
       "disabledTitle": "Lançamento já estornado",
       "label": "Estornar"
     },
+    "receiptAction": {
+      "title": "Baixar recibo em PDF deste lançamento",
+      "label": "Recibo (PDF)",
+      "downloading": "Baixando…"
+    },
     "error": {
       "load": "Erro ao carregar lançamentos.",
-      "reverse": "Erro ao estornar lançamento."
+      "reverse": "Erro ao estornar lançamento.",
+      "receipt": "Erro ao baixar recibo."
     },
     "loading": "Carregando lançamentos…",
     "empty": "Nenhum lançamento postado nesta unidade ainda.",

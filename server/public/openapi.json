@@ -8615,6 +8615,206 @@
         }
       }
     },
+    "/api/accounting/sped/ecf/real/generate": {
+      "post": {
+        "summary": "Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Real, esqueleto)",
+        "description": "Composes the ECF for the given calendar year in Lucro Real and persists a plain-text (ISO-8859-1) artifact as an EXPORT job of kind EXPORT_SPED_ECF_REAL (dedicated route, ADR-INCR-SPED-ECF-FASE3 Fork 1). Block 0 is parametrized from fiscal (FORMA_TRIB and FORMA_TRIB_PER are REQUIRED with no server default - the regime code is never guessed; FORMA_APUR is T, quarterly). Balance sheet and income statement are read per quarter through the report service. Blocks L, M and N (and the recovered C, E, J, K plus the Presumido-only P) are emitted as empty markers until Forks 2, 3 and 4 are ratified. There is no revenue exhaustiveness gate. Download via /data-exchange/jobs/{jobId}/download.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "year",
+                  "declarant",
+                  "fiscal",
+                  "signers"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "year": {
+                    "type": "integer",
+                    "example": 2025
+                  },
+                  "declarant": {
+                    "type": "object",
+                    "required": [
+                      "cnpj",
+                      "nome",
+                      "codNat",
+                      "cnaeFiscal",
+                      "endereco",
+                      "bairro",
+                      "uf",
+                      "codMun",
+                      "cep",
+                      "email"
+                    ],
+                    "properties": {
+                      "cnpj": {
+                        "type": "string",
+                        "description": "14 digits"
+                      },
+                      "nome": {
+                        "type": "string"
+                      },
+                      "codNat": {
+                        "type": "string",
+                        "description": "natureza juridica (3-4 digits)"
+                      },
+                      "cnaeFiscal": {
+                        "type": "string",
+                        "description": "7 digits"
+                      },
+                      "endereco": {
+                        "type": "string"
+                      },
+                      "num": {
+                        "type": "string"
+                      },
+                      "bairro": {
+                        "type": "string"
+                      },
+                      "uf": {
+                        "type": "string"
+                      },
+                      "codMun": {
+                        "type": "string",
+                        "description": "IBGE 7 digits"
+                      },
+                      "cep": {
+                        "type": "string",
+                        "description": "8 digits"
+                      },
+                      "email": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "fiscal": {
+                    "type": "object",
+                    "required": [
+                      "formaTrib",
+                      "formaTribPer"
+                    ],
+                    "properties": {
+                      "formaTrib": {
+                        "type": "string",
+                        "description": "0010.FORMA_TRIB, 1 digit, no default"
+                      },
+                      "formaTribPer": {
+                        "type": "string",
+                        "description": "0010.FORMA_TRIB_PER, 4 positions, no default"
+                      },
+                      "formaApur": {
+                        "type": "string",
+                        "enum": [
+                          "T"
+                        ],
+                        "description": "T = trimestral (Fork 5)"
+                      },
+                      "indAliqCsll": {
+                        "type": "string",
+                        "enum": [
+                          "1",
+                          "4"
+                        ],
+                        "description": "1 = 9 percent"
+                      },
+                      "indRecReceita": {
+                        "type": "string",
+                        "enum": [
+                          "1",
+                          "2"
+                        ],
+                        "description": "2 = competencia"
+                      }
+                    }
+                  },
+                  "signers": {
+                    "type": "array",
+                    "maxItems": 2,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "identNom",
+                        "identCpfCnpj",
+                        "identQualif",
+                        "email",
+                        "fone"
+                      ],
+                      "properties": {
+                        "identNom": {
+                          "type": "string"
+                        },
+                        "identCpfCnpj": {
+                          "type": "string"
+                        },
+                        "identQualif": {
+                          "type": "string",
+                          "description": "3 digits; 900 = Contador"
+                        },
+                        "indCrc": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "fone": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "ECF (Lucro Real) export job created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DataExchangeJob"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
     "/api/accounting/closing/exercise": {
       "post": {
         "summary": "Close the result of a fiscal year (encerramento do exercício)",

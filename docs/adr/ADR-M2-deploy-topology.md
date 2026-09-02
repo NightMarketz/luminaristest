@@ -58,7 +58,7 @@ o "por quê" para o executor humano não re-decidir no meio da execução.
 | Nenhum artefato de deploy roda `prisma migrate deploy` | `docker-compose.yml` sem `command`/`entrypoint`; grep por `"migrate deploy"` fora de `docs/**` só acha `scripts/smoke-migration-gate.mjs` (gate local, não deploy) e `execSync` dentro de suítes de teste de integração (harness, não artefato de produção) | **Confirmado** |
 | 0 migrações `down` | `find server/prisma/migrations -iname "*down*"` = 0 | **Confirmado** |
 | SQLite com WAL exige disco local; volume de rede quebra o locking | `server/src/lib/prisma.ts:23-24` (`PRAGMA journal_mode = WAL`, `PRAGMA busy_timeout = 5000`) | **Confirmado**; aplicado pela aplicação em runtime, não pelo compose |
-| **DIVERGÊNCIA da tarefa:** "9 das 29 migrações fazem DROP TABLE; a última da fila (`20260814120000_counterparty_notnull`) tem `RAISE(ABORT)` que não reverte" | `ls -d server/prisma/migrations/*/` agora = **30** (não 29) — o merge do PR #211 (P1 binding press, `dfaed751`) acrescentou `20260821090000_accounting_binding` **depois** de `counterparty_notnull`. `grep -rl "DROP TABLE" server/prisma/migrations` continua = **9** (nenhuma DROP TABLE nova). A migração nova (`accounting_bindings`) é **aditiva pura** — 1 `CREATE TABLE` + 2 `CREATE INDEX`, sem `DROP TABLE`, sem `RAISE`. | **Corrigido abaixo** |
+| **DIVERGÊNCIA da tarefa:** "9 das 29 migrações fazem DROP TABLE; a última da fila (`20260814120000_counterparty_notnull`) tem `RAISE(ABORT)` que não reverte" | `ls -d server/prisma/migrations/*/` agora = **30** (não 29) — o merge do PR #211 (P1 binding press, `dfaed751`) acrescentou `20260821090000_accounting_binding` **depois** de `counterparty_notnull`. `grep -rl "DROP TABLE" server/prisma/migrations` continua = ~~**9**~~ **[EMENDA 2026-09-02]: 11** (ver abaixo) (nenhuma DROP TABLE nova). A migração nova (`accounting_bindings`) é **aditiva pura** — 1 `CREATE TABLE` + 2 `CREATE INDEX`, sem `DROP TABLE`, sem `RAISE`. | **Corrigido abaixo** |
 
 **Correção do fato divergente:** a migração hoje **última da fila** é `20260821090000_accounting_binding`
 (aditiva, sem risco de reversão). A migração com `RAISE(ABORT, ...)` que não reverte no SQLite
@@ -69,6 +69,35 @@ que agora é a **penúltima**, não a última — o risco descrito no runbook (A
 continua na fila de migrações pendentes de um alvo novo; só a posição ordinal mudou. Nenhuma
 consequência para as 4 decisões do dono: a migração como etapa separada (decisão 4) cobre a fila
 inteira, não só o topo dela.
+
+**[EMENDA 2026-09-02] — recontagem (kit de preflight M2, `docs/accounting/KITS-PREFLIGHT-2026-09-02.md`):**
+a correção acima (2026-08-22) já ficou estale. Medido de novo agora, com o mesmo par de comandos:
+`ls server/prisma/migrations | grep -c "^[0-9]"` = **35** migrações no total (não mais 30);
+`grep -l -i "DROP TABLE" server/prisma/migrations/*/migration.sql | wc -l` = **11** (não mais 9).
+As 11 migrações com `DROP TABLE`, na ordem da fila:
+
+1. `20251217012341_add_chat_instance_type`
+2. `20260430211446_add_user_locale_currency`
+3. `20260627150000_add_entry_numbering`
+4. `20260701014733_add_document_attachments`
+5. `20260714171742_approval_tower_maker_checker`
+6. `20260715060000_incr_counterparty`
+7. `20260720115019_add_inventory_subledger`
+8. `20260721120000_dashboard_multi_tab_layouts`
+9. `20260814120000_counterparty_notnull` (o `RAISE(ABORT)` descrito acima continua aqui)
+10. `20260830160349_counterparty_identity_normalization` (nova; também tem `RAISE(ABORT)` — probe
+    de colisão de `nameNormalized`, mesmo padrão de assert-por-trigger da nº 9)
+11. `20260831032258_int_to_bigint_cents` (nova; SEM `RAISE(ABORT)` — 11 `DROP TABLE` de rebuild
+    de coluna INTEGER→BigInt, verificado com `grep -c "RAISE(ABORT" nesse arquivo` = 0)
+
+**A afirmação derivada também mudou de novo:** a correção de 2026-08-22 dizia que a última da fila
+era `20260821090000_accounting_binding` (aditiva pura). Isso já não vale — 4 migrações foram
+adicionadas depois dela, e a **última da fila hoje é `20260831032258_int_to_bigint_cents`**, que
+NÃO é aditiva pura: reconstrói 11 tabelas via `DROP TABLE`/`CREATE TABLE` (mudança de tipo de coluna
+para BigInt/centavos, PR #245). Sem `RAISE(ABORT)`, então não herda o risco específico de não-reversão
+da nº 9/nº 10 — mas não é mais correto descrever a ponta da fila como "aditiva, sem risco de
+reversão"; é um rebuild de tabela como as outras 10. O ponto que segue de pé: nenhuma delas muda as
+4 decisões do dono (decisão 4 — migração como etapa separada — cobre a fila inteira, não só a ponta).
 
 ## 4. Encaixe CLEAN para PaaS — checklist
 

@@ -26,7 +26,7 @@ const REVENDA_ACCOUNT_CODE = '3.3';
 const PRESUNCAO_ACCOUNT_CODES = new Set([SERVICO_ACCOUNT_CODE, REVENDA_ACCOUNT_CODE]);
 
 /** Quarter windows (T01..T04) for a calendar year. */
-function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
+export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
   const q = (per: string, m0: number, mEnd: number, endDay: number) => ({
     perApur: per,
     dtIni: `${year}-${String(m0 + 1).padStart(2, '0')}-01`,

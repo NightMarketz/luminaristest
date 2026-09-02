@@ -23,6 +23,9 @@ export const EXPORT_KINDS = [
   'EXPORT_SPED_ECD',
   // SPED Fiscal (ECF · Lucro Presumido) file (ADR-INCR-SPED-ECF D7) ⇒ zero migration.
   'EXPORT_SPED_ECF',
+  // SPED Fiscal (ECF · Lucro Real) file — serviço/rota dedicados (ADR-INCR-SPED-ECF-FASE3,
+  // Fork 1→(b); BRIEF item 4). Mesma coluna String ⇒ zero migration.
+  'EXPORT_SPED_ECF_REAL',
 ] as const;
 
 export type ImportKind = (typeof IMPORT_KINDS)[number];

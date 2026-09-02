@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // JSX compiles to bare `React.createElement` with React expected in scope. Unlike the
 // panels that `import React`, this one doesn't — expose it globally for the render.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { JournalEntriesPanel } from '../JournalEntriesPanel';
 import {
   accountingService,
@@ -16,6 +16,7 @@ vi.mock('../../../../lib/services/accounting.service', () => ({
   accountingService: {
     listEntries: vi.fn(),
     reverseEntry: vi.fn(),
+    downloadReceipt: vi.fn(),
   },
 }));
 
@@ -57,5 +58,19 @@ describe('JournalEntriesPanel (render)', () => {
     expect(screen.getByRole('button', { name: /Estornar/ })).toBeInTheDocument();
     expect(container.textContent).toContain('1.000,00');
     expect(container.textContent).not.toContain('NaN');
+  });
+
+  it('clicking "Recibo (PDF)" calls accountingService.downloadReceipt with the entry and unit id', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [entry], total: 1 });
+    vi.mocked(accountingService.downloadReceipt).mockResolvedValue(undefined);
+
+    render(<JournalEntriesPanel unitId="u1" />);
+
+    await waitFor(() => expect(screen.getByText('Venda à vista')).toBeInTheDocument());
+    const receiptButton = screen.getByRole('button', { name: /Recibo \(PDF\)/ });
+    fireEvent.click(receiptButton);
+
+    await waitFor(() => expect(accountingService.downloadReceipt).toHaveBeenCalledTimes(1));
+    expect(accountingService.downloadReceipt).toHaveBeenCalledWith('e1', 'u1');
   });
 });

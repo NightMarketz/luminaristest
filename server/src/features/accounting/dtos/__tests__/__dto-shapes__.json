@@ -2460,6 +2460,149 @@
     }
   },
   "SpedEcfDto.ts": {
+    "DeclarantSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "cnpj": {
+          "type": "string",
+          "pattern": "^\\d{14}$"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "codNat": {
+          "type": "string",
+          "pattern": "^\\d{3,4}$"
+        },
+        "cnaeFiscal": {
+          "type": "string",
+          "pattern": "^\\d{7}$"
+        },
+        "endereco": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "num": {
+          "default": "S/N",
+          "type": "string",
+          "maxLength": 6
+        },
+        "compl": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "bairro": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "uf": {
+          "type": "string",
+          "enum": [
+            "AC",
+            "AL",
+            "AM",
+            "AP",
+            "BA",
+            "CE",
+            "DF",
+            "ES",
+            "GO",
+            "MA",
+            "MG",
+            "MS",
+            "MT",
+            "PA",
+            "PB",
+            "PE",
+            "PI",
+            "PR",
+            "RJ",
+            "RN",
+            "RO",
+            "RR",
+            "RS",
+            "SC",
+            "SE",
+            "SP",
+            "TO"
+          ]
+        },
+        "codMun": {
+          "type": "string",
+          "pattern": "^\\d{7}$"
+        },
+        "cep": {
+          "type": "string",
+          "pattern": "^\\d{8}$"
+        },
+        "numTel": {
+          "type": "string",
+          "maxLength": 15
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        }
+      },
+      "required": [
+        "cnpj",
+        "nome",
+        "codNat",
+        "cnaeFiscal",
+        "endereco",
+        "bairro",
+        "uf",
+        "codMun",
+        "cep",
+        "email"
+      ],
+      "additionalProperties": false
+    },
+    "SignerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "identNom": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identCpfCnpj": {
+          "type": "string",
+          "pattern": "^\\d{11}$|^\\d{14}$"
+        },
+        "identQualif": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "indCrc": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "fone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 14
+        }
+      },
+      "required": [
+        "identNom",
+        "identCpfCnpj",
+        "identQualif",
+        "email",
+        "fone"
+      ],
+      "additionalProperties": false
+    },
     "SpedEcfRequestSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2650,6 +2793,219 @@
         "unitId",
         "year",
         "declarant",
+        "signers"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "SpedEcfRealDto.ts": {
+    "SpedEcfRealRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "declarant": {
+          "type": "object",
+          "properties": {
+            "cnpj": {
+              "type": "string",
+              "pattern": "^\\d{14}$"
+            },
+            "nome": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "codNat": {
+              "type": "string",
+              "pattern": "^\\d{3,4}$"
+            },
+            "cnaeFiscal": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "endereco": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "num": {
+              "default": "S/N",
+              "type": "string",
+              "maxLength": 6
+            },
+            "compl": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "bairro": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "uf": {
+              "type": "string",
+              "enum": [
+                "AC",
+                "AL",
+                "AM",
+                "AP",
+                "BA",
+                "CE",
+                "DF",
+                "ES",
+                "GO",
+                "MA",
+                "MG",
+                "MS",
+                "MT",
+                "PA",
+                "PB",
+                "PE",
+                "PI",
+                "PR",
+                "RJ",
+                "RN",
+                "RO",
+                "RR",
+                "RS",
+                "SC",
+                "SE",
+                "SP",
+                "TO"
+              ]
+            },
+            "codMun": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "cep": {
+              "type": "string",
+              "pattern": "^\\d{8}$"
+            },
+            "numTel": {
+              "type": "string",
+              "maxLength": 15
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+            }
+          },
+          "required": [
+            "cnpj",
+            "nome",
+            "codNat",
+            "cnaeFiscal",
+            "endereco",
+            "bairro",
+            "uf",
+            "codMun",
+            "cep",
+            "email"
+          ],
+          "additionalProperties": false
+        },
+        "fiscal": {
+          "type": "object",
+          "properties": {
+            "formaTrib": {
+              "default": "1",
+              "type": "string",
+              "pattern": "^\\d$"
+            },
+            "formaTribPer": {
+              "type": "string",
+              "minLength": 4,
+              "maxLength": 4
+            },
+            "formaApur": {
+              "default": "T",
+              "type": "string",
+              "enum": [
+                "T"
+              ]
+            },
+            "indAliqCsll": {
+              "default": "1",
+              "type": "string",
+              "enum": [
+                "1",
+                "4"
+              ]
+            },
+            "indRecReceita": {
+              "default": "2",
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          },
+          "required": [
+            "formaTribPer"
+          ],
+          "additionalProperties": false
+        },
+        "signers": {
+          "minItems": 1,
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "identNom": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identCpfCnpj": {
+                "type": "string",
+                "pattern": "^\\d{11}$|^\\d{14}$"
+              },
+              "identQualif": {
+                "type": "string",
+                "pattern": "^\\d{3}$"
+              },
+              "indCrc": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              },
+              "fone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 14
+              }
+            },
+            "required": [
+              "identNom",
+              "identCpfCnpj",
+              "identQualif",
+              "email",
+              "fone"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "year",
+        "declarant",
+        "fiscal",
         "signers"
       ],
       "additionalProperties": false

@@ -34,6 +34,7 @@ Pré-condições (verificar antes de começar):
 > encerramento executado no H1 for de outro ano, **esta não é a tabela**. Há ainda duas datas
 > concorrentes para o mesmo Leiaute 12 — o portal SPED lista *28/05/2026* e a página do gov.br anuncia
 > *25/07/2026*; confira qual está corrente e registre versão/vigência (o passo 2 pede `layoutVersion`).
+> **[EMENDA 2026-09-02]** **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial.
 >
 > **O arquivo oficial é XLSX; o conversor lê TEXTO com pipe.** O passo 1 abaixo, como está escrito, **não
 > aceita** o arquivo que a pré-condição manda baixar. Duas saídas:

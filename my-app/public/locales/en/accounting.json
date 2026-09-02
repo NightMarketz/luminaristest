@@ -570,9 +570,15 @@
       "disabledTitle": "Entry already reversed",
       "label": "Reverse"
     },
+    "receiptAction": {
+      "title": "Download this entry's PDF receipt",
+      "label": "Receipt (PDF)",
+      "downloading": "Downloading…"
+    },
     "error": {
       "load": "Failed to load journal entries.",
-      "reverse": "Failed to reverse entry."
+      "reverse": "Failed to reverse entry.",
+      "receipt": "Failed to download receipt."
     },
     "loading": "Loading journal entries…",
     "empty": "No journal entries posted for this unit yet.",

@@ -503,7 +503,10 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
             />
           </label>
 
-          <input ref={fileRef} type="file" accept=".csv,.xlsx,.ofx" onChange={handleFileSelected} className="hidden" />
+          {/* CNAB 240 is detected by the backend via extension (.ret/.cnab) OR content-sniff
+              (reconciliationController.ts sniffFormat) — .ret/.cnab are the only extensions the
+              backend actually checks by name, so those are what the picker allowlists here. */}
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.ofx,.ret,.cnab" onChange={handleFileSelected} className="hidden" />
           <button
             type="button"
             onClick={() => fileRef.current?.click()}

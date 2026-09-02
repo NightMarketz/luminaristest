@@ -95,5 +95,6 @@ bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depend
 2. **O tamanho real da ECF Fase 3.** O delta está nomeado (blocos L/M/N + e-Lalur), não dimensionado;
    dimensionar é trabalho do ADR/BRIEF, não deste doc.
 3. **A forma certa do F-W2F-3 e do F-W2F-5** — declarados, não chutados.
-4. **Se o Leiaute 12 corrente é o de 28/05/2026 ou o de 25/07/2026** — conferir na hora do X2, que
-   exige registrar versão/vigência de qualquer forma.
+4. ~~**Se o Leiaute 12 corrente é o de 28/05/2026 ou o de 25/07/2026**~~ — **[EMENDA 2026-09-02]**
+   **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Fecha também a pendência de versão do BRIEF da ECF Fase 3 (§4). Detalhe no
+   `KITS-PREFLIGHT-2026-09-02.md`, kit do X2.
