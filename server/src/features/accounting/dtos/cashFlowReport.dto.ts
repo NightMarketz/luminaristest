@@ -28,7 +28,8 @@ import { isValidDateOnly } from '../models/dates';
 export const CashFlowStatementQuerySchema = z
   .object({
     unitId: z.string().min(1),
-    asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD'),
+    // Opcional: omitido ⇒ o Service usa hoje no fuso do escopo (scopeToday). Ver BalanceSheetQuerySchema.
+    asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD').optional(),
   })
   .strict();
 

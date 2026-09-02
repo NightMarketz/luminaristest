@@ -5,10 +5,6 @@ import { accountingService, type IncomeStatementReport, type StatementSection } 
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function SectionTable({ section, title, subtitle }: { section: StatementSection; title: string; subtitle?: string }) {
   const { t } = useTranslation('accounting');
   const total = parseInt(section.totalCents, 10);
@@ -59,17 +55,25 @@ interface Props {
 
 export function IncomeStatementPanel({ unitId }: Props) {
   const { t } = useTranslation('accounting');
-  const [asOf, setAsOf] = useState(today());
+  // Campo não tocado ⇒ `asOf` omitido e o BACKEND decide "hoje" via `scopeToday` (fuso do escopo) —
+  // nunca derivar "hoje" aqui: em UTC o default adiantava o dia entre 21h-00h BRT, e em 31/12 a janela
+  // year-to-date pulava para o ano seguinte (relatório vazio). F1(a), GAP-MAP nº 5 — mesmo padrão do
+  // AgingPanel (PR #250).
+  const [asOf, setAsOf] = useState('');
+  const [asOfTouched, setAsOfTouched] = useState(false);
   const [report, setReport] = useState<IncomeStatementReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadReport() {
-    if (!unitId || !asOf) return;
+    if (!unitId) return;
     setLoading(true);
     setError(null);
     try {
-      setReport(await accountingService.getIncomeStatement(unitId, asOf));
+      const next = await accountingService.getIncomeStatement(unitId, asOfTouched && asOf ? asOf : undefined);
+      setReport(next);
+      // `toDate` É o asOf nestes dois (janela year-to-date: fromDate=1º jan → toDate=asOf).
+      if (!asOfTouched) setAsOf(next.toDate); // exibe o dia que o backend usou
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('incomeStatement.loadError', 'Erro ao carregar DRE.'));
       setReport(null);
@@ -89,14 +93,14 @@ export function IncomeStatementPanel({ unitId }: Props) {
           <input
             type="date"
             value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
+            onChange={(e) => { setAsOf(e.target.value); setAsOfTouched(true); }}
             className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none"
           />
         </label>
         <button
           type="button"
           onClick={() => void loadReport()}
-          disabled={loading || !asOf}
+          disabled={loading}
           className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
         >
           {loading ? t('incomeStatement.calculating', 'Calculando…') : t('incomeStatement.generate', 'Gerar DRE')}
