@@ -52,7 +52,11 @@ export interface Payable {
   issueDate: string;
   dueDate: string;
   amountCents: number;
-  expenseAccountId: string;
+  /** Null for an INVENTORY purchase (the recognition debits 1.1.6 Estoques, not an expense leaf). */
+  expenseAccountId: string | null;
+  /** Inventory-purchase arm (FE-INCR-PURCHASE-VALUATION / LAC-D): productRef + qty, XOR with expenseAccountId. */
+  inventoryProductRef: string | null;
+  inventoryQty: number | null;
   status: PayableStatus;
   createdById: string | null;
   cancelledById: string | null;
@@ -95,9 +99,18 @@ export interface CreatePayablePayload {
   issueDate: string;
   /** YYYY-MM-DD */
   dueDate: string;
+  /** TOTAL da compra em centavos (nunca por unidade) — no braço de inventário valora qty unidades. */
   amountCents: number;
-  /** Chart-of-accounts account **id** (analytic, nature=Expense). */
-  expenseAccountId: string;
+  /**
+   * Chart-of-accounts account **id** (analytic, nature=Expense) — EXPENSE arm.
+   * XOR duro no servidor (LAC-D): exatamente UM dos braços — `expenseAccountId` OU o par
+   * `inventoryProductRef`+`inventoryQty`; par meio-preenchido é 400.
+   */
+  expenseAccountId?: string;
+  /** INVENTORY arm: DT `products` row id (validado no servidor contra o catálogo do tenant). */
+  inventoryProductRef?: string;
+  /** INVENTORY arm: quantidade inteira > 0. */
+  inventoryQty?: number;
   /** Optional FK to a Counterparty(SUPPLIER) of this unit (re-scoped on the backend). */
   counterpartyId?: string;
   attachmentId?: string;

@@ -135,6 +135,12 @@ function PayableRow({ payable, onPay, onCancel, onUndoPayment }: RowProps) {
         </td>
         <td className="max-w-xs px-4 py-2.5 text-neutral-300">
           <span className="line-clamp-1">{payable.description}</span>
+          {payable.inventoryProductRef != null && (
+            // LAC-D: compra de estoque (D 1.1.6 + valoração) — distingue da despesa comum.
+            <span className="mt-0.5 inline-block rounded-full bg-sky-950/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
+              {t('contasAPagar.inventoryBadge', 'Estoque · {{qty}} un.', { qty: payable.inventoryQty ?? 0 })}
+            </span>
+          )}
         </td>
         <td className="px-4 py-2.5 tabular-nums text-neutral-300">{formatDate(payable.dueDate)}</td>
         <td className="px-4 py-2.5 text-right tabular-nums text-neutral-100">{formatCents(payable.amountCents)}</td>

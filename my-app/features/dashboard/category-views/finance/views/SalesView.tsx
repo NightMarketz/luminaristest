@@ -8,6 +8,8 @@ import { StandardPagination } from '@/features/dashboard/shared/components/Stand
 
 import { SalesTable, SaleDetailPanel, SalesFilterBar } from '../components/sales';
 import SalesCreateModal from '../components/sales/SalesCreateModal';
+import { SalePaymentModal, SaleReasonModal } from '../components/sales/SaleActionModals';
+import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 import { useTranslation } from 'next-i18next';
 import { useFilterPersistence } from '../../shared/hooks/useFilterPersistence';
 
@@ -48,6 +50,9 @@ export function SalesView({
         stockIndex,
         updating,
         updateSale,
+        paySale,
+        cancelSale,
+        returnSale,
     } = useSalesData(tables);
 
     // 2. Hook de Lógica (Filtros + Sort + Paginação)
@@ -74,7 +79,32 @@ export function SalesView({
     // 4. Estado da View
     const [selectedSale, setSelectedSale] = useState<SaleRecord | null>(null);
 
+    // 4b. Transições dedicadas da venda (LAC-A) — o modal certo por intenção; Draft-cancel é a
+    // única que fica no PUT genérico (F-A1(a): Draft não tem efeito contábil a estornar).
+    const [saleToPay, setSaleToPay] = useState<SaleRecord | null>(null);
+    const [reasonAction, setReasonAction] = useState<{ kind: 'cancel' | 'return'; sale: SaleRecord } | null>(null);
+    const { confirmNode: draftCancelConfirmNode, confirm: confirmDraftCancel } = useConfirmModal();
+
     const { t } = useTranslation(['common', 'finance_view']);
+
+    const handleRequestPay = useCallback((sale: SaleRecord) => setSaleToPay(sale), []);
+    const handleRequestReturn = useCallback((sale: SaleRecord) => setReasonAction({ kind: 'return', sale }), []);
+    const handleRequestCancel = useCallback((sale: SaleRecord) => {
+        const isFinalized = String(sale.status || '').toLowerCase() === 'finalized';
+        if (isFinalized) {
+            // Finalized: rota dedicada (estorno contábil via bridge) + motivo opcional.
+            setReasonAction({ kind: 'cancel', sale });
+            return;
+        }
+        // Draft: sem lançamento a estornar — PUT genérico segue correto (F-A1(a) ratificado).
+        void confirmDraftCancel({
+            title: t('finance_view:sales.confirm_cancel', 'Cancelar venda?'),
+            message: t('finance_view:sales.confirm_cancel_message', 'Esta ação não pode ser desfeita. A venda será marcada como cancelada.'),
+            variant: 'danger',
+            confirmLabel: t('common:cancel', 'Cancelar venda'),
+            onConfirm: () => updateSale(sale.id, { status: 'Cancelled' }, t('finance_view:sales.success_cancelled', 'Venda cancelada com sucesso.')),
+        });
+    }, [confirmDraftCancel, t, updateSale]);
 
     // 5. Refetch quando FinanceView cria uma nova venda
     useEffect(() => {
@@ -140,6 +170,9 @@ export function SalesView({
                         isWidgetMode={isWidgetMode}
                         onSelectSale={setSelectedSale}
                         onUpdateSale={updateSale}
+                        onRequestPay={handleRequestPay}
+                        onRequestCancel={handleRequestCancel}
+                        onRequestReturn={handleRequestReturn}
                         onRefresh={refetch}
                     />
                     {/* Pagination — controlled by useSalesLogic, shown below table */}
@@ -169,9 +202,33 @@ export function SalesView({
                         customerNameMap={customerNameMap}
                         unitNameMap={unitNameMap}
                         onUpdateSale={updateSale}
+                        onRequestPay={handleRequestPay}
+                        onRequestCancel={handleRequestCancel}
+                        onRequestReturn={handleRequestReturn}
                     />
                 </div>
             </div>
+
+            {/* Modais das transições dedicadas (LAC-A) + confirm do Draft-cancel */}
+            {draftCancelConfirmNode}
+            <SalePaymentModal
+                sale={saleToPay}
+                isOpen={saleToPay != null}
+                onClose={() => setSaleToPay(null)}
+                onConfirm={async (payment) => {
+                    if (saleToPay) await paySale(saleToPay.id, payment);
+                }}
+            />
+            <SaleReasonModal
+                isOpen={reasonAction != null}
+                kind={reasonAction?.kind ?? 'cancel'}
+                onClose={() => setReasonAction(null)}
+                onConfirm={async (reason) => {
+                    if (!reasonAction) return;
+                    if (reasonAction.kind === 'cancel') await cancelSale(reasonAction.sale.id, reason);
+                    else await returnSale(reasonAction.sale.id, reason);
+                }}
+            />
 
             {/* Modal de criação — controlado por FinanceView via isCreateOpen/onCloseCreate */}
             {isCreateOpen && salesTable && saleItemsTable && (

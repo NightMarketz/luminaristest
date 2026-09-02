@@ -30,6 +30,7 @@ import { ForbiddenError } from '../../../../lib/errors';
 import { LEDGER_STATUSES } from '../../models/ledgerStatus';
 import {
   CLIENTES_A_RECEBER_CODE,
+  ESTOQUES_CODE,
   FORNECEDORES_A_PAGAR_CODE,
 } from '../../fixtures/ChartOfAccountsFixture';
 import type { AccountingScope } from '../../scope/AccountingScope';
@@ -47,11 +48,13 @@ const scope: AccountingScope = {
 const AR_ID = 'acc-115';
 const AP_ID = 'acc-212';
 const POS_ID = 'acc-112';
+const INV_ID = 'acc-116';
 
 const CHART: Record<string, { id: string; code: string; name: string; nature: string }> = {
   [CLIENTES_A_RECEBER_CODE]: { id: AR_ID, code: '1.1.5', name: 'Clientes a Receber', nature: 'Asset' },
   [FORNECEDORES_A_PAGAR_CODE]: { id: AP_ID, code: '2.1.2', name: 'Fornecedores a Pagar', nature: 'Liability' },
   [POS_RECEIVABLE_CODE]: { id: POS_ID, code: '1.1.2', name: 'A Receber', nature: 'Asset' },
+  [ESTOQUES_CODE]: { id: INV_ID, code: '1.1.6', name: 'Estoques', nature: 'Asset' },
 };
 
 interface Totals {
@@ -95,6 +98,7 @@ function buildService(
     totalsSansFeeders?: Totals[];
     receivableRows?: Array<{ amountCents: number }>;
     payableRows?: Array<{ amountCents: number }>;
+    inventoryItems?: Array<{ productRef: string; totalValueCents: number }>;
     chart?: typeof CHART;
     policy?: ReturnType<typeof fullPolicy>;
   } = {},
@@ -111,6 +115,7 @@ function buildService(
   };
   const receivableRepo = { findOutstanding: jest.fn(async () => over.receivableRows ?? []) };
   const payableRepo = { findOutstanding: jest.fn(async () => over.payableRows ?? []) };
+  const inventoryRepo = { findAllActive: jest.fn(async () => over.inventoryItems ?? []) };
   const policy = over.policy ?? fullPolicy();
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const svc = new TieOutDiagnosticService(
@@ -119,9 +124,10 @@ function buildService(
     receivableRepo as any,
     payableRepo as any,
     policy as any,
+    inventoryRepo as any,
   );
   /* eslint-enable @typescript-eslint/no-explicit-any */
-  return { svc, accountRepo, postingRepo, receivableRepo, payableRepo, policy };
+  return { svc, accountRepo, postingRepo, receivableRepo, payableRepo, inventoryRepo, policy };
 }
 
 function checkById(checks: TieOutCheck[], id: TieOutCheck['id']): TieOutCheck {
@@ -142,10 +148,16 @@ const BALANCED = {
     { accountId: AR_ID, debitCents: 9000, creditCents: 2000 },
     { accountId: AP_ID, debitCents: 1000, creditCents: 4000 },
     { accountId: POS_ID, debitCents: 8000, creditCents: 2000 },
+    // Estoque: subrazão 4000+2500=6500 ↔ 1.1.6 D 7000 / C 500 → saldo devedor 6500 (LAC-E).
+    { accountId: INV_ID, debitCents: 7000, creditCents: 500 },
   ],
   totalsSansFeeders: [] as Totals[],
   receivableRows: [{ amountCents: 5000 }, { amountCents: 2000 }],
   payableRows: [{ amountCents: 3000 }],
+  inventoryItems: [
+    { productRef: 'prod-1', totalValueCents: 4000 },
+    { productRef: 'prod-2', totalValueCents: 2500 },
+  ],
 };
 
 describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', () => {
@@ -157,7 +169,7 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
 
     expect(r.unitId).toBe('unit-1');
     expect(r.status).toBe('OK');
-    expect(r.checks).toHaveLength(3);
+    expect(r.checks).toHaveLength(4);
 
     const ar = checkById(r.checks, 'receivables');
     expect(ar.subledgerCents).toBe('7000');
@@ -179,6 +191,14 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     expect(pos.ledgerCents).toBe('6000');
     expect(pos.balanced).toBe(true);
     expect(pos.controlAccountCode).toBe('1.1.2');
+
+    // Estoque (LAC-E): Σ InventoryItem.totalValueCents vs saldo devedor da 1.1.6.
+    const inv = checkById(r.checks, 'inventory');
+    expect(inv.subledgerCents).toBe('6500');
+    expect(inv.ledgerCents).toBe('6500');
+    expect(inv.balanced).toBe(true);
+    expect(inv.controlAccountCode).toBe('1.1.6');
+    expect(inv.controlAccountName).toBe('Estoques');
   });
 
   it('passa LEDGER_STATUSES às duas agregações e excludeSourceTypes com TODOS os 6 feeders PDV na 2ª', async () => {
@@ -220,6 +240,7 @@ describe('TieOutDiagnosticService.tieOut — casos divergentes (o diagnóstico A
         { accountId: AR_ID, debitCents: 8000, creditCents: 2000 }, // 6000 ≠ 7000 do subrazão
         { accountId: AP_ID, debitCents: 1000, creditCents: 4000 },
         { accountId: POS_ID, debitCents: 8000, creditCents: 2000 },
+        { accountId: INV_ID, debitCents: 7000, creditCents: 500 },
       ],
     });
     const r = await svc.tieOut(scope);
@@ -239,6 +260,7 @@ describe('TieOutDiagnosticService.tieOut — casos divergentes (o diagnóstico A
         { accountId: AR_ID, debitCents: 9000, creditCents: 2000 },
         { accountId: AP_ID, debitCents: 1000, creditCents: 4500 }, // credor 3500 ≠ 3000
         { accountId: POS_ID, debitCents: 8000, creditCents: 2000 },
+        { accountId: INV_ID, debitCents: 7000, creditCents: 500 },
       ],
     });
     const r = await svc.tieOut(scope);
@@ -256,6 +278,7 @@ describe('TieOutDiagnosticService.tieOut — casos divergentes (o diagnóstico A
         { accountId: AR_ID, debitCents: 9000, creditCents: 2000 },
         { accountId: AP_ID, debitCents: 1000, creditCents: 4000 },
         { accountId: POS_ID, debitCents: 9500, creditCents: 2000 }, // 7500 no razão
+        { accountId: INV_ID, debitCents: 7000, creditCents: 500 },
       ],
       // Excluindo os feeders sobra o lançamento manual: D 1500 → residual 1500.
       totalsSansFeeders: [{ accountId: POS_ID, debitCents: 1500, creditCents: 0 }],
@@ -266,6 +289,41 @@ describe('TieOutDiagnosticService.tieOut — casos divergentes (o diagnóstico A
     expect(pos.subledgerCents).toBe('6000'); // 7500 − 1500: agregado salão+CRM, NÃO o total
     expect(pos.differenceCents).toBe('1500'); // exatamente a partida estranha
     expect(pos.balanced).toBe(false);
+    expect(r.status).toBe('DIVERGENT');
+  });
+
+  it('estoque (LAC-E): lançamento manual em 1.1.6 → razão 8000 ≠ subrazão 6500, ACUSA com a diferença exata', async () => {
+    const { svc } = buildService({
+      ...BALANCED,
+      totals: [
+        { accountId: AR_ID, debitCents: 9000, creditCents: 2000 },
+        { accountId: AP_ID, debitCents: 1000, creditCents: 4000 },
+        { accountId: POS_ID, debitCents: 8000, creditCents: 2000 },
+        { accountId: INV_ID, debitCents: 8500, creditCents: 500 }, // devedor 8000 ≠ 6500 do subrazão
+      ],
+    });
+    const r = await svc.tieOut(scope);
+    const inv = checkById(r.checks, 'inventory');
+    expect(inv.ledgerCents).toBe('8000');
+    expect(inv.subledgerCents).toBe('6500');
+    expect(inv.differenceCents).toBe('1500'); // exatamente a partida fora do funil Payable/CMV
+    expect(inv.balanced).toBe(false);
+    expect(r.status).toBe('DIVERGENT');
+    // As demais continuam fechadas — divergência localizada.
+    expect(checkById(r.checks, 'receivables').balanced).toBe(true);
+    expect(checkById(r.checks, 'payables').balanced).toBe(true);
+  });
+
+  it('estoque: conta 1.1.6 ausente do chart + subrazão valorado → razão 0, ACUSA sem explodir', async () => {
+    const chartSem116 = { ...CHART };
+    delete chartSem116[ESTOQUES_CODE];
+    const { svc } = buildService({ ...BALANCED, chart: chartSem116 });
+    const r = await svc.tieOut(scope);
+    const inv = checkById(r.checks, 'inventory');
+    expect(inv.controlAccountName).toBeNull();
+    expect(inv.ledgerCents).toBe('0');
+    expect(inv.subledgerCents).toBe('6500');
+    expect(inv.balanced).toBe(false);
     expect(r.status).toBe('DIVERGENT');
   });
 

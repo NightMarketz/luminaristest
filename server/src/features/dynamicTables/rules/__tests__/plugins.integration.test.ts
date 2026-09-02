@@ -338,6 +338,41 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     const { movements } = await seedInventory(10);
     await expect(create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 999 })).rejects.toBeInstanceOf(ValidationError);
   });
+  it('manual Purchase entry still requires supplierId (regression guard for the skip below)', async () => {
+    const { movements } = await seedInventory(10);
+    await expect(
+      create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5, reason: 'Purchase' }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+  it('linha do Payable (detailKey ACCOUNTING_PAYABLE:) pula a validação manual e aplica o delta — sob o schema REAL, sem campo sourceType (LAC-D F-D2)', async () => {
+    // Condição de PRODUÇÃO (finding do review independente, classe sintetico-nao-cobre-formato-
+    // de-dado-real): o preset stockMovements NÃO declara sourceType, e o buildZodSchema REMOVE
+    // chaves fora do schema antes do plugin — um discriminador via sourceType morre no strip.
+    // O discriminador real é o PREFIXO do detailKey (campo declarado no preset).
+    const prodLikeMovementFields = [
+      f('productId', 'string'), f('unitId', 'string'),
+      f('type', 'select', false, { options: ['In', 'Out'] }), f('quantity', 'number'),
+      f('reason', 'string'), f('detailKey', 'string'), // como no preset real: SEM sourceType
+    ];
+    const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
+    const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: prodLikeMovementFields });
+    const pu = await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } });
+
+    // Envia sourceType como a integração enviaria por engano — o canário abaixo prova o strip.
+    await create(movements.id, {
+      productId: 'p1', unitId: 'u1', type: 'In', quantity: 5,
+      reason: 'Purchase', sourceType: 'ACCOUNTING_PAYABLE', detailKey: 'ACCOUNTING_PAYABLE:pay-1',
+    });
+
+    // Delta aplicado sem exigir supplierId/cost (a linha já nasceu valorada no razão).
+    expect(((await rowById(pu.id))!.data as Record<string, unknown>)).toMatchObject({ stock: 15 });
+    // Canário do strip + reason preservado (a normalização p/ 'Adjustment' não se aplica aqui).
+    const movementRow = await prisma.dynamicTableData.findFirst({ where: { dynamicTableId: movements.id } });
+    const stored = movementRow!.data as Record<string, unknown>;
+    expect('sourceType' in stored).toBe(false);
+    expect(stored.reason).toBe('Purchase');
+    expect(stored.detailKey).toBe('ACCOUNTING_PAYABLE:pay-1');
+  });
 });
 
 // ---------------------------------------------------------------------------------------------

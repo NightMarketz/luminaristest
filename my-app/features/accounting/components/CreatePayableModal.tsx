@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import {
   accountsPayableService,
   type CreatePayablePayload,
 } from '../../../lib/services/accountsPayable.service';
+import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import type { Account } from '../../../lib/services/accounting.service';
 import type { Counterparty } from '../../../lib/services/counterparties.service';
 import { parseBrl } from '../lib/parseBrl';
@@ -30,6 +31,34 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * FE-INCR-PURCHASE-VALUATION (LAC-D): o payable tem DOIS braços (XOR do servidor) —
+ * despesa (D conta de despesa) ou COMPRA DE ESTOQUE (D 1.1.6 + valoração via receiveStock).
+ * O modo estoque troca a conta de despesa por (produto do catálogo DT + quantidade).
+ */
+type PayableMode = 'expense' | 'inventory';
+
+interface ProductOption {
+  id: string;
+  name: string;
+}
+
+/** Carrega o catálogo `products` (DynamicTable) do tenant para o dropdown do braço de inventário. */
+async function loadProductOptions(): Promise<ProductOption[]> {
+  const tables = await DynamicTableService.getTables();
+  const products = (tables.data ?? []).find(
+    (tbl) => (tbl as { internalName?: string }).internalName === 'products',
+  );
+  if (!products) return [];
+  const rows = await DynamicTableService.getTableData(products.id, 'limit=500');
+  return ((rows.data ?? []) as Array<{ id?: string; data?: Record<string, unknown> }>)
+    .map((r) => ({
+      id: String(r.id ?? ''),
+      name: typeof r.data?.name === 'string' && r.data.name ? r.data.name : String(r.id ?? ''),
+    }))
+    .filter((p) => p.id !== '');
+}
+
 
 export function CreatePayableModal({
   isOpen,
@@ -50,22 +79,43 @@ export function CreatePayableModal({
   const [dueDate, setDueDate] = useState<string>(today);
   const [amountBrl, setAmountBrl] = useState('');
   const [expenseAccountId, setExpenseAccountId] = useState('');
+  const [mode, setMode] = useState<PayableMode>('expense');
+  const [inventoryProductRef, setInventoryProductRef] = useState('');
+  const [inventoryQtyStr, setInventoryQtyStr] = useState('');
+  const [products, setProducts] = useState<ProductOption[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [periodError, setPeriodError] = useState(false);
+
+  // Catálogo de produtos: carregado sob demanda na 1ª entrada no modo estoque.
+  useEffect(() => {
+    if (!isOpen || mode !== 'inventory' || products !== null) return;
+    let alive = true;
+    loadProductOptions()
+      .then((opts) => { if (alive) setProducts(opts); })
+      .catch(() => { if (alive) setProducts([]); });
+    return () => { alive = false; };
+  }, [isOpen, mode, products]);
 
   const analyticExpense = expenseAccounts.filter(
     (a) => a.nature === 'Expense' && a.acceptsEntries,
   );
 
   const amountCents = parseBrl(amountBrl);
+  // Number() (não parseInt): "2.5" deve INVALIDAR, nunca truncar para 2 em silêncio.
+  const inventoryQty = Number(inventoryQtyStr);
+  const inventoryArmValid =
+    inventoryProductRef !== '' && Number.isInteger(inventoryQty) && inventoryQty > 0;
+
+  // XOR na UI (espelho do superRefine do servidor): o modo decide o braço; par meio-preenchido
+  // é inalcançável porque o braço inativo é limpo no toggle e omitido do payload.
   const isValid =
     supplierName.trim() !== '' &&
     description.trim() !== '' &&
     !!issueDate &&
     !!dueDate &&
     amountCents > 0 &&
-    expenseAccountId !== '';
+    (mode === 'expense' ? expenseAccountId !== '' : inventoryArmValid);
 
   const isDirty =
     supplierName !== '' ||
@@ -73,7 +123,9 @@ export function CreatePayableModal({
     documentNumber !== '' ||
     description !== '' ||
     amountBrl !== '' ||
-    expenseAccountId !== '';
+    expenseAccountId !== '' ||
+    inventoryProductRef !== '' ||
+    inventoryQtyStr !== '';
 
   /** Selecting a counterparty prefills the supplier name snapshot when it is still blank. */
   function handleCounterpartyChange(id: string) {
@@ -91,8 +143,22 @@ export function CreatePayableModal({
     setDueDate(today());
     setAmountBrl('');
     setExpenseAccountId('');
+    setMode('expense');
+    setInventoryProductRef('');
+    setInventoryQtyStr('');
     setError(null);
     setPeriodError(false);
+  }
+
+  /** Trocar de braço limpa o lado inativo — o XOR do servidor nunca vê par meio-preenchido. */
+  function switchMode(next: PayableMode) {
+    setMode(next);
+    if (next === 'expense') {
+      setInventoryProductRef('');
+      setInventoryQtyStr('');
+    } else {
+      setExpenseAccountId('');
+    }
   }
 
   function handleClose() {
@@ -105,7 +171,11 @@ export function CreatePayableModal({
     setError(null);
     setPeriodError(false);
     if (!isValid) {
-      setError(t('contasAPagar.createModal.error.invalid', 'Preencha fornecedor, descrição, datas, valor e conta de despesa.'));
+      setError(
+        mode === 'inventory'
+          ? t('contasAPagar.createModal.error.invalidInventory', 'Preencha fornecedor, descrição, datas, valor total, produto e quantidade.')
+          : t('contasAPagar.createModal.error.invalid', 'Preencha fornecedor, descrição, datas, valor e conta de despesa.'),
+      );
       return;
     }
 
@@ -116,7 +186,10 @@ export function CreatePayableModal({
       issueDate,
       dueDate,
       amountCents,
-      expenseAccountId,
+      // XOR do servidor: exatamente UM braço entra no payload.
+      ...(mode === 'expense'
+        ? { expenseAccountId }
+        : { inventoryProductRef, inventoryQty }),
       ...(counterpartyId ? { counterpartyId } : {}),
       ...(documentNumber.trim() ? { documentNumber: documentNumber.trim() } : {}),
     };
@@ -293,29 +366,107 @@ export function CreatePayableModal({
             />
           </div>
 
-          {/* Expense account */}
+          {/* Braço do payable (LAC-D): despesa × compra de estoque (XOR do servidor) */}
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
-              {t('contasAPagar.createModal.field.expenseAccount', 'Conta de despesa (contrapartida)')}
+              {t('contasAPagar.createModal.field.kind', 'Tipo de lançamento')}
             </label>
-            <select
-              value={expenseAccountId}
-              onChange={(e) => setExpenseAccountId(e.target.value)}
-              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
-            >
-              <option value="">{t('contasAPagar.createModal.field.selectAccount', '— selecione a conta de despesa —')}</option>
-              {analyticExpense.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.code} — {a.name}
-                </option>
-              ))}
-            </select>
-            {analyticExpense.length === 0 && (
-              <p className="text-xs text-amber-400">
-                {t('contasAPagar.createModal.noExpenseAccounts', 'Nenhuma conta de despesa analítica encontrada. Cadastre uma no Plano de Contas.')}
+            <div className="flex gap-2" role="radiogroup" aria-label={t('contasAPagar.createModal.field.kind', 'Tipo de lançamento')}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={mode === 'expense'}
+                onClick={() => switchMode('expense')}
+                className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'expense' ? 'bg-emerald-600 text-white' : 'border border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'}`}
+              >
+                {t('contasAPagar.createModal.mode.expense', 'Despesa')}
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={mode === 'inventory'}
+                onClick={() => switchMode('inventory')}
+                className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'inventory' ? 'bg-emerald-600 text-white' : 'border border-neutral-700 bg-neutral-800 text-neutral-300 hover:bg-neutral-700'}`}
+              >
+                {t('contasAPagar.createModal.mode.inventory', 'Compra de estoque')}
+              </button>
+            </div>
+            {mode === 'inventory' && (
+              <p className="text-xs text-neutral-500">
+                {t('contasAPagar.createModal.mode.inventoryHint', 'Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra.')}
               </p>
             )}
           </div>
+
+          {mode === 'expense' ? (
+            /* Expense account */
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                {t('contasAPagar.createModal.field.expenseAccount', 'Conta de despesa (contrapartida)')}
+              </label>
+              <select
+                value={expenseAccountId}
+                onChange={(e) => setExpenseAccountId(e.target.value)}
+                className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="">{t('contasAPagar.createModal.field.selectAccount', '— selecione a conta de despesa —')}</option>
+                {analyticExpense.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.code} — {a.name}
+                  </option>
+                ))}
+              </select>
+              {analyticExpense.length === 0 && (
+                <p className="text-xs text-amber-400">
+                  {t('contasAPagar.createModal.noExpenseAccounts', 'Nenhuma conta de despesa analítica encontrada. Cadastre uma no Plano de Contas.')}
+                </p>
+              )}
+            </div>
+          ) : (
+            /* Inventory arm: produto do catálogo + quantidade */
+            <>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                  {t('contasAPagar.createModal.field.product', 'Produto')}
+                </label>
+                <select
+                  value={inventoryProductRef}
+                  onChange={(e) => setInventoryProductRef(e.target.value)}
+                  className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
+                >
+                  <option value="">
+                    {products === null
+                      ? t('contasAPagar.createModal.field.loadingProducts', 'Carregando produtos…')
+                      : t('contasAPagar.createModal.field.selectProduct', '— selecione o produto —')}
+                  </option>
+                  {(products ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                {products !== null && products.length === 0 && (
+                  <p className="text-xs text-amber-400">
+                    {t('contasAPagar.createModal.noProducts', 'Nenhum produto no catálogo. Cadastre produtos no módulo de estoque.')}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                  {t('contasAPagar.createModal.field.qty', 'Quantidade')}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={inventoryQtyStr}
+                  onChange={(e) => setInventoryQtyStr(e.target.value)}
+                  placeholder="0"
+                  className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-right text-sm tabular-nums text-neutral-100 placeholder-neutral-600 focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Error */}

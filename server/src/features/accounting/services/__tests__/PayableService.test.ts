@@ -115,6 +115,16 @@ function build(opts: Opts = {}) {
     reverseStockForReceipt: jest.fn(async () => ({ totalReversedCents: 0 })),
   };
 
+  // LAC-E F-E2: existence gate for inventoryProductRef — defaults to "exists" so the purchase paths
+  // exercise the downstream behavior; the gate's own tests override it.
+  const productRefLookup = { productExists: jest.fn(async () => true) };
+
+  // F-D2=(b): espelho físico da compra (best-effort, idempotente no port).
+  const physicalStockSync = {
+    recordPurchaseInbound: jest.fn(async () => 'created' as const),
+    reversePurchaseInbound: jest.fn(async () => 'reversed' as const),
+  };
+
   const service = new PayableService(
     payableRepo as never,
     accountRepo as never,
@@ -123,8 +133,10 @@ function build(opts: Opts = {}) {
     policy as never,
     counterpartyRepo as never,
     inventoryService as never,
+    productRefLookup as never,
+    physicalStockSync as never,
   );
-  return { service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo, inventoryService };
+  return { service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo, inventoryService, productRefLookup, physicalStockSync };
 }
 
 /** A PayableService constructed WITHOUT the optional inventory dep (pre-Fase-B wiring state). */
@@ -698,6 +710,57 @@ describe('PayableService.createPayable — inventory purchase (D3(b))', () => {
     await expect(service.createPayable(scope, inventoryDto as never)).rejects.toBeInstanceOf(ValidationError);
   });
 
+  it('LAC-E F-E2: rejects a productRef that does not exist in the tenant catalog — 400 BEFORE any write', async () => {
+    const { service, productRefLookup, payableRepo, postEntry, inventoryService } = build();
+    productRefLookup.productExists.mockResolvedValueOnce(false);
+
+    await expect(service.createPayable(scope, inventoryDto as never)).rejects.toBeInstanceOf(ValidationError);
+    // Nothing persisted, nothing posted, nothing valued — the typo dies at the gate.
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+    expect(inventoryService.receiveStock).not.toHaveBeenCalled();
+  });
+
+  it('LAC-E F-E2: consults the catalog with the DTO productRef and proceeds when it exists', async () => {
+    const { service, productRefLookup } = build();
+    await service.createPayable(scope, inventoryDto as never);
+    expect(productRefLookup.productExists).toHaveBeenCalledTimes(1);
+    expect((productRefLookup.productExists.mock.calls[0] as unknown[])[1]).toBe('prod-shampoo');
+  });
+
+  it('LAC-E F-E2: an EXPENSE payable never consults the catalog (gate is inventory-only)', async () => {
+    const { service, productRefLookup } = build();
+    await service.createPayable(scope, createDto as never);
+    expect(productRefLookup.productExists).not.toHaveBeenCalled();
+  });
+
+  it('F-D2=(b): drives the PHYSICAL inbound mirror with productRef/unitId/qty and payableId', async () => {
+    const { service, physicalStockSync } = build();
+    await service.createPayable(scope, inventoryDto as never);
+
+    expect(physicalStockSync.recordPurchaseInbound).toHaveBeenCalledTimes(1);
+    const params = (physicalStockSync.recordPurchaseInbound.mock.calls[0] as unknown[])[1] as Record<string, unknown>;
+    expect(params).toMatchObject({
+      productRef: 'prod-shampoo',
+      unitId: 'unit-1',
+      qty: 10,
+      payableId: 'pay-new',
+      totalValueCents: 30000,
+    });
+  });
+
+  it('F-D2=(b): a physical-mirror failure is best-effort — createPayable still resolves', async () => {
+    const { service, physicalStockSync } = build();
+    physicalStockSync.recordPurchaseInbound.mockRejectedValueOnce(new Error('physical boom'));
+    await expect(service.createPayable(scope, inventoryDto as never)).resolves.toBeTruthy();
+  });
+
+  it('F-D2=(b): an EXPENSE payable never touches the physical mirror', async () => {
+    const { service, physicalStockSync } = build();
+    await service.createPayable(scope, createDto as never);
+    expect(physicalStockSync.recordPurchaseInbound).not.toHaveBeenCalled();
+  });
+
   it('does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)', async () => {
     const { service, inventoryService, payableRepo } = build();
     inventoryService.receiveStock.mockRejectedValueOnce(new Error('inbound crash'));
@@ -731,6 +794,25 @@ describe('PayableService.cancelPayable — inventory purchase REVERSAL at origin
     });
     // Ledger recognition still reversed (D 2.1.2 / C 1.1.6 at original cost).
     expect(reverseEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it('F-PS1: drives the PHYSICAL counter-movement on cancel (best-effort, never blocks the cancel)', async () => {
+    const { service, physicalStockSync, payableRepo } = build({
+      findEntryBySource: (type) => (type === AP_PAYABLE_SOURCE_TYPE ? { id: 'rec-inv' } : null),
+    });
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({
+      ...payableRow({ inventoryProductRef: 'prod-shampoo', inventoryQty: 10, expenseAccountId: null }),
+      payments: [],
+    });
+    physicalStockSync.reversePurchaseInbound.mockRejectedValueOnce(new Error('physical boom'));
+
+    await expect(
+      service.cancelPayable(scope, 'pay-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).resolves.toBeTruthy();
+    expect(physicalStockSync.reversePurchaseInbound).toHaveBeenCalledTimes(1);
+    expect((physicalStockSync.reversePurchaseInbound.mock.calls[0] as unknown[])[1]).toMatchObject({
+      payableId: 'pay-1',
+    });
   });
 });
 

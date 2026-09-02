@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from 'next-i18next';
-import { HiEye, HiCheck, HiBan, HiCurrencyDollar } from 'react-icons/hi';
+import { HiEye, HiCheck, HiBan, HiCurrencyDollar, HiReceiptRefund } from 'react-icons/hi';
 import { formatDateBR } from '../../utils/formatters';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
@@ -62,6 +62,10 @@ interface SalesTableProps {
     isWidgetMode?: boolean;
     onSelectSale: (sale: SaleRecord) => void;
     onUpdateSale: (saleId: string, payload: Record<string, unknown>, successMessage?: string) => Promise<void>;
+    /** LAC-A: pay/cancel/return sinalizam intenção — os modais e as rotas dedicadas moram na SalesView. */
+    onRequestPay: (sale: SaleRecord) => void;
+    onRequestCancel: (sale: SaleRecord) => void;
+    onRequestReturn: (sale: SaleRecord) => void;
     onRefresh: () => void;
 }
 
@@ -75,6 +79,9 @@ export default function SalesTable({
     isWidgetMode = false,
     onSelectSale,
     onUpdateSale,
+    onRequestPay,
+    onRequestCancel,
+    onRequestReturn,
     onRefresh,
 }: SalesTableProps) {
     const { t } = useTranslation(['finance_view', 'common']);
@@ -153,6 +160,7 @@ export default function SalesTable({
                                     const paymentLc = String(sale.paymentStatus || '').toLowerCase();
                                     const isFinalized = statusLc === 'finalized';
                                     const isCancelled = statusLc === 'cancelled';
+                                    const isReturned = statusLc === 'returned';
                                     const isPaid = paymentLc === 'paid';
 
                                     const computedSubtotal = saleIdToSubtotal[sale.id] ?? 0;
@@ -225,17 +233,11 @@ export default function SalesTable({
                                                         </button>
                                                     )}
 
-                                                    {/* Cancelar — só se não cancelado */}
-                                                    {!isCancelled && (
+                                                    {/* Cancelar — rotas dedicadas via SalesView (LAC-A) */}
+                                                    {!isCancelled && !isReturned && (
                                                         <button
                                                             disabled={isUpdating === sale.id}
-                                                            onClick={() => confirm({
-                                                                title: t('finance_view:sales.confirm_cancel', 'Cancelar venda?'),
-                                                                message: t('finance_view:sales.confirm_cancel_message', 'Esta ação não pode ser desfeita. A venda será marcada como cancelada.'),
-                                                                variant: 'danger',
-                                                                confirmLabel: t('common:cancel', 'Cancelar venda'),
-                                                                onConfirm: () => onUpdateSale(sale.id, { status: 'Cancelled' }, t('finance_view:sales.success_cancelled', 'Venda cancelada com sucesso.'))
-                                                            })}
+                                                            onClick={() => onRequestCancel(sale)}
                                                             title={t('common:cancel', 'Cancelar')}
                                                             className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                                         >
@@ -243,17 +245,23 @@ export default function SalesTable({
                                                         </button>
                                                     )}
 
-                                                    {/* Pagar — só se não pago e não cancelado */}
-                                                    {!isPaid && !isCancelled && (
+                                                    {/* Devolver — só venda finalizada (contra-receita 3.2) */}
+                                                    {isFinalized && !isReturned && (
                                                         <button
                                                             disabled={isUpdating === sale.id}
-                                                            onClick={() => confirm({
-                                                                title: t('finance_view:sales.confirm_mark_paid', 'Marcar como paga?'),
-                                                                message: t('finance_view:sales.confirm_pay_message', 'O status de pagamento será atualizado para Pago.'),
-                                                                variant: 'info',
-                                                                confirmLabel: t('common:pay', 'Confirmar pagamento'),
-                                                                onConfirm: () => onUpdateSale(sale.id, { paymentStatus: 'Paid' }, t('finance_view:sales.success_paid', 'Venda paga com sucesso.'))
-                                                            })}
+                                                            onClick={() => onRequestReturn(sale)}
+                                                            title={t('finance_view:sales.return', 'Devolver')}
+                                                            className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                                        >
+                                                            <HiReceiptRefund size={18} />
+                                                        </button>
+                                                    )}
+
+                                                    {/* Pagar — só Finalized (o settlement do backend recusa Draft) */}
+                                                    {isFinalized && !isPaid && (
+                                                        <button
+                                                            disabled={isUpdating === sale.id}
+                                                            onClick={() => onRequestPay(sale)}
                                                             title={t('common:pay', 'Pagar')}
                                                             className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                                         >

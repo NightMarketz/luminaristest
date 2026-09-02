@@ -109,14 +109,26 @@
         "expenseAccount": "Conta de despesa (contrapartida)",
         "selectAccount": "— selecione a conta de despesa —",
         "counterparty": "Contraparte",
-        "noCounterparty": "— sem contraparte —"
+        "noCounterparty": "— sem contraparte —",
+        "kind": "Tipo de lançamento",
+        "product": "Produto",
+        "qty": "Quantidade",
+        "selectProduct": "— selecione o produto —",
+        "loadingProducts": "Carregando produtos…"
       },
       "error": {
         "invalid": "Preencha fornecedor, descrição, datas, valor e conta de despesa.",
-        "failed": "Erro ao registrar a conta a pagar."
+        "failed": "Erro ao registrar a conta a pagar.",
+        "invalidInventory": "Preencha fornecedor, descrição, datas, valor total, produto e quantidade."
       },
       "noCounterparties": "Nenhum fornecedor cadastrado.",
-      "manageCounterparties": "Cadastrar contrapartes"
+      "manageCounterparties": "Cadastrar contrapartes",
+      "mode": {
+        "expense": "Despesa",
+        "inventory": "Compra de estoque",
+        "inventoryHint": "Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
+      },
+      "noProducts": "Nenhum produto no catálogo. Cadastre produtos no módulo de estoque."
     },
     "actionModal": {
       "cancel": "Voltar",
@@ -136,7 +148,8 @@
       "undoConfirm": "Confirmar",
       "undoing": "Desfazendo…",
       "undoNote": "O pagamento será estornado e a conta voltará para “Em aberto”."
-    }
+    },
+    "inventoryBadge": "Estoque · {{qty}} un."
   },
   "contasAReceber": {
     "heading": "Contas a Receber",

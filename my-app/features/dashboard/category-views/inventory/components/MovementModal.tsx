@@ -91,8 +91,14 @@ export function MovementModal({
     const incrementQty = useCallback(() => setMovementQty(q => q + 1), []);
     const decrementQty = useCallback(() => setMovementQty(q => Math.max(0, q - 1)), []);
 
+    // LAC-D F-D1(a): compra NÃO entra mais pela tela de estoque — o custo digitado aqui era
+    // descartado (nunca virava AP, razão nem custo médio: receita-sem-CMV silenciosa). O caminho
+    // único de valoração é o Payable de inventário (Contas a Pagar), que também espelha o físico.
+    const isPurchaseBlocked = movementType === 'In' && movementReason === 'Purchase';
+
     const handleRegisterMovement = useCallback(async () => {
         if (!row) return;
+        if (isPurchaseBlocked) return; // botão já desabilitado; guarda extra
 
         try {
             setIsSubmitting(true);
@@ -147,7 +153,7 @@ export function MovementModal({
         } finally {
             setIsSubmitting(false);
         }
-    }, [row, movementType, movementReason, movementQty, movementCost, movementSupplier, activeLocale, onCreateMovement, onClose, onSuccess, t]);
+    }, [row, isPurchaseBlocked, movementType, movementReason, movementQty, movementCost, movementSupplier, activeLocale, onCreateMovement, onClose, onSuccess, t]);
 
     if (!mounted || !isOpen || !row) return null;
 
@@ -233,8 +239,26 @@ export function MovementModal({
                         </div>
                     </div>
 
+                    {/* LAC-D F-D1(a): compra entra por Contas a Pagar (valoração + AP + físico) */}
+                    {isPurchaseBlocked && (
+                        <div className="p-4 rounded-xl border border-sky-200 dark:border-sky-900/50 bg-sky-50 dark:bg-sky-950/30 text-left space-y-2 animate-in slide-in-from-top-4">
+                            <p className="text-xs font-black text-sky-700 dark:text-sky-300 uppercase tracking-tight">
+                                {t('inventory_view:modal.purchase_blocked_title', 'Compra entra por Contas a Pagar')}
+                            </p>
+                            <p className="text-xs text-sky-800 dark:text-sky-200">
+                                {t('inventory_view:modal.purchase_blocked_message', 'Registre a compra em Contabilidade → Contas a Pagar (tipo "Compra de estoque"): ela lança o título do fornecedor, valora o produto pelo custo médio e dá a entrada física automaticamente.')}
+                            </p>
+                            <a
+                                href="/accounting"
+                                className="inline-block text-xs font-bold text-sky-700 dark:text-sky-300 underline hover:text-sky-900 dark:hover:text-sky-100"
+                            >
+                                {t('inventory_view:modal.purchase_blocked_link', 'Abrir Contas a Pagar')}
+                            </a>
+                        </div>
+                    )}
+
                     {/* Cost & Supplier (for entries) */}
-                    {movementType === 'In' && (
+                    {movementType === 'In' && !isPurchaseBlocked && (
                         <div className="space-y-5 pt-4 border-t border-gray-100 dark:border-gray-800 animate-in slide-in-from-top-4">
                             <div className="space-y-1.5 text-left">
                                 <div className="flex items-center gap-2 pl-1">
@@ -280,8 +304,8 @@ export function MovementModal({
                     </button>
                     <button
                         onClick={handleRegisterMovement}
-                        className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-600/20 text-xs disabled:opacity-50"
-                        disabled={isSubmitting}
+                        className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-600/20 text-xs disabled:opacity-50 disabled:hover:scale-100"
+                        disabled={isSubmitting || isPurchaseBlocked}
                     >
                         {isSubmitting ? t('inventory_view:modal.submitting', 'Finalizando...') : t('inventory_view:modal.confirm', 'Confirmar Fluxo')}
                     </button>

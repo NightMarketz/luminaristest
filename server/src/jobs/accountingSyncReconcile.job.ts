@@ -1032,6 +1032,100 @@ export async function reconcilePackageBalanceVsLiability(
   return { checked: rows.length, divergences };
 }
 
+// ─── Physical × subledger inventory check (BE-INCR-INVENTORY-TIEOUT / LAC-E) ─────────────────
+
+export interface PhysicalInventoryDeps {
+  /** Every (owner, unit) scope that has live subledger valuation rows. */
+  listInventoryScopes: () => Promise<Array<{ ownerUserId: string; unitId: string }>>;
+  /** Live valuation rows of the scope: productRef + qtyOnHand. */
+  listSubledgerItems: (
+    scope: AccountingScope,
+  ) => Promise<Array<{ productRef: string; qtyOnHand: number }>>;
+  /** Σ physical `productUnits.stock` of the scope, keyed by productRef (= DT productId). */
+  sumPhysicalByProduct: (scope: AccountingScope) => Promise<Map<string, number>>;
+  /**
+   * F-E1(a): the subledger's own snapshot↔movements repairer (InventoryService.reconcileInventory).
+   * Conservative by construction (recomputes from the append-only log); runs best-effort BEFORE the
+   * physical comparison so the compare reads a self-consistent subledger.
+   */
+  reconcileSubledger: (scope: AccountingScope) => Promise<{ itemsChecked: number; itemsRepaired: number }>;
+}
+
+/**
+ * WARN-ONLY reconciliation: compare physical stock (DynamicTable `productUnits.stock`) against the
+ * valued subledger (`InventoryItem.qtyOnHand`) per scope, aggregated by product (F-E3(a) — the
+ * subledger has no per-unit granularity). NEVER writes to either side; a divergence is logged for a
+ * human. The signature case it exists to catch (LAC-D): physical stock > 0 with NO subledger row —
+ * merchandise that entered through the stock screen and was never valued (revenue-without-COGS).
+ * Called OUTSIDE the summary merge so it can never hold the watermark back (F-W2F-4).
+ */
+export async function reconcilePhysicalInventory(
+  deps: PhysicalInventoryDeps,
+): Promise<{ checked: number; divergences: number }> {
+  const scopes = await deps.listInventoryScopes();
+  let checked = 0;
+  let divergences = 0;
+
+  for (const { ownerUserId, unitId } of scopes) {
+    try {
+      const scope = resolveAccountingScope({ userId: ownerUserId }, unitId);
+
+      // F-E1(a): self-repair the subledger first (best-effort; isolated so a repair failure never
+      // kills the comparison of the remaining scopes).
+      try {
+        const repaired = await deps.reconcileSubledger(scope);
+        if (repaired.itemsRepaired > 0) {
+          logger.warn('Inventory subledger self-repair applied during physical check', {
+            ownerUserId,
+            unitId,
+            ...repaired,
+          });
+        }
+      } catch (error) {
+        logger.error('Inventory subledger self-repair failed — comparing anyway', {
+          ownerUserId,
+          unitId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+
+      const [items, physical] = await Promise.all([
+        deps.listSubledgerItems(scope),
+        deps.sumPhysicalByProduct(scope),
+      ]);
+
+      // Union of productRefs on both sides: a subledger row without physical stock diverges the
+      // same way physical stock without a valuation row does (the LAC-D signature).
+      const refs = new Set<string>([...items.map((i) => i.productRef), ...physical.keys()]);
+      for (const ref of refs) {
+        checked++;
+        const subledgerQty = items.find((i) => i.productRef === ref)?.qtyOnHand ?? 0;
+        const physicalQty = physical.get(ref) ?? 0;
+        if (subledgerQty !== physicalQty) {
+          divergences++;
+          logger.warn('Physical × subledger inventory divergence (warn-only, not autocorrected)', {
+            ownerUserId,
+            unitId,
+            productRef: ref,
+            physicalQty,
+            subledgerQty,
+          });
+        }
+      }
+    } catch (error) {
+      logger.error('Physical × subledger inventory check failed — continuing', {
+        ownerUserId,
+        unitId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      continue;
+    }
+  }
+
+  logger.info('Physical × subledger inventory reconcile complete', { checked, divergences });
+  return { checked, divergences };
+}
+
 /** Sum two summaries into one (the job runs CRM + sale passes and reports the total). */
 function mergeSummaries(a: ReconcileSummary, b: ReconcileSummary): ReconcileSummary {
   return {
@@ -1325,6 +1419,77 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         return centsFromDb(agg._sum.creditCents ?? 0n) - centsFromDb(agg._sum.debitCents ?? 0n);
       },
     });
+
+    // Warn-only: physical stock (DT productUnits) × valued subledger (InventoryItem), per scope.
+    // Outside the summary reduce AND wrapped in its own try/catch — a divergence or ANY failure
+    // here (including scope enumeration IO) never holds the watermark back (F-W2F-4).
+    const readProductUnitRows = async (ownerUserId: string) => {
+      const tables = await prisma.dynamicTable.findMany({
+        where: { internalName: 'productUnits', userId: ownerUserId },
+        select: { id: true },
+      });
+      if (tables.length === 0) return [];
+      const rows = await prisma.dynamicTableData.findMany({
+        where: { dynamicTableId: { in: tables.map((t) => t.id) }, deletedAt: null },
+        select: { data: true },
+      });
+      return rows.map((r) => r.data as Record<string, unknown>);
+    };
+    try {
+      await reconcilePhysicalInventory({
+      listInventoryScopes: async () => {
+        // Union of both sides: subledger scopes (valued rows) ∪ physical scopes (productUnits rows) —
+        // the LAC-D signature (physical stock never valued) only exists on the physical side.
+        const keys = new Map<string, { ownerUserId: string; unitId: string }>();
+        const grouped = await prisma.inventoryItem.groupBy({
+          by: ['userId', 'unitId'],
+          where: { deletedAt: null },
+        });
+        for (const g of grouped) keys.set(`${g.userId}::${g.unitId}`, { ownerUserId: g.userId, unitId: g.unitId });
+        const tables = await prisma.dynamicTable.findMany({
+          where: { internalName: 'productUnits' },
+          select: { id: true, userId: true },
+        });
+        for (const table of tables) {
+          const rows = await prisma.dynamicTableData.findMany({
+            where: { dynamicTableId: table.id, deletedAt: null },
+            select: { data: true },
+          });
+          for (const row of rows) {
+            const data = row.data as Record<string, unknown>;
+            const unitId = typeof data.unitId === 'string' ? data.unitId : '';
+            if (unitId) keys.set(`${table.userId}::${unitId}`, { ownerUserId: table.userId, unitId });
+          }
+        }
+        return [...keys.values()];
+      },
+      listSubledgerItems: async (scope) => {
+        const items = await prisma.inventoryItem.findMany({
+          where: { userId: scope.ownerUserId, unitId: scope.unitId, deletedAt: null },
+          select: { productRef: true, qtyOnHand: true },
+        });
+        return items.map((i) => ({ productRef: i.productRef, qtyOnHand: i.qtyOnHand }));
+      },
+      sumPhysicalByProduct: async (scope) => {
+        const out = new Map<string, number>();
+        for (const data of await readProductUnitRows(scope.ownerUserId)) {
+          if ((typeof data.unitId === 'string' ? data.unitId : '') !== scope.unitId) continue;
+          const productRef = typeof data.productId === 'string' ? data.productId : String(data.productId ?? '');
+          if (!productRef) continue;
+          const stock = typeof data.stock === 'number' && Number.isFinite(data.stock) ? data.stock : 0;
+          out.set(productRef, (out.get(productRef) ?? 0) + stock);
+        }
+        return out;
+      },
+      reconcileSubledger: (scope) => factory.getInventoryService().reconcileInventory(scope),
+      });
+    } catch (error) {
+      // Warn-only por contrato: nem a enumeração de escopos pode derrubar runPasses (o watermark
+      // e o summary das 8 passadas não pertencem a este check).
+      logger.error('Physical × subledger inventory check aborted — continuing', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return [crm, sale, cancellations, returns, settlements, cogs, packageOrigin, packageConsumption].reduce(
       mergeSummaries,

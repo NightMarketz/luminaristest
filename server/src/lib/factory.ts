@@ -83,6 +83,8 @@ import { ReceivableService } from '../features/accounting/services/ReceivableSer
 import { DimensionService } from '../features/accounting/services/DimensionService';
 import { DimensionReportService } from '../features/accounting/services/DimensionReportService';
 import { TieOutDiagnosticService } from '../features/accounting/services/TieOutDiagnosticService';
+import { DynamicTableProductRefLookup } from '../features/accounting/services/ProductRefLookup';
+import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
@@ -706,6 +708,10 @@ export class ApplicationFactory {
         // OPTIONAL AP→estoque bridge (INCR-INVENTORY D3(b) / Body 3): an inventory purchase receives
         // stock and its cancel reverses it, via the shared InventoryService instance built above.
         inventoryService,
+        // LAC-E F-E2: existence gate for inventoryProductRef against the DT `products` catalog.
+        new DynamicTableProductRefLookup(this.repositories.dynamicTable),
+        // F-D2=(b): espelho físico da compra (movimento DT via escrita isSystem, best-effort).
+        new DynamicTablePhysicalStockSync(dynamicTableService, this.repositories.dynamicTable),
       ),
       receivable: receivableService,
       // CRM → AR seam (ADR-CRM-AR-SEAM): post-commit integration bridge, same altitude as
@@ -734,6 +740,7 @@ export class ApplicationFactory {
         this.repositories.receivable,
         this.repositories.payable,
         this.policies.accounting,
+        this.repositories.inventory,
       ),
       counterparty: new CounterpartyService(
         this.repositories.counterparty,
