@@ -15,6 +15,14 @@ Pré-condições (verificar antes de começar):
   qualquer host escolhido precisa oferecer disco LOCAL real (sem NFS/EFS/objeto-storage, ver ADR §4.b).
   **Falta:** qual VPS/provedor concreto (item explicitamente ABERTO no ADR) — isso continua decisão do
   dono, não do agente.
+
+  > **[EMENDA 2026-09-02 — decisão do dono]** *"Deixe o host para só na finalização do app."* O
+  > provisionamento do host concreto **sai da fila corrente** e passa a ser a última tarefa antes de
+  > operar cliente real; o M2 inteiro fica atrás dela. Consequências: (a) o item ABERTO do ADR §7
+  > deixa de ser pendência de decisão e vira tarefa agendada, sem prazo; (b) nenhum gate acima do M2
+  > depende disto — B-4/X2/H1/H2 rodam contra o `dev.db` real local, não contra host; (c) a classe
+  > ratificada (VPS própria, 1 instância/cliente, disco local real) **continua valendo** — o adiamento
+  > é de provedor concreto, não de topologia.
 - Backup do banco de produção-alvo feito ANTES de qualquer migração. **O backup É o rollback** —
   ver o bloco A5 abaixo antes de rodar qualquer migração no alvo.
 - Branch a implantar integrada e CI verde (registrar o commit).

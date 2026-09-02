@@ -157,6 +157,22 @@ menos um** com `codAssin` diferente de `'900'`.
 
 #### ECF — parâmetros fiscais (0010/0020)
 
+> **[EMENDA 2026-09-02 — regime ratificado pelo dono]** O regime-alvo do produto é **Lucro Real**
+> (critério: *"o mais completo que englobe todos os outros e produza prova de evidência que os
+> runbooks exigem"*). **Este H1 roda em Lucro Presumido assim mesmo, e isso é deliberado:** o
+> serializer é Presumido MVP (`server/src/lib/ecf.ts:4`), emite `FORMA_TRIB='5'` fixo (`:145`), deixa
+> os blocos **L/M/N vazios por desenho** (`:330`) e nem expõe `formaTrib` no `SpedEcfDto` — pedir
+> Lucro Real hoje seria **FALHOU garantido** no PVA, não um parâmetro diferente.
+>
+> O que este H1 prova, então: a cadeia **ECD + encerramento + ECF** contra o validador oficial —
+> oráculo do **módulo**, que é o que a fila §5.1 item 3 cobra. O que ele **não** prova: a ECF do
+> regime-alvo. Isso fica com a **2ª passada do H1** após a frente *ECF Fase 3 — Lucro Real*
+> (Bloco B item 10 do `ACCOUNTING-MASTER-MAP.md`), obrigatória **antes de operar cliente real**.
+>
+> Efeito prático nos campos abaixo: nenhum. `indAliqCsll`/`indRecReceita` seguem como estão; não
+> acrescente campo de regime a este request — a API não tem onde recebê-lo.
+
+
 O bloco inteiro pode ficar de fora do request — se omitido, o backend assume
 `indAliqCsll: '1'`, `indRecReceita: '2'`.
 
