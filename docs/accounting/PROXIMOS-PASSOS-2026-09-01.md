@@ -1,5 +1,9 @@
 # Próximos passos — 2026-09-01
 
+> ⚠️ **SUPERSEDED em 2026-09-02** por `PROXIMOS-PASSOS-2026-09-02.md` — as cinco lacunas
+> deste doc foram implementadas e mergeadas (PR #259, `f28ac87c`; fold #260). Mantido como registro
+> histórico.
+
 > **Substitui** `PROXIMOS-PASSOS-2026-08-31.md`, que segue válido como registro histórico. O que mudou
 > em um dia: a auditoria completa do fluxo venda→SPED (sessão fluxo-salao-beleza, doc vivo "Do Corte
 > ao SPED") encontrou **cinco lacunas verificadas linha a linha** que a fila não conhecia — e uma delas
