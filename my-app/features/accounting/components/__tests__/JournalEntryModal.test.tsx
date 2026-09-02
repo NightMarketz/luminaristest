@@ -84,10 +84,16 @@ describe('JournalEntryModal — default de data (classe date-only UTC shift)', (
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
-      const { container } = render(
+      render(
         <JournalEntryModal isOpen onClose={() => {}} unitId="u1" accounts={accounts} onSuccess={() => {}} />,
       );
-      const input = container.querySelector('input[type="date"]') as HTMLInputElement;
+      // O Modal renderiza via createPortal(..., document.body) — `container` do RTL cobre só a
+      // árvore montada no baseElement e acha ZERO inputs aqui. Consultar `container` fazia este
+      // guarda estourar TypeError ANTES de asserir: ele parecia vermelho "pelo motivo certo" e na
+      // verdade nunca testou a data. Consulte o document; a sanidade abaixo mantém isso visível.
+      const inputs = Array.from(document.querySelectorAll('input[type="date"]')) as HTMLInputElement[];
+      expect(inputs.length).toBeGreaterThanOrEqual(1); // sanidade: a data do lançamento existe
+      const input = inputs[0];
       expect(
         ['', '2026-08-31'],
         'default da data do lançamento às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o lançamento manual default grava o razão no dia errado (e no fim do mês, no período seguinte)',

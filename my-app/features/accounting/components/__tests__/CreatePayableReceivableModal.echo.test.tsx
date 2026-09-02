@@ -52,10 +52,14 @@ describe('CreatePayableModal — echoes the interpreted amount', () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
-      const { container } = render(
+      render(
         <CreatePayableModal isOpen onClose={() => {}} unitId="u1" expenseAccounts={expenseAccounts} onSuccess={() => {}} />,
       );
-      const inputs = Array.from(container.querySelectorAll('input[type="date"]')) as HTMLInputElement[];
+      // O Modal renderiza via createPortal(..., document.body) — `container` do RTL cobre só a
+      // árvore montada no baseElement e acha ZERO inputs aqui. Consultar `container` fazia este
+      // guarda estourar TypeError ANTES de asserir: ele parecia vermelho "pelo motivo certo" e na
+      // verdade nunca testou a data. Consulte o document; a sanidade abaixo mantém isso visível.
+      const inputs = Array.from(document.querySelectorAll('input[type="date"]')) as HTMLInputElement[];
       expect(inputs.length).toBeGreaterThanOrEqual(2); // sanidade: emissão + vencimento
       for (const input of inputs) {
         expect(
@@ -96,10 +100,14 @@ describe('CreateReceivableModal — echoes the interpreted amount', () => {
     vi.useFakeTimers();
     try {
       vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
-      const { container } = render(
+      render(
         <CreateReceivableModal isOpen onClose={() => {}} unitId="u1" revenueAccounts={revenueAccounts} onSuccess={() => {}} />,
       );
-      const inputs = Array.from(container.querySelectorAll('input[type="date"]')) as HTMLInputElement[];
+      // O Modal renderiza via createPortal(..., document.body) — `container` do RTL cobre só a
+      // árvore montada no baseElement e acha ZERO inputs aqui. Consultar `container` fazia este
+      // guarda estourar TypeError ANTES de asserir: ele parecia vermelho "pelo motivo certo" e na
+      // verdade nunca testou a data. Consulte o document; a sanidade abaixo mantém isso visível.
+      const inputs = Array.from(document.querySelectorAll('input[type="date"]')) as HTMLInputElement[];
       expect(inputs.length).toBeGreaterThanOrEqual(2); // sanidade: emissão + vencimento
       for (const input of inputs) {
         expect(

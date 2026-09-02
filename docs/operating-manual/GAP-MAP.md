@@ -187,6 +187,22 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    levando junto o teste-guarda dele — o lote da correção é de **12 sites**; **F5(a)** #250 primeiro,
 >    rebase por cima, os dois registros mantidos (esta resolução).
 >
+>    **CORRIGIDO 2026-09-02** — os 12 sites do lote (13 menos o DynamicForm, que F4(b) tirou para item
+>    próprio): BP/DRE/DFC pelo backend (`asOf` opcional + `scopeToday` no Service) e os 9 restantes no
+>    FE. Suíte 210/210.
+>    **Defeito do próprio instrumento, achado na correção:** 4 dos 13 guardas
+>    (JournalEntryModal, JournalEntriesPanel, CreatePayableModal, CreateReceivableModal) consultavam
+>    `container.querySelector('input[type="date"]')`, mas o `Modal` renderiza via
+>    `createPortal(..., document.body)` — achavam ZERO elementos e estouravam `TypeError` **antes de
+>    asserir**. Pareciam "vermelhos pelo motivo certo" e nunca testaram data nenhuma; verificado
+>    rodando-os contra o componente pré-fix de `c8314d2e`. Consertados na sessão de instrumentação de
+>    2026-09-02: consulta ao `document` + sanidade de existência do input (é a asserção que teria
+>    pegado o defeito). Par vermelho→verde provado no mesmo PR — contra os componentes de
+>    `c8314d2e` os 4 falham pela ASSERÇÃO (`expected [ '', '2026-08-31' ] to include '2026-09-01'`).
+>    **Classe:** `comentario-de-teste-afirma-o-que-nao-assere` — guarda cuja consulta não alcança onde
+>    o componente renderiza passa por vermelho legítimo. Quem escreve guarda de componente em portal
+>    consulta o `document`, e deixa uma sanidade de existência para que a falha de alcance apareça.
+>
 > **Viés a declarar:** a entrada nº 3 é classificada como Nível 3, que é exatamente o que a aposta
 > acima prevê — classificação feita pela natureza do defeito (regra declarada × caminho real), não
 > para favorecer a aposta, mas o leitor deve saber que quem classificou conhecia a aposta.
