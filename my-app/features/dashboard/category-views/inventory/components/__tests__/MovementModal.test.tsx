@@ -15,7 +15,11 @@ vi.mock('@/lib/context/CurrencyContext', () => ({
   useCurrency: () => ({ currency: 'BRL' }),
   SUPPORTED_CURRENCIES: [{ code: 'BRL', locale: 'pt-BR', symbol: 'R$' }],
 }));
-vi.mock('../../../components/forms/RelationSelector', () => ({
+// O caminho do vi.mock resolve a partir DESTE arquivo (__tests__/), nao do MovementModal.tsx
+// que fica um nivel acima: 4 saltos, nao 3. Com 3 o mock apontava para um modulo inexistente,
+// nao se aplicava, e o RelationSelector real montava e fazia fetch -> setState apos o teardown
+// do jsdom ('window is not defined' apos o teste, derrubando a run inteira de forma nao-deterministica).
+vi.mock('../../../../components/forms/RelationSelector', () => ({
   default: () => <div data-testid="relation-selector" />,
 }));
 
@@ -56,6 +60,10 @@ describe('MovementModal — bloqueio da compra (LAC-D F-D1a)', () => {
     renderModal();
     const selects = screen.getAllByRole('combobox');
     fireEvent.change(selects[1], { target: { value: 'Adjustment' } });
+    // Guarda do proprio mock: este e o unico caso que monta o RelationSelector (In && !bloqueado).
+    // Se o caminho do vi.mock quebrar, o componente real monta, faz fetch, e o setState chega
+    // depois do teardown do jsdom -> flake que derruba a run inteira. Aqui falha na hora.
+    expect(screen.getByTestId('relation-selector')).toBeInTheDocument();
     expect(screen.queryByText('Compra entra por Contas a Pagar')).toBeNull();
     expect(screen.getByRole('button', { name: 'Confirmar Fluxo' })).toHaveProperty('disabled', false);
   });
