@@ -2,6 +2,19 @@
 
 > **Estado [EMENDA 2026-09-02]: esqueleto AUTORIZADO.** Forks 1 → (b) dedicado e 5 → (a) trimestral ratificados por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. A `sessao-feature` pode executar os itens `[direto]`, `[cond:Fork 1]` e `[cond:Fork 5]`; os itens `[cond:Fork 2/3/4]` e todo conteúdo fiscal de L/M/N seguem pausados (marcadores vazios; `FORMA_TRIB` sem default). Texto original abaixo mantido como histórico.
 >
+> **[FOLD 2026-09-02] Esqueleto IMPLEMENTADO** na PR #263, commit `6af66557` (`sessao-feature` + revisor independente: PASS, 0 bloqueantes).
+> Itens 1, 2, 3, 4, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17 ✅; itens 6, 7, 8, 18 seguem pausados (Forks 2/3/4).
+> Rota `POST /sped/ecf/real/generate` → `SpedEcfRealGenerationService` → job `EXPORT_SPED_ECF_REAL`; serializer
+> `server/src/lib/ecfReal.ts`; DTO `SpedEcfRealDto.ts` (`.strict()`); openapi 143→144 paths. Lacunas de spec
+> resolvidas por **parametrização sem default**, não por escolha: `fiscal.formaTrib` (1 dígito) e
+> `fiscal.formaTribPer` (4 posições; o default `PPPP` da lib é o código do Presumido e vazaria). `quarterWindows()`
+> ganhou `export` (reuso, fan-in 2). Contrato `l300Source.ytdNetResultCents` é YTD por construção (`incomeStatement`);
+> o resultado DO trimestre é decisão do builder L300 (Fork 3). **Decisão pronta para o dono:** a transcrição
+> `BE-INCR-SPED-ECF-layout-transcription.md:85` (Manual p. 13 §1.3) já cita `FORMA_TRIB=1` para Lucro Real; se
+> ratificado, vira default do DTO em 1 linha. Dívidas nomeadas pelo revisor: Bloco 9 inlinado 3× (`sped.ts`/`ecf.ts`/
+> `ecfReal.ts`), 8 leituras de relatório por geração sem saída no arquivo até L100/L300 existirem, `formaTribPer`
+> aceita qualquer 4 chars até o alfabeto vir do Manual.
+>
 > **Estado original: preparação apenas.** Produzido em `sessao-planejamento`. Checklist e contratos abaixo NÃO
 > autorizam código — cada fork listado em §4 segue `RATIFICAÇÃO PENDENTE`; vários comportamentos do
 > checklist estão explicitamente condicionados a um fork ainda não resolvido. **A `sessao-feature` que
