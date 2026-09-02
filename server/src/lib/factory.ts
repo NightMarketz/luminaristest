@@ -77,6 +77,7 @@ import { ReceiptService } from '../features/accounting/services/ReceiptService';
 import { DataExchangeImportService } from '../features/accounting/services/DataExchangeImportService';
 import { SpedGenerationService } from '../features/accounting/services/SpedGenerationService';
 import { SpedEcfGenerationService } from '../features/accounting/services/SpedEcfGenerationService';
+import { SpedEcfRealGenerationService } from '../features/accounting/services/SpedEcfRealGenerationService';
 import { ExerciseClosingService } from '../features/accounting/services/ExerciseClosingService';
 import { PayableService } from '../features/accounting/services/PayableService';
 import { ReceivableService } from '../features/accounting/services/ReceivableService';
@@ -357,6 +358,7 @@ export class ApplicationFactory {
     receipt: ReceiptService;
     sped: SpedGenerationService;
     spedEcf: SpedEcfGenerationService;
+    spedEcfReal: SpedEcfRealGenerationService;
     exerciseClosing: ExerciseClosingService;
     payable: PayableService;
     receivable: ReceivableService;
@@ -692,6 +694,13 @@ export class ApplicationFactory {
         this.repositories.dataExchange,
         auditService,
       ),
+      // Lucro Real (esqueleto): BP/DRE via AccountingReportService, não groupByAccount (BRIEF item 5).
+      spedEcfReal: new SpedEcfRealGenerationService(
+        accountingReportService,
+        this.policies.accounting,
+        this.repositories.dataExchange,
+        auditService,
+      ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,
         this.repositories.posting,
@@ -886,6 +895,7 @@ export class ApplicationFactory {
   public getReceiptService = (): ReceiptService => this.services.receipt;
   public getSpedGenerationService = (): SpedGenerationService => this.services.sped;
   public getSpedEcfGenerationService = (): SpedEcfGenerationService => this.services.spedEcf;
+  public getSpedEcfRealGenerationService = (): SpedEcfRealGenerationService => this.services.spedEcfReal;
   public getExerciseClosingService = (): ExerciseClosingService => this.services.exerciseClosing;
   public getPayableService = (): PayableService => this.services.payable;
 

@@ -72,7 +72,7 @@ import {
   importReferentialCatalog,
   listReferentialCatalog,
 } from '../controllers/referentialCatalogController';
-import { generateSpedEcd, generateSpedEcf } from '../controllers/spedController';
+import { generateSpedEcd, generateSpedEcf, generateSpedEcfReal } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
 const router = Router();
@@ -128,6 +128,9 @@ router.post('/sped/ecd/generate', generateSpedEcd);
 
 // SPED Fiscal (ECF) — Lucro Presumido; generate the `.txt` (download reuses the job route).
 router.post('/sped/ecf/generate', generateSpedEcf);
+
+// SPED Fiscal (ECF) — Lucro Real (esqueleto, rota dedicada — Fork 1→(b)); download reuses the job route.
+router.post('/sped/ecf/real/generate', generateSpedEcfReal);
 
 // Year-end result closing (encerramento/apuração do resultado, BE-INCR-SPED-APURACAO).
 // Reopening = reverse the returned entry via POST /reverse (frees the idempotency key).

@@ -23,7 +23,7 @@ const cnpj = z.string().regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos (só númer
 const cpfOrCnpj = z.string().regex(/^\d{11}$|^\d{14}$/, 'CPF (11) ou CNPJ (14) dígitos.');
 
 /** Declarante — identificação (0000) + dados cadastrais (0030). Manual pp. 61-101. */
-const DeclarantSchema = z
+export const DeclarantSchema = z
   .object({
     // 0000
     cnpj,
@@ -58,7 +58,7 @@ const FiscalSchema = z
  * de 3 dígitos da tabela SPEDECF_QUALIF_ASSINANTE ('900' = Contador). Quando
  * '900' ⇒ CPF (11 dígitos) e IND_CRC obrigatórios.
  */
-const SignerSchema = z
+export const SignerSchema = z
   .object({
     identNom: z.string().min(1),
     identCpfCnpj: cpfOrCnpj,
@@ -73,6 +73,35 @@ const SignerSchema = z
  * POST /sped/ecf/generate body. `year` drives the four quarterly windows (D3).
  * Regime = Presumido (D1). No dtIni/dtFin override (annual calendar → 4 trimestres).
  */
+/**
+ * 0930 compliance (REGRA_OBRIGATORIO_ASSIN_CONTADOR, p. 104): ≥1 contador
+ * (IDENT_QUALIF='900' com IND_CRC) e ≥1 não-contador. Mesmo objeto de domínio nos
+ * dois regimes (Presumido e Real) — exportado para que o DTO Real reuse em vez de clonar.
+ */
+export const refineEcfSigners = (
+  val: { signers: Array<z.infer<typeof SignerSchema>> },
+  ctx: z.RefinementCtx,
+): void => {
+  const contadores = val.signers.filter((s) => s.identQualif === '900');
+  const hasNonContador = val.signers.some((s) => s.identQualif !== '900');
+  if (contadores.length < 1 || !hasNonContador) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['signers'],
+      message: 'A ECF exige um signatário contador (IDENT_QUALIF=900) e um não-contador.',
+    });
+  }
+  for (const c of contadores) {
+    if (c.identCpfCnpj.length !== 11 || !c.indCrc) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['signers'],
+        message: 'O signatário contador (900) exige CPF de 11 dígitos e IND_CRC.',
+      });
+    }
+  }
+};
+
 export const SpedEcfRequestSchema = z
   .object({
     unitId: z.string().min(1),
@@ -82,28 +111,7 @@ export const SpedEcfRequestSchema = z
     signers: z.array(SignerSchema).min(1).max(2),
   })
   .strict()
-  .superRefine((val, ctx) => {
-    // 0930 compliance (REGRA_OBRIGATORIO_ASSIN_CONTADOR, p. 104): ≥1 contador
-    // (IDENT_QUALIF='900' com IND_CRC) e ≥1 não-contador.
-    const contadores = val.signers.filter((s) => s.identQualif === '900');
-    const hasNonContador = val.signers.some((s) => s.identQualif !== '900');
-    if (contadores.length < 1 || !hasNonContador) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['signers'],
-        message: 'A ECF exige um signatário contador (IDENT_QUALIF=900) e um não-contador.',
-      });
-    }
-    for (const c of contadores) {
-      if (c.identCpfCnpj.length !== 11 || !c.indCrc) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['signers'],
-          message: 'O signatário contador (900) exige CPF de 11 dígitos e IND_CRC.',
-        });
-      }
-    }
-  });
+  .superRefine(refineEcfSigners);
 
 export type SpedEcfRequestDto = z.infer<typeof SpedEcfRequestSchema>;
 export type SpedEcfDeclarantDto = z.infer<typeof DeclarantSchema>;
