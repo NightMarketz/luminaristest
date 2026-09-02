@@ -20,9 +20,29 @@
 | T1 | O `dev.db` real (`server/prisma/prisma/dev.db`, raiz) tem **29 de 35 migrações** aplicadas; `accounting_bindings` não existe nele. Sem `migrate deploy` + ativação de binding o server nem sobe (`server.ts` exit 1). | verificado (leitura `mode=ro`, reconfirmado pelo orquestrador) | B-4 (P2 do H1: backup É o rollback), H1, H2, M2 |
 | T2 | `referential_mappings` e `referential_accounts` têm **zero linhas** no `dev.db` real: `coverage.ready=false`, o passo 3 do H1 recusa com 400. São **8** contas-folha vivas a mapear na unidade com movimento ([EMENDA 2026-09-02] — a contagem original, 9, não filtrava soft-delete). | verificado | X2, H1 |
 | T3 | O XLSX oficial da RFB **não entra direto** no conversor: cabeçalhos em português (`CÓDIGO`/`DESCRIÇÃO`/`TIPO`), `TIPO` = `A`/`S`, e o parser lê só a 1ª aba. | verificado (leitura do parser) | X2 |
-| T4 | PRs #250, #252, #254 seguem **OPEN**: a classe date-only UTC shift (data volta um dia entre 21h e 00h BRT) está viva em `main`. | verificado (`gh pr view`) | H2 |
+| T4 | ~~PRs #250, #252, #254 seguem **OPEN**~~ **[EMENDA 2026-09-02]** a **#250 foi mergeada** (`64d8e675`, 18:01Z — corrige o site do AgingPanel); **#252 e #254 seguem OPEN**, então a classe date-only UTC shift continua viva em `main` nos demais sites. | verificado (`gh pr view`) | H2 |
 | T5 | Este worktree não tem `my-app/node_modules`, `server/.env` nem `generated/prisma`; build de produção e smoke só rodam na raiz. | verificado | todos |
-| T6 | O recibo PDF (`GET /journal-entries/:id/receipt`) existe no backend mas **nenhuma tela chama**; o passo 4 do H2 não tem onde clicar. | verificado | H2 |
+| T6 | ~~O recibo PDF existe no backend mas **nenhuma tela chama**~~ **[EMENDA 2026-09-02 — FECHADO por `1d68a12e`]** o botão "Recibo (PDF)" existe por lançamento no Livro Diário; o passo 4 do H2 tem onde clicar. | verificado | H2 |
+
+## [EMENDA 2026-09-02] O que mudou depois deste kit
+
+Este kit foi levantado contra `2e95ffe9`. No mesmo dia, o trabalho da PR #263 e a merge da #250
+fecharam parte dos achados. **Os kits abaixo seguem válidos; só as linhas listadas aqui envelheceram**
+(cada uma também está emendada no ponto de origem).
+
+| Achado original | Estado hoje | Fechado por |
+|---|---|---|
+| T6 / H2 achado 1 — recibo PDF sem botão em tela | ✅ **fechado**: botão "Recibo (PDF)" por lançamento no Livro Diário | `1d68a12e` (#263) |
+| H2 achado 2 — `accept` do upload sem extensão CNAB | ✅ **fechado**: `accept=".csv,.xlsx,.ofx,.ret,.cnab"` | `1d68a12e` (#263) |
+| H2 achado 3 — runbook com vocabulário `salon.*` pré-rename | ✅ **fechado**: cada ocorrência anotada com o nome atual | `ad903847` (#263) |
+| M2 achado — contagem de `DROP TABLE` no ADR-M2 desatualizada | ✅ **fechado**: ADR emendado para 11/35 | `ad903847` (#263) |
+| T4 — "PRs #250, #252, #254 seguem OPEN" | ⚠️ **parcial**: a **#250 foi mergeada** (`64d8e675`, 18:01Z); #252 e #254 seguem OPEN | merge da #250 |
+| H1 2ª passada — "a ECF Fase 3 não existe em código" | ⚠️ **mudou de forma**: o esqueleto existe; o bloqueio agora é o conteúdo de L/M/N | `02fc802b` (#263) |
+| P5 do H1 — "9 contas-folha" | ✅ **corrigido**: são **8** vivas (a query não filtrava soft-delete) | esta emenda |
+
+**Não mudou:** o diagnóstico central de cada gate. `dev.db` real segue em **29/35** migrações, sem
+`accounting_bindings`, e `referential_mappings`/`referential_accounts` seguem com **0 linhas** —
+reconferido em 2026-09-02 por leitura `mode=ro`.
 
 ---
 
@@ -440,10 +460,21 @@ marcado; `Assinatura do executor: ____________` vazia. Confere com o formato exi
 
 ### Seção — H1, 2ª passada em Lucro Real (item 6 da fila, HOJE BLOQUEADA)
 
-**Pré-condição bloqueante, declarada, não planejada aqui:** a **ECF Fase 3 — Lucro Real**
+**Pré-condição bloqueante, declarada, não planejada aqui:** ~~a **ECF Fase 3 — Lucro Real**
 (master map §5.1 Bloco B item 10) não existe em código. É **ADR + `sessao-planejamento` NÃO
-autorizada** (ORCH-006) — este kit não abre essa frente, só nomeia o delta já medido pelo
+autorizada** (ORCH-006)~~ — este kit não abre essa frente, só nomeia o delta já medido pelo
 próprio mapa e pela emenda do runbook.
+
+> **[EMENDA 2026-09-02 — o bloqueio mudou de forma, não desapareceu]** O ADR foi escrito, os Forks 1
+> (endpoint dedicado) e 5 (trimestral) foram ratificados pelo dono e o **esqueleto foi implementado e
+> mergeado** (`02fc802b`): existe `POST /sped/ecf/real/generate` → `SpedEcfRealGenerationService` →
+> `server/src/lib/ecfReal.ts`. **A 2ª passada continua BLOQUEADA por outro motivo:** o arquivo que ela
+> levaria ao PVA sai **vazio exatamente nos blocos que definem o regime** — `L001/L990`, `M001/M990` e
+> `N001/N990` são marcadores sem dados (`ecfReal.ts:107-111`, `buildBlockOpen(open, false)`), e o teste
+> crava que nada de dinheiro chega ao arquivo (`ecfReal.test.ts:127`: gerar com `quarters=[]` produz
+> arquivo idêntico). Sem balanço/DRE (L), e-Lalur (M) e cálculo de IRPJ/CSLL (N) não existe o que a 2ª
+> passada deveria provar. Isso depende dos **Forks 2, 3 e 4**, que dependem das seções L/M/N do Manual
+> do Leiaute 12 (não commitado). A tabela de delta abaixo segue válida como enumeração do que falta.
 
 **O que muda no runbook H1 na 2ª passada** (delta medido em `server/src/lib/ecf.ts`, citado pela
 emenda 2026-09-02 do próprio `RUNBOOK-H1-PVA.md` e pela linha 10 do master map §5.1 Bloco B):
@@ -584,16 +615,22 @@ risco que B-4 cobre; não há evidência aqui de que B-4 já rodou para esta esc
 
 **Achados fora de escopo**
 
-1. **Recibo PDF (passo 4) sem UI wired** — `GET /journal-entries/:entryId/receipt` existe no
+1. ~~**Recibo PDF (passo 4) sem UI wired**~~ **[EMENDA 2026-09-02 — FECHADO por `1d68a12e`: existe o
+   botão "Recibo (PDF)" por lançamento no Livro Diário, chamando `accountingService.downloadReceipt`.]**
+   Texto original: `GET /journal-entries/:entryId/receipt` existe no
    backend (`server/src/routes/accounting.ts:104`) mas nenhuma tela em `my-app/features/accounting`
    o chama. O passo 4 do runbook não tem onde clicar hoje. Isto não é um problema do runbook — é um
    gap de produto que o sign-off vai bater de frente. Registrar como achado de domínio (candidato a
    item novo de fila / §5.2), não corrigir aqui (GHC-004/CBM-001).
-2. **CNAB 240 sem extensão no filtro de upload** — `ReconciliationPanel.tsx:506` só aceita
+2. ~~**CNAB 240 sem extensão no filtro de upload**~~ **[EMENDA 2026-09-02 — FECHADO por `1d68a12e`:
+   `accept=".csv,.xlsx,.ofx,.ret,.cnab"`; o texto visível do formulário ainda não cita CNAB.]**
+   Texto original: `ReconciliationPanel.tsx:506` só aceita
    `.csv,.xlsx,.ofx` no `<input>`; o backend detecta CNAB por conteúdo/`.ret`/`.cnab`, mas a tela
    não anuncia isso e pode esconder o arquivo do diálogo nativo. Contorno possível sem código
    (renomear extensão ou trocar filtro do diálogo), mas é atrito real na execução do passo 3.
-3. **Runbook cita vocabulário de evento pré-rename** (`salon.sale.finalized` etc., deveria ser
+3. ~~**Runbook cita vocabulário de evento pré-rename**~~ **[EMENDA 2026-09-02 — FECHADO por `ad903847`:
+   cada ocorrência dos passos 6-11 foi anotada com o nome atual, ex. `salon.sale.finalized (hoje:
+   sale.finalized, PR #222)`.]** Texto original: (`salon.sale.finalized` etc., deveria ser
    `sale.finalized` etc. desde PR #222/2026-08-25) nos passos 6-11. Não muda o resultado esperado
    (contas D/C), só o nome do evento nas anotações do executor — vale uma nota de leitura, não
    bloqueia a execução.
@@ -697,7 +734,7 @@ concreto foi adiado — grau: **verificado** (texto do doc + emenda no próprio 
 Todos os campos de evidência/desfecho/assinatura seguem `[...]`/`[ ]`/`____________` — nenhum preenchido.
 
 **Achados fora de escopo:**
-- Contagem de migrações com `DROP TABLE` no `ADR-M2-deploy-topology.md` (9) está **desatualizada** — hoje são 11 sobre 35 migrações (o ADR mediu 9 sobre 30 em 2026-08-22). Não é pré-condição vermelha do M2 (o A5 do runbook já avisa que a fila de destrutivas é o padrão esperado), mas o número citado no ADR §3 não bate mais com o disco. Sinalizo para quem emendar o ADR na próxima passada de higiene — não corrijo aqui (fora do escopo desta tarefa e não edito arquivos do repo).
+- ~~Contagem de migrações com `DROP TABLE` no `ADR-M2-deploy-topology.md` (9) está **desatualizada**~~ **[EMENDA 2026-09-02 — FECHADO por `ad903847`: o ADR §3 foi emendado para 11/35, com a lista das migrações e a correção da afirmação derivada sobre a ponta da fila.]** Texto original: hoje são 11 sobre 35 migrações (o ADR mediu 9 sobre 30 em 2026-08-22). Não é pré-condição vermelha do M2 (o A5 do runbook já avisa que a fila de destrutivas é o padrão esperado), mas o número citado no ADR §3 não bate mais com o disco. Sinalizo para quem emendar o ADR na próxima passada de higiene — não corrijo aqui (fora do escopo desta tarefa e não edito arquivos do repo).
 - `ALLOWED_ORIGIN` não está no schema Zod de `config/env.ts` (só `app.ts:35` a lê, com fallback silencioso para `localhost:3000`), enquanto `docker-compose.yml` a torna obrigatória via `:?`. Ou seja, **fora do compose** (ex.: rodando `node dist/server.js` direto num host sem docker) nada impede o boot de subir com CORS quebrado em silêncio contra um domínio real. Não é pré-condição do M2 propriamente, mas é o tipo de "erro de ambiente" que o copiloto existe para prevenir — registro para o executor conferir manualmente se o alvo não usar o compose tal como está.
 
 **O que eu não sei:**
