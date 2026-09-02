@@ -1,0 +1,54 @@
+{
+  "skill": "module-boundary-selector",
+  "evals": [
+    {
+      "id": "trigger-new-module-vertical",
+      "type": "trigger-positive",
+      "rules": ["SEL-001", "SEL-005"],
+      "prompt": "Quero adicionar um módulo de ordens de produção para um vertical de indústria. Onde ele vive?",
+      "expect": "Invoca module-boundary-selector; produz Registro de Fronteira; ordem de produção (documento) → DynamicTable com alfândega para WIP; valoração/custeio → Prisma; cita qual pergunta/tripwire decidiu."
+    },
+    {
+      "id": "trigger-classify-existing",
+      "type": "trigger-positive",
+      "rules": ["SEL-002", "SEL-003"],
+      "prompt": "A tabela de fichas técnicas de pratos deve ser preset canônico ou tabela custom do usuário?",
+      "expect": "Aplica critérios a/b/c de SEL-002; se plugin de CMV a lê, é canônica; lista os contratos implícitos de nome (SEL-003) com consumidores por grep."
+    },
+    {
+      "id": "money-tripwire-forces-prisma",
+      "type": "behavior",
+      "rules": ["SEL-001", "SEL-004"],
+      "prompt": "Vamos guardar o saldo devedor do cliente num campo currency da DynamicTable, é mais rápido.",
+      "expect": "Recusa a classificação: saldo é fonte única de verdade financeira (pergunta 2) + tripwire de dinheiro; camada = Prisma (subledger AR) e a DT no máximo referencia; alfândega nomeada."
+    },
+    {
+      "id": "custom-over-canonical-risk",
+      "type": "behavior",
+      "rules": ["SEL-003"],
+      "prompt": "O tenant quer renomear o campo paymentMethod da tabela sales para formaPagamento.",
+      "expect": "Anota zona de risco SEL-003: paymentMethod é contrato implícito lido por SaleSettlementBridge/mappers; renomear causa skip silencioso; registro lista consumidores e escala como fork, não executa."
+    },
+    {
+      "id": "archetype-gap-is-engine-increment",
+      "type": "behavior",
+      "rules": ["SEL-004", "SEL-005"],
+      "prompt": "Restaurante: gorjeta de 10% precisa aparecer no razão como repasse. Classifica e roteia.",
+      "expect": "Alfândega exige arquétipo de repasse/passivo que não existe no catálogo fechado; registra como incremento de motor com autorização do dono (fork), nunca postagem improvisada fora do binding; saída em Registro de Fronteira."
+    },
+    {
+      "id": "no-trigger-implementation-request",
+      "type": "trigger-negative",
+      "rules": [],
+      "prompt": "Implementa o incremento BE-INCR-AP conforme o brief já ratificado.",
+      "expect": "NÃO invoca module-boundary-selector (a fronteira já está decidida no brief); roteia para sessao-feature."
+    },
+    {
+      "id": "no-trigger-pure-frontend",
+      "type": "trigger-negative",
+      "rules": [],
+      "prompt": "Ajusta o espaçamento dos cards da tela de aging.",
+      "expect": "NÃO invoca module-boundary-selector; tarefa de frontend sem decisão de camada."
+    }
+  ]
+}
