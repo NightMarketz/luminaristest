@@ -97,8 +97,15 @@ Pré-condições (verificar antes de começar):
 > se confere DEPOIS, na aba **Livro Diário**/lançamento do painel de contabilidade. Se a unidade de
 > salão (pré-condição acima) ainda não existir, criá-la é parte do passo 6.
 
+> **[EMENDA 2026-09-02]** (kit de preflight H2, `docs/accounting/KITS-PREFLIGHT-2026-09-02.md`):
+> o vocabulário de evento abaixo (`salon.sale.*`, `salon.package.sold`) é PRÉ-rename — o código usa
+> `sale.*`/`sale.package.sold` desde o PR #222 (`docs/adr/ADR-RN-salon-to-sale-rename.md`,
+> confirmado em `server/src/features/accounting/sync/AccountingSyncPort.ts` e nos mappers
+> `Sale*Mapper.ts`). Cada ocorrência abaixo ganha a forma atual entre parênteses. O resultado
+> esperado de cada passo (contas D/C) NÃO muda — é só o nome do evento que trocou.
+
 6. Na tela do salão, criar (se preciso) a unidade Salão de Beleza e fechar uma **venda só de
-   serviço** (sem item de produto/estoque) — evento `salon.sale.finalized`.
+   serviço** (sem item de produto/estoque) — evento `salon.sale.finalized` (hoje: `sale.finalized`, PR #222).
    Resultado esperado: no Livro Diário, lançamento novo com D **1.1.2 A Receber** = valor da venda
    e C **3.1 Receita de Serviços** = mesmo valor. **Caso de borda:** a linha de C **3.3 Receita de
    Revenda NÃO deve aparecer** (base do split é zero para venda sem produto — `revenueSplit.ts`,
@@ -106,14 +113,16 @@ Pré-condições (verificar antes de começar):
    EVIDÊNCIA: [print da tela de fechamento da venda + print do lançamento no Livro Diário/aba
    Lançamento mostrando as 2 linhas (e a ausência da 3ª)]
 
-7. Vender um **pacote pré-pago** — evento `salon.package.sold`.
+7. Vender um **pacote pré-pago** — evento `salon.package.sold` (hoje: `sale.package.sold`, PR #222).
    Resultado esperado: lançamento com D **1.1.2 A Receber** = valor do pacote e C **2.1.1 Pacotes
    Pré-pagos** (passivo, não receita — a venda do pacote NÃO reconhece receita agora, só cria
    passivo diferido).
    EVIDÊNCIA: [print da tela de venda de pacote + print do lançamento]
 
-8. Fechar uma **venda com item de produto de estoque** — evento `salon.sale.finalized` (com
-   `revenueByNature` não-zero) seguido do evento automático `salon.sale.cogs` (disparado pelo
+8. Fechar uma **venda com item de produto de estoque** — evento `salon.sale.finalized`
+   (hoje: `sale.finalized`, PR #222) (com
+   `revenueByNature` não-zero) seguido do evento automático `salon.sale.cogs`
+   (hoje: `sale.cogs`, PR #222) (disparado pelo
    `InventoryService.recordSaleCogs` na baixa de estoque, mesma tela).
    Resultado esperado: DOIS lançamentos. (a) finalized: D 1.1.2 A Receber = total; C 3.1 Receita de
    Serviços + C **3.3 Receita de Revenda** (agora presente, valor = parte de produto do split). (b)
@@ -122,16 +131,16 @@ Pré-condições (verificar antes de começar):
    não com o preço de venda.
    EVIDÊNCIA: [print da tela + prints dos DOIS lançamentos no Livro Diário]
 
-9. Fazer a **devolução** de uma das vendas acima — evento `salon.sale.returned`.
+9. Fazer a **devolução** de uma das vendas acima — evento `salon.sale.returned` (hoje: `sale.returned`, PR #222).
    Resultado esperado: lançamento NOVO e separado (não é estorno/`reversedById` do lançamento
-   original — o original de `salon.sale.finalized` continua `Posted`, intocado) com D **3.2
+   original — o original de `salon.sale.finalized` (hoje: `sale.finalized`, PR #222) continua `Posted`, intocado) com D **3.2
    Devoluções de Vendas** (contra-receita) e C **1.1.2 A Receber**.
    EVIDÊNCIA: [print da devolução na tela + print do lançamento novo + confirmação de que o
    lançamento original da venda continua com status Posted, não alterado]
 
 10. Registrar **pagamento** (liquidação) para pelo menos 3 vendas em aberto, uma por meio de
     pagamento diferente: **Dinheiro**, **Pix ou Cartão**, e (se houver saldo de pacote disponível)
-    **Package Balance** — evento `salon.sale.settled`. Este é o passo mais frágil do intérprete: a
+    **Package Balance** — evento `salon.sale.settled` (hoje: `sale.settled`, PR #222). Este é o passo mais frágil do intérprete: a
     conta de débito é resolvida por SUB-CHAVE (`paymentMethod`), não por uma conta fixa.
     Resultado esperado, um lançamento por meio: C **1.1.2 A Receber** sempre; D varia por método —
     Dinheiro → **1.1.3 Caixa**; Pix → **1.1.1 Banco**; Cartão (Débito/Crédito) → **1.1.4 A Receber
