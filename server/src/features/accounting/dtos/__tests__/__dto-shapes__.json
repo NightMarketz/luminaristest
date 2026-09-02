@@ -2919,6 +2919,7 @@
           "type": "object",
           "properties": {
             "formaTrib": {
+              "default": "1",
               "type": "string",
               "pattern": "^\\d$"
             },
@@ -2952,7 +2953,6 @@
             }
           },
           "required": [
-            "formaTrib",
             "formaTribPer"
           ],
           "additionalProperties": false

@@ -124,9 +124,18 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
     expect(theirsMeta.status).toBe(404);
   });
 
-  it('400 quando fiscal.formaTrib está ausente — o servidor NÃO chuta o dígito do regime (sem job)', async () => {
+  it("fiscal.formaTrib ausente → 201 com FORMA_TRIB='1' no 0010 (default ratificado 2026-09-02); formaTribPer ausente → 400", async () => {
+    const ok = await post(donoA, body({ fiscal: { formaTribPer: 'XXXX' } }));
+    expect(ok.status).toBe(201);
+    const file = await request(app)
+      .get(`/api/accounting/data-exchange/jobs/${ok.body.data.id as string}/download`)
+      .query({ unitId: UNIT })
+      .set(authHeader(donoA));
+    expect(file.status).toBe(200);
+    // FORMA_TRIB é o 4º campo do 0010: '1' suprido pelo default, formaTribPer do caller.
+    expect(file.text).toContain('|0010||N|1|T|01|XXXX|');
     const antes = await prisma.accountingDataExchangeJob.count();
-    const res = await post(donoA, body({ fiscal: { formaTribPer: 'XXXX' } }));
+    const res = await post(donoA, body({ fiscal: { formaTrib: '1' } }));
     expect(res.status).toBe(400);
     // `flatten()` agrupa o erro do campo aninhado sob `fieldErrors.fiscal` (a chave folha não aparece).
     expect(res.body.error.fieldErrors.fiscal).toEqual(expect.arrayContaining([expect.any(String)]));

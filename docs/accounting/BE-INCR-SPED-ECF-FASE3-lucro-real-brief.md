@@ -10,8 +10,8 @@
 > `fiscal.formaTribPer` (4 posições; o default `PPPP` da lib é o código do Presumido e vazaria). `quarterWindows()`
 > ganhou `export` (reuso, fan-in 2). Contrato `l300Source.ytdNetResultCents` é YTD por construção (`incomeStatement`);
 > o resultado DO trimestre é decisão do builder L300 (Fork 3). **Decisão pronta para o dono:** a transcrição
-> `BE-INCR-SPED-ECF-layout-transcription.md:85` (Manual p. 13 §1.3) já cita `FORMA_TRIB=1` para Lucro Real; se
-> ratificado, vira default do DTO em 1 linha. Dívidas nomeadas pelo revisor: Bloco 9 inlinado 3× (`sped.ts`/`ecf.ts`/
+> `BE-INCR-SPED-ECF-layout-transcription.md:85` (Manual p. 13 §1.3) já cita `FORMA_TRIB=1` para Lucro Real —
+> **RATIFICADO e APLICADO** (dono, em sessão, 2026-09-02: *"Ratifico FORMA_TRIB=1 como default, aplica"*): `fiscal.formaTrib` agora tem `.default('1')`; o caller ainda pode informar outro dígito. Dívidas nomeadas pelo revisor: Bloco 9 inlinado 3× (`sped.ts`/`ecf.ts`/
 > `ecfReal.ts`), 8 leituras de relatório por geração sem saída no arquivo até L100/L300 existirem, `formaTribPer`
 > aceita qualquer 4 chars até o alfabeto vir do Manual.
 >
@@ -227,7 +227,7 @@ coluna "Real". Lista completa (com o fork que cada um decide) está no ADR §5; 
 3. Layout campo-a-campo M010/M300/M350/M500 + mecânica de Parte A vs Parte B.
 4. Layout campo-a-campo N500/N600/N620/N630/N650/N660/N670 — decide o Fork 3.
 5. Semântica exata de `HASH_ECF_ANTERIOR` (hash do arquivo vs recibo de transmissão) — decide o Fork 2.
-6. Código exato de `FORMA_TRIB` para Real (não verificado nesta sessão — não chutar o dígito).
+6. ~~Código exato de `FORMA_TRIB` para Real (não verificado nesta sessão — não chutar o dígito).~~ **Fechado 2026-09-02:** `1`, artefato `BE-INCR-SPED-ECF-layout-transcription.md:85` (Manual p. 13 §1.3), dono, em sessão, 2026-09-02: *"Ratifico FORMA_TRIB=1 como default, aplica"*.
 7. Regra de compensação de prejuízo fiscal/base negativa CSLL (trava 30%, Lei 9.065/95) — condicionada ao
    Fork 4.
 8. Qual `FORMA_APUR` é o alvo do MVP — decide o Fork 5.

@@ -45,7 +45,7 @@ const socio = {
   fone: '1199998888',
 };
 
-/** `formaTrib`/`formaTribPer` são placeholders de teste — o valor real vem do caller (sem default). */
+/** `formaTribPer` é placeholder de teste (sem default); `formaTrib` default '1' é o ratificado. */
 const fiscal = { formaTrib: '1', formaTribPer: 'XXXX' };
 
 const valid = { unitId: 'unit-1', year: 2026, declarant, fiscal, signers: [contador, socio] };
@@ -95,14 +95,16 @@ describe('SpedEcfRealRequestSchema — contrato de entrada', () => {
 });
 
 describe('SpedEcfRealRequestSchema — 0010 parametrizado, sem dígito de regime no servidor', () => {
-  it('rejects fiscal ausente — o bloco não tem default porque formaTrib/formaTribPer não têm', () => {
+  it('rejects fiscal ausente — o bloco não tem default porque formaTribPer não tem', () => {
     const { fiscal: _omit, ...semFiscal } = valid;
     failsOn(semFiscal, 'fiscal');
   });
 
-  it('rejects formaTrib ausente (sem default) e formaTrib fora de 1 dígito', () => {
+  it("formaTrib ausente → default '1' (Lucro Real, ratificado 2026-09-02; transcription.md:85); fora de 1 dígito rejeita", () => {
     const { formaTrib: _omit, ...semTrib } = fiscal;
-    failsOn({ ...valid, fiscal: semTrib }, 'fiscal');
+    const parsed = SpedEcfRealRequestSchema.safeParse({ ...valid, fiscal: semTrib });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.fiscal.formaTrib).toBe('1');
     failsOn({ ...valid, fiscal: { ...fiscal, formaTrib: '10' } }, 'fiscal');
     failsOn({ ...valid, fiscal: { ...fiscal, formaTrib: 'R' } }, 'fiscal');
   });
@@ -114,7 +116,7 @@ describe('SpedEcfRealRequestSchema — 0010 parametrizado, sem dígito de regime
     failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'XXXXX' } }, 'fiscal');
   });
 
-  it('repassa formaTrib/formaTribPer EXATAMENTE como informados (nenhuma normalização, nenhum default)', () => {
+  it('repassa formaTrib/formaTribPer EXATAMENTE como informados (o default só supre a ausência)', () => {
     for (const formaTrib of ['0', '1', '9']) {
       const parsed = SpedEcfRealRequestSchema.safeParse({ ...valid, fiscal: { ...fiscal, formaTrib } });
       expect(parsed.success).toBe(true);

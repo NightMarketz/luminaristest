@@ -10,10 +10,11 @@ import { DeclarantSchema, SignerSchema, refineEcfSigners } from './SpedEcfDto';
  * domínio do Presumido e vêm importados de `SpedEcfDto.ts` — nunca redigitados.
  *
  * O que é diferente do Presumido, e por quê cada campo fiscal existe:
- *  - `formaTrib` (0010.FORMA_TRIB) — OBRIGATÓRIO, SEM DEFAULT. O dígito do Lucro Real não
- *    está confirmado em artefato citável (BRIEF §4 item 6: "não chutar o dígito"); a lacuna é
- *    resolvida por PARAMETRIZAÇÃO, não por escolha — o caller informa, o código não contém
- *    nenhum dígito literal de regime.
+ *  - `formaTrib` (0010.FORMA_TRIB) — default `'1'` = Lucro Real, RATIFICADO pelo dono em
+ *    2026-09-02 ("Ratifico FORMA_TRIB=1 como default, aplica"). Artefato:
+ *    `docs/accounting/BE-INCR-SPED-ECF-layout-transcription.md:85` (Manual da ECF p. 13 §1.3,
+ *    "recuperação da ECF anterior do Lucro REAL — FORMA_TRIB=1"). O caller ainda pode informar
+ *    outro dígito; o servidor só supre a ausência.
  *  - `formaTribPer` (0010.FORMA_TRIB_PER) — OBRIGATÓRIO, SEM DEFAULT, pela MESMA regra: o
  *    default da lib (`'PPPP'`, `ecf.ts` Reg0010Input) é o código do Presumido e não pode vazar
  *    para um arquivo do Real; o código do Real não está transcrito. Comprimento 4 = um
@@ -30,7 +31,7 @@ import { DeclarantSchema, SignerSchema, refineEcfSigners } from './SpedEcfDto';
 const FiscalRealSchema = z
   .object({
     // 0010.FORMA_TRIB — 1 dígito; valor informado pelo caller (sem default, ver cabeçalho).
-    formaTrib: z.string().regex(/^\d$/, 'FORMA_TRIB = 1 dígito (tabela do Manual da ECF).'),
+    formaTrib: z.string().regex(/^\d$/, 'FORMA_TRIB = 1 dígito (tabela do Manual da ECF).').default('1'),
     // 0010.FORMA_TRIB_PER — 4 posições (uma por trimestre); sem default (ver cabeçalho).
     formaTribPer: z.string().length(4, 'FORMA_TRIB_PER = 4 posições (uma por trimestre).'),
     // 0010.FORMA_APUR — Fork 5→(a): Trimestral.
@@ -44,8 +45,8 @@ const FiscalRealSchema = z
 
 /**
  * POST /sped/ecf/real/generate body. `year` drives the four quarterly windows (Fork 5→(a)).
- * `fiscal` é OBRIGATÓRIO (não tem default de bloco) porque `formaTrib`/`formaTribPer` não
- * têm default — omitir o bloco é 400, nunca um dígito escolhido pelo servidor.
+ * `fiscal` é OBRIGATÓRIO (não tem default de bloco) porque `formaTribPer` não tem default —
+ * omitir o bloco é 400. Só `formaTrib` tem default ratificado (`'1'`).
  */
 export const SpedEcfRealRequestSchema = z
   .object({
