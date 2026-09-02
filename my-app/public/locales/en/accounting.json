@@ -109,14 +109,26 @@
         "expenseAccount": "Expense account (counterpart)",
         "selectAccount": "— select the expense account —",
         "counterparty": "Counterparty",
-        "noCounterparty": "— no counterparty —"
+        "noCounterparty": "— no counterparty —",
+        "kind": "Entry type",
+        "product": "Product",
+        "qty": "Quantity",
+        "selectProduct": "— select the product —",
+        "loadingProducts": "Loading products…"
       },
       "error": {
         "invalid": "Fill in supplier, description, dates, amount and expense account.",
-        "failed": "Failed to record the bill."
+        "failed": "Failed to record the bill.",
+        "invalidInventory": "Fill in supplier, description, dates, total amount, product and quantity."
       },
       "noCounterparties": "No supplier registered.",
-      "manageCounterparties": "Register counterparties"
+      "manageCounterparties": "Register counterparties",
+      "mode": {
+        "expense": "Expense",
+        "inventory": "Inventory purchase",
+        "inventoryHint": "Debits 1.1.6 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
+      },
+      "noProducts": "No products in the catalog. Register products in the inventory module."
     },
     "actionModal": {
       "cancel": "Back",
@@ -136,7 +148,8 @@
       "undoConfirm": "Confirm",
       "undoing": "Undoing…",
       "undoNote": "The payment will be reversed and the bill will return to “Open”."
-    }
+    },
+    "inventoryBadge": "Inventory · {{qty}} un."
   },
   "contasAReceber": {
     "heading": "Accounts Receivable",

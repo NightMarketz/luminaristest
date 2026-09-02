@@ -43,8 +43,19 @@ export const StockMovementsApplyPlugin: RulePlugin = {
       return;
     }
 
-    // Regras financeiras para entradas manuais: exigir dados essenciais quando motivo for compra
-    if (type === 'In') {
+    // Entradas vindas do Payable de inventário (BE-INCR-PURCHASE-PHYSICAL-SYNC) já nasceram
+    // valoradas no razão (D 1.1.6 × C 2.1.2 + receiveStock) e trazem fornecedor via Counterparty.
+    // O discriminador é o PREFIXO do detailKey — campo DECLARADO no preset stockMovements: o
+    // buildZodSchema do motor REMOVE chaves fora do schema antes do plugin (finding do review
+    // independente — um sourceType custom não sobrevive ao strip; detailKey sobrevive).
+    // ponytail: um cliente pode forjar o prefixo no POST genérico e pular a validação manual —
+    // impacto restrito ao dado operacional do próprio tenant (o razão não passa por aqui);
+    // chave dura exigiria mover o log físico para Prisma.
+    const isAccountingPayableRow = String(ctx.after?.detailKey || '').startsWith('ACCOUNTING_PAYABLE:');
+
+    // Regras financeiras para entradas manuais: exigir dados essenciais quando motivo for compra.
+    // A validação manual de supplierId/cost não se aplica à linha do Payable; o delta abaixo SIM.
+    if (type === 'In' && !isAccountingPayableRow) {
       const reason = String(ctx.after?.reason || '');
       const cost = ctx.after?.cost;
       if (reason === 'Purchase') {
@@ -72,8 +83,9 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     if (!productUnitsTableId) throw new ValidationError('Tabela de estoque (Product Units) não encontrada.');
     if (!productUnitRow) throw new ValidationError('Produto/unidade não possui registro de estoque.');
 
-    // Normalize reason: manual (sem sourceType) é sempre 'Adjustment'
-    if (!sourceType) {
+    // Normalize reason: manual (sem sourceType) é sempre 'Adjustment' — exceto a linha do Payable,
+    // cujo reason='Purchase' é verdadeiro (o sourceType dela não sobrevive ao strip do schema).
+    if (!sourceType && !isAccountingPayableRow) {
       if (ctx.after) ctx.after['reason'] = 'Adjustment';
     }
 

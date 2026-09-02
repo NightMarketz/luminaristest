@@ -28,6 +28,8 @@ import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
+import type { IProductRefLookup } from './ProductRefLookup';
+import type { IPhysicalStockSync } from './PhysicalStockSync';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
@@ -64,6 +66,14 @@ export class PayableService {
     // Kept optional so the Fase B factory wiring is a separate step — the factory compiles with this
     // arg absent. Inventory-purchase paths assert its presence and fail loud when it is missing.
     private readonly inventoryService?: IInventoryService,
+    // OPTIONAL (LAC-E F-E2): existence gate for `inventoryProductRef` against the tenant's DT
+    // `products` catalog. Optional for the same wiring reason as inventoryService; inventory-purchase
+    // paths fail loud when absent — a silent skip would recreate the orphan-cost-layer class.
+    private readonly productRefLookup?: IProductRefLookup,
+    // OPTIONAL (BE-INCR-PURCHASE-PHYSICAL-SYNC / F-D2=(b)): espelha a compra no estoque FÍSICO
+    // (DT stockMovements→productUnits). Best-effort como o receiveStock — a passada de reconcile
+    // re-dirige o que faltar; wiring ausente degrada com warn (o físico é derivado, não verdade).
+    private readonly physicalStockSync?: IPhysicalStockSync,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -134,6 +144,23 @@ export class PayableService {
       throw new ValidationError(
         'Compra de estoque requer o serviço de estoque configurado (wiring de inventário pendente).',
       );
+    }
+
+    // LAC-E F-E2 (ratificado): o productRef precisa existir no catálogo `products` do tenant ANTES
+    // de qualquer escrita — typo em string livre criaria camada de custo órfã invisível ao CMV.
+    // Mesmo padrão fail-loud do inventoryService para wiring ausente.
+    if (inventoryPurchase) {
+      if (!this.productRefLookup) {
+        throw new ValidationError(
+          'Compra de estoque requer o catálogo de produtos configurado (wiring de lookup pendente).',
+        );
+      }
+      const exists = await this.productRefLookup.productExists(scope, dto.inventoryProductRef!);
+      if (!exists) {
+        throw new ValidationError(
+          `Produto '${dto.inventoryProductRef}' não existe no catálogo desta conta — confira o identificador antes de lançar a compra.`,
+        );
+      }
     }
 
     // tx1 — resolve/mint the counterparty, create the row (OPEN) and append payable.created
@@ -220,8 +247,39 @@ export class PayableService {
           error,
         });
       }
+      // F-D2=(b): espelho FÍSICO da compra (movimento In → productUnits.stock). Mesmo estágio
+      // best-effort do receiveStock: idempotente por detailKey, re-dirigido pelo reconcile.
+      await this.drivePhysicalInbound(scope, payable.id, dto.inventoryProductRef!, dto.inventoryQty!, dto.amountCents, new Date(dto.issueDate), dto.unitId);
     }
     return payable;
+  }
+
+  /** Best-effort do movimento físico da compra (nunca desfaz razão/subrazão já commitados). */
+  private async drivePhysicalInbound(
+    scope: AccountingScope,
+    payableId: string,
+    productRef: string,
+    qty: number,
+    totalValueCents: number,
+    occurredAt: Date,
+    unitId: string,
+  ): Promise<void> {
+    if (!this.physicalStockSync) {
+      logger.warn('AP: physical stock sync não configurado — estoque físico não espelhado', { payableId });
+      return;
+    }
+    try {
+      await this.physicalStockSync.recordPurchaseInbound(scope, {
+        productRef,
+        unitId,
+        qty,
+        payableId,
+        occurredAt,
+        totalValueCents,
+      });
+    } catch (error) {
+      logger.warn('AP: movimento físico da compra falhou — reconcile re-dirige', { payableId, error });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -369,6 +427,20 @@ export class PayableService {
         reversalEventId: `${payableId}:cancel`,
         reversalDate: new Date(dto.reversalDate),
       });
+      // F-PS1: contra-movimento físico Out (best-effort; 'not-found' = físico nunca criado, ok).
+      if (this.physicalStockSync) {
+        try {
+          await this.physicalStockSync.reversePurchaseInbound(scope, {
+            payableId,
+            reversalDate: new Date(dto.reversalDate),
+          });
+        } catch (error) {
+          logger.warn('AP cancel: contra-movimento físico falhou — divergência visível no tie-out físico', {
+            payableId,
+            error,
+          });
+        }
+      }
     }
 
     // Reverse the recognition if it exists (a dangling create may have none).
@@ -507,6 +579,16 @@ export class PayableService {
               description: payable.description,
             });
           }
+          // F-D2=(b): re-dirige também o espelho FÍSICO (idempotente por detailKey no port).
+          await this.drivePhysicalInbound(
+            scope,
+            payable.id,
+            payable.inventoryProductRef!,
+            payable.inventoryQty!,
+            centsFromDb(payable.amountCents),
+            payable.issueDate,
+            payable.unitId,
+          );
         } catch (error) {
           // TRIAGEM-AUDIT-2026-08-15 A4 — a skip-listed deterministic code (period-closed /
           // MAX_CENTS poison, same discipline as the sync bridges) is BLOCKED, never a bug; anything

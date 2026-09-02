@@ -29,6 +29,14 @@ interface SaleDetailPanelProps {
     customerNameMap: Record<string, string>;
     unitNameMap: Record<string, string>;
     onUpdateSale: (saleId: string, payload: Record<string, unknown>, successMessage?: string) => Promise<void>;
+    /**
+     * LAC-A: pay/cancel/return usam as ROTAS DEDICADAS (/api/sales/*) — nunca o PUT genérico,
+     * que bate no immutableAfter da venda Finalized e pula as bridges contábeis. Os modais
+     * (método de pagamento, motivo) moram na SalesView; aqui só sinalizamos a intenção.
+     */
+    onRequestPay: (sale: SaleRecord) => void;
+    onRequestCancel: (sale: SaleRecord) => void;
+    onRequestReturn: (sale: SaleRecord) => void;
 }
 
 export default function SaleDetailPanel({
@@ -42,6 +50,9 @@ export default function SaleDetailPanel({
     customerNameMap,
     unitNameMap,
     onUpdateSale,
+    onRequestPay,
+    onRequestCancel,
+    onRequestReturn,
 }: SaleDetailPanelProps) {
     const { t } = useTranslation(['finance_view', 'common']);
     const formatCurrency = useFormatCurrency();
@@ -66,6 +77,7 @@ export default function SaleDetailPanel({
     const paymentLc = String(sale.paymentStatus || '').toLowerCase();
     const isFinalized = statusLc === 'finalized';
     const isCancelled = statusLc === 'cancelled';
+    const isReturned = statusLc === 'returned';
     const isPaid = paymentLc === 'paid';
 
     const customerName = sale.simpleCustomer
@@ -99,31 +111,29 @@ export default function SaleDetailPanel({
                             {t('common:finalize', 'Finalizar')}
                         </button>
                     )}
-                    {!isCancelled && (
+                    {!isCancelled && !isReturned && (
                         <button
                             disabled={isUpdating === sale.id}
-                            onClick={() => confirm({
-                                title: t('finance_view:sales.confirm_cancel', 'Cancelar venda?'),
-                                message: t('finance_view:sales.confirm_cancel_message', 'Esta ação não pode ser desfeita. A venda será marcada como cancelada.'),
-                                variant: 'danger',
-                                confirmLabel: t('common:cancel', 'Cancelar venda'),
-                                onConfirm: () => onUpdateSale(sale.id, { status: 'Cancelled' }, t('finance_view:sales.success_cancelled', 'Venda cancelada com sucesso.'))
-                            })}
+                            onClick={() => onRequestCancel(sale)}
                             className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {t('common:cancel', 'Cancelar')}
                         </button>
                     )}
-                    {!isPaid && !isCancelled && (
+                    {isFinalized && !isReturned && (
                         <button
                             disabled={isUpdating === sale.id}
-                            onClick={() => confirm({
-                                title: t('finance_view:sales.confirm_mark_paid', 'Marcar como paga?'),
-                                message: t('finance_view:sales.confirm_pay_message', 'O status de pagamento desta venda será atualizado para Pago.'),
-                                variant: 'info',
-                                confirmLabel: t('common:pay', 'Confirmar pagamento'),
-                                onConfirm: () => onUpdateSale(sale.id, { paymentStatus: 'Paid' }, t('finance_view:sales.success_paid', 'Venda paga com sucesso.'))
-                            })}
+                            onClick={() => onRequestReturn(sale)}
+                            className="text-xs px-2 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {t('finance_view:sales.return', 'Devolver')}
+                        </button>
+                    )}
+                    {/* Pagar só existe para Finalized — o settlement do backend recusa Draft. */}
+                    {isFinalized && !isPaid && (
+                        <button
+                            disabled={isUpdating === sale.id}
+                            onClick={() => onRequestPay(sale)}
                             className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {t('common:pay', 'Pagar')}

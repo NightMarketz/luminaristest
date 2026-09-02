@@ -3,12 +3,14 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository, AccountPostingTotals } from '../repositories/IPostingRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
+import type { IInventoryRepository } from '../repositories/IInventoryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import {
   CLIENTES_A_RECEBER_CODE,
+  ESTOQUES_CODE,
   FORNECEDORES_A_PAGAR_CODE,
 } from '../fixtures/ChartOfAccountsFixture';
 import type { AccountingEvent } from '../sync/AccountingSyncPort';
@@ -53,7 +55,7 @@ export const POS_FEEDER_SOURCE_TYPES = Object.keys(POS_FEEDER_SOURCE_TYPE_MAP) a
 // ─── Report shapes (money em INTEGER CENTS, serializado como string — convenção INCR-4) ──
 
 /** Identidade estável de cada verificação. */
-export type TieOutCheckId = 'receivables' | 'payables' | 'pos_receivable';
+export type TieOutCheckId = 'receivables' | 'payables' | 'pos_receivable' | 'inventory';
 
 /** Uma verificação subrazão ↔ conta-controle do razão. */
 export interface TieOutCheck {
@@ -126,6 +128,8 @@ export class TieOutDiagnosticService {
     private readonly receivableRepo: IReceivableRepository,
     private readonly payableRepo: IPayableRepository,
     private readonly policy: IAccountingPolicy,
+    // BE-INCR-INVENTORY-TIEOUT (LAC-E): subrazão de estoque para o check da 1.1.6.
+    private readonly inventoryRepo: IInventoryRepository,
   ) {}
 
   /**
@@ -137,18 +141,29 @@ export class TieOutDiagnosticService {
       throw new ForbiddenError('Você não tem permissão para ler o diagnóstico de amarração.');
     }
 
-    const [totals, totalsSansFeeders, openReceivables, openPayables, arAccount, apAccount, posAccount] =
-      await Promise.all([
-        this.postingRepo.groupByAccount(scope, LEDGER_STATUSES),
-        this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
-          excludeSourceTypes: [...POS_FEEDER_SOURCE_TYPES],
-        }),
-        this.receivableRepo.findOutstanding(scope),
-        this.payableRepo.findOutstanding(scope),
-        this.accountRepo.findByCode(scope, CLIENTES_A_RECEBER_CODE),
-        this.accountRepo.findByCode(scope, FORNECEDORES_A_PAGAR_CODE),
-        this.accountRepo.findByCode(scope, POS_RECEIVABLE_CODE),
-      ]);
+    const [
+      totals,
+      totalsSansFeeders,
+      openReceivables,
+      openPayables,
+      arAccount,
+      apAccount,
+      posAccount,
+      inventoryItems,
+      invAccount,
+    ] = await Promise.all([
+      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES),
+      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
+        excludeSourceTypes: [...POS_FEEDER_SOURCE_TYPES],
+      }),
+      this.receivableRepo.findOutstanding(scope),
+      this.payableRepo.findOutstanding(scope),
+      this.accountRepo.findByCode(scope, CLIENTES_A_RECEBER_CODE),
+      this.accountRepo.findByCode(scope, FORNECEDORES_A_PAGAR_CODE),
+      this.accountRepo.findByCode(scope, POS_RECEIVABLE_CODE),
+      this.inventoryRepo.findAllActive(scope),
+      this.accountRepo.findByCode(scope, ESTOQUES_CODE),
+    ]);
 
     // (i) AR em aberto vs 1.1.5 (Asset: débito − crédito).
     const arOpenCents = openReceivables.reduce((acc, r) => acc + centsFromDb(r.amountCents), 0);
@@ -191,7 +206,27 @@ export class TieOutDiagnosticService {
         'Agregado (salão + CRM) das partidas com sourceType de feeder PDV vs saldo devedor da 1.1.2 — o CRM também debita 1.1.2, então o salão sozinho NUNCA fecha; divergência = partidas estranhas (ex.: lançamento manual) na conta-controle.',
     });
 
-    const checks = [arCheck, apCheck, posCheck];
+    // (iv) Estoque: Σ InventoryItem.totalValueCents (subrazão valorado, itens vivos) === saldo
+    // devedor de `1.1.6 Estoques` (Asset). BE-INCR-INVENTORY-TIEOUT (LAC-E): torna visível a
+    // classe "entrada física nunca valorada" — o subrazão fecha com o razão por construção
+    // (receiveStock/recordSaleCogs postam e valoram juntos), então divergência = alimentação
+    // fora do funil (lançamento manual em 1.1.6, ou INBOUND/baixa perdidos).
+    const invSubledgerCents = inventoryItems.reduce(
+      (acc, item) => acc + centsFromDb(item.totalValueCents),
+      0,
+    );
+    const invLedgerCents = invAccount ? debitBalance(totals, invAccount.id) : 0;
+    const invCheck = buildCheck({
+      id: 'inventory',
+      controlAccountCode: ESTOQUES_CODE,
+      controlAccountName: invAccount?.name ?? null,
+      subledgerCents: invSubledgerCents,
+      ledgerCents: invLedgerCents,
+      detail:
+        'Σ InventoryItem.totalValueCents (subrazão de estoque, itens vivos) vs saldo devedor da 1.1.6 — divergência = valoração fora do funil Payable/CMV (ex.: lançamento manual em 1.1.6).',
+    });
+
+    const checks = [arCheck, apCheck, posCheck, invCheck];
     return {
       unitId: scope.unitId,
       generatedAt: new Date().toISOString(),

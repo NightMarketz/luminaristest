@@ -8,6 +8,7 @@ import { useSalesAnalytics } from '../analytics/useSalesAnalytics';
 import { useFinanceData } from '../shared/useFinanceData';
 import { useTableRelationLookups } from '../../../../shared/hooks/useTableRelationLookups';
 import { FinanceService } from '../../services/FinanceService';
+import { salesService, type SalePaymentMethod } from '@/lib/services/sales.service';
 import { SaleRecord, SaleItemRecord } from '../../types/sales.types';
 import type { StockIndexEntry } from '../../components/sales/create/types';
 
@@ -110,6 +111,42 @@ export function useSalesData(tables: IDynamicTable[]) {
         }
     }, [salesTable?.id, refetch, refetchItems]);
 
+    // 9. Mutations dedicadas do ciclo da venda (LAC-A): pay/cancel/return vão às rotas
+    // /api/sales/* — NUNCA ao PUT genérico, que bate no immutableAfter da venda Finalized e
+    // pula as bridges contábeis. O tableId exigido pelos DTOs .strict() vive AQUI (salesTable.id).
+    const runSaleTransition = useCallback(async (
+        saleId: string,
+        action: (tableId: string) => Promise<unknown>,
+    ): Promise<void> => {
+        if (!salesTable?.id) return;
+        try {
+            setUpdating(saleId);
+            await action(salesTable.id);
+            await Promise.all([refetch(), refetchItems()]);
+        } catch {
+            // Erro notificado pelo apiClient
+        } finally {
+            setUpdating(null);
+        }
+    }, [salesTable?.id, refetch, refetchItems]);
+
+    const paySale = useCallback((
+        saleId: string,
+        payment: { paymentMethod: SalePaymentMethod; paymentReference?: string; packageId?: string },
+    ) => runSaleTransition(saleId, (tableId) =>
+        salesService.paySale({ tableId, saleId, ...payment })
+    ), [runSaleTransition]);
+
+    const cancelSale = useCallback((saleId: string, reason?: string) =>
+        runSaleTransition(saleId, (tableId) =>
+            salesService.cancelSale({ tableId, saleId, ...(reason ? { reason } : {}) })
+        ), [runSaleTransition]);
+
+    const returnSale = useCallback((saleId: string, reason?: string) =>
+        runSaleTransition(saleId, (tableId) =>
+            salesService.returnSale({ tableId, saleId, ...(reason ? { reason } : {}) })
+        ), [runSaleTransition]);
+
     const isLoading = isLoadingSales || isLoadingItems || isLoadingRelations;
 
     return {
@@ -128,5 +165,8 @@ export function useSalesData(tables: IDynamicTable[]) {
         refetchItems,
         updating,
         updateSale,
+        paySale,
+        cancelSale,
+        returnSale,
     };
 }
