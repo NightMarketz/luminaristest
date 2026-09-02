@@ -1,6 +1,6 @@
 # ADR-INCR-SPED-ECF-FASE3 — ECF em Lucro Real (Blocos L/M/N + `HASH_ECF_ANTERIOR` + `0010` parametrizável)
 
-- **Status:** **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
+- **Status:** **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entra como parâmetro do DTO **sem default** (dígito não chutado, §5 item 6) até o Manual do Leiaute 12 estar no repo. Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
   código escrito, nenhuma branch criada.** Este ADR NÃO ratifica nenhum dos forks que lista — cada um
   segue **RATIFICAÇÃO PENDENTE** do dono. A execução (código) exige autorização própria, distinta desta.
 - **Date:** 2026-09-02
@@ -122,7 +122,7 @@ fiscal exato, de validação externa (§5). O que segue é a **estrutura** propo
 
 ---
 
-## 4. Forks pendentes de ratificação — **nenhum decidido aqui**
+## 4. Forks pendentes de ratificação — **Forks 1 e 5 ratificados em 2026-09-02; 2, 3 e 4 pendentes**
 
 ### Fork 1 — Superfície de regime: estender o endpoint existente ou criar um serviço/rota dedicados
 
@@ -136,7 +136,7 @@ fiscal exato, de validação externa (§5). O que segue é a **estrutura** propo
   (b) mantém o serviço Presumido **já implementado e testado** (`ecf.test.ts`, `SpedEcfGenerationService.test.ts`)
   **inteiramente intocado** — menor blast radius sobre código que já passou por review independente. A
   duplicação de boilerplate do declarante/signatários é mitigada pelo reuso de `DeclarantSchema`/
-  `SignerSchema` (§3). **RATIFICAÇÃO PENDENTE.**
+  `SignerSchema` (§3). ~~**RATIFICAÇÃO PENDENTE.**~~ **RATIFICADO (b) — dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*.**
 
 ### Fork 2 — Fonte do `0010.HASH_ECF_ANTERIOR`
 
@@ -209,7 +209,7 @@ de suspensão/redução (`MES_BAL_RED` do `0010`, hoje sempre vazio no `build001
   `getAccountBalances` suportam janela mensal arbitrária, mas a lógica de antecipação/ajuste não existe).
 - **Recomendação: (a)**, por menor superfície e por reusar a única primitiva de janelamento já testada
   (`quarterWindows`) — mas **sem confirmação de qual modalidade é a exigida/mais comum para o perfil de
-  cliente-alvo do produto** (ver §5). **RATIFICAÇÃO PENDENTE.**
+  cliente-alvo do produto** (ver §5). ~~**RATIFICAÇÃO PENDENTE.**~~ **RATIFICADO (a) Trimestral — dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*.**
 
 ---
 

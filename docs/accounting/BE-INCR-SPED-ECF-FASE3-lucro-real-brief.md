@@ -1,6 +1,8 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3 (ECF em Lucro Real)
 
-> **Estado: preparação apenas.** Produzido em `sessao-planejamento`. Checklist e contratos abaixo NÃO
+> **Estado [EMENDA 2026-09-02]: esqueleto AUTORIZADO.** Forks 1 → (b) dedicado e 5 → (a) trimestral ratificados por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. A `sessao-feature` pode executar os itens `[direto]`, `[cond:Fork 1]` e `[cond:Fork 5]`; os itens `[cond:Fork 2/3/4]` e todo conteúdo fiscal de L/M/N seguem pausados (marcadores vazios; `FORMA_TRIB` sem default). Texto original abaixo mantido como histórico.
+>
+> **Estado original: preparação apenas.** Produzido em `sessao-planejamento`. Checklist e contratos abaixo NÃO
 > autorizam código — cada fork listado em §4 segue `RATIFICAÇÃO PENDENTE`; vários comportamentos do
 > checklist estão explicitamente condicionados a um fork ainda não resolvido. **A `sessao-feature` que
 > eventualmente executar este BRIEF só pode avançar nos itens marcados `direto`**; os condicionados
@@ -188,8 +190,8 @@ Detalhados no ADR normativo §4. Resumo (ordem de custo de errar, do menor ao ma
 
 | # | Fork | Recomendação (não ratificada) | Grau de abertura |
 |---|---|---|---|
-| 5 | `FORMA_APUR` Trimestral vs Anual | (a) Trimestral | MÉDIO — muda janela de apuração |
-| 1 | Endpoint dedicado vs parâmetro no existente | (b) dedicado | MÉDIO — muda superfície de API, zero regressão no Presumido |
+| 5 | `FORMA_APUR` Trimestral vs Anual | ~~(a) Trimestral~~ **RATIFICADO (a) 2026-09-02** | fechado |
+| 1 | Endpoint dedicado vs parâmetro no existente | ~~(b) dedicado~~ **RATIFICADO (b) 2026-09-02** | fechado |
 | 2 | Fonte do `HASH_ECF_ANTERIOR` | Nenhuma sem confirmar §4 item 5 (externa) | MÉDIO a ALTO conforme a externa |
 | 3 | Quem computa o Bloco N (Luminaris vs PVA) | (a) PVA, por consistência com o Presumido | MÉDIO — decide toda a lógica de cálculo do serviço |
 | 4 | Persistência dos ajustes Lalur/prejuízo fiscal | **Nenhuma** — o mais caro de errar | **ALTO** — decide se o incremento reabre migração/torre de cadastro |
