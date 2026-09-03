@@ -1010,3 +1010,51 @@ describe('PayableService.listPayables — repasse de filtros (BE-INCR-SUBLEDGER-
     }
   });
 });
+
+/**
+ * TESTE-GUARDA — review do PR #267, achado C1/C2 (sessao-instrumentacao 2026-09-03, fork (a) do dono).
+ *
+ * LAC-E (F-E2, #259) e F-D2 entraram em `main` DEPOIS da tag nfe-fase-b-preserved; o rebase textual
+ * passou limpo, mas os dois gates só conhecem o par single-SKU (`inventoryProductRef`/`inventoryQty`).
+ * No modo multi-item esses campos são `undefined` POR DESENHO do DTO — então o gate valida
+ * `undefined` (rejeita "Produto 'undefined'" ou passa por coincidência via findFirst id=undefined) e
+ * NENHUM `inventoryItems[].productRef` é conferido; o espelho físico recebe productRef/qty undefined.
+ * Comportamento esperado (fork (a)): LAC-E roda por item agregado, F-D2 é dirigido por item agregado.
+ */
+describe('PayableService.createPayable — multi-item × gates pós-fork (PR #267 C1/C2, fork (a))', () => {
+  const multiDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-44', description: 'NF-e compra',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 19333,
+    inventoryMultiItem: true,
+    inventoryItems: [
+      { productRef: 'prod-shamp', qty: 10, valueCents: 10545, description: 'Shampoo' },
+      { productRef: 'prod-shamp', qty: 5, valueCents: 5272, description: 'Shampoo (2ª linha)' },
+      { productRef: 'prod-masc', qty: 3, valueCents: 3516, description: 'Máscara' },
+    ],
+  };
+
+  it('LAC-E por item: productExists é chamado com CADA productRef agregado, nunca com undefined, e o item inexistente é rejeitado pelo nome', async () => {
+    const { service, productRefLookup } = build();
+    (productRefLookup.productExists as jest.Mock).mockImplementation(async (_s: unknown, ref: string) => ref !== 'prod-masc');
+
+    const attempt = service.createPayable(scope, multiDto as never);
+    // Só 'prod-masc' não existe → a compra inteira é rejeitada citando o item (fail-loud, como no single-SKU).
+    await expect(attempt).rejects.toThrow(/prod-masc/);
+
+    const checked = productRefLookup.productExists.mock.calls.map((c) => (c as unknown[])[1]);
+    expect(checked).toEqual(['prod-shamp', 'prod-masc']); // hoje: [undefined]
+  });
+
+  it('F-D2 por item: recordPurchaseInbound é dirigido por SKU agregado com productRef/qty reais, nunca undefined', async () => {
+    const { service, physicalStockSync } = build();
+    await service.createPayable(scope, multiDto as never);
+
+    const driven = physicalStockSync.recordPurchaseInbound.mock.calls.map(
+      (c) => (c as unknown[])[1] as { productRef: string; qty: number; totalValueCents: number },
+    );
+    expect(driven.map((d) => [d.productRef, d.qty, d.totalValueCents])).toEqual([
+      ['prod-shamp', 15, 15817],
+      ['prod-masc', 3, 3516],
+    ]); // hoje: [[undefined, undefined, 19333]]
+  });
+});

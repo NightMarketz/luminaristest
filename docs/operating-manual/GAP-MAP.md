@@ -36,6 +36,7 @@ declarado, sem executável · **[ABERTO]** sem instrumento · **[ORÁCULO]** só
 |---|---|---|---|
 | Contrato implícito | Zod valida formato em runtime — só o contrato escrito | [PARCIAL] | `grep -rc "safeParse" server/src/controllers/` |
 | Evolução assimétrica (B muda schema, A lê o antigo) | **snapshot de shape Zod dos DTOs** (Fase 4 deste plano; teste jest, snapshot comitado, diff obrigatório no PR). Limite: só server-side — o espelho FE é tipo TS à mão, comparar exige codegen (resíduo declarado) | [ABERTO] → [PARCIAL] após F4 | `ls server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot*` |
+| **Colisão semântica rebase × gate novo em `main`** — PR #267 C1/C2: `createPayable` multi-item (NF-e) chega aos gates LAC-E (#259) e F-D2 com `inventoryProductRef`/`inventoryQty` `undefined`; `inventoryItems[].productRef` nunca é validado. `tsc` + 2226 unit + 514 integração + CI verdes (mocks). Decisão do dono 2026-09-03: fork (a) gate por item + F-D2 por item agregado | teste-guarda `server/src/features/accounting/services/__tests__/PayableService.test.ts` › `multi-item × gates pós-fork (PR #267 C1/C2, fork (a))` (2 casos, VERMELHOS até a correção) | [INSTRUMENTADO] → `sessao-correcao` | `cd server && npx jest PayableService.test -t "gates pós-fork"` |
 | Idempotência sob redelivery | testes de chave de idempotência existem por write-path (classe varrida — memória `idempotency-class-fix-discipline`); redelivery *forçado* na fronteira, não | [PARCIAL] | `grep -rln "P2002" server/src --include=*.test.ts` |
 
 ## Nível 4 — Runtime sistêmico
