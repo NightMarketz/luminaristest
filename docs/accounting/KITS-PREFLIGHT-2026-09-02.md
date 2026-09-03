@@ -592,7 +592,12 @@ risco que B-4 cobre; não há evidência aqui de que B-4 já rodou para esta esc
 **Armadilhas deste repo que mordem neste gate**
 
 - **Date-only UTC shift (13 sites, PR #254 ABERTA; fix parcial PR #250 ABERTA; #252 ABERTA)**:
-  confirmado por `gh pr view 250|252|254` — as 3 PRs seguem `OPEN`, nenhuma mergeada em `main`.
+  ~~confirmado por `gh pr view 250|252|254` — as 3 PRs seguem `OPEN`, nenhuma mergeada em `main`.~~
+  **[EMENDA 2026-09-02: a #250 foi MERGEADA (`64d8e675`) e a #254 mudou de natureza às 18:45Z** —
+  passou de instrumentação (13 guardas vermelhos) para o ciclo completo (12 sites corrigidos, forks
+  F1..F5 ratificados), verde na CI, bloqueada só por conflito com `main`. A classe **continua viva
+  no `main` que este sign-off testa** — o que muda é o custo de fechá-la: rebase da #254, não
+  trabalho de correção novo.**]
   A classe "data volta um dia entre 21h-00h BRT" está viva no `main` que este sign-off testa. O
   runbook **não** menciona horário de execução. Nem `RUNBOOK-FORMAT.md` nem `RUNBOOK-H2...md`
   resolvem esse fork — decisão do dono: (a) rodar H2 fora da janela 21h-00h BRT e registrar a data
