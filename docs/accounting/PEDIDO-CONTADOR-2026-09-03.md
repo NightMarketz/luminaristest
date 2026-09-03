@@ -15,8 +15,18 @@
 ## Texto do pedido (copiar e enviar)
 
 > Olá, [nome]. Estamos fechando o módulo fiscal do sistema para operar empresa no **Lucro Real** e
-> preciso de três coisas suas (duas, se eu conseguir a nota fiscal por outro caminho). Nenhuma é urgente para hoje, mas as duas primeiras travam o desenho
-> do módulo, então quanto antes melhor.
+> preciso de quatro coisas suas (três, se eu conseguir a nota fiscal por outro caminho). Nenhuma é
+> urgente para hoje, mas a primeira decide se o resto faz sentido, então quanto antes melhor.
+>
+> **0. A pergunta que vem antes de todas: você assina ECD e ECF geradas por um sistema que você não
+> opera?** A ideia do produto é a escrituração inteira nascer no sistema — lançamentos, depreciação,
+> encerramento, ECD e ECF prontas — e chegar a você para revisar e assinar como responsável técnico,
+> em vez de você escriturar do zero. Sob que condições você assina isso, e o que precisa ver antes de
+> assinar (balancete? razão? conciliação bancária? amostra de lançamentos? tudo?). Se a resposta for
+> "só revisando lançamento a lançamento", quero saber também, porque muda o desenho. E uma segunda,
+> ligada a essa: para você, um sistema que faz isso continua sendo software que o seu cliente usa
+> com você como responsável técnico, ou em algum ponto vira prestação de serviço contábil, que é
+> atividade do CRC? Onde você traça essa linha?
 >
 > **1. Lista de obrigações de uma empresa no Lucro Real (serviços + revenda de produtos, porte
 > pequeno).** Preciso da relação do que ela entrega e paga, por periodicidade, na sua prática atual:
@@ -63,6 +73,7 @@
 
 | # | Item | Formato exigido | Anonimização | Critério de aceite NOSSO | Trilho quando chegar |
 |---|---|---|---|---|---|
+| **0** | **Premissa do F-Z0: o contador assina ECD/ECF que não conduziu?** + fronteira software × serviço contábil (CRC) | Resposta livre; o que importa é a **condição** (assina / assina revisando X / não assina) e a **linha** que ele traça | n/a | **C3×D5** — sem saída interna. Aceite = condição nomeada e checável (ex.: "assino com balancete + conciliação + amostra de 30 lançamentos"). Resposta "não" ou "só lançamento a lançamento" **reabre o F-Z0** e todo o trilho contábil autorizado por ele (imobilizado, retificação, e-mail) | **crítica** → cédula de módulos §B (F-Z0 passa de "ratificado" a "ratificado sob premissa testada" ou reabre); item **Z0-a** na lista de abertos ao lado de T1b |
 | 1 | Lista de obrigações do Lucro Real | Texto/checklist, por obrigação: nome · periodicidade · validador · origem (arquivo × portal) | n/a | Cada obrigação nomeada vira **linha ⚫ ou ⏳ no master map §5** com validador identificado. Sem validador nomeado, a linha não abre ADR | **dado** → insumo dos ADRs `ADR-INCR-TAX-ASSESSMENT`, `ADR-INCR-EFD-CONTRIBUICOES`, `ADR-INCR-DCTFWEB` (cédula de módulos §E, fiscal) |
 | 2 | Regra de custo D3 por tributo no Lucro Real | Tabela tributo → "compõe custo" / "vira crédito" | n/a | Regra por tributo, sem "depende" sem condição nomeada. Vira **flag de regime** no `lib/nfe.ts` (ADR-INCR-NFE §D3 já exige guarda de regime antes de reusar a fórmula fora do molde salão) | **crítica** → emenda ADR-INCR-NFE §D3 + fork de implementação (recuperabilidade por tenant); fecha o E10 |
 | 3 | 2 XML NF-e 4.00 (compra + venda), **autorizadas ≥ 03/08/2026** (grupos IBS/CBS — senão testa o formato que está saindo de circulação) | XML, modelo 55, `cStat` 100 preferível | CNPJ/CPF/xNome/endereço/IE trocados **com DV válido**; **chave reconstruída** com o CNPJ fictício e `cDV` recalculado (`@Id` = `NFe`+`chNFe`); `<Signature>` **substituída por bloco sintético bem-formado**, não zerada; **preservar** `vProd`/`vDesc`/`vFrete`/`vIPI`/`vST`/`vNF`, `qCom`, `cStat`, impostos por item. *(Corrigido 2026-09-03 — [triagem simulada §B.2](TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md); a versão anterior mandava zerar a assinatura e não falava em `cDV`.)* | `nfe-fixture-provenance.test.ts` volta de `it.todo` a `it` e passa; `nfe.test.ts` verde contra o real **incluindo a asserção nova chave×CNPJ×`cDV`** (T4 da triagem); **se vier PII real, não commitar** (CTD-003), devolver o passo. **Alternativa sem contador:** XML de compra da própria empresa ou fixture open source com proveniência por commit | **dado** → item **E9** do Bloco A (trocar fixture sintético); fecha a dívida F-I2 |

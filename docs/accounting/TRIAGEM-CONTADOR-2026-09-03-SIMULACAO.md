@@ -103,3 +103,5 @@ Coluna nova **"Atravessa 2027?"** (sequenciar por sobrevivência: PIS/COFINS mor
 | Veículo legal da exclusão do ICMS da base do crédito; IN 2.121/22 (IPI) | [NC] | Comentário normativo de T1b | não |
 | Baixar o PDF do Manual 20/05/2026 e conferir o carimbo | [V-web] índice | Forks 2/3/4 da ECF Fase 3 | X4 |
 | Resposta do **contador real** | — | T1b, T2 | X7–X9 |
+| **Z0-a — o contador assina ECD/ECF que não conduziu, e sob que condições?** (4ª rodada; item 0 do pedido) | [L] do dono, não conferido: assinatura com certificado do contabilista com CRC, responsabilidade técnica perante o conselho | Se a **premissa do F-Z0** ("o contador só assina") se sustenta; "não" ou "só lançamento a lançamento" reabre F-Z0 e C8/C9/C6 | **SIM** — todo o trilho contábil novo |
+| **Z0-b — fronteira software de contabilidade × serviço contábil (CRC)** | [L] do dono | Se o produto pode ser vendido como "sua contabilidade no sistema" ou só como ferramenta do contador responsável | material comercial |

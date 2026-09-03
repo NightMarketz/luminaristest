@@ -732,6 +732,9 @@ Antes de gerar "novo", reuse (Contrato §0). Confirmado por código:
 processo manual, o contador só assina o trabalho pronto, e o documento fiscal vai até a ponta por API de
 parceiro emissor.* Antes desta data nenhum doc dizia se o produto era a fonte da ECD ou um módulo fiscal
 alimentado pelo contador; a resposta define a origem do bloco L da ECF e quem responde pelo número.
+**Premissa não testada (Z0-a, aberto):** "o contador só assina" depende do contador com CRC aceitar assinar
+escrituração que não conduziu — é o item 0 do pedido a ele; resposta "não" reabre o F-Z0 e o trilho
+contábil que ela autorizou. Segunda pergunta no mesmo pacote: fronteira software × serviço contábil (CRC).
 
 Ordem de fechamento ratificada (**F-M6**): contábil → financeiro → fiscal. Oráculo das regras fiscais =
 contador, pedido pronto em [PEDIDO-CONTADOR-2026-09-03.md](PEDIDO-CONTADOR-2026-09-03.md) (**F-M5**).
