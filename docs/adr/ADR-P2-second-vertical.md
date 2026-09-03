@@ -1,6 +1,6 @@
 # ADR-P2 — O segundo vertical: provar a prensa
 
-> **Status: Draft — 8/8 FORKS RATIFICADOS (2026-08-25); promoção a Accepted PENDENTE.** Os oito forks
+> **Status: ACCEPTED — promovido pelo dono em 2026-09-03 (F-Q1 → "promover agora", contra a recomendação de esperar H1/H2; registro em `docs/accounting/CEDULA-DECISAO-2026-09-03-modulos.md` §B). Ressalva mantida: a pré-condição "vertical 1 validado" segue FALSA — o sign-off é o RUNBOOK-H3.** ~~Status: Draft — 8/8 FORKS RATIFICADOS (2026-08-25); promoção a Accepted PENDENTE.~~ Os oito forks
 > (F-P2-1..F-P2-10) estão decididos — ver bloco de ratificação de 2026-08-25 e §3. O ADR **segue
 > `Draft` de propósito**: a pré-condição §5 item 2 ("vertical 1 validado: PVA verde + sign-offs")
 > **continua insatisfeita**, e promover a Accepted é decisão separada do dono. Nada roteável sem ela

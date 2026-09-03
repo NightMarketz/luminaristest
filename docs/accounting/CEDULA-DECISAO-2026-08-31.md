@@ -107,3 +107,13 @@ passarem de meses.
 A trilha crítica segue humana e sem sessão de agente: **B-4 → X2 → H1 (PVA) → H2 → M2**, runbooks em
 branco prontos. A pergunta do **regime tributário do primeiro cliente** segue governando o alvo do
 produto e não é fork ratificável.
+
+---
+
+## EMENDA 2026-09-03 — B², F-W2F-3 e D fechados pelo dono
+
+- **B² (F-W2F-5) e F-W2F-3 → RATIFICADO (b):** a marca avança e o item falho/bloqueado por período vai para
+  **tabela de pendências re-varrida** (migração + comando/tela) — BRIEF `BE-INCR-RECONCILE-PENDING`. Contra
+  a recomendação (mecânica do F-W2F-4). Registro: `CEDULA-DECISAO-2026-09-03-modulos.md` §B.
+- **D (F-Q1) → RATIFICADO "promover agora":** ADR-P2 está `Accepted` desde 2026-09-03; a ressalva
+  "vertical 1 não validado" fica no próprio ADR. Contra a recomendação de esperar.

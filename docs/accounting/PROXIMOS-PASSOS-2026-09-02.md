@@ -30,11 +30,21 @@
 | 5 | **ECF Fase 3 — Lucro Real** | ~~ADR + `sessao-planejamento` (**não autorizada ainda**)~~ **[EMENDA 2026-09-02] ADR escrito, Forks 1/5 ratificados, esqueleto MERGEADO (`02fc802b`, PR #263); falta o conteúdo de L/M/N (Forks 2/3/4, dependentes do Manual)** | **NOVA.** Blocos L (balanço/DRE), M (e-Lalur/e-Lacs), N (IRPJ/CSLL), `HASH_ECF_ANTERIOR` e `0010` parametrizável. Delta medido no §5.1 Bloco B item 10 do master map. |
 | 6 | **H1 — 2ª passada, em Lucro Real** | `RUNBOOK-H1-PVA.md` (reexecução) | **NOVA. Obrigatória antes de operar cliente real.** É ela que prova a ECF do regime-alvo; o passo 3 não prova. |
 | 7 | **M2** — provisionar host + 1º deploy | `RUNBOOK-M2-DEPLOY-SMOKE.md` | **Adiado por decisão do dono** — última tarefa antes de operar cliente real. Topologia ratificada (VPS própria, 1 instância/cliente, disco local) **continua valendo**; o adiamento é de provedor concreto. |
+| **∥** | **NF-e — BE (rebase da `nfe-fase-b-preserved`) + FE (`FE-INCR-NFE`)** — **[EMENDA 2026-09-03]** | [CEDULA-DECISAO-2026-09-03-integracao.md](CEDULA-DECISAO-2026-09-03-integracao.md) §E | **NOVA, em PARALELO aos itens 1–4 (F-I3), começa agora (F-I6).** Destravada por decisão, não por dado: merge com fixture sintético e dívida declarada (**F-I2**); F-D1 reaberto → **rebasear**, não refazer (**F-I7**). Fecha o Núcleo 3 de 6/9 para 8/9; o 9/9 é o upload por clique no H2. |
 
 **Sem custo de fila:** nenhum gate de 1 a 4 depende do host (todos rodam contra o `dev.db` real local),
-e nenhum depende da ECF Fase 3.
+e nenhum depende da ECF Fase 3 **nem da NF-e** (e a NF-e não depende de nenhum deles — cédula §E).
 
 **Permanece diferida:** **LAC-B** — UI da Prensa de binding. O CLI atende até onboarding self-service/P2.
+
+**[EMENDA 2026-09-03 — fechamento por módulo.** Nove decisões do dono
+([CEDULA-DECISAO-2026-09-03-modulos.md](CEDULA-DECISAO-2026-09-03-modulos.md)): partição contábil /
+financeiro / fiscal ratificada (F-M1), escopo **máximo** nos três (F-M2/F-M3/F-M4 — reabre apuração de
+tributos, EFD-Contribuições, DCTFWeb, baixa parcial, caixa projetado, remessa bancária, e-mail ao
+contador, mais 4 telas do já-existente), ordem **contábil → financeiro → fiscal** (F-M6). A fila 1–7
+acima **não muda**; as frentes novas entram por ADR + BRIEF, listadas na cédula §E. **Ação do dono com
+maior latência: enviar hoje o [pedido ao contador](PEDIDO-CONTADOR-2026-09-03.md)** (F-M5) — os três
+ADRs fiscais e a emenda do custo D3 esperam a resposta.**]
 
 ---
 
@@ -60,6 +70,7 @@ e nenhum depende da ECF Fase 3.
 |---|---|---|
 | **ECF Fase 3 — Lucro Real** | ~~ADR + `sessao-planejamento`~~ `sessao-feature` (restante) | ~~**Alvo e ordem ratificados; execução NÃO autorizada** (ORCH-006). Primeiro passo é o ADR, não código.~~ **[EMENDA 2026-09-02]** ADR `Accepted` parcial, Forks **1** (endpoint dedicado) e **5** (trimestral) ratificados, `FORMA_TRIB` default `'1'` ratificado, e o **esqueleto foi implementado e mergeado** (`02fc802b`): 14 dos 18 itens do BRIEF. **Os 4 restantes seguem pausados** — Forks 2/3/4 exigem as seções L/M/N do Manual do Leiaute 12, que não está no repo. |
 | **PRs abertas** — ~~[#250](https://github.com/NightMarketz/luminaristest/pull/250)~~ **[EMENDA 2026-09-02: #250 MERGEADA (`64d8e675`)]**, [#252](https://github.com/NightMarketz/luminaristest/pull/252), [#254](https://github.com/NightMarketz/luminaristest/pull/254) | `sessao-integracao` / `sessao-correcao` | ~~⚠️ A **#254** são 13 testes-guarda **vermelhos por desenho** (varredura date-only UTC shift): não pode entrar em `main` sem os fixes correspondentes. A #250 é um desses fixes.~~ **[EMENDA 2026-09-02: caracterização OBSOLETA.** Às 18:45Z a #254 deixou de ser só instrumentação — passou a carregar o ciclo completo (`fecha a classe date-only-utc-shift no frontend — 12 sites, forks F1..F5 ratificados`, +753/-110, 6 commits) e está **verde na CI** (10/10 checks `SUCCESS`). O que a bloqueia hoje é `mergeable: CONFLICTING` / `mergeStateStatus: DIRTY`, não teste vermelho: precisa de **rebase sobre `main`**, não dos fixes de terceiros.**] |
+| **NF-e — BE + FE** | `sessao-integracao` (rebase da tag, regras pré-decididas na cédula §E2) → review → `sessao-planejamento` (`FE-INCR-NFE`) → `sessao-feature` | **[EMENDA 2026-09-03] PASSA nas quatro condições** — autorizado (F-I2/F-I6/F-I7, cédula §B), especificado (`BE-INCR-NFE-fase-b-spec.md` como spec de aceitação; BRIEF do FE a escrever), não é gate humano, não bloqueado (o XML real virou item E9 do Bloco A). |
 
 Fora isso, **nada passa nas quatro condições** (autorizado · especificado · não é gate humano · não
 bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depende do H1/H2.
@@ -89,7 +100,11 @@ bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depend
   conflito é `JournalEntriesPanel.tsx` (+ teste), `accounting.service.ts`, `openapi.json` e
   `__dto-shapes__.json`; os dois últimos se resolvem por regeneração (`npm run docs:generate`,
   `UPDATE_DTO_SNAPSHOT=1`), nunca à mão.**]
-- **Não apagar** `nfe-fase-a-preserved` nem `nfe-fase-b-preserved`.
+- **Não apagar** `nfe-fase-a-preserved` nem `nfe-fase-b-preserved`. **[EMENDA 2026-09-03]** A `fase-b`
+  agora é a **base do rebase** (F-I7), não só cópia de segurança; a `fase-a` segue histórico.
+- **[EMENDA 2026-09-03] Não mergear a NF-e sem os 3 marcadores da dívida sintética** (F-I8): `it.todo`
+  em `nfe-fixture-provenance.test.ts`, item E9 no Bloco A, emenda §10 no ADR-INCR-NFE. Dívida declarada
+  em um lugar só é dívida esquecida.
 - **Não tratar runbook preenchido por agente como sign-off.** Nulo por desenho.
 - **Não pular a 2ª passada do H1** antes de cliente real: o passo 3 prova o módulo, não o regime-alvo.
 
@@ -102,5 +117,5 @@ bloqueado): as LAC estão mergeadas, o FE-INCR-AGING fechou no #248, o P2 depend
    dimensionar é trabalho do ADR/BRIEF, não deste doc.
 3. **A forma certa do F-W2F-3 e do F-W2F-5** — declarados, não chutados.
 4. ~~**Se o Leiaute 12 corrente é o de 28/05/2026 ou o de 25/07/2026**~~ — **[EMENDA 2026-09-02]**
-   **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Fecha também a pendência de versão do BRIEF da ECF Fase 3 (§4). Detalhe no
+   **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`] **[CORRIGIDO 2026-09-03 — verificado no índice oficial <http://sped.rfb.gov.br/pasta/show/1644>: a atualização vigente do Manual Leiaute 12 é de **20/05/2026** (PDF `arquivo/show/8003`), anterior 28/04/2026; NÃO encontrei versão de 23/07 em nenhuma fonte — o "23/07" abaixo veio de fonte secundária (ATVI) e está SUPERADO. Detalhe: `TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md` §A.2.]**** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Fecha também a pendência de versão do BRIEF da ECF Fase 3 (§4). Detalhe no
    `KITS-PREFLIGHT-2026-09-02.md`, kit do X2.
