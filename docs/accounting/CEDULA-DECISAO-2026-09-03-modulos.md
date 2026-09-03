@@ -1,12 +1,12 @@
 # Cédula de decisão — 2026-09-03 (fechamento por módulo: contábil · financeiro · fiscal)
 
-> **O que este doc é:** o registro das **9 decisões ratificadas pelo dono em 2026-09-03** (sessão,
+> **O que este doc é:** o registro das **12 decisões ratificadas pelo dono em 2026-09-03** (9 na 1ª rodada + F-M7/F-M8 + F-Z0/F-Q1/F-W2F-3/5 nas rodadas 2 e 3) (sessão,
 > `AskUserQuestion`, duas rodadas) sobre o que "fechar" cada um dos três módulos significa, a
 > **medição por módulo** com denominador explícito, e a fila resultante. Segue a
 > [cédula de integração](CEDULA-DECISAO-2026-09-03-integracao.md) do mesmo dia. Todo claim de estado
 > foi verificado contra `origin/main` (`2c2fda6a`): rotas em `server/src/routes/*.ts`, abas em
 > `my-app/features/accounting/AccountingView.tsx` (19 ids), consumidores FE por grep em
-> `my-app/lib/services` + `my-app/features`, ADRs em `docs/adr/` (43 arquivos).
+> `my-app/lib/services` + `my-app/features`, ADRs em `docs/adr/` (44 entradas, incl. INDEX e 2 pareceres).
 >
 > **O que não é:** execução. Cada item da seção E cita a decisão que o autoriza (ORCH-006); frentes
 > novas abrem por **ADR + BRIEF**, não por esta cédula.
@@ -25,7 +25,7 @@ e aprovações entraram depois do texto).
 
 ---
 
-## B. As 9 decisões — ✅ RATIFICADAS 2026-09-03 (dono, `AskUserQuestion`)
+## B. As 12 decisões (9 + 3 rodadas) — ✅ RATIFICADAS 2026-09-03 (dono, `AskUserQuestion`)
 
 | # | Fork | Decisão | Contra a recomendação? |
 |---|---|---|---|
@@ -128,7 +128,7 @@ inbox/outbox) fica fora — não-objetivo não é lacuna. Peso 1 por nó; a rég
 | G1 | **X2** — import do arquivo RFB (baixado, runbook em branco) | gate humano |
 | G2 | **H1** — PVA Presumido, depois **H1 2ª passada** Lucro Real | gate humano ×2 |
 
-**Leitura honesta:** o fiscal é o único módulo cujo denominador **cresceu** hoje (de 8 para 12 nós) por
+**Leitura honesta:** o fiscal é o único módulo cujo denominador **cresceu** hoje (de 8 para 13 nós — 12 pelo F-M2, 13 pelo F-M7) por
 decisão do dono. Antes do F-M2 ele estava em 4/8 (50%). O número caiu porque a régua ficou mais
 verdadeira, não porque algo regrediu.
 

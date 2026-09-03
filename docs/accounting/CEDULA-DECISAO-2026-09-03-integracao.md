@@ -68,7 +68,7 @@ prensa de binding = plataforma P1, "não move nenhuma das % dos 5 núcleos", §7
 | 5 | Pontes de sync venda→razão + alimentador do binding (BE-INCR-BINDING-FEEDER) | §5.1 A item 0 | ✅ PR #213 |
 | 6 | Seam `attachSourceDocument` (NFE-X) | §5.1 A NFE-X | ✅ PR #228 — `PostingService.ts:733` + rota `POST /journal-entries/:entryId/source-documents` |
 | 7 | **NF-e — backend** (parser + compra + venda + wiring) | §5 / §5.1 B item 11 | ⛔ **fora de `main`** — tag `nfe-fase-b-preserved` (34 arquivos, +3.143/−42) |
-| 8 | **NF-e — UI de upload** (FE-INCR-NFE, criado pelo F-I4) | novo | ⛔ sem BRIEF, sem código (`my-app/src` não cita nfe) |
+| 8 | **NF-e — UI de upload** (FE-INCR-NFE, criado pelo F-I4) | novo | ⛔ sem BRIEF, sem código (`my-app` não cita nfe) |
 | 9 | Sign-off humano: upload OFX/CNAB **por clique** | §5.1 A item 4(b) | ⏳ gate humano (H2) |
 | — | Inbox/outbox/DLQ | §5 / §5.1 B item 16 | ⚫ fora do denominador (T11) |
 

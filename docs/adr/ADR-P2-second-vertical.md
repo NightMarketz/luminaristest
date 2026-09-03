@@ -1,10 +1,10 @@
 # ADR-P2 — O segundo vertical: provar a prensa
 
 > **Status: ACCEPTED — promovido pelo dono em 2026-09-03 (F-Q1 → "promover agora", contra a recomendação de esperar H1/H2; registro em `docs/accounting/CEDULA-DECISAO-2026-09-03-modulos.md` §B). Ressalva mantida: a pré-condição "vertical 1 validado" segue FALSA — o sign-off é o RUNBOOK-H3.** ~~Status: Draft — 8/8 FORKS RATIFICADOS (2026-08-25); promoção a Accepted PENDENTE.~~ Os oito forks
-> (F-P2-1..F-P2-10) estão decididos — ver bloco de ratificação de 2026-08-25 e §3. O ADR **segue
+> (F-P2-1..F-P2-10) estão decididos — ver bloco de ratificação de 2026-08-25 e §3. ~~O ADR **segue
 > `Draft` de propósito**: a pré-condição §5 item 2 ("vertical 1 validado: PVA verde + sign-offs")
 > **continua insatisfeita**, e promover a Accepted é decisão separada do dono. Nada roteável sem ela
-> (ORCH-006). **Depende de ADR-P1 Accepted + implementado + golden test verde.**
+> (ORCH-006).~~ **[2026-09-03] Promovido mesmo com a pré-condição insatisfeita — decisão do dono; o sign-off do vertical 1 continua pendente (H1/H2) e o do P2 é o RUNBOOK-H3.** **Depende de ADR-P1 Accepted + implementado + golden test verde.** ✅ (PR #211)
 >
 > **RATIFICAÇÃO 2026-08-21 (dono, via AskUserQuestion): F-P2-1 → CLÍNICA ESTÉTICA.** Decisão
 > corroborada a posteriori pelo achado OQ-1 do `docs/accounting/P2-DOSSIER-prova.md`: o

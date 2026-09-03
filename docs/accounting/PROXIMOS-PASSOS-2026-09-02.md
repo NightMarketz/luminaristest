@@ -37,7 +37,7 @@ e nenhum depende da ECF Fase 3 **nem da NF-e** (e a NF-e não depende de nenhum 
 
 **Permanece diferida:** **LAC-B** — UI da Prensa de binding. O CLI atende até onboarding self-service/P2.
 
-**[EMENDA 2026-09-03 — fechamento por módulo.** Nove decisões do dono
+**[EMENDA 2026-09-03 — fechamento por módulo.** Doze decisões do dono (9 + rodadas 2 e 3)
 ([CEDULA-DECISAO-2026-09-03-modulos.md](CEDULA-DECISAO-2026-09-03-modulos.md)): partição contábil /
 financeiro / fiscal ratificada (F-M1), escopo **máximo** nos três (F-M2/F-M3/F-M4 — reabre apuração de
 tributos, EFD-Contribuições, DCTFWeb, baixa parcial, caixa projetado, remessa bancária, e-mail ao
