@@ -114,6 +114,16 @@ jobs:
       - name: Debt ledger matches spec (governance C5)
         run: node ../scripts/debt-ledger-check.mjs --root my-app
 
+      # O `next build` typecheca os fontes da APLICAÇÃO; os fontes de TESTE ficavam de fora, e
+      # `tsconfig.vitest.json` não era rodado por ninguém. Resultado: as fixtures foram ficando
+      # para trás dos tipos sem nada morder — `counterpartyId` (INCR-COUNTERPARTY),
+      # `version`/`contentHash`/trilha maker-checker (ADR-INCR-APPROVAL), `inventoryProductRef`/
+      # `inventoryQty` (INCR-INVENTORY/LAC-D) e o shape de `PendingReport`. Foram 5 erros
+      # acumulados, fechados no PR #252 — este passo é o que impede a próxima safra.
+      # Gate que lê o APP (compilador contra os tipos reais), não aparato de auditoria.
+      - name: Typecheck tests (tsconfig.vitest.json)
+        run: npm run test:types
+
       - name: Build
         run: npm run build
 
