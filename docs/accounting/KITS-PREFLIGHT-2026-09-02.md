@@ -249,7 +249,7 @@ fontes; nenhuma menção cruzada encontrada). §1 confirma: "nenhum gate de 1 a 
 - **[DONO confere] Confirmar qual das duas abas do arquivo oficial usar, e preparar o arquivo de
   entrada** — ver achado abaixo sobre 1 planilha por vez.
 - ~~**[DONO confere] Resolver a data do Leiaute 12** (28/05/2026 vs 25/07/2026 — §6 item 4 da fila)~~
-  **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`]** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Registrar a versão conferida no campo `layoutVersion` do passo 2.
+  **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`] **[CORRIGIDO 2026-09-03 — verificado no índice oficial <http://sped.rfb.gov.br/pasta/show/1644>: a atualização vigente do Manual Leiaute 12 é de **20/05/2026** (PDF `arquivo/show/8003`), anterior 28/04/2026; NÃO encontrei versão de 23/07 em nenhuma fonte — o "23/07" abaixo veio de fonte secundária (ATVI) e está SUPERADO. Detalhe: `TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md` §A.2.]**** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Registrar a versão conferida no campo `layoutVersion` do passo 2.
 - **[DONO confere] Confirmar que o ano-calendário 2025 do arquivo bate com o exercício que o H1 vai
   encerrar** — a emenda do runbook já avisa; é decisão de domínio, não checagem de código.
 
@@ -311,7 +311,7 @@ campo preenchido, nenhum `[x]` marcado):
    `referential_accounts`/`referential_mappings` no `dev.db` real porque isso exigiria abrir o banco,
    e a tarefa restringe leitura só ao necessário; não achei motivo para abrir.
 3. ~~Qual das duas datas do Leiaute 12 (28/05/2026 ou 25/07/2026) é a vigente~~ — **resolvido em
-   2026-09-02** (23/07/2026, fonte secundária; ver a pré-condição riscada acima e o §6.4 da fila).
+   2026-09-02** (~~23/07/2026~~ **20/05/2026 — corrigido 2026-09-03, ver §acima**, fonte secundária superada; ver a pré-condição riscada acima e o §6.4 da fila).
 
 **Caso adversarial que tentei contra a minha própria conclusão e o que aconteceu:** supus que o
 caminho (a) da emenda ("pular o conversor, a rota já aceita XLSX") fosse literalmente "subir o

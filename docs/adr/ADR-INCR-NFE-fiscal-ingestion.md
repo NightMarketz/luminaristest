@@ -319,3 +319,18 @@ sem eles o parser e seus testes provam o meu entendimento do leiaute, não o lei
 > é aditiva — dep nova + nenhuma ALTER em `journal_entries`; roda o gate por disciplina) → PR → closeout
 > (ORCH-007 promove o nó §5.1 item 11 e move NF-e de ⚫ para ✅) → memória`. Nada implementado; nó permanece
 > ⚫ até a implementação fechar.
+
+## 10. EMENDA (2026-09-03) — gate do XML real convertido em dívida declarada; F-D1 reaberto
+
+Ratificado pelo dono em 2026-09-03 (`AskUserQuestion`, registro em
+[CEDULA-DECISAO-2026-09-03-integracao.md](../accounting/CEDULA-DECISAO-2026-09-03-integracao.md) §B):
+
+| Fork | Decisão | Efeito neste ADR |
+|---|---|---|
+| **F-I2** | Mergear com fixture **sintético** e dívida declarada | O §8 ("sinal humano — estado do gate") deixa de exigir o XML real **para o merge**. A trava `nfe-fixture-provenance.test.ts` vira `it.todo` (F-I8). O XML real anonimizado passa a ser **item E9 do Bloco A** do master map — obrigação de fila, não gate de CI. **Risco aceito por escrito:** todo teste verde prova o entendimento do leiaute (transcrição MOC 7.0, F0-2), não o leiaute (lição I052). |
+| **F-I7** | F-D1 de 2026-08-28 **reaberto** → **rebasear** `nfe-fase-b-preserved` sobre `main`, não refazer | A premissa do F-D1(a) — "o merge seguiria travado pelo XML de qualquer jeito" — caiu com o F-I2. Regras pré-decididas do rebase: cédula §E2 (7 literais `salon.*`→`sale.*`; remover o `attachSourceDocument` da branch, que já está em `main` via #228; migração com timestamp **> `20260831032258`**; `PayableDto` sobre o de `main`, BigInt/`MAX_CENTS`; `openapi.json`/`__dto-shapes__.json` regenerados). |
+| **F-I4** | UI de upload (`FE-INCR-NFE`) no mesmo ciclo | Novo incremento FE, BRIEF por `sessao-planejamento`. Fora do escopo original deste ADR (que era backend); registrado aqui para o consumidor de tela não ficar sem dono. |
+| **F-I6 / F-I3** | Começa agora, em paralelo aos gates humanos B-4/X2/H1/H2 | Nenhuma dependência nos dois sentidos (cédula §E). |
+
+**O que NÃO muda:** D3 (custo ≠ `vNF` cego) segue com a pendência do `vICMS` como **dívida de contador**
+(cédula E10); F-NFE7/F-NFE8 do §9 e o `blocked` do multi-item (F-D5) permanecem.

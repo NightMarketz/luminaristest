@@ -310,3 +310,16 @@ bloco, citando página em cada builder — lição I052, já citada 3× no ADR-E
   `server/src/routes/docs.paths.ts`, `server/src/lib/factory.ts`,
   `server/src/features/accounting/audit/auditCanonical.ts`,
   `server/src/lib/__tests__/ecf.test.ts`.
+
+## EMENDA (2026-09-03) — Fork 5 (trimestral) declarado como RESTRIÇÃO DE PRODUTO
+
+Ratificado pelo dono em 2026-09-03 (**F-M8**, [CEDULA-DECISAO-2026-09-03-modulos.md](../accounting/CEDULA-DECISAO-2026-09-03-modulos.md) §B):
+a apuração **trimestral** ratificada no Fork 5→(a) deixa de ser "escolha ainda aberta" e passa a **critério de
+qualificação de cliente** — *o módulo atende Lucro Real com apuração trimestral; tenant em estimativa mensal
+de IRPJ/CSLL fica fora até segunda ordem*. O futuro `ADR-INCR-TAX-ASSESSMENT` herda esta restrição. Reabrir
+exige ADR + sinal humano (regra §1 do master map). Zero código.
+
+Registrado na mesma data como achado de triagem (T5): `ECF_COD_VER = '0012'` é **constante** em
+`server/src/lib/ecf.ts:43`; os fatos geradores de 2026 saem em Leiaute 13 — parametrizar por ano-calendário
+(molde do `0010`) entra como item novo do BRIEF da Fase 3. E a versão vigente do Manual do Leiaute 12 é a
+atualização de **20/05/2026** (índice oficial `sped.rfb.gov.br/pasta/show/1644`), não 23/07.
