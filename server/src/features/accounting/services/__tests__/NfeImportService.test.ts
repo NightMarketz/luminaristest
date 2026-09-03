@@ -54,7 +54,7 @@ function build(opts: Opts = {}) {
     if (r === 'dup') {
       throw new ValidationError('Já existe uma conta a pagar em aberto para este fornecedor e documento.');
     }
-    return payableRow({ documentNumber: input.documentNumber ?? CHAVE, amountCents: input.amountCents });
+    return payableRow({ documentNumber: input.documentNumber ?? CHAVE, amountCents: BigInt(input.amountCents) });
   });
   const payableService = { createPayable };
 

@@ -1,6 +1,7 @@
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { parseNfe } from '../../../lib/nfe';
+import { centsFromDb } from '../models/money';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostingService } from './PostingService';
@@ -95,7 +96,7 @@ export class NfeSaleReconciliationService {
     }
 
     // Total lançado da venda = Σ débito do lançamento de receita (balanceado ⇒ == Σ crédito).
-    const saleTotalCents = anchor.postings.reduce((acc, p) => acc + p.debitCents, 0);
+    const saleTotalCents = anchor.postings.reduce((acc, p) => acc + centsFromDb(p.debitCents), 0);
     const nfeTotalCents = nfe.totais.vNFCents;
     const differenceCents = nfeTotalCents - saleTotalCents;
     const totalMatches = differenceCents === 0;
