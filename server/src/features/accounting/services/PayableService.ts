@@ -156,11 +156,18 @@ export class PayableService {
           'Compra de estoque requer o catálogo de produtos configurado (wiring de lookup pendente).',
         );
       }
-      const exists = await this.productRefLookup.productExists(scope, dto.inventoryProductRef!);
-      if (!exists) {
-        throw new ValidationError(
-          `Produto '${dto.inventoryProductRef}' não existe no catálogo desta conta — confira o identificador antes de lançar a compra.`,
-        );
+      // PR #267 C1 / fork (a): no modo multi-item o par single-SKU é undefined por desenho — o gate roda
+      // sobre CADA productRef agregado dos itens, nunca sobre o campo vazio.
+      const refsToCheck = hasSingleInventorySku(dto)
+        ? [dto.inventoryProductRef!]
+        : aggregateInventoryItems(dto.inventoryItems ?? []).map((item) => item.productRef);
+      for (const ref of refsToCheck) {
+        const exists = await this.productRefLookup.productExists(scope, ref);
+        if (!exists) {
+          throw new ValidationError(
+            `Produto '${ref}' não existe no catálogo desta conta — confira o identificador antes de lançar a compra.`,
+          );
+        }
       }
     }
 
@@ -271,7 +278,14 @@ export class PayableService {
       }
       // F-D2=(b): espelho FÍSICO da compra (movimento In → productUnits.stock). Mesmo estágio
       // best-effort do receiveStock: idempotente por detailKey, re-dirigido pelo reconcile.
-      await this.drivePhysicalInbound(scope, payable.id, dto.inventoryProductRef!, dto.inventoryQty!, dto.amountCents, new Date(dto.issueDate), dto.unitId);
+      // PR #267 C2 / fork (a): multi-item → um espelho por SKU agregado (mesma agregação do subrazão).
+      if (hasSingleInventorySku(dto)) {
+        await this.drivePhysicalInbound(scope, payable.id, dto.inventoryProductRef!, dto.inventoryQty!, dto.amountCents, new Date(dto.issueDate), dto.unitId);
+      } else {
+        for (const item of aggregateInventoryItems(dto.inventoryItems ?? [])) {
+          await this.drivePhysicalInbound(scope, payable.id, item.productRef, item.qty, item.valueCents, new Date(dto.issueDate), dto.unitId);
+        }
+      }
     }
     return payable;
   }
@@ -690,15 +704,19 @@ export class PayableService {
             });
           }
           // F-D2=(b): re-dirige também o espelho FÍSICO (idempotente por detailKey no port).
-          await this.drivePhysicalInbound(
-            scope,
-            payable.id,
-            payable.inventoryProductRef!,
-            payable.inventoryQty!,
-            centsFromDb(payable.amountCents),
-            payable.issueDate,
-            payable.unitId,
-          );
+          // PR #267 C2: só quando a linha carrega o SKU — no multi-item o breakdown não está na row
+          // (mesmo limite de dado do skip acima, decisão do dono 2026-08-22), então não há o que re-dirigir.
+          if (hasSingleInventorySku(payable)) {
+            await this.drivePhysicalInbound(
+              scope,
+              payable.id,
+              payable.inventoryProductRef!,
+              payable.inventoryQty!,
+              centsFromDb(payable.amountCents),
+              payable.issueDate,
+              payable.unitId,
+            );
+          }
         } catch (error) {
           // TRIAGEM-AUDIT-2026-08-15 A4 — a skip-listed deterministic code (period-closed /
           // MAX_CENTS poison, same discipline as the sync bridges) is BLOCKED, never a bug; anything
