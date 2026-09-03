@@ -133,3 +133,14 @@ inbox/outbox: 6/10 hoje, teto 9/10 = 90% enquanto T11 valer — a objeção 3 da
 - **Viés na contagem:** itens do denominador têm peso 1 cada; a NF-e backend é ~3.000 linhas e o
   seam NFE-X ~100. A régua mede **nós fechados**, não esforço — é a mesma régua do §7, só com o
   denominador explícito.
+
+## G. Execução — 2026-09-03 (fold pós-merge)
+
+| # | Estado | Evidência |
+|---|---|---|
+| E1 | ✅ | PR #268 (`e9346c97`) |
+| E2 | ✅ | `sessao-integracao`: tag → 1 commit `7ba39c04` (commit 2 caiu vazio, doc já em `main`); 6 regras + 3 classificações ratificadas (`factory.ts` união, `PayableService.ts` união de imports, commit vazio descartado); fix BigInt `a7a43c0c` autorizado |
+| E4 | ✅ | review independente **FAIL** (C1/C2 multi-item × LAC-E/F-D2 pós-fork) → fork (a) → guarda `69416f81` → fix `f1f76ac7` → review-delta **PASS**; smoke sobre `dev.db` real OK (S6/S7 são de `main`) |
+| E5 | ✅ | squash **`9fbe200f`** (PR #267) + este fold (§3, §5.1 item 11, §7 Núcleo 3 → **7/9**) |
+| E3 | ⏳ | BRIEF `FE-INCR-NFE` — próximo |
+| E6–E10 | ⏳ | dependem de E3 / dono / contador |
