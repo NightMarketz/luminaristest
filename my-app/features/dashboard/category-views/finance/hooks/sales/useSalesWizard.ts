@@ -54,8 +54,24 @@ export interface UseSalesWizardReturn {
 // Initial State
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Hoje (`YYYY-MM-DD`) no fuso do escopo — nunca em UTC.
+ *
+ * A data da venda atravessa a ponte contábil e vira o dia do RECONHECIMENTO DE RECEITA. Derivada
+ * com `toISOString()`, das 21h às 23h59 BRT ela já era a de amanhã: a receita entrava no razão no
+ * dia errado, e numa virada de mês em período diferente.
+ *
+ * ponytail: a constante de fuso é ESPELHADA de `AccountingScope.timeZone` (backend) e existe em
+ * DUAS cópias no frontend por decisão do dono em 2026-09-02 (fork F3(b), um helper por feature):
+ * esta e a de `features/accounting/lib/formatDate.ts`. Ao mexer numa, mexa na outra. Vira uma só
+ * quando o fuso for por tenant — aí ele desce do backend e as duas cópias saem juntas.
+ */
+const SCOPE_TIME_ZONE = 'America/Sao_Paulo';
+
+const scopeToday = (): string => new Date().toLocaleDateString('en-CA', { timeZone: SCOPE_TIME_ZONE });
+
 const createInitialState = (): SalesWizardState => ({
-    date: new Date().toISOString().substring(0, 10),
+    date: scopeToday(),
     customerId: '',
     unitId: '',
     notes: '',

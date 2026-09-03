@@ -7,7 +7,7 @@ import {
 } from '../../../lib/services/accounting.service';
 import { Modal } from '../../../components/ui/Modal';
 import { formatCents } from '../lib/formatCents';
-import { formatDate } from '../lib/formatDate';
+import { formatDate, scopeToday } from '../lib/formatDate';
 import { useAccountingT } from '../lib/useAccountingT';
 import { resolveError } from '../lib/resolveError';
 
@@ -223,7 +223,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [error, setError] = useState<string | null>(null);
   const [periodError, setPeriodError] = useState(false);
   const [confirmReverseId, setConfirmReverseId] = useState<string | null>(null);
-  const [reversalDate, setReversalDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [reversalDate, setReversalDate] = useState(scopeToday);
   const [isReversing, setIsReversing] = useState(false);
   const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
 

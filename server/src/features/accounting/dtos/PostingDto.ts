@@ -325,16 +325,23 @@ export type ReopenPeriodInput = z.infer<typeof ReopenPeriodSchema>;
 // Financial statement DTOs (INCR-4)
 // ---------------------------------------------------------------------------
 
-/** Query DTO for GET /balance-sheet?unitId=&asOf=YYYY-MM-DD */
+/**
+ * Query DTO for GET /balance-sheet?unitId=&asOf=YYYY-MM-DD
+ *
+ * `asOf` é OPCIONAL: omitido ⇒ o Service usa hoje no fuso do ESCOPO (`scopeToday`) — nunca um
+ * default aqui no DTO, que congelaria o dia no parse. Espelha o contrato do aging (aging.dto.ts) e
+ * fecha a classe date-only-utc-shift: o cliente derivava o default com `toISOString()` e entre
+ * 21h-00h BRT pedia a posição de AMANHÃ (GAP-MAP nº 5, fork F1(a) ratificado 2026-09-02).
+ */
 export const BalanceSheetQuerySchema = z.object({
   unitId: z.string().min(1),
-  asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD'),
+  asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD').optional(),
 });
 
-/** Query DTO for GET /income-statement?unitId=&asOf=YYYY-MM-DD */
+/** Query DTO for GET /income-statement?unitId=&asOf=YYYY-MM-DD — `asOf` opcional, ver acima. */
 export const IncomeStatementQuerySchema = z.object({
   unitId: z.string().min(1),
-  asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD'),
+  asOf: z.string().refine(isValidDateOnly, 'asOf deve ser uma data real YYYY-MM-DD').optional(),
 });
 
 export type BalanceSheetQueryInput = z.infer<typeof BalanceSheetQuerySchema>;

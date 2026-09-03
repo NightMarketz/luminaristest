@@ -16,7 +16,7 @@ import { CreateReceivableModal } from './CreateReceivableModal';
 import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
-import { formatDate } from '../lib/formatDate';
+import { formatDate, scopeToday } from '../lib/formatDate';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 
@@ -26,10 +26,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 // dropping data past the backend max; ListReceivablesQuerySchema caps `limit` at 200
 // but `total` comes back on every page so StandardPagination has what it needs).
 const RECEIVABLES_PER_PAGE = 50;
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 
 /** Sum of the ACTIVE receipts on a receivable (in cents). */
@@ -239,7 +235,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
 
   // action modal (receive / cancel receivable / cancel receipt)
   const [action, setAction] = useState<ActionState>(null);
-  const [actionDate, setActionDate] = useState<string>(today);
+  const [actionDate, setActionDate] = useState<string>(scopeToday);
   const [method, setMethod] = useState<ReceiptMethod>('Pix');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -303,7 +299,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
 
   // ── action open helpers ──────────────────────────────────────────────────────
   function openAction(next: ActionState) {
-    setActionDate(today());
+    setActionDate(scopeToday());
     setMethod('Pix');
     setReason('');
     setActionError(null);

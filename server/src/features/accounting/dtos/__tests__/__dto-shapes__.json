@@ -1459,8 +1459,7 @@
         }
       },
       "required": [
-        "unitId",
-        "asOf"
+        "unitId"
       ]
     },
     "IncomeStatementQuerySchema": {
@@ -1476,8 +1475,7 @@
         }
       },
       "required": [
-        "unitId",
-        "asOf"
+        "unitId"
       ]
     }
   },
@@ -3152,8 +3150,7 @@
         }
       },
       "required": [
-        "unitId",
-        "asOf"
+        "unitId"
       ],
       "additionalProperties": false
     }
