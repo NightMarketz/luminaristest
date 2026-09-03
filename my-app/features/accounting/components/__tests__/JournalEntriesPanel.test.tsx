@@ -23,7 +23,9 @@ vi.mock('../../../../lib/services/accounting.service', () => ({
 const entry: JournalEntryWithFullPostings = {
   id: 'e1', userId: 'o1', unitId: 'u1', date: '2026-06-01', description: 'Venda à vista',
   status: 'Posted', sourceType: 'Manual', sourceId: null, reversedById: null,
-  fiscalYear: 2026, entryNumber: 1, createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z',
+  fiscalYear: 2026, entryNumber: 1, version: 1, contentHash: 'h1',
+  createdById: 'o1', submittedById: 'o1', approvedById: 'o1',
+  createdAt: '2026-06-01T00:00:00Z', updatedAt: '2026-06-01T00:00:00Z',
   postings: [
     { id: 'p1', userId: 'o1', unitId: 'u1', entryId: 'e1', accountId: 'a1', debitCents: 100000, creditCents: 0, createdAt: '2026-06-01T00:00:00Z', account: { code: '1.1.1', name: 'Caixa' } },
     { id: 'p2', userId: 'o1', unitId: 'u1', entryId: 'e1', accountId: 'a2', debitCents: 0, creditCents: 100000, createdAt: '2026-06-01T00:00:00Z', account: { code: '3.1', name: 'Receita' } },

@@ -23,7 +23,7 @@ describe('ReconciliationPanel (render)', () => {
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [bankAccount] });
     vi.mocked(accountingService.listBankStatements).mockResolvedValue({ statements: [], total: 0 });
     vi.mocked(accountingService.getPendingReport).mockResolvedValue({
-      unitId: 'u1', glAccountId: 'a1', unmatchedLines: [], unmatchedPostings: [],
+      account: { id: 'a1', code: '1.1.2', name: 'Banco' }, unmatchedLines: [], unmatchedPostings: [],
       totals: { lineCount: 0, lineTotalCents: 0, postingCount: 0 },
     });
   });
