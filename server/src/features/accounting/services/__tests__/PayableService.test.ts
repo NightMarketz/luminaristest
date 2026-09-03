@@ -635,6 +635,24 @@ describe('PayableService.reconcilePayables — failed vs blocked classification 
     expect(out.failed).toBe(1);
     expect(out.blocked ?? 0).toBe(0);
   });
+
+  // DECISÃO DO DONO 2026-08-22 (BE-INCR-NFE-integration-plan.md §2.4): the multi-item skip is a
+  // deterministic, by-design limit — it must surface as `blocked` (path (i): counted directly in the
+  // skipping branch), never as `failed` (permanent false alarm) nor as a silent 0 (the
+  // param-aceito-e-ignorado class: payable exists, nobody re-receives, nobody is told).
+  it('a MULTI-ITEM inventory payable whose receiveStock re-drive is skipped counts as `blocked`', async () => {
+    const { service, payableRepo, inventoryService } = build({
+      findEntryBySource: (type) => (type === AP_PAYABLE_SOURCE_TYPE ? { id: 'rec-1' } : null),
+    });
+    payableRepo.findAllActive.mockResolvedValueOnce([payableRow({
+      id: 'pay-multi', status: 'OPEN', expenseAccountId: null,
+      inventoryProductRef: null, inventoryQty: null, inventoryMultiItem: true,
+    })]);
+    const out = await service.reconcilePayables(scope);
+    expect(inventoryService.receiveStock).not.toHaveBeenCalled(); // the skip really happened
+    expect(out.blocked).toBe(1); // …and it was REPORTED, not swallowed
+    expect(out.failed ?? 0).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -773,6 +791,112 @@ describe('PayableService.createPayable — inventory purchase (D3(b))', () => {
   });
 });
 
+// ── MULTI-ITEM (NF-e) inventory purchase — aggregation + per-item isolation + re-drive ──────────
+describe('PayableService.createPayable — multi-item inventory purchase (BE-INCR-NFE F-NFE7→a)', () => {
+  /** The NF-e shape: the note total on the row, the per-SKU breakdown in the dto. Two lines resolve to
+   *  the SAME productRef (a NF-e may repeat a cProd across <det>), the third is another SKU. */
+  const multiDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-44', description: 'NF-e compra',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 19333,
+    inventoryMultiItem: true,
+    inventoryItems: [
+      { productRef: 'prod-shamp', qty: 10, valueCents: 10545, description: 'Shampoo' },
+      { productRef: 'prod-shamp', qty: 5, valueCents: 5272, description: 'Shampoo (2ª linha)' },
+      { productRef: 'prod-masc', qty: 3, valueCents: 3516, description: 'Máscara' },
+    ],
+  };
+
+  it('the DTO accepts the multi-item shape (Σ itens === amountCents)', () => {
+    expect(CreatePayableSchema.safeParse(multiDto).success).toBe(true);
+  });
+
+  it('AGREGA por productRef antes do receiveStock — o subrazão recebe o TOTAL debitado em 1.1.6', async () => {
+    const { service, inventoryService, postEntry } = build();
+    await service.createPayable(scope, multiDto as never);
+
+    // 3 note lines → 2 SKUs → 2 calls. Driving 3 calls would make the 2nd shampoo line look like a
+    // REPLAY of the first (same inventoryItemId + kind + sourceType + sourceId=payableId), so
+    // receiveStock would return WITHOUT incrementing and R$ 52,72 would vanish from the subledger.
+    expect(inventoryService.receiveStock).toHaveBeenCalledTimes(2);
+    const calls = inventoryService.receiveStock.mock.calls.map(
+      (c) => (c as unknown[])[1] as Record<string, unknown>,
+    );
+    expect(calls[0]).toMatchObject({
+      productRef: 'prod-shamp',
+      qty: 15, // 10 + 5 summed
+      totalValueCents: 15817, // 10545 + 5272 summed
+      sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
+      sourceId: 'pay-new',
+    });
+    expect(calls[1]).toMatchObject({ productRef: 'prod-masc', qty: 3, totalValueCents: 3516 });
+
+    // TIE-OUT: Σ what the subledger was told to receive === the 1.1.6 debit that was posted.
+    const receivedCents = calls.reduce((a, c) => a + (c.totalValueCents as number), 0);
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const estoquesDebit = input.lines.find((l) => l.accountCode === ESTOQUES_CODE)!.debitCents;
+    expect(receivedCents).toBe(estoquesDebit);
+    expect(receivedCents).toBe(19333);
+  });
+
+  it('ISOLA a falha por item: o item 2 de 3 falha e os itens 1 e 3 ENTRAM mesmo assim', async () => {
+    const { service, inventoryService } = build();
+    const threeSkus = {
+      ...multiDto,
+      inventoryItems: [
+        { productRef: 'p1', qty: 1, valueCents: 10000 },
+        { productRef: 'p2', qty: 2, valueCents: 5000 },
+        { productRef: 'p3', qty: 3, valueCents: 4333 },
+      ],
+    };
+    (inventoryService.receiveStock as jest.Mock).mockImplementation(async (_s: unknown, p: { productRef: string }) => {
+      if (p.productRef === 'p2') throw new Error('inbound crash on p2');
+      return { valueCents: 0 };
+    });
+
+    // Best-effort as before (the recognition is valid and stays), but the loop is NOT abandoned.
+    await expect(service.createPayable(scope, threeSkus as never)).resolves.toBeDefined();
+
+    const driven = inventoryService.receiveStock.mock.calls.map(
+      (c) => ((c as unknown[])[1] as { productRef: string }).productRef,
+    );
+    expect(driven).toEqual(['p1', 'p2', 'p3']); // p3 was still attempted after p2 blew up
+  });
+
+  it('RE-DRIVE posterior completa o item faltante (idempotente por SKU em sourceId=payableId)', async () => {
+    const { service, inventoryService } = build();
+    const items = [
+      { productRef: 'p1', qty: 1, valueCents: 10000 },
+      { productRef: 'p2', qty: 2, valueCents: 5000 },
+      { productRef: 'p3', qty: 3, valueCents: 4333 },
+    ];
+    (inventoryService.receiveStock as jest.Mock).mockImplementation(async (_s: unknown, p: { productRef: string }) => {
+      if (p.productRef === 'p2') throw new Error('inbound crash on p2');
+      return { valueCents: 0 };
+    });
+    await service.createPayable(scope, { ...multiDto, inventoryItems: items } as never);
+
+    // The subledger is short by p2. A re-drive with the SAME breakdown completes it; p1/p3 replay
+    // harmlessly (read-first idempotency on (item, INBOUND, sourceType, payableId)).
+    inventoryService.receiveStock.mockReset();
+    inventoryService.receiveStock.mockResolvedValue({ valueCents: 0 });
+    const out = await service.receiveInventoryItems(scope, {
+      payableId: 'pay-new',
+      occurredAt: new Date('2026-06-10'),
+      description: 'NF-e compra',
+      items,
+    });
+
+    expect(out.failed).toEqual([]);
+    expect(out.received).toBe(3);
+    const redriven = inventoryService.receiveStock.mock.calls.map(
+      (c) => (c as unknown[])[1] as Record<string, unknown>,
+    );
+    expect(redriven.map((c) => c.productRef)).toEqual(['p1', 'p2', 'p3']);
+    expect(redriven.every((c) => c.sourceId === 'pay-new')).toBe(true);
+    expect(redriven.find((c) => c.productRef === 'p2')).toMatchObject({ qty: 2, totalValueCents: 5000 });
+  });
+});
+
 describe('PayableService.cancelPayable — inventory purchase REVERSAL at original cost (D3(b)/D8)', () => {
   it('reverses the received stock (sourceId=payableId, distinct reversal key) then the ledger', async () => {
     const { service, inventoryService, reverseEntry, payableRepo } = build({
@@ -884,5 +1008,53 @@ describe('PayableService.listPayables — repasse de filtros (BE-INCR-SUBLEDGER-
     for (const chave of ['status', 'counterpartyId', 'dueFrom', 'dueTo', 'q']) {
       expect(params[chave]).toBeUndefined();
     }
+  });
+});
+
+/**
+ * TESTE-GUARDA — review do PR #267, achado C1/C2 (sessao-instrumentacao 2026-09-03, fork (a) do dono).
+ *
+ * LAC-E (F-E2, #259) e F-D2 entraram em `main` DEPOIS da tag nfe-fase-b-preserved; o rebase textual
+ * passou limpo, mas os dois gates só conhecem o par single-SKU (`inventoryProductRef`/`inventoryQty`).
+ * No modo multi-item esses campos são `undefined` POR DESENHO do DTO — então o gate valida
+ * `undefined` (rejeita "Produto 'undefined'" ou passa por coincidência via findFirst id=undefined) e
+ * NENHUM `inventoryItems[].productRef` é conferido; o espelho físico recebe productRef/qty undefined.
+ * Comportamento esperado (fork (a)): LAC-E roda por item agregado, F-D2 é dirigido por item agregado.
+ */
+describe('PayableService.createPayable — multi-item × gates pós-fork (PR #267 C1/C2, fork (a))', () => {
+  const multiDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-44', description: 'NF-e compra',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 19333,
+    inventoryMultiItem: true,
+    inventoryItems: [
+      { productRef: 'prod-shamp', qty: 10, valueCents: 10545, description: 'Shampoo' },
+      { productRef: 'prod-shamp', qty: 5, valueCents: 5272, description: 'Shampoo (2ª linha)' },
+      { productRef: 'prod-masc', qty: 3, valueCents: 3516, description: 'Máscara' },
+    ],
+  };
+
+  it('LAC-E por item: productExists é chamado com CADA productRef agregado, nunca com undefined, e o item inexistente é rejeitado pelo nome', async () => {
+    const { service, productRefLookup } = build();
+    (productRefLookup.productExists as jest.Mock).mockImplementation(async (_s: unknown, ref: string) => ref !== 'prod-masc');
+
+    const attempt = service.createPayable(scope, multiDto as never);
+    // Só 'prod-masc' não existe → a compra inteira é rejeitada citando o item (fail-loud, como no single-SKU).
+    await expect(attempt).rejects.toThrow(/prod-masc/);
+
+    const checked = productRefLookup.productExists.mock.calls.map((c) => (c as unknown[])[1]);
+    expect(checked).toEqual(['prod-shamp', 'prod-masc']); // hoje: [undefined]
+  });
+
+  it('F-D2 por item: recordPurchaseInbound é dirigido por SKU agregado com productRef/qty reais, nunca undefined', async () => {
+    const { service, physicalStockSync } = build();
+    await service.createPayable(scope, multiDto as never);
+
+    const driven = physicalStockSync.recordPurchaseInbound.mock.calls.map(
+      (c) => (c as unknown[])[1] as { productRef: string; qty: number; totalValueCents: number },
+    );
+    expect(driven.map((d) => [d.productRef, d.qty, d.totalValueCents])).toEqual([
+      ['prod-shamp', 15, 15817],
+      ['prod-masc', 3, 3516],
+    ]); // hoje: [[undefined, undefined, 19333]]
   });
 });

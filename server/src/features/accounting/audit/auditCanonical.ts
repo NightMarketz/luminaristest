@@ -107,6 +107,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'binding.compiled':          ['bindingId', 'sectorKey', 'bindingVersion', 'status'],
   'binding.activated':         ['bindingId', 'sectorKey', 'bindingVersion'],
   'binding.validation_failed': ['bindingId', 'sectorKey', 'bindingVersion', 'blockingCount'],
+  // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
+  // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
+  // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
 };
 
 /**
