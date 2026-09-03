@@ -43,7 +43,8 @@ const supplierOptions = [
 const openPayable: PayableWithPayments = {
   id: 'ap1', userId: 'o1', unitId: 'u1', supplierName: 'Fornecedor X', supplierRef: null, counterpartyId: null,
   documentNumber: 'NF-1', description: 'Aluguel', issueDate: '2026-06-01', dueDate: '2026-06-10',
-  amountCents: 150000, expenseAccountId: 'acc1', status: 'OPEN', createdById: 'o1',
+  amountCents: 150000, expenseAccountId: 'acc1', inventoryProductRef: null, inventoryQty: null,
+  status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
   updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [],
 };
