@@ -156,7 +156,17 @@ const cpfOrCnpj = z.string().regex(/^[0-9]{11}$|^[A-Z0-9]{12}[0-9]{2}$/, 'CPF (1
     ocorrências em `docs.paths.ts`); as descrições `@openapi` de `cnpj`/`identCpfCnpj`/`taxId` que o
     implementador tocar passam por `npm run docs:generate` — `openapi.json` nunca à mão. **Direto — gate.**
 
-## Forks — RATIFICAÇÃO PENDENTE
+## Forks — ✅ RATIFICADOS 2026-09-07 (dono, `AskUserQuestion`, fork a fork)
+
+| Fork | Decisão do dono | Contra a recomendação? | Efeito no checklist |
+|---|---|---|---|
+| **F-CNPJ-1** | **(b) no DTO, (a) na lib** — DTO rejeita minúscula; `stripCnpjMask` põe em maiúsculas | não | comportamentos 1 e 7 como escritos |
+| **F-CNPJ-2** | **(a) só formato nos DTOs**; DV na lib e na asserção da NF-e | não | comportamento 6 sem `refine`; "Insumos ausentes" (varredura de CNPJ fictício) **não se aplica** |
+| **F-CNPJ-3** | **(a) incluir a contraparte** neste item | não | comportamentos 13 e 14 **entram** no escopo |
+| **F-CNPJ-4** | **(b) também no parser** — `nfe.ts` rejeita com `ValidationError` chave fora do regex, `cDV` inválido e `chave.slice(6,20) !== emit.CNPJ` | **SIM** — recomendação era só regex no parser | comportamento 12 vira: regex **+** `isValidNfeChave` **+** coerência com `emit/CNPJ`, cada um com mensagem própria e teste de rejeição; a asserção 11 continua no teste. Risco aceito por escrito: rejeitador sobre leiaute entendido por transcrição (F-I2) — se o XML real (E9) reprovar nota autorizada, é achado de domínio, emenda aqui |
+| **F-CNPJ-5** | **(a) variante gerada no teste** | não | comportamento 10 como escrito |
+
+Tabela original (caminhos + recomendação), mantida como registro:
 
 | Fork | Caminhos | Recomendação + justificativa | Custo de errar |
 |---|---|---|---|

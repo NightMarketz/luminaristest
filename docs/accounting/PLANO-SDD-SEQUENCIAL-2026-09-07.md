@@ -46,7 +46,7 @@ Tudo aqui é do dono ou do copiloto de gate; nada bloqueia outra coisa além do 
 | # | Ação | Quem | Destrava |
 |---|---|---|---|
 | 0.1 | **Enviar o pedido ao contador** (D1) com o item P6 do H1 anexado (D8) | dono | R2, X6, X7, C8, H1 |
-| 0.2 | **Ratificar R1** — os 7 forks do `FE-INCR-NFE-brief.md` | dono | rodada 2 |
+| 0.2 | ~~**Ratificar R1** — os 7 forks do `FE-INCR-NFE-brief.md`~~ **✅ feito 2026-09-07** (3 contra a recomendação: F-FENFE-1 → preview no BE, F-FENFE-2 → aba própria, F-FENFE-4 → memória local); os 5 forks do CNPJ-ALFA também (F-CNPJ-4 contra: rigor no parser) | dono | rodadas 1, 2a, 2b |
 | 0.3 | **Decidir R4** — onde vive a credencial de emissão (BYOK por tenant × chave do Luminaris) | dono | rodada 6 (ADR X10) |
 | 0.4 | **Instalar os validadores** (P4) — `luminaris-gates\` já tem os dois `.exe` | dono | H1 |
 | 0.5 | **B-4** ensaio de restauração — `luminaris-gate-copilot` faz o preflight e entrega o runbook em branco | dono | H1 |
@@ -63,7 +63,8 @@ Gatilho de cada preflight: *"prepara o B-4"*, *"preflight do X2"*, *"me acompanh
 | Rod. | Nó(s) | Tam. | Ciclo | Pré-requisito aberto | Gatilho (frase do dono) | Fecha |
 |---|---|---|---|---|---|---|
 | **1** | **X6b** `BE-INCR-CNPJ-ALFA` — `lib/cnpj.ts` alfanumérico + 4 regex `\d{14}` em `SpedEcdDto`/`SpedEcfDto` | P | S → R → I → V → M → F | nenhum (dívida da cédula E2) | *"planeja o CNPJ-ALFA"* → *"implementa o BE-INCR-CNPJ-ALFA"* | pré-requisito de X10 e do 1º fornecedor alfanumérico |
-| **2** | **F1b/F1c** `FE-INCR-NFE` — modal de compra no AP, botão na venda, `nfe.service.ts`, parser de tela | M | I → V → M → F (S já feito, PR #270) | **R1** (0.2) | *"implementa o FE-INCR-NFE"* | Núcleo 3 → 8/9; libera **H2 parte NF-e** (dono) → 9/9 |
+| **2a** | **[EMENDA 2026-09-07, F-FENFE-1 → b]** `BE-INCR-NFE-PREVIEW` — `POST /api/nfe/preview` (dry-run do `lib/nfe.ts`, resumo da nota: cabeçalho, emitente, itens com `indTot`), DTO, `docs.paths.ts`, snapshot, path-count | P/M | S → R → I → V → M → F | nenhum (R1 ratificado 07/09) | *"planeja o NFE-PREVIEW"* → *"implementa"* | contrato que a rodada 2b consome |
+| **2b** | **F1b/F1c** `FE-INCR-NFE` — **aba "NF-e" no painel contábil** (F-FENFE-2 → a) com seções Compra (preview + mapeamento com memória local, F-FENFE-4 → c) e Venda (seletor de vendas finalizadas, nunca `saleId` em texto livre), `nfe.service.ts` + `multipart.ts` | M | S (re-emenda curta após 2a) → I → V → M → F | rodada 2a | *"implementa o FE-INCR-NFE"* | Núcleo 3 → 8/9; libera **H2 parte NF-e** (dono) → 9/9 |
 | **3** | **C7** `BE-INCR-RECONCILE-PENDING` — tabela de pendências do reconcile + re-varredura + tela | M (migração) | S → R → I → V → M → F | nenhum (F-W2F-3/5 → b) | *"planeja o RECONCILE-PENDING"* → *"implementa"* | contábil 14/19 |
 | **4 ∥** | **C4/C5** `FE-INCR-AUDIT-PROVENANCE` (verify-chain + source-documents) **+ X3** `FE-INCR-COMPLIANCE-2` (botão ECF Real + import do catálogo) — dois BRIEFs, um lote FE | M | S×2 → R → I×2 (parallel-batch, write-sets disjuntos) → V → M → F | nenhum | *"planeja o lote FE de telas faltantes"* → *"implementa o lote"* | contábil 16/19; fiscal 6/13; 5 rotas sem tela → 1 (binding, diferida) |
 | **5** | **F4** `FE-INCR-CASH-FORECAST` — caixa projetado read-only sobre vencimentos AP/AR (sem migração) | P/M | S → R → I → V → M → F | nenhum | *"planeja o CASH-FORECAST"* → *"implementa"* | financeiro 14/17 |
