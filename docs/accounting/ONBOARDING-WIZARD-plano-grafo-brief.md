@@ -138,14 +138,14 @@ o "depois" só o teste garante). Sem fork.
     via `createTableData` (dispara os plugins `LeadsSeedOnUnitPlugin`/`UnitAutoStockPlugin` pelo caminho
     normal). **Recomendação: (b)** — o motor de plugins só roda no caminho de escrita de linha; (a)
     exigiria disparar plugins de dentro da tx do schema, que é o anti-padrão do Contrato §2.1.
-    **✅ RATIFICADO 2026-09-07 → (b) no controller, dois passos + compensação (F-I1-4 b) — contra a recomendação; o dono reafirmou após o conflito F-I1-1×F-I1-4 ser apontado.**
+    **✅ RATIFICADO 2026-09-07 → (b) no controller, dois passos + compensação (F-I1-4 b) — na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); reafirmado após o conflito F-I1-1×F-I1-4 ser apontado.**
   - **F-I1-2 · unidade ausente no body:** (a) criar "Matriz" por padrão; (b) exigir `unit` (400).
     **Recomendação: (a)** — a regra `param-aceito-e-ignorado` não se aplica (é default, não ignorado) e
-    (b) quebraria o modo Rápido atual. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — contra a recomendação; consequência: o campo de nome nos modos Rápido e Controle Total entra no MESMO incremento.**
+    (b) quebraria o modo Rápido atual. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); consequência: o campo de nome nos modos Rápido e Controle Total entra no MESMO incremento.**
   - **F-I1-3 · tenant já existente sem unidade** (o dev.db do dono tem 13 tabelas e usa `unit-incr6-val`
     como string solta): (a) ignorar — I1 é só onboarding novo; (b) job/CLI de backfill que cria a linha
     em `units` a partir dos `unitId` distintos já usados na contabilidade. **Recomendação: (a) agora**, e
-    (b) só se I6 for ratificado, porque I6 é quem passa a rejeitar `unitId` sem linha. **✅ RATIFICADO 2026-09-07 → (b) backfill via CLI** — contra a recomendação; consequência: F-I6-2
+    (b) só se I6 for ratificado, porque I6 é quem passa a rejeitar `unitId` sem linha. **✅ RATIFICADO 2026-09-07 → (b) backfill via CLI** — depois superado por F-I1b-1 (b) re-key; consequência: F-I6-2
     destravado. O CLI de backfill é nó novo (**I1b**, S: 1 job em `src/jobs/` + wrapper em `scripts/`, molde do
     `activate-salon-binding.mjs`, idempotente por `unitId`), dependência dura de I6.
 
