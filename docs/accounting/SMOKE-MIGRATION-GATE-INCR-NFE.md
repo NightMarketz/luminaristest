@@ -2,6 +2,12 @@
 
 > **TRANSPORTADO da `claude/nfe-fase-b` em 2026-08-28** (`git show`, conteúdo íntegro — só este
 > parágrafo foi acrescentado). O relatório vivia **apenas na branch** e teria sido perdido ao apagá-la.
+> **EMENDA 2026-09-03 — a migração ENTROU em `main` pelo PR #267 (`9fbe200f`)**, renomeada para
+> `20260903120000_nfe_multi_item_discriminator` (regra (c) da cédula §E2, timestamp > `20260831032258`).
+> O revisor E4 re-rodou este gate sobre cópia semeada do `dev.db` real: **7 migrações aplicadas**, `smoke-pay-1`
+> sobreviveu com `inventoryMultiItem IS NULL`; as falhas S6×2+S7 que o script acusa são de `main` sozinho
+> (bisect em `origin/main`), não desta migração. A frase seguinte é **histórica**.
+>
 > **A migração que ele valida NÃO está em `main`**: este é o registro de um gate rodado sobre código que
 > segue fora do tronco — leia junto com [BE-INCR-NFE-fase-b-spec.md](BE-INCR-NFE-fase-b-spec.md).
 >
