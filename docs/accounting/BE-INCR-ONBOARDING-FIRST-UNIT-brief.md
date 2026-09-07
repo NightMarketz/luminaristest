@@ -3,8 +3,15 @@
 > Produzido em sessão de planejamento, 2026-09-07, sob a autorização do dono **"Pode seguir a ordem
 > natural"** (mesma data), cuja ordem enunciada e aceita era: sign-off de browser → fold no master map →
 > **BRIEF do I1**. Nó I1 do [plano em grafo](ONBOARDING-WIZARD-plano-grafo-brief.md), com o nó I1b
-> (backfill do `unitId` legado) que nasceu da ratificação **F-I1-3 → (b)**. **Nenhum fork novo se
-> auto-ratifica**; F-I1-1 e F-I1-2 seguem PENDENTES do plano, e este BRIEF acrescenta F-I1-4 e F-I1b-1.
+> (backfill do `unitId` legado) que nasceu da ratificação **F-I1-3 → (b)**. **Nenhum fork se auto-ratifica.**
+>
+> **RATIFICAÇÕES 2026-09-07 (dono, via `AskUserQuestion`, duas rodadas — a segunda após o agente apontar o
+> conflito F-I1-1×F-I1-4 e o custo do re-key):** F-I1-1 → **(b)** no controller · F-I1-2 → **(b)** `unit`
+> obrigatório, 400 · F-I1-4 → **(b)** dois passos + compensação `deleteAllTablesForUser` no catch ·
+> F-I1b-1 → **(b)** cuid novo + **re-key da contabilidade como incremento próprio de migração de dado, com ADR
+> e B-4 executado antes** · F-I1b-2 absorvido por esse ADR. Todas contra a recomendação, reafirmadas; a
+> recomendação fica registrada como histórico. **I1 está pronto para `sessao-feature`; I1b vira
+> `sessao-planejamento` de um ADR de migração.**
 
 ## 0. Contexto fixo
 
@@ -55,29 +62,35 @@
    `POST /dashboard/create` → `units` tem 1 linha; `leadPipelines` tem "Pipeline Padrão" e
    `leadStages` as etapas (quando CRM-0 está instalado — I8); `stockMovements`/estoque sem linhas
    (não há produto ainda).
-3. **Atomicidade** conforme fork F-I1-4. Testável: falha injetada na criação da unidade → nenhuma tabela
-   sobrevive (se (a)) ou a compensação as remove (se (b)); o usuário NÃO fica com 403 "setup já
-   concluído" e sem unidade.
+3. **Atomicidade por compensação (F-I1-4 b)** — no catch da criação da unidade, o controller chama
+   `deleteAllTablesForUser(userId)` + limpeza de `knowledgeGraph`/`actionProposal` (o mesmo que o reset faz)
+   e responde 500 com `errorCode: 'ONBOARDING_ROLLED_BACK'`. Testável: falha injetada em `createTableData` →
+   `GET /dynamic-tables` volta vazio e um novo `POST /dashboard/create` NÃO recebe 403. **Janela residual
+   declarada:** entre a instalação e a compensação, um segundo request concorrente do mesmo usuário vê o 403;
+   aceito pelo dono ao escolher (b).
 4. **Resposta** — `201 { data: { suiteKey|presetKey, unitId, tables } }`. Testável: `unitId` é o id da
    linha em `units` e `GET /accounting/accounts?unitId=<ele>` responde 200 (chart lazy nasce).
-5. **Frontend envia o nome** — Entrevista: do `SUMMARY:` (ou nome do preset); Rápido e Controle Total:
-   campo "Nome da unidade" com default. `useAiInterview.handleCreateSystem` passa a montar `unit`.
+5. **Frontend envia o nome — OBRIGATÓRIO (F-I1-2 b)** — Entrevista: do `SUMMARY:` (ou nome do preset);
+   Rápido e Controle Total: campo "Nome da unidade" **sem default e validado antes do submit**; sem ele o
+   botão fica desabilitado (o servidor responde 400 de qualquer modo). `useAiInterview.handleCreateSystem` passa a montar `unit`.
    Testável: vitest do hook assere o body.
 6. **Front contábil usa o `unitId` devolvido** — sem mudança: `useAccountingData` já lê a primeira linha
    de `units`; o teste é ver a aba renderizar (browser, humano).
 7. **Gates mecânicos:** snapshot de shape do DTO de criação; path-count do OpenAPI (rota existente);
    i18n pt/en para o campo novo; docs.paths.ts do body.
 
-**I1b — backfill do legado (CLI)**
+**I1b — migração do legado (F-I1b-1 b: NÃO é mais CLI de backfill — é ADR de migração de dado)**
 
-8. **Job** `src/jobs/backfillUnitsFromAccountingCli.ts` + wrapper `scripts/backfill-units.mjs`, molde do
-   `activate-salon-binding.mjs`: para um `--owner-user-id`, lista os `unitId` distintos em
-   `Account`, `AccountingPeriod`, `JournalEntry`, `Payable`, `Receivable`, `AccountingBinding` e, para cada um
-   sem linha em `units`, cria a linha (fork F-I1b-1 decide o id). Idempotente: segunda execução = NO-OP.
-   `--dry-run` imprime o plano. Testável: self-check em SQLite temporário, como o wrapper de binding.
-9. **Nunca no boot, nunca no Dockerfile** — mesma proibição dos outros CLIs (ADR-M2 decisão 4).
-10. **Rastreio:** o CLI grava no log estruturado `{ event: 'units_backfilled', created: [...] }`; sem
-    tabela nova.
+8. **ADR próprio** `ADR-INCR-UNIT-REKEY-migration.md` (sessão de planejamento): para cada `unitId` legado
+   do tenant, criar a linha em `units` com cuid novo e **re-chavear** `unitId` nas 31 tabelas contábeis em
+   passos idempotentes (uma tabela por passo, `WHERE unitId = <legado>`, re-executável), com prólogo
+   `IF EXISTS` (memória `migracao-sqlite-nao-e-transacional`), verificação de contagem antes/depois por
+   tabela, e registro documental de que `AuditEvent` mantém o `unitId` antigo nos payloads (histórico,
+   não reescrito). **Pré-condição dura: B-4 executado e assinado** (o backup é o único rollback).
+   `unitId` que já é cuid de linha existente em `units` → pular (F-I1b-2 absorvido).
+9. **Nunca no boot, nunca no Dockerfile** — mesma proibição dos outros scripts de migração (ADR-M2 decisão 4).
+10. **Rastreio:** o script grava `{ event: 'unit_rekeyed', from, to, tables: {…contagens} }` no log estruturado e
+    o ADR registra o mapa legado→novo; sem tabela nova.
 
 ## 2. Contratos esboçados
 
@@ -96,38 +109,36 @@ CustomCreationSchema.extend({ unit: UnitInput.optional() })
 { success: true, data: { suiteKey?: string; presetKey?: string; unitId: string;
                          tables: { core: string[]; business: string[] } } }
 
-// serviço (F-I1-4 a): DynamicTableService
-installSystemWithUnit(user, preset, unit): Promise<{ unitId: string }>
-  // = prisma.$transaction(tx => installPresetAsSystem(userId, preset, { tx }) + createTableData(user, unitsTableId, unit, { tx }))
+// controller (F-I1-1 b / F-I1-4 b): dashboardController
+// 1) installPresetAsSystem(userId, merged)  2) createTableData(user, unitsTableId, unit)
+// catch(2) → deleteAllTablesForUser(userId) + limpar KG/proposals → 500 ONBOARDING_ROLLED_BACK
 
-// I1b
-node scripts/backfill-units.mjs --owner-user-id <id> [--dry-run] [--db <caminho>]
+// I1b — definido no ADR-INCR-UNIT-REKEY-migration (não aqui)
 ```
 
-## 3. Forks
+## 3. Forks — 4 ratificados 2026-09-07 (todos contra a recomendação, reafirmados) + 1 absorvido
 
 - **F-I1-1 · onde a linha nasce** (do plano, PENDENTE): (a) dentro da tx de `installPresetAsSystem`;
   (b) no controller, após a instalação, via `createTableData`. **Recomendação revisada após ler o
   código: (a′) — um método novo `installSystemWithUnit` no PRÓPRIO `DynamicTableService`, que abre a
   tx e chama `installPresetAsSystem(…, { tx })` + `createTableData(…, { tx })`.** Não é o anti-padrão
   do Contrato §2.1 (nada de fora é injetado no motor; o método é do mesmo módulo), e `createTableData`
-  já roda os plugins dentro de tx. (b) puro deixa a janela do comportamento 3 aberta. **RATIFICAÇÃO
-  PENDENTE.**
+  já roda os plugins dentro de tx. (b) puro deixa a janela do comportamento 3 aberta. **✅ RATIFICADO 2026-09-07 → (b), contra a recomendação (reafirmado após o conflito com F-I1-4 ser apontado).**
 - **F-I1-2 · unidade ausente no body** (do plano, PENDENTE): (a) default "Matriz"; (b) 400.
-  **Recomendação: (a)** — mantém o modo Rápido atual funcionando sem mudança de tela. **PENDENTE.**
+  **Recomendação: (a)** — mantém o modo Rápido atual funcionando sem mudança de tela. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — contra a recomendação.**
 - **F-I1-4 · atomicidade (novo):** (a) tx única (implica F-I1-1 a′: `installPresetAsSystem` passa a
   aceitar `{ tx }` opcional, mantendo o comportamento atual quando ausente — par de testes de
   caracterização antes/depois); (b) dois passos + compensação `deleteAllTablesForUser` no catch.
   **Recomendação: (a)** — (b) reintroduz a classe "meio instalado" que a tx de 3 passes existe para
-  evitar. **PENDENTE.**
+  evitar. **✅ RATIFICADO 2026-09-07 → (b) compensação — contra a recomendação; prevaleceu sobre F-I1-1 (a′).**
 - **F-I1b-1 · id da linha no backfill (novo):** (a) criar a linha em `units` com **id = o `unitId`
   legado** (exige que o repositório aceite id explícito — ver insumo 1); (b) criar com cuid novo e
   **re-chavear** todas as linhas contábeis (31 tabelas; toca `AuditChainHead`/hash da trilha — proibido
   pela classe `audit-log-no-fk-cascade`). **Recomendação: (a)**; se o repositório não aceitar id, o
-  insumo 1 vira decisão do dono antes de I6. **PENDENTE.**
+  insumo 1 vira decisão do dono antes de I6. **✅ RATIFICADO 2026-09-07 → (b) re-key como ADR de migração de dado, B-4 antes — contra a recomendação, reafirmado com o custo medido (31 tabelas, SQLite não transacional, trilha com unitId antigo).**
 - **F-I1b-2 · `unitId` legado que já é cuid de linha existente** (`cmr2jyirc006oci1kscm61n6n`): (a) o
   CLI verifica se existe linha com esse id e pula; (b) trata como legado. **Recomendação: (a)** — é o
-  caso idempotente por construção. **PENDENTE.**
+  caso idempotente por construção. **Absorvido pelo ADR do F-I1b-1 (2026-09-07).**
 
 ## 4. Pendente de validação externa
 
