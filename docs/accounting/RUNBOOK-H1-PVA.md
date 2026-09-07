@@ -18,12 +18,79 @@ Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
 | P2 | **Backup do `dev.db` real feito** — o passo 1 ESCREVE no razão | copiar `server/prisma/prisma/dev.db` (o populado; `server/prisma/dev.db` é isca de 0 byte) | [ ] |
 | **P2b** | **[EMENDA 2026-08-27] Migrações pendentes aplicadas + binding `Active` no banco** — sem isso o `npm start` do P3 **aborta com exit 1** e nada abaixo é executável | ver "P0 de boot" abaixo | [ ] |
 | P3 | Server e app rodando em **build de produção** do commit exato (nunca `next dev`; servidor de dev longo serve código velho) | ver "Subir o ambiente" abaixo | [ ] |
-| P4 | PVA da **ECD** e PVA da **ECF** instalados (versão vigente, site do SPED/Receita Federal) | abrir cada validador | [ ] |
+| P4 | PVA da **ECD** e PVA da **ECF** instalados na versão vigente — **[EMENDA 2026-09-07]** origem, versão, tamanho e passos em **"P4 detalhado"** abaixo; o Manual da ECF (Leiaute 12) é insumo do passo 6 | abrir cada validador → menu Ajuda/Sobre → versão igual à de "P4 detalhado" (ou mais nova, com a página oficial como prova) | [ ] |
 | P5 | Mapeamento referencial com cobertura pronta + **nome da versão** em mãos (a ECD exige `mappingVersion`) | aba **Compliance** → painel de mapeamento; ou `GET /api/accounting/referential/coverage?unitId=…` | [ ] |
 | P6 | Dados do declarante/livro/signatários fornecidos pelo contador (lista exata abaixo) | conferir campo a campo | [ ] |
 | P7 | Dezembro do ano-calendário **OPEN** no controle de períodos (o encerramento tem gate de período) | aba **Períodos** | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
+
+### P4 detalhado — validadores oficiais e Manual (EMENDA 2026-09-07)
+
+> Até esta data a P4 dizia só "site do SPED/Receita Federal". O que segue foi **verificado pelo
+> agente em 2026-09-07** lendo as páginas oficiais e baixando os arquivos (tamanho conferido byte a
+> byte com o `Content-Length` do servidor; cabeçalho `MZ`/`%PDF` conferido). **O que o agente NÃO
+> fez e não faz:** instalar, abrir ou executar qualquer binário — isso é do executor humano, e a
+> versão "vigente" só se prova abrindo o programa (evidência abaixo).
+
+**Onde está (fonte oficial, única que vale):** portal gov.br/receitafederal → Centrais de Conteúdo →
+Download → SPED. As duas páginas:
+
+| Validador | Página oficial | Arquivo Windows x64 (vigente em 2026-09-07) | Bytes | Página "Atualizado em" |
+|---|---|---|---|---|
+| **ECD** (Sped Contábil) | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecd> | [`SPEDContabil_w64-10.4.1.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/SpedContabil/SPEDContabil_w64-10.4.1.exe) | 129.667.328 | 19/05/2026 |
+| **ECF** | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecf> | [`SpedEcf_w64-12.2.6.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/ECF/SpedEcf_w64-12.2.6.exe) | 143.753.984 | **03/09/2026** |
+
+As páginas também oferecem `w32` (Windows 32 bits) e Linux (`.sh`, exige `chmod +x` segundo a
+própria página). O atalho `gov.br/sped → Centrais de Conteúdo → Downloads → "Validador ECD/ECF"`
+redireciona para as mesmas páginas. Cópia local baixada em 2026-09-07:
+`C:\Users\smurf\Downloads\luminaris-gates\` (os dois `.exe` + os dois PDFs abaixo).
+
+**Leitura de versão (grau: inferido, confirmar no "Sobre"):** o major do validador da ECF (**12**.x)
+acompanha o **Leiaute 12** do Manual; a página da ECF foi atualizada em **03/09/2026**, quatro dias
+antes desta emenda — se ao abrir o programa a versão for maior que 12.2.6, a página oficial é a
+verdade e este quadro é histórico. Para a ECD, o número (10.4.1) **não** é o número do leiaute da
+ECD; não infira nada dele.
+
+**Manual da ECF — Leiaute 12 (insumo dos passos 5 e 6):**
+[`Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf`](http://sped.rfb.gov.br/arquivo/download/8003)
+(6.410.931 bytes, 621 páginas; página 1 carimba "Anexo ao Ato Declaratório Executivo Cofis nº
+02/2026 — Atualização: maio/2026", coerente com o 20/05/2026 do índice
+<http://sped.rfb.gov.br/pasta/show/1644>). O host `sped.rfb.gov.br` **só responde em `http://`**.
+É nele que se traduz cada crítica do PVA da ECF para o registro/campo (passo 6) e é ele que os
+Forks 2/3/4 da ECF Fase 3 esperam. O carimbo `[DONO confere]` do BRIEF da Fase 3 e do RUNBOOK-X2
+continua sendo do dono; a evidência está na página 1 do arquivo.
+
+**Passos de instalação (executor humano; cada linha é uma ação, evidência ao final):**
+
+1. Confira na **página oficial** de cada validador se o nome do arquivo ainda é o do quadro. Se
+   mudou, baixe o novo da página e **atualize o quadro** nesta emenda antes de seguir — não instale
+   a cópia local antiga.
+2. Execute `SPEDContabil_w64-10.4.1.exe` como o usuário que vai rodar o H1 (o programa grava a base
+   local do validador no perfil desse usuário). Aceite o diretório padrão.
+3. Execute `SpedEcf_w64-12.2.6.exe` da mesma forma. São **dois programas independentes**; o da ECF
+   não substitui nem contém o da ECD.
+4. Abra cada um, vá em **Ajuda → Sobre** (ou equivalente) e anote a versão exibida.
+5. Se o programa oferecer **atualização automática** ao abrir, aceite e anote a versão final — o que
+   conta é a versão com que o passo 4/6 do runbook vai rodar, não a do instalador.
+
+EVIDÊNCIA P4: [screenshot do "Sobre" de cada validador com a versão legível + `dir` (ou `ls -l`) da
+pasta `luminaris-gates` mostrando os 4 arquivos com os bytes do quadro]
+
+**O que cada validador faz no fluxo deste runbook** (para não importar no programa errado):
+
+| Passo | Programa | Entrada | Saída que vira evidência |
+|---|---|---|---|
+| 4 | Validador **ECD** | `sped-ecd-<ano>.txt` gerado no passo 3 (não reabra em editor — codificação) | tela de resultado do import + lista de críticas com **código do registro** (I050, J930…) |
+| 6 | Validador **ECF** | `sped-ecf-<ano>.txt` gerado no passo 5 | idem; cada crítica traduzida pelo Manual (registro/campo/página) |
+
+Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada à RFB
+(transmitir é ato do contador com certificado, fora do H1 — ver pedido ao contador, item 0).
+
+**Fora do H1, mas baixado na mesma sessão:** `Ato_Conjunto_RFB_CGIBS_4_2026.pdf` (867.240 bytes,
+3 páginas, <https://cgibs.gov.br/upload/arquivos/202607/31091735-20260730-16h30-ato-conjunto-rfb-cgibs-na-c2-ba-4-260731-090909.pdf>)
+— calendário de obrigatoriedade NFS-e/NF-e com IBS/CBS; insumo do ADR de emissão via parceiro
+(cédula de módulos F-M7), não deste gate.
 
 ### P0 de boot (EMENDA 2026-08-27 — fazer ANTES de "Subir o ambiente")
 
