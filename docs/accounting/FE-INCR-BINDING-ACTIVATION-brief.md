@@ -1,5 +1,12 @@
 # BRIEF — FE-INCR-BINDING-ACTIVATION (LAC-B) — item DIFERIDO na fila
 
+> **EMENDA 2026-09-07 — ITEM ATIVADO pelo dono** ("Ativar agora", via `AskUserQuestion`, sessão do plano
+> em grafo do wizard — [ONBOARDING-WIZARD-plano-grafo-brief.md](ONBOARDING-WIZARD-plano-grafo-brief.md) nó I3).
+> Gatilho "onboarding self-service" dado. **Emenda de escopo ratificada no mesmo ato (F-I3-1 → a):** o
+> compile exige `AccountingPeriod` OPEN no mês corrente (ADR feeder, correção 2026-08-23), que este BRIEF
+> não cobria — o DTO ganha `openCurrentPeriodIfMissing?: boolean`, simétrica à `installChartIfEmpty`;
+> sem a flag, bloqueante estruturado `ACCOUNTING_PERIOD_NOT_OPEN`. O título acima fica histórico.
+
 > Produzido em sessão de planejamento, 2026-09-02, sob a autorização "planeja todos os LAC".
 > **A posição da LAC-B na fila permanece DIFERIDA** (ratificação de 2026-09-01): este BRIEF
 > destrava a execução FUTURA — nenhuma sessão de feature deve executá-lo antes de o dono ativar o
