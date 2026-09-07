@@ -27,7 +27,7 @@ export function useAiInterview() {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
           body: JSON.stringify({ messages: [], stage: 'GREETING' })
         });
         const data = await response.json();
@@ -110,7 +110,7 @@ export function useAiInterview() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/ai/ChatInterview`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getCookie('auth_token')}` },
         body: JSON.stringify({ 
           messages: newMessages, 
           stage: currentStage, 
