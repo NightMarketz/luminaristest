@@ -43,7 +43,11 @@ O envio ao contador é um **pacote (ECD/ECF + hash + manifesto) transportado por
 registrado numa tabela de log de entrega própria (idempotente, reenviável) — nunca um e-mail disparado
 direto do service de geração. Nenhuma decisão de biblioteca de e-mail, retenção do pacote enviado ou
 múltiplos contadores por escopo está tomada: são forks abertos, cada um com opção recomendada e custo
-de errar, para o dono ratificar quando a resposta do contador (item 0) chegar.
+de errar, para o dono ratificar quando a resposta do contador (item 0) chegar. **[emenda pós-parecer
+2026-09-07]** Dois invariantes (não-fork) e dois forks novos entraram por achado do
+`luminaris-accounting-architect`: o pacote só é "pronto para assinar" com o período `HARD_CLOSED`
+(F-CD7), e o signatário J930 do arquivo é sempre exibido ao lado do `AccountingContact` escolhido
+(D7, com reforço em fork F-CD8) — sem isso, "pronto para assinar" era uma frase sem garantia.
 
 ---
 
@@ -62,6 +66,9 @@ de errar, para o dono ratificar quando a resposta do contador (item 0) chegar.
 | O allowlist de auditoria (`auditCanonical.ts`) é fechado por `eventType`: só chaves listadas sobrevivem à sanitização; PII (nome/e-mail de terceiro) já foi tratada como classe proibida em eventos existentes (`supplierName`/`customerName` nunca entram no payload) | verificado | `server/src/features/accounting/audit/auditCanonical.ts:8-46,116-125` |
 | Padrão de comando + CAS (`createDraft`/`submit`/`approve`/`reject`, nunca `PATCH status`) já existe para um fluxo de confirmação humana sobre um artefato contábil sensível (maker-checker) | verificado | `docs/adr/ADR-INCR-APPROVAL-maker-checker.md` §3 (ciclo de vida por comando), mergeado PR #108 |
 | Memória do projeto: **campo PII novo na allowlist de auditoria exige teste-guarda no MESMO PR** — nenhuma allowlist genérica foi aceita antes | verificado (memória) | `accounting-audit-allowlist-guards` (PR #255/#258, denylist genérica rejeitada 2×) |
+| **[emenda pós-parecer 2026-09-07]** Os quatro status reais de período são `OPEN`/`SOFT_CLOSED`/`HARD_CLOSED`/`FUTURE`; `HARD_CLOSED` é terminal (nunca reabre) — é o único status que expressa "este período não muda mais". `IAccountingPeriodRepository.findByYearMonth` já existe como leitura pronta para um gate de entrega, sem código de leitura novo | verificado | `server/src/features/accounting/services/PeriodService.ts:14-19,117-159`; `server/src/features/accounting/repositories/IAccountingPeriodRepository.ts:8` |
+| **[emenda pós-parecer 2026-09-07]** O J930 (assinatura da ECD) é validado só por **shape** no DTO de geração (`SpedEcdDto.ts` `SignerSchema`, `codAssin` regex 3 dígitos) e o `superRefine` da rota exige um `codAssin==='900'` (contador) e um não-900 (responsável legal) — mas **nada compara** `identNom`/`identCpfCnpj` do signatário contra nenhum `AccountingContact`; são dois dados desconexos hoje | verificado | `server/src/features/accounting/dtos/SpedEcdDto.ts:64-112` |
+| **[emenda pós-parecer 2026-09-07]** O job `EXPORT_SPED_ECD`/`EXPORT_SPED_ECF` já grava `sha256` e audita esse hash em `sped.ecd_generated`/`sped.ecf_generated` (allowlist fechada) — o hash correto para o manifesto é **este mesmo valor lido da tabela**, nunca um recálculo do arquivo em disco | verificado | `server/src/features/accounting/audit/auditCanonical.ts:100-101` |
 
 **Tradução do doc/decisão aspiracional → realidade do projeto:** não há torre `Workspace →
 LegalEntity → Establishment`; o destinatário (contador) é modelado **por `AccountingScope`**
@@ -104,6 +111,21 @@ LegalEntity → Establishment`; o destinatário (contador) é modelado **por `Ac
   próprio (`confirmDelivery`/`sendToAccountant`), no padrão de comando do maker-checker (ACC-016: nunca
   `PATCH status` genérico). **O que fica em fork é SE esse comando exige um segundo ator (maker-checker
   real) ou só uma confirmação de UI de um único operador** — ver F-CD2.
+- **D7 — [emenda pós-parecer 2026-09-07, ACC-CD-2] O comando de confirmação de envio SEMPRE exibe,
+  lado a lado, os signatários `codAssin='900'` do `.txt` já gerado (nome/CPF lidos do arquivo/DTO de
+  geração) e o `AccountingContact.name`/`crc` escolhido como destinatário.** Isto é invariante, não
+  fork: hoje **nada no código junta esses dois dados** (`SpedEcdDto.SignerSchema` valida só shape,
+  `AccountingContact` nasce desconexo dele — evidência emendada em §1) — expor os dois lado a lado no
+  retorno do comando é o mínimo inegociável para a promessa "pronto para assinar" não sair endereçada
+  à pessoa errada. **O que fica em fork é o QUANTO o sistema reforça isso além da exibição** — ver
+  F-CD8.
+- **D8 — [emenda pós-parecer 2026-09-07, ACC-CD-4] `AccountingContact` é resolvido por `(scope,
+  contactId)`, nunca por `contactId` global** — mesmo padrão de tenancy que `findJobById(scope, id)`
+  já usa para o job de export (evidência §1: `DataExchangeExportService.ts:212-233`). Contato de outro
+  `scope` referenciado num `confirmDelivery` é `NotFoundError`, nunca `ForbiddenError` nem vazamento
+  silencioso de nome/e-mail de outro tenant. Isto é invariante de tenancy (Contrato §2), não fork — o
+  gate de teste correspondente (contato cross-tenant → `NotFoundError`) é obrigatório no BRIEF/feature,
+  espelhando o já existente para `jobId`.
 
 ### Fora de escopo deste ADR (nomeado, não esquecido)
 
@@ -166,12 +188,19 @@ LegalEntity → Establishment`; o destinatário (contador) é modelado **por `Ac
   **Trade-off aceito nomeado:** se o job de geração original for apagado/sobrescrito, o log de entrega
   vira um ponteiro morto — precisa de uma política de retenção do job de export tão longa quanto a do
   log de entrega (mínimo: nunca hard-delete um job referenciado por um `AccountingDeliveryLog`).
+  **[emenda pós-parecer 2026-09-07, ACC-CD-6] O guarda-corpo é schema, não teste de comportamento:
+  `AccountingDeliveryLog.jobId` é FK real para `AccountingDataExchangeJob` com `onDelete: Restrict`**
+  — não um scope-string solto (o padrão que o resto do módulo usa para apontar para fora do ledger,
+  ex. `Payable.supplierRef`). Aqui o alvo é dentro do próprio domínio contábil e a integridade
+  referencial É o invariante: tentar apagar um job referenciado deve falhar por violação de FK, nunca
+  suceder silenciosamente deixando um ponteiro morto. Hoje não existe nenhum caminho de hard-delete do
+  job (`grep -rn "accountingDataExchangeJob.delete" server/src` não casa nada) — a regra é preventiva,
+  não correção de bug vivo, mas o desenho do schema tem de nascer com a FK.
 - (b) Persistir uma cópia imutável do pacote no momento do envio (novo `storageKey` próprio do log de
   entrega). Mais seguro contra o job original mudar/sumir, mas duplica armazenamento e duplica a
   superfície de "onde está a verdade do que foi enviado".
-- **Recomendação do par:** (a) com o guarda-corpo de retenção nomeado — reuso sem duplicação, mas o
-  guarda-corpo tem de ser um teste (job referenciado por delivery log não pode ser hard-deleted), não
-  só prosa.
+- **Recomendação do par:** (a) com o guarda-corpo de retenção nomeado — reuso sem duplicação, e o
+  guarda-corpo é a FK `onDelete: Restrict` acima, não só um teste de comportamento.
 
 **F-CD5 — Múltiplos contadores por `AccountingScope`:**
 - **(a) Recomendado — 1:N desde o início** (`AccountingContact` tem FK para `scope`, não o inverso;
@@ -189,6 +218,66 @@ LegalEntity → Establishment`; o destinatário (contador) é modelado **por `Ac
 - (b) Sem hash no corpo — mais simples, mas perde a checagem de integridade barata.
 - **Recomendação do par:** (a) — é o mesmo padrão já usado em `AccountingDataExchangeJob.sha256`, zero
   custo extra (o hash já é calculado na geração).
+  **[emenda pós-parecer 2026-09-07, ACC-CD-3] Precisão obrigatória do fork: o manifesto DEVE ler
+  `job.sha256` da tabela — nunca recomputar o SHA-256 do arquivo em disco no momento de montar o
+  pacote.** O job já grava e audita esse hash em `sped.ecd_generated`/`sped.ecf_generated`
+  (`auditCanonical.ts:100-101`); recomputar seria uma segunda fonte de verdade que pode divergir da
+  auditada em silêncio (gravação não-atômica, corrupção, substituição do arquivo) sem que nada acuse.
+  Se por algum motivo o serviço decidir recomputar (ex.: para provar que o arquivo não mudou desde a
+  geração), a comparação `computed === job.sha256` é uma asserção que **falha ruidosamente**, nunca um
+  log silencioso — gate de teste obrigatório no BRIEF.
+
+**F-CD7 — [emenda pós-parecer 2026-09-07, ACC-CD-1] Gate de período para o pacote "pronto para
+assinar":**
+
+D7 do `ADR-INCR-SPED-ECD` decidiu, corretamente, **não** travar a *geração* do arquivo por status de
+período — permite ECD-rascunho legítima antes do fechamento. Este ADR herdava esse read-only sem
+reabrir a pergunta para a *entrega*: nada barrava hoje o pacote sair endereçado como "pronto para
+assinar" com o período ainda `OPEN`/`SOFT_CLOSED`, e mais um lançamento pode postar naquele período
+entre o envio e a assinatura — o número que o contador assina já não bate com o razão atual, e
+retificação (item 19 do master map) ainda não existe para corrigir depois. O parecer chama isto de
+"buraco conhecido criando o próprio próximo buraco". Não é reabertura de D7 (que segue correto para
+**geração**) — é um gate novo sobre **entrega para assinatura**, comando diferente, exigência de
+negócio diferente (F-Z0).
+
+- **(a) Recomendado — exigir `HARD_CLOSED`.** `confirmDelivery`/`buildDeliveryPackage` lê o(s)
+  período(s) cobertos pelo job de origem via `IAccountingPeriodRepository.findByYearMonth` (leitura já
+  pronta, zero código de leitura novo) e recusa a confirmação se qualquer período coberto não estiver
+  `HARD_CLOSED`. É a única leitura consistente com "pronto para assinar" — `HARD_CLOSED` é o único
+  status que expressa "este período não muda mais" (`PeriodService.ts:149-159`, terminal). Custo de
+  errar se este for o escolhido e não implementado: exatamente o modo de falha acima.
+- (b) Exigir `SOFT_CLOSED` (permite reabertura) com aviso explícito no pacote ("período pode reabrir
+  antes da assinatura"). Menos rígido — mantém alguma flexibilidade operacional, mas o aviso depende de
+  o contador realmente ler e entender a ressalva; não fecha a lacuna, só a declara.
+- (c) Sem gate — o comando só marca o pacote como `draft: true` no manifesto quando o período não é
+  `HARD_CLOSED`, nunca bloqueia. Mínimo custo de implementação, mas deixa a promessa de F-Z0 ("pronto
+  para assinar") sem garantia nenhuma além de rótulo — o parecer nomeia isto como o caminho que
+  mais subestima o custo de errar.
+- **Recomendação do par:** (a) — a promessa "pronto para assinar" só é honesta com o gate; (b)/(c)
+  ficam como fallback só se o dono julgar `HARD_CLOSED` operacionalmente cedo demais no fluxo real
+  (ex.: contador quer revisar antes do fechamento formal) — nesse caso a escolha do dono deve registrar
+  explicitamente que o pacote pode sair como rascunho, nunca como "pronto para assinar" silencioso.
+
+**F-CD8 — [emenda pós-parecer 2026-09-07, ACC-CD-2] Reforço além da exibição lado a lado (D7):**
+
+D7 (§2) já fixa como invariante que o comando de confirmação exibe o(s) signatário(s) `codAssin='900'`
+do arquivo ao lado do `AccountingContact` escolhido. O que fica em fork é o quanto o sistema **força**
+essa coerência além de mostrar:
+
+- **(a) Recomendado — o `AccountingContact` escolhido É a fonte do signatário contador no próximo DTO
+  de geração** (o comando de confirmação, ou um passo anterior de "preparar geração", pré-preenche
+  `identNom`/`identCpfCnpj` do J930 a partir do contato cadastrado, em vez do operador digitar de novo
+  a cada geração). Elimina a divergência na origem — nunca há dois dados para divergir.
+- (b) Validação de igualdade no envio: o comando de confirmação compara `identNom`/`identCpfCnpj` do
+  signatário `codAssin='900'` já gravado no `.txt` contra o `AccountingContact` escolhido e **bloqueia**
+  se não baterem (permite exceção só com confirmação humana explícita adicional). Não elimina a
+  duplicação de input, mas barra o caso em que divergiram.
+- (c) Independentes — só a exibição lado a lado (D7), sem pré-preenchimento nem bloqueio. Custo de
+  errar mais alto: a checagem depende inteiramente de o operador notar a divergência visualmente.
+- **Recomendação do par:** (a) como alvo (fecha a causa raiz — dois cadastros digitados separadamente
+  deixam de existir), com (b) como gate defensivo mesmo se (a) for adotado (a geração pode ocorrer fora
+  do fluxo de entrega, ex.: para conferência interna antes de qualquer contato escolhido) — os dois não
+  são mutuamente exclusivos. (c) sozinho é insuficiente para a promessa de F-Z0.
 
 ---
 
@@ -250,8 +339,8 @@ quando essa frente abrir.
 ## O que este ADR NÃO é
 
 - **Não é a implementação.** Nenhum model, service, controller, rota, migração ou teste foi escrito.
-- **Não é ratificação de fork.** As seis decisões da §3 continuam PENDENTES — o agente não escolhe
-  entre elas.
+- **Não é ratificação de fork.** As oito decisões da §3 (F-CD1..F-CD8 — F-CD7/F-CD8 acrescentados
+  **[emenda pós-parecer 2026-09-07]**) continuam PENDENTES — o agente não escolhe entre elas.
 - **Não é BRIEF.** O BRIEF (checklist + contratos Zod esboçados) só nasce depois da ratificação
   fork-a-fork, na `sessao-planejamento` seguinte.
 - **Não decide biblioteca de e-mail.** Se F-CD1→(b)/(c) for escolhido, a lib (`nodemailer` ou
@@ -270,11 +359,13 @@ quando essa frente abrir.
 
 ## Próximo passo
 
-1. **Parecer do arquiteto contábil** sobre este ADR (se algo aqui colide com invariante de domínio não
-   coberto).
+1. ~~**Parecer do arquiteto contábil** sobre este ADR~~ **FEITO** —
+   `docs/adr/PARECER-ARCHITECT-ADR-CONTADOR-DELIVERY.md` (2026-09-07): 2 gaps críticos (ACC-CD-1
+   período, ACC-CD-2 signatário×contato) e 4 menores (ACC-CD-3..6), incorporados nesta emenda como
+   D7/D8 (invariantes) e F-CD7/F-CD8 (forks novos).
 2. **Resposta do contador** ao item 0 do `PEDIDO-CONTADOR-2026-09-03.md` — condição de existência deste
    trilho.
-3. **Ratificação fork-a-fork** (F-CD1..F-CD6) pelo dono, só depois do passo 2.
+3. **Ratificação fork-a-fork** (F-CD1..F-CD8) pelo dono, só depois do passo 2.
 4. **BRIEF** (`sessao-planejamento`) com os contratos Zod (`AccountingContact`, `AccountingDeliveryLog`,
    comandos `registerContact`/`buildDeliveryPackage`/`confirmDelivery`/`retryDelivery`) — só então
    `sessao-feature` implementa.
