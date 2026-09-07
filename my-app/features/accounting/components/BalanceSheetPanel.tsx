@@ -5,10 +5,6 @@ import { accountingService, type BalanceSheetReport, type StatementSection } fro
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function SectionTable({ section, title }: { section: StatementSection; title: string }) {
   const { t } = useTranslation('accounting');
   const total = parseInt(section.totalCents, 10);
@@ -58,17 +54,24 @@ interface Props {
 
 export function BalanceSheetPanel({ unitId }: Props) {
   const { t } = useTranslation('accounting');
-  const [asOf, setAsOf] = useState(today());
+  // Campo não tocado ⇒ `asOf` omitido e o BACKEND decide "hoje" via `scopeToday` (fuso do escopo) —
+  // nunca derivar "hoje" aqui: em UTC o default adiantava o dia entre 21h-00h BRT, e em 31/12 a janela
+  // year-to-date pulava para o ano seguinte (relatório vazio). F1(a), GAP-MAP nº 5 — mesmo padrão do
+  // AgingPanel (PR #250).
+  const [asOf, setAsOf] = useState('');
+  const [asOfTouched, setAsOfTouched] = useState(false);
   const [report, setReport] = useState<BalanceSheetReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadReport() {
-    if (!unitId || !asOf) return;
+    if (!unitId) return;
     setLoading(true);
     setError(null);
     try {
-      setReport(await accountingService.getBalanceSheet(unitId, asOf));
+      const next = await accountingService.getBalanceSheet(unitId, asOfTouched && asOf ? asOf : undefined);
+      setReport(next);
+      if (!asOfTouched) setAsOf(next.asOf); // exibe o dia que o backend usou
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('balanceSheet.error.load', 'Erro ao carregar balanço patrimonial.'));
       setReport(null);
@@ -89,14 +92,14 @@ export function BalanceSheetPanel({ unitId }: Props) {
           <input
             type="date"
             value={asOf}
-            onChange={(e) => setAsOf(e.target.value)}
+            onChange={(e) => { setAsOf(e.target.value); setAsOfTouched(true); }}
             className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none"
           />
         </label>
         <button
           type="button"
           onClick={() => void loadReport()}
-          disabled={loading || !asOf}
+          disabled={loading}
           className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-600 disabled:opacity-50"
         >
           {loading ? t('balanceSheet.controls.calculating', 'Calculando…') : t('balanceSheet.controls.generate', 'Gerar BP')}

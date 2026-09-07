@@ -738,22 +738,22 @@ export const accountingService = {
 
   // ── Financial statements (INCR-4) ───────────────────────────────────────────
 
-  /** Balance sheet (Balanço Patrimonial) as of a given date. */
-  async getBalanceSheet(unitId: string, asOf: string): Promise<BalanceSheetReport> {
+  /** Balance sheet (Balanço Patrimonial). `asOf` omitido ⇒ o backend usa hoje no fuso do escopo. */
+  async getBalanceSheet(unitId: string, asOf?: string): Promise<BalanceSheetReport> {
     const qs = buildQuery({ unitId, asOf });
     const res = await apiClient.get<ApiEnvelope<BalanceSheetReport>>(`/accounting/balance-sheet${qs}`);
     return res.data;
   },
 
   /** Income statement (DRE) year-to-date as of a given date. */
-  async getIncomeStatement(unitId: string, asOf: string): Promise<IncomeStatementReport> {
+  async getIncomeStatement(unitId: string, asOf?: string): Promise<IncomeStatementReport> {
     const qs = buildQuery({ unitId, asOf });
     const res = await apiClient.get<ApiEnvelope<IncomeStatementReport>>(`/accounting/income-statement${qs}`);
     return res.data;
   },
 
   /** Cash flow statement (DFC, indirect method) year-to-date as of a given date. */
-  async getCashFlow(unitId: string, asOf: string): Promise<CashFlowStatementReport> {
+  async getCashFlow(unitId: string, asOf?: string): Promise<CashFlowStatementReport> {
     const qs = buildQuery({ unitId, asOf });
     const res = await apiClient.get<ApiEnvelope<CashFlowStatementReport>>(`/accounting/reports/cash-flow${qs}`);
     return res.data;

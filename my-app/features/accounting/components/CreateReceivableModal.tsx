@@ -10,6 +10,7 @@ import type { Counterparty } from '../../../lib/services/counterparties.service'
 import { parseBrl } from '../lib/parseBrl';
 import { formatCents } from '../lib/formatCents';
 import { resolveErrorWithCode } from '../lib/resolveError';
+import { scopeToday } from '../lib/formatDate';
 
 export interface CreateReceivableModalProps {
   isOpen: boolean;
@@ -24,10 +25,6 @@ export interface CreateReceivableModalProps {
   onNavigateToPeriods?: () => void;
   /** Navigate to the Contrapartes tab (shown when none is registered). */
   onNavigateToCounterparties?: () => void;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 
@@ -47,8 +44,8 @@ export function CreateReceivableModal({
   const [counterpartyId, setCounterpartyId] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
   const [description, setDescription] = useState('');
-  const [issueDate, setIssueDate] = useState<string>(today);
-  const [dueDate, setDueDate] = useState<string>(today);
+  const [issueDate, setIssueDate] = useState<string>(scopeToday);
+  const [dueDate, setDueDate] = useState<string>(scopeToday);
   const [amountBrl, setAmountBrl] = useState('');
   const [revenueAccountId, setRevenueAccountId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,8 +85,8 @@ export function CreateReceivableModal({
     setCounterpartyId('');
     setDocumentNumber('');
     setDescription('');
-    setIssueDate(today());
-    setDueDate(today());
+    setIssueDate(scopeToday());
+    setDueDate(scopeToday());
     setAmountBrl('');
     setRevenueAccountId('');
     setError(null);

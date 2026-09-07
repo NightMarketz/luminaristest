@@ -4,6 +4,7 @@ import { Modal } from '../../../components/ui/Modal';
 import { parseBrl } from '../lib/parseBrl';
 import { formatCents } from '../lib/formatCents';
 import { resolveError } from '../lib/resolveError';
+import { scopeToday } from '../lib/formatDate';
 import { accountingService } from '../../../lib/services/accounting.service';
 import type { DimensionCatalogEntry } from '../../../lib/services/dimensions.service';
 
@@ -102,10 +103,6 @@ function toTaggableAxes(catalog: DimensionCatalogEntry[]): TaggableAxis[] {
     .filter((a) => a.leaves.length > 0);
 }
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 let nextId = 3;
 
 const DEFAULT_LINES: Line[] = [
@@ -148,7 +145,7 @@ export function JournalEntryModal({
   busyLabel,
 }: JournalEntryModalProps) {
   const { t } = useTranslation('accounting');
-  const [date, setDate] = useState<string>(() => initial?.date ?? today());
+  const [date, setDate] = useState<string>(() => initial?.date ?? scopeToday());
   const [description, setDescription] = useState(initial?.description ?? '');
   const [lines, setLines] = useState<Line[]>(() => (initial ? toLines(initial) : DEFAULT_LINES));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -257,7 +254,7 @@ export function JournalEntryModal({
       // Default command = post straight to the ledger; the approval tower injects its own.
       await (submit ? submit(payload) : accountingService.postEntry(payload));
       // Reset form state before closing
-      setDate(today());
+      setDate(scopeToday());
       setDescription('');
       setLines(DEFAULT_LINES);
       onSuccess();

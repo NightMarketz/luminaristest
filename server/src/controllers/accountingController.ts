@@ -233,7 +233,7 @@ export const setAccountRequiresDimension = async (req: Request, res: Response) =
  *     summary: Balanço Patrimonial — snapshot as_of a given date
  *     parameters:
  *       - { in: query, name: unitId, required: true, schema: { type: string } }
- *       - { in: query, name: asOf,   required: true, schema: { type: string, format: date }, description: "YYYY-MM-DD — position date (as_of semantics)" }
+ *       - { in: query, name: asOf,   required: false, schema: { type: string, format: date }, description: "YYYY-MM-DD — position date (as_of semantics)" }
  *     responses:
  *       200: { description: Balance sheet report }
  *       400: { description: Validation error or FROM_DATE_NOT_SUPPORTED_IN_INCR4 }
@@ -253,8 +253,9 @@ export const getBalanceSheet = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    // asOf is end-of-day UTC so the full day is included in the snapshot.
-    const asOf = new Date(parsed.data.asOf + 'T23:59:59.999Z');
+    // asOf is end-of-day UTC so the full day is included in the snapshot. Ausente ⇒ undefined:
+    // quem decide "hoje" é o Service, no fuso do escopo (F1(a), GAP-MAP nº 5).
+    const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getAccountingReportService().balanceSheet(scope, asOf);
     return res.json({ success: true, data });
   } catch (error) {
@@ -268,7 +269,7 @@ export const getBalanceSheet = async (req: Request, res: Response) => {
  *     summary: DRE — year_to_date from 1 Jan of asOf.year through asOf
  *     parameters:
  *       - { in: query, name: unitId, required: true, schema: { type: string } }
- *       - { in: query, name: asOf,   required: true, schema: { type: string, format: date }, description: "YYYY-MM-DD — period end date; fromDate is computed as 1 Jan of that year" }
+ *       - { in: query, name: asOf,   required: false, schema: { type: string, format: date }, description: "YYYY-MM-DD — period end date; fromDate is computed as 1 Jan of that year" }
  *     responses:
  *       200: { description: Income statement report }
  *       400: { description: Validation error or FROM_DATE_NOT_SUPPORTED_IN_INCR4 }
@@ -287,7 +288,7 @@ export const getIncomeStatement = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const asOf = new Date(parsed.data.asOf + 'T23:59:59.999Z');
+    const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getAccountingReportService().incomeStatement(scope, asOf);
     return res.json({ success: true, data });
   } catch (error) {
@@ -301,7 +302,7 @@ export const getIncomeStatement = async (req: Request, res: Response) => {
  *     summary: DFC — Demonstração do Fluxo de Caixa (método indireto), year_to_date
  *     parameters:
  *       - { in: query, name: unitId, required: true, schema: { type: string } }
- *       - { in: query, name: asOf,   required: true, schema: { type: string, format: date }, description: "YYYY-MM-DD — inclusive upper bound; window is 1 Jan of that year → asOf" }
+ *       - { in: query, name: asOf,   required: false, schema: { type: string, format: date }, description: "YYYY-MM-DD — inclusive upper bound; window is 1 Jan of that year → asOf" }
  *     responses:
  *       200: { description: Cash-flow statement report }
  *       400: { description: Validation error }
@@ -315,7 +316,7 @@ export const getCashFlow = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const asOf = new Date(parsed.data.asOf + 'T23:59:59.999Z');
+    const asOf = parsed.data.asOf ? new Date(parsed.data.asOf + 'T23:59:59.999Z') : undefined;
     const data = await getFactory().getCashFlowReportService().cashFlowStatement(scope, asOf);
     return res.json({ success: true, data });
   } catch (error) {

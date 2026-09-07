@@ -7,6 +7,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
+import { scopeToday } from '../models/dates';
 import { STATEMENT_MAPPING_VERSION } from './StatementMappingFixture';
 import type { AccountingReportService } from './AccountingReportService';
 
@@ -180,10 +181,19 @@ export class CashFlowReportService {
    * → asOf inclusive. Reconciles the period result and patrimonial variations into
    * Operational / Investing / Financing sections.
    */
-  async cashFlowStatement(scope: AccountingScope, asOf: Date): Promise<CashFlowStatementReport> {
+  /**
+   * `asOf` OPCIONAL: omitido ⇒ hoje no fuso do ESCOPO via `scopeToday` (fim do dia, para incluir o
+   * dia inteiro — mesma semântica do caminho explícito). Nunca derivar o dia com `toISOString()`: em
+   * UTC-3 o dia UTC já virou das 21h às 00h e o relatório afirmaria a posição de amanhã — em 31/12 a
+   * janela year-to-date pularia para o ano seguinte, devolvendo relatório VAZIO. O default mora AQUI,
+   * no Service, e não no DTO (que congelaria o dia no parse) — F1(a), GAP-MAP nº 5.
+   */
+  async cashFlowStatement(scope: AccountingScope, asOfInput?: Date): Promise<CashFlowStatementReport> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler o fluxo de caixa.');
     }
+
+    const asOf = asOfInput ?? new Date(scopeToday(scope) + 'T23:59:59.999Z');
 
     // BRIEF-W2-D (F4, layer 3) — see AccountingReportService.trialBalance() for why this starts
     // after the policy gate.

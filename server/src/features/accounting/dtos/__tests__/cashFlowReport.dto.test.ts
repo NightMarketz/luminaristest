@@ -24,8 +24,12 @@ describe('CashFlowStatementQuerySchema', () => {
     expect(CashFlowStatementQuerySchema.safeParse({ ...valid, asOf: '2024-02-29' }).success).toBe(true);
   });
 
-  it('rejects asOf ausente (aqui é OBRIGATÓRIA — contraste deliberado com aging.dto)', () => {
-    expect(CashFlowStatementQuerySchema.safeParse({ unitId: 'unit-1' }).success).toBe(false);
+  // O contraste deliberado com aging.dto foi REVERTIDO em 2026-09-02 (fork F1(a), GAP-MAP nº 5):
+  // exigir asOf empurrava o cliente a derivar o default, e ele derivava em UTC — entre 21h-00h BRT
+  // pedia o ano seguinte em 31/12 e recebia DFC vazia. Agora omitir é o caminho CORRETO: quem decide
+  // "hoje" é o Service, no fuso do escopo. A validação segue dura quando a data É enviada (casos acima).
+  it('aceita asOf ausente — omitir ⇒ o Service usa hoje no fuso do escopo (espelha aging.dto)', () => {
+    expect(CashFlowStatementQuerySchema.safeParse({ unitId: 'unit-1' }).success).toBe(true);
   });
 
   it('rejects datetime e forma inválida', () => {

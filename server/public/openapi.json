@@ -2664,7 +2664,7 @@
           {
             "in": "query",
             "name": "asOf",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "format": "date"
@@ -2697,7 +2697,7 @@
           {
             "in": "query",
             "name": "asOf",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "format": "date"
@@ -2730,7 +2730,7 @@
           {
             "in": "query",
             "name": "asOf",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string",
               "format": "date"

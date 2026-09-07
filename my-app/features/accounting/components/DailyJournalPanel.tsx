@@ -4,11 +4,7 @@ import { useTranslation } from 'next-i18next';
 import { FiCheckCircle, FiAlertTriangle } from 'react-icons/fi';
 import { accountingService, type DailyJournalReport, type DailyJournalEntry } from '../../../lib/services/accounting.service';
 import { formatCents } from '../lib/formatCents';
-import { formatDate } from '../lib/formatDate';
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { formatDate, scopeToday } from '../lib/formatDate';
 
 const inputClass = 'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none';
 
@@ -51,7 +47,7 @@ function EntryCard({ entry }: { entry: DailyJournalEntry }) {
 export function DailyJournalPanel({ unitId }: { unitId: string }) {
   const { t } = useTranslation('accounting');
   const [from, setFrom] = useState('');
-  const [to, setTo] = useState(today());
+  const [to, setTo] = useState(scopeToday());
   const [report, setReport] = useState<DailyJournalReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

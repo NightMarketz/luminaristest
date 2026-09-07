@@ -74,4 +74,27 @@ describe('IncomeStatementPanel (render)', () => {
     // -25000 cents → "250,00" visible in the CMV section.
     expect(container.textContent).toContain('250,00');
   });
+
+  // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+  // `today()` (IncomeStatementPanel.tsx:8-10) deriva o default de `asOf` via
+  // `toISOString()` (UTC): entre 21h-00h BRT o dia UTC já virou e o DRE default pede o
+  // "amanhã" do escopo (DTO exige `asOf`; sem default de backend). A janela do DRE é
+  // year-to-date do ANO do asOf — em 31/12 noturno o default vira 01/01 do ano seguinte
+  // e o DRE default é o do ano novo, VAZIO. Comportamento correto (fork-agnóstico): na
+  // posição default o campo afirma o HOJE do escopo — ou vazio, se a correção delegar.
+  // Instante FIXADO com fake timers na janela que morde (determinístico em qualquer fuso).
+  it('guarda: default de asOf do DRE na janela 21h-00h BRT é o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      const { container } = render(<IncomeStatementPanel unitId="u1" />);
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(
+        ['', '2026-08-31'],
+        'default de asOf às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC; em 31/12 esta mesma derivação entrega um DRE default do ano seguinte, vazio',
+      ).toContain(input.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

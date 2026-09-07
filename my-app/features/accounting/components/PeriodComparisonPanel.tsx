@@ -3,17 +3,13 @@ import React, { useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { accountingService, type PeriodComparisonReport } from '../../../lib/services/accounting.service';
 import { formatCents } from '../lib/formatCents';
-import { formatDate } from '../lib/formatDate';
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
+import { formatDate, scopeToday } from '../lib/formatDate';
 
 const inputClass = 'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none';
 
 export function PeriodComparisonPanel({ unitId }: { unitId: string }) {
   const { t } = useTranslation('accounting');
-  const [asOfCurrent, setAsOfCurrent] = useState(today());
+  const [asOfCurrent, setAsOfCurrent] = useState(scopeToday());
   const [asOfPrevious, setAsOfPrevious] = useState('');
   const [report, setReport] = useState<PeriodComparisonReport | null>(null);
   const [loading, setLoading] = useState(false);

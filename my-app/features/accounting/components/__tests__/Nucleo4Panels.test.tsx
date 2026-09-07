@@ -4,12 +4,14 @@ import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/re
 
 import { DFCPanel } from '../DFCPanel';
 import { PeriodComparisonPanel } from '../PeriodComparisonPanel';
+import { DailyJournalPanel } from '../DailyJournalPanel';
 import { accountingService } from '../../../../lib/services/accounting.service';
 
 vi.mock('../../../../lib/services/accounting.service', () => ({
   accountingService: {
     getCashFlow: vi.fn(),
     getPeriodComparison: vi.fn(),
+    getDailyJournal: vi.fn(),
   },
 }));
 
@@ -63,5 +65,68 @@ describe('PeriodComparisonPanel (number cents, null baseline)', () => {
     expect(container.textContent).toContain('25.0%');
     expect(container.textContent).toContain('—'); // null deltaPct baseline
     expect(container.textContent).not.toContain('NaN');
+  });
+});
+
+// ── Testes-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+// Cada painel deriva o default do seu campo de data via `new Date().toISOString().slice(0,10)`
+// (UTC): entre 21h-00h BRT o dia UTC já virou e o default afirma o "amanhã" do escopo. Os
+// DTOs exigem a data (sem default de backend). No DFC a janela é year-to-date do ano do
+// asOf — em 31/12 noturno o default entrega o DFC do ano seguinte, vazio. Comportamento
+// correto (fork-agnóstico): na posição default o campo afirma o HOJE do escopo — ou
+// vazio, se a correção delegar o default. Instante FIXADO com fake timers dentro da
+// janela que morde — 2026-09-01T02:30Z = 23:30 BRT de 2026-08-31 — determinístico em
+// qualquer máquina/fuso (armadilha teste-de-hoje-quebra-em-janela-utc).
+describe('defaults de data — janela 21h-00h BRT (classe date-only UTC shift)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('guarda: DFCPanel — default de asOf é o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      const { container } = render(<DFCPanel unitId="u1" />);
+      const input = container.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(
+        ['', '2026-08-31'],
+        'default de asOf do DFC às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC; em 31/12 esta derivação entrega o DFC do ano seguinte, vazio',
+      ).toContain(input.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('guarda: PeriodComparisonPanel — default de "Período atual" é o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      const { container } = render(<PeriodComparisonPanel unitId="u1" />);
+      const inputs = container.querySelectorAll('input[type="date"]');
+      const asOfCurrent = inputs[0] as HTMLInputElement; // 1º input = asOfCurrent (default today()); o 2º nasce vazio
+      expect(
+        ['', '2026-08-31'],
+        'default de asOfCurrent às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC na posição default do comparativo',
+      ).toContain(asOfCurrent.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('guarda: DailyJournalPanel — default de "Até" é o hoje do escopo, não o amanhã UTC', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      const { container } = render(<DailyJournalPanel unitId="u1" />);
+      const inputs = container.querySelectorAll('input[type="date"]');
+      const to = inputs[1] as HTMLInputElement; // JSX: "De" (vazio) vem antes de "Até" (default today())
+      expect(
+        ['', '2026-08-31'],
+        'default de "Até" às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o Livro Diário default pede um intervalo que termina num dia que ainda não existe no escopo',
+      ).toContain(to.value);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

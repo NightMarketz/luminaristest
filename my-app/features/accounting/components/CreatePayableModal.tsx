@@ -11,6 +11,7 @@ import type { Counterparty } from '../../../lib/services/counterparties.service'
 import { parseBrl } from '../lib/parseBrl';
 import { formatCents } from '../lib/formatCents';
 import { resolveErrorWithCode } from '../lib/resolveError';
+import { scopeToday } from '../lib/formatDate';
 
 export interface CreatePayableModalProps {
   isOpen: boolean;
@@ -25,10 +26,6 @@ export interface CreatePayableModalProps {
   onNavigateToPeriods?: () => void;
   /** Navigate to the Contrapartes tab (shown when none is registered). */
   onNavigateToCounterparties?: () => void;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 /**
@@ -75,8 +72,8 @@ export function CreatePayableModal({
   const [counterpartyId, setCounterpartyId] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
   const [description, setDescription] = useState('');
-  const [issueDate, setIssueDate] = useState<string>(today);
-  const [dueDate, setDueDate] = useState<string>(today);
+  const [issueDate, setIssueDate] = useState<string>(scopeToday);
+  const [dueDate, setDueDate] = useState<string>(scopeToday);
   const [amountBrl, setAmountBrl] = useState('');
   const [expenseAccountId, setExpenseAccountId] = useState('');
   const [mode, setMode] = useState<PayableMode>('expense');
@@ -139,8 +136,8 @@ export function CreatePayableModal({
     setCounterpartyId('');
     setDocumentNumber('');
     setDescription('');
-    setIssueDate(today());
-    setDueDate(today());
+    setIssueDate(scopeToday());
+    setDueDate(scopeToday());
     setAmountBrl('');
     setExpenseAccountId('');
     setMode('expense');

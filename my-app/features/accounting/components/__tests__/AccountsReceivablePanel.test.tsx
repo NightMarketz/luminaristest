@@ -164,4 +164,33 @@ describe('AccountsReceivablePanel (render)', () => {
       expect(last).not.toHaveProperty('overdue', false);
     });
   });
+
+  // ── Teste-guarda (sessão de instrumentação 2026-09-01) — classe date-only UTC shift ──
+  // Espelho do AccountsPayablePanel: `openAction` (AccountsReceivablePanel.tsx:306)
+  // re-deriva `actionDate` com `today()` (`toISOString()`, UTC) no CLIQUE — entre
+  // 21h-00h BRT o RECEBIMENTO default nasce datado do "amanhã" do escopo e grava o dia
+  // errado em silêncio (write-path sem checagem de hoje). Comportamento correto
+  // (fork-agnóstico): o default afirma o HOJE do escopo — ou vazio. Instante FIXADO só
+  // em volta do clique (é aí que o default é derivado).
+  it('guarda: default da data do recebimento na janela 21h-00h BRT é o hoje do escopo, não o amanhã UTC', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-09-01T02:30:00Z')); // 23:30 BRT de 2026-08-31
+      fireEvent.click(screen.getByRole('button', { name: /Receber/ }));
+
+      const label = screen.getByText('Data do recebimento'); // sanidade: o modal abriu
+      const input = label.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
+      expect(
+        ['', '2026-08-31'],
+        'default de receivedAt às 23:30 BRT de 2026-08-31 deve afirmar o hoje do escopo (ou vazio) — 2026-09-01 é o "amanhã" UTC: o recebimento default grava a baixa no dia errado, em silêncio',
+      ).toContain(input.value);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
