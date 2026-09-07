@@ -33,11 +33,11 @@ flowchart LR
   classDef decide fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
 
   subgraph EXT[Dado externo / pessoas]
-    D1["D1 Enviar pedido ao contador\nitem 0 = Z0-a 'assina?'\nitens 1/1b tributos · 2 D3 ICMS · taxas de depreciação"]:::ext
-    D8["D8 Dados P6 do contador\ndeclarante · livro · signatários\nidentQualif obrigatório"]:::ext
-    D2["D2 XML de NF-e real\ncompra própria ≥ 03/08/2026"]:::ext
-    D3["D3 Manual ECF Leiaute 12 20/05\nBAIXADO 07/09 · carimbo DONO confere"]:::done
-    D4["D4 e-CAC: MIT tem API?\n20 min"]:::ext
+    D1["D1 Enviar pedido ao contador<br/>item 0 = Z0-a 'assina?'<br/>itens 1/1b tributos · 2 D3 ICMS · taxas de depreciação"]:::ext
+    D8["D8 Dados P6 do contador<br/>declarante · livro · signatários<br/>identQualif obrigatório"]:::ext
+    D2["D2 XML de NF-e real<br/>compra própria ≥ 03/08/2026"]:::ext
+    D3["D3 Manual ECF Leiaute 12 20/05<br/>BAIXADO 07/09 · carimbo DONO confere"]:::done
+    D4["D4 e-CAC: MIT tem API?<br/>20 min"]:::ext
     D5["D5 Parceiro emissor + certificado"]:::ext
     D6["D6 Convênio/leiaute do banco"]:::ext
     D7["D7 Vigilância PNCT até 31/12"]:::ext
@@ -45,50 +45,50 @@ flowchart LR
 
   subgraph GATES[Gates humanos - runbooks, 0 desfechos]
     B4["B-4 Ensaio de restauração"]:::human
-    X2["X2 Import referencial RFB\narquivo já baixado"]:::human
-    P4["P4 Instalar validadores\nECD 10.4.1 · ECF 12.2.6 baixados"]:::human
-    H1["H1 PVA em Presumido\nECD + apuração + ECF"]:::human
-    H2["H2 Sign-off de browser\nparte NF-e por clique"]:::human
+    X2["X2 Import referencial RFB<br/>arquivo já baixado"]:::human
+    P4["P4 Instalar validadores<br/>ECD 10.4.1 · ECF 12.2.6 baixados"]:::human
+    H1["H1 PVA em Presumido<br/>ECD + apuração + ECF"]:::human
+    H2["H2 Sign-off de browser<br/>parte NF-e por clique"]:::human
     H3["H3 Sign-off P2 clínica"]:::human
     H1b["H1 2ª passada em Lucro Real"]:::human
-    M2["M2 Host + 1º deploy\nadiado: fim do app"]:::human
+    M2["M2 Host + 1º deploy<br/>adiado: fim do app"]:::human
   end
 
   subgraph DEC[Ratificações do dono]
-    R1["R1 Forks F-FENFE-1..7\nBRIEF FE-INCR-NFE"]:::decide
-    R2["R2 Forks 2/3/4 ECF Fase 3\nblocos L/M/N"]:::decide
-    R4["R4 Onde vive a credencial\nde emissão"]:::decide
+    R1["R1 Forks F-FENFE-1..7<br/>BRIEF FE-INCR-NFE"]:::decide
+    R2["R2 Forks 2/3/4 ECF Fase 3<br/>blocos L/M/N"]:::decide
+    R4["R4 Onde vive a credencial<br/>de emissão"]:::decide
   end
 
   subgraph CONT[Contábil - ordem 1]
-    C4["C4 BRIEF FE-INCR-AUDIT-PROVENANCE\nverify-chain + source-documents"]:::ready
+    C4["C4 BRIEF FE-INCR-AUDIT-PROVENANCE<br/>verify-chain + source-documents"]:::ready
     C5["C5 feature do C4"]:::blocked
-    C6["C6 ADR-CONTADOR-DELIVERY\ne-mail ECD/ECF"]:::ready
-    C7["C7 BRIEF BE-INCR-RECONCILE-PENDING\nF-W2F-3/5 → b"]:::ready
-    C8["C8 ADR-INCR-FIXED-ASSETS\nimobilizado + depreciação"]:::blocked
-    C9["C9 Retificação ECD/ECF\nitem do BRIEF ECF Fase 3"]:::blocked
-    C10["C10 P2 clínica estética\nBRIEF 8/8 forks · ADR Accepted"]:::ready
+    C6["C6 ADR-CONTADOR-DELIVERY<br/>e-mail ECD/ECF"]:::ready
+    C7["C7 BRIEF BE-INCR-RECONCILE-PENDING<br/>F-W2F-3/5 → b"]:::ready
+    C8["C8 ADR-INCR-FIXED-ASSETS<br/>imobilizado + depreciação"]:::blocked
+    C9["C9 Retificação ECD/ECF<br/>item do BRIEF ECF Fase 3"]:::blocked
+    C10["C10 P2 clínica estética<br/>BRIEF 8/8 forks · ADR Accepted"]:::ready
   end
 
   subgraph FIN[Financeiro - ordem 2]
-    F1a["F1a BRIEF FE-INCR-NFE\nPR 270"]:::done
+    F1a["F1a BRIEF FE-INCR-NFE<br/>PR 270"]:::done
     F1b["F1b feature FE-INCR-NFE"]:::blocked
-    F1c["F1c review + merge FE-NFE\nNúcleo 3 → 8/9"]:::blocked
-    E9["E9 Trocar fixture sintético\nreverter it.todo"]:::blocked
-    F3["F3 ADR-INCR-PARTIAL-SETTLEMENT\nbaixa parcial AP/AR"]:::ready
+    F1c["F1c review + merge FE-NFE<br/>Núcleo 3 → 8/9"]:::blocked
+    E9["E9 Trocar fixture sintético<br/>reverter it.todo"]:::blocked
+    F3["F3 ADR-INCR-PARTIAL-SETTLEMENT<br/>baixa parcial AP/AR"]:::ready
     F4["F4 BRIEF FE-INCR-CASH-FORECAST"]:::ready
-    F5["F5 ADR-INCR-BANK-OUTBOUND\nremessa CNAB/boleto/Pix"]:::blocked
+    F5["F5 ADR-INCR-BANK-OUTBOUND<br/>remessa CNAB/boleto/Pix"]:::blocked
   end
 
   subgraph FISC[Fiscal - ordem 3]
-    X3["X3 BRIEF FE-INCR-COMPLIANCE-2\nbotão ECF Real + import catálogo"]:::ready
-    X4["X4 ECF Fase 3 L/M/N + e-Lalur\n+ C9 retificação"]:::blocked
-    X6["X6 Triagem contador → emenda\nADR-INCR-NFE §D3 flag de regime"]:::blocked
-    X6b["X6b BRIEF BE-INCR-CNPJ-ALFA\nT10 - dívida: PR 267 mergeou sem"]:::ready
-    X7["X7 ADR-INCR-TAX-ASSESSMENT\nIRPJ/CSLL trimestral + MIT"]:::blocked
+    X3["X3 BRIEF FE-INCR-COMPLIANCE-2<br/>botão ECF Real + import catálogo"]:::ready
+    X4["X4 ECF Fase 3 L/M/N + e-Lalur<br/>+ C9 retificação"]:::blocked
+    X6["X6 Triagem contador → emenda<br/>ADR-INCR-NFE §D3 flag de regime"]:::blocked
+    X6b["X6b BRIEF BE-INCR-CNPJ-ALFA<br/>T10 - dívida: PR 267 mergeou sem"]:::ready
+    X7["X7 ADR-INCR-TAX-ASSESSMENT<br/>IRPJ/CSLL trimestral + MIT"]:::blocked
     X9["X9 ADR-INCR-DCTFWEB"]:::blocked
-    X10["X10 ADR-INCR-DFE-EMISSAO-PARCEIRO\nNFS-e 01/10 · NF-e 01/12"]:::blocked
-    X8["X8 ADR-INCR-EFD-CONTRIBUICOES\nraso, por último"]:::blocked
+    X10["X10 ADR-INCR-DFE-EMISSAO-PARCEIRO<br/>NFS-e 01/10 · NF-e 01/12"]:::blocked
+    X8["X8 ADR-INCR-EFD-CONTRIBUICOES<br/>raso, por último"]:::blocked
   end
 
   %% gates humanos
