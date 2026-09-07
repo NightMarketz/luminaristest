@@ -9,7 +9,7 @@
 > conflito F-I1-1×F-I1-4 e o custo do re-key):** F-I1-1 → **(b)** no controller · F-I1-2 → **(b)** `unit`
 > obrigatório, 400 · F-I1-4 → **(b)** dois passos + compensação `deleteAllTablesForUser` no catch ·
 > F-I1b-1 → **(b)** cuid novo + **re-key da contabilidade como incremento próprio de migração de dado, com ADR
-> e B-4 executado antes** · F-I1b-2 absorvido por esse ADR. Todas contra a recomendação, reafirmadas; a
+> e B-4 executado antes** · F-I1b-2 absorvido por esse ADR. Todas na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); a
 > recomendação fica registrada como histórico. **I1 está pronto para `sessao-feature`; I1b vira
 > `sessao-planejamento` de um ADR de migração.**
 
@@ -116,26 +116,26 @@ CustomCreationSchema.extend({ unit: UnitInput.optional() })
 // I1b — definido no ADR-INCR-UNIT-REKEY-migration (não aqui)
 ```
 
-## 3. Forks — 4 ratificados 2026-09-07 (todos contra a recomendação, reafirmados) + 1 absorvido
+## 3. Forks — 4 ratificados 2026-09-07 (todos na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff)) + 1 absorvido
 
 - **F-I1-1 · onde a linha nasce** (do plano, PENDENTE): (a) dentro da tx de `installPresetAsSystem`;
   (b) no controller, após a instalação, via `createTableData`. **Recomendação revisada após ler o
   código: (a′) — um método novo `installSystemWithUnit` no PRÓPRIO `DynamicTableService`, que abre a
   tx e chama `installPresetAsSystem(…, { tx })` + `createTableData(…, { tx })`.** Não é o anti-padrão
   do Contrato §2.1 (nada de fora é injetado no motor; o método é do mesmo módulo), e `createTableData`
-  já roda os plugins dentro de tx. (b) puro deixa a janela do comportamento 3 aberta. **✅ RATIFICADO 2026-09-07 → (b), contra a recomendação (reafirmado após o conflito com F-I1-4 ser apontado).**
+  já roda os plugins dentro de tx. (b) puro deixa a janela do comportamento 3 aberta. **✅ RATIFICADO 2026-09-07 → (b), na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); reafirmado após o conflito com F-I1-4 ser apontado.**
 - **F-I1-2 · unidade ausente no body** (do plano, PENDENTE): (a) default "Matriz"; (b) 400.
-  **Recomendação: (a)** — mantém o modo Rápido atual funcionando sem mudança de tela. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — contra a recomendação.**
+  **Recomendação: (a)** — mantém o modo Rápido atual funcionando sem mudança de tela. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff).**
 - **F-I1-4 · atomicidade (novo):** (a) tx única (implica F-I1-1 a′: `installPresetAsSystem` passa a
   aceitar `{ tx }` opcional, mantendo o comportamento atual quando ausente — par de testes de
   caracterização antes/depois); (b) dois passos + compensação `deleteAllTablesForUser` no catch.
   **Recomendação: (a)** — (b) reintroduz a classe "meio instalado" que a tx de 3 passes existe para
-  evitar. **✅ RATIFICADO 2026-09-07 → (b) compensação — contra a recomendação; prevaleceu sobre F-I1-1 (a′).**
+  evitar. **✅ RATIFICADO 2026-09-07 → (b) compensação — na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); prevaleceu sobre F-I1-1 (a′).**
 - **F-I1b-1 · id da linha no backfill (novo):** (a) criar a linha em `units` com **id = o `unitId`
   legado** (exige que o repositório aceite id explícito — ver insumo 1); (b) criar com cuid novo e
   **re-chavear** todas as linhas contábeis (31 tabelas; toca `AuditChainHead`/hash da trilha — proibido
   pela classe `audit-log-no-fk-cascade`). **Recomendação: (a)**; se o repositório não aceitar id, o
-  insumo 1 vira decisão do dono antes de I6. **✅ RATIFICADO 2026-09-07 → (b) re-key como ADR de migração de dado, B-4 antes — contra a recomendação, reafirmado com o custo medido (31 tabelas, SQLite não transacional, trilha com unitId antigo).**
+  insumo 1 vira decisão do dono antes de I6. **✅ RATIFICADO 2026-09-07 → (b) re-key como ADR de migração de dado, B-4 antes — na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff); reafirmado com o custo medido (31 tabelas, SQLite não transacional, trilha com unitId antigo).**
 - **F-I1b-2 · `unitId` legado que já é cuid de linha existente** (`cmr2jyirc006oci1kscm61n6n`): (a) o
   CLI verifica se existe linha com esse id e pula; (b) trata como legado. **Recomendação: (a)** — é o
   caso idempotente por construção. **Absorvido pelo ADR do F-I1b-1 (2026-09-07).**
