@@ -138,10 +138,10 @@ o "depois" só o teste garante). Sem fork.
     via `createTableData` (dispara os plugins `LeadsSeedOnUnitPlugin`/`UnitAutoStockPlugin` pelo caminho
     normal). **Recomendação: (b)** — o motor de plugins só roda no caminho de escrita de linha; (a)
     exigiria disparar plugins de dentro da tx do schema, que é o anti-padrão do Contrato §2.1.
-    **RATIFICAÇÃO PENDENTE.**
+    **✅ RATIFICADO 2026-09-07 → (b) no controller, dois passos + compensação (F-I1-4 b) — contra a recomendação; o dono reafirmou após o conflito F-I1-1×F-I1-4 ser apontado.**
   - **F-I1-2 · unidade ausente no body:** (a) criar "Matriz" por padrão; (b) exigir `unit` (400).
     **Recomendação: (a)** — a regra `param-aceito-e-ignorado` não se aplica (é default, não ignorado) e
-    (b) quebraria o modo Rápido atual. **RATIFICAÇÃO PENDENTE.**
+    (b) quebraria o modo Rápido atual. **✅ RATIFICADO 2026-09-07 → (b) `unit` obrigatório, 400 — contra a recomendação; consequência: o campo de nome nos modos Rápido e Controle Total entra no MESMO incremento.**
   - **F-I1-3 · tenant já existente sem unidade** (o dev.db do dono tem 13 tabelas e usa `unit-incr6-val`
     como string solta): (a) ignorar — I1 é só onboarding novo; (b) job/CLI de backfill que cria a linha
     em `units` a partir dos `unitId` distintos já usados na contabilidade. **Recomendação: (a) agora**, e
@@ -428,7 +428,7 @@ PresetSuite & { aiDescription: string }   // KB derivado de tablePresetSuites
 
 F-I1-1, F-I1-2, F-I1-3 · F-I2-1 · F-I3-1 · F-I4-1, F-I4-2, F-I4-3 · F-I5-1, F-I5-2 · F-I6-1, F-I6-2 ·
 F-I7-1 · F-I8-1 · F-I11-1 · F-W1-1, F-W1-2 · F-W2-1 · F-W3-1, F-W3-2 · F-W4-1, F-W4-2 · F-W5-1 · F-W6-1.
-**24 forks listados; 3 ratificados pelo dono em 2026-09-07 (F-I3-1, F-I1-3, F-I8-1) + a ativação da LAC-B; 1 sub-fork novo (F-I8-2); 21 pendentes.** Os que mudam contrato público (F-I1-1/2, F-I3-1,
+**24 forks listados; 5 ratificados pelo dono em 2026-09-07 (F-I3-1, F-I1-3, F-I8-1, F-I1-1, F-I1-2) + a ativação da LAC-B; 1 sub-fork novo (F-I8-2); 19 pendentes. Os forks próprios do BRIEF do I1 (F-I1-4, F-I1b-1) estão ratificados lá.** Os que mudam contrato público (F-I1-1/2, F-I3-1,
 F-I4-2, F-I7-1, F-I8-1, F-W1-2) são D3+ e, pela regra da casa, vão ao dono por questionário com
 contexto — não por prosa.
 
