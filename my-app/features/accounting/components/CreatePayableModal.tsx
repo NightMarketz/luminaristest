@@ -5,7 +5,7 @@ import {
   accountsPayableService,
   type CreatePayablePayload,
 } from '../../../lib/services/accountsPayable.service';
-import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
+import { loadProductOptions, type ProductOption } from '../lib/loadProductOptions';
 import type { Account } from '../../../lib/services/accounting.service';
 import type { Counterparty } from '../../../lib/services/counterparties.service';
 import { parseBrl } from '../lib/parseBrl';
@@ -35,26 +35,6 @@ export interface CreatePayableModalProps {
  */
 type PayableMode = 'expense' | 'inventory';
 
-interface ProductOption {
-  id: string;
-  name: string;
-}
-
-/** Carrega o catálogo `products` (DynamicTable) do tenant para o dropdown do braço de inventário. */
-async function loadProductOptions(): Promise<ProductOption[]> {
-  const tables = await DynamicTableService.getTables();
-  const products = (tables.data ?? []).find(
-    (tbl) => (tbl as { internalName?: string }).internalName === 'products',
-  );
-  if (!products) return [];
-  const rows = await DynamicTableService.getTableData(products.id, 'limit=500');
-  return ((rows.data ?? []) as Array<{ id?: string; data?: Record<string, unknown> }>)
-    .map((r) => ({
-      id: String(r.id ?? ''),
-      name: typeof r.data?.name === 'string' && r.data.name ? r.data.name : String(r.id ?? ''),
-    }))
-    .filter((p) => p.id !== '');
-}
 
 
 export function CreatePayableModal({

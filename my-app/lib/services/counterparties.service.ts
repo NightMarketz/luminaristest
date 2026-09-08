@@ -32,6 +32,8 @@ export interface Counterparty {
   name: string;
   /** OPTIONAL scoped ref to a DynamicTable row (plain string, not a FK). */
   ref: string | null;
+  /** OPTIONAL CPF/CNPJ, normalized by the backend (mask stripped; alphanumeric CNPJ kept uppercase). */
+  taxId?: string | null;
   createdById: string | null;
   createdAt: string;
   updatedAt: string;
