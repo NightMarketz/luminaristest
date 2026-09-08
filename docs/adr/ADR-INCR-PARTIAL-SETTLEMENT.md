@@ -5,7 +5,13 @@
   opções + recomendação do par para o dono ratificar fork-a-fork (via `AskUserQuestion`). **Nunca
   Accepted por este documento.**
 - **Autores:** par `luminaris-orchestrator` + `luminaris-accounting-architect`. Parecer de domínio
-  separado (arquivo próprio do arquiteto contábil) complementa este ADR e não está fundido aqui.
+  separado (`docs/adr/PARECER-ARCHITECT-ADR-INCR-PARTIAL-SETTLEMENT.md`, commit `fcb6fb38`) complementa
+  este ADR e não está fundido aqui. **[emenda pós-parecer 2026-09-07]** Este ADR foi emendado em
+  resposta ao parecer — achados CRÍTICO (§3, gate de soma não expressável em Prisma puro como
+  originalmente redigido), ALTO (§F-PS4/§5/§7, segundo consumidor de tie-out não nomeado) e MÉDIO
+  (§F-PS2/§7, três sites do status novo, não um) foram incorporados como patches marcados
+  `[emenda pós-parecer 2026-09-07]` inline — nenhum fork foi ratificado por esta emenda, Status
+  permanece Proposed.
 - **Depende de:** nenhum nó de código aberto (grafo `F3`: `ready`, zero aresta de entrada). Consome
   evidência de `ADR-INCR-AP-accounts-payable.md`, `ADR-INCR-AR-accounts-receivable.md`,
   `ADR-INCR-AP-AR-AGING.md` e `ADR-INCR7-bank-reconciliation.md` (já `Accepted`/mergeados).
@@ -67,16 +73,43 @@ igualdade para `≤ saldo`, **mais** um campo `paidCents`/`receivedCents BigInt 
 `Payable`/`Receivable` que serve dois papéis:
 
 1. **Gate atômico de soma** — um único `UPDATE` condicional faz o papel que `claimForPayment` faz hoje
-   para o binário OPEN→PAYING, só que aritmético:
-   ```sql
-   UPDATE payables
-   SET paidCents = paidCents + :novo
-   WHERE id = :id AND status IN ('OPEN','PARTIALLY_PAID') AND paidCents + :novo <= amountCents
+   para o binário OPEN→PAYING, só que aritmético. **[emenda pós-parecer 2026-09-07 — CRÍTICO]** A
+   redação original deste ADR (`WHERE ... AND paidCents + :novo <= amountCents`) **não é expressável**
+   pela API fluente do Prisma Client neste projeto: o `generator client` do `schema.prisma` não declara
+   `previewFeatures` de comparação campo-a-campo (`fieldReference`), e os dois únicos gates atômicos
+   hoje existentes (`claimForPayment`/`markPaidIfPaying` em `PayableRepository.ts:104-133`, espelho em
+   `ReceivableRepository.ts:121-149`) filtram só por **igualdade de string num único campo** — nenhum
+   deles compara duas colunas nem soma um parâmetro a uma coluna dentro do `WHERE`. Um grep exaustivo
+   por `executeRaw|queryRaw` em `server/src/features/accounting/**` fora de `__tests__/` confirma
+   **zero** uso de SQL cru em caminho de escrita de domínio hoje — introduzir `$executeRaw` aqui seria
+   uma exceção sem precedente ao padrão "repositório só fala com `prisma.<model>.*`".
+
+   **Correção (parecer §1.1, grau inferido — não implementada nesta sessão):** `amountCents` é
+   **imutável após a criação** (verificado: nenhum caminho de `PayableService`/`ReceivableService`
+   chama `update*` com `amountCents` no `data`; a única forma de neutralizar um título é cancelar, que
+   nunca reescreve o total). Logo é seguro **ler `amountCents` FORA da tx** (não há TOCTOU sobre um
+   valor que não muda) e usar o valor já lido como **literal** no filtro — expressável em Prisma puro:
+   ```ts
+   // amountCentsLido lido ANTES desta chamada (imutável — sem TOCTOU sobre ele)
+   payableRepo.updateMany({
+     where: {
+       id,
+       ...accountingScopeWhere(scope),
+       status: { in: ['OPEN', 'PARTIALLY_PAID'] },
+       paidCents: { lte: amountCentsLido - novo },
+     },
+     data: { paidCents: { increment: novo } },
+   });
    ```
    `count === 1` vence a corrida; `count === 0` = perdeu a corrida OU o novo valor estouraria o saldo —
    os dois casos colapsam no mesmo `ValidationError`, exatamente como `claimForPayment` hoje colapsa
    "não está mais OPEN" num único throw. **Nenhuma leitura-depois-escreve fora de uma única instrução
-   atômica** — fecha o caso adversarial do gate 3 de OPS-001 (§7) sem exigir lock explícito.
+   atômica** — fecha o caso adversarial do gate 3 de OPS-001 (§7) sem exigir lock explícito nem SQL cru.
+   **Invariante a registrar (não apenas nomear):** o teste de concorrência obrigatório (§5) roda contra
+   SQLite real (harness de `PayableClaim.integration.test.ts`), mas **Windows serializa SQLite por
+   processo único e a CI Linux não** (memória `windows-serializa-sqlite-ci-linux-nao`) — um verde local
+   não é evidência de que a corrida multi-processo/worker está fechada; só a CI é o oráculo para este
+   invariante.
 2. **Leitura barata de saldo** — aging e qualquer relatório read outstanding sem precisar agregar N
    filhos por título a cada consulta.
 
@@ -96,11 +129,14 @@ uma linha. **Ratificação pendente — ver F-PS1.**
 
 ### F-PS1 — Modelo de dado: entidade vs campo vs ambos
 - **(a) Só entidade** — generalizar `PayablePayment`/`ReceivableReceipt` (relaxar guard), saldo sempre
-  agregado por `SUM()` no momento da leitura/gate. Zero coluna nova no pai. **Custo de errar:** todo
-  gate de soma vira leitura-agregada + escrita dentro de `runTransaction` (mais lento que um `UPDATE`
-  condicional; SQLite serializa escritores mas a leitura de agregação ainda precisa estar na MESMA tx
-  que o insert do novo recibo para fechar o TOCTOU — mais fácil esquecer um `tx` propagado, a classe
-  `tx-nao-propagado-ao-repo`).
+  agregado por `SUM()` no momento da leitura/gate. Zero coluna nova no pai. **Custo de errar
+  [emenda pós-parecer 2026-09-07]:** o texto original subestimava o custo citando só "mais fácil
+  esquecer um `tx` propagado" — o custo maior é **performance de leitura**: todo `loadOutstanding`/
+  tie-out (nos DOIS consumidores, §F-PS4) passaria a exigir um `SUM()` agregado por título a cada
+  chamada de relatório, em vez do `findMany` simples de hoje — em N títulos com M recibos cada isso é
+  uma agregação por linha, não um campo já pronto para leitura. O gate de soma também vira
+  leitura-agregada + escrita dentro de `runTransaction` (mais lento que um `UPDATE` condicional de uma
+  linha), com a mesma superfície de esquecer um `tx` propagado (classe `tx-nao-propagado-ao-repo`).
 - **(b) Só campo** — `paidCents` no pai, sem child rows (substituir os existentes). **Custo de errar:**
   perde o histórico por liquidação que o AP/AR **já tem hoje** (regressão, não lacuna nova); estorno
   seletivo de um recibo entre N fica sem onde gravar método/data/quem; reconciliação bancária perde o
@@ -114,14 +150,29 @@ uma linha. **Ratificação pendente — ver F-PS1.**
 ### F-PS2 — Status intermediário
 - ✅ **(a) Um novo status `PARTIALLY_PAID`/`PARTIALLY_RECEIVED`** entre `OPEN` e `PAID`/`RECEIVED`
   (recomendado). Como a coluna já é `String` (não enum do banco), isto é **zero-migração de schema**
-  — só estender `PAYABLE_STATUSES`/`RECEIVABLE_STATUSES` e os `.enum()` do DTO. `PAYING`/`RECEIVING`
-  (transiente) precisa de decisão companion: continua existindo como estado transitório da CHAMADA em
-  curso (mantém a semântica atual, mas agora "voltar" pode ser para `OPEN` OU `PARTIALLY_PAID`
-  dependendo do saldo antes da tentativa), ou é **eliminado** porque o `UPDATE` condicional de soma
-  (§3) já é atômico sem precisar de um estado transiente visível — a corrida se resolve no `count` do
-  `UPDATE`, não numa janela de status observável. **Custo de errar:** manter `PAYING`/`RECEIVING` sem
-  necessidade real é estado morto que a próxima pessoa vai tentar entender; eliminá-lo sem substituto
-  quebra o teste golden-ref (`PayableClaim.integration.test.ts`) que hoje afirma a transição por nome.
+  — só estender `PAYABLE_STATUSES`/`RECEIVABLE_STATUSES` e os `.enum()` do DTO. **[emenda pós-parecer
+  2026-09-07]** Introduzir o status novo exige tocar em TRÊS sites em lockstep, não um só — o parecer
+  (§1.3) achou dois que a redação original não nomeava:
+  1. o `WHERE` da CAS nova (§3, já nomeado neste ADR);
+  2. o **guard defensivo pré-CAS** em `registerPayment`/`registerReceipt` (`PayableService.ts:411` —
+     `if (payable.status !== 'OPEN') throw`; espelho `ReceivableService.ts:203`) — este roda ANTES do
+     `claimForPayment`/CAS nova e hoje rejeitaria `PARTIALLY_PAID` mesmo que o gate de soma aceitasse;
+     sem editar os dois em conjunto, um título parcialmente pago nunca chegaria ao `UPDATE` novo;
+  3. a mensagem/branch de `cancelPayable`/`cancelPayment` (`PayableService.ts:505-510`, espelho
+     `ReceivableService.ts`) — hoje só distingue `PAID` vs "outro status" na mensagem de erro; precisa
+     de um terceiro ramo para `PARTIALLY_PAID` ("desfaça as baixas ativas antes de cancelar"), coerente
+     com a defesa `findActivePayment` já existente (`:513-516`).
+
+  `PAYING`/`RECEIVING` (transiente) precisa de decisão companion: continua existindo como estado
+  transitório da CHAMADA em curso (mantém a semântica atual, mas agora "voltar" pode ser para `OPEN` OU
+  `PARTIALLY_PAID` dependendo do saldo antes da tentativa), ou é **eliminado** porque o `UPDATE`
+  condicional de soma (§3) já é atômico sem precisar de um estado transiente visível — a corrida se
+  resolve no `count` do `UPDATE`, não numa janela de status observável. **Recomendação de ordem
+  [emenda pós-parecer]:** manter `PAYING`/`RECEIVING` como estado transitório na primeira versão —
+  preserva o golden ref (`PayableClaim.integration.test.ts`) sem reescrevê-lo; decidir a eliminação é
+  do BRIEF, não deste ADR. **Custo de errar:** manter `PAYING`/`RECEIVING` sem necessidade real é
+  estado morto que a próxima pessoa vai tentar entender; eliminá-lo sem substituto quebra o teste
+  golden-ref citado.
 - (b) Sem status novo — inferir "parcial" só por `paidCents < amountCents && paidCents > 0`. Mais
   simples, mas todo filtro que hoje usa `status IN (...)` (aging outstanding, reconcile, relatórios)
   precisaria trocar para uma expressão sobre dois campos — mais pontos de re-implementar a mesma regra.
@@ -151,6 +202,20 @@ uma linha. **Ratificação pendente — ver F-PS1.**
   subledger passa a somar saldos em vez de totais cheios, o que é o que TORNA o tie-out correto sob
   parcial (hoje ele já quebraria silenciosamente se alguém forçasse um título "parcial" por fora).
   **Custo de errar:** esquecer este ponto é a lacuna mais perigosa do incremento inteiro — ver §7 risco 1.
+
+  **[emenda pós-parecer 2026-09-07 — ALTO, achado do parecer §1.2] SÃO DOIS TIE-OUTS, NÃO UM.** Um
+  segundo consumidor lê `amountCents` cru do MESMO `findOutstanding()` e não estava nomeado na
+  redação original deste fork nem em §1/§5/§7:  `TieOutDiagnosticService.tieOut()` —
+  `arOpenCents = openReceivables.reduce((acc, r) => acc + centsFromDb(r.amountCents), 0)`
+  (`TieOutDiagnosticService.ts:169`) e o espelho `apOpenCents` (`:182`), comparados contra as MESMAS
+  contas-controle `1.1.5`/`2.1.2`. **Modo de falha concreto:** na primeira baixa parcial, o razão
+  reflete corretamente o saldo remanescente (cada recibo é uma entry real), mas
+  `TieOutDiagnosticService.tieOut()` continuaria somando o `amountCents` INTEIRO de toda linha
+  `PARTIALLY_PAID`/`PARTIALLY_RECEIVED` (que `PAYABLE_OUTSTANDING_STATUSES`/
+  `RECEIVABLE_OUTSTANDING_STATUSES` passam a incluir por este mesmo fork) — o diagnóstico acusaria
+  divergência a mais, exatamente pelo valor já pago, onde não há erro nenhum. **A correção
+  `amountCents - paidCents` precisa ser aplicada nos DOIS serviços**, não só no `AgingReportService` —
+  ambos entram em §5 (invariante) e §7 (gate) como dois sites distintos.
 - (b) Manter aging por título cheio, ignorar saldo — descartado: o tie-out (`Σ aging == saldo da conta
   de controle`) quebraria pela primeira baixa parcial (o razão reflete o saldo real; o aging mentiria o
   valor cheio). Não é uma opção defensável, listada só para nomear o custo de não fazer (a).
@@ -190,8 +255,13 @@ uma linha. **Ratificação pendente — ver F-PS1.**
 
 ## 5. Invariantes que a implementação DEVE provar (ACC + específicos deste incremento)
 
-- **[ACC-011/012]** Gate de soma re-checado **dentro** da mesma instrução atômica (`UPDATE ... WHERE
-  paidCents + novo <= amountCents`), nunca preflight-depois-escreve separado.
+- **[ACC-011/012]** Gate de soma re-checado **dentro** da mesma instrução atômica. **[emenda
+  pós-parecer 2026-09-07]** A instrução exata é `UPDATE ... WHERE status IN (...) AND paidCents <=
+  (amountCentsLido - novo)`, com `amountCentsLido` lido FORA da tx antes da chamada (seguro porque
+  `amountCents` é imutável — §3) — **nunca** a forma `paidCents + novo <= amountCents` do rascunho
+  original, que não é expressável como filtro Prisma sem `previewFeatures` de comparação
+  campo-a-campo (ausentes do `schema.prisma` deste projeto). Preflight-depois-escreve separado
+  continua proibido nas duas formas.
 - **[ACC-013]** Idempotência do recibo por `sourceId = <id do recibo>` (nunca `<id do título>`) —
   mantém o D3 já ratificado do AP/AR; um recibo estornado e re-lançado é um `id` novo, chave nova.
 - **[ACC-014]** `Σ recibos ativos ≤ amountCents` é igualdade/desigualdade **inteira exata** (BigInt/
@@ -203,12 +273,22 @@ uma linha. **Ratificação pendente — ver F-PS1.**
   original; decrementa `paidCents` na MESMA tx do `reverseEntry` + recomputo de status.
 - **[novo, F-PS4]** `Σ aging outstanding de um título === amountCents − paidCents` (ou `receivedCents`)
   em qualquer momento — invariante de leitura que substitui o binário atual "outstanding é 0 ou o
-  total".
+  total". **[emenda pós-parecer 2026-09-07]** Este invariante vale em DOIS serviços, não um:
+  `AgingReportService.loadOutstanding` **e** `TieOutDiagnosticService.tieOut()` (`arOpenCents`/
+  `apOpenCents`, linhas 169/182) — os dois somam `amountCents` cru do MESMO `findOutstanding()` hoje.
+  Corrigir só o primeiro deixa o segundo divergir silenciosamente (achado do parecer §1.2).
 - **[novo, F-PS1(c)]** `paidCents === SUM(PayablePayment.amountCents WHERE status='ACTIVE')` — invariante
   de consistência campo↔filhos; teste de guarda dedicado (o campo nunca diverge da soma das linhas).
 - **Teste de domínio obrigatório (é o caso adversarial deste ADR, §7):** 2 recibos concorrentes cuja
   soma excede `amountCents` → exatamente 1 aceito, o outro recebe `ValidationError` de saldo
-  insuficiente — harness real-SQLite, golden ref `PayableClaim.integration.test.ts`.
+  insuficiente — harness real-SQLite (forma corrigida do `UPDATE`, não a original), golden ref
+  `PayableClaim.integration.test.ts`. **[emenda pós-parecer]** Windows serializa SQLite por processo
+  único; a CI Linux é o oráculo real deste teste (memória `windows-serializa-sqlite-ci-linux-nao`) —
+  verde local não fecha o invariante sozinho.
+- **[novo, achado §1.2 do parecer]** Teste de tie-out com fixture que mistura título
+  `PARTIALLY_PAID`/`OPEN`/`PAID` no mesmo scope, rodado contra **ambos** `AgingReportService` e
+  `TieOutDiagnosticService` — uma fixture de status único deixaria a guarda recíproca quebrada passar
+  (mesma classe de `bp-dre-diagnostics-test-must-mix-natures`).
 
 ## 6. Migração (SQLite — não transacional, prólogo obrigatório)
 
@@ -231,16 +311,45 @@ Escopo provável: **1 migração aditiva**, não uma reconstrução de tabela �
 
 - `LEDGER_STATUSES` (`models/ledgerStatus.ts`) não muda — os novos status são de `Payable`/`Receivable`,
   não de `JournalEntry`.
+- **[emenda pós-parecer 2026-09-07 — ALTO]** `AgingReportService.loadOutstanding` **e**
+  `TieOutDiagnosticService.tieOut()` (`arOpenCents`/`apOpenCents`, achado §1.2 do parecer) — os DOIS
+  precisam trocar `amountCents` cru por `amountCents - paidCents`/`- receivedCents`. Tratar como um
+  gate único ("corrigi o aging") sem tocar o segundo arquivo é o modo de falha silenciosa nomeado no
+  parecer: o diagnóstico de amarração acusaria divergência onde não há nenhuma.
+- **[emenda pós-parecer 2026-09-07 — MÉDIO]** Três sites em lockstep para o status novo (F-PS2,
+  detalhe no fork): o `WHERE` da CAS (§3), o guard pré-CAS em `registerPayment`/`registerReceipt`
+  (`PayableService.ts:411`/`ReceivableService.ts:203`), e a branch de mensagem em
+  `cancelPayable`/`cancelPayment` (`PayableService.ts:505-510`).
 - `audit/auditCanonical.ts`: allowlist ganha eventos (nomes exatos = decisão do BRIEF pós-ADR, prováveis
   `payable.settlement_registered`/`payable.settlement_cancelled` renomeando ou complementando
   `payment_registered`/`payment_cancelled` — decisão de nomenclatura, não deste ADR) com payload
   incluindo `paidCentsAfter`/`remainingCents` (id-only, money-as-string, sem PII — mesmo padrão do D6
   do AR).
 - Snapshot de shape do DTO (`PayableDto.test.ts`/`ReceivableDto.test.ts`) — `RegisterPaymentInput`/
-  `RegisterReceiptInput` mudam de "deve igualar o saldo" para "deve ser ≤ saldo, > 0".
+  `RegisterReceiptInput` mudam de "deve igualar o saldo" para "deve ser ≤ saldo, > 0". A mudança é
+  lógica fina (`.refine`/`.superRefine`), invisível a um snapshot de shape puro
+  (`dto-shape-snapshot-nao-cobre-logica-fina`) — precisa de teste de comportamento, não só de shape.
 - `openapi-paths.test.ts` — bump do `BASELINE` se as rotas `{id}/pay` viram `{id}/settlements` (ou
   ganham uma rota irmã) — decisão de nomenclatura de rota é do BRIEF, não deste ADR.
+- **Smoke-migration-gate sobre `server/prisma/prisma/dev.db` real** — confirmar volume não-vazio em
+  `payables`/`receivables` antes de aceitar como prova (memória `smoke-gate-s6-x-migracao-de-dado`);
+  este ADR não confirmou o volume atual (worktree novo, arquivo ausente — grau assumido, ver parecer §4).
 - `tsc` limpo ×2 é gate, como sempre.
+
+## Achados fora de escopo (emenda pós-parecer 2026-09-07)
+
+**[BAIXO/pré-existente, não agravado por este incremento] Baixa parcial × dimensão obrigatória — a
+settlement leg já não suporta dimensão hoje, com ou sem parcial.** Achado do parecer §1.4, verificado
+por leitura: `RegisterPaymentInput`/`RegisterReceiptInput` (`PayableDto.ts`/`ReceivableDto.ts`) não
+têm campo `dimensions` em nenhum shape; `PostEntryInput.lines[].dimensions` existe como capacidade do
+núcleo (`PostingDto.ts:24-26,64-67`), mas `PayableService.buildSettlementInput`/
+`buildSettlementInputFromRow` (`PayableService.ts:946-986`) nunca populam esse array. **Consequência:**
+se a conta de controle ou a conta de método de pagamento estiverem marcadas `requiresDimension: true`
+(`ADR-INCR-DIM-COMPLETENESS`, B1, posting-time em `postEntry`), a liquidação **já falha hoje**, em
+pagamento integral — antes deste ADR existir. A baixa parcial **não piora nem resolve** essa lacuna: N
+recibos herdam a mesma limitação que 1 recibo já tinha. **Não é um invariante deste incremento** e não
+vira fork aqui; se o dono quiser dimensão na liquidação, é um incremento à parte (`dimensions?: string[]`
+no DTO + repasse ao `postEntry`), fora do escopo autorizado por este ADR.
 
 ## 8. O que este ADR NÃO é
 
