@@ -1,9 +1,18 @@
 # ADR-INCR-PARTIAL-SETTLEMENT — Baixa parcial em Contas a Pagar / Contas a Receber
 
 - **Data:** 2026-09-07
-- **Status:** **Proposed — forks RATIFICAÇÃO PENDENTE.** Este ADR não decide fork nenhum; apresenta
-  opções + recomendação do par para o dono ratificar fork-a-fork (via `AskUserQuestion`). **Nunca
-  Accepted por este documento.**
+- **Status:** **Accepted — F-PS1..F-PS7 ratificados POR DELEGAÇÃO 2026-09-07** (cédula
+  `docs/accounting/CEDULA-DECISAO-2026-09-07-forks-sdd.md`, sinal literal do dono: *"Ratifico as
+  recomendações de todos os forks, segue"* — dispensou a revisão fork-a-fork via `AskUserQuestion`
+  ⇒ os defaults recomendados do par foram adotados: **F-PS1→(c)** entidade+campo, **F-PS2→(a)**
+  status `PARTIALLY_PAID`/`PARTIALLY_RECEIVED`, **F-PS3→(a)** estorno em qualquer ordem,
+  **F-PS4→(a)** aging/tie-out por saldo remanescente (nos DOIS consumidores, achado do parecer
+  §1.2), **F-PS5→(a)** backfill = recibo sintético (via `UPDATE` sobre dado já existente),
+  **F-PS6→(b)** FE em incremento separado, **F-PS7→(a)** conciliação bancária sem mudança.
+  **Registro honesto: não houve escolha explícita fork-a-fork; a delegação é o sinal** (mesmo
+  padrão de `ADR-INCR-AP-AR-AGING.md`, "ratificados POR DELEGAÇÃO 2026-07-15"). O texto original
+  abaixo (opções + recomendação, nunca reescrito) permanece como registro do raciocínio que a
+  delegação adotou.
 - **Autores:** par `luminaris-orchestrator` + `luminaris-accounting-architect`. Parecer de domínio
   separado (`docs/adr/PARECER-ARCHITECT-ADR-INCR-PARTIAL-SETTLEMENT.md`, commit `fcb6fb38`) complementa
   este ADR e não está fundido aqui. **[emenda pós-parecer 2026-09-07]** Este ADR foi emendado em
