@@ -14,6 +14,7 @@
  * `RECEIVABLE_OUTSTANDING_STATUSES` (`['OPEN','PAYING']` / `['OPEN','RECEIVING']`) — títulos em
  * trânsito (CAS 2-tx) já vêm incluídos, sem filtro adicional aqui (F-AG3→a / F-CF4→a).
  */
+import type { Prisma } from 'generated/prisma';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -30,12 +31,25 @@ export interface OutstandingLine {
   counterpartyName: string;
 }
 
-/** Carrega e normaliza as Payable em aberto do escopo para a forma comum. */
+/**
+ * Carrega e normaliza as Payable em aberto do escopo para a forma comum.
+ * `tx` é repassado ao repositório tal qual o próprio `findOutstanding(scope, tx?)` aceita (mesma
+ * assinatura do repositório, MIRROR — nunca reimplementada aqui) — necessário para os testes de
+ * integração injetarem um client Prisma dedicado (ex.: `outstandingLines.integration.test.ts`,
+ * `AgingOutstanding.integration.test.ts`); em produção nenhum chamador passa `tx` hoje (nem
+ * `AgingReportService` nem `CashForecastReportService` correm dentro de transação).
+ *
+ * A chamada só inclui o segundo argumento quando `tx` é REALMENTE fornecido — nunca
+ * `findOutstanding(scope, undefined)` — para não mudar a aridade da chamada que os testes
+ * mockados existentes (`AgingReportService.test.ts`/`CashForecastReportService.test.ts`) já
+ * afirmam com `toHaveBeenCalledWith(scope)` (1 argumento).
+ */
 export async function loadOutstandingPayables(
   scope: AccountingScope,
   payableRepo: IPayableRepository,
+  tx?: Prisma.TransactionClient,
 ): Promise<OutstandingLine[]> {
-  const rows = await payableRepo.findOutstanding(scope);
+  const rows = await (tx ? payableRepo.findOutstanding(scope, tx) : payableRepo.findOutstanding(scope));
   return rows.map((r) => ({
     id: r.id,
     documentNumber: r.documentNumber,
@@ -46,12 +60,13 @@ export async function loadOutstandingPayables(
   }));
 }
 
-/** Carrega e normaliza as Receivable em aberto do escopo para a forma comum. */
+/** Carrega e normaliza as Receivable em aberto do escopo para a forma comum. `tx` — ver `loadOutstandingPayables`. */
 export async function loadOutstandingReceivables(
   scope: AccountingScope,
   receivableRepo: IReceivableRepository,
+  tx?: Prisma.TransactionClient,
 ): Promise<OutstandingLine[]> {
-  const rows = await receivableRepo.findOutstanding(scope);
+  const rows = await (tx ? receivableRepo.findOutstanding(scope, tx) : receivableRepo.findOutstanding(scope));
   return rows.map((r) => ({
     id: r.id,
     documentNumber: r.documentNumber,

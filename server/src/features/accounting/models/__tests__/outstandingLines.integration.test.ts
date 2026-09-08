@@ -101,7 +101,10 @@ describe('outstandingLines (loadOutstandingPayables/Receivables) — real SQLite
 
   it('loadOutstandingPayables: lê SÓ OPEN (exclui PAID); amountCents e dueDate íntegros no boundary BigInt->number', async () => {
     const repo = new PayableRepository();
-    const lines = await loadOutstandingPayables(scope, repo);
+    // Injeta o client de teste dedicado (o repo, sem `tx`, cairia no `prisma` compartilhado —
+    // que aponta para `test-integration.db`, não para este arquivo temporário — ver
+    // AgingOutstanding.integration.test.ts:106, mesmo padrão).
+    const lines = await loadOutstandingPayables(scope, repo, db as any);
     expect(lines.map((l) => l.id)).toEqual(['p-open']);
     expect(lines[0].amountCents).toBe(300_000_000);
     expect(Number.isSafeInteger(lines[0].amountCents)).toBe(true);
@@ -111,9 +114,9 @@ describe('outstandingLines (loadOutstandingPayables/Receivables) — real SQLite
 
   it('loadOutstandingReceivables: inclui RECEIVING (em trânsito, F-CF4→a herdado); customerName como snapshot', async () => {
     const repo = new ReceivableRepository();
-    const lines = await loadOutstandingReceivables(scope, repo);
+    const lines = await loadOutstandingReceivables(scope, repo, db as any);
     expect(lines.map((l) => l.id)).toEqual(['r-receiving']);
     expect(lines[0].amountCents).toBe(250_000_000);
     expect(lines[0].counterpartyName).toBe('Cliente Grande');
   });
-}, 30000);
+});

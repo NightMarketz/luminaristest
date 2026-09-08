@@ -338,6 +338,21 @@
           }
         }
       },
+      "CashForecastQueryInput": {
+        "type": "object",
+        "required": [
+          "unitId"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "asOf": {
+            "type": "string",
+            "description": "Date-only YYYY-MM-DD — data-base da projeção (default hoje). Horizonte fixo de 90 dias a partir de asOf (F-CF1)."
+          }
+        }
+      },
       "CloseExerciseInput": {
         "type": "object",
         "required": [
@@ -3067,6 +3082,39 @@
         "responses": {
           "200": {
             "description": "Aging report (grupos por contraparte com totais por faixa) + bloco tieOut — a prova subledger↔razão: total do aging vs saldo da conta de controle (2.1.2 p/ payable, 1.1.5 p/ receivable) normalizado pela natureza. tieOut é null quando não é emitível (asOf ≠ hoje, ou conta de controle ausente); nesse caso tieOutSkippedReason diz por quê."
+          },
+          "400": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/accounting/reports/cash-forecast": {
+      "get": {
+        "summary": "Fluxo de caixa PROJETADO (read-only) sobre os vencimentos de AP/AR em aberto",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "YYYY-MM-DD — data-base da projeção (default hoje). Horizonte fixo de 90 dias."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projeção diária de caixa (openingBalanceCents derivado do razão + uma linha por dia, cada uma com inflow/outflow/net/saldo acumulado e o drill de documentos AP/AR que a compõem). NÃO cobre títulos já vencidos (dueDate < asOf) — ver Aging para posição de atraso."
           },
           "400": {
             "description": "Validation error"
