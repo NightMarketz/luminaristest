@@ -18,6 +18,7 @@
     "docs:generate": "node ./scripts/generate-openapi.js",
     "logs:errors": "node ./scripts/read-error-log.mjs",
     "accounting:reconcile": "node dist/jobs/accountingSyncReconcileCli.js",
+    "prove:p2-zero-diff": "ts-node -r tsconfig-paths/register src/jobs/proveP2ZeroDiffCli.ts",
     "smoke:migration": "node ../scripts/smoke-migration-gate.mjs",
     "db:backup": "node ./scripts/db-backup.mjs",
     "deploy:migrate": "node ../scripts/migrate-deploy.mjs",
