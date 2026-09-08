@@ -579,7 +579,9 @@
     "error": {
       "load": "Erro ao carregar lançamentos.",
       "reverse": "Erro ao estornar lançamento.",
-      "receipt": "Erro ao baixar recibo."
+      "receipt": "Erro ao baixar recibo.",
+      "verifyChain": "Erro ao verificar a cadeia de auditoria.",
+      "sourceDocuments": "Erro ao carregar documentos de origem."
     },
     "loading": "Carregando lançamentos…",
     "empty": "Nenhum lançamento postado nesta unidade ainda.",
@@ -603,6 +605,38 @@
       "warning": "Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.",
       "periodClosed": "O período para a data selecionada está fechado.",
       "viewPeriods": "Ver Períodos"
+    },
+    "verifyChain": {
+      "button": "Verificar cadeia de auditoria",
+      "loading": "Verificando…",
+      "title": "Verificação da cadeia de auditoria",
+      "ok": "Cadeia íntegra",
+      "empty": "Nenhum evento de auditoria neste escopo ainda.",
+      "compromised": "Cadeia comprometida",
+      "compromisedDescription": "Evidência de adulteração detectada nesta trilha de auditoria. Este diagnóstico não corrige a cadeia — a origem precisa ser investigada manualmente.",
+      "checkedEvents": "Eventos verificados",
+      "range": "Sequência verificada",
+      "headHash": "Hash da cabeça",
+      "failureSeq": "Sequência com falha",
+      "reason": {
+        "MISSING_GENESIS": "Evento inicial (gênese) ausente ou fora de posição.",
+        "SEQ_GAP": "Lacuna detectada na sequência de eventos.",
+        "PREV_HASH_MISMATCH": "O hash do evento anterior não confere — elo da cadeia rompido.",
+        "HASH_MISMATCH": "O hash recalculado do evento não confere com o hash registrado.",
+        "HEAD_MISMATCH": "O ponteiro de cabeça da cadeia não confere com o último evento."
+      }
+    },
+    "sourceDocuments": {
+      "button": "Proveniência",
+      "title": "Documentos de origem",
+      "loading": "Carregando documentos de origem…",
+      "empty": "Nenhum documento de origem registrado para este lançamento.",
+      "sourceType": "Tipo de origem",
+      "externalRef": "Referência",
+      "documentDate": "Data do documento",
+      "description": "Descrição",
+      "recordedAt": "Registrado em",
+      "attachment": "Anexo"
     }
   },
   "journalEntryModal": {

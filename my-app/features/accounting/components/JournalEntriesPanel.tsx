@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiFileText, FiRotateCcw } from 'react-icons/fi';
+import { FiChevronDown, FiChevronRight, FiFileText, FiRotateCcw, FiShield, FiLink } from 'react-icons/fi';
 import {
   accountingService,
   type JournalEntryWithFullPostings,
+  type VerifyAuditChainResult,
+  type VerifyFailureReason,
+  type JournalEntrySourceLink,
 } from '../../../lib/services/accounting.service';
 import { Modal } from '../../../components/ui/Modal';
 import { formatCents } from '../lib/formatCents';
@@ -71,6 +74,22 @@ function StatusBadge({ entry }: StatusBadgeProps) {
   );
 }
 
+/** Closed-enum fallback copy for `VerifyFailureReason` — mirrors the pt strings in
+ *  `accounting.json` so a missing i18n bundle still reads sensibly. Never the raw enum string
+ *  (checklist behavior 7 — "nunca a string crua do enum"). */
+const VERIFY_REASON_FALLBACK: Record<VerifyFailureReason, string> = {
+  MISSING_GENESIS: 'Evento inicial (gênese) ausente ou fora de posição.',
+  SEQ_GAP: 'Lacuna detectada na sequência de eventos.',
+  PREV_HASH_MISMATCH: 'O hash do evento anterior não confere — elo da cadeia rompido.',
+  HASH_MISMATCH: 'O hash recalculado do evento não confere com o hash registrado.',
+  HEAD_MISMATCH: 'O ponteiro de cabeça da cadeia não confere com o último evento.',
+};
+
+/** Truncate a long id for display-only purposes (F-FEAP-6a: informative text, no download). */
+function truncateId(id: string): string {
+  return id.length > 12 ? `${id.slice(0, 12)}…` : id;
+}
+
 // ── PostingsDrawer ────────────────────────────────────────────────────────────
 
 interface PostingsDrawerProps {
@@ -119,11 +138,21 @@ interface JournalEntryRowProps {
   entry: JournalEntryWithFullPostings;
   onReverseClick: (id: string) => void;
   onReceiptClick: (id: string) => void;
+  onProvenanceClick: (id: string) => void;
   /** id of the entry whose receipt is currently downloading, or null. */
   receiptBusyId: string | null;
+  /** id of the entry whose source documents are currently loading, or null. */
+  provenanceBusyId: string | null;
 }
 
-function JournalEntryRow({ entry, onReverseClick, onReceiptClick, receiptBusyId }: JournalEntryRowProps) {
+function JournalEntryRow({
+  entry,
+  onReverseClick,
+  onReceiptClick,
+  onProvenanceClick,
+  receiptBusyId,
+  provenanceBusyId,
+}: JournalEntryRowProps) {
   const { t } = useTranslation('accounting');
   const [expanded, setExpanded] = useState(false);
 
@@ -131,6 +160,7 @@ function JournalEntryRow({ entry, onReverseClick, onReceiptClick, receiptBusyId 
   const totalCreditCents = entry.postings.reduce((s, p) => s + p.creditCents, 0);
   const canReverse = !entry.reversedById && entry.status !== 'Reversed';
   const isDownloadingReceipt = receiptBusyId === entry.id;
+  const isLoadingProvenance = provenanceBusyId === entry.id;
 
   return (
     <>
@@ -191,6 +221,19 @@ function JournalEntryRow({ entry, onReverseClick, onReceiptClick, receiptBusyId 
               <FiRotateCcw size={12} />
               {t('journalEntries.reverseAction.label', 'Estornar')}
             </button>
+            <button
+              disabled={isLoadingProvenance}
+              onClick={() => onProvenanceClick(entry.id)}
+              title={t('journalEntries.sourceDocuments.title', 'Documentos de origem')}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-blue-700 hover:bg-blue-900/30 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
+            >
+              {isLoadingProvenance ? (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-neutral-500/40 border-t-neutral-300" />
+              ) : (
+                <FiLink size={12} />
+              )}
+              {t('journalEntries.sourceDocuments.button', 'Proveniência')}
+            </button>
           </div>
         </td>
       </tr>
@@ -226,6 +269,12 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [reversalDate, setReversalDate] = useState(scopeToday);
   const [isReversing, setIsReversing] = useState(false);
   const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
+  // ── audit chain verification (FE-INCR-AUDIT-PROVENANCE, F-FEAP-1a) ─────────
+  const [isVerifyingChain, setIsVerifyingChain] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<VerifyAuditChainResult | null>(null);
+  // ── source-document provenance, per row (F-FEAP-2a) ────────────────────────
+  const [provenanceBusyId, setProvenanceBusyId] = useState<string | null>(null);
+  const [provenanceDocs, setProvenanceDocs] = useState<JournalEntrySourceLink[] | null>(null);
 
   // ── fetch ──────────────────────────────────────────────────────────────────
   const fetchEntries = useCallback(async () => {
@@ -290,9 +339,61 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
     }
   };
 
+  // ── verify audit chain (F-FEAP-1a) ────────────────────────────────────────
+  // On-demand only — `verifyAuditChain` scans the WHOLE scope trail (O(n)),
+  // never called automatically on mount/tab-switch (checklist behavior 4).
+  const handleVerifyChain = async () => {
+    setIsVerifyingChain(true);
+    setError(null);
+    try {
+      const result = await accountingService.verifyAuditChain(unitId);
+      setVerifyResult(result);
+    } catch (err: unknown) {
+      // Error banner only — the result modal never opens on failure (behavior 8).
+      setError(resolveError(err, t('journalEntries.error.verifyChain', 'Erro ao verificar a cadeia de auditoria.')));
+    } finally {
+      setIsVerifyingChain(false);
+    }
+  };
+
+  // ── source-document provenance, per row (F-FEAP-2a) ───────────────────────
+  const handleShowProvenance = async (entryId: string) => {
+    setProvenanceBusyId(entryId);
+    setError(null);
+    try {
+      const docs = await accountingService.listSourceDocuments(unitId, entryId);
+      setProvenanceDocs(docs);
+    } catch (err: unknown) {
+      // Error banner only — the modal never opens on failure (behavior 14, same as B.8).
+      setError(resolveError(err, t('journalEntries.error.sourceDocuments', 'Erro ao carregar documentos de origem.')));
+    } finally {
+      setProvenanceBusyId(null);
+    }
+  };
+
   // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      {/* Verify audit chain — header, above the entries table (F-FEAP-1a) */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          disabled={isVerifyingChain}
+          onClick={() => void handleVerifyChain()}
+          title={t('journalEntries.verifyChain.title', 'Verificação da cadeia de auditoria')}
+          className="inline-flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-800 px-4 py-2 text-sm font-medium text-neutral-300 transition-colors hover:border-blue-700 hover:bg-blue-900/30 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isVerifyingChain ? (
+            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-500/40 border-t-neutral-300" />
+          ) : (
+            <FiShield size={14} />
+          )}
+          {isVerifyingChain
+            ? t('journalEntries.verifyChain.loading', 'Verificando…')
+            : t('journalEntries.verifyChain.button', 'Verificar cadeia de auditoria')}
+        </button>
+      </div>
+
       {/* Error banner */}
       {error && (
         <div className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
@@ -335,7 +436,9 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
                   entry={entry}
                   onReverseClick={(id) => setConfirmReverseId(id)}
                   onReceiptClick={(id) => void handleDownloadReceipt(id)}
+                  onProvenanceClick={(id) => void handleShowProvenance(id)}
                   receiptBusyId={receiptBusyId}
+                  provenanceBusyId={provenanceBusyId}
                 />
               ))}
             </tbody>
@@ -422,6 +525,154 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* Verify-chain result modal (F-FEAP-1a) — opens only on success (behavior 8). */}
+      <Modal
+        isOpen={!!verifyResult}
+        onClose={() => setVerifyResult(null)}
+        title={t('journalEntries.verifyChain.title', 'Verificação da cadeia de auditoria')}
+        themeColor={verifyResult && !verifyResult.ok ? 'bg-red-600' : 'bg-emerald-600'}
+        maxWidth="max-w-lg"
+      >
+        {verifyResult && (
+          <div className="space-y-4 px-6 py-5 text-sm text-neutral-300">
+            {verifyResult.ok && verifyResult.checkedEvents === 0 && (
+              <p className="text-neutral-400">
+                {t('journalEntries.verifyChain.empty', 'Nenhum evento de auditoria neste escopo ainda.')}
+              </p>
+            )}
+            {verifyResult.ok && verifyResult.checkedEvents > 0 && (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1 text-xs font-medium text-emerald-400">
+                  {t('journalEntries.verifyChain.ok', 'Cadeia íntegra')}
+                </span>
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
+                  <dt className="text-neutral-400">
+                    {t('journalEntries.verifyChain.checkedEvents', 'Eventos verificados')}
+                  </dt>
+                  <dd className="text-neutral-100">{verifyResult.checkedEvents}</dd>
+                  {(verifyResult.firstSeq !== null || verifyResult.lastSeq !== null) && (
+                    <>
+                      <dt className="text-neutral-400">
+                        {t('journalEntries.verifyChain.range', 'Sequência verificada')}
+                      </dt>
+                      <dd className="text-neutral-100">
+                        {verifyResult.firstSeq ?? '—'} – {verifyResult.lastSeq ?? '—'}
+                      </dd>
+                    </>
+                  )}
+                  {verifyResult.headHash !== null && (
+                    <>
+                      <dt className="text-neutral-400">
+                        {t('journalEntries.verifyChain.headHash', 'Hash da cabeça')}
+                      </dt>
+                      <dd>
+                        <code className="select-all font-mono text-xs text-neutral-300">
+                          {verifyResult.headHash}
+                        </code>
+                      </dd>
+                    </>
+                  )}
+                </dl>
+              </>
+            )}
+            {!verifyResult.ok && (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600/15 px-3 py-1 text-xs font-medium text-red-400">
+                  {t('journalEntries.verifyChain.compromised', 'Cadeia comprometida')}
+                </span>
+                <p className="text-neutral-400">
+                  {t(
+                    'journalEntries.verifyChain.compromisedDescription',
+                    'Evidência de adulteração detectada nesta trilha de auditoria. Este diagnóstico não corrige a cadeia — a origem precisa ser investigada manualmente.',
+                  )}
+                </p>
+                {verifyResult.failure && (
+                  <div className="space-y-1">
+                    <p className="text-neutral-300">
+                      {t('journalEntries.verifyChain.failureSeq', 'Sequência com falha')}:{' '}
+                      <span className="font-mono">{verifyResult.failure.seq}</span>
+                    </p>
+                    <p className="text-neutral-300">
+                      {t(
+                        `journalEntries.verifyChain.reason.${verifyResult.failure.reason}`,
+                        VERIFY_REASON_FALLBACK[verifyResult.failure.reason],
+                      )}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Source-document provenance modal, per row (F-FEAP-2a) — opens only on success (behavior 14). */}
+      <Modal
+        isOpen={!!provenanceDocs}
+        onClose={() => setProvenanceDocs(null)}
+        title={t('journalEntries.sourceDocuments.title', 'Documentos de origem')}
+        themeColor="bg-blue-600"
+        maxWidth="max-w-lg"
+      >
+        {provenanceDocs && (
+          <div className="space-y-3 px-6 py-5 text-sm text-neutral-300">
+            {provenanceDocs.length === 0 && (
+              <p className="text-neutral-400">
+                {t(
+                  'journalEntries.sourceDocuments.empty',
+                  'Nenhum documento de origem registrado para este lançamento.',
+                )}
+              </p>
+            )}
+            {provenanceDocs.map((link) => (
+              <div
+                key={link.id}
+                className="space-y-1.5 rounded-xl border border-neutral-800 bg-neutral-950/40 p-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+                    {t('journalEntries.sourceDocuments.sourceType', 'Tipo de origem')}
+                  </span>
+                  <span className="font-mono text-xs text-neutral-300">
+                    {link.sourceDocument.sourceType}
+                  </span>
+                </div>
+                {link.sourceDocument.externalRef && (
+                  <p className="text-neutral-300">
+                    {t('journalEntries.sourceDocuments.externalRef', 'Referência')}:{' '}
+                    {link.sourceDocument.externalRef}
+                  </p>
+                )}
+                {link.sourceDocument.documentDate != null && (
+                  <p className="text-neutral-300">
+                    {t('journalEntries.sourceDocuments.documentDate', 'Data do documento')}:{' '}
+                    {formatDate(link.sourceDocument.documentDate)}
+                  </p>
+                )}
+                {link.sourceDocument.description && (
+                  <p className="text-neutral-300">
+                    {t('journalEntries.sourceDocuments.description', 'Descrição')}:{' '}
+                    {link.sourceDocument.description}
+                  </p>
+                )}
+                <p className="text-xs text-neutral-500">
+                  {t('journalEntries.sourceDocuments.recordedAt', 'Registrado em')}:{' '}
+                  {formatDate(link.sourceDocument.createdAt)}
+                </p>
+                {link.sourceDocument.attachmentId && (
+                  <p className="text-xs text-neutral-500">
+                    {t('journalEntries.sourceDocuments.attachment', 'Anexo')}:{' '}
+                    <code className="select-all font-mono">
+                      {truncateId(link.sourceDocument.attachmentId)}
+                    </code>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
     </div>
   );
