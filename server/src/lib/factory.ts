@@ -90,6 +90,7 @@ import { CounterpartyService } from '../features/accounting/services/Counterpart
 import { InventoryService } from '../features/accounting/services/InventoryService';
 import { NfeImportService } from '../features/accounting/services/NfeImportService';
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
+import { NfePreviewService } from '../features/accounting/services/NfePreviewService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -371,6 +372,7 @@ export class ApplicationFactory {
     inventory: InventoryService;
     nfeImport: NfeImportService;
     nfeSaleReconciliation: NfeSaleReconciliationService;
+    nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
     attachment: AttachmentService;
@@ -779,6 +781,8 @@ export class ApplicationFactory {
         postingService,
         this.policies.accounting,
       ),
+      // BE-INCR-NFE-PREVIEW: dry-run do parser + indicador de idempotência (F-PREV-3 → b); sem escrita.
+      nfePreview: new NfePreviewService(this.repositories.payable, this.policies.accounting),
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -931,6 +935,7 @@ export class ApplicationFactory {
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>
     this.services.nfeSaleReconciliation;
+  public getNfePreviewService = (): NfePreviewService => this.services.nfePreview;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

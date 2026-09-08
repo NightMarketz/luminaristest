@@ -821,6 +821,275 @@
         "saleId"
       ],
       "additionalProperties": false
+    },
+    "PreviewNfeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "NfePreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "chaveAcesso": {
+          "type": "string",
+          "pattern": "^[0-9]{6}[A-Z0-9]{12}[0-9]{26}$"
+        },
+        "ide": {
+          "type": "object",
+          "properties": {
+            "numero": {
+              "type": "string"
+            },
+            "serie": {
+              "type": "string"
+            },
+            "dhEmiDate": {
+              "type": "string"
+            },
+            "tpNF": {
+              "type": "string"
+            },
+            "natOp": {
+              "type": "string"
+            },
+            "mod": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "numero",
+            "serie",
+            "dhEmiDate",
+            "tpNF",
+            "natOp",
+            "mod"
+          ],
+          "additionalProperties": false
+        },
+        "emit": {
+          "type": "object",
+          "properties": {
+            "cnpj": {
+              "type": "string"
+            },
+            "cpf": {
+              "type": "string"
+            },
+            "nome": {
+              "type": "string"
+            },
+            "ie": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "dest": {
+          "type": "object",
+          "properties": {
+            "cnpj": {
+              "type": "string"
+            },
+            "cpf": {
+              "type": "string"
+            },
+            "nome": {
+              "type": "string"
+            },
+            "ie": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "itens": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "nItem": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "cProd": {
+                "type": "string"
+              },
+              "cEAN": {
+                "type": "string"
+              },
+              "xProd": {
+                "type": "string"
+              },
+              "ncm": {
+                "type": "string"
+              },
+              "cfop": {
+                "type": "string"
+              },
+              "uCom": {
+                "type": "string"
+              },
+              "qCom": {
+                "type": "string"
+              },
+              "vUnComStr": {
+                "type": "string"
+              },
+              "vProdCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vDescCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "indTot": {
+                "type": "string",
+                "enum": [
+                  "0",
+                  "1"
+                ]
+              }
+            },
+            "required": [
+              "nItem",
+              "cProd",
+              "cEAN",
+              "xProd",
+              "ncm",
+              "cfop",
+              "uCom",
+              "qCom",
+              "vUnComStr",
+              "vProdCents",
+              "vDescCents",
+              "indTot"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "totais": {
+          "type": "object",
+          "properties": {
+            "vProdCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vDescCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vFreteCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vSegCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vOutroCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vIPICents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vSTCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vICMSCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "vNFCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "vProdCents",
+            "vDescCents",
+            "vFreteCents",
+            "vSegCents",
+            "vOutroCents",
+            "vIPICents",
+            "vSTCents",
+            "vICMSCents",
+            "vNFCents"
+          ],
+          "additionalProperties": false
+        },
+        "protocolo": {
+          "type": "object",
+          "properties": {
+            "cStat": {
+              "type": "string"
+            },
+            "nProt": {
+              "type": "string"
+            },
+            "dhRecbtoDate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "cStat",
+            "nProt",
+            "dhRecbtoDate"
+          ],
+          "additionalProperties": false
+        },
+        "alreadyImported": {
+          "type": "boolean"
+        },
+        "existingPayableId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "chaveAcesso",
+        "ide",
+        "emit",
+        "dest",
+        "itens",
+        "totais",
+        "protocolo",
+        "alreadyImported",
+        "existingPayableId"
+      ],
+      "additionalProperties": false
     }
   },
   "PayableDto.ts": {

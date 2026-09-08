@@ -33,6 +33,17 @@ export class PayableRepository implements IPayableRepository {
     });
   }
 
+  /** BE-INCR-NFE-PREVIEW (F-PREV-3 → b) — espelho de `findById`, chaveado pelo `documentNumber`. */
+  public async findByDocumentNumber(
+    scope: AccountingScope,
+    documentNumber: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Payable | null> {
+    return (tx ?? prisma).payable.findFirst({
+      where: { documentNumber, ...accountingScopeWhere(scope), deletedAt: null },
+    });
+  }
+
   public async findByIdWithPayments(
     scope: AccountingScope,
     id: string,
