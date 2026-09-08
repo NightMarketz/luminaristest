@@ -65,6 +65,21 @@
 > índice oficial do SPED — não precisa do contador. Item 3 também pode sair se o dono usar o XML de
 > compra da própria empresa, que é o caminho preferido: precisa ser nota de agosto/setembro de 2026.)*
 >
+> **5. Emissão da nota de serviço (NFS-e) e da NF-e de venda pelo sistema, via parceiro emissor** — o
+> sistema vai montar a nota e entregar a um emissor por API; a obrigação da NFS-e nacional para serviços
+> de beleza começa em **01/10/2026** (Ato Conjunto RFB/CGIBS nº 4/2026, art. 1º III "d"). Preciso de você:
+> **(a)** o item da lista de serviços da LC 116/2003 em que os serviços do salão se enquadram (6.01/6.02?)
+> e a regra de onde o ISS é devido (estabelecimento prestador?) — a alíquota em si eu pego quando o
+> município do 1º cliente estiver definido; **(b)** quando há **ISS retido** pelo tomador (só PJ? quais
+> casos) — pretendo deixar retenção fora da 1ª versão; **(c)** num **pacote pré-pago** de serviços (o
+> cliente paga hoje e consome ao longo dos meses), o fato gerador do ISS é na venda do pacote ou em cada
+> prestação? Vou emitir a nota **no consumo**, não na venda do pacote — confirme; **(d)** em 2026 a nota
+> **destaca** IBS/CBS (ano-teste, 0,1% + 0,9%) mas não há recolhimento para quem cumpre as acessórias —
+> confere? Não vou escriturar IBS/CBS de teste no razão; **(e)** para **optante do Simples**, o que muda na
+> nota nacional (ISS dentro do DAS, sem destaque de IBS/CBS?) e se a emissão antes de 01/01/2027 é
+> facultativa; **(f)** consequência prática de emitir a nota **no mês seguinte** ao da prestação (competência
+> × emissão) dentro do programa de conformidade (PNCT 2026, Ato nº 5).
+>
 > Obrigado!
 
 ---
@@ -79,13 +94,19 @@
 | 3 | 2 XML NF-e 4.00 (compra + venda), **autorizadas ≥ 03/08/2026** (grupos IBS/CBS — senão testa o formato que está saindo de circulação) | XML, modelo 55, `cStat` 100 preferível | CNPJ/CPF/xNome/endereço/IE trocados **com DV válido**; **chave reconstruída** com o CNPJ fictício e `cDV` recalculado (`@Id` = `NFe`+`chNFe`); `<Signature>` **substituída por bloco sintético bem-formado**, não zerada; **preservar** `vProd`/`vDesc`/`vFrete`/`vIPI`/`vST`/`vNF`, `qCom`, `cStat`, impostos por item. *(Corrigido 2026-09-03 — [triagem simulada §B.2](TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md); a versão anterior mandava zerar a assinatura e não falava em `cDV`.)* | `nfe-fixture-provenance.test.ts` volta de `it.todo` a `it` e passa; `nfe.test.ts` verde contra o real **incluindo a asserção nova chave×CNPJ×`cDV`** (T4 da triagem); **se vier PII real, não commitar** (CTD-003), devolver o passo. **Alternativa sem contador:** XML de compra da própria empresa ou fixture open source com proveniência por commit | **dado** → item **E9** do Bloco A (trocar fixture sintético); fecha a dívida F-I2 |
 | 4 | Manual ECF Leiaute 12 (PDF) | PDF do Anexo ao ADE Cofis 2/2026 | n/a | Carimbo de "Atualização" no PDF confere com **20/05/2026** (vigente no [índice oficial](http://sped.rfb.gov.br/pasta/show/1644), verificado 2026-09-03; a pendência anterior dizia 23/07 por fonte secundária — corrigida); seções L/M/N legíveis | **dado** → destrava Forks 2/3/4 da ECF Fase 3 (BRIEF `BE-INCR-SPED-ECF-FASE3`) |
 | 1b | Complemento ao item 1: destaque IBS/CBS, `cClassTrib`, DeRE | idem item 1 | n/a | Mesmo critério do item 1: obrigação nomeada → linha no §5 com validador. Ato Conjunto RFB/CGIBS nº 4/2026 já localizado ([PDF](https://cgibs.gov.br/upload/arquivos/202607/31091735-20260730-16h30-ato-conjunto-rfb-cgibs-na-c2-ba-4-260731-090909.pdf)) | **dado** → linha "Reforma tributária IBS/CBS" do master map §5 |
+| **5a** | **[EMENDA 2026-09-08 — ADR-INCR-DFE-EMISSAO-PARCEIRO, parecer gate 2]** Item da lista LC 116 dos serviços do salão + regra de onde o ISS é devido (estabelecimento prestador) | Item numerado (ex.: 6.01) + frase da regra | n/a | Item nomeado vira `ServiceFiscalProfile.itemLc116`; a alíquota fica pendente até o município do 1º cliente (não muda o "não pedimos") | BRIEF `BE-INCR-DFE` (F-DFE-6) |
+| **5b** | ISS retido pelo tomador — em que casos (PJ? município? serviço?) | Lista de condições | n/a | Confirma "retenção fora do MVP" ou nomeia o caso que o salão vive | ADR-DFE §9.2 item 3; `FiscalDocument.issRetido` default false |
+| **5c** | Pacote pré-pago: fato gerador do ISS na venda ou na prestação? | Resposta binária + base legal | n/a | Se "prestação", F-DFE-9 (a) confirmado (emitir no consumo); se "venda", **reabre F-DFE-9** | ADR-DFE F-DFE-9 |
+| **5d** | IBS/CBS 2026: destaque sem recolhimento para quem cumpre as acessórias? | Confirmação + base (LC 214 art. 348) | n/a | Confirma "nenhum lançamento de IBS/CBS de teste no razão" (ADR-DFE §9.2 item 1) | ADR-DFE; X7 |
+| **5e** | Simples Nacional na NFS-e nacional: regras da DPS para optante (ISS no DAS; destaque IBS/CBS?) e emissão facultativa antes de 01/01/2027 | Texto/checklist | n/a | Vira `FiscalProfile.regime = SIMPLES` com regras próprias (F-DFE-8 → b); DAS continua fora | BRIEF `BE-INCR-DFE` |
+| **5f** | Competência × emissão em mês seguinte: consequência no PNCT 2026 | Frase da regra + fonte (Ato nº 5) | n/a | Define o aviso da tela (ADR-DFE §9.2 item 4 d) | BRIEF do FE da emissão |
 
 **O que NÃO estamos pedindo (para o dono não re-pedir):**
 - Arquivo RFB "PJ em Geral" — já baixado (`RUNBOOK-X2`).
 - Validação profissional de BP/DRE/ECD/ECF — só depois do H1 (PVA) rodar.
 - Alíquotas municipais de ISS por cidade — só quando o 1º cliente real tiver município definido.
-- Opinião sobre o Simples Nacional — regime-alvo é Lucro Real (ratificado 2026-09-02); DAS fica fora
-  até segunda ordem.
+- ~~Opinião sobre o Simples Nacional~~ **[EMENDA 2026-09-08]** o Simples entrou pela **emissão** (F-DFE-8 → b,
+  item 5e); o que segue fora é a **apuração** (DAS/PGDAS-D) — regime-alvo do razão continua Lucro Real.
 
 **Quando a resposta chegar:** me chame com **"triagem do que o contador mandou"**. Cada item entra na
 classificação dado / crítica / confirmação / fora do pedido, com trilho e executor nomeados.
