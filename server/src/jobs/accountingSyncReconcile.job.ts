@@ -35,15 +35,28 @@
  * Absent watermark (first run post-deploy, or the row was never created) = EPOCH = full scan,
  * byte-identical to the pre-watermark behavior.
  *
- * KNOWN RESIDUAL — CLOSED by F-W2F-4 (ratified 2026-09-01, opção 1): an item that fails in
- * isolation (`summary.failed++`, batch continues — see each pass' catch block) used to
- * silently drop out of every future scan once the OLD unbounded-scan retry window closed
- * (roughly `OVERLAP_MS` after the row was last written), because the persisted watermark
- * advanced right past it regardless of the failure. `withReconcileWatermark` now holds the
- * watermark at its OLD value for the whole round whenever `summary.failed > 0` — see that
- * function's JSDoc for the proof that this is a safe instance of the ratified
- * `min(runStartAt - OVERLAP_MS, updatedAt da falha mais antiga)` formula. A fault-isolated
- * item therefore stays inside every future scan's window until it stops failing.
+ * KNOWN RESIDUAL — CLOSED by F-W2F-4 (ratified 2026-09-01, opção 1), then SUPERSEDED by
+ * F-W2F-3/5 (2026-09-03, BE-INCR-RECONCILE-PENDING-brief.md, "Fork 1" — não fork, correção pós-
+ * review: literal das duas cédulas mostra a questão já fechada como (B) Substitui). ESTE
+ * PARÁGRAFO DESCREVE O MECANISMO ANTIGO, mantido por histórico — o mecanismo ATUAL está no
+ * JSDoc de `withReconcileWatermark`, mais abaixo. An item that fails in isolation
+ * (`summary.failed++`, batch continues — see each pass' catch block) used to silently drop out
+ * of every future scan once the OLD unbounded-scan retry window closed (roughly `OVERLAP_MS`
+ * after the row was last written), because the persisted watermark advanced right past it
+ * regardless of the failure. `withReconcileWatermark` used to hold the watermark at its OLD
+ * value for the whole round whenever `summary.failed > 0` — a safe instance of the ratified
+ * `min(runStartAt - OVERLAP_MS, updatedAt da falha mais antiga)` formula, so a fault-isolated
+ * item stayed inside every future scan's window until it stopped failing. SUPERSEDED because the
+ * owner rejected holding the watermark as the shape of the fix (`CEDULA-DECISAO-2026-08-31.md`
+ * §B², EMENDA de 2026-09-03: "Contra a recomendação (mecânica do F-W2F-4)"): the watermark now
+ * ALWAYS advances (`runStartAt - OVERLAP_MS`, incondicional), and every item that falls into
+ * `failed` OR `blocked` (any `reasonCode`, incl. `MAX_CENTS_EXCEEDED` — Fork 1-R, ratificado
+ * "incluir" em `CEDULA-DECISAO-2026-09-07-forks-sdd.md`) is captured as a row in
+ * `reconcile_pending_items` (Fork 2-b, the `onPending`/`onResolved` callbacks threaded through
+ * every pass below) instead of relying on the watermark to keep it in view. The ONE case that
+ * still holds the watermark is a NEW, narrower one — see Fork 5 / `pendingWriteFailed` in
+ * `withReconcileWatermark`'s JSDoc: a failure writing the CAPTURE ROW itself, not a failure in
+ * the item being reconciled.
  *
  * F-W2F-3 (accepted by the owner, 2026-08-30): the window-with-overlap design closes the
  * delayed-commit-under-contention failure mode above, but it assumes no write EXTERNAL to
@@ -78,6 +91,52 @@ import { PackageBalanceRepository } from '../features/packages/repositories/Pack
 import { loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
 import { JobWatermarkRepository } from './JobWatermarkRepository';
+import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
+import type { ReconcilePendingReasonCodeValue } from '../features/accounting/dtos/ReconcilePendingDto';
+
+/**
+ * BE-INCR-RECONCILE-PENDING (nó C7, Fork 2-b) — one item newly/still pending after a pass'
+ * classification. Reported to `onPending` at the SAME point each pass already logged
+ * `summary.failed++`/`summary.blocked++` — never a parallel reclassification (Fork 2-c rejected).
+ */
+export interface ReconcilePendingCaptureItem {
+  ownerUserId: string;
+  unitId: string;
+  sourceType: string;
+  sourceId: string;
+  reasonCode: ReconcilePendingReasonCodeValue;
+  reasonDetail: string;
+}
+
+/**
+ * Reporter pair threaded through every reconcile pass' Deps (Fork 2-b). Both are OPTIONAL so
+ * every existing unit test of the 8 passes keeps compiling unchanged when it does not care about
+ * pending capture. `reportPending` is on the FORK 5 hot path (its failure must be visible to the
+ * caller, see `pendingWriteFailed` below); `reportResolved` is best-effort bookkeeping, so a pass
+ * catches its own rejection internally and never lets it affect `ReconcileSummary`.
+ */
+export interface ReconcileOutcomeReporter {
+  /**
+   * A capture WRITE failing must propagate to the pass' catch block (FORK 5-b): it is the ONLY
+   * remaining protection for a failed/blocked item now that the watermark no longer holds by
+   * `failed`/`blocked` (Fork 1). Passes call this and catch ONLY the write failure themselves,
+   * incrementing `summary.pendingWriteFailed` — never swallow it silently (that would be the
+   * rejected Fork 5-c: "loga e segue, marca avança normalmente").
+   */
+  reportPending?: (item: ReconcilePendingCaptureItem) => Promise<void>;
+  /**
+   * Best-effort: resolves any existing pending row for this identity when the pass finds the
+   * SAME item synced or an idempotent hit (checklist item 5). A rejection here is logged and
+   * swallowed by the pass itself — it is bookkeeping cleanup, not the data-loss-risk path FORK 5
+   * protects; a stale "pending" row left behind self-heals the next time this item succeeds.
+   */
+  reportResolved?: (item: {
+    ownerUserId: string;
+    unitId: string;
+    sourceType: string;
+    sourceId: string;
+  }) => Promise<void>;
+}
 
 /** A `Won` opportunity normalized from its DynamicTable row, with its owning tenant. */
 export interface WonOpportunity {
@@ -92,7 +151,7 @@ export interface WonOpportunity {
   accountRef?: string;
 }
 
-export interface CrmReceivableReconcileDeps {
+export interface CrmReceivableReconcileDeps extends ReconcileOutcomeReporter {
   listWonOpportunities: () => Promise<WonOpportunity[]>;
   /** CrmReceivableBridge.bookWonOpportunity — owns money guards + both idempotency guards. */
   book: (scope: AccountingScope, fact: WonOpportunityFact) => Promise<CrmBridgeOutcome>;
@@ -114,6 +173,15 @@ export interface ReconcileSummary {
    * Optional so passes without occurrences keep their exact 4-field summary unchanged.
    */
   blocked?: number;
+  /**
+   * FORK 5-b (BE-INCR-RECONCILE-PENDING) — count of items whose `reportPending` WRITE itself
+   * failed (infra failure on `reconcile_pending_items`, not a failure of the item being
+   * reconciled). Distinct from `failed`/`blocked`: those items are captured and safe; a
+   * `pendingWriteFailed` item has NO row anywhere — `withReconcileWatermark` holds the watermark
+   * back when this is `> 0`, the one narrow case (post Fork 1) that still does. Optional so every
+   * pass without a `reportPending` dep (or with zero write failures) keeps its summary unchanged.
+   */
+  pendingWriteFailed?: number;
 }
 
 /**
@@ -123,6 +191,60 @@ export interface ReconcileSummary {
  */
 function classifyBlockedSyncError(error: unknown): string | null {
   return syncSkipErrorCode(error);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// BE-INCR-RECONCILE-PENDING (nó C7) — shared reporter wiring for every pass' catch block
+// (Fork 2-b `onPending`/`onResolved`, Fork 5-b `pendingWriteFailed`). Two tiny helpers so all 8
+// call sites share ONE isolation behavior instead of re-deciding it locally 8 times.
+// ───────────────────────────────────────────────────────────────────────────
+
+/**
+ * Attempts `reportPending`; on a write failure, increments `summary.pendingWriteFailed` and logs
+ * — NEVER lets the write failure propagate out of the caller's catch block (FORK 5-b: preserves
+ * "Isolated failure must NOT stop the batch" — rejected FORK 5-a would have broken that by
+ * throwing here). No-op when the pass' deps did not wire a `reportPending`.
+ */
+async function reportPendingSafely(
+  reportPending: ReconcileOutcomeReporter['reportPending'],
+  summary: ReconcileSummary,
+  item: ReconcilePendingCaptureItem,
+): Promise<void> {
+  if (!reportPending) return;
+  try {
+    await reportPending(item);
+  } catch (writeError) {
+    summary.pendingWriteFailed = (summary.pendingWriteFailed ?? 0) + 1;
+    logger.error(
+      'Reconcile pending-item capture write failed — item has NO record anywhere (FORK 5-b)',
+      {
+        sourceType: item.sourceType,
+        sourceId: item.sourceId,
+        reasonCode: item.reasonCode,
+        error: writeError instanceof Error ? writeError.message : String(writeError),
+      },
+    );
+  }
+}
+
+/**
+ * Best-effort resolve (checklist item 5): a rejection here is logged and swallowed — it is
+ * bookkeeping cleanup, not the data-loss-risk path FORK 5 protects. A stale "pending" row left
+ * behind self-heals the next time this SAME item is found synced/idempotent.
+ */
+async function reportResolvedSafely(
+  reportResolved: ReconcileOutcomeReporter['reportResolved'],
+  item: { ownerUserId: string; unitId: string; sourceType: string; sourceId: string },
+): Promise<void> {
+  if (!reportResolved) return;
+  try {
+    await reportResolved(item);
+  } catch (error) {
+    logger.warn(
+      'Reconcile pending-item resolve failed — best-effort, item stays pending until next success',
+      { ...item, error: error instanceof Error ? error.message : String(error) },
+    );
+  }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -159,29 +281,30 @@ export interface ReconcileWatermarkDeps {
 /**
  * Wraps one reconciliation round with the trailing watermark. Reads the persisted watermark
  * (EPOCH on the first run), runs `runPasses(watermarkAt)`, and — ONLY if it resolves without
- * throwing — advances the watermark, UNLESS the round reports a fault-isolated item failure
- * (F-W2F-4, see below), in which case it stays at `watermarkAt`.
+ * throwing — advances the watermark, UNLESS the round reports a pending-CAPTURE write failure
+ * (FORK 5-b, see below), in which case it stays at `watermarkAt`.
  *
  * GUARD: if `runPasses` throws (a whole-round failure — not the per-item fault isolation each
  * pass already does internally), `setWatermark` is never called: the watermark stays exactly
  * where it was, so the NEXT run re-scans the same `[watermarkAt, now]` window instead of
  * silently skipping whatever the failed round never reached.
  *
- * F-W2F-4 (ratified 2026-09-01, opção 1 — `min(runStartAt - OVERLAP_MS, updatedAt da falha não
- * resolvida mais antiga da rodada)`): when `summary.failed > 0`, the watermark is held at the
- * OLD `watermarkAt` instead of advancing to `runStartAt - OVERLAP_MS`. This is a provably-safe
- * instance of the ratified `min(...)` formula, not an approximation of it: every row that can
- * reach `summary.failed` — the 8 merged passes all list via
- * `updatedAt >= watermarkAt` (the scan operator, `DynamicTableRepository.findRowsByFieldValueSince`
- * :370; the balance-vs-liability check inside `runPasses` scans unfiltered, but its result never
- * feeds the merged summary) — so `watermarkAt <= failedItem.updatedAt` holds for EVERY failed
- * item by construction, with no need to plumb the failing item's actual `updatedAt` back out of
- * any of the 8 passes (none of their per-item types carry the source row's real `updatedAt`
- * today; threading it through all 8 passes would be a larger, riskier diff for the same
- * invariant). The trade-off versus the literal per-item minimum: the
- * round-level watermark does not creep forward AT ALL while any single item anywhere in the
- * round keeps failing (rows already synced this round get redundantly, harmlessly rescanned
- * next tick too) — conservative, but never drops a failed item out of the window.
+ * F-W2F-4 (ratified 2026-09-01, opção 1) is SUPERSEDED (BE-INCR-RECONCILE-PENDING-brief.md,
+ * "Fork 1" — not a fork, correction post-review: the two cédulas literally already decide (B)
+ * Substitui): the watermark no longer holds by `summary.failed > 0` — every failed/blocked item
+ * is now captured as a row in `reconcile_pending_items` instead (Fork 2-b, `onPending` below),
+ * which is a STRONGER guarantee than holding the watermark ever was (a captured row survives
+ * forever, not just until the next successful round; it is also individually re-scannable via
+ * the rescan command instead of waiting for the bulk window to catch it again).
+ *
+ * FORK 5-b (`pendingWriteFailed`, RATIFICADO via delegação em CEDULA-DECISAO-2026-09-07-forks-sdd.md):
+ * the ONE case that still holds the watermark is narrower than the old one — not "an item failed
+ * in the ledger" (that is now captured, see above) but "the CAPTURE ROW ITSELF failed to write".
+ * When that happens the item has NO record anywhere (the ledger attempt failed AND the only proof
+ * of that — the pending row — also failed to persist), so holding the watermark is the last
+ * remaining safety net, exactly as it was for `failed` before Fork 1 superseded that use. This
+ * preserves the existing "Isolated failure must NOT stop the batch" invariant in every pass' catch
+ * block (rejected Fork 5-a would have broken it by propagating the write failure out of the loop).
  */
 export async function withReconcileWatermark(
   deps: ReconcileWatermarkDeps,
@@ -191,7 +314,9 @@ export async function withReconcileWatermark(
   const runStartAt = deps.now();
   const summary = await runPasses(watermarkAt);
   const nextWatermarkAt =
-    summary.failed > 0 ? watermarkAt : new Date(runStartAt.getTime() - OVERLAP_MS);
+    (summary.pendingWriteFailed ?? 0) > 0
+      ? watermarkAt
+      : new Date(runStartAt.getTime() - OVERLAP_MS);
   await deps.setWatermark(nextWatermarkAt);
   return summary;
 }
@@ -237,9 +362,21 @@ export async function reconcileCrmReceivables(
           opportunityId: opp.opportunityId,
           receivableId: result.receivableId,
         });
+        await reportResolvedSafely(deps.reportResolved, {
+          ownerUserId: opp.ownerUserId,
+          unitId: opp.unitId,
+          sourceType: 'crm.opportunity.won',
+          sourceId: opp.opportunityId,
+        });
       } else {
         // 'already_booked' (live or user-cancelled tombstone) or 'legacy_entry'.
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, {
+          ownerUserId: opp.ownerUserId,
+          unitId: opp.unitId,
+          sourceType: 'crm.opportunity.won',
+          sourceId: opp.opportunityId,
+        });
       }
     } catch (error) {
       // Poison/defer (Council 1.5): a skip-listed deterministic code is BLOCKED, not failed —
@@ -247,10 +384,19 @@ export async function reconcileCrmReceivables(
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for opportunity — deterministic non-retriable code, skipping', {
           opportunityId: opp.opportunityId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: opp.ownerUserId,
+          unitId: opp.unitId,
+          sourceType: 'crm.opportunity.won',
+          sourceId: opp.opportunityId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
@@ -267,6 +413,14 @@ export async function reconcileCrmReceivables(
         unitId: opp.unitId,
         failedSoFar: summary.failed,
         reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: opp.ownerUserId,
+        unitId: opp.unitId,
+        sourceType: 'crm.opportunity.won',
+        sourceId: opp.opportunityId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -299,7 +453,7 @@ export interface FinalizedSale {
   revenueByNature?: { serviceReais: number; productReais: number };
 }
 
-export interface SaleReconcileDeps {
+export interface SaleReconcileDeps extends ReconcileOutcomeReporter {
   listFinalizedSales: () => Promise<FinalizedSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -353,6 +507,7 @@ export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<Recon
       const exists = await deps.hasExistingEntry(scope, event.sourceType, event.sourceId);
       if (exists) {
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.finalized', sourceId: sale.saleId });
         continue;
       }
 
@@ -362,15 +517,25 @@ export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<Recon
         saleId: sale.saleId,
         entryId: result.entryId,
       });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.finalized', sourceId: sale.saleId });
     } catch (error) {
       // Poison/defer (Council 1.5): skip-listed deterministic code → BLOCKED, not failed.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for sale — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.finalized',
+          sourceId: sale.saleId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
@@ -387,6 +552,14 @@ export async function reconcileSaleSales(deps: SaleReconcileDeps): Promise<Recon
         unitId: sale.unitId,
         failedSoFar: summary.failed,
         reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.finalized',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -414,7 +587,7 @@ export interface CancelledSale {
   unitId: string;
 }
 
-export interface SaleCancellationReconcileDeps {
+export interface SaleCancellationReconcileDeps extends ReconcileOutcomeReporter {
   listCancelledSales: () => Promise<CancelledSale[]>;
   /** Locate an entry by source within the scope (returns its id + status, or null). */
   findEntry: (
@@ -469,22 +642,41 @@ export async function reconcileSaleCancellations(
         // Nothing Posted to reverse (already reversed, or never booked) — idempotent.
         summary.idempotentHits++;
       }
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cancelled', sourceId: sale.saleId });
     } catch (error) {
       // Poison/defer (Council 1.5): the reversal path can hit the period gate too — BLOCKED.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for cancelled sale — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.cancelled',
+          sourceId: sale.saleId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for cancelled sale — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.cancelled',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -504,7 +696,7 @@ export interface ReturnedSale {
   occurredAt: string;
 }
 
-export interface SaleReturnReconcileDeps {
+export interface SaleReturnReconcileDeps extends ReconcileOutcomeReporter {
   listReturnedSales: () => Promise<ReturnedSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -543,28 +735,48 @@ export async function reconcileSaleReturns(deps: SaleReturnReconcileDeps): Promi
       const exists = await deps.hasExistingEntry(scope, event.sourceType, event.sourceId);
       if (exists) {
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.returned', sourceId: sale.saleId });
         continue;
       }
 
       const result = await deps.sync(scope, event);
       summary.synced++;
       logger.info('Reconcile booked sale return', { saleId: sale.saleId, entryId: result.entryId });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.returned', sourceId: sale.saleId });
     } catch (error) {
       // Poison/defer (Council 1.5): skip-listed deterministic code → BLOCKED, not failed.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for sale return — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.returned',
+          sourceId: sale.saleId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for sale return — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.returned',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -587,7 +799,7 @@ export interface SettledSale {
   isAllPackage?: boolean;
 }
 
-export interface SaleSettlementReconcileDeps {
+export interface SaleSettlementReconcileDeps extends ReconcileOutcomeReporter {
   listSettledSales: () => Promise<SettledSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -630,12 +842,20 @@ export async function reconcileSaleSettlements(
       const exists = await deps.hasExistingEntry(scope, 'sale.settled', sale.saleId);
       if (exists) {
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.settled', sourceId: sale.saleId });
         continue;
       }
 
       // Ordering gate: without the A Receber opening entry there is nothing to clear — defer
       // (blocked), do NOT fail the batch. The opening is the revenue entry for a normal sale, or
       // the prepaid origin ('sale.package.sold') for an all-Package sale (Incremento G P6).
+      //
+      // LACUNA DE SPEC (registrada, não bloqueante): este "blocked" NÃO passa por
+      // `classifyBlockedSyncError` — não tem `reasonCode` correspondente no enum do BRIEF
+      // (FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED). Forçar 'FAILED' rotularia
+      // errado uma dependência de ordenação auto-resolvível como "erro não classificado". Sem
+      // decisão do dono sobre um 4º reasonCode, este item NÃO é capturado na tabela de
+      // pendências — comportamento pré-existente preservado (loga e segue).
       const openingSourceType = sale.isAllPackage ? 'sale.package.sold' : 'sale.finalized';
       const hasOpening = await deps.hasExistingEntry(scope, openingSourceType, sale.saleId);
       if (!hasOpening) {
@@ -663,22 +883,41 @@ export async function reconcileSaleSettlements(
         saleId: sale.saleId,
         entryId: result.entryId,
       });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.settled', sourceId: sale.saleId });
     } catch (error) {
       // Poison/defer (Council 1.5): skip-listed deterministic code → BLOCKED, not failed.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for sale settlement — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.settled',
+          sourceId: sale.saleId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for sale settlement — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.settled',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -710,7 +949,7 @@ export interface CogsSale {
   productLines: ProductLine[];
 }
 
-export interface SaleCogsReconcileDeps {
+export interface SaleCogsReconcileDeps extends ReconcileOutcomeReporter {
   listCogsSales: () => Promise<CogsSale[]>;
   hasExistingEntry: (
     scope: AccountingScope,
@@ -743,6 +982,7 @@ export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<Re
       if (sale.productLines.length === 0) {
         // No product lines → no cost of goods; nothing to book.
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cogs', sourceId: sale.saleId });
         continue;
       }
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
@@ -752,6 +992,7 @@ export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<Re
       const exists = await deps.hasExistingEntry(scope, 'sale.cogs', sale.saleId);
       if (exists) {
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cogs', sourceId: sale.saleId });
         continue;
       }
 
@@ -766,6 +1007,7 @@ export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<Re
       if (totalCogsCents <= 0) {
         // Zero-cost sale (e.g. every product line valued at 0) — nothing to post.
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cogs', sourceId: sale.saleId });
         continue;
       }
 
@@ -780,11 +1022,25 @@ export async function reconcileSaleCogs(deps: SaleCogsReconcileDeps): Promise<Re
       const result = await deps.sync(scope, event);
       summary.synced++;
       logger.info('Reconcile booked sale CMV', { saleId: sale.saleId, entryId: result.entryId });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.cogs', sourceId: sale.saleId });
     } catch (error) {
+      // Achados fora de escopo item 1 (BRIEF): reconcileSaleCogs é a ÚNICA das 8 passadas sem
+      // classifyBlockedSyncError — todo erro cai aqui como FAILED, mesmo um período fechado.
+      // Não corrigido nesta fatia (fora do item autorizado); a captura abaixo é honesta sobre
+      // isso — reasonCode sempre 'FAILED' para esta passada especificamente.
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for sale CMV — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.cogs',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -813,7 +1069,7 @@ export interface PackageOriginSale {
   packageId: string;
 }
 
-export interface SalePackageOriginReconcileDeps {
+export interface SalePackageOriginReconcileDeps extends ReconcileOutcomeReporter {
   listPackageSales: () => Promise<PackageOriginSale[]>;
   hasExistingEntry: (scope: AccountingScope, sourceType: string, sourceId: string) => Promise<boolean>;
   sync: (scope: AccountingScope, event: AccountingEvent) => Promise<SyncResult>;
@@ -878,22 +1134,43 @@ export async function reconcileSalePackageOrigin(
           saleId: sale.saleId,
         });
       }
+      // Both sub-steps above either already existed or just succeeded — the origin identity is
+      // resolved (the credit is a secondary effect of the same item, not a separate pending row).
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.package.sold', sourceId: sale.saleId });
     } catch (error) {
       // Poison/defer (Council 1.5): skip-listed deterministic code → BLOCKED, not failed.
       const skipCode = classifyBlockedSyncError(error);
       if (skipCode) {
         summary.blocked = (summary.blocked ?? 0) + 1;
+        const reason = error instanceof Error ? error.message : String(error);
         logger.warn('Reconcile blocked for package origin — deterministic non-retriable code, skipping', {
           saleId: sale.saleId,
           code: skipCode,
-          error: error instanceof Error ? error.message : String(error),
+          error: reason,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.package.sold',
+          sourceId: sale.saleId,
+          reasonCode: skipCode as ReconcilePendingReasonCodeValue,
+          reasonDetail: reason,
         });
         continue;
       }
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for package origin — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.package.sold',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -914,7 +1191,7 @@ export interface PackageConsumptionSale {
   paidWithPackageId: string;
 }
 
-export interface SalePackageConsumptionReconcileDeps {
+export interface SalePackageConsumptionReconcileDeps extends ReconcileOutcomeReporter {
   listPackageConsumptions: () => Promise<PackageConsumptionSale[]>;
   hasDebitMovement: (scope: AccountingScope, saleId: string) => Promise<boolean>;
   debitBalance: (
@@ -943,6 +1220,9 @@ export async function reconcileSalePackageConsumption(
       }
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
 
+      // LACUNA DE SPEC (registrada, mesma classe do ordering-gate de reconcileSaleSettlements):
+      // 'blocked_missing_paid_with_package_id' não tem reasonCode no enum do BRIEF — não
+      // capturado na tabela de pendências sem decisão do dono sobre um 4º reasonCode.
       if (!sale.paidWithPackageId || !sale.customerId) {
         summary.blocked = (summary.blocked ?? 0) + 1;
         logger.warn('Reconcile debit blocked — blocked_missing_paid_with_package_id', {
@@ -954,6 +1234,7 @@ export async function reconcileSalePackageConsumption(
       const hasDebit = await deps.hasDebitMovement(scope, sale.saleId);
       if (hasDebit) {
         summary.idempotentHits++;
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.package.consumption', sourceId: sale.saleId });
         continue;
       }
 
@@ -965,13 +1246,23 @@ export async function reconcileSalePackageConsumption(
       });
       summary.synced++;
       logger.info('Reconcile debited package balance', { saleId: sale.saleId });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.package.consumption', sourceId: sale.saleId });
     } catch (error) {
       // Insufficient (the atomic decrement refuses, never going negative) or transient — fail this
       // item, never autocorrect, continue the batch.
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failed++;
       logger.error('Reconcile failed for package consumption — continuing', {
         saleId: sale.saleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: reason,
+      });
+      await reportPendingSafely(deps.reportPending, summary, {
+        ownerUserId: sale.ownerUserId,
+        unitId: sale.unitId,
+        sourceType: 'sale.package.consumption',
+        sourceId: sale.saleId,
+        reasonCode: 'FAILED',
+        reasonDetail: reason,
       });
       continue;
     }
@@ -1134,6 +1425,7 @@ function mergeSummaries(a: ReconcileSummary, b: ReconcileSummary): ReconcileSumm
     idempotentHits: a.idempotentHits + b.idempotentHits,
     failed: a.failed + b.failed,
     blocked: (a.blocked ?? 0) + (b.blocked ?? 0),
+    pendingWriteFailed: (a.pendingWriteFailed ?? 0) + (b.pendingWriteFailed ?? 0),
   };
 }
 
@@ -1166,6 +1458,31 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         lancamentoId: entryId,
         reversalPostingDate: new Date().toISOString(),
       });
+    };
+
+    // BE-INCR-RECONCILE-PENDING (nó C7, Fork 2-b) — reporter pair threaded into every pass below.
+    // Instantiated directly here (NOT via getFactory()/a Service+Policy), mirroring the existing
+    // pattern for JournalEntryRepository/PackageBalanceRepository above: the job's write-path
+    // collaborators are system-actor infra, not an HTTP-authenticated operation — Policy checks
+    // apply to the Service used by the rescan ROUTE (Fork 3-b), never to this bulk tick.
+    const pendingRepo = new ReconcilePendingRepository();
+    const reportPending = async (item: ReconcilePendingCaptureItem) => {
+      const scope = resolveAccountingScope({ userId: item.ownerUserId }, item.unitId);
+      await pendingRepo.upsertPending(scope, {
+        sourceType: item.sourceType,
+        sourceId: item.sourceId,
+        reasonCode: item.reasonCode,
+        reasonDetail: item.reasonDetail,
+      });
+    };
+    const reportResolved = async (item: {
+      ownerUserId: string;
+      unitId: string;
+      sourceType: string;
+      sourceId: string;
+    }) => {
+      const scope = resolveAccountingScope({ userId: item.ownerUserId }, item.unitId);
+      await pendingRepo.resolvePending(scope, item.sourceType, item.sourceId);
     };
 
     /** Normalize the sale `sales` rows of a given status across every tenant, since the watermark. */
@@ -1254,6 +1571,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         return out;
       },
       book: (scope, fact) => factory.getCrmReceivableBridge().bookWonOpportunity(scope, fact),
+      reportPending,
+      reportResolved,
     });
 
     const sale = await reconcileSaleSales({
@@ -1270,6 +1589,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         })),
       hasExistingEntry,
       sync: doSync,
+      reportPending,
+      reportResolved,
     });
 
     const cancellations = await reconcileSaleCancellations({
@@ -1283,6 +1604,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       },
       findEntry,
       reverse,
+      reportPending,
+      reportResolved,
     });
 
     const returns = await reconcileSaleReturns({
@@ -1304,6 +1627,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       },
       hasExistingEntry,
       sync: doSync,
+      reportPending,
+      reportResolved,
     });
 
     const settlements = await reconcileSaleSettlements({
@@ -1327,6 +1652,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
           })),
       hasExistingEntry,
       sync: doSync,
+      reportPending,
+      reportResolved,
     });
 
     // Sale CMV (INCR-INVENTORY Body 2) — re-drive the cost-of-goods razão for every Finalized
@@ -1346,6 +1673,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       hasExistingEntry,
       recordSaleCogs: (scope, params) => factory.getInventoryService().recordSaleCogs(scope, params),
       sync: doSync,
+      reportPending,
+      reportResolved,
     });
 
     // Package origin (C 2.1.1 + balance credit) for every all-Package Finalized sale.
@@ -1367,6 +1696,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       sync: doSync,
       hasCreditMovement,
       creditBalance,
+      reportPending,
+      reportResolved,
     });
 
     // Package consumption (balance debit) for every Finalized+Paid Package-Balance sale.
@@ -1387,6 +1718,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
           })),
       hasDebitMovement,
       debitBalance,
+      reportPending,
+      reportResolved,
     });
 
     // Warn-only: prepaid balance Σ vs 2.1.1 liability per (tenant, unit). Never autocorrects.
@@ -1504,4 +1837,272 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     },
     runPasses,
   );
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// BE-INCR-RECONCILE-PENDING (nó C7) — single-item rescan (Fork 3/checklist item 6).
+// ───────────────────────────────────────────────────────────────────────────
+
+export interface ReconcileRetryOutcome {
+  outcome: 'resolved' | 'still_pending';
+}
+
+/**
+ * Re-drive ONE previously captured pending item (rescan command/route, Fork 3-b). Reuses the
+ * SAME pure `reconcile*` core and production `book`/`sync`/`reverse`/`recordSaleCogs`
+ * collaborators the bulk tick uses — NOT a parallel reimplementation of the classification
+ * logic (Fork 2-c named that risk explicitly and it was rejected). Only the per-sourceType row
+ * lookup below is new: fetching ONE row instead of listing every eligible row is unavoidable
+ * data-access glue, not error classification, so it does not reintroduce the "two places decide
+ * the same thing" risk Fork 2-c warned about (`classifyBlockedSyncError` runs exactly once,
+ * inside the reused pass).
+ */
+export async function retryOneReconcilePendingItem(
+  scope: AccountingScope,
+  pending: { sourceType: string; sourceId: string },
+): Promise<ReconcileRetryOutcome> {
+  const factory = getFactory();
+  const sync = factory.getAccountingSyncService();
+  const posting = factory.getPostingService();
+  const journalRepo = new JournalEntryRepository();
+  const pkgRepo = new PackageBalanceRepository();
+  const pkgService = factory.getPackageBalanceService();
+
+  const hasExistingEntry = (s: AccountingScope, sourceType: string, sourceId: string) =>
+    journalRepo.findBySource(s, sourceType, sourceId).then((entry) => entry != null);
+  const doSync = (s: AccountingScope, event: AccountingEvent) => sync.sync(s, event);
+  const findEntry = (s: AccountingScope, sourceType: string, sourceId: string) =>
+    journalRepo
+      .findBySource(s, sourceType, sourceId)
+      .then((entry) => (entry ? { id: entry.id, status: entry.status } : null));
+  const reverse = async (s: AccountingScope, unitId: string, entryId: string) => {
+    await posting.reverseEntry(s, {
+      unitId,
+      lancamentoId: entryId,
+      reversalPostingDate: new Date().toISOString(),
+    });
+  };
+
+  // A retry NEVER writes a new pending row on failure and NEVER resolves one on success itself —
+  // the CALLER (ReconcilePendingService.rescan) owns that write, inside its own audited tx
+  // (Fork 4). Passing no reporter here is deliberate, not an omission.
+  const resolvedIfAny = (summary: ReconcileSummary): ReconcileRetryOutcome =>
+    summary.synced > 0 || summary.idempotentHits > 0
+      ? { outcome: 'resolved' }
+      : { outcome: 'still_pending' };
+
+  /** Loads the ONE DynamicTable row for `pending.sourceId`, scoped to `scope.ownerUserId`. */
+  const loadRow = async (
+    internalName: string,
+  ): Promise<{ id: string; data: Record<string, unknown> } | null> => {
+    const row = await prisma.dynamicTableData.findFirst({
+      where: {
+        id: pending.sourceId,
+        deletedAt: null,
+        dynamicTable: { internalName, userId: scope.ownerUserId },
+      },
+      select: { id: true, data: true },
+    });
+    return row ? { id: row.id, data: row.data as Record<string, unknown> } : null;
+  };
+
+  switch (pending.sourceType) {
+    case 'crm.opportunity.won': {
+      const row = await loadRow('crmOpportunities');
+      if (!row) return { outcome: 'still_pending' };
+      const data = row.data;
+      const summary = await reconcileCrmReceivables({
+        listWonOpportunities: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            opportunityId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.amount === 'number' ? data.amount : NaN,
+            occurredAt: typeof data.closedAt === 'string' ? data.closedAt : new Date().toISOString(),
+            label: typeof data.name === 'string' ? data.name : `Oportunidade ${row.id}`,
+            accountRef: typeof data.accountId === 'string' ? data.accountId : undefined,
+          },
+        ],
+        book: (s, fact) => factory.getCrmReceivableBridge().bookWonOpportunity(s, fact),
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.finalized': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const info = await loadSalePackageInfo(scope.ownerUserId, row.id);
+      const data = row.data;
+      const summary = await reconcileSaleSales({
+        listFinalizedSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,
+            currency: typeof data.currency === 'string' ? data.currency : 'BRL',
+            occurredAt: typeof data.date === 'string' ? data.date : new Date().toISOString(),
+            isAllPackage: info.kind === 'Package',
+            revenueByNature: info.revenueByNature,
+          },
+        ],
+        hasExistingEntry,
+        sync: doSync,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.cancelled': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const data = row.data;
+      const summary = await reconcileSaleCancellations({
+        listCancelledSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+          },
+        ],
+        findEntry,
+        reverse,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.returned': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const data = row.data;
+      const summary = await reconcileSaleReturns({
+        listReturnedSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,
+            currency: typeof data.currency === 'string' ? data.currency : 'BRL',
+            occurredAt:
+              typeof data.returnedAt === 'string'
+                ? data.returnedAt
+                : typeof data.date === 'string'
+                  ? data.date
+                  : new Date().toISOString(),
+          },
+        ],
+        hasExistingEntry,
+        sync: doSync,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.settled': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const info = await loadSalePackageInfo(scope.ownerUserId, row.id);
+      const data = row.data;
+      const summary = await reconcileSaleSettlements({
+        listSettledSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,
+            currency: typeof data.currency === 'string' ? data.currency : 'BRL',
+            occurredAt:
+              typeof data.paidAt === 'string'
+                ? data.paidAt
+                : typeof data.date === 'string'
+                  ? data.date
+                  : new Date().toISOString(),
+            paymentMethod: typeof data.paymentMethod === 'string' ? data.paymentMethod : '',
+            isAllPackage: info.kind === 'Package',
+          },
+        ],
+        hasExistingEntry,
+        sync: doSync,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.cogs': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const info = await loadSalePackageInfo(scope.ownerUserId, row.id);
+      const data = row.data;
+      const summary = await reconcileSaleCogs({
+        listCogsSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            currency: typeof data.currency === 'string' ? data.currency : 'BRL',
+            occurredAt: typeof data.date === 'string' ? data.date : new Date().toISOString(),
+            productLines: info.productLines,
+          },
+        ],
+        hasExistingEntry,
+        recordSaleCogs: (s, params) => factory.getInventoryService().recordSaleCogs(s, params),
+        sync: doSync,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.package.sold': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const info = await loadSalePackageInfo(scope.ownerUserId, row.id);
+      const data = row.data;
+      const hasCreditMovement = (s: AccountingScope, saleId: string) =>
+        pkgRepo.findMovement(s, saleId, 'credit').then((m) => m != null);
+      const creditBalance = (
+        s: AccountingScope,
+        cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
+      ) => pkgService.creditFromSale(s, cmd);
+      const summary = await reconcileSalePackageOrigin({
+        listPackageSales: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,
+            currency: typeof data.currency === 'string' ? data.currency : 'BRL',
+            occurredAt: typeof data.date === 'string' ? data.date : new Date().toISOString(),
+            customerId: typeof data.customerId === 'string' ? data.customerId : '',
+            packageId: info.packageIds.length === 1 ? info.packageIds[0] : '',
+          },
+        ],
+        hasExistingEntry,
+        sync: doSync,
+        hasCreditMovement,
+        creditBalance,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.package.consumption': {
+      const row = await loadRow('sales');
+      if (!row) return { outcome: 'still_pending' };
+      const data = row.data;
+      const hasDebitMovement = (s: AccountingScope, saleId: string) =>
+        pkgRepo.findMovement(s, saleId, 'debit').then((m) => m != null);
+      const debitBalance = (
+        s: AccountingScope,
+        cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
+      ) => pkgService.debitForConsumption(s, cmd);
+      const summary = await reconcileSalePackageConsumption({
+        listPackageConsumptions: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            saleId: row.id,
+            unitId: typeof data.unitId === 'string' ? data.unitId : '',
+            amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,
+            customerId: typeof data.customerId === 'string' ? data.customerId : '',
+            paidWithPackageId: typeof data.paidWithPackageId === 'string' ? data.paidWithPackageId : '',
+          },
+        ],
+        hasDebitMovement,
+        debitBalance,
+      });
+      return resolvedIfAny(summary);
+    }
+    default:
+      // Defensive — every capture site in the 8 passes above uses exactly one of the sourceTypes
+      // handled above. An unrecognized sourceType (e.g. a row hand-inserted by a future caller)
+      // cannot be retried without a mapper, so it stays pending rather than throwing.
+      return { outcome: 'still_pending' };
+  }
 }
