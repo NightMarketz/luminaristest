@@ -44,6 +44,7 @@ e tie-out, que hoje assumem full-only em pontos nomeados (§1).
 | `amountCents` é `BigInt` nativo em `Payable`/`PayablePayment`/`Receivable`/`ReceivableReceipt`; `MAX_CENTS` é teto de **política** (DTO), não de persistência, desde a migração BigInt | verificado | `schema.prisma:878,927,959,995`; `models/money.ts:1-20` (`MAX_CENTS = 2_147_483_647`, comentário "POLICY ceiling only") |
 | Reconciliação bancária vincula **linha↔posting** (não linha↔título), no máximo 1 match ativo por posting — cada liquidação parcial já posta como `JournalEntry`/`Posting` PRÓPRIO (sourceId=id-do-recibo), logo é candidato de match independente das outras liquidações do mesmo título | verificado | `docs/adr/ADR-INCR7-bank-reconciliation.md` D3 (linha 60-70): "cada posting tem no máximo 1 match ativo"; confirma que N recibos por título = N postings = N candidatos de match, sem redesenho da conciliação |
 | `AgingReportService.loadOutstanding` lê `amountCents` diretamente para toda linha em `PAYABLE_OUTSTANDING_STATUSES`/`RECEIVABLE_OUTSTANDING_STATUSES` — **não** existe hoje um caminho de leitura de saldo remanescente | verificado | `AgingReportService.ts:404-426` |
+| Baixa parcial não reabre period-close: cada recibo/liquidação continua postando via `postEntry` (gate de período preflight + autoritativo in-tx, já existente) e um estorno de recibo continua passando por `reverseEntry`, que já reusa o MESMO gate de período — nenhum mecanismo novo de período é necessário para N liquidações por título | verificado | `PostingService.ts:515-525` (`reverseEntry`: `await this.assertPeriodOpen(scope, input.reversalPostingDate)` — gate na data do ESTORNO, não na do lançamento original); espelha o preflight de `postEntry` em `PostingService.ts:289-290,321-322` |
 | Allowlist de auditoria é fechada; os 8 eventos atuais (`payable.*`/`receivable.*`) não têm campo de saldo no payload | verificado | `auditCanonical.ts:50-57` |
 | Rotas atuais modelam pagamento/recebimento como ação única terminal (`{id}/pay`, `{id}/payments/{paymentId}/cancel`) — semântica "a última baixa" | verificado | `server/src/routes/docs.paths.ts:3006-3028,3050` |
 | Precedente de gate de soma re-checado dentro de tx é norma do domínio (`ACC-011`), não invenção deste ADR | verificado | `.claude/skills/luminaris-accounting-architect/SKILL.md` ACC-011/012; memórias `authoritative-gate-inside-tx`, `tx-nao-propagado-ao-repo` |
@@ -54,7 +55,7 @@ uma trava arquitetural; reabri-la é exatamente o gatilho que este ADR formaliza
 
 ## 2. Contexto e objetivo
 
-`ReceivableService.ts:213` e `PayableService.ts:316` (citados na autorização) rejeitam qualquer
+`ReceivableService.ts:213` e `PayableService.ts:415-423` (a linha real do guard — a autorização citou `PayableService.ts:316`, referência que ficou stale conforme o arquivo cresceu; confirmado por leitura, mesmo trecho de §1) rejeitam qualquer
 `amountCents` que não feche o saldo integral. Isso deixa **descoberto** o caso normal de negócio: um
 cliente paga 60% agora e 40% em 30 dias; um fornecedor recebe 3 boletos parcelados do mesmo título. A
 cédula de 2026-09-03 marcou isso explicitamente como item 14 do escopo financeiro, "rejeitada
@@ -363,7 +364,7 @@ no DTO + repasse ao `postEntry`), fora do escopo autorizado por este ADR.
 - **Não estende conciliação bancária** para "match parcial de linha" (F-PS7-b) — não é necessário
   (§F-PS7) e não está no escopo autorizado.
 - **Não reabre o modelo de contraparte, dimensões ou period-close** — nenhum destes é tocado pela
-  baixa parcial.
+  baixa parcial — a evidência de que period-close já é reusado sem mudança está em §1 (linha `PostingService.ts:515-525`, `reverseEntry` já gate por período).
 - **Não é ratificação.** Todo fork acima é PENDENTE até o dono responder via `AskUserQuestion`.
 
 ## 9. Pendente de validação externa
