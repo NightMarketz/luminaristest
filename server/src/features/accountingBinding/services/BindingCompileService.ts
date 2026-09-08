@@ -80,6 +80,19 @@ export interface CompileBindingResult {
  * na GERAÇÃO do sistema (aqui, em `compile()`) — um binding incompleto nunca chega a virar `Active`**,
  * em vez de derrubar o processo depois, em runtime.
  *
+ * **Nota de nomenclatura (review independente PR #282, achado 4):** a ratificação do dono
+ * (ADR-P2 F-P2-6) descreve o gate como vivendo "no alimentador" — nome que aponta para
+ * `AccountingBindingFeederService`, a classe batizada pelo BE-INCR-BINDING-FEEDER. Este gate mora
+ * em `BindingCompileService.compile()`, não naquela classe. É o mesmo EFEITO ratificado (gate na
+ * GERAÇÃO, não no boot; binding incompleto nunca vira `Active`) por um componente com outro nome:
+ * `compile()` é o único caminho de geração de um `AccountingBinding` — tanto
+ * `POST /accounting-binding/compile` quanto o CLI de ativação (`activateAccountingBindingCli.ts`)
+ * passam por aqui — e `AccountingBindingFeederService` é estritamente um leitor de bindings JÁ
+ * `Active` no boot (`buildActiveMapperRegistrations()`), sem acesso a `operationalSchema`/
+ * `eventBindings` candidatos para comparar. Colocar o gate lá exigiria mover a comparação para
+ * DEPOIS da ativação — o oposto do que a ratificação pede. Divergência de nome do componente
+ * citado no texto do dono, não de efeito.
+ *
  * `emittableEventKeys` é `Object.keys(input.operationalSchema)` — o MESMO campo que já alimentava só
  * o hash de staleness (`compiledFromHash`) passa a ter um SEGUNDO papel: quem monta o
  * `operationalSchema` (o CLI de ativação, F-P2-7) é responsável por listar, sob essa chave, TODO

@@ -12,6 +12,9 @@ import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKno
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import type { IMessage } from '../../models/InterviewTypes';
 
+// Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
+beforeEach(() => jest.clearAllMocks());
+
 const userSays = (content: string): IMessage[] => [{ role: 'user', content }];
 
 function buildMatcher(aiResponse: string | null): PresetMatcher {

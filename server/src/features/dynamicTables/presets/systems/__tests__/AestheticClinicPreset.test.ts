@@ -9,6 +9,9 @@ import { tablePresetSuites } from '../../index';
 import AestheticClinicPreset from '../AestheticClinicPreset';
 import BeautySalonPreset from '../BeautySalonPreset';
 
+// Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
+beforeEach(() => jest.clearAllMocks());
+
 describe('AestheticClinicPreset — resolve pelo registro (comportamento 1)', () => {
   it('tablePresetSuites.services.aestheticClinic aponta para este preset', () => {
     expect(tablePresetSuites.services.aestheticClinic).toBe(AestheticClinicPreset);

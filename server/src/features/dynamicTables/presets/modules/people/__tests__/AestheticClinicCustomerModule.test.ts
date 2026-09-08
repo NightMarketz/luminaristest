@@ -7,6 +7,9 @@ import { aestheticClinicCustomerModule } from '../AestheticClinicCustomerModule'
 import { customerModule } from '../CustomerModule';
 import { createTableFromModule } from '../../../../utils/TableFactory';
 
+// Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
+beforeEach(() => jest.clearAllMocks());
+
 describe('aestheticClinicCustomerModule — campo próprio da clínica (comportamento 2)', () => {
   it('tem clinicalRecordNumber; o customerModule do salão NÃO tem', () => {
     const clinicFieldNames = aestheticClinicCustomerModule.schema.fields.map((f) => f.name);

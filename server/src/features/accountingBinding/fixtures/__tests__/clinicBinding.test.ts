@@ -3,6 +3,9 @@ import { computeCompiledFromHash } from '../../services/BindingCompileService';
 import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../clinicBinding';
 import { SALE_BINDING_V1 } from '../saleBinding';
 
+// Contrato §5 (testes): beforeEach(() => jest.clearAllMocks()) sempre.
+beforeEach(() => jest.clearAllMocks());
+
 /**
  * BE-INCR-P2-VERTICAL-CLINICA — Bloco II, comportamento 4. Espelho de `saleBinding.test.ts`
  * (o gate do binding do vertical 1) — prova que `CLINIC_BINDING_V1` (a) valida contra o schema
