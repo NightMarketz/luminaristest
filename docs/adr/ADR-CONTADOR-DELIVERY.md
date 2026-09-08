@@ -1,13 +1,15 @@
 # ADR-CONTADOR-DELIVERY — Envio de ECD/ECF ao contador
 
 - **Data:** 2026-09-07
-- **Status:** **Proposed — forks RATIFICAÇÃO PENDENTE, condicionado à resposta do contador (item 0 do
-  `PEDIDO-CONTADOR-2026-09-03.md`).** Nenhum código escrito. **Pré-condição de ratificação (não decisão
-  do agente): se o contador responder "não assino" ao item 0** — *"você assina ECD e ECF geradas por
-  um sistema que você não opera?"* — **F-Z0 reabre e este ADR sai do plano junto com o resto do trilho
-  contábil que ela autorizou** (rodada 9 do `PLANO-SDD-SEQUENCIAL-2026-09-07.md`, decisão do dono, não
-  do agente). Este documento pode ser escrito e revisado enquanto a resposta não chega — não pode ser
-  ratificado fork-a-fork nem implementado antes dela.
+- **Status:** **Accepted por delegação 2026-09-07 (cédula 2026-09-07-forks-sdd) — CONDICIONADO ao item 0
+  do PEDIDO-CONTADOR (F-Z0); implementação não abre antes da resposta.** F-CD1..F-CD8 → recomendação de
+  cada um (ver §3, tabela emendada com o caminho ratificado). **Pré-condição de existência do trilho
+  (não decisão do agente): se o contador responder "não assino" ao item 0** — *"você assina ECD e ECF
+  geradas por um sistema que você não opera?"* — **F-Z0 reabre e este ADR sai do plano junto com o resto
+  do trilho contábil que ela autorizou** (rodada 9 do `PLANO-SDD-SEQUENCIAL-2026-09-07.md`, decisão do
+  dono, não do agente). O BRIEF (`docs/accounting/BE-INCR-CONTADOR-DELIVERY-brief.md`) pode ser escrito
+  com os forks já resolvidos por delegação — a `sessao-feature` que o executar continua pausada até a
+  resposta do item 0 chegar (a pré-condição é sobre abrir código, não sobre preparar o BRIEF).
 - **Autores:** par `luminaris-orchestrator` + `luminaris-accounting-architect`.
 - **Depende de:** nenhuma aresta de código aberta (nó **C6**, `ready` no
   `GRAFO-DEPENDENCIAS-2026-09-07.md`). Depende de **decisão externa**: item 0 do pedido ao contador
@@ -340,10 +342,13 @@ quando essa frente abrir.
 ## O que este ADR NÃO é
 
 - **Não é a implementação.** Nenhum model, service, controller, rota, migração ou teste foi escrito.
-- **Não é ratificação de fork.** As oito decisões da §3 (F-CD1..F-CD8 — F-CD7/F-CD8 acrescentados
-  **[emenda pós-parecer 2026-09-07]**) continuam PENDENTES — o agente não escolhe entre elas.
-- **Não é BRIEF.** O BRIEF (checklist + contratos Zod esboçados) só nasce depois da ratificação
-  fork-a-fork, na `sessao-planejamento` seguinte.
+- **Não foi o agente que ratificou.** As oito decisões da §3 (F-CD1..F-CD8 — F-CD7/F-CD8 acrescentados
+  **[emenda pós-parecer 2026-09-07]**) foram ratificadas **por delegação** do dono (`CEDULA-DECISAO-2026-09-07-forks-sdd.md`,
+  sinal "ratifico as recomendações de todos os forks") — a recomendação escrita em cada fork é o caminho
+  ratificado; nenhuma opção foi escolhida por julgamento do agente.
+- **O BRIEF nasce deste ADR.** `docs/accounting/BE-INCR-CONTADOR-DELIVERY-brief.md` (checklist + contratos
+  Zod esboçados) foi escrito na `sessao-planejamento` seguinte, com os oito forks já resolvidos — mas
+  segue **condicionado** ao item 0 do pedido ao contador para a `sessao-feature` poder abrir código.
 - **Não decide biblioteca de e-mail.** Se F-CD1→(b)/(c) for escolhido, a lib (`nodemailer` ou
   provedor) é ela própria uma decisão a ratificar — nunca adicionada como dependência silenciosa.
 - **Não reabre F-Z0.** Este ADR assume F-Z0 ratificado; se a resposta do contador (item 0) vier "não"
@@ -364,9 +369,9 @@ quando essa frente abrir.
    `docs/adr/PARECER-ARCHITECT-ADR-CONTADOR-DELIVERY.md` (2026-09-07): 2 gaps críticos (ACC-CD-1
    período, ACC-CD-2 signatário×contato) e 4 menores (ACC-CD-3..6), incorporados nesta emenda como
    D7/D8 (invariantes) e F-CD7/F-CD8 (forks novos).
-2. **Resposta do contador** ao item 0 do `PEDIDO-CONTADOR-2026-09-03.md` — condição de existência deste
-   trilho.
-3. **Ratificação fork-a-fork** (F-CD1..F-CD8) pelo dono, só depois do passo 2.
-4. **BRIEF** (`sessao-planejamento`) com os contratos Zod (`AccountingContact`, `AccountingDeliveryLog`,
-   comandos `registerContact`/`buildDeliveryPackage`/`confirmDelivery`/`retryDelivery`) — só então
-   `sessao-feature` implementa.
+2. ~~**Ratificação fork-a-fork** (F-CD1..F-CD8) pelo dono~~ **FEITO por delegação** — `CEDULA-DECISAO-2026-09-07-forks-sdd.md`.
+3. ~~**BRIEF** (`sessao-planejamento`)~~ **FEITO** — `docs/accounting/BE-INCR-CONTADOR-DELIVERY-brief.md`
+   (contratos Zod de `AccountingContact`, `AccountingDeliveryLog`, comandos
+   `registerContact`/`buildDeliveryPackage`/`confirmDelivery`/`retryDelivery`).
+4. **Resposta do contador** ao item 0 do `PEDIDO-CONTADOR-2026-09-03.md` — condição que ainda falta para
+   a `sessao-feature` poder abrir código sobre o BRIEF.
