@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { ValidationError } from './errors';
+import { NFE_CHAVE_REGEX, isValidNfeChave } from './cnpj';
 
 /**
  * Pure NF-e 4.00 (modelo 55) parser for the fiscal-ingestion increment (BE-INCR-NFE / F0-2).
@@ -260,12 +261,29 @@ export function parseNfe(input: string | Buffer, options: ParseNfeOptions = {}):
     throw new ValidationError('NF-e de homologação (tpAmb=2) rejeitada — não vira passivo real.');
   }
 
-  // Chave de acesso (§1): @Id = 'NFe' + 44 díg.
+  // Chave de acesso (§1): @Id = 'NFe' + 44 posições. BE-INCR-CNPJ-ALFA / F-CNPJ-4 → (b), ratificado
+  // 2026-09-07: forma [0-9]{6}[A-Z0-9]{12}[0-9]{26} (NT 2026.004), cDV módulo 11 e coerência das
+  // posições 7–20 com emit/CNPJ — cada um rejeita loud. Risco aceito por escrito no BRIEF: rejeitador
+  // sobre leiaute entendido por transcrição (F-I2); se o XML real (E9) reprovar nota autorizada, é
+  // achado de domínio → emenda, nunca hotfix.
   const idAttr = reqStr(infNFe['@_Id'], 'infNFe/@Id');
-  if (!idAttr.startsWith('NFe') || idAttr.length !== 47) {
-    throw new ValidationError(`NF-e inválida: @Id "${idAttr}" deve ser 'NFe' + 44 dígitos (47 chars).`);
+  if (!idAttr.startsWith('NFe') || !NFE_CHAVE_REGEX.test(idAttr.slice(3))) {
+    throw new ValidationError(
+      `NF-e inválida: @Id "${idAttr}" deve ser 'NFe' + chave de 44 posições ([0-9]{6}[A-Z0-9]{12}[0-9]{26}).`,
+    );
   }
   const chaveAcesso = idAttr.slice(3);
+  if (!isValidNfeChave(chaveAcesso)) {
+    throw new ValidationError(
+      `NF-e inválida: dígito verificador da chave de acesso (${chaveAcesso}) não confere (módulo 11).`,
+    );
+  }
+  const emitCnpjForKey = str((infNFe.emit as Record<string, unknown> | undefined)?.CNPJ);
+  if (emitCnpjForKey && chaveAcesso.slice(6, 20) !== emitCnpjForKey) {
+    throw new ValidationError(
+      `NF-e inválida: CNPJ do emitente na chave (${chaveAcesso.slice(6, 20)}) diverge de emit/CNPJ (${emitCnpjForKey}).`,
+    );
+  }
 
   // Protocolo + gate D5. Ausência de protNFe = sem autorização -> rejeita.
   const protNFe = proc?.protNFe as Record<string, unknown> | undefined;

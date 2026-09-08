@@ -166,3 +166,10 @@ describe('SpedEcfRealRequestSchema — 0930 (superRefine, mesma regra do Presumi
     failsOn({ ...valid, signers: [socio] }, 'signers');
   });
 });
+
+describe('SpedEcfRealRequestSchema — CNPJ alfanumérico herdado do DeclarantSchema (BE-INCR-CNPJ-ALFA)', () => {
+  it('aceita CNPJ alfanumérico MAIÚSCULO e rejeita minúscula (mesmo objeto de domínio da ECF Presumido)', () => {
+    expect(SpedEcfRealRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE35' } }).success).toBe(true);
+    expect(SpedEcfRealRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12abc34501de35' } }).success).toBe(false);
+  });
+});

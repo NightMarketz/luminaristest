@@ -8,6 +8,7 @@
  * FK (`counterpartyId`, nullable this increment) so aging/posição por contraparte groups by a STABLE,
  * integral key instead of the display-name snapshot. It carries NO money and NO dates of its own.
  */
+import { stripCnpjMask } from '../../../lib/cnpj';
 
 /** The counterparty kind. A supplier is the AP side; a customer is the AR side. */
 export const COUNTERPARTY_TYPES = ['SUPPLIER', 'CUSTOMER'] as const;
@@ -53,14 +54,19 @@ export function normalizeCounterpartyName(name: string): string {
 }
 
 /**
- * `taxId` normalization (BRIEF-W2-A comp. 3): digit-only, same pattern as `isValidCpf`/`isValidCnpj`
+ * `taxId` normalization (BRIEF-W2-A comp. 3; alfanumérico desde BE-INCR-CNPJ-ALFA): mask-only strip via
+ * `lib/cnpj.ts` (NOT digit-only any more — the IN RFB 2.229/2024 CNPJ carries letters), unlike `isValidCpf`/`isValidCnpj`
  * (`dynamicTables/utils/ValidationUtils.ts`) — BESPOKE LOCAL, not a cross-module import (that utility
  * lives on the DynamicTable side of the platform boundary; `Counterparty` is Prisma first-class and
  * owns its own normalization). NO checksum and NO fixed `.length` (11 or 14) validation this phase —
  * `taxId` is an informational discriminator, OUTSIDE the `@@unique` key (fork F-W2A-4).
  */
 export function normalizeTaxId(taxId: string): string {
-  return taxId.replace(/\D/g, '');
+  // BE-INCR-CNPJ-ALFA (F-CNPJ-3 → a, 2026-09-07): `\D` mutilava o CNPJ alfanumérico em silêncio
+  // ('12ABC34501DE35' → '123450135'). CPF (11 dígitos após tirar a máscara) continua só-dígitos;
+  // qualquer outra coisa passa por `stripCnpjMask` (tira só máscara, MAIÚSCULO, preserva letras).
+  // Continua sem checksum e sem tamanho fixo (fork F-W2A-4).
+  return stripCnpjMask(taxId);
 }
 
 /**

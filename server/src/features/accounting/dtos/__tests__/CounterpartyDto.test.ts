@@ -65,3 +65,17 @@ describe('CreateCounterpartySchema', () => {
     }
   });
 });
+
+describe('CreateCounterpartySchema — taxId com CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ-3 → a)', () => {
+  it('preserva as letras do CNPJ alfanumérico: tira só a máscara e põe em maiúsculas', () => {
+    const parsed = CreateCounterpartySchema.safeParse({ ...valid, taxId: '12.abc.345/01-de35' });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.taxId).toBe('12ABC34501DE35');
+  });
+
+  it('CPF com máscara continua só-dígitos (comportamento anterior preservado)', () => {
+    const parsed = CreateCounterpartySchema.safeParse({ ...valid, taxId: '882.440.449-40' });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.taxId).toBe('88244044940');
+  });
+});

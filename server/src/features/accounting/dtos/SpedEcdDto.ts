@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
+import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX } from '../../../lib/cnpj';
 
 /**
  * Zod DTO for SPED ECD generation (ADR-INCR-SPED-ECD, D3). The declarant
@@ -20,8 +21,15 @@ export const UF_CODES = [
   'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO',
 ] as const;
 
-const cnpj = z.string().regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos (só números).');
-const cpfOrCnpj = z.string().regex(/^\d{11}$|^\d{14}$/, 'CPF (11) ou CNPJ (14) dígitos.');
+// BE-INCR-CNPJ-ALFA (T10): CNPJ alfanumérico (IN RFB 2.229/2024) — forma canônica da lib, sem máscara,
+// MAIÚSCULO (F-CNPJ-1 → rejeita minúscula aqui; quem lê fonte suja normaliza com stripCnpjMask). Só
+// formato (F-CNPJ-2 → a): DV é conferido pelo PVA, não duplicado na fronteira. Manual ECF L12 §2.4: CNPJ C 014.
+const cnpj = z
+  .string()
+  .regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara: 12 alfanuméricas maiúsculas + 2 dígitos verificadores.');
+const cpfOrCnpj = z
+  .string()
+  .regex(CPF_OR_CNPJ_REGEX, 'CPF (11 dígitos) ou CNPJ (14 posições, alfanumérico maiúsculo).');
 
 /** Declarante — identificação do registro 0000 (manual pp. 64-67). */
 const DeclarantSchema = z

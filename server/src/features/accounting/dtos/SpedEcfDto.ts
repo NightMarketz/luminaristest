@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { UF_CODES } from './SpedEcdDto';
+import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX } from '../../../lib/cnpj';
 
 /**
  * Zod DTO for SPED ECF generation (ADR-INCR-SPED-ECF, D4 — TRANSIENTE).
@@ -19,8 +20,13 @@ import { UF_CODES } from './SpedEcdDto';
  * input do usuário.
  */
 
-const cnpj = z.string().regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos (só números).');
-const cpfOrCnpj = z.string().regex(/^\d{11}$|^\d{14}$/, 'CPF (11) ou CNPJ (14) dígitos.');
+// BE-INCR-CNPJ-ALFA (T10): mesma forma canônica do SpedEcdDto (lib/cnpj.ts); só formato (F-CNPJ-2 → a).
+const cnpj = z
+  .string()
+  .regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara: 12 alfanuméricas maiúsculas + 2 dígitos verificadores.');
+const cpfOrCnpj = z
+  .string()
+  .regex(CPF_OR_CNPJ_REGEX, 'CPF (11 dígitos) ou CNPJ (14 posições, alfanumérico maiúsculo).');
 
 /** Declarante — identificação (0000) + dados cadastrais (0030). Manual pp. 61-101. */
 export const DeclarantSchema = z

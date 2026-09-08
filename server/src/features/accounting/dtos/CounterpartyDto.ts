@@ -29,7 +29,7 @@ import { queryBoolean } from './queryPrimitives';
  *         unitId: { type: string }
  *         type:   { type: string, enum: [SUPPLIER, CUSTOMER], description: "Fornecedor (AP) ou cliente (AR)" }
  *         name:   { type: string, description: "Nome de exibição — a chave de negócio é o nameNormalized derivado (trim + fold de caixa + colapso de espaços)" }
- *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado para só-dígitos — discriminador informacional, fora da chave de unicidade" }
+ *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado (máscara removida; CPF só-dígitos; CNPJ alfanumérico preservado em maiúsculas — BE-INCR-CNPJ-ALFA) — discriminador informacional, fora da chave de unicidade" }
  *         ref:    { type: string, description: "Ref opcional escopada a uma linha de DynamicTable (não é FK)" }
  */
 export const CreateCounterpartySchema = z

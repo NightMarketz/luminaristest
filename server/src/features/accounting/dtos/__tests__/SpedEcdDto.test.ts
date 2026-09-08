@@ -134,3 +134,23 @@ describe('SpedEcdRequestSchema — formas fechadas do registro 0000', () => {
     }
   });
 });
+
+describe('SpedEcdRequestSchema — CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ-1 → b, F-CNPJ-2 → a)', () => {
+  it('aceita CNPJ alfanumérico MAIÚSCULO no declarante, no codScp e no signatário (só formato, sem DV)', () => {
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE35' } }).success).toBe(true);
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, codScp: '12ABC34501DE35' } }).success).toBe(true);
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], identCpfCnpj: '12ABC34501DE35' }, signers[1]] }).success).toBe(true);
+    // DV NÃO é conferido na fronteira (F-CNPJ-2 → a): o PVA é o oráculo
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE36' } }).success).toBe(true);
+  });
+
+  it('rejeita minúscula, 12 posições, letra nos DV e máscara (forma canônica é obrigatória)', () => {
+    for (const cnpj of ['12abc34501de35', '12ABC34501DE', '12ABC34501DEAB', '12.ABC.345/01-DE35']) {
+      expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj } }).success).toBe(false);
+    }
+  });
+
+  it('CPF do signatário continua estritamente numérico (11 dígitos)', () => {
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], identCpfCnpj: '1234567890A' }, signers[1]] }).success).toBe(false);
+  });
+});

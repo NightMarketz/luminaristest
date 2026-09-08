@@ -17,6 +17,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parseNfe } from '../nfe';
 import { ValidationError } from '../errors';
+import { cnpjCheckDigits, isValidCnpj, isValidNfeChave, nfeChaveCheckDigit } from '../cnpj';
 
 const FIXTURE_DIR = join(__dirname, 'fixtures', 'nfe');
 const readFixture = (name: string) => readFileSync(join(FIXTURE_DIR, name), 'utf8');
@@ -57,7 +58,7 @@ describe('parseNfe — compra multi-item (fixture sintético)', () => {
 
   it('extrai e valida a chave de acesso (@Id.slice(3) == protNFe/chNFe)', () => {
     const nfe = parseNfe(PURCHASE);
-    expect(nfe.chaveAcesso).toBe('35250712345678000190550010000000011000000017');
+    expect(nfe.chaveAcesso).toBe('35250712345678000195550010000000011000000012');
     expect(nfe.chaveAcesso).toHaveLength(44);
     expect(nfe.protocolo.chNFe).toBe(nfe.chaveAcesso);
     expect(nfe.protocolo.cStat).toBe('100');
@@ -71,9 +72,9 @@ describe('parseNfe — compra multi-item (fixture sintético)', () => {
 
   it('extrai emitente e destinatário (CNPJ/nome), tpNF informativo, mod 55', () => {
     const nfe = parseNfe(PURCHASE);
-    expect(nfe.emit.cnpj).toBe('12345678000190');
+    expect(nfe.emit.cnpj).toBe('12345678000195');
     expect(nfe.emit.nome).toBe('DISTRIBUIDORA DE COSMETICOS EXEMPLO LTDA');
-    expect(nfe.dest.cnpj).toBe('98765432000155');
+    expect(nfe.dest.cnpj).toBe('98765432000198');
     expect(nfe.ide.mod).toBe('55');
     expect(nfe.ide.tpNF).toBe('1');
     expect(nfe.ide.numero).toBe('1');
@@ -133,5 +134,60 @@ describe('parseNfe — gates de rejeição (rejeita loud)', () => {
   it('aceita Buffer além de string', () => {
     const nfe = parseNfe(Buffer.from(PURCHASE, 'utf8'));
     expect(nfe.itens).toHaveLength(3);
+  });
+});
+
+// ── BE-INCR-CNPJ-ALFA (T10) — cédula de integração 2026-09-03 §E2 (h), F-CNPJ-4 → (b) ────────────
+
+/** Variante alfanumérica gerada a partir do fixture de compra (F-CNPJ-5 → b): emitente
+ *  `12ABC34501DE35`, chave recalculada pela própria lib — prova a lib duas vezes. */
+function alnumVariant(): { xml: string; chave: string; cnpj: string } {
+  const cnpj = '12ABC34501DE' + cnpjCheckDigits('12ABC34501DE');
+  const base43 = '352509' + cnpj + '55' + '001' + '000000003' + '1' + '00000003';
+  const chave = base43 + String(nfeChaveCheckDigit(base43));
+  const xml = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, chave).replace(
+    '<CNPJ>12345678000195</CNPJ>',
+    `<CNPJ>${cnpj}</CNPJ>`,
+  );
+  return { xml, chave, cnpj };
+}
+
+describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)', () => {
+  it.each([
+    ['compra', () => PURCHASE],
+    ['venda', () => SALE],
+  ])('fixture de %s: chave.slice(6,20) == emit/CNPJ, cDV confere e o CNPJ tem DV válido', (_n, read) => {
+    const nfe = parseNfe(read());
+    expect(nfe.chaveAcesso.slice(6, 20)).toBe(nfe.emit.cnpj);
+    expect(isValidNfeChave(nfe.chaveAcesso)).toBe(true);
+    expect(isValidCnpj(nfe.emit.cnpj as string)).toBe(true);
+  });
+
+  it('aceita NF-e com CNPJ ALFANUMÉRICO do emitente (variante sintética gerada; chave 35250912ABC34501DE35…)', () => {
+    const { xml, chave, cnpj } = alnumVariant();
+    expect(chave).toBe('35250912ABC34501DE35550010000000031000000030');
+    const nfe = parseNfe(xml);
+    expect(nfe.chaveAcesso).toBe(chave);
+    expect(nfe.emit.cnpj).toBe(cnpj);
+    expect(nfe.chaveAcesso.slice(6, 20)).toBe(cnpj);
+    expect(nfe.itens).toHaveLength(3);
+  });
+
+  it('rejeita chave fora do formato (letra fora das posições 7–20)', () => {
+    const bad = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '3525071234567800019555001000000001100000001A');
+    expect(() => parseNfe(bad)).toThrow(ValidationError);
+    expect(() => parseNfe(bad)).toThrow(/44 posições/);
+  });
+
+  it('rejeita cDV errado (a chave antiga do fixture, …017, morre aqui)', () => {
+    const bad = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017');
+    expect(() => parseNfe(bad)).toThrow(ValidationError);
+    expect(() => parseNfe(bad)).toThrow(/dígito verificador da chave/);
+  });
+
+  it('rejeita CNPJ do emitente que diverge das posições 7–20 da chave', () => {
+    const bad = PURCHASE.replace('<CNPJ>12345678000195</CNPJ>', '<CNPJ>98765432000198</CNPJ>');
+    expect(() => parseNfe(bad)).toThrow(ValidationError);
+    expect(() => parseNfe(bad)).toThrow(/diverge de emit\/CNPJ/);
   });
 });
