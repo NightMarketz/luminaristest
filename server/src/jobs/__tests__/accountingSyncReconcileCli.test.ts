@@ -41,6 +41,18 @@ describe('accountingSyncReconcileCli.runCli', () => {
     expect(disconnect).toHaveBeenCalledTimes(1);
   });
 
+  it('returns a non-zero exit code when pendingWriteFailed>0 even with failed=0 (pós-review achado 4)', async () => {
+    runAccountingSyncReconcile.mockResolvedValueOnce({
+      total: 3,
+      synced: 2,
+      idempotentHits: 0,
+      failed: 0,
+      pendingWriteFailed: 1,
+    });
+    expect(await runCli()).toBe(1);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a non-zero exit code and still disconnects Prisma when the job throws', async () => {
     runAccountingSyncReconcile.mockRejectedValueOnce(new Error('db down'));
     expect(await runCli()).toBe(1);
@@ -124,6 +136,24 @@ describe('accountingSyncReconcileCli.runCli', () => {
       runAccountingSyncReconcile.mockRejectedValueOnce(new Error('db down'));
       await runCli();
       expect(sendAlertWebhook).not.toHaveBeenCalled();
+    });
+
+    it('calls the webhook when pendingWriteFailed>0 even though failed=0 and blocked=0, and the exit code goes non-zero (pós-review achado 4)', async () => {
+      runAccountingSyncReconcile.mockResolvedValueOnce({
+        total: 3,
+        synced: 1,
+        idempotentHits: 0,
+        failed: 0,
+        blocked: 0,
+        pendingWriteFailed: 1,
+      });
+      const code = await runCli();
+
+      expect(code).toBe(1);
+      expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+      expect(sendAlertWebhook).toHaveBeenCalledWith(
+        expect.objectContaining({ pendingWriteFailed: 1, failed: 0, blocked: 0 }),
+      );
     });
   });
 });

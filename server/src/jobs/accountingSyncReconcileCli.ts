@@ -22,6 +22,7 @@ export async function runCli(): Promise<number> {
   try {
     const summary = await runAccountingSyncReconcile();
     const blocked = summary.blocked ?? 0;
+    const pendingWriteFailed = summary.pendingWriteFailed ?? 0;
     const completeContext = {
       job: JOB,
       event: 'cli_complete',
@@ -30,16 +31,16 @@ export async function runCli(): Promise<number> {
       idempotentHits: summary.idempotentHits,
       failed: summary.failed,
       blocked,
+      pendingWriteFailed,
       durationMs: Date.now() - startedAtMs,
     };
     logger.info(JOB, completeContext);
     // Operator-facing structured line on stdout.
     process.stdout.write(`${JSON.stringify({ job: JOB, ...summary })}\n`);
-    // Alert criterion mirrors the scheduler (F-W2C-2: `blocked>0 || failed>0`), not the exit
-    // code below — the exit code stays failed-only (blocked is a deliberate, deterministic
-    // skip, not a retry-worthy failure), but the alert is about "something needs a human", which
-    // blocked rows also signal.
-    if (blocked > 0 || summary.failed > 0) {
+    // Alert criterion mirrors the scheduler (F-W2C-2: `blocked>0 || failed>0`), plus
+    // `pendingWriteFailed>0` (pós-review achado 4): the one case where an item ends up with NO
+    // trace anywhere (watermark held by Fork 5-b) must not fail silently either.
+    if (blocked > 0 || summary.failed > 0 || pendingWriteFailed > 0) {
       sendAlertWebhook({
         ...completeContext,
         source: 'accounting_sync_reconcile',
@@ -47,9 +48,11 @@ export async function runCli(): Promise<number> {
         timestamp: new Date().toISOString(),
       });
     }
-    // Exit code stays failed-only: `blocked` is a deliberate, deterministic skip (not a retry-worthy
-    // failure), so it must not flip the CLI's exit code — only surface it in the summary above.
-    return summary.failed === 0 ? 0 : 1;
+    // Exit code stays failed-only for `blocked` (a deliberate, deterministic skip, not a
+    // retry-worthy failure) but now also flips non-zero on `pendingWriteFailed` (pós-review
+    // achado 4): unlike `blocked`, a pending-write failure leaves the item with no row anywhere,
+    // so an operator running this CLI manually needs a non-zero exit, not just the alert.
+    return summary.failed === 0 && pendingWriteFailed === 0 ? 0 : 1;
   } catch (error) {
     logger.error(JOB, {
       job: JOB,

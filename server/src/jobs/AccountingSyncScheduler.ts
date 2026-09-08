@@ -100,6 +100,7 @@ export class AccountingSyncScheduler {
     try {
       const summary = await this.reconcile();
       const blocked = summary.blocked ?? 0;
+      const pendingWriteFailed = summary.pendingWriteFailed ?? 0;
       const completeContext = {
         job: JOB,
         runId,
@@ -111,10 +112,13 @@ export class AccountingSyncScheduler {
         idempotentHits: summary.idempotentHits,
         failed: summary.failed,
         blocked,
+        pendingWriteFailed,
       };
       // logger.ts only persists error|warn to the NDJSON sink (info is console-only) — a
       // blocked or failed run must log at `warn` or the summary is invisible on disk.
-      if (blocked > 0 || summary.failed > 0) {
+      // pendingWriteFailed > 0 also warns: it is the one case where an item ends up with NO
+      // trace anywhere (watermark held by Fork 5-b, but nobody is told the safety net itself failed).
+      if (blocked > 0 || summary.failed > 0 || pendingWriteFailed > 0) {
         this.log.warn(JOB, completeContext);
         // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
         // ALERT_WEBHOOK_URL is unset.
