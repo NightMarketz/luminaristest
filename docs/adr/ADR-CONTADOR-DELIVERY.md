@@ -33,9 +33,10 @@
    (PNCT 2026 — Ato Conjunto RFB/CGIBS nº 5/2026; contador indicado recebe as inconsistências).
 4. **Plano SDD 2026-09-07, rodada 9**: gatilho *"escreve o ADR do envio ao contador"*, disparado pelo
    dono em 2026-09-07 dentro de *"Pode disparar o plano em multi agent sonnet até finalizar"*. O
-   próprio plano registra a saída: *"se o contador responder 'não assino' ao item 0 do pedido (F-Z0
-   reabre), a rodada 9 sai do plano"* — daí o Status acima carregar essa pré-condição no cabeçalho, não
-   só em prosa.
+   próprio plano registra a saída, citação literal de §3 **[correção pós-review 2026-09-07]**: *"se o
+   item 0 do pedido ('o contador assina?') voltar 'não', F-Z0 reabre e as rodadas 11, 13 e 9 (trilho
+   contábil que ela autorizou) saem do plano — decisão do dono, não do agente"* — daí o Status acima
+   carregar essa pré-condição no cabeçalho, não só em prosa.
 
 ## TLDR (2 linhas)
 
@@ -235,7 +236,7 @@ período — permite ECD-rascunho legítima antes do fechamento. Este ADR herdav
 reabrir a pergunta para a *entrega*: nada barrava hoje o pacote sair endereçado como "pronto para
 assinar" com o período ainda `OPEN`/`SOFT_CLOSED`, e mais um lançamento pode postar naquele período
 entre o envio e a assinatura — o número que o contador assina já não bate com o razão atual, e
-retificação (item 19 do master map) ainda não existe para corrigir depois. O parecer chama isto de
+retificação (item 19 do `CEDULA-DECISAO-2026-09-03-modulos.md` §C.1) ainda não existe para corrigir depois. O parecer chama isto de
 "buraco conhecido criando o próprio próximo buraco". Não é reabertura de D7 (que segue correto para
 **geração**) — é um gate novo sobre **entrega para assinatura**, comando diferente, exigência de
 negócio diferente (F-Z0).

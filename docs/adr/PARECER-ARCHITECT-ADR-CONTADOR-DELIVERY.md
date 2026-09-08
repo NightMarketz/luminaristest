@@ -54,8 +54,9 @@ o `AccountingContact` para quem o pacote é de fato endereçado.
   rascunho, nunca "pronto para assinar") quando o status não for `HARD_CLOSED`. Isto não é reabertura
   de D7 do outro ADR — D7 continua correto para **geração**; o gate novo é sobre **entrega para
   assinatura**, um comando diferente, com uma exigência de negócio diferente (F-Z0).
-- **Custo de errar que o ADR subestima:** o próprio ADR já nomeia "retificação" como fora de escopo
-  (§Fora de escopo + item 19 do master map, ⚫ 0 ocorrências — verificado abaixo). Sem o gate, o produto
+- **Custo de errar que o ADR subestima:** o próprio ADR já nomeia "retificação" no fork F-CD7
+  **[correção pós-review 2026-09-07: a fonte é item 19 de `CEDULA-DECISAO-2026-09-03-modulos.md`
+  §C.1, não o master map]** (⚫ 0 ocorrências — verificado abaixo). Sem o gate, o produto
   cria a necessidade de retificação (dado assinado que muda) antes de ter construído a feature que a
   resolve — um "buraco conhecido criando o próprio próximo buraco".
 
