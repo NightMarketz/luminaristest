@@ -395,10 +395,15 @@ decisão de domínio):**
    (namespace já dono do domínio de ações de lançamento); o irmão só sob `compliance.*` — zero
    interseção de chave, então o merge é semanticamente trivial mesmo que sintaticamente aconteça no
    mesmo arquivo.
-3. **Fase B (serial, integrador único):** o merge de `accounting.json` (pt e en) com os dois
-   fragmentos aplicados em sequência, `tsc` limpo + paridade (847 → N = N, folhas) medida **uma vez**, depois
-   dos dois merges — espelha exatamente o texto do PAR-003 ("Fase B — registro… regen do
-   openapi… uma de cada vez").
+3. **Fase B (serial, integrador único) — regra do lote, complemento pós-review (T6):** o merge de
+   `accounting.json` (pt e en) aplica os dois fragmentos **um de cada vez, nunca os dois juntos**, e a
+   paridade i18n é medida **a CADA aplicação** (após o 1º merge, depois de novo após o 2º) — **não**
+   "uma vez no final". Metodologia da contagem: **só folhas** (847 = 847 em `d162cd4d`, mesma medição
+   do BRIEF irmão). O BRIEF `FE-INCR-COMPLIANCE-2` (PR nº 279) adota **a mesma regra do lote** —
+   mesma metodologia (só folhas) e mesma cadência (medir a cada aplicação, não só no final) — para
+   que a Fase B nunca tenha dois números diferentes para o mesmo arquivo, nem um merge "quebrado"
+   só descoberto depois do segundo. Espelha o texto do PAR-003 ("Fase B — registro… regen do openapi…
+   uma de cada vez"), lido aqui como "uma de cada vez" também na medição de gate, não só na aplicação.
 4. Se as duas `sessao-feature` rodarem em worktrees separados sem coordenação (em vez de uma esperar
    a outra), a Fase B vira responsabilidade do **integrador** (`sessao-integracao`) resolver o
    conflito textual do JSON por **regra pré-decidida**: união dos dois blocos de chaves, nunca escolha
