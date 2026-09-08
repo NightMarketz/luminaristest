@@ -27,6 +27,8 @@
 import { ApplicationFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
 import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/saleBinding';
+import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/clinicBinding';
+import type { AccountingBindingV1 } from '../features/accountingBinding/dtos/AccountingBindingDto';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 
 export interface ActivateBindingArgs {
@@ -35,6 +37,21 @@ export interface ActivateBindingArgs {
   unitId: string;
   sectorKey: string;
 }
+
+/**
+ * BE-INCR-P2-VERTICAL-CLINICA, comportamento 6 — F-P2-7 → RATIFICADO (a): registry
+ * `sectorKey → {binding, operationalSchema}` DENTRO deste CLI. Antes deste registry, `--sector-key`
+ * só trocava o RÓTULO gravado e a chave de idempotência — o payload compilado era SEMPRE
+ * `SALE_BINDING_V1`/`SALE_OPERATIONAL_SCHEMA_SNAPSHOT` (footgun verificado: rodar
+ * `--sector-key aestheticClinic` gravava o binding DO SALÃO sob o rótulo da clínica, uma linha
+ * `Active`, válida, com os `descriptionTemplate` errados, sem nenhum erro). Este CLI está FORA do
+ * perímetro zero-diff da prova de saída (ADR-P2 §2 item 2) — editá-lo é legítimo, ao contrário de
+ * tocar o binding/preset em si.
+ */
+const SECTOR_BINDING_REGISTRY: Record<string, { binding: AccountingBindingV1; operationalSchema: Record<string, unknown> }> = {
+  [SALE_BINDING_V1.sectorKey]: { binding: SALE_BINDING_V1, operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT },
+  [CLINIC_BINDING_V1.sectorKey]: { binding: CLINIC_BINDING_V1, operationalSchema: CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT },
+};
 
 /** Lê `--flag valor` de um array argv — mesma convenção de `scripts/migrate-deploy.mjs`. */
 function readFlag(argv: string[], name: string): string | undefined {
@@ -77,6 +94,18 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
 
   const scope: BindingScope = { ownerUserId: args.ownerUserId, actorUserId: args.actorUserId, unitId: args.unitId };
 
+  // F-P2-7 → (a): registry lookup ANTES de qualquer acesso a banco — um sectorKey desconhecido
+  // falha claro (nunca compila silenciosamente o binding de OUTRO setor sob o rótulo pedido, o
+  // footgun que este registry substitui).
+  const registryEntry = SECTOR_BINDING_REGISTRY[args.sectorKey];
+  if (!registryEntry) {
+    console.error(
+      `erro: setor '${args.sectorKey}' não está registrado neste CLI (SECTOR_BINDING_REGISTRY). ` +
+        `Setores conhecidos: ${Object.keys(SECTOR_BINDING_REGISTRY).join(', ')}.`,
+    );
+    return 1;
+  }
+
   try {
     // Idempotência (pré-check que compile() não faz sozinho — ver header).
     // ponytail: este pré-check e o compile() abaixo são duas idas ao banco, sem tx compartilhada —
@@ -115,18 +144,21 @@ export async function runCli(argv: string[] = process.argv.slice(2)): Promise<nu
     const chart = chartRows.map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries }));
 
     // O MESMO caminho que POST /accounting-binding/compile usa — validador real, nunca bypass.
+    // Payload vem do REGISTRY (F-P2-7a), nunca mais hardcoded a `SALE_BINDING_V1` — é isso que
+    // fecha o footgun: `--sector-key aestheticClinic` agora compila `CLINIC_BINDING_V1` de fato.
     const compileService = ApplicationFactory.getInstance().getAccountingBindingCompileService(scope);
     const result = await compileService.compile(scope, {
       sectorKey: args.sectorKey,
-      operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT,
+      operationalSchema: registryEntry.operationalSchema,
       chart,
-      eventBindings: SALE_BINDING_V1.eventBindings,
+      eventBindings: registryEntry.binding.eventBindings,
     });
 
     if (result.status !== 'Active') {
       console.error(
         `FALHOU: binding compilou como '${result.status}' (não Active) — bloqueante(s) do validador: ` +
-          JSON.stringify(result.validation.blocking),
+          `${JSON.stringify(result.validation.blocking)}; cobertura de evento ausente: ` +
+          `${JSON.stringify(result.coverage.missing)}`,
       );
       return 1;
     }

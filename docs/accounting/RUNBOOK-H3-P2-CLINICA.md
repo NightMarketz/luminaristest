@@ -69,11 +69,13 @@ dizendo que deu certo.
 ### 1. Rodar o script da prova zero-diff (comportamento 9)
 
 ```bash
-cd server && npm run <script-da-prova-zero-diff>
+cd server && npm run prove:p2-zero-diff
 ```
 
-(nome exato do script definido na implementação do comportamento 9 — confirmar em `package.json` antes
-de rodar; se o script não existir, é **BLOQUEADO**, não falha deste runbook.)
+> **Atualizado na implementação (rodada 7 SDD):** script real em
+> `server/src/jobs/proveP2ZeroDiffCli.ts`, exposto pelo script npm acima. Roda
+> `git diff --name-only origin/main...HEAD` e falha se qualquer arquivo cair no perímetro do ADR-P2
+> §2 item 2. Aceita `--base`/`--head` para comparar outra dupla de refs.
 
 Resultado esperado: saída indicando **zero arquivos** no perímetro (`features/dynamicTables/{services,
 repositories, policies, rules, validation, dtos, models, utils}`, `presets/PresetManager.ts`,
@@ -91,10 +93,14 @@ EVIDÊNCIA: [colar a saída completa do script]
 ### 2. Confirmar o self-check do tenant-fixture (comportamento 7)
 
 ```bash
-node <script-de-seed-da-clinica> --self-check
+node scripts/seed-clinic-tenant.mjs --self-check
 ```
 
-(espelho de `scripts/activate-salon-binding.mjs --self-check`; não toca em banco do projeto.)
+> **Atualizado na implementação (rodada 7 SDD):** espelho de
+> `scripts/activate-salon-binding.mjs --self-check`; não toca em banco do projeto — monta SQLite
+> temporário, semeia chart + período OPEN do mês corrente, ativa `CLINIC_BINDING_V1` via
+> `activateAccountingBindingCli.ts --sector-key aestheticClinic` (registry F-P2-7a), confere
+> idempotência.
 
 Resultado esperado: self-check passa sem tocar em `dev.db`.
 
