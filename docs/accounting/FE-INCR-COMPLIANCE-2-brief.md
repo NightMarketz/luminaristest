@@ -411,16 +411,10 @@ QUAL das duas aplicações introduziu uma quebra, caso haja uma — a diferença
 checkpoint a cada passo" e "serial com checkpoint só no fim" é exatamente a diferença entre um
 `git bisect` de 1 passo e um de 2.
 
-**3. Coordenação com PR #277.** O BRIEF `FE-INCR-AUDIT-PROVENANCE` (#277) adota esta MESMA regra —
-metodologia de folhas (847=847 na mesma base `d162cd4d`, já corrigido de 1022 por emenda pós-review
-no commit `6b75ff25`) — por emenda coordenada entre os dois BRIEFs deste lote. **Nota de
-verificação honesta (OPS-003):** ao ler `FE-INCR-AUDIT-PROVENANCE-brief.md` nesta sessão
-(`claude/brief-fe-audit-provenance:399`), o texto da Fase B ali ainda descreve a medição como "uma
-vez, depois dos dois merges" — a metodologia de contagem (folhas, 847=847) já convergiu entre os
-dois BRIEFs, mas o procedimento de medição na Fase B (item 2 acima) é a parte que esta emenda fixa
-como regra do lote; falta um patch espelhado em #277 para que os dois textos deixem de divergir
-nesse único ponto. Registrado para quem rodar a `sessao-integracao`: a regra vinculante é a desta
-seção (medir a cada aplicação), independente de qual dos dois documentos ainda não reflete isso.
+**3. Coordenação com PR #277.** O BRIEF `FE-INCR-AUDIT-PROVENANCE` (#277) adota a mesma regra
+(commit `79faecaf`) — metodologia de folhas (847=847 na mesma base `d162cd4d`, já corrigido de 1022
+por emenda pós-review no commit `6b75ff25`) e medição na Fase B **a cada aplicação**, não uma vez ao
+final. Os dois BRIEFs deste lote convergem no mesmo texto de regra por emenda coordenada.
 
 **Fatiamento proposto (PAR-003):**
 1. **Fase 0 (schema) — não se aplica.** Nenhum dos dois BRIEFs muda `schema.prisma` (zero
