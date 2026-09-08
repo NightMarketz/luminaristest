@@ -2,7 +2,7 @@
 
 > Produzido por **sessão de planejamento**, 2026-09-07, sobre `origin/main` `a940b702`. **Rodada 2a**
 > do [PLANO-SDD-SEQUENCIAL-2026-09-07.md](PLANO-SDD-SEQUENCIAL-2026-09-07.md) (emenda 2026-09-07).
-> Não contém código de aplicação, não ratifica fork. Todo fork abaixo está **RATIFICAÇÃO PENDENTE**.
+> Não contém código de aplicação. **[EMENDA 2026-09-07 — os 4 forks foram RATIFICADOS pelo dono no mesmo dia** (ver §Forks); F-PREV-3 contra a recomendação: `alreadyImported` com repositório.**]**
 
 ## Cabeçalho
 
@@ -131,7 +131,16 @@ igual pelo parser) — fork F-PREV-1 decide se é espelho integral ou subconjunt
 13. `tsc` limpo; suíte `nfe*` + `NfeDto` + snapshot + `openapi-paths` verdes; sem migração ⇒ sem
     smoke-migration-gate. **Direto — gate.**
 
-## Forks — RATIFICAÇÃO PENDENTE
+## Forks — ✅ RATIFICADOS 2026-09-07 (dono, `AskUserQuestion`, fork a fork)
+
+| Fork | Decisão do dono | Contra a recomendação? | Efeito no checklist |
+|---|---|---|---|
+| **F-PREV-1** | **(a) espelho integral** do `ParsedNfe` em `NfePreviewSchema` | não | comportamento 2 como escrito |
+| **F-PREV-2** | **(a) `canManagePayable \|\| canReconcile`** | não | comportamentos 3 e 5 como escritos |
+| **F-PREV-3** | **(b) `alreadyImported`** consultando `Payable` por `documentNumber = chaveAcesso` | **SIM** | **Comportamento 3 muda:** o construtor recebe `IPayableRepository` além da policy; **comportamento 14 (novo):** `IPayableRepository.findByDocumentNumber(scope, documentNumber, tx?)` → `Payable \| null` (`findFirst` com `accountingScopeWhere(scope)` + `deletedAt: null`, espelho de `findById` em `PayableRepository.ts:26-34`); a resposta ganha `alreadyImported: boolean` e `existingPayableId: string \| null` (entram no `NfePreviewSchema`). Nota de coerência: título cancelado/apagado tem o `documentNumber` renomeado para `deleted:<id>:<doc>` (`schema.prisma:904`), logo lê como **não importado** — exatamente o que o import faria (a chave está livre para reimportar). Teste com repo falso: nota nova ⇒ `false/null`; nota com `Payable` vivo ⇒ `true/<id>`; a ordem é policy → parse → lookup (sem parse válido não há chave para consultar) |
+| **F-PREV-4** | **(a) supertest, 3 casos** | não | comportamento 11 = suíte `nfeController.preview.integration.test.ts`: 200 com fixture (corpo bate com `NfePreviewSchema`), 400 sem `file`, 400 sem `unitId` |
+
+Tabela original (caminhos + recomendação), mantida como registro:
 
 | Fork | Caminhos | Recomendação + justificativa | Custo de errar |
 |---|---|---|---|
