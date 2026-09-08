@@ -121,6 +121,14 @@ describe('NfePanel', () => {
     expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'MASC-300': 'prod-dup-b' });
   });
 
+  it('memória com productRef que não existe mais no catálogo NÃO pré-preenche (cai para sugerido/vazio)', async () => {
+    window.localStorage.setItem(NFE_MAPPING_MEMORY_KEY, JSON.stringify({ '12345678000195': { 'SHAMP-500': 'prod-deleted', 'MASC-300': 'prod-deleted' } }));
+    await renderWithPreview();
+    expect((screen.getByTestId('nfe-item-select-SHAMP-500') as HTMLSelectElement).value).toBe('prod-shamp');
+    expect(screen.getByTestId('nfe-origin-SHAMP-500').textContent).toMatch(/sugerido/);
+    expect((screen.getByTestId('nfe-item-select-MASC-300') as HTMLSelectElement).value).toBe('');
+  });
+
   it('fornecedor pré-selecionado por CNPJ (taxId) antes do nome', async () => {
     await renderWithPreview();
     expect((screen.getByTestId('nfe-counterparty') as HTMLSelectElement).value).toBe('cp-tax');

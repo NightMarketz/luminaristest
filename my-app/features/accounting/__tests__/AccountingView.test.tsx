@@ -56,6 +56,9 @@ vi.mock('../components/PeriodComparisonPanel', () => ({ PeriodComparisonPanel: (
 vi.mock('../components/DailyJournalPanel', () => ({ DailyJournalPanel: () => null }));
 vi.mock('../components/CounterpartiesPanel', () => ({ CounterpartiesPanel: () => null }));
 vi.mock('../components/DimensionsPanel', () => ({ DimensionsPanel: () => null }));
+vi.mock('../components/NfePanel', () => ({
+  NfePanel: () => React.createElement('div', { 'data-testid': 'nfe-panel-mock' }),
+}));
 vi.mock('../components/JournalEntryModal', () => ({ JournalEntryModal: () => null }));
 
 // AgingPanel stub: exposes two buttons that call the navigation callbacks with a fixed
@@ -131,5 +134,14 @@ describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
     // The pending seed was consumed (cleared) right after the first mount — this remount
     // gets no filter, exactly like any manual visit.
     expect(screen.getByTestId('ap-panel').textContent).toBe('seed:null');
+  });
+});
+
+describe('AccountingView — aba NF-e (FE-INCR-NFE V4/V18)', () => {
+  it('a barra de abas tem o botão "NF-e" e clicar nele renderiza o NfePanel', async () => {
+    render(<AccountingView />);
+    const tab = await screen.findByRole('tab', { name: /NF-e/ });
+    fireEvent.click(tab);
+    expect(await screen.findByTestId('nfe-panel-mock')).toBeInTheDocument();
   });
 });
