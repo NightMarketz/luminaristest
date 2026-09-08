@@ -7,6 +7,7 @@ import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ImportNfePurchaseSchema,
   ImportNfeSaleSchema,
+  PreviewNfeSchema,
 } from '../features/accounting/dtos/NfeDto';
 
 /**
@@ -126,6 +127,34 @@ export const reconcileNfeSale = async (req: Request, res: Response) => {
     const data = await getFactory()
       .getNfeSaleReconciliationService()
       .reconcileSale(scope, { saleId: parsed.data.saleId, xml: file.buffer });
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * POST /api/nfe/preview — dry-run do parser (BE-INCR-NFE-PREVIEW, rodada 2a; F-FENFE-1 → b). Mesmo
+ * multer (`nfeUpload`) dos dois endpoints de escrita; NADA é criado, por isso 200 (não 201). Erros de
+ * parse chegam como `ValidationError` → 400 pelo `handleApiError`, idênticos aos do import.
+ */
+export const previewNfe = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const file = uploadedFile(req);
+    if (!file) {
+      return res.status(400).json({ success: false, error: 'File is required (field name: file)' });
+    }
+
+    const parsed = PreviewNfeSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory().getNfePreviewService().preview(scope, file.buffer);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

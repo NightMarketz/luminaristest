@@ -702,6 +702,200 @@
           }
         }
       },
+      "PreviewNfeInput": {
+        "type": "object",
+        "required": [
+          "unitId"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string"
+          }
+        }
+      },
+      "NfePreview": {
+        "type": "object",
+        "description": "Dry-run do parser da NF-e (BE-INCR-NFE-PREVIEW): espelho integral do ParsedNfe menos protocolo.chNFe (redundante com chaveAcesso), mais o indicador de idempotência. Dinheiro em centavos INTEIROS (number). Nada é escrito.",
+        "required": [
+          "chaveAcesso",
+          "ide",
+          "emit",
+          "dest",
+          "itens",
+          "totais",
+          "protocolo",
+          "alreadyImported",
+          "existingPayableId"
+        ],
+        "properties": {
+          "chaveAcesso": {
+            "type": "string",
+            "description": "44 posições — [0-9]{6}[A-Z0-9]{12}[0-9]{26} (NT 2026.004)"
+          },
+          "ide": {
+            "type": "object",
+            "properties": {
+              "numero": {
+                "type": "string"
+              },
+              "serie": {
+                "type": "string"
+              },
+              "dhEmiDate": {
+                "type": "string",
+                "format": "date"
+              },
+              "tpNF": {
+                "type": "string"
+              },
+              "natOp": {
+                "type": "string"
+              },
+              "mod": {
+                "type": "string"
+              }
+            }
+          },
+          "emit": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string"
+              },
+              "cpf": {
+                "type": "string"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "ie": {
+                "type": "string"
+              }
+            }
+          },
+          "dest": {
+            "type": "object",
+            "properties": {
+              "cnpj": {
+                "type": "string"
+              },
+              "cpf": {
+                "type": "string"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "ie": {
+                "type": "string"
+              }
+            }
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nItem": {
+                  "type": "integer"
+                },
+                "cProd": {
+                  "type": "string"
+                },
+                "cEAN": {
+                  "type": "string"
+                },
+                "xProd": {
+                  "type": "string"
+                },
+                "ncm": {
+                  "type": "string"
+                },
+                "cfop": {
+                  "type": "string"
+                },
+                "uCom": {
+                  "type": "string"
+                },
+                "qCom": {
+                  "type": "string"
+                },
+                "vUnComStr": {
+                  "type": "string"
+                },
+                "vProdCents": {
+                  "type": "integer"
+                },
+                "vDescCents": {
+                  "type": "integer"
+                },
+                "indTot": {
+                  "type": "string",
+                  "enum": [
+                    "0",
+                    "1"
+                  ],
+                  "description": "0 = nao compoe o total (sera ignorado pelo import)"
+                }
+              }
+            }
+          },
+          "totais": {
+            "type": "object",
+            "properties": {
+              "vProdCents": {
+                "type": "integer"
+              },
+              "vDescCents": {
+                "type": "integer"
+              },
+              "vFreteCents": {
+                "type": "integer"
+              },
+              "vSegCents": {
+                "type": "integer"
+              },
+              "vOutroCents": {
+                "type": "integer"
+              },
+              "vIPICents": {
+                "type": "integer"
+              },
+              "vSTCents": {
+                "type": "integer"
+              },
+              "vICMSCents": {
+                "type": "integer"
+              },
+              "vNFCents": {
+                "type": "integer"
+              }
+            }
+          },
+          "protocolo": {
+            "type": "object",
+            "properties": {
+              "cStat": {
+                "type": "string"
+              },
+              "nProt": {
+                "type": "string"
+              },
+              "dhRecbtoDate": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          },
+          "alreadyImported": {
+            "type": "boolean",
+            "description": "true quando ja existe conta a pagar VIVA com documentNumber = chaveAcesso nesta unidade (F-PREV-3 → b)"
+          },
+          "existingPayableId": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "CreatePayableInput": {
         "type": "object",
         "required": [
@@ -10724,6 +10918,65 @@
         "responses": {
           "201": {
             "description": "object with payable (the note liability) and ignoredItems (lines with indTot 0, which do not compose the note total and are neither costed nor received)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/nfe/preview": {
+      "post": {
+        "summary": "Dry-run parse of an NF-e XML (preview before import; nothing is written)",
+        "description": "Multipart upload of an NF-e 4.00 XML. Runs the SAME pure parser the purchase import and the sale reconciliation use, and returns the note summary (chave de acesso, ide, emitente/destinatario, itens with indTot, totais in integer cents, protocolo) plus alreadyImported (a live payable with documentNumber = chave already exists in this unit). Rejects exactly what the import rejects (DTD, modelo != 55, homologacao, cStat outside 100/150, invalid chave). Writes nothing, emits no audit event. BE-INCR-NFE-PREVIEW.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "file"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "the NF-e XML"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "the parsed note summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NfePreview"
+                }
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

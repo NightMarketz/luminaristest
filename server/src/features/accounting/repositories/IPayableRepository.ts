@@ -55,6 +55,14 @@ export interface IPayableRepository {
 
   findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Payable | null>;
 
+  /** BE-INCR-NFE-PREVIEW (F-PREV-3 → b): título VIVO desta unidade com este `documentNumber` (a chave de
+   *  acesso, no caso da NF-e). Título cancelado tem o número renomeado (`deleted:<id>:<doc>`), logo não casa. */
+  findByDocumentNumber(
+    scope: AccountingScope,
+    documentNumber: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Payable | null>;
+
   findByIdWithPayments(
     scope: AccountingScope,
     id: string,

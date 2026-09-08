@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
+import { NFE_CHAVE_REGEX } from '../../../lib/cnpj';
 
 /**
  * NfeDto — request schemas for fiscal NF-e ingestion (BE-INCR-NFE): `ImportNfePurchaseSchema` (A2,
@@ -88,3 +89,98 @@ export const ImportNfeSaleSchema = z
   .strict();
 
 export type ImportNfeSaleInput = z.infer<typeof ImportNfeSaleSchema>;
+
+// ── BE-INCR-NFE-PREVIEW (rodada 2a; F-FENFE-1 → b) ─────────────────────────────────────────────────
+
+/** @openapi
+ * components:
+ *   schemas:
+ *     PreviewNfeInput:
+ *       type: object
+ *       required: [unitId]
+ *       properties:
+ *         unitId: { type: string }
+ *     NfePreview:
+ *       type: object
+ *       description: "Dry-run do parser da NF-e (BE-INCR-NFE-PREVIEW): espelho integral do ParsedNfe menos protocolo.chNFe (redundante com chaveAcesso), mais o indicador de idempotência. Dinheiro em centavos INTEIROS (number). Nada é escrito."
+ *       required: [chaveAcesso, ide, emit, dest, itens, totais, protocolo, alreadyImported, existingPayableId]
+ *       properties:
+ *         chaveAcesso:       { type: string, description: "44 posições — [0-9]{6}[A-Z0-9]{12}[0-9]{26} (NT 2026.004)" }
+ *         ide:               { type: object, properties: { numero: { type: string }, serie: { type: string }, dhEmiDate: { type: string, format: date }, tpNF: { type: string }, natOp: { type: string }, mod: { type: string } } }
+ *         emit:              { type: object, properties: { cnpj: { type: string }, cpf: { type: string }, nome: { type: string }, ie: { type: string } } }
+ *         dest:              { type: object, properties: { cnpj: { type: string }, cpf: { type: string }, nome: { type: string }, ie: { type: string } } }
+ *         itens:             { type: array, items: { type: object, properties: { nItem: { type: integer }, cProd: { type: string }, cEAN: { type: string }, xProd: { type: string }, ncm: { type: string }, cfop: { type: string }, uCom: { type: string }, qCom: { type: string }, vUnComStr: { type: string }, vProdCents: { type: integer }, vDescCents: { type: integer }, indTot: { type: string, enum: ["0", "1"], description: "0 = nao compoe o total (sera ignorado pelo import)" } } } }
+ *         totais:            { type: object, properties: { vProdCents: { type: integer }, vDescCents: { type: integer }, vFreteCents: { type: integer }, vSegCents: { type: integer }, vOutroCents: { type: integer }, vIPICents: { type: integer }, vSTCents: { type: integer }, vICMSCents: { type: integer }, vNFCents: { type: integer } } }
+ *         protocolo:         { type: object, properties: { cStat: { type: string }, nProt: { type: string }, dhRecbtoDate: { type: string, format: date } } }
+ *         alreadyImported:   { type: boolean, description: "true quando ja existe conta a pagar VIVA com documentNumber = chaveAcesso nesta unidade (F-PREV-3 → b)" }
+ *         existingPayableId: { type: string, nullable: true }
+ */
+export const PreviewNfeSchema = z.object({ unitId: z.string().min(1) }).strict();
+export type PreviewNfeInput = z.infer<typeof PreviewNfeSchema>;
+
+const centsInt = z.number().int().nonnegative();
+const nfeParty = z
+  .object({
+    cnpj: z.string().optional(),
+    cpf: z.string().optional(),
+    nome: z.string().optional(),
+    ie: z.string().optional(),
+  })
+  .strict();
+
+/** Contrato de SAÍDA do preview — materializado em Zod para o snapshot de shape e para o teste de
+ *  contrato (o `ParsedNfe` dos fixtures tem de passar aqui). `.strict()` em todo nível. */
+export const NfePreviewSchema = z
+  .object({
+    chaveAcesso: z.string().regex(NFE_CHAVE_REGEX),
+    ide: z
+      .object({
+        numero: z.string(),
+        serie: z.string(),
+        dhEmiDate: z.string(),
+        tpNF: z.string(),
+        natOp: z.string(),
+        mod: z.string(),
+      })
+      .strict(),
+    emit: nfeParty,
+    dest: nfeParty,
+    itens: z
+      .array(
+        z
+          .object({
+            nItem: z.number().int().positive(),
+            cProd: z.string(),
+            cEAN: z.string(),
+            xProd: z.string(),
+            ncm: z.string(),
+            cfop: z.string(),
+            uCom: z.string(),
+            qCom: z.string(),
+            vUnComStr: z.string(),
+            vProdCents: centsInt,
+            vDescCents: centsInt,
+            indTot: z.enum(['0', '1']),
+          })
+          .strict(),
+      )
+      .min(1),
+    totais: z
+      .object({
+        vProdCents: centsInt,
+        vDescCents: centsInt,
+        vFreteCents: centsInt,
+        vSegCents: centsInt,
+        vOutroCents: centsInt,
+        vIPICents: centsInt,
+        vSTCents: centsInt,
+        vICMSCents: centsInt,
+        vNFCents: centsInt,
+      })
+      .strict(),
+    protocolo: z.object({ cStat: z.string(), nProt: z.string(), dhRecbtoDate: z.string() }).strict(),
+    alreadyImported: z.boolean(),
+    existingPayableId: z.string().nullable(),
+  })
+  .strict();
+export type NfePreview = z.infer<typeof NfePreviewSchema>;

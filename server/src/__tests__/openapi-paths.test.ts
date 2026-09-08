@@ -44,7 +44,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (BE-INCR-SPED-ECF-FASE3, esqueleto — Fork 1→(b) rota dedicada): POST
 //    /api/accounting/sped/ecf/real/generate (143 → 144).
 // +2 (BE-INCR-NFE, B-2): POST /api/nfe/purchase, POST /api/nfe/sale (144 → 146).
-const BASELINE = 146;
+// +1 (BE-INCR-NFE-PREVIEW, rodada 2a — F-FENFE-1 → b): POST /api/nfe/preview (146 → 147).
+const BASELINE = 147;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

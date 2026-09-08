@@ -3091,6 +3091,32 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
+ *   /api/nfe/preview:
+ *     post:
+ *       summary: Dry-run parse of an NF-e XML (preview before import; nothing is written)
+ *       description: 'Multipart upload of an NF-e 4.00 XML. Runs the SAME pure parser the purchase import and the sale reconciliation use, and returns the note summary (chave de acesso, ide, emitente/destinatario, itens with indTot, totais in integer cents, protocolo) plus alreadyImported (a live payable with documentNumber = chave already exists in this unit). Rejects exactly what the import rejects (DTD, modelo != 55, homologacao, cStat outside 100/150, invalid chave). Writes nothing, emits no audit event. BE-INCR-NFE-PREVIEW.'
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               required: [unitId, file]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 file:   { type: string, format: binary, description: 'the NF-e XML' }
+ *       responses:
+ *         '200':
+ *           description: 'the parsed note summary'
+ *           content:
+ *             application/json:
+ *               schema: { $ref: '#/components/schemas/NfePreview' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
  *   /api/nfe/sale:
  *     post:
  *       summary: Cross a sale NF-e with the already-posted sale and attach provenance
