@@ -124,7 +124,14 @@ export class CashForecastReportService {
   /**
    * Projeção de caixa a partir de `asOf` (date-only `YYYY-MM-DD`, default hoje quando omitido).
    * @throws ForbiddenError se a policy negar leitura de AP OU AR (F-CF5→a: exige as DUAS — falha
-   *   fechada, nunca serve um relatório "incompleto" sem aviso).
+   *   fechada, nunca serve um relatório "incompleto" sem aviso). Este é o ÚNICO gate que o contrato
+   *   F-CF5→a documenta; ele roda ANTES de qualquer leitura (payables/receivables/razão).
+   * @throws ForbiddenError também herdado de `computeOpeningBalance` → `AccountingReportService.balancesAsOf`
+   *   → `policy.canRead(scope)` (AccountingReportService.ts) — um GATE DE POLICY DISTINTO, não coberto
+   *   pelo AND de F-CF5→a (achado MÉDIO do review da PR #298: hoje `canRead`/`canReadPayable`/
+   *   `canReadReceivable` nascem idênticos em `AccountingPolicy`, então este 3º gate é inerte na
+   *   prática — mas se o RBAC granularizar um dia, um perfil com AP+AR liberados e razão negado
+   *   ainda cai aqui com a mensagem de `balancesAsOf`, não a deste método).
    * @throws ValidationError se `asOf` não for uma data real YYYY-MM-DD.
    */
   async forecast(scope: AccountingScope, params: { asOf?: string }): Promise<CashForecastReport> {
