@@ -68,6 +68,12 @@ export interface IAccountingPolicy {
   /** Can approve a submitted journal entry (checker action, ADR-INCR-APPROVAL). */
   canApproveEntry(scope: AccountingScope): boolean;
 
+  /** Can trigger a re-scan of the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7). */
+  canManageReconcilePending(scope: AccountingScope): boolean;
+
+  /** Can list/read the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7). */
+  canReadReconcilePending(scope: AccountingScope): boolean;
+
   /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this
    * scope (ADR-INCR-APPROVAL F3, re-ratified fork-a-fork 2026-07-14). Today it is OFF while

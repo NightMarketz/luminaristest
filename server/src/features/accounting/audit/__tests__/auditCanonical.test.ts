@@ -189,3 +189,26 @@ describe('buildAuditCanonicalTuple + hashAuditCanonical', () => {
     expect(GENESIS_HASH).toMatch(/^0{64}$/);
   });
 });
+
+// BE-INCR-RECONCILE-PENDING (nó C7, Fork 4-a) — teste-guarda de PII no MESMO PR que introduz o
+// eventType (memória `accounting-audit-allowlist-guards`): nenhum campo do item de ORIGEM
+// (nome de cliente/fornecedor, reasonDetail livre) sobrevive à canonicalização, mesmo que o
+// chamador passe algo a mais por engano.
+it('keeps only allowlisted keys for reconcile_pending.rescanned — drops reasonDetail/PII-shaped extras', () => {
+  const result = canonicalizeAuditPayload('reconcile_pending.rescanned', {
+    pendingId: 'rpi-1',
+    sourceType: 'sale.finalized',
+    outcome: 'resolved',
+    // non-allowlisted — origin-item PII / free-text error message must be dropped
+    reasonDetail: 'Cliente João da Silva — período fechado',
+    customerName: 'João da Silva',
+    sourceId: 'sale-42',
+    secret: 'drop-me',
+  });
+  const parsed = JSON.parse(result);
+  expect(parsed).toEqual({
+    outcome: 'resolved',
+    pendingId: 'rpi-1',
+    sourceType: 'sale.finalized',
+  });
+});

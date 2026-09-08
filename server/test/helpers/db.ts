@@ -61,6 +61,7 @@ export async function resetDb(): Promise<void> {
   await prisma.customerPackageBalance.deleteMany();
   await prisma.packageBalanceMovement.deleteMany();
   await prisma.accountingBinding.deleteMany();
+  await prisma.reconcilePendingItem.deleteMany();
 
   // Accounting — now safe: their own children are gone.
   await prisma.posting.deleteMany();

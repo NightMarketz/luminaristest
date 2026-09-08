@@ -88,7 +88,25 @@ describe('AccountingSyncScheduler', () => {
       expect(log.warn.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
     });
 
-    describe('alert webhook (F-W2C-2: same blocked>0 || failed>0 criterion as the warn branch)', () => {
+    it('includes pendingWriteFailed in the complete summary and logs at warn when pendingWriteFailed>0 even with blocked=0 and failed=0 (pós-review achado 4)', async () => {
+      const { scheduler, log } = build(
+        jest.fn(async () =>
+          summary({ total: 3, synced: 2, idempotentHits: 0, failed: 0, blocked: 0, pendingWriteFailed: 1 }),
+        ),
+      );
+      await scheduler.runOnce();
+
+      expect(log.info.mock.calls.find((c) => c[1]?.event === 'complete')).toBeUndefined();
+      const complete = log.warn.mock.calls.find((c) => c[1]?.event === 'complete')?.[1];
+      expect(complete).toMatchObject({
+        event: 'complete',
+        blocked: 0,
+        failed: 0,
+        pendingWriteFailed: 1,
+      });
+    });
+
+    describe('alert webhook (F-W2C-2: same blocked>0 || failed>0 criterion as the warn branch, plus pendingWriteFailed>0)', () => {
       it('fires the webhook with the same completeContext payload when blocked>0', async () => {
         const { scheduler } = build(
           jest.fn(async () => summary({ total: 3, synced: 1, idempotentHits: 0, failed: 0, blocked: 2 })),
@@ -118,7 +136,19 @@ describe('AccountingSyncScheduler', () => {
         expect(sendAlertWebhook).toHaveBeenCalledWith(expect.objectContaining({ failed: 1 }));
       });
 
-      it('does NOT fire the webhook when blocked=0 and failed=0', async () => {
+      it('fires the webhook when pendingWriteFailed>0 (pós-review achado 4)', async () => {
+        const { scheduler } = build(
+          jest.fn(async () =>
+            summary({ total: 2, synced: 2, idempotentHits: 0, failed: 0, blocked: 0, pendingWriteFailed: 1 }),
+          ),
+        );
+        await scheduler.runOnce();
+
+        expect(sendAlertWebhook).toHaveBeenCalledTimes(1);
+        expect(sendAlertWebhook).toHaveBeenCalledWith(expect.objectContaining({ pendingWriteFailed: 1 }));
+      });
+
+      it('does NOT fire the webhook when blocked=0, failed=0 and pendingWriteFailed=0', async () => {
         const { scheduler } = build();
         await scheduler.runOnce();
         expect(sendAlertWebhook).not.toHaveBeenCalled();

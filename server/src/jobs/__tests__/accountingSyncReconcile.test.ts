@@ -779,20 +779,19 @@ describe('withReconcileWatermark', () => {
     expect(RECONCILE_WATERMARK_JOB).toBe('accounting_sync_reconcile');
   });
 
-  // F-W2F-4 (Cédula de decisão 2026-08-31, seção B — ratificada 2026-09-01: "Ratifico o F-W2F-4 na
-  // opção 1, dispara instrumentação e correção"; ver F-W2F-3-DOSSIE.md para a evidência completa).
-  // Scan operator confirmado em DynamicTableRepository.findRowsByFieldValueSince
-  // (server/src/features/dynamicTables/repositories/DynamicTableRepository.ts:370):
-  // `"updatedAt" >= ${updatedAtFrom}` — logo um item permanece na janela do PRÓXIMO scan sse
-  // `watermarkAt_novo <= item.updatedAt`. Opção 1 ratificada: a marca persistida deve ser
-  // `min(runStartAt - OVERLAP_MS, updatedAt da falha não resolvida mais antiga da rodada)`.
+  // F-W2F-4 (Cédula de decisão 2026-08-31, seção B — ratificada 2026-09-01) foi SUPERSEDED por
+  // F-W2F-3/5 em 2026-09-03 (CEDULA-DECISAO-2026-09-03-modulos.md, linha F-W2F-3/F-W2F-5,
+  // RATIFICADO (b); EMENDA de CEDULA-DECISAO-2026-08-31.md §B²: "Contra a recomendação (mecânica
+  // do F-W2F-4)"). BE-INCR-RECONCILE-PENDING-brief.md "Fork 1" documenta a reescrita: a asserção
+  // de freeze abaixo (watermark <= updatedAt do item falho) DEIXA DE VALER sob a nova semântica —
+  // a marca agora avança SEMPRE (Fork 1), e a proteção do item falho passa a ser a captura na
+  // tabela de pendências via `reportPending` (Fork 2-b), não mais a retenção do watermark
+  // principal. Par vermelho→verde no MESMO PR (memória `protocolo-conserto-de-gate`): este teste
+  // reescrito prova o comportamento NOVO, não mais o antigo.
   it(
-    'F-W2F-4: mantém um item fault-isolated que falhou DENTRO da janela do próximo scan ' +
-      '(watermark novo <= updatedAt do item falho), em vez de avançar por cima dele',
+    'F-W2F-3/5 (supersedes F-W2F-4): a marca AVANÇA por cima de um item fault-isolated ' +
+      '— a proteção agora é a captura em reconcile_pending_items via reportPending, não o freeze',
     async () => {
-      // T: updatedAt do item que falha isolado dentro do pass — deliberadamente bem mais antigo
-      // que runStartAt - OVERLAP_MS, para que a marca hoje sempre calculada (runStartAt - OVERLAP_MS)
-      // fique inequivocamente à frente de T, não por coincidência de timing.
       const failedItemUpdatedAt = new Date('2026-08-30T00:00:00.000Z');
       const runStartAt = new Date('2026-08-30T12:00:00.000Z');
 
@@ -807,6 +806,7 @@ describe('withReconcileWatermark', () => {
       // runPasses REAL: um dos 8 passes (reconcileCrmReceivables) com deps stub — exatamente 1 item
       // falha isolado (throw dentro do try/catch do pass — summary.failed++, continue), os demais
       // passam. withReconcileWatermark recebe este runPasses diretamente, como em produção.
+      const captured: Array<{ sourceId: string; reasonCode: string }> = [];
       const crmDeps: CrmReceivableReconcileDeps = {
         listWonOpportunities: async () => [
           opp({ opportunityId: 'opp-failed', occurredAt: failedItemUpdatedAt.toISOString() }),
@@ -818,6 +818,9 @@ describe('withReconcileWatermark', () => {
           }
           return { outcome: 'created' as const, receivableId: 'recv-ok' };
         },
+        reportPending: async (item) => {
+          captured.push({ sourceId: item.sourceId, reasonCode: item.reasonCode });
+        },
       };
       const runPasses = (_updatedAtFrom: Date) => reconcileCrmReceivables(crmDeps);
 
@@ -826,12 +829,70 @@ describe('withReconcileWatermark', () => {
       // Sanity — a lacuna só existe porque o fault isolation funciona: a rodada inteira NÃO lança
       // (senão o GUARD acima já protegeria), o item falho é só contado, e o batch continua.
       expect(summary.failed).toBe(1);
+      expect(summary.pendingWriteFailed ?? 0).toBe(0);
 
-      // Comportamento correto (opção 1 ratificada): a marca persistida não pode ultrapassar o
-      // updatedAt do item falho — do contrário `updatedAt >= watermarkAt` o exclui permanentemente
-      // do próximo scan, sem nenhum caminho de re-varredura (F-W2F-3-DOSSIE.md, seção c).
+      // Comportamento NOVO (Fork 1, "Substitui"): a marca avança para runStartAt - OVERLAP_MS
+      // INCONDICIONALMENTE — ultrapassa o updatedAt do item falho, ao contrário do F-W2F-4 antigo.
       expect(persistedWatermark).not.toBeNull();
-      expect(persistedWatermark!.getTime()).toBeLessThanOrEqual(failedItemUpdatedAt.getTime());
+      expect(persistedWatermark).toEqual(new Date(runStartAt.getTime() - OVERLAP_MS));
+      expect(persistedWatermark!.getTime()).toBeGreaterThan(failedItemUpdatedAt.getTime());
+
+      // A proteção real (Fork 2-b): o item falho foi capturado em reconcile_pending_items.
+      expect(captured).toEqual([{ sourceId: 'opp-failed', reasonCode: 'FAILED' }]);
+    },
+  );
+
+  // FORK 5-b (RATIFICADO via delegação, CEDULA-DECISAO-2026-09-07-forks-sdd.md): quando a
+  // ESCRITA da pendência falha (não o item em si), o loop da passada continua (isolamento por
+  // item preservado — "Isolated failure must NOT stop the batch"), mas `pendingWriteFailed`
+  // conta o evento e `withReconcileWatermark` retém a marca — a única proteção que resta quando
+  // nem o ledger nem a tabela de pendências têm rastro do item.
+  it(
+    'FORK 5-b: reportPending que lança NÃO derruba a rodada (loop continua) e ' +
+      'RETÉM o watermark via pendingWriteFailed — nunca perde o item em silêncio (opção (c) rejeitada)',
+    async () => {
+      const runStartAt = new Date('2026-08-30T12:00:00.000Z');
+      let persistedWatermark: Date | null = null;
+      const deps = buildDeps({
+        now: jest.fn(() => runStartAt),
+        setWatermark: jest.fn(async (watermarkAt: Date) => {
+          persistedWatermark = watermarkAt;
+        }),
+      });
+
+      const crmDeps: CrmReceivableReconcileDeps = {
+        listWonOpportunities: async () => [
+          opp({ opportunityId: 'opp-failed', occurredAt: '2026-08-30T00:00:00.000Z' }),
+          opp({ opportunityId: 'opp-ok' }),
+        ],
+        book: async (_scope, fact) => {
+          if (fact.opportunityId === 'opp-failed') {
+            throw new Error('reconcile item boom — falha isolada simulada');
+          }
+          return { outcome: 'created' as const, receivableId: 'recv-ok' };
+        },
+        // The CAPTURE write itself blows up — FORK 5's exact scenario.
+        reportPending: async () => {
+          throw new Error('reconcile_pending_items write down — infra failure simulada');
+        },
+      };
+      const runPasses = (_updatedAtFrom: Date) => reconcileCrmReceivables(crmDeps);
+
+      const summary = await withReconcileWatermark(deps, runPasses);
+
+      // Isolation preserved: the batch still processed BOTH items (opp-ok still synced) — a
+      // pendingWriteFailed does not abort the round (rejects Fork 5-a).
+      expect(summary.total).toBe(2);
+      expect(summary.synced).toBe(1);
+      expect(summary.failed).toBe(1);
+      expect(summary.pendingWriteFailed).toBe(1);
+
+      // Watermark held back — the one remaining net when NOTHING recorded the failed item.
+      // buildDeps() defaults getWatermark to `null` (no row ever persisted), so the OLD value read
+      // by withReconcileWatermark was RECONCILE_WATERMARK_EPOCH; holding means persisting that
+      // same value again, NOT advancing to runStartAt - OVERLAP_MS.
+      expect(persistedWatermark).toEqual(RECONCILE_WATERMARK_EPOCH);
+      expect(persistedWatermark).not.toEqual(new Date(runStartAt.getTime() - OVERLAP_MS));
     },
   );
 });

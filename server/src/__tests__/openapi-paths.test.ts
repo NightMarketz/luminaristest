@@ -45,7 +45,9 @@ const { options } = require('../../scripts/generate-openapi');
 //    /api/accounting/sped/ecf/real/generate (143 → 144).
 // +2 (BE-INCR-NFE, B-2): POST /api/nfe/purchase, POST /api/nfe/sale (144 → 146).
 // +1 (BE-INCR-NFE-PREVIEW, rodada 2a — F-FENFE-1 → b): POST /api/nfe/preview (146 → 147).
-const BASELINE = 147;
+// +2 (BE-INCR-RECONCILE-PENDING, nó C7, Fork 3-b): GET /api/reconcile-pending,
+//    POST /api/reconcile-pending/rescan (147 → 149).
+const BASELINE = 149;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

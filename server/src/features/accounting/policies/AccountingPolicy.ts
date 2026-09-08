@@ -86,6 +86,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  // BE-INCR-RECONCILE-PENDING (nó C7) — mesmo par manage/read de todo recurso do módulo.
+  canManageReconcilePending(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
+  canReadReconcilePending(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto
   // ownerUserId === actorUserId (single-user → staging usável), ativa sozinha quando um delegado
   // opera os livros do dono (ownerUserId !== actorUserId, via membership futuro). Ver

@@ -25,6 +25,7 @@ import entryApprovalRoutes from './entryApprovals';
 import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
 import packageBalanceRoutes from './packageBalances';
+import reconcilePendingRoutes from './reconcilePending';
 
 const router = Router();
 
@@ -74,6 +75,7 @@ router.use('/entry-approvals', entryApprovalRoutes);
 router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
 router.use('/package-balances', packageBalanceRoutes);
+router.use('/reconcile-pending', reconcilePendingRoutes);
 
 export { router };
 

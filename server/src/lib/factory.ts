@@ -28,6 +28,7 @@ import { ReceivableRepository } from '../features/accounting/repositories/Receiv
 import { DimensionRepository } from '../features/accounting/repositories/DimensionRepository';
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
+import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
 // Features - Policies
@@ -91,6 +92,7 @@ import { InventoryService } from '../features/accounting/services/InventoryServi
 import { NfeImportService } from '../features/accounting/services/NfeImportService';
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
 import { NfePreviewService } from '../features/accounting/services/NfePreviewService';
+import { ReconcilePendingService } from '../features/accounting/services/ReconcilePendingService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -164,6 +166,7 @@ import type { IReceivableRepository } from '../features/accounting/repositories/
 import type { IDimensionRepository } from '../features/accounting/repositories/IDimensionRepository';
 import type { ICounterpartyRepository } from '../features/accounting/repositories/ICounterpartyRepository';
 import type { IInventoryRepository } from '../features/accounting/repositories/IInventoryRepository';
+import type { IReconcilePendingRepository } from '../features/accounting/repositories/IReconcilePendingRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
@@ -308,6 +311,7 @@ export class ApplicationFactory {
     dimension: IDimensionRepository;
     counterparty: ICounterpartyRepository;
     inventory: IInventoryRepository;
+    reconcilePending: IReconcilePendingRepository;
   };
 
   private readonly policies: {
@@ -372,6 +376,7 @@ export class ApplicationFactory {
     inventory: InventoryService;
     nfeImport: NfeImportService;
     nfeSaleReconciliation: NfeSaleReconciliationService;
+    reconcilePending: ReconcilePendingService;
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
@@ -416,6 +421,7 @@ export class ApplicationFactory {
       dimension: new DimensionRepository(),
       counterparty: new CounterpartyRepository(),
       inventory: new InventoryRepository(),
+      reconcilePending: new ReconcilePendingRepository(),
     };
 
     // Policies
@@ -783,6 +789,14 @@ export class ApplicationFactory {
       ),
       // BE-INCR-NFE-PREVIEW: dry-run do parser + indicador de idempotência (F-PREV-3 → b); sem escrita.
       nfePreview: new NfePreviewService(this.repositories.payable, this.policies.accounting),
+      // BE-INCR-RECONCILE-PENDING (nó C7, Fork 3-b): HTTP-facing half only (list/rescan). The
+      // WRITE path (reportPending/reportResolved) is wired directly in accountingSyncReconcile.job.ts,
+      // NOT through this Service — see that file's comment on why (system actor, no Policy check).
+      reconcilePending: new ReconcilePendingService(
+        this.repositories.reconcilePending,
+        this.policies.accounting,
+        auditService,
+      ),
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -936,6 +950,7 @@ export class ApplicationFactory {
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>
     this.services.nfeSaleReconciliation;
   public getNfePreviewService = (): NfePreviewService => this.services.nfePreview;
+  public getReconcilePendingService = (): ReconcilePendingService => this.services.reconcilePending;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
