@@ -58,7 +58,8 @@
     por `targetId` — só `append`/`verifyAuditChain`, verificado em
     `server/src/features/accounting/services/AuditService.ts`) ou fazer parsing frágil do
     `originalName` (`ecd_${cnpj}_${year}.txt`) — não é contrato, é nome de exibição.
-  - `server/src/features/accounting/dtos/SpedEcdDto.ts:64-112` (`SignerSchema`) — campos do J930 são
+  - `server/src/features/accounting/dtos/SpedEcdDto.ts:74-88` (`SignerSchema`) — **[CORREÇÃO pós-review:
+    a citação anterior (64-112) apontava demais — o bloco do schema é 74-88]** campos do J930 são
     input transiente do DTO de geração, nunca persistidos (confirma ADR-INCR-SPED-ECD D3).
   - `server/src/lib/sped.ts`/`ecf.ts`/`ecfReal.ts` — só **serializers** (escrevem `.txt`); **achado
     novo: não existe nenhum parser SPED de leitura no repo**
@@ -134,10 +135,16 @@ não listado item a item).
    referencia os dois jobs de origem. Testável: `prisma migrate diff` mostra só tabelas novas, zero
    alteração em `accounting_data_exchange_jobs`.
 5. **[direto]** `AccountingDeliveryLog.ecdJobId`/`ecfJobId` são **FK reais com `onDelete: Restrict`**
-   (ACC-CD-6/F-CD4-a) — **precedente novo no schema**: nenhuma FK `Restrict` existe hoje
-   (`grep -n "onDelete: Restrict" server/prisma/schema.prisma` não casa nada; todas as FKs atuais são
-   `Cascade`). Testável: tentar apagar um `AccountingDataExchangeJob` referenciado por um
-   `AccountingDeliveryLog` falha por violação de FK — hoje não há nenhum caminho de hard-delete do job
+   (ACC-CD-6/F-CD4-a) — **[CORREÇÃO pós-review]** não é precedente inédito no schema: `grep -n
+   "onDelete: Restrict" server/prisma/schema.prisma` casa **2** FKs já existentes,
+   `Payable.counterparty` (`schema.prisma:884`) e `Receivable.counterparty` (`schema.prisma:963`),
+   ambas com o mesmo comentário de justificativa (`F-NN2(a): SET NULL é irrepresentável em coluna NOT
+   NULL; archive é soft, RESTRICT nunca dispara no fluxo real`) — a diferença aqui é que, ao contrário
+   de `Counterparty` (arquivamento soft, `RESTRICT` nunca dispara na prática), o alvo
+   `AccountingDataExchangeJob` **não tem** hoje nenhum caminho de soft-delete/archive — então este
+   `RESTRICT` é o primeiro que pode efetivamente disparar em produção. Testável: tentar apagar um
+   `AccountingDataExchangeJob` referenciado por um `AccountingDeliveryLog` falha por violação de FK —
+   hoje não há nenhum caminho de hard-delete do job
    (`grep -rn "accountingDataExchangeJob.delete" server/src` vazio), então o teste é preventivo (gate 5
    do parecer), não correção de bug vivo.
 6. **[cond:Fork Novo A]** `buildDeliveryPackage`/`confirmDelivery` recebem `year` **explícito no DTO de
@@ -227,6 +234,16 @@ não listado item a item).
     service novo.
 22. **[direto]** i18n: **não se aplica** — backend-only, sem tela nova (mesmo argumento do BRIEF irmão
     da ECF Fase 3).
+23. **[direto, ACRESCENTADO pós-review]** Gate de contrato da fronteira — snapshot de shape dos DTOs
+    Zod: `server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts` descobre **todo**
+    arquivo de `dtos/` e todo export que é `z.ZodType`, então `AccountingContactDto.ts`/
+    `AccountingDeliveryDto.ts` novos (item 2/6) **entram automaticamente** no escopo do gate — sem
+    ação extra de registro. O teste reprova até o formato novo entrar em
+    `__tests__/__dto-shapes__.json`; regenerar no MESMO PR com `UPDATE_DTO_SNAPSHOT=1 npx jest
+    --selectProjects unit dtoShapeSnapshot` e commitar o diff do JSON junto (o diff É o registro da
+    mudança de contrato, mesma disciplina de toda fronteira DTO existente). Testável: rodar o teste sem
+    regenerar → falha nomeando os schemas novos ausentes do snapshot; regenerar → verde, diff do JSON
+    visível no PR.
 
 ---
 
