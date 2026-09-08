@@ -108,3 +108,28 @@ inbox/outbox. Não entram em nenhuma rodada sem gatilho nomeado.
    (planejadas e mergeadas no mesmo dia, #259) e da NF-e (integração → review → correção → PASS no mesmo dia).
 2. Se o dono quer as rodadas 4 e 5 antes da 3 (telas antes de migração) — troquei por F-M6, é reversível.
 3. Se X9 se funde em X7 — depende de D4.
+
+## 5. Estado das rodadas — fold 2026-09-07
+
+> Cada linha é fato verificado por `git merge-base --is-ancestor <sha> origin/main` no momento deste
+> fold (comandos no corpo do PR) — nunca por leitura de doc. Passo do ciclo §0: S/R/I/V/M/F (ADR
+> substitui S quando a frente é nova).
+
+| Rodada | Nó | Passo concluído | Falta | Próximo gatilho |
+|---|---|---|---|---|
+| **1** | X6b `BE-INCR-CNPJ-ALFA` | **S ✅ #272 `a940b702`** (BRIEF) e **I ✅ #280 `76c8defb`** (feature) — ambos ancestrais verificados de `origin/main`. Conduzida por outra sessão. | R (dono não ratificou fork nomeado neste fold), V/M/F conforme o ciclo já tenha rodado na outra sessão — este fold não afirma além do `merge-base` acima | — (fora do escopo deste fold) |
+| **2a** | `BE-INCR-NFE-PREVIEW` | **S ✅ #281 `89794a87`** (BRIEF) — ancestral verificado. Conduzida por outra sessão. | R/I/V/M/F | — (fora do escopo deste fold) |
+| **2b** | `FE-INCR-NFE` | **S ✅ #270 `d162cd4d`** (BRIEF, já em `main` antes da rodada 1) — ancestral verificado | I/V/M/F; depende do contrato da rodada 2a | *"implementa o FE-INCR-NFE"* |
+| **3** | C7 `BE-INCR-RECONCILE-PENDING` | **S ✅ #275 `1bbeb953`** (BRIEF) — ancestral verificado neste fold. Fork 1 FECHADO pela cédula (B substitui o freeze F-W2F-4) | **R do dono** nos 5 forks pendentes (1-R, 2, 3, 4, 5) → I → V → M → F | *"ratifico os forks do RECONCILE-PENDING"* |
+| **4a** | C4/C5 `FE-INCR-AUDIT-PROVENANCE` | **S ✅ #277 `aafe8a5e`** (BRIEF) — ancestral verificado | **R do dono** nos 7 forks F-FEAP-1..7 → I → V → M → F (lote paralelo com 4b, write-sets disjuntos) | *"ratifico os forks do AUDIT-PROVENANCE"* |
+| **4b** | X3 `FE-INCR-COMPLIANCE-2` | **S ✅ #279 `5daa8763`** (BRIEF) — ancestral verificado | **R do dono** nos 7 forks F-COMP2-1..7 → I → V → M → F | *"ratifico os forks do COMPLIANCE-2"* |
+| **5** | F4 `FE-INCR-CASH-FORECAST` | **S ✅ #278 `77c77553`** (BRIEF) — ancestral verificado; exige BE report read-only novo, sem migração | **R do dono** nos 7 forks F-CF1..F-CF7 → I → V → M → F | *"ratifico os forks do CASH-FORECAST"* |
+| **7** | C10 `P2 clínica estética` | I em curso — **PR #282 aberto em `draft`, estado OPEN, NÃO mergeado** (verificado via `gh pr view 282`; `merge-base` não se aplica a branch não integrada) | V → M → F; H3 espera H1 | *"me acompanha no H3"* (após M) |
+| **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR Proposed ✅ + parecer #276 `b7a62a73`** — ancestral verificado. Achado: CAS aritmético não expressável em Prisma como escrito → reformulado; 2 tie-outs a corrigir antes da implementação | **R do dono** nos 7 forks F-PS1..F-PS7 → S (BRIEF) → I → V → M → F | *"ratifico os forks do PARTIAL-SETTLEMENT"* |
+| **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Proposed ✅ + parecer #274 `239945d1`** — ancestral verificado | **R do dono** nos 8 forks F-CD1..F-CD8 → S → I → V → M → F; **CONDICIONADO** ao item 0 do pedido ao contador (F-Z0) | *"ratifico os forks do CONTADOR-DELIVERY"* |
+
+**Rodadas 1 e 2 (a e b):** conduzidas por outra sessão em paralelo a este fold (PRs #272, #280, #281,
+#270) — a tabela acima registra só o que `git merge-base --is-ancestor` provou neste worktree no momento
+do fold; não afirma R/V/M/F de nenhuma delas além disso, e uma nova leitura pode encontrá-las mais
+adiante. **Rodada 6** (`ADR-INCR-DFE-EMISSAO-PARCEIRO`) e as rodadas 10+ não entraram neste fold — sem
+artefato para verificar ainda.
