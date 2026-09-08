@@ -1983,6 +1983,253 @@
       ]
     }
   },
+  "ReconcilePendingDto.ts": {
+    "ReconcilePendingReasonCode": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "FAILED",
+        "ACCOUNTING_PERIOD_NOT_OPEN",
+        "MAX_CENTS_EXCEEDED"
+      ]
+    },
+    "ListReconcilePendingQueryDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasonCode": {
+          "type": "string",
+          "enum": [
+            "FAILED",
+            "ACCOUNTING_PERIOD_NOT_OPEN",
+            "MAX_CENTS_EXCEEDED"
+          ]
+        },
+        "includeResolved": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "RescanReconcilePendingDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ids": {
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ReconcilePendingItemViewDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sourceType": {
+          "type": "string"
+        },
+        "sourceId": {
+          "type": "string"
+        },
+        "reasonCode": {
+          "type": "string",
+          "enum": [
+            "FAILED",
+            "ACCOUNTING_PERIOD_NOT_OPEN",
+            "MAX_CENTS_EXCEEDED"
+          ]
+        },
+        "reasonDetail": {
+          "type": "string"
+        },
+        "firstSeenAt": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string"
+        },
+        "resolvedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "id",
+        "sourceType",
+        "sourceId",
+        "reasonCode",
+        "reasonDetail",
+        "firstSeenAt",
+        "lastSeenAt",
+        "resolvedAt",
+        "attempts"
+      ],
+      "additionalProperties": false
+    },
+    "ReconcilePendingListViewDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sourceType": {
+                "type": "string"
+              },
+              "sourceId": {
+                "type": "string"
+              },
+              "reasonCode": {
+                "type": "string",
+                "enum": [
+                  "FAILED",
+                  "ACCOUNTING_PERIOD_NOT_OPEN",
+                  "MAX_CENTS_EXCEEDED"
+                ]
+              },
+              "reasonDetail": {
+                "type": "string"
+              },
+              "firstSeenAt": {
+                "type": "string"
+              },
+              "lastSeenAt": {
+                "type": "string"
+              },
+              "resolvedAt": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "attempts": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "sourceType",
+              "sourceId",
+              "reasonCode",
+              "reasonDetail",
+              "firstSeenAt",
+              "lastSeenAt",
+              "resolvedAt",
+              "attempts"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "nextCursor"
+      ],
+      "additionalProperties": false
+    },
+    "RescanReconcilePendingResultDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "attempted": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "resolved": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "stillPending": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "attempted",
+        "resolved",
+        "stillPending"
+      ],
+      "additionalProperties": false
+    }
+  },
   "ReconciliationDto.ts": {
     "ImportBankStatementSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
