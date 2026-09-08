@@ -629,7 +629,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
             {provenanceDocs.map((link) => (
               <div
                 key={link.id}
-                className="space-y-1.5 rounded-xl border border-neutral-800 bg-neutral-950/40 p-3"
+                className="space-y-1.5 rounded-2xl border border-neutral-800 bg-neutral-950/40 p-3"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
