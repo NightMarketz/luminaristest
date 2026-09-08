@@ -565,6 +565,59 @@ export interface AgingQuery {
   asOf?: string;
 }
 
+// ── Cash Forecast (FE-INCR-CASH-FORECAST) — caixa PROJETADO, read-only, sobre os ──
+// vencimentos de AP/AR em aberto (CashForecastReportService, `docs/accounting/
+// FE-INCR-CASH-FORECAST-brief.md`, forks F-CF1..F-CF9 ratificados
+// `CEDULA-DECISAO-2026-09-07-forks-sdd.md`). NÃO é o DFC histórico (`getCashFlow`
+// acima, `year_to_date`) — namespace i18n distinto `cashForecast.*` (achado 10 do
+// BRIEF: `cashFlow` já é o DFC). Money is STRING cents (like BP/DRE/DFC/Aging), the
+// UI always parseInt's before formatCents. Types are LOCAL (never imported from the
+// backend). Horizonte FIXO em 90 dias (F-CF1→a) — sem parâmetro no request.
+
+export type CashForecastDocumentKind = 'payable' | 'receivable';
+
+export interface CashForecastDocumentLine {
+  id: string;
+  kind: CashForecastDocumentKind;
+  documentNumber: string | null;
+  /** date-only YYYY-MM-DD */
+  dueDate: string;
+  amountCents: string;
+}
+
+/** Uma linha DIÁRIA da projeção (F-CF3→a): periodStart === periodEnd. */
+export interface CashForecastLine {
+  /** date-only YYYY-MM-DD */
+  periodStart: string;
+  periodEnd: string;
+  inflowCents: string;
+  outflowCents: string;
+  /** inflowCents − outflowCents (pode ser negativo). */
+  netCents: string;
+  /** Saldo projetado acumulado até o fim deste dia (F-CF2→a: derivado do razão). */
+  projectedBalanceCents: string;
+  /** Drill por documento (F-CF9→a: sempre expandido). */
+  documents: CashForecastDocumentLine[];
+}
+
+export interface CashForecastReport {
+  unitId: string;
+  /** date-only YYYY-MM-DD — data-base da projeção. */
+  asOf: string;
+  /** Saldo de caixa na `asOf`, derivado do razão (F-CF2→a). */
+  openingBalanceCents: string;
+  lines: CashForecastLine[];
+  totalInflowCents: string;
+  totalOutflowCents: string;
+  totalNetCents: string;
+}
+
+export interface CashForecastQuery {
+  unitId: string;
+  /** YYYY-MM-DD; omitido = hoje no fuso do escopo (backend decide). */
+  asOf?: string;
+}
+
 // Multipart import bypasses apiClient (which forces application/json). The three helpers were moved to
 // `lib/services/multipart.ts` (FE-INCR-NFE, F-FENFE-7 → a) so `nfe.service.ts` reuses them instead of
 // re-inlining the technique; local names preserved for the call sites below.
@@ -956,6 +1009,15 @@ export const accountingService = {
   async getAging(query: AgingQuery): Promise<AgingReport> {
     const qs = buildQuery({ unitId: query.unitId, kind: query.kind, asOf: query.asOf });
     const res = await apiClient.get<ApiEnvelope<AgingReport>>(`/accounting/reports/aging${qs}`);
+    return res.data;
+  },
+
+  // ── Cash Forecast (FE-INCR-CASH-FORECAST) ────────────────────────────────────
+
+  /** Fluxo de caixa PROJETADO (horizonte fixo de 90 dias a partir de `asOf`) — read-only. */
+  async getCashForecast(query: CashForecastQuery): Promise<CashForecastReport> {
+    const qs = buildQuery({ unitId: query.unitId, asOf: query.asOf });
+    const res = await apiClient.get<ApiEnvelope<CashForecastReport>>(`/accounting/reports/cash-forecast${qs}`);
     return res.data;
   },
 

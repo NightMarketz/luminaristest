@@ -65,3 +65,38 @@ export function scopeDay(scope: { timeZone: string }, instant: string | Date = n
 export function scopeToday(scope: { timeZone: string }): string {
   return scopeDay(scope);
 }
+
+// ─── Dia-calendário UTC por componente (extraído de AgingReportService, item 2/3 do checklist
+// FE-INCR-CASH-FORECAST) — FONTE ÚNICA para qualquer código que precise comparar/enumerar dias-
+// calendário sem depender do fuso local. Usado por AgingReportService (faixas de atraso) e por
+// CashForecastReportService (janela diária da projeção). Nunca reimplementar localmente.
+
+/**
+ * Número do dia-calendário UTC (dias inteiros desde a época) de um instante, extraído POR
+ * COMPONENTE (getUTCFullYear/Month/Date → Date.UTC). Imune ao bug de classe UTC-shift
+ * (date-only-rendering-utc-shift-class-bug): jamais usa o fuso local nem depende da hora-do-dia
+ * com que o instante foi persistido. `dueDate` é gravado como `new Date('YYYY-MM-DD')` (meia-noite
+ * UTC), então o resultado é exato.
+ */
+export function toUtcDayNumber(d: Date): number {
+  return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / 86_400_000);
+}
+
+/** Dia-calendário UTC de uma data-only `YYYY-MM-DD` (já validada), por componente — nunca via fuso local. */
+export function dayNumberFromDateOnly(dateOnly: string): number {
+  const [y, m, d] = dateOnly.split('-').map((n) => parseInt(n, 10));
+  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+
+/**
+ * Inverso de `dayNumberFromDateOnly`: formata um dia-calendário UTC de volta para `YYYY-MM-DD`,
+ * por componente. Usado por CashForecastReportService para rotular cada linha diária da janela
+ * `[asOf, asOf+horizonte]` sem reconverter via fuso local.
+ */
+export function dateOnlyFromDayNumber(dayNumber: number): string {
+  const d = new Date(dayNumber * 86_400_000);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}

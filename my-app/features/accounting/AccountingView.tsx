@@ -21,13 +21,14 @@ import { DailyJournalPanel } from './components/DailyJournalPanel';
 import { AccountsPayablePanel } from './components/AccountsPayablePanel';
 import { AccountsReceivablePanel } from './components/AccountsReceivablePanel';
 import { AgingPanel } from './components/AgingPanel';
+import { CashForecastPanel } from './components/CashForecastPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes';
+type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -41,6 +42,10 @@ const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   // AP e AR via toggle único (F-AGING-2), então é seu próprio relatório de posição (análogo a
   // DFC/Comparativo/Diário), na ordem lógica documento → posição agregada → cadastro.
   { id: 'aging',          labelKey: 'view.tabs.aging',          label: 'Aging' },
+  // F-CF7(a) ratificado: aba própria logo após "Aging" — ordem lógica documento (AP/AR) →
+  // posição atual (aging) → posição futura (forecast); NUNCA sub-view do DFC nem do Aging
+  // (misturaria semânticas de tempo opostas, ver BRIEF FE-INCR-CASH-FORECAST).
+  { id: 'fluxo-de-caixa-projetado', labelKey: 'view.tabs.cashForecast', label: 'Fluxo de Caixa Projetado' },
   { id: 'contrapartes',   labelKey: 'view.tabs.contrapartes',   label: 'Contrapartes' },
   { id: 'razao',          labelKey: 'view.tabs.razao',          label: 'Razão' },
   { id: 'plano-de-contas',labelKey: 'view.tabs.planoDeContas',  label: 'Plano de Contas' },
@@ -283,6 +288,11 @@ export function AccountingView() {
             setActiveTab('contas-a-receber');
           }}
         />
+      )}
+
+      {/* ── Fluxo de Caixa Projetado tab (F-CF7→a, read-only sobre vencimentos AP/AR) ───────── */}
+      {activeTab === 'fluxo-de-caixa-projetado' && unitId && (
+        <CashForecastPanel unitId={unitId} />
       )}
 
       {/* ── Contrapartes tab ───────────────────────────────────────────────── */}
