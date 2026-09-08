@@ -49,6 +49,49 @@ export interface AccountLedgerQuery extends TrialBalanceQuery {
   accountCode: string;
 }
 
+// ── Audit chain + source-document provenance (FE-INCR-AUDIT-PROVENANCE) ───────
+/**
+ * Closed enum mirrored from `AuditService.VerifyFailureReason` (backend). The
+ * chain is tamper-EVIDENT, not tamper-proof (ADR-INCR2) — this only names *which*
+ * link check failed; the UI never infers a 6th value.
+ */
+export type VerifyFailureReason =
+  | 'MISSING_GENESIS'
+  | 'SEQ_GAP'
+  | 'PREV_HASH_MISMATCH'
+  | 'HASH_MISMATCH'
+  | 'HEAD_MISMATCH';
+
+export interface VerifyAuditChainResult {
+  ok: boolean;
+  checkedEvents: number;
+  /** bigint on the backend, serialized to string by the controller (F-A2) — never a number here. */
+  firstSeq: string | null;
+  lastSeq: string | null;
+  headHash: string | null;
+  failure?: { seq: string; reason: VerifyFailureReason };
+}
+
+export interface SourceDocumentEntry {
+  id: string;
+  sourceType: string;
+  externalRef: string | null;
+  /** `DateTime?` on the backend — genuinely optional, not "always present". Never call
+   *  `formatDate` without checking `!= null` first (ADR-INCR8 D5: most entries have none). */
+  documentDate: string | null;
+  description: string | null;
+  attachmentId: string | null;
+  createdAt: string;
+}
+
+export interface JournalEntrySourceLink {
+  id: string;
+  journalEntryId: string;
+  sourceDocumentId: string;
+  createdAt: string;
+  sourceDocument: SourceDocumentEntry;
+}
+
 // ── Responses ─────────────────────────────────────────────────────────────────
 /**
  * `PendingApproval` is the maker-checker staging state (ADR-INCR-APPROVAL). It is deliberately
@@ -590,6 +633,26 @@ export const accountingService = {
       to: query.to,
     });
     const res = await apiClient.get<ApiEnvelope<AccountLedgerReport>>(`/accounting/ledger${qs}`);
+    return res.data;
+  },
+
+  /**
+   * Verify the append-only audit hash-chain integrity for a unit — read-only,
+   * diagnostic only (does NOT repair the chain). O(n) over the whole `AuditEvent`
+   * trail of the scope: call on demand, never automatically on mount/tab-switch.
+   */
+  async verifyAuditChain(unitId: string): Promise<VerifyAuditChainResult> {
+    const qs = buildQuery({ unitId });
+    const res = await apiClient.get<ApiEnvelope<VerifyAuditChainResult>>(`/accounting/audit/verify-chain${qs}`);
+    return res.data;
+  },
+
+  /** List the source documents (provenance) linked to a single journal entry — read-only. */
+  async listSourceDocuments(unitId: string, entryId: string): Promise<JournalEntrySourceLink[]> {
+    const qs = buildQuery({ unitId });
+    const res = await apiClient.get<ApiEnvelope<JournalEntrySourceLink[]>>(
+      `/accounting/journal-entries/${encodeURIComponent(entryId)}/source-documents${qs}`,
+    );
     return res.data;
   },
 

@@ -579,7 +579,9 @@
     "error": {
       "load": "Failed to load journal entries.",
       "reverse": "Failed to reverse entry.",
-      "receipt": "Failed to download receipt."
+      "receipt": "Failed to download receipt.",
+      "verifyChain": "Failed to verify the audit chain.",
+      "sourceDocuments": "Failed to load source documents."
     },
     "loading": "Loading journal entries…",
     "empty": "No journal entries posted for this unit yet.",
@@ -603,6 +605,38 @@
       "warning": "A new offsetting entry will be created automatically on the date above. This action cannot be undone.",
       "periodClosed": "The period for the selected date is closed.",
       "viewPeriods": "View Periods"
+    },
+    "verifyChain": {
+      "button": "Verify audit chain",
+      "loading": "Verifying…",
+      "title": "Audit chain verification",
+      "ok": "Chain intact",
+      "empty": "No audit events in this scope yet.",
+      "compromised": "Chain compromised",
+      "compromisedDescription": "Tamper evidence detected in this audit trail. This diagnostic does not repair the chain — the source must be investigated manually.",
+      "checkedEvents": "Events checked",
+      "range": "Sequence checked",
+      "headHash": "Head hash",
+      "failureSeq": "Failing sequence",
+      "reason": {
+        "MISSING_GENESIS": "Initial (genesis) event missing or out of position.",
+        "SEQ_GAP": "Gap detected in the event sequence.",
+        "PREV_HASH_MISMATCH": "The previous event's hash does not match — chain link broken.",
+        "HASH_MISMATCH": "The recomputed event hash does not match the recorded hash.",
+        "HEAD_MISMATCH": "The chain's head pointer does not match the last event."
+      }
+    },
+    "sourceDocuments": {
+      "button": "Provenance",
+      "title": "Source documents",
+      "loading": "Loading source documents…",
+      "empty": "No source document registered for this entry.",
+      "sourceType": "Source type",
+      "externalRef": "Reference",
+      "documentDate": "Document date",
+      "description": "Description",
+      "recordedAt": "Recorded at",
+      "attachment": "Attachment"
     }
   },
   "journalEntryModal": {
