@@ -14,7 +14,7 @@ import { queryBoolean } from './queryPrimitives';
  * `name` to the derived `nameNormalized` (`[userId,unitId,type,nameNormalized]`, enforced at the DB +
  * mapped to a ValidationError in the service) — this DTO does not compute `nameNormalized` itself,
  * that stays a service-layer concern (not duplicated here, per the reuse gate). `taxId` is OPTIONAL,
- * normalized to digits-only via the SAME `normalizeTaxId` the model exposes (not re-implemented here) —
+ * normalized (mask stripped, uppercase; letters of an alphanumeric CNPJ preserved — BE-INCR-CNPJ-ALFA) via the SAME `normalizeTaxId` the model exposes (not re-implemented here) —
  * no checksum, no fixed length (fork F-W2A-4). `ref` is an OPTIONAL scoped link to a DynamicTable row
  * (plain string, not a FK).
  */
@@ -29,7 +29,7 @@ import { queryBoolean } from './queryPrimitives';
  *         unitId: { type: string }
  *         type:   { type: string, enum: [SUPPLIER, CUSTOMER], description: "Fornecedor (AP) ou cliente (AR)" }
  *         name:   { type: string, description: "Nome de exibição — a chave de negócio é o nameNormalized derivado (trim + fold de caixa + colapso de espaços)" }
- *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado para só-dígitos — discriminador informacional, fora da chave de unicidade" }
+ *         taxId:  { type: string, description: "CPF/CNPJ opcional, normalizado (máscara removida; CPF só-dígitos; CNPJ alfanumérico preservado em maiúsculas — BE-INCR-CNPJ-ALFA) — discriminador informacional, fora da chave de unicidade" }
  *         ref:    { type: string, description: "Ref opcional escopada a uma linha de DynamicTable (não é FK)" }
  */
 export const CreateCounterpartySchema = z

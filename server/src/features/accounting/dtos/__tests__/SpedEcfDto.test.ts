@@ -104,3 +104,20 @@ describe('SpedEcfRequestSchema — 0930 (superRefine)', () => {
     }
   });
 });
+
+describe('SpedEcfRequestSchema — CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ-1 → b, F-CNPJ-2 → a)', () => {
+  it('aceita CNPJ alfanumérico MAIÚSCULO no declarante e no signatário não-contador (só formato)', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE35' } }).success).toBe(true);
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [contador, { ...socio, identCpfCnpj: '12ABC34501DE35' }] }).success).toBe(true);
+  });
+
+  it('rejeita minúscula, 12 posições e máscara no declarante', () => {
+    for (const cnpj of ['12abc34501de35', '12ABC34501DE', '12.ABC.345/01-DE35']) {
+      expect(SpedEcfRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj } }).success).toBe(false);
+    }
+  });
+
+  it('contador (900) continua exigindo CPF de 11 dígitos — CNPJ alfanumérico não passa pelo refine', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, identCpfCnpj: '12ABC34501DE35' }, socio] }).success).toBe(false);
+  });
+});

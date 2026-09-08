@@ -380,7 +380,7 @@
           },
           "taxId": {
             "type": "string",
-            "description": "CPF/CNPJ opcional, normalizado para só-dígitos — discriminador informacional, fora da chave de unicidade"
+            "description": "CPF/CNPJ opcional, normalizado (máscara removida; CPF só-dígitos; CNPJ alfanumérico preservado em maiúsculas — BE-INCR-CNPJ-ALFA) — discriminador informacional, fora da chave de unicidade"
           },
           "ref": {
             "type": "string",

@@ -19,7 +19,7 @@ const PURCHASE_XML = readFileSync(
 // Fixture facts (from the XML totals, §5 cost D3):
 //   vProd 183.33, vDesc 10.00, vFrete 15.00, vIPI 5.00, vST 0, vOutro 0 → custo = 18333−1000+1500+500 = 19333
 //   (vICMS 33.00 is NOT subtracted — the named ALTO risk). vNF = 193.33 = 19333 → ties out.
-const CHAVE = '35250712345678000190550010000000011000000017';
+const CHAVE = '35250712345678000195550010000000011000000012';
 const CUSTO_TOTAL = 19333;
 
 /** cProd → productRef mappings covering all 3 fixture itens (D6). */
@@ -85,7 +85,7 @@ function inlineNfe(
   items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string }>,
   totals: { vProd: string; vFrete?: string; vSeg?: string; vDesc?: string; vIPI?: string; vNF: string },
 ): string {
-  const chave = '35250712345678000190550010000000021000000025';
+  const chave = '35250712345678000195550010000000021000000028';
   const dets = items
     .map(
       (it, i) => `      <det nItem="${i + 1}">
@@ -109,8 +109,8 @@ function inlineNfe(
         <natOp>COMPRA</natOp><mod>55</mod><serie>1</serie><nNF>2</nNF>
         <dhEmi>2025-07-11T09:30:00-03:00</dhEmi><tpNF>1</tpNF><tpAmb>1</tpAmb>
       </ide>
-      <emit><CNPJ>12345678000190</CNPJ><xNome>FORNECEDOR EXEMPLO LTDA</xNome></emit>
-      <dest><CNPJ>98765432000155</CNPJ><xNome>SALAO EXEMPLO LTDA</xNome></dest>
+      <emit><CNPJ>12345678000195</CNPJ><xNome>FORNECEDOR EXEMPLO LTDA</xNome></emit>
+      <dest><CNPJ>98765432000198</CNPJ><xNome>SALAO EXEMPLO LTDA</xNome></dest>
 ${dets}
       <total>
         <ICMSTot>

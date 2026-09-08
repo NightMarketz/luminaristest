@@ -8,7 +8,7 @@
      dividam exato entre os 3 itens (exercita o gate 1 do rateio: Σ itens == total). -->
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
   <NFe>
-    <infNFe Id="NFe35250712345678000190550010000000011000000017" versao="4.00">
+    <infNFe Id="NFe35250712345678000195550010000000011000000012" versao="4.00">
       <ide>
         <cUF>35</cUF>
         <cNF>00000001</cNF>
@@ -23,12 +23,12 @@
         <finNFe>1</finNFe>
       </ide>
       <emit>
-        <CNPJ>12345678000190</CNPJ>
+        <CNPJ>12345678000195</CNPJ>
         <xNome>DISTRIBUIDORA DE COSMETICOS EXEMPLO LTDA</xNome>
         <IE>111111111111</IE>
       </emit>
       <dest>
-        <CNPJ>98765432000155</CNPJ>
+        <CNPJ>98765432000198</CNPJ>
         <xNome>SALAO EXEMPLO LTDA</xNome>
       </dest>
       <det nItem="1">
@@ -107,7 +107,7 @@
     <infProt>
       <tpAmb>1</tpAmb>
       <verAplic>SP_NFE_PL_009</verAplic>
-      <chNFe>35250712345678000190550010000000011000000017</chNFe>
+      <chNFe>35250712345678000195550010000000011000000012</chNFe>
       <dhRecbto>2025-07-10T09:31:12-03:00</dhRecbto>
       <nProt>135250000000017</nProt>
       <cStat>100</cStat>

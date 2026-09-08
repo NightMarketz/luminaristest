@@ -5,7 +5,7 @@
      e remover este marcador para destravar o merge (ver nfe-fixture-provenance.test.ts). -->
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
   <NFe>
-    <infNFe Id="NFe35250798765432000155550010000000021000000025" versao="4.00">
+    <infNFe Id="NFe35250798765432000198550010000000021000000026" versao="4.00">
       <ide>
         <cUF>35</cUF>
         <cNF>00000002</cNF>
@@ -20,7 +20,7 @@
         <finNFe>1</finNFe>
       </ide>
       <emit>
-        <CNPJ>98765432000155</CNPJ>
+        <CNPJ>98765432000198</CNPJ>
         <xNome>SALAO EXEMPLO LTDA</xNome>
         <IE>222222222222</IE>
       </emit>
@@ -67,7 +67,7 @@
     <infProt>
       <tpAmb>1</tpAmb>
       <verAplic>SP_NFE_PL_009</verAplic>
-      <chNFe>35250798765432000155550010000000021000000025</chNFe>
+      <chNFe>35250798765432000198550010000000021000000026</chNFe>
       <dhRecbto>2025-07-11T14:06:03-03:00</dhRecbto>
       <nProt>135250000000025</nProt>
       <cStat>100</cStat>
