@@ -1,6 +1,9 @@
 # RUNBOOK: H3 — Prova do P2 (vertical 2, clínica estética) + PVA da ECD do vertical 2
 
 > Preparado por agente B3 em 2026-08-25 contra `worktree-agent-a120bd375070caef2` `c1b4db84`.
+> **[FOLD 2026-09-07] Pré-condição P3 satisfeita**: `BE-INCR-P2-VERTICAL-CLINICA` mergeado em `main`
+> via PR #282, squash `60cced8d` — este é o commit de referência para as pré-condições P3/P4 abaixo,
+> não mais `c1b4db84`. Nenhum campo de evidência, desfecho ou assinatura foi tocado.
 > **Autorização citável (ORCH-006):** dono, 2026-08-25, "Pode disparar" — lote multi-agente no qual
 > B3 = "runbook EM BRANCO da prova do P2 (vertical clínica estética)".
 > **Em branco de propósito:** EVIDÊNCIA, desfecho e assinatura são do executor humano — runbook sem
