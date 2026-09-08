@@ -17,9 +17,12 @@
   item 17. **Verificado**: li o arquivo, a citação existe literalmente.
 - Mesmo documento, §C.1 item 17 e §E.1 C7 confirmam: nó **ready**, sem aresta bloqueadora (`GRAFO-
   DEPENDENCIAS-2026-09-07.md` linhas 67 e 162: `C7 ready — —`). **Verificado**.
-- Gatilho da rodada: `docs/accounting/PLANO-SDD-SEQUENCIAL-2026-09-07.md` §2, Rodada 3 — *"planeja
-  o RECONCILE-PENDING"* → *"implementa"*, disparado pelo dono em 2026-09-07 ("Pode disparar o plano
-  em multi agent sonnet até finalizar"). **Verificado**.
+- Gatilho da rodada: `docs/accounting/PLANO-SDD-SEQUENCIAL-2026-09-07.md:67` (§2, tabela "Sequência
+  de rodadas de código", linha **Rodada 3**): *"C7 `BE-INCR-RECONCILE-PENDING` — tabela de
+  pendências do reconcile + re-varredura + tela | M (migração) | S → R → I → V → M → F | nenhum
+  (F-W2F-3/5 → b) | "planeja o RECONCILE-PENDING" → "implementa" | contábil 14/19"*. Documento já
+  em `main` (confirmado: `origin/main` no checkout desta sessão já o contém, sem depender de PR em
+  aberto). **Verificado** — citação por arquivo:linha, não por frase de disparo fora de doc.
 - Contexto do fork: `docs/accounting/CEDULA-DECISAO-2026-08-31.md` §B² (introduz o candidato
   F-W2F-5) e §A (renomeia o item "item falho pulado" de F-W2F-3 para **F-W2F-4**, já mergeado —
   PR #249, opção 1: `min(runStartAt − OVERLAP_MS, updatedAt da falha não resolvida mais antiga)`).
@@ -74,28 +77,69 @@ contador, não uma lista).
 
 ---
 
-## FORK 1 — o novo mecanismo (tabela de pendências) SUBSTITUI ou COMPLEMENTA o freeze do F-W2F-4?
+## FORK 1 — FECHADO PELA CÉDULA (não é fork; corrigido pós-review independente)
 
-**Por que é fork, não decisão óbvia:** a linha ratificada descreve o problema como "item falho **/**
-bloqueado por período pulado e nunca re-varrido" — texto que cobre as DUAS classes (failed e
-blocked). Mas F-W2F-4 (failed) já foi ratificado e mergeado com um mecanismo DIFERENTE (segurar a
-marca) em 2026-09-01, dois dias antes desta ratificação. A cédula de 09-03 diz "recomendação era a
-mecânica do F-W2F-4" e o dono foi **contra** a recomendação, mas não está escrito se isso significa
-"não seguir a mecânica do F-W2F-4 para o caso NOVO (blocked)" ou "abandonar a mecânica do F-W2F-4
-também para failed, unificando tudo na tabela de pendências".
+**Correção sobre a versão anterior deste BRIEF:** a versão anterior tratava isto como fork aberto
+(A "complementa" x B "substitui"). Releitura literal (não paráfrase) das duas cédulas mostra que a
+questão já está decidida como (B) — registro abaixo, não fork.
 
-| Caminho | Descrição | Risco se for o errado |
-|---|---|---|
-| **(A) Complementa** | `withReconcileWatermark` continua segurando a marca quando `failed > 0` (F-W2F-4 intocado). A tabela de pendências é **só para `blocked`** (que hoje não tem NENHUM mecanismo de retenção) — cada item bloqueado vira uma linha; um comando de re-varredura roda os itens pendentes independente do watermark principal | Baixo: soma-se ao que já existe, não quebra nada ratificado. Mas não cobre o "item falho" citado na linha ratificada — a rastreabilidade de itens `failed` continua só em log, sem tela |
-| **(B) Substitui** | Remove o `summary.failed > 0` do `withReconcileWatermark` — a marca **sempre** avança (`runStartAt − OVERLAP_MS`), e TANTO `failed` quanto `blocked` vão para a tabela de pendências, re-varridos por comando dedicado, desacoplados do watermark principal | Alto: reabre o merge de F-W2F-4 (PR #249) e seus testes; muda o contrato de `withReconcileWatermark` que 3 testes já fixam; se a extração de identidade por item (ver Fork 2) ficar incompleta, um item failed que hoje é PROTEGIDO pelo freeze passa a depender só da tabela nova — regressão se a tabela falhar em capturar algum dos 8 sourceTypes |
+**Texto literal 1** — `CEDULA-DECISAO-2026-09-03-modulos.md` linha F-W2F-3/F-W2F-5 (§B): "RATIFICADO
+→ (b) marca avança; item vai para tabela de pendências re-varrida. [...] recomendação era a mecânica
+do F-W2F-4" — coluna "contra a recomendação?" = SIM: o dono rejeitou a mecânica do F-W2F-4 (segurar
+a marca) como a forma do conserto.
 
-**Recomendação:** **(A)**. Justificativa: (1) não reabre uma decisão já ratificada e testada
-separadamente (F-W2F-4, 2026-09-01); (2) a lacuna real e sem NENHUMA proteção hoje é `blocked`
-(F-W2F-5, o candidato que motivou esta rodada); (3) "failed" já tem um comportamento auditável
-(nunca perde o item, mas também nunca avança enquanto ele existir — trade-off aceito na ratificação
-do F-W2F-4). Custo de estar errado na recomendação: se o dono queria (B), a tabela de pendências
-nasce sem cobrir `failed`, e um segundo ciclo (instrumentação→correção) precisa reabrir
-`withReconcileWatermark` depois. **Status: RATIFICAÇÃO PENDENTE.**
+**Texto literal 2** — `CEDULA-DECISAO-2026-08-31.md`, EMENDA 2026-09-03: "B² (F-W2F-5) e F-W2F-3 →
+RATIFICADO (b): a marca avança e o item falho/bloqueado por período vai para tabela de pendências
+re-varrida (migração + comando/tela) [...] Contra a recomendação (mecânica do F-W2F-4)." — "a marca
+avança" é incondicional (não "avança exceto quando failed>0"), e o texto nomeia as duas classes
+juntas ("item falho/bloqueado por período") como destino da mesma tabela. Não há leitura literal que
+preserve o freeze de `summary.failed > 0` — "contra a recomendação (mecânica do F-W2F-4)" só faz
+sentido se a mecânica antiga for abandonada, não mantida ao lado da nova.
+
+**Decisão registrada (não fork): (B) Substitui.** O freeze de `withReconcileWatermark` ratificado em
+2026-09-01 (F-W2F-4, PR #249, opção 1) fica SUPERADO por decisão datada de 2026-09-03. A marca passa
+a avançar sempre (`runStartAt − OVERLAP_MS`, incondicional); todo item que hoje cai em `failed` OU em
+`blocked` (qualquer `reasonCode`) sai do `ReconcileSummary` agregado e vira uma linha na tabela de
+pendências, capturado pelo mecanismo do Fork 2, e re-varrido pelo comando/rota do Fork 3 — nunca mais
+pela retenção do watermark principal.
+
+**Mudança de código exigida** (documentada aqui para a `sessao-feature`, NÃO implementada nesta
+sessão de planejamento):
+- `server/src/jobs/accountingSyncReconcile.job.ts:193-194` — a expressão `summary.failed > 0 ?
+  watermarkAt : new Date(runStartAt.getTime() - OVERLAP_MS)` vira incondicional:
+  `const nextWatermarkAt = new Date(runStartAt.getTime() - OVERLAP_MS);`.
+- O docstring do módulo que descreve o F-W2F-4 (linhas 38-46) e o JSDoc de `withReconcileWatermark`
+  (linhas 159-185) precisam de nota de suplantação ("SUPERSEDED by F-W2F-3/5, 2026-09-03 — ver
+  BE-INCR-RECONCILE-PENDING-brief.md"), não remoção silenciosa do histórico.
+- `server/src/jobs/__tests__/accountingSyncReconcile.test.ts:789-831` — **1 teste** (não 3; os dois
+  vizinhos, linhas 754 e 766, fixam comportamento genérico do watermark com `failed: 0` fixo e não
+  são afetados) — o teste `F-W2F-4: mantém um item fault-isolated que falhou DENTRO da janela do
+  próximo scan [...]` assere hoje `persistedWatermark!.getTime() <= failedItemUpdatedAt.getTime()`.
+  Essa asserção deixa de valer sob a nova semântica (a marca avança independente de `failed`) — o
+  teste precisa ser reescrito para assertar a captura na tabela de pendências em vez do freeze, no
+  MESMO PR da correção (par vermelho→verde, memória `protocolo-conserto-de-gate`).
+
+### FORK 1-R (residual estreito) — `MAX_CENTS_EXCEEDED` entra na tabela de pendências?
+
+**Texto exato que deixa isto aberto** — `CEDULA-DECISAO-2026-08-31.md` §B²: "Itens classificados
+como `blocked` via `ACCOUNTING_PERIOD_NOT_OPEN` — que ao contrário de `MAX_CENTS_EXCEEDED` não é
+veneno permanente [...] têm o MESMO mecanismo de queda." O candidato F-W2F-5 nomeia
+`ACCOUNTING_PERIOD_NOT_OPEN` e contrasta explicitamente com `MAX_CENTS_EXCEEDED` para dizer que só o
+primeiro "espera reabrir" — a ratificação de 09-03 herda essa redação ("bloqueado por período"),
+nunca escreve "bloqueado por poison" nem generaliza para todo `blocked`. Não está escrito se
+`MAX_CENTS_EXCEEDED` (que nunca se resolve sozinho, por definição) deve ganhar linha na mesma tabela
+(valor: visibilidade humana de um item preso) ou ficar de fora (valor: a tabela só lista o que uma
+re-varredura pode de fato resolver).
+
+**Recomendação:** incluir — o custo de listar um item que nunca se auto-resolve é baixo (aparece com
+`reasonCode: 'MAX_CENTS_EXCEEDED'`, permanentemente pendente até correção manual do dado de origem,
+exatamente o "resíduo documentado, nunca perdido" que a ratificação persegue); excluir teria o efeito
+pior de voltar a perder o item de vista — o mesmo defeito que motivou a rodada inteira. Custo de
+estar errado: se o dono quis dizer literalmente só `ACCOUNTING_PERIOD_NOT_OPEN`, a tabela nasce com
+uma classe de item "pendente" que na prática nunca sai do estado — ruído de UI, não perda de dado (a
+listagem filtra por `reasonCode`, item 7 do checklist). **Status: RATIFICAÇÃO PENDENTE** — único
+fork remanescente sobre O MECANISMO; Forks 2-4 abaixo são sobre a IMPLEMENTAÇÃO do mecanismo já
+fechado, não sobre se ele se aplica.
 
 ---
 
@@ -191,12 +235,22 @@ decisão de auditar. **Status: RATIFICAÇÃO PENDENTE.**
    `sale.finalized`, `sale.cancelled` [via `findEntry`/`reverse`], `sale.returned`, `sale.settled`,
    `sale.package.sold`, pacote-consumo, e `sale.cogs` que hoje NÃO tem `blocked` — decidir se cogs
    entra só como `FAILED`).
-4. **Persistência da pendência é best-effort, nunca derruba a rodada** — uma falha ao escrever
-   `reconcile_pending_items` (ex.: DB fora do ar por 1 tick) é capturada e logada, **nunca** propaga
-   para `runPasses` (mesmo contrato do `reconcilePhysicalInventory`, que roda fora do merge de
-   summary e nunca segura o watermark — linha 1486-1492 do job). Testável: mock do writer da
-   pendência lança erro → `withReconcileWatermark` ainda avança a marca normalmente (Fork 1-A: só
-   `failed` segura, não a escrita de pendência).
+4. **Persistência da pendência NUNCA pode falhar em silêncio** — sob a decisão do Fork 1 (fechado —
+   ver seção acima), o watermark principal já não segura por `failed` nem por nenhuma outra condição:
+   a marca avança sempre, incondicionalmente (`runStartAt − OVERLAP_MS`), mesmo dentro de
+   `withReconcileWatermark`. Isso muda o risco-silencioso do desenho anterior: se a escrita em
+   `reconcile_pending_items` falhar no mesmo tick em que o item falhou/bloqueou no ledger, o item
+   **não é mais protegido por nada** — a marca principal já passou por cima dele (diferente do
+   `reconcilePhysicalInventory`, cuja falha é aceitável porque aquele check é warn-only e não perde
+   dado de origem; aqui perder a escrita da pendência PERDE o único rastro do item). Por isso este
+   comportamento não pode seguir o padrão "best-effort, loga e segue" das outras passadas warn-only:
+   a escrita da pendência precisa estar na MESMA operação atômica que incrementa `failed`/`blocked`
+   no core de cada passada (dentro do `catch`, antes do `continue`), não como um passo externo
+   opcional depois do merge. Testável: mock do writer de pendência lança erro dentro do `catch` de
+   uma das 8 passadas → o teste-guarda assere que a exceção SOBE (derruba a rodada inteira, o que
+   preserva o watermark antigo via o `GUARD` já existente do job, linha 766 do teste) em vez de ser
+   engolida — a escolha de propagar em vez de engolir é o que substitui a proteção que o freeze do
+   F-W2F-4 dava antes.
 5. **Resolução automática** — quando uma passada, numa rodada seguinte, encontra o MESMO
    `(sourceType, sourceId)` sem erro (idempotent hit ou synced), marca a pendência existente como
    `resolvedAt = now()` em vez de deixá-la pendente para sempre. Testável: item pendente por
@@ -215,10 +269,13 @@ decisão de auditar. **Status: RATIFICAÇÃO PENDENTE.**
    entrada (paginação, filtro por `reasonCode`) e de saída (nunca formato livre). Testável: campo
    extra no corpo é REJEITADO (400), não silenciosamente ignorado (classe
    `param-aceito-e-ignorado-e-bug`).
-9. **Policy** — reusa o padrão de `IAccountingPolicy`/`canManageData` já usado por
-   `PayableService`/`ReceivableService` (mesmo scope: `ownerUserId` + `unitId`); nenhuma pendência
-   de OUTRO tenant é visível/re-varrida por engano. Testável: pendência de tenant B não aparece na
-   listagem/comando do tenant A.
+9. **Policy** — `IAccountingPolicy` (`server/src/features/accounting/policies/IAccountingPolicy.ts`)
+   não tem método genérico `canManageData`; o padrão real é um par de métodos por recurso —
+   `canManagePayable`/`canReadPayable` (Contas a Pagar), `canManageReceivable`/`canReadReceivable`
+   (Contas a Receber). Este BRIEF adiciona o mesmo par para o recurso novo:
+   `canManageReconcilePending` (dispara a re-varredura) e `canReadReconcilePending` (lista), ambos
+   recebendo `AccountingScope` e aplicando o mesmo gate (`ownerUserId` + `unitId`) de todos os outros
+   pares. Testável: pendência de tenant B não aparece na listagem/comando do tenant A.
 10. **Factory** — `getReconcilePendingService()` registrado em `server/src/lib/factory.ts`, mesmo
     padrão de `getPayableService`/`getReconciliationService` (linhas 911/922).
 11. **Allowlist de auditoria** (Fork 4, condicional) — SE Fork 3 = rota HTTP e Fork 4 = audita: novo
@@ -341,12 +398,19 @@ origem regulatório.
 
 ## Achados fora de escopo (registrados, não planejados)
 
-1. **`reconcileSaleCogs` sem `classifyBlockedSyncError`** — das 8 passadas, é a única sem
-   suporte a `blocked` (todo erro cai em `failed`). Se o CMV também puder bater
-   `ACCOUNTING_PERIOD_NOT_OPEN` (plausível — o `PostingService.postEntry` subjacente é o mesmo gate
-   de período das outras 7 passadas), ela está classificando um "transitório-esperado" como
-   "falha isolada" — o F-W2F-4 já a protege via freeze de watermark, então não é um bug NOVO, mas é
-   uma inconsistência de classificação que vale ADR/BRIEF próprio se confirmada.
+1. **`reconcileSaleCogs` sem `classifyBlockedSyncError`** — das 8 passadas merged em `runPasses`
+   (`crm`, `sale`, `cancellations`, `returns`, `settlements`, `cogs`, `packageOrigin`,
+   `packageConsumption`), **7 têm suporte a `blocked`** (linhas 249, 369, 476, 556, 642, 670, 885,
+   947 do job — `settlements` grava `blocked` em dois pontos distintos da mesma função) e
+   `reconcileSaleCogs` é a única das 8 sem `classifyBlockedSyncError` (todo erro cai em `failed`,
+   linha ~784). Se o CMV também puder bater `ACCOUNTING_PERIOD_NOT_OPEN` (plausível — o
+   `PostingService.postEntry` subjacente é o mesmo gate de período das outras 7), ela está
+   classificando um "transitório-esperado" como "falha isolada". Sob a decisão do Fork 1 (fechado),
+   isso já não é protegido por nenhum freeze de watermark (que deixou de existir) — o item cai na
+   tabela de pendências com `reasonCode: 'FAILED'` em vez de `'ACCOUNTING_PERIOD_NOT_OPEN'`, o que
+   não perde o item mas mistura a classificação na tela/relatório futuro. Não é um bug NOVO nem
+   piora com este BRIEF, mas é uma inconsistência de classificação que vale ADR/BRIEF próprio se
+   confirmada.
 2. **Tela de pendências (FE)** — nó vizinho explícito no plano SDD (parte do "comando/tela" da
    ratificação, mas fora do escopo BACKEND deste BRIEF por convenção da casa). Autorização própria
    quando o BE mergear.
@@ -362,32 +426,49 @@ origem regulatório.
    resíduo de reconcile; este BRIEF entrega o checklist implementável desse comando+tabela (a tela
    fica registrada como nó vizinho, com justificativa citada na skill). Frase que aponta a resposta:
    seção "Checklist numerado", itens 1-6.
-2. **Grau em cada claim:** ver tabela de insumos (cada linha cita arquivo:linha = verificado);
-   os 4 forks são explicitamente **assumido/inferido** onde a cédula não resolve por letra (ex.: se
-   (A) ou (B) do Fork 1 é a leitura certa da frase "item falho / bloqueado" — inferido a partir do
-   histórico de ratificação, não verificado por declaração explícita do dono sobre a interação com
-   F-W2F-4).
+2. **Grau em cada claim:** ver tabela de insumos (cada linha cita arquivo:linha = verificado). O
+   mecanismo do Fork 1 é **verificado** por citação literal das duas cédulas (não mais fork — ver
+   correção acima); os 4 forks pendentes (1-R, 2, 3, 4) são explicitamente **assumido/inferido**
+   onde nenhuma cédula resolve por letra — nenhum deles reabre o que já está fechado.
 3. **Caso adversarial tentado:** verifiquei se os dois ADRs de "reconciliação" citados no prompt de
    disparo (`ADR-INCR7-bank-reconciliation.md`, `ADR-INCR7-UNMATCH-read-shape.md`) eram o MESMO
    mecanismo do F-W2F job — a hipótese natural, já que ambos usam a palavra "reconcile". Resultado:
    **não são** — o próprio ADR-INCR7 declara a distinção na sua seção 1, e confirmei por grep que
    `watermark`/`JobWatermarkRepository` não aparecem em nenhum arquivo do módulo de conciliação
    bancária. Se eu tivesse ignorado essa checagem e citado o ADR-INCR7 como insumo funcional deste
-   BRIEF, o checklist teria misturado dois domínios sem relação de dados.
+   BRIEF, o checklist teria misturado dois domínios sem relação de dados. Segundo caso adversarial
+   (pós-review): reli as duas cédulas (09-03 e a EMENDA de 08-31) palavra por palavra em vez de
+   confiar na paráfrase da primeira versão deste BRIEF — resultado: Fork 1 estava ERRADO (tratava
+   como aberto o que a cédula já fecha como (B)); a correção está registrada acima com as duas
+   citações literais.
 4. **Checagem falseável:** a checagem acima (grep por `watermark` fora de `accountingSyncReconcile.job.ts`
    e `JobWatermarkRepository.ts`) TERIA revelado uma referência cruzada, se existisse — ela não
    revelou nenhuma, o que é a evidência negativa que sustenta "são features distintas". Segunda
-   checagem falseável: `grep -n "summary.blocked" accountingSyncReconcile.job.ts` mostra que só 6
-   das 8 passadas escrevem em `blocked` — se todas as 8 escrevessem, o achado #1 de "fora de escopo"
-   (CMV sem blocked) estaria errado.
+   checagem falseável: `grep -n "summary.blocked = " accountingSyncReconcile.job.ts` retorna 8
+   ocorrências de linha (249, 369, 476, 556, 642, 670, 885, 947), mas 642 e 670 pertencem à MESMA
+   função `reconcileSaleSettlements` — logo **7 das 8 passadas** merged em `runPasses` escrevem
+   `blocked`; só `reconcileSaleCogs` não. Terceira checagem falseável: contei
+   as ocorrências de `it(` dentro de `describe('withReconcileWatermark', ...)`
+   (`accountingSyncReconcile.test.ts:723-833`) e localizei exatamente **1** teste (linha 789) que
+   assere o comportamento específico do freeze por `failed`; os outros 2 testes de watermark
+   (linhas 754, 766) usam `failed: 0` fixo e testam avanço genérico / guard de exceção, não o
+   freeze — por isso é 1 teste a corrigir, não 3.
 5. **Duas primeiras linhas entregam verdade + risco:** ver abertura do relatório final — a verdade é
-   "BRIEF pronto com autorização citada e nó C7 sem aresta bloqueadora"; o risco principal é o
-   **Fork 1** (se a leitura for (B) em vez de (A), a implementação reabre um merge já fechado,
-   PR #249).
+   "Fork 1 fechado pela cédula (não é mais fork), BRIEF corrigido"; o risco principal é o item 4 do
+   checklist — se a `sessao-feature` implementar a escrita da pendência como best-effort (copiando o
+   padrão warn-only vizinho do `reconcilePhysicalInventory`), um item que falhou/bloqueou E cuja
+   escrita de pendência também falhar no mesmo tick fica sem NENHUM mecanismo de retenção — o
+   watermark principal já não segura mais nada.
 
-**Risco silencioso nº1 (OPS-004):** se a `sessao-feature` escolher a leitura errada do Fork 1 SEM
-esperar ratificação — por exemplo, assumir (A) por ser a recomendação e implementar direto — o
-"ninguém avisa" é literal: nem `tsc`, nem teste, nem CI acusam a divergência, porque (A) e (B) são
-ambos código que compila e passa os testes que HOJE existem; só o dono sabe se a intenção era mais
-ampla que "cobrir blocked". Por isso os 4 forks ficam PENDENTES e não pré-resolvidos por
-conveniência de implementação.
+**Risco silencioso nº1 (OPS-004):** com o freeze do F-W2F-4 superado (Fork 1 fechado), a única rede
+de proteção contra perder um item falho/bloqueado passa a ser a escrita bem-sucedida em
+`reconcile_pending_items`. Se a `sessao-feature` seguir o padrão dos dois checks vizinhos no MESMO
+arquivo (`reconcilePackageBalanceVsLiability`, `reconcilePhysicalInventory` — ambos warn-only,
+"loga e segue" por desenho, linhas 1002-1127) e aplicar o mesmo "nunca derruba a rodada" à escrita
+da pendência, um erro transitório de banco no exato tick em que um item falha vira **perda
+silenciosa total**: nem `tsc`, nem teste, nem CI acusam — o item simplesmente não existe em lugar
+nenhum na próxima consulta, porque a marca já avançou. O checklist (item 4) já registra que a
+escrita da pendência deve **propagar** a exceção (derrubar a rodada, preservando o watermark antigo
+via o GUARD existente) em vez de engolir — mas nada IMPEDE a `sessao-feature` de copiar o padrão
+errado por proximidade textual no mesmo arquivo; por isso o teste-guarda do item 4 é o único que
+prova a escolha certa foi feita.
