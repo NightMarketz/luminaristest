@@ -169,5 +169,12 @@ do dono) — o agente prepara o runbook em branco, não o preenche.
 4. ✅ FEITO 2026-08-25 — **Definir o T0 da métrica** (pré-trabalho do F-P2-4b, §2 item 3): marco
    explícito na tx do `installPresetAsSystem` (emenda no cabeçalho).
 5. Parecer do `luminaris-accounting-architect` quando o preset do setor esboçar contas novas por papel.
-6. Execução do P2 (sessão de feature) → runbooks humanos: prova + **PVA da ECD do vertical 2**
-   (F-P2-3b) + o incremento diferido de plugar o `FieldCustomizationService` (F-P2-5, ADR próprio).
+6. ✅ **EXECUÇÃO FEITA 2026-09-07 — PR #282, squash `60cced8d`, mergeado em `main`.** Comportamentos
+   1–7, 9, 10 implementados e revisados independentemente (PASS, execução real: `tsc` 0, 58/526
+   integração, 183/2271 unit); 8 parcial (postagem dos 5 arquétipos automatizada; fechamento do
+   exercício + ECD ficam no runbook, gate humano); **11 pausado** — fork novo aberto ao dono: o T0
+   da métrica exige persistir marco em `DynamicTableService.installPresetAsSystem`, dentro do
+   perímetro zero-diff (`CEDULA-DECISAO-2026-09-07-forks-sdd.md` §"O que NÃO cobre" item 2).
+   **Falta, na ordem:** runbooks humanos — `RUNBOOK-H3-P2-CLINICA.md` (prova + **PVA da ECD do
+   vertical 2**, F-P2-3b), que depende de **H1** rodar primeiro (Presumido); e o incremento diferido
+   de plugar o `FieldCustomizationService` (F-P2-5, ADR próprio, sem chamador ainda).
