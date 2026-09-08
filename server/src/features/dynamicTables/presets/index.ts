@@ -1,5 +1,6 @@
 import { CoreSystemPreset } from './systems/CoreSystemPreset';
 import BeautySalonPreset from './systems/BeautySalonPreset';
+import AestheticClinicPreset from './systems/AestheticClinicPreset';
 import CrmModulePreset from './systems/CrmModulePreset';
 import { ITableSchema } from '../models/DynamicTable.model';
 import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
@@ -19,6 +20,8 @@ export { CoreSystemPreset };
 export const tablePresetSuites = {
   services: {
     beautySalon: BeautySalonPreset,
+    // BE-INCR-P2-VERTICAL-CLINICA — segundo vertical da prova (ADR-P2, F-P2-1 → RATIFICADO).
+    aestheticClinic: AestheticClinicPreset,
   },
   sales: {
     crmModule: CrmModulePreset,
