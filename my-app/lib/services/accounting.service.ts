@@ -1,4 +1,4 @@
-import { getCookie } from 'cookies-next';
+import { multipartAuthHeaders, multipartBaseUrl, multipartParseError } from './multipart';
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
 
@@ -522,31 +522,12 @@ export interface AgingQuery {
   asOf?: string;
 }
 
-// Multipart import bypasses apiClient (which forces application/json) — same
-// direct-fetch pattern as dataExchange.service.importFile.
-function reconBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api';
-}
-function reconAuthHeaders(): Record<string, string> {
-  const token = getCookie('auth_token');
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${String(token)}`;
-  return headers;
-}
-async function reconParseError(response: Response): Promise<Record<string, unknown>> {
-  let body: Record<string, unknown> = {};
-  try {
-    const text = await response.text();
-    body = text ? (JSON.parse(text) as Record<string, unknown>) : {};
-  } catch {
-    body = {};
-  }
-  if (!body.error && !body.message) {
-    body.error = `Erro ${response.status}: ${response.statusText}`;
-  }
-  body.status = response.status;
-  return body;
-}
+// Multipart import bypasses apiClient (which forces application/json). The three helpers were moved to
+// `lib/services/multipart.ts` (FE-INCR-NFE, F-FENFE-7 → a) so `nfe.service.ts` reuses them instead of
+// re-inlining the technique; local names preserved for the call sites below.
+const reconBaseUrl = multipartBaseUrl;
+const reconAuthHeaders = multipartAuthHeaders;
+const reconParseError = multipartParseError;
 
 /**
  * Stream a binary GET (e.g. the PDF receipt) to a browser download via a transient

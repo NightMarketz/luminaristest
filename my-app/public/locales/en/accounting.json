@@ -29,7 +29,8 @@
       "compliance": "Compliance",
       "dimensoes": "Dimensions",
       "contrapartes": "Counterparties",
-      "aprovacoes": "Approvals"
+      "aprovacoes": "Approvals",
+      "nfe": "NF-e"
     },
     "error": {
       "units": "Failed to load units.",
@@ -1194,6 +1195,68 @@
       "load": "Failed to load the approval queue.",
       "action": "Could not complete the operation.",
       "conflict": "Someone changed this entry while this screen was open. The list was reloaded — review it and try again."
+    }
+  },
+  "nfe": {
+    "heading": "NF-e",
+    "purchase": {
+      "heading": "Purchase NF-e",
+      "help": "Pick the note XML; confirm the product for each item and import. Creates one payable and the stock inbounds.",
+      "reading": "Reading…",
+      "selectFile": "Select XML",
+      "previewError": "Could not read the NF-e.",
+      "importError": "Invalid data — review the fields.",
+      "success": "NF-e imported: payable {{doc}} of {{amount}}.",
+      "ignoredHeading": "Items not imported",
+      "alreadyImported": "This note was already imported (payable {{id}}). Import is disabled.",
+      "supplier": "Supplier (counterparty)",
+      "supplierAuto": "Resolve by emitter name",
+      "manageSuppliers": "manage suppliers",
+      "dueDate": "Due date (optional)",
+      "importing": "Sending…",
+      "import": "Import"
+    },
+    "preview": {
+      "emitter": "Emitter",
+      "number": "Number / series",
+      "issued": "Issued",
+      "total": "Note total (vNF)",
+      "key": "Access key"
+    },
+    "items": {
+      "cProd": "Code",
+      "xProd": "Description",
+      "qty": "Qty",
+      "vProd": "Amount",
+      "product": "Catalogue product",
+      "choose": "Choose product…",
+      "remembered": "remembered",
+      "forget": "forget",
+      "suggested": "suggested",
+      "notInTotal": "not part of the total — will be ignored"
+    },
+    "ignored": {
+      "indTot-0": "not part of the note total (indTot = 0)"
+    },
+    "sale": {
+      "heading": "Sale NF-e",
+      "help": "Pick the finalized sale and attach the XML. The note becomes the entry's source document; nothing is re-posted.",
+      "pick": "Finalized sale",
+      "loading": "Loading sales…",
+      "choose": "Choose sale…",
+      "sending": "Sending…",
+      "attach": "Attach XML",
+      "empty": "No finalized sale in this unit.",
+      "error": "Could not attach the NF-e to the sale."
+    },
+    "report": {
+      "ok": "Totals match",
+      "divergent": "Divergence",
+      "nfeTotal": "NF-e total",
+      "saleTotal": "Booked total",
+      "difference": "Difference",
+      "items": "Items in note",
+      "sourceDocument": "Source document"
     }
   }
 }

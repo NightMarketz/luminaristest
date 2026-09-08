@@ -29,7 +29,8 @@
       "compliance": "Compliance",
       "dimensoes": "Dimensões",
       "contrapartes": "Contrapartes",
-      "aprovacoes": "Aprovações"
+      "aprovacoes": "Aprovações",
+      "nfe": "NF-e"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -1194,6 +1195,68 @@
       "load": "Erro ao carregar a fila de aprovação.",
       "action": "Não foi possível concluir a operação.",
       "conflict": "Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo."
+    }
+  },
+  "nfe": {
+    "heading": "NF-e",
+    "purchase": {
+      "heading": "NF-e de compra",
+      "help": "Selecione o XML da nota; confirme o produto de cada item e importe. Gera uma conta a pagar e as entradas de estoque.",
+      "reading": "Lendo…",
+      "selectFile": "Selecionar XML",
+      "previewError": "Não foi possível ler a NF-e.",
+      "importError": "Dados inválidos — revise os campos.",
+      "success": "NF-e importada: conta a pagar {{doc}} de {{amount}}.",
+      "ignoredHeading": "Itens não importados",
+      "alreadyImported": "Esta nota já foi importada (título {{id}}). O import está desabilitado.",
+      "supplier": "Fornecedor (contraparte)",
+      "supplierAuto": "Resolver pelo nome do emitente",
+      "manageSuppliers": "gerenciar fornecedores",
+      "dueDate": "Vencimento (opcional)",
+      "importing": "Enviando…",
+      "import": "Importar"
+    },
+    "preview": {
+      "emitter": "Emitente",
+      "number": "Número / série",
+      "issued": "Emissão",
+      "total": "Valor da nota (vNF)",
+      "key": "Chave de acesso"
+    },
+    "items": {
+      "cProd": "Código",
+      "xProd": "Descrição",
+      "qty": "Qtd",
+      "vProd": "Valor",
+      "product": "Produto no catálogo",
+      "choose": "Escolher produto…",
+      "remembered": "lembrado",
+      "forget": "esquecer",
+      "suggested": "sugerido",
+      "notInTotal": "não compõe o total — será ignorado"
+    },
+    "ignored": {
+      "indTot-0": "não compõe o total da nota (indTot = 0)"
+    },
+    "sale": {
+      "heading": "NF-e de venda",
+      "help": "Escolha a venda finalizada e anexe o XML. A nota vira documento de origem do lançamento; nada é relançado.",
+      "pick": "Venda finalizada",
+      "loading": "Carregando vendas…",
+      "choose": "Escolher venda…",
+      "sending": "Enviando…",
+      "attach": "Anexar XML",
+      "empty": "Nenhuma venda finalizada nesta unidade.",
+      "error": "Não foi possível anexar a NF-e à venda."
+    },
+    "report": {
+      "ok": "Totais conferem",
+      "divergent": "Divergência",
+      "nfeTotal": "Total da NF-e",
+      "saleTotal": "Total lançado",
+      "difference": "Diferença",
+      "items": "Itens na nota",
+      "sourceDocument": "Documento de origem"
     }
   }
 }

@@ -12,6 +12,7 @@ import { BalanceSheetPanel } from './components/BalanceSheetPanel';
 import { IncomeStatementPanel } from './components/IncomeStatementPanel';
 import { ImportExportPanel } from './components/ImportExportPanel';
 import { ReconciliationPanel } from './components/ReconciliationPanel';
+import { NfePanel } from './components/NfePanel';
 import { CompliancePanel } from './components/CompliancePanel';
 import { SpedGenerationPanel } from './components/SpedGenerationPanel';
 import { DFCPanel } from './components/DFCPanel';
@@ -26,7 +27,7 @@ import { JournalEntryModal, type AccountOption } from './components/JournalEntry
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'compliance' | 'dimensoes';
+type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -50,6 +51,7 @@ const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'diario',         labelKey: 'view.tabs.diario',         label: 'Livro Diário' },
   { id: 'importacao-exportacao', labelKey: 'view.tabs.importacaoExportacao', label: 'Importação/Exportação' },
   { id: 'conciliacao',    labelKey: 'view.tabs.conciliacao',    label: 'Conciliação' },
+  { id: 'nfe',            labelKey: 'view.tabs.nfe',            label: 'NF-e' },
   { id: 'compliance',     labelKey: 'view.tabs.compliance',     label: 'Compliance' },
   { id: 'dimensoes',      labelKey: 'view.tabs.dimensoes',      label: 'Dimensões' },
 ];
@@ -331,6 +333,11 @@ export function AccountingView() {
       {/* ── Conciliação bancária tab ───────────────────────────────────────── */}
       {activeTab === 'conciliacao' && unitId && (
         <ReconciliationPanel unitId={unitId} onLedgerChange={reload} />
+      )}
+
+      {/* ── NF-e (compra → AP + estoque; venda → proveniência) tab — FE-INCR-NFE ─── */}
+      {activeTab === 'nfe' && unitId && (
+        <NfePanel unitId={unitId} onLedgerChange={reload} onNavigateTab={(tab) => setActiveTab(tab)} />
       )}
 
       {/* ── Compliance (mapeamento referencial RFB + geração SPED) tab ─────── */}

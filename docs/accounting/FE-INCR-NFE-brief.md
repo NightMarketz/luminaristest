@@ -306,3 +306,102 @@ Tabela original (caminhos + recomendação), mantida como registro:
   "diff mínimo" escolhe (b) e aceita mais um ciclo de BE antes deste.
 - **Viés de localização:** F-FENFE-2 (b) é minha leitura do objetivo sob a letra de E3; a letra
   literal é (a).
+
+---
+
+## Checklist VIGENTE — re-emenda 2026-09-08 (pós rodada 2a; substitui o checklist original onde conflita)
+
+> Base: `origin/main` `83c70088` — `POST /api/nfe/preview` mergeado (#283, `NfePreviewSchema` em
+> `server/src/features/accounting/dtos/NfeDto.ts`), `lib/cnpj.ts` (#280). Forks F-FENFE-1..7 ratificados
+> 2026-09-07. Onde este checklist e o original divergem, **vale este**. Decisões D2 (implementador decide e
+> anota) marcadas `[D2]`.
+
+**Contrato consumido (rodada 2a):** `POST /api/nfe/preview` multipart `file` + `unitId` → 200
+`{ success, data: NfePreview }`; `NfePreview` = `chaveAcesso, ide{numero,serie,dhEmiDate,tpNF,natOp,mod},
+emit{cnpj?,cpf?,nome?,ie?}, dest{…}, itens[{nItem,cProd,cEAN,xProd,ncm,cfop,uCom,qCom,vUnComStr,vProdCents,
+vDescCents,indTot:'0'|'1'}], totais{…9 campos cents}, protocolo{cStat,nProt,dhRecbtoDate}, alreadyImported,
+existingPayableId`. Erros 400 com mensagem pt-BR pronta; 403 policy; 401.
+
+**A. Serviços de API**
+
+V1. `my-app/lib/services/multipart.ts` (novo): `multipartBaseUrl()`, `multipartAuthHeaders()`,
+    `multipartParseError(res)` — extraídos **por movimento** de `accounting.service.ts:528-547`;
+    `accounting.service.ts` passa a importá-los (nomes locais preservados; zero mudança de comportamento).
+    `crm.service.ts` intocado. Teste: `importBankStatement` continua enviando os mesmos campos (teste
+    existente do Reconciliation cobre; se não houver, um teste de `FormData` mínimo).
+V2. `my-app/lib/services/nfe.service.ts` (novo): `previewNfe({unitId}, file)`, `importPurchaseNfe({unitId,
+    itemMappings, counterpartyId?, dueDate?}, file)` (`itemMappings` = `JSON.stringify`), `reconcileSaleNfe({unitId,
+    saleId}, file)`; tipos `NfePreview`, `NfePurchaseImportResult`, `NfeSaleReconciliationReport` espelhando o
+    servidor; sem `Content-Type` manual; erro = `{...body, status}` (padrão `resolveError`); `notify` só em
+    sucesso de mutação (import/reconcile), nunca no preview. Teste: `FormData` capturado tem exatamente os
+    campos do DTO; `itemMappings` é string JSON; preview não chama `notify`.
+V3. `counterparties.service.ts`: `Counterparty` ganha `taxId?: string | null` (o backend já devolve; opcional no tipo para não tocar fixtures de testes vizinhos).
+
+**B. Aba "NF-e" (F-FENFE-2 → a)**
+
+V4. `AccountingView.tsx`: 20ª aba `{ id: 'nfe', labelKey: 'view.tabs.nfe', label: 'NF-e' }`, render
+    `<NfePanel unitId={unitId} onLedgerChange={reload} />` só com `unitId`. `[D2]` posição: logo após
+    `conciliacao` (é o vizinho de upload).
+V5. `NfePanel.tsx` (novo, `features/accounting/components/`): duas seções empilhadas, "Compra" e "Venda",
+    cada uma com seu input hidden `.xml` + botão (técnica de `ReconciliationPanel:509-522`), `setError`/
+    `setNotice`, `resolveError`. Carrega `counterparties` SUPPLIER (`counterpartiesService.listCounterparties`)
+    e o catálogo de produtos (V6) ao montar. `[D2]` um único componente com dois sub-blocos internos (`NfePurchaseSection`,
+    `NfeSaleSection`) no mesmo arquivo, para o teste montar cada um.
+
+**C. Compra**
+
+V6. `features/accounting/lib/loadProductOptions.ts` (novo): função extraída **por movimento** de
+    `CreatePayableModal.tsx:44-57`; o modal passa a importá-la (F-FENFE-3 → a). Teste do modal existente
+    (`CreatePayableModal.inventory.test.tsx`) continua verde.
+V7. Passo 1 — arquivo selecionado ⇒ `previewNfe`; loading; erro 400/403 ⇒ banner com a mensagem do servidor;
+    sucesso ⇒ cabeçalho (emitente nome + documento, número/série, emissão via `formatDate`, chave
+    monoespaçada, `vNFCents` via `formatCents` rotulado "valor da nota (vNF)") + tabela de itens.
+    **`alreadyImported === true` ⇒ banner de aviso "esta nota já foi importada (título `existingPayableId`)" e
+    botão Importar desabilitado** (F-PREV-3 b consumido).
+V8. Tabela de itens: linha por item (`nItem, cProd, xProd, qCom uCom, vProdCents`); `indTot='0'` sem select,
+    marcada "não compõe o total"; demais com `<select>` de produto (valor = `productRef`). `cProd` repetido
+    compartilha o select (o DTO é por `cProd`).
+V9. Pré-preenchimento (F-FENFE-4 → c): ordem **lembrado > sugerido > vazio**. `features/accounting/lib/
+    nfeMappingMemory.ts` (novo): chave `luminaris.nfe.mapping.v1`, mapa `{ [emitDoc]: { [cProd]: productRef } }`,
+    `remember(emitDoc, mappings)` após 201, `recall(emitDoc)`, `forget(emitDoc, cProd)`; toda leitura/escrita em
+    `try/catch`, JSON inválido ⇒ mapa vazio. Linha lembrada mostra marca "lembrado" + botão "esquecer";
+    sugerido = match **exato** de `xProd` normalizado (trim/lowercase/sem acento) com **um único** `name` do
+    catálogo, marca "sugerido". Nunca auto-submete. `[D2]` `emitDoc` = `emit.cnpj ?? emit.cpf ?? ''`.
+V10. Fornecedor (F-FENFE-5 → a'): select opcional de SUPPLIER; pré-seleção por `stripCnpjMask(emit.cnpj) ===
+    counterparty.taxId` (a máscara-strip é **só** para comparar — `taxId` já vem normalizado do backend; no FE,
+    replicar `stripCnpjMask` como helper local de 1 linha, `[D2]` sem importar do server), senão nome
+    normalizado exato; link "gerenciar fornecedores" (`onNavigateToCounterparties` opcional — `[D2]` texto
+    simples que troca para a aba `contrapartes` via prop `onNavigateTab?`).
+V11. Vencimento `<input type="date">` opcional; vazio ⇒ omitido.
+V12. Botão Importar habilitado só com todo item `indTot='1'` mapeado **e** `!alreadyImported`; "Enviando…"
+    durante o request. 201 ⇒ `notify`, `remember(...)`, `onLedgerChange`, aviso persistente de
+    `ignoredItems` (`nItem — cProd — xProd`, motivo via chave i18n `nfe.ignored.indTot-0`), e a seção volta ao
+    passo 1 mantendo o aviso. 400/403 ⇒ `resolveError` (duplicata aparece como está).
+V13. A tela **não** exibe custo/rateio/D3; só `vNFCents`. Dinheiro sempre `number` cents ⇒ `formatCents`
+    direto; teste de "nunca NaN".
+
+**D. Venda**
+
+V14. Seletor de vendas finalizadas (F-FENFE-2 a + F-FENFE-6 a): `[D2]` fonte = DynamicTable `sales`
+    (`DynamicTableService.getTables()` → `internalName === 'sales'` → `getTableData(id, 'limit=500')`),
+    filtrada **no cliente** por `data.unitId === unitId` e `String(data.status).toLowerCase() === 'finalized'`
+    (mesma técnica de `loadProductOptions`/`useAccountingData`). Opção = `id · date · totalAmount ·
+    simpleCustomerName|customerId`. Lista vazia ⇒ mensagem "nenhuma venda finalizada nesta unidade".
+    **Nunca campo de texto livre para `saleId`.**
+V15. Fluxo: escolher venda → selecionar `.xml` → `reconcileSaleNfe({unitId, saleId}, file)` direto (sem
+    preview: o servidor só precisa da âncora). 200 ⇒ relatório inline (não modal, `[D2]`): `nfeTotalCents` ×
+    `saleTotalCents` × `differenceCents` via `formatCents`, badge `totalMatches`, lista `divergences[]`,
+    `chaveAcesso`, `nfeItemCount`, `sourceDocumentId` copiável; `notify` contexto Vendas. 404/400 ⇒ banner.
+
+**E. i18n, gates, testes**
+
+V16. Chaves `view.tabs.nfe` + `nfe.*` em `accounting.json` pt/en, paridade medida (847 → N = N).
+V17. `neutral-*`, `rounded-2xl`, zero `any`; `cd my-app && npx tsc --noEmit` limpo; `npm run build` de
+    produção (tela atrás de `withAuth`); zero mudança em `server/`.
+V18. Testes vitest (shim `globalThis.React`): `nfe.service.test.ts`; `nfeMappingMemory.test.ts` (round-trip,
+    JSON inválido, `localStorage` que lança); `NfePanel.test.tsx` — compra: preview renderiza itens; Importar
+    desabilitado até mapear; `indTot='0'` sem select; sugerido só em match exato único; lembrado precede
+    sugerido; `alreadyImported` desabilita; payload chamado com `{unitId, itemMappings, ...}`; 201 com
+    `ignoredItems` mostra aviso; 400 mostra mensagem; sem `NaN`; venda: seletor lista só `finalized` da
+    unidade; chama `reconcileSaleNfe` com `saleId`/`unitId`; relatório renderiza `divergences`;
+    `loadProductOptions` extraído: teste do `CreatePayableModal` inalterado; `AccountingView`: aba `nfe` existe.
