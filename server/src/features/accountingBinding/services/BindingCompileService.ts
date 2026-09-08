@@ -65,7 +65,69 @@ export interface CompileBindingInput {
 export interface CompileBindingResult {
   binding: AccountingBinding;
   validation: BindingValidationResult;
+  /** Gate de cobertura de evento (BE-INCR-P2-VERTICAL-CLINICA, comportamento 5) — ver `computeEventCoverage`. */
+  coverage: BindingCoverageReport;
   status: AccountingBindingStatus;
+}
+
+/**
+ * BE-INCR-P2-VERTICAL-CLINICA — Bloco II, comportamento 5 (contrato §4.4 do BRIEF). Achado que
+ * origina este gate: o dispatcher lança `ValidationError` quando não acha mapper para um evento
+ * (`AccountingSyncService.ts`), mas a ponte CAPTURA esse erro e só loga — a venda grava, nenhum
+ * lançamento nasce, o HTTP devolve 200. Um binding de setor a que falte um `eventKey` que a
+ * operação instalada emite produz uma ECD silenciosamente incompleta: o arquivo é gerado, passa os
+ * gates internos, e falta receita/CMV/o que for. **Ratificado (F-P2-6, segunda metade): o gate vive
+ * na GERAÇÃO do sistema (aqui, em `compile()`) — um binding incompleto nunca chega a virar `Active`**,
+ * em vez de derrubar o processo depois, em runtime.
+ *
+ * `emittableEventKeys` é `Object.keys(input.operationalSchema)` — o MESMO campo que já alimentava só
+ * o hash de staleness (`compiledFromHash`) passa a ter um SEGUNDO papel: quem monta o
+ * `operationalSchema` (o CLI de ativação, F-P2-7) é responsável por listar, sob essa chave, TODO
+ * `eventKey` que a operação instalada do setor pode emitir — nenhum DTO novo, nenhum campo novo
+ * (BRIEF §4.3: "se este incremento precisar alterar qualquer um dos três DTOs do módulo, isso é
+ * sinal de falha da prensa").
+ *
+ * `missing` (emitível \ vinculado) é BLOQUEANTE — é exatamente o caso do achado acima. `orphan`
+ * (vinculado \ emitível — o binding referencia um evento que a operação instalada não emite) é só
+ * informativo: um binding "generoso" não corrompe nada, e não é o modo de falha que este gate existe
+ * para pegar.
+ *
+ * **Resíduo aberto, registrado no ADR (não resolvido aqui):** o CLI de ativação
+ * (`activateAccountingBindingCli.ts`) é um SEGUNDO caminho de escrita de `AccountingBinding` — este
+ * gate roda dentro de `compile()`, que o CLI também chama (mesmo caminho de
+ * `POST /accounting-binding/compile`), então ele COBRE o CLI. O que ele não cobre é qualquer futura
+ * via de escrita que bypasse `BindingCompileService.compile()` inteiramente (ex.: migração de dado
+ * direta) — decisão fora do escopo deste incremento.
+ */
+export interface BindingCoverageReport {
+  unitId: string;
+  sectorKey: string;
+  boundEventKeys: string[];
+  emittableEventKeys: string[];
+  /** `emittable \ bound` — não-vazio = reprova (ECD ficaria incompleta em silêncio). */
+  missing: string[];
+  /** `bound \ emittable` — informativo, não bloqueia. */
+  orphan: string[];
+}
+
+export function computeEventCoverage(
+  unitId: string,
+  sectorKey: string,
+  operationalSchema: Record<string, unknown>,
+  eventBindings: EventBinding[],
+): BindingCoverageReport {
+  const emittableEventKeys = Object.keys(operationalSchema).sort();
+  const boundEventKeys = eventBindings.map((eb) => eb.eventKey).sort();
+  const emittableSet = new Set(emittableEventKeys);
+  const boundSet = new Set(boundEventKeys);
+  return {
+    unitId,
+    sectorKey,
+    boundEventKeys,
+    emittableEventKeys,
+    missing: emittableEventKeys.filter((k) => !boundSet.has(k)),
+    orphan: boundEventKeys.filter((k) => !emittableSet.has(k)),
+  };
 }
 
 export interface ValidateBindingResult {
@@ -117,7 +179,12 @@ export class BindingCompileService {
 
       const candidate = this.buildCandidate(input, nextVersion, compiledAt, compiledFromHash);
       const validation = await this.validationService.validate(candidate);
-      const status: AccountingBindingStatus = validation.ok ? 'Active' : 'Draft';
+      // Gate de cobertura de evento (BE-INCR-P2-VERTICAL-CLINICA, comportamento 5) — roda SEMPRE,
+      // independente do validador estrutural: um binding pode passar nas 9 checagens do validador
+      // (todo eventBinding presente é válido) e AINDA assim faltar um eventBinding inteiro que a
+      // operação instalada emite. `missing` não-vazio reprova a ativação — ver `computeEventCoverage`.
+      const coverage = computeEventCoverage(scope.unitId, input.sectorKey, input.operationalSchema, input.eventBindings);
+      const status: AccountingBindingStatus = validation.ok && coverage.missing.length === 0 ? 'Active' : 'Draft';
 
       const created = await this.repo.create(
         scope,
@@ -142,7 +209,7 @@ export class BindingCompileService {
         payload: { bindingId: created.id, sectorKey: input.sectorKey, bindingVersion: nextVersion, status },
       });
 
-      if (validation.ok) {
+      if (status === 'Active') {
         await this.activateAtomically(scope, input.sectorKey, created, tx);
         await this.auditPort.append(tx, scope, {
           eventType: 'binding.activated',
@@ -150,6 +217,8 @@ export class BindingCompileService {
           payload: { bindingId: created.id, sectorKey: input.sectorKey, bindingVersion: nextVersion },
         });
       } else {
+        // `blockingCount` soma os bloqueantes estruturais do validador COM os `missing` do gate de
+        // cobertura — as duas são razões independentes de reprovar a ativação (comportamento 5).
         await this.auditPort.append(tx, scope, {
           eventType: 'binding.validation_failed',
           targetId: created.id,
@@ -157,12 +226,12 @@ export class BindingCompileService {
             bindingId: created.id,
             sectorKey: input.sectorKey,
             bindingVersion: nextVersion,
-            blockingCount: validation.blocking.length,
+            blockingCount: validation.blocking.length + coverage.missing.length,
           },
         });
       }
 
-      return { binding: created, validation, status };
+      return { binding: created, validation, coverage, status };
     });
   }
 
