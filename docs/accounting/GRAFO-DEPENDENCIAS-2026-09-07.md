@@ -72,8 +72,8 @@ flowchart LR
 
   subgraph FIN[Financeiro - ordem 2]
     F1a["F1a BRIEF FE-INCR-NFE<br/>PR 270"]:::done
-    F1b["F1b feature FE-INCR-NFE"]:::blocked
-    F1c["F1c review + merge FE-NFE<br/>Núcleo 3 → 8/9"]:::blocked
+    F1b["F1b feature FE-INCR-NFE<br/>MERGEADO PR 286 (08/09)"]:::done
+    F1c["F1c review + merge FE-NFE<br/>Núcleo 3 = 8/9 ✓ (08/09)"]:::done
     E9["E9 Trocar fixture sintético<br/>reverter it.todo"]:::blocked
     F3["F3 ADR-INCR-PARTIAL-SETTLEMENT<br/>baixa parcial AP/AR"]:::ready
     F4["F4 BRIEF FE-INCR-CASH-FORECAST"]:::ready
@@ -141,7 +141,7 @@ flowchart LR
 | **X2** | human | — (arquivo baixado 31/08) | fila 09-02 item 2 |
 | **P4** | human | — (instaladores baixados 07/09) | RUNBOOK-H1 P4 detalhado |
 | **H1** | human | B-4 · P4 · **D8** | RUNBOOK-H1 P2/P4/P6 |
-| **H2** | human | — para OFX/CNAB; **F1c** para a parte NF-e (9/9) | cédula integração E8 |
+| **H2** | human | — (OFX/CNAB **e** NF-e por clique agora executáveis; F1c ✅ 08/09) | cédula integração E8 |
 | **H3** | human | C10 · H1 | cédula módulos C10 ("RUNBOOK-H3 para o sign-off"); plano Degrau 2 |
 | **H1 2ª** | human | X4 | fila 09-02 item 6 |
 | **M2** | human | "fim do app" (decisão do dono) — H1 2ª e H2 `(inferida)` | fila 09-02 item 7 |
@@ -164,8 +164,8 @@ flowchart LR
 | **C9** | blocked | X4 (é item do BRIEF da Fase 3) | F-Z0 (2); cédula E.1 C9 |
 | **C10** | ready | — (ADR-P2 Accepted, BRIEF 8/8) | F-Q1 |
 | **F1a** | done | — | PR #270 |
-| **F1b** | blocked | R1 · F1a · E5 ✅ | cédula E6 |
-| **F1c** | blocked | F1b | cédula E7 |
+| **F1b** | **done** (PR #286, 2026-09-08; preview BE em #283) | R1 ✅ · F1a ✅ · E5 ✅ | cédula E6 |
+| **F1c** | **done** (2026-09-08) | F1b ✅ | cédula E7 |
 | **E9** | blocked | D2 | F-I2/F-I8 |
 | **F3** | ready | — | F-M3 |
 | **F4** | ready | — | F-M3 |
