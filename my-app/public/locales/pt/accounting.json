@@ -324,6 +324,18 @@
       "toLabel": "Nova versão",
       "submit": "Copiar",
       "copying": "Copiando…"
+    },
+    "catalog": {
+      "title": "Catálogo Referencial Oficial (RFB)",
+      "description": "Importe o layout oficial do plano referencial da Receita para uma versão. O catálogo é global — vale para todos os clientes, não só esta unidade.",
+      "formatNote": "O arquivo esperado tem colunas nomeadas code,name,isAnalytic,parentCode — não é o XLSX oficial bruto da RFB. Veja RUNBOOK-X2-RFB-REFERENCIAL.md para o passo de conversão.",
+      "versionLabel": "Versão do layout",
+      "submit": "Selecionar arquivo e importar",
+      "importing": "Importando…",
+      "riskNote": "A partir do 1º import de uma versão, toda gravação de mapeamento nessa versão passa a validar o código contra este catálogo — um código fora do catálogo ou sintético será rejeitado onde antes era aceito livremente.",
+      "error": {
+        "versionRequired": "Informe a versão do layout."
+      }
     }
   },
   "sped": {
@@ -338,6 +350,15 @@
       "title": "Gerar SPED ECF",
       "description": "Escrituração Contábil Fiscal (Lucro Presumido). O PVA recupera os blocos da ECD ativa.",
       "submit": "Gerar e baixar ECF"
+    },
+    "ecfReal": {
+      "title": "Gerar SPED ECF (Lucro Real)",
+      "description": "Escrituração Contábil Fiscal — Lucro Real. O PVA recupera os blocos da ECD ativa.",
+      "submit": "Gerar e baixar ECF (Real)",
+      "skeletonBanner": "Esqueleto — blocos L, M e N saem vazios; HASH_ECF_ANTERIOR sempre vazio; Forks 2, 3 e 4 do ADR ainda pendentes de ratificação e do Manual do Leiaute 12.",
+      "error": {
+        "formaTribPer": "Forma trib. do período (0010) deve ter exatamente 4 posições."
+      }
     },
     "field": {
       "year": "Ano",
@@ -364,7 +385,9 @@
       "codAssin": "Cód. (900=contador)",
       "qualifCode": "Qualif. (900=contador)",
       "indCrc": "CRC",
-      "fone": "Fone"
+      "fone": "Fone",
+      "formaTrib": "Forma de tributação (0010)",
+      "formaTribPer": "Forma trib. do período (0010, 4 posições)"
     },
     "opt": {
       "no": "Não",

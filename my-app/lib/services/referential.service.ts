@@ -1,5 +1,6 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import { postMultipart } from './multipart';
 
 /**
  * Referential mapping service — typed client over the RFB chart-mapping endpoints
@@ -59,6 +60,15 @@ export interface ReferentialMappingItem {
   accountId: string;
   referentialCode: string;
   label: string;
+}
+
+/** Response of `POST /referential/catalog/import` — the official RFB layout catalog. */
+export interface ReferentialCatalogImportResult {
+  layoutVersion: string;
+  totalRows: number;
+  imported: number;
+  analyticCount: number;
+  syntheticCount: number;
 }
 
 function qs(unitId: string, version: string): string {
@@ -132,5 +142,35 @@ export const referentialService = {
     );
     notify('Mapeamento removido.', 'success', 'Contabilidade');
     return res.data;
+  },
+
+  /**
+   * Import the official RFB referential layout for a version (ADMIN-only on the
+   * server — a 403 surfaces via `resolveError` like any other endpoint). Multipart
+   * (`fetch` + `FormData`, no manual `Content-Type`) via the shared `postMultipart`
+   * helper (Fork F-COMP2-7 → (b)) — `apiClient` cannot carry a file. All-or-nothing
+   * and idempotent on the server (`@@unique([layoutVersion, code])`); this call does
+   * NOT refetch coverage/mappings — the import only affects future writes
+   * (`ReferentialMappingService.resolveDestinationLabel`), never past ones.
+   */
+  async importCatalog(
+    unitId: string,
+    layoutVersion: string,
+    file: File,
+  ): Promise<ReferentialCatalogImportResult> {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('unitId', unitId);
+    form.append('layoutVersion', layoutVersion);
+    const result = await postMultipart<ReferentialCatalogImportResult>(
+      '/accounting/referential/catalog/import',
+      form,
+    );
+    notify(
+      `Catálogo importado: ${result.imported} conta(s) (${result.analyticCount} analítica(s), ${result.syntheticCount} sintética(s)).`,
+      'success',
+      'Contabilidade',
+    );
+    return result;
   },
 };

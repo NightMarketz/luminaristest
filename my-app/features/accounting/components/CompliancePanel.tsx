@@ -1,8 +1,8 @@
 // React default import: tsconfig uses jsx:"preserve", so vitest/esbuild transforms JSX with the
 // classic runtime and needs React in scope (same pattern as ImportExportPanel, the tested precedent).
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
-import { FiCheckCircle, FiAlertTriangle, FiRefreshCw, FiSave, FiCopy } from 'react-icons/fi';
+import { FiCheckCircle, FiAlertTriangle, FiRefreshCw, FiSave, FiCopy, FiUpload } from 'react-icons/fi';
 import {
   referentialService,
   type ReferentialCoverageReport,
@@ -10,6 +10,7 @@ import {
   type UnmappedReferentialAccount,
 } from '../../../lib/services/referential.service';
 import { resolveError } from '../lib/resolveError';
+import { useAuth } from '../../../lib/context/AuthContext';
 
 const inputClass =
   'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50';
@@ -51,6 +52,7 @@ export function buildBatchItems(
  */
 export function CompliancePanel({ unitId }: { unitId: string }) {
   const { t } = useTranslation('accounting');
+  const { user } = useAuth();
   const genericError = () => t('compliance.error.generic', 'Ocorreu um erro. Tente novamente.');
 
   const [version, setVersion] = useState('');
@@ -65,6 +67,19 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
   const [copyTo, setCopyTo] = useState('');
   const [copying, setCopying] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
+
+  // Catalog import state (Fork F-COMP2-3 → (a): section hidden for non-ADMIN below).
+  // Fork F-COMP2-5 → (b): pre-filled from the mapping `version` field, editable, not locked —
+  // tracks whether the operator has touched it so it stops following `version` once they have.
+  const [catalogVersion, setCatalogVersion] = useState('');
+  const [catalogVersionTouched, setCatalogVersionTouched] = useState(false);
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const catalogFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!catalogVersionTouched) setCatalogVersion(version);
+  }, [version, catalogVersionTouched]);
 
   const loadCoverage = useCallback(
     async (v: string) => {
@@ -145,6 +160,33 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
       setCopyError(resolveError(err, genericError()));
     } finally {
       setCopying(false);
+    }
+  }
+
+  /**
+   * Upload handler for the hidden `<input type="file">` (technique clone of
+   * `ReconciliationPanel.tsx`: reset `e.target.value` so re-selecting the same file
+   * still fires `onChange`). No refetch afterward — the import only gates FUTURE
+   * mapping writes (`ReferentialMappingService.resolveDestinationLabel`), it never
+   * touches mappings already saved (BRIEF item 16).
+   */
+  async function handleCatalogFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setCatalogError(null);
+    const trimmedVersion = catalogVersion.trim();
+    if (!trimmedVersion) {
+      setCatalogError(t('compliance.catalog.error.versionRequired', 'Informe a versão do layout.'));
+      return;
+    }
+    setCatalogBusy(true);
+    try {
+      await referentialService.importCatalog(unitId, trimmedVersion, file);
+    } catch (err) {
+      setCatalogError(resolveError(err, genericError()));
+    } finally {
+      setCatalogBusy(false);
     }
   }
 
@@ -329,6 +371,77 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
               {copyError}
             </div>
           )}
+        </section>
+      )}
+
+      {/* ── Catálogo Referencial Oficial (RFB) — ADMIN-only (Fork F-COMP2-3 → a) ── */}
+      {user?.role === 'ADMIN' && (
+        <section className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+          <h2 className="mb-1 text-lg font-semibold text-neutral-200">
+            {t('compliance.catalog.title', 'Catálogo Referencial Oficial (RFB)')}
+          </h2>
+          <p className="mb-1 text-sm text-neutral-500">
+            {t(
+              'compliance.catalog.description',
+              'Importe o layout oficial do plano referencial da Receita para uma versão. O catálogo é global — vale para todos os clientes, não só esta unidade.',
+            )}
+          </p>
+          <p className="mb-4 text-xs text-neutral-500">
+            {t(
+              'compliance.catalog.formatNote',
+              'O arquivo esperado tem colunas nomeadas code,name,isAnalytic,parentCode — não é o XLSX oficial bruto da RFB. Veja RUNBOOK-X2-RFB-REFERENCIAL.md para o passo de conversão.',
+            )}
+          </p>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex items-center gap-2 text-sm text-neutral-400">
+              {t('compliance.catalog.versionLabel', 'Versão do layout')}
+              <input
+                type="text"
+                value={catalogVersion}
+                onChange={(e) => {
+                  setCatalogVersion(e.target.value);
+                  setCatalogVersionTouched(true);
+                }}
+                placeholder="2026"
+                className={inputClass}
+              />
+            </label>
+            <input
+              ref={catalogFileInputRef}
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleCatalogFileSelected}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => catalogFileInputRef.current?.click()}
+              disabled={catalogBusy}
+              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-50"
+            >
+              {catalogBusy ? <FiRefreshCw className="animate-spin" size={16} /> : <FiUpload size={16} />}
+              {catalogBusy
+                ? t('compliance.catalog.importing', 'Importando…')
+                : t('compliance.catalog.submit', 'Selecionar arquivo e importar')}
+            </button>
+          </div>
+
+          {catalogError && (
+            <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+              {catalogError}
+            </div>
+          )}
+
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-xs text-amber-300">
+            <FiAlertTriangle size={14} className="mt-0.5 shrink-0" />
+            <span>
+              {t(
+                'compliance.catalog.riskNote',
+                'A partir do 1º import de uma versão, toda gravação de mapeamento nessa versão passa a validar o código contra este catálogo — um código fora do catálogo ou sintético será rejeitado onde antes era aceito livremente.',
+              )}
+            </span>
+          </div>
         </section>
       )}
     </div>
