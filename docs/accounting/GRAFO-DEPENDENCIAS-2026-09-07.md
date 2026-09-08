@@ -84,7 +84,7 @@ flowchart LR
     X3["X3 BRIEF FE-INCR-COMPLIANCE-2<br/>botão ECF Real + import catálogo"]:::ready
     X4["X4 ECF Fase 3 L/M/N + e-Lalur<br/>+ C9 retificação"]:::blocked
     X6["X6 Triagem contador → emenda<br/>ADR-INCR-NFE §D3 flag de regime"]:::blocked
-    X6b["X6b BRIEF BE-INCR-CNPJ-ALFA<br/>T10 - dívida: PR 267 mergeou sem"]:::ready
+    X6b["X6b BE-INCR-CNPJ-ALFA<br/>MERGEADO PR 280 (08/09)"]:::done
     X7["X7 ADR-INCR-TAX-ASSESSMENT<br/>IRPJ/CSLL trimestral + MIT"]:::blocked
     X9["X9 ADR-INCR-DCTFWEB"]:::blocked
     X10["X10 ADR-INCR-DFE-EMISSAO-PARCEIRO<br/>NFS-e 01/10 · NF-e 01/12"]:::blocked
@@ -173,7 +173,7 @@ flowchart LR
 | **X3** | ready | — | F-M2 (telas do já-existente) |
 | **X4** | blocked | R2 | fila 09-02 item 5 |
 | **X6** | blocked | D1 | F-M5 |
-| **X6b** | ready | — | triagem [V-repo] T10. **Dívida:** cédula E2 o punha como pré-requisito do merge da NF-e; #267 mergeou sem ele. Aresta viva: X10 e o 1º fornecedor com CNPJ alfanumérico `(inferida)` |
+| **X6b** | **done** (PR #280, 2026-09-08) | — | triagem [V-repo] T10. **Dívida:** cédula E2 o punha como pré-requisito do merge da NF-e; #267 mergeou sem ele. Aresta viva: X10 e o 1º fornecedor com CNPJ alfanumérico `(inferida)` |
 | **X7** | blocked | D1 · D4 · F-M8 ✅ | cédula E.3 X7 |
 | **X9** | blocked | X7 | cédula E.3 X9 |
 | **X10** | blocked | X6b · D5 · R4 | cédula E.3 X10 ("T10 sim"; "pendência MIT não bloqueia") |
