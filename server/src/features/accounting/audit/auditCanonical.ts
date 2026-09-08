@@ -110,6 +110,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-NFE — a ingestão fiscal NÃO emite evento `nfe.*` próprio (decisão A / T8): auditoria é IN-TX
   // e os serviços de integração (compra/venda) não possuem tx própria. A nota já entra no trilho imutável
   // in-tx pela escrita que de fato ocorre — `payable.created` e a chave como `entry.source_recorded`.
+  // BE-INCR-RECONCILE-PENDING (nó C7, Fork 4-a): SÓ emitido quando a re-varredura manual via
+  // ROTA HTTP resolve uma pendência (Fork 3=b justifica auditar — um ator humano autenticado está
+  // por trás; a bulk tick do job continua sem AuditService, ator de sistema, igual antes). Id-only:
+  // `pendingId`/`sourceType` são identificadores internos (cuid da linha + string de rota fixa,
+  // ex. 'sale.finalized') — NUNCA o `reasonDetail` (mensagem de erro livre, pode ecoar dado de
+  // origem) nem qualquer campo do item de origem (nome de cliente/fornecedor). Teste-guarda:
+  // ReconcilePendingAuditAllowlist.test.ts (memória `accounting-audit-allowlist-guards`).
+  'reconcile_pending.rescanned': ['pendingId', 'sourceType', 'outcome'],
 };
 
 /**
