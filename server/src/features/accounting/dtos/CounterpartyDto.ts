@@ -14,7 +14,7 @@ import { queryBoolean } from './queryPrimitives';
  * `name` to the derived `nameNormalized` (`[userId,unitId,type,nameNormalized]`, enforced at the DB +
  * mapped to a ValidationError in the service) — this DTO does not compute `nameNormalized` itself,
  * that stays a service-layer concern (not duplicated here, per the reuse gate). `taxId` is OPTIONAL,
- * normalized to digits-only via the SAME `normalizeTaxId` the model exposes (not re-implemented here) —
+ * normalized (mask stripped, uppercase; letters of an alphanumeric CNPJ preserved — BE-INCR-CNPJ-ALFA) via the SAME `normalizeTaxId` the model exposes (not re-implemented here) —
  * no checksum, no fixed length (fork F-W2A-4). `ref` is an OPTIONAL scoped link to a DynamicTable row
  * (plain string, not a FK).
  */

@@ -63,9 +63,9 @@ export function normalizeCounterpartyName(name: string): string {
  */
 export function normalizeTaxId(taxId: string): string {
   // BE-INCR-CNPJ-ALFA (F-CNPJ-3 → a, 2026-09-07): `\D` mutilava o CNPJ alfanumérico em silêncio
-  // ('12ABC34501DE35' → '123450135'). CPF (11 dígitos após tirar a máscara) continua só-dígitos;
-  // qualquer outra coisa passa por `stripCnpjMask` (tira só máscara, MAIÚSCULO, preserva letras).
-  // Continua sem checksum e sem tamanho fixo (fork F-W2A-4).
+  // ('12ABC34501DE35' → '123450135'). Um único ramo: tira só a máscara ('.', '/', '-', espaços) e põe
+  // em MAIÚSCULAS — um CPF mascarado sai só-dígitos por consequência ('882.440.449-40' → '88244044940'),
+  // um CNPJ alfanumérico preserva as letras. Sem checksum e sem tamanho fixo (fork F-W2A-4).
   return stripCnpjMask(taxId);
 }
 
