@@ -4,8 +4,9 @@
 - **Status:** **Proposed — rodada 6 do `PLANO-SDD-SEQUENCIAL-2026-09-07.md` (só ADR + BRIEF agora; a
   implementação espera o parceiro contratado — dado externo D5).** Forks §5 **RATIFICAÇÃO PENDENTE**;
   **R4 já ratificado 2026-09-08** (credencial por tenant, BYOK — §3 D2). **NENHUM código escrito.**
-- **Autores:** orquestrador (esta sessão) + parecer do `luminaris-accounting-architect` (a anexar como
-  `PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md`, precedente dos ADRs #274/#276).
+- **Autores:** orquestrador (esta sessão) + parecer do `luminaris-accounting-architect` **anexado 2026-09-08**
+  ([PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md](PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md):
+  "apto a ratificação com 6 ajustes e 3 forks novos" — ajustes aplicados na §9; forks F-DFE-9..11 na §9.3).
 - **Autorização (ORCH-006):** cédula de módulos 2026-09-03 **F-M7 → (d)**, palavras do dono: *"chegar até
   a ponta da emissão para poder exportar e enviar a um parceiro emissor via API"*; master map §5 linha
   "Emissão de DF-e via parceiro emissor (API)" ⚫→⏳ "autorizado a abrir ADR"; cédula E.3 **X10**; plano
@@ -211,3 +212,82 @@ apenas **bloqueia** a emissão com aviso até segunda ordem.
   certificado do cliente — dado externo); manual de integração da NFS-e nacional (download pelo dono ou pelo
   agente com permissão, como o Manual ECF); resposta do contador (itens 1b e o novo item de ISS por serviço).
 - **O que este ADR NÃO autoriza:** código; escolha de parceiro; qualquer disparo automático; webhook público.
+
+## 9. EMENDA (2026-09-08) — ajustes do parecer do `luminaris-accounting-architect`
+
+Aplicados **como emenda**, sem reescrever D1–D8 (T6: patch no que falha, nunca rewrite). Onde a emenda e o
+texto original divergem, **vale a emenda**. Fonte: parecer §0–§5.
+
+### 9.1 Contradição interna resolvida por fork (D3(ii) × D7)
+D3(ii) "payload imutável após `SENT`" e D7 "reenvia com o mesmo `ref`" não convivem: um parceiro que trata
+`ref` como identidade devolve o mesmo resultado e o documento nunca sai de `REJECTED`; e o reenvio corrigido
+muda o payload. **Regra emendada:** o que foi **enviado** é imutável **por tentativa**; o `ref` no parceiro é
+**por tentativa** (`<FiscalDocument.id>:<n>`). A forma de persistir a tentativa é o fork **F-DFE-10** (§9.3).
+
+### 9.2 Invariantes acrescentadas (o BRIEF herda todas)
+1. **Fronteira do ISS declarada:** a NFS-e **destaca** ISS; o razão **não o escritura** neste ADR (plano de
+   contas canônico sem conta de tributo — verificado no parecer §1.2; o mapper da venda ignora `taxAmount`).
+   Apuração/recolhimento do ISS é obrigação **humana** até o `ADR-INCR-TAX-ASSESSMENT` (X7). **Nenhum**
+   lançamento de ISS, IBS ou CBS (ano-teste 2026) nasce deste ADR — não-objetivo explícito. Os valores
+   tributários calculados ficam em **colunas** do `FiscalDocument` (`vServCents, baseIssCents, aliqIssBp,
+   vIssCents, vIbsCents, vCbsCents, issRetido`) para X7 consumir sem parsear JSON.
+2. **Tie-out documento × razão, por natureza, em centavos exatos:** `Σ vServ da DPS == crédito 3.1 do
+   lançamento `sale.finalized`` (onda 2: `Σ vProd da NF-e == crédito 3.3`). O §7 item 4 passa a exigir esta
+   igualdade, além de "0 lançamentos novos". Fonte dos valores = fork **F-DFE-11**. A técnica de rateio com
+   resíduo é a canônica (`splitRevenueCredit`), nunca re-inlinada.
+3. **`issRetido` sai do `ServiceFiscalProfile`** (é propriedade da operação/tomador, não do serviço) e vive
+   no documento, default `false`, **sem UI no MVP**; retenção por tomador PJ fica fora do escopo declarado.
+   Alíquota de ISS = (`FiscalProfile.codMun` × item da lista LC 116), não atributo solto do serviço — o
+   pedido ao contador ganha o item "item da lista + alíquota do município do 1º cliente".
+4. **Competência:** a DPS leva `dCompet = sale.date` (data da prestação, mesma do lançamento —
+   `scopeDay(scope, sale.date)`), nunca "hoje"; `SourceDocument.documentDate = sale.date`;
+   `FiscalDocument.authorizedAt` = data de autorização. Anexar proveniência a período **fechado é
+   intencional** (não altera saldo, ACC-021) — o `attach` **não** ganha gate de período. A tela avisa quando
+   `hoje − sale.date` cruza o mês.
+5. **`ambiente` é coluna** do `FiscalDocument` (`producao|homologacao`). **Só documento autorizado em
+   `producao` vira `SourceDocument`**; homologação grava o `FiscalDocument` e não anexa proveniência.
+6. **Pré-condição por `kind` da venda:** venda `Empty` ou all-`Package` é recusada **antes** de chamar a
+   porta (não há âncora `sale.finalized`; pacote posta `sale.package.sold` contra 2.1.1). Pacote em venda mista
+   → fork **F-DFE-9**. Invariante de fecho da venda mista: `Σ NFS-e + Σ NF-e == totalCents − linhas Package`.
+7. **Cancelamento fiscal:** (i) `cancelar` da porta devolve **"fora do prazo"** como resultado tipado (o
+   prazo é do fisco — NF-e 24h [secundária]; NFS-e nacional pendente do manual); (ii) `CANCELLED` sem novo
+   documento vivo na mesma venda é **pendência visível**, não estado estável; (iii) no `CANCELLED` a
+   proveniência anexada recebe **marca** (status em `rawJson`/`description` do `SourceDocument`, ou soft-delete
+   já reservado no schema) — decisão do BRIEF, mas a nota morta não pode seguir como proveniência viva sem
+   marca; (iv) `Returned` (devolução) fica **fora do MVP** — declarado.
+8. **Anexos:** `DocumentAttachment.targetId` tem FK real a `JournalEntry` (verificado) ⇒ o XML/PDF só pousa
+   ali em `AUTHORIZED` de venda com âncora. Rejeição/homologação/pacote **não** usam `DocumentAttachment`
+   (ficam em `payloadJson`/`errorsJson` ou storage próprio) — decisão do BRIEF; o ADR não promete o que o
+   schema não dá.
+9. **Numeração:** número da NFS-e é do ADN; número/série da **DPS** é do prestador [secundária, pendente
+   manual] — se o parceiro não numerar, a sequência é nossa, por `(unitId, serie)`, dentro da tx (ACC-015 por
+   analogia), **nunca** a sequência do razão. Onda 2 (NF-e 55): sequência gapless por série + inutilização =
+   fork do BRIEF da onda 2, não herdado em silêncio. Vigilância PNCT registra a inconsistência recebida contra
+   o `FiscalDocument` (`errorsJson`).
+10. **Identidade:** tomador com `taxId` valida **DV** de CPF (função nova em `lib/cnpj.ts`; hoje só regex) e
+    de CNPJ (`isValidCnpj`); teste de que unidade com CNPJ alfanumérico **cadastra** no preset `units`.
+11. **Polling:** F-DFE-5 (a) exige **nomear o job** que re-consulta `SENT`/`PROCESSING` órfãos (nenhum job
+    existente serve) — vai no BRIEF; sem isso um documento fica preso até alguém abrir a tela.
+12. **ECD/ECF:** nada muda no MVP; `NUM_ARQ` (I250) é o único consumidor futuro — não-objetivo declarado.
+
+### 9.3 Forks novos — RATIFICAÇÃO PENDENTE (do parecer §3)
+
+| Fork | Caminhos | Recomendação + justificativa | Custo de errar |
+|---|---|---|---|
+| **F-DFE-9 — pacote pré-pago × NFS-e** | (a) emitir na **venda do pacote** (âncora `sale.package.sold`, receita ainda não reconhecida) · (b) emitir no **consumo** (serviço pago com pacote, `paidWithPackageId`; âncora `sale.finalized`) · (c) MVP **bloqueia** emissão para venda com item `Package`, com aviso | **(b) + (c) para a venda do pacote em si.** ISS tem fato gerador na prestação [secundária — pendente contador]; (b) casa documento com receita reconhecida; (a) cria NFS-e sem receita no razão e antecipa ISS. (c) sozinho é MVP mínimo aceitável | (a) = ISS 2× ou nota sem receita; ignorar = nota autorizada sem âncora |
+| **F-DFE-10 — reenvio após rejeição × imutabilidade** | (a) tabela filha `FiscalDocumentAttempt` (payload + `ref` + resultado por tentativa; `FiscalDocument` guarda o status corrente) · (b) `payloadJson` mutável até `AUTHORIZED` · (c) `REJECTED` terminal; reenvio = novo `FiscalDocument` (rename-on-reject libera o `@@unique`) | **(a).** Preserva a prova do que foi enviado por tentativa (PNCT/contador) e dá `ref` único por tentativa. (c) é o menor diff aceitável; (b) apaga evidência | (b) perde a prova da rejeição; manter o texto original = reenvio proibido ou preso |
+| **F-DFE-11 — fonte dos valores da DPS** | (a) totais **do lançamento `sale.finalized`** (crédito 3.1 em centavos como teto; itens só para descrição/quantidade, rateio com resíduo na última linha) · (b) recomputar dos floats da venda/itens em reais | **(a).** `Σ documento == razão` por construção; (b) diverge 1 centavo em desconto de header e re-inlina `splitRevenueCredit` | (b) = divergência sistemática ADN × ECF em toda venda com desconto |
+
+### 9.4 Emendas aos forks originais (recomendações mantidas)
+- **F-DFE-4** ganha critérios: `ref` idempotente **por tentativa** (ou reenvio com `ref` novo); cancelamento
+  devolve "fora do prazo" tipado; substituição de NFS-e; sandbox de **NFS-e nacional** (não só NF-e); retorno
+  ecoa `dCompet`; **N CNPJs por conta** (era premissa do D2, vira critério de seleção).
+- **F-DFE-5** (a): nomear o job de re-consulta (9.2 item 11).
+- **F-DFE-6** (a): sem `issRetido` no perfil de serviço; alíquota = município × item (9.2 item 3).
+- **F-DFE-7** (a): DV de CPF/CNPJ antes de enviar (9.2 item 10).
+
+### 9.5 Gates de domínio (ordem do parecer §4)
+Manual da NFS-e nacional (primária) **∥** contador (item LC 116 + alíquota do município, ISS retido, fato
+gerador em pacote, IBS/CBS 2026) → BRIEF `BE-INCR-DFE-NFSE` → Ato nº 5 PDF (aviso na tela) → **D5** parceiro
+→ **H2-DFE** em homologação (1ª nota com `Σ DPS == crédito 3.1`) → produção. Nenhuma nota de produção antes
+do H2-DFE PASSOU.
