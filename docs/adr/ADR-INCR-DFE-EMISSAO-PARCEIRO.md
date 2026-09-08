@@ -1,9 +1,9 @@
 # ADR-INCR-DFE-EMISSAO-PARCEIRO — Documento fiscal de saída (NFS-e nacional / NF-e) montado até a borda e entregue a um parceiro emissor por API
 
 - **Data:** 2026-09-08
-- **Status:** **Proposed — rodada 6 do `PLANO-SDD-SEQUENCIAL-2026-09-07.md` (só ADR + BRIEF agora; a
-  implementação espera o parceiro contratado — dado externo D5).** Forks §5 **RATIFICAÇÃO PENDENTE**;
-  **R4 já ratificado 2026-09-08** (credencial por tenant, BYOK — §3 D2). **NENHUM código escrito.**
+- **Status:** **Accepted 2026-09-08 — forks F-DFE-1..11 RATIFICADOS fork a fork pelo dono (§10; 4 contra a
+  recomendação: F-DFE-1, 5, 7, 8).** Implementação continua condicionada ao parceiro contratado (D5) e ao
+  manual da NFS-e nacional (gate 1 do parecer). **R4 ratificado 2026-09-08** (BYOK — §3 D2). **NENHUM código escrito.**
 - **Autores:** orquestrador (esta sessão) + parecer do `luminaris-accounting-architect` **anexado 2026-09-08**
   ([PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md](PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md):
   "apto a ratificação com 6 ajustes e 3 forks novos" — ajustes aplicados na §9; forks F-DFE-9..11 na §9.3).
@@ -291,3 +291,25 @@ Manual da NFS-e nacional (primária) **∥** contador (item LC 116 + alíquota d
 gerador em pacote, IBS/CBS 2026) → BRIEF `BE-INCR-DFE-NFSE` → Ato nº 5 PDF (aviso na tela) → **D5** parceiro
 → **H2-DFE** em homologação (1ª nota com `Σ DPS == crédito 3.1`) → produção. Nenhuma nota de produção antes
 do H2-DFE PASSOU.
+
+## 10. RATIFICAÇÃO — 2026-09-08 (dono, `AskUserQuestion`, fork a fork; 3 lotes)
+
+| Fork | Decisão do dono | Contra a recomendação? | Efeito no BRIEF / no ADR |
+|---|---|---|---|
+| **F-DFE-1** | **(b) NFS-e + NF-e 55 de venda no MESMO BRIEF** | **SIM** | O BRIEF `BE-INCR-DFE` cobre os dois `kind`; a **numeração gapless por série + inutilização de faixas** da NF-e 55 (parecer §1.6) deixa de ser "fork da onda 2" e entra como fork do próprio BRIEF; a chave de 44 posições usa `lib/cnpj.ts`. O prazo de 01/10 (NFS-e) segue sendo o primeiro a cumprir — o BRIEF ordena os comportamentos NFS-e antes dos NF-e, mas o ciclo é um só |
+| **F-DFE-2** | **(a) env da instância**, 1 chave para N unidades | não | D2 como escrito; "N CNPJs por conta" é critério de D5 |
+| **F-DFE-3** | **(a) manual** (botão na venda finalizada) | não | D4 como escrito |
+| **F-DFE-4** | **dono escolhe depois, fora da sessão (D5)** | — | ADR fixa só os critérios (§5 + §9.4); BE nasce com `FileEmissor`/`NullEmissor`; adaptador do parceiro = BRIEF próprio após D5. **Critério novo por F-DFE-8:** o parceiro precisa suportar emissão para optante do **Simples** pelo Emissor Nacional |
+| **F-DFE-5** | **(c) polling + webhook** | **SIM** | Além do job nomeado de re-consulta, o BRIEF ganha uma **rota pública** de webhook (`POST /api/nfe/dfe/webhook/<parceiro>`) na allowlist deny-by-default **de propósito**, com verificação de assinatura/segredo do parceiro, idempotente por `partnerRef` + status, e sem confiança no corpo além do que `consultar` confirma (o webhook só *acorda* a re-consulta). Risco aceito por escrito: superfície pública nova; teste-guarda de assinatura inválida ⇒ 401 sem efeito |
+| **F-DFE-6** | **(a) `FiscalProfile` + `ServiceFiscalProfile` Prisma por `ref`**, com as emendas do parecer | não | D5 + §9.2 itens 1 e 3 |
+| **F-DFE-7** | **(b) exigir CPF/CNPJ do cliente para emitir** | **SIM** | Pré-condição de emissão: venda ligada a cliente (`customerId`) com `taxId` válido por **DV** (`lib/cnpj.ts` + DV de CPF novo); venda só com `simpleCustomerName` **não emite** e a tela diz o que falta (vincular cliente / cadastrar documento). Consequência declarada: consumidor anônimo fica sem nota até ser cadastrado |
+| **F-DFE-8** | **(b) suportar Simples desde já** | **SIM** | `FiscalProfile.regime ∈ {LUCRO_REAL, LUCRO_PRESUMIDO, SIMPLES}`; para SIMPLES a DPS segue as regras do optante (ISS dentro do DAS, sem destaque de IBS/CBS de teste em 2026 [secundária — **pendente contador**]) e a obrigatoriedade é 01/01/2027 (Ato 4 § 1º) — emitir antes é facultativo. **Fronteira mantida:** o sistema **não** gera DAS/PGDAS-D (cédula 09-02 §2); só o documento. O parceiro precisa suportar o Emissor Nacional para Simples (Res. CGSN 189/2026 [secundária]) — critério de D5 |
+| **F-DFE-9** | **(a) emitir no consumo do pacote; venda do pacote bloqueada com aviso** | não | §9.2 item 6; âncora do consumo = `sale.finalized` do serviço pago com pacote (`paidWithPackageId`) |
+| **F-DFE-10** | **(a) `FiscalDocumentAttempt`** | não | Resolve D3(ii) × D7 (§9.1): payload imutável **por tentativa**, `ref = <id>:<n>` |
+| **F-DFE-11** | **(a) totais do lançamento `sale.finalized`** | não | §9.2 item 2; rateio pela técnica canônica |
+
+**O que muda na fila (plano rodada 6 → 12):** o BRIEF `BE-INCR-DFE` (NFS-e **e** NF-e 55, com webhook + polling,
+tomador obrigatório, regime incluindo Simples) só abre depois dos gates 1 ∥ 2 do parecer (manual da NFS-e
+nacional — **primária, ainda não obtida**: o portal gov.br devolve 403 a cliente automatizado, o dono baixa
+pelo navegador — e a resposta do contador aos itens novos: item LC 116 + alíquota do município, ISS retido,
+fato gerador em pacote, regras do Simples na DPS). Implementação do adaptador espera **D5**.
