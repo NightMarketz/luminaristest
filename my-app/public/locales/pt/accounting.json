@@ -17,6 +17,7 @@
       "contasAPagar": "Contas a Pagar",
       "contasAReceber": "Contas a Receber",
       "aging": "Aging",
+      "cashForecast": "Fluxo de Caixa Projetado",
       "razao": "Razão",
       "planoDeContas": "Plano de Contas",
       "bp": "BP",
@@ -287,6 +288,39 @@
         "control_account_missing": "Conta de controle não encontrada no plano de contas.",
         "control_account_not_balance_sheet_nature": "Conta de controle com natureza fora do Balanço Patrimonial."
       }
+    }
+  },
+  "cashForecast": {
+    "title": "Fluxo de Caixa Projetado",
+    "controls": {
+      "asOf": "Data-base",
+      "generate": "Gerar",
+      "generating": "Gerando…"
+    },
+    "empty": "Selecione a data-base e clique em \"Gerar\" para visualizar a projeção de caixa.",
+    "error": {
+      "load": "Erro ao carregar o fluxo de caixa projetado."
+    },
+    "summary": {
+      "openingBalance": "Saldo inicial",
+      "totalInflow": "Total a receber",
+      "totalOutflow": "Total a pagar",
+      "totalNet": "Líquido do horizonte"
+    },
+    "table": {
+      "date": "Dia",
+      "inflow": "Entradas",
+      "outflow": "Saídas",
+      "net": "Líquido",
+      "balance": "Saldo projetado",
+      "negativeBadge": "Negativo",
+      "noMovement": "Sem vencimentos neste dia."
+    },
+    "document": {
+      "payable": "A pagar",
+      "receivable": "A receber",
+      "number": "Documento",
+      "dueDate": "Vencimento"
     }
   },
   "compliance": {
