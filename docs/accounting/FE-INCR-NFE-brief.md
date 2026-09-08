@@ -1,8 +1,11 @@
 # BRIEF — FE-INCR-NFE (UI de ingestão de NF-e: compra pré-preenche AP, venda anexa proveniência)
 
 > Produzido por **sessão de planejamento**, 2026-09-07, sobre `origin/main` `09ae49a2`. Não contém
-> código de aplicação, não ratifica fork. Todo fork abaixo está **RATIFICAÇÃO PENDENTE** — decisão do
-> dono, fora desta sessão (ORCH-006). Sem os forks ratificados a `sessao-feature` não abre (cédula E6).
+> código de aplicação. **[EMENDA 2026-09-07 — os 7 forks foram RATIFICADOS pelo dono no mesmo dia**
+> (ver §Forks); três contra a recomendação, e o F-FENFE-1 → (b) cria o pré-requisito
+> **`BE-INCR-NFE-PREVIEW`** (rodada 2a do plano). O checklist abaixo é o **original**; os comportamentos
+> que caem ou mudam estão listados na tabela de ratificação, e o BRIEF recebe re-emenda curta quando o
+> contrato do preview estiver em `main`.**]**
 
 ## Cabeçalho
 
@@ -240,7 +243,23 @@ chave. Tudo isso permanece no servidor; um parse divergente no cliente só produ
       `sale.id`/`sale.unitId`; relatório renderiza `divergences`.
     - `AccountsPayablePanel`: o botão "Importar NF-e" existe e abre o modal (regressão de header).
 
-## Forks — RATIFICAÇÃO PENDENTE (decisão do dono)
+## Forks — ✅ RATIFICADOS 2026-09-07 (dono, `AskUserQuestion`, fork a fork) — EMENDA
+
+| Fork | Decisão do dono | Contra a recomendação? | Efeito no checklist |
+|---|---|---|---|
+| **F-FENFE-1** | **(b) endpoint novo `POST /api/nfe/preview`** (dry-run do `lib/nfe.ts`, devolve o resumo da nota) | **SIM** | Este item deixa de ser FE-only: nasce **`BE-INCR-NFE-PREVIEW`** (BRIEF próprio, rodada 2a do plano) **antes** deste. Comportamentos 3–5 (parser de tela) **caem**; no lugar, a tela chama o preview e renderiza o que o servidor devolve. Uma fonte de verdade do leiaute; custo = DTO + rota + `docs.paths.ts` + snapshot + path-count |
+| **F-FENFE-2** | **(a) aba nova "NF-e" no `AccountingView`** com os dois fluxos | **SIM** | Comportamento 6 vira "aba `nfe` (20ª) com duas seções: Compra / Venda"; comportamento 18 (botão no `SaleDetailPanel`) **cai**. **Consequência que o dono precisa saber (D2, anotada):** a âncora `saleId` da venda **não pode ser texto livre** — recria o risco que o F-NFE8 matou. A aba usa um **seletor de vendas finalizadas** (unidade + período, listando id/data/valor/cliente) alimentado pela mesma fonte que o dashboard (`useSalesData`/DynamicTable `sales`, `status='Finalized'`); detalhe do seletor é decisão do implementador dentro desta regra. Um só namespace i18n (`accounting.json`) |
+| **F-FENFE-3** | **(a) extrair `loadProductOptions`** para `features/accounting/lib/` e reusar | não | comportamento 9 como escrito |
+| **F-FENFE-4** | **(c) match exato + lembrar `(emitDoc, cProd) → productRef` em `localStorage`** | **SIM** | Comportamento 10 ganha: após um import com sucesso, grava o mapa por `(CNPJ do emitente, cProd)`; na próxima nota do mesmo emitente a linha nasce preenchida e marcada **"lembrado"** (distinto de "sugerido"); `try/catch` em toda leitura/escrita; nunca auto-submete; botão "esquecer" por linha. Risco aceito: mapeamento errado uma vez propaga até o operador corrigir — a marca visível é a mitigação |
+| **F-FENFE-5** | **(a') select opcional, pré-seleção por CNPJ (`taxId`) e senão por nome exato**, link para Contrapartes | não (opção refinada na 2ª pergunta) | Comportamento 12 muda: o tipo `Counterparty` do FE passa a expor `taxId` (o backend já o tem, `schema.prisma:1120`); pré-seleção compara `stripCnpjMask(emit.CNPJ)` com `taxId`; sem match, nome normalizado exato. Achado 2 deixa de valer para `taxId` |
+| **F-FENFE-6** | **(a) só `status = 'finalized'`** | não | vale para o seletor de vendas da aba (F-FENFE-2), não mais para um botão no detalhe |
+| **F-FENFE-7** | **(a) `nfe.service.ts` + `lib/services/multipart.ts`** | não | comportamento 1 como escrito |
+
+**O que muda no plano:** rodada 2 → **2a** `BE-INCR-NFE-PREVIEW` (S → R → I → V → M) e **2b** `FE-INCR-NFE`
+(este BRIEF, re-emendado após o 2a fixar o contrato do preview). Este BRIEF **não** abre `sessao-feature`
+antes do 2a mergear.
+
+Tabela original (caminhos + recomendação), mantida como registro:
 
 | Fork | Caminhos | Recomendação + justificativa | Custo de errar |
 |---|---|---|---|
