@@ -207,6 +207,39 @@ decisão de auditar. **Status: RATIFICAÇÃO PENDENTE.**
 
 ---
 
+## FORK 5 — falha ao ESCREVER a pendência × invariante do loop da passada
+
+**Por que é fork (achado do 2º review independente):** a versão anterior do item 4 do checklist
+mandava a escrita da pendência **propagar** (throw) quando falhasse, para não perder a proteção que
+o freeze do F-W2F-4 dava antes (ver FORK 1, fechado). Mas cada uma das 8 passadas roda um `for` com
+`try/catch` **por item**, e o comentário explícito no código é `// Isolated failure must NOT stop the
+batch.` (`server/src/jobs/accountingSyncReconcile.job.ts`, dentro do `catch` de
+`reconcileCrmReceivables`, laço `for (const opp of opportunities)` linhas 216-271, comentário na
+linha ~257; o mesmo padrão se repete nas outras 7 passadas). Um `throw` dentro desse `catch` não
+"derruba a rodada com segurança" — ele quebra o `for` daquela passada específica e descarta **todo
+item ainda não processado na MESMA passada** (ex.: 500 oportunidades, a 3ª falha ao escrever
+pendência, as 497 restantes nunca são tentadas neste tick). Isso é uma mudança de invariante do
+motor (isolamento por item vira isolamento por rodada) que o BRIEF não pode decidir sozinho — é
+escolha do dono entre dois modos de falha diferentes, não um detalhe de implementação.
+
+| Caminho | Descrição | Custo de errar |
+|---|---|---|
+| **(a) `throw` derruba a rodada inteira** — a escrita da pendência falhando propaga para fora do `catch` do item, saindo do `for` da passada e do `runPasses`; `withReconcileWatermark` não persiste o novo watermark (GUARD existente, linha 766 do teste) | Mais seguro contra perda silenciosa (nenhum item da rodada é dado por resolvido sem prova), mas contraria o comentário explícito "Isolated failure must NOT stop the batch" e MUDA o raio de efeito de uma falha de infraestrutura (1 escrita em `reconcile_pending_items` fora do ar) — de "1 item não reconciliado" para "toda a passada, e potencialmente as 7 seguintes do mesmo tick, não avançam" |
+| **(b) Contador `pendingWriteFailed`, loop continua** — a falha ao escrever a pendência incrementa `summary.pendingWriteFailed` (novo campo) e o loop segue para o próximo item (mesmo padrão de `failed`/`blocked` hoje); `withReconcileWatermark` NÃO avança a marca se `pendingWriteFailed > 0` — reaproveita a mecânica de freeze (agora superada para `failed`/`blocked` pelo FORK 1) só para este caso específico | Preserva o isolamento por item (não perde os 497 restantes); mas reintroduz exatamente o tipo de freeze condicional que o FORK 1 acabou de fechar como superado — precisa de justificativa própria de por que ESTE caso (falha de infra na escrita, não falha de negócio no item) merece voltar a segurar a marca |
+| **(c) Loga e continua, marca avança normalmente** | Mais simples, sem novo campo nem freeze condicional | **Rejeitar** — é exatamente a perda silenciosa que motivou a rodada inteira (F-W2F-3/F-W2F-5): o item falhou/bloqueou no ledger, a ÚNICA prova disso (a linha da pendência) não foi escrita, e a marca principal já não protege mais nada (FORK 1) — o item desaparece sem deixar rastro em lugar nenhum |
+
+**Recomendação:** **(b)**. Justificativa: preserva o comentário/invariante já existente no código
+("Isolated failure must NOT stop the batch") em vez de contrariá-lo — mudar esse invariante (opção a)
+é uma decisão de maior raio de efeito sobre as 8 passadas, não algo que uma falha de escrita numa
+tabela nova deveria forçar; o custo extra de (b) é um campo de summary e uma condição a mais no
+`withReconcileWatermark` (`pendingWriteFailed > 0`, ao lado — não em vez — do que já existe para
+`failed`/`blocked` antes do FORK 1). Custo de estar errado: se o dono preferir (a) por segurança
+máxima, a `sessao-feature` precisa aceitar que uma falha de infraestrutura na tabela de pendências
+pode paralisar TODA a reconciliação daquele tick, não só o item afetado — trade-off explícito que
+merece a palavra do dono, não a inferência do BRIEF. **Status: RATIFICAÇÃO PENDENTE.**
+
+---
+
 ## Checklist numerado de comportamentos (após os forks acima resolvidos — cada um testável isoladamente)
 
 > Numeração usa `(A)`/`(B)` etc. quando o comportamento **muda de forma** dependendo do fork; o
@@ -235,22 +268,18 @@ decisão de auditar. **Status: RATIFICAÇÃO PENDENTE.**
    `sale.finalized`, `sale.cancelled` [via `findEntry`/`reverse`], `sale.returned`, `sale.settled`,
    `sale.package.sold`, pacote-consumo, e `sale.cogs` que hoje NÃO tem `blocked` — decidir se cogs
    entra só como `FAILED`).
-4. **Persistência da pendência NUNCA pode falhar em silêncio** — sob a decisão do Fork 1 (fechado —
-   ver seção acima), o watermark principal já não segura por `failed` nem por nenhuma outra condição:
-   a marca avança sempre, incondicionalmente (`runStartAt − OVERLAP_MS`), mesmo dentro de
-   `withReconcileWatermark`. Isso muda o risco-silencioso do desenho anterior: se a escrita em
-   `reconcile_pending_items` falhar no mesmo tick em que o item falhou/bloqueou no ledger, o item
-   **não é mais protegido por nada** — a marca principal já passou por cima dele (diferente do
-   `reconcilePhysicalInventory`, cuja falha é aceitável porque aquele check é warn-only e não perde
-   dado de origem; aqui perder a escrita da pendência PERDE o único rastro do item). Por isso este
-   comportamento não pode seguir o padrão "best-effort, loga e segue" das outras passadas warn-only:
-   a escrita da pendência precisa estar na MESMA operação atômica que incrementa `failed`/`blocked`
-   no core de cada passada (dentro do `catch`, antes do `continue`), não como um passo externo
-   opcional depois do merge. Testável: mock do writer de pendência lança erro dentro do `catch` de
-   uma das 8 passadas → o teste-guarda assere que a exceção SOBE (derruba a rodada inteira, o que
-   preserva o watermark antigo via o `GUARD` já existente do job, linha 766 do teste) em vez de ser
-   engolida — a escolha de propagar em vez de engolir é o que substitui a proteção que o freeze do
-   F-W2F-4 dava antes.
+4. **Persistência da pendência NUNCA pode falhar em silêncio (forma exata = FORK 5, RATIFICAÇÃO
+   PENDENTE)** — sob a decisão do Fork 1 (fechado), o watermark principal já não segura por `failed`
+   nem por nenhuma outra condição: a marca avança sempre, incondicionalmente
+   (`runStartAt − OVERLAP_MS`). Se a escrita em `reconcile_pending_items` falhar no mesmo tick em que
+   o item falhou/bloqueou no ledger, o item fica sem NENHUMA proteção (a marca principal já passou
+   por cima dele) — mas a FORMA exata da reação (derrubar a rodada inteira × contador dedicado ×
+   ignorar) muda o raio de efeito sobre o isolamento por item que as 8 passadas já garantem hoje
+   ("Isolated failure must NOT stop the batch", comentário em cada `catch`) — ver **FORK 5** para as
+   3 opções, recomendação e custo de errar. Testável (independente da opção escolhida): mock do
+   writer de pendência lança erro dentro do `catch` de uma das 8 passadas → o teste-guarda assere o
+   comportamento ratificado no FORK 5 (throw que derruba a rodada, OU `pendingWriteFailed++` com loop
+   contínuo e watermark retido) — nunca a opção (c) rejeitada (loga e segue com marca avançando).
 5. **Resolução automática** — quando uma passada, numa rodada seguinte, encontra o MESMO
    `(sourceType, sourceId)` sem erro (idempotent hit ou synced), marca a pendência existente como
    `resolvedAt = now()` em vez de deixá-la pendente para sempre. Testável: item pendente por
@@ -428,7 +457,7 @@ origem regulatório.
    seção "Checklist numerado", itens 1-6.
 2. **Grau em cada claim:** ver tabela de insumos (cada linha cita arquivo:linha = verificado). O
    mecanismo do Fork 1 é **verificado** por citação literal das duas cédulas (não mais fork — ver
-   correção acima); os 4 forks pendentes (1-R, 2, 3, 4) são explicitamente **assumido/inferido**
+   correção acima); os 5 forks pendentes (1-R, 2, 3, 4, 5) são explicitamente **assumido/inferido**
    onde nenhuma cédula resolve por letra — nenhum deles reabre o que já está fechado.
 3. **Caso adversarial tentado:** verifiquei se os dois ADRs de "reconciliação" citados no prompt de
    disparo (`ADR-INCR7-bank-reconciliation.md`, `ADR-INCR7-UNMATCH-read-shape.md`) eram o MESMO
@@ -454,21 +483,21 @@ origem regulatório.
    (linhas 754, 766) usam `failed: 0` fixo e testam avanço genérico / guard de exceção, não o
    freeze — por isso é 1 teste a corrigir, não 3.
 5. **Duas primeiras linhas entregam verdade + risco:** ver abertura do relatório final — a verdade é
-   "Fork 1 fechado pela cédula (não é mais fork), BRIEF corrigido"; o risco principal é o item 4 do
-   checklist — se a `sessao-feature` implementar a escrita da pendência como best-effort (copiando o
-   padrão warn-only vizinho do `reconcilePhysicalInventory`), um item que falhou/bloqueou E cuja
-   escrita de pendência também falhar no mesmo tick fica sem NENHUM mecanismo de retenção — o
-   watermark principal já não segura mais nada.
+   "Fork 1 fechado pela cédula, FORK 5 aberto pelo 2º review (não é detalhe de implementação)"; o
+   risco principal é precisamente por isso um FORK, não um item resolvido do checklist — a forma
+   exata da proteção contra falha de escrita da pendência muda o raio de efeito de uma falha de
+   infraestrutura sobre as 8 passadas, e só o dono decide esse trade-off (FORK 5).
 
 **Risco silencioso nº1 (OPS-004):** com o freeze do F-W2F-4 superado (Fork 1 fechado), a única rede
 de proteção contra perder um item falho/bloqueado passa a ser a escrita bem-sucedida em
-`reconcile_pending_items`. Se a `sessao-feature` seguir o padrão dos dois checks vizinhos no MESMO
-arquivo (`reconcilePackageBalanceVsLiability`, `reconcilePhysicalInventory` — ambos warn-only,
-"loga e segue" por desenho, linhas 1002-1127) e aplicar o mesmo "nunca derruba a rodada" à escrita
-da pendência, um erro transitório de banco no exato tick em que um item falha vira **perda
-silenciosa total**: nem `tsc`, nem teste, nem CI acusam — o item simplesmente não existe em lugar
-nenhum na próxima consulta, porque a marca já avançou. O checklist (item 4) já registra que a
-escrita da pendência deve **propagar** a exceção (derrubar a rodada, preservando o watermark antigo
-via o GUARD existente) em vez de engolir — mas nada IMPEDE a `sessao-feature` de copiar o padrão
-errado por proximidade textual no mesmo arquivo; por isso o teste-guarda do item 4 é o único que
-prova a escolha certa foi feita.
+`reconcile_pending_items` — e a FORMA dessa proteção é o que o FORK 5 decide. Se a `sessao-feature`
+implementar a opção (c) do Fork 5 (rejeitada, mas sempre possível por atalho) ou copiar por
+proximidade textual o padrão dos dois checks vizinhos no MESMO arquivo
+(`reconcilePackageBalanceVsLiability`, `reconcilePhysicalInventory` — ambos warn-only, "loga e
+segue" por desenho, linhas 1002-1127) sem perceber que aqui a semântica é diferente (aqueles nunca
+perdem dado de origem; este perde o único rastro do item), um erro transitório de banco no exato
+tick em que um item falha vira **perda silenciosa total**: nem `tsc`, nem teste, nem CI acusam — o
+item simplesmente não existe em lugar nenhum na próxima consulta, porque a marca já avançou. É
+exatamente por isso que o checklist (item 4) NÃO resolve a forma sozinho — aponta para o FORK 5 e
+deixa a escolha (a) ou (b) explícita para o dono, com (c) nomeada e rejeitada por escrito para que
+nem a `sessao-feature` nem um leitor futuro a escolham por omissão.
