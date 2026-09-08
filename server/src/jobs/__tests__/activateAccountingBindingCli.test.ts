@@ -108,6 +108,7 @@ describe('activateAccountingBindingCli', () => {
     compile.mockResolvedValueOnce({
       binding: { id: 'b3', bindingVersion: 1 },
       validation: { ok: false, blocking: [{ code: 'ACCOUNT_NOT_FOUND', message: 'conta ausente' }], warnings: [] },
+      coverage: { unitId: 'unit-1', sectorKey: 'beautySalon', boundEventKeys: [], emittableEventKeys: [], missing: [], orphan: [] },
       status: 'Draft',
     });
 
@@ -124,5 +125,46 @@ describe('activateAccountingBindingCli', () => {
     const code = await runCli(argv);
     expect(code).toBe(1);
     expect(disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * BE-INCR-P2-VERTICAL-CLINICA, comportamento 6 (F-P2-7 → RATIFICADO (a)). Par vermelho→verde
+   * contra o footgun verificado no BRIEF: ANTES deste registry, `--sector-key aestheticClinic`
+   * compilava `SALE_BINDING_V1` (o binding do SALÃO) sob o rótulo da clínica, sem erro nenhum.
+   */
+  describe('registry sectorKey → {binding, operationalSchema} (F-P2-7a)', () => {
+    it('sectorKey desconhecido falha claro (exit 1) e NUNCA toca o banco', async () => {
+      const code = await runCli(['--owner-user-id', 'u1', '--unit-id', 'unit-1', '--sector-key', 'petShop']);
+
+      expect(code).toBe(1);
+      expect(findFirstAccountingBinding).not.toHaveBeenCalled();
+      expect(findManyAccount).not.toHaveBeenCalled();
+      expect(compile).not.toHaveBeenCalled();
+      expect(String((console.error as jest.Mock).mock.calls[0][0])).toMatch(/petShop/);
+    });
+
+    it("--sector-key aestheticClinic compila o payload da CLÍNICA, não o do salão (fecha o footgun)", async () => {
+      findFirstAccountingBinding.mockResolvedValueOnce(null);
+      findManyAccount.mockResolvedValueOnce([{ code: '1.1.1', nature: 'Asset', acceptsEntries: true }]);
+      compile.mockResolvedValueOnce({
+        binding: { id: 'b-clinic', bindingVersion: 1 },
+        validation: { ok: true, blocking: [], warnings: [] },
+        coverage: { unitId: 'unit-1', sectorKey: 'aestheticClinic', boundEventKeys: [], emittableEventKeys: [], missing: [], orphan: [] },
+        status: 'Active',
+      });
+
+      const code = await runCli(['--owner-user-id', 'u1', '--unit-id', 'unit-1', '--sector-key', 'aestheticClinic']);
+
+      expect(code).toBe(0);
+      const [, input] = compile.mock.calls[0];
+      expect(input.sectorKey).toBe('aestheticClinic');
+      // O ponto do fork: o payload é o da clínica, não o `SALE_BINDING_V1` hardcoded de antes —
+      // nenhum descriptionTemplate carrega o texto "salão" (o binding do vertical 1).
+      expect(input.eventBindings.some((eb: { descriptionTemplate?: string }) => eb.descriptionTemplate?.toLowerCase().includes('salão'))).toBe(false);
+      expect(input.eventBindings.some((eb: { descriptionTemplate?: string }) => eb.descriptionTemplate?.toLowerCase().includes('clínica'))).toBe(true);
+      expect(Object.keys(input.operationalSchema)).toEqual(
+        expect.arrayContaining(['sale.finalized', 'sale.settled', 'sale.returned', 'sale.package.sold', 'sale.cogs']),
+      );
+    });
   });
 });
