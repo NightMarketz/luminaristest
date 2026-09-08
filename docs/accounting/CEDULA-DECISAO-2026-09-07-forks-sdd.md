@@ -23,7 +23,7 @@ o caminho marcado como **Recomendação** no documento que o define, na versão 
 | 5 | `FE-INCR-CASH-FORECAST-brief.md` (#278 `77c77553`) | **F-CF1 a, F-CF2 a, F-CF3 a, F-CF4 a, F-CF5 a, F-CF7 a, F-CF9 a** | abre `sessao-feature` (BE report read-only + FE) **depois** do lote FE mergear (same-domain: `accounting.service.ts`/`accounting.json`) |
 | 8 | `ADR-INCR-PARTIAL-SETTLEMENT.md` (#276 `b7a62a73`) | **F-PS1 c, F-PS2 a, F-PS3 a, F-PS4 a, F-PS5 a, F-PS6 b, F-PS7 a** | ADR → **Accepted por delegação**; abre `sessao-planejamento` do BRIEF |
 | 9 | `ADR-CONTADOR-DELIVERY.md` (#274 `239945d1`) | **F-CD1..F-CD8 → recomendação** (todas (a); F-CD4 com FK `Restrict`, F-CD6 reusa `job.sha256`) | ADR → **Accepted por delegação, condicionado**: a implementação segue esperando o item 0 do pedido ao contador (F-Z0); o BRIEF pode ser escrito |
-| 1–2 | `BE-INCR-CNPJ-ALFA-brief.md`, `FE-INCR-NFE-brief.md`, `BE-INCR-NFE-PREVIEW-brief.md` | conduzidos pela sessão paralela ("Próximos passos módulo financeiro"); o mesmo sinal vale para eles — registro lá | — |
+| 1–2 | `BE-INCR-CNPJ-ALFA-brief.md`, `FE-INCR-NFE-brief.md`, `BE-INCR-NFE-PREVIEW-brief.md` | **NÃO cobertos por este sinal.** Ratificados **fork a fork** pelo dono na sessão paralela ("Próximos passos módulo financeiro") em 2026-09-07 — alguns **contra** a recomendação (F-CNPJ-4, F-FENFE-1/2/4); registro canônico = tabelas "RATIFICADOS 2026-09-07" nos próprios BRIEFs. [correção 2026-09-08: a versão anterior desta linha dizia que a delegação valia para eles — não vale] | rodadas 1/2a/2b mergeadas (#280, #283, #286; fold #284/#288) |
 
 ## O que este sinal NÃO cobre
 
