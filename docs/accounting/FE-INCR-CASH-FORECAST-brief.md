@@ -36,7 +36,7 @@
      `CashFlowReportService.ts` (rota `GET /reports/cash-flow`, já registrada e documentada), é a
      **DFC método indireto, `periodSemantics: 'year_to_date'`** — um demonstrativo **histórico**
      (1º de janeiro do ano de `asOf` até `asOf`, lendo o razão já lançado). Não projeta nada para
-     frente; não lê `dueDate` de AP/AR. Confirmado lendo o arquivo inteiro (325 linhas). A nota
+     frente; não lê `dueDate` de AP/AR. Confirmado lendo o arquivo inteiro (324 linhas). A nota
      "fora de escopo" do próprio `ADR-INCR-AP-AR-AGING.md` §5 — *"projeção de fluxo futuro (é o
      DFC, já existe)"* — está **desatualizada/imprecisa**: o DFC existente não cobre projeção; é
      exatamente o gap que a cédula de 03/09 (item 15) reabriu.
@@ -72,7 +72,7 @@
      `router.get('/reports/aging', getAging)` (linha 92); a doc OpenAPI **não** vive em
      `docs.paths.ts` (esse arquivo não tem nenhuma entrada `reports/aging`, `reports/cash-flow`
      nem `accounting/reports` — confirmado por grep) — vive **inline no controller**
-     (`accountingController.ts:394-405`, bloco `/** @openapi ... */` acima de `getAging`). O
+     (`accountingController.ts:395-406`, bloco `/** @openapi ... */` acima de `getAging`). O
      "registro em 2 toques" para rotas de `accounting.ts` é, portanto: (i) `routes/accounting.ts`
      + (ii) o bloco `@openapi` dentro do próprio controller — **não** `docs.paths.ts`. Isto
      corrige uma suposição do enunciado da tarefa.
@@ -165,62 +165,71 @@ Nenhum fork se auto-ratifica.
 4. **DTO `cashForecast.dto.ts`**, `.strict()`, `unitId` obrigatório, demais campos conforme forks
    F-CF1/F-CF3 (horizonte/agrupamento) — clona a estrutura de `aging.dto.ts` (refine com
    `isValidDateOnly`, nunca regex nu). **Direto na forma; conteúdo depende dos forks.**
-5. **Policy** — clona `canReadPayable`/`canReadReceivable`; a composição exata depende do fork
+5. **Gate de snapshot de shape do DTO** (patch pós-review, PR #278) —
+   `server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts` faz
+   `fs.readdirSync` no diretório de DTOs e reprova qualquer schema Zod exportado (incl.
+   `CashForecastQuerySchema` do item 4) ausente de `__dto-shapes__.json`. **Não é opcional nem
+   improvisação do implementador** — a própria `sessao-planejamento/SKILL.md` cita este gate como
+   pertencente ao checklist. Ao criar o DTO, rodar
+   `UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit dtoShapeSnapshot` e comitar o JSON
+   atualizado no MESMO PR — o diff do snapshot é o registro legível da mudança de contrato.
+   **Direto — é gate.**
+6. **Policy** — clona `canReadPayable`/`canReadReceivable`; a composição exata depende do fork
    F-CF5. **Fork F-CF5.**
-6. **Horizonte de projeção** — depende do fork **F-CF1**.
-7. **Saldo inicial da projeção** (para exibir saldo corrente projetado, não só o líquido do
+7. **Horizonte de projeção** — depende do fork **F-CF1**.
+8. **Saldo inicial da projeção** (para exibir saldo corrente projetado, não só o líquido do
    período) — depende do fork **F-CF2**.
-8. **Granularidade das linhas** (dia/semana/mês) — depende do fork **F-CF3**.
-9. **Inclusão de títulos em trânsito** (`PAYING`/`RECEIVING`) — **herdado automaticamente** de
-   `findOutstanding()` sem código extra (achado 3). **Fork F-CF4** registra a alternativa
-   (excluir exigiria filtro adicional) mas a opção reusada é, por construção, a recomendada.
-10. **Serialização money**: toda cifra é `string` de INTEGER CENTS (nunca `number` JS cru),
+9. **Granularidade das linhas** (dia/semana/mês) — depende do fork **F-CF3**.
+10. **Inclusão de títulos em trânsito** (`PAYING`/`RECEIVING`) — **herdado automaticamente** de
+    `findOutstanding()` sem código extra (achado 3). **Fork F-CF4** registra a alternativa
+    (excluir exigiria filtro adicional) mas a opção reusada é, por construção, a recomendada.
+11. **Serialização money**: toda cifra é `string` de INTEGER CENTS (nunca `number` JS cru),
     idêntico à convenção INCR-4/aging. **Direto — é gate.**
-11. **Rota** `GET /reports/cash-forecast` registrada em `server/src/routes/accounting.ts` (mesmo
+12. **Rota** `GET /reports/cash-forecast` registrada em `server/src/routes/accounting.ts` (mesmo
     bloco dos outros `/reports/*`). **Direto.**
-12. **Controller** `getCashForecast` em `accountingController.ts`, clonando exatamente o padrão
+13. **Controller** `getCashForecast` em `accountingController.ts`, clonando exatamente o padrão
     de `getAging` (401 sem user, 400 Zod, `resolveAccountingScope`, `getFactory()`,
     `handleApiError`) + bloco `/** @openapi */` **inline no controller** (achado 7 — nunca
     `docs.paths.ts` para rotas de `accounting.ts`). **Direto.**
-13. **Factory**: novo campo no map de services + construtor + getter público
+14. **Factory**: novo campo no map de services + construtor + getter público
     (`getCashForecastReportService()`), mesmo padrão de `agingReport` em `server/src/lib/factory.ts`.
     **Direto.**
-14. **Guard de path-count**: subir `BASELINE` de `146` para `147` em
+15. **Guard de path-count**: subir `BASELINE` de `146` para `147` em
     `server/src/__tests__/openapi-paths.test.ts`, com comentário histórico no mesmo estilo dos
     anteriores. **Direto — é gate.**
-15. **Teste do service** `CashForecastReportService.test.ts`: vazio (sem AP/AR em aberto);
+16. **Teste do service** `CashForecastReportService.test.ts`: vazio (sem AP/AR em aberto);
     títulos AP e AR misturados no mesmo dia; título em trânsito (`PAYING`/`RECEIVING`) contado;
     `asOf` custom; policy negada (`ForbiddenError`); `asOf` inválido (`ValidationError`); nenhuma
     conversão produz `NaN`/perde centavo (invariante de soma exata, inteiro). **Direto.**
-16. **`cd server && npx tsc --noEmit` limpo.** **Direto — é gate.**
+17. **`cd server && npx tsc --noEmit` limpo.** **Direto — é gate.**
 
 ### Frontend
 
-17. **Painel novo `CashForecastPanel.tsx`** — controles (data-base `asOf`, e o(s) parâmetro(s) do
+18. **Painel novo `CashForecastPanel.tsx`** — controles (data-base `asOf`, e o(s) parâmetro(s) do
     fork F-CF1), botão "Gerar" — clona `AgingPanel.tsx`/`BalanceSheetPanel.tsx`. **Direto.**
-18. Estado vazio, loading, erro (`resolveError`) — mesmo padrão dos irmãos. **Direto.**
-19. Renderiza as linhas da projeção (forma depende de F-CF3) com saldo projetado acumulado por
+19. Estado vazio, loading, erro (`resolveError`) — mesmo padrão dos irmãos. **Direto.**
+20. Renderiza as linhas da projeção (forma depende de F-CF3) com saldo projetado acumulado por
     linha, quando F-CF2 escolhe saldo inicial — **Fork F-CF3** define a forma exata.
-20. **Drill-down por documento** dentro de cada linha/bucket — **Fork F-CF9** (espelha F-AGING-3
+21. **Drill-down por documento** dentro de cada linha/bucket — **Fork F-CF9** (espelha F-AGING-3
     da Aging).
-21. Toda money via `parseInt(x, 10)` antes de `formatCents`; teste explícito contra `"NaN"`
+22. Toda money via `parseInt(x, 10)` antes de `formatCents`; teste explícito contra `"NaN"`
     (mesmo padrão `BalanceSheetPanel.test.tsx`). **Direto — é gate.**
-22. `dueDate`/`asOf` sempre via `formatDate` (nunca `new Date(iso).toLocaleDateString()` cru).
+23. `dueDate`/`asOf` sempre via `formatDate` (nunca `new Date(iso).toLocaleDateString()` cru).
     **Direto — é gate.**
-23. Erros de policy (403) e validação (400) no banner de erro padrão. **Direto.**
-24. Nova entrada em `AccountingView.tsx` (`TABS` + import + render condicional por `activeTab`).
+24. Erros de policy (403) e validação (400) no banner de erro padrão. **Direto.**
+25. Nova entrada em `AccountingView.tsx` (`TABS` + import + render condicional por `activeTab`).
     **Fork F-CF7** (posição/nome da aba).
-25. `accountingService.getCashForecast()` + tipos novos locais (nunca importados do backend) em
+26. `accountingService.getCashForecast()` + tipos novos locais (nunca importados do backend) em
     `accounting.service.ts`, espelhando o shape do DTO/service. **Direto.**
-26. i18n: todas as strings novas sob namespace **`cashForecast.*`** (nunca `cashFlow.*` — já
+27. i18n: todas as strings novas sob namespace **`cashForecast.*`** (nunca `cashFlow.*` — já
     ocupado pelo DFC, achado 10) em `public/locales/{pt,en}/accounting.json`; paridade mantida
     N=N a partir do baseline medido **847=847**. **Direto — é gate.**
-27. Teste vitest `CashForecastPanel.test.tsx`: estado vazio; geração com sucesso; erro de policy;
+28. Teste vitest `CashForecastPanel.test.tsx`: estado vazio; geração com sucesso; erro de policy;
     (se F-CF9→a) drill por documento presente. **Direto.**
-28. `cd my-app && npx tsc --noEmit` limpo. **Direto — é gate.**
-29. Verificação da aba nova contra **build de produção** (`next build && next start`), não
+29. `cd my-app && npx tsc --noEmit` limpo. **Direto — é gate.**
+30. Verificação da aba nova contra **build de produção** (`next build && next start`), não
     `next dev` — página hospedeira já está atrás de `useAuth()`+redirect. **Direto — é gate.**
-30. **Exportação (PDF/CSV) NÃO entra nesta fatia** — nenhum painel de relatório da contabilidade
+31. **Exportação (PDF/CSV) NÃO entra nesta fatia** — nenhum painel de relatório da contabilidade
     tem exportação hoje (mesmo achado do `BRIEF-FE-AGING.md`). Registrado em "Achados fora de
     escopo", não fork.
 
@@ -279,6 +288,17 @@ interface CashForecastPanelProps {
 ```
 
 ## Forks — RATIFICAÇÃO PENDENTE
+
+> **Nota de numeração (patch pós-review, PR #278):** os 7 forks reais de dono são
+> **F-CF1, F-CF2, F-CF3, F-CF4, F-CF5, F-CF7, F-CF9** — a sequência não é contígua de propósito.
+> `F-CF6` (linha 89, nomenclatura de rota/namespace i18n `cashForecast.*` vs. alternativa mais
+> longa) e `F-CF8` (exportação PDF/CSV, movida para "Achados fora de escopo" por mirror direto
+> do precedente já registrado em `BRIEF-FE-AGING.md`) foram **rebaixados de fork para decisão
+> técnica/achado fora de escopo** durante a redação — ambos são de custo/reversibilidade baixos o
+> bastante para não ocupar o tempo do dono (nomenclatura de rota é quase mecânica; exportação já
+> tem precedente de "não incluir" em todos os irmãos). Os números foram **preservados como
+> reservados**, não reciclados, para que nenhuma citação cruzada no documento (ex. linha 89)
+> precisasse ser renumerada — nenhuma decisão foi ratificada em silêncio nesse rebaixamento.
 
 - **F-CF1 — Horizonte de projeção.**
   (a) **Fixo, sem parâmetro** (ex.: 90 dias a partir de `asOf`) — YAGNI, mesma filosofia de
@@ -376,6 +396,9 @@ interface CashForecastPanelProps {
 **Backend (novo — não existe hoje):**
 - CRIAR `server/src/features/accounting/services/CashForecastReportService.ts`.
 - CRIAR `server/src/features/accounting/dtos/cashForecast.dto.ts`.
+- EDITAR `server/src/features/accounting/dtos/__tests__/__dto-shapes__.json` — regenerado via
+  `UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit dtoShapeSnapshot` (gate do checklist item
+  5); **nunca editado à mão**, o diff é o registro da forma do `CashForecastQuerySchema`.
 - CRIAR `server/src/features/accounting/services/__tests__/CashForecastReportService.test.ts`.
 - EDITAR `server/src/controllers/accountingController.ts` — `getCashForecast` + bloco
   `@openapi` inline (achado 7).
@@ -439,7 +462,7 @@ localizados e lidos em disco nesta sessão.
    recomendações de fork são "assumido" (julgamento, não fato) — nunca apresentadas como
    verificadas.
 3. **Caso adversarial tentado:** tentei confirmar que `CashFlowReportService.ts` PODERIA já ser
-   o forecast (leitura completa das 325 linhas, procurando por qualquer projeção "para frente")
+   o forecast (leitura completa das 324 linhas, procurando por qualquer projeção "para frente")
    — resultado: é 100% histórico (`fromDate = 1º jan do ano de asOf`, nunca lê `dueDate`,
    `method: 'indirect'`), então a leitura confirma que BE novo é necessário, não uma suposição
    de partida.
