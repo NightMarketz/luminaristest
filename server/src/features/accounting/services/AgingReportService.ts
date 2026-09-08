@@ -4,8 +4,8 @@ import type { IReceivableRepository } from '../repositories/IReceivableRepositor
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
-import { isValidDateOnly, scopeToday } from '../models/dates';
-import { centsFromDb } from '../models/money';
+import { isValidDateOnly, scopeToday, toUtcDayNumber, dayNumberFromDateOnly } from '../models/dates';
+import { loadOutstandingPayables, loadOutstandingReceivables, type OutstandingLine } from '../models/outstandingLines';
 import type { AccountingReportService } from './AccountingReportService';
 import { findMappingRule, applySign } from './StatementMappingFixture';
 import {
@@ -35,21 +35,11 @@ export type AgingBucketId = (typeof AGING_BUCKETS)[number];
 export const NO_COUNTERPARTY_LABEL = '(Sem contraparte)';
 
 /**
- * Número do dia-calendário UTC (dias inteiros desde a época) de um instante, extraído POR COMPONENTE
- * (getUTCFullYear/Month/Date → Date.UTC). Isto é imune ao bug de classe UTC-shift
- * (date-only-rendering-utc-shift-class-bug): jamais usa o fuso local nem depende da hora-do-dia com que
- * o `dueDate` foi persistido — floreia para a MEIA-NOITE UTC daquela data-calendário. `dueDate` é gravado
- * como `new Date('YYYY-MM-DD')` (meia-noite UTC), então o resultado é exato.
+ * `toUtcDayNumber`/`dayNumberFromDateOnly` foram EXTRAÍDOS para `models/dates.ts` (FE-INCR-CASH-
+ * FORECAST, item 3 do checklist: "nunca reimplementar" — agora fonte única compartilhada com
+ * `CashForecastReportService`). Reimportados acima; comportamento idêntico ao original (component-
+ * based UTC, imune a `date-only-rendering-utc-shift-class-bug`).
  */
-function toUtcDayNumber(d: Date): number {
-  return Math.floor(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) / 86_400_000);
-}
-
-/** Dia-calendário UTC de uma data-only `YYYY-MM-DD` (já validada), por componente — nunca via fuso local. */
-function dayNumberFromDateOnly(dateOnly: string): number {
-  const [y, m, d] = dateOnly.split('-').map((n) => parseInt(n, 10));
-  return Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
-}
 
 /**
  * NOTA: "hoje" é `scopeToday(scope)` (fuso do escopo, `models/dates.ts`) — FONTE ÚNICA usada TANTO
@@ -173,16 +163,8 @@ export interface AgingReport {
 export type AgingKind = 'payable' | 'receivable';
 
 // ─── Linha normalizada (AP e AR compartilham a mesma forma para o agrupamento) ───
-
-interface OutstandingLine {
-  id: string;
-  documentNumber: string | null;
-  dueDate: Date;
-  amountCents: number;
-  counterpartyId: string | null;
-  /** supplierName (AP) / customerName (AR) — snapshot por linha. */
-  counterpartyName: string;
-}
+// `OutstandingLine` agora vive em `models/outstandingLines.ts` (compartilhado com
+// CashForecastReportService) — importado acima, não redeclarado aqui.
 
 /** Chave interna do grupo: o counterpartyId, ou um sentinela para o balde NULL (todas as linhas sem CP). */
 const NULL_GROUP_KEY = ' __none__';
@@ -401,27 +383,10 @@ export class AgingReportService {
     };
   }
 
-  /** Carrega e normaliza as linhas em aberto do subrazão pedido para a forma comum. */
+  /** Carrega e normaliza as linhas em aberto do subrazão pedido para a forma comum (helper compartilhado). */
   private async loadOutstanding(scope: AccountingScope, kind: AgingKind): Promise<OutstandingLine[]> {
-    if (kind === 'payable') {
-      const rows = await this.payableRepo.findOutstanding(scope);
-      return rows.map((r) => ({
-        id: r.id,
-        documentNumber: r.documentNumber,
-        dueDate: r.dueDate,
-        amountCents: centsFromDb(r.amountCents),
-        counterpartyId: r.counterpartyId,
-        counterpartyName: r.supplierName,
-      }));
-    }
-    const rows = await this.receivableRepo.findOutstanding(scope);
-    return rows.map((r) => ({
-      id: r.id,
-      documentNumber: r.documentNumber,
-      dueDate: r.dueDate,
-      amountCents: centsFromDb(r.amountCents),
-      counterpartyId: r.counterpartyId,
-      counterpartyName: r.customerName,
-    }));
+    return kind === 'payable'
+      ? loadOutstandingPayables(scope, this.payableRepo)
+      : loadOutstandingReceivables(scope, this.receivableRepo);
   }
 }

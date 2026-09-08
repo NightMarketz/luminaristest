@@ -25,6 +25,7 @@ import { CashFlowStatementQuerySchema } from '../features/accounting/dtos/cashFl
 import { PeriodComparisonSchema } from '../features/accounting/dtos/periodComparison.dto';
 import { DailyJournalRequestSchema } from '../features/accounting/dtos/dailyJournal.dto';
 import { AgingReportQuerySchema } from '../features/accounting/dtos/aging.dto';
+import { CashForecastQuerySchema } from '../features/accounting/dtos/cashForecast.dto';
 import { TieOutDiagnosticQuerySchema } from '../features/accounting/dtos/tieOutDiagnostic.dto';
 import { VerifyAuditChainQuerySchema } from '../features/accounting/dtos/AuditDto';
 
@@ -416,6 +417,35 @@ export const getAging = async (req: Request, res: Response) => {
     const data = await getFactory()
       .getAgingReportService()
       .aging(scope, { kind: parsed.data.kind, asOf: parsed.data.asOf });
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** @openapi
+ * /api/accounting/reports/cash-forecast:
+ *   get:
+ *     summary: Fluxo de caixa PROJETADO (read-only) sobre os vencimentos de AP/AR em aberto
+ *     parameters:
+ *       - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       - { in: query, name: asOf,   required: false, schema: { type: string, format: date }, description: "YYYY-MM-DD — data-base da projeção (default hoje). Horizonte fixo de 90 dias." }
+ *     responses:
+ *       200: { description: "Projeção diária de caixa (openingBalanceCents derivado do razão + uma linha por dia, cada uma com inflow/outflow/net/saldo acumulado e o drill de documentos AP/AR que a compõem). NÃO cobre títulos já vencidos (dueDate < asOf) — ver Aging para posição de atraso." }
+ *       400: { description: Validation error }
+ */
+export const getCashForecast = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) throw new UnauthorizedError();
+    const parsed = CashForecastQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory()
+      .getCashForecastReportService()
+      .forecast(scope, { asOf: parsed.data.asOf });
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
