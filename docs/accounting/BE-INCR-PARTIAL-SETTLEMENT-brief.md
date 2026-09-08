@@ -66,8 +66,19 @@
   - `server/src/routes/payables.ts` — rotas atuais: `POST /:id/pay`, `POST /:id/cancel`,
     `POST /:id/payments/:paymentId/cancel`; `server/src/routes/receivables.ts` espelho
     (`/:id/receive`, `/:id/receipts/:receiptId/cancel`); `server/src/routes/docs.paths.ts:3006-3028,
-    3050,3217,3261` — blocos OpenAPI correspondentes. Zero uso destas rotas em `my-app/src` (grep
-    vazio) — módulo AP/AR settlement não tem consumidor de frontend hoje (consistente com F-PS6).
+    3050,3217,3261` — blocos OpenAPI correspondentes. **[CORRIGIDO pós-review PR #291]** A árvore real
+    do frontend é `my-app/{lib,features,pages,components}` — **`my-app/src` não existe**; o grep
+    original mirou caminho errado e a conclusão "zero consumidor" estava FALSA. Consumidores reais,
+    confirmados por leitura: `my-app/lib/services/accountsPayable.service.ts:185`
+    (`registerPayment` → `POST /payables/:id/pay`), `:209` (`cancelPayment` →
+    `POST /payables/:id/payments/:paymentId/cancel`); espelho `accountsReceivable.service.ts:172`
+    (`registerReceipt` → `POST /receivables/:id/receive`), `:196` (`cancelReceipt`). Chamados
+    diretamente por `my-app/features/accounting/components/AccountsPayablePanel.tsx:332,339,345` e
+    `AccountsReceivablePanel.tsx:326,333,339` — telas JÁ em produção para pagamento/recebimento
+    INTEGRAL (F-PS6 diferiu a UI de **parcial**, não a UI de integral, que já existe e não pode
+    quebrar). Nenhum consumidor de frontend lê os *nomes de evento* de auditoria
+    (`payment_registered`/`payment_cancelled`/`receipt_registered`/`receipt_cancelled`) — grep
+    dedicado nesta árvore real retorna vazio para esses 4 literais.
   - `server/src/features/accounting/repositories/__tests__/PayableClaim.integration.test.ts` (131
     linhas) / `ReceivableClaim.integration.test.ts` (126 linhas) — golden ref real-SQLite (WAL) para
     o teste de concorrência que este incremento estende.
@@ -82,9 +93,11 @@
   - **É consumido por:** `AgingReportService.loadOutstanding` (F-PS4), `TieOutDiagnosticService.tieOut`
     (F-PS4, segundo site), `ADR-INCR7-bank-reconciliation` (F-PS7, zero mudança — cada recibo já
     posta como `JournalEntry` próprio, granularidade linha↔posting intacta).
-  - **Não consome nem é consumido por:** frontend (F-PS6 diferido; zero rota chamada em `my-app`),
-    `LEDGER_STATUSES` (não muda — são status de `Payable`/`Receivable`, não de `JournalEntry`),
-    dimensões (achado fora de escopo, §6 abaixo), period-close (reusado sem mudança).
+  - **Não consome nem é consumido por:** `LEDGER_STATUSES` (não muda — são status de
+    `Payable`/`Receivable`, não de `JournalEntry`), dimensões (achado fora de escopo, §6 abaixo),
+    period-close (reusado sem mudança). **Frontend NÃO está fora do blast radius** — ver correção
+    acima: `AccountsPayablePanel.tsx`/`AccountsReceivablePanel.tsx` consomem as rotas de pagamento/
+    recebimento INTEGRAL hoje; só a UI de baixa PARCIAL está diferida (F-PS6).
 
 ## Definição de pronto
 
@@ -143,7 +156,7 @@ delegação); **[cond:Fork N]** — pausa até um fork **NOVO** (§3) ser ratifi
    incorporado ao ADR §4/F-PS2). Testável: teste de serviço registra 2 recibos em sequência no mesmo
    título (1º deixa `PARTIALLY_PAID`, 2º deve ser aceito, não rejeitado pelo guard antigo).
 7. **[direto]** Branch de mensagem em `cancelPayable`/`cancelPayment`
-   (`PayableService.ts:505-510`, espelho `ReceivableService.ts:300-303`) ganha um terceiro ramo para
+   (`PayableService.ts:505-510`, espelho `ReceivableService.ts:301,303-305`) ganha um terceiro ramo para
    `PARTIALLY_PAID`/`PARTIALLY_RECEIVED` ("desfaça as baixas ativas antes de cancelar"), coerente com
    a defesa `findActivePayment`/equivalente já existente. Testável: teste negativo — cancelar um
    título `PARTIALLY_PAID` retorna a mensagem nova, não a genérica de "status atual".
@@ -201,14 +214,25 @@ delegação); **[cond:Fork N]** — pausa até um fork **NOVO** (§3) ser ratifi
     rascunho original do ADR. **Windows serializa SQLite por processo único; a CI Linux não**
     (memória `windows-serializa-sqlite-ci-linux-nao`) — verde local não fecha este invariante
     sozinho, só a CI é o oráculo.
-17. **[cond:Fork F-PS10]** Rotas: `POST /:id/pay` + `POST /:id/payments/:paymentId/cancel`
-    (`server/src/routes/payables.ts`) e espelho AR — a forma exata (renomear para `/:id/settlements`
-    + `/:id/settlements/:settlementId/cancel` conforme ACC-016, vs manter as atuais como rota-irmã)
-    depende do Fork F-PS10. `docs.paths.ts` atualizado no mesmo PR; `npm run docs:generate`;
+17. **[cond:Fork F-PS10] [RECALCULADO pós-review PR #291]** Rotas: `POST /:id/pay` +
+    `POST /:id/payments/:paymentId/cancel` (`server/src/routes/payables.ts`) e espelho AR **têm
+    consumidor real de frontend** (`my-app/lib/services/accountsPayable.service.ts:185,209` +
+    `accountsReceivable.service.ts:172,196`, chamados por `AccountsPayablePanel.tsx`/
+    `AccountsReceivablePanel.tsx` já em produção) — a recomendação recalculada de F-PS10 é
+    **(b) rota-irmã**: as rotas atuais NÃO mudam; `/:id/settlements`+
+    `/:id/settlements/:settlementId/cancel` nascem como superfície nova (ACC-016), sem tocar
+    `payables.ts`/`receivables.ts`/os 2 serviços de frontend. Se F-PS10 for ratificado (a) em vez
+    disso, este item passa a incluir, no MESMO PR: `accountsPayable.service.ts`,
+    `accountsReceivable.service.ts`, e os testes que os exercitam (`accountsPayable.service.test.ts`,
+    `AccountsPayablePanel.test.tsx`, espelho AR) — nomeado explicitamente para não ser descoberto
+    tarde. `docs.paths.ts` atualizado no mesmo PR; `npm run docs:generate`;
     `server/src/__tests__/openapi-paths.test.ts` — guard é `>=BASELINE` (147), path novo nunca
-    quebra o teste (só justifica subir o piso se `docs:generate` mudar a contagem).
-18. **[direto]** `tsc --noEmit` limpo ×2 (`server/` e `my-app/` — este último não deveria mudar,
-    F-PS6 diferido; rodar mesmo assim é o gate padrão do projeto).
+    quebra o teste (só justifica subir o piso).
+18. **[direto] [CORRIGIDO pós-review PR #291]** `tsc --noEmit` limpo ×2 (`server/` e `my-app/`).
+    **Se F-PS10→(b) (recomendado):** `my-app/` não deveria mudar (rota-irmã, FE de parcial diferida
+    por F-PS6). **Se F-PS10→(a):** `my-app/` MUDA (item 17) e este gate passa a cobrir a mudança
+    real, não uma formalidade — rodar mesmo assim nunca foi opcional, mas a expectativa de "não
+    deveria mudar" só vale sob (b).
 19. **[direto]** Fatoria (`lib/factory.ts`) — nenhuma injeção nova (mesmos repositórios/serviços já
     wireados); confirmar que a mudança de assinatura interna de `claimForPayment`/`claimForReceipt`
     (novo parâmetro `novo`/`amountCentsLido`) não quebra nenhum outro call site — grep de chamada
@@ -309,33 +333,51 @@ de status observável).
   ("Recomendação de ordem [emenda pós-parecer]: manter PAYING/RECEIVING... decidir a eliminação é
   do BRIEF"); ratificar aqui só formaliza o que o ADR já apontou como caminho de menor risco.
 
-### F-PS9 — Nome do evento de auditoria e do DTO/método de serviço
+### F-PS9 — Nome do evento de auditoria e do DTO/método de serviço — **RECALCULADO pós-review PR #291**
 
 O ADR §7 nomeia explicitamente esta lacuna: *"nomes exatos = decisão do BRIEF pós-ADR, prováveis
 `payable.settlement_registered`/`payable.settlement_cancelled` renomeando ou complementando
 `payment_registered`/`payment_cancelled` — decisão de nomenclatura, não deste ADR."*
 
-- **(a) Renomear** — `payment_registered`→`settlement_registered`, `payment_cancelled`→
-  `settlement_cancelled` (espelho AR `receipt_*`→`settlement_*`), acompanhado de renomear
-  `registerPayment`→`registerSettlement`/`RegisterPaymentInput`→`RegisterSettlementInput` no
-  serviço/DTO para consistência com a rota nova (Fork F-PS10) e com ACC-016 (que já fala em
-  "settlements" no nome da rota). Custo de errar: 2 nomes de evento saem da allowlist — todo
-  consumidor de log/auditoria histórico que filtrar por `payment_registered` para de bater com
-  eventos novos (mitigado: grep confirma zero consumidor fora de `server/src/features/accounting/**`
-  e seus testes — sem frontend, sem job externo).
-- (b) Complementar — manter `payment_registered`/`payment_cancelled` como estão (primeiro e único
-  recibo continua no nome antigo) e não introduzir nomenclatura nova nenhuma; "settlement" fica só
-  no nome da rota (se F-PS10→a). Custo de errar: nome do evento (`payment_*`) e nome da rota
-  (`/settlements`) divergem permanentemente — próxima pessoa lendo o audit log e a rota vê dois
-  vocabulários para o mesmo conceito.
-- **Recomendação do BRIEF:** (a) — o blast radius medido é zero fora do próprio módulo (grep
-  exaustivo: `payment_registered`/`payment_cancelled`/`receipt_registered`/`receipt_cancelled`
-  aparecem só em `auditCanonical.ts` + os 2 repositórios + os 2 serviços + os 4 arquivos de teste
-  correspondentes — nenhum consumidor de frontend, job ou relatório), e a consistência de
-  vocabulário (rota + evento + DTO todos "settlement") evita a divergência de nome permanente que
-  (b) deixaria.
+**Evidência corrigida (a recomendação original citava "zero consumidor" apontando para
+`my-app/src`, que não existe — árvore real é `my-app/{lib,features,pages,components}`, ver
+"Insumos existentes" acima).** Consumidores reais confirmados: grep dedicado pelos 4 literais
+(`payment_registered`, `payment_cancelled`, `receipt_registered`, `receipt_cancelled`) na árvore
+real do frontend retorna **zero** ocorrência — nenhuma tela lê o nome do EVENTO de auditoria. O que
+a árvore real tem, e o grep original não viu, é `AccountsPayablePanel.tsx`/
+`AccountsReceivablePanel.tsx` chamando `accountsPayable.service.ts`/`accountsReceivable.service.ts`
+(`registerPayment`/`registerReceipt`, nomes de MÉTODO, não de evento) — que batem nas ROTAS
+(`/pay`, `/receive`), não na allowlist de auditoria. **Ou seja: o nome do EVENTO de auditoria
+continua com blast radius zero de frontend; o nome do MÉTODO/DTO de serviço, se acoplado ao rename
+do evento, herdaria o blast radius da rota (ver F-PS10 abaixo) — os dois planos de nomenclatura
+precisam ser tratados separadamente, não como um pacote único.**
 
-### F-PS10 — Rota: renomear `/:id/pay` → `/:id/settlements` ou manter como rota-irmã
+- **(a) Renomear só o evento de auditoria** (`payment_registered`→`settlement_registered`, etc.,
+  espelho AR) **sem** renomear `registerPayment`/`RegisterPaymentInput` no código do serviço/DTO.
+  Custo de errar: nome do evento e nome do método divergem (`registerPayment` emite
+  `settlement_registered`) — pequena dissonância de leitura, mas sem quebra de contrato externo
+  (o payload da allowlist é interno ao backend; zero consumidor de frontend/job confirmado).
+- (b) Renomear evento E método/DTO juntos (`registerPayment`→`registerSettlement`,
+  `RegisterPaymentInput`→`RegisterSettlementInput`) — mais consistente, mas **NÃO pode ser feito sem
+  também tocar a rota** (a) do serviço frontend `accountsPayable.service.ts:185,209` chama a rota
+  por string literal, não pelo nome do método TS do backend, então renomear só o backend não quebra
+  a FE em si — mas se o método/DTO renomeado vier acoplado a uma mudança de ROTA (F-PS10), a FE
+  quebra em silêncio se não for atualizada no mesmo ciclo. Custo de errar: alto SE combinado com
+  F-PS10→renomear sem tocar a FE.
+- (c) Não renomear nada agora — manter `payment_registered`/`payment_cancelled`/`registerPayment`/
+  `RegisterPaymentInput` como estão; "settlement" fica só como vocabulário de documentação/BRIEF,
+  não de código. Custo de errar: nenhum imediato; a única perda é consistência de nome com a rota
+  se F-PS10 escolher renomear a rota.
+- **Recomendação recalculada do BRIEF:** **(a)** para o evento de auditoria (zero blast radius
+  medido, nome interno) **combinada com (c) para o método/DTO se F-PS10→(b) mantém a rota atual**,
+  ou combinada com (b) para o método/DTO **somente se** F-PS10→(a) renomear a rota **e** a FE for
+  atualizada no MESMO PR (violação deliberada e explícita de F-PS6-(b) "FE em incremento separado" —
+  ver nota de custo em F-PS10). Custo de errar de tratar isso como pacote único: acoplar o rename do
+  método/DTO a uma mudança de rota sem atualizar a FE quebra o pagamento/recebimento INTEGRAL em
+  produção — **silenciosamente**, porque o erro só aparece em runtime (404 na chamada), não em
+  `tsc` (o TS do frontend não importa os types do backend por essa rota).
+
+### F-PS10 — Rota: renomear `/:id/pay` → `/:id/settlements` ou manter como rota-irmã — **RECALCULADO pós-review PR #291**
 
 O ADR §7 nomeia esta lacuna: *"`openapi-paths.test.ts` — bump do BASELINE se as rotas `{id}/pay`
 viram `{id}/settlements` (ou ganham uma rota irmã) — decisão de nomenclatura de rota é do BRIEF, não
@@ -343,18 +385,40 @@ deste ADR."* O ADR §5/ACC-016 já recomenda o padrão de nome (`POST /:id/settl
 /:id/settlements/:settlementId/cancel`) como o formato do comando-por-ação, mas não decide se a
 rota **atual** (`/:id/pay`, `/:id/payments/:paymentId/cancel`) é substituída ou preservada ao lado.
 
-- **(a) Renomear (substituir), sem rota-irmã** — `payables.ts`/`receivables.ts` passam a expor só
-  `/:id/settlements`+`/:id/settlements/:settlementId/cancel` (espelho AR). Custo de errar: qualquer
-  chamador externo de `/:id/pay` quebra — **mitigado**: grep em `my-app/src` por estas rotas retorna
-  zero ocorrência (nenhum frontend consome o módulo de settlement hoje, F-PS6 confirma que a UI é
-  incremento futuro) e não há outro consumidor HTTP conhecido no repo.
-- (b) Rota-irmã — mantém `/:id/pay` funcionando (full-payment, sem mudar semântica) e adiciona
-  `/:id/settlements` como caminho novo para parcial. Custo de errar: duas rotas fazendo
-  essencialmente a mesma coisa (uma é caso particular da outra) — superfície dobrada para manter e
-  documentar, sem consumidor que precise da rota antiga preservada.
-- **Recomendação do BRIEF:** (a) — zero blast radius medido (grep confirma nenhum consumidor de
-  frontend) e evita a superfície duplicada de (b); segue a nomenclatura que o próprio ACC-016 já
-  cita como padrão do comando-por-ação.
+**A recomendação original (a, renomear sem rota-irmã) estava fundamentada em "zero consumidor de
+frontend", achado FALSO** (review independente da PR #291, achado ALTO): o grep mirou
+`my-app/src`, que não existe — a árvore real é `my-app/{lib,features,pages,components}`. Consumidores
+reais, confirmados por leitura: `my-app/lib/services/accountsPayable.service.ts:185`
+(`registerPayment` → `POST /payables/:id/pay`), `:209` (`cancelPayment` →
+`POST /payables/:id/payments/:paymentId/cancel`); espelho `accountsReceivable.service.ts:172,196`
+— chamados por `AccountsPayablePanel.tsx:332,339,345`/`AccountsReceivablePanel.tsx:326,333,339`,
+telas JÁ em produção para pagamento/recebimento INTEGRAL. Renomear a rota sem atualizar esses dois
+arquivos de serviço no MESMO PR quebra o fluxo de pagamento/recebimento integral em produção —
+**em silêncio** (a chamada HTTP responde 404, não um erro de compilação; nenhum `tsc` pega isso,
+porque o path é uma string literal, não um type compartilhado).
+
+- (a) Renomear (substituir), sem rota-irmã — **custo de errar recalculado: ALTO**, não zero. Só é
+  seguro se a atualização de `accountsPayable.service.ts`/`accountsReceivable.service.ts` (e os
+  testes que os mockam — `accountsPayable.service.test.ts`, `AccountsPayablePanel.test.tsx`,
+  espelho AR) entrar no MESMO ciclo/PR do backend. Isso **fere F-PS6-(b)** ("`FE-INCR-PARTIAL-SETTLEMENT`
+  separado... o backend por si prova o invariante mais caro... a tela reusa o padrão de formulário
+  existente") na leitura estrita — mas F-PS6 diferiu a UI de baixa **parcial** (tela nova), não a
+  manutenção da UI de pagamento **integral** já existente; atualizar 2 arquivos de serviço (só a URL
+  chamada, não a UI) para não quebrar em produção é diferente de construir a tela de parcial. Ainda
+  assim é trabalho de frontend fora do escopo original deste BRIEF backend-only — precisa estar
+  explícito no PR da `sessao-feature`, não descoberto tarde.
+- ✅ **(b) Rota-irmã** (recomendação recalculada) — mantém `/:id/pay` e
+  `/:id/payments/:paymentId/cancel` funcionando exatamente como hoje (full-payment via CAS de soma
+  com `novo === remaining`, que é um caso particular do gate novo — nenhuma duplicação de lógica de
+  domínio, só de rota) e adiciona `/:id/settlements`+`/:id/settlements/:settlementId/cancel` como
+  superfície nova para parcial, alinhada a ACC-016. Custo de errar: 2 rotas HTTP para o mesmo
+  serviço de domínio (uma é caso particular da outra) — superfície um pouco maior para documentar,
+  mas **zero mudança na FE existente** e **zero risco de quebra silenciosa**; a FE de parcial
+  (F-PS6 diferida) chama a rota nova quando for construída, sem pressa de coordenar com o backend.
+- **Recomendação recalculada do BRIEF:** **(b)** — o custo de (a) (coordenar 2 repositórios/times no
+  mesmo PR para não quebrar produção) supera o custo de manter uma rota-irmã por um ciclo; (b)
+  também desacopla o timing do backend do timing do FE-INCR-PARTIAL-SETTLEMENT (F-PS6), que é
+  exatamente o que F-PS6 pretendia ao diferir a UI.
 
 ---
 
@@ -414,3 +478,36 @@ fechadas):** itens 15 (auditoria), 17 (rotas/openapi), 18 (tsc), 19 (factory/wir
 `luminaris-reviewer` roda uma vez ao final de cada fase, não só no fim do incremento inteiro —
 follow-on do padrão já em uso nos incrementos anteriores (AR/AP/Aging todos passaram por review
 faseado).
+
+---
+
+## 8. Gates de envio [OPS-001] — lição registrada pós-review (PR #291)
+
+1. **Objetivo:** a frase que responde ao pedido do review é a correção de F-PS9/F-PS10 acima — as
+   duas recomendações mudaram de "renomear sem custo" para "manter/isolar por causa de um consumidor
+   real de frontend".
+2. **Grau:** achado ALTO do `luminaris-reviewer` independente
+   (https://github.com/NightMarketz/luminaristest/pull/291#issuecomment-5578071221) — **verificado**
+   por leitura direta nesta sessão: `AccountsPayablePanel.tsx:332,339,345` /
+   `AccountsReceivablePanel.tsx:326,333,339` chamam `accountsPayable.service.ts:185,209` /
+   `accountsReceivable.service.ts:172,196`, que batem `POST /payables/:id/pay`,
+   `POST /payables/:id/payments/:paymentId/cancel` e o espelho AR.
+3. **Caso adversarial que faltou na primeira passada e o que aconteceu quando rodado certo:** a
+   sessão original rodou `grep ... my-app/src` — caminho que **não existe neste repo** — e leu o
+   resultado vazio como "zero consumidor", sem verificar primeiro que o caminho existia. Rodado
+   contra a árvore real (`my-app/{lib,features,pages,components}`), o mesmo grep retorna 4
+   consumidores reais e ativos.
+4. **Checagem que teria falhado, e agora falharia se a premissa voltasse a ser falsa:** `ls my-app/src`
+   (retorna "No such type of file or directory") deveria ter sido o primeiro comando, antes de
+   qualquer grep de blast radius de frontend neste repo — não depois. Registrado aqui como regra
+   permanente para qualquer fork futuro deste projeto que meça "consumo de frontend": **grep de
+   blast radius de FE mira `my-app/{lib,features,pages,components}`, nunca `my-app/src`** (este
+   projeto não usa a convenção `src/` no frontend — `server/` também não usa `src/` como raiz de
+   busca ingênua sem checar primeiro, mas lá `server/src` de fato existe, o que tornou o engano
+   fácil de cometer por analogia).
+5. **Risco principal (repetido):** um grep de blast radius contra um caminho inexistente sempre
+   retorna vazio — é indistinguível de "busquei e não achei" na saída, mas significa "não busquei
+   nada". Todo claim de "zero consumidor"/"blast radius zero" neste projeto (ou qualquer outro)
+   precisa confirmar que o caminho buscado existe (`ls`/`test -d`) ANTES de aceitar um grep vazio
+   como evidência negativa — o viés a declarar é a tentação de tratar silêncio de grep como prova
+   de ausência sem checar a premissa do próprio comando.
