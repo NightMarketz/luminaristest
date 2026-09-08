@@ -120,16 +120,51 @@ inbox/outbox. Não entram em nenhuma rodada sem gatilho nomeado.
 | **1** | X6b `BE-INCR-CNPJ-ALFA` | **S ✅ #272 · R ✅ 07/09 (F-CNPJ-1..5, dono via AskUserQuestion; F-CNPJ-4 → b) · I ✅ · V ✅ (review indep. PASS) · M ✅ #280 `76c8defb` · F ✅ #284** — ancestrais verificados | — | fechada |
 | **2a** | `BE-INCR-NFE-PREVIEW` | **S ✅ #281 · R ✅ 07/09 (F-PREV-1..4; F-PREV-3 → b) · I ✅ · V ✅ PASS · M ✅ #283 `83c70088` · F ✅ (este fold)** | — | fechada |
 | **2b** | `FE-INCR-NFE` | **S ✅ #270 + re-emenda 08/09 (no #286) · R ✅ 07/09 (F-FENFE-1..7) · I ✅ · V ✅ FAIL→PASS · M ✅ #286 `af35bfc9` · F ✅ (este fold)** | **H2 parte NF-e** (dono, cédula E8) | *"me acompanha no H2"* |
-| **3** | C7 `BE-INCR-RECONCILE-PENDING` | **S ✅ #275 `1bbeb953`** (BRIEF) — ancestral verificado neste fold. Fork 1 FECHADO pela cédula (B substitui o freeze F-W2F-4) | **R do dono** nos 5 forks pendentes (1-R, 2, 3, 4, 5) → I → V → M → F | *"ratifico os forks do RECONCILE-PENDING"* |
-| **4a** | C4/C5 `FE-INCR-AUDIT-PROVENANCE` | **S ✅ #277 `aafe8a5e`** (BRIEF) — ancestral verificado | **R do dono** nos 7 forks F-FEAP-1..7 → I → V → M → F (lote paralelo com 4b, write-sets disjuntos) | *"ratifico os forks do AUDIT-PROVENANCE"* |
-| **4b** | X3 `FE-INCR-COMPLIANCE-2` | **S ✅ #279 `5daa8763`** (BRIEF) — ancestral verificado | **R do dono** nos 7 forks F-COMP2-1..7 → I → V → M → F | *"ratifico os forks do COMPLIANCE-2"* |
-| **5** | F4 `FE-INCR-CASH-FORECAST` | **S ✅ #278 `77c77553`** (BRIEF) — ancestral verificado; exige BE report read-only novo, sem migração | **R do dono** nos 7 forks F-CF1..F-CF7 → I → V → M → F | *"ratifico os forks do CASH-FORECAST"* |
+| **3** | C7 `BE-INCR-RECONCILE-PENDING` | **S ✅ #275 `1bbeb953` · R ✅ 07/09 (delegação, cédula #287 — F-W2F-3/5→b, Fork 1 já fechado pela própria cédula) · I ✅ · V ✅ (review indep. PASS) · M ✅ #296 `4ea2c4c9` · F ✅ (este fold)** | — | fechada |
+| **4a** | C4/C5 `FE-INCR-AUDIT-PROVENANCE` | **S ✅ #277 `aafe8a5e` · R ✅ 07/09 (delegação, cédula #287 — F-FEAP-1..7) · I ✅ · V ✅ (review indep. PASS, 1 achado cosmético não-bloqueante) · M ✅ #293 `05a1b413` · F ✅ (este fold)** | — | fechada |
+| **4b** | X3 `FE-INCR-COMPLIANCE-2` | **S ✅ #279 `5daa8763` · R ✅ 07/09 (delegação, cédula #287 — F-COMP2-1..7) · I ✅ · V ✅ (review indep. PASS; Fase B paridade i18n 939=939) · M ✅ #295 `2a4608ab` · F ✅ (este fold)** | — | fechada |
+| **5** | F4 `FE-INCR-CASH-FORECAST` | **S ✅ #278 `77c77553` · R ✅ 07/09 (delegação, cédula #287 — F-CF1..F-CF7) · I ✅ · V ✅ (review indep. PASS com 1 achado ALTO não-bloqueante, classe pré-existente na família de reports) · M ✅ #298 `63ceba20` · F ✅ (este fold)** | — | fechada |
 | **7** | C10 `P2 clínica estética` | **I ✅ V ✅ M ✅ F ✅** — **PR #282 MERGED, squash `60cced8d`** (verificado: `git merge-base --is-ancestor 60cced8d origin/main` exit 0). Review independente PASS (4 achados baixa severidade, não-bloqueantes). Comportamentos 1–7,9,10 feitos; 8 parcial (RUNBOOK-H3); 11 pausado (fork T0 × perímetro, ver `CEDULA-DECISAO-2026-09-07-forks-sdd.md`) | nenhum passo de código; H3 espera H1 | *"me acompanha no H3"* (após H1) |
-| **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR Proposed ✅ + parecer #276 `b7a62a73`** — ancestral verificado. Achado: CAS aritmético não expressável em Prisma como escrito → reformulado; 2 tie-outs a corrigir antes da implementação | **R do dono** nos 7 forks F-PS1..F-PS7 → S (BRIEF) → I → V → M → F | *"ratifico os forks do PARTIAL-SETTLEMENT"* |
-| **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Proposed ✅ + parecer #274 `239945d1`** — ancestral verificado | **R do dono** nos 8 forks F-CD1..F-CD8 → S → I → V → M → F; **CONDICIONADO** ao item 0 do pedido ao contador (F-Z0) | *"ratifico os forks do CONTADOR-DELIVERY"* |
+| **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-PS1..F-PS7) + parecer ✅ #276 `b7a62a73` · S ✅ #291 `f1307009` (BRIEF, 2026-09-08) — 19 comportamentos + contratos Zod esboçados; 3 forks NOVOS abertos pela sessão de planejamento (F-PS8/9/10; F-PS10 recalculado p/ (b) rota-irmã por achado do review — consumidores reais em `accountsPayable.service.ts`/`accountsReceivable.service.ts`)** | **R do dono** nos 3 forks novos → I → V → M → F | *"ratifico os forks novos do PARTIAL-SETTLEMENT"* |
+| **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-CD1..F-CD8) + parecer ✅ #274 `239945d1` · S ✅ #290 `62b00302` (BRIEF, 2026-09-08) — 22 comportamentos + contratos Prisma/Zod esboçados; 2 forks NOVOS abertos pela sessão de planejamento (Fork A: `year` explícito no DTO; Fork B: NÃO implementar F-CD8-b, sem parser SPED de leitura)** | **R do dono** nos 2 forks novos → I → V → M → F; **CONDICIONADO** ao item 0 do pedido ao contador (F-Z0) | *"ratifico os forks novos do CONTADOR-DELIVERY"* |
 
 **Rodadas 1 e 2 (a e b):** conduzidas por outra sessão em paralelo a este fold (PRs #272, #280, #281,
 #270) — a tabela acima registra só o que `git merge-base --is-ancestor` provou neste worktree no momento
 do fold; não afirma R/V/M/F de nenhuma delas além disso, e uma nova leitura pode encontrá-las mais
 adiante. **Rodada 6** (`ADR-INCR-DFE-EMISSAO-PARCEIRO`) e as rodadas 10+ não entraram neste fold — sem
 artefato para verificar ainda.
+
+### Forks novos pendentes do dono (pós-execução) — fold 2026-09-08
+
+Achados das sessões de correção/planejamento das rodadas 3/4/5/8/9, todos por citação de PR — nenhum
+decidido por agente:
+
+- **Rodada 3 (`BE-INCR-RECONCILE-PENDING`, #296):** 2 "blocked" sem `reasonCode` no enum ratificado
+  (`FAILED|ACCOUNTING_PERIOD_NOT_OPEN|MAX_CENTS_EXCEEDED`) — ordering-gate de settlements
+  (`accountingSyncReconcile.job.ts:863`) e `blocked_missing_paid_with_package_id` (~linha 1228) não
+  entram na tabela de pendências. Recomendação do implementador: **(a)** enum ganha os 2 códigos novos.
+- **Rodada 8 (`ADR-INCR-PARTIAL-SETTLEMENT`, #291):** 3 forks novos abertos pelo BRIEF —
+  **F-PS8** manter `PAYING`/`RECEIVING` como estado transitório, recomendação **(a)**; **F-PS9**
+  renomear os eventos de auditoria (`payment_registered`→`settlement_registered` etc.), recomendação
+  **(a)**; **F-PS10** rota `/:id/pay`→`/:id/settlements`, recomendação **recalculada pelo review para
+  (b) rota-irmã** — a checagem original ("zero consumidor de frontend") mirava um caminho inexistente
+  (`my-app/src`); a árvore real tem consumidores em produção (`accountsPayable.service.ts:185,209`,
+  `accountsReceivable.service.ts:172,196`, usados por `AccountsPayablePanel.tsx`/
+  `AccountsReceivablePanel.tsx`) — renomear sem a rota-irmã quebraria pagamento/recebimento integral.
+- **Rodada 9 (`ADR-CONTADOR-DELIVERY`, #290):** 2 forks novos abertos pelo BRIEF — **Fork Novo A**
+  como o comando de entrega sabe qual `year` cobre (`AccountingDataExchangeJob` não persiste
+  ano/período), recomendação **(a)** `year` explícito no DTO de entrada; **Fork Novo B** se/como o
+  gate defensivo F-CD8-b lê o signatário J930 do `.txt` (não existe parser SPED de leitura no repo, só
+  serializers), recomendação **(c)** não implementar F-CD8-b neste incremento.
+- **Rodada 7 P2 (já foldada, #292):** fork **T0** (perímetro do comportamento 11, zero-diff) segue
+  aberto — não é desta faixa, registrado aqui só para não se perder entre os 4 grupos.
+
+### Dívidas de gate
+
+- **Smoke S6/S7 (`npm run smoke:migration`)** — falha PRÉ-EXISTENTE em `origin/main` (S6 "postings"
+  muda no rebuild, S7 índice de counterparties desaparece), reproduzida de forma isolada nas rodadas 3
+  e 5 (removendo a migração/o código da rodada o mesmo erro persiste). Não é regressão desta faixa;
+  segue como dívida do gate, dono ainda não identificado.
+- **Flake `NfePanel.test.tsx`** ("import: payload exato…") — falhou no run de push do sha `712c7032` e
+  passou no run de `pull_request` do mesmo sha e no rerun. Registrado como flake de timing a
+  instrumentar; dono do teste = PR #286.

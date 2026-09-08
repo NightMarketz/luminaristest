@@ -61,10 +61,10 @@ flowchart LR
   end
 
   subgraph CONT[Contábil - ordem 1]
-    C4["C4 BRIEF FE-INCR-AUDIT-PROVENANCE<br/>verify-chain + source-documents"]:::ready
-    C5["C5 feature do C4"]:::blocked
-    C6["C6 ADR-CONTADOR-DELIVERY<br/>e-mail ECD/ECF"]:::ready
-    C7["C7 BRIEF BE-INCR-RECONCILE-PENDING<br/>F-W2F-3/5 → b"]:::ready
+    C4["C4 FE-INCR-AUDIT-PROVENANCE<br/>MERGEADO PR 293 (08/09)"]:::done
+    C5["C5 feature do C4<br/>MERGEADO PR 293 (08/09)"]:::done
+    C6["C6 ADR-CONTADOR-DELIVERY<br/>ADR Accepted + BRIEF done (08/09)<br/>blocked por contador (F-Z0) + 2 forks novos"]:::decide
+    C7["C7 BE-INCR-RECONCILE-PENDING<br/>MERGEADO PR 296 (08/09)"]:::done
     C8["C8 ADR-INCR-FIXED-ASSETS<br/>imobilizado + depreciação"]:::blocked
     C9["C9 Retificação ECD/ECF<br/>item do BRIEF ECF Fase 3"]:::blocked
     C10["C10 P2 clínica estética<br/>BRIEF 8/8 forks · ADR Accepted"]:::ready
@@ -75,13 +75,13 @@ flowchart LR
     F1b["F1b feature FE-INCR-NFE<br/>MERGEADO PR 286 (08/09)"]:::done
     F1c["F1c review + merge FE-NFE<br/>Núcleo 3 = 8/9 ✓ (08/09)"]:::done
     E9["E9 Trocar fixture sintético<br/>reverter it.todo"]:::blocked
-    F3["F3 ADR-INCR-PARTIAL-SETTLEMENT<br/>baixa parcial AP/AR"]:::ready
-    F4["F4 BRIEF FE-INCR-CASH-FORECAST"]:::ready
+    F3["F3 ADR-INCR-PARTIAL-SETTLEMENT<br/>ADR Accepted + BRIEF done (08/09)<br/>blocked por 3 forks novos (F-PS8/9/10)"]:::decide
+    F4["F4 FE-INCR-CASH-FORECAST<br/>MERGEADO PR 298 (08/09)"]:::done
     F5["F5 ADR-INCR-BANK-OUTBOUND<br/>remessa CNAB/boleto/Pix"]:::blocked
   end
 
   subgraph FISC[Fiscal - ordem 3]
-    X3["X3 BRIEF FE-INCR-COMPLIANCE-2<br/>botão ECF Real + import catálogo"]:::ready
+    X3["X3 FE-INCR-COMPLIANCE-2<br/>MERGEADO PR 295 (08/09)"]:::done
     X4["X4 ECF Fase 3 L/M/N + e-Lalur<br/>+ C9 retificação"]:::blocked
     X6["X6 Triagem contador → emenda<br/>ADR-INCR-NFE §D3 flag de regime"]:::blocked
     X6b["X6b BE-INCR-CNPJ-ALFA<br/>MERGEADO PR 280 (08/09)"]:::done
@@ -156,10 +156,10 @@ flowchart LR
 | **R1** | decide | F1a ✅ | BRIEF FE-INCR-NFE §Forks; cédula E6 |
 | **R2** | decide | D3 ✅ · **D1** (item 4 + F-Z0: "a origem do bloco L é o próprio razão") | fila 09-02 item 5; F-Z0 (4) |
 | **R4** | decide | — | cédula módulos D2 (iii) |
-| **C4** | ready | — | F-M4; cédula E.1 |
-| **C5** | blocked | C4 + forks do BRIEF | cédula E.1 |
-| **C6** | ready | — | F-M4 |
-| **C7** | ready | — | F-W2F-3/5 → (b) |
+| **C4** | **done** (PR #293 `05a1b413`, 2026-09-08) | — | F-M4; cédula E.1 |
+| **C5** | **done** (PR #293 `05a1b413`, 2026-09-08 — mesmo PR do C4) | C4 ✅ + forks do BRIEF ✅ (delegação) | cédula E.1 |
+| **C6** | ADR Accepted + BRIEF done (PR #290 `62b00302`, 2026-09-08); **feature blocked** por 2 forks novos + item 0 do contador (F-Z0) | — | F-M4 |
+| **C7** | **done** (PR #296 `4ea2c4c9`, 2026-09-08) | — | F-W2F-3/5 → (b) |
 | **C8** | blocked | **D1** (tabela de taxas que o contador pratica) | cédula E.1 C8 |
 | **C9** | blocked | X4 (é item do BRIEF da Fase 3) | F-Z0 (2); cédula E.1 C9 |
 | **C10** | ready | — (ADR-P2 Accepted, BRIEF 8/8) | F-Q1 |
@@ -167,10 +167,10 @@ flowchart LR
 | **F1b** | **done** (PR #286, 2026-09-08; preview BE em #283) | R1 ✅ · F1a ✅ · E5 ✅ | cédula E6 |
 | **F1c** | **done** (2026-09-08) | F1b ✅ | cédula E7 |
 | **E9** | blocked | D2 | F-I2/F-I8 |
-| **F3** | ready | — | F-M3 |
-| **F4** | ready | — | F-M3 |
+| **F3** | ADR Accepted + BRIEF done (PR #291 `f1307009`, 2026-09-08); **feature blocked** por 3 forks novos (F-PS8/9/10) | — | F-M3 |
+| **F4** | **done** (PR #298 `63ceba20`, 2026-09-08) | — | F-M3 |
 | **F5** | blocked | D6 | F-M3 |
-| **X3** | ready | — | F-M2 (telas do já-existente) |
+| **X3** | **done** (PR #295 `2a4608ab`, 2026-09-08) | — | F-M2 (telas do já-existente) |
 | **X4** | blocked | R2 | fila 09-02 item 5 |
 | **X6** | blocked | D1 | F-M5 |
 | **X6b** | **done** (PR #280, 2026-09-08) | — | triagem [V-repo] T10. **Dívida:** cédula E2 o punha como pré-requisito do merge da NF-e; #267 mergeou sem ele. Aresta viva: X10 e o 1º fornecedor com CNPJ alfanumérico `(inferida)` |
@@ -186,8 +186,12 @@ X7 → X9/X8; X6; C8. Sem a resposta, o fiscal inteiro e a 2ª passada do H1 fic
 maior latência e a única sem substituto.
 
 **Pronto hoje, sem aresta aberta (agente, cada um com autorização de sessão própria):**
-C4, C6, C7, C10, F3, F4, X3, X6b. **Humano, sem aresta aberta:** B-4, X2, P4, H2 (parte OFX/CNAB),
-D1 enviar, D2 obter, D4 conferir, R1 ratificar, R4 decidir.
+C10, X6b. **[Fold 2026-09-08] C4, C7, F4, X3 saíram da lista — código mergeado** (PRs #293/#296/#298/
+#295). **C6 e F3 saíram por outro motivo — ADR Accepted + BRIEF done, mas a *feature* não abre**: cada
+um tem forks novos (abertos pelo próprio BRIEF, fora dos 7/8 já delegados pela cédula) esperando
+ratificação do dono antes de `sessao-feature`; C6 carrega ainda a condição do item 0 do contador (F-Z0).
+**Humano, sem aresta aberta:** B-4, X2, P4, H2 (parte OFX/CNAB), D1 enviar, D2 obter, D4 conferir, R1
+ratificar, R4 decidir.
 
 **O que R1 (ratificar os forks do FE-NFE) destrava:** só F1b → F1c → parte NF-e do H2 (9/9). Não
 destrava nada no fiscal nem no contábil. **O que R1 precisa:** nada — F1a está em PR e o BE (E5) em
