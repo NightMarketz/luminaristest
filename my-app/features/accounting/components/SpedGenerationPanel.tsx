@@ -12,14 +12,21 @@ import {
   type EcfSigner,
 } from '../../../lib/services/sped.service';
 import { resolveError } from '../lib/resolveError';
+import { SpedEcfRealPanel } from './SpedEcfRealPanel';
 
-/** Tabela de UF (0000 campo 07) — reference data mirrored from server SpedEcdDto.UF_CODES. */
-const UF_CODES = [
+/**
+ * Tabela de UF (0000 campo 07) — reference data mirrored from server SpedEcdDto.UF_CODES.
+ * Exported (FE-INCR-COMPLIANCE-2, Fork F-COMP2-1 → (b)) for `SpedEcfRealPanel.tsx`, which
+ * reuses the identical declarant shape (same `DeclarantSchema` on the server) — never
+ * redeclare this table there.
+ */
+export const UF_CODES = [
   'AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT',
   'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO',
 ];
 
-const inputClass =
+/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same input styling. */
+export const inputClass =
   'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50';
 
 
@@ -64,7 +71,8 @@ const emptyEcdSigner = (): EcdSigner => ({
   codAssin: '',
   indRespLegal: 'N',
 });
-const emptyEcfSigner = (): EcfSigner => ({
+/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same 0930 signer shape. */
+export const emptyEcfSigner = (): EcfSigner => ({
   identNom: '',
   identCpfCnpj: '',
   identQualif: '',
@@ -73,7 +81,8 @@ const emptyEcfSigner = (): EcfSigner => ({
   fone: '',
 });
 
-function Field({
+/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same field wrapper. */
+export function Field({
   label,
   children,
 }: {
@@ -336,6 +345,9 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
           {ecfBusy ? t('sped.generating', 'Gerando…') : t('sped.ecf.submit', 'Gerar e baixar ECF')}
         </button>
       </section>
+
+      {/* ── ECF Lucro Real (esqueleto, FE-INCR-COMPLIANCE-2) ───────────────────── */}
+      <SpedEcfRealPanel unitId={unitId} />
     </div>
   );
 }
@@ -395,7 +407,10 @@ function EcdSignersEditor({
   );
 }
 
-function EcfSignersEditor({
+/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same 0930 signer editor
+ * (SpedEcfRealDto.ts imports the identical `SignerSchema`/`refineEcfSigners` from
+ * `SpedEcfDto.ts` on the server, so this UI must not diverge either). */
+export function EcfSignersEditor({
   t,
   signers,
   setSigners,

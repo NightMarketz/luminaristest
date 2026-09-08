@@ -1,14 +1,18 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { SpedGenerationPanel, validateEcdSigners, validateEcfSigners } from '../SpedGenerationPanel';
+import { SpedEcfRealPanel } from '../SpedEcfRealPanel';
 import type { EcdSigner, EcfSigner } from '../../../../lib/services/sped.service';
 
-// Stub the download service so mounting the panel never touches the network.
+// Stub the download service so mounting the panel never touches the network. SpedGenerationPanel
+// now mounts SpedEcfRealPanel too (FE-INCR-COMPLIANCE-2), so generateAndDownloadEcfReal is stubbed
+// here as well — both panels resolve `../../../../lib/services/sped.service` to the same module.
 vi.mock('../../../../lib/services/sped.service', () => ({
   spedService: {
     generateAndDownloadEcd: vi.fn(),
     generateAndDownloadEcf: vi.fn(),
+    generateAndDownloadEcfReal: vi.fn(),
   },
 }));
 
@@ -91,22 +95,85 @@ describe('validateEcfSigners (0930)', () => {
   });
 });
 
-// ── Render smoke: both generation forms mount with their submit buttons ───────
+// ── Render smoke: all three generation forms mount with their submit buttons ──
+// SpedGenerationPanel now also mounts SpedEcfRealPanel (FE-INCR-COMPLIANCE-2, Fork
+// F-COMP2-1 → b) — headings/buttons use EXACT matches below so "ECF" (Presumido) and
+// "ECF (Real)" (Real) don't collide as substrings of the same regex.
 describe('SpedGenerationPanel (render)', () => {
   beforeEach(cleanup);
 
-  it('renders the ECD and ECF sections with their submit buttons', () => {
+  it('renders the ECD, ECF and ECF (Real) sections with their submit buttons', () => {
     render(<SpedGenerationPanel unitId="u1" />);
     expect(screen.getByRole('heading', { name: /Gerar SPED ECD/ })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Gerar SPED ECF/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Gerar e baixar ECD/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Gerar e baixar ECF/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Gerar SPED ECF' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Gerar SPED ECF \(Lucro Real\)/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Gerar e baixar ECD' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Gerar e baixar ECF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Gerar e baixar ECF \(Real\)/ })).toBeInTheDocument();
   });
 
-  it('starts each signer editor with exactly one signer row', () => {
+  it('starts each signer editor with exactly one signer row (ECD, ECF, ECF Real)', () => {
     render(<SpedGenerationPanel unitId="u1" />);
-    // Both editors seed one row each → two "Adicionar" buttons, two "Remover" controls.
-    expect(screen.getAllByRole('button', { name: /Adicionar/ })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: /Remover/ })).toHaveLength(2);
+    // Three editors seed one row each → three "Adicionar" buttons, three "Remover" controls.
+    expect(screen.getAllByRole('button', { name: /Adicionar/ })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /Remover/ })).toHaveLength(3);
+  });
+});
+
+// ── SpedEcfRealPanel (Lucro Real, esqueleto) ───────────────────────────────────
+describe('SpedEcfRealPanel (render + validation)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('always shows the permanent skeleton banner (Fork F-COMP2-4 → a)', () => {
+    render(<SpedEcfRealPanel unitId="u1" />);
+    expect(screen.getByText(/Esqueleto — blocos L, M e N saem vazios/)).toBeInTheDocument();
+  });
+
+  it('pre-fills formaTrib editable with the server default (Fork F-COMP2-2 → b)', () => {
+    render(<SpedEcfRealPanel unitId="u1" />);
+    const formaTribInput = screen.getByPlaceholderText('1') as HTMLInputElement;
+    expect(formaTribInput.value).toBe('1');
+  });
+
+  it('blocks submit client-side when formaTribPer is not exactly 4 characters', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedEcfRealPanel unitId="u1" />);
+    fireEvent.click(screen.getByRole('button', { name: /Gerar e baixar ECF \(Real\)/ }));
+    expect(screen.getByText(/deve ter exatamente 4 posições/)).toBeInTheDocument();
+    expect(spedService.generateAndDownloadEcfReal).not.toHaveBeenCalled();
+  });
+
+  it('sends a payload without formaApur once formaTribPer and signers are valid', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedEcfRealPanel unitId="u1" />);
+
+    fireEvent.change(screen.getByPlaceholderText('PPPP'), { target: { value: 'PPPP' } });
+    fireEvent.change(screen.getByPlaceholderText('14 dígitos'), { target: { value: '12345678000199' } });
+
+    // Signer row (0930): contador (900, CPF 11, CRC) + non-contador — same shape as the
+    // Presumido form (validateEcfSigners reused as-is — fiação, não regra nova, item 23).
+    fireEvent.change(screen.getAllByPlaceholderText('Nome')[0], { target: { value: 'Fulano' } });
+    fireEvent.change(screen.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '12345678901' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Qualif. (900=contador)')[0], { target: { value: '900' } });
+    fireEvent.change(screen.getAllByPlaceholderText('CRC')[0], { target: { value: 'SP-1' } });
+    fireEvent.click(screen.getByRole('button', { name: /Adicionar/ }));
+    fireEvent.change(screen.getAllByPlaceholderText('Nome')[1], { target: { value: 'Beltrano' } });
+    fireEvent.change(screen.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '98765432100' } });
+    fireEvent.change(screen.getAllByPlaceholderText('Qualif. (900=contador)')[1], { target: { value: '205' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /Gerar e baixar ECF \(Real\)/ }));
+
+    await waitFor(() => expect(spedService.generateAndDownloadEcfReal).toHaveBeenCalledTimes(1));
+    const payload = (spedService.generateAndDownloadEcfReal as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(payload.fiscal).toEqual({
+      formaTrib: '1',
+      formaTribPer: 'PPPP',
+      indAliqCsll: '1',
+      indRecReceita: '2',
+    });
+    expect(payload.fiscal).not.toHaveProperty('formaApur');
   });
 });

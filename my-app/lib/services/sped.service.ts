@@ -74,6 +74,29 @@ export interface GenerateEcfPayload {
   signers: EcfSigner[];
 }
 
+// ── ECF Lucro Real (SpedEcfRealRequestSchema, FE-INCR-COMPLIANCE-2) ────────────
+// `declarant`/`signers` REUSE EcfDeclarant/EcfSigner above — SpedEcfRealDto.ts imports
+// the SAME DeclarantSchema/SignerSchema (+ refineEcfSigners) from SpedEcfDto.ts on the
+// server, so this is the identical domain object, not a parallel shape.
+export interface EcfRealFiscal {
+  /** 0010.FORMA_TRIB — optional on the wire; server defaults '1' when absent (Fork
+   *  F-COMP2-2 → (b): the field is editable in the UI, pre-filled with '1'). */
+  formaTrib?: string;
+  /** 0010.FORMA_TRIB_PER — REQUIRED, 4 chars, NO server default (Manual do Leiaute 12
+   *  for the Real regime not transcribed yet — the server/PVA is the oracle). */
+  formaTribPer: string;
+  indAliqCsll: '1' | '4';
+  /** Hardcoded '2' by the caller, same as the Presumido form — not exposed as a field. */
+  indRecReceita: '1' | '2';
+}
+export interface GenerateEcfRealPayload {
+  unitId: string;
+  year: number;
+  declarant: EcfDeclarant;
+  fiscal: EcfRealFiscal;
+  signers: EcfSigner[];
+}
+
 export const spedService = {
   /** Generate the ECD .txt and immediately download it. Requires coverage.ready. */
   async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<DataExchangeJob> {
@@ -101,6 +124,25 @@ export const spedService = {
       job.id,
       payload.unitId,
       job.fileName ?? `sped-ecf-${payload.year}.txt`,
+    );
+    return job;
+  },
+
+  /**
+   * Generate the ECF .txt for Lucro REAL and immediately download it (esqueleto,
+   * ADR-INCR-SPED-ECF-FASE3 — blocks L/M/N ship empty, HASH_ECF_ANTERIOR always blank).
+   * No revenue-exhaustiveness gate, unlike the Presumido form.
+   */
+  async generateAndDownloadEcfReal(payload: GenerateEcfRealPayload): Promise<DataExchangeJob> {
+    const res = await apiClient.post<Envelope<DataExchangeJob>>(
+      '/accounting/sped/ecf/real/generate',
+      payload,
+    );
+    const job = res.data;
+    await dataExchangeService.downloadArtifact(
+      job.id,
+      payload.unitId,
+      job.fileName ?? `sped-ecf-real-${payload.year}.txt`,
     );
     return job;
   },

@@ -324,6 +324,18 @@
       "toLabel": "New version",
       "submit": "Copy",
       "copying": "Copying…"
+    },
+    "catalog": {
+      "title": "Official Referential Catalog (RFB)",
+      "description": "Import the RFB's official referential chart layout for a version. The catalog is global — it applies to every tenant, not just this unit.",
+      "formatNote": "The expected file has named columns code,name,isAnalytic,parentCode — it is not the RFB's raw official XLSX. See RUNBOOK-X2-RFB-REFERENCIAL.md for the conversion step.",
+      "versionLabel": "Layout version",
+      "submit": "Select file & import",
+      "importing": "Importing…",
+      "riskNote": "From the 1st import of a version onward, every mapping write in that version starts validating its code against this catalog — a code outside the catalog or a synthetic one is now rejected where it used to be accepted freely.",
+      "error": {
+        "versionRequired": "Enter the layout version."
+      }
     }
   },
   "sped": {
@@ -338,6 +350,15 @@
       "title": "Generate SPED ECF",
       "description": "Fiscal Accounting Bookkeeping (Lucro Presumido). The PVA recovers the ECD blocks.",
       "submit": "Generate & download ECF"
+    },
+    "ecfReal": {
+      "title": "Generate SPED ECF (Lucro Real)",
+      "description": "Fiscal Accounting Bookkeeping — Lucro Real. The PVA recovers the ECD blocks.",
+      "submit": "Generate & download ECF (Real)",
+      "skeletonBanner": "Skeleton — blocks L, M and N ship empty; HASH_ECF_ANTERIOR is always blank; ADR Forks 2, 3 and 4 are still pending ratification and the Manual do Leiaute 12 transcription.",
+      "error": {
+        "formaTribPer": "Period taxation form (0010) must be exactly 4 characters."
+      }
     },
     "field": {
       "year": "Year",
@@ -364,7 +385,9 @@
       "codAssin": "Code (900=accountant)",
       "qualifCode": "Qualif. (900=accountant)",
       "indCrc": "CRC",
-      "fone": "Phone"
+      "fone": "Phone",
+      "formaTrib": "Taxation form (0010)",
+      "formaTribPer": "Period taxation form (0010, 4 characters)"
     },
     "opt": {
       "no": "No",
