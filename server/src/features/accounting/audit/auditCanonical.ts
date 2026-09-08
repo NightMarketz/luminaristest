@@ -116,7 +116,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // `pendingId`/`sourceType` são identificadores internos (cuid da linha + string de rota fixa,
   // ex. 'sale.finalized') — NUNCA o `reasonDetail` (mensagem de erro livre, pode ecoar dado de
   // origem) nem qualquer campo do item de origem (nome de cliente/fornecedor). Teste-guarda:
-  // ReconcilePendingAuditAllowlist.test.ts (memória `accounting-audit-allowlist-guards`).
+  // auditCanonical.test.ts (memória `accounting-audit-allowlist-guards`).
   'reconcile_pending.rescanned': ['pendingId', 'sourceType', 'outcome'],
 };
 
