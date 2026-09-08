@@ -53,14 +53,14 @@
   - `server/src/controllers/referentialCatalogController.ts:38-42`: import do catálogo é
     **admin-only** (`user.role !== 'ADMIN'` → 403), checado **antes** da policy
     (`canManageReferential`) e antes de qualquer leitura de arquivo — dois gates independentes.
-  - `server/src/features/accounting/services/ReferentialCatalogService.import()` (linhas 73-119) é
+  - `server/src/features/accounting/services/ReferentialCatalogService.import()` (linhas 73-125) é
     **all-or-nothing** (header/linha inválida rejeita o arquivo inteiro, nenhuma escrita parcial) e
     **idempotente** por `@@unique([layoutVersion, code])` (reimport = upsert). Formato aceito pelo
-    parser (`server/src/lib/referentialCatalog.ts:39`): colunas **nomeadas** `code,name,isAnalytic,
+    parser (`server/src/lib/referentialCatalog.ts:42`): colunas **nomeadas** `code,name,isAnalytic,
     parentCode` (`parentCode` opcional) — **não** é o XLSX cru da RFB; o `RUNBOOK-X2-RFB-REFERENCIAL.md`
     já documenta a conversão humana (script ou mapeamento manual de colunas) como pré-requisito.
   - **Achado de maior risco silencioso (OPS-004):** `ReferentialMappingService.
-    resolveDestinationLabel()` (linhas 231-262) **já valida** `referentialCode` contra o catálogo
+    resolveDestinationLabel()` (linhas 230-265) **já valida** `referentialCode` contra o catálogo
     **quando ele existe** para a versão (D3/D9 do ADR-INCR9B, já mergeado) — rejeita código sintético
     ou ausente do catálogo com `ValidationError` pt-BR. Isso significa que **assim que o operador
     importar o 1º catálogo de uma versão**, a tela de Mapeamento **já existente**
@@ -74,7 +74,7 @@
     existente, fora de escopo), só nota textual.
   - `dataExchangeService.importFile` (`my-app/lib/services/dataExchange.service.ts:116-130`) é a
     técnica multipart canônica (`fetch`+`FormData`, sem `Content-Type` manual, `authHeaders()` via
-    cookie `auth_token`) — **3º site** a precisar dela depois de `accounting.service.ts:788-808`
+    cookie `auth_token`) — **3º site** a precisar dela depois de `accounting.service.ts:787-808`
     (OFX/CNAB) e `crm.service.ts:197-199` (já achado pelo BRIEF irmão `FE-INCR-NFE`, fork F-FENFE-7,
     ainda `RATIFICAÇÃO PENDENTE`).
   - `my-app/components/layout/Navbar.tsx:204` é o único precedente de role-gate por
@@ -106,10 +106,10 @@
 | Rota + controller catálogo | `server/src/routes/accounting.ts:146`, `server/src/controllers/referentialCatalogController.ts` | admin-only (403 antes da policy), multipart `file`, `unitId`+`layoutVersion` |
 | DTO catálogo | `server/src/features/accounting/dtos/ReferentialCatalogDto.ts` | `unitId` = `idLike` (`^[A-Za-z0-9_-]+$`), `layoutVersion` string livre ≤32 |
 | Service catálogo | `server/src/features/accounting/services/ReferentialCatalogService.ts` | all-or-nothing, idempotente, retorna `{layoutVersion,totalRows,imported,analyticCount,syntheticCount}` |
-| Parser do arquivo | `server/src/lib/referentialCatalog.ts:39` | colunas nomeadas `code,name,isAnalytic,parentCode` — não é o XLSX oficial cru |
+| Parser do arquivo | `server/src/lib/referentialCatalog.ts:42` | colunas nomeadas `code,name,isAnalytic,parentCode` — não é o XLSX oficial cru |
 | ADR catálogo | `docs/adr/ADR-INCR9B-referential-catalog-seed.md` (D1/D3/D4/D9), `docs/adr/ADR-INCR9-referential-chart-mapping.md` | D1 guarda-corpo (nunca placeholder); D9 label auto-preenchido; catálogo é global, sem tenancy |
 | Runbook do gate humano | `docs/accounting/RUNBOOK-X2-RFB-REFERENCIAL.md` | já antecipa (2026-08-17) "na UI isso corresponde ao upload... na aba Compliance"; passos 1/2 hoje descrevem só `curl`/script |
-| Efeito colateral já mergeado | `server/src/features/accounting/services/ReferentialMappingService.ts:231-262` | validação de destino já ativa quando o catálogo existe (D3/D9) — risco silencioso a nomear na tela |
+| Efeito colateral já mergeado | `server/src/features/accounting/services/ReferentialMappingService.ts:230-265` | validação de destino já ativa quando o catálogo existe (D3/D9) — risco silencioso a nomear na tela |
 | Golden ref — upload multipart | `dataExchangeService.importFile` (`dataExchange.service.ts:116-130`) | técnica a clonar (fetch+FormData, sem Content-Type, `authHeaders()`) |
 | Golden ref — role-gate | `Navbar.tsx:204` (`useAuth` + `user?.role === 'ADMIN'`) | único precedente no app |
 | Reuso canônico | `Modal`, `resolveError`, `formatCents`, `useAccountingT`, `notify` | obrigatórios (my-app/CLAUDE.md §1) — `Modal` não é necessário aqui (nenhum fluxo pede diálogo modal; as duas seções são inline, como as demais da aba) |
@@ -329,10 +329,10 @@ Tudo que ela faz é coletar o que o DTO exige e mostrar o que o servidor devolve
 
 A rodada 4 do plano SDD roda este BRIEF em lote com `FE-INCR-AUDIT-PROVENANCE` (nó C4:
 *"botão 'verificar cadeia' (`verify-chain`) + lista de documentos de origem no
-`JournalEntriesPanel`"* — `CEDULA-DECISAO-2026-09-03-modulos.md:161`). Como aquele BRIEF ainda não
-foi escrito nesta sessão (planejado em paralelo por outra sessão), seu write-set abaixo é
-**inferido** da descrição do nó C4, não lido — grau **ASSUMIDO** até o BRIEF irmão existir; o resto
-desta seção (o write-set DESTE BRIEF e a disjunção fora do choke point) é **verificado**.
+`JournalEntriesPanel`"* — `CEDULA-DECISAO-2026-09-03-modulos.md:161`). O BRIEF irmão já existe
+(PR #277, `docs/accounting/FE-INCR-AUDIT-PROVENANCE-brief.md`) — write-set abaixo **verificado**
+lendo o arquivo real na branch `claude/brief-fe-audit-provenance` (commit `6b75ff25`, pós-emenda de
+review), não mais inferido da descrição do nó.
 
 **Write-set previsto — FE-INCR-COMPLIANCE-2 (este BRIEF):**
 - `my-app/lib/services/sped.service.ts` (edita — novo export)
@@ -341,49 +341,109 @@ desta seção (o write-set DESTE BRIEF e a disjunção fora do choke point) é *
 - `my-app/features/accounting/components/CompliancePanel.tsx` (edita)
 - `my-app/features/accounting/components/__tests__/SpedGenerationPanel.test.tsx` (edita)
 - `my-app/features/accounting/components/__tests__/CompliancePanel.test.tsx` (edita)
-- `my-app/public/locales/{pt,en}/accounting.json` (edita — **choke point PAR-001**)
+- `my-app/public/locales/{pt,en}/accounting.json` — sub-chaves em `sped.ecfReal.*`/`compliance.catalog.*` (edita — **choke point PAR-001**)
 
-**Write-set inferido — FE-INCR-AUDIT-PROVENANCE (C4, ASSUMIDO):**
+**Write-set — FE-INCR-AUDIT-PROVENANCE (C4/C5, verificado lendo PR #277):**
 - `my-app/features/accounting/components/JournalEntriesPanel.tsx` (edita)
+- `my-app/lib/services/accounting.service.ts` (edita — 2 métodos novos, `apiClient`-based, sem multipart)
 - `my-app/features/accounting/components/__tests__/JournalEntriesPanel.test.tsx` (edita)
-- um service novo/estendido para `audit/verify-chain` + `journal-entries/:id/source-documents`
-  (não identificado — provavelmente `accounting.service.ts` ou um `audit.service.ts` novo)
-- `my-app/public/locales/{pt,en}/accounting.json` (edita — **mesmo choke point**)
+- `my-app/public/locales/{pt,en}/accounting.json` — sub-chaves em `journalEntries.verifyChain.*`/`journalEntries.sourceDocuments.*` (edita — **mesmo choke point**)
 
 **Prova de disjunção (verificado — grep sobre `origin/main` `d162cd4d`, não só grafo — CBM-001):**
-zero cross-referência nos dois sentidos entre `JournalEntriesPanel.tsx` e
+zero cross-referência nos dois sentidos entre `JournalEntriesPanel.tsx`/`accounting.service.ts` e
 {`SpedGenerationPanel.tsx`, `CompliancePanel.tsx`, `sped.service.ts`, `referential.service.ts`} —
 nenhum importa o outro, nenhum cita `verify-chain`/`source-documents`/`Sped`/`Compliance`/`referential`
-cruzado. Fora do `accounting.json`, os dois write-sets **não se cruzam**.
+cruzado. Nenhum dos dois BRIEFs toca `AccountingView.tsx` (as abas `lancamentos` e `compliance` já
+existem e já montam os respectivos painéis — confirmado nos dois BRIEFs, nenhuma aba nova). Fora do
+`accounting.json`, os dois write-sets **não se cruzam**.
 
 **`accounting.json` é choke point PAR-001 — mesmo domínio (`accounting`), NÃO disjunto.** Por
 PAR-001 ("i18n por domínio — disjunto entre domínios, **compartilhado dentro do mesmo domínio**") e
 pelo caso-exemplo do próprio contrato ("dois KPIs no mesmo dashboard de `accounting` → ambos tocam
 `accounting.json` → **serial**"), as chaves i18n dos dois BRIEFs **não** podem ser escritas em
-paralelo no mesmo arquivo sem risco de conflito/overwrite silencioso de merge.
+paralelo no mesmo arquivo sem risco de conflito/overwrite silencioso de merge. Namespaces
+reservados sem sobreposição: este BRIEF só escreve sob `sped.ecfReal.*`/`compliance.catalog.*`; o
+irmão só sob `journalEntries.verifyChain.*`/`journalEntries.sourceDocuments.*` — zero interseção de
+chave-folha; o conflito é só textual (mesmo arquivo), nunca semântico.
+
+### REGRA DO LOTE para o choke point `accounting.json` (T6 — vale para os DOIS BRIEFs)
+
+Esta seção fixa, para o lote inteiro (#279 + #277), a única metodologia de paridade i18n e o único
+procedimento de medição na Fase B — reconciliando o Achado 2 da revisão independente de #279
+(as duas sessões de planejamento, rodando em paralelo, haviam chegado a mecânicas diferentes para o
+mesmo passo serial).
+
+**1. Metodologia de contagem — só FOLHAS, nunca nós de agrupamento.** Um objeto intermediário
+(`sped`, `sped.ecf`, `compliance.mapping`) não conta; só a chave terminal com valor string conta.
+Contar nós internos infla o número (a 1ª leitura do BRIEF irmão, antes da emenda pós-review, chegou
+a **1022** somando objetos + folhas — descartado por ser outra métrica, não por o arquivo ter
+mudado). Comando exato, reproduzível, rodado nesta sessão contra `origin/main d162cd4d`:
+
+```js
+// node -e a partir da raiz do repo (ou script equivalente salvo em arquivo)
+const fs = require('fs');
+function flatten(o, p = "") {
+  let r = {};
+  for (const k in o) {
+    const v = o[k];
+    const kp = p ? p + "." + k : k;
+    if (v && typeof v === "object" && !Array.isArray(v)) Object.assign(r, flatten(v, kp));
+    else r[kp] = v; // só folha (valor não-objeto) conta
+  }
+  return r;
+}
+const pt = flatten(JSON.parse(fs.readFileSync('my-app/public/locales/pt/accounting.json', 'utf8')));
+const en = flatten(JSON.parse(fs.readFileSync('my-app/public/locales/en/accounting.json', 'utf8')));
+console.log('pt keys:', Object.keys(pt).length, '| en keys:', Object.keys(en).length);
+```
+
+**Resultado nesta sessão (`d162cd4d`, base dos dois BRIEFs): `pt keys: 847 | en keys: 847`** — zero
+chave só-pt ou só-en (`onlyPt`/`onlyEn` = `[]`, checado por diff de conjuntos). Este é o número de
+partida ratificado para o lote: **847 = 847, metodologia folhas.**
+
+**2. Medição na Fase B — a CADA aplicação, nunca só ao final.** A Fase B (integrador único, serial)
+aplica as duas deltas de `accounting.json` (pt e en) **uma de cada vez**. Depois de CADA uma das
+duas aplicações — não só depois da segunda — o integrador roda o comando acima e confere: (i)
+`tsc --noEmit` limpo em `my-app`; (ii) pt keys === en keys (paridade não quebrou); (iii) o delta de
+contagem bate com o número de chaves-folha novas daquele PR (nem uma sobrando, nem uma faltando —
+prova de que o merge textual não duplicou nem truncou uma sub-árvore). Medir só ao final esconde
+QUAL das duas aplicações introduziu uma quebra, caso haja uma — a diferença entre "serial com
+checkpoint a cada passo" e "serial com checkpoint só no fim" é exatamente a diferença entre um
+`git bisect` de 1 passo e um de 2.
+
+**3. Coordenação com PR #277.** O BRIEF `FE-INCR-AUDIT-PROVENANCE` (#277) adota esta MESMA regra —
+metodologia de folhas (847=847 na mesma base `d162cd4d`, já corrigido de 1022 por emenda pós-review
+no commit `6b75ff25`) — por emenda coordenada entre os dois BRIEFs deste lote. **Nota de
+verificação honesta (OPS-003):** ao ler `FE-INCR-AUDIT-PROVENANCE-brief.md` nesta sessão
+(`claude/brief-fe-audit-provenance:399`), o texto da Fase B ali ainda descreve a medição como "uma
+vez, depois dos dois merges" — a metodologia de contagem (folhas, 847=847) já convergiu entre os
+dois BRIEFs, mas o procedimento de medição na Fase B (item 2 acima) é a parte que esta emenda fixa
+como regra do lote; falta um patch espelhado em #277 para que os dois textos deixem de divergir
+nesse único ponto. Registrado para quem rodar a `sessao-integracao`: a regra vinculante é a desta
+seção (medir a cada aplicação), independente de qual dos dois documentos ainda não reflete isso.
 
 **Fatiamento proposto (PAR-003):**
 1. **Fase 0 (schema) — não se aplica.** Nenhum dos dois BRIEFs muda `schema.prisma` (zero
    migração, os dois endpoints já existem em `main`).
 2. **Fase A (corpos, paralela) — os dois BRIEFs constroem em worktrees separados TUDO exceto as
    chaves de `accounting.json`:** componentes, services, testes, e a **prosa i18n** (o texto
-   pt/en de cada chave nova) fica pronta e **staged** (ex.: um bloco JSON candidato no PR/branch),
-   mas a **escrita física** no arquivo compartilhado é adiada para a Fase B. Cada branch roda
-   `tsc`/testes localmente contra o `accounting.json` **atual** (sem as chaves do outro lote) —
-   aceitável porque nenhum teste deste BRIEF depende de chave do C4 nem vice-versa (write-sets de
-   código são disjuntos, só o arquivo de chaves é compartilhado).
+   pt/en de cada chave nova) fica pronta e **staged** (fragmento JSON candidato no PR/branch, não
+   commitado como patch do arquivo compartilhado). Cada branch roda `tsc`/testes localmente contra
+   o `accounting.json` **atual** (sem as chaves do outro lote) — aceitável porque nenhum teste
+   deste BRIEF depende de chave do C4 nem vice-versa (write-sets de código são disjuntos, só o
+   arquivo de chaves é compartilhado).
 3. **Fase B (registro, serial, integrador único):** aplica as duas deltas de `accounting.json` **uma
-   de cada vez**, `tsc` verde entre cada (mede paridade 847→N a cada aplicação, não só no final) —
-   evita que o merge dos dois PRs colida na mesma chave-pai ou produza uma paridade pt/en quebrada
-   por interleaving.
+   de cada vez**, seguindo a REGRA DO LOTE acima — `tsc` verde + paridade (folhas) medida **a cada
+   aplicação**, não só no final.
 4. **Review por branch, antes do merge** (independência já exigida por norma da casa) — cada BRIEF
    revisado isoladamente; a Fase B só roda depois que AMBOS os PASS existirem.
+5. Se as duas `sessao-feature` rodarem sem coordenação prévia, a Fase B vira responsabilidade do
+   **integrador** (`sessao-integracao`) resolver o conflito textual do JSON por regra pré-decidida:
+   união dos dois blocos de chaves (namespaces disjuntos, §3 acima), nunca escolha de um lado —
+   exatamente o que a sessão de integração já está autorizada a fazer.
 
-**Confirmação pendente:** o passo 2 acima assume que o BRIEF `FE-INCR-AUDIT-PROVENANCE` não toca
-`AccountingView.tsx` (nenhuma aba nova — os dois botões do C4 vivem dentro do `JournalEntriesPanel`
-já existente, conforme a descrição do nó). Este BRIEF também não toca `AccountingView.tsx` (a aba
-Compliance já renderiza os dois componentes estendidos). Se o BRIEF irmão, quando escrito, divergir
-disso, a lista de choke points cresce em 1 arquivo — reconferir antes de abrir os dois worktrees.
+**Confirmação pendente:** nenhuma — os dois BRIEFs já confirmam, por leitura direta um do outro,
+que nenhum toca `AccountingView.tsx` nem cria aba nova.
 
 ## Risco principal e vieses (T8)
 
