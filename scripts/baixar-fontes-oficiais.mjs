@@ -69,12 +69,12 @@ const FONTES = [
     arquivo: 'Manual-ECD-Leiaute-9.pdf',
   },
   {
-    id: 'referencial-rfb',
-    assunto: 'X2 — plano de contas referencial',
-    titulo: 'Tabela dinamica de Contas Referenciais (Leiaute 12)',
+    id: 'tabelas-dinamicas-ecf',
+    assunto: 'X2 (plano referencial) + linhas de L/M/N/P (TIPO e FORMULA)',
+    titulo: 'Tabelas Dinamicas e Planos Referenciais da ECF, Leiaute 12 (28/05/2026)',
     tipo: 'arquivo',
     url: 'http://sped.rfb.gov.br/arquivo/download/8002',
-    arquivo: 'RFB-contas-referenciais-leiaute-12.xlsx',
+    arquivo: 'RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx',
   },
   {
     id: 'guia-efd-contrib',
