@@ -8,6 +8,12 @@ export const CANONICAL_VERSION = 1;
  * Allowlisted payload fields per eventType.
  * Only these keys survive sanitization — everything else (tokens, PII, request body) is dropped.
  * Money values must be strings (never numbers) before calling this.
+ *
+ * Esta lista decide a CHAVE, nunca o VALOR. Se um eventType novo carregar campo de TEXTO LIVRE
+ * (`description`/`reason` digitado pelo operador), ele também entra em `MASKABLE_FREE_TEXT_KEYS`
+ * (`auditFreeTextMask.ts`). Os dois testes de contrato em `__tests__/auditFreeTextMask.test.ts`
+ * cobrem as DUAS direções: nenhuma chave mascarável fora desta allowlist, e nenhum
+ * `description`/`reason` allowlistado aqui sem mascaramento declarado lá.
  */
 export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // TRIAGEM-AUDIT-2026-08-15 A2(b) — 'description' here is NOT always JournalEntry.description
