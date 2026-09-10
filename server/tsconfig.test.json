@@ -16,5 +16,17 @@
     "src/**/*",
     "test/**/*",
     "generated/**/*"
+  ],
+  // OBRIGATÓRIO declarar `exclude` aqui. `extends` NÃO mescla campos: sem esta chave, o `exclude` do
+  // tsconfig.json pai (que filtra `src/**/__tests__/**`, `*.test.ts` e `*.spec.ts`) é herdado e
+  // FILTRA o que o `include` acima acabou de trazer — o gate `tsc -p tsconfig.test.json` da CI
+  // rodava sobre ZERO arquivo de teste, checando exatamente o que o tsconfig de produção já checa.
+  // Medido em 2026-09-10: com esta chave, a suíte inteira entra (>250 arquivos) e um erro
+  // deliberado num teste é pego (TS2322); sem ela, resolve UM arquivo e o mesmo erro passa com 0
+  // erros reportados. O número exato cresce com a suíte — o piso está na guarda, não aqui.
+  // Guarda de regressão: `src/__tests__/tsconfigTestCoverage.test.ts`.
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }
