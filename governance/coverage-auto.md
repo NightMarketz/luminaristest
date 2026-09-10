@@ -216,6 +216,11 @@ generated-by: skill-audit coverage
 | `REV-005` | luminaris-reviewer | eval:./evals/evals.json#happy-1 | ✅ |
 | `REV-006` | luminaris-reviewer | eval:./evals/evals.json#happy-2 | ✅ |
 | `REV-007` | luminaris-reviewer | eval:./evals/evals.json#happy-3 | ✅ |
+| `SEL-001` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `SEL-002` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `SEL-003` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `SEL-004` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `SEL-005` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
 | `SDATA-001` | structured-data-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SDATA-002` | structured-data-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#edge-1 | ✅ |
 | `SDATA-003` | structured-data-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
