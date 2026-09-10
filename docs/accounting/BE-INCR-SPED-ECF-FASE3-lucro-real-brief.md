@@ -193,7 +193,7 @@ const SpedEcfRealRequestSchema = z.object({
     // `codigo` escolhido (coluna `TIPO LANÇ` da aba M300A) — derivar, nunca aceitar do caller.
     // M300.DESCRICAO idem: vem da tabela dinâmica, não do usuário.
     // M300.IND_RELACAO (1 = com conta da Parte B, 2 = com conta contábil) e os filhos M305/M310/M312
-    // dependem de haver reflexo na Parte B — ver `parteB` abaixo.
+    // dependem de haver reflexo na Parte B — ver `lalurParteB` abaixo.
   })).optional(),
   // Parte B (M010 identificação da conta / M410 lançamento sem reflexo na Parte A / M500 saldos):
   // SEGUNDO AGREGADO, não um campo `natureza` do ajuste. É aqui que "temporária × definitiva" vive.
