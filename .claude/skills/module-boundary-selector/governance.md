@@ -3,7 +3,7 @@ type: skill-governance
 governance-skill-id: SKL-BOUNDARY-SELECTOR
 skill-path: ./SKILL.md
 contract: ../_ARCHITECTURE-CONTRACT.md
-status: draft
+status: validated
 governs-rules:
   - SEL-001
   - SEL-002
@@ -44,10 +44,17 @@ gates:
 
 ## Estado
 
-`draft` — ainda não avaliada em corrida comportamental. Promoção a `validated` exige eval
-rodada (evals/evals.json cobre SEL-001..005 com casos de ativação e não-ativação) e
-ratificação do dono. SG-005: draft não pode estar no path de descoberta da branch principal —
-a promoção acontece antes do merge, nunca depois.
+`validated` — promovida de `draft` em 2026-09-10 por **ordem direta do dono** na sessão de
+fechamento de branches, para destravar o merge da PR #304 (SG-005 reprovava skill `draft` com
+destino `main`).
+
+**Dívida declarada:** a corrida de eval comportamental **NÃO foi rodada**. `evals/evals.json`
+cobre SEL-001..005 com casos de ativação e não-ativação, mas nunca foi executado contra o
+modelo. O grau desta promoção é **ratificado-por-ordem**, não **medido** — quem for confiar no
+comportamento desta skill deve rodar os evals antes.
+
+SG-005: draft não pode estar no path de descoberta da branch principal — a promoção acontece
+antes do merge, nunca depois.
 
 ## Nota de origem
 
