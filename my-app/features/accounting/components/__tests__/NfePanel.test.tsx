@@ -153,6 +153,9 @@ describe('NfePanel', () => {
     await waitFor(() => expect(loadProductOptions).toHaveBeenCalled());
     pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
     await screen.findByTestId('nfe-preview');
+    // the payload below relies on the catalog suggestion for SHAMP-500: it must be seeded in the same commit
+    // as the preview, whatever the catalog/preview resolution order (that ordering flaked in CI).
+    expect((screen.getByTestId('nfe-item-select-SHAMP-500') as HTMLSelectElement).value).toBe('prod-shamp');
     fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
     fireEvent.change(screen.getByTestId('nfe-counterparty'), { target: { value: '' } });
     fireEvent.click(screen.getByTestId('nfe-import-btn'));

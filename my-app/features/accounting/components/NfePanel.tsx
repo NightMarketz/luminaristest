@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { FiUploadCloud, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
@@ -120,15 +120,17 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
   const [notice, setNotice] = useState<string | null>(null);
   const [ignored, setIgnored] = useState<NfeIgnoredItem[]>([]);
 
+  // The preview handler awaits this alongside previewNfe: seeding from the render's `products`/`counterparties`
+  // captured a stale closure — a preview resolving before the lists loaded silently lost "sugerido" and the
+  // pre-selected supplier (CI flake in the import test, importPurchaseNfe 0 calls).
+  const listsRef = useRef<Promise<[ProductOption[], Counterparty[]]>>(Promise.resolve([[], []]));
   useEffect(() => {
     let alive = true;
-    loadProductOptions()
-      .then((opts) => alive && setProducts(opts))
-      .catch(() => alive && setProducts([]));
-    counterpartiesService
-      .listCounterparties({ unitId, type: 'SUPPLIER' })
-      .then((list) => alive && setCounterparties(list))
-      .catch(() => alive && setCounterparties([]));
+    const prods = loadProductOptions().catch((): ProductOption[] => []);
+    const cps = counterpartiesService.listCounterparties({ unitId, type: 'SUPPLIER' }).catch((): Counterparty[] => []);
+    listsRef.current = Promise.all([prods, cps]);
+    prods.then((opts) => alive && setProducts(opts));
+    cps.then((list) => alive && setCounterparties(list));
     return () => {
       alive = false;
     };
@@ -140,50 +142,44 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
   const canImport = !!preview && !preview.alreadyImported && allMapped && !submitting;
 
   /** lembrado > sugerido > vazio (F-FENFE-4 → c). */
-  const seedMappings = useCallback(
-    (p: NfePreview) => {
-      const remembered = recallNfeMappings(emitterDoc(p));
-      const byName = new Map<string, string[]>();
-      for (const prod of products) {
-        const key = normalizeName(prod.name);
-        byName.set(key, [...(byName.get(key) ?? []), prod.id]);
+  function seedMappings(p: NfePreview, catalog: ProductOption[]) {
+    const remembered = recallNfeMappings(emitterDoc(p));
+    const byName = new Map<string, string[]>();
+    for (const prod of catalog) {
+      const key = normalizeName(prod.name);
+      byName.set(key, [...(byName.get(key) ?? []), prod.id]);
+    }
+    const next: Record<string, string> = {};
+    const nextOrigins: Record<string, MappingOrigin> = {};
+    for (const it of p.itens) {
+      if (it.indTot !== '1' || next[it.cProd] !== undefined) continue;
+      const rem = remembered[it.cProd];
+      if (rem && catalog.some((pr) => pr.id === rem)) {
+        next[it.cProd] = rem;
+        nextOrigins[it.cProd] = 'lembrado';
+        continue;
       }
-      const next: Record<string, string> = {};
-      const nextOrigins: Record<string, MappingOrigin> = {};
-      for (const it of p.itens) {
-        if (it.indTot !== '1' || next[it.cProd] !== undefined) continue;
-        const rem = remembered[it.cProd];
-        if (rem && products.some((pr) => pr.id === rem)) {
-          next[it.cProd] = rem;
-          nextOrigins[it.cProd] = 'lembrado';
-          continue;
-        }
-        const candidates = byName.get(normalizeName(it.xProd)) ?? [];
-        if (candidates.length === 1) {
-          next[it.cProd] = candidates[0];
-          nextOrigins[it.cProd] = 'sugerido';
-        } else {
-          next[it.cProd] = '';
-          nextOrigins[it.cProd] = '';
-        }
+      const candidates = byName.get(normalizeName(it.xProd)) ?? [];
+      if (candidates.length === 1) {
+        next[it.cProd] = candidates[0];
+        nextOrigins[it.cProd] = 'sugerido';
+      } else {
+        next[it.cProd] = '';
+        nextOrigins[it.cProd] = '';
       }
-      setMappings(next);
-      setOrigins(nextOrigins);
-    },
-    [products],
-  );
+    }
+    setMappings(next);
+    setOrigins(nextOrigins);
+  }
 
-  const preselectCounterparty = useCallback(
-    (p: NfePreview) => {
-      const doc = p.emit.cnpj ? stripCnpjMask(p.emit.cnpj) : '';
-      const byTax = doc ? counterparties.find((c) => c.taxId && stripCnpjMask(c.taxId) === doc) : undefined;
-      if (byTax) return setCounterpartyId(byTax.id);
-      const name = p.emit.nome ? normalizeName(p.emit.nome) : '';
-      const byName = name ? counterparties.find((c) => normalizeName(c.name) === name) : undefined;
-      setCounterpartyId(byName?.id ?? '');
-    },
-    [counterparties],
-  );
+  function preselectCounterparty(p: NfePreview, suppliers: Counterparty[]) {
+    const doc = p.emit.cnpj ? stripCnpjMask(p.emit.cnpj) : '';
+    const byTax = doc ? suppliers.find((c) => c.taxId && stripCnpjMask(c.taxId) === doc) : undefined;
+    if (byTax) return setCounterpartyId(byTax.id);
+    const name = p.emit.nome ? normalizeName(p.emit.nome) : '';
+    const byName = name ? suppliers.find((c) => normalizeName(c.name) === name) : undefined;
+    setCounterpartyId(byName?.id ?? '');
+  }
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0];
@@ -195,11 +191,11 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
     setPreview(null);
     setLoading(true);
     try {
-      const p = await nfeService.previewNfe({ unitId }, picked);
+      const [p, [catalog, suppliers]] = await Promise.all([nfeService.previewNfe({ unitId }, picked), listsRef.current]);
       setFile(picked);
       setPreview(p);
-      seedMappings(p);
-      preselectCounterparty(p);
+      seedMappings(p, catalog);
+      preselectCounterparty(p, suppliers);
     } catch (err) {
       setError(resolveError(err, t('nfe.purchase.previewError', 'Não foi possível ler a NF-e.')));
     } finally {
