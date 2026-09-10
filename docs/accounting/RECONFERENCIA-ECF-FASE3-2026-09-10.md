@@ -1,5 +1,15 @@
 # Reconferência do BRIEF da ECF Fase 3 contra o Manual do Leiaute 12
 
+> **[FOLD 2026-09-10] Itens 1, 2 e 5 da fila abaixo APLICADOS** — dono, em sessão, 2026-09-10:
+> *"emenda o BRIEF com os itens 1, 2 e 5"*. Emendas em `BE-INCR-SPED-ECF-FASE3-lucro-real-brief.md`
+> (§4 `layoutVersion` fechado; §2 forma do contrato do Fork 4 corrigida; §5 insumo deixou de estar
+> ausente) e em `BE-INCR-SPED-ECF-layout-transcription.md` (§Fonte normativa: julho→maio/2026).
+> **Arrastado pelo item 1:** o §5 do BRIEF afirmava que o Manual não estava no repositório — deixar
+> isso de pé faria o BRIEF contradizer o próprio §4 emendado, então foi corrigido junto.
+> **NÃO aplicados (seguem do dono):** 3 e 4 (registrar Forks 2 e 3 como respondidos pela fonte),
+> 6 (abrir o fork novo do Bloco L), 7 (reclassificar o item 5 do checklist), 8 (passo E990/M990 no
+> runbook), 9 (transcrição campo-a-campo de L/M/N). Nenhum fork foi ratificado nesta emenda.
+
 > **Escopo:** conferir `BE-INCR-SPED-ECF-FASE3-lucro-real-brief.md` e
 > `BE-INCR-SPED-ECF-layout-transcription.md` contra o Manual oficial agora no corpus local
 > (`docs/accounting/fontes-oficiais/`). **Nada aqui ratifica fork nem edita o BRIEF** — é leitura de
