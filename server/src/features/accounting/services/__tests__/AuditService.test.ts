@@ -115,8 +115,16 @@ function buildService(headState: AuditChainHead | null, events: AuditEvent[], po
     runTransaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn({})),
   };
 
-  const svc = new AuditService(auditRepo as any, postingRepo as any, policy);
-  return { svc, auditRepo, postingRepo, policy };
+  // BE-INCR-AUDIT-FREETEXT-MASK — catálogo vazio por padrão: sem contraparte cadastrada o masker é
+  // no-op, então os casos deste arquivo (hash/chain/allowlist) seguem afirmando o mesmo de antes.
+  // O comportamento do masker tem suíte própria (audit/__tests__/auditFreeTextMask.test.ts) e a
+  // barreira ponta-a-ponta é integração (AuditFreeTextMask.integration.test.ts).
+  const counterpartyRepo = {
+    findManyByUnit: jest.fn(async () => []),
+  };
+
+  const svc = new AuditService(auditRepo as any, postingRepo as any, policy, counterpartyRepo as any);
+  return { svc, auditRepo, postingRepo, policy, counterpartyRepo };
 }
 
 const baseAppendInput = {

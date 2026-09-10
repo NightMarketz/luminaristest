@@ -263,8 +263,9 @@ function buildAccountingBindingAuditPort(
   auditRepo: IAuditRepository,
   postingRepo: IPostingRepository,
   policy: IAccountingPolicy,
+  counterpartyRepo: ICounterpartyRepository,
 ): IBindingAuditPort {
-  const auditService = new AuditService(auditRepo, postingRepo, policy);
+  const auditService = new AuditService(auditRepo, postingRepo, policy, counterpartyRepo);
   return {
     async append(tx, scope, event) {
       await auditService.append(tx, bindingScopeToAccountingScope(scope), {
@@ -506,6 +507,7 @@ export class ApplicationFactory {
       this.repositories.audit,
       this.repositories.posting,
       this.policies.accounting,
+      this.repositories.counterparty,
     );
 
     const postingService = new PostingService(
@@ -844,6 +846,7 @@ export class ApplicationFactory {
       this.repositories.audit,
       this.repositories.posting,
       this.policies.accounting,
+      this.repositories.counterparty,
     );
     return new BindingCompileService(
       new AccountingBindingRepository(),

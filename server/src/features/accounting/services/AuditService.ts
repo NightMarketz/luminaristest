@@ -3,6 +3,7 @@ import type { Prisma } from 'generated/prisma';
 import { ForbiddenError } from '../../../lib/errors';
 import type { IAuditRepository } from '../repositories/IAuditRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
+import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import {
@@ -13,6 +14,7 @@ import {
   canonicalizeAuditPayload,
   hashAuditCanonical,
 } from '../audit/auditCanonical';
+import { MASKABLE_FREE_TEXT_KEYS, maskThirdPartyNames } from '../audit/auditFreeTextMask';
 
 export type VerifyFailureReason =
   | 'MISSING_GENESIS'
@@ -44,7 +46,45 @@ export class AuditService {
     private readonly auditRepo: IAuditRepository,
     private readonly postingRepo: IPostingRepository,
     private readonly policy: IAccountingPolicy,
+    private readonly counterpartyRepo: ICounterpartyRepository,
   ) {}
+
+  /**
+   * BE-INCR-AUDIT-FREETEXT-MASK — mascara nome de contraparte digitado à mão nos campos de texto
+   * livre deste eventType, ANTES da canonicalização (e portanto antes do hash: a chain é
+   * append-only, ADR-INCR2 Q2 — não há conserto depois).
+   *
+   * A leitura das contrapartes usa a MESMA `tx` do append (exigência vinculada à ratificação do
+   * Fork D): fora dela, uma contraparte criada/arquivada entre a leitura e o append deixaria uma
+   * janela de inconsistência. `includeArchived: false` porque o arquivamento mangla o nome para
+   * `deleted:<id>:<name>` (SEC-A1-4) — a forma arquivada não é o que o operador digita.
+   *
+   * A consulta só acontece quando este eventType TEM campo livre e ele veio preenchido: a maioria
+   * dos eventos é id-only, e `reason` é opcional em quase todos os DTOs — não faz sentido pagar uma
+   * leitura por append que não tem o que mascarar.
+   */
+  private async maskFreeText(
+    tx: Prisma.TransactionClient,
+    scope: AccountingScope,
+    input: AuditEventInput,
+  ): Promise<Record<string, unknown>> {
+    const maskableKeys = MASKABLE_FREE_TEXT_KEYS[input.eventType] ?? [];
+    const presentKeys = maskableKeys.filter((key) => typeof input.payload[key] === 'string');
+    if (presentKeys.length === 0) return input.payload;
+
+    const counterparties = await this.counterpartyRepo.findManyByUnit(
+      scope,
+      { includeArchived: false },
+      tx,
+    );
+    if (counterparties.length === 0) return input.payload;
+
+    const masked: Record<string, unknown> = { ...input.payload };
+    for (const key of presentKeys) {
+      masked[key] = maskThirdPartyNames(masked[key] as string, counterparties);
+    }
+    return masked;
+  }
 
   /**
    * Append one audit event in the same tx as the originating mutation.
@@ -65,7 +105,10 @@ export class AuditService {
     const createdAtISO = createdAt.toISOString();
     const actorType    = input.actorType ?? 'USER';
 
-    const payloadCanonical = canonicalizeAuditPayload(input.eventType, input.payload);
+    // O hash é computado sobre o valor JÁ mascarado — mascarar depois seria impossível (chain
+    // append-only), e antes da canonicalização é o único ponto em que todo evento passa.
+    const maskedPayload = await this.maskFreeText(tx, scope, input);
+    const payloadCanonical = canonicalizeAuditPayload(input.eventType, maskedPayload);
 
     const tupleJson = buildAuditCanonicalTuple({
       eventId,

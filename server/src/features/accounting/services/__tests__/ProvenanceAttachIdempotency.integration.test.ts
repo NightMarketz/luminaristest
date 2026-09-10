@@ -34,6 +34,7 @@ import { AccountingPeriodRepository } from '@/features/accounting/repositories/A
 import { SourceProvenanceRepository } from '@/features/accounting/repositories/SourceProvenanceRepository';
 import { DimensionRepository } from '@/features/accounting/repositories/DimensionRepository';
 import { AuditRepository } from '@/features/accounting/repositories/AuditRepository';
+import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
@@ -55,7 +56,7 @@ function buildRealService(): PostingService {
     postingRepo,
     new AccountingPolicy(),
     new AccountingPeriodRepository(),
-    new AuditService(new AuditRepository(), postingRepo, new AccountingPolicy()),
+    new AuditService(new AuditRepository(), postingRepo, new AccountingPolicy(), new CounterpartyRepository()),
     new SourceProvenanceRepository(),
     new DimensionRepository(),
   );
