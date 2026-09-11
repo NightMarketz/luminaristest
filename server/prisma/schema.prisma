@@ -1255,7 +1255,7 @@ model ReconcilePendingItem {
   unitId       String // business unit (scoped string, not a FK)
   sourceType   String // 'crm.opportunity.won' | 'sale.finalized' | 'sale.cancelled' | 'sale.returned' | 'sale.settled' | 'sale.cogs' | 'sale.package.sold' | 'sale.package.consumption'
   sourceId     String // origin key (opportunityId | saleId), same identity the reconcile pass already uses
-  reasonCode   String // FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED (ReconcilePendingReasonCode)
+  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r)
   reasonDetail String // error message captured at classification time
   firstSeenAt  DateTime  @default(now())
   lastSeenAt   DateTime  @updatedAt
