@@ -76,6 +76,14 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  canManageLalur(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
+  canReadLalur(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
   canManageInventory(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }

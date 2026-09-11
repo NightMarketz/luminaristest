@@ -31,6 +31,7 @@ import { AccountingContactRepository } from '../features/accounting/repositories
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
+import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
 // Features - Policies
@@ -98,6 +99,7 @@ import { NfeImportService } from '../features/accounting/services/NfeImportServi
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
 import { NfePreviewService } from '../features/accounting/services/NfePreviewService';
 import { ReconcilePendingService } from '../features/accounting/services/ReconcilePendingService';
+import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -174,6 +176,7 @@ import type { IDimensionRepository } from '../features/accounting/repositories/I
 import type { ICounterpartyRepository } from '../features/accounting/repositories/ICounterpartyRepository';
 import type { IInventoryRepository } from '../features/accounting/repositories/IInventoryRepository';
 import type { IReconcilePendingRepository } from '../features/accounting/repositories/IReconcilePendingRepository';
+import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
@@ -320,6 +323,7 @@ export class ApplicationFactory {
     counterparty: ICounterpartyRepository;
     inventory: IInventoryRepository;
     reconcilePending: IReconcilePendingRepository;
+    lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
   };
@@ -388,6 +392,7 @@ export class ApplicationFactory {
     nfeImport: NfeImportService;
     nfeSaleReconciliation: NfeSaleReconciliationService;
     reconcilePending: ReconcilePendingService;
+    lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
     nfePreview: NfePreviewService;
@@ -435,6 +440,7 @@ export class ApplicationFactory {
       counterparty: new CounterpartyRepository(),
       inventory: new InventoryRepository(),
       reconcilePending: new ReconcilePendingRepository(),
+      lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
     };
@@ -819,6 +825,14 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
       ),
+      // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do
+      // plano só para VALIDAR `accountId` (M310.COD_CTA ∈ J050); nunca posta no razão.
+      lalur: new LalurService(
+        this.repositories.lalur,
+        this.repositories.account,
+        auditService,
+        this.policies.accounting,
+      ),
       // BE-INCR-CONTADOR-DELIVERY (nó C6): cadastro do contador + log de entrega do pacote
       // ECD/ECF. O serviço de entrega consome os repos JÁ existentes de data-exchange (jobs de
       // origem) e de período (gate F-CD7-a dos 12 meses) — não instancia repo próprio nem toca
@@ -995,6 +1009,7 @@ export class ApplicationFactory {
     this.services.nfeSaleReconciliation;
   public getNfePreviewService = (): NfePreviewService => this.services.nfePreview;
   public getReconcilePendingService = (): ReconcilePendingService => this.services.reconcilePending;
+  public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

@@ -1042,6 +1042,369 @@
       ]
     }
   },
+  "LalurDto.ts": {
+    "CreateLalurEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "quarter": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "livro": {
+          "type": "string",
+          "enum": [
+            "lalur",
+            "lacs",
+            "n500",
+            "n630",
+            "n670"
+          ]
+        },
+        "codigo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "histLancamento": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "indRelacao": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "parteBId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "year",
+        "quarter",
+        "livro",
+        "codigo",
+        "valorCents"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateLalurEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "histLancamento": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "indRelacao": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        "parteBId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "accountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ArchiveLalurSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListLalurEntriesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "quarter": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "livro": {
+          "type": "string",
+          "enum": [
+            "lalur",
+            "lacs",
+            "n500",
+            "n630",
+            "n670"
+          ]
+        },
+        "includeArchived": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "CreateLalurParteBAccountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codCtaB": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "descricao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "dtCriacao": {
+          "type": "string"
+        },
+        "codPbRfb": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "dtLimite": {
+          "type": "string"
+        },
+        "codTributo": {
+          "type": "string",
+          "enum": [
+            "I",
+            "C"
+          ]
+        },
+        "saldoIniCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "indSaldoIni": {
+          "type": "string",
+          "enum": [
+            "D",
+            "C"
+          ]
+        },
+        "cnpjSitEsp": {
+          "type": "string",
+          "pattern": "^\\d{14}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "codCtaB",
+        "descricao",
+        "dtCriacao",
+        "codPbRfb",
+        "codTributo",
+        "saldoIniCents",
+        "indSaldoIni"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateLalurParteBAccountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "descricao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "dtCriacao": {
+          "type": "string"
+        },
+        "codPbRfb": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "dtLimite": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "saldoIniCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "indSaldoIni": {
+          "type": "string",
+          "enum": [
+            "D",
+            "C"
+          ]
+        },
+        "cnpjSitEsp": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{14}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListLalurParteBQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codTributo": {
+          "type": "string",
+          "enum": [
+            "I",
+            "C"
+          ]
+        },
+        "includeArchived": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
   "NfeDto.ts": {
     "ImportNfePurchaseSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

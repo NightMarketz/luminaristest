@@ -52,7 +52,11 @@ const { options } = require('../../scripts/generate-openapi');
 //    /contacts/{id} (PATCH+DELETE), /delivery/build, /delivery/confirm, /delivery/{id}/retry,
 //    /delivery/{id} — 6 PATHS e 8 OPERAÇÕES (150 → 156 paths, 177 → 185 operations, medido com
 //    docs:generate; a lição do NFE-X vale aqui: contar operação como path reprovaria o guard).
-const BASELINE = 160; // BE-INCR-PARTIAL-SETTLEMENT: +4 rotas-irmãs /settlements (AP+AR) — F-PS10 → b
+// +4 (BE-INCR-PARTIAL-SETTLEMENT): rotas-irmãs /settlements (AP+AR) — F-PS10 → b (156 → 160).
+// +6 (BE-INCR-SPED-ECF-FASE3B item 11, Fork 4→b): /api/lalur/entries (GET+POST), /entries/{id} (PATCH),
+//    /entries/{id}/archive, /parte-b (GET+POST), /parte-b/{id} (PATCH), /parte-b/{id}/archive —
+//    6 PATHS e 8 OPERAÇÕES (160 → 166).
+const BASELINE = 166;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

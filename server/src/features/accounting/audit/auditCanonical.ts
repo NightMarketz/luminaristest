@@ -137,6 +137,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf'],
   'delivery.sent':          ['deliveryId', 'contactId', 'attemptCount'],
   'delivery.failed':        ['deliveryId', 'contactId', 'attemptCount', 'reason'],
+  // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
+  // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
+  // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).
+  'lalur.entry_created':    ['entryId', 'livro', 'codigo', 'quarter', 'year', 'valorCents', 'indRelacao', 'parteBId', 'accountId'],
+  'lalur.entry_updated':    ['entryId', 'livro', 'codigo', 'quarter', 'year', 'valorCents', 'indRelacao', 'parteBId', 'accountId'],
+  'lalur.entry_archived':   ['entryId', 'livro', 'codigo', 'quarter', 'year'],
+  'lalur.parte_b_created':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
+  'lalur.parte_b_updated':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
+  'lalur.parte_b_archived': ['parteBId', 'codCtaB', 'codTributo'],
 };
 
 /**
