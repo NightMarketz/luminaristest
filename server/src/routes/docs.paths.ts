@@ -2342,16 +2342,21 @@
  *
  *   /api/accounting/sped/ecf/real/generate:
  *     post:
- *       summary: Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Real, esqueleto)
+ *       summary: Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Real, Blocos L/M/N)
  *       description: >-
  *         Composes the ECF for the given calendar year in Lucro Real and persists a plain-text
  *         (ISO-8859-1) artifact as an EXPORT job of kind EXPORT_SPED_ECF_REAL (dedicated route,
- *         ADR-INCR-SPED-ECF-FASE3 Fork 1). Block 0 is parametrized from fiscal (FORMA_TRIB and
- *         FORMA_TRIB_PER are REQUIRED with no server default - the regime code is never guessed;
- *         FORMA_APUR is T, quarterly). Balance sheet and income statement are read per quarter
- *         through the report service. Blocks L, M and N (and the recovered C, E, J, K plus the
- *         Presumido-only P) are emitted as empty markers until Forks 2, 3 and 4 are ratified.
- *         There is no revenue exhaustiveness gate. Download via /data-exchange/jobs/{jobId}/download.
+ *         ADR-INCR-SPED-ECF-FASE3 Fork 1; BRIEF 3B Forks 2-d, 3-a, 4-b, 6-b, 7-a). Block 0 is
+ *         parametrized from fiscal (FORMA_TRIB defaults to 1; FORMA_TRIB_PER is REQUIRED, 4 chars in
+ *         [0RPAES], one per quarter, no server default; FORMA_APUR is T, quarterly). COD_VER is
+ *         resolved from the calendar year (2025 = 0012) or overridden by fiscal.codVer - a year with
+ *         no known layout is a 400, never a guessed code. HASH_ECF_ANTERIOR is emitted empty (the PVA
+ *         fills it when the previous ECF is recovered). Block L carries L030 periods only (L100/L300
+ *         are recovered by the PVA from K155/K156). Blocks M and N are read from the e-Lalur store
+ *         (/api/lalur): M010 per Parte B account, M030 per quarter with M300/M350 lines (+ M305/M355
+ *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
+ *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
+ *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2382,10 +2387,11 @@
  *                     email:      { type: string }
  *                 fiscal:
  *                   type: object
- *                   required: [formaTrib, formaTribPer]
+ *                   required: [formaTribPer]
  *                   properties:
- *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, no default' }
- *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 positions, no default' }
+ *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, default 1 (Lucro Real)' }
+ *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 chars in [0RPAES], one per quarter (Manual pp.71-72), no default' }
+ *                     codVer:         { type: string, description: '0000.COD_VER override, 4 digits (e.g. 0012); absent = resolved by calendar year' }
  *                     formaApur:      { type: string, enum: ['T'], description: 'T = trimestral (Fork 5)' }
  *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }

@@ -360,3 +360,72 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
 - Atualização do artefato de rastreio: [linha do master map §5.1 Bloco A item 3 atualizada com o
   desfecho + data]
 - Assinatura do executor: ____________
+
+---
+
+## 2ª passada — Lucro Real (Blocos L/M/N) — preparada pelo agente em 2026-09-11, EM BRANCO
+
+> **[BRIEF 3B item 20]** Preparado pela `sessao-feature` do BRIEF `BE-INCR-SPED-ECF-FASE3B-blocos-LMN`
+> (Forks 2→d, 3→a, 4→b, 6→b, 7→a ratificados em 2026-09-11). O agente redigiu os passos e as
+> pré-condições; **EVIDÊNCIA, desfecho e assinatura são do humano** (RUNBOOK-FORMAT). A rota é
+> `POST /api/accounting/sped/ecf/real/generate` (`fiscal.formaTribPer` obrigatório, ex. `RRRR`); os
+> ajustes do e-Lalur vêm de `/api/lalur` (cadastrados ANTES de gerar — o corpo da geração não os carrega).
+> A tela de cadastro é `FE-INCR-LALUR`, incremento separado: nesta passada o cadastro é por API (curl/Insomnia).
+
+### Pré-condições adicionais (além das da 1ª passada)
+
+- [ ] `year` da geração tem leiaute na tabela `ECF_COD_VER_BY_YEAR` (`server/src/lib/ecf.ts`) — hoje só
+      **2025**; AC 2026 exige o Manual do Leiaute 13 no corpus + uma linha na tabela (ou `fiscal.codVer`).
+- [ ] Pelo menos **1 ajuste** cadastrado em `/api/lalur/entries` (adição ou exclusão, linha `E` da aba
+      M300A) e, se houver Parte B, a conta em `/api/lalur/parte-b` — senão o Bloco M sai só com períodos e
+      a passada prova estrutura, não o e-Lalur (resíduo do Fork 4→(c), registrado no ADR §7).
+
+### 2P-1. Recuperar a ECF do período anterior no PVA ANTES de validar
+
+Manual do Leiaute 12, p.14: a partir do **2º exercício** em `FORMA_TRIB=1`, a transmissão verifica se
+existe ECF transmitida do período anterior com o hashcode informado; o `.txt` do Luminaris emite
+`0010.HASH_ECF_ANTERIOR` **vazio** (p.70, campo 2: *"preenchido automaticamente pelo sistema"*, Fork 2→d).
+No PVA: abrir a escrituração → **Recuperar ECF anterior** → confirmar que o hash apareceu no 0010 e que os
+saldos da Parte B (`E020`) recuperados batem com os `M010` do arquivo (`REGRA_SALDOS_M010_E020`, p.237 —
+é erro, não aviso). **1º exercício em Real**: registrar "não se aplica" com o motivo.
+
+Resultado esperado: recuperação sem erro; `E020` × `M010` iguais para cada `COD_CTA_B + COD_TRIBUTO`.
+
+EVIDÊNCIA: [tela do PVA após a recuperação — hash do 0010 e lista E020/M010, tarjados]
+
+### 2P-2. Importar a ECF do Real no PVA — e o que fazer se recusar E990/M990/S990
+
+Importar o `.txt` gerado. Tabela de Registros do Manual (pp.44/47): `E990` e `M990` têm **Entrada = N**
+("não deve existir" na importação) e `S990` **não consta** da tabela — o Luminaris emite os três por
+regra "todos os blocos obrigatórios" (p.41), como no Presumido. **Se a importação acusar** exatamente uma
+dessas linhas: anotar o código da crítica, remover a linha correspondente em `EMPTY_BLOCKS_*`
+(`server/src/lib/ecfReal.ts`; no Presumido, `ecf.ts`) por `sessao-correcao` de uma linha, regerar e
+reimportar. Se acusar **outro** registro, é FALHOU deste passo — não editar nada.
+
+Resultado esperado: import sem críticas impeditivas; `L030/M030/N030` aceitos; `M300/M350` com seus
+filhos `M305/M310` sem `REGRA_RELACAO_INEXISTENTE`/`REGRA_PEA`/`REGRA_VALOR_DETALHADO`; linhas `E` de
+`N630/N670` aceitas e as `CNA` (IRPJ 15%, adicional) computadas pelo PVA.
+
+EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas com código do registro, se houver]
+
+### 2P-3. Oráculo da leitura INFERIDA (Nota N-3 do BRIEF)
+
+Se o PVA recusar `M300` por `REGRA_OBRIGATORIO_TIPO_E` / `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`
+(p.247 — os dois textos se contradizem; o serializer emite `TIPO_LANCAMENTO` e `IND_RELACAO` em toda
+linha `E`), registrar a crítica literal: muda o **serviço**, não o DTO.
+
+EVIDÊNCIA: [crítica literal do PVA ou "nenhuma crítica de TIPO_LANCAMENTO"]
+
+## Desfecho da 2ª passada (marcar UM)
+
+- [ ] **PASSOU** — 2P-1 (ou "não se aplica" justificado) e 2P-2 com evidência conferindo; 2P-3 sem crítica
+- [ ] **FALHOU** — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte foi
+      executado após a falha
+- [ ] **BLOQUEADO** — pré-condição __ não se sustentava; execução nem começou
+
+## Registro da 2ª passada
+
+- Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
+- Atualização do artefato de rastreio: [linha do master map §5.1 Bloco B item 10 atualizada com o
+  desfecho + data]
+- Assinatura do executor: ____________
