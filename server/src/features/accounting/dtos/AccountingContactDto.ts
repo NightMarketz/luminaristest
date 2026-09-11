@@ -81,8 +81,8 @@ export const RegisterContactSchema = z
  *         email:     { type: string, format: email }
  *         crcNumber: { type: string }
  *         crcUf:     { type: string, description: "Sigla da UF (Tabela de UF)" }
- *         crcCertificate: { type: string, description: "UF/AAAA/NÚMERO" }
- *         crcCertificateValidUntil: { type: string, description: "Data-only YYYY-MM-DD" }
+ *         crcCertificate: { type: string, nullable: true, description: "UF/AAAA/NÚMERO — null LIMPA a certidão" }
+ *         crcCertificateValidUntil: { type: string, nullable: true, description: "Data-only YYYY-MM-DD — null LIMPA a validade" }
  */
 export const UpdateContactSchema = z
   .object({

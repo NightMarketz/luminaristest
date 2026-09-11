@@ -120,6 +120,35 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
       // 3 passam pelo limiter (e caem no DTO, 400); a 4ª é barrada pelo limiter (429).
       expect(statuses.slice(0, 3)).toEqual([400, 400, 400]);
       expect(statuses[3]).toBe(429);
+
+      // Review-delta M6b: chave constante ('GLOBAL') passava no caso acima. A cota é POR ESCOPO —
+      // outro ator no mesmo unitId e o mesmo ator em outro unitId ainda têm cota inteira.
+      const outroAtor: { id: string; username: string } = await criarUsuario('contact-http-b');
+      const doOutroAtor = await request(app)
+        .post('/api/accounting/delivery/confirm')
+        .set(authHeader(outroAtor))
+        .send({ unitId: `${UNIT}-rl` });
+      expect(doOutroAtor.status).toBe(400);
+      const outraUnidade = await request(app)
+        .post('/api/accounting/delivery/confirm')
+        .set(authHeader(dono))
+        .send({ unitId: `${UNIT}-rl-2` });
+      expect(outraUnidade.status).toBe(400);
+    } finally {
+      delete process.env.DELIVERY_CONFIRM_RATE_LIMIT;
+    }
+  });
+
+  // Review-delta obs. 1: env inválido cai no padrão (60), nunca em "sem limite".
+  it('DELIVERY_CONFIRM_RATE_LIMIT inválido NÃO desliga o limiter (cai no padrão)', async () => {
+    process.env.DELIVERY_CONFIRM_RATE_LIMIT = 'abc';
+    try {
+      const res = await request(app)
+        .post('/api/accounting/delivery/confirm')
+        .set(authHeader(dono))
+        .send({ unitId: `${UNIT}-rl-nan` });
+      expect(res.status).toBe(400);
+      expect(Number(res.headers['ratelimit-limit'])).toBe(60);
     } finally {
       delete process.env.DELIVERY_CONFIRM_RATE_LIMIT;
     }

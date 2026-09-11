@@ -357,11 +357,13 @@
           },
           "crcCertificate": {
             "type": "string",
-            "description": "UF/AAAA/NÚMERO"
+            "nullable": true,
+            "description": "UF/AAAA/NÚMERO — null LIMPA a certidão"
           },
           "crcCertificateValidUntil": {
             "type": "string",
-            "description": "Data-only YYYY-MM-DD"
+            "nullable": true,
+            "description": "Data-only YYYY-MM-DD — null LIMPA a validade"
           }
         }
       },

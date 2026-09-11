@@ -159,7 +159,7 @@ O campo virou **quatro**, espelhando o que o J930 exige do signatário `COD_ASSI
 |---|---|---|---|
 | 06 `IND_CRC` | `crcNumber` | normalizado (caixa alta/trim), **sem máscara** | o manual **não declara formato** — inventar uma rejeitaria inscrição legítima em silêncio |
 | 09 `UF_CRC` | `crcUf` | enum das 27 UFs | `REGRA_TABELA_UF` |
-| 10 `NUM_SEQ_CRC` | `crcCertificate` | máscara `UF/AAAA/NÚMERO` + UF na tabela + ano plausível | `REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC` |
+| 10 `NUM_SEQ_CRC` | `crcCertificate` | máscara `UF/AAAA/NÚMERO` + UF na tabela (o piso de ano da 1ª versão era regra inventada — removido no fix 9a113cec, review F9) | `REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC` |
 | 11 `DT_CRC` | `crcCertificateValidUntil` | date-only real (`isValidDateOnly`) | campo N(008) do manual |
 
 Gates re-rodados depois da mudança: `tsc` limpo · **2.423 testes unit** · **558 de integração** ·

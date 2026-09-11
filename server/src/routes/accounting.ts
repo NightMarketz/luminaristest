@@ -186,7 +186,13 @@ router.get('/referential/catalog', listReferentialCatalog);
 // o teste de contrato apertá-lo sem reconstruir o app; padrão defensivo, não regra de negócio.
 const deliveryConfirmLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: () => Number(process.env.DELIVERY_CONFIRM_RATE_LIMIT ?? 60),
+  // Review-delta obs. 1: `Number('abc')` = NaN e `totalHits > NaN` nunca é verdade — o limiter
+  // desligava EM SILÊNCIO com env inválido (classe "config aceita-e-ignorada"). Inválido ou ≤ 0
+  // cai no padrão, nunca em "sem limite".
+  limit: () => {
+    const n = Number(process.env.DELIVERY_CONFIRM_RATE_LIMIT);
+    return Number.isFinite(n) && n > 0 ? n : 60;
+  },
   keyGenerator: (req) => {
     const user = getUserContextFromRequest(req);
     const unitId = typeof req.body?.unitId === 'string' ? req.body.unitId : '';

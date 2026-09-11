@@ -171,6 +171,28 @@ describe('AccountingContactService', () => {
     expect(data).toEqual({ email: 'novo@exemplo.com.br' });
   });
 
+  // Review-delta M7: o ramo `null` virava `new Date('nullT00:00:00.000Z')` (Invalid Date) sem que
+  // teste nenhum notasse. `null` LIMPA a coluna; `undefined` não entra no patch.
+  it('updateContact traduz null das duas colunas do J930 10/11 para coluna null, e undefined não mexe', async () => {
+    const { service, update } = build();
+    await service.updateContact(scope, 'contact-1', {
+      unitId: 'unit-1',
+      contactId: 'contact-1',
+      crcCertificate: null,
+      crcCertificateValidUntil: null,
+    });
+    const [, , data] = update.mock.calls[0] as unknown as [unknown, string, Record<string, unknown>];
+    expect(data).toEqual({ crcCertificate: null, crcCertificateValidUntil: null });
+
+    await service.updateContact(scope, 'contact-1', {
+      unitId: 'unit-1',
+      contactId: 'contact-1',
+      crcCertificateValidUntil: '2027-01-31',
+    });
+    const [, , data2] = update.mock.calls[1] as unknown as [unknown, string, Record<string, unknown>];
+    expect(data2).toEqual({ crcCertificateValidUntil: new Date('2027-01-31T00:00:00.000Z') });
+  });
+
   it('updateContact NÃO emite evento de auditoria (lacuna de spec registrada, não esquecimento)', async () => {
     const { service, auditAppend } = build();
     await service.updateContact(scope, 'contact-1', {
