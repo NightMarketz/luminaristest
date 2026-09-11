@@ -12511,7 +12511,9 @@
               "enum": [
                 "FAILED",
                 "ACCOUNTING_PERIOD_NOT_OPEN",
-                "MAX_CENTS_EXCEEDED"
+                "MAX_CENTS_EXCEEDED",
+                "OPENING_ENTRY_MISSING",
+                "MISSING_PAID_WITH_PACKAGE_ID"
               ]
             }
           },

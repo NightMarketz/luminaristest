@@ -3635,7 +3635,7 @@
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
- *         - { in: query, name: reasonCode, required: false, schema: { type: string, enum: [FAILED, ACCOUNTING_PERIOD_NOT_OPEN, MAX_CENTS_EXCEEDED] } }
+ *         - { in: query, name: reasonCode, required: false, schema: { type: string, enum: [FAILED, ACCOUNTING_PERIOD_NOT_OPEN, MAX_CENTS_EXCEEDED, OPENING_ENTRY_MISSING, MISSING_PAID_WITH_PACKAGE_ID] } }
  *         - { in: query, name: includeResolved, required: false, schema: { type: boolean }, description: 'default false — só pendentes' }
  *         - { in: query, name: cursor, required: false, schema: { type: string } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
