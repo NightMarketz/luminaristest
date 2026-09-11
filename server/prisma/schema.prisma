@@ -48,6 +48,8 @@ model User {
   reconcilePendingItems   ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
+  lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
+  lalurParteBAccounts     LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
 }
 
 // Per-user saved table views (query/filters/sort) for the canonical table stack.
@@ -441,6 +443,7 @@ model Account {
   referentialMappings ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
   payablesExpense     Payable[]            @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
   receivablesRevenue  Receivable[]         @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
+  lalurEntries        LalurEntry[]         @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   deletedAt           DateTime?
@@ -979,7 +982,7 @@ model Receivable {
   counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
   counterparty     Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
   status           String // OPEN | PARTIALLY_RECEIVED | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
-  receivedCents       BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): espelho de Payable.paidCents
+  receivedCents    BigInt              @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): espelho de Payable.paidCents
   createdById      String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById    String? // actor who cancelled; plain string
   cancelReason     String?
@@ -1347,4 +1350,84 @@ model AccountingDeliveryLog {
   @@unique([ecdJobId, ecfJobId, contactId])
   @@index([userId, unitId, periodStart])
   @@map("accounting_delivery_logs")
+}
+
+// ── e-Lalur / e-Lacs (ECF Lucro Real, Bloco M Parte A/B + linhas E do Bloco N) ──
+// BE-INCR-SPED-ECF-FASE3B, Fork 4→(b) — ADR-INCR-SPED-ECF-FASE3-lucro-real EMENDA 2026-09-11 (2ª),
+// D-M1..D-M5. Ajuste fiscal (adição/exclusão/compensação) é invariante LEGAL ⇒ Prisma first-class,
+// nunca DynamicTable (STOP block). Tenancy = AccountingScope (userId + unitId), sem torre nova (D-M1).
+//
+// LalurEntry = UMA linha `E` da tabela dinâmica com valor informado pela PJ: M300 (e-Lalur, IRPJ),
+// M350 (e-Lacs, CSLL) ou N500/N630/N670 (compensação/deduções) — `livro` discrimina. `codigo` é a
+// linha da aba M300A/M350A/N500/N630A/N670 (validado no serviço contra o fixture derivado do XLSX,
+// item 9/10); DESCRICAO e TIPO_LANCAMENTO NÃO são colunas — o serializer os copia/deriva do catálogo.
+// `valorCents` ≥ 0 sempre (Manual p.244: valor negativo = "Erro no programa"); a direção D/C vem do
+// TIPO_LANCAMENTO derivado, nunca do sinal (lacuna 4). `indRelacao` (M300.IND_RELACAO, p.245) só em
+// lalur/lacs — NULL em N (D-M3); condiciona os filhos: 1/3 ⇒ parteBId (M305/M355), 2/3 ⇒ accountId
+// (M310/M360 — id da Account, o serializer resolve → COD_CTA = I050/J050.COD_CTA, p.252).
+//
+// - Business key = (scope, year, quarter, livro, codigo): uma linha por código por período (M300
+//   chave CODIGO sob M030.PER_APUR, p.244). REGRA_DUPLICIDADE_DESPREZADA do PVA (aviso) vira
+//   constraint nossa (erro) — item 11.
+// - Soft-delete + rename-on-key (D-M2): archive reescreve `codigo → deleted:<id>:<codigo>` na mesma tx
+//   (precedente SEC-A1-4 Counterparty / D3 Payable) — a chave fica livre para re-cadastro sem P2002.
+//   `deletedAt` NÃO entra na chave (NULL é distinto no índice único do SQLite — não fecharia nada).
+// - User FK cascade: dado operacional; a trilha é o AuditEvent (T8, precedente Counterparty).
+model LalurEntry {
+  id             String              @id @default(cuid())
+  userId         String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional; trilha = AuditEvent, T8)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId         String // business unit (scoped string, not a FK)
+  year           Int // exercício (ano-calendário da ECF)
+  quarter        String // 'T01'..'T04' (Fork 5→a trimestral; ver LALUR_QUARTERS)
+  livro          String // 'lalur' | 'lacs' | 'n500' | 'n630' | 'n670' (LALUR_LIVROS)
+  codigo         String // linha da tabela dinâmica (aba por livro); rename-on-delete frees the key (D-M2)
+  valorCents     BigInt // ≥ 0 — invariante de DTO/serviço (p.244); MAX_CENTS é política, não persistência
+  indRelacao     String? // M300.IND_RELACAO '1'|'2'|'3'|'4' (p.245) em lalur/lacs; NULL em livro N (D-M3)
+  histLancamento String? // M300.HIST_LAN_LAL, C 500 (p.245); obrigatório com indRelacao=4 (p.247, leitura INFERIDA)
+  parteBId       String? // FK LalurParteBAccount — exigido com indRelacao ∈ {1,3} (REGRA_RELACAO_INEXISTENTE p.247)
+  parteB         LalurParteBAccount? @relation(fields: [parteBId], references: [id], onDelete: Restrict) // archive da conta é soft ⇒ RESTRICT nunca dispara no fluxo real
+  accountId      String? // FK Account (id, NÃO código) — exigido com indRelacao ∈ {2,3} (p.247/p.253)
+  account        Account?            @relation("LalurEntryAccount", fields: [accountId], references: [id])
+  createdById    String? // actor (AccountingScope.actorUserId); plain string
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  deletedAt      DateTime? // set when archived (soft) — together with the rename-on-key
+
+  @@unique([userId, unitId, year, quarter, livro, codigo]) // uma linha viva por código × período × livro (D-M2)
+  @@index([userId, unitId, year])
+  @@index([deletedAt])
+  @@map("lalur_entries")
+}
+
+// LalurParteBAccount = M010 (p.237) — conta da Parte B do e-Lalur/e-Lacs. `codCtaB` é "código unívoco
+// atribuído pela pessoa jurídica": NOSSO, estável entre exercícios, reconciliado pelo PVA com o E020
+// da ECF anterior (REGRA_SALDOS_M010_E020 — erro). Chave = COD_CTA_B + COD_TRIBUTO (lacuna 6): a mesma
+// conta existe separadamente para IRPJ ('I') e CSLL ('C'). Campos 2-10 do M010 transcritos (lacuna 7).
+// O que NÃO mora aqui (D-M5): saldo por período (M500 / N-1) e lançamentos sem reflexo na Parte A
+// (M410) — item 13, 2ª migração, decisão com o dono.
+model LalurParteBAccount {
+  id            String       @id @default(cuid())
+  userId        String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId        String // business unit (scoped string, not a FK)
+  codCtaB       String // 2 COD_CTA_B — rename-on-delete frees the key (D-M2)
+  descricao     String // 3 DESC_CTA_LAL
+  dtCriacao     DateTime // 4 DT_AP_LAL — date-only: data FINAL do período de apuração em que a conta nasceu
+  codPbRfb      String // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO do XLSX (REGRA_M010_COD_PB_RFB_TRIBUTO, por tributo)
+  dtLimite      DateTime? // 6 DT_LIM_LAL — date-only; data-limite p/ exclusão/adição/compensação, se houver
+  codTributo    String // 7 COD_TRIBUTO 'I' | 'C' (LALUR_TRIBUTOS) — parte da chave
+  saldoIniCents BigInt // 8 VL_SALDO_INI ≥ 0 (N 19 2) — REGRA_DT_AP_ZERO: = 0 se dtCriacao cai dentro do exercício
+  indSaldoIni   String // 9 IND_VL_SALDO_INI 'D' | 'C'
+  cnpjSitEsp    String? // 10 CNPJ_SIT_ESP — 14 dígitos (REGRA_VALIDA_CNPJ)
+  createdById   String? // actor (AccountingScope.actorUserId); plain string
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deletedAt     DateTime? // set when archived (soft) — together with the rename-on-key
+  entries       LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+
+  @@unique([userId, unitId, codCtaB, codTributo]) // uma conta viva por código × tributo (M010 chave, p.237)
+  @@index([userId, unitId])
+  @@index([deletedAt])
+  @@map("lalur_parte_b_accounts")
 }
