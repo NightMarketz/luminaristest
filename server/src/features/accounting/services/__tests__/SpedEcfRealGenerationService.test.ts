@@ -129,6 +129,7 @@ describe('SpedEcfRealGenerationService.generate', () => {
   it('item 4 (Fork 7→a): year sem leiaute conhecido (2026) é erro explícito ANTES do job; fiscal.codVer sobrepõe', async () => {
     const { service, createJob } = buildService();
     await expect(service.generate(scope, makeDto({ year: 2026 }))).rejects.toThrow(/ECF_COD_VER desconhecido.*2026/);
+    await expect(service.generate(scope, makeDto({ year: 2026 }))).rejects.toBeInstanceOf(ValidationError); // 400, não 500 (review I-1)
     expect(createJob).not.toHaveBeenCalled();
     await service.generate(scope, makeDto({ year: 2026, fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2', codVer: '0013' } }));
     expect(producedLines()[0]).toMatch(/^\|0000\|LECF\|0013\|/);
@@ -153,6 +154,24 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(lines.some((l) => l.startsWith('|N630|6|') && l.endsWith('|10,00|'))).toBe(true);
   });
 
+  it('item 13 / review I-3: M010 só de contas com dtCriacao ≤ 31/12/year (REGRA_MENOR_IGUAL_DT_FIN); criada no exercício com saldo ≠ 0 é 400 (REGRA_DT_AP_ZERO)', async () => {
+    const futura = { ...parteBIrpj, id: 'pb-2', codCtaB: 'PF-2026', dtCriacao: new Date('2026-03-31T00:00:00.000Z') } as LalurParteBAccount;
+    const { service } = buildService({ entries: [], parteB: [parteBIrpj, futura] });
+    await service.generate(scope, makeDto());
+    const M010 = producedLines().filter((l) => l.startsWith('|M010|'));
+    expect(M010).toHaveLength(1);
+    expect(M010[0].startsWith('|M010|PF-2024|')).toBe(true);
+
+    const noAno = { ...parteBIrpj, id: 'pb-3', codCtaB: 'PF-2025', dtCriacao: new Date('2025-06-30T00:00:00.000Z'), saldoIniCents: 100n } as LalurParteBAccount;
+    const { service: s2, createJob } = buildService({ entries: [], parteB: [noAno] });
+    await expect(s2.generate(scope, makeDto())).rejects.toThrow(/PF-2025.*REGRA_DT_AP_ZERO/);
+    expect(createJob).not.toHaveBeenCalled();
+    // controle: criada no exercício COM saldo 0 passa
+    const { service: s3 } = buildService({ entries: [], parteB: [{ ...noAno, saldoIniCents: 0n } as LalurParteBAccount] });
+    await s3.generate(scope, makeDto());
+    expect(producedLines().some((l) => l.startsWith('|M010|PF-2025|') && l.includes('|30062025|'))).toBe(true);
+  });
+
   it('item 6 (Fork 6→b): Bloco L só com períodos — L001=0, L030 × 4, L990=6; nenhuma L100/L300', async () => {
     const { service } = buildService();
     await service.generate(scope, makeDto());
@@ -173,9 +192,12 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(lines).toContain('|P001|1|');
   });
 
-  it('toSerializerLine: linha persistida cujo código deixou de ser E no catálogo é erro explícito, nunca omitida (classe FAIL-1)', async () => {
+  it('toSerializerLine: linha persistida cujo código deixou de ser E no catálogo, ou não vigora no ano, é erro explícito — nunca omitida (classe FAIL-1)', async () => {
     const bad = { ...makeEntries()[0], codigo: '2' } as LalurEntryWithRelations; // 2 = CNA
     expect(() => SpedEcfRealGenerationService.toSerializerLine(bad)).toThrow(ValidationError);
+    // linha E com DT_INI 2026 persistida para 2025 (só possível por via fora do DTO / catálogo novo) — review I-2
+    const stale = { ...makeEntries()[0], codigo: '8.1101' } as LalurEntryWithRelations;
+    expect(() => SpedEcfRealGenerationService.toSerializerLine(stale)).toThrow(/8\.1101.*não vigora em 2025/);
     const { service, createJob } = buildService({ entries: [bad] });
     await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
     expect(createJob).not.toHaveBeenCalled();

@@ -68,8 +68,14 @@ describe('LalurService.resolveLinha — item 9: 400 com código e motivo, nunca 
     expect(() => LalurService.resolveLinha('lalur', '2', 2025)).toThrow(ValidationError);
     expect(() => LalurService.resolveLinha('lalur', '2', 2025)).toThrow(/'2'.*CNA/);
   });
-  it("codigo='6.1' de n630 (DT_INI 01012026) é 400 para year=2025", () => {
+  it("codigo='6.1' de n630 (DT_INI 01012026, CNA) é 400 para year=2025", () => {
     expect(() => LalurService.resolveLinha('n630', '6.1', 2025)).toThrow(/6\.1/);
+  });
+  it("vigência isolada: linha E 'M300A/8.1101' (DT_INI 2026-01-01) é 400 em 2025 citando DT_INI, e passa em 2026", () => {
+    const row = findLinha('lalur', '8.1101')!;
+    expect(row).toMatchObject({ tipo: 'E', dtIni: '2026-01-01' });
+    expect(() => LalurService.resolveLinha('lalur', '8.1101', 2025)).toThrow(/8\.1101.*não vigora em 2025.*DT_INI 2026-01-01/);
+    expect(LalurService.resolveLinha('lalur', '8.1101', 2026).codigo).toBe('8.1101');
   });
   it('código inexistente é 400 nomeando o código e o livro', () => {
     expect(() => LalurService.resolveLinha('lacs', 'nao-existe', 2025)).toThrow(/'nao-existe'.*lacs/);
@@ -79,6 +85,7 @@ describe('LalurService.resolveLinha — item 9: 400 com código e motivo, nunca 
       for (const r of linhasDoLivro(livro)) {
         if (r.tipo !== 'E') expect(() => LalurService.resolveLinha(livro, r.codigo, 2025)).toThrow(ValidationError);
         else if (vigenteNoAno(r, 2025)) expect(LalurService.resolveLinha(livro, r.codigo, 2025).codigo).toBe(r.codigo);
+        else expect(() => LalurService.resolveLinha(livro, r.codigo, 2025)).toThrow(/não vigora em 2025/);
       }
     }
   });

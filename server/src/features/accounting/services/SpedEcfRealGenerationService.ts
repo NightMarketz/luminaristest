@@ -13,7 +13,8 @@ import type { SpedEcfRealRequestDto } from '../dtos/SpedEcfRealDto';
 import { quarterWindows } from './SpedEcfGenerationService';
 import { serializeEcf, resolveEcfCodVer } from '../../../lib/ecf';
 import { natureToCodNat } from './SpedGenerationService';
-import { findLinha, type LalurLivro } from '../models/Lalur.model';
+import type { LalurLivro } from '../models/Lalur.model';
+import { LalurService } from './LalurService';
 import {
   buildEcfRealFile,
   type EcfRealFileInput,
@@ -63,9 +64,13 @@ export class SpedEcfRealGenerationService {
    */
   public static toSerializerLine(e: LalurEntryWithRelations): EcfRealLalurLine {
     const livro = e.livro as LalurLivro;
-    const row = findLinha(livro, e.codigo);
-    if (!row || row.tipo !== 'E') {
-      throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' não é linha E do livro '${livro}' no catálogo do Leiaute 12.`);
+    // As 3 condições do item 9 (existe / é E / vigente em e.year) — REGRA_LINHA_DESPREZADA (p.244) faria
+    // o PVA descartar com AVISO uma linha encerrada; aqui é erro (review I-2).
+    let row: ReturnType<typeof LalurService.resolveLinha>;
+    try {
+      row = LalurService.resolveLinha(livro, e.codigo, e.year);
+    } catch (err) {
+      throw new ValidationError(`Ajuste ${e.id}: ${err instanceof Error ? err.message : String(err)}`);
     }
     const line: EcfRealLalurLine = {
       livro,
@@ -75,7 +80,7 @@ export class SpedEcfRealGenerationService {
       valorCents: Number(e.valorCents),
     };
     if (livro === 'lalur' || livro === 'lacs') {
-      if (!row.tipoLanc) throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo.`);
+      if (!row.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo.`);
       line.tipoLancamento = row.tipoLanc;
       line.indRelacao = (e.indRelacao ?? undefined) as EcfRealLalurLine['indRelacao'];
       if (e.histLancamento) line.hist = e.histLancamento;
@@ -94,7 +99,14 @@ export class SpedEcfRealGenerationService {
     }
 
     const { year } = dto;
-    const codVer = resolveEcfCodVer(year, dto.fiscal.codVer);
+    // Fork 7→(a): ano sem leiaute é 400 explícito (a lib lança Error puro; aqui vira ValidationError
+    // para a OpenAPI "a year with no known layout is a 400" ser verdade em produção — review I-1).
+    let codVer: string;
+    try {
+      codVer = resolveEcfCodVer(year, dto.fiscal.codVer);
+    } catch (e) {
+      throw new ValidationError(e instanceof Error ? e.message : String(e));
+    }
 
     // ── Períodos (Fork 5→(a)) — L030/M030/N030 derivados do Bloco 0 ──
     const periods: EcfRealPeriod[] = quarterWindows(year).map((w) => ({
@@ -106,7 +118,22 @@ export class SpedEcfRealGenerationService {
     // ── e-Lalur/e-Lacs (Fork 4→(b)): o gerador LÊ do model ──
     const entries = await this.lalurRepo.findEntriesForYear(scope, year);
     const lalur = entries.map(SpedEcfRealGenerationService.toSerializerLine);
-    const parteB: EcfRealParteBAccount[] = (await this.lalurRepo.findManyParteB(scope, { includeArchived: false })).map((a) => ({
+    const yearEnd = `${year}-12-31`;
+    const parteB: EcfRealParteBAccount[] = (await this.lalurRepo.findManyParteB(scope, { includeArchived: false }))
+      // REGRA_MENOR_IGUAL_DT_FIN (p.237): M010.DT_AP_LAL ≤ 0000.DT_FIN — conta nascida depois do exercício
+      // não pertence a esta ECF (geração retroativa/retificadora — review I-3).
+      .filter((a) => a.dtCriacao.toISOString().slice(0, 10) <= yearEnd)
+      .map((a) => {
+        // REGRA_DT_AP_ZERO (p.237): conta criada DENTRO do exercício tem VL_SALDO_INI = 0.
+        const dtApLal = a.dtCriacao.toISOString().slice(0, 10);
+        if (dtApLal >= `${year}-01-01` && a.saldoIniCents !== 0n) {
+          throw new ValidationError(
+            `Conta da Parte B '${a.codCtaB}' (${a.codTributo}) foi criada em ${dtApLal}, dentro de ${year}: VL_SALDO_INI tem de ser 0 (Manual p.237, REGRA_DT_AP_ZERO).`,
+          );
+        }
+        return a;
+      })
+      .map((a) => ({
       codCtaB: a.codCtaB,
       descricao: a.descricao,
       dtApLal: a.dtCriacao.toISOString().slice(0, 10),

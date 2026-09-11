@@ -27,7 +27,9 @@ import {
   type EcfRealLalurLine,
 } from '../ecfReal';
 import { serializeEcf, build0010 } from '../ecf';
-import { ECF_L12_CATALOG, linhasDoLivro } from '../../features/accounting/models/Lalur.model';
+import { ECF_L12_CATALOG, linhasDoLivro, vigenteNoAno } from '../../features/accounting/models/Lalur.model';
+import { SpedEcfRealGenerationService } from '../../features/accounting/services/SpedEcfRealGenerationService';
+import type { LalurEntryWithRelations } from '../../features/accounting/repositories/ILalurRepository';
 
 const periods: EcfRealFileInput['periods'] = [
   { perApur: 'T01', dtIni: '2025-01-01', dtFin: '2025-03-31' },
@@ -40,7 +42,7 @@ const periods: EcfRealFileInput['periods'] = [
 const lalurLines = (): EcfRealLalurLine[] => [
   { livro: 'lalur', perApur: 'T01', codigo: '7', descricao: 'Custos não dedutíveis', tipoLancamento: 'A', indRelacao: '4', valorCents: 123456, hist: 'Custos do T1' },
   { livro: 'lalur', perApur: 'T01', codigo: '166', descricao: 'Exclusão teste', tipoLancamento: 'E', indRelacao: '2', valorCents: 50000, codCta: '3.1.1', codNat: '04' },
-  { livro: 'lalur', perApur: 'T02', codigo: '175', descricao: 'Compensação teste', tipoLancamento: 'P', indRelacao: '1', valorCents: 700, codCtaB: 'PF-2024' },
+  { livro: 'lalur', perApur: 'T02', codigo: '173', descricao: 'Compensação teste', tipoLancamento: 'P', indRelacao: '1', valorCents: 700, codCtaB: 'PF-2024' },
   { livro: 'lacs', perApur: 'T01', codigo: '7', descricao: 'Custos não dedutíveis', tipoLancamento: 'A', indRelacao: '3', valorCents: 999, codCtaB: 'BC-2024', codCta: '1.1.1', codNat: '01' },
   { livro: 'n630', perApur: 'T04', codigo: '4', descricao: 'PAT', valorCents: 1000 },
   { livro: 'n500', perApur: 'T03', codigo: '2', descricao: 'Estimativa', valorCents: 2500 },
@@ -127,7 +129,7 @@ describe('ecfReal — Bloco M (itens 7/8/13, Fork 4→b)', () => {
     expect(i7).toBeGreaterThan(iM030T01);
     expect(i7).toBeLessThan(iM030T02);
     // A compensação (T02) fica sob o M030 de T02.
-    const iP = lines.indexOf('|M300|175|Compensação teste|P|1|7,00||');
+    const iP = lines.indexOf('|M300|173|Compensação teste|P|1|7,00||');
     expect(iP).toBeGreaterThan(iM030T02);
   });
 
@@ -138,9 +140,9 @@ describe('ecfReal — Bloco M (itens 7/8/13, Fork 4→b)', () => {
     expect(lines[i166 + 1]).toBe('|M310|3.1.1||500,00|C|');
     expect(lines[i166 + 2].startsWith('|M305|')).toBe(false);
     // indRelacao=1 (Parte B) ⇒ só M305; compensação ⇒ 'C' (credita a Parte B)
-    const i175 = lines.indexOf('|M300|175|Compensação teste|P|1|7,00||');
-    expect(lines[i175 + 1]).toBe('|M305|PF-2024|7,00|C|');
-    expect(lines[i175 + 2].startsWith('|M310|')).toBe(false);
+    const i173 = lines.indexOf('|M300|173|Compensação teste|P|1|7,00||');
+    expect(lines[i173 + 1]).toBe('|M305|PF-2024|7,00|C|');
+    expect(lines[i173 + 2].startsWith('|M310|')).toBe(false);
     // lacs, indRelacao=3 ⇒ M355 + M360; adição ⇒ Parte B 'D'; conta patrimonial (01) em adição ⇒ 'C'
     const iLacs = lines.indexOf('|M350|7|Custos não dedutíveis|A|3|9,99||');
     expect(lines[iLacs + 1]).toBe('|M355|BC-2024|9,99|D|');
@@ -165,11 +167,17 @@ describe('ecfReal — Bloco M (itens 7/8/13, Fork 4→b)', () => {
     }
   });
 
-  it('item 8 (tabela-dirigido): para TODO código E do catálogo M300A/M350A, TIPO_LANCAMENTO no arquivo == TIPO LANÇ do XLSX', () => {
+  it('item 8 (tabela-dirigido): para TODO código E vigente do catálogo M300A/M350A, o serviço DERIVA TIPO_LANCAMENTO e DESCRICAO do XLSX (nunca do input)', () => {
     for (const [livro, reg] of [['lalur', 'M300'], ['lacs', 'M350']] as const) {
+      const seen = new Set<string>();
       for (const r of linhasDoLivro(livro)) {
-        if (r.tipo !== 'E') continue;
-        const line = buildParteALine(reg, { livro, perApur: 'T01', codigo: r.codigo, descricao: r.descricao, tipoLancamento: r.tipoLanc!, indRelacao: '4', valorCents: 100 });
+        if (r.tipo !== 'E' || !vigenteNoAno(r, 2025)) continue;
+        if (seen.has(r.codigo)) continue; // M350A/13 duplicado na planilha oficial — lookup = 1ª ocorrência (lalurCatalog.test.ts)
+        seen.add(r.codigo);
+        // a linha persistida NÃO carrega tipo nem descrição — só o código
+        const persisted = { id: 'x', year: 2025, quarter: 'T01', livro, codigo: r.codigo, valorCents: 100n, indRelacao: '4', histLancamento: 'h', parteB: null, account: null } as unknown as LalurEntryWithRelations;
+        const resolved = SpedEcfRealGenerationService.toSerializerLine(persisted);
+        const line = buildParteALine(reg, resolved);
         expect(line.split('|')[4]).toBe(r.tipoLanc);
         expect(line.split('|')[3]).toBe(r.descricao);
       }

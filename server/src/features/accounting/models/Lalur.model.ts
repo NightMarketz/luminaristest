@@ -51,8 +51,8 @@ export interface EcfLinhaCatalogo {
   descricao: string;
   /** E = entrada (nossa) · CNA/CA = calculada pelo PVA · R = rótulo. Só `E` é aceita (item 9). */
   tipo: 'E' | 'CNA' | 'CA' | 'R';
-  /** M300/M350.TIPO_LANCAMENTO derivado da coluna TIPO LANÇ (p.245: A|E|P|L); null nas abas N. */
-  tipoLanc: 'A' | 'E' | 'P' | 'L' | null;
+  /** M300/M350.TIPO_LANCAMENTO derivado da coluna TIPO LANÇ (p.245: A|E|P|L); 'R' nas linhas-rótulo; null nas abas N. */
+  tipoLanc: 'A' | 'E' | 'P' | 'L' | 'R' | null;
   dtIni: string | null; // ISO YYYY-MM-DD
   dtFim: string | null;
 }
