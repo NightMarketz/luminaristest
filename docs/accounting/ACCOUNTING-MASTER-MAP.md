@@ -509,7 +509,7 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 | **Baixa parcial em AP/AR** | **ADR Accepted ✅ por delegação 2026-09-07 (`CEDULA-DECISAO-2026-09-07-forks-sdd.md` #287) + BRIEF ✅ #291 `f1307009` (2026-09-08, rodada 8 SDD) — 19 comportamentos + contratos Zod esboçados** | Hoje **rejeitada com 400 explícito** (`ReceivableService.ts:213`, `PayableService.ts:316`). N recibos por título, aging por saldo, CAS por saldo. **7 forks do ADR ratificados por delegação** (F-PS1→c..F-PS7→a). **3 forks NOVOS abertos pelo BRIEF, RATIFICAÇÃO PENDENTE:** F-PS8 (manter `PAYING`/`RECEIVING`, rec. a), F-PS9 (renomear eventos de auditoria, rec. a), F-PS10 (rota `/:id/pay`→`/:id/settlements`, rec. **recalculada para (b) rota-irmã** — review achou consumidores reais em produção, `accountsPayable.service.ts:185,209`/`accountsReceivable.service.ts:172,196`; renomear sem rota-irmã quebraria pagamento/recebimento integral). `ADR-INCR-PARTIAL-SETTLEMENT.md` + `BE-INCR-PARTIAL-SETTLEMENT-brief.md`. |
 | **Fluxo de caixa projetado** (read-only) | ✅ **Mergeado em `main`** (FE-INCR-CASH-FORECAST, PR #298 `63ceba20`, 2026-09-08, rodada 5 SDD; review indep. PASS com 1 achado ALTO não-bloqueante — teste cross-tenant ausente, classe pré-existente na família de reports) | `CashForecastReportService.ts` first-class Prisma read-only, horizonte 90 dias fixo (F-CF1→a), saldo inicial derivado do razão via `AccountingReportService.balancesAsOf`+`isCashAccount` (F-CF2→a), granularidade diária (F-CF3→a), policy AND payable/receivable (F-CF5→a); helper `outstandingLines.ts` extraído de `AgingReportService` (bug de `tx` não repassado achado e corrigido nesta sessão); aba própria "Fluxo de Caixa Projetado" (F-CF7→a), drill por documento sempre expandido (F-CF9→a). i18n pt/en 961=961. `FE-INCR-CASH-FORECAST-brief.md`. |
 | **Remessa CNAB / boleto / Pix** (integração bancária de saída) | ⚫→⏳ **autorizado a abrir ADR 2026-09-03 (F-M3)** | `lib/cnab.ts` só **lê** retorno/extrato; não existe entidade "conta bancária". **Dado externo:** convênio e leiaute do banco do 1º cliente — gate humano sem sessão de agente. |
-| **Envio de ECD/ECF ao contador por e-mail** | **ADR Accepted ✅ por delegação 2026-09-07 (`CEDULA-DECISAO-2026-09-07-forks-sdd.md` #287) + BRIEF ✅ #290 `62b00302` (2026-09-08, rodada 9 SDD) — 22 comportamentos, `AccountingContact`+`AccountingDeliveryLog` (FK `onDelete: Restrict`) esboçados** | Era A6 do `ROADMAP-PLATAFORMA.md`. Outbound ⇒ confirmação explícita por envio; dado contábil saindo do processo ⇒ decisão de LGPD no mesmo ADR. **8 forks do ADR ratificados por delegação. 2 forks NOVOS abertos pelo BRIEF, RATIFICAÇÃO PENDENTE:** Fork Novo A (`year` explícito no DTO de entrada — o job não persiste ano/período), Fork Novo B (NÃO implementar F-CD8-b — sem parser SPED de leitura no repo, só serializers). **CONDICIONADO ao item 0 do pedido ao contador (F-Z0)** — `sessao-feature` não abre antes da resposta (regra já registrada linha acima, "camada zero"). `ADR-CONTADOR-DELIVERY.md` + `BE-INCR-CONTADOR-DELIVERY-brief.md`. |
+| **Envio de ECD/ECF ao contador por e-mail** | **[ATUALIZAÇÃO 2026-09-10] DESCONDICIONADO do F-Z0 (a resposta 1 da entrevista fechou a camada zero pelo produto) + forks novos A/B ratificados + IMPLEMENTADO na branch (review independente pendente) — ver [cédula 10/09](CEDULA-DECISAO-2026-09-10-entrevista.md). A condição citada abaixo é HISTÓRICA.** ADR Accepted ✅ por delegação 2026-09-07 (`CEDULA-DECISAO-2026-09-07-forks-sdd.md` #287) + BRIEF ✅ #290 `62b00302` (2026-09-08, rodada 9 SDD) — 22 comportamentos, `AccountingContact`+`AccountingDeliveryLog` (FK `onDelete: Restrict`) esboçados** | Era A6 do `ROADMAP-PLATAFORMA.md`. Outbound ⇒ confirmação explícita por envio; dado contábil saindo do processo ⇒ decisão de LGPD no mesmo ADR. **8 forks do ADR ratificados por delegação. 2 forks NOVOS abertos pelo BRIEF, RATIFICAÇÃO PENDENTE:** Fork Novo A (`year` explícito no DTO de entrada — o job não persiste ano/período), Fork Novo B (NÃO implementar F-CD8-b — sem parser SPED de leitura no repo, só serializers). **CONDICIONADO ao item 0 do pedido ao contador (F-Z0)** — `sessao-feature` não abre antes da resposta (regra já registrada linha acima, "camada zero"). `ADR-CONTADOR-DELIVERY.md` + `BE-INCR-CONTADOR-DELIVERY-brief.md`. |
 | **Telas do já-existente sem consumidor FE** | ✅ **Mergeadas em `main`**, ambas rodada 4 SDD 2026-09-08 — `FE-INCR-AUDIT-PROVENANCE` (PR #293 `05a1b413`, slice A, review PASS com 1 achado cosmético não-bloqueante) + `FE-INCR-COMPLIANCE-2` (PR #295 `2a4608ab`, slice B, review PASS; Fase B paridade i18n 939=939) | `audit/verify-chain` (botão "Verificar cadeia de auditoria" no `JournalEntriesPanel`, agora consumido) + `source-documents` por lançamento (botão "Proveniência" por linha, agora consumido); `sped/ecf/real/generate` (`SpedEcfRealPanel`, agora consumido) + `referential/catalog/import` (aba Compliance, ADMIN-only, agora consumido). `FE-INCR-AUDIT-PROVENANCE-brief.md` (contábil) e `FE-INCR-COMPLIANCE-2-brief.md` (fiscal). |
 | **Reforma tributária do consumo — IBS/CBS** (NT 2025.002 v1.40 na NF-e, `cClassTrib`, DeRE, Ato Conjunto RFB/CGIBS nº 4/2026) | ⚫ **registrado 2026-09-03; até esta data não constava do mapa** | Convergência de fontes secundárias nesta data — primárias não abertas ([triagem](TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md) §A.2): 2026 é ano-teste (0,1% IBS + 0,9% CBS, LC 214/2025 art. 348 §1º); NF-e autorizada ≥ **03/08/2026** traz grupos `IBSCBS`/`IS`/`vNFTot` que o parser da tag **ignora em silêncio** (dívida T3); **01/12/2026**: NF-e obrigatória para contribuinte de IBS/CBS **não contribuinte de ICMS** — a premissa "não-contribuinte ⇒ sem NF-e" do molde salão (ADR-INCR-NFE §D3, ADR-C01) ganha data de validade. Abrir ADR exige a resposta do contador real (item 1b do pedido). **[2ª rodada]** A onda do **molde salão é a NFS-e, 01/10/2026** (serviços sujeitos ao ISS) — 4 semanas, não 13; salão com revenda pega as duas. Emitir-ou-não: **F-M7 RATIFICADO → (d)**, *"chegar até a ponta da emissão para exportar e enviar a um parceiro emissor via API"* — o sistema monta o DF-e completo e um parceiro emite (certificado/autorização/contingência ficam nele). Abre `ADR-INCR-DFE-EMISSAO-PARCEIRO` (cédula de módulos X10). |
 | **Emissão de DF-e via parceiro emissor (API)** — NFS-e nacional + NF-e | ⚫→⏳ **autorizado a abrir ADR 2026-09-03 (F-M7→(d))** | Documento de saída montado até a borda (`cClassTrib`, IBS/CBS) e entregue por HTTP a parceiro emissor; retorno vira `SourceDocument`. **Dado externo:** contratar parceiro + certificado do cliente. Onda do salão = NFS-e **01/10/2026**. Pré-requisito: `BE-INCR-CNPJ-ALFA` (T10). **PNCT 2026** (Ato Conjunto RFB/CGIBS nº 5, 12/08/2026, secundárias convergentes): enquadramento automático, correção de inconsistências até 31/12/2026, contador indicado recebe as inconsistências — não posterga 01/10; o 1º release pode autorregularizar; nasce a **vigilância de intimações** como execução humana. |
@@ -748,12 +748,53 @@ Antes de gerar "novo", reuse (Contrato §0). Confirmado por código:
 
 ### 7.1 Régua por módulo — contábil · financeiro · fiscal (partição F-M1, ratificada 2026-09-03)
 
+> **🔁 RE-BASELINE 2026-09-10 — o denominador mudou. A régua de 49 nós está APOSENTADA.**
+> As 23 respostas da entrevista de fechamento + os 4 forks novos
+> ([cédula 2026-09-10](CEDULA-DECISAO-2026-09-10-entrevista.md)) foram respondidas como **requisito de
+> produto** ("são diferentes empresas que vão usar", "cobrir todas as possibilidades"), não como o caso
+> de uma empresa. Isso **acrescenta nós** e **faz outros crescerem**. Contagem nova abaixo.
+>
+> **Regra de contagem declarada (é o que torna o número auditável, não exato):**
+> 1. **1 nó = 1 unidade que fecha por um ciclo SDD** (BRIEF → feature → review independente → merge).
+> 2. **Nó que só CRESCE não vira nó novo** — "todas as adições/exclusões" engorda o bloco M, não o
+>    duplica. O crescimento fica registrado na coluna, para não sumir.
+> 3. **Capacidade de plataforma não entra na régua dos 3 módulos** — mesmo tratamento que a prensa de
+>    binding (P1) recebeu: ela é Fase do `ROADMAP-PLATAFORMA.md`, não núcleo contábil.
+> 4. O numerador (fechados) **não muda por re-baseline**: continua sendo o que está em `main`.
+>
+> **Delta medido: 49 → 57 nós (+8), fechados 38 → 38** (39 quando o `BE-INCR-CONTADOR-DELIVERY`
+> mergear; ele está implementado e verde na branch, ainda sem review independente). O percentual cai
+> **sem nenhuma linha de código ter sido perdida** — o produto que se decidiu construir ficou maior.
+
+| Módulo | Código | Nós novos (por quê) | Nós que cresceram |
+|---|---|---|---|
+| **Contábil** | ~~16/19 (84%)~~ **16/22 (73%)** | **+3**: revisão profissional editável (resposta 2 + F-EDIT-1 → a+c: edita o DADO ou lança acerto, e regera — nunca o arquivo); pacote ampliado ao contador (resposta 8 reabre F-CD3: balancete, razão, conciliação, amostra); endurecimento dos campos de identidade da geração SPED (resposta 3 — qualificação J930 vira enum do manual, CPF/CNPJ/UF com máscara) | retificação passa a **preservar a versão anterior** (resposta 7); tabela de depreciação vira **editável por tenant** semeada do Anexo III (resposta 6) |
+| **Financeiro** | ~~15/17 (88%)~~ **15/19 (79%)** | **+2**: Pix vira frente própria (resposta 21 — "API separada"); consumo do retorno bancário → **item de conciliação pendente** (F-BAIXA-1 → a, reusa a tabela da rodada 3) | remessa passa a suportar N leiautes de banco, não um; encargo (multa/juros) entra **pelo retorno**, não pelo razão (resposta 22) |
+| **Fiscal** | ~~7/13 (54%)~~ **7/16 (44%)** | **+3**: adaptador por TIPO de documento (resposta 9 — NFS-e e NF-e 55 deixam de ser um adaptador só); eventos de DF-e com prazo legal validado (resposta 13); **catálogo de adições/exclusões dirigido por dado** (F-COB-1 → tabela, não `if`) | custo D3 vira configuração por tenant, não fórmula fixa (resposta 5); parser de retorno aceita XML/JSON/PDF (resposta 12); adaptador nasce com IBS/CBS (resposta 15) |
+| **Total** | ~~38/49 (78%)~~ **38/57 (67%)** | +8 | — |
+
+**Frente NOVA fora da régua (regra 3):** **extração genérica de documento por IA** — F-BANK-1 ratificado
+em **(b)**, contra a recomendação do par, que era suportar N leiautes por configuração. É capacidade de
+plataforma (lê o manual/arquivo do banco, e por extensão qualquer documento), **exige ADR próprio** e
+**a remessa financeira passa a depender dela**. Não recebe número de nó até o ADR existir — inventar um
+denominador para frente sem spec é exatamente o que a regra 1 proíbe.
+
+**Onde a régua antiga sobrevive:** o numerador. Nada do que está em `main` foi perdido ou recontado; o
+que mudou é o tamanho do alvo. Comparar 78% com 67% é comparar dois alvos diferentes — a frase honesta
+é "38 nós fechados, de 49 que o plano previa em 08/09 e de 57 que ele prevê em 10/09".
+
 > Segunda projeção do mesmo estado, cortada por **domínio** em vez de maturidade. Denominadores,
 > regra de contagem e verificação nó a nó em
 > [CEDULA-DECISAO-2026-09-03-modulos.md §C](CEDULA-DECISAO-2026-09-03-modulos.md). Escopo de cada
 > módulo é o **máximo** ratificado (F-M2/F-M3/F-M4) — inclui frentes que antes eram ⚫ por demanda.
 
-| Módulo | Código | Com gates | Abertos em código | Gates humanos |
+> **⚠️ A TABELA ABAIXO É HISTÓRICA (fold de 2026-09-08) — denominadores SUPERADOS pelo re-baseline
+> acima.** Achado do review de dependência de 2026-09-10: as duas tabelas coexistiam sem aviso, e o
+> "16/22" da coluna *Com gates* daqui colidia numericamente com o "16/22" de *Código* de lá — mesmo
+> número, dois significados, no mesmo parágrafo. Mantida pelo detalhe das colunas "Abertos em código"
+> e "Gates humanos", que o re-baseline não repete; **para contagem, vale só a tabela de cima.**
+
+| Módulo | Código (HISTÓRICO 08/09) | Com gates | Abertos em código | Gates humanos |
 |---|---|---|---|---|
 | **Contábil** | ~~13/17~~ ~~13/19 (68%)~~ **16/19 (84%, fold 2026-09-08: nós 14/15 `verify-chain`+`source-documents` ✅ #293, nó 17 pendências do reconcile ✅ #296)** | 16/22 | e-mail ECD/ECF ao contador (ADR Accepted por delegação + BRIEF ✅ #290 `62b00302`, 2026-09-08, 2 forks novos pendentes — Fork Novo A `year` no DTO/Fork Novo B sem F-CD8-b, condicionado ao F-Z0), **imobilizado/depreciação (ADR, F-Z0)**, **retificação ECD/ECF** | B-4, H1 (ECD), H2 |
 | **Financeiro** | ~~13/17~~ ~~14/17 (82%)~~ **15/17 (88%, fold 2026-09-08: nó 15 caixa projetado ✅ #298)** | 15/18 | baixa parcial AP/AR (ADR Accepted por delegação + BRIEF ✅ #291 `f1307009`, 2026-09-08, 3 forks novos pendentes — F-PS8/9/10, F-PS10 recalculado p/ rota-irmã), remessa CNAB/boleto/Pix (ADR + dado do banco) | H2 (upload por clique) |
