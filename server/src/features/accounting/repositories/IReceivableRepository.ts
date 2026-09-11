@@ -99,18 +99,44 @@ export interface IReceivableRepository {
   findOutstanding(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<Receivable[]>;
 
   /**
-   * Atomically claim a receivable for receipt: `updateMany` where status='OPEN' → 'RECEIVING'.
-   * Returns the row count (1 = won the race, 0 = lost / not open). This is the TOCTOU gate.
+   * Sum-CAS of BE-INCR-PARTIAL-SETTLEMENT (ADR §3, corrected form) — MIRROR of AP `claimForPayment`:
+   * ONE `updateMany` where status ∈ {OPEN, PARTIALLY_RECEIVED} AND `receivedCents <= amountCents − newCents`
+   * → status='RECEIVING', `receivedCents += newCents`. `amountCents` is the literal read BEFORE the call
+   * (immutable after create). Returns 1 = won the race AND the balance carries the receipt; 0 = lost
+   * the race OR the receipt would overshoot the balance.
    */
-  claimForReceipt(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+  claimForReceipt(
+    scope: AccountingScope,
+    id: string,
+    amountCents: number,
+    newCents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
 
   /**
-   * Atomically finalize a receipt: `updateMany` where status='RECEIVING' → 'RECEIVED'. Returns the
-   * row count (1 = this caller performed the transition, 0 = someone already finalized it). The
-   * exactly-once gate for the `receivable.receipt_registered` domain audit — both registerReceipt and
-   * reconcile emit ONLY when this returns 1 (authoritative-gate-inside-tx). Must run inside the tx.
+   * Atomically finalize a receipt: `RECEIVING → RECEIVED` when `receivedCents >= amountCents`, else
+   * `RECEIVING → PARTIALLY_RECEIVED` (F-PS2 → a). Returns the row count (1 = this caller performed the
+   * transition, 0 = someone already finalized it) — the exactly-once gate for the
+   * `receivable.settlement_registered` domain audit (authoritative-gate-inside-tx). Must run inside the tx.
    */
-  markReceivedIfReceiving(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+  finalizeIfReceiving(
+    scope: AccountingScope,
+    id: string,
+    amountCents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
+
+  /**
+   * Atomically give a cancelled receipt's cents back to the balance (F-PS3 → a) — MIRROR of AP
+   * `releaseSettlement`: status ∈ {PARTIALLY_RECEIVED, RECEIVED} AND `receivedCents >= cents` →
+   * `receivedCents −= cents`. 0 = a receipt is in flight or the balance could not carry it. Must run inside the tx.
+   */
+  releaseSettlement(
+    scope: AccountingScope,
+    id: string,
+    cents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
 
   updateReceivable(
     scope: AccountingScope,

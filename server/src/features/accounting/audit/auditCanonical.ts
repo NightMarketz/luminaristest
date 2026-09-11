@@ -55,12 +55,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
   'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode'],
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
-  'payable.payment_registered': ['payableId', 'paymentId', 'amountCents', 'method', 'entryId'],
-  'payable.payment_cancelled':  ['payableId', 'paymentId', 'reversalEntryId', 'reason'],
+  // BE-INCR-PARTIAL-SETTLEMENT (F-PS9 → a): `payment_*` → `settlement_*`; payload ganha o saldo após o
+  // recibo (money-as-string, id-only, sem PII — mesmo padrão dos 8 eventos originais).
+  'payable.settlement_registered': ['payableId', 'paymentId', 'amountCents', 'method', 'entryId', 'paidCentsAfter', 'remainingCents'],
+  'payable.settlement_cancelled':  ['payableId', 'paymentId', 'reversalEntryId', 'reason'],
   'receivable.created':            ['receivableId', 'customerRef', 'amountCents', 'dueDate', 'revenueAccountCode'],
   'receivable.cancelled':          ['receivableId', 'reversalEntryId', 'reason'],
-  'receivable.receipt_registered': ['receivableId', 'receiptId', 'amountCents', 'method', 'entryId'],
-  'receivable.receipt_cancelled':  ['receivableId', 'receiptId', 'reversalEntryId', 'reason'],
+  'receivable.settlement_registered': ['receivableId', 'receiptId', 'amountCents', 'method', 'entryId', 'receivedCentsAfter', 'remainingCents'],
+  'receivable.settlement_cancelled':  ['receivableId', 'receiptId', 'reversalEntryId', 'reason'],
   // ADR-INCR-APPROVAL — maker-checker torre. Ids/hashes/counts only; money-as-string; no PII.
   // The SoD pair is provable: actorUserId (the trail column) is the actor of each command,
   // and `entry.approved` carries `createdById` so creator≠approver is auditable.

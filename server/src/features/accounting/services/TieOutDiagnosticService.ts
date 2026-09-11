@@ -166,7 +166,13 @@ export class TieOutDiagnosticService {
     ]);
 
     // (i) AR em aberto vs 1.1.5 (Asset: débito − crédito).
-    const arOpenCents = openReceivables.reduce((acc, r) => acc + centsFromDb(r.amountCents), 0);
+    // BE-INCR-PARTIAL-SETTLEMENT (F-PS4→a, BRIEF item 12 — o SEGUNDO consumidor do parecer §1.2): saldo
+    // remanescente, nunca o total cru — o razão já reflete cada recibo como entry própria, então somar o
+    // `amountCents` inteiro de um título PARTIALLY_* acusaria divergência exatamente pelo valor já pago.
+    const arOpenCents = openReceivables.reduce(
+      (acc, r) => acc + (centsFromDb(r.amountCents) - centsFromDb(r.receivedCents)),
+      0,
+    );
     const arLedgerCents = arAccount ? debitBalance(totals, arAccount.id) : 0;
     const arCheck = buildCheck({
       id: 'receivables',
@@ -175,11 +181,14 @@ export class TieOutDiagnosticService {
       subledgerCents: arOpenCents,
       ledgerCents: arLedgerCents,
       detail:
-        'Σ Receivable em aberto (OPEN+RECEIVING) vs saldo devedor da conta-controle dedicada do AR.',
+        'Σ saldo remanescente das Receivable em aberto (OPEN+PARTIALLY_RECEIVED+RECEIVING) vs saldo devedor da conta-controle dedicada do AR.',
     });
 
     // (ii) AP em aberto vs 2.1.2 (Liability: crédito − débito).
-    const apOpenCents = openPayables.reduce((acc, p) => acc + centsFromDb(p.amountCents), 0);
+    const apOpenCents = openPayables.reduce(
+      (acc, p) => acc + (centsFromDb(p.amountCents) - centsFromDb(p.paidCents)),
+      0,
+    );
     const apLedgerCents = apAccount ? creditBalance(totals, apAccount.id) : 0;
     const apCheck = buildCheck({
       id: 'payables',

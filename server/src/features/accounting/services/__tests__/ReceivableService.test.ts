@@ -23,6 +23,7 @@ function receivableRow(over: Partial<Receivable> = {}): Receivable {
     id: 'rec-1', userId: 'owner-1', unitId: 'unit-1', customerName: 'Cliente XPTO', customerRef: null,
     documentNumber: 'FAT-100', description: 'Serviço faturado', issueDate: new Date('2026-06-10'),
     dueDate: new Date('2026-07-10'), amountCents: 50000, revenueAccountId: 'rev-1',
+    receivedCents: 0, // BE-INCR-PARTIAL-SETTLEMENT: cache Σ receipts ACTIVE
     status: 'OPEN', createdById: 'owner-1', cancelledById: null, cancelReason: null,
     createdAt: new Date(), updatedAt: new Date(), deletedAt: null, ...over,
   } as Receivable;
@@ -40,7 +41,8 @@ interface Opts {
   canManage?: boolean;
   canRead?: boolean;
   claimResults?: number[]; // successive claimForReceipt return values
-  markResults?: number[]; // successive markReceivedIfReceiving (RECEIVING→RECEIVED CAS) return values
+  markResults?: number[]; // successive finalizeIfReceiving (RECEIVING→RECEIVED|PARTIALLY_RECEIVED CAS) return values
+  releaseResults?: number[]; // successive releaseSettlement return values (0 = in flight / breach)
   findEntryBySource?: (type: string, id: string) => unknown;
   revenueAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
@@ -62,7 +64,9 @@ function build(opts: Opts = {}) {
   const claimResults = [...(opts.claimResults ?? [1])];
   const claimForReceipt = jest.fn(async () => (claimResults.length ? claimResults.shift()! : 1));
   const markResults = [...(opts.markResults ?? [])];
-  const markReceivedIfReceiving = jest.fn(async () => (markResults.length ? markResults.shift()! : 1));
+  const finalizeIfReceiving = jest.fn(async () => (markResults.length ? markResults.shift()! : 1));
+  const releaseResults = [...(opts.releaseResults ?? [])];
+  const releaseSettlement = jest.fn(async () => (releaseResults.length ? releaseResults.shift()! : 1));
 
   const createdReceipts: ReceivableReceipt[] = [];
   const receivableRepo = {
@@ -72,7 +76,8 @@ function build(opts: Opts = {}) {
     findManyByUnit: jest.fn(async () => ({ receivables: [], total: 0 })),
     findAllActive: jest.fn(async () => [] as Receivable[]),
     claimForReceipt,
-    markReceivedIfReceiving,
+    finalizeIfReceiving,
+    releaseSettlement,
     updateReceivable: jest.fn(async (_s, id: string, data: Record<string, unknown>) => receivableRow({ id, ...data } as Partial<Receivable>)),
     createReceipt: jest.fn(async (data: Record<string, unknown>) => {
       const r = receiptRow({ id: `recp-${createdReceipts.length + 1}`, ...data } as Partial<ReceivableReceipt>);
@@ -320,11 +325,47 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     expect(receivableRepo.createReceipt).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a partial amount (full-receipt MVP guard, F2)', async () => {
-    const { service } = build();
+  // ── BE-INCR-PARTIAL-SETTLEMENT — MIRROR of PayableService (BRIEF itens 5, 6, 8) ──
+
+  it('accepts a PARTIAL receipt (60%): sum-CAS gets (amountCents, novo) and the audit carries the balance after', async () => {
+    const { service, receivableRepo, auditService, postEntry } = build();
+    await service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 30000 } as never);
+    expect(receivableRepo.claimForReceipt).toHaveBeenCalledWith(scope, 'rec-1', 50000, 30000);
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines).toContainEqual({ accountCode: CLIENTES_A_RECEBER_CODE, debitCents: 0, creditCents: 30000 });
+    expect(receivableRepo.finalizeIfReceiving).toHaveBeenCalledWith(expect.anything(), 'rec-1', 50000, expect.anything());
+    const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
+      .find((c) => c[2].eventType === 'receivable.settlement_registered')!;
+    expect(evt[2].payload).toMatchObject({ amountCents: '30000', receivedCentsAfter: '30000', remainingCents: '20000' });
+  });
+
+  it('rejects a receipt ABOVE the remaining balance before any CAS or ledger write', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
     await expect(
-      service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 30000 } as never),
+      service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 22000 } as never),
     ).rejects.toBeInstanceOf(ValidationError);
+    expect(receivableRepo.claimForReceipt).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('accepts a SECOND receipt on a PARTIALLY_RECEIVED receivable (guard pré-CAS — item 6)', async () => {
+    const { service, receivableRepo, auditService } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    await service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 20000 } as never);
+    expect(receivableRepo.claimForReceipt).toHaveBeenCalledWith(scope, 'rec-1', 50000, 20000);
+    const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
+      .find((c) => c[2].eventType === 'receivable.settlement_registered')!;
+    expect(evt[2].payload).toMatchObject({ receivedCentsAfter: '50000', remainingCents: '0' });
+  });
+
+  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and restores PARTIALLY_RECEIVED', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const revert = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
+    expect(revert).toEqual({ receivedCents: { decrement: 10000 }, status: 'PARTIALLY_RECEIVED' });
   });
 
   it('rejects receiving a non-OPEN receivable', async () => {
@@ -341,18 +382,18 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     expect(reverts).toHaveLength(0);
   });
 
-  it('emits receivable.receipt_registered exactly once on the happy path (CAS won)', async () => {
-    const { service, auditService } = build(); // markReceivedIfReceiving defaults to 1 (won)
+  it('emits receivable.settlement_registered exactly once on the happy path (CAS won)', async () => {
+    const { service, auditService } = build(); // finalizeIfReceiving defaults to 1 (won)
     await service.registerReceipt(scope, 'rec-1', receiveDto as never);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.filter((c) => c[2].eventType === 'receivable.receipt_registered')).toHaveLength(1);
+    expect(calls.filter((c) => c[2].eventType === 'receivable.settlement_registered')).toHaveLength(1);
   });
 
   it('does NOT emit when a concurrent reconcile already finalized the receipt (CAS lost)', async () => {
     const { service, auditService } = build({ markResults: [0] }); // RECEIVING→RECEIVED CAS matched 0 rows
     await service.registerReceipt(scope, 'rec-1', receiveDto as never);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.filter((c) => c[2].eventType === 'receivable.receipt_registered')).toHaveLength(0);
+    expect(calls.filter((c) => c[2].eventType === 'receivable.settlement_registered')).toHaveLength(0);
   });
 });
 
@@ -401,6 +442,14 @@ describe('ReceivableService.cancelReceivable — reverse recognition (F6/ACC-018
     expect(reverseEntry).not.toHaveBeenCalled();
   });
 
+  it('refuses to cancel a PARTIALLY_RECEIVED receivable with the dedicated message (ADR F-PS2 site 3 — BRIEF item 7)', async () => {
+    const { service, receivableRepo } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    await expect(
+      service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toThrow('Desfaça as baixas ativas');
+  });
+
   it('refuses to cancel a RECEIVED receivable (must undo the receipt first)', async () => {
     const { service, receivableRepo } = build();
     receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'RECEIVED' }), receipts: [] });
@@ -420,8 +469,30 @@ describe('ReceivableService.cancelReceipt — reverse receipt + reopen (net-zero
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'set-1' });
     const receiptUpd = receivableRepo.updateReceipt.mock.calls.at(-1)![2] as Record<string, unknown>;
     expect(receiptUpd.status).toBe('CANCELLED');
+    expect(receivableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'rec-1', 50000, expect.anything());
     const receivableUpd = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
     expect(receivableUpd.status).toBe('OPEN'); // reopened
+  });
+
+  it('cancelling ONE receipt among N (the middle one) leaves the title PARTIALLY_RECEIVED (BRIEF item 9, mirror)', async () => {
+    const { service, receivableRepo } = build({
+      findEntryBySource: (type) => (type === AR_RECEIPT_SOURCE_TYPE ? { id: 'set-2' } : null),
+    });
+    receivableRepo.findReceiptById.mockResolvedValueOnce(receiptRow({ id: 'recp-2', amountCents: BigInt(15000) }));
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(35000) }));
+    await service.cancelReceipt(scope, 'rec-1', 'recp-2', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
+    expect(receivableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'rec-1', 15000, expect.anything());
+    const receivableUpd = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
+    expect(receivableUpd.status).toBe('PARTIALLY_RECEIVED');
+  });
+
+  it('refuses to cancel a receipt while another is in flight (release CAS count 0)', async () => {
+    const { service, receivableRepo } = build({ releaseResults: [0] });
+    await expect(
+      service.cancelReceipt(scope, 'rec-1', 'recp-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
+    const statusWrites = receivableRepo.updateReceivable.mock.calls.filter((c) => 'status' in (c[2] as object));
+    expect(statusWrites).toHaveLength(0);
   });
 });
 
@@ -446,7 +517,7 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
     const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
     expect(input.sourceType).toBe(AR_RECEIPT_SOURCE_TYPE);
     expect(input.sourceId).toBe('recp-1');
-    expect(receivableRepo.markReceivedIfReceiving).toHaveBeenCalledWith(expect.anything(), 'rec-1', expect.anything());
+    expect(receivableRepo.finalizeIfReceiving).toHaveBeenCalledWith(expect.anything(), 'rec-1', 50000, expect.anything());
   });
 
   it('does NOT emit (nor count) when the finalize CAS loses to a concurrent finalizer', async () => {
@@ -460,10 +531,10 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
 
     expect(out.finalized).toBe(0);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.find((c) => c[2].eventType === 'receivable.receipt_registered')).toBeFalsy();
+    expect(calls.find((c) => c[2].eventType === 'receivable.settlement_registered')).toBeFalsy();
   });
 
-  it('re-emits receivable.receipt_registered when finalizing a crash-stranded RECEIVING receivable', async () => {
+  it('re-emits receivable.settlement_registered when finalizing a crash-stranded RECEIVING receivable', async () => {
     const { service, receivableRepo, auditService, postEntry } = build({
       findEntryBySource: (type) => (type === AR_RECEIPT_SOURCE_TYPE ? { id: 'set-1' } : null),
     });
@@ -474,7 +545,7 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
     expect(postEntry).not.toHaveBeenCalled(); // receipt existed
     expect(out.finalized).toBe(1);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, unknown> }]>;
-    const evt = calls.find((c) => c[2].eventType === 'receivable.receipt_registered');
+    const evt = calls.find((c) => c[2].eventType === 'receivable.settlement_registered');
     expect(evt).toBeTruthy();
     expect(evt![2].payload).toMatchObject({ receivableId: 'rec-1', receiptId: 'recp-1', entryId: 'set-1' });
   });
@@ -489,7 +560,7 @@ describe('ReceivableService.reconcileReceivables — re-drive safety net (D4/ADR
 
     expect(out.finalized).toBe(0);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.find((c) => c[2].eventType === 'receivable.receipt_registered')).toBeFalsy();
+    expect(calls.find((c) => c[2].eventType === 'receivable.settlement_registered')).toBeFalsy();
   });
 
   it('does NOT re-post when the recognition already exists (idempotent)', async () => {

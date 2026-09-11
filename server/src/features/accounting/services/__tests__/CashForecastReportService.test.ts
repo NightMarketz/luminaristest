@@ -47,12 +47,16 @@ function line(over: {
   name?: string;
   documentNumber?: string | null;
   status?: string;
+  /** BE-INCR-PARTIAL-SETTLEMENT: já liquidado; o caixa projetado conta só o saldo (amountCents − settledCents). */
+  settledCents?: number;
 }) {
   return {
     id: over.id,
     documentNumber: over.documentNumber ?? `NF-${over.id}`,
     dueDate: new Date(`${over.dueDate}T00:00:00.000Z`), // exatamente como createPayable/createReceivable persiste
     amountCents: over.amountCents,
+    paidCents: over.settledCents ?? 0,
+    receivedCents: over.settledCents ?? 0,
     counterpartyId: over.counterpartyId ?? 'cp-A',
     supplierName: over.name ?? 'Fornecedor',
     customerName: over.name ?? 'Cliente',

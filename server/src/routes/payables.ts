@@ -6,6 +6,7 @@ import {
   registerPayment,
   cancelPayable,
   cancelPayment,
+  cancelSettlement,
   reconcilePayables,
 } from '../controllers/payableController';
 
@@ -25,5 +26,11 @@ router.get('/:id', getPayable);
 router.post('/:id/pay', registerPayment);
 router.post('/:id/cancel', cancelPayable);
 router.post('/:id/payments/:paymentId/cancel', cancelPayment);
+// BE-INCR-PARTIAL-SETTLEMENT (F-PS10 → b, ACC-016): rota-irmã do comando de liquidação — mesmo serviço
+// (`registerPayment`/`cancelPayment`, agora ≤ saldo). `/pay` e `/payments/:paymentId/cancel` ficam
+// como estão (consumidor real: my-app/lib/services/accountsPayable.service.ts); a UI de parcial
+// (F-PS6 → b, diferida) nasce contra estas.
+router.post('/:id/settlements', registerPayment);
+router.post('/:id/settlements/:settlementId/cancel', cancelSettlement);
 
 export default router;

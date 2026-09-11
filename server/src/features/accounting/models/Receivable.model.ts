@@ -11,16 +11,30 @@ import { ValidationError } from '../../../lib/errors';
  * `registerReceipt` flips `OPEN → RECEIVING` atomically before posting, so two concurrent receipts
  * race on this single-row transition and exactly one wins. `RECEIVED` and `CANCELLED` are terminal.
  */
-export const RECEIVABLE_STATUSES = ['OPEN', 'RECEIVING', 'RECEIVED', 'CANCELLED'] as const;
+export const RECEIVABLE_STATUSES = ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING', 'RECEIVED', 'CANCELLED'] as const;
 export type ReceivableStatus = (typeof RECEIVABLE_STATUSES)[number];
 
+/** Statuses a NEW receipt may be registered against (guard pré-CAS, ADR F-PS2 site 2). MIRROR of AP. */
+export const RECEIVABLE_SETTLEABLE_STATUSES = ['OPEN', 'PARTIALLY_RECEIVED'] as const;
+
 /**
- * "Em aberto" statuses for aging / posição (INCR-AGING, F-AG3→a): a receivable is still owed its full
- * `amountCents` while `OPEN` or in-flight `RECEIVING` (the CAS 2-tx window before receipt finalizes).
- * EXCLUDES the terminal `RECEIVED`/`CANCELLED`. Since receipt is full-only there is no partial balance,
- * so outstanding per line is exactly `amountCents` for these statuses. MIRROR of PAYABLE_OUTSTANDING_STATUSES.
+ * "Em aberto" statuses for aging / posição (INCR-AGING, F-AG3→a; F-PS4→a): a receivable is still owed
+ * `amountCents − receivedCents` while `OPEN`, `PARTIALLY_RECEIVED` or in-flight `RECEIVING`. EXCLUDES the
+ * terminal `RECEIVED`/`CANCELLED`. Outstanding per line is the REMAINING balance. MIRROR of PAYABLE_OUTSTANDING_STATUSES.
  */
-export const RECEIVABLE_OUTSTANDING_STATUSES = ['OPEN', 'RECEIVING'] as const;
+export const RECEIVABLE_OUTSTANDING_STATUSES = ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING'] as const;
+
+/** Status a receivable settles to for a given balance — MIRROR of `payableStatusForBalance` (F-PS2/F-PS3). */
+export function receivableStatusForBalance(receivedCents: number, amountCents: number): ReceivableStatus {
+  if (receivedCents < 0 || receivedCents > amountCents) {
+    throw new ValidationError(
+      `Saldo recebido inconsistente (${receivedCents} de ${amountCents} centavos) — invariante receivedCents ≤ amountCents violado.`,
+    );
+  }
+  if (receivedCents === 0) return 'OPEN';
+  if (receivedCents === amountCents) return 'RECEIVED';
+  return 'PARTIALLY_RECEIVED';
+}
 
 /** Receipt lifecycle. Cancel is a status flip (+ receipt reversal), never a hard delete. */
 export const RECEIPT_STATUSES = ['ACTIVE', 'CANCELLED'] as const;

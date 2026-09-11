@@ -11,6 +11,8 @@ import {
   deletedDocumentNumber,
   hasSingleInventorySku,
   isInventoryPurchase,
+  PAYABLE_SETTLEABLE_STATUSES,
+  payableStatusForBalance,
   resolvePaymentMethodAccount,
 } from '../models/Payable.model';
 import type {
@@ -20,6 +22,7 @@ import type {
   ListPayablesQueryInput,
   RegisterPaymentInput,
 } from '../dtos/PayableDto';
+import type { PayableStatus } from '../models/Payable.model';
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
@@ -55,6 +58,13 @@ import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
  * - cancel = estorno (reverseEntry) in an open period + row lifecycle flip (ACC-018/T5), never a
  *   destructive edit; rename-on-delete frees the business key (D3).
  */
+/** Read shape of a title with its balance (BRIEF §2): `remainingCents` is DERIVED, never persisted twice. */
+export type PayableWithBalance = PayableWithPayments & { remainingCents: bigint };
+
+function withBalance(payable: PayableWithPayments): PayableWithBalance {
+  return { ...payable, remainingCents: payable.amountCents - payable.paidCents };
+}
+
 export class PayableService {
   constructor(
     private readonly payableRepo: IPayableRepository,
@@ -84,14 +94,14 @@ export class PayableService {
   async listPayables(
     scope: AccountingScope,
     params: ListPayablesQueryInput,
-  ): Promise<{ payables: PayableWithPayments[]; total: number }> {
+  ): Promise<{ payables: PayableWithBalance[]; total: number }> {
     if (!this.policy.canReadPayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para listar contas a pagar.');
     }
     const skip = (params.page - 1) * params.limit;
     // BE-INCR-SUBLEDGER-FILTERS §2: todo filtro declarado no DTO é repassado ao repo. Param aceito
     // no DTO e não repassado aqui devolveria uma lista "filtrada" que não filtrou.
-    return this.payableRepo.findManyByUnit(scope, {
+    const { payables, total } = await this.payableRepo.findManyByUnit(scope, {
       status: params.status,
       counterpartyId: params.counterpartyId,
       dueFrom: params.dueFrom,
@@ -101,15 +111,16 @@ export class PayableService {
       skip,
       limit: params.limit,
     });
+    return { payables: payables.map(withBalance), total };
   }
 
-  async getPayable(scope: AccountingScope, id: string): Promise<PayableWithPayments> {
+  async getPayable(scope: AccountingScope, id: string): Promise<PayableWithBalance> {
     if (!this.policy.canReadPayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler contas a pagar.');
     }
     const payable = await this.payableRepo.findByIdWithPayments(scope, id);
     if (!payable) throw new NotFoundError(`Conta a pagar '${id}' não foi encontrada.`);
-    return payable;
+    return withBalance(payable);
   }
 
   // ---------------------------------------------------------------------------
@@ -392,9 +403,13 @@ export class PayableService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Register the (single, full) payment of a payable: book the settlement (D 2.1.2 / C
-   * conta-por-método) and move the payable to PAID. The double-payment race is closed by the
-   * OPEN→PAYING CAS before any ledger write, so two concurrent calls yield exactly one payment.
+   * Register ONE payment (settlement) of a payable — full or PARTIAL (BE-INCR-PARTIAL-SETTLEMENT,
+   * F-PS1 c / F-PS2 a): book the settlement (D 2.1.2 / C conta-por-método), add it to the balance cache
+   * and move the payable to PAID (balance closed) or PARTIALLY_PAID. The race is closed by the SUM-CAS
+   * (`OPEN|PARTIALLY_PAID → PAYING` with `paidCents += amount`, only when the balance carries it)
+   * before any ledger write. Concurrent calls serialize on PAYING (F-PS8 → a: one settlement in flight
+   * at a time); across the sequence exactly the payments the balance carries are accepted.
+   * Also the service behind the sister route `POST /:id/settlements` (F-PS10 → b).
    */
   async registerPayment(
     scope: AccountingScope,
@@ -408,27 +423,36 @@ export class PayableService {
 
     const payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
     if (!payable) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
-    if (payable.status !== 'OPEN') {
+    // Guard pré-CAS (ADR F-PS2, site 2): OPEN and PARTIALLY_PAID may take another payment.
+    if (!(PAYABLE_SETTLEABLE_STATUSES as readonly string[]).includes(payable.status)) {
       throw new ValidationError(
         `Conta a pagar não está aberta para pagamento (status atual: ${payable.status}).`,
       );
     }
 
-    // Full-payment guard (F2 MVP): the amount must settle the whole remaining balance.
-    const remaining = centsFromDb(payable.amountCents) - this.sumActivePayments(payable);
-    if (dto.amountCents !== remaining) {
+    // Balance guard (BRIEF item 8): any part of the remaining balance, never more. `paidCents` is the
+    // atomic cache of Σ payments ACTIVE (F-PS1 c). This read only shapes the message — the
+    // AUTHORITATIVE check is the sum-CAS below (ACC-011). `amountCents` is immutable after create,
+    // so the value read here is safe to enter the CAS as a literal (ADR §3).
+    const amountCents = centsFromDb(payable.amountCents);
+    const paidBefore = centsFromDb(payable.paidCents);
+    const remaining = amountCents - paidBefore;
+    if (dto.amountCents > remaining) {
       throw new ValidationError(
-        `Pagamento parcial não é suportado: informe o saldo integral (${remaining} centavos).`,
+        `Valor do pagamento (${dto.amountCents} centavos) excede o saldo em aberto (${remaining} centavos).`,
       );
     }
 
     // Resolve the credit account for the method (closed map — unknown REJECTS, D2) BEFORE the CAS.
     const creditCode = resolvePaymentMethodAccount(dto.method);
 
-    // ATOMIC RACE GATE (D4) — OPEN → PAYING. count 0 = lost the race / not open.
-    const claimed = await this.payableRepo.claimForPayment(scope, payableId);
+    // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_PAID → PAYING, paidCents += amount, ONLY when the
+    // balance carries it. count 0 = lost the race / not settleable / would overshoot the balance.
+    const claimed = await this.payableRepo.claimForPayment(scope, payableId, amountCents, dto.amountCents);
     if (claimed === 0) {
-      throw new ValidationError('A conta já está em pagamento ou não está mais aberta.');
+      throw new ValidationError(
+        'A conta já está em pagamento, não está mais aberta ou o saldo não comporta este pagamento.',
+      );
     }
 
     let posted = false;
@@ -452,17 +476,19 @@ export class PayableService {
       );
       posted = true;
 
-      // Finalize (tx) — link the entry, mark PAID via the atomic PAYING→PAID CAS, emit the domain
-      // audit ONLY when THIS call performed the transition. The ledger is already committed; if
-      // this tx crashes, reconcilePayables finalizes it. The CAS closes the race with a concurrent
+      // Finalize (tx) — link the entry, resolve PAYING → PAID|PARTIALLY_PAID via the atomic CAS, emit
+      // the domain audit ONLY when THIS call performed the transition. The ledger is already committed;
+      // if this tx crashes, reconcilePayables finalizes it. The CAS closes the race with a concurrent
       // reconcile that could finalize between the post above and this tx (else both would emit).
+      // While PAYING no other writer touches paidCents (claim needs OPEN|PARTIALLY_PAID, release needs
+      // PARTIALLY_PAID|PAID), so the balance after this receipt is exactly paidBefore + amount.
       await this.payableRepo.runTransaction(async (tx) => {
         await this.payableRepo.updatePayment(scope, payment!.id, { entryId: entry.id }, tx);
-        const flipped = await this.payableRepo.markPaidIfPaying(scope, payableId, tx);
+        const flipped = await this.payableRepo.finalizeIfPaying(scope, payableId, amountCents, tx);
         if (flipped === 1) {
           await this.auditService.append(tx, scope, {
             actorUserId: scope.actorUserId,
-            eventType: 'payable.payment_registered',
+            eventType: 'payable.settlement_registered',
             targetType: 'payable',
             targetId: payableId,
             payload: {
@@ -471,6 +497,8 @@ export class PayableService {
               amountCents: String(dto.amountCents),
               method: dto.method,
               entryId: entry.id,
+              paidCentsAfter: String(paidBefore + dto.amountCents),
+              remainingCents: String(remaining - dto.amountCents),
             },
           });
         }
@@ -480,7 +508,10 @@ export class PayableService {
       // Only safe to revert BEFORE the ledger commit. After a successful post, the money is
       // booked — leave it PAYING for reconcile to finalize (never revert over a real posting).
       if (!posted) {
-        await this.revertClaim(scope, payableId, payment);
+        await this.revertClaim(scope, payableId, payment, {
+          amountCents: dto.amountCents,
+          status: payableStatusForBalance(paidBefore, amountCents),
+        });
       }
       throw error;
     }
@@ -506,7 +537,9 @@ export class PayableService {
       throw new ValidationError(
         payable.status === 'PAID'
           ? 'Desfaça o pagamento (cancelar pagamento) antes de cancelar a conta.'
-          : `Conta a pagar não pode ser cancelada no status atual (${payable.status}).`,
+          : payable.status === 'PARTIALLY_PAID'
+            ? 'Desfaça as baixas ativas (cancelar pagamentos) antes de cancelar a conta.'
+            : `Conta a pagar não pode ser cancelada no status atual (${payable.status}).`,
       );
     }
     // Defense-in-depth: an OPEN payable should have no active payment, but never cancel over one.
@@ -590,8 +623,10 @@ export class PayableService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Cancel an active payment: reverse its settlement and reopen the payable. The settlement +
-   * its reversal net to zero on 2.1.2, leaving the recognition's liability standing again.
+   * Cancel ONE active payment among N (F-PS3 → a, any position): reverse its settlement, give its
+   * cents back to the balance cache atomically and recompute the status (0 → OPEN, partial →
+   * PARTIALLY_PAID). The settlement + its reversal net to zero on 2.1.2, leaving that part of the
+   * liability standing again. Also the service behind `POST /:id/settlements/:settlementId/cancel`.
    */
   async cancelPayment(
     scope: AccountingScope,
@@ -620,12 +655,31 @@ export class PayableService {
       reversalEntryId = reversal.id;
     }
 
+    // The reversal above runs in PostingService's own tx (reverseEntry takes no `tx`); the
+    // balance/status change lives in ONE tx here, so decrement + recompute never split. A crash in
+    // between is converged by re-running cancelPayment (reverseEntry is idempotent).
     return this.payableRepo.runTransaction(async (tx) => {
       const cancelled = await this.payableRepo.updatePayment(scope, paymentId, { status: 'CANCELLED' }, tx);
-      await this.payableRepo.updatePayable(scope, payableId, { status: 'OPEN' }, tx);
+      // F-PS3 → a: atomic decrement — refuses while another payment is in flight (PAYING) or when the
+      // balance could not carry it (invariant), never guesses.
+      const cents = centsFromDb(payment.amountCents);
+      const released = await this.payableRepo.releaseSettlement(scope, payableId, cents, tx);
+      if (released === 0) {
+        throw new ValidationError(
+          'Não foi possível estornar o pagamento: há um pagamento em curso ou o saldo liquidado não comporta o estorno.',
+        );
+      }
+      const row = await this.payableRepo.findById(scope, payableId, tx);
+      if (!row) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
+      // Guarda defensiva (BRIEF item 9): a reversal can never leave the title fully paid again.
+      const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
+      if (status === 'PAID') {
+        throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente pago após o estorno.');
+      }
+      await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
-        eventType: 'payable.payment_cancelled',
+        eventType: 'payable.settlement_cancelled',
         targetType: 'payable',
         targetId: payableId,
         payload: { payableId, paymentId, reversalEntryId, reason: dto.reason },
@@ -781,10 +835,10 @@ export class PayableService {
         // Finalize atomically — link the entry, mark PAID, and re-emit the AP-domain audit event
         // that the crashed normal-path finalize tx never wrote. The ledger 'entry.posted' audit
         // already exists (postEntry's own tx), so the hash-chain is intact; this restores the
-        // 'payable.payment_registered' domain trail so a reconcile-finalized payment is
-        // indistinguishable from a normally-paid one. The audit is tied to the PAYING→PAID
+        // 'payable.settlement_registered' domain trail so a reconcile-finalized payment is
+        // indistinguishable from a normally-paid one. The audit is tied to the PAYING→PAID|PARTIALLY_PAID
         // transition, which happens exactly once per payment (normal path OR here) — so repeated
-        // reconcile passes never double-emit (once PAID, needsFinalize is false).
+        // reconcile passes never double-emit (once finalized, the row is no longer PAYING).
         const payable = await this.payableRepo.findById(scope, payment.payableId);
         const settlementEntryId = settlement.id;
         const needsEntryLink = payment.entryId !== settlementEntryId;
@@ -794,13 +848,17 @@ export class PayableService {
             if (needsEntryLink) {
               await this.payableRepo.updatePayment(scope, payment.id, { entryId: settlementEntryId }, tx);
             }
-            // Atomic PAYING→PAID: emit + count ONLY when THIS pass performed the transition. Closes
-            // the double-emit under two overlapping reconcile passes (or a reconcile-vs-normal race).
-            const flipped = await this.payableRepo.markPaidIfPaying(scope, payment.payableId, tx);
+            // Atomic PAYING→PAID|PARTIALLY_PAID by balance: emit + count ONLY when THIS pass performed
+            // the transition. Closes the double-emit under two overlapping reconcile passes (or a
+            // reconcile-vs-normal race). Under PAYING `payable.paidCents` already holds this payment.
+            const flipped = payable
+              ? await this.payableRepo.finalizeIfPaying(scope, payment.payableId, centsFromDb(payable.amountCents), tx)
+              : 0;
             if (flipped === 1) {
+              const paidCentsAfter = centsFromDb(payable!.paidCents);
               await this.auditService.append(tx, scope, {
                 actorUserId: scope.actorUserId,
-                eventType: 'payable.payment_registered',
+                eventType: 'payable.settlement_registered',
                 targetType: 'payable',
                 targetId: payment.payableId,
                 payload: {
@@ -809,6 +867,8 @@ export class PayableService {
                   amountCents: String(payment.amountCents),
                   method: payment.method,
                   entryId: settlementEntryId,
+                  paidCentsAfter: String(paidCentsAfter),
+                  remainingCents: String(centsFromDb(payable!.amountCents) - paidCentsAfter),
                 },
               });
               finalized += 1;
@@ -836,12 +896,6 @@ export class PayableService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
-
-  private sumActivePayments(payable: PayableWithPayments): number {
-    return payable.payments
-      .filter((p) => p.status === 'ACTIVE')
-      .reduce((acc, p) => acc + centsFromDb(p.amountCents), 0);
-  }
 
   /**
    * Resolve the SUPPLIER identity this payable links to — NEVER null (SEC-A1-5 / F-NN1(a)). A
@@ -1013,18 +1067,28 @@ export class PayableService {
     return d.toISOString().slice(0, 10);
   }
 
-  /** Undo a claimed-but-unposted payment attempt (safe only before the ledger commit). */
+  /**
+   * Undo a claimed-but-unposted payment attempt (safe only before the ledger commit): give the
+   * claimed cents back and restore the pre-claim status. Safe as a plain update: while PAYING no
+   * other writer touches paidCents (see registerPayment).
+   */
   private async revertClaim(
     scope: AccountingScope,
     payableId: string,
     payment: PayablePayment | undefined,
+    restore: { amountCents: number; status: PayableStatus },
   ): Promise<void> {
     try {
       await this.payableRepo.runTransaction(async (tx) => {
         if (payment) {
           await this.payableRepo.updatePayment(scope, payment.id, { status: 'CANCELLED' }, tx);
         }
-        await this.payableRepo.updatePayable(scope, payableId, { status: 'OPEN' }, tx);
+        await this.payableRepo.updatePayable(
+          scope,
+          payableId,
+          { paidCents: { decrement: restore.amountCents }, status: restore.status },
+          tx,
+        );
       });
     } catch (error) {
       logger.error('AP registerPayment revert failed — reconcile will reconcile state', {

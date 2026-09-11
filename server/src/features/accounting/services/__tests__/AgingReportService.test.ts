@@ -42,12 +42,16 @@ function line(over: {
   name: string; // supplierName / customerName snapshot
   documentNumber?: string | null;
   status?: string;
+  /** BE-INCR-PARTIAL-SETTLEMENT: já liquidado (cache Σ recibos ACTIVE). Default 0 = título sem baixa. */
+  settledCents?: number;
 }) {
   return {
     id: over.id,
     documentNumber: over.documentNumber ?? `NF-${over.id}`,
     dueDate: new Date(`${over.dueDate}T00:00:00.000Z`), // exactly how createPayable persists it
     amountCents: over.amountCents,
+    paidCents: over.settledCents ?? 0,
+    receivedCents: over.settledCents ?? 0,
     counterpartyId: over.counterpartyId,
     supplierName: over.name,
     customerName: over.name,
@@ -310,6 +314,44 @@ const TODAY = scopeToday(scope);
 function balanceRow(accountId: string, rawBalanceCents: number) {
   return { accountId, balanceCents: rawBalanceCents };
 }
+
+describe('AgingReportService.aging — saldo remanescente (BE-INCR-PARTIAL-SETTLEMENT, F-PS4→a, BRIEF itens 11/13)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  // Fixture MISTA (OPEN + PARTIALLY_PAID + PAYING) no mesmo escopo — uma fixture de status único
+  // deixaria a guarda passar com o total cru (classe bp-dre-diagnostics-test-must-mix-natures).
+  const MIXED = [
+    line({ id: 'open', dueDate: '2026-08-01', amountCents: 10000, counterpartyId: 'cp-A', name: 'Alfa' }),
+    line({ id: 'partial', dueDate: '2026-07-01', amountCents: 20000, settledCents: 12000, status: 'PARTIALLY_PAID', counterpartyId: 'cp-A', name: 'Alfa' }),
+    line({ id: 'inflight', dueDate: '2026-06-01', amountCents: 30000, settledCents: 5000, status: 'PAYING', counterpartyId: 'cp-B', name: 'Bravo' }),
+  ];
+
+  it('AP: o outstanding de cada linha é amountCents − paidCents, e o total soma SALDOS, não totais', async () => {
+    const { svc } = buildService({ payableRows: MIXED });
+    const r = await svc.aging(scope, { kind: 'payable', asOf: AS_OF });
+    const byId = Object.fromEntries(r.groups.flatMap((g) => g.documents).map((d) => [d.id, d.amountCents]));
+    expect(byId.open).toBe('10000');
+    expect(byId.partial).toBe('8000');
+    expect(byId.inflight).toBe('25000');
+    expect(r.totalCents).toBe('43000'); // 10000 + 8000 + 25000 — NUNCA 60000
+  });
+
+  it('AR: espelho — amountCents − receivedCents', async () => {
+    const { svc } = buildService({ receivableRows: MIXED });
+    const r = await svc.aging(scope, { kind: 'receivable', asOf: AS_OF });
+    expect(r.totalCents).toBe('43000');
+  });
+
+  it('tie-out fecha contra o razão pelo SALDO (o razão já reflete cada recibo como entry própria)', async () => {
+    const { svc } = buildService({
+      payableRows: MIXED,
+      balanceRows: [balanceRow('acc-ap', -43000)], // credor 43000 = só o que ainda se deve
+    });
+    const r = await svc.aging(scope, { kind: 'payable', asOf: TODAY });
+    expect(r.tieOut?.tiesOut).toBe(true);
+    expect(r.tieOut?.differenceCents).toBe('0');
+  });
+});
 
 describe('AgingReportService.aging — tie-out fecha', () => {
   beforeEach(() => jest.clearAllMocks());

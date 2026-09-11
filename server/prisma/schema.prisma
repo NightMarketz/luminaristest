@@ -898,7 +898,8 @@ model Payable {
   inventoryQty        Int? // INCR-INVENTORY D3(b): units received by this purchase; paired with inventoryProductRef. receiveStock gets amountCents as the TOTAL value (avoids per-unit rounding).
   counterpartyId      String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createPayable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from supplierName, so there is no null branch left. supplierName stays the snapshot.
   counterparty        Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
-  status              String // OPEN | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
+  status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
+  paidCents           BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): cache atomico de SUM(payments ACTIVE); gate de soma `paidCents <= amountCents - novo`; nunca fonte de relatorio oficial
   createdById         String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById       String? // actor who cancelled; plain string
   cancelReason        String?
@@ -977,7 +978,8 @@ model Receivable {
   revenueAccount   Account             @relation("ReceivableRevenueAccount", fields: [revenueAccountId], references: [id])
   counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createReceivable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from customerName, which is what lets CrmReceivableBridge keep passing none. customerName stays the snapshot.
   counterparty     Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
-  status           String // OPEN | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
+  status           String // OPEN | PARTIALLY_RECEIVED | RECEIVING | RECEIVED | CANCELLED (see RECEIVABLE_STATUSES)
+  receivedCents       BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): espelho de Payable.paidCents
   createdById      String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById    String? // actor who cancelled; plain string
   cancelReason     String?

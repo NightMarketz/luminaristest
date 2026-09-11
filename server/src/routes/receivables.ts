@@ -6,6 +6,7 @@ import {
   registerReceipt,
   cancelReceivable,
   cancelReceipt,
+  cancelSettlement,
   reconcileReceivables,
 } from '../controllers/receivableController';
 
@@ -25,5 +26,8 @@ router.get('/:id', getReceivable);
 router.post('/:id/receive', registerReceipt);
 router.post('/:id/cancel', cancelReceivable);
 router.post('/:id/receipts/:receiptId/cancel', cancelReceipt);
+// BE-INCR-PARTIAL-SETTLEMENT (F-PS10 → b, ACC-016): rota-irmã — MIRROR of payables.ts (see comment there).
+router.post('/:id/settlements', registerReceipt);
+router.post('/:id/settlements/:settlementId/cancel', cancelSettlement);
 
 export default router;

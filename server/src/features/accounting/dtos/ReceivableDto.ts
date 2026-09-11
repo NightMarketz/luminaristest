@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
-import { RECEIPT_METHODS } from '../models/Receivable.model';
+import { RECEIVABLE_STATUSES, RECEIPT_METHODS } from '../models/Receivable.model';
 import { queryBoolean } from './queryPrimitives';
 
 /**
@@ -65,8 +65,9 @@ export const CreateReceivableSchema = z
  *         unitId:      { type: string }
  *         method:      { type: string, enum: [Cash, Pix, TED, Boleto] }
  *         receivedAt:  { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do crédito bancário (D9), não a data do clique" }
- *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "MVP: deve igualar o saldo do receivable (recebimento integral único). Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
+ *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "Valor DESTE recebimento: qualquer parte do saldo em aberto (amountCents − receivedCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico). Teto de POLÍTICA (não de persistência): acima disso a API responde 400." }
  */
+// "≤ saldo remanescente" vive no serviço (`registerReceipt`) + sum-CAS do repositório — ver PayableDto.
 export const RegisterReceiptSchema = z
   .object({
     unitId: z.string().min(1),
@@ -122,7 +123,7 @@ export const CancelReceiptSchema = z
  *       required: [unitId]
  *       properties:
  *         unitId: { type: string }
- *         status: { type: string, enum: [OPEN, RECEIVING, RECEIVED, CANCELLED] }
+ *         status: { type: string, enum: [OPEN, PARTIALLY_RECEIVED, RECEIVING, RECEIVED, CANCELLED] }
  *         counterpartyId: { type: string, description: "Filtra pela FK de contraparte (INCR-COUNTERPARTY)" }
  *         dueFrom: { type: string, description: "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)" }
  *         dueTo:   { type: string, description: "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)" }
@@ -133,7 +134,7 @@ export const CancelReceiptSchema = z
  */
 export const ListReceivablesQuerySchema = z.object({
   unitId: z.string().min(1),
-  status: z.enum(['OPEN', 'RECEIVING', 'RECEIVED', 'CANCELLED']).optional(),
+  status: z.enum(RECEIVABLE_STATUSES).optional(),
   // BE-INCR-SUBLEDGER-FILTERS §2 — espelho literal do AP (F6). F3: só a FK; o customerName
   // snapshot NÃO é casado aqui.
   counterpartyId: z.string().min(1).optional(),

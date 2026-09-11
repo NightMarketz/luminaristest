@@ -8,8 +8,11 @@ import {
   AR_RECEIVABLE_SOURCE_TYPE,
   AR_RECEIPT_SOURCE_TYPE,
   deletedDocumentNumber,
+  RECEIVABLE_SETTLEABLE_STATUSES,
+  receivableStatusForBalance,
   resolveReceiptMethodAccount,
 } from '../models/Receivable.model';
+import type { ReceivableStatus } from '../models/Receivable.model';
 import type {
   CancelReceivableInput,
   CancelReceiptInput,
@@ -55,6 +58,13 @@ import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
  * - cancel = estorno (reverseEntry) in an open period + row lifecycle flip (ACC-018/T5), never a
  *   destructive edit; rename-on-delete frees the business key (D3).
  */
+/** Read shape of a title with its balance (BRIEF §2) — MIRROR of PayableWithBalance. */
+export type ReceivableWithBalance = ReceivableWithReceipts & { remainingCents: bigint };
+
+function withBalance(receivable: ReceivableWithReceipts): ReceivableWithBalance {
+  return { ...receivable, remainingCents: receivable.amountCents - receivable.receivedCents };
+}
+
 export class ReceivableService {
   constructor(
     private readonly receivableRepo: IReceivableRepository,
@@ -72,13 +82,13 @@ export class ReceivableService {
   async listReceivables(
     scope: AccountingScope,
     params: ListReceivablesQueryInput,
-  ): Promise<{ receivables: ReceivableWithReceipts[]; total: number }> {
+  ): Promise<{ receivables: ReceivableWithBalance[]; total: number }> {
     if (!this.policy.canReadReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para listar contas a receber.');
     }
     const skip = (params.page - 1) * params.limit;
     // BE-INCR-SUBLEDGER-FILTERS §2 — espelho do AP (F6): todo filtro do DTO é repassado ao repo.
-    return this.receivableRepo.findManyByUnit(scope, {
+    const { receivables, total } = await this.receivableRepo.findManyByUnit(scope, {
       status: params.status,
       counterpartyId: params.counterpartyId,
       dueFrom: params.dueFrom,
@@ -88,15 +98,16 @@ export class ReceivableService {
       skip,
       limit: params.limit,
     });
+    return { receivables: receivables.map(withBalance), total };
   }
 
-  async getReceivable(scope: AccountingScope, id: string): Promise<ReceivableWithReceipts> {
+  async getReceivable(scope: AccountingScope, id: string): Promise<ReceivableWithBalance> {
     if (!this.policy.canReadReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler contas a receber.');
     }
     const receivable = await this.receivableRepo.findByIdWithReceipts(scope, id);
     if (!receivable) throw new NotFoundError(`Conta a receber '${id}' não foi encontrada.`);
-    return receivable;
+    return withBalance(receivable);
   }
 
   // ---------------------------------------------------------------------------
@@ -184,9 +195,11 @@ export class ReceivableService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Register the (single, full) receipt of a receivable: book the receipt (D conta-por-método / C
-   * 1.1.5) and move the receivable to RECEIVED. The double-receipt race is closed by the
-   * OPEN→RECEIVING CAS before any ledger write, so two concurrent calls yield exactly one receipt.
+   * Register ONE receipt of a receivable — full or PARTIAL (BE-INCR-PARTIAL-SETTLEMENT, F-PS1 c /
+   * F-PS2 a) — MIRROR of PayableService.registerPayment: book the receipt (D conta-por-método / C
+   * 1.1.5), add it to the balance cache and move the receivable to RECEIVED or PARTIALLY_RECEIVED. The
+   * race is closed by the SUM-CAS (`OPEN|PARTIALLY_RECEIVED → RECEIVING`, `receivedCents += amount`)
+   * before any ledger write. Also the service behind the sister route `POST /:id/settlements`.
    */
   async registerReceipt(
     scope: AccountingScope,
@@ -200,27 +213,32 @@ export class ReceivableService {
 
     const receivable = await this.receivableRepo.findByIdWithReceipts(scope, receivableId);
     if (!receivable) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
-    if (receivable.status !== 'OPEN') {
+    // Guard pré-CAS (ADR F-PS2, site 2): OPEN and PARTIALLY_RECEIVED may take another receipt.
+    if (!(RECEIVABLE_SETTLEABLE_STATUSES as readonly string[]).includes(receivable.status)) {
       throw new ValidationError(
         `Conta a receber não está aberta para recebimento (status atual: ${receivable.status}).`,
       );
     }
 
-    // Full-receipt guard (F2 MVP): the amount must settle the whole remaining balance.
-    const remaining = centsFromDb(receivable.amountCents) - this.sumActiveReceipts(receivable);
-    if (dto.amountCents !== remaining) {
+    // Balance guard (BRIEF item 8) — message only; the AUTHORITATIVE check is the sum-CAS below.
+    const amountCents = centsFromDb(receivable.amountCents);
+    const receivedBefore = centsFromDb(receivable.receivedCents);
+    const remaining = amountCents - receivedBefore;
+    if (dto.amountCents > remaining) {
       throw new ValidationError(
-        `Recebimento parcial não é suportado: informe o saldo integral (${remaining} centavos).`,
+        `Valor do recebimento (${dto.amountCents} centavos) excede o saldo em aberto (${remaining} centavos).`,
       );
     }
 
     // Resolve the debit account for the method (closed map — unknown REJECTS, D2) BEFORE the CAS.
     const debitCode = resolveReceiptMethodAccount(dto.method);
 
-    // ATOMIC RACE GATE (D4) — OPEN → RECEIVING. count 0 = lost the race / not open.
-    const claimed = await this.receivableRepo.claimForReceipt(scope, receivableId);
+    // ATOMIC SUM-CAS (D4 + ADR §3) — OPEN|PARTIALLY_RECEIVED → RECEIVING, receivedCents += amount.
+    const claimed = await this.receivableRepo.claimForReceipt(scope, receivableId, amountCents, dto.amountCents);
     if (claimed === 0) {
-      throw new ValidationError('A conta já está em recebimento ou não está mais aberta.');
+      throw new ValidationError(
+        'A conta já está em recebimento, não está mais aberta ou o saldo não comporta este recebimento.',
+      );
     }
 
     let posted = false;
@@ -248,13 +266,15 @@ export class ReceivableService {
       // domain audit ONLY when THIS call performed the transition. The ledger is already committed; if
       // this tx crashes, reconcileReceivables finalizes it. The CAS closes the race with a concurrent
       // reconcile that could finalize between the post above and this tx (else both would emit).
+      // While RECEIVING no other writer touches receivedCents, so the balance after this receipt is
+      // exactly receivedBefore + amount (see PayableService.registerPayment).
       await this.receivableRepo.runTransaction(async (tx) => {
         await this.receivableRepo.updateReceipt(scope, receipt!.id, { entryId: entry.id }, tx);
-        const flipped = await this.receivableRepo.markReceivedIfReceiving(scope, receivableId, tx);
+        const flipped = await this.receivableRepo.finalizeIfReceiving(scope, receivableId, amountCents, tx);
         if (flipped === 1) {
           await this.auditService.append(tx, scope, {
             actorUserId: scope.actorUserId,
-            eventType: 'receivable.receipt_registered',
+            eventType: 'receivable.settlement_registered',
             targetType: 'receivable',
             targetId: receivableId,
             payload: {
@@ -263,6 +283,8 @@ export class ReceivableService {
               amountCents: String(dto.amountCents),
               method: dto.method,
               entryId: entry.id,
+              receivedCentsAfter: String(receivedBefore + dto.amountCents),
+              remainingCents: String(remaining - dto.amountCents),
             },
           });
         }
@@ -272,7 +294,10 @@ export class ReceivableService {
       // Only safe to revert BEFORE the ledger commit. After a successful post, the money is booked —
       // leave it RECEIVING for reconcile to finalize (never revert over a real posting).
       if (!posted) {
-        await this.revertClaim(scope, receivableId, receipt);
+        await this.revertClaim(scope, receivableId, receipt, {
+          amountCents: dto.amountCents,
+          status: receivableStatusForBalance(receivedBefore, amountCents),
+        });
       }
       throw error;
     }
@@ -302,7 +327,9 @@ export class ReceivableService {
       throw new ValidationError(
         receivable.status === 'RECEIVED'
           ? 'Desfaça o recebimento (cancelar recebimento) antes de cancelar a conta.'
-          : `Conta a receber não pode ser cancelada no status atual (${receivable.status}).`,
+          : receivable.status === 'PARTIALLY_RECEIVED'
+            ? 'Desfaça as baixas ativas (cancelar recebimentos) antes de cancelar a conta.'
+            : `Conta a receber não pode ser cancelada no status atual (${receivable.status}).`,
       );
     }
     // Defense-in-depth: an OPEN receivable should have no active receipt, but never cancel over one.
@@ -383,12 +410,26 @@ export class ReceivableService {
       reversalEntryId = reversal.id;
     }
 
+    // Reversal in PostingService's own tx; balance + status in ONE tx here (mirror of AP cancelPayment).
     return this.receivableRepo.runTransaction(async (tx) => {
       const cancelled = await this.receivableRepo.updateReceipt(scope, receiptId, { status: 'CANCELLED' }, tx);
-      await this.receivableRepo.updateReceivable(scope, receivableId, { status: 'OPEN' }, tx);
+      const cents = centsFromDb(receipt.amountCents);
+      const released = await this.receivableRepo.releaseSettlement(scope, receivableId, cents, tx);
+      if (released === 0) {
+        throw new ValidationError(
+          'Não foi possível estornar o recebimento: há um recebimento em curso ou o saldo recebido não comporta o estorno.',
+        );
+      }
+      const row = await this.receivableRepo.findById(scope, receivableId, tx);
+      if (!row) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
+      const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
+      if (status === 'RECEIVED') {
+        throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente recebido após o estorno.');
+      }
+      await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
-        eventType: 'receivable.receipt_cancelled',
+        eventType: 'receivable.settlement_cancelled',
         targetType: 'receivable',
         targetId: receivableId,
         payload: { receivableId, receiptId, reversalEntryId, reason: dto.reason },
@@ -469,7 +510,7 @@ export class ReceivableService {
         // Finalize atomically — link the entry, mark RECEIVED, and re-emit the AR-domain audit event
         // that the crashed normal-path finalize tx never wrote. The ledger 'entry.posted' audit already
         // exists (postEntry's own tx), so the hash-chain is intact; this restores the
-        // 'receivable.receipt_registered' domain trail. The audit is tied to the RECEIVING→RECEIVED
+        // 'receivable.settlement_registered' domain trail. The audit is tied to the RECEIVING→RECEIVED
         // transition, which happens exactly once per receipt (normal path OR here) — so repeated
         // reconcile passes never double-emit (once RECEIVED, needsFinalize is false).
         const receivable = await this.receivableRepo.findById(scope, receipt.receivableId);
@@ -481,12 +522,16 @@ export class ReceivableService {
             if (needsEntryLink) {
               await this.receivableRepo.updateReceipt(scope, receipt.id, { entryId: settlementEntryId }, tx);
             }
-            // Atomic RECEIVING→RECEIVED: emit + count ONLY when THIS pass performed the transition.
-            const flipped = await this.receivableRepo.markReceivedIfReceiving(scope, receipt.receivableId, tx);
+            // Atomic RECEIVING→RECEIVED|PARTIALLY_RECEIVED by balance: emit + count ONLY when THIS
+            // pass performed the transition. Under RECEIVING `receivedCents` already holds this receipt.
+            const flipped = receivable
+              ? await this.receivableRepo.finalizeIfReceiving(scope, receipt.receivableId, centsFromDb(receivable.amountCents), tx)
+              : 0;
             if (flipped === 1) {
+              const receivedCentsAfter = centsFromDb(receivable!.receivedCents);
               await this.auditService.append(tx, scope, {
                 actorUserId: scope.actorUserId,
-                eventType: 'receivable.receipt_registered',
+                eventType: 'receivable.settlement_registered',
                 targetType: 'receivable',
                 targetId: receipt.receivableId,
                 payload: {
@@ -495,6 +540,8 @@ export class ReceivableService {
                   amountCents: String(receipt.amountCents),
                   method: receipt.method,
                   entryId: settlementEntryId,
+                  receivedCentsAfter: String(receivedCentsAfter),
+                  remainingCents: String(centsFromDb(receivable!.amountCents) - receivedCentsAfter),
                 },
               });
               finalized += 1;
@@ -522,12 +569,6 @@ export class ReceivableService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
-
-  private sumActiveReceipts(receivable: ReceivableWithReceipts): number {
-    return receivable.receipts
-      .filter((r) => r.status === 'ACTIVE')
-      .reduce((acc, r) => acc + centsFromDb(r.amountCents), 0);
-  }
 
   /**
    * Resolve the CUSTOMER identity this receivable links to — NEVER null (SEC-A1-5 / F-NN1(a)). A
@@ -688,13 +729,19 @@ export class ReceivableService {
     scope: AccountingScope,
     receivableId: string,
     receipt: ReceivableReceipt | undefined,
+    restore: { amountCents: number; status: ReceivableStatus },
   ): Promise<void> {
     try {
       await this.receivableRepo.runTransaction(async (tx) => {
         if (receipt) {
           await this.receivableRepo.updateReceipt(scope, receipt.id, { status: 'CANCELLED' }, tx);
         }
-        await this.receivableRepo.updateReceivable(scope, receivableId, { status: 'OPEN' }, tx);
+        await this.receivableRepo.updateReceivable(
+          scope,
+          receivableId,
+          { receivedCents: { decrement: restore.amountCents }, status: restore.status },
+          tx,
+        );
       });
     } catch (error) {
       logger.error('AR registerReceipt revert failed — reconcile will reconcile state', {
