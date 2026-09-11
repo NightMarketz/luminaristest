@@ -98,8 +98,10 @@ export const UpdateContactSchema = z
       .transform((v) => normalizeCrcNumber(v))
       .optional(),
     crcUf: z.enum(UF_CODES).optional(),
-    crcCertificate: crcCertificateSchema.optional(),
-    crcCertificateValidUntil: crcValidUntilSchema.optional(),
+    // Review F10: `null` LIMPA a certidão/validade (certidão vencida não é só sobrescrita);
+    // ausente = não mexe. Os dois campos são opcionais no manual (J930 10/11).
+    crcCertificate: crcCertificateSchema.nullable().optional(),
+    crcCertificateValidUntil: crcValidUntilSchema.nullable().optional(),
   })
   .strict();
 

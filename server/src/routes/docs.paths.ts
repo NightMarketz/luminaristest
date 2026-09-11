@@ -3769,6 +3769,7 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '429': { description: 'Rate limit por escopo (ator + unidade) excedido - DELIVERY_CONFIRM_RATE_LIMIT por 15 min, padrao 60' }
  *
  *   /api/accounting/delivery/{id}/retry:
  *     post:

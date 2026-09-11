@@ -125,7 +125,11 @@ export class AccountingContactService {
       ...(dto.crcUf !== undefined ? { crcUf: dto.crcUf } : {}),
       ...(dto.crcCertificate !== undefined ? { crcCertificate: dto.crcCertificate } : {}),
       ...(dto.crcCertificateValidUntil !== undefined
-        ? { crcCertificateValidUntil: new Date(`${dto.crcCertificateValidUntil}T00:00:00.000Z`) }
+        ? {
+            crcCertificateValidUntil: dto.crcCertificateValidUntil
+              ? new Date(`${dto.crcCertificateValidUntil}T00:00:00.000Z`)
+              : null,
+          }
         : {}),
     });
   }

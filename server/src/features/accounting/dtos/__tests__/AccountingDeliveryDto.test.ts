@@ -92,7 +92,6 @@ describe('RegisterContactSchema', () => {
       const ruins = [
         'XX/2026/000123',
         'SP/26/000123',
-        'SP/1899/000123',
         'SP-2026-000123',
         '2026/SP/000123',
         'SP/2026/',
@@ -106,6 +105,31 @@ describe('RegisterContactSchema', () => {
     it('é opcional — o manual marca o campo 10 como não obrigatório', () => {
       expect(RegisterContactSchema.safeParse(validContact).success).toBe(true);
     });
+
+    // ---------------------------------------------------------------- review F9
+    // O manual diz só "yyyy corresponde ao ano" — 4 dígitos. Um piso (1990) e um teto (relógio da
+    // máquina + 1) eram regra INVENTADA, exatamente o que o mesmo arquivo dá como razão para NÃO
+    // mascarar o IND_CRC. E validador com `new Date()` dentro muda de veredito com a data.
+    it('aceita qualquer ano de 4 dígitos — sem piso inventado e sem relógio dentro do validador', () => {
+      for (const crcCertificate of ['SP/1989/000001', 'SP/2099/000001', 'RJ/1975/12']) {
+        expect(RegisterContactSchema.safeParse({ ...validContact, crcCertificate }).success).toBe(true);
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------- review F10
+  it('UpdateContactSchema aceita null para LIMPAR a certidão e a validade (não só sobrescrever)', () => {
+    const parsed = UpdateContactSchema.safeParse({
+      unitId: 'unit-1',
+      contactId: 'c-1',
+      crcCertificate: null,
+      crcCertificateValidUntil: null,
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.crcCertificate).toBeNull();
+      expect(parsed.data.crcCertificateValidUntil).toBeNull();
+    }
   });
 
   // ------------------------------------------------------------------ J930 campo 11 (DT_CRC)

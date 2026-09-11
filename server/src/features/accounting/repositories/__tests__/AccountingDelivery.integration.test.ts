@@ -226,6 +226,40 @@ describe('AccountingContact + AccountingDeliveryLog — contrato em SQLite real'
     ).resolves.toBeDefined();
   });
 
+  // ------------------------------------------------------------------ review F8 — tenancy no UPDATE
+  // O `where` de `update` carrega o escopo (`{id, userId, unitId}`) e o comentário vende isso como a
+  // rede para "um caller futuro que esqueça o findById". Rede sem teste é prosa: mutar para
+  // `where: { id }` passava tudo. Cada negativo com o seu controle positivo.
+  it('update com escopo ALHEIO não escreve na linha (P2025), e o controle no escopo certo escreve', async () => {
+    const contato = await criarContato(DONO_A, UNIT, 'Contabilidade Lambda');
+
+    await expect(
+      contactRepo.update(escopo(DONO_B), contato.id, { name: 'Sequestrado' }),
+    ).rejects.toMatchObject({ code: 'P2025' });
+    const intacto = await prisma.accountingContact.findUnique({ where: { id: contato.id } });
+    expect(intacto!.name).toBe('Contabilidade Lambda');
+
+    const atualizado = await contactRepo.update(escopo(DONO_A), contato.id, { name: 'Renomeado' });
+    expect(atualizado.name).toBe('Renomeado');
+  });
+
+  it('update da ENTREGA com escopo alheio também é P2025 (mesma rede, segundo repo)', async () => {
+    const contato = await criarContato(DONO_A, UNIT, 'Contabilidade Mu');
+    const ecd = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECD');
+    const ecf = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECF');
+    const entrega = await deliveryRepo.create({
+      userId: DONO_A, unitId: UNIT, contactId: contato.id, ecdJobId: ecd.id, ecfJobId: ecf.id,
+      year: 2026, manifestSha256Ecd: 'f'.repeat(64), manifestSha256Ecf: 'e'.repeat(64),
+      status: 'SENT', attemptCount: 1, requestedById: DONO_A, sentAt: new Date(),
+    });
+
+    await expect(
+      deliveryRepo.update(escopo(DONO_B), entrega.id, { status: 'FAILED' }),
+    ).rejects.toMatchObject({ code: 'P2025' });
+    const intacta = await prisma.accountingDeliveryLog.findUnique({ where: { id: entrega.id } });
+    expect(intacta!.status).toBe('SENT');
+  });
+
   // ------------------------------------------------------------------ item 12 — entrega de outro escopo
   it('entrega do dono B não é legível pelo escopo do dono A', async () => {
     const contatoB = await criarContato(DONO_B, UNIT, 'Contabilidade Kappa');

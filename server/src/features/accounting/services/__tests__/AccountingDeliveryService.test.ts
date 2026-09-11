@@ -301,6 +301,42 @@ describe('AccountingDeliveryService', () => {
       expect(auditAppend).not.toHaveBeenCalled();
     });
 
+    // ---------------------------------------------------------------- review F4 (mutação M1)
+    // Guarda contra a mutação `if (existing.status === 'SENT' || true) return existing;` que
+    // sobrevivia à suíte: o fixture `existing` era sempre SENT, então o ramo QUEUED→SENT nunca rodava.
+    it('reusa uma linha QUEUED promovendo-a a SENT (update + 2 eventos), sem criar segunda linha', async () => {
+      const { service, create, update, auditAppend } = build({
+        existing: { ...deliveryRow, status: 'QUEUED', attemptCount: 0 },
+      });
+      const result = await service.confirmDelivery(scope, confirmDto);
+
+      expect(create).not.toHaveBeenCalled();
+      expect(update).toHaveBeenCalledTimes(1);
+      const [, id, data] = update.mock.calls[0] as unknown as [unknown, string, Record<string, unknown>];
+      expect(id).toBe('delivery-1');
+      expect(data).toMatchObject({ status: 'SENT', attemptCount: 1 });
+      expect(auditAppend).toHaveBeenCalledTimes(2);
+      expect(result.status).toBe('QUEUED'); // valor do dublê de update — o que importa é a chamada acima
+    });
+
+    // ---------------------------------------------------------------- review F5
+    // O ramo P2002 devolvia a vencedora CRUA: se ela estivesse QUEUED, a resposta dizia
+    // `status: 'QUEUED'` junto de `statusMeaning: 'o operador confirmou…'` — contradição na mesma
+    // resposta, e sem evento na trilha. A vencedora tem de passar pelo MESMO caminho de promoção.
+    it('P2002 com vencedora QUEUED promove a vencedora a SENT em vez de devolvê-la crua', async () => {
+      const { service, findByJobsAndContact, update, auditAppend } = build({ createThrowsP2002: true });
+      findByJobsAndContact
+        .mockResolvedValueOnce(null as never)
+        .mockResolvedValueOnce({ ...deliveryRow, status: 'QUEUED', attemptCount: 0 } as never);
+
+      await service.confirmDelivery(scope, confirmDto);
+
+      expect(update).toHaveBeenCalledTimes(1);
+      const [, , data] = update.mock.calls[0] as unknown as [unknown, string, Record<string, unknown>];
+      expect(data).toMatchObject({ status: 'SENT' });
+      expect(auditAppend).toHaveBeenCalledTimes(2);
+    });
+
     it('P2002 na corrida devolve a linha VENCEDORA — nunca uma segunda entrega', async () => {
       const { service, findByJobsAndContact } = build({ createThrowsP2002: true });
       // 1ª leitura (preflight da idempotência) não acha; a 2ª, após o P2002, acha a vencedora.

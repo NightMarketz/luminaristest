@@ -60,12 +60,6 @@ export type UfCode = (typeof UF_CODES)[number];
 export const CRC_CERTIFICATE_RE = /^([A-Z]{2})\/(\d{4})\/(\d{1,10})$/;
 
 /**
- * Ano mínimo aceito na certidão. A CRP existe desde bem antes, mas uma certidão com ano de 1800 é
- * digitação errada, não histórico — e o objetivo declarado do campo é não deixar erro passar.
- */
-export const CRC_CERTIFICATE_MIN_YEAR = 1990;
-
-/**
  * Normaliza o número de inscrição (`IND_CRC`): caixa alta e sem espaço/hífen sobrando nas pontas.
  * NÃO remove pontuação interna — sem formato oficial, mexer no miolo do valor seria adivinhação.
  */
@@ -80,15 +74,15 @@ export function normalizeCrcCertificate(value: string): string {
 
 /**
  * `REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC` implementada na entrada: forma UF/AAAA/NÚMERO **e** UF
- * existente na tabela **e** ano plausível. Recebe o valor já normalizado.
+ * existente na tabela. Recebe o valor já normalizado. O manual diz só "yyyy corresponde ao ano" —
+ * 4 dígitos; piso ou teto de ano seriam regra inventada (review F9), e um validador com relógio
+ * dentro muda de veredito com a data da máquina.
  */
-export function isValidCrcCertificate(value: string, maxYear = new Date().getUTCFullYear() + 1): boolean {
+export function isValidCrcCertificate(value: string): boolean {
   const match = CRC_CERTIFICATE_RE.exec(value);
   if (!match) return false;
-  const [, uf, year] = match;
-  if (!(UF_CODES as readonly string[]).includes(uf)) return false;
-  const y = Number(year);
-  return y >= CRC_CERTIFICATE_MIN_YEAR && y <= maxYear;
+  const [, uf] = match;
+  return (UF_CODES as readonly string[]).includes(uf);
 }
 
 /**

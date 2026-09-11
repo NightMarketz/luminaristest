@@ -212,3 +212,37 @@ it('keeps only allowlisted keys for reconcile_pending.rescanned — drops reason
     sourceType: 'sale.finalized',
   });
 });
+
+// BE-INCR-CONTADOR-DELIVERY (item 14, D5) — teste-guarda de PII no MESMO PR que introduz os
+// eventTypes (memória `accounting-audit-allowlist-guards`; review F12: o precedente da casa é o
+// caso acima, no nível do CANONICALIZADOR, não só do serviço). Nome e e-mail do contador são PII
+// de terceiro numa trilha append-only: mesmo que um caller futuro os passe por engano, eles NÃO
+// sobrevivem à canonicalização em nenhum dos 5 eventos.
+describe('contact.* / delivery.* — PII do contador nunca sobrevive à canonicalização', () => {
+  const PII = { name: 'Contabilidade Silva', email: 'silva@exemplo.com.br', contactName: 'Silva' };
+
+  it('contact.registered mantém contactId + registro profissional e derruba nome/e-mail', () => {
+    const parsed = JSON.parse(
+      canonicalizeAuditPayload('contact.registered', {
+        contactId: 'c-1', crcNumber: 'SP-1/O-1', crcUf: 'SP', ...PII,
+      }),
+    );
+    expect(parsed).toEqual({ contactId: 'c-1', crcNumber: 'SP-1/O-1', crcUf: 'SP' });
+  });
+
+  it.each([
+    ['contact.archived', { contactId: 'c-1' }],
+    ['delivery.package_built', {
+      deliveryId: 'd-1', ecdJobId: 'j-ecd', ecfJobId: 'j-ecf', year: 2026,
+      sha256Ecd: 'a'.repeat(64), sha256Ecf: 'b'.repeat(64),
+    }],
+    ['delivery.sent', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 1 }],
+    ['delivery.failed', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 2, reason: 'caixa cheia' }],
+  ])('%s derruba nome/e-mail passados a mais', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, { ...allowed, ...PII });
+    expect(out).not.toContain('Contabilidade Silva');
+    expect(out).not.toContain('silva@exemplo.com.br');
+    // e o que a allowlist autoriza continua lá (String() para os numéricos, como o canonicalizador faz)
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+});

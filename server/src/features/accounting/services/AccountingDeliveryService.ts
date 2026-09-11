@@ -175,7 +175,9 @@ export class AccountingDeliveryService {
             contact.id,
             tx,
           );
-          if (winner) return winner;
+          // Review F5: a vencedora passa pelo MESMO caminho de promoção da linha pré-existente —
+          // devolvê-la crua responderia `status: 'QUEUED'` junto de "o operador confirmou…".
+          if (winner) return this.markSent(scope, winner, manifest, tx);
         }
         throw error;
       }
