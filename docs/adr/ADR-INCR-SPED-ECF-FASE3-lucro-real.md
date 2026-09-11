@@ -1,6 +1,6 @@
 # ADR-INCR-SPED-ECF-FASE3 — ECF em Lucro Real (Blocos L/M/N + `HASH_ECF_ANTERIOR` + `0010` parametrizável)
 
-- **Status:** **Accepted — forks fechados.** [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
+- **Status:** **Accepted — forks fechados; model do Fork 4→(b) normatizado (EMENDA 2026-09-11, 2ª — D-M1..D-M5, ao final).** [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
   código escrito, nenhuma branch criada.** Este ADR NÃO ratifica nenhum dos forks que lista — cada um
   segue **RATIFICAÇÃO PENDENTE** do dono. A execução (código) exige autorização própria, distinta desta.
 - **Date:** 2026-09-02
@@ -351,3 +351,98 @@ item 8 já estava fechado (Fork 5). Duas pendências **só o PVA responde**: se 
 (primeira vez neste domínio desde D7/D2); (ii) `FE-INCR-LALUR` como incremento separado; (iii) o bloqueador
 referencial (§5.1 do ADR-ECF, `3.3` sem código RFB) volta a valer **transitivamente** via ECD → K → L —
 pertence ao X2, não a esta frente, mas quem operar a 2ª passada precisa saber.
+
+---
+
+## EMENDA (2026-09-11, 2ª) — Fork 4→(b): forma NORMATIVA do model persistido (pré-requisito do código)
+
+O BRIEF 3B (§3, Fork 4) condiciona o primeiro código de model a *"emenda ao ADR commitada antes"*. A EMENDA
+anterior ratificou a **direção** (model persistido); esta fixa a **forma** — o que o §2.2 do BRIEF esboçava
+como "tentativo" vira decisão, com as duas correções que a sessão de feature levantou e o dono ratificou em
+sessão (2026-09-11, questionário, ambas na opção (a) recomendada). Autorização de implementação: dono, em
+sessão, 2026-09-11: *"implementa o BRIEF 3B, começando pela emenda ao ADR → model"*.
+
+### D-M1 — Dois agregados, tenancy = `AccountingScope` (`userId` + `unitId`), sem torre nova
+
+| Model | Registro ECF | Chave de negócio | Fonte |
+|---|---|---|---|
+| `LalurEntry` | `M300`/`M350` (Parte A) + linhas `E` de `N500`/`N630`/`N670` | `(userId, unitId, year, quarter, livro, codigo)` | M300 chave `CODIGO` sob `M030.PER_APUR` (p.244); N630/N670 chave `CODIGO` (pp.298/307) |
+| `LalurParteBAccount` | `M010` (Parte B) | `(userId, unitId, codCtaB, codTributo)` | M010 chave `COD_CTA_B + COD_TRIBUTO` (p.237, lacuna 6) |
+
+O `scopeId` do esboço §2.2 **é** o par `userId + unitId` — `AccountingScope` não é tabela (verificado:
+`schema.prisma` não tem model de scope; precedente `Counterparty`/`DimensionDefinition`). FK `User` com
+`onDelete: Cascade` (dado operacional; a trilha é o `AuditEvent` — exceção T8, precedente `Counterparty`).
+
+### D-M2 — Soft-delete + rename-on-key (ratificado (a), 2026-09-11)
+
+O esboço `@@unique([…, deletedAt])` **não fecha duplicidade viva no SQLite** (NULL é distinto em índice
+único: duas linhas com `deletedAt = NULL` e o mesmo `codigo` passam). Decisão: `@@unique` **sem** `deletedAt`
++ archive na mesma tx reescreve a coluna-chave — `LalurEntry.codigo → deleted:<id>:<codigo>`,
+`LalurParteBAccount.codCtaB → deleted:<id>:<codCtaB>` — precedente SEC-A1-4 (`Counterparty`) e D3 do
+`Payable`. `REGRA_DUPLICIDADE_DESPREZADA` do Manual (aviso do PVA) vira constraint nossa (erro), como o
+item 11 pede. Alternativas descartadas: hard-delete (contraria Contrato §2) e chave com `deletedAt`
+(deixa o TOCTOU aberto).
+
+### D-M3 — Linhas do Bloco N não carregam campos do M300 (ratificado (a), 2026-09-11)
+
+`N500/N630/N670` só têm `REG, CODIGO, DESCRICAO, VALOR` (pp.280/298/307). Para `livro ∈ {n500, n630, n670}`
+o DTO **proíbe** `indRelacao`, `contaParteB`, `accountId`, `histLancamento` (400 se vierem) e o `superRefine`
+de `REGRA_RELACAO_INEXISTENTE` só roda em `lalur`/`lacs`. No model, `indRelacao` é **nullable** (NULL em N).
+Corrige o §2.1 do BRIEF, que exigia `indRelacao` para todo `livro` (input aceito-e-ignorado — classe da
+memória `param-aceito-e-ignorado-e-bug`).
+
+### D-M4 — Colunas (fecha o §2.2 do BRIEF, lacunas 1-7 já dobradas)
+
+```prisma
+model LalurEntry {
+  id             String   @id @default(cuid())
+  userId         String   // AccountingScope.ownerUserId — FK User, Cascade
+  unitId         String
+  year           Int
+  quarter        String   // 'T01'..'T04' (Fork 5→a)
+  livro          String   // 'lalur' | 'lacs' | 'n500' | 'n630' | 'n670'
+  codigo         String   // linha da tabela dinâmica; validado contra o fixture (item 9/10); rename-on-delete
+  valorCents     BigInt   // ≥ 0 (p.244: negativo = "Erro no programa"); direção vem do TIPO_LANCAMENTO derivado
+  indRelacao     String?  // '1'|'2'|'3'|'4' (p.245) em lalur/lacs; NULL em N (D-M3)
+  histLancamento String?  // M300.HIST_LAN_LAL, C 500 (p.245); obrigatório com indRelacao=4 (p.247, leitura INFERIDA)
+  parteBId       String?  // FK LalurParteBAccount, Restrict — indRelacao ∈ {1,3} (p.247)
+  accountId      String?  // FK Account (id, não código) — indRelacao ∈ {2,3}; serializer resolve → M310.COD_CTA = I050/J050.COD_CTA (p.252)
+  createdById    String?
+  createdAt / updatedAt / deletedAt
+  @@unique([userId, unitId, year, quarter, livro, codigo])
+}
+model LalurParteBAccount {                 // M010 campos 2-10 (p.237)
+  id, userId (FK User Cascade), unitId
+  codCtaB        String   // 2 COD_CTA_B — nosso, estável entre exercícios; rename-on-delete
+  descricao      String   // 3 DESC_CTA_LAL
+  dtCriacao      DateTime // 4 DT_AP_LAL — date-only (data FINAL do período em que nasceu)
+  codPbRfb       String   // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO (REGRA_M010_COD_PB_RFB_TRIBUTO)
+  dtLimite       DateTime? // 6 DT_LIM_LAL — date-only
+  codTributo     String   // 7 COD_TRIBUTO 'I' | 'C' — parte da chave (lacuna 6)
+  saldoIniCents  BigInt   // 8 VL_SALDO_INI ≥ 0 — REGRA_DT_AP_ZERO: = 0 se dtCriacao ∈ exercício
+  indSaldoIni    String   // 9 IND_VL_SALDO_INI 'D' | 'C'
+  cnpjSitEsp     String?  // 10 CNPJ_SIT_ESP, 14 dígitos
+  createdById, createdAt, updatedAt, deletedAt
+  @@unique([userId, unitId, codCtaB, codTributo])
+}
+```
+
+`MAX_CENTS` segue política de DTO (memória `max-cents-e-politica-nao-persistencia`); `≥ 0` é invariante de
+DTO + teste (SQLite via Prisma não tem CHECK). Datas `date-only` seguem a convenção `Payable.issueDate`
+(`isValidDateOnly` no DTO).
+
+### D-M5 — O que esta emenda NÃO decide (fica para o item 13, com o dono)
+
+- **N-1 (saldos da Parte B por período / `M500`)** — o BRIEF §2.2 manda a sessão do item 13 escolher entre
+  `LalurParteBBalance` (espelho do M500) e recomputar do razão da Parte B. **Não entra nesta migração**; se
+  for (i), é uma **2ª migração**, nomeada aqui para que o `smoke-migration-gate` não a receba como surpresa.
+- **`M410`** (lançamento sem reflexo na Parte A) — mesma sessão do item 13; `M362/M415/M510` continuam sem
+  seção própria na transcrição (BRIEF §4 item 3), logo `[pendente-externa]` de leiaute.
+
+### Consequências
+
+Migração `add_lalur_entries_and_parte_b_accounts` (tabelas novas — sem backfill; prólogo `DROP … IF EXISTS`
+por `migracao-sqlite-nao-e-transacional`), `smoke-migration-gate` reaberto **nesta** frente; cadeia
+`Route → Controller → Service → Repository → Prisma` + Policy (`canManageData` escreve, `canRead` gera),
+DTO `.strict()`, rotas em 2 toques + path-count guard. O gerador da ECF Real **lê** do model; o DTO de
+geração **não** carrega ajustes (item 11). Tela = `FE-INCR-LALUR`, separada.
