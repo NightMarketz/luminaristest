@@ -62,9 +62,9 @@
 | 1 | `REG` | Texto fixo contendo a identificação do registro (L001). | C | 4 | - | [L001] | Sim |
 | 2 | `IND_DAD` | Indicador de movimento: 0 – Bloco com dados informados. 1 – Bloco sem dados informados. | N | 1 | - | [0;1] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
-- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “L001” (REG). Se a regra não for cumprida, a ECF gera um erro. Exemplo de Preenchimento: |L001|0| |L001|: Identificação do tipo do registro. |0|: Indica que o bloco possui dados info…
+- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “L001” (REG). Se a regra não for cumprida, a ECF gera um erro.
 
 ### L030 — Identificação dos Períodos e Formas de Apuração do IRPJ e da CSLL no Ano-Calendário (p.221)
 
@@ -80,11 +80,11 @@ Regras (seção I do registro):
 | 3 | `DT_FIN` | Data do Fim do período | N | 8 | - | - | Sim |
 | 4 | `PER_APUR` | Período de apuração [para 0010.FORMA_APUR = “A”]: A00 – Receita Bruta/ Balanço de Suspensão e Redução Anual A0… | C | 3 | - | [A00; A01; A02; A03; A04; A05; A06; A07; A08; A09; A10; A11; A12; T01; T02; T03; | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_PERIODO_DESPREZADO`: Verifica se a linha deste período existe no arquivo de importação, mas não deve ser importado, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
-- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso. Exemplo de Preenchimento: |L030|01012025|31032025|T01| |L030|: Ident…
+- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
 
 ### L990 — Encerramento do Bloco L (p.235)
 
@@ -106,16 +106,16 @@ Regras (seção I do registro):
 | 1 | `REG` | Texto fixo contendo a identificação do registro (M001). | C | 4 | - | [M001] | Sim |
 | 2 | `IND_DAD` | Indicador de movimento: 0 – Bloco com dados informados. 1 – Bloco sem dados informados. | N | 1 | - | [0;1] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
-- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “M001” (REG). Se a regra não for cumprida, a ECF gera um erro. Exemplo de Preenchimento: |M001|0| |M001|: Identificação do tipo do registro. |0|: Indica que o bloco possui dados info…
+- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “M001” (REG). Se a regra não for cumprida, a ECF gera um erro.
 
 ### M010 — Identificação da Conta na Parte B do e-Lalur e do e-Lacs (p.237)
 
 > Cadastra os saldos iniciais no período da escrituração das contas da parte B utilizadas no e-LALUR e no e-LACS. O registro pode ser replicado da ECF anterior, importado e/ou editado.
 
 - Nível / Ocorrência: **2 / 0:N** · Campo(s) chave: `COD_CTA_B + COD_TRIBUTO`
-- Regras de validação (cabeçalho): `REGRA_DIVERGENCIA_E020_M010 REGRA_EXISTENCIA_M010`
+- Regras de validação (cabeçalho): `REGRA_DIVERGENCIA_E020_M010` · `REGRA_EXISTENCIA_M010` · `REGRA_SALDOS_M010_E020`
 
 | Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
 |---|---|---|---|---|---|---|---|
@@ -130,17 +130,24 @@ Regras (seção I do registro):
 | 9 | `IND_VL_SALDO_INI` | Indicador do Saldo Inicial: D – Para prejuízos ou valores que reduzam o lucro real ou a base de cálculo da con… | C | 1 | - | [D; C] | Sim |
 | 10 | `CNPJ_SIT_ESP` | CNPJ da outra pessoa jurídica relacionada com evento originário da conta. Exemplos: 1- Identificar a investida… | C | 14 | - | - | Não |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_EXISTENCIA_M010`: Verifica se os saldos recuperados no registro E020 existem no registro M010. A advertência ocorre se 0010.FORMA_TRIB = “1”, “2”, “3” ou “4”, para cada E020 com VL_SALDO_FIN diferente de zero não localizado no registro M010.
-- `REGRA_SALDOS_M010_E020`: Verifica se os saldos recuperados no registro E020 são iguais aos saldos do registro M010. O erro ocorre se 0010.FORMA_TRIB = “1”, “2”, “3” ou “4”, para cada M010 localizado no registro E020 com conteúdo diferente em qualquer dos seguintes campos do registro M…
+- `REGRA_SALDOS_M010_E020`: Verifica se os saldos recuperados no registro E020 são iguais aos saldos do registro M010. O erro ocorre se 0010.FORMA_TRIB = “1”, “2”, “3” ou “4”, para cada M010 localizado no registro E020 com conteúdo diferente em qualquer dos seguintes campos do registro M010: E020.VL_SALDO_FIN diferente de M010_VL_SALDO_INI Ou E02…
+- `DT_AP_LAL` · `REGRA_MENOR_IGUAL_DT_FIN`: Verifica se M010.DT_AP_LAL é menor ou igual a 0000.DT_FIN.
+- `REGRA_CONTA_PERIODO_ANTERIOR`: Caso M010.DT_AP_LAL for menor que 0000.DT_INI e M010.COD_CTA_B e M010.COD_TRIBUTO não existirem no registro E020 (E020.COD_CTA_B e E020.TRIBUTO), o sistema gera um aviso (A data de criação da conta na parte B é anterior à data de início da ECF. Verifique se essa informação está correta). Erro Erro
+- `COD_PB_RFB` · `REGRA_M010_COD_PB_RFB_TRIBUTO`: Verifica se o código padrão da Parte B preenchido – M010.COD_PB_RFB – existe na tabela padrão para o tributo informado no campo M010.COD_TRIBUTO.
+- `REGRA_CONTA_PADRAO_E020_M010`: Verifica, quando M010.COD_CTA_B é igual a E020.COD_CTA_B, M010.COD_TRIBUTO é igual a E020.TRIBUTO e E020.COD_PB_RFB é diferente de vazio, se E020.COD_PB_RFB é igual a M010.COD_PB_RFB.
+- `REGRA_PARTE_B_PARTE_A`: Verifica, quando é realizada uma adição/exclusão nos registro M300/M350, com relacionamento com conta da parte B, se o código da linha de adição/exclusão dos registros M300/M350 consta na tabela “SPEDECF_LOCAL$SPEDECF_PARTEB_PARTEA” (Relacionamento da Parte B com a ParteA) e se a conta padrão da parte B relacionada tem…
+- `VL_SALDO_INI` · `REGRA_DT_AP_ZERO`: Verifica, quando M010.DT_AP_LAL estiver dentro do período de apuração, se M010.VL_SALDO_INI é igual a zero. Erro
+- `CNPJ_SIT_ESP` · `REGRA_VALIDA_CNPJ`: Verifica se a regra de formação do código é válida. Erro
 
 ### M030 — Identificação dos Períodos e Formas de Apuração do IRPJ e da CSLL das Empresas Tributadas pelo Lucro Real (p.241)
 
 > Registro de identificação dos períodos da escrituração necessários conforme definições de parâmetros do Bloco 0.
 
 - Nível / Ocorrência: **2 / 0:13** · Campo(s) chave: `PER_APUR`
-- Regras de validação (cabeçalho): `REGRA_DUPLICIDADE_DESPREZADA` · `REGRA_PERIODO_DESPREZADO. REGRA_LINHA_ALTERADA`
+- Regras de validação (cabeçalho): `REGRA_DUPLICIDADE_DESPREZADA` · `REGRA_PERIODO_DESPREZADO` · `REGRA_LINHA_ALTERADA`
 
 | Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
 |---|---|---|---|---|---|---|---|
@@ -149,15 +156,15 @@ Regras (seção I do registro):
 | 3 | `DT_FIN` | Data do Fim do período | N | 8 | - | - | Sim |
 | 4 | `PER_APUR` | Período de apuração [para 0010.FORMA_APUR = “A”]: A00 – Receita Bruta/ Balanço de Suspensão e Redução Anual A0… | C | 3 | - | [A00; A01; A02; A03; A04; A05; A06; A07; A08; A09; A10; A11; A12; T01; T02; T03; | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_PERIODO_DESPREZADO`: Verifica se a linha deste período existe no arquivo de importação, mas não deve ser importado, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
-- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso. Exemplo de Preenchimento: |M030|01012024|31032024|T01| |M030|: Ident…
+- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
 
 ### M300 — Demonstração do Lucro Real – Lançamentos da Parte A do e-Lalur (p.244)
 
-> Apresenta os lançamentos da parte A do e-LALUR. Este registro demonstrará a apuração da base de cálculo da IRPJ anual, trimestral e nos meses com estimativa apurada com base no
+> Apresenta os lançamentos da parte A do e-LALUR. Este registro demonstrará a apuração da base de cálculo da IRPJ anual, trimestral e nos meses com estimativa apurada com base no balanço/balancete. Livro da Parte A Saldo da Conta da Parte B Sinal do Lançamento na Parte B Utilização Adição Credor Devedor Utilização de saldo para adição Adição Devedor Devedor Constituição de saldo para posterior exclusão Exclusão Devedor Credor Utilização de saldo para exclusão Exclusão Credor Credor Constituição de saldo para posterior adição Livro da Parte A Sinal no M300 Indicador no M305 (Sinal do lançamento na conta da Parte B) Indicador no M310 Conta de Resultado (Sinal do saldo da conta contábil de resultado) Indicador no M310 Conta Patrimonial (Sinal do saldo da conta contábil patrimonial) Adição ou Lucro + (positivo) D – Devedor D – Devedor C – Credor Adição ou Lucro - (negativo) Erro no programa C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo + (positivo) C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo - (negativo) Erro no programa D - Devedor D - Devedor C – Credor
 
 - Nível / Ocorrência: **3 / 1:N** · Campo(s) chave: `CODIGO`
 - Regras de validação (cabeçalho): `REGRA_VALOR_DETALHADO` · `REGRA_DUPLICIDADE_DESPREZADA` · `REGRA_LINHA_DESPREZADA` · `REGRA_LINHA_ATUALIZADA`
@@ -172,9 +179,25 @@ Regras (seção I do registro):
 | 6 | `VALOR` | Valor do Lançamento no e-Lalur | NS | 19 | 2 | - | Não |
 | 7 | `HIST_LAN_LAL` | Histórico do Lançamento no e-Lalur | C | 500 | - | - | Não |
 
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `REGRA_VALOR_DETALHADO`:  Verifica, quando M300.IND_RELACAO for igual a “1” (com conta da parte B), se o M300.VALOR é igual ao somatório de M305.VALOR_CTA. Verifica, quando M300.IND_RELACAO for igual a “2” (com conta contábil) se o M300.VALOR é igual ao somatório de M310.VALOR_CTA. Verifica, quando M300.IND_RELACAO for igual a “3” (com conta d…
+- `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
+- `REGRA_LINHA_DESPREZADA`: Verifica se o registro existe na importação, mas não será importado por não existir na tabela dinâmica devido às configurações do bloco 0 ou da tabela dinâmica. Se a regra não for cumprida, a ECF gera um aviso.
+- `REGRA_LINHA_ATUALIZADA`: Verifica se o registro está desatualizado em relação à tabela da RFB. Se a regra não for cumprida, a ECF gera um aviso.
+- `TIPO_LANCAMENTO` · `REGRA_OBRIGATORIO_TIPO_E`: Verifica se M300.TIPO_LANCAMENTO não está preenchido quando o tipo de linha é “E”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se M300.TIP_LANCAMENTO está preenchido quando o tipo da linha é “E”.
+- `REGRA_RELACAO_INEXISTENTE`:  - Verifica se existe, pelo menos, um registro M305/M355 filho e não existe um registro M310/M360 filho, quando M300.IND_RELACAO é igual a “1” (Com Conta da Parte B). - Verifica se não existe registro M305/M355 filho e existe, pelo menos, um registro M310/M360 filho, quando M300.IND_RELACAO é igual a “2” (Com Conta Con…
+- `IND_RELACAO` · `REGRA_IND_RELACAO`: Verifica, quando M300.TIPO_LANCAMENTO for igual a “P” (compensação de prejuízo), se M300.IND_RELACAO é igual a “1” (com conta da parte B).
+- `REGRA_OBRIGATORIO_TIPO_E`: Verifica se o campo M300.IND_RELACAO não está preenchido quando o tipo de linha é “E”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se o campo M300.IND_RELACAO está preenchido quando o tipo da linha é “E”. Erro Erro Erro
+- `VALOR` · `REGRA_OBRIGATORIO_TIPO_R`: Verifica se o campo M300.VALOR não está preenchido quando o tipo de linha é “R”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_R`: Verifica se o campo M300.VALOR está preenchido quando o tipo da linha é “R”. Erro Erro
+- `HIST_LAN_LAL` · `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se o campo M300.HIST_LAN_LAL está preenchido quando o tipo da linha é “E” e M300.IND_RELACAO = “4” (Sem relacionamento). Erro
+
 ### M305 — Conta da Parte B do e-Lalur (p.250)
 
-> Relacionamento do lançamento da parte A do e-Lalur com a conta da parte B do e-Lalur, de acordo com as regras abaixo:
+> Relacionamento do lançamento da parte A do e-Lalur com a conta da parte B do e-Lalur, de acordo com as regras abaixo: - Se adição, debita conta da parte B e credita na parte A. - Se exclusão, credita conta da parte B e debita na parte A. - Se prejuízo, debita conta da parte B e credita na parte A.
 
 - Nível / Ocorrência: **4 /  0:N** · Campo(s) chave: `COD_CTA_B`
 - Regras de validação (cabeçalho): —
@@ -185,6 +208,11 @@ Regras (seção I do registro):
 | 2 | `COD_CTA_B` | Código da Conta na Parte B: Código unívoco atribuído pelo contribuinte à conta no e-Lalur no registro M010. | C | - | - | [M010.COD_CTA_B] | Sim |
 | 3 | `VL_CTA` | Valor Total dos Lançamentos: Valor total dos lançamentos adicionados ou excluídos da conta. Observação: Valor … | N | 19 | 2 | - | Sim |
 | 4 | `IND_VL_CTA†` | Indicador do Valor Total dos Lançamentos: D – Para prejuízos ou valores que reduzam o lucro real em períodos s… | C | 1 | - | [D; C] | Sim |
+
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `COD_CTA_B` · `REGRA_PARTE_B_PARTE_A`: Verifica se a conta padrão da Parte B relacionada à conta da Parte B da pessoa jurídica titular da ECF possui relacionamento com a linha da parte A informada no registro M300. Erro
+- `IND_VL_CTA` · `REGRA_PEA`: Verifica as regras abaixo: - Se faz adição na parte A (crédito na parte A), debita na conta da parte B. - Se faz exclusão na parte A (débito na parte A), credita conta da parte B. - Se compensa prejuízo na parte A (débito na parte A), credita conta da parte B. O erro ocorre se o campo M300.TIPO_LANCAMENTO é igual a: - …
 
 ### M310 — Contas Contábeis Relacionadas ao Lançamento da Parte A do e-Lalur (p.252)
 
@@ -201,13 +229,18 @@ Regras (seção I do registro):
 | 4 | `VL_CTA` | Valor da Conta Utilizado no Lançamento da Parte A. | N | 19 | 2 | - | Sim |
 | 5 | `IND_VL_CTA` | Indicador do Valor do Lançamento: D – Devedor. C – Credor. | C | 1 | - | [D; C] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
-- `REGRA_REGISTRO_M312_OBRIGATORIO`: Verifica se o registro M312 foi preenchido no caso de M310.VL_CTA, para o mesmo M310.COD_CTA e M310.COD_CCUS: - No caso de J050.COD_NAT igual a“1” (Ativo), “2” (Passivo) ou “3” (Patrimônio Líquido): - For diferente do saldo final da conta em K155.VL_SLD_FIN no…
+- `REGRA_REGISTRO_M312_OBRIGATORIO`: Verifica se o registro M312 foi preenchido no caso de M310.VL_CTA, para o mesmo M310.COD_CTA e M310.COD_CCUS: - No caso de J050.COD_NAT igual a“1” (Ativo), “2” (Passivo) ou “3” (Patrimônio Líquido): - For diferente do saldo final da conta em K155.VL_SLD_FIN no período de apuração; ou - For diferente do resultado da dif…
+- `COD_CTA` · `REGRA_RELACIONAMENTO_PATRIMONIAL`: Verifica se a conta é de resultado, exceto no caso de exclusão de juros sobre o capital próprio, conforme abaixo: PJ em Geral – M300(166.03), M300(340,04), M350(166.03) e M350(340.04) Financeiras – M300(198.03) e M350(198.03) Seguradoras – M300(137.03) e M350(137.03)
+- `REGRA_VALIDA_CONTA_BALANCO_DRE`: Verifica se o campo M310.COD_CTA e o campo M310.COD_CCUS existem no registro K155 ou no registro K355 para o mesmo período de apuração. Aviso Erro
+- `VL_CTA` · `REGRA_SALDO_CONTABIL_MENOR`: Verifica se M310.VL_CTA é menor ou igual ao saldo final da conta no período menos os outros lançamentos no mesmo período de apuração para a parte A.
+- `REGRA_OBRIGATORIA_M310_VL_CTA`: Verifica se M310.VL_CTA foi preenchido quando M300. IND_RELACAO for igual a “2” (com conta contábil). Erro Erro
+- `IND_VL_CTA` · `REGRA_INDICADOR_CONTABIL_DIFERENTE`: Verifica se o indicador do saldo final da conta no período é igual ao indicador do valor da conta utilizado no relacionamento M310.IND_VL_CTA. Aviso
 
 ### M312 — Números dos Lançamentos Relacionados à Conta Contábil (p.254)
 
->  Esse registro é de preenchimento facultativo para PJ Componente do Sistema Financeiro (0010.COD_QUALIF_PJ = “02”) ou Sociedades Seguradoras, de Capitalização ou Entidade Aberta de
+> Esse registro é de preenchimento facultativo para PJ Componente do Sistema Financeiro (0010.COD_QUALIF_PJ = “02”) ou Sociedades Seguradoras, de Capitalização ou Entidade Aberta de Previdência Complementar (0010.COD_QUALIF_PJ = “03”), que utilizam a forma de escrituração “B” (Balancetes Diários) na ECD e não informam lançamentos. Nos demais casos, o registro apresenta o número dos lançamentos contábeis que foram informados na ECD relacionados ao lançamento da conta da parte A, quando não for utilizado, no caso de conta patrimonial: I) O saldo total da conta contábil (M310.VL_CTA < K155.VL_SLD_FIN); ou II) O saldo do período (saldo final – saldo inicial) da conta contábil (M310.VL_CTA < (K155.VL_SLD_FIN – K155.VL_SLD_INI); ou III) O total de débitos da conta contábil no período (M310.VL_CTA < K155.VL_DEB); ou IV) O total de créditos da conta contábil no período (M310.VL_CTA < K155.VL_CRED). Apresenta o número dos lançamentos contábeis do período referenciado no registro M030, relacionados ao lançamento da conta da parte A, quando não for utilizado, no caso de conta resultado: I) O saldo total da conta contábil (M310.VL_CTA < K355.VL_SLD_FIN). Observação: No caso de apuração anual do IRPJ, se os números dos lançamentos já foram informados em períodos de apuração anteriores, não é necessário repeti-los.
 
 - Nível / Ocorrência: **5 /  0:N** · Campo(s) chave: `NUM_LCTO`
 - Regras de validação (cabeçalho): `REGRA_FINANCEIRAS_NAO_OBRIGATORIO`
@@ -217,9 +250,13 @@ Regras (seção I do registro):
 | 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M312). | C | 4 | - | [M312] | Sim |
 | 2 | `NUM_LCTO` | Número do Lançamento Descrito na ECD (Escrituração Contábil Digital) no campo 2 (NUM_LCTO) registro “I200 – La… | C | 50 | - | - | Sim |
 
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `REGRA_FINANCEIRAS_NAO_OBRIGATORIO`: Se 0010.COD_QUALIF_PJ = “02” ou “03” ou 0010. FORMA_TRIB = “08” ou “09”, o registro é facultativo.
+
 ### M350 — Demonstração da Base de Cálculo da CSLL – Lançamentos da Parte A do e-Lacs (p.256)
 
-> Apresenta os lançamentos da parte A do e-Lacs. Este registro demonstrará a apuração da base de cálculo da CSLL anual, trimestral e nos meses com estimativa apurada com base no
+> Apresenta os lançamentos da parte A do e-Lacs. Este registro demonstrará a apuração da base de cálculo da CSLL anual, trimestral e nos meses com estimativa apurada com base no balanço/balancete. Livro da Parte A Saldo da Conta da Parte B Sinal do Lançamento na Parte B Utilização Adição Credor Devedor Utilização de saldo para adição Adição Devedor Devedor Constituição de saldo para posterior exclusão Exclusão Devedor Credor Utilização de saldo para exclusão Exclusão Credor Credor Constituição de saldo para posterior adição Livro da Parte A Sinal no M350 Indicador no M355 (Sinal do lançamento na conta da Parte B) Indicador no M360 Conta de Resultado (Sinal do saldo da conta contábil de resultado) Indicador no M360 Conta Patrimonial (Sinal do saldo da conta contábil patrimonial) Adição ou Lucro + (positivo) D – Devedor D – Devedor C – Credor Adição ou Lucro - (negativo) Erro do programa C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo + (positivo) C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo - (negativo) Erro do programa D - Devedor D - Devedor C – Credor
 
 - Nível / Ocorrência: **3 /  1:N** · Campo(s) chave: `CODIGO`
 - Regras de validação (cabeçalho): `REGRA_VALOR_DETALHADO` · `REGRA_DUPLICIDADE_DESPREZADA` · `REGRA_LINHA_DESPREZADA` · `REGRA_LINHA_ATUALIZADA`
@@ -234,9 +271,25 @@ Regras (seção I do registro):
 | 6 | `VALOR` | Valor do Lançamento no e-Lalur | NS | 19 | 2 | - | Não |
 | 7 | `HIST_LAN_LAL` | Histórico do Lançamento no e-Lalur | C | 500 | - | - | Não |
 
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `REGRA_VALOR_DETALHADO_CSLL`:  Verifica, quando M350.IND_RELACAO for igual a “1” (com conta da parte B), se o M350.VALOR é igual ao somatório de M355.VALOR_CTA. Verifica, quando M350.IND_RELACAO for igual a “2” (com conta contábil) se o M350.VALOR é igual ao somatório de M360.VALOR_CTA. Verifica, quando M350.IND_RELACAO for igual a “3” (com conta d…
+- `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
+- `REGRA_LINHA_DESPREZADA`: Verifica se o registro existe na importação, mas não será importado por não existir na tabela dinâmica devido às configurações do bloco 0 ou da tabela dinâmica. Se a regra não for cumprida, a ECF gera um aviso.
+- `REGRA_LINHA_ATUALIZADA`: Verifica se o registro está desatualizado em relação à tabela da RFB. Se a regra não for cumprida, a ECF gera um aviso.
+- `TIPO_LANCAMENTO` · `REGRA_OBRIGATORIO_TIPO_E`: Verifica se o campo M350.TIPO_LANCAMENTO não está preenchido quando o tipo de linha é “E”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se o campo M350.TIP_LANCAMENTO está preenchido quando o tipo da linha é “E”.
+- `REGRA_RELACAO_INEXISTENTE`:  - Verifica se existe, pelo menos, um registro M305/M355 filho e não existe um registro M310/M360 filho, quando M350.IND_RELACAO é igual a “1” (Com Conta da Parte B). - Verifica se não existe registro M305/M355 filho e existe, pelo menos, um registro M310/M360 filho, quando M350.IND_RELACAO é igual a “2” (Com Conta Con…
+- `IND_RELACAO` · `REGRA_IND_RELACAO`: Verifica, quando M350.TIPO_LANCAMENTO for igual a “P” (compensação de prejuízo), se M350.IND_RELACAOé igual a “1” (com conta da parte B).
+- `REGRA_OBRIGATORIO_TIPO_E`: Verifica se o campo M350.IND_RELACAO não está preenchido quando o tipo de linha é “E”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se o campo M350.IND_RELACAO está preenchido quando o tipo da linha é “E”. Erro Erro Erro
+- `VALOR` · `REGRA_OBRIGATORIO_TIPO_R`: Verifica se o campo M350.VALOR não está preenchido quando o tipo de linha é “R”.
+- `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_R`: Verifica se o campo M350.VALOR está preenchido quando o tipo da linha é “R”. Erro Erro
+- `HIST_LAN_LAL` · `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`: Verifica se o campo M350.HIST_LAN_LAL está preenchido quando o tipo da linha é “E” e M350.IND_RELACAO = “4” (Sem Relacionamento). Erro
+
 ### M355 — Conta da Parte B do e-Lacs (p.262)
 
-> Relacionamento do lançamento da parte A do e-Lacs com a conta da parte B do e-Lacs, de acordo com as regras abaixo:
+> Relacionamento do lançamento da parte A do e-Lacs com a conta da parte B do e-Lacs, de acordo com as regras abaixo: - Se adição, debita conta da parte B e credita na parte A. - Se exclusão, credita conta da parte B e debita na parte A. - Se prejuízo, debita conta da parte B e credita na parte A.
 
 - Nível / Ocorrência: **4 /  0:N** · Campo(s) chave: `COD_CTA_B`
 - Regras de validação (cabeçalho): `REGRA_SALDO_DISPONIVEL_PARTE_B`
@@ -247,6 +300,12 @@ Regras (seção I do registro):
 | 2 | `COD_CTA_B` | Código da Conta na Parte B: Código unívoco atribuído pelo contribuinte à conta no e-Lacs no registro M010. | C | - | - | [M010.COD_CTA_B] | Sim |
 | 3 | `VL_CTA` | Valor Total dos Lançamentos: Valor total dos lançamentos adicionados ou excluídos da conta. Observação: Valor … | N | 19 | 2 | - | Sim |
 | 4 | `IND_VL_CTA†` | Indicador do Valor Total dos Lançamentos: D – Para prejuízos ou valores que reduzam o lucro real em períodos s… | C | 1 | - | [D; C] | Sim |
+
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `REGRA_SALDO_DISPONIVEL_PARTE_B`: Verifica se M355.VL_CTA é menor ou igual ao saldo disponível do mesmo período de apuração da conta na parte B informada do registro M410. Se a regra não for cumprida, a ECF gera um erro.
+- `COD_CTA_B` · `REGRA_PARTE_B_PARTE_A`: Verifica se a conta padrão da Parte B relacionada à conta da Parte B da pessoa jurídica titular da ECF possui relacionamento com a linha da parte A informada no registro M300. Erro
+- `IND_VL_CTA` · `REGRA_PEA`: Verifica as regras abaixo: - Se adição, debita na conta da parte B e credita na parte A - Se exclusão, credita conta da parte B e debita na parte A - Se prejuízo, credita conta da parte B e debita na parte A O erro ocorre se os campos M300.TIPO_LANCAMENTO é igual a: - “A” (adição) e M355.IND_VL_CTA é igual a “C” - “E” …
 
 ### M360 — Contas Contábeis Relacionadas ao Lançamento da Parte A do e-Lacs (p.264)
 
@@ -263,9 +322,14 @@ Regras (seção I do registro):
 | 4 | `VL_CTA` | Valor da Conta Utilizado no Lançamento da Parte A. | N | 19 | 2 | - | Sim |
 | 5 | `IND_VL_CTA` | Indicador do Valor do Lançamento: D – Devedor. C – Credor. | C | 1 | - | [D; C] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
-- `REGRA_REGISTRO_M362_OBRIGATORIO`: Verifica se o registro M362 foi preenchido no caso de M360.VL_CTA, para o mesmo M360.COD_CTA e M360.COD_CCUS: - No caso de J050.COD_NAT igual “1” (Ativo), “2” (Passivo) ou “3” (Patrimônio Líquido): - For diferente do saldo final da conta em K155.VL_SLD_FIN no …
+- `REGRA_REGISTRO_M362_OBRIGATORIO`: Verifica se o registro M362 foi preenchido no caso de M360.VL_CTA, para o mesmo M360.COD_CTA e M360.COD_CCUS: - No caso de J050.COD_NAT igual “1” (Ativo), “2” (Passivo) ou “3” (Patrimônio Líquido): - For diferente do saldo final da conta em K155.VL_SLD_FIN no período de apuração; ou - For diferente do resultado da dife…
+- `COD_CTA` · `REGRA_RELACIONAMENTO_PATRIMONIAL`: Verifica se a conta é de resultado, exceto no caso de exclusão de juros sobre o capital próprio, conforme abaixo: PJ em Geral – M300(166.03), M300(340,04), M350(166.03) e M350(340.04) Financeiras – M300(198.03) e M350(198.03) Seguradoras – M300(137.03) e M350(137.03)
+- `REGRA_VALIDA_CONTA_BALANCO_DRE`: Verifica se o campo M360.COD_CTA e o campo M360.COD_CCUS existem no registro K155 ou no registro K355 para o mesmo período de apuração. Aviso Erro
+- `VL_CTA` · `REGRA_SALDO_CONTABIL_MENOR`: Verifica se M360.VL_CTA é menor ou igual ao saldo final da conta no período menos os outros lançamentos no mesmo período de apuração para a parte A.
+- `REGRA_OBRIGATORIA_M310_VL_CTA`: Verifica se M360.VL_CTA foi preenchido quando M300. IND_RELACAO for igual a “2” (com conta contábil). Erro Erro
+- `IND_VL_CTA` · `REGRA_INDICADOR_CONTABIL_DIFERENTE`: Verifica se o indicador do saldo final da conta no período é igual ao indicador do valor da conta utilizado no relacionamento M360.IND_VL_CTA. Aviso
 
 ### M410 — Lançamento na Conta da Parte B do e-Lalur e do e-Lacs sem Reflexo na Parte A (p.268)
 
@@ -285,14 +349,16 @@ Regras (seção I do registro):
 | 7 | `HIST_LAN_LALB` | Histórico do Lançamento. | C | - | - | - | Sim |
 | 8 | `IND_LAN_ANT` | Lançamento para Realização de Valores Cuja Tributação Tenha Sido Diferida: S – Sim N – Não Observação: Marca-s… | C | 1 | - | [S; N] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_PREJUIZO_FISCAL`: Verifica se o somatório dos lançamentos de prejuízo fiscal é igual ao valor da base de cálculo do IRPJ. Se a regra não for cumprida, a ECF gera um erro.
 - `REGRA_BC_NEGATIVA`: Verifica se o somatório dos lançamentos da base de cálculo negativa da CSLL é igual ao valor da base de cálculo da CSLL. Se a regra não for cumprida, a ECF gera um erro.
+- `COD_CTA_B_CTP` · `REGRA_MESMO_TRIBUTO`: Se M410.COD_CTA_B_CTP for preenchido, as contas constantes do lançamento devem corresponder ao mesmo tributo (M010.TRIBUTO).
+- `REGRA_NAO_PREENCHER_CTP`: Se M410.IND_VAL_LAN_LALB_PB igual a “PF” ou “BC”, campo M410.COD_CTA_B_CTP não deve ser preenchido. Erro Erro
 
 ### M500 — Controle de Saldos das Contas da Parte B do e-Lalur e do e-Lacs (p.271)
 
-> Apresenta a visão sintética do controle de saldos das contas da parte B do e-LALUR e e-LACS. Registro gerado pelo sistema a partir do saldo inicial e das movimentações.
+> Apresenta a visão sintética do controle de saldos das contas da parte B do e-LALUR e e-LACS. Registro gerado pelo sistema a partir do saldo inicial e das movimentações. - Os campos SD_FIM_LAL e IND_SD_FIM do último período serão transportados para o E020 da próxima ECF. - Quando a escrituração for trimestral, o saldo final do período será transportado para o saldo inicial do período seguinte. - O valor do SD_INI_LAL do primeiro período será igual ao saldo inicial do registro M010.
 
 - Nível / Ocorrência: **3 / 0:N** · Campo(s) chave: `COD_CTA_B + COD_TRIBUTO`
 - Regras de validação (cabeçalho): —
@@ -331,9 +397,9 @@ Regras (seção I do registro):
 | 1 | `REG` | Texto fixo contendo a identificação do registro (N001). | C | 4 | - | [N001] | Sim |
 | 2 | `IND_DAD` | Indicador de movimento: 0 – Bloco com dados informados. 1 – Bloco sem dados informados. | N | 1 | - | [0;1] | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
-- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “N001” (REG). Se a regra não for cumprida, a ECF gera um erro. Exemplo de Preenchimento: |N001|0| |N001|: Identificação do tipo do registro. |0|: Indica que o bloco possui dados info…
+- `REGRA_OCORRENCIA_UNITARIA_ARQ`: Verifica se registro ocorreu apenas uma vez por arquivo, considerando a chave “N001” (REG). Se a regra não for cumprida, a ECF gera um erro.
 
 ### N030 — Identificação dos Períodos e Formas de Apuração do IRPJ e da CSLL das Empresas Tributadas pelo Lucro Real (p.277)
 
@@ -349,18 +415,18 @@ Regras (seção I do registro):
 | 3 | `DT_FIN` | Data do Fim do período | N | 8 | - | - | Sim |
 | 4 | `PER_APUR` | Período de apuração [para 0010.FORMA_APUR = “A”]: A00 – Receita Bruta/ Balanço de Suspensão e Redução Anual A0… | C | 3 | - | [A00; A01; A02; A03; A04; A05; A06; A07; A08; A09; A10; A11; A12; T01; T02; T03; | Sim |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_PERIODO_DESPREZADO`: Verifica se a linha deste período existe no arquivo de importação, mas não deve ser importado, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
-- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso. Exemplo de Preenchimento: |N030|01012024|31032024|T01| |N030|: Ident…
+- `REGRA_LINHA_ALTERADA`: Verifica se a linha deste período existe no arquivo de importação, mas deve ser alterada, pois as datas não compatíveis com o período da ECF. Se a regra não for cumprida, a ECF gera um aviso.
 
 ### N500 — Base de Cálculo do IRPJ Sobre o Lucro Real Após as Compensações de Prejuízos (p.280)
 
 > Apresenta a base de cálculo do IRPJ após as compensações de prejuízos.
 
 - Nível / Ocorrência: **3 / 1:13** · Campo(s) chave: `REG`
-- Regras de validação (cabeçalho): `REGRA_DUPLICIDADE_DESPREZADA REGRA_LINHA_DESPREZADA`
+- Regras de validação (cabeçalho): `REGRA_DUPLICIDADE_DESPREZADA` · `REGRA_LINHA_DESPREZADA` · `REGRA_LINHA_ATUALIZADA`
 
 | Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
 |---|---|---|---|---|---|---|---|
@@ -369,11 +435,12 @@ Regras (seção I do registro):
 | 3 | `DESCRICAO` | Descrição, conforme tabela dinâmica do Sped (Disponibilizada no item III deste registro e no programa da ECF n… | C | - | - | - | Não |
 | 4 | `VALOR` | Valor | C | - | - | - | Não |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_DESPREZADA`: Verifica se o registro existe na importação, mas não será importado por não existir na tabela dinâmica devido às configurações do bloco 0 ou da tabela dinâmica. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_ATUALIZADA`: Verifica se o registro está desatualizado em relação à tabela da RFB. Se a regra não for cumprida, a ECF gera um aviso.
+- `VALOR` · `REGRA_OBRIGATORIO_TIPO_DIFERENTE_R`: Verifica se o campo está preenchido quando o tipo da linha é diferente de “R”. Erro
 
 ### N630 — Apuração do IRPJ Com Base no Lucro Real (p.298)
 
@@ -389,11 +456,12 @@ Regras (seção I do registro):
 | 3 | `DESCRICAO` | Descrição, conforme tabela dinâmica do Sped (Disponibilizada no item III deste registro e no programa da ECF n… | C | - | - | - | Não |
 | 4 | `VALOR` | Valor | C | - | - | - | Não |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_DESPREZADA`: Verifica se o registro existe na importação, mas não será importado por não existir na tabela dinâmica devido às configurações do bloco 0 ou da tabela dinâmica. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_ATUALIZADA`: Verifica se o registro está desatualizado em relação à tabela da RFB. Se a regra não for cumprida, a ECF gera um aviso.
+- `VALOR` · `REGRA_OBRIGATORIO_TIPO_DIFERENTE_R`: Verifica se o campo está preenchido quando o tipo da linha é diferente de “R”. Erro
 
 ### N670 — Apuração da CSLL Com Base no Lucro Real (p.307)
 
@@ -409,11 +477,12 @@ Regras (seção I do registro):
 | 3 | `DESCRICAO` | Descrição, conforme tabela dinâmica do Sped (Disponibilizada no item III deste registro e no programa da ECF n… | C | - | - | - | Não |
 | 4 | `VALOR` | Valor | NS | 19 | 2 | - | Não |
 
-Regras (seção I do registro):
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
 
 - `REGRA_DUPLICIDADE_DESPREZADA`: Verifica se o registro já foi importado anteriormente, de acordo com a chave e os registros pais. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_DESPREZADA`: Verifica se o registro existe na importação, mas não será importado por não existir na tabela dinâmica devido às configurações do bloco 0 ou da tabela dinâmica. Se a regra não for cumprida, a ECF gera um aviso.
 - `REGRA_LINHA_ATUALIZADA`: Verifica se o registro está desatualizado em relação à tabela da RFB. Se a regra não for cumprida, a ECF gera um aviso.
+- `VALOR` · `REGRA_OBRIGATORIO_TIPO_DIFERENTE_R`: Verifica se o campo está preenchido quando o tipo da linha é diferente de “R”. Erro
 
 ### N990 — Encerramento do Bloco N (p.309)
 
@@ -1249,6 +1318,38 @@ Linhas calculadas (17) — só para o teste negativo do item 14: `1`, `3`, `4`, 
 Linhas calculadas (10) — só para o teste negativo do item 14: `0.61`, `1`, `2`, `4`, `8`, `9`, `10`, `11`, `12.20`, `21`
 
 
+
+## Lacunas de spec reveladas pela transcrição (sessão de feature, 2026-09-11)
+
+O que o Manual diz e o BRIEF 3B (§2 contratos) **ainda não diz** — registrado aqui, não corrigido no BRIEF
+(regra 2 da sessão de feature: lacuna de spec pausa, não escolhe). Cada item cita a página.
+
+1. **`M300.TIPO_LANCAMENTO` é `[A; E; P; L]`**, não só A/E (p.245): `P` compensação de prejuízo, `L` lucro. O
+   contrato §2.3 (`tipoLancamento?: 'A'|'E'`) precisa do alfabeto inteiro — e a derivação "vem da coluna
+   `TIPO LANÇ` da aba" tem de contemplar `P`/`L`.
+2. **`M300.IND_RELACAO` é `[1; 2; 3; 4]`** (p.245): `3` = com conta da Parte B **e** conta contábil; `4` = sem
+   relação. O contrato §2.3 (`indRelacao?: '1'|'2'`) está incompleto.
+3. **Em M300 só `REG` e `CODIGO` são obrigatórios** (p.244-245); `VALOR`, `TIPO_LANCAMENTO`, `IND_RELACAO`,
+   `DESCRICAO` são "Não" — mas as regras de campo (seção II) condicionam pelo **tipo da linha na tabela
+   dinâmica**: `REGRA_OBRIGATORIO_TIPO_E` exige `TIPO_LANCAMENTO` em linha `E`; `REGRA_OBRIGATORIO_TIPO_R`
+   proíbe `VALOR` em linha `R`; `REGRA_IND_RELACAO` obriga `IND_RELACAO=1` quando `TIPO_LANCAMENTO=P`. O DTO
+   precisa espelhar essas condicionais, não o "Obrigatório" cru da tabela.
+4. **`M300.VALOR` é `NS` e o sinal é semântico**: `REGRA_VALOR_DETALHADO` + a tabela de sinais na intro do M300
+   (p.244: "Adição ou Lucro − (negativo) → Erro no programa") — fecha a pendência §4 item 4 do BRIEF:
+   **valor sempre positivo para A/L; o sinal negativo é rejeitado**. `z.number().int().nonnegative()`.
+5. **`M310.COD_CTA` tem valores válidos `[J050.COD_CTA]`** (p.252) e `REGRA_REGISTRO_M312_OBRIGATORIO` exige
+   `M312` (números dos lançamentos contábeis) em certos casos — ou seja, `IND_RELACAO=2` amarra o ajuste a
+   uma conta do **Bloco J** (plano de contas da ECD recuperada) e possivelmente aos lançamentos da ECD.
+   Fecha a pendência §4 item 5: **o ajuste com relação contábil precisa de `accountId` do razão**, e o
+   contrato §2.1/§2.2 não tem esse campo.
+6. **`M010` tem chave composta `COD_CTA_B + COD_TRIBUTO`** (p.237) e `COD_TRIBUTO ∈ [I; C]` — a mesma conta
+   da Parte B existe separadamente para IRPJ e CSLL. O model §2.2 (`@@unique([scopeId, codCtaB, …])`) precisa
+   de `codTributo` na chave.
+7. **`M010` campos 5-10 transcritos**: `COD_PB_RFB` (C 6, aba `PARTEB_PADRAO`), `DT_LIM_LAL`, `COD_TRIBUTO`,
+   `VL_SALDO_INI`, `IND_VL_SALDO_INI [D; C]`, `CNPJ_SIT_ESP` — a pendência §4 item 3 deixa de existir para
+   M010; `M410`/`M500` idem (8 e 11 campos acima).
+8. **`M500` é controle de saldos por período com transporte para o `E020` da próxima ECF** (intro p.271) —
+   sustenta a leitura do Fork 4→(b), mas o BRIEF não lista `M500` como builder com teste próprio.
 
 ---
 

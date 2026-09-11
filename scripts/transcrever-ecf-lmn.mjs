@@ -80,7 +80,9 @@ function parseRegister(reg) {
   if (!s) return { reg, missing: true };
   const body = s.body;
   const joined = body.map((b) => b.t).join('\n');
-  const intro = body.slice(0, 6).map((b) => b.t).find((t) => !/^REGISTRO|^Regras|^Nível|^Campo\(s\)|^\d+ [A-Z_]/.test(t)) || '';
+  // intro = tudo entre o cabecalho e o titulo em caixa alta "REGISTRO XNNN:" (traz a tabela de sinais do M300, p.244)
+  const introEnd = body.findIndex((b) => /^REGISTRO [A-Z0-9]{4}:/.test(b.t));
+  const intro = body.slice(0, introEnd > 0 ? introEnd : 0).map((b) => b.t.trim()).join(' ').replace(/\s+/g, ' ');
   const nivel = (joined.match(/Nível Hierárquico – (\d+)\s+Ocorrência – ([\d:N ]+)/) || [])
     .slice(1).join(' / ');
   const chave = (joined.match(/Campo\(s\) chave: ([^\n]+)/) || [, ''])[1].trim();
@@ -89,12 +91,13 @@ function parseRegister(reg) {
   const ri = body.findIndex((b) => /^Regras de Validação do Registro/.test(b.t));
   if (ri >= 0) {
     regrasHdr = body[ri].t.replace(/^Regras de Validação do Registro:?\s*/, '');
-    for (let j = ri + 1; j < ri + 3 && j < body.length; j++) {
-      if (/^REGRA_/.test(body[j].t)) regrasHdr += ' ' + body[j].t;
+    for (let j = ri + 1; j < ri + 5 && j < body.length; j++) {
+      if (/^\s*REGRA_/.test(body[j].t)) regrasHdr += ' ' + body[j].t.trim();
+      else break;
     }
   }
   // campos: comeca em "^N NOME" e vai ate o proximo; para na secao "I – Regras" / "Exemplo"
-  const stopIdx = body.findIndex((b) => /^(I – Regras de Validação|II – |Exemplo de preenchimento|III – )/.test(b.t));
+  const stopIdx = body.findIndex((b) => /^(I – Regras? de Validação|II – |Exemplo de preenchimento|III – )/i.test(b.t));
   // pre-passo: numero do campo sozinho na linha ("5" + "IND_ SD_INI_LAL") vira uma linha so
   const region0 = body.slice(0, stopIdx >= 0 ? stopIdx : body.length);
   const fieldRegion = [];
@@ -135,15 +138,18 @@ function parseRegister(reg) {
       tipo: m[1], tam: m[2], dec: m[3] ?? '-', validos: m[4].replace(/\s+/g, ' ').trim().slice(0, 80), obrig: m[5], page: chunk[0].page });
   });
   // definicoes das regras (secao I)
+  // Regras (secoes I e II): qualquer linha "REGRA_X: ..." do corpo, com prefixo opcional "N CAMPO " (secao II,
+  // regras de campo) e espaco inicial tolerado. A continuacao para em nova regra, titulo de secao, exemplo
+  // (qualquer caixa), linha de tabela ou inicio de campo.
   const defs = [];
-  if (stopIdx >= 0) {
-    let cur = null;
-    for (const b of body.slice(stopIdx)) {
-      if (/^(II – |III – |Exemplo de preenchimento)/.test(b.t)) break;
-      const m = b.t.match(/^(REGRA_[A-Z0-9_]+):\s*(.*)$/);
-      if (m) { cur = { nome: m[1], texto: m[2] }; defs.push(cur); }
-      else if (cur && !/^I – /.test(b.t)) cur.texto += ' ' + b.t.trim();
-    }
+  let cur = null;
+  for (const b of body) {
+    const t = b.t.trim();
+    const m = t.match(/^(?:(\d{1,2})\s+([A-Z][A-Z_0-9]+)\s+)?(REGRA_[A-Z0-9_]+):\s*(.*)$/);
+    if (m) { cur = { campo: m[2] || '', nome: m[3], texto: m[4] }; defs.push(cur); continue; }
+    if (!cur) continue;
+    if (/^([IVX]+ – |Exemplo de preenchimento|\||REGISTRO [A-Z0-9]{4}:|Nº Campo|\d{1,2} [A-Z][A-Z_0-9]{2,}\s)/i.test(t)) { cur = null; continue; }
+    cur.texto += ' ' + t;
   }
   const nums = fields.map((f) => Number(f.n));
   const gaps = nums.filter((n, i) => i > 0 && n !== nums[i - 1] + 1);
@@ -235,7 +241,8 @@ for (const reg of REGS) {
   out.push(`### ${r.reg} — ${r.title} (p.${r.page})\n`);
   if (r.intro) out.push(`> ${r.intro}\n`);
   out.push(`- Nível / Ocorrência: **${r.nivel || '[PARSER?]'}** · Campo(s) chave: \`${r.chave || '—'}\``);
-  out.push(`- Regras de validação (cabeçalho): ${r.regrasHdr ? '`' + r.regrasHdr.trim().replace(/[;.]\s*$/, '').split(/;\s*/).join('` · `') + '`' : '—'}\n`);
+  const hdrRules = r.regrasHdr.split(/[;\s]+/).filter((x) => /^REGRA_/.test(x)).map((x) => x.replace(/\.$/, ''));
+  out.push(`- Regras de validação (cabeçalho): ${hdrRules.length ? '`' + hdrRules.join('` · `') + '`' : '—'}\n`);
   out.push('| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |');
   out.push('|---|---|---|---|---|---|---|---|');
   for (const f of r.fields) {
@@ -243,8 +250,11 @@ for (const reg of REGS) {
     else out.push(`| ${f.n} | \`${f.nome}\` | ${f.desc.replace(/\|/g, '\\|')} | ${f.tipo} | ${f.tam} | ${f.dec} | ${f.validos.replace(/\|/g, '\\|') || '—'} | ${f.obrig} |`);
   }
   if (r.defs.length) {
-    out.push('\nRegras (seção I do registro):\n');
-    for (const d of r.defs) out.push(`- \`${d.nome}\`: ${d.texto.replace(/\s+/g, ' ').slice(0, 260)}${d.texto.length > 260 ? '…' : ''}`);
+    out.push('\nRegras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):\n');
+    for (const d of r.defs) {
+      const txt = d.texto.replace(/\s+/g, ' ');
+      out.push(`- ${d.campo ? '`' + d.campo + '` · ' : ''}\`${d.nome}\`: ${txt.slice(0, 320)}${txt.length > 320 ? '…' : ''}`);
+    }
   }
   out.push('');
 }
@@ -275,7 +285,43 @@ for (const a of abas) {
   }
   out.push('');
 }
-out.push('\n---\n\nScript gerador: `node scripts/transcrever-ecf-lmn.mjs` (lê o PDF e o XLSX do corpus; rodar de novo com diff vazio é o teste de que esta transcrição ainda bate com a fonte). Marcas `†` = nome normalizado pelo parser (ver cabeçalho).\n');
+out.push(`
+## Lacunas de spec reveladas pela transcrição (sessão de feature, 2026-09-11)
+
+O que o Manual diz e o BRIEF 3B (§2 contratos) **ainda não diz** — registrado aqui, não corrigido no BRIEF
+(regra 2 da sessão de feature: lacuna de spec pausa, não escolhe). Cada item cita a página.
+
+1. **\`M300.TIPO_LANCAMENTO\` é \`[A; E; P; L]\`**, não só A/E (p.245): \`P\` compensação de prejuízo, \`L\` lucro. O
+   contrato §2.3 (\`tipoLancamento?: 'A'|'E'\`) precisa do alfabeto inteiro — e a derivação "vem da coluna
+   \`TIPO LANÇ\` da aba" tem de contemplar \`P\`/\`L\`.
+2. **\`M300.IND_RELACAO\` é \`[1; 2; 3; 4]\`** (p.245): \`3\` = com conta da Parte B **e** conta contábil; \`4\` = sem
+   relação. O contrato §2.3 (\`indRelacao?: '1'|'2'\`) está incompleto.
+3. **Em M300 só \`REG\` e \`CODIGO\` são obrigatórios** (p.244-245); \`VALOR\`, \`TIPO_LANCAMENTO\`, \`IND_RELACAO\`,
+   \`DESCRICAO\` são "Não" — mas as regras de campo (seção II) condicionam pelo **tipo da linha na tabela
+   dinâmica**: \`REGRA_OBRIGATORIO_TIPO_E\` exige \`TIPO_LANCAMENTO\` em linha \`E\`; \`REGRA_OBRIGATORIO_TIPO_R\`
+   proíbe \`VALOR\` em linha \`R\`; \`REGRA_IND_RELACAO\` obriga \`IND_RELACAO=1\` quando \`TIPO_LANCAMENTO=P\`. O DTO
+   precisa espelhar essas condicionais, não o "Obrigatório" cru da tabela.
+4. **\`M300.VALOR\` é \`NS\` e o sinal é semântico**: \`REGRA_VALOR_DETALHADO\` + a tabela de sinais na intro do M300
+   (p.244: "Adição ou Lucro − (negativo) → Erro no programa") — fecha a pendência §4 item 4 do BRIEF:
+   **valor sempre positivo para A/L; o sinal negativo é rejeitado**. \`z.number().int().nonnegative()\`.
+5. **\`M310.COD_CTA\` tem valores válidos \`[J050.COD_CTA]\`** (p.252) e \`REGRA_REGISTRO_M312_OBRIGATORIO\` exige
+   \`M312\` (números dos lançamentos contábeis) em certos casos — ou seja, \`IND_RELACAO=2\` amarra o ajuste a
+   uma conta do **Bloco J** (plano de contas da ECD recuperada) e possivelmente aos lançamentos da ECD.
+   Fecha a pendência §4 item 5: **o ajuste com relação contábil precisa de \`accountId\` do razão**, e o
+   contrato §2.1/§2.2 não tem esse campo.
+6. **\`M010\` tem chave composta \`COD_CTA_B + COD_TRIBUTO\`** (p.237) e \`COD_TRIBUTO ∈ [I; C]\` — a mesma conta
+   da Parte B existe separadamente para IRPJ e CSLL. O model §2.2 (\`@@unique([scopeId, codCtaB, …])\`) precisa
+   de \`codTributo\` na chave.
+7. **\`M010\` campos 5-10 transcritos**: \`COD_PB_RFB\` (C 6, aba \`PARTEB_PADRAO\`), \`DT_LIM_LAL\`, \`COD_TRIBUTO\`,
+   \`VL_SALDO_INI\`, \`IND_VL_SALDO_INI [D; C]\`, \`CNPJ_SIT_ESP\` — a pendência §4 item 3 deixa de existir para
+   M010; \`M410\`/\`M500\` idem (8 e 11 campos acima).
+8. **\`M500\` é controle de saldos por período com transporte para o \`E020\` da próxima ECF** (intro p.271) —
+   sustenta a leitura do Fork 4→(b), mas o BRIEF não lista \`M500\` como builder com teste próprio.
+
+---
+
+Script gerador: \`node scripts/transcrever-ecf-lmn.mjs\` (lê o PDF e o XLSX do corpus; rodar de novo com diff vazio é o teste de que esta transcrição ainda bate com a fonte). Marcas \`†\` = nome normalizado pelo parser (ver cabeçalho).
+`);
 await writeFile(outPath, out.join('\n'), 'utf8');
 const parserMarks = (out.join('\n').match(/\[PARSER\?\]/g) || []).length;
 console.log(`gerado: ${outPath} — ${REGS.length} registros, ${abas.length} abas, marcas [PARSER?]: ${parserMarks}`);
