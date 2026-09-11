@@ -88,6 +88,7 @@ function build(opts: Opts = {}) {
       return p;
     }),
     findPaymentById: jest.fn(async () => paymentRow()),
+    cancelPaymentIfActive: jest.fn(async () => 1), // review #307 F8: authoritative ACTIVE→CANCELLED flip
     findActivePayment: jest.fn(async () => null),
     findAllActivePayments: jest.fn(async () => [] as PayablePayment[]),
     updatePayment: jest.fn(async (_s, id: string, data: Record<string, unknown>) => paymentRow({ id, ...data } as Partial<PayablePayment>)),
@@ -536,6 +537,16 @@ describe('PayableService.cancelPayable — reverse recognition (F6/ACC-018/D3)',
     expect(reverseEntry).not.toHaveBeenCalled();
   });
 
+  it('F8: a concurrent duplicate cancel (flip count 0) returns idempotently — no release, no second audit', async () => {
+    const { service, payableRepo, auditService } = build();
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check passes
+    payableRepo.cancelPaymentIfActive.mockResolvedValueOnce(0);
+    await service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
+    expect(payableRepo.releaseSettlement).not.toHaveBeenCalled();
+    const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
+    expect(calls.filter((c) => c[2].eventType === 'payable.settlement_cancelled')).toHaveLength(0);
+  });
+
   it('refuses to cancel a PAID payable (must undo the payment first)', async () => {
     const { service, payableRepo } = build();
     payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PAID' }), payments: [] });
@@ -565,8 +576,7 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
 
     // reverseEntry swaps the legs → credits 2.1.2 back, netting the settlement to zero on 2.1.2.
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'set-1' });
-    const paymentUpd = payableRepo.updatePayment.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(paymentUpd.status).toBe('CANCELLED');
+    expect(payableRepo.cancelPaymentIfActive).toHaveBeenCalledWith(scope, 'paym-1', expect.anything()); // F8: flip autoritativo in-tx
     // BE-INCR-PARTIAL-SETTLEMENT (F-PS3 a): the cents go back through the atomic release, then the
     // status is recomputed from the row re-read in the same tx — 0 remaining paid → OPEN.
     expect(payableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'pay-1', 50000, expect.anything());

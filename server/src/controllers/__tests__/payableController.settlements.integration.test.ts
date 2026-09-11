@@ -165,6 +165,28 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     expect(events.filter((e) => e.payload.includes(target.id))).toHaveLength(1);
   });
 
+  // Review #307 F9: o cenário F1 ponta a ponta também no AP (o AR já o tinha).
+  it('F1 (AP): cancelar recibo finalizado enquanto o título está PAYING → 200, status fica para o finalize', async () => {
+    // Estado: 1 recibo ACTIVE de 20000. Simula outro em trânsito (claim +15000, sem finalize).
+    await prisma.payable.update({ where: { id: payableId }, data: { status: 'PAYING', paidCents: 35000 } });
+    const active = await prisma.payablePayment.findFirstOrThrow({ where: { payableId, status: 'ACTIVE' } });
+    const res = await request(app)
+      .post(`/api/payables/${payableId}/settlements/${active.id}/cancel`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, reversalDate: DATA, reason: 'cheque devolvido' });
+    expect(res.status).toBe(200);
+    let row = await prisma.payable.findUniqueOrThrow({ where: { id: payableId } });
+    expect(Number(row.paidCents)).toBe(15000);
+    expect(row.status).toBe('PAYING');
+    const { PayableRepository } = await import('@/features/accounting/repositories/PayableRepository');
+    const { resolveAccountingScope } = await import('@/features/accounting/scope/AccountingScope');
+    expect(await new PayableRepository().finalizeIfPaying(resolveAccountingScope({ userId: dono.id }, UNIT), payableId, 50000)).toBe(1);
+    row = await prisma.payable.findUniqueOrThrow({ where: { id: payableId } });
+    expect(row.status).toBe('PARTIALLY_PAID');
+    // Restaura um recibo ACTIVE coerente com o saldo para o caso seguinte (o em-trânsito simulado nunca ganhou linha).
+    await prisma.payablePayment.create({ data: { userId: dono.id, unitId: UNIT, payableId, amountCents: 15000, method: 'Pix', paidAt: new Date(DATA), paidByUserId: dono.id, status: 'ACTIVE' } });
+  });
+
   it('cancelar a conta com baixa ativa → 400 com a mensagem do 3º ramo (ADR F-PS2 site 3)', async () => {
     const res = await request(app)
       .post(`/api/payables/${payableId}/cancel`)

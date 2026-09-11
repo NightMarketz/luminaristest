@@ -227,6 +227,19 @@ export class ReceivableRepository implements IReceivableRepository {
     });
   }
 
+  public async cancelReceiptIfActive(
+    scope: AccountingScope,
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // MIRROR of PayableRepository.cancelPaymentIfActive (review #307 F8).
+    const result = await (tx ?? prisma).receivableReceipt.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'ACTIVE' },
+      data: { status: 'CANCELLED' },
+    });
+    return result.count;
+  }
+
   public async updateReceipt(
     scope: AccountingScope,
     id: string,

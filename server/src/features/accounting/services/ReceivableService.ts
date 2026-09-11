@@ -419,7 +419,14 @@ export class ReceivableService {
 
     // Reversal in PostingService's own tx; balance + status in ONE tx here (mirror of AP cancelPayment).
     return this.receivableRepo.runTransaction(async (tx) => {
-      const cancelled = await this.receivableRepo.updateReceipt(scope, receiptId, { status: 'CANCELLED' }, tx);
+      // Authoritative idempotency gate INSIDE the tx (review #307 F8) — mirror of AP cancelPayment.
+      const flipped = await this.receivableRepo.cancelReceiptIfActive(scope, receiptId, tx);
+      if (flipped === 0) {
+        const already = await this.receivableRepo.findReceiptById(scope, receiptId, tx);
+        if (!already) throw new NotFoundError(`Recebimento '${receiptId}' não foi encontrado.`);
+        return already;
+      }
+      const cancelled = { ...receipt, status: 'CANCELLED' };
       const released = await this.receivableRepo.releaseSettlement(scope, receivableId, cents, tx);
       if (released === 0) {
         throw new ValidationError(

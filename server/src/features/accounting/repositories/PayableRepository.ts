@@ -228,6 +228,20 @@ export class PayableRepository implements IPayableRepository {
     });
   }
 
+  public async cancelPaymentIfActive(
+    scope: AccountingScope,
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // Authoritative gate of the cancel (review #307 F8): only the caller that flips ACTIVE → CANCELLED
+    // gives the cents back; a concurrent duplicate gets 0 and returns idempotently.
+    const result = await (tx ?? prisma).payablePayment.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'ACTIVE' },
+      data: { status: 'CANCELLED' },
+    });
+    return result.count;
+  }
+
   public async updatePayment(
     scope: AccountingScope,
     id: string,

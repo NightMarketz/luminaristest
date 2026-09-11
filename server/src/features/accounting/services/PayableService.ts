@@ -672,7 +672,16 @@ export class PayableService {
     // balance/status change lives in ONE tx here, so decrement + recompute never split. A crash in
     // between is converged by re-running cancelPayment (reverseEntry is idempotent).
     return this.payableRepo.runTransaction(async (tx) => {
-      const cancelled = await this.payableRepo.updatePayment(scope, paymentId, { status: 'CANCELLED' }, tx);
+      // Authoritative idempotency gate INSIDE the tx (review #307 F8): the out-of-tx "already
+      // CANCELLED" read above is a fast path only. Two concurrent cancels of the same payment both
+      // pass it; only the one that flips ACTIVE → CANCELLED here gives the cents back.
+      const flipped = await this.payableRepo.cancelPaymentIfActive(scope, paymentId, tx);
+      if (flipped === 0) {
+        const already = await this.payableRepo.findPaymentById(scope, paymentId, tx);
+        if (!already) throw new NotFoundError(`Pagamento '${paymentId}' não foi encontrado.`);
+        return already; // idempotent — no release, no second audit
+      }
+      const cancelled = { ...payment, status: 'CANCELLED' };
       // F-PS3 → a: atomic decrement — the only refusal is the invariant (`paidCents >= cents`); the
       // pre-check above already screened it, so a 0 here is a race that broke the invariant.
       const released = await this.payableRepo.releaseSettlement(scope, payableId, cents, tx);

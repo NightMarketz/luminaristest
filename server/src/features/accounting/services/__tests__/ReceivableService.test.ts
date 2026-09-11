@@ -85,6 +85,7 @@ function build(opts: Opts = {}) {
       return r;
     }),
     findReceiptById: jest.fn(async () => receiptRow()),
+    cancelReceiptIfActive: jest.fn(async () => 1), // review #307 F8
     findActiveReceipt: jest.fn(async () => null),
     findAllActiveReceipts: jest.fn(async () => [] as ReceivableReceipt[]),
     updateReceipt: jest.fn(async (_s, id: string, data: Record<string, unknown>) => receiptRow({ id, ...data } as Partial<ReceivableReceipt>)),
@@ -474,8 +475,7 @@ describe('ReceivableService.cancelReceipt — reverse receipt + reopen (net-zero
     await service.cancelReceipt(scope, 'rec-1', 'recp-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
 
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'set-1' });
-    const receiptUpd = receivableRepo.updateReceipt.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(receiptUpd.status).toBe('CANCELLED');
+    expect(receivableRepo.cancelReceiptIfActive).toHaveBeenCalledWith(scope, 'recp-1', expect.anything()); // F8
     expect(receivableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'rec-1', 50000, expect.anything());
     const receivableUpd = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
     expect(receivableUpd.status).toBe('OPEN'); // reopened

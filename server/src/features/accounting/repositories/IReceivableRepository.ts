@@ -163,6 +163,9 @@ export interface IReceivableRepository {
   /** All ACTIVE receipts in scope (reconcile re-drive input). */
   findAllActiveReceipts(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<ReceivableReceipt[]>;
 
+  /** Atomic flip `ACTIVE → CANCELLED` of ONE receipt — MIRROR of AP `cancelPaymentIfActive` (review #307 F8). */
+  cancelReceiptIfActive(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+
   updateReceipt(
     scope: AccountingScope,
     id: string,

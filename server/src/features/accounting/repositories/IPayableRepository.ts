@@ -172,6 +172,15 @@ export interface IPayableRepository {
   /** All ACTIVE payments in scope (reconcile re-drive input). */
   findAllActivePayments(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<PayablePayment[]>;
 
+  /**
+   * Atomic, authoritative flip of ONE payment `ACTIVE → CANCELLED` (`updateMany` where status='ACTIVE').
+   * Returns the row count: 1 = this caller cancelled it (and is the only one allowed to give its cents
+   * back), 0 = already cancelled by a concurrent/previous call → idempotent return, NO release. Closes
+   * the double-cancel race (review #307 F8: the out-of-tx "already CANCELLED" read let two callers
+   * decrement twice). Must run inside the tx.
+   */
+  cancelPaymentIfActive(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+
   updatePayment(
     scope: AccountingScope,
     id: string,
