@@ -66,6 +66,9 @@ export interface CreateJobInput {
   kind: DataExchangeKind;
   status: DataExchangeStatus;
   requestedById: string;
+  /** Período coberto pelo artefato SPED (date-only, UTC 00:00). Só os exports SPED preenchem. */
+  periodStart?: Date | null;
+  periodEnd?: Date | null;
   originalName?: string | null;
   mimeType?: string | null;
   sizeBytes?: number | null;

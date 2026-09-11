@@ -293,6 +293,7 @@
           "unitId",
           "name",
           "email",
+          "cpf",
           "crcNumber",
           "crcUf"
         ],
@@ -309,9 +310,17 @@
             "format": "email",
             "description": "Canal de contato; o ENVIO é do dono (F-CD1-a, zero credencial no servidor)"
           },
+          "cpf": {
+            "type": "string",
+            "description": "J930 campo 03 IDENT_CPF_CNPJ — 11 dígitos com DV; máscara aceita e removida"
+          },
+          "phone": {
+            "type": "string",
+            "description": "J930 campo 08 FONE — 10 ou 11 dígitos com DDD; máscara aceita e removida"
+          },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC — inscrição no CRC. Normalizado (caixa alta); sem máscara porque o manual não declara formato"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D (grafias usuais aceitas e normalizadas); a UF tem de bater com crcUf"
           },
           "crcUf": {
             "type": "string",
@@ -348,8 +357,18 @@
             "type": "string",
             "format": "email"
           },
+          "cpf": {
+            "type": "string",
+            "description": "11 dígitos com DV"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "10-11 dígitos — null LIMPA"
+          },
           "crcNumber": {
-            "type": "string"
+            "type": "string",
+            "description": "UF-NNNNNN/O-D (CFC)"
           },
           "crcUf": {
             "type": "string",
@@ -383,8 +402,7 @@
         "required": [
           "unitId",
           "ecdJobId",
-          "ecfJobId",
-          "year"
+          "ecfJobId"
         ],
         "properties": {
           "unitId": {
@@ -392,15 +410,11 @@
           },
           "ecdJobId": {
             "type": "string",
-            "description": "Job EXPORTED da ECD (referência — o .txt nunca é copiado)"
+            "description": "Job EXPORTED da ECD (referência — o .txt nunca é copiado); o período vem dele"
           },
           "ecfJobId": {
             "type": "string",
-            "description": "Job EXPORTED da ECF"
-          },
-          "year": {
-            "type": "integer",
-            "description": "Ano-calendário coberto — o job não persiste ano (Fork Novo A)"
+            "description": "Job EXPORTED da ECF — tem de cobrir o MESMO período da ECD"
           }
         }
       },
@@ -410,7 +424,6 @@
           "unitId",
           "ecdJobId",
           "ecfJobId",
-          "year",
           "contactId",
           "confirmed"
         ],
@@ -424,12 +437,9 @@
           "ecfJobId": {
             "type": "string"
           },
-          "year": {
-            "type": "integer"
-          },
           "contactId": {
             "type": "string",
-            "description": "Contador escolhido — a resposta devolve nome e CRC dele (D7)"
+            "description": "Contador escolhido — a resposta devolve contact e o signer J930 montado dele (D7)"
           },
           "confirmed": {
             "type": "boolean",
@@ -8772,6 +8782,13 @@
                   "unitId": {
                     "type": "string"
                   },
+                  "signerContactIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF"
+                  },
                   "mappingVersion": {
                     "type": "string"
                   },
@@ -8939,6 +8956,13 @@
                 "properties": {
                   "unitId": {
                     "type": "string"
+                  },
+                  "signerContactIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF"
                   },
                   "year": {
                     "type": "integer",
@@ -9120,6 +9144,13 @@
                 "properties": {
                   "unitId": {
                     "type": "string"
+                  },
+                  "signerContactIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF"
                   },
                   "year": {
                     "type": "integer",

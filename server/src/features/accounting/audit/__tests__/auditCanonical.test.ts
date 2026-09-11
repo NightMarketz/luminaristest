@@ -233,8 +233,8 @@ describe('contact.* / delivery.* — PII do contador nunca sobrevive à canonica
   it.each([
     ['contact.archived', { contactId: 'c-1' }],
     ['delivery.package_built', {
-      deliveryId: 'd-1', ecdJobId: 'j-ecd', ecfJobId: 'j-ecf', year: 2026,
-      sha256Ecd: 'a'.repeat(64), sha256Ecf: 'b'.repeat(64),
+      deliveryId: 'd-1', ecdJobId: 'j-ecd', ecfJobId: 'j-ecf', periodStart: '2026-01-01',
+      periodEnd: '2026-12-31', sha256Ecd: 'a'.repeat(64), sha256Ecf: 'b'.repeat(64),
     }],
     ['delivery.sent', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 1 }],
     ['delivery.failed', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 2, reason: 'caixa cheia' }],

@@ -27,6 +27,7 @@ const contatoBody = (over: Record<string, unknown> = {}) => ({
   unitId: UNIT,
   name: 'Contabilidade HTTP',
   email: 'http@exemplo.com.br',
+  cpf: '529.982.247-25',
   crcNumber: 'SP-000777/O-1',
   crcUf: 'SP',
   ...over,
@@ -96,6 +97,79 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
       .send({ unitId: UNIT, deliveryId: 'outro-id' });
     expect(res.status).toBe(400);
     expect(String(res.body.error)).toMatch(/diverge/);
+  });
+
+  // ------------------------------------------------------------------ F2 — a "via barata" (cédula 10/09 §6)
+  /**
+   * `signerContactIds` no corpo da geração SPED vira signatário J930 do cadastro, ANTES do
+   * `.strict()`. Prova de ponta a ponta no esqueleto da ECF Lucro Real (o único gerador que roda
+   * sobre banco vazio): o arquivo gerado carrega a linha J930 do contador com o CRC do cadastro, e
+   * o job gravou o período (F3 → Fork Novo A → b) — sem `year` digitado em lugar nenhum da entrega.
+   */
+  const ecfRealBody = (over: Record<string, unknown> = {}) => ({
+    unitId: UNIT,
+    year: 2025,
+    declarant: {
+      cnpj: '11222333000181', nome: 'INDUSTRIA TESTE LTDA', codNat: '2062', cnaeFiscal: '9602501',
+      endereco: 'RUA DAS FLORES', num: '100', bairro: 'CENTRO', uf: 'DF', codMun: '5300108',
+      cep: '70000000', email: 'industria@teste.com',
+    },
+    fiscal: { formaTrib: '1', formaTribPer: 'XXXX' },
+    signers: [
+      { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
+    ],
+    ...over,
+  });
+
+  it('signerContactIds expande o contador do cadastro no 0930 da ECF gerada, e o job grava o período', async () => {
+    const created = await request(app)
+      .post('/api/accounting/contacts')
+      .set(authHeader(dono))
+      .send(contatoBody({ phone: '(61) 3333-4444' }));
+    const contactId = created.body.data.id as string;
+
+    const gen = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: [contactId] }));
+    expect(gen.status).toBe(201);
+
+    const job = await prisma.accountingDataExchangeJob.findUnique({ where: { id: gen.body.data.id } });
+    expect(job?.periodStart?.toISOString()).toBe('2025-01-01T00:00:00.000Z');
+    expect(job?.periodEnd?.toISOString()).toBe('2025-12-31T00:00:00.000Z');
+
+    const file = await request(app)
+      .get(`/api/accounting/data-exchange/jobs/${gen.body.data.id}/download`)
+      .query({ unitId: UNIT })
+      .set(authHeader(dono));
+    expect(file.status).toBe(200);
+    // ECF = registro 0930 (a ECD usa o J930 — shapes diferentes, mesmo contato)
+    const r0930 = String(file.text).split(/\r?\n/).filter((l) => l.startsWith('|0930|'));
+    expect(r0930.some((l) => l.includes('SP-000777/O-1') && l.includes('|900|'))).toBe(true);
+  });
+
+  it('signerContactIds com contato inexistente/alheio é 404 (escopo), e sem contador nenhum é 400 (controle)', async () => {
+    const notFound = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: ['nao-existe'] }));
+    expect(notFound.status).toBe(404);
+
+    // 0930 exige FONE: contato SEM telefone não assina a ECF pela via barata — 400 nomeando o contato
+    const semFone = await request(app).post('/api/accounting/contacts').set(authHeader(dono)).send(contatoBody());
+    const semFoneRes = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: [semFone.body.data.id] }));
+    expect(semFoneRes.status).toBe(400);
+    expect(String(semFoneRes.body.message)).toMatch(/telefone/); // handleApiError: { code, message }
+
+    // controle: sem signerContactIds e sem contador nos signers, o DTO reprova (REGRA_OBRIGATORIO_ASSIN_CONTADOR)
+    const noContador = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody());
+    expect(noContador.status).toBe(400);
   });
 
   // ------------------------------------------------------------------ review F1 — item 20 do BRIEF

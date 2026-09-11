@@ -18,6 +18,8 @@ CREATE TABLE "accounting_contacts" (
     "unitId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
+    "cpf" TEXT NOT NULL,
+    "phone" TEXT,
     -- Registro profissional espelhando o J930 da ECD (Manual do Leiaute 9, ADE Cofis 01/2026):
     -- 06 IND_CRC, 09 UF_CRC, 10 NUM_SEQ_CRC (UF/AAAA/NÚMERO), 11 DT_CRC.
     "crcNumber" TEXT NOT NULL,
@@ -45,7 +47,8 @@ CREATE TABLE "accounting_delivery_logs" (
     "contactId" TEXT NOT NULL,
     "ecdJobId" TEXT NOT NULL,
     "ecfJobId" TEXT NOT NULL,
-    "year" INTEGER NOT NULL,
+    "periodStart" DATETIME NOT NULL,
+    "periodEnd" DATETIME NOT NULL,
     "manifestSha256Ecd" TEXT NOT NULL,
     "manifestSha256Ecf" TEXT NOT NULL,
     "status" TEXT NOT NULL,
@@ -66,4 +69,4 @@ CREATE TABLE "accounting_delivery_logs" (
 CREATE UNIQUE INDEX "accounting_delivery_logs_ecdJobId_ecfJobId_contactId_key" ON "accounting_delivery_logs"("ecdJobId", "ecfJobId", "contactId");
 
 -- CreateIndex
-CREATE INDEX "accounting_delivery_logs_userId_unitId_year_idx" ON "accounting_delivery_logs"("userId", "unitId", "year");
+CREATE INDEX "accounting_delivery_logs_userId_unitId_periodStart_idx" ON "accounting_delivery_logs"("userId", "unitId", "periodStart");

@@ -3,11 +3,13 @@ import type { AccountingContact, AccountingDataExchangeJob, AccountingDeliveryLo
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import {
   buildDeliveryManifest,
-  CALENDAR_MONTHS,
   DELIVERY_PACKAGE_BUILT,
   DELIVERY_SENT,
+  monthsCovered,
+  toDateOnly,
   type DeliveryManifest,
 } from '../models/AccountingDelivery.model';
+import { contactToJ930Signer, type J930Signer } from '../models/AccountingContact.model';
 import type {
   BuildDeliveryPackageInput,
   ConfirmDeliveryInput,
@@ -41,7 +43,19 @@ export interface ConfirmDeliveryResult {
    */
   statusMeaning: string;
   contact: { name: string; crcNumber: string; crcUf: string };
+  /**
+   * D7 / item 13: o signatário J930 que o MESMO contato pré-preenche na geração (a "via barata",
+   * cédula 10/09 §6 F2) — contato e signatário lado a lado, sem parser do arquivo.
+   */
+  signer: J930Signer;
   manifest: DeliveryManifest;
+}
+
+/** Jobs já resolvidos e provados compatíveis: mesmo período nos dois. */
+interface ResolvedPair {
+  ecd: AccountingDataExchangeJob;
+  ecf: AccountingDataExchangeJob;
+  period: { start: Date; end: Date };
 }
 
 /**
@@ -86,12 +100,12 @@ export class AccountingDeliveryService {
     if (!this.policy.canManageAccountingContact(scope)) {
       throw new ForbiddenError('Você não tem permissão para montar entregas ao contador.');
     }
-    const { ecd, ecf } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
-    await this.assertYearHardClosed(scope, dto.year);
+    const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
+    await this.assertPeriodHardClosed(scope, period);
 
     const full = buildDeliveryManifest({
       scope,
-      year: dto.year,
+      period,
       contactId: '',
       ecd: { jobId: ecd.id, sha256: ecd.sha256 as string },
       ecf: { jobId: ecf.id, sha256: ecf.sha256 as string },
@@ -117,12 +131,12 @@ export class AccountingDeliveryService {
       throw new ForbiddenError('Você não tem permissão para confirmar entregas ao contador.');
     }
     const contact = await this.requireContact(scope, dto.contactId);
-    const { ecd, ecf } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
+    const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
 
     const { userId, unitId } = accountingScopeWhere(scope);
     const manifest = buildDeliveryManifest({
       scope,
-      year: dto.year,
+      period,
       contactId: contact.id,
       ecd: { jobId: ecd.id, sha256: ecd.sha256 as string },
       ecf: { jobId: ecf.id, sha256: ecf.sha256 as string },
@@ -132,7 +146,7 @@ export class AccountingDeliveryService {
     const delivery = await this.deliveryRepo.runTransaction(async (tx) => {
       // GATE AUTORITATIVO — re-checado DENTRO da tx com `tx` propagado ao repo. O preflight do
       // buildDeliveryPackage não fecha o TOCTOU: um mês reaberto no meio do caminho passaria.
-      await this.assertYearHardClosed(scope, dto.year, tx);
+      await this.assertPeriodHardClosed(scope, period, tx);
 
       const existing = await this.deliveryRepo.findByJobsAndContact(
         scope,
@@ -151,7 +165,8 @@ export class AccountingDeliveryService {
             contactId: contact.id,
             ecdJobId: ecd.id,
             ecfJobId: ecf.id,
-            year: dto.year,
+            periodStart: period.start,
+            periodEnd: period.end,
             manifestSha256Ecd: manifest.files[0].sha256,
             manifestSha256Ecf: manifest.files[1].sha256,
             status: 'SENT',
@@ -189,6 +204,7 @@ export class AccountingDeliveryService {
       statusMeaning:
         'SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento.',
       contact: { name: contact.name, crcNumber: contact.crcNumber, crcUf: contact.crcUf },
+      signer: contactToJ930Signer(contact),
       manifest,
     };
   }
@@ -249,14 +265,18 @@ export class AccountingDeliveryService {
   /**
    * Resolve os dois jobs PELO ESCOPO (cross-tenant → `NotFoundError`, nunca `ForbiddenError` —
    * mesmo padrão de `DataExchangeExportService.getArtifactForDownload`) e prova que servem de
-   * pacote: kind correto, `EXPORTED`, e `sha256` gravado. Um job sem `sha256` não pode entrar num
-   * manifesto que promete integridade — é 400, nunca hash vazio no log.
+   * pacote: kind correto, `EXPORTED`, `sha256` gravado, **período persistido e IGUAL nos dois**.
+   * Um job sem `sha256` não pode entrar num manifesto que promete integridade — é 400, nunca hash
+   * vazio no log. Um job sem período (gerado antes da migração `job_period_covered`) é 400: o
+   * sistema não sabe o que ele cobre, e dizer "pronto para assinar" seria chute. ECD e ECF de
+   * períodos diferentes é 400: é o furo F3 do review (arquivos de 2025 rotulados 2026) fechado na
+   * origem — a entrega nunca mais depende de um ano digitado (Fork Novo A → b).
    */
   private async resolveJobs(
     scope: AccountingScope,
     ecdJobId: string,
     ecfJobId: string,
-  ): Promise<{ ecd: AccountingDataExchangeJob; ecf: AccountingDataExchangeJob }> {
+  ): Promise<ResolvedPair> {
     const ecd = await this.dataExchangeRepo.findJobById(scope, ecdJobId);
     if (!ecd) throw new NotFoundError(`Job da ECD '${ecdJobId}' não foi encontrado.`);
     const ecf = await this.dataExchangeRepo.findJobById(scope, ecfJobId);
@@ -279,29 +299,49 @@ export class AccountingDeliveryService {
           `O job '${job.id}' não tem sha256 gravado — sem ele o manifesto não prova integridade.`,
         );
       }
+      if (!job.periodStart || !job.periodEnd) {
+        throw new ValidationError(
+          `O job '${job.id}' não tem período gravado (gerado antes da migração de período) — ` +
+            'regere o arquivo para entregá-lo.',
+        );
+      }
     }
-    return { ecd, ecf };
+    const ecdStart = ecd.periodStart as Date;
+    const ecdEnd = ecd.periodEnd as Date;
+    const ecfStart = ecf.periodStart as Date;
+    const ecfEnd = ecf.periodEnd as Date;
+    if (ecdStart.getTime() !== ecfStart.getTime() || ecdEnd.getTime() !== ecfEnd.getTime()) {
+      throw new ValidationError(
+        `ECD cobre ${toDateOnly(ecdStart)}..${toDateOnly(ecdEnd)} e ECF cobre ` +
+          `${toDateOnly(ecfStart)}..${toDateOnly(ecfEnd)} — o pacote exige o mesmo período nos dois.`,
+      );
+    }
+    return { ecd, ecf, period: { start: ecdStart, end: ecdEnd } };
   }
 
   /**
-   * F-CD7-a: os DOZE meses do ano-calendário têm de estar `HARD_CLOSED`. Não é só dezembro —
-   * ECD/ECF cobrem o ano inteiro, e um lançamento em qualquer mês ainda `OPEN`/`SOFT_CLOSED`
-   * mudaria o resultado anual que o contador assinaria. Período não semeado conta como NÃO fechado.
+   * F-CD7-a: TODOS os meses que o arquivo cobre têm de estar `HARD_CLOSED` — "12 meses seguidos
+   * sempre, ou período selecionado" (cédula 10/09 §6, F3). Para o exercício-calendário são os 12;
+   * para uma situação especial, os meses do período do job. Um lançamento em qualquer mês ainda
+   * `OPEN`/`SOFT_CLOSED` mudaria o resultado que o contador assinaria. Mês não semeado conta como
+   * NÃO fechado.
    */
-  private async assertYearHardClosed(
+  private async assertPeriodHardClosed(
     scope: AccountingScope,
-    year: number,
+    period: { start: Date; end: Date },
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    const open: number[] = [];
-    for (const month of CALENDAR_MONTHS) {
-      const period = await this.periodRepo.findByYearMonth(scope, year, month, tx);
-      if (!period || period.status !== HARD_CLOSED) open.push(month);
+    const months = monthsCovered(period.start, period.end);
+    const open: string[] = [];
+    for (const { year, month } of months) {
+      const row = await this.periodRepo.findByYearMonth(scope, year, month, tx);
+      if (!row || row.status !== HARD_CLOSED) open.push(`${year}-${String(month).padStart(2, '0')}`);
     }
     if (open.length > 0) {
       throw new ValidationError(
-        `O pacote de ${year} não está pronto para assinar: ${open.length} de 12 meses não estão ` +
-          `HARD_CLOSED (${open.join(', ')}). Feche o exercício inteiro antes de entregar ao contador.`,
+        `O pacote de ${toDateOnly(period.start)}..${toDateOnly(period.end)} não está pronto para ` +
+          `assinar: ${open.length} de ${months.length} meses não estão HARD_CLOSED (${open.join(', ')}). ` +
+          'Feche o período inteiro antes de entregar ao contador.',
       );
     }
   }
@@ -343,7 +383,8 @@ export class AccountingDeliveryService {
         deliveryId: delivery.id,
         ecdJobId: delivery.ecdJobId,
         ecfJobId: delivery.ecfJobId,
-        year: delivery.year,
+        periodStart: toDateOnly(delivery.periodStart),
+        periodEnd: toDateOnly(delivery.periodEnd),
         sha256Ecd: manifest.files[0].sha256,
         sha256Ecf: manifest.files[1].sha256,
       },

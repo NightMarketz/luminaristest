@@ -30,7 +30,7 @@ function makeJob(over: Partial<AccountingDataExchangeJob> = {}): AccountingDataE
     sizeBytes: null, sha256: null, storageKey: null, totalRows: 0, validRows: 0,
     invalidRows: 0, committedRows: 0, requestedById: 'owner-1', committedById: null,
     createdAt: new Date('2026-07-01T00:00:00Z'), updatedAt: new Date('2026-07-01T00:00:00Z'),
-    committedAt: null, ...over,
+    committedAt: null, periodStart: null, periodEnd: null, ...over,
   };
 }
 

@@ -3,7 +3,7 @@
  * Unit: repos e auditoria são dublês; o que se prova aqui é ORDEM (policy antes de dado), tradução
  * de erro (cross-tenant → NotFound) e o conteúdo do payload de auditoria (PII fora).
  */
-import { ForbiddenError, NotFoundError } from '@/lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { AccountingContactService } from '@/features/accounting/services/AccountingContactService';
 import type { IAccountingContactRepository } from '@/features/accounting/repositories/IAccountingContactRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
@@ -22,6 +22,8 @@ const contactRow = {
   unitId: 'unit-1',
   name: 'Contabilidade Silva',
   email: 'silva@exemplo.com.br',
+  cpf: '52998224725',
+  phone: null as string | null,
   crcNumber: 'SP-123456/O-1',
   crcUf: 'SP',
   crcCertificate: 'SP/2026/000123' as string | null,
@@ -74,7 +76,8 @@ describe('AccountingContactService', () => {
         unitId: 'unit-1',
         name: 'X',
         email: 'x@y.com',
-        crcNumber: '1',
+        cpf: '52998224725',
+        crcNumber: 'SP-000001/O-1',
         crcUf: 'SP',
       }),
     ).rejects.toThrow(ForbiddenError);
@@ -94,6 +97,7 @@ describe('AccountingContactService', () => {
       unitId: 'unit-1',
       name: 'Contabilidade Silva',
       email: 'silva@exemplo.com.br',
+      cpf: '52998224725',
       crcNumber: 'SP-123456/O-1',
       crcUf: 'SP',
     });
@@ -114,6 +118,7 @@ describe('AccountingContactService', () => {
     const serialized = JSON.stringify(event.payload);
     expect(serialized).not.toContain('Contabilidade Silva');
     expect(serialized).not.toContain('silva@exemplo.com.br');
+    expect(serialized).not.toContain('52998224725'); // cpf também é PII de terceiro
   });
 
   it('a escrita e o evento saem na MESMA tx (o append recebe o handle da tx)', async () => {
@@ -122,7 +127,8 @@ describe('AccountingContactService', () => {
       unitId: 'unit-1',
       name: 'X',
       email: 'x@y.com',
-      crcNumber: '1',
+      cpf: '52998224725',
+      crcNumber: 'SP-000001/O-1',
       crcUf: 'SP',
     });
     expect(auditAppend.mock.calls[0]![0]).toEqual({ tx: true });
@@ -193,12 +199,37 @@ describe('AccountingContactService', () => {
     expect(data2).toEqual({ crcCertificateValidUntil: new Date('2027-01-31T00:00:00.000Z') });
   });
 
+  // ---------------------------------------------------------------- F13 — cruzamento no patch parcial
+  it('updateContact recusa patch que deixaria UF e número do CRC inconsistentes (lê a linha atual)', async () => {
+    const { service, update } = build(); // linha atual: SP-123456/O-1 + SP
+    await expect(
+      service.updateContact(scope, 'contact-1', { unitId: 'unit-1', contactId: 'contact-1', crcUf: 'RJ' }),
+    ).rejects.toThrow(ValidationError);
+    await expect(
+      service.updateContact(scope, 'contact-1', {
+        unitId: 'unit-1',
+        contactId: 'contact-1',
+        crcNumber: 'RJ-000001/O-1',
+      }),
+    ).rejects.toThrow(/diverge/);
+    expect(update).not.toHaveBeenCalled();
+
+    // controle: os dois juntos, consistentes, passam
+    await service.updateContact(scope, 'contact-1', {
+      unitId: 'unit-1',
+      contactId: 'contact-1',
+      crcNumber: 'RJ-000001/O-1',
+      crcUf: 'RJ',
+    });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
   it('updateContact NÃO emite evento de auditoria (lacuna de spec registrada, não esquecimento)', async () => {
     const { service, auditAppend } = build();
     await service.updateContact(scope, 'contact-1', {
       unitId: 'unit-1',
       contactId: 'contact-1',
-      crcNumber: 'RJ-9',
+      crcNumber: 'SP-000009/O-9',
     });
     // O BRIEF (item 14) não listou `contact.updated` na allowlist, e canonicalizeAuditPayload LANÇA
     // para eventType desconhecido. Este teste CONGELA a decisão: quando o dono ratificar o evento,

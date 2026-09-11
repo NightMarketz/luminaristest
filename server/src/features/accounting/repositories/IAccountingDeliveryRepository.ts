@@ -8,7 +8,9 @@ export interface CreateDeliveryLogData {
   contactId: string;
   ecdJobId: string;
   ecfJobId: string;
-  year: number;
+  /** Período coberto, copiado do job de origem (Fork Novo A → b). */
+  periodStart: Date;
+  periodEnd: Date;
   manifestSha256Ecd: string;
   manifestSha256Ecf: string;
   status: string;

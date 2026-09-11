@@ -32,6 +32,8 @@ const contact = {
   unitId: 'unit-1',
   name: 'Contabilidade Silva',
   email: 'silva@exemplo.com.br',
+  cpf: '52998224725',
+  phone: '11999998888',
   crcNumber: 'SP-123456/O-1',
   crcUf: 'SP',
   crcCertificate: 'SP/2026/000123',
@@ -42,7 +44,15 @@ const contact = {
   deletedAt: null,
 };
 
-const job = (id: string, kind: string, sha256: string | null, status = 'EXPORTED') => ({
+const PERIOD = { start: new Date('2026-01-01T00:00:00.000Z'), end: new Date('2026-12-31T00:00:00.000Z') };
+
+const job = (
+  id: string,
+  kind: string,
+  sha256: string | null,
+  status = 'EXPORTED',
+  period: { start: Date | null; end: Date | null } = PERIOD,
+) => ({
   id,
   userId: 'dono-a',
   unitId: 'unit-1',
@@ -63,6 +73,8 @@ const job = (id: string, kind: string, sha256: string | null, status = 'EXPORTED
   createdAt: new Date(),
   updatedAt: new Date(),
   committedAt: null,
+  periodStart: period.start,
+  periodEnd: period.end,
 });
 
 const deliveryRow = {
@@ -72,7 +84,8 @@ const deliveryRow = {
   contactId: 'contact-1',
   ecdJobId: 'job-ecd',
   ecfJobId: 'job-ecf',
-  year: YEAR,
+  periodStart: PERIOD.start,
+  periodEnd: PERIOD.end,
   manifestSha256Ecd: SHA_ECD,
   manifestSha256Ecf: SHA_ECF,
   status: 'SENT',
@@ -161,7 +174,7 @@ function build(opts: Opts = {}) {
   };
 }
 
-const buildDto = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf', year: YEAR };
+const buildDto = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf' };
 const confirmDto = { ...buildDto, contactId: 'contact-1', confirmed: true as const };
 
 describe('AccountingDeliveryService', () => {
@@ -180,7 +193,7 @@ describe('AccountingDeliveryService', () => {
     it('VERDE: 12/12 HARD_CLOSED deixa o preflight passar', async () => {
       const { service, findByYearMonth } = build();
       const manifest = await service.buildDeliveryPackage(scope, buildDto);
-      expect(manifest.year).toBe(YEAR);
+      expect(manifest.period).toEqual({ start: '2026-01-01', end: '2026-12-31' });
       expect(findByYearMonth).toHaveBeenCalledTimes(12);
     });
 
@@ -188,7 +201,7 @@ describe('AccountingDeliveryService', () => {
       const { service } = build({ openMonths: [7] });
       await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(ValidationError);
       await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/1 de 12 meses/);
-      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/\(7\)/);
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/2026-07/);
     });
 
     it('mês NÃO SEMEADO conta como não fechado (ausência não é fechamento)', async () => {
@@ -199,6 +212,39 @@ describe('AccountingDeliveryService', () => {
     it('só dezembro fechado NÃO basta — o ano inteiro é o escopo da ECD/ECF', async () => {
       const { service } = build({ openMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] });
       await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/11 de 12 meses/);
+    });
+
+    // ---------------------------------------------------------------- F3 → Fork Novo A → (b)
+    // "12 meses seguidos sempre, ou período selecionado": o gate itera os meses DO JOB. Um job de
+    // situação especial (maio..dezembro) checa 8 meses, não 12 — e nenhum `year` digitado entra.
+    it('período selecionado no job (maio..dez) checa exatamente os 8 meses cobertos', async () => {
+      const special = { start: new Date('2026-05-01T00:00:00.000Z'), end: new Date('2026-12-31T00:00:00.000Z') };
+      const { service, findByYearMonth } = build({
+        ecdJob: job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD, 'EXPORTED', special),
+        ecfJob: job('job-ecf', 'EXPORT_SPED_ECF', SHA_ECF, 'EXPORTED', special),
+      });
+      const manifest = await service.buildDeliveryPackage(scope, buildDto);
+      expect(manifest.period).toEqual({ start: '2026-05-01', end: '2026-12-31' });
+      expect(findByYearMonth).toHaveBeenCalledTimes(8);
+      expect(findByYearMonth.mock.calls.map((c) => c[2])).toEqual([5, 6, 7, 8, 9, 10, 11, 12]);
+    });
+
+    // O furo F3 fechado na origem: jobs de 2025 NÃO viram pacote de 2026, porque não existe mais
+    // ano digitado — e ECD/ECF de períodos diferentes são recusados antes de qualquer gate.
+    it('ECD e ECF de períodos DIFERENTES são 400 antes do gate (o furo F3, fechado na origem)', async () => {
+      const p2025 = { start: new Date('2025-01-01T00:00:00.000Z'), end: new Date('2025-12-31T00:00:00.000Z') };
+      const { service, findByYearMonth } = build({
+        ecdJob: job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD, 'EXPORTED', p2025),
+      });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/mesmo período/);
+      expect(findByYearMonth).not.toHaveBeenCalled();
+    });
+
+    it('job SEM período gravado (gerado antes da migração) é 400 — o sistema não sabe o que ele cobre', async () => {
+      const { service } = build({
+        ecfJob: job('job-ecf', 'EXPORT_SPED_ECF', SHA_ECF, 'EXPORTED', { start: null, end: null }),
+      });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/não tem período/);
     });
 
     // Esta é a diferença entre um preflight e uma garantia: sem a re-checagem in-tx, reabrir um mês
@@ -262,13 +308,28 @@ describe('AccountingDeliveryService', () => {
       const [data] = create.mock.calls[0] as unknown as [Record<string, unknown>];
       expect(data.status).toBe('SENT');
       expect(data.manifestSha256Ecd).toBe(SHA_ECD);
-      expect(data.year).toBe(YEAR);
+      expect(data.periodStart).toEqual(PERIOD.start);
+      expect(data.periodEnd).toEqual(PERIOD.end);
       expect(result.contact).toEqual({
         name: 'Contabilidade Silva',
         crcNumber: 'SP-123456/O-1',
         crcUf: 'SP',
       });
       expect(result.manifest.contactId).toBe('contact-1');
+      // D7 / F2 — o signatário J930 que o MESMO contato pré-preenche, lado a lado com o contato
+      expect(result.signer).toEqual({
+        identNom: 'Contabilidade Silva',
+        identCpfCnpj: '52998224725',
+        identQualif: 'Contador',
+        codAssin: '900',
+        indCrc: 'SP-123456/O-1',
+        email: 'silva@exemplo.com.br',
+        fone: '11999998888',
+        ufCrc: 'SP',
+        numSeqCrc: 'SP/2026/000123',
+        dtCrc: '2026-12-31',
+        indRespLegal: 'N',
+      });
       // A semântica de SENT viaja com a resposta — um leitor futuro não pode achar que o servidor
       // confirmou entrega (F-CD1-a: não existe transporte aqui).
       expect(result.statusMeaning).toMatch(/operador confirmou/);

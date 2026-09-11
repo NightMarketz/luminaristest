@@ -614,6 +614,14 @@ model AccountingDataExchangeJob {
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
   committedAt     DateTime?
+  // Período coberto pelo ARTEFATO gerado (só exports SPED preenchem; imports e demais exports ficam
+  // null). BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) ratificado em 2026-09-10 (cédula §6, F3):
+  // a entrega lê o período DAQUI, nunca de um `year` digitado — jobs de 2025 não podem virar um
+  // pacote "pronto para assinar 2026". Date-only: 12 meses seguidos hoje (ADR-SPED-ECD D4), ou o
+  // período selecionado quando a geração passar a aceitá-lo (situação especial). Nullable de
+  // propósito: NOT NULL com default forçaria rebuild da tabela no SQLite (lição do expenseAccountId).
+  periodStart     DateTime?
+  periodEnd       DateTime?
   rows            AccountingDataExchangeRow[]
   // Reverse relations of AccountingDeliveryLog (BE-INCR-CONTADOR-DELIVERY, F-CD4-a). ÚNICA mudança
   // neste model: zero coluna nova, zero backfill — o log de entrega REFERENCIA o job de origem
@@ -1279,6 +1287,8 @@ model AccountingContact {
   unitId                   String // business unit (scoped string, not a FK)
   name                     String // PII de terceiro — nunca em payload de auditoria (D5)
   email                    String // PII de terceiro — idem; canal de envio é do DONO (F-CD1-a: zero credencial aqui)
+  cpf                      String // J930 campo 03 IDENT_CPF_CNPJ do signatário 900 — 11 dígitos com DV (cédula 10/09 §6, F2/F13)
+  phone                    String? // J930 campo 08 FONE — só dígitos, 10-11
   // Registro profissional espelhando o J930 da ECD (Manual do Leiaute 9, ADE Cofis 01/2026,
   // campos 06/09/10/11) — é o que o pré-preenchimento do signatário COD_ASSIN=900 consome.
   crcNumber                String // J930 campo 06 IND_CRC — o manual NÃO declara formato; normalizado, não mascarado
@@ -1319,7 +1329,8 @@ model AccountingDeliveryLog {
   ecdJob            AccountingDataExchangeJob @relation("DeliveryEcdJob", fields: [ecdJobId], references: [id], onDelete: Restrict)
   ecfJobId          String
   ecfJob            AccountingDataExchangeJob @relation("DeliveryEcfJob", fields: [ecfJobId], references: [id], onDelete: Restrict)
-  year              Int // ano-calendário coberto pelo pacote — explícito (Fork Novo A → a)
+  periodStart       DateTime // período coberto pelo pacote, COPIADO do job de origem (Fork Novo A → b, cédula 10/09 §6)
+  periodEnd         DateTime
   manifestSha256Ecd String // lido de job.sha256, nunca recomputado (F-CD6-a)
   manifestSha256Ecf String
   status            String // QUEUED | SENT | FAILED (DELIVERY_STATUSES)
@@ -1332,6 +1343,6 @@ model AccountingDeliveryLog {
   updatedAt         DateTime                  @updatedAt
 
   @@unique([ecdJobId, ecfJobId, contactId])
-  @@index([userId, unitId, year])
+  @@index([userId, unitId, periodStart])
   @@map("accounting_delivery_logs")
 }

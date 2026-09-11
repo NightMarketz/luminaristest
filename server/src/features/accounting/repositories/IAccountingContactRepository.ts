@@ -7,6 +7,10 @@ export interface CreateAccountingContactData {
   unitId: string;
   name: string;
   email: string;
+  /** J930 campo 03 (IDENT_CPF_CNPJ) — 11 dígitos, DV validado pelo DTO. */
+  cpf: string;
+  /** J930 campo 08 (FONE) — só dígitos; opcional no manual. */
+  phone: string | null;
   /** J930 campo 06 (IND_CRC) — inscrição no CRC, já normalizada pelo DTO. */
   crcNumber: string;
   /** J930 campo 09 (UF_CRC) — sigla da UF, validada contra a Tabela de UF. */

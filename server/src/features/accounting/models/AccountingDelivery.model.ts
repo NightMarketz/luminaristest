@@ -41,7 +41,8 @@ export interface DeliveryManifestFile {
  */
 export interface DeliveryManifest {
   scope: { unitId: string; ledgerCode: string };
-  year: number;
+  /** Período coberto pelos dois arquivos (date-only), COPIADO do job — nunca digitado. */
+  period: { start: string; end: string };
   contactId: string;
   files: DeliveryManifestFile[];
   generatedAt: string;
@@ -57,7 +58,7 @@ export interface DeliveryManifest {
  */
 export function buildDeliveryManifest(params: {
   scope: AccountingScope;
-  year: number;
+  period: { start: Date; end: Date };
   contactId: string;
   ecd: { jobId: string; sha256: string };
   ecf: { jobId: string; sha256: string };
@@ -65,7 +66,7 @@ export function buildDeliveryManifest(params: {
 }): DeliveryManifest {
   return {
     scope: { unitId: params.scope.unitId, ledgerCode: params.scope.ledgerCode },
-    year: params.year,
+    period: { start: toDateOnly(params.period.start), end: toDateOnly(params.period.end) },
     contactId: params.contactId,
     files: [
       { kind: 'ECD', jobId: params.ecd.jobId, sha256: params.ecd.sha256 },
@@ -75,9 +76,35 @@ export function buildDeliveryManifest(params: {
   };
 }
 
+/** `Date` (UTC 00:00) → `YYYY-MM-DD`. */
+export function toDateOnly(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 /**
- * Os 12 meses do ano-calendário. O gate de período (F-CD7-a, item 7) exige TODOS eles
- * `HARD_CLOSED`, não só dezembro: ECD/ECF cobrem o ano inteiro, e um lançamento em qualquer mês
- * ainda `OPEN`/`SOFT_CLOSED` muda o resultado anual que o contador assinaria.
+ * Os meses `{year, month}` cobertos por um período date-only, inclusive nas duas pontas. O gate de
+ * período (F-CD7-a, item 7) exige TODOS eles `HARD_CLOSED`: "12 meses seguidos sempre, ou período
+ * selecionado" (decisão do dono 2026-09-10, cédula §6, F3) — para o exercício-calendário são os 12;
+ * para uma situação especial, os meses que o arquivo de fato cobre. Um lançamento em qualquer mês
+ * do período ainda `OPEN`/`SOFT_CLOSED` muda o resultado que o contador assinaria. Lança se o
+ * período for vazio ou invertido — isso é dado corrompido no job, não caso de negócio.
  */
-export const CALENDAR_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+export function monthsCovered(start: Date, end: Date): Array<{ year: number; month: number }> {
+  if (end.getTime() < start.getTime()) {
+    throw new Error(`Período invertido: ${toDateOnly(start)} > ${toDateOnly(end)}`);
+  }
+  const out: Array<{ year: number; month: number }> = [];
+  let y = start.getUTCFullYear();
+  let m = start.getUTCMonth() + 1;
+  const endY = end.getUTCFullYear();
+  const endM = end.getUTCMonth() + 1;
+  while (y < endY || (y === endY && m <= endM)) {
+    out.push({ year: y, month: m });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}

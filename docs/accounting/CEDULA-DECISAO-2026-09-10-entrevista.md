@@ -26,6 +26,10 @@ Três sinais na mesma sessão, em ordem:
    respostas"* (§2).
 3. **A ratificação dos 4 forks novos** abertos pelas próprias respostas (§3) — três na recomendação,
    F-BANK-1 contra ela.
+4. **As respostas aos 3 achados do review independente + a contradição F-DFE-2** (§6) — literal:
+   *"f3. 12 meses seguidos sempre, ou período selecionado · f2. crie a via barata · f13. pode fazer
+   máscara em todos os campos · 4. force, um usuário pode ter mais cnpj, mas vai ter que pagar mais
+   usuários"*.
 
 ## 2. Decisões ratificadas
 
@@ -170,3 +174,20 @@ teste, e `prisma migrate diff` continua "No difference detected".
 **Fica aberto, fora desta branch:** o código de qualificação do signatário (`IDENT_QUALIF`/`COD_ASSIN`)
 na geração do SPED continua `string` livre; virar enum do manual é o nó "endurecimento dos campos de
 identidade" contado no re-baseline (§4).
+
+## 6. Quarto sinal — achados do review independente (2026-09-10, mesma sessão)
+
+O review independente do `BE-INCR-CONTADOR-DELIVERY` (FAIL → ciclo → review-delta PASS) deixou três
+achados que só o dono decide. Respondidos, e o que cada resposta AUTORIZA em código:
+
+| Achado | Resposta literal | Leitura executável | O que muda |
+|---|---|---|---|
+| **F3** — o gate dos 12 meses validava o `year` DIGITADO, não o período que os arquivos cobrem (jobs de 2025 + `year: 2026` fechado = "pronto para assinar 2026" sobre arquivos de 2025) | *"12 meses seguidos sempre, ou período selecionado"* | O período da entrega é **o período do arquivo**: 12 meses seguidos (exercício-calendário, único que a geração produz hoje — ADR-SPED-ECD D4) **ou um período selecionado** quando a geração passar a aceitá-lo (situação especial). Para isso o período tem de viver **no job**, não no DTO da entrega — é o **Fork Novo A → (b)** que o próprio BRIEF nomeava como upgrade natural. **Reabre o item 15 do BRIEF** (zero diff nos serviços SPED): os 3 serviços de geração passam a gravar `periodStart/periodEnd` no job que criam | migração ADITIVA em `accounting_data_exchange_jobs` (2 colunas nullable, `ADD COLUMN`, sem rebuild); DTOs de entrega perdem `year`; o gate itera os meses de `[periodStart, periodEnd]`; ECD e ECF têm de cobrir o **mesmo** período (400 se não) |
+| **F2** — a resposta da entrega nunca mostra o signatário do arquivo; a "via barata" (caller pré-preenche o J930 pelo cadastro) não existia em caller nenhum | *"crie a via barata"* | O **caller** que monta o `SignerSchema` — o controller de geração SPED, exatamente onde o item 15 do BRIEF diz que a integração cadastro→geração mora — aceita `signerContactIds[]` e expande cada contato em um signatário J930 (`codAssin=900`, `identQualif='Contador'`) **antes** do `.strict()`. Os serviços e DTOs de geração **não mudam**. A resposta da entrega passa a devolver `signer` (o mesmo mapeamento) ao lado de `contact` — item 13 (D7) fecha | `AccountingContact` ganha `cpf` (J930 `IDENT_CPF_CNPJ` é obrigatório) e `phone?`; mapper puro `contactToJ930Signer`; expansão nos 3 endpoints de geração |
+| **F13** — a leitura "máscara só onde o manual declara" (o `IND_CRC` ficou sem máscara) estava registrada só em cédula escrita pelo agente | *"pode fazer máscara em todos os campos"* | Máscara em **todos** os campos de identidade do contato: `cpf` (11 dígitos + dígitos verificadores), `crcNumber` no formato do **Manual de Registro do Sistema CFC/CRCs** (`1UFXXXXXX/O-X`: categoria, UF, 6 dígitos, O/T, DV — normalizado para `UF-NNNNNN/O-D`) com a UF do número **cruzada** com `crcUf`, `phone` só dígitos (10-11), `crcCertificate` e `crcCertificateValidUntil` como já estavam | supera a nota do §5 desta cédula ("sem máscara porque o manual não declara") — a fonte da máscara do CRC é o CFC, não o manual da ECD |
+| **4 — F-DFE-2 × resposta 16** | *"force, um usuário pode ter mais cnpj, mas vai ter que pagar mais usuários"* | **Uma conta de emissão por CNPJ, forçado.** Um mesmo dono com N CNPJs paga N usuários/instâncias. Emenda o `ADR-INCR-DFE` F-DFE-2: a premissa "os parceiros aceitam N CNPJs por conta" deixa de ser critério de D5; vira **modelo comercial** (por CNPJ), não capacidade técnica | emenda registrada no ADR (§Forks, linha F-DFE-2) nesta mesma data; código só na rodada 12 |
+
+**Grau da fonte do CRC (F13):** o formato `1UFXXXXXX/O-X` vem do *Manual de Registro do Sistema CFC/CRCs*
+(cfc.org.br, 2ª ed. 2009) por resumo de busca — **o PDF não foi aberto nesta sessão**. A máscara aceita
+as grafias usuais (`SP-123456/O-1`, `1SP123456/O-1`, `CRC-SP 123456/O-1`) e normaliza; se o manual
+impuser algo além disso, é ajuste de regex com teste, não de desenho.

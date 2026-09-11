@@ -18,10 +18,16 @@
           "format": "email",
           "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
         },
+        "cpf": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
         "crcNumber": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 20
+          "maxLength": 30
         },
         "crcUf": {
           "type": "string",
@@ -66,6 +72,7 @@
         "unitId",
         "name",
         "email",
+        "cpf",
         "crcNumber",
         "crcUf"
       ],
@@ -93,10 +100,23 @@
           "format": "email",
           "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
         },
+        "cpf": {
+          "type": "string"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "crcNumber": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 20
+          "maxLength": 30
         },
         "crcUf": {
           "type": "string",
@@ -187,18 +207,12 @@
         "ecfJobId": {
           "type": "string",
           "minLength": 1
-        },
-        "year": {
-          "type": "integer",
-          "minimum": 2000,
-          "maximum": 2100
         }
       },
       "required": [
         "unitId",
         "ecdJobId",
-        "ecfJobId",
-        "year"
+        "ecfJobId"
       ],
       "additionalProperties": false
     },
@@ -218,11 +232,6 @@
           "type": "string",
           "minLength": 1
         },
-        "year": {
-          "type": "integer",
-          "minimum": 2000,
-          "maximum": 2100
-        },
         "contactId": {
           "type": "string",
           "minLength": 1
@@ -236,7 +245,6 @@
         "unitId",
         "ecdJobId",
         "ecfJobId",
-        "year",
         "contactId",
         "confirmed"
       ],

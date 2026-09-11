@@ -2224,6 +2224,7 @@
  *               required: [unitId, mappingVersion, year, declarant, book, signers]
  *               properties:
  *                 unitId:         { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 mappingVersion: { type: string }
  *                 year:           { type: integer, example: 2026 }
  *                 declarant:
@@ -2290,6 +2291,7 @@
  *               required: [unitId, year, declarant, signers]
  *               properties:
  *                 unitId: { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
  *                 declarant:
  *                   type: object
@@ -2361,6 +2363,7 @@
  *               required: [unitId, year, declarant, fiscal, signers]
  *               properties:
  *                 unitId: { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
  *                 declarant:
  *                   type: object

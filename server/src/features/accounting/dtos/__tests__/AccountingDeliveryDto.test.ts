@@ -19,11 +19,12 @@ const validContact = {
   unitId: 'unit-1',
   name: 'Contabilidade Silva',
   email: 'contato@exemplo.com.br',
+  cpf: '52998224725',
   crcNumber: 'SP-123456/O-1',
   crcUf: 'SP' as const,
 };
 
-const validBuild = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf', year: 2026 };
+const validBuild = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf' };
 
 describe('RegisterContactSchema', () => {
   it('accepts a well-formed payload', () => {
@@ -50,7 +51,6 @@ describe('RegisterContactSchema', () => {
     if (parsed.success) {
       expect(parsed.data.name).toBe(exact);
       expect(parsed.data.email).toBe('contato@exemplo.com.br');
-      // normalizeCrcNumber: caixa alta + trim, SEM tocar a pontuacao interna (o manual nao a define)
       expect(parsed.data.crcNumber).toBe('SP-123456/O-1');
     }
     expect(
@@ -58,19 +58,61 @@ describe('RegisterContactSchema', () => {
     ).toBe(false);
   });
 
-  // ------------------------------------------------------------------ J930 campo 06 (IND_CRC)
-  it('aceita IND_CRC em qualquer forma — o Manual da ECD NÃO declara formato para o campo 06', () => {
-    for (const crcNumber of ['123456/O-1', 'SP123456', '1-RJ-000999']) {
-      expect(RegisterContactSchema.safeParse({ ...validContact, crcNumber }).success).toBe(true);
+  // ------------------------------------------------------------------ J930 campo 06 (IND_CRC) — máscara do CFC
+  // Cédula 10/09 §6 F13 ("pode fazer máscara em todos os campos"): a fonte do formato é o Manual
+  // de Registro do Sistema CFC/CRCs (`1UFXXXXXX/O-X`), não o manual da ECD (que não declara nenhum).
+  it('normaliza as grafias usuais do número do CRC para UF-NNNNNN/O-D', () => {
+    for (const [input, expected] of [
+      ['SP-123456/O-1', 'SP-123456/O-1'],
+      ['sp123456/o-1', 'SP-123456/O-1'],
+      ['1SP123456/O-1', 'SP-123456/O-1'],
+      ['CRC-SP 123456/O-1', 'SP-123456/O-1'],
+      ['CRC/SP 123456/T-7', 'SP-123456/T-7'],
+    ]) {
+      const parsed = RegisterContactSchema.safeParse({ ...validContact, crcNumber: input });
+      expect(parsed.success).toBe(true);
+      if (parsed.success) expect(parsed.data.crcNumber).toBe(expected);
     }
-    // Presença e tamanho continuam valendo — vazio não passa.
-    expect(RegisterContactSchema.safeParse({ ...validContact, crcNumber: '   ' }).success).toBe(false);
+  });
+
+  it('recusa número de CRC fora do formato do CFC (e vazio)', () => {
+    for (const crcNumber of ['123456/O-1', 'SP123456', '1-RJ-000999', 'SP-12345/O-1', 'SP-123456/X-1', '   ']) {
+      expect(RegisterContactSchema.safeParse({ ...validContact, crcNumber }).success).toBe(false);
+    }
+  });
+
+  it('cruza a UF embutida no número com crcUf — divergência é digitação errada, 400', () => {
+    const bad = RegisterContactSchema.safeParse({ ...validContact, crcNumber: 'RJ-123456/O-1', crcUf: 'SP' });
+    expect(bad.success).toBe(false);
+    if (!bad.success) expect(JSON.stringify(bad.error.flatten())).toMatch(/diverge/);
+    expect(RegisterContactSchema.safeParse({ ...validContact, crcNumber: 'RJ-123456/O-1', crcUf: 'RJ' }).success).toBe(true);
+  });
+
+  // ------------------------------------------------------------------ J930 campo 03 (IDENT_CPF_CNPJ)
+  it('cpf: aceita com ou sem máscara, exige 11 dígitos com DV válido, recusa repetidos', () => {
+    const ok = RegisterContactSchema.safeParse({ ...validContact, cpf: '529.982.247-25' });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.cpf).toBe('52998224725');
+    for (const cpf of ['52998224726', '11111111111', '5299822472', 'abc', '']) {
+      expect(RegisterContactSchema.safeParse({ ...validContact, cpf }).success).toBe(false);
+    }
+  });
+
+  // ------------------------------------------------------------------ J930 campo 08 (FONE)
+  it('phone: opcional; aceita máscara e exige 10-11 dígitos', () => {
+    const ok = RegisterContactSchema.safeParse({ ...validContact, phone: '(11) 99999-8888' });
+    expect(ok.success).toBe(true);
+    if (ok.success) expect(ok.data.phone).toBe('11999998888');
+    expect(RegisterContactSchema.safeParse({ ...validContact, phone: '999' }).success).toBe(false);
+    expect(RegisterContactSchema.safeParse(validContact).success).toBe(true);
   });
 
   // ------------------------------------------------------------------ J930 campo 09 (UF_CRC)
   it('REGRA_TABELA_UF: aceita as 27 siglas e recusa o que está fora da tabela', () => {
     for (const crcUf of UF_CODES) {
-      expect(RegisterContactSchema.safeParse({ ...validContact, crcUf }).success).toBe(true);
+      // o número carrega a mesma UF — o cruzamento UF×número é testado à parte
+      const crcNumber = `${crcUf}-123456/O-1`;
+      expect(RegisterContactSchema.safeParse({ ...validContact, crcUf, crcNumber }).success).toBe(true);
     }
     for (const crcUf of ['XX', 'sp', 'EX', '']) {
       expect(RegisterContactSchema.safeParse({ ...validContact, crcUf }).success).toBe(false);
@@ -162,17 +204,10 @@ describe('BuildDeliveryPackageSchema', () => {
     expect(BuildDeliveryPackageSchema.safeParse(validBuild).success).toBe(true);
   });
 
-  // ---------------------------------------------------------------- Fork Novo A → (a)
-  it('REQUIRES year — o job de origem não persiste ano, então ele não é derivável', () => {
-    const { year: _dropped, ...withoutYear } = validBuild;
-    expect(BuildDeliveryPackageSchema.safeParse(withoutYear).success).toBe(false);
-  });
-
-  it('rejects a non-integer / out-of-range year', () => {
-    expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, year: 2026.5 }).success).toBe(false);
-    expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, year: 1999 }).success).toBe(false);
-    expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, year: 2101 }).success).toBe(false);
-    expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, year: '2026' }).success).toBe(false);
+  // ---------------------------------------------------------------- Fork Novo A → (b), cédula 10/09 §6 F3
+  it('NÃO aceita `year` — o período vem do job, nunca digitado (o furo F3 fechado no contrato)', () => {
+    expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, year: 2026 }).success).toBe(false);
+    expect(ConfirmDeliverySchema.safeParse({ ...validBuild, contactId: 'c', confirmed: true, year: 2026 }).success).toBe(false);
   });
 
   it('rejects unknown keys (.strict)', () => {
