@@ -143,10 +143,16 @@ function parseRegister(reg) {
   // (qualquer caixa), linha de tabela ou inicio de campo.
   const defs = [];
   let cur = null;
+  let lastCampo = ''; // secao II e tabular: so a 1a regra de cada campo traz o prefixo; as seguintes herdam
   for (const b of body) {
     const t = b.t.trim();
     const m = t.match(/^(?:(\d{1,2})\s+([A-Z][A-Z_0-9]+)\s+)?(REGRA_[A-Z0-9_]+):\s*(.*)$/);
-    if (m) { cur = { campo: m[2] || '', nome: m[3], texto: m[4] }; defs.push(cur); continue; }
+    if (m) {
+      if (m[2]) lastCampo = m[2];
+      cur = { campo: m[2] || lastCampo, nome: m[3], texto: m[4] };
+      defs.push(cur);
+      continue;
+    }
     if (!cur) continue;
     if (/^([IVX]+ – |Exemplo de preenchimento|\||REGISTRO [A-Z0-9]{4}:|Nº Campo|\d{1,2} [A-Z][A-Z_0-9]{2,}\s)/i.test(t)) { cur = null; continue; }
     cur.texto += ' ' + t;
@@ -252,8 +258,10 @@ for (const reg of REGS) {
   if (r.defs.length) {
     out.push('\nRegras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):\n');
     for (const d of r.defs) {
-      const txt = d.texto.replace(/\s+/g, ' ');
-      out.push(`- ${d.campo ? '`' + d.campo + '` · ' : ''}\`${d.nome}\`: ${txt.slice(0, 320)}${txt.length > 320 ? '…' : ''}`);
+      // sem corte de tamanho (REGRA_VALOR_DETALHADO tem o bloco de sinais depois do 320o char); a coluna
+      // "Tipo" da tabela da secao II (Erro/Aviso) vem colada no fim do texto e e descartada
+      const txt = d.texto.replace(/\s+/g, ' ').replace(/(\s+(Erro|Aviso))+\s*$/, '').trim();
+      out.push(`- ${d.campo ? '`' + d.campo + '` · ' : ''}\`${d.nome}\`: ${txt}`);
     }
   }
   out.push('');
@@ -298,25 +306,33 @@ O que o Manual diz e o BRIEF 3B (§2 contratos) **ainda não diz** — registrad
    relação. O contrato §2.3 (\`indRelacao?: '1'|'2'\`) está incompleto.
 3. **Em M300 só \`REG\` e \`CODIGO\` são obrigatórios** (p.244-245); \`VALOR\`, \`TIPO_LANCAMENTO\`, \`IND_RELACAO\`,
    \`DESCRICAO\` são "Não" — mas as regras de campo (seção II) condicionam pelo **tipo da linha na tabela
-   dinâmica**: \`REGRA_OBRIGATORIO_TIPO_E\` exige \`TIPO_LANCAMENTO\` em linha \`E\`; \`REGRA_OBRIGATORIO_TIPO_R\`
-   proíbe \`VALOR\` em linha \`R\`; \`REGRA_IND_RELACAO\` obriga \`IND_RELACAO=1\` quando \`TIPO_LANCAMENTO=P\`. O DTO
-   precisa espelhar essas condicionais, não o "Obrigatório" cru da tabela.
-4. **\`M300.VALOR\` é \`NS\` e o sinal é semântico**: \`REGRA_VALOR_DETALHADO\` + a tabela de sinais na intro do M300
-   (p.244: "Adição ou Lucro − (negativo) → Erro no programa") — fecha a pendência §4 item 4 do BRIEF:
-   **valor sempre positivo para A/L; o sinal negativo é rejeitado**. \`z.number().int().nonnegative()\`.
-5. **\`M310.COD_CTA\` tem valores válidos \`[J050.COD_CTA]\`** (p.252) e \`REGRA_REGISTRO_M312_OBRIGATORIO\` exige
-   \`M312\` (números dos lançamentos contábeis) em certos casos — ou seja, \`IND_RELACAO=2\` amarra o ajuste a
-   uma conta do **Bloco J** (plano de contas da ECD recuperada) e possivelmente aos lançamentos da ECD.
-   Fecha a pendência §4 item 5: **o ajuste com relação contábil precisa de \`accountId\` do razão**, e o
-   contrato §2.1/§2.2 não tem esse campo.
+   dinâmica**: \`REGRA_IND_RELACAO\` obriga \`IND_RELACAO=1\` quando \`TIPO_LANCAMENTO=P\` (p.247, literal —
+   VERIFICADO); \`REGRA_OBRIGATORIO_TIPO_E\` / \`_TIPO_R\` dizem *"verifica se … não está preenchido quando o tipo
+   de linha é E/R"* — a leitura "exige \`TIPO_LANCAMENTO\` em linha \`E\`, proíbe \`VALOR\` em linha \`R\`" é a
+   coerente com o nome da regra e com \`REGRA_OBRIGATORIO_TIPO_DIFERENTE_R\` (p.281), mas é **INFERIDA**, não
+   literal. O DTO precisa espelhar essas condicionais, não o "Obrigatório" cru da tabela.
+4. **\`M300.VALOR\` é \`NS\` e o sinal é semântico**: a tabela de sinais na intro do M300 (p.244) marca **"Erro no
+   programa" para o valor negativo nas 4 linhas** — adição, lucro, exclusão **e** compensação de prejuízo —
+   e \`REGRA_VALOR_DETALHADO\` (p.246, transcrita inteira abaixo, com o bloco de conversão de sinais) descreve
+   como o valor positivo vira D/C na Parte B. Fecha a pendência §4 item 4 do BRIEF: **valor sempre positivo
+   para todo \`TIPO_LANCAMENTO\`; a direção vem do tipo, nunca do sinal**. \`z.number().int().nonnegative()\`.
+5. **\`IND_RELACAO=2\` amarra o ajuste a uma conta do Bloco J**: \`REGRA_RELACAO_INEXISTENTE\` (p.247: com
+   \`IND_RELACAO=2\` deve existir ≥1 \`M310\` e nenhum \`M305\`), \`REGRA_OBRIGATORIA_M310_VL_CTA\` (p.253),
+   \`M310.COD_CTA\` com valores válidos \`[J050.COD_CTA]\` (p.252) e \`REGRA_REGISTRO_M312_OBRIGATORIO\` (M312 =
+   números dos lançamentos contábeis, em certos casos). Fecha a pendência §4 item 5: **o ajuste com relação
+   contábil precisa de conta do razão (\`accountId\`) — e o J050 vem da ECD recuperada, logo o mapeamento
+   referencial volta a pesar**; o contrato §2.1/§2.2 não tem esse campo.
 6. **\`M010\` tem chave composta \`COD_CTA_B + COD_TRIBUTO\`** (p.237) e \`COD_TRIBUTO ∈ [I; C]\` — a mesma conta
    da Parte B existe separadamente para IRPJ e CSLL. O model §2.2 (\`@@unique([scopeId, codCtaB, …])\`) precisa
    de \`codTributo\` na chave.
 7. **\`M010\` campos 5-10 transcritos**: \`COD_PB_RFB\` (C 6, aba \`PARTEB_PADRAO\`), \`DT_LIM_LAL\`, \`COD_TRIBUTO\`,
    \`VL_SALDO_INI\`, \`IND_VL_SALDO_INI [D; C]\`, \`CNPJ_SIT_ESP\` — a pendência §4 item 3 deixa de existir para
    M010; \`M410\`/\`M500\` idem (8 e 11 campos acima).
-8. **\`M500\` é controle de saldos por período com transporte para o \`E020\` da próxima ECF** (intro p.271) —
-   sustenta a leitura do Fork 4→(b), mas o BRIEF não lista \`M500\` como builder com teste próprio.
+8. **\`M500\` é controle de saldos por período com transporte para o \`E020\` da próxima ECF** (intro p.271:
+   *"os campos SD_FIM_LAL e IND_SD_FIM do último período serão transportados para o E020"*) — sustenta a
+   leitura do Fork 4→(b). O BRIEF cobre \`M500\` dentro do item 13 (com cláusula testável); o que a intro
+   acrescenta é que o **saldo de abertura do exercício seguinte é o nosso \`SD_FIM_LAL\`**, então o model
+   precisa guardar o saldo final por conta/tributo/exercício, não só os lançamentos.
 
 ---
 
