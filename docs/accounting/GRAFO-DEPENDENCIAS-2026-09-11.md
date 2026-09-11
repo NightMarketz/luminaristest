@@ -147,7 +147,7 @@ flowchart LR
   subgraph CONT[Contábil - ordem 1 - 17/22]
     C6["C6 CONTADOR-DELIVERY<br/>MERGEADO PR #305 7725f0ca (11/09)"]:::done
     C6b["C6b Pacote ampliado<br/>tabela filha + migração — BRIEF"]:::plan
-    C7r["C7r 2 reasonCodes (a)<br/>instrumentação → correção"]:::ready
+    C7r["C7r 2 reasonCodes (a)<br/>MERGEADO PR #308 3399016f (11/09)"]:::done
     C8["C8 Imobilizado + depreciação<br/>Anexo III IN 1.700 semeado, editável — ADR"]:::plan
     C9["C9 Retificação ECD/ECF VERSIONADA<br/>item do BRIEF ECF Fase 3"]:::blocked
     C10["C10 P2 clínica — código ✅ #282<br/>comportamento 11 espera R7"]:::done
@@ -155,8 +155,8 @@ flowchart LR
     C12["C12 Máscaras de identidade no SPED<br/>J930 enum — BRIEF"]:::plan
   end
 
-  subgraph FIN[Financeiro - ordem 2 - 15/19]
-    F3["F3 Baixa parcial AP/AR<br/>BRIEF #291 + F-PS8/9/10 ✅ 10/09<br/>sessao-feature DIRETO"]:::ready
+  subgraph FIN[Financeiro - ordem 2 - 16/19]
+    F3["F3 Baixa parcial AP/AR<br/>MERGEADO PR #307 b45eaf62 (11/09)"]:::done
     F5["F5 Remessa CNAB/boleto<br/>N leiautes — ADR"]:::blocked
     F6["F6 Pix — API separada — ADR"]:::blocked
     F7["F7 Retorno → item de conciliação pendente<br/>BRIEF c/ decisão de desenho"]:::plan
@@ -166,7 +166,7 @@ flowchart LR
 
   subgraph FISC[Fiscal - ordem 3 - 7/16]
     X4["X4 ECF Fase 3 L/M/N + e-Lalur"]:::blocked
-    X6["X6 Custo D3 = configuração por tenant<br/>emenda ADR-INCR-NFE §D3 — planejamento"]:::plan
+    X6["X6 Custo D3 por regime do tenant<br/>BRIEF PR #309 — 6 forks F-X6-1..6 PENDENTES"]:::decide
     X7["X7 Apuração IRPJ/CSLL + porta MIT — ADR"]:::blocked
     X8["X8 EFD-Contribuições — ADR"]:::blocked
     X9["X9 DCTFWeb — ADR"]:::blocked
@@ -265,20 +265,20 @@ flowchart LR
 | **R10** | decide | ADR P-IA + parecer | cédula 10/09 §3 F-BANK-1 |
 | **C6** | **done** (PR #305, squash `7725f0ca`, 2026-09-11 — ancestral verificado) | — (F-Z0 fechado; Forks A/B ratificados; F3/F2/F13 absorvidos) | cédula 10/09 §1/§6 |
 | **C6b** | plan (BRIEF) | C6 ✅ | resposta 8 |
-| **C7r** | **ready** (instrumentação → correção) | — (ratificado (a), resposta 23) | plano SDD §5 "forks novos pendentes" rod. 3 |
+| **C7r** | **done** (PR #308 `3399016f`, 2026-09-11 — ciclo instrumentação→correção, review PASS) | — | plano SDD §5 rod. 3; cédula 10/09 resposta 23 |
 | **C8** | plan (ADR → parecer → forks → BRIEF) | D3b (Anexo III da IN 1.700 no corpus) | resposta 6; plano SDD rod. 13 |
 | **C9** | blocked | X4 | resposta 7 (versionada); F-Z0 (2) |
 | **C10** | done (#282 `60cced8d`); comportamento 11 espera R7 | — | cédula 07/09 |
 | **C11** | plan (BRIEF) | geração SPED ✅ · PostingService ✅ · C6 `(inferida)` | resposta 2 + F-EDIT-1 |
 | **C12** | plan (BRIEF) | geração SPED ✅ · #305 (máscaras de contato) | resposta 3 + cédula §5 |
-| **F3** | **ready → `sessao-feature`** | — (BRIEF #291 `f1307009`; F-PS8 a · F-PS9 a · F-PS10 b ratificados 10/09) | resposta 23 |
+| **F3** | **done** (PR #307 `b45eaf62`, 2026-09-11 — review indep. FAIL→C→FAIL(F8)→C→PASS) | — | resposta 23 |
 | **F5** | blocked (ADR) | D6 · **P-IA** | F-M3; F-BANK-1 (b) consequência (ii) |
 | **F6** | blocked (ADR) | D6 · F5 `(inferida)` | resposta 21 |
 | **F7** | plan (BRIEF com fork R9) | C7 ✅ · R9 | F-BAIXA-1 (a) + correção |
 | **E9** | blocked | D2 | F-I2/F-I8 |
 | **P-IA** | plan (ADR) — **fora da régua** | R10 | F-BANK-1 (b) |
 | **X4** | blocked | R2 · D3b | fila 09-02 item 5; plano SDD rod. 11 |
-| **X6** | plan (`sessao-planejamento`: emenda ADR-INCR-NFE §D3) | — | resposta 5; plano SDD rod. 10 (era "triagem do contador") |
+| **X6** | **decide** — BRIEF `BE-INCR-NFE-COST-REGIME` escrito (PR #309); forks F-X6-1..6 pendentes; regras fiscais f1–f5 [NC] fora do corpus (D3b) | R (dono) · D3b | resposta 5; plano SDD rod. 10 |
 | **X7** | blocked (ADR) | D1 (itens 1/1b) · R5 | cédula E.3 X7; pergunta 30 |
 | **X8** | blocked | X7 | cédula E.3 X8 |
 | **X9** | blocked | X7 | cédula E.3 X9 |
@@ -309,9 +309,9 @@ com **três** arestas vivas: D8 (H1), X7 (tributos), D1f.
 | # | Nó | Sessão | Por quê nesta posição |
 |---|---|---|---|
 | 1 | ~~**C6** merge do #305 + fold~~ ✅ **feito 11/09** (`7725f0ca`; §5.1 C6 ✅, 17/22, ADR descondicionado) | integração + fold | único nó com código pronto, CI verde e review PASS |
-| 2 | **F3** baixa parcial AP/AR | `sessao-feature` direto | financeiro, mas o **único** com spec + 3 forks ratificados |
-| 3 | **C7r** 2 reasonCodes | `sessao-instrumentacao` → `sessao-correcao` | contábil; resíduo ratificado (a), sem spec nova |
-| 4 | **X6** custo D3 por tenant | `sessao-planejamento` (emenda ADR §D3) → feature | fiscal, mas destravou do contador; precisa de spec |
+| 2 | ~~**F3** baixa parcial AP/AR~~ ✅ **feito 11/09** (#307 `b45eaf62`) | `sessao-feature` direto | financeiro, mas o **único** com spec + 3 forks ratificados |
+| 3 | ~~**C7r** 2 reasonCodes~~ ✅ **feito 11/09** (#308 `3399016f`) | `sessao-instrumentacao` → `sessao-correcao` | contábil; resíduo ratificado (a), sem spec nova |
+| 4 | **X6** custo D3 por tenant — BRIEF ✅ (#309), **6 forks ao dono** | `sessao-planejamento` (emenda ADR §D3) → feature | fiscal, mas destravou do contador; precisa de spec |
 | 5 | **C8** imobilizado | ADR → parecer → forks → BRIEF | contábil; **espera D3b** (Anexo III no corpus) |
 | 6 | **C6b · C11 · C12** | `sessao-planejamento` cada | contábil; BRIEFs — C6b só após o merge do #305 |
 | 7 | **R2 / X4** ECF Fase 3 | **pára e apresenta** forks 2/3/4 com a fonte | contrato do Fork 4 errado; espera D3b |
@@ -322,6 +322,19 @@ com **três** arestas vivas: D8 (H1), X7 (tributos), D1f.
 **Conflito visível:** o prazo de 01/10 puxa X10i, mas X10i tem **3 entradas externas** (D-NFSE, D1f, D5)
 e uma humana `(inferida)` (M2). Nenhuma delas é de agente. O que o agente pode fazer hoje pela emissão é
 **zero código** — só preparar (gate-copilot/liaison) e apontar.
+
+### 4.1 Estado ao fim da sessão de 2026-09-11 (verificado por `merge-base`)
+
+Fechados nesta sessão: C6 (#305 `7725f0ca`), F3 (#307 `b45eaf62`), C7r (#308 `3399016f`); grafo/fold (#306 `e3ab5d69`).
+Planejado: X6 (#309, BRIEF). **Régua 40/57.** Próximo nó pelo algoritmo, sem decisão do dono: **C11/C12 BRIEFs**
+(contábil, `sessao-planejamento`); C6b idem (agora que C6 mergeou). Tudo o mais espera o dono (F-X6-1..6, R2, R8,
+R9, R10, D3b) ou terceiro (D2, D5, D6, D-NFSE).
+
+**Residuais de código declarados (não são nós):** F10 do #307 (400 em vez de 200 em duplicata que cavalga o
+commit); `tx?` em `PostingService.reverseEntry` (L1 — decisão do dono); corrida pré-existente
+`cancelPayable/cancelReceivable × registerPayment` (`updatePayable` incondicional após guard fora da tx —
+classe a varrer, achado do revisor); F7 (PAYING sem recibo após crash entre claim e createPayment — reconcile não
+repara). Regra (j) da cédula de integração (dois campos de D3) nunca implementada — absorvida no BRIEF X6 item 10.
 
 ## 5. O que eu não sei
 

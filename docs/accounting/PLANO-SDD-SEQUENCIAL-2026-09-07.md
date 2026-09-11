@@ -129,7 +129,8 @@ inbox/outbox. Não entram em nenhuma rodada sem gatilho nomeado.
 | **4b** | X3 `FE-INCR-COMPLIANCE-2` | **S ✅ #279 `5daa8763` · R ✅ 07/09 (delegação, cédula #287 — F-COMP2-1..7) · I ✅ · V ✅ (review indep. PASS; Fase B paridade i18n 939=939) · M ✅ #295 `2a4608ab` · F ✅ (este fold)** | — | fechada |
 | **5** | F4 `FE-INCR-CASH-FORECAST` | **S ✅ #278 `77c77553` · R ✅ 07/09 (delegação, cédula #287 — F-CF1..F-CF7) · I ✅ · V ✅ (review indep. PASS com 1 achado ALTO não-bloqueante, classe pré-existente na família de reports) · M ✅ #298 `63ceba20` · F ✅ (este fold)** | — | fechada |
 | **7** | C10 `P2 clínica estética` | **I ✅ V ✅ M ✅ F ✅** — **PR #282 MERGED, squash `60cced8d`** (verificado: `git merge-base --is-ancestor 60cced8d origin/main` exit 0). Review independente PASS (4 achados baixa severidade, não-bloqueantes). Comportamentos 1–7,9,10 feitos; 8 parcial (RUNBOOK-H3); 11 pausado (fork T0 × perímetro, ver `CEDULA-DECISAO-2026-09-07-forks-sdd.md`) | nenhum passo de código; H3 espera H1 | *"me acompanha no H3"* (após H1) |
-| **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-PS1..F-PS7) + parecer ✅ #276 `b7a62a73` · S ✅ #291 `f1307009` (BRIEF, 2026-09-08) — 19 comportamentos + contratos Zod esboçados; 3 forks NOVOS abertos pela sessão de planejamento (F-PS8/9/10; F-PS10 recalculado p/ (b) rota-irmã por achado do review — consumidores reais em `accountsPayable.service.ts`/`accountsReceivable.service.ts`)** | **R do dono** nos 3 forks novos → I → V → M → F | *"ratifico os forks novos do PARTIAL-SETTLEMENT"* |
+| **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR ✅ (delegação 07/09) + parecer ✅ #276 · S ✅ #291 `f1307009` · R ✅ 10/09 (F-PS8 a · F-PS9 a · F-PS10 b, [cédula 10/09](CEDULA-DECISAO-2026-09-10-entrevista.md) resposta 23) · I ✅ · V ✅ (review indep. FAIL → C → FAIL (F8) → C → PASS) · M ✅ #307 `b45eaf62` (squash, 2026-09-11) · F ✅ (fold 11/09)** — ancestral verificado | — | fechada |
+| **10** | X6 custo D3 por regime | **S ✅ `sessao-planejamento` 2026-09-11 — BRIEF [`BE-INCR-NFE-COST-REGIME`](BE-INCR-NFE-COST-REGIME-brief.md) (PR #309): 17 itens, `FiscalProfile` Prisma, função pura de custo, 6 forks F-X6-1..6 PENDENTES; 5 regras fiscais [NC] fora do corpus (D3b)** | **R do dono** (F-X6-1..6) + fontes f1/f2 no corpus → I → V → M → F | *"ratifico os forks do NFE-COST-REGIME"* |
 | **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-CD1..F-CD8) + parecer ✅ #274 `239945d1` · S ✅ #290 `62b00302` · R ✅ 10/09 (Forks A/B; A → (b) período no job pelo sinal F3; F-Z0 fechado pelo produto — [cédula 10/09](CEDULA-DECISAO-2026-09-10-entrevista.md)) · I ✅ · V ✅ (2 reviews indep. FAIL → ciclo → delta PASS) · M ✅ #305 `7725f0ca` (squash, 2026-09-11) · F ✅ (fold 11/09)** — ancestral verificado | — | fechada |
 
 **Rodadas 1 e 2 (a e b):** conduzidas por outra sessão em paralelo a este fold (PRs #272, #280, #281,
@@ -143,18 +144,8 @@ artefato para verificar ainda.
 Achados das sessões de correção/planejamento das rodadas 3/4/5/8/9, todos por citação de PR — nenhum
 decidido por agente:
 
-- **Rodada 3 (`BE-INCR-RECONCILE-PENDING`, #296):** 2 "blocked" sem `reasonCode` no enum ratificado
-  (`FAILED|ACCOUNTING_PERIOD_NOT_OPEN|MAX_CENTS_EXCEEDED`) — ordering-gate de settlements
-  (`accountingSyncReconcile.job.ts:863`) e `blocked_missing_paid_with_package_id` (~linha 1228) não
-  entram na tabela de pendências. Recomendação do implementador: **(a)** enum ganha os 2 códigos novos.
-- **Rodada 8 (`ADR-INCR-PARTIAL-SETTLEMENT`, #291):** 3 forks novos abertos pelo BRIEF —
-  **F-PS8** manter `PAYING`/`RECEIVING` como estado transitório, recomendação **(a)**; **F-PS9**
-  renomear os eventos de auditoria (`payment_registered`→`settlement_registered` etc.), recomendação
-  **(a)**; **F-PS10** rota `/:id/pay`→`/:id/settlements`, recomendação **recalculada pelo review para
-  (b) rota-irmã** — a checagem original ("zero consumidor de frontend") mirava um caminho inexistente
-  (`my-app/src`); a árvore real tem consumidores em produção (`accountsPayable.service.ts:185,209`,
-  `accountsReceivable.service.ts:172,196`, usados por `AccountsPayablePanel.tsx`/
-  `AccountsReceivablePanel.tsx`) — renomear sem a rota-irmã quebraria pagamento/recebimento integral.
+- **Rodada 3 (`BE-INCR-RECONCILE-PENDING`, #296):** ~~2 "blocked" sem `reasonCode`~~ ✅ **FECHADO 2026-09-11** — ratificado (a) na cédula 10/09 (resposta 23); ciclo `sessao-instrumentacao` (`24fe2480`, guarda vermelha) → `sessao-correcao` (`773e3d8c`) → review independente PASS → **PR #308 `3399016f`**. Enum ganhou `OPENING_ENTRY_MISSING` (transitório) e `MISSING_PAID_WITH_PACKAGE_ID` (poison).
+- **Rodada 8 (`ADR-INCR-PARTIAL-SETTLEMENT`, #291):** ~~F-PS8/9/10~~ ✅ **ratificados 10/09 (a/a/b) e IMPLEMENTADOS — PR #307 `b45eaf62` (2026-09-11).**
 - **Rodada 9 (`ADR-CONTADOR-DELIVERY`, #290):** 2 forks novos abertos pelo BRIEF — **Fork Novo A**
   como o comando de entrega sabe qual `year` cobre (`AccountingDataExchangeJob` não persiste
   ano/período), recomendação **(a)** `year` explícito no DTO de entrada; **Fork Novo B** se/como o
