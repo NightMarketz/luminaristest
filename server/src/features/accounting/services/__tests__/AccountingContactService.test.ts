@@ -224,6 +224,23 @@ describe('AccountingContactService', () => {
     expect(update).toHaveBeenCalledTimes(1);
   });
 
+  // Review-delta M7: tirar o `tx` do `findById` dentro do `runTransaction` sobrevivia — o gate
+  // "leitura + cruzamento + escrita na MESMA tx" era prosa. Aqui as DUAS chamadas têm de carregar o
+  // handle da tx (server/CLAUDE.md gate 5).
+  it('updateContact lê a linha atual e escreve DENTRO da tx, com o handle nas duas chamadas', async () => {
+    const { service, findById, update } = build();
+    await service.updateContact(scope, 'contact-1', {
+      unitId: 'unit-1',
+      contactId: 'contact-1',
+      crcNumber: 'SP-000009/O-9',
+    });
+    // a leitura autoritativa é a de dentro da tx (a última chamada), com o handle
+    const inTxRead = findById.mock.calls[findById.mock.calls.length - 1] as unknown[];
+    expect(inTxRead[2]).toEqual({ tx: true });
+    const [, , , updateTx] = update.mock.calls[0] as unknown[];
+    expect(updateTx).toEqual({ tx: true });
+  });
+
   it('updateContact NÃO emite evento de auditoria (lacuna de spec registrada, não esquecimento)', async () => {
     const { service, auditAppend } = build();
     await service.updateContact(scope, 'contact-1', {

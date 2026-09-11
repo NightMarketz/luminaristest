@@ -198,6 +198,20 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
     expect(contador).toContain('|SP|SP/2026/000123|31122026|N|');
   });
 
+  // Review-delta M12: sem o dedupe, [id, id] + 1 sócio estoura o `.max(2)` da ECF (400). Com ele, 201.
+  it('signerContactIds duplicado vira UM signatário (a ECF aceita no máximo 2)', async () => {
+    const created = await request(app)
+      .post('/api/accounting/contacts')
+      .set(authHeader(dono))
+      .send(contatoBody({ phone: '(61) 3333-4444' }));
+    const id = created.body.data.id as string;
+    const gen = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: [id, id] }));
+    expect(gen.status).toBe(201);
+  });
+
   it('signerContactIds malformado é 400 (o .strict() recusa a chave que o controller não consumiu)', async () => {
     for (const bad of ['abc', [1, 2], [''], { a: 1 }, null]) {
       const res = await request(app)
