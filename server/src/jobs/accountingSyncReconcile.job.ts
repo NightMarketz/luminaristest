@@ -850,12 +850,9 @@ export async function reconcileSaleSettlements(
       // (blocked), do NOT fail the batch. The opening is the revenue entry for a normal sale, or
       // the prepaid origin ('sale.package.sold') for an all-Package sale (Incremento G P6).
       //
-      // LACUNA DE SPEC (registrada, não bloqueante): este "blocked" NÃO passa por
-      // `classifyBlockedSyncError` — não tem `reasonCode` correspondente no enum do BRIEF
-      // (FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED). Forçar 'FAILED' rotularia
-      // errado uma dependência de ordenação auto-resolvível como "erro não classificado". Sem
-      // decisão do dono sobre um 4º reasonCode, este item NÃO é capturado na tabela de
-      // pendências — comportamento pré-existente preservado (loga e segue).
+      // C7r (cédula 2026-09-10 §2 resposta 23 → a): este "blocked" ganhou código próprio
+      // (OPENING_ENTRY_MISSING — dependência de ordenação auto-resolvível, nunca 'FAILED') e entra
+      // na tabela de pendências; `reportResolved` abaixo o limpa quando a abertura postar.
       const openingSourceType = sale.isAllPackage ? 'sale.package.sold' : 'sale.finalized';
       const hasOpening = await deps.hasExistingEntry(scope, openingSourceType, sale.saleId);
       if (!hasOpening) {
@@ -863,6 +860,14 @@ export async function reconcileSaleSettlements(
         logger.warn('Reconcile settlement blocked — opening entry missing', {
           saleId: sale.saleId,
           openingSourceType,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.settled',
+          sourceId: sale.saleId,
+          reasonCode: 'OPENING_ENTRY_MISSING',
+          reasonDetail: `abertura '${openingSourceType}' ausente para a venda ${sale.saleId}`,
         });
         continue;
       }
@@ -1220,13 +1225,20 @@ export async function reconcileSalePackageConsumption(
       }
       const scope = resolveAccountingScope({ userId: sale.ownerUserId }, sale.unitId);
 
-      // LACUNA DE SPEC (registrada, mesma classe do ordering-gate de reconcileSaleSettlements):
-      // 'blocked_missing_paid_with_package_id' não tem reasonCode no enum do BRIEF — não
-      // capturado na tabela de pendências sem decisão do dono sobre um 4º reasonCode.
+      // C7r (cédula 2026-09-10 §2 resposta 23 → a): 'blocked_missing_paid_with_package_id' ganhou
+      // código próprio (MISSING_PAID_WITH_PACKAGE_ID, poison) e entra na tabela de pendências.
       if (!sale.paidWithPackageId || !sale.customerId) {
         summary.blocked = (summary.blocked ?? 0) + 1;
         logger.warn('Reconcile debit blocked — blocked_missing_paid_with_package_id', {
           saleId: sale.saleId,
+        });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.package.consumption',
+          sourceId: sale.saleId,
+          reasonCode: 'MISSING_PAID_WITH_PACKAGE_ID',
+          reasonDetail: `venda ${sale.saleId} sem paidWithPackageId/customerId persistido`,
         });
         continue;
       }

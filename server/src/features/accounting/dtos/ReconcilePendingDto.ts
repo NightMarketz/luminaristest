@@ -17,6 +17,9 @@ export const ReconcilePendingReasonCode = z.enum([
   'FAILED', // erro isolado não classificado (ex.: sale sem unitId)
   'ACCOUNTING_PERIOD_NOT_OPEN', // transitório — resolve quando o período reabre
   'MAX_CENTS_EXCEEDED', // poison — nunca resolve sem corrigir o dado de origem (Fork 1-R: RATIFICADO incluir)
+  // C7r (cédula 2026-09-10 §2 resposta 23 → a): os 2 "blocked" que não tinham código passam a entrar.
+  'OPENING_ENTRY_MISSING', // transitório — ordering-gate do settlement: resolve quando a abertura da venda postar
+  'MISSING_PAID_WITH_PACKAGE_ID', // poison — consumo de pacote sem paidWithPackageId persistido; nunca inferido
 ]);
 export type ReconcilePendingReasonCodeValue = z.infer<typeof ReconcilePendingReasonCode>;
 
