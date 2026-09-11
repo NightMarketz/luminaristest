@@ -76,6 +76,19 @@ import {
 import { generateSpedEcd, generateSpedEcf, generateSpedEcfReal } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
+import {
+  archiveAccountingContact,
+  listAccountingContacts,
+  registerAccountingContact,
+  updateAccountingContact,
+} from '../controllers/accountingContactController';
+import {
+  buildDeliveryPackage,
+  confirmDelivery,
+  getDelivery,
+  retryDelivery,
+} from '../controllers/accountingDeliveryController';
+
 const router = Router();
 
 // Accounting posting engine — double-entry journal entries (first-class Prisma).
@@ -162,6 +175,18 @@ router.get('/referential/skeleton', getReferentialSkeleton);
 // Referential CATALOG (RFB official layout) — import + lookup (BE-INCR-9B Track B).
 router.post('/referential/catalog/import', referentialCatalogUpload, importReferentialCatalog);
 router.get('/referential/catalog', listReferentialCatalog);
+
+// Cadastro do contador destinatário + entrega do pacote ECD/ECF (BE-INCR-CONTADOR-DELIVERY).
+// Nenhuma destas rotas ENVIA nada: sob F-CD1-a o servidor não tem canal nem credencial —
+// `build` valida e monta o manifesto, `confirm` registra que o OPERADOR despachou.
+router.get('/contacts', listAccountingContacts);
+router.post('/contacts', registerAccountingContact);
+router.patch('/contacts/:id', updateAccountingContact);
+router.delete('/contacts/:id', archiveAccountingContact);
+router.post('/delivery/build', buildDeliveryPackage);
+router.post('/delivery/confirm', confirmDelivery);
+router.post('/delivery/:id/retry', retryDelivery);
+router.get('/delivery/:id', getDelivery);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

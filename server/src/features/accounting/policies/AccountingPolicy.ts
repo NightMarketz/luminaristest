@@ -68,6 +68,14 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  canManageAccountingContact(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
+  canReadAccountingContact(scope: AccountingScope): boolean {
+    return !!scope.actorUserId;
+  }
+
   canManageInventory(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }

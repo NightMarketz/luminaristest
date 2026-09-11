@@ -59,6 +59,19 @@ export const MASKABLE_FREE_TEXT_KEYS: Record<string, readonly string[]> = {
   'receivable.cancelled':         ['reason'],
   'receivable.receipt_cancelled': ['reason'],
   'reconciliation.unmatched':     ['reason'],
+  // BE-INCR-CONTADOR-DELIVERY: `failureReason` é texto livre do operador — mesma classe de
+  // `reason` dos demais. Sem esta linha o teste de contrato reprova (toda chave `reason`
+  // allowlistada precisa de mascaramento declarado).
+  //
+  // LIMITE MEDIDO (review de dependência, 2026-09-10) — esta entrada compra MENOS do que parece:
+  // o masker resolve nomes a partir do catálogo `Counterparty` (`AuditService` monta a lista com
+  // `counterpartyRepo.findManyByUnit`), e o PII de terceiro DESTE incremento mora em
+  // `AccountingContact.name/email`, que não está naquele catálogo. Ou seja: o nome do contador
+  // digitado à mão em `failureReason` entra EM CLARO na trilha append-only. Estender o masker ao
+  // cadastro de contadores é mudança no `AuditService` — nó vizinho, fora da spec deste incremento
+  // (regra 3 da sessão de feature), registrada como lacuna de spec no relatório. Atenuante atual:
+  // nenhum comando produz `FAILED` hoje, então este evento é inalcançável em produção.
+  'delivery.failed':              ['reason'],
 };
 
 /** O que o masker precisa de cada contraparte: a identidade opaca e o nome já normalizado. */

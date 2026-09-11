@@ -48,7 +48,11 @@ const { options } = require('../../scripts/generate-openapi');
 // +2 (BE-INCR-RECONCILE-PENDING, nó C7, Fork 3-b): GET /api/reconcile-pending,
 //    POST /api/reconcile-pending/rescan (147 → 149).
 // +1 (FE-INCR-CASH-FORECAST, rodada 5 SDD): GET /api/accounting/reports/cash-forecast (149 → 150).
-const BASELINE = 150;
+// +6 (BE-INCR-CONTADOR-DELIVERY, nó C6): /api/accounting/contacts (GET+POST),
+//    /contacts/{id} (PATCH+DELETE), /delivery/build, /delivery/confirm, /delivery/{id}/retry,
+//    /delivery/{id} — 6 PATHS e 8 OPERAÇÕES (150 → 156 paths, 177 → 185 operations, medido com
+//    docs:generate; a lição do NFE-X vale aqui: contar operação como path reprovaria o guard).
+const BASELINE = 156;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

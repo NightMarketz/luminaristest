@@ -124,6 +124,17 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // origem) nem qualquer campo do item de origem (nome de cliente/fornecedor). Teste-guarda:
   // auditCanonical.test.ts (memória `accounting-audit-allowlist-guards`).
   'reconcile_pending.rescanned': ['pendingId', 'sourceType', 'outcome'],
+  // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
+  // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
+  // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que
+  // resolve para uma linha que continua apagável/mascarável — mesma disciplina de
+  // `supplierName`/`customerName` no AP/AR. `crc` entra por decisão explícita do BRIEF (é o
+  // registro profissional que dá sentido à entrega, não um dado de contato).
+  'contact.registered':     ['contactId', 'crcNumber', 'crcUf'],
+  'contact.archived':       ['contactId'],
+  'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'year', 'sha256Ecd', 'sha256Ecf'],
+  'delivery.sent':          ['deliveryId', 'contactId', 'attemptCount'],
+  'delivery.failed':        ['deliveryId', 'contactId', 'attemptCount', 'reason'],
 };
 
 /**
