@@ -25,6 +25,7 @@ function payableRow(over: Partial<Payable> = {}): Payable {
     id: 'pay-1', userId: 'owner-1', unitId: 'unit-1', supplierName: 'ACME', supplierRef: null,
     counterpartyId: null, documentNumber: 'NF-100', description: 'Serviço', issueDate: new Date('2026-06-10'),
     dueDate: new Date('2026-07-10'), amountCents: 50000, expenseAccountId: 'exp-1',
+    paidCents: 0, // BE-INCR-PARTIAL-SETTLEMENT: cache Σ payments ACTIVE
     inventoryProductRef: null, inventoryQty: null,
     status: 'OPEN', createdById: 'owner-1', cancelledById: null, cancelReason: null,
     createdAt: new Date(), updatedAt: new Date(), deletedAt: null, ...over,
@@ -43,7 +44,8 @@ interface Opts {
   canManage?: boolean;
   canRead?: boolean;
   claimResults?: number[]; // successive claimForPayment return values
-  markResults?: number[]; // successive markPaidIfPaying (PAYING→PAID CAS) return values
+  markResults?: number[]; // successive finalizeIfPaying (PAYING→PAID|PARTIALLY_PAID CAS) return values
+  releaseResults?: number[]; // successive releaseSettlement return values (0 = in flight / breach)
   findEntryBySource?: (type: string, id: string) => unknown;
   expenseAccount?: Account | null;
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
@@ -65,7 +67,9 @@ function build(opts: Opts = {}) {
   const claimResults = [...(opts.claimResults ?? [1])];
   const claimForPayment = jest.fn(async () => (claimResults.length ? claimResults.shift()! : 1));
   const markResults = [...(opts.markResults ?? [])];
-  const markPaidIfPaying = jest.fn(async () => (markResults.length ? markResults.shift()! : 1));
+  const finalizeIfPaying = jest.fn(async () => (markResults.length ? markResults.shift()! : 1));
+  const releaseResults = [...(opts.releaseResults ?? [])];
+  const releaseSettlement = jest.fn(async () => (releaseResults.length ? releaseResults.shift()! : 1));
 
   const createdPayments: PayablePayment[] = [];
   const payableRepo = {
@@ -75,7 +79,8 @@ function build(opts: Opts = {}) {
     findManyByUnit: jest.fn(async () => ({ payables: [], total: 0 })),
     findAllActive: jest.fn(async () => [] as Payable[]),
     claimForPayment,
-    markPaidIfPaying,
+    finalizeIfPaying,
+    releaseSettlement,
     updatePayable: jest.fn(async (_s, id: string, data: Record<string, unknown>) => payableRow({ id, ...data } as Partial<Payable>)),
     createPayment: jest.fn(async (data: Record<string, unknown>) => {
       const p = paymentRow({ id: `paym-${createdPayments.length + 1}`, ...data } as Partial<PayablePayment>);
@@ -83,6 +88,7 @@ function build(opts: Opts = {}) {
       return p;
     }),
     findPaymentById: jest.fn(async () => paymentRow()),
+    cancelPaymentIfActive: jest.fn(async () => 1), // review #307 F8: authoritative ACTIVE→CANCELLED flip
     findActivePayment: jest.fn(async () => null),
     findAllActivePayments: jest.fn(async () => [] as PayablePayment[]),
     updatePayment: jest.fn(async (_s, id: string, data: Record<string, unknown>) => paymentRow({ id, ...data } as Partial<PayablePayment>)),
@@ -395,11 +401,61 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(payableRepo.createPayment).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a partial amount (full-payment MVP guard, F2)', async () => {
-    const { service } = build();
+  // ── BE-INCR-PARTIAL-SETTLEMENT (ADR-INCR-PARTIAL-SETTLEMENT F-PS1 c / F-PS2 a; BRIEF itens 5, 6, 8) ──
+
+  it('accepts a PARTIAL payment (60%): sum-CAS gets (amountCents, novo) and the audit carries the balance after', async () => {
+    const { service, payableRepo, auditService, postEntry } = build();
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) })); // re-read inside the finalize tx (review #307 F3)
+    await service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 30000 } as never);
+
+    // Item 5: the CAS is the arithmetic one — amountCents read BEFORE the call enters as a literal.
+    expect(payableRepo.claimForPayment).toHaveBeenCalledWith(scope, 'pay-1', 50000, 30000);
+    // Item 8: the settlement is booked for the partial amount, not the balance.
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines).toContainEqual({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 30000, creditCents: 0 });
+    // Finalize resolves PAYING → PAID|PARTIALLY_PAID by balance (repo decides), audit carries the balance.
+    expect(payableRepo.finalizeIfPaying).toHaveBeenCalledWith(expect.anything(), 'pay-1', 50000, expect.anything());
+    const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
+      .find((c) => c[2].eventType === 'payable.settlement_registered')!;
+    expect(evt[2].payload).toMatchObject({ amountCents: '30000', paidCentsAfter: '30000', remainingCents: '20000' });
+  });
+
+  it('rejects a payment ABOVE the remaining balance (110% of what is left) before any CAS or ledger write', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
     await expect(
-      service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 30000 } as never),
+      service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 22000 } as never), // remaining = 20000
     ).rejects.toBeInstanceOf(ValidationError);
+    expect(payableRepo.claimForPayment).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('accepts a SECOND payment on a PARTIALLY_PAID payable (guard pré-CAS, ADR F-PS2 site 2 — item 6)', async () => {
+    const { service, payableRepo, auditService } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // re-read inside the finalize tx
+    await service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 20000 } as never);
+    expect(payableRepo.claimForPayment).toHaveBeenCalledWith(scope, 'pay-1', 50000, 20000);
+    const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
+      .find((c) => c[2].eventType === 'payable.settlement_registered')!;
+    expect(evt[2].payload).toMatchObject({ paidCentsAfter: '50000', remainingCents: '0' });
+  });
+
+  it('the sum-CAS losing (count 0) rejects with ValidationError — "overshoot" and "lost the race" collapse into one', async () => {
+    const { service, postEntry } = build({ claimResults: [0] });
+    await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toBeInstanceOf(ValidationError);
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and recomputes the status from the row RE-READ in the tx (review #307 F2)', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) })); // after the decrement
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const writes = payableRepo.updatePayable.mock.calls.map((c) => c[2] as Record<string, unknown>);
+    expect(writes).toContainEqual({ paidCents: { decrement: 10000 } });
+    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_PAID' });
   });
 
   it('rejects paying a non-OPEN payable', async () => {
@@ -417,18 +473,18 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(reverts).toHaveLength(0);
   });
 
-  it('emits payable.payment_registered exactly once on the happy path (CAS won)', async () => {
-    const { service, auditService } = build(); // markPaidIfPaying defaults to 1 (won)
+  it('emits payable.settlement_registered exactly once on the happy path (CAS won)', async () => {
+    const { service, auditService } = build(); // finalizeIfPaying defaults to 1 (won)
     await service.registerPayment(scope, 'pay-1', payDto as never);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.filter((c) => c[2].eventType === 'payable.payment_registered')).toHaveLength(1);
+    expect(calls.filter((c) => c[2].eventType === 'payable.settlement_registered')).toHaveLength(1);
   });
 
   it('does NOT emit when a concurrent reconcile already finalized the payment (CAS lost, Scenario B)', async () => {
     const { service, auditService } = build({ markResults: [0] }); // PAYING→PAID CAS matched 0 rows
     await service.registerPayment(scope, 'pay-1', payDto as never);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.filter((c) => c[2].eventType === 'payable.payment_registered')).toHaveLength(0);
+    expect(calls.filter((c) => c[2].eventType === 'payable.settlement_registered')).toHaveLength(0);
   });
 });
 
@@ -481,12 +537,30 @@ describe('PayableService.cancelPayable — reverse recognition (F6/ACC-018/D3)',
     expect(reverseEntry).not.toHaveBeenCalled();
   });
 
+  it('F8: a concurrent duplicate cancel (flip count 0) returns idempotently — no release, no second audit', async () => {
+    const { service, payableRepo, auditService } = build();
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check passes
+    payableRepo.cancelPaymentIfActive.mockResolvedValueOnce(0);
+    await service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
+    expect(payableRepo.releaseSettlement).not.toHaveBeenCalled();
+    const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
+    expect(calls.filter((c) => c[2].eventType === 'payable.settlement_cancelled')).toHaveLength(0);
+  });
+
   it('refuses to cancel a PAID payable (must undo the payment first)', async () => {
     const { service, payableRepo } = build();
     payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PAID' }), payments: [] });
     await expect(
       service.cancelPayable(scope, 'pay-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('refuses to cancel a PARTIALLY_PAID payable with the dedicated message (ADR F-PS2 site 3 — BRIEF item 7)', async () => {
+    const { service, payableRepo } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    await expect(
+      service.cancelPayable(scope, 'pay-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toThrow('Desfaça as baixas ativas');
   });
 });
 
@@ -495,14 +569,53 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
     const { service, reverseEntry, payableRepo } = build({
       findEntryBySource: (type) => (type === AP_PAYMENT_SOURCE_TYPE ? { id: 'set-1' } : null),
     });
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })) // pre-check (review #307 F1)
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(0) })); // re-read after the release
     await service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
 
     // reverseEntry swaps the legs → credits 2.1.2 back, netting the settlement to zero on 2.1.2.
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'set-1' });
-    const paymentUpd = payableRepo.updatePayment.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(paymentUpd.status).toBe('CANCELLED');
+    expect(payableRepo.cancelPaymentIfActive).toHaveBeenCalledWith(scope, 'paym-1', expect.anything()); // F8: flip autoritativo in-tx
+    // BE-INCR-PARTIAL-SETTLEMENT (F-PS3 a): the cents go back through the atomic release, then the
+    // status is recomputed from the row re-read in the same tx — 0 remaining paid → OPEN.
+    expect(payableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'pay-1', 50000, expect.anything());
     const payableUpd = payableRepo.updatePayable.mock.calls.at(-1)![2] as Record<string, unknown>;
     expect(payableUpd.status).toBe('OPEN'); // reopened
+  });
+
+  it('cancelling ONE payment among N (the middle one) leaves the title PARTIALLY_PAID by the remaining balance (BRIEF item 9)', async () => {
+    const { service, payableRepo } = build({
+      findEntryBySource: (type) => (type === AP_PAYMENT_SOURCE_TYPE ? { id: 'set-2' } : null),
+    });
+    // 3 payments of 10000/15000/25000 = 50000 (PAID); the middle one is reversed → row re-read shows 35000 paid.
+    payableRepo.findPaymentById.mockResolvedValueOnce(paymentRow({ id: 'paym-2', amountCents: BigInt(15000) }));
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })) // pre-check
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(35000) })); // re-read after the release
+    await service.cancelPayment(scope, 'pay-1', 'paym-2', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
+
+    expect(payableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'pay-1', 15000, expect.anything());
+    const payableUpd = payableRepo.updatePayable.mock.calls.at(-1)![2] as Record<string, unknown>;
+    expect(payableUpd.status).toBe('PARTIALLY_PAID');
+  });
+
+  it('a release CAS that returns 0 (invariant broken under a race) rejects after the pre-check passed — never guesses the balance', async () => {
+    const { service, payableRepo } = build({ releaseResults: [0] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check passes
+    await expect(
+      service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
+    const statusWrites = payableRepo.updatePayable.mock.calls.filter((c) => 'status' in (c[2] as object));
+    expect(statusWrites).toHaveLength(0);
+  });
+
+  it('guarda defensiva: a reversal that would leave the title fully PAID again is rejected (invariant breach)', async () => {
+    const { service, payableRepo } = build();
+    payableRepo.findById.mockResolvedValue(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check ok; release "worked" but the row still shows full
+    await expect(
+      service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 });
 
@@ -529,11 +642,11 @@ describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2
     expect(input.sourceType).toBe(AP_PAYMENT_SOURCE_TYPE);
     expect(input.sourceId).toBe('paym-1');
     // Finalized → payable moved PAYING→PAID via the atomic CAS (not an unconditional update).
-    expect(payableRepo.markPaidIfPaying).toHaveBeenCalledWith(expect.anything(), 'pay-1', expect.anything());
+    expect(payableRepo.finalizeIfPaying).toHaveBeenCalledWith(expect.anything(), 'pay-1', 50000, expect.anything());
   });
 
   it('does NOT emit (nor count) when the finalize CAS loses to a concurrent finalizer', async () => {
-    // Preliminary read still says PAYING, but markPaidIfPaying returns 0 → someone else already
+    // Preliminary read still says PAYING, but finalizeIfPaying returns 0 → someone else already
     // flipped PAYING→PAID and emitted. This pass must NOT double-emit (the exactly-once gate).
     const { service, payableRepo, auditService } = build({
       markResults: [0],
@@ -545,10 +658,10 @@ describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2
 
     expect(out.finalized).toBe(0);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    expect(calls.find((c) => c[2].eventType === 'payable.payment_registered')).toBeFalsy();
+    expect(calls.find((c) => c[2].eventType === 'payable.settlement_registered')).toBeFalsy();
   });
 
-  it('re-emits payable.payment_registered when finalizing a crash-stranded PAYING payable', async () => {
+  it('re-emits payable.settlement_registered when finalizing a crash-stranded PAYING payable', async () => {
     const { service, payableRepo, auditService, postEntry } = build({
       findEntryBySource: (type) => (type === AP_PAYMENT_SOURCE_TYPE ? { id: 'set-1' } : null),
     });
@@ -560,7 +673,7 @@ describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2
     expect(postEntry).not.toHaveBeenCalled(); // settlement existed
     expect(out.finalized).toBe(1);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, unknown> }]>;
-    const evt = calls.find((c) => c[2].eventType === 'payable.payment_registered');
+    const evt = calls.find((c) => c[2].eventType === 'payable.settlement_registered');
     expect(evt).toBeTruthy();
     expect(evt![2].payload).toMatchObject({ payableId: 'pay-1', paymentId: 'paym-1', entryId: 'set-1' });
   });
@@ -575,7 +688,7 @@ describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2
 
     expect(out.finalized).toBe(0);
     const calls = auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string }]>;
-    const evt = calls.find((c) => c[2].eventType === 'payable.payment_registered');
+    const evt = calls.find((c) => c[2].eventType === 'payable.settlement_registered');
     expect(evt).toBeFalsy(); // no double-emit across repeated passes
   });
 

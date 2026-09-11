@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import { RECEIVABLE_OUTSTANDING_STATUSES } from '../models/Receivable.model';
+import { RECEIVABLE_OUTSTANDING_STATUSES, RECEIVABLE_SETTLEABLE_STATUSES } from '../models/Receivable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import type {
@@ -121,30 +121,62 @@ export class ReceivableRepository implements IReceivableRepository {
   public async claimForReceipt(
     scope: AccountingScope,
     id: string,
+    amountCents: number,
+    newCents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
-    // Atomic conditional transition OPEN → RECEIVING. `updateMany` matches only when the row is
-    // still OPEN, so two concurrent callers race on THIS single-row write and exactly one gets
-    // count===1 (D4). Scoped by owner+unit so it can never touch another tenant's row.
+    // Sum-CAS — MIRROR of PayableRepository.claimForPayment (see its comment). `amountCents` is a
+    // literal read before the call; `receivedCents <= amountCents - newCents` is the Prisma-expressible
+    // form of `receivedCents + newCents <= amountCents`.
     const result = await (tx ?? prisma).receivable.updateMany({
-      where: { id, ...accountingScopeWhere(scope), status: 'OPEN', deletedAt: null },
-      data: { status: 'RECEIVING' },
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        status: { in: [...RECEIVABLE_SETTLEABLE_STATUSES] },
+        deletedAt: null,
+        receivedCents: { lte: amountCents - newCents },
+      },
+      data: { status: 'RECEIVING', receivedCents: { increment: newCents } },
     });
     return result.count;
   }
 
-  public async markReceivedIfReceiving(
+  public async finalizeIfReceiving(
     scope: AccountingScope,
     id: string,
+    amountCents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
-    // Atomic conditional transition RECEIVING → RECEIVED (mirror of claimForReceipt). Matches only
-    // when the row is still RECEIVING, so of N concurrent finalizers (a raced reconcile + the normal
-    // registerReceipt, or two reconcile passes) exactly one gets count===1 and thus emits the
-    // receivable.receipt_registered audit exactly once.
-    const result = await (tx ?? prisma).receivable.updateMany({
-      where: { id, ...accountingScopeWhere(scope), status: 'RECEIVING' },
+    // RECEIVING → RECEIVED (balance closed) else RECEIVING → PARTIALLY_RECEIVED — MIRROR of
+    // PayableRepository.finalizeIfPaying; exactly one finalizer gets count===1.
+    const db = tx ?? prisma;
+    const received = await db.receivable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'RECEIVING', receivedCents: { gte: amountCents } },
       data: { status: 'RECEIVED' },
+    });
+    if (received.count === 1) return 1;
+    const partial = await db.receivable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'RECEIVING' },
+      data: { status: 'PARTIALLY_RECEIVED' },
+    });
+    return partial.count;
+  }
+
+  public async releaseSettlement(
+    scope: AccountingScope,
+    id: string,
+    cents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // Atomic decrement for the reversal of ONE receipt among N — MIRROR of AP releaseSettlement.
+    const result = await (tx ?? prisma).receivable.updateMany({
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        status: { in: ['PARTIALLY_RECEIVED', 'RECEIVED', 'RECEIVING'] }, // in flight does not block (review #307 F1)
+        receivedCents: { gte: cents },
+      },
+      data: { receivedCents: { decrement: cents } },
     });
     return result.count;
   }
@@ -193,6 +225,19 @@ export class ReceivableRepository implements IReceivableRepository {
     return (tx ?? prisma).receivableReceipt.findMany({
       where: { ...accountingScopeWhere(scope), status: 'ACTIVE' },
     });
+  }
+
+  public async cancelReceiptIfActive(
+    scope: AccountingScope,
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // MIRROR of PayableRepository.cancelPaymentIfActive (review #307 F8).
+    const result = await (tx ?? prisma).receivableReceipt.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'ACTIVE' },
+      data: { status: 'CANCELLED' },
+    });
+    return result.count;
   }
 
   public async updateReceipt(

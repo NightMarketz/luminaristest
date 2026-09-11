@@ -3008,11 +3008,13 @@
  *
  *   /api/payables/{id}/pay:
  *     post:
- *       summary: Register the full payment and book the settlement
+ *       summary: Register a payment (full or partial) and book the settlement — alias of /settlements
  *       description: >-
- *         Closes the double-payment race with an atomic OPEN to PAYING transition, then books the
- *         settlement (debit 2.1.2, credit the account for the method) dated the effective debit
- *         date, and moves the payable to PAID. MVP is a single full payment.
+ *         Closes the race with an atomic sum-CAS (OPEN or PARTIALLY_PAID to PAYING, paidCents plus
+ *         amount, only when the remaining balance carries it), then books the settlement (debit
+ *         2.1.2, credit the account for the method) dated the effective debit date, and moves the
+ *         payable to PAID (balance closed) or PARTIALLY_PAID. Kept as the historical path of the
+ *         full payment; same service as POST /api/payables/{id}/settlements (BE-INCR-PARTIAL-SETTLEMENT).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -3050,9 +3052,56 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   /api/payables/{id}/settlements:
+ *     post:
+ *       summary: Register one settlement (partial or full) of a payable
+ *       description: >-
+ *         BE-INCR-PARTIAL-SETTLEMENT (F-PS10 rota-irma, ACC-016). Any amount up to the remaining
+ *         balance (amountCents minus paidCents); N settlements per title. Atomic sum-CAS closes the
+ *         race, each settlement posts its own JournalEntry (sourceId = settlement id), and the title
+ *         moves to PARTIALLY_PAID or PAID by balance. Audit payable.settlement_registered carries
+ *         paidCentsAfter and remainingCents.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/RegisterPaymentInput' }
+ *       responses:
+ *         '201': { description: 'the registered settlement (PayablePayment row)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/payables/{id}/settlements/{settlementId}/cancel:
+ *     post:
+ *       summary: Cancel one settlement among N (reverse it, give its amount back to the balance)
+ *       description: >-
+ *         Any settlement, any position (F-PS3). Reverses that settlement's entry, decrements
+ *         paidCents atomically and recomputes the status (OPEN when nothing remains paid,
+ *         PARTIALLY_PAID otherwise). Refuses while another settlement is in flight.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: settlementId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CancelPaymentInput' }
+ *       responses:
+ *         '200': { description: 'the cancelled settlement' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
  *   /api/payables/{id}/payments/{paymentId}/cancel:
  *     post:
- *       summary: Cancel a payment (reverse the settlement and reopen the payable)
+ *       summary: Cancel a payment (reverse the settlement, give its amount back to the balance) — alias of /settlements/{settlementId}/cancel
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -3219,11 +3268,13 @@
  *
  *   /api/receivables/{id}/receive:
  *     post:
- *       summary: Register the full receipt and book the entry
+ *       summary: Register a receipt (full or partial) and book the entry — alias of /settlements
  *       description: >-
- *         Closes the double-receipt race with an atomic OPEN to RECEIVING transition, then books the
+ *         Closes the race with an atomic sum-CAS (OPEN or PARTIALLY_RECEIVED to RECEIVING,
+ *         receivedCents plus amount, only when the remaining balance carries it), then books the
  *         receipt (debit the account for the method, credit 1.1.5) dated the effective credit date,
- *         and moves the receivable to RECEIVED. MVP is a single full receipt.
+ *         and moves the receivable to RECEIVED (balance closed) or PARTIALLY_RECEIVED. Kept as the
+ *         historical path; same service as POST /api/receivables/{id}/settlements.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -3261,9 +3312,55 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   /api/receivables/{id}/settlements:
+ *     post:
+ *       summary: Register one settlement (partial or full) of a receivable
+ *       description: >-
+ *         BE-INCR-PARTIAL-SETTLEMENT (F-PS10 rota-irma, ACC-016) — mirror of the payables path. Any
+ *         amount up to the remaining balance (amountCents minus receivedCents); N receipts per title,
+ *         each posting its own JournalEntry (sourceId = receipt id). Audit
+ *         receivable.settlement_registered carries receivedCentsAfter and remainingCents.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/RegisterReceiptInput' }
+ *       responses:
+ *         '201': { description: 'the registered settlement (ReceivableReceipt row)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/receivables/{id}/settlements/{settlementId}/cancel:
+ *     post:
+ *       summary: Cancel one settlement among N (reverse it, give its amount back to the balance)
+ *       description: >-
+ *         Any receipt, any position (F-PS3). Reverses that receipt's entry, decrements receivedCents
+ *         atomically and recomputes the status (OPEN when nothing remains received,
+ *         PARTIALLY_RECEIVED otherwise). Refuses while another receipt is in flight.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: settlementId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CancelReceiptInput' }
+ *       responses:
+ *         '200': { description: 'the cancelled settlement' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
  *   /api/receivables/{id}/receipts/{receiptId}/cancel:
  *     post:
- *       summary: Cancel a receipt (reverse the entry and reopen the receivable)
+ *       summary: Cancel a receipt (reverse the entry, give its amount back to the balance) — alias of /settlements/{settlementId}/cancel
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:

@@ -72,7 +72,7 @@ export const getPayable = async (req: Request, res: Response) => {
   }
 };
 
-/** POST /api/payables/:id/pay — register the (full) payment and book the settlement. */
+/** POST /api/payables/:id/pay and /:id/settlements — register one (full or partial) payment and book the settlement. */
 export const registerPayment = async (req: Request, res: Response) => {
   try {
     const user = getUserContextFromRequest(req);
@@ -126,6 +126,12 @@ export const cancelPayment = async (req: Request, res: Response) => {
   } catch (error) {
     return handleApiError(error, res);
   }
+};
+
+/** POST /api/payables/:id/settlements/:settlementId/cancel — sister of cancelPayment (F-PS10 → b): same service, path param renamed. */
+export const cancelSettlement = async (req: Request, res: Response) => {
+  req.params.paymentId = req.params.settlementId;
+  return cancelPayment(req, res);
 };
 
 /** POST /api/payables/reconcile — re-drive missing recognitions/settlements (D4 safety net). */

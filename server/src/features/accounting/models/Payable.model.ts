@@ -7,20 +7,41 @@
 import { ValidationError } from '../../../lib/errors';
 
 /**
- * Payable lifecycle. `PAYING` is the TRANSIENT DB race-gate of the double-payment guard (D4):
- * `registerPayment` flips `OPEN → PAYING` atomically before posting, so two concurrent payments
- * race on this single-row transition and exactly one wins. `PAID` and `CANCELLED` are terminal.
+ * Payable lifecycle. `PAYING` is the TRANSIENT DB race-gate of the settlement (D4, kept by F-PS8 → a):
+ * `registerPayment` flips `OPEN|PARTIALLY_PAID → PAYING` atomically (the sum-CAS of
+ * BE-INCR-PARTIAL-SETTLEMENT, ADR §3) before posting, so concurrent settlements race on this
+ * single-row write and exactly one wins; finalize resolves `PAYING → PAID | PARTIALLY_PAID` by the
+ * balance. `PARTIALLY_PAID` (F-PS2 → a) = `0 < paidCents < amountCents`. `PAID`/`CANCELLED` are terminal.
  */
-export const PAYABLE_STATUSES = ['OPEN', 'PAYING', 'PAID', 'CANCELLED'] as const;
+export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED'] as const;
 export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
 
+/** Statuses a NEW settlement may be registered against (guard pré-CAS, ADR F-PS2 site 2). */
+export const PAYABLE_SETTLEABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID'] as const;
+
 /**
- * "Em aberto" statuses for aging / posição (INCR-AGING, F-AG3→a): a payable still owes its full
- * `amountCents` while `OPEN` or in-flight `PAYING` (the CAS 2-tx window before settlement finalizes).
- * EXCLUDES the terminal `PAID`/`CANCELLED`. Since payment is full-only there is no partial balance,
- * so outstanding per line is exactly `amountCents` for these statuses.
+ * "Em aberto" statuses for aging / posição (INCR-AGING, F-AG3→a; F-PS4→a): a payable still owes
+ * `amountCents − paidCents` while `OPEN`, `PARTIALLY_PAID` or in-flight `PAYING`. EXCLUDES the
+ * terminal `PAID`/`CANCELLED`. Outstanding per line is the REMAINING balance, never the raw total.
  */
-export const PAYABLE_OUTSTANDING_STATUSES = ['OPEN', 'PAYING'] as const;
+export const PAYABLE_OUTSTANDING_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING'] as const;
+
+/**
+ * Status a title settles to for a given balance (BE-INCR-PARTIAL-SETTLEMENT, F-PS2/F-PS3): used by
+ * finalize, by the reversal of one receipt among N, and by the claim revert. `paidCents > amountCents`
+ * is an invariant breach (the sum-CAS forbids it) — REJECTS instead of guessing (guarda defensiva,
+ * BRIEF item 9).
+ */
+export function payableStatusForBalance(paidCents: number, amountCents: number): PayableStatus {
+  if (paidCents < 0 || paidCents > amountCents) {
+    throw new ValidationError(
+      `Saldo liquidado inconsistente (${paidCents} de ${amountCents} centavos) — invariante paidCents ≤ amountCents violado.`,
+    );
+  }
+  if (paidCents === 0) return 'OPEN';
+  if (paidCents === amountCents) return 'PAID';
+  return 'PARTIALLY_PAID';
+}
 
 /** Payment lifecycle. Cancel is a status flip (+ settlement reversal), never a hard delete. */
 export const PAYMENT_STATUSES = ['ACTIVE', 'CANCELLED'] as const;

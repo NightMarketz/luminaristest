@@ -46,7 +46,7 @@ export interface CreatePaymentData {
 /**
  * Repository contract for Contas a Pagar (`payables` + `payable_payments`). Two-level tenancy via
  * AccountingScope (ownerUserId + unitId). Every method takes an optional `tx` so the service can
- * propagate the transaction (ACC-012). `claimForPayment` is the atomic double-payment race gate
+ * propagate the transaction (ACC-012). `claimForPayment` is the atomic sum-CAS race gate
  * (D4) — the ONLY correct place to serialize concurrent payments, since PostingService.postEntry
  * opens its own root tx and cannot enclose this transition.
  */
@@ -102,18 +102,50 @@ export interface IPayableRepository {
   findOutstanding(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<Payable[]>;
 
   /**
-   * Atomically claim a payable for payment: `updateMany` where status='OPEN' → 'PAYING'.
-   * Returns the row count (1 = won the race, 0 = lost / not open). This is the TOCTOU gate.
+   * Sum-CAS of BE-INCR-PARTIAL-SETTLEMENT (ADR §3, corrected form): ONE `updateMany` where
+   * status ∈ {OPEN, PARTIALLY_PAID} AND `paidCents <= amountCents − newCents` → status='PAYING',
+   * `paidCents += newCents`. `amountCents` is the value read BEFORE the call (immutable after create —
+   * no TOCTOU on it) and enters as a LITERAL: Prisma has no column-to-column filter here. Returns the
+   * row count: 1 = won the race AND the balance carries the receipt; 0 = lost the race OR the receipt
+   * would overshoot the balance (both collapse into one rejection, as the binary CAS already did).
    */
-  claimForPayment(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+  claimForPayment(
+    scope: AccountingScope,
+    id: string,
+    amountCents: number,
+    newCents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
 
   /**
-   * Atomically finalize a payment: `updateMany` where status='PAYING' → 'PAID'. Returns the row
-   * count (1 = this caller performed the transition, 0 = someone already finalized it). The
-   * exactly-once gate for the `payable.payment_registered` domain audit — both registerPayment and
-   * reconcile emit ONLY when this returns 1 (authoritative-gate-inside-tx). Must run inside the tx.
+   * Atomically finalize a settlement: `PAYING → PAID` when `paidCents >= amountCents`, else
+   * `PAYING → PARTIALLY_PAID` (F-PS2 → a). Two conditional writes on the same `status='PAYING'`
+   * predicate, so at most one matches. Returns the row count (1 = this caller performed the transition,
+   * 0 = someone already finalized it) — the exactly-once gate for the `payable.settlement_registered`
+   * domain audit; both registerPayment and reconcile emit ONLY when this returns 1
+   * (authoritative-gate-inside-tx). Must run inside the tx.
    */
-  markPaidIfPaying(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
+  finalizeIfPaying(
+    scope: AccountingScope,
+    id: string,
+    amountCents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
+
+  /**
+   * Atomically give a cancelled receipt's cents back to the balance (F-PS3 → a, any receipt among N):
+   * `updateMany` where status ∈ {PARTIALLY_PAID, PAID, PAYING} AND `paidCents >= cents` → `paidCents −= cents`.
+   * Returns the row count: 0 = the balance could not carry the decrement (invariant breach) — the
+   * caller REJECTS instead of guessing. A settlement in flight (`PAYING`) does not block (its finalize
+   * reads the decremented balance). Status is recomputed by the caller from the row re-read inside
+   * the SAME tx, and only when the row is not `PAYING`. Must run inside the tx.
+   */
+  releaseSettlement(
+    scope: AccountingScope,
+    id: string,
+    cents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
 
   updatePayable(
     scope: AccountingScope,
@@ -139,6 +171,15 @@ export interface IPayableRepository {
 
   /** All ACTIVE payments in scope (reconcile re-drive input). */
   findAllActivePayments(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<PayablePayment[]>;
+
+  /**
+   * Atomic, authoritative flip of ONE payment `ACTIVE → CANCELLED` (`updateMany` where status='ACTIVE').
+   * Returns the row count: 1 = this caller cancelled it (and is the only one allowed to give its cents
+   * back), 0 = already cancelled by a concurrent/previous call → idempotent return, NO release. Closes
+   * the double-cancel race (review #307 F8: the out-of-tx "already CANCELLED" read let two callers
+   * decrement twice). Must run inside the tx.
+   */
+  cancelPaymentIfActive(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<number>;
 
   updatePayment(
     scope: AccountingScope,

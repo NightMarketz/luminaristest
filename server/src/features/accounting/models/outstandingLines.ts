@@ -11,8 +11,12 @@
  * `centsFromDb` (convenção INTEGER CENTS, BE-INCR-MONEY-BIGINT).
  *
  * `findOutstanding(scope)` já filtra por `PAYABLE_OUTSTANDING_STATUSES`/
- * `RECEIVABLE_OUTSTANDING_STATUSES` (`['OPEN','PAYING']` / `['OPEN','RECEIVING']`) — títulos em
+ * `RECEIVABLE_OUTSTANDING_STATUSES` (`OPEN | PARTIALLY_* | PAYING/RECEIVING`) — títulos em
  * trânsito (CAS 2-tx) já vêm incluídos, sem filtro adicional aqui (F-AG3→a / F-CF4→a).
+ *
+ * BE-INCR-PARTIAL-SETTLEMENT (F-PS4→a, BRIEF item 11): `amountCents` da linha é o SALDO REMANESCENTE
+ * (`amountCents − paidCents` / `− receivedCents`), nunca o total cru — um título `PARTIALLY_*` pesa no
+ * aging e no caixa projetado só pelo que ainda falta.
  */
 import type { Prisma } from 'generated/prisma';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
@@ -25,6 +29,7 @@ export interface OutstandingLine {
   id: string;
   documentNumber: string | null;
   dueDate: Date;
+  /** SALDO REMANESCENTE em centavos (`amountCents − paidCents|receivedCents`), não o total do título. */
   amountCents: number;
   counterpartyId: string | null;
   /** supplierName (AP) / customerName (AR) — snapshot por linha. */
@@ -54,7 +59,7 @@ export async function loadOutstandingPayables(
     id: r.id,
     documentNumber: r.documentNumber,
     dueDate: r.dueDate,
-    amountCents: centsFromDb(r.amountCents),
+    amountCents: centsFromDb(r.amountCents) - centsFromDb(r.paidCents),
     counterpartyId: r.counterpartyId,
     counterpartyName: r.supplierName,
   }));
@@ -71,7 +76,7 @@ export async function loadOutstandingReceivables(
     id: r.id,
     documentNumber: r.documentNumber,
     dueDate: r.dueDate,
-    amountCents: centsFromDb(r.amountCents),
+    amountCents: centsFromDb(r.amountCents) - centsFromDb(r.receivedCents),
     counterpartyId: r.counterpartyId,
     counterpartyName: r.customerName,
   }));

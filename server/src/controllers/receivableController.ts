@@ -128,6 +128,12 @@ export const cancelReceipt = async (req: Request, res: Response) => {
   }
 };
 
+/** POST /api/receivables/:id/settlements/:settlementId/cancel — sister of cancelReceipt (F-PS10 → b). */
+export const cancelSettlement = async (req: Request, res: Response) => {
+  req.params.receiptId = req.params.settlementId;
+  return cancelReceipt(req, res);
+};
+
 /** POST /api/receivables/reconcile — re-drive missing recognitions/receipts (D4 safety net). */
 export const reconcileReceivables = async (req: Request, res: Response) => {
   try {

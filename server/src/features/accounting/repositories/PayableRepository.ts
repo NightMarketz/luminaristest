@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import { PAYABLE_OUTSTANDING_STATUSES } from '../models/Payable.model';
+import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import type {
@@ -115,30 +115,69 @@ export class PayableRepository implements IPayableRepository {
   public async claimForPayment(
     scope: AccountingScope,
     id: string,
+    amountCents: number,
+    newCents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
-    // Atomic conditional transition OPEN → PAYING. `updateMany` matches only when the row is
-    // still OPEN, so two concurrent callers race on THIS single-row write and exactly one gets
-    // count===1 (D4). Scoped by owner+unit so it can never touch another tenant's row.
+    // Sum-CAS (BE-INCR-PARTIAL-SETTLEMENT, ADR §3 corrected form): the balance check and the
+    // OPEN|PARTIALLY_PAID → PAYING claim are ONE conditional write. `amountCents` is a literal read
+    // before the call (immutable after create); `paidCents <= amountCents - newCents` ⇔
+    // `paidCents + newCents <= amountCents`, the form Prisma cannot express column-to-column.
+    // Concurrent callers race on THIS single-row write: exactly the ones the balance carries win.
     const result = await (tx ?? prisma).payable.updateMany({
-      where: { id, ...accountingScopeWhere(scope), status: 'OPEN', deletedAt: null },
-      data: { status: 'PAYING' },
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        status: { in: [...PAYABLE_SETTLEABLE_STATUSES] },
+        deletedAt: null,
+        paidCents: { lte: amountCents - newCents },
+      },
+      data: { status: 'PAYING', paidCents: { increment: newCents } },
     });
     return result.count;
   }
 
-  public async markPaidIfPaying(
+  public async finalizeIfPaying(
     scope: AccountingScope,
     id: string,
+    amountCents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
-    // Atomic conditional transition PAYING → PAID (mirror of claimForPayment). Matches only when
-    // the row is still PAYING, so of N concurrent finalizers (a raced reconcile + the normal
-    // registerPayment, or two reconcile passes) exactly one gets count===1 and thus emits the
-    // payable.payment_registered audit exactly once.
-    const result = await (tx ?? prisma).payable.updateMany({
-      where: { id, ...accountingScopeWhere(scope), status: 'PAYING' },
+    // Atomic conditional transition PAYING → PAID (balance closed) else PAYING → PARTIALLY_PAID.
+    // Both writes match only while the row is still PAYING, so of N concurrent finalizers (a raced
+    // reconcile + the normal registerPayment, or two reconcile passes) exactly one gets count===1
+    // and thus emits the payable.settlement_registered audit exactly once.
+    const db = tx ?? prisma;
+    const paid = await db.payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'PAYING', paidCents: { gte: amountCents } },
       data: { status: 'PAID' },
+    });
+    if (paid.count === 1) return 1;
+    const partial = await db.payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'PAYING' },
+      data: { status: 'PARTIALLY_PAID' },
+    });
+    return partial.count;
+  }
+
+  public async releaseSettlement(
+    scope: AccountingScope,
+    id: string,
+    cents: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // Atomic decrement for the reversal of ONE receipt among N (F-PS3 → a, any order). A settlement
+    // in flight (PAYING) does NOT block it (review #307 F1): the decrement is atomic and that
+    // settlement's finalize reads the balance already decremented. The only refusal is the
+    // invariant (`paidCents >= cents`) — never lets paidCents go negative.
+    const result = await (tx ?? prisma).payable.updateMany({
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        status: { in: ['PARTIALLY_PAID', 'PAID', 'PAYING'] },
+        paidCents: { gte: cents },
+      },
+      data: { paidCents: { decrement: cents } },
     });
     return result.count;
   }
@@ -187,6 +226,20 @@ export class PayableRepository implements IPayableRepository {
     return (tx ?? prisma).payablePayment.findMany({
       where: { ...accountingScopeWhere(scope), status: 'ACTIVE' },
     });
+  }
+
+  public async cancelPaymentIfActive(
+    scope: AccountingScope,
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    // Authoritative gate of the cancel (review #307 F8): only the caller that flips ACTIVE → CANCELLED
+    // gives the cents back; a concurrent duplicate gets 0 and returns idempotently.
+    const result = await (tx ?? prisma).payablePayment.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'ACTIVE' },
+      data: { status: 'CANCELLED' },
+    });
+    return result.count;
   }
 
   public async updatePayment(

@@ -55,9 +55,9 @@ export const MASKABLE_FREE_TEXT_KEYS: Record<string, readonly string[]> = {
   'period.hard_closed': ['reason'],
   'period.reopened':    ['reason'],
   'payable.cancelled':            ['reason'],
-  'payable.payment_cancelled':    ['reason'],
+  'payable.settlement_cancelled': ['reason'],
   'receivable.cancelled':         ['reason'],
-  'receivable.receipt_cancelled': ['reason'],
+  'receivable.settlement_cancelled': ['reason'],
   'reconciliation.unmatched':     ['reason'],
   // BE-INCR-CONTADOR-DELIVERY: `failureReason` é texto livre do operador — mesma classe de
   // `reason` dos demais. Sem esta linha o teste de contrato reprova (toda chave `reason`

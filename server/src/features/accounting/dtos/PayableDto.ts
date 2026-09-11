@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
-import { PAYMENT_METHODS } from '../models/Payable.model';
+import { PAYABLE_STATUSES, PAYMENT_METHODS } from '../models/Payable.model';
 import { queryBoolean } from './queryPrimitives';
 
 /**
@@ -169,8 +169,11 @@ export const CreatePayableSchema = z
  *         unitId:      { type: string }
  *         method:      { type: string, enum: [Cash, Pix, TED, Boleto] }
  *         paidAt:      { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do débito bancário (D9), não a data do clique" }
- *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "MVP: deve igualar o saldo do payable (pagamento integral único). Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
+ *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "Valor DESTE pagamento: qualquer parte do saldo em aberto (amountCents − paidCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico), não neste schema. Teto de POLÍTICA (não de persistência — BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400." }
  */
+// A regra "≤ saldo remanescente" NÃO cabe no DTO puro (precisa do registro): vive no serviço
+// (`registerPayment`) e é autoritativa no sum-CAS do repositório. Mudança de "deve igualar" para
+// "≤ saldo" é lógica fina, invisível ao snapshot de shape (dto-shape-snapshot-nao-cobre-logica-fina).
 export const RegisterPaymentSchema = z
   .object({
     unitId: z.string().min(1),
@@ -226,7 +229,7 @@ export const CancelPaymentSchema = z
  *       required: [unitId]
  *       properties:
  *         unitId: { type: string }
- *         status: { type: string, enum: [OPEN, PAYING, PAID, CANCELLED] }
+ *         status: { type: string, enum: [OPEN, PARTIALLY_PAID, PAYING, PAID, CANCELLED] }
  *         counterpartyId: { type: string, description: "Filtra pela FK de contraparte (INCR-COUNTERPARTY)" }
  *         dueFrom: { type: string, description: "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)" }
  *         dueTo:   { type: string, description: "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)" }
@@ -237,7 +240,7 @@ export const CancelPaymentSchema = z
  */
 export const ListPayablesQuerySchema = z.object({
   unitId: z.string().min(1),
-  status: z.enum(['OPEN', 'PAYING', 'PAID', 'CANCELLED']).optional(),
+  status: z.enum(PAYABLE_STATUSES).optional(),
   // BE-INCR-SUBLEDGER-FILTERS §2. F3: só a FK — o supplierName snapshot NÃO é casado aqui.
   counterpartyId: z.string().min(1).optional(),
   // F4: faixa INCLUSIVA nos dois extremos. `isValidDateOnly` e round-trip, não regex: '2026-02-30'

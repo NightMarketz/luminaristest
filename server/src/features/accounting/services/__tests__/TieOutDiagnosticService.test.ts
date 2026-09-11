@@ -96,8 +96,8 @@ function buildService(
   over: {
     totals?: Totals[];
     totalsSansFeeders?: Totals[];
-    receivableRows?: Array<{ amountCents: number }>;
-    payableRows?: Array<{ amountCents: number }>;
+    receivableRows?: Array<{ amountCents: number; receivedCents?: number; status?: string }>;
+    payableRows?: Array<{ amountCents: number; paidCents?: number; status?: string }>;
     inventoryItems?: Array<{ productRef: string; totalValueCents: number }>;
     chart?: typeof CHART;
     policy?: ReturnType<typeof fullPolicy>;
@@ -113,8 +113,13 @@ function buildService(
         options?.excludeSourceTypes ? (over.totalsSansFeeders ?? []) : (over.totals ?? []),
     ),
   };
-  const receivableRepo = { findOutstanding: jest.fn(async () => over.receivableRows ?? []) };
-  const payableRepo = { findOutstanding: jest.fn(async () => over.payableRows ?? []) };
+  // BE-INCR-PARTIAL-SETTLEMENT: linhas sem baixa parcial explícita valem saldo cheio (cache = 0).
+  const receivableRepo = {
+    findOutstanding: jest.fn(async () => (over.receivableRows ?? []).map((r) => ({ receivedCents: 0, status: 'OPEN', ...r }))),
+  };
+  const payableRepo = {
+    findOutstanding: jest.fn(async () => (over.payableRows ?? []).map((p) => ({ paidCents: 0, status: 'OPEN', ...p }))),
+  };
   const inventoryRepo = { findAllActive: jest.fn(async () => over.inventoryItems ?? []) };
   const policy = over.policy ?? fullPolicy();
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -227,6 +232,44 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     );
     // E a lista exportada é a mesma (fonte única).
     expect([...POS_FEEDER_SOURCE_TYPES].sort()).toEqual([...excluded].sort());
+  });
+});
+
+describe('TieOutDiagnosticService.tieOut — saldo remanescente sob baixa parcial (BE-INCR-PARTIAL-SETTLEMENT, BRIEF itens 12/13)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  // O SEGUNDO consumidor do parecer §1.2: sem `− paidCents` o diagnóstico acusaria divergência
+  // exatamente pelo valor já pago. Fixture MISTA (OPEN + PARTIALLY_* + em trânsito) em AMBOS os lados.
+  it('AR e AP fecham pelo saldo com títulos OPEN, PARTIALLY_* e em trânsito misturados', async () => {
+    const { svc } = buildService({
+      ...BALANCED,
+      // AR: 5000 aberto + (4000 − 1500 recebido) + (3000 − 500 em trânsito) = 10000 ↔ 1.1.5 D 12000 / C 2000
+      receivableRows: [
+        { amountCents: 5000 },
+        { amountCents: 4000, receivedCents: 1500, status: 'PARTIALLY_RECEIVED' },
+        { amountCents: 3000, receivedCents: 500, status: 'RECEIVING' },
+      ],
+      // AP: (9000 − 6000 pago) = 3000 ↔ 2.1.2 C 3500 / D 500 (inalterado da BALANCED)
+      payableRows: [{ amountCents: 9000, paidCents: 6000, status: 'PARTIALLY_PAID' }],
+      totals: BALANCED.totals.map((t) => (t.accountId === AR_ID ? { ...t, debitCents: 12000, creditCents: 2000 } : t)),
+    });
+    const r = await svc.tieOut(scope);
+    expect(checkById(r.checks, 'receivables').subledgerCents).toBe('10000');
+    expect(checkById(r.checks, 'receivables').balanced).toBe(true);
+    expect(checkById(r.checks, 'payables').subledgerCents).toBe('3000');
+    expect(checkById(r.checks, 'payables').balanced).toBe(true);
+    expect(r.status).toBe('OK');
+  });
+
+  it('a guarda MORDE: somar o total cru de um título PARTIALLY_PAID acusaria divergência pelo valor já pago', async () => {
+    const { svc } = buildService({
+      ...BALANCED,
+      payableRows: [{ amountCents: 9000, paidCents: 6000, status: 'PARTIALLY_PAID' }],
+    });
+    const r = await svc.tieOut(scope);
+    // Se o serviço somasse 9000 (total cru), differenceCents seria 6000 e balanced=false.
+    expect(checkById(r.checks, 'payables').subledgerCents).not.toBe('9000');
+    expect(checkById(r.checks, 'payables').differenceCents).toBe('0');
   });
 });
 
