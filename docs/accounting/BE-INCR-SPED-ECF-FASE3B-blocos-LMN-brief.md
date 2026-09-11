@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3B (conteúdo dos Blocos L/M/N — o que falta da ECF em Lucro Real)
 
+> **[FOLD 2026-09-11] §2 emendado contra o Passo A** — as 8 "Lacunas de spec reveladas pela transcrição" (`BE-INCR-SPED-ECF-FASE3-layout-transcription-LMN.md`, rodapé) foram dobradas nos contratos §2.1–§2.4 e nas pendências §4 itens 3 (parcial), 4 e 5. Docs-only; nenhum fork reaberto ou criado.
+>
 > **Estado [FOLD 2026-09-11]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-11, por questionário (2→d, 3→a, 4→b, 6→b, 7→a). Todo item `[cond:Fork N]` do checklist fica **destravado**, com uma exceção de ordem: **Fork 4→(b) exige a emenda ao ADR commitada antes do primeiro código de model** (ver §3). **Implementação segue exigindo autorização própria** (ORCH-006) — a ratificação decide os forks, não abre a `sessao-feature`.
 >
 > Estado original: preparação apenas. Produzido em `sessao-planejamento` (2026-09-11). Checklist e contratos
@@ -185,6 +187,22 @@ Tags: **[direto]** — implementável sem fork; **[cond:Fork N]** — pausa até
 
 ## 2. Contratos esboçados (schema Zod-like / Prisma-like) — **tentativos, condicionados aos forks**
 
+> **[EMENDA 2026-09-11 — contratos contra a transcrição do Passo A]** — autorização: dono, em sessão,
+> 2026-09-11: *"emenda o §2 do BRIEF com as 8 lacunas numa nova sessão"*. Fonte: as 8 "Lacunas de spec
+> reveladas pela transcrição" no rodapé de `BE-INCR-SPED-ECF-FASE3-layout-transcription-LMN.md` (Passo A,
+> commit `61a4e360`), cada uma com página do Manual do Leiaute 12. **É correção de contrato contra fonte
+> primária, não decisão de fork**: os 5 forks (2→d, 3→a, 4→b, 6→b, 7→a) ficam como ratificados em §3; o
+> checklist §1 não muda. Onde a mudança é de valor, o esboço anterior fica riscado (`~~`); onde é acréscimo,
+> a linha nova cita a página. Grau de cada mudança: **VERIFICADO** = literal na transcrição; **INFERIDO** = a
+> leitura coerente com o nome da regra, sem texto literal (mantido como no doc irmão). O que parecia exigir
+> decisão nova está em **Notas de desenho N-1..N-3** no fim desta seção — nenhuma é fork novo; nenhuma foi
+> escolhida aqui.
+>
+> Mapa lacuna → onde mudou: **1** §2.3 `tipoLancamento` · **2** §2.1/§2.3 `indRelacao` · **3** §2.1 `.superRefine`
+> · **4** §2.1/§2.3 `valorCents` (fecha §4 item 4) · **5** §2.1/§2.2/§2.3 `accountId` (fecha §4 item 5) ·
+> **6** §2.2 `codTributo` na chave de `LalurParteBAccount` · **7** §2.2 campos 5-10 de M010 (§4 item 3 parcial)
+> · **8** §2.2 nota N-1 (`LalurParteBBalance`).
+
 ### 2.1 DTO de geração — `SpedEcfRealDto.ts` (muda em todo caso; `lalur*` só se Fork 4→(a))
 
 ```ts
@@ -196,15 +214,53 @@ const FiscalRealSchema = z.object({
   indRecReceita: z.enum(['1', '2']).default('2'),
 }).strict();
 
-// SÓ se Fork 4 → (a). Se (b), estes dois campos NÃO existem: o serviço lê do model.
+// Forma de UMA linha de ajuste. Com Fork 4→(b) ratificado, esta forma é a do DTO de CRUD do item 11
+// (`LalurEntryDto`) — o DTO de GERAÇÃO não a carrega (item 11: "o gerador lê do model"). Fica aqui
+// porque §2.1 era o único lugar onde o contrato da linha estava escrito; a EMENDA corrige a forma,
+// não o dono dela.
 const LalurLineSchema = z.object({
   livro: z.enum(['lalur', 'lacs', 'n500', 'n630', 'n670']),  // M300 | M350 | linhas E de N
   quarter: z.enum(['T01', 'T02', 'T03', 'T04']),
   codigo: z.string().min(1),                                 // validado contra o fixture (item 9/10)
-  valorCents: z.number().int(),                              // NS — sinal: pendência externa 4
-  histLancamento: z.string().max(500).optional(),            // M300.HIST_LAN_LAL
-  contaParteB: z.string().optional(),                        // M300.IND_RELACAO=1 → M305.COD_CTA_B
-}).strict();
+  // EMENDA (lacuna 4, VERIFICADO): ~~z.number().int()  // NS — sinal: pendência externa 4~~
+  valorCents: z.number().int().nonnegative(),                // p.244 tabela de sinais: negativo = "Erro no
+                                                             // programa" nas 4 linhas; direção vem do tipo
+  histLancamento: z.string().max(500).optional(),            // M300.HIST_LAN_LAL (C 500, p.245)
+  // EMENDA (lacuna 2, VERIFICADO): IND_RELACAO ∈ [1;2;3;4] (p.245). Input do caller — o serviço não
+  // consegue derivá-lo (é a escolha de COMO o ajuste se relaciona). Obrigatório em linha E (INFERIDO,
+  // ver superRefine).
+  indRelacao: z.enum(['1', '2', '3', '4']),
+  contaParteB: z.string().optional(),                        // M305.COD_CTA_B — exigido se indRelacao ∈ {1,3}
+  // EMENDA (lacuna 5, VERIFICADO): id da `Account` (NÃO código) — o serviço resolve → J050.COD_CTA
+  // (p.252: M310.COD_CTA ∈ [J050.COD_CTA]). Exigido se indRelacao ∈ {2,3} (REGRA_RELACAO_INEXISTENTE
+  // p.247 + REGRA_OBRIGATORIA_M310_VL_CTA p.253).
+  accountId: z.string().optional(),
+}).strict().superRefine((l, ctx) => {
+  // EMENDA (lacuna 3): a tabela "Obrig." do M300 só marca REG e CODIGO (p.244-245); as regras de campo
+  // (seção II) condicionam pelo TIPO da linha e pelo IND_RELACAO. O DTO espelha as condicionais:
+  // — REGRA_RELACAO_INEXISTENTE (p.247, VERIFICADO): 1 ⇒ ≥1 M305 e 0 M310; 2 ⇒ 0 M305 e ≥1 M310;
+  //   3 ⇒ ≥1 de cada; 4 ⇒ nenhum.
+  const needsB = l.indRelacao === '1' || l.indRelacao === '3';
+  const needsCta = l.indRelacao === '2' || l.indRelacao === '3';
+  if (needsB !== Boolean(l.contaParteB)) ctx.addIssue({ code: 'custom', path: ['contaParteB'],
+    message: `contaParteB ${needsB ? 'obrigatória' : 'proibida'} com indRelacao=${l.indRelacao} (Manual p.247)` });
+  if (needsCta !== Boolean(l.accountId)) ctx.addIssue({ code: 'custom', path: ['accountId'],
+    message: `accountId ${needsCta ? 'obrigatório' : 'proibido'} com indRelacao=${l.indRelacao} (Manual p.247/p.253)` });
+  // — HIST_LAN_LAL · REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E (p.247): o texto diz "verifica se está
+  //   preenchido quando o tipo da linha é E e IND_RELACAO = 4"; o NOME diz o contrário. Leitura
+  //   INFERIDA (mesmo grau da lacuna 3): histórico obrigatório no ajuste sem relacionamento.
+  if (l.indRelacao === '4' && !l.histLancamento) ctx.addIssue({ code: 'custom', path: ['histLancamento'],
+    message: 'histLancamento obrigatório com indRelacao=4 (Manual p.247, leitura INFERIDA)' });
+});
+// Condicionais que o DTO NÃO consegue espelhar sozinho (dependem do catálogo) — ficam no SERVIÇO, após
+// resolver `codigo` contra o fixture (item 9), com 400 + código + motivo (mesma classe do item 9):
+//  a) REGRA_IND_RELACAO (p.247, VERIFICADO, literal): TIPO_LANCAMENTO=P ⇒ IND_RELACAO tem de ser 1.
+//  b) REGRA_OBRIGATORIO_TIPO_E / _TIPO_R (p.247): a leitura "TIPO_LANCAMENTO e IND_RELACAO exigidos em
+//     linha E; VALOR proibido em linha R" é INFERIDA (coerente com o nome e com
+//     REGRA_OBRIGATORIO_TIPO_DIFERENTE_R, p.281), não literal. Como o item 9 já rejeita linha R/CNA/CA
+//     com 400, o DTO só recebe linha E — logo `indRelacao` e `valorCents` são obrigatórios acima e
+//     `tipoLancamento` vem sempre derivado. Se o PVA (H1 2ª passada) contradisser a leitura, muda o
+//     serviço, não o DTO.
 
 export const SpedEcfRealRequestSchema = z.object({
   unitId: z.string().min(1),
@@ -212,8 +268,8 @@ export const SpedEcfRealRequestSchema = z.object({
   declarant: DeclarantSchema,
   fiscal: FiscalRealSchema,
   signers: z.array(SignerSchema).min(1).max(2),
-  lalurParteA: z.array(LalurLineSchema).optional(),          // Fork 4 (a) apenas
-  lalurParteB: z.array(/* M010 — só após Passo A */).optional(),
+  lalurParteA: z.array(LalurLineSchema).optional(),          // Fork 4 (a) apenas — perna NÃO ratificada
+  lalurParteB: z.array(/* M010 — ver §2.2 (campos transcritos) */).optional(),  // idem
 }).strict().superRefine(refineEcfSigners);
 // NÃO EXISTE e não deve existir: hashEcfAnterior (Fork 2, leitura: PVA preenche — p.70).
 ```
@@ -229,8 +285,13 @@ model LalurEntry {                       // Parte A do e-Lalur/e-Lacs + linhas E
   livro         String                   // 'lalur' | 'lacs' | 'n500' | 'n630' | 'n670'
   codigo        String                   // linha da tabela dinâmica — validado contra o fixture
   valorCents    BigInt                   // MAX_CENTS é política, não persistência (memória)
+                                         // EMENDA (lacuna 4): ≥ 0 é invariante de DTO/serviço (p.244);
+                                         // SQLite não tem CHECK via Prisma — o gate é o DTO + teste
   histLancamento String?
-  parteBId      String?                  // → LalurParteBAccount (IND_RELACAO = 1)
+  indRelacao    String                   // EMENDA (lacuna 2): '1'|'2'|'3'|'4' (p.245) — era implícito
+  parteBId      String?                  // → LalurParteBAccount (IND_RELACAO ∈ {1,3})
+  accountId     String?                  // EMENDA (lacuna 5): → Account (IND_RELACAO ∈ {2,3}) — id, não
+                                         // código; o serializer resolve → J050.COD_CTA (p.252)
   deletedAt     DateTime?                // soft-delete
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -239,15 +300,52 @@ model LalurEntry {                       // Parte A do e-Lalur/e-Lacs + linhas E
 model LalurParteBAccount {               // M010 — a conta é NOSSA (COD_CTA_B "atribuído pela PJ", p.237)
   id           String   @id @default(cuid())
   scopeId      String
-  codCtaB      String                    // estável entre exercícios — reconcilia com E020 recuperado
-  descricao    String
-  dtCriacao    DateTime                  // M010.DT_AP_LAL
-  // campos 5-10 de M010 (COD_PB_RFB, DT_LIM_LAL, COD_TRIBUTO, VL_SALDO_INI, IND_VL_SALDO_INI,
-  // CNPJ_SIT_ESP): SÓ após o Passo A (item 1) — não esboçar de memória.
+  codCtaB      String                    // M010.COD_CTA_B — estável entre exercícios — reconcilia com E020
+  descricao    String                    // M010.DESC_CTA_LAL (C, Sim)
+  dtCriacao    DateTime                  // M010.DT_AP_LAL (C 8, Sim) — data FINAL do período em que nasceu
+  // EMENDA (lacuna 7, VERIFICADO p.237): campos 5-10 de M010 — substitui o comentário "NÃO transcritos".
+  codPbRfb     String                    // 5 COD_PB_RFB  C 6, Sim — aba PARTEB_PADRAO do XLSX (fixture, §2.4);
+                                         //   REGRA_M010_COD_PB_RFB_TRIBUTO: tem de existir p/ o tributo
+  dtLimite     DateTime?                 // 6 DT_LIM_LAL  C 8, Não — data-limite p/ exclusão/adição/compensação
+  codTributo   String                    // 7 COD_TRIBUTO C 1, Sim — 'I' | 'C' — EMENDA (lacuna 6): parte da CHAVE
+  saldoIniCents BigInt                   // 8 VL_SALDO_INI N 19 2, Sim — REGRA_DT_AP_ZERO: = 0 se dtCriacao
+                                         //   cai dentro do exercício; senão = E020.VL_SALDO_FIN recuperado
+  indSaldoIni  String                    // 9 IND_VL_SALDO_INI C 1, Sim — 'D' | 'C'
+  cnpjSitEsp   String?                   // 10 CNPJ_SIT_ESP C 14, Não — REGRA_VALIDA_CNPJ
   deletedAt    DateTime?
-  @@unique([scopeId, codCtaB, deletedAt])
+  // EMENDA (lacuna 6, VERIFICADO): chave do M010 é COD_CTA_B + COD_TRIBUTO (p.237) — a mesma conta existe
+  // separadamente p/ IRPJ e CSLL. ~~@@unique([scopeId, codCtaB, deletedAt])~~
+  @@unique([scopeId, codCtaB, codTributo, deletedAt])
 }
 ```
+
+**Notas de desenho (EMENDA 2026-09-11) — registradas, não decididas; nenhuma é fork:**
+
+- **N-1 (lacuna 8, VERIFICADO p.271)** — `M500` é *"gerado pelo sistema a partir do saldo inicial e das
+  movimentações"* e *"os campos SD_FIM_LAL e IND_SD_FIM do último período serão transportados para o E020 da
+  próxima ECF"*; *"o SD_INI_LAL do primeiro período será igual ao saldo inicial do M010"*. Logo o **saldo final
+  por conta/tributo/exercício é estado nosso que sobrevive ao arquivo**: no exercício N+1, `saldoIniCents` /
+  `indSaldoIni` de `LalurParteBAccount` **têm de bater** com o `E020` que o PVA recupera da ECF N
+  (`REGRA_SALDOS_M010_E020`, p.237 — erro, não aviso). O model precisa guardar isso; duas formas possíveis,
+  **sem escolher aqui**: (i) tabela `LalurParteBBalance { parteBId, year, quarter, sdIniCents, indSdIni,
+  vlParteACents, indParteA, vlParteBCents, indParteB, sdFimCents, indSdFim }` — espelho 1:1 do M500 por
+  período, materializado no fechamento; (ii) só `saldoFimCents/indSaldoFim` + `year` em `LalurParteBAccount`
+  e M500 recomputado do razão da Parte B (`LalurEntry` com `parteBId` + `M410`) a cada geração. (i) é
+  auditável por período; (ii) é menor. A `sessao-feature` do item 13 escolhe **com o dono**, à luz do
+  `smoke-migration-gate` — vira fork só se as duas divergirem em comportamento observável no arquivo.
+- **N-2 (lacuna 5)** — `accountId → J050.COD_CTA`: o `J050` da ECF é **recuperado pelo PVA da ECD** (Bloco J,
+  Entrada=`N`, `ecfReal.ts` cabeçalho). O código que o serializer emite em `M310.COD_CTA` tem de ser o mesmo
+  que a nossa ECD escreveu em `I050.COD_CTA` — hoje `Account.code` (VERIFICADO: `SpedGenerationService.ts`
+  emite I050 a partir de `Account`, com `natureToCodNat(a.nature)` para `COD_NAT`). O sinal do `M310.IND_VL_CTA`
+  depende de `J050.COD_NAT` (resultado × patrimonial, `REGRA_VALOR_DETALHADO` p.246) — o mesmo `natureToCodNat`
+  serve. Risco nomeado: conta **renomeada/recodificada** entre a ECD transmitida e a geração da ECF quebra a
+  referência em silêncio no PVA — o mapeamento referencial ECD↔ECF (INCR-9B) volta a pesar; não é fork, é
+  item de teste do 11.
+- **N-3 (lacuna 3, grau)** — as duas regras `REGRA_OBRIGATORIO_TIPO_E` e `REGRA_NAO_PREENCHER_TIPO_DIFERENTE_E`
+  (p.247) têm textos que, lidos literalmente, se contradizem (uma diz "não está preenchido quando E", a outra
+  "está preenchido quando E"). O doc irmão manteve a leitura INFERIDA e este §2 também. **Oráculo: PVA (H1 2ª
+  passada)** — a checagem que falharia se a leitura estiver errada é a importação de um `.txt` com linha `E` sem
+  `TIPO_LANCAMENTO` (runbook do item 20).
 
 ### 2.3 Entrada do serializer — `ecfReal.ts` (muda em todo caso)
 
@@ -256,14 +354,41 @@ export interface EcfRealPeriod { perApur: 'T01'|'T02'|'T03'|'T04'; dtIni: string
 export interface EcfRealLalurLine {          // já resolvida contra o catálogo pelo serviço
   livro: 'lalur'|'lacs'|'n500'|'n630'|'n670';
   perApur: string; codigo: string; descricao: string;       // descricao vem do catálogo
-  tipoLancamento?: 'A'|'E';                                 // derivado (M300/M350); ausente em N
-  indRelacao?: '1'|'2'; valorCents: number; hist?: string; codCtaB?: string;
+  // EMENDA (lacuna 1, VERIFICADO p.245): M300/M350.TIPO_LANCAMENTO ∈ [A; E; P; L] — P = compensação de
+  // prejuízo, L = lucro. TODOS os quatro vêm DERIVADOS da coluna `TIPO LANÇ` da aba M300A/M350A (item 8),
+  // nunca input do caller. Ausente em N.
+  tipoLancamento?: ~~'A'|'E'~~ 'A'|'E'|'P'|'L';
+  // EMENDA (lacuna 2, VERIFICADO p.245): 3 = Parte B E conta contábil; 4 = sem relacionamento.
+  indRelacao?: ~~'1'|'2'~~ '1'|'2'|'3'|'4';
+  // EMENDA (lacuna 4, VERIFICADO p.244): sempre ≥ 0; o serializer NÃO escreve sinal em VALOR.
+  valorCents: number;                                       // invariante: ≥ 0 (garantido pelo DTO/model)
+  hist?: string;
+  // Filhos — o serializer emite a partir destes (REGRA_RELACAO_INEXISTENTE, p.247):
+  codCtaB?: string;                                         // → M305/M355 (indRelacao ∈ {1,3})
+  // EMENDA (lacuna 5, VERIFICADO p.252/p.253): → M310/M360 (indRelacao ∈ {2,3}); já resolvido pelo serviço
+  // de accountId → código do plano (= I050.COD_CTA da ECD) + natureza (p/ o sinal, N-2).
+  codCta?: string; codNat?: '01'|'02'|'03'|'04'|'09';
+}
+// Sinais dos filhos — DERIVADOS, nunca input (REGRA_PEA p.250 + bloco de conversão de REGRA_VALOR_DETALHADO
+// p.246, com VALOR positivo): M305.IND_VL_CTA = 'D' se tipo ∈ {A,L}, 'C' se tipo ∈ {E,P}; M310.IND_VL_CTA =
+// (tipo ∈ {A,L}) ? (codNat==='04' ? 'D' : 'C') : (codNat==='04' ? 'C' : 'D'). VL_CTA = valorCents (1 filho
+// por linha — ponytail: a soma de vários filhos é o mesmo invariante, adicionar quando um ajuste precisar
+// de mais de uma conta).
+// `codNat` no domínio de `natureToCodNat` (I050: '01'..'04','09' — VERIFICADO em SpedGenerationService.ts);
+// a regra p.246 escreve "4" / "1, 2 ou 3" sem zero à esquerda — ASSUMIDO o mesmo domínio do J050 (2 chars).
+export interface EcfRealParteBAccount {      // M010 — EMENDA (lacuna 7): campos 1-10, p.237
+  codCtaB: string; descricao: string; dtApLal: string;      // 2-4
+  codPbRfb: string; dtLimLal?: string; codTributo: 'I'|'C'; // 5-7
+  saldoIniCents: number; indSaldoIni: 'D'|'C';              // 8-9 — ≥ 0, sinal no indicador (N 19 2)
+  cnpjSitEsp?: string;                                      // 10
 }
 export interface EcfRealFileInput {
   declarant; fiscal; params; signers;
   periods: EcfRealPeriod[];                                 // substitui `quarters` (Fork 6)
   lalur: EcfRealLalurLine[];                                // vazio ⇒ M/N só com 001/030/990
   parteB: EcfRealParteBAccount[];                           // vazio ⇒ sem M010
+  // M410 e M500 (item 13): M500 é derivado (N-1) — entra como saldos por conta/tributo/período já
+  // calculados pelo serviço, ou é recomputado aqui; forma aberta em N-1. NÃO esboçado nesta EMENDA.
   codVer: string;                                           // Fork 7 — resolvido fora do serializer
 }
 ```
@@ -273,8 +398,14 @@ export interface EcfRealFileInput {
 ```json
 { "origem": "RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx", "sha256": "366b8d9030a0…", "leiaute": "0012",
   "abas": { "M300A": [ { "codigo": "7", "descricao": "Custos não dedutíveis", "tipo": "E",
-                        "tipoLanc": "A", "dtIni": "2015-01-01", "dtFim": null } ] } }
+                        "tipoLanc": "A", "dtIni": "2015-01-01", "dtFim": null } ],
+            "PARTEB_PADRAO": [ /* EMENDA (lacuna 7): M010.COD_PB_RFB C 6 valida contra esta aba
+                                  (p.237, REGRA_M010_COD_PB_RFB_TRIBUTO — por tributo) */ ] } }
 ```
+
+`tipoLanc` no fixture assume os 4 valores `A|E|P|L` (lacuna 1) — o teste tabela-dirigido do item 8 cobre o
+alfabeto inteiro, não só A/E. `PARTEB_PADRAO` é aba nova no script do item 10 (a contagem de linhas entra na
+reconferência do fixture; a transcrição do Passo A não a contou — **aberto**, não bloqueia o item 11).
 
 ### Saída
 
@@ -377,13 +508,28 @@ Todas têm agora **fonte no corpus** exceto as que só o PVA responde:
    tabela) — item 20-ii prepara o passo; o H1 2ª passada é o oráculo.
 2. **[só o PVA]** Se o PVA cria `L030/M030/N030` sozinho a partir do Bloco 0 quando o bloco vem só com
    `001(IND_DAD=1)` — decide entre (a) e (b) do Fork 6 de forma definitiva; (b) é seguro nas duas hipóteses.
-3. **[Passo A, item 1]** Campos 5-10 de `M010`, e os registros `M305/M310/M312`, `M355/M360/M362`,
-   `M410/M415`, `M500/M510`, `L030/M030/N030` campo-a-campo — bloqueia os itens 5, 7, 8, 13, 14.
-4. **[Passo A, item 1]** Se `M300.VALOR` (`NS 19,2`) usa sinal ou vai sempre positivo com
-   `TIPO_LANCAMENTO` dando a direção — Regras de Validação do M300 (p.244+). Até lá `z.number().int()`.
-5. **[Passo A, item 1]** Obrigatoriedade de `M310` (contas contábeis relacionadas) quando
-   `IND_RELACAO=2` — se obrigatório, o ajuste precisa apontar conta do razão (`accountId`), e o contrato
-   §2.1/2.2 ganha esse campo.
+3. **[Passo A, item 1] — RESOLVIDO PARCIAL (EMENDA 2026-09-11).** ~~Campos 5-10 de `M010`, e os registros
+   `M305/M310/M312`, `M355/M360/M362`, `M410/M415`, `M500/M510`, `L030/M030/N030` campo-a-campo — bloqueia os
+   itens 5, 7, 8, 13, 14.~~ **Transcritos** (doc irmão, com página): `M010` campos 1-10 (p.237), `M305` (p.250),
+   `M310` (p.252), `M312` (p.254), `M355` (p.262), `M360` (p.264), `M410` 8 campos (p.268), `M500` 11 campos
+   (p.271), `L030` (p.221), `M030` (p.241), `N030` (p.277) — §2.2 já carrega os campos de M010. **Ainda aberto:**
+   `M362`, `M415` e `M510` — o doc irmão só os cita pelo nome dentro de regras de outros registros
+   (`REGRA_REGISTRO_M362_OBRIGATORIO`, p.264) e **não tem seção própria** para nenhum dos três; o item 13 segue
+   `[pendente-externa]` de leiaute **só** para esses. Não bloqueia mais os itens 5, 7, 8, 14.
+4. **[Passo A, item 1] — RESOLVIDO (EMENDA 2026-09-11).** ~~Se `M300.VALOR` (`NS 19,2`) usa sinal ou vai
+   sempre positivo com `TIPO_LANCAMENTO` dando a direção — Regras de Validação do M300 (p.244+). Até lá
+   `z.number().int()`.~~ Evidência: a tabela de sinais na intro do M300 (p.244) marca **"Erro no programa"** para o
+   valor negativo nas 4 linhas (adição, lucro, exclusão, compensação de prejuízo) e `REGRA_VALOR_DETALHADO`
+   (p.246) converte o valor **positivo** em D/C a partir do `TIPO_LANCAMENTO`. Contrato: `valorCents`
+   `.nonnegative()` em §2.1 e §2.3; a direção vem do tipo, nunca do sinal (VERIFICADO na transcrição).
+5. **[Passo A, item 1] — RESOLVIDO (EMENDA 2026-09-11).** ~~Obrigatoriedade de `M310` (contas contábeis
+   relacionadas) quando `IND_RELACAO=2` — se obrigatório, o ajuste precisa apontar conta do razão (`accountId`),
+   e o contrato §2.1/2.2 ganha esse campo.~~ **É obrigatório**: `REGRA_RELACAO_INEXISTENTE` (p.247 — com
+   `IND_RELACAO=2`, ≥1 `M310` e nenhum `M305`; com `3`, ≥1 de cada), `REGRA_OBRIGATORIA_M310_VL_CTA` (p.253) e
+   `M310.COD_CTA ∈ [J050.COD_CTA]` (p.252). Contrato: `accountId` (id da `Account`, não código) em §2.1/§2.2/§2.3,
+   obrigatório quando `indRelacao ∈ {2,3}`. Consequência registrada em §2.3: o `COD_CTA` emitido tem de bater
+   com o `J050` da ECD **recuperada pelo PVA**, logo o mapeamento referencial ECD↔ECF volta a pesar (ver nota
+   de desenho N-2).
 6. **[fora do corpus]** Manual do **Leiaute 13** (AC 2026) — não publicado no índice oficial em 2026-09-11
    (`SPED-indice-manuais.html` lista até o 12). Item 4 falha explicitamente para `year=2026` até lá.
 7. **[contador]** Quais linhas `E` de `M300A` este parque de clientes realmente usa (as 374 são o universo,
