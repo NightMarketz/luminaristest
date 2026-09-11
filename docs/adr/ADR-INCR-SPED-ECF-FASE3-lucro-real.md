@@ -1,6 +1,6 @@
 # ADR-INCR-SPED-ECF-FASE3 — ECF em Lucro Real (Blocos L/M/N + `HASH_ECF_ANTERIOR` + `0010` parametrizável)
 
-- **Status:** **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
+- **Status:** **Accepted — forks fechados.** [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
   código escrito, nenhuma branch criada.** Este ADR NÃO ratifica nenhum dos forks que lista — cada um
   segue **RATIFICAÇÃO PENDENTE** do dono. A execução (código) exige autorização própria, distinta desta.
 - **Date:** 2026-09-02
@@ -122,7 +122,7 @@ fiscal exato, de validação externa (§5). O que segue é a **estrutura** propo
 
 ---
 
-## 4. Forks pendentes de ratificação — **Forks 1 e 5 ratificados em 2026-09-02; 2, 3 e 4 pendentes**
+## 4. Forks pendentes de ratificação — **Forks 1 e 5 ratificados em 2026-09-02; 2, 3 e 4 ratificados em 2026-09-11 (ver EMENDA 2026-09-11 — Forks 6 e 7 também)**
 
 ### Fork 1 — Superfície de regime: estender o endpoint existente ou criar um serviço/rota dedicados
 
@@ -323,3 +323,31 @@ Registrado na mesma data como achado de triagem (T5): `ECF_COD_VER = '0012'` é 
 `server/src/lib/ecf.ts:43`; os fatos geradores de 2026 saem em Leiaute 13 — parametrizar por ano-calendário
 (molde do `0010`) entra como item novo do BRIEF da Fase 3. E a versão vigente do Manual do Leiaute 12 é a
 atualização de **20/05/2026** (índice oficial `sped.rfb.gov.br/pasta/show/1644`), não 23/07.
+
+## EMENDA (2026-09-11) — Forks 2, 3 e 4 ratificados; Forks 6 e 7 abertos e ratificados; §5 resolvido na fonte
+
+Ratificado pelo dono em 2026-09-11, em sessão, por questionário de forks (padrão INCR-DIM/NF-e), após a
+reconferência do BRIEF contra o Manual do Leiaute 12 agora no corpus local
+(`docs/accounting/RECONFERENCIA-ECF-FASE3-2026-09-10.md`) e o BRIEF de continuação
+`docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Status do ADR: Accepted parcial → Accepted
+(forks fechados; implementação do restante segue exigindo autorização própria, ORCH-006).**
+
+| Fork | Decisão | Fonte que a sustenta |
+|---|---|---|
+| **2** `HASH_ECF_ANTERIOR` | **(d) — nenhuma das três do §4.** O PVA preenche na recuperação da ECF anterior; o `.txt` emite vazio; o DTO **não** tem o campo. | Manual p.70 (campo 2: *"preenchido automaticamente pelo sistema"*, Obrigatório=Não); p.14 (regra de transmissão). Mesmo padrão dos Blocos C/E da Fase 2. |
+| **3** Quem computa o Bloco N | **(a) PVA.** Luminaris emite `N001/N030/N990` + linhas `E` quando houver valor; nenhuma `CNA/CA`. | Tabelas Dinâmicas, aba `N630A`: `TIPO=CNA` com `FÓRMULA` (15%, adicional sobre `20000*MESES_PERIODO()`, teto 90% LC 224/25 em `6.1/8.1/10.1`); 15 CNA / 26 E. Deixa de ser analogia: é **VERIFICADO**. |
+| **4** Persistência dos ajustes | **(b) model Prisma persistido** — `LalurEntry` (Parte A + linhas `E` de N) e `LalurParteBAccount` (M010). **Este é o "ADR próprio" que o D4 do ADR-ECF exigia; esta emenda o cumpre.** | Manual p.237: `M010.COD_CTA_B` é *"código unívoco atribuído pela pessoa jurídica"* — nosso, e precisa ser estável entre exercícios; p.44: `E020` (saldos da Parte B do ano anterior) é recuperado pelo PVA, Entrada=`N`. Input transiente não sobrevive à Parte B. Critério do dono (master map l.516): completude. |
+| **6** Bloco L (novo) | **(b) `L001(IND_DAD=0)` + `L030`×4 + `L990`, sem `L100/L300`.** Sai a injeção de `AccountingReportService` do serviço Real; `ecfReal.test.ts:123` vira gate vermelho→verde. | Manual p.224 (*"saldo final será recuperado do registro K155/K156 … não são editáveis"*), p.232 (idem L300), p.41 (K construído da ECD recuperada). Corrige o §1 deste ADR, que chamava `balanceSheet/incomeStatement` de "fonte candidata do Bloco L". |
+| **7** `ECF_COD_VER` por ano (novo, autorizado na EMENDA 03/09) | **(a) tabela `{2025:'0012'}` em `lib/ecf.ts`, erro explícito para ano sem leiaute, override opcional pelo caller.** | Índice oficial `pasta/show/1644`: Leiaute 12 é o último publicado em 2026-09-11; Leiaute 13 (AC 2026) ainda não existe. |
+
+**§5 (pendências externas) — estado após o corpus:** itens 1, 2, 3, 4, 5 e 6 **resolvidos na fonte**
+(Manual + XLSX no repositório; detalhe página a página na reconferência); item 7 (compensação 30%,
+Parte B) e a mecânica de `M410/M500` ficam para o **Passo A** do BRIEF 3B (transcrição campo-a-campo);
+item 8 já estava fechado (Fork 5). Duas pendências **só o PVA responde**: se rejeita `E990/M990/S990`
+(Entrada=`N`/ausente — pp.44/47) e se cria `L030/M030/N030` sozinho — ambas viram passos do
+`RUNBOOK-H1-PVA.md` 2ª passada, preparados pelo agente e preenchidos pelo humano.
+
+**Consequências que esta emenda assume, nomeadas:** (i) migração nova + `smoke-migration-gate` reaberto
+(primeira vez neste domínio desde D7/D2); (ii) `FE-INCR-LALUR` como incremento separado; (iii) o bloqueador
+referencial (§5.1 do ADR-ECF, `3.3` sem código RFB) volta a valer **transitivamente** via ECD → K → L —
+pertence ao X2, não a esta frente, mas quem operar a 2ª passada precisa saber.

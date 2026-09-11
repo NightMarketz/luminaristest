@@ -1,8 +1,10 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3B (conteúdo dos Blocos L/M/N — o que falta da ECF em Lucro Real)
 
-> **Estado: preparação apenas.** Produzido em `sessao-planejamento` (2026-09-11). Checklist e contratos
-> abaixo **NÃO autorizam código** — cada fork em §3 está `RATIFICAÇÃO PENDENTE`. A `sessao-feature` que
-> executar este BRIEF só avança nos itens `[direto]`; os `[cond:Fork N]` pausam no fork correspondente.
+> **Estado [FOLD 2026-09-11]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-11, por questionário (2→d, 3→a, 4→b, 6→b, 7→a). Todo item `[cond:Fork N]` do checklist fica **destravado**, com uma exceção de ordem: **Fork 4→(b) exige a emenda ao ADR commitada antes do primeiro código de model** (ver §3). **Implementação segue exigindo autorização própria** (ORCH-006) — a ratificação decide os forks, não abre a `sessao-feature`.
+>
+> Estado original: preparação apenas. Produzido em `sessao-planejamento` (2026-09-11). Checklist e contratos
+> abaixo não autorizavam código — cada fork em §3 estava `RATIFICAÇÃO PENDENTE`. A `sessao-feature` que
+> executar este BRIEF avança em todos os itens; os `[cond:Fork N]` já têm direção.
 > **Este BRIEF é a continuação de `BE-INCR-SPED-ECF-FASE3-lucro-real-brief.md`** (esqueleto, mergeado
 > #263) e **substitui** os itens 6, 7, 8 e 18 dele, que nasceram sem o Manual. O que lá era
 > `[pendente-externa]` aqui tem página.
@@ -284,11 +286,11 @@ Inalterada: `DataExchangeJobResponse` (INCR-6). `periodStart/periodEnd` do #305 
 
 | # | Fork | Recomendação | Grau de abertura |
 |---|---|---|---|
-| 2 | Fonte do `HASH_ECF_ANTERIOR` | **(d) nenhuma das 3 do ADR — o PVA preenche; emitimos vazio** | leitura: **FECHADO na fonte** |
-| 3 | Quem computa o Bloco N | **(a) PVA** — agora VERIFICADO | leitura: **FECHADO na fonte** |
-| 4 | Persistência dos ajustes do Lalur | **(b) model persistido** | **ALTO** — reabre migração + exige emenda ao ADR |
-| 6 | Bloco L: emitir ou deixar ao PVA | **(b) L001+L030, sem L100/L300** | MÉDIO — decide o item 6 (remover report service) |
-| 7 | Onde vive `ECF_COD_VER` por ano | **(a) tabela ano→leiaute no código, erro em ano desconhecido** | BAIXO |
+| 2 | Fonte do `HASH_ECF_ANTERIOR` | **(d) nenhuma das 3 do ADR — o PVA preenche; emitimos vazio** | ✅ **RATIFICADO (d) 2026-09-11** |
+| 3 | Quem computa o Bloco N | **(a) PVA** — agora VERIFICADO | ✅ **RATIFICADO (a) 2026-09-11** |
+| 4 | Persistência dos ajustes do Lalur | **(b) model persistido** | ✅ **RATIFICADO (b) 2026-09-11** — emenda ao ADR antes de código |
+| 6 | Bloco L: emitir ou deixar ao PVA | **(b) L001+L030, sem L100/L300** | ✅ **RATIFICADO (b) 2026-09-11** |
+| 7 | Onde vive `ECF_COD_VER` por ano | **(a) tabela ano→leiaute no código, erro em ano desconhecido** | ✅ **RATIFICADO (a) 2026-09-11** |
 
 ### Fork 2 — `HASH_ECF_ANTERIOR` (re-apresentado com a fonte)
 
@@ -299,8 +301,8 @@ existe, o campo tem de estar vazio**. É o mesmo padrão dos Blocos C/E (Fase 2 
 - **(d) O PVA preenche na recuperação; o `.txt` emite vazio; o DTO não tem o campo; o runbook ganha o passo
   de recuperação (item 20-i).** Residual humano: a partir do 2º exercício, operador que não recuperar a ECF
   anterior no PVA tem transmissão recusada — isso é runbook, não código.
-- **Recomendação: (d).** O que o dono ratifica aqui é a **leitura**, não uma escolha. **RATIFICAÇÃO
-  PENDENTE.**
+- **Recomendação: (d).** O que o dono ratifica aqui é a **leitura**, não uma escolha. ~~RATIFICAÇÃO
+  PENDENTE.~~ **RATIFICADO — dono, em sessão, 2026-09-11 (questionário de forks, respostas: Forks 2 e 3 "Ratifico as duas"; Fork 4 "(b) Model persistido"; Fork 6 "(b) L001 + L030 × 4, sem L100/L300"; Fork 7 "(a) Tabela ano→leiaute no código").**
 
 ### Fork 3 — Quem computa o Bloco N (re-apresentado com a fonte)
 
@@ -311,7 +313,7 @@ da LC 224/25 nas linhas `6.1/8.1/10.1` com `DT_INI=01012026`) contra `E` (entrad
 - **(a) PVA computa; Luminaris emite períodos + linhas `E` quando houver valor** (itens 14-15).
 - (b) Luminaris computa — descartada pela mesma razão da Fase 2, agora com evidência de que a fórmula muda
   por lei dentro do mesmo leiaute.
-- **Recomendação: (a), VERIFICADO.** Ratifica-se a leitura. **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a), VERIFICADO.** Ratifica-se a leitura. ~~RATIFICAÇÃO PENDENTE.~~ **RATIFICADO — dono, em sessão, 2026-09-11 (questionário de forks, respostas: Forks 2 e 3 "Ratifico as duas"; Fork 4 "(b) Model persistido"; Fork 6 "(b) L001 + L030 × 4, sem L100/L300"; Fork 7 "(a) Tabela ano→leiaute no código").**
 
 ### Fork 4 — Persistência dos ajustes (re-apresentado com a forma corrigida)
 
@@ -331,8 +333,10 @@ O ADR dizia *"Recomendação: nenhuma"*. Dois fatos novos mudam isso:
   estrutural. **Não atende o critério do dono** (*"o mais completo que englobe todos os outros e produza
   prova de evidência que os runbooks exigem"*, master map linha 516).
 - **Recomendação: (b)**, pela Parte B (fato 2) e pelo critério de completude ratificado. Custo real nomeado:
-  migração + gate reaberto + emenda ao ADR + FE separado. **RATIFICAÇÃO PENDENTE — decisão do dono.**
-  Se ratificado (b): a `sessao-feature` **não começa** antes da emenda ao ADR estar commitada.
+  migração + gate reaberto + emenda ao ADR + FE separado. ~~RATIFICAÇÃO PENDENTE — decisão do dono.~~
+  **RATIFICADO — dono, em sessão, 2026-09-11 (questionário de forks, respostas: Forks 2 e 3 "Ratifico as duas"; Fork 4 "(b) Model persistido"; Fork 6 "(b) L001 + L030 × 4, sem L100/L300"; Fork 7 "(a) Tabela ano→leiaute no código").**
+  **Ordem obrigatória:** a `sessao-feature` **não começa** o item 11 antes da emenda ao ADR estar commitada
+  (feita no mesmo fold: `ADR-INCR-SPED-ECF-FASE3-lucro-real.md`, EMENDA 2026-09-11).
 
 ### Fork 6 — Bloco L: emitir `L100/L300` ou deixar ao PVA (NOVO — ninguém tinha aberto)
 
@@ -350,16 +354,18 @@ recuperado do registro K155/K156. Os saldos finais do registro L100 não são ed
 - **Recomendação: (b).** Consequência: item 6 (remover `l100Source/l300Source` + injeção do report
   service). **O bloqueador referencial (§5.1, `3.3` sem código RFB) volta a valer transitivamente via
   ECD → K** — não é deste BRIEF, mas quem ratificar (b) precisa saber que a qualidade do L depende do
-  mapeamento referencial da ECD. **RATIFICAÇÃO PENDENTE.**
+  mapeamento referencial da ECD. ~~RATIFICAÇÃO PENDENTE.~~ **RATIFICADO — dono, em sessão, 2026-09-11 (questionário de forks, respostas: Forks 2 e 3 "Ratifico as duas"; Fork 4 "(b) Model persistido"; Fork 6 "(b) L001 + L030 × 4, sem L100/L300"; Fork 7 "(a) Tabela ano→leiaute no código").**
 
 ### Fork 7 — `ECF_COD_VER` por ano-calendário (autorizado na EMENDA 03/09)
 
 - **(a) Tabela `{ 2025: '0012' }` em `lib/ecf.ts`, com erro explícito para ano ausente** e override opcional
   pelo caller (`fiscal.codVer?`). Quando o Leiaute 13 for publicado, é uma linha + o corpus.
 - (b) Só input do caller, sem tabela — empurra para o operador um dado que é função do ano.
-- **Recomendação: (a).** É o molde do `0010`: parametrizado, sem default silencioso. **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a).** É o molde do `0010`: parametrizado, sem default silencioso. ~~RATIFICAÇÃO PENDENTE.~~ **RATIFICADO — dono, em sessão, 2026-09-11 (questionário de forks, respostas: Forks 2 e 3 "Ratifico as duas"; Fork 4 "(b) Model persistido"; Fork 6 "(b) L001 + L030 × 4, sem L100/L300"; Fork 7 "(a) Tabela ano→leiaute no código").**
 
-Nenhum fork se auto-ratifica. Forks 2 e 3 pedem ratificação de **leitura**; 4, 6 e 7 pedem **escolha**.
+~~Nenhum fork se auto-ratifica. Forks 2 e 3 pedem ratificação de **leitura**; 4, 6 e 7 pedem **escolha**.~~
+**[FOLD 2026-09-11]** Os cinco foram ratificados pelo dono no mesmo dia, por questionário com contexto (padrão
+INCR-DIM/NF-e: fork a fork, em sessão). Nenhum se auto-ratificou.
 
 ---
 
