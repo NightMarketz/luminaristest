@@ -188,10 +188,20 @@ describe('PartialSettlement — sum-CAS, invariante campo↔filhos, backfill (re
     expect(await apRepo.releaseSettlement(scope, 'ps-mid', 1, db as any)).toBe(0);
   }, 60000);
 
-  it('releaseSettlement refuses while a settlement is in flight (PAYING not in the predicate)', async () => {
+  // F1 do review independente (PR #307): cancelar um recibo JÁ finalizado não pode ser recusado só
+  // porque OUTRO recibo está em trânsito — o decremento é atômico e o status fica para o finalize
+  // (que lê o saldo já decrementado). Só o invariante (`paidCents >= cents`) recusa.
+  it('releaseSettlement DECREMENTA mesmo com um settlement em trânsito (PAYING); o status não é tocado pelo release', async () => {
     await seedPayable('ps-inflight', 50000, 'PAYING', 30000);
-    expect(await apRepo.releaseSettlement(scope, 'ps-inflight', 10000, db as any)).toBe(0);
-    expect(Number((await db.payable.findUniqueOrThrow({ where: { id: 'ps-inflight' } })).paidCents)).toBe(30000);
+    expect(await apRepo.releaseSettlement(scope, 'ps-inflight', 10000, db as any)).toBe(1); // LACUNA: hoje 0
+    const row = await db.payable.findUniqueOrThrow({ where: { id: 'ps-inflight' } });
+    expect(Number(row.paidCents)).toBe(20000);
+    expect(row.status).toBe('PAYING');
+    // O finalize que vier depois resolve pelo saldo já decrementado: 20000 < 50000 → PARTIALLY_PAID.
+    expect(await apRepo.finalizeIfPaying(scope, 'ps-inflight', 50000, db as any)).toBe(1);
+    expect((await db.payable.findUniqueOrThrow({ where: { id: 'ps-inflight' } })).status).toBe('PARTIALLY_PAID');
+    // Invariante continua o único motivo de recusa.
+    expect(await apRepo.releaseSettlement(scope, 'ps-inflight', 20001, db as any)).toBe(0);
   }, 30000);
 
   it('AR mirror — sum-CAS by receivedCents: 3 × 15000 fit a 50000 title, the 4th loses by balance', async () => {
