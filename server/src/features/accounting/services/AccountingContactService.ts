@@ -120,19 +120,24 @@ export class AccountingContactService {
     if (!this.policy.canManageAccountingContact(scope)) {
       throw new ForbiddenError('Você não tem permissão para editar contadores.');
     }
-    const current = await this.requireContact(scope, id);
+    await this.requireContact(scope, id);
     // Cruzamento UF × número do CRC no patch PARCIAL: o DTO só cruza quando os dois vêm juntos;
     // aqui o campo que não veio é lido da linha existente, para o patch nunca deixar a linha
-    // inconsistente (cédula 10/09 §6, F13 — "máscara em todos os campos").
-    const nextNumber = dto.crcNumber ?? current.crcNumber;
-    const nextUf = dto.crcUf ?? current.crcUf;
-    const embedded = crcNumberUf(nextNumber);
-    if (embedded && embedded !== nextUf) {
-      throw new ValidationError(
-        `crcUf (${nextUf}) diverge da UF do número do CRC (${embedded}) — ajuste os dois juntos.`,
-      );
-    }
-    return this.contactRepo.update(scope, id, {
+    // inconsistente (cédula 10/09 §6, F13). Leitura + gate + escrita DENTRO da tx com `tx`
+    // propagado (server/CLAUDE.md gate 5; review achado 7): dois PATCHes concorrentes
+    // ({crcNumber:RJ…,crcUf:RJ} × {crcUf:SP}) não podem entrelaçar e deixar RJ-…/SP.
+    return this.contactRepo.runTransaction(async (tx) => {
+      const current = await this.contactRepo.findById(scope, id, tx);
+      if (!current) throw new NotFoundError(`Contador '${id}' não foi encontrado.`);
+      const nextNumber = dto.crcNumber ?? current.crcNumber;
+      const nextUf = dto.crcUf ?? current.crcUf;
+      const embedded = crcNumberUf(nextNumber);
+      if (embedded && embedded !== nextUf) {
+        throw new ValidationError(
+          `crcUf (${nextUf}) diverge da UF do número do CRC (${embedded}) — ajuste os dois juntos.`,
+        );
+      }
+      return this.contactRepo.update(scope, id, {
       ...(dto.name !== undefined ? { name: dto.name } : {}),
       ...(dto.email !== undefined ? { email: dto.email } : {}),
       ...(dto.cpf !== undefined ? { cpf: dto.cpf } : {}),
@@ -147,6 +152,7 @@ export class AccountingContactService {
               : null,
           }
         : {}),
+      }, tx);
     });
   }
 

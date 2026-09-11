@@ -15,6 +15,10 @@ export interface DataExchangeJobResponse {
   invalidRows: number;
   committedRows: number;
   createdAt: Date;
+  /** Período coberto pelo artefato SPED (date-only) — null nos demais jobs. É o que diz ao operador
+   * quais jobs são entregáveis ao contador (review 2026-09-10 achado 10). */
+  periodStart: string | null;
+  periodEnd: string | null;
 }
 
 /** Shared job → response mapper used by the export and import services. */
@@ -33,6 +37,8 @@ export function toJobResponse(job: AccountingDataExchangeJob): DataExchangeJobRe
     invalidRows: job.invalidRows,
     committedRows: job.committedRows,
     createdAt: job.createdAt,
+    periodStart: job.periodStart ? job.periodStart.toISOString().slice(0, 10) : null,
+    periodEnd: job.periodEnd ? job.periodEnd.toISOString().slice(0, 10) : null,
   };
 }
 

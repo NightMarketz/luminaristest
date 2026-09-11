@@ -42,8 +42,11 @@ async function expandSignerContacts(
   const scope = resolveAccountingScope(user, raw.unitId);
   const contacts = getFactory().getAccountingContactService();
   const fromContacts = [];
-  for (const id of ids as string[]) {
-    const contact = await contacts.requireContact(scope, id);
+  // `getContact` (policy-first: canReadAccountingContact), não `requireContact` (sem policy) —
+  // review 2026-09-10 achado 6. Ids repetidos viram UM signatário (achado 12): a ECF aceita no
+  // máximo 2 e um duplicado gastaria a vaga do responsável legal.
+  for (const id of [...new Set(ids as string[])]) {
+    const contact = await contacts.getContact(scope, id);
     if (target === 'ecd') {
       fromContacts.push(contactToJ930Signer(contact));
     } else {

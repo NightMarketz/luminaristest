@@ -1291,7 +1291,7 @@ model AccountingContact {
   phone                    String? // J930 campo 08 FONE — só dígitos, 10-11
   // Registro profissional espelhando o J930 da ECD (Manual do Leiaute 9, ADE Cofis 01/2026,
   // campos 06/09/10/11) — é o que o pré-preenchimento do signatário COD_ASSIN=900 consome.
-  crcNumber                String // J930 campo 06 IND_CRC — o manual NÃO declara formato; normalizado, não mascarado
+  crcNumber                String // J930 campo 06 IND_CRC — máscara do CFC UF-NNNNNN/O-D (cédula 10/09 §6 F13), UF cruzada com crcUf
   crcUf                    String // J930 campo 09 UF_CRC — 2 letras, Tabela de UF (REGRA_TABELA_UF)
   crcCertificate           String? // J930 campo 10 NUM_SEQ_CRC — Certidão de Regularidade no formato UF/AAAA/NÚMERO
   crcCertificateValidUntil DateTime? // J930 campo 11 DT_CRC — date-only (validade da certidão)

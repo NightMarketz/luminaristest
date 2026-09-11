@@ -240,6 +240,16 @@ describe('AccountingDeliveryService', () => {
       expect(findByYearMonth).not.toHaveBeenCalled();
     });
 
+    // Review achado 3 (mutação M1): apagar a comparação de `periodEnd` sobrevivia — o caso "mesmo
+    // início, fim diferente" não existia.
+    it('ECD e ECF com o MESMO início e fins diferentes também são 400', async () => {
+      const shorter = { start: PERIOD.start, end: new Date('2026-06-30T00:00:00.000Z') };
+      const { service } = build({
+        ecfJob: job('job-ecf', 'EXPORT_SPED_ECF', SHA_ECF, 'EXPORTED', shorter),
+      });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(/mesmo período/);
+    });
+
     it('job SEM período gravado (gerado antes da migração) é 400 — o sistema não sabe o que ele cobre', async () => {
       const { service } = build({
         ecfJob: job('job-ecf', 'EXPORT_SPED_ECF', SHA_ECF, 'EXPORTED', { start: null, end: null }),

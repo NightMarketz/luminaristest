@@ -148,6 +148,66 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
     expect(r0930.some((l) => l.includes('SP-000777/O-1') && l.includes('|900|'))).toBe(true);
   });
 
+  /**
+   * O J930 da ECD — shape diferente do 0930 (descrição + codAssin + ufCrc + numSeqCrc + dtCrc +
+   * indRespLegal). O review de 2026-09-10 (B-iv) derrubou a justificativa "a ECD exige mapeamento
+   * referencial em banco vazio" — ele gerou uma ECD e deu 201. Sem este teste, trocar o mapper do
+   * ramo ECD pelo da ECF sobrevivia à suíte (mutação M9c).
+   */
+  const ecdBody = (over: Record<string, unknown> = {}) => ({
+    unitId: UNIT,
+    mappingVersion: 'RFB-2024',
+    year: 2026,
+    declarant: {
+      nome: 'Salão Luminaris ME', cnpj: '12345678000199', uf: 'SP', codMun: '3550308',
+      indNire: '0', indGrandePorte: '0',
+    },
+    book: { numOrd: '1', natLivr: 'Livro Diário', dtExSocial: '2026-12-31' },
+    signers: [
+      { identNom: 'Sócio', identCpfCnpj: '55566677788', identQualif: 'Sócio', codAssin: '309', indRespLegal: 'S' },
+    ],
+    ...over,
+  });
+
+  it('signerContactIds expande o contador no J930 da ECD gerada (shape da ECD, não o 0930)', async () => {
+    const created = await request(app)
+      .post('/api/accounting/contacts')
+      .set(authHeader(dono))
+      .send(contatoBody({ phone: '(61) 3333-4444', crcCertificate: 'SP/2026/000123', crcCertificateValidUntil: '2026-12-31' }));
+    const contactId = created.body.data.id as string;
+
+    const gen = await request(app)
+      .post('/api/accounting/sped/ecd/generate')
+      .set(authHeader(dono))
+      .send(ecdBody({ signerContactIds: [contactId] }));
+    expect(gen.status).toBe(201);
+    // o período do job vem exposto na resposta (review achado 10) — é o que diz que ele é entregável
+    expect(gen.body.data.periodStart).toBe('2026-01-01');
+    expect(gen.body.data.periodEnd).toBe('2026-12-31');
+
+    const file = await request(app)
+      .get(`/api/accounting/data-exchange/jobs/${gen.body.data.id}/download`)
+      .query({ unitId: UNIT })
+      .set(authHeader(dono));
+    expect(file.status).toBe(200);
+    const j930 = String(file.text).split(/\r?\n/).filter((l) => l.startsWith('|J930|'));
+    const contador = j930.find((l) => l.includes('SP-000777/O-1'));
+    expect(contador).toBeDefined();
+    // campos que só o J930 tem: descrição 'Contador', codAssin 900, UF do CRC, certidão, validade DDMMAAAA, resp. legal N
+    expect(contador).toContain('|Contador|900|');
+    expect(contador).toContain('|SP|SP/2026/000123|31122026|N|');
+  });
+
+  it('signerContactIds malformado é 400 (o .strict() recusa a chave que o controller não consumiu)', async () => {
+    for (const bad of ['abc', [1, 2], [''], { a: 1 }, null]) {
+      const res = await request(app)
+        .post('/api/accounting/sped/ecf/real/generate')
+        .set(authHeader(dono))
+        .send(ecfRealBody({ signerContactIds: bad }));
+      expect(res.status).toBe(400);
+    }
+  });
+
   it('signerContactIds com contato inexistente/alheio é 404 (escopo), e sem contador nenhum é 400 (controle)', async () => {
     const notFound = await request(app)
       .post('/api/accounting/sped/ecf/real/generate')

@@ -76,7 +76,11 @@ describe('RegisterContactSchema', () => {
   });
 
   it('recusa número de CRC fora do formato do CFC (e vazio)', () => {
-    for (const crcNumber of ['123456/O-1', 'SP123456', '1-RJ-000999', 'SP-12345/O-1', 'SP-123456/X-1', '   ']) {
+    for (const crcNumber of [
+      '123456/O-1', 'SP123456', '1-RJ-000999', 'SP-12345/O-1', 'SP-123456/X-1', '   ',
+      'SP-1234567/O-1', // 7 dígitos (review achado 8, mutação M6)
+      'XX-123456/O-1', // letras fora da Tabela de UF — pego pelo cruzamento com crcUf
+    ]) {
       expect(RegisterContactSchema.safeParse({ ...validContact, crcNumber }).success).toBe(false);
     }
   });
@@ -95,6 +99,10 @@ describe('RegisterContactSchema', () => {
     if (ok.success) expect(ok.data.cpf).toBe('52998224725');
     for (const cpf of ['52998224726', '11111111111', '5299822472', 'abc', '']) {
       expect(RegisterContactSchema.safeParse({ ...validContact, cpf }).success).toBe(false);
+    }
+    // Review achado 8 (mutação M4 `rest < 2` → `rest < 1`): CPFs cujo DV nasce de resto 0/1 → DV 0.
+    for (const cpf of ['00000000191', '11144477735', '12345678909']) {
+      expect(RegisterContactSchema.safeParse({ ...validContact, cpf }).success).toBe(true);
     }
   });
 
