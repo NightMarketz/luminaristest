@@ -1,22 +1,23 @@
 /**
- * SpedEcfRealGenerationService — esqueleto do Lucro Real (ADR-INCR-SPED-ECF-FASE3).
- * Espelha `SpedEcfGenerationService.test.ts` padrão por padrão, mais os comportamentos que
- * são PRÓPRIOS do Real no BRIEF:
- *  - item 5: injeta `AccountingReportService` e chama `balanceSheet`/`incomeStatement` (mock
- *    confirma a chamada — não duplica lógica de somatório);
- *  - item 9: FORMA_APUR/FORMA_TRIB/FORMA_TRIB_PER chegam do DTO ao 0010 (parâmetro, não default);
- *  - item 10: conta Revenue fora de 3.1/3.3 NÃO bloqueia (gate de exaustividade não portado);
- *  - item 13: audit reusa `sped.ecf_generated`, payload só com as chaves da allowlist;
+ * SpedEcfRealGenerationService — Lucro Real (ADR-INCR-SPED-ECF-FASE3 + BRIEF 3B, Blocos L/M/N).
+ * Espelha `SpedEcfGenerationService.test.ts` padrão por padrão, mais o que é PRÓPRIO do Real:
+ *  - item 6 (Fork 6→b): o serviço NÃO injeta mais `AccountingReportService` — Bloco L só tem períodos;
+ *  - item 11 (Fork 4→b): o gerador LÊ do model (`ILalurRepository.findEntriesForYear` + `findManyParteB`)
+ *    e resolve cada linha contra o catálogo (descricao copiada, TIPO_LANCAMENTO derivado, accountId →
+ *    code + COD_NAT);
+ *  - item 4 (Fork 7→a): `year` sem leiaute conhecido é erro explícito ANTES de qualquer job;
+ *  - itens 2/9: FORMA_APUR/FORMA_TRIB/FORMA_TRIB_PER chegam do DTO ao 0010 (parâmetro, não default);
+ *  - item 18: audit reusa `sped.ecf_generated`, payload = allowlist + `lalurEntries` (contagem);
  *  - item 17: o job nasce carimbado com o escopo (userId/unitId) — tenancy.
  */
 import { SpedEcfRealGenerationService, SPED_ECF_REAL_JOB_KIND } from '../SpedEcfRealGenerationService';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
-import { ForbiddenError } from '../../../../lib/errors';
+import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import type { SpedEcfRealRequestDto } from '../../dtos/SpedEcfRealDto';
-import type { AccountingDataExchangeJob } from 'generated/prisma';
-import type { BalanceSheetReport, IncomeStatementReport } from '../AccountingReportService';
+import type { AccountingDataExchangeJob, LalurParteBAccount } from 'generated/prisma';
+import type { LalurEntryWithRelations } from '../../repositories/ILalurRepository';
 
 const savedBuffers: Buffer[] = [];
 jest.mock('../../../../lib/attachmentStorage', () => ({
@@ -44,8 +45,8 @@ function makeDto(over: Partial<SpedEcfRealRequestDto> = {}): SpedEcfRealRequestD
       endereco: 'RUA DAS FLORES', num: '100', bairro: 'CENTRO', uf: 'DF', codMun: '5300108',
       cep: '70000000', numTel: '6133334444', email: 'industria@teste.com',
     },
-    // formaTrib/formaTribPer: placeholders de teste — em produção vêm do caller (sem default).
-    fiscal: { formaTrib: '1', formaTribPer: 'XXXX', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2' },
+    // formaTribPer 'RRRR' = Real nos 4 trimestres (alfabeto pp.71-72); formaTrib default '1' ratificado.
+    fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2' },
     signers: [
       { identNom: 'CONTADOR', identCpfCnpj: '12345678900', identQualif: '900', indCrc: '1DF123', email: 'c@d.com', fone: '6133334444' },
       { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
@@ -54,58 +55,40 @@ function makeDto(over: Partial<SpedEcfRealRequestDto> = {}): SpedEcfRealRequestD
   } as SpedEcfRealRequestDto;
 }
 
-/** DRE mock — inclui uma conta Revenue FORA de 3.1/3.3 (3.9) com movimento (item 10). */
-function makeDre(asOf: Date): IncomeStatementReport {
-  const toDate = asOf.toISOString().slice(0, 10);
-  return {
-    unitId: 'unit-1',
-    periodSemantics: 'year_to_date',
-    fromDate: `${asOf.getUTCFullYear()}-01-01`,
-    toDate,
-    mappingVersion: 'v1',
-    grossRevenue: {
-      accounts: [
-        { accountId: 'rec31', code: '3.1', name: 'Receita de Serviços', amountCents: '15000000' },
-        { accountId: 'rec39', code: '3.9', name: 'Receita Financeira', amountCents: '1000000' },
-      ],
-      totalCents: '16000000',
-    },
-    revenueDeductions: { accounts: [], totalCents: '0' },
-    costOfGoodsSold: { accounts: [], totalCents: '0' },
-    expenses: { accounts: [{ accountId: 'exp41', code: '4.1', name: 'Despesas', amountCents: '-4000000' }], totalCents: '-4000000' },
-    netResult: { amountCents: '12000000', isComputed: true, computation: 'income_statement_net_result' },
-    reportStatus: 'OK',
-    diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },
-  };
-}
+const parteBIrpj = {
+  id: 'pb-1', userId: 'owner-1', unitId: 'unit-1', codCtaB: 'PF-2024', descricao: 'Prejuízo fiscal 2024',
+  dtCriacao: new Date('2024-12-31T00:00:00.000Z'), codPbRfb: '1000', dtLimite: null, codTributo: 'I',
+  saldoIniCents: 500000n, indSaldoIni: 'D', cnpjSitEsp: null, createdById: 'owner-1',
+  createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+} as unknown as LalurParteBAccount;
 
-function makeBp(asOf: Date): BalanceSheetReport {
-  const asOfIso = asOf.toISOString().slice(0, 10);
-  return {
-    unitId: 'unit-1',
-    periodSemantics: 'as_of',
-    asOf: asOfIso,
-    mappingVersion: 'v1',
-    assets: { accounts: [], totalCents: '30000000' },
-    liabilities: { accounts: [], totalCents: '10000000' },
-    equity: { accounts: [], totalCents: '8000000' },
-    netResultLine: { amountCents: '12000000', isComputed: true, computation: 'income_statement_net_result', fromDate: `${asOf.getUTCFullYear()}-01-01`, toDate: asOfIso },
-    balanced: true,
-    reportStatus: 'OK',
-    diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },
-  };
+const baseEntry = {
+  userId: 'owner-1', unitId: 'unit-1', year: 2025, histLancamento: null, parteBId: null, accountId: null,
+  createdById: 'owner-1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null, parteB: null, account: null,
+};
+
+/** 1 adição (M300/7, sem relação) + 1 exclusão (M300/166 com conta de resultado) que NÃO se cancelam + 1 dedução N630. */
+function makeEntries(): LalurEntryWithRelations[] {
+  return [
+    { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 123456n, indRelacao: '4', histLancamento: 'Custos do T1' },
+    { ...baseEntry, id: 'e2', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 50000n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue' } },
+    { ...baseEntry, id: 'e3', quarter: 'T02', livro: 'lalur', codigo: '173', valorCents: 700n, indRelacao: '1', parteBId: 'pb-1', parteB: parteBIrpj },
+    { ...baseEntry, id: 'e4', quarter: 'T04', livro: 'n630', codigo: '6', valorCents: 1000n, indRelacao: null },
+  ] as unknown as LalurEntryWithRelations[];
 }
 
 interface Mocks {
   canRead?: boolean;
+  entries?: LalurEntryWithRelations[];
+  parteB?: LalurParteBAccount[];
 }
 
 function buildService(m: Mocks = {}) {
   const canRead = m.canRead ?? true;
 
-  const balanceSheet = jest.fn(async (_s: unknown, asOf: Date) => makeBp(asOf));
-  const incomeStatement = jest.fn(async (_s: unknown, asOf: Date) => makeDre(asOf));
-  const reportService = { balanceSheet, incomeStatement } as never;
+  const findEntriesForYear = jest.fn(async (_s: unknown, _year: number) => m.entries ?? makeEntries());
+  const findManyParteB = jest.fn(async (_s: unknown, _f: unknown) => m.parteB ?? [parteBIrpj]);
+  const lalurRepo = { findEntriesForYear, findManyParteB } as never;
 
   const policy = { canRead: jest.fn(() => canRead) } as never;
 
@@ -119,8 +102,8 @@ function buildService(m: Mocks = {}) {
   const append = jest.fn(async () => undefined);
   const audit = { append } as never;
 
-  const service = new SpedEcfRealGenerationService(reportService, policy, repo, audit);
-  return { service, createJob, updateJob, balanceSheet, incomeStatement, append, policy };
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit);
+  return { service, createJob, updateJob, findEntriesForYear, findManyParteB, append, policy };
 }
 
 function producedLines(): string[] {
@@ -134,61 +117,81 @@ beforeEach(() => {
 });
 
 describe('SpedEcfRealGenerationService.generate', () => {
-  it('rejects with ForbiddenError when policy denies read — before any report read or job (policy-first)', async () => {
-    const { service, createJob, balanceSheet, incomeStatement } = buildService({ canRead: false });
+  it('rejects with ForbiddenError when policy denies read — before any model read or job (policy-first)', async () => {
+    const { service, createJob, findEntriesForYear, findManyParteB } = buildService({ canRead: false });
     await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ForbiddenError);
     expect(createJob).not.toHaveBeenCalled();
-    expect(balanceSheet).not.toHaveBeenCalled();
-    expect(incomeStatement).not.toHaveBeenCalled();
+    expect(findEntriesForYear).not.toHaveBeenCalled();
+    expect(findManyParteB).not.toHaveBeenCalled();
     expect(savedBuffers).toHaveLength(0);
   });
 
-  it('item 5: reads BP/DRE through AccountingReportService, once per quarter end (Fork 5 trimestral)', async () => {
-    const { service, balanceSheet, incomeStatement } = buildService();
-    await service.generate(scope, makeDto());
-    // 4 janelas (T01..T04) × 2 relatórios — nenhuma agregação própria de saldo.
-    expect(balanceSheet).toHaveBeenCalledTimes(4);
-    expect(incomeStatement).toHaveBeenCalledTimes(4);
-    const ends = ['2025-03-31', '2025-06-30', '2025-09-30', '2025-12-31'];
-    for (const [i, end] of ends.entries()) {
-      expect((balanceSheet.mock.calls[i][1] as Date).toISOString().slice(0, 10)).toBe(end);
-      expect((incomeStatement.mock.calls[i][1] as Date).toISOString().slice(0, 10)).toBe(end);
-      expect(balanceSheet.mock.calls[i][0]).toBe(scope);
-      expect(incomeStatement.mock.calls[i][0]).toBe(scope);
-    }
+  it('item 4 (Fork 7→a): year sem leiaute conhecido (2026) é erro explícito ANTES do job; fiscal.codVer sobrepõe', async () => {
+    const { service, createJob } = buildService();
+    await expect(service.generate(scope, makeDto({ year: 2026 }))).rejects.toThrow(/ECF_COD_VER desconhecido.*2026/);
+    expect(createJob).not.toHaveBeenCalled();
+    await service.generate(scope, makeDto({ year: 2026, fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2', codVer: '0013' } }));
+    expect(producedLines()[0]).toMatch(/^\|0000\|LECF\|0013\|/);
+    expect(producedLines()[0]).toContain('|01012026|31122026|');
   });
 
-  it('item 10: a Revenue account outside 3.1/3.3 with movement does NOT block the Real generation', async () => {
-    // makeDre carrega 3.9 (Receita Financeira) com movimento — no Presumido isto é ValidationError.
-    const { service, createJob } = buildService();
-    await expect(service.generate(scope, makeDto())).resolves.toBeDefined();
-    expect(createJob).toHaveBeenCalledTimes(1);
-    expect(savedBuffers).toHaveLength(1);
+  it('item 11: o gerador LÊ do model — findEntriesForYear(scope, year) + findManyParteB(scope, live) — e o DTO não carrega ajustes', async () => {
+    const { service, findEntriesForYear, findManyParteB } = buildService();
+    await service.generate(scope, makeDto());
+    expect(findEntriesForYear).toHaveBeenCalledWith(scope, 2025);
+    expect(findManyParteB).toHaveBeenCalledWith(scope, { includeArchived: false });
+    const lines = producedLines();
+    // 1 adição + 1 exclusão que não se cancelam (valores distintos, ambos no arquivo, VALOR sempre positivo)
+    expect(lines).toContain('|M300|7|Custos não dedutíveis|A|4|1234,56|Custos do T1|');
+    expect(lines.some((l) => l.startsWith('|M300|166|') && l.includes('|E|2|500,00|'))).toBe(true);
+    // accountId → Account.code (= I050/J050.COD_CTA) + COD_NAT 04 (Revenue) ⇒ exclusão em resultado = 'C'
+    expect(lines).toContain('|M310|3.1.1||500,00|C|');
+    // Parte B: M010 do cadastro + M305 da compensação (P ⇒ credita a Parte B)
+    expect(lines).toContain('|M010|PF-2024|Prejuízo fiscal 2024|31122024|1000||I|5000,00|D||');
+    expect(lines).toContain('|M305|PF-2024|7,00|C|');
+    // N630 linha E
+    expect(lines.some((l) => l.startsWith('|N630|6|') && l.endsWith('|10,00|'))).toBe(true);
+  });
+
+  it('item 6 (Fork 6→b): Bloco L só com períodos — L001=0, L030 × 4, L990=6; nenhuma L100/L300', async () => {
+    const { service } = buildService();
+    await service.generate(scope, makeDto());
+    const L = producedLines().filter((l) => l.startsWith('|L'));
+    expect(L).toEqual(['|L001|0|', '|L030|01012025|31032025|T01|', '|L030|01042025|30062025|T02|', '|L030|01072025|30092025|T03|', '|L030|01102025|31122025|T04|', '|L990|6|']);
+  });
+
+  it('item 7: com ZERO ajustes e zero Parte B, M e N ainda têm 001(0) + 030 × 4 + 990=6', async () => {
+    const { service } = buildService({ entries: [], parteB: [] });
+    await service.generate(scope, makeDto());
+    const lines = producedLines();
+    for (const b of ['M', 'N']) {
+      const B = lines.filter((l) => l.startsWith(`|${b}`));
+      expect(B[0]).toBe(`|${b}001|0|`);
+      expect(B.filter((l) => l.startsWith(`|${b}030|`))).toHaveLength(4);
+      expect(B[B.length - 1]).toBe(`|${b}990|6|`);
+    }
+    expect(lines).toContain('|P001|1|');
+  });
+
+  it('toSerializerLine: linha persistida cujo código deixou de ser E no catálogo é erro explícito, nunca omitida (classe FAIL-1)', async () => {
+    const bad = { ...makeEntries()[0], codigo: '2' } as LalurEntryWithRelations; // 2 = CNA
+    expect(() => SpedEcfRealGenerationService.toSerializerLine(bad)).toThrow(ValidationError);
+    const { service, createJob } = buildService({ entries: [bad] });
+    await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
+    expect(createJob).not.toHaveBeenCalled();
   });
 
   it('item 9: 0010 carries FORMA_TRIB / FORMA_APUR / FORMA_TRIB_PER from the DTO (no server default)', async () => {
     const { service } = buildService();
     await service.generate(scope, makeDto());
-    expect(producedLines()).toContain('|0010||N|1|T|01|XXXX||C||||2|');
-    await service.generate(scope, makeDto({ fiscal: { formaTrib: '3', formaTribPer: 'ZZZZ', formaApur: 'T', indAliqCsll: '4', indRecReceita: '1' } }));
+    expect(producedLines()).toContain('|0010||N|1|T|01|RRRR||C||||2|');
+    await service.generate(scope, makeDto({ fiscal: { formaTrib: '3', formaTribPer: 'PPRR', formaApur: 'T', indAliqCsll: '4', indRecReceita: '1' } }));
     const lines = producedLines();
-    expect(lines).toContain('|0010||N|3|T|01|ZZZZ||C||||1|');
+    expect(lines).toContain('|0010||N|3|T|01|PPRR||C||||1|');
     expect(lines.find((l) => l.startsWith('|0020|'))!.startsWith('|0020|4|0|')).toBe(true);
-    // O 0010 default do Presumido nunca sai daqui.
+    // O 0010 default do Presumido nunca sai daqui; HASH_ECF_ANTERIOR vazio (Fork 2→d).
     expect(lines).not.toContain('|0010||N|5|T|01|PPPP||C||||2|');
-  });
-
-  it('emits L/M/N (and P) as empty markers — Fase 3, conteúdo pendente (Forks 2/3/4)', async () => {
-    const { service } = buildService();
-    await service.generate(scope, makeDto());
-    const lines = producedLines();
-    for (const b of ['L', 'M', 'N', 'P']) {
-      expect(lines).toContain(`|${b}001|1|`);
-      expect(lines).toContain(`|${b}990|2|`);
-    }
-    // Nenhuma linha de receita do Presumido (P030/P200/P400) e nenhum valor de DRE/BP no arquivo.
-    expect(lines.some((l) => /^\|P(030|200|400)\|/.test(l))).toBe(false);
-    expect(lines.some((l) => l.includes('120000,00') || l.includes('300000,00'))).toBe(false);
+    expect(lines.find((l) => l.startsWith('|0010|'))!.split('|')[2]).toBe('');
   });
 
   it('records an EXPORT_SPED_ECF_REAL job (PROCESSING → EXPORTED) stamped with the scope, and the audit in the same tx', async () => {
@@ -211,13 +214,15 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(out.kind).toBe('EXPORT_SPED_ECF_REAL');
   });
 
-  it('item 13: audit payload carries ONLY allowlisted keys of sped.ecf_generated (kind distinguishes the regime; no PII)', async () => {
+  it('item 18: audit payload = allowlist de sped.ecf_generated + lalurEntries (CONTAGEM, não conteúdo; sem PII)', async () => {
     const { service, append } = buildService();
     await service.generate(scope, makeDto());
     const input = (append.mock.calls[0] as unknown as [unknown, unknown, { payload: Record<string, unknown> }])[2];
     const allowed = PAYLOAD_ALLOWLIST['sped.ecf_generated'];
     expect(Object.keys(input.payload).sort()).toEqual([...allowed].sort());
     expect(input.payload.kind).toBe('EXPORT_SPED_ECF_REAL');
+    expect(input.payload.lalurEntries).toBe('4');
+    expect(JSON.stringify(input.payload)).not.toMatch(/Custos do T1|1234,56|PF-2024/);
     // Nada do declarante/signatários (nome, CNPJ, CPF, e-mail, fone) chega ao payload.
     const json = JSON.stringify(input.payload);
     for (const pii of ['INDUSTRIA TESTE', '11222333000181', '12345678900', '@', '6133334444']) {
@@ -244,11 +249,11 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(first).toBe(second);
   });
 
-  it('never writes to the ledger: only report reads + job metadata (no posting/journal repo at all)', async () => {
-    const { service, balanceSheet, incomeStatement, createJob, updateJob } = buildService();
+  it('never writes to the ledger: only model reads + job metadata (no posting/journal repo at all)', async () => {
+    const { service, findEntriesForYear, findManyParteB, createJob, updateJob } = buildService();
     await service.generate(scope, makeDto());
-    expect(balanceSheet).toHaveBeenCalled();
-    expect(incomeStatement).toHaveBeenCalled();
+    expect(findEntriesForYear).toHaveBeenCalledTimes(1);
+    expect(findManyParteB).toHaveBeenCalledTimes(1);
     expect(createJob).toHaveBeenCalledTimes(1);
     expect(updateJob).toHaveBeenCalledTimes(1);
   });

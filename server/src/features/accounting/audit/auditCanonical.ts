@@ -106,7 +106,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-SPED — ECD/ECF file generation jobs. Job id + kind + year + file hash + line count;
   // never the file bytes or account balances (PII-safe).
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
-  'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
+  // `lalurEntries` (BE-INCR-SPED-ECF-FASE3B item 18): CONTAGEM de ajustes do e-Lalur que entraram no
+  // arquivo do Real — número, nunca conteúdo (código/valor/histórico ficam nos eventos lalur.*).
+  'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount', 'lalurEntries'],
   // BE-INCR-BINDING-PRESS (item 15 do BRIEF) — A Prensa: compilação/ativação/reprovação de
   // binding vertical→contabilidade. Emitido por `BindingCompileService` (features/accountingBinding,
   // fora desta árvore — chega aqui via `IBindingAuditPort`, adaptado em `lib/factory.ts`). Só

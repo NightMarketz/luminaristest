@@ -31,7 +31,7 @@ import {
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
 
 /** Account.nature -> I050 COD_NAT (manual p. 118 table). */
-function natureToCodNat(nature: string): string {
+export function natureToCodNat(nature: string): string {
   switch (nature) {
     case 'Asset':
       return '01';

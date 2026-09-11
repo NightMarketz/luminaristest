@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError } from '../../../lib/errors';
+import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
@@ -7,46 +7,86 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
-import type { AccountingReportService } from './AccountingReportService';
+import type { ILalurRepository, LalurEntryWithRelations } from '../repositories/ILalurRepository';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcfRealRequestDto } from '../dtos/SpedEcfRealDto';
 import { quarterWindows } from './SpedEcfGenerationService';
-import { serializeEcf } from '../../../lib/ecf';
-import { buildEcfRealFile, type EcfRealFileInput, type EcfRealQuarter } from '../../../lib/ecfReal';
+import { serializeEcf, resolveEcfCodVer } from '../../../lib/ecf';
+import { natureToCodNat } from './SpedGenerationService';
+import { findLinha, type LalurLivro } from '../models/Lalur.model';
+import {
+  buildEcfRealFile,
+  type EcfRealFileInput,
+  type EcfRealLalurLine,
+  type EcfRealParteBAccount,
+  type EcfRealPeriod,
+} from '../../../lib/ecfReal';
 
 /** `kind` do job de export do Real (BRIEF item 4 — coluna String, zero migração). */
 export const SPED_ECF_REAL_JOB_KIND = 'EXPORT_SPED_ECF_REAL';
 
 /**
- * SPED ECF (SPED Fiscal · IRPJ/CSLL · Lucro REAL) file generation — ESQUELETO
- * (ADR-INCR-SPED-ECF-FASE3; Fork 1→(b) serviço dedicado, Fork 5→(a) trimestral). READ-ONLY
- * over the ledger + ONE metadata write (the export job): NO Posting/JournalEntry write, no
- * period gate (reuso de D8 do ADR-ECF — `IAccountingPolicy.canRead`, BRIEF item 15).
+ * SPED ECF (SPED Fiscal · IRPJ/CSLL · Lucro REAL) file generation (ADR-INCR-SPED-ECF-FASE3 — Fork
+ * 1→(b) serviço dedicado, Fork 5→(a) trimestral; BRIEF 3B — Forks 2→(d) 3→(a) 4→(b) 6→(b) 7→(a)).
+ * READ-ONLY over the ledger + ONE metadata write (the export job): NO Posting/JournalEntry write, no
+ * period gate (reuso de D8 do ADR-ECF — `IAccountingPolicy.canRead`).
  *
- * ── Diferença estrutural para o serviço Presumido (BRIEF item 5, ADR §2) ──
- * A base do Real é o resultado/balanço INTEIROS, não duas contas de receita. Por isso este
- * serviço injeta `AccountingReportService` (`balanceSheet` closing-inclusive → fonte de L100;
- * `incomeStatement` closing-exclusive → fonte de L300; ADR §1) em vez de agregar saldo por conta
- * via `groupByAccount`. Consequência (BRIEF item 10): o gate de exaustividade da receita do
- * Presumido (contas Revenue ∉ {3.1, 3.3} bloqueiam) NÃO é portado — toda conta Revenue/Expense
- * já participa da DRE por construção.
- *
- * ── O que o esqueleto NÃO faz (forks pendentes) ──
- * Não emite L/M/N (marcadores vazios — Forks 2/3/4), não computa base/IRPJ/adicional/CSLL,
- * não alimenta HASH_ECF_ANTERIOR (Fork 2), não carrega ajustes Lalur (Fork 4). Os relatórios
- * lidos por trimestre são passados ao serializer como `EcfRealQuarter`, que ainda não os emite.
+ * ── Fontes (BRIEF 3B) ──
+ *  - Períodos (L030/M030/N030): `quarterWindows(year)` — derivados do Bloco 0 (Manual p.221/241/277).
+ *  - Bloco L (Fork 6→(b)): SÓ períodos. `AccountingReportService` SAIU deste serviço (item 6): os
+ *    saldos de L100/L300 "não são editáveis" e são recuperados pelo PVA do K155/K156 (pp.224/232) —
+ *    a cadeia real é ECD → K → L100/L300, nada que o report service alimente.
+ *  - Bloco M/N (Fork 4→(b)): o gerador LÊ do model — `ILalurRepository.findEntriesForYear` +
+ *    `findManyParteB` — e resolve cada linha contra o catálogo (`findLinha`): DESCRICAO copiada da
+ *    tabela, TIPO_LANCAMENTO derivado (item 8), `accountId` → `Account.code` (= I050/J050.COD_CTA da
+ *    ECD, p.252) + `natureToCodNat` para o sinal do M310 (N-2). O DTO de geração NÃO carrega ajustes.
+ *  - 0000.COD_VER: `resolveEcfCodVer(year, dto.fiscal.codVer)` (Fork 7→(a)) — ano sem leiaute é erro.
+ *  - HASH_ECF_ANTERIOR: vazio (Fork 2→(d), p.70) — o PVA preenche na recuperação.
+ * Não computa base/IRPJ/adicional/CSLL (linhas CNA/CA são do PVA — Fork 3→(a)).
  *
  * Persiste o `.txt` (ISO-8859-1) via o store de disco reusado e grava um EXPORT job +
- * `sped.ecf_generated` audit numa tx (mesmo eventType do Presumido — `kind` distingue o
- * regime, BRIEF item 13; allowlist intocada).
+ * `sped.ecf_generated` audit numa tx (mesmo eventType do Presumido — `kind` distingue o regime;
+ * payload ganha `lalurEntries` = CONTAGEM, item 18 — sem PII).
  */
 export class SpedEcfRealGenerationService {
   constructor(
-    private readonly reportService: AccountingReportService,
+    private readonly lalurRepo: ILalurRepository,
     private readonly policy: IAccountingPolicy,
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
   ) {}
+
+  /**
+   * Resolve UMA linha persistida contra o catálogo (item 8/9). A linha já passou pelo gate do
+   * `LalurService` ao ser cadastrada; re-resolver aqui fecha a janela "catálogo mudou depois do
+   * cadastro" com erro explícito em vez de descricao vazia (classe FAIL-1: omitir ajuste = base errada).
+   */
+  public static toSerializerLine(e: LalurEntryWithRelations): EcfRealLalurLine {
+    const livro = e.livro as LalurLivro;
+    const row = findLinha(livro, e.codigo);
+    if (!row || row.tipo !== 'E') {
+      throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' não é linha E do livro '${livro}' no catálogo do Leiaute 12.`);
+    }
+    const line: EcfRealLalurLine = {
+      livro,
+      perApur: e.quarter,
+      codigo: e.codigo,
+      descricao: row.descricao,
+      valorCents: Number(e.valorCents),
+    };
+    if (livro === 'lalur' || livro === 'lacs') {
+      if (!row.tipoLanc) throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo.`);
+      line.tipoLancamento = row.tipoLanc;
+      line.indRelacao = (e.indRelacao ?? undefined) as EcfRealLalurLine['indRelacao'];
+      if (e.histLancamento) line.hist = e.histLancamento;
+      if (e.parteB) line.codCtaB = e.parteB.codCtaB;
+      if (e.account) {
+        line.codCta = e.account.code;
+        line.codNat = natureToCodNat(e.account.nature);
+      }
+    }
+    return line;
+  }
 
   public async generate(scope: AccountingScope, dto: SpedEcfRealRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
@@ -54,26 +94,29 @@ export class SpedEcfRealGenerationService {
     }
 
     const { year } = dto;
+    const codVer = resolveEcfCodVer(year, dto.fiscal.codVer);
 
-    // ── Trimestres (Fork 5→(a)): fontes de L100/L300 por janela via AccountingReportService ──
-    const quarters: EcfRealQuarter[] = [];
-    for (const w of quarterWindows(year)) {
-      const [bp, dre] = await Promise.all([
-        this.reportService.balanceSheet(scope, w.to),
-        this.reportService.incomeStatement(scope, w.to),
-      ]);
-      quarters.push({
-        perApur: w.perApur,
-        dtIni: w.dtIni,
-        dtFin: w.dtFin,
-        l100Source: {
-          assetsCents: Number(bp.assets.totalCents),
-          liabilitiesCents: Number(bp.liabilities.totalCents),
-          equityCents: Number(bp.equity.totalCents),
-        },
-        l300Source: { ytdNetResultCents: Number(dre.netResult.amountCents) },
-      });
-    }
+    // ── Períodos (Fork 5→(a)) — L030/M030/N030 derivados do Bloco 0 ──
+    const periods: EcfRealPeriod[] = quarterWindows(year).map((w) => ({
+      perApur: w.perApur as EcfRealPeriod['perApur'],
+      dtIni: w.dtIni,
+      dtFin: w.dtFin,
+    }));
+
+    // ── e-Lalur/e-Lacs (Fork 4→(b)): o gerador LÊ do model ──
+    const entries = await this.lalurRepo.findEntriesForYear(scope, year);
+    const lalur = entries.map(SpedEcfRealGenerationService.toSerializerLine);
+    const parteB: EcfRealParteBAccount[] = (await this.lalurRepo.findManyParteB(scope, { includeArchived: false })).map((a) => ({
+      codCtaB: a.codCtaB,
+      descricao: a.descricao,
+      dtApLal: a.dtCriacao.toISOString().slice(0, 10),
+      codPbRfb: a.codPbRfb,
+      dtLimLal: a.dtLimite ? a.dtLimite.toISOString().slice(0, 10) : undefined,
+      codTributo: a.codTributo as 'I' | 'C',
+      saldoIniCents: Number(a.saldoIniCents),
+      indSaldoIni: a.indSaldoIni as 'D' | 'C',
+      cnpjSitEsp: a.cnpjSitEsp ?? undefined,
+    }));
 
     const input: EcfRealFileInput = {
       declarant: {
@@ -108,7 +151,10 @@ export class SpedEcfRealGenerationService {
         email: s.email,
         fone: s.fone,
       })),
-      quarters,
+      periods,
+      lalur,
+      parteB,
+      codVer,
     };
 
     const lines = buildEcfRealFile(input);
@@ -181,6 +227,7 @@ export class SpedEcfRealGenerationService {
           year: String(year),
           sha256,
           lineCount: String(lines.length),
+          lalurEntries: String(lalur.length), // item 18: contagem, não conteúdo
         },
       });
       return j;

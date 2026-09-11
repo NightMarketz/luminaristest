@@ -752,9 +752,10 @@ export class ApplicationFactory {
         this.repositories.dataExchange,
         auditService,
       ),
-      // Lucro Real (esqueleto): BP/DRE via AccountingReportService, não groupByAccount (BRIEF item 5).
+      // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
+      // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232).
       spedEcfReal: new SpedEcfRealGenerationService(
-        accountingReportService,
+        this.repositories.lalur,
         this.policies.accounting,
         this.repositories.dataExchange,
         auditService,

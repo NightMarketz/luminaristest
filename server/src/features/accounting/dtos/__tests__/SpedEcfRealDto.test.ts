@@ -45,8 +45,8 @@ const socio = {
   fone: '1199998888',
 };
 
-/** `formaTribPer` é placeholder de teste (sem default); `formaTrib` default '1' é o ratificado. */
-const fiscal = { formaTrib: '1', formaTribPer: 'XXXX' };
+/** `formaTribPer` = 'RRRR' (Real nos 4 trimestres, alfabeto pp.71-72); `formaTrib` default '1' é o ratificado. */
+const fiscal = { formaTrib: '1', formaTribPer: 'RRRR' };
 
 const valid = { unitId: 'unit-1', year: 2026, declarant, fiscal, signers: [contador, socio] };
 
@@ -112,8 +112,32 @@ describe('SpedEcfRealRequestSchema — 0010 parametrizado, sem dígito de regime
   it('rejects formaTribPer ausente (sem default) e fora de 4 posições', () => {
     const { formaTribPer: _omit, ...semPer } = fiscal;
     failsOn({ ...valid, fiscal: semPer }, 'fiscal');
-    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'XXX' } }, 'fiscal');
-    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'XXXXX' } }, 'fiscal');
+    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'RRR' } }, 'fiscal');
+    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'RRRRR' } }, 'fiscal');
+  });
+
+  it('item 2 (BRIEF 3B): formaTribPer no alfabeto do Manual pp.71-72 [0;R;P;A;E;S] — RRRR e PPPP passam, XXXX é 400', () => {
+    for (const per of ['RRRR', 'PPPP', '0RPA', 'ESRR']) {
+      expect(SpedEcfRealRequestSchema.safeParse({ ...valid, fiscal: { ...fiscal, formaTribPer: per } }).success).toBe(true);
+    }
+    // 'PPPP' é válido no Manual — o que não pode vazar é o DEFAULT do Presumido, não o valor.
+    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'XXXX' } }, 'fiscal');
+    failsOn({ ...valid, fiscal: { ...fiscal, formaTribPer: 'rrrr' } }, 'fiscal');
+  });
+
+  it('item 3 (Fork 2→d): hashEcfAnterior NÃO existe no DTO — .strict() recusa (Manual p.70: o PVA preenche)', () => {
+    // `.strict()` reporta chave desconhecida como issue `unrecognized_keys` (path do objeto, chave em `keys`).
+    const top = SpedEcfRealRequestSchema.safeParse({ ...valid, hashEcfAnterior: 'abc123' });
+    expect(top.success).toBe(false);
+    if (!top.success) expect(top.error.issues.some((i) => i.code === 'unrecognized_keys' && (i as { keys?: string[] }).keys?.includes('hashEcfAnterior'))).toBe(true);
+    failsOn({ ...valid, fiscal: { ...fiscal, hashEcfAnterior: 'abc123' } }, 'fiscal');
+  });
+
+  it('Fork 7→(a): fiscal.codVer é override opcional de 4 dígitos', () => {
+    const parsed = SpedEcfRealRequestSchema.safeParse({ ...valid, fiscal: { ...fiscal, codVer: '0013' } });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.fiscal.codVer).toBe('0013');
+    failsOn({ ...valid, fiscal: { ...fiscal, codVer: '13' } }, 'fiscal');
   });
 
   it('repassa formaTrib/formaTribPer EXATAMENTE como informados (o default só supre a ausência)', () => {

@@ -35,12 +35,31 @@ import { spedLine, centsToSpedDecimal, spedDate } from './sped';
 /** 0000.NOME_ESC — tipo de escrituração (texto fixo). Manual p. 62. */
 export const ECF_TIPO_ESC = 'LECF';
 /**
- * 0000.COD_VER — código da versão do leiaute. Leiaute 12 ⇒ '0012'. O exemplo do
- * Manual (p. 67) mostra '0011' (exemplo não atualizado do leiaute anterior — bug
- * conhecido de exemplo). Usamos '0012' (o leiaute corrente); VERIFICAR no
- * PVA-ECF (residual de sign-off humano, ver §Fechamento do ADR).
+ * 0000.COD_VER — código da versão do leiaute, POR ANO-CALENDÁRIO (BE-INCR-SPED-ECF-FASE3B item 4,
+ * Fork 7→(a), ratificado 2026-09-11; autorizado na EMENDA 03/09 do ADR Fase 3): cada ano de fatos
+ * geradores tem o seu leiaute (2025 ⇒ Leiaute 12, ADE Cofis 02/2026; o Leiaute 13, AC 2026, não
+ * estava publicado no índice oficial `sped.rfb.gov.br/pasta/show/1644` em 2026-09-11). Molde do
+ * `0010`: parametrizado, SEM default silencioso — ano sem leiaute conhecido é erro explícito, nunca
+ * `'0012'` chutado. O exemplo do Manual (p. 67) mostra '0011' (exemplo não atualizado — bug conhecido
+ * de exemplo). Quando o Leiaute 13 for publicado: uma linha aqui + o corpus.
  */
+/** Código do Leiaute 12 (AC 2025). NÃO é mais o que `build0000` escreve por conta própria — é uma entrada da tabela. */
 export const ECF_COD_VER = '0012';
+export const ECF_COD_VER_BY_YEAR: Readonly<Record<number, string>> = { 2025: ECF_COD_VER };
+
+/** Resolve o COD_VER do ano; `override` (caller) vence a tabela. Ano desconhecido ⇒ throw. */
+export function resolveEcfCodVer(year: number, override?: string): string {
+  if (override) return override;
+  const v = ECF_COD_VER_BY_YEAR[year];
+  if (!v) {
+    throw new Error(
+      `ECF_COD_VER desconhecido para o ano-calendário ${year}: o leiaute desse ano não está na tabela ` +
+        `ECF_COD_VER_BY_YEAR (lib/ecf.ts) — publique o Manual do leiaute no corpus e registre o código; ` +
+        `ou informe fiscal.codVer explicitamente.`,
+    );
+  }
+  return v;
+}
 
 /**
  * Códigos de linha da tabela dinâmica (P200/P400) que recebem a receita bruta
@@ -95,6 +114,8 @@ export interface Reg0000Input {
   retificadora?: string; // 'N' original (default)
   numRec?: string; // hash recibo ECF anterior — vazio p/ original
   tipEcf?: string; // '0' não-SCP (default)
+  /** 0000.COD_VER — override do caller; ausente ⇒ resolvido pelo ano de `dtIni` (item 4, Fork 7→a). */
+  codVer?: string;
 }
 
 /**
@@ -109,7 +130,7 @@ export function build0000(i: Reg0000Input): string {
   return spedLine([
     '0000',
     ECF_TIPO_ESC,
-    ECF_COD_VER,
+    resolveEcfCodVer(Number(i.dtIni.slice(0, 4)), i.codVer),
     i.cnpj,
     i.nome,
     i.indSitIniPer ?? '0',
@@ -451,6 +472,11 @@ export function __selfCheck(): void {
   assert(buildBlockOpen('C001', false) === '|C001|1|', 'empty block open');
   assert(buildBlockOpen('P001', true) === '|P001|0|', 'data block open');
   assert(build0010() === '|0010||N|5|T|01|PPPP||C||||2|', '0010 presumido default');
+  assert(resolveEcfCodVer(2025) === '0012', 'cod_ver 2025');
+  assert(resolveEcfCodVer(2030, '0099') === '0099', 'cod_ver override');
+  let threw = false;
+  try { resolveEcfCodVer(1999); } catch { threw = true; }
+  assert(threw, 'cod_ver ano desconhecido lança');
   // Determinismo: mesma entrada ⇒ mesma saída.
   const input: EcfFileInput = {
     declarant: {
