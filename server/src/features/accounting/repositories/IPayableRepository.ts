@@ -134,10 +134,11 @@ export interface IPayableRepository {
 
   /**
    * Atomically give a cancelled receipt's cents back to the balance (F-PS3 → a, any receipt among N):
-   * `updateMany` where status ∈ {PARTIALLY_PAID, PAID} AND `paidCents >= cents` → `paidCents −= cents`.
-   * Returns the row count: 0 = a settlement is in flight (`PAYING`) or the balance could not carry the
-   * decrement (invariant breach) — the caller REJECTS instead of guessing. Status is recomputed by the
-   * caller from the row re-read inside the SAME tx. Must run inside the tx.
+   * `updateMany` where status ∈ {PARTIALLY_PAID, PAID, PAYING} AND `paidCents >= cents` → `paidCents −= cents`.
+   * Returns the row count: 0 = the balance could not carry the decrement (invariant breach) — the
+   * caller REJECTS instead of guessing. A settlement in flight (`PAYING`) does not block (its finalize
+   * reads the decremented balance). Status is recomputed by the caller from the row re-read inside
+   * the SAME tx, and only when the row is not `PAYING`. Must run inside the tx.
    */
   releaseSettlement(
     scope: AccountingScope,

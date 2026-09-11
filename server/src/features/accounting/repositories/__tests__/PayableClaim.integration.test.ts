@@ -19,7 +19,7 @@ const SERVER_ROOT = path.join(__dirname, '../../../../../');
 const USER_ID = 'u-ap';
 const UNIT = 'unit-ap';
 
-/** The exact conditional transition PayableRepository.claimForPayment issues. */
+/** The binary status CAS that PRECEDED the sum-CAS (historical golden ref for the single-row race; the live `claimForPayment` is the arithmetic form — see `PartialSettlement.integration.test.ts`). */
 async function claim(db: PrismaClient, id: string): Promise<number> {
   const r = await db.payable.updateMany({
     where: { id, userId: USER_ID, unitId: UNIT, status: 'OPEN', deletedAt: null },
@@ -28,7 +28,7 @@ async function claim(db: PrismaClient, id: string): Promise<number> {
   return r.count;
 }
 
-/** The exact conditional transition PayableRepository.markPaidIfPaying issues (finalize CAS). */
+/** The binary finalize CAS that PRECEDED `finalizeIfPaying` (historical golden ref; live form resolves PAID|PARTIALLY_PAID by balance). */
 async function markPaid(db: PrismaClient, id: string): Promise<number> {
   const r = await db.payable.updateMany({
     where: { id, userId: USER_ID, unitId: UNIT, status: 'PAYING' },

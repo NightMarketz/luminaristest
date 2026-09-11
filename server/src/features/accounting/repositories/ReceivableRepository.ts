@@ -173,7 +173,7 @@ export class ReceivableRepository implements IReceivableRepository {
       where: {
         id,
         ...accountingScopeWhere(scope),
-        status: { in: ['PARTIALLY_RECEIVED', 'RECEIVED'] },
+        status: { in: ['PARTIALLY_RECEIVED', 'RECEIVED', 'RECEIVING'] }, // in flight does not block (review #307 F1)
         receivedCents: { gte: cents },
       },
       data: { receivedCents: { decrement: cents } },

@@ -128,8 +128,8 @@ export interface IReceivableRepository {
 
   /**
    * Atomically give a cancelled receipt's cents back to the balance (F-PS3 → a) — MIRROR of AP
-   * `releaseSettlement`: status ∈ {PARTIALLY_RECEIVED, RECEIVED} AND `receivedCents >= cents` →
-   * `receivedCents −= cents`. 0 = a receipt is in flight or the balance could not carry it. Must run inside the tx.
+   * `releaseSettlement`: status ∈ {PARTIALLY_RECEIVED, RECEIVED, RECEIVING} AND `receivedCents >= cents` →
+   * `receivedCents −= cents`. 0 = the balance could not carry it (a receipt in flight does not block). Must run inside the tx.
    */
   releaseSettlement(
     scope: AccountingScope,

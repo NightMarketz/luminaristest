@@ -166,14 +166,15 @@ export class PayableRepository implements IPayableRepository {
     cents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number> {
-    // Atomic decrement for the reversal of ONE receipt among N (F-PS3 → a). Refuses while a
-    // settlement is in flight (PAYING is not in the predicate) and when the balance could not carry
-    // the decrement (`paidCents >= cents`) — never lets paidCents go negative.
+    // Atomic decrement for the reversal of ONE receipt among N (F-PS3 → a, any order). A settlement
+    // in flight (PAYING) does NOT block it (review #307 F1): the decrement is atomic and that
+    // settlement's finalize reads the balance already decremented. The only refusal is the
+    // invariant (`paidCents >= cents`) — never lets paidCents go negative.
     const result = await (tx ?? prisma).payable.updateMany({
       where: {
         id,
         ...accountingScopeWhere(scope),
-        status: { in: ['PARTIALLY_PAID', 'PAID'] },
+        status: { in: ['PARTIALLY_PAID', 'PAID', 'PAYING'] },
         paidCents: { gte: cents },
       },
       data: { paidCents: { decrement: cents } },

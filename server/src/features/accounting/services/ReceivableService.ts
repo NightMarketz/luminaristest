@@ -12,7 +12,6 @@ import {
   receivableStatusForBalance,
   resolveReceiptMethodAccount,
 } from '../models/Receivable.model';
-import type { ReceivableStatus } from '../models/Receivable.model';
 import type {
   CancelReceivableInput,
   CancelReceiptInput,
@@ -266,12 +265,13 @@ export class ReceivableService {
       // domain audit ONLY when THIS call performed the transition. The ledger is already committed; if
       // this tx crashes, reconcileReceivables finalizes it. The CAS closes the race with a concurrent
       // reconcile that could finalize between the post above and this tx (else both would emit).
-      // While RECEIVING no other writer touches receivedCents, so the balance after this receipt is
-      // exactly receivedBefore + amount (see PayableService.registerPayment).
+      // Balance after this receipt READ from the row inside the tx (review #307 F3) — mirror of AP.
       await this.receivableRepo.runTransaction(async (tx) => {
         await this.receivableRepo.updateReceipt(scope, receipt!.id, { entryId: entry.id }, tx);
         const flipped = await this.receivableRepo.finalizeIfReceiving(scope, receivableId, amountCents, tx);
         if (flipped === 1) {
+          const row = await this.receivableRepo.findById(scope, receivableId, tx);
+          const receivedCentsAfter = row ? centsFromDb(row.receivedCents) : receivedBefore + dto.amountCents;
           await this.auditService.append(tx, scope, {
             actorUserId: scope.actorUserId,
             eventType: 'receivable.settlement_registered',
@@ -283,8 +283,8 @@ export class ReceivableService {
               amountCents: String(dto.amountCents),
               method: dto.method,
               entryId: entry.id,
-              receivedCentsAfter: String(receivedBefore + dto.amountCents),
-              remainingCents: String(remaining - dto.amountCents),
+              receivedCentsAfter: String(receivedCentsAfter),
+              remainingCents: String(amountCents - receivedCentsAfter),
             },
           });
         }
@@ -294,10 +294,7 @@ export class ReceivableService {
       // Only safe to revert BEFORE the ledger commit. After a successful post, the money is booked —
       // leave it RECEIVING for reconcile to finalize (never revert over a real posting).
       if (!posted) {
-        await this.revertClaim(scope, receivableId, receipt, {
-          amountCents: dto.amountCents,
-          status: receivableStatusForBalance(receivedBefore, amountCents),
-        });
+        await this.revertClaim(scope, receivableId, receipt, dto.amountCents);
       }
       throw error;
     }
@@ -398,6 +395,16 @@ export class ReceivableService {
     }
     if (receipt.status === 'CANCELLED') return receipt; // idempotent
 
+    // Review #307 F1 — authoritative check screened BEFORE the reversal (mirror of AP cancelPayment).
+    const cents = centsFromDb(receipt.amountCents);
+    const current = await this.receivableRepo.findById(scope, receivableId);
+    if (!current) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
+    if (centsFromDb(current.receivedCents) < cents) {
+      throw new ValidationError(
+        'Não foi possível estornar o recebimento: o saldo recebido não comporta o estorno (invariante receivedCents ≥ recibo violado).',
+      );
+    }
+
     const settlement = await this.posting.findEntryBySource(scope, AR_RECEIPT_SOURCE_TYPE, receiptId);
     let reversalEntryId: string | null = null;
     if (settlement) {
@@ -413,20 +420,21 @@ export class ReceivableService {
     // Reversal in PostingService's own tx; balance + status in ONE tx here (mirror of AP cancelPayment).
     return this.receivableRepo.runTransaction(async (tx) => {
       const cancelled = await this.receivableRepo.updateReceipt(scope, receiptId, { status: 'CANCELLED' }, tx);
-      const cents = centsFromDb(receipt.amountCents);
       const released = await this.receivableRepo.releaseSettlement(scope, receivableId, cents, tx);
       if (released === 0) {
         throw new ValidationError(
-          'Não foi possível estornar o recebimento: há um recebimento em curso ou o saldo recebido não comporta o estorno.',
+          'Não foi possível estornar o recebimento: o saldo recebido não comporta o estorno (invariante violado).',
         );
       }
       const row = await this.receivableRepo.findById(scope, receivableId, tx);
       if (!row) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
-      const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
-      if (status === 'RECEIVED') {
-        throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente recebido após o estorno.');
+      if (row.status !== 'RECEIVING') {
+        const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
+        if (status === 'RECEIVED') {
+          throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente recebido após o estorno.');
+        }
+        await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
       }
-      await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'receivable.settlement_cancelled',
@@ -729,19 +737,19 @@ export class ReceivableService {
     scope: AccountingScope,
     receivableId: string,
     receipt: ReceivableReceipt | undefined,
-    restore: { amountCents: number; status: ReceivableStatus },
+    claimedCents: number,
   ): Promise<void> {
     try {
       await this.receivableRepo.runTransaction(async (tx) => {
         if (receipt) {
           await this.receivableRepo.updateReceipt(scope, receipt.id, { status: 'CANCELLED' }, tx);
         }
-        await this.receivableRepo.updateReceivable(
-          scope,
-          receivableId,
-          { receivedCents: { decrement: restore.amountCents }, status: restore.status },
-          tx,
-        );
+        // Status from the row RE-READ after the decrement (review #307 F2) — mirror of AP.
+        await this.receivableRepo.updateReceivable(scope, receivableId, { receivedCents: { decrement: claimedCents } }, tx);
+        const row = await this.receivableRepo.findById(scope, receivableId, tx);
+        if (!row) return;
+        const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
+        await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
       });
     } catch (error) {
       logger.error('AR registerReceipt revert failed — reconcile will reconcile state', {

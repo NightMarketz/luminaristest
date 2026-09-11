@@ -190,6 +190,19 @@ describe('CashForecastReportService.forecast — títulos em trânsito (F-CF4→
     expect(day.outflowCents).toBe('1000');
     expect(day.inflowCents).toBe('2000');
   });
+
+  it('BE-INCR-PARTIAL-SETTLEMENT (F-PS4→a): título PARTIALLY_* projeta só o SALDO (amountCents − liquidado), nunca o total', async () => {
+    const { svc } = buildService({
+      payableRows: [line({ id: 'p1', dueDate: '2026-07-20', amountCents: 5000, settledCents: 3000, status: 'PARTIALLY_PAID' })],
+      receivableRows: [line({ id: 'r1', dueDate: '2026-07-20', amountCents: 8000, settledCents: 2500, status: 'PARTIALLY_RECEIVED' })],
+    });
+    const r = await svc.forecast(scope, { asOf: AS_OF });
+    const day = r.lines.find((l) => l.periodStart === '2026-07-20')!;
+    expect(day.outflowCents).toBe('2000'); // 5000 − 3000 — NUNCA 5000
+    expect(day.inflowCents).toBe('5500'); // 8000 − 2500
+    expect(r.totalOutflowCents).toBe('2000');
+    expect(r.totalInflowCents).toBe('5500');
+  });
 });
 
 describe('CashForecastReportService.forecast — janela [asOf, asOf+90]', () => {

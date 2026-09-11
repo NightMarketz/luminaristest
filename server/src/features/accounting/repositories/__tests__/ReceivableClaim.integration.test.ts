@@ -16,7 +16,7 @@ const SERVER_ROOT = path.join(__dirname, '../../../../../');
 const USER_ID = 'u-ar';
 const UNIT = 'unit-ar';
 
-/** The exact conditional transition ReceivableRepository.claimForReceipt issues. */
+/** The binary status CAS that PRECEDED the sum-CAS (historical golden ref; live `claimForReceipt` is the arithmetic form — see `PartialSettlement.integration.test.ts`). */
 async function claim(db: PrismaClient, id: string): Promise<number> {
   const r = await db.receivable.updateMany({
     where: { id, userId: USER_ID, unitId: UNIT, status: 'OPEN', deletedAt: null },
@@ -25,7 +25,7 @@ async function claim(db: PrismaClient, id: string): Promise<number> {
   return r.count;
 }
 
-/** The exact conditional transition ReceivableRepository.markReceivedIfReceiving issues (finalize CAS). */
+/** The binary finalize CAS that PRECEDED `finalizeIfReceiving` (historical golden ref; live form resolves RECEIVED|PARTIALLY_RECEIVED by balance). */
 async function markReceived(db: PrismaClient, id: string): Promise<number> {
   const r = await db.receivable.updateMany({
     where: { id, userId: USER_ID, unitId: UNIT, status: 'RECEIVING' },

@@ -22,7 +22,6 @@ import type {
   ListPayablesQueryInput,
   RegisterPaymentInput,
 } from '../dtos/PayableDto';
-import type { PayableStatus } from '../models/Payable.model';
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
@@ -480,12 +479,15 @@ export class PayableService {
       // the domain audit ONLY when THIS call performed the transition. The ledger is already committed;
       // if this tx crashes, reconcilePayables finalizes it. The CAS closes the race with a concurrent
       // reconcile that could finalize between the post above and this tx (else both would emit).
-      // While PAYING no other writer touches paidCents (claim needs OPEN|PARTIALLY_PAID, release needs
-      // PARTIALLY_PAID|PAID), so the balance after this receipt is exactly paidBefore + amount.
+      // The balance after this receipt is READ from the row inside the tx (review #307 F3): the
+      // pre-CAS `paidBefore` can be stale — another settlement may have completed in between, and a
+      // cancel of an already-finalized receipt may decrement while we are PAYING.
       await this.payableRepo.runTransaction(async (tx) => {
         await this.payableRepo.updatePayment(scope, payment!.id, { entryId: entry.id }, tx);
         const flipped = await this.payableRepo.finalizeIfPaying(scope, payableId, amountCents, tx);
         if (flipped === 1) {
+          const row = await this.payableRepo.findById(scope, payableId, tx);
+          const paidCentsAfter = row ? centsFromDb(row.paidCents) : paidBefore + dto.amountCents;
           await this.auditService.append(tx, scope, {
             actorUserId: scope.actorUserId,
             eventType: 'payable.settlement_registered',
@@ -497,8 +499,8 @@ export class PayableService {
               amountCents: String(dto.amountCents),
               method: dto.method,
               entryId: entry.id,
-              paidCentsAfter: String(paidBefore + dto.amountCents),
-              remainingCents: String(remaining - dto.amountCents),
+              paidCentsAfter: String(paidCentsAfter),
+              remainingCents: String(amountCents - paidCentsAfter),
             },
           });
         }
@@ -508,10 +510,7 @@ export class PayableService {
       // Only safe to revert BEFORE the ledger commit. After a successful post, the money is
       // booked — leave it PAYING for reconcile to finalize (never revert over a real posting).
       if (!posted) {
-        await this.revertClaim(scope, payableId, payment, {
-          amountCents: dto.amountCents,
-          status: payableStatusForBalance(paidBefore, amountCents),
-        });
+        await this.revertClaim(scope, payableId, payment, dto.amountCents);
       }
       throw error;
     }
@@ -643,6 +642,20 @@ export class PayableService {
     }
     if (payment.status === 'CANCELLED') return payment; // idempotent
 
+    // Review #307 F1 — check what the release gate will check BEFORE the ledger reversal, so a
+    // rejected command has mutated nothing. The in-tx `releaseSettlement` below stays authoritative;
+    // this read only prevents the "400 after the estorno was posted" window for a breach that is
+    // already visible. A settlement in flight (PAYING) is NOT a reason to refuse: the decrement is
+    // atomic and the status is left to that settlement's finalize (F-PS3 → a, any order).
+    const cents = centsFromDb(payment.amountCents);
+    const current = await this.payableRepo.findById(scope, payableId);
+    if (!current) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
+    if (centsFromDb(current.paidCents) < cents) {
+      throw new ValidationError(
+        'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante paidCents ≥ recibo violado).',
+      );
+    }
+
     const settlement = await this.posting.findEntryBySource(scope, AP_PAYMENT_SOURCE_TYPE, paymentId);
     let reversalEntryId: string | null = null;
     if (settlement) {
@@ -660,23 +673,26 @@ export class PayableService {
     // between is converged by re-running cancelPayment (reverseEntry is idempotent).
     return this.payableRepo.runTransaction(async (tx) => {
       const cancelled = await this.payableRepo.updatePayment(scope, paymentId, { status: 'CANCELLED' }, tx);
-      // F-PS3 → a: atomic decrement — refuses while another payment is in flight (PAYING) or when the
-      // balance could not carry it (invariant), never guesses.
-      const cents = centsFromDb(payment.amountCents);
+      // F-PS3 → a: atomic decrement — the only refusal is the invariant (`paidCents >= cents`); the
+      // pre-check above already screened it, so a 0 here is a race that broke the invariant.
       const released = await this.payableRepo.releaseSettlement(scope, payableId, cents, tx);
       if (released === 0) {
         throw new ValidationError(
-          'Não foi possível estornar o pagamento: há um pagamento em curso ou o saldo liquidado não comporta o estorno.',
+          'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
         );
       }
       const row = await this.payableRepo.findById(scope, payableId, tx);
       if (!row) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
-      // Guarda defensiva (BRIEF item 9): a reversal can never leave the title fully paid again.
-      const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
-      if (status === 'PAID') {
-        throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente pago após o estorno.');
+      // While another settlement is in flight the status belongs to ITS finalize (it reads the
+      // balance already decremented here); otherwise recompute it from the re-read row.
+      if (row.status !== 'PAYING') {
+        // Guarda defensiva (BRIEF item 9): a reversal can never leave the title fully paid again.
+        const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
+        if (status === 'PAID') {
+          throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente pago após o estorno.');
+        }
+        await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
       }
-      await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'payable.settlement_cancelled',
@@ -1069,26 +1085,25 @@ export class PayableService {
 
   /**
    * Undo a claimed-but-unposted payment attempt (safe only before the ledger commit): give the
-   * claimed cents back and restore the pre-claim status. Safe as a plain update: while PAYING no
-   * other writer touches paidCents (see registerPayment).
+   * claimed cents back and recompute the status from the row RE-READ inside the same tx after the
+   * decrement (review #307 F2) — never from the pre-CAS read, which may be stale.
    */
   private async revertClaim(
     scope: AccountingScope,
     payableId: string,
     payment: PayablePayment | undefined,
-    restore: { amountCents: number; status: PayableStatus },
+    claimedCents: number,
   ): Promise<void> {
     try {
       await this.payableRepo.runTransaction(async (tx) => {
         if (payment) {
           await this.payableRepo.updatePayment(scope, payment.id, { status: 'CANCELLED' }, tx);
         }
-        await this.payableRepo.updatePayable(
-          scope,
-          payableId,
-          { paidCents: { decrement: restore.amountCents }, status: restore.status },
-          tx,
-        );
+        await this.payableRepo.updatePayable(scope, payableId, { paidCents: { decrement: claimedCents } }, tx);
+        const row = await this.payableRepo.findById(scope, payableId, tx);
+        if (!row) return;
+        const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
+        await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
       });
     } catch (error) {
       logger.error('AP registerPayment revert failed — reconcile will reconcile state', {

@@ -329,6 +329,7 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
 
   it('accepts a PARTIAL receipt (60%): sum-CAS gets (amountCents, novo) and the audit carries the balance after', async () => {
     const { service, receivableRepo, auditService, postEntry } = build();
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) })); // re-read inside the finalize tx
     await service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 30000 } as never);
     expect(receivableRepo.claimForReceipt).toHaveBeenCalledWith(scope, 'rec-1', 50000, 30000);
     const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
@@ -352,6 +353,7 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
   it('accepts a SECOND receipt on a PARTIALLY_RECEIVED receivable (guard pré-CAS — item 6)', async () => {
     const { service, receivableRepo, auditService } = build();
     receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(50000) })); // re-read inside the finalize tx
     await service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 20000 } as never);
     expect(receivableRepo.claimForReceipt).toHaveBeenCalledWith(scope, 'rec-1', 50000, 20000);
     const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
@@ -359,13 +361,15 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     expect(evt[2].payload).toMatchObject({ receivedCentsAfter: '50000', remainingCents: '0' });
   });
 
-  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and restores PARTIALLY_RECEIVED', async () => {
+  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and recomputes the status from the row RE-READ in the tx (review #307 F2)', async () => {
     const { service, receivableRepo, postEntry } = build();
     receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVING', receivedCents: BigInt(30000) })); // after the decrement
     postEntry.mockRejectedValueOnce(new Error('period closed'));
     await expect(service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
-    const revert = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(revert).toEqual({ receivedCents: { decrement: 10000 }, status: 'PARTIALLY_RECEIVED' });
+    const writes = receivableRepo.updateReceivable.mock.calls.map((c) => c[2] as Record<string, unknown>);
+    expect(writes).toContainEqual({ receivedCents: { decrement: 10000 } });
+    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_RECEIVED' });
   });
 
   it('rejects receiving a non-OPEN receivable', async () => {
@@ -464,6 +468,9 @@ describe('ReceivableService.cancelReceipt — reverse receipt + reopen (net-zero
     const { service, reverseEntry, receivableRepo } = build({
       findEntryBySource: (type) => (type === AR_RECEIPT_SOURCE_TYPE ? { id: 'set-1' } : null),
     });
+    receivableRepo.findById
+      .mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(50000) })) // pre-check (review #307 F1)
+      .mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(0) })); // re-read after the release
     await service.cancelReceipt(scope, 'rec-1', 'recp-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
 
     expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'set-1' });
@@ -479,15 +486,18 @@ describe('ReceivableService.cancelReceipt — reverse receipt + reopen (net-zero
       findEntryBySource: (type) => (type === AR_RECEIPT_SOURCE_TYPE ? { id: 'set-2' } : null),
     });
     receivableRepo.findReceiptById.mockResolvedValueOnce(receiptRow({ id: 'recp-2', amountCents: BigInt(15000) }));
-    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(35000) }));
+    receivableRepo.findById
+      .mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(50000) })) // pre-check
+      .mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(35000) })); // re-read after the release
     await service.cancelReceipt(scope, 'rec-1', 'recp-2', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
     expect(receivableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'rec-1', 15000, expect.anything());
     const receivableUpd = receivableRepo.updateReceivable.mock.calls.at(-1)![2] as Record<string, unknown>;
     expect(receivableUpd.status).toBe('PARTIALLY_RECEIVED');
   });
 
-  it('refuses to cancel a receipt while another is in flight (release CAS count 0)', async () => {
+  it('a release CAS that returns 0 (invariant broken under a race) rejects after the pre-check passed', async () => {
     const { service, receivableRepo } = build({ releaseResults: [0] });
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVED', receivedCents: BigInt(50000) })); // pre-check passes
     await expect(
       service.cancelReceipt(scope, 'rec-1', 'recp-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);

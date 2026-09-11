@@ -404,6 +404,7 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
 
   it('accepts a PARTIAL payment (60%): sum-CAS gets (amountCents, novo) and the audit carries the balance after', async () => {
     const { service, payableRepo, auditService, postEntry } = build();
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) })); // re-read inside the finalize tx (review #307 F3)
     await service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 30000 } as never);
 
     // Item 5: the CAS is the arithmetic one — amountCents read BEFORE the call enters as a literal.
@@ -431,6 +432,7 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
   it('accepts a SECOND payment on a PARTIALLY_PAID payable (guard pré-CAS, ADR F-PS2 site 2 — item 6)', async () => {
     const { service, payableRepo, auditService } = build();
     payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // re-read inside the finalize tx
     await service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 20000 } as never);
     expect(payableRepo.claimForPayment).toHaveBeenCalledWith(scope, 'pay-1', 50000, 20000);
     const evt = (auditService.append.mock.calls as unknown as Array<[unknown, unknown, { eventType: string; payload: Record<string, string> }]>)
@@ -444,13 +446,15 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(postEntry).not.toHaveBeenCalled();
   });
 
-  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and restores the pre-claim status (PARTIALLY_PAID, not OPEN)', async () => {
+  it('reverting a claimed-but-unposted PARTIAL attempt gives the cents back and recomputes the status from the row RE-READ in the tx (review #307 F2)', async () => {
     const { service, payableRepo, postEntry } = build();
     payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) })); // after the decrement
     postEntry.mockRejectedValueOnce(new Error('period closed'));
     await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
-    const revert = payableRepo.updatePayable.mock.calls.at(-1)![2] as Record<string, unknown>;
-    expect(revert).toEqual({ paidCents: { decrement: 10000 }, status: 'PARTIALLY_PAID' });
+    const writes = payableRepo.updatePayable.mock.calls.map((c) => c[2] as Record<string, unknown>);
+    expect(writes).toContainEqual({ paidCents: { decrement: 10000 } });
+    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_PAID' });
   });
 
   it('rejects paying a non-OPEN payable', async () => {
@@ -554,6 +558,9 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
     const { service, reverseEntry, payableRepo } = build({
       findEntryBySource: (type) => (type === AP_PAYMENT_SOURCE_TYPE ? { id: 'set-1' } : null),
     });
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })) // pre-check (review #307 F1)
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(0) })); // re-read after the release
     await service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
 
     // reverseEntry swaps the legs → credits 2.1.2 back, netting the settlement to zero on 2.1.2.
@@ -573,7 +580,9 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
     });
     // 3 payments of 10000/15000/25000 = 50000 (PAID); the middle one is reversed → row re-read shows 35000 paid.
     payableRepo.findPaymentById.mockResolvedValueOnce(paymentRow({ id: 'paym-2', amountCents: BigInt(15000) }));
-    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(35000) }));
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })) // pre-check
+      .mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(35000) })); // re-read after the release
     await service.cancelPayment(scope, 'pay-1', 'paym-2', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never);
 
     expect(payableRepo.releaseSettlement).toHaveBeenCalledWith(scope, 'pay-1', 15000, expect.anything());
@@ -581,8 +590,9 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
     expect(payableUpd.status).toBe('PARTIALLY_PAID');
   });
 
-  it('refuses to cancel a payment while another settlement is in flight (release CAS count 0) — never guesses the balance', async () => {
+  it('a release CAS that returns 0 (invariant broken under a race) rejects after the pre-check passed — never guesses the balance', async () => {
     const { service, payableRepo } = build({ releaseResults: [0] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check passes
     await expect(
       service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
@@ -592,7 +602,7 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
 
   it('guarda defensiva: a reversal that would leave the title fully PAID again is rejected (invariant breach)', async () => {
     const { service, payableRepo } = build();
-    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // release "worked" but the row still shows full
+    payableRepo.findById.mockResolvedValue(payableRow({ status: 'PAID', paidCents: BigInt(50000) })); // pre-check ok; release "worked" but the row still shows full
     await expect(
       service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
