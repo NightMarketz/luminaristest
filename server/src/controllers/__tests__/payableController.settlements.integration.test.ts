@@ -138,6 +138,33 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     expect(types).not.toContain('payable.payment_registered');
   });
 
+  // Review #307 delta, F8 (CRÍTICO): duplo cancel CONCORRENTE do mesmo recibo (duplo clique / retry) — a
+  // checagem "já CANCELLED" fora da tx deixa as duas passarem e o saldo é decrementado 2×. Correto: o flip
+  // do recibo é condicional e autoritativo DENTRO da tx (ACTIVE → CANCELLED, count), e só quem flipou
+  // libera os centavos. Invariante `paidCents === Σ ACTIVE` sobrevive; o 2º cancel é idempotente.
+  it('F8: 2 cancels concorrentes do MESMO recibo → invariante paidCents === Σ ACTIVE sobrevive (só um decrementa)', async () => {
+    // Estado atual: 1 recibo ACTIVE de 20000 (PARTIALLY_PAID, paidCents 20000). Registra mais um de 10000.
+    expect((await settle(dono, payableId, 10000)).status).toBe(201);
+    const target = await prisma.payablePayment.findFirstOrThrow({ where: { payableId, amountCents: 10000, status: 'ACTIVE' } });
+    const cancel = () =>
+      request(app)
+        .post(`/api/payables/${payableId}/settlements/${target.id}/cancel`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, reversalDate: DATA, reason: 'duplo clique' });
+    const [a, b] = await Promise.all([cancel(), cancel()]);
+    expect([a.status, b.status].sort()).toEqual([200, 200]); // ambos idempotentes, nenhum 500
+
+    const row = await prisma.payable.findUniqueOrThrow({ where: { id: payableId } });
+    const active = await prisma.payablePayment.findMany({ where: { payableId, status: 'ACTIVE' } });
+    const sumActive = active.reduce((n, p) => n + Number(p.amountCents), 0);
+    expect(sumActive).toBe(20000);
+    expect(Number(row.paidCents)).toBe(sumActive); // LACUNA: hoje 10000 (decrementou 2×)
+    expect(row.status).toBe('PARTIALLY_PAID');
+    // E a auditoria de cancelamento é emitida UMA vez para este recibo.
+    const events = await prisma.auditEvent.findMany({ where: { scopeUserId: dono.id, unitId: UNIT, targetId: payableId, eventType: 'payable.settlement_cancelled' } });
+    expect(events.filter((e) => e.payload.includes(target.id))).toHaveLength(1);
+  });
+
   it('cancelar a conta com baixa ativa → 400 com a mensagem do 3º ramo (ADR F-PS2 site 3)', async () => {
     const res = await request(app)
       .post(`/api/payables/${payableId}/cancel`)
