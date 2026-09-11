@@ -179,15 +179,65 @@ const SpedEcfRealRequestSchema = z.object({
   // Fork 2 — só se ratificado na direção (a) input humano; se (b), campo NÃO existe (derivado do job).
   hashEcfAnterior: z.string().optional(),
   // Fork 4 — só se ratificado na direção (a) input transiente; se (b), campo NÃO existe (lido de model).
-  lalurAdjustments: z.array(z.object({
-    descricao: z.string().min(1),
-    valorCents: z.number().int().positive(),
-    tipo: z.enum(['adicao', 'exclusao']),
-    natureza: z.enum(['temporaria', 'definitiva']),
+  // [EMENDA 2026-09-10] A FORMA abaixo foi corrigida contra o Manual (pp. 237, 244-245) e a aba M300A
+  // das Tabelas Dinâmicas. A PERSISTÊNCIA (transiente × model) segue PENDENTE — esta emenda não a decide.
+  //
+  // Parte A (M300 e-Lalur / M350 e-Lacs): a linha NÃO é texto livre — é uma das 374 linhas `E`
+  // (entrada) da tabela dinâmica, identificada por código da RFB.
+  lalurParteA: z.array(z.object({
+    livro: z.enum(['lalur', 'lacs']),      // M300 (IRPJ, aba M300A) × M350 (CSLL, aba M350A)
+    codigo: z.string().min(1),             // M300.CODIGO — ex.: '6', '7', '8.01', '8.11' (obrigatório)
+    valorCents: z.number().int(),          // M300.VALOR é `NS 19,2` (numérico SINALIZADO) — ver nota (c)
+    histLancamento: z.string().max(500).optional(),  // M300.HIST_LAN_LAL, C 500, não obrigatório
+    // M300.TIPO_LANCAMENTO ('A' adição / 'E' exclusão) NÃO entra como input: é determinado pelo
+    // `codigo` escolhido (coluna `TIPO LANÇ` da aba M300A) — derivar, nunca aceitar do caller.
+    // M300.DESCRICAO idem: vem da tabela dinâmica, não do usuário.
+    // M300.IND_RELACAO (1 = com conta da Parte B, 2 = com conta contábil) e os filhos M305/M310/M312
+    // dependem de haver reflexo na Parte B — ver `lalurParteB` abaixo.
+  })).optional(),
+  // Parte B (M010 identificação da conta / M410 lançamento sem reflexo na Parte A / M500 saldos):
+  // SEGUNDO AGREGADO, não um campo `natureza` do ajuste. É aqui que "temporária × definitiva" vive.
+  lalurParteB: z.array(z.object({
+    codCtaB: z.string().min(1),            // M010.COD_CTA_B — "código unívoco atribuído PELA PESSOA
+                                           // JURÍDICA" ⇒ é NOSSO código, e precisa ser estável entre anos
+    descricao: z.string().min(1),          // M010.DESC_CTA_LAL
+    dtCriacao: z.string(),                 // M010.DT_AP_LAL — período de apuração em que a conta nasceu
+    // demais campos de M010 (COD_PB_RFB, DT_LIM_LAL, COD_TRIBUTO, VL_SALDO_INI, IND_VL_SALDO_INI,
+    // CNPJ_SIT_ESP) NÃO transcritos campo-a-campo — ver nota (b).
   })).optional(),
   signers: z.array(SignerSchema).min(1).max(2),  // REUSADO de SpedEcfDto.ts
 }).strict();
 ```
+
+> **[EMENDA 2026-09-10 — correção de forma do contrato do Fork 4]** Autorização: dono, em sessão,
+> 2026-09-10 — *"emenda o BRIEF com os itens 1, 2 e 5"*. Evidência e falsificadores em
+> `RECONFERENCIA-ECF-FASE3-2026-09-10.md` §E.
+>
+> **O que esta emenda decide:** nada sobre persistência. **O que ela corrige:** o esboço anterior
+> (`{descricao, valorCents, tipo, natureza}`) estava com a forma errada **nas duas direções do Fork 4** —
+> um model persistido com aqueles campos seria tão inutilizável quanto o input transiente.
+>
+> - **(a) Grau VERIFICADO:** `M300.CODIGO` é obrigatório e vem *"conforme tabela dinâmica do Sped"*
+>   (Manual p.244); `M300.TIPO_LANCAMENTO` = `A` adição / `E` exclusão (p.245); `M300.IND_RELACAO` =
+>   `1` com conta da Parte B / `2` com conta contábil (p.245); `M300.VALOR` é `NS 19,2`;
+>   `M300.HIST_LAN_LAL` é `C 500`. A aba `M300A` tem **386 linhas, 374 delas `TIPO=E`** (entrada),
+>   cada uma com base legal na coluna `ORIENTAÇÕES` (arts. 70/71/284 da IN RFB 1.700/2017, art. 6º §2º
+>   do DL 1.598/77, …) e a natureza adição/exclusão na coluna `TIPO LANÇ`. `M350A` tem a mesma forma
+>   (353 linhas, 342 `E`). `M010.COD_CTA_B` é *"código unívoco atribuído pela pessoa jurídica"* (p.237).
+> - **(b) Grau NÃO CONFERIDO:** os registros `M305/M310/M312/M315` (filhos de M300), `M355/M360/M362/M365`
+>   (filhos de M350), `M410/M415` e `M500/M510` **não foram transcritos campo-a-campo**. O esboço da
+>   Parte B acima cobre só os 3 primeiros campos de `M010`. Fechar isso é o "Passo A" das seções L/M/N,
+>   que agora tem os dois insumos no repositório (ver §5).
+> - **(c) Aberto:** `M300.VALOR` é numérico **sinalizado** (`NS`), mas `TIPO_LANCAMENTO` já carrega a
+>   direção — se o sinal é usado aqui ou se o valor vai sempre positivo **não foi verificado** (exigiria
+>   as Regras de Validação do M300). Até lá, `z.number().int()` sem `.positive()` é o conservador.
+> - **(d) Insumo novo para o Fork 4 — não é decisão, é o que torna a decisão mais afiada:**
+>   `M010.COD_CTA_B` é um código que **nós** atribuímos, e os saldos da Parte B do ano anterior chegam
+>   pelo `E020` (*"Saldos Finais das Contas da Parte B do e-Lalur da ECF Imediatamente Anterior"*,
+>   Entrada=`N` — recuperado pelo PVA, p.44). Ou seja: qualquer que seja a direção escolhida, **o código
+>   da conta da Parte B precisa ser estável entre exercícios e reconciliar com o que o PVA recupera**.
+>   Isso é argumento de peso para o lado (b) do fork, mas **a decisão continua do dono** — registrado
+>   aqui como insumo, não como recomendação ratificada.
 
 ### Saída
 
@@ -219,8 +269,29 @@ Artefato único que resolveria os 8 itens: **Manual de Orientação do Leiaute 1
 ao ano-calendário-alvo) — seções dos Blocos L, M e N (Lucro Real)**, com a matriz de obrigatoriedade
 coluna "Real". Lista completa (com o fork que cada um decide) está no ADR §5; resumida aqui:
 
-> **Versão a usar [EMENDA 2026-09-02]:** **[RESOLVIDO 2026-09-02, fonte secundária — carimbo oficial `[DONO confere]`] **[CORRIGIDO 2026-09-03 — índice oficial <http://sped.rfb.gov.br/pasta/show/1644>: atualização vigente do Manual Leiaute 12 = **20/05/2026** (`arquivo/show/8003`); o "23/07" abaixo era fonte secundária (ATVI), SUPERADO — ver `TRIAGEM-CONTADOR-2026-09-03-SIMULACAO.md` §A.2.]**** A versão vigente do Manual da ECF Leiaute 12 (Anexo ao ADE Cofis nº 2/2026) **não é nem 28/05 nem 25/07**: recebeu atualização em **23/07/2026**, superando a de 20/05/2026. Fonte: ATVI, citando o Sped como origem; a página oficial `sped.rfb.gov.br` bloqueia fetch automatizado, então o carimbo exato de "Atualização" no PDF ainda deve ser conferido pelo dono antes de fechar o `layoutVersion`. Ressalva registrada: a resposta é sobre o **Manual** (PDF); o XLSX das Tabelas Dinâmicas já baixado carrega `28_05_2026` no nome, e se a atualização de 23/07 republicou também o XLSX é parte do que o dono confere na página oficial. Ao transcrever as seções L/M/N (padrão "Passo A" da
-> Fase 2 do Presumido), registrar no cabeçalho do doc irmão a data de atualização lida no PDF.
+> **Versão a usar — ✅ FECHADO [EMENDA 2026-09-10].** `layoutVersion` = **Manual do Leiaute 12, Anexo ao
+> ADE Cofis nº 02/2026, atualização 20/05/2026, 621 páginas.** O carimbo que faltava foi **lido no PDF**:
+> a p.1 traz `Atualização: maio/2026`, e o índice oficial <http://sped.rfb.gov.br/pasta/show/1644> lista
+> *"Manual da ECF - Versão em .pdf - Leiaute 12 (Atualização: **20/05/2026**)"* → `item/show/8003`. O PDF
+> está no corpus local (`docs/accounting/fontes-oficiais/Manual-ECF-Leiaute-12.pdf`, sha256 no
+> `MANIFEST.md`). **A correção de 2026-09-03 estava certa e a fonte secundária ATVI ("23/07/2026") era
+> falsa** — não existe tal versão no índice oficial. Grau: **VERIFICADO** (leitura direta do PDF + do
+> índice, não mais fonte secundária); evidência e falsificador em
+> `RECONFERENCIA-ECF-FASE3-2026-09-10.md` §A. Autorização desta emenda: dono, em sessão, 2026-09-10 —
+> *"emenda o BRIEF com os itens 1, 2 e 5"*.
+>
+> Duas ressalvas que sobrevivem ao fechamento:
+> - **O `sped.rfb.gov.br` não bloqueia fetch automatizado** (era a premissa que forçou a fonte
+>   secundária). Bloqueia HTTPS — é `http://` mesmo, como o `RUNBOOK-X2` já registrava. Os três
+>   downloads (`8003` Manual, `8002` Tabelas Dinâmicas, `5836` Guia EFD) saem por `curl` sem cookie.
+> - **O XLSX das Tabelas Dinâmicas (`28_05_2026`) é de uma data diferente do Manual (`20_05_2026`) e
+>   isso está correto** — são artefatos publicados separadamente, ambos do Leiaute 12 / AC 2025. O do
+>   corpus é byte-a-byte o mesmo já baixado em 2026-08-31 (`ACCOUNTING-MASTER-MAP.md:546`,
+>   1.724.077 bytes).
+>
+> Ao transcrever as seções L/M/N (padrão "Passo A" da Fase 2 do Presumido), registrar no cabeçalho do
+> doc irmão a data de atualização lida no PDF — **feito na mesma emenda**
+> (`BE-INCR-SPED-ECF-layout-transcription.md`, §Fonte normativa: dizia "julho/2026", é maio/2026).
 
 1. Matriz de obrigatoriedade por regime, coluna Real (quais registros de L/M/N são obrigatórios).
 2. Layout campo-a-campo L100/L200/L210/L300.
@@ -234,11 +305,25 @@ coluna "Real". Lista completa (com o fork que cada um decide) está no ADR §5; 
 
 ## 5. Insumos ausentes
 
-- **O Manual de Orientação do Leiaute 12 da ECF não está commitado no repositório** (nenhum PDF/texto em
-  `docs/`) — só a transcrição parcial (`BE-INCR-SPED-ECF-layout-transcription.md`, seções 0/9/P/C/E/J/K)
+- ~~**O Manual de Orientação do Leiaute 12 da ECF não está commitado no repositório** (nenhum PDF/texto em
+  `docs/`)~~ — só a transcrição parcial (`BE-INCR-SPED-ECF-layout-transcription.md`, seções 0/9/P/C/E/J/K)
   existe. Baixar/transcrever as seções L/M/N é o primeiro passo de uma eventual FASE 2 desta frente
   (mesmo padrão do "Passo A" da FASE 2 do Presumido) — **fora do escopo desta sessão de planejamento**
   (regra 2 do formulário: registrar como insumo ausente, não sair varrendo).
+  > **[EMENDA 2026-09-10 — o insumo deixou de estar ausente.]** Correção factual arrastada pela emenda
+  > do §4 (sem ela o BRIEF ficaria auto-contraditório: o §4 passa a citar o caminho do PDF). **Baixar**
+  > está feito; **transcrever** segue pendente e continua fora do escopo desta sessão. Os dois insumos:
+  > - `docs/accounting/fontes-oficiais/Manual-ECF-Leiaute-12.pdf` — 621 pp, atualização 20/05/2026.
+  > - `docs/accounting/fontes-oficiais/RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx` — abas `L100A/B/C`,
+  >   `L210`, `L300A/B/C`, `M300A/R/B/C`, `M350A/R/B/C`, `N500`, `N600`, `N610`, `N620`, `N630A/B/C`,
+  >   `N650`, `N660`, `N670`. **Este arquivo já estava baixado desde 2026-08-31**
+  >   (`ACCOUNTING-MASTER-MAP.md:546`, 1.724.077 bytes, byte-a-byte o mesmo) — estava catalogado só como
+  >   "plano referencial" do item X2; as abas de L/M/N nunca tinham sido abertas.
+  >
+  > Ambos são gitignored (binário) e reponíveis por `node scripts/baixar-fontes-oficiais.mjs`; sha256 em
+  > `docs/accounting/fontes-oficiais/MANIFEST.md`. **Corrige também o §4:** o Manual **não** é o
+  > "artefato único" que resolve as 8 pendências — o conteúdo linha-a-linha de L/M/N/P (o que é entrada
+  > nossa e o que a RFB calcula) está no **XLSX**, não no PDF.
 - **Nenhum artefato de domínio fiscal geral** (lei, tabela RFB, parecer de contador) sobre a mecânica de
   Lalur/prejuízo fiscal/base negativa está no repositório — o que o ADR §2 descreve como distinção
   Presumido×Real é conhecimento de domínio geral, grau **ASSUMIDO**, não uma fonte citável.

@@ -1,0 +1,10 @@
+# Os documentos oficiais em si NAO vao pro git: sao ~29 MB de binario reproduzivel
+# por `node scripts/baixar-fontes-oficiais.mjs`. O que fica versionado e a evidencia
+# checavel — MANIFEST.md (sha256 de cada arquivo) e o texto extraido dos atos da RFB,
+# que e diffavel: reedicao de norma aparece como diff, nao como "confie no hash".
+*.pdf
+*.xlsx
+*.zip
+*.html
+*.json
+*-anexos/

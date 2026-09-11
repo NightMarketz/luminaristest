@@ -16,12 +16,23 @@
 ## Fonte normativa (ECF-1 — RESOLVIDO)
 
 - **Manual de Orientação do Leiaute 12 da ECF** — Anexo ao **ADE Cofis nº 02/2026**,
-  atualização **julho/2026**, 621 páginas. É o leiaute vigente para o
+  atualização **maio/2026** (carimbo `Atualização: maio/2026` na p.1; o índice oficial
+  <http://sped.rfb.gov.br/pasta/show/1644> lista *"Leiaute 12 (Atualização: **20/05/2026**)"*),
+  621 páginas. É o leiaute vigente para o
   **ano-calendário 2025** (ECF entregue até o último dia útil de julho/2026) e
   situações especiais de 2026.
+  > **[EMENDA 2026-09-10 — correção factual]** Esta linha dizia *"atualização julho/2026"*, o que
+  > contradizia o próprio nome de arquivo citado abaixo (`..._20_05_2026_...`). Erro de digitação:
+  > o mês da atualização é **maio**; julho é o prazo de entrega, citado na frase seguinte. **Só o mês
+  > estava errado — a transcrição foi feita contra este mesmo PDF**, falsificador rodado em
+  > `RECONFERENCIA-ECF-FASE3-2026-09-10.md` §A: as 10 páginas do Bloco P citadas no §3 (326, 327, 329,
+  > 333, 336, 339, 341, 343, 345, 347) batem exatas com o PDF no corpus local, e idem p.31 e pp.43-44.
+  > Autorização: dono, em sessão, 2026-09-10 — *"emenda o BRIEF com os itens 1, 2 e 5"*.
 - Origem: `gov.br/sped` →
-  `manual_ecf_leiaute_12_20_05_2026_ac_2025_sit_esp_2026.pdf`. Extraído com
-  `pdftotext -layout -enc UTF-8` (mesmo procedimento da ECD).
+  `manual_ecf_leiaute_12_20_05_2026_ac_2025_sit_esp_2026.pdf` (`arquivo/download/8003`). Extraído com
+  `pdftotext -layout -enc UTF-8` (mesmo procedimento da ECD). **[EMENDA 2026-09-10]** O PDF passou a
+  estar no corpus local: `docs/accounting/fontes-oficiais/Manual-ECF-Leiaute-12.pdf` (sha256 no
+  `MANIFEST.md`; reponível por `node scripts/baixar-fontes-oficiais.mjs`).
 - Todas as citações abaixo são página do Manual (grau **VERIFICADO** — leitura
   direta do PDF oficial), não inferência de domínio.
 
