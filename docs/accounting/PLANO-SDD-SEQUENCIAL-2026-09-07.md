@@ -112,7 +112,11 @@ inbox/outbox. Não entram em nenhuma rodada sem gatilho nomeado.
 ## 5. Estado das rodadas — fold 2026-09-07
 
 > Cada linha é fato verificado por `git merge-base --is-ancestor <sha> origin/main` no momento deste
-> fold (comandos no corpo do PR) — nunca por leitura de doc. Passo do ciclo §0: S/R/I/V/M/F (ADR
+> fold (comandos no corpo do PR) — nunca por leitura de doc.
+>
+> **[FOLD 2026-09-11]** Rodada 9 fechada (#305 `7725f0ca`). Grafo vigente = [GRAFO-DEPENDENCIAS-2026-09-11.md](GRAFO-DEPENDENCIAS-2026-09-11.md);
+> o de 07/09 (§0 deste plano) está supersedido — a raiz da cadeia crítica passou a ser a emissão (01/10), não o contador.
+> Rodada 10 (X6) deixa de esperar D1 (resposta 5); rodada 13 (C8) idem (resposta 6); rodada 11 (X4) espera só R2 + corpus em `main` (D3b). Passo do ciclo §0: S/R/I/V/M/F (ADR
 > substitui S quando a frente é nova).
 
 | Rodada | Nó | Passo concluído | Falta | Próximo gatilho |
@@ -126,7 +130,7 @@ inbox/outbox. Não entram em nenhuma rodada sem gatilho nomeado.
 | **5** | F4 `FE-INCR-CASH-FORECAST` | **S ✅ #278 `77c77553` · R ✅ 07/09 (delegação, cédula #287 — F-CF1..F-CF7) · I ✅ · V ✅ (review indep. PASS com 1 achado ALTO não-bloqueante, classe pré-existente na família de reports) · M ✅ #298 `63ceba20` · F ✅ (este fold)** | — | fechada |
 | **7** | C10 `P2 clínica estética` | **I ✅ V ✅ M ✅ F ✅** — **PR #282 MERGED, squash `60cced8d`** (verificado: `git merge-base --is-ancestor 60cced8d origin/main` exit 0). Review independente PASS (4 achados baixa severidade, não-bloqueantes). Comportamentos 1–7,9,10 feitos; 8 parcial (RUNBOOK-H3); 11 pausado (fork T0 × perímetro, ver `CEDULA-DECISAO-2026-09-07-forks-sdd.md`) | nenhum passo de código; H3 espera H1 | *"me acompanha no H3"* (após H1) |
 | **8** | F3 `ADR-INCR-PARTIAL-SETTLEMENT` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-PS1..F-PS7) + parecer ✅ #276 `b7a62a73` · S ✅ #291 `f1307009` (BRIEF, 2026-09-08) — 19 comportamentos + contratos Zod esboçados; 3 forks NOVOS abertos pela sessão de planejamento (F-PS8/9/10; F-PS10 recalculado p/ (b) rota-irmã por achado do review — consumidores reais em `accountsPayable.service.ts`/`accountsReceivable.service.ts`)** | **R do dono** nos 3 forks novos → I → V → M → F | *"ratifico os forks novos do PARTIAL-SETTLEMENT"* |
-| **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-CD1..F-CD8) + parecer ✅ #274 `239945d1` · S ✅ #290 `62b00302` (BRIEF, 2026-09-08) — 22 comportamentos + contratos Prisma/Zod esboçados; 2 forks NOVOS abertos pela sessão de planejamento (Fork A: `year` explícito no DTO; Fork B: NÃO implementar F-CD8-b, sem parser SPED de leitura)** | **R do dono** nos 2 forks novos → I → V → M → F; **CONDICIONADO** ao item 0 do pedido ao contador (F-Z0) | *"ratifico os forks novos do CONTADOR-DELIVERY"* |
+| **9** | C6 `ADR-CONTADOR-DELIVERY` | **ADR Accepted ✅ por delegação 07/09 (cédula #287 — F-CD1..F-CD8) + parecer ✅ #274 `239945d1` · S ✅ #290 `62b00302` · R ✅ 10/09 (Forks A/B; A → (b) período no job pelo sinal F3; F-Z0 fechado pelo produto — [cédula 10/09](CEDULA-DECISAO-2026-09-10-entrevista.md)) · I ✅ · V ✅ (2 reviews indep. FAIL → ciclo → delta PASS) · M ✅ #305 `7725f0ca` (squash, 2026-09-11) · F ✅ (fold 11/09)** — ancestral verificado | — | fechada |
 
 **Rodadas 1 e 2 (a e b):** conduzidas por outra sessão em paralelo a este fold (PRs #272, #280, #281,
 #270) — a tabela acima registra só o que `git merge-base --is-ancestor` provou neste worktree no momento

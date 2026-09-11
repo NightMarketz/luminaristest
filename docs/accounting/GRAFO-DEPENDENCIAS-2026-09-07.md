@@ -1,5 +1,9 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-07)
 
+> **⚠️ SUPERSEDIDO em 2026-09-11 por [GRAFO-DEPENDENCIAS-2026-09-11.md](GRAFO-DEPENDENCIAS-2026-09-11.md).**
+> O review de dependência de 2026-09-10 provou 6 arestas mortas (D1→C8, D1→X6, D1→R2, F-Z0 como gate do C6,
+> D4→X7, R4→X10) e 8 nós a menos (re-baseline 49 → 57). Mantido como histórico; **não use para escolher nó.**
+
 > **O que este doc é:** um nó por tarefa **já documentada** nos três módulos (cédula de módulos
 > 2026-09-03 §E, cédula de integração §E, `PROXIMOS-PASSOS-2026-09-02` §1, `PLANO-MODULO-COMPLETO-
 > REPLICAVEL`, BRIEF `FE-INCR-NFE`), com estado verificado contra `origin/main` `09ae49a2` +
