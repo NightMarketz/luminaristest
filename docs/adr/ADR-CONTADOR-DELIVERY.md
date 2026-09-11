@@ -1,8 +1,14 @@
 # ADR-CONTADOR-DELIVERY — Envio de ECD/ECF ao contador
 
 - **Data:** 2026-09-07
-- **Status:** **Accepted por delegação 2026-09-07 (cédula 2026-09-07-forks-sdd) — CONDICIONADO ao item 0
-  do PEDIDO-CONTADOR (F-Z0); implementação não abre antes da resposta.** F-CD1..F-CD8 → recomendação de
+- **Status:** **Accepted — IMPLEMENTADO e MERGEADO 2026-09-11 (PR #305, squash `7725f0ca`).** A condição ao item 0 do
+  PEDIDO-CONTADOR (F-Z0) foi **removida em 2026-09-10** pela resposta 1 da entrevista de fechamento
+  ([cédula 10/09](../accounting/CEDULA-DECISAO-2026-09-10-entrevista.md) §2): "100% automatizado de ponta a ponta;
+  contabilidade é determinística" — F-Z0 fechou pelo produto, não pelo contador; o pedido ao contador vira verificação
+  a posteriori (CTD-002). Forks novos A → **(b)** (período no job, pelo sinal F3 do dono — supera o (a) ratificado no
+  sinal 1) e B → (c). O parágrafo abaixo é HISTÓRICO.
+- **Status anterior (histórico):** Accepted por delegação 2026-09-07 (cédula 2026-09-07-forks-sdd) — CONDICIONADO ao item 0
+  do PEDIDO-CONTADOR (F-Z0); implementação não abre antes da resposta. F-CD1..F-CD8 → recomendação de
   cada um (ver §3, tabela emendada com o caminho ratificado). **Pré-condição de existência do trilho
   (não decisão do agente): se o contador responder "não assino" ao item 0** — *"você assina ECD e ECF
   geradas por um sistema que você não opera?"* — **F-Z0 reabre e este ADR sai do plano junto com o resto

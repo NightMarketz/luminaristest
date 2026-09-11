@@ -7,9 +7,8 @@
 > mortas** e **8 nós a menos**; este doc é o fold, não planejamento. **O que não é:** ratificação nem
 > fila nova — a ordem de execução continua sendo F-M6 + o algoritmo declarado na §4.
 >
-> **Estado verificado contra `origin/main` `66465eaa` (2026-09-11)** + PR #305 (`b3b46cdd`, CI 5/5 verde,
-> `mergeStateStatus: CLEAN`, review-delta PASS registrado no corpo) **ainda não mergeada no momento em que
-> este doc foi escrito** — a coluna "Estado" diz qual dos dois. Claim de ✅ exige
+> **Estado verificado contra `origin/main` `7725f0ca` (2026-09-11, pós-merge do PR #305** — squash de `b3b46cdd`,
+> CI 5/5 verde, review-delta PASS; `git merge-base --is-ancestor 7725f0ca origin/main` = 0). Claim de ✅ exige
 > `git merge-base --is-ancestor <sha> origin/main` (regra do plano SDD §0 passo F).
 >
 > **Regra de aresta (mantida):** só entra dependência **escrita** em cédula/BRIEF/ADR/runbook. O que eu
@@ -145,8 +144,8 @@ flowchart LR
     R10["R10 ADR P-IA: extração propõe, humano confirma"]:::decide
   end
 
-  subgraph CONT[Contábil - ordem 1 - 16/22 → 17/22 com o #305]
-    C6["C6 CONTADOR-DELIVERY<br/>PR #305 b3b46cdd — CI verde, delta PASS<br/>MERGE = 1º nó desta sessão"]:::ready
+  subgraph CONT[Contábil - ordem 1 - 17/22]
+    C6["C6 CONTADOR-DELIVERY<br/>MERGEADO PR #305 7725f0ca (11/09)"]:::done
     C6b["C6b Pacote ampliado<br/>tabela filha + migração — BRIEF"]:::plan
     C7r["C7r 2 reasonCodes (a)<br/>instrumentação → correção"]:::ready
     C8["C8 Imobilizado + depreciação<br/>Anexo III IN 1.700 semeado, editável — ADR"]:::plan
@@ -264,7 +263,7 @@ flowchart LR
 | **R8** | decide | — | cédula 10/09 §3 "contradição aberta"; PR #305 lacunas declaradas |
 | **R9** | decide | BRIEF F7 apresentando as duas opções | cédula 10/09 §3 F-BAIXA-1 correção |
 | **R10** | decide | ADR P-IA + parecer | cédula 10/09 §3 F-BANK-1 |
-| **C6** | **ready → merge** (PR #305 `b3b46cdd`) | — (F-Z0 fechado; Forks A/B ratificados; F3/F2/F13 absorvidos) | cédula 10/09 §1/§6 |
+| **C6** | **done** (PR #305, squash `7725f0ca`, 2026-09-11 — ancestral verificado) | — (F-Z0 fechado; Forks A/B ratificados; F3/F2/F13 absorvidos) | cédula 10/09 §1/§6 |
 | **C6b** | plan (BRIEF) | C6 ✅ | resposta 8 |
 | **C7r** | **ready** (instrumentação → correção) | — (ratificado (a), resposta 23) | plano SDD §5 "forks novos pendentes" rod. 3 |
 | **C8** | plan (ADR → parecer → forks → BRIEF) | D3b (Anexo III da IN 1.700 no corpus) | resposta 6; plano SDD rod. 13 |
@@ -309,7 +308,7 @@ com **três** arestas vivas: D8 (H1), X7 (tributos), D1f.
 
 | # | Nó | Sessão | Por quê nesta posição |
 |---|---|---|---|
-| 1 | **C6** merge do #305 + fold (§5.1 C6 ⏳→✅, 17/22, ADR descondicionado) | integração + fold | único nó com código pronto, CI verde e review PASS |
+| 1 | ~~**C6** merge do #305 + fold~~ ✅ **feito 11/09** (`7725f0ca`; §5.1 C6 ✅, 17/22, ADR descondicionado) | integração + fold | único nó com código pronto, CI verde e review PASS |
 | 2 | **F3** baixa parcial AP/AR | `sessao-feature` direto | financeiro, mas o **único** com spec + 3 forks ratificados |
 | 3 | **C7r** 2 reasonCodes | `sessao-instrumentacao` → `sessao-correcao` | contábil; resíduo ratificado (a), sem spec nova |
 | 4 | **X6** custo D3 por tenant | `sessao-planejamento` (emenda ADR §D3) → feature | fiscal, mas destravou do contador; precisa de spec |
