@@ -34,6 +34,9 @@ export class DataExchangeRepository implements IDataExchangeRepository {
         sizeBytes: data.sizeBytes ?? null,
         sha256: data.sha256 ?? null,
         storageKey: data.storageKey ?? null,
+        // Período coberto pelo artefato SPED (Fork Novo A → b); os demais jobs seguem null.
+        periodStart: data.periodStart ?? null,
+        periodEnd: data.periodEnd ?? null,
         totalRows: data.totalRows ?? 0,
         validRows: data.validRows ?? 0,
         invalidRows: data.invalidRows ?? 0,

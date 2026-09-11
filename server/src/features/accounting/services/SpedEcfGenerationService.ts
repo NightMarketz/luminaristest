@@ -168,6 +168,12 @@ export class SpedEcfGenerationService {
       kind: 'EXPORT_SPED_ECF',
       status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
       requestedById: scope.actorUserId,
+      // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
+      // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
+      // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
+      // selecionado, é este par que muda — a entrega não precisa saber.
+      periodStart: new Date(`${year}-01-01T00:00:00.000Z`),
+      periodEnd: new Date(`${year}-12-31T00:00:00.000Z`),
       originalName: fileName,
       mimeType: 'text/plain',
       sizeBytes: buffer.length,

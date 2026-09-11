@@ -62,6 +62,9 @@ export async function resetDb(): Promise<void> {
   await prisma.packageBalanceMovement.deleteMany();
   await prisma.accountingBinding.deleteMany();
   await prisma.reconcilePendingItem.deleteMany();
+  // BE-INCR-CONTADOR-DELIVERY: o log de entrega tem FK RESTRICT para o job de data-exchange E
+  // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
+  await prisma.accountingDeliveryLog.deleteMany();
 
   // Accounting — now safe: their own children are gone.
   await prisma.posting.deleteMany();
@@ -81,6 +84,7 @@ export async function resetDb(): Promise<void> {
   await prisma.bankStatement.deleteMany();
   await prisma.dimensionDefinition.deleteMany();
   await prisma.counterparty.deleteMany();
+  await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();

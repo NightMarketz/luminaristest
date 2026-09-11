@@ -84,8 +84,11 @@ ao fisco e o DANFSe/DANFE ficam no parceiro. **Consequência:** o Luminaris nunc
 Cada cliente contrata o parceiro e traz a própria chave. Como a topologia é **1 instância por cliente**
 (ADR-M2), a chave vive em **env da instância** (`DFE_PARTNER=<adapter>`, `DFE_PARTNER_API_KEY`,
 `DFE_PARTNER_ENV=producao|homologacao`), exatamente como `OPENAI_API_KEY` — zero migração, zero cifra em
-repouso nova. Uma chave serve **N unidades** (CNPJs) da mesma instância: o adaptador envia o CNPJ do
-emitente por documento (os parceiros do mercado aceitam N empresas sob uma conta) [secundária]. Sem chave ⇒
+repouso nova. ~~Uma chave serve **N unidades** (CNPJs) da mesma instância: o adaptador envia o CNPJ do
+emitente por documento (os parceiros do mercado aceitam N empresas sob uma conta) [secundária].~~
+**[EMENDA 2026-09-10, cédula 10/09 §6 item 4]** a chave continua no env, mas **uma instância = um CNPJ
+emitente**: "force, um usuário pode ter mais cnpj, mas vai ter que pagar mais usuários" — N CNPJs são N
+instâncias/usuários pagos, e a conta no parceiro é uma por CNPJ. Sem chave ⇒
 emissão **desabilitada com aviso** na tela; nunca falha em silêncio. Fork F-DFE-2 registra a alternativa
 (tabela por unidade, cifrada).
 
@@ -170,9 +173,9 @@ apenas **bloqueia** a emissão com aviso até segunda ordem.
 | Fork | Caminhos | Recomendação + justificativa | Custo de errar |
 |---|---|---|---|
 | **F-DFE-1 — escopo do MVP** | (a) só NFS-e nacional (onda 1) · (b) NFS-e + NF-e 55 de venda no mesmo BRIEF · (c) só NF-e 55 | **(a).** É o prazo de 01/10; a NF-e 55 de saída tem prazo 01/12 e leiaute maior; a porta já nasce genérica (`kind`) e a onda 2 é BRIEF próprio | (b) atrasa a onda 1; (c) erra o prazo |
-| **F-DFE-2 — onde vive a credencial (R4 = BYOK, ✅)** | (a) env da instância (`DFE_PARTNER_API_KEY`), 1 chave para N unidades · (b) tabela `FiscalCredential` por unidade, cifrada com chave de processo | **(a).** Molde do ADR-M2 (BYOK por env, 1 instância/cliente), zero migração e zero cifra nova; os parceiros aceitam N CNPJs por conta. (b) só quando um cliente tiver unidades em contas distintas do parceiro | baixo; (b) reabre "cifra em repouso" que o M2 não decidiu |
+| **F-DFE-2 — onde vive a credencial (R4 = BYOK, ✅)** | (a) env da instância (`DFE_PARTNER_API_KEY`), 1 chave para N unidades · (b) tabela `FiscalCredential` por unidade, cifrada com chave de processo | **(a) — EMENDADO 2026-09-10** ([cédula 10/09 §6](../accounting/CEDULA-DECISAO-2026-09-10-entrevista.md)): a credencial segue no env da instância (BYOK, custódia local — resposta 10), mas a premissa "1 chave para N unidades / os parceiros aceitam N CNPJs por conta" **cai**. Sinal do dono: *"force, um usuário pode ter mais cnpj, mas vai ter que pagar mais usuários"* — **uma conta de emissão por CNPJ, forçado**; N CNPJs = N usuários/instâncias pagos. É modelo comercial, não limitação técnica; "N CNPJs por conta" deixa de ser critério de seleção do parceiro (F-DFE-4). (b) continua descartado | baixo; (b) reabre "cifra em repouso" que o M2 não decidiu |
 | **F-DFE-3 — gatilho** | (a) manual (botão na venda) · (b) automático no `sale.finalized` com perfil completo · (c) manual + lote "emitir pendentes do dia" | **(a).** Primeiro release imperfeito + PNCT: rejeição em massa automática é o pior cenário; (c) é a evolução natural depois do H2-DFE | (b) rejeições/duplicidade em massa |
-| **F-DFE-4 — parceiro** | candidatos com API de NFS-e nacional **e** NF-e: Focus NFe, NFE.io, PlugNotas/TecnoSpeed, eNotas, Notaas [todos de fonte secundária, nenhum verificado]; critério da cédula D2 (iii): emite NFS-e nacional em **SP capital e RJ capital**, sandbox de homologação, preço por documento, suporte a IBS/CBS | **Sem recomendação — dado externo D5 do dono.** O ADR só exige: REST + JSON, sandbox, idempotência por `ref`, retorno com XML + PDF, cancelamento, e **cláusula de N CNPJs por conta** (F-DFE-2 a) | escolher sem sandbox = testar em produção |
+| **F-DFE-4 — parceiro** | candidatos com API de NFS-e nacional **e** NF-e: Focus NFe, NFE.io, PlugNotas/TecnoSpeed, eNotas, Notaas [todos de fonte secundária, nenhum verificado]; critério da cédula D2 (iii): emite NFS-e nacional em **SP capital e RJ capital**, sandbox de homologação, preço por documento, suporte a IBS/CBS | **Sem recomendação — dado externo D5 do dono.** O ADR só exige: REST + JSON, sandbox, idempotência por `ref`, retorno com XML + PDF, cancelamento, e ~~cláusula de N CNPJs por conta (F-DFE-2 a)~~ **[EMENDA 2026-09-10]** conta **por CNPJ** — a cláusula de N CNPJs deixa de ser critério (cédula 10/09 §6 item 4) | escolher sem sandbox = testar em produção |
 | **F-DFE-5 — transporte do resultado** | (a) polling (`consultar`) pela tela/job · (b) webhook do parceiro (rota pública + assinatura) · (c) ambos | **(a).** Single-process, sem inbox/outbox (T11); webhook exige rota **pública** (allowlist deny-by-default) e verificação de assinatura — item próprio quando houver volume | (b) abre superfície pública sem necessidade |
 | **F-DFE-6 — onde vive o dado fiscal da unidade/serviço** | (a) `FiscalProfile` + `ServiceFiscalProfile` Prisma apontando para as linhas (`ref`) · (b) campos novos nos presets `units`/`services` (DynamicTable) · (c) misto | **(a).** §2.1: invariante legal = Prisma; a tela de perfil fiscal é contábil, não do preset do setor; a prensa de binding não precisa saber de ISS | (b) viola a fronteira e espalha regra fiscal no motor |
 | **F-DFE-7 — tomador (cliente) na NFS-e** | (a) opcional: PF sem documento emite sem tomador identificado · (b) exigir CPF/CNPJ do cliente para emitir | **(a) com aviso.** A NFS-e nacional aceita tomador não identificado [secundária — confirmar no manual]; (b) bloqueia o salão que vende a consumidor anônimo | (a) errado = rejeição do parceiro; corrige-se na 1ª nota |
@@ -281,7 +284,8 @@ muda o payload. **Regra emendada:** o que foi **enviado** é imutável **por ten
 ### 9.4 Emendas aos forks originais (recomendações mantidas)
 - **F-DFE-4** ganha critérios: `ref` idempotente **por tentativa** (ou reenvio com `ref` novo); cancelamento
   devolve "fora do prazo" tipado; substituição de NFS-e; sandbox de **NFS-e nacional** (não só NF-e); retorno
-  ecoa `dCompet`; **N CNPJs por conta** (era premissa do D2, vira critério de seleção).
+  ecoa `dCompet`; ~~**N CNPJs por conta** (era premissa do D2, vira critério de seleção)~~ **[EMENDA
+  2026-09-10]** conta por CNPJ, forçado — a premissa caiu com o sinal do dono (cédula 10/09 §6 item 4).
 - **F-DFE-5** (a): nomear o job de re-consulta (9.2 item 11).
 - **F-DFE-6** (a): sem `issRetido` no perfil de serviço; alíquota = município × item (9.2 item 3).
 - **F-DFE-7** (a): DV de CPF/CNPJ antes de enviar (9.2 item 10).
@@ -297,7 +301,7 @@ do H2-DFE PASSOU.
 | Fork | Decisão do dono | Contra a recomendação? | Efeito no BRIEF / no ADR |
 |---|---|---|---|
 | **F-DFE-1** | **(b) NFS-e + NF-e 55 de venda no MESMO BRIEF** | **SIM** | O BRIEF `BE-INCR-DFE` cobre os dois `kind`; a **numeração gapless por série + inutilização de faixas** da NF-e 55 (parecer §1.6) deixa de ser "fork da onda 2" e entra como fork do próprio BRIEF; a chave de 44 posições usa `lib/cnpj.ts`. O prazo de 01/10 (NFS-e) segue sendo o primeiro a cumprir — o BRIEF ordena os comportamentos NFS-e antes dos NF-e, mas o ciclo é um só |
-| **F-DFE-2** | **(a) env da instância**, 1 chave para N unidades | não | D2 como escrito; "N CNPJs por conta" é critério de D5 |
+| **F-DFE-2** | **(a) env da instância**, ~~1 chave para N unidades~~ **1 instância = 1 CNPJ (emenda 2026-09-10)** | não | D2 emendado; "N CNPJs por conta" **deixou de ser** critério de D5 (cédula 10/09 §6 item 4) |
 | **F-DFE-3** | **(a) manual** (botão na venda finalizada) | não | D4 como escrito |
 | **F-DFE-4** | **dono escolhe depois, fora da sessão (D5)** | — | ADR fixa só os critérios (§5 + §9.4); BE nasce com `FileEmissor`/`NullEmissor`; adaptador do parceiro = BRIEF próprio após D5. **Critério novo por F-DFE-8:** o parceiro precisa suportar emissão para optante do **Simples** pelo Emissor Nacional |
 | **F-DFE-5** | **(c) polling + webhook** | **SIM** | Além do job nomeado de re-consulta, o BRIEF ganha uma **rota pública** de webhook (`POST /api/nfe/dfe/webhook/<parceiro>`) na allowlist deny-by-default **de propósito**, com verificação de assinatura/segredo do parceiro, idempotente por `partnerRef` + status, e sem confiança no corpo além do que `consultar` confirma (o webhook só *acorda* a re-consulta). Risco aceito por escrito: superfície pública nova; teste-guarda de assinatura inválida ⇒ 401 sem efeito |

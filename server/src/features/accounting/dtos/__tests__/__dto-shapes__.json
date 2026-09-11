@@ -1,4 +1,288 @@
 {
+  "AccountingContactDto.ts": {
+    "RegisterContactSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "cpf": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "crcNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "crcUf": {
+          "type": "string",
+          "enum": [
+            "AC",
+            "AL",
+            "AM",
+            "AP",
+            "BA",
+            "CE",
+            "DF",
+            "ES",
+            "GO",
+            "MA",
+            "MG",
+            "MS",
+            "MT",
+            "PA",
+            "PB",
+            "PE",
+            "PI",
+            "PR",
+            "RJ",
+            "RN",
+            "RO",
+            "RR",
+            "RS",
+            "SC",
+            "SE",
+            "SP",
+            "TO"
+          ]
+        },
+        "crcCertificate": {
+          "type": "string"
+        },
+        "crcCertificateValidUntil": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "name",
+        "email",
+        "cpf",
+        "crcNumber",
+        "crcUf"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateContactSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "cpf": {
+          "type": "string"
+        },
+        "phone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "crcNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "crcUf": {
+          "type": "string",
+          "enum": [
+            "AC",
+            "AL",
+            "AM",
+            "AP",
+            "BA",
+            "CE",
+            "DF",
+            "ES",
+            "GO",
+            "MA",
+            "MG",
+            "MS",
+            "MT",
+            "PA",
+            "PB",
+            "PE",
+            "PI",
+            "PR",
+            "RJ",
+            "RN",
+            "RO",
+            "RR",
+            "RS",
+            "SC",
+            "SE",
+            "SP",
+            "TO"
+          ]
+        },
+        "crcCertificate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "crcCertificateValidUntil": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "contactId"
+      ],
+      "additionalProperties": false
+    },
+    "AccountingContactScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
+  "AccountingDeliveryDto.ts": {
+    "BuildDeliveryPackageSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecdJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecfJobId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "ecdJobId",
+        "ecfJobId"
+      ],
+      "additionalProperties": false
+    },
+    "ConfirmDeliverySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecdJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecfJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confirmed": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "unitId",
+        "ecdJobId",
+        "ecfJobId",
+        "contactId",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    },
+    "RetryDeliverySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deliveryId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "deliveryId"
+      ],
+      "additionalProperties": false
+    },
+    "AccountingDeliveryScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
   "AuditDto.ts": {
     "VerifyAuditChainQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

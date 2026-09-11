@@ -52,6 +52,12 @@ export interface IAccountingPolicy {
   /** Can list/read the counterparty catalog (INCR-COUNTERPARTY). */
   canReadCounterparty(scope: AccountingScope): boolean;
 
+  /** Can register/update/archive the accountant contact catalog (BE-INCR-CONTADOR-DELIVERY). */
+  canManageAccountingContact(scope: AccountingScope): boolean;
+
+  /** Can list/read accountant contacts and delivery logs (BE-INCR-CONTADOR-DELIVERY). */
+  canReadAccountingContact(scope: AccountingScope): boolean;
+
   /** Can receive/adjust/reverse perpetual inventory stock (INCR-INVENTORY). */
   canManageInventory(scope: AccountingScope): boolean;
 

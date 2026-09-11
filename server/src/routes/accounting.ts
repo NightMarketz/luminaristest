@@ -76,6 +76,21 @@ import {
 import { generateSpedEcd, generateSpedEcf, generateSpedEcfReal } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
+import {
+  archiveAccountingContact,
+  listAccountingContacts,
+  registerAccountingContact,
+  updateAccountingContact,
+} from '../controllers/accountingContactController';
+import {
+  buildDeliveryPackage,
+  confirmDelivery,
+  getDelivery,
+  retryDelivery,
+} from '../controllers/accountingDeliveryController';
+import rateLimit from 'express-rate-limit';
+import { getUserContextFromRequest } from '../lib/authUtils';
+
 const router = Router();
 
 // Accounting posting engine — double-entry journal entries (first-class Prisma).
@@ -162,6 +177,43 @@ router.get('/referential/skeleton', getReferentialSkeleton);
 // Referential CATALOG (RFB official layout) — import + lookup (BE-INCR-9B Track B).
 router.post('/referential/catalog/import', referentialCatalogUpload, importReferentialCatalog);
 router.get('/referential/catalog', listReferentialCatalog);
+
+// BE-INCR-CONTADOR-DELIVERY item 20 — rate limit POR ESCOPO no comando `confirmDelivery` (review
+// F1). O limiter global de `app.ts` é por IP e frouxo de propósito (5000/15min); este é o freio do
+// único comando desta família que escreve no log de entrega e roda 12 leituras de período por
+// chamada. Chave = ator + unidade (não IP: dois operadores do mesmo escritório não dividem cota, e
+// um operador em loop não esconde atrás do NAT). O teto é lido do ambiente A CADA REQUISIÇÃO para
+// o teste de contrato apertá-lo sem reconstruir o app; padrão defensivo, não regra de negócio.
+const deliveryConfirmLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  // Review-delta obs. 1: `Number('abc')` = NaN e `totalHits > NaN` nunca é verdade — o limiter
+  // desligava EM SILÊNCIO com env inválido (classe "config aceita-e-ignorada"). Inválido ou ≤ 0
+  // cai no padrão, nunca em "sem limite".
+  limit: () => {
+    const n = Number(process.env.DELIVERY_CONFIRM_RATE_LIMIT);
+    return Number.isFinite(n) && n > 0 ? n : 60;
+  },
+  keyGenerator: (req) => {
+    const user = getUserContextFromRequest(req);
+    const unitId = typeof req.body?.unitId === 'string' ? req.body.unitId : '';
+    return `${user?.userId ?? 'anon'}:${unitId}`;
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Muitas confirmações de entrega para este escopo. Aguarde 15 minutos.' },
+});
+
+// Cadastro do contador destinatário + entrega do pacote ECD/ECF (BE-INCR-CONTADOR-DELIVERY).
+// Nenhuma destas rotas ENVIA nada: sob F-CD1-a o servidor não tem canal nem credencial —
+// `build` valida e monta o manifesto, `confirm` registra que o OPERADOR despachou.
+router.get('/contacts', listAccountingContacts);
+router.post('/contacts', registerAccountingContact);
+router.patch('/contacts/:id', updateAccountingContact);
+router.delete('/contacts/:id', archiveAccountingContact);
+router.post('/delivery/build', buildDeliveryPackage);
+router.post('/delivery/confirm', deliveryConfirmLimiter, confirmDelivery);
+router.post('/delivery/:id/retry', retryDelivery);
+router.get('/delivery/:id', getDelivery);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

@@ -27,6 +27,8 @@ import { PayableRepository } from '../features/accounting/repositories/PayableRe
 import { ReceivableRepository } from '../features/accounting/repositories/ReceivableRepository';
 import { DimensionRepository } from '../features/accounting/repositories/DimensionRepository';
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
+import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
+import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
@@ -89,6 +91,8 @@ import { TieOutDiagnosticService } from '../features/accounting/services/TieOutD
 import { DynamicTableProductRefLookup } from '../features/accounting/services/ProductRefLookup';
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
+import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
+import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
 import { NfeImportService } from '../features/accounting/services/NfeImportService';
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
@@ -155,6 +159,8 @@ import type { IAccountRepository } from '../features/accounting/repositories/IAc
 import type { IJournalEntryRepository } from '../features/accounting/repositories/IJournalEntryRepository';
 import type { IPostingRepository } from '../features/accounting/repositories/IPostingRepository';
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
+import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
+import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
@@ -314,6 +320,8 @@ export class ApplicationFactory {
     counterparty: ICounterpartyRepository;
     inventory: IInventoryRepository;
     reconcilePending: IReconcilePendingRepository;
+    accountingContact: IAccountingContactRepository;
+    accountingDelivery: IAccountingDeliveryRepository;
   };
 
   private readonly policies: {
@@ -380,6 +388,8 @@ export class ApplicationFactory {
     nfeImport: NfeImportService;
     nfeSaleReconciliation: NfeSaleReconciliationService;
     reconcilePending: ReconcilePendingService;
+    accountingContact: AccountingContactService;
+    accountingDelivery: AccountingDeliveryService;
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
@@ -425,6 +435,8 @@ export class ApplicationFactory {
       counterparty: new CounterpartyRepository(),
       inventory: new InventoryRepository(),
       reconcilePending: new ReconcilePendingRepository(),
+      accountingContact: new AccountingContactRepository(),
+      accountingDelivery: new AccountingDeliveryRepository(),
     };
 
     // Policies
@@ -807,6 +819,23 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
       ),
+      // BE-INCR-CONTADOR-DELIVERY (nó C6): cadastro do contador + log de entrega do pacote
+      // ECD/ECF. O serviço de entrega consome os repos JÁ existentes de data-exchange (jobs de
+      // origem) e de período (gate F-CD7-a dos 12 meses) — não instancia repo próprio nem toca
+      // nos serviços de geração SPED (item 15 do BRIEF: zero diff neles).
+      accountingContact: new AccountingContactService(
+        this.repositories.accountingContact,
+        auditService,
+        this.policies.accounting,
+      ),
+      accountingDelivery: new AccountingDeliveryService(
+        this.repositories.accountingDelivery,
+        this.repositories.accountingContact,
+        this.repositories.dataExchange,
+        this.repositories.accountingPeriod,
+        auditService,
+        this.policies.accounting,
+      ),
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -957,6 +986,9 @@ export class ApplicationFactory {
   public getDimensionReportService = (): DimensionReportService => this.services.dimensionReport;
   public getTieOutDiagnosticService = (): TieOutDiagnosticService => this.services.tieOutDiagnostic;
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
+  public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
+  public getAccountingDeliveryService = (): AccountingDeliveryService =>
+    this.services.accountingDelivery;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>

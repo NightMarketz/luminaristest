@@ -46,6 +46,8 @@ model User {
   inventoryItems          InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings      AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
   reconcilePendingItems   ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
+  accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
+  accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
 }
 
 // Per-user saved table views (query/filters/sort) for the canonical table stack.
@@ -89,9 +91,9 @@ model DashboardLayout {
   id         String   @id @default(cuid())
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name       String   // Tab label (promoted out of layoutData JSON)
+  name       String // Tab label (promoted out of layoutData JSON)
   isActive   Boolean  @default(false) // At most one active layout (tab) per user
-  layoutData Json     // { type, config } — the grid configuration
+  layoutData Json // { type, config } — the grid configuration
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -506,31 +508,31 @@ model ReferentialAccount {
 // corrections are made via a reversing entry (estorno). `reversedById` links an
 // original to its reversal (self-relation).
 model JournalEntry {
-  id           String               @id @default(cuid())
-  userId       String
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId       String // business unit (scoped string, not a FK)
-  date         DateTime
-  description  String
-  status       String               @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
-  sourceType   String               @default("manual")
-  sourceId     String?
-  reversedById String?              @unique // the reversal entry that estorned this one
-  reversedBy   JournalEntry?        @relation("Reversal", fields: [reversedById], references: [id])
-  reverses     JournalEntry?        @relation("Reversal")
-  postings     Posting[]
-  attachments  DocumentAttachment[] @relation("JournalEntryAttachments")
-  sources      JournalEntrySource[] @relation("JournalEntrySources")
-  createdById  String? // actor who created this entry (authorship trail / maker)
+  id            String               @id @default(cuid())
+  userId        String
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId        String // business unit (scoped string, not a FK)
+  date          DateTime
+  description   String
+  status        String               @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
+  sourceType    String               @default("manual")
+  sourceId      String?
+  reversedById  String?              @unique // the reversal entry that estorned this one
+  reversedBy    JournalEntry?        @relation("Reversal", fields: [reversedById], references: [id])
+  reverses      JournalEntry?        @relation("Reversal")
+  postings      Posting[]
+  attachments   DocumentAttachment[] @relation("JournalEntryAttachments")
+  sources       JournalEntrySource[] @relation("JournalEntrySources")
+  createdById   String? // actor who created this entry (authorship trail / maker)
   submittedById String? // actor who submitted for approval (ADR-INCR-APPROVAL, maker trail)
-  approvedById String? // actor who approved (ADR-INCR-APPROVAL, checker trail — SoD: != createdById)
-  postedById   String? // actor who posted/confirmed this entry (SoD trail)
-  version      Int                  @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
-  contentHash  String? // frozen economic-content hash at submit (ACC-017/022); null while Draft
-  fiscalYear   Int? // born at POST/approve, inside the tx (ACC-015) — null while Draft/PendingApproval
-  entryNumber  Int? // sequential within (userId, unitId, fiscalYear); born at POST/approve — null while Draft/PendingApproval
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  approvedById  String? // actor who approved (ADR-INCR-APPROVAL, checker trail — SoD: != createdById)
+  postedById    String? // actor who posted/confirmed this entry (SoD trail)
+  version       Int                  @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
+  contentHash   String? // frozen economic-content hash at submit (ACC-017/022); null while Draft
+  fiscalYear    Int? // born at POST/approve, inside the tx (ACC-015) — null while Draft/PendingApproval
+  entryNumber   Int? // sequential within (userId, unitId, fiscalYear); born at POST/approve — null while Draft/PendingApproval
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   // Idempotency — a real DB constraint (SQLite treats NULL sourceId as distinct, so
   // manual entries never collide). Closes the double-post window app code cannot.
@@ -592,27 +594,40 @@ model DocumentAttachment {
 // NOT a DynamicTable preset. Imports commit through PostingService.postEntry/createAccount;
 // this model never writes ledger data directly. Tenancy = plain scoped strings (no User FK).
 model AccountingDataExchangeJob {
-  id            String                      @id @default(cuid())
-  userId        String // scope owner (AccountingScope.ownerUserId); plain scope key
-  unitId        String // business unit (scoped string, not a FK)
-  direction     String // IMPORT | EXPORT
-  kind          String // IMPORT_CHART_OF_ACCOUNTS | IMPORT_OPENING_BALANCES | IMPORT_JOURNAL_ENTRIES | EXPORT_*
-  status        String // UPLOADED | VALIDATED | COMMITTING | PROCESSING | COMMITTED | PARTIAL | FAILED | EXPORTED
-  originalName  String? // client-supplied upload name (display only)
-  mimeType      String?
-  sizeBytes     Int?
-  sha256        String? // 64-char hex of the uploaded/generated artifact
-  storageKey    String? // relative path within ATTACHMENTS_DIR (attachmentStorage); source or artifact
-  totalRows     Int                         @default(0)
-  validRows     Int                         @default(0)
-  invalidRows   Int                         @default(0)
-  committedRows Int                         @default(0)
-  requestedById String // actor who created the job; plain string
-  committedById String? // actor who committed; plain string
-  createdAt     DateTime                    @default(now())
-  updatedAt     DateTime                    @updatedAt
-  committedAt   DateTime?
-  rows          AccountingDataExchangeRow[]
+  id              String                      @id @default(cuid())
+  userId          String // scope owner (AccountingScope.ownerUserId); plain scope key
+  unitId          String // business unit (scoped string, not a FK)
+  direction       String // IMPORT | EXPORT
+  kind            String // IMPORT_CHART_OF_ACCOUNTS | IMPORT_OPENING_BALANCES | IMPORT_JOURNAL_ENTRIES | EXPORT_*
+  status          String // UPLOADED | VALIDATED | COMMITTING | PROCESSING | COMMITTED | PARTIAL | FAILED | EXPORTED
+  originalName    String? // client-supplied upload name (display only)
+  mimeType        String?
+  sizeBytes       Int?
+  sha256          String? // 64-char hex of the uploaded/generated artifact
+  storageKey      String? // relative path within ATTACHMENTS_DIR (attachmentStorage); source or artifact
+  totalRows       Int                         @default(0)
+  validRows       Int                         @default(0)
+  invalidRows     Int                         @default(0)
+  committedRows   Int                         @default(0)
+  requestedById   String // actor who created the job; plain string
+  committedById   String? // actor who committed; plain string
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  committedAt     DateTime?
+  // Período coberto pelo ARTEFATO gerado (só exports SPED preenchem; imports e demais exports ficam
+  // null). BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) ratificado em 2026-09-10 (cédula §6, F3):
+  // a entrega lê o período DAQUI, nunca de um `year` digitado — jobs de 2025 não podem virar um
+  // pacote "pronto para assinar 2026". Date-only: 12 meses seguidos hoje (ADR-SPED-ECD D4), ou o
+  // período selecionado quando a geração passar a aceitá-lo (situação especial). Nullable de
+  // propósito: NOT NULL com default forçaria rebuild da tabela no SQLite (lição do expenseAccountId).
+  periodStart     DateTime?
+  periodEnd       DateTime?
+  rows            AccountingDataExchangeRow[]
+  // Reverse relations of AccountingDeliveryLog (BE-INCR-CONTADOR-DELIVERY, F-CD4-a). ÚNICA mudança
+  // neste model: zero coluna nova, zero backfill — o log de entrega REFERENCIA o job de origem
+  // (nunca copia o `.txt`), e a FK com onDelete: Restrict vive do lado do log.
+  deliveriesAsEcd AccountingDeliveryLog[]     @relation("DeliveryEcdJob")
+  deliveriesAsEcf AccountingDeliveryLog[]     @relation("DeliveryEcfJob")
 
   @@index([userId, unitId, createdAt])
   @@map("accounting_data_exchange_jobs")
@@ -866,30 +881,30 @@ model PackageBalanceMovement {
 // dedupes the human record (supplierName+documentNumber). status: OPEN → PAYING → PAID | CANCELLED
 // (PAYING is the transient DB race-gate of the double-payment guard, D4; CANCELLED terminal).
 model Payable {
-  id               String           @id @default(cuid())
-  userId           String // scope owner (AccountingScope.ownerUserId); FK User — audit trail is the AuditEvent (exception to cascade), the payable row itself cascades
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId           String // business unit (scoped string, not a FK)
-  supplierName     String // snapshot of the supplier display name (F1) — never resolved from supplierRef at read time
-  supplierRef      String? // scoped ref to a DynamicTable supplier row (F1 rota (c); precedent CustomerPackageBalance.customerId) — plain string, not a FK
-  documentNumber   String? // nº da NF/documento; part of the business key (SQLite treats NULL as distinct, like sourceId)
-  description      String
-  issueDate        DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
-  dueDate          DateTime // date-only (vencimento; aging is a later increment — F3)
-  amountCents      BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
-  expenseAccountId String? // FK Account — contrapartida do reconhecimento, folha nature='Expense' (gate D4). NULLABLE (INCR-INVENTORY D3(b)): an inventory PURCHASE debits 1.1.6 Estoques instead of an expense leaf, so expenseAccountId is null and inventoryProductRef/inventoryQty are set (DTO XOR gate). The service re-checks the branch via isInventoryPurchase.
-  expenseAccount   Account?         @relation("PayableExpenseAccount", fields: [expenseAccountId], references: [id])
+  id                  String           @id @default(cuid())
+  userId              String // scope owner (AccountingScope.ownerUserId); FK User — audit trail is the AuditEvent (exception to cascade), the payable row itself cascades
+  user                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String // business unit (scoped string, not a FK)
+  supplierName        String // snapshot of the supplier display name (F1) — never resolved from supplierRef at read time
+  supplierRef         String? // scoped ref to a DynamicTable supplier row (F1 rota (c); precedent CustomerPackageBalance.customerId) — plain string, not a FK
+  documentNumber      String? // nº da NF/documento; part of the business key (SQLite treats NULL as distinct, like sourceId)
+  description         String
+  issueDate           DateTime // date-only (competência do reconhecimento) — validated by isValidDateOnly at the DTO
+  dueDate             DateTime // date-only (vencimento; aging is a later increment — F3)
+  amountCents         BigInt // integer cents (Contract §2.1); MAX_CENTS guarded at the DTO (ACC-014)
+  expenseAccountId    String? // FK Account — contrapartida do reconhecimento, folha nature='Expense' (gate D4). NULLABLE (INCR-INVENTORY D3(b)): an inventory PURCHASE debits 1.1.6 Estoques instead of an expense leaf, so expenseAccountId is null and inventoryProductRef/inventoryQty are set (DTO XOR gate). The service re-checks the branch via isInventoryPurchase.
+  expenseAccount      Account?         @relation("PayableExpenseAccount", fields: [expenseAccountId], references: [id])
   inventoryProductRef String? // INCR-INVENTORY D3(b): set (with inventoryQty) when this Payable is a merchandise-for-resale purchase → routes the debit to 1.1.6 Estoques + emits a StockMovement INBOUND. XOR with expenseAccountId (DTO .superRefine).
   inventoryQty        Int? // INCR-INVENTORY D3(b): units received by this purchase; paired with inventoryProductRef. receiveStock gets amountCents as the TOTAL value (avoids per-unit rounding).
-  counterpartyId   String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createPayable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from supplierName, so there is no null branch left. supplierName stays the snapshot.
-  counterparty     Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
-  status           String // OPEN | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
-  createdById      String? // actor who created (AccountingScope.actorUserId); plain string
-  cancelledById    String? // actor who cancelled; plain string
-  cancelReason     String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  deletedAt        DateTime?
+  counterpartyId      String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createPayable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from supplierName, so there is no null branch left. supplierName stays the snapshot.
+  counterparty        Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
+  status              String // OPEN | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
+  createdById         String? // actor who created (AccountingScope.actorUserId); plain string
+  cancelledById       String? // actor who cancelled; plain string
+  cancelReason        String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  deletedAt           DateTime?
   // BE-INCR-NFE F0-1b (F-NFE7→a): discriminator for a MULTI-ITEM NF-e PURCHASE = ONE Payable carrying
   // the total liability (debit 1.1.6 Estoques / credit 2.1.2) with the per-SKU breakdown living OUTSIDE
   // the row (N StockMovement INBOUND, sourceId=payableId). true → isInventoryPurchase() routes the debit
@@ -898,8 +913,8 @@ model Payable {
   // for a nullable column, but a NOT-NULL-with-default forces a full table REBUILD on SQLite — and a
   // botched rebuild silently drops FKs/indexes (lesson expenseAccountId RESTRICT→SET NULL). null = legacy
   // rows (pre-migration) = not multi-item; the create path writes an explicit boolean.
-  inventoryMultiItem Boolean?
-  payments         PayablePayment[]
+  inventoryMultiItem  Boolean?
+  payments            PayablePayment[]
 
   // Business key (D3): one live payable per supplier × document. rename-on-delete
   // (documentNumber → deleted:<id>:<documentNumber>) frees the key on cancel/delete so a
@@ -1111,14 +1126,14 @@ model PostingDimension {
 //   carry counterpartyId NULLABLE (SEC-A1-5: NOT NULL deferred to a 2nd migration).
 model Counterparty {
   id             String       @id @default(cuid())
-  userId         String       // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data; trail = AuditEvent, T8)
+  userId         String // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data; trail = AuditEvent, T8)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId         String       // business unit (scoped string, not a FK)
-  type           String       // SUPPLIER | CUSTOMER (see COUNTERPARTY_TYPES)
-  name           String       // display name only — NOT constrained (BRIEF-W2-A comp. 1); the business key moved to nameNormalized
-  nameNormalized String       // derived from `name` (trim + case-fold + collapse of internal whitespace, F1(b)); NOT NULL, recomputed on every write that touches `name`
-  ref            String?      // OPTIONAL scoped ref to a DynamicTable row (plain string, NOT a FK — precedent Payable.supplierRef)
-  taxId          String?      // OPTIONAL digit-only CPF/CNPJ (BRIEF-W2-A comp. 3); informational discriminator, OUTSIDE the unique key (F-W2A-4), no checksum this phase
+  unitId         String // business unit (scoped string, not a FK)
+  type           String // SUPPLIER | CUSTOMER (see COUNTERPARTY_TYPES)
+  name           String // display name only — NOT constrained (BRIEF-W2-A comp. 1); the business key moved to nameNormalized
+  nameNormalized String // derived from `name` (trim + case-fold + collapse of internal whitespace, F1(b)); NOT NULL, recomputed on every write that touches `name`
+  ref            String? // OPTIONAL scoped ref to a DynamicTable row (plain string, NOT a FK — precedent Payable.supplierRef)
+  taxId          String? // OPTIONAL digit-only CPF/CNPJ (BRIEF-W2-A comp. 3); informational discriminator, OUTSIDE the unique key (F-W2A-4), no checksum this phase
   createdById    String? // actor (AccountingScope.actorUserId); plain string
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -1200,9 +1215,9 @@ model StockMovement {
 // auto-ativa Active, versão anterior vira Superseded ATOMICAMENTE na mesma tx, nunca edição
 // in-place — invariante 4 do ADR). Migração ADITIVA pura (CREATE TABLE, zero ALTER).
 model AccountingBinding {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data, not audit trail)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   unitId           String // business unit (scoped string, not a FK)
   sectorKey        String // ex.: 'beautySalon' — casa com o preset instalado (ver P1-DOSSIER-schema-binding.md §0.1)
   bindingVersion   Int // monotônico por (userId,unitId,sectorKey); incrementa a CADA recompilação (invariante 4)
@@ -1211,8 +1226,8 @@ model AccountingBinding {
   payload          String // JSON do AccountingBindingV1 validado (AccountingBindingDto.ts)
   status           String // Draft | Active | Superseded (ver ACCOUNTING_BINDING_STATUSES)
   createdById      String? // actor (AccountingScope.actorUserId); plain string
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   deletedAt        DateTime? // soft-delete
 
   // Uma versão nasce uma vez só; várias versões coexistem para audit/rollback (padrão ReferentialMapping).
@@ -1250,4 +1265,84 @@ model ReconcilePendingItem {
   @@unique([userId, unitId, sourceType, sourceId])
   @@index([userId, unitId, resolvedAt])
   @@map("reconcile_pending_items")
+}
+
+// ── Entrega de ECD/ECF ao contador — BE-INCR-CONTADOR-DELIVERY / ADR-CONTADOR-DELIVERY ──
+// O contador destinatário do pacote (ECD.txt + ECF.txt + manifesto). First-class Prisma: é
+// cadastro de identidade profissional (CRC) que um log de entrega referencia por FK — não é
+// DynamicTable (STOP block: o dado sustenta uma entrega com consequência legal) e não reusa
+// `Counterparty` (parecer §3: shape e posse divergem — CRC não é modelado lá, e a posse aqui é
+// o log de entrega, não o subrazão AP/AR).
+//
+// - 1:N por escopo (F-CD5-a): vários contadores vivos por (userId, unitId) são VÁLIDOS — NÃO existe
+//   `@@unique` que trave a segunda linha. Deliberado: escritório com mais de um responsável técnico.
+// - `email`/`name` são PII de terceiro: moram AQUI e nunca em payload de auditoria (D5) — a trilha
+//   carrega só `contactId`.
+// - User FK cascade: cadastro OPERACIONAL, mesma leitura de `Counterparty` (a trilha imutável é o
+//   AuditEvent, T8) — apagar o usuário leva o cadastro junto, nunca a trilha.
+model AccountingContact {
+  id                       String                  @id @default(cuid())
+  userId                   String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                   String // business unit (scoped string, not a FK)
+  name                     String // PII de terceiro — nunca em payload de auditoria (D5)
+  email                    String // PII de terceiro — idem; canal de envio é do DONO (F-CD1-a: zero credencial aqui)
+  cpf                      String // J930 campo 03 IDENT_CPF_CNPJ do signatário 900 — 11 dígitos com DV (cédula 10/09 §6, F2/F13)
+  phone                    String? // J930 campo 08 FONE — só dígitos, 10-11
+  // Registro profissional espelhando o J930 da ECD (Manual do Leiaute 9, ADE Cofis 01/2026,
+  // campos 06/09/10/11) — é o que o pré-preenchimento do signatário COD_ASSIN=900 consome.
+  crcNumber                String // J930 campo 06 IND_CRC — máscara do CFC UF-NNNNNN/O-D (cédula 10/09 §6 F13), UF cruzada com crcUf
+  crcUf                    String // J930 campo 09 UF_CRC — 2 letras, Tabela de UF (REGRA_TABELA_UF)
+  crcCertificate           String? // J930 campo 10 NUM_SEQ_CRC — Certidão de Regularidade no formato UF/AAAA/NÚMERO
+  crcCertificateValidUntil DateTime? // J930 campo 11 DT_CRC — date-only (validade da certidão)
+  createdById              String? // actor (AccountingScope.actorUserId); plain string
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  deletedAt                DateTime? // set when archived (soft) — nunca prisma.delete()
+  deliveries               AccountingDeliveryLog[]
+
+  @@index([userId, unitId])
+  @@index([deletedAt])
+  @@map("accounting_contacts")
+}
+
+// Log de entrega do pacote ECD/ECF a um contador. NUNCA copia o `.txt` (F-CD4-a): referencia os
+// dois jobs de origem por FK REAL com onDelete: Restrict (ACC-CD-6) e guarda os dois sha256 lidos
+// de `AccountingDataExchangeJob.sha256` (F-CD6-a — nunca recomputados do disco).
+//
+// - `year` é COLUNA porque o job de origem NÃO persiste ano (achado do BRIEF §5; Fork Novo A → (a),
+//   ratificado pelo dono 2026-09-10): o operador informa no DTO, o log registra o que foi entregue.
+// - `status`: QUEUED | SENT | FAILED. `SENT` = "o operador confirmou que despachou o pacote"
+//   (F-CD1-a, zero-dependência) — NUNCA "o servidor confirmou entrega real".
+// - `@@unique([ecdJobId, ecfJobId, contactId])` é a idempotência (item 10): duas confirmações
+//   concorrentes do mesmo par de jobs para o mesmo contato produzem UMA linha.
+// - Sem coluna de conteúdo (corpo de e-mail, cópia do .txt) por desenho — é o que sustenta a
+//   minimização do §4 (LGPD) sem depender de disciplina de quem escreve o próximo caller.
+model AccountingDeliveryLog {
+  id                String                    @id @default(cuid())
+  userId            String // scope owner; FK User — cascade (mesma leitura do AccountingContact)
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId            String // business unit (scoped string, not a FK)
+  contactId         String
+  contact           AccountingContact         @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  ecdJobId          String
+  ecdJob            AccountingDataExchangeJob @relation("DeliveryEcdJob", fields: [ecdJobId], references: [id], onDelete: Restrict)
+  ecfJobId          String
+  ecfJob            AccountingDataExchangeJob @relation("DeliveryEcfJob", fields: [ecfJobId], references: [id], onDelete: Restrict)
+  periodStart       DateTime // período coberto pelo pacote, COPIADO do job de origem (Fork Novo A → b, cédula 10/09 §6)
+  periodEnd         DateTime
+  manifestSha256Ecd String // lido de job.sha256, nunca recomputado (F-CD6-a)
+  manifestSha256Ecf String
+  status            String // QUEUED | SENT | FAILED (DELIVERY_STATUSES)
+  attemptCount      Int                       @default(0)
+  requestedById     String // actor que montou/confirmou; plain string
+  sentAt            DateTime?
+  failedAt          DateTime?
+  failureReason     String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@unique([ecdJobId, ecfJobId, contactId])
+  @@index([userId, unitId, periodStart])
+  @@map("accounting_delivery_logs")
 }

@@ -2224,6 +2224,7 @@
  *               required: [unitId, mappingVersion, year, declarant, book, signers]
  *               properties:
  *                 unitId:         { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 mappingVersion: { type: string }
  *                 year:           { type: integer, example: 2026 }
  *                 declarant:
@@ -2290,6 +2291,7 @@
  *               required: [unitId, year, declarant, signers]
  *               properties:
  *                 unitId: { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
  *                 declarant:
  *                   type: object
@@ -2361,6 +2363,7 @@
  *               required: [unitId, year, declarant, fiscal, signers]
  *               properties:
  *                 unitId: { type: string }
+ *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
  *                 declarant:
  *                   type: object
@@ -3665,5 +3668,147 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/contacts:
+ *     get:
+ *       summary: List the accountant contacts of a scope (BE-INCR-CONTADOR-DELIVERY)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'AccountingContact[] — só linhas vivas (arquivadas não aparecem)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Register an accountant contact (nome, e-mail, CRC)
+ *       description: >-
+ *         Vários contadores vivos por escopo são válidos (F-CD5-a) — não há chave única que trave
+ *         o segundo cadastro. Nome e e-mail são PII e nunca entram na trilha de auditoria.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/RegisterAccountingContactInput' }
+ *       responses:
+ *         '201': { description: 'AccountingContact criado' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/contacts/{id}:
+ *     patch:
+ *       summary: Update an accountant contact (nome, e-mail ou CRC)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateAccountingContactInput' }
+ *       responses:
+ *         '200': { description: 'AccountingContact atualizado' }
+ *         '400': { description: 'DTO inválido OU contactId do corpo divergente do id da rota' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Archive an accountant contact (soft-delete, nunca hard-delete)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'AccountingContact arquivado (deletedAt preenchido)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/delivery/build:
+ *     post:
+ *       summary: Preflight do pacote ECD/ECF - valida os jobs e o fechamento do ano, sem persistir
+ *       description: >-
+ *         Resolve os dois jobs no escopo (ECD e ECF, EXPORTED, com sha256 gravado), exige os DOZE
+ *         meses do ano-calendário em HARD_CLOSED (F-CD7-a) e devolve o manifesto sem destinatário.
+ *         Não persiste, não audita e NÃO ENVIA - sob F-CD1-a o servidor não tem canal nem credencial.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/BuildDeliveryPackageInput' }
+ *       responses:
+ *         '200': { description: 'manifesto com scope, year, files (kind, jobId, sha256) e generatedAt' }
+ *         '400': { description: 'DTO inválido, job que não é ECD/ECF, job sem sha256 ou ano não fechado' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/delivery/confirm:
+ *     post:
+ *       summary: Registra a entrega do pacote ao contador (confirmação explícita do operador)
+ *       description: >-
+ *         Re-checa o gate dos 12 meses DENTRO da transação e grava o log com status SENT. SENT
+ *         significa que o operador confirmou que despachou o pacote, nunca que o servidor confirmou
+ *         entrega. Idempotente pela tripla ecdJobId + ecfJobId + contactId.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ConfirmDeliveryInput' }
+ *       responses:
+ *         '201': { description: 'deliveryId, status, statusMeaning, contact (name, crcNumber, crcUf) e manifest' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '429': { description: 'Rate limit por escopo (ator + unidade) excedido - DELIVERY_CONFIRM_RATE_LIMIT por 15 min, padrao 60' }
+ *
+ *   /api/accounting/delivery/{id}/retry:
+ *     post:
+ *       summary: Reprocessa uma entrega FAILED (FAILED para QUEUED na linha existente)
+ *       description: >-
+ *         Só transiciona FAILED para QUEUED, incrementando attemptCount. Reenvio de uma entrega já
+ *         SENT NÃO é coberto por este comando (400) - é frente adjacente, não decisão implícita.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/RetryDeliveryInput' }
+ *       responses:
+ *         '200': { description: 'AccountingDeliveryLog em QUEUED' }
+ *         '400': { description: 'DTO inválido, deliveryId divergente do id da rota, ou status diferente de FAILED' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/delivery/{id}:
+ *     get:
+ *       summary: Le o log de uma entrega (escopado; cross-tenant devolve 404)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'AccountingDeliveryLog' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  */
 export {};
