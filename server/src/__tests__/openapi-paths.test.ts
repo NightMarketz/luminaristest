@@ -56,7 +56,10 @@ const { options } = require('../../scripts/generate-openapi');
 // +6 (BE-INCR-SPED-ECF-FASE3B item 11, Fork 4→b): /api/lalur/entries (GET+POST), /entries/{id} (PATCH),
 //    /entries/{id}/archive, /parte-b (GET+POST), /parte-b/{id} (PATCH), /parte-b/{id}/archive —
 //    6 PATHS e 8 OPERAÇÕES (160 → 166).
-const BASELINE = 166;
+// +6 (BE-INCR-SPED-ECF-FASE3C, ADR EMENDA 3ª): /api/lalur/parte-b/movements (GET+POST), /movements/{id}
+//    (PATCH), /movements/{id}/archive, /parte-b/close, /parte-b/reopen, /parte-b/balances —
+//    6 PATHS e 7 OPERAÇÕES (166 → 172, 197 → 204 operations, medido com docs:generate).
+const BASELINE = 172;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

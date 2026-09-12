@@ -517,9 +517,44 @@ linha `E`), registrar a crítica literal: muda o **serviço**, não o DTO.
 
 EVIDÊNCIA: [crítica literal do PVA ou "nenhuma crítica de TIPO_LANCAMENTO"]
 
+### 2P-4. Parte B fechada — M410 (PF/BC), M500 × E020 e as 7 leituras INFERIDAS do BRIEF 3C (preparado em 2026-09-12, EM BRANCO)
+
+Pré-requisito no Luminaris (ECF 3C, ADR EMENDA 3ª): os 4 trimestres do exercício **fechados** em
+`POST /api/lalur/parte-b/close` (a geração recusa com 400 nomeando o primeiro aberto) e
+`GET /api/lalur/parte-b/balances?unitId&year` com `divergences: []`. Ao menos UM trimestre com
+**prejuízo** (base do IRPJ negativa) para que o `M410 … PF` derivado pelo sistema exista no arquivo, e ao
+menos uma conta da Parte B com saldo de abertura ≠ 0 (para o transporte).
+
+Conferir no PVA, nesta ordem, e colar a evidência de cada item (o que não for verificável nesta passada,
+marcar "não exercitado" com o motivo — nunca em branco):
+
+1. **REGRA_PREJUIZO_FISCAL / REGRA_BC_NEGATIVA (p.269, erro):** Σ `M410 PF` do período = base negativa do
+   IRPJ que o PVA computa a partir da ECD recuperada + Parte A; idem `BC` × CSLL. Divergiu ⇒ a fórmula
+   `base = resultado(T) + ΣA − ΣE` (D-P3.3, INFERIDA) está errada ou o razão difere do L300 — anotar os dois
+   números. Origem: BRIEF 3C §4 itens 1 e 6.
+2. **REGRA_SALDOS_M010_E020 (p.237, erro):** com a ECF anterior recuperada (2P-1), `M010.VL_SALDO_INI` de cada
+   conta = `E020` = `M500(T04 do exercício anterior).SD_FIM_LAL` (C3 — âncora implícita). Divergiu ⇒ anotar
+   `COD_CTA_B`, os dois valores e se o exercício anterior foi **refechado** após transmitido.
+3. **Ordem intra-período (§4 item 3):** o PVA aceitou `M410` e `M500` depois de todos os `M300/M350` do
+   mesmo `M030` (ordem hierárquica da p.236)? Crítica de ordem ⇒ registrar literal; mudança só no
+   `ecfReal.ts`.
+4. **`M500` para conta sem movimento e saldo zero (§4 item 4):** o Luminaris emite uma linha por conta viva do
+   M010 ("visão sintética", p.271). O PVA aceitou / avisou / recusou? Registrar.
+5. **`M410.COD_CTA_B` sempre preenchido (§4 item 2):** nenhuma crítica pedindo vazio? Registrar.
+6. **`M312/M362` (p.254):** nos ajustes com conta contábil e valor **parcial** (menor que os 4 agregados do
+   K155/K355), o PVA exigiu os `NUM_LCTO`? Os que o Luminaris emitiu bateram com o `I200` recuperado?
+7. **Indicador do saldo zero = `C` (D-P3.1, INFERIDO):** conta com `SD_FIM_LAL = 0,00` saiu com `C`; o PVA
+   aceitou? Registrar.
+
+Resultado esperado: import sem erro em `M410/M415/M500/M510/M312/M315/M362/M365`; itens 1 e 2 **iguais**;
+itens 3–7 aceitos (ou a crítica literal colada — é ela que muda o código, nunca a leitura do agente).
+
+EVIDÊNCIA: [tela do PVA por item 1–7 — valores tarjados quando forem do tenant real; "não exercitado: <motivo>" onde couber]
+
 ## Desfecho da 2ª passada (marcar UM)
 
-- [ ] **PASSOU** — 2P-1 (ou "não se aplica" justificado) e 2P-2 com evidência conferindo; 2P-3 sem crítica
+- [ ] **PASSOU** — 2P-1 (ou "não se aplica" justificado), 2P-2 e 2P-4 (itens 1 e 2 iguais) com evidência
+      conferindo; 2P-3 sem crítica; 2P-4 itens 3–7 registrados
 - [ ] **FALHOU** — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte foi
       executado após a falha
 - [ ] **BLOQUEADO** — pré-condição __ não se sustentava; execução nem começou

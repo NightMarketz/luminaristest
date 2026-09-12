@@ -607,8 +607,10 @@ nunca inteiro com sinal — o sinal só existe na aritmética do serviço (D-P3)
    `Draft`/`PendingApproval` (`schema.prisma:536`); `NUM_LCTO` é `Obrig.=Sim` (p.254). Logo `journalEntryIds[]`
    exige `entryNumber != null`, mesmo escopo, `date` dentro da janela do trimestre — 400 caso contrário.
    `Reversed` **permanece** elegível (o lançamento e seu estorno estão ambos no I200 da ECD).
-5. **Saldo negativo da Parte B (BRIEF item 13 — INFERIDO).** `sdFim < 0` em qualquer conta ⇒ 400 no
-   create/update do ajuste `P` **e** no `close`. O teto de 30% (Lei 9.065/95 art. 15) é da apuração
+5. **Compensação acima do saldo (BRIEF item 13 — INFERIDO).** Na conta da Parte B relacionada a uma linha
+   `P` do período, `sdFim` com indicador `C` (sinal interno < 0 — a compensação excedeu o prejuízo acumulado)
+   ⇒ 400 no create/update desse ajuste **e** no `close`. Saldo `C` em conta que NÃO recebe compensação é
+   legítimo (valores a adicionar no futuro — p.237 campo 9). O teto de 30% (Lei 9.065/95 art. 15) é da apuração
    (`ADR-INCR-TAX-ASSESSMENT`), não daqui.
 
 ### D-P4 — O que esta emenda NÃO decide
@@ -628,8 +630,8 @@ Migração `add_lalur_parte_b_movements_closings_processes` — **5 CREATE TABLE
 `DROP … IF EXISTS` na ordem filha→mãe (`LalurProcess`, `LalurEntryJournalEntry`, `LalurParteBBalance`,
 `LalurParteBMovement`, `LalurParteBClosing`), sem backfill; `smoke:migration` sobre cópia do `dev.db`
 real. Cadeia `Route → Controller → LalurService → LalurRepository → Prisma` (mesmo serviço — BRIEF item
-4), Policy `canManageData`/`canRead`, DTO `.strict()`, rotas em 2 toques + path-count guard (166→170 CRUD
-de movimento + `close`/`reopen`/`balances` = **173**), 5 eventos novos na allowlist
+4), Policy `canManageData`/`canRead`, DTO `.strict()`, rotas em 2 toques + path-count guard (166 → **172**: `movements`, `movements/{id}`,
+`movements/{id}/archive`, `close`, `reopen`, `balances`), 5 eventos novos na allowlist
 (`lalur.movement_{created,updated,archived}`, `lalur.parte_b_{closed,reopened}`). `ecfReal.ts` ganha
 `buildM312/M315/M362/M365/M410/M415/M500/M510`; `M010.VL_SALDO_INI` passa a vir de C3. Tela =
 `FE-INCR-LALUR` (botão "fechar trimestre" + diagnóstico), separada.
