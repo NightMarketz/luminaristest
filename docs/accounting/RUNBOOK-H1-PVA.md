@@ -380,6 +380,107 @@ EVIDÊNCIA: [tela/protocolo do PVA + lista de críticas, se houver]
       M300A) e, se houver Parte B, a conta em `/api/lalur/parte-b` — senão o Bloco M sai só com períodos e
       a passada prova estrutura, não o e-Lalur (resíduo do Fork 4→(c), registrado no ADR §7).
 
+### Preflight do agente (2026-09-12, `luminaris-gate-copilot`) — grau por linha; NÃO é evidência do runbook
+
+> Medido sobre **cópia** do `dev.db` real (`server/prisma/prisma/dev.db`, md5 `bf4f8bb4…`, 1.208.320 bytes;
+> o original não foi tocado — gate S1). `main` = `197cc9fc` (#313). Tudo abaixo é `preflight`; a evidência
+> que vale é a que o executor cola nos campos EVIDÊNCIA durante a execução dele.
+
+| Pré-condição | Como verifiquei | Resultado | Grau |
+|---|---|---|---|
+| P1 código em `main` | `git log origin/main -1` | `197cc9fc` (L/M/N + `/api/lalur` em `main`) | verificado |
+| `year=2025` tem leiaute | `lib/ecf.ts:48` `ECF_COD_VER_BY_YEAR = { 2025: '0012' }` | só 2025; `year=2026` ⇒ 400 explícito | verificado |
+| P2b migrações pendentes | `smoke-migration-gate.mjs --db <real>` | **12 pendentes** (29/41 aplicadas); gate **FALHA S6/S7** — **ambas falso positivo**: S7 = índice `counterparties_…_type_name_key` foi **substituído** por `…_type_nameNormalized_key` (migração `20260830160349`), não perdido; S6 = rebuild int→bigint de `postings` muda a representação byte-a-byte, mas `count/Σdébito/Σcrédito/ids` são **idênticos** antes e depois (30 linhas, 1.897.300 / 1.897.300). Classe já registrada (`smoke-gate-s6-x-migracao-de-dado`). `prisma migrate deploy` na cópia aplica as 12 limpo e cria `lalur_entries`/`lalur_parte_b_accounts` | verificado |
+| P2b binding `Active` | `activate-salon-binding.mjs` sobre a cópia migrada | **FALHA — binding compila como `Draft`**: o chart real do salão (13 contas) **não tem `1.1.6` Estoques, `3.3` Receita de Revenda e `4.2` CMV** (LAC-D, #259, posteriores ao seed do banco) e o **mês corrente (2026/09) está `FUTURE`** — o compilador roda dry-run e exige o mês OPEN. O RUNBOOK-H2 P0 só previa "chart ausente", não incompleto. ⇒ **novo passo P0.2b abaixo** | verificado |
+| P3 build de produção sobe | `npm run build` + `node dist/server.js` sobre a cópia com binding `Active` | `Luminaris Server running` · `/health` `database: ok` (`qdrant: error` = degradado, não bloqueia) | verificado (na cópia) |
+| ≥1 ajuste + 1 conta da Parte B | curls abaixo, na cópia | `POST /parte-b` 201 · `POST /entries` ×2 (A rel=4; P rel=1→Parte B) 201 · `POST …/ecf/real/generate` **201**, 108 linhas, `M010`/`M030`/`M300`/`M305` presentes (trecho colado em "Corpo dos curls") | verificado (na cópia) — **no real, é o executor que cadastra** |
+| Dado do tenant × ano | `journal_entries` por ano na cópia | **todo o razão real é de 2026** (datas `1767225600000`…`1798675200000` = 01/01 a 31/12/2026); períodos só 2026; **nada em 2025**. A ECF Real de 2025 sai com Bloco M/N preenchidos pelo e-Lalur e L/K vazios (o PVA recupera da ECD — que também seria vazia em 2025). O PVA 12.2.6 valida **AC 2025** (Manual "AC_2025_SIT_ESP_2026"); AC 2026 normal só com o Leiaute 13 | verificado — **[DONO decide]** ver "Achados" |
+| P4 PVA instalados / P5 mapeamento / P6 dados do contador / P7 dezembro OPEN | credencial/julgamento/dado externo | `[DONO confere]` — P7: em 2025 **não existe período** no controle; a geração da ECF não tem gate de período, mas o encerramento (passo 1 da 1ª passada) tem | — |
+
+**Armadilhas deste repo que mordem neste gate (novas, medidas hoje):**
+1. **`server/.env` sobrescreve o ambiente** (`src/config/env.ts:16` `override: NODE_ENV !== 'test'`): `--db` do
+   `activate-salon-binding.mjs` e `DATABASE_URL`/`PORT` passados por env ao `npm start` são **ignorados** quando
+   `server/.env` define os mesmos. Para ensaiar sobre cópia, aponte o `DATABASE_URL` **do `.env`** para a cópia
+   (e restaure depois). No real, o `.env` já aponta para o real — funciona "por acidente".
+2. **Ordem do P0 para este banco:** migrar → **completar o chart (3 contas) + abrir o mês corrente** → ativar binding
+   → boot. O compilador não cria conta nem abre período.
+
+#### P0.2b — completar o chart do salão e abrir o mês corrente (decisão do dono; escreve em dado real)
+
+Sem isto o `activate-salon-binding.mjs` devolve `Draft` e o boot aborta. Fazer **depois** do `migrate deploy`
+(P0 passo 2) e **antes** do passo 3. Duas formas equivalentes; a (a) é a que o ensaio usou:
+
+- **(a) script descartável sobre o banco** (Prisma, mesmos códigos/nomes/naturezas de
+  `ChartOfAccountsFixture.ts`): criar `Account {code:'1.1.6', name:'Estoques', nature:'Asset'}`,
+  `{'3.3','Receita de Revenda','Revenue'}`, `{'4.2','CMV','Expense'}` (`acceptsEntries: true`) para
+  `userId=<admin> unitId=<salão>`, e `AccountingPeriod {year: <ano atual>, month: <mês atual>}` → `OPEN`
+  (`openedById=<admin>`). É seed de **conta/período**, não de binding — o ADR-INCR-BINDING-FEEDER §7 proíbe
+  seed direto de *binding*.
+- **(b) pela API** — impossível antes do boot (o boot exige o binding) — só serve se houver um servidor
+  anterior ao #213 de pé, o que este runbook proíbe (commit exato).
+
+Confirmação: `node scripts/activate-salon-binding.mjs --owner-user-id <admin> --unit-id <salão>` imprime
+`OK: binding 'beautySalon' ativado — … versão N`. EVIDÊNCIA: [saída colada pelo executor]
+
+#### Corpo exato dos curls da 2ª passada (ordem: login → Parte B → Parte A → gerar → baixar)
+
+`<TOKEN>` = `data.token` do login; `<UNIT>` = unidade do salão (`cmr2jyirc006oci1kscm61n6n` no `dev.db` real);
+`<PB_ID>` = `data.id` devolvido pelo passo 2. Valores de exemplo do ensaio — o executor troca pelos reais.
+
+```bash
+curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"<SENHA>\"}"
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/lalur/parte-b -H "Content-Type: application/json" -H "Authorization: Bearer <TOKEN>" -d "{\"unitId\":\"<UNIT>\",\"codCtaB\":\"PB-PREJ-2024\",\"descricao\":\"Prejuizo fiscal acumulado ate 2024\",\"dtCriacao\":\"2024-12-31\",\"codPbRfb\":\"1000\",\"codTributo\":\"I\",\"saldoIniCents\":1000000,\"indSaldoIni\":\"D\"}"
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/lalur/entries -H "Content-Type: application/json" -H "Authorization: Bearer <TOKEN>" -d "{\"unitId\":\"<UNIT>\",\"year\":2025,\"quarter\":\"T01\",\"livro\":\"lalur\",\"codigo\":\"7\",\"valorCents\":150000,\"indRelacao\":\"4\",\"histLancamento\":\"Custos nao dedutiveis\"}"
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/lalur/entries -H "Content-Type: application/json" -H "Authorization: Bearer <TOKEN>" -d "{\"unitId\":\"<UNIT>\",\"year\":2025,\"quarter\":\"T01\",\"livro\":\"lalur\",\"codigo\":\"173\",\"valorCents\":40000,\"indRelacao\":\"1\",\"parteBId\":\"<PB_ID>\"}"
+```
+
+```bash
+curl -s -X POST http://localhost:3001/api/accounting/sped/ecf/real/generate -H "Content-Type: application/json" -H "Authorization: Bearer <TOKEN>" -d "{\"unitId\":\"<UNIT>\",\"year\":2025,\"declarant\":{\"cnpj\":\"<CNPJ14>\",\"nome\":\"<RAZAO SOCIAL>\",\"codNat\":\"2062\",\"cnaeFiscal\":\"9602501\",\"endereco\":\"<LOGRADOURO>\",\"num\":\"100\",\"bairro\":\"<BAIRRO>\",\"uf\":\"SP\",\"codMun\":\"3550308\",\"cep\":\"01001000\",\"email\":\"<EMAIL>\"},\"fiscal\":{\"formaTrib\":\"1\",\"formaTribPer\":\"RRRR\",\"formaApur\":\"T\",\"indAliqCsll\":\"1\",\"indRecReceita\":\"2\"},\"signers\":[{\"identNom\":\"<CONTADOR>\",\"identCpfCnpj\":\"<CPF11>\",\"identQualif\":\"900\",\"indCrc\":\"<CRC>\",\"email\":\"<EMAIL>\",\"fone\":\"<FONE>\"},{\"identNom\":\"<SOCIO>\",\"identCpfCnpj\":\"<CPF11>\",\"identQualif\":\"203\",\"email\":\"<EMAIL>\",\"fone\":\"<FONE>\"}]}"
+```
+
+```bash
+curl -s -o ecf_real_2025.txt "http://localhost:3001/api/accounting/data-exchange/jobs/<JOB_ID>/download?unitId=<UNIT>" -H "Authorization: Bearer <TOKEN>"
+```
+
+Trecho do arquivo do ensaio (cópia; Latin-1; `sha256 1525ca39…`, 2.306 bytes, 108 linhas) — o que o executor deve
+reconhecer no dele antes de importar no PVA:
+
+```
+|0000|LECF|0012|<CNPJ>|<NOME>|0|0|||01012025|31122025|N||0||
+|0010||N|1|T|01|RRRR||C||||2|
+|M010|PB-PREJ-2024|Prejuizo fiscal acumulado ate 2024|31122024|1000||I|10000,00|D||
+|M030|01012025|31032025|T01|
+|M300|173|(-) Compensação de Prejuízos Fiscais de Períodos Anteriores - Atividades em Geral|P|1|400,00||
+|M305|PB-PREJ-2024|400,00|C|
+|M300|7|Custos não dedutíveis|A|4|1500,00|Custos nao dedutiveis|
+|M990|10|
+```
+
+**Achados do preflight para o dono (fora do runbook, trilho = fila/ADR):**
+- **A1 — Ano do dado × ano do PVA.** O razão real é 100% de 2026 e o PVA vigente valida AC 2025. Para o H1 (as duas
+  passadas) provar *dado real* e não só estrutura, ou (i) o tenant ganha um exercício 2025 (cópia do banco com as
+  datas deslocadas −1 ano, script descartável, **decisão do dono**), ou (ii) a passada roda em 2025 com razão vazio
+  e prova a cadeia estrutural + e-Lalur (o que o ensaio fez), registrando que o L/K/ECD-recuperada saem vazios.
+  (iii) Esperar Leiaute 13 + PVA AC 2026 (2027). Nenhuma das três é do agente.
+  **→ DECISÃO DO DONO (2026-09-12, questionário):** *"o dev.db é só seed de testes, só popular a seed com dados para vários anos"* —
+  nenhuma das três: o `dev.db` **é seed de desenvolvimento**, e a correção é a **seed cobrir vários exercícios** (2025 + 2026:
+  períodos, lançamentos, AP/AR, e o chart completo com `1.1.6/3.3/4.2`). Vira item de fila (`job-generator` → seed fixture),
+  com autorização própria; enquanto não existir, o H1 roda como (ii). Consequência para P2: o backup continua obrigatório
+  (o passo 1 escreve), mas o banco não é "real" — é o seed que os runbooks passam a chamar de alvo.
+- **A2 — P0 incompleto nos dois runbooks (H1/H2):** falta o passo "completar chart + abrir mês corrente" — esta
+  emenda cobre o H1; o H2 precisa do mesmo parágrafo (docs-only, fora desta sessão).
+- **A3 — `.env` com `override`** defeita o `--db` do script e o `PORT`/`DATABASE_URL` por env fora de teste. Classe
+  `gate-predicate-environment-class`; não corrigido (fora de escopo — mudar o `override` toca o boot de todos).
+
 ### 2P-1. Recuperar a ECF do período anterior no PVA ANTES de validar
 
 Manual do Leiaute 12, p.14: a partir do **2º exercício** em `FORMA_TRIB=1`, a transmissão verifica se

@@ -254,6 +254,19 @@ Regras de validação (seção I — registro — e seção II — campos, prefi
 
 - `REGRA_FINANCEIRAS_NAO_OBRIGATORIO`: Se 0010.COD_QUALIF_PJ = “02” ou “03” ou 0010. FORMA_TRIB = “08” ou “09”, o registro é facultativo.
 
+### M315 — Identificação de Processos Judiciais e Administrativos Referentes ao Lançamento (p.255)
+
+> Identifica os processos judiciais ou administrativos utilizados que embasaram adições menores que as previstas na legislação ou falta de adição e exclusões maiores que as previstas na legislação na parte A do e-Lalur (tratamento diverso do regramento fiscal). Os processos judiciais a serem utilizados e informados devem ter decisão definitiva, ou seja, transitado em julgado. Ver item 1.29 deste Manual (Ações Judiciais) para mais informações.
+
+- Nível / Ocorrência: **4 /  0:N** · Campo(s) chave: `IND_PROC + NUM_PROC`
+- Regras de validação (cabeçalho): —
+
+| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
+|---|---|---|---|---|---|---|---|
+| 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M315). | C | 4 | - | [M315] | Sim |
+| 2 | `IND_PROC` | Tipo do Processo: 1 - Judicial 2 – Administrativo | C | 1 | - | [1; 2] | Sim |
+| 3 | `NUM_PROC` | Número do Processo. | C | 20 | - | - | Sim |
+
 ### M350 — Demonstração da Base de Cálculo da CSLL – Lançamentos da Parte A do e-Lacs (p.256)
 
 > Apresenta os lançamentos da parte A do e-Lacs. Este registro demonstrará a apuração da base de cálculo da CSLL anual, trimestral e nos meses com estimativa apurada com base no balanço/balancete. Livro da Parte A Saldo da Conta da Parte B Sinal do Lançamento na Parte B Utilização Adição Credor Devedor Utilização de saldo para adição Adição Devedor Devedor Constituição de saldo para posterior exclusão Exclusão Devedor Credor Utilização de saldo para exclusão Exclusão Credor Credor Constituição de saldo para posterior adição Livro da Parte A Sinal no M350 Indicador no M355 (Sinal do lançamento na conta da Parte B) Indicador no M360 Conta de Resultado (Sinal do saldo da conta contábil de resultado) Indicador no M360 Conta Patrimonial (Sinal do saldo da conta contábil patrimonial) Adição ou Lucro + (positivo) D – Devedor D – Devedor C – Credor Adição ou Lucro - (negativo) Erro do programa C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo + (positivo) C – Credor C – Credor D - Devedor Exclusão ou Compensação de Prejuízo - (negativo) Erro do programa D - Devedor D - Devedor C – Credor
@@ -331,6 +344,35 @@ Regras de validação (seção I — registro — e seção II — campos, prefi
 - `VL_CTA` · `REGRA_OBRIGATORIA_M310_VL_CTA`: Verifica se M360.VL_CTA foi preenchido quando M300. IND_RELACAO for igual a “2” (com conta contábil).
 - `IND_VL_CTA` · `REGRA_INDICADOR_CONTABIL_DIFERENTE`: Verifica se o indicador do saldo final da conta no período é igual ao indicador do valor da conta utilizado no relacionamento M360.IND_VL_CTA.
 
+### M362 — Números dos Lançamentos Relacionados à Conta Contábil (p.266)
+
+> Esse registro é de preenchimento facultativo para PJ Componente do Sistema Financeiro (0010.COD_QUALIF_PJ = “02”) ou Sociedades Seguradoras, de Capitalização ou Entidade Aberta de Previdência Complementar (0010.COD_QUALIF_PJ = “03”), que utilizam a forma de escrituração “B” (Balancetes Diários) na ECD e não informam lançamentos. Nos demais casos, o registro apresenta o número dos lançamentos contábeis que foram informados na ECD relacionados ao lançamento da conta da parte A, quando não for utilizado, no caso de conta patrimonial: I) O saldo total da conta contábil (M360.VL_CTA < K155.VL_SLD_FIN); ou II) O saldo do período (saldo final – saldo inicial) da conta contábil (M360.VL_CTA < (K155.VL_SLD_FIN – K155.VL_SLD_INI); ou III) O total de débitos da conta contábil no período (M360.VL_CTA < K155.VL_DEB); ou IV) O total de créditos da conta contábil no período (M360.VL_CTA < K155.VL_CRED). Apresenta o número dos lançamentos contábeis do período referenciado no registro M030, relacionados ao lançamento da conta da parte A, quando não for utilizado, no caso de conta resultado: I) O saldo total da conta contábil (M360.VL_CTA < K355.VL_SLD_FIN). Observação: No caso de apuração anual da CSLL, se os números dos lançamentos já foram informados em períodos de apuração anteriores, não é necessário repeti-los.
+
+- Nível / Ocorrência: **5 / 0:N** · Campo(s) chave: `NUM_LCTO`
+- Regras de validação (cabeçalho): `REGRA_FINANCEIRAS_NAO_OBRIGATORIO`
+
+| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
+|---|---|---|---|---|---|---|---|
+| 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M362). | C | 4 | - | [M362] | Sim |
+| 2 | `NUM_LCTO` | Número do Lançamento Descrito na ECD (Escrituração Contábil Digital) no campo 2 (NUM_LCTO) registro “I200 – La… | C | 50 | - | - | Sim |
+
+Regras de validação (seção I — registro — e seção II — campos, prefixadas pelo campo):
+
+- `REGRA_FINANCEIRAS_NAO_OBRIGATORIO`: Se 0010.COD_QUALIF_PJ = “02” ou “03” ou 0010. FORMA_TRIB = “08” ou “09”, o registro é facultativo.
+
+### M365 — Identificação de Processos Judiciais e Administrativos Referentes ao Lançamento (p.267)
+
+> Identifica os processos judiciais e administrativos utilizados que embasaram adições menores que as previstas na legislação ou falta de adição e exclusões maiores que as previstas na legislação na parte A do e-Lacs (tratamento diverso do regramento fiscal). Os processos judiciais a serem utilizados e informados devem ter decisão definitiva, ou seja, transitado em julgado. Ver item 1.29 deste Manual (Ações Judiciais) para mais informações.
+
+- Nível / Ocorrência: **4 / 0:N** · Campo(s) chave: `IND_PROC + NUM_PROC`
+- Regras de validação (cabeçalho): —
+
+| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
+|---|---|---|---|---|---|---|---|
+| 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M365). | C | 4 | - | [M365] | Sim |
+| 2 | `IND_PROC` | Tipo do Processo: 1 - Judicial 2 – Administrativo | C | 1 | - | [1; 2] | Sim |
+| 3 | `NUM_PROC` | Número do Processo. | C | 20 | - | - | Sim |
+
 ### M410 — Lançamento na Conta da Parte B do e-Lalur e do e-Lacs sem Reflexo na Parte A (p.268)
 
 > Apresenta os lançamentos em contas da parte B sem reflexos na parte A.
@@ -356,6 +398,19 @@ Regras de validação (seção I — registro — e seção II — campos, prefi
 - `COD_CTA_B_CTP` · `REGRA_MESMO_TRIBUTO`: Se M410.COD_CTA_B_CTP for preenchido, as contas constantes do lançamento devem corresponder ao mesmo tributo (M010.TRIBUTO).
 - `COD_CTA_B_CTP` · `REGRA_NAO_PREENCHER_CTP`: Se M410.IND_VAL_LAN_LALB_PB igual a “PF” ou “BC”, campo M410.COD_CTA_B_CTP não deve ser preenchido.
 
+### M415 — Identificação de Processos Judiciais e Administrativos Referentes ao Lançamento (p.270)
+
+> Identifica os processos judiciais e administrativos utilizados que embasaram adições menores que as previstas na legislação ou falta de adição e exclusões maiores que as previstas na legislação na parte B do e-Lalur ou do e-Lacs (tratamento diverso do regramento fiscal). Os processos judiciais a serem utilizados e informados devem ter decisão definitiva, ou seja, transitado em julgado. Ver item 1.29 deste Manual (Ações Judiciais) para mais informações.
+
+- Nível / Ocorrência: **4 / 0:N** · Campo(s) chave: `IND_PROC + NUM_PROC`
+- Regras de validação (cabeçalho): —
+
+| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
+|---|---|---|---|---|---|---|---|
+| 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M415). | C | 4 | - | [M415] | Sim |
+| 2 | `IND_PROC` | Tipo do Processo: 1 - Judicial 2 – Administrativo | C | 1 | - | [1; 2] | Sim |
+| 3 | `NUM_PROC` | Número do Processo. | C | 20 | - | - | Sim |
+
 ### M500 — Controle de Saldos das Contas da Parte B do e-Lalur e do e-Lacs (p.271)
 
 > Apresenta a visão sintética do controle de saldos das contas da parte B do e-LALUR e e-LACS. Registro gerado pelo sistema a partir do saldo inicial e das movimentações. - Os campos SD_FIM_LAL e IND_SD_FIM do último período serão transportados para o E020 da próxima ECF. - Quando a escrituração for trimestral, o saldo final do período será transportado para o saldo inicial do período seguinte. - O valor do SD_INI_LAL do primeiro período será igual ao saldo inicial do registro M010.
@@ -376,6 +431,28 @@ Regras de validação (seção I — registro — e seção II — campos, prefi
 | 9 | `IND_VL_LCTO_PARTE_B†` | Indicador Somatório dos Lançamentos da Parte B Sem Reflexo na Parte A no Período (entre contas da parte B): C … | C | 1 | - | [C; D] | Sim |
 | 10 | `SD_FIM_LAL` | Saldo Final da Conta no Período de Apuração. | N | 19 | 2 | - | Sim |
 | 11 | `IND_SD_FIM_LAL†` | Indicador de Saldo Final: D – Para prejuízos ou valores que serão excluídos do lucro real ou da base de cálcul… | C | 1 | - | [C; D] | Sim |
+
+### M510 — Controle de Saldos das Contas Padrão da Parte B do e-Lalur e do e-Lacs (p.273)
+
+> Apresenta a visão sintética do controle de saldos das contas padrão da parte B do e-LALUR e e-LACS. Registro gerado pelo sistema a partir do saldo inicial e das movimentações. - Os campos SD_FIM_LAL e IND_SD_FIM do último período serão transportados para o E020 da próxima ECF. - Quando a escrituração for trimestral, o saldo final do período será transportado para o saldo inicial do período seguinte. - O valor do SD_INI_LAL do primeiro período será igual ao saldo inicial do registro M010.
+
+- Nível / Ocorrência: **3 / 0:N** · Campo(s) chave: `COD_CTA_B + COD_TRIBUTO`
+- Regras de validação (cabeçalho): —
+
+| Nº | Campo | Descrição (início) | Tipo | Tam. | Dec. | Valores válidos | Obrig. |
+|---|---|---|---|---|---|---|---|
+| 1 | `REG` | Texto Fixo Contendo a Identificação do Registro (M510). | C | 4 | - | [M510] | Sim |
+| 2 | `COD_PB_RFB` | Código da Conta Padrão da Parte B (deve existir no M010.COD_PB_RFB). | C | - | - | [M010.COD_CTA_B] | Sim |
+| 3 | `DESCRICAO_PB_RFB` | Descrição da Conta Padrão da Parte B | C | - | - | - | Sim |
+| 4 | `COD_TRIBUTO` | Código do Tributo: I – Imposto de Renda C – Contribuição Social Sobre o Lucro Líquido | C | 1 | - | [I; C] | Sim |
+| 5 | `SD_INI_LAL` | Saldo Inicial da Conta no Período de Apuração. | N | 19 | 2 | - | Sim |
+| 6 | `IND_SD_INI_LAL†` | Indicador de Saldo Inicial: D – Para prejuízos ou valores que serão excluídos do lucro real ou da base de cálc… | C | 1 | - | [C; D] | Sim |
+| 7 | `VL_LCTO_PARTE_A` | Somatório dos Lançamentos da Parte B com Reflexo na Parte A no Período. | N | 19 | 2 | - | Sim |
+| 8 | `IND_VL_LCTO_PARTE_A†` | Indicador do Somatório dos Lançamentos da Parte B com Reflexo na Parte A no período: C – Para prejuízos ou val… | C | 1 | - | [C; D] | Sim |
+| 9 | `VL_LCTO_PARTE_B†` | Somatório dos Lançamentos da Parte B Sem Reflexo na Parte A no Período (entre contas da parte B). | N | 19 | 2 | - | Sim |
+| 10 | `IND_VL_LCTO_PARTE_B†` | Indicador Somatório dos Lançamentos da Parte B Sem Reflexo na Parte A no Período (entre contas da parte B): C … | C | 1 | - | [C; D] | Sim |
+| 11 | `SD_FIM_LAL` | Saldo Final da Conta no Período de Apuração. | N | 19 | 2 | - | Sim |
+| 12 | `IND_SD_FIM_LAL†` | Indicador de Saldo Final: D – Para prejuízos ou valores que serão excluídos do lucro real ou da base de cálcul… | C | 1 | - | [C; D] | Sim |
 
 ### M990 — Encerramento do Bloco M (p.275)
 
