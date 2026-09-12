@@ -1,5 +1,16 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3B (conteúdo dos Blocos L/M/N — o que falta da ECF em Lucro Real)
 
+> **Estado [FOLD 2026-09-12]: ✅ IMPLEMENTADO — PR #313 MERGEADO em `main` (squash `197cc9fc`, 12/09), exceto o item 13 (`M410`/`M500`).**
+> `sessao-feature` em 11/09 (branch `claude/brief-3b-adr-model-e826b1`, 5 commits + 1 de correção), review independente **PASS-COM-RESSALVAS**
+> (I-1..I-5 corrigidos no próprio PR; 4 MENOR registrados → BRIEF 3C), `sessao-integracao` em 12/09 (0 conflitos, CI 5/5, árvore idêntica ao SHA validado).
+> **Checklist §1: ✅ 1–11, 14–20 · — 12 (perna (a), não ratificada, não implementada) · ⚠️ 13 PARCIAL** — `M010` emitido (filtrado por `REGRA_MENOR_IGUAL_DT_FIN`
+> + `REGRA_DT_AP_ZERO`); **`M410` e `M500` ficam para o BRIEF `BE-INCR-SPED-ECF-FASE3C-parte-b`** (nota N-1 = fork do dono: `LalurParteBBalance` espelho × recompute;
+> 2ª migração), `M312/M362/M415/M510` sem transcrição (Passo A complementar). **Decisões tomadas em sessão e normatizadas na EMENDA 2ª do ADR (D-M1..D-M5):**
+> D-M2 `@@unique` SEM `deletedAt` + rename-on-key no archive (o esboço §2.2 com `deletedAt` na chave não fecha duplicidade viva no SQLite); D-M3 linhas de livro N
+> não carregam `indRelacao`/`parteBId`/`accountId`/`histLancamento` (corrige o §2.1); policy = `canManageLalur`/`canReadLalur`, **não** `canManageData` (que é da
+> `DynamicTablePolicy`); item 18: `lalurEntries` (contagem) entrou na allowlist de `sped.ecf_generated`. Anomalia da fonte: `M350A/13` duplicado no XLSX — lookup = 1ª
+> ocorrência, fixado em `lalurCatalog.test.ts`. **Tela = `FE-INCR-LALUR`** (BRIEF separado). **Gate humano seguinte: H1 2ª passada em Real** (`RUNBOOK-H1-PVA.md` §2ª passada, em branco).
+>
 > **[FOLD 2026-09-11] §2 emendado contra o Passo A** — as 8 "Lacunas de spec reveladas pela transcrição" (`BE-INCR-SPED-ECF-FASE3-layout-transcription-LMN.md`, rodapé) foram dobradas nos contratos §2.1–§2.4 e nas pendências §4 itens 3 (parcial), 4 e 5. Docs-only; nenhum fork reaberto ou criado.
 >
 > **Estado [FOLD 2026-09-11]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-11, por questionário (2→d, 3→a, 4→b, 6→b, 7→a). Todo item `[cond:Fork N]` do checklist fica **destravado**, com uma exceção de ordem: **Fork 4→(b) exige a emenda ao ADR commitada antes do primeiro código de model** (ver §3). **Implementação segue exigindo autorização própria** (ORCH-006) — a ratificação decide os forks, não abre a `sessao-feature`.
