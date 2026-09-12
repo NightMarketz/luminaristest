@@ -227,6 +227,40 @@ export const ListLalurParteBQuerySchema = z.object({
   includeArchived: queryBoolean(),
 });
 
+/**
+ * Query DTO — GET /lalur/catalog (FE-INCR-LALUR, Fork F-FE-1→a). Read-only view of the Leiaute 12
+ * fixture for the cadastro screen: exactly ONE of `livro` (linhas E vigentes no ano da aba do livro —
+ * `year` obrigatório) or `aba=PARTEB_PADRAO` (M010.COD_PB_RFB universe, filtrável por `tributo`; sem
+ * `year`, porque o write path `assertCodPbRfb` não aplica vigência e o catálogo nunca esconde o que o
+ * POST aceita). `unitId` is auth scope only — the catalog is global (same shape as
+ * `ReferentialCatalogQuerySchema`). `q` (≥ 2 chars) is a substring filter on codigo/descricao. Not
+ * `.strict()`: query schemas here never are.
+ */
+export const LalurCatalogQuerySchema = z
+  .object({
+    unitId: z.string().min(1),
+    livro: z.enum(LALUR_LIVROS).optional(),
+    aba: z.literal('PARTEB_PADRAO').optional(),
+    year: z.coerce.number().int().gte(2015).lte(2100).optional(),
+    q: z.string().trim().min(2).max(120).optional(),
+    tributo: z.enum(LALUR_TRIBUTOS).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if ((v.livro === undefined) === (v.aba === undefined)) {
+      ctx.addIssue({ code: 'custom', path: ['livro'], message: 'Informe exatamente um de livro ou aba=PARTEB_PADRAO.' });
+    }
+    if (v.livro !== undefined && v.year === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['year'], message: 'year é obrigatório com livro (vigência da linha no exercício).' });
+    }
+    // Param aceito-e-ignorado é bug (regra da casa): cada filtro pertence a UMA aba.
+    if (v.livro !== undefined && v.tributo !== undefined) {
+      ctx.addIssue({ code: 'custom', path: ['tributo'], message: 'tributo só se aplica a aba=PARTEB_PADRAO.' });
+    }
+    if (v.aba !== undefined && v.year !== undefined) {
+      ctx.addIssue({ code: 'custom', path: ['year'], message: 'year não se aplica a aba=PARTEB_PADRAO (o write path não filtra vigência do COD_PB_RFB).' });
+    }
+  });
+
 export type CreateLalurEntryInput = z.infer<typeof CreateLalurEntrySchema>;
 export type UpdateLalurEntryInput = z.infer<typeof UpdateLalurEntrySchema>;
 export type ArchiveLalurInput = z.infer<typeof ArchiveLalurSchema>;
@@ -234,3 +268,4 @@ export type ListLalurEntriesQueryInput = z.infer<typeof ListLalurEntriesQuerySch
 export type CreateLalurParteBAccountInput = z.infer<typeof CreateLalurParteBAccountSchema>;
 export type UpdateLalurParteBAccountInput = z.infer<typeof UpdateLalurParteBAccountSchema>;
 export type ListLalurParteBQueryInput = z.infer<typeof ListLalurParteBQuerySchema>;
+export type LalurCatalogQueryInput = z.infer<typeof LalurCatalogQuerySchema>;

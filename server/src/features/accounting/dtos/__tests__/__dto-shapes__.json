@@ -1403,6 +1403,50 @@
       "required": [
         "unitId"
       ]
+    },
+    "LalurCatalogQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "livro": {
+          "type": "string",
+          "enum": [
+            "lalur",
+            "lacs",
+            "n500",
+            "n630",
+            "n670"
+          ]
+        },
+        "aba": {
+          "type": "string",
+          "const": "PARTEB_PADRAO"
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "q": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "I",
+            "C"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
     }
   },
   "NfeDto.ts": {
