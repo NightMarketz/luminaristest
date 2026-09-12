@@ -1349,5 +1349,154 @@
       "items": "Items in note",
       "sourceDocument": "Source document"
     }
+  },
+  "lalur": {
+    "action": {
+      "archive": "Archive",
+      "edit": "Edit"
+    },
+    "archiveModal": {
+      "archiving": "Archiving…",
+      "cancel": "Back",
+      "confirm": "Confirm archive",
+      "note": "The record leaves the ECF and its code is freed for a new registration. Nothing is deleted.",
+      "showRelated": "Show the adjustments related to this account",
+      "titleEntry": "Archive adjustment",
+      "titleParteB": "Archive Parte B account"
+    },
+    "col": {
+      "actions": "Actions"
+    },
+    "combobox": {
+      "loading": "Loading catalog…",
+      "noMatch": "No catalog line matches.",
+      "notInCatalog": "Code not in the catalog — pick a line from the list."
+    },
+    "counters": "{{entries}} adjustments · {{accounts}} Parte B accounts in fiscal year {{year}}",
+    "entry": {
+      "col": {
+        "codigo": "Code · description",
+        "hist": "History",
+        "indRelacao": "Rel.",
+        "livro": "Book",
+        "quarter": "Qtr.",
+        "related": "Parte B / account",
+        "tipo": "Type",
+        "valor": "Amount"
+      },
+      "empty": "No adjustment registered in this fiscal year.",
+      "filter": {
+        "allLivros": "All books",
+        "allQuarters": "All quarters",
+        "parteB": "Parte B: {{code}} ×"
+      },
+      "heading": "Parte A — adjustments (M300/M350) and Block N entry lines",
+      "modal": {
+        "error": {
+          "failed": "Error saving the adjustment.",
+          "invalid": "Fill in quarter, code, amount and the fields required by the relationship."
+        },
+        "immutableNote": "Fiscal year, quarter, book and code never change — archive and recreate.",
+        "title": "New adjustment (Parte A / Block N)",
+        "titleEdit": "Edit adjustment"
+      },
+      "new": "New adjustment"
+    },
+    "error": {
+      "archive": "Could not archive.",
+      "catalog": "Error loading the Layout 12 catalog.",
+      "loadEntries": "Error loading the adjustments.",
+      "loadParteB": "Error loading the Parte B accounts."
+    },
+    "field": {
+      "account": "Ledger account (M310/M360)",
+      "accountPick": "Select…",
+      "codigo": "Line code (Dynamic Table)",
+      "codigoPlaceholder": "Search by code or description (≥ 2 characters)…",
+      "hist": "History (HIST_LAN_LAL)",
+      "indRelacao": "Relationship (IND_RELACAO)",
+      "indRelacaoLocked": "Loss compensation (TYPE P): relates only to Parte B (Manual p.247, REGRA_IND_RELACAO).",
+      "indRelacaoPick": "Select…",
+      "livro": "Book",
+      "parteB": "Parte B account ({{tributo}})",
+      "parteBEmpty": "No live Parte B account for this tax — register one above.",
+      "parteBPick": "Select…",
+      "quarter": "Quarter",
+      "quarterPick": "Select…",
+      "valor": "Amount (always ≥ 0)",
+      "year": "Fiscal year"
+    },
+    "filter": {
+      "includeArchived": "Show archived"
+    },
+    "generateLink": "Generate ECF Real",
+    "indRelacao": {
+      "1": "1 — Parte B account",
+      "2": "2 — ledger account",
+      "3": "3 — Parte B and ledger account",
+      "4": "4 — no relationship (history required)"
+    },
+    "indSaldo": {
+      "C": "C — credit",
+      "D": "D — debit (loss / reduces taxable income)"
+    },
+    "loading": "Loading…",
+    "modal": {
+      "cancel": "Cancel",
+      "immutable": "Never changes — archive and recreate.",
+      "saving": "Saving…",
+      "submit": "Save"
+    },
+    "parteB": {
+      "col": {
+        "codCtaB": "Code",
+        "codPbRfb": "RFB standard",
+        "descricao": "Description",
+        "dtCriacao": "Created",
+        "dtLimite": "Limit",
+        "saldoIni": "Opening balance",
+        "tributo": "Tax"
+      },
+      "empty": "No Parte B account registered.",
+      "field": {
+        "cnpjInvalid": "CNPJ has 14 digits.",
+        "cnpjSitEsp": "Special-situation CNPJ — optional",
+        "codCtaB": "Account code (COD_CTA_B)",
+        "codCtaBPipe": "The code cannot contain \"|\" — it is the field separator of the SPED file.",
+        "codPbRfb": "RFB standard code (COD_PB_RFB)",
+        "codPbRfbPlaceholder": "Search by code or description (≥ 2 characters)…",
+        "codTributo": "Tax",
+        "descricao": "Description (DESC_CTA_LAL)",
+        "dtCriacao": "Creation date (DT_AP_LAL)",
+        "dtCriacaoHint": "FINAL date of the assessment period in which the account was created.",
+        "dtLimite": "Limit date (DT_LIM_LAL) — optional",
+        "indSaldoIni": "Opening balance nature",
+        "saldoIni": "Opening balance (VL_SALDO_INI)",
+        "saldoIniZero": "Account created within {{year}}: opening balance fixed at 0 (Manual p.237, REGRA_DT_AP_ZERO)."
+      },
+      "filter": {
+        "allTributos": "All taxes",
+        "tributo": "Tax"
+      },
+      "heading": "Parte B — accounts (M010)",
+      "modal": {
+        "error": {
+          "failed": "Error saving the Parte B account.",
+          "invalid": "Fill in code, description, RFB code and creation date."
+        },
+        "title": "New Parte B account (M010)",
+        "titleEdit": "Edit Parte B account"
+      },
+      "new": "New Parte B account"
+    },
+    "status": {
+      "archived": "archived"
+    },
+    "subtitle": "Parte A (M300/M350) · Parte B (M010) — registration of the taxable-income adjustments the ECF (Blocks M/N) reads.",
+    "title": "e-Lalur / e-Lacs",
+    "tributo": {
+      "C": "C — CSLL (e-Lacs)",
+      "I": "I — IRPJ (e-Lalur)"
+    }
   }
 }

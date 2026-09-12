@@ -7,6 +7,7 @@ import {
   ArchiveLalurSchema,
   CreateLalurEntrySchema,
   CreateLalurParteBAccountSchema,
+  LalurCatalogQuerySchema,
   ListLalurEntriesQuerySchema,
   ListLalurParteBQuerySchema,
   UpdateLalurEntrySchema,
@@ -19,6 +20,22 @@ import {
  * (Parte A M300/M350 + linhas E do Bloco N) and Parte B ACCOUNTS (M010). Archive is a COMMAND
  * (never a generic DELETE). These endpoints never post money — the ECF generator reads the store.
  */
+
+// ── Catálogo (Leiaute 12) ──────────────────────────────────────────────────
+/** GET /api/lalur/catalog?unitId=&year=&livro=|aba=PARTEB_PADRAO&q=&tributo= — read-only, global (FE-INCR-LALUR F-FE-1→a). */
+export const getLalurCatalog = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = LalurCatalogQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = getFactory().getLalurService().catalog(scope, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
 
 // ── Entries ────────────────────────────────────────────────────────────────
 /** GET /api/lalur/entries?unitId=&year=&quarter=&livro=&includeArchived= */
