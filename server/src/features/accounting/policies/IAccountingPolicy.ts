@@ -74,6 +74,12 @@ export interface IAccountingPolicy {
   /** Can approve a submitted journal entry (checker action, ADR-INCR-APPROVAL). */
   canApproveEntry(scope: AccountingScope): boolean;
 
+  /** Can create/update/archive e-Lalur/e-Lacs adjustments and Parte B accounts (BE-INCR-SPED-ECF-FASE3B item 11). */
+  canManageLalur(scope: AccountingScope): boolean;
+
+  /** Can list/read the e-Lalur/e-Lacs store; the ECF Real generator keeps `canRead` (BE-INCR-SPED-ECF-FASE3B). */
+  canReadLalur(scope: AccountingScope): boolean;
+
   /** Can trigger a re-scan of the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7). */
   canManageReconcilePending(scope: AccountingScope): boolean;
 

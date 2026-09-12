@@ -66,6 +66,10 @@ export async function resetDb(): Promise<void> {
   // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
   await prisma.accountingDeliveryLog.deleteMany();
 
+  // BE-INCR-SPED-ECF-FASE3B: ajuste (FK Restrict para a conta da Parte B + FK para Account) cai antes de ambos.
+  await prisma.lalurEntry.deleteMany();
+  await prisma.lalurParteBAccount.deleteMany();
+
   // Accounting — now safe: their own children are gone.
   await prisma.posting.deleteMany();
   await prisma.bankStatementLine.deleteMany();

@@ -2342,16 +2342,21 @@
  *
  *   /api/accounting/sped/ecf/real/generate:
  *     post:
- *       summary: Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Real, esqueleto)
+ *       summary: Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Real, Blocos L/M/N)
  *       description: >-
  *         Composes the ECF for the given calendar year in Lucro Real and persists a plain-text
  *         (ISO-8859-1) artifact as an EXPORT job of kind EXPORT_SPED_ECF_REAL (dedicated route,
- *         ADR-INCR-SPED-ECF-FASE3 Fork 1). Block 0 is parametrized from fiscal (FORMA_TRIB and
- *         FORMA_TRIB_PER are REQUIRED with no server default - the regime code is never guessed;
- *         FORMA_APUR is T, quarterly). Balance sheet and income statement are read per quarter
- *         through the report service. Blocks L, M and N (and the recovered C, E, J, K plus the
- *         Presumido-only P) are emitted as empty markers until Forks 2, 3 and 4 are ratified.
- *         There is no revenue exhaustiveness gate. Download via /data-exchange/jobs/{jobId}/download.
+ *         ADR-INCR-SPED-ECF-FASE3 Fork 1; BRIEF 3B Forks 2-d, 3-a, 4-b, 6-b, 7-a). Block 0 is
+ *         parametrized from fiscal (FORMA_TRIB defaults to 1; FORMA_TRIB_PER is REQUIRED, 4 chars in
+ *         [0RPAES], one per quarter, no server default; FORMA_APUR is T, quarterly). COD_VER is
+ *         resolved from the calendar year (2025 = 0012) or overridden by fiscal.codVer - a year with
+ *         no known layout is a 400, never a guessed code. HASH_ECF_ANTERIOR is emitted empty (the PVA
+ *         fills it when the previous ECF is recovered). Block L carries L030 periods only (L100/L300
+ *         are recovered by the PVA from K155/K156). Blocks M and N are read from the e-Lalur store
+ *         (/api/lalur): M010 per Parte B account, M030 per quarter with M300/M350 lines (+ M305/M355
+ *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
+ *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
+ *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2382,10 +2387,11 @@
  *                     email:      { type: string }
  *                 fiscal:
  *                   type: object
- *                   required: [formaTrib, formaTribPer]
+ *                   required: [formaTribPer]
  *                   properties:
- *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, no default' }
- *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 positions, no default' }
+ *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, default 1 (Lucro Real)' }
+ *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 chars in [0RPAES], one per quarter (Manual pp.71-72), no default' }
+ *                     codVer:         { type: string, description: '0000.COD_VER override, 4 digits (e.g. 0012); absent = resolved by calendar year' }
  *                     formaApur:      { type: string, enum: ['T'], description: 'T = trimestral (Fork 5)' }
  *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }
@@ -3625,6 +3631,150 @@
  *         - { in: query, name: to, required: false, schema: { type: string } }
  *       responses:
  *         '200': { description: 'result buckets per dimension value with rollup' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ */
+
+/**
+ * @openapi
+ * paths:
+ *   /api/lalur/entries:
+ *     get:
+ *       summary: List e-Lalur/e-Lacs adjustment lines (Parte A M300/M350 + linhas E do Bloco N)
+ *       description: >-
+ *         BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4 - b, model persistido). One row per (year, quarter,
+ *         livro, codigo). The ECF Real generator reads this store; the generation DTO never carries
+ *         adjustments. Archived rows are hidden unless includeArchived=true.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: year, required: false, schema: { type: integer } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
+ *       responses:
+ *         '200': { description: 'adjustment lines' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *     post:
+ *       summary: Register one adjustment line (validated against the Leiaute 12 catalog)
+ *       description: >-
+ *         codigo must exist in the Tabela Dinamica sheet of the livro, be an ENTRY line (tipo E - CNA/CA/R
+ *         are computed by the PVA) and be in force for the year; otherwise 400 with the code and the
+ *         reason (never a silent drop). indRelacao conditionals mirror REGRA_RELACAO_INEXISTENTE (Manual
+ *         p.247); TIPO_LANCAMENTO=P forces indRelacao=1 (REGRA_IND_RELACAO). Lines of livro n500/n630/n670
+ *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateLalurEntryInput' }
+ *       responses:
+ *         '201': { description: 'the created line' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/entries/{id}:
+ *     patch:
+ *       summary: Update an adjustment line (partial; merged row fully re-validated)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateLalurEntryInput' }
+ *       responses:
+ *         '200': { description: 'the updated line' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/entries/{id}/archive:
+ *     post:
+ *       summary: Archive an adjustment line (soft; the code is freed for re-registration)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ArchiveLalurInput' }
+ *       responses:
+ *         '200': { description: 'the archived line (idempotent)' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b:
+ *     get:
+ *       summary: List Parte B accounts (M010) of the e-Lalur/e-Lacs
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: codTributo, required: false, schema: { type: string, enum: [I, C] } }
+ *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
+ *       responses:
+ *         '200': { description: 'Parte B accounts' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *     post:
+ *       summary: Register a Parte B account (M010 - codCtaB + codTributo is the key)
+ *       description: >-
+ *         codPbRfb must exist in the PARTEB_PADRAO sheet for the tributo (REGRA_M010_COD_PB_RFB_TRIBUTO,
+ *         Manual p.237). codCtaB is OUR stable code, reconciled by the PVA against the E020 recovered from
+ *         the previous ECF - never renumber it between years.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateLalurParteBAccountInput' }
+ *       responses:
+ *         '201': { description: 'the created account' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
+ *   /api/lalur/parte-b/{id}:
+ *     patch:
+ *       summary: Update a Parte B account (partial; key fields immutable)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateLalurParteBAccountInput' }
+ *       responses:
+ *         '200': { description: 'the updated account' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/{id}/archive:
+ *     post:
+ *       summary: Archive a Parte B account (soft; live related lines must be archived first)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ArchiveLalurInput' }
+ *       responses:
+ *         '200': { description: 'the archived account (idempotent)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  */

@@ -106,7 +106,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-SPED — ECD/ECF file generation jobs. Job id + kind + year + file hash + line count;
   // never the file bytes or account balances (PII-safe).
   'sped.ecd_generated': ['jobId', 'kind', 'year', 'mappingVersion', 'sha256', 'lineCount'],
-  'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount'],
+  // `lalurEntries` (BE-INCR-SPED-ECF-FASE3B item 18): CONTAGEM de ajustes do e-Lalur que entraram no
+  // arquivo do Real — número, nunca conteúdo (código/valor/histórico ficam nos eventos lalur.*).
+  'sped.ecf_generated': ['jobId', 'kind', 'year', 'sha256', 'lineCount', 'lalurEntries'],
   // BE-INCR-BINDING-PRESS (item 15 do BRIEF) — A Prensa: compilação/ativação/reprovação de
   // binding vertical→contabilidade. Emitido por `BindingCompileService` (features/accountingBinding,
   // fora desta árvore — chega aqui via `IBindingAuditPort`, adaptado em `lib/factory.ts`). Só
@@ -137,6 +139,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf'],
   'delivery.sent':          ['deliveryId', 'contactId', 'attemptCount'],
   'delivery.failed':        ['deliveryId', 'contactId', 'attemptCount', 'reason'],
+  // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
+  // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
+  // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).
+  'lalur.entry_created':    ['entryId', 'livro', 'codigo', 'quarter', 'year', 'valorCents', 'indRelacao', 'parteBId', 'accountId'],
+  'lalur.entry_updated':    ['entryId', 'livro', 'codigo', 'quarter', 'year', 'valorCents', 'indRelacao', 'parteBId', 'accountId'],
+  'lalur.entry_archived':   ['entryId', 'livro', 'codigo', 'quarter', 'year'],
+  'lalur.parte_b_created':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
+  'lalur.parte_b_updated':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
+  'lalur.parte_b_archived': ['parteBId', 'codCtaB', 'codTributo'],
 };
 
 /**

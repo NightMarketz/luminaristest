@@ -17,23 +17,31 @@ import { DeclarantSchema, SignerSchema, refineEcfSigners } from './SpedEcfDto';
  *    outro dígito; o servidor só supre a ausência.
  *  - `formaTribPer` (0010.FORMA_TRIB_PER) — OBRIGATÓRIO, SEM DEFAULT, pela MESMA regra: o
  *    default da lib (`'PPPP'`, `ecf.ts` Reg0010Input) é o código do Presumido e não pode vazar
- *    para um arquivo do Real; o código do Real não está transcrito. Comprimento 4 = um
- *    caractere por trimestre (Fork 5→(a) trimestral, 4 janelas); o alfabeto do código não é
- *    restringido porque não foi verificado.
+ *    para um arquivo do Real. Alfabeto VERIFICADO (BRIEF 3B item 2; Manual do Leiaute 12 pp.71-72,
+ *    campo 7, `C 4`, `[0;R;P;A;E;S]`): um caractere por trimestre (Fork 5→(a), 4 janelas) ⇒
+ *    `/^[0RPAES]{4}$/`. `'PPPP'` é VÁLIDO no Manual — o que vaza é o DEFAULT, não o valor.
+ *  - `codVer` (0000.COD_VER) — OPCIONAL, override do caller (Fork 7→(a)); ausente ⇒ tabela
+ *    ano→leiaute em `lib/ecf.ts` (`resolveEcfCodVer`), erro explícito para ano sem leiaute.
  *  - `formaApur` (0010.FORMA_APUR) — Fork 5→(a) Trimestral ratificado ⇒ enum fechado `['T']`
  *    com default `'T'`; entra como parâmetro (BRIEF item 9), não como constante do serializer.
  *  - `indAliqCsll`/`indRecReceita` — mesmo shape e defaults do Presumido (reuso direto).
  *
- * O que NÃO existe aqui (forks pendentes — BRIEF §2/§3): `hashEcfAnterior` (Fork 2) e
- * `lalurAdjustments` (Fork 4). `HASH_ECF_ANTERIOR` sai vazio como no Presumido.
+ * O que NÃO existe aqui e NÃO deve existir (BRIEF 3B §2.1): `hashEcfAnterior` — Fork 2→(d), Manual
+ * p.70 campo 2 "preenchido automaticamente pelo sistema" (Obrigatório=Não): o PVA preenche na
+ * recuperação da ECF anterior, o `.txt` emite vazio, `.strict()` recusa a chave; e os ajustes do
+ * e-Lalur — Fork 4→(b): o gerador LÊ do model (`LalurEntry`), o DTO de geração não os carrega.
  */
 
 const FiscalRealSchema = z
   .object({
     // 0010.FORMA_TRIB — 1 dígito; valor informado pelo caller (sem default, ver cabeçalho).
     formaTrib: z.string().regex(/^\d$/, 'FORMA_TRIB = 1 dígito (tabela do Manual da ECF).').default('1'),
-    // 0010.FORMA_TRIB_PER — 4 posições (uma por trimestre); sem default (ver cabeçalho).
-    formaTribPer: z.string().length(4, 'FORMA_TRIB_PER = 4 posições (uma por trimestre).'),
+    // 0010.FORMA_TRIB_PER — 4 posições (uma por trimestre) no alfabeto do Manual pp.71-72; sem default.
+    formaTribPer: z
+      .string()
+      .regex(/^[0RPAES]{4}$/, 'FORMA_TRIB_PER = 4 posições em [0;R;P;A;E;S], uma por trimestre (Manual pp.71-72).'),
+    // 0000.COD_VER — override opcional (Fork 7→(a)); 4 dígitos como '0012'.
+    codVer: z.string().regex(/^\d{4}$/, 'COD_VER = 4 dígitos (ex.: 0012).').optional(),
     // 0010.FORMA_APUR — Fork 5→(a): Trimestral.
     formaApur: z.enum(['T']).default('T'),
     // 0020.IND_ALIQ_CSLL — ECF ≥ 2019 ∈ {1 (9%), 4 (15%)} (REGRA_PREENCHIMENTO_IND_ALIQ_CSSL).

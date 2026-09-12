@@ -114,7 +114,7 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
       endereco: 'RUA DAS FLORES', num: '100', bairro: 'CENTRO', uf: 'DF', codMun: '5300108',
       cep: '70000000', email: 'industria@teste.com',
     },
-    fiscal: { formaTrib: '1', formaTribPer: 'XXXX' },
+    fiscal: { formaTrib: '1', formaTribPer: 'RRRR' },
     signers: [
       { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
     ],

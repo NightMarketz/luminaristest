@@ -26,6 +26,7 @@ import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
 import packageBalanceRoutes from './packageBalances';
 import reconcilePendingRoutes from './reconcilePending';
+import lalurRoutes from './lalur';
 
 const router = Router();
 
@@ -76,6 +77,7 @@ router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
 router.use('/package-balances', packageBalanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);
+router.use('/lalur', lalurRoutes);
 
 export { router };
 

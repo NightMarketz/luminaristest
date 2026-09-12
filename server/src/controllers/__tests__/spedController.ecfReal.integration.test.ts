@@ -36,8 +36,8 @@ const body = (over: Record<string, unknown> = {}) => ({
     endereco: 'RUA DAS FLORES', num: '100', bairro: 'CENTRO', uf: 'DF', codMun: '5300108',
     cep: '70000000', email: 'industria@teste.com',
   },
-  // Placeholders de teste — o dígito/código do regime é informado pelo caller (sem default).
-  fiscal: { formaTrib: '1', formaTribPer: 'XXXX' },
+  // 'RRRR' = Lucro Real nos 4 trimestres (alfabeto pp.71-72, item 2); sem default no servidor.
+  fiscal: { formaTrib: '1', formaTribPer: 'RRRR' },
   signers: [
     { identNom: 'CONTADOR', identCpfCnpj: '12345678900', identQualif: '900', indCrc: '1DF123', email: 'c@d.com', fone: '6133334444' },
     { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
@@ -125,7 +125,7 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
   });
 
   it("fiscal.formaTrib ausente → 201 com FORMA_TRIB='1' no 0010 (default ratificado 2026-09-02); formaTribPer ausente → 400", async () => {
-    const ok = await post(donoA, body({ fiscal: { formaTribPer: 'XXXX' } }));
+    const ok = await post(donoA, body({ fiscal: { formaTribPer: 'RRRR' } }));
     expect(ok.status).toBe(201);
     const file = await request(app)
       .get(`/api/accounting/data-exchange/jobs/${ok.body.data.id as string}/download`)
@@ -133,7 +133,7 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
       .set(authHeader(donoA));
     expect(file.status).toBe(200);
     // FORMA_TRIB é o 4º campo do 0010: '1' suprido pelo default, formaTribPer do caller.
-    expect(file.text).toContain('|0010||N|1|T|01|XXXX|');
+    expect(file.text).toContain('|0010||N|1|T|01|RRRR|');
     const antes = await prisma.accountingDataExchangeJob.count();
     const res = await post(donoA, body({ fiscal: { formaTrib: '1' } }));
     expect(res.status).toBe(400);
@@ -146,7 +146,7 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
     const antes = await prisma.accountingDataExchangeJob.count();
     const { fiscal: _omit, ...semFiscal } = body();
     expect((await post(donoA, semFiscal)).status).toBe(400);
-    expect((await post(donoA, body({ fiscal: { formaTrib: '1', formaTribPer: 'XXXX', formaApur: 'A' } }))).status).toBe(400);
+    expect((await post(donoA, body({ fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'A' } }))).status).toBe(400);
     expect(await prisma.accountingDataExchangeJob.count()).toBe(antes);
   });
 });
