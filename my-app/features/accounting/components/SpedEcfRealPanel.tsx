@@ -40,6 +40,9 @@ import { resolveError } from '../lib/resolveError';
  * Unlike the Presumido ECF, there is no revenue-exhaustiveness gate here (server comment,
  * `spedController.ts`) — this panel does not fabricate one (BRIEF item 12).
  */
+/** id of this panel's section — the "Gerar ECF Real ↓" link in `LalurPanel` scrolls to it (FE-INCR-LALUR item 12). */
+export const SPED_ECF_REAL_ANCHOR = 'sped-ecf-real';
+
 export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
   const { t } = useTranslation('accounting');
   const currentYear = new Date().getFullYear();
@@ -107,7 +110,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+    <section id={SPED_ECF_REAL_ANCHOR} className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
       <h2 className="mb-1 text-lg font-semibold text-neutral-200">
         {t('sped.ecfReal.title', 'Gerar SPED ECF (Lucro Real)')}
       </h2>

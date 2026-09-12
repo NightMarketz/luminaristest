@@ -15,6 +15,7 @@ import { ReconciliationPanel } from './components/ReconciliationPanel';
 import { NfePanel } from './components/NfePanel';
 import { CompliancePanel } from './components/CompliancePanel';
 import { SpedGenerationPanel } from './components/SpedGenerationPanel';
+import { LalurPanel } from './components/LalurPanel';
 import { DFCPanel } from './components/DFCPanel';
 import { PeriodComparisonPanel } from './components/PeriodComparisonPanel';
 import { DailyJournalPanel } from './components/DailyJournalPanel';
@@ -350,10 +351,11 @@ export function AccountingView() {
         <NfePanel unitId={unitId} onLedgerChange={reload} onNavigateTab={(tab) => setActiveTab(tab)} />
       )}
 
-      {/* ── Compliance (mapeamento referencial RFB + geração SPED) tab ─────── */}
+      {/* ── Compliance (mapeamento referencial RFB + e-Lalur + geração SPED) tab ── */}
       {activeTab === 'compliance' && unitId && (
         <div className="space-y-8">
           <CompliancePanel unitId={unitId} />
+          <LalurPanel unitId={unitId} />
           <SpedGenerationPanel unitId={unitId} />
         </div>
       )}

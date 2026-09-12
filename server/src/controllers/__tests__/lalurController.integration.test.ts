@@ -8,6 +8,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { ECF_L12_CATALOG } from '@/features/accounting/models/Lalur.model';
 
 const app = makeApp();
 const UNIT = 'unit-lalur-http';
@@ -57,7 +58,8 @@ describe('/api/lalur — contrato HTTP', () => {
     await prisma.$disconnect();
   });
 
-  it('sem Bearer, as 8 rotas respondem 401 (nascem protegidas)', async () => {
+  it('sem Bearer, as 9 rotas respondem 401 (nascem protegidas)', async () => {
+    expect((await request(app).get('/api/lalur/catalog').query({ unitId: UNIT, year: 2025, livro: 'lalur' })).status).toBe(401);
     expect((await request(app).get('/api/lalur/entries').query({ unitId: UNIT })).status).toBe(401);
     expect((await request(app).post('/api/lalur/entries').send(entryBody())).status).toBe(401);
     expect((await request(app).patch('/api/lalur/entries/x').send({ unitId: UNIT })).status).toBe(401);
@@ -66,6 +68,54 @@ describe('/api/lalur — contrato HTTP', () => {
     expect((await request(app).post('/api/lalur/parte-b').send(parteBBody())).status).toBe(401);
     expect((await request(app).patch('/api/lalur/parte-b/x').send({ unitId: UNIT })).status).toBe(401);
     expect((await request(app).post('/api/lalur/parte-b/x/archive').send({ unitId: UNIT })).status).toBe(401);
+  });
+
+  // ── Catálogo (FE-INCR-LALUR, Fork F-FE-1→a) ──────────────────────────────
+  it('catálogo: livro devolve só linhas E vigentes no ano (mesmo predicado do POST), sem duplicata; q filtra sem acento', async () => {
+    const lalur = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025, livro: 'lalur' });
+    expect(lalur.status).toBe(200);
+    const rows = lalur.body.data.rows as Array<{ codigo: string; tipo: string; tipoLanc?: string; vigencia: { de: string | null; ate: string | null } }>;
+    expect(rows.length).toBeGreaterThan(300);
+    expect(rows.every((r) => r.tipo === 'E')).toBe(true);
+    expect(rows.find((r) => r.codigo === '7')?.tipoLanc).toBe('A'); // Custos não dedutíveis
+    expect(rows.find((r) => r.codigo === '2')).toBeUndefined(); // CNA — o POST recusa, o catálogo não oferece
+    expect(new Set(rows.map((r) => r.codigo)).size).toBe(rows.length);
+
+    // M350A/13 aparece DUAS vezes na planilha oficial — o catálogo devolve uma (1ª ocorrência = findLinha)
+    const lacs = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025, livro: 'lacs' });
+    expect((lacs.body.data.rows as Array<{ codigo: string }>).filter((r) => r.codigo === '13')).toHaveLength(1);
+
+    // vigência: M300A/8.1101 é E com DT_INI 2026-01-01 — ausente em 2025, presente em 2026 (o mesmo
+    // predicado do POST; N630A/6.1 NÃO serve de prova: é CNA, cai pelo tipo antes da vigência)
+    expect(rows.find((r) => r.codigo === '8.1101')).toBeUndefined();
+    const lalur2026 = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2026, livro: 'lalur' });
+    expect((lalur2026.body.data.rows as Array<{ codigo: string; vigencia: { de: string | null } }>).find((r) => r.codigo === '8.1101')?.vigencia.de).toBe('2026-01-01');
+
+    const q = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025, livro: 'lalur', q: 'provisoes' });
+    expect(q.status).toBe(200);
+    expect(q.body.data.rows.length).toBeGreaterThan(0);
+    expect(q.body.data.rows.every((r: { descricao: string }) => /provis/i.test(r.descricao))).toBe(true);
+  });
+
+  it('catálogo: PARTEB_PADRAO filtra por tributo (A casa com os dois), sem year e sem vigência (= assertCodPbRfb); livro+aba juntos ou nenhum é 400; livro sem year é 400; q de 1 char é 400', async () => {
+    const irpj = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, aba: 'PARTEB_PADRAO', tributo: 'I' });
+    expect(irpj.status).toBe(200);
+    const rows = irpj.body.data.rows as Array<{ codigo: string; tributo: string }>;
+    expect(rows.find((r) => r.codigo === '1000')?.tributo).toBe('I');
+    expect(rows.find((r) => r.codigo === '1003')).toBeUndefined(); // BC negativa CSLL — tributo C
+    expect(rows.every((r) => r.tributo === 'I' || r.tributo === 'A')).toBe(true);
+    expect(rows.some((r) => r.tributo === 'A')).toBe(true);
+    // sem filtro de tributo = a aba inteira, inclusive DT_INI 2024 — nada escondido por ano (o POST também não esconde)
+    const all = await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, aba: 'PARTEB_PADRAO' });
+    expect(all.body.data.rows.length).toBe(ECF_L12_CATALOG.abas.PARTEB_PADRAO.length);
+
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025, livro: 'lalur', aba: 'PARTEB_PADRAO' })).status).toBe(400);
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025 })).status).toBe(400);
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, livro: 'lalur' })).status).toBe(400); // year obrigatório
+    // param aceito-e-ignorado é bug: cada filtro pertence a uma aba
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, aba: 'PARTEB_PADRAO', year: 2025 })).status).toBe(400);
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, livro: 'lalur', year: 2025, tributo: 'I' })).status).toBe(400);
+    expect((await request(app).get('/api/lalur/catalog').set(authHeader(dono)).query({ unitId: UNIT, year: 2025, livro: 'lalur', q: 'p' })).status).toBe(400);
   });
 
   // ── Parte B ──────────────────────────────────────────────────────────────
@@ -172,7 +222,6 @@ describe('/api/lalur — contrato HTTP', () => {
     expect(ok.status).toBe(201);
 
     // compensação de prejuízo (M300A código com TIPO LANÇ = P) com indRelacao=2 → 400 (REGRA_IND_RELACAO p.247)
-    const { ECF_L12_CATALOG } = await import('@/features/accounting/models/Lalur.model');
     const p = ECF_L12_CATALOG.abas.M300A.find((r) => r.tipo === 'E' && r.tipoLanc === 'P' && !r.dtFim)!;
     const comp = await request(app).post('/api/lalur/entries').set(authHeader(dono)).send({ unitId: UNIT, year: 2025, quarter: 'T03', livro: 'lalur', codigo: p.codigo, valorCents: 10, indRelacao: '2', accountId: contaResultado.id });
     expect(comp.status).toBe(400);

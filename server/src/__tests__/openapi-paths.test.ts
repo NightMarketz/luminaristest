@@ -59,7 +59,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +6 (BE-INCR-SPED-ECF-FASE3C, ADR EMENDA 3ª): /api/lalur/parte-b/movements (GET+POST), /movements/{id}
 //    (PATCH), /movements/{id}/archive, /parte-b/close, /parte-b/reopen, /parte-b/balances —
 //    6 PATHS e 7 OPERAÇÕES (166 → 172, 197 → 204 operations, medido com docs:generate).
-const BASELINE = 172;
+// +1 (FE-INCR-LALUR, Fork F-FE-1→a): GET /api/lalur/catalog — catálogo Leiaute 12 read-only (172 → 173).
+const BASELINE = 173;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

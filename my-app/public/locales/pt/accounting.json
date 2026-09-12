@@ -1349,5 +1349,154 @@
       "items": "Itens na nota",
       "sourceDocument": "Documento de origem"
     }
+  },
+  "lalur": {
+    "action": {
+      "archive": "Arquivar",
+      "edit": "Editar"
+    },
+    "archiveModal": {
+      "archiving": "Arquivando…",
+      "cancel": "Voltar",
+      "confirm": "Confirmar arquivamento",
+      "note": "O registro sai da ECF e o código fica livre para novo cadastro. Nada é apagado.",
+      "showRelated": "Ver os ajustes relacionados a esta conta",
+      "titleEntry": "Arquivar ajuste",
+      "titleParteB": "Arquivar conta da Parte B"
+    },
+    "col": {
+      "actions": "Ações"
+    },
+    "combobox": {
+      "loading": "Carregando catálogo…",
+      "noMatch": "Nenhuma linha do catálogo corresponde.",
+      "notInCatalog": "Código fora do catálogo — selecione uma linha da lista."
+    },
+    "counters": "{{entries}} ajustes · {{accounts}} contas da Parte B no exercício {{year}}",
+    "entry": {
+      "col": {
+        "codigo": "Código · descrição",
+        "hist": "Histórico",
+        "indRelacao": "Rel.",
+        "livro": "Livro",
+        "quarter": "Trim.",
+        "related": "Parte B / conta",
+        "tipo": "Tipo",
+        "valor": "Valor"
+      },
+      "empty": "Nenhum ajuste registrado neste exercício.",
+      "filter": {
+        "allLivros": "Todos os livros",
+        "allQuarters": "Todos os trimestres",
+        "parteB": "Parte B: {{code}} ×"
+      },
+      "heading": "Parte A — ajustes (M300/M350) e linhas E do Bloco N",
+      "modal": {
+        "error": {
+          "failed": "Erro ao salvar o ajuste.",
+          "invalid": "Preencha trimestre, código, valor e os campos exigidos pelo relacionamento."
+        },
+        "immutableNote": "Exercício, trimestre, livro e código não mudam — arquive e recrie.",
+        "title": "Novo ajuste (Parte A / Bloco N)",
+        "titleEdit": "Editar ajuste"
+      },
+      "new": "Novo ajuste"
+    },
+    "error": {
+      "archive": "Não foi possível arquivar.",
+      "catalog": "Erro ao carregar o catálogo do Leiaute 12.",
+      "loadEntries": "Erro ao carregar os ajustes.",
+      "loadParteB": "Erro ao carregar as contas da Parte B."
+    },
+    "field": {
+      "account": "Conta contábil (M310/M360)",
+      "accountPick": "Selecione…",
+      "codigo": "Código da linha (Tabela Dinâmica)",
+      "codigoPlaceholder": "Busque por código ou descrição (≥ 2 caracteres)…",
+      "hist": "Histórico (HIST_LAN_LAL)",
+      "indRelacao": "Relacionamento (IND_RELACAO)",
+      "indRelacaoLocked": "Compensação de prejuízo (TIPO P): relaciona-se só com a Parte B (Manual p.247, REGRA_IND_RELACAO).",
+      "indRelacaoPick": "Selecione…",
+      "livro": "Livro",
+      "parteB": "Conta da Parte B ({{tributo}})",
+      "parteBEmpty": "Nenhuma conta viva da Parte B para este tributo — cadastre uma acima.",
+      "parteBPick": "Selecione…",
+      "quarter": "Trimestre",
+      "quarterPick": "Selecione…",
+      "valor": "Valor (sempre ≥ 0)",
+      "year": "Exercício"
+    },
+    "filter": {
+      "includeArchived": "Mostrar arquivados"
+    },
+    "generateLink": "Gerar ECF Real",
+    "indRelacao": {
+      "1": "1 — conta da Parte B",
+      "2": "2 — conta contábil",
+      "3": "3 — Parte B e conta contábil",
+      "4": "4 — sem relacionamento (histórico obrigatório)"
+    },
+    "indSaldo": {
+      "C": "C — credor",
+      "D": "D — devedor (prejuízo / reduz o lucro real)"
+    },
+    "loading": "Carregando…",
+    "modal": {
+      "cancel": "Cancelar",
+      "immutable": "Não muda — arquive e recrie.",
+      "saving": "Salvando…",
+      "submit": "Salvar"
+    },
+    "parteB": {
+      "col": {
+        "codCtaB": "Código",
+        "codPbRfb": "Padrão RFB",
+        "descricao": "Descrição",
+        "dtCriacao": "Criação",
+        "dtLimite": "Limite",
+        "saldoIni": "Saldo inicial",
+        "tributo": "Tributo"
+      },
+      "empty": "Nenhuma conta da Parte B cadastrada.",
+      "field": {
+        "cnpjInvalid": "CNPJ tem 14 dígitos.",
+        "cnpjSitEsp": "CNPJ situação especial — opcional",
+        "codCtaB": "Código da conta (COD_CTA_B)",
+        "codCtaBPipe": "O código não pode conter \"|\" — é o separador de campo do arquivo SPED.",
+        "codPbRfb": "Código padrão RFB (COD_PB_RFB)",
+        "codPbRfbPlaceholder": "Busque por código ou descrição (≥ 2 caracteres)…",
+        "codTributo": "Tributo",
+        "descricao": "Descrição (DESC_CTA_LAL)",
+        "dtCriacao": "Data de criação (DT_AP_LAL)",
+        "dtCriacaoHint": "Data FINAL do período de apuração em que a conta nasceu.",
+        "dtLimite": "Data-limite (DT_LIM_LAL) — opcional",
+        "indSaldoIni": "Natureza do saldo inicial",
+        "saldoIni": "Saldo inicial (VL_SALDO_INI)",
+        "saldoIniZero": "Conta criada dentro de {{year}}: saldo inicial fixado em 0 (Manual p.237, REGRA_DT_AP_ZERO)."
+      },
+      "filter": {
+        "allTributos": "Todos os tributos",
+        "tributo": "Tributo"
+      },
+      "heading": "Parte B — contas (M010)",
+      "modal": {
+        "error": {
+          "failed": "Erro ao salvar a conta da Parte B.",
+          "invalid": "Preencha código, descrição, código RFB e data de criação."
+        },
+        "title": "Nova conta da Parte B (M010)",
+        "titleEdit": "Editar conta da Parte B"
+      },
+      "new": "Nova conta da Parte B"
+    },
+    "status": {
+      "archived": "arquivada"
+    },
+    "subtitle": "Parte A (M300/M350) · Parte B (M010) — cadastro dos ajustes do lucro real que a ECF (Blocos M/N) lê.",
+    "title": "e-Lalur / e-Lacs",
+    "tributo": {
+      "C": "C — CSLL (e-Lacs)",
+      "I": "I — IRPJ (e-Lalur)"
+    }
   }
 }

@@ -51,6 +51,7 @@ vi.mock('../components/ImportExportPanel', () => ({ ImportExportPanel: () => nul
 vi.mock('../components/ReconciliationPanel', () => ({ ReconciliationPanel: () => null }));
 vi.mock('../components/CompliancePanel', () => ({ CompliancePanel: () => null }));
 vi.mock('../components/SpedGenerationPanel', () => ({ SpedGenerationPanel: () => null }));
+vi.mock('../components/LalurPanel', () => ({ LalurPanel: () => null }));
 vi.mock('../components/DFCPanel', () => ({ DFCPanel: () => null }));
 vi.mock('../components/PeriodComparisonPanel', () => ({ PeriodComparisonPanel: () => null }));
 vi.mock('../components/DailyJournalPanel', () => ({ DailyJournalPanel: () => null }));

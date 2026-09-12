@@ -17,6 +17,7 @@ import {
   LALUR_SYSTEM_PREJUIZO_HISTORICO,
   LALUR_TRIBUTOS,
   LIVRO_TRIBUTO,
+  ECF_L12_CATALOG,
   TRIBUTO_LIVRO,
   TRIBUTO_PREJUIZO_COD_PB_RFB,
   TRIBUTO_PREJUIZO_INDICADOR,
@@ -24,6 +25,7 @@ import {
   findParteBPadrao,
   isParteALivro,
   isPrejuizoIndicador,
+  linhasDoLivro,
   vigenteNoAno,
   type LalurLivro,
   type LalurQuarter,
@@ -33,6 +35,7 @@ import { refineLalurLine, refineLalurMovement } from '../dtos/LalurDto';
 import type {
   ArchiveLalurInput,
   CreateLalurEntryInput,
+  LalurCatalogQueryInput,
   CreateLalurParteBAccountInput,
   CreateLalurParteBMovementInput,
   LalurParteBBalancesQueryInput,
@@ -96,6 +99,14 @@ const qIndex = (q: string) => (LALUR_QUARTERS as readonly string[]).indexOf(q);
 export const deletedLalurCodigo = (id: string, codigo: string) => `deleted:${id}:${codigo}`;
 export const deletedLalurCodCtaB = (id: string, codCtaB: string) => `deleted:${id}:${codCtaB}`;
 
+/** One row of GET /lalur/catalog (FE-INCR-LALUR §2.2): a linha E do livro, or a PARTEB_PADRAO code. */
+export type LalurCatalogRow =
+  | { codigo: string; descricao: string; tipo: 'E'; tipoLanc?: 'A' | 'E' | 'P' | 'L'; vigencia: { de: string | null; ate: string | null } }
+  | { codigo: string; descricao: string; tributo: 'I' | 'C' | 'A' };
+
+/** Accent/case-insensitive substring match for the `q` filter (the sheet spells "Provisões"; the user types "provisoes"). */
+const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
 /**
  * LalurService — e-Lalur / e-Lacs adjustment store (BE-INCR-SPED-ECF-FASE3B item 11, Fork 4→(b);
  * ADR EMENDA 2026-09-11 (2ª) D-M1..D-M5). FIRST-CLASS PRISMA: an adjustment is a LEGAL invariant of the
@@ -143,6 +154,43 @@ export class LalurService {
       );
     }
     return row;
+  }
+
+  /**
+   * GET /lalur/catalog (FE-INCR-LALUR, Fork F-FE-1→a) — the fixture as the FE sees it, with EXACTLY the
+   * write path's predicates, so the combobox never offers a code POST would refuse nor hides one it would
+   * accept: a livro row is listed iff it is what `findLinha` resolves for its code (first occurrence of a
+   * duplicated code — `ECF_L12_CODIGOS_DUPLICADOS`) AND `resolveLinha` would accept it (`tipo = E`,
+   * `vigenteNoAno(year)`); a PARTEB_PADRAO row is listed iff `assertCodPbRfb` would accept it (tributo
+   * `A` matches both; NO vigência — the write path applies none). Global catalog: no tenancy, policy only.
+   */
+  catalog(scope: AccountingScope, params: LalurCatalogQueryInput): { rows: LalurCatalogRow[] } {
+    if (!this.policy.canReadLalur(scope)) throw new ForbiddenError('Você não tem permissão para ler o e-Lalur.');
+    let rows: LalurCatalogRow[];
+    if (params.aba === 'PARTEB_PADRAO') {
+      rows = ECF_L12_CATALOG.abas.PARTEB_PADRAO.filter(
+        (r) => !params.tributo || r.tributo === 'A' || r.tributo === params.tributo,
+      ).map((r) => ({ codigo: r.codigo, descricao: r.descricao, tributo: r.tributo }));
+    } else {
+      const livro = params.livro as LalurLivro;
+      const year = params.year as number; // the DTO refine makes it required with livro
+      rows = [];
+      for (const r of linhasDoLivro(livro)) {
+        if (findLinha(livro, r.codigo) !== r || r.tipo !== 'E' || !vigenteNoAno(r, year)) continue;
+        rows.push({
+          codigo: r.codigo,
+          descricao: r.descricao,
+          tipo: 'E',
+          ...(r.tipoLanc && r.tipoLanc !== 'R' ? { tipoLanc: r.tipoLanc } : {}),
+          vigencia: { de: r.dtIni, ate: r.dtFim },
+        });
+      }
+    }
+    if (params.q) {
+      const q = norm(params.q);
+      rows = rows.filter((r) => norm(r.codigo).includes(q) || norm(r.descricao).includes(q));
+    }
+    return { rows };
   }
 
   /**
