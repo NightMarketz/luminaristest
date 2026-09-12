@@ -128,6 +128,25 @@ export class SpedEcfRealGenerationService {
     return line;
   }
 
+  /** Item 17: texto livre com '|' nomeado por registro + identificador (M300/M350 ajuste, M010 conta, M410 movimento, M315/M415 processo). */
+  public static assertNoPipe(entries: LalurEntryWithRelations[], movements: LalurMovementWithRelations[], accounts: Array<{ codCtaB: string; descricao: string; codTributo: string }>): void {
+    const bad = (reg: string, who: string, field: string) =>
+      new ValidationError(`${reg} ${who}: campo ${field} contém '|' (separador de campo do arquivo ECF, Manual p.31) — corrija o texto antes de gerar.`);
+    for (const a of accounts) {
+      if (a.codCtaB.includes('|')) throw bad('M010', `conta '${a.codCtaB}' (${a.codTributo})`, 'codCtaB');
+      if (a.descricao.includes('|')) throw bad('M010', `conta '${a.codCtaB}' (${a.codTributo})`, 'descricao');
+    }
+    for (const e of entries) {
+      const reg = e.livro === 'lacs' ? 'M350' : e.livro === 'lalur' ? 'M300' : e.livro.toUpperCase();
+      if (e.histLancamento?.includes('|')) throw bad(reg, `ajuste ${e.id} (código ${e.codigo}, ${e.quarter})`, 'histLancamento');
+      for (const p of e.processos ?? []) if (p.numProc.includes('|')) throw bad(e.livro === 'lacs' ? 'M365' : 'M315', `ajuste ${e.id}`, 'numProc');
+    }
+    for (const m of movements) {
+      if (m.historico.includes('|')) throw bad('M410', `movimento ${m.id} (conta '${m.parteB.codCtaB}', ${m.quarter})`, 'historico');
+      for (const p of m.processos ?? []) if (p.numProc.includes('|')) throw bad('M415', `movimento ${m.id}`, 'numProc');
+    }
+  }
+
   /** M410 a partir do movimento persistido (ECF 3C item 5). */
   public static toSerializerMovement(m: LalurMovementWithRelations): EcfRealParteBMovement {
     const out: EcfRealParteBMovement = {
@@ -279,8 +298,9 @@ export class SpedEcfRealGenerationService {
       codVer,
     };
 
-    // BRIEF 3C item 17: `spedLine` lança Error puro em campo com '|' (dado pré-existente ao DTO que hoje recusa) —
-    // aqui vira 400 nomeando o campo, não 500.
+    // BRIEF 3C item 17: `spedLine` lança Error puro em campo com '|' (dado pré-existente ao DTO que hoje recusa).
+    // Varre ANTES de montar, nomeando registro + id/código (review M6); o try é a rede para o que a varredura não cobrir.
+    SpedEcfRealGenerationService.assertNoPipe(entries, movementsRaw, liveAccounts);
     let lines: string[];
     try {
       lines = buildEcfRealFile(input);

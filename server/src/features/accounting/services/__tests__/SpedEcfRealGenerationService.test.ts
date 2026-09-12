@@ -437,7 +437,7 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
     const { service, createJob } = buildService({ entries: [e] });
     const p = service.generate(scope, makeDto());
     await expect(p).rejects.toBeInstanceOf(ValidationError);
-    await expect(p).rejects.toThrow(/não pode conter '\|'.*separador de campo/);
+    await expect(p).rejects.toThrow(/M300 ajuste e1 \(código 7, T01\): campo histLancamento contém '\|'/); // review M6: nomeia registro + id
     expect(createJob).not.toHaveBeenCalled();
   });
 

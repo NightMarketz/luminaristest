@@ -503,8 +503,11 @@ esboço + soft-delete (duplicata passa; update vira archive+recreate).
 a perna (a) não tem coluna de exercício-âncora. Regra: para o exercício `N`,
 `sdIni(N, T01) = balance(N−1, T04).sdFim` **se** o T04 de N−1 estiver fechado; **senão** `saldoIniCents`
 (+ `REGRA_DT_AP_ZERO`: 0 se `dtCriacao ∈ N`). Guarda: existe **qualquer** `LalurParteBClosing` em
-exercício `< N−1` **e** `(N−1, T04)` não está fechado ⇒ `ValidationError` "feche N−1 primeiro" — no
-`close` de `(N, T01)` e na geração da ECF de N. Fecha o caso "fechou 2025, pulou 2026, gerou 2027".
+exercício `< N` **e** `(N−1, T04)` não está fechado ⇒ `ValidationError` "feche N−1 primeiro" — no
+`close` de `(N, T01)` e na geração da ECF de N. Fecha "fechou 2025, pulou 2026, gerou 2027" **e** "fechou
+2025 até T03 e abriu 2026" (o `< N`, mais estrito que o `< N−1` da 1ª redação, foi o que a implementação
+provou necessário — review N2). Ordem limpa cruza o exercício: reabrir/refechar `(N, T04)` com `(N+1, T01)`
+fechado é 400 (review M3).
 Alternativa descartada: coluna `saldoIniYear` (é o ALTER que a perna (c) previa; S6 reprova por desenho).
 `M010.VL_SALDO_INI`/`IND_VL_SALDO_INI` **emitidos** para N = esse `sdIni(N, T01)`, não a coluna crua —
 é o que `REGRA_SALDOS_M010_E020` (p.237, erro) confere contra o E020 recuperado.

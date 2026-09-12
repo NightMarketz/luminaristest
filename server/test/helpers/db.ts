@@ -66,6 +66,14 @@ export async function resetDb(): Promise<void> {
   // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
   await prisma.accountingDeliveryLog.deleteMany();
 
+  // ECF Fase 3C (EMENDA 3ª): filhos value-object e saldos caem antes dos pais — processos (FK Restrict para
+  // ajuste E movimento), links M312 (Restrict para ajuste e JournalEntry), saldos (Cascade do fechamento, mas
+  // Restrict para a conta), depois movimentos (Restrict para a conta) e fechamentos.
+  await prisma.lalurProcess.deleteMany();
+  await prisma.lalurEntryJournalEntry.deleteMany();
+  await prisma.lalurParteBBalance.deleteMany();
+  await prisma.lalurParteBClosing.deleteMany();
+  await prisma.lalurParteBMovement.deleteMany();
   // BE-INCR-SPED-ECF-FASE3B: ajuste (FK Restrict para a conta da Parte B + FK para Account) cai antes de ambos.
   await prisma.lalurEntry.deleteMany();
   await prisma.lalurParteBAccount.deleteMany();

@@ -9,7 +9,7 @@
 import { LalurService } from '../LalurService';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { NotFoundError, ValidationError } from '../../../../lib/errors';
-import { LALUR_PARTE_B_CLOSED, LALUR_PARTE_B_REOPENED } from '../../models/Lalur.model';
+import { LALUR_PARTE_B_CLOSED, LALUR_PARTE_B_REOPENED, LALUR_QUARTERS } from '../../models/Lalur.model';
 import type { LalurEntry, LalurParteBAccount, LalurParteBMovement } from 'generated/prisma';
 import type {
   CreateLalurEntryData,
@@ -365,5 +365,53 @@ describe('diagnóstico materializado × recomputado (item 11)', () => {
       svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1, indRelacao: '2', accountId: 'a9' }),
     ).rejects.toThrow(/COD_NAT 09/);
     expect(ValidationError).toBeDefined();
+  });
+});
+
+describe('review independente 2026-09-12 — M2/M3/M4/M5 (cada um falhava antes do fix)', () => {
+  it('M2: >1 conta de prejuízo + PF `user` vivo no período ⇒ fechamento PASSA sem derivar, e o `system` remanescente é arquivado', async () => {
+    const t = build({ netResult: { '2025-03-31': '-100' } });
+    const pf1 = acc({ codCtaB: 'PF-OP', codPbRfb: '1000' });
+    t.repo.accounts.push(pf1, acc({ codCtaB: 'BC', codPbRfb: '1003', codTributo: 'C' }));
+    await t.svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' }); // 1 conta ⇒ deriva
+    const sys = t.repo.movements.find((m) => m.origem === 'system' && m.indicador === 'PF')!;
+    t.repo.accounts.push(acc({ codCtaB: 'PF-NAO-OP', codPbRfb: '1001' })); // agora 2 contas ⇒ ambíguo
+    await expect(t.svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' })).rejects.toThrow(/ambígua — lance o M410 PF manualmente/);
+    await t.svc.createMovement(scope, { unitId: 'unit-1', parteBId: pf1.id, year: 2025, quarter: 'T01', indicador: 'PF', valorCents: 100, historico: 'manual', indLanAnt: 'N' });
+    const c = await t.svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' });
+    expect(t.repo.movements.find((m) => m.id === sys.id)!.deletedAt).not.toBeNull(); // o system antigo saiu — nunca user+system no mesmo período (releitura: o rollback do fake troca as referências)
+    expect(t.repo.movements.filter((m) => m.indicador === 'PF' && !m.deletedAt).map((m) => m.origem)).toEqual(['user']);
+    expect(bal(c, pf1.id)).toMatchObject({ vlParteBCents: 100n, indVlParteB: 'D' });
+  });
+
+  it('M3: reabrir/refechar T04 de N com T01 de N+1 fechado é 400 (ordem limpa cruza o exercício)', async () => {
+    const { svc, repo } = build();
+    repo.accounts.push(acc({ codCtaB: 'PF', dtCriacao: new Date('2023-12-31T00:00:00.000Z') }));
+    for (const q of LALUR_QUARTERS) await svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: q });
+    await svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' });
+    await expect(svc.reopenParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'T04' })).rejects.toThrow(/T01\/2025 está fechado sobre o saldo final de T04\/2024/);
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'T04' })).rejects.toThrow(/T01\/2025 já está fechado/);
+    await svc.reopenParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' });
+    await expect(svc.reopenParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'T04' })).resolves.toMatchObject({ reopened: true });
+  });
+
+  it('M4: base do PF usa as linhas A/E lidas DENTRO da tx — exclusão que aparece entre a leitura pré-tx e a tx entra na base', async () => {
+    const t = build();
+    const pf = acc({ codCtaB: 'PF', codPbRfb: '1000' });
+    t.repo.accounts.push(pf, acc({ codCtaB: 'BC', codPbRfb: '1003', codTributo: 'C' }));
+    // "outro request" cria uma exclusão de 500 só visível com tx (simula commit concorrente antes da nossa tx)
+    const ghost = { id: 'e-ghost', userId: 'owner-1', unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 500n, indRelacao: '4', histLancamento: 'x', parteBId: null, accountId: null, deletedAt: null, parteB: null, account: null, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
+    const orig = t.repo.findEntriesForYear;
+    t.repo.findEntriesForYear = (async (_s: unknown, year: number, tx?: unknown) => [...(await orig(_s, year)), ...(tx === TX ? [ghost] : [])]) as typeof orig;
+    const c = await t.svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' });
+    expect(bal(c, pf.id)).toMatchObject({ vlParteBCents: 500n, indVlParteB: 'D' }); // PF = 500 derivado da exclusão em-tx
+    expect(t.repo.movements.find((m) => m.origem === 'system')!.valorCents).toBe(500n);
+  });
+
+  it('M5: PATCH com processos em linha do Bloco N é 400 (D-M3 vale no update, não só no create)', async () => {
+    const { svc, repo } = build();
+    const e = await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T04', livro: 'n630', codigo: '6', valorCents: 1 });
+    await expect(svc.updateEntry(scope, e.id, { unitId: 'unit-1', processos: [{ indProc: '1', numProc: 'X' }] })).rejects.toThrow(/processos não existe em linha do Bloco N/);
+    expect(repo.entries.find((x) => x.id === e.id)!.valorCents).toBe(1n);
   });
 });

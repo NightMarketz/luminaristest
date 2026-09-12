@@ -319,7 +319,7 @@ export class LalurService {
     const check = z
       .object({})
       .passthrough()
-      .superRefine((_, ctx) => refineLalurLine({ ...merged, journalEntryIds: dto.journalEntryIds }, ctx))
+      .superRefine((_, ctx) => refineLalurLine({ ...merged, journalEntryIds: dto.journalEntryIds, processos: dto.processos }, ctx))
       .safeParse({});
     if (!check.success) throw new ValidationError(check.error.issues.map((i) => i.message).join(' '));
     LalurService.resolveLinha(merged.livro, merged.codigo, merged.year);
@@ -724,16 +724,24 @@ export class LalurService {
   }
 
   /**
-   * Base do tributo no trimestre (D-P3.3, INFERIDO — oráculo PVA 2P-4): resultado contábil do trimestre
-   * (DRE YTD closing-exclusive: fim T − fim T−1) + Σ adições − Σ exclusões das linhas vivas do livro do
-   * tributo no período. `P` e `L` não entram. Lido FORA da tx do fechamento (o razão não é escrito por ela).
+   * Resultado contábil do trimestre (D-P3.3): DRE YTD closing-exclusive, fim T − fim T−1. Lido FORA da tx do
+   * fechamento — o razão não é escrito por ela (D-P4) e o report service usa o client fora da tx.
    */
-  private async baseDoTributo(scope: AccountingScope, year: number, quarter: LalurQuarter, tributo: LalurTributo, entries: LalurEntryWithRelations[]): Promise<bigint> {
+  private async resultadoDoTrimestre(scope: AccountingScope, year: number, quarter: LalurQuarter): Promise<bigint> {
     const windows = quarterWindows(year);
     const qi = qIndex(quarter);
     const ytd = BigInt((await this.reports.incomeStatement(scope, windows[qi].to)).netResult.amountCents);
     const prev = qi === 0 ? 0n : BigInt((await this.reports.incomeStatement(scope, windows[qi - 1].to)).netResult.amountCents);
-    let base = ytd - prev;
+    return ytd - prev;
+  }
+
+  /**
+   * Base do tributo no trimestre (D-P3.3, INFERIDO — oráculo PVA 2P-4): resultado + Σ adições − Σ exclusões das
+   * linhas vivas do livro do tributo no período. `P` e `L` não entram. `entries` vêm da MESMA leitura em-tx que
+   * alimenta os saldos (review M4: base e vlA de um só snapshot).
+   */
+  public static baseDoTributo(resultado: bigint, quarter: LalurQuarter, tributo: LalurTributo, entries: LalurEntryWithRelations[]): bigint {
+    let base = resultado;
     const livro = TRIBUTO_LIVRO[tributo];
     for (const e of entries) {
       if (e.livro !== livro || e.quarter !== quarter) continue;
@@ -752,10 +760,8 @@ export class LalurService {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const { year, quarter } = dto;
     const qi = qIndex(quarter);
-    // Base do PF/BC lida do razão antes da tx (o fechamento não escreve no razão).
-    const entriesPre = await this.repo.findEntriesForYear(scope, year);
-    const bases = new Map<LalurTributo, bigint>();
-    for (const t of LALUR_TRIBUTOS) bases.set(t, await this.baseDoTributo(scope, year, quarter, t, entriesPre));
+    // Só o RESULTADO vem de fora da tx (razão); as linhas A/E entram em-tx junto com os saldos (M4).
+    const resultado = await this.resultadoDoTrimestre(scope, year, quarter);
 
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.repo.runTransaction(async (tx) => {
@@ -763,6 +769,12 @@ export class LalurService {
       const byQ = new Map(closings.map((c) => [c.quarter, c]));
       const later = LALUR_QUARTERS.slice(qi + 1).find((q) => byQ.has(q));
       if (later) throw new ValidationError(`${later}/${year} já está fechado — reabra-o antes de (re)fechar ${quarter}/${year} (ordem limpa, p.271).`);
+      // M3: "período posterior" cruza o exercício — o T04 de N é o sdIni do T01 de N+1 (C3).
+      if (quarter === 'T04' && (await this.repo.findClosing(scope, year + 1, 'T01', tx))) {
+        throw new ValidationError(`T01/${year + 1} já está fechado sobre o saldo final de T04/${year} — reabra-o antes de refechar T04/${year} (REGRA_SALDOS_M010_E020, p.237).`);
+      }
+      const entriesTx = await this.repo.findEntriesForYear(scope, year, tx);
+      const bases = new Map<LalurTributo, bigint>(LALUR_TRIBUTOS.map((t) => [t, LalurService.baseDoTributo(resultado, quarter, t, entriesTx)]));
       const prevQ = qi > 0 ? LALUR_QUARTERS[qi - 1] : null;
       if (prevQ && !byQ.has(prevQ)) throw new ValidationError(`Feche ${prevQ}/${year} antes de ${quarter}/${year}: o saldo inicial do período é o saldo final do anterior (Manual p.271).`);
 
@@ -786,9 +798,16 @@ export class LalurService {
             );
           }
           if (targets.length > 1) {
-            throw new ValidationError(
-              `Mais de uma conta de prejuízo viva para o tributo ${tributo} (${targets.map((a) => a.codCtaB).join(', ')}): a derivação do ${indicador} é ambígua — lance o M410 ${indicador} manualmente (BRIEF 3C item 6).`,
-            );
+            // BRIEF item 6: ambíguo ⇒ o usuário lança o PF/BC manualmente — e o manual DESTRAVA o fechamento
+            // (review M2): com um `user` PF/BC vivo no período/tributo, nada é derivado e nenhum `system` sobra.
+            const manual = liveMovs.some((m) => m.origem === 'user' && m.indicador === indicador);
+            if (!manual) {
+              throw new ValidationError(
+                `Mais de uma conta de prejuízo viva para o tributo ${tributo} (${targets.map((a) => a.codCtaB).join(', ')}): a derivação do ${indicador} é ambígua — lance o M410 ${indicador} manualmente na conta certa e refeche (BRIEF 3C item 6).`,
+              );
+            }
+            for (const m of existing) await this.repo.updateMovement(scope, m.id, { deletedAt: new Date() }, tx);
+            continue;
           }
           const target = targets[0];
           const keep = existing.find((m) => m.parteBId === target.id);
@@ -854,6 +873,9 @@ export class LalurService {
       if (!target) throw new NotFoundError(`${quarter}/${year} não está fechado.`);
       const later = LALUR_QUARTERS.slice(qi + 1).find((q) => closings.some((c) => c.quarter === q));
       if (later) throw new ValidationError(`${later}/${year} está fechado — reabra-o antes de reabrir ${quarter}/${year} (ordem limpa, p.271).`);
+      if (quarter === 'T04' && (await this.repo.findClosing(scope, year + 1, 'T01', tx))) {
+        throw new ValidationError(`T01/${year + 1} está fechado sobre o saldo final de T04/${year} — reabra-o antes (ordem limpa cruza o exercício, C3).`);
+      }
       await this.repo.deleteClosing(target.id, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
