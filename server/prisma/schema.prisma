@@ -50,6 +50,8 @@ model User {
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
   lalurParteBAccounts     LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
+  lalurParteBMovements    LalurParteBMovement[] // Relation to LalurParteBMovement (M410, ECF Fase 3C)
+  lalurParteBClosings     LalurParteBClosing[] // Relation to LalurParteBClosing (fechamento trimestral da Parte B, ECF Fase 3C)
 }
 
 // Per-user saved table views (query/filters/sort) for the canonical table stack.
@@ -511,31 +513,32 @@ model ReferentialAccount {
 // corrections are made via a reversing entry (estorno). `reversedById` links an
 // original to its reversal (self-relation).
 model JournalEntry {
-  id            String               @id @default(cuid())
+  id            String                   @id @default(cuid())
   userId        String
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   unitId        String // business unit (scoped string, not a FK)
   date          DateTime
   description   String
-  status        String               @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
-  sourceType    String               @default("manual")
+  status        String                   @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
+  sourceType    String                   @default("manual")
   sourceId      String?
-  reversedById  String?              @unique // the reversal entry that estorned this one
-  reversedBy    JournalEntry?        @relation("Reversal", fields: [reversedById], references: [id])
-  reverses      JournalEntry?        @relation("Reversal")
+  reversedById  String?                  @unique // the reversal entry that estorned this one
+  reversedBy    JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
+  reverses      JournalEntry?            @relation("Reversal")
   postings      Posting[]
-  attachments   DocumentAttachment[] @relation("JournalEntryAttachments")
-  sources       JournalEntrySource[] @relation("JournalEntrySources")
+  attachments   DocumentAttachment[]     @relation("JournalEntryAttachments")
+  sources       JournalEntrySource[]     @relation("JournalEntrySources")
+  lalurLinks    LalurEntryJournalEntry[] // M312/M362 — ajuste do e-Lalur que cita este lançamento (ECF Fase 3C)
   createdById   String? // actor who created this entry (authorship trail / maker)
   submittedById String? // actor who submitted for approval (ADR-INCR-APPROVAL, maker trail)
   approvedById  String? // actor who approved (ADR-INCR-APPROVAL, checker trail — SoD: != createdById)
   postedById    String? // actor who posted/confirmed this entry (SoD trail)
-  version       Int                  @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
+  version       Int                      @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
   contentHash   String? // frozen economic-content hash at submit (ACC-017/022); null while Draft
   fiscalYear    Int? // born at POST/approve, inside the tx (ACC-015) — null while Draft/PendingApproval
   entryNumber   Int? // sequential within (userId, unitId, fiscalYear); born at POST/approve — null while Draft/PendingApproval
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
 
   // Idempotency — a real DB constraint (SQLite treats NULL sourceId as distinct, so
   // manual entries never collide). Closes the double-post window app code cannot.
@@ -1374,9 +1377,9 @@ model AccountingDeliveryLog {
 //   `deletedAt` NÃO entra na chave (NULL é distinto no índice único do SQLite — não fecharia nada).
 // - User FK cascade: dado operacional; a trilha é o AuditEvent (T8, precedente Counterparty).
 model LalurEntry {
-  id             String              @id @default(cuid())
+  id             String                   @id @default(cuid())
   userId         String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional; trilha = AuditEvent, T8)
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   unitId         String // business unit (scoped string, not a FK)
   year           Int // exercício (ano-calendário da ECF)
   quarter        String // 'T01'..'T04' (Fork 5→a trimestral; ver LALUR_QUARTERS)
@@ -1386,12 +1389,14 @@ model LalurEntry {
   indRelacao     String? // M300.IND_RELACAO '1'|'2'|'3'|'4' (p.245) em lalur/lacs; NULL em livro N (D-M3)
   histLancamento String? // M300.HIST_LAN_LAL, C 500 (p.245); obrigatório com indRelacao=4 (p.247, leitura INFERIDA)
   parteBId       String? // FK LalurParteBAccount — exigido com indRelacao ∈ {1,3} (REGRA_RELACAO_INEXISTENTE p.247)
-  parteB         LalurParteBAccount? @relation(fields: [parteBId], references: [id], onDelete: Restrict) // archive da conta é soft ⇒ RESTRICT nunca dispara no fluxo real
+  parteB         LalurParteBAccount?      @relation(fields: [parteBId], references: [id], onDelete: Restrict) // archive da conta é soft ⇒ RESTRICT nunca dispara no fluxo real
   accountId      String? // FK Account (id, NÃO código) — exigido com indRelacao ∈ {2,3} (p.247/p.253)
-  account        Account?            @relation("LalurEntryAccount", fields: [accountId], references: [id])
+  account        Account?                 @relation("LalurEntryAccount", fields: [accountId], references: [id])
+  processos      LalurProcess[] // M315/M365 (processos judiciais/administrativos do ajuste) — value-objects, C2
+  journalLinks   LalurEntryJournalEntry[] // M312/M362 (lançamentos da ECD relacionados) — value-objects, Fork F-3C-3
   createdById    String? // actor (AccountingScope.actorUserId); plain string
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
   deletedAt      DateTime? // set when archived (soft) — together with the rename-on-key
 
   @@unique([userId, unitId, year, quarter, livro, codigo]) // uma linha viva por código × período × livro (D-M2)
@@ -1407,27 +1412,151 @@ model LalurEntry {
 // O que NÃO mora aqui (D-M5): saldo por período (M500 / N-1) e lançamentos sem reflexo na Parte A
 // (M410) — item 13, 2ª migração, decisão com o dono.
 model LalurParteBAccount {
-  id            String       @id @default(cuid())
-  userId        String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId        String // business unit (scoped string, not a FK)
-  codCtaB       String // 2 COD_CTA_B — rename-on-delete frees the key (D-M2)
-  descricao     String // 3 DESC_CTA_LAL
-  dtCriacao     DateTime // 4 DT_AP_LAL — date-only: data FINAL do período de apuração em que a conta nasceu
-  codPbRfb      String // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO do XLSX (REGRA_M010_COD_PB_RFB_TRIBUTO, por tributo)
-  dtLimite      DateTime? // 6 DT_LIM_LAL — date-only; data-limite p/ exclusão/adição/compensação, se houver
-  codTributo    String // 7 COD_TRIBUTO 'I' | 'C' (LALUR_TRIBUTOS) — parte da chave
-  saldoIniCents BigInt // 8 VL_SALDO_INI ≥ 0 (N 19 2) — REGRA_DT_AP_ZERO: = 0 se dtCriacao cai dentro do exercício
-  indSaldoIni   String // 9 IND_VL_SALDO_INI 'D' | 'C'
-  cnpjSitEsp    String? // 10 CNPJ_SIT_ESP — 14 dígitos (REGRA_VALIDA_CNPJ)
-  createdById   String? // actor (AccountingScope.actorUserId); plain string
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  deletedAt     DateTime? // set when archived (soft) — together with the rename-on-key
-  entries       LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  id              String                @id @default(cuid())
+  userId          String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId          String // business unit (scoped string, not a FK)
+  codCtaB         String // 2 COD_CTA_B — rename-on-delete frees the key (D-M2)
+  descricao       String // 3 DESC_CTA_LAL
+  dtCriacao       DateTime // 4 DT_AP_LAL — date-only: data FINAL do período de apuração em que a conta nasceu
+  codPbRfb        String // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO do XLSX (REGRA_M010_COD_PB_RFB_TRIBUTO, por tributo)
+  dtLimite        DateTime? // 6 DT_LIM_LAL — date-only; data-limite p/ exclusão/adição/compensação, se houver
+  codTributo      String // 7 COD_TRIBUTO 'I' | 'C' (LALUR_TRIBUTOS) — parte da chave
+  saldoIniCents   BigInt // 8 VL_SALDO_INI ≥ 0 (N 19 2) — REGRA_DT_AP_ZERO: = 0 se dtCriacao cai dentro do exercício
+  indSaldoIni     String // 9 IND_VL_SALDO_INI 'D' | 'C'
+  cnpjSitEsp      String? // 10 CNPJ_SIT_ESP — 14 dígitos (REGRA_VALIDA_CNPJ)
+  createdById     String? // actor (AccountingScope.actorUserId); plain string
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime? // set when archived (soft) — together with the rename-on-key
+  entries         LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  movements       LalurParteBMovement[] @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
+  contrapartidaDe LalurParteBMovement[] @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
+  balances        LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
 
   @@unique([userId, unitId, codCtaB, codTributo]) // uma conta viva por código × tributo (M010 chave, p.237)
   @@index([userId, unitId])
   @@index([deletedAt])
   @@map("lalur_parte_b_accounts")
+}
+
+// ─── ECF Fase 3C — Parte B: M410 / fechamento / M500 / M315-M365-M415 / M312-M362 ────────────────────
+// ADR-INCR-SPED-ECF-FASE3-lucro-real, EMENDA 2026-09-12 (3ª), D-P1..D-P4 + correções C1..C4
+// (BRIEF `BE-INCR-SPED-ECF-FASE3C-parte-b-brief.md`, 5/5 forks → (a)). 2ª migração da frente: 5 CREATE
+// TABLE, ZERO ALTER — as tabelas existentes só ganham relação reversa (a FK mora do lado novo).
+
+// LalurParteBMovement = M410 (p.268) — lançamento em conta da Parte B SEM reflexo na Parte A (nível 3
+// sob o M030 do período). SEM @@unique: o leiaute não tem chave ("Campo(s) chave: —"); duplicata por
+// duplo-submit é do FE. `codTributo` é DERIVADO de `parteB.codTributo` no create (a conta não muda de
+// tributo — é chave dela). `origem='system'` = PF/BC derivado no fechamento (Fork F-3C-2 a): só archive,
+// nunca PATCH de valor/indicador.
+model LalurParteBMovement {
+  id              String              @id @default(cuid())
+  userId          String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional; trilha = AuditEvent, T8)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId          String // business unit (scoped string, not a FK)
+  parteBId        String // 2 COD_CTA_B — FK LalurParteBAccount (obrigatório no nosso DTO; leiaute diz Não — BRIEF §4 item 2, INFERIDO)
+  parteB          LalurParteBAccount  @relation("LalurMovementConta", fields: [parteBId], references: [id], onDelete: Restrict)
+  year            Int // exercício
+  quarter         String // 'T01'..'T04' — o M030 sob o qual a linha sai
+  codTributo      String // 3 COD_TRIBUTO 'I' | 'C' — DERIVADO da conta (denormalizado p/ ordenação/consulta)
+  valorCents      BigInt // 4 VAL_LAN_LALB_PB ≥ 0 — invariante de DTO/serviço
+  indicador       String // 5 IND_VAL_LAN_LALB_PB 'CR' | 'DB' | 'PF' | 'BC' (LALUR_MOV_INDICADORES)
+  contrapartidaId String? // 6 COD_CTA_B_CTP — NULL com PF/BC (REGRA_NAO_PREENCHER_CTP); mesmo tributo (REGRA_MESMO_TRIBUTO)
+  contrapartida   LalurParteBAccount? @relation("LalurMovementContrapartida", fields: [contrapartidaId], references: [id], onDelete: Restrict)
+  historico       String // 7 HIST_LAN_LALB — texto livre, sem '|' (DTO)
+  indLanAnt       String // 8 IND_LAN_ANT 'S' | 'N'
+  origem          String // 'user' | 'system' (LALUR_ORIGENS)
+  createdById     String? // actor (AccountingScope.actorUserId); plain string
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deletedAt       DateTime? // set when archived (soft)
+  processos       LalurProcess[] // M415 — value-objects (C2)
+
+  @@index([userId, unitId, year, quarter])
+  @@index([parteBId])
+  @@index([deletedAt])
+  @@map("lalur_parte_b_movements")
+}
+
+// LalurParteBClosing = o fato "trimestre da Parte B fechado" (C1 — Fork N-1 a). Não é registro da ECF;
+// é o que a N-1 (M500.SD_FIM → E020/M010 do exercício seguinte) e a geração exigem. É a linha-pai: os
+// saldos (M500) são filhos em cascata — reabrir apaga pai+filhas na mesma tx, refechar substitui. Existe
+// mesmo para tenant com ZERO contas da Parte B (por isso não se infere dos saldos). SEM deletedAt:
+// snapshot; a trilha é o AuditEvent (`lalur.parte_b_closed/reopened`, com o sha256 — nunca os valores).
+model LalurParteBClosing {
+  id             String               @id @default(cuid())
+  userId         String // scope owner; FK User — cascade
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId         String // business unit (scoped string, not a FK)
+  year           Int
+  quarter        String // 'T01'..'T04'
+  balancesSha256 String // sha256 do conjunto ORDENADO de saldos materializados (auditoria, item 10)
+  closedAt       DateTime             @default(now())
+  closedById     String? // actor (AccountingScope.actorUserId); plain string
+  balances       LalurParteBBalance[]
+
+  @@unique([userId, unitId, year, quarter]) // um fechamento por período
+  @@index([userId, unitId, year])
+  @@map("lalur_parte_b_closings")
+}
+
+// LalurParteBBalance = M500 (p.271) materializado — uma linha por conta viva × período fechado. Guarda
+// MAGNITUDE + indicador (convenção M010/M500), nunca inteiro com sinal — o sinal só existe na aritmética
+// do serviço (D-P3.1: D=+, C=−). Escopo vem da pai (closingId); SEM deletedAt (snapshot — precedente
+// ReferentialMapping D5). M510 é agregação em memória deste conjunto por COD_PB_RFB + COD_TRIBUTO.
+model LalurParteBBalance {
+  id            String             @id @default(cuid())
+  closingId     String // FK LalurParteBClosing — cascade (reabrir apaga)
+  closing       LalurParteBClosing @relation(fields: [closingId], references: [id], onDelete: Cascade)
+  parteBId      String // FK LalurParteBAccount — Restrict (archive é soft ⇒ nunca dispara no fluxo real)
+  parteB        LalurParteBAccount @relation(fields: [parteBId], references: [id], onDelete: Restrict)
+  sdIniCents    BigInt // 4 SD_INI_LAL ≥ 0
+  indSdIni      String // 5 IND_SD_INI_LAL 'D' | 'C'
+  vlParteACents BigInt // 6 VL_LCTO_PARTE_A ≥ 0 (Σ M305/M355 do período)
+  indVlParteA   String // 7 IND_VL_LCTO_PARTE_A
+  vlParteBCents BigInt // 8 VL_LCTO_PARTE_B ≥ 0 (Σ M410 do período, contrapartida com sinal oposto)
+  indVlParteB   String // 9 IND_VL_LCTO_PARTE_B
+  sdFimCents    BigInt // 10 SD_FIM_LAL ≥ 0
+  indSdFim      String // 11 IND_SD_FIM_LAL
+
+  @@unique([closingId, parteBId]) // uma linha por conta × período (M500 chave COD_CTA_B + COD_TRIBUTO sob o M030)
+  @@index([parteBId])
+  @@map("lalur_parte_b_balances")
+}
+
+// LalurProcess = M315 / M365 / M415 (pp.255/267/270) — processo judicial/administrativo que embasa o ajuste
+// (pai = LalurEntry) ou o movimento (pai = LalurParteBMovement). `parentId` NÃO-NULO = entryId ?? movementId
+// (XOR verificado no serviço; SQLite via Prisma sem CHECK) é a coluna da chave — dois pais nullable não
+// fechariam duplicata no índice único do SQLite (C2, classe D-M2). Value-object do pai (precedente
+// Posting/PostingDimension): sem deletedAt; o DTO `processos[]` SUBSTITUI o conjunto na mesma tx.
+model LalurProcess {
+  id         String               @id @default(cuid())
+  parentId   String // = entryId ?? movementId — chave não-nula (C2)
+  entryId    String? // FK LalurEntry — Restrict
+  entry      LalurEntry?          @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  movementId String? // FK LalurParteBMovement — Restrict
+  movement   LalurParteBMovement? @relation(fields: [movementId], references: [id], onDelete: Restrict)
+  indProc    String // 2 IND_PROC '1' judicial | '2' administrativo (LALUR_IND_PROC)
+  numProc    String // 3 NUM_PROC C 20, sem '|'
+
+  @@unique([parentId, indProc, numProc]) // chave IND_PROC + NUM_PROC sob o pai
+  @@index([entryId])
+  @@index([movementId])
+  @@map("lalur_processes")
+}
+
+// LalurEntryJournalEntry = M312 / M362 (pp.254/266) — lançamentos da ECD (I200.NUM_LCTO = JournalEntry.entryNumber)
+// relacionados ao ajuste da Parte A com relação contábil. Só lançamento com `entryNumber` (Posted/Reconciled/
+// Reversed — nulo em Draft/PendingApproval, D-P3.4). Value-object do pai: sem deletedAt; `journalEntryIds[]`
+// SUBSTITUI o conjunto na mesma tx (Fork F-3C-3 a).
+model LalurEntryJournalEntry {
+  entryId        String // FK LalurEntry — Restrict
+  entry          LalurEntry   @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  journalEntryId String // FK JournalEntry — Restrict
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Restrict)
+
+  @@id([entryId, journalEntryId])
+  @@index([journalEntryId])
+  @@map("lalur_entry_journal_entries")
 }
