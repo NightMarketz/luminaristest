@@ -1,7 +1,8 @@
 # BRIEF — FE-INCR-LALUR (cadastro de ajustes da Parte A + contas da Parte B do e-Lalur/e-Lacs, aba Compliance)
 
-> Produzido por **sessão de planejamento** (2026-09-12). Não contém código de aplicação, não ratifica fork.
-> Todo fork abaixo está **PENDENTE** — decisão do dono, fora desta sessão (ORCH-006).
+> **Estado [FOLD 2026-09-12, mesma sessão]: os 4 forks RATIFICADOS** — dono, em sessão, 2026-09-12, por questionário (AskUserQuestion), na opção recomendada: F-FE-1→(a) endpoint `GET /api/lalur/catalog`, F-FE-2→(a) `<table>`+Modal, F-FE-3→(a) combobox, F-FE-4→(a) cadastro agora / M410+fechamento+diagnóstico em 2º PR após o 3C. **Implementação segue exigindo autorização própria** (ORCH-006).
+>
+> Produzido por **sessão de planejamento** (2026-09-12). Não contém código de aplicação. Os forks nasceram PENDENTES e foram ratificados no questionário da mesma sessão.
 
 ## Cabeçalho
 
@@ -163,7 +164,7 @@ query: { livro?: Livro; aba?: 'PARTEB_PADRAO'; year: int; q?: string (≥2 chars
 Policy `canReadLalur`; sem tenancy (catálogo global); path-count 166→167 (ou 170→171 se depois do 3C);
 `docs.paths.ts`; snapshot de shape do DTO de query.
 
-## 3. Forks pendentes de ratificação — **decisão do dono, fora desta sessão**
+## 3. Forks — **RATIFICADOS 2026-09-12 (4/4 na opção (a))**
 
 ### Fork F-FE-1 — Fonte do catálogo L12 para a tela
 
@@ -173,7 +174,7 @@ Policy `canReadLalur`; sem tenancy (catálogo global); path-count 166→167 (ou 
 | (b) Copiar `ecf-l12-linhas.json` para `my-app` | Zero toque no BE | 263 KB no bundle; duas cópias do mesmo objeto ⇒ drift na próxima versão das Tabelas Dinâmicas (critério de reuso, Etapa 1) |
 | (c) `<input>` livre com validação só no BE | Zero código de catálogo | Usuário digita código de 3 dígitos de cor; erro só no submit; contraria o pedido ("seleção pelo catálogo com busca") |
 
-**Recomendação: (a).** **RATIFICAÇÃO PENDENTE.**
+**Recomendação: (a).** **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-FE-2 — Tabela: `GenericTable` (canônico DynamicTable) ou `<table>` + `Modal` (precedente contábil)
 
@@ -184,7 +185,7 @@ Policy `canReadLalur`; sem tenancy (catálogo global); path-count 166→167 (ou 
 
 **Recomendação: (a)** — o pedido diz "GenericTable/Modal canônicos"; o `Modal` é reusado literalmente, a
 tabela segue o **canônico da contabilidade** (que não é o `GenericTable`), pelo critério de reuso Etapa 1
-(objeto de domínio diferente: linha Prisma first-class ≠ registro DynamicTable). **RATIFICAÇÃO PENDENTE.**
+(objeto de domínio diferente: linha Prisma first-class ≠ registro DynamicTable). **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-FE-3 — Widget de seleção do código (M300A/M350A/N…/PARTEB_PADRAO)
 
@@ -194,7 +195,7 @@ tabela segue o **canônico da contabilidade** (que não é o `GenericTable`), pe
 | (b) `<select>` nativo com 374 `<option>` | Zero componente | Sem busca por descrição; inutilizável no M300A (374 linhas com descrições longas) |
 | (c) `<input list>` + `<datalist>` | Nativo, com filtro | Sem descrição visível após seleção, sem TIPO, comportamento inconsistente entre browsers |
 
-**Recomendação: (a).** **RATIFICAÇÃO PENDENTE.**
+**Recomendação: (a).** **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-FE-4 — Onde a Parte B mostra o saldo por período (dependente do 3C)
 
@@ -203,7 +204,7 @@ tabela segue o **canônico da contabilidade** (que não é o `GenericTable`), pe
 | **(a) Esperar o 3C: a tela nasce com contas + ajustes; movimentos/fechamento/diagnóstico entram como 2º PR desta mesma frente quando o Fork N-1 for ratificado — RECOMENDADA** | Não bloqueia o cadastro (2P-2/2P-3 do H1 2ª passada precisam **só** de ajuste + conta) |
 | (b) Empacotar M410 + fechamento + diagnóstico já neste BRIEF | Planeja sobre contrato que ainda não existe (item 13 aberto) — violaria regra 3 |
 
-**Recomendação: (a).** **RATIFICAÇÃO PENDENTE.**
+**Recomendação: (a).** **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ## 4. Pendências de validação externa
 

@@ -1,7 +1,9 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3C-parte-b (M410 + M500 + N-1: o que falta da Parte B do e-Lalur/e-Lacs)
 
-> **Estado: preparação apenas.** Produzido em `sessao-planejamento` (2026-09-12). Checklist e contratos abaixo
-> **não autorizam código** — todo fork em §3 está `RATIFICAÇÃO PENDENTE`. Este BRIEF é o **item 13 do BRIEF 3B**
+> **Estado [FOLD 2026-09-12, mesma sessão]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-12, por questionário (AskUserQuestion), na opção recomendada: N-1→(a), F-3C-2→(a), F-3C-3→(a), F-3C-4→(a), F-3C-5→(a). Todo item `[cond:…]` fica destravado. **Implementação segue exigindo autorização própria** (ORCH-006) e a ordem do Fork N-1 (a): **EMENDA 3ª ao ADR antes do 1º código de model**.
+>
+> Estado original: preparação apenas. Produzido em `sessao-planejamento` (2026-09-12). Checklist e contratos abaixo
+> não autorizavam código — todo fork em §3 nasceu `RATIFICAÇÃO PENDENTE`. Este BRIEF é o **item 13 do BRIEF 3B**
 > (`BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md:148`) desdobrado, e o que o ADR **D-M5** deixou explicitamente
 > "para o item 13, com o dono". Na régua é **crescimento do nó X4**, não nó novo (master map §7.1 regra 2).
 > **ADR normativo:** `docs/adr/ADR-INCR-SPED-ECF-FASE3-lucro-real.md` (EMENDA 2ª, D-M1..D-M5). O Fork N-1
@@ -290,7 +292,7 @@ GET /api/lalur/parte-b/balances?unitId&year → {
 }
 ```
 
-## 3. Forks pendentes de ratificação — **decisão do dono, fora desta sessão**
+## 3. Forks — **RATIFICADOS 2026-09-12 (5/5 na opção (a))**
 
 ### Fork N-1 — Como a Parte B carrega saldo entre períodos e exercícios (**o fork deste BRIEF**)
 
@@ -313,7 +315,7 @@ imediato). (b) é (a) menos a peça que produz evidência; (c) é o menor diff e
 que o projeto já mediu como gargalo. Custo de (a) é insumo de planejamento: +1 comando, +1 tabela, +1 endpoint
 de diagnóstico, +1 passo no runbook H1 2ª (2P-4). **Sub-decisão embutida (D2, decidida aqui, reversível):** o
 fechamento é **comando próprio por trimestre**, não efeito do `closeExercise` anual — fiscal ≠ contábil, e a
-apuração é trimestral (Fork 5→a). **RATIFICAÇÃO PENDENTE.**
+apuração é trimestral (Fork 5→a). **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-3C-2 — Quem produz o movimento `PF`/`BC` (prejuízo fiscal / base negativa do período)
 
@@ -331,7 +333,7 @@ se o razão for o mesmo.
 
 **Recomendação: (a)** — o único número que o Manual chama de erro se divergir é derivado do nosso próprio
 razão; derivar e congelar é o que "cobrir a lacuna por inteiro" significa aqui. Só faz sentido com Fork N-1 (a)
-ou (b). **RATIFICAÇÃO PENDENTE.**
+ou (b). **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-3C-3 — `M312`/`M362`: relacionar ajuste a lançamentos contábeis da ECD
 
@@ -340,7 +342,7 @@ ou (b). **RATIFICAÇÃO PENDENTE.**
 | **(a) Relação N:N `LalurEntryJournalEntry` + `journalEntryIds[]` no DTO; `M312/M362` emitidos com `entryNumber` — RECOMENDADA** | Cobre o caso parcial (ajuste < saldo da conta) que `REGRA_REGISTRO_M312_OBRIGATORIO` exige; diagnóstico avisa ajuste parcial sem lançamentos | Igualdade com K155/K355 só o PVA fecha; 1 tabela a mais na 2ª migração |
 | (b) Não emitir; documentar que ajuste **deve** igualar um dos 4 agregados da conta | Zero código | Todo ajuste parcial (o caso real: parte de uma conta de despesa é indedutível) vira erro no PVA sem saída no produto |
 
-**Recomendação: (a).** **RATIFICAÇÃO PENDENTE.**
+**Recomendação: (a).** **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-3C-4 — Processos judiciais: `M415` só, ou `M315`/`M365`/`M415` juntos
 
@@ -350,7 +352,7 @@ ou (b). **RATIFICAÇÃO PENDENTE.**
 | (b) Só `M415` (o que o pedido listou) | Menor | Ajuste da Parte A amparado em decisão judicial (adição menor que a legal) não tem onde citar o processo — o caso volta como lacuna |
 
 **Recomendação: (a).** Achado de escopo: `M315`/`M365` não estavam na lista do pedido; entram por serem o
-mesmo registro em outro pai. **RATIFICAÇÃO PENDENTE.**
+mesmo registro em outro pai. **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ### Fork F-3C-5 — Ordem dos MENOR do review dentro deste incremento
 
@@ -359,7 +361,7 @@ mesmo registro em outro pai. **RATIFICAÇÃO PENDENTE.**
 | **(a) Os 4 MENOR (itens 16-19) entram no MESMO `sessao-feature`, cada um como ciclo instrumentação→correção (teste vermelho primeiro) — RECOMENDADA** | Fecha o resíduo do #313 junto com a Parte B; a guarda no `AccountService` (item 19) é o único toque fora de `lalur*` |
 | (b) MENOR em PR próprio antes do 3C | Isola blast radius; atrasa a Parte B por 1 ciclo de review |
 
-**Recomendação: (a).** **RATIFICAÇÃO PENDENTE.**
+**Recomendação: (a).** **RATIFICADO → (a), 2026-09-12 (questionário).**
 
 ## 4. Pendências de validação externa (oráculo = PVA / contador — H1 2ª passada, 2P-4)
 
@@ -400,4 +402,4 @@ mesmo registro em outro pai. **RATIFICAÇÃO PENDENTE.**
 - O pedido listou `M312/M362/M415/M510` como "sem transcrição": **`M312` já estava transcrito** (PR #311);
   `M315`/`M365` faltavam e não estavam na lista — transcritos junto (mesmo script, +2 nomes). Nenhum código
   de aplicação foi tocado; o script de transcrição (`scripts/`, docs-tooling) ganhou 5 nomes na lista.
-- Nenhum fork foi ratificado nesta sessão. O questionário ao dono acompanha o relatório da sessão.
+- Forks ratificados pelo dono no questionário da mesma sessão (5/5 → (a)); registrados no cabeçalho e em cada fork.

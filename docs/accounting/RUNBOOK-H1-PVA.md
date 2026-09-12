@@ -471,6 +471,11 @@ reconhecer no dele antes de importar no PVA:
   datas deslocadas −1 ano, script descartável, **decisão do dono**), ou (ii) a passada roda em 2025 com razão vazio
   e prova a cadeia estrutural + e-Lalur (o que o ensaio fez), registrando que o L/K/ECD-recuperada saem vazios.
   (iii) Esperar Leiaute 13 + PVA AC 2026 (2027). Nenhuma das três é do agente.
+  **→ DECISÃO DO DONO (2026-09-12, questionário):** *"o dev.db é só seed de testes, só popular a seed com dados para vários anos"* —
+  nenhuma das três: o `dev.db` **é seed de desenvolvimento**, e a correção é a **seed cobrir vários exercícios** (2025 + 2026:
+  períodos, lançamentos, AP/AR, e o chart completo com `1.1.6/3.3/4.2`). Vira item de fila (`job-generator` → seed fixture),
+  com autorização própria; enquanto não existir, o H1 roda como (ii). Consequência para P2: o backup continua obrigatório
+  (o passo 1 escreve), mas o banco não é "real" — é o seed que os runbooks passam a chamar de alvo.
 - **A2 — P0 incompleto nos dois runbooks (H1/H2):** falta o passo "completar chart + abrir mês corrente" — esta
   emenda cobre o H1; o H2 precisa do mesmo parágrafo (docs-only, fora desta sessão).
 - **A3 — `.env` com `override`** defeita o `--db` do script e o `PORT`/`DATABASE_URL` por env fora de teste. Classe
