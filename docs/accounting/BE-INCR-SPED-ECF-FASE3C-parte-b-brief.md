@@ -12,8 +12,10 @@
 > **Implementação (mesma sessão, branch `claude/3c-sessao-feature-emenda-adr-9d5f8b`):** itens 2–13 e 15–20 ✅; item 14 ✅ **parcial**
 > (relação, DTO, serializer M312/M362; o **"aviso no diagnóstico" para ajuste parcial sem lançamentos NÃO foi implementado** — lacuna
 > de spec: §2.4 não tem o campo e "parcial" exige os 4 agregados do K155/K355 da conta no trimestre, dependência nova em postings —
-> decisão do dono). Review independente: PASS, 6 MENOR (5 corrigidos no mesmo PR; M1 = esta lacuna). Item 19 devolve **409**
-> (consistente com os guards irmãos do `deleteAccount`), não 400.
+> **RATIFICADO 2026-09-13 (dono, questionário): aviso COMPLETO em PR de follow-up** — `warnings[]` no diagnóstico (§2.4 a emendar),
+> comparando `valorCents` com os 4 agregados da conta no trimestre via `AccountingReportService` (já injetado); a geração NÃO recusa.
+> Implementação exige autorização própria (ORCH-006).) Review independente: PASS, 6 MENOR (5 corrigidos no mesmo PR; M1 = esta
+> lacuna). Item 19 devolve **409** (consistente com os guards irmãos do `deleteAccount`), não 400. PR: #316.
 
 > **Estado [FOLD 2026-09-12, mesma sessão]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-12, por questionário (AskUserQuestion), na opção recomendada: N-1→(a), F-3C-2→(a), F-3C-3→(a), F-3C-4→(a), F-3C-5→(a). Todo item `[cond:…]` fica destravado. **Implementação segue exigindo autorização própria** (ORCH-006) e a ordem do Fork N-1 (a): **EMENDA 3ª ao ADR antes do 1º código de model**.
 >
