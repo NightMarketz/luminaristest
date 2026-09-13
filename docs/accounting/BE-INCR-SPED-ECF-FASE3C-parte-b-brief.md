@@ -1,5 +1,22 @@
 # BRIEF — BE-INCR-SPED-ECF-FASE3C-parte-b (M410 + M500 + N-1: o que falta da Parte B do e-Lalur/e-Lacs)
 
+> **Estado [FOLD 2026-09-12, sessão de feature]: EMENDA 3ª ao ADR commitada** (`docs/adr/ADR-INCR-SPED-ECF-FASE3-lucro-real.md`,
+> D-P1..D-P4) — **o §2.2 abaixo está SUPERADO pela D-P2**. A sessão de feature levantou 4 correções de forma que o esboço não
+> fechava, ratificadas pelo dono (2026-09-12, questionário, 4/4 na recomendada): **C1** "fechado" é linha-pai `LalurParteBClosing`
+> (tenant com 0 contas fecharia sem linha; sha256 sem casa) · **C2** `LalurProcess.parentId` não-nulo na chave (pais nullable não
+> fecham duplicata no SQLite — classe D-M2) e filhos `LalurProcess`/`LalurEntryJournalEntry` sem soft-delete (value-object do pai)
+> · **C3** âncora do `saldoIniCents` implícita (`balance(N−1,T04)` se fechado, senão a coluna) + guarda de continuidade ⇒ zero
+> ALTER · **C4** PF/BC com 0 contas de prejuízo ⇒ 400 nomeando o `COD_PB_RFB`. Autorização de implementação: dono, 2026-09-12,
+> *"sessao-feature do 3C — EMENDA 3ª ao ADR antes do model"*.
+>
+> **Implementação (mesma sessão, branch `claude/3c-sessao-feature-emenda-adr-9d5f8b`):** itens 2–13 e 15–20 ✅; item 14 ✅ **parcial**
+> (relação, DTO, serializer M312/M362; o **"aviso no diagnóstico" para ajuste parcial sem lançamentos NÃO foi implementado** — lacuna
+> de spec: §2.4 não tem o campo e "parcial" exige os 4 agregados do K155/K355 da conta no trimestre, dependência nova em postings —
+> **RATIFICADO 2026-09-13 (dono, questionário): aviso COMPLETO em PR de follow-up** — `warnings[]` no diagnóstico (§2.4 a emendar),
+> comparando `valorCents` com os 4 agregados da conta no trimestre via `AccountingReportService` (já injetado); a geração NÃO recusa.
+> Implementação exige autorização própria (ORCH-006).) Review independente: PASS, 6 MENOR (5 corrigidos no mesmo PR; M1 = esta
+> lacuna). Item 19 devolve **409** (consistente com os guards irmãos do `deleteAccount`), não 400. PR: #316.
+
 > **Estado [FOLD 2026-09-12, mesma sessão]: os 5 forks RATIFICADOS** — dono, em sessão, 2026-09-12, por questionário (AskUserQuestion), na opção recomendada: N-1→(a), F-3C-2→(a), F-3C-3→(a), F-3C-4→(a), F-3C-5→(a). Todo item `[cond:…]` fica destravado. **Implementação segue exigindo autorização própria** (ORCH-006) e a ordem do Fork N-1 (a): **EMENDA 3ª ao ADR antes do 1º código de model**.
 >
 > Estado original: preparação apenas. Produzido em `sessao-planejamento` (2026-09-12). Checklist e contratos abaixo

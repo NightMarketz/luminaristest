@@ -3762,7 +3762,7 @@
  *
  *   /api/lalur/parte-b/{id}/archive:
  *     post:
- *       summary: Archive a Parte B account (soft; live related lines must be archived first)
+ *       summary: Archive a Parte B account (soft; live related lines and movements must be archived first)
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -3777,6 +3777,132 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/movements:
+ *     get:
+ *       summary: List Parte B movements without Parte A reflection (M410)
+ *       description: >-
+ *         ECF Fase 3C (ADR EMENDA 2026-09-12, 3a). One row per M410 line under the M030 of (year, quarter).
+ *         origem=system rows are the PF/BC derived by the quarter close (Fork F-3C-2 a).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: year, required: false, schema: { type: integer } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: parteBId, required: false, schema: { type: string } }
+ *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
+ *       responses:
+ *         '200': { description: 'movements' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *     post:
+ *       summary: Register an M410 movement (codTributo derived from the account; origem=user)
+ *       description: >-
+ *         parteBId must be a live Parte B account in scope; contrapartidaId (transfer) must be live and of the
+ *         SAME tributo (REGRA_MESMO_TRIBUTO) and is forbidden with PF/BC (REGRA_NAO_PREENCHER_CTP, Manual p.269).
+ *         historico may not contain '|' (SPED field separator). processos[] = M415 (replaces the set).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateLalurParteBMovementInput' }
+ *       responses:
+ *         '201': { description: 'the created movement' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/movements/{id}:
+ *     patch:
+ *       summary: Update an M410 movement (partial; year/quarter/parteBId immutable; system PF/BC refuses value/indicador)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateLalurParteBMovementInput' }
+ *       responses:
+ *         '200': { description: 'the updated movement' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/movements/{id}/archive:
+ *     post:
+ *       summary: Archive an M410 movement (soft, idempotent)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ArchiveLalurInput' }
+ *       responses:
+ *         '200': { description: 'the archived movement' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/close:
+ *     post:
+ *       summary: Close a Parte B quarter — materialize the M500 balances and derive PF/BC (Fork N-1 a)
+ *       description: >-
+ *         Requires the previous quarter closed (T01 requires the previous exercise fully closed when any
+ *         earlier closing exists — continuity guard C3) and no later quarter closed. Re-closing recomputes.
+ *         Derives the PF (IRPJ) / BC (CSLL) movement of the quarter from the ledger result + Parte A lines
+ *         (Fork F-3C-2 a): base below zero with no prejuizo account (COD_PB_RFB 1000/1003) is 400; more than
+ *         one is 400 (ambiguous). A compensation (P) that exceeds the account balance is 400 (item 13).
+ *         Emits lalur.parte_b_closed with the sha256 of the balance set (never the values).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/LalurParteBPeriodInput' }
+ *       responses:
+ *         '200': { description: 'the closing with its materialized balances' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
+ *   /api/lalur/parte-b/reopen:
+ *     post:
+ *       summary: Reopen a Parte B quarter — drops the materialized balances (no later quarter may be closed)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/LalurParteBPeriodInput' }
+ *       responses:
+ *         '200': { description: '{ year, quarter, reopened: true }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/lalur/parte-b/balances:
+ *     get:
+ *       summary: Parte B balances diagnostic — materialized (closed) vs recomputed from the current store
+ *       description: >-
+ *         Per quarter and account: sdIni / vlA / vlB / sdFim (signed, D positive, C negative, as strings) on both
+ *         sides plus divergences[]. The ECF Real generation runs this same diagnostic and refuses with 400 when
+ *         divergences exist (re-close the period). BRIEF 3C item 11.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: year, required: true, schema: { type: integer } }
+ *       responses:
+ *         '200': { description: 'diagnostic' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  */
 
 /**

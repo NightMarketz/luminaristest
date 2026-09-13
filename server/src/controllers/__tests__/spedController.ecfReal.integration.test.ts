@@ -55,10 +55,23 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
     pushTestSchema();
     donoA = await criarUsuario('ecf-real-a');
     donoB = await criarUsuario('ecf-real-b');
+    // ECF 3C (item 11): a geração exige os 4 trimestres da Parte B FECHADOS — dono A fecha (sem contas: C1);
+    // dono B fica aberto de propósito (negativo abaixo).
+    for (const quarter of ['T01', 'T02', 'T03', 'T04']) {
+      const r = await request(app).post('/api/lalur/parte-b/close').set(authHeader(donoA)).send({ unitId: UNIT, year: 2025, quarter });
+      expect(r.status).toBe(200);
+    }
   }, 120000);
 
   afterAll(async () => {
     await prisma.$disconnect();
+  });
+
+  it('ECF 3C item 11: Parte B com trimestre aberto ⇒ 400 nomeando T01/2025 e NENHUM job (dono B nunca fechou)', async () => {
+    const res = await post(donoB, body());
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/Feche a Parte B .* de T01\/2025/);
+    expect(await prisma.accountingDataExchangeJob.count({ where: { userId: donoB.id, unitId: UNIT } })).toBe(0);
   });
 
   it('sem token: 401 (auth deny-by-default) e nenhum job gravado', async () => {

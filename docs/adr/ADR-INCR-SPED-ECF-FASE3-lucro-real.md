@@ -1,6 +1,6 @@
 # ADR-INCR-SPED-ECF-FASE3 — ECF em Lucro Real (Blocos L/M/N + `HASH_ECF_ANTERIOR` + `0010` parametrizável)
 
-- **Status:** **Accepted — forks fechados; model do Fork 4→(b) normatizado (EMENDA 2026-09-11, 2ª — D-M1..D-M5, ao final).** [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
+- **Status:** **Accepted — forks fechados; Parte B (item 13 / BRIEF 3C) normatizada (EMENDA 2026-09-12, 3ª — D-P1..D-P4 + correções C1..C4, ao final); model do Fork 4→(b) normatizado (EMENDA 2026-09-11, 2ª — D-M1..D-M5).** [EMENDA 2026-09-12] BRIEF 3C 5/5 forks → (a) e 4 correções de forma (C1 linha-pai de fechamento · C2 `parentId` não-nulo nos filhos · C3 âncora implícita + guarda de continuidade · C4 PF/BC sem conta ⇒ 400) ratificados por dono, em sessão, 2026-09-12 (questionário); implementação autorizada na mesma data: *"sessao-feature do 3C — EMENDA 3ª ao ADR antes do model"*. [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
   código escrito, nenhuma branch criada.** Este ADR NÃO ratifica nenhum dos forks que lista — cada um
   segue **RATIFICAÇÃO PENDENTE** do dono. A execução (código) exige autorização própria, distinta desta.
 - **Date:** 2026-09-02
@@ -446,3 +446,195 @@ por `migracao-sqlite-nao-e-transacional`), `smoke-migration-gate` reaberto **nes
 `Route → Controller → Service → Repository → Prisma` + Policy (`canManageData` escreve, `canRead` gera),
 DTO `.strict()`, rotas em 2 toques + path-count guard. O gerador da ECF Real **lê** do model; o DTO de
 geração **não** carrega ajustes (item 11). Tela = `FE-INCR-LALUR`, separada.
+
+---
+
+## EMENDA (2026-09-12, 3ª) — Item 13 / BRIEF 3C: forma NORMATIVA da Parte B persistida (pré-requisito do código)
+
+O BRIEF 3C (`docs/accounting/BE-INCR-SPED-ECF-FASE3C-parte-b-brief.md`) condiciona o primeiro código de
+model a *"EMENDA 3ª ao ADR antes"* (Fork N-1, qualquer perna com tabela — mesma regra do Fork 4→(b)). A
+D-M5 nomeou esta 2ª migração *"para que o `smoke-migration-gate` não a receba como surpresa"*. Os 5 forks
+do BRIEF foram ratificados na opção (a) (dono, 2026-09-12, questionário); esta emenda fixa a **forma** —
+o §2.2 do BRIEF ("tentativo, condicionado aos forks") vira decisão — com **quatro correções** que a
+sessão de feature levantou lendo o esboço contra o `schema.prisma` real e o dono ratificou em sessão
+(2026-09-12, questionário, 4/4 na opção recomendada). Autorização de implementação: dono, em sessão,
+2026-09-12: *"sessao-feature do 3C — EMENDA 3ª ao ADR antes do model"*.
+
+### D-P1 — Cinco models, tenancy = `AccountingScope`, um agregado por registro do Bloco M
+
+| Model | Registro ECF | Chave de negócio | Fonte |
+|---|---|---|---|
+| `LalurParteBMovement` | `M410` (nível 3 sob `M030`) | **nenhuma** (Manual p.268: "Campo(s) chave: —") | duplicata por duplo-submit é do FE |
+| `LalurParteBClosing` | estado "trimestre fechado" (não é registro; é o que a N-1 exige) | `(userId, unitId, year, quarter)` | Fork N-1 (a) + correção C1 abaixo |
+| `LalurParteBBalance` | `M500` (uma linha por conta × período; `M510` é agregação em memória) | `(closingId, parteBId)` — M500 chave `COD_CTA_B + COD_TRIBUTO` sob o período (p.271) | Fork N-1 (a) |
+| `LalurProcess` | `M315` / `M365` / `M415` (nível 4/4/4 sob M300/M350/M410) | `(parentId, indProc, numProc)` — chave `IND_PROC + NUM_PROC` (pp.255/267/270) | Fork F-3C-4 (a) + correção C2 |
+| `LalurEntryJournalEntry` | `M312` / `M362` (nível 5 sob M310/M360) | `(entryId, journalEntryId)` — chave `NUM_LCTO` (pp.254/266) | Fork F-3C-3 (a) |
+
+Tenancy segue D-M1 (`userId` + `unitId`, FK `User` Cascade no que é agregado-raiz). **Nenhum ALTER** em
+tabela existente: `LalurParteBAccount`/`LalurEntry`/`JournalEntry` só ganham relação reversa no schema
+Prisma (a FK mora do lado novo) — a mesma propriedade da 1ª migração, e a que mantém o S6 do smoke gate
+fora desta frente (correção C3 escolhida também por isso).
+
+### C1 — "Fechado" é uma linha-pai, não a existência de saldos (ratificado (a), 2026-09-12)
+
+O esboço só tinha `LalurParteBBalance`. Tenant com **zero** contas da Parte B fecharia o trimestre sem
+gerar linha nenhuma; a geração (BRIEF item 11, "exige 4 trimestres fechados") ficaria bloqueada para
+sempre, e o `sha256` do conjunto de saldos (item 10, auditoria) não teria onde morar. Decisão:
+`LalurParteBClosing` **é** o fato "fechado"; os saldos são filhos (`closingId`, `onDelete: Cascade`) —
+reabrir apaga a pai e as filhas na mesma tx, refechar substitui. Alternativa descartada: inferir de
+`≥1` saldo no período (deixa o caso 0 contas como lacuna permanente).
+
+### C2 — Filhos com pai nullable: chave por `parentId` denormalizado, sem soft-delete (ratificado (a), 2026-09-12)
+
+O esboço `@@unique([entryId, movementId, indProc, numProc])` com **dois pais nullable** não fecha
+duplicata no SQLite — NULL é distinto no índice único, exatamente a falha que a D-M2 corrigiu na 1ª
+migração. Decisão: `LalurProcess.parentId String` **não-nulo** (= `entryId ?? movementId`, XOR
+verificado no serviço — SQLite via Prisma sem CHECK) + `@@unique([parentId, indProc, numProc])`;
+`entryId?`/`movementId?` permanecem como FKs (`Restrict`) para navegação. `LalurProcess` e
+`LalurEntryJournalEntry` são **value-objects do pai** (precedente `Posting`/`PostingDimension`: sem
+`deletedAt`): `processos[]` e `journalEntryIds[]` no DTO **substituem o conjunto** na mesma tx do
+create/update; o soft-delete do pai cobre os filhos; a trilha da troca é o `AuditEvent` (contagens, não
+os números). Alternativas descartadas: duas tabelas de processo (+1 tabela por zero coluna) e manter o
+esboço + soft-delete (duplicata passa; update vira archive+recreate).
+
+### C3 — Âncora do saldo inicial é IMPLÍCITA, com guarda de continuidade (ratificado (a), 2026-09-12)
+
+`saldoIniCents` (M010 campo 8) passa a ser "saldo de abertura ancorado num exercício" (BRIEF item 9), mas
+a perna (a) não tem coluna de exercício-âncora. Regra: para o exercício `N`,
+`sdIni(N, T01) = balance(N−1, T04).sdFim` **se** o T04 de N−1 estiver fechado; **senão** `saldoIniCents`
+(+ `REGRA_DT_AP_ZERO`: 0 se `dtCriacao ∈ N`). Guarda: existe **qualquer** `LalurParteBClosing` em
+exercício `< N` **e** `(N−1, T04)` não está fechado ⇒ `ValidationError` "feche N−1 primeiro" — no
+`close` de `(N, T01)` e na geração da ECF de N. Fecha "fechou 2025, pulou 2026, gerou 2027" **e** "fechou
+2025 até T03 e abriu 2026" (o `< N`, mais estrito que o `< N−1` da 1ª redação, foi o que a implementação
+provou necessário — review N2). Ordem limpa cruza o exercício: reabrir/refechar `(N, T04)` com `(N+1, T01)`
+fechado é 400 (review M3).
+Alternativa descartada: coluna `saldoIniYear` (é o ALTER que a perna (c) previa; S6 reprova por desenho).
+`M010.VL_SALDO_INI`/`IND_VL_SALDO_INI` **emitidos** para N = esse `sdIni(N, T01)`, não a coluna crua —
+é o que `REGRA_SALDOS_M010_E020` (p.237, erro) confere contra o E020 recuperado.
+
+### C4 — PF/BC sem conta de prejuízo cadastrada ⇒ 400 nomeando o `COD_PB_RFB` (ratificado (a), 2026-09-12)
+
+BRIEF item 6 decide `>1` conta viva de prejuízo por tributo (⇒ 400 pedindo manual). Caso **0**: o
+fechamento recusa — *"cadastre a conta da Parte B com COD_PB_RFB 1000 (I) / 1003 (C) antes de fechar
+Txx"*. Nenhuma conta nasce sem o usuário (`codCtaB` é dele; `dtCriacao` é data final do período em que
+nasceu — REGRA_DT_AP_ZERO). Alternativa descartada: sistema cria a conta padrão (M010 ganha conta que o
+usuário não cadastrou).
+
+### D-P2 — Colunas (fecha o §2.2 do BRIEF com C1–C4)
+
+```prisma
+model LalurParteBMovement {                    // M410 (p.268) — 8 campos; nível 3 sob M030
+  id, userId (FK User Cascade), unitId
+  parteBId        String   // 2 COD_CTA_B — FK LalurParteBAccount, Restrict (obrigatório: Fork F-3C-2, §4 item 2 INFERIDO)
+  year            Int
+  quarter         String   // 'T01'..'T04' — o M030 sob o qual sai
+  codTributo      String   // 3 COD_TRIBUTO — DERIVADO de parteB.codTributo no create (imutável na conta: é chave)
+  valorCents      BigInt   // 4 VAL_LAN_LALB_PB ≥ 0 (invariante de DTO)
+  indicador       String   // 5 IND_VAL_LAN_LALB_PB 'CR'|'DB'|'PF'|'BC'
+  contrapartidaId String?  // 6 COD_CTA_B_CTP — FK LalurParteBAccount, Restrict; NULL com PF/BC (REGRA_NAO_PREENCHER_CTP); mesmo codTributo (REGRA_MESMO_TRIBUTO)
+  historico       String   // 7 HIST_LAN_LALB, sem '|'
+  indLanAnt       String   // 8 IND_LAN_ANT 'S'|'N'
+  origem          String   // 'user' | 'system' (PF/BC derivado no fechamento — Fork F-3C-2 a)
+  createdById, createdAt, updatedAt, deletedAt
+  @@index([userId, unitId, year, quarter])
+  @@index([deletedAt])
+  // SEM @@unique — p.268 "Campo(s) chave: —"
+}
+model LalurParteBClosing {                     // estado "trimestre fechado" (C1) — Fork N-1 (a)
+  id, userId (FK User Cascade), unitId
+  year            Int
+  quarter         String
+  balancesSha256  String   // sha256 do conjunto ordenado de saldos (auditoria — item 10: nunca os valores)
+  closedAt        DateTime
+  closedById      String?
+  balances        LalurParteBBalance[]
+  @@unique([userId, unitId, year, quarter])
+}
+model LalurParteBBalance {                     // M500 (p.271) materializado — Fork N-1 (a)
+  id
+  closingId       String   // FK LalurParteBClosing, Cascade (reabrir apaga)
+  parteBId        String   // FK LalurParteBAccount, Restrict
+  sdIniCents      BigInt;  indSdIni     String   // 4/5   SD_INI_LAL   'D'|'C'
+  vlParteACents   BigInt;  indVlParteA  String   // 6/7   VL_LCTO_PARTE_A
+  vlParteBCents   BigInt;  indVlParteB  String   // 8/9   VL_LCTO_PARTE_B
+  sdFimCents      BigInt;  indSdFim     String   // 10/11 SD_FIM_LAL
+  @@unique([closingId, parteBId])              // uma linha por conta × período (M500 chave, p.271)
+  @@index([parteBId])
+  // SEM userId/unitId próprios (escopo vem da pai) · SEM deletedAt (snapshot: refechar substitui, reabrir apaga — precedente ReferentialMapping D5)
+}
+model LalurProcess {                           // M315/M365/M415 (pp.255/267/270) — Fork F-3C-4 (a) + C2
+  id
+  parentId        String   // = entryId ?? movementId (XOR no serviço) — chave não-nula
+  entryId         String?  // FK LalurEntry, Restrict
+  movementId      String?  // FK LalurParteBMovement, Restrict
+  indProc         String   // 2 IND_PROC '1'|'2'
+  numProc         String   // 3 NUM_PROC C 20, sem '|'
+  @@unique([parentId, indProc, numProc])
+  @@index([entryId]); @@index([movementId])
+  // SEM deletedAt (value-object do pai — C2)
+}
+model LalurEntryJournalEntry {                 // M312/M362 (pp.254/266) — Fork F-3C-3 (a)
+  entryId         String   // FK LalurEntry, Restrict
+  journalEntryId  String   // FK JournalEntry, Restrict — só lançamento com entryNumber (I200.NUM_LCTO); ver D-P3
+  @@id([entryId, journalEntryId])
+  @@index([journalEntryId])
+}
+```
+
+Domínio das colunas-enum vive em `Lalur.model.ts` (`LALUR_MOV_INDICADORES`, `LALUR_ORIGENS`,
+`LALUR_IND_PROC`), como `LALUR_TRIBUTOS`/`LALUR_QUARTERS` hoje. `MAX_CENTS` segue política de DTO; `≥ 0`
+é invariante de DTO + teste. `LalurParteBBalance` guarda **magnitude + indicador** (convenção do M010/M500),
+nunca inteiro com sinal — o sinal só existe na aritmética do serviço (D-P3).
+
+### D-P3 — Regras de derivação que o model pressupõe (grau por linha; oráculo = PVA, H1 2ª passada 2P-4)
+
+1. **Aritmética do saldo (VERIFICADO na fonte, p.250/p.271 + BRIEF item 7).** Sinal interno: `D = +`, `C = −`.
+   Parte A (`M305/M355` do período, REGRA_PEA): `A`/`L` **+valor**, `E`/`P` **−valor**. Parte B (`M410`):
+   `DB`/`PF`/`BC` **+valor** na conta; `CR` **−valor**; movimento com `contrapartidaId` aplica o **oposto**
+   na contrapartida (transferência, p.268 campo 6) — daí a propriedade Σ_contas(vlParteB com contrapartida)
+   = 0. `sdFim = sdIni + ΣA + ΣB`; emitido como `|valor|` + indicador (`0` ⇒ indicador `C`, convenção do
+   `M010.saldoIni = 0` já em `main` — INFERIDO, PVA confirma).
+2. **Transporte intra-exercício (VERIFICADO, p.271).** `sdIni(N, Tn) = sdFim(N, Tn−1)` lido da linha
+   materializada; `close(N, Tn)` exige `(N, Tn−1)` fechado (T01 exige C3). Refechar `(N, Tn)` exige
+   nenhum `(N, Tk>n)` fechado (400 nomeando) — ordem limpa, precedente F-W2F-5. Gate **dentro da tx**
+   (`authoritative-gate-inside-tx`).
+3. **PF/BC (Fork F-3C-2 a — INFERIDO, §4 item 6 do BRIEF).** No `close`, por tributo:
+   `base = resultado(T) + ΣA − ΣE` das `LalurEntry` vivas do período no livro do tributo, onde
+   `resultado(T) = incomeStatement(fim T) − incomeStatement(fim T−1)` (DRE YTD closing-exclusive, janela de
+   `quarterWindows`); linhas `P` e `L` **não** entram na base do prejuízo. `base < 0` ⇒ um movimento
+   `origem='system'`, `indicador = PF (I) | BC (C)`, `valorCents = |base|`, `historico` fixo, `indLanAnt='N'`,
+   na **única** conta viva com `codPbRfb ∈ {1000,1001,1002}` (I) / `{1003,1004}` (C) — `>1` ⇒ 400 (BRIEF item
+   6), `0` ⇒ 400 (C4). `base ≥ 0` ⇒ nenhum `system` PF/BC vivo no período (o refechamento arquiva o que
+   houver). Movimento `system` não aceita PATCH de `valorCents`/`indicador`; só archive.
+4. **M312/M362 (Fork F-3C-3 a — DERIVADO do schema).** `JournalEntry.entryNumber` é `Int?`, nulo em
+   `Draft`/`PendingApproval` (`schema.prisma:536`); `NUM_LCTO` é `Obrig.=Sim` (p.254). Logo `journalEntryIds[]`
+   exige `entryNumber != null`, mesmo escopo, `date` dentro da janela do trimestre — 400 caso contrário.
+   `Reversed` **permanece** elegível (o lançamento e seu estorno estão ambos no I200 da ECD).
+5. **Compensação acima do saldo (BRIEF item 13 — INFERIDO).** Na conta da Parte B relacionada a uma linha
+   `P` do período, `sdFim` com indicador `C` (sinal interno < 0 — a compensação excedeu o prejuízo acumulado)
+   ⇒ 400 no create/update desse ajuste **e** no `close`. Saldo `C` em conta que NÃO recebe compensação é
+   legítimo (valores a adicionar no futuro — p.237 campo 9). O teto de 30% (Lei 9.065/95 art. 15) é da apuração
+   (`ADR-INCR-TAX-ASSESSMENT`), não daqui.
+
+### D-P4 — O que esta emenda NÃO decide
+
+- **Ordem intra-período** M300…M350…M410…M500 sob o mesmo M030 (BRIEF §4 item 3) e **M500 para conta sem
+  movimento e saldo zero** (§4 item 4): o serializer emite na ordem hierárquica da p.236 e **uma linha
+  por conta viva** (p.271 "visão sintética"); o PVA decide, e a mudança é só no `ecfReal.ts`.
+- **`M410.COD_CTA_B` vazio** (§4 item 2): DTO exige; relaxar só com caso do PVA/contador.
+- **Apuração por atividade** (1002/1004, M300A 174): frente própria (BRIEF §6 item 2).
+- Fechamento fiscal **não** acopla ao `AccountingPeriod` mensal nem ao `closeExercise` (D2 do BRIEF): um
+  trimestre pode ser fechado com meses contábeis abertos; o diagnóstico (`GET …/balances`) acusa a
+  divergência posterior e a geração recusa (BRIEF item 11).
+
+### Consequências
+
+Migração `add_lalur_parte_b_movements_closings_processes` — **5 CREATE TABLE, zero ALTER**, prólogo
+`DROP … IF EXISTS` na ordem filha→mãe (`LalurProcess`, `LalurEntryJournalEntry`, `LalurParteBBalance`,
+`LalurParteBMovement`, `LalurParteBClosing`), sem backfill; `smoke:migration` sobre cópia do `dev.db`
+real. Cadeia `Route → Controller → LalurService → LalurRepository → Prisma` (mesmo serviço — BRIEF item
+4), Policy `canManageData`/`canRead`, DTO `.strict()`, rotas em 2 toques + path-count guard (166 → **172**: `movements`, `movements/{id}`,
+`movements/{id}/archive`, `close`, `reopen`, `balances`), 5 eventos novos na allowlist
+(`lalur.movement_{created,updated,archived}`, `lalur.parte_b_{closed,reopened}`). `ecfReal.ts` ganha
+`buildM312/M315/M362/M365/M410/M415/M500/M510`; `M010.VL_SALDO_INI` passa a vir de C3. Tela =
+`FE-INCR-LALUR` (botão "fechar trimestre" + diagnóstico), separada.
