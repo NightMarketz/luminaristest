@@ -84,6 +84,17 @@ function applyTargetMigration(dbPath: string): void {
   );
 }
 
+/** Semeia o `User` dono no formato PRÉ-migração via SQL cru — o client Prisma gerado é o do schema
+ *  ATUAL e `db.user.create()` faria SELECT de coluna que este db (só migrações < TARGET) não tem
+ *  (mordeu em 2026-09-14 com `onboardingCompletedAt`, PR #320). Mesma regra de `seedLegacyCounterparty`. */
+function seedLegacyUser(db: PrismaClient, id: string): Promise<unknown> {
+  const now = Date.now();
+  return db.$executeRawUnsafe(
+    `INSERT INTO "User" ("id","name","username","email","password","role","createdAt","updatedAt") VALUES (?,?,?,?,?,?,?,?)`,
+    id, 'u', id, `${id}@test.local`, 'x', 'USER', now, now,
+  );
+}
+
 /** Semeia uma `counterparty` no formato PRÉ-migração (sem nameNormalized/taxId) via SQL cru. */
 function seedLegacyCounterparty(
   db: PrismaClient,
@@ -122,9 +133,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
       dbPath = `${basePath}.collision.db`;
       copyFileSync(basePath, dbPath);
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      await db.user.create({
-        data: { id: 'u-w2a-c', name: 'u', username: 'u-w2a-c', email: 'u-w2a-c@test.local', password: 'x', role: 'USER' },
-      });
+      await seedLegacyUser(db, 'u-w2a-c');
       // Duas linhas VIVAS no MESMO (userId,unitId,type) cujo nome só difere por trim/caixa — colidem
       // em nameNormalized apos o fold, exatamente o caso que F-W2A-5 manda abortar.
       await seedLegacyCounterparty(db, { id: 'cp-c1', userId: 'u-w2a-c', unitId: 'unit-1', type: 'SUPPLIER', name: ' Padaria X' });
@@ -164,9 +173,7 @@ describe('BRIEF-W2-A migration (nameNormalized + taxId) — real SQLite DB (F-W2
       dbPath = `${basePath}.happy.db`;
       copyFileSync(basePath, dbPath);
       const db = new PrismaClient({ datasources: { db: { url: `file:${dbPath}` } } });
-      await db.user.create({
-        data: { id: 'u-w2a-h', name: 'u', username: 'u-w2a-h', email: 'u-w2a-h@test.local', password: 'x', role: 'USER' },
-      });
+      await seedLegacyUser(db, 'u-w2a-h');
       // Linha viva com espaçamento/caixa a normalizar.
       await seedLegacyCounterparty(db, { id: ID_VIVA, userId: 'u-w2a-h', unitId: 'unit-1', type: 'SUPPLIER', name: '  Padaria   X  ' });
       // Linha ARQUIVADA (já mangled pelo SEC-A1-4 antigo) — precisa normalizar o valor mangled também.
