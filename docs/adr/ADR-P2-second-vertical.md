@@ -74,6 +74,27 @@
 > usuário). Nome e shape exatos do marco são decisão da execução do P2; a **âncora semântica está
 > fechada**.
 >
+> **EMENDA 2026-09-14 (dono, via `AskUserQuestion` — R7, `CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md`
+> e `CEDULA-DECISAO-2026-09-14-gates-humanos.md`, ambas concordam) — exceção NOMINAL ao perímetro
+> zero-diff para o T0.** A emenda de 08-25 exigiu o marco **na mesma transação** de
+> `DynamicTableService.installPresetAsSystem`, e esse arquivo está DENTRO do perímetro (§2 item 2 —
+> `features/dynamicTables/services/`). O comportamento 11 do P2 ficou pausado nessa contradição
+> (cédula 07/09 §"O que NÃO cobre" item 2). Decidido **contra** a alternativa "marco fora do motor"
+> (controller grava após o install, passando `tx`): o dono escolheu **emendar o perímetro**. Regra:
+> 1. **Um símbolo só:** `DynamicTableService.installPresetAsSystem` pode receber **uma** escrita a mais —
+>    o marco de T0 (`onboardingCompletedAt` ou nome equivalente) — dentro da transação já existente.
+>    Nenhuma outra linha desse arquivo nem de qualquer outro arquivo do perímetro é liberada por esta
+>    emenda.
+> 2. **A prova (`proveP2ZeroDiffCli.ts`) ganha allowlist de UM símbolo, não de um caminho:** o diff
+>    dentro de `DynamicTableService.ts` só é aceito se tocar exclusivamente o corpo de
+>    `installPresetAsSystem` e o teste-guarda da prova **falha** se a allowlist crescer (2º símbolo, 2º
+>    arquivo) ou se o diff do símbolo contiver algo além do marco. Como medir "só o marco" é decisão da
+>    execução (par vermelho→verde obrigatório no mesmo PR, `protocolo-conserto-de-gate`).
+> 3. **Ordem:** esta emenda está commitada **antes** do código (precedente `f42984ee`, 08-22); o
+>    comportamento 11 só reabre com ela em `main`.
+> 4. **O que segue fora:** qualquer outra escrita "de onboarding" no motor (flags, eventos, métricas
+>    novas) volta a ser diff não-vazio = defeito da prensa, como o §2 já diz.
+>
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
 >
@@ -96,7 +117,10 @@ runtime** — só: preset do setor + binding compilado na geração + (se precis
    invoca as pontes de salão incondicionalmente, o acoplamento vertical mais claro que estava fora do
    perímetro) entre antes e depois do vertical é **vazio**. **`presets/ai/PresetKnowledgeBase.ts` fica
    FORA do perímetro** pela mesma emenda: o comportamento 3 do BRIEF **precisa** de uma entrada nova
-   nele, e exigir zero-diff ali reprovaria a prova por fazer o que o §1 autoriza. Um diff não-vazio não é "ajuste" — é defeito da
+   nele, e exigir zero-diff ali reprovaria a prova por fazer o que o §1 autoriza. **EMENDA 2026-09-14
+   (R7): exceção nominal de UM símbolo — o marco de T0 dentro de
+   `DynamicTableService.installPresetAsSystem` (ver cabeçalho); a prova aceita esse diff e só ele.**
+   Qualquer outro diff não-vazio não é "ajuste" — é defeito da
    prensa e volta para o P1 como lacuna (sessão de instrumentação → correção).
 3. **Métrica instaurada: *time-to-first-ECD*** — do onboarding ao primeiro arquivo validável (análogo
    do "minutes to first sale" da Shopify). **EMENDA 2026-08-25 (F-P2-4 → (b)): instrumentada no
