@@ -23,6 +23,7 @@ model User {
   role                    Role                     @default(USER)
   locale                  String                   @default("en") // 'en' | 'pt'
   currency                String                   @default("BRL") // 'BRL' | 'USD' | 'EUR'
+  onboardingCompletedAt   DateTime? // T0 do time-to-first-ECD — gravado na tx de installPresetAsSystem (ADR-P2 emenda R7, F-I2-1 → a)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   dashboardLayouts        DashboardLayout[] // multi-tab dashboards (fork feature/back-end)
