@@ -8,6 +8,7 @@ import {
   CreateLalurEntrySchema,
   CreateLalurParteBAccountSchema,
   CreateLalurParteBMovementSchema,
+  LalurCatalogQuerySchema,
   LalurParteBBalancesQuerySchema,
   LalurParteBPeriodSchema,
   ListLalurEntriesQuerySchema,
@@ -26,6 +27,22 @@ import {
  * ECF 3C (ADR EMENDA 2026-09-12, 3ª): Parte B MOVEMENTS (M410), quarter CLOSE/REOPEN (materializes the
  * M500 — Fork N-1 a) and the BALANCES diagnostic (materialized × recomputed).
  */
+
+// ── Catálogo (Leiaute 12) ──────────────────────────────────────────────────
+/** GET /api/lalur/catalog?unitId=&year=&livro=|aba=PARTEB_PADRAO&q=&tributo= — read-only, global (FE-INCR-LALUR F-FE-1→a). */
+export const getLalurCatalog = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = LalurCatalogQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = getFactory().getLalurService().catalog(scope, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
 
 // ── Entries ────────────────────────────────────────────────────────────────
 /** GET /api/lalur/entries?unitId=&year=&quarter=&livro=&includeArchived= */

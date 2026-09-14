@@ -3638,6 +3638,32 @@
 /**
  * @openapi
  * paths:
+ *   /api/lalur/catalog:
+ *     get:
+ *       summary: Leiaute 12 catalog for the e-Lalur cadastro screen (linhas E of a livro, or PARTEB_PADRAO)
+ *       description: >-
+ *         FE-INCR-LALUR (Fork F-FE-1 - a). Read-only view of the Tabelas Dinamicas fixture, global
+ *         (unitId is auth scope only). Exactly one of livro or aba=PARTEB_PADRAO. livro returns the
+ *         ENTRY lines (tipo E) in force for the year - the same predicate the write path enforces,
+ *         so the combobox never offers a code POST /entries would refuse; a code duplicated in the
+ *         official sheet surfaces once (first occurrence, what findLinha resolves). aba=PARTEB_PADRAO
+ *         returns the M010.COD_PB_RFB universe filtered by tributo (A matches both) with no vigencia
+ *         filter (the write path applies none), so year is not used there. q (>= 2 chars) is an
+ *         accent-insensitive substring filter on codigo/descricao.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: year, required: false, schema: { type: integer }, description: required with livro }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: aba, required: false, schema: { type: string, enum: [PARTEB_PADRAO] } }
+ *         - { in: query, name: tributo, required: false, schema: { type: string, enum: [I, C] } }
+ *         - { in: query, name: q, required: false, schema: { type: string, minLength: 2 } }
+ *       responses:
+ *         '200': { description: '{ rows: [{ codigo, descricao, tipo: E, tipoLanc?, vigencia: { de, ate } }] } or { rows: [{ codigo, descricao, tributo }] }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
  *   /api/lalur/entries:
  *     get:
  *       summary: List e-Lalur/e-Lacs adjustment lines (Parte A M300/M350 + linhas E do Bloco N)
