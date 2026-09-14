@@ -11,6 +11,20 @@
 > "Pode tomar todas as decisões aqui" — dado sobre a tabela de 10 linhas (R8 · F-X6-1..6 · R9 · R10 ·
 > R5/R6/R7 · SEED-MY · X4-14 · #315 · C8), respondida opção a opção no questionário.
 
+## ⚠️ Reconciliação com a cédula paralela (`CEDULA-DECISAO-2026-09-14-gates-humanos.md`, PR #318)
+
+Duas sessões questionaram o dono no mesmo dia sobre o mesmo conjunto e as respostas divergiram em
+**4 pontos**. O dono desempatou **item a item** (questionário, esta sessão, 14/09). **Esta tabela prevalece
+sobre as duas cédulas onde elas divergem**; onde concordam, qualquer uma é citável.
+
+| Ref | Vence | Decisão final | O que muda na tabela abaixo / no #318 |
+|---|---|---|---|
+| **R6** | **#319 (esta)** | **Financeiro antes de fiscal**: F7 BRIEF e F-BAIXA antes da `sessao-feature` do X6; exceção 01/10 (X10i quando D5 existir) mantida | linha R6 do #318 ("manter F-M6") **superada** |
+| **R8** | **#318** | **Instância = CNPJ raiz; unidade = filial com conta de emissão própria.** `units.cnpj` **fica**; chave do parceiro por instância, conta por unidade no `FiscalProfile` (R4 derivada, a confirmar na emenda do ADR-DFE) | linha R8 abaixo ("`units.cnpj` informativo") **superada** |
+| **F-X6-3** | **#318** | **(b) subtrair PIS/COFINS já** — ativa F-X6-4 monofásico por produto agora; 4 exceções (monofásico, ICMS fora da base — Lei 14.592/23, IPI na base, fornecedor do Simples) com default conservador **sem crédito**, como dado configurável; linha nova no pedido ao contador | X6 passa a **5/6 → (a) + F-X6-3 → (b)**; o BRIEF #309 precisa de emenda (itens 10/11) antes da feature |
+| **R5** | **#319 (esta)** | **Adiar até X7 destravar** — sem desenho de adaptador agora; contratar decide-se quando D1 itens 1/1b chegarem | linha R5 do #318 ("não contratar + port") **superada** |
+| **#315** | **#318** | **A sessão paralela integra** (review independente + merge no PASS). Esta sessão iniciou `sessao-integracao`, encontrou o conflito com o #316 e **abandonou sem tocar a branch** (baseline inválido por EBUSY — jest concorrente) | regra de conflito da linha #315 abaixo continua válida para quem integrar |
+
 ## Decisões
 
 | Ref | Pergunta | Decisão do dono | Recomendação | Consequência imediata |
