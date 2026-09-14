@@ -24,6 +24,14 @@
       "port": 3000,
       "cwd": "my-app",
       "autoPort": false
+    },
+    {
+      "name": "backend-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "port": 3001,
+      "cwd": "server",
+      "autoPort": false
     }
   ]
 }

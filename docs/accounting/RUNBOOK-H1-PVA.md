@@ -108,6 +108,15 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > 3. `node scripts/activate-salon-binding.mjs` — a tabela nasce vazia; migrar não basta.
 >
 > Fechou quando `npm start` imprime `Luminaris Server running on ...` em vez de `Boot ABORTADO`.
+>
+> **[EXECUTADO 2026-09-14 — ordem do dono, agente disparou; evidência no PR desta emenda]** sobre o
+> `dev.db` real (`server/prisma/prisma/dev.db`, md5 antes `bf4f8bb4…`): backup `dev-20260914135952.db`
+> (`integrity_check: ok`) → `migrate deploy` 29→42 migrações (S6/S7 do smoke gate re-medidos como falso
+> positivo: 30 postings valor-a-valor iguais; índice `…_type_name_key` → `…_type_nameNormalized_key`)
+> → P0.2b: contas `1.1.6`/`3.3`/`4.2` criadas + `2026/09` `OPEN` → `activate-salon-binding.mjs`
+> `OK: binding 'beautySalon' ativado — versão 1` → `node dist/server.js` (build de produção, `c96e2227`)
+> `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. **P2b está satisfeito
+> neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**
 
 ### Subir o ambiente (build de produção)
 

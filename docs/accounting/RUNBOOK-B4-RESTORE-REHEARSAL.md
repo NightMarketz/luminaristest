@@ -3,6 +3,17 @@
 > Preparado por agente em 2026-08-30 contra `origin/main` `41884c8a`. **Em branco de propósito:**
 > EVIDÊNCIA, desfecho e assinatura são do executor humano — runbook sem assinatura é nulo
 > (`docs/operating-manual/RUNBOOK-FORMAT.md`).
+>
+> **[EMENDA 2026-09-14 — referência por SQL]** P5 e o passo 4 deixam de depender de um server de
+> pé + login + `unitId`: a leitura de referência é uma **impressão digital SQL** do arquivo (mesmo
+> script nos dois lados, saída idêntica = restauração fiel). Motivos medidos: (i) o P5 original exigia
+> o server rodando contra o original, e o server escreve sozinho (`accounting_sync_reconcile` a cada
+> 5 min desde o boot) — referência tirada com o server no ar pode divergir do backup por causa do
+> próprio job, FALHOU falso; (ii) `/trial-balance` e `/entries` cobrem 2 tabelas; a impressão digital
+> cobre todas (55 hoje). Os curls seguem como prova **opcional** de que a API lê o restaurado; o
+> boot do passo 3 já prova que o código abre o arquivo. P7 (`unitId`) só é necessário se usar os
+> curls opcionais. Pré-condição nova: **Python 3 no PATH** (o repo não tem `sqlite3` CLI nem
+> `better-sqlite3`; o Python vem com `sqlite3` embutido).
 
 Executor: [nome — humano]           Data: [____]
 Autorização: item B-1/B-4 do plano pré-dados-reais (Wave 1, "Pode disparar" — dono, 2026-08-30);
@@ -22,10 +33,10 @@ Rastreio a atualizar no fim: [linha do master map / plano-mãe que este runbook 
 | P2 | `dev.db` real existe e está populado (o passo 1 só LÊ, mas confirme antes de mexer) | `ls -la server/prisma/prisma/dev.db` (o populado; `server/prisma/dev.db` é isca de 0 byte) | [ ] |
 | P3 | `cd server && npm ci && npx prisma generate` rodado (client do Prisma presente) | `ls server/generated/prisma` | [ ] |
 | P4 | Porta 3001 (server) e 3000 (app) livres para o boot do passo 3 | `netstat -ano \| grep ":3001\|:3000"` sem processo Luminaris já ativo | [ ] |
-| P5 | Duas leituras de referência do banco ORIGINAL anotadas ANTES de restaurar (balancete e uma
-listagem — comparar depois contra o restaurado) | ver "Leituras de referência" abaixo | [ ] |
+| P5 | Impressão digital SQL do banco ORIGINAL anotada ANTES do passo 1, **com o server parado** (P4) — comparar depois contra o restaurado | ver "Leitura de referência por SQL" abaixo | [ ] |
+| P5b | `python --version` responde (3.x) — o script de referência usa o `sqlite3` embutido do Python | `python --version` | [ ] |
 | P6 | `OPENAI_API_KEY` presente em `server/.env`, qualquer valor não vazio — sem ela `new OpenAIService()` lança na construção do factory e o boot aborta ANTES de tocar no banco (verificado); nenhum passo deste runbook exercita IA, então um valor dummy serve só para este ensaio | `grep OPENAI_API_KEY server/.env` — se vazio/ausente, acrescente uma linha como `OPENAI_API_KEY=sk-rehearsal-dummy-nao-real` | [ ] |
-| P7 | `unitId` da unidade a testar, resolvido ANTES de P5 (os curls de P5 e do passo 4 exigem `unitId`, e não é um valor óbvio) | ver "Como descobrir o unitId" abaixo | [ ] |
+| P7 | *(opcional — só se for rodar os curls opcionais do passo 4)* `unitId` da unidade a testar | ver "Como descobrir o unitId" abaixo | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
 
@@ -35,24 +46,40 @@ Caminho mais simples — tela **Contabilidade** do app (`/accounting`, component
 
 Sem acesso à tela (ex.: ambiente sem frontend rodando): `cd server && npx prisma studio` (script já existe em `package.json`), abra a tabela `JournalEntry` e leia a coluna `unitId` de qualquer linha — todos os lançamentos da mesma unidade compartilham o valor.
 
-### Leituras de referência (P5) — tirar ANTES do passo 1
+### Leitura de referência por SQL (P5) — tirar ANTES do passo 1, com o server PARADO
 
-Com o server rodando contra o `dev.db` real (ambiente atual, sem alterar nada):
-
-```bash
-curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"SEU_USUARIO\",\"password\":\"SUA_SENHA\"}"
-```
+Salve o script uma vez (fora do repo, ex.: `%TEMP%/db-fingerprint.py`) — é o MESMO script que o
+passo 4 roda sobre o restaurado; a comparação só vale se o texto for idêntico dos dois lados:
 
 ```bash
-curl -s "http://localhost:3001/api/accounting/trial-balance?unitId=SEU_UNIT_ID" -H "Authorization: Bearer SEU_TOKEN"
+cat > "$TEMP/db-fingerprint.py" <<'EOF'
+import sqlite3, hashlib, sys
+c = sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True)
+tabs = [r[0] for r in c.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%' and name<>'_prisma_migrations' order by name")]
+print("integrity_check:", c.execute("pragma integrity_check").fetchone()[0])
+print("migracoes:", c.execute("select count(*) from _prisma_migrations").fetchone()[0])
+print("journal_entries/postings/accounts/accounting_bindings:", [c.execute(f"select count(*) from {t}").fetchone()[0] for t in ("journal_entries","postings","accounts","accounting_bindings")])
+print("postings debito/credito:", c.execute("select sum(debitCents), sum(creditCents) from postings").fetchone())
+h = hashlib.sha256()
+for t in tabs:
+    for r in c.execute(f"select * from {t} order by 1"):
+        h.update(repr(r).encode())
+print("tabelas:", len(tabs), "| sha256(linhas):", h.hexdigest())
+EOF
 ```
+
+Abre em `mode=ro` (nunca escreve no arquivo lido) e cobre **todas** as tabelas, exceto
+`_prisma_migrations` (só a contagem — o conteúdo tem timestamps de aplicação). O `sha256(linhas)`
+é sobre todas as linhas de todas as tabelas, ordenadas pela 1ª coluna (o `id`).
 
 ```bash
-curl -s "http://localhost:3001/api/accounting/entries?unitId=SEU_UNIT_ID" -H "Authorization: Bearer SEU_TOKEN"
+python "$TEMP/db-fingerprint.py" server/prisma/prisma/dev.db
 ```
 
-Guarde as duas respostas — são a base de comparação do passo 4.
+Guarde a saída inteira — é a base de comparação do passo 4. Se `integrity_check` não for `ok` aqui,
+o problema é o ORIGINAL, não o backup: desfecho **BLOQUEADO** em P5.
 
+EVIDÊNCIA P5: [colar a saída completa]
 ---
 
 ## Passos
@@ -146,9 +173,25 @@ Resultado esperado: log de boot chegando em `Luminaris Server running on ...` (n
 EVIDÊNCIA: [colar as linhas de log do boot até "running on", e a linha `DATABASE_URL` usada no
 `.env` durante o teste]
 
-### 4. Conferência — 2 a 3 leituras contra a restauração
+### 4. Conferência — impressão digital SQL do restaurado
 
-Com o server do passo 3 no ar (porta 3001 apontando para o restaurado):
+Com o server do passo 3 ainda no ar (prova que o arquivo é utilizável), rode o MESMO script de P5
+sobre o arquivo restaurado (o `mode=ro` não briga com o server aberto no mesmo arquivo):
+
+```bash
+python "$TEMP/db-fingerprint.py" "<path absoluto do passo 2>/restored-<data>.db"
+```
+
+Resultado esperado: as 5 linhas **idênticas** às de P5 — em especial `sha256(linhas)` igual e
+`integrity_check: ok`. `migracoes` diferente = o backup NÃO é do schema atual (achado, ver nota do
+passo 3); `sha256` diferente com contagens iguais = alguma linha mudou entre P5 e o passo 1 (o
+server estava de pé durante P5? — refaça P5 com o server parado antes de concluir FALHOU).
+
+EVIDÊNCIA: [colar a saída do restaurado + a linha `sha256(linhas)` de P5 lado a lado — iguais ou
+diferença exata]
+
+*(Opcional — prova de que a API lê o restaurado, exige P7 e credencial; não substitui a comparação
+SQL acima.)*
 
 ```bash
 curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: application/json" -d "{\"username\":\"SEU_USUARIO\",\"password\":\"SUA_SENHA\"}"
@@ -158,14 +201,7 @@ curl -s -X POST http://localhost:3001/api/auth/login -H "Content-Type: applicati
 curl -s "http://localhost:3001/api/accounting/trial-balance?unitId=SEU_UNIT_ID" -H "Authorization: Bearer SEU_TOKEN"
 ```
 
-```bash
-curl -s "http://localhost:3001/api/accounting/entries?unitId=SEU_UNIT_ID" -H "Authorization: Bearer SEU_TOKEN"
-```
-
-Resultado esperado: balancete e listagem de lançamentos **idênticos** aos capturados em "Leituras
-de referência" (P5) contra o banco original.
-
-EVIDÊNCIA: [colar as duas respostas + confirmação lado a lado com P5 — iguais ou diferença exata]
+Esperado: balancete cujos Σdébito/Σcrédito batem com `select sum(debitCents), sum(creditCents) from postings where unitId='<UNIT>'` sobre o restaurado — **da unidade**, não o total de P5 (que soma todas as unidades; no ensaio de 2026-09-14: 861.300 da unidade × 1.897.300 total).
 
 > **Encerrar o server do passo 3, reverter o `DATABASE_URL` do `server/.env` (passo 3.4) e apagar o
 > `restored-<data>.db` do path absoluto do passo 2 ao final do ensaio** — arquivo de teste, não deve

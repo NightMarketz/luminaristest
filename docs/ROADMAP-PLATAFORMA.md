@@ -64,7 +64,8 @@ sobre as rotas `reports/*` existentes. Sem isso o Núcleo 4 é ~70% de backend e
 
 ### A7 — Diferidos que PERMANECEM demand-gated (não puxar por completude)
 Torre de aprovação (maker-checker/SoD) · Dimensões · **Subrazões (AR/AP/estoque/imobilizado/folha/
-fiscal)** · NF-e · inbox/outbox (só se sair de single-process, T11) · IA/analytics · LGPD granular.
+fiscal)** · NF-e · inbox/outbox (só se sair de single-process, T11) · IA/analytics (**RAG/Qdrant: re-analisar
+uso real + backend antes de tocar — `docs/tech-debt/rag-vector-store-reanalysis.md`**) · LGPD granular.
 Gatilhos de AR já registrados (memória `luminaris-product-thesis` + parecer do orquestrador 2026-07-13):
 posição por cliente/título, parcelamento/baixa parcial real, aging pedido pelo contador, volume de
 não-liquidadas. **Sem gatilho real, ficam onde estão.**
