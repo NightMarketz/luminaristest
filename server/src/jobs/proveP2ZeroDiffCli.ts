@@ -63,32 +63,127 @@ export const VETOED_SHARED_FILES = [
   'server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts',
 ] as const;
 
+/**
+ * Exceção NOMINAL de UM símbolo (ADR-P2 EMENDA 2026-09-14, R7 — cédula `CEDULA-DECISAO-2026-09-14-
+ * forks-ratificacoes.md`): o marco de T0 do *time-to-first-ECD* (`User.onboardingCompletedAt`, F-I2-1 → a)
+ * é gravado DENTRO da transação de `installPresetAsSystem`, e esse arquivo mora no perímetro. A emenda
+ * libera exatamente ESSA escrita — a allowlist é de símbolo, não de caminho, e o teste-guarda em
+ * `__tests__/proveP2ZeroDiffCli.test.ts` falha se ela crescer (2º símbolo, 2º arquivo).
+ *
+ * "Só o marco" (decisão de execução delegada pela emenda, item 2) mede-se assim: o diff do arquivo é
+ * ADITIVO (zero linha removida), toda linha adicionada não-comentário contém `marker`, e todas caem
+ * entre a assinatura de `symbol` e o `}` que fecha o método no head.
+ */
+export const SYMBOL_ALLOWLIST = [
+  {
+    file: 'server/src/features/dynamicTables/services/DynamicTableService.ts',
+    symbol: 'installPresetAsSystem',
+    marker: 'onboardingCompletedAt',
+  },
+] as const;
+
+export type SymbolAllowlistEntry = (typeof SYMBOL_ALLOWLIST)[number];
+
+/** Entrada por arquivo allowlisted: `git diff -U0 base...head -- file` + `git show head:file`. */
+export interface SymbolDiffInput {
+  diff: string;
+  headSource: string;
+}
+
 function normalize(filePath: string): string {
   return filePath.replace(/\\/g, '/').trim();
+}
+
+/** [start, end] (1-based, inclusive) do método `symbol` no head — assinatura até o `  }` de membro. */
+function findSymbolRange(headSource: string, symbol: string): [number, number] | null {
+  const lines = headSource.split('\n');
+  const signature = new RegExp(`^\\s+(?:public\\s+|private\\s+|protected\\s+)?(?:async\\s+)?${symbol}\\s*\\(`);
+  const start = lines.findIndex((l) => signature.test(l));
+  if (start === -1) return null;
+  const indent = /^(\s*)/.exec(lines[start])![1];
+  const end = lines.findIndex((l, i) => i > start && l.replace(/\r$/, '') === `${indent}}`);
+  return end === -1 ? null : [start + 1, end + 1];
+}
+
+/** Função pura — lista as violações do diff de UM arquivo allowlisted (vazia = só o marco). */
+export function classifySymbolDiff(diff: string, headSource: string, entry: SymbolAllowlistEntry): string[] {
+  const range = findSymbolRange(headSource, entry.symbol);
+  if (!range) return [`símbolo ${entry.symbol} não encontrado no head de ${entry.file}`];
+  const [start, end] = range;
+
+  const violations: string[] = [];
+  let newLine = 0;
+  for (const raw of diff.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
+    if (hunk) {
+      newLine = Number(hunk[1]);
+      continue;
+    }
+    if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('diff ') || line.startsWith('index ')) continue;
+    if (line.startsWith('-')) {
+      violations.push(`linha removida em ${entry.file} — a exceção do marco é aditiva: ${line.slice(1).trim()}`);
+      continue;
+    }
+    if (line.startsWith('+')) {
+      const body = line.slice(1).trim();
+      // O `+` de uma linha adicionada; em -U0 não há linha de contexto para contar.
+      if (newLine < start || newLine > end) {
+        violations.push(`linha ${newLine} fora do corpo de ${entry.symbol}: ${body}`);
+      } else if (body !== '' && !body.startsWith('//') && !body.startsWith('*') && !body.startsWith('/*') && !body.includes(entry.marker)) {
+        violations.push(`linha ${newLine} dentro de ${entry.symbol} não é o marco (${entry.marker}): ${body}`);
+      }
+      newLine += 1;
+    }
+  }
+  return violations;
 }
 
 export interface ZeroDiffReport {
   changedFiles: string[];
   perimeterViolations: string[];
   vetoedFileViolations: string[];
+  /** Arquivos do perímetro aceitos pela exceção nominal (diff = só o marco do símbolo allowlisted). */
+  allowlistedSymbolEdits: string[];
+  /** Detalhe por arquivo allowlisted cujo diff foi além do marco. */
+  symbolViolations: Record<string, string[]>;
   clean: boolean;
 }
 
-/** Função pura — classifica uma lista de paths já obtida (testável sem shell-out a `git`). */
-export function classifyZeroDiffViolations(changedFiles: string[]): ZeroDiffReport {
+/** Função pura — classifica uma lista de paths já obtida (testável sem shell-out a `git`). Sem
+ *  `symbolDiffs` para um arquivo allowlisted, o nome do arquivo continua violação (fail-closed). */
+export function classifyZeroDiffViolations(
+  changedFiles: string[],
+  opts: { symbolDiffs?: Record<string, SymbolDiffInput> } = {},
+): ZeroDiffReport {
   const files = changedFiles.map(normalize).filter(Boolean);
 
-  const perimeterViolations = files.filter(
-    (f) =>
+  const allowlistedSymbolEdits: string[] = [];
+  const symbolViolations: Record<string, string[]> = {};
+  const perimeterViolations = files.filter((f) => {
+    const inPerimeter =
       PERIMETER_PREFIXES.some((prefix) => f === prefix || f.startsWith(prefix)) &&
-      !EXPLICITLY_EXEMPT_PREFIXES.some((exempt) => f.startsWith(exempt)),
-  );
+      !EXPLICITLY_EXEMPT_PREFIXES.some((exempt) => f.startsWith(exempt));
+    if (!inPerimeter) return false;
+    const entry = SYMBOL_ALLOWLIST.find((e) => e.file === f);
+    const input = entry && opts.symbolDiffs?.[f];
+    if (!entry || !input) return true;
+    const v = classifySymbolDiff(input.diff, input.headSource, entry);
+    if (v.length === 0) {
+      allowlistedSymbolEdits.push(f);
+      return false;
+    }
+    symbolViolations[f] = v;
+    return true;
+  });
   const vetoedFileViolations = files.filter((f) => (VETOED_SHARED_FILES as readonly string[]).includes(f));
 
   return {
     changedFiles: files,
     perimeterViolations,
     vetoedFileViolations,
+    allowlistedSymbolEdits,
+    symbolViolations,
     clean: perimeterViolations.length === 0 && vetoedFileViolations.length === 0,
   };
 }
@@ -111,25 +206,49 @@ export function getChangedFiles(base: string, head: string, repoRoot: string = R
   return out.split('\n').map((l) => l.trim()).filter(Boolean);
 }
 
+/** Shell-out para os arquivos allowlisted que aparecem no diff: `-U0` (sem contexto, só as linhas
+ *  tocadas) + o head do arquivo para localizar o corpo do símbolo. */
+export function getSymbolDiffs(
+  changedFiles: string[],
+  base: string,
+  head: string,
+  repoRoot: string = REPO_ROOT,
+): Record<string, SymbolDiffInput> {
+  const out: Record<string, SymbolDiffInput> = {};
+  for (const entry of SYMBOL_ALLOWLIST) {
+    if (!changedFiles.map(normalize).includes(entry.file)) continue;
+    const diff = execFileSync('git', ['diff', '-U0', `${base}...${head}`, '--', entry.file], { cwd: repoRoot, encoding: 'utf8' });
+    const headSource = execFileSync('git', ['show', `${head}:${entry.file}`], { cwd: repoRoot, encoding: 'utf8' });
+    out[entry.file] = { diff, headSource };
+  }
+  return out;
+}
+
 /** Nunca chama `process.exit` (testável) — devolve o código de saída pretendido. */
 export function runCli(argv: string[] = process.argv.slice(2)): number {
   const { base, head } = parseArgs(argv);
 
   let files: string[];
+  let symbolDiffs: Record<string, SymbolDiffInput>;
   try {
     files = getChangedFiles(base, head);
+    symbolDiffs = getSymbolDiffs(files, base, head);
   } catch (error) {
     console.error(`erro ao rodar 'git diff --name-only ${base}...${head}': ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
 
-  const report = classifyZeroDiffViolations(files);
+  const report = classifyZeroDiffViolations(files, { symbolDiffs });
 
   if (report.clean) {
     console.log(
       `OK: zero-diff no perímetro — ${report.changedFiles.length} arquivo(s) alterado(s) entre ` +
         `${base}...${head}, nenhum dentro do perímetro protegido (ADR-P2 §2 item 2).`,
     );
+    for (const f of report.allowlistedSymbolEdits) {
+      const entry = SYMBOL_ALLOWLIST.find((e) => e.file === f)!;
+      console.log(`  exceção nominal (ADR-P2 EMENDA 2026-09-14 R7): ${f} — só o marco ${entry.marker} em ${entry.symbol}`);
+    }
     return 0;
   }
 
@@ -138,7 +257,13 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
       `${base}...${head}) — isso é defeito da prensa, não ajuste. Volta para o P1 como lacuna ` +
       '(sessão de instrumentação → correção).',
   );
-  for (const f of report.perimeterViolations) console.error(`  perímetro: ${f}`);
+  for (const f of report.perimeterViolations) {
+    console.error(`  perímetro: ${f}`);
+    for (const v of report.symbolViolations[f] ?? []) {
+      const entry = SYMBOL_ALLOWLIST.find((e) => e.file === f)!;
+      console.error(`    símbolo allowlisted (${entry.symbol}): ${v}`);
+    }
+  }
   for (const f of report.vetoedFileViolations) console.error(`  arquivo compartilhado vetado (F-P2-5): ${f}`);
   return 1;
 }
