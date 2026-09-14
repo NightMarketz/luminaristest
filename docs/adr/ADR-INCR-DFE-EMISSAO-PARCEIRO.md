@@ -92,6 +92,29 @@ instâncias/usuários pagos, e a conta no parceiro é uma por CNPJ. Sem chave �
 emissão **desabilitada com aviso** na tela; nunca falha em silêncio. Fork F-DFE-2 registra a alternativa
 (tabela por unidade, cifrada).
 
+**[EMENDA 2026-09-14 — R8, tensão `units.cnpj` × "1 instância = 1 CNPJ" RESOLVIDA pelo dono
+(`CEDULA-DECISAO-2026-09-14-gates-humanos.md` R8, desempate item a item registrado em
+`CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md` §Reconciliação).]** A emenda de 09-10 deixou uma
+contradição aberta (grafo 11/09 §0.3): o preset `units` (`modules/core/UnitsModule.ts`) tem `cnpj` **por
+unidade**. Decisão: **instância = CNPJ raiz; unidade = filial (mesma raiz, sufixo próprio) com conta de
+emissão própria.** Consequências, cada uma verificável:
+1. **`units.cnpj` FICA** — matriz e filiais do mesmo cliente são unidades da mesma instância. A
+   validação do preset ganha (na execução do BRIEF `BE-INCR-DFE`, não aqui) a regra **"os 8 dígitos da
+   raiz do CNPJ de toda unidade = raiz da instância"**; unidade com raiz diferente é outro cliente e
+   cadastra em outra instância (o modelo comercial da emenda de 09-10 permanece: N raízes = N instâncias
+   pagas).
+2. **Chave do parceiro continua por instância** (env, BYOK — R4 intacto); **a conta/cadastro de emissão
+   no parceiro é por unidade** (uma por CNPJ de filial), identificada por `partnerAccountRef` no
+   `FiscalProfile` (F-DFE-6 a) — coluna nova a nascer com o `FiscalProfile`, não migração posterior.
+   **R4 derivada, a confirmar na execução:** se o parceiro escolhido (D5) exigir chave distinta por
+   CNPJ (e não conta sob uma chave), a chave desce para o `FiscalProfile` cifrada — o que reabre
+   F-DFE-2 (b) **só para esse parceiro**; critério de seleção de D5 passa a incluir "N filiais sob
+   uma chave".
+3. **Chave de tudo que é fiscal por unidade = escopo contábil real (`userId`+`unitId`)**, como o
+   `FiscalProfile` do BRIEF X6 (F-X6-1 a) já assume — o DFE herda, não duplica.
+4. **M2**: provisionar uma instância por CNPJ raiz; certificado A1 é do CNPJ raiz e vale para filiais
+   (regra da RFB para e-CNPJ da matriz — **fonte a citar no BRIEF**, grau INFERIDO até lá).
+
 ### D3 — `FiscalDocument` é entidade **Prisma first-class** (§2.1: invariante fiscal)
 ```
 FiscalDocument { id, userId, unitId, kind: NFSE|NFE, status: DRAFT|SENT|AUTHORIZED|REJECTED|CANCELLED,
@@ -301,7 +324,7 @@ do H2-DFE PASSOU.
 | Fork | Decisão do dono | Contra a recomendação? | Efeito no BRIEF / no ADR |
 |---|---|---|---|
 | **F-DFE-1** | **(b) NFS-e + NF-e 55 de venda no MESMO BRIEF** | **SIM** | O BRIEF `BE-INCR-DFE` cobre os dois `kind`; a **numeração gapless por série + inutilização de faixas** da NF-e 55 (parecer §1.6) deixa de ser "fork da onda 2" e entra como fork do próprio BRIEF; a chave de 44 posições usa `lib/cnpj.ts`. O prazo de 01/10 (NFS-e) segue sendo o primeiro a cumprir — o BRIEF ordena os comportamentos NFS-e antes dos NF-e, mas o ciclo é um só |
-| **F-DFE-2** | **(a) env da instância**, ~~1 chave para N unidades~~ **1 instância = 1 CNPJ (emenda 2026-09-10)** | não | D2 emendado; "N CNPJs por conta" **deixou de ser** critério de D5 (cédula 10/09 §6 item 4) |
+| **F-DFE-2** | **(a) env da instância**, ~~1 chave para N unidades~~ **1 instância = 1 CNPJ raiz; filiais = unidades com conta de emissão própria (emendas 2026-09-10 e 2026-09-14/R8)** | não | D2 emendado; "N CNPJs por conta" **deixou de ser** critério de D5 (cédula 10/09 §6 item 4) |
 | **F-DFE-3** | **(a) manual** (botão na venda finalizada) | não | D4 como escrito |
 | **F-DFE-4** | **dono escolhe depois, fora da sessão (D5)** | — | ADR fixa só os critérios (§5 + §9.4); BE nasce com `FileEmissor`/`NullEmissor`; adaptador do parceiro = BRIEF próprio após D5. **Critério novo por F-DFE-8:** o parceiro precisa suportar emissão para optante do **Simples** pelo Emissor Nacional |
 | **F-DFE-5** | **(c) polling + webhook** | **SIM** | Além do job nomeado de re-consulta, o BRIEF ganha uma **rota pública** de webhook (`POST /api/nfe/dfe/webhook/<parceiro>`) na allowlist deny-by-default **de propósito**, com verificação de assinatura/segredo do parceiro, idempotente por `partnerRef` + status, e sem confiança no corpo além do que `consultar` confirma (o webhook só *acorda* a re-consulta). Risco aceito por escrito: superfície pública nova; teste-guarda de assinatura inválida ⇒ 401 sem efeito |
