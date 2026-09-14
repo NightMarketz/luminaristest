@@ -8,6 +8,13 @@ import {
   createLalurParteB,
   updateLalurParteB,
   archiveLalurParteB,
+  listLalurMovements,
+  createLalurMovement,
+  updateLalurMovement,
+  archiveLalurMovement,
+  closeLalurParteB,
+  reopenLalurParteB,
+  getLalurParteBBalances,
 } from '../controllers/lalurController';
 
 /**
@@ -24,6 +31,15 @@ router.get('/entries', listLalurEntries);
 router.post('/entries', createLalurEntry);
 router.patch('/entries/:id', updateLalurEntry);
 router.post('/entries/:id/archive', archiveLalurEntry);
+
+// Parte B — estáticos ANTES de `/parte-b/:id` (ECF 3C): movimentos M410, fechamento, diagnóstico
+router.get('/parte-b/movements', listLalurMovements);
+router.post('/parte-b/movements', createLalurMovement);
+router.patch('/parte-b/movements/:id', updateLalurMovement);
+router.post('/parte-b/movements/:id/archive', archiveLalurMovement);
+router.post('/parte-b/close', closeLalurParteB);
+router.post('/parte-b/reopen', reopenLalurParteB);
+router.get('/parte-b/balances', getLalurParteBBalances);
 
 // Parte B (M010)
 router.get('/parte-b', listLalurParteB);

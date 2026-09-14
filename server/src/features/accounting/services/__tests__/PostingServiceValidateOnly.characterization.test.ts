@@ -148,6 +148,7 @@ function buildService(over: {
     auditService as any,
     sourceProvenanceRepo as any,
     dimensionRepo as any,
+    { countLiveEntriesByAccount: async () => 0 }, // ECF 3C item 19: sem ajuste do e-Lalur nestas suítes
   );
   return { svc, accountRepo, journalEntryRepo, postingRepo, policy, periodRepo, auditService, sourceProvenanceRepo, dimensionRepo };
 }

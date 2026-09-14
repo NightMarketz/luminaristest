@@ -537,6 +537,7 @@ export class ApplicationFactory {
       auditService,
       this.repositories.sourceProvenance,
       this.repositories.dimension,
+      this.repositories.lalur,
     );
 
     // Maker-checker approval tower (ADR-INCR-APPROVAL) — the controlled Draft→PendingApproval→Posted
@@ -577,6 +578,18 @@ export class ApplicationFactory {
       this.repositories.posting,
       this.repositories.journalEntry,
       this.policies.accounting
+    );
+
+    // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
+    // só para VALIDAR `accountId` (M310.COD_CTA ∈ J050); nunca posta no razão. ECF 3C (Fork F-3C-2 a):
+    // LÊ a DRE (`incomeStatement`) para derivar o PF/BC no fechamento — leitura, nunca escrita. Hoisted
+    // porque o gerador da ECF Real o consome (diagnóstico + abertura C3).
+    const lalurService = new LalurService(
+      this.repositories.lalur,
+      this.repositories.account,
+      auditService,
+      this.policies.accounting,
+      accountingReportService,
     );
 
     const presetSyncService = new PresetSyncService(
@@ -753,12 +766,14 @@ export class ApplicationFactory {
         auditService,
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
-      // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232).
+      // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
+      // consulta o LalurService para o diagnóstico da Parte B (item 11) e a abertura C3 do M010.
       spedEcfReal: new SpedEcfRealGenerationService(
         this.repositories.lalur,
         this.policies.accounting,
         this.repositories.dataExchange,
         auditService,
+        lalurService,
       ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,
@@ -827,13 +842,10 @@ export class ApplicationFactory {
         auditService,
       ),
       // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do
-      // plano só para VALIDAR `accountId` (M310.COD_CTA ∈ J050); nunca posta no razão.
-      lalur: new LalurService(
-        this.repositories.lalur,
-        this.repositories.account,
-        auditService,
-        this.policies.accounting,
-      ),
+      // plano só para VALIDAR `accountId` (M310.COD_CTA ∈ J050); nunca posta no razão. ECF 3C (Fork
+      // F-3C-2 a): LÊ a DRE (`incomeStatement`) para derivar o PF/BC no fechamento do trimestre — leitura,
+      // nunca escrita no razão.
+      lalur: lalurService,
       // BE-INCR-CONTADOR-DELIVERY (nó C6): cadastro do contador + log de entrega do pacote
       // ECD/ECF. O serviço de entrega consome os repos JÁ existentes de data-exchange (jobs de
       // origem) e de período (gate F-CD7-a dos 12 meses) — não instancia repo próprio nem toca

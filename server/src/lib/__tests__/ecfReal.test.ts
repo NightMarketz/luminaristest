@@ -23,8 +23,13 @@ import {
   buildPeriodReg,
   indVlCtaContabil,
   indVlCtaParteB,
+  buildM410,
+  buildM510,
+  aggregateM510,
   type EcfRealFileInput,
   type EcfRealLalurLine,
+  type EcfRealParteBBalance,
+  type EcfRealParteBMovement,
 } from '../ecfReal';
 import { serializeEcf, build0010 } from '../ecf';
 import { ECF_L12_CATALOG, linhasDoLivro, vigenteNoAno } from '../../features/accounting/models/Lalur.model';
@@ -280,5 +285,111 @@ describe('ecfReal — transversais (item 16)', () => {
     expect(buildParteBChild('M305', { livro: 'lalur', perApur: 'T01', codigo: '7', descricao: 'x', tipoLancamento: 'A', indRelacao: '1', valorCents: 1, codCtaB: 'B' })).toBe('|M305|B|0,01|D|');
     expect(buildContabilChild('M360', { livro: 'lacs', perApur: 'T01', codigo: '7', descricao: 'x', tipoLancamento: 'E', indRelacao: '2', valorCents: 123456789, codCta: 'C', codNat: '04' })).toBe('|M360|C||1234567,89|C|');
     expect(() => buildParteBChild('M305', { livro: 'lalur', perApur: 'T01', codigo: '7', descricao: 'x', tipoLancamento: 'A', valorCents: 1 })).toThrow(/codCtaB/);
+  });
+});
+
+// ─── ECF Fase 3C — M410/M415, M500/M510, M312/M315 (ADR EMENDA 2026-09-12, 3ª) ───────────────
+
+const movements = (): EcfRealParteBMovement[] => [
+  // exemplo literal da p.269 — reproduzido byte a byte (BRIEF 3C item 5)
+  { perApur: 'T01', codCtaB: '101', codTributo: 'I', valorCents: 100000, indicador: 'CR', codCtaBCtp: '202', hist: 'Transferência', indLanAnt: 'N' },
+  { perApur: 'T02', codCtaB: 'PF-2024', codTributo: 'I', valorCents: 12345, indicador: 'PF', hist: 'Prejuízo do período', indLanAnt: 'N', processos: [{ indProc: '1', numProc: '0001234-56.2025' }] },
+];
+
+const balances = (): EcfRealParteBBalance[] => [
+  { perApur: 'T01', codCtaB: 'PF-2024', codTributo: 'I', codPbRfb: '1000', descricaoPbRfb: 'Prejuízo Fiscal Operacional - Atividade Geral', sdIniCents: 500000, indSdIni: 'D', vlParteACents: 0, indVlParteA: 'C', vlParteBCents: 100000, indVlParteB: 'C', sdFimCents: 400000, indSdFim: 'D' },
+  { perApur: 'T01', codCtaB: 'PF-RURAL', codTributo: 'I', codPbRfb: '1000', descricaoPbRfb: 'Prejuízo Fiscal Operacional - Atividade Geral', sdIniCents: 1000, indSdIni: 'D', vlParteACents: 0, indVlParteA: 'C', vlParteBCents: 0, indVlParteB: 'C', sdFimCents: 1000, indSdFim: 'D' },
+  { perApur: 'T01', codCtaB: 'BC-2024', codTributo: 'C', codPbRfb: '1003', descricaoPbRfb: 'Base de Cálculo Negativa da CSLL - Atividade Geral', sdIniCents: 0, indSdIni: 'C', vlParteACents: 999, indVlParteA: 'D', vlParteBCents: 0, indVlParteB: 'C', sdFimCents: 999, indSdFim: 'D' },
+];
+
+describe('ecfReal — Parte B 3C: M410 (p.268) e M415 (p.270)', () => {
+  it('item 5: exemplo da p.269 byte a byte — |M410|101|I|1000,00|CR|202|Transferência|N|', () => {
+    expect(buildM410(movements()[0])).toBe('|M410|101|I|1000,00|CR|202|Transferência|N|');
+  });
+  it('PF sem contrapartida deixa COD_CTA_B_CTP vazio (REGRA_NAO_PREENCHER_CTP) e M415 sai logo abaixo', () => {
+    const lines = buildEcfRealFile(sampleInput({ movements: movements() }));
+    const i = lines.findIndex((l) => l.startsWith('|M410|PF-2024|'));
+    expect(lines[i]).toBe('|M410|PF-2024|I|123,45|PF||Prejuízo do período|N|');
+    expect(lines[i + 1]).toBe('|M415|1|0001234-56.2025|');
+  });
+  it('M410 sai sob o M030 do SEU período, depois de todos os M300/M350 daquele período (ordem hierárquica p.236)', () => {
+    const lines = buildEcfRealFile(sampleInput({ movements: movements() }));
+    const regs = regsOf(lines);
+    const m030 = regs.map((r, i) => (r === 'M030' ? i : -1)).filter((i) => i >= 0);
+    const m410T01 = lines.findIndex((l) => l.startsWith('|M410|101|'));
+    expect(m410T01).toBeGreaterThan(m030[0]);
+    expect(m410T01).toBeLessThan(m030[1]);
+    const lastParteA_T01 = Math.max(...regs.map((r, i) => (i < m030[1] && (r === 'M300' || r === 'M350' || r === 'M305' || r === 'M310') ? i : -1)));
+    expect(m410T01).toBeGreaterThan(lastParteA_T01);
+  });
+});
+
+describe('ecfReal — Parte B 3C: M500 (p.271) e M510 (p.273)', () => {
+  it('M500 tem 11 campos na ordem da p.271, uma linha por conta, sob o M030 do período, depois dos M410', () => {
+    const lines = buildEcfRealFile(sampleInput({ movements: movements(), balances: balances() }));
+    const m500 = lines.filter((l) => l.startsWith('|M500|'));
+    expect(m500).toEqual([
+      '|M500|PF-2024|I|5000,00|D|0,00|C|1000,00|C|4000,00|D|',
+      '|M500|PF-RURAL|I|10,00|D|0,00|C|0,00|C|10,00|D|',
+      '|M500|BC-2024|C|0,00|C|9,99|D|0,00|C|9,99|D|',
+    ]);
+    const i410 = lines.findIndex((l) => l.startsWith('|M410|101|'));
+    const i500 = lines.findIndex((l) => l.startsWith('|M500|'));
+    const i030T02 = lines.findIndex((l) => l.startsWith('|M030|01042025|'));
+    expect(i500).toBeGreaterThan(i410);
+    expect(i500).toBeLessThan(i030T02);
+  });
+  it('item 8: M510 = Σ M500 por (COD_PB_RFB, COD_TRIBUTO) com sinal; DESCRICAO_PB_RFB da aba PARTEB_PADRAO; 12 campos', () => {
+    const agg = aggregateM510(balances());
+    expect(agg).toHaveLength(2);
+    // 1000/I: 5000,00 D + 10,00 D = 5010,00 D; vlB 1000,00 C; sdFim 4010,00 D
+    expect(buildM510(agg[0])).toBe('|M510|1003|Base de Cálculo Negativa da CSLL - Atividade Geral|C|0,00|C|9,99|D|0,00|C|9,99|D|');
+    expect(buildM510(agg[1])).toBe('|M510|1000|Prejuízo Fiscal Operacional - Atividade Geral|I|5010,00|D|0,00|C|1000,00|C|4010,00|D|');
+    const lines = buildEcfRealFile(sampleInput({ balances: balances() }));
+    const i500last = lines.map((l, i) => (l.startsWith('|M500|') ? i : -1)).filter((i) => i >= 0).pop()!;
+    expect(lines[i500last + 1].startsWith('|M510|')).toBe(true);
+  });
+  it('sinal agregado: D 100 + C 300 = C 200 (soma com sinal, não de magnitudes)', () => {
+    const agg = aggregateM510([
+      { ...balances()[0], codCtaB: 'A', sdIniCents: 10000, indSdIni: 'D', sdFimCents: 10000, indSdFim: 'D' },
+      { ...balances()[0], codCtaB: 'B', sdIniCents: 30000, indSdIni: 'C', sdFimCents: 30000, indSdFim: 'C' },
+    ]);
+    expect([agg[0].sdIniCents, agg[0].indSdIni, agg[0].sdFimCents, agg[0].indSdFim]).toEqual([20000, 'C', 20000, 'C']);
+  });
+  it('sem movements/balances (input antigo) o arquivo é idêntico ao de antes — campos opcionais', () => {
+    const a = serializeEcf(buildEcfRealFile(sampleInput()));
+    const b = serializeEcf(buildEcfRealFile(sampleInput({ movements: [], balances: [] })));
+    expect(sha(a)).toBe(sha(b));
+    expect(regsOf(buildEcfRealFile(sampleInput()))).not.toContain('M410');
+  });
+});
+
+describe('ecfReal — 3C: M312/M362 (p.254/266) e M315/M365 (p.255/267) como filhos da Parte A', () => {
+  it('ordem M300 → M305 → M310 → M312 (filho do M310) → M315; M312 só sai com conta contábil', () => {
+    const line: EcfRealLalurLine = {
+      livro: 'lalur', perApur: 'T01', codigo: '7', descricao: 'Custos', tipoLancamento: 'A', indRelacao: '3', valorCents: 100,
+      codCtaB: 'PF-2024', codCta: '3.1.1', codNat: '04', numLctos: ['12', '13'], processos: [{ indProc: '2', numProc: 'ADM-7' }],
+    };
+    const lines = buildEcfRealFile(sampleInput({ lalur: [line] }));
+    const i = lines.findIndex((l) => l.startsWith('|M300|7|'));
+    expect(regsOf(lines).slice(i, i + 6)).toEqual(['M300', 'M305', 'M310', 'M312', 'M312', 'M315']);
+    expect(lines[i + 3]).toBe('|M312|12|');
+    expect(lines[i + 5]).toBe('|M315|2|ADM-7|');
+    // lacs → M362/M365
+    const lacs = buildEcfRealFile(sampleInput({ lalur: [{ ...line, livro: 'lacs', codCtaB: 'BC-2024' }] }));
+    const j = lacs.findIndex((l) => l.startsWith('|M350|7|'));
+    expect(regsOf(lacs).slice(j, j + 6)).toEqual(['M350', 'M355', 'M360', 'M362', 'M362', 'M365']);
+  });
+  it('9900 conta os registros novos (M312 M315 M410 M415 M500 M510) e o arquivo segue determinístico', () => {
+    const input = sampleInput({
+      movements: movements(),
+      balances: balances(),
+      lalur: [{ livro: 'lalur', perApur: 'T01', codigo: '166', descricao: 'Exclusão', tipoLancamento: 'E', indRelacao: '2', valorCents: 5, codCta: '3.1.1', codNat: '04', numLctos: ['1'], processos: [{ indProc: '1', numProc: 'X' }] }],
+    });
+    const lines = buildEcfRealFile(input);
+    const counts = Object.fromEntries(lines.filter((l) => l.startsWith('|9900|')).map((l) => l.split('|').slice(2, 4)));
+    expect(counts).toMatchObject({ M312: '1', M315: '1', M410: '2', M415: '1', M500: '3', M510: '2' });
+    expect(sha(serializeEcf(lines))).toBe(sha(serializeEcf(buildEcfRealFile(input))));
+    expect(lines[lines.length - 1]).toBe(`|9999|${lines.length}|`);
   });
 });

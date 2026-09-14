@@ -34,6 +34,43 @@ export const LALUR_IND_SALDO = ['D', 'C'] as const;
 
 /** livro → tributo da conta da Parte B que ele pode relacionar (REGRA_PARTE_B_PARTE_A, p.237/p.250). */
 export const LIVRO_TRIBUTO: Record<'lalur' | 'lacs', LalurTributo> = { lalur: 'I', lacs: 'C' };
+/** tributo → livro da Parte A cujos ajustes entram na base do PF/BC (D-P3.3). */
+export const TRIBUTO_LIVRO: Record<LalurTributo, 'lalur' | 'lacs'> = { I: 'lalur', C: 'lacs' };
+
+// ─── ECF Fase 3C — Parte B (ADR EMENDA 2026-09-12, 3ª — D-P2) ───────────────────────────────
+
+/** M410.IND_VAL_LAN_LALB_PB (p.268): CR crédito · DB débito · PF prejuízo do exercício · BC base negativa da CSLL. */
+export const LALUR_MOV_INDICADORES = ['CR', 'DB', 'PF', 'BC'] as const;
+export type LalurMovIndicador = (typeof LALUR_MOV_INDICADORES)[number];
+/** PF/BC: proibido COD_CTA_B_CTP (REGRA_NAO_PREENCHER_CTP, p.269) e é o que o fechamento deriva (Fork F-3C-2 a). */
+export const isPrejuizoIndicador = (i: string): i is 'PF' | 'BC' => i === 'PF' || i === 'BC';
+/** tributo → indicador de prejuízo que o fechamento deriva (D-P3.3). */
+export const TRIBUTO_PREJUIZO_INDICADOR: Record<LalurTributo, 'PF' | 'BC'> = { I: 'PF', C: 'BC' };
+/** tributo → COD_PB_RFB das contas-padrão de prejuízo/base negativa (aba PARTEB_PADRAO; BRIEF 3C item 6). */
+export const TRIBUTO_PREJUIZO_COD_PB_RFB: Record<LalurTributo, readonly string[]> = {
+  I: ['1000', '1001', '1002'],
+  C: ['1003', '1004'],
+};
+
+/** `origem` do movimento: `user` digitado · `system` = PF/BC derivado no fechamento (só archive, nunca PATCH de valor). */
+export const LALUR_ORIGENS = ['user', 'system'] as const;
+export type LalurOrigem = (typeof LALUR_ORIGENS)[number];
+
+/** M315/M365/M415.IND_PROC (pp.255/267/270): 1 judicial · 2 administrativo. */
+export const LALUR_IND_PROC = ['1', '2'] as const;
+export type LalurIndProc = (typeof LALUR_IND_PROC)[number];
+
+/** M410.IND_LAN_ANT (p.268). */
+export const LALUR_IND_LAN_ANT = ['S', 'N'] as const;
+
+/** Histórico fixo do movimento PF/BC derivado pelo fechamento (D-P3.3) — nunca texto do usuário. */
+export const LALUR_SYSTEM_PREJUIZO_HISTORICO = 'Prejuízo/base negativa do período apurado pelo sistema no fechamento da Parte B';
+
+export const LALUR_MOVEMENT_CREATED = 'lalur.movement_created';
+export const LALUR_MOVEMENT_UPDATED = 'lalur.movement_updated';
+export const LALUR_MOVEMENT_ARCHIVED = 'lalur.movement_archived';
+export const LALUR_PARTE_B_CLOSED = 'lalur.parte_b_closed';
+export const LALUR_PARTE_B_REOPENED = 'lalur.parte_b_reopened';
 
 /** Audit event keys (T8 — every state change auditable). Payloads are id/code/cents only — never `histLancamento`. */
 export const LALUR_ENTRY_CREATED = 'lalur.entry_created';

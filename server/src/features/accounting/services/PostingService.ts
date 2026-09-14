@@ -20,6 +20,7 @@ import type {
   JournalEntrySourceWithDocument,
 } from '../repositories/ISourceProvenanceRepository';
 import type { IDimensionRepository } from '../repositories/IDimensionRepository';
+import type { ILalurRepository } from '../repositories/ILalurRepository';
 import type { AuditService } from './AuditService';
 import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -83,6 +84,8 @@ export class PostingService {
     private readonly auditService: AuditService,
     private readonly sourceProvenanceRepo: ISourceProvenanceRepository,
     private readonly dimensionRepo: IDimensionRepository,
+    /** ECF 3C item 19: ajustes vivos do e-Lalur apontando para a conta travam o soft-delete dela. */
+    private readonly lalurRepo: Pick<ILalurRepository, 'countLiveEntriesByAccount'>,
   ) {}
 
   /** Derive year+month from an ISO date string using UTC (no tz shift for date-only strings). */
@@ -925,6 +928,12 @@ export class PostingService {
     }
 
     await this.postingRepo.runTransaction(async (tx) => {
+      // BRIEF 3C item 19 (espelho de LalurService.archiveParteB): um ajuste vivo da Parte A com esta conta
+      // sairia no M310/M360 apontando para conta morta. Contado DENTRO da tx (item 16).
+      const lalurLive = await this.lalurRepo.countLiveEntriesByAccount(scope, accountId, tx);
+      if (lalurLive > 0) {
+        throw new AppError('Arquive os ajustes do e-Lalur/e-Lacs relacionados a esta conta antes de excluí-la.', 409, 'CONFLICT');
+      }
       await this.accountRepo.softDelete(scope, accountId, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,

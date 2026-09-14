@@ -148,6 +148,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'lalur.parte_b_created':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
   'lalur.parte_b_updated':  ['parteBId', 'codCtaB', 'codTributo', 'codPbRfb', 'saldoIniCents', 'indSaldoIni'],
   'lalur.parte_b_archived': ['parteBId', 'codCtaB', 'codTributo'],
+  // ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª; BRIEF 3C item 4/10): movimento M410 — ids, período, indicador,
+  // valor, origem; `historico` é texto livre e NUNCA entra. Fechamento — contagem + sha256 do conjunto de
+  // saldos (nunca os valores; item 10).
+  'lalur.movement_created':  ['movementId', 'parteBId', 'contrapartidaId', 'year', 'quarter', 'indicador', 'valorCents', 'origem'],
+  'lalur.movement_updated':  ['movementId', 'parteBId', 'contrapartidaId', 'year', 'quarter', 'indicador', 'valorCents', 'origem'],
+  'lalur.movement_archived': ['movementId', 'parteBId', 'contrapartidaId', 'year', 'quarter', 'indicador', 'valorCents', 'origem'],
+  'lalur.parte_b_closed':    ['closingId', 'year', 'quarter', 'accounts', 'balancesSha256', 'reclosed'],
+  'lalur.parte_b_reopened':  ['closingId', 'year', 'quarter', 'accounts', 'balancesSha256'],
 };
 
 /**

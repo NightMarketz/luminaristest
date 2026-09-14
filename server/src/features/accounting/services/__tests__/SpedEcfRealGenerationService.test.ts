@@ -17,7 +17,8 @@ import { logger } from '../../../../lib/logger';
 import { PAYLOAD_ALLOWLIST } from '../../audit/auditCanonical';
 import type { SpedEcfRealRequestDto } from '../../dtos/SpedEcfRealDto';
 import type { AccountingDataExchangeJob, LalurParteBAccount } from 'generated/prisma';
-import type { LalurEntryWithRelations } from '../../repositories/ILalurRepository';
+import type { LalurClosingWithBalances, LalurEntryWithRelations, LalurMovementWithRelations } from '../../repositories/ILalurRepository';
+import { LalurService, type LalurParteBBalancesDiagnostic } from '../LalurService';
 
 const savedBuffers: Buffer[] = [];
 jest.mock('../../../../lib/attachmentStorage', () => ({
@@ -81,6 +82,19 @@ interface Mocks {
   canRead?: boolean;
   entries?: LalurEntryWithRelations[];
   parteB?: LalurParteBAccount[];
+  /** ECF 3C: fechamentos do exercício (default: os 4, sem saldos — o suficiente para a geração passar). */
+  closings?: LalurClosingWithBalances[];
+  movements?: LalurMovementWithRelations[];
+  divergences?: LalurParteBBalancesDiagnostic['divergences'];
+  /** abertura C3 por conta (default: a coluna saldoIni com sinal — nenhum exercício anterior fechado). */
+  opening?: Map<string, bigint>;
+}
+
+/** 4 fechamentos vazios (tenant sem saldo materializado) — C1: o fato "fechado" é a linha-pai. */
+export function makeClosings(balances: LalurClosingWithBalances['balances'] = []): LalurClosingWithBalances[] {
+  return ['T01', 'T02', 'T03', 'T04'].map((quarter, i) => ({
+    id: `cl-${i + 1}`, userId: 'owner-1', unitId: 'unit-1', year: 2025, quarter, balancesSha256: 'x', closedAt: new Date('2026-01-10T00:00:00.000Z'), closedById: 'owner-1', balances,
+  })) as unknown as LalurClosingWithBalances[];
 }
 
 function buildService(m: Mocks = {}) {
@@ -88,7 +102,14 @@ function buildService(m: Mocks = {}) {
 
   const findEntriesForYear = jest.fn(async (_s: unknown, _year: number) => m.entries ?? makeEntries());
   const findManyParteB = jest.fn(async (_s: unknown, _f: unknown) => m.parteB ?? [parteBIrpj]);
-  const lalurRepo = { findEntriesForYear, findManyParteB } as never;
+  const findClosingsForYear = jest.fn(async (_s: unknown, _year: number) => m.closings ?? makeClosings());
+  const findMovementsForYear = jest.fn(async (_s: unknown, _year: number) => m.movements ?? []);
+  const lalurRepo = { findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear } as never;
+  const diagnoseYear = jest.fn(async (_s: unknown, year: number): Promise<LalurParteBBalancesDiagnostic> => ({ year, periods: [], divergences: m.divergences ?? [] }));
+  // Sem exercício anterior fechado, a abertura é a COLUNA via a regra real (REGRA_DT_AP_ZERO dentro de anchorOpening).
+  const openingBalances = jest.fn(async (_s: unknown, year: number, accounts: LalurParteBAccount[]) =>
+    m.opening ?? new Map(accounts.map((a) => [a.id, LalurService.anchorOpening(a, year)])));
+  const lalurService = { diagnoseYear, openingBalances } as never;
 
   const policy = { canRead: jest.fn(() => canRead) } as never;
 
@@ -102,8 +123,8 @@ function buildService(m: Mocks = {}) {
   const append = jest.fn(async () => undefined);
   const audit = { append } as never;
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit);
-  return { service, createJob, updateJob, findEntriesForYear, findManyParteB, append, policy };
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService);
+  return { service, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 
 function producedLines(): string[] {
@@ -339,5 +360,94 @@ describe('SpedEcfRealGenerationService.generate', () => {
       expect(ctx.status).toBe('failure');
       warnSpy.mockRestore();
     });
+  });
+});
+
+// ─── ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª) — Parte B fechada, C3, M410/M500, MENOR 17/18/19 ─────
+
+describe('SpedEcfRealGenerationService — ECF 3C', () => {
+  const closingsWith = (balances: Array<Record<string, unknown>>) =>
+    makeClosings(balances.map((b) => ({ id: 'bal', closingId: 'cl', parteB: parteBIrpj, sdIniCents: 0n, indSdIni: 'C', vlParteACents: 0n, indVlParteA: 'C', vlParteBCents: 0n, indVlParteB: 'C', sdFimCents: 0n, indSdFim: 'C', ...b })) as never);
+
+  it('item 11: trimestre aberto ⇒ 400 nomeando o PRIMEIRO aberto, antes de qualquer job', async () => {
+    const { service, createJob } = buildService({ closings: makeClosings().filter((c) => c.quarter !== 'T02') });
+    await expect(service.generate(scope, makeDto())).rejects.toThrow(/Feche a Parte B .* de T02\/2025/);
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+
+  it('item 11: divergência materializado × recomputado ⇒ 400 "refeche", nunca arquivo silenciosamente errado', async () => {
+    const { service, createJob, diagnoseYear } = buildService({
+      divergences: [{ quarter: 'T03', codCtaB: 'PF-2024', codTributo: 'I', field: 'sdFim', materialized: '10', recomputed: '15' }],
+    });
+    await expect(service.generate(scope, makeDto())).rejects.toThrow(/divergente em T03\/2025: conta 'PF-2024' \(I\) campo sdFim materializado=10 recomputado=15/);
+    expect(diagnoseYear).toHaveBeenCalledWith(scope, 2025);
+    expect(createJob).not.toHaveBeenCalled();
+  });
+
+  it('C3: M010.VL_SALDO_INI é a ABERTURA (balance(N−1,T04).sdFim), não a coluna crua', async () => {
+    const { service, openingBalances } = buildService({ entries: [], opening: new Map([['pb-1', -1234n]]) }); // saldo C 12,34 herdado de 2024/T04
+    await service.generate(scope, makeDto());
+    expect(openingBalances).toHaveBeenCalledWith(scope, 2025, [parteBIrpj]);
+    const m010 = producedLines().find((l) => l.startsWith('|M010|PF-2024|'))!;
+    expect(m010).toBe('|M010|PF-2024|Prejuízo fiscal 2024|31122024|1000||I|12,34|C||'); // coluna diz 5000,00 D — ignorada
+  });
+
+  it('item 5/8: M410(+M415) dos movimentos vivos e M500/M510 das linhas materializadas saem sob o M030 do período; audit conta ajustes', async () => {
+    const movement = {
+      id: 'mv-1', userId: 'owner-1', unitId: 'unit-1', parteBId: 'pb-1', year: 2025, quarter: 'T02', codTributo: 'I', valorCents: 12345n, indicador: 'PF',
+      contrapartidaId: null, historico: 'Prejuízo do período', indLanAnt: 'N', origem: 'system', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+      parteB: parteBIrpj, contrapartida: null, processos: [{ id: 'p1', parentId: 'mv-1', entryId: null, movementId: 'mv-1', indProc: '1', numProc: '0001' }],
+    } as unknown as LalurMovementWithRelations;
+    const { service } = buildService({
+      entries: [],
+      movements: [movement],
+      closings: closingsWith([{ sdIniCents: 500000n, indSdIni: 'D', vlParteBCents: 12345n, indVlParteB: 'D', sdFimCents: 512345n, indSdFim: 'D' }]),
+    });
+    await service.generate(scope, makeDto());
+    const lines = producedLines();
+    const i410 = lines.findIndex((l) => l === '|M410|PF-2024|I|123,45|PF||Prejuízo do período|N|');
+    expect(i410).toBeGreaterThan(-1);
+    expect(lines[i410 + 1]).toBe('|M415|1|0001|');
+    expect(lines[i410 - 1]).toBe('|M030|01042025|30062025|T02|'); // sob o M030 do T02, sem M300 antes (entries vazio)
+    expect(lines.filter((l) => l.startsWith('|M500|'))).toHaveLength(4); // uma por trimestre fechado × 1 conta
+    expect(lines.filter((l) => l.startsWith('|M500|'))[0]).toBe('|M500|PF-2024|I|5000,00|D|0,00|C|123,45|D|5123,45|D|');
+    expect(lines.filter((l) => l.startsWith('|M510|'))[0]).toBe('|M510|1000|Prejuízo Fiscal Operacional - Atividade Geral|I|5000,00|D|0,00|C|123,45|D|5123,45|D|');
+  });
+
+  it('item 6: PF `user` E `system` no mesmo período/tributo ⇒ 400 (ambiguidade REGRA_PREJUIZO_FISCAL)', async () => {
+    const base = { userId: 'owner-1', unitId: 'unit-1', parteBId: 'pb-1', year: 2025, quarter: 'T01', codTributo: 'I', valorCents: 1n, indicador: 'PF', contrapartidaId: null, historico: 'x', indLanAnt: 'N', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null, parteB: parteBIrpj, contrapartida: null, processos: [] };
+    const { service } = buildService({ entries: [], movements: [{ ...base, id: 'a', origem: 'user' }, { ...base, id: 'b', origem: 'system' }] as unknown as LalurMovementWithRelations[] });
+    await expect(service.generate(scope, makeDto())).rejects.toThrow(/T01\/2025: existe PF\/BC lançado manualmente E derivado pelo sistema para o tributo I/);
+  });
+
+  it('M312/M362 + M315: numLctos vêm de journalLinks.entryNumber (I200.NUM_LCTO); link sem entryNumber é 400', async () => {
+    const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 50000n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue', deletedAt: null }, processos: [{ indProc: '2', numProc: 'ADM-9' }], journalLinks: [{ journalEntryId: 'je-1', journalEntry: { entryNumber: 42 } }] } as unknown as LalurEntryWithRelations;
+    const { service } = buildService({ entries: [e] });
+    await service.generate(scope, makeDto());
+    const lines = producedLines();
+    const i = lines.findIndex((l) => l.startsWith('|M310|3.1.1|'));
+    expect(lines.slice(i + 1, i + 3)).toEqual(['|M312|42|', '|M315|2|ADM-9|']);
+    const draft = { ...e, journalLinks: [{ journalEntryId: 'je-2', journalEntry: { entryNumber: null } }] } as unknown as LalurEntryWithRelations;
+    await expect(buildService({ entries: [draft] }).service.generate(scope, makeDto())).rejects.toThrow(/sem NUM_LCTO/);
+  });
+
+  it('item 17: `|` em texto pré-existente (histLancamento) vira 400 nomeando o campo — não 500', async () => {
+    const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1n, indRelacao: '4', histLancamento: 'a|b', processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
+    const { service, createJob } = buildService({ entries: [e] });
+    const p = service.generate(scope, makeDto());
+    await expect(p).rejects.toBeInstanceOf(ValidationError);
+    await expect(p).rejects.toThrow(/M300 ajuste e1 \(código 7, T01\): campo histLancamento contém '\|'/); // review M6: nomeia registro + id
+    expect(createJob).not.toHaveBeenCalled();
+  });
+
+  it('item 18: conta contábil com natureza fora de 01..04 (COD_NAT 09) ⇒ 400 na geração', async () => {
+    const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 1n, indRelacao: '2', accountId: 'acc-9', account: { id: 'acc-9', code: '9.9', nature: 'Memo', deletedAt: null }, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
+    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/COD_NAT 09\) fora do domínio 01\.\.04/);
+  });
+
+  it('item 19: conta contábil soft-deletada depois do ajuste ⇒ 400 nomeando ajuste e conta (não sai no M310)', async () => {
+    const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 1n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue', deletedAt: new Date() }, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
+    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/Ajuste e1: a conta contábil '3\.1\.1' foi arquivada/);
   });
 });

@@ -214,3 +214,133 @@ describe('/api/lalur — contrato HTTP', () => {
     for (const e of events) expect(e.payload).not.toMatch(/Custos não dedutíveis do trimestre|histLancamento/);
   });
 });
+
+// ─── ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª) — M410, fechamento, diagnóstico sobre SQLite REAL ─────
+
+describe('/api/lalur — Parte B 3C (movimentos M410, fechamento trimestral, diagnóstico)', () => {
+  const UNIT3 = 'unit-lalur-3c'; // escopo limpo: os testes acima deixaram estado em UNIT
+  let pf: { id: string };
+  let bc: { id: string };
+  let prov: { id: string };
+  let contaDespesa: { id: string };
+
+  const mvBody = (over: Record<string, unknown> = {}) => ({
+    unitId: UNIT3, parteBId: pf.id, year: 2025, quarter: 'T01', indicador: 'DB', valorCents: 1000, historico: 'Ajuste manual', indLanAnt: 'N', ...over,
+  });
+
+  beforeAll(async () => {
+    contaDespesa = await prisma.account.create({ data: { userId: dono.id, unitId: UNIT3, code: '4.1.9', name: 'Despesas indedutíveis', nature: 'Expense' } });
+    const mk = async (b: Record<string, unknown>) => {
+      const r = await request(app).post('/api/lalur/parte-b').set(authHeader(dono)).send(parteBBody({ unitId: UNIT3, ...b }));
+      expect(r.status).toBe(201);
+      return r.body.data as { id: string };
+    };
+    pf = await mk({ codCtaB: 'PF', codPbRfb: '1000', codTributo: 'I', saldoIniCents: 500000 });
+    bc = await mk({ codCtaB: 'BC', codPbRfb: '1003', codTributo: 'C', saldoIniCents: 0 });
+    prov = await mk({ codCtaB: 'PROV', codPbRfb: '1010', codTributo: 'I', saldoIniCents: 0 });
+  });
+
+  it('sem Bearer, as 7 rotas novas respondem 401', async () => {
+    expect((await request(app).get('/api/lalur/parte-b/movements').query({ unitId: UNIT3 })).status).toBe(401);
+    expect((await request(app).post('/api/lalur/parte-b/movements').send(mvBody())).status).toBe(401);
+    expect((await request(app).patch('/api/lalur/parte-b/movements/x').send({ unitId: UNIT3 })).status).toBe(401);
+    expect((await request(app).post('/api/lalur/parte-b/movements/x/archive').send({ unitId: UNIT3 })).status).toBe(401);
+    expect((await request(app).post('/api/lalur/parte-b/close').send({ unitId: UNIT3, year: 2025, quarter: 'T01' })).status).toBe(401);
+    expect((await request(app).post('/api/lalur/parte-b/reopen').send({ unitId: UNIT3, year: 2025, quarter: 'T01' })).status).toBe(401);
+    expect((await request(app).get('/api/lalur/parte-b/balances').query({ unitId: UNIT3, year: 2025 })).status).toBe(401);
+  });
+
+  it('M410: POST deriva codTributo/origem, aceita processos (M415) e a rota estática não é capturada por /parte-b/:id', async () => {
+    const created = await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ contrapartidaId: prov.id, processos: [{ indProc: '1', numProc: '0001234-56' }] }));
+    expect(created.status).toBe(201);
+    expect(created.body.data).toMatchObject({ codTributo: 'I', origem: 'user', indicador: 'DB', contrapartidaId: prov.id, valorCents: 1000 });
+    const procs = await prisma.lalurProcess.findMany({ where: { movementId: created.body.data.id } });
+    expect(procs.map((p) => [p.parentId, p.indProc, p.numProc])).toEqual([[created.body.data.id, '1', '0001234-56']]);
+
+    // contrapartida de outro tributo (REGRA_MESMO_TRIBUTO) → 400; PF com contrapartida → 400 (DTO); '|' → 400
+    expect((await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ contrapartidaId: bc.id }))).status).toBe(400);
+    expect((await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ indicador: 'PF', contrapartidaId: prov.id }))).status).toBe(400);
+    expect((await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ historico: 'a|b' }))).status).toBe(400);
+    // codTributo como input é rejeitado pelo .strict()
+    expect((await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ codTributo: 'I' }))).status).toBe(400);
+
+    const listed = await request(app).get('/api/lalur/parte-b/movements').set(authHeader(dono)).query({ unitId: UNIT3, year: 2025, quarter: 'T01' });
+    expect(listed.status).toBe(200);
+    expect(listed.body.data).toHaveLength(1);
+
+    // PATCH substitui o conjunto de processos; [] limpa
+    const patched = await request(app).patch(`/api/lalur/parte-b/movements/${created.body.data.id}`).set(authHeader(dono)).send({ unitId: UNIT3, historico: 'rev', processos: [] });
+    expect(patched.status).toBe(200);
+    expect(await prisma.lalurProcess.count({ where: { movementId: created.body.data.id } })).toBe(0);
+
+    // tenancy: outro dono → 404
+    expect((await request(app).patch(`/api/lalur/parte-b/movements/${created.body.data.id}`).set(authHeader(outro)).send({ unitId: UNIT3, historico: 'x' })).status).toBe(404);
+  });
+
+  it('C2 no banco: processo duplicado (mesmo pai, IND_PROC+NUM_PROC) é P2002 — a chave por parentId fecha o que pais NULL não fechariam', async () => {
+    const e = await request(app).post('/api/lalur/entries').set(authHeader(dono)).send(entryBody({ unitId: UNIT3, codigo: '166', indRelacao: '2', accountId: contaDespesa.id, histLancamento: undefined, processos: [{ indProc: '2', numProc: 'ADM-1' }] }));
+    expect(e.status).toBe(201);
+    await expect(prisma.lalurProcess.create({ data: { parentId: e.body.data.id, entryId: e.body.data.id, indProc: '2', numProc: 'ADM-1' } })).rejects.toMatchObject({ code: 'P2002' });
+    // mesmo processo em OUTRO pai passa
+    const e2 = await request(app).post('/api/lalur/entries').set(authHeader(dono)).send(entryBody({ unitId: UNIT3, codigo: '7', processos: [{ indProc: '2', numProc: 'ADM-1' }] }));
+    expect(e2.status).toBe(201);
+    // M312: lançamento inexistente → 404; DTO exige indRelacao 2/3
+    expect((await request(app).post('/api/lalur/entries').set(authHeader(dono)).send(entryBody({ unitId: UNIT3, codigo: '95', indRelacao: '2', accountId: contaDespesa.id, histLancamento: undefined, journalEntryIds: ['nope'] }))).status).toBe(404);
+  });
+
+  it('fechamento: T02 antes de T01 é 400; T01 fecha (linha-pai + M500 por conta); PF derivado da base negativa (exclusão > adição); T02 lê o sdIni materializado', async () => {
+    expect((await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T02' })).status).toBe(400);
+    // Parte A em T01 (escopo UNIT3, razão vazio ⇒ resultado 0): A 123.456 (código 7) + E 123.456 (166) já criados acima ⇒ base I = 0.
+    // Acrescenta exclusão para forçar base negativa: E 300.000 (96) ⇒ base = −300.000 ⇒ PF system de 300.000 na conta PF.
+    const excl = await request(app).post('/api/lalur/entries').set(authHeader(dono)).send(entryBody({ unitId: UNIT3, codigo: '96', valorCents: 300000, indRelacao: '2', accountId: contaDespesa.id, histLancamento: undefined }));
+    expect(excl.status).toBe(201);
+
+    const t1 = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T01' });
+    expect(t1.status).toBe(200);
+    expect(t1.body.data.balances).toHaveLength(3);
+    const byId = Object.fromEntries((t1.body.data.balances as Array<Record<string, unknown>>).map((b) => [b.parteBId, b]));
+    // PF: sdIni 5.000,00 D; Parte B = +1.000 (DB user) + 300.000 (PF system) = 301.000 D; sdFim 801.000 D
+    expect(byId[pf.id]).toMatchObject({ sdIniCents: 500000, indSdIni: 'D', vlParteACents: 0, vlParteBCents: 301000, indVlParteB: 'D', sdFimCents: 801000, indSdFim: 'D' });
+    // PROV: contrapartida do DB de 1.000 ⇒ −1.000 (C)
+    expect(byId[prov.id]).toMatchObject({ vlParteBCents: 1000, indVlParteB: 'C', sdFimCents: 1000, indSdFim: 'C' });
+    const sys = await prisma.lalurParteBMovement.findMany({ where: { unitId: UNIT3, origem: 'system', deletedAt: null } });
+    expect(sys.map((m) => [m.indicador, m.valorCents, m.parteBId])).toEqual([['PF', 300000n, pf.id]]); // base da CSLL = 0 ⇒ nenhum BC
+    expect(await prisma.lalurParteBClosing.count({ where: { userId: dono.id, unitId: UNIT3, year: 2025 } })).toBe(1);
+
+    const t2 = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T02' });
+    expect(t2.status).toBe(200);
+    const pfT2 = (t2.body.data.balances as Array<Record<string, unknown>>).find((b) => b.parteBId === pf.id)!;
+    expect(pfT2).toMatchObject({ sdIniCents: 801000, indSdIni: 'D', sdFimCents: 801000 });
+
+    // reabrir T01 com T02 fechado → 400; reabrir T02 → 200 e a cascata apaga os saldos
+    expect((await request(app).post('/api/lalur/parte-b/reopen').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T01' })).status).toBe(400);
+    const re = await request(app).post('/api/lalur/parte-b/reopen').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T02' });
+    expect(re.status).toBe(200);
+    expect(await prisma.lalurParteBBalance.count({ where: { closing: { unitId: UNIT3, quarter: 'T02' } } })).toBe(0);
+
+    // audit: fechamento carrega sha256 e contagem, nunca os valores
+    const ev = await prisma.auditEvent.findFirst({ where: { scopeUserId: dono.id, unitId: UNIT3, eventType: 'lalur.parte_b_closed' }, orderBy: { createdAt: 'desc' } });
+    expect(ev).not.toBeNull();
+    expect(ev!.payload).toMatch(/balancesSha256/);
+    expect(ev!.payload).not.toContain('801000');
+  });
+
+  it('diagnóstico: movimento novo em T01 fechado ⇒ divergência em vlB/sdFim; GET devolve os 4 períodos; refechar zera', async () => {
+    const late = await request(app).post('/api/lalur/parte-b/movements').set(authHeader(dono)).send(mvBody({ valorCents: 7 }));
+    expect(late.status).toBe(201);
+    let d = await request(app).get('/api/lalur/parte-b/balances').set(authHeader(dono)).query({ unitId: UNIT3, year: 2025 });
+    expect(d.status).toBe(200);
+    expect(d.body.data.periods.map((p: { quarter: string; closed: boolean }) => [p.quarter, p.closed])).toEqual([['T01', true], ['T02', false], ['T03', false], ['T04', false]]);
+    expect(d.body.data.divergences.map((x: { field: string; codCtaB: string }) => [x.codCtaB, x.field])).toEqual([['PF', 'vlB'], ['PF', 'sdFim']]);
+    await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT3, year: 2025, quarter: 'T01' });
+    d = await request(app).get('/api/lalur/parte-b/balances').set(authHeader(dono)).query({ unitId: UNIT3, year: 2025 });
+    expect(d.body.data.divergences).toEqual([]);
+  });
+
+  it('archive da conta da Parte B com movimento vivo (inclusive como contrapartida) é 400; item 19: excluir conta contábil com ajuste vivo é 409', async () => {
+    expect((await request(app).post(`/api/lalur/parte-b/${prov.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT3 })).status).toBe(400);
+    const del = await request(app).delete(`/api/accounting/accounts/${contaDespesa.id}`).set(authHeader(dono)).query({ unitId: UNIT3 });
+    expect([400, 409]).toContain(del.status);
+    expect((await prisma.account.findUnique({ where: { id: contaDespesa.id } }))!.deletedAt).toBeNull();
+  });
+});

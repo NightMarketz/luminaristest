@@ -1043,6 +1043,30 @@
     }
   },
   "LalurDto.ts": {
+    "LalurProcessoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "indProc": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2"
+          ]
+        },
+        "numProc": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "pattern": "^[^|]*$"
+        }
+      },
+      "required": [
+        "indProc",
+        "numProc"
+      ],
+      "additionalProperties": false
+    },
     "CreateLalurEntrySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1088,7 +1112,8 @@
         "histLancamento": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 500
+          "maxLength": 500,
+          "pattern": "^[^|]*$"
         },
         "indRelacao": {
           "type": "string",
@@ -1106,6 +1131,41 @@
         "accountId": {
           "type": "string",
           "minLength": 1
+        },
+        "processos": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "indProc": {
+                "type": "string",
+                "enum": [
+                  "1",
+                  "2"
+                ]
+              },
+              "numProc": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20,
+                "pattern": "^[^|]*$"
+              }
+            },
+            "required": [
+              "indProc",
+              "numProc"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "journalEntryIds": {
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "required": [
@@ -1136,7 +1196,8 @@
             {
               "type": "string",
               "minLength": 1,
-              "maxLength": 500
+              "maxLength": 500,
+              "pattern": "^[^|]*$"
             },
             {
               "type": "null"
@@ -1173,6 +1234,41 @@
               "type": "null"
             }
           ]
+        },
+        "processos": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "indProc": {
+                "type": "string",
+                "enum": [
+                  "1",
+                  "2"
+                ]
+              },
+              "numProc": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20,
+                "pattern": "^[^|]*$"
+              }
+            },
+            "required": [
+              "indProc",
+              "numProc"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "journalEntryIds": {
+          "maxItems": 200,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "required": [
@@ -1256,12 +1352,14 @@
         "codCtaB": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 64
+          "maxLength": 64,
+          "pattern": "^[^|]*$"
         },
         "descricao": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 255
+          "maxLength": 255,
+          "pattern": "^[^|]*$"
         },
         "dtCriacao": {
           "type": "string"
@@ -1321,7 +1419,8 @@
         "descricao": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 255
+          "maxLength": 255,
+          "pattern": "^[^|]*$"
         },
         "dtCriacao": {
           "type": "string"
@@ -1402,6 +1501,276 @@
       },
       "required": [
         "unitId"
+      ]
+    },
+    "CreateLalurParteBMovementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parteBId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "quarter": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "indicador": {
+          "type": "string",
+          "enum": [
+            "CR",
+            "DB",
+            "PF",
+            "BC"
+          ]
+        },
+        "contrapartidaId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "historico": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "^[^|]*$"
+        },
+        "indLanAnt": {
+          "type": "string",
+          "enum": [
+            "S",
+            "N"
+          ]
+        },
+        "processos": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "indProc": {
+                "type": "string",
+                "enum": [
+                  "1",
+                  "2"
+                ]
+              },
+              "numProc": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20,
+                "pattern": "^[^|]*$"
+              }
+            },
+            "required": [
+              "indProc",
+              "numProc"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "parteBId",
+        "year",
+        "quarter",
+        "valorCents",
+        "indicador",
+        "historico",
+        "indLanAnt"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateLalurParteBMovementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valorCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "indicador": {
+          "type": "string",
+          "enum": [
+            "CR",
+            "DB",
+            "PF",
+            "BC"
+          ]
+        },
+        "contrapartidaId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "historico": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "^[^|]*$"
+        },
+        "indLanAnt": {
+          "type": "string",
+          "enum": [
+            "S",
+            "N"
+          ]
+        },
+        "processos": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "indProc": {
+                "type": "string",
+                "enum": [
+                  "1",
+                  "2"
+                ]
+              },
+              "numProc": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20,
+                "pattern": "^[^|]*$"
+              }
+            },
+            "required": [
+              "indProc",
+              "numProc"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListLalurParteBMovementsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "quarter": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "parteBId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "includeArchived": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "LalurParteBPeriodSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        },
+        "quarter": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "year",
+        "quarter"
+      ],
+      "additionalProperties": false
+    },
+    "LalurParteBBalancesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "year"
       ]
     }
   },

@@ -37,6 +37,11 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     dono = await criarUsuario('contact-http-a');
+    // ECF 3C (item 11): a geração da ECF Real exige os 4 trimestres da Parte B fechados (sem contas — C1).
+    for (const quarter of ['T01', 'T02', 'T03', 'T04']) {
+      const r = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send({ unitId: UNIT, year: 2025, quarter });
+      expect(r.status).toBe(200);
+    }
   }, 120000);
 
   afterAll(async () => {

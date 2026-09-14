@@ -41,8 +41,11 @@ import {
  *  - Bloco M (Fork 4→(b)): M001(IND_DAD=0) SEMPRE (períodos derivam do Bloco 0, p.241) + M010 por conta
  *    da Parte B (p.237) + M030 por período (p.241) com, sob cada um, M300 (e-Lalur, p.244) e M350
  *    (e-Lacs, p.256) uma linha por ajuste, cada uma seguida dos filhos M305/M355 (Parte B, pp.250/262)
- *    e/ou M310/M360 (conta contábil, pp.252/264) conforme IND_RELACAO (REGRA_RELACAO_INEXISTENTE, p.247)
- *    + M990. NÃO emitidos (item 13, pendente-externa M362/M415/M510 + N-1): M312/M362, M410/M415, M500/M510.
+ *    e/ou M310/M360 (conta contábil, pp.252/264) conforme IND_RELACAO (REGRA_RELACAO_INEXISTENTE, p.247),
+ *    M312/M362 (NUM_LCTO da ECD, pp.254/266 — filho do M310/M360) e M315/M365 (processos, pp.255/267);
+ *    depois, sob o mesmo M030, M410 (+M415) por movimento da Parte B (pp.268/270), M500 por conta
+ *    (p.271) e M510 por conta-padrão (p.273) — ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª). A ordem
+ *    intra-período é a hierárquica da p.236; o PVA confirma (BRIEF 3C §4 item 3). + M990.
  *  - Bloco N (Fork 3→(a)): N001(IND_DAD=0) + N030 por período + só as linhas `E` de N500/N630/N670 com
  *    valor informado (o PVA computa as CNA/CA — alíquota, adicional, teto da LC 224/25) + N990.
  *    Nenhuma alíquota aqui (o teste faz grep neste arquivo).
@@ -99,6 +102,42 @@ export interface EcfRealLalurLine {
   codCta?: string;
   /** J050.COD_NAT da conta ('01'..'04','09' — domínio de natureToCodNat/I050) — decide o sinal do M310 (p.246). */
   codNat?: string;
+  /** → M312/M362.NUM_LCTO (pp.254/266) — filhos do M310/M360; ordem de entrada preservada (já ordenada pelo serviço). */
+  numLctos?: string[];
+  /** → M315/M365 (pp.255/267) — processos judiciais/administrativos do ajuste. */
+  processos?: EcfRealProcesso[];
+}
+
+/** M315 / M365 / M415 — processo (3 campos: REG, IND_PROC, NUM_PROC). */
+export interface EcfRealProcesso {
+  indProc: '1' | '2';
+  numProc: string;
+}
+
+/** M410 — lançamento na Parte B sem reflexo na Parte A (p.268, 8 campos). */
+export interface EcfRealParteBMovement {
+  perApur: string;
+  codCtaB: string;
+  codTributo: 'I' | 'C';
+  valorCents: number; // ≥ 0
+  indicador: 'CR' | 'DB' | 'PF' | 'BC';
+  codCtaBCtp?: string; // COD_CTA_B_CTP — ausente com PF/BC
+  hist: string;
+  indLanAnt: 'S' | 'N';
+  processos?: EcfRealProcesso[]; // → M415
+}
+
+/** M500 — controle de saldos de UMA conta da Parte B no período (p.271, 11 campos), já materializado. */
+export interface EcfRealParteBBalance {
+  perApur: string;
+  codCtaB: string;
+  codTributo: 'I' | 'C';
+  codPbRfb: string; // agrega o M510
+  descricaoPbRfb: string; // M510.DESCRICAO_PB_RFB (aba PARTEB_PADRAO)
+  sdIniCents: number; indSdIni: 'D' | 'C';
+  vlParteACents: number; indVlParteA: 'D' | 'C';
+  vlParteBCents: number; indVlParteB: 'D' | 'C';
+  sdFimCents: number; indSdFim: 'D' | 'C';
 }
 
 /** M010 — conta da Parte B (p.237, campos 2-10). */
@@ -122,6 +161,10 @@ export interface EcfRealFileInput {
   periods: EcfRealPeriod[]; // T01→T04 (ordenados)
   lalur: EcfRealLalurLine[]; // vazio ⇒ M/N só com 001/010/030/990
   parteB: EcfRealParteBAccount[]; // vazio ⇒ sem M010
+  /** M410 (ECF 3C) — ausente/vazio ⇒ nenhum M410. Já ordenados pelo serviço (quarter, codCtaB, createdAt, id). */
+  movements?: EcfRealParteBMovement[];
+  /** M500 materializado (ECF 3C) — ausente/vazio ⇒ nenhum M500/M510. */
+  balances?: EcfRealParteBBalance[];
   /** 0000.COD_VER resolvido fora do serializer (Fork 7→(a), `resolveEcfCodVer`). */
   codVer: string;
 }
@@ -207,6 +250,120 @@ export function buildContabilChild(reg: 'M310' | 'M360', l: EcfRealLalurLine): s
   return spedLine([reg, l.codCta, EMPTY, centsToSpedDecimal(l.valorCents), indVlCtaContabil(l.tipoLancamento, l.codNat)]);
 }
 
+/** M312 (p.254) / M362 (p.266) — NUM_LCTO da ECD (2 campos): REG, NUM_LCTO. Filho do M310/M360 (nível 5). */
+export function buildNumLctoChild(reg: 'M312' | 'M362', numLcto: string): string {
+  return spedLine([reg, numLcto]);
+}
+
+/** M315 (p.255) / M365 (p.267) / M415 (p.270) — processo (3 campos): REG, IND_PROC, NUM_PROC. */
+export function buildProcesso(reg: 'M315' | 'M365' | 'M415', p: EcfRealProcesso): string {
+  return spedLine([reg, p.indProc, p.numProc]);
+}
+
+/**
+ * M410 (p.268) — lançamento na Parte B sem reflexo na Parte A (8 campos): REG, COD_CTA_B, COD_TRIBUTO,
+ * VAL_LAN_LALB_PB, IND_VAL_LAN_LALB_PB, COD_CTA_B_CTP, HIST_LAN_LALB, IND_LAN_ANT. Exemplo da p.269:
+ * `|M410|101|I|1000,00|CR|202|Transferência|N|` (reproduzido byte a byte no teste — BRIEF 3C item 5).
+ */
+export function buildM410(m: EcfRealParteBMovement): string {
+  return spedLine([
+    'M410',
+    m.codCtaB,
+    m.codTributo,
+    centsToSpedDecimal(m.valorCents),
+    m.indicador,
+    m.codCtaBCtp ?? EMPTY,
+    m.hist,
+    m.indLanAnt,
+  ]);
+}
+
+/**
+ * M500 (p.271) — controle de saldos da conta da Parte B (11 campos): REG, COD_CTA_B, COD_TRIBUTO,
+ * SD_INI_LAL, IND_SD_INI_LAL, VL_LCTO_PARTE_A, IND_VL_LCTO_PARTE_A, VL_LCTO_PARTE_B, IND_VL_LCTO_PARTE_B,
+ * SD_FIM_LAL, IND_SD_FIM_LAL. Valores são magnitudes; o sinal está no indicador.
+ */
+export function buildM500(b: EcfRealParteBBalance): string {
+  return spedLine([
+    'M500',
+    b.codCtaB,
+    b.codTributo,
+    centsToSpedDecimal(b.sdIniCents),
+    b.indSdIni,
+    centsToSpedDecimal(b.vlParteACents),
+    b.indVlParteA,
+    centsToSpedDecimal(b.vlParteBCents),
+    b.indVlParteB,
+    centsToSpedDecimal(b.sdFimCents),
+    b.indSdFim,
+  ]);
+}
+
+/** Uma linha do M510 (agregado por COD_PB_RFB + COD_TRIBUTO). */
+export interface EcfRealParteBPadraoBalance {
+  perApur: string;
+  codPbRfb: string;
+  descricaoPbRfb: string;
+  codTributo: 'I' | 'C';
+  sdIniCents: number; indSdIni: 'D' | 'C';
+  vlParteACents: number; indVlParteA: 'D' | 'C';
+  vlParteBCents: number; indVlParteB: 'D' | 'C';
+  sdFimCents: number; indSdFim: 'D' | 'C';
+}
+
+const sgn = (cents: number, ind: 'D' | 'C') => (ind === 'C' ? -cents : cents);
+const mag = (v: number): { cents: number; ind: 'D' | 'C' } => (v > 0 ? { cents: v, ind: 'D' } : { cents: -v, ind: 'C' });
+
+/**
+ * M510 (p.273) = Σ do M500 por (COD_PB_RFB, COD_TRIBUTO) dentro do período (BRIEF 3C item 8). Soma com sinal
+ * (D=+, C=−) e re-expressa como magnitude + indicador; zero sai 'C' (mesma convenção do serviço, D-P3.1).
+ * Ordem: (codTributo, codPbRfb) — determinística.
+ */
+export function aggregateM510(balances: EcfRealParteBBalance[]): EcfRealParteBPadraoBalance[] {
+  const acc = new Map<string, { perApur: string; codPbRfb: string; descricaoPbRfb: string; codTributo: 'I' | 'C'; sdIni: number; vlA: number; vlB: number; sdFim: number }>();
+  for (const b of balances) {
+    const k = `${b.codTributo}|${b.codPbRfb}`;
+    const cur = acc.get(k) ?? { perApur: b.perApur, codPbRfb: b.codPbRfb, descricaoPbRfb: b.descricaoPbRfb, codTributo: b.codTributo, sdIni: 0, vlA: 0, vlB: 0, sdFim: 0 };
+    cur.sdIni += sgn(b.sdIniCents, b.indSdIni);
+    cur.vlA += sgn(b.vlParteACents, b.indVlParteA);
+    cur.vlB += sgn(b.vlParteBCents, b.indVlParteB);
+    cur.sdFim += sgn(b.sdFimCents, b.indSdFim);
+    acc.set(k, cur);
+  }
+  return [...acc.values()]
+    .sort((x, y) => x.codTributo.localeCompare(y.codTributo) || x.codPbRfb.localeCompare(y.codPbRfb))
+    .map((r) => {
+      const si = mag(r.sdIni), a = mag(r.vlA), pb = mag(r.vlB), sf = mag(r.sdFim);
+      return {
+        perApur: r.perApur, codPbRfb: r.codPbRfb, descricaoPbRfb: r.descricaoPbRfb, codTributo: r.codTributo,
+        sdIniCents: si.cents, indSdIni: si.ind, vlParteACents: a.cents, indVlParteA: a.ind,
+        vlParteBCents: pb.cents, indVlParteB: pb.ind, sdFimCents: sf.cents, indSdFim: sf.ind,
+      };
+    });
+}
+
+/**
+ * M510 (p.273) — controle de saldos da conta PADRÃO (12 campos): REG, COD_PB_RFB, DESCRICAO_PB_RFB, COD_TRIBUTO,
+ * SD_INI_LAL, IND_SD_INI_LAL, VL_LCTO_PARTE_A, IND_VL_LCTO_PARTE_A, VL_LCTO_PARTE_B, IND_VL_LCTO_PARTE_B,
+ * SD_FIM_LAL, IND_SD_FIM_LAL.
+ */
+export function buildM510(b: EcfRealParteBPadraoBalance): string {
+  return spedLine([
+    'M510',
+    b.codPbRfb,
+    b.descricaoPbRfb,
+    b.codTributo,
+    centsToSpedDecimal(b.sdIniCents),
+    b.indSdIni,
+    centsToSpedDecimal(b.vlParteACents),
+    b.indVlParteA,
+    centsToSpedDecimal(b.vlParteBCents),
+    b.indVlParteB,
+    centsToSpedDecimal(b.sdFimCents),
+    b.indSdFim,
+  ]);
+}
+
 /**
  * N500 (p.280) / N630 (p.298) / N670 (p.307) — linha `E` informada pela PJ (4 campos): REG, CODIGO,
  * DESCRICAO, VALOR. Só linhas `E`; toda CNA/CA é do PVA (Fork 3→(a)).
@@ -246,14 +403,26 @@ function dataBlock(open: BlockOpenReg, close: BlockCloseReg, body: string[]): st
   return [...lines, buildBlockClose(close, lines.length + 1)];
 }
 
-/** Filhos de uma linha da Parte A conforme IND_RELACAO (REGRA_RELACAO_INEXISTENTE, p.247). */
+/**
+ * Filhos de uma linha da Parte A conforme IND_RELACAO (REGRA_RELACAO_INEXISTENTE, p.247), na ordem da
+ * tabela de registros (p.236): M305 → M310 → M312 (filho do M310) → M315.
+ */
 function parteAChildren(livro: 'lalur' | 'lacs', l: EcfRealLalurLine): string[] {
   const out: string[] = [];
   const needsB = l.indRelacao === '1' || l.indRelacao === '3';
   const needsCta = l.indRelacao === '2' || l.indRelacao === '3';
   if (needsB) out.push(buildParteBChild(livro === 'lalur' ? 'M305' : 'M355', l));
-  if (needsCta) out.push(buildContabilChild(livro === 'lalur' ? 'M310' : 'M360', l));
+  if (needsCta) {
+    out.push(buildContabilChild(livro === 'lalur' ? 'M310' : 'M360', l));
+    for (const n of l.numLctos ?? []) out.push(buildNumLctoChild(livro === 'lalur' ? 'M312' : 'M362', n));
+  }
+  for (const p of l.processos ?? []) out.push(buildProcesso(livro === 'lalur' ? 'M315' : 'M365', p));
   return out;
+}
+
+/** M410 + filhos M415 (p.270). */
+function movementLines(m: EcfRealParteBMovement): string[] {
+  return [buildM410(m), ...(m.processos ?? []).map((p) => buildProcesso('M415', p))];
 }
 
 /**
@@ -291,12 +460,16 @@ export function buildEcfRealFile(input: EcfRealFileInput): string[] {
   // ── Bloco L (Fork 6→(b)): só os períodos ──
   const blockL = dataBlock('L001', 'L990', input.periods.map((p) => buildPeriodReg('L030', p)));
 
-  // ── Bloco M (Fork 4→(b)): M010 × contas + M030 × períodos ⊃ M300/M350 (+ filhos) ──
+  // ── Bloco M (Fork 4→(b) + 3C): M010 × contas + M030 × períodos ⊃ M300/M350 (+ filhos) → M410 → M500 → M510 ──
   const bodyM: string[] = input.parteB.map(buildM010);
   for (const p of input.periods) {
     bodyM.push(buildPeriodReg('M030', p));
     for (const l of byPeriod('lalur', p.perApur)) bodyM.push(buildParteALine('M300', l), ...parteAChildren('lalur', l));
     for (const l of byPeriod('lacs', p.perApur)) bodyM.push(buildParteALine('M350', l), ...parteAChildren('lacs', l));
+    for (const m of (input.movements ?? []).filter((x) => x.perApur === p.perApur)) bodyM.push(...movementLines(m));
+    const bal = (input.balances ?? []).filter((x) => x.perApur === p.perApur);
+    for (const b of bal) bodyM.push(buildM500(b));
+    for (const b of aggregateM510(bal)) bodyM.push(buildM510(b));
   }
   const blockM = dataBlock('M001', 'M990', bodyM);
 
