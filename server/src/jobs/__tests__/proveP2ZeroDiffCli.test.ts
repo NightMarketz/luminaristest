@@ -100,6 +100,57 @@ describe('SYMBOL_ALLOWLIST — exceção NOMINAL de UM símbolo (ADR-P2 EMENDA 2
     expect(v).toEqual([expect.stringMatching(/remov/)]);
   });
 
+  // ── Bypasses achados no review independente do PR #320 (F2–F5) — cada um REPROVA ──────────────
+  it('F2: marker num comentário à direita de código não é o marco', () => {
+    const diff = DIFF_MARCO_ONLY.replace(
+      '+      await tx.user.update({ where: { id: userId }, data: { onboardingCompletedAt: new Date() } });',
+      '+      await tx.user.deleteMany({}); // onboardingCompletedAt',
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 10 .*não é o marco/)]);
+  });
+
+  it('F2: marker dentro de string literal não é o marco', () => {
+    const diff = DIFF_MARCO_ONLY.replace(
+      "data: { onboardingCompletedAt: new Date() }",
+      "data: { role: 'ADMIN', locale: 'onboardingCompletedAt' }",
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 10 .*não é o marco/)]);
+  });
+
+  it('F3: comentário de bloco na mesma linha de código executável não é isento', () => {
+    const diff = DIFF_MARCO_ONLY.replace(
+      '+      // T0 do time-to-first-ECD (ADR-P2 emenda R7)',
+      "+      /* T0 */ await tx.user.update({ where: { id: userId }, data: { role: 'ADMIN' } });",
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 9 .*não é o marco/)]);
+  });
+
+  it('F3: linha que começa com `*/` seguida de código não é isenta', () => {
+    const diff = DIFF_MARCO_ONLY.replace(
+      '+      // T0 do time-to-first-ECD (ADR-P2 emenda R7)',
+      '+      */ await tx.user.deleteMany({}); /*',
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 9 .*não é o marco/)]);
+  });
+
+  it('F4: linha adicionada cujo conteúdo começa com `++` não é confundida com cabeçalho `+++`', () => {
+    const diff = DIFF_MARCO_ONLY.replace(
+      '+      // T0 do time-to-first-ECD (ADR-P2 emenda R7)',
+      '+++[].length, await tx.user.deleteMany({});',
+    );
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/linha 9 .*não é o marco/)]);
+  });
+
+  it('F4: linha removida cujo conteúdo começa com `--` não é confundida com cabeçalho `---`', () => {
+    const diff = [`diff --git a/${SERVICE_FILE} b/${SERVICE_FILE}`, '@@ -8,1 +8,0 @@', '---i;', ''].join('\n');
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/remov/)]);
+  });
+
+  it('F5: diff sem nenhuma linha do marco (ex.: só mode-change) não é "só o marco"', () => {
+    const diff = [`diff --git a/${SERVICE_FILE} b/${SERVICE_FILE}`, 'old mode 100644', 'new mode 100755', ''].join('\n');
+    expect(classifySymbolDiff(diff, HEAD_SOURCE, SYMBOL_ALLOWLIST[0])).toEqual([expect.stringMatching(/nenhuma linha do marco/)]);
+  });
+
   it('REPROVA quando o símbolo não é encontrado no head (renomeado/apagado)', () => {
     const v = classifySymbolDiff(DIFF_MARCO_ONLY, HEAD_SOURCE.replace('installPresetAsSystem', 'installPreset'), SYMBOL_ALLOWLIST[0]);
     expect(v).toEqual([expect.stringMatching(/installPresetAsSystem não encontrado/)]);

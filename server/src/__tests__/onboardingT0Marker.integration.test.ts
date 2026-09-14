@@ -12,7 +12,7 @@ import { pushTestSchema, disconnectDb } from '@test/helpers/db';
 import { DynamicTableRepository } from '@/features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTablePolicy } from '@/features/dynamicTables/policies/DynamicTablePolicy';
 import { DynamicTableService } from '@/features/dynamicTables/services/DynamicTableService';
-import { ValidationError } from '@/lib/errors';
+import { TransactionalDynamicTableRepository } from '@/features/dynamicTables/repositories/TransactionalDynamicTableRepository';
 
 const service = new DynamicTableService(new DynamicTableRepository(), new DynamicTablePolicy());
 const USERS = ['t0-ok', 't0-rollback'];
@@ -62,13 +62,24 @@ describe('T0 do time-to-first-ECD — User.onboardingCompletedAt na tx de instal
     expect(await prisma.dynamicTable.count({ where: { userId: 't0-ok' } })).toBe(2);
   });
 
-  it('install que reverte (Pass 2 falha) NÃO deixa T0 — o marco está na mesma tx das tabelas', async () => {
-    await expect(
-      service.installPresetAsSystem('t0-rollback', { tables: { authors, books: booksPointingTo('nao-existe') } } as any),
-    ).rejects.toBeInstanceOf(ValidationError);
+  it('install que reverte DENTRO da tx (Pass 2 falha) NÃO deixa T0 nem tabela — o marco está na mesma tx', async () => {
+    // Review F1 do PR #320: uma relação para chave inexistente morre na PRÉ-validação, ANTES de
+    // `prisma.$transaction` (0 chamadas — provado com spy). Para provar a tx, a falha tem de nascer
+    // DEPOIS de o Pass 1 ter criado linhas: derruba-se o updateTableSchema do Pass 2.
+    const spy = jest
+      .spyOn(TransactionalDynamicTableRepository.prototype, 'updateTableSchema')
+      .mockRejectedValueOnce(new Error('pass-2 boom (simulado)'));
+    try {
+      await expect(
+        service.installPresetAsSystem('t0-rollback', { tables: { authors, books: booksPointingTo('authors') } } as any),
+      ).rejects.toThrow('pass-2 boom');
+      expect(spy).toHaveBeenCalledTimes(1); // a falha veio de dentro do Pass 2, não da pré-validação
+    } finally {
+      spy.mockRestore();
+    }
     const u = await prisma.user.findUniqueOrThrow({ where: { id: 't0-rollback' } });
     expect(u.onboardingCompletedAt).toBeNull();
-    // Se as tabelas do Pass 1 tivessem sobrevivido, o marco também teria — esta linha é o que prova a tx.
+    // Pass 1 criou 2 tabelas antes do boom; se elas sobreviveram, a tx não reverteu — e o marco também não.
     expect(await prisma.dynamicTable.count({ where: { userId: 't0-rollback' } })).toBe(0);
   });
 });
