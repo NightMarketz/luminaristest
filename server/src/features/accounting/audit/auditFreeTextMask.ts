@@ -72,6 +72,8 @@ export const MASKABLE_FREE_TEXT_KEYS: Record<string, readonly string[]> = {
   // (regra 3 da sessão de feature), registrada como lacuna de spec no relatório. Atenuante atual:
   // nenhum comando produz `FAILED` hoje, então este evento é inalcançável em produção.
   'delivery.failed':              ['reason'],
+  // BE-INCR-BANK-SETTLEMENT (nó F7): motivo da rejeição digitado pelo operador — mesma classe.
+  'bank_settlement.rejected':     ['reason'],
 };
 
 /** O que o masker precisa de cada contraparte: a identidade opaca e o nome já normalizado. */

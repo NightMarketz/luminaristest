@@ -128,6 +128,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // origem) nem qualquer campo do item de origem (nome de cliente/fornecedor). Teste-guarda:
   // auditCanonical.test.ts (memória `accounting-audit-allowlist-guards`).
   'reconcile_pending.rescanned': ['pendingId', 'sourceType', 'outcome'],
+  // BE-INCR-BANK-SETTLEMENT (nó F7, item 13). Sem PII: a DESCRIÇÃO da linha do extrato nunca entra
+  // (classe accounting-audit-allowlist-guards); `reason` (reject) é texto do operador → mascarado.
+  'bank_settlement.scanned':   ['statementId', 'created', 'skippedExisting', 'ambiguous', 'none', 'stale'],
+  'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId'],
+  'bank_settlement.rejected':  ['itemId', 'reason'],
+  'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que
