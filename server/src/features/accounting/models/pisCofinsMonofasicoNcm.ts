@@ -46,13 +46,17 @@ export const PIS_COFINS_MONOFASICO_NCM: readonly MonofasicoNcmRule[] = [
   p('3006301', L10147), p('3006302', L10147),
   p('30029020', L10147), p('30029092', L10147), p('30029099', L10147),
   p('30051010', L10147), p('30066000', L10147),
-  p('3303', L10147), p('3304', L10147), p('3305', L10147), p('3306', L10147), p('3307', L10147), // "3303.00 a 33.07"
+  p('3303', L10147), p('3304', L10147), p('3305', L10147), p('3307', L10147), // "3303.00 a 33.07, exceto na posição 33.06" (red. Lei 12.839/2013)
   p('34011190', L10147), p('34012010', L10147), p('96032100', L10147),
 
   // ── Lei 10.485/2002 art. 1º — veículos e máquinas (monofásico na revenda: art. 3º II) ────────
-  p('8429', L10485_1), p('84324000', L10485_1), p('84328000', L10485_1), p('843320', L10485_1),
-  p('84333000', L10485_1), p('84334000', L10485_1), p('84335', L10485_1),
+  // Redação vigente (Lei 12.973/2014): "73.09, 7310.29, 7612.90.12, 8424.81, 84.29, 8430.69.90, 84.32, 84.33, 84.34,
+  // 84.35, 84.36, 84.37, 87.01, 87.02, 87.03, 87.04, 87.05, 87.06 e 8716.20.00" — NÃO a lista de 2004 (8432.40.00…).
+  p('7309', L10485_1), p('731029', L10485_1), p('76129012', L10485_1), p('842481', L10485_1), p('8429', L10485_1),
+  p('84306990', L10485_1), p('8432', L10485_1), p('8433', L10485_1), p('8434', L10485_1), p('8435', L10485_1),
+  p('8436', L10485_1), p('8437', L10485_1),
   p('8701', L10485_1), p('8702', L10485_1), p('8703', L10485_1), p('8704', L10485_1), p('8705', L10485_1), p('8706', L10485_1),
+  p('87162000', L10485_1),
 
   // ── Lei 10.485/2002 Anexo I — autopeças (alíquota zero na revenda, art. 3º I) ────────────────
   p('40161010', L10485_A1), p('40169990', L10485_A1), p('6813', L10485_A1), p('70071100', L10485_A1),
@@ -95,8 +99,13 @@ export function findMonofasicoRule(ncm8: string): MonofasicoNcmRule | null {
 
 /** CST de PIS/COFINS de SAÍDA do fornecedor que já declaram "sem crédito" na aquisição (item 11, regra dura; §4 f9 [NC]). */
 export const CST_SEM_CREDITO = ['04', '05', '06', '07', '08', '09'] as const;
-/** CST tributados na saída do fornecedor — só estes habilitam o crédito (com NCM fora da tabela). */
-export const CST_TRIBUTADO = ['01', '02'] as const;
+/**
+ * CST tributado na saída do fornecedor — SÓ o 01 habilita o crédito (com NCM fora da tabela). O 02 ("alíquota
+ * diferenciada") é a saída típica do fabricante/importador monofásico (Leis 10.147 art. 1º, 10.485 art. 1º); como a
+ * tabela de NCM é transcrição versionada e pode ficar atrás da TIPI, CST 02 cai no default conservador do item 11
+ * (UNKNOWN = sem crédito + warning) até o contador confirmar (pedido do passo 11).
+ */
+export const CST_TRIBUTADO = ['01'] as const;
 
 /**
  * Classificação do item para o crédito (item 11): a NOTA manda quando diz "sem crédito"; a TABELA manda
@@ -115,5 +124,14 @@ export function classifyPisCofinsItem(input: { ncm: string | null | undefined; c
     if (rule) return { classe: 'MONOFASICO', motivo: `NCM ${ncm8} — ${rule.fonte}` };
   }
   if (cst && (CST_TRIBUTADO as readonly string[]).includes(cst) && ncm8) return { classe: 'TRIBUTADO', motivo: `CST ${cst}, NCM ${ncm8} fora da tabela monofásica` };
-  return { classe: 'UNKNOWN', motivo: !cst ? 'item sem grupo PIS/COFINS (CST ausente)' : !ncm8 ? 'NCM ausente ou inválido' : `CST ${cst} fora de {01,02} e de {04..09}` };
+  return {
+    classe: 'UNKNOWN',
+    motivo: !cst
+      ? 'item sem grupo PIS/COFINS (CST ausente)'
+      : !ncm8
+        ? 'NCM ausente ou inválido'
+        : cst === '02'
+          ? `CST 02 (alíquota diferenciada — saída monofásica típica) com NCM ${ncm8} fora da tabela: sem crédito até confirmação do contador`
+          : `CST ${cst} fora de {01} e de {04..09}`,
+  };
 }

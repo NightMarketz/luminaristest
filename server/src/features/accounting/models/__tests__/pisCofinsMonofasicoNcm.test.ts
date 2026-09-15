@@ -16,6 +16,17 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
     expect(PIS_COFINS_MONOFASICO_NCM.length).toBeGreaterThan(80);
   });
 
+  it('Lei 10.485 art. 1º na redação VIGENTE (Lei 12.973/2014): 73.09, 7310.29, 84.32/84.33 inteiras, 84.34–84.37, 8716.20.00 são monofásicos', () => {
+    for (const ncm of ['73090010', '73102910', '76129012', '84248111', '84306990', '84321000', '84331100', '84341000', '84351000', '84361000', '84371000', '87162000']) {
+      expect(findMonofasicoRule(ncm)?.fonte).toContain('Lei 10.485/2002 art. 1º');
+    }
+  });
+
+  it('33.06 (higiene bucal) NÃO é monofásico — "3303.00 a 33.07, exceto na posição 33.06" (Lei 10.147 art. 1º, red. Lei 12.839/2013)', () => {
+    expect(findMonofasicoRule('33061000')).toBeNull();
+    expect(findMonofasicoRule('33071000')?.fonte).toContain('Lei 10.147');
+  });
+
   it('exceções da lei valem: 30.03 é monofásico exceto 3003.90.56; 30.04 exceto 3004.90.46', () => {
     expect(findMonofasicoRule('30039011')?.prefixo).toBe('3003');
     expect(findMonofasicoRule('30039056')).toBeNull();
@@ -29,7 +40,8 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
     expect(normalizeNcm('')).toBeNull();
   });
 
-  it('classificação (item 11): CST 04..09 da nota manda; tabela manda sobre CST 01; sem CST = UNKNOWN', () => {
+  it('classificação (item 11): CST 04..09 da nota manda; tabela manda sobre CST 01; CST 02 e sem CST = UNKNOWN (default conservador)', () => {
+    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '02', cstCofins: '02' })).toEqual({ classe: 'UNKNOWN', motivo: expect.stringContaining('CST 02') });
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '04', cstCofins: '04' }).classe).toBe('MONOFASICO');
     expect(classifyPisCofinsItem({ ncm: '33051000', cstPis: '01', cstCofins: '01' }).classe).toBe('MONOFASICO');
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '01', cstCofins: '01' }).classe).toBe('TRIBUTADO');
