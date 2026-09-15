@@ -24,6 +24,7 @@ import {
   BANK_SETTLEMENT_FAILED,
   BANK_SETTLEMENT_REJECTED,
   BANK_SETTLEMENT_SCANNED,
+  BANK_SETTLEMENT_CONFIRMING_STALE_MS,
   pickCandidate,
   type BankSettlementStep,
   type BankSettlementTitleType,
@@ -108,14 +109,20 @@ export class BankSettlementService {
 
     // Item 10 — stale: PENDING cuja linha saiu de UNMATCHED ou cujo título deixou de ser liquidável.
     const pending = await this.repo.findPendingByStatement(scope, input.statementId);
+    const openById = new Map([...payables, ...receivables].map((t) => [`${t.titleType}:${t.id}`, t.openCents]));
     for (const item of pending) {
       const line = await this.reconciliationRepo.findLineById(scope, item.statementLineId);
       const lineGone = !line || line.status !== 'UNMATCHED';
       const titleGone = !settleableIds.has(`${item.titleType}:${item.titleId}`);
-      if (lineGone || titleGone) {
+      // Review #326 F2/F7: saldo que MUDOU (parcial cancelada/nova) invalida proposto/encargo — o item
+      // vira STALE e o loop abaixo o renasce com os valores re-avaliados (mesmo scan).
+      const open = openById.get(`${item.titleType}:${item.titleId}`) ?? 0;
+      const abs = line ? Math.abs(centsFromDb(line.amountCents)) : 0;
+      const balanceDrift = !lineGone && !titleGone && (Math.min(abs, open) !== centsFromDb(item.proposedCents) || Math.max(0, abs - open) !== centsFromDb(item.chargeCents));
+      if (lineGone || titleGone || balanceDrift) {
         await this.repo.update(scope, item.id, {
           status: 'STALE',
-          reason: lineGone ? 'line_not_unmatched' : 'title_not_open',
+          reason: lineGone ? 'line_not_unmatched' : titleGone ? 'title_not_open' : 'title_balance_changed',
         });
         summary.stale += 1;
       }
@@ -151,7 +158,7 @@ export class BankSettlementService {
       const stale = existing.find((e) => e.status === 'STALE' && e.titleType === title.titleType && e.titleId === title.id);
       if (stale) {
         // Mesmo (linha, título) já existe como STALE — a @@unique impede 2ª linha; volta a PENDING com os valores re-avaliados.
-        await this.repo.update(scope, stale.id, { status: 'PENDING', reason: null });
+        await this.repo.update(scope, stale.id, { status: 'PENDING', reason: null, proposedCents: result.proposedCents!, chargeCents: result.chargeCents! });
         summary.created += 1;
         continue;
       }
@@ -264,8 +271,13 @@ export class BankSettlementService {
   async retry(scope: AccountingScope, id: string, method: string): Promise<BankSettlementItemView> {
     const item = await this.requireItem(scope, id);
     this.assertCanManage(scope, item.titleType as BankSettlementTitleType);
-    const won = await this.repo.compareAndSetStatus(scope, id, 'FAILED', 'CONFIRMING');
-    if (won === 0) throw new ValidationError(`retry só de FAILED (status atual: ${item.status}).`);
+    let won = await this.repo.compareAndSetStatus(scope, id, 'FAILED', 'CONFIRMING');
+    // Review #326 F5: CONFIRMING preso (crash entre o CAS e o efeito) é retomável só depois da janela de
+    // staleness — um CONFIRMING recente é outro chamador vivo, e aí o retry perde (400).
+    if (won === 0 && item.status === 'CONFIRMING') {
+      won = await this.repo.claimStaleConfirming(scope, id, new Date(Date.now() - BANK_SETTLEMENT_CONFIRMING_STALE_MS));
+    }
+    if (won === 0) throw new ValidationError(`retry só de FAILED ou de CONFIRMING preso há mais de ${BANK_SETTLEMENT_CONFIRMING_STALE_MS / 60000} min (status atual: ${item.status}).`);
     return this.runConfirm(scope, id, method, 'FAILED');
   }
 
@@ -398,12 +410,32 @@ export class BankSettlementService {
     const proposedCents = centsFromDb(item.proposedCents);
     // Saldo RE-LIDO (item 6): na retomada após (i), a baixa já foi debitada do saldo — não exigir de novo.
     if (!item.settlementId) {
+      // Review #326 F6: pagamento ÓRFÃO — o AP postou e o crash impediu gravar o id (ou o reconcile do AP
+      // finalizou depois). Um recibo ACTIVE igual em (data, valor, método) sem vínculo é sinal forte;
+      // nunca se cria o 2º: o humano decide (manualMatch) — 400 nomeado.
+      const orphan = await this.findOrphanSettlement(scope, titleType, item.titleId, toDateOnly(line.date), proposedCents, method, tx);
+      if (orphan) {
+        throw new ValidationError(`settlement_orphan_suspected: o título já tem ${titleType === 'PAYABLE' ? 'pagamento' : 'recebimento'} ACTIVE '${orphan}' igual a este item (mesma data, valor e método) sem vínculo — concilie à mão antes de repetir.`);
+      }
       const settleable = titleType === 'PAYABLE' ? ['OPEN', 'PARTIALLY_PAID'] : ['OPEN', 'PARTIALLY_RECEIVED'];
       if (!title || !settleable.includes(title.status)) throw new ValidationError('title_not_open: o título não está aberto para baixa.');
-      if (title.openCents < proposedCents) {
-        throw new ValidationError(`title_balance: saldo aberto (${title.openCents}) menor que a baixa proposta (${proposedCents}).`);
+      // Review #326 F2: proposto/encargo foram derivados do saldo NO SCAN. Se o saldo mudou (parcial
+      // cancelada ou nova), a mesma linha significa outra coisa — principal viraria "encargo" ou vice-versa.
+      // Re-deriva do saldo atual e exige igualdade exata; o scan seguinte re-avalia (STALE → PENDING).
+      const abs = Math.abs(centsFromDb(line.amountCents));
+      const expectedProposed = Math.min(abs, title.openCents);
+      const expectedCharge = Math.max(0, abs - title.openCents);
+      if (expectedProposed !== proposedCents || expectedCharge !== centsFromDb(item.chargeCents)) {
+        throw new ValidationError(
+          `title_balance_changed: saldo aberto agora é ${title.openCents} (proposta ${proposedCents} + encargo ${centsFromDb(item.chargeCents)} foi calculada sobre outro saldo) — rode o scan de novo.`,
+        );
       }
     }
+
+    // Review #326 F3: a etapa (i) posta na data da LINHA — período aberto é pré-cheque SEMPRE, não só com encargo.
+    const day = toDateOnly(line.date);
+    const period = await this.periodRepo.findByYearMonth(scope, Number(day.slice(0, 4)), Number(day.slice(5, 7)), tx);
+    if (!period || period.status !== 'OPEN') throw new ValidationError(`period_not_open: período ${day.slice(0, 7)} não está aberto para a baixa.`);
 
     // F-F7-3 (a): a conta do método TEM de ser a conta do extrato.
     const bankAccountCode = resolvePaymentMethodAccount(method);
@@ -425,12 +457,29 @@ export class BankSettlementService {
       const chargeAccount = await this.accountRepo.findById(scope, chargeAccountId, tx);
       if (!chargeAccount || chargeAccount.deletedAt) throw new ValidationError('charge_account_not_configured: a conta de encargo configurada não existe mais.');
       chargeAccountCode = chargeAccount.code;
-      const day = toDateOnly(line.date);
-      const period = await this.periodRepo.findByYearMonth(scope, Number(day.slice(0, 4)), Number(day.slice(5, 7)), tx);
-      if (!period || period.status !== 'OPEN') throw new ValidationError(`period_not_open: período ${day.slice(0, 7)} não está aberto para o encargo.`);
     }
 
     return { item, line, statement, bankAccountId: statement.glAccountId, bankAccountCode, chargeAccountCode };
+  }
+
+  /** Review #326 F6 — recibo ACTIVE do título igual a (data, valor, método) que NÃO está ligado a nenhum item. */
+  private async findOrphanSettlement(
+    scope: AccountingScope,
+    titleType: BankSettlementTitleType,
+    titleId: string,
+    dateOnly: string,
+    amountCents: number,
+    method: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<string | null> {
+    if (titleType === 'PAYABLE') {
+      const row = await this.payableRepo.findByIdWithPayments(scope, titleId, tx);
+      const hit = row?.payments.find((p) => p.status === 'ACTIVE' && p.method === method && centsFromDb(p.amountCents) === amountCents && toDateOnly(p.paidAt) === dateOnly);
+      return hit?.id ?? null;
+    }
+    const row = await this.receivableRepo.findByIdWithReceipts(scope, titleId, tx);
+    const hit = row?.receipts.find((r) => r.status === 'ACTIVE' && r.method === method && centsFromDb(r.amountCents) === amountCents && toDateOnly(r.receivedAt) === dateOnly);
+    return hit?.id ?? null;
   }
 
   /** Postings do lado do banco: o da baixa (entry do pagamento/recebimento) e, se houver, o do encargo. */

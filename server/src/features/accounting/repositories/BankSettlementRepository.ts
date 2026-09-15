@@ -82,8 +82,16 @@ export class BankSettlementRepository implements IBankSettlementRepository {
 
   public async update(scope: AccountingScope, id: string, patch: BankSettlementItemPatch, tx?: Prisma.TransactionClient): Promise<BankSettlementItem> {
     // updateMany + re-read: `update` não aceita where composto por escopo (tenancy no where, sempre).
-    await this.db(tx).bankSettlementItem.updateMany({ where: { id, ...accountingScopeWhere(scope) }, data: patch });
-    const row = await this.db(tx).bankSettlementItem.findFirst({ where: { id, ...accountingScopeWhere(scope) } });
+    const { proposedCents, chargeCents, ...rest } = patch;
+    await this.db(tx).bankSettlementItem.updateMany({
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      data: {
+        ...rest,
+        ...(proposedCents !== undefined ? { proposedCents: BigInt(proposedCents) } : {}),
+        ...(chargeCents !== undefined ? { chargeCents: BigInt(chargeCents) } : {}),
+      },
+    });
+    const row = await this.db(tx).bankSettlementItem.findFirst({ where: { id, ...accountingScopeWhere(scope), deletedAt: null } });
     if (!row) throw new Error(`bank_settlement_items ${id} desapareceu durante o update`);
     return row;
   }
@@ -98,6 +106,14 @@ export class BankSettlementRepository implements IBankSettlementRepository {
     const r = await this.db(tx).bankSettlementItem.updateMany({
       where: { id, ...accountingScopeWhere(scope), deletedAt: null, status: from },
       data: { status: to },
+    });
+    return r.count;
+  }
+
+  public async claimStaleConfirming(scope: AccountingScope, id: string, olderThan: Date, tx?: Prisma.TransactionClient): Promise<number> {
+    const r = await this.db(tx).bankSettlementItem.updateMany({
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null, status: 'CONFIRMING', updatedAt: { lt: olderThan } },
+      data: { status: 'CONFIRMING', reason: 'retomado após CONFIRMING preso' },
     });
     return r.count;
   }

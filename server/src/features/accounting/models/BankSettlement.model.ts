@@ -28,6 +28,9 @@ export const BANK_SETTLEMENT_CHARGE_CAP_BP = 2000;
 export const BANK_SETTLEMENT_WINDOW_BEFORE_DAYS = 30;
 export const BANK_SETTLEMENT_WINDOW_AFTER_DAYS = 5;
 
+/** Review #326 F5: CONFIRMING mais velho que isto sem desfecho = crash entre CAS e efeito; `retry` pode retomar. */
+export const BANK_SETTLEMENT_CONFIRMING_STALE_MS = 10 * 60 * 1000;
+
 /** `sourceType` do lançamento de encargo (BRIEF item 8) — idempotente por `sourceId = item.id`. */
 export const BANK_CHARGE_SOURCE_TYPE = 'bank.charge';
 

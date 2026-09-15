@@ -62,6 +62,10 @@ export async function resetDb(): Promise<void> {
   await prisma.packageBalanceMovement.deleteMany();
   await prisma.accountingBinding.deleteMany();
   await prisma.reconcilePendingItem.deleteMany();
+  // BE-INCR-BANK-SETTLEMENT (nó F7): item cascade da linha do extrato; settings tem FK RESTRICT para
+  // `accounts` — os dois caem ANTES de accounts/statements ou o deleteMany deles falha por violação.
+  await prisma.bankSettlementItem.deleteMany();
+  await prisma.accountingScopeSettings.deleteMany();
   // BE-INCR-CONTADOR-DELIVERY: o log de entrega tem FK RESTRICT para o job de data-exchange E
   // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
   await prisma.accountingDeliveryLog.deleteMany();

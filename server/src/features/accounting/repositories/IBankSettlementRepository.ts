@@ -13,6 +13,8 @@ export interface CreateBankSettlementItemData {
 
 export interface BankSettlementItemPatch {
   status?: BankSettlementStatus;
+  proposedCents?: number;
+  chargeCents?: number;
   reason?: string | null;
   failedStep?: BankSettlementStep | null;
   settlementId?: string | null;
@@ -51,6 +53,8 @@ export interface IBankSettlementRepository {
     to: BankSettlementStatus,
     tx?: Prisma.TransactionClient,
   ): Promise<number>;
+  /** Review #326 F5: item preso em CONFIRMING (crash entre CAS e efeito) — só retomável se `updatedAt` for mais velho que `olderThan`. */
+  claimStaleConfirming(scope: AccountingScope, id: string, olderThan: Date, tx?: Prisma.TransactionClient): Promise<number>;
 
   /** Títulos liquidáveis (OPEN | PARTIALLY_*) do escopo, projetados em centavos inteiros (leitura). */
   findSettleableTitles(scope: AccountingScope, titleType: BankSettlementTitleType, tx?: Prisma.TransactionClient): Promise<CandidateTitle[]>;
