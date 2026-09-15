@@ -325,7 +325,8 @@ sinal de `vICMS`, trocar `vST` de lado) e sobre o `superRefine`.
 > **sem crédito**, como dado configurável; linha nova no pedido ao contador"*) + **R8** (`ADR-INCR-DFE-EMISSAO-
 > PARCEIRO.md` EMENDA 2026-09-14 item 2: `partnerAccountRef` nasce com o `FiscalProfile`). Esta emenda
 > **substitui os itens 10 e 11** do §1 e **estende** os contratos do §2; tudo o mais fica. **Dois forks novos**
-> (F-X6-7, F-X6-8) ficam `RATIFICAÇÃO PENDENTE`; a `sessao-feature` pausa nos itens 8/10/11 até eles.
+> (F-X6-7, F-X6-8) — **✅ RATIFICADOS 2026-09-15 (dono, via `AskUserQuestion`): F-X6-7 → (a), F-X6-8 → (a)**,
+> ambos na recomendação. Nada mais pausa a `sessao-feature` além dos insumos [NC] de §4 (f6–f8: baixar as leis).
 
 ### Itens 10 e 11 — versão vigente (substituem os de 2026-09-11)
 
@@ -392,9 +393,9 @@ Preview (`POST /api/nfe/preview`) devolve os campos acima em `custo`; `payable.c
 `pisCofinsAplicado` e `creditoPisCofinsCents` (string) na allowlist (mesma mudança, item 13).
 Snapshot de DTO, `docs:generate` (paths inalterados; schema muda) e o guard seguem os gates do item 16.
 
-### Forks NOVOS — RATIFICAÇÃO PENDENTE
+### Forks NOVOS — ✅ RATIFICADOS 2026-09-15 (ambos → a)
 
-#### F-X6-7 — Fonte da classificação "monofásico / alíquota zero" por produto (F-X6-4 a diz "NCM/flag")
+#### F-X6-7 ✅ (a) — Fonte da classificação "monofásico / alíquota zero" por produto (F-X6-4 a diz "NCM/flag")
 - **(a) Tabela de NCM monofásicos versionada no código** (`models/pisCofinsMonofasicoNcm.ts`), transcrita
   das leis (10.147/2000 farmácia/perfumaria, 10.485/2002 autopeças, 10.865/2004 e 9.718/98 art. 4º
   combustíveis, 10.833 art. 58-A bebidas frias) com página/artigo citado — o NCM vem do item da nota
@@ -407,7 +408,7 @@ Snapshot de DTO, `docs:generate` (paths inalterados; schema muda) e o guard segu
 - **Recomendação: (a)** com (c) como **regra dura adicional** (item 11): a nota manda quando diz "sem
   crédito"; a tabela manda quando a nota diz "tributado" mas o NCM é monofásico. (b) reabre o §2.1.
 
-#### F-X6-8 — O passivo com o fornecedor quando o custo é líquido de crédito (ACHADO DE CÓDIGO, atinge também F-X6-2 a)
+#### F-X6-8 ✅ (a) — O passivo com o fornecedor quando o custo é líquido de crédito (ACHADO DE CÓDIGO, atinge também F-X6-2 a)
 `NfeImportService.importPurchase` (`:125`) cria o `Payable` com `amountCents = custoTotalCents`. Hoje
 custo = vNF e a igualdade segura; com crédito recuperável (ICMS do contribuinte — item 8, **já ratificado** —
 e agora PIS/COFINS), `custo < vNF` e o passivo ficaria **subestimado** pelo valor do crédito. A partida
