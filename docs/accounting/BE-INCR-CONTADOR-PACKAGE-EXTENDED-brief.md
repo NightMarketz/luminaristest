@@ -32,7 +32,13 @@
     `delivery.package_built/sent/failed`), `:269` (job sem `sha256` → 400).
   - `server/src/features/accounting/dtos/AccountingDeliveryDto.ts:24-45` — `BuildDeliveryPackageSchema {
     unitId, ecdJobId, ecfJobId }`, `ConfirmDeliverySchema { …, contactId, confirmed: true }`.
-  - Rotas em `docs.paths.ts:4133-4193`: `POST /api/accounting/delivery/build`, `/confirm`, `/{id}/retry`.
+  - Rotas em `server/src/routes/docs.paths.ts` (4 paths): `POST /api/accounting/delivery/build` (l.4133),
+    `/confirm` (4154), `/{id}/retry` (4176), `GET /{id}` (4198).
+  - `AccountingDataExchangeJob.periodStart/periodEnd DateTime?` **já existem** (`schema.prisma:629-630`,
+    migração `20260910180000_job_period_covered`), preenchidos pela geração SPED (`SpedGenerationService.ts:129`,
+    `SpedEcfGenerationService.ts:175`) e exigidos por `resolveJobs` (`AccountingDeliveryService.ts:268-272`).
+    **Os exports de relatório NÃO os preenchem** (`grep periodStart DataExchangeExportService.ts` = 0) — é isso
+    que F-C6b-3 trata; **zero migração** no job.
   - `server/src/features/accounting/models/DataExchange.model.ts:14-32` — `EXPORT_KINDS`:
     `EXPORT_TRIAL_BALANCE` (balancete), `EXPORT_GENERAL_LEDGER` (razão), `EXPORT_BALANCE_SHEET` (BP),
     `EXPORT_INCOME_STATEMENT` (DRE), `EXPORT_IMPORT_ERRORS`, `EXPORT_TEMPLATE`, `EXPORT_SPED_ECD`,
@@ -77,14 +83,16 @@ transporte (o dono envia — F-CD1-a), nem revisão (C11).
    núcleo obrigatório e a chave de idempotência; os itens filhos são os **extras**. Invariante guardado
    por teste: todo delivery tem itens `position 0/1` iguais às colunas fixas.
 4. **Manifesto N-ário**: `buildDeliveryManifest` recebe `items: Array<{kind, jobId, sha256}>` (ECD, ECF
-   e extras, em `position`); `files[]` já tem o shape. Snapshot do manifesto para 2 e para 6 itens.
+   e extras, em `position`); `files[]` já tem o shape, mas `kind: DeliveryFileKind` é união fechada
+   `DELIVERY_FILE_KINDS = ['ECD','ECF']` (`AccountingDelivery.model.ts:21-22`) → passa a `ExportKind`
+   (o núcleo continua `EXPORT_SPED_ECD`/`EXPORT_SPED_ECF`). Snapshot do manifesto para 2 e para 6 itens.
 
 **Bloco B — composição configurável**
 
 5. **`BuildDeliveryPackageSchema` ganha `extraJobIds: string[]` (≤ 20, `.strict()`)**: cada id resolve
    por `findJobById(scope, id)` (404 cross-tenant, nunca 403), tem de ser `EXPORTED` com `sha256`, `kind`
    ∈ `DELIVERABLE_EXPORT_KINDS` (§4) e **mesmo `unitId`**; período do extra ⊆ período do pacote (F-C6b-3
-   diz como o período do extra é conhecido — o job não persiste período, achado do C6). Duplicata de
+   diz como o período do extra passa a ser gravado — as colunas existem, os exports não as preenchem). Duplicata de
    `kind` no mesmo pacote → 400 `DUPLICATE_KIND`.
 6. **Perfil de pacote por contato** (F-C6b-2): `AccountingContact.packageProfile: Json?` com a lista de
    `kind` que a UI pré-marca (`["EXPORT_TRIAL_BALANCE","EXPORT_GENERAL_LEDGER",…]`); `GET
@@ -94,7 +102,8 @@ transporte (o dono envia — F-CD1-a), nem revisão (C11).
    com o mesmo núcleo e extras **diferentes** → 409 `PACKAGE_ALREADY_DELIVERED` com o `deliveryId`
    (re-entrega = nova geração do núcleo, nunca "acrescentar item a pacote SENT").
 8. **Eventos de auditoria**: `delivery.package_built` ganha `itemCount` e `kinds[]` (allowlist de
-   `auditCanonical.ts` **na mesma mudança**; `sha256` por item **fora** do payload — já está na linha);
+   `auditCanonical.ts` **na mesma mudança**; `sha256Ecd`/`sha256Ecf` **ficam** como hoje (`auditCanonical.ts:139`),
+   os `sha256` dos extras **não** entram no payload — já estão na linha filha);
    sem eventType novo.
 
 **Bloco C — os relatórios que faltam (exports novos, `DataExchangeExportService`)**
@@ -118,7 +127,7 @@ transporte (o dono envia — F-CD1-a), nem revisão (C11).
     `docs.paths.ts`) → controller → `AccountingDeliveryService` → `IAccountingDeliveryRepository`
     (métodos novos `createItems(tx)`, `listItems`) → Prisma; policy `canManageAccountingContact` reusada.
     Repositório de contato ganha `updatePackageProfile`.
-14. Gates: `tsc`×2 · `test:integration` · snapshot de DTO · `docs:generate` (+2 paths) · `smoke:migration`
+14. Gates: `tsc`×2 · `test:integration` · snapshot de DTO · `docs:generate` (+1 path, 2 operações) · `smoke:migration`
     · allowlist de auditoria · review independente.
 
 ## 3. Forks — RATIFICAÇÃO PENDENTE
@@ -127,7 +136,7 @@ transporte (o dono envia — F-CD1-a), nem revisão (C11).
 |---|---|---|---|
 | **F-C6b-1** | Colunas fixas ECD/ECF | (a) **ficam** como núcleo + chave; itens filhos = extras (migração só aditiva + backfill 2 itens) · (b) tudo vira item; `ecdJobId/ecfJobId/manifestSha256*` viram nullable e depois somem (2 migrações, rebuild da tabela no SQLite) | **(a)** — zero rebuild, C11 (F-C11-3) e o `@@unique` continuam lendo o par; (b) é limpeza sem demanda e reabre `migracao-sqlite-nao-e-transacional` |
 | **F-C6b-2** | Onde mora "configurável" | (a) perfil por **contato** (`AccountingContact.packageProfile`) · (b) perfil por **escopo** (tabela nova) · (c) só no corpo do `build` (sem persistência) | **(a)** — o contador é quem pede o conjunto; 1:N contatos por escopo já existe (F-CD5-a). (c) é MVP, contra a preferência do dono |
-| **F-C6b-3** | Como validar que o extra cobre o período do pacote, se o job não persiste período | (a) o export passa a **persistir `periodStart/End`** no job (coluna nullable, 1 migração, só exports de relatório preenchem) · (b) inferir do `originalName` (frágil, achado do C6) · (c) não validar período dos extras | **(a)** — fecha o achado do C6 pela raiz; (b) foi rejeitado no C6; (c) deixa balancete de 2025 entrar em pacote de 2026 em silêncio |
+| **F-C6b-3** | Como validar que o extra cobre o período do pacote, se os exports de relatório não gravam `periodStart/End` (colunas já existem no job) | (a) `DataExchangeExportService` passa a **gravar** as colunas existentes nos exports de relatório (`asOf`/janela do DTO → período; **zero migração**) · (b) inferir do `originalName` (frágil, achado do C6) · (c) não validar período dos extras | **(a)** — reusa a coluna que a geração SPED já preenche; (b) foi rejeitado no C6; (c) deixa balancete de 2025 entrar em pacote de 2026 em silêncio |
 | **F-C6b-4** | Idempotência com extras diferentes | (a) chave inalterada; núcleo já entregue → 409 nomeado · (b) chave vira hash do conjunto (núcleo+extras) — permite 2 pacotes do mesmo par | **(a)** — "pacote" é o par assinado; extras diferentes = pedido do contador por fora ou nova geração |
 | **F-C6b-5** | Critério da amostra | (a) `n` por conta (resultado + patrimonial com movimento), semente determinística · (b) `n` aleatório global · (c) top-N por valor | **(a)** — reproduzível e cobre o plano; (c) ignora lançamentos pequenos, onde erro se esconde |
 
@@ -165,7 +174,6 @@ model AccountingDeliveryItem {
   @@index([deliveryId, position])
   @@map("accounting_delivery_items")
 }
-// F-C6b-3 (a): AccountingDataExchangeJob { periodStart DateTime? ; periodEnd DateTime? }
 // F-C6b-2 (a): AccountingContact { packageProfile Json? }
 ```
 
@@ -189,7 +197,7 @@ model AccountingDeliveryItem {
 
 ## 7. Gates de envio do PR de implementação
 
-`cd server && npx tsc --noEmit && npm run test:integration` · snapshot de DTO · `docs:generate` (+2 paths,
+`cd server && npx tsc --noEmit && npm run test:integration` · snapshot de DTO · `docs:generate` (+1 path / 2 ops,
 enum do `kind`) · `smoke:migration` (declarar S6 vacuoso) · allowlist de auditoria (`itemCount`, `kinds`)
 · review independente PASS · OPS-001 com adversarial (sugestão: extra de outro `unitId` → 400; 2º `confirm`
 com extras diferentes → 409 com o mesmo `deliveryId`; backfill rodado 2× → mesma contagem de itens).
