@@ -105,7 +105,7 @@ function buildService(m: Mocks = {}) {
   const findClosingsForYear = jest.fn(async (_s: unknown, _year: number) => m.closings ?? makeClosings());
   const findMovementsForYear = jest.fn(async (_s: unknown, _year: number) => m.movements ?? []);
   const lalurRepo = { findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear } as never;
-  const diagnoseYear = jest.fn(async (_s: unknown, year: number): Promise<LalurParteBBalancesDiagnostic> => ({ year, periods: [], divergences: m.divergences ?? [] }));
+  const diagnoseYear = jest.fn(async (_s: unknown, year: number): Promise<LalurParteBBalancesDiagnostic> => ({ year, periods: [], divergences: m.divergences ?? [], warnings: [] }));
   // Sem exercício anterior fechado, a abertura é a COLUNA via a regra real (REGRA_DT_AP_ZERO dentro de anchorOpening).
   const openingBalances = jest.fn(async (_s: unknown, year: number, accounts: LalurParteBAccount[]) =>
     m.opening ?? new Map(accounts.map((a) => [a.id, LalurService.anchorOpening(a, year)])));

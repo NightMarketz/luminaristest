@@ -3919,7 +3919,11 @@
  *       description: >-
  *         Per quarter and account: sdIni / vlA / vlB / sdFim (signed, D positive, C negative, as strings) on both
  *         sides plus divergences[]. The ECF Real generation runs this same diagnostic and refuses with 400 when
- *         divergences exist (re-close the period). BRIEF 3C item 11.
+ *         divergences exist (re-close the period). BRIEF 3C item 11. X4-14 (item 14, EMENDA §2.4 2026-09-15):
+ *         warnings[] lists every Parte A adjustment with an account relation (indRelacao 2|3) whose valorCents
+ *         equals none of the account's 4 K155/K355 aggregates in the quarter (Σ debits, Σ credits, period balance,
+ *         final balance) and cites no M312/M362 — REGRA_REGISTRO_M312_OBRIGATORIO (p.253). Warning only; the
+ *         generation never refuses on it.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:

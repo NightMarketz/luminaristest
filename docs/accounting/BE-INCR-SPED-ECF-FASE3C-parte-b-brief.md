@@ -12,7 +12,7 @@
 > **Implementação (mesma sessão, branch `claude/3c-sessao-feature-emenda-adr-9d5f8b`):** itens 2–13 e 15–20 ✅; item 14 ✅ **parcial**
 > (relação, DTO, serializer M312/M362; o **"aviso no diagnóstico" para ajuste parcial sem lançamentos NÃO foi implementado** — lacuna
 > de spec: §2.4 não tem o campo e "parcial" exige os 4 agregados do K155/K355 da conta no trimestre, dependência nova em postings —
-> **RATIFICADO 2026-09-13 (dono, questionário): aviso COMPLETO em PR de follow-up** — `warnings[]` no diagnóstico (§2.4 a emendar),
+> **RATIFICADO 2026-09-13 (dono, questionário): aviso COMPLETO em PR de follow-up** — `warnings[]` no diagnóstico (§2.4 **emendado 2026-09-15, X4-14 implementado — passo 9 de PROXIMOS-PASSOS-2026-09-14**),
 > comparando `valorCents` com os 4 agregados da conta no trimestre via `AccountingReportService` (já injetado); a geração NÃO recusa.
 > Implementação exige autorização própria (ORCH-006).) Review independente: PASS, 6 MENOR (5 corrigidos no mesmo PR; M1 = esta
 > lacuna). Item 19 devolve **409** (consistente com os guards irmãos do `deleteAccount`), não 400. PR: #316.
@@ -305,7 +305,13 @@ EcfRealFileInput += { movements: EcfRealParteBMovement[]; balances: EcfRealParte
 GET /api/lalur/parte-b/balances?unitId&year → {
   year, periods: [{ quarter, closed: boolean, closedAt?, accounts: [{ parteBId, codCtaB, codTributo,
     materialized?: Balance, recomputed: Balance, divergent: boolean }] }],
-  divergences: Array<{ quarter, codCtaB, codTributo, field, materialized, recomputed }>
+  divergences: Array<{ quarter, codCtaB, codTributo, field, materialized, recomputed }>,
+  // EMENDA 2026-09-15 (X4-14, follow-up do item 14 ratificado 2026-09-13): ajuste da Parte A (lalur/lacs) com
+  // relação contábil (indRelacao 2|3) cujo valorCents ≠ {Σ débitos, Σ créditos, saldo do período, saldo final}
+  // da conta no trimestre (K155/K355, postings reais via AccountingReportService.accountAggregates) E sem
+  // M312/M362 (journalLinks vazio) — REGRA_REGISTRO_M312_OBRIGATORIO (p.253). AVISO; a geração NÃO recusa.
+  warnings: Array<{ code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT', quarter, livro, codigo, entryId, accountCode,
+    valorCents, aggregates: { sumDebitCents, sumCreditCents, saldoPeriodoCents, saldoFinalCents }, message }>
 }
 ```
 

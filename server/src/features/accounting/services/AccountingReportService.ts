@@ -323,6 +323,35 @@ export class AccountingReportService {
    * Trial balance for a scope unit: per-account debit/credit totals (cents) joined to
    * the chart, plus a grand total and a `balanced` audit flag (Σdebit === Σcredit exact).
    */
+  /**
+   * X4-14 (BRIEF 3C item 14, follow-up ratificado 2026-09-13): os 4 agregados que o K155/K355 da ECD
+   * expõe para uma conta num intervalo — Σ débitos, Σ créditos, saldo do período e saldo FINAL (acumulado
+   * até `to`) — a régua da `REGRA_REGISTRO_M312_OBRIGATORIO` (Manual ECF L12 p.253): um M310/M360 cujo
+   * `VL_CTA` não iguala nenhum deles é ajuste PARCIAL e exige M312/M362. Mesmos statuses do balancete
+   * (`LEDGER_STATUSES`); saldos em valor ABSOLUTO (o VL_CTA do e-Lalur é ≥ 0, p.244). Leitura pura.
+   */
+  async accountAggregates(
+    scope: AccountingScope,
+    accountId: string,
+    from: Date,
+    to: Date,
+  ): Promise<{ sumDebitCents: number; sumCreditCents: number; saldoPeriodoCents: number; saldoFinalCents: number }> {
+    const [period, cumulative] = await Promise.all([
+      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { from, to }),
+      this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to }),
+    ]);
+    const p = period.find((t) => t.accountId === accountId);
+    const c = cumulative.find((t) => t.accountId === accountId);
+    const sumDebitCents = p?.debitCents ?? 0;
+    const sumCreditCents = p?.creditCents ?? 0;
+    return {
+      sumDebitCents,
+      sumCreditCents,
+      saldoPeriodoCents: Math.abs(sumDebitCents - sumCreditCents),
+      saldoFinalCents: Math.abs((c?.debitCents ?? 0) - (c?.creditCents ?? 0)),
+    };
+  }
+
   async trialBalance(scope: AccountingScope): Promise<TrialBalanceReport> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler o balancete.');
