@@ -41,6 +41,8 @@ export interface NfeParty {
   cpf?: string;
   nome?: string;
   ie?: string;
+  /** emit/CRT (C21): 1 = Simples Nacional, 2 = Simples excesso de sublimite, 3 = Regime Normal, 4 = MEI (X6, F-X6-3 b: fornecedor do Simples). */
+  crt?: string;
 }
 
 export interface NfeItem {
@@ -56,6 +58,15 @@ export interface NfeItem {
   vProdCents: number; // prod/vProd (I11) — peso do rateio
   vDescCents: number; // prod/vDesc (I17) — 0 se ausente
   indTot: string; // prod/indTot (I17b) — '0' não compõe total / '1' compõe
+  // ── X6 (BE-INCR-NFE-COST-REGIME, F-X6-2 a + F-X6-3 b): tributos POR ITEM — grupos N (ICMS), O (IPI), Q/S (PIS/COFINS) ──
+  vFreteCents: number; // prod/vFrete (I13) — 0 se ausente; base do crédito de PIS/COFINS por item
+  vSegCents: number; // prod/vSeg (I15)
+  vOutroCents: number; // prod/vOutro (I16)
+  vICMSCents: number; // imposto/ICMS/ICMS*/vICMS — ICMS próprio do item (0 em ICMSSN*/isento); crédito do contribuinte (item 8)
+  vICMSSTCents: number; // imposto/ICMS/ICMS*/vICMSST — ST do item (nunca recuperável, §4 f2)
+  vIPICents: number; // imposto/IPI/IPITrib/vIPI — 0 se ausente/IPINT
+  cstPis: string | null; // imposto/PIS/PIS{Aliq,Qtde,NT,Outr}/CST — null quando o grupo Q não existe
+  cstCofins: string | null; // imposto/COFINS/COFINS{Aliq,Qtde,NT,Outr}/CST — null quando o grupo S não existe
 }
 
 export interface NfeTotais {
@@ -174,11 +185,39 @@ function readParty(node: unknown): NfeParty {
   const cpf = str(o.CPF);
   const nome = str(o.xNome);
   const ie = str(o.IE);
+  const crt = str(o.CRT);
   if (cnpj) party.cnpj = cnpj;
   if (cpf) party.cpf = cpf;
   if (nome) party.nome = nome;
   if (ie) party.ie = ie;
+  if (crt) party.crt = crt;
   return party;
+}
+
+/** Primeiro filho-objeto de um grupo de tributo (`ICMS` → `ICMS00`|`ICMS10`|…|`ICMSSN102`; `PIS` → `PISAliq`|…). */
+function firstTaxVariant(group: unknown): Record<string, unknown> | null {
+  if (!group || typeof group !== 'object') return null;
+  for (const v of Object.values(group as Record<string, unknown>)) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, unknown>;
+  }
+  return null;
+}
+
+/** Tributos por item (X6). Grupo ausente = 0 / null — NUNCA inventa; o classificador trata `null` como UNKNOWN. */
+function readItemTaxes(det: Record<string, unknown>): Pick<NfeItem, 'vICMSCents' | 'vICMSSTCents' | 'vIPICents' | 'cstPis' | 'cstCofins'> {
+  const imposto = (det.imposto ?? {}) as Record<string, unknown>;
+  const icms = firstTaxVariant(imposto.ICMS);
+  const ipi = (imposto.IPI ?? {}) as Record<string, unknown>;
+  const ipiTrib = (ipi.IPITrib ?? null) as Record<string, unknown> | null;
+  const pis = firstTaxVariant(imposto.PIS);
+  const cofins = firstTaxVariant(imposto.COFINS);
+  return {
+    vICMSCents: moneyToCentsOpt(icms?.vICMS, 'det/imposto/ICMS/vICMS'),
+    vICMSSTCents: moneyToCentsOpt(icms?.vICMSST, 'det/imposto/ICMS/vICMSST'),
+    vIPICents: moneyToCentsOpt(ipiTrib?.vIPI, 'det/imposto/IPI/IPITrib/vIPI'),
+    cstPis: pis ? str(pis.CST) || null : null,
+    cstCofins: cofins ? str(cofins.CST) || null : null,
+  };
 }
 
 function readItem(det: Record<string, unknown>): NfeItem {
@@ -201,6 +240,10 @@ function readItem(det: Record<string, unknown>): NfeItem {
     vProdCents: moneyToCents(reqStr(prod.vProd, 'det/prod/vProd'), 'det/prod/vProd'),
     vDescCents: moneyToCentsOpt(prod.vDesc, 'det/prod/vDesc'),
     indTot: str(prod.indTot),
+    vFreteCents: moneyToCentsOpt(prod.vFrete, 'det/prod/vFrete'),
+    vSegCents: moneyToCentsOpt(prod.vSeg, 'det/prod/vSeg'),
+    vOutroCents: moneyToCentsOpt(prod.vOutro, 'det/prod/vOutro'),
+    ...readItemTaxes(det),
   };
 }
 

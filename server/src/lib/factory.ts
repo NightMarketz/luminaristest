@@ -32,6 +32,7 @@ import { AccountingDeliveryRepository } from '../features/accounting/repositorie
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
+import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
@@ -102,6 +103,7 @@ import { NfePreviewService } from '../features/accounting/services/NfePreviewSer
 import { ReconcilePendingService } from '../features/accounting/services/ReconcilePendingService';
 import { BankSettlementService } from '../features/accounting/services/BankSettlementService';
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
+import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -180,6 +182,7 @@ import type { ICounterpartyRepository } from '../features/accounting/repositorie
 import type { IInventoryRepository } from '../features/accounting/repositories/IInventoryRepository';
 import type { IReconcilePendingRepository } from '../features/accounting/repositories/IReconcilePendingRepository';
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
+import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
@@ -328,6 +331,7 @@ export class ApplicationFactory {
     inventory: IInventoryRepository;
     reconcilePending: IReconcilePendingRepository;
     bankSettlement: IBankSettlementRepository;
+    fiscalProfile: IFiscalProfileRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
@@ -399,6 +403,7 @@ export class ApplicationFactory {
     reconcilePending: ReconcilePendingService;
     bankSettlement: BankSettlementService;
     accountingScopeSettings: AccountingScopeSettingsService;
+    fiscalProfile: FiscalProfileService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
@@ -448,6 +453,7 @@ export class ApplicationFactory {
       inventory: new InventoryRepository(),
       reconcilePending: new ReconcilePendingRepository(),
       bankSettlement: new BankSettlementRepository(),
+      fiscalProfile: new FiscalProfileRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
@@ -681,6 +687,12 @@ export class ApplicationFactory {
       postingService,
       auditService,
     );
+    const fiscalProfileService = new FiscalProfileService(
+      this.repositories.fiscalProfile,
+      this.repositories.account,
+      this.policies.accounting,
+      auditService,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: new AccountingScopeSettingsService(
@@ -688,6 +700,9 @@ export class ApplicationFactory {
         this.repositories.account,
         this.policies.accounting,
       ),
+      // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal por escopo — o NfeImportService/NfePreviewService o LÊ
+      // (requireCostRegime, F-X6-6 a) e nunca o escreve.
+      fiscalProfile: fiscalProfileService,
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -858,6 +873,7 @@ export class ApplicationFactory {
         payableService,
         this.repositories.counterparty,
         this.policies.accounting,
+        fiscalProfileService, // X6: lê o perfil (F-X6-6 a)
       ),
       nfeSaleReconciliation: new NfeSaleReconciliationService(
         this.repositories.journalEntry,
@@ -865,7 +881,7 @@ export class ApplicationFactory {
         this.policies.accounting,
       ),
       // BE-INCR-NFE-PREVIEW: dry-run do parser + indicador de idempotência (F-PREV-3 → b); sem escrita.
-      nfePreview: new NfePreviewService(this.repositories.payable, this.policies.accounting),
+      nfePreview: new NfePreviewService(this.repositories.payable, this.policies.accounting, fiscalProfileService),
       // BE-INCR-RECONCILE-PENDING (nó C7, Fork 3-b): HTTP-facing half only (list/rescan). The
       // WRITE path (reportPending/reportResolved) is wired directly in accountingSyncReconcile.job.ts,
       // NOT through this Service — see that file's comment on why (system actor, no Policy check).
@@ -1057,6 +1073,7 @@ export class ApplicationFactory {
   public getReconcilePendingService = (): ReconcilePendingService => this.services.reconcilePending;
   public getBankSettlementService = (): BankSettlementService => this.services.bankSettlement;
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
+  public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;

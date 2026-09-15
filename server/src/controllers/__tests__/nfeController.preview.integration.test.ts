@@ -23,6 +23,9 @@ describe('POST /api/nfe/preview — dry-run do parser pela fronteira HTTP', () =
     ator = await prisma.user.create({
       data: { name: 'nfe-preview', username: 'nfe-preview', email: 'nfe-preview@test.local', password: 'x', role: 'USER' },
     });
+    // X6 (F-X6-6 a): o preview exige perfil fiscal — neutro (não-contribuinte, CUMULATIVO) mantém o contrato de antes.
+    const perfil = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(ator)).send({ unitId: UNIT, regimeTributario: 'PRESUMIDO', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' });
+    expect(perfil.status).toBe(200);
   }, 120000);
 
   afterAll(async () => {
@@ -42,7 +45,15 @@ describe('POST /api/nfe/preview — dry-run do parser pela fronteira HTTP', () =
     expect(parsed.success).toBe(true);
     expect(res.body.data.alreadyImported).toBe(false);
     expect(res.body.data.itens).toHaveLength(3);
+    // X6 item 12: o preview ecoa o regime e o custo — neutro = bruto = estoque = 19333, sem créditos
+    expect(res.body.data.custo).toEqual(expect.objectContaining({ custoBrutoCents: 19333, custoEstoqueCents: 19333, creditoIcmsCents: 0, creditoPisCofinsCents: 0, regimeAplicado: 'NAO_CONTRIBUINTE', pisCofinsAplicado: 'SEM_CREDITO' }));
     expect(await prisma.payable.count({ where: { userId: ator.id } })).toBe(before);
+  });
+
+  it('X6 F-X6-6 (a): unidade SEM perfil fiscal → 400 fiscal_profile_missing (o preview não inventa custo)', async () => {
+    const res = await request(app).post('/api/nfe/preview').set(authHeader(ator)).field('unitId', 'unit-sem-perfil').attach('file', XML, { filename: 'nfe.xml', contentType: 'text/xml' });
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/fiscal_profile_missing/);
   });
 
   it('400 sem o campo file', async () => {

@@ -27,6 +27,8 @@ export interface CreatePayableData {
   // driven StockMovements, not on the row). null/false otherwise. Discriminator that lets
   // isInventoryPurchase() route the debit without a sentinel inventoryProductRef.
   inventoryMultiItem: boolean | null;
+  // X6 F-X6-8 (a): JSON [{accountId, amountCents, kind}] — persistido para o re-drive reconstruir o MESMO entry.
+  recoverableTaxLines?: string | null;
   status: string;
   createdById: string | null;
 }

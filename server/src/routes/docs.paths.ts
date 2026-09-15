@@ -4240,6 +4240,57 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
+ *   /api/accounting/fiscal-profile:
+ *     get:
+ *       summary: Read the unit fiscal profile (BE-INCR-NFE-COST-REGIME, nó X6, F-X6-1 a)
+ *       description: >-
+ *         The axes that decide the NF-e acquisition cost (D3): icmsContribuinte (ICMS credit on
+ *         purchase for resale), pisCofinsRegime (credit only under NAO_CUMULATIVO), the 3 exception
+ *         flags with conservative defaults (F-X6-3 b — cédula 14/09), the recoverable-tax accounts
+ *         (F-X6-8 a) and partnerAccountRef (R8). 404 when the unit has no profile — the import and
+ *         the preview answer 400 fiscal_profile_missing in that case (F-X6-6 a).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'FiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'fiscal_profile_missing' }
+ *     put:
+ *       summary: Create or replace the unit fiscal profile (idempotent upsert, item 4)
+ *       description: >-
+ *         Consistency (LC 123/2006 art. 23): SIMPLES cannot combine with icmsContribuinte=true nor
+ *         pisCofinsRegime≠SIMPLES; a normal regime cannot use pisCofinsRegime=SIMPLES. Recoverable-tax
+ *         account ids must be existing Asset leaves of this scope (the codes are the accountant's).
+ *         Audited as fiscal_profile.updated (enum/boolean/id only).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, regimeTributario, icmsContribuinte, pisCofinsRegime]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 regimeTributario: { type: string, enum: [SIMPLES, PRESUMIDO, REAL] }
+ *                 icmsContribuinte: { type: boolean }
+ *                 pisCofinsRegime: { type: string, enum: [SIMPLES, CUMULATIVO, NAO_CUMULATIVO] }
+ *                 pisCofinsCreditExcludesIcms: { type: boolean, default: true, description: 'Lei 14.592/2023 art. 6º' }
+ *                 pisCofinsCreditIncludesIpi: { type: boolean, default: false }
+ *                 pisCofinsCreditFromSimplesSupplier: { type: boolean, default: false }
+ *                 icmsRecuperavelAccountId: { type: string, nullable: true }
+ *                 pisCofinsRecuperavelAccountId: { type: string, nullable: true }
+ *                 partnerAccountRef: { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'FiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
  *   /api/accounting/contacts:
  *     get:
  *       summary: List the accountant contacts of a scope (BE-INCR-CONTADOR-DELIVERY)

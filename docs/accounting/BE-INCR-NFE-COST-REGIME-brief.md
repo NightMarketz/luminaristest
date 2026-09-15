@@ -458,3 +458,24 @@ resposta."*
 - O ICMS-ST continua no custo (f2); o ICMS próprio recuperável sai só para o contribuinte (item 8).
 - Nada de **apuração** do crédito (X7/X8): aqui o crédito nasce no ativo (`a recuperar`, item 18) e valoriza
   o estoque líquido; a **baixa** desse ativo contra o tributo devido é do ADR de apuração — fora de escopo.
+
+## ERRATA 2026-09-15 (review independente do PR #328 — transcrição × corpus)
+
+Três correções no item 11 / tabela `pisCofinsMonofasicoNcm.ts`, todas **verificadas no corpus baixado em 15/09**
+(`Lei-10485-2002-monofasico-autopecas.html`, `Lei-10147-2000-monofasico-farmacia.html`):
+
+1. **Lei 10.485 art. 1º** estava transcrito na redação de 2004 (`8432.40.00, 8432.80.00, 8433.20…`). A redação
+   **vigente** (Lei 12.973/2014) é *"73.09, 7310.29, 7612.90.12, 8424.81, 84.29, 8430.69.90, 84.32, 84.33, 84.34,
+   84.35, 84.36, 84.37, 87.01…87.06 e 8716.20.00"*. Direção do erro: **crédito indevido** (NCM 73.09, 84.32
+   inteira etc. + CST 01 → `TRIBUTADO`). Substituída a lista; teste-guarda com 12 NCMs da redação vigente.
+2. **Lei 10.147 art. 1º**: *"3303.00 a 33.07, **exceto na posição 33.06**"* (red. Lei 12.839/2013) — `3306`
+   removido da tabela (higiene bucal é tributado normal). Direção: conservadora (negava crédito devido).
+3. **CST 02** ("alíquota diferenciada") habilitava crédito com NCM fora da tabela. O CST 02 é a saída típica do
+   fabricante/importador monofásico; com tabela versionada que pode ficar atrás da TIPI, isso furava a promessa
+   do item 11 ("item sem classificação = sem crédito"). Agora **só CST 01** habilita; CST 02 → `UNKNOWN` (sem
+   crédito + warning nomeando o item). **Não é fork novo** — é o default conservador que o item 11 já fixa; a
+   posição final é do contador (linha nova ao pedido do passo 11: *"nota de compra com CST PIS/COFINS 02 e NCM
+   fora das listas monofásicas: há crédito?"*).
+
+Registrado sem finding (revisor): 1,65%/7,6% e exclusão do ICMS conferem no corpus; Anexo I 51/51, Anexo II
+15/15; invariante Σ custo_item = custoEstoque mantida em 4 casos adversariais; re-drive e estorno com 4 linhas.

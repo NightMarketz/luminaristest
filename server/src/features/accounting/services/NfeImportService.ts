@@ -5,6 +5,8 @@ import { MAX_CENTS } from '../models/money';
 import type { CreatePayableInput } from '../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../dtos/NfeDto';
 import type { PayableService } from './PayableService';
+import type { FiscalProfileService } from './FiscalProfileService';
+import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -66,6 +68,7 @@ export class NfeImportService {
     private readonly payableService: PayableService,
     private readonly counterpartyRepo: ICounterpartyRepository,
     private readonly policy: IAccountingPolicy,
+    private readonly fiscalProfile: FiscalProfileService,
   ) {}
 
   /**
@@ -98,8 +101,13 @@ export class NfeImportService {
     // reject the whole import if any item is unmapped (loud, never a silent skip).
     const mappingByCProd = new Map(dto.itemMappings.map((m) => [m.cProd, m.productRef]));
 
-    // Cost D3 (F-NFE6) + rateio. The per-item shares sum EXACTLY to custoTotalCents (residue on last).
-    const custoTotalCents = this.acquisitionCost(nfe.totais);
+    // X6: custo POR REGIME (BRIEF itens 6–11 + EMENDA 2026-09-15). Sem perfil fiscal → 400 (F-X6-6 a).
+    // `amountCents` = custo BRUTO (o que se deve ao fornecedor, F-X6-8 a); o estoque recebe o LÍQUIDO;
+    // a diferença nasce como crédito a recuperar no MESMO entry (recoverableTaxLines).
+    const regime = await this.fiscalProfile.requireCostRegime(scope);
+    const costed = nfe.itens.filter((it) => it.indTot !== '0');
+    const custo = acquisitionCost(nfe, costed, regime);
+    const custoTotalCents = custo.custoBrutoCents;
     if (custoTotalCents <= 0) {
       throw new ValidationError('NF-e de compra com custo de aquisição não positivo — rejeitada.');
     }
@@ -108,7 +116,8 @@ export class NfeImportService {
         `NF-e de compra excede o teto de centavos suportado (${custoTotalCents} > ${MAX_CENTS}).`,
       );
     }
-    const { inventoryItems, ignoredItems } = this.allocate(nfe.itens, custoTotalCents, mappingByCProd);
+    const recoverableTaxLines = this.recoverableLines(custo, regime);
+    const { inventoryItems, ignoredItems } = this.allocate(nfe.itens, custo, mappingByCProd);
 
     const issueDate = nfe.ide.dhEmiDate; // YYYY-MM-DD (reslice literal from the parser)
 
@@ -125,6 +134,7 @@ export class NfeImportService {
       amountCents: custoTotalCents,
       inventoryMultiItem: true,
       inventoryItems,
+      ...(recoverableTaxLines.length > 0 ? { recoverableTaxLines } : {}),
     };
 
     const payable = await this.payableService.createPayable(scope, input);
@@ -147,8 +157,32 @@ export class NfeImportService {
    *  NOT subtracted — the named ALTO risk). `vSeg` (seguro) É custo de aquisição e compõe o `vNF` (decisão
    *  E): sem ele, uma nota com seguro criaria passivo MENOR que a nota e o pagamento full-balance quitaria
    *  a menos. Ties out to `vNF` for a fully-taxed não-contribuinte note. */
-  private acquisitionCost(t: NfeTotais): number {
-    return t.vProdCents - t.vDescCents + t.vFreteCents + t.vSegCents + t.vOutroCents + t.vIPICents + t.vSTCents;
+  /**
+   * X6 F-X6-8 (a): créditos a recuperar → linhas do mesmo entry, em contas do `FiscalProfile`. Crédito > 0
+   * sem conta configurada → 400 nomeado (os códigos são do contador, BRIEF §5) — nunca conta inventada.
+   */
+  private recoverableLines(
+    custo: AcquisitionCost,
+    regime: { icmsRecuperavelAccountId: string | null; pisCofinsRecuperavelAccountId: string | null },
+  ): NonNullable<CreatePayableInput['recoverableTaxLines']> {
+    const lines: NonNullable<CreatePayableInput['recoverableTaxLines']> = [];
+    if (custo.creditoIcmsCents > 0) {
+      if (!regime.icmsRecuperavelAccountId) {
+        throw new ValidationError(
+          `recoverable_account_not_configured: a nota gera ${custo.creditoIcmsCents} centavos de crédito de ICMS e o perfil fiscal não tem icmsRecuperavelAccountId (PUT /api/accounting/fiscal-profile — código é do contador).`,
+        );
+      }
+      lines.push({ accountId: regime.icmsRecuperavelAccountId, amountCents: custo.creditoIcmsCents, kind: 'ICMS' });
+    }
+    if (custo.creditoPisCofinsCents > 0) {
+      if (!regime.pisCofinsRecuperavelAccountId) {
+        throw new ValidationError(
+          `recoverable_account_not_configured: a nota gera ${custo.creditoPisCofinsCents} centavos de crédito de PIS/COFINS e o perfil fiscal não tem pisCofinsRecuperavelAccountId (PUT /api/accounting/fiscal-profile — código é do contador).`,
+        );
+      }
+      lines.push({ accountId: regime.pisCofinsRecuperavelAccountId, amountCents: custo.creditoPisCofinsCents, kind: 'PIS_COFINS' });
+    }
+    return lines;
   }
 
   /**
@@ -172,7 +206,7 @@ export class NfeImportService {
    */
   private allocate(
     itens: NfeItem[],
-    custoTotalCents: number,
+    custo: AcquisitionCost,
     mappingByCProd: Map<string, string>,
   ): {
     inventoryItems: NonNullable<CreatePayableInput['inventoryItems']>;
@@ -193,22 +227,20 @@ export class NfeImportService {
     if (totalWeight <= 0) {
       throw new ValidationError('NF-e de compra sem valor de produtos (Σ vProd = 0) — rejeitada.');
     }
-    const totalWeightBig = BigInt(totalWeight);
-    const custoTotalBig = BigInt(custoTotalCents);
-
-    let allocated = 0;
-    const lastIdx = costed.length - 1;
-    const inventoryItems = costed.map((it, idx) => {
+    // X6: a parcela de cada item já vem do `acquisitionCost` (rateio do BRUTO por vProd, resíduo na última,
+    // menos os créditos DO PRÓPRIO item) — Σ custoLiquido === custoEstoqueCents (item 9).
+    const liquidoByItem = new Map(custo.itens.map((c) => [c.nItem, c.custoLiquidoCents]));
+    const inventoryItems = costed.map((it) => {
       const productRef = mappingByCProd.get(it.cProd);
       if (!productRef) {
         throw new ValidationError(
           `Item '${it.cProd}' (${it.xProd}) não tem mapeamento de produto confirmado (D6) — rejeitado.`,
         );
       }
-      const share = idx === lastIdx
-        ? custoTotalCents - allocated
-        : Number((custoTotalBig * BigInt(it.vProdCents)) / totalWeightBig);
-      allocated += share;
+      const share = liquidoByItem.get(it.nItem);
+      if (share === undefined) {
+        throw new ValidationError(`Item ${it.nItem} ('${it.cProd}') sem custo calculado — rejeitado.`);
+      }
       return {
         productRef,
         qty: this.qComToUnits(it.qCom, it.cProd),

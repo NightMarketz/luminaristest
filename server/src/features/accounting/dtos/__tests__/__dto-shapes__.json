@@ -1134,6 +1134,104 @@
       ]
     }
   },
+  "FiscalProfileDto.ts": {
+    "FiscalProfileScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpsertFiscalProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regimeTributario": {
+          "type": "string",
+          "enum": [
+            "SIMPLES",
+            "PRESUMIDO",
+            "REAL"
+          ]
+        },
+        "icmsContribuinte": {
+          "type": "boolean"
+        },
+        "pisCofinsRegime": {
+          "type": "string",
+          "enum": [
+            "SIMPLES",
+            "CUMULATIVO",
+            "NAO_CUMULATIVO"
+          ]
+        },
+        "pisCofinsCreditExcludesIcms": {
+          "default": true,
+          "type": "boolean"
+        },
+        "pisCofinsCreditIncludesIpi": {
+          "default": false,
+          "type": "boolean"
+        },
+        "pisCofinsCreditFromSimplesSupplier": {
+          "default": false,
+          "type": "boolean"
+        },
+        "icmsRecuperavelAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsRecuperavelAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "partnerAccountRef": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "regimeTributario",
+        "icmsContribuinte",
+        "pisCofinsRegime"
+      ],
+      "additionalProperties": false
+    }
+  },
   "InventoryDto.ts": {
     "ReceiveStockSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2078,6 +2176,68 @@
       ],
       "additionalProperties": false
     },
+    "NfeCostPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "custoBrutoCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "custoEstoqueCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "creditoIcmsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "creditoPisCofinsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "baseCreditoPisCofinsCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "regimeAplicado": {
+          "type": "string",
+          "enum": [
+            "NAO_CONTRIBUINTE",
+            "CONTRIBUINTE_ICMS"
+          ]
+        },
+        "pisCofinsAplicado": {
+          "type": "string",
+          "enum": [
+            "SEM_CREDITO",
+            "NAO_CUMULATIVO"
+          ]
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "custoBrutoCents",
+        "custoEstoqueCents",
+        "creditoIcmsCents",
+        "creditoPisCofinsCents",
+        "baseCreditoPisCofinsCents",
+        "regimeAplicado",
+        "pisCofinsAplicado",
+        "warnings"
+      ],
+      "additionalProperties": false
+    },
     "NfePreviewSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2132,6 +2292,9 @@
             },
             "ie": {
               "type": "string"
+            },
+            "crt": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -2149,6 +2312,9 @@
               "type": "string"
             },
             "ie": {
+              "type": "string"
+            },
+            "crt": {
               "type": "string"
             }
           },
@@ -2205,6 +2371,56 @@
                   "0",
                   "1"
                 ]
+              },
+              "vFreteCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vSegCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vOutroCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vICMSCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vICMSSTCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "vIPICents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "cstPis": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cstCofins": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -2219,7 +2435,15 @@
               "vUnComStr",
               "vProdCents",
               "vDescCents",
-              "indTot"
+              "indTot",
+              "vFreteCents",
+              "vSegCents",
+              "vOutroCents",
+              "vICMSCents",
+              "vICMSSTCents",
+              "vIPICents",
+              "cstPis",
+              "cstCofins"
             ],
             "additionalProperties": false
           }
@@ -2318,6 +2542,67 @@
               "type": "null"
             }
           ]
+        },
+        "custo": {
+          "type": "object",
+          "properties": {
+            "custoBrutoCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "custoEstoqueCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "creditoIcmsCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "creditoPisCofinsCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "baseCreditoPisCofinsCents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "regimeAplicado": {
+              "type": "string",
+              "enum": [
+                "NAO_CONTRIBUINTE",
+                "CONTRIBUINTE_ICMS"
+              ]
+            },
+            "pisCofinsAplicado": {
+              "type": "string",
+              "enum": [
+                "SEM_CREDITO",
+                "NAO_CUMULATIVO"
+              ]
+            },
+            "warnings": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "custoBrutoCents",
+            "custoEstoqueCents",
+            "creditoIcmsCents",
+            "creditoPisCofinsCents",
+            "baseCreditoPisCofinsCents",
+            "regimeAplicado",
+            "pisCofinsAplicado",
+            "warnings"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2329,7 +2614,8 @@
         "totais",
         "protocolo",
         "alreadyImported",
-        "existingPayableId"
+        "existingPayableId",
+        "custo"
       ],
       "additionalProperties": false
     }
@@ -2418,6 +2704,37 @@
               "productRef",
               "qty",
               "valueCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "recoverableTaxLines": {
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "amountCents": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 2147483647
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "ICMS",
+                  "PIS_COFINS"
+                ]
+              }
+            },
+            "required": [
+              "accountId",
+              "amountCents",
+              "kind"
             ],
             "additionalProperties": false
           }
