@@ -314,3 +314,133 @@ sinal de `vICMS`, trocar `vST` de lado) e sobre o `superRefine`.
    se existisse, o item 10 seria "manter", não "criar".
 5. **Risco principal:** as fontes fiscais desta fórmula não estão no repositório; o viés é tratar norma
    lembrada como norma verificada — declarado como [NC] em toda linha.
+
+---
+
+## EMENDA 2026-09-15 — F-X6-3 → (b) e R8 (sessão de planejamento, passo 8 de `PROXIMOS-PASSOS-2026-09-14.md`)
+
+> **Autorização:** `CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md` — **F-X6-1,2,4,5,6 → (a)** e
+> **F-X6-3 → (b)** (*"subtrair PIS/COFINS já — ativa F-X6-4 monofásico por produto agora; 4 exceções
+> (monofásico, ICMS fora da base — Lei 14.592/23, IPI na base, fornecedor do Simples) com default conservador
+> **sem crédito**, como dado configurável; linha nova no pedido ao contador"*) + **R8** (`ADR-INCR-DFE-EMISSAO-
+> PARCEIRO.md` EMENDA 2026-09-14 item 2: `partnerAccountRef` nasce com o `FiscalProfile`). Esta emenda
+> **substitui os itens 10 e 11** do §1 e **estende** os contratos do §2; tudo o mais fica. **Dois forks novos**
+> (F-X6-7, F-X6-8) ficam `RATIFICAÇÃO PENDENTE`; a `sessao-feature` pausa nos itens 8/10/11 até eles.
+
+### Itens 10 e 11 — versão vigente (substituem os de 2026-09-11)
+
+10. **[F-X6-3 b] Crédito de PIS/COFINS entra no custo** — só no regime **`NAO_CUMULATIVO`**
+    (`CUMULATIVO`/`SIMPLES` → crédito zero, custo idêntico ao item 7/8): `custo = custoICMS − creditoPisCofins`,
+    onde `creditoPisCofins = Σ_itens base_item × (1,65% + 7,6%)` (Lei 10.833/2003 art. 2º/3º; Lei 10.637/2002
+    art. 2º/3º — **[NC]**, fora do corpus, §4 f6) e `base_item = vProd_item − vDesc_item + vFrete + vSeg + vOutro
+    rateados`, ajustada pelas **4 exceções** abaixo, cada uma um **flag do `FiscalProfile`** com **default
+    conservador = sem crédito** (cédula 14/09): o tenant só ganha crédito onde o contador confirmar.
+    | Exceção | Flag (`FiscalProfile`) | Default | Efeito quando `true` | Fonte |
+    |---|---|---|---|---|
+    | ICMS fora da base do crédito | `pisCofinsCreditExcludesIcms` | `true` (conservador = base menor) | subtrai `vICMS_item` da base | Lei 14.592/2023 art. 6º [NC] |
+    | IPI na base | `pisCofinsCreditIncludesIpi` | `false` | soma `vIPI_item` à base | IN RFB 2.121/2022 art. 170 (contestada) [NC] |
+    | Fornecedor do Simples Nacional | `pisCofinsCreditFromSimplesSupplier` | `false` | crédito normal em nota de emitente do Simples (`emit/CRT = 1`) | ADI SRF 15/2007 [NC] |
+    | Produto monofásico / alíquota zero | ver item 11 | sem crédito | item excluído do Σ | Lei 10.833/2003 art. 3º §2º II [NC] |
+    Arredondamento: crédito por item em centavos, `Math.round` por item, Σ inteira; `custo_item` rateia o
+    crédito do próprio item (não o total) — invariante do item 9 continua: `Σ custo_item === custoTotalCents`.
+    `baseCreditoPisCofinsCents` (regra (j)) deixa de ser "sem efeito": é a Σ das bases pós-exceções e **é
+    o número que o contador vai conferir**. Testável: mesma nota, 3 perfis (`CUMULATIVO`, `NAO_CUMULATIVO`
+    com defaults, `NAO_CUMULATIVO` com os 3 flags `true`) → 3 custos distintos e determinísticos; perfil
+    `NAO_CUMULATIVO` + nota de emitente `CRT=1` + flag `false` → crédito 0 nessa nota.
+11. **[F-X6-4 a, F-X6-7] Monofásico por produto, ativo:** o item é excluído do Σ do crédito quando é
+    monofásico/alíquota zero. A **fonte** da classificação é o Fork **F-X6-7** (§3, novo). Em qualquer opção,
+    **default conservador**: item sem classificação = **sem crédito**; a nota com `CST PIS/COFINS ∈ {04, 05, 06,
+    07, 08, 09}` no item (grupo Q/S do MOC) é **sempre** sem crédito, independente da configuração (a nota
+    do fornecedor já declara) — regra dura, não flag. Testável: fixture mista (item CST 01 + item CST 04) →
+    crédito só no primeiro; item sem grupo Q → sem crédito e `warnings[]` no preview nomeando o item.
+
+### Contratos — extensões ao §2
+
+```prisma
+model FiscalProfile {
+  // … campos de 2026-09-11 …
+  pisCofinsCreditExcludesIcms        Boolean @default(true)  // Lei 14.592/23 — default conservador
+  pisCofinsCreditIncludesIpi         Boolean @default(false)
+  pisCofinsCreditFromSimplesSupplier Boolean @default(false)
+  partnerAccountRef                  String? // R8 item 2 (ADR-DFE EMENDA 14/09): conta de emissão no parceiro POR UNIDADE — nasce aqui, reservada; BE-INCR-DFE a preenche
+}
+```
+
+```ts
+// UpsertFiscalProfileSchema ganha os 3 flags (boolean, opcionais no PUT → default do schema) e
+// partnerAccountRef: z.string().min(1).max(120).nullable().optional()  — sem validação de formato (parceiro D5 indefinido)
+export interface CostRegime {
+  icmsContribuinte: boolean;
+  pisCofinsRegime: 'SIMPLES' | 'CUMULATIVO' | 'NAO_CUMULATIVO';
+  pisCofinsCreditExcludesIcms: boolean;
+  pisCofinsCreditIncludesIpi: boolean;
+  pisCofinsCreditFromSimplesSupplier: boolean;
+}
+export interface NfeItem { /* … */ vICMSCents: number; cstPis: string | null; cstCofins: string | null; vBCPisCents: number | null; } // parser: grupos N (F-X6-2 a) + Q/S
+export interface NfeEmitente { /* … */ crt: '1' | '2' | '3' | '4' | null; } // emit/CRT (C21) — 1 = Simples Nacional
+export interface AcquisitionCost {
+  custoEstoqueCents: number;
+  creditoIcmsCents: number;            // F-X6-2 a
+  creditoPisCofinsCents: number;       // F-X6-3 b
+  baseCreditoPisCofinsCents: number;   // Σ bases pós-exceções — o número do contador
+  regimeAplicado: 'NAO_CONTRIBUINTE' | 'CONTRIBUINTE_ICMS';
+  pisCofinsAplicado: 'SEM_CREDITO' | 'NAO_CUMULATIVO';
+  warnings: string[];                  // item sem grupo Q/S, NCM sem classificação (F-X6-7)
+}
+```
+Preview (`POST /api/nfe/preview`) devolve os campos acima em `custo`; `payable.created` ganha
+`pisCofinsAplicado` e `creditoPisCofinsCents` (string) na allowlist (mesma mudança, item 13).
+Snapshot de DTO, `docs:generate` (paths inalterados; schema muda) e o guard seguem os gates do item 16.
+
+### Forks NOVOS — RATIFICAÇÃO PENDENTE
+
+#### F-X6-7 — Fonte da classificação "monofásico / alíquota zero" por produto (F-X6-4 a diz "NCM/flag")
+- **(a) Tabela de NCM monofásicos versionada no código** (`models/pisCofinsMonofasicoNcm.ts`), transcrita
+  das leis (10.147/2000 farmácia/perfumaria, 10.485/2002 autopeças, 10.865/2004 e 9.718/98 art. 4º
+  combustíveis, 10.833 art. 58-A bebidas frias) com página/artigo citado — o NCM vem do item da nota
+  (`prod/NCM`, I05); zero cadastro por tenant. Custo de errar: lista desatualizada → item novo cai no default
+  conservador (sem crédito), nunca crédito indevido.
+- (b) Flag por produto no preset `products` (DynamicTable) — cadastro manual por tenant; a regra contábil
+  passa a depender de dado de usuário (Contrato §2.1: invariante fiscal não vira campo solto de preset).
+- (c) Só o CST da nota — depende do fornecedor ter classificado certo; sem defesa quando o CST vem `01`
+  num produto monofásico (crédito indevido em silêncio).
+- **Recomendação: (a)** com (c) como **regra dura adicional** (item 11): a nota manda quando diz "sem
+  crédito"; a tabela manda quando a nota diz "tributado" mas o NCM é monofásico. (b) reabre o §2.1.
+
+#### F-X6-8 — O passivo com o fornecedor quando o custo é líquido de crédito (ACHADO DE CÓDIGO, atinge também F-X6-2 a)
+`NfeImportService.importPurchase` (`:125`) cria o `Payable` com `amountCents = custoTotalCents`. Hoje
+custo = vNF e a igualdade segura; com crédito recuperável (ICMS do contribuinte — item 8, **já ratificado** —
+e agora PIS/COFINS), `custo < vNF` e o passivo ficaria **subestimado** pelo valor do crédito. A partida
+correta é `D estoque (custo líquido) + D tributos a recuperar (crédito) / C fornecedores (vNF)`.
+- **(a) `Payable.amountCents = vNF`** (o que se deve ao fornecedor) e o `createPayable` recebe, além do
+  reconhecimento em estoque, **linhas de crédito a recuperar** em contas configuráveis do `FiscalProfile`
+  (`icmsRecuperavelAccountId`, `pisCofinsRecuperavelAccountId`, FK `Account`, `Restrict`); sem conta
+  configurada e crédito > 0 → **400 nomeado** (mesmo padrão do F7 Fase C). Contas = pendência do contador.
+  Toca `createPayable` (AP) — nó vizinho: entra como **item 18** com o contrato explícito
+  (`CreatePayableInput.recoverableTaxLines?: {accountId, amountCents}[]`, reconhecidos no mesmo entry).
+- (b) Manter `amountCents = custo` — passivo errado por desenho; rejeitado por regra de domínio (o AP é
+  quem paga a nota inteira).
+- (c) Postar o crédito num 2º lançamento fora do AP — quebra o "1 nota = 1 createPayable" (F-NFE7 a).
+- **Recomendação: (a).** Sem (a), os itens 8 e 10 **não podem ser implementados** sem quebrar o passivo:
+  a `sessao-feature` pausa nos dois até este fork. É lacuna do BRIEF de 11/09 que o código expôs.
+
+### Pendente de validação externa — linhas novas (§4)
+
+| # | Regra | Fonte | Grau |
+|---|---|---|---|
+| f6 | Crédito não-cumulativo = 1,65% (PIS) + 7,6% (COFINS) sobre a base de aquisição para revenda | Lei 10.637/2002 art. 2º/3º; Lei 10.833/2003 art. 2º/3º | [NC] — fora do corpus; **baixar antes da feature** (`scripts/baixar-fontes-oficiais.mjs`, 2 entradas novas) |
+| f7 | Exclusão do ICMS da base do crédito (desde 05/2023) | Lei 14.592/2023 art. 6º | [NC] — idem |
+| f8 | Listas de NCM monofásicos (F-X6-7 a) | Leis 10.147, 10.485, 10.865, 9.718 art. 4º, 10.833 art. 58-A | [NC] — transcrição com artigo citado, ou o item 11 pausa |
+
+**Linha nova ao contador (pedido do passo 11):** *"Regime de PIS/COFINS de cada tenant (cumulativo ×
+não-cumulativo) e, no não-cumulativo, a posição sobre as 4 exceções: ICMS fora da base (sim, pela Lei
+14.592?), IPI na base (sim/não), crédito em compra de fornecedor do Simples (sim/não), e a lista de
+produtos monofásicos que ele reconhece — os defaults do sistema são conservadores (sem crédito) até a
+resposta."*
+
+### O que esta emenda NÃO muda
+- Itens 1–9, 12–17 do §1 (com o acréscimo de campos ao 12 e 13 acima); F-X6-1/2/5/6 → (a) intactos.
+- O ICMS-ST continua no custo (f2); o ICMS próprio recuperável sai só para o contribuinte (item 8).
+- Nada de apuração/escrituração do crédito (X7/X8): aqui o crédito só **valoriza o estoque**; o lançamento
+  do crédito a recuperar (`1.1.x PIS/COFINS a recuperar`) é do ADR de apuração — **achado fora de escopo**,
+  registrado: sem ele, o custo menor não tem contrapartida no ativo → o BRIEF de X7 tem de fechar.
