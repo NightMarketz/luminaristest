@@ -401,4 +401,32 @@ describe('/api/bank-settlements — F7', () => {
     expect(await prisma.payablePayment.count({ where: { payableId: p14, status: 'ACTIVE' } })).toBe(1);
     expect((await itemByLine(l16)).status).toBe('FAILED');
   });
+
+  it('review-delta ADV-9 (should-fix): 2 linhas IGUAIS (valor, data, método) para o MESMO título — a 2ª confirma; pagamento já vinculado a outro item não é "órfão"', async () => {
+    const p15 = await criarPayable('NF-15', 6000, '2026-06-19');
+    const la = await criarLinha(17, -3000, 'NF-15');
+    const lb = await criarLinha(18, -3000, 'NF-15');
+    expect((await scan()).status).toBe(200);
+    const ia = await itemByLine(la);
+    const ib = await itemByLine(lb);
+    expect((await confirm(ia.id)).status).toBe(200);
+    const res = await confirm(ib.id);
+    expect(res.status).toBe(200);
+    expect(res.body.data.status).toBe('CONFIRMED');
+    expect((await prisma.payable.findUniqueOrThrow({ where: { id: p15 } })).status).toBe('PAID');
+    expect(await prisma.payablePayment.count({ where: { payableId: p15, status: 'ACTIVE' } })).toBe(2);
+  });
+
+  it('review-delta nit: precheck que falha no retry grava a causa real em reason, não o texto do claim', async () => {
+    const p16 = await criarPayable('NF-16', 700, '2026-06-19');
+    const l19 = await criarLinha(19, -700, 'NF-16');
+    expect((await scan()).status).toBe(200);
+    const item = await itemByLine(l19);
+    await prisma.bankSettlementItem.update({ where: { id: item.id }, data: { status: 'CONFIRMING', updatedAt: new Date(Date.now() - 20 * 60 * 1000) } });
+    const res = await request(app).post(`/api/bank-settlements/${item.id}/retry`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Cash' }); // conta errada → precheck falha
+    expect(res.status).toBe(400);
+    const after = await itemByLine(l19);
+    expect(after.status).toBe('FAILED');
+    expect(after.reason).toMatch(/method_account_mismatch/);
+  });
 });
