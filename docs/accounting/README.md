@@ -14,7 +14,7 @@
 |---|---|---|
 | [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) | grafo-mestre reconciliado: §1 travadas · §4 rejeitadas · §5 diferidos · **§5.1 fila** · **§7.1 régua** · fold no topo | régua **41/57**; último fold: #315 + cédulas 14/09 |
 | [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) | dependências nó a nó + algoritmo do próximo nó (R6) | vigente — supersede [09-11](GRAFO-DEPENDENCIAS-2026-09-11.md) 📜 e [09-07](GRAFO-DEPENDENCIAS-2026-09-07.md) 📜 |
-| [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md) | prompt de orquestração + **detalhamento por passo** (pré-condição, arquivos, gates, evidência, stops humanos) | vigente — passos 0–1 ✅, 2–4 🔄, 5–12 ⬜ |
+| [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md) | prompt de orquestração + **detalhamento por passo** (pré-condição, arquivos, gates, evidência, stops humanos) | vigente — passos 0–1 ✅, 2–4 🔄 (#320/#321/#322), 5–12 ⬜ |
 
 ## 2. Cédulas de decisão (citáveis, ORCH-006) — cronológicas
 
@@ -59,7 +59,7 @@
 | **C6** entrega ao contador | [`BE-INCR-CONTADOR-DELIVERY-brief.md`](BE-INCR-CONTADOR-DELIVERY-brief.md) | ✅ | #305 |
 | **F7** baixa por retorno bancário | [`BE-INCR-BANK-SETTLEMENT-brief.md`](BE-INCR-BANK-SETTLEMENT-brief.md) | ⏸ **5 forks F-F7-1..5 ao dono** (stop humano) | #319 (R9 tabela irmã) |
 | **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | 🔄 **PR #321** (6 forks) | — |
-| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | 🔄 worktree, não commitado (4 forks) | — |
+| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | 🔄 **PR #322** (4 forks) | — |
 | **C6b** · **C8** · **X12** · **X7/X8/X9** · **X10b** | — | ⬜ sem BRIEF (ver grafo §3) | — |
 | Ondas paralelas de 08/2026 | [`BRIEFS-WAVE1.md`](BRIEFS-WAVE1.md) · [`BRIEFS-WAVE2-BACKEND.md`](BRIEFS-WAVE2-BACKEND.md) · [`BRIEFS-WAVE2-SCHEMA.md`](BRIEFS-WAVE2-SCHEMA.md) · [`BRIEFS-WAVE2-FE.md`](BRIEFS-WAVE2-FE.md) | ✅ 📜 (estado de fork lá pode estar desatualizado — o master map vence) | cédula 08-31; `pr-bodies/` |
 

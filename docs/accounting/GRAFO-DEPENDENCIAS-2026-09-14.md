@@ -43,7 +43,7 @@
 | Nó | Artefato | Onde está | Forks |
 |---|---|---|---|
 | **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **PR #321** (`36c19a51`, docs-only, aberto) | **6 pendentes** |
-| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | worktree `proximos-passos-orchestration-f5934e` (branch `claude/brief-c12-mascaras-identidade`), **não commitado** | **4 pendentes** + 1 transcrição obrigatória (§5) |
+| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **PR #322** (docs-only, aberto; branch `claude/brief-c12-mascaras-identidade`) | **4 pendentes** + 1 transcrição obrigatória (§5) |
 | **F7** baixa por retorno bancário | `BE-INCR-BANK-SETTLEMENT-brief.md` | `main` (#319) | **5 pendentes** (F-F7-1..5) — **stop humano** do passo 7 |
 | **X6** custo D3 por regime | `BE-INCR-NFE-COST-REGIME-brief.md` (#309) | `main`; **precisa de emenda** (F-X6-3 b + exceções, itens 10/11) | ratificados (5a+1b) |
 
@@ -130,7 +130,7 @@ flowchart LR
     C9["C9 Retificação ECD/ECF VERSIONADA"]:::blocked
     C10["C10 P2 clínica ✅ #282<br/>comportamento 11 = PR #320"]:::inflight
     C11["C11 Revisão profissional editável<br/>BRIEF = PR #321"]:::inflight
-    C12["C12 Máscaras de identidade no SPED<br/>BRIEF em worktree, não commitado"]:::inflight
+    C12["C12 Máscaras de identidade no SPED<br/>BRIEF = PR #322"]:::inflight
   end
 
   subgraph FIN[Financeiro - ordem 2 - 16/19]
@@ -229,7 +229,7 @@ flowchart LR
 | **R2 · R5 · R6 · R7 · R8 · R9 · R10** | **✅ decididos** | — | cédula #319 (prevalece) + #318 |
 | **C10** | inflight — comportamento 11 em **PR #320** (`670847fa`; migração `20260914200000` + allowlist de 1 símbolo + teste-guarda) | review independente + CI | `gh pr view 320` |
 | **C11** | inflight — BRIEF em **PR #321**, 6 forks pendentes | merge do #321 → forks ao dono | `gh pr view 321` |
-| **C12** | inflight — BRIEF no worktree, **não commitado** (4 forks + transcrição obrigatória) | PR → forks ao dono | worktree `proximos-passos-orchestration-f5934e` |
+| **C12** | inflight — BRIEF em **PR #322** (4 forks + transcrição obrigatória) | merge do #322 → forks ao dono | `gh pr view 322` |
 | **C6b** | plan (BRIEF) | C6 ✅ | resposta 8 (cédula 10/09) |
 | **C8** | plan (ADR `ADR-INCR-FIXED-ASSETS` → parecer → forks **delegados quando há recomendação** → BRIEF) | D3b ✅ (Anexo III no corpus) | cédula #319 "C8 delegação condicionada" |
 | **C9** | blocked | X4 (retificação versionada) | resposta 7 |
@@ -278,7 +278,7 @@ arquivos, gates, evidência de "feito", stop humano) está em
 | 1 | ~~#315~~ | ✅ `c1e4b7a5` | — | — |
 | 2 | C10 c.11 (**#320**) | inflight | review independente → PASS + CI 5/5 → merge | `sessao-integracao` |
 | 3 | C11 (**#321**) | inflight | merge docs-only → apresentar **6 forks** ao dono | `sessao-integracao` → dono |
-| 4 | C12 | inflight (worktree) | commit + PR docs-only → apresentar **4 forks** ao dono | dono da sessão paralela |
+| 4 | C12 (**#322**) | inflight | merge docs-only → apresentar **4 forks** ao dono | `sessao-integracao` → dono |
 | 5 | C6b | plan | BRIEF (tabela filha + migração) | `sessao-planejamento` |
 | 6 | SEED-MY | plan | BRIEF curto; **pára** sem assinatura do B-4 | `sessao-planejamento` → `job-generator` |
 | 7 | **F7** | plan | **STOP humano:** F-F7-1..5 ao dono (recomendação primeiro) → só então feature | dono → `sessao-feature` |
@@ -294,7 +294,7 @@ arquivos, gates, evidência de "feito", stop humano) está em
 - `origin/main` = `c1e4b7a5` (#315). Régua **41/57** (contábil 17/22 · financeiro 16/19 · fiscal 8/16) — #315 é
   crescimento do X4 (precedente C10 / item 13), numerador inalterado. Leitura alternativa declarada: se a tela
   contasse como nó, seria 42/57 — decisão do dono se discordar.
-- Em voo: **#320** (código, CI parcial, sem review), **#321** (docs, BRIEF C11), BRIEF C12 (worktree, não commitado).
+- Em voo: **#320** (código, CI parcial, sem review), **#321** (docs, BRIEF C11), **#322** (docs, BRIEF C12), **#323** (docs, este fold + índices).
 - Gates humanos abertos e **em branco**: B-4 (executado por referência, não assinado), X2, P4, H1, H1 2ª passada,
   H2, H3, M2. Dado externo: D1/D1f/D8, D2, D5, D6, D-NFSE.
 - **Residuais de código declarados (não são nós):** F10 do #307; `tx?` em `PostingService.reverseEntry` (L1);

@@ -5,7 +5,7 @@
 > paralela do PR #318 ainda estiver viva, o dono para uma das duas antes de colar isto.
 >
 > **🔁 2ª leitura (14/09, noite, `origin/main` `c1e4b7a5`):** passos **0 e 1 fechados** (#315 mergeado); passos
-> **2, 3 e 4 em voo** (PR #320, PR #321, BRIEF C12 em worktree). A coluna **Estado** da tabela e a seção
+> **2, 3 e 4 em voo** (PR #320, PR #321, PR #322). A coluna **Estado** da tabela e a seção
 > [§Detalhamento por passo](#detalhamento-por-passo-granularidade-para-a-sessão-executora) foram
 > acrescentadas nessa leitura; o grafo vigente passou a ser
 > [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md). O PROMPT continua colável — quem
@@ -50,7 +50,7 @@ runbook em branco, nunca preencha.
 | 1 | **#315** FE-INCR-LALUR PR 1 | `sessao-integracao` | Review PASS já existe no PR. Conflito com #316 em `LalurService.ts` (**PR vence** no `GET /api/lalur/catalog`) e `__dto-shapes__.json` (**main vence**, regenerar snapshot). Baseline no alvo ANTES. | merge; FE-INCR-LALUR PR 2 destravado | ✅ **mergeado** `c1e4b7a5` |
 | 2 | **P2 comportamento 11** (T0 da métrica) | `sessao-feature` (BRIEF P2 item 11) | ADR-P2 EMENDA 14/09: marco `onboardingCompletedAt` **na tx** de `installPresetAsSystem`; `proveP2ZeroDiffCli` ganha allowlist de **1 símbolo** + teste-guarda que falha se crescer (par vermelho→verde no mesmo PR). Nada mais no perímetro. | P2 11/11; prova zero-diff segue verde | 🔄 **PR #320** aberto (`670847fa`, CI parcial, sem review) → falta review independente + merge |
 | 3 | **C11** revisão profissional editável | `sessao-planejamento` | F-EDIT-1 → a+c (cédula 10/09 resposta 2); insumos: geração SPED ✅, `PostingService` (acerto), C6 #305 | BRIEF + forks pendentes | 🔄 **PR #321** aberto (BRIEF `BE-INCR-REVIEW-LAYER`, **6 forks**) → falta merge + forks ao dono |
-| 4 | **C12** máscaras de identidade no SPED | `sessao-planejamento` | J930 `IDENT_QUALIF`/`COD_ASSIN` = enum do Manual ECD L9 (corpus); CPF/CNPJ/UF com máscara; base #305 | BRIEF + forks pendentes | 🔄 BRIEF `BE-INCR-SPED-IDENTITY-MASKS` escrito em worktree (**4 forks** + transcrição), **não commitado** → falta PR |
+| 4 | **C12** máscaras de identidade no SPED | `sessao-planejamento` | J930 `IDENT_QUALIF`/`COD_ASSIN` = enum do Manual ECD L9 (corpus); CPF/CNPJ/UF com máscara; base #305 | BRIEF + forks pendentes | 🔄 **PR #322** aberto (BRIEF `BE-INCR-SPED-IDENTITY-MASKS`, **4 forks** + transcrição) → falta merge + forks ao dono |
 | 5 | **C6b** pacote ampliado ao contador | `sessao-planejamento` | tabela filha + migração (`AccountingDeliveryLog` tem hashes/FKs fixos); resposta 8 | BRIEF + forks pendentes | ⬜ não iniciado |
 | 6 | **SEED-MY** seed multi-exercício | `sessao-planejamento` (BRIEF curto) → `job-generator` | 2025 + 2026: períodos, lançamentos, AP/AR, chart com `1.1.6/3.3/4.2`; alvo dos runbooks H1/H2/H3 passa a ser o seed. **Pré-condição do #318: B-4 assinado pelo dono** — se não estiver, deixe o BRIEF pronto e pare aqui. | seed fixture; RUNBOOK-H1 P0 atualizado | ⬜ não iniciado — **B-4 sem assinatura** (0 checkbox marcado) |
 | 7 | **F7** baixa por retorno bancário | **PARE**: apresente F-F7-1..5 ao dono (questionário, recomendação primeiro) → só então `sessao-feature` | BRIEF `BE-INCR-BANK-SETTLEMENT`. Insumos ausentes §4 (config de contas por escopo; `externalRef` no título) são lidos na feature e **pausam** se virarem decisão de modelo. Fase C (encargo) entrega 400 nomeado até o contador dar as contas. | `bank_settlement_items` + 5 rotas + auditoria | ⬜ BRIEF em `main`; **stop humano** pendente |
@@ -130,7 +130,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
-| 4.1 | Commit + push + PR docs-only do `BE-INCR-SPED-IDENTITY-MASKS-brief.md` (**pela sessão que o escreveu**) | PR aberto | ⬜ |
+| 4.1 | PR docs-only do `BE-INCR-SPED-IDENTITY-MASKS-brief.md` → merge após CI | **PR #322** aberto | 🔄 |
 | 4.2 | A transcrição obrigatória do §5 (enum J930 do Manual ECD L9) está no corpus? | `grep -n "J930" docs/accounting/fontes-oficiais/*` (Manual ECD é PDF no `MANIFEST.md` — transcrever por script, precedente `transcrever-ecf-lmn.mjs`) | ⬜ |
 | 4.3 | **[H]** 4 forks ao dono → ratificação no cabeçalho | cédula | [H] |
 
@@ -221,7 +221,7 @@ de #320 (C10 11/11), #321 (C11 BRIEF em `main`) e C12 (BRIEF em `main`) — quem
 ## Estado na 2ª leitura (verificado 2026-09-14, noite)
 
 - `origin/main` = **`c1e4b7a5`** (#315). #318 `93e52adb` e #319 `b002f78c` ancestrais (`merge-base` = 0).
-- Abertos: **#320** (código, `670847fa`, MERGEABLE, CI parcial, 0 reviews) · **#321** (docs, `36c19a51`, BRIEF C11).
-  BRIEF C12 no worktree `proximos-passos-orchestration-f5934e`, não commitado.
+- Abertos: **#320** (código, `670847fa`, MERGEABLE, CI parcial, 0 reviews) · **#321** (docs, `36c19a51`, BRIEF C11) ·
+  **#322** (docs, BRIEF C12) · **#323** (docs, este fold + índices `docs/README.md` e `docs/accounting/README.md`).
 - Régua **41/57** inalterada (#315 = crescimento do X4). Gates humanos: B-4 (executado por referência SQL,
   **não assinado**), X2, P4, H1, H1 2ª passada, H2, H3, M2 — **0 checkbox de desfecho marcado nos 7 runbooks**.

@@ -16,7 +16,7 @@
 > R5 adiar Serpro · R6 **financeiro antes de fiscal** · R7 perímetro zero-diff emendado (1 símbolo; `ADR-P2` EMENDA em `main`) · R8 instância = CNPJ raiz, `units.cnpj` fica (`ADR-INCR-DFE` EMENDA em `main`) ·
 > R9 **tabela irmã** para o F7 (BRIEF `BE-INCR-BANK-SETTLEMENT` em `main`, 5 forks pendentes) · R10 ADR P-IA adiado · F-X6-1..6 = 5×(a) + **F-X6-3 → (b)** (BRIEF #309 exige emenda antes da feature).
 > **Autorizados sem número de nó:** SEED-MY (pré-condição de gate: alvo dos runbooks H1/H2/H3 passa a ser o seed 2025+2026; exige **B-4 assinado**, hoje 0 checkbox marcado) e X4-14 (crescimento do X4, antes da H1 2ª passada).
-> **Em voo ao fechar esta leitura:** PR #320 (P2 comportamento 11, código, CI parcial, sem review), PR #321 (BRIEF C11, 6 forks), BRIEF C12 em worktree (4 forks, não commitado). **Grafo vigente:**
+> **Em voo ao fechar esta leitura:** PR #320 (P2 comportamento 11, código, CI parcial, sem review), PR #321 (BRIEF C11, 6 forks), PR #322 (BRIEF C12, 4 forks). **Grafo vigente:**
 > [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) (o de 11/09 supersedido — corrige a afirmação "parser CNAB 240 retorno ✅": `lib/cnab.ts` parseia **extrato** Segmento E; retorno de
 > cobrança não existe e pressupõe remessa F5). Ordem de execução e detalhamento por passo: [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md) §Detalhamento. Índice da pasta: [`README.md`](README.md).
 >
@@ -624,7 +624,7 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 > | **FE-INCR-LALUR PR 2** (M410 + fechar + diagnóstico na tela) | B — crescimento do item 10 (X4) | `ready` (F-FE-4 → a; #315 + #316 em `main`); só com "executa" | `FE-INCR-LALUR-brief.md` §3 |
 > | **P2 comportamento 11** (T0 `onboardingCompletedAt`, R7) | B — P2 (ROADMAP Fase P2) | 🔄 **PR #320** aberto | `ADR-P2` EMENDA 14/09 |
 > | **C11** revisão profissional editável | B — nó novo do re-baseline 10/09 | 🔄 BRIEF em **PR #321**, 6 forks pendentes | `BE-INCR-REVIEW-LAYER-brief.md` (na branch) |
-> | **C12** máscaras de identidade no SPED | B — nó novo do re-baseline | 🔄 BRIEF em worktree, 4 forks, não commitado | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` (na branch) |
+> | **C12** máscaras de identidade no SPED | B — nó novo do re-baseline | 🔄 BRIEF em **PR #322**, 4 forks pendentes | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` (na branch) |
 > | **C6b** pacote ampliado ao contador | B — nó novo do re-baseline | ⬜ BRIEF não escrito (tabela filha + migração) | cédula 10/09 resposta 8 |
 > | **F7** baixa por retorno bancário (tabela irmã, R9) | B — financeiro, **antes de X6** (R6) | ⬜ BRIEF em `main`; **5 forks F-F7-1..5 ao dono** | `BE-INCR-BANK-SETTLEMENT-brief.md` |
 > | **X6** custo D3 por regime do tenant | B — fiscal | ⬜ forks ✅ (5a + F-X6-3 b); **emenda do BRIEF #309 antes da feature** | `BE-INCR-NFE-COST-REGIME-brief.md` |
