@@ -3,7 +3,7 @@
 > **Estado: BRIEF pronto; execução (`job-generator`) BLOQUEADA por gate humano.** `PROXIMOS-PASSOS-2026-09-14.md`
 > passo 6: *"Pré-condição do #318: B-4 assinado pelo dono — se não estiver, deixe o BRIEF pronto e pare aqui."*
 > Verificado em `origin/main` (2026-09-14): `RUNBOOK-B4-RESTORE-REHEARSAL.md` §Desfecho com os 3 `[ ]` em
-> branco e *"Assinatura do executor: ____"*. **Parado aqui.** 3 forks `RATIFICAÇÃO PENDENTE` (§3).
+> branco e *"Assinatura do executor: ____"*. **Parado aqui.** 2 forks `RATIFICAÇÃO PENDENTE` (§3).
 
 ---
 
@@ -21,13 +21,16 @@
     `db:seed` — memória `parked-unmerged-worktrees`), nada de tenant/contabilidade.
   - `server/scripts/seed-test-data.js` — seed de KPIs sobre DynamicTables com **IDs de tabela
     hardcoded** (`T = { sales: 'cmqaecoxj…' }`) — não reusável para contabilidade.
-  - `server/src/features/accounting/fixtures/ChartOfAccountsFixture.ts` — chart do salão (13 contas)
-    usado em teste; **sem** `1.1.6`/`3.3`/`4.2` (achado do ensaio H1, `RUNBOOK-H1-PVA.md` l.403).
+  - `server/src/features/accounting/fixtures/ChartOfAccountsFixture.ts` — **19 contas**, e **já tem**
+    `1.1.6 Estoques` (l.41), `3.3 Receita de Revenda de Mercadorias` (l.68), `4.2 Custo das Mercadorias
+    Vendidas` (l.76), todas `acceptsEntries: true` (desde INCR-INVENTORY; `ESTOQUES_CODE`/`CMV_CODE` exportados).
+    O "chart de 13 contas sem as três" do `RUNBOOK-H1-PVA.md` l.403 é o **chart real do `dev.db`**, não o
+    fixture — e o l.423 manda criar as três "com os mesmos códigos/nomes/naturezas do fixture".
   - `PeriodService.seedYear(scope, year)` (`:33`) — cria os 12 períodos do ano; `softClosePeriod`
     (`:73`), `hardClosePeriod`, `reopenPeriod` (`:137`, `HARD_CLOSED` terminal).
   - `PostingService.postEntry` (`:286`, gate de período OPEN) — único caminho de escrita no razão;
     `PayableService.createPayable` / `ReceivableService` (AP/AR) com liquidação parcial (#245/#309).
-  - `server/scripts/activate-salon-binding.mjs` (P0.2b) — ativa o binding do salão; ADR-INCR-BINDING-FEEDER
+  - `scripts/activate-salon-binding.mjs` (raiz do repo; P0.2b) — ativa o binding do salão; ADR-INCR-BINDING-FEEDER
     §7 **proíbe seed direto de binding** (só por CLI de ativação).
   - `RUNBOOK-H1-PVA.md` l.401/406 — `ECF_COD_VER_BY_YEAR = { 2025: '0012' }` (só 2025 gera ECF Real);
     todo o razão do `dev.db` é 2026; **nada em 2025**; P7 "dezembro OPEN" não existe em 2025.
@@ -38,7 +41,7 @@
 ## 1. O que o nó é
 
 Um **comando idempotente** `npm run db:seed:accounting -- --years 2025,2026 [--tenant salon|clinic]` que
-popula um tenant-fixture com: chart completo (13 + `1.1.6/3.3/4.2`), 12 períodos por ano, lançamentos
+popula um tenant-fixture com: o `ChartOfAccountsFixture` inteiro (19 contas, já com `1.1.6/3.3/4.2`), 12 períodos por ano, lançamentos
 por mês em todas as contas de resultado, AP/AR com títulos abertos/parciais/liquidados, **exercício 2025
 fechado** (`HARD_CLOSED` até dezembro) e **2026 aberto até o mês corrente** — pelos **serviços** (nunca
 `prisma.*` direto no razão), para que todo invariante (débito=crédito, período, numeração, auditoria)
@@ -49,13 +52,14 @@ migração.
 
 1. **Comando versionado** `server/src/jobs/seedAccountingFixtureCli.ts` + script `db:seed:accounting`
    (padrão `activateAccountingBindingCli.ts`, `runCli` sem `process.exit`, testável). Recusa rodar se
-   `NODE_ENV=production` ou se `DATABASE_URL` não for `file:` — 400 nomeado, nunca "seguir".
+   `NODE_ENV=production` ou se `DATABASE_URL` não for `file:` — `runCli` devolve **exit 1** com erro nomeado
+   (padrão `activateAccountingBindingCli.ts`; CLI não fala HTTP), nunca "seguir".
 2. **Idempotência por marcador**: tenant-fixture identificado por `username='seed-accounting'`;
    2ª execução com os mesmos anos **não duplica** (verifica `journal_entries` por `sourceType='seed'`
    + `sourceId=<ano-mês-seq>`; `findBySource` já existe) — teste assere a **2ª** chamada.
-3. **Chart completo**: `ChartOfAccountsFixture` **+** `1.1.6 Estoques (Asset)`, `3.3 Receita de Revenda
-   (Revenue)`, `4.2 CMV (Expense)` com `acceptsEntries: true` (RUNBOOK-H1 P0.2b, l.423-424) — o mesmo
-   fixture passa a servir H1/H2/H3 (F-SEED-1 decide se o fixture de teste muda ou se o seed estende).
+3. **Chart completo**: instala o `ChartOfAccountsFixture` **como está** (19 contas — `1.1.6/3.3/4.2` já
+   presentes, RUNBOOK-H1 P0.2b l.423 pede exatamente esses códigos/nomes/naturezas); tenant `clinic` (H3)
+   usa o mesmo fixture (F-P2-8a: nenhuma conta nova por papel). Sem fork.
 4. **Períodos**: `seedYear` para cada ano; 2025 → `softClose` + `hardClose` de 01..12 **depois** dos
    lançamentos; 2026 → OPEN até o mês corrente (`scopeToday`, classe `teste-de-hoje-quebra-em-janela-utc`).
 5. **Lançamentos**: por mês, `postEntry` com `sourceType:'seed'`: receita de serviço (3.1 × 1.1.3/1.1.1),
@@ -78,7 +82,6 @@ migração.
 
 | # | Pergunta | Caminhos | Recomendação (não-vinculante) |
 |---|---|---|---|
-| **F-SEED-1** | Onde entram `1.1.6/3.3/4.2` | (a) o seed **estende** o `ChartOfAccountsFixture` na hora (fixture de teste intacto) · (b) o fixture ganha as 3 contas (muda 13 → 16 em todos os testes que o usam) | **(a)** — não mexe em suíte existente; (b) só se H3/P2 exigir o fixture completo em teste |
 | **F-SEED-2** | Proteção do dado | (a) exige `--i-have-a-backup` (o humano roda B-4/`db:backup`) · (b) o comando chama `db:backup` sozinho · (c) sem proteção (é "só seed") | **(a)** — B-4 é gate humano; automatizar o backup dentro do seed esconde o gate. (c) contradiz o P2 dos runbooks |
 | **F-SEED-3** | Regime do tenant-fixture | (a) um tenant Presumido 2025 + 2026 (H1 2ª passada é Real → precisa de M/N) · (b) dois tenants: `seed-presumido` e `seed-real` · (c) um tenant Real nos dois anos | **(b)** — H1 2ª passada é Lucro Real (regime-alvo ratificado 02/09) e a ECF Presumido já foi validada; um tenant por regime evita "trocar regime" (IN 2004 art. 7º §2º proíbe na retificadora) |
 
