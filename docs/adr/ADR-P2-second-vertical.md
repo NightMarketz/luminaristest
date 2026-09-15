@@ -95,6 +95,15 @@
 > 4. **O que segue fora:** qualquer outra escrita "de onboarding" no motor (flags, eventos, métricas
 >    novas) volta a ser diff não-vazio = defeito da prensa, como o §2 já diz.
 >
+> **EMENDA 2026-09-15 (dono, via `AskUserQuestion` na sessão do PR #320 — opção (a) entre (a) isentar
+> `__tests__/`, (b) 2ª exceção nominal, (c) aceitar prova vermelha) — harness de teste NÃO é perímetro.**
+> A coluna sancionada pela emenda R7 quebrou um harness de replay de migração dentro de
+> `features/accounting/**/__tests__/` (client Prisma atual × db pré-migração — CI do #320); consertá-lo
+> é consequência da R7, não vazamento da vertical no motor. O §2 item 2 fala em "núcleo do ledger";
+> `proveP2ZeroDiffCli` passa a isentar o **segmento** `/__tests__/` em qualquer prefixo do perímetro,
+> com teste-guarda de que a isenção não vaza para código de produção ao lado. A R7 item 1 (um símbolo
+> de produção) segue intacta.
+>
 > **Origem:** `docs/ROADMAP-PLATAFORMA.md` Fase P2. **Classe:** PROVA DE PRODUTO (preset + binding;
 > zero código de motor/ledger — se exigir código lá, a prova falhou).
 >

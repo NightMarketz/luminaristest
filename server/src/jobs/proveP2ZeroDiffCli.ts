@@ -58,6 +58,12 @@ export const PERIMETER_PREFIXES = [
 /** Fora do perímetro mesmo que um prefixo acima pareça abranger (ver header). */
 export const EXPLICITLY_EXEMPT_PREFIXES = ['server/src/features/dynamicTables/presets/ai/'] as const;
 
+/** Harness de teste não é ledger nem motor (ADR-P2 §2 "núcleo"; EMENDA 2026-09-15, decisão do dono por
+ *  questionário no PR #320): um `__tests__/` que replaya migração quebra a cada coluna nova e teria de
+ *  ser consertado "dentro do perímetro" sem ser diff da vertical. Só o SEGMENTO `/__tests__/` isenta —
+ *  `tests-helper.ts` ao lado do código continua perímetro (teste-guarda). */
+export const EXEMPT_PATH_SEGMENT = '/__tests__/';
+
 /** Arquivos compartilhados vetados por regra própria (F-P2-5), independente da árvore do motor. */
 export const VETOED_SHARED_FILES = [
   'server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts',
@@ -179,7 +185,8 @@ export function classifyZeroDiffViolations(
   const perimeterViolations = files.filter((f) => {
     const inPerimeter =
       PERIMETER_PREFIXES.some((prefix) => f === prefix || f.startsWith(prefix)) &&
-      !EXPLICITLY_EXEMPT_PREFIXES.some((exempt) => f.startsWith(exempt));
+      !EXPLICITLY_EXEMPT_PREFIXES.some((exempt) => f.startsWith(exempt)) &&
+      !f.includes(EXEMPT_PATH_SEGMENT);
     if (!inPerimeter) return false;
     const entry = SYMBOL_ALLOWLIST.find((e) => e.file === f);
     const input = entry && opts.symbolDiffs?.[f];
