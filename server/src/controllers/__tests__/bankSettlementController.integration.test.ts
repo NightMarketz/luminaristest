@@ -312,4 +312,93 @@ describe('/api/bank-settlements — F7', () => {
     expect(await prisma.payablePayment.count({ where: { payableId: p8, status: 'ACTIVE' } })).toBe(1);
     expect(await prisma.reconciliationMatch.count({ where: { statementLineId: l10, unmatchedAt: null } })).toBe(1);
   });
+
+  // ── Achados do review independente do PR #326 (par vermelho→verde no mesmo PR) ────────────────────
+
+  it('review F2 (blocker): saldo do título SUBIU entre scan e confirm (cancel de parcial) → 400 title_balance_changed, sem efeito — principal nunca vira encargo', async () => {
+    const p9 = await criarPayable('NF-9', 9000, '2026-06-19');
+    const parcial = await request(app).post(`/api/payables/${p9}/settlements`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix', paidAt: '2026-06-17', amountCents: 1000 });
+    expect(parcial.status).toBe(201);
+    const l11 = await criarLinha(11, -9000, 'NF-9'); // open 8000 → proposto 8000 + encargo 1000
+    expect((await scan()).status).toBe(200);
+    const item = await itemByLine(l11);
+    expect([Number(item.proposedCents), Number(item.chargeCents)]).toEqual([8000, 1000]);
+    const cancel = await request(app).post(`/api/payables/${p9}/settlements/${parcial.body.data.id}/cancel`).set(authHeader(dono)).send({ unitId: UNIT, reversalDate: '2026-06-18', reason: 'erro' });
+    expect(cancel.status).toBe(200); // open volta a 9000: a linha de 9000 agora é baixa EXATA, não 8000+1000
+    const res = await confirm(item.id);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/title_balance_changed/);
+    expect((await itemByLine(l11)).status).toBe('PENDING');
+    expect(await prisma.journalEntry.count({ where: { sourceType: 'bank.charge', sourceId: item.id } })).toBe(0);
+    // o scan seguinte re-avalia e o confirm passa como baixa exata (encargo 0)
+    expect((await scan()).body.data.stale).toBeGreaterThanOrEqual(1);
+    expect((await scan()).status).toBe(200);
+    const renasce = await itemByLine(l11);
+    expect([renasce.status, Number(renasce.proposedCents), Number(renasce.chargeCents)]).toEqual(['PENDING', 9000, 0]);
+  });
+
+  it('review F4 (should-fix): STALE que renasce PENDING grava os valores RE-AVALIADOS, não os velhos', async () => {
+    const p10 = await criarPayable('NF-10', 5000, '2026-06-19');
+    const l12 = await criarLinha(12, -5000, 'NF-10');
+    expect((await scan()).status).toBe(200);
+    const antes = await itemByLine(l12);
+    expect([Number(antes.proposedCents), Number(antes.chargeCents)]).toEqual([5000, 0]);
+    // parcial de 2000 → open 3000: a mesma linha de 5000 vira 3000 + encargo 2000 (≤ 20%? não: 2000 > 600 → none)
+    // então usamos parcial de 500 → open 4500: 4500 + 500 de encargo (500 ≤ 900 cap) — item precisa mudar de valores
+    const parcial = await request(app).post(`/api/payables/${p10}/settlements`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix', paidAt: '2026-06-17', amountCents: 500 });
+    expect(parcial.status).toBe(201);
+    const r1 = await scan(); // o MESMO scan marca STALE (title_balance) e renasce o (linha, título) com 4500 + 500
+    expect(r1.body.data.stale).toBeGreaterThanOrEqual(1);
+    const depois = await itemByLine(l12);
+    expect([depois.status, Number(depois.proposedCents), Number(depois.chargeCents)]).toEqual(['PENDING', 4500, 500]);
+  });
+
+  it('review F3 (should-fix): linha em período FECHADO/inexistente sem encargo → 400 period_not_open no pré-cheque, item volta a PENDING, zero pagamento', async () => {
+    const p11 = await criarPayable('NF-11', 1500, '2026-07-10');
+    const l13 = await criarLinha(13, -1500, 'NF-11', '2026-07-08'); // julho: sem período aberto no fixture
+    expect((await scan()).status).toBe(200);
+    const item = await itemByLine(l13);
+    const res = await confirm(item.id);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/period_not_open/);
+    expect((await itemByLine(l13)).status).toBe('PENDING');
+    expect(await prisma.payablePayment.count({ where: { payableId: p11 } })).toBe(0);
+  });
+
+  it('review F5 (should-fix): item preso em CONFIRMING (crash) — retry o retoma depois da janela de staleness', async () => {
+    const p12 = await criarPayable('NF-12', 1200, '2026-06-19');
+    const l14 = await criarLinha(14, -1200, 'NF-12');
+    expect((await scan()).status).toBe(200);
+    const item = await itemByLine(l14);
+    // simula crash entre o CAS e o precheck: CONFIRMING antigo, sem ids
+    await prisma.bankSettlementItem.update({ where: { id: item.id }, data: { status: 'CONFIRMING', updatedAt: new Date(Date.now() - 20 * 60 * 1000) } });
+    expect((await confirm(item.id)).status).toBe(400); // confirm continua exigindo PENDING
+    const retry = await request(app).post(`/api/bank-settlements/${item.id}/retry`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix' });
+    expect(retry.status).toBe(200);
+    expect(retry.body.data.status).toBe('CONFIRMED');
+    // CONFIRMING RECENTE (outro chamador vivo) não é retomável
+    const p13 = await criarPayable('NF-13', 1300, '2026-06-19');
+    const l15 = await criarLinha(15, -1300, 'NF-13');
+    expect((await scan()).status).toBe(200);
+    const vivo = await itemByLine(l15);
+    await prisma.bankSettlementItem.update({ where: { id: vivo.id }, data: { status: 'CONFIRMING' } });
+    expect((await request(app).post(`/api/bank-settlements/${vivo.id}/retry`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix' })).status).toBe(400);
+    expect(await prisma.payablePayment.count({ where: { payableId: p13 } })).toBe(0);
+  });
+
+  it('review F6 (should-fix): FAILED em SETTLE sem settlementId, mas o título já tem pagamento ACTIVE igual (crash do AP após postEntry) → retry bloqueia com settlement_orphan_suspected, sem 2º pagamento', async () => {
+    const p14 = await criarPayable('NF-14', 1400, '2026-06-19');
+    const l16 = await criarLinha(16, -1400, 'NF-14');
+    expect((await scan()).status).toBe(200);
+    const item = await itemByLine(l16);
+    // o pagamento "órfão": mesmo (paidAt, amount, method), feito pelo AP antes do crash que impediu gravar o id
+    const orfao = await request(app).post(`/api/payables/${p14}/settlements`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix', paidAt: '2026-06-18', amountCents: 1400 });
+    expect(orfao.status).toBe(201);
+    await prisma.bankSettlementItem.update({ where: { id: item.id }, data: { status: 'FAILED', failedStep: 'SETTLE', reason: 'crash simulado', settlementId: null } });
+    const retry = await request(app).post(`/api/bank-settlements/${item.id}/retry`).set(authHeader(dono)).send({ unitId: UNIT, method: 'Pix' });
+    expect(retry.status).toBe(400);
+    expect(JSON.stringify(retry.body)).toMatch(/settlement_orphan_suspected/);
+    expect(await prisma.payablePayment.count({ where: { payableId: p14, status: 'ACTIVE' } })).toBe(1);
+    expect((await itemByLine(l16)).status).toBe('FAILED');
+  });
 });
