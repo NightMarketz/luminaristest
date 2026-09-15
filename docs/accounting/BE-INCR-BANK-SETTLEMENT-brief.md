@@ -6,7 +6,15 @@
 > ("AP/AR NÃO têm baixa automática") e **22** ("o encargo chega pelo retorno") + §3 **F-BAIXA-1 → (a)
 > RATIFICADO** com a correção do review (4 emendas do reuso); `GRAFO-DEPENDENCIAS-2026-09-11.md` §4
 > frente #8 "F7 BRIEF com decisão de desenho explícita"; sinal do dono 14/09 "pode invocar sessões".
-> **Status dos forks: RATIFICAÇÃO PENDENTE** — nenhum se auto-ratifica.
+> **Status dos forks: ✅ RATIFICADOS 2026-09-15 (dono, via `AskUserQuestion`, sessão `PROXIMOS-PASSOS-2026-09-14`
+> passo 7): F-F7-1 → (a) · F-F7-2 → (a) · F-F7-3 → (a) · F-F7-4 → (a) · F-F7-5 → (a) — todos na recomendação.**
+> Insumos §4 resolvidos na `sessao-feature` do mesmo dia: §4.1 → **tabela nova `AccountingScopeSettings`**
+> (decisão do dono 2026-09-15, opção (a) entre tabela nova / adiar / flag na Account) com
+> `bankChargeExpenseAccountId`/`bankChargeIncomeAccountId` e `GET/PUT /api/accounting/settings`; §4.2 →
+> `Payable.documentNumber`/`Receivable.documentNumber` existem e viram desempate de `ambiguous` contra
+> `line.externalRef` (sem fork). Contas de encargo (§5) seguem pendência do contador: `confirm` com
+> `chargeCents > 0` responde 400 `charge_account_not_configured` até serem configuradas.
+> ~~**Status dos forks: RATIFICAÇÃO PENDENTE** — nenhum se auto-ratifica.~~
 
 ## 0. Fronteira e desenho já fechado (não rediscutir)
 
@@ -186,7 +194,7 @@ AR: D <statement.glAccountId>            chargeCents
 
 ## 3. Forks — RATIFICAÇÃO PENDENTE
 
-### F-F7-1 — O que é "retorno" neste incremento
+### F-F7-1 ✅ (a) — O que é "retorno" neste incremento
 - **(a) Linha de extrato `UNMATCHED`** (CSV/OFX/CNAB Segmento E, #61) — existe hoje, sem parser novo.
   `origin='STATEMENT_LINE'`. Custo de errar: o encargo é **derivado** (|line| − saldo), não informado
   campo a campo pelo banco — juros e multa saem somados numa linha só.
@@ -195,7 +203,7 @@ AR: D <statement.glAccountId>            chargeCents
   haver "nosso número". Hoje = zero código possível.
 - **Recomendação: (a)** com `origin` reservando (b). (b) volta como crescimento do nó quando F5 existir.
 
-### F-F7-2 — Como o encargo entra no razão
+### F-F7-2 ✅ (a) — Como o encargo entra no razão
 - **(a) Lançamento próprio `bank.charge`** no `confirm`, contas por configuração de escopo (item 8);
   AP/AR intocados (baixa = `proposedCents` ≤ saldo, como #307 exige). Custo de errar: 2 lançamentos por
   baixa com encargo (baixa + encargo) — o `manualMatch` já fecha a soma exata.
@@ -205,7 +213,7 @@ AR: D <statement.glAccountId>            chargeCents
 - **Recomendação: (a).** Contas = pendência externa (§5); até chegarem, `confirm` com `chargeCents > 0`
   responde 400 nomeado — nunca lança em conta inventada.
 
-### F-F7-3 — Conta bancária da baixa × `method`
+### F-F7-3 ✅ (a) — Conta bancária da baixa × `method`
 - **(a) `method` vem do humano e o pré-cheque exige `resolveAccount(method).id === statement.glAccountId`**
   (mapa fechado `PAYMENT_METHOD_ACCOUNTS`, D2 do AP). Zero mudança no AP/AR. Custo de errar: extrato
   ancorado em conta bancária fora do mapa (ex.: 2ª conta corrente) **não confirma por aqui** — limite
@@ -213,7 +221,7 @@ AR: D <statement.glAccountId>            chargeCents
 - (b) `RegisterPaymentInput.bankAccountId?` sobrescrevendo o mapa — toca #307 e o D2.
 - **Recomendação: (a).** (b) é frente própria ("conta bancária como entidade", já `(inferida)` em F5).
 
-### F-F7-4 — Atomicidade do `confirm`
+### F-F7-4 ✅ (a) — Atomicidade do `confirm`
 - **(a) Etapas idempotentes com estado gravado no item** (item 7) + pré-cheque autoritativo em leitura
   transacional (item 6) + `retry` (item 9). `registerPayment` **não** aceita `tx` externa (verificado:
   claim CAS fora de tx → `createPayment` → `book` → tx de finalize; `PAYING` é resolvido pelo reconcile) —
@@ -222,7 +230,7 @@ AR: D <statement.glAccountId>            chargeCents
 - (b) Uma tx só: `registerPayment(…, { tx })` — exige reescrever o protocolo do AP/AR.
 - **Recomendação: (a).** Mesma classe de solução que o próprio AP usa (`PAYING` + finalize).
 
-### F-F7-5 — Cap do encargo na candidatura
+### F-F7-5 ✅ (a) — Cap do encargo na candidatura
 - **(a) Cap relativo `chargeCents ≤ 20% × saldoAberto`** — constante nomeada (`BANK_SETTLEMENT_CHARGE_CAP_BP =
   2000`), por escopo depois se pedirem. Acima do cap = `none` (o humano concilia à mão). Custo de errar:
   encargo legítimo acima de 20% não é proposto — só não é automático.

@@ -90,6 +90,7 @@ import {
 } from '../controllers/accountingDeliveryController';
 import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
+import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
 
 const router = Router();
 
@@ -214,6 +215,10 @@ router.post('/delivery/build', buildDeliveryPackage);
 router.post('/delivery/confirm', deliveryConfirmLimiter, confirmDelivery);
 router.post('/delivery/:id/retry', retryDelivery);
 router.get('/delivery/:id', getDelivery);
+
+// Configuração por escopo (AccountingScopeSettings, 2026-09-15) — segmento estático, antes de /:unitId/periods.
+router.get('/settings', getAccountingSettings);
+router.put('/settings', updateAccountingSettings);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

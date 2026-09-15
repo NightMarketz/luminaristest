@@ -60,7 +60,9 @@ const { options } = require('../../scripts/generate-openapi');
 //    (PATCH), /movements/{id}/archive, /parte-b/close, /parte-b/reopen, /parte-b/balances —
 //    6 PATHS e 7 OPERAÇÕES (166 → 172, 197 → 204 operations, medido com docs:generate).
 // +1 (FE-INCR-LALUR, Fork F-FE-1→a): GET /api/lalur/catalog — catálogo Leiaute 12 read-only (172 → 173).
-const BASELINE = 173;
+// +6 (BE-INCR-BANK-SETTLEMENT, nó F7 + AccountingScopeSettings): /api/bank-settlements (GET), /scan, /{id}/confirm,
+//    /{id}/reject, /{id}/retry + /api/accounting/settings (GET+PUT) — 6 PATHS e 7 OPERAÇÕES (173 → 179, 205 → 212).
+const BASELINE = 179;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

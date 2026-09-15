@@ -111,6 +111,25 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  // BE-INCR-BANK-SETTLEMENT (nó F7, item 11) — composição EXPLÍCITA das policies existentes, não um
+  // novo `!!actorUserId`: quando membership chegar, herda o estreitamento de cada uma.
+  canReadBankSettlement(scope: AccountingScope): boolean {
+    return this.canRead(scope) && this.canReconcile(scope);
+  }
+
+  canManageBankSettlement(scope: AccountingScope, titleType: 'PAYABLE' | 'RECEIVABLE'): boolean {
+    const byType = titleType === 'PAYABLE' ? this.canManagePayable(scope) : this.canManageReceivable(scope);
+    return this.canReconcile(scope) && byType;
+  }
+
+  canManageAccountingSettings(scope: AccountingScope): boolean {
+    return this.canClosePeriod(scope);
+  }
+
+  canReadAccountingSettings(scope: AccountingScope): boolean {
+    return this.canRead(scope);
+  }
+
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto
   // ownerUserId === actorUserId (single-user → staging usável), ativa sozinha quando um delegado
   // opera os livros do dono (ownerUserId !== actorUserId, via membership futuro). Ver

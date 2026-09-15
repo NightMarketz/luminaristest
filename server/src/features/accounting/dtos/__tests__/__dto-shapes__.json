@@ -283,6 +283,58 @@
       ]
     }
   },
+  "AccountingScopeSettingsDto.ts": {
+    "GetAccountingScopeSettingsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateAccountingScopeSettingsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bankChargeExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bankChargeIncomeAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "AuditDto.ts": {
     "VerifyAuditChainQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -296,6 +348,136 @@
       "required": [
         "unitId"
       ]
+    }
+  },
+  "BankSettlementDto.ts": {
+    "ScanBankSettlementsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statementId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "statementId"
+      ],
+      "additionalProperties": false
+    },
+    "ConfirmBankSettlementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "Cash",
+            "Pix",
+            "TED",
+            "Boleto"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "RejectBankSettlementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "RetryBankSettlementSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "Cash",
+            "Pix",
+            "TED",
+            "Boleto"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "ListBankSettlementsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statementId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "CONFIRMING",
+            "CONFIRMED",
+            "REJECTED",
+            "FAILED",
+            "STALE"
+          ]
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 20,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
     }
   },
   "ClosingDto.ts": {

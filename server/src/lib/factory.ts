@@ -31,6 +31,7 @@ import { AccountingContactRepository } from '../features/accounting/repositories
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
+import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
@@ -99,6 +100,8 @@ import { NfeImportService } from '../features/accounting/services/NfeImportServi
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
 import { NfePreviewService } from '../features/accounting/services/NfePreviewService';
 import { ReconcilePendingService } from '../features/accounting/services/ReconcilePendingService';
+import { BankSettlementService } from '../features/accounting/services/BankSettlementService';
+import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -176,6 +179,7 @@ import type { IDimensionRepository } from '../features/accounting/repositories/I
 import type { ICounterpartyRepository } from '../features/accounting/repositories/ICounterpartyRepository';
 import type { IInventoryRepository } from '../features/accounting/repositories/IInventoryRepository';
 import type { IReconcilePendingRepository } from '../features/accounting/repositories/IReconcilePendingRepository';
+import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
@@ -323,6 +327,7 @@ export class ApplicationFactory {
     counterparty: ICounterpartyRepository;
     inventory: IInventoryRepository;
     reconcilePending: IReconcilePendingRepository;
+    bankSettlement: IBankSettlementRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
@@ -392,6 +397,8 @@ export class ApplicationFactory {
     nfeImport: NfeImportService;
     nfeSaleReconciliation: NfeSaleReconciliationService;
     reconcilePending: ReconcilePendingService;
+    bankSettlement: BankSettlementService;
+    accountingScopeSettings: AccountingScopeSettingsService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
@@ -440,6 +447,7 @@ export class ApplicationFactory {
       counterparty: new CounterpartyRepository(),
       inventory: new InventoryRepository(),
       reconcilePending: new ReconcilePendingRepository(),
+      bankSettlement: new BankSettlementRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
@@ -649,7 +657,37 @@ export class ApplicationFactory {
       this.repositories.counterparty,
     );
 
+    const reconciliationService = new ReconciliationService(
+      this.repositories.reconciliation,
+      this.repositories.account,
+      this.policies.accounting,
+      auditService,
+    );
+    // BE-INCR-BANK-SETTLEMENT (nó F7): consome AP/AR/posting/conciliação JÁ existentes pelos serviços
+    // deles (protocolo claim→book→finalize não é reaberto, F-F7-4 a); leituras de título/linha pelo repo
+    // próprio. Tabela irmã de reconcile_pending (R9) — não injeta ReconcilePendingService.
+    const bankSettlementService = new BankSettlementService(
+      this.repositories.bankSettlement,
+      this.repositories.reconciliation,
+      this.repositories.posting,
+      this.repositories.payable,
+      this.repositories.receivable,
+      this.repositories.account,
+      this.repositories.accountingPeriod,
+      this.policies.accounting,
+      reconciliationService,
+      payableService,
+      receivableService,
+      postingService,
+      auditService,
+    );
     this.services = {
+      bankSettlement: bankSettlementService,
+      accountingScopeSettings: new AccountingScopeSettingsService(
+        this.repositories.bankSettlement,
+        this.repositories.account,
+        this.policies.accounting,
+      ),
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -716,12 +754,7 @@ export class ApplicationFactory {
         accountingReportService,
         this.policies.accounting,
       ),
-      reconciliation: new ReconciliationService(
-        this.repositories.reconciliation,
-        this.repositories.account,
-        this.policies.accounting,
-        auditService,
-      ),
+      reconciliation: reconciliationService,
       referentialMapping: referentialMappingService,
       referentialCatalog: referentialCatalogService,
       documentAttachment: new DocumentAttachmentService(
@@ -1022,6 +1055,8 @@ export class ApplicationFactory {
     this.services.nfeSaleReconciliation;
   public getNfePreviewService = (): NfePreviewService => this.services.nfePreview;
   public getReconcilePendingService = (): ReconcilePendingService => this.services.reconcilePending;
+  public getBankSettlementService = (): BankSettlementService => this.services.bankSettlement;
+  public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
