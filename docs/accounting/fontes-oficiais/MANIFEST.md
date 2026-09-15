@@ -1,6 +1,6 @@
 # Fontes oficiais — manifesto
 
-Gerado por `node scripts/baixar-fontes-oficiais.mjs` em **2026-09-10**.
+Gerado por `node scripts/baixar-fontes-oficiais.mjs` em **2026-09-10**; 9 normas do X6 acrescentadas em **2026-09-15** (`--so=<id>` por entrada — o script reescreve o manifesto só com a última; linhas acrescentadas à mão com o mesmo sha256).
 
 Os arquivos desta pasta **não vão pro git** (só este manifesto vai). Para repor:
 rode o script. Para saber se o órgão reeditou algum documento sem trocar a URL:
@@ -32,6 +32,15 @@ que citava o antigo precisa ser reconferido.
 | apis-mit | D4 — o MIT tem API (decide contratar Integra Contador) | Anuncio das APIs do MIT no Integra Contador (abr/2025) | `RFB-noticia-APIs-MIT-2025-04.html` | 55.470 | `9a425746eda9` |
 | cnab240 | Remessa e retorno — CNAB 240 | FEBRABAN Layout Padrao 240 posicoes, versao 10.11 (31/07/2023) | `FEBRABAN-CNAB240-v10.11.pdf` | 4.342.675 | `246c9e261e95` |
 | febraban-portal | Remessa e retorno — indice de versoes | Portal FEBRABAN — layout 240 | `FEBRABAN-portal-layout-240.html` | 85.790 | `d0f751fe8c48` |
+| rir-2018 | Custo de aquisicao — tributo recuperavel nao integra o custo (art. 301 §3) | Decreto 9.580/2018 (RIR/2018) | `Decreto-9580-2018-RIR.html` | 2.944.670 | `08623894666c` |
+| lei-10637-2002 | PIS nao-cumulativo — credito 1.65% (art. 2/3) | Lei 10.637/2002 | `Lei-10637-2002-PIS.html` | 238.160 | `811b878b1ade` |
+| lei-10833-2003 | COFINS nao-cumulativa — credito 7.6% (art. 2/3). monofasico sem credito (art. 3 §2 II) | Lei 10.833/2003 | `Lei-10833-2003-COFINS.html` | 531.890 | `f89ed8a3ea62` |
+| lei-14592-2023 | ICMS fora da base do credito de PIS/COFINS (art. 6) | Lei 14.592/2023 | `Lei-14592-2023.html` | 74.825 | `ee873f914ada` |
+| lei-10147-2000 | Monofasico — farmacia/perfumaria (NCM. F-X6-7 a) | Lei 10.147/2000 | `Lei-10147-2000-monofasico-farmacia.html` | 35.624 | `2d43d0001ac4` |
+| lei-10485-2002 | Monofasico — autopecas/veiculos (NCM. F-X6-7 a) | Lei 10.485/2002 | `Lei-10485-2002-monofasico-autopecas.html` | 40.944 | `8ba63d7b856a` |
+| lei-10865-2004 | PIS/COFINS-Importacao e aliquotas por produto (monofasico. F-X6-7 a) | Lei 10.865/2004 | `Lei-10865-2004.html` | 389.869 | `5c7376321f17` |
+| lei-9718-1998 | Monofasico — combustiveis (art. 4. F-X6-7 a) | Lei 9.718/1998 | `Lei-9718-1998.html` | 196.422 | `a71cf61cb7b3` |
+| lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
 
 ## URLs de origem
 
@@ -77,3 +86,12 @@ que citava o antigo precisa ser reconferido.
 | in-1700-2017 | `IN-RFB-1700-2017-anexos/43263-Anexo IX.pdf` | 248.906 | `7fd770189ae3` |
 | in-1700-2017 | `IN-RFB-1700-2017-anexos/51971-Anexo X.pdf` | 25.409 | `07d911ff1863` |
 | in-1700-2017 | `IN-RFB-1700-2017-anexos/51972-Anexo XI.pdf` | 9.811 | `44d8ce803aa6` |
+- **rir-2018** — <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm>
+- **lei-10637-2002** — <http://www.planalto.gov.br/ccivil_03/leis/2002/l10637.htm>
+- **lei-10833-2003** — <http://www.planalto.gov.br/ccivil_03/leis/2003/l10.833.htm>
+- **lei-14592-2023** — <http://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14592.htm>
+- **lei-10147-2000** — <http://www.planalto.gov.br/ccivil_03/leis/l10147.htm>
+- **lei-10485-2002** — <http://www.planalto.gov.br/ccivil_03/leis/2002/l10485.htm>
+- **lei-10865-2004** — <http://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.865.htm>
+- **lei-9718-1998** — <http://www.planalto.gov.br/ccivil_03/leis/l9718.htm>
+- **lc-123-2006** — <http://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>

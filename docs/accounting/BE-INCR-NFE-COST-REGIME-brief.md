@@ -435,9 +435,9 @@ correta é `D estoque (custo líquido) + D tributos a recuperar (crédito) / C f
 
 | # | Regra | Fonte | Grau |
 |---|---|---|---|
-| f6 | Crédito não-cumulativo = 1,65% (PIS) + 7,6% (COFINS) sobre a base de aquisição para revenda | Lei 10.637/2002 art. 2º/3º; Lei 10.833/2003 art. 2º/3º | [NC] — fora do corpus; **baixar antes da feature** (`scripts/baixar-fontes-oficiais.mjs`, 2 entradas novas) |
-| f7 | Exclusão do ICMS da base do crédito (desde 05/2023) | Lei 14.592/2023 art. 6º | [NC] — idem |
-| f8 | Listas de NCM monofásicos (F-X6-7 a) | Leis 10.147, 10.485, 10.865, 9.718 art. 4º, 10.833 art. 58-A | [NC] — transcrição com artigo citado, ou o item 11 pausa |
+| f6 | Crédito não-cumulativo = 1,65% (PIS) + 7,6% (COFINS) sobre a base de aquisição para revenda | Lei 10.637/2002 art. 2º/3º; Lei 10.833/2003 art. 2º/3º | **[C] no corpus desde 2026-09-15** (`Lei-10637-2002-PIS.html`, `Lei-10833-2003-COFINS.html`; os percentuais conferidos no texto) |
+| f7 | Exclusão do ICMS da base do crédito (desde 05/2023) | Lei 14.592/2023 art. 6º (altera a Lei 10.637 art. 3º) | **[C] no corpus desde 2026-09-15** (`Lei-14592-2023.html`) |
+| f8 | Listas de NCM monofásicos (F-X6-7 a) | Leis 10.147, 10.485, 10.865, 9.718 art. 4º — **10.833 art. 58-A (bebidas frias) está REVOGADO pela Lei 13.097/2015** (lido no corpus 15/09); o regime atual de bebidas é a Lei 13.097 art. 14 ss., a baixar se o item 11 for cobrir bebidas | **[C] no corpus desde 2026-09-15** (`fontes-oficiais/MANIFEST.md`, 9 entradas do X6) — a transcrição com artigo citado é da `sessao-feature` |
 | f9 | CST de PIS/COFINS sem crédito na aquisição: 04 (monofásico), 05 (ST), 06 (alíquota zero), 07 (isento), 08 (sem incidência), 09 (suspensão) | Tabela de CST PIS/COFINS (MOC/NF-e, Anexo — grupos Q/S) | [NC] — transcrever do MOC no corpus antes da regra dura do item 11 |
 
 **Linha nova ao contador (pedido do passo 11):** *"Regime de PIS/COFINS de cada tenant (cumulativo ×
