@@ -291,7 +291,13 @@ export class BankSettlementService {
     try {
       ctx = await this.repo.runTransaction((tx) => this.precheck(scope, id, method, tx));
     } catch (error) {
-      await this.repo.compareAndSetStatus(scope, id, 'CONFIRMING', releaseTo);
+      // Review-delta #326 nit: no retry, a causa REAL do precheck vai para `reason` (não o texto do claim).
+      await this.repo.runTransaction(async (tx) => {
+        const released = await this.repo.compareAndSetStatus(scope, id, 'CONFIRMING', releaseTo, tx);
+        if (released === 1 && releaseTo === 'FAILED') {
+          await this.repo.update(scope, id, { reason: error instanceof Error ? error.message : String(error) }, tx);
+        }
+      });
       throw error;
     }
 
@@ -472,13 +478,15 @@ export class BankSettlementService {
     method: string,
     tx: Prisma.TransactionClient,
   ): Promise<string | null> {
+    // Review-delta #326 ADV-9: recibo já vinculado a outro item vivo NÃO é órfão (2 linhas iguais no mesmo dia).
+    const linked = await this.repo.findLinkedSettlementIds(scope, tx);
     if (titleType === 'PAYABLE') {
       const row = await this.payableRepo.findByIdWithPayments(scope, titleId, tx);
-      const hit = row?.payments.find((p) => p.status === 'ACTIVE' && p.method === method && centsFromDb(p.amountCents) === amountCents && toDateOnly(p.paidAt) === dateOnly);
+      const hit = row?.payments.find((p) => p.status === 'ACTIVE' && !linked.has(p.id) && p.method === method && centsFromDb(p.amountCents) === amountCents && toDateOnly(p.paidAt) === dateOnly);
       return hit?.id ?? null;
     }
     const row = await this.receivableRepo.findByIdWithReceipts(scope, titleId, tx);
-    const hit = row?.receipts.find((r) => r.status === 'ACTIVE' && r.method === method && centsFromDb(r.amountCents) === amountCents && toDateOnly(r.receivedAt) === dateOnly);
+    const hit = row?.receipts.find((r) => r.status === 'ACTIVE' && !linked.has(r.id) && r.method === method && centsFromDb(r.amountCents) === amountCents && toDateOnly(r.receivedAt) === dateOnly);
     return hit?.id ?? null;
   }
 

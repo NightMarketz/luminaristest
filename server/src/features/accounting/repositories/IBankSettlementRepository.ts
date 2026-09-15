@@ -56,6 +56,9 @@ export interface IBankSettlementRepository {
   /** Review #326 F5: item preso em CONFIRMING (crash entre CAS e efeito) — só retomável se `updatedAt` for mais velho que `olderThan`. */
   claimStaleConfirming(scope: AccountingScope, id: string, olderThan: Date, tx?: Prisma.TransactionClient): Promise<number>;
 
+  /** Review-delta #326: ids de pagamento/recebimento já ligados a item VIVO (não STALE/REJECTED) — nunca são 'órfãos'. */
+  findLinkedSettlementIds(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<Set<string>>;
+
   /** Títulos liquidáveis (OPEN | PARTIALLY_*) do escopo, projetados em centavos inteiros (leitura). */
   findSettleableTitles(scope: AccountingScope, titleType: BankSettlementTitleType, tx?: Prisma.TransactionClient): Promise<CandidateTitle[]>;
   /** Um título por id/tipo, projetado; `null` se inexistente, apagado ou de outro escopo (404, nunca 403). */

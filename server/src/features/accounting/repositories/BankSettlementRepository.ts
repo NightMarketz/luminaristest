@@ -118,6 +118,14 @@ export class BankSettlementRepository implements IBankSettlementRepository {
     return r.count;
   }
 
+  public async findLinkedSettlementIds(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<Set<string>> {
+    const rows = await this.db(tx).bankSettlementItem.findMany({
+      where: { ...accountingScopeWhere(scope), deletedAt: null, settlementId: { not: null }, status: { notIn: ['STALE', 'REJECTED'] } },
+      select: { settlementId: true },
+    });
+    return new Set(rows.map((r) => r.settlementId as string));
+  }
+
   public async findSettleableTitles(scope: AccountingScope, titleType: BankSettlementTitleType, tx?: Prisma.TransactionClient): Promise<CandidateTitle[]> {
     const where = { ...accountingScopeWhere(scope), deletedAt: null };
     if (titleType === 'PAYABLE') {
