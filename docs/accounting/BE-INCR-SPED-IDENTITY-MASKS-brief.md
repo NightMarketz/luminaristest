@@ -31,7 +31,7 @@
   - `server/src/lib/cpf.ts` (`isValidCpf`, `stripCpfMask` — **com DV**), `server/src/lib/cnpj.ts`
     (`CNPJ_REGEX`, `isValidCnpj`), `server/src/features/accounting/models/AccountingContact.model.ts`
     (`CRC_NUMBER_RE = /^([A-Z]{2})-(\d{6})\/([OT])-(\d)$/`, `normalizeCrcNumber`, `crcNumberUf`,
-    `CRC_CERTIFICATE_RE = /^UF\/AAAA\/N{1,10}$/`, `isValidCrcCertificate`, `UF_CODES`,
+    `CRC_CERTIFICATE_RE = /^([A-Z]{2})\/(\d{4})\/(\d{1,10})$/` (l.100), `isValidCrcCertificate`, `UF_CODES`,
     **`contactToJ930Signer` / `contactToEcf0930Signer`** — F-CD8-a já materializada como função pura).
   - `docs/accounting/CEDULA-DECISAO-2026-09-10-entrevista.md` §5 — tabela J930 06/09/10/11 ↔ campos do
     contato (#305), fonte **Manual ECD Leiaute 9 pp. 199-205** (ADE Cofis 01/2026,
@@ -43,7 +43,7 @@
     manifesto (sha256 registrado) mas **os PDFs não estão no disco desta sessão** (só os 3 `.txt` das INs);
     repor com `node scripts/baixar-fontes-oficiais.mjs` — ver §5.
 - **Nós vizinhos:** consome geração SPED ✅ (ECD #62 · ECF #78 · ECF Real #263) e #305 (máscaras do
-  contato + `contactTo*Signer`). Consumido por C11 (`reviewerCrc` — máscara vem daqui), H1 2ª passada
+  contato + `contactTo*Signer`). Consumido por H1 2ª passada
   (o PVA é o oráculo destas máscaras — gate humano, `RUNBOOK-H1-PVA.md`). FE (`FE-INCR-SPED-*`) fora.
 
 ---
@@ -67,9 +67,10 @@ máscara de campos **não-identidade** do 0000 (`ie`, `im`, `nire` — §6).
    L12, 0930, pp. 103-106) — F-C12-2 decide se é a mesma const. Teste-guarda: `'900' → 'Contador'`
    presente nas duas; todo código `^\d{3}$`; sem duplicata; tabela não vazia.
 2. **ECD J930 `codAssin: z.enum(keys(SPED_ECD_QUALIF_ASSINANTE))`** — string fora da tabela → 400 com a
-   mensagem nomeando o campo e a fonte. Teste: `'901'` → 400; `'900'` → ok.
-3. **ECD J930 campo 04 (`identQualif`) derivado do código** (F-C12-1 → a): o DTO **não aceita** o
-   campo (strict → `unrecognized_keys`); o gerador escreve `SPED_ECD_QUALIF_ASSINANTE[codAssin]`.
+   mensagem nomeando o campo e a fonte. Teste: um código **ausente da tabela transcrita** (escolhido na `sessao-feature` lendo o manual — nenhum código além de `900` se escreve de memória, §4.1) → 400; `'900'` → ok.
+3. **ECD J930 campo 04 (`identQualif`)** — **se F-C12-1 → (a)**: derivado do código, o DTO **não aceita** o
+   campo (strict → `unrecognized_keys`) e o gerador escreve `SPED_ECD_QUALIF_ASSINANTE[codAssin]`; **se (b)**:
+   input cruzado com a tabela (400 se diverge).
    Teste de snapshot da linha `|J930|…|` para `codAssin='900'`.
 4. **ECF 0930 `identQualif: z.enum(keys(SPED_ECF_QUALIF_ASSINANTE))`** — mesmo teste do item 2; o
    `refineEcfSigners` continua o único refine (reuso, sem clone no DTO Real).
