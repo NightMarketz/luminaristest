@@ -111,16 +111,28 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
   if (!range) return [`símbolo ${entry.symbol} não encontrado no head de ${entry.file}`];
   const [start, end] = range;
 
+  // O marco CANÔNICO — a linha inteira, não uma substring (review #320 F2: `includes(marker)` aceitava
+  // o marker em comentário à direita ou em string literal). Só `//` de linha inteira e linha vazia são
+  // isentos; `/* … */` na mesma linha de código NÃO é (F3).
+  const marcoLine = new RegExp(
+    `^await tx\\.user\\.update\\(\\{ where: \\{ id: userId \\}, data: \\{ ${entry.marker}: new Date\\(\\) \\} \\}\\);$`,
+  );
+  const isExempt = (body: string): boolean => body === '' || body.startsWith('//');
+
   const violations: string[] = [];
   let newLine = 0;
+  let seenHunk = false;
+  let marcoLines = 0;
   for (const raw of diff.split('\n')) {
     const line = raw.replace(/\r$/, '');
     const hunk = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line);
     if (hunk) {
       newLine = Number(hunk[1]);
+      seenHunk = true;
       continue;
     }
-    if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('diff ') || line.startsWith('index ')) continue;
+    // Cabeçalho só existe ANTES do primeiro hunk; depois dele, `+++x` é linha adicionada `++x` (F4).
+    if (!seenHunk) continue;
     if (line.startsWith('-')) {
       violations.push(`linha removida em ${entry.file} — a exceção do marco é aditiva: ${line.slice(1).trim()}`);
       continue;
@@ -130,12 +142,16 @@ export function classifySymbolDiff(diff: string, headSource: string, entry: Symb
       // O `+` de uma linha adicionada; em -U0 não há linha de contexto para contar.
       if (newLine < start || newLine > end) {
         violations.push(`linha ${newLine} fora do corpo de ${entry.symbol}: ${body}`);
-      } else if (body !== '' && !body.startsWith('//') && !body.startsWith('*') && !body.startsWith('/*') && !body.includes(entry.marker)) {
+      } else if (marcoLine.test(body)) {
+        marcoLines += 1;
+      } else if (!isExempt(body)) {
         violations.push(`linha ${newLine} dentro de ${entry.symbol} não é o marco (${entry.marker}): ${body}`);
       }
       newLine += 1;
     }
   }
+  // Fail-closed (F5): diff que não contém o marco (só mode-change, só comentário) não é "só o marco".
+  if (violations.length === 0 && marcoLines === 0) violations.push(`nenhuma linha do marco (${entry.marker}) no diff de ${entry.file}`);
   return violations;
 }
 
@@ -234,7 +250,7 @@ export function runCli(argv: string[] = process.argv.slice(2)): number {
     files = getChangedFiles(base, head);
     symbolDiffs = getSymbolDiffs(files, base, head);
   } catch (error) {
-    console.error(`erro ao rodar 'git diff --name-only ${base}...${head}': ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`erro ao rodar git (diff --name-only / diff -U0 / show) em ${base}...${head}: ${error instanceof Error ? error.message : String(error)}`);
     return 1;
   }
 
