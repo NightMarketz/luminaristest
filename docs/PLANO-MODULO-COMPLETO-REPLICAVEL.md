@@ -1,5 +1,13 @@
 # Plano de alto nível — módulo contábil 100% + replicável para outros setores
 
+> **Estado em 2026-09-14 (ponteiro, não reescrita):** Degrau 1 (prensa) ✅ #211 · Degrau 2 (P2 clínica) código
+> ✅ #282, comportamento 11 em PR #320, sign-off H3 em branco · Degrau 0 segue **aberto nos 4 oráculos**
+> (B-4 executado por referência e não assinado; X2, H1/H1 2ª passada, H2, M2 em branco). Régua por módulo
+> **41/57** (`ACCOUNTING-MASTER-MAP.md` §7.1). A sequência executável de hoje é
+> [`accounting/PROXIMOS-PASSOS-2026-09-14.md`](accounting/PROXIMOS-PASSOS-2026-09-14.md) sobre o
+> [grafo de 14/09](accounting/GRAFO-DEPENDENCIAS-2026-09-14.md); os degraus abaixo continuam válidos como
+> **definição de pronto**, não como fila.
+
 > **Relação com os outros docs:** o `ACCOUNTING-MASTER-MAP.md` segue a fonte de verdade operacional;
 > o `ROADMAP-PLATAFORMA.md` é a camada de horizonte. Este plano é a **sequência executável** que liga
 > os dois ao objetivo declarado pelo dono (2026-08-21): *"um módulo completo e replicável para outros

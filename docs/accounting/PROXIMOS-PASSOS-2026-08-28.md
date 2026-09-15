@@ -1,5 +1,9 @@
 # Próximos passos — 2026-08-28
 
+> ⚠️ **SUPERSEDED em 2026-08-31** por `PROXIMOS-PASSOS-2026-08-31.md` (cadeia: 08-31 → 09-01 → 09-02 →
+> grafos 09-07/09-11/**09-14** → [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md)). Mantido
+> como registro histórico.
+
 > **Escopo deste documento:** ele **enumera e ordena** o que já está autorizado ou parado esperando
 > decisão. **Não abre frente nova** (ORCH-006), não ratifica nada, não propõe aparato de auditoria.
 > Deriva da [LEITURA-DA-FILA-2026-08-28.md](LEITURA-DA-FILA-2026-08-28.md) e do

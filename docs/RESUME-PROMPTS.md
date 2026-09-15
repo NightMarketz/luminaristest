@@ -1,5 +1,10 @@
 # RESUME-PROMPTS — Retomada fora deste chat
 
+> ⚠️ **HISTÓRICO (2026-07-14).** Os prompts abaixo retomam o estado de julho. O prompt de retomada
+> **vigente** é o bloco PROMPT de
+> [`accounting/PROXIMOS-PASSOS-2026-09-14.md`](accounting/PROXIMOS-PASSOS-2026-09-14.md), que cita as
+> autorizações citáveis e a ordem R6. Use este arquivo só como registro das 3 tasks verbatim do § final.
+
 > **Objetivo:** sobreviver ao fim desta sessão. Cole o prompt relevante num chat novo e o
 > agente retoma com contexto suficiente. Gerado em **2026-07-14**.
 >
