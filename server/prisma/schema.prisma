@@ -15,17 +15,17 @@ datasource db {
 }
 
 model User {
-  id                      String                   @id @default(cuid())
+  id                      String                    @id @default(cuid())
   name                    String?
-  username                String                   @unique
-  email                   String                   @unique
+  username                String                    @unique
+  email                   String                    @unique
   password                String
-  role                    Role                     @default(USER)
-  locale                  String                   @default("en") // 'en' | 'pt'
-  currency                String                   @default("BRL") // 'BRL' | 'USD' | 'EUR'
+  role                    Role                      @default(USER)
+  locale                  String                    @default("en") // 'en' | 'pt'
+  currency                String                    @default("BRL") // 'BRL' | 'USD' | 'EUR'
   onboardingCompletedAt   DateTime? // T0 do time-to-first-ECD — gravado na tx de installPresetAsSystem (ADR-P2 emenda R7, F-I2-1 → a)
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
   dashboardLayouts        DashboardLayout[] // multi-tab dashboards (fork feature/back-end)
   chatInstances           ChatInstance[] // Relation to ChatInstance
   documents               Document[] // Relation to Document
@@ -47,6 +47,8 @@ model User {
   inventoryItems          InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
   accountingBindings      AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
   reconcilePendingItems   ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
+  bankSettlementItems     BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
+  accountingScopeSettings AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
@@ -427,28 +429,30 @@ model AuditChainHead {
 // (`code`, e.g. "1.1.2") — the parent is the prefix; there is no self-relation.
 // Only leaf accounts (`acceptsEntries`) receive ledger lines.
 model Account {
-  id                  String               @id @default(cuid())
+  id                  String                    @id @default(cuid())
   userId              String
-  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   unitId              String // business unit (DynamicTable row id; scoped string, not a FK)
   code                String // hierarchical key, e.g. "1.1.2"
   name                String
   nature              String // Asset | Liability | Equity | Revenue | Expense
-  acceptsEntries      Boolean              @default(true)
+  acceptsEntries      Boolean                   @default(true)
   // INCR-DIM-COMPLETENESS (B1, ADR-INCR-DIM-COMPLETENESS — EMENDA a ADR-INCR-DIM F5): quando true,
   // toda partida a esta conta EXIGE ≥1 etiqueta de dimensão (qualquer eixo — MVP booleano simples,
   // não por-eixo). Default false ⇒ contas seguem 100% opcionais (F5 permanece o default). Gate
   // prospectivo (SEC-B1-5): re-checado in-tx nos escritores de conteúdo original (postEntry/approve);
   // NUNCA retro-rejeita histórico. Toggle audita + canManage (SEC-B1-4). Zero mudança de dado (ADD COLUMN).
-  requiresDimension   Boolean              @default(false)
+  requiresDimension   Boolean                   @default(false)
   postings            Posting[]
-  bankStatements      BankStatement[]      @relation("AccountBankStatements")
+  bankStatements      BankStatement[]           @relation("AccountBankStatements")
   referentialMappings ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
-  payablesExpense     Payable[]            @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
-  receivablesRevenue  Receivable[]         @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
-  lalurEntries        LalurEntry[]         @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  payablesExpense     Payable[]                 @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
+  receivablesRevenue  Receivable[]              @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
+  bankChargeExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
+  bankChargeIncomeOf  AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
+  lalurEntries        LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
   deletedAt           DateTime?
 
   @@unique([userId, unitId, code]) // real DB constraint — each unit owns its chart
@@ -725,21 +729,22 @@ model BankStatement {
 
 // One parsed statement line (staging; immutable — no soft-delete, status covers IGNORED).
 model BankStatementLine {
-  id          String                @id @default(cuid())
-  userId      String
-  unitId      String
-  statementId String
-  statement   BankStatement         @relation(fields: [statementId], references: [id], onDelete: Cascade)
-  lineNumber  Int // 1-based, source order
-  date        DateTime
-  amountCents BigInt // SIGNED: >0 inflow (statement credit), <0 outflow. |v| <= MAX_CENTS (ACC-014)
-  description String
-  externalRef String? // bank transaction/document id, when present
-  status      String                @default("UNMATCHED") // UNMATCHED | MATCHED | IGNORED
-  rawJson     String // original parsed cells (JSON string)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  matches     ReconciliationMatch[]
+  id              String                @id @default(cuid())
+  userId          String
+  unitId          String
+  statementId     String
+  statement       BankStatement         @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  lineNumber      Int // 1-based, source order
+  date            DateTime
+  amountCents     BigInt // SIGNED: >0 inflow (statement credit), <0 outflow. |v| <= MAX_CENTS (ACC-014)
+  description     String
+  externalRef     String? // bank transaction/document id, when present
+  status          String                @default("UNMATCHED") // UNMATCHED | MATCHED | IGNORED
+  rawJson         String // original parsed cells (JSON string)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  matches         ReconciliationMatch[]
+  settlementItems BankSettlementItem[] // BE-INCR-BANK-SETTLEMENT (nó F7): propostas de baixa desta linha
 
   @@unique([statementId, lineNumber])
   @@index([userId, unitId, statementId, status])
@@ -1257,6 +1262,60 @@ model AccountingBinding {
 // falhar/bloquear depois de já ter sido resolvido — decisão forçada pelo `@@unique` abaixo (uma
 // segunda linha para a MESMA chave colidiria em P2002; memória
 // `unique-de-idempotencia-x-soft-delete`), não uma escolha livre.
+// F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por
+// confirmação humana (cédula 10/09 resposta 20). Tabela IRMÃ de reconcile_pending_items (R9): outro
+// produtor (extrato, não venda/CRM), outra resolução (confirm/reject humano, não rescan) e outra
+// policy (efeito financeiro). Prisma first-class (§2.1). Tenancy = AccountingScope. F-F7-1..5 → (a),
+// ratificados 2026-09-15.
+model BankSettlementItem {
+  id              String            @id @default(cuid())
+  userId          String // scope owner; FK User — cascade (operacional; a trilha é AuditEvent)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId          String // business unit (scoped string, not a FK)
+  origin          String // 'STATEMENT_LINE' (F-F7-1 a) — 'CNAB_RETURN' reservado para quando F5 existir
+  statementLineId String
+  statementLine   BankStatementLine @relation(fields: [statementLineId], references: [id], onDelete: Cascade)
+  titleType       String // 'PAYABLE' | 'RECEIVABLE'
+  titleId         String // payables.id | receivables.id (sem FK polimórfica; validado no serviço)
+  proposedCents   BigInt // min(|line|, saldoAberto no scan) — o saldo é RE-LIDO no confirm
+  chargeCents     BigInt // max(0, |line| − saldoAberto no scan); encargo (resposta 22), cap F-F7-5 a
+  status          String // PENDING | CONFIRMING | CONFIRMED | REJECTED | FAILED | STALE (BANK_SETTLEMENT_STATUSES)
+  reason          String? // reject reason | failReason
+  failedStep      String? // 'SETTLE' | 'CHARGE' | 'MATCH' (BRIEF item 7)
+  settlementId    String? // payable_payments.id | receivable_receipts.id (etapa i)
+  chargeEntryId   String? // journal_entries.id do bank.charge (etapa ii)
+  confirmedById   String?
+  confirmedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+
+  @@unique([userId, unitId, statementLineId, titleType, titleId]) // 1 proposta por (linha, título)
+  @@index([userId, unitId, status])
+  @@index([userId, unitId, statementLineId])
+  @@map("bank_settlement_items")
+}
+
+// Configuração por escopo (decisão do dono 2026-09-15, questionário na sessão do F7): 1 linha por
+// (userId, unitId). Nasce com as 2 contas de encargo bancário (F7 Fase C, BRIEF item 8); X6/C6b decidem
+// se reusam. FK Account com Restrict: apagar a conta configurada é erro, não silêncio.
+model AccountingScopeSettings {
+  id                         String   @id @default(cuid())
+  userId                     String
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                     String
+  bankChargeExpenseAccountId String? // encargo PAGO (AP): D esta conta / C banco — conta vem do contador (F7 §5)
+  bankChargeExpenseAccount   Account? @relation("ScopeSettingsBankChargeExpense", fields: [bankChargeExpenseAccountId], references: [id], onDelete: Restrict)
+  bankChargeIncomeAccountId  String? // encargo RECEBIDO (AR): D banco / C esta conta
+  bankChargeIncomeAccount    Account? @relation("ScopeSettingsBankChargeIncome", fields: [bankChargeIncomeAccountId], references: [id], onDelete: Restrict)
+  updatedById                String
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@unique([userId, unitId])
+  @@map("accounting_scope_settings")
+}
+
 model ReconcilePendingItem {
   id           String    @id @default(cuid())
   userId       String // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data, not the audit trail; mirrors Counterparty/AccountingBinding, not AuditEvent's no-cascade exception)

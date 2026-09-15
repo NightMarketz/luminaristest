@@ -86,6 +86,16 @@ export interface IAccountingPolicy {
   /** Can list/read the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7). */
   canReadReconcilePending(scope: AccountingScope): boolean;
 
+  /** BE-INCR-BANK-SETTLEMENT (nó F7, item 11): list/read = canRead ∧ canReconcile. NÃO reusa canManageReconcilePending (R9). */
+  canReadBankSettlement(scope: AccountingScope): boolean;
+
+  /** F7 item 11: confirm/reject/retry = canReconcile ∧ (canManagePayable | canManageReceivable) pelo tipo do título. */
+  canManageBankSettlement(scope: AccountingScope, titleType: 'PAYABLE' | 'RECEIVABLE'): boolean;
+
+  /** Configuração por escopo (AccountingScopeSettings, 2026-09-15) — quem fecha período configura contas. */
+  canManageAccountingSettings(scope: AccountingScope): boolean;
+  canReadAccountingSettings(scope: AccountingScope): boolean;
+
   /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this
    * scope (ADR-INCR-APPROVAL F3, re-ratified fork-a-fork 2026-07-14). Today it is OFF while
