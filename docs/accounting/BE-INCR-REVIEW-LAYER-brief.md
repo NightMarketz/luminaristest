@@ -43,8 +43,8 @@
     a ECD do ano subsequente) e `IN-RFB-2004-2021-ECF.txt` art. 7º (retificadora substitui
     integralmente; §3º retificar anos posteriores se muda Parte B).
 - **Nós vizinhos no grafo:** consome geração SPED ✅ (ECD #62, ECF #78, ECF Real #263), `PostingService`
-  ✅ (acerto), C6 ✅ #305 (o pacote entregue é o objeto revisado), C12 ⏳ (máscara de CRC/CPF do
-  signatário — BRIEF irmão desta rodada). Consumido por: entrega C6 (se F-C11-3 → a), FE-INCR-REVIEW
+  ✅ (acerto), C6 ✅ #305 (o pacote entregue é o objeto revisado), C12 ⏳ (irmão desta rodada — **não** é dependência: a máscara de CRC já existe em
+  `AccountingContact.model.ts`, #305). Consumido por: entrega C6 (se F-C11-3 → a), FE-INCR-REVIEW
   (fora deste BRIEF, regra "BE por padrão").
 
 ---
@@ -104,9 +104,9 @@ irmão.
    (`POST /sped/ecd`, `/sped/ecf`) — a revisão **troca** `ecdJobId`/`ecfJobId` pelo job novo via
    `PATCH /reviews/:id/jobs` (F-C11-6 diz se o par antigo fica na trilha).
 9. **Sign-off**: `POST /reviews/:id/sign-off` com `{ reviewerName, reviewerCrc, statement }` →
-   `SIGNED_OFF`, `closedAt`. `reviewerCrc` valida por máscara (**C12** é dono da máscara; até lá, `regex`
-   `^[A-Z]{2}-\d{6}/[OP]-\d$` fica em §4 como **pendente de validação externa** — não inventar). Teste:
-   CRC fora da máscara → 400 nomeado.
+   `SIGNED_OFF`, `closedAt`. `reviewerCrc` valida pelo **canônico já existente** `CRC_NUMBER_RE` +
+   `normalizeCrcNumber` (`server/src/features/accounting/models/AccountingContact.model.ts:57-71`, #305) —
+   reuso, nunca regex nova. Teste: CRC fora da máscara → 400 nomeado.
 10. **Rejeição**: `POST /reviews/:id/reject` `{ reason }` → `REJECTED` (o pacote não deve ser entregue).
 11. **Imutabilidade**: revisão e achados **não têm DELETE** (trilha legal — mesma classe de
     `audit_events`/`accounting_delivery_logs`); FK ao `User` **sem cascade** (`onDelete: Restrict`,
@@ -137,7 +137,7 @@ irmão.
 15. Cadeia completa: `routes/accountingReviews.ts` (registro em `index.ts` + `docs.paths.ts`) →
     `accountingReviewController` → `AccountingReviewService` → `AccountingReviewRepository`
     (`IAccountingReviewRepository`) → Prisma; `AccountingReviewPolicy` (`canReviewAccounting`,
-    `canSignOffReview` — F-C11-1); factory. DTOs Zod `.strict()`; snapshot de shape regenerado; guard de
+    `canSignOffReview` — F-C11-1); factory; `REVIEW_STATUSES` em `models/ledgerStatus.ts`. DTOs Zod `.strict()`; snapshot de shape regenerado; guard de
     path-count do openapi (+8 paths); `npm run smoke:migration` (2 tabelas novas); review independente.
 
 ## 3. Forks — RATIFICAÇÃO PENDENTE
@@ -147,7 +147,7 @@ irmão.
 | **F-C11-1** | Quem é "o profissional"? | (a) qualquer `User` do escopo com `canManageData` (dono revisa; identidade = `reviewerName`+`reviewerCrc` no sign-off) · (b) `Role.ACCOUNTANT` novo (login próprio, só revisa) · (c) o `AccountingContact` (externo, sem login) via link assinado | **(a)** — resposta 1 diz que a contabilidade é determinística e o dono opera; o CRC é dado do sign-off, não de sessão. (b) abre frente de auth (ADR próprio, §6); (c) põe escrita anônima em trilha legal |
 | **F-C11-2** | O que (a) DATA_EDIT cobre? | (a) **ponteiro** para o dado editado pelos serviços existentes (chart, mapping, counterparty, DTO de geração) · (b) endpoints-proxy de edição dentro da revisão | **(a)** — reuse antes de recriar; os alvos já auditam. (b) duplica 4 serviços |
 | **F-C11-3** | A entrega (C6) exige sign-off? | (a) sim: `REVIEW_REQUIRED`/`REVIEW_REJECTED` em `buildPackage` · (b) não: revisão é opcional, C6 intacto | **(a)** — resposta 2 diz "assina e verifica"; sem gate a revisão é decorativa. Toca C6 (vizinho) em 1 checagem |
-| **F-C11-4** | Data do acerto (c) | (a) `postingDate` em **qualquer período OPEN** (extemporâneo, IN 2003 art. 8 + ITG 2000 itens 31–36) · (b) reabrir `SOFT_CLOSED` original e lançar na data de competência (impossível em `HARD_CLOSED`) | **(a)** — é o que a IN prevê e não bate no terminal `HARD_CLOSED`. (b) só cabe se o par ainda não fechou duro; pode ser opção do corpo (`reopenIfSoftClosed`) — deixar para C11 v2 |
+| **F-C11-4** | Data do acerto (c) | (a) `postingDate` em **qualquer período OPEN** (extemporâneo — IN 2003 art. 8º *remete* à ITG 2000 itens 31–36, que está fora do corpus, §5.2) · (b) reabrir `SOFT_CLOSED` original e lançar na data de competência (impossível em `HARD_CLOSED`) | **(a)** — é o que a IN prevê e não bate no terminal `HARD_CLOSED`. (b) só cabe se o par ainda não fechou duro; pode ser opção do corpo (`reopenIfSoftClosed`) — deixar para C11 v2 |
 | **F-C11-5** | Chave de unicidade da revisão OPEN | (a) `@@unique([ecdJobId, ecfJobId])` + checagem in-tx (NULL distinto no SQLite) · (b) `@@unique([userId, unitId, year, status])` parcial via checagem in-tx | **(a)** com gate in-tx — `@@unique` não fecha TOCTOU sozinho (`authoritative-gate-inside-tx`) |
 | **F-C11-6** | Troca de jobs após regerar | (a) `PATCH /jobs` substitui e o par antigo fica só no evento `review.jobs_replaced` · (b) tabela filha `AccountingReviewJobHistory` | **(a)** — o evento já é a trilha; (b) é C6b-shape sem demanda |
 
@@ -182,7 +182,7 @@ export const AdjustmentEntrySchema = z.object({          // (c) — corpo espelh
   reverseOriginal: z.boolean().optional(),                // só quando register='I200'
 }).strict();
 
-export const SignOffSchema = z.object({ reviewerName: z.string().min(3).max(120), reviewerCrc: CRC_MASK /* C12 */, statement: z.string().min(1).max(500) }).strict();
+export const SignOffSchema = z.object({ reviewerName: z.string().min(3).max(120), reviewerCrc: z.string().transform(normalizeCrcNumber).pipe(z.string().regex(CRC_NUMBER_RE)) /* #305 */, statement: z.string().min(1).max(500) }).strict();
 export const RejectSchema  = z.object({ reason: z.string().min(1).max(500) }).strict();
 export const ReplaceJobsSchema = z.object({ ecdJobId: z.string().min(1).optional(), ecfJobId: z.string().min(1).optional() }).strict();
 ```
@@ -198,7 +198,7 @@ model AccountingReview {
   ecdJob         AccountingDataExchangeJob? @relation("ReviewEcdJob", fields: [ecdJobId], references: [id], onDelete: Restrict)
   ecfJobId       String?
   ecfJob         AccountingDataExchangeJob? @relation("ReviewEcfJob", fields: [ecfJobId], references: [id], onDelete: Restrict)
-  status         String   // OPEN | SIGNED_OFF | REJECTED (REVIEW_STATUSES em models/ledgerStatus.ts)
+  status         String   // OPEN | SIGNED_OFF | REJECTED (REVIEW_STATUSES em models/ledgerStatus.ts — arquivo tocado, item 15)
   reviewerUserId String
   reviewerName   String?
   reviewerCrc    String?
@@ -228,9 +228,7 @@ Rotas (8 paths / 9 operações): `POST /api/accounting/reviews` · `GET /api/acc
 2. **ITG 2000 (R1) itens 31–36 — lançamento extemporâneo.** A IN 2003 art. 8º cita; o texto da ITG
    **não está no corpus** (`fontes-oficiais/` tem IN 1.700, 2.003, 2.004). A forma do histórico e a data
    do acerto (comportamento 5) ficam **pendentes de validação externa** até o texto entrar no corpus.
-3. **Máscara de CRC** (comportamento 9) — dono é **C12**; até lá, campo `string` com regex provisória
-   documentada como pendente, nunca "validado".
-4. **Item do contador (linha nova ao pedido):** *"o senhor revisa e assina dentro do sistema (login) ou
+3. **Item do contador (linha nova ao pedido):** *"o senhor revisa e assina dentro do sistema (login) ou
    recebe o pacote e devolve achados por fora?"* — decide F-C11-1 melhor do que a recomendação.
 
 ## 6. Achados fora de escopo (não planejar — exigem autorização própria)
