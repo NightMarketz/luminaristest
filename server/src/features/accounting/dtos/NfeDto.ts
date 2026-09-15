@@ -125,6 +125,21 @@ const nfeParty = z
     cpf: z.string().optional(),
     nome: z.string().optional(),
     ie: z.string().optional(),
+    crt: z.string().optional(), // X6: emit/CRT
+  })
+  .strict();
+
+/** X6 (BRIEF item 12 + EMENDA 2026-09-15): o operador vê ANTES de importar qual fórmula vai valer. */
+export const NfeCostPreviewSchema = z
+  .object({
+    custoBrutoCents: centsInt,
+    custoEstoqueCents: centsInt,
+    creditoIcmsCents: centsInt,
+    creditoPisCofinsCents: centsInt,
+    baseCreditoPisCofinsCents: centsInt,
+    regimeAplicado: z.enum(['NAO_CONTRIBUINTE', 'CONTRIBUINTE_ICMS']),
+    pisCofinsAplicado: z.enum(['SEM_CREDITO', 'NAO_CUMULATIVO']),
+    warnings: z.array(z.string()),
   })
   .strict();
 
@@ -161,6 +176,14 @@ export const NfePreviewSchema = z
             vProdCents: centsInt,
             vDescCents: centsInt,
             indTot: z.enum(['0', '1']),
+            vFreteCents: centsInt,
+            vSegCents: centsInt,
+            vOutroCents: centsInt,
+            vICMSCents: centsInt,
+            vICMSSTCents: centsInt,
+            vIPICents: centsInt,
+            cstPis: z.string().nullable(),
+            cstCofins: z.string().nullable(),
           })
           .strict(),
       )
@@ -181,6 +204,7 @@ export const NfePreviewSchema = z
     protocolo: z.object({ cStat: z.string(), nProt: z.string(), dhRecbtoDate: z.string() }).strict(),
     alreadyImported: z.boolean(),
     existingPayableId: z.string().nullable(),
+    custo: NfeCostPreviewSchema, // X6
   })
   .strict();
 export type NfePreview = z.infer<typeof NfePreviewSchema>;

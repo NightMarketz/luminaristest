@@ -30,7 +30,14 @@ function build(opts: { existing?: Payable | null; canManage?: boolean; canReconc
     canManagePayable: () => opts.canManage ?? true,
     canReconcile: () => opts.canReconcile ?? false,
   } as unknown as IAccountingPolicy;
-  return { service: new NfePreviewService(payableRepo, policy), findByDocumentNumber };
+  // X6 (F-X6-6 a): o preview exige perfil fiscal — stub neutro (não-contribuinte, CUMULATIVO).
+  const fiscalProfile = {
+    requireCostRegime: async () => ({
+      icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false,
+      icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null,
+    }),
+  } as never;
+  return { service: new NfePreviewService(payableRepo, policy, fiscalProfile), findByDocumentNumber };
 }
 
 describe('NfePreviewService.preview', () => {

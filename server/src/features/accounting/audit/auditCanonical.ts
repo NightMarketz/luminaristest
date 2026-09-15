@@ -53,7 +53,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'referential.mapping.set':   ['accountId', 'referentialCode', 'mappingVersion'],
   'referential.mapping.unset': ['accountId', 'referentialCode', 'mappingVersion'],
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
-  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode'],
+  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents'], // X6 item 13
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
   // BE-INCR-PARTIAL-SETTLEMENT (F-PS9 → a): `payment_*` → `settlement_*`; payload ganha o saldo após o
   // recibo (money-as-string, id-only, sem PII — mesmo padrão dos 8 eventos originais).
@@ -134,6 +134,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'bank_settlement.confirmed': ['itemId', 'titleType', 'titleId', 'proposedCents', 'chargeCents', 'settlementId', 'chargeEntryId'],
   'bank_settlement.rejected':  ['itemId', 'reason'],
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
+  // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
+  'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

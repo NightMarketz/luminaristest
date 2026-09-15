@@ -149,6 +149,10 @@ export class PayableService {
       ? null
       : await this.resolveExpenseAccount(scope, dto.expenseAccountId!);
 
+    // X6 F-X6-8 (a): contas a recuperar validadas ANTES da tx (existência, folha, Asset) — códigos resolvidos aqui,
+    // persistidos na linha (JSON) para o re-drive reconstruir o mesmo entry.
+    const recoverableLines = await this.resolveRecoverableLines(scope, dto);
+
     // Inventory purchases MUST have the subledger wired (the dep is optional until Fase B factory
     // wiring). Fail LOUD before minting a row we could never value, never silently skip the INBOUND.
     if (inventoryPurchase && !this.inventoryService) {
@@ -205,6 +209,7 @@ export class PayableService {
             inventoryProductRef: dto.inventoryProductRef ?? null,
             inventoryQty: dto.inventoryQty ?? null,
             inventoryMultiItem: dto.inventoryMultiItem ?? false,
+            recoverableTaxLines: recoverableLines.length > 0 ? JSON.stringify(recoverableLines) : null,
             status: 'OPEN',
             createdById: scope.actorUserId,
           },
@@ -219,6 +224,9 @@ export class PayableService {
             payableId: created.id,
             supplierRef: dto.supplierRef,
             amountCents: String(dto.amountCents),
+            // X6 F-X6-8 (a): o que foi RECONHECIDO como crédito a recuperar (derivado das linhas, nunca do perfil).
+            recoverableIcmsCents: String(recoverableLines.filter((l) => l.kind === 'ICMS').reduce((acc, l) => acc + l.amountCents, 0)),
+            recoverablePisCofinsCents: String(recoverableLines.filter((l) => l.kind === 'PIS_COFINS').reduce((acc, l) => acc + l.amountCents, 0)),
             dueDate: dto.dueDate,
             // Debit leg of the recognition: an expense leaf, or 1.1.6 Estoques for an inventory purchase.
             expenseAccountCode: expenseAccount?.code ?? ESTOQUES_CODE,
@@ -990,11 +998,51 @@ export class PayableService {
         documentDate: dto.issueDate,
         attachmentId: dto.attachmentId,
       },
-      lines: [
-        { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: dto.amountCents, creditCents: 0 },
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: dto.amountCents },
-      ],
+      lines: this.recognitionLines(payable, expenseAccount, dto.amountCents, this.parseRecoverableLines(payable)),
     };
+  }
+
+  /**
+   * X6 F-X6-8 (a): `D estoque/despesa (amountCents − Σ recuperáveis) + D conta(s) a recuperar / C fornecedores
+   * (amountCents)`. Sem linhas recuperáveis é o par de sempre. Os códigos das contas a recuperar vêm
+   * resolvidos no create (`resolveRecoverableLines`) e persistidos na linha para o re-drive.
+   */
+  private recognitionLines(
+    payable: Payable,
+    expenseAccount: Account | null,
+    amountCents: number,
+    recoverable: { accountCode: string; amountCents: number }[],
+  ): PostEntryInput['lines'] {
+    const recoverableSum = recoverable.reduce((a, l) => a + l.amountCents, 0);
+    return [
+      { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: amountCents - recoverableSum, creditCents: 0 },
+      ...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })),
+      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents },
+    ];
+  }
+
+  private parseRecoverableLines(payable: Payable): { accountCode: string; amountCents: number }[] {
+    const raw = (payable as Payable & { recoverableTaxLines?: string | null }).recoverableTaxLines;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as { accountCode: string; amountCents: number }[];
+    return parsed.map((l) => ({ accountCode: l.accountCode, amountCents: l.amountCents }));
+  }
+
+  /** X6: valida as contas a recuperar (existem no escopo, folha, natureza Asset) e devolve o que se persiste. */
+  private async resolveRecoverableLines(
+    scope: AccountingScope,
+    dto: CreatePayableInput,
+  ): Promise<{ accountId: string; accountCode: string; amountCents: number; kind: string }[]> {
+    const out: { accountId: string; accountCode: string; amountCents: number; kind: string }[] = [];
+    for (const line of dto.recoverableTaxLines ?? []) {
+      const account = await this.accountRepo.findById(scope, line.accountId);
+      if (!account || account.deletedAt) throw new ValidationError(`Conta a recuperar '${line.accountId}' não existe neste escopo.`);
+      if (!account.acceptsEntries || account.nature !== 'Asset') {
+        throw new ValidationError(`Conta a recuperar '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
+      }
+      out.push({ accountId: account.id, accountCode: account.code, amountCents: line.amountCents, kind: line.kind });
+    }
+    return out;
   }
 
   /** Recognition input rebuilt from a persisted row (reconcile re-drive). `expenseAccount` is null for
@@ -1015,10 +1063,7 @@ export class PayableService {
         externalRef: payable.documentNumber ?? undefined,
         documentDate: this.toDateOnly(payable.issueDate),
       },
-      lines: [
-        { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: centsFromDb(payable.amountCents), creditCents: 0 },
-        { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: centsFromDb(payable.amountCents) },
-      ],
+      lines: this.recognitionLines(payable, expenseAccount, centsFromDb(payable.amountCents), this.parseRecoverableLines(payable)),
     };
   }
 

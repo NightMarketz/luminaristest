@@ -96,6 +96,10 @@ export interface IAccountingPolicy {
   canManageAccountingSettings(scope: AccountingScope): boolean;
   canReadAccountingSettings(scope: AccountingScope): boolean;
 
+  /** BE-INCR-NFE-COST-REGIME (nó X6, item 2): perfil fiscal — escrita = mesma régua de fechar período. */
+  canReadFiscalProfile(scope: AccountingScope): boolean;
+  canManageFiscalProfile(scope: AccountingScope): boolean;
+
   /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this
    * scope (ADR-INCR-APPROVAL F3, re-ratified fork-a-fork 2026-07-14). Today it is OFF while

@@ -130,6 +130,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canRead(scope);
   }
 
+  // BE-INCR-NFE-COST-REGIME (nó X6, item 2)
+  canReadFiscalProfile(scope: AccountingScope): boolean {
+    return this.canRead(scope);
+  }
+
+  canManageFiscalProfile(scope: AccountingScope): boolean {
+    return this.canClosePeriod(scope);
+  }
+
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto
   // ownerUserId === actorUserId (single-user → staging usável), ativa sozinha quando um delegado
   // opera os livros do dono (ownerUserId !== actorUserId, via membership futuro). Ver

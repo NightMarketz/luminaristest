@@ -49,6 +49,7 @@ model User {
   reconcilePendingItems   ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
   bankSettlementItems     BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
   accountingScopeSettings AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
+  fiscalProfiles          FiscalProfile[] // Relation to FiscalProfile (BE-INCR-NFE-COST-REGIME, nó X6)
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
@@ -429,31 +430,33 @@ model AuditChainHead {
 // (`code`, e.g. "1.1.2") — the parent is the prefix; there is no self-relation.
 // Only leaf accounts (`acceptsEntries`) receive ledger lines.
 model Account {
-  id                  String                    @id @default(cuid())
-  userId              String
-  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId              String // business unit (DynamicTable row id; scoped string, not a FK)
-  code                String // hierarchical key, e.g. "1.1.2"
-  name                String
-  nature              String // Asset | Liability | Equity | Revenue | Expense
-  acceptsEntries      Boolean                   @default(true)
+  id                     String                    @id @default(cuid())
+  userId                 String
+  user                   User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                 String // business unit (DynamicTable row id; scoped string, not a FK)
+  code                   String // hierarchical key, e.g. "1.1.2"
+  name                   String
+  nature                 String // Asset | Liability | Equity | Revenue | Expense
+  acceptsEntries         Boolean                   @default(true)
   // INCR-DIM-COMPLETENESS (B1, ADR-INCR-DIM-COMPLETENESS — EMENDA a ADR-INCR-DIM F5): quando true,
   // toda partida a esta conta EXIGE ≥1 etiqueta de dimensão (qualquer eixo — MVP booleano simples,
   // não por-eixo). Default false ⇒ contas seguem 100% opcionais (F5 permanece o default). Gate
   // prospectivo (SEC-B1-5): re-checado in-tx nos escritores de conteúdo original (postEntry/approve);
   // NUNCA retro-rejeita histórico. Toggle audita + canManage (SEC-B1-4). Zero mudança de dado (ADD COLUMN).
-  requiresDimension   Boolean                   @default(false)
-  postings            Posting[]
-  bankStatements      BankStatement[]           @relation("AccountBankStatements")
-  referentialMappings ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
-  payablesExpense     Payable[]                 @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
-  receivablesRevenue  Receivable[]              @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
-  bankChargeExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
-  bankChargeIncomeOf  AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
-  lalurEntries        LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
-  deletedAt           DateTime?
+  requiresDimension      Boolean                   @default(false)
+  postings               Posting[]
+  bankStatements         BankStatement[]           @relation("AccountBankStatements")
+  referentialMappings    ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
+  payablesExpense        Payable[]                 @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
+  receivablesRevenue     Receivable[]              @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
+  bankChargeExpenseOf    AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
+  bankChargeIncomeOf     AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
+  icmsRecuperavelOf      FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
+  pisCofinsRecuperavelOf FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
+  lalurEntries           LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
+  createdAt              DateTime                  @default(now())
+  updatedAt              DateTime                  @updatedAt
+  deletedAt              DateTime?
 
   @@unique([userId, unitId, code]) // real DB constraint — each unit owns its chart
   @@index([userId, unitId])
@@ -912,6 +915,7 @@ model Payable {
   counterparty        Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
   status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
   paidCents           BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): cache atomico de SUM(payments ACTIVE); gate de soma `paidCents <= amountCents - novo`; nunca fonte de relatorio oficial
+  recoverableTaxLines String? // X6 F-X6-8 a: JSON [{accountId, amountCents}] dos créditos a recuperar reconhecidos NO MESMO entry (D estoque líquido + D a recuperar / C fornecedores = amountCents); persistido para o re-drive do reconcile reconstruir o mesmo entry
   createdById         String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById       String? // actor who cancelled; plain string
   cancelReason        String?
@@ -1262,6 +1266,37 @@ model AccountingBinding {
 // falhar/bloquear depois de já ter sido resolvido — decisão forçada pelo `@@unique` abaixo (uma
 // segunda linha para a MESMA chave colidiria em P2002; memória
 // `unique-de-idempotencia-x-soft-delete`), não uma escolha livre.
+// BE-INCR-NFE-COST-REGIME (nó X6) — perfil fiscal do tenant (F-X6-1 a): os eixos que decidem o custo D3
+// da NF-e de compra. Prisma first-class (§2.1 — invariante de dinheiro nunca vira campo de preset).
+// F-X6-3 → (b) (cédula 14/09): 3 flags das exceções do crédito de PIS/COFINS com DEFAULT CONSERVADOR
+// (sem crédito). R8 (ADR-DFE EMENDA 14/09 item 2): `partnerAccountRef` nasce aqui, reservado.
+// F-X6-8 → (a) (2026-09-15): contas de "a recuperar" para o crédito de ICMS e de PIS/COFINS.
+model FiscalProfile {
+  id                                 String    @id @default(cuid())
+  userId                             String
+  user                               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                             String // 1 perfil por unidade (R8: unidade = filial do mesmo CNPJ raiz)
+  regimeTributario                   String // SIMPLES | PRESUMIDO | REAL (informativo; consistência com os dois abaixo)
+  icmsContribuinte                   Boolean   @default(false) // crédito de ICMS próprio na compra para revenda (item 8)
+  pisCofinsRegime                    String // SIMPLES | CUMULATIVO | NAO_CUMULATIVO (item 10: crédito só no NAO_CUMULATIVO)
+  pisCofinsCreditExcludesIcms        Boolean   @default(true) // Lei 14.592/2023 art. 6º — default conservador
+  pisCofinsCreditIncludesIpi         Boolean   @default(false) // IN RFB 2.121/2022 art. 170 [NC] — default sem crédito
+  pisCofinsCreditFromSimplesSupplier Boolean   @default(false) // ADI SRF 15/2007 [NC] — default sem crédito
+  icmsRecuperavelAccountId           String? // F-X6-8 a: conta 1.1.x "ICMS a recuperar" (contador, §5)
+  icmsRecuperavelAccount             Account?  @relation("FiscalProfileIcmsRecuperavel", fields: [icmsRecuperavelAccountId], references: [id], onDelete: Restrict)
+  pisCofinsRecuperavelAccountId      String? // F-X6-8 a: conta 1.1.x "PIS/COFINS a recuperar"
+  pisCofinsRecuperavelAccount        Account?  @relation("FiscalProfilePisCofinsRecuperavel", fields: [pisCofinsRecuperavelAccountId], references: [id], onDelete: Restrict)
+  partnerAccountRef                  String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
+  createdById                        String?
+  updatedById                        String?
+  createdAt                          DateTime  @default(now())
+  updatedAt                          DateTime  @updatedAt
+  deletedAt                          DateTime?
+
+  @@unique([userId, unitId])
+  @@map("fiscal_profiles")
+}
+
 // F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por
 // confirmação humana (cédula 10/09 resposta 20). Tabela IRMÃ de reconcile_pending_items (R9): outro
 // produtor (extrato, não venda/CRM), outra resolução (confirm/reject humano, não rescan) e outra

@@ -45,7 +45,23 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   /** Successive createPayable behaviours: 'ok' resolves, 'dup' throws the @@unique ValidationError. */
   createResults?: Array<'ok' | 'dup'>;
+  /** X6: perfil fiscal do escopo; `null` = ausente (F-X6-6 a → 400). Default neutro: não-contribuinte, CUMULATIVO. */
+  profile?: Partial<FiscalProfileStub> | null;
 }
+
+interface FiscalProfileStub {
+  icmsContribuinte: boolean;
+  pisCofinsRegime: 'SIMPLES' | 'CUMULATIVO' | 'NAO_CUMULATIVO';
+  pisCofinsCreditExcludesIcms: boolean;
+  pisCofinsCreditIncludesIpi: boolean;
+  pisCofinsCreditFromSimplesSupplier: boolean;
+  icmsRecuperavelAccountId: string | null;
+  pisCofinsRecuperavelAccountId: string | null;
+}
+const NEUTRAL_PROFILE: FiscalProfileStub = {
+  icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false,
+  pisCofinsCreditFromSimplesSupplier: false, icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null,
+};
 
 function build(opts: Opts = {}) {
   const createResults = [...(opts.createResults ?? ['ok'])];
@@ -64,10 +80,19 @@ function build(opts: Opts = {}) {
   };
   const policy = { canManagePayable: () => opts.canManage ?? true };
 
+  const fiscalProfile = {
+    requireCostRegime: jest.fn(async () => {
+      if (opts.profile === null) {
+        throw new ValidationError('fiscal_profile_missing: perfil fiscal da unidade não cadastrado');
+      }
+      return { ...NEUTRAL_PROFILE, ...(opts.profile ?? {}) };
+    }),
+  };
   const service = new NfeImportService(
     payableService as never,
     counterpartyRepo as never,
     policy as never,
+    fiscalProfile as never,
   );
   return { service, createPayable, counterpartyRepo };
 }
@@ -348,5 +373,56 @@ describe('NfeImportService.importPurchase — rateio em BigInt (sem fronteira de
     // Two identical lines ⇒ two identical shares. The float path would give [994239618, 994239620].
     expect(input.inventoryItems!.map((i) => i.valueCents)).toEqual([994239619, 994239619]);
     expect(input.inventoryItems!.reduce((a, i) => a + i.valueCents, 0)).toBe(1988479238);
+  });
+});
+
+describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-6 a, F-X6-8 a)', () => {
+  const PC_XML = readFileSync(join(__dirname, '../../../../lib/__tests__/fixtures/nfe/purchase-pis-cofins.SYNTHETIC.xml'), 'utf8');
+  const PC_MAPPINGS: ImportNfePurchaseInput['itemMappings'] = FULL_MAPPINGS;
+
+  it('F-X6-6 (a): sem perfil fiscal → 400 nomeado, nada é criado', async () => {
+    const { service, createPayable } = build({ profile: null });
+    await expect(service.importPurchase(scope, PURCHASE_XML, dto())).rejects.toThrow(/fiscal_profile_missing/);
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('item 7: perfil neutro (não-contribuinte, CUMULATIVO) = fixture de sempre, 19333, sem recoverableTaxLines', async () => {
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, PURCHASE_XML, dto());
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.amountCents).toBe(CUSTO_TOTAL);
+    expect(input.recoverableTaxLines).toBeUndefined();
+    expect(input.inventoryItems!.reduce((a, it) => a + it.valueCents, 0)).toBe(CUSTO_TOTAL);
+  });
+
+  it('item 8 + F-X6-8 (a): contribuinte de ICMS — passivo = bruto 19333, estoque = 16033, linha ICMS a recuperar de 3300 na conta do perfil', async () => {
+    const { service, createPayable } = build({ profile: { icmsContribuinte: true, icmsRecuperavelAccountId: 'acc-icms' } });
+    await service.importPurchase(scope, PURCHASE_XML, dto());
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.amountCents).toBe(19333);
+    expect(input.inventoryItems!.reduce((a, it) => a + it.valueCents, 0)).toBe(16033);
+    expect(input.recoverableTaxLines).toEqual([{ accountId: 'acc-icms', amountCents: 3300, kind: 'ICMS' }]);
+  });
+
+  it('F-X6-8 (a): crédito > 0 sem conta a recuperar configurada → 400 nomeado, nada é criado', async () => {
+    const { service, createPayable } = build({ profile: { icmsContribuinte: true, icmsRecuperavelAccountId: null } });
+    await expect(service.importPurchase(scope, PURCHASE_XML, dto())).rejects.toThrow(/recoverable_account_not_configured/);
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('item 10/11 (F-X6-3 b): NAO_CUMULATIVO + contribuinte na nota com PIS/COFINS — passivo 19333, estoque 19333 − 3300 − 784, duas linhas a recuperar', async () => {
+    const { service, createPayable } = build({
+      profile: { icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO', icmsRecuperavelAccountId: 'acc-icms', pisCofinsRecuperavelAccountId: 'acc-pc' },
+    });
+    await service.importPurchase(scope, PC_XML, dto({ itemMappings: PC_MAPPINGS }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.amountCents).toBe(19333);
+    expect(input.inventoryItems!.reduce((a, it) => a + it.valueCents, 0)).toBe(19333 - 3300 - 784);
+    expect(input.recoverableTaxLines).toEqual([
+      { accountId: 'acc-icms', amountCents: 3300, kind: 'ICMS' },
+      { accountId: 'acc-pc', amountCents: 784, kind: 'PIS_COFINS' },
+    ]);
+    // item 1 (TRIBUTADO) carrega o crédito de PIS/COFINS; itens 2/3 (monofásicos) só o de ICMS
+    expect(input.inventoryItems!.map((it) => it.valueCents)).toEqual([10545 - 1800 - 784, 5272 - 900, 3516 - 600]);
   });
 });
