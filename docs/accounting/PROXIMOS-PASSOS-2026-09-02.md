@@ -1,5 +1,11 @@
 # Próximos passos — 2026-09-02
 
+> ⚠️ **SUPERSEDED** — a fila deste doc foi absorvida pelo [plano SDD de 07/09](PLANO-SDD-SEQUENCIAL-2026-09-07.md),
+> pelos grafos de [07/09](GRAFO-DEPENDENCIAS-2026-09-07.md) → [11/09](GRAFO-DEPENDENCIAS-2026-09-11.md) →
+> [**14/09**](GRAFO-DEPENDENCIAS-2026-09-14.md) e pela ordem vigente em
+> [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md). Mantido como registro histórico
+> (a ratificação do host M2 e do regime-alvo Lucro Real, de 02/09, continua citável aqui).
+
 > **Substitui** `PROXIMOS-PASSOS-2026-09-01.md`, que segue válido como registro histórico. O que mudou
 > em um dia: as cinco lacunas do fluxo venda→SPED **foram implementadas e mergeadas** (PR #259, merge
 > `f28ac87c`; fold das linhas pelo #260), e o dono ratificou **duas decisões** que reordenam o fim da

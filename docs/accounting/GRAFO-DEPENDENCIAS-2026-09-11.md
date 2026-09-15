@@ -1,5 +1,10 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-11) — SUPERSEDE o de 07/09
 
+> **⚠️ SUPERSEDIDO em 2026-09-14 por [GRAFO-DEPENDENCIAS-2026-09-14.md](GRAFO-DEPENDENCIAS-2026-09-14.md).**
+> O fold de 14/09 fechou R5..R10 (cédulas #318/#319), marcou X4 ✅ parcial (#313/#315/#316) e D3b ✅, e
+> **corrigiu a aresta "parser CNAB 240 retorno ✅"** (é parser de extrato; retorno de cobrança não existe —
+> BRIEF F7 §0.1). Mantido como histórico; **não use para escolher nó.**
+
 > **O que este doc é:** o [grafo de 07/09](GRAFO-DEPENDENCIAS-2026-09-07.md) **reconciliado** com a
 > [cédula 2026-09-10](CEDULA-DECISAO-2026-09-10-entrevista.md) (23 respostas do dono + 4 forks novos +
 > respostas F3/F2/F13 + emenda F-DFE-2) e com o re-baseline da régua (master map §7.1: **38/57** —

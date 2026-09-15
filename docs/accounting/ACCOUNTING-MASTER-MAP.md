@@ -8,6 +8,18 @@
 > **Regra de uso (arquiteto/orquestrador):** nenhuma skill de geração roteia contra um nó marcado
 > 🔴/⚫ sem **ADR em disco + sinal humano**. Nós ✅ estão fechados; nós ⏳ são o incremento corrente.
 >
+> **🔁 FOLD 2026-09-14 (2ª leitura, noite) — FE-INCR-LALUR PR 1 MERGEADO + cédulas de 14/09 dobradas — **PR #315 MERGEADO em `main` (squash `c1e4b7a5`, 14/09)**; #318 `93e52adb` e #319 `b002f78c` ancestrais.**
+> Tela de cadastro do e-Lalur/e-Lacs na aba Compliance (`LalurPanel`/`LalurEntryModal`/`LalurParteBModal`/`CatalogCombobox`, 4 forks F-FE-1..4 → a) + o único toque no BE:
+> `GET /api/lalur/catalog` (+1 path na spec commitada e no path-count guard — `openapi.json` +91 linhas, `openapi-paths.test.ts` ajustado; conflito com #316 resolvido pela regra pré-decidida — `main` venceu no snapshot de DTO, PR venceu no endpoint).
+> **Régua inalterada: 41/57** — pela mesma regra dos folds de 12/09 e 14/09 (precedente C10 / item 13), a tela é **crescimento do nó X4**, não nó novo; leitura alternativa declarada: 42/57 se o dono
+> quiser contar a tela. **FE-INCR-LALUR PR 2** (M410 + fechar trimestre + diagnóstico na tela, F-FE-4 → a) fica `ready` sem item de fila próprio. **Decisões dobradas** (cédula #319 prevalece onde diverge do #318):
+> R5 adiar Serpro · R6 **financeiro antes de fiscal** · R7 perímetro zero-diff emendado (1 símbolo; `ADR-P2` EMENDA em `main`) · R8 instância = CNPJ raiz, `units.cnpj` fica (`ADR-INCR-DFE` EMENDA em `main`) ·
+> R9 **tabela irmã** para o F7 (BRIEF `BE-INCR-BANK-SETTLEMENT` em `main`, 5 forks pendentes) · R10 ADR P-IA adiado · F-X6-1..6 = 5×(a) + **F-X6-3 → (b)** (BRIEF #309 exige emenda antes da feature).
+> **Autorizados sem número de nó:** SEED-MY (pré-condição de gate: alvo dos runbooks H1/H2/H3 passa a ser o seed 2025+2026; exige **B-4 assinado**, hoje 0 checkbox marcado) e X4-14 (crescimento do X4, antes da H1 2ª passada).
+> **Em voo ao fechar esta leitura:** PR #320 (P2 comportamento 11, código, CI parcial, sem review), PR #321 (BRIEF C11, 6 forks), PR #322 (BRIEF C12, 4 forks). **Grafo vigente:**
+> [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) (o de 11/09 supersedido — corrige a afirmação "parser CNAB 240 retorno ✅": `lib/cnab.ts` parseia **extrato** Segmento E; retorno de
+> cobrança não existe e pressupõe remessa F5). Ordem de execução e detalhamento por passo: [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md) §Detalhamento. Índice da pasta: [`README.md`](README.md).
+>
 > **🔁 FOLD 2026-09-14 — ECF FASE 3C PARTE B MERGEADA: M410/M500/M510/M312/M315 + fechamento trimestral — **PR #316 MERGEADO em `main` (squash `c96e2227`, 14/09)**.**
 > Nó **X4** ganha o que faltava do BRIEF 3B: **item 13 (BRIEF 3B) sai de ⚠️ PARCIAL para ✅** — `M410`/`M415`
 > (movimentos sem reflexo na Parte A, PF/BC derivado do razão no fechamento, Fork F-3C-2→a), `M500`/`M510`
@@ -594,9 +606,30 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 > continuam ⚫ — **cada um exige ADR + sinal humano antes de qualquer código** (ORCH-006).
 >
 > **[EMENDA 2026-09-02 — apontadores que faltavam]** Esta fila é a ordem *estrutural*. A ordem de
-> execução vigente, com as ratificações do dono, está em `PROXIMOS-PASSOS-2026-09-02.md` (substitui os
+> execução vigente, com as ratificações do dono, está em ~~`PROXIMOS-PASSOS-2026-09-02.md`~~ (substitui os
 > docs de fila anteriores, que seguem como histórico). O preflight dos cinco gates humanos do Bloco A
 > está em `KITS-PREFLIGHT-2026-09-02.md` — preparação de agente, **não** evidência de runbook.
+>
+> **[EMENDA 2026-09-14 — fila vigente e itens sem linha]** A ordem de execução vigente é
+> [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md) (R6: contábil → **financeiro** → fiscal;
+> detalhamento por passo na 2ª leitura) sobre o grafo
+> [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md). Os itens abaixo foram
+> **autorizados pelas cédulas de 14/09** (#318/#319) e não tinham linha nesta fila — entram aqui como
+> apontadores; a linha longa de cada um vive no BRIEF/grafo, não se duplica:
+>
+> | Item | Bloco | Estado (14/09 noite) | Onde |
+> |---|---|---|---|
+> | **SEED-MY** seed multi-exercício 2025+2026 | A (pré-condição dos gates H1/H2/H3) | ⬜ BRIEF não escrito; **exige B-4 assinado** (item 0 de gates) | cédula #318 §4; `RUNBOOK-H1-PVA.md` A1 |
+> | **X4-14** aviso no diagnóstico (ajuste parcial sem M312) | B — crescimento do item 10 (X4) | ⬜ emenda BRIEF 3C não escrita; **antes da H1 2ª passada** | cédula #319; fold 14/09 |
+> | **FE-INCR-LALUR PR 2** (M410 + fechar + diagnóstico na tela) | B — crescimento do item 10 (X4) | `ready` (F-FE-4 → a; #315 + #316 em `main`); só com "executa" | `FE-INCR-LALUR-brief.md` §3 |
+> | **P2 comportamento 11** (T0 `onboardingCompletedAt`, R7) | B — P2 (ROADMAP Fase P2) | 🔄 **PR #320** aberto | `ADR-P2` EMENDA 14/09 |
+> | **C11** revisão profissional editável | B — nó novo do re-baseline 10/09 | 🔄 BRIEF em **PR #321**, 6 forks pendentes | `BE-INCR-REVIEW-LAYER-brief.md` (na branch) |
+> | **C12** máscaras de identidade no SPED | B — nó novo do re-baseline | 🔄 BRIEF em **PR #322**, 4 forks pendentes | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` (na branch) |
+> | **C6b** pacote ampliado ao contador | B — nó novo do re-baseline | ⬜ BRIEF não escrito (tabela filha + migração) | cédula 10/09 resposta 8 |
+> | **F7** baixa por retorno bancário (tabela irmã, R9) | B — financeiro, **antes de X6** (R6) | ⬜ BRIEF em `main`; **5 forks F-F7-1..5 ao dono** | `BE-INCR-BANK-SETTLEMENT-brief.md` |
+> | **X6** custo D3 por regime do tenant | B — fiscal | ⬜ forks ✅ (5a + F-X6-3 b); **emenda do BRIEF #309 antes da feature** | `BE-INCR-NFE-COST-REGIME-brief.md` |
+> | **C8** imobilizado + depreciação | B — item 12 "Imobilizado" desta fila | ⬜ ADR `ADR-INCR-FIXED-ASSETS` não aberto; forks com recomendação = delegados | cédula #319 |
+> | **Pedido ao contador** (4 linhas novas) | A — dado externo D1 | ⬜ não montado; **dono envia** | `PEDIDO-CONTADOR-2026-09-03.md` + passo 11 |
 
 ### Bloco A — resíduos sobre trabalho já mergeado (fechar primeiro; custo baixo, valor imediato)
 
@@ -834,12 +867,12 @@ Antes de gerar "novo", reuse (Contrato §0). Confirmado por código:
 > mergear~~ → **39/57 em 2026-09-11**: PR #305 `7725f0ca` mergeado, review independente ×2 delta PASS). O percentual cai
 > **sem nenhuma linha de código ter sido perdida** — o produto que se decidiu construir ficou maior.
 >
-> **Grafo vigente:** [GRAFO-DEPENDENCIAS-2026-09-11.md](GRAFO-DEPENDENCIAS-2026-09-11.md) (o de 07/09 está supersedido).
+> **Grafo vigente:** [GRAFO-DEPENDENCIAS-2026-09-14.md](GRAFO-DEPENDENCIAS-2026-09-14.md) (os de 07/09 e 11/09 estão supersedidos; o de 14/09 dobra R5..R10, #313/#315/#316 e corrige a aresta do CNAB no F7).
 
 | Módulo | Código | Nós novos (por quê) | Nós que cresceram |
 |---|---|---|---|
 | **Contábil** | ~~16/19 (84%)~~ ~~16/22 (73%)~~ **17/22 (77%, fold 2026-09-11: C6 CONTADOR-DELIVERY ✅ #305 `7725f0ca`)** | **+3**: revisão profissional editável (resposta 2 + F-EDIT-1 → a+c: edita o DADO ou lança acerto, e regera — nunca o arquivo); pacote ampliado ao contador (resposta 8 reabre F-CD3: balancete, razão, conciliação, amostra); endurecimento dos campos de identidade da geração SPED (resposta 3 — qualificação J930 vira enum do manual, CPF/CNPJ/UF com máscara) | retificação passa a **preservar a versão anterior** (resposta 7); tabela de depreciação vira **editável por tenant** semeada do Anexo III (resposta 6) |
-| **Financeiro** | ~~15/17 (88%)~~ ~~15/19 (79%)~~ **16/19 (84%, fold 2026-09-11: F3 baixa parcial ✅ #307 `b45eaf62`)** | **+2**: Pix vira frente própria (resposta 21 — "API separada"); consumo do retorno bancário → **item de conciliação pendente** (F-BAIXA-1 → a, reusa a tabela da rodada 3) | remessa passa a suportar N leiautes de banco, não um; encargo (multa/juros) entra **pelo retorno**, não pelo razão (resposta 22) |
+| **Financeiro** | ~~15/17 (88%)~~ ~~15/19 (79%)~~ **16/19 (84%, fold 2026-09-11: F3 baixa parcial ✅ #307 `b45eaf62`)** | **+2**: Pix vira frente própria (resposta 21 — "API separada"); consumo do retorno bancário → **item de baixa pendente confirmado por humano** (F-BAIXA-1 → a; ~~reusa a tabela da rodada 3~~ → **R9 14/09: tabela irmã `BankSettlementItem`**, `reconcile_pending_items` intocada; "retorno" = linha `UNMATCHED` de extrato já importado — retorno de cobrança CNAB T/U **não existe** e pressupõe remessa F5, BRIEF F7 §0.1) | remessa passa a suportar N leiautes de banco, não um; encargo (multa/juros) entra **pelo retorno**, não pelo razão (resposta 22) — comportamento **novo**, não configuração (`registerPayment` rejeita acima do saldo) |
 | **Fiscal** | ~~7/13 (54%)~~ ~~7/16 (44%)~~ ~~8/16 (50%, fold 2026-09-12: X4 ECF Fase 3B L/M/N + e-Lalur ✅ parcial #313 `197cc9fc` — item 13 M410/M500 = crescimento do nó, BRIEF 3C)~~ **8/16 (50%, fold 2026-09-14: item 13 fecha — M410/M500/M510/M312/M315 ✅ #316 `c96e2227`, mesmo nó X4; item 14 do BRIEF 3C (aviso M312) diferido, follow-up)** | **+3**: adaptador por TIPO de documento (resposta 9 — NFS-e e NF-e 55 deixam de ser um adaptador só); eventos de DF-e com prazo legal validado (resposta 13); **catálogo de adições/exclusões dirigido por dado** (F-COB-1 → tabela, não `if`) | custo D3 vira configuração por tenant, não fórmula fixa (resposta 5); parser de retorno aceita XML/JSON/PDF (resposta 12); adaptador nasce com IBS/CBS (resposta 15) |
 | **Total** | ~~38/49 (78%)~~ ~~38/57 (67%)~~ ~~39/57 (68%)~~ ~~40/57 (70%, fold 2026-09-11, 2ª passada)~~ ~~41/57 (72%, fold 2026-09-12: X4 #313)~~ **41/57 (72%, fold 2026-09-14: X4 #316, crescimento — mesmo nó, numerador inalterado)** | +8 | — |
 
