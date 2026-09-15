@@ -4,7 +4,7 @@
 > [plano SDD](PLANO-SDD-SEQUENCIAL-2026-09-07.md), nó **X6** do [grafo 11/09](GRAFO-DEPENDENCIAS-2026-09-11.md).
 > **É a emenda do `ADR-INCR-NFE §D3`** que o próprio ADR exigia antes de qualquer molde não-salão reusar
 > `lib/nfe.ts` ("flag/guarda de regime — recuperabilidade de ICMS por tenant — que troque a fórmula").
-> **Este documento NÃO escreve código** — checklist + contratos esboçados + forks PENDENTES.
+> **Este documento NÃO escreve código** — checklist + contratos esboçados. **Forks: F-X6-1..6 ratificados pela cédula 14/09 (F-X6-3 → b); F-X6-7/8 ratificados 2026-09-15 — ver EMENDA 2026-09-15 no fim.** Os itens 10/11 abaixo estão SUPERADOS pela emenda.
 
 ---
 
@@ -87,7 +87,7 @@ Tags: **[direto]** implementável sem fork; **[cond:F-X6-n]** pausa até o fork;
 6. **[cond:F-X6-1, F-X6-6]** `NfeImportService.importPurchase` lê o perfil fiscal do escopo **antes** de
    computar o custo. Sem perfil → comportamento do Fork **F-X6-6** (bloquear × default). Testável: teste de
    serviço com perfil ausente reproduz exatamente o caminho ratificado.
-7. **[direto]** Fórmula base **inalterada** para o tenant não-contribuinte (o que hoje existe vira o ramo
+7. **[direto]** Fórmula base **inalterada** para o tenant não-contribuinte **e com `pisCofinsRegime ≠ NAO_CUMULATIVO`** (EMENDA 15/09: no não-cumulativo o item 10 vigente subtrai o crédito mesmo sem ICMS) (o que hoje existe vira o ramo
    `icmsContribuinte=false`): `custo = vProd − vDesc + vFrete + vSeg + vOutro + vIPI + vST` — ICMS próprio
    **incluso** (tributo não recuperável integra o custo — RIR/2018 art. 301 §3 a contrario; CPC 16 item 11).
    Testável: fixture atual do `NfeImportService.test.ts:20` continua dando 19333 sob perfil não-contribuinte.
@@ -98,12 +98,12 @@ Tags: **[direto]** implementável sem fork; **[cond:F-X6-n]** pausa até o fork;
    dos itens com direito a crédito, sob F-X6-2 a); perfil não-contribuinte → 19333.
 9. **[direto]** Invariante de rateio preservado: `Σ custo_item === custoTotalCents` em **ambos** os ramos
    (resíduo na última linha, BigInt). Testável: nota com desconto+frete+IPI+ICMS que não dividem exato.
-10. **[cond:F-X6-3]** PIS/COFINS: sob a recomendação (a) o custo **não** subtrai crédito de PIS/COFINS neste
+10. ~~**[cond:F-X6-3]**~~ **SUPERADO — ver EMENDA 2026-09-15 (F-X6-3 → b).** ~~PIS/COFINS: sob a recomendação (a) o custo **não** subtrai crédito de PIS/COFINS neste~~
     incremento; `pisCofinsRegime` é persistido e **lido** só para (i) rejeitar combinação inconsistente
     (`SIMPLES` + `icmsContribuinte=true` → 400, ver §4 f4) e (ii) preencher o segundo campo da regra (j)
     (`baseCreditoPisCofinsCents = custo − vST`, sem ICMS próprio até T1b) **sem efeito contábil**. Testável:
     o campo aparece no resultado do preview/import e o passivo/estoque não mudam por ele.
-11. **[cond:F-X6-4]** Monofásico: **por produto, não por tenant** — só faz sentido com o crédito de PIS/COFINS
+11. ~~**[cond:F-X6-4]**~~ **SUPERADO — ver EMENDA 2026-09-15 (F-X6-4 ativo, F-X6-7 → a).** ~~Monofásico: **por produto, não por tenant** — só faz sentido com o crédito de PIS/COFINS~~
     (F-X6-3). Sob a recomendação, **nada no custo** neste incremento; entra como pendência nomeada (§4 f3).
 12. **[direto]** `POST /api/nfe/preview` devolve `custoEstoqueCents`, `baseCreditoPisCofinsCents` e o
     `regimeAplicado` (eco do perfil) — o operador vê **antes** de importar qual fórmula vai valer.
@@ -197,7 +197,7 @@ export function acquisitionCost(t: NfeTotais, itens: NfeItem[], regime: CostRegi
 
 ---
 
-## 3. Forks NOVOS — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+## 3. Forks NOVOS — ✅ RATIFICADOS (cédula 14/09: 1,2,4,5,6 → a; 3 → b) — texto de 11/09 mantido como registro
 
 ### F-X6-1 — Onde vive a configuração
 - **(a) `FiscalProfile` Prisma por escopo, criado AGORA com os eixos do custo** (é a mesma entidade que o
@@ -417,8 +417,14 @@ correta é `D estoque (custo líquido) + D tributos a recuperar (crédito) / C f
   reconhecimento em estoque, **linhas de crédito a recuperar** em contas configuráveis do `FiscalProfile`
   (`icmsRecuperavelAccountId`, `pisCofinsRecuperavelAccountId`, FK `Account`, `Restrict`); sem conta
   configurada e crédito > 0 → **400 nomeado** (mesmo padrão do F7 Fase C). Contas = pendência do contador.
-  Toca `createPayable` (AP) — nó vizinho: entra como **item 18** com o contrato explícito
+  Toca `createPayable` (AP) — nó vizinho: entra como **item 18** (abaixo) com o contrato explícito
   (`CreatePayableInput.recoverableTaxLines?: {accountId, amountCents}[]`, reconhecidos no mesmo entry).
+  **O que muda no AP, nomeado (review #327):** (i) o `superRefine` de `PayableDto.ts:86-118` hoje exige
+  `Σ inventoryItems.valueCents === amountCents` — passa a `Σ inventoryItems + Σ recoverableTaxLines ===
+  amountCents` (com `amountCents = vNF`, Σ itens = custo líquido); (ii) `PayableService.buildRecognitionInput`
+  (`:993-994`) hoje debita `amountCents` inteiro na conta de reconhecimento — passa a `D estoque (Σ itens) +
+  D conta(s) a recuperar (Σ linhas) / C 2.1.2 (amountCents)`. Sem os dois, o DTO devolve 400 antes de qualquer
+  serviço.
 - (b) Manter `amountCents = custo` — passivo errado por desenho; rejeitado por regra de domínio (o AP é
   quem paga a nota inteira).
 - (c) Postar o crédito num 2º lançamento fora do AP — quebra o "1 nota = 1 createPayable" (F-NFE7 a).
@@ -432,6 +438,7 @@ correta é `D estoque (custo líquido) + D tributos a recuperar (crédito) / C f
 | f6 | Crédito não-cumulativo = 1,65% (PIS) + 7,6% (COFINS) sobre a base de aquisição para revenda | Lei 10.637/2002 art. 2º/3º; Lei 10.833/2003 art. 2º/3º | [NC] — fora do corpus; **baixar antes da feature** (`scripts/baixar-fontes-oficiais.mjs`, 2 entradas novas) |
 | f7 | Exclusão do ICMS da base do crédito (desde 05/2023) | Lei 14.592/2023 art. 6º | [NC] — idem |
 | f8 | Listas de NCM monofásicos (F-X6-7 a) | Leis 10.147, 10.485, 10.865, 9.718 art. 4º, 10.833 art. 58-A | [NC] — transcrição com artigo citado, ou o item 11 pausa |
+| f9 | CST de PIS/COFINS sem crédito na aquisição: 04 (monofásico), 05 (ST), 06 (alíquota zero), 07 (isento), 08 (sem incidência), 09 (suspensão) | Tabela de CST PIS/COFINS (MOC/NF-e, Anexo — grupos Q/S) | [NC] — transcrever do MOC no corpus antes da regra dura do item 11 |
 
 **Linha nova ao contador (pedido do passo 11):** *"Regime de PIS/COFINS de cada tenant (cumulativo ×
 não-cumulativo) e, no não-cumulativo, a posição sobre as 4 exceções: ICMS fora da base (sim, pela Lei
@@ -440,8 +447,14 @@ produtos monofásicos que ele reconhece — os defaults do sistema são conserva
 resposta."*
 
 ### O que esta emenda NÃO muda
-- Itens 1–9, 12–17 do §1 (com o acréscimo de campos ao 12 e 13 acima); F-X6-1/2/5/6 → (a) intactos.
+- Itens 1–6, 8–9, 12–17 do §1 (com o acréscimo de campos ao 12 e 13 acima); o **item 7** ganha o qualificador
+  `pisCofinsRegime ≠ NAO_CUMULATIVO`; F-X6-1/2/5/6 → (a) intactos.
+- **Item 18 (novo, F-X6-8 a):** `Payable.amountCents = vNF`; `createPayable` recebe `recoverableTaxLines[]`
+  (ICMS recuperável do contribuinte — item 8 — e PIS/COFINS — item 10) e as reconhece **no mesmo entry**
+  do reconhecimento da nota (`D estoque + D a recuperar / C fornecedores`); contas por `FiscalProfile`
+  (`icmsRecuperavelAccountId`, `pisCofinsRecuperavelAccountId`); sem conta e crédito > 0 → 400 nomeado.
+  Testável: nota do contribuinte no não-cumulativo → passivo = vNF, estoque = líquido, Σ recuperáveis =
+  vNF − líquido; nota sem crédito → entry idêntico ao de hoje.
 - O ICMS-ST continua no custo (f2); o ICMS próprio recuperável sai só para o contribuinte (item 8).
-- Nada de apuração/escrituração do crédito (X7/X8): aqui o crédito só **valoriza o estoque**; o lançamento
-  do crédito a recuperar (`1.1.x PIS/COFINS a recuperar`) é do ADR de apuração — **achado fora de escopo**,
-  registrado: sem ele, o custo menor não tem contrapartida no ativo → o BRIEF de X7 tem de fechar.
+- Nada de **apuração** do crédito (X7/X8): aqui o crédito nasce no ativo (`a recuperar`, item 18) e valoriza
+  o estoque líquido; a **baixa** desse ativo contra o tributo devido é do ADR de apuração — fora de escopo.
