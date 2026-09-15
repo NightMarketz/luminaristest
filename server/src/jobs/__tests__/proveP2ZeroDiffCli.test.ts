@@ -231,6 +231,29 @@ describe('classifyZeroDiffViolations — função pura (BE-INCR-P2-VERTICAL-CLIN
     expect(report.vetoedFileViolations).toEqual(['server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts']);
   });
 
+  // ── Harness de teste fora do perímetro (decisão do dono 2026-09-15, questionário na sessão do PR #320;
+  //    ADR-P2 EMENDA 2026-09-15): `__tests__/` não é ledger nem motor — um harness que replaya migração
+  //    quebra a cada coluna nova e teria de ser consertado dentro do perímetro sem ser "diff da vertical".
+  it('__tests__/ dentro de features/accounting/ e do motor DynamicTable é ISENTO (harness não é ledger)', () => {
+    const report = classifyZeroDiffViolations([
+      'server/src/features/accounting/repositories/__tests__/CounterpartyIdentityNormalization.integration.test.ts',
+      'server/src/features/dynamicTables/services/__tests__/DynamicTableService.integration.test.ts',
+    ]);
+    expect(report.clean).toBe(true);
+    expect(report.perimeterViolations).toEqual([]);
+  });
+
+  it('a isenção de __tests__/ NÃO vaza para código de produção ao lado nem para um diretório que só contém "tests" no nome', () => {
+    const report = classifyZeroDiffViolations([
+      'server/src/features/accounting/repositories/CounterpartyRepository.ts',
+      'server/src/features/accounting/services/tests-helper.ts',
+    ]);
+    expect(report.perimeterViolations).toEqual([
+      'server/src/features/accounting/repositories/CounterpartyRepository.ts',
+      'server/src/features/accounting/services/tests-helper.ts',
+    ]);
+  });
+
   it('normaliza separador win32 (rg-win32-backslash-quebra-filtro-de-caminho) antes de classificar', () => {
     const report = classifyZeroDiffViolations(['server\\src\\features\\accounting\\services\\PostingService.ts']);
     expect(report.clean).toBe(false);
