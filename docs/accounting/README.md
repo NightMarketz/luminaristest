@@ -61,7 +61,7 @@
 | **F7** baixa por retorno bancário | [`BE-INCR-BANK-SETTLEMENT-brief.md`](BE-INCR-BANK-SETTLEMENT-brief.md) | ✅ (forks → a, 15/09) | #326 |
 | **C11** revisão profissional editável | [`BE-INCR-REVIEW-LAYER-brief.md`](BE-INCR-REVIEW-LAYER-brief.md) | ✅ BRIEF · 6 forks ao dono | #321 |
 | **C12** máscaras de identidade no SPED | [`BE-INCR-SPED-IDENTITY-MASKS-brief.md`](BE-INCR-SPED-IDENTITY-MASKS-brief.md) | ✅ BRIEF · 4 forks ao dono | #322 |
-| **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) | ✅ BRIEF · 5 forks ao dono | #324 |
+| **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) · [`…-execution-plan.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md) | ✅ BRIEF · 5 forks ✅ 16/09 · plano granular (3 PRs) · F-C6b-6..8 ✅ 16/09 · **executa dado 16/09** | #324 · #333 |
 | **SEED-MY** seed multi-exercício | [`SEED-MULTI-EXERCICIO-brief.md`](SEED-MULTI-EXERCICIO-brief.md) | ✅ BRIEF · bloqueado até B-4 | #325 |
 | **X6** custo D3 por regime | [`BE-INCR-NFE-COST-REGIME-brief.md`](BE-INCR-NFE-COST-REGIME-brief.md) | ✅ (emenda 15/09 + ERRATA) | #327 · #328 |
 | **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) | ✅ ADR+BRIEF · F-FA10/12/13 ao dono; execução não autorizada | #330 |
