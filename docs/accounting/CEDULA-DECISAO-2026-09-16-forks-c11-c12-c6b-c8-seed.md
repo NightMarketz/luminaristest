@@ -7,7 +7,7 @@
 > `GRAFO-DEPENDENCIAS-2026-09-14.md` §4.2). Cada pergunta levou a evidência citável, o que cada opção
 > **fecha**, e a recomendação marcada como 1ª opção (`duvidas-por-questionario-com-contexto`).
 > **O que não é:** autorização de implementação — ratificar fork abre a `sessao-feature` **só** com o
-> "executa" do dono por nó (ORCH-006). Nenhum "executa" foi dado nesta sessão.
+> "executa" do dono por nó (ORCH-006). **[Adendo, mesma sessão]** "executa C11" foi dado depois desta cédula → #334 mergeado; os demais seguem sem "executa".
 
 ## Sinal do dono (literal)
 
@@ -68,9 +68,9 @@ A coluna "Consequência" transcreve o que a opção **fecha**, como foi apresent
 
 | Nó | Estado antes | Estado depois | Próxima ação | Precisa de |
 |---|---|---|---|---|
-| **C11** | `plan` (6 forks) | **`ready`** | `sessao-feature` | "executa" do dono |
+| **C11** | `plan` (6 forks) | ~~`ready`~~ **✅ `done` #334 `a2c974cb`** ("executa C11" dado na mesma sessão; review FAIL B1 → fix → PASS) | — | — |
 | **C12** | `plan` (4 forks + transcrição) | **`ready` após transcrição** | transcrição J930 (ECD L9) + 0930 (ECF L12) por script (precedente `transcrever-ecf-lmn.mjs`) → `sessao-feature` | transcrição = trabalho de agente sem fork; feature = "executa" |
-| **C6b** | `plan` (5 forks) | **`ready`**, **serial depois de C11** (ambos tocam `buildPackage`, F-C11-3 × F-C6b-1) | `sessao-feature` | "executa" + C11 mergeado |
+| **C6b** | `plan` (5 forks) | **`ready`** (~~serial depois de C11~~ — C11 mergeado #334; o gate F-C11-3 já está em `AccountingDeliveryService`, C6b o herda) | `sessao-feature` | "executa" do dono |
 | **C8** | `plan` (3 forks) | **`ready`** | `sessao-feature` (37 comportamentos; ADR C8 Proposed → Accepted no fold) | "executa" do dono |
 | **SEED-MY** | `plan` (2 forks) + gate | forks fechados; **segue bloqueado por B-4** | `job-generator` só após assinatura | **B-4 assinado** (gate humano) |
 
