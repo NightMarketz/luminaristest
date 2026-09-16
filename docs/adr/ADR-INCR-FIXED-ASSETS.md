@@ -2,7 +2,9 @@
 
 - **Data:** 2026-09-15
 - **Status:** **Proposed → parecer anexado 2026-09-15 (§4): D1–D11 confirmados com refinamentos,
-  F-FA1..F-FA9 todos com recomendação ⇒ ratificados por delegação (cédula 2026-09-14, C8).** Próximo: o BRIEF
+  F-FA1..F-FA9 todos com recomendação ⇒ ratificados por delegação (cédula 2026-09-14, C8). EMENDA pós-review
+  independente do PR #330 (2026-09-15): 3 blockers fechados — forma real do Anexo III (D4), J801/J932/J935 na ECD
+  substituta (D9), tie-out em 2 txs (D3/parecer) — mais S1–S9; as emendas estão marcadas inline.** Próximo: o BRIEF
   `docs/accounting/BE-INCR-FIXED-ASSETS-brief.md` via `sessao-planejamento`. Forks (§3) **com
   recomendação escrita no parecer ficam ratificados por delegação** (cédula 2026-09-14, linha C8);
   fork **sem recomendação volta ao dono** por questionário. Nenhum código abre antes do BRIEF.
@@ -60,20 +62,25 @@ de errar — o parecer do arquiteto confirma/contesta e o que ficar sem recomend
 |---|---|---|
 | **0 linhas de imobilizado no repo**: `grep -c -iE "model FixedAsset\|Depreciation" server/prisma/schema.prisma` = 0; nenhum service/route com "imobilizado"/"depreciação" | verificado | grep nesta sessão sobre `origin/main` = `fb7ae649` |
 | A única semântica de "ativo de investimento" hoje é o prefixo de conta `1.2` no fluxo de caixa (`INVESTING_ASSET_CODE_PREFIXES = ['1.2']`) — compra de imobilizado que debite conta `1.2.*` já cai em *investing* sem código novo | verificado | `server/src/features/accounting/services/CashFlowReportService.ts:28,72` |
-| `JournalEntry` tem `sourceType` (default `manual`) + `@@unique([userId, unitId, sourceType, sourceId])` — a chave de idempotência canônica do ledger; `SourceDocument.sourceType` é taxonomia viva (`crm.opportunity.won \| sale.* \| IMPORT_*`) | verificado | `server/prisma/schema.prisma:531,553,796` |
+| `JournalEntry` tem `sourceType` (default `manual`) + `@@unique([userId, unitId, sourceType, sourceId])` — a chave de idempotência canônica do ledger; `SourceDocument.sourceType` é taxonomia viva (`crm.opportunity.won \| sale.* \| IMPORT_*`) | verificado | `server/prisma/schema.prisma:531,553,800` |
 | `PostingService.postEntry` roda `assertPeriodOpen` como preflight **e** `assertPeriodOpenTx` dentro de `runTransaction` (gate autoritativo na tx); status de período = `FUTURE/OPEN/SOFT_CLOSED/HARD_CLOSED` | verificado | `PostingService.ts:83,114-117,323`; `schema.prisma:347-353` |
 | ECD: o DTO **já expõe** `declarant.indFinEsc` (`'0'\|'1'`, default `'0'`) e `declarant.codHashSub` (opcional), e `SpedGenerationService` os repassa ao `lib/sped.ts` (registro 0000) — mas **nada liga o job substituto ao substituído** nem valida que `codHashSub` seja informado quando `indFinEsc='1'` | verificado | `dtos/SpedEcdDto.ts:46-47`; `services/SpedGenerationService.ts:366-367`; `lib/sped.ts:160,174,194` |
 | ECF: `lib/ecf.ts` suporta `retificadora` (`'N'` default) e `NUM_REC` (vazio quando `'N'`), mas **nenhum DTO de ECF (`SpedEcfDto`/`SpedEcfRealDto`) expõe** esses campos — geração é sempre original | verificado | `lib/ecf.ts:114,125-127,142`; `grep retificadora\|numRec dtos/SpedEcf*.ts` vazio |
 | `AccountingDataExchangeJob` tem `kind`/`status` como `String` (sem enum de banco), `sha256`, `storageKey`, `periodStart`, `periodEnd` — versionar = **job novo** apontando para o anterior, sem migração de enum | verificado | `schema.prisma:615-638` |
 | Parser NF-e expõe `cfop` por item (I08) — CFOP `1551`/`2551` (compra para ativo imobilizado, dentro/fora do estado) é discriminável na importação; **nenhuma ocorrência de `1551`/`2551` no código hoje** | verificado | `server/src/lib/nfe.ts:54,236`; grep vazio |
 | Parte B do e-Lalur/e-Lacs é persistida (`LalurParteBAccount` com `codCtaB`, `codPbRfb`, `codTributo`, `saldoIniCents`; `LalurParteBMovement`; fechamento trimestral) — a exclusão do art. 124 §4 tem onde viver | verificado | `schema.prisma:1509-1603`; PR #316 |
+| **[emenda pós-review #330, 2026-09-15]** **Manual da ECD Leiaute 9** (MANIFEST `manual-ecd-l9`; PDF em disco no worktree `blissful-antonelli-4bfd90`, lido por `pdftotext`): a ECD substituta exige **`J801`** (Termo de Verificação para Fins de Substituição — campos `TIPO_DOC='001'`, `DESC_RTF`, `COD_MOT_SUBS`, `ARQ_RTF` = o Termo em RTF **dentro do arquivo**; tabela de obrigatoriedade p.61 "obrigatório se IND_FIN_ESC = 1"), **`J932`** (signatários do Termo) e `J935` (auditores, quando houver); `REGRA_HASH_SUBSTITUIDA`: `COD_HASH_SUB` = **40 caracteres hexadecimais** obrigatório com `IND_FIN_ESC='1'`; **prazo**: substituição só até o fim do prazo de entrega da ECD do **ano-calendário subsequente** (§4 do art. 8º); `grep J801 server/src/lib/sped.ts` = vazio | verificado | `Manual-ECD-Leiaute-9.pdf` pp.61,193–207; `lib/sped.ts` |
+| **[emenda pós-review #330, 2026-09-15]** **Manual da ECF Leiaute 12** (MANIFEST `manual-ecf-l12`): `0000.RETIFICADORA ∈ {N, S, F}` (`F` = retificadora com mudança de forma de tributação), `0000.NUM_REC` = **C 40** (hashcode do recibo anterior), `REGRA_REC_ANTERIOR_OBRIGATORIO` com `S`/`F` e `REGRA_NRO_REC_ANTERIOR_NAO_SE_APLICA` com `N` | verificado | `Manual-ECF-Leiaute-12.pdf` (layout l.2788–2872 do `pdftotext`) |
+| **[emenda pós-review #330, 2026-09-15]** **`PostingService.postEntry(scope, input)` abre `runTransaction` raiz própria e não aceita `tx` nem hook** (`:286`, `:323`); o precedente do estoque diz explicitamente que subrazão e ledger são **dois commits** com convergência por idempotência read-first + `reconcileInventory` (`InventoryService.ts:69-72`; AP idem `PayableService.ts:50-52`). `postEntry` devolve o entry tanto no hit idempotente (`:303-314`) quanto no post novo | verificado | leitura nesta sessão |
+| **[emenda pós-review #330, 2026-09-15]** **`LalurProcess` NÃO é o exercício** — é o value-object de processo judicial/administrativo (M315/M365/M415: `parentId`, `indProc`, `numProc`), sem `year`; a única âncora anual do Lalur é `LalurParteBClosing (year, quarter)` | verificado | `schema.prisma:1623-1640` |
+| **[emenda pós-review #330, 2026-09-15]** **Gate de período do `postEntry` recusa qualquer `status !== 'OPEN'` e período inexistente** (não só `HARD_CLOSED`): `FUTURE`, `SOFT_CLOSED`, `HARD_CLOSED` e ausente → `AccountingPeriodNotOpenError` | verificado | `PostingService.ts:120,137` |
 | `AccountingScopeSettings` (F7) é o lugar canônico de "conta configurada por tenant vinda do contador" (`bankChargeExpenseAccountId` etc., FK `Restrict`) — as contas de depreciação seguem o mesmo padrão | verificado | `schema.prisma:1337-1349` |
 | **IN RFB 1.700/2017** arts. 121–125 (corpus `fontes-oficiais/IN-RFB-1700-2017.txt`, linhas 2504–2590): art. 121 §2 dedutível a partir de instalado/posto em serviço; **§3 acumulado ≤ custo de aquisição**; §4 imprestável → redução do ativo; §6 quota não deduzida não se recupera depois; art. 122 §ú **I terrenos não depreciam** (salvo melhoramentos), I-b edificação destacada do terreno (laudo); art. 123 **§2 quotas mensais, dispensado o ajuste no mês** de entrada/baixa; art. 124 **§1 prazo = Anexo III, taxa diferente exige prova**; **§3 conjunto sem especificação → taxa do bem de maior vida útil**; **§4 quota contábil < fiscal → diferença excluída na Parte B**; §5 ao atingir o custo, adiciona e baixa a Parte B | verificado | leitura integral nesta sessão |
-| **Anexo III** (`IN-RFB-1700-2017-anexos/43557-tabela.html`, sha `d526ac53071a`, MANIFEST linha 80): 260 linhas × 4 colunas (`Referência NCM \| Bens \| Prazo (anos) \| Taxa anual`); 2 linhas sem NCM (`INSTALAÇÕES` 10 anos/10%, `EDIFICAÇÕES` 25 anos/4%); linhas de capítulo sem taxa; demais = NCM 4 dígitos + prazo + taxa | verificado | parse nesta sessão (`rows 260`) |
+| **Anexo III** (`IN-RFB-1700-2017-anexos/43557-tabela.html`, sha `d526ac53071a`, MANIFEST linha 80): 260 `<TR>` × 4 colunas (`Referência NCM \| Bens \| Prazo (anos) \| Taxa anual`). **[emenda pós-review #330, 2026-09-15]** **Forma real** (re-parse com tratamento de `<STRIKE>`): 1 cabeçalho + 259 linhas de dado; **221 com taxa, 1 delas tachada** (`8517` `0%` em `<STRIKE>` — retificação de 13/04/2017 embutida no HTML compilado; a viva é `8517` 20%) ⇒ **220 vivas**; NCM em **3 formatos**: 4 dígitos (173 com taxa + 14 cabeçalho sem taxa), `xxxx.xx` 6 dígitos (41), `xxxx.x` 5 dígitos (4 com taxa + 2 sem); 23 linhas `Capítulo NN` — **22 sem taxa e 1 com** (`Capítulo 57` tapetes 5 anos/20%); 2 linhas com NCM = `--------------` (traços, não vazio): `INSTALAÇÕES` 10 anos/10%, `EDIFICAÇÕES` 25 anos/4%. **Chaves repetidas com taxas diferentes:** `3926.90` ×2 (correias 50% / artigos de laboratório 20%). ⇒ NCM **não** é chave; a chave do seed é o **ordinal da linha na fonte** | verificado | `scratchpad/anexo3b.py` nesta sessão: `with_rate 221, live_with_rate 220`, `dup keys {3926.90, 8517(STRIKE)}`, `CAP with rate: Capítulo 57` |
 | **IN RFB 2.003/2021** art. 8º: ECD autenticada só substituída por erro **não corrigível por lançamento extemporâneo** (ITG 2000 itens 31–36); §1 exige **Termo de Verificação para Fins de Substituição** (identificação da substituída, descrição dos erros, registros afetados, autorização de acesso ao CFC); §2 assinado pelo profissional que assina os livros substitutos | verificado | corpus `IN-RFB-2003-2021-ECD.txt:83-95` |
 | **IN RFB 2.004/2021** art. 7º: retificadora **substitui integralmente** a ECF; §3 se altera saldos da Parte B, retifica anos posteriores; §4 hipóteses sem efeito (DAU/procedimento fiscal); **art. 8º ECD substituta que altere saldos recuperados ⇒ ECF retificadora obrigatória**; art. 9º lançamento extemporâneo que altere base ⇒ ECF retificadora do ano; art. 10 ⇒ DCTF retificadora | verificado | corpus `IN-RFB-2004-2021-ECF.txt:73-105` |
 | Resposta 6 do dono (10/09): tabela editável por tenant, semeada do Anexo III, link da fonte na tela, **não hardcode**; resposta 7: retificação versionada, anterior preservado | verificado | `CEDULA-DECISAO-2026-09-10-entrevista.md:43-44` |
-| Memória do projeto: tabela transcrita de lei → conferir a **redação vigente**, não a original (Lei 10.485 art. 1º mordeu em X6, ERRATA). Aplicado aqui: no JSON multivigente da IN 1.700 o Anexo III tem **dois binários** — `43237` (original, `tachado: true`, `compilado: false`) e **`43557` (versão 2, `compilado: true` = vigente)**; o arquivo do corpus é o `43557`. Após a tabela há **Notas (1)–(3)** no corpo da IN, fora do HTML: (1) fornos para vidro NCM 8417 → 3 anos/33,3%; (2) máquinas/instalações industriais na **indústria química** → 5 anos/20%; (3) acessórios e partes só depreciam quando incorporados ao bem, integrando a base dele | verificado | segmentos `ordemSegmentoAto` 2443–2452 do `IN-RFB-1700-2017.json`, lidos nesta sessão |
+| Memória do projeto: tabela transcrita de lei → conferir a **redação vigente**, não a original (Lei 10.485 art. 1º mordeu em X6, ERRATA). Aplicado aqui: no JSON multivigente da IN 1.700 o Anexo III tem **dois binários** — `43237` (original, `tachado: true`, `compilado: false`) e **`43557` (versão 2, `compilado: true` = vigente)**; o arquivo do corpus é o `43557`. Após a tabela há **Notas (1)–(3)** no corpo da IN, fora do HTML: (1) fornos para vidro NCM 8417 → 3 anos/33,3%; (2) máquinas/instalações industriais na **indústria química** → 5 anos/20%; (3) acessórios e partes só depreciam quando incorporados ao bem, integrando a base dele | verificado | segmentos `ordemSegmentoAto` 2444–2452 do `IN-RFB-1700-2017.json` (2443 é o PDF do Anexo II), lidos nesta sessão |
 
 **Tradução aspiracional → projeto:** não há `LegalEntity`/`Establishment`; o imobilizado é do
 `AccountingScope` (`userId`+`unitId`), igual a `Account`/`JournalEntry`/`Payable`. "Empresa" no texto
@@ -101,17 +108,26 @@ das INs = escopo contábil aqui.
 - **D3 — Quota mensal = `custo depreciável × taxa anual ÷ 12`, mês de ativação e mês de baixa
   contam inteiros** (art. 123 §2 — "dispensado o ajuste da taxa para os bens postos em funcionamento
   ou baixados no curso do mês"). Começa no mês em que `activatedAt` cai (art. 121 §2: instalado/posto
-  em serviço — **não** a data da NF). Última quota é truncada para que **Σ quotas ≤ custo** (art. 121
-  §3) — invariante checado **dentro da tx**, contra as quotas já postadas no ledger, não contra um
-  contador em memória (memória `authoritative-gate-inside-tx`).
+  em serviço — **não** a data da NF). **[emenda pós-review #330, 2026-09-15]** **Quota do mês k (1-based desde a ativação) =
+  `floor(base × bp × k ÷ 120000) − floor(base × bp × (k−1) ÷ 120000)`** (cumulativa, `BigInt`) — assim
+  Σ das 12 quotas de um ano = exatamente `base × bp ÷ 10000` (833/833/834…, nunca 9.996) e o bem termina
+  no mês `lifeMonths` exato, sem cauda de 121º mês; **Σ quotas ≤ custo** (art. 121 §3) vale por construção
+  e é re-checado no CAS do acumulado (tx2, ver parecer D3 emendado) — nunca contra um contador em memória
+  (memória `authoritative-gate-inside-tx`). A taxa que a quota **contábil** usa é `bookAnnualRateBp ??
+  annualRateBp` (F-FA8 b); a fiscal (Parte B) usa sempre `annualRateBp`.
 - **D4 — `DepreciationRate` é tabela por tenant, semeada do Anexo III, editável, com a fonte.** Cada
-  linha guarda `ncmPrefix` (4 dígitos; `null` para INSTALAÇÕES/EDIFICAÇÕES), `description`, `lifeYears`,
+  linha guarda **[emenda pós-review #330, 2026-09-15]** `ncm` **como texto da fonte** (`'8471'`, `'3926.90'`, `'8479.8'`; `null` para
+  `--------------` e para `Capítulo NN`), `sourceRow` (ordinal da linha no HTML — **é a chave**, porque
+  `3926.90` aparece 2× com taxas diferentes), `description`, `lifeYears`,
   `annualRateBp` (taxa em basis points — inteiro, nunca float), `source` (`'ANEXO_III_IN_1700_2017'` \|
   `'CUSTOM'`), `sourceUrl` (link do gov.br gravado no seed, exibido na tela — resposta 6), `sourceSha256`
   (`d526ac53071a…` do MANIFEST). Editar = linha `CUSTOM` com `justification` **obrigatória** quando a
   taxa difere da do Anexo III para o mesmo NCM (art. 124 §1: "desde que faça prova dessa adequação") —
-  o sistema não julga a prova, só a exige e a guarda. Seed é idempotente por `(scope, ncmPrefix, source)`.
-  Linhas de capítulo (sem taxa) **não** são semeadas. As **Notas (1)–(3)** do Anexo (vidro 8417 → 33,3%;
+  o sistema não julga a prova, só a exige e a guarda. Seed é idempotente por `(scope, source, sourceRow)`.
+  **[emenda pós-review #330, 2026-09-15]** Regras do parser (provadas pelo gate 5 de §5): linha em `<STRIKE>` **descartada** (`8517 0%`);
+  linha **sem taxa** descartada (14 cabeçalhos NCM4 + 2 NCM5 + 22 capítulos); linha de capítulo **com**
+  taxa **semeada** (`Capítulo 57`, `ncm=null`, descrição preservada); traços → `ncm=null`; NCM de 5/6
+  dígitos preservado como texto. Resultado: **220 linhas vivas** + 2 Notas. As **Notas (1)–(3)** do Anexo (vidro 8417 → 33,3%;
   indústria química → 20%; partes/acessórios só quando incorporados) entram como linhas `source='ANEXO_III_NOTA_N'`
   que o operador escolhe explicitamente — o sistema **não** infere "indústria química" de nada.
 - **D5 — Baixa/alienação é comando próprio (`dispose`), nunca `PATCH status`.** Posta um
@@ -136,12 +152,21 @@ das INs = escopo contábil aqui.
   desacoplado) e `supersedesJobId`; ECF retificadora: DTOs de ECF passam a expor `retificadora='S'`
   + `numRec` (obrigatório quando `'S'`) + `supersedesJobId`. `codHashSub`/`numRec` são dados do
   **recibo** do PVA/Sped — entrada humana, nunca calculados pelo sistema (o `sha256` do job **não é**
-  o hash do Sped).
+  o hash do Sped). **[emenda pós-review #330, 2026-09-15]** Formatos pelos manuais (§1): `codHashSub` = 40 hex; `numRec` = C 40;
+  `retificadora` no leiaute é `{N,S,F}` — o DTO expõe só `N|S` (o `F`, mudança de forma de tributação,
+  fica fora por decisão: reabre regime, que é do ADR de apuração). **Prazo** (art. 8º §4 IN 2.003 /
+  Manual): ECD substituta só até o prazo de entrega da ECD do ano seguinte — o serviço recusa (400
+  nomeado) substituição de exercício anterior a `ano corrente − 1`; a data-limite exata é do contador.
 - **D9 — Termo de Verificação (art. 8º §1 IN 2.003) é gate humano.** O sistema gera a ECD substituta
   só depois de um runbook assinado (`docs/operating-manual/RUNBOOK-FORMAT.md`) com o Termo anexado
   como evidência colada; o agente **prepara o runbook em branco** (CLAUDE.md: "não pode preencher
-  evidência, marcar desfecho nem assinar"). O job substituto guarda `verificationTermRef` (referência
-  ao runbook/arquivo), não o texto.
+  evidência, marcar desfecho nem assinar"). **[emenda pós-review #330, 2026-09-15]** ~~O job substituto guarda `verificationTermRef`,
+  não o texto.~~ **O texto do Termo entra no arquivo**: o Leiaute 9 exige `J801` (Termo em RTF no campo
+  `ARQ_RTF`, `COD_MOT_SUBS`) e `J932` (signatários do Termo) quando `IND_FIN_ESC='1'` — sem eles o PVA
+  rejeita. O runbook assinado **entrega** o `.rtf` e os signatários; o sistema os recebe como upload
+  (`attachmentStorage`, `storageKey` no job: `verificationTermStorageKey`) e os serializa em J801/J932;
+  `lib/sped.ts` ganha os dois registros. O gate humano continua sendo o runbook; o que muda é que o
+  artefato dele é insumo do arquivo, não só referência.
 - **D10 — Auditoria: eventos `fixed_asset.activated` / `depreciation.posted` / `fixed_asset.disposed` /
   `sped.ecd_substituted` / `sped.ecf_rectified` entram na allowlist fechada (`auditCanonical.ts`) com
   payload de ids/centavos/hash — sem PII; qualquer campo novo de PII exige teste-guarda no mesmo PR
@@ -205,7 +230,9 @@ das INs = escopo contábil aqui.
 **F-FA5 — Terrenos e edificações (art. 122 I-b e §ú I):**
 - **(a) Recomendado — classe `LAND` com `depreciable=false`** (nunca gera quota; `runMonth` a ignora
   explicitamente, com teste); compra de imóvel = **dois** `FixedAsset` (terreno + edificação), o rateio
-  informado pelo humano (laudo, art. 122 I-b) — o sistema exige os dois valores, não deduz.
+  informado pelo humano (laudo, art. 122 I-b). **[emenda pós-review #330, 2026-09-15]** ~~o sistema exige os dois valores~~ — sem
+  comando de par: é **recomendação operacional** (dois cadastros, `FE-INCR-FIXED-ASSETS` orienta); o
+  invariante que o BE garante é só `LAND` nunca depreciar.
 - (b) Um ativo com `landPortionCents` — menos linhas, mas a baixa parcial (vender só a construção)
   fica torta.
 - **Recomendação:** (a).
@@ -222,9 +249,12 @@ das INs = escopo contábil aqui.
 **F-FA7 — ECF retificadora quando há ECD substituta (art. 8º IN 2.004):**
 - (a) Automática — gerar a ECF retificadora no mesmo comando da ECD substituta.
 - **(b) Recomendado — comando explícito com pendência obrigatória:** gerar ECD substituta (D8/D9)
-  marca o exercício com `ecfRectificationRequired=true` (na `LalurProcess`/job) e **bloqueia** o pacote
-  ao contador (ADR-CONTADOR-DELIVERY, F-CD7) até a ECF retificadora ser gerada com `numRec` do recibo
-  anterior. Automático é impossível de fazer certo: `NUM_REC` vem do recibo humano, e o art. 7º §4
+  marca ~~o exercício (`LalurProcess`)~~ **[emenda pós-review #330, 2026-09-15]** **o próprio job da ECD substituta** com
+  `ecfRectificationRequired=true` (`LalurProcess` não é exercício — §1) e **bloqueia** o pacote ao
+  contador (ADR-CONTADOR-DELIVERY, F-CD7: o gate lê o último job ECD do ano) até (i) a ECF retificadora
+  do ano ser gerada com `numRec` do recibo anterior **ou** (ii) o comando `waiveEcfRectification {
+  justification }` — o art. 8º da IN 2.004 é **condicional** ("que altere contas ou saldos recuperados");
+  se o contador conclui que não altera, dispensa com justificativa auditada, senão o pacote nunca destrava. Automático é impossível de fazer certo: `NUM_REC` vem do recibo humano, e o art. 7º §4
   tem hipóteses em que a retificadora **não produz efeito** — decisão do contador, não do sistema.
 - **Recomendação:** (b).
 
@@ -264,8 +294,8 @@ das INs = escopo contábil aqui.
 | D | Veredito | Refinamento obrigatório (entra no BRIEF) |
 |---|---|---|
 | D1 | ✅ confirma | Policy `canManageFixedAssets` **separada** de `canManageData`; leitura de taxa (`DepreciationRate`) pode ficar sob `canRead` do escopo. |
-| D2 | ✅ confirma | **`sourceId` sem `userId`** (ACC-013) — `'<assetId>:<YYYY-MM>'` está certo. `runMonth` = **uma tx por ativo** (cada `postEntry` já abre a sua), nunca uma tx gigante para N ativos (lock do SQLite); resultado `{posted, skipped, failed[]}` e re-execução preenche o que faltou — idempotência é o que torna a falha parcial segura. |
-| D3 | ✅ confirma, com **ACC-TIEOUT** | "Σ quotas ≤ custo dentro da tx" **não** se prova somando o razão a cada mês (N queries por ativo). Padrão do projeto (ADR-INCR-INVENTORY): `FixedAsset.accumulatedDepreciationCents` **denormalizado, atualizado na MESMA tx** do `postEntry` (CAS: `where accumulated = valorLido`), + **teste de tie-out** `Σ linhas do ledger com sourceType='fixed_asset.depreciation' e sourceId LIKE '<assetId>:%' === accumulatedDepreciationCents` (mesmo desenho de `Σ StockMovement == saldo(1.1.6)`). Cálculo em `BigInt`, truncamento da última quota provado no gate 2 de §5. `activatedAt`/`disposedAt` são **date-only** (`isValidDateOnly`, memória `date-only-regex-nao-valida-calendario`; renderização sem `new Date(iso)`, memória `date-only-rendering-utc-shift`). |
+| D2 | ✅ confirma | **`sourceId` sem `userId`** (ACC-013) — `'<assetId>:<YYYY-MM>'` está certo. `runMonth` = **uma tx por ativo** (cada `postEntry` já abre a sua), nunca uma tx gigante para N ativos (lock do SQLite); resultado `{posted, skipped, failed[]}` e re-execução preenche o que faltou — idempotência é o que torna a falha parcial segura. **[emenda pós-review #330, 2026-09-15]** `postEntry` devolve o entry nos dois casos (hit e novo) — `skipped` vem de um **read-first** do próprio `DepreciationService` (`journalEntryRepo.findBySource` antes de postar), não de inspecionar o retorno. |
+| D3 | ✅ confirma, com **ACC-TIEOUT** | "Σ quotas ≤ custo dentro da tx" **não** se prova somando o razão a cada mês (N queries por ativo). Padrão do projeto (ADR-INCR-INVENTORY): `FixedAsset.accumulatedDepreciationCents` **denormalizado** ~~atualizado na MESMA tx do `postEntry`~~ **[emenda pós-review #330, 2026-09-15]** **em DUAS txs, como o estoque** (`InventoryService.ts:69-72`: `postEntry` abre tx raiz própria, SQLite não aninha): **tx1** = `postEntry` (idempotente por `sourceId`); **tx2** = CAS `updateMany where { id, accumulatedDepreciationCents: lido, version }` += quota, 0 linhas → `ConflictError`. Convergência na janela de crash entre tx1 e tx2 = **read-first** (`findBySource` do `sourceId` do mês antes de tx1; se existe e o acumulado não o reflete, só tx2) + `reconcileFixedAssets` (re-drive que recomputa o acumulado a partir das linhas `fixed_asset.depreciation` do ledger, padrão `reconcileInventory`). + **teste de tie-out** `Σ linhas do ledger com sourceType='fixed_asset.depreciation' e sourceId LIKE '<assetId>:%' === accumulatedDepreciationCents` (mesmo desenho de `Σ StockMovement == saldo(1.1.6)`). Cálculo em `BigInt`, truncamento da última quota provado no gate 2 de §5. `activatedAt`/`disposedAt` são **date-only** (`isValidDateOnly`, memória `date-only-regex-nao-valida-calendario`; renderização sem `new Date(iso)`, memória `date-only-rendering-utc-shift`). |
 | D4 | ✅ confirma | Linhas `ANEXO_III_*` são **imutáveis** (editar = criar `CUSTOM`; a linha do Anexo pode ser `hiddenAt`, nunca alterada) — senão o "link da fonte na tela" (resposta 6) aponta para um número que já não é o da fonte. `annualRateBp` **copiado** para o ativo na ativação (snapshot), não FK viva. |
 | D5 | ✅ confirma | ACC-018: baixa é entry novo; mês `HARD_CLOSED` → mesmo `AccountingPeriodNotOpenError`. `dispose` **exige** que a quota do mês da baixa já esteja postada (ou a posta na mesma chamada, sequencialmente — 2 entries, 2 tx, idempotentes) para o ganho/perda sair do valor contábil certo. |
 | D6 | ✅ confirma | Dado externo: **COD_PB_RFB** da conta da Parte B para "depreciação — diferença contábil × fiscal" (aba PARTEB_PADRAO) — **item (h) do pedido ao contador**, não fork. Enquanto não houver conta cadastrada e existir diferença ≠ 0 no trimestre, o fechamento falha com `ValidationError` nomeando o COD_PB_RFB — mesmo padrão da C4 (`LalurService.ts:840-845`). |
@@ -301,7 +331,7 @@ das INs = escopo contábil aqui.
 
 ### Riscos de domínio
 - **Backfill**: escopo já com contas `1.2.*` e lançamentos manuais de depreciação antes deste incremento — `FixedAsset` novo com `activatedAt` no passado geraria quotas retroativas em períodos `HARD_CLOSED` (bloqueadas) e duplicaria o que já foi lançado à mão. **Regra:** `activatedAt` anterior ao primeiro período `OPEN` do escopo exige `openingAccumulatedCents` informado (saldo inicial da acumulada, sem entry) — o smoke-gate S6 reprova backfill por desenho (memória `smoke-gate-s6-x-migracao-de-dado`).
-- **Seed do Anexo III por tenant** = ~250 linhas × N escopos; seed idempotente **no `installPresetAsSystem`/T0** (P2, #320) ou lazy na primeira leitura — o BRIEF escolhe, o parecer só exige idempotência por `(scope, ncmPrefix, source)`.
+- **Seed do Anexo III por tenant** = 220 linhas vivas + 2 Notas × N escopos; seed idempotente **no `installPresetAsSystem`/T0** (P2, #320) ou lazy na primeira leitura — o BRIEF escolhe (**[emenda pós-review #330, 2026-09-15]** escolhido: lazy, BRIEF A3), o parecer só exige idempotência por `(scope, source, sourceRow)`.
 - **Windows serializa SQLite** (memória): teste de `runMonth` concorrente verde local não é evidência; a CI é o oráculo.
 
 PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano de skills.
@@ -312,15 +342,15 @@ PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano de skills
 
 1. Idempotência: `runMonth` 2× no mesmo mês → 1 `JournalEntry` (assere a **segunda** chamada, memória
    `comentario-de-teste-afirma-o-que-nao-assere`).
-2. `Σ quotas ≤ custo` provado com custo não divisível por 12×anos (última quota truncada).
-3. Mês `HARD_CLOSED` → `AccountingPeriodNotOpenError`, nenhum entry criado (gate dentro da tx).
+2. `Σ quotas ≤ custo` provado com custo não divisível por 12×anos: fórmula cumulativa — custo 100.000, 10% a.a. ⇒ quotas 833/833/834…, **Σ12 = 10.000 exato**, mês 120 fecha em 100.000 e o 121º não existe.
+3. Período `HARD_CLOSED`, `SOFT_CLOSED`, `FUTURE` **ou inexistente** → `AccountingPeriodNotOpenError` (4 casos, `PostingService.ts:120,137`), nenhum entry criado (gate dentro da tx).
 4. Classe `LAND` nunca gera quota; ativo `PENDING_ACTIVATION` nunca gera quota.
 5. Seed do Anexo III: contagem de linhas com taxa esperada + `INSTALAÇÕES`/`EDIFICAÇÕES` presentes
    com NCM `null`; taxa `CUSTOM` sem `justification` → 400.
 6. Cross-tenant: ativo/taxa de outro escopo → `NotFoundError`.
 7. ECD `indFinEsc='1'` sem `codHashSub` ou sem `supersedesJobId` → 400; job substituído continua
    `EXPORTED` com `sha256` inalterado após a substituição.
-8. ECF `retificadora='S'` sem `numRec` → 400; `openapi-paths` BASELINE sobe **de propósito** pelas rotas
+8. ECF `retificadora='S'` sem `numRec` (C 40) → 400; ECD `indFinEsc='1'` sem `J801`/`J932` no arquivo gerado → teste vermelho; `openapi-paths` BASELINE (hoje **180**) sobe **de propósito** pelas rotas
    novas.
 9. `dispose` posta ganho/perda correto (3 casos: valor de venda >, =, < valor contábil).
 10. Fluxo de caixa: aquisição por NF-e cai em *investing* sem código novo (prova o reuso do prefixo `1.2`).
