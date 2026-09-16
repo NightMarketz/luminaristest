@@ -111,9 +111,12 @@ das INs = escopo contábil aqui.
   em serviço — **não** a data da NF). **[emenda pós-review #330, 2026-09-15]** **Quota do mês k (1-based desde a ativação) =
   `floor(base × bp × k ÷ 120000) − floor(base × bp × (k−1) ÷ 120000)`** (cumulativa, `BigInt`) — assim
   Σ das 12 quotas de um ano = exatamente `base × bp ÷ 10000` (833/833/834…, nunca 9.996) e o bem termina
-  no mês `lifeMonths` exato, sem cauda de 121º mês; **Σ quotas ≤ custo** (art. 121 §3) vale por construção
-  e é re-checado no CAS do acumulado (tx2, ver parecer D3 emendado) — nunca contra um contador em memória
-  (memória `authoritative-gate-inside-tx`). A taxa que a quota **contábil** usa é `bookAnnualRateBp ??
+  no mês `lifeMonths` exato, sem cauda de 121º mês. **[delta-review D4]** A cumulativa **não para sozinha**
+  (q121 = 833) e para taxas que não dividem 120000 (33,3% do próprio Anexo: Σ36 = 99.900, q37 = 2.775) ela
+  ou deixa 0,1% eterno ou estoura — logo: `lifeMonths := ceil(120000 ÷ bp)`, **quota do mês = `min(cumulativa,
+  base − acumulado)`**, e `FULLY_DEPRECIATED` quando `acumulado == base` (flip na tx2). **Σ quotas ≤ custo**
+  (art. 121 §3) vale pelo cap e é re-checado no CAS do acumulado (tx2, ver parecer D3 emendado) — nunca
+  contra um contador em memória (memória `authoritative-gate-inside-tx`). A taxa que a quota **contábil** usa é `bookAnnualRateBp ??
   annualRateBp` (F-FA8 b); a fiscal (Parte B) usa sempre `annualRateBp`.
 - **D4 — `DepreciationRate` é tabela por tenant, semeada do Anexo III, editável, com a fonte.** Cada
   linha guarda **[emenda pós-review #330, 2026-09-15]** `ncm` **como texto da fonte** (`'8471'`, `'3926.90'`, `'8479.8'`; `null` para
@@ -127,7 +130,11 @@ das INs = escopo contábil aqui.
   **[emenda pós-review #330, 2026-09-15]** Regras do parser (provadas pelo gate 5 de §5): linha em `<STRIKE>` **descartada** (`8517 0%`);
   linha **sem taxa** descartada (14 cabeçalhos NCM4 + 2 NCM5 + 22 capítulos); linha de capítulo **com**
   taxa **semeada** (`Capítulo 57`, `ncm=null`, descrição preservada); traços → `ncm=null`; NCM de 5/6
-  dígitos preservado como texto. Resultado: **220 linhas vivas** + 2 Notas. As **Notas (1)–(3)** do Anexo (vidro 8417 → 33,3%;
+  dígitos preservado como texto. **[delta-review D1]** Normalização da taxa: `'20 %'` (4 linhas `8203.x`/`8204`)
+  → 2000 bp; `'33,3%'` → 3330 bp; **`8905`** tem prazo `20` e célula de taxa `%` **sem número** na fonte →
+  taxa derivada `10000 ÷ prazo` = 500 bp, com `source='ANEXO_III_IN_1700_2017'` e `justification` automática
+  "taxa derivada do prazo (célula vazia na fonte)" — única exceção codificada, testada nominalmente.
+  Resultado: **220 linhas vivas** (inclui `8905`) + 2 Notas. As **Notas (1)–(3)** do Anexo (vidro 8417 → 33,3%;
   indústria química → 20%; partes/acessórios só quando incorporados) entram como linhas `source='ANEXO_III_NOTA_N'`
   que o operador escolhe explicitamente — o sistema **não** infere "indústria química" de nada.
 - **D5 — Baixa/alienação é comando próprio (`dispose`), nunca `PATCH status`.** Posta um
@@ -155,8 +162,10 @@ das INs = escopo contábil aqui.
   o hash do Sped). **[emenda pós-review #330, 2026-09-15]** Formatos pelos manuais (§1): `codHashSub` = 40 hex; `numRec` = C 40;
   `retificadora` no leiaute é `{N,S,F}` — o DTO expõe só `N|S` (o `F`, mudança de forma de tributação,
   fica fora por decisão: reabre regime, que é do ADR de apuração). **Prazo** (art. 8º §4 IN 2.003 /
-  Manual): ECD substituta só até o prazo de entrega da ECD do ano seguinte — o serviço recusa (400
-  nomeado) substituição de exercício anterior a `ano corrente − 1`; a data-limite exata é do contador.
+  Manual): ECD substituta só até o prazo de entrega da ECD do ano seguinte (≈ junho de N+2). **[delta-review
+  D5]** O serviço recusa (400 nomeado) só exercício `< ano corrente − 2` (fora da janela em qualquer
+  calendário); exercício `= ano corrente − 2` gera **aviso** e exige `deadlineJustification` no runbook —
+  a data-limite exata é do calendário da RFB, do contador, não do sistema.
 - **D9 — Termo de Verificação (art. 8º §1 IN 2.003) é gate humano.** O sistema gera a ECD substituta
   só depois de um runbook assinado (`docs/operating-manual/RUNBOOK-FORMAT.md`) com o Termo anexado
   como evidência colada; o agente **prepara o runbook em branco** (CLAUDE.md: "não pode preencher
@@ -183,6 +192,12 @@ das INs = escopo contábil aqui.
   contador (Passo 11 h).
 - Depreciação acelerada incentivada (Parte B própria) — só a "por turnos" é fork aqui (F-FA2).
 - DCTF retificadora (art. 10 IN 2.004) — obrigação humana derivada, fora do sistema.
+- **[emenda pós-review #330]** `0000.RETIFICADORA='F'` (retificadora com mudança de forma de tributação) —
+  fora: mudar regime é matéria do ADR de apuração e o art. 7º §2 da IN 2.004 só a admite para arbitrado.
+  O DTO devolve 400 nomeado. Decisão de escopo desta emenda, declarada no PR.
+- **[emenda pós-review #330]** `waiveEcfRectification` (F-FA7) é **refinamento** do (b) ratificado, não
+  decisão nova: "pendência obrigatória" passa a "obrigatória, ou dispensada com justificativa auditada"
+  porque o art. 8º da IN 2.004 é condicional — a conclusão "não altera saldos recuperados" é do contador.
 
 ---
 
@@ -345,10 +360,11 @@ PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano de skills
 2. `Σ quotas ≤ custo` provado com custo não divisível por 12×anos: fórmula cumulativa — custo 100.000, 10% a.a. ⇒ quotas 833/833/834…, **Σ12 = 10.000 exato**, mês 120 fecha em 100.000 e o 121º não existe.
 3. Período `HARD_CLOSED`, `SOFT_CLOSED`, `FUTURE` **ou inexistente** → `AccountingPeriodNotOpenError` (4 casos, `PostingService.ts:120,137`), nenhum entry criado (gate dentro da tx).
 4. Classe `LAND` nunca gera quota; ativo `PENDING_ACTIVATION` nunca gera quota.
-5. Seed do Anexo III: contagem de linhas com taxa esperada + `INSTALAÇÕES`/`EDIFICAÇÕES` presentes
-   com NCM `null`; taxa `CUSTOM` sem `justification` → 400.
+5. Seed do Anexo III: **220 + 2** linhas exatas; `INSTALAÇÕES`/`EDIFICAÇÕES`/`Capítulo 57` com `ncm=null`;
+   `8517` = 2000 bp (a tachada não existe); `8905` = 500 bp derivada; taxa `CUSTOM` sem `justification` → 400.
 6. Cross-tenant: ativo/taxa de outro escopo → `NotFoundError`.
-7. ECD `indFinEsc='1'` sem `codHashSub` ou sem `supersedesJobId` → 400; job substituído continua
+7. ECD `indFinEsc='1'` sem `codHashSub`, sem `supersedesJobId` ou sem `verificationTerm` (RTF + signatários)
+   → 400; job substituído continua
    `EXPORTED` com `sha256` inalterado após a substituição.
 8. ECF `retificadora='S'` sem `numRec` (C 40) → 400; ECD `indFinEsc='1'` sem `J801`/`J932` no arquivo gerado → teste vermelho; `openapi-paths` BASELINE (hoje **180**) sobe **de propósito** pelas rotas
    novas.

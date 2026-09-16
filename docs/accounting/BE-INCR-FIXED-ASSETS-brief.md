@@ -5,9 +5,10 @@
 > Anexo III reescrito contra a forma real da fonte (A2/A3, F-FA10), B2 J801/J932 na ECD substituta (G26/G31),
 > B3 tie-out em 2 txs (C13/C14), S1–S9 (fórmula cumulativa, `bookAnnualRateBp`, dispensa da ECF retificadora,
 > cauda da Parte B, 4 casos de período, rascunho por NF-e com re-drive, F-FA11 decidido no BRIEF, manuais no
-> MANIFEST, F-FA5 sem comando). **3 forks NOVOS `RATIFICAÇÃO PENDENTE` (§3)**,
+> MANIFEST, F-FA5 sem comando; delta-review D1–D5: taxa derivada do `8905`, `signers` reusa `SignerSchema`,
+> predicado da tx2, `lifeMonths`/cap, prazo por aviso). **3 forks NOVOS `RATIFICAÇÃO PENDENTE` (§3)**,
 > descobertos ao materializar os contratos — o parecer não os cobre, logo voltam ao dono. Nenhuma linha de
-> código nasce deste documento antes da ratificação dos 4. Escrito em `sessao-planejamento` (2026-09-15,
+> código nasce deste documento antes da ratificação dos 3. Escrito em `sessao-planejamento` (2026-09-15,
 > passo 10.3 de `PROXIMOS-PASSOS-2026-09-14.md`).
 
 ---
@@ -87,8 +88,10 @@ preservado — resposta 7). **Não é:** tela (FE), intangível/exaustão, CIAP,
    → descartada (`8517 0%`); (ii) linha sem taxa → descartada (14 cabeçalhos NCM4 + 2 NCM5 + 22 capítulos);
    (iii) `Capítulo NN` **com** taxa → semeada com `ncm=null` (`Capítulo 57`, 20%); (iv) `--------------` →
    `ncm=null` (INSTALAÇÕES 10%, EDIFICAÇÕES 4%); (v) NCM 5/6 dígitos preservado como texto; (vi) `sourceRow` =
-   ordinal da `<TR>` na fonte. Contagens **exatas** asseridas pelo teste do script: **220 linhas vivas** (221
-   com taxa − 1 tachada) + 2 Notas (NCM `8417` 33,3% · `null` "indústria química" 20%). O JSON é gerado por
+   ordinal da `<TR>` na fonte; (vii) **[D1]** taxa normalizada: `'20 %'` → 2000, `'33,3%'` → 3330; célula `%`
+   sem número com prazo presente (só `8905`, prazo 20) → `10000 ÷ prazo` = 500 bp + `justification` "taxa
+   derivada do prazo (célula vazia na fonte)" — teste nominal. Contagens **exatas** asseridas pelo teste do
+   script: **220 linhas vivas** (221 com taxa − 1 tachada, `8905` incluída) + 2 Notas (NCM `8417` 33,3% · `null` "indústria química" 20%). O JSON é gerado por
    `scripts/anexo-iii-to-fixture.mjs` e **rodar de novo com diff vazio é o teste** (padrão
    `ecf-tabelas-dinamicas-to-catalog.mjs`). `DepreciationRateSeedService.seed(scope)` idempotente por
    `@@unique` (2ª passada = 0 inserts, **asserido**). **Gatilho (decidido aqui, delegado pelo parecer): lazy** —
@@ -104,8 +107,8 @@ preservado — resposta 7). **Não é:** tela (FE), intangível/exaustão, CIAP,
 5. **`AccountingScopeSettings`** ganha `depreciationExpenseAccountId?`, `disposalGainAccountId?`,
    `disposalLossAccountId?` (FK Account, Restrict) — DTO `UpdateAccountingScopeSettingsSchema` estendido, evento
    `scope_settings.updated` (allowlist) com os 3 ids.
-6. **`AccountingDataExchangeJob.supersedesJobId String? @unique`** (self-FK, `onDelete: Restrict`) +
-   `verificationTermRef String?`. Índice existente inalterado.
+6. **`AccountingDataExchangeJob.supersedesJobId String? @unique`** (self-FK, `onDelete: Restrict`). Índice
+   existente inalterado. (O Termo vive em `verificationTermStorageKey`, item 7 — uma referência só.)
 7. **`AccountingDataExchangeJob`** ganha `ecfRectificationRequired Boolean @default(false)`,
    `ecfRectificationWaivedAt DateTime?`, `ecfRectificationWaiverReason String?` e `verificationTermStorageKey
    String?` — a flag vive **no job da ECD substituta** (**[S3]** `LalurProcess` é processo judicial M315, não
@@ -130,13 +133,16 @@ preservado — resposta 7). **Não é:** tela (FE), intangível/exaustão, CIAP,
     depreciável com `activatedAt ≤ fim do mês`: **[S1/S2]** `k` = nº do mês desde a ativação (1-based),
     `base = costCents − residualValueCents`, `bp = bookAnnualRateBp ?? annualRateBp` (a quota **postada** é a
     contábil, F-FA8 b), quota = `floor(base × bp × k ÷ 120000) − floor(base × bp × (k−1) ÷ 120000)` em `BigInt`
-    (cumulativa: Σ12 = `base × bp ÷ 10000` exato, sem cauda de 121º mês); `k > lifeMonths` ou quota `0` →
-    `FULLY_DEPRECIATED` sem entry. **Mês de ativação e de baixa contam inteiros** (art. 123 §2).
+    (cumulativa: Σ12 = `base × bp ÷ 10000` exato); **[D4]** `lifeMonths := ceil(120000 ÷ bp)` (120 para 10%,
+    37 para 33,3%), **quota postada = `min(cumulativa, base − acumulado)`** (cap do art. 121 §3 — a cumulativa
+    não para sozinha e para 33,3% deixaria resíduo de 0,1%); ativo com `acumulado == base` vira
+    `FULLY_DEPRECIATED` na tx2 e sai do loop. **Mês de ativação e de baixa contam inteiros** (art. 123 §2).
 13. Cada quota = `postEntry({ sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:${yearMonth}`, date:
     último dia do mês, lines: D despesa (ScopeSettings) / C acumulada (classe) })` — **uma tx por ativo**; a
     idempotência é a do `PostingService`, sem guarda própria (parecer D2). **[B3]** `skipped` = **read-first**:
     `journalEntryRepo.findBySource(scope, 'fixed_asset.depreciation', sourceId)` antes de postar; existe →
-    `skipped` (e, se `accumulatedDepreciationCents` ainda não o reflete, só o passo 14); não existe → tx1.
+    `skipped` — e **[D3]** predicado barato para "tx2 pendente", sem somar o razão: `acumulado − opening <
+    min(floor(base × bp × k ÷ 120000), base)` ⇒ roda só o passo 14; não existe → tx1.
 14. **ACC-TIEOUT em DUAS txs (parecer D3 emendado, padrão `InventoryService.ts:69-72`):** **[B3]** `postEntry`
     abre tx raiz própria e não aceita `tx` (`PostingService.ts:286,323`) — logo **tx1** = `postEntry`; **tx2** =
     CAS `fixedAssetRepo.addAccumulated(id, quota, { expectedAccumulated, expectedVersion })` (`updateMany`, 0
@@ -199,12 +205,17 @@ preservado — resposta 7). **Não é:** tela (FE), intangível/exaustão, CIAP,
 **Bloco G — retificação versionada (D8/D9, F-FA7 b)**
 
 26. `SpedEcdDto.declarant`: `superRefine` — `indFinEsc='1'` **exige** `codHashSub` (**40 hex**, `REGRA_HASH_SUBSTITUIDA`)
-    **e** o body ganha `supersedesJobId`, `verificationTerm { attachmentId (RTF já enviado por upload),
-    codMotSubs, descRtf?, signers: [{ identNom, identCpfCnpj, indCrc?, codAssin }] }` (obrigatórios quando `'1'`;
-    proibidos quando `'0'`). 400 nomeado. **[B2]** `lib/sped.ts` ganha **`J801`** (`TIPO_DOC='001'`, `DESC_RTF`,
+    **e** o body ganha `supersedesJobId` + `verificationTerm { codMotSubs: enum('001'..'005','099'), descRtf?,
+    signers: SignerSchema[] }` — **[D2]** `signers` **reusa** `SignerSchema` de `SpedEcdDto.ts:72-83` (mesmo objeto
+    de domínio: `identNom`, `identCpfCnpj`, `identQualif` **obrigatório** no J932 = `IDENT_QUALIF_T`, `codAssin`,
+    `indCrc`, `ufCrc`), nunca um shape paralelo; o `.rtf` do Termo chega como **multipart** na própria chamada de
+    geração (fronteira de controller, como o XML da NF-e) e vira `verificationTermStorageKey` (A7). Obrigatórios
+    quando `'1'`; proibidos quando `'0'`. 400 nomeado. **[B2]** `lib/sped.ts` ganha **`J801`** (`TIPO_DOC='001'`, `DESC_RTF`,
     `COD_MOT_SUBS`, `ARQ_RTF` = bytes do RTF) e **`J932`** (signatários do Termo) — obrigatórios com
     `IND_FIN_ESC=1` (Manual ECD L9 p.61/193–204); `J935` só se houver auditor. Teste: substituta gerada contém
-    `|J801|` e `|J932|`; original não contém nenhum. Prazo: exercício < `ano corrente − 1` → 400 (art. 8º §4).
+    `|J801|` e `|J932|`; original não contém nenhum. **[D5]** Prazo (art. 8º §4): exercício `< ano corrente − 2` →
+    400; `= ano corrente − 2` → aviso na resposta + `deadlineJustification` obrigatória (a janela real vai até
+    ≈ jun/N+2 e é do calendário da RFB, não do sistema).
 27. `SpedEcfDto`/`SpedEcfRealDto`: `retificadora ('N'|'S', default 'N')` — o leiaute tem também `'F'` (mudança
     de forma de tributação), **excluído de propósito** (400; reabre regime = ADR de apuração); `numRec` (**C 40**,
     obrigatório quando `'S'`, proibido quando `'N'` — `REGRA_REC_ANTERIOR_OBRIGATORIO` / `_NAO_SE_APLICA`),
@@ -266,11 +277,11 @@ ActivateFixedAssetSchema = { unitId, activatedAt: dateOnly, openingAccumulatedCe
 DisposeFixedAssetSchema  = { unitId, disposedAt: dateOnly, proceedsCents: string(>=0), counterpartAccountId?: string, version: int }
 RunDepreciationSchema    = { unitId, yearMonth: /^\d{4}-(0[1-9]|1[0-2])$/ }
 RunDepreciationResult    = { yearMonth, posted: number, skipped: number, failed: Array<{ assetId, code: 'PERIOD_NOT_OPEN', message }> }
-UpsertDepreciationRateSchema = { unitId, key, ncmPrefix?, description, lifeYears: int>0, annualRateBp: int(1..10000), justification: string (obrigatório) }  // sempre source='CUSTOM'
+UpsertDepreciationRateSchema = { unitId, ncm?: string, description, lifeYears: int>0, annualRateBp: int(1..10000), justification: string (obrigatório) }  // sempre source='CUSTOM', sourceRow=null
 // SPED
-SpedEcdDto.declarant.indFinEsc '1' ⇒ codHashSub (string 40 hex) & body.supersedesJobId & body.verificationTermRef obrigatórios
+SpedEcdDto.declarant.indFinEsc '1' ⇒ codHashSub (string 40 hex maiúsc.) & body.supersedesJobId & body.verificationTerm obrigatórios
 SpedEcf(Real)Dto: retificadora: 'N'|'S' = 'N' ('F' do leiaute → 400 de propósito); numRec?: string(len 40); supersedesJobId?  // 'S' ⇒ ambos obrigatórios
-SpedEcdDto body: verificationTerm?: { attachmentId, codMotSubs: string(3), descRtf?, signers: [{ identNom, identCpfCnpj, indCrc?, codAssin }] }  // indFinEsc '1' ⇒ obrigatório (J801/J932)
+SpedEcdDto body: verificationTerm?: { codMotSubs: z.enum(['001','002','003','004','005','099']), descRtf?, signers: SignerSchema[] (reuso), deadlineJustification? }  // indFinEsc '1' ⇒ obrigatório (J801/J932); RTF via multipart
 WaiveEcfRectificationSchema = { unitId, justification: string.min(20) }
 // Ledger
 sourceType 'fixed_asset.depreciation' / sourceId `${assetId}:${yearMonth}`;  sourceType 'fixed_asset.disposal' / sourceId assetId
@@ -318,8 +329,9 @@ sourceType 'fixed_asset.depreciation' / sourceId `${assetId}:${yearMonth}`;  sou
 a CI é o oráculo) · snapshot de DTO · `docs:generate` + BASELINE do `openapi-paths` elevada **de propósito** ·
 `smoke:migration` (declarar S6 vacuoso) · allowlist de auditoria com teste-guarda por evento · tie-out (item 14)
 · falsificadores obrigatórios: `runMonth` 2× → 2ª chamada `skipped=n, posted=0` (asserir a **segunda**);
-custo 100.000 × 10% a.a. → quotas cumulativas 833/833/834…, **Σ12 = 10.000 exato**, mês 120 fecha em 100.000 e
-`runMonth` do 121º = `skipped` (nada a postar); classe `LAND` → 0 entries; os **4** casos de período (`HARD_CLOSED`,
+custo 100.000 × 10% a.a. → quotas cumulativas 833/833/834…, **Σ12 = 10.000 exato**, mês 120 fecha em 100.000,
+ativo `FULLY_DEPRECIATED` e `runMonth` do 121º devolve `posted=0` **sem** o ativo no loop; custo 100.000 × 33,3%
+→ mês 37 posta o resíduo (100) e fecha; classe `LAND` → 0 entries; os **4** casos de período (`HARD_CLOSED`,
 `SOFT_CLOSED`, `FUTURE`, inexistente) → `failed[]` com 0 entries; job substituído com `sha256` inalterado após
 substituição; substituta contém `|J801|`+`|J932|`; tx2 falha injetada → `reconcile` fecha o drift 1×;
 2º substituto do mesmo job → 409 · review independente PASS · OPS-001 com adversarial escrito.
