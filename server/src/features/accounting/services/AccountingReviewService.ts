@@ -266,10 +266,24 @@ export class AccountingReviewService {
     // Item 6: estorno só quando o achado aponta um lançamento (register='I200', locator=entryId), e
     // só se o acerto ainda não existe — senão a 2ª chamada estornaria de novo.
     const alreadyPosted = await this.journalEntryRepo.findBySource(scope, REVIEW_ADJUSTMENT_SOURCE_TYPE, finding.id);
+    const seq = review.findings.findIndex((f) => f.id === finding.id) + 1;
+    const entryInput = {
+      unitId: dto.unitId,
+      date: dto.postingDate,
+      description: adjustmentDescription(review.id, seq, dto.description),
+      sourceType: REVIEW_ADJUSTMENT_SOURCE_TYPE,
+      sourceId: finding.id,
+      lines: dto.lines,
+    };
     if (dto.reverseOriginal && !alreadyPosted) {
       if (finding.register !== 'I200') {
         throw new ValidationError(`reverseOriginal só se aplica a achado de lançamento (register='I200'); este é '${finding.register}'.`);
       }
+      // Review #334 B1 (classe `efeito-irreversivel-antes-do-gate-autoritativo`, F1 #307): o estorno
+      // abre tx própria e é irreversível; o corpo do acerto só seria validado pelo postEntry DEPOIS.
+      // Pré-cheque do MESMO predicado (período, balanço, contas, dimensões) antes de mutar o razão —
+      // corpo inválido devolve 400 com o original intacto. O gate autoritativo segue no postEntry.
+      await this.postingService.validateEntry(scope, entryInput);
       await this.postingService.reverseEntry(scope, {
         unitId: dto.unitId,
         lancamentoId: finding.locator,
@@ -278,17 +292,8 @@ export class AccountingReviewService {
       });
     }
 
-    const seq = review.findings.findIndex((f) => f.id === finding.id) + 1;
     // Commit 1 — o razão. Gate de período (F-C11-4 a: OPEN) preflight + autoritativo dentro do postEntry.
-    const entry = alreadyPosted
-      ?? (await this.postingService.postEntry(scope, {
-        unitId: dto.unitId,
-        date: dto.postingDate,
-        description: adjustmentDescription(review.id, seq, dto.description),
-        sourceType: REVIEW_ADJUSTMENT_SOURCE_TYPE,
-        sourceId: finding.id,
-        lines: dto.lines,
-      }));
+    const entry = alreadyPosted ?? (await this.postingService.postEntry(scope, entryInput));
 
     // Commit 2 — o achado aponta o lançamento (reconcile: roda também quando o commit 1 já existia).
     const updated = await this.reviewRepo.runTransaction(async (tx) => {

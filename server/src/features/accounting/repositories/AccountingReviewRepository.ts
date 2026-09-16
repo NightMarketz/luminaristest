@@ -42,18 +42,6 @@ export class AccountingReviewRepository implements IAccountingReviewRepository {
     });
   }
 
-  public async findByAnyJob(
-    scope: AccountingScope,
-    ecdJobId: string,
-    ecfJobId: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<AccountingReview[]> {
-    return (tx ?? prisma).accountingReview.findMany({
-      where: { ...accountingScopeWhere(scope), OR: [{ ecdJobId }, { ecfJobId }] },
-      orderBy: { openedAt: 'desc' },
-    });
-  }
-
   public async list(scope: AccountingScope, filter: ListReviewsFilter): Promise<AccountingReview[]> {
     return prisma.accountingReview.findMany({
       where: { ...accountingScopeWhere(scope), year: filter.year, status: filter.status },

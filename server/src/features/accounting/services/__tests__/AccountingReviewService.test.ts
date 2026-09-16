@@ -40,7 +40,7 @@ const job = (id: string, kind: string, createdAt = T0, over: Record<string, unkn
 const reviewRow = (over: Record<string, unknown> = {}) => ({
   id: 'r-1', userId: 'dono-a', unitId: 'unit-1', year: 2026, ecdJobId: 'job-ecd', ecfJobId: 'job-ecf',
   status: 'OPEN', reviewerUserId: 'dono-a', reviewerName: null, reviewerCrc: null, statement: null,
-  closeReason: null, openedAt: T0, closedAt: null, ...over,
+  closeReason: null, openedAt: T0, updatedAt: T0, closedAt: null, ...over,
 });
 
 const findingRow = (over: Record<string, unknown> = {}) => ({
@@ -59,6 +59,7 @@ interface Opts {
   jobs?: Record<string, ReturnType<typeof job> | null>;
   accountFound?: boolean;
   existingEntry?: { id: string } | null;
+  validateRejects?: boolean;
 }
 
 function build(opts: Opts = {}) {
@@ -77,7 +78,7 @@ function build(opts: Opts = {}) {
   const runTransaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true }));
   const reviewRepo = {
     create, findById, findByJobs, update, createFinding, findFindingById, updateFinding, runTransaction,
-    list: jest.fn(async () => []), findByAnyJob: jest.fn(async () => []),
+    list: jest.fn(async () => []),
   } as unknown as IAccountingReviewRepository;
 
   const jobs: Record<string, ReturnType<typeof job> | null> = {
@@ -96,7 +97,11 @@ function build(opts: Opts = {}) {
   const auditRepo = { listByTarget } as unknown as IAuditRepository;
   const postEntry = jest.fn(async (_s: unknown, _input: { description: string }) => ({ id: 'entry-1', postings: [] }));
   const reverseEntry = jest.fn(async (_s: unknown, _input: unknown) => ({ reversal: { id: 'rev-1' }, original: { id: 'orig-1' } }));
-  const postingService = { postEntry, reverseEntry } as unknown as PostingService;
+  const validateEntry = jest.fn(async (_s: unknown, _input: unknown) => {
+    if (opts.validateRejects) throw new ValidationError('Σdébito ≠ Σcrédito');
+  });
+  const postingService = { postEntry, reverseEntry, validateEntry } as unknown as PostingService;
+
   const policy = {
     canReviewAccounting: () => opts.can ?? true,
     canSignOffReview: () => opts.can ?? true,
@@ -108,7 +113,7 @@ function build(opts: Opts = {}) {
     reviewRepo, dataExchangeRepo, accountRepo, mappingRepo, counterpartyRepo, journalEntryRepo,
     auditRepo, postingService, audit, policy,
   );
-  return { service, create, findByJobs, update, createFinding, updateFinding, auditAppend, postEntry, reverseEntry, findBySource, listByTarget };
+  return { service, create, findByJobs, update, createFinding, updateFinding, auditAppend, postEntry, reverseEntry, validateEntry, findBySource, listByTarget };
 }
 
 const lines = [
@@ -250,6 +255,14 @@ describe('AccountingReviewService', () => {
       await b.service.postAdjustment(scope, 'r-1', 'f-1', { ...dto, reverseOriginal: true });
       expect(b.reverseEntry.mock.calls[0][1]).toMatchObject({ lancamentoId: 'orig-1', reversalPostingDate: '2026-03-15' });
       expect(b.postEntry).toHaveBeenCalledTimes(1);
+    });
+
+    it('B1 (#334): corpo inválido é rejeitado ANTES do estorno — validateEntry roda primeiro, reverseEntry não é chamado', async () => {
+      const { service, reverseEntry, postEntry, validateEntry } = build({ finding: findingRow({ register: 'I200', locator: 'orig-1' }), validateRejects: true });
+      await expect(service.postAdjustment(scope, 'r-1', 'f-1', { ...dto, reverseOriginal: true })).rejects.toThrow(ValidationError);
+      expect(validateEntry).toHaveBeenCalledTimes(1);
+      expect(reverseEntry).not.toHaveBeenCalled();
+      expect(postEntry).not.toHaveBeenCalled();
     });
 
     it('revisão fechada é 409 antes de qualquer lançamento', async () => {

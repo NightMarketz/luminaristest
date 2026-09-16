@@ -1477,6 +1477,7 @@ model AccountingReview {
   statement      String?
   closeReason    String? // motivo da rejeição
   openedAt       DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   closedAt       DateTime?
   findings       AccountingReviewFinding[]
 

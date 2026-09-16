@@ -24,6 +24,7 @@ CREATE TABLE "accounting_reviews" (
     "statement" TEXT,
     "closeReason" TEXT,
     "openedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
     "closedAt" DATETIME,
     CONSTRAINT "accounting_reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "accounting_reviews_ecdJobId_fkey" FOREIGN KEY ("ecdJobId") REFERENCES "accounting_data_exchange_jobs" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,

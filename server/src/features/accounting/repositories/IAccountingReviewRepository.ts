@@ -32,7 +32,7 @@ export interface ListReviewsFilter {
 /**
  * Contrato do repositório da revisão profissional (`accounting_reviews` + `accounting_review_findings`).
  * Único lugar com `prisma.accountingReview*.*` (BE-INCR-REVIEW-LAYER, item 15). SEM delete de
- * propósito (item 11: trilha legal). `findOpenByJobs` é a metade de LEITURA do gate F-C11-5 — o
+ * propósito (item 11: trilha legal). `findByJobs` é a metade de LEITURA do gate F-C11-5 — o
  * `@@unique([ecdJobId, ecfJobId])` fecha o par cheio, mas o SQLite trata NULL como distinto, então
  * a leitura DENTRO da tx é a autoridade para pares com um job só.
  */
@@ -53,14 +53,6 @@ export interface IAccountingReviewRepository {
     ecfJobId: string | null,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingReview | null>;
-
-  /** Revisões que referenciam este par (por job individual) — usada pelo gate da entrega (item 14). */
-  findByAnyJob(
-    scope: AccountingScope,
-    ecdJobId: string,
-    ecfJobId: string,
-    tx?: Prisma.TransactionClient,
-  ): Promise<AccountingReview[]>;
 
   list(scope: AccountingScope, filter: ListReviewsFilter): Promise<AccountingReview[]>;
 
