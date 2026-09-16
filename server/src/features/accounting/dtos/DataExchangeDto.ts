@@ -50,6 +50,26 @@ export const ExportRequestSchema = z
     if (val.kind === 'EXPORT_TEMPLATE' && !val.templateKind) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['templateKind'], message: 'templateKind é obrigatório para exportar template.' });
     }
+    // Review #337 F1 (classe param-aceito-e-ignorado): periodStart/periodEnd só têm leitor em
+    // EXPORT_GENERAL_LEDGER (buildTable) — para qualquer outro kind eram aceitos pelo DTO e
+    // IGNORADOS em silêncio pelo service. Fecha na fronteira, não no service.
+    if (val.kind !== 'EXPORT_GENERAL_LEDGER' && (val.periodStart || val.periodEnd)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['periodStart'],
+        message: 'periodStart/periodEnd só valem para o razão (EXPORT_GENERAL_LEDGER).',
+      });
+    }
+    // Review #337 F1: um só dos dois caía em janela `undefined` silenciosamente dentro do
+    // razão (buildTable fazia `periodStart && periodEnd`, então um só lado virava "sem janela",
+    // não um erro) — a MESMA classe, só que dentro do kind que legitimamente usa o par.
+    if ((val.periodStart == null) !== (val.periodEnd == null)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: val.periodStart ? ['periodEnd'] : ['periodStart'],
+        message: 'Informe periodStart e periodEnd juntos, ou nenhum dos dois.',
+      });
+    }
     if (val.periodStart && val.periodEnd && val.periodEnd < val.periodStart) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['periodEnd'], message: 'periodEnd deve ser maior ou igual a periodStart.' });
     }

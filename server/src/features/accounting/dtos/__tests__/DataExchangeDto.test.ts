@@ -111,6 +111,45 @@ describe('ExportRequestSchema — periodStart/periodEnd (C6b PR-1, Passo 5)', ()
       }).success,
     ).toBe(false);
   });
+
+  // Review #337 F1 (classe param-aceito-e-ignorado): periodStart/periodEnd só têm leitor dentro
+  // de EXPORT_GENERAL_LEDGER — para qualquer outro kind o DTO aceitava e o service ignorava em
+  // silêncio. Fechado na fronteira: qualquer outro kind com periodStart OU periodEnd é 400.
+  it('rejeita periodStart/periodEnd em EXPORT_TRIAL_BALANCE — só valem para o razão', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_TRIAL_BALANCE', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
+
+  it('rejeita periodStart/periodEnd em EXPORT_BALANCE_SHEET mesmo com asOf presente', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_BALANCE_SHEET', asOf: '2026-06-30',
+      periodStart: '2026-01-01', periodEnd: '2026-01-31',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
+
+  // Review #337 F1: dentro do próprio razão, um só dos dois campos caía em janela `undefined`
+  // silenciosamente no service (`dto.periodStart && dto.periodEnd`) — a MESMA classe de bug,
+  // agora fechada no par inteiro, não só "kind errado".
+  it('rejeita o razão com só periodStart (sem periodEnd) — informe os dois ou nenhum', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_GENERAL_LEDGER', accountCode: '1.1.1', periodStart: '2026-01-01',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodEnd')).toBe(true);
+  });
+
+  it('rejeita o razão com só periodEnd (sem periodStart) — informe os dois ou nenhum', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_GENERAL_LEDGER', accountCode: '1.1.1', periodEnd: '2026-01-31',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
 });
 
 describe('ExportRequestSchema — listas fechadas', () => {

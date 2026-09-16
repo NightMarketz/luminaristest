@@ -2189,8 +2189,8 @@
  *                 unitId:       { type: string }
  *                 asOf:         { type: string, description: 'YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)' }
  *                 accountCode:  { type: string, description: 'EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)' }
- *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER window start. Required when accountCode is absent; optional (single-account window) when accountCode is present' }
- *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER window end, >= periodStart' }
+ *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise). Required when accountCode is absent; optional (single-account window) when accountCode is present' }
+ *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodStart (never just one — 400 otherwise). >= periodStart' }
  *                 templateKind: { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES], description: 'required for EXPORT_TEMPLATE' }
  *       responses:
  *         '201':

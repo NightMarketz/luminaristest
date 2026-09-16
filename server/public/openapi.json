@@ -9384,11 +9384,11 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER window start. Required when accountCode is absent; optional (single-account window) when accountCode is present"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise). Required when accountCode is absent; optional (single-account window) when accountCode is present"
                   },
                   "periodEnd": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER window end, >= periodStart"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodStart (never just one — 400 otherwise). >= periodStart"
                   },
                   "templateKind": {
                     "type": "string",
