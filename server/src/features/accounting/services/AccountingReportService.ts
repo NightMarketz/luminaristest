@@ -60,6 +60,26 @@ export interface AccountLedgerReport {
   closingBalanceCents: number;
 }
 
+/**
+ * One row of the "razão geral" (all accounts with movement in a window, C6b PR-1 Passo 7,
+ * F-C6b-7 a). One `OPENING_BALANCE` row per account (saldo antes de `window.from`), followed
+ * by its legs in the window with a running balance. Accounts with zero legs in the window are
+ * absent entirely (never a bare opening row with nothing after it).
+ */
+export interface GeneralLedgerRow {
+  accountCode: string;
+  accountName: string;
+  date: Date;
+  entryId: string;
+  entryNumber: number | null;
+  description: string;
+  /** 'OPENING_BALANCE' for the synthetic opening row, else the JournalEntry status. */
+  status: string;
+  debitCents: number;
+  creditCents: number;
+  runningBalanceCents: number;
+}
+
 // ─── BP / DRE shared types ────────────────────────────────────────────────────
 
 interface BpDreLine {
@@ -200,6 +220,19 @@ export class AccountingReportService {
         };
       })
       .sort((a, b) => a.code.localeCompare(b.code));
+  }
+
+  /**
+   * Saldo (débito - crédito) de TODAS as contas do escopo com movimento ANTES de `before`
+   * (exclusive) — usado como abertura de janela pelo razão (accountLedger/generalLedger, C6b
+   * PR-1 Passo 7, F-C6b-7 a). `before.getTime() - 1` é o fim do dia ANTERIOR (mesma convenção
+   * de `to` inclusivo de `groupByAccount`), então um lançamento exatamente EM `before` não entra
+   * na abertura — ele é o primeiro leg DENTRO da janela.
+   */
+  private async openingBalances(scope: AccountingScope, before: Date): Promise<Map<string, number>> {
+    const to = new Date(before.getTime() - 1);
+    const totals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to });
+    return new Map(totals.map((t) => [t.accountId, t.debitCents - t.creditCents]));
   }
 
   /**
@@ -359,7 +392,14 @@ export class AccountingReportService {
     return out;
   }
 
-  async trialBalance(scope: AccountingScope): Promise<TrialBalanceReport> {
+  /**
+   * `asOf` OPCIONAL (C6b PR-1 Passo 6, F-C6b-6 a): omitido ⇒ balancete acumulado (comportamento
+   * histórico, idêntico a antes desta mudança). Informado ⇒ delega em `balancesAsOf` — fecha o
+   * `asOf` que `EXPORT_TRIAL_BALANCE` já aceitava no DTO mas IGNORAVA silenciosamente
+   * (`param-aceito-e-ignorado-e-bug`): antes desta mudança um balancete pedido com `asOf=2026-06-30`
+   * devolvia o acumulado até HOJE, não até `asOf`.
+   */
+  async trialBalance(scope: AccountingScope, asOf?: Date): Promise<TrialBalanceReport> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler o balancete.');
     }
@@ -371,7 +411,7 @@ export class AccountingReportService {
     // Metrics.startTimer, not a new helper).
     const endTimer = metrics.startTimer('report_trialBalance');
     try {
-      const rows = await this.getAccountBalances(scope);
+      const rows = asOf ? await this.balancesAsOf(scope, asOf) : await this.getAccountBalances(scope);
 
       const grandDebit = rows.reduce((acc, r) => acc + r.debitCents, 0);
       const grandCredit = rows.reduce((acc, r) => acc + r.creditCents, 0);
@@ -412,8 +452,18 @@ export class AccountingReportService {
   /**
    * Ledger of a single account (by code) for the scope: each leg with a running balance.
    * Includes Posted + Reversed legs (excludes only Draft) so reversals net to zero.
+   *
+   * `window` OPCIONAL (C6b PR-1 Passo 6/7, F-C6b-7 a): omitido ⇒ comportamento histórico
+   * (toda a história da conta, sem linha de abertura — idêntico a antes desta mudança).
+   * Informado ⇒ as legs são filtradas a `[window.from, window.to]` (ambos inclusive) e uma
+   * linha sintética `OPENING_BALANCE` (saldo antes de `window.from`) abre o relatório, para
+   * que `runningBalanceCents` comece do saldo real da conta, não de zero.
    */
-  async accountLedger(scope: AccountingScope, accountCode: string): Promise<AccountLedgerReport> {
+  async accountLedger(
+    scope: AccountingScope,
+    accountCode: string,
+    window?: { from: Date; to: Date },
+  ): Promise<AccountLedgerReport> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler o razão.');
     }
@@ -425,6 +475,8 @@ export class AccountingReportService {
       if (!account) {
         throw new NotFoundError(`Conta '${accountCode}' não foi encontrada.`);
       }
+
+      const opening = window ? ((await this.openingBalances(scope, window.from)).get(account.id) ?? 0) : 0;
 
       // This account's raw legs (tenant+unit scoped), then hydrate each parent entry for
       // date/description/status and drop Draft entries (keep Posted + Reversed so reversals net).
@@ -448,6 +500,9 @@ export class AccountingReportService {
           entry = { date: head.date, description: head.description, status: head.status };
           entryCache.set(p.entryId, entry);
         }
+        // Janela opcional (C6b PR-1): fora de [from, to] a leg não pertence a este relatório —
+        // ela já está representada pelo saldo de abertura (se anterior) ou fica de fora (se posterior).
+        if (window && (entry.date < window.from || entry.date > window.to)) continue;
         hydrated.push({
           postingId: p.id,
           entryId: p.entryId,
@@ -461,11 +516,24 @@ export class AccountingReportService {
 
       hydrated.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-      let running = 0;
-      const rows: AccountLedgerRow[] = hydrated.map((leg) => {
+      let running = opening;
+      const rows: AccountLedgerRow[] = [];
+      if (window) {
+        rows.push({
+          postingId: 'OPENING_BALANCE',
+          entryId: '',
+          date: window.from,
+          description: 'Saldo de abertura',
+          status: 'OPENING_BALANCE',
+          debitCents: 0,
+          creditCents: 0,
+          runningBalanceCents: opening,
+        });
+      }
+      for (const leg of hydrated) {
         running += leg.debitCents - leg.creditCents;
-        return { ...leg, runningBalanceCents: running };
-      });
+        rows.push({ ...leg, runningBalanceCents: running });
+      }
 
       const report: AccountLedgerReport = {
         unitId: scope.unitId,
@@ -482,6 +550,89 @@ export class AccountingReportService {
       return report;
     } catch (error) {
       endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.accountLedger, unitId: scope.unitId, accountCode });
+      throw error;
+    }
+  }
+
+  /**
+   * "Razão geral" — todas as contas com movimento numa janela (C6b PR-1 Passo 7, F-C6b-7 a):
+   * o que um contador chama de razão quando não pede 1 conta específica. Fonte: o MESMO read
+   * que a ECD usa para o Diário (`findManyForExport`, A6 do plano) + `openingBalances` para a
+   * linha de abertura por conta. Conta sem NENHUMA leg na janela não aparece — a lista é
+   * "contas com movimento", não "todas as contas do plano".
+   */
+  async generalLedger(scope: AccountingScope, window: { from: Date; to: Date }): Promise<GeneralLedgerRow[]> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler o razão.');
+    }
+
+    const endTimer = metrics.startTimer('report_generalLedger');
+    try {
+      const [openingByAccount, entries, accounts] = await Promise.all([
+        this.openingBalances(scope, window.from),
+        this.journalEntryRepo.findManyForExport(scope, LEDGER_STATUSES, window),
+        this.accountRepo.findManyByUnit(scope),
+      ]);
+      const accountById = new Map(accounts.map((a) => [a.id, a]));
+
+      // Agrupa as legs por conta, preservando a ordem cronológica de `entries` (o repositório
+      // já devolve (date, entryNumber) ASC — não há por que reordenar aqui).
+      const legsByAccount = new Map<string, Array<{ entry: (typeof entries)[number]; leg: (typeof entries)[number]['postings'][number] }>>();
+      for (const entry of entries) {
+        for (const leg of entry.postings) {
+          const bucket = legsByAccount.get(leg.accountId);
+          if (bucket) bucket.push({ entry, leg });
+          else legsByAccount.set(leg.accountId, [{ entry, leg }]);
+        }
+      }
+
+      const accountIds = [...legsByAccount.keys()].sort((a, b) => {
+        const codeA = accountById.get(a)?.code ?? '';
+        const codeB = accountById.get(b)?.code ?? '';
+        return codeA.localeCompare(codeB);
+      });
+
+      const rows: GeneralLedgerRow[] = [];
+      for (const accountId of accountIds) {
+        const account = accountById.get(accountId);
+        const accountCode = account?.code ?? '?';
+        const accountName = account?.name ?? '(conta removida)';
+        let running = openingByAccount.get(accountId) ?? 0;
+        rows.push({
+          accountCode,
+          accountName,
+          date: window.from,
+          entryId: '',
+          entryNumber: null,
+          description: 'Saldo de abertura',
+          status: 'OPENING_BALANCE',
+          debitCents: 0,
+          creditCents: 0,
+          runningBalanceCents: running,
+        });
+        for (const { entry, leg } of legsByAccount.get(accountId) ?? []) {
+          const debitCents = centsFromDb(leg.debitCents);
+          const creditCents = centsFromDb(leg.creditCents);
+          running += debitCents - creditCents;
+          rows.push({
+            accountCode,
+            accountName,
+            date: entry.date,
+            entryId: entry.id,
+            entryNumber: entry.entryNumber,
+            description: entry.description,
+            status: entry.status,
+            debitCents,
+            creditCents,
+            runningBalanceCents: running,
+          });
+        }
+      }
+
+      endTimer({ success: true, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.accountLedger, unitId: scope.unitId });
+      return rows;
+    } catch (error) {
+      endTimer({ success: false, warnThresholdMs: REPORT_WARN_THRESHOLDS_MS.accountLedger, unitId: scope.unitId });
       throw error;
     }
   }
