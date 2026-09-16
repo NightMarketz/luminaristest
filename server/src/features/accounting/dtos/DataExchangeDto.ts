@@ -20,7 +20,18 @@ export const IMPLEMENTED_EXPORT_KINDS = [
   'EXPORT_TEMPLATE',
 ] as const;
 
-/** POST /exports body — which report/template to render and in which format. */
+/**
+ * POST /exports body — which report/template to render and in which format.
+ *
+ * `periodStart`/`periodEnd` (C6b PR-1, F-C6b-6/7 a): janela opcional gravada no job (as colunas
+ * já existem — `AccountingDataExchangeJob.periodStart/periodEnd` — zero migração). `accountCode`
+ * deixou de ser obrigatório para `EXPORT_GENERAL_LEDGER` (F-C6b-7 a): omitido, o export vira
+ * "razão geral" (todas as contas com movimento na janela) — mas a janela em si CONTINUA opcional
+ * neste DTO (plano, Passo 5 T: "razão sem accountCode → válido"); o guard de que a razão geral
+ * exige periodStart/periodEnd para ser CONSTRUÍDA mora em `DataExchangeExportService.buildTable`
+ * (consequência de `IJournalEntryRepository.findManyForExport` exigir `window` não-opcional —
+ * não é regra de forma do DTO).
+ */
 export const ExportRequestSchema = z
   .object({
     kind: z.enum(IMPLEMENTED_EXPORT_KINDS),
@@ -28,17 +39,19 @@ export const ExportRequestSchema = z
     unitId: z.string().min(1),
     asOf: dateOnly.optional(),
     accountCode: z.string().min(1).optional(),
+    periodStart: dateOnly.optional(),
+    periodEnd: dateOnly.optional(),
     templateKind: z.enum(IMPORT_KINDS).optional(),
   })
   .superRefine((val, ctx) => {
     if ((val.kind === 'EXPORT_BALANCE_SHEET' || val.kind === 'EXPORT_INCOME_STATEMENT') && !val.asOf) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['asOf'], message: 'asOf é obrigatório para BP/DRE.' });
     }
-    if (val.kind === 'EXPORT_GENERAL_LEDGER' && !val.accountCode) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['accountCode'], message: 'accountCode é obrigatório para o razão.' });
-    }
     if (val.kind === 'EXPORT_TEMPLATE' && !val.templateKind) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['templateKind'], message: 'templateKind é obrigatório para exportar template.' });
+    }
+    if (val.periodStart && val.periodEnd && val.periodEnd < val.periodStart) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['periodEnd'], message: 'periodEnd deve ser maior ou igual a periodStart.' });
     }
   });
 

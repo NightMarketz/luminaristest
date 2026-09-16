@@ -9376,11 +9376,19 @@
                   },
                   "asOf": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — required for BP/DRE"
+                    "description": "YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)"
                   },
                   "accountCode": {
                     "type": "string",
-                    "description": "required for EXPORT_GENERAL_LEDGER"
+                    "description": "EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)"
+                  },
+                  "periodStart": {
+                    "type": "string",
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER window start. Required when accountCode is absent; optional (single-account window) when accountCode is present"
+                  },
+                  "periodEnd": {
+                    "type": "string",
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER window end, >= periodStart"
                   },
                   "templateKind": {
                     "type": "string",

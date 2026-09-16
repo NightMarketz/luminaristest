@@ -5,7 +5,7 @@ import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { parseTable } from '../../../../lib/spreadsheet';
-import { ForbiddenError, NotFoundError } from '../../../../lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import type { AccountingDataExchangeJob } from 'generated/prisma';
 
@@ -60,9 +60,29 @@ function makeReports(): IReportReader {
       totals: { debitCents: 100000, creditCents: 0, balanceCents: 100000 },
       balanced: true,
     })),
-    accountLedger: jest.fn(),
-    balanceSheet: jest.fn(),
-    incomeStatement: jest.fn(),
+    accountLedger: jest.fn(async () => ({
+      unitId: 'unit-1',
+      account: { accountId: 'a1', code: '1.1.01', name: 'Banco', nature: 'Asset' },
+      rows: [],
+      closingBalanceCents: 0,
+    })),
+    generalLedger: jest.fn(async () => []),
+    balanceSheet: jest.fn(async () => ({
+      unitId: 'unit-1', periodSemantics: 'as_of', asOf: '2026-12-31', mappingVersion: 'v1',
+      assets: { accounts: [], totalCents: '0' }, liabilities: { accounts: [], totalCents: '0' },
+      equity: { accounts: [], totalCents: '0' },
+      netResultLine: { amountCents: '0', isComputed: true, computation: 'income_statement_net_result', fromDate: '2026-01-01', toDate: '2026-12-31' },
+      balanced: true, reportStatus: 'OK',
+      diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },
+    })),
+    incomeStatement: jest.fn(async () => ({
+      unitId: 'unit-1', periodSemantics: 'year_to_date', fromDate: '2026-01-01', toDate: '2026-12-31', mappingVersion: 'v1',
+      grossRevenue: { accounts: [], totalCents: '0' }, revenueDeductions: { accounts: [], totalCents: '0' },
+      costOfGoodsSold: { accounts: [], totalCents: '0' }, expenses: { accounts: [], totalCents: '0' },
+      netResult: { amountCents: '0', isComputed: true, computation: 'income_statement_net_result' },
+      reportStatus: 'OK',
+      diagnostics: { mappingVersion: 'v1', unmappedAccounts: [], removedAccountsReferenced: [], hasUnclosedPriorYearResult: false, priorYearResultCents: 0, warnings: [] },
+    })),
   } as unknown as IReportReader;
 }
 
@@ -205,6 +225,106 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       expect(ctx.status).toBe('failure');
       expect(typeof ctx.duration).toBe('number');
       warnSpy.mockRestore();
+    });
+  });
+
+  // C6b PR-1 (Passo 6/7, F-C6b-3/6/7 a): os exports de relatório passam a GRAVAR o período que
+  // cobrem no job — antes desta mudança, `periodStart/periodEnd` ficavam sempre null para os 4
+  // kinds de relatório (só a geração SPED os preenchia). "Regra de período por kind" do plano.
+  describe('C6b PR-1 — período gravado no job (F-C6b-3/6/7 a)', () => {
+    it('DRE com asOf=2026-12-31 → job com periodStart=2026-01-01 / periodEnd=2026-12-31', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, { kind: 'EXPORT_INCOME_STATEMENT', format: 'csv', unitId: 'unit-1', asOf: '2026-12-31' });
+
+      expect(reports.incomeStatement).toHaveBeenCalledWith(scope, new Date('2026-12-31'));
+      const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
+      expect(call.periodStart).toEqual(new Date('2026-01-01T00:00:00.000Z'));
+      expect(call.periodEnd).toEqual(new Date('2026-12-31T00:00:00.000Z'));
+    });
+
+    it('balancete SEM asOf → período null/null no job (comportamento acumulado preservado)', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
+
+      expect(reports.trialBalance).toHaveBeenCalledWith(scope, undefined);
+      const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
+      expect(call.periodStart).toBeNull();
+      expect(call.periodEnd).toBeNull();
+    });
+
+    it('balancete COM asOf → devolve as linhas de balancesAsOf(asOf) (F-C6b-6 a — falhava antes: asOf era aceito e ignorado) e grava período [Jan-1, asOf]', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1', asOf: '2026-06-30' });
+
+      // A prova de que o service passa o `asOf` adiante (não o descarta) é esta chamada: antes
+      // da mudança, `trialBalance` era chamado sem argumento nenhum além do scope.
+      expect(reports.trialBalance).toHaveBeenCalledWith(scope, new Date('2026-06-30'));
+      const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
+      expect(call.periodStart).toEqual(new Date('2026-01-01T00:00:00.000Z'));
+      expect(call.periodEnd).toEqual(new Date('2026-06-30T00:00:00.000Z'));
+    });
+
+    it('razão com accountCode + janela → chama accountLedger com a window e grava o período', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, {
+        kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1',
+        accountCode: '1.1.01', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      });
+
+      expect(reports.accountLedger).toHaveBeenCalledWith(scope, '1.1.01', {
+        from: new Date('2026-01-01T00:00:00.000Z'), to: new Date('2026-01-31T23:59:59.999Z'),
+      });
+      const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
+      expect(call.periodStart).toEqual(new Date('2026-01-01T00:00:00.000Z'));
+      expect(call.periodEnd).toEqual(new Date('2026-01-31T00:00:00.000Z'));
+    });
+
+    it('razão SEM accountCode (razão geral) → chama generalLedger com a window e grava o período', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await svc.export(scope, {
+        kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1',
+        periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      });
+
+      expect(reports.accountLedger).not.toHaveBeenCalled();
+      expect(reports.generalLedger).toHaveBeenCalledWith(scope, {
+        from: new Date('2026-01-01T00:00:00.000Z'), to: new Date('2026-01-31T23:59:59.999Z'),
+      });
+      const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
+      expect(call.periodStart).toEqual(new Date('2026-01-01T00:00:00.000Z'));
+      expect(call.periodEnd).toEqual(new Date('2026-01-31T00:00:00.000Z'));
+    });
+
+    // Adversarial (OPS-001): a razão geral sem accountCode E sem janela passa no DTO (Passo 5 T:
+    // "razão sem accountCode → válido" é regra de FORMA), mas `generalLedger` exige `window` não-
+    // opcional (`findManyForExport` não tem modo "sem bound") — a CONSTRUÇÃO do artefato tem de
+    // recusar em vez de tentar um scan sem fim. Nenhum job deve ser criado (a checagem é ANTES
+    // do createJob).
+    it('razão geral sem periodStart/periodEnd → ValidationError, e NENHUM job é criado', async () => {
+      const { repo, createJob } = makeRepo();
+      const reports = makeReports();
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit);
+
+      await expect(
+        svc.export(scope, { kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1' }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      expect(reports.generalLedger).not.toHaveBeenCalled();
+      expect(createJob).not.toHaveBeenCalled();
     });
   });
 });

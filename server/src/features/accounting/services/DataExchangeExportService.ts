@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { AccountingDataExchangeJob } from 'generated/prisma';
-import { ForbiddenError, NotFoundError } from '../../../lib/errors';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
@@ -15,19 +15,50 @@ import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappe
 import type {
   TrialBalanceReport,
   AccountLedgerReport,
+  GeneralLedgerRow,
   BalanceSheetReport,
   IncomeStatementReport,
 } from './AccountingReportService';
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
+/** A date-only window in UTC-day boundaries (C6b PR-1, F-C6b-3/6/7 a). */
+export interface ExportWindow {
+  from: Date;
+  to: Date;
+}
+
 /** Minimal read surface the exporter needs — satisfied structurally by AccountingReportService. */
 export interface IReportReader {
-  trialBalance(scope: AccountingScope): Promise<TrialBalanceReport>;
-  accountLedger(scope: AccountingScope, accountCode: string): Promise<AccountLedgerReport>;
+  trialBalance(scope: AccountingScope, asOf?: Date): Promise<TrialBalanceReport>;
+  accountLedger(scope: AccountingScope, accountCode: string, window?: ExportWindow): Promise<AccountLedgerReport>;
+  generalLedger(scope: AccountingScope, window: ExportWindow): Promise<GeneralLedgerRow[]>;
   balanceSheet(scope: AccountingScope, asOf: Date): Promise<BalanceSheetReport>;
   incomeStatement(scope: AccountingScope, asOf: Date): Promise<IncomeStatementReport>;
 }
+
+/** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
+ *  storage convention (period-as-marker, not a query bound; matches SpedGenerationService). */
+function periodColumns(periodStart: string, periodEnd: string): { periodStart: Date; periodEnd: Date } {
+  return {
+    periodStart: new Date(`${periodStart}T00:00:00.000Z`),
+    periodEnd: new Date(`${periodEnd}T00:00:00.000Z`),
+  };
+}
+
+/** `[YYYY-MM-DD, YYYY-MM-DD]` → query window with a whole-day-inclusive `to` — same convention
+ *  as `SpedGenerationService`/`DailyJournalReportService`'s own `findManyForExport` calls. */
+function queryWindow(periodStart: string, periodEnd: string): ExportWindow {
+  return {
+    from: new Date(`${periodStart}T00:00:00.000Z`),
+    to: new Date(`${periodEnd}T23:59:59.999Z`),
+  };
+}
+
+/** Período gravado no job (C6b PR-1 Passo 6) — null/null para kinds que nunca entram no pacote
+ *  do contador (F-C6b-3 a) ou quando a entrada opcional que determina o período não veio. */
+type JobPeriod = { periodStart: Date | null; periodEnd: Date | null };
+const NO_PERIOD: JobPeriod = { periodStart: null, periodEnd: null };
 
 /** Metadata + resolved absolute path for streaming an export artifact. */
 export interface ArtifactDownloadTarget {
@@ -61,28 +92,72 @@ export class DataExchangeExportService {
     private readonly audit: AuditService,
   ) {}
 
-  /** Builds the tabular payload for a given export kind. */
-  private async buildTable(scope: AccountingScope, dto: ExportRequestDto): Promise<OutTable> {
+  /**
+   * Builds the tabular payload for a given export kind, PLUS the period the artifact covers
+   * (C6b PR-1 Passo 6, F-C6b-3/6/7 a) — the caller records it on the job so the contador
+   * package (C6b PR-3) can validate that an extra's period is contained in the delivery's.
+   * "Regra de período por kind" (plano, Passo 6): BP/DRE/balancete = `[Jan-1 do ano(asOf), asOf]`;
+   * razão = a janela do DTO; template = null. Entrada ausente (sem asOf / sem janela) ⇒ null/null
+   * — nunca inventa um período que ninguém pediu.
+   */
+  private async buildTable(scope: AccountingScope, dto: ExportRequestDto): Promise<{ table: OutTable; period: JobPeriod }> {
     switch (dto.kind) {
       case 'EXPORT_TRIAL_BALANCE': {
-        const r = await this.reports.trialBalance(scope);
-        return {
+        const asOf = dto.asOf ? new Date(dto.asOf) : undefined;
+        const r = await this.reports.trialBalance(scope, asOf);
+        const table: OutTable = {
           headers: ['code', 'name', 'nature', 'debitCents', 'creditCents', 'balanceCents'],
           rows: r.rows.map((row) => [row.code, row.name, row.nature, row.debitCents, row.creditCents, row.balanceCents]),
         };
+        const period = dto.asOf
+          ? periodColumns(`${asOf!.getUTCFullYear()}-01-01`, dto.asOf)
+          : NO_PERIOD;
+        return { table, period };
       }
       case 'EXPORT_GENERAL_LEDGER': {
-        const r = await this.reports.accountLedger(scope, dto.accountCode as string);
-        return {
-          headers: ['date', 'entryId', 'description', 'status', 'debitCents', 'creditCents', 'runningBalanceCents'],
-          rows: r.rows.map((row) => [
-            row.date.toISOString().slice(0, 10), row.entryId, row.description, row.status,
-            row.debitCents, row.creditCents, row.runningBalanceCents,
+        const window = dto.periodStart && dto.periodEnd ? queryWindow(dto.periodStart, dto.periodEnd) : undefined;
+        const period = dto.periodStart && dto.periodEnd
+          ? periodColumns(dto.periodStart, dto.periodEnd)
+          : NO_PERIOD;
+
+        if (dto.accountCode) {
+          const r = await this.reports.accountLedger(scope, dto.accountCode, window);
+          const table: OutTable = {
+            headers: ['date', 'entryId', 'description', 'status', 'debitCents', 'creditCents', 'runningBalanceCents'],
+            rows: r.rows.map((row) => [
+              row.date.toISOString().slice(0, 10), row.entryId, row.description, row.status,
+              row.debitCents, row.creditCents, row.runningBalanceCents,
+            ]),
+          };
+          return { table, period };
+        }
+
+        // Razão geral (sem accountCode, F-C6b-7 a): exige janela — `findManyForExport` (o read
+        // que `generalLedger` reusa da ECD) não tem modo "sem bound". O DTO PERMITE omitir a
+        // janela (Passo 5 T: "razão sem accountCode → válido") porque essa é uma regra de FORMA;
+        // esta é a regra de CONSTRUÇÃO do artefato — 400 nomeado, nunca um scan sem fim.
+        if (!window) {
+          throw new ValidationError(
+            'periodStart e periodEnd são obrigatórios para exportar o razão geral (sem accountCode).',
+          );
+        }
+        const rows = await this.reports.generalLedger(scope, window);
+        const table: OutTable = {
+          headers: [
+            'accountCode', 'accountName', 'date', 'entryId', 'entryNumber',
+            'description', 'status', 'debitCents', 'creditCents', 'runningBalanceCents',
+          ],
+          rows: rows.map((row) => [
+            row.accountCode, row.accountName, row.date.toISOString().slice(0, 10), row.entryId,
+            row.entryNumber ?? '', row.description, row.status, row.debitCents, row.creditCents,
+            row.runningBalanceCents,
           ]),
         };
+        return { table, period };
       }
       case 'EXPORT_BALANCE_SHEET': {
-        const r = await this.reports.balanceSheet(scope, new Date(dto.asOf as string));
+        const asOf = new Date(dto.asOf as string);
+        const r = await this.reports.balanceSheet(scope, asOf);
         const rows: OutTable['rows'] = [];
         const push = (section: string, lines: { code: string; name: string; amountCents: string }[]) =>
           lines.forEach((l) => rows.push([section, l.code, l.name, l.amountCents]));
@@ -90,10 +165,13 @@ export class DataExchangeExportService {
         push('LIABILITIES', r.liabilities.accounts);
         push('EQUITY', r.equity.accounts);
         rows.push(['NET_RESULT', '', 'Resultado do período', r.netResultLine.amountCents]);
-        return { headers: ['section', 'code', 'name', 'amountCents'], rows };
+        const table: OutTable = { headers: ['section', 'code', 'name', 'amountCents'], rows };
+        const period = periodColumns(`${asOf.getUTCFullYear()}-01-01`, dto.asOf as string);
+        return { table, period };
       }
       case 'EXPORT_INCOME_STATEMENT': {
-        const r = await this.reports.incomeStatement(scope, new Date(dto.asOf as string));
+        const asOf = new Date(dto.asOf as string);
+        const r = await this.reports.incomeStatement(scope, asOf);
         const rows: OutTable['rows'] = [];
         const push = (section: string, lines: { code: string; name: string; amountCents: string }[]) =>
           lines.forEach((l) => rows.push([section, l.code, l.name, l.amountCents]));
@@ -104,10 +182,13 @@ export class DataExchangeExportService {
         push('COST_OF_GOODS_SOLD', r.costOfGoodsSold.accounts);
         push('EXPENSES', r.expenses.accounts);
         rows.push(['NET_RESULT', '', 'Resultado líquido', r.netResult.amountCents]);
-        return { headers: ['section', 'code', 'name', 'amountCents'], rows };
+        const table: OutTable = { headers: ['section', 'code', 'name', 'amountCents'], rows };
+        const period = periodColumns(`${asOf.getUTCFullYear()}-01-01`, dto.asOf as string);
+        return { table, period };
       }
       case 'EXPORT_TEMPLATE': {
-        return { headers: TEMPLATE_HEADERS[dto.templateKind as ImportKind], rows: [] };
+        const table: OutTable = { headers: TEMPLATE_HEADERS[dto.templateKind as ImportKind], rows: [] };
+        return { table, period: NO_PERIOD };
       }
       default:
         // Exhaustiveness guard — the DTO enum should prevent reaching here.
@@ -123,7 +204,7 @@ export class DataExchangeExportService {
       throw new ForbiddenError('Não autorizado a exportar dados contábeis.');
     }
 
-    const table = await this.buildTable(scope, dto);
+    const { table, period } = await this.buildTable(scope, dto);
     const buffer = await serializeTable(table, dto.format);
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `${dto.kind.toLowerCase()}.${dto.format}`;
@@ -136,6 +217,11 @@ export class DataExchangeExportService {
       kind: dto.kind,
       status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
       requestedById: scope.actorUserId,
+      // C6b PR-1 (F-C6b-3/6/7 a): período coberto pelo artefato — as colunas já existiam
+      // (job SPED as preenche desde BE-INCR-CONTADOR-DELIVERY); os exports de relatório
+      // passam a preenchê-las também, para o pacote do contador (C6b PR-3) validar período.
+      periodStart: period.periodStart,
+      periodEnd: period.periodEnd,
       originalName: fileName,
       mimeType,
       sizeBytes: buffer.length,
