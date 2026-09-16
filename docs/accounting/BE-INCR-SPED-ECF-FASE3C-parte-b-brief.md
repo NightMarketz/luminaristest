@@ -307,9 +307,14 @@ GET /api/lalur/parte-b/balances?unitId&year → {
     materialized?: Balance, recomputed: Balance, divergent: boolean }] }],
   divergences: Array<{ quarter, codCtaB, codTributo, field, materialized, recomputed }>,
   // EMENDA 2026-09-15 (X4-14, follow-up do item 14 ratificado 2026-09-13): ajuste da Parte A (lalur/lacs) com
-  // relação contábil (indRelacao 2|3) cujo valorCents ≠ {Σ débitos, Σ créditos, saldo do período, saldo final}
-  // da conta no trimestre (K155/K355, postings reais via AccountingReportService.accountAggregates) E sem
-  // M312/M362 (journalLinks vazio) — REGRA_REGISTRO_M312_OBRIGATORIO (p.253). AVISO; a geração NÃO recusa.
+  // relação contábil (indRelacao 2|3) cujo valorCents ≠ o agregado que a REGRA_REGISTRO_M312_OBRIGATORIO (p.253)
+  // manda comparar E sem M312/M362 (journalLinks vazio). AVISO; a geração NÃO recusa.
+  // ERRATA 2026-09-15 (review independente #329, S1): "≠ {Σ débitos, Σ créditos, saldo do período, saldo final}"
+  // era paráfrase que perdeu o 2º ramo da regra transcrita (layout-transcription-LMN.md l.234): conta
+  // PATRIMONIAL (J050.COD_NAT 1/2/3) compara com os 4 agregados do K155; conta de RESULTADO (COD_NAT 4 — o caso
+  // comum do M310) compara SÓ com K355.VL_SLD_FIN. Os 4 agregados continuam expostos em `aggregates` para
+  // leitura humana; a régua é por natureza da conta. Não é fork novo — é fidelidade à regra que o item 14 citou.
+  // Também (#329 N1): `quarterBounds.to` = último dia 23:59:59.999Z (régua dos irmãos balanceSheet/ECD).
   warnings: Array<{ code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT', quarter, livro, codigo, entryId, accountCode,
     valorCents, aggregates: { sumDebitCents, sumCreditCents, saldoPeriodoCents, saldoFinalCents }, message }>
 }

@@ -1013,13 +1013,26 @@ export class LalurService {
   ): Promise<LalurParteBBalancesDiagnostic['warnings']> {
     const entries = await this.repo.findEntriesForYear(scope, year, tx);
     const warnings: LalurParteBBalancesDiagnostic['warnings'] = [];
+    const byQuarter = new Map<string, Awaited<ReturnType<LalurReportReader['accountAggregates']>>>(); // S2: 1 par de groupBy por trimestre
+    const EMPTY = { sumDebitCents: 0, sumCreditCents: 0, saldoPeriodoCents: 0, saldoFinalCents: 0 };
     for (const e of entries) {
       if (!e.accountId || !e.account || !isParteALivro(e.livro as LalurLivro) || e.journalLinks.length > 0) continue;
-      const { from, to } = quarterBounds(year, e.quarter as LalurQuarter);
-      const agg = await this.reports.accountAggregates(scope, e.accountId, from, to);
+      let quarterAgg = byQuarter.get(e.quarter);
+      if (!quarterAgg) {
+        const { from, to } = quarterBounds(year, e.quarter as LalurQuarter);
+        quarterAgg = await this.reports.accountAggregates(scope, from, to);
+        byQuarter.set(e.quarter, quarterAgg);
+      }
+      const agg = quarterAgg.get(e.accountId) ?? EMPTY;
       const valor = Number(e.valorCents);
-      const matches = [agg.sumDebitCents, agg.sumCreditCents, agg.saldoPeriodoCents, agg.saldoFinalCents].includes(valor);
-      if (matches) continue;
+      // REGRA_REGISTRO_M312_OBRIGATORIO (p.253) tem DOIS ramos por J050.COD_NAT: patrimonial (1/2/3) compara
+      // com os 4 agregados do K155; conta de RESULTADO (4) compara SÓ com K355.VL_SLD_FIN — review #329 S1:
+      // a régua uniforme silenciava o aviso que o PVA emite quando a conta de resultado tem D e C no trimestre.
+      const isResultado = e.account.nature === 'Revenue' || e.account.nature === 'Expense';
+      const candidates = isResultado
+        ? [agg.saldoFinalCents]
+        : [agg.sumDebitCents, agg.sumCreditCents, agg.saldoPeriodoCents, agg.saldoFinalCents];
+      if (candidates.includes(valor)) continue;
       warnings.push({
         code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT',
         quarter: e.quarter as LalurQuarter,
@@ -1034,7 +1047,9 @@ export class LalurService {
           saldoPeriodoCents: String(agg.saldoPeriodoCents),
           saldoFinalCents: String(agg.saldoFinalCents),
         },
-        message: `Ajuste ${e.livro} ${e.codigo} (${e.quarter}) de ${valor} centavos na conta ${e.account.code} não iguala Σ débitos, Σ créditos, saldo do período nem saldo final do trimestre — é ajuste PARCIAL e o M312/M362 é obrigatório (Manual ECF L12 p.253): informe journalEntryIds.`,
+        message: isResultado
+          ? `Ajuste ${e.livro} ${e.codigo} (${e.quarter}) de ${valor} centavos na conta de resultado ${e.account.code} não iguala o saldo final do trimestre (K355.VL_SLD_FIN) — é ajuste PARCIAL e o M312/M362 é obrigatório (Manual ECF L12 p.253): informe journalEntryIds.`
+          : `Ajuste ${e.livro} ${e.codigo} (${e.quarter}) de ${valor} centavos na conta ${e.account.code} não iguala Σ débitos, Σ créditos, saldo do período nem saldo final do trimestre (K155) — é ajuste PARCIAL e o M312/M362 é obrigatório (Manual ECF L12 p.253): informe journalEntryIds.`,
       });
     }
     return warnings;

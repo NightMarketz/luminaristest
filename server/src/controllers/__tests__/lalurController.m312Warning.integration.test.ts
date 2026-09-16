@@ -1,8 +1,10 @@
 /**
  * X4-14 (BRIEF 3C item 14 — follow-up ratificado 2026-09-13; EMENDA §2.4 2026-09-15): o diagnóstico
  * `GET /api/lalur/parte-b/balances` AVISA (nunca 400) o ajuste da Parte A com relação contábil cujo
- * `valorCents` não iguala nenhum dos 4 agregados K155/K355 da conta no trimestre e que não cita M312/M362
- * (`REGRA_REGISTRO_M312_OBRIGATORIO`, Manual ECF L12 p.253). Os agregados vêm dos postings reais.
+ * `valorCents` não iguala o agregado que a `REGRA_REGISTRO_M312_OBRIGATORIO` (Manual ECF L12 p.253) manda
+ * comparar e que não cita M312/M362. A regra tem DOIS ramos por J050.COD_NAT: patrimonial (1/2/3) → qualquer
+ * dos 4 agregados do K155; conta de RESULTADO (4) → SÓ K355.VL_SLD_FIN (review independente #329, S1).
+ * Os agregados vêm dos postings reais.
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
@@ -90,5 +92,34 @@ describe('X4-14 — aviso M312 para ajuste parcial sem lançamentos', () => {
     expect(ids).toContain(off.body.data.id);
     expect(d.body.data.warnings.find((w: { entryId: string }) => w.entryId === off.body.data.id).aggregates).toEqual({ sumDebitCents: '0', sumCreditCents: '0', saldoPeriodoCents: '0', saldoFinalCents: '7000' });
     expect(d.body.data.warnings).toHaveLength(2); // o parcial do T01 + este
+  });
+
+  it('S1 (#329): conta de RESULTADO com D e C no trimestre — ajuste = Σ débitos (≠ saldo final) → AVISO; ajuste = saldo final → sem aviso', async () => {
+    await prisma.accountingPeriod.createMany({ data: [7, 8, 9].map((month) => ({ userId: dono.id, unitId: UNIT, year: 2025, month, status: 'OPEN', openedAt: new Date(), openedById: dono.id })) });
+    // T03: D 9000 e C 4000 na 4.1.9 → Σ débitos 9000, Σ créditos 4000, saldo do período 5000, saldo final 7000+5000 = 12000
+    expect((await postEntry('2025-07-10', 9000)).status).toBe(201);
+    const estorno = await request(app).post('/api/accounting/post').set(authHeader(dono)).send({
+      unitId: UNIT, date: '2025-08-05', description: 'estorno parcial de multa',
+      lines: [
+        { accountCode: '1.1.1', debitCents: 4000, creditCents: 0 },
+        { accountCode: '4.1.9', debitCents: 0, creditCents: 4000 },
+      ],
+    });
+    expect(estorno.status).toBe(201);
+    const somaDeb = await lalurEntry({ valorCents: 9000, quarter: 'T03', codigo: '7', histLancamento: 'T03 = Σ débitos' });
+    expect(somaDeb.status).toBe(201);
+    const saldoFinal = await lalurEntry({ valorCents: 12000, quarter: 'T03', codigo: '8', histLancamento: 'T03 = saldo final' });
+    expect(saldoFinal.status).toBe(201);
+
+    const d = await request(app).get('/api/lalur/parte-b/balances').set(authHeader(dono)).query({ unitId: UNIT, year: 2025 });
+    expect(d.status).toBe(200);
+    const ids = d.body.data.warnings.map((w: { entryId: string }) => w.entryId);
+    // Régua uniforme (4 agregados) deixaria 9000 passar porque iguala Σ débitos — o Manual manda comparar só com K355.VL_SLD_FIN.
+    expect(ids).toContain(somaDeb.body.data.id);
+    expect(ids).not.toContain(saldoFinal.body.data.id);
+    const w = d.body.data.warnings.find((x: { entryId: string }) => x.entryId === somaDeb.body.data.id);
+    expect(w.aggregates).toEqual({ sumDebitCents: '9000', sumCreditCents: '4000', saldoPeriodoCents: '5000', saldoFinalCents: '12000' });
+    expect(w.message).toMatch(/conta de resultado .* saldo final do trimestre \(K355\.VL_SLD_FIN\)/);
+    expect(d.body.data.warnings).toHaveLength(3); // T01 parcial + T02 fora + este
   });
 });

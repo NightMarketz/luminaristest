@@ -149,6 +149,14 @@ export interface IncomeStatementReport {
  * a reversible bank-reconciliation marker, NOT a money change; omitting it would make
  * a reconciled entry vanish from BP/DRE/razão/balancete.
  */
+/** X4-14: agregados K155/K355 de uma conta numa janela (valores ABSOLUTOS — o VL_CTA do e-Lalur é >= 0). */
+export interface AccountAggregates {
+  sumDebitCents: number;
+  sumCreditCents: number;
+  saldoPeriodoCents: number;
+  saldoFinalCents: number;
+}
+
 export class AccountingReportService {
   constructor(
     private readonly accountRepo: IAccountRepository,
@@ -325,31 +333,30 @@ export class AccountingReportService {
    */
   /**
    * X4-14 (BRIEF 3C item 14, follow-up ratificado 2026-09-13): os 4 agregados que o K155/K355 da ECD
-   * expõe para uma conta num intervalo — Σ débitos, Σ créditos, saldo do período e saldo FINAL (acumulado
-   * até `to`) — a régua da `REGRA_REGISTRO_M312_OBRIGATORIO` (Manual ECF L12 p.253): um M310/M360 cujo
-   * `VL_CTA` não iguala nenhum deles é ajuste PARCIAL e exige M312/M362. Mesmos statuses do balancete
+   * expõe por conta numa janela — Σ débitos, Σ créditos, saldo do período e saldo FINAL (acumulado
+   * até `to`) — a régua da `REGRA_REGISTRO_M312_OBRIGATORIO` (Manual ECF L12 p.253). Qual dos 4 vale
+   * depende do COD_NAT da conta e é decisão do CHAMADOR (`LalurService.partialAdjustmentWarnings`):
+   * patrimonial compara com os 4 (K155), resultado só com o saldo final (K355). Devolve TODAS as contas
+   * do escopo com movimento (Map por accountId) — o groupBy já agrega o escopo inteiro, então 1 chamada
+   * por janela custa o mesmo que 1 por conta (review #329 S2). Mesmos statuses do balancete
    * (`LEDGER_STATUSES`); saldos em valor ABSOLUTO (o VL_CTA do e-Lalur é ≥ 0, p.244). Leitura pura.
    */
-  async accountAggregates(
-    scope: AccountingScope,
-    accountId: string,
-    from: Date,
-    to: Date,
-  ): Promise<{ sumDebitCents: number; sumCreditCents: number; saldoPeriodoCents: number; saldoFinalCents: number }> {
+  async accountAggregates(scope: AccountingScope, from: Date, to: Date): Promise<Map<string, AccountAggregates>> {
+    // Review #329 S2: 2 groupBy por JANELA (máx. 8 por ano), nunca por ajuste — o groupBy já agrega o escopo inteiro.
     const [period, cumulative] = await Promise.all([
       this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { from, to }),
       this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to }),
     ]);
-    const p = period.find((t) => t.accountId === accountId);
-    const c = cumulative.find((t) => t.accountId === accountId);
-    const sumDebitCents = p?.debitCents ?? 0;
-    const sumCreditCents = p?.creditCents ?? 0;
-    return {
-      sumDebitCents,
-      sumCreditCents,
-      saldoPeriodoCents: Math.abs(sumDebitCents - sumCreditCents),
-      saldoFinalCents: Math.abs((c?.debitCents ?? 0) - (c?.creditCents ?? 0)),
-    };
+    const out = new Map<string, AccountAggregates>();
+    for (const t of period) {
+      out.set(t.accountId, { sumDebitCents: t.debitCents, sumCreditCents: t.creditCents, saldoPeriodoCents: Math.abs(t.debitCents - t.creditCents), saldoFinalCents: 0 });
+    }
+    for (const c of cumulative) {
+      const row = out.get(c.accountId) ?? { sumDebitCents: 0, sumCreditCents: 0, saldoPeriodoCents: 0, saldoFinalCents: 0 };
+      row.saldoFinalCents = Math.abs(c.debitCents - c.creditCents);
+      out.set(c.accountId, row);
+    }
+    return out;
   }
 
   async trialBalance(scope: AccountingScope): Promise<TrialBalanceReport> {
