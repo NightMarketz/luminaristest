@@ -153,7 +153,7 @@ describe('ExportRequestSchema — periodStart/periodEnd (C6b PR-1, Passo 5)', ()
 });
 
 describe('ExportRequestSchema — listas fechadas', () => {
-  it('aceita os 5 kinds implementados e recusa um kind declarado-mas-não-fiado', () => {
+  it('aceita os 7 kinds implementados e recusa um kind declarado-mas-não-fiado', () => {
     for (const kind of IMPLEMENTED_EXPORT_KINDS) {
       const extra =
         kind === 'EXPORT_BALANCE_SHEET' || kind === 'EXPORT_INCOME_STATEMENT'
@@ -162,7 +162,11 @@ describe('ExportRequestSchema — listas fechadas', () => {
             ? { accountCode: '1.1.1' }
             : kind === 'EXPORT_TEMPLATE'
               ? { templateKind: 'IMPORT_CHART_OF_ACCOUNTS' as const }
-              : {};
+              : kind === 'EXPORT_BANK_RECONCILIATION'
+                ? { periodStart: '2026-01-01', periodEnd: '2026-01-31' }
+                : kind === 'EXPORT_ENTRY_SAMPLE'
+                  ? { periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1' }
+                  : {};
       expect(ExportRequestSchema.safeParse({ ...base, kind, ...extra }).success).toBe(true);
     }
     // EXPORT_IMPORT_ERRORS existe no enum do model e NÃO está fiado (Fase 5).
@@ -179,6 +183,111 @@ describe('ExportRequestSchema — listas fechadas', () => {
     expect(
       ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_TRIAL_BALANCE', asof: 'x' }).success,
     ).toBe(true);
+  });
+});
+
+// C6b PR-2 Passo 8/9 (F-C6b-5 a): dois kinds novos — conciliação bancária e amostra de
+// lançamentos — AMPLIAM (não substituem) a regra do periodStart/periodEnd que o review #337
+// fechou no PR-1: agora 3 kinds legitimamente usam o par (razão OPCIONAL; conciliação e
+// amostra OBRIGATÓRIO), e qualquer outro continua 400.
+describe('ExportRequestSchema — EXPORT_BANK_RECONCILIATION (C6b PR-2 Passo 8)', () => {
+  it('exige periodStart/periodEnd — ausentes → issue em periodStart', () => {
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_BANK_RECONCILIATION' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+  });
+
+  it('com periodStart/periodEnd válidos → passa', () => {
+    expect(
+      ExportRequestSchema.safeParse({
+        ...base, kind: 'EXPORT_BANK_RECONCILIATION', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('só periodStart (sem periodEnd) → issue em periodEnd (par obrigatório junto)', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_BANK_RECONCILIATION', periodStart: '2026-01-01',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodEnd')).toBe(true);
+  });
+});
+
+describe('ExportRequestSchema — EXPORT_ENTRY_SAMPLE (C6b PR-2 Passo 9, F-C6b-8 a)', () => {
+  it('exige periodStart/periodEnd E seed — todos ausentes → issues em periodStart e seed', () => {
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_ENTRY_SAMPLE' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
+      expect(parsed.error.issues.some((i) => i.path[0] === 'seed')).toBe(true);
+    }
+  });
+
+  it('com periodStart/periodEnd/seed válidos → passa; perAccount é opcional (default fica a cargo do service)', () => {
+    expect(
+      ExportRequestSchema.safeParse({
+        ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: 'seed-1',
+      }).success,
+    ).toBe(true);
+    expect(
+      ExportRequestSchema.safeParse({
+        ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+        seed: 'seed-1', perAccount: 10,
+      }).success,
+    ).toBe(true);
+  });
+
+  it('perAccount fora de 1..50 → issue', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      seed: 'seed-1', perAccount: 51,
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('seed vazia → issue (min 1)', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31', seed: '',
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
+
+// Classe param-aceito-e-ignorado (review #337 F1) — perAccount/seed só têm leitor em
+// EXPORT_ENTRY_SAMPLE; em qualquer outro kind, aceitos-e-ignorados seria o MESMO bug que o
+// review fechou para periodStart/periodEnd. Fecha na fronteira do DTO.
+describe('ExportRequestSchema — perAccount/seed rejeitados fora de EXPORT_ENTRY_SAMPLE', () => {
+  it('perAccount em EXPORT_TRIAL_BALANCE → issue em perAccount', () => {
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_TRIAL_BALANCE', perAccount: 5 });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'perAccount')).toBe(true);
+  });
+
+  it('seed em EXPORT_GENERAL_LEDGER → issue em seed', () => {
+    const parsed = ExportRequestSchema.safeParse({ ...base, kind: 'EXPORT_GENERAL_LEDGER', seed: 'x' });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'seed')).toBe(true);
+  });
+
+  it('perAccount em EXPORT_BANK_RECONCILIATION → issue (só vale para a amostra)', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_BANK_RECONCILIATION', periodStart: '2026-01-01', periodEnd: '2026-01-31', perAccount: 5,
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'perAccount')).toBe(true);
+  });
+});
+
+// Regressão do PR-1 (review #337 F1): periodStart/periodEnd continuam 400 fora do conjunto
+// ampliado — o Passo 8/9 amplia QUEM pode usar o par, nunca remove a regra para quem não pode.
+describe('ExportRequestSchema — regressão: periodStart/periodEnd continuam 400 em BP (C6b PR-2)', () => {
+  it('EXPORT_BALANCE_SHEET com periodStart/periodEnd → issue em periodStart', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_BALANCE_SHEET', asOf: '2026-06-30', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'periodStart')).toBe(true);
   });
 });
 

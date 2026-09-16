@@ -9,6 +9,7 @@ import type {
   CreateBankStatementLineInput,
   CreateReconciliationMatchInput,
   EntryPostingReconciliationState,
+  MatchedLineForExport,
   ReconciliationMatchType,
 } from '../models/Reconciliation.model';
 
@@ -273,6 +274,20 @@ export interface IReconciliationRepository {
     options?: { from?: Date; to?: Date },
     tx?: Prisma.TransactionClient,
   ): Promise<CandidatePosting[]>;
+
+  /**
+   * Linhas de extrato CASADAS (status MATCHED) numa janela, entre as contas bancárias dadas —
+   * achatadas 1:1 por match ATIVO, com o código da conta bancária e o resumo do lançamento
+   * casado (C6b PR-2 Passo 8, F-C6b-5 a — fonte de `EXPORT_BANK_RECONCILIATION`, seção MATCHED
+   * do export). O ÚNICO read novo deste passo — pendências reusam `findUnmatchedLinesByAccount`/
+   * `findUnmatchedBankPostings` (A5 do plano) já existentes.
+   */
+  findMatchedLinesByWindow(
+    scope: AccountingScope,
+    glAccountIds: string[],
+    window: { from: Date; to: Date },
+    tx?: Prisma.TransactionClient,
+  ): Promise<MatchedLineForExport[]>;
 
   /** Runs fn inside a DB transaction (the only tx entry point for the service). */
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;

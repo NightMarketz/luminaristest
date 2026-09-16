@@ -71,10 +71,27 @@ export interface CandidatePostingQuery {
   dateTo: Date;
 }
 
-/** Candidate posting with the entry summary needed for ranking/display. */
+/** Candidate posting with the entry summary needed for ranking/display.
+ *  `entryNumber` (C6b PR-2 Passo 8): a pendência de posting no export de conciliação precisa do
+ *  número sequencial do lançamento, igual às demais tabelas do pacote (razão, DRE etc.) — campo
+ *  aditivo, não muda nenhum consumidor existente (auto-match/manual-match/unmatch nunca o leem). */
 export type CandidatePosting = Posting & {
-  entry: { id: string; date: Date; description: string; status: string };
+  entry: { id: string; date: Date; description: string; status: string; entryNumber: number | null };
 };
+
+/** Uma linha de extrato CASADA, achatada para o export de conciliação (C6b PR-2 Passo 8,
+ *  F-C6b-5 a — `EXPORT_BANK_RECONCILIATION`, BRIEF item 9). Uma linha por match ATIVO — uma
+ *  linha de extrato com N matches ativos (estrutural N:M, D3) produz N linhas de export. */
+export interface MatchedLineForExport {
+  bankAccountCode: string;
+  statementId: string;
+  lineDate: Date;
+  amountCents: number;
+  memo: string;
+  entryId: string;
+  entryNumber: number | null;
+  matchType: ReconciliationMatchType;
+}
 
 /** Per-posting reconciliation state of one journal entry (flip derivation, D5). */
 export interface EntryPostingReconciliationState {

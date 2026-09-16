@@ -931,7 +931,9 @@
             "EXPORT_GENERAL_LEDGER",
             "EXPORT_BALANCE_SHEET",
             "EXPORT_INCOME_STATEMENT",
-            "EXPORT_TEMPLATE"
+            "EXPORT_TEMPLATE",
+            "EXPORT_BANK_RECONCILIATION",
+            "EXPORT_ENTRY_SAMPLE"
           ]
         },
         "format": {
@@ -965,6 +967,16 @@
             "IMPORT_OPENING_BALANCES",
             "IMPORT_JOURNAL_ENTRIES"
           ]
+        },
+        "perAccount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "seed": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
         }
       },
       "required": [

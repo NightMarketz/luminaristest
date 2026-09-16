@@ -3,6 +3,7 @@ import type { BankStatement, BankStatementLine, ReconciliationMatch, Prisma } fr
 import { NotFoundError } from '../../../lib/errors';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { centsFromDb } from '../models/money';
 import type { IReconciliationRepository } from './IReconciliationRepository';
 import type {
   BankStatementLineStatus,
@@ -13,12 +14,15 @@ import type {
   CreateBankStatementLineInput,
   CreateReconciliationMatchInput,
   EntryPostingReconciliationState,
+  MatchedLineForExport,
   ReconciliationMatchType,
 } from '../models/Reconciliation.model';
 
-/** Entry summary selected alongside candidate postings (ranking/display). */
+/** Entry summary selected alongside candidate postings (ranking/display). `entryNumber` (C6b
+ *  PR-2 Passo 8): aditivo — o export de conciliação precisa do número sequencial do lançamento
+ *  para a coluna `entryNumber` das pendências de posting; nenhum consumidor existente lê. */
 const CANDIDATE_ENTRY_SELECT = {
-  entry: { select: { id: true, date: true, description: true, status: true } },
+  entry: { select: { id: true, date: true, description: true, status: true, entryNumber: true } },
 } as const;
 
 /**
@@ -458,6 +462,59 @@ export class ReconciliationRepository implements IReconciliationRepository {
       include: CANDIDATE_ENTRY_SELECT,
       orderBy: [{ entry: { date: 'asc' } }, { id: 'asc' }],
     });
+  }
+
+  public async findMatchedLinesByWindow(
+    scope: AccountingScope,
+    glAccountIds: string[],
+    window: { from: Date; to: Date },
+    tx?: Prisma.TransactionClient,
+  ): Promise<MatchedLineForExport[]> {
+    if (glAccountIds.length === 0) return [];
+    const lines = await (tx ?? prisma).bankStatementLine.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        status: 'MATCHED',
+        date: { gte: window.from, lte: window.to },
+        // Only lines of ACTIVE statements of the given bank accounts (same convention as
+        // findUnmatchedLinesByAccount) — a soft-deleted statement's lines are dead for reporting.
+        statement: { glAccountId: { in: glAccountIds }, deletedAt: null },
+      },
+      select: {
+        statementId: true,
+        date: true,
+        amountCents: true,
+        description: true,
+        statement: { select: { glAccount: { select: { code: true } } } },
+        // ACTIVE matches only (unmatchedAt == null) — same filter as findLinesWithActiveMatches.
+        // A line with N active matches (structural N:M, D3) yields N rows here.
+        matches: {
+          where: { unmatchedAt: null },
+          select: {
+            matchType: true,
+            posting: { select: { entry: { select: { id: true, entryNumber: true } } } },
+          },
+        },
+      },
+      orderBy: [{ date: 'asc' }, { lineNumber: 'asc' }],
+    });
+
+    const rows: MatchedLineForExport[] = [];
+    for (const line of lines) {
+      for (const match of line.matches) {
+        rows.push({
+          bankAccountCode: line.statement.glAccount.code,
+          statementId: line.statementId,
+          lineDate: line.date,
+          amountCents: centsFromDb(line.amountCents),
+          memo: line.description,
+          entryId: match.posting.entry.id,
+          entryNumber: match.posting.entry.entryNumber,
+          matchType: match.matchType as ReconciliationMatchType,
+        });
+      }
+    }
+    return rows;
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

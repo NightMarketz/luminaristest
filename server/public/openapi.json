@@ -9333,7 +9333,7 @@
     "/api/accounting/data-exchange/exports": {
       "post": {
         "summary": "Export a report or blank import template to CSV/XLSX",
-        "description": "Renders read-only report data (trial balance, ledger, BP, DRE) or a blank import template; persists the artifact and returns a job. Download via /jobs/{jobId}/download.",
+        "description": "Renders read-only report data (trial balance, ledger, BP, DRE, bank reconciliation, entry sample) or a blank import template; persists the artifact and returns a job. Download via /jobs/{jobId}/download.",
         "tags": [
           "Accounting"
         ],
@@ -9361,7 +9361,9 @@
                       "EXPORT_GENERAL_LEDGER",
                       "EXPORT_BALANCE_SHEET",
                       "EXPORT_INCOME_STATEMENT",
-                      "EXPORT_TEMPLATE"
+                      "EXPORT_TEMPLATE",
+                      "EXPORT_BANK_RECONCILIATION",
+                      "EXPORT_ENTRY_SAMPLE"
                     ]
                   },
                   "format": {
@@ -9384,11 +9386,11 @@
                   },
                   "periodStart": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise). Required when accountCode is absent; optional (single-account window) when accountCode is present"
+                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)"
                   },
                   "periodEnd": {
                     "type": "string",
-                    "description": "YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodStart (never just one — 400 otherwise). >= periodStart"
+                    "description": "YYYY-MM-DD — same kinds/rules as periodStart. >= periodStart"
                   },
                   "templateKind": {
                     "type": "string",
@@ -9398,6 +9400,18 @@
                       "IMPORT_JOURNAL_ENTRIES"
                     ],
                     "description": "required for EXPORT_TEMPLATE"
+                  },
+                  "perAccount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 50,
+                    "description": "EXPORT_ENTRY_SAMPLE only (400 for any other kind). Max legs sampled per account, default 5 when omitted."
+                  },
+                  "seed": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "EXPORT_ENTRY_SAMPLE only (required for it; 400 for any other kind). Deterministic sampling seed — same seed + same data = same sample."
                   }
                 }
               }
