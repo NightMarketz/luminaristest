@@ -1,7 +1,8 @@
 # BRIEF — BE-INCR-REVIEW-LAYER (nó C11 · revisão profissional editável)
 
-> **Estado: BRIEF pronto, 6 forks `RATIFICAÇÃO PENDENTE` (§3).** Nenhuma linha de código nasce deste
-> documento antes da ratificação. Escrito em `sessao-planejamento` (2026-09-14, passo 3 de
+> **Estado: BRIEF pronto. ✅ 6 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
+> `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C11-1..6 → (a), todos na recomendação.**
+> Implementação ainda exige "executa" do dono (ORCH-006); **serial antes de C6b** (ambos tocam `buildPackage`). Escrito em `sessao-planejamento` (2026-09-14, passo 3 de
 > `PROXIMOS-PASSOS-2026-09-14.md`).
 
 ---

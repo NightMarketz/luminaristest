@@ -1,7 +1,8 @@
 # BRIEF — BE-INCR-CONTADOR-PACKAGE-EXTENDED (nó C6b · pacote ampliado ao contador)
 
-> **Estado: BRIEF pronto, 5 forks `RATIFICAÇÃO PENDENTE` (§3).** Nenhuma linha de código nasce deste
-> documento antes da ratificação. Escrito em `sessao-planejamento` (2026-09-14, passo 5 de
+> **Estado: BRIEF pronto. ✅ 5 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
+> `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C6b-1..5 → (a), todos na recomendação.**
+> Implementação exige "executa" do dono (ORCH-006) e **C11 mergeado antes** (F-C11-3 e F-C6b-1 tocam `buildPackage`). Escrito em `sessao-planejamento` (2026-09-14, passo 5 de
 > `PROXIMOS-PASSOS-2026-09-14.md`), **depois** do merge de C6 (#305) como a fila exigia.
 
 ---

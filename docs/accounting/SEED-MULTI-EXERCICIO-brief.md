@@ -3,7 +3,9 @@
 > **Estado: BRIEF pronto; execução (`job-generator`) BLOQUEADA por gate humano.** `PROXIMOS-PASSOS-2026-09-14.md`
 > passo 6: *"Pré-condição do #318: B-4 assinado pelo dono — se não estiver, deixe o BRIEF pronto e pare aqui."*
 > Verificado em `origin/main` (2026-09-14): `RUNBOOK-B4-RESTORE-REHEARSAL.md` §Desfecho com os 3 `[ ]` em
-> branco e *"Assinatura do executor: ____"*. **Parado aqui.** 2 forks `RATIFICAÇÃO PENDENTE` (§3).
+> branco e *"Assinatura do executor: ____"*. **Parado aqui.** ✅ 2 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`;
+> registro em `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-SEED-2 → (a) · F-SEED-3 → (b), ambos na
+> recomendação — **bloqueio por B-4 permanece**.
 
 ---
 
