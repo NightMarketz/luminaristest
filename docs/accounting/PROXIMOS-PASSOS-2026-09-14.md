@@ -115,7 +115,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 | 2.4 | Teste de integração fora do perímetro (T0 gravado; falha no Pass 2 → T0 NULL e 0 tabelas) | `server/src/__tests__/onboardingT0Marker.integration.test.ts` | ✅ (declarado) |
 | 2.5 | **Review independente** em worktree separado (`reviewer-independence-separate-agent`), 4 sondas: allowlist cresce → teste falha? · T0 fora da tx? · prova zero-diff ainda verde com o símbolo allowlisted? · `smoke:migration` S1–S5/S8 | relatório PASS/FAIL no PR | ✅ (fold 16/09) |
 | 2.6 | CI 5/5 verde no SHA revisado; **um** rerun se instável (`rerun-durante-instabilidade-mata-a-run-boa`) | `gh pr checks 320` | ✅ (fold 16/09) |
-| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ✅ apontador §7.1 (`#320 MERGEADO`); a linha longa do P2 no §5.1 segue histórica ("11 PAUSADO") — corrigir no próximo fold do P2 |
+| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ✅ apontador §5.1 (`#320 MERGEADO`); a linha longa do P2 no §5.1 segue histórica ("11 PAUSADO") — corrigir no próximo fold do P2 |
 
 ### Passo 3 — C11 BRIEF (PR #321) ✅ `8e79b8cb` · 6 forks ao dono
 
