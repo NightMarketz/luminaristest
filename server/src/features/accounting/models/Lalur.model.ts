@@ -21,6 +21,19 @@ export const isParteALivro = (livro: string): livro is 'lalur' | 'lacs' =>
 export const LALUR_QUARTERS = ['T01', 'T02', 'T03', 'T04'] as const;
 export type LalurQuarter = (typeof LALUR_QUARTERS)[number];
 
+/**
+ * X4-14: janela [from, to] (UTC) do trimestre — T01 = 01/01–31/03 … T04 = 01/10–31/12. `to` é o último
+ * dia às 23:59:59.999Z (mesma régua de `balanceSheet`/`SpedGenerationService`): todo write-path grava
+ * date-only à meia-noite UTC, mas um posting do dia 31 com hora > 00:00 seria excluído com `to` à 00:00
+ * (review independente #329, N1).
+ */
+export function quarterBounds(year: number, quarter: LalurQuarter): { from: Date; to: Date } {
+  const q = (LALUR_QUARTERS as readonly string[]).indexOf(quarter);
+  const from = new Date(Date.UTC(year, q * 3, 1));
+  const to = new Date(Date.UTC(year, q * 3 + 3, 0, 23, 59, 59, 999)); // dia 0 do mês seguinte = último dia do trimestre
+  return { from, to };
+}
+
 /** M300.IND_RELACAO (Manual p.245): 1 Parte B · 2 conta contábil · 3 ambas · 4 sem relacionamento. */
 export const LALUR_IND_RELACAO = ['1', '2', '3', '4'] as const;
 export type LalurIndRelacao = (typeof LALUR_IND_RELACAO)[number];

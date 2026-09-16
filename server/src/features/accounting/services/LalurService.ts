@@ -26,6 +26,7 @@ import {
   isParteALivro,
   isPrejuizoIndicador,
   linhasDoLivro,
+  quarterBounds,
   vigenteNoAno,
   type LalurLivro,
   type LalurQuarter,
@@ -69,7 +70,7 @@ import {
 import { z } from 'zod';
 
 /** O que o serviço lê do razão para derivar o PF/BC (D-P3.3) — só `incomeStatement`. */
-export type LalurReportReader = Pick<AccountingReportService, 'incomeStatement'>;
+export type LalurReportReader = Pick<AccountingReportService, 'incomeStatement' | 'accountAggregates'>;
 
 /** Diagnóstico materializado × recomputado (BRIEF 3C §2.4). Valores em string (BigInt seguro no JSON). */
 export interface LalurParteBBalancesDiagnostic {
@@ -88,6 +89,23 @@ export interface LalurParteBBalancesDiagnostic {
     }>;
   }>;
   divergences: Array<{ quarter: LalurQuarter; codCtaB: string; codTributo: string; field: string; materialized: string; recomputed: string }>;
+  /**
+   * X4-14 (BRIEF 3C item 14, EMENDA §2.4 2026-09-15): ajuste da Parte A com relação contábil (indRelacao
+   * 2|3) cujo `valorCents` não iguala nenhum dos 4 agregados K155/K355 da conta no trimestre E que não cita
+   * lançamento (M312/M362 ausente) — `REGRA_REGISTRO_M312_OBRIGATORIO` (p.253). AVISO, nunca 400: a igualdade
+   * exata só o PVA fecha. Valores em string (BigInt seguro).
+   */
+  warnings: Array<{
+    code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT';
+    quarter: LalurQuarter;
+    livro: string;
+    codigo: string;
+    entryId: string;
+    accountCode: string;
+    valorCents: string;
+    aggregates: { sumDebitCents: string; sumCreditCents: string; saldoPeriodoCents: string; saldoFinalCents: string };
+    message: string;
+  }>;
 }
 export interface BalanceView { sdIni: string; vlA: string; vlB: string; sdFim: string }
 
@@ -951,7 +969,7 @@ export class LalurService {
     const accounts = await this.accountsOfYear(scope, year, tx);
     const accById = new Map(accounts.map((a) => [a.id, a]));
     const recomputed = await this.recomputeYear(scope, year, tx);
-    const out: LalurParteBBalancesDiagnostic = { year, periods: [], divergences: [] };
+    const out: LalurParteBBalancesDiagnostic = { year, periods: [], divergences: [], warnings: [] };
     for (const quarter of LALUR_QUARTERS) {
       const closing = byQ.get(quarter);
       const rec = recomputed.get(quarter) ?? new Map<string, QuarterBalance>();
@@ -983,6 +1001,57 @@ export class LalurService {
       });
       out.periods.push({ quarter, closed: Boolean(closing), closedAt: closing?.closedAt.toISOString(), accounts: rows });
     }
+    out.warnings = await this.partialAdjustmentWarnings(scope, year, tx);
     return out;
+  }
+
+  /** X4-14: ver `LalurParteBBalancesDiagnostic.warnings`. Só Parte A (lalur/lacs) com conta e sem M312/M362. */
+  private async partialAdjustmentWarnings(
+    scope: AccountingScope,
+    year: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<LalurParteBBalancesDiagnostic['warnings']> {
+    const entries = await this.repo.findEntriesForYear(scope, year, tx);
+    const warnings: LalurParteBBalancesDiagnostic['warnings'] = [];
+    const byQuarter = new Map<string, Awaited<ReturnType<LalurReportReader['accountAggregates']>>>(); // S2: 1 par de groupBy por trimestre
+    const EMPTY = { sumDebitCents: 0, sumCreditCents: 0, saldoPeriodoCents: 0, saldoFinalCents: 0 };
+    for (const e of entries) {
+      if (!e.accountId || !e.account || !isParteALivro(e.livro as LalurLivro) || e.journalLinks.length > 0) continue;
+      let quarterAgg = byQuarter.get(e.quarter);
+      if (!quarterAgg) {
+        const { from, to } = quarterBounds(year, e.quarter as LalurQuarter);
+        quarterAgg = await this.reports.accountAggregates(scope, from, to);
+        byQuarter.set(e.quarter, quarterAgg);
+      }
+      const agg = quarterAgg.get(e.accountId) ?? EMPTY;
+      const valor = Number(e.valorCents);
+      // REGRA_REGISTRO_M312_OBRIGATORIO (p.253) tem DOIS ramos por J050.COD_NAT: patrimonial (1/2/3) compara
+      // com os 4 agregados do K155; conta de RESULTADO (4) compara SÓ com K355.VL_SLD_FIN — review #329 S1:
+      // a régua uniforme silenciava o aviso que o PVA emite quando a conta de resultado tem D e C no trimestre.
+      const isResultado = e.account.nature === 'Revenue' || e.account.nature === 'Expense';
+      const candidates = isResultado
+        ? [agg.saldoFinalCents]
+        : [agg.sumDebitCents, agg.sumCreditCents, agg.saldoPeriodoCents, agg.saldoFinalCents];
+      if (candidates.includes(valor)) continue;
+      warnings.push({
+        code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT',
+        quarter: e.quarter as LalurQuarter,
+        livro: e.livro,
+        codigo: e.codigo,
+        entryId: e.id,
+        accountCode: e.account.code,
+        valorCents: String(valor),
+        aggregates: {
+          sumDebitCents: String(agg.sumDebitCents),
+          sumCreditCents: String(agg.sumCreditCents),
+          saldoPeriodoCents: String(agg.saldoPeriodoCents),
+          saldoFinalCents: String(agg.saldoFinalCents),
+        },
+        message: isResultado
+          ? `Ajuste ${e.livro} ${e.codigo} (${e.quarter}) de ${valor} centavos na conta de resultado ${e.account.code} não iguala o saldo final do trimestre (K355.VL_SLD_FIN) — é ajuste PARCIAL e o M312/M362 é obrigatório (Manual ECF L12 p.253): informe journalEntryIds.`
+          : `Ajuste ${e.livro} ${e.codigo} (${e.quarter}) de ${valor} centavos na conta ${e.account.code} não iguala Σ débitos, Σ créditos, saldo do período nem saldo final do trimestre (K155) — é ajuste PARCIAL e o M312/M362 é obrigatório (Manual ECF L12 p.253): informe journalEntryIds.`,
+      });
+    }
+    return warnings;
   }
 }
