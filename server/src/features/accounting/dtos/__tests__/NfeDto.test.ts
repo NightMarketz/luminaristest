@@ -5,6 +5,7 @@
  * `toNfePreview`; um campo a mais falha (todo nível é `.strict()`).
  */
 import { readFileSync } from 'fs';
+import { acquisitionCost } from '../../../../lib/nfeCost';
 import { join } from 'path';
 import { parseNfe } from '../../../../lib/nfe';
 import { cnpjCheckDigits, nfeChaveCheckDigit } from '../../../../lib/cnpj';
@@ -39,13 +40,19 @@ describe('PreviewNfeSchema (comportamento 1)', () => {
   });
 });
 
+/** X6: custo por regime NEUTRO (não-contribuinte, CUMULATIVO) — o preview sempre carrega o bloco `custo`. */
+const custoNeutro = (parsed: ReturnType<typeof parseNfe>) =>
+  acquisitionCost(parsed, parsed.itens.filter((it) => it.indTot !== '0'), {
+    icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false,
+  });
+
 describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   it.each([
     ['compra (3 itens)', () => PURCHASE],
     ['venda', () => SALE],
     ['compra com CNPJ alfanumérico', alnumVariant],
   ])('o ParsedNfe do fixture de %s passa após toNfePreview', (_n, read) => {
-    const preview = toNfePreview(parseNfe(read()), null);
+    const preview = toNfePreview(parseNfe(read()), null, custoNeutro(parseNfe(read())));
     const parsed = NfePreviewSchema.safeParse(preview);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
@@ -57,7 +64,7 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   });
 
   it('é .strict() em todo nível: campo a mais no topo, no item e no protocolo falha', () => {
-    const base = toNfePreview(parseNfe(PURCHASE), null);
+    const base = toNfePreview(parseNfe(PURCHASE), null, custoNeutro(parseNfe(PURCHASE)));
     expect(NfePreviewSchema.safeParse({ ...base, extra: 1 }).success).toBe(false);
     expect(
       NfePreviewSchema.safeParse({ ...base, itens: [{ ...base.itens[0], custo: 1 }, ...base.itens.slice(1)] })
@@ -67,7 +74,7 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   });
 
   it('centavos são inteiros não negativos e a chave respeita o regex da NT 2026.004', () => {
-    const base = toNfePreview(parseNfe(PURCHASE), 'pay-1');
+    const base = toNfePreview(parseNfe(PURCHASE), 'pay-1', custoNeutro(parseNfe(PURCHASE)));
     expect(NfePreviewSchema.safeParse({ ...base, totais: { ...base.totais, vNFCents: 193.33 } }).success).toBe(false);
     // letra fora das posições 7–20 (aqui na 1ª) viola [0-9]{6}[A-Z0-9]{12}[0-9]{26}
     expect(NfePreviewSchema.safeParse({ ...base, chaveAcesso: 'A' + base.chaveAcesso.slice(1) }).success).toBe(false);

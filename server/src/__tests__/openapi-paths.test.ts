@@ -62,7 +62,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (FE-INCR-LALUR, Fork F-FE-1→a): GET /api/lalur/catalog — catálogo Leiaute 12 read-only (172 → 173).
 // +6 (BE-INCR-BANK-SETTLEMENT, nó F7 + AccountingScopeSettings): /api/bank-settlements (GET), /scan, /{id}/confirm,
 //    /{id}/reject, /{id}/retry + /api/accounting/settings (GET+PUT) — 6 PATHS e 7 OPERAÇÕES (173 → 179, 205 → 212).
-const BASELINE = 179;
+// +1 (BE-INCR-NFE-COST-REGIME, nó X6): /api/accounting/fiscal-profile (GET+PUT) — 1 PATH e 2 OPERAÇÕES (179 → 180, 212 → 214).
+const BASELINE = 180;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

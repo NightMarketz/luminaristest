@@ -50,6 +50,15 @@ function makeParsedNfe(over: { vNFCents?: number; itemCount?: number; chave?: st
     vProdCents: 5000,
     vDescCents: 0,
     indTot: '1',
+    // X6: tributos por item (grupos N/O/Q/S) — irrelevantes para a venda; zero/null como o parser devolve sem grupo
+    vFreteCents: 0,
+    vSegCents: 0,
+    vOutroCents: 0,
+    vICMSCents: 0,
+    vICMSSTCents: 0,
+    vIPICents: 0,
+    cstPis: null,
+    cstCofins: null,
   }));
   return {
     chaveAcesso: over.chave ?? '35240600000000000000550010000000011000000017',

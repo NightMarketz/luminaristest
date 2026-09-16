@@ -5,6 +5,8 @@ import type { NfePreview } from '../dtos/NfeDto';
 import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { FiscalProfileService } from './FiscalProfileService';
+import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
 
 /**
  * NfePreviewService — dry-run do parser da NF-e (BE-INCR-NFE-PREVIEW, rodada 2a). Existe para a tela
@@ -25,6 +27,7 @@ export class NfePreviewService {
   constructor(
     private readonly payableRepo: IPayableRepository,
     private readonly policy: IAccountingPolicy,
+    private readonly fiscalProfile: FiscalProfileService,
   ) {}
 
   async preview(scope: AccountingScope, xml: string | Buffer): Promise<NfePreview> {
@@ -33,13 +36,16 @@ export class NfePreviewService {
     }
     const parsed = parseNfe(xml);
     const existing = await this.payableRepo.findByDocumentNumber(scope, parsed.chaveAcesso);
-    return toNfePreview(parsed, existing?.id ?? null);
+    // X6 (F-X6-6 a): sem perfil fiscal o preview NÃO inventa custo — 400 nomeado, igual ao import.
+    const regime = await this.fiscalProfile.requireCostRegime(scope);
+    const custo = acquisitionCost(parsed, parsed.itens.filter((it) => it.indTot !== '0'), regime);
+    return toNfePreview(parsed, existing?.id ?? null, custo);
   }
 }
 
 /** Espelho integral do `ParsedNfe` (F-PREV-1 → a) menos `protocolo.chNFe` (redundante com `chaveAcesso`,
  *  já conferido igual pelo parser), mais o indicador de idempotência. */
-export function toNfePreview(parsed: ParsedNfe, existingPayableId: string | null): NfePreview {
+export function toNfePreview(parsed: ParsedNfe, existingPayableId: string | null, custo: AcquisitionCost): NfePreview {
   const { chNFe: _chNFe, ...protocolo } = parsed.protocolo;
   void _chNFe;
   return {
@@ -52,5 +58,15 @@ export function toNfePreview(parsed: ParsedNfe, existingPayableId: string | null
     protocolo,
     alreadyImported: existingPayableId !== null,
     existingPayableId,
+    custo: {
+      custoBrutoCents: custo.custoBrutoCents,
+      custoEstoqueCents: custo.custoEstoqueCents,
+      creditoIcmsCents: custo.creditoIcmsCents,
+      creditoPisCofinsCents: custo.creditoPisCofinsCents,
+      baseCreditoPisCofinsCents: custo.baseCreditoPisCofinsCents,
+      regimeAplicado: custo.regimeAplicado,
+      pisCofinsAplicado: custo.pisCofinsAplicado,
+      warnings: custo.warnings,
+    },
   };
 }

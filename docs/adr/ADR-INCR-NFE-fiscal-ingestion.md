@@ -132,6 +132,19 @@ fica **FORA do MVP** (é o território do AR-formal / faturas avulsas — declar
 venda) introduz o maior risco novo, e por isso o cruzamento é **read-only + proveniência**, jamais lançamento.
 
 ### D3 — Custo de estoque da NF-e **≠ `vNF` cego** (fronteira fiscal de dinheiro — F-NFE6)
+
+> **EMENDA 2026-09-15 (BE-INCR-NFE-COST-REGIME, nó X6 — cumprimento do "antes de qualquer molde não-salão
+> reusar `lib/nfe.ts`" abaixo).** A fórmula deste D3 passa a ser o **ramo `icmsContribuinte=false` +
+> `pisCofinsRegime ≠ NAO_CUMULATIVO`** do custo por REGIME (`lib/nfeCost.ts`, função pura), lido do
+> `FiscalProfile` da unidade (F-X6-1 a; sem perfil → 400, F-X6-6 a). Contribuinte de ICMS: o `vICMS` **do item**
+> sai do custo (F-X6-2 a; ICMS-ST nunca). Não-cumulativo de PIS/COFINS: crédito de 1,65% + 7,6% sobre a base
+> pós-exceções sai do custo (F-X6-3 → b, cédula 14/09; Leis 10.637/10.833/14.592 no corpus desde 15/09), com
+> monofásico por NCM (F-X6-7 a) e CST 04–09 da nota como regra dura. **O passivo com o fornecedor continua
+> o custo BRUTO** (esta fórmula) e a diferença nasce como `tributos a recuperar` no MESMO entry (F-X6-8 a —
+> achado de código 15/09: `amountCents = custo` subestimaria o passivo). A linha "`vICMS` como dívida de
+> contador" (§final) é **HISTÓRICA**: a resposta 5 da entrevista de 10/09 descondicionou. BRIEF + EMENDA:
+> `docs/accounting/BE-INCR-NFE-COST-REGIME-brief.md`.
+
 O custo de aquisição que valoriza o estoque **não** é o total da nota. Regra proposta (a ratificar, F-NFE6):
 ```
 custoCents = vProdCents − vDescCents + vFreteCents + vOutroCents + vIpiCents + vIcmsStCents

@@ -46,6 +46,15 @@ const dateOnly = (field: string) =>
 /** One received SKU of a multi-item NF-e purchase (BE-INCR-NFE A2). `valueCents` is the item's SHARE
  *  of the note's acquisition cost after the header rateio (D3); Σ over items === amountCents (the DTO
  *  re-checks this tie-out below, ACC-014/T4). Guarded by MAX_CENTS like every money field. */
+/** X6 F-X6-8 (a): crédito a recuperar reconhecido NO MESMO entry da nota (D conta 1.1.x a recuperar). */
+const recoverableTaxLine = z
+  .object({
+    accountId: z.string().min(1),
+    amountCents: cents,
+    kind: z.enum(['ICMS', 'PIS_COFINS']),
+  })
+  .strict();
+
 const inventoryItem = z
   .object({
     productRef: z.string().min(1),
@@ -74,6 +83,9 @@ export const CreatePayableSchema = z
     // carries the per-SKU breakdown the create path drives as N StockMovement INBOUND (sourceId=payableId).
     inventoryMultiItem: z.boolean().optional(),
     inventoryItems: z.array(inventoryItem).optional(),
+    // X6 F-X6-8 (a): só com inventoryMultiItem; `amountCents` (o que se deve ao fornecedor) = Σ itens (estoque
+    // líquido) + Σ recoverableTaxLines (créditos). Ausente = comportamento anterior (Σ itens === amountCents).
+    recoverableTaxLines: z.array(recoverableTaxLine).max(2).optional(),
     attachmentId: z.string().min(1).optional(),
   })
   .strict()
@@ -92,6 +104,14 @@ export const CreatePayableSchema = z
     const hasItems = val.inventoryItems != null && val.inventoryItems.length > 0;
 
     // Mode 3 — multi-item NF-e purchase: the flag is set; items required; NO expense / single-SKU fields.
+    if (!isMultiItem && val.recoverableTaxLines && val.recoverableTaxLines.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'recoverableTaxLines só cabe em compra multi-item (NF-e, inventoryMultiItem).',
+        path: ['recoverableTaxLines'],
+      });
+      return;
+    }
     if (isMultiItem) {
       if (hasExpense || hasProductRef || hasQty) {
         ctx.addIssue({
@@ -112,10 +132,11 @@ export const CreatePayableSchema = z
       }
       // Tie-out (ACC-014/T4): the per-SKU shares must sum EXACTLY to the note total on the row.
       const itemsSum = val.inventoryItems!.reduce((acc, it) => acc + it.valueCents, 0);
-      if (itemsSum !== val.amountCents) {
+      const recoverableSum = (val.recoverableTaxLines ?? []).reduce((acc, l) => acc + l.amountCents, 0);
+      if (itemsSum + recoverableSum !== val.amountCents) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Σ dos itens (${itemsSum}) deve igualar amountCents (${val.amountCents}).`,
+          message: `Σ dos itens (${itemsSum}) + Σ créditos a recuperar (${recoverableSum}) deve igualar amountCents (${val.amountCents}).`,
           path: ['inventoryItems'],
         });
       }
