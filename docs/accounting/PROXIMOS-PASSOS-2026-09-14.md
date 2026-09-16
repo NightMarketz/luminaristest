@@ -115,7 +115,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 | 2.4 | Teste de integração fora do perímetro (T0 gravado; falha no Pass 2 → T0 NULL e 0 tabelas) | `server/src/__tests__/onboardingT0Marker.integration.test.ts` | ✅ (declarado) |
 | 2.5 | **Review independente** em worktree separado (`reviewer-independence-separate-agent`), 4 sondas: allowlist cresce → teste falha? · T0 fora da tx? · prova zero-diff ainda verde com o símbolo allowlisted? · `smoke:migration` S1–S5/S8 | relatório PASS/FAIL no PR | ✅ (fold 16/09) |
 | 2.6 | CI 5/5 verde no SHA revisado; **um** rerun se instável (`rerun-durante-instabilidade-mata-a-run-boa`) | `gh pr checks 320` | ✅ (fold 16/09) |
-| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ✅ (fold 16/09) |
+| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ✅ apontador §7.1 (`#320 MERGEADO`); a linha longa do P2 no §5.1 segue histórica ("11 PAUSADO") — corrigir no próximo fold do P2 |
 
 ### Passo 3 — C11 BRIEF (PR #321) ✅ `8e79b8cb` · 6 forks ao dono
 
@@ -123,7 +123,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 |---|---|---|---|
 | 3.1 | Merge docs-only (sem conflito previsto: arquivo novo `BE-INCR-REVIEW-LAYER-brief.md`) | `gh pr merge 321 --squash` após CI | ✅ (fold 16/09) |
 | 3.2 | **[H]** Apresentar os **6 forks** ao dono por questionário, recomendação primeiro (`duvidas-por-questionario-com-contexto`) | cédula nova ou emenda na de 14/09 | [H] |
-| 3.3 | Registrar ratificações no cabeçalho do BRIEF (`PENDENTE` → `RATIFICADO (x)`) | commit docs-only | ✅ (fold 16/09) |
+| 3.3 | Registrar ratificações no cabeçalho do BRIEF (`PENDENTE` → `RATIFICADO (x)`) | commit docs-only | ⬜ após 3.2 [H] — BRIEF C11 continua "6 forks RATIFICAÇÃO PENDENTE" |
 | 3.4 | Só então `sessao-feature` — exige "executa" do dono (ORCH-006) | autorização citável | [H] |
 
 ### Passo 4 — C12 BRIEF (PR #322) ✅ `1c469e2f` · 4 forks ao dono
@@ -131,7 +131,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
 | 4.1 | PR docs-only do `BE-INCR-SPED-IDENTITY-MASKS-brief.md` → merge após CI | **PR #322** aberto | ✅ (fold 16/09) |
-| 4.2 | A transcrição obrigatória do §5 (enum J930 do Manual ECD L9) está no corpus? | `grep -n "J930" docs/accounting/fontes-oficiais/*` (Manual ECD é PDF no `MANIFEST.md` — transcrever por script, precedente `transcrever-ecf-lmn.mjs`) | ✅ (fold 16/09) |
+| 4.2 | A transcrição obrigatória do §5 (enum J930 do Manual ECD L9) está no corpus? | `grep -n "J930" docs/accounting/fontes-oficiais/*` (Manual ECD é PDF no `MANIFEST.md` — transcrever por script, precedente `transcrever-ecf-lmn.mjs`) | ⬜ PDFs do Manual ECD fora do disco neste worktree (BRIEF C12 §5); rodar `baixar-fontes-oficiais.mjs --so=manual-ecd-l9` e transcrever antes da feature |
 | 4.3 | **[H]** 4 forks ao dono → ratificação no cabeçalho | cédula | [H] |
 
 ### Passo 5 — C6b BRIEF ✅ #324 `ce0c97e8` · 5 forks ao dono
@@ -148,8 +148,8 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 |---|---|---|---|
 | 6.1 | **[H] B-4 assinado?** | `grep -n "^- \[x\]" docs/accounting/RUNBOOK-B4-RESTORE-REHEARSAL.md` → hoje **0** | [H] — sem isso, só o BRIEF |
 | 6.2 | BRIEF curto: exercícios 2025+2026 · períodos por mês · lançamentos por natureza (receita/CMV/despesa/AP/AR) · chart completo com `1.1.6/3.3/4.2` · idempotência (re-seed = mesmo estado) | `sessao-planejamento` | ✅ (fold 16/09) |
-| 6.3 | `job-generator` → seed fixture; **não** tocar `db:seed` do admin sem ler `parked-unmerged-worktrees` (upsert de senha) | fixture + teste que prova `trial-balance` balanceado nos 2 exercícios | ✅ (fold 16/09) |
-| 6.4 | Atualizar `RUNBOOK-H1-PVA.md` P0 (alvo = seed) — **sem** tocar evidência/desfecho/assinatura | diff só em P0 | ✅ (fold 16/09) |
+| 6.3 | `job-generator` → seed fixture; **não** tocar `db:seed` do admin sem ler `parked-unmerged-worktrees` (upsert de senha) | fixture + teste que prova `trial-balance` balanceado nos 2 exercícios | ⬜ bloqueado até B-4 assinado (só o BRIEF está em `main`) |
+| 6.4 | Atualizar `RUNBOOK-H1-PVA.md` P0 (alvo = seed) — **sem** tocar evidência/desfecho/assinatura | diff só em P0 | ⬜ bloqueado até B-4 assinado (`RUNBOOK-H1-PVA.md` intocado desde #318) |
 
 ### Passo 7 — F7 baixa por retorno bancário ✅ #326 `22b97252` (F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7)
 
@@ -170,7 +170,7 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 | 8.2 | Fase 0: `FiscalProfile` Prisma por escopo (`userId`+`unitId`), com `partnerAccountRef` **reservado** (ADR-DFE emenda R8 item 2) — migração aditiva | PR 1 | ✅ (fold 16/09) |
 | 8.3 | Fase A: parser lê ICMS **por item** (grupo N do MOC) — estender transcrição F0-2; fixture mista obrigatória; import sem perfil → **400** (F-X6-6) | PR 2 | ✅ (fold 16/09) |
 | 8.4 | Notas já importadas **não** reprocessam (F-X6-5) — teste-guarda | teste | ✅ (fold 16/09) |
-| 8.5 | H2 (parte NF-e) e onboarding I1/W ganham o passo "cadastrar perfil fiscal" — **só** o texto dos runbooks, em branco | diff docs | ✅ (fold 16/09) |
+| 8.5 | H2 (parte NF-e) e onboarding I1/W ganham o passo "cadastrar perfil fiscal" — **só** o texto dos runbooks, em branco | diff docs | ⬜ diferido ao plano do wizard (BRIEF X6 §6 "frente do plano do wizard, não deste BRIEF"); runbook H2 sem o passo |
 
 ### Passo 9 — X4-14 aviso M312 ✅ #329 `a6783795`
 
