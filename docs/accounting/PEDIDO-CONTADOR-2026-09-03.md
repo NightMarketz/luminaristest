@@ -148,8 +148,9 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 > você segue a IN 2.121/2022 e tira?; **(c)** compra de fornecedor do **Simples Nacional** — dá crédito de
 > PIS/COFINS (ADI SRF 15/2007) ou você não toma?; **(d)** produtos **monofásicos** (perfumaria, cosméticos,
 > farmácia, autopeças) não dão crédito — a lista que o sistema reconhece hoje vem só das Leis **10.147**
-> (higiene/perfumaria/farmácia) e **10.485** (autopeças); **bebidas e combustíveis ainda ficam fora** da lista
-> (o sistema nega o crédito e avisa). Tem algum grupo de produto que os seus clientes compram e que você
+> (higiene/perfumaria/farmácia) e **10.485** (veículos, máquinas e autopeças); **bebidas e combustíveis ainda
+> ficam fora** da lista (quando a nota vem com CST 02 o sistema nega o crédito e avisa; com CST 01 ele **toma** o
+> crédito — por isso pergunto). Tem algum grupo de produto que os seus clientes compram e que você
 > trata como monofásico além desses — bebidas (Lei 13.097/2015)? combustíveis? — ou algum desses dois que
 > você **não** trata assim?
 >
@@ -186,8 +187,8 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 > **depreciação acumulada** de cada grupo, **despesa de depreciação**, e **ganho/perda na alienação** de
 > bem; **(c)** quando a depreciação contábil for diferente da fiscal (vida útil menor, valor residual), o
 > sistema leva a diferença para a **Parte B do e-Lalur** — na tabela padrão da Receita há três contas com
-> esse nome: **1071** (IRPJ/CSLL, desde 2018), **2210** (desde 2018) e **3130** (art. 6º da IN 1.778/2017,
-> desde 2023). Qual delas você usa, e em que caso cada uma?;
+> esse nome (as três valem para IRPJ e CSLL): **1071** (desde 2018), **2210** (desde 2018) e **3130** (art. 6º da
+> IN 1.778/2017, desde 2023). Qual delas você usa, e em que caso cada uma?;
 > **(d)** o ICMS da compra de um bem para o ativo (CFOP 1551/2551): você deixa **no custo do bem** ou
 > controla o crédito em 48 parcelas (CIAP)? O desenho previsto deixa no custo. **(e)** Algum cliente seu usa
 > depreciação **acelerada por turnos** (2 ou 3 turnos)? Se ninguém usa, deixo fora por enquanto.
