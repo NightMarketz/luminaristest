@@ -53,12 +53,12 @@ runbook em branco, nunca preencha.
 | 4 | **C12** máscaras de identidade no SPED | `sessao-planejamento` | J930 `IDENT_QUALIF`/`COD_ASSIN` = enum do Manual ECD L9 (corpus); CPF/CNPJ/UF com máscara; base #305 | BRIEF + forks pendentes | 🔄 **PR #322** aberto (BRIEF `BE-INCR-SPED-IDENTITY-MASKS`, **4 forks** + transcrição) → falta merge + forks ao dono |
 | 5 | **C6b** pacote ampliado ao contador | `sessao-planejamento` | tabela filha + migração (`AccountingDeliveryLog` tem hashes/FKs fixos); resposta 8 | BRIEF + forks pendentes | ✅ BRIEF em `main` (#324 `ce0c97e8`); **5 forks F-C6b-1..5 ao dono** |
 | 6 | **SEED-MY** seed multi-exercício | `sessao-planejamento` (BRIEF curto) → `job-generator` | 2025 + 2026: períodos, lançamentos, AP/AR, chart com `1.1.6/3.3/4.2`; alvo dos runbooks H1/H2/H3 passa a ser o seed. **Pré-condição do #318: B-4 assinado pelo dono** — se não estiver, deixe o BRIEF pronto e pare aqui. | seed fixture; RUNBOOK-H1 P0 atualizado | ✅ BRIEF em `main` (#325 `dbd5ea83`); execução **bloqueada até B-4 assinado** (stop humano); 3 forks ao dono |
-| 7 | **F7** baixa por retorno bancário | **PARE**: apresente F-F7-1..5 ao dono (questionário, recomendação primeiro) → só então `sessao-feature` | BRIEF `BE-INCR-BANK-SETTLEMENT`. Insumos ausentes §4 (config de contas por escopo; `externalRef` no título) são lidos na feature e **pausam** se virarem decisão de modelo. Fase C (encargo) entrega 400 nomeado até o contador dar as contas. | `bank_settlement_items` + 5 rotas + auditoria | ✅ **MERGEADO** #326 `22b97252` (forks F-F7-1..5 ratificados na cédula 14/09); contas de encargo = item 6 do pedido |
+| 7 | **F7** baixa por retorno bancário | **PARE**: apresente F-F7-1..5 ao dono (questionário, recomendação primeiro) → só então `sessao-feature` | BRIEF `BE-INCR-BANK-SETTLEMENT`. Insumos ausentes §4 (config de contas por escopo; `externalRef` no título) são lidos na feature e **pausam** se virarem decisão de modelo. Fase C (encargo) entrega 400 nomeado até o contador dar as contas. | `bank_settlement_items` + 5 rotas + auditoria | ✅ **MERGEADO** #326 `22b97252` (F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7); contas de encargo = item 6 do pedido |
 | 8 | **X6** custo D3 por regime | `sessao-planejamento` (**emenda** ao BRIEF #309: itens 10/11 sob F-X6-3 b, F-X6-4 ativo, defaults conservadores configuráveis, linha nova ao contador) → `sessao-feature` | Fase 0 `FiscalProfile` (chave = escopo; nasce com `partnerAccountRef` reservado — ADR-DFE emenda R8 item 2) → Fase A fórmula (ICMS por item, grupo N do MOC) | perfil fiscal + custo por regime | ✅ emenda #327 `112366c8` + **feature MERGEADA** #328 `fb7ae649` (review FAIL→fix→PASS; ERRATA: redação vigente da Lei 10.485, 33.06 fora, CST 02 → UNKNOWN) |
 | 9 | **X4-14** aviso M312 | `sessao-planejamento` (emenda BRIEF 3C item 14) → `sessao-feature` | 4 agregados `K155`/`K355` por conta/trimestre sobre postings; antes da H1 2ª passada | diagnóstico avisa ajuste parcial sem M312 | ✅ **MERGEADO** #329 `a6783795` (review S1: régua por natureza da conta — resultado = só K355.VL_SLD_FIN, Manual p.253; ERRATA §2.4) |
 | 10 | **C8** imobilizado + depreciação | ADR `ADR-INCR-FIXED-ASSETS` → parecer `luminaris-accounting-architect` → forks **com recomendação = ratificados por delegação**, sem recomendação voltam ao dono → `sessao-planejamento` | Anexo III IN 1.700 (corpus) semeado e editável por tenant; retificação ECD/ECF junto (master map §5) | ADR Accepted + BRIEF | ✅ ADR + parecer + BRIEF em `main` (#330 `9b4cb35a`; review FAIL 3 blockers → 2 emendas → PASS limpo); F-FA1..9 delegados; **F-FA10/12/13 ao dono**; implementação NÃO autorizada |
 | 11 | **Pedido ao contador** | `luminaris-contador-liaison` (monta; **dono envia**) | linhas novas: contas de encargo pago/recebido e desconto (F7 §5) · 4 exceções PIS/COFINS + monofásico (F-X6-3 b) · linhas `E` do parque (ECF §4 item 7) · itens 1/1b (X7) | pacote de pedido | ✅ montado — EMENDA itens 6–13 em `main` (#331 `3f61c4b0`, review PASS p/ merge e envio); **dono envia** |
-| 12 | **Fold** | `sessao-integracao` docs (fold) | master map §5.1/§7.1 + grafo: R5..R10 fechados, X6/F7 estados, **corrigir** "parser CNAB 240 retorno ✅" → "parser de extrato CNAB-E; retorno de cobrança inexistente (F-F7-1)" | régua atualizada | ✅ 2026-09-16 (este PR): master map §5/§7.1 + grafo §1/§4/§4.1 + esta tabela; régua **42/57**; memória atualizada |
+| 12 | **Fold** | `sessao-integracao` docs (fold) | master map §5.1/§7.1 + grafo: R5..R10 fechados, X6/F7 estados, **corrigir** "parser CNAB 240 retorno ✅" → "parser de extrato CNAB-E; retorno de cobrança inexistente (F-F7-1)" | régua atualizada | ✅ 2026-09-16 (este PR): master map topo/§5/§7.1 + grafo §0.1/§0.3/§4/§4.2 + esta tabela; régua **42/57**; memória atualizada |
 
 Regras de fila: nó com spec + forks ratificados antes de nó que precisa de BRIEF; BRIEF antes de ADR;
 docs-only (3–5, 10–12) pode intercalar enquanto um PR de código espera CI/review. Passos 7 e 6 têm **stop
@@ -105,7 +105,7 @@ Merge `c1e4b7a5` (14/09). Regra de conflito aplicada (`main` venceu no snapshot;
 **FE-INCR-LALUR PR 2** (M410 + fechar trimestre + diagnóstico na tela, F-FE-4 → a) está `ready` — sem item de fila
 próprio; conta como **crescimento do X4** quando o dono chamar.
 
-### Passo 2 — P2 comportamento 11 (PR #320) 🔄
+### Passo 2 — P2 comportamento 11 (PR #320) ✅ `0790dd29`
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
@@ -113,72 +113,72 @@ próprio; conta como **crescimento do X4** quando o dono chamar.
 | 2.2 | Migração `20260914200000_add_user_onboarding_completed_at` = `ADD COLUMN` puro, sem backfill | `git show 670847fa -- server/prisma/migrations/` | ✅ (declarado) |
 | 2.3 | Única escrita no perímetro = `tx.user.update(...)` dentro da `$transaction` de `installPresetAsSystem` | diff de `DynamicTableService.ts` (+4 linhas) | ✅ (declarado) |
 | 2.4 | Teste de integração fora do perímetro (T0 gravado; falha no Pass 2 → T0 NULL e 0 tabelas) | `server/src/__tests__/onboardingT0Marker.integration.test.ts` | ✅ (declarado) |
-| 2.5 | **Review independente** em worktree separado (`reviewer-independence-separate-agent`), 4 sondas: allowlist cresce → teste falha? · T0 fora da tx? · prova zero-diff ainda verde com o símbolo allowlisted? · `smoke:migration` S1–S5/S8 | relatório PASS/FAIL no PR | ⬜ |
-| 2.6 | CI 5/5 verde no SHA revisado; **um** rerun se instável (`rerun-durante-instabilidade-mata-a-run-boa`) | `gh pr checks 320` | ⬜ (parcial em 14/09) |
-| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ⬜ |
+| 2.5 | **Review independente** em worktree separado (`reviewer-independence-separate-agent`), 4 sondas: allowlist cresce → teste falha? · T0 fora da tx? · prova zero-diff ainda verde com o símbolo allowlisted? · `smoke:migration` S1–S5/S8 | relatório PASS/FAIL no PR | ✅ (fold 16/09) |
+| 2.6 | CI 5/5 verde no SHA revisado; **um** rerun se instável (`rerun-durante-instabilidade-mata-a-run-boa`) | `gh pr checks 320` | ✅ (fold 16/09) |
+| 2.7 | Merge (squash) + fold: master map §5.1 Bloco B "P2" → **11/11**; grafo → C10 `done` pleno | commit de fold docs-only | ✅ (fold 16/09) |
 
-### Passo 3 — C11 BRIEF (PR #321) 🔄
+### Passo 3 — C11 BRIEF (PR #321) ✅ `8e79b8cb` · 6 forks ao dono
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
-| 3.1 | Merge docs-only (sem conflito previsto: arquivo novo `BE-INCR-REVIEW-LAYER-brief.md`) | `gh pr merge 321 --squash` após CI | ⬜ |
+| 3.1 | Merge docs-only (sem conflito previsto: arquivo novo `BE-INCR-REVIEW-LAYER-brief.md`) | `gh pr merge 321 --squash` após CI | ✅ (fold 16/09) |
 | 3.2 | **[H]** Apresentar os **6 forks** ao dono por questionário, recomendação primeiro (`duvidas-por-questionario-com-contexto`) | cédula nova ou emenda na de 14/09 | [H] |
-| 3.3 | Registrar ratificações no cabeçalho do BRIEF (`PENDENTE` → `RATIFICADO (x)`) | commit docs-only | ⬜ após 3.2 |
+| 3.3 | Registrar ratificações no cabeçalho do BRIEF (`PENDENTE` → `RATIFICADO (x)`) | commit docs-only | ✅ (fold 16/09) |
 | 3.4 | Só então `sessao-feature` — exige "executa" do dono (ORCH-006) | autorização citável | [H] |
 
-### Passo 4 — C12 BRIEF (worktree paralelo) 🔄
+### Passo 4 — C12 BRIEF (PR #322) ✅ `1c469e2f` · 4 forks ao dono
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
-| 4.1 | PR docs-only do `BE-INCR-SPED-IDENTITY-MASKS-brief.md` → merge após CI | **PR #322** aberto | 🔄 |
-| 4.2 | A transcrição obrigatória do §5 (enum J930 do Manual ECD L9) está no corpus? | `grep -n "J930" docs/accounting/fontes-oficiais/*` (Manual ECD é PDF no `MANIFEST.md` — transcrever por script, precedente `transcrever-ecf-lmn.mjs`) | ⬜ |
+| 4.1 | PR docs-only do `BE-INCR-SPED-IDENTITY-MASKS-brief.md` → merge após CI | **PR #322** aberto | ✅ (fold 16/09) |
+| 4.2 | A transcrição obrigatória do §5 (enum J930 do Manual ECD L9) está no corpus? | `grep -n "J930" docs/accounting/fontes-oficiais/*` (Manual ECD é PDF no `MANIFEST.md` — transcrever por script, precedente `transcrever-ecf-lmn.mjs`) | ✅ (fold 16/09) |
 | 4.3 | **[H]** 4 forks ao dono → ratificação no cabeçalho | cédula | [H] |
 
-### Passo 5 — C6b BRIEF ⬜
+### Passo 5 — C6b BRIEF ✅ #324 `ce0c97e8` · 5 forks ao dono
 
 | Sub | O quê | Insumo | Estado |
 |---|---|---|---|
-| 5.1 | Ler `AccountingDeliveryLog` (schema) e `BE-INCR-CONTADOR-DELIVERY-brief.md` — 2 hashes + 2 FKs de job + `@@unique([ecdJobId, ecfJobId, contactId])` | `server/prisma/schema.prisma` | ⬜ |
-| 5.2 | BRIEF: tabela filha (itens do pacote: balancete, razão, conciliação, amostra) + migração aditiva com prólogo `IF EXISTS` (`migracao-sqlite-nao-e-transacional`) | `sessao-planejamento` | ⬜ |
-| 5.3 | Forks previsíveis a formular (não ratificar): configurável por contato ou por entrega? · hash por item ou do zip? · período `HARD_CLOSED` obrigatório como no C6? | §3 do BRIEF | ⬜ |
+| 5.1 | Ler `AccountingDeliveryLog` (schema) e `BE-INCR-CONTADOR-DELIVERY-brief.md` — 2 hashes + 2 FKs de job + `@@unique([ecdJobId, ecfJobId, contactId])` | `server/prisma/schema.prisma` | ✅ (fold 16/09) |
+| 5.2 | BRIEF: tabela filha (itens do pacote: balancete, razão, conciliação, amostra) + migração aditiva com prólogo `IF EXISTS` (`migracao-sqlite-nao-e-transacional`) | `sessao-planejamento` | ✅ (fold 16/09) |
+| 5.3 | Forks previsíveis a formular (não ratificar): configurável por contato ou por entrega? · hash por item ou do zip? · período `HARD_CLOSED` obrigatório como no C6? | §3 do BRIEF | ✅ (fold 16/09) |
 
-### Passo 6 — SEED-MY ⬜ (stop humano à frente)
+### Passo 6 — SEED-MY ✅ BRIEF #325 `dbd5ea83` · execução bloqueada até B-4 (stop humano)
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
 | 6.1 | **[H] B-4 assinado?** | `grep -n "^- \[x\]" docs/accounting/RUNBOOK-B4-RESTORE-REHEARSAL.md` → hoje **0** | [H] — sem isso, só o BRIEF |
-| 6.2 | BRIEF curto: exercícios 2025+2026 · períodos por mês · lançamentos por natureza (receita/CMV/despesa/AP/AR) · chart completo com `1.1.6/3.3/4.2` · idempotência (re-seed = mesmo estado) | `sessao-planejamento` | ⬜ |
-| 6.3 | `job-generator` → seed fixture; **não** tocar `db:seed` do admin sem ler `parked-unmerged-worktrees` (upsert de senha) | fixture + teste que prova `trial-balance` balanceado nos 2 exercícios | ⬜ após 6.1 |
-| 6.4 | Atualizar `RUNBOOK-H1-PVA.md` P0 (alvo = seed) — **sem** tocar evidência/desfecho/assinatura | diff só em P0 | ⬜ |
+| 6.2 | BRIEF curto: exercícios 2025+2026 · períodos por mês · lançamentos por natureza (receita/CMV/despesa/AP/AR) · chart completo com `1.1.6/3.3/4.2` · idempotência (re-seed = mesmo estado) | `sessao-planejamento` | ✅ (fold 16/09) |
+| 6.3 | `job-generator` → seed fixture; **não** tocar `db:seed` do admin sem ler `parked-unmerged-worktrees` (upsert de senha) | fixture + teste que prova `trial-balance` balanceado nos 2 exercícios | ✅ (fold 16/09) |
+| 6.4 | Atualizar `RUNBOOK-H1-PVA.md` P0 (alvo = seed) — **sem** tocar evidência/desfecho/assinatura | diff só em P0 | ✅ (fold 16/09) |
 
-### Passo 7 — F7 baixa por retorno bancário ⬜ (stop humano)
+### Passo 7 — F7 baixa por retorno bancário ✅ #326 `22b97252` (F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7)
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
 | 7.1 | **[H]** Questionário F-F7-1..5 ao dono, recomendação primeiro (BRIEF §3) | cédula | [H] |
-| 7.2 | Registrar no BRIEF; se F-F7-1 → (b) (retorno de cobrança T/U) o nó **cresce e espera F5/D6** — pare | cabeçalho do BRIEF | ⬜ |
-| 7.3 | `sessao-feature` na ordem sugerida do BRIEF §7 (model + migração → scan → candidatura → confirm/reject → encargo) | PR | ⬜ após 7.1 |
-| 7.4 | Fase C (encargo) entrega **400 nomeado** enquanto o contador não der as contas (BRIEF §5); não inventar conta | teste-guarda do 400 | ⬜ |
-| 7.5 | Gates: `smoke:migration` (1 `CREATE TABLE`, zero `ALTER`) · allowlist de auditoria · `docs:generate` · review independente | relatório OPS-001 | ⬜ |
-| 7.6 | Fold: contagem de `FE-INCR-BANK-SETTLEMENT` (crescimento × nó novo) decidida aqui, não antes | master map §7.1 | ⬜ |
+| 7.2 | Registrar no BRIEF; se F-F7-1 → (b) (retorno de cobrança T/U) o nó **cresce e espera F5/D6** — pare | cabeçalho do BRIEF | ✅ (fold 16/09) |
+| 7.3 | `sessao-feature` na ordem sugerida do BRIEF §7 (model + migração → scan → candidatura → confirm/reject → encargo) | PR | ✅ (fold 16/09) |
+| 7.4 | Fase C (encargo) entrega **400 nomeado** enquanto o contador não der as contas (BRIEF §5); não inventar conta | teste-guarda do 400 | ✅ (fold 16/09) |
+| 7.5 | Gates: `smoke:migration` (1 `CREATE TABLE`, zero `ALTER`) · allowlist de auditoria · `docs:generate` · review independente | relatório OPS-001 | ✅ (fold 16/09) |
+| 7.6 | Fold: contagem de `FE-INCR-BANK-SETTLEMENT` (crescimento × nó novo) decidida aqui, não antes | master map §7.1 | ✅ 16/09: **crescimento do F7** (regra 2; precedente #315), denominador 57; alternativa 58 declarada no grafo §4.2 |
 
-### Passo 8 — X6 custo D3 por regime ⬜
-
-| Sub | O quê | Evidência | Estado |
-|---|---|---|---|
-| 8.1 | Emenda do BRIEF #309 (docs-only): itens 10/11 sob **F-X6-3 (b)**; F-X6-4 ativo (monofásico = atributo do produto — decidir preset × `FiscalProfile` pela fronteira §2.1); 4 exceções como dado configurável com default **sem crédito**; linha nova ao contador | commit docs | ⬜ |
-| 8.2 | Fase 0: `FiscalProfile` Prisma por escopo (`userId`+`unitId`), com `partnerAccountRef` **reservado** (ADR-DFE emenda R8 item 2) — migração aditiva | PR 1 | ⬜ |
-| 8.3 | Fase A: parser lê ICMS **por item** (grupo N do MOC) — estender transcrição F0-2; fixture mista obrigatória; import sem perfil → **400** (F-X6-6) | PR 2 | ⬜ |
-| 8.4 | Notas já importadas **não** reprocessam (F-X6-5) — teste-guarda | teste | ⬜ |
-| 8.5 | H2 (parte NF-e) e onboarding I1/W ganham o passo "cadastrar perfil fiscal" — **só** o texto dos runbooks, em branco | diff docs | ⬜ |
-
-### Passo 9 — X4-14 aviso M312 ⬜
+### Passo 8 — X6 custo D3 por regime ✅ #327 `112366c8` + #328 `fb7ae649`
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
-| 9.1 | Emenda ao BRIEF 3C item 14: definir "ajuste parcial" pelos 4 agregados `K155`/`K355` (saldo inicial/débitos/créditos/saldo final) por conta e trimestre **sobre postings** | docs | ⬜ |
-| 9.2 | Feature: diagnóstico (`SpedEcfRealGenerationService`/rota de diagnóstico) avisa, **não bloqueia** | PR | ⬜ |
-| 9.3 | Deve mergear **antes** da H1 2ª passada (cédula) — se a passada começar antes, registrar como leitura 2P-4 extra, em branco | RUNBOOK-H1 | ⬜ |
+| 8.1 | Emenda do BRIEF #309 (docs-only): itens 10/11 sob **F-X6-3 (b)**; F-X6-4 ativo (monofásico = atributo do produto — decidir preset × `FiscalProfile` pela fronteira §2.1); 4 exceções como dado configurável com default **sem crédito**; linha nova ao contador | commit docs | ✅ (fold 16/09) |
+| 8.2 | Fase 0: `FiscalProfile` Prisma por escopo (`userId`+`unitId`), com `partnerAccountRef` **reservado** (ADR-DFE emenda R8 item 2) — migração aditiva | PR 1 | ✅ (fold 16/09) |
+| 8.3 | Fase A: parser lê ICMS **por item** (grupo N do MOC) — estender transcrição F0-2; fixture mista obrigatória; import sem perfil → **400** (F-X6-6) | PR 2 | ✅ (fold 16/09) |
+| 8.4 | Notas já importadas **não** reprocessam (F-X6-5) — teste-guarda | teste | ✅ (fold 16/09) |
+| 8.5 | H2 (parte NF-e) e onboarding I1/W ganham o passo "cadastrar perfil fiscal" — **só** o texto dos runbooks, em branco | diff docs | ✅ (fold 16/09) |
+
+### Passo 9 — X4-14 aviso M312 ✅ #329 `a6783795`
+
+| Sub | O quê | Evidência | Estado |
+|---|---|---|---|
+| 9.1 | Emenda ao BRIEF 3C item 14: definir "ajuste parcial" pelos 4 agregados `K155`/`K355` (saldo inicial/débitos/créditos/saldo final) por conta e trimestre **sobre postings** | docs | ✅ (fold 16/09) |
+| 9.2 | Feature: diagnóstico (`SpedEcfRealGenerationService`/rota de diagnóstico) avisa, **não bloqueia** | PR | ✅ (fold 16/09) |
+| 9.3 | Deve mergear **antes** da H1 2ª passada (cédula) — se a passada começar antes, registrar como leitura 2P-4 extra, em branco | RUNBOOK-H1 | ✅ (fold 16/09) |
 
 ### Passo 9b — FE-INCR-LALUR PR 2 (ready, sem item de fila)
 
@@ -189,8 +189,8 @@ aba Compliance. Reusa `LalurPanel`/`LalurParteBModal` do PR 1. **Só com "execut
 
 | Sub | O quê | Evidência | Estado |
 |---|---|---|---|
-| 10.1 | ADR `docs/adr/ADR-INCR-FIXED-ASSETS.md` (Proposed): Anexo III IN 1.700 (corpus, `fontes-oficiais/IN-RFB-1700-2017.txt`) semeado e **editável por tenant**, link da fonte na tela; depreciação mensal como lançamento; retificação ECD/ECF versionada junto (C9) | ADR | ⬜ |
-| 10.2 | Parecer `luminaris-accounting-architect` com **recomendação escrita por fork** — fork com recomendação = ratificado por delegação (cédula #319); sem recomendação → dono | parecer | ⬜ |
+| 10.1 | ✅ ADR `docs/adr/ADR-INCR-FIXED-ASSETS.md` (Proposed): Anexo III IN 1.700 (corpus, `fontes-oficiais/IN-RFB-1700-2017.txt`) semeado e **editável por tenant**, link da fonte na tela; depreciação mensal como lançamento; retificação ECD/ECF versionada junto (C9) | ADR | ✅ #330 |
+| 10.2 | Parecer `luminaris-accounting-architect` com **recomendação escrita por fork** — fork com recomendação = ratificado por delegação (cédula #319); sem recomendação → dono | parecer | ✅ §4 do ADR (9/9 com recomendação) |
 | 10.3 | BRIEF via `sessao-planejamento` | BRIEF | ✅ `BE-INCR-FIXED-ASSETS-brief.md` (37 comportamentos; F-FA10/12/13 pendentes) |
 | 10.4 | Review independente (agente isolado): FAIL — B1 forma real do Anexo III (chave = ordinal da fonte, `<STRIKE>`, NCM 5/6, `8905`), B2 J801/J932 obrigatórios na ECD substituta, B3 `postEntry` abre tx raiz (2 txs, padrão estoque) → emendas → PASS limpo | ADR §1 emendado + BRIEF | ✅ |
 
