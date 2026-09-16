@@ -29,6 +29,7 @@ import { DimensionRepository } from '../features/accounting/repositories/Dimensi
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
+import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
@@ -96,6 +97,7 @@ import { DynamicTablePhysicalStockSync } from '../features/accounting/services/P
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
+import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
 import { NfeImportService } from '../features/accounting/services/NfeImportService';
 import { NfeSaleReconciliationService } from '../features/accounting/services/NfeSaleReconciliationService';
@@ -168,6 +170,7 @@ import type { IPostingRepository } from '../features/accounting/repositories/IPo
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
+import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
@@ -335,6 +338,7 @@ export class ApplicationFactory {
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
+    accountingReview: IAccountingReviewRepository;
   };
 
   private readonly policies: {
@@ -407,6 +411,7 @@ export class ApplicationFactory {
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
+    accountingReview: AccountingReviewService;
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
@@ -457,6 +462,7 @@ export class ApplicationFactory {
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
+      accountingReview: new AccountingReviewRepository(),
     };
 
     // Policies
@@ -552,6 +558,22 @@ export class ApplicationFactory {
       this.repositories.sourceProvenance,
       this.repositories.dimension,
       this.repositories.lalur,
+    );
+
+    // BE-INCR-REVIEW-LAYER (nó C11): revisão profissional editável. Consome PostingService (acerto
+    // extemporâneo, item 5), os repositórios dos alvos do ponteiro DATA_EDIT (item 4) e a leitura da
+    // trilha por alvo (item 13). Construído ANTES da entrega porque o gate F-C11-3 (item 14) é dele.
+    const accountingReviewService = new AccountingReviewService(
+      this.repositories.accountingReview,
+      this.repositories.dataExchange,
+      this.repositories.account,
+      this.repositories.referentialMapping,
+      this.repositories.counterparty,
+      this.repositories.journalEntry,
+      this.repositories.audit,
+      postingService,
+      auditService,
+      this.policies.accounting,
     );
 
     // Maker-checker approval tower (ADR-INCR-APPROVAL) — the controlled Draft→PendingApproval→Posted
@@ -911,7 +933,9 @@ export class ApplicationFactory {
         this.repositories.accountingPeriod,
         auditService,
         this.policies.accounting,
+        accountingReviewService,
       ),
+      accountingReview: accountingReviewService,
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -1065,6 +1089,7 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
+  public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>

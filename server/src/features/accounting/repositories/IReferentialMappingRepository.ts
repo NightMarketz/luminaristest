@@ -42,6 +42,12 @@ export interface IReferentialMappingRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<number>;
 
+  /**
+   * Point lookup escopado por id — BE-INCR-REVIEW-LAYER (C11, item 4): o ponteiro DATA_EDIT
+   * `referential_mapping` só é aceito se o alvo existe no escopo. Leitura pura, aditiva.
+   */
+  findById(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<ReferentialMapping | null>;
+
   /** Finds the mapping of (accountId, mappingVersion) within the scope, or null. */
   findByAccountAndVersion(
     scope: AccountingScope,

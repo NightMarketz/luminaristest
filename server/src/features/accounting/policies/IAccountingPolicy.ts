@@ -101,6 +101,13 @@ export interface IAccountingPolicy {
   canManageFiscalProfile(scope: AccountingScope): boolean;
 
   /**
+   * BE-INCR-REVIEW-LAYER (nó C11, F-C11-1 → a): o profissional é qualquer User do escopo que já
+   * gerencia dado (`canManage`); identidade do atestado (nome + CRC) é DADO do sign-off, não de sessão.
+   */
+  canReviewAccounting(scope: AccountingScope): boolean;
+  canSignOffReview(scope: AccountingScope): boolean;
+
+  /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this
    * scope (ADR-INCR-APPROVAL F3, re-ratified fork-a-fork 2026-07-14). Today it is OFF while
    * `ownerUserId === actorUserId` (single-user reality): a lone operator gets a usable
