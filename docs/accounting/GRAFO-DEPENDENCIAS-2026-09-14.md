@@ -7,7 +7,7 @@
 > É o **fold pendente** que a cédula #319 nomeia na última seção. **O que não é:** ratificação nem fila
 > nova — a ordem de execução é a de `PROXIMOS-PASSOS-2026-09-14.md` (R6 aplicado), detalhada lá passo a passo.
 >
-> **Estado verificado contra `origin/main` `c1e4b7a5` (2026-09-14, pós-merge do PR #315**; `git merge-base
+> **[16/09] Estado vigente em §4.2 (`origin/main` `3f61c4b0`); §1 mermaid e §3 são a leitura de 14/09, congelados — o estado por nó é §4/§4.2.** Estado verificado contra `origin/main` `c1e4b7a5` (2026-09-14, pós-merge do PR #315**; `git merge-base
 > --is-ancestor origin/main HEAD` = 0; #318 `93e52adb` e #319 `b002f78c` ancestrais). Claim de ✅ exige
 > `git merge-base --is-ancestor <sha> origin/main` (regra do plano SDD §0 passo F).
 >
@@ -25,7 +25,7 @@
 | **R6** | **Financeiro antes de fiscal**, já; exceção 01/10 (X10i quando D5 existir) mantida | Ordem da §4: contábil (BRIEFs) → **F7** → X6 feature. R6 → ✅ |
 | **R7** | Emendar o perímetro zero-diff (1 símbolo: `installPresetAsSystem`) | `ADR-P2` EMENDA 14/09 **em `main`**; C10 comportamento 11 **em PR #320** (aberto) |
 | **R8** | Instância = CNPJ raiz; unidade = filial com conta de emissão própria; `units.cnpj` **fica** | `ADR-INCR-DFE` EMENDA 14/09 **em `main`**; aresta R8 ⇢ M2 deixa de ser `(inferida)` na parte do CNPJ; `FiscalProfile` por `unitId` nasce com `partnerAccountRef` reservado |
-| **R9** | **Tabela irmã** (`BankSettlementItem`) | F7 → `plan` com desenho fechado; BRIEF **em `main`** (`BE-INCR-BANK-SETTLEMENT-brief.md`, #319) com **5 forks F-F7-1..5 PENDENTES** |
+| **R9** | **Tabela irmã** (`BankSettlementItem`) | F7 → `plan` com desenho fechado; BRIEF **em `main`** (`BE-INCR-BANK-SETTLEMENT-brief.md`, #319) com ~~5 forks PENDENTES~~ → F-F7-1..5 → (a) ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7; feature ✅ #326 (16/09) |
 | **R10** | Não abrir ADR P-IA agora | P-IA fica posição 9; nenhuma frente bloqueada por ele |
 | **F-X6-1..6** | 5/6 → (a); **F-X6-3 → (b)** (subtrair PIS/COFINS já, exceções como dado configurável) | X6 = `ready` **depois** da emenda do BRIEF #309 (itens 10/11) — a emenda é `sessao-planejamento` docs-only |
 
@@ -42,10 +42,10 @@
 
 | Nó | Artefato | Onde está | Forks |
 |---|---|---|---|
-| **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **PR #321** (`36c19a51`, docs-only, aberto) | **6 pendentes** |
-| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **PR #322** (docs-only, aberto; branch `claude/brief-c12-mascaras-identidade`) | **4 pendentes** + 1 transcrição obrigatória (§5) |
-| **F7** baixa por retorno bancário | `BE-INCR-BANK-SETTLEMENT-brief.md` | `main` (#319) | **5 pendentes** (F-F7-1..5) — **stop humano** do passo 7 |
-| **X6** custo D3 por regime | `BE-INCR-NFE-COST-REGIME-brief.md` (#309) | `main`; **precisa de emenda** (F-X6-3 b + exceções, itens 10/11) | ratificados (5a+1b) |
+| **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **✅ `main` #321 `8e79b8cb`** (fold 16/09) | **6 pendentes** (ao dono) |
+| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **✅ `main` #322 `1c469e2f`** (fold 16/09) | **4 pendentes** (ao dono) + 1 transcrição |
+| **F7** baixa por retorno bancário | `BE-INCR-BANK-SETTLEMENT-brief.md` | `main` (#319) → **✅ feature #326 `22b97252`** (fold 16/09) | F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7 |
+| **X6** custo D3 por regime | `BE-INCR-NFE-COST-REGIME-brief.md` (#309) | emenda #327 → **✅ feature #328 `fb7ae649`** (fold 16/09; ERRATA transcrição × corpus) | ratificados (5a+1b) |
 
 ### 0.4 Correções de fato (o grafo de 11/09 afirmava; o disco diz outra coisa)
 
@@ -276,18 +276,34 @@ arquivos, gates, evidência de "feito", stop humano) está em
 |---|---|---|---|---|
 | 0 | preflight | — | `merge-base` de #315/#318/#319; `gh pr list`; zero jest concorrente | — |
 | 1 | ~~#315~~ | ✅ `c1e4b7a5` | — | — |
-| 2 | C10 c.11 (**#320**) | inflight | review independente → PASS + CI 5/5 → merge | `sessao-integracao` |
-| 3 | C11 (**#321**) | inflight | merge docs-only → apresentar **6 forks** ao dono | `sessao-integracao` → dono |
-| 4 | C12 (**#322**) | inflight | merge docs-only → apresentar **4 forks** ao dono | `sessao-integracao` → dono |
-| 5 | C6b | plan | BRIEF (tabela filha + migração) | `sessao-planejamento` |
-| 6 | SEED-MY | plan | BRIEF curto; **pára** sem assinatura do B-4 | `sessao-planejamento` → `job-generator` |
-| 7 | **F7** | plan | **STOP humano:** F-F7-1..5 ao dono (recomendação primeiro) → só então feature | dono → `sessao-feature` |
-| 8 | X6 | plan | emenda do BRIEF #309 → feature (Fase 0 `FiscalProfile` → Fase A fórmula) | `sessao-planejamento` → `sessao-feature` |
-| 9 | X4-14 | plan | emenda BRIEF 3C item 14 → feature (4 agregados K155/K355) | `sessao-planejamento` → `sessao-feature` |
+| 2 | ~~C10 c.11 (#320)~~ | ✅ `0790dd29` | — | — |
+| 3 | ~~C11 (#321)~~ | ✅ `8e79b8cb` docs | **6 forks ao dono** (pendentes) | dono |
+| 4 | ~~C12 (#322)~~ | ✅ `1c469e2f` docs | **4 forks ao dono** (pendentes) | dono |
+| 5 | ~~C6b~~ | ✅ `ce0c97e8` BRIEF (#324) | **5 forks ao dono** | dono |
+| 6 | ~~SEED-MY~~ | ✅ `dbd5ea83` BRIEF (#325) | **bloqueado até B-4 assinado**; 3 forks ao dono | dono / gate |
+| 7 | ~~**F7**~~ | ✅ `22b97252` feature (#326) | contas de encargo = item 6 do pedido | — |
+| 8 | ~~X6~~ | ✅ `112366c8` emenda (#327) + `fb7ae649` feature (#328) | defaults conservadores até item 7 do pedido | — |
+| 9 | ~~X4-14~~ | ✅ `a6783795` (#329) | régua por natureza (S1 do review) | — |
 | 9b | FE-INCR-LALUR PR 2 | ready | quando o dono chamar — sem item de fila próprio (crescimento do X4) | `sessao-feature` |
-| 10 | C8 | plan | ADR `ADR-INCR-FIXED-ASSETS` → parecer → forks delegados/ao dono → BRIEF | ADR → `luminaris-accounting-architect` → `sessao-planejamento` |
-| 11 | D1 pedido | ext | montar pacote (encargo/desconto · PIS/COFINS exceções · linhas E · itens 1/1b); **dono envia** | `luminaris-contador-liaison` |
-| 12 | fold | docs | master map §5.1/§7.1 + este grafo → sucessor | `sessao-integracao` docs |
+| 10 | ~~C8~~ | ✅ `9b4cb35a` ADR+parecer+BRIEF (#330) | **F-FA10/12/13 ao dono**; implementação NÃO autorizada | dono |
+| 11 | ~~D1 pedido~~ | ✅ `3f61c4b0` montado (#331) | **dono envia** | dono |
+| 12 | ~~fold~~ | ✅ 16/09 | régua 42/57 | — |
+
+### 4.2 Estado ao fim da sessão 3 — 2026-09-16 (fold) — verificado
+
+- `origin/main` = **`3f61c4b0`** (#331). Fila §4 **inteira ✅** (passos 1–12). Régua **42/57** (contábil 17/22 · financeiro
+  **17/19** · fiscal 8/16): F7 é nó novo do financeiro (§7.1 "+2"); X6 (custo D3 por tenant) e X4-14 são **crescimento**
+  de nó (§7.1 "nós que cresceram"), numerador inalterado. Leitura alternativa declarada: se X6 contasse como nó, 43/57.
+- **Contagem decidida neste fold (7.6 do prompt-mãe, regra 2 do §7.1):** `FE-INCR-BANK-SETTLEMENT` (tela do F7) é
+  **crescimento do F7**, não nó novo — denominador segue 57 (mesmo precedente da tela do e-Lalur, #315). Leitura
+  alternativa declarada: se contasse, 58.
+- **Nós novos nomeados nesta sessão (fora da régua até ADR/BRIEF próprios):** `FE-INCR-FIXED-ASSETS` (tela do C8),
+  relatório de imobilizado como extra do C6b, amortização de intangível, CIAP — ver ADR C8 §2 "Fora de escopo".
+- **Correções de fato desta sessão:** o DTO da ECD **já expõe** `indFinEsc`/`codHashSub` (só a ECF não expõe
+  `retificadora`/`numRec`); `LalurProcess` é M315, não exercício; `postEntry` abre tx raiz própria (subrazão = 2 commits);
+  o Anexo III da IN 1.700 tem 2 binários (o corpus tem o compilado `43557`) e linha `<STRIKE>`.
+- Abertos ao dono: forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (3). Gates humanos e dado externo inalterados
+  (abaixo). Sucessor deste grafo: só quando algum fork/gate se mover — não há passo de agente pendente.
 
 ### 4.1 Estado ao fim da sessão de 2026-09-14 (noite) — verificado
 

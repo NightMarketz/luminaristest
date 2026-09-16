@@ -57,10 +57,14 @@
 | Pendências do reconcile (rodada 3) | [`BE-INCR-RECONCILE-PENDING-brief.md`](BE-INCR-RECONCILE-PENDING-brief.md) · [`F-W2F-4-DOSSIE.md`](F-W2F-4-DOSSIE.md) | ✅ (+ C7r) | #296 · #308 |
 | **F3** baixa parcial AP/AR | [`BE-INCR-PARTIAL-SETTLEMENT-brief.md`](BE-INCR-PARTIAL-SETTLEMENT-brief.md) | ✅ | #307 |
 | **C6** entrega ao contador | [`BE-INCR-CONTADOR-DELIVERY-brief.md`](BE-INCR-CONTADOR-DELIVERY-brief.md) | ✅ | #305 |
-| **F7** baixa por retorno bancário | [`BE-INCR-BANK-SETTLEMENT-brief.md`](BE-INCR-BANK-SETTLEMENT-brief.md) | ⏸ **5 forks F-F7-1..5 ao dono** (stop humano) | #319 (R9 tabela irmã) |
-| **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | 🔄 **PR #321** (6 forks) | — |
-| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | 🔄 **PR #322** (4 forks) | — |
-| **C6b** · **C8** · **X12** · **X7/X8/X9** · **X10b** | — | ⬜ sem BRIEF (ver grafo §3) | — |
+| **F7** baixa por retorno bancário | [`BE-INCR-BANK-SETTLEMENT-brief.md`](BE-INCR-BANK-SETTLEMENT-brief.md) | ✅ (forks → a, 15/09) | #326 |
+| **C11** revisão profissional editável | [`BE-INCR-REVIEW-LAYER-brief.md`](BE-INCR-REVIEW-LAYER-brief.md) | ✅ BRIEF · 6 forks ao dono | #321 |
+| **C12** máscaras de identidade no SPED | [`BE-INCR-SPED-IDENTITY-MASKS-brief.md`](BE-INCR-SPED-IDENTITY-MASKS-brief.md) | ✅ BRIEF · 4 forks ao dono | #322 |
+| **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) | ✅ BRIEF · 5 forks ao dono | #324 |
+| **SEED-MY** seed multi-exercício | [`SEED-MULTI-EXERCICIO-brief.md`](SEED-MULTI-EXERCICIO-brief.md) | ✅ BRIEF · bloqueado até B-4 | #325 |
+| **X6** custo D3 por regime | [`BE-INCR-NFE-COST-REGIME-brief.md`](BE-INCR-NFE-COST-REGIME-brief.md) | ✅ (emenda 15/09 + ERRATA) | #327 · #328 |
+| **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) | ✅ ADR+BRIEF · F-FA10/12/13 ao dono; execução não autorizada | #330 |
+| **X12** · **X7/X8/X9** · **X10b** | — | ⬜ sem BRIEF (ver grafo §3) | — |
 | Ondas paralelas de 08/2026 | [`BRIEFS-WAVE1.md`](BRIEFS-WAVE1.md) · [`BRIEFS-WAVE2-BACKEND.md`](BRIEFS-WAVE2-BACKEND.md) · [`BRIEFS-WAVE2-SCHEMA.md`](BRIEFS-WAVE2-SCHEMA.md) · [`BRIEFS-WAVE2-FE.md`](BRIEFS-WAVE2-FE.md) | ✅ 📜 (estado de fork lá pode estar desatualizado — o master map vence) | cédula 08-31; `pr-bodies/` |
 
 ## 4. BRIEFs por nó — frontend
