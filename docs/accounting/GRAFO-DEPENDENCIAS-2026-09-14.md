@@ -42,7 +42,7 @@
 
 | Nó | Artefato | Onde está | Forks |
 |---|---|---|---|
-| **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **✅ `main` #321 `8e79b8cb`** (fold 16/09) | **6 pendentes** (ao dono) |
+| **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **✅ `main` #321 `8e79b8cb`** (fold 16/09) → **✅ feature #334 `a2c974cb`** (sessão 4, 16/09) | ~~6 pendentes~~ → (a) ×6 ratificados 16/09 (#333) |
 | **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **✅ `main` #322 `1c469e2f`** (fold 16/09) | **4 pendentes** (ao dono) + 1 transcrição |
 | **F7** baixa por retorno bancário | `BE-INCR-BANK-SETTLEMENT-brief.md` | `main` (#319) → **✅ feature #326 `22b97252`** (fold 16/09) | F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7 |
 | **X6** custo D3 por regime | `BE-INCR-NFE-COST-REGIME-brief.md` (#309) | emenda #327 → **✅ feature #328 `fb7ae649`** (fold 16/09; ERRATA transcrição × corpus) | ratificados (5a+1b) |
@@ -303,7 +303,7 @@ arquivos, gates, evidência de "feito", stop humano) está em
   `retificadora`/`numRec`); `LalurProcess` é M315, não exercício; `postEntry` abre tx raiz própria (subrazão = 2 commits);
   o Anexo III da IN 1.700 tem 2 binários (o corpus tem o compilado `43557`) e linha `<STRIKE>`.
 - ~~Abertos ao dono: forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (3).~~ **[16/09, sessão 4] 20/20 ratificados**
-  (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): C11 · C12 (após transcrição J930/0930) · C6b (serial após C11) · C8 passam a **`ready`** —
+  (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): ~~C11~~ **✅ #334 `a2c974cb` ("executa C11", régua 43/57 — contábil 18/22)** · C12 (após transcrição J930/0930) · C6b (~~serial após C11~~ destravado) · C8 seguem **`ready`** —
   nenhum tem "executa". SEED-MY segue `blocked` por B-4. Gates humanos e dado externo inalterados (abaixo).
 
 ### 4.1 Estado ao fim da sessão de 2026-09-14 (noite) — verificado
