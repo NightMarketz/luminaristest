@@ -1,7 +1,9 @@
 # BRIEF — BE-INCR-SPED-IDENTITY-MASKS (nó C12 · máscaras de identidade na geração SPED)
 
-> **Estado: BRIEF pronto, 4 forks `RATIFICAÇÃO PENDENTE` (§3) + 1 transcrição obrigatória (§5).** Nenhuma
-> linha de código nasce deste documento antes da ratificação. Escrito em `sessao-planejamento`
+> **Estado: BRIEF pronto. ✅ 4 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
+> `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C12-1..4 → (a), todos na recomendação.** Falta a
+> transcrição obrigatória do §5 (J930 ECD L9 + 0930 ECF L12 — **os dois PDFs estão no disco**, conferir sha256)
+> antes da `sessao-feature`, que ainda exige "executa" do dono (ORCH-006). Escrito em `sessao-planejamento`
 > (2026-09-14, passo 4 de `PROXIMOS-PASSOS-2026-09-14.md`).
 
 ---

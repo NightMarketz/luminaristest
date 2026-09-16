@@ -302,8 +302,9 @@ arquivos, gates, evidência de "feito", stop humano) está em
 - **Correções de fato desta sessão:** o DTO da ECD **já expõe** `indFinEsc`/`codHashSub` (só a ECF não expõe
   `retificadora`/`numRec`); `LalurProcess` é M315, não exercício; `postEntry` abre tx raiz própria (subrazão = 2 commits);
   o Anexo III da IN 1.700 tem 2 binários (o corpus tem o compilado `43557`) e linha `<STRIKE>`.
-- Abertos ao dono: forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (3). Gates humanos e dado externo inalterados
-  (abaixo). Sucessor deste grafo: só quando algum fork/gate se mover — não há passo de agente pendente.
+- ~~Abertos ao dono: forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (3).~~ **[16/09, sessão 4] 20/20 ratificados**
+  (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): C11 · C12 (após transcrição J930/0930) · C6b (serial após C11) · C8 passam a **`ready`** —
+  nenhum tem "executa". SEED-MY segue `blocked` por B-4. Gates humanos e dado externo inalterados (abaixo).
 
 ### 4.1 Estado ao fim da sessão de 2026-09-14 (noite) — verificado
 

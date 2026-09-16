@@ -27,6 +27,7 @@
 | 09-10 | [`CEDULA-DECISAO-2026-09-10-entrevista.md`](CEDULA-DECISAO-2026-09-10-entrevista.md) | 23 respostas + 4 forks → re-baseline 49→57 |
 | 09-14 | [`CEDULA-DECISAO-2026-09-14-gates-humanos.md`](CEDULA-DECISAO-2026-09-14-gates-humanos.md) (#318) | 16/16 respostas; **superada em R6/R5/#315/R8-texto** pela irmã abaixo |
 | 09-14 | [`CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md`](CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md) (#319) | R5..R10, F-X6-1..6, SEED-MY/X4-14/#315/C8 — **prevalece onde diverge** |
+| 09-16 | [`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`](CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md) | 20/20 forks C11·C12·C6b·C8·SEED-MY ratificados (todos na recomendação); C11/C12/C6b/C8 → `ready`, sem "executa" |
 
 ## 3. BRIEFs por nó — backend
 

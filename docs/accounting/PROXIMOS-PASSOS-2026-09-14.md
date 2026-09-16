@@ -231,8 +231,8 @@ Régua **42/57** (financeiro 16→17/19 pelo F7; X6 e X4-14 = crescimento de nó
 - `origin/main` = **`3f61c4b0`** (#331). Nenhum PR desta orquestração aberto. Ordem de merge da sessão 3: #328 → #329
   (rebase + review + fix) → #330 → #331.
 - Régua **42/57** (contábil 17/22 · financeiro **17/19** · fiscal 8/16).
-- **Restos que só o dono/humano fecha:** forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (F-FA10/12/13) — questionário
-  quando pedir; envio do pedido ao contador (#331); gates B-4 (destrava SEED-MY), H1 2ª passada em Real, Termo de
+- **Restos que só o dono/humano fecha:** ~~forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (F-FA10/12/13)~~ → **✅ 20/20
+  ratificados 2026-09-16** (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`; C11/C12/C6b/C8 agora `ready`, ordem sugerida C11 → C6b → C12 → C8, cada um só com "executa"); envio do pedido ao contador (#331); gates B-4 (destrava SEED-MY), H1 2ª passada em Real, Termo de
   Verificação (ECD substituta). Nada de código sem "executa" + forks ratificados (ORCH-006).
 
 ## Estado na 2ª leitura (verificado 2026-09-14, noite)

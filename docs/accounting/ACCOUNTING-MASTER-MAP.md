@@ -69,7 +69,7 @@
 > #320 P2 c.11 · #321 C11 BRIEF · #322 C12 BRIEF · #323 docs · #324 C6b BRIEF · #325 SEED-MY BRIEF · **#326 F7 feature** · #327 X6 emenda ·
 > **#328 X6 feature** (`fb7ae649`) · **#329 X4-14** (`a6783795`, régua M312 por natureza da conta) · **#330 C8 ADR+parecer+BRIEF** (`9b4cb35a`) ·
 > **#331 pedido ao contador itens 6–13** (`3f61c4b0`). **Régua: 42/57 — contábil 17/22 · financeiro 17/19 · fiscal 8/16.** R5..R10 fechados.
-> **Sobra só decisão/gate humano:** forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (F-FA10/12/13); envio do pedido; B-4 · H1 2ª passada · Termo de Verificação.
+> **Sobra só decisão/gate humano:** ~~forks C11 (6) · C12 (4) · C6b (5) · SEED-MY (3) · C8 (F-FA10/12/13)~~ → **✅ 20/20 ratificados 2026-09-16** (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`); C11/C12/C6b/C8 `ready` **sem "executa"**; envio do pedido; B-4 · H1 2ª passada · Termo de Verificação.
 > Lições da sessão em memória: redação vigente/versão compilada de tabela de lei; `postEntry` abre tx raiz (subrazão = 2 commits); paráfrase de regra ratificada perde ramo.
 >
 > **🔁 FOLD 2026-09-11 (3ª passada) — ECF FASE 3B: BRIEF `BE-INCR-SPED-ECF-FASE3B-blocos-LMN` + 5 forks RATIFICADOS + Passo A transcrito + §2 EMENDADO — **PR #311 MERGEADO em `main` (squash `acb927ba`, 11/09)**.**
@@ -628,16 +628,16 @@ Ordenados por proximidade da fundação. **Nenhum** é "o próximo passo" antes 
 >
 > | Item | Bloco | Estado (16/09, fold) | Onde |
 > |---|---|---|---|
-> | **SEED-MY** seed multi-exercício 2025+2026 | A (pré-condição dos gates H1/H2/H3) | ✅ BRIEF em `main` (#325 `dbd5ea83`); **execução bloqueada até B-4 assinado**; 3 forks ao dono | `SEED-MULTI-EXERCICIO-brief.md` |
+> | **SEED-MY** seed multi-exercício 2025+2026 | A (pré-condição dos gates H1/H2/H3) | ✅ BRIEF em `main` (#325 `dbd5ea83`); **execução bloqueada até B-4 assinado**; 2 forks ✅ ratificados 16/09 (F-SEED-2 a · F-SEED-3 b) | `SEED-MULTI-EXERCICIO-brief.md` |
 > | **X4-14** aviso no diagnóstico (ajuste parcial sem M312) | B — crescimento do item 10 (X4) | ✅ **MERGEADO** #329 `a6783795` (16/09); régua por natureza da conta (Manual p.253) + ERRATA §2.4 | BRIEF 3C §2.4 |
 > | **FE-INCR-LALUR PR 2** (M410 + fechar + diagnóstico na tela) | B — crescimento do item 10 (X4) | `ready` (F-FE-4 → a; #315 + #316 em `main`); só com "executa" | `FE-INCR-LALUR-brief.md` §3 |
 > | **P2 comportamento 11** (T0 `onboardingCompletedAt`, R7) | B — P2 (ROADMAP Fase P2) | ✅ **MERGEADO** #320 `0790dd29` | `ADR-P2` EMENDA 14/09 |
-> | **C11** revisão profissional editável | B — nó novo do re-baseline 10/09 | ✅ BRIEF em `main` (#321 `8e79b8cb`); **6 forks ao dono** | `BE-INCR-REVIEW-LAYER-brief.md` |
-> | **C12** máscaras de identidade no SPED | B — nó novo do re-baseline | ✅ BRIEF em `main` (#322 `1c469e2f`); **4 forks ao dono** | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` |
-> | **C6b** pacote ampliado ao contador | B — nó novo do re-baseline | ✅ BRIEF em `main` (#324 `ce0c97e8`); **5 forks ao dono** | `BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md` |
+> | **C11** revisão profissional editável | B — nó novo do re-baseline 10/09 | ✅ BRIEF em `main` (#321 `8e79b8cb`); 6 forks ✅ ratificados 16/09 (todos a) → **`ready`, falta "executa"** | `BE-INCR-REVIEW-LAYER-brief.md` |
+> | **C12** máscaras de identidade no SPED | B — nó novo do re-baseline | ✅ BRIEF em `main` (#322 `1c469e2f`); 4 forks ✅ ratificados 16/09 (todos a) → `ready` **após transcrição J930/0930**, falta "executa" | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` |
+> | **C6b** pacote ampliado ao contador | B — nó novo do re-baseline | ✅ BRIEF em `main` (#324 `ce0c97e8`); 5 forks ✅ ratificados 16/09 (todos a) → `ready` **serial após C11**, falta "executa" | `BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md` |
 > | **F7** baixa por retorno bancário (tabela irmã, R9) | B — financeiro | ✅ **MERGEADO** #326 `22b97252` (F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7); contas de encargo = item 6 do pedido | `BE-INCR-BANK-SETTLEMENT-brief.md` |
 > | **X6** custo D3 por regime do tenant | B — fiscal (crescimento do nó NF-e) | ✅ emenda #327 + **MERGEADO** #328 `fb7ae649` (review FAIL→PASS; ERRATA Lei 10.485 vigente) | `BE-INCR-NFE-COST-REGIME-brief.md` |
-> | **C8** imobilizado + depreciação | B — item 12 "Imobilizado" desta fila | ✅ ADR (Proposed) + parecer + BRIEF em `main` (#330 `9b4cb35a`); F-FA1..9 delegados; **F-FA10/12/13 ao dono**; execução NÃO autorizada | `ADR-INCR-FIXED-ASSETS.md` · `BE-INCR-FIXED-ASSETS-brief.md` |
+> | **C8** imobilizado + depreciação | B — item 12 "Imobilizado" desta fila | ✅ ADR (Proposed) + parecer + BRIEF em `main` (#330 `9b4cb35a`); F-FA1..9 delegados; F-FA10/12/13 ✅ ratificados 16/09 (todos a) → `ready`; execução NÃO autorizada (falta "executa") | `ADR-INCR-FIXED-ASSETS.md` · `BE-INCR-FIXED-ASSETS-brief.md` |
 > | **Pedido ao contador** (itens 6–13) | A — dado externo D1 | ✅ montado (#331 `3f61c4b0`); **dono envia** | `PEDIDO-CONTADOR-2026-09-03.md` EMENDA 15/09 |
 
 ### Bloco A — resíduos sobre trabalho já mergeado (fechar primeiro; custo baixo, valor imediato)

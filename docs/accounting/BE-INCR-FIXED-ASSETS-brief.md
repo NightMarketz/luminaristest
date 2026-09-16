@@ -6,9 +6,9 @@
 > B3 tie-out em 2 txs (C13/C14), S1–S9 (fórmula cumulativa, `bookAnnualRateBp`, dispensa da ECF retificadora,
 > cauda da Parte B, 4 casos de período, rascunho por NF-e com re-drive, F-FA11 decidido no BRIEF, manuais no
 > MANIFEST, F-FA5 sem comando; delta-review D1–D5: taxa derivada do `8905`, `signers` reusa `SignerSchema`,
-> predicado da tx2, `lifeMonths`/cap, prazo por aviso). **3 forks NOVOS `RATIFICAÇÃO PENDENTE` (§3)**,
-> descobertos ao materializar os contratos — o parecer não os cobre, logo voltam ao dono. Nenhuma linha de
-> código nasce deste documento antes da ratificação dos 3. Escrito em `sessao-planejamento` (2026-09-15,
+> predicado da tx2, `lifeMonths`/cap, prazo por aviso). **3 forks novos ✅ RATIFICADOS 2026-09-16 (dono, via
+> `AskUserQuestion`; registro em `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-FA10 → (a) · F-FA12 → (a) ·
+> F-FA13 → (a), todos na recomendação.** Implementação ainda exige "executa" do dono (ORCH-006). Escrito em `sessao-planejamento` (2026-09-15,
 > passo 10.3 de `PROXIMOS-PASSOS-2026-09-14.md`).
 
 ---
