@@ -21,6 +21,7 @@ import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepos
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
+import type { AccountingReviewService } from './AccountingReviewService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 
@@ -76,6 +77,9 @@ interface ResolvedPair {
  *   banco. Duas confirmações concorrentes produzem UMA linha — a perdedora trata P2002 como
  *   caminho normal e relê a linha vencedora.
  * - **Cross-tenant** (item 12): contato/jobs/entrega de outro escopo → `NotFoundError`.
+ * - **Revisão assinada antes da entrega** (BE-INCR-REVIEW-LAYER item 14, F-C11-3 → a): o par de
+ *   jobs exige `AccountingReview` `SIGNED_OFF`; `REJECTED` → 409 `REVIEW_REJECTED`, nenhuma →
+ *   409 `REVIEW_REQUIRED`. Preflight no `build`; AUTORITATIVO dentro da tx do `confirm`.
  */
 export class AccountingDeliveryService {
   constructor(
@@ -85,6 +89,7 @@ export class AccountingDeliveryService {
     private readonly periodRepo: IAccountingPeriodRepository,
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
+    private readonly reviewService: AccountingReviewService,
   ) {}
 
   // ── Preflight ──────────────────────────────────────────────────────────────
@@ -102,6 +107,7 @@ export class AccountingDeliveryService {
     }
     const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
     await this.assertPeriodHardClosed(scope, period);
+    await this.reviewService.assertPairSignedOff(scope, ecd.id, ecf.id);
 
     const full = buildDeliveryManifest({
       scope,
@@ -147,6 +153,9 @@ export class AccountingDeliveryService {
       // GATE AUTORITATIVO — re-checado DENTRO da tx com `tx` propagado ao repo. O preflight do
       // buildDeliveryPackage não fecha o TOCTOU: um mês reaberto no meio do caminho passaria.
       await this.assertPeriodHardClosed(scope, period, tx);
+      // C11 item 14 — gate da revisão também DENTRO da tx: assinar/rejeitar entre o preflight e a
+      // confirmação não pode passar.
+      await this.reviewService.assertPairSignedOff(scope, ecd.id, ecf.id, tx);
 
       const existing = await this.deliveryRepo.findByJobsAndContact(
         scope,

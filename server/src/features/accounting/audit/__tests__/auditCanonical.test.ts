@@ -246,3 +246,25 @@ describe('contact.* / delivery.* — PII do contador nunca sobrevive à canonica
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
   });
 });
+
+// BE-INCR-REVIEW-LAYER (nó C11, item 12) — teste-guarda de PII no MESMO PR que introduz os 6
+// eventTypes (classe `accounting-audit-allowlist-guards`). `description` e `locator` do achado e
+// `statement` do sign-off são texto livre digitado (nome de cliente, CPF, o que o profissional
+// quiser escrever): mesmo passados por engano, NÃO sobrevivem à canonicalização.
+describe('review.* — texto livre do achado/sign-off nunca sobrevive à canonicalização', () => {
+  const FREE = { description: 'Cliente João da Silva CPF 529.982.247-25', locator: 'conta 1.1.2 João', statement: 'Atesto p/ João' };
+
+  it.each([
+    ['review.opened', { reviewId: 'r-1', ecdJobId: 'j-ecd', ecfJobId: 'j-ecf', year: 2026 }],
+    ['review.finding_added', { reviewId: 'r-1', findingId: 'f-1', register: 'J150', severity: 'BLOCKER' }],
+    ['review.finding_resolved', { reviewId: 'r-1', findingId: 'f-1', resolution: 'DATA_EDIT', targetType: 'account', targetId: 'acc-1' }],
+    ['review.jobs_replaced', { reviewId: 'r-1', fromEcdJobId: 'j1', toEcdJobId: 'j2', fromEcfJobId: 'k1', toEcfJobId: 'k2' }],
+    ['review.signed_off', { reviewId: 'r-1', reviewerName: 'Maria Contadora', reviewerCrc: 'SP-123456/O-1' }],
+    ['review.rejected', { reviewId: 'r-1', reason: 'saldo não bate' }],
+  ])('%s derruba description/locator/statement passados a mais', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, { ...allowed, ...FREE });
+    expect(out).not.toContain('João');
+    expect(out).not.toContain('529.982.247-25');
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+});

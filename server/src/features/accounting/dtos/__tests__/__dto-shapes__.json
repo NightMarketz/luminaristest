@@ -283,6 +283,325 @@
       ]
     }
   },
+  "AccountingReviewDto.ts": {
+    "OpenReviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        },
+        "ecdJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecfJobId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "year"
+      ],
+      "additionalProperties": false
+    },
+    "AddFindingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "register": {
+          "type": "string",
+          "enum": [
+            "0000",
+            "I050",
+            "I051",
+            "I200",
+            "I250",
+            "J150",
+            "J930",
+            "M300",
+            "M350",
+            "M410",
+            "N630"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "BLOCKER",
+            "NOTE"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "register",
+        "locator",
+        "description",
+        "severity"
+      ],
+      "additionalProperties": false
+    },
+    "ResolveFindingSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "unitId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resolution": {
+              "type": "string",
+              "const": "DATA_EDIT"
+            },
+            "targetType": {
+              "type": "string",
+              "enum": [
+                "account",
+                "referential_mapping",
+                "counterparty",
+                "generation_input",
+                "journal_entry"
+              ]
+            },
+            "targetId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "unitId",
+            "resolution",
+            "targetType",
+            "targetId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "unitId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "resolution": {
+              "type": "string",
+              "const": "NO_ACTION"
+            },
+            "resolutionNote": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "unitId",
+            "resolution",
+            "resolutionNote"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "AdjustmentEntrySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "postingDate": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "lines": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "accountCode": {
+                "type": "string",
+                "minLength": 1
+              },
+              "debitCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "creditCents": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              },
+              "dimensions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "accountCode",
+              "debitCents",
+              "creditCents"
+            ]
+          }
+        },
+        "reverseOriginal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "unitId",
+        "postingDate",
+        "description",
+        "lines"
+      ],
+      "additionalProperties": false
+    },
+    "SignOffReviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewerName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "reviewerCrc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "reviewerName",
+        "reviewerCrc",
+        "statement"
+      ],
+      "additionalProperties": false
+    },
+    "RejectReviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "ReplaceReviewJobsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecdJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecfJobId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ListReviewsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "SIGNED_OFF",
+            "REJECTED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "ReviewScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
   "AccountingScopeSettingsDto.ts": {
     "GetAccountingScopeSettingsQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -71,6 +71,9 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-CONTADOR-DELIVERY: o log de entrega tem FK RESTRICT para o job de data-exchange E
   // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
   await prisma.accountingDeliveryLog.deleteMany();
+  // BE-INCR-REVIEW-LAYER (C11): achado antes da revisão (FK Restrict), revisão antes do job e do User.
+  await prisma.accountingReviewFinding.deleteMany();
+  await prisma.accountingReview.deleteMany();
 
   // ECF Fase 3C (EMENDA 3ª): filhos value-object e saldos caem antes dos pais — processos (FK Restrict para
   // ajuste E movimento), links M312 (Restrict para ajuste e JournalEntry), saldos (Cascade do fechamento, mas

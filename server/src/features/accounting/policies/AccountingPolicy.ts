@@ -139,6 +139,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canClosePeriod(scope);
   }
 
+  // BE-INCR-REVIEW-LAYER (nó C11, F-C11-1 → a)
+  canReviewAccounting(scope: AccountingScope): boolean {
+    return this.canManage(scope);
+  }
+
+  canSignOffReview(scope: AccountingScope): boolean {
+    return this.canManage(scope);
+  }
+
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto
   // ownerUserId === actorUserId (single-user → staging usável), ativa sozinha quando um delegado
   // opera os livros do dono (ownerUserId !== actorUserId, via membership futuro). Ver

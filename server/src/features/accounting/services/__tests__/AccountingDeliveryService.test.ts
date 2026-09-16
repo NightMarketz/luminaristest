@@ -15,6 +15,8 @@ import type { IDataExchangeRepository } from '@/features/accounting/repositories
 import type { IAccountingPeriodRepository } from '@/features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
+import type { AccountingReviewService } from '@/features/accounting/services/AccountingReviewService';
+import { ConflictError } from '@/lib/errors';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import {
   DELIVERY_PACKAGE_BUILT,
@@ -109,6 +111,8 @@ interface Opts {
   existing?: typeof deliveryRow | null;
   deliveryFound?: typeof deliveryRow | null;
   createThrowsP2002?: boolean;
+  /** BE-INCR-REVIEW-LAYER item 14: estado da revisão do par — default = assinada (gate passa). */
+  reviewGate?: 'SIGNED_OFF' | 'REVIEW_REQUIRED' | 'REVIEW_REJECTED';
 }
 
 function build(opts: Opts = {}) {
@@ -156,6 +160,11 @@ function build(opts: Opts = {}) {
     canReadAccountingContact: () => opts.canRead ?? true,
   } as unknown as IAccountingPolicy;
   const audit = { append: auditAppend } as unknown as AuditService;
+  const assertPairSignedOff = jest.fn(async (..._args: unknown[]) => {
+    const gate = opts.reviewGate ?? 'SIGNED_OFF';
+    if (gate !== 'SIGNED_OFF') throw new ConflictError(`gate ${gate}`, gate);
+  });
+  const reviewService = { assertPairSignedOff } as unknown as AccountingReviewService;
 
   return {
     service: new AccountingDeliveryService(
@@ -165,8 +174,10 @@ function build(opts: Opts = {}) {
       periodRepo,
       audit,
       policy,
+      reviewService,
     ),
     create,
+    assertPairSignedOff,
     update,
     findByYearMonth,
     findByJobsAndContact,
@@ -266,6 +277,32 @@ describe('AccountingDeliveryService', () => {
       for (const call of findByYearMonth.mock.calls) {
         expect(call[3]).toEqual({ tx: true });
       }
+    });
+  });
+
+  // ------------------------------------------------------------------ C11 item 14 — gate da revisão (F-C11-3 a)
+  describe('gate da revisão profissional (BE-INCR-REVIEW-LAYER item 14)', () => {
+    it('par sem revisão assinada é 409 REVIEW_REQUIRED no preflight E na confirmação', async () => {
+      const { service, create } = build({ reviewGate: 'REVIEW_REQUIRED' });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toMatchObject({ errorCode: 'REVIEW_REQUIRED' });
+      await expect(service.confirmDelivery(scope, confirmDto)).rejects.toMatchObject({ errorCode: 'REVIEW_REQUIRED' });
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('revisão REJEITADA bloqueia a entrega com 409 REVIEW_REJECTED', async () => {
+      const { service, create } = build({ reviewGate: 'REVIEW_REJECTED' });
+      await expect(service.confirmDelivery(scope, confirmDto)).rejects.toMatchObject({ errorCode: 'REVIEW_REJECTED' });
+      expect(create).not.toHaveBeenCalled();
+    });
+
+    it('a checagem AUTORITATIVA da revisão roda DENTRO da tx (recebe o handle) e sobre o par exato', async () => {
+      const { service, assertPairSignedOff } = build();
+      await service.confirmDelivery(scope, confirmDto);
+      const inTx = assertPairSignedOff.mock.calls.find((c) => c[3] !== undefined);
+      expect(inTx).toBeDefined();
+      expect(inTx![1]).toBe('job-ecd');
+      expect(inTx![2]).toBe('job-ecf');
+      expect(inTx![3]).toEqual({ tx: true });
     });
   });
 

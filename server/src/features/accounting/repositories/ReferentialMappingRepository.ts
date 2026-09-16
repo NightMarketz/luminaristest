@@ -59,6 +59,14 @@ export class ReferentialMappingRepository implements IReferentialMappingReposito
     return result.count;
   }
 
+  public async findById(
+    scope: AccountingScope,
+    id: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<ReferentialMapping | null> {
+    return (tx ?? prisma).referentialMapping.findFirst({ where: { id, ...accountingScopeWhere(scope) } });
+  }
+
   public async findByAccountAndVersion(
     scope: AccountingScope,
     accountId: string,

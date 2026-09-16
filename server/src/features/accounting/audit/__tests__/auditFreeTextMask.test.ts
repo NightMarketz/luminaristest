@@ -58,7 +58,8 @@ describe('MASKABLE_FREE_TEXT_KEYS — contrato contra PAYLOAD_ALLOWLIST', () => 
   // (`delivery.failed.reason`, texto livre do operador na falha de entrega). Esta lista é
   // deliberadamente congelada: um eventType novo com campo livre falha aqui até ser declarado.
   // + 1 de BE-INCR-BANK-SETTLEMENT (`bank_settlement.rejected.reason`, motivo do operador ao rejeitar).
-  it('cobre os 15 eventTypes de campo livre (13 do BRIEF + delivery.failed + bank_settlement.rejected)', () => {
+  // + 1 de BE-INCR-REVIEW-LAYER (`review.rejected.reason`, motivo da rejeição da revisão — item 12).
+  it('cobre os 16 eventTypes de campo livre (13 do BRIEF + delivery.failed + bank_settlement.rejected + review.rejected)', () => {
     expect(Object.keys(MASKABLE_FREE_TEXT_KEYS).sort()).toEqual(
       [
         'entry.draft_updated',
@@ -76,6 +77,7 @@ describe('MASKABLE_FREE_TEXT_KEYS — contrato contra PAYLOAD_ALLOWLIST', () => 
         'reconciliation.unmatched',
         'delivery.failed',
         'bank_settlement.rejected',
+        'review.rejected',
       ].sort(),
     );
   });

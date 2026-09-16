@@ -147,6 +147,18 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf'],
   'delivery.sent':          ['deliveryId', 'contactId', 'attemptCount'],
   'delivery.failed':        ['deliveryId', 'contactId', 'attemptCount', 'reason'],
+  // BE-INCR-REVIEW-LAYER (nó C11, item 12) — revisão profissional editável. Ids, registro SPED,
+  // severidade, resolução e ponteiro (targetType/targetId) só: `description` do achado, `statement`
+  // do sign-off e `locator` são texto livre digitado (PII potencial, classe
+  // accounting-audit-allowlist-guards) e NUNCA entram. `reviewerName`/`reviewerCrc` entram por
+  // decisão do BRIEF (identidade do atestado, como `crcNumber` do contato). `reason` da rejeição
+  // entra e é mascarado por MASKABLE_FREE_TEXT_KEYS.
+  'review.opened':          ['reviewId', 'ecdJobId', 'ecfJobId', 'year'],
+  'review.finding_added':   ['reviewId', 'findingId', 'register', 'severity'],
+  'review.finding_resolved': ['reviewId', 'findingId', 'resolution', 'targetType', 'targetId'],
+  'review.jobs_replaced':   ['reviewId', 'fromEcdJobId', 'toEcdJobId', 'fromEcfJobId', 'toEcfJobId'],
+  'review.signed_off':      ['reviewId', 'reviewerName', 'reviewerCrc'],
+  'review.rejected':        ['reviewId', 'reason'],
   // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
   // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
   // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).

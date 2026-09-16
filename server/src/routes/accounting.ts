@@ -88,6 +88,17 @@ import {
   getDelivery,
   retryDelivery,
 } from '../controllers/accountingDeliveryController';
+import {
+  addFinding,
+  getReview,
+  listReviews,
+  openReview,
+  postAdjustment,
+  rejectReview,
+  replaceReviewJobs,
+  resolveFinding,
+  signOffReview,
+} from '../controllers/accountingReviewController';
 import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
@@ -216,6 +227,18 @@ router.post('/delivery/build', buildDeliveryPackage);
 router.post('/delivery/confirm', deliveryConfirmLimiter, confirmDelivery);
 router.post('/delivery/:id/retry', retryDelivery);
 router.get('/delivery/:id', getDelivery);
+
+// Revisão profissional editável (BE-INCR-REVIEW-LAYER, nó C11) — segmento estático, antes de /:unitId/periods.
+// O arquivo gerado nunca é editado: achado → ponteiro/acerto → regeração (fluxo SPED) → PATCH /jobs → sign-off.
+router.post('/reviews', openReview);
+router.get('/reviews', listReviews);
+router.get('/reviews/:id', getReview);
+router.post('/reviews/:id/findings', addFinding);
+router.post('/reviews/:id/findings/:findingId/resolve', resolveFinding);
+router.post('/reviews/:id/findings/:findingId/adjustment', postAdjustment);
+router.patch('/reviews/:id/jobs', replaceReviewJobs);
+router.post('/reviews/:id/sign-off', signOffReview);
+router.post('/reviews/:id/reject', rejectReview);
 
 // Configuração por escopo (AccountingScopeSettings, 2026-09-15) — segmento estático, antes de /:unitId/periods.
 router.get('/settings', getAccountingSettings);

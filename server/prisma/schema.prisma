@@ -52,6 +52,7 @@ model User {
   fiscalProfiles          FiscalProfile[] // Relation to FiscalProfile (BE-INCR-NFE-COST-REGIME, nó X6)
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
+  accountingReviews       AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
   lalurParteBAccounts     LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
   lalurParteBMovements    LalurParteBMovement[] // Relation to LalurParteBMovement (M410, ECF Fase 3C)
@@ -642,6 +643,9 @@ model AccountingDataExchangeJob {
   // (nunca copia o `.txt`), e a FK com onDelete: Restrict vive do lado do log.
   deliveriesAsEcd AccountingDeliveryLog[]     @relation("DeliveryEcdJob")
   deliveriesAsEcf AccountingDeliveryLog[]     @relation("DeliveryEcfJob")
+  // BE-INCR-REVIEW-LAYER (C11, item 1): a revisão REFERENCIA o par de jobs, como a entrega.
+  reviewsAsEcd    AccountingReview[]          @relation("ReviewEcdJob")
+  reviewsAsEcf    AccountingReview[]          @relation("ReviewEcfJob")
 
   @@index([userId, unitId, createdAt])
   @@map("accounting_data_exchange_jobs")
@@ -1448,6 +1452,63 @@ model AccountingDeliveryLog {
   @@unique([ecdJobId, ecfJobId, contactId])
   @@index([userId, unitId, periodStart])
   @@map("accounting_delivery_logs")
+}
+
+// ── Revisão profissional editável (BE-INCR-REVIEW-LAYER, nó C11) ──
+// Cédula 10/09 resposta 2 + F-EDIT-1 (a)+(c); forks F-C11-1..6 → (a) (CEDULA-DECISAO-2026-09-16).
+// Invariante LEGAL (quem revisou/assinou o quê) ⇒ Prisma first-class. Trilha imutável: sem DELETE,
+// FK ao User com onDelete: Restrict (memória audit-log-no-fk-cascade) — mesma classe de audit_events.
+// @@unique([ecdJobId, ecfJobId]) (F-C11-5 a): SQLite trata NULL como distinto no unique, então o
+// gate in-tx do serviço é a parte AUTORITATIVA para pares com um job só; o unique fecha o par cheio.
+model AccountingReview {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  unitId         String // business unit (scoped string, not a FK)
+  year           Int
+  ecdJobId       String?
+  ecdJob         AccountingDataExchangeJob? @relation("ReviewEcdJob", fields: [ecdJobId], references: [id], onDelete: Restrict)
+  ecfJobId       String?
+  ecfJob         AccountingDataExchangeJob? @relation("ReviewEcfJob", fields: [ecfJobId], references: [id], onDelete: Restrict)
+  status         String // OPEN | SIGNED_OFF | REJECTED (REVIEW_STATUSES em models/ledgerStatus.ts)
+  reviewerUserId String // quem abriu (F-C11-1 a: User do escopo); plain string
+  reviewerName   String? // identidade do sign-off (nome + CRC são dado do atestado, não de sessão)
+  reviewerCrc    String? // máscara CFC UF-NNNNNN/O-D (reuso de AccountingContact.model)
+  statement      String?
+  closeReason    String? // motivo da rejeição
+  openedAt       DateTime @default(now())
+  closedAt       DateTime?
+  findings       AccountingReviewFinding[]
+
+  @@unique([ecdJobId, ecfJobId])
+  @@index([userId, unitId, year])
+  @@map("accounting_reviews")
+}
+
+// Achado da revisão (item 3). `resolution` + `resolutionTargetType/Id` = o PONTEIRO para o dado
+// editado (F-C11-2 a) ou para o lançamento de acerto (item 5) — nunca um endpoint de edição próprio.
+model AccountingReviewFinding {
+  id                   String   @id @default(cuid())
+  reviewId             String
+  review               AccountingReview @relation(fields: [reviewId], references: [id], onDelete: Restrict)
+  userId               String // cópia do escopo da revisão (leitura escopada sem join)
+  unitId               String
+  register             String // registro SPED apontado: 0000 | I050 | ... | J930 | M300 | ...
+  locator              String // código de conta, nº do lançamento, linha (≤ 200)
+  description          String // ≤ 1000 — texto livre, NUNCA entra em payload de auditoria (item 12)
+  severity             String // BLOCKER | NOTE
+  resolution           String? // DATA_EDIT | ADJUSTMENT_ENTRY | NO_ACTION
+  resolutionTargetType String? // account | referential_mapping | counterparty | generation_input | journal_entry
+  resolutionTargetId   String?
+  resolutionNote       String? // obrigatória em NO_ACTION (item 7)
+  resolvedById         String?
+  resolvedAt           DateTime?
+  createdById          String
+  createdAt            DateTime @default(now())
+
+  @@index([reviewId])
+  @@index([userId, unitId, reviewId])
+  @@map("accounting_review_findings")
 }
 
 // ── e-Lalur / e-Lacs (ECF Lucro Real, Bloco M Parte A/B + linhas E do Bloco N) ──
