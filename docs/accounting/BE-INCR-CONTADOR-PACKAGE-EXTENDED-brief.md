@@ -2,7 +2,9 @@
 
 > **Estado: BRIEF pronto. ✅ 5 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
 > `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C6b-1..5 → (a), todos na recomendação.**
-> Implementação exige "executa" do dono (ORCH-006) e **C11 mergeado antes** (F-C11-3 e F-C6b-1 tocam `buildPackage`). Escrito em `sessao-planejamento` (2026-09-14, passo 5 de
+> **Plano de execução granular (passo/arquivo/teste, 3 PRs seriais, forks novos F-C6b-6..8 ✅ ratificados 16/09, "executa" dado 16/09):
+> `BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md` (2026-09-16).**
+> Implementação exige "executa" do dono (ORCH-006) e **C11 mergeado antes** (✅ #334) (F-C11-3 e F-C6b-1 tocam `buildPackage`). Escrito em `sessao-planejamento` (2026-09-14, passo 5 de
 > `PROXIMOS-PASSOS-2026-09-14.md`), **depois** do merge de C6 (#305) como a fila exigia.
 
 ---
