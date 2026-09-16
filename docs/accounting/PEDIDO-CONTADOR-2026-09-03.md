@@ -11,7 +11,7 @@
 > — entra só quando o H1 (PVA) chegar lá.
 >
 > **EMENDA 2026-09-15 (Passo 11):** itens **6–13** acrescentados ao fim deste doc (encargo/desconto F7,
-> PIS/COFINS X6, linhas E do e-Lalur, revisão C11, pacote C6b, imobilizado C8). O texto dos itens 0–5
+> PIS/COFINS X6 + CST 02, linhas E do e-Lalur, reforço 1/1b, revisão C11, pacote C6b, imobilizado C8). O texto dos itens 0–5
 > continua valendo; o item 1 já pedia a tabela de depreciação — o 13 a detalha.
 
 ---
@@ -120,15 +120,17 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 ## EMENDA 2026-09-15 — itens 6 a 13 (Passo 11 de `PROXIMOS-PASSOS-2026-09-14.md`)
 
 > Montada pelo `luminaris-contador-liaison` em 2026-09-15. **Patch, não rewrite**: os itens 0–5 acima
-> continuam valendo como estão (o item 1 já pedia a tabela de depreciação; o item 8 abaixo a detalha, não
+> continuam valendo como estão (o item 1 já pedia a tabela de depreciação; o item 13 abaixo a detalha, não
 > a repete). Ancoragem na fila (CTD-004): cada linha nova nasce de um BRIEF mergeado que a nomeou como
 > "pendente de validação externa" — F7 §5 (#326), X6 §4 + ERRATA (#327/#328), 3B §4 item 7 (#311), C11 §5
-> (#321), C6b §5 (#324), C8 ADR/BRIEF (#330). **Quem envia é o dono.**
+> (#321), C6b §5 (#324); o item 13 nasce do ADR/BRIEF C8 **em PR #330 (aberto, não mergeado)** — o texto ao
+> contador pede a prática dele, não depende do merge. **Quem envia é o dono.**
 
 ### Texto adicional (copiar e colar após o item 5)
 
-> Desde o pedido anterior avançamos bastante, e apareceram mais oito perguntas — todas curtas, e nenhuma
-> precisa de documento, só da sua prática. Se preferir responder em áudio ou numa ligação, eu transcrevo.
+> Desde o pedido anterior avançamos bastante, e apareceram mais oito perguntas — todas curtas, quase todas
+> só da sua prática (a 9 aceita um exemplo, opcional). Se preferir responder em áudio ou numa ligação, eu
+> transcrevo.
 >
 > **6. Contas para juros, multa e desconto na baixa de títulos.** O sistema vai fazer a baixa de contas a
 > pagar e a receber a partir do retorno do banco, e o valor do retorno às vezes vem **maior** que o título
@@ -145,9 +147,11 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 > base do crédito (Lei 14.592/2023) — você já aplica assim?; **(b)** o IPI **entra** na base do crédito ou
 > você segue a IN 2.121/2022 e tira?; **(c)** compra de fornecedor do **Simples Nacional** — dá crédito de
 > PIS/COFINS (ADI SRF 15/2007) ou você não toma?; **(d)** produtos **monofásicos** (perfumaria, cosméticos,
-> autopeças, bebidas, farmácia) não dão crédito — a lista que o sistema reconhece hoje vem das Leis 10.147,
-> 10.485 e 10.865; tem algum grupo de produto que os seus clientes compram e que você trata como monofásico
-> além desses? Ou algum desses que você **não** trata assim?
+> farmácia, autopeças) não dão crédito — a lista que o sistema reconhece hoje vem só das Leis **10.147**
+> (higiene/perfumaria/farmácia) e **10.485** (autopeças); **bebidas e combustíveis ainda ficam fora** da lista
+> (o sistema nega o crédito e avisa). Tem algum grupo de produto que os seus clientes compram e que você
+> trata como monofásico além desses — bebidas (Lei 13.097/2015)? combustíveis? — ou algum desses dois que
+> você **não** trata assim?
 >
 > **8. Um caso concreto do item 7.** Nota de compra em que o fornecedor destacou PIS/COFINS com **CST 02**
 > (alíquota diferenciada) num produto que **não está** nas listas de monofásico que temos. Hoje o sistema
@@ -170,8 +174,8 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 > revisão, então quero fazer do jeito que você trabalha.
 >
 > **12. O que vai no pacote que chega a você.** Além da ECD e da ECF, quais demonstrativos você quer junto,
-> e em que formato (CSV, XLSX, PDF)? Balancete, razão, conciliação bancária e uma amostra de lançamentos
-> já estão previstos — servem? Falta algo que você sempre pede e eu não listei?
+> e em que formato (CSV ou XLSX)? Balancete, razão, balanço, DRE, conciliação bancária e uma amostra de
+> lançamentos já estão previstos — servem? Falta algo que você sempre pede e eu não listei?
 >
 > **13. Imobilizado e depreciação — detalhando o que o item 1 já pedia.** O sistema vai controlar o
 > imobilizado (cadeiras, equipamentos, ar-condicionado, veículo, reforma do ponto) e lançar a depreciação
@@ -181,10 +185,11 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 > grupo (móveis e utensílios, máquinas e equipamentos, instalações, veículos, edificações, terrenos),
 > **depreciação acumulada** de cada grupo, **despesa de depreciação**, e **ganho/perda na alienação** de
 > bem; **(c)** quando a depreciação contábil for diferente da fiscal (vida útil menor, valor residual), o
-> sistema leva a diferença para a **Parte B do e-Lalur** — qual **código de conta da Parte B** (o
-> `COD_PB_RFB` da tabela padrão da Receita) você usa para "depreciação — diferença contábil × fiscal"?;
+> sistema leva a diferença para a **Parte B do e-Lalur** — na tabela padrão da Receita há três contas com
+> esse nome: **1071** (IRPJ/CSLL, desde 2018), **2210** (desde 2018) e **3130** (art. 6º da IN 1.778/2017,
+> desde 2023). Qual delas você usa, e em que caso cada uma?;
 > **(d)** o ICMS da compra de um bem para o ativo (CFOP 1551/2551): você deixa **no custo do bem** ou
-> controla o crédito em 48 parcelas (CIAP)? Hoje o sistema deixa no custo. **(e)** Algum cliente seu usa
+> controla o crédito em 48 parcelas (CIAP)? O desenho previsto deixa no custo. **(e)** Algum cliente seu usa
 > depreciação **acelerada por turnos** (2 ou 3 turnos)? Se ninguém usa, deixo fora por enquanto.
 >
 > Obrigado de novo — e o item 0 continua sendo o que mais importa.
@@ -199,8 +204,8 @@ classificação dado / crítica / confirmação / fora do pedido, com trilho e e
 | **9** | Linhas `E` do M300A/M350A que o parque usa (BRIEF 3B §4 item 7) | Lista de códigos de linha (ex.: `M300A/1`, `/24`…); ECF de exemplo **só com códigos**, sem valores/CNPJ | Se vier ECF: **sem identificação nem valores** — se vier com, não commitar (CTD-003) | Lista vira `favoritos`/ordenação no catálogo `ecf-l12-linhas.json` (FE-INCR-LALUR PR 2) — **não** filtra o catálogo (as 374 continuam) | **dado** → FE-INCR-LALUR PR 2 (ordenação); código inexistente no catálogo = **fora do pedido** |
 | **10** | Reforço dos itens 1/1b (X7) | idem itens 1/1b | n/a | idem itens 1/1b | idem |
 | **11** | Revisa **dentro** do sistema (login) ou **por fora** (pacote + achados)? (C11 §5 item 3) | Resposta binária + o que precisa ver | n/a | "Dentro" → F-C11-1 (b) `Role.ACCOUNTANT` exige ADR de auth antes do BRIEF C11 sair do papel; "por fora" → F-C11-1 (a) confirmado. **Decide o fork melhor que a recomendação** | **crítica ou confirmação** → BRIEF C11 §3 F-C11-1 |
-| **12** | Composição e formato do pacote ampliado (C6b §5 item 1) | Lista de demonstrativos + formato por item | n/a | Itens já em `DELIVERABLE_EXPORT_KINDS` → confirma; item **fora** (ex.: DFC, notas explicativas) → **achado fora de escopo** do C6b, autorização própria; formato PDF → F-CD3 segue "sem PDF" salvo decisão do dono | **dado** → perfil por contato (F-C6b-2 a) |
-| **13** | Imobilizado (C8): (a) taxas praticadas × Anexo III/laudo · (b) contas por grupo + acumulada + despesa + ganho/perda · (c) `COD_PB_RFB` da diferença de depreciação · (d) ICMS no custo × CIAP · (e) turnos | (a) tabela grupo→taxa ou "Anexo III"; (b) códigos; (c) código da PARTEB_PADRAO; (d) binário; (e) sim/não | n/a | (a) "Anexo III" → seed basta (BRIEF C8 A3), taxa própria → linha `CUSTOM` com `justification` = a resposta dele; (b) contas viram `FixedAssetClass.{cost,accumulatedDepreciation}AccountId` + `AccountingScopeSettings.{depreciationExpense,disposalGain,disposalLoss}AccountId` (BRIEF C8 A1/A5); (c) vira `depreciationParteBAccountId` (BRIEF C8 F24) — sem ele, fechamento com diferença ≠ 0 é 400 nomeado; (d) "CIAP" → **achado fora de escopo** já nomeado no ADR (não reabre F-FA3); (e) "sim" → reabre F-FA2 para (b) — **decisão do dono**, não do agente | **dado** → BRIEF C8 (execução ainda não autorizada); (e) sim = **crítica** → fork |
+| **12** | Composição e formato do pacote ampliado (C6b §5 item 1) | Lista de demonstrativos + formato por item | n/a | Itens já em `DELIVERABLE_EXPORT_KINDS` (BRIEF C6b §4 — ainda não em código) → confirma; item **fora** (ex.: DFC, notas explicativas) → **achado fora de escopo** do C6b, autorização própria; formato PDF → F-CD3 segue "sem PDF" salvo decisão do dono | **dado** → perfil por contato (F-C6b-2 a) |
+| **13** | Imobilizado (C8): (a) taxas praticadas × Anexo III/laudo · (b) contas por grupo + acumulada + despesa + ganho/perda · (c) `COD_PB_RFB` da diferença de depreciação · (d) ICMS no custo × CIAP · (e) turnos | (a) tabela grupo→taxa ou "Anexo III"; (b) códigos; (c) código da PARTEB_PADRAO; (d) binário; (e) sim/não | n/a | (a) "Anexo III" → seed basta (BRIEF C8 A3), taxa própria → linha `CUSTOM` com `justification` = a resposta dele; (b) contas viram `FixedAssetClass.{cost,accumulatedDepreciation}AccountId` + `AccountingScopeSettings.{depreciationExpense,disposalGain,disposalLoss}AccountId` (BRIEF C8 A1/A5); (c) lista **fechada** da PARTEB_PADRAO (`ecf-l12-linhas.json`: 1071 · 2210 · 3130) → vira `depreciationParteBAccountId` (BRIEF C8 F24); código fora da lista = **fora do pedido**; sem ele, fechamento com diferença ≠ 0 é 400 nomeado; (d) "CIAP" → **achado fora de escopo** já nomeado no ADR (não reabre F-FA3); (e) "sim" → reabre F-FA2 para (b) — **decisão do dono**, não do agente | **dado** → BRIEF C8 (execução ainda não autorizada); (e) sim = **crítica** → fork |
 
 **O que NÃO estamos pedindo (adições de 2026-09-15):**
 - Manual/leiaute da ECD (Bloco 0/K) — baixamos direto do SPED (`scripts/baixar-fontes-oficiais.mjs`); insumo
