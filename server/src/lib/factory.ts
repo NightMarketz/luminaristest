@@ -34,6 +34,8 @@ import { InventoryRepository } from '../features/accounting/repositories/Invento
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
+import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
+import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
@@ -106,6 +108,7 @@ import { ReconcilePendingService } from '../features/accounting/services/Reconci
 import { BankSettlementService } from '../features/accounting/services/BankSettlementService';
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
+import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -186,6 +189,8 @@ import type { IInventoryRepository } from '../features/accounting/repositories/I
 import type { IReconcilePendingRepository } from '../features/accounting/repositories/IReconcilePendingRepository';
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
+import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
+import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
@@ -335,6 +340,8 @@ export class ApplicationFactory {
     reconcilePending: IReconcilePendingRepository;
     bankSettlement: IBankSettlementRepository;
     fiscalProfile: IFiscalProfileRepository;
+    serviceFiscalProfile: IServiceFiscalProfileRepository;
+    fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
@@ -408,6 +415,7 @@ export class ApplicationFactory {
     bankSettlement: BankSettlementService;
     accountingScopeSettings: AccountingScopeSettingsService;
     fiscalProfile: FiscalProfileService;
+    serviceFiscalProfile: ServiceFiscalProfileService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
@@ -459,6 +467,8 @@ export class ApplicationFactory {
       reconcilePending: new ReconcilePendingRepository(),
       bankSettlement: new BankSettlementRepository(),
       fiscalProfile: new FiscalProfileRepository(),
+      serviceFiscalProfile: new ServiceFiscalProfileRepository(),
+      fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
@@ -725,6 +735,8 @@ export class ApplicationFactory {
       // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal por escopo — o NfeImportService/NfePreviewService o LÊ
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
+      // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a)
+      serviceFiscalProfile: new ServiceFiscalProfileService(this.repositories.serviceFiscalProfile, this.policies.accounting, auditService),
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -799,6 +811,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         this.repositories.journalEntry,
+        this.repositories.fiscalDocument, // F-DFE-19 b: gate do alvo por targetType
       ),
       dataExchangeExport: new DataExchangeExportService(
         accountingReportService,
@@ -1107,6 +1120,8 @@ export class ApplicationFactory {
   public getBankSettlementService = (): BankSettlementService => this.services.bankSettlement;
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
+  public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;

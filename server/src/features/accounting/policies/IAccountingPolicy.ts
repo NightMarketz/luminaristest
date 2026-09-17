@@ -101,6 +101,15 @@ export interface IAccountingPolicy {
   canManageFiscalProfile(scope: AccountingScope): boolean;
 
   /**
+   * BE-INCR-DFE (nó X10b, BRIEF item 5): perfil fiscal do serviço = régua do perfil fiscal; emissão/cancelamento
+   * de documento fiscal = quem gerencia dados contábeis (efeito legal externo); leitura = canRead.
+   */
+  canManageServiceFiscalProfile(scope: AccountingScope): boolean;
+  canReadFiscalDocument(scope: AccountingScope): boolean;
+  canEmitFiscalDocument(scope: AccountingScope): boolean;
+  canCancelFiscalDocument(scope: AccountingScope): boolean;
+
+  /**
    * BE-INCR-REVIEW-LAYER (nó C11, F-C11-1 → a): o profissional é qualquer User do escopo que já
    * gerencia dado (`canManage`); identidade do atestado (nome + CRC) é DADO do sign-off, não de sessão.
    */

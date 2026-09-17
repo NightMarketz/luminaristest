@@ -6,6 +6,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDocumentAttachmentRepository } from '../repositories/IDocumentAttachmentRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
+import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { AuditService } from './AuditService';
 import type { DocumentAttachmentTargetType } from '../models/DocumentAttachment.model';
 
@@ -57,7 +58,33 @@ export class DocumentAttachmentService {
     private readonly policy: IAccountingPolicy,
     private readonly audit: AuditService,
     private readonly journalEntryRepo: IJournalEntryRepository,
+    private readonly fiscalDocumentRepo: IFiscalDocumentRepository,
   ) {}
+
+  /**
+   * F-DFE-19 → (b) (BE-INCR-DFE, 2026-09-17): a FK a journal_entries saiu do schema — a existência do
+   * alvo NO ESCOPO é gate deste serviço, por targetType. Alvo ausente/cross-tenant => NotFound (anti-enumeração).
+   */
+  private async assertTargetInScope(scope: AccountingScope, targetType: DocumentAttachmentTargetType, targetId: string): Promise<void> {
+    switch (targetType) {
+      case 'JOURNAL_ENTRY': {
+        if (!(await this.journalEntryRepo.findById(scope, targetId))) throw new NotFoundError('Lançamento não encontrado para anexar evidência.');
+        return;
+      }
+      case 'FISCAL_DOCUMENT': {
+        if (!(await this.fiscalDocumentRepo.findById(scope, targetId))) throw new NotFoundError('Documento fiscal não encontrado para anexar evidência.');
+        return;
+      }
+      case 'FISCAL_DOCUMENT_ATTEMPT': {
+        if (!(await this.fiscalDocumentRepo.findAttemptById(scope, targetId))) throw new NotFoundError('Tentativa de documento fiscal não encontrada para anexar evidência.');
+        return;
+      }
+      default: {
+        const never: never = targetType;
+        throw new NotFoundError(`targetType desconhecido: ${String(never)}`);
+      }
+    }
+  }
 
   private toResponse(att: DocumentAttachment): DocumentAttachmentResponse {
     return {
@@ -87,12 +114,8 @@ export class DocumentAttachmentService {
       throw new ForbiddenError('Não autorizado a anexar evidências contábeis.');
     }
 
-    // Authoritative target-in-scope gate: the DB FK only proves the entry EXISTS, not
-    // that it belongs to this tenant. Reject cross-tenant targets as NotFound.
-    const entry = await this.journalEntryRepo.findById(scope, input.targetId);
-    if (!entry) {
-      throw new NotFoundError('Lançamento não encontrado para anexar evidência.');
-    }
+    // Authoritative target-in-scope gate (sem FK desde F-DFE-19 b): existência + posse, por targetType.
+    await this.assertTargetInScope(scope, input.targetType, input.targetId);
 
     const sha256 = createHash('sha256').update(input.buffer).digest('hex');
 
@@ -130,7 +153,9 @@ export class DocumentAttachmentService {
           targetType: 'document_attachment',
           targetId: row.id,
           payload: {
-            journalEntryId: input.targetId,
+            journalEntryId: input.targetType === 'JOURNAL_ENTRY' ? input.targetId : '',
+            targetType: input.targetType,
+            targetId: input.targetId,
             mimeType: input.mimeType,
             sizeBytes: String(input.buffer.length),
             sha256,
@@ -187,7 +212,9 @@ export class DocumentAttachmentService {
           targetType: 'document_attachment',
           targetId: att.id,
           payload: {
-            journalEntryId: att.targetId,
+            journalEntryId: att.targetType === 'JOURNAL_ENTRY' ? att.targetId : '',
+            targetType: att.targetType,
+            targetId: att.targetId,
             mimeType: att.mimeType,
             sizeBytes: String(att.fileSize),
             sha256: att.sha256,
@@ -221,7 +248,9 @@ export class DocumentAttachmentService {
         targetType: 'document_attachment',
         targetId: att.id,
         payload: {
-          journalEntryId: att.targetId,
+          journalEntryId: att.targetType === 'JOURNAL_ENTRY' ? att.targetId : '',
+          targetType: att.targetType,
+          targetId: att.targetId,
           mimeType: att.mimeType,
           sizeBytes: String(att.fileSize),
           sha256: att.sha256,

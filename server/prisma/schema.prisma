@@ -535,7 +535,8 @@ model JournalEntry {
   reversedBy    JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
   reverses      JournalEntry?            @relation("Reversal")
   postings      Posting[]
-  attachments   DocumentAttachment[]     @relation("JournalEntryAttachments")
+  // `attachments` deixou de ser relação (BE-INCR-DFE F-DFE-19 b, 2026-09-17): DocumentAttachment é
+  // polimórfico por (targetType, targetId) sem FK — o drill-down consulta por targetType.
   sources       JournalEntrySource[]     @relation("JournalEntrySources")
   lalurLinks    LalurEntryJournalEntry[] // M312/M362 — ajuste do e-Lalur que cita este lançamento (ECF Fase 3C)
   createdById   String? // actor who created this entry (authorship trail / maker)
@@ -575,19 +576,21 @@ model JournalEntrySequence {
 
 // Documentary evidence attached to an accounting entry (BE-INCR-5). First-class
 // Prisma (NOT CrmAttachment): two-level tenancy (userId + unitId via AccountingScope),
-// a REAL FK to journal_entries, a sha256 integrity checksum, and audit-in-tx via
+// a scoped (targetType, targetId) target, a sha256 integrity checksum, and audit-in-tx via
 // AuditService. `userId`/`unitId`/`uploadedById`/`deletedById` are plain scope/actor
 // strings (no User FK — mirrors AuditEvent/JournalEntry.createdById). The binary lives
 // on disk (lib/attachmentStorage); only the relative storageKey is stored here.
-// `targetType` is polymorphic-in-intent but the FK ties it to JournalEntry this
-// increment; broadening to other targets (INCR-6+) relaxes the FK.
+// BE-INCR-DFE F-DFE-19 → (b) (dono, 2026-09-17, contra a recomendação): a FK a journal_entries
+// SAIU — `targetType` ∈ JOURNAL_ENTRY | FISCAL_DOCUMENT | FISCAL_DOCUMENT_ATTEMPT e `targetId` é
+// string escopada; a existência do alvo no escopo é gate do DocumentAttachmentService por
+// targetType (a FK só provava existência, não posse — o serviço já fazia o gate de posse).
+// Migração = rebuild da tabela (SQLite não altera FK) — prólogo idempotente, smoke sobre dev.db real.
 model DocumentAttachment {
-  id           String       @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String // scope owner (AccountingScope.ownerUserId); plain scope key
   unitId       String // business unit (scoped string, not a FK)
-  targetType   String       @default("JOURNAL_ENTRY")
-  targetId     String // journal_entries.id
-  journalEntry JournalEntry @relation("JournalEntryAttachments", fields: [targetId], references: [id], onDelete: Cascade)
+  targetType   String    @default("JOURNAL_ENTRY") // JOURNAL_ENTRY | FISCAL_DOCUMENT | FISCAL_DOCUMENT_ATTEMPT
+  targetId     String // journal_entries.id | fiscal_documents.id | fiscal_document_attempts.id — plain string, sem FK (F-DFE-19 b)
   fileName     String // sanitized display name (what is on disk), never raw client input
   mimeType     String
   fileSize     Int
@@ -595,8 +598,8 @@ model DocumentAttachment {
   storageKey   String // relative path within ATTACHMENTS_DIR (attachmentStorage.saveFile)
   uploadedById String? // actor who uploaded (AccountingScope.actorUserId); plain string
   deletedById  String? // actor who soft-deleted; plain string
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
 
   @@index([userId, unitId, targetType, targetId])
@@ -1295,6 +1298,27 @@ model FiscalProfile {
   pisCofinsRecuperavelAccountId      String? // F-X6-8 a: conta 1.1.x "PIS/COFINS a recuperar"
   pisCofinsRecuperavelAccount        Account?  @relation("FiscalProfilePisCofinsRecuperavel", fields: [pisCofinsRecuperavelAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                  String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
+  // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
+  // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
+  // segue válida para importar NF-e; só a EMISSÃO exige o conjunto completo (item 7, `emissao.faltantes`).
+  codMun                             String? // IBGE 7 dígitos — cLocEmi [112] e cLocPrestacao default [192]
+  inscricaoMunicipal                 String? // prest/IM [123]
+  cnae                               String? // informativo
+  dpsSerie                           Int       @default(1) // serie [106], faixa 00001–49999 "aplicativo próprio" (RN E0010)
+  regEspTrib                         Int       @default(0) // regTrib/regEspTrib [142]: 0 = nenhum
+  regApTribSN                        Int? // [141] só SIMPLES; 1 = apuração do ISSQN pelo SN [inferido RN 508] — pendente contador (5e)
+  issAliquotaBp                      Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)
+  issRetidoTomadorPj                 Boolean   @default(false) // 5b — tpRetISSQN=2 para tomador CNPJ (exige endereço, E0237) — pendente contador
+  pacoteFatoGerador                  String    @default("CONSUMO") // 5c — CONSUMO | VENDA (F-DFE-9 a = CONSUMO) — pendente contador
+  ibsCbsInformar                     Boolean   @default(true) // 5d — grupo IBSCBS [336]; SIMPLES => false (leiaute: só 2027)
+  ibsCbsCst                          String? // gIBSCBS/CST [405] 3 dígitos — tabela fora do corpus (BRIEF §6) — pendente contador (1b)
+  ibsCbsClassTrib                    String? // gIBSCBS/cClassTrib [406] 6 dígitos, prefixo = CST (E0959)
+  pTotTribFedCent                    Int? // totTrib/pTotTribFed [330] em centésimos de % (Lei 12.741/IBPT) — obrigatório p/ não-optante (E0713) — pendente contador
+  pTotTribEstCent                    Int?
+  pTotTribMunCent                    Int?
+  pTotTribSNCent                     Int? // [335] só SIMPLES
+  emissaoForaDoMes                   String    @default("AVISAR") // 5f — AVISAR | BLOQUEAR — pendente contador
+  d1fConfirmado                      Boolean   @default(false) // item 7 — PUT explícito do operador retira os campos D1f de pendingExternalValidation
   createdById                        String?
   updatedById                        String?
   createdAt                          DateTime  @default(now())
@@ -1303,6 +1327,120 @@ model FiscalProfile {
 
   @@unique([userId, unitId])
   @@map("fiscal_profiles")
+}
+
+// BE-INCR-DFE (nó X10b, BRIEF item 2; ADR-DFE F-DFE-6 → a) — dado fiscal DO SERVIÇO (item da lista
+// nacional LC 116, NBS, INDOP). Prisma first-class (§2.1: invariante legal nunca vira campo de preset).
+// `serviceRef` = id da linha `services` do DynamicTable — plain string escopada, NÃO FK (precedente
+// Payable.supplierRef / Counterparty.ref). Soft-delete com rename-on-delete do `serviceRef`
+// (`deleted:<id>:<ref>`) para liberar o @@unique (memória unique-de-idempotencia-x-soft-delete).
+model ServiceFiscalProfile {
+  id            String    @id @default(cuid())
+  userId        String
+  unitId        String
+  serviceRef    String
+  cTribNac      String // 6 dígitos — LC116_LISTA_NACIONAL (models/lc116ListaNacional.ts), ex. 060101
+  cTribMun      String? // 3 dígitos [196]
+  cNBS          String? // 9 dígitos, Anexo B NBS 2.0 [198] — obrigatório se ibsCbsInformar (E0322)
+  cIndOp        String    @default("030101") // Anexo C (models/indOp.ts) [339]
+  cLocPrestacao String? // IBGE 7 [192]; null => FiscalProfile.codMun (EP — grupo 6 da lista, MUN.INCID l.73-78)
+  xDescServ     String? // [197]; null => services.name
+  createdById   String?
+  updatedById   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@unique([userId, unitId, serviceRef])
+  @@map("service_fiscal_profiles")
+}
+
+// BE-INCR-DFE (nó X10b, BRIEF item 3; ADR-DFE D3 + §9.2) — documento fiscal de SAÍDA (NFS-e nacional /
+// NF-e 55) montado pelo Luminaris e emitido por parceiro via DfeEmissorPort. Prisma first-class
+// (Contrato AC-2.1-B2: o exemplar nomeado). Subrazão fiscal apontando para a venda por `saleId`
+// (linha DynamicTable, plain string). `userId`/`unitId` plain (sem FK User — trilha legal, memória
+// audit-log-no-fk-cascade). Um documento VIVO por (venda, kind, cTribNac) — F-DFE-16 (b): uma DPS por
+// código de serviço da venda; rename-on-cancel de `saleKey` libera o @@unique após CANCELLED.
+// `cTribNac` = "" (não null) para NFE — SQLite trata NULL como distinto no unique.
+// Status só transiciona pelo serviço (SENT|PROCESSING → AUTHORIZED|REJECTED|PROCESSING; AUTHORIZED → CANCELLED).
+model FiscalDocument {
+  id               String                  @id @default(cuid())
+  userId           String
+  unitId           String
+  kind             String // NFSE | NFE
+  status           String // SENT | PROCESSING | AUTHORIZED | REJECTED | CANCELLED
+  saleId           String
+  saleKey          String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
+  cTribNac         String                  @default("") // F-DFE-16 (b); "" para NFE
+  anchorEntryId    String // JournalEntry âncora: sale.finalized | sale.package.sold (pacote VENDA, 5c)
+  ambiente         String // producao | homologacao (ADR §9.2 item 5 — só producao vira SourceDocument)
+  partner          String // null | file | <parceiro> (DFE_PARTNER)
+  partnerRef       String?
+  serie            Int
+  numero           BigInt? // nDPS (nosso) | nNF (NF-e)
+  nNFSe            String? // número da NFS-e gerado pelo ADN (retorno)
+  chaveOuCodigo    String? // chave ADN da NFS-e | chave 44 da NF-e
+  dCompet          String // AAAA-MM-DD = sale.date (leiaute [108]: data da prestação)
+  vServCents       BigInt // NFSE: parcela do crédito 3.1 | NFE: crédito 3.3 — tie-out exato (F-DFE-11 a / F-DFE-15 a)
+  vDescIncondCents BigInt                  @default(0) // reservado (F-DFE-15 a => 0)
+  baseIssCents     BigInt?
+  aliqIssBp        Int? // retorno (pAliqAplic) ou issAliquotaBp
+  vIssCents        BigInt? // retorno
+  tpRetISSQN       Int                     @default(1) // 1 não retido | 2 retido pelo tomador [311]
+  vIbsCents        BigInt? // retorno — a DPS não carrega valores de IBS/CBS (BRIEF §1)
+  vCbsCents        BigInt? // retorno
+  currentAttemptNo Int                     @default(1)
+  authorizedAt     DateTime?
+  cancelledAt      DateTime?
+  cancelMotivo     Int? // Anexo II e101101 cMotivo: 1 erro na emissão | 2 serviço não prestado | 9 outros
+  cancelReason     String? // xMotivo 15-255
+  errorsJson       String? // último resultado REJECTED / inconsistência PNCT (vigilância)
+  xmlAttachmentId  String? // DocumentAttachment (targetType FISCAL_DOCUMENT)
+  pdfAttachmentId  String?
+  sourceDocumentId String? // após AUTHORIZED em producao (ADR D7)
+  createdById      String?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  deletedAt        DateTime?
+  attempts         FiscalDocumentAttempt[]
+
+  @@unique([userId, unitId, saleKey, kind, cTribNac])
+  @@index([userId, unitId, status])
+  @@index([userId, unitId, saleId])
+  @@map("fiscal_documents")
+}
+
+// BE-INCR-DFE (ADR-DFE F-DFE-10 → a, §9.1) — o que foi ENVIADO, imutável POR TENTATIVA; `ref` único por
+// tentativa é a chave de idempotência no parceiro. `payloadJson` nunca muda depois de criado (o
+// repositório não expõe update dele). XML/PDF de rejeição pousam em DocumentAttachment com
+// targetType FISCAL_DOCUMENT_ATTEMPT (F-DFE-19 b).
+model FiscalDocumentAttempt {
+  id           String         @id @default(cuid())
+  documentId   String
+  document     FiscalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  attemptNo    Int
+  ref          String         @unique // "<documentId>:<attemptNo>"
+  payloadJson  String
+  sentAt       DateTime       @default(now())
+  resultStatus String? // PROCESSING | AUTHORIZED | REJECTED
+  resultJson   String? // retorno bruto SEM PII
+
+  @@unique([documentId, attemptNo])
+  @@map("fiscal_document_attempts")
+}
+
+// BE-INCR-DFE (BRIEF item 4; ADR §9.2 item 9) — numeração da DPS/NF-e por (unidade, kind, série), consumida
+// DENTRO da tx do SENT (ACC-015 por analogia). Espelho de JournalEntrySequence; NUNCA a sequência do razão.
+model FiscalDocumentSequence {
+  userId    String
+  unitId    String
+  kind      String
+  serie     Int
+  last      BigInt   @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, unitId, kind, serie])
+  @@map("fiscal_document_sequences")
 }
 
 // F7 / BE-INCR-BANK-SETTLEMENT — item de baixa PROPOSTO pelo retorno bancário, efetivado só por

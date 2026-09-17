@@ -105,6 +105,12 @@ import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
 import { getFiscalProfile, upsertFiscalProfile } from '../controllers/fiscalProfileController';
+import {
+  deleteServiceFiscalProfile,
+  getServiceFiscalProfile,
+  listServiceFiscalProfiles,
+  upsertServiceFiscalProfile,
+} from '../controllers/serviceFiscalProfileController';
 
 const router = Router();
 
@@ -254,6 +260,11 @@ router.put('/settings', updateAccountingSettings);
 // BE-INCR-NFE-COST-REGIME (nó X6, item 4) — perfil fiscal por escopo; segmento estático, antes de /:unitId/periods.
 router.get('/fiscal-profile', getFiscalProfile);
 router.put('/fiscal-profile', upsertFiscalProfile);
+// BE-INCR-DFE (nó X10b, BRIEF item 8) — perfil fiscal do serviço (F-DFE-6 a)
+router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
+router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
+router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
+router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.
