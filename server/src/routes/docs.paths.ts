@@ -2173,7 +2173,7 @@
  *   /api/accounting/data-exchange/exports:
  *     post:
  *       summary: Export a report or blank import template to CSV/XLSX
- *       description: Renders read-only report data (trial balance, ledger, BP, DRE) or a blank import template; persists the artifact and returns a job. Download via /jobs/{jobId}/download.
+ *       description: Renders read-only report data (trial balance, ledger, BP, DRE, bank reconciliation, entry sample) or a blank import template; persists the artifact and returns a job. Download via /jobs/{jobId}/download.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2184,14 +2184,16 @@
  *               type: object
  *               required: [kind, format, unitId]
  *               properties:
- *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE] }
+ *                 kind:         { type: string, enum: [EXPORT_TRIAL_BALANCE, EXPORT_GENERAL_LEDGER, EXPORT_BALANCE_SHEET, EXPORT_INCOME_STATEMENT, EXPORT_TEMPLATE, EXPORT_BANK_RECONCILIATION, EXPORT_ENTRY_SAMPLE] }
  *                 format:       { type: string, enum: [csv, xlsx] }
  *                 unitId:       { type: string }
  *                 asOf:         { type: string, description: 'YYYY-MM-DD — required for BP/DRE; optional for EXPORT_TRIAL_BALANCE (balances as-of that date instead of accumulated-to-date)' }
  *                 accountCode:  { type: string, description: 'EXPORT_GENERAL_LEDGER only. When present, exports one account (optionally windowed by periodStart/periodEnd). When absent, exports the general ledger — every account with a leg in [periodStart, periodEnd] (periodStart/periodEnd then required)' }
- *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise). Required when accountCode is absent; optional (single-account window) when accountCode is present' }
- *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER only (400 for any other kind). Must be given together with periodStart (never just one — 400 otherwise). >= periodStart' }
+ *                 periodStart:  { type: string, description: 'YYYY-MM-DD — EXPORT_GENERAL_LEDGER (optional; window), EXPORT_BANK_RECONCILIATION and EXPORT_ENTRY_SAMPLE (both REQUIRED) only (400 for any other kind). Must be given together with periodEnd (never just one — 400 otherwise)' }
+ *                 periodEnd:    { type: string, description: 'YYYY-MM-DD — same kinds/rules as periodStart. >= periodStart' }
  *                 templateKind: { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES], description: 'required for EXPORT_TEMPLATE' }
+ *                 perAccount:   { type: integer, minimum: 1, maximum: 50, description: 'EXPORT_ENTRY_SAMPLE only (400 for any other kind). Max legs sampled per account, default 5 when omitted.' }
+ *                 seed:         { type: string, minLength: 1, maxLength: 64, description: 'EXPORT_ENTRY_SAMPLE only (required for it; 400 for any other kind). Deterministic sampling seed — same seed + same data = same sample.' }
  *       responses:
  *         '201':
  *           description: Export job created

@@ -805,6 +805,14 @@ export class ApplicationFactory {
         this.policies.accounting,
         this.repositories.dataExchange,
         auditService,
+        // C6b PR-2 Passo 8/9: IReconciliationReader e IJournalEntryRepository — injeção direta
+        // dos repositórios existentes (mesma instância que ReconciliationService/DailyJournalReportService
+        // já usam), zero serviço novo.
+        this.repositories.reconciliation,
+        this.repositories.journalEntry,
+        // Review #338 F1: IAccountReader — resolve o código da conta bancária via o plano de
+        // contas ATIVO (findManyByUnit), nunca via trialBalance (só cobre conta com movimento).
+        this.repositories.account,
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,

@@ -11,14 +11,26 @@ const dateOnly = z
   .string()
   .refine(isValidDateOnly, 'Data deve ser uma data real no formato YYYY-MM-DD');
 
-/** Export kinds wired so far (Phase 3). EXPORT_IMPORT_ERRORS joins in Phase 5. */
+/** Export kinds wired so far (Phase 3 + C6b PR-2 Bloco C). EXPORT_IMPORT_ERRORS joins in Phase 5. */
 export const IMPLEMENTED_EXPORT_KINDS = [
   'EXPORT_TRIAL_BALANCE',
   'EXPORT_GENERAL_LEDGER',
   'EXPORT_BALANCE_SHEET',
   'EXPORT_INCOME_STATEMENT',
   'EXPORT_TEMPLATE',
+  // C6b PR-2 Passo 8/9 (F-C6b-5/8 a) — pacote ampliado ao contador (BRIEF item 9/10).
+  'EXPORT_BANK_RECONCILIATION',
+  'EXPORT_ENTRY_SAMPLE',
 ] as const;
+
+/** Kinds cujo `periodStart`/`periodEnd` são OPCIONAIS (razão: single-account window é opcional,
+ *  razão geral exige — a exigência mora em `DataExchangeExportService.buildTable`, não no DTO). */
+const PERIOD_OPTIONAL_KINDS = new Set<string>(['EXPORT_GENERAL_LEDGER']);
+
+/** Kinds cujo `periodStart`/`periodEnd` são OBRIGATÓRIOS já na fronteira do DTO (C6b PR-2 Passo
+ *  8/9): sem janela explícita, conciliação e amostra não têm o que exportar — nunca um scan
+ *  sem fim ou um kind "all-time" silencioso (mesma classe que F-C6b-6 a fechou p/ o balancete). */
+const PERIOD_REQUIRED_KINDS = new Set<string>(['EXPORT_BANK_RECONCILIATION', 'EXPORT_ENTRY_SAMPLE']);
 
 /**
  * POST /exports body — which report/template to render and in which format.
@@ -31,6 +43,15 @@ export const IMPLEMENTED_EXPORT_KINDS = [
  * exige periodStart/periodEnd para ser CONSTRUÍDA mora em `DataExchangeExportService.buildTable`
  * (consequência de `IJournalEntryRepository.findManyForExport` exigir `window` não-opcional —
  * não é regra de forma do DTO).
+ *
+ * `perAccount`/`seed` (C6b PR-2 Passo 9, F-C6b-8 a): extensão do MESMO schema (não um schema
+ * paralelo — `EntrySampleExportSchema` do BRIEF §4 vira `superRefine` por kind aqui, para o
+ * controller continuar com 1 parse só). Ambos só valem para `EXPORT_ENTRY_SAMPLE` — aceitos-e-
+ * ignorados em qualquer outro kind é a MESMA classe `param-aceito-e-ignorado` que o review #337
+ * já fechou para periodStart/periodEnd. `perAccount` não carrega `.default()` aqui de propósito:
+ * um default no schema mascararia "o campo não veio" atrás do valor 5 ANTES do superRefine rodar,
+ * e essa distinção é o que permite rejeitar `perAccount` explícito em outro kind mas tolerar sua
+ * ausência — o default 5 (BRIEF §4) é aplicado em `DataExchangeExportService.buildTable`.
  */
 export const ExportRequestSchema = z
   .object({
@@ -42,6 +63,8 @@ export const ExportRequestSchema = z
     periodStart: dateOnly.optional(),
     periodEnd: dateOnly.optional(),
     templateKind: z.enum(IMPORT_KINDS).optional(),
+    perAccount: z.number().int().min(1).max(50).optional(),
+    seed: z.string().min(1).max(64).optional(),
   })
   .superRefine((val, ctx) => {
     if ((val.kind === 'EXPORT_BALANCE_SHEET' || val.kind === 'EXPORT_INCOME_STATEMENT') && !val.asOf) {
@@ -51,13 +74,26 @@ export const ExportRequestSchema = z
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['templateKind'], message: 'templateKind é obrigatório para exportar template.' });
     }
     // Review #337 F1 (classe param-aceito-e-ignorado): periodStart/periodEnd só têm leitor em
-    // EXPORT_GENERAL_LEDGER (buildTable) — para qualquer outro kind eram aceitos pelo DTO e
-    // IGNORADOS em silêncio pelo service. Fecha na fronteira, não no service.
-    if (val.kind !== 'EXPORT_GENERAL_LEDGER' && (val.periodStart || val.periodEnd)) {
+    // EXPORT_GENERAL_LEDGER/EXPORT_BANK_RECONCILIATION/EXPORT_ENTRY_SAMPLE (buildTable) — para
+    // qualquer outro kind eram aceitos pelo DTO e IGNORADOS em silêncio pelo service. Fecha na
+    // fronteira, não no service. C6b PR-2 Passo 8/9 AMPLIA o conjunto de kinds que legitimamente
+    // usam o par (não muda a regra em si: continua 400 fora dele).
+    const periodAllowed = PERIOD_OPTIONAL_KINDS.has(val.kind) || PERIOD_REQUIRED_KINDS.has(val.kind);
+    if (!periodAllowed && (val.periodStart || val.periodEnd)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['periodStart'],
-        message: 'periodStart/periodEnd só valem para o razão (EXPORT_GENERAL_LEDGER).',
+        message: 'periodStart/periodEnd só valem para razão, conciliação bancária e amostra de lançamentos.',
+      });
+    }
+    // C6b PR-2 Passo 8/9: para conciliação e amostra a janela é OBRIGATÓRIA (nunca um kind
+    // "all-time" silencioso nem um scan sem fim) — diferente do razão, onde ausência = "razão
+    // geral inteira" é um caminho válido por si (regra decorre de F-C6b-3 a).
+    if (PERIOD_REQUIRED_KINDS.has(val.kind) && (!val.periodStart || !val.periodEnd)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['periodStart'],
+        message: 'periodStart e periodEnd são obrigatórios para este kind.',
       });
     }
     // Review #337 F1: um só dos dois caía em janela `undefined` silenciosamente dentro do
@@ -72,6 +108,32 @@ export const ExportRequestSchema = z
     }
     if (val.periodStart && val.periodEnd && val.periodEnd < val.periodStart) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['periodEnd'], message: 'periodEnd deve ser maior ou igual a periodStart.' });
+    }
+    // C6b PR-2 Passo 9 (classe param-aceito-e-ignorado, mesma disciplina do periodStart/periodEnd
+    // acima): perAccount/seed só têm leitor em EXPORT_ENTRY_SAMPLE.
+    if (val.kind !== 'EXPORT_ENTRY_SAMPLE') {
+      if (val.perAccount !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['perAccount'], message: 'perAccount só vale para EXPORT_ENTRY_SAMPLE.' });
+      }
+      if (val.seed !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['seed'], message: 'seed só vale para EXPORT_ENTRY_SAMPLE.' });
+      }
+    } else if (!val.seed) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['seed'], message: 'seed é obrigatório para EXPORT_ENTRY_SAMPLE.' });
+    }
+    // Review #338 F3 (MÉDIO, classe param-aceito-e-ignorado): conciliação e amostra não leem
+    // accountCode/asOf/templateKind — campo de OUTRO kind aceito em silêncio é o mesmo bug que
+    // já fechamos para periodStart/periodEnd e perAccount/seed. Mesmo padrão, mesma fronteira.
+    if (PERIOD_REQUIRED_KINDS.has(val.kind)) {
+      if (val.accountCode !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['accountCode'], message: 'accountCode só vale para o razão (EXPORT_GENERAL_LEDGER).' });
+      }
+      if (val.asOf !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['asOf'], message: 'asOf só vale para balancete/BP/DRE.' });
+      }
+      if (val.templateKind !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['templateKind'], message: 'templateKind só vale para EXPORT_TEMPLATE.' });
+      }
     }
   });
 

@@ -26,6 +26,12 @@ export const EXPORT_KINDS = [
   // SPED Fiscal (ECF · Lucro Real) file — serviço/rota dedicados (ADR-INCR-SPED-ECF-FASE3,
   // Fork 1→(b); BRIEF item 4). Mesma coluna String ⇒ zero migration.
   'EXPORT_SPED_ECF_REAL',
+  // Conciliação bancária do pacote ao contador (C6b PR-2, Passo 8, F-C6b-5 a — bloco C do
+  // BRIEF item 9). Mesma coluna String ⇒ zero migration.
+  'EXPORT_BANK_RECONCILIATION',
+  // Amostra determinística de lançamentos (C6b PR-2, Passo 9, F-C6b-8 a — BRIEF item 10).
+  // Mesma coluna String ⇒ zero migration.
+  'EXPORT_ENTRY_SAMPLE',
 ] as const;
 
 export type ImportKind = (typeof IMPORT_KINDS)[number];

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { AccountingDataExchangeJob } from 'generated/prisma';
+import type { AccountingDataExchangeJob, BankStatementLine } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -8,9 +8,14 @@ import { serializeTable, type OutTable } from '../../../lib/spreadsheet';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
+import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
+import type { CandidatePosting, MatchedLineForExport } from '../models/Reconciliation.model';
 import type { AuditService } from './AuditService';
 import type { ExportRequestDto } from '../dtos/DataExchangeDto';
 import type { ImportKind } from '../models/DataExchange.model';
+import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { centsFromDb } from '../models/money';
+import { sampleEntries, type SampleableLeg } from '../models/entrySample';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
@@ -35,6 +40,41 @@ export interface IReportReader {
   generalLedger(scope: AccountingScope, window: ExportWindow): Promise<GeneralLedgerRow[]>;
   balanceSheet(scope: AccountingScope, asOf: Date): Promise<BalanceSheetReport>;
   incomeStatement(scope: AccountingScope, asOf: Date): Promise<IncomeStatementReport>;
+}
+
+/** Minimal read surface `EXPORT_BANK_RECONCILIATION` needs (C6b PR-2 Passo 8) — same narrowing
+ *  pattern as `IReportReader`, satisfied structurally by `IReconciliationRepository` (injected
+ *  directly; a service-level `ReconciliationService` wrapper would also satisfy it, but none of
+ *  these 4 reads live on the service today — they are repo-level). */
+export interface IReconciliationReader {
+  findScopeBankAccountIds(scope: AccountingScope): Promise<string[]>;
+  findUnmatchedLinesByAccount(
+    scope: AccountingScope,
+    glAccountId: string,
+    options?: { from?: Date; to?: Date },
+  ): Promise<BankStatementLine[]>;
+  findUnmatchedBankPostings(
+    scope: AccountingScope,
+    glAccountId: string,
+    options?: { from?: Date; to?: Date },
+  ): Promise<CandidatePosting[]>;
+  findMatchedLinesByWindow(
+    scope: AccountingScope,
+    glAccountIds: string[],
+    window: ExportWindow,
+  ): Promise<MatchedLineForExport[]>;
+}
+
+/**
+ * Minimal read surface for resolving a bank account's CODE (C6b PR-2 Passo 8, review F1 —
+ * ALTO). `findScopeBankAccountIds` only returns ids; `IReportReader.trialBalance` only covers
+ * accounts WITH movement (a freshly-registered bank account with an imported statement and
+ * ZERO postings resolves to nothing there — the `'?'` sentinel this used to fall back to was
+ * reachable, not defensive). This reads the chart of accounts directly (every ACTIVE account
+ * in the unit, regardless of movement) — satisfied structurally by `IAccountRepository`.
+ */
+export interface IAccountReader {
+  findManyByUnit(scope: AccountingScope): Promise<Array<{ id: string; code: string }>>;
 }
 
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
@@ -90,6 +130,15 @@ export class DataExchangeExportService {
     private readonly policy: IAccountingPolicy,
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
+    // C6b PR-2 Passo 8/9: fonte de EXPORT_BANK_RECONCILIATION (leituras de conciliação) e
+    // EXPORT_ENTRY_SAMPLE (findManyForExport — o MESMO read que a ECD usa para o Diário, A6
+    // do plano). Injeção direta do repositório (plano Passo 9: "injetar IJournalEntryRepository
+    // ou expor via reader" — escolhido injetar, zero mudança em AccountingReportService).
+    private readonly reconciliation: IReconciliationReader,
+    private readonly journalEntryRepo: IJournalEntryRepository,
+    // Review #338 F1 (ALTO): código da conta bancária para EXPORT_BANK_RECONCILIATION — NUNCA
+    // via trialBalance (só cobre conta COM movimento; ver IAccountReader acima).
+    private readonly accountRepo: IAccountReader,
   ) {}
 
   /**
@@ -98,7 +147,9 @@ export class DataExchangeExportService {
    * package (C6b PR-3) can validate that an extra's period is contained in the delivery's.
    * "Regra de período por kind" (plano, Passo 6): BP/DRE/balancete = `[Jan-1 do ano(asOf), asOf]`;
    * razão = a janela do DTO; template = null. Entrada ausente (sem asOf / sem janela) ⇒ null/null
-   * — nunca inventa um período que ninguém pediu.
+   * — nunca inventa um período que ninguém pediu. C6b PR-2 Passo 8/9: conciliação e amostra também
+   * gravam a janela EXPLÍCITA do DTO (igual ao razão) — mas para elas a janela é OBRIGATÓRIA na
+   * fronteira do DTO (superRefine), então nunca chegam aqui com `periodStart`/`periodEnd` ausentes.
    */
   private async buildTable(scope: AccountingScope, dto: ExportRequestDto): Promise<{ table: OutTable; period: JobPeriod }> {
     switch (dto.kind) {
@@ -189,6 +240,128 @@ export class DataExchangeExportService {
       case 'EXPORT_TEMPLATE': {
         const table: OutTable = { headers: TEMPLATE_HEADERS[dto.templateKind as ImportKind], rows: [] };
         return { table, period: NO_PERIOD };
+      }
+      case 'EXPORT_BANK_RECONCILIATION': {
+        // DTO superRefine já garante periodStart/periodEnd presentes para este kind.
+        const periodStart = dto.periodStart as string;
+        const periodEnd = dto.periodEnd as string;
+        const window = queryWindow(periodStart, periodEnd);
+        const period = periodColumns(periodStart, periodEnd);
+
+        const bankAccountIds = await this.reconciliation.findScopeBankAccountIds(scope);
+        // Review #338 F1 (ALTO): código da conta bancária por id via IAccountReader — NUNCA
+        // trialBalance, que só cobre conta COM movimento; uma conta bancária recém-cadastrada
+        // com extrato importado e ZERO postings some de lá (o '?' que caía aqui era alcançável
+        // em produção, não defensivo). findManyByUnit cobre toda conta ATIVA do escopo.
+        const codeByAccountId = new Map(
+          (await this.accountRepo.findManyByUnit(scope)).map((a) => [a.id, a.code]),
+        );
+        const resolveBankAccountCode = (glAccountId: string): string => {
+          const code = codeByAccountId.get(glAccountId);
+          if (!code) {
+            // Conta sem código resolvido = erro de dado (a conta some do plano ativo enquanto
+            // o extrato ainda a referencia) — nunca uma sentinela silenciosa num CSV ao contador.
+            throw new ValidationError(
+              `Conta bancária '${glAccountId}' não foi encontrada no plano de contas ativo — não é possível montar a conciliação.`,
+            );
+          }
+          return code;
+        };
+
+        const rows: OutTable['rows'] = [];
+        const matched = await this.reconciliation.findMatchedLinesByWindow(scope, bankAccountIds, window);
+        for (const m of matched) {
+          rows.push([
+            'MATCHED', m.bankAccountCode, m.statementId, m.lineDate.toISOString().slice(0, 10),
+            m.amountCents, m.memo, m.entryId, m.entryNumber ?? '', m.matchType,
+          ]);
+        }
+
+        for (const glAccountId of bankAccountIds) {
+          const code = resolveBankAccountCode(glAccountId);
+          const [unmatchedLines, unmatchedPostings] = await Promise.all([
+            this.reconciliation.findUnmatchedLinesByAccount(scope, glAccountId, { from: window.from, to: window.to }),
+            this.reconciliation.findUnmatchedBankPostings(scope, glAccountId, { from: window.from, to: window.to }),
+          ]);
+          for (const line of unmatchedLines) {
+            rows.push([
+              'UNMATCHED_LINE', code, line.statementId, line.date.toISOString().slice(0, 10),
+              centsFromDb(line.amountCents), line.description, '', '', '',
+            ]);
+          }
+          for (const posting of unmatchedPostings) {
+            const signed = centsFromDb(posting.debitCents) - centsFromDb(posting.creditCents);
+            rows.push([
+              'UNMATCHED_POSTING', code, '', posting.entry.date.toISOString().slice(0, 10),
+              signed, posting.entry.description, posting.entry.id, posting.entry.entryNumber ?? '', '',
+            ]);
+          }
+        }
+
+        const table: OutTable = {
+          headers: ['section', 'bankAccountCode', 'statementId', 'lineDate', 'amountCents', 'memo', 'entryId', 'entryNumber', 'matchType'],
+          rows,
+        };
+        return { table, period };
+      }
+      case 'EXPORT_ENTRY_SAMPLE': {
+        // DTO superRefine já garante periodStart/periodEnd/seed presentes para este kind.
+        const periodStart = dto.periodStart as string;
+        const periodEnd = dto.periodEnd as string;
+        const seed = dto.seed as string;
+        const perAccount = dto.perAccount ?? 5; // default do BRIEF §4 — aplicado aqui, não no DTO (ver comentário no schema).
+        const window = queryWindow(periodStart, periodEnd);
+        const period = periodColumns(periodStart, periodEnd);
+
+        const [entries, trialBalance] = await Promise.all([
+          this.journalEntryRepo.findManyForExport(scope, LEDGER_STATUSES, window),
+          this.reports.trialBalance(scope),
+        ]);
+        const natureByCode = new Map(trialBalance.rows.map((r) => [r.code, r.nature]));
+
+        const legs: SampleableLeg[] = [];
+        for (const entry of entries) {
+          for (const leg of entry.postings) {
+            legs.push({
+              accountCode: leg.account.code,
+              entryId: entry.id,
+              entryNumber: entry.entryNumber,
+              date: entry.date,
+              description: entry.description,
+              sourceType: entry.sourceType,
+              sourceId: entry.sourceId,
+              debitCents: centsFromDb(leg.debitCents),
+              creditCents: centsFromDb(leg.creditCents),
+            });
+          }
+        }
+
+        const sampled = sampleEntries(legs, { perAccount, seed })
+          // Ordem de EXIBIÇÃO apenas (não afeta QUAIS linhas foram escolhidas, só a ordem no
+          // arquivo) — determinística por si (accountCode, date, entryId), sem depender do hash.
+          .sort((a, b) =>
+            a.accountCode.localeCompare(b.accountCode) ||
+            a.date.getTime() - b.date.getTime() ||
+            a.entryId.localeCompare(b.entryId),
+          );
+
+        // F-C6b-8 a: semente + algoritmo na 1ª linha do arquivo (rastreável pelo contador sem
+        // depender do metadado do job). Como `OutTable.headers` é literalmente a 1ª linha
+        // renderizada (serializeTable não trata headers/rows de forma especial), os nomes de
+        // coluna REAIS viram a 1ª linha de `rows` — a única forma de ter DUAS linhas de cabeçalho
+        // físicas com este formato de tabela.
+        const metaLine = `# seed=${seed}; algorithm=sha256-rank-v1; perAccount=${perAccount}`;
+        const columnHeaders = [
+          'accountCode', 'accountNature', 'entryId', 'entryNumber', 'date',
+          'description', 'sourceType', 'sourceId', 'debitCents', 'creditCents',
+        ];
+        const dataRows: OutTable['rows'] = sampled.map((leg) => [
+          leg.accountCode, natureByCode.get(leg.accountCode) ?? '?', leg.entryId, leg.entryNumber ?? '',
+          leg.date.toISOString().slice(0, 10), leg.description, leg.sourceType, leg.sourceId ?? '',
+          leg.debitCents, leg.creditCents,
+        ]);
+        const table: OutTable = { headers: [metaLine], rows: [columnHeaders, ...dataRows] };
+        return { table, period };
       }
       default:
         // Exhaustiveness guard — the DTO enum should prevent reaching here.
