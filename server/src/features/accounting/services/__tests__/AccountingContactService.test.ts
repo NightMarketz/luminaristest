@@ -41,12 +41,17 @@ function build(opts: { canManage?: boolean; canRead?: boolean; found?: typeof co
   const findById = jest.fn(async () => (opts.found === undefined ? contactRow : opts.found));
   const findManyByUnit = jest.fn(async () => [contactRow]);
   const runTransaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true }));
+  const updatePackageProfile = jest.fn(async (_s: unknown, _id: string, kinds: string[]) => ({
+    ...contactRow,
+    packageProfile: kinds,
+  }));
 
   const repo = {
     create,
     findById,
     findManyByUnit,
     update,
+    updatePackageProfile,
     runTransaction,
   } as unknown as IAccountingContactRepository;
   const policy = {
@@ -61,6 +66,7 @@ function build(opts: { canManage?: boolean; canRead?: boolean; found?: typeof co
     findById,
     findManyByUnit,
     update,
+    updatePackageProfile,
     auditAppend,
   };
 }
@@ -252,5 +258,49 @@ describe('AccountingContactService', () => {
     // para eventType desconhecido. Este teste CONGELA a decisão: quando o dono ratificar o evento,
     // ele falha e obriga a atualizar allowlist + serviço juntos.
     expect(auditAppend).not.toHaveBeenCalled();
+  });
+
+  // ------------------------------------------------------------------ C6b PR-3, Passo 13 — perfil de pacote
+  describe('getPackageProfile / setPackageProfile (F-C6b-2 a)', () => {
+    it('getPackageProfile devolve kinds: [] quando packageProfile é null (nunca lança)', async () => {
+      const { service } = build({ found: { ...contactRow, packageProfile: null } as never });
+      await expect(service.getPackageProfile(scope, 'contact-1')).resolves.toEqual({ kinds: [] });
+    });
+
+    it('getPackageProfile devolve os kinds salvos', async () => {
+      const { service } = build({
+        found: { ...contactRow, packageProfile: ['EXPORT_TRIAL_BALANCE'] } as never,
+      });
+      await expect(service.getPackageProfile(scope, 'contact-1')).resolves.toEqual({
+        kinds: ['EXPORT_TRIAL_BALANCE'],
+      });
+    });
+
+    it('canRead=false lança ForbiddenError ANTES de ler o perfil', async () => {
+      const { service, findById } = build({ canRead: false });
+      await expect(service.getPackageProfile(scope, 'contact-1')).rejects.toThrow(ForbiddenError);
+      expect(findById).not.toHaveBeenCalled();
+    });
+
+    it('canManage=false lança ForbiddenError ANTES de gravar o perfil', async () => {
+      const { service, updatePackageProfile } = build({ canManage: false });
+      await expect(
+        service.setPackageProfile(scope, 'contact-1', ['EXPORT_TRIAL_BALANCE']),
+      ).rejects.toThrow(ForbiddenError);
+      expect(updatePackageProfile).not.toHaveBeenCalled();
+    });
+
+    it('setPackageProfile grava e devolve os mesmos kinds; contato arquivado/alheio é NotFoundError', async () => {
+      const { service, updatePackageProfile } = build();
+      const result = await service.setPackageProfile(scope, 'contact-1', ['EXPORT_GENERAL_LEDGER']);
+      expect(result).toEqual({ kinds: ['EXPORT_GENERAL_LEDGER'] });
+      expect(updatePackageProfile).toHaveBeenCalledWith(scope, 'contact-1', ['EXPORT_GENERAL_LEDGER']);
+
+      const { service: serviceSemContato, updatePackageProfile: naoChamado } = build({ found: null });
+      await expect(
+        serviceSemContato.setPackageProfile(scope, 'contact-1', []),
+      ).rejects.toThrow(NotFoundError);
+      expect(naoChamado).not.toHaveBeenCalled();
+    });
   });
 });

@@ -11,6 +11,8 @@ import {
 import {
   BuildDeliveryPackageSchema,
   ConfirmDeliverySchema,
+  PackageProfileQuerySchema,
+  PackageProfileSchema,
   RetryDeliverySchema,
 } from '../AccountingDeliveryDto';
 import { ACCOUNTING_CONTACT_NAME_MAX_LENGTH, UF_CODES } from '../../models/AccountingContact.model';
@@ -220,6 +222,64 @@ describe('BuildDeliveryPackageSchema', () => {
 
   it('rejects unknown keys (.strict)', () => {
     expect(BuildDeliveryPackageSchema.safeParse({ ...validBuild, ano: 2026 }).success).toBe(false);
+  });
+
+  // ---------------------------------------------------------------- C6b PR-3, Bloco B — extraJobIds
+  describe('extraJobIds (F-C6b-4 a)', () => {
+    it('é opcional — omitido vira array vazio (pacote sem extras)', () => {
+      const parsed = BuildDeliveryPackageSchema.safeParse(validBuild);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) expect(parsed.data.extraJobIds).toEqual([]);
+    });
+
+    it('aceita até 20 ids e recusa o 21º', () => {
+      const twenty = Array.from({ length: 20 }, (_, i) => `job-${i}`);
+      expect(
+        BuildDeliveryPackageSchema.safeParse({ ...validBuild, extraJobIds: twenty }).success,
+      ).toBe(true);
+      expect(
+        BuildDeliveryPackageSchema.safeParse({ ...validBuild, extraJobIds: [...twenty, 'job-21'] })
+          .success,
+      ).toBe(false);
+    });
+
+    it('recusa string vazia como id', () => {
+      expect(
+        BuildDeliveryPackageSchema.safeParse({ ...validBuild, extraJobIds: [''] }).success,
+      ).toBe(false);
+    });
+  });
+});
+
+describe('PackageProfileSchema / PackageProfileQuerySchema (C6b PR-3, F-C6b-2 a)', () => {
+  it('aceita kinds vazio e os 6 kinds entregáveis', () => {
+    expect(PackageProfileSchema.safeParse({ kinds: [] }).success).toBe(true);
+    expect(
+      PackageProfileSchema.safeParse({
+        kinds: [
+          'EXPORT_TRIAL_BALANCE',
+          'EXPORT_GENERAL_LEDGER',
+          'EXPORT_BALANCE_SHEET',
+          'EXPORT_INCOME_STATEMENT',
+          'EXPORT_BANK_RECONCILIATION',
+          'EXPORT_ENTRY_SAMPLE',
+        ],
+      }).success,
+    ).toBe(true);
+  });
+
+  it('recusa kind fora do enum entregável (SPED não é um perfil de extra)', () => {
+    expect(PackageProfileSchema.safeParse({ kinds: ['EXPORT_SPED_ECD'] }).success).toBe(false);
+  });
+
+  it('rejects unknown keys (.strict)', () => {
+    expect(PackageProfileSchema.safeParse({ kinds: [], unitId: 'unit-1' }).success).toBe(false);
+  });
+
+  it('PackageProfileQuerySchema exige unitId e contactId', () => {
+    expect(PackageProfileQuerySchema.safeParse({ unitId: 'u', contactId: 'c' }).success).toBe(true);
+    expect(PackageProfileQuerySchema.safeParse({ unitId: 'u' }).success).toBe(false);
+    expect(PackageProfileQuerySchema.safeParse({ contactId: 'c' }).success).toBe(false);
   });
 });
 

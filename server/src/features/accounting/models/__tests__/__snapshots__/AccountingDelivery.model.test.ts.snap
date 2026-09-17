@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`buildDeliveryManifest com núcleo + 4 extras (6 itens): files preserva a ORDEM (position 0..5) e core continua o núcleo 1`] = `
+{
+  "contactId": "contact-1",
+  "core": {
+    "ecd": {
+      "jobId": "job-ecd",
+      "kind": "EXPORT_SPED_ECD",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    },
+    "ecf": {
+      "jobId": "job-ecf",
+      "kind": "EXPORT_SPED_ECF",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    },
+  },
+  "files": [
+    {
+      "jobId": "job-ecd",
+      "kind": "EXPORT_SPED_ECD",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    },
+    {
+      "jobId": "job-ecf",
+      "kind": "EXPORT_SPED_ECF",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    },
+    {
+      "jobId": "extra-0",
+      "kind": "EXPORT_TRIAL_BALANCE",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    },
+    {
+      "jobId": "extra-1",
+      "kind": "EXPORT_GENERAL_LEDGER",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    },
+    {
+      "jobId": "extra-2",
+      "kind": "EXPORT_BALANCE_SHEET",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    },
+    {
+      "jobId": "extra-3",
+      "kind": "EXPORT_INCOME_STATEMENT",
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    },
+  ],
+  "generatedAt": "2026-12-31T12:00:00.000Z",
+  "period": {
+    "end": "2026-12-31",
+    "start": "2026-01-01",
+  },
+  "scope": {
+    "ledgerCode": "DEFAULT",
+    "unitId": "unit-1",
+  },
+}
+`;

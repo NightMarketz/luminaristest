@@ -61,5 +61,17 @@ export interface IAccountingContactRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingContact>;
 
+  /**
+   * Grava o perfil de pacote sugerido (C6b PR-3, F-C6b-2 a) — `kinds` é a lista de `ExportKind`
+   * (`DeliverableExportKind`) que a UI pré-marca no `build`. SUGESTÃO, não gate: o corpo do build
+   * pode divergir do perfil salvo e passa normalmente.
+   */
+  updatePackageProfile(
+    scope: AccountingScope,
+    id: string,
+    kinds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingContact>;
+
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

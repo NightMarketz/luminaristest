@@ -4404,6 +4404,45 @@
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '429': { description: 'Rate limit por escopo (ator + unidade) excedido - DELIVERY_CONFIRM_RATE_LIMIT por 15 min, padrao 60' }
  *
+ *   /api/accounting/delivery/profile:
+ *     get:
+ *       summary: Le o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
+ *       description: >-
+ *         kinds que a UI pre-marca no build - SUGESTAO, nao gate. null (nunca salvo) devolve
+ *         kinds vazio, nunca 404. Segmento estatico registrado ANTES de /delivery/{id}.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: contactId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: '{ kinds: ExportKind[] }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { description: 'Contato nao encontrado ou arquivado (cross-tenant tambem cai aqui)' }
+ *     put:
+ *       summary: Grava o perfil de pacote sugerido de um contato (C6b PR-3, F-C6b-2 a)
+ *       description: >-
+ *         Perfil e sugestao, nunca gate - o corpo do build/confirm pode divergir do perfil salvo e
+ *         passa normalmente. Quem valida extraJobIds e sempre resolveExtras do build/confirm.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: contactId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/PackageProfileInput' }
+ *       responses:
+ *         '200': { description: '{ kinds: ExportKind[] } gravado' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { description: 'Contato nao encontrado ou arquivado' }
+ *
  *   /api/accounting/delivery/{id}/retry:
  *     post:
  *       summary: Reprocessa uma entrega FAILED (FAILED para QUEUED na linha existente)

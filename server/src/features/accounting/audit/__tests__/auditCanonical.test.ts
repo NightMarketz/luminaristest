@@ -232,9 +232,12 @@ describe('contact.* / delivery.* — PII do contador nunca sobrevive à canonica
 
   it.each([
     ['contact.archived', { contactId: 'c-1' }],
+    // itemCount/kinds (C6b PR-3, Passo 12): pacote N-ário — número de itens + composição
+    // (kinds vira string via canonicalização, mesmo padrão de todo valor não-string aqui).
     ['delivery.package_built', {
       deliveryId: 'd-1', ecdJobId: 'j-ecd', ecfJobId: 'j-ecf', periodStart: '2026-01-01',
       periodEnd: '2026-12-31', sha256Ecd: 'a'.repeat(64), sha256Ecf: 'b'.repeat(64),
+      itemCount: '2', kinds: ['EXPORT_SPED_ECD', 'EXPORT_SPED_ECF'],
     }],
     ['delivery.sent', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 1 }],
     ['delivery.failed', { deliveryId: 'd-1', contactId: 'c-1', attemptCount: 2, reason: 'caixa cheia' }],

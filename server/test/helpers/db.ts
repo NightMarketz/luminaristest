@@ -68,6 +68,9 @@ export async function resetDb(): Promise<void> {
   await prisma.accountingScopeSettings.deleteMany();
   // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal tem FK RESTRICT para as duas contas 'a recuperar' — antes de accounts.
   await prisma.fiscalProfile.deleteMany();
+  // C6b PR-3: o item do pacote tem FK RESTRICT para o log de entrega E para o job de
+  // data-exchange — cai ANTES dos dois (e antes do accountingDeliveryLog.deleteMany() abaixo).
+  await prisma.accountingDeliveryItem.deleteMany();
   // BE-INCR-CONTADOR-DELIVERY: o log de entrega tem FK RESTRICT para o job de data-exchange E
   // para o contato — tem de cair ANTES dos dois, ou o deleteMany deles falha por violação.
   await prisma.accountingDeliveryLog.deleteMany();

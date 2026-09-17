@@ -113,7 +113,19 @@ interface Opts {
   createThrowsP2002?: boolean;
   /** BE-INCR-REVIEW-LAYER item 14: estado da revisão do par — default = assinada (gate passa). */
   reviewGate?: 'SIGNED_OFF' | 'REVIEW_REQUIRED' | 'REVIEW_REJECTED';
+  /** C6b PR-3 — jobs extras disponíveis por id (além do fixture padrão `extra-1`). */
+  extraJobs?: Record<string, ReturnType<typeof job> | null>;
+  /** C6b PR-3 — itens já gravados na entrega `existing`/vencedora do P2002 (position ≥ 2 = extras). */
+  existingItems?: Array<{ jobId: string; kind: string; sha256: string; position: number }>;
 }
+
+const extraJob = (
+  id: string,
+  kind: string,
+  sha256: string | null = 'c'.repeat(64),
+  status = 'EXPORTED',
+  period: { start: Date | null; end: Date | null } = PERIOD,
+) => job(id, kind, sha256, status, period);
 
 function build(opts: Opts = {}) {
   const auditAppend = jest.fn(async (..._args: unknown[]) => undefined);
@@ -135,6 +147,7 @@ function build(opts: Opts = {}) {
   const findJobById = jest.fn(async (_s: unknown, id: string, ..._rest: unknown[]) => {
     if (id === 'job-ecd') return opts.ecdJob === undefined ? job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD) : opts.ecdJob;
     if (id === 'job-ecf') return opts.ecfJob === undefined ? job('job-ecf', 'EXPORT_SPED_ECF', SHA_ECF) : opts.ecfJob;
+    if (opts.extraJobs && id in opts.extraJobs) return opts.extraJobs[id];
     return null;
   });
   const findByYearMonth = jest.fn(async (_s: unknown, year: number, month: number, ..._rest: unknown[]) => {
@@ -142,12 +155,16 @@ function build(opts: Opts = {}) {
     const status = opts.openMonths?.includes(month) ? 'OPEN' : 'HARD_CLOSED';
     return { id: `p-${year}-${month}`, year, month, status };
   });
+  const createItems = jest.fn(async () => []);
+  const listItems = jest.fn(async () => opts.existingItems ?? []);
 
   const deliveryRepo = {
     create,
     findById: findDeliveryById,
     findByJobsAndContact,
     update,
+    createItems,
+    listItems,
     runTransaction,
   } as unknown as IAccountingDeliveryRepository;
   const contactRepo = {
@@ -181,11 +198,13 @@ function build(opts: Opts = {}) {
     update,
     findByYearMonth,
     findByJobsAndContact,
+    createItems,
+    listItems,
     auditAppend,
   };
 }
 
-const buildDto = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf' };
+const buildDto = { unitId: 'unit-1', ecdJobId: 'job-ecd', ecfJobId: 'job-ecf', extraJobIds: [] as string[] };
 const confirmDto = { ...buildDto, contactId: 'contact-1', confirmed: true as const };
 
 describe('AccountingDeliveryService', () => {
@@ -308,13 +327,20 @@ describe('AccountingDeliveryService', () => {
 
   // ------------------------------------------------------------------ item 8 — manifesto
   describe('manifesto', () => {
+    // C6b PR-3 (Passo 4, F-C6b-1 a): `kind` deixa de ser 'ECD'/'ECF' e passa a ser o ExportKind
+    // real do job (EXPORT_SPED_ECD/EXPORT_SPED_ECF) — o núcleo continua sendo os 2 primeiros
+    // itens, mas sem a união fechada antiga.
     it('lê o sha256 do JOB e nunca recomputa do disco (F-CD6-a)', async () => {
       const { service } = build();
       const manifest = await service.buildDeliveryPackage(scope, buildDto);
       expect(manifest.files).toEqual([
-        { kind: 'ECD', jobId: 'job-ecd', sha256: SHA_ECD },
-        { kind: 'ECF', jobId: 'job-ecf', sha256: SHA_ECF },
+        { kind: 'EXPORT_SPED_ECD', jobId: 'job-ecd', sha256: SHA_ECD },
+        { kind: 'EXPORT_SPED_ECF', jobId: 'job-ecf', sha256: SHA_ECF },
       ]);
+      expect(manifest.core).toEqual({
+        ecd: { kind: 'EXPORT_SPED_ECD', jobId: 'job-ecd', sha256: SHA_ECD },
+        ecf: { kind: 'EXPORT_SPED_ECF', jobId: 'job-ecf', sha256: SHA_ECF },
+      });
     });
 
     it('o preflight NÃO expõe contactId (o destinatário só existe na confirmação)', async () => {
@@ -345,10 +371,178 @@ describe('AccountingDeliveryService', () => {
     });
   });
 
+  // ------------------------------------------------------------------ C6b PR-3, Bloco B — extras
+  describe('resolveExtras (F-C6b-4 a — BRIEF §4/item 5)', () => {
+    it('extra de outro escopo (findJobById devolve null) é 404', async () => {
+      const { service } = build({ extraJobs: { 'extra-1': null } });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it('extra SPED (núcleo, não demonstrativo) é 400 — SPED nunca é extra', async () => {
+      const { service } = build({
+        extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_SPED_ECD') },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toThrow(/não é um demonstrativo entregável/);
+    });
+
+    it('extra fora do EXPORTED é 400', async () => {
+      const { service } = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64), 'PROCESSING'),
+        },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toThrow(/EXPORTED/);
+    });
+
+    it('extra sem sha256 é 400', async () => {
+      const { service } = build({
+        extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', null) },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toThrow(/sha256/);
+    });
+
+    it('extra de 2025 num pacote de 2026 é 400 EXTRA_PERIOD_OUT_OF_RANGE', async () => {
+      const p2025 = { start: new Date('2025-01-01T00:00:00.000Z'), end: new Date('2025-12-31T00:00:00.000Z') };
+      const { service } = build({
+        extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64), 'EXPORTED', p2025) },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toMatchObject({ errorCode: 'EXTRA_PERIOD_OUT_OF_RANGE' });
+    });
+
+    it('extra sem período gravado é 400 (nunca item com período nulo — adversarial do plano)', async () => {
+      const { service } = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64), 'EXPORTED', {
+            start: null,
+            end: null,
+          }),
+        },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1'] }),
+      ).rejects.toThrow(/não tem período gravado/);
+    });
+
+    it('2 extras do MESMO kind é 400 DUPLICATE_KIND', async () => {
+      const { service } = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE'),
+          'extra-2': extraJob('extra-2', 'EXPORT_TRIAL_BALANCE'),
+        },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1', 'extra-2'] }),
+      ).rejects.toMatchObject({ errorCode: 'DUPLICATE_KIND' });
+    });
+
+    it('id repetido em extraJobIds é 400 antes de resolver qualquer job', async () => {
+      const { service, findByYearMonth } = build({
+        extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE') },
+      });
+      await expect(
+        service.buildDeliveryPackage(scope, { ...buildDto, extraJobIds: ['extra-1', 'extra-1'] }),
+      ).rejects.toThrow(/mais de uma vez/);
+      // O gate de período roda ANTES de resolveExtras (ordem do método) — este teste só prova
+      // que o id duplicado é pego dentro de resolveExtras, não a ordem entre gates.
+      expect(findByYearMonth).toHaveBeenCalled();
+    });
+
+    // BRIEF item 6 / Passo 13: "o perfil é SUGESTÃO, não gate — o corpo do build é a verdade".
+    // `AccountingContactService.getPackageProfile/setPackageProfile` são os ÚNICOS lugares que
+    // leem/escrevem `packageProfile`; nem `resolveExtras` nem `buildDeliveryPackage` recebem ou
+    // consultam o contato neste caminho (o `build` nem chama `contactRepo`). Um contato com
+    // qualquer perfil salvo passa por aqui exatamente igual — a prova é que `extraJobIds`
+    // diferente do que estaria "sugerido" (EXPORT_TRIAL_BALANCE) valida e monta normalmente.
+    it('build ignora qualquer perfil salvo do contato — o corpo do build é a única verdade', async () => {
+      const { service } = build({
+        extraJobs: { 'extra-1': extraJob('extra-1', 'EXPORT_GENERAL_LEDGER', 'd'.repeat(64)) },
+      });
+      // extraJobIds diverge de um perfil hipotético ["EXPORT_TRIAL_BALANCE"] — build nem consulta
+      // o contato (buildDeliveryPackage não chama contactRepo.findById em nenhum ponto do código).
+      const manifest = await service.buildDeliveryPackage(scope, {
+        ...buildDto,
+        extraJobIds: ['extra-1'],
+      });
+      expect(manifest.files.map((f) => f.kind)).toEqual([
+        'EXPORT_SPED_ECD',
+        'EXPORT_SPED_ECF',
+        'EXPORT_GENERAL_LEDGER',
+      ]);
+    });
+
+    it('extras válidos entram no manifesto em position 2..n, na ordem de extraJobIds', async () => {
+      const { service } = build({
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64)),
+          'extra-2': extraJob('extra-2', 'EXPORT_GENERAL_LEDGER', 'd'.repeat(64)),
+        },
+      });
+      const manifest = await service.buildDeliveryPackage(scope, {
+        ...buildDto,
+        extraJobIds: ['extra-1', 'extra-2'],
+      });
+      expect(manifest.files).toEqual([
+        { kind: 'EXPORT_SPED_ECD', jobId: 'job-ecd', sha256: SHA_ECD },
+        { kind: 'EXPORT_SPED_ECF', jobId: 'job-ecf', sha256: SHA_ECF },
+        { kind: 'EXPORT_TRIAL_BALANCE', jobId: 'extra-1', sha256: 'c'.repeat(64) },
+        { kind: 'EXPORT_GENERAL_LEDGER', jobId: 'extra-2', sha256: 'd'.repeat(64) },
+      ]);
+    });
+  });
+
+  // ------------------------------------------------------------------ F-C6b-4 a — idempotência com extras
+  describe('idempotência com extras (confirmDelivery)', () => {
+    function withExistingAndExtras() {
+      const existingRow = { ...deliveryRow, status: 'QUEUED', attemptCount: 0 };
+      return build({
+        existing: existingRow,
+        existingItems: [
+          { jobId: 'job-ecd', kind: 'EXPORT_SPED_ECD', sha256: SHA_ECD, position: 0 },
+          { jobId: 'job-ecf', kind: 'EXPORT_SPED_ECF', sha256: SHA_ECF, position: 1 },
+          { jobId: 'extra-1', kind: 'EXPORT_TRIAL_BALANCE', sha256: 'c'.repeat(64), position: 2 },
+        ],
+        extraJobs: {
+          'extra-1': extraJob('extra-1', 'EXPORT_TRIAL_BALANCE', 'c'.repeat(64)),
+          'extra-2': extraJob('extra-2', 'EXPORT_GENERAL_LEDGER', 'd'.repeat(64)),
+        },
+      });
+    }
+
+    it('entrega já existente + MESMO conjunto de extras segue o caminho normal (markSent, sem 409)', async () => {
+      const { service, update } = withExistingAndExtras();
+      const result = await service.confirmDelivery(scope, {
+        ...confirmDto,
+        extraJobIds: ['extra-1'],
+      });
+      expect(result.deliveryId).toBe('delivery-1');
+      expect(update).toHaveBeenCalledTimes(1); // QUEUED → SENT, mesmo caminho de sempre
+    });
+
+    it('entrega já existente + conjunto de extras DIFERENTE é 409 PACKAGE_ALREADY_DELIVERED com o deliveryId', async () => {
+      const { service } = withExistingAndExtras();
+      await expect(
+        service.confirmDelivery(scope, { ...confirmDto, extraJobIds: ['extra-2'] }),
+      ).rejects.toMatchObject({ errorCode: 'PACKAGE_ALREADY_DELIVERED' });
+      await expect(
+        service.confirmDelivery(scope, { ...confirmDto, extraJobIds: ['extra-2'] }),
+      ).rejects.toThrow(/delivery-1/);
+    });
+  });
+
   // ------------------------------------------------------------------ itens 9/13/14 — confirmação
   describe('confirmDelivery', () => {
     it('cria a entrega SENT e devolve contato + manifesto lado a lado (D7)', async () => {
-      const { service, create } = build();
+      const { service, create, createItems } = build();
       const result = await service.confirmDelivery(scope, confirmDto);
 
       expect(create).toHaveBeenCalledTimes(1);
@@ -357,6 +551,17 @@ describe('AccountingDeliveryService', () => {
       expect(data.manifestSha256Ecd).toBe(SHA_ECD);
       expect(data.periodStart).toEqual(PERIOD.start);
       expect(data.periodEnd).toEqual(PERIOD.end);
+      // C6b PR-3 (Passo 3): createItems roda na MESMA tx, com o núcleo em position 0/1.
+      expect(createItems).toHaveBeenCalledTimes(1);
+      const [deliveryId, items] = createItems.mock.calls[0] as unknown as [
+        string,
+        Array<{ jobId: string; kind: string; sha256: string; position: number }>,
+      ];
+      expect(deliveryId).toBe('delivery-1');
+      expect(items).toEqual([
+        { jobId: 'job-ecd', kind: 'EXPORT_SPED_ECD', sha256: SHA_ECD, position: 0 },
+        { jobId: 'job-ecf', kind: 'EXPORT_SPED_ECF', sha256: SHA_ECF, position: 1 },
+      ]);
       expect(result.contact).toEqual({
         name: 'Contabilidade Silva',
         crcNumber: 'SP-123456/O-1',

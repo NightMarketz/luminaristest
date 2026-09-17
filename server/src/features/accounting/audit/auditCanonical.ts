@@ -144,7 +144,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // registro profissional que dá sentido à entrega, não um dado de contato).
   'contact.registered':     ['contactId', 'crcNumber', 'crcUf'],
   'contact.archived':       ['contactId'],
-  'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf'],
+  // itemCount/kinds (C6b PR-3, Passo 12): tamanho e composição do pacote N-ário — números/enums,
+  // nunca sha256 dos EXTRAS (só o do núcleo, que já estava aqui desde a origem).
+  'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf', 'itemCount', 'kinds'],
   'delivery.sent':          ['deliveryId', 'contactId', 'attemptCount'],
   'delivery.failed':        ['deliveryId', 'contactId', 'attemptCount', 'reason'],
   // BE-INCR-REVIEW-LAYER (nó C11, item 12) — revisão profissional editável. Ids, registro SPED,

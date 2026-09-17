@@ -1,4 +1,4 @@
-import type { AccountingDeliveryLog, Prisma } from 'generated/prisma';
+import type { AccountingDeliveryItem, AccountingDeliveryLog, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 /** Dados para criar um log de entrega. Escalares apenas; `status` vem de `DELIVERY_STATUSES`. */
@@ -17,6 +17,18 @@ export interface CreateDeliveryLogData {
   attemptCount: number;
   requestedById: string;
   sentAt: Date | null;
+}
+
+/**
+ * Um item do pacote (C6b PR-3, Bloco A — BRIEF item 1/4). `position 0/1` = núcleo (ECD/ECF,
+ * espelha as colunas fixas do log); `position 2..n` = extras. `kind` é `ExportKind` como string
+ * (mesma disciplina da coluna `kind` de `AccountingDataExchangeJob`).
+ */
+export interface CreateDeliveryItemData {
+  jobId: string;
+  kind: string;
+  sha256: string;
+  position: number;
 }
 
 /**
@@ -53,6 +65,25 @@ export interface IAccountingDeliveryRepository {
     data: Prisma.AccountingDeliveryLogUpdateInput,
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingDeliveryLog>;
+
+  /**
+   * Cria os itens do pacote (núcleo + extras) para uma entrega recém-criada. Chamado na MESMA tx
+   * do `create` (gate autoritativo — `authoritative-gate-inside-tx`): o pacote nunca existe sem
+   * seus itens, nem por uma janela de tempo dentro da mesma transação.
+   */
+  createItems(
+    deliveryId: string,
+    items: CreateDeliveryItemData[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDeliveryItem[]>;
+
+  /** Os itens de uma entrega, ESCOPADOS (join no log — o item em si não carrega userId/unitId),
+   *  ordenados por `position` (núcleo primeiro, extras depois). */
+  listItems(
+    scope: AccountingScope,
+    deliveryId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDeliveryItem[]>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }
