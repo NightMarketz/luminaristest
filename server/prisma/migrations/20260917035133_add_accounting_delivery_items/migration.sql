@@ -6,10 +6,17 @@
 -- "already exists"; o backfill usa "WHERE NOT EXISTS" pelo mesmo motivo (alem do
 -- @@unique([deliveryId, jobId]) que tambem fecha o TOCTOU no banco).
 --
--- AlterTable: AccountingContact.packageProfile (F-C6b-2 a) -- perfil de pacote sugerido por
--- contato, Json? nullable sem default (SQLite nao reconstroi a tabela -- licao do
--- expenseAccountId). Nenhum contato existente ganha valor; GET devolve kinds:[] quando null.
-ALTER TABLE "accounting_contacts" ADD COLUMN "packageProfile" JSONB;
+-- ORDEM DELIBERADA (review #340 F1): "ALTER TABLE ... ADD COLUMN" NAO tem "IF NOT EXISTS" no
+-- SQLite (a clausula so existe para CREATE TABLE/INDEX/VIEW/TRIGGER e DROP) -- reproduzido com
+-- node --experimental-sqlite: um abort DEPOIS do ADD COLUMN faz o retry do script inteiro
+-- estourar "duplicate column name: packageProfile" antes de chegar no CREATE TABLE/backfill
+-- guardados. Por isso o ADD COLUMN de packageProfile fica POR ULTIMO, depois de tudo que e
+-- idempotente (CREATE TABLE IF NOT EXISTS + backfill WHERE NOT EXISTS): um retry so pode
+-- alcancar o ADD COLUMN depois que TUDO antes dele ja rodou (idempotentemente) de novo, e uma
+-- vez que ele roda com sucesso nao ha mais nada depois para forcar outro retry por cima dele.
+-- Mesmo padrao de 20260915140000_add_fiscal_profiles_and_payable_recoverable_tax_lines/migration.sql
+-- (CREATE TABLE fiscal_profiles guardado por DROP IF EXISTS, ADD COLUMN payables.recoverableTaxLines
+-- por ultimo, sem guarda).
 
 -- CreateTable: AccountingDeliveryItem (F-C6b-1 a) -- generaliza os 2 arquivos fixos do
 -- AccountingDeliveryLog (nucleo ECD/ECF) para N itens. As colunas fixas do log NAO somem --
@@ -77,3 +84,9 @@ WHERE NOT EXISTS (
     SELECT 1 FROM "accounting_delivery_items" i
     WHERE i."deliveryId" = d."id" AND i."jobId" = d."ecfJobId"
 );
+
+-- AlterTable: AccountingContact.packageProfile (F-C6b-2 a) -- perfil de pacote sugerido por
+-- contato, Json? nullable sem default (SQLite nao reconstroi a tabela -- licao do
+-- expenseAccountId). Nenhum contato existente ganha valor; GET devolve kinds:[] quando null.
+-- POR ULTIMO de proposito (review #340 F1) -- ver comentario do cabecalho.
+ALTER TABLE "accounting_contacts" ADD COLUMN "packageProfile" JSONB;
