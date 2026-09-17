@@ -12,7 +12,7 @@
 
 | Doc | Papel | Estado 14/09 |
 |---|---|---|
-| [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) | grafo-mestre reconciliado: §1 travadas · §4 rejeitadas · §5 diferidos · **§5.1 fila** · **§7.1 régua** · fold no topo | régua **41/57**; último fold: #315 + cédulas 14/09 |
+| [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) | grafo-mestre reconciliado: §1 travadas · §4 rejeitadas · §5 diferidos · **§5.1 fila** · **§7.1 régua** · fold no topo | régua **44/57**; último fold: 17/09 sessão 5 (#342, C6b ✅) |
 | [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) | dependências nó a nó + algoritmo do próximo nó (R6) | vigente — supersede [09-11](GRAFO-DEPENDENCIAS-2026-09-11.md) 📜 e [09-07](GRAFO-DEPENDENCIAS-2026-09-07.md) 📜 |
 | [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) | prompt de orquestração pós-C6b + **detalhamento por passo** (sucede o 09-14, que fechou 11/12) | vigente — 1 ✅ #338, 2 ✅ #340, 3 ✅ #339, 4–8 [H] |
 
