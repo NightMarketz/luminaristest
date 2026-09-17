@@ -1,5 +1,9 @@
 # Próximos passos — 2026-09-14 — prompt de orquestração pós-decisões
 
+> **⏭️ SUPERSEDIDO em 2026-09-17** por [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) — este
+> doc fechou 11/12 passos (fold 16/09); o resíduo (4.2 transcrição C12 ✅ 16/09, 6.x SEED-MY bloqueado por B-4,
+> 11.5 envio ao contador [H]) foi transportado para lá. Segue como histórico, não edite.
+
 > **Uso:** cole o bloco "PROMPT" numa sessão nova com `luminaris-orchestrator`. Ele é autocontido: cita as
 > autorizações, fixa a ordem (R6) e diz o que NÃO fazer. **Uma sessão executora só** — se a sessão
 > paralela do PR #318 ainda estiver viva, o dono para uma das duas antes de colar isto.

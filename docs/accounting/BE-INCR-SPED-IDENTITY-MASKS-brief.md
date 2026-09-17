@@ -1,10 +1,13 @@
 # BRIEF — BE-INCR-SPED-IDENTITY-MASKS (nó C12 · máscaras de identidade na geração SPED)
 
 > **Estado: BRIEF pronto. ✅ 4 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
-> `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C12-1..4 → (a), todos na recomendação.** Falta a
-> transcrição obrigatória do §5 (J930 ECD L9 + 0930 ECF L12 — **os dois PDFs estão no disco**, conferir sha256)
-> antes da `sessao-feature`, que ainda exige "executa" do dono (ORCH-006). Escrito em `sessao-planejamento`
-> (2026-09-14, passo 4 de `PROXIMOS-PASSOS-2026-09-14.md`).
+> `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C12-1..4 → (a), todos na recomendação.**
+> **Transcrição J930/0930 CONCLUÍDA 2026-09-16** (sha256 conferidos) →
+> `BE-INCR-SPED-IDENTITY-MASKS-transcription-J930-0930.md`: fecha §4.1/§4.2/§5, confirma F-C12-2 (a)
+> (tabelas diferem: 19 × 17 códigos) e abriu 3 forks — **F-C12-5..7 ✅ RATIFICADOS 2026-09-16 (3/3 na
+> recomendação; adendo da cédula 16/09)** → C12 `ready`, **11 comportamentos**; a `sessao-feature` ainda
+> exige "executa" do dono (ORCH-006). Escrito em
+> `sessao-planejamento` (2026-09-14, passo 4 de `PROXIMOS-PASSOS-2026-09-14.md`).
 
 ---
 
@@ -79,9 +82,11 @@ máscara de campos **não-identidade** do 0000 (`ie`, `im`, `nire` — §6).
 5. **CPF com DV** nos signatários (ECD J930 campo 03 quando 11 dígitos; ECF 0930 idem):
    `identCpfCnpj` = `CPF_REGEX ∧ isValidCpf` **ou** `CNPJ_REGEX` (CNPJ segue só formato, F-CNPJ-2 → a).
    Teste: `'11111111111'` (DV inválido) → 400; CPF válido → ok; CNPJ alfanumérico → ok.
-6. **`codAssin='900'`/`identQualif='900'` ⇒ CPF (pessoa física) e `indCrc` obrigatórios** — regra já
-   escrita para a ECF (comentário `SpedEcfDto.ts:63-66`, Manual ECF pp. 103-106); estender à ECD **só se
-   o Manual ECD L9 p. 200 disser o mesmo** (transcrição, §5) — senão fica em §4.
+6. **`codAssin='900'`/`identQualif='900'` ⇒ CPF (pessoa física) e `indCrc` obrigatórios** — ECF:
+   `REGRA_CONTADOR_CPF` + `REGRA_OBRIGATORIO_CONTADOR` (Manual ECF p. 106, já no `refineEcfSigners`).
+   **ECD (transcrição §1.5, p. 202): `900` ⇒ `indCrc` + `email` + `fone` + `ufCrc` obrigatórios
+   (`REGRA_OBRIGATORIO_CONTADOR`, erro) — e CPF-11 por F-C12-6 (a)** (regra de assinatura 2, p. 198).
+   Teste: `900` sem `fone` → 400 nomeando `J930.FONE`.
 7. **CRC do J930 com as máscaras de #305**: `indCrc` → `normalizeCrcNumber` + `CRC_NUMBER_RE` (F-C12-3
    decide, porque o manual não declara formato); `ufCrc` enum ✅ (já) **e cruzado** com a UF do
    `indCrc` (`crcNumberUf`); `numSeqCrc` → `CRC_CERTIFICATE_RE` + `isValidCrcCertificate`; `dtCrc` já é
@@ -98,6 +103,13 @@ máscara de campos **não-identidade** do 0000 (`ie`, `im`, `nire` — §6).
     diff vazio (paths inalterados; schemas de componente mudam → openapi.json regenerado); paridade i18n
     **não** acende (BE only); `auditCanonical` **não** acende (sem evento novo); review independente.
 
+11. **Regras de registro da ECD que o PVA reprova (F-C12-7 → a; transcrição §1.4)** no mesmo
+    `superRefine`: `REGRA_QUALIF_INV_RESP_LEGAL` (`indRespLegal='S'` ⇒ `codAssin ≠ '900'`) e
+    `REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE` (par `identCpfCnpj + codAssin` único em `signers[]`).
+    Teste: contador `900` com `indRespLegal='S'` → 400 (é o exemplo oficial p. 203 — o próprio manual
+    o viola); dois signers com mesmo CPF e `codAssin` → 400; mesmo CPF com `900` e `309` → ok
+    (Manual ECF p. 104 "assinatura como procurador").
+
 ## 3. Forks — RATIFICAÇÃO PENDENTE
 
 | # | Pergunta | Caminhos | Recomendação (não-vinculante) |
@@ -107,22 +119,31 @@ máscara de campos **não-identidade** do 0000 (`ie`, `im`, `nire` — §6).
 | **F-C12-3** | Formato de `IND_CRC` no J930 | (a) mesma máscara CFC do contato (`UF-NNNNNN/O-D`, #305) — coerente com F-CD8 (o contato **é** a fonte do signatário) · (b) normalizar caixa/trim sem máscara (o manual não declara formato — cédula 10/09 §5) | **(a)** — se o contato já exige a máscara, aceitar outro formato no DTO de geração é a divergência que a resposta 3 proíbe; risco nomeado: inscrição legítima fora do padrão CFC seria rejeitada — mitigação: mensagem com o formato esperado |
 | **F-C12-4** | `signers[].contactId` no DTO de geração | (a) sim, resolvido no serviço pelo repositório de contatos (`contactTo*Signer`) · (b) não — pré-preenchimento é do FE | **(a)** — F-CD8 (a) ratificado diz "fonte do signatário no próximo DTO de geração" e a função já existe; (b) duplica no FE a máscara que o BE já tem |
 
+**Forks 5-7 — nascidos da transcrição (16/09), ✅ RATIFICADOS 2026-09-16 (adendo da cédula 16/09), todos na recomendação:**
+
+| # | Pergunta | Decisão | Consequência |
+|---|---|---|---|
+| **F-C12-5** | Derivação do campo 04 para `900` (`REGRA_TABELA_ASSINANTE_DESC`, transcrição §5.1) | **(i)** const literal (`'900': 'Contador/Contabilista'`) + exceção de emissão `900 → 'Contador'` | item 3: o gerador escreve `SPED_ECD_QUALIF_ASSINANTE[codAssin]`, **exceto** `900 → 'Contador'` (comentário citando p. 202 + exemplo p. 203); snapshot da linha `|J930|` com `Contador` |
+| **F-C12-6** | CPF-11 quando `900` também na ECD (transcrição §5.2) | **(a)** sim | item 6 |
+| **F-C12-7** | `REGRA_QUALIF_INV_RESP_LEGAL` + `REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE` (transcrição §5.3) | **(a)** entram | **item 11** |
+
 ## 4. Pendente de validação externa
 
-1. **Conteúdo das tabelas de qualificação** (itens 1, 2, 4): só entram por transcrição do manual com
-   página citada — **nenhum código além de `900 = Contador`** (já citado no ADR-ECD l.179 e no DTO ECF)
-   pode ser escrito de memória. Sem o PDF no disco, a `sessao-feature` **pausa no item 1**.
-2. **Item 6 na ECD** — confirmar no Manual ECD L9 p. 200 se `COD_ASSIN=900` exige CPF e `IND_CRC` (a
-   ECF diz; a ECD tem de ser lida).
+1. ~~Conteúdo das tabelas~~ **RESOLVIDO 16/09** — transcritas em `…-transcription-J930-0930.md` §1.2
+   (ECD, 19 códigos, pp. 201-202) e §2.2 (ECF, 17 códigos, p. 105); a `sessao-feature` copia de lá,
+   não do manual. Código ausente para o teste do item 2: `305` (o "interventor" do exemplo 9 — erro
+   interno do manual; a tabela diz `315`).
+2. ~~Item 6 na ECD~~ **RESOLVIDO 16/09** — ver item 6 e F-C12-6.
 3. **O PVA é o único oráculo** destas máscaras (`accounting-gargalo-is-human-validation`): verde de teste
    de contrato prova que o DTO rejeita o que a tabela rejeita, não que o PVA aceita o que o DTO aceita.
    Runbook H1 2ª passada (`RUNBOOK-H1-PVA.md`) continua o fecho.
 
 ## 5. Insumos ausentes
 
-1. **PDFs `Manual-ECD-Leiaute-9.pdf` e `Manual-ECF-Leiaute-12.pdf` não estão no disco** — só no
-   manifesto (sha256 `bc63f0a893ce`, `7216ec2bd62d`). Repor com `node scripts/baixar-fontes-oficiais.mjs`
-   **antes** da `sessao-feature` e conferir o sha256 (manual reeditado = BRIEF a reconferir).
+1. ~~PDFs não estão no disco~~ **RESOLVIDO 2026-09-16**: os dois PDFs estão em `fontes-oficiais/`, sha256
+   `bc63f0a893ce` / `7216ec2bd62d` conferidos iguais ao manifesto; transcrição em
+   `BE-INCR-SPED-IDENTITY-MASKS-transcription-J930-0930.md` (tabelas §1.2/§2.2, regras §1.4-1.5/§2.3,
+   reconciliação com os DTOs §4). Correção: a tabela ECD está nas **pp. 201-202**, não 199-201.
 
 ## 6. Achados fora de escopo
 
