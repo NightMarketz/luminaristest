@@ -109,6 +109,7 @@ import { BankSettlementService } from '../features/accounting/services/BankSettl
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
+import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -416,6 +417,7 @@ export class ApplicationFactory {
     accountingScopeSettings: AccountingScopeSettingsService;
     fiscalProfile: FiscalProfileService;
     serviceFiscalProfile: ServiceFiscalProfileService;
+    fiscalDocumentEmission: FiscalDocumentEmissionService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
@@ -725,6 +727,23 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
+    // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.
+    const serviceFiscalProfileService = new ServiceFiscalProfileService(
+      this.repositories.serviceFiscalProfile,
+      this.policies.accounting,
+      auditService,
+    );
+    // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
+    const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
+      this.repositories.fiscalDocument,
+      this.repositories.account,
+      this.repositories.journalEntry,
+      fiscalProfileService,
+      serviceFiscalProfileService,
+      this.policies.accounting,
+      auditService,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: new AccountingScopeSettingsService(
@@ -735,8 +754,8 @@ export class ApplicationFactory {
       // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal por escopo — o NfeImportService/NfePreviewService o LÊ
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
-      // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a)
-      serviceFiscalProfile: new ServiceFiscalProfileService(this.repositories.serviceFiscalProfile, this.policies.accounting, auditService),
+      serviceFiscalProfile: serviceFiscalProfileService,
+      fiscalDocumentEmission: fiscalDocumentEmissionService,
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -1121,6 +1140,7 @@ export class ApplicationFactory {
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;

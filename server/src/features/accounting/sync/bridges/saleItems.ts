@@ -100,3 +100,37 @@ export async function loadSalePackageInfo(userId: string, saleId: string): Promi
 export async function isAllPackageSale(userId: string, saleId: string): Promise<boolean> {
   return (await loadSalePackageInfo(userId, saleId)).kind === 'Package';
 }
+
+/** One Service-typed line of a sale, for the DPS assembly (BE-INCR-DFE, BRIEF item 15). */
+export interface SaleServiceLine {
+  serviceRef: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+/**
+ * Load ONLY the Service-typed lines of a sale (BE-INCR-DFE, BRIEF item 15) — same repository lookup
+ * as `loadSalePackageInfo`, without touching the classifier. Lines without a `serviceId` are skipped
+ * (an unresolvable service reference cannot build a DPS `cServ` group).
+ */
+export async function loadSaleServiceLines(userId: string, saleId: string): Promise<SaleServiceLine[]> {
+  const repo = getFactory().getDynamicTableRepository();
+  const itemsTable = await repo.findTableByInternalName(userId, 'saleItems');
+  if (!itemsTable) return [];
+
+  const rows = await repo.findRowsByFieldValue(itemsTable.id, 'saleId', saleId);
+  const lines: SaleServiceLine[] = [];
+  for (const r of rows) {
+    const d = (r.data ?? {}) as Record<string, unknown>;
+    const isService = Boolean(d.serviceId) || String(d.type ?? '') === 'Service';
+    if (!isService || !d.serviceId) continue;
+    lines.push({
+      serviceRef: String(d.serviceId),
+      description: String(d.description ?? ''),
+      quantity: toNum(d.quantity),
+      unitPrice: toNum(d.unitPrice),
+    });
+  }
+  return lines;
+}
