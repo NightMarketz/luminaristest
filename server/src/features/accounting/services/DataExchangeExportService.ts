@@ -65,6 +65,18 @@ export interface IReconciliationReader {
   ): Promise<MatchedLineForExport[]>;
 }
 
+/**
+ * Minimal read surface for resolving a bank account's CODE (C6b PR-2 Passo 8, review F1 —
+ * ALTO). `findScopeBankAccountIds` only returns ids; `IReportReader.trialBalance` only covers
+ * accounts WITH movement (a freshly-registered bank account with an imported statement and
+ * ZERO postings resolves to nothing there — the `'?'` sentinel this used to fall back to was
+ * reachable, not defensive). This reads the chart of accounts directly (every ACTIVE account
+ * in the unit, regardless of movement) — satisfied structurally by `IAccountRepository`.
+ */
+export interface IAccountReader {
+  findManyByUnit(scope: AccountingScope): Promise<Array<{ id: string; code: string }>>;
+}
+
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
  *  storage convention (period-as-marker, not a query bound; matches SpedGenerationService). */
 function periodColumns(periodStart: string, periodEnd: string): { periodStart: Date; periodEnd: Date } {
@@ -124,6 +136,9 @@ export class DataExchangeExportService {
     // ou expor via reader" — escolhido injetar, zero mudança em AccountingReportService).
     private readonly reconciliation: IReconciliationReader,
     private readonly journalEntryRepo: IJournalEntryRepository,
+    // Review #338 F1 (ALTO): código da conta bancária para EXPORT_BANK_RECONCILIATION — NUNCA
+    // via trialBalance (só cobre conta COM movimento; ver IAccountReader acima).
+    private readonly accountRepo: IAccountReader,
   ) {}
 
   /**
@@ -234,14 +249,24 @@ export class DataExchangeExportService {
         const period = periodColumns(periodStart, periodEnd);
 
         const bankAccountIds = await this.reconciliation.findScopeBankAccountIds(scope);
-        // Código da conta bancária por id: reusa trialBalance (IReportReader já injetado) em vez
-        // de abrir uma dependência nova só para "contas com movimento, todo o histórico" — toda
-        // conta bancária que aparece nas seções abaixo (casada ou com posting pendente) TEM ao
-        // menos 1 posting histórico, logo aparece aqui. '?' é o mesmo fallback que
-        // AccountingReportService.getAccountBalances já usa para conta sem match.
+        // Review #338 F1 (ALTO): código da conta bancária por id via IAccountReader — NUNCA
+        // trialBalance, que só cobre conta COM movimento; uma conta bancária recém-cadastrada
+        // com extrato importado e ZERO postings some de lá (o '?' que caía aqui era alcançável
+        // em produção, não defensivo). findManyByUnit cobre toda conta ATIVA do escopo.
         const codeByAccountId = new Map(
-          (await this.reports.trialBalance(scope)).rows.map((r) => [r.accountId, r.code]),
+          (await this.accountRepo.findManyByUnit(scope)).map((a) => [a.id, a.code]),
         );
+        const resolveBankAccountCode = (glAccountId: string): string => {
+          const code = codeByAccountId.get(glAccountId);
+          if (!code) {
+            // Conta sem código resolvido = erro de dado (a conta some do plano ativo enquanto
+            // o extrato ainda a referencia) — nunca uma sentinela silenciosa num CSV ao contador.
+            throw new ValidationError(
+              `Conta bancária '${glAccountId}' não foi encontrada no plano de contas ativo — não é possível montar a conciliação.`,
+            );
+          }
+          return code;
+        };
 
         const rows: OutTable['rows'] = [];
         const matched = await this.reconciliation.findMatchedLinesByWindow(scope, bankAccountIds, window);
@@ -253,7 +278,7 @@ export class DataExchangeExportService {
         }
 
         for (const glAccountId of bankAccountIds) {
-          const code = codeByAccountId.get(glAccountId) ?? '?';
+          const code = resolveBankAccountCode(glAccountId);
           const [unmatchedLines, unmatchedPostings] = await Promise.all([
             this.reconciliation.findUnmatchedLinesByAccount(scope, glAccountId, { from: window.from, to: window.to }),
             this.reconciliation.findUnmatchedBankPostings(scope, glAccountId, { from: window.from, to: window.to }),

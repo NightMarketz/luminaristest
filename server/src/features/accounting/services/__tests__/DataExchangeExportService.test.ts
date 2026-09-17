@@ -112,6 +112,14 @@ function makeJournalEntryRepo(): IJournalEntryRepository {
   } as unknown as IJournalEntryRepository;
 }
 
+/** Review #338 F1 — IAccountReader: resolves a bank account's code via the ACTIVE chart of
+ *  accounts (`findManyByUnit`), never via trialBalance (which only covers accounts WITH
+ *  movement). Default empty so kinds that don't need it (everything but
+ *  EXPORT_BANK_RECONCILIATION) don't have to pass a fixture. */
+function makeAccountRepo() {
+  return { findManyByUnit: jest.fn(async () => [] as Array<{ id: string; code: string }>) };
+}
+
 type AppendArgs = [unknown, unknown, { eventType: string; payload: Record<string, unknown> }];
 
 describe('DataExchangeExportService (BE-INCR-6)', () => {
@@ -122,7 +130,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
 
   it('exports a trial balance to CSV, persists it, and audits export_generated', async () => {
     const { repo } = makeRepo();
-    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
     const res = await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
 
@@ -145,7 +153,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
   it('exports a blank template (headers only, no report call)', async () => {
     const { repo } = makeRepo();
     const reports = makeReports();
-    const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
     await svc.export(scope, { kind: 'EXPORT_TEMPLATE', format: 'xlsx', unitId: 'unit-1', templateKind: 'IMPORT_JOURNAL_ENTRIES' });
 
@@ -159,7 +167,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
 
   it('resolves an artifact path for download and NotFound on a missing job', async () => {
     const { repo } = makeRepo();
-    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
     await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
     const dl = await svc.getArtifactForDownload(scope, 'job-1');
@@ -171,7 +179,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
 
   it('rejects export when the policy denies (no actor)', async () => {
     const { repo, createJob } = makeRepo();
-    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
     const noActor = { ...scope, actorUserId: '' };
 
     await expect(
@@ -184,7 +192,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
   // relatório da auditoria (ela nomeou só ECD e ECF). Ver a nota em SpedGenerationService.test.ts.
   it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
     const { repo, createJob, updateJob } = makeRepo();
-    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
     (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
 
     await expect(
@@ -198,7 +206,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
 
   it('fires the alert webhook (source=data_exchange_export) alongside the FAILED status, before the throw (F-W2C-1)', async () => {
     const { repo } = makeRepo();
-    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
     (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
 
     await expect(
@@ -223,7 +231,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('logs Metric: data_exchange_export at info with a numeric duration on success', async () => {
       const infoSpy = jest.spyOn(logger, 'info').mockImplementation(() => {});
       const { repo } = makeRepo();
-      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
 
@@ -238,7 +246,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('logs Metric: data_exchange_export at warn on the FAILED (saveFile) path', async () => {
       const warnSpy = jest.spyOn(logger, 'warn').mockImplementation(() => {});
       const { repo } = makeRepo();
-      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
       (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
 
       await expect(
@@ -261,7 +269,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('DRE com asOf=2026-12-31 → job com periodStart=2026-01-01 / periodEnd=2026-12-31', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, { kind: 'EXPORT_INCOME_STATEMENT', format: 'csv', unitId: 'unit-1', asOf: '2026-12-31' });
 
@@ -274,7 +282,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('balancete SEM asOf → período null/null no job (comportamento acumulado preservado)', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
 
@@ -287,7 +295,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('balancete COM asOf → devolve as linhas de balancesAsOf(asOf) (F-C6b-6 a — falhava antes: asOf era aceito e ignorado) e grava período [Jan-1, asOf]', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1', asOf: '2026-06-30' });
 
@@ -302,7 +310,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('razão com accountCode + janela → chama accountLedger com a window e grava o período', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, {
         kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1',
@@ -320,7 +328,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('razão SEM accountCode (razão geral) → chama generalLedger com a window e grava o período', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await svc.export(scope, {
         kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1',
@@ -344,7 +352,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     it('razão geral sem periodStart/periodEnd → ValidationError, e NENHUM job é criado', async () => {
       const { repo, createJob } = makeRepo();
       const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo());
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
 
       await expect(
         svc.export(scope, { kind: 'EXPORT_GENERAL_LEDGER', format: 'csv', unitId: 'unit-1' }),
@@ -381,8 +389,12 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
         },
       ]);
 
-      const reports = makeReports();
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, reconciliation, makeJournalEntryRepo());
+      const reports = makeReports(); // trialBalance mock só tem 'a1' — NÃO é a fonte do código aqui (review #338 F1).
+      const accountRepo = makeAccountRepo();
+      // Conta bancária SEM nenhum posting histórico (não aparece em trialBalance) — só no plano
+      // de contas ATIVO. Prova que o código vem de accountRepo.findManyByUnit, não de trialBalance.
+      accountRepo.findManyByUnit.mockResolvedValue([{ id: 'a1', code: '1.1.01' }]);
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, reconciliation, makeJournalEntryRepo(), accountRepo);
 
       await svc.export(scope, {
         kind: 'EXPORT_BANK_RECONCILIATION', format: 'csv', unitId: 'unit-1',
@@ -407,6 +419,11 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       const matchedRow = table.rows.find((r) => r[0] === 'MATCHED')!;
       expect(matchedRow).toEqual(['MATCHED', '1.1.01', 'st-1', '2026-06-15', '15000', 'linha casada', 'je-1', '10', 'AUTO']);
 
+      // UNMATCHED_LINE também usa o código resolvido por accountRepo (review #338 F1 — a conta
+      // aqui NÃO está no mock de trialBalance, e ainda assim o código sai correto, nunca '?').
+      const unmatchedLineRow = table.rows.find((r) => r[0] === 'UNMATCHED_LINE')!;
+      expect(unmatchedLineRow).toEqual(['UNMATCHED_LINE', '1.1.01', 'st-1', '2026-06-17', '9900', 'linha pendente', '', '', '']);
+
       const unmatchedPostingRow = table.rows.find((r) => r[0] === 'UNMATCHED_POSTING')!;
       // signed = debitCents - creditCents = 5000 - 0 (inflow -> debit on an asset bank account).
       expect(unmatchedPostingRow).toEqual(['UNMATCHED_POSTING', '1.1.01', '', '2026-06-18', '5000', 'posting pendente', 'je-2', '11', '']);
@@ -416,6 +433,51 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       expect(call.periodEnd).toEqual(new Date('2026-06-30T00:00:00.000Z'));
     });
 
+    // Review #338 F1 (ALTO): sem posting nenhum a conta some de trialBalance — o '?' que
+    // caía aqui era ALCANÇÁVEL, não defensivo. Prova o mesmo caminho pelo ângulo "conta banco
+    // com extrato mas zero lançamentos" citado no achado do reviewer.
+    it('conta bancária com extrato e ZERO postings → código correto no CSV, nunca "?"', async () => {
+      const { repo } = makeRepo();
+      const reconciliation = makeReconciliationReader();
+      (reconciliation.findScopeBankAccountIds as jest.Mock).mockResolvedValue(['acc-nova']);
+      (reconciliation.findUnmatchedLinesByAccount as jest.Mock).mockResolvedValue([
+        { id: 'l1', statementId: 'st-nova', date: new Date('2026-06-10T00:00:00.000Z'), amountCents: 3000n, description: 'linha da conta nova' },
+      ]);
+
+      // trialBalance NÃO tem a conta (zero movimento histórico) — só accountRepo a conhece.
+      const reports = makeReports();
+      const accountRepo = makeAccountRepo();
+      accountRepo.findManyByUnit.mockResolvedValue([{ id: 'acc-nova', code: '1.1.09' }]);
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, reconciliation, makeJournalEntryRepo(), accountRepo);
+
+      await svc.export(scope, {
+        kind: 'EXPORT_BANK_RECONCILIATION', format: 'csv', unitId: 'unit-1',
+        periodStart: '2026-06-01', periodEnd: '2026-06-30',
+      });
+
+      const buf = (storage.saveFile as jest.Mock).mock.calls[0][4] as Buffer;
+      const table = await parseTable(buf, 'csv');
+      expect(table.rows).toHaveLength(1);
+      expect(table.rows[0]).toEqual(['UNMATCHED_LINE', '1.1.09', 'st-nova', '2026-06-10', '3000', 'linha da conta nova', '', '', '']);
+    });
+
+    // Review #338 F1: conta bancária que sumiu do plano ATIVO (soft-deleted) enquanto o extrato
+    // ainda a referencia — erro de DADO nomeado, nunca uma sentinela '?' num CSV ao contador.
+    it('conta bancária não encontrada no plano de contas ativo → ValidationError nomeada', async () => {
+      const { repo } = makeRepo();
+      const reconciliation = makeReconciliationReader();
+      (reconciliation.findScopeBankAccountIds as jest.Mock).mockResolvedValue(['acc-sumida']);
+
+      const accountRepo = makeAccountRepo(); // findManyByUnit → [] (a conta não está mais ativa)
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, reconciliation, makeJournalEntryRepo(), accountRepo);
+
+      await expect(
+        svc.export(scope, {
+          kind: 'EXPORT_BANK_RECONCILIATION', format: 'csv', unitId: 'unit-1',
+          periodStart: '2026-06-01', periodEnd: '2026-06-30',
+        }),
+      ).rejects.toThrow(ValidationError);
+    });
   });
 
   // C6b PR-2 Passo 9 (F-C6b-8 a): EXPORT_ENTRY_SAMPLE — semente determinística, 1ª linha de
@@ -439,7 +501,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       const journalEntryRepo = makeJournalEntryRepo();
       (journalEntryRepo.findManyForExport as jest.Mock).mockResolvedValue(makeEntries());
       const reports = makeReports(); // trialBalance mock só tem a conta '1.1.01' (Asset) — ver abaixo.
-      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), journalEntryRepo);
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), journalEntryRepo, makeAccountRepo());
 
       await svc.export(scope, {
         kind: 'EXPORT_ENTRY_SAMPLE', format: 'csv', unitId: 'unit-1',
@@ -459,8 +521,13 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       expect(lines[0]).toBe('# seed=seed-x; algorithm=sha256-rank-v1; perAccount=5');
       expect(lines[1]).toBe('accountCode,accountNature,entryId,entryNumber,date,description,sourceType,sourceId,debitCents,creditCents');
       expect(lines[2]).toBe('1.1.01,Asset,e1,1,2026-01-05,venda 1,sale.recorded,sale-1,1000,0');
-      // conta 3.1 (Revenue) não está no mock de trialBalance — fallback '?' (mesmo idioma de
-      // AccountingReportService.getAccountBalances para conta sem correspondência).
+      // conta 3.1 (Revenue) não está no mock de trialBalance (o fixture só declara '1.1.01') —
+      // fallback '?' só dispara aqui por LACUNA DO MOCK, não por um caminho de produção real:
+      // toda conta que aparece na amostra tem ≥1 posting NA JANELA (é assim que ela chega a
+      // `legs`), e `trialBalance(scope)` sem `asOf` agrega postings de TODO o histórico — logo
+      // a mesma conta SEMPRE aparece lá também (revisão #338 confirmou: inalcançável em
+      // produção, ao contrário do '?' de `bankAccountCode` do Passo 8, que ERA alcançável e foi
+      // corrigido — ver describe de EXPORT_BANK_RECONCILIATION acima).
       expect(lines[3]).toBe('3.1,?,e1,1,2026-01-05,venda 1,sale.recorded,sale-1,0,1000');
 
       const call = createJob.mock.calls[0][0] as { periodStart: Date | null; periodEnd: Date | null };
@@ -486,7 +553,7 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
         const { repo } = makeRepo();
         const journalEntryRepo = makeJournalEntryRepo();
         (journalEntryRepo.findManyForExport as jest.Mock).mockResolvedValue(entries());
-        const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), journalEntryRepo);
+        const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), journalEntryRepo, makeAccountRepo());
         await svc.export(scope, {
           kind: 'EXPORT_ENTRY_SAMPLE', format: 'csv', unitId: 'unit-1',
           periodStart: '2026-01-01', periodEnd: '2026-01-31', seed, perAccount: 1,

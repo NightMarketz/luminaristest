@@ -65,4 +65,46 @@ describe('sampleEntries (C6b PR-2 Passo 9, F-C6b-8 a)', () => {
   it('lista vazia → amostra vazia', () => {
     expect(sampleEntries([], { perAccount: 5, seed: 'seed-w' })).toEqual([]);
   });
+
+  // Review #338 F2 (ALTO): um lançamento com 2 pernas na MESMA conta (ex.: 2 débitos separados
+  // na conta bancária) tinha rank IDÊNTICO (mesmo seed|accountCode|entryId) e entrava 2× —
+  // `perAccount` contava PERNAS, não LANÇAMENTOS, ao contrário do BRIEF item 10. Dedup + soma
+  // de débito/crédito ANTES do rank fecha a classe.
+  it('lançamento com 2 pernas na MESMA conta → 1 única linha, com débito/crédito somados (não 2x)', () => {
+    const legs = [
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 300, creditCents: 0 }),
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 200, creditCents: 0 }),
+    ];
+    const sampled = sampleEntries(legs, { perAccount: 5, seed: 'seed-dup' });
+    expect(sampled).toHaveLength(1); // NÃO 2 — antes do fix, ['e1','e1']
+    expect(sampled[0]).toMatchObject({ accountCode: '1.1.01', entryId: 'e1', debitCents: 500, creditCents: 0 });
+  });
+
+  it('2 pernas na mesma conta não somam com pernas de OUTRO lançamento (chave é accountCode+entryId)', () => {
+    const legs = [
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 100, creditCents: 0 }),
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 50, creditCents: 0 }),
+      leg({ accountCode: '1.1.01', entryId: 'e2', debitCents: 900, creditCents: 0 }),
+    ];
+    const sampled = sampleEntries(legs, { perAccount: 5, seed: 'seed-dup2' });
+    expect(sampled).toHaveLength(2);
+    const e1 = sampled.find((l) => l.entryId === 'e1')!;
+    const e2 = sampled.find((l) => l.entryId === 'e2')!;
+    expect(e1.debitCents).toBe(150);
+    expect(e2.debitCents).toBe(900); // não contaminado pela soma de e1
+  });
+
+  it('2 pernas na mesma conta contam como 1 lançamento para o corte de perAccount', () => {
+    // 2 lançamentos "reais" na conta (e1 com 2 pernas, e2 com 1 perna) + perAccount=1: o corte
+    // deve escolher 1 LANÇAMENTO (podendo ser e1, que carrega suas 2 pernas já somadas), nunca
+    // "1 perna" que deixaria e1 pela metade.
+    const legs = [
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 100, creditCents: 0 }),
+      leg({ accountCode: '1.1.01', entryId: 'e1', debitCents: 50, creditCents: 0 }),
+      leg({ accountCode: '1.1.01', entryId: 'e2', debitCents: 900, creditCents: 0 }),
+    ];
+    const sampled = sampleEntries(legs, { perAccount: 1, seed: 'seed-cut' });
+    expect(sampled).toHaveLength(1);
+    if (sampled[0].entryId === 'e1') expect(sampled[0].debitCents).toBe(150); // nunca 100 OU 50 isolado
+  });
 });

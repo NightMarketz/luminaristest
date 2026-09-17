@@ -279,6 +279,38 @@ describe('ExportRequestSchema — perAccount/seed rejeitados fora de EXPORT_ENTR
   });
 });
 
+// Review #338 F3 (MÉDIO, classe param-aceito-e-ignorado): conciliação e amostra não leem
+// accountCode/asOf/templateKind (são campos de OUTROS kinds) — aceito-e-ignorado em silêncio
+// seria o MESMO bug que perAccount/seed e periodStart/periodEnd já fecharam.
+describe('ExportRequestSchema — accountCode/asOf/templateKind rejeitados em EXPORT_BANK_RECONCILIATION/EXPORT_ENTRY_SAMPLE', () => {
+  it('accountCode em EXPORT_ENTRY_SAMPLE → issue em accountCode', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      seed: 'seed-1', accountCode: '1.1.1',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'accountCode')).toBe(true);
+  });
+
+  it('asOf em EXPORT_ENTRY_SAMPLE → issue em asOf', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_ENTRY_SAMPLE', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      seed: 'seed-1', asOf: '2026-06-30',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'asOf')).toBe(true);
+  });
+
+  it('templateKind em EXPORT_BANK_RECONCILIATION → issue em templateKind', () => {
+    const parsed = ExportRequestSchema.safeParse({
+      ...base, kind: 'EXPORT_BANK_RECONCILIATION', periodStart: '2026-01-01', periodEnd: '2026-01-31',
+      templateKind: 'IMPORT_CHART_OF_ACCOUNTS',
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) expect(parsed.error.issues.some((i) => i.path[0] === 'templateKind')).toBe(true);
+  });
+});
+
 // Regressão do PR-1 (review #337 F1): periodStart/periodEnd continuam 400 fora do conjunto
 // ampliado — o Passo 8/9 amplia QUEM pode usar o par, nunca remove a regra para quem não pode.
 describe('ExportRequestSchema — regressão: periodStart/periodEnd continuam 400 em BP (C6b PR-2)', () => {

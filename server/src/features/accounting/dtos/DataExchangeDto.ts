@@ -121,6 +121,20 @@ export const ExportRequestSchema = z
     } else if (!val.seed) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['seed'], message: 'seed é obrigatório para EXPORT_ENTRY_SAMPLE.' });
     }
+    // Review #338 F3 (MÉDIO, classe param-aceito-e-ignorado): conciliação e amostra não leem
+    // accountCode/asOf/templateKind — campo de OUTRO kind aceito em silêncio é o mesmo bug que
+    // já fechamos para periodStart/periodEnd e perAccount/seed. Mesmo padrão, mesma fronteira.
+    if (PERIOD_REQUIRED_KINDS.has(val.kind)) {
+      if (val.accountCode !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['accountCode'], message: 'accountCode só vale para o razão (EXPORT_GENERAL_LEDGER).' });
+      }
+      if (val.asOf !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['asOf'], message: 'asOf só vale para balancete/BP/DRE.' });
+      }
+      if (val.templateKind !== undefined) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['templateKind'], message: 'templateKind só vale para EXPORT_TEMPLATE.' });
+      }
+    }
   });
 
 export type ExportRequestDto = z.infer<typeof ExportRequestSchema>;
