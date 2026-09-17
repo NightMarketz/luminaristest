@@ -4031,6 +4031,24 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
+ *   /api/package-balances:
+ *     get:
+ *       summary: List prepaid-package balances for a unit, optionally one customer (Incremento G)
+ *       description: >-
+ *         Read-only. One live row per customer × package (`balanceCents` is integer cents).
+ *         Credit/debit movements are driven internally by the package-sale bridge and
+ *         RegisterPaymentService — never exposed as a raw HTTP write.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: customerId, required: false, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'balances (CustomerPackageBalance[] — id, unitId, customerId, packageId, balanceCents, expiresAt)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
  *   /api/reconcile-pending:
  *     get:
  *       summary: List the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7)

@@ -32,7 +32,6 @@ const KNOWN_UNDOCUMENTED = [
   'POST /api/counterparties',
   'GET /api/counterparties/{id}',
   'POST /api/counterparties/{id}/archive',
-  'GET /api/package-balances',
   'PATCH /api/accounting/accounts/{id}/requires-dimension',
   'POST /api/dashboard/ai/ChatInterview',
 ];
