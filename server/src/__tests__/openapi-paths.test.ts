@@ -66,7 +66,9 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (C6b PR-3, Passo 13, F-C6b-2 a): /api/accounting/delivery/profile (GET+PUT) — 1 PATH e
 //    2 OPERAÇÕES (188 → 189). extraJobIds em build/confirm e os 2 exports novos do PR-2 são
 //    props/enum novos em paths JÁ contados — não mexem no path-count.
-const BASELINE = 189;
+// +1 (higiene docs/spec 17/09, Incremento G): GET /api/package-balances — rota montada desde o G
+//    sem bloco de path; saiu de KNOWN_UNDOCUMENTED em route-spec-wiring (189 → 190, 225 → 226 ops).
+const BASELINE = 190;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
