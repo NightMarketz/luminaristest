@@ -289,6 +289,17 @@ arquivos, gates, evidência de "feito", stop humano) está em
 | 11 | ~~D1 pedido~~ | ✅ `3f61c4b0` montado (#331) | **dono envia** | dono |
 | 12 | ~~fold~~ | ✅ 16/09 | régua 42/57 | — |
 
+### 4.3 Estado em 2026-09-17 (fold pós-C6b) — verificado
+
+- `origin/main` = **`0f1af265`** (#342, fold sessão 5). **C6b ✅** em 3 PRs seriais (#337 `daf76279` · #338 `15c8bf53` · #340
+  `373d00d4`, "executa C6b" 16/09; review do PR-3 FAIL F1 → fix `63f02b04` → PASS, veredito gravado no fold #342, não no
+  corpo do PR — precedente #338 grava no corpo). Régua **44/57** (contábil **19/22** · financeiro 17/19 · fiscal 8/16) — C6b é
+  nó (§1), numerador +1.
+- Orquestração vigente: `PROXIMOS-PASSOS-2026-09-17.md` (#339 `d7181f8f`), que aplica o algoritmo do §4 deste grafo.
+  Próximo nó por R6: nenhum em voo — C12 (transcrição ✅, 11 comportamentos) · C8 · FE-LALUR PR 2 `ready` **sem "executa"**;
+  `FE-INCR-BANK-SETTLEMENT` sem BRIEF (autorização citável pendente); SEED-MY `blocked` por B-4. Gates humanos e dado
+  externo inalterados.
+
 ### 4.2 Estado ao fim da sessão 3 — 2026-09-16 (fold) — verificado
 
 - `origin/main` = **`3f61c4b0`** (#331). Fila §4 **inteira ✅** (passos 1–12). Régua **42/57** (contábil 17/22 · financeiro
