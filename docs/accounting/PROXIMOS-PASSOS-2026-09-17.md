@@ -73,10 +73,10 @@ Fora da régua e sem fila própria (só quando o dono chamar): `FE-INCR-REVIEW` 
 `FE-INCR-FIXED-ASSETS` (tela do C8), `FE-INCR-DELIVERY` (consome C6b — o plano §5.1 já avisa a quebra de
 `files[].kind`), `FE-INCR-SPED-SIGNERS` (combobox de qualificação, BRIEF C12 §6.3 — rota nova).
 
-**Cadeia crítica (inalterada desde 11/09):** emissão 01/10 ← D-NFSE · D1f · D5 · **M2**. Nenhum passo desta
+**Cadeia crítica:** emissão 01/10 ← D1f · D5 · **M2** (~~D-NFSE~~ saiu 17/09 — no corpus desde 10/09, `MANIFEST.md` l.21–29; grafo §0.4). Nenhum passo desta
 tabela a move. Gates humanos abertos e **em branco** (0 checkbox nos 5 runbooks, verificado 17/09): B-4 →
 SEED-MY → H1 2ª passada; H2; X2 (executável desde 31/08, arquivo no corpus); M2. Dado externo: **envio do
-pedido ao contador** (#331, itens 6–13 — dono envia), D2, D5, D6, D-NFSE.
+pedido ao contador** (#331, itens 6–13 — dono envia), D2, D5, D6.
 
 Regras de fila: passo 1 antes do 2 (serial obrigatório, plano §7); 3 intercala enquanto 1 espera review;
 4/5/6 só com "executa" — a ordem entre eles é sugestão (C12 é o menor e tem transcrição fresca; C8 é a
@@ -89,7 +89,7 @@ sinal do dono.**
 - **Não** abrir segunda sessão de código no domínio contábil enquanto o C6b PR-2/PR-3 estiver em voo
   (PAR-005) — exceção só se o dono autorizar C12 em paralelo (write-set disjunto declarado no passo 4).
 - **Não** tocar `reconcile_pending_items` (R9), **não** reabrir P-IA (R10), **não** Serpro (R5), **não**
-  X10b/emissão (espera D-NFSE + D1f + D5), **não** aparato de auditoria (bancada desligada 2026-08-09).
+  X10b/emissão (espera D1f + D5 — D-NFSE já está no corpus; regra só o dono reverte; D1f (item LC 116, alíquota ISS, `cClassTrib` do 1b) pode virar campo obrigatório do `FiscalProfile` (técnica X6 — dado configurável em vez de espera) — **decisão do dono**), **não** aparato de auditoria (bancada desligada 2026-08-09).
 - **Não** preencher evidência, marcar desfecho ou assinar runbook (B-4, X2, H1, H2, H3, M2).
 - **Não** reabrir F-C12-3 (a) — o achado dos exemplos `1SP123456` (transcrição §5.4) está registrado com o
   risco que o fork já declarava; reabrir é decisão do dono, não do executor.
@@ -188,7 +188,7 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 - **Ready sem "executa":** C12 (11 comportamentos, transcrição ✅ neste worktree) · C8 · FE-LALUR PR 2.
   **Sem BRIEF:** FE-INCR-BANK-SETTLEMENT. **Bloqueado por gate:** SEED-MY (B-4).
 - Gates humanos: B-4, H1, H2, X2, M2 — **0 checkbox** nos 5 runbooks. Dado externo: pedido ao contador (#331)
-  **não enviado** (sem registro de envio no repo); D2/D5/D6/D-NFSE abertos.
+  **não enviado** (sem registro de envio no repo); D2/D5/D6 abertos (D-NFSE ✅ corpus 10/09 — corrigido 17/09).
 - GAP-MAP: célula "colisão semântica rebase × gate novo" corrigida para `[FECHADO #267]` (comando da célula
   rodado: 2 passed). Nenhuma célula `[INSTRUMENTADO]` pendente de correção.
 - Vieses desta leitura (T8): escrita pela mesma sessão que fez a transcrição C12 — a ordem sugerida 4 < 5 < 6

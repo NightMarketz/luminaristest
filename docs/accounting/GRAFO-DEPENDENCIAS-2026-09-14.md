@@ -56,6 +56,7 @@
 | — (não dito) | **Nenhuma conta de juros/multa/desconto** existe no chart do salão (13 contas) → **pendência externa ao contador** (linha nova do pedido) | BRIEF F7 §5; passo 11 do plano |
 | D3b `blocked` no mermaid de 11/09 | já estava ✅ desde o fold 11/09 (3ª passada) — o mermaid não foi atualizado | master map fold 11/09 |
 | Financeiro §7.1: "consumo do retorno bancário … **reusa a tabela da rodada 3**" | superado por **R9 → tabela irmã** | cédula #319 R9 |
+| **D-NFSE** "Manual NFS-e nacional — dono baixa — 403 à automação" (nó `DM` do mermaid, §3, §4, §4.1) como dado externo **aberto** na cadeia crítica | Já estava no corpus desde **2026-09-10**: `MANIFEST.md` l.21–29 registram com sha256 os 3 manuais (`nfse-manual-emissor` / `-adn` / `-judicial`), `NFSe-ESQUEMAS_XSD-v1.01.zip`, `NFSe-ANEXO-I-leiaute-DPS-NFSe-v1.01.xlsx` e os Anexos II/A/B/C. `DM` → `done`; cadeia crítica = **emissão 01/10 ← D1f · D5 · M2**. A regra "não X10b/emissão" **não muda** (só o dono reverte). D1f (item LC 116, alíquota ISS, `cClassTrib` do 1b) pode virar campo obrigatório do `FiscalProfile` (técnica X6 — dado configurável em vez de espera) — **decisão do dono** | `docs/accounting/fontes-oficiais/MANIFEST.md` l.21–29; pedido do dono 17/09 ("problemas de informações externas e gates humanos não deveriam ser isolados até a ponta"); fold 17/09 |
 
 ### 0.5 Itens autorizados SEM número de nó (não entram na régua)
 
@@ -101,7 +102,7 @@ flowchart LR
     D5["D5 Parceiro emissor + certificado A1<br/>critério: N contas sob 1 chave (R8)"]:::ext
     D6["D6 Convênio/leiaute do banco"]:::ext
     D7["D7 Vigilância PNCT até 31/12"]:::ext
-    DM["D-NFSE Manual NFS-e nacional<br/>dono baixa — 403 à automação"]:::ext
+    DM["D-NFSE Manual NFS-e nacional<br/>✅ no corpus desde 2026-09-10 — MANIFEST.md l.21–29 (§0.4)"]:::done
   end
 
   subgraph GATES[Gates humanos - runbooks, todos EM BRANCO]
@@ -243,7 +244,7 @@ flowchart LR
 | **X6** | plan → ready **após emenda do BRIEF** (`sessao-planejamento`, itens 10/11 sob F-X6-3 b, F-X6-4 ativo, defaults conservadores, linha ao contador) | emenda docs-only | cédula #318 §1 |
 | **X7** | blocked (ADR) | D1 itens 1/1b; Serpro adiado (R5) | cédula #319 R5 |
 | **X10** | done — EMENDA R8 em `main` | — | `ADR-INCR-DFE-EMISSAO-PARCEIRO.md:95` |
-| **X10b → X10a → X10i → X11** | blocked | D-NFSE · D1f · D5 · **M2 (agora aresta escrita: conta por unidade, R8)** | cédula #318 §2 R8 |
+| **X10b → X10a → X10i → X11** | blocked | ~~D-NFSE~~ (✅ corpus 10/09, §0.4) · D1f · D5 · **M2 (agora aresta escrita: conta por unidade, R8)** — regra "não X10b/emissão" **inalterada** (só o dono reverte); D1f (item LC 116, alíquota ISS, `cClassTrib` do 1b) pode virar campo obrigatório do `FiscalProfile` (técnica X6 — dado configurável em vez de espera) — **decisão do dono** | cédula #318 §2 R8; fold 17/09 |
 | **X12** | plan (BRIEF) | X4 ✅ · D3b ✅ | resposta 4 + F-COB-1 (b) |
 | **D3b** | ✅ | — | PR #311 |
 
@@ -255,13 +256,13 @@ era só C11/C12/C6b (BRIEFs). Hoje há **9 unidades executáveis por agente** se
 feature; ADR C8 → parecer; FE-INCR-LALUR PR 2; pedido ao contador (montar). E **2 stops humanos** nomeados
 (forks F-F7-1..5; assinatura do B-4 para o SEED-MY).
 
-**A cadeia crítica não mudou de raiz:** emissão (01/10) ← D-NFSE · D1f · D5 · M2. Nenhuma entrada é de
-agente. R8 tirou o `(inferida)` da aresta M2 → X10i (conta por unidade é agora regra escrita), o que
+**A cadeia crítica não mudou de raiz:** emissão (01/10) ← D1f · D5 · M2 (~~D-NFSE~~ saiu em 17/09 — já
+estava no corpus desde 10/09, §0.4). Nenhuma entrada é de agente; D1f (item LC 116, alíquota ISS, `cClassTrib` do 1b) pode virar campo obrigatório do `FiscalProfile` (técnica X6 — dado configurável em vez de espera) — **decisão do dono**. R8 tirou o `(inferida)` da aresta M2 → X10i (conta por unidade é agora regra escrita), o que
 **aumenta** o peso do M2, não diminui.
 
 **Algoritmo de escolha do próximo nó (mantido, com R6):**
 1. `git fetch origin main` + `merge-base --is-ancestor` para todo nó que for marcar ✅.
-2. Nós abertos com **todas** as entradas ✅ que **não** esperam terceiro (D2/D5/D6/D-NFSE) nem gate humano
+2. Nós abertos com **todas** as entradas ✅ que **não** esperam terceiro (D2/D5/D6) nem gate humano
    (B-4/X2/H1/H2/H3/M2).
 3. **R6:** contábil → **financeiro** → fiscal. Exceção ratificada: X10i sobe pelo prazo de 01/10 **assim que D5
    existir** — não antes.
@@ -324,7 +325,7 @@ arquivos, gates, evidência de "feito", stop humano) está em
   contasse como nó, seria 42/57 — decisão do dono se discordar.
 - Em voo: **#320** (código, CI parcial, sem review), **#321** (docs, BRIEF C11), **#322** (docs, BRIEF C12), **#323** (docs, este fold + índices).
 - Gates humanos abertos e **em branco**: B-4 (executado por referência, não assinado), X2, P4, H1, H1 2ª passada,
-  H2, H3, M2. Dado externo: D1/D1f/D8, D2, D5, D6, D-NFSE.
+  H2, H3, M2. Dado externo: D1/D1f/D8, D2, D5, D6, ~~D-NFSE~~ (corrigido 17/09 — §0.4).
 - **Residuais de código declarados (não são nós):** F10 do #307; `tx?` em `PostingService.reverseEntry` (L1);
   corrida `cancelPayable/cancelReceivable × registerPayment`; F7 (PAYING sem recibo após crash — reconcile não
   repara); 4 MENOR do #313 absorvidos no 3C; itens 16–19 do #316 corrigidos.
