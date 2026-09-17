@@ -300,6 +300,15 @@ arquivos, gates, evidência de "feito", stop humano) está em
   Próximo nó por R6: nenhum em voo — C12 (transcrição ✅, 11 comportamentos) · C8 · FE-LALUR PR 2 `ready` **sem "executa"**;
   `FE-INCR-BANK-SETTLEMENT` sem BRIEF (autorização citável pendente); SEED-MY `blocked` por B-4. Gates humanos e dado
   externo inalterados.
+- **[Sessão 6, 17/09 — docs-only, `85378005` → PR desta sessão]** Pontas não-código fechadas (`PLANO-SESSAO-2026-09-17-pontas-nao-codigo.md`,
+  F-PS-1..5 → a): `FE-INCR-BANK-SETTLEMENT` **tem BRIEF** (4 forks pendentes; não é mais "sem BRIEF"); `FE-INCR-REVIEW` e
+  `FE-INCR-DELIVERY` **têm BRIEF** (4 + 4 forks pendentes) — os três são **crescimento** de F7/C11/C6b (régua 44/57 inalterada);
+  C8 ganha **plano granular** (5 PRs seriais, F-FA14/15 pendentes) — segue `ready` sem "executa"; cédula da entrevista 14/09
+  em `main` com reconciliação (E9/G-6 = única autorização escrita para o XML real; passa a ser citável). **Aresta nova
+  compartilhada:** `GET /api/accounting/data-exchange/jobs` (lista) é insumo de FE-REVIEW, FE-DELIVERY e C8 item 30 — não
+  existe hoje; regra "quem mergear primeiro cria" (F-FE-RV-1 a / F-FA15 a). Achado de FE: `ImportExportPanel` não gera exports
+  com período ⇒ extras do pacote C6b só nascem pela tela após crescimento do painel (BRIEF FE-DELIVERY §6.2). Grafo 09-17
+  **não** aberto: nenhuma aresta de nó mudou (só crescimento + plano).
 
 ### 4.2 Estado ao fim da sessão 3 — 2026-09-16 (fold) — verificado
 
