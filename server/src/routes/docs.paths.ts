@@ -4311,11 +4311,102 @@
  *                 icmsRecuperavelAccountId: { type: string, nullable: true }
  *                 pisCofinsRecuperavelAccountId: { type: string, nullable: true }
  *                 partnerAccountRef: { type: string, nullable: true }
+ *                 codMun: { type: string, nullable: true, description: 'BE-INCR-DFE — IBGE 7 dígitos (cLocEmi)' }
+ *                 inscricaoMunicipal: { type: string, nullable: true }
+ *                 cnae: { type: string, nullable: true }
+ *                 dpsSerie: { type: integer, default: 1, description: 'série da DPS, 1–49999 (RN E0010)' }
+ *                 regEspTrib: { type: integer, default: 0 }
+ *                 regApTribSN: { type: integer, nullable: true, description: 'só SIMPLES — 1|2|3 (leiaute [141])' }
+ *                 issAliquotaBp: { type: integer, nullable: true, description: '5a — só município NÃO conveniado; ≤ 500 (E0595)' }
+ *                 issRetidoTomadorPj: { type: boolean, default: false, description: '5b' }
+ *                 pacoteFatoGerador: { type: string, enum: [CONSUMO, VENDA], default: CONSUMO, description: '5c' }
+ *                 ibsCbsInformar: { type: boolean, description: '5d — default true fora do SIMPLES' }
+ *                 ibsCbsCst: { type: string, nullable: true }
+ *                 ibsCbsClassTrib: { type: string, nullable: true, description: 'prefixo 3 dígitos = CST (E0959)' }
+ *                 pTotTribFedCent: { type: integer, nullable: true, description: 'Lei 12.741 — centésimos de %; obrigatório p/ não-optante (E0713)' }
+ *                 pTotTribEstCent: { type: integer, nullable: true }
+ *                 pTotTribMunCent: { type: integer, nullable: true }
+ *                 pTotTribSNCent: { type: integer, nullable: true, description: 'só SIMPLES' }
+ *                 emissaoForaDoMes: { type: string, enum: [AVISAR, BLOQUEAR], default: AVISAR, description: '5f' }
  *       responses:
- *         '200': { description: 'FiscalProfileView' }
+ *         '200': { description: 'FiscalProfileView (inclui emissao.completo/faltantes/pendingExternalValidation — BE-INCR-DFE item 7)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/service-fiscal-profiles:
+ *     get:
+ *       summary: List the per-service fiscal profiles of a unit (BE-INCR-DFE, nó X10b, F-DFE-6 a)
+ *       description: >-
+ *         One row per serviceRef (id of the `services` DynamicTable row) with the national service
+ *         code (cTribNac — LC 116 list transcribed from Anexo I), NBS, INDOP (Anexo C) and the
+ *         optional place of service. Soft-deleted rows are omitted.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'ServiceFiscalProfileView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/service-fiscal-profiles/{serviceRef}:
+ *     get:
+ *       summary: Read one service fiscal profile
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: serviceRef, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'ServiceFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     put:
+ *       summary: Create or replace a service fiscal profile (idempotent upsert)
+ *       description: >-
+ *         cTribNac must exist in the transcribed national list (6 digits, e.g. 060101 barbearia /
+ *         060201 esteticistas); cIndOp must exist in Anexo C (default 030101). Audited as
+ *         service_fiscal_profile.updated (codes only, no free text).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: serviceRef, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, cTribNac]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 cTribNac: { type: string, description: '6 dígitos — lista nacional (Anexo I)' }
+ *                 cTribMun: { type: string, nullable: true }
+ *                 cNBS: { type: string, nullable: true, description: '9 dígitos (Anexo B) — obrigatório se IBSCBS informado (E0322)' }
+ *                 cIndOp: { type: string, default: '030101' }
+ *                 cLocPrestacao: { type: string, nullable: true, description: 'IBGE 7; null => FiscalProfile.codMun' }
+ *                 xDescServ: { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'ServiceFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     delete:
+ *       summary: Soft-delete a service fiscal profile (rename-on-delete frees the key)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: serviceRef, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'deleted' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/accounting/contacts:
  *     get:

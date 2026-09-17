@@ -4,6 +4,7 @@ import { canonicalizeAuditPayload } from '../../audit/auditCanonical';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { IDocumentAttachmentRepository } from '../../repositories/IDocumentAttachmentRepository';
 import type { IJournalEntryRepository } from '../../repositories/IJournalEntryRepository';
+import type { IFiscalDocumentRepository } from '../../repositories/IFiscalDocumentRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { AuditService } from '../AuditService';
 import type { DocumentAttachment, Prisma } from 'generated/prisma';
@@ -48,6 +49,8 @@ function buildService(
     repo?: Partial<IDocumentAttachmentRepository>;
     policy?: Partial<IAccountingPolicy>;
     entryFound?: boolean;
+    fiscalDocFound?: boolean;
+    attemptFound?: boolean;
   } = {},
 ) {
   const runTransaction = jest.fn(async (fn: (tx: Prisma.TransactionClient) => Promise<unknown>) =>
@@ -79,8 +82,14 @@ function buildService(
     findById: jest.fn(async () => (overrides.entryFound === false ? null : makeRow())),
   } as unknown as jest.Mocked<IJournalEntryRepository>;
 
-  const svc = new DocumentAttachmentService(repository, policy, audit, journalEntryRepo);
-  return { svc, repository, policy, append, journalEntryRepo };
+  // F-DFE-19 (b): alvo FISCAL_DOCUMENT / FISCAL_DOCUMENT_ATTEMPT é gate por targetType, sem FK.
+  const fiscalDocumentRepo = {
+    findById: jest.fn(async () => (overrides.fiscalDocFound === false ? null : { id: 'fd-1' })),
+    findAttemptById: jest.fn(async () => (overrides.attemptFound === false ? null : { id: 'fda-1' })),
+  } as unknown as jest.Mocked<IFiscalDocumentRepository>;
+
+  const svc = new DocumentAttachmentService(repository, policy, audit, journalEntryRepo, fiscalDocumentRepo);
+  return { svc, repository, policy, append, journalEntryRepo, fiscalDocumentRepo };
 }
 
 describe('DocumentAttachmentService', () => {
@@ -125,6 +134,8 @@ describe('DocumentAttachmentService', () => {
       expect(auditArg.eventType).toBe('attachment.uploaded');
       expect(auditArg.payload).toEqual({
         journalEntryId: 'entry-1',
+        targetType: 'JOURNAL_ENTRY',
+        targetId: 'entry-1',
         mimeType: 'application/pdf',
         sizeBytes: String(buffer.length),
         sha256: expected,
@@ -260,6 +271,47 @@ describe('DocumentAttachmentService', () => {
         ForbiddenError,
       );
     });
+  });
+});
+
+// BE-INCR-DFE F-DFE-19 → (b): DocumentAttachment polimórfico sem FK — a existência do alvo no escopo é
+// gate do serviço por targetType (o gate de JOURNAL_ENTRY já era assim; agora há dois alvos novos).
+describe('DocumentAttachmentService — alvos FISCAL_DOCUMENT / FISCAL_DOCUMENT_ATTEMPT (F-DFE-19 b)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('FISCAL_DOCUMENT: consulta o repositório de documento fiscal (não o de lançamento) e anexa; audit leva targetType/targetId e journalEntryId vazio', async () => {
+    mockedStorage.saveFile.mockResolvedValue({ storageKey: 'u1/unit-1/fd-1/x.xml', sanitizedName: 'x.xml' });
+    const { svc, journalEntryRepo, fiscalDocumentRepo, append } = buildService();
+    await svc.upload(scope, { targetType: 'FISCAL_DOCUMENT', targetId: 'fd-1', fileName: 'x.xml', mimeType: 'application/xml', buffer: Buffer.from('<x/>') });
+    expect(fiscalDocumentRepo.findById).toHaveBeenCalledWith(scope, 'fd-1');
+    expect(journalEntryRepo.findById).not.toHaveBeenCalled();
+    const payload = append.mock.calls[0][2].payload as Record<string, string>;
+    expect(payload).toMatchObject({ targetType: 'FISCAL_DOCUMENT', targetId: 'fd-1', journalEntryId: '' });
+  });
+
+  it('FISCAL_DOCUMENT ausente/cross-tenant → NotFoundError e NADA é escrito em disco', async () => {
+    const { svc, repository } = buildService({ fiscalDocFound: false });
+    await expect(
+      svc.upload(scope, { targetType: 'FISCAL_DOCUMENT', targetId: 'fd-x', fileName: 'x.xml', mimeType: 'application/xml', buffer: Buffer.from('<x/>') }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+    expect(mockedStorage.saveFile).not.toHaveBeenCalled();
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('FISCAL_DOCUMENT_ATTEMPT: gate pela tentativa; ausente → NotFoundError', async () => {
+    mockedStorage.saveFile.mockResolvedValue({ storageKey: 'u1/unit-1/fda-1/rej.xml', sanitizedName: 'rej.xml' });
+    const ok = buildService();
+    await ok.svc.upload(scope, { targetType: 'FISCAL_DOCUMENT_ATTEMPT', targetId: 'fda-1', fileName: 'rej.xml', mimeType: 'application/xml', buffer: Buffer.from('<r/>') });
+    expect(ok.fiscalDocumentRepo.findAttemptById).toHaveBeenCalledWith(scope, 'fda-1');
+    const missing = buildService({ attemptFound: false });
+    await expect(
+      missing.svc.upload(scope, { targetType: 'FISCAL_DOCUMENT_ATTEMPT', targetId: 'fda-x', fileName: 'rej.xml', mimeType: 'application/xml', buffer: Buffer.from('<r/>') }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('allowlist: targetType/targetId sobrevivem à canonicalização de attachment.uploaded (na mesma mudança)', () => {
+    const json = canonicalizeAuditPayload('attachment.uploaded', { journalEntryId: '', targetType: 'FISCAL_DOCUMENT', targetId: 'fd-1', mimeType: 'application/xml', sizeBytes: '4', sha256: 'a'.repeat(64) });
+    expect(JSON.parse(json)).toMatchObject({ targetType: 'FISCAL_DOCUMENT', targetId: 'fd-1' });
   });
 });
 

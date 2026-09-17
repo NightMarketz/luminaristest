@@ -1619,6 +1619,170 @@
               "type": "null"
             }
           ]
+        },
+        "codMun": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inscricaoMunicipal": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 15
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cnae": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dpsSerie": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 49999
+        },
+        "regEspTrib": {
+          "default": 0,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "regApTribSN": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issAliquotaBp": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issRetidoTomadorPj": {
+          "default": false,
+          "type": "boolean"
+        },
+        "pacoteFatoGerador": {
+          "default": "CONSUMO",
+          "type": "string",
+          "enum": [
+            "CONSUMO",
+            "VENDA"
+          ]
+        },
+        "ibsCbsInformar": {
+          "type": "boolean"
+        },
+        "ibsCbsCst": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ibsCbsClassTrib": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribFedCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribEstCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribMunCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pTotTribSNCent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "emissaoForaDoMes": {
+          "default": "AVISAR",
+          "type": "string",
+          "enum": [
+            "AVISAR",
+            "BLOQUEAR"
+          ]
         }
       },
       "required": [
@@ -4659,6 +4823,106 @@
         "unitId",
         "fromVersion",
         "toVersion"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "ServiceFiscalProfileDto.ts": {
+    "ServiceFiscalProfileScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceFiscalProfileParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "serviceRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "serviceRef"
+      ],
+      "additionalProperties": false
+    },
+    "UpsertServiceFiscalProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cTribNac": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "cTribMun": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{3}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cNBS": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cIndOp": {
+          "default": "030101",
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        },
+        "cLocPrestacao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "xDescServ": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "cTribNac"
       ],
       "additionalProperties": false
     }

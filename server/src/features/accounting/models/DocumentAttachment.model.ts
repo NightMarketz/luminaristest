@@ -1,14 +1,17 @@
 /**
  * Target entity types that can carry documentary evidence (BE-INCR-5).
- * Only JOURNAL_ENTRY this increment; broadening (period, reconciliation…) is INCR-6+.
+ * BE-INCR-DFE F-DFE-19 → (b) (2026-09-17): FISCAL_DOCUMENT (XML/PDF autorizado) e
+ * FISCAL_DOCUMENT_ATTEMPT (retorno de rejeição/homologação por tentativa). A FK a
+ * journal_entries saiu do schema; a existência do alvo no escopo é gate do serviço.
  */
-export type DocumentAttachmentTargetType = 'JOURNAL_ENTRY';
+export const DOCUMENT_ATTACHMENT_TARGET_TYPES = ['JOURNAL_ENTRY', 'FISCAL_DOCUMENT', 'FISCAL_DOCUMENT_ATTEMPT'] as const;
+export type DocumentAttachmentTargetType = (typeof DOCUMENT_ATTACHMENT_TARGET_TYPES)[number];
 
 /**
  * Core accounting document-attachment entity within the application domain.
  * Decouples business logic from Prisma. Mirrors the DocumentAttachment Prisma model.
- * First-class (NOT CrmAttachment): two-level tenancy (userId + unitId), a real FK to
- * JournalEntry, a sha256 integrity checksum, and audit-in-tx.
+ * First-class (NOT CrmAttachment): two-level tenancy (userId + unitId), a scoped
+ * (targetType, targetId) target without FK (F-DFE-19 b), a sha256 checksum, and audit-in-tx.
  */
 export interface IDocumentAttachment {
   /** Unique identifier (cuid). */
@@ -17,9 +20,9 @@ export interface IDocumentAttachment {
   userId: string;
   /** Business unit (scoped string, not a FK). */
   unitId: string;
-  /** Polymorphic-in-intent target type (FK-tied to JournalEntry this increment). */
+  /** Polymorphic target type (DocumentAttachmentTargetType). */
   targetType: string;
-  /** journal_entries.id the evidence is attached to. */
+  /** journal_entries.id | fiscal_documents.id | fiscal_document_attempts.id — plain string, no FK. */
   targetId: string;
   /** Sanitized display name (what is actually on disk). */
   fileName: string;

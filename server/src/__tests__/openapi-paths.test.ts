@@ -68,7 +68,11 @@ const { options } = require('../../scripts/generate-openapi');
 //    props/enum novos em paths JÁ contados — não mexem no path-count.
 // +1 (higiene docs/spec 17/09, Incremento G): GET /api/package-balances — rota montada desde o G
 //    sem bloco de path; saiu de KNOWN_UNDOCUMENTED em route-spec-wiring (189 → 190, 225 → 226 ops).
-const BASELINE = 190;
+// +2 (BE-INCR-DFE PR-1, nó X10b, BRIEF item 8/38): /api/accounting/service-fiscal-profiles (GET) e
+//    /api/accounting/service-fiscal-profiles/{serviceRef} (GET+PUT+DELETE) — 2 PATHS e 4 OPERAÇÕES
+//    (190 → 192, 226 → 230, medido com docs:generate após o rebase sobre #347). Os campos DFE do PUT
+//    fiscal-profile são props novas em path JÁ contado.
+const BASELINE = 192;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

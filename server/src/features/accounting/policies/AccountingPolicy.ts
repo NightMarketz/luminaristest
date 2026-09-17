@@ -139,6 +139,23 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canClosePeriod(scope);
   }
 
+  // BE-INCR-DFE (nó X10b, BRIEF item 5)
+  canManageServiceFiscalProfile(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
+  canReadFiscalDocument(scope: AccountingScope): boolean {
+    return this.canRead(scope);
+  }
+
+  canEmitFiscalDocument(scope: AccountingScope): boolean {
+    return this.canManage(scope);
+  }
+
+  canCancelFiscalDocument(scope: AccountingScope): boolean {
+    return this.canManage(scope);
+  }
+
   // BE-INCR-REVIEW-LAYER (nó C11, F-C11-1 → a)
   canReviewAccounting(scope: AccountingScope): boolean {
     return this.canManage(scope);

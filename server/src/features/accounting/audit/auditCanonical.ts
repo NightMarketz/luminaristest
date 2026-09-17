@@ -35,9 +35,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'period.hard_closed': ['year', 'month', 'fromStatus', 'toStatus', 'reason'],
   'period.reopened':    ['year', 'month', 'fromStatus', 'toStatus', 'reason'],
   // BE-INCR-5 — document attachments. No file path, filename, or raw content (PII-safe).
-  'attachment.uploaded':   ['journalEntryId', 'mimeType', 'sizeBytes', 'sha256'],
-  'attachment.deleted':    ['journalEntryId', 'mimeType', 'sizeBytes', 'sha256', 'deletedById'],
-  'attachment.downloaded': ['journalEntryId', 'mimeType', 'sizeBytes', 'sha256'],
+  'attachment.uploaded':   ['journalEntryId', 'targetType', 'targetId', 'mimeType', 'sizeBytes', 'sha256'], // F-DFE-19 b: alvo polimórfico (journalEntryId = '' fora de JOURNAL_ENTRY)
+  'attachment.deleted':    ['journalEntryId', 'targetType', 'targetId', 'mimeType', 'sizeBytes', 'sha256', 'deletedById'],
+  'attachment.downloaded': ['journalEntryId', 'targetType', 'targetId', 'mimeType', 'sizeBytes', 'sha256'],
   // BE-INCR-6 — data exchange (CSV/XLSX import/export). Counts + hash only; never file
   // content, filenames, or account balances (PII-safe).
   'data_exchange.import_uploaded':     ['jobId', 'kind', 'direction', 'sha256', 'totalRows', 'validRows', 'invalidRows'],
@@ -135,7 +135,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'bank_settlement.rejected':  ['itemId', 'reason'],
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
-  'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId'],
+  'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId',
+    // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
+    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
+  // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
+  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
+  'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que
