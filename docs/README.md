@@ -13,7 +13,7 @@
 
 | Papel | Leia nesta ordem |
 |---|---|
-| **Dono** (decidir / assinar) | [`accounting/PROXIMOS-PASSOS-2026-09-14.md`](accounting/PROXIMOS-PASSOS-2026-09-14.md) (o que está em voo e onde há stop humano) → [`accounting/GRAFO-DEPENDENCIAS-2026-09-14.md`](accounting/GRAFO-DEPENDENCIAS-2026-09-14.md) §4 → runbooks em branco (`accounting/RUNBOOK-*.md`) → [`operating-manual/PLAYBOOK.md`](operating-manual/PLAYBOOK.md) |
+| **Dono** (decidir / assinar) | [`accounting/PROXIMOS-PASSOS-2026-09-17.md`](accounting/PROXIMOS-PASSOS-2026-09-17.md) (o que está em voo e onde há stop humano) → [`accounting/GRAFO-DEPENDENCIAS-2026-09-14.md`](accounting/GRAFO-DEPENDENCIAS-2026-09-14.md) §4 → runbooks em branco (`accounting/RUNBOOK-*.md`) → [`operating-manual/PLAYBOOK.md`](operating-manual/PLAYBOOK.md) |
 | **Orquestrador de agente** | `CLAUDE.md` (raiz) → [`accounting/ACCOUNTING-MASTER-MAP.md`](accounting/ACCOUNTING-MASTER-MAP.md) §1/§4 (travadas/rejeitadas) → grafo 14/09 → plano 14/09 §Detalhamento → [`operating-manual/GAP-MAP.md`](operating-manual/GAP-MAP.md) |
 | **Sessão de feature / correção** | BRIEF do nó (índice em `accounting/README.md`) → ADR citado no BRIEF ([`adr/INDEX.md`](adr/INDEX.md)) → [`claude-skills/GENERATION_CONTRACTS.md`](claude-skills/GENERATION_CONTRACTS.md) → `server/CLAUDE.md` / `my-app/CLAUDE.md` |
 | **Revisor independente** | PR + BRIEF + [`operating-manual/CONTRATO-DE-RETORNO.md`](operating-manual/CONTRATO-DE-RETORNO.md) + [`operating-manual/REPORTE-HUMANO-FORMAT.md`](operating-manual/REPORTE-HUMANO-FORMAT.md) |
@@ -25,7 +25,7 @@
 |---|---|---|
 | Roadmap contábil (nós, estados, régua) | `accounting/ACCOUNTING-MASTER-MAP.md` | fold no topo a cada merge; §5.1 fila; §7.1 régua **41/57** |
 | Dependências e próximo nó | `accounting/GRAFO-DEPENDENCIAS-2026-09-14.md` | supersede 09-11 e 09-07 |
-| Ordem de execução + detalhamento por passo | `accounting/PROXIMOS-PASSOS-2026-09-14.md` | supersede 09-02/09-01/08-31/08-28 |
+| Ordem de execução + detalhamento por passo | `accounting/PROXIMOS-PASSOS-2026-09-17.md` | supersede 09-14 (11/12 ✅) /09-02/09-01/08-31/08-28 |
 | Decisões do dono (citáveis) | `accounting/CEDULA-DECISAO-*.md` (7) | a de **14/09 forks-ratificações prevalece** onde diverge da de 14/09 gates-humanos |
 | Decisões de arquitetura | `adr/` (42 ADRs + pareceres/ratificações, [`adr/INDEX.md`](adr/INDEX.md)) | ADR emendado ganha bloco `EMENDA <data>` no corpo, nunca arquivo novo |
 | Gates humanos | `accounting/RUNBOOK-{B4,X2,H1,H2,H2-WIZARD,H3,M2}.md` | **todos em branco** (0 desfecho marcado em 14/09); formato em `operating-manual/RUNBOOK-FORMAT.md` |

@@ -39,6 +39,15 @@ A coluna "Consequência" transcreve o que a opção **fecha**, como foi apresent
 | **F-C12-3** | Formato de `IND_CRC` | **(a)** máscara CFC `UF-NNNNNN/O-D` igual à do contato (#305) | = | 400 nomeado com o formato esperado; risco aceito: inscrição legítima fora do padrão CFC é rejeitada |
 | **F-C12-4** | `signers[].contactId` no DTO | **(a)** sim, resolvido no serviço por `contactTo*Signer` | = | Uma máscara só (BE); FE não duplica |
 
+**[Adendo, sessão 2026-09-16 (tarde) — 3 forks nascidos da transcrição J930/0930, 3/3 na recomendação
+(`AskUserQuestion`, 1 rodada); fonte: `BE-INCR-SPED-IDENTITY-MASKS-transcription-J930-0930.md` §5]**
+
+| Ref | Pergunta | Decisão | Rec. | Consequência |
+|---|---|---|---|---|
+| **F-C12-5** | Derivação do campo 04 para `900` (tabela imprime "Contador/Contabilista"; `REGRA_TABELA_ASSINANTE_DESC` exige "Contador" ou "Contabilista") | **(i)** const transcrita literal + exceção de emissão `900 → 'Contador'` | = | Const verificável linha a linha; 1 linha de exceção nomeada; PVA (H1 2ª) é o oráculo |
+| **F-C12-6** | CPF-11 quando `900` também na ECD (o manual ECD só tem a regra de assinatura 2, p. 198; a ECF tem `REGRA_CONTADOR_CPF`) | **(a)** sim — mesma regra nos dois DTOs | = | Item 6 da ECD = CPF-11 + `IND_CRC` + `EMAIL` + `FONE` + `UF_CRC` obrigatórios (p. 202) |
+| **F-C12-7** | `REGRA_QUALIF_INV_RESP_LEGAL` + `REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE` (erro no PVA, ausentes no `superRefine`) | **(a)** entram como item 11 do C12 | = | Mesmo `superRefine` que o item 6 reescreve; C12 sobe a 11 comportamentos |
+
 ### C6b — `BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md` §3 (5/5)
 
 | Ref | Pergunta | Decisão | Rec. | Consequência |
@@ -69,7 +78,7 @@ A coluna "Consequência" transcreve o que a opção **fecha**, como foi apresent
 | Nó | Estado antes | Estado depois | Próxima ação | Precisa de |
 |---|---|---|---|---|
 | **C11** | `plan` (6 forks) | ~~`ready`~~ **✅ `done` #334 `a2c974cb`** ("executa C11" dado na mesma sessão; review FAIL B1 → fix → PASS) | — | — |
-| **C12** | `plan` (4 forks + transcrição) | **`ready` após transcrição** | transcrição J930 (ECD L9) + 0930 (ECF L12) por script (precedente `transcrever-ecf-lmn.mjs`) → `sessao-feature` | transcrição = trabalho de agente sem fork; feature = "executa" |
+| **C12** | `plan` (4 forks + transcrição) | ~~`ready` após transcrição~~ **`ready`** — transcrição ✅ 16/09 (`…-transcription-J930-0930.md`, sha256 conferidos) + F-C12-5..7 ratificados (adendo acima) | `sessao-feature` (11 comportamentos) | "executa" do dono |
 | **C6b** | `plan` (5 forks) | **`ready`** (~~serial depois de C11~~ — C11 mergeado #334; o gate F-C11-3 já está em `AccountingDeliveryService`, C6b o herda) | `sessao-feature` | "executa" do dono |
 | **C8** | `plan` (3 forks) | **`ready`** | `sessao-feature` (37 comportamentos; ADR C8 Proposed → Accepted no fold) | "executa" do dono |
 | **SEED-MY** | `plan` (2 forks) + gate | forks fechados; **segue bloqueado por B-4** | `job-generator` só após assinatura | **B-4 assinado** (gate humano) |
