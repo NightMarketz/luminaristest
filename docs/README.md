@@ -23,7 +23,7 @@
 
 | Assunto | Doc vigente | Sucessão / observação |
 |---|---|---|
-| Roadmap contábil (nós, estados, régua) | `accounting/ACCOUNTING-MASTER-MAP.md` | fold no topo a cada merge; §5.1 fila; §7.1 régua **41/57** |
+| Roadmap contábil (nós, estados, régua) | `accounting/ACCOUNTING-MASTER-MAP.md` | fold no topo a cada merge; §5.1 fila; §7.1 régua **44/57** (fold 17/09) |
 | Dependências e próximo nó | `accounting/GRAFO-DEPENDENCIAS-2026-09-14.md` | supersede 09-11 e 09-07 |
 | Ordem de execução + detalhamento por passo | `accounting/PROXIMOS-PASSOS-2026-09-17.md` | supersede 09-14 (11/12 ✅) /09-02/09-01/08-31/08-28 |
 | Decisões do dono (citáveis) | `accounting/CEDULA-DECISAO-*.md` (7) | a de **14/09 forks-ratificações prevalece** onde diverge da de 14/09 gates-humanos |
@@ -69,4 +69,4 @@
 - **Runbook** = evidência colada, desfecho em 3 estados, assinatura humana. Agente prepara em branco.
 - **Fold** = parágrafo no topo do master map + linhas de §5.1/§7.1 após cada merge; o grafo ganha sucessor
   datado quando muda estado de nó.
-- **Régua** = 1 nó = 1 ciclo SDD; nó que só cresce não vira nó novo (regra 2 do §7.1). Hoje **41/57**.
+- **Régua** = 1 nó = 1 ciclo SDD; nó que só cresce não vira nó novo (regra 2 do §7.1). Hoje **44/57** (fold 17/09).
