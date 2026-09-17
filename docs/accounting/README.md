@@ -28,6 +28,8 @@
 | 09-14 | [`CEDULA-DECISAO-2026-09-14-gates-humanos.md`](CEDULA-DECISAO-2026-09-14-gates-humanos.md) (#318) | 16/16 respostas; **superada em R6/R5/#315/R8-texto** pela irmã abaixo |
 | 09-14 | [`CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md`](CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md) (#319) | R5..R10, F-X6-1..6, SEED-MY/X4-14/#315/C8 — **prevalece onde diverge** |
 | 09-16 | [`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`](CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md) | 20/20 forks C11·C12·C6b·C8·SEED-MY ratificados (todos na recomendação); C11 ✅ #334 na mesma sessão; C12/C6b/C8 `ready`, sem "executa" |
+| 09-14 | [`CEDULA-DECISAO-2026-09-14-entrevista-gates-humanos.md`](CEDULA-DECISAO-2026-09-14-entrevista-gates-humanos.md) (entrou em `main` 17/09) | entrevista dos 7 gates humanos (G-1..G-12) + **§0 Reconciliação 17/09**: 2 superadas, 1 cumprida, 9 vivas; **única autorização escrita do E9** (XML real via `akretion/nfelib`, G-6) |
+| 09-17 | [`PLANO-SESSAO-2026-09-17-pontas-nao-codigo.md`](PLANO-SESSAO-2026-09-17-pontas-nao-codigo.md) | sessão docs-only (F-PS-1..5 → a): 3 BRIEFs FE + plano C8 + cédula + fold em 1 PR |
 
 ## 3. BRIEFs por nó — backend
 
@@ -64,7 +66,7 @@
 | **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) · [`…-execution-plan.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md) | ✅ **MERGEADO 17/09** — PR-1 #337 · PR-2 #338 · PR-3 #340 `373d00d4`; contábil 19/22 | #324 · #333 · #336 · #337 · #338 · #340 |
 | **SEED-MY** seed multi-exercício | [`SEED-MULTI-EXERCICIO-brief.md`](SEED-MULTI-EXERCICIO-brief.md) | ✅ BRIEF · bloqueado até B-4 | #325 |
 | **X6** custo D3 por regime | [`BE-INCR-NFE-COST-REGIME-brief.md`](BE-INCR-NFE-COST-REGIME-brief.md) | ✅ (emenda 15/09 + ERRATA) | #327 · #328 |
-| **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) | ✅ ADR+BRIEF · F-FA10/12/13 ao dono; execução não autorizada | #330 |
+| **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) · [`…-execution-plan.md`](BE-INCR-FIXED-ASSETS-execution-plan.md) | 📐 ADR+BRIEF · F-FA10/12/13 ✅ 16/09 · **plano granular 17/09 (5 PRs; F-FA14/15 ⏸)**; execução não autorizada | #330 · #333 |
 | **X12** · **X7/X8/X9** · **X10b** | — | ⬜ sem BRIEF (ver grafo §3) | — |
 | Ondas paralelas de 08/2026 | [`BRIEFS-WAVE1.md`](BRIEFS-WAVE1.md) · [`BRIEFS-WAVE2-BACKEND.md`](BRIEFS-WAVE2-BACKEND.md) · [`BRIEFS-WAVE2-SCHEMA.md`](BRIEFS-WAVE2-SCHEMA.md) · [`BRIEFS-WAVE2-FE.md`](BRIEFS-WAVE2-FE.md) | ✅ 📜 (estado de fork lá pode estar desatualizado — o master map vence) | cédula 08-31; `pr-bodies/` |
 
@@ -83,6 +85,9 @@
 | Compliance 2 (ECF Real + import catálogo) | [`FE-INCR-COMPLIANCE-2-brief.md`](FE-INCR-COMPLIANCE-2-brief.md) | ✅ | #295 |
 | Caixa projetado | [`FE-INCR-CASH-FORECAST-brief.md`](FE-INCR-CASH-FORECAST-brief.md) | ✅ | #298 |
 | e-Lalur/e-Lacs (aba Compliance) | [`FE-INCR-LALUR-brief.md`](FE-INCR-LALUR-brief.md) | ✅ PR 1 (#315); **PR 2** (M410 + fechar + diagnóstico) `ready` | #315 |
+| Baixas por retorno bancário (sub-aba Conciliação, F7) | [`FE-INCR-BANK-SETTLEMENT-brief.md`](FE-INCR-BANK-SETTLEMENT-brief.md) | ⏸ BRIEF 17/09 · F-FE-BS-1..4 pendentes | sessão 6 |
+| Revisão profissional (aba Compliance, C11) | [`FE-INCR-REVIEW-brief.md`](FE-INCR-REVIEW-brief.md) | ⏸ BRIEF 17/09 · F-FE-RV-1..4 pendentes (RV-1 = `GET /data-exchange/jobs`, insumo comum) | sessão 6 |
+| Entrega ao contador (aba Compliance, C6/C6b) | [`FE-INCR-DELIVERY-brief.md`](FE-INCR-DELIVERY-brief.md) | ⏸ BRIEF 17/09 · F-FE-DL-1..4 pendentes; `files[].kind` = `ExportKind` (contrato) | sessão 6 |
 
 ## 5. Gates humanos — runbooks (todos 🧑 em branco em 14/09; `grep "^- \[x\]"` = 0)
 

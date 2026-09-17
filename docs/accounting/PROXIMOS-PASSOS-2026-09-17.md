@@ -63,15 +63,17 @@ runbook em branco, nunca preencha.
 | 2 | **C6b PR-3** ✅ #340 `373d00d4` | contábil | `sessao-feature` | Passos 11–14: `AccountingDeliveryItem` + `packageProfile` (1 migração, 2 tabelas, prólogo `IF NOT EXISTS`), manifesto N-ário, backfill, extras; 14 arquivos, ~20 casos + `smoke:migration` | PR + review + merge; **C6b `done`** | "executa C6b" 16/09 | 🔄 **#340** `71b87c63` (review independente em voo; CI server pending 17/09) |
 | 3 | **Docs C12 + GAP-MAP + este doc** | docs | `sessao-integracao` docs (PR docs-only) | branch `claude/pos-c6b-queue-blockers-35f6f9`: transcrição J930/0930, BRIEF C12 (item 11, F-C12-5..7), adendo da cédula 16/09, GAP-MAP l.39 `[FECHADO #267]`, este doc | merge; C12 `ready` citável em `main` | dono 17/09 ("faz os dois") | 🔄 (este worktree) |
 | 4 | **C12** máscaras de identidade no SPED | contábil | `sessao-feature` | BRIEF itens 1–11; write-set = `SpedEcdDto/SpedEcfDto/SpedEcfRealDto`, const nova `models/spedQualifAssinante.ts`, serviço de geração (resolução de `contactId`), snapshots; **disjunto do C6b** (PAR-001) — pode correr em worktree paralelo ao passo 2 se o dono autorizar 2 sessões | PR + review + merge; contábil 18→19/22 | **falta "executa"** | ⬜ [H] |
-| 5 | **C8** imobilizado + depreciação | contábil | `sessao-feature` | 37 comportamentos; ADR Proposed → Accepted no PR de código; 2 txs (`postentry-tx-raiz-subrazao-2-commits`); J801/J932; quota cumulativa; Anexo III do corpus (chave = ordinal da fonte) | PR(s) + review + merge; contábil +1 | **falta "executa"** | ⬜ [H] |
+| 5 | **C8** imobilizado + depreciação | contábil | `sessao-feature` | 37 comportamentos; ADR Proposed → Accepted no PR de código; 2 txs (`postentry-tx-raiz-subrazao-2-commits`); J801/J932; quota cumulativa; Anexo III do corpus (chave = ordinal da fonte) | PR(s) + review + merge; contábil +1 | **falta "executa"** | ⬜ [H] — **5.2 ✅ plano granular 17/09** (`BE-INCR-FIXED-ASSETS-execution-plan.md`, 5 PRs; F-FA14/15 [H]); 5.3 ✅ sha no plano (arquivo **não em disco**: A1) |
 | 6 | **FE-INCR-LALUR PR 2** (M410 + fechar trimestre + diagnóstico na tela) | contábil (crescimento X4) | `sessao-feature` | BRIEF FE-LALUR §3; `withAuth` ⇒ verificar contra build de produção; vitest com shim `React` global | PR + review + merge; numerador inalterado | **falta "executa"** | ⬜ [H] |
-| 7 | **FE-INCR-BANK-SETTLEMENT** (tela do F7) | financeiro (crescimento F7) | `sessao-planejamento` | insumos: `BE-INCR-BANK-SETTLEMENT-brief.md`, 5 rotas do #326, aba Conciliação existente (reuse canônico: GenericTable/Modal/StandardPagination) | BRIEF + forks PENDENTES | nomeado no fold 16/09 (§4.2 do grafo); **BRIEF exige autorização citável** — o fold nomeia, não autoriza → **[H] confirmar antes de abrir** | ⬜ [H] |
+| 7 | **FE-INCR-BANK-SETTLEMENT** (tela do F7) | financeiro (crescimento F7) | `sessao-planejamento` | insumos: `BE-INCR-BANK-SETTLEMENT-brief.md`, 5 rotas do #326, aba Conciliação existente (reuse canônico: GenericTable/Modal/StandardPagination) | BRIEF + forks PENDENTES | dono 17/09 (`PLANO-SESSAO-2026-09-17-pontas-nao-codigo.md`, F-PS-1 → a) | ✅ **BRIEF 17/09 (sessão 6)** — `FE-INCR-BANK-SETTLEMENT-brief.md`, F-FE-BS-1..4 [H] |
 | 8 | **SEED-MY** | pré-gate | `job-generator` | BRIEF ✅; forks ✅ (F-SEED-2 a · F-SEED-3 b) | seed 2025+2026; `RUNBOOK-H1` P0 | **B-4 assinado** (`RUNBOOK-B4`: 0 `[x]` hoje) | ⬜ [H] gate |
 | 9 | **Fold** | docs | `sessao-integracao` docs | master map §5.1/§7.1 + grafo §4.2 + este doc (coluna Estado) após cada merge de código | régua atualizada | — | contínuo |
 
-Fora da régua e sem fila própria (só quando o dono chamar): `FE-INCR-REVIEW` (aba do C11),
-`FE-INCR-FIXED-ASSETS` (tela do C8), `FE-INCR-DELIVERY` (consome C6b — o plano §5.1 já avisa a quebra de
-`files[].kind`), `FE-INCR-SPED-SIGNERS` (combobox de qualificação, BRIEF C12 §6.3 — rota nova).
+Fora da régua e sem fila própria (só quando o dono chamar): `FE-INCR-REVIEW` (aba do C11) — **✅ BRIEF 17/09 sessão 6,
+F-FE-RV-1..4 [H]**; `FE-INCR-DELIVERY` (consome C6b; `files[].kind` = `ExportKind` **registrado como contrato**) — **✅ BRIEF
+17/09 sessão 6, F-FE-DL-1..4 [H]**; `FE-INCR-FIXED-ASSETS` (tela do C8) e `FE-INCR-SPED-SIGNERS` (combobox de qualificação,
+BRIEF C12 §6.3 — rota nova) **esperam o merge do BE** (F-PS-4 → a). **Insumo comum dos 3 BRIEFs de FE + C8 item 30:**
+`GET /api/accounting/data-exchange/jobs` (lista) — não existe; quem mergear primeiro cria (F-FE-RV-1 a / F-FA15 a).
 
 **Cadeia crítica (inalterada desde 11/09):** emissão 01/10 ← D-NFSE · D1f · D5 · **M2**. Nenhum passo desta
 tabela a move. Gates humanos abertos e **em branco** (0 checkbox nos 5 runbooks, verificado 17/09): B-4 →
@@ -150,8 +152,8 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 | Sub | O quê | Comando / evidência | Estado |
 |---|---|---|---|
 | 5.1 | **[H] "executa C8"** — o ADR vai a Accepted no PR de código | citação do dono | [H] |
-| 5.2 | Fatiamento: o BRIEF tem 37 comportamentos — a `sessao-feature` propõe PRs seriais por bloco (modelo+migração+Anexo III seed → aquisição/baixa → depreciação/quota → ECD J801/J932 → import NF-e modo 4) **antes** de codar; fatiamento é plano, não fork | plano granular (precedente C6b #336) | ⬜ |
-| 5.3 | Anexo III: chave = ordinal da fonte; conferir redação vigente + `<STRIKE>` (`tabela-transcrita-de-lei-conferir-redacao-vigente`) | transcrição com sha256 do `43557` | ⬜ |
+| 5.2 | Fatiamento: o BRIEF tem 37 comportamentos — a `sessao-feature` propõe PRs seriais por bloco (modelo+migração+Anexo III seed → aquisição/baixa → depreciação/quota → ECD J801/J932 → import NF-e modo 4) **antes** de codar; fatiamento é plano, não fork | plano granular (precedente C6b #336) | ✅ `BE-INCR-FIXED-ASSETS-execution-plan.md` (17/09 sessão 6): PR-1 schema+seed · PR-2 ativos/baixa · PR-3 depreciação+Parte B · PR-4 retificação/J801/J932 · PR-5 NF-e modo 4; F-FA14 (migração única) / F-FA15 (lista de jobs) [H] |
+| 5.3 | Anexo III: chave = ordinal da fonte; conferir redação vigente + `<STRIKE>` (`tabela-transcrita-de-lei-conferir-redacao-vigente`) | transcrição com sha256 do `43557` | ✅ sha `d526ac53071a` (MANIFEST:80) citado no plano; **arquivo não em disco** num worktree novo (`*-anexos/` gitignored) — plano PR-1 Passo 1 baixa e assere o sha |
 
 ### Passo 6 — FE-INCR-LALUR PR 2 ⬜ [H]
 
@@ -164,8 +166,8 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 
 | Sub | O quê | Comando / evidência | Estado |
 |---|---|---|---|
-| 7.1 | **[H] autorização citável para o BRIEF** — o fold 16/09 só **nomeou** o item (grafo §4.2, contagem = crescimento do F7); sem citação, `sessao-planejamento` recusa | citação do dono | [H] |
-| 7.2 | `sessao-planejamento`: comportamentos = scan → candidatura → confirm/reject → encargo (400 nomeado até o contador, BRIEF F7 §5) na aba Conciliação; forks previsíveis: aba própria × sub-aba · confirmar em lote × um a um | BRIEF + forks PENDENTES | ⬜ |
+| 7.1 | **[H] autorização citável para o BRIEF** — o fold 16/09 só **nomeou** o item (grafo §4.2, contagem = crescimento do F7); sem citação, `sessao-planejamento` recusa | citação do dono | ✅ dono 17/09 (F-PS-1 → a) |
+| 7.2 | `sessao-planejamento`: comportamentos = scan → candidatura → confirm/reject → encargo (400 nomeado até o contador, BRIEF F7 §5) na aba Conciliação; forks previsíveis: aba própria × sub-aba · confirmar em lote × um a um | BRIEF + forks PENDENTES | ✅ `FE-INCR-BANK-SETTLEMENT-brief.md` (15 comportamentos; F-FE-BS-1 sub-aba · BS-2 um a um · BS-3 default PENDING · BS-4 encargo = 400 do BE) |
 
 ### Passo 8 — SEED-MY ⬜ [H] gate
 
