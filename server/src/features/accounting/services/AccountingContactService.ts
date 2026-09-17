@@ -181,4 +181,44 @@ export class AccountingContactService {
       return archived;
     });
   }
+
+  // ── Perfil de pacote (C6b PR-3, F-C6b-2 a) ────────────────────────────────
+  /**
+   * `GET /delivery/profile` — a lista de `kind` que a UI pré-marca no `build` do pacote para este
+   * contato. `null` (nunca salvo) devolve `kinds: []`, nunca lança. Contato arquivado é
+   * `NotFoundError` (mesma leitura de linha viva de `requireContact` — `findById` já filtra
+   * `deletedAt: null`).
+   */
+  async getPackageProfile(scope: AccountingScope, contactId: string): Promise<{ kinds: string[] }> {
+    if (!this.policy.canReadAccountingContact(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler o perfil de pacote.');
+    }
+    const contact = await this.requireContact(scope, contactId);
+    return { kinds: packageProfileKinds(contact.packageProfile) };
+  }
+
+  /**
+   * `PUT /delivery/profile` — grava o perfil. SUGESTÃO, não gate (§Bloco B item 6 do BRIEF): o
+   * corpo do `build`/`confirm` da entrega pode divergir do perfil salvo e passa normalmente — quem
+   * valida `extraJobIds` é `AccountingDeliveryService.resolveExtras`, nunca este método.
+   */
+  async setPackageProfile(
+    scope: AccountingScope,
+    contactId: string,
+    kinds: string[],
+  ): Promise<{ kinds: string[] }> {
+    if (!this.policy.canManageAccountingContact(scope)) {
+      throw new ForbiddenError('Você não tem permissão para editar o perfil de pacote.');
+    }
+    await this.requireContact(scope, contactId);
+    const updated = await this.contactRepo.updatePackageProfile(scope, contactId, kinds);
+    return { kinds: packageProfileKinds(updated.packageProfile) };
+  }
+}
+
+/** `AccountingContact.packageProfile` é `Json?` (SQLite não tem array nativo) — normaliza para
+ *  `string[]`, tolerando `null`/forma inesperada em vez de lançar (dado interno, nunca do usuário
+ *  direto: só `setPackageProfile`, já validado pelo DTO `.strict()`, escreve nesta coluna). */
+function packageProfileKinds(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }

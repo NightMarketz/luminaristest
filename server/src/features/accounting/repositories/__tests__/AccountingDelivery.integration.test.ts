@@ -10,6 +10,8 @@
  * CADA NEGATIVO TEM SEU CONTROLE: um teste que espera `null`/erro passa também quando tudo está
  * quebrado — o par positivo/negativo é o que separa "a guarda mordeu" de "nada funciona aqui".
  */
+import * as fs from 'fs';
+import * as path from 'path';
 import prisma from '@/lib/prisma';
 import { pushTestSchema } from '@test/helpers/db';
 import { AccountingContactRepository } from '@/features/accounting/repositories/AccountingContactRepository';
@@ -292,5 +294,126 @@ describe('AccountingContact + AccountingDeliveryLog — contrato em SQLite real'
 
     expect(await deliveryRepo.findById(escopo(DONO_A), entrega.id)).toBeNull();
     expect(await deliveryRepo.findById(escopo(DONO_B), entrega.id)).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------- C6b PR-3, Passos 1-3 — itens
+/**
+ * `AccountingDeliveryItem` + backfill (BRIEF item 1/2, F-C6b-1 a). `pushTestSchema()` roda `prisma
+ * db push`, não `migrate deploy` — o backfill do `migration.sql` NUNCA executa neste harness. Este
+ * bloco extrai as DUAS INSERTs exatas do arquivo (mesma fonte que roda em produção via `migrate
+ * deploy`) e as executa contra o SQLite real de teste, provando o comportamento do SQL que a
+ * migração ship — não uma reimplementação paralela dele.
+ */
+describe('AccountingDeliveryItem — schema + backfill (C6b PR-3)', () => {
+  const MIGRATION_SQL = fs.readFileSync(
+    path.resolve(
+      __dirname,
+      '../../../../../prisma/migrations/20260917035133_add_accounting_delivery_items/migration.sql',
+    ),
+    'utf8',
+  );
+  const BACKFILL_STATEMENTS = MIGRATION_SQL.match(/INSERT INTO "accounting_delivery_items"[\s\S]*?;/g);
+
+  const runBackfill = async () => {
+    for (const stmt of BACKFILL_STATEMENTS ?? []) {
+      await prisma.$executeRawUnsafe(stmt);
+    }
+  };
+
+  it('sanidade: o migration.sql tem exatamente 2 INSERTs de backfill (ECD + ECF)', () => {
+    expect(BACKFILL_STATEMENTS).toHaveLength(2);
+  });
+
+  it('createItems + listItems: núcleo em position 0/1, ordenado', async () => {
+    const contato = await criarContato(DONO_A, UNIT, 'Contabilidade Backfill A');
+    const ecd = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECD');
+    const ecf = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECF');
+    const entrega = await deliveryRepo.create({
+      userId: DONO_A, unitId: UNIT, contactId: contato.id, ecdJobId: ecd.id, ecfJobId: ecf.id,
+      periodStart: new Date('2026-01-01T00:00:00.000Z'), periodEnd: new Date('2026-12-31T00:00:00.000Z'),
+      manifestSha256Ecd: 'f'.repeat(64), manifestSha256Ecf: 'e'.repeat(64),
+      status: 'SENT', attemptCount: 1, requestedById: DONO_A, sentAt: new Date(),
+    });
+
+    await deliveryRepo.createItems(entrega.id, [
+      { jobId: ecd.id, kind: 'EXPORT_SPED_ECD', sha256: 'f'.repeat(64), position: 0 },
+      { jobId: ecf.id, kind: 'EXPORT_SPED_ECF', sha256: 'e'.repeat(64), position: 1 },
+    ]);
+
+    const items = await deliveryRepo.listItems(escopo(DONO_A), entrega.id);
+    expect(items.map((i) => ({ jobId: i.jobId, kind: i.kind, position: i.position }))).toEqual([
+      { jobId: ecd.id, kind: 'EXPORT_SPED_ECD', position: 0 },
+      { jobId: ecf.id, kind: 'EXPORT_SPED_ECF', position: 1 },
+    ]);
+    // Escopado por JOIN no log — outro dono não enxerga os itens de uma entrega alheia.
+    expect(await deliveryRepo.listItems(escopo(DONO_B), entrega.id)).toEqual([]);
+  });
+
+  it('FK Restrict — apagar o JOB referenciado por um ITEM falha (item filho nunca fica órfão)', async () => {
+    const contato = await criarContato(DONO_A, UNIT, 'Contabilidade Restrict Item');
+    const ecd = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECD');
+    const ecf = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECF');
+    const extra = await criarJob(DONO_A, UNIT, 'EXPORT_TRIAL_BALANCE');
+    const entrega = await deliveryRepo.create({
+      userId: DONO_A, unitId: UNIT, contactId: contato.id, ecdJobId: ecd.id, ecfJobId: ecf.id,
+      periodStart: new Date('2026-01-01T00:00:00.000Z'), periodEnd: new Date('2026-12-31T00:00:00.000Z'),
+      manifestSha256Ecd: 'f'.repeat(64), manifestSha256Ecf: 'e'.repeat(64),
+      status: 'SENT', attemptCount: 1, requestedById: DONO_A, sentAt: new Date(),
+    });
+    await deliveryRepo.createItems(entrega.id, [
+      { jobId: extra.id, kind: 'EXPORT_TRIAL_BALANCE', sha256: 'c'.repeat(64), position: 2 },
+    ]);
+
+    await expect(prisma.accountingDataExchangeJob.delete({ where: { id: extra.id } })).rejects.toThrow();
+    // Controle: um job SEM item referenciando-o apaga normalmente.
+    const solto = await criarJob(DONO_A, UNIT, 'EXPORT_TRIAL_BALANCE');
+    await expect(prisma.accountingDataExchangeJob.delete({ where: { id: solto.id } })).resolves.toBeDefined();
+  });
+
+  it('backfill: log inserido SEM itens ganha os 2 do núcleo; rodar 2x não duplica (idempotente)', async () => {
+    const contato = await criarContato(DONO_A, UNIT, 'Contabilidade Backfill B');
+    const ecd = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECD');
+    const ecf = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECF_REAL'); // kind da ECF lido por JOIN — prova que NÃO é hardcoded
+    const entrega = await deliveryRepo.create({
+      userId: DONO_A, unitId: UNIT, contactId: contato.id, ecdJobId: ecd.id, ecfJobId: ecf.id,
+      periodStart: new Date('2026-01-01T00:00:00.000Z'), periodEnd: new Date('2026-12-31T00:00:00.000Z'),
+      manifestSha256Ecd: 'a'.repeat(64), manifestSha256Ecf: 'b'.repeat(64),
+      status: 'SENT', attemptCount: 1, requestedById: DONO_A, sentAt: new Date(),
+    });
+    // Nenhum item criado — simula o estado PRÉ-migração (delivery existente sem tabela filha).
+    expect(await deliveryRepo.listItems(escopo(DONO_A), entrega.id)).toEqual([]);
+
+    await runBackfill();
+    const primeiraPassada = await deliveryRepo.listItems(escopo(DONO_A), entrega.id);
+    expect(primeiraPassada).toHaveLength(2);
+    expect(primeiraPassada.map((i) => ({ jobId: i.jobId, kind: i.kind, sha256: i.sha256, position: i.position }))).toEqual([
+      { jobId: ecd.id, kind: 'EXPORT_SPED_ECD', sha256: 'a'.repeat(64), position: 0 },
+      { jobId: ecf.id, kind: 'EXPORT_SPED_ECF_REAL', sha256: 'b'.repeat(64), position: 1 },
+    ]);
+
+    await runBackfill(); // 2ª passada — WHERE NOT EXISTS não duplica
+    const segundaPassada = await deliveryRepo.listItems(escopo(DONO_A), entrega.id);
+    expect(segundaPassada).toHaveLength(2);
+    expect(segundaPassada.map((i) => i.id)).toEqual(primeiraPassada.map((i) => i.id)); // MESMAS linhas
+  });
+
+  it('backfill não toca uma entrega que JÁ TEM itens (idempotência entre entregas diferentes)', async () => {
+    const contatoBackfilled = await criarContato(DONO_A, UNIT, 'Contabilidade Ja Migrada');
+    const ecdA = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECD');
+    const ecfA = await criarJob(DONO_A, UNIT, 'EXPORT_SPED_ECF');
+    const jaMigrada = await deliveryRepo.create({
+      userId: DONO_A, unitId: UNIT, contactId: contatoBackfilled.id, ecdJobId: ecdA.id, ecfJobId: ecfA.id,
+      periodStart: new Date('2026-01-01T00:00:00.000Z'), periodEnd: new Date('2026-12-31T00:00:00.000Z'),
+      manifestSha256Ecd: 'a'.repeat(64), manifestSha256Ecf: 'b'.repeat(64),
+      status: 'SENT', attemptCount: 1, requestedById: DONO_A, sentAt: new Date(),
+    });
+    await deliveryRepo.createItems(jaMigrada.id, [
+      { jobId: ecdA.id, kind: 'EXPORT_SPED_ECD', sha256: 'a'.repeat(64), position: 0 },
+      { jobId: ecfA.id, kind: 'EXPORT_SPED_ECF', sha256: 'b'.repeat(64), position: 1 },
+    ]);
+
+    await runBackfill();
+    expect(await deliveryRepo.listItems(escopo(DONO_A), jaMigrada.id)).toHaveLength(2); // inalterado
   });
 });

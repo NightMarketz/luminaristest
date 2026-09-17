@@ -7,6 +7,8 @@ import {
   AccountingDeliveryScopeQuerySchema,
   BuildDeliveryPackageSchema,
   ConfirmDeliverySchema,
+  PackageProfileQuerySchema,
+  PackageProfileSchema,
   RetryDeliverySchema,
 } from '../features/accounting/dtos/AccountingDeliveryDto';
 
@@ -66,6 +68,47 @@ export const retryDelivery = async (req: Request, res: Response) => {
     const data = await getFactory()
       .getAccountingDeliveryService()
       .retryDelivery(scope, req.params.id, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * GET /api/accounting/delivery/profile?unitId=&contactId= — perfil de pacote sugerido do contato
+ * (C6b PR-3, F-C6b-2 a). SUGESTÃO, não gate: a UI pré-marca `kinds` no build, mas o corpo do
+ * build pode divergir e passa normalmente. Registrada ANTES de `/delivery/:id` — senão `profile`
+ * casaria como o parâmetro `:id`.
+ */
+export const getPackageProfile = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = PackageProfileQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory()
+      .getAccountingContactService()
+      .getPackageProfile(scope, parsed.data.contactId);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** PUT /api/accounting/delivery/profile?unitId=&contactId= — grava o perfil sugerido (corpo: `{ kinds }`). */
+export const setPackageProfile = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsedQuery = PackageProfileQuerySchema.safeParse(req.query);
+    if (!parsedQuery.success) return res.status(400).json({ success: false, error: parsedQuery.error.flatten() });
+    const parsedBody = PackageProfileSchema.safeParse(req.body);
+    if (!parsedBody.success) return res.status(400).json({ success: false, error: parsedBody.error.flatten() });
+    const scope = resolveAccountingScope(user, parsedQuery.data.unitId);
+    const data = await getFactory()
+      .getAccountingContactService()
+      .setPackageProfile(scope, parsedQuery.data.contactId, parsedBody.data.kinds);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

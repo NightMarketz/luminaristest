@@ -1,10 +1,12 @@
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { ExportKind } from './DataExchange.model';
 
 /**
  * AccountingDeliveryLog domain constants + o manifesto puro (BE-INCR-CONTADOR-DELIVERY /
- * ADR-CONTADOR-DELIVERY). O pacote entregue ao contador é, por decisão ratificada (F-CD3-a),
- * **ECD.txt + ECF.txt + manifesto** — e o manifesto NÃO é um arquivo novo com cópia de conteúdo:
- * é a lista de referências (jobId + sha256) que prova QUAL par de arquivos foi entregue.
+ * ADR-CONTADOR-DELIVERY; N-ário desde C6b PR-3). O pacote entregue ao contador é, por decisão
+ * ratificada (F-CD3-a), **ECD.txt + ECF.txt (núcleo obrigatório) + extras configuráveis +
+ * manifesto** — e o manifesto NÃO é um arquivo novo com cópia de conteúdo: é a lista de
+ * referências (jobId + sha256) que prova QUAIS arquivos foram entregues.
  */
 
 /**
@@ -17,41 +19,68 @@ import type { AccountingScope } from '../scope/AccountingScope';
 export const DELIVERY_STATUSES = ['QUEUED', 'SENT', 'FAILED'] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
-/** Os dois arquivos do pacote (F-CD3-a: sem PDF-resumo, sem zip). */
-export const DELIVERY_FILE_KINDS = ['ECD', 'ECF'] as const;
-export type DeliveryFileKind = (typeof DELIVERY_FILE_KINDS)[number];
+/**
+ * Os `kind` de export que podem entrar como EXTRA configurável do pacote (C6b PR-3, Bloco B, item
+ * 5 do BRIEF §4). SPED (ECD/ECF/ECF_REAL) NUNCA é extra — é o núcleo obrigatório, resolvido à
+ * parte por `resolveJobs`. Um `extraJobIds` apontando para um job SPED é 400 (não é um demonstrativo
+ * "a mais": é o próprio núcleo, duplicado).
+ */
+export const DELIVERABLE_EXPORT_KINDS = [
+  'EXPORT_TRIAL_BALANCE',
+  'EXPORT_GENERAL_LEDGER',
+  'EXPORT_BALANCE_SHEET',
+  'EXPORT_INCOME_STATEMENT',
+  'EXPORT_BANK_RECONCILIATION',
+  'EXPORT_ENTRY_SAMPLE',
+] as const;
+export type DeliverableExportKind = (typeof DELIVERABLE_EXPORT_KINDS)[number];
 
 /** Audit event keys da entrega — os três estão na allowlist de `auditCanonical.ts` (item 14). */
 export const DELIVERY_PACKAGE_BUILT = 'delivery.package_built';
 export const DELIVERY_SENT = 'delivery.sent';
 export const DELIVERY_FAILED = 'delivery.failed';
 
-/** Uma referência de arquivo no manifesto: identidade + hash, NUNCA conteúdo. */
+/**
+ * Uma referência de arquivo no manifesto: identidade + hash, NUNCA conteúdo.
+ *
+ * C6b PR-3 (Passo 4, F-C6b-1 a): `kind` deixa de ser a união fechada `DeliveryFileKind` ('ECD'|'ECF')
+ * e passa a `ExportKind` — o núcleo continua `EXPORT_SPED_ECD`/`EXPORT_SPED_ECF*`, e os extras
+ * carregam o `kind` real do export (`EXPORT_TRIAL_BALANCE`, …). `DELIVERY_FILE_KINDS` foi REMOVIDO:
+ * era só um alias de 2 valores que a lista N-ária tornou obsoleto. Nota de contrato (achado fora de
+ * escopo do plano de execução, §5.1): um consumidor FE que leia `files[].kind` esperando 'ECD'/'ECF'
+ * quebra com esta mudança — não há consumidor em `main` hoje (grep confirmado no plano).
+ */
 export interface DeliveryManifestFile {
-  kind: DeliveryFileKind;
+  kind: ExportKind;
   jobId: string;
   sha256: string;
 }
 
 /**
- * O manifesto (item 8 do BRIEF). `scope` é materializado como `{unitId, ledgerCode}` — só o que
- * identifica a escrituração para quem vai assinar. `ownerUserId`/`actorUserId` ficam de FORA por
- * minimização (§4 do ADR): são identificadores internos do sistema, não dizem nada ao contador e
- * viajariam junto do pacote sem necessidade.
+ * O manifesto (item 8 do BRIEF; N-ário desde C6b PR-3 Passo 4). `scope` é materializado como
+ * `{unitId, ledgerCode}` — só o que identifica a escrituração para quem vai assinar.
+ * `ownerUserId`/`actorUserId` ficam de FORA por minimização (§4 do ADR): são identificadores
+ * internos do sistema, não dizem nada ao contador e viajariam junto do pacote sem necessidade.
+ *
+ * `core` dá acesso direto ao núcleo SEM índice mágico (`files[0]`/`files[1]` — a classe de bug que
+ * o Passo 4 fecha); `files` é a lista completa NA ORDEM `position` (núcleo primeiro, extras depois)
+ * — é o que um consumidor que só precisa "todos os arquivos" itera.
  */
 export interface DeliveryManifest {
   scope: { unitId: string; ledgerCode: string };
-  /** Período coberto pelos dois arquivos (date-only), COPIADO do job — nunca digitado. */
+  /** Período coberto pelo núcleo (date-only), COPIADO do job — nunca digitado. */
   period: { start: string; end: string };
   contactId: string;
+  core: { ecd: DeliveryManifestFile; ecf: DeliveryManifestFile };
+  /** `[core.ecd, core.ecf, ...extras]`, na ordem de `position`. */
   files: DeliveryManifestFile[];
   generatedAt: string;
 }
 
 /**
- * Monta o manifesto a partir dos dois jobs já resolvidos. Função PURA (sem I/O, sem Date.now
- * escondido: `generatedAt` entra por parâmetro) — é o que permite testá-la sem banco e o que garante
- * que o mesmo par de jobs produz o mesmo manifesto.
+ * Monta o manifesto a partir do núcleo (ECD/ECF) já resolvido + extras já validados. Função PURA
+ * (sem I/O, sem Date.now escondido: `generatedAt` entra por parâmetro) — é o que permite testá-la
+ * sem banco e o que garante que o mesmo núcleo+extras produz o mesmo manifesto.
  *
  * F-CD6-a/ACC-CD-3: os `sha256` chegam AQUI já lidos de `AccountingDataExchangeJob.sha256`. Esta
  * função nunca abre arquivo — quem recomputa hash do disco é quem quer divergir do que foi gerado.
@@ -60,18 +89,34 @@ export function buildDeliveryManifest(params: {
   scope: AccountingScope;
   period: { start: Date; end: Date };
   contactId: string;
-  ecd: { jobId: string; sha256: string };
-  ecf: { jobId: string; sha256: string };
+  core: {
+    ecd: { jobId: string; kind: ExportKind; sha256: string };
+    ecf: { jobId: string; kind: ExportKind; sha256: string };
+  };
+  extras: Array<{ jobId: string; kind: ExportKind; sha256: string }>;
   generatedAt: Date;
 }): DeliveryManifest {
+  const ecd: DeliveryManifestFile = {
+    kind: params.core.ecd.kind,
+    jobId: params.core.ecd.jobId,
+    sha256: params.core.ecd.sha256,
+  };
+  const ecf: DeliveryManifestFile = {
+    kind: params.core.ecf.kind,
+    jobId: params.core.ecf.jobId,
+    sha256: params.core.ecf.sha256,
+  };
+  const extraFiles: DeliveryManifestFile[] = params.extras.map((e) => ({
+    kind: e.kind,
+    jobId: e.jobId,
+    sha256: e.sha256,
+  }));
   return {
     scope: { unitId: params.scope.unitId, ledgerCode: params.scope.ledgerCode },
     period: { start: toDateOnly(params.period.start), end: toDateOnly(params.period.end) },
     contactId: params.contactId,
-    files: [
-      { kind: 'ECD', jobId: params.ecd.jobId, sha256: params.ecd.sha256 },
-      { kind: 'ECF', jobId: params.ecf.jobId, sha256: params.ecf.sha256 },
-    ],
+    core: { ecd, ecf },
+    files: [ecd, ecf, ...extraFiles],
     generatedAt: params.generatedAt.toISOString(),
   };
 }

@@ -86,7 +86,9 @@ import {
   buildDeliveryPackage,
   confirmDelivery,
   getDelivery,
+  getPackageProfile,
   retryDelivery,
+  setPackageProfile,
 } from '../controllers/accountingDeliveryController';
 import {
   addFinding,
@@ -225,6 +227,11 @@ router.patch('/contacts/:id', updateAccountingContact);
 router.delete('/contacts/:id', archiveAccountingContact);
 router.post('/delivery/build', buildDeliveryPackage);
 router.post('/delivery/confirm', deliveryConfirmLimiter, confirmDelivery);
+// C6b PR-3 (F-C6b-2 a) — segmento estático `/delivery/profile`, ANTES de `/delivery/:id/retry` e
+// `/delivery/:id`: senão "profile" casaria como o parâmetro `:id` (mesma disciplina das rotas de
+// revisão, comentário abaixo).
+router.get('/delivery/profile', getPackageProfile);
+router.put('/delivery/profile', setPackageProfile);
 router.post('/delivery/:id/retry', retryDelivery);
 router.get('/delivery/:id', getDelivery);
 

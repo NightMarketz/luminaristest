@@ -306,4 +306,86 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
       delete process.env.DELIVERY_CONFIRM_RATE_LIMIT;
     }
   });
+
+  // ------------------------------------------------------------------ C6b PR-3, Passo 13 — perfil de pacote
+  /**
+   * GET/PUT /api/accounting/delivery/profile (F-C6b-2 a). Registrado ANTES de /delivery/:id (senão
+   * "profile" casaria como :id) — este bloco prova que a rota estática realmente resolve para o
+   * handler certo, não para GET /delivery/:id com id="profile".
+   */
+  describe('/delivery/profile — perfil de pacote sugerido', () => {
+    it('GET devolve kinds: [] quando o contato nunca teve perfil salvo (nunca 404)', async () => {
+      const created = await request(app).post('/api/accounting/contacts').set(authHeader(dono)).send(contatoBody());
+      const contactId = created.body.data.id as string;
+
+      const res = await request(app)
+        .get('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: UNIT, contactId });
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual({ kinds: [] });
+    });
+
+    it('PUT grava e GET lê de volta o mesmo perfil', async () => {
+      const created = await request(app).post('/api/accounting/contacts').set(authHeader(dono)).send(contatoBody());
+      const contactId = created.body.data.id as string;
+      const kinds = ['EXPORT_TRIAL_BALANCE', 'EXPORT_GENERAL_LEDGER'];
+
+      const put = await request(app)
+        .put('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: UNIT, contactId })
+        .send({ kinds });
+      expect(put.status).toBe(200);
+      expect(put.body.data).toEqual({ kinds });
+
+      const get = await request(app)
+        .get('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: UNIT, contactId });
+      expect(get.body.data).toEqual({ kinds });
+    });
+
+    it('PUT com kind fora do enum entregável é 400 (SPED não é perfil de extra)', async () => {
+      const created = await request(app).post('/api/accounting/contacts').set(authHeader(dono)).send(contatoBody());
+      const contactId = created.body.data.id as string;
+
+      const res = await request(app)
+        .put('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: UNIT, contactId })
+        .send({ kinds: ['EXPORT_SPED_ECD'] });
+      expect(res.status).toBe(400);
+    });
+
+    it('PUT/.GET em contato de OUTRO escopo (ou arquivado) é 404, nunca 403 (D8/ACC-CD-4)', async () => {
+      const outroAtor: { id: string; username: string } = await criarUsuario('contact-http-profile-b');
+      const alheio = await request(app).post('/api/accounting/contacts').set(authHeader(outroAtor)).send(contatoBody({ unitId: `${UNIT}-alheio` }));
+      const alheioId = alheio.body.data.id as string;
+
+      const getAlheio = await request(app)
+        .get('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: `${UNIT}-alheio`, contactId: alheioId });
+      expect(getAlheio.status).toBe(404);
+
+      const putAlheio = await request(app)
+        .put('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: `${UNIT}-alheio`, contactId: alheioId })
+        .send({ kinds: [] });
+      expect(putAlheio.status).toBe(404);
+
+      // Contato arquivado do PRÓPRIO dono também é 404 (leitura de linha viva, mesma regra do resto do serviço).
+      const proprio = await request(app).post('/api/accounting/contacts').set(authHeader(dono)).send(contatoBody({ unitId: `${UNIT}-arquivado` }));
+      const proprioId = proprio.body.data.id as string;
+      const arquivar = await request(app).delete(`/api/accounting/contacts/${proprioId}`).set(authHeader(dono)).query({ unitId: `${UNIT}-arquivado` });
+      expect(arquivar.status).toBe(200);
+      const getArquivado = await request(app)
+        .get('/api/accounting/delivery/profile')
+        .set(authHeader(dono))
+        .query({ unitId: `${UNIT}-arquivado`, contactId: proprioId });
+      expect(getArquivado.status).toBe(404);
+    });
+  });
 });

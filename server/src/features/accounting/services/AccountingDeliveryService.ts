@@ -1,21 +1,27 @@
 import { Prisma } from 'generated/prisma';
 import type { AccountingContact, AccountingDataExchangeJob, AccountingDeliveryLog } from 'generated/prisma';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import {
   buildDeliveryManifest,
+  DELIVERABLE_EXPORT_KINDS,
   DELIVERY_PACKAGE_BUILT,
   DELIVERY_SENT,
   monthsCovered,
   toDateOnly,
+  type DeliverableExportKind,
   type DeliveryManifest,
 } from '../models/AccountingDelivery.model';
+import type { ExportKind } from '../models/DataExchange.model';
 import { contactToJ930Signer, type J930Signer } from '../models/AccountingContact.model';
 import type {
   BuildDeliveryPackageInput,
   ConfirmDeliveryInput,
   RetryDeliveryInput,
 } from '../dtos/AccountingDeliveryDto';
-import type { IAccountingDeliveryRepository } from '../repositories/IAccountingDeliveryRepository';
+import type {
+  CreateDeliveryItemData,
+  IAccountingDeliveryRepository,
+} from '../repositories/IAccountingDeliveryRepository';
 import type { IAccountingContactRepository } from '../repositories/IAccountingContactRepository';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
@@ -30,6 +36,14 @@ const ECD_JOB_KIND = 'EXPORT_SPED_ECD';
 const ECF_JOB_KINDS = ['EXPORT_SPED_ECF', 'EXPORT_SPED_ECF_REAL'];
 const EXPORTED = 'EXPORTED';
 const HARD_CLOSED = 'HARD_CLOSED';
+const DELIVERABLE_KIND_SET: ReadonlySet<string> = new Set(DELIVERABLE_EXPORT_KINDS);
+
+/** Um extra já resolvido e validado (C6b PR-3, Bloco B) — pronto para virar item do manifesto. */
+interface ResolvedExtra {
+  jobId: string;
+  kind: DeliverableExportKind;
+  sha256: string;
+}
 
 /** Preview do manifesto no preflight: tudo menos o destinatário, que só existe na confirmação. */
 export type DeliveryManifestPreview = Omit<DeliveryManifest, 'contactId'>;
@@ -80,6 +94,14 @@ interface ResolvedPair {
  * - **Revisão assinada antes da entrega** (BE-INCR-REVIEW-LAYER item 14, F-C11-3 → a): o par de
  *   jobs exige `AccountingReview` `SIGNED_OFF`; `REJECTED` → 409 `REVIEW_REJECTED`, nenhuma →
  *   409 `REVIEW_REQUIRED`. Preflight no `build`; AUTORITATIVO dentro da tx do `confirm`.
+ * - **Extras configuráveis** (C6b PR-3, Bloco A/B): o pacote deixou de ser 2 arquivos fixos —
+ *   `AccountingDeliveryItem` guarda o núcleo (ECD position 0, ECF position 1) + até 20 extras
+ *   (position 2..n) por `extraJobIds`. As colunas fixas do log (`ecdJobId`/`ecfJobId`/
+ *   `manifestSha256*`) CONTINUAM sendo o núcleo e a chave de idempotência (F-C6b-1 a) — os itens
+ *   são a lista completa. `resolveExtras` valida cada extra (escopo, `EXPORTED`+`sha256`, kind
+ *   entregável, período ⊆ pacote, sem duplicata) no preflight do `build` E, AUTORITATIVO, dentro
+ *   da tx do `confirm`. Uma entrega já existente com um conjunto de extras DIFERENTE do pedido é
+ *   409 `PACKAGE_ALREADY_DELIVERED` (F-C6b-4 a) — nunca "acrescenta item a pacote já criado".
  */
 export class AccountingDeliveryService {
   constructor(
@@ -108,13 +130,17 @@ export class AccountingDeliveryService {
     const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
     await this.assertPeriodHardClosed(scope, period);
     await this.reviewService.assertPairSignedOff(scope, ecd.id, ecf.id);
+    const extras = await this.resolveExtras(scope, dto.extraJobIds, period);
 
     const full = buildDeliveryManifest({
       scope,
       period,
       contactId: '',
-      ecd: { jobId: ecd.id, sha256: ecd.sha256 as string },
-      ecf: { jobId: ecf.id, sha256: ecf.sha256 as string },
+      core: {
+        ecd: { jobId: ecd.id, kind: ecd.kind as ExportKind, sha256: ecd.sha256 as string },
+        ecf: { jobId: ecf.id, kind: ecf.kind as ExportKind, sha256: ecf.sha256 as string },
+      },
+      extras,
       generatedAt: new Date(),
     });
     const { contactId: _omitted, ...preview } = full;
@@ -138,24 +164,31 @@ export class AccountingDeliveryService {
     }
     const contact = await this.requireContact(scope, dto.contactId);
     const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
-
     const { userId, unitId } = accountingScopeWhere(scope);
-    const manifest = buildDeliveryManifest({
-      scope,
-      period,
-      contactId: contact.id,
-      ecd: { jobId: ecd.id, sha256: ecd.sha256 as string },
-      ecf: { jobId: ecf.id, sha256: ecf.sha256 as string },
-      generatedAt: new Date(),
-    });
 
-    const delivery = await this.deliveryRepo.runTransaction(async (tx) => {
+    const { delivery, manifest } = await this.deliveryRepo.runTransaction(async (tx) => {
       // GATE AUTORITATIVO — re-checado DENTRO da tx com `tx` propagado ao repo. O preflight do
       // buildDeliveryPackage não fecha o TOCTOU: um mês reaberto no meio do caminho passaria.
       await this.assertPeriodHardClosed(scope, period, tx);
       // C11 item 14 — gate da revisão também DENTRO da tx: assinar/rejeitar entre o preflight e a
       // confirmação não pode passar.
       await this.reviewService.assertPairSignedOff(scope, ecd.id, ecf.id, tx);
+      // C6b PR-3 (Bloco B) — extras também AUTORITATIVOS dentro da tx: o status/sha256/período do
+      // job extra podem ter mudado entre o preflight do build e esta confirmação.
+      const extras = await this.resolveExtras(scope, dto.extraJobIds, period, tx);
+
+      const manifest = buildDeliveryManifest({
+        scope,
+        period,
+        contactId: contact.id,
+        core: {
+          ecd: { jobId: ecd.id, kind: ecd.kind as ExportKind, sha256: ecd.sha256 as string },
+          ecf: { jobId: ecf.id, kind: ecf.kind as ExportKind, sha256: ecf.sha256 as string },
+        },
+        extras,
+        generatedAt: new Date(),
+      });
+      const items = manifestToItemData(manifest);
 
       const existing = await this.deliveryRepo.findByJobsAndContact(
         scope,
@@ -164,7 +197,12 @@ export class AccountingDeliveryService {
         contact.id,
         tx,
       );
-      if (existing) return this.markSent(scope, existing, manifest, tx);
+      if (existing) {
+        // F-C6b-4 (a): o núcleo já foi entregue. Extras DIFERENTES do conjunto gravado é conflito
+        // nomeado — nunca "acrescenta item a pacote SENT"; mesmo conjunto segue o caminho normal.
+        await this.assertExtrasMatchExisting(scope, existing, extras, tx);
+        return { delivery: await this.markSent(scope, existing, manifest, tx), manifest };
+      }
 
       try {
         const created = await this.deliveryRepo.create(
@@ -176,8 +214,8 @@ export class AccountingDeliveryService {
             ecfJobId: ecf.id,
             periodStart: period.start,
             periodEnd: period.end,
-            manifestSha256Ecd: manifest.files[0].sha256,
-            manifestSha256Ecf: manifest.files[1].sha256,
+            manifestSha256Ecd: manifest.core.ecd.sha256,
+            manifestSha256Ecf: manifest.core.ecf.sha256,
             status: 'SENT',
             attemptCount: 1,
             requestedById: scope.actorUserId,
@@ -185,8 +223,9 @@ export class AccountingDeliveryService {
           },
           tx,
         );
+        await this.deliveryRepo.createItems(created.id, items, tx);
         await this.appendDeliveryEvents(scope, created, manifest, tx);
-        return created;
+        return { delivery: created, manifest };
       } catch (error) {
         // P2002 na chave [ecdJobId, ecfJobId, contactId]: outra confirmação concorrente venceu a
         // corrida. Isso é caminho NORMAL da idempotência, não erro — relê a linha vencedora e
@@ -199,9 +238,12 @@ export class AccountingDeliveryService {
             contact.id,
             tx,
           );
-          // Review F5: a vencedora passa pelo MESMO caminho de promoção da linha pré-existente —
-          // devolvê-la crua responderia `status: 'QUEUED'` junto de "o operador confirmou…".
-          if (winner) return this.markSent(scope, winner, manifest, tx);
+          if (winner) {
+            await this.assertExtrasMatchExisting(scope, winner, extras, tx);
+            // Review F5: a vencedora passa pelo MESMO caminho de promoção da linha pré-existente —
+            // devolvê-la crua responderia `status: 'QUEUED'` junto de "o operador confirmou…".
+            return { delivery: await this.markSent(scope, winner, manifest, tx), manifest };
+          }
         }
         throw error;
       }
@@ -329,6 +371,103 @@ export class AccountingDeliveryService {
   }
 
   /**
+   * C6b PR-3 (Bloco B, item 5 do BRIEF, F-C6b-4 a) — resolve e valida cada `extraJobId` contra o
+   * ESCOPO e o PERÍODO do núcleo. `findJobById` já filtra por `(userId, unitId)` do escopo —
+   * cross-tenant OU de outra unidade resolve `null` → `NotFoundError` (mesmo padrão de
+   * `resolveJobs`, nunca `ForbiddenError`). Ordem de validação por id: existe → `EXPORTED` →
+   * `sha256` → kind entregável (SPED nunca é extra) → kind não duplicado no pacote → período
+   * gravado e ⊆ período do núcleo. Id duplicado em `extraJobIds` é 400 antes de tudo.
+   */
+  private async resolveExtras(
+    scope: AccountingScope,
+    extraJobIds: string[],
+    period: { start: Date; end: Date },
+    tx?: Prisma.TransactionClient,
+  ): Promise<ResolvedExtra[]> {
+    const seenIds = new Set<string>();
+    const seenKinds = new Set<string>();
+    const resolved: ResolvedExtra[] = [];
+    for (const id of extraJobIds) {
+      if (seenIds.has(id)) {
+        throw new ValidationError(`O job extra '${id}' foi informado mais de uma vez em extraJobIds.`);
+      }
+      seenIds.add(id);
+
+      const job = await this.dataExchangeRepo.findJobById(scope, id, tx);
+      if (!job) throw new NotFoundError(`Job extra '${id}' não foi encontrado.`);
+      if (job.status !== EXPORTED) {
+        throw new ValidationError(
+          `O job extra '${id}' não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`,
+        );
+      }
+      if (!job.sha256) {
+        throw new ValidationError(`O job extra '${id}' não tem sha256 gravado.`);
+      }
+      if (!DELIVERABLE_KIND_SET.has(job.kind)) {
+        throw new ValidationError(
+          `O job extra '${id}' tem kind '${job.kind}' — não é um demonstrativo entregável ` +
+            '(SPED é o núcleo obrigatório, nunca um extra).',
+        );
+      }
+      if (seenKinds.has(job.kind)) {
+        throw new AppError(
+          `Já existe um extra do kind '${job.kind}' neste pacote — cada demonstrativo entra uma vez.`,
+          400,
+          'DUPLICATE_KIND',
+        );
+      }
+      seenKinds.add(job.kind);
+      if (!job.periodStart || !job.periodEnd) {
+        throw new ValidationError(
+          `O job extra '${id}' não tem período gravado — regere o arquivo com asOf/janela antes ` +
+            'de anexá-lo ao pacote.',
+        );
+      }
+      const extraStart = job.periodStart as Date;
+      const extraEnd = job.periodEnd as Date;
+      if (extraStart.getTime() < period.start.getTime() || extraEnd.getTime() > period.end.getTime()) {
+        throw new AppError(
+          `O job extra '${id}' cobre ${toDateOnly(extraStart)}..${toDateOnly(extraEnd)}, fora do ` +
+            `período do pacote ${toDateOnly(period.start)}..${toDateOnly(period.end)}.`,
+          400,
+          'EXTRA_PERIOD_OUT_OF_RANGE',
+        );
+      }
+      resolved.push({ jobId: job.id, kind: job.kind as DeliverableExportKind, sha256: job.sha256 });
+    }
+    return resolved;
+  }
+
+  /**
+   * F-C6b-4 (a): uma entrega já existente para o par núcleo+contato só reusa o caminho de
+   * idempotência (`markSent`) se o conjunto de `jobId` dos extras pedidos AGORA for IGUAL ao
+   * conjunto já gravado nos itens (position ≥ 2 — o núcleo em 0/1 nunca entra nesta comparação).
+   * Divergir é 409 nomeado: "pacote" é o par assinado, extras diferentes pedem uma nova geração,
+   * nunca um "acrescenta item a uma entrega SENT" silencioso.
+   */
+  private async assertExtrasMatchExisting(
+    scope: AccountingScope,
+    existing: AccountingDeliveryLog,
+    extras: ResolvedExtra[],
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    const items = await this.deliveryRepo.listItems(scope, existing.id, tx);
+    const existingExtraIds = new Set(items.filter((i) => i.position >= 2).map((i) => i.jobId));
+    const requestedIds = new Set(extras.map((e) => e.jobId));
+    const same =
+      existingExtraIds.size === requestedIds.size &&
+      [...requestedIds].every((id) => existingExtraIds.has(id));
+    if (!same) {
+      throw new ConflictError(
+        `O núcleo (ecdJobId=${existing.ecdJobId}, ecfJobId=${existing.ecfJobId}) já foi entregue ` +
+          `ao contato '${existing.contactId}' com um conjunto diferente de extras ` +
+          `(deliveryId=${existing.id}). Gere uma nova versão do núcleo para reentregar com outros extras.`,
+        'PACKAGE_ALREADY_DELIVERED',
+      );
+    }
+  }
+
+  /**
    * F-CD7-a: TODOS os meses que o arquivo cobre têm de estar `HARD_CLOSED` — "12 meses seguidos
    * sempre, ou período selecionado" (cédula 10/09 §6, F3). Para o exercício-calendário são os 12;
    * para uma situação especial, os meses do período do job. Um lançamento em qualquer mês ainda
@@ -375,7 +514,10 @@ export class AccountingDeliveryService {
 
   /**
    * Os dois eventos da confirmação, na MESMA tx da escrita (T8). Payloads id-only + hash: nome e
-   * e-mail do contador NUNCA entram na trilha (D5) — só `contactId`.
+   * e-mail do contador NUNCA entram na trilha (D5) — só `contactId`. C6b PR-3 (Passo 12): `itemCount`
+   * (string, allowlist trata número como string — mesmo padrão de outros contadores da casa) e
+   * `kinds` (ordem de `position`, núcleo primeiro) entram no `package_built`; `sha256` dos EXTRAS
+   * NÃO entram (já estão na linha filha — só os do núcleo, que sempre estiveram aqui).
    */
   private async appendDeliveryEvents(
     scope: AccountingScope,
@@ -394,8 +536,10 @@ export class AccountingDeliveryService {
         ecfJobId: delivery.ecfJobId,
         periodStart: toDateOnly(delivery.periodStart),
         periodEnd: toDateOnly(delivery.periodEnd),
-        sha256Ecd: manifest.files[0].sha256,
-        sha256Ecf: manifest.files[1].sha256,
+        sha256Ecd: manifest.core.ecd.sha256,
+        sha256Ecf: manifest.core.ecf.sha256,
+        itemCount: String(manifest.files.length),
+        kinds: manifest.files.map((f) => f.kind),
       },
     });
     await this.auditService.append(tx, scope, {
@@ -410,4 +554,18 @@ export class AccountingDeliveryService {
       },
     });
   }
+}
+
+/**
+ * Projeta `manifest.files` (já em ordem `position`: núcleo primeiro, extras depois) para o
+ * formato de escrita do repositório. Função PURA de módulo (não do serviço) — não depende de
+ * estado, só do manifesto já construído.
+ */
+function manifestToItemData(manifest: DeliveryManifest): CreateDeliveryItemData[] {
+  return manifest.files.map((file, position) => ({
+    jobId: file.jobId,
+    kind: file.kind,
+    sha256: file.sha256,
+    position,
+  }));
 }

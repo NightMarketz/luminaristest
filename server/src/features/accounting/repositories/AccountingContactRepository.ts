@@ -52,6 +52,16 @@ export class AccountingContactRepository implements IAccountingContactRepository
     return (tx ?? prisma).accountingContact.update({ where: { id, userId, unitId }, data });
   }
 
+  public async updatePackageProfile(
+    scope: AccountingScope,
+    id: string,
+    kinds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingContact> {
+    // Thin wrapper sobre o `update` genérico — mesmo where escopado, sem duplicar a regra.
+    return this.update(scope, id, { packageProfile: kinds }, tx);
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

@@ -646,6 +646,10 @@ model AccountingDataExchangeJob {
   // BE-INCR-REVIEW-LAYER (C11, item 1): a revisão REFERENCIA o par de jobs, como a entrega.
   reviewsAsEcd    AccountingReview[]          @relation("ReviewEcdJob")
   reviewsAsEcf    AccountingReview[]          @relation("ReviewEcfJob")
+  // C6b PR-3 (Bloco A): item de entrega (núcleo OU extra) que referencia este job — o mesmo job
+  // pode ser núcleo de uma entrega e nunca é referenciado duas vezes na MESMA entrega
+  // (@@unique([deliveryId, jobId]) do lado do item).
+  deliveryItems   AccountingDeliveryItem[]    @relation("DeliveryItemJob")
 
   @@index([userId, unitId, createdAt])
   @@map("accounting_data_exchange_jobs")
@@ -1407,6 +1411,10 @@ model AccountingContact {
   updatedAt                DateTime                @updatedAt
   deletedAt                DateTime? // set when archived (soft) — nunca prisma.delete()
   deliveries               AccountingDeliveryLog[]
+  // C6b PR-3 (F-C6b-2 a): lista de `kind` (ExportKind) que a UI pré-marca no build do pacote —
+  // SUGESTÃO, não gate (o corpo do build pode divergir e passa normalmente). `Json?` porque SQLite
+  // não tem array nativo; `null` = nenhum perfil salvo ainda (GET devolve `kinds: []`).
+  packageProfile           Json?
 
   @@index([userId, unitId])
   @@index([deletedAt])
@@ -1448,10 +1456,36 @@ model AccountingDeliveryLog {
   failureReason     String?
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt
+  // C6b PR-3 (Bloco A) — itens do pacote: núcleo (ECD position 0, ECF position 1) + extras
+  // (position 2..n). As colunas fixas acima CONTINUAM sendo o núcleo/chave de idempotência
+  // (F-C6b-1 a) — os itens são a lista completa, incluindo o núcleo (backfill nos existentes).
+  items             AccountingDeliveryItem[]
 
   @@unique([ecdJobId, ecfJobId, contactId])
   @@index([userId, unitId, periodStart])
   @@map("accounting_delivery_logs")
+}
+
+// Item do pacote de entrega (C6b PR-3, Bloco A — BRIEF item 1/4, F-C6b-1 a). Generaliza os 2
+// arquivos fixos do `AccountingDeliveryLog` (núcleo ECD/ECF) para N itens: núcleo em
+// position 0/1 (espelha as colunas fixas — backfill dos pacotes existentes) + extras
+// configuráveis em position 2..n (F-C6b-1 a: as colunas fixas do log NÃO somem; isto é tabela
+// filha aditiva, zero rebuild). FK `Restrict` nos dois lados: apagar o job ou o log de uma
+// entrega com itens filhos falha, nunca deixa item órfão.
+model AccountingDeliveryItem {
+  id         String                    @id @default(cuid())
+  deliveryId String
+  delivery   AccountingDeliveryLog     @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  jobId      String
+  job        AccountingDataExchangeJob @relation("DeliveryItemJob", fields: [jobId], references: [id], onDelete: Restrict)
+  kind       String // ExportKind (DataExchange.model.ts) — núcleo = EXPORT_SPED_ECD/EXPORT_SPED_ECF*; extra ∈ DELIVERABLE_EXPORT_KINDS
+  sha256     String // lido de job.sha256, nunca recomputado (F-CD6-a, mesma disciplina do núcleo)
+  position   Int // 0=ECD, 1=ECF, 2..n=extras na ordem de `extraJobIds`
+  createdAt  DateTime                  @default(now())
+
+  @@unique([deliveryId, jobId])
+  @@index([deliveryId, position])
+  @@map("accounting_delivery_items")
 }
 
 // ── Revisão profissional editável (BE-INCR-REVIEW-LAYER, nó C11) ──
@@ -1461,9 +1495,9 @@ model AccountingDeliveryLog {
 // @@unique([ecdJobId, ecfJobId]) (F-C11-5 a): SQLite trata NULL como distinto no unique, então o
 // gate in-tx do serviço é a parte AUTORITATIVA para pares com um job só; o unique fecha o par cheio.
 model AccountingReview {
-  id             String   @id @default(cuid())
+  id             String                     @id @default(cuid())
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  user           User                       @relation(fields: [userId], references: [id], onDelete: Restrict)
   unitId         String // business unit (scoped string, not a FK)
   year           Int
   ecdJobId       String?
@@ -1476,8 +1510,8 @@ model AccountingReview {
   reviewerCrc    String? // máscara CFC UF-NNNNNN/O-D (reuso de AccountingContact.model)
   statement      String?
   closeReason    String? // motivo da rejeição
-  openedAt       DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  openedAt       DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
   closedAt       DateTime?
   findings       AccountingReviewFinding[]
 
@@ -1489,7 +1523,7 @@ model AccountingReview {
 // Achado da revisão (item 3). `resolution` + `resolutionTargetType/Id` = o PONTEIRO para o dado
 // editado (F-C11-2 a) ou para o lançamento de acerto (item 5) — nunca um endpoint de edição próprio.
 model AccountingReviewFinding {
-  id                   String   @id @default(cuid())
+  id                   String           @id @default(cuid())
   reviewId             String
   review               AccountingReview @relation(fields: [reviewId], references: [id], onDelete: Restrict)
   userId               String // cópia do escopo da revisão (leitura escopada sem join)
@@ -1505,7 +1539,7 @@ model AccountingReviewFinding {
   resolvedById         String?
   resolvedAt           DateTime?
   createdById          String
-  createdAt            DateTime @default(now())
+  createdAt            DateTime         @default(now())
 
   @@index([reviewId])
   @@index([userId, unitId, reviewId])

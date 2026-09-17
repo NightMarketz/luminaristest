@@ -207,6 +207,15 @@
         "ecfJobId": {
           "type": "string",
           "minLength": 1
+        },
+        "extraJobIds": {
+          "default": [],
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "required": [
@@ -239,6 +248,15 @@
         "confirmed": {
           "type": "boolean",
           "const": true
+        },
+        "extraJobIds": {
+          "default": [],
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "required": [
@@ -249,6 +267,49 @@
         "confirmed"
       ],
       "additionalProperties": false
+    },
+    "PackageProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kinds": {
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EXPORT_TRIAL_BALANCE",
+              "EXPORT_GENERAL_LEDGER",
+              "EXPORT_BALANCE_SHEET",
+              "EXPORT_INCOME_STATEMENT",
+              "EXPORT_BANK_RECONCILIATION",
+              "EXPORT_ENTRY_SAMPLE"
+            ]
+          }
+        }
+      },
+      "required": [
+        "kinds"
+      ],
+      "additionalProperties": false
+    },
+    "PackageProfileQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contactId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "contactId"
+      ]
     },
     "RetryDeliverySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
