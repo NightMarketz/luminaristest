@@ -6,7 +6,7 @@
 -- Prisma, como 20260831032258_int_to_bigint_cents), e por ÚLTIMO os ADD COLUMN de fiscal_profiles —
 -- "ALTER TABLE ... ADD COLUMN" não tem IF NOT EXISTS no SQLite, então um retry só os alcança depois
 -- de tudo antes ter rodado de novo idempotentemente. ADD COLUMN puro (nullable ou NOT NULL DEFAULT
--- constante) NÃO faz rebuild: as linhas X6 existentes ganham o default (smoke S6 prova byte-a-byte).
+-- constante) NÃO faz rebuild: as linhas X6 existentes ganham o default (o dev.db real de 14/09 esta em 42/49 migracoes e sem fiscal_profiles — a prova byte-a-byte e a sonda sintetica do review #348, nao o smoke).
 
 -- CreateTable: ServiceFiscalProfile (BRIEF item 2; F-DFE-6 a)
 CREATE TABLE IF NOT EXISTS "service_fiscal_profiles" (
@@ -106,6 +106,9 @@ CREATE TABLE IF NOT EXISTS "fiscal_document_sequences" (
 -- MESMO nome (smoke S7 exige que nenhum índice nomeado desapareça).
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
+-- Prologo IF EXISTS (review #348, MEDIO): abort entre o CREATE de new_ e o DROP da velha deixaria new_ orfa
+-- e o retry morreria em "table already exists"; a tabela velha ainda existe nessa janela, entao dropar new_ nao perde dado.
+DROP TABLE IF EXISTS "new_document_attachments";
 CREATE TABLE "new_document_attachments" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
