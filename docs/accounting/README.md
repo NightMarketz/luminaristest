@@ -14,7 +14,7 @@
 |---|---|---|
 | [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) | grafo-mestre reconciliado: §1 travadas · §4 rejeitadas · §5 diferidos · **§5.1 fila** · **§7.1 régua** · fold no topo | régua **41/57**; último fold: #315 + cédulas 14/09 |
 | [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) | dependências nó a nó + algoritmo do próximo nó (R6) | vigente — supersede [09-11](GRAFO-DEPENDENCIAS-2026-09-11.md) 📜 e [09-07](GRAFO-DEPENDENCIAS-2026-09-07.md) 📜 |
-| [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) | prompt de orquestração pós-C6b + **detalhamento por passo** (sucede o 09-14, que fechou 11/12) | vigente — 1 ✅ #338, 2 🔄 #340, 3 ✅ #339, 4–8 [H] |
+| [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) | prompt de orquestração pós-C6b + **detalhamento por passo** (sucede o 09-14, que fechou 11/12) | vigente — 1 ✅ #338, 2 ✅ #340, 3 ✅ #339, 4–8 [H] |
 
 ## 2. Cédulas de decisão (citáveis, ORCH-006) — cronológicas
 
@@ -61,7 +61,7 @@
 | **F7** baixa por retorno bancário | [`BE-INCR-BANK-SETTLEMENT-brief.md`](BE-INCR-BANK-SETTLEMENT-brief.md) | ✅ (forks → a, 15/09) | #326 |
 | **C11** revisão profissional editável | [`BE-INCR-REVIEW-LAYER-brief.md`](BE-INCR-REVIEW-LAYER-brief.md) | ✅ BRIEF · 6 forks ao dono | #321 |
 | **C12** máscaras de identidade no SPED | [`BE-INCR-SPED-IDENTITY-MASKS-brief.md`](BE-INCR-SPED-IDENTITY-MASKS-brief.md) | ✅ BRIEF · 4 forks ao dono | #322 |
-| **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) · [`…-execution-plan.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md) | ✅ BRIEF · 5 forks ✅ 16/09 · plano granular (3 PRs) · F-C6b-6..8 ✅ 16/09 · **executa dado 16/09** | #324 · #333 |
+| **C6b** pacote ampliado ao contador | [`BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md) · [`…-execution-plan.md`](BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md) | ✅ **MERGEADO 17/09** — PR-1 #337 · PR-2 #338 · PR-3 #340 `373d00d4`; contábil 19/22 | #324 · #333 · #336 · #337 · #338 · #340 |
 | **SEED-MY** seed multi-exercício | [`SEED-MULTI-EXERCICIO-brief.md`](SEED-MULTI-EXERCICIO-brief.md) | ✅ BRIEF · bloqueado até B-4 | #325 |
 | **X6** custo D3 por regime | [`BE-INCR-NFE-COST-REGIME-brief.md`](BE-INCR-NFE-COST-REGIME-brief.md) | ✅ (emenda 15/09 + ERRATA) | #327 · #328 |
 | **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) | ✅ ADR+BRIEF · F-FA10/12/13 ao dono; execução não autorizada | #330 |

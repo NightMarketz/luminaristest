@@ -1,5 +1,7 @@
 # C6b — Plano de execução granular: BE-INCR-CONTADOR-PACKAGE-EXTENDED
 
+> **✅ EXECUTADO 2026-09-17: PR-1 #337 `daf76279` · PR-2 #338 `15c8bf53` · PR-3 #340 `373d00d4`. Reviews independentes: PR-1 PASS (+1 MÉDIO fechado), PR-2 FAIL→PASS (2 ALTO + 1 MÉDIO), PR-3 FAIL→PASS (1 BLOQUEANTE na migração). Desvios registrados nos PRs; nenhum fork novo.**
+>
 > **Estado: plano de execução (granularização do BRIEF), 2026-09-16.** Forks F-C6b-1..5 → (a) ✅
 > ratificados (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`). C11 ✅ mergeado (#334
 > `a2c974cb`) — a pré-condição serial está satisfeita. **Implementação continua exigindo "executa"

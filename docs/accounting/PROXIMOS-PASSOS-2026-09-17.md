@@ -60,7 +60,7 @@ runbook em branco, nunca preencha.
 | # | Nó | Módulo | Sessão | Entrada / regra | Saída esperada | Autorização | Estado (17/09) |
 |---|---|---|---|---|---|---|---|
 | 1 | **C6b PR-2** (#338) | contábil | review independente → `sessao-integracao` | Passos 8–10 do plano (`EXPORT_BANK_RECONCILIATION`, `EXPORT_ENTRY_SAMPLE`, F-C6b-5/8 → a); CI 5/5 verde, MERGEABLE, **0 reviews** | PASS + merge (squash) | "executa C6b" 16/09 | ✅ #338 `15c8bf53` (17/09) — fold 1.3 neste PR |
-| 2 | **C6b PR-3** | contábil | `sessao-feature` | Passos 11–14: `AccountingDeliveryItem` + `packageProfile` (1 migração, 2 tabelas, prólogo `IF NOT EXISTS`), manifesto N-ário, backfill, extras; 14 arquivos, ~20 casos + `smoke:migration` | PR + review + merge; **C6b `done`** | "executa C6b" 16/09 | 🔄 **#340** `71b87c63` (review independente em voo; CI server pending 17/09) |
+| 2 | **C6b PR-3** ✅ #340 `373d00d4` | contábil | `sessao-feature` | Passos 11–14: `AccountingDeliveryItem` + `packageProfile` (1 migração, 2 tabelas, prólogo `IF NOT EXISTS`), manifesto N-ário, backfill, extras; 14 arquivos, ~20 casos + `smoke:migration` | PR + review + merge; **C6b `done`** | "executa C6b" 16/09 | 🔄 **#340** `71b87c63` (review independente em voo; CI server pending 17/09) |
 | 3 | **Docs C12 + GAP-MAP + este doc** | docs | `sessao-integracao` docs (PR docs-only) | branch `claude/pos-c6b-queue-blockers-35f6f9`: transcrição J930/0930, BRIEF C12 (item 11, F-C12-5..7), adendo da cédula 16/09, GAP-MAP l.39 `[FECHADO #267]`, este doc | merge; C12 `ready` citável em `main` | dono 17/09 ("faz os dois") | 🔄 (este worktree) |
 | 4 | **C12** máscaras de identidade no SPED | contábil | `sessao-feature` | BRIEF itens 1–11; write-set = `SpedEcdDto/SpedEcfDto/SpedEcfRealDto`, const nova `models/spedQualifAssinante.ts`, serviço de geração (resolução de `contactId`), snapshots; **disjunto do C6b** (PAR-001) — pode correr em worktree paralelo ao passo 2 se o dono autorizar 2 sessões | PR + review + merge; contábil 18→19/22 | **falta "executa"** | ⬜ [H] |
 | 5 | **C8** imobilizado + depreciação | contábil | `sessao-feature` | 37 comportamentos; ADR Proposed → Accepted no PR de código; 2 txs (`postentry-tx-raiz-subrazao-2-commits`); J801/J932; quota cumulativa; Anexo III do corpus (chave = ordinal da fonte) | PR(s) + review + merge; contábil +1 | **falta "executa"** | ⬜ [H] |
@@ -122,9 +122,9 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 | Sub | O quê | Comando / evidência | Estado |
 |---|---|---|---|
 | 2.1 | `sessao-feature` com BRIEF + plano §PR-3 (passos 11–14); worktree novo ⇒ `npm ci` + `.env` (`worktree-deps-stale-prisma-client`) | formulário preenchido | ✅ (#340 aberto 17/09, Passos 1–4 + 11–14) |
-| 2.2 | Migração aditiva única (2 tabelas) com prólogo `IF NOT EXISTS`; backfill idempotente; `npm run smoke:migration` contra cópia do `dev.db` real (`server/prisma/prisma/dev.db` — `dev-db-real-path-is-nested`); S6 reprova backfill por desenho — declarar | relatório do smoke no PR | 🔄 (declarado no corpo do #340; conferir no review) |
-| 2.3 | `resetDb()` cobre a tabela nova por derivação do schema — confirmar com o teste-guarda existente | `npx jest resetDb` | ⬜ |
-| 2.4 | Review independente + CI + merge; fold: C6b `done`, contábil 18→19/22 (C6b é nó — grafo §1) | master map §5.1/§7.1 | 🔄 review em `review-pr3` + CI pending |
+| 2.2 | Migração aditiva única (2 tabelas) com prólogo `IF NOT EXISTS`; backfill idempotente; `npm run smoke:migration` contra cópia do `dev.db` real (`server/prisma/prisma/dev.db` — `dev-db-real-path-is-nested`); S6 reprova backfill por desenho — declarar | relatório do smoke no PR | ✅ smoke 5 migrações OK, S6 vacuoso (logs = 0); **review pegou `ADD COLUMN` sem guarda como 1ª instrução** (SQLite sem `IF NOT EXISTS` p/ coluna) → movido p/ o fim (`63f02b04`), abort/retry simulado em 2 pontos |
+| 2.3 | `resetDb()` cobre a tabela nova por derivação do schema — confirmar com o teste-guarda existente | `npx jest resetDb` | ✅ `test/helpers/db.ts` +1 `deleteMany` (item antes do log, FK Restrict) |
+| 2.4 | Review independente + CI + merge; fold: C6b `done`, contábil 18→19/22 (C6b é nó — grafo §1) | master map §5.1/§7.1 | ✅ review FAIL→fix→PASS · CI 5/5 · **merge `373d00d4`** · fold neste PR |
 
 ### Passo 3 — PR docs (C12 transcrição + GAP-MAP + este doc) 🔄 #339
 

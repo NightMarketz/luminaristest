@@ -1,5 +1,7 @@
 # BRIEF — BE-INCR-CONTADOR-PACKAGE-EXTENDED (nó C6b · pacote ampliado ao contador)
 
+> **✅ MERGEADO 2026-09-17 em 3 PRs seriais: #337 `daf76279` · #338 `15c8bf53` · #340 `373d00d4` (fold no master map §5.1).**
+>
 > **Estado: BRIEF pronto. ✅ 5 forks RATIFICADOS 2026-09-16 (dono, via `AskUserQuestion`; registro em
 > `CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`): F-C6b-1..5 → (a), todos na recomendação.**
 > **Plano de execução granular (passo/arquivo/teste, 3 PRs seriais, forks novos F-C6b-6..8 ✅ ratificados 16/09, "executa" dado 16/09):
