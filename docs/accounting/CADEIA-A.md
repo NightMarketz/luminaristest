@@ -54,11 +54,24 @@ A-04 C8 (imobilizado + depreciação + retificação versionada ECD/ECF, absorve
    │  → PR-4 (retificação versionada — Bloco G) → PR-5 (NF-e modo 4)
    │  PR-4 ⇄ PR-5 permutáveis (write-sets disjuntos entre si)
    │
-   │  ⚠️ DEPENDÊNCIA NOVA (achada nesta sessão, não estava no enunciado original):
-   │  A-01 (C12) deve MERGEAR antes do C8 abrir o PR-4 — write-set overlap real em
-   │  SpedEcdDto.ts/SpedEcfDto.ts/SpedEcfRealDto.ts (bloco superRefine do `declarant`,
-   │  reuso de SignerSchema). Sem overlap com PR-1/2/3/5. Se C12 atrasar, C8 pode
-   │  fazer PR-5 antes do PR-4 (permutáveis) para não ficar parado.
+   │  ⚠️ DEPENDÊNCIA NOVA (achada nesta sessão, não estava no enunciado original;
+   │  confirmada por leitura direta do código-fonte, não só do texto dos planos):
+   │  A-01 (C12) deve MERGEAR antes do C8 abrir o PR-4. Não é só "mesmo arquivo" —
+   │  é o MESMO símbolo Zod reusado: `SpedEcdDto.ts:74` exporta `SignerSchema`
+   │  ({identQualif, indCrc, ...}) que é exatamente o que C12 (F-C12-1/F-C12-3)
+   │  vai alterar (identQualif derivado do código; indCrc com máscara CFC). O
+   │  execution-plan do C8, Passo 19, cita textualmente "signers: SignerSchema[]
+   │  (reuso :74)" para o `verificationTerm` do PR-4 — ou seja, PR-4 CONSOME o
+   │  mesmo tipo que C12 muda. Se PR-4 nascer antes de C12, ele é escrito/revisado
+   │  contra o shape ANTIGO de SignerSchema e herda a mudança de C12 sem que
+   │  ninguém tenha revisado se a máscara de identidade também deveria valer para
+   │  os signatários do Termo de Verificação. Mesmo acoplamento, mais fraco (mesmo
+   │  arquivo, símbolos diferentes — `DeclarantSchema` × `SignerSchema`), existe em
+   │  `SpedEcfDto.ts`/`SpedEcfRealDto.ts` (`SpedEcfRealDto.ts:2` importa
+   │  `DeclarantSchema, SignerSchema, refineEcfSigners` de `SpedEcfDto.ts` — "o MESMO
+   │  objeto", comentário do próprio arquivo). Sem overlap nenhum com PR-1/2/3/5.
+   │  Se C12 atrasar, C8 pode fazer PR-5 antes do PR-4 (permutáveis) para não
+   │  ficar parado — mas o PR-4 em si não deve abrir antes de C12 mergear.
    ▼
 A-23 fold (consolidação do Trecho A no master map)
 ```
