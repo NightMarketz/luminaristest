@@ -4334,6 +4334,78 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *
+ *   /api/accounting/depreciation-rates:
+ *     get:
+ *       summary: List the unit depreciation rate table (BE-INCR-FIXED-ASSETS, nó C8, item 3)
+ *       description: >-
+ *         Seeds the Anexo III (IN RFB 1.700/2017) table LAZILY on first read of the scope (idempotent —
+ *         a scope only seeds once). includeHidden=false (default) omits rows the operator hid; ANEXO_*
+ *         rows are immutable (no edit route), CUSTOM rows are created via POST below.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: includeHidden, schema: { type: string, enum: ['true', 'false'] } }
+ *       responses:
+ *         '200': { description: 'DepreciationRate[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Create a CUSTOM depreciation rate (item 2)
+ *       description: >-
+ *         Always source=CUSTOM, sourceRow=null (F-FA10 → a: no business-key uniqueness for CUSTOM rows,
+ *         the key is the row id). ANEXO_* rows are never edited — a divergent rate is a new CUSTOM row.
+ *         Audited as depreciation_rate.created (ids/numbers only — description/justification never enter
+ *         the trail).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, description, lifeYears, annualRateBp, justification]
+ *               properties:
+ *                 unitId:        { type: string }
+ *                 ncm:           { type: string }
+ *                 description:   { type: string }
+ *                 lifeYears:     { type: integer, minimum: 1 }
+ *                 annualRateBp:  { type: integer, minimum: 1, maximum: 10000, description: '10% = 1000' }
+ *                 justification: { type: string }
+ *       responses:
+ *         '201': { description: 'DepreciationRate' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/depreciation-rates/{id}/hide:
+ *     post:
+ *       summary: Hide a depreciation rate (soft — item 2)
+ *       description: >-
+ *         Never deletes: a rate a FixedAsset already snapshotted stays readable by id. Works on ANEXO_*
+ *         and CUSTOM rows alike. Audited as depreciation_rate.hidden.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *       responses:
+ *         '200': { description: 'DepreciationRate' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
  *   /api/accounting/service-fiscal-profiles:
  *     get:
  *       summary: List the per-service fiscal profiles of a unit (BE-INCR-DFE, nó X10b, F-DFE-6 a)

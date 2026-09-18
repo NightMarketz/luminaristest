@@ -35,6 +35,7 @@ import { ReconcilePendingRepository } from '../features/accounting/repositories/
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
+import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
@@ -109,6 +110,8 @@ import { BankSettlementService } from '../features/accounting/services/BankSettl
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
+import { DepreciationRateSeedService } from '../features/accounting/services/DepreciationRateSeedService';
+import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
@@ -192,6 +195,7 @@ import type { IReconcilePendingRepository } from '../features/accounting/reposit
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
+import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
@@ -348,6 +352,7 @@ export class ApplicationFactory {
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
+    depreciationRate: IDepreciationRateRepository;
   };
 
   private readonly policies: {
@@ -429,6 +434,8 @@ export class ApplicationFactory {
     presetSync: PresetSyncService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    depreciationRateSeed: DepreciationRateSeedService;
+    depreciationRate: DepreciationRateService;
   };
 
   private constructor() {
@@ -477,6 +484,7 @@ export class ApplicationFactory {
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
+      depreciationRate: new DepreciationRateRepository(),
     };
 
     // Policies
@@ -729,6 +737,14 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação, seed lazy do Anexo III.
+    const depreciationRateSeedService = new DepreciationRateSeedService(this.repositories.depreciationRate);
+    const depreciationRateService = new DepreciationRateService(
+      this.repositories.depreciationRate,
+      depreciationRateSeedService,
+      auditService,
+      this.policies.accounting,
+    );
     // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
     // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.
     const serviceFiscalProfileService = new ServiceFiscalProfileService(
@@ -776,6 +792,8 @@ export class ApplicationFactory {
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
+      depreciationRateSeed: depreciationRateSeedService,
+      depreciationRate: depreciationRateService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
       chat: new ChatService(
@@ -1156,6 +1174,7 @@ export class ApplicationFactory {
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;

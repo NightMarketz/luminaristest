@@ -106,6 +106,11 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
 import { getFiscalProfile, upsertFiscalProfile } from '../controllers/fiscalProfileController';
 import {
+  listDepreciationRates,
+  createDepreciationRate,
+  hideDepreciationRate,
+} from '../controllers/depreciationRateController';
+import {
   deleteServiceFiscalProfile,
   getServiceFiscalProfile,
   listServiceFiscalProfiles,
@@ -265,6 +270,12 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+
+// BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
+// de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).
+router.get('/depreciation-rates', listDepreciationRates);
+router.post('/depreciation-rates', createDepreciationRate);
+router.post('/depreciation-rates/:id/hide', hideDepreciationRate);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

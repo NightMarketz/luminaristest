@@ -62,6 +62,9 @@ export async function resetDb(): Promise<void> {
   await prisma.packageBalanceMovement.deleteMany();
   await prisma.accountingBinding.deleteMany();
   await prisma.reconcilePendingItem.deleteMany();
+  // BE-INCR-FIXED-ASSETS (nó C8): nada referencia FixedAsset por FK — folha pura; cai antes de
+  // fixedAssetClass/depreciationRate (que ele referencia) e de journalEntry/sourceDocument/payable.
+  await prisma.fixedAsset.deleteMany();
   // BE-INCR-BANK-SETTLEMENT (nó F7): item cascade da linha do extrato; settings tem FK RESTRICT para
   // `accounts` — os dois caem ANTES de accounts/statements ou o deleteMany deles falha por violação.
   await prisma.bankSettlementItem.deleteMany();
@@ -114,6 +117,11 @@ export async function resetDb(): Promise<void> {
   await prisma.dimensionDefinition.deleteMany();
   await prisma.counterparty.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
+
+  // BE-INCR-FIXED-ASSETS (nó C8): fixedAssetClass tem FK Restrict para account — cai antes dele;
+  // depreciationRate não referencia account, mas cai junto por proximidade temática.
+  await prisma.fixedAssetClass.deleteMany();
+  await prisma.depreciationRate.deleteMany();
 
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();

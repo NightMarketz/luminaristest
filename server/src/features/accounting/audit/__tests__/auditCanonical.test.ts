@@ -271,3 +271,22 @@ describe('review.* — texto livre do achado/sign-off nunca sobrevive à canonic
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-1 (nó C8, item 2/3) — teste-guarda no MESMO PR que introduz os 2
+// eventTypes (classe `accounting-audit-allowlist-guards`). `description`/`justification` são texto
+// livre digitado (linhas CUSTOM); mesmo passados por engano, NÃO sobrevivem à canonicalização.
+describe('depreciation_rate.* — texto livre da linha CUSTOM nunca sobrevive à canonicalização', () => {
+  const FREE = { description: 'Torno CNC do fornecedor João', justification: 'Laudo técnico do João Perito' };
+
+  it.each([
+    ['depreciation_rate.created', { rateId: 'dr-1', source: 'CUSTOM', ncm: null, annualRateBp: 1000, lifeYears: 10 }],
+    ['depreciation_rate.hidden', { rateId: 'dr-1', source: 'CUSTOM' }],
+  ])('%s derruba description/justification passados a mais', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, { ...allowed, ...FREE });
+    expect(out).not.toContain('João');
+    for (const [k, v] of Object.entries(allowed)) {
+      if (v === null) expect(JSON.parse(out)[k]).toBeUndefined(); // null é OMITIDO, não vira "null"
+      else expect(JSON.parse(out)[k]).toBe(String(v));
+    }
+  });
+});

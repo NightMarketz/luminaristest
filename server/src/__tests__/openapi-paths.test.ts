@@ -79,7 +79,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +4 (BE-INCR-DFE PR-3, nó X10b, BRIEF item 38, Fase D): /api/nfe/dfe/documents/{id}/consultar
 //    (POST), /.../reenviar (POST), /.../cancelar (POST), /api/nfe/dfe/webhook/{partner} (POST) —
 //    4 PATHS e 4 OPERAÇÕES (196 → 200, medido com docs:generate).
-const BASELINE = 200;
+// +2 (BE-INCR-FIXED-ASSETS PR-1, nó C8): depreciation-rates, depreciation-rates/{id}/hide.
+const BASELINE = 202;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

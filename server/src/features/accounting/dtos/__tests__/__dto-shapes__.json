@@ -1126,6 +1126,89 @@
       ]
     }
   },
+  "DepreciationRateDto.ts": {
+    "ListDepreciationRatesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "includeHidden": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "UpsertDepreciationRateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ncm": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifeYears": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "annualRateBp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "justification": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "description",
+        "lifeYears",
+        "annualRateBp",
+        "justification"
+      ],
+      "additionalProperties": false
+    },
+    "HideDepreciationRateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "DimensionDto.ts": {
     "CreateDimensionDefinitionSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

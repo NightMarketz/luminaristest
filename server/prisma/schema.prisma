@@ -57,6 +57,9 @@ model User {
   lalurParteBAccounts     LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
   lalurParteBMovements    LalurParteBMovement[] // Relation to LalurParteBMovement (M410, ECF Fase 3C)
   lalurParteBClosings     LalurParteBClosing[] // Relation to LalurParteBClosing (fechamento trimestral da Parte B, ECF Fase 3C)
+  fixedAssetClasses       FixedAssetClass[] // Relation to FixedAssetClass (BE-INCR-FIXED-ASSETS, nó C8)
+  depreciationRates       DepreciationRate[] // Relation to DepreciationRate (BE-INCR-FIXED-ASSETS, nó C8)
+  fixedAssets             FixedAsset[] // Relation to FixedAsset (BE-INCR-FIXED-ASSETS, nó C8)
 }
 
 // Per-user saved table views (query/filters/sort) for the canonical table stack.
@@ -431,33 +434,38 @@ model AuditChainHead {
 // (`code`, e.g. "1.1.2") — the parent is the prefix; there is no self-relation.
 // Only leaf accounts (`acceptsEntries`) receive ledger lines.
 model Account {
-  id                     String                    @id @default(cuid())
-  userId                 String
-  user                   User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId                 String // business unit (DynamicTable row id; scoped string, not a FK)
-  code                   String // hierarchical key, e.g. "1.1.2"
-  name                   String
-  nature                 String // Asset | Liability | Equity | Revenue | Expense
-  acceptsEntries         Boolean                   @default(true)
+  id                                 String                    @id @default(cuid())
+  userId                             String
+  user                               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                             String // business unit (DynamicTable row id; scoped string, not a FK)
+  code                               String // hierarchical key, e.g. "1.1.2"
+  name                               String
+  nature                             String // Asset | Liability | Equity | Revenue | Expense
+  acceptsEntries                     Boolean                   @default(true)
   // INCR-DIM-COMPLETENESS (B1, ADR-INCR-DIM-COMPLETENESS — EMENDA a ADR-INCR-DIM F5): quando true,
   // toda partida a esta conta EXIGE ≥1 etiqueta de dimensão (qualquer eixo — MVP booleano simples,
   // não por-eixo). Default false ⇒ contas seguem 100% opcionais (F5 permanece o default). Gate
   // prospectivo (SEC-B1-5): re-checado in-tx nos escritores de conteúdo original (postEntry/approve);
   // NUNCA retro-rejeita histórico. Toggle audita + canManage (SEC-B1-4). Zero mudança de dado (ADD COLUMN).
-  requiresDimension      Boolean                   @default(false)
-  postings               Posting[]
-  bankStatements         BankStatement[]           @relation("AccountBankStatements")
-  referentialMappings    ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
-  payablesExpense        Payable[]                 @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
-  receivablesRevenue     Receivable[]              @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
-  bankChargeExpenseOf    AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
-  bankChargeIncomeOf     AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
-  icmsRecuperavelOf      FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
-  pisCofinsRecuperavelOf FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
-  lalurEntries           LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
-  createdAt              DateTime                  @default(now())
-  updatedAt              DateTime                  @updatedAt
-  deletedAt              DateTime?
+  requiresDimension                  Boolean                   @default(false)
+  postings                           Posting[]
+  bankStatements                     BankStatement[]           @relation("AccountBankStatements")
+  referentialMappings                ReferentialMapping[] // conta-folha → conta referencial RFB, versionado (INCR-9)
+  payablesExpense                    Payable[]                 @relation("PayableExpenseAccount") // conta-despesa (4.x) da contrapartida do reconhecimento AP (INCR-AP)
+  receivablesRevenue                 Receivable[]              @relation("ReceivableRevenueAccount") // conta-receita (3.x) da contrapartida do reconhecimento AR (INCR-AR)
+  bankChargeExpenseOf                AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
+  bankChargeIncomeOf                 AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
+  icmsRecuperavelOf                  FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
+  pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
+  lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
+  fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
+  fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
+  scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
+  scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
+  scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
+  createdAt                          DateTime                  @default(now())
+  updatedAt                          DateTime                  @updatedAt
+  deletedAt                          DateTime?
 
   @@unique([userId, unitId, code]) // real DB constraint — each unit owns its chart
   @@index([userId, unitId])
@@ -522,33 +530,34 @@ model ReferentialAccount {
 // corrections are made via a reversing entry (estorno). `reversedById` links an
 // original to its reversal (self-relation).
 model JournalEntry {
-  id            String                   @id @default(cuid())
-  userId        String
-  user          User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId        String // business unit (scoped string, not a FK)
-  date          DateTime
-  description   String
-  status        String                   @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
-  sourceType    String                   @default("manual")
-  sourceId      String?
-  reversedById  String?                  @unique // the reversal entry that estorned this one
-  reversedBy    JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
-  reverses      JournalEntry?            @relation("Reversal")
-  postings      Posting[]
+  id                  String                   @id @default(cuid())
+  userId              String
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId              String // business unit (scoped string, not a FK)
+  date                DateTime
+  description         String
+  status              String                   @default("Draft") // Draft | PendingApproval | Posted | Reconciled | Reversed
+  sourceType          String                   @default("manual")
+  sourceId            String?
+  reversedById        String?                  @unique // the reversal entry that estorned this one
+  reversedBy          JournalEntry?            @relation("Reversal", fields: [reversedById], references: [id])
+  reverses            JournalEntry?            @relation("Reversal")
+  postings            Posting[]
   // `attachments` deixou de ser relação (BE-INCR-DFE F-DFE-19 b, 2026-09-17): DocumentAttachment é
   // polimórfico por (targetType, targetId) sem FK — o drill-down consulta por targetType.
-  sources       JournalEntrySource[]     @relation("JournalEntrySources")
-  lalurLinks    LalurEntryJournalEntry[] // M312/M362 — ajuste do e-Lalur que cita este lançamento (ECF Fase 3C)
-  createdById   String? // actor who created this entry (authorship trail / maker)
-  submittedById String? // actor who submitted for approval (ADR-INCR-APPROVAL, maker trail)
-  approvedById  String? // actor who approved (ADR-INCR-APPROVAL, checker trail — SoD: != createdById)
-  postedById    String? // actor who posted/confirmed this entry (SoD trail)
-  version       Int                      @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
-  contentHash   String? // frozen economic-content hash at submit (ACC-017/022); null while Draft
-  fiscalYear    Int? // born at POST/approve, inside the tx (ACC-015) — null while Draft/PendingApproval
-  entryNumber   Int? // sequential within (userId, unitId, fiscalYear); born at POST/approve — null while Draft/PendingApproval
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
+  sources             JournalEntrySource[]     @relation("JournalEntrySources")
+  lalurLinks          LalurEntryJournalEntry[] // M312/M362 — ajuste do e-Lalur que cita este lançamento (ECF Fase 3C)
+  fixedAssetDisposals FixedAsset[]             @relation("FixedAssetDisposalEntry") // BE-INCR-FIXED-ASSETS item 18 — entry da baixa
+  createdById         String? // actor who created this entry (authorship trail / maker)
+  submittedById       String? // actor who submitted for approval (ADR-INCR-APPROVAL, maker trail)
+  approvedById        String? // actor who approved (ADR-INCR-APPROVAL, checker trail — SoD: != createdById)
+  postedById          String? // actor who posted/confirmed this entry (SoD trail)
+  version             Int                      @default(1) // optimistic-lock counter for the approval CAS (ACC-023)
+  contentHash         String? // frozen economic-content hash at submit (ACC-017/022); null while Draft
+  fiscalYear          Int? // born at POST/approve, inside the tx (ACC-015) — null while Draft/PendingApproval
+  entryNumber         Int? // sequential within (userId, unitId, fiscalYear); born at POST/approve — null while Draft/PendingApproval
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
 
   // Idempotency — a real DB constraint (SQLite treats NULL sourceId as distinct, so
   // manual entries never collide). Closes the double-post window app code cannot.
@@ -815,6 +824,7 @@ model SourceDocument {
   updatedAt    DateTime             @updatedAt
   deletedAt    DateTime? // soft-delete — wired por PostingService.retireSourceDocument (BE-INCR-DFE, F-DFE-18 a)
   sources      JournalEntrySource[]
+  fixedAssets  FixedAsset[] // BE-INCR-FIXED-ASSETS item 22 — rascunho criado a partir de item de NF-e (INCR-8)
 
   // SEM @@unique de idempotência (D2): a dedup do ledger é do JournalEntry; postEntry
   // curto-circuita no idempotent-hit antes de criar a origem, então re-post não duplica.
@@ -943,6 +953,7 @@ model Payable {
   // rows (pre-migration) = not multi-item; the create path writes an explicit boolean.
   inventoryMultiItem  Boolean?
   payments            PayablePayment[]
+  fixedAssetDrafts    FixedAsset[] // BE-INCR-FIXED-ASSETS item 22 — rascunhos criados a partir deste payable (modo 4 NF-e)
 
   // Business key (D3): one live payable per supplier × document. rename-on-delete
   // (documentNumber → deleted:<id>:<documentNumber>) frees the key on cancel/delete so a
@@ -1481,20 +1492,151 @@ model BankSettlementItem {
 // (userId, unitId). Nasce com as 2 contas de encargo bancário (F7 Fase C, BRIEF item 8); X6/C6b decidem
 // se reusam. FK Account com Restrict: apagar a conta configurada é erro, não silêncio.
 model AccountingScopeSettings {
-  id                         String   @id @default(cuid())
-  userId                     String
-  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId                     String
-  bankChargeExpenseAccountId String? // encargo PAGO (AP): D esta conta / C banco — conta vem do contador (F7 §5)
-  bankChargeExpenseAccount   Account? @relation("ScopeSettingsBankChargeExpense", fields: [bankChargeExpenseAccountId], references: [id], onDelete: Restrict)
-  bankChargeIncomeAccountId  String? // encargo RECEBIDO (AR): D banco / C esta conta
-  bankChargeIncomeAccount    Account? @relation("ScopeSettingsBankChargeIncome", fields: [bankChargeIncomeAccountId], references: [id], onDelete: Restrict)
-  updatedById                String
-  createdAt                  DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
+  id                           String              @id @default(cuid())
+  userId                       String
+  user                         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                       String
+  bankChargeExpenseAccountId   String? // encargo PAGO (AP): D esta conta / C banco — conta vem do contador (F7 §5)
+  bankChargeExpenseAccount     Account?            @relation("ScopeSettingsBankChargeExpense", fields: [bankChargeExpenseAccountId], references: [id], onDelete: Restrict)
+  bankChargeIncomeAccountId    String? // encargo RECEBIDO (AR): D banco / C esta conta
+  bankChargeIncomeAccount      Account?            @relation("ScopeSettingsBankChargeIncome", fields: [bankChargeIncomeAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-FIXED-ASSETS (nó C8, item 5 + item 24). Colunas nascem no PR-1 (F-FA14 → b: migração
+  // única, PR-2/PR-3 não abrem migração própria); a exposição no DTO/serviço é do PR-2 (item 5) e do
+  // PR-3 (item 24 — Parte B).
+  depreciationExpenseAccountId String? // despesa de depreciação (4.x) — D esta conta / C acumulada da classe
+  depreciationExpenseAccount   Account?            @relation("ScopeSettingsDepreciationExpense", fields: [depreciationExpenseAccountId], references: [id], onDelete: Restrict)
+  disposalGainAccountId        String? // ganho na baixa de imobilizado
+  disposalGainAccount          Account?            @relation("ScopeSettingsDisposalGain", fields: [disposalGainAccountId], references: [id], onDelete: Restrict)
+  disposalLossAccountId        String? // perda na baixa de imobilizado
+  disposalLossAccount          Account?            @relation("ScopeSettingsDisposalLoss", fields: [disposalLossAccountId], references: [id], onDelete: Restrict)
+  depreciationParteBAccountId  String? // item 24 — conta da Parte B (M010) p/ diferença contábil×fiscal de depreciação
+  depreciationParteBAccount    LalurParteBAccount? @relation("ScopeSettingsDepreciationParteB", fields: [depreciationParteBAccountId], references: [id], onDelete: Restrict)
+  updatedById                  String
+  createdAt                    DateTime            @default(now())
+  updatedAt                    DateTime            @updatedAt
 
   @@unique([userId, unitId])
   @@map("accounting_scope_settings")
+}
+
+// ── Imobilizado — BE-INCR-FIXED-ASSETS (nó C8, ADR-INCR-FIXED-ASSETS) ──────────────────────────
+// Subrazão de imobilizado Prisma first-class: FixedAssetClass → FixedAsset, com DepreciationRate
+// como tabela de taxas por tenant semeada do Anexo III da IN RFB 1.700/2017 (resposta 6, cédula
+// 2026-09-03). Tenancy = AccountingScope (userId + unitId), como o resto do módulo contábil.
+//
+// F-FA14 → (b) (ratificado 2026-09-18, execution-plan §1): migração POR PR — esta migração (PR-1)
+// cria as 3 tabelas abaixo e as 4 colunas novas de AccountingScopeSettings (item 5 + item 24,
+// porque PR-2/PR-3 não abrem migração própria sob (b)); as 5 colunas de
+// AccountingDataExchangeJob (itens 6-7, retificação versionada) ficam para a migração do PR-4.
+
+// Classe de bem — dono da conta do bem (1.2.x) e da conta de depreciação acumulada (1.2.9.x).
+// Soft-delete bloqueado com ativo vivo (regra de serviço, não FK: um DELETE não pode deixar
+// FixedAsset.classId órfão, mas a classe pode ter zero ativos e ser removida livremente).
+model FixedAssetClass {
+  id                               String       @id @default(cuid())
+  userId                           String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user                             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                           String // business unit (scoped string, not a FK)
+  code                             String
+  name                             String
+  depreciable                      Boolean // LAND nasce false (F-FA5 → a); item 8 exige accumulatedDepreciationAccountId quando true
+  costAccountId                    String
+  costAccount                      Account      @relation("FixedAssetClassCost", fields: [costAccountId], references: [id], onDelete: Restrict)
+  accumulatedDepreciationAccountId String? // obrigatório se depreciable (gate no DTO/serviço do PR-2, não aqui — a coluna é sempre nullable)
+  accumulatedDepreciationAccount   Account?     @relation("FixedAssetClassAccumulatedDepreciation", fields: [accumulatedDepreciationAccountId], references: [id], onDelete: Restrict)
+  assets                           FixedAsset[]
+  createdAt                        DateTime     @default(now())
+  updatedAt                        DateTime     @updatedAt
+  deletedAt                        DateTime?
+
+  @@unique([userId, unitId, code])
+  @@index([userId, unitId])
+  @@index([deletedAt])
+  @@map("fixed_asset_classes")
+}
+
+// Tabela de taxas de depreciação por tenant, semeada LAZY (item 3: a 1ª leitura de
+// GET /depreciation-rates do escopo semeia) do Anexo III da IN RFB 1.700/2017
+// (fixtures/anexo-iii-in-1700-2017.json, gerado por scripts/anexo-iii-to-fixture.mjs).
+//
+// F-FA10 → (a) (ratificado 2026-09-16): a chave de negócio das linhas do Anexo é
+// `[userId, unitId, source, sourceRow]` (ordinal da linha na fonte) — NCM não identifica a linha
+// (`3926.90` aparece 2× com taxas diferentes na fonte). Linhas CUSTOM têm sourceRow=null; SQLite
+// trata NULL como distinto em índice único, então várias linhas CUSTOM coexistem livremente (é o
+// "sem unique de negócio" do BRIEF item 2 — a chave delas é o id).
+//
+// Linhas ANEXO_* são IMUTÁVEIS (parecer D4): PUT numa linha ANEXO_* → 400 no serviço/DTO; editar =
+// criar CUSTOM; hiddenAt só oculta, nunca apaga (histórico do que já foi usado por um FixedAsset
+// snapshot continua legível).
+model DepreciationRate {
+  id            String       @id @default(cuid())
+  userId        String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId        String // business unit (scoped string, not a FK)
+  ncm           String? // texto da fonte ('8471' | '3926.90' | '8479.8' | null — Capítulo/traço sem NCM)
+  sourceRow     Int? // ordinal da <TR> na fonte (item 3.vi); null em CUSTOM
+  description   String
+  lifeYears     Int
+  annualRateBp  Int // basis points (10% = 1000); D1 — taxa '33,3%' → 3330; derivada do prazo (8905) → 500 + justification
+  source        String // 'ANEXO_III_IN_1700_2017' | 'ANEXO_III_NOTA_1' | 'ANEXO_III_NOTA_2' | 'CUSTOM'
+  sourceUrl     String? // link da fonte oficial (FE mostra; BE só devolve, achado §7 do BRIEF)
+  sourceSha256  String? // sha256 do HTML do corpus no momento do seed (rastreabilidade da transcrição)
+  justification String? // obrigatório para CUSTOM e para a linha derivada do prazo (item 3.vii)
+  hiddenAt      DateTime? // oculta sem apagar (linha ANEXO_* usada por um snapshot histórico continua legível)
+  createdById   String? // actor (AccountingScope.actorUserId); plain string
+  createdAt     DateTime     @default(now())
+  assets        FixedAsset[]
+
+  @@unique([userId, unitId, source, sourceRow])
+  @@index([userId, unitId])
+  @@index([userId, unitId, hiddenAt])
+  @@map("depreciation_rates")
+}
+
+// Bem do imobilizado. `annualRateBp` é SNAPSHOT da taxa no momento do create (item 4) — a taxa
+// pode mudar de rótulo depois (hidden, ou uma linha CUSTOM nova) sem afetar ativos já criados.
+// `bookAnnualRateBp` é a taxa CONTÁBIL (societária) quando diverge da fiscal (Anexo III); a quota
+// POSTADA no razão é sempre a contábil (F-FA8 → b, item 12) — a diferença vira ajuste na Parte B
+// (item 23, PR-3).
+model FixedAsset {
+  id                           String            @id @default(cuid())
+  userId                       String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user                         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                       String // business unit (scoped string, not a FK)
+  classId                      String
+  class                        FixedAssetClass   @relation(fields: [classId], references: [id], onDelete: Restrict)
+  code                         String
+  description                  String
+  ncmPrefix                    String?
+  quantity                     Int               @default(1)
+  costCents                    BigInt // MAX_CENTS guardado no DTO (ACC-014, item 8)
+  residualValueCents           BigInt            @default(0)
+  rateId                       String? // taxa de origem (Anexo III ou CUSTOM); XOR com annualRateBp explícito no DTO — aqui só o snapshot
+  rate                         DepreciationRate? @relation(fields: [rateId], references: [id], onDelete: Restrict)
+  annualRateBp                 Int // SNAPSHOT no create (item 4) — nunca recalculado a partir de rateId depois
+  bookAnnualRateBp             Int? // taxa contábil, se diverge da fiscal (item 12/23)
+  bookRateJustification        String? // obrigatório se bookAnnualRateBp setado (item 8)
+  openingAccumulatedCents      BigInt            @default(0) // ativo retroativo (item 9) — base do tie-out (item 14)
+  accumulatedDepreciationCents BigInt            @default(0) // atualizado por CAS (addAccumulated, item 14)
+  status                       String            @default("PENDING_ACTIVATION") // PENDING_ACTIVATION | ACTIVE | FULLY_DEPRECIATED | DISPOSED (ACC-016: comandos, nunca PATCH status)
+  acquiredAt                   DateTime // date-only
+  activatedAt                  DateTime? // date-only
+  disposedAt                   DateTime?
+  disposalEntryId              String?           @unique
+  disposalEntry                JournalEntry?     @relation("FixedAssetDisposalEntry", fields: [disposalEntryId], references: [id])
+  sourceDocumentId             String? // NF-e de origem quando criado pelo modo 4 (item 22, INCR-8)
+  sourceDocument               SourceDocument?   @relation(fields: [sourceDocumentId], references: [id])
+  payableId                    String? // payable de origem quando criado pelo modo 4 (item 22)
+  payable                      Payable?          @relation(fields: [payableId], references: [id])
+  version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
+  createdById                  String?
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @updatedAt
+  deletedAt                    DateTime?
+
+  @@unique([userId, unitId, code])
+  @@index([userId, unitId, status])
+  @@map("fixed_assets")
 }
 
 model ReconcilePendingItem {
@@ -1741,27 +1883,28 @@ model LalurEntry {
 // O que NÃO mora aqui (D-M5): saldo por período (M500 / N-1) e lançamentos sem reflexo na Parte A
 // (M410) — item 13, 2ª migração, decisão com o dono.
 model LalurParteBAccount {
-  id              String                @id @default(cuid())
-  userId          String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId          String // business unit (scoped string, not a FK)
-  codCtaB         String // 2 COD_CTA_B — rename-on-delete frees the key (D-M2)
-  descricao       String // 3 DESC_CTA_LAL
-  dtCriacao       DateTime // 4 DT_AP_LAL — date-only: data FINAL do período de apuração em que a conta nasceu
-  codPbRfb        String // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO do XLSX (REGRA_M010_COD_PB_RFB_TRIBUTO, por tributo)
-  dtLimite        DateTime? // 6 DT_LIM_LAL — date-only; data-limite p/ exclusão/adição/compensação, se houver
-  codTributo      String // 7 COD_TRIBUTO 'I' | 'C' (LALUR_TRIBUTOS) — parte da chave
-  saldoIniCents   BigInt // 8 VL_SALDO_INI ≥ 0 (N 19 2) — REGRA_DT_AP_ZERO: = 0 se dtCriacao cai dentro do exercício
-  indSaldoIni     String // 9 IND_VL_SALDO_INI 'D' | 'C'
-  cnpjSitEsp      String? // 10 CNPJ_SIT_ESP — 14 dígitos (REGRA_VALIDA_CNPJ)
-  createdById     String? // actor (AccountingScope.actorUserId); plain string
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  deletedAt       DateTime? // set when archived (soft) — together with the rename-on-key
-  entries         LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
-  movements       LalurParteBMovement[] @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
-  contrapartidaDe LalurParteBMovement[] @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
-  balances        LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
+  id                                String                    @id @default(cuid())
+  userId                            String // scope owner (AccountingScope.ownerUserId); FK User — cascade (dado operacional)
+  user                              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                            String // business unit (scoped string, not a FK)
+  codCtaB                           String // 2 COD_CTA_B — rename-on-delete frees the key (D-M2)
+  descricao                         String // 3 DESC_CTA_LAL
+  dtCriacao                         DateTime // 4 DT_AP_LAL — date-only: data FINAL do período de apuração em que a conta nasceu
+  codPbRfb                          String // 5 COD_PB_RFB, C 6 — aba PARTEB_PADRAO do XLSX (REGRA_M010_COD_PB_RFB_TRIBUTO, por tributo)
+  dtLimite                          DateTime? // 6 DT_LIM_LAL — date-only; data-limite p/ exclusão/adição/compensação, se houver
+  codTributo                        String // 7 COD_TRIBUTO 'I' | 'C' (LALUR_TRIBUTOS) — parte da chave
+  saldoIniCents                     BigInt // 8 VL_SALDO_INI ≥ 0 (N 19 2) — REGRA_DT_AP_ZERO: = 0 se dtCriacao cai dentro do exercício
+  indSaldoIni                       String // 9 IND_VL_SALDO_INI 'D' | 'C'
+  cnpjSitEsp                        String? // 10 CNPJ_SIT_ESP — 14 dígitos (REGRA_VALIDA_CNPJ)
+  createdById                       String? // actor (AccountingScope.actorUserId); plain string
+  createdAt                         DateTime                  @default(now())
+  updatedAt                         DateTime                  @updatedAt
+  deletedAt                         DateTime? // set when archived (soft) — together with the rename-on-key
+  entries                           LalurEntry[] // linhas da Parte A relacionadas (M305/M355)
+  movements                         LalurParteBMovement[]     @relation("LalurMovementConta") // M410 lançados NESTA conta (ECF Fase 3C)
+  contrapartidaDe                   LalurParteBMovement[]     @relation("LalurMovementContrapartida") // M410 em que esta conta é COD_CTA_B_CTP
+  balances                          LalurParteBBalance[] // M500 materializado por período fechado (ECF Fase 3C, Fork N-1 a)
+  scopeSettingsDepreciationParteBOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationParteB") // BE-INCR-FIXED-ASSETS item 24 — diferença contábil×fiscal de depreciação
 
   @@unique([userId, unitId, codCtaB, codTributo]) // uma conta viva por código × tributo (M010 chave, p.237)
   @@index([userId, unitId])
