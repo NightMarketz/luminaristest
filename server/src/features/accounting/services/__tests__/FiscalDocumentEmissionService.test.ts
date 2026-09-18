@@ -191,23 +191,11 @@ describe('FiscalDocumentEmissionService — tie-out (item 16, fixture MISTA)', (
     expect(accountRepo.findByCode).toHaveBeenCalledWith(SCOPE, SERVICE_REVENUE_ACCOUNT);
   });
 
-  it('MUTATION TARGET: reading account 3.3 instead of 3.1 breaks the tie-out (must go red)', async () => {
-    findRowsByFieldValue.mockResolvedValue([
-      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
-    ]);
-    const { service, accountRepo } = makeService({
-      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
-      ledgerPostings: [
-        { accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n },
-        { accountId: 'acc-3.3', debitCents: 0n, creditCents: 500n },
-      ],
-    });
-    // Simula a mutação do revisor: força o serviço a somar 3.3 em vez de 3.1.
-    accountRepo.findByCode.mockImplementation(async (_s: unknown, _code: string) => ({ id: 'acc-3.3', code: '3.3' }));
-
-    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
-    expect(result.tieOut.vServCents).not.toBe('10000'); // a mutação corrompe o total — o teste deve notar
-  });
+  // NOTA (revisão independente do PR-2): havia aqui um teste chamado "MUTATION TARGET" que mockava
+  // `accountRepo.findByCode` diretamente — não exercitava `SERVICE_REVENUE_ACCOUNT` do código de
+  // produção, então uma mutação real na constante o deixaria passando (falso positivo de proteção).
+  // Removido: a proteção real contra essa classe de mutação é o teste acima ('splits the EXACT
+  // posted 3.1 credit...'), confirmado por mutação de verdade no código-fonte durante a revisão.
 });
 
 describe('FiscalDocumentEmissionService — pré-condições (item 14, porta nunca chamada)', () => {
@@ -233,6 +221,177 @@ describe('FiscalDocumentEmissionService — pré-condições (item 14, porta nun
   it('kind=NFE (Fase E pendente-insumo) recusa loud sem tocar a porta', async () => {
     const { service, repo } = makeService({});
     await expect(service.emit(SCOPE, SALE_ID, 'NFE')).rejects.toThrow(/nfe_nao_implementada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  // As 6 pré-condições restantes (revisão independente do PR-2, achado MÉDIO) — cada uma prova,
+  // com spy, que `repo.runTransaction` (logo `porta.emitir`) nunca é alcançado quando ela falha.
+  function setupFinalizedSaleFixtures(overrides: { customerTaxId?: string; unitCnpj?: string } = {}) {
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: overrides.customerTaxId ?? '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: overrides.unitCnpj ?? '11222333000181' } };
+      return null;
+    });
+  }
+
+  it('perfil fiscal incompleto (emissao.completo=false) -> 400, porta nunca tocada', async () => {
+    setupFinalizedSaleFixtures();
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      fiscalProfile: baseFiscalProfileView({ emissao: { completo: false, faltantes: ['codMun'], pendingExternalValidation: [] } }),
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it("serviço sem ServiceFiscalProfile cadastrado -> 400, porta nunca tocada", async () => {
+    setupFinalizedSaleFixtures();
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-sem-perfil', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({ serviceProfiles: {} }); // get() rejeita para qualquer serviceRef
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('ibsCbsInformar=true sem cNBS no ServiceFiscalProfile -> 400 (E0322), porta nunca tocada', async () => {
+    setupFinalizedSaleFixtures();
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      fiscalProfile: baseFiscalProfileView({ ibsCbsInformar: true }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('venda sem cliente vinculado (F-DFE-7 b) -> 400, porta nunca tocada', async () => {
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', date: todayDateOnly() } }; // sem customerId
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('taxId do cliente inválido por DV -> 400, porta nunca tocada', async () => {
+    setupFinalizedSaleFixtures({ customerTaxId: '11111111111' }); // 11 dígitos repetidos: CPF inválido por DV
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('já existe documento vivo para (venda, kind, cTribNac) -> 400, porta nunca tocada', async () => {
+    setupFinalizedSaleFixtures();
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      liveDocs: [{ id: 'doc-existente', status: 'SENT', cTribNac: '060101' }],
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('emissaoForaDoMes=BLOQUEAR com competência fora do mês corrente -> 400, porta nunca tocada', async () => {
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: '2000-01-15' } }; // mês certamente diferente de hoje
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      fiscalProfile: baseFiscalProfileView({ emissaoForaDoMes: 'BLOQUEAR' }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('porta desabilitada (DFE_PARTNER ausente) -> 400, porta nunca tocada', async () => {
+    process.env = { ...process.env, DFE_PARTNER: '', DFE_PARTNER_ENV: '', NODE_ENV: 'test' };
+    setupFinalizedSaleFixtures();
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    const { service, repo } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/emissao_bloqueada/);
+    expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+});
+
+describe('FiscalDocumentEmissionService — pacote VENDA (item 21, lacuna de spec)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockResolvedValue({ id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', date: todayDateOnly() } });
+  });
+
+  it('venda 100% pacote com pacoteFatoGerador=VENDA bloqueia com 400 nomeado — NUNCA emite um cTribNac fake', async () => {
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { packageId: 'pkg-1', type: 'Package', quantity: 1, unitPrice: 200 } },
+    ]);
+    const { service, repo } = makeService({
+      fiscalProfile: baseFiscalProfileView({ pacoteFatoGerador: 'VENDA' }),
+    });
+    let caught: unknown;
+    try {
+      await service.emit(SCOPE, SALE_ID, 'NFSE');
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    const faltantes = (caught as { details?: { faltantes?: string[] } }).details?.faltantes ?? [];
+    expect(faltantes.some((f) => f.includes('cTribNac do pacote'))).toBe(true);
     expect(repo.runTransaction).not.toHaveBeenCalled();
   });
 });

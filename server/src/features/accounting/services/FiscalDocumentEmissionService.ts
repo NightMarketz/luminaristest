@@ -1,3 +1,4 @@
+import type { FiscalDocument } from 'generated/prisma';
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
@@ -75,6 +76,8 @@ export interface FiscalDocumentView {
   errors: Array<{ code: string; message: string }>;
   sourceDocumentId: string | null;
   attempts: Array<{ attemptNo: number; ref: string; sentAt: string; resultStatus: string | null }>;
+  /** BE-INCR-DFE (item 30) — pendências que exigem ação humana; nunca resolvidas automaticamente. */
+  pendencias: string[];
 }
 
 function centsToMoneyString(cents: number): string {
@@ -250,30 +253,100 @@ export class FiscalDocumentEmissionService {
   }
 
   /**
-   * GET /api/nfe/dfe/documents?unitId&saleId?&status? (item 38). Exige pelo menos um filtro — o
-   * repositório não expõe um "listar tudo" e um dump sem filtro não está no contrato do BRIEF.
+   * GET /api/nfe/dfe/documents?unitId&saleId?&status?&pendencias? (item 38). Exige pelo menos um
+   * de `saleId`/`status` — o repositório não expõe um "listar tudo" e um dump sem filtro não está
+   * no contrato do BRIEF. `pendencias=true` (item 30) filtra por CIMA de um dos dois, nunca
+   * sozinho — não vira um "listar tudo com pendência" que o repositório não sabe fazer.
    * `status` some `saleId`: filtra a lista da venda em memória (a lista de uma venda é sempre
    * pequena — N documentos, um por `cTribNac`); sem `saleId`, delega a `listByStatus`.
    */
-  async list(scope: AccountingScope, filter: { saleId?: string; status?: FiscalDocumentStatus }): Promise<FiscalDocumentView[]> {
+  async list(scope: AccountingScope, filter: { saleId?: string; status?: FiscalDocumentStatus; pendencias?: boolean }): Promise<FiscalDocumentView[]> {
     if (!this.policy.canReadFiscalDocument(scope)) throw new ForbiddenError('Você não tem permissão para ler documentos fiscais.');
+    let views: FiscalDocumentView[];
     if (filter.saleId) {
       const rows = await this.repo.listBySale(scope, filter.saleId);
-      const filtered = filter.status ? rows.filter((r) => r.status === filter.status) : rows;
-      return filtered.map((r) => this.toView(r));
-    }
-    if (filter.status) {
+      const target = filter.status ? rows.filter((r) => r.status === filter.status) : rows;
+      // `rows` (não filtrado) já é o conjunto de irmãos completo desta venda — evita um 2º round-trip.
+      views = await this.attachPendencias(scope, target, new Map([[filter.saleId, rows]]));
+    } else if (filter.status) {
       const rows = await this.repo.listByStatus(scope, filter.status);
-      return rows.map((r) => this.toView({ ...r, attempts: [] }));
+      views = await this.attachPendencias(scope, rows.map((r) => ({ ...r, attempts: [] })));
+    } else {
+      throw new ValidationError('Informe ao menos um filtro: saleId ou status.', { faltantes: ['saleId ou status'] });
     }
-    throw new ValidationError('Informe ao menos um filtro: saleId ou status.', { faltantes: ['saleId ou status'] });
+    return filter.pendencias ? views.filter((v) => v.pendencias.length > 0) : views;
   }
 
   async getById(scope: AccountingScope, id: string): Promise<FiscalDocumentView> {
     if (!this.policy.canReadFiscalDocument(scope)) throw new ForbiddenError('Você não tem permissão para ler documentos fiscais.');
     const row = await this.repo.findById(scope, id);
     if (!row) throw new ValidationError(`Documento fiscal '${id}' não encontrado.`, null);
-    return this.toView(row);
+    const [view] = await this.attachPendencias(scope, [row]);
+    return view;
+  }
+
+  /**
+   * BE-INCR-DFE (item 30) — pendências que exigem ação humana: venda cancelada/devolvida com
+   * documento AUTHORIZED ainda vivo (`sale_cancelled_with_live_document`), ou documento CANCELLED
+   * sem substituto vivo no mesmo `cTribNac` (`cancelled_without_replacement`). Nada é resolvido
+   * automaticamente — só sinalizado (item 30: "nada automático").
+   */
+  private async attachPendencias(
+    scope: AccountingScope,
+    docs: FiscalDocumentWithAttempts[],
+    siblingsSeed?: Map<string, FiscalDocument[]>,
+  ): Promise<FiscalDocumentView[]> {
+    const dynamicTableRepo = getFactory().getDynamicTableRepository();
+    const salesTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'sales');
+    const saleStatusCache = new Map<string, string | undefined>();
+    const siblingsCache = new Map<string, FiscalDocument[]>(siblingsSeed ?? []);
+    const views: FiscalDocumentView[] = [];
+    for (const doc of docs) {
+      if (!saleStatusCache.has(doc.saleId)) {
+        const row = salesTable ? await dynamicTableRepo.findDataById(doc.saleId) : null;
+        saleStatusCache.set(doc.saleId, (row?.data as Record<string, unknown> | undefined)?.status as string | undefined);
+      }
+      if (!siblingsCache.has(doc.saleId)) {
+        siblingsCache.set(doc.saleId, await this.repo.listBySale(scope, doc.saleId));
+      }
+      const saleStatus = saleStatusCache.get(doc.saleId);
+      const siblings = siblingsCache.get(doc.saleId)!;
+      const pendencias: string[] = [];
+      if ((saleStatus === 'Cancelled' || saleStatus === 'Returned') && doc.status === 'AUTHORIZED') {
+        pendencias.push('sale_cancelled_with_live_document');
+      }
+      if (doc.status === 'CANCELLED') {
+        const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED');
+        if (!hasReplacement) pendencias.push('cancelled_without_replacement');
+      }
+      views.push(this.toView(doc, pendencias));
+    }
+    return views;
+  }
+
+  /**
+   * BE-INCR-DFE (nó X10b, PR-3, item 26) — remonta o payload de UM grupo (`cTribNac`) já existente,
+   * para o reenvio de um documento `REJECTED`. Roda as MESMAS pré-condições da emissão original
+   * ("payload remontado (perfil/venda corrigidos)" — se o operador corrigiu o perfil fiscal ou a
+   * venda desde a rejeição, a remontagem reflete a correção). É `FiscalDocumentLifecycleService`
+   * (PR-3) quem chama isto e decide o que fazer com o resultado (nova tentativa, não um novo
+   * documento) — este serviço só sabe montar payload, nunca decide sobre `status`/tentativas.
+   */
+  async reassembleGroupForReenvio(
+    scope: AccountingScope,
+    saleId: string,
+    kind: FiscalDocumentKind,
+    cTribNac: string,
+  ): Promise<{ vServCents: number; payload: DpsPayload; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    const assembly = await this.assemble(scope, saleId, kind);
+    const group = assembly.groups.find((g) => g.cTribNac === cTribNac);
+    if (!group) {
+      throw new ValidationError(
+        `emissao_bloqueada: grupo cTribNac '${cTribNac}' não existe mais na montagem atual da venda (linhas de serviço mudaram desde a emissão original?).`,
+        { faltantes: [`cTribNac '${cTribNac}' ausente na remontagem`] },
+      );
+    }
+    return { ...group, cnpjEmitente: assembly.cnpjEmitente, partnerAccountRef: assembly.partnerAccountRef };
   }
 
   // ---- Montagem interna (itens 14-19) — compartilhada por preview e emit ----
@@ -464,11 +537,14 @@ export class FiscalDocumentEmissionService {
       }
     }
 
-    const weights = [...groupsMap.values()].map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0));
+    // F-DFE-16 (b): "ordem determinística por cTribNac" — ordena por VALOR, não por ordem de
+    // inserção no Map (que seguiria a ordem de retorno do repositório de linhas de venda).
+    const orderedGroups = [...groupsMap.values()].sort((a, b) => a.cTribNac.localeCompare(b.cTribNac));
+    const weights = orderedGroups.map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0));
     const shares = splitCents(ledgerCents, weights);
 
     const fp = fiscalProfile!;
-    const groups = [...groupsMap.values()].map((g, i) => {
+    const groups = orderedGroups.map((g, i) => {
       const vServCents = shares[i];
       const xDescServ = g.lines.map((l) => `${l.quantity}x ${l.description || l.serviceRef}`).join('; ').slice(0, 1000) || 'Serviço';
       const payload = this.buildPayload({
@@ -610,7 +686,7 @@ export class FiscalDocumentEmissionService {
       .reduce((sum, p) => sum + centsFromDb(side === 'debit' ? p.debitCents : p.creditCents), 0);
   }
 
-  private toView(doc: FiscalDocumentWithAttempts): FiscalDocumentView {
+  private toView(doc: FiscalDocumentWithAttempts, pendencias: string[] = []): FiscalDocumentView {
     return {
       id: doc.id,
       kind: doc.kind,
@@ -642,6 +718,7 @@ export class FiscalDocumentEmissionService {
         sentAt: a.sentAt.toISOString(),
         resultStatus: a.resultStatus,
       })),
+      pendencias,
     };
   }
 }

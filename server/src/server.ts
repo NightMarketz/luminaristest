@@ -6,6 +6,7 @@ import { logger } from './lib/logger';
 import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
+import { dfePollScheduler } from './jobs/DfePollScheduler';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,7 @@ async function bootstrap(): Promise<void> {
     // Só aqui: o alimentador já trocou o accountingSync (o await acima), então o primeiro
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
     accountingSyncScheduler.start();
+    dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
   });
 }
 
@@ -110,6 +112,7 @@ setInterval(() => {
 function gracefulShutdown() {
   logger.info('Shutting down gracefully...');
   accountingSyncScheduler.stop();
+  dfePollScheduler.stop();
 
   // Force-exit safety net after 10 seconds
   const forceExitTimer = setTimeout(() => {

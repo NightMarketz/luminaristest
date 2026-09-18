@@ -1,10 +1,14 @@
 import { Router } from 'express';
 import {
+  cancelarFiscalDocument,
+  consultarFiscalDocument,
   emitFiscalDocument,
   getDfeStatus,
   getFiscalDocument,
   listFiscalDocuments,
   previewFiscalDocument,
+  receiveDfeWebhook,
+  reenviarFiscalDocument,
 } from '../controllers/fiscalDocumentController';
 
 /**
@@ -24,5 +28,11 @@ router.post('/preview', previewFiscalDocument);
 router.post('/documents', emitFiscalDocument);
 router.get('/documents', listFiscalDocuments);
 router.get('/documents/:id', getFiscalDocument);
+router.post('/documents/:id/consultar', consultarFiscalDocument);
+router.post('/documents/:id/reenviar', reenviarFiscalDocument);
+router.post('/documents/:id/cancelar', cancelarFiscalDocument);
+// PÚBLICA (F-DFE-12) — listada em publicApiRoutes (middleware/auth.ts); NUNCA GET (HEAD deriva de
+// GET no Express — memória critical-auth-bypass-case-sensitive-guard — por isso só POST aqui).
+router.post('/webhook/:partner', receiveDfeWebhook);
 
 export default router;

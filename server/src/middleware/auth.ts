@@ -39,6 +39,10 @@ const publicApiRoutes: PublicRule[] = [
   { path: '/api/auth/register', method: 'POST', match: 'exact' },
   { path: '/api/users', method: 'POST', match: 'exact' }, // public user registration
   { path: '/api/docs', method: 'GET', match: 'prefix' }, // swagger UI + openapi.json + static
+  // BE-INCR-DFE (nó X10b, item 28, F-DFE-12) — o parceiro não tem credencial de sessão; a
+  // verificação é `porta.verifyWebhook` (assinatura), não JWT. POST apenas — HEAD deriva de GET
+  // no Express (routedMethod acima), então nunca cai aqui por acidente.
+  { path: '/api/nfe/dfe/webhook', method: 'POST', match: 'prefix' },
 ];
 
 // Admin-only API paths with method checks (prefix match covers /api/users/:id).

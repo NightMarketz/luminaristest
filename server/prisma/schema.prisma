@@ -813,7 +813,7 @@ model SourceDocument {
   createdById  String? // ator (AccountingScope.actorUserId); plain string
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
-  deletedAt    DateTime? // soft-delete p/ correção futura; NENHUM path de delete é wired no MVP
+  deletedAt    DateTime? // soft-delete — wired por PostingService.retireSourceDocument (BE-INCR-DFE, F-DFE-18 a)
   sources      JournalEntrySource[]
 
   // SEM @@unique de idempotência (D2): a dedup do ledger é do JournalEntry; postEntry

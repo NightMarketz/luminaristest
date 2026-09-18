@@ -62,4 +62,16 @@ export interface ISourceProvenanceRepository {
     journalEntryId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<JournalEntrySourceWithDocument[]>;
+
+  /**
+   * BE-INCR-DFE (nó X10b, F-DFE-18 a) — soft-delete de um SourceDocument (o campo `deletedAt` já
+   * existia no schema, "para correção futura", sem nenhum caminho de escrita ligado). Lança se o
+   * id não existir no escopo ou já estiver retirado (idempotência não é o objetivo aqui — repetir
+   * a retirada é bug do chamador, não caso normal).
+   */
+  softDeleteSourceDocument(
+    scope: AccountingScope,
+    sourceDocumentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<SourceDocument>;
 }

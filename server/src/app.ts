@@ -44,7 +44,14 @@ export function createApp(): express.Express {
   // BRIEF-W2-D (F4, layer 2 / F-W2D-2): measures the WHOLE route — body parsing, auth, and the
   // route handler — so it must sit before json()/urlencoded()/authMiddleware/routes, not after.
   app.use(httpTimingMiddleware);
-  app.use(json());
+  // BE-INCR-DFE (nó X10b, item 28): o webhook precisa dos BYTES BRUTOS do corpo pra verificar a
+  // assinatura do parceiro — `verify` captura em `req.rawBody` no mesmo passe do parse normal
+  // (nunca reordene json()/webhook: mudaria o parsing de toda rota só por causa de uma).
+  app.use(json({
+    verify: (req, _res, buf) => {
+      (req as express.Request & { rawBody?: Buffer }).rawBody = buf;
+    },
+  }));
   app.use(urlencoded({ extended: true }));
 
   // Basic rate limiting (customize as needed)
