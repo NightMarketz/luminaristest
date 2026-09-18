@@ -10,6 +10,13 @@
 > `agent-ab9c16574065aa80c`) com review independente em voo em `review-pr3` (`agent-a996900b13769c688`). A
 > coluna Estado abaixo foi atualizada; o resto do texto segue como escrito.
 >
+> **[Fold 2026-09-18 — X10b executado e FECHADO fora deste doc.]** BE-INCR-DFE rodou por sessão separada
+> depois deste plano: PR-1 #348 `f00b304a`, PR-2 #349 `0dcbb22b`, PR-3 #350 `e61c0f6d`, os 3 MERGEADOS em
+> `main` (confirmado por `git merge-base --is-ancestor` + `gh pr view`, 18/09). A linha 94 ("Não fazer:
+> X10b/emissão — espera D1f + D5") está **HISTÓRICA** — D1f virou config no próprio BRIEF (§0 D-X10b-2),
+> D5 segue sem parceiro real (porta com `Null`/`File`, decisão do BRIEF, não um bloqueio que sobrou).
+> Detalhe do fold em [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) (régua 45/57, fiscal 9/16).
+>
 > **Por que este doc existe:** o de 14/09 fechou **11 de 12 passos** (fold 16/09) e não tinha sucessor — a
 > "fila" seguinte vivia só na tabela "O que esta cédula destrava" da `CEDULA-DECISAO-2026-09-16-…`. Este
 > doc é essa fila, com o algoritmo do grafo 09-14 §4 aplicado sobre `origin/main` **`daf76279`** (#337).
@@ -91,7 +98,8 @@ sinal do dono.**
 - **Não** abrir segunda sessão de código no domínio contábil enquanto o C6b PR-2/PR-3 estiver em voo
   (PAR-005) — exceção só se o dono autorizar C12 em paralelo (write-set disjunto declarado no passo 4).
 - **Não** tocar `reconcile_pending_items` (R9), **não** reabrir P-IA (R10), **não** Serpro (R5), **não**
-  X10b/emissão (espera D1f + D5 — D-NFSE já está no corpus; regra só o dono reverte; D1f (item LC 116, alíquota ISS, `cClassTrib` do 1b) pode virar campo obrigatório do `FiscalProfile` (técnica X6 — dado configurável em vez de espera) — **decisão do dono**), **não** aparato de auditoria (bancada desligada 2026-08-09).
+  aparato de auditoria (bancada desligada 2026-08-09). ~~X10b/emissão (espera D1f + D5...)~~ — **HISTÓRICO,
+  ver fold 2026-09-18 acima: X10b já rodou e fechou (#348/#349/#350).**
 - **Não** preencher evidência, marcar desfecho ou assinar runbook (B-4, X2, H1, H2, H3, M2).
 - **Não** reabrir F-C12-3 (a) — o achado dos exemplos `1SP123456` (transcrição §5.4) está registrado com o
   risco que o fork já declarava; reabrir é decisão do dono, não do executor.

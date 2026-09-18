@@ -1,5 +1,16 @@
 # BRIEF — BE-INCR-DFE (documento fiscal de saída: NFS-e nacional + NF-e 55, montado até a borda e entregue por porta) — nó X10b
 
+> **✅ FECHADO 2026-09-18 — os 3 PRs planejados no §8 MERGEARAM em `main`:** PR-1 #348 `f00b304a` ·
+> PR-2 #349 `0dcbb22b` · PR-3 #350 `e61c0f6d` (confirmado via `git merge-base --is-ancestor` + `gh pr view`
+> contra `origin/main`). NFS-e nacional atrás da porta sem parceiro está entregue; **NF-e 55 (PR-4+, Fase E)
+> segue fora**, aguardando a transcrição do MOC 7.0 no corpus (F-DFE-13 a) — não é regressão deste BRIEF,
+> é o escopo declarado em §0/§8 desde 17/09. Achado do revisor do PR-3: `NullEmissor.consultar()` (o
+> adaptador de referência deste próprio BRIEF) não devolvia `numero`/`nNFSe`, o que quebraria o guard de
+> completude do ADR (D3 iv) em qualquer caminho de autorização — corrigido no mesmo PR, com teste contra o
+> adaptador real. Detalhe consolidado em
+> [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) (fold 2026-09-18, régua 45/57 — fiscal 9/16) e em
+> [`README.md`](README.md).
+
 > Produzido em `sessao-planejamento` (2026-09-17), nó **X10b** do [grafo 14/09](GRAFO-DEPENDENCIAS-2026-09-14.md)
 > (`X10b → X10a → X10i → X11`), item 13 do módulo fiscal (§7.1 do master map). Executa o
 > [`ADR-INCR-DFE-EMISSAO-PARCEIRO.md`](../adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) (Accepted, F-DFE-1..11
