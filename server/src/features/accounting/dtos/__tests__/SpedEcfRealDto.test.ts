@@ -28,9 +28,11 @@ const declarant = {
   email: 'contato@luminaris.com.br',
 };
 
+// CPFs com DV válido (item 5, C12) — '11122233344'/'55566677788' (antigos) tinham DV inválido e só
+// passavam porque o campo era regex de forma, não `isValidCpf`.
 const contador = {
   identNom: 'Contador Responsável',
-  identCpfCnpj: '11122233344',
+  identCpfCnpj: '11122233396',
   identQualif: '900',
   indCrc: 'SP-123456/O-1',
   email: 'contador@escritorio.com.br',
@@ -39,7 +41,7 @@ const contador = {
 
 const socio = {
   identNom: 'Sócia Administradora',
-  identCpfCnpj: '55566677788',
+  identCpfCnpj: '55566677720',
   identQualif: '309',
   email: 'socia@luminaris.com.br',
   fone: '1199998888',

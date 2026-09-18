@@ -29,6 +29,7 @@ import {
   type RegJ150Line,
 } from '../../../lib/sped';
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
+import { ecdIdentQualifParaEmissao, type SpedEcdQualifAssinanteCode } from '../models/spedQualifAssinante';
 
 /** Account.nature -> I050 COD_NAT (manual p. 118 table). */
 export function natureToCodNat(nature: string): string {
@@ -390,7 +391,12 @@ export class SpedGenerationService {
       resultClosing,
       balanceSheet,
       incomeStatement,
-      signers: dto.signers,
+      // F-C12-1 → (a): o DTO não aceita mais IDENT_QUALIF (campo 04) — o gerador deriva da Tabela de
+      // Qualificação do Assinante a partir de COD_ASSIN (F-C12-5 → i: exceção 900 → 'Contador').
+      signers: dto.signers.map((s) => ({
+        ...s,
+        identQualif: ecdIdentQualifParaEmissao(s.codAssin as SpedEcdQualifAssinanteCode),
+      })),
     };
   }
 
