@@ -235,6 +235,25 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
     expect(repo.transition).not.toHaveBeenCalled();
   });
 
+  // ACHADO REAL da revisão independente (PR #350): NullEmissor.consultar() nunca devolve
+  // numero/nNFSe (só emitir() ecoa, e aquele resultado imediato é descartado por design) — sem o
+  // fallback pra doc.numero (numeração LOCAL, numbersDps=false), NENHUM documento chegaria a
+  // AUTHORIZED pelo adaptador de referência do próprio BRIEF. Reproduz exatamente o shape real de
+  // NullEmissor.consultar(): { status, partnerRef, chaveOuCodigo, errors } — sem numero/nNFSe.
+  it('AUTHORIZED sem numero/nNFSe no retorno, mas doc.numero já atribuído localmente -> autoriza (numeração local, numbersDps=false)', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ ambiente: 'homologacao', numero: 7n }) } });
+    mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'doc-1:1', chaveOuCodigo: 'NULLCHAVE123', errors: [] } as EmissaoResult);
+    await service.consultarUm(SCOPE, 'doc-1');
+    expect(repo.transition).toHaveBeenCalledWith(SCOPE, 'doc-1', expect.objectContaining({ status: 'AUTHORIZED', chaveOuCodigo: 'NULLCHAVE123' }), expect.anything());
+  });
+
+  it('AUTHORIZED sem numero/nNFSe E sem doc.numero atribuído -> ainda lança (nada supre o número)', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ numero: null }) } });
+    mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'ref-1', chaveOuCodigo: 'X', errors: [] } as EmissaoResult);
+    await expect(service.consultarUm(SCOPE, 'doc-1')).rejects.toThrow(/dfe_authorized_incompleto/);
+    expect(repo.transition).not.toHaveBeenCalled();
+  });
+
   it('REJECTED: grava errorsJson e audita dfe.rejected com errorCodes', async () => {
     const { service, repo, auditService } = makeService();
     const result: EmissaoResult = { status: 'REJECTED', partnerRef: 'ref-1', errors: [{ code: 'E123', message: 'CNPJ inválido' }] };

@@ -321,8 +321,13 @@ export class FiscalDocumentLifecycleService {
       return;
     }
 
-    // AUTHORIZED (item 25)
-    if (!result.partnerRef || !(result.numero || result.nNFSe) || !result.chaveOuCodigo) {
+    // AUTHORIZED (item 25). O "número" do ADR D3 iv já está satisfeito por `doc.numero` quando a
+    // numeração é LOCAL (capabilities.numbersDps === false, item 18) — o parceiro não precisa
+    // ecoar de volta o que ele nunca atribuiu. Achado real da revisão independente do PR-3:
+    // NullEmissor.consultar() nunca devolve numero/nNFSe (só emitir() ecoa, e aquele resultado
+    // imediato é descartado por design, item 20/24) — sem este fallback, NENHUM documento chega a
+    // AUTHORIZED pelo adaptador de referência do próprio BRIEF.
+    if (!result.partnerRef || !(result.numero || result.nNFSe || doc.numero != null) || !result.chaveOuCodigo) {
       throw new ValidationError(
         'dfe_authorized_incompleto: retorno do parceiro não trouxe partnerRef + número + chaveOuCodigo (ADR D3 iv).',
       );
