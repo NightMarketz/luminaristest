@@ -15426,6 +15426,15 @@
                 "CANCELLED"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "pendencias",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "item 30 — true filtra só documentos com pendências; exige saleId ou status junto"
           }
         ],
         "responses": {
@@ -15485,6 +15494,221 @@
           },
           "403": {
             "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/documents/{id}/consultar": {
+      "post": {
+        "summary": "Re-query the partner for one document's current result (item 27, manual re-check)",
+        "description": "No-op (devolve a view atual) se o documento já estiver num status terminal (AUTHORIZED/REJECTED/CANCELLED) — só SENT/PROCESSING são re-consultados.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalDocumentView (atualizada, se houve transição)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/documents/{id}/reenviar": {
+      "post": {
+        "summary": "Resend a REJECTED document as a new attempt (item 26)",
+        "description": "Só de status REJECTED. Payload remontado (perfil/venda corrigidos), tentativa n+1 com ref novo; a tentativa n permanece intacta. A numeração da DPS NÃO é reconsumida.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalDocumentView (status SENT, nova tentativa)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/documents/{id}/cancelar": {
+      "post": {
+        "summary": "Cancel an AUTHORIZED document (item 29, Anexo II e101101)",
+        "description": "Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "cMotivo",
+                  "xMotivo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "cMotivo": {
+                    "type": "integer",
+                    "enum": [
+                      1,
+                      2,
+                      9
+                    ],
+                    "description": "1 erro na emissão | 2 serviço não prestado | 9 outros"
+                  },
+                  "xMotivo": {
+                    "type": "string",
+                    "minLength": 15,
+                    "maxLength": 255
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalDocumentView (status CANCELLED)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro"
+          }
+        }
+      }
+    },
+    "/api/nfe/dfe/webhook/{partner}": {
+      "post": {
+        "summary": "Partner webhook — wakes up a re-query, never transitions state directly (item 28, F-DFE-12)",
+        "description": "Rota PÚBLICA (publicApiRoutes) — sem Bearer. Assinatura inválida, `:partner` diferente do parceiro habilitado, ou adaptador sem capabilities.webhook ⇒ 401 sem efeito (0 escrita). Null/File (os únicos adaptadores deste BRIEF) ⇒ 401 sempre — nenhum tem webhook real.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "partner",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "assinatura válida — re-consulta disparada (ou nada a fazer)"
+          },
+          "401": {
+            "description": "assinatura inválida / parceiro não habilitado / sem capability de webhook"
           }
         }
       }

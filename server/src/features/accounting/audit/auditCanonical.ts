@@ -28,6 +28,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-8 — formal provenance. Recorded in the same tx as the entry when an origin
   // descriptor is present. Only ids/type/ref — never rawJson or attachment bytes (PII-safe).
   'entry.source_recorded': ['journalEntryId', 'sourceDocumentId', 'externalRef', 'sourceType'],
+  // BE-INCR-DFE (nó X10b, PR-3, F-DFE-18 a) — soft-delete de SourceDocument (ex.: cancelamento).
+  'entry.source_retired': ['sourceDocumentId', 'sourceType', 'motivoCodigo'],
   'account.created': ['code', 'name', 'nature', 'acceptsEntries'],
   'account.deleted': ['code'],
   'period.opened':      ['year', 'month', 'fromStatus', 'toStatus'],
@@ -143,6 +145,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
   // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
   'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
+  // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
+  'dfe.authorized': ['documentId', 'partnerRef', 'nNFSe', 'chaveOuCodigo', 'sourceDocumentId'],
+  'dfe.rejected': ['documentId', 'attemptNo', 'errorCodes'],
+  'dfe.cancelled': ['documentId', 'cMotivo'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

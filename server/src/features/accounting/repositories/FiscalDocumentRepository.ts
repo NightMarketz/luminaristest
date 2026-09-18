@@ -64,6 +64,12 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
+    return this.db(tx).fiscalDocument.findFirst({
+      where: { partnerRef, status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null },
+    });
+  }
+
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
     const { payloadJson, ...doc } = data;

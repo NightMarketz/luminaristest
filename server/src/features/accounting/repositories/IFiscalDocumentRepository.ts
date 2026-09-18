@@ -75,6 +75,13 @@ export interface IFiscalDocumentRepository {
   listByStatus(scope: AccountingScope, status: FiscalDocumentStatus, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * BE-INCR-DFE (PR-3, item 28) — busca cross-tenant por `partnerRef`, mesmo desenho de
+   * `listPending`: o webhook chega ANTES de o serviço saber a qual escopo pertence (a
+   * identidade do documento é reconstruída DEPOIS, a partir do `userId`/`unitId` da linha —
+   * mesmo padrão do job de polling). Só documentos vivos (`SENT`/`PROCESSING`) interessam.
+   */
+  findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
   /** Cria documento em SENT + tentativa 1 (`ref = <id>:1`). */
   createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts>;
   appendAttempt(scope: AccountingScope, data: AppendAttemptData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentAttempt>;

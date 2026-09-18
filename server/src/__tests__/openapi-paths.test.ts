@@ -76,7 +76,10 @@ const { options } = require('../../scripts/generate-openapi');
 //    (POST), /api/nfe/dfe/documents (POST+GET), /api/nfe/dfe/documents/{id} (GET) — 4 PATHS e 5
 //    OPERAÇÕES (192 → 196, medido com docs:generate). Fase D (consultar/reenviar/cancelar/webhook)
 //    fica para o PR-3.
-const BASELINE = 196;
+// +4 (BE-INCR-DFE PR-3, nó X10b, BRIEF item 38, Fase D): /api/nfe/dfe/documents/{id}/consultar
+//    (POST), /.../reenviar (POST), /.../cancelar (POST), /api/nfe/dfe/webhook/{partner} (POST) —
+//    4 PATHS e 4 OPERAÇÕES (196 → 200, medido com docs:generate).
+const BASELINE = 200;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

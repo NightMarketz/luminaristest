@@ -108,6 +108,51 @@ describe('SourceDocument / JournalEntrySource — real SQLite DB (BE-INCR-8)', (
     expect(crossUnit).toHaveLength(0);
   });
 
+  it('BE-INCR-DFE F-DFE-18: retired (deletedAt != null) SourceDocument disappears from the drill-down, but the row (and the link) survive', async () => {
+    const entry = await createEntry(db, 'entry-retired');
+    const sd = await db.sourceDocument.create({
+      data: { userId: scope.userId, unitId: scope.unitId, sourceType: 'dfe.nfse', externalRef: 'CHAVE-RETIRED' },
+    });
+    await db.journalEntrySource.create({
+      data: { userId: scope.userId, unitId: scope.unitId, journalEntryId: entry.id, sourceDocumentId: sd.id },
+    });
+
+    // Same query SourceProvenanceRepository.findSourcesByEntry issues (with the F-DFE-18 filter).
+    const before = await db.journalEntrySource.findMany({
+      where: { journalEntryId: entry.id, userId: scope.userId, unitId: scope.unitId, sourceDocument: { deletedAt: null } },
+      include: { sourceDocument: true },
+    });
+    expect(before).toHaveLength(1);
+
+    // softDeleteSourceDocument's write (mirrored): updateMany scoped, deletedAt: null guard.
+    const retireResult = await db.sourceDocument.updateMany({
+      where: { id: sd.id, userId: scope.userId, unitId: scope.unitId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    expect(retireResult.count).toBe(1);
+
+    const after = await db.journalEntrySource.findMany({
+      where: { journalEntryId: entry.id, userId: scope.userId, unitId: scope.unitId, sourceDocument: { deletedAt: null } },
+      include: { sourceDocument: true },
+    });
+    expect(after).toHaveLength(0); // sumiu do drill-down
+
+    // A linha e o LINK sobrevivem — só o SourceDocument fica soft-deleted.
+    const survivor = await db.sourceDocument.findUnique({ where: { id: sd.id } });
+    expect(survivor).not.toBeNull();
+    expect(survivor?.deletedAt).not.toBeNull();
+    const linkSurvivor = await db.journalEntrySource.findFirst({ where: { journalEntryId: entry.id, sourceDocumentId: sd.id } });
+    expect(linkSurvivor).not.toBeNull();
+
+    // Retirar de novo (já retirado) não acha linha pra atualizar — 0, não 1 (a guarda de
+    // softDeleteSourceDocument lança quando count !== 1, evitando "retirar" duas vezes em silêncio).
+    const secondRetire = await db.sourceDocument.updateMany({
+      where: { id: sd.id, userId: scope.userId, unitId: scope.unitId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    expect(secondRetire.count).toBe(0);
+  });
+
   it('link @@unique([journalEntryId, sourceDocumentId]): re-linking the same pair does not duplicate', async () => {
     const entry = await createEntry(db, 'entry-uniq');
     const sd = await db.sourceDocument.create({

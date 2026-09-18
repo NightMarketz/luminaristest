@@ -58,9 +58,27 @@ export class SourceProvenanceRepository implements ISourceProvenanceRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<JournalEntrySourceWithDocument[]> {
     return (tx ?? prisma).journalEntrySource.findMany({
-      where: { journalEntryId, ...accountingScopeWhere(scope) },
+      // F-DFE-18 (a): retirado (deletedAt != null) some do drill-down por padrão — o link em si
+      // não é apagado (a trilha de QUE algo esteve anexado sobrevive), só o documento de origem.
+      where: { journalEntryId, ...accountingScopeWhere(scope), sourceDocument: { deletedAt: null } },
       include: { sourceDocument: true },
       orderBy: { createdAt: 'asc' },
     });
+  }
+
+  public async softDeleteSourceDocument(
+    scope: AccountingScope,
+    sourceDocumentId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<SourceDocument> {
+    const db = tx ?? prisma;
+    const r = await db.sourceDocument.updateMany({
+      where: { id: sourceDocumentId, ...accountingScopeWhere(scope), deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    if (r.count !== 1) {
+      throw new Error(`source_document_not_found_or_already_retired: ${sourceDocumentId}`);
+    }
+    return db.sourceDocument.findFirst({ where: { id: sourceDocumentId } }) as Promise<SourceDocument>;
   }
 }

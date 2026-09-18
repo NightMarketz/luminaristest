@@ -803,6 +803,33 @@ export class PostingService {
   }
 
   /**
+   * BE-INCR-DFE (nó X10b, BRIEF F-DFE-18 a) — soft-delete de um `SourceDocument` (ex.: um
+   * cancelamento de NFS-e que já tinha proveniência anexada retira o vínculo, sem apagar a linha —
+   * a trilha de que ALGO esteve anexado sobrevive). `targetType`/`targetId` do evento apontam para
+   * o próprio `SourceDocument` (a operação é sobre ele, não sobre o lançamento que o referenciava —
+   * um SourceDocument pode estar ligado a mais de um lançamento via `JournalEntrySource`).
+   */
+  async retireSourceDocument(scope: AccountingScope, sourceDocumentId: string, reason: string): Promise<void> {
+    if (!this.policy.canManage(scope)) {
+      throw new ForbiddenError('Você não tem permissão para retirar proveniência de lançamentos.');
+    }
+    await this.postingRepo.runTransaction(async (tx) => {
+      const doc = await this.sourceProvenanceRepo.softDeleteSourceDocument(scope, sourceDocumentId, tx);
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: 'entry.source_retired',
+        targetType: 'source_document',
+        targetId: doc.id,
+        // `motivoCodigo`, não `reason`: é um código de sistema fixo (ex.: "dfe_cancelled:1"),
+        // NUNCA texto livre digitado por humano — não entra na classe que MASKABLE_FREE_TEXT_KEYS
+        // exige mascarar (memória: nome de chave não é heurística confiável nos dois sentidos).
+        payload: { sourceDocumentId: doc.id, sourceType: doc.sourceType, motivoCodigo: reason },
+      });
+      logger.info('SourceDocument retirado (soft-delete)', { sourceDocumentId: doc.id, reason });
+    });
+  }
+
+  /**
    * Drill-down read of the origin documents linked to an entry (BE-INCR-PROVENANCE-ATTACH, NFE-X).
    *
    * Thin by design: it exists so the HTTP edge honours the layer chain

@@ -110,6 +110,7 @@ import { AccountingScopeSettingsService } from '../features/accounting/services/
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
+import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
@@ -418,6 +419,7 @@ export class ApplicationFactory {
     fiscalProfile: FiscalProfileService;
     serviceFiscalProfile: ServiceFiscalProfileService;
     fiscalDocumentEmission: FiscalDocumentEmissionService;
+    fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
@@ -744,6 +746,25 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // Extraído como const própria (não só inline no literal abaixo) porque
+    // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
+    const documentAttachmentService = new DocumentAttachmentService(
+      this.repositories.documentAttachment,
+      this.policies.accounting,
+      auditService,
+      this.repositories.journalEntry,
+      this.repositories.fiscalDocument, // F-DFE-19 b: gate do alvo por targetType
+    );
+    // BE-INCR-DFE (nó X10b, PR-3): ciclo de vida pós-SENT (Fase D — transição, proveniência,
+    // reenvio, cancelamento, job de polling).
+    const fiscalDocumentLifecycleService = new FiscalDocumentLifecycleService(
+      this.repositories.fiscalDocument,
+      fiscalDocumentEmissionService,
+      documentAttachmentService,
+      postingService,
+      this.policies.accounting,
+      auditService,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: new AccountingScopeSettingsService(
@@ -756,6 +777,7 @@ export class ApplicationFactory {
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
+      fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -825,13 +847,7 @@ export class ApplicationFactory {
       reconciliation: reconciliationService,
       referentialMapping: referentialMappingService,
       referentialCatalog: referentialCatalogService,
-      documentAttachment: new DocumentAttachmentService(
-        this.repositories.documentAttachment,
-        this.policies.accounting,
-        auditService,
-        this.repositories.journalEntry,
-        this.repositories.fiscalDocument, // F-DFE-19 b: gate do alvo por targetType
-      ),
+      documentAttachment: documentAttachmentService,
       dataExchangeExport: new DataExchangeExportService(
         accountingReportService,
         this.policies.accounting,
@@ -1141,6 +1157,7 @@ export class ApplicationFactory {
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
+  public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
