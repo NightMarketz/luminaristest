@@ -48,7 +48,12 @@ async function expandSignerContacts(
   for (const id of [...new Set(ids as string[])]) {
     const contact = await contacts.getContact(scope, id);
     if (target === 'ecd') {
-      fromContacts.push(contactToJ930Signer(contact));
+      // F-C12-1 → (a): o SignerSchema da ECD não aceita mais IDENT_QUALIF (é derivado de COD_ASSIN
+      // pelo gerador) — `contactToJ930Signer` continua emitindo o campo para o uso COMPARTILHADO em
+      // `AccountingDeliveryService.confirmDelivery` (D7, item 13, resposta ao operador); aqui, na
+      // fronteira de geração, ele é descartado antes do `.strict()` ver o corpo.
+      const { identQualif: _identQualif, ...j930Signer } = contactToJ930Signer(contact);
+      fromContacts.push(j930Signer);
     } else {
       // 0930 da ECF exige FONE; sem telefone no cadastro o contato não assina a ECF por esta via.
       const signer = contactToEcf0930Signer(contact);

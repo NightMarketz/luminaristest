@@ -29,10 +29,12 @@ const declarant = {
   email: 'contato@luminaris.com.br',
 };
 
+// CPFs com DV válido (item 5, C12) — '11122233344'/'55566677788' (antigos) tinham DV inválido e só
+// passavam porque o campo era regex de forma, não `isValidCpf`.
 /** Contador: IDENT_QUALIF='900' ⇒ CPF (11) + IND_CRC obrigatórios. */
 const contador = {
   identNom: 'Contador Responsável',
-  identCpfCnpj: '11122233344',
+  identCpfCnpj: '11122233396',
   identQualif: '900',
   indCrc: 'SP-123456/O-1',
   email: 'contador@escritorio.com.br',
@@ -42,7 +44,7 @@ const contador = {
 /** Não-contador (sócio, IDENT_QUALIF='309') — sem exigência de CRC. */
 const socio = {
   identNom: 'Sócia Administradora',
-  identCpfCnpj: '55566677788',
+  identCpfCnpj: '55566677720',
   identQualif: '309',
   email: 'socia@luminaris.com.br',
   fone: '1199998888',
@@ -119,5 +121,17 @@ describe('SpedEcfRequestSchema — CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ
 
   it('contador (900) continua exigindo CPF de 11 dígitos — CNPJ alfanumérico não passa pelo refine', () => {
     expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, identCpfCnpj: '12ABC34501DE35' }, socio] }).success).toBe(false);
+  });
+});
+
+describe('SpedEcfRequestSchema — C12 item 4: IDENT_QUALIF fechado na tabela SPEDECF_QUALIF_ASSINANTE (Manual ECF L12 p. 105)', () => {
+  it('rejeita código fora da tabela (mesmo mantendo o shape de 3 dígitos)', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [contador, { ...socio, identQualif: '305' }] }).success).toBe(false);
+  });
+});
+
+describe('SpedEcfRequestSchema — C12 item 5: CPF com DV no signatário (REGRA_VALIDA_CPF_CNPJ)', () => {
+  it('CPF com DV inválido no não-contador é 400; CPF válido passa (CONTROLE já coberto acima)', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [contador, { ...socio, identCpfCnpj: '11111111111' }] }).success).toBe(false);
   });
 });
