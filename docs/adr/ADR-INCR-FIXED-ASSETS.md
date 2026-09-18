@@ -1,13 +1,15 @@
 # ADR-INCR-FIXED-ASSETS — Imobilizado + depreciação + retificação versionada de ECD/ECF
 
 - **Data:** 2026-09-15
-- **Status:** **Proposed → parecer anexado 2026-09-15 (§4): D1–D11 confirmados com refinamentos,
+- **Status:** **Accepted** (2026-09-18) — parecer anexado 2026-09-15 (§4): D1–D11 confirmados com refinamentos,
   F-FA1..F-FA9 todos com recomendação ⇒ ratificados por delegação (cédula 2026-09-14, C8). EMENDA pós-review
   independente do PR #330 (2026-09-15): 3 blockers fechados — forma real do Anexo III (D4), J801/J932/J935 na ECD
-  substituta (D9), tie-out em 2 txs (D3/parecer) — mais S1–S9; as emendas estão marcadas inline.** Próximo: o BRIEF
-  `docs/accounting/BE-INCR-FIXED-ASSETS-brief.md` via `sessao-planejamento`. Forks (§3) **com
+  substituta (D9), tie-out em 2 txs (D3/parecer) — mais S1–S9; as emendas estão marcadas inline. BRIEF pronto
+  (`docs/accounting/BE-INCR-FIXED-ASSETS-brief.md`, 37 comportamentos) + execution-plan granular (5 PRs);
+  F-FA10/12/13 ratificados 2026-09-16, F-FA14 → (b)/F-FA15 → (b) ratificados 2026-09-18. **"Executa C8"
+  recebido do dono 2026-09-18 — PR-1 (Bloco A: schema, seed do Anexo III, taxas) em execução.** Forks (§3) **com
   recomendação escrita no parecer ficam ratificados por delegação** (cédula 2026-09-14, linha C8);
-  fork **sem recomendação volta ao dono** por questionário. Nenhum código abre antes do BRIEF.
+  fork **sem recomendação volta ao dono** por questionário.
 - **Autores:** `luminaris-orchestrator` (este texto) + `luminaris-accounting-architect` (parecer §4).
 - **Depende de:** nenhuma aresta de código aberta (nó **C8**, `plan` no
   `GRAFO-DEPENDENCIAS-2026-09-14.md`; D3b ✅ Anexo III no corpus). Assume como já mergeado: ledger

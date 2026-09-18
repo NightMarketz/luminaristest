@@ -148,6 +148,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canRead(scope);
   }
 
+  // BE-INCR-FIXED-ASSETS (nó C8, item 11)
+  canManageFixedAssets(scope: AccountingScope): boolean {
+    return this.canClosePeriod(scope);
+  }
+
   canEmitFiscalDocument(scope: AccountingScope): boolean {
     return this.canManage(scope);
   }

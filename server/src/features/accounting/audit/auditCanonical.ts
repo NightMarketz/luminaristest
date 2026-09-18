@@ -191,6 +191,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'lalur.movement_archived': ['movementId', 'parteBId', 'contrapartidaId', 'year', 'quarter', 'indicador', 'valorCents', 'origem'],
   'lalur.parte_b_closed':    ['closingId', 'year', 'quarter', 'accounts', 'balancesSha256', 'reclosed'],
   'lalur.parte_b_reopened':  ['closingId', 'year', 'quarter', 'accounts', 'balancesSha256'],
+  // BE-INCR-FIXED-ASSETS PR-1 (nó C8, item 2/3). `description`/`justification` são texto livre
+  // (CUSTOM é digitado pelo operador) e NUNCA entram — só ids/números/enum do que foi criado/oculto.
+  'depreciation_rate.created': ['rateId', 'source', 'ncm', 'annualRateBp', 'lifeYears'],
+  'depreciation_rate.hidden':  ['rateId', 'source'],
 };
 
 /**

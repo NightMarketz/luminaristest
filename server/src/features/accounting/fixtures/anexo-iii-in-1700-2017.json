@@ -1,0 +1,1784 @@
+{
+  "origem": "43557-tabela.html",
+  "sha256": "d526ac53071a0532cca69ebb366a3ea3371accbf1e6699267fa1de6fcfc01d8d",
+  "geradoPor": "scripts/anexo-iii-to-fixture.mjs",
+  "rows": [
+    {
+      "ncm": null,
+      "sourceRow": 2,
+      "description": "INSTALAÇÕES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": null,
+      "sourceRow": 3,
+      "description": "EDIFICAÇÕES",
+      "lifeYears": 25,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 400
+    },
+    {
+      "ncm": "0101",
+      "sourceRow": 5,
+      "description": "ANIMAIS VIVOS DAS ESPÉCIES CAVALAR, ASININA E MUAR",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "0102",
+      "sourceRow": 6,
+      "description": "ANIMAIS VIVOS DA ESPÉCIE BOVINA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "0103",
+      "sourceRow": 7,
+      "description": "ANIMAIS VIVOS DA ESPÉCIE SUÍNA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "0104",
+      "sourceRow": 8,
+      "description": "ANIMAIS VIVOS DAS ESPÉCIES OVINA E CAPRINA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "0105",
+      "sourceRow": 9,
+      "description": "GALOS, GALINHAS, PATOS, GANSOS, PERUS, PERUAS E GALINHAS-D'ANGOLA (PINTADAS), DAS ESPÉCIES DOMÉSTICAS, VIVOS",
+      "lifeYears": 2,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 5000
+    },
+    {
+      "ncm": "3923.10",
+      "sourceRow": 12,
+      "description": "-Caixas, caixotes, engradados e artigos semelhantes",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "3923.30",
+      "sourceRow": 13,
+      "description": "-Garrafões, garrafas, frascos e artigos semelhantes",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "3923.90",
+      "sourceRow": 14,
+      "description": "-Outros vasilhames",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "3926.90",
+      "sourceRow": 16,
+      "description": "Correias de transmissão e correias transportadoras",
+      "lifeYears": 2,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 5000
+    },
+    {
+      "ncm": "3926.90",
+      "sourceRow": 17,
+      "description": "Artigos de laboratório ou de farmácia",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "4010",
+      "sourceRow": 19,
+      "description": "CORREIAS TRANSPORTADORAS OU DE TRANSMISSÃO, DE BORRACHA VULCANIZADA",
+      "lifeYears": 2,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 5000
+    },
+    {
+      "ncm": "4204",
+      "sourceRow": 21,
+      "description": "Correias transportadoras ou correias de transmissão",
+      "lifeYears": 2,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 5000
+    },
+    {
+      "ncm": "4415",
+      "sourceRow": 23,
+      "description": "CAIXOTES, CAIXAS, ENGRADADOS, BARRICAS E EMBALAGENS SEMELHANTES, DE MADEIRA; CARRETÉIS PARA CABOS, DE MADEIRA; PALETES SIMPLES, PALETES-CAIXAS E OUTROS ESTRADOS PARA CARGA, DE MADEIRA; TAIPAIS DE PALETES, DE MADEIRA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "4416",
+      "sourceRow": 24,
+      "description": "BARRIS, CUBAS, BALSAS, DORNAS, SELHAS E OUTRAS OBRAS DE TANOEIRO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": null,
+      "sourceRow": 25,
+      "description": "TAPETES E OUTROS REVESTIMENTOS PARA PAVIMENTOS, DE MATÉRIAS TÊXTEIS",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "5910.00",
+      "sourceRow": 27,
+      "description": "CORREIAS TRANSPORTADORAS OU DE TRANSMISSÃO, DE MATÉRIAS TÊXTEIS, MESMO IMPREGNADAS, REVESTIDAS OU RECOBERTAS, DE PLÁSTICO, OU ESTRATIFICADAS COM PLÁSTICO OU REFORÇADAS COM METAL OU COM OUTRAS MATÉRIAS",
+      "lifeYears": 2,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 5000
+    },
+    {
+      "ncm": "6303",
+      "sourceRow": 29,
+      "description": "CORTINADOS, CORTINAS E ESTORES; SANEFAS E ARTIGOS SEMELHANTES PARA CAMAS PARA USO EM HOTÉIS E HOSPITAIS",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "6305",
+      "sourceRow": 30,
+      "description": "SACOS DE QUAISQUER DIMENSÕES, PARA EMBALAGEM",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "6306",
+      "sourceRow": 31,
+      "description": "ENCERADOS E TOLDOS; TENDAS; VELAS PARA EMBARCAÇÕES, PARA PRANCHAS À VELA OU PARA CARROS À VELA; ARTIGOS PARA ACAMPAMENTO",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "6909",
+      "sourceRow": 33,
+      "description": "APARELHOS E ARTEFATOS PARA USOS QUÍMICOS OU PARA OUTROS USOS TÉCNICOS, DE CERÂMICA; ALGUIDARES, GAMELAS E OUTROS RECIPIENTES SEMELHANTES PARA USOS RURAIS, DE CERÂMICA; BILHAS E OUTRAS VASILHAS PRÓPRIAS PARA TRANSPORTE OU EMBALAGEM, DE CERÂMICA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "7010",
+      "sourceRow": 35,
+      "description": "GARRAFÕES, GARRAFAS, FRASCOS, BOIÕES, VASOS, EMBALAGENS TUBULARES, AMPOLAS E OUTROS RECIPIENTES, DE VIDRO, PRÓPRIOS PARA TRANSPORTE OU EMBALAGEM; BOIÕES DE VIDRO PARA CONSERVA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "7308.10",
+      "sourceRow": 38,
+      "description": "-Pontes e elementos de pontes",
+      "lifeYears": 25,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 400
+    },
+    {
+      "ncm": "7308.20",
+      "sourceRow": 39,
+      "description": "-Torres e pórticos",
+      "lifeYears": 25,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 400
+    },
+    {
+      "ncm": "7309",
+      "sourceRow": 40,
+      "description": "RESERVATÓRIOS, TONÉIS, CUBAS E RECIPIENTES SEMELHANTES PARA QUAISQUER MATÉRIAS (EXCETO GASES COMPRIMIDOS OU LIQUEFEITOS), DE FERRO FUNDIDO, FERRO OU AÇO, DE CAPACIDADE SUPERIOR A 300 LITROS, SEM DISPOSITIVOS MECÂNICOS OU TÉRMICOS, MESMO COM REVESTIMENTO INTERIOR OU CALORÍFUGO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "7311",
+      "sourceRow": 41,
+      "description": "RECIPIENTES PARA GASES COMPRIMIDOS OU LIQUEFEITOS, DE FERRO FUNDIDO, FERRO OU AÇO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "7321",
+      "sourceRow": 42,
+      "description": "AQUECEDORES DE AMBIENTES (FOGÕES DE SALA), CALDEIRAS DE FORNALHA, FOGÕES DE COZINHA (INCLUÍDOS OS QUE POSSAM SER UTILIZADOS ACESSORIAMENTE NO AQUECIMENTO CENTRAL), CHURRASQUEIRAS (GRELHADORES), BRASEIRAS, FOGAREIROS A GÁS, AQUECEDORES DE PRATOS, E APARELHOS NÃO ELÉTRICOS SEMELHANTES, DE USO DOMÉSTICO, DE FERRO FUNDIDO, FERRO OU AÇO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "7322",
+      "sourceRow": 43,
+      "description": "RADIADORES PARA AQUECIMENTO CENTRAL, NÃO ELÉTRICOS, DE FERRO FUNDIDO, FERRO OU AÇO; GERADORES E DISTRIBUIDORES DE AR QUENTE (INCLUÍDOS OS DISTRIBUIDORES QUE POSSAM TAMBÉM FUNCIONAR COMO DISTRIBUIDORES DE AR FRIO OU CONDICIONADO), NÃO ELÉTRICOS, MUNIDOS DE VENTILADOR OU FOLE COM MOTOR, DE FERRO FUNDIDO, FERRO OU AÇO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "7610",
+      "sourceRow": 45,
+      "description": "CONSTRUÇÕES DE ALUMÍNIO",
+      "lifeYears": 25,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 400
+    },
+    {
+      "ncm": "7611",
+      "sourceRow": 46,
+      "description": "RESERVATÓRIOS, TONÉIS, CUBAS E RECIPIENTES SEMELHANTES PARA QUAISQUER MATÉRIAS (EXCETO GASES COMPRIMIDOS OU LIQUEFEITOS), DE ALUMÍNIO, DE CAPACIDADE SUPERIOR A 300 LITROS, SEM DISPOSITIVOS MECÂNICOS OU TÉRMICOS, MESMO COM REVESTIMENTO INTERIOR OU CALORÍFUGO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "7613",
+      "sourceRow": 47,
+      "description": "RECIPIENTES PARA GASES COMPRIMIDOS OU LIQUEFEITOS, DE ALUMÍNIO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8201",
+      "sourceRow": 49,
+      "description": "PÁS, ALVIÕES, PICARETAS, ENXADAS, SACHOS, FORCADOS E FORQUILHAS, ANCINHOS E RASPADEIRAS; MACHADOS, PODÕES E FERRAMENTAS SEMELHANTES COM GUME; TESOURAS DE PODAR DE TODOS OS TIPOS; FOICES E FOICINHAS, FACAS PARA FENO OU PARA PALHA, TESOURAS PARA SEBES, CUNHAS E OUTRAS FERRAMENTAS MANUAIS PARA AGRICULTURA, HORTICULTURA OU SILVICULTURA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8202",
+      "sourceRow": 50,
+      "description": "SERRAS MANUAIS; FOLHAS DE SERRAS DE TODOS OS TIPOS (INCLUÍDAS AS FRESAS-SERRAS E AS FOLHAS NÃO DENTADAS PARA SERRAR)",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8203.20",
+      "sourceRow": 52,
+      "description": "-Alicates (mesmo cortantes), tenazes, pinças e ferramentas semelhantes",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8203.30",
+      "sourceRow": 53,
+      "description": "-Cisalhas para metais e ferramentas semelhantes",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8203.40",
+      "sourceRow": 54,
+      "description": "-Corta-tubos, corta-pinos, saca-bocados e ferramentas semelhantes",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8204",
+      "sourceRow": 55,
+      "description": "CHAVES DE PORCAS, MANUAIS (INCLUÍDAS AS CHAVES DINAMOMÉTRICAS); CHAVES DE CAIXA INTERCAMBIÁVEIS, MESMO COM CABOS",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8205",
+      "sourceRow": 56,
+      "description": "FERRAMENTAS MANUAIS (INCLUÍDOS OS CORTA-VIDROS) NÃO ESPECIFICADAS NEM COMPREENDIDAS EM OUTRAS POSIÇÕES, LAMPARINAS OU LÂMPADAS DE SOLDAR (MAÇARICOS) E SEMELHANTES; TORNOS DE APERTAR, SARGENTOS E SEMELHANTES, EXCETO OS ACESSÓRIOS OU PARTES DE MÁQUINAS-FERRAMENTAS; BIGORNAS; FORJASPORTÁTEIS; MÓS COM ARMAÇÃO, MANUAIS OU DE PEDAL",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8206",
+      "sourceRow": 57,
+      "description": "FERRAMENTAS DE PELO MENOS DUAS DAS POSIÇÕES 8202 A 8205",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8207.30",
+      "sourceRow": 59,
+      "description": "-Ferramentas de embutir, de estampar ou de puncionar",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8210",
+      "sourceRow": 60,
+      "description": "APARELHOS MECÂNICOS DE ACIONAMENTO MANUAL, PESANDO ATÉ 10kg, UTILIZADOS PARA PREPARAR, ACONDICIONAR OU SERVIR ALIMENTOS OU BEBIDAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8214",
+      "sourceRow": 61,
+      "description": "MÁQUINAS DE TOSQUIAR",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8303",
+      "sourceRow": 63,
+      "description": "COFRES-FORTES, PORTAS BLINDADAS E COMPARTIMENTOS PARA CASAS-FORTES, COFRES E CAIXAS DE SEGURANÇA E ARTEFATOS SEMELHANTES, DE METAIS COMUNS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8304",
+      "sourceRow": 64,
+      "description": "CLASSIFICADORES, FICHÁRIOS (FICHEIROS*), CAIXAS DE CLASSIFICAÇÃO, PORTA-CÓPIAS, PORTA-CANETAS, PORTACARIMBOS E ARTEFATOS SEMELHANTES, DE ESCRITÓRIO, DE METAIS COMUNS, EXCLUÍDOS OS MÓVEIS DE ESCRITÓRIO DA POSIÇÃO 9403",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8401",
+      "sourceRow": 66,
+      "description": "REATORES NUCLEARES; ELEMENTOS COMBUSTÍVEIS (CARTUCHOS) NÃO IRRADIADOS, PARA REATORES NUCLEARES; MÁQUINAS E APARELHOS PARA A SEPARAÇÃO DE ISÓTOPOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8402",
+      "sourceRow": 67,
+      "description": "CALDEIRAS DE VAPOR (GERADORES DE VAPOR), EXCLUÍDAS AS CALDEIRAS PARA AQUECIMENTO CENTRAL CONCEBIDAS PARA PRODUÇÃO DE ÁGUA QUENTE E VAPOR DE BAIXA PRESSÃO; CALDEIRAS DENOMINADAS \"DE ÁGUA SUPERAQUECIDA\"",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8403",
+      "sourceRow": 68,
+      "description": "CALDEIRAS PARA AQUECIMENTO CENTRAL, EXCETO AS DA POSIÇÃO 8402",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8404",
+      "sourceRow": 69,
+      "description": "APARELHOS AUXILIARES PARA CALDEIRAS DAS POSIÇÕES 8402 OU 8403 (POR EXEMPLO: ECONOMIZADORES, SUPERAQUECEDORES, APARELHOS DE LIMPEZA DE TUBOS OU DE RECUPERACAO DE GÁS); CONDENSADORES PARA MÁQUINAS A VAPOR",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8405",
+      "sourceRow": 70,
+      "description": "GERADORES DE GÁS DE AR (GÁS POBRE) OU DE GÁS DE ÁGUA, COM OU SEM DEPURADORES; GERADORES DE ACETILENO E GERADORES SEMELHANTES DE GÁS, OPERADOS A ÁGUA, COM OU SEM DEPURADORES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8406",
+      "sourceRow": 71,
+      "description": "TURBINAS A VAPOR",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8407",
+      "sourceRow": 72,
+      "description": "MOTORES DE PISTÃO, ALTERNATIVO OU ROTATIVO, DE IGNIÇÃO POR CENTELHA (FAÍSCA) (MOTORES DE EXPLOSÃO)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8408",
+      "sourceRow": 73,
+      "description": "MOTORES DE PISTÃO, DE IGNIÇÃO POR COMPRESSÃO (MOTORES DIESEL OU SEMI-DIESEL)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8410",
+      "sourceRow": 74,
+      "description": "TURBINAS HIDRÁULICAS, RODAS HIDRÁULICAS, E SEUS REGULADORES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8411",
+      "sourceRow": 75,
+      "description": "TURBORREATORES, TURBOPROPULSORES E OUTRAS TURBINAS A GÁS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8412",
+      "sourceRow": 76,
+      "description": "OUTROS MOTORES E MÁQUINAS MOTRIZES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8413",
+      "sourceRow": 77,
+      "description": "BOMBAS PARA LÍQUIDOS, MESMO COM DISPOSITIVO MEDIDOR; ELEVADORES DE LÍQUIDOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8414",
+      "sourceRow": 78,
+      "description": "BOMBAS DE AR OU DE VÁCUO, COMPRESSORES DE AR OU DE OUTROS GASES E VENTILADORES; COIFAS ASPIRANTES (EXAUSTORES*) PARA EXTRAÇÃO OU RECICLAGEM, COM VENTILADOR INCORPORADO, MESMO FILTRANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8415",
+      "sourceRow": 79,
+      "description": "MÁQUINAS E APARELHOS DE AR-CONDICIONADO CONTENDO UM VENTILADOR MOTORIZADO E DISPOSITIVOS PRÓPRIOS PARA MODIFICAR A TEMPERATURA E A UMIDADE, INCLUÍDOS AS MÁQUINAS E APARELHOS EM QUE A UMIDADE NÃO SEJA REGULÁVEL SEPARADAMENTE",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8416",
+      "sourceRow": 80,
+      "description": "QUEIMADORES PARA ALIMENTAÇÃO DE FORNALHAS DE COMBUSTÍVEIS LÍQUIDOS, COMBUSTÍVEIS SÓLIDOS PULVERIZADOS OU DE GÁS; FORNALHAS AUTOMÁTICAS, INCLUÍDAS AS ANTEFORNALHAS, GRELHAS MECÂNICAS, DESCARREGADORES MECÂNICOS DE CINZAS E DISPOSITIVOS SEMELHANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8417",
+      "sourceRow": 81,
+      "description": "FORNOS INDUSTRIAIS OU DE LABORATÓRIO, INCLUÍDOS OS INCINERADORES, NÃO ELÉTRICOS Ver Nota (1)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8418",
+      "sourceRow": 82,
+      "description": "REFRIGERADORES, CONGELADORES (\"FREEZERS\") E OUTROS MATERIAIS, MÁQUINAS E APARELHOS PARA A PRODUÇÃO DE FRIO, COM EQUIPAMENTO ELÉTRICO OU OUTRO; BOMBAS DE CALOR, EXCLUÍDAS AS MÁQUINAS E APARELHOS DE AR-CONDICIONADO DA POSIÇÃO 8415",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8419",
+      "sourceRow": 83,
+      "description": "APARELHOS E DISPOSITIVOS, MESMO AQUECIDOS ELETRICAMENTE, PARA TRATAMENTO DE MATÉRIAS POR MEIO DE OPERAÇÕES QUE IMPLIQUEM MUDANÇA DE TEMPERATURA, TAIS COMO AQUECIMENTO, COZIMENTO, TORREFAÇÃO, DESTILAÇÃO, RETIFICAÇÃO, ESTERILIZAÇÃO, PASTEURIZAÇÃO, ESTUFAGEM, SECAGEM, EVAPORAÇÃO, VAPORIZAÇÃO, CONDENSAÇÃO OU ARREFECIMENTO, EXCETO OS DE USO DOMÉSTICO; AQUECEDORES DE ÁGUA NÃO ELÉTRICOS, DE AQUECIMENTO INSTANTÂNEO OU DE ACUMULAÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8420",
+      "sourceRow": 84,
+      "description": "CALANDRAS E LAMINADORES, EXCETO OS DESTINADOS AO TRATAMENTO DE METAIS OU VIDRO, E SEUS CILINDROS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8421",
+      "sourceRow": 85,
+      "description": "CENTRIFUGADORES, INCLUÍDOS OS SECADORES CENTRÍFUGOS; APARELHOS PARA FILTRAR OU DEPURAR LÍQUIDOS OU GASES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8422",
+      "sourceRow": 86,
+      "description": "MÁQUINAS DE LAVAR LOUÇA; MÁQUINAS E APARELHOS PARA LIMPAR OU SECAR GARRAFAS OU OUTROS RECIPIENTES; MÁQUINAS E APARELHOS PARA ENCHER, FECHAR, ARROLHAR OU ROTULAR GARRAFAS, CAIXAS, LATAS, SACOS OU OUTROS RECIPIENTES; MÁQUINAS PARA CAPSULAR GARRAFAS, VASOS, TUBOS E RECIPIENTES SEMELHANTES; OUTRAS MÁQUINAS E APARELHOS PARA EMPACOTAR OU EMBALAR MERCADORIAS (INCLUÍDAS AS MÁQUINAS E APARELHOS PARA EMBALAR COM PELÍCULA TERMO-RETRÁTIL); MÁQUINAS E APARELHOS PARA GASEIFICAR BEBIDAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8423",
+      "sourceRow": 87,
+      "description": "APARELHOS E INSTRUMENTOS DE PESAGEM, INCLUÍDAS AS BÁSCULAS E BALANÇAS PARA VERIFICAR PEÇAS USINADAS (FABRICADAS*), EXCLUÍDAS AS BALANÇAS SENSÍVEIS A PESOS NÃO SUPERIORES A 5cg; PESOS PARA QUAISQUER BALANÇAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8424",
+      "sourceRow": 88,
+      "description": "APARELHOS MECÂNICOS (MESMO MANUAIS) PARA PROJETAR, DISPERSAR OU PULVERIZAR LÍQUIDOS OU PÓS; EXTINTORES, MESMO CARREGADOS; PISTOLAS AEROGRÁFICAS E APARELHOS SEMELHANTES; MÁQUINAS E APARELHOS DE JATO DE AREIA, DE JATO DE VAPOR E APARELHOS DE JATO SEMELHANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8425",
+      "sourceRow": 89,
+      "description": "TALHAS, CADERNAIS E MOITÕES; GUINCHOS E CABRESTANTES; MACACOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8426",
+      "sourceRow": 90,
+      "description": "CÁBREAS; GUINDASTES, INCLUÍDOS OS DE CABO; PONTES ROLANTES, PÓRTICOS DE DESCARGA OU DE MOVIMENTAÇÃO, PONTES-GUINDASTES, CARROS-PÓRTICOS E CARROS-GUINDASTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8427",
+      "sourceRow": 91,
+      "description": "EMPILHADEIRAS; OUTROS VEÍCULOS PARA MOVIMENTAÇÃO DE CARGA E SEMELHANTES, EQUIPADOS COM DISPOSITIVOS DE ELEVAÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8428",
+      "sourceRow": 92,
+      "description": "OUTRAS MÁQUINAS E APARELHOS DE ELEVAÇÃO, DE CARGA, DE DESCARGA OU DE MOVIMENTAÇÃO (POR EXEMPLO: ELEVADORES OU ASCENSORES, ESCADAS ROLANTES, TRANSPORTADORES, TELEFÉRICOS)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8429",
+      "sourceRow": 93,
+      "description": "\"BULLDOZERS\", \"ANGLEDOZERS\", NIVELADORES, RASPO-TRANSPORTADORES (\"SCRAPERS\"), PÁS MECÂNICAS, ESCAVADORES, CARREGADORAS E PÁS CARREGADORAS, COMPACTADORES E ROLOS OU CILINDROS COMPRESSORES, AUTOPROPULSORES",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8430",
+      "sourceRow": 94,
+      "description": "OUTRAS MÁQUINAS E APARELHOS DE TERRAPLENAGEM, NIVELAMENTO, RASPAGEM, ESCAVAÇÃO, COMPACTAÇÃO, EXTRAÇÃO OU PERFURAÇÃO DA TERRA, DE MINERAIS OU MINÉRIOS; BATE-ESTACAS E ARRANCA-ESTACAS; LIMPA-NEVES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8432",
+      "sourceRow": 95,
+      "description": "MÁQUINAS E APARELHOS DE USO AGRÍCOLA, HORTÍCOLA OU FLORESTAL, PARA PREPARAÇÃO OU TRABALHO DO SOLO OU PARA CULTURA; ROLOS PARA GRAMADOS (RELVADOS), OU PARA CAMPOS DE ESPORTE",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8433",
+      "sourceRow": 96,
+      "description": "MÁQUINAS E APARELHOS PARA COLHEITA OU DEBULHA DE PRODUTOS AGRÍCOLAS, INCLUÍDAS AS ENFARDADORAS DE PALHA OU FORRAGEM; CORTADORES DE GRAMA (RELVA) E CEIFEIRAS; MÁQUINAS PARA LIMPAR OU SELECIONAR OVOS, FRUTAS OU OUTROS PRODUTOS AGRÍCOLAS, EXCETO AS DA POSIÇÃO 8437",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8434",
+      "sourceRow": 97,
+      "description": "MÁQUINAS DE ORDENHAR E MÁQUINAS E APARELHOS PARA A INDÚSTRIA DE LATICÍNIOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8435",
+      "sourceRow": 98,
+      "description": "PRENSAS, ESMAGADORES E MÁQUINAS E APARELHOS SEMELHANTES, PARA FABRICAÇÃO DE VINHO, SIDRA, SUCO DE FRUTAS OU BEBIDAS SEMELHANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8436",
+      "sourceRow": 99,
+      "description": "OUTRAS MÁQUINAS E APARELHOS PARA AGRICULTURA, HORTICULTURA, SILVICULTURA, AVICULTURA OU APICULTURA, INCLUÍDOS OS GERMINADORES EQUIPADOS COM DISPOSITIVOS MECÂNICOS OU TÉRMICOS E AS CHOCADEIRAS E CRIADEIRAS PARA AVICULTURA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8437",
+      "sourceRow": 100,
+      "description": "MÁQUINAS PARA LIMPEZA, SELEÇÃO OU PENEIRAÇÃO DE GRÃOS OU DE PRODUTOS HORTÍCOLAS SECOS; MÁQUINAS E APARELHOS PARA A INDÚSTRIA DE MOAGEM OU TRATAMENTO DE CEREAIS OU DE PRODUTOS HORTÍCOLAS SECOS, EXCETO DOS TIPOS UTILIZADOS EM FAZENDAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8438",
+      "sourceRow": 101,
+      "description": "MÁQUINAS E APARELHOS NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DO PRESENTE CAPÍTULO, PARA PREPARAÇÃO OU FABRICAÇÃO INDUSTRIAIS DE ALIMENTOS OU DE BEBIDAS, EXCETO AS MÁQUINAS E APARELHOS PARA EXTRAÇÃO OU PREPARAÇÃO DE ÓLEOS OU GORDURAS VEGETAIS FIXOS OU DE ÓLEOS OU GORDURAS ANIMAIS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8439",
+      "sourceRow": 102,
+      "description": "MÁQUINAS E APARELHOS PARA FABRICAÇÃO DE PASTA DE MATÉRIAS FIBROSAS CELULÓSICAS OU PARA FABRICAÇÃO OU ACABAMENTO DE PAPEL OU CARTÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8440",
+      "sourceRow": 103,
+      "description": "MÁQUINAS E APARELHOS PARA BROCHURA OU ENCADERNAÇÃO, INCLUÍDAS AS MÁQUINAS DE COSTURAR CADERNOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8441",
+      "sourceRow": 104,
+      "description": "OUTRAS MÁQUINAS E APARELHOS PARA O TRABALHO DA PASTA DE PAPEL, DO PAPEL OU CARTÃO, INCLUÍDAS AS CORTADEIRAS DE TODOS OS TIPOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8442",
+      "sourceRow": 105,
+      "description": "MÁQUINAS, APARELHOS E MATERIAL (EXCETO AS MÁQUINASFERRAMENTAS DAS POSIÇÕES 8456 A 8465), PARA FUNDIR OU COMPOR CARACTERES TIPOGRÁFICOS OU PARA PREPARAÇÃO OU FABRICAÇÃO DE CLICHÊS, BLOCOS, CILINDROS OU OUTROS ELEMENTOS DE IMPRESSÃO; CARACTERES TIPOGRÁFICOS, CLICHÊS, BLOCOS, CILINDROS OU OUTROS ELEMENTOS DE IMPRESSÃO; PEDRAS LITOGRÁFICAS, BLOCOS, PLACAS E CILINDROS, PREPARADOS PARA IMPRESSÃO (POR EXEMPLO: APLAINADOS, GRANULADOS OU POLIDOS)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8443",
+      "sourceRow": 106,
+      "description": "MÁQUINAS E APARELHOS DE IMPRESSÃO, INCLUÍDAS AS MÁQUINAS DE IMPRESSÃO DE JATO DE TINTA, EXCETO AS DA POSIÇÃO 8471; MÁQUINAS AUXILIARES PARA IMPRESSÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8444",
+      "sourceRow": 107,
+      "description": "MÁQUINAS PARA EXTRUDAR, ESTIRAR, TEXTURIZAR OU CORTAR MATÉRIAS TÊXTEIS SINTÉTICAS OU ARTIFICIAIS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8445",
+      "sourceRow": 108,
+      "description": "MÁQUINAS PARA PREPARAÇÃO DE MATÉRIAS TÊXTEIS; MÁQUINAS PARA FIAÇÃO, DOBRAGEM OU TORÇÃO, DE MATÉRIAS TÊXTEIS E OUTRAS MÁQUINAS E APARELHOS PARA FABRICAÇÃO DE FIOS TÊXTEIS; MÁQUINAS DE BOBINAR (INCLUÍDAS AS BOBINADEIRAS DE TRAMA) OU DE DOBAR MATÉRIAS TÊXTEIS E MÁQUINAS PARA PREPARAÇÃO DE FIOS TÊXTEIS PARA SUA UTILIZAÇÃO NAS MÁQUINAS DAS POSIÇÕES 8446 OU 8447",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8446",
+      "sourceRow": 109,
+      "description": "TEARES PARA TECIDOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8447",
+      "sourceRow": 110,
+      "description": "TEARES PARA FABRICAR MALHAS, MÁQUINAS DE COSTURA POR ENTRELAÇAMENTO (\"COUTURE-TRICOTAGE\"), MÁQUINAS PARA FABRICAR GUIPURAS, TULES, RENDAS, BORDADOS, PASSAMANARIAS, GALÕES OU REDES; MÁQUINAS PARA INSERIR TUFOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8448",
+      "sourceRow": 111,
+      "description": "MÁQUINAS E APARELHOS AUXILIARES PARA AS MÁQUINAS DAS POSIÇÕES 8444, 8445, 8446 OU 8447 (POR EXEMPLO: RATIERAS, MECANISMOS \"JACQUARD\", QUEBRA-URDIDURAS E QUEBRA-TRAMAS, MECANISMOS TROCA-LANÇADEIRAS)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8449",
+      "sourceRow": 112,
+      "description": "MÁQUINAS E APARELHOS PARA FABRICAÇÃO OU ACABAMENTO DE FELTRO OU DE FALSOS TECIDOS, EM PEÇA OU EM FORMAS DETERMINADAS, INCLUÍDAS AS MÁQUINAS E APARELHOS PARA FABRICAÇÃO DE CHAPÉUS DE FELTRO; FORMAS PARA CHAPÉUS E PARA ARTEFATOS DE USO SEMELHANTE",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8450",
+      "sourceRow": 113,
+      "description": "MÁQUINAS DE LAVAR ROUPA, MESMO COM DISPOSITIVOS DE SECAGEM",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8451",
+      "sourceRow": 114,
+      "description": "MÁQUINAS E APARELHOS (EXCETO AS MÁQUINAS DA POSIÇÃO 8450) PARA LAVAR, LIMPAR, ESPREMER, SECAR, PASSAR, PRENSAR (INCLUÍDAS AS PRENSAS FIXADORAS), BRANQUEAR, TINGIR, PARA APRESTO E ACABAMENTO, PARA REVESTIR OU IMPREGNAR FIOS, TECIDOS OU OBRAS DE MATÉRIAS TÊXTEIS E MÁQUINAS PARA REVESTIR TECIDOSBASE OU OUTROS SUPORTES UTILIZADOS NA FABRICAÇÃO DE REVESTIMENTOS PARA PAVIMENTOS, TAIS COMO LINÓLEO; MÁQUINAS PARA ENROLAR, DESENROLAR, DOBRAR, CORTAR OU DENTEAR TECIDOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8452",
+      "sourceRow": 115,
+      "description": "MÁQUINAS DE COSTURA, EXCETO AS DE COSTURAR CADERNOS DA POSIÇÃO 8440; MÓVEIS, BASES E TAMPAS, PRÓPRIOS PARA MÁQUINAS DE COSTURA; AGULHAS PARA MÁQUINAS DE COSTURA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8453",
+      "sourceRow": 116,
+      "description": "MÁQUINAS E APARELHOS PARA PREPARAR, CURTIR OU TRABALHAR COUROS OU PELES, OU PARA FABRICAR OU CONSERTAR CALÇADOS E OUTRAS OBRAS DE COURO OU DE PELE, EXCETO MÁQUINAS DE COSTURA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8454",
+      "sourceRow": 117,
+      "description": "CONVERSORES, CADINHOS OU COLHERES DE FUNDIÇÃO, LINGOTEIRAS E MÁQUINAS DE VAZAR (MOLDAR), PARA METALURGIA, ACIARIA OU FUNDIÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8455",
+      "sourceRow": 118,
+      "description": "LAMINADORES DE METAIS E SEUS CILINDROS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8456",
+      "sourceRow": 119,
+      "description": "MÁQUINAS-FERRAMENTAS QUE TRABALHEM POR ELIMINAÇÃO DE QUALQUER MATÉRIA, OPERANDO POR \"LASER\" OU POR OUTROS FEIXES DE LUZ OU DE FÓTONS, POR ULTRA-SOM, ELETRO-EROSÃO, PROCESSOS ELETROQUÍMICOS, FEIXES DE ELÉTRONS, FEIXES IÔNICOS OU POR JATO DE PLASMA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8457",
+      "sourceRow": 120,
+      "description": "CENTROS DE USINAGEM (CENTROS DE MAQUINAGEM*), MÁQUINAS DE SISTEMA MONOSTÁTICO (\"SINGLE STATION\") E MÁQUINAS DE ESTAÇÕES MÚLTIPLAS, PARA TRABALHAR METAIS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8458",
+      "sourceRow": 121,
+      "description": "TORNOS (INCLUÍDOS OS CENTROS DE TORNEAMENTO) PARA METAIS.",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8459",
+      "sourceRow": 122,
+      "description": "MÁQUINAS-FERRAMENTAS (INCLUÍDAS AS UNIDADES COM CABEÇA DESLIZANTE) PARA FURAR, MANDRILAR, FRESAR OU ROSCAR INTERIOR E EXTERIORMENTE METAIS, POR ELIMINAÇÃO DE MATÉRIA, EXCETO OS TORNOS (INCLUÍDOS OS CENTROS DE TORNEAMENTO) DA POSIÇÃO 8458",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8460",
+      "sourceRow": 123,
+      "description": "MÁQUINAS-FERRAMENTAS PARA REBARBAR, AFIAR, AMOLAR, RETIFICAR, BRUNIR, POLIR OU REALIZAR OUTRAS OPERAÇÕES DE ACABAMENTO EM METAIS OU CERAMAIS (\"CERMETS\") POR MEIO DE MÓS, DE ABRASIVOS OU DE PRODUTOS POLIDORES, EXCETO AS MÁQUINAS DE CORTAR OU ACABAR ENGRENAGENS DA POSIÇÃO 8461",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8461",
+      "sourceRow": 124,
+      "description": "MÁQUINAS-FERRAMENTAS PARA APLAINAR, PLAINASLIMADORAS, MÁQUINAS-FERRAMENTAS PARA ESCATELAR, BROCHAR, CORTAR OU ACABAR ENGRENAGENS, SERRAR, SECCIONAR E OUTRAS MÁQUINAS-FERRAMENTAS QUE TRABALHEM POR ELIMINAÇÃO DE METAL OU DE CERAMAIS (\"CERMETS\"), NÃO ESPECIFICADAS NEM COMPREENDIDAS EM OUTRAS POSIÇÕES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8462",
+      "sourceRow": 125,
+      "description": "MÁQUINAS-FERRAMENTAS (INCLUÍDAS AS PRENSAS) PARA FORJAR OU ESTAMPAR, MARTELOS, MARTELOS-PILÕES E MARTINETES, PARA TRABALHAR METAIS; MÁQUINASFERRAMENTAS (INCLUÍDAS AS PRENSAS) PARA ENROLAR, ARQUEAR, DOBRAR, ENDIREITAR, APLANAR, CISALHAR, PUNCIONAR OU CHANFRAR METAIS; PRENSAS PARA TRABALHAR METAIS OU CARBONETOS METÁLICOS, NÃO ESPECIFICADAS ACIMA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8463",
+      "sourceRow": 126,
+      "description": "OUTRAS MÁQUINAS-FERRAMENTAS PARA TRABALHAR METAIS OU CERAMAIS (\"CERMETS\"), QUE TRABALHEM SEM ELIMINAÇÃO DE MATÉRIA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8464",
+      "sourceRow": 127,
+      "description": "MÁQUINAS-FERRAMENTAS PARA TRABALHAR PEDRA, PRODUTOS CERÂMICOS, CONCRETO (BETÃO), FIBROCIMENTO OU MATÉRIAS MINERAIS SEMELHANTES, OU PARA O TRABALHO A FRIO DO VIDRO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8465",
+      "sourceRow": 128,
+      "description": "MÁQUINAS-FERRAMENTAS (INCLUÍDAS AS MÁQUINAS PARA PREGAR, GRAMPEAR, COLAR OU REUNIR POR QUALQUER OUTRO MODO) PARA TRABALHAR MADEIRA, CORTIÇA, OSSO, BORRACHA ENDURECIDA, PLÁSTICOS DUROS OU MATÉRIAS DURAS SEMELHANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8467",
+      "sourceRow": 129,
+      "description": "FERRAMENTAS PNEUMÁTICAS, HIDRÁULICAS OU DE MOTOR, NÃO ELÉTRICO, INCORPORADO, DE USO MANUAL",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8468",
+      "sourceRow": 130,
+      "description": "MÁQUINAS E APARELHOS PARA SOLDAR, MESMO DE CORTE, EXCETO OS DA POSIÇÃO 8515; MÁQUINAS E APARELHOS A GÁS, PARA TÊMPERA SUPERFICIAL",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8469",
+      "sourceRow": 131,
+      "description": "MÁQUINAS DE ESCREVER, EXCETO AS IMPRESSORAS DA POSIÇÃO 8471; MÁQUINAS DE TRATAMENTO DE TEXTOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.21",
+      "sourceRow": 133,
+      "description": "--Máquinas eletrônicas de calcular com dispositivo impressor incorporado",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.29",
+      "sourceRow": 134,
+      "description": "--Outras máquinas eletrônicas de calcular, exceto de bolso",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.30",
+      "sourceRow": 135,
+      "description": "-Outras máquinas de calcular",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.40",
+      "sourceRow": 136,
+      "description": "-Máquinas de contabilidade",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.50",
+      "sourceRow": 137,
+      "description": "-Caixas registradoras",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8470.90",
+      "sourceRow": 138,
+      "description": "Máquinas de franquear correspondência",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8471",
+      "sourceRow": 139,
+      "description": "MÁQUINAS AUTOMÁTICAS PARA PROCESSAMENTO DE DADOS E SUAS UNIDADES; LEITORES MAGNÉTICOS OU ÓPTICOS, MÁQUINAS PARA REGISTRAR DADOS EM SUPORTE SOB FORMA CODIFICADA, E MÁQUINAS PARA PROCESSAMENTO DESSES DADOS, NÃO ESPECIFICADAS NEM COMPREENDIDAS EM OUTRAS POSIÇÕES",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8472",
+      "sourceRow": 140,
+      "description": "OUTRAS MÁQUINAS E APARELHOS DE ESCRITÓRIO [POR EXEMPLO: DUPLICADORES HECTOGRÁFICOS OU A ESTÊNCIL, MÁQUINAS PARA IMPRIMIR ENDEREÇOS, DISTRIBUIDORES AUTOMÁTICOS DE PAPEL-MOEDA, MÁQUINAS PARA SELECIONAR, CONTAR OU EMPACOTAR MOEDAS, APONTADORES (AFIADORES) MECÂNICOS DE LÁPIS, PERFURADORES OU GRAMPEADORES]",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8474",
+      "sourceRow": 141,
+      "description": "MÁQUINAS E APARELHOS PARA SELECIONAR, PENEIRAR, SEPARAR, LAVAR, ESMAGAR, MOER, MISTURAR OU AMASSAR TERRAS, PEDRAS, MINÉRIOS OU OUTRAS SUBSTÂNCIAS MINERAIS SÓLIDAS (INCLUÍDOS OS PÓS E PASTAS); MÁQUINAS PARA AGLOMERAR OU MOLDAR COMBUSTÍVEIS MINERAIS SÓLIDOS, PASTAS CERÂMICAS, CIMENTO, GESSO OU OUTRAS MATÉRIAS MINERAIS EM PÓ OU EM PASTA; MÁQUINAS PARA FAZER MOLDES DE AREIA PARA FUNDIÇÃO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8475",
+      "sourceRow": 142,
+      "description": "MÁQUINAS PARA MONTAGEM DE LÂMPADAS, TUBOS OU VÁLVULAS, ELÉTRICOS OU ELETRÔNICOS, OU DE LÂMPADAS DE LUZ RELÂMPAGO (\"FLASH\"), QUE TENHAM INVÓLUCRO DE VIDRO; MÁQUINAS PARA FABRICAÇÃO OU TRABALHO A QUENTE DO VIDRO OU DAS SUAS OBRAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8476",
+      "sourceRow": 143,
+      "description": "MÁQUINAS AUTOMÁTICAS DE VENDA DE PRODUTOS (POR EXEMPLO: SELOS, CIGARROS, ALIMENTOS OU BEBIDAS), INCLUÍDAS AS MÁQUINAS DE TROCAR DINHEIRO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8477",
+      "sourceRow": 144,
+      "description": "MÁQUINAS E APARELHOS PARA TRABALHAR BORRACHA OU PLÁSTICOS OU PARA FABRICAÇÃO DE PRODUTOS DESSAS MATÉRIAS, NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DESTE CAPÍTULO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8478",
+      "sourceRow": 145,
+      "description": "MÁQUINAS E APARELHOS PARA PREPARAR OU TRANSFORMAR FUMO (TABACO), NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DESTE CAPÍTULO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.10",
+      "sourceRow": 147,
+      "description": "-Máquinas e aparelhos para obras públicas, construção civil ou trabalhos semelhantes",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8479.20",
+      "sourceRow": 148,
+      "description": "-Máquinas e aparelhos para extração ou preparação de óleos ou gorduras vegetais fixos ou de óleos ou gorduras animais",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.30",
+      "sourceRow": 149,
+      "description": "-Prensas para fabricação de painéis de partículas, de fibras de madeira ou de outras matérias lenhosas, e outras máquinas e aparelhos para tratamento de madeira ou de cortiça",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.40",
+      "sourceRow": 150,
+      "description": "-Máquinas para fabricação de cordas ou cabos",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.50",
+      "sourceRow": 151,
+      "description": "-Robôs industriais, não especificados nem compreendidos em outras posições",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.60",
+      "sourceRow": 152,
+      "description": "-Aparelhos de evaporação para arrefecimento do ar",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.81",
+      "sourceRow": 154,
+      "description": "--Para tratamento de metais, incluídas as bobinadoras para enrolamentos elétricos",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.82",
+      "sourceRow": 155,
+      "description": "--Para misturar, amassar, esmagar, moer, separar, peneirar, homogeneizar, emulsionar ou agitar",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8479.89",
+      "sourceRow": 156,
+      "description": "--Outros",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8480",
+      "sourceRow": 157,
+      "description": "CAIXAS DE FUNDIÇÃO; PLACAS DE FUNDO PARA MOLDES; MODELOS PARA MOLDES; MOLDES PARA METAIS (EXCETO LINGOTEIRAS), CARBONETOS METÁLICOS, VIDRO, MATÉRIAS MINERAIS, BORRACHA OU PLÁSTICOS",
+      "lifeYears": 3,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 3330
+    },
+    {
+      "ncm": "8483.40",
+      "sourceRow": 159,
+      "description": "Caixas de transmissão, redutores, multiplicadores e variadores de velocidade, incluídos os conversores de torque (binários)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8501",
+      "sourceRow": 161,
+      "description": "MOTORES E GERADORES, ELÉTRICOS, EXCETO OS GRUPOS ELETROGÊNEOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8502",
+      "sourceRow": 162,
+      "description": "GRUPOS ELETROGÊNEOS E CONVERSORES ROTATIVOS, ELÉTRICOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8504",
+      "sourceRow": 163,
+      "description": "TRANSFORMADORES ELÉTRICOS, CONVERSORES ELÉTRICOS ESTÁTICOS (RETIFICADORES, POR EXEMPLO), BOBINAS DE REATÂNCIA E DE AUTO-INDUÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8508",
+      "sourceRow": 164,
+      "description": "FERRAMENTAS ELETROMECÂNICAS DE MOTOR ELÉTRICO INCORPORADO, DE USO MANUAL",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8510",
+      "sourceRow": 165,
+      "description": "APARELHOS OU MÁQUINAS DE TOSQUIAR DE MOTOR ELÉTRICO INCORPORADO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8514",
+      "sourceRow": 166,
+      "description": "FORNOS ELÉTRICOS INDUSTRIAIS OU DE LABORATÓRIO, INCLUÍDOS OS QUE FUNCIONAM POR INDUÇÃO OU POR PERDAS DIELÉTRICAS; OUTROS APARELHOS INDUSTRIAIS OU DE LABORATÓRIO PARA TRATAMENTO TÉRMICO DE MATÉRIAS POR INDUÇÃO OU POR PERDAS DIELÉTRICAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8515",
+      "sourceRow": 167,
+      "description": "MÁQUINAS E APARELHOS PARA SOLDAR (MESMO DE CORTE) ELÉTRICOS (INCLUÍDOS OS A GÁS AQUECIDO ELETRICAMENTE), A \"LASER\" OU OUTROS FEIXES DE LUZ OU DE FÓTONS, A ULTRA-SOM, A FEIXES DE ELÉTRONS, A IMPULSOS MAGNÉTICOS OU A JATO DE PLASMA; MÁQUINAS E APARELHOS ELÉTRICOS PARA PROJEÇÃO A QUENTE DE METAIS OU DE CERAMAIS (\"CERMETS\")",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8516",
+      "sourceRow": 168,
+      "description": "APARELHOS ELÉTRICOS PARA AQUECIMENTO DE AMBIENTES, DO SOLO OU PARA USOS SEMELHANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8517",
+      "sourceRow": 170,
+      "description": "APARELHOS ELÉTRICOS PARA TELEFONIA OU TELEGRAFIA, POR FIO, INCLUÍDOS OS APARELHOS TELEFÔNICOS POR FIO CONJUGADO COM UM APARELHO TELEFÔNICO PORTÁTIL SEM FIO E OS APARELHOS DE TELECOMUNICAÇÃO POR CORRENTE PORTADORA OU DE TELECOMUNICAÇÃO DIGITAL; VIDEOFONES (Retificado no DOU de 13/04/2017, pág. 53)",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8520",
+      "sourceRow": 171,
+      "description": "GRAVADORES DE DADOS DE VOO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8521.10",
+      "sourceRow": 173,
+      "description": "Gravador-reprodutor de fita magnética, sem sintonizador",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8521.90",
+      "sourceRow": 174,
+      "description": "Gravador-reprodutor e editor de imagem e som, em discos, por meio magnético, óptico ou opto-magnético",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8524.3",
+      "sourceRow": 176,
+      "description": "-Discos para sistemas de leitura por raio \"laser\":",
+      "lifeYears": 3,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 3330
+    },
+    {
+      "ncm": "8524.40",
+      "sourceRow": 177,
+      "description": "-Fitas magnéticas para reprodução de fenômenos diferentes do som e da imagem",
+      "lifeYears": 3,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 3330
+    },
+    {
+      "ncm": "8524.5",
+      "sourceRow": 178,
+      "description": "-Outras fitas magnéticas",
+      "lifeYears": 3,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 3330
+    },
+    {
+      "ncm": "8524.60",
+      "sourceRow": 179,
+      "description": "-Cartões magnéticos",
+      "lifeYears": 3,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 3330
+    },
+    {
+      "ncm": "8525",
+      "sourceRow": 180,
+      "description": "APARELHOS TRANSMISSORES (EMISSORES) PARA RADIOTELEFONIA, RADIOTELEGRAFIA, RADIODIFUSÃO OU TELEVISÃO, MESMO INCORPORANDO UM APARELHO DE RECEPÇÃO OU UM APARELHO DE GRAVAÇÃO OU DE REPRODUÇÃO DE SOM; CÂMERAS DE TELEVISÃO; CÂMERAS DE VÍDEO DE IMAGENS FIXAS E OUTRAS CÂMERAS (\"CAMCORDERS\")",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8526",
+      "sourceRow": 181,
+      "description": "APARELHOS DE RADIODETECÇÃO E DE RADIOSSONDAGEM (RADAR), APARELHOS DE RADIONAVEGAÇÃO E APARELHOS DE RADIOTELECOMANDO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8527",
+      "sourceRow": 182,
+      "description": "APARELHOS RECEPTORES PARA RADIOTELEFONIA, RADIOTELEGRAFIA OU RADIODIFUSÃO, EXCETO DE USO DOMÉSTICO",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8531.20",
+      "sourceRow": 184,
+      "description": "Painéis indicadores com dispositivos de cristais líquidos (LCD) ou de diodos emissores de luz (LED), próprios para anúncios publicitários",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8543",
+      "sourceRow": 185,
+      "description": "MÁQUINAS E APARELHOS ELÉTRICOS COM FUNÇÃO PRÓPRIA, NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DESTE CAPÍTULO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8601",
+      "sourceRow": 187,
+      "description": "LOCOMOTIVAS E LOCOTRATORES, DE FONTE EXTERNA DE ELETRICIDADE OU DE ACUMULADORES ELÉTRICOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8602",
+      "sourceRow": 188,
+      "description": "OUTRAS LOCOMOTIVAS E LOCOTRATORES; TÊNDERES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8603",
+      "sourceRow": 189,
+      "description": "LITORINAS (AUTOMOTORAS), MESMO PARA CIRCULAÇÃO URBANA, EXCETO AS DA POSIÇÃO 8604",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8604",
+      "sourceRow": 190,
+      "description": "VEÍCULOS PARA INSPEÇÃO E MANUTENÇÃO DE VIAS FÉRREAS OU SEMELHANTES, MESMO AUTOPROPULSORES (POR EXEMPLO: VAGÕES-OFICINAS, VAGÕES-GUINDASTES, VAGÕES EQUIPADOS COM BATEDORES DE BALASTRO, ALINHADORES DE VIAS, VIATURAS PARA TESTES E DRESINAS)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8605",
+      "sourceRow": 191,
+      "description": "VAGÕES DE PASSAGEIROS, FURGÕES PARA BAGAGEM, VAGÕES-POSTAIS E OUTROS VAGÕES ESPECIAIS, PARA VIAS FÉRREAS OU SEMELHANTES (EXCLUÍDAS AS VIATURAS DA POSIÇÃO 8604)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8606",
+      "sourceRow": 192,
+      "description": "VAGÕES PARA TRANSPORTE DE MERCADORIAS SOBRE VIAS FÉRREAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8608",
+      "sourceRow": 193,
+      "description": "APARELHOS MECÂNICOS (INCLUÍDOS OS ELETROMECÂNICOS) DE SINALIZAÇÃO, DE SEGURANÇA, DE CONTROLE OU DE COMANDO PARA VIAS FÉRREAS OU SEMELHANTES, RODOVIÁRIAS OU FLUVIAIS, PARA ÁREAS OU PARQUES DE ESTACIONAMENTO, INSTALAÇÕES PORTUÁRIAS OU PARA AERÓDROMOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8609",
+      "sourceRow": 194,
+      "description": "CONTEINERES (CONTENTORES), INCLUÍDOS OS DE TRANSPORTE DE FLUIDOS, ESPECIALMENTE CONCEBIDOS E EQUIPADOS PARA UM OU VÁRIOS MEIOS DE TRANSPORTE",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8701",
+      "sourceRow": 196,
+      "description": "TRATORES (EXCETO OS CARROS-TRATORES DA POSIÇÃO 8709)",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8702",
+      "sourceRow": 197,
+      "description": "VEÍCULOS AUTOMÓVEIS PARA TRANSPORTE DE 10 PESSOAS OU MAIS, INCLUINDO O MOTORISTA",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8703",
+      "sourceRow": 198,
+      "description": "AUTOMÓVEIS DE PASSAGEIROS E OUTROS VEÍCULOS AUTOMÓVEIS PRINCIPALMENTE CONCEBIDOS PARA TRANSPORTE DE PESSOAS (EXCETO OS DA POSIÇÃO 8702), INCLUÍDOS OS VEÍCULOS DE USO MISTO (\"STATION WAGONS\") E OS AUTOMÓVEIS DE CORRIDA",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8704",
+      "sourceRow": 199,
+      "description": "VEÍCULOS AUTOMÓVEIS PARA TRANSPORTE DE MERCADORIAS",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8705",
+      "sourceRow": 200,
+      "description": "VEÍCULOS AUTOMÓVEIS PARA USOS ESPECIAIS (POR EXEMPLO: AUTO-SOCORROS, CAMINHÕES-GUINDASTES, VEÍCULOS DE COMBATE A INCÊNDIOS, CAMINHÕESBETONEIRAS, VEÍCULOS PARA VARRER, VEÍCULOS PARA ESPALHAR, VEÍCULOS-OFICINAS, VEÍCULOS RADIOLÓGICOS), EXCETO OS CONCEBIDOS PRINCIPALMENTE PARA TRANSPORTE DE PESSOAS OU DE MERCADORIAS",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8709",
+      "sourceRow": 201,
+      "description": "VEÍCULOS AUTOMÓVEIS SEM DISPOSITIVO DE ELEVAÇÃO, DOS TIPOS UTILIZADOS EM FÁBRICAS, ARMAZÉNS, PORTOS OU AEROPORTOS, PARA TRANSPORTE DE MERCADORIAS A CURTAS DISTÂNCIAS; CARROS-TRATORES DOS TIPOS UTILIZADOS NAS ESTAÇÕES FERROVIÁRIAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8711",
+      "sourceRow": 202,
+      "description": "MOTOCICLETAS (INCLUÍDOS OS CICLOMOTORES) E OUTROS CICLOS EQUIPADOS COM MOTOR AUXILIAR, MESMO COM CARRO LATERAL; CARROS LATERAIS",
+      "lifeYears": 4,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2500
+    },
+    {
+      "ncm": "8716",
+      "sourceRow": 203,
+      "description": "REBOQUES E SEMI-REBOQUES, PARA QUAISQUER VEÍCULOS; OUTROS VEÍCULOS NÃO AUTOPROPULSORES",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8801",
+      "sourceRow": 205,
+      "description": "BALÕES E DIRIGÍVEIS; PLANADORES, ASAS VOADORAS E OUTROS VEÍCULOS AÉREOS, NÃO CONCEBIDOS PARA PROPULSÃO COM MOTOR",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8802",
+      "sourceRow": 206,
+      "description": "OUTROS VEÍCULOS AÉREOS (POR EXEMPLO: HELICÓPTEROS, AVIÕES); VEÍCULOS ESPACIAIS (INCLUÍDOS OS SATÉLITES) E SEUS VEÍCULOS DE LANÇAMENTO, E VEÍCULOS SUBORBITAIS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8804",
+      "sourceRow": 207,
+      "description": "PÁRA-QUEDAS (INCLUÍDOS OS PÁRA-QUEDAS DIRIGÍVEIS E OS PARAPENTES) E OS PÁRA-QUEDAS GIRATÓRIOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8805",
+      "sourceRow": 208,
+      "description": "APARELHOS E DISPOSITIVOS PARA LANÇAMENTO DE VEÍCULOS AÉREOS; APARELHOS E DISPOSITIVOS PARA ATERRISSAGEM DE VEÍCULOS AÉREOS EM PORTA-AVIÕES E APARELHOS E DISPOSITIVOS SEMELHANTES; APARELHOS SIMULADORES DE VOO EM TERRA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8901",
+      "sourceRow": 210,
+      "description": "TRANSATLÂNTICOS, BARCOS DE CRUZEIRO, \"FERRY-BOATS\", CARGUEIROS, CHATAS E EMBARCAÇÕES SEMELHANTES, PARA O TRANSPORTE DE PESSOAS OU DE MERCADORIAS",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500
+    },
+    {
+      "ncm": "8902",
+      "sourceRow": 211,
+      "description": "BARCOS DE PESCA; NAVIOS-FÁBRICAS E OUTRAS EMBARCAÇÕES PARA O TRATAMENTO OU CONSERVAÇÃO DE PRODUTOS DA PESCA",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500
+    },
+    {
+      "ncm": "8903.10",
+      "sourceRow": 213,
+      "description": "-Barcos infláveis",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8903.9",
+      "sourceRow": 214,
+      "description": "-Outros",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8904",
+      "sourceRow": 215,
+      "description": "REBOCADORES E BARCOS CONCEBIDOS PARA EMPURRAR OUTRAS EMBARCAÇÕES",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500
+    },
+    {
+      "ncm": "8905",
+      "sourceRow": 216,
+      "description": "BARCOS-FARÓIS, BARCOS-BOMBAS, DRAGAS, GUINDASTES FLUTUANTES E OUTRAS EMBARCAÇÕES EM QUE A NAVEGAÇÃO É ACESSÓRIA DA FUNÇÃO PRINCIPAL; DOCAS OU DIQUES FLUTUANTES; PLATAFORMAS DE PERFURAÇÃO OU DE EXPLORAÇÃO, FLUTUANTES OU SUBMERSÍVEIS",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500,
+      "justification": "Taxa derivada do prazo de vida útil (célula de taxa vazia na fonte, Anexo III da IN RFB 1.700/2017)."
+    },
+    {
+      "ncm": "8906",
+      "sourceRow": 217,
+      "description": "OUTRAS EMBARCAÇÕES, INCLUÍDOS OS NAVIOS DE GUERRA E OS BARCOS SALVA-VIDAS, EXCETO OS BARCOS A REMO",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500
+    },
+    {
+      "ncm": "8907.10",
+      "sourceRow": 219,
+      "description": "-Balsas infláveis",
+      "lifeYears": 5,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 2000
+    },
+    {
+      "ncm": "8907.90",
+      "sourceRow": 220,
+      "description": "-Outras",
+      "lifeYears": 20,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 500
+    },
+    {
+      "ncm": "9005",
+      "sourceRow": 222,
+      "description": "BINÓCULOS, LUNETAS, INCLUÍDAS AS ASTRONÔMICAS, TELESCÓPIOS ÓPTICOS, E SUAS ARMAÇÕES; OUTROS INSTRUMENTOS DE ASTRONOMIA E SUAS ARMAÇÕES, EXCETO OS APARELHOS DE RADIOASTRONOMIA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9006",
+      "sourceRow": 223,
+      "description": "APARELHOS FOTOGRÁFICOS; APARELHOS E DISPOSITIVOS, EXCLUÍDAS AS LÂMPADAS E TUBOS, DE LUZ-RELÂMPAGO (\"FLASH\"), PARA FOTOGRAFIA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9007",
+      "sourceRow": 224,
+      "description": "CÂMERAS E PROJETORES, CINEMATOGRÁFICOS, MESMO COM APARELHOS DE GRAVAÇÃO OU DE REPRODUÇÃO DE SOM INCORPORADOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9008",
+      "sourceRow": 225,
+      "description": "APARELHOS DE PROJEÇÃO FIXA; APARELHOS FOTOGRÁFICOS, DE AMPLIAÇÃO OU DE REDUÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9009",
+      "sourceRow": 226,
+      "description": "APARELHOS DE FOTOCÓPIA, POR SISTEMA ÓPTICO OU POR CONTATO, E APARELHOS DE TERMOCÓPIA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9010",
+      "sourceRow": 227,
+      "description": "APARELHOS DOS TIPOS USADOS NOS LABORATÓRIOS FOTOGRÁFICOS OU CINEMATOGRÁFICOS (INCLUÍDOS OS APARELHOS PARA PROJEÇÃO OU EXECUÇÃO DE TRAÇADOS DE CIRCUITOS SOBRE SUPERFÍCIES SENSIBILIZADAS DE MATERIAIS SEMICONDUTORES); NEGATOSCÓPIOS; TELAS PARA PROJEÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9011",
+      "sourceRow": 228,
+      "description": "MICROSCÓPIOS ÓPTICOS, INCLUÍDOS OS MICROSCÓPIOS PARA FOTOMICROGRAFIA, CINEFOTOMICROGRAFIA OU MICROPROJEÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9012",
+      "sourceRow": 229,
+      "description": "MICROSCÓPIOS (EXCETO ÓPTICOS) E DIFRATÓGRAFOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9014",
+      "sourceRow": 230,
+      "description": "BÚSSOLAS, INCLUÍDAS AS AGULHAS DE MAREAR, OUTROS INSTRUMENTOS E APARELHOS DE NAVEGAÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9015",
+      "sourceRow": 231,
+      "description": "INSTRUMENTOS E APARELHOS DE GEODÉSIA, TOPOGRAFIA, AGRIMENSURA, NIVELAMENTO, FOTOGRAMETRIA, HIDROGRAFIA, OCEANOGRAFIA, HIDROLOGIA, METEOROLOGIA OU DE GEOFÍSICA, EXCETO BÚSSOLAS; TELÊMETROS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9016",
+      "sourceRow": 232,
+      "description": "BALANÇAS SENSÍVEIS A PESOS IGUAIS OU INFERIORES A 5cg, COM OU SEM PESOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9017",
+      "sourceRow": 233,
+      "description": "INSTRUMENTOS DE DESENHO, DE TRAÇADO OU DE CÁLCULO (POR EXEMPLO: MÁQUINAS DE DESENHAR, PANTÓGRAFOS, TRANSFERIDORES, ESTOJOS DE DESENHO, RÉGUAS DE CÁLCULO E DISCOS DE CÁLCULO); INSTRUMENTOS DE MEDIDA DE DISTÂNCIAS DE USO MANUAL (POR EXEMPLO: METROS, MICRÔMETROS, PAQUÍMETROS E CALIBRES), NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DESTE CAPÍTULO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.1",
+      "sourceRow": 235,
+      "description": "-Aparelhos de eletrodiagnóstico (incluídos os aparelhos de exploração funcional e os de verificação de parâmetros fisiológicos)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.20",
+      "sourceRow": 236,
+      "description": "-Aparelhos de raios ultravioleta ou infravermelhos",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.41",
+      "sourceRow": 238,
+      "description": "--Aparelhos dentários de brocar, mesmo combinados numa base comum com outros equipamentos dentários",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.49",
+      "sourceRow": 239,
+      "description": "--Outros instrumentos e aparelhos para odontologia",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.50",
+      "sourceRow": 240,
+      "description": "-Outros instrumentos e aparelhos para oftalmologia",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9018.90",
+      "sourceRow": 241,
+      "description": "-Outros instrumentos e aparelhos",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9019",
+      "sourceRow": 242,
+      "description": "APARELHOS DE MECANOTERAPIA; APARELHOS DE MASSAGEM; APARELHOS DE PSICOTÉCNICA; APARELHOS DE OZONOTERAPIA, DE OXIGENOTERAPIA, DE AEROSSOLTERAPIA, APARELHOS RESPIRATÓRIOS DE REANIMAÇÃO E OUTROS APARELHOS DE TERAPIA RESPIRATÓRIA",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9020",
+      "sourceRow": 243,
+      "description": "OUTROS APARELHOS REPIRATÓRIOS E MÁSCARAS CONTRA GASES, EXCETO AS MÁSCARAS DE PROTEÇÃO DESPROVIDAS DE MECANISMO E DE ELEMENTO FILTRANTE AMOVÍVEL",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9022",
+      "sourceRow": 244,
+      "description": "APARELHOS DE RAIOS X E APARELHOS QUE UTILIZEM RADIAÇÕES ALFA, BETA OU GAMA, MESMO PARA USOS MÉDICOS, CIRÚRGICOS, ODONTOLÓGICOS OU VETERINÁRIOS, INCLUÍDOS OS APARELHOS DE RADIOFOTOGRAFIA OU DE RADIOTERAPIA, OS TUBOS DE RAIOS X E OUTROS DISPOSITIVOS GERADORES DE RAIOS X, OS GERADORES DE TENSÃO, AS MESAS DE COMANDO, AS TELAS DE VISUALIZAÇÃO, AS MESAS, POLTRONAS E SUPORTES SEMELHANTES PARA EXAME OU TRATAMENTO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9024",
+      "sourceRow": 245,
+      "description": "MÁQUINAS E APARELHOS PARA ENSAIOS DE DUREZA, TRAÇÃO, COMPRESSÃO, ELASTICIDADE OU DE OUTRAS PROPRIEDADES MECÂNICAS DE MATERIAIS (POR EXEMPLO: METAIS, MADEIRA, TÊXTEIS, PAPEL, PLÁSTICOS)",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9025",
+      "sourceRow": 246,
+      "description": "DENSÍMETROS, AREÔMETROS, PESA-LÍQUIDOS E INSTRUMENTOS FLUTUANTES SEMELHANTES, TERMÔMETROS, PIRÔMETROS, BARÔMETROS, HIGRÔMETROS E PSICRÔMETROS, REGISTRADORES OU NÃO, MESMO COMBINADOS ENTRE SI",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9026",
+      "sourceRow": 247,
+      "description": "INSTRUMENTOS E APARELHOS PARA MEDIDA OU CONTROLE DA VAZÃO (CAUDAL), DO NÍVEL, DA PRESSÃO OU DE OUTRAS CARACTERÍSTICAS VARIÁVEIS DOS LÍQUIDOS OU GASES [POR EXEMPLO: MEDIDORES DE VAZÃO (CAUDAL), INDICADORES DE NÍVEL, MANÔMETROS, CONTADORES DE CALOR], EXCETO OS INSTRUMENTOS E APARELHOS DAS POSIÇÕES 9014, 9015, 9028 OU 9032",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9027",
+      "sourceRow": 248,
+      "description": "INSTRUMENTOS E APARELHOS PARA ANÁLISES FÍSICAS OU QUÍMICAS [POR EXEMPLO: POLARÍMETROS, REFRATÔMETROS, ESPECTRÔMETROS, ANALISADORES DE GASES OU DE FUMAÇA]; INSTRUMENTOS E APARELHOS PARA ENSAIOS DE VISCOSIDADE, POROSIDADE, DILATAÇÃO, TENSÃO SUPERFICIAL OU SEMELHANTES OU PARA MEDIDAS CALORIMÉTRICAS, ACÚSTICAS OU FOTOMÉTRICAS (INCLUÍDOS OS INDICADORES DE TEMPO DE EXPOSIÇÃO); MICRÓTOMOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9028",
+      "sourceRow": 249,
+      "description": "CONTADORES DE GASES, LÍQUIDOS OU DE ELETRICIDADE, INCLUÍDOS OS APARELHOS PARA SUA AFERIÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9029",
+      "sourceRow": 250,
+      "description": "OUTROS CONTADORES (POR EXEMPLO: CONTADORES DE VOLTAS, CONTADORES DE PRODUÇÃO, TAXÍMETROS, TOTALIZADORES DE CAMINHO PERCORRIDO, PODÔMETROS); INDICADORES DE VELOCIDADE E TACÔMETROS, EXCETO OS DAS POSIÇÕES 9014 OU 9015; ESTROBOSCÓPIOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9030",
+      "sourceRow": 251,
+      "description": "OSCILOSCÓPIOS, ANALISADORES DE ESPECTRO E OUTROS INSTRUMENTOS E APARELHOS PARA MEDIDA OU CONTROLE DE GRANDEZAS ELÉTRICAS; INSTRUMENTOS E APARELHOS PARA MEDIDA OU DETECÇÃO DE RADIAÇÕES ALFA, BETA, GAMA, X, CÓSMICAS OU OUTRAS RADIAÇÕES IONIZANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9031",
+      "sourceRow": 252,
+      "description": "INSTRUMENTOS, APARELHOS E MÁQUINAS DE MEDIDA OU CONTROLE, NÃO ESPECIFICADOS NEM COMPREENDIDOS EM OUTRAS POSIÇÕES DESTE CAPÍTULO; PROJETORES DE PERFIS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9032",
+      "sourceRow": 253,
+      "description": "INSTRUMENTOS E APARELHOS PARA REGULAÇÃO OU CONTROLE, AUTOMÁTICOS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9402",
+      "sourceRow": 255,
+      "description": "MOBILIÁRIO PARA MEDICINA, CIRURGIA, ODONTOLOGIA OU VETERINÁRIA (POR EXEMPLO: MESAS DE OPERAÇÃO, MESAS DE EXAMES, CAMAS DOTADAS DE MECANISMOS PARA USOS CLÍNICOS, CADEIRAS DE DENTISTA); CADEIRAS PARA SALÕES DE CABELEIREIRO E CADEIRAS SEMELHANTES, COM DISPOSITIVOS DE ORIENTAÇÃO E DE ELEVAÇÃO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9403",
+      "sourceRow": 256,
+      "description": "OUTROS MÓVEIS PARA ESCRITÓRIO",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9406",
+      "sourceRow": 257,
+      "description": "CONSTRUÇÕES PRÉ-FABRICADAS",
+      "lifeYears": 25,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 400
+    },
+    {
+      "ncm": "9506",
+      "sourceRow": 259,
+      "description": "ARTIGOS E EQUIPAMENTOS PARA CULTURA FÍSICA E GINÁSTICA; PISCINAS",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "9508",
+      "sourceRow": 260,
+      "description": "CARROSSÉIS, BALANÇOS, INSTALAÇÕES DE TIRO-AO-ALVO E OUTRAS DIVERSÕES DE PARQUES E FEIRAS; CIRCOS, COLEÇÕES DE ANIMAIS E TEATROS AMBULANTES",
+      "lifeYears": 10,
+      "source": "ANEXO_III_IN_1700_2017",
+      "annualRateBp": 1000
+    },
+    {
+      "ncm": "8417",
+      "sourceRow": null,
+      "description": "Fornos para a indústria de vidro (Anexo III, Nota 1)",
+      "lifeYears": 3,
+      "annualRateBp": 3330,
+      "source": "ANEXO_III_NOTA_1"
+    },
+    {
+      "ncm": null,
+      "sourceRow": null,
+      "description": "Máquinas, equipamentos e instalações industriais utilizados na indústria química (Anexo III, Nota 2)",
+      "lifeYears": 5,
+      "annualRateBp": 2000,
+      "source": "ANEXO_III_NOTA_2"
+    }
+  ]
+}

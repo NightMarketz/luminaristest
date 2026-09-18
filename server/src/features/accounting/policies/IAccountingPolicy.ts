@@ -106,6 +106,9 @@ export interface IAccountingPolicy {
    */
   canManageServiceFiscalProfile(scope: AccountingScope): boolean;
   canReadFiscalDocument(scope: AccountingScope): boolean;
+
+  /** BE-INCR-FIXED-ASSETS (nó C8, item 11) — mesma régua de quem fecha período (padrão canManageFiscalProfile). */
+  canManageFixedAssets(scope: AccountingScope): boolean;
   canEmitFiscalDocument(scope: AccountingScope): boolean;
   canCancelFiscalDocument(scope: AccountingScope): boolean;
 
