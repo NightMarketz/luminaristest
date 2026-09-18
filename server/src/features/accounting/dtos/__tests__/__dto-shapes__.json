@@ -1317,6 +1317,467 @@
       "additionalProperties": false
     }
   },
+  "DpsPayloadDto.ts": {
+    "DpsPayloadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "versao": {
+          "type": "string",
+          "const": "1.01"
+        },
+        "infDPS": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^DPS\\d{42}$"
+            },
+            "tpAmb": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "const": 1
+                },
+                {
+                  "type": "number",
+                  "const": 2
+                }
+              ]
+            },
+            "dhEmi": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "verAplic": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            },
+            "serie": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 49999
+            },
+            "nDPS": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 999999999999999
+            },
+            "dCompet": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "tpEmit": {
+              "type": "number",
+              "const": 1
+            },
+            "cLocEmi": {
+              "type": "string",
+              "pattern": "^\\d{7}$"
+            },
+            "prest": {
+              "type": "object",
+              "properties": {
+                "CNPJ": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+                },
+                "IM": {
+                  "type": "string",
+                  "maxLength": 15
+                },
+                "xNome": {
+                  "type": "string",
+                  "maxLength": 150
+                },
+                "regTrib": {
+                  "type": "object",
+                  "properties": {
+                    "opSimpNac": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 1
+                        },
+                        {
+                          "type": "number",
+                          "const": 3
+                        }
+                      ]
+                    },
+                    "regApTribSN": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    },
+                    "regEspTrib": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9
+                    }
+                  },
+                  "required": [
+                    "opSimpNac",
+                    "regEspTrib"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "CNPJ",
+                "regTrib"
+              ],
+              "additionalProperties": false
+            },
+            "toma": {
+              "type": "object",
+              "properties": {
+                "CNPJ": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+                },
+                "CPF": {
+                  "type": "string",
+                  "pattern": "^[0-9]{11}$"
+                },
+                "xNome": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 150
+                },
+                "end": {
+                  "type": "object",
+                  "properties": {
+                    "endNac": {
+                      "type": "object",
+                      "properties": {
+                        "cMun": {
+                          "type": "string",
+                          "pattern": "^\\d{7}$"
+                        },
+                        "CEP": {
+                          "type": "string",
+                          "pattern": "^\\d{8}$"
+                        }
+                      },
+                      "required": [
+                        "cMun",
+                        "CEP"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "xLgr": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255
+                    },
+                    "nro": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    },
+                    "xCpl": {
+                      "type": "string",
+                      "maxLength": 156
+                    },
+                    "xBairro": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 60
+                    }
+                  },
+                  "required": [
+                    "endNac",
+                    "xLgr",
+                    "nro",
+                    "xBairro"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "xNome"
+              ],
+              "additionalProperties": false
+            },
+            "serv": {
+              "type": "object",
+              "properties": {
+                "locPrest": {
+                  "type": "object",
+                  "properties": {
+                    "cLocPrestacao": {
+                      "type": "string",
+                      "pattern": "^\\d{7}$"
+                    }
+                  },
+                  "required": [
+                    "cLocPrestacao"
+                  ],
+                  "additionalProperties": false
+                },
+                "cServ": {
+                  "type": "object",
+                  "properties": {
+                    "cTribNac": {
+                      "type": "string",
+                      "pattern": "^\\d{6}$"
+                    },
+                    "cTribMun": {
+                      "type": "string",
+                      "pattern": "^\\d{3}$"
+                    },
+                    "xDescServ": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 1000
+                    },
+                    "cNBS": {
+                      "type": "string",
+                      "pattern": "^\\d{9}$"
+                    },
+                    "cIntContrib": {
+                      "type": "string",
+                      "maxLength": 20
+                    }
+                  },
+                  "required": [
+                    "cTribNac",
+                    "xDescServ"
+                  ],
+                  "additionalProperties": false
+                },
+                "infoCompl": {
+                  "type": "object",
+                  "properties": {
+                    "xInfComp": {
+                      "type": "string",
+                      "maxLength": 2000
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "locPrest",
+                "cServ"
+              ],
+              "additionalProperties": false
+            },
+            "valores": {
+              "type": "object",
+              "properties": {
+                "vServPrest": {
+                  "type": "object",
+                  "properties": {
+                    "vServ": {
+                      "type": "string",
+                      "pattern": "^\\d{1,15}\\.\\d{2}$"
+                    }
+                  },
+                  "required": [
+                    "vServ"
+                  ],
+                  "additionalProperties": false
+                },
+                "vDescCondIncond": {
+                  "type": "object",
+                  "properties": {
+                    "vDescIncond": {
+                      "type": "string",
+                      "pattern": "^\\d{1,15}\\.\\d{2}$"
+                    },
+                    "vDescCond": {
+                      "type": "string",
+                      "pattern": "^\\d{1,15}\\.\\d{2}$"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "trib": {
+                  "type": "object",
+                  "properties": {
+                    "tribMun": {
+                      "type": "object",
+                      "properties": {
+                        "tribISSQN": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "tpRetISSQN": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "const": 1
+                            },
+                            {
+                              "type": "number",
+                              "const": 2
+                            }
+                          ]
+                        },
+                        "pAliq": {
+                          "type": "string",
+                          "pattern": "^\\d{1,2}\\.\\d{2}$"
+                        }
+                      },
+                      "required": [
+                        "tribISSQN",
+                        "tpRetISSQN"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "totTrib": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "pTotTrib": {
+                              "type": "object",
+                              "properties": {
+                                "pTotTribFed": {
+                                  "type": "string",
+                                  "pattern": "^\\d{1,2}\\.\\d{2}$"
+                                },
+                                "pTotTribEst": {
+                                  "type": "string",
+                                  "pattern": "^\\d{1,2}\\.\\d{2}$"
+                                },
+                                "pTotTribMun": {
+                                  "type": "string",
+                                  "pattern": "^\\d{1,2}\\.\\d{2}$"
+                                }
+                              },
+                              "required": [
+                                "pTotTribFed",
+                                "pTotTribEst",
+                                "pTotTribMun"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "pTotTrib"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "pTotTribSN": {
+                              "type": "string",
+                              "pattern": "^\\d{1,2}\\.\\d{2}$"
+                            }
+                          },
+                          "required": [
+                            "pTotTribSN"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "tribMun",
+                    "totTrib"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "vServPrest",
+                "trib"
+              ],
+              "additionalProperties": false
+            },
+            "IBSCBS": {
+              "type": "object",
+              "properties": {
+                "finNFSe": {
+                  "type": "number",
+                  "const": 0
+                },
+                "cIndOp": {
+                  "type": "string",
+                  "pattern": "^\\d{6}$"
+                },
+                "indDest": {
+                  "type": "number",
+                  "const": 0
+                },
+                "valores": {
+                  "type": "object",
+                  "properties": {
+                    "trib": {
+                      "type": "object",
+                      "properties": {
+                        "gIBSCBS": {
+                          "type": "object",
+                          "properties": {
+                            "CST": {
+                              "type": "string",
+                              "pattern": "^\\d{3}$"
+                            },
+                            "cClassTrib": {
+                              "type": "string",
+                              "pattern": "^\\d{6}$"
+                            }
+                          },
+                          "required": [
+                            "CST",
+                            "cClassTrib"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "gIBSCBS"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "trib"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "finNFSe",
+                "cIndOp",
+                "indDest",
+                "valores"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "tpAmb",
+            "dhEmi",
+            "verAplic",
+            "serie",
+            "nDPS",
+            "dCompet",
+            "tpEmit",
+            "cLocEmi",
+            "prest",
+            "toma",
+            "serv",
+            "valores"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "versao",
+        "infDPS"
+      ],
+      "additionalProperties": false
+    }
+  },
   "EntryApprovalDto.ts": {
     "CreateDraftEntrySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1530,6 +1991,117 @@
       "required": [
         "unitId"
       ]
+    }
+  },
+  "FiscalDocumentDto.ts": {
+    "EmitFiscalDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NFSE",
+            "NFE"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "saleId",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "PreviewFiscalDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "NFSE",
+            "NFE"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "saleId",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalDocumentListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "SENT",
+            "PROCESSING",
+            "AUTHORIZED",
+            "REJECTED",
+            "CANCELLED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalDocumentScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalDocumentParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
     }
   },
   "FiscalProfileDto.ts": {

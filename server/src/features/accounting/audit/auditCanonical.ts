@@ -141,6 +141,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
+  'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
   // `name`/`email` do contador NUNCA aparecem aqui (D5): são PII de TERCEIRO numa trilha
   // append-only e hash-encadeada, então o que entra não sai. A trilha carrega `contactId`, que

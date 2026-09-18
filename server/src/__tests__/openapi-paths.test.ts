@@ -72,7 +72,11 @@ const { options } = require('../../scripts/generate-openapi');
 //    /api/accounting/service-fiscal-profiles/{serviceRef} (GET+PUT+DELETE) — 2 PATHS e 4 OPERAÇÕES
 //    (190 → 192, 226 → 230, medido com docs:generate após o rebase sobre #347). Os campos DFE do PUT
 //    fiscal-profile são props novas em path JÁ contado.
-const BASELINE = 192;
+// +4 (BE-INCR-DFE PR-2, nó X10b, BRIEF item 38): /api/nfe/dfe/status (GET), /api/nfe/dfe/preview
+//    (POST), /api/nfe/dfe/documents (POST+GET), /api/nfe/dfe/documents/{id} (GET) — 4 PATHS e 5
+//    OPERAÇÕES (192 → 196, medido com docs:generate). Fase D (consultar/reenviar/cancelar/webhook)
+//    fica para o PR-3.
+const BASELINE = 196;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

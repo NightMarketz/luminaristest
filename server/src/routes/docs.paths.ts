@@ -4408,6 +4408,93 @@
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
+ *   /api/nfe/dfe/status:
+ *     get:
+ *       summary: Whether NFS-e/NF-e emission is enabled and by which partner (BE-INCR-DFE, nó X10b)
+ *       description: >-
+ *         Reads DFE_PARTNER/DFE_PARTNER_ENV — enabled=false with a named reason when disabled (ADR
+ *         §7 item 6: nunca em silêncio). Fase E (NF-e 55) é [pendente-insumo].
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       responses:
+ *         '200': { description: '{ enabled, partner, ambiente, reason?, capabilities? }' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
+ *   /api/nfe/dfe/preview:
+ *     post:
+ *       summary: Dry-run the DPS assembly for a sale without persisting or calling the partner
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, saleId, kind]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 saleId: { type: string }
+ *                 kind: { type: string, enum: [NFSE, NFE] }
+ *       responses:
+ *         '200': { description: '{ ok, faltantes, competenciaAlerta, payloads, tieOut }' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/nfe/dfe/documents:
+ *     post:
+ *       summary: Emit one FiscalDocument per distinct cTribNac of the sale's service lines (F-DFE-16 b)
+ *       description: >-
+ *         All preconditions (item 14) are checked together before any tx/partner call — a single 400
+ *         with the full `faltantes` list. Creates SENT + attempt 1 per document, consumes the DPS
+ *         sequence, audits dfe.emitted, then calls the partner post-commit. Fase E (kind=NFE) is
+ *         [pendente-insumo] and rejects loud.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, saleId, kind]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 saleId: { type: string }
+ *                 kind: { type: string, enum: [NFSE, NFE] }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView[] — um por cTribNac distinto da venda' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     get:
+ *       summary: List fiscal documents (filter by saleId and/or status)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: saleId, required: false, schema: { type: string } }
+ *         - { in: query, name: status, required: false, schema: { type: string, enum: [SENT, PROCESSING, AUTHORIZED, REJECTED, CANCELLED] } }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView[]' }
+ *         '400': { description: 'nem saleId nem status informados' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/nfe/dfe/documents/{id}:
+ *     get:
+ *       summary: Read one fiscal document with its attempts
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
  *   /api/accounting/contacts:
  *     get:
  *       summary: List the accountant contacts of a scope (BE-INCR-CONTADOR-DELIVERY)
