@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { nfeUpload, importNfePurchase, reconcileNfeSale, previewNfe } from '../controllers/nfeController';
-import dfeRoutes from './dfe';
 
 /**
  * Ingestão fiscal de NF-e (BE-INCR-NFE). Montada em `/api/nfe` (routes/index.ts) — registro de
@@ -18,6 +17,5 @@ const router = Router();
 router.post('/preview', nfeUpload, previewNfe); // BE-INCR-NFE-PREVIEW — dry-run, mesmo multer
 router.post('/purchase', nfeUpload, importNfePurchase);
 router.post('/sale', nfeUpload, reconcileNfeSale);
-router.use('/dfe', dfeRoutes); // BE-INCR-DFE (nó X10b) — emissão de saída, /api/nfe/dfe/*
 
 export default router;
