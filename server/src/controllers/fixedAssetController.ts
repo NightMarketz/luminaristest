@@ -13,6 +13,7 @@ import {
   ListFixedAssetsQuerySchema,
   UpdateFixedAssetSchema,
 } from '../features/accounting/dtos/FixedAssetDto';
+import { ReconcileFixedAssetsSchema, RunDepreciationSchema } from '../features/accounting/dtos/DepreciationDto';
 
 /** BE-INCR-FIXED-ASSETS (nó C8, Blocos B+D) — /fixed-assets CRUD + comandos activate/dispose. */
 export const listFixedAssets = async (req: Request, res: Response) => {
@@ -119,6 +120,36 @@ export const disposeFixedAsset = async (req: Request, res: Response) => {
     }
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getFixedAssetService().disposeAsset(scope, req.params.id, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** BE-INCR-FIXED-ASSETS (nó C8, PR-3, item 12) — POST /fixed-assets/depreciation/run. */
+export const runDepreciation = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = RunDepreciationSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory().getDepreciationService().runMonth(scope, parsed.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** BE-INCR-FIXED-ASSETS (nó C8, PR-3, item 13/14) — POST /fixed-assets/reconcile. */
+export const reconcileFixedAssets = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = ReconcileFixedAssetsSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory().getDepreciationService().reconcile(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

@@ -82,7 +82,9 @@ const { options } = require('../../scripts/generate-openapi');
 // +2 (BE-INCR-FIXED-ASSETS PR-1, nó C8): depreciation-rates, depreciation-rates/{id}/hide.
 // +6 (BE-INCR-FIXED-ASSETS PR-2, nó C8): fixed-asset-classes, fixed-asset-classes/{id},
 // fixed-assets, fixed-assets/{id}, fixed-assets/{id}/activate, fixed-assets/{id}/dispose.
-const BASELINE = 208;
+// +2 (BE-INCR-FIXED-ASSETS PR-3, nó C8, item 12/13/17): fixed-assets/depreciation/run,
+// fixed-assets/reconcile (208 → 210).
+const BASELINE = 210;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

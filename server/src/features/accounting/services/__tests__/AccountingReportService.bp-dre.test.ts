@@ -227,6 +227,30 @@ describe('balanceSheet', () => {
     expect(report.balanced).toBe(true);
   });
 
+  // BE-INCR-FIXED-ASSETS (nó C8, PR-3, item 35, parecer ACC-021, grau inferido): conta retificadora
+  // (1.2.9.x, depreciação acumulada) tem nature='Asset' como a conta de custo — NÃO é um nature
+  // separado. `bp.assets` mapeia por nature apenas (StatementMappingFixture.ts:16), então uma conta
+  // Asset credora entra na MESMA seção `assets` com balanceCents NEGATIVO (debit−credit) e
+  // `sign='debit_positive'` não inverte — o total da seção soma os dois e SUBTRAI por aritmética
+  // simples, sem código novo. Se isto quebrar, é lacuna do BP (INCR-4), não deste incremento (regra 4).
+  it('item 35 — conta retificadora (1.2.9, Asset, saldo credor) aparece SUBTRAINDO no total de assets', async () => {
+    const accounts = [
+      makeAccount({ id: 'custo', code: '1.2.1', nature: 'Asset' }),
+      makeAccount({ id: 'accdep', code: '1.2.9.1', nature: 'Asset' }),
+    ];
+    const raw: MockGroupByResult[] = [
+      { accountId: 'custo', debitCents: 100_000, creditCents: 0 }, // custo do bem, rawBalance=+100000
+      { accountId: 'accdep', debitCents: 0, creditCents: 30_000 }, // depreciação acumulada, rawBalance=-30000
+    ];
+    const { svc } = buildService(accounts, raw);
+    const report = await svc.balanceSheet(SCOPE, AS_OF);
+
+    const byCode = new Map(report.assets.accounts.map((a) => [a.code, a.amountCents]));
+    expect(byCode.get('1.2.1')).toBe('100000');
+    expect(byCode.get('1.2.9.1')).toBe('-30000'); // credora → NEGATIVA, subtrai do total
+    expect(report.assets.totalCents).toBe('70000'); // 100.000 − 30.000, valor contábil líquido
+  });
+
   it('netResultLine.fromDate is 1 Jan of asOf.year', async () => {
     const { svc } = buildService([], []);
     const report = await svc.balanceSheet(SCOPE, new Date('2026-06-30T23:59:59.999Z'));

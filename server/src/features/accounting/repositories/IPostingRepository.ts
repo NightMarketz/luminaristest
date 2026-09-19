@@ -88,6 +88,20 @@ export interface IPostingRepository {
   ): Promise<AccountDimensionTotals[]>;
 
   /**
+   * Σcréditos de todas as postings cujo `entry` tem `sourceType` e `sourceId` COMEÇANDO por
+   * `sourceIdPrefix` (BE-INCR-FIXED-ASSETS, nó C8, item 14 — tie-out do `reconcile`). Cada quota
+   * mensal credita a conta de depreciação acumulada da classe com `sourceId =
+   * '${assetId}:${yearMonth}'`; somar todos os créditos com prefixo `'${assetId}:'` reconstrói o
+   * total depreciado desde a ativação, direto do razão, independente de qual conta recebeu.
+   */
+  sumCreditsBySourcePrefix(
+    scope: AccountingScope,
+    sourceType: string,
+    sourceIdPrefix: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number>;
+
+  /**
    * Atomically increments the JournalEntrySequence counter for (scope, fiscalYear)
    * and returns the new last value. Must be called inside a transaction.
    * Rollback of the outer tx also rolls back the increment — gapless transactional.

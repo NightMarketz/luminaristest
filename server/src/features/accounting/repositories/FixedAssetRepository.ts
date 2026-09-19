@@ -1,5 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { FixedAsset, Prisma } from 'generated/prisma';
+import type { FixedAssetStatus } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import type {
@@ -44,6 +45,23 @@ export class FixedAssetRepository implements IFixedAssetRepository {
         deletedAt: null,
         ...(filter.status ? { status: filter.status } : {}),
         ...(filter.classId ? { classId: filter.classId } : {}),
+      },
+      orderBy: [{ code: 'asc' }],
+    });
+  }
+
+  public async findActiveDepreciable(
+    scope: AccountingScope,
+    asOfDate: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<FixedAsset[]> {
+    return (tx ?? prisma).fixedAsset.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: 'ACTIVE',
+        activatedAt: { lte: asOfDate },
+        class: { depreciable: true },
       },
       orderBy: [{ code: 'asc' }],
     });
@@ -128,6 +146,7 @@ export class FixedAssetRepository implements IFixedAssetRepository {
     id: string,
     deltaCents: bigint,
     expected: { accumulatedDepreciationCents: bigint; version: number },
+    nextStatus: FixedAssetStatus | undefined,
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset | null> {
     const client = tx ?? prisma;
@@ -143,10 +162,24 @@ export class FixedAssetRepository implements IFixedAssetRepository {
       data: {
         accumulatedDepreciationCents: { increment: deltaCents },
         version: { increment: 1 },
+        ...(nextStatus !== undefined ? { status: nextStatus } : {}),
       },
     });
     if (result.count === 0) return null;
     return client.fixedAsset.findFirst({ where: { id, userId, unitId } });
+  }
+
+  public async reconcileAccumulated(
+    scope: AccountingScope,
+    id: string,
+    accumulatedDepreciationCents: bigint,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    const { userId, unitId } = accountingScopeWhere(scope);
+    await (tx ?? prisma).fixedAsset.updateMany({
+      where: { id, userId, unitId },
+      data: { accumulatedDepreciationCents },
+    });
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

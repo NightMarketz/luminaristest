@@ -124,6 +124,8 @@ import {
   deleteFixedAsset,
   activateFixedAsset,
   disposeFixedAsset,
+  runDepreciation,
+  reconcileFixedAssets,
 } from '../controllers/fixedAssetController';
 import {
   deleteServiceFiscalProfile,
@@ -299,6 +301,9 @@ router.patch('/fixed-asset-classes/:id', updateFixedAssetClass);
 router.delete('/fixed-asset-classes/:id', deleteFixedAssetClass);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Blocos B+D) — ativos + comandos (ACC-016: activate/dispose, nunca PATCH status).
+// Segmentos estáticos (item 12) ANTES de /fixed-assets/:id.
+router.post('/fixed-assets/depreciation/run', runDepreciation);
+router.post('/fixed-assets/reconcile', reconcileFixedAssets);
 router.get('/fixed-assets', listFixedAssets);
 router.get('/fixed-assets/:id', getFixedAsset);
 router.post('/fixed-assets', createFixedAsset);

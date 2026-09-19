@@ -307,3 +307,15 @@ describe('fixed_asset.* — texto livre da descrição do ativo nunca sobrevive 
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-3 (nó C8, item 17) — teste-guarda no MESMO PR que introduz o eventType
+// (classe `accounting-audit-allowlist-guards`). `description` não faz parte do payload de
+// `depreciation.posted`, mas a guarda prova que mesmo passada por engano não sobrevive.
+describe('depreciation.posted — nenhum texto livre sobrevive à canonicalização', () => {
+  it('derruba description passada a mais', () => {
+    const allowed = { assetId: 'fa-1', yearMonth: '2026-01', quotaCents: '833', entryId: 'je-1' };
+    const out = canonicalizeAuditPayload('depreciation.posted', { ...allowed, description: 'Torno CNC do fornecedor João da Silva' });
+    expect(out).not.toContain('João');
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+});
