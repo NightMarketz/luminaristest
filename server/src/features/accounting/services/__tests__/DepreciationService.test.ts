@@ -215,6 +215,32 @@ describe('DepreciationService.runMonth — predicado barato [D3]: tx2 pendente d
     expect(assetState.accumulatedDepreciationCents).toBe(833n);
     expect(auditAppend).toHaveBeenCalledTimes(1); // depreciation.posted — 1ª vez que a tx2 de fato roda
   });
+
+  it('ativo com ativação RETROATIVA (openingAccumulatedCents > 0): o reparo NÃO soma o opening de novo (achado do review independente)', async () => {
+    // activatedAt = 2022-01-01 → k=49 em 2026-01; openingAccumulatedCents = cumulativa(k=48) =
+    // 40.000 exato (seed de uma ativação retroativa cujo opening já reflete o histórico pré-Luminaris).
+    // cumulativa(k=49) = 40.833 → a quota FALTANTE do mês 49 é 833, não 40.833 (o bug somava o
+    // opening de novo: owed = cumK − (accumulated − opening) em vez de cumK − accumulated).
+    const asset = makeAssetState({
+      activatedAt: new Date('2022-01-01T00:00:00Z'),
+      openingAccumulatedCents: 40_000n,
+      accumulatedDepreciationCents: 40_000n,
+    });
+    const { service, assetState, addAccumulated, postedEntries } = makeHarness({ asset });
+    postedEntries.set('asset-1:2026-01', { id: 'entry-crash' });
+
+    const result = await service.runMonth(scope, { unitId: 'unit-1', yearMonth: '2026-01' });
+    expect(result).toEqual({ yearMonth: '2026-01', posted: 0, skipped: 1, failed: [] });
+    expect(addAccumulated).toHaveBeenCalledWith(
+      scope,
+      'asset-1',
+      833n, // NÃO 40_833n
+      { accumulatedDepreciationCents: 40_000n, version: 1 },
+      undefined,
+      { tx: true },
+    );
+    expect(assetState.accumulatedDepreciationCents).toBe(40_833n); // NÃO 80_833n
+  });
 });
 
 describe('DepreciationService.runMonth — 4 casos de período (item 15, erro-especifico-para-skip-em-job)', () => {

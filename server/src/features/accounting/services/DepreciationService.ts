@@ -171,8 +171,11 @@ export class DepreciationService {
     const existing = await this.journalEntryRepo.findBySource(scope, DEPRECIATION_SOURCE_TYPE, sourceId);
     if (existing) {
       // [D3] predicado barato — sem somar o razão: o que falta para bater com a cumulativa
-      // esperada até este mês, sem contar o opening (que já entrou no accumulated no activate()).
-      const owed = cumK - (asset.accumulatedDepreciationCents - asset.openingAccumulatedCents);
+      // esperada até este mês. `cumK` já é o alvo TOTAL (o `activate()` semeia
+      // `accumulatedDepreciationCents := openingAccumulatedCents`, e cada quota soma em cima —
+      // `opening` NÃO entra de novo aqui, senão dobra a base de um ativo com ativação retroativa
+      // (achado do review independente: fórmula anterior somava `opening` a mais no reparo).
+      const owed = cumK - asset.accumulatedDepreciationCents;
       if (owed <= 0n) return { asset, outcome: 'skipped' };
       const nextStatus = cumK === base ? ('FULLY_DEPRECIATED' as const) : undefined;
       const repaired = await this.completeTx2(scope, asset, owed, nextStatus, yearMonth, existing.id);
