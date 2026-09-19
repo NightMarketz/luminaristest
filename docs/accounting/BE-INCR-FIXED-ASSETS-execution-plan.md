@@ -47,12 +47,25 @@ Nenhum achado contradiz o BRIEF; A2/A4/A8 corrigem **contagens e pressupostos** 
 
 ---
 
-## 1. Forks NOVOS — RATIFICAÇÃO PENDENTE (desdobram A2/A3; não reabrem F-FA1..13)
+## 1. Forks NOVOS — RATIFICADO 2026-09-18 (desdobram A2/A3; não reabrem F-FA1..13)
 
-| Fork | Pergunta | Caminhos | Recomendação (não-vinculante) |
-|---|---|---|---|
-| **F-FA14** | **Uma migração** para todo o C8 (Fase 0 do `_PARALLELIZATION-CONTRACT.md`) no PR-1, ou **uma por PR** (precedente C6b: migração só no PR-3)? | (a) **única no PR-1** — 3 tabelas + 9 colunas, shapes já fixados pelo BRIEF itens 1–7; PR-2..5 sem migração · (b) por PR (PR-1 tabelas+seed; PR-2 nada; PR-3 nada; PR-4 colunas do job; PR-5 nada) — 2 migrações | **(a)** — o BRIEF fecha os shapes (F-FA10 a decidiu a chave da taxa); uma migração = um `smoke:migration` contra o `dev.db` real, um S6 vacuoso, um review do passo de maior blast radius. (b) vale se o dono quiser o PR-1 mínimo — custo: 2ª migração aditiva no PR-4 |
-| **F-FA15** | Quem cria `GET /api/accounting/data-exchange/jobs` (lista): o C8 (item 30, PR-4) ou o `FE-INCR-REVIEW` (F-FE-RV-1 a)? | (a) **regra pré-decidida: quem mergear primeiro cria; o segundo rebaseia e só estende** (C8 acrescenta `supersedesJobId`/`supersededByJobId`; o FE acrescenta nada) — shape único: `{ unitId, direction?, kind?, status?, year?, page, limit }` → `{ items: DataExchangeJob[] (+periodStart/End), total, page, limit }`, policy `canRead` · (b) `BE-INCR-DATA-EXCHANGE-JOBS-LIST` próprio (P, 1 rota) executado **antes** dos dois · (c) C8 sempre cria; FE espera | **(a)** — evita uma 3ª autorização para 1 rota e evita bloquear o FE no C8 (maior peça); o shape fica escrito aqui **e** no BRIEF FE-REVIEW §2.2 para não divergir. (b) é a versão limpa se o dono preferir zero acoplamento |
+> Registro citável em `docs/accounting/CADEIA-A.md §1` (elo A-00, sessão interativa 2026-09-18,
+> `AskUserQuestion` com contexto/recomendação/custo de errar).
+
+| Fork | Pergunta | Caminhos | Recomendação (não-vinculante) | **Ratificado (2026-09-18)** |
+|---|---|---|---|---|
+| **F-FA14** | **Uma migração** para todo o C8 (Fase 0 do `_PARALLELIZATION-CONTRACT.md`) no PR-1, ou **uma por PR** (precedente C6b: migração só no PR-3)? | (a) **única no PR-1** — 3 tabelas + 9 colunas, shapes já fixados pelo BRIEF itens 1–7; PR-2..5 sem migração · (b) por PR (PR-1 tabelas+seed; PR-2 nada; PR-3 nada; PR-4 colunas do job; PR-5 nada) — 2 migrações | **(a)** — o BRIEF fecha os shapes (F-FA10 a decidiu a chave da taxa); uma migração = um `smoke:migration` contra o `dev.db` real, um S6 vacuoso, um review do passo de maior blast radius. (b) vale se o dono quiser o PR-1 mínimo — custo: 2ª migração aditiva no PR-4 | **(b)** — dono escolheu o PR-1 mínimo. **Nota:** sob (b) o Passo 28 (PR-5, coluna `sourceItemRef`) também vira migração aditiva própria — **3** migrações no total (PR-1, PR-4, PR-5), não 2 |
+| **F-FA15** | Quem cria `GET /api/accounting/data-exchange/jobs` (lista): o C8 (item 30, PR-4) ou o `FE-INCR-REVIEW` (F-FE-RV-1 a)? | (a) **regra pré-decidida: quem mergear primeiro cria; o segundo rebaseia e só estende** (C8 acrescenta `supersedesJobId`/`supersededByJobId`; o FE acrescenta nada) — shape único: `{ unitId, direction?, kind?, status?, year?, page, limit }` → `{ items: DataExchangeJob[] (+periodStart/End), total, page, limit }`, policy `canRead` · (b) `BE-INCR-DATA-EXCHANGE-JOBS-LIST` próprio (P, 1 rota) executado **antes** dos dois · (c) C8 sempre cria; FE espera | **(a)** — evita uma 3ª autorização para 1 rota e evita bloquear o FE no C8 (maior peça); o shape fica escrito aqui **e** no BRIEF FE-REVIEW §2.2 para não divergir. (b) é a versão limpa se o dono preferir zero acoplamento | **(a)** — dono seguiu a recomendação |
+
+**Achado adicional ratificado 2026-09-18 (`CADEIA-A.md §2`):** o nó "C9 — Retificação ECD/ECF
+VERSIONADA" do `GRAFO-DEPENDENCIAS-2026-09-14.md` **já está absorvido** neste BRIEF (Bloco G / PR-4,
+ver ADR §"Nó do master map"). Não existe mais "BRIEF do C9" a autorizar separadamente — "executa C8"
+cobre a retificação versionada ECD/ECF. Dono confirmou ("Pode seguir") em 2026-09-18.
+
+**Dependência nova achada nesta sessão:** A-01 (C12, `BE-INCR-SPED-IDENTITY-MASKS-brief.md`) deve
+mergear antes deste C8 abrir o **PR-4** — write-set overlap real em `SpedEcdDto.ts`/`SpedEcfDto.ts`/
+`SpedEcfRealDto.ts` (bloco `superRefine` do `declarant`, reuso de `SignerSchema`). C12 não colide com
+PR-1/2/3/5; pode rodar em paralelo a eles. Detalhe em `CADEIA-A.md §3`.
 
 ---
 
