@@ -111,6 +111,21 @@ import {
   hideDepreciationRate,
 } from '../controllers/depreciationRateController';
 import {
+  listFixedAssetClasses,
+  createFixedAssetClass,
+  updateFixedAssetClass,
+  deleteFixedAssetClass,
+} from '../controllers/fixedAssetClassController';
+import {
+  listFixedAssets,
+  getFixedAsset,
+  createFixedAsset,
+  updateFixedAsset,
+  deleteFixedAsset,
+  activateFixedAsset,
+  disposeFixedAsset,
+} from '../controllers/fixedAssetController';
+import {
   deleteServiceFiscalProfile,
   getServiceFiscalProfile,
   listServiceFiscalProfiles,
@@ -276,6 +291,21 @@ router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile
 router.get('/depreciation-rates', listDepreciationRates);
 router.post('/depreciation-rates', createDepreciationRate);
 router.post('/depreciation-rates/:id/hide', hideDepreciationRate);
+
+// BE-INCR-FIXED-ASSETS (nó C8, Bloco B) — classes de bem.
+router.get('/fixed-asset-classes', listFixedAssetClasses);
+router.post('/fixed-asset-classes', createFixedAssetClass);
+router.patch('/fixed-asset-classes/:id', updateFixedAssetClass);
+router.delete('/fixed-asset-classes/:id', deleteFixedAssetClass);
+
+// BE-INCR-FIXED-ASSETS (nó C8, Blocos B+D) — ativos + comandos (ACC-016: activate/dispose, nunca PATCH status).
+router.get('/fixed-assets', listFixedAssets);
+router.get('/fixed-assets/:id', getFixedAsset);
+router.post('/fixed-assets', createFixedAsset);
+router.put('/fixed-assets/:id', updateFixedAsset);
+router.delete('/fixed-assets/:id', deleteFixedAsset);
+router.post('/fixed-assets/:id/activate', activateFixedAsset);
+router.post('/fixed-assets/:id/dispose', disposeFixedAsset);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.

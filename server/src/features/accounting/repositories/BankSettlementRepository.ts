@@ -201,7 +201,14 @@ export class BankSettlementRepository implements IBankSettlementRepository {
 
   public async upsertSettings(
     scope: AccountingScope,
-    data: { bankChargeExpenseAccountId?: string | null; bankChargeIncomeAccountId?: string | null },
+    data: {
+      bankChargeExpenseAccountId?: string | null;
+      bankChargeIncomeAccountId?: string | null;
+      depreciationExpenseAccountId?: string | null;
+      disposalGainAccountId?: string | null;
+      disposalLossAccountId?: string | null;
+      depreciationParteBAccountId?: string | null;
+    },
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingScopeSettings> {
     const { userId, unitId } = accountingScopeWhere(scope);

@@ -94,4 +94,11 @@ export class AccountingPeriodRepository implements IAccountingPeriodRepository {
       orderBy: { month: 'asc' },
     });
   }
+
+  public async findEarliestOpenOrSoftClosed(scope: AccountingScope): Promise<AccountingPeriod | null> {
+    return prisma.accountingPeriod.findFirst({
+      where: { ...accountingScopeWhere(scope), status: { in: ['OPEN', 'SOFT_CLOSED'] } },
+      orderBy: [{ year: 'asc' }, { month: 'asc' }],
+    });
+  }
 }

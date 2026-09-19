@@ -36,6 +36,8 @@ import { BankSettlementRepository } from '../features/accounting/repositories/Ba
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
+import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
+import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
@@ -112,6 +114,8 @@ import { FiscalProfileService } from '../features/accounting/services/FiscalProf
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
 import { DepreciationRateSeedService } from '../features/accounting/services/DepreciationRateSeedService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
+import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
+import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
@@ -196,6 +200,8 @@ import type { IBankSettlementRepository } from '../features/accounting/repositor
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
+import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
+import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
@@ -353,6 +359,8 @@ export class ApplicationFactory {
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     depreciationRate: IDepreciationRateRepository;
+    fixedAssetClass: IFixedAssetClassRepository;
+    fixedAsset: IFixedAssetRepository;
   };
 
   private readonly policies: {
@@ -436,6 +444,8 @@ export class ApplicationFactory {
     savedTableView: SavedTableViewService;
     depreciationRateSeed: DepreciationRateSeedService;
     depreciationRate: DepreciationRateService;
+    fixedAssetClass: FixedAssetClassService;
+    fixedAsset: FixedAssetService;
   };
 
   private constructor() {
@@ -485,6 +495,8 @@ export class ApplicationFactory {
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       depreciationRate: new DepreciationRateRepository(),
+      fixedAssetClass: new FixedAssetClassRepository(),
+      fixedAsset: new FixedAssetRepository(),
     };
 
     // Policies
@@ -781,19 +793,43 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
     );
+    // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
+    // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
+    const accountingScopeSettingsService = new AccountingScopeSettingsService(
+      this.repositories.bankSettlement,
+      this.repositories.account,
+      this.repositories.lalur,
+      this.policies.accounting,
+    );
+    // BE-INCR-FIXED-ASSETS (nó C8, PR-2) — classes de bem + ativos + comandos activate/dispose.
+    const fixedAssetClassService = new FixedAssetClassService(
+      this.repositories.fixedAssetClass,
+      this.repositories.fixedAsset,
+      this.repositories.account,
+      this.policies.accounting,
+    );
+    const fixedAssetService = new FixedAssetService(
+      this.repositories.fixedAsset,
+      this.repositories.fixedAssetClass,
+      this.repositories.depreciationRate,
+      this.repositories.account,
+      this.repositories.accountingPeriod,
+      accountingScopeSettingsService,
+      postingService,
+      auditService,
+      this.policies.accounting,
+    );
     this.services = {
       bankSettlement: bankSettlementService,
-      accountingScopeSettings: new AccountingScopeSettingsService(
-        this.repositories.bankSettlement,
-        this.repositories.account,
-        this.policies.accounting,
-      ),
+      accountingScopeSettings: accountingScopeSettingsService,
       // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal por escopo — o NfeImportService/NfePreviewService o LÊ
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
       depreciationRateSeed: depreciationRateSeedService,
       depreciationRate: depreciationRateService,
+      fixedAssetClass: fixedAssetClassService,
+      fixedAsset: fixedAssetService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
       chat: new ChatService(
@@ -1175,6 +1211,8 @@ export class ApplicationFactory {
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
+  public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
+  public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;

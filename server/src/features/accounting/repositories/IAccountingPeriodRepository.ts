@@ -46,4 +46,14 @@ export interface IAccountingPeriodRepository {
 
   /** List all periods for a fiscal year ordered by month asc. */
   list(scope: AccountingScope, year: number): Promise<AccountingPeriod[]>;
+
+  /**
+   * O período mais antigo (menor year/month) com status `OPEN` ou `SOFT_CLOSED` — a fronteira do
+   * histórico operacional do escopo (BE-INCR-FIXED-ASSETS, nó C8, item 9): um período
+   * `HARD_CLOSED` nunca mais aceita `postEntry` (`PostingService.ts` só posta em `OPEN`), então uma
+   * data anterior a este período está fora do alcance de qualquer postagem retroativa. `null` = o
+   * escopo não tem nenhum período OPEN/SOFT_CLOSED (nunca operou) — quem chama trata como "sem
+   * histórico para comparar".
+   */
+  findEarliestOpenOrSoftClosed(scope: AccountingScope): Promise<AccountingPeriod | null>;
 }

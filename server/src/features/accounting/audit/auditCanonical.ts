@@ -195,6 +195,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // (CUSTOM é digitado pelo operador) e NUNCA entram — só ids/números/enum do que foi criado/oculto.
   'depreciation_rate.created': ['rateId', 'source', 'ncm', 'annualRateBp', 'lifeYears'],
   'depreciation_rate.hidden':  ['rateId', 'source'],
+  // BE-INCR-FIXED-ASSETS PR-2 (nó C8, itens 10/19). `description` do ativo é texto livre (o
+  // operador digita) e NUNCA entra — só ids/datas/centavos.
+  'fixed_asset.created':   ['assetId'],
+  'fixed_asset.activated': ['assetId', 'activatedAt', 'openingAccumulatedCents'],
+  'fixed_asset.disposed':  ['assetId', 'entryId', 'gainLossCents'],
 };
 
 /**
