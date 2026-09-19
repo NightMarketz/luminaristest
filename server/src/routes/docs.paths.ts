@@ -4237,16 +4237,18 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
- *         '200': { description: 'unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, updatedAt' }
+ *         '200': { description: 'unitId, bankChargeExpenseAccountId, bankChargeIncomeAccountId, depreciationExpenseAccountId, disposalGainAccountId, disposalLossAccountId, depreciationParteBAccountId, updatedAt' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *     put:
- *       summary: Update the per-scope accounting settings (bank charge accounts, F7 item 8)
+ *       summary: Update the per-scope accounting settings (bank charge + fixed-asset accounts, F7 item 8 + BE-INCR-FIXED-ASSETS item 5/24)
  *       description: >-
  *         Account ids of this scope; the service validates existence, acceptsEntries and nature
- *         (Expense for the paid charge, Revenue for the received charge). The account CODES are the
- *         accountant decision (BRIEF F7 §5) — until configured, /confirm with chargeCents > 0 answers
- *         400 charge_account_not_configured. null clears a field.
+ *         (Expense for the paid charge, Revenue for the received charge; the 2 fixed-asset gain/loss
+ *         accounts have no fixed nature). The account CODES are the accountant decision (BRIEF F7 §5) —
+ *         until configured, /confirm with chargeCents > 0 answers 400 charge_account_not_configured.
+ *         depreciationParteBAccountId targets LalurParteBAccount, not Account (PR-3 consumer). null
+ *         clears a field.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4258,8 +4260,12 @@
  *               required: [unitId]
  *               properties:
  *                 unitId: { type: string }
- *                 bankChargeExpenseAccountId: { type: string, nullable: true }
- *                 bankChargeIncomeAccountId: { type: string, nullable: true }
+ *                 bankChargeExpenseAccountId:    { type: string, nullable: true }
+ *                 bankChargeIncomeAccountId:     { type: string, nullable: true }
+ *                 depreciationExpenseAccountId:  { type: string, nullable: true, description: 'D despesa de depreciação (item 5)' }
+ *                 disposalGainAccountId:         { type: string, nullable: true, description: 'C ganho na baixa (item 5)' }
+ *                 disposalLossAccountId:         { type: string, nullable: true, description: 'D perda na baixa (item 5)' }
+ *                 depreciationParteBAccountId:   { type: string, nullable: true, description: 'conta LalurParteBAccount para a diferença contábil×fiscal (item 24, PR-3)' }
  *       responses:
  *         '200': { description: 'the updated settings view' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -4405,6 +4411,205 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/fixed-asset-classes:
+ *     get:
+ *       summary: List fixed-asset classes of a unit (BE-INCR-FIXED-ASSETS, nó C8, item 1)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'FixedAssetClass[]' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Create a fixed-asset class (item 1)
+ *       description: >-
+ *         depreciable=true requires accumulatedDepreciationAccountId (superRefine); LAND-type classes
+ *         are created with depreciable=false (F-FA5 → a) — no code-level enforcement on the name, it is
+ *         a usage convention.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateFixedAssetClassInput' }
+ *       responses:
+ *         '201': { description: 'FixedAssetClass' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/fixed-asset-classes/{id}:
+ *     patch:
+ *       summary: Update a fixed-asset class
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateFixedAssetClassInput' }
+ *       responses:
+ *         '200': { description: 'FixedAssetClass' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Soft-delete a fixed-asset class (item 7)
+ *       description: Blocked (400) while the class has any live FixedAsset (in any status).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/DeleteFixedAssetClassInput' }
+ *       responses:
+ *         '200': { description: 'FixedAssetClass' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/fixed-assets:
+ *     get:
+ *       summary: List fixed assets of a unit (BE-INCR-FIXED-ASSETS, nó C8, item 8)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: status, schema: { type: string, enum: [PENDING_ACTIVATION, ACTIVE, FULLY_DEPRECIATED, DISPOSED] } }
+ *         - { in: query, name: classId, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'FixedAsset[]' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Create a fixed asset (item 8) — born PENDING_ACTIVATION
+ *       description: >-
+ *         rateId (catalog) XOR annualRateBp (explicit) is required. costCents > MAX_CENTS is a plain
+ *         400 (Zod ceiling, same pattern as PayableDto.amountCents). bookAnnualRateBp requires
+ *         bookRateJustification.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreateFixedAssetInput' }
+ *       responses:
+ *         '201': { description: 'FixedAsset' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/fixed-assets/{id}:
+ *     get:
+ *       summary: Get a fixed asset by id
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'FixedAsset' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     put:
+ *       summary: Update a fixed asset — only while PENDING_ACTIVATION (ACC-016)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/UpdateFixedAssetInput' }
+ *       responses:
+ *         '200': { description: 'FixedAsset' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Soft-delete a fixed asset — PENDING_ACTIVATION or ACTIVE without posted quota (item 8)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/DeleteFixedAssetInput' }
+ *       responses:
+ *         '200': { description: 'FixedAsset' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/fixed-assets/{id}/activate:
+ *     post:
+ *       summary: Activate a fixed asset — PENDING_ACTIVATION → ACTIVE (item 9, ACC-016)
+ *       description: >-
+ *         CAS by version (409 on mismatch). openingAccumulatedCents is required when activatedAt
+ *         predates the scope's earliest OPEN/SOFT_CLOSED period (retroactive activation, item 9) —
+ *         a HARD_CLOSED period never accepts postEntry again, so the system cannot compute history
+ *         before that point.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/ActivateFixedAssetInput' }
+ *       responses:
+ *         '200': { description: 'FixedAsset' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'Version conflict (CAS)' }
+ *
+ *   /api/accounting/fixed-assets/{id}/dispose:
+ *     post:
+ *       summary: Dispose a fixed asset — ACTIVE → DISPOSED (item 18, ACC-016)
+ *       description: >-
+ *         Posts a 2-4 leg entry (D accumulated depreciation / C cost / D counterpart (if proceeds>0) /
+ *         D loss or C gain by the difference) via postEntry (tx1, idempotent by sourceId), then CASes
+ *         status+disposalEntryId by version (tx2, 409 on mismatch). TEMPORARY PR-2 deviation (no
+ *         runMonth yet, PR-3): requires accumulatedDepreciationCents to already reflect the
+ *         cumulative quota up to the disposedAt month, or 400 naming the month to post first —
+ *         non-depreciable classes (LAND) skip this check.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/DisposeFixedAssetInput' }
+ *       responses:
+ *         '200': { description: 'FixedAsset' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'Version conflict (CAS)' }
  *
  *   /api/accounting/service-fiscal-profiles:
  *     get:

@@ -67,7 +67,15 @@ export interface IBankSettlementRepository {
   getSettings(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<AccountingScopeSettings | null>;
   upsertSettings(
     scope: AccountingScope,
-    data: { bankChargeExpenseAccountId?: string | null; bankChargeIncomeAccountId?: string | null },
+    data: {
+      bankChargeExpenseAccountId?: string | null;
+      bankChargeIncomeAccountId?: string | null;
+      // BE-INCR-FIXED-ASSETS (nó C8, item 5 + item 24)
+      depreciationExpenseAccountId?: string | null;
+      disposalGainAccountId?: string | null;
+      disposalLossAccountId?: string | null;
+      depreciationParteBAccountId?: string | null;
+    },
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingScopeSettings>;
 

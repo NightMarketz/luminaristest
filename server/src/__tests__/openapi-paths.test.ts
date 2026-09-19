@@ -80,7 +80,9 @@ const { options } = require('../../scripts/generate-openapi');
 //    (POST), /.../reenviar (POST), /.../cancelar (POST), /api/nfe/dfe/webhook/{partner} (POST) —
 //    4 PATHS e 4 OPERAÇÕES (196 → 200, medido com docs:generate).
 // +2 (BE-INCR-FIXED-ASSETS PR-1, nó C8): depreciation-rates, depreciation-rates/{id}/hide.
-const BASELINE = 202;
+// +6 (BE-INCR-FIXED-ASSETS PR-2, nó C8): fixed-asset-classes, fixed-asset-classes/{id},
+// fixed-assets, fixed-assets/{id}, fixed-assets/{id}/activate, fixed-assets/{id}/dispose.
+const BASELINE = 208;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

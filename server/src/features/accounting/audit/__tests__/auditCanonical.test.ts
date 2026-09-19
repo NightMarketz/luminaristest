@@ -290,3 +290,20 @@ describe('depreciation_rate.* — texto livre da linha CUSTOM nunca sobrevive à
     }
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-2 (nó C8, itens 10/19) — teste-guarda no MESMO PR que introduz os 3
+// eventTypes (classe `accounting-audit-allowlist-guards`). `description` do ativo é texto livre
+// digitado pelo operador; mesmo passada por engano, NÃO sobrevive à canonicalização.
+describe('fixed_asset.* — texto livre da descrição do ativo nunca sobrevive à canonicalização', () => {
+  const FREE = { description: 'Torno CNC do fornecedor João da Silva' };
+
+  it.each([
+    ['fixed_asset.created', { assetId: 'fa-1' }],
+    ['fixed_asset.activated', { assetId: 'fa-1', activatedAt: '2026-01-01', openingAccumulatedCents: '0' }],
+    ['fixed_asset.disposed', { assetId: 'fa-1', entryId: 'je-1', gainLossCents: '-500' }],
+  ])('%s derruba description passada a mais', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, { ...allowed, ...FREE });
+    expect(out).not.toContain('João');
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+});
