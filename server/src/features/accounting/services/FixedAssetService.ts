@@ -1,6 +1,5 @@
 import type { FixedAsset } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
-import { quotaCumulativa } from '../models/FixedAsset.model';
 import type {
   ActivateFixedAssetInput,
   CreateFixedAssetInput,
@@ -14,6 +13,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
 import type { AccountingScopeSettingsService } from './AccountingScopeSettingsService';
 import type { PostingService } from './PostingService';
+import type { DepreciationService } from './DepreciationService';
 import type { AuditService } from './AuditService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -28,11 +28,10 @@ export const FIXED_ASSET_DISPOSED = 'fixed_asset.disposed';
  * PRISMA. ACC-016: comandos, nunca `PATCH status` — `activate`/`dispose` são os únicos caminhos que
  * mudam `status`.
  *
- * **Desvio temporário DELIBERADO (Passo 9 do execution-plan, registrado no BRIEF item 18):** o
- * `runMonth` do PR-3 ainda não existe, então `dispose` aqui EXIGE que
- * `accumulatedDepreciationCents` já reflita a cumulativa esperada até o mês de `disposedAt`
- * (comparação com `quotaCumulativa`, mesma fórmula do PR-1) — 400 nomeado se não refletir. O PR-3
- * troca esse 400 pela postagem sequencial automática; não é para "resolver" aqui.
+ * **Baixa sequencial (execution-plan Passo 14, PR-3):** `dispose` posta a quota do mês de
+ * `disposedAt` (via `DepreciationService.postQuotaForDisposal`, idempotente pelo mesmo mecanismo
+ * do `runMonth`) ANTES de montar o entry de baixa — troca o 400 temporário do PR-2 pela postagem
+ * automática.
  */
 export class FixedAssetService {
   constructor(
@@ -43,6 +42,7 @@ export class FixedAssetService {
     private readonly periodRepo: IAccountingPeriodRepository,
     private readonly settingsService: AccountingScopeSettingsService,
     private readonly postingService: PostingService,
+    private readonly depreciationService: DepreciationService,
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
   ) {}
@@ -207,7 +207,7 @@ export class FixedAssetService {
 
   async disposeAsset(scope: AccountingScope, id: string, dto: DisposeFixedAssetInput): Promise<FixedAsset> {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para baixar ativos.');
-    const asset = await this.requireAsset(scope, id);
+    let asset = await this.requireAsset(scope, id);
     if (asset.status !== 'ACTIVE') {
       throw new ValidationError(`Ativo '${id}' está em status ${asset.status}; só ACTIVE pode ser baixado.`);
     }
@@ -219,21 +219,20 @@ export class FixedAssetService {
       throw new ValidationError(`disposedAt (${dto.disposedAt}) não pode ser anterior a activatedAt.`);
     }
 
-    // Desvio temporário (Passo 9): sem runMonth (PR-3), a quota até o mês de disposedAt precisa já
-    // estar refletida em accumulatedDepreciationCents. Classes não-depreciáveis (LAND) nunca têm
-    // quota — pulam a checagem.
-    if (klass.depreciable) {
-      const base = asset.costCents - asset.residualValueCents;
-      const bp = asset.bookAnnualRateBp ?? asset.annualRateBp;
-      const k = monthsBetweenInclusive(asset.activatedAt, disposedAtDate);
-      const expected = minBigInt(quotaCumulativa(base, bp, k), base);
-      if (asset.accumulatedDepreciationCents !== expected) {
-        throw new ValidationError(
-          `Poste a depreciação do mês de ${dto.disposedAt.slice(0, 7)} antes de baixar o ativo '${id}' ` +
-            `(acumulado atual ${asset.accumulatedDepreciationCents}, esperado ${expected} — desvio temporário do PR-2, o PR-3 posta a sequência automaticamente).`,
-        );
-      }
+    // CAS de leitura: o `version` que o CLIENTE leu antes de chamar dispose precisa bater AGORA,
+    // antes de qualquer efeito colateral (a postagem sequencial abaixo vai avançar o version deste
+    // mesmo ativo por conta própria — checar depois dela compararia com um valor que a própria
+    // chamada já mudou, nunca o de um ator externo).
+    if (asset.version !== dto.version) {
+      throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
     }
+
+    // Baixa sequencial (execution-plan Passo 14): posta a quota do mês de disposedAt antes do
+    // entry de baixa, idempotente pelo mesmo mecanismo do runMonth. LAND (depreciable=false) é
+    // no-op dentro do próprio DepreciationService. Recarrega o ativo — accumulatedDepreciationCents
+    // e version podem ter mudado.
+    await this.depreciationService.postQuotaForDisposal(scope, id, dto.disposedAt);
+    asset = await this.requireAsset(scope, id);
 
     // Valor contábil líquido = custo − depreciação acumulada (item 18). `residualValueCents` é só
     // o PISO que a fórmula de quota respeita (base = costCents − residualValueCents) — não entra
@@ -281,9 +280,15 @@ export class FixedAssetService {
       lines,
     });
 
-    // tx2 — CAS de status/disposalEntryId + auditoria.
+    // tx2 — CAS de status/disposalEntryId + auditoria. Usa `asset.version` (RELIDO após a
+    // postagem sequencial, linha 227), não `dto.version`: a quota postada acima já incrementou o
+    // version deste MESMO ativo dentro desta MESMA chamada — comparar com o `dto.version` que o
+    // cliente leu antes de chamar `dispose` sempre daria 409 (falso conflito, não uma corrida
+    // real). A checagem de status (ACTIVE) já cobre "outro ator baixou/reativou nesse meio-tempo";
+    // uma corrida genuína (ex.: um `runMonth` concorrente) ainda é pega aqui, porque este é o
+    // valor mais recente lido antes do CAS final.
     return this.assetRepo.runTransaction(async (tx) => {
-      const updated = await this.assetRepo.dispose(scope, id, { disposedAt: disposedAtDate, disposalEntryId: entry.id }, dto.version, tx);
+      const updated = await this.assetRepo.dispose(scope, id, { disposedAt: disposedAtDate, disposalEntryId: entry.id }, asset.version, tx);
       if (!updated) throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
@@ -302,13 +307,4 @@ export class FixedAssetService {
     if (!account.acceptsEntries) throw new ValidationError(`${label} '${account.code}' não aceita lançamentos (não é folha).`);
     return account;
   }
-}
-
-/** Meses de `from` até `to`, INCLUSIVE dos dois extremos (item 12: "mês de ativação e de baixa contam inteiros"). */
-function monthsBetweenInclusive(from: Date, to: Date): number {
-  return (to.getUTCFullYear() - from.getUTCFullYear()) * 12 + (to.getUTCMonth() - from.getUTCMonth()) + 1;
-}
-
-function minBigInt(a: bigint, b: bigint): bigint {
-  return a < b ? a : b;
 }

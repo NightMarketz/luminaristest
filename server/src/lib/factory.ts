@@ -116,6 +116,7 @@ import { DepreciationRateSeedService } from '../features/accounting/services/Dep
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
 import { FixedAssetService } from '../features/accounting/services/FixedAssetService';
+import { DepreciationService } from '../features/accounting/services/DepreciationService';
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
@@ -446,6 +447,7 @@ export class ApplicationFactory {
     depreciationRate: DepreciationRateService;
     fixedAssetClass: FixedAssetClassService;
     fixedAsset: FixedAssetService;
+    depreciation: DepreciationService;
   };
 
   private constructor() {
@@ -808,6 +810,19 @@ export class ApplicationFactory {
       this.repositories.account,
       this.policies.accounting,
     );
+    // BE-INCR-FIXED-ASSETS (nó C8, PR-3) — depreciação mensal (runMonth) + reconcile. Construído
+    // ANTES do FixedAssetService porque `dispose` (baixa sequencial, Passo 14) o injeta.
+    const depreciationService = new DepreciationService(
+      this.repositories.fixedAsset,
+      this.repositories.fixedAssetClass,
+      this.repositories.account,
+      this.repositories.journalEntry,
+      this.repositories.posting,
+      accountingScopeSettingsService,
+      postingService,
+      auditService,
+      this.policies.accounting,
+    );
     const fixedAssetService = new FixedAssetService(
       this.repositories.fixedAsset,
       this.repositories.fixedAssetClass,
@@ -816,6 +831,7 @@ export class ApplicationFactory {
       this.repositories.accountingPeriod,
       accountingScopeSettingsService,
       postingService,
+      depreciationService,
       auditService,
       this.policies.accounting,
     );
@@ -830,6 +846,7 @@ export class ApplicationFactory {
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
       fixedAsset: fixedAssetService,
+      depreciation: depreciationService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
       chat: new ChatService(
@@ -1213,6 +1230,7 @@ export class ApplicationFactory {
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
   public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;
+  public getDepreciationService = (): DepreciationService => this.services.depreciation;
   public getFiscalDocumentEmissionService = (): FiscalDocumentEmissionService => this.services.fiscalDocumentEmission;
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;

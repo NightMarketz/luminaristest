@@ -85,6 +85,22 @@ export class PostingRepository implements IPostingRepository {
     }));
   }
 
+  public async sumCreditsBySourcePrefix(
+    scope: AccountingScope,
+    sourceType: string,
+    sourceIdPrefix: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const result = await (tx ?? prisma).posting.aggregate({
+      where: {
+        ...accountingScopeWhere(scope),
+        entry: { sourceType, sourceId: { startsWith: sourceIdPrefix } },
+      },
+      _sum: { creditCents: true },
+    });
+    return centsFromDb(result._sum.creditCents ?? 0n);
+  }
+
   public async groupByAccountAndDimension(
     scope: AccountingScope,
     statuses: string[],

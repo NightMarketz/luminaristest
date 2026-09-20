@@ -200,6 +200,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'fixed_asset.created':   ['assetId'],
   'fixed_asset.activated': ['assetId', 'activatedAt', 'openingAccumulatedCents'],
   'fixed_asset.disposed':  ['assetId', 'entryId', 'gainLossCents'],
+  // BE-INCR-FIXED-ASSETS PR-3 (nó C8, item 17). Nenhum texto livre no payload.
+  'depreciation.posted':   ['assetId', 'yearMonth', 'quotaCents', 'entryId'],
 };
 
 /**

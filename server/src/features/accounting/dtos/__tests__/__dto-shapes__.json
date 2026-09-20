@@ -1170,6 +1170,41 @@
       ]
     }
   },
+  "DepreciationDto.ts": {
+    "RunDepreciationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "yearMonth": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId",
+        "yearMonth"
+      ],
+      "additionalProperties": false
+    },
+    "ReconcileFixedAssetsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "DepreciationRateDto.ts": {
     "ListDepreciationRatesQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

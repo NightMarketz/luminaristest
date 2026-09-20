@@ -1,4 +1,5 @@
 import type { FixedAsset, Prisma } from 'generated/prisma';
+import type { FixedAssetStatus } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 
 export interface CreateFixedAssetData {
@@ -56,6 +57,19 @@ export interface IFixedAssetRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset[]>;
 
+  /**
+   * Ativos `ACTIVE` de classe `depreciable=true` com `activatedAt <= asOfDate` (BE-INCR-FIXED-ASSETS,
+   * nó C8, item 12 — a lista que o `runMonth` processa). O filtro de status por si só já exclui
+   * `FULLY_DEPRECIATED`/`DISPOSED`/`PENDING_ACTIVATION` — não há checagem extra de "vida útil
+   * esgotada" a fazer aqui (o 121º mês de um ativo 10%/a.a. não aparece porque o `addAccumulated`
+   * já o moveu para `FULLY_DEPRECIATED` no mês 120).
+   */
+  findActiveDepreciable(
+    scope: AccountingScope,
+    asOfDate: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<FixedAsset[]>;
+
   /** Conta ativos vivos (não soft-deleted) de uma classe, em qualquer status — usado pelo bloqueio
    *  de soft-delete da classe (item 7, "delete com ativo vivo → 400"). */
   countByClass(scope: AccountingScope, classId: string, tx?: Prisma.TransactionClient): Promise<number>;
@@ -91,16 +105,31 @@ export interface IFixedAssetRepository {
 
   /**
    * CAS de `accumulatedDepreciationCents` (item 14, ACC-TIEOUT) — `where` inclui o valor ATUAL
-   * esperado, não só a `version` (dupla trava). Sem chamador nesta PR (nasce só para o `runMonth`
-   * do PR-3); testado isoladamente aqui, como `quotaCumulativa` no PR-1.
+   * esperado, não só a `version` (dupla trava). `nextStatus` — quando informado — é gravado na
+   * MESMA `updateMany` (o ativo vira `FULLY_DEPRECIATED` no instante em que `acumulado == base`,
+   * item 12); `undefined` não toca o `status`.
    */
   addAccumulated(
     scope: AccountingScope,
     id: string,
     deltaCents: bigint,
     expected: { accumulatedDepreciationCents: bigint; version: number },
+    nextStatus: FixedAssetStatus | undefined,
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset | null>;
+
+  /**
+   * Repara `accumulatedDepreciationCents` a partir da soma do razão (item 14, `reconcile` —
+   * espelho de `InventoryService.reconcileInventory`'s `updateItem`): SET direto, sem CAS de
+   * `version` — não é um comando (ACC-016), é a rede de segurança do tie-out, best-effort por
+   * item, nunca a autoridade de quanto foi postado (essa é a soma dos créditos do razão).
+   */
+  reconcileAccumulated(
+    scope: AccountingScope,
+    id: string,
+    accumulatedDepreciationCents: bigint,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

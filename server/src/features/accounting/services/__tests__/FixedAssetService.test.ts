@@ -1,8 +1,9 @@
 /**
  * FixedAssetService (BE-INCR-FIXED-ASSETS, nó C8, Blocos B+D). Unit: repos/serviços injetados são
  * dublês; prova-se ORDEM (policy antes de dado), a matriz de status × comando, o CAS por version
- * (activate/dispose), e o desvio temporário do Passo 9 (dispose exige quota já refletida, sem
- * runMonth ainda).
+ * (activate/dispose), e a baixa sequencial do PR-3 (execution-plan Passo 14 — dispose delega a
+ * postagem da quota do mês de disposedAt ao DepreciationService, dublê aqui, antes do entry de
+ * baixa).
  */
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '@/lib/errors';
 import { FixedAssetService } from '@/features/accounting/services/FixedAssetService';
@@ -13,6 +14,7 @@ import type { IAccountRepository } from '@/features/accounting/repositories/IAcc
 import type { IAccountingPeriodRepository } from '@/features/accounting/repositories/IAccountingPeriodRepository';
 import type { AccountingScopeSettingsService } from '@/features/accounting/services/AccountingScopeSettingsService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
+import type { DepreciationService } from '@/features/accounting/services/DepreciationService';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
@@ -92,15 +94,18 @@ function build(opts: {
   const postEntry = jest.fn(async (_s: unknown, input: { sourceId?: string; lines: Array<{ accountCode: string; debitCents: number; creditCents: number }> }) => ({ id: `entry-${input.sourceId}` }));
   const postingService = { postEntry } as unknown as PostingService;
 
+  const postQuotaForDisposal = jest.fn(async () => undefined);
+  const depreciationService = { postQuotaForDisposal } as unknown as DepreciationService;
+
   const auditAppend = jest.fn(async () => undefined);
   const auditService = { append: auditAppend } as unknown as AuditService;
 
   const policy = { canRead: () => true, canManageFixedAssets: () => opts.canManage ?? true } as unknown as IAccountingPolicy;
 
   return {
-    service: new FixedAssetService(assetRepo, classRepo, rateRepo, accountRepo, periodRepo, settingsService, postingService, auditService, policy),
+    service: new FixedAssetService(assetRepo, classRepo, rateRepo, accountRepo, periodRepo, settingsService, postingService, depreciationService, auditService, policy),
     create, findById, update, softDelete, activate, dispose, runTransaction,
-    classFindById, rateFindById, accountFindById, findEarliestOpenOrSoftClosed, settingsGet, postEntry, auditAppend,
+    classFindById, rateFindById, accountFindById, findEarliestOpenOrSoftClosed, settingsGet, postEntry, postQuotaForDisposal, auditAppend,
   };
 }
 
@@ -196,7 +201,7 @@ describe('FixedAssetService.activateAsset — item 9', () => {
   });
 });
 
-describe('FixedAssetService.disposeAsset — item 18 (3 casos: >, =, <) + desvio temporário do Passo 9', () => {
+describe('FixedAssetService.disposeAsset — item 18 (3 casos: >, =, <) + baixa sequencial (Passo 14, PR-3)', () => {
   const activeAsset = (accumulated: bigint) =>
     makeAsset({ status: 'ACTIVE', activatedAt: new Date('2026-01-01T00:00:00Z'), accumulatedDepreciationCents: accumulated, annualRateBp: 1000, costCents: 100_000n });
 
@@ -207,12 +212,22 @@ describe('FixedAssetService.disposeAsset — item 18 (3 casos: >, =, <) + desvio
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it('desvio temporário: accumulatedDepreciationCents NÃO reflete o mês → 400 nomeando o mês', async () => {
-    // mês 1 (Jan) de um ativo 100.000 @ 10% a.a. deveria ter acumulado 833 — 0 não bate.
-    const { service } = build({ asset: activeAsset(0n) });
+  it('version divergente do dto ANTES de qualquer efeito colateral → ConflictError; postQuotaForDisposal NUNCA chamado', async () => {
+    const { service, postQuotaForDisposal, postEntry } = build({ asset: activeAsset(833n) });
     await expect(
-      service.disposeAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', disposedAt: '2026-01-31', proceedsCents: 0, version: 1 }),
-    ).rejects.toThrow(/Poste a depreciação/);
+      service.disposeAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', disposedAt: '2026-01-31', proceedsCents: 0, version: 99 }),
+    ).rejects.toBeInstanceOf(ConflictError);
+    expect(postQuotaForDisposal).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('baixa sequencial: chama postQuotaForDisposal com o mês de disposedAt ANTES do entry de baixa', async () => {
+    const { service, postQuotaForDisposal, postEntry } = build({ asset: activeAsset(833n) });
+    await service.disposeAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: 'acc-caixa', version: 1 });
+    expect(postQuotaForDisposal).toHaveBeenCalledWith(scope, 'asset-1', '2026-01-31');
+    const quotaCallOrder = postQuotaForDisposal.mock.invocationCallOrder[0];
+    const entryCallOrder = postEntry.mock.invocationCallOrder[0];
+    expect(quotaCallOrder).toBeLessThan(entryCallOrder);
   });
 
   it('classe depreciable=false (LAND) PULA a checagem de quota — acumulado 0 é aceito', async () => {
