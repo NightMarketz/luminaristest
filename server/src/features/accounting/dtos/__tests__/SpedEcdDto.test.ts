@@ -22,9 +22,20 @@ const declarant = {
 
 const book = { numOrd: '1', natLivr: 'Livro Diário', dtExSocial: '2026-12-31' };
 
+// CPFs com DV válido (item 5) — '11122233344'/'55566677788' (antigos) tinham DV inválido e só
+// passavam porque o campo era regex de forma; F-C12-1 → (a) também remove `identQualif` do input.
 const signers = [
-  { identNom: 'Contador', identCpfCnpj: '11122233344', identQualif: 'Contador', codAssin: '900', indRespLegal: 'N' as const },
-  { identNom: 'Sócio', identCpfCnpj: '55566677788', identQualif: 'Sócio', codAssin: '309', indRespLegal: 'S' as const },
+  {
+    identNom: 'Contador',
+    identCpfCnpj: '11122233396',
+    codAssin: '900',
+    indCrc: 'SP-123456/O-1',
+    email: 'contador@escritorio.com.br',
+    fone: '1133334444',
+    ufCrc: 'SP' as const,
+    indRespLegal: 'N' as const,
+  },
+  { identNom: 'Sócio', identCpfCnpj: '55566677720', codAssin: '309', indRespLegal: 'S' as const },
 ];
 
 const valid = { unitId: 'unit-1', mappingVersion: 'RFB-2024', year: 2026, declarant, book, signers };
@@ -136,10 +147,12 @@ describe('SpedEcdRequestSchema — formas fechadas do registro 0000', () => {
 });
 
 describe('SpedEcdRequestSchema — CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ-1 → b, F-CNPJ-2 → a)', () => {
-  it('aceita CNPJ alfanumérico MAIÚSCULO no declarante, no codScp e no signatário (só formato, sem DV)', () => {
+  it('aceita CNPJ alfanumérico MAIÚSCULO no declarante, no codScp e no signatário NÃO-contador (só formato, sem DV)', () => {
     expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE35' } }).success).toBe(true);
     expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, codScp: '12ABC34501DE35' } }).success).toBe(true);
-    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], identCpfCnpj: '12ABC34501DE35' }, signers[1]] }).success).toBe(true);
+    // signers[0] é o contador (900) — F-C12-6 → a exige CPF-11 dele; o CNPJ alfanumérico vai no
+    // signatário NÃO-contador (signers[1]).
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [signers[0], { ...signers[1], identCpfCnpj: '12ABC34501DE35' }] }).success).toBe(true);
     // DV NÃO é conferido na fronteira (F-CNPJ-2 → a): o PVA é o oráculo
     expect(SpedEcdRequestSchema.safeParse({ ...valid, declarant: { ...declarant, cnpj: '12ABC34501DE36' } }).success).toBe(true);
   });
@@ -150,7 +163,149 @@ describe('SpedEcdRequestSchema — CNPJ alfanumérico (BE-INCR-CNPJ-ALFA, F-CNPJ
     }
   });
 
-  it('CPF do signatário continua estritamente numérico (11 dígitos)', () => {
-    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], identCpfCnpj: '1234567890A' }, signers[1]] }).success).toBe(false);
+  it('CPF do signatário não-contador continua estritamente numérico (11 dígitos)', () => {
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [signers[0], { ...signers[1], identCpfCnpj: '1234567890A' }] }).success).toBe(false);
+  });
+});
+
+describe('SpedEcdRequestSchema — C12 item 2/4: COD_ASSIN fechado na Tabela de Qualificação (Manual ECD L9 pp. 201-202)', () => {
+  it("aceita '900' (controle) e rejeita '305' (código do exemplo 9 da p. 200 — a TABELA da p. 202 prevalece e não o tem)", () => {
+    expect(SpedEcdRequestSchema.safeParse(valid).success).toBe(true);
+    expect(
+      SpedEcdRequestSchema.safeParse({ ...valid, signers: [signers[0], { ...signers[1], codAssin: '305' }] })
+        .success,
+    ).toBe(false);
+  });
+
+  it('IDENT_QUALIF (campo 04) não é mais aceito no payload — .strict() recusa a chave (F-C12-1 → a)', () => {
+    const withIdentQualif = { ...signers[0], identQualif: 'Contador' };
+    const parsed = SpedEcdRequestSchema.safeParse({ ...valid, signers: [withIdentQualif, signers[1]] });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(
+        parsed.error.issues.some(
+          (i) => i.code === 'unrecognized_keys' && (i as { keys?: string[] }).keys?.includes('identQualif'),
+        ),
+      ).toBe(true);
+    }
+  });
+});
+
+describe('SpedEcdRequestSchema — C12 item 5: CPF com DV no signatário (REGRA_VALIDA_CPF)', () => {
+  it('CPF com DV inválido é 400; CPF válido passa; CNPJ alfanumérico (não-contador) passa', () => {
+    expect(
+      SpedEcdRequestSchema.safeParse({ ...valid, signers: [signers[0], { ...signers[1], identCpfCnpj: '11111111111' }] }).success,
+    ).toBe(false);
+    expect(SpedEcdRequestSchema.safeParse(valid).success).toBe(true);
+    expect(
+      SpedEcdRequestSchema.safeParse({ ...valid, signers: [signers[0], { ...signers[1], identCpfCnpj: '12ABC34501DE35' }] }).success,
+    ).toBe(true);
+  });
+});
+
+describe('SpedEcdRequestSchema — C12 item 6: COD_ASSIN=900 ⇒ CPF-11 + IND_CRC + EMAIL + FONE + UF_CRC (REGRA_OBRIGATORIO_CONTADOR, p. 202)', () => {
+  it('contador (900) sem FONE é 400 nomeando J930.FONE', () => {
+    const { fone: _omit, ...contadorSemFone } = signers[0];
+    const parsed = SpedEcdRequestSchema.safeParse({ ...valid, signers: [contadorSemFone, signers[1]] });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((i) => i.message.includes('J930.FONE'))).toBe(true);
+    }
+  });
+
+  it('contador sem IND_CRC, sem EMAIL ou sem UF_CRC também é 400; o mesmo campo ausente no não-contador é válido', () => {
+    const { indCrc: _c, ...semCrc } = signers[0];
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [semCrc, signers[1]] }).success).toBe(false);
+    const { email: _e, ...semEmail } = signers[0];
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [semEmail, signers[1]] }).success).toBe(false);
+    const { ufCrc: _u, ...semUf } = signers[0];
+    expect(SpedEcdRequestSchema.safeParse({ ...valid, signers: [semUf, signers[1]] }).success).toBe(false);
+    // CONTROLE: signers[1] (não-contador) já não tem nenhum destes campos e o payload passa.
+    expect(SpedEcdRequestSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('contador com CNPJ (14) em vez de CPF (11) é 400 (F-C12-6 → a: o contador é pessoa física)', () => {
+    const parsed = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [{ ...signers[0], identCpfCnpj: '12ABC34501DE35' }, signers[1]],
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe('SpedEcdRequestSchema — C12 item 7: máscara CRC (IND_CRC, NUM_SEQ_CRC, cruzamento com UF_CRC)', () => {
+  it('normaliza grafias usuais de IND_CRC para UF-NNNNNN/O-D', () => {
+    const parsed = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [{ ...signers[0], indCrc: '1SP123456/O-1' }, signers[1]],
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      const contador = parsed.data.signers.find((s) => s.codAssin === '900');
+      expect(contador?.indCrc).toBe('SP-123456/O-1');
+    }
+  });
+
+  it('rejeita IND_CRC fora do formato do CRC', () => {
+    expect(
+      SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], indCrc: 'não é um crc' }, signers[1]] }).success,
+    ).toBe(false);
+  });
+
+  it("UF_CRC divergente da UF embutida em IND_CRC é 400 ('UF do CRC não bate')", () => {
+    const parsed = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [{ ...signers[0], ufCrc: 'RJ' as const }, signers[1]],
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((i) => i.message.includes('UF_CRC'))).toBe(true);
+    }
+  });
+
+  it('NUM_SEQ_CRC no formato UF/AAAA/NÚMERO é aceito e normalizado; fora do formato é 400', () => {
+    const ok = SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], numSeqCrc: 'sp/2012/001' }, signers[1]] });
+    expect(ok.success).toBe(true);
+    if (ok.success) {
+      const contador = ok.data.signers.find((s) => s.codAssin === '900');
+      expect(contador?.numSeqCrc).toBe('SP/2012/001');
+    }
+    expect(
+      SpedEcdRequestSchema.safeParse({ ...valid, signers: [{ ...signers[0], numSeqCrc: '2012/001' }, signers[1]] }).success,
+    ).toBe(false);
+  });
+});
+
+describe('SpedEcdRequestSchema — C12 item 11: REGRA_QUALIF_INV_RESP_LEGAL + REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE (p. 202)', () => {
+  it('contador (900) marcado como responsável legal é 400 — é o próprio exemplo oficial (p. 203) que viola a regra', () => {
+    const parsed = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [{ ...signers[0], indRespLegal: 'S' as const }, { ...signers[1], indRespLegal: 'N' as const }],
+    });
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.some((i) => i.message.includes('REGRA_QUALIF_INV_RESP_LEGAL'))).toBe(true);
+    }
+  });
+
+  it('dois signatários com a mesma dupla CPF+COD_ASSIN é 400; o mesmo CPF com códigos diferentes (900 e 309, "assinatura como procurador") é válido', () => {
+    // 3 signatários (contador + sócio + duplicata do sócio) para isolar a regra de duplicidade das
+    // regras "exatamente um responsável legal" / "um contador e um não-contador", que já passam.
+    const duplicated = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [signers[0], signers[1], { ...signers[1], identNom: 'Sócio (dup)', indRespLegal: 'N' as const }],
+    });
+    expect(duplicated.success).toBe(false);
+    if (!duplicated.success) {
+      expect(
+        duplicated.error.issues.some((i) => i.message.includes('REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE')),
+      ).toBe(true);
+    }
+
+    const sameCpfAsProcurador = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      signers: [signers[0], { ...signers[1], identCpfCnpj: signers[0].identCpfCnpj, codAssin: '309' }],
+    });
+    expect(sameCpfAsProcurador.success).toBe(true);
   });
 });

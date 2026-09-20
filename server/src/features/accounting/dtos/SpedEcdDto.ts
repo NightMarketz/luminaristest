@@ -1,6 +1,14 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
-import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX } from '../../../lib/cnpj';
+import { CNPJ_REGEX, CPF_REGEX } from '../../../lib/cnpj';
+import { isValidCpf } from '../../../lib/cpf';
+import {
+  isValidCrcCertificate,
+  normalizeCrcCertificate,
+  normalizeCrcNumber,
+  crcNumberUf,
+} from '../models/AccountingContact.model';
+import { SPED_ECD_QUALIF_ASSINANTE_CODES } from '../models/spedQualifAssinante';
 
 /**
  * Zod DTO for SPED ECD generation (ADR-INCR-SPED-ECD, D3). The declarant
@@ -27,9 +35,58 @@ export const UF_CODES = [
 const cnpj = z
   .string()
   .regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara: 12 alfanuméricas maiúsculas + 2 dígitos verificadores.');
-const cpfOrCnpj = z
-  .string()
-  .regex(CPF_OR_CNPJ_REGEX, 'CPF (11 dígitos) ou CNPJ (14 posições, alfanumérico maiúsculo).');
+
+/**
+ * IDENT_CPF_CNPJ do signatário (J930 campo 03 / 0930 campo 3) — CPF com dígito verificador
+ * (`REGRA_VALIDA_CPF`, reuso de `isValidCpf`) OU CNPJ só por formato (`REGRA_VALIDA_CNPJ`; DV
+ * segue F-CNPJ-2 → a, não duplicado na fronteira). Mesmo objeto de domínio nos dois leiautes
+ * (BE-INCR-SPED-IDENTITY-MASKS §4 item 5) — exportado para o DTO da ECF reusar em vez de clonar.
+ */
+export function signerCpfOrCnpjSchema(registro: 'J930' | '0930') {
+  return z.string().superRefine((value, ctx) => {
+    if (CPF_REGEX.test(value)) {
+      if (!isValidCpf(value)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${registro}.IDENT_CPF_CNPJ — CPF inválido (dígito verificador não confere, REGRA_VALIDA_CPF).`,
+        });
+      }
+      return;
+    }
+    if (CNPJ_REGEX.test(value)) return;
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `${registro}.IDENT_CPF_CNPJ deve ser CPF (11 dígitos com DV) ou CNPJ (14 posições alfanuméricas maiúsculas).`,
+    });
+  });
+}
+
+/** J930 campo 06 (IND_CRC) — mesma máscara CFC do contato (#305, F-C12-3 → a): `normalizeCrcNumber`
+ * aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D`, ou reprova. */
+const crcNumberField = z.string().transform((value, ctx) => {
+  const normalized = normalizeCrcNumber(value);
+  if (!normalized) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'J930.IND_CRC deve seguir o formato do CRC: UF-NNNNNN/O-D (ex.: SP-123456/O-1).',
+    });
+    return z.NEVER;
+  }
+  return normalized;
+});
+
+/** J930 campo 10 (NUM_SEQ_CRC) — `REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC`: UF/AAAA/NÚMERO, UF na tabela. */
+const crcCertificateField = z.string().transform((value, ctx) => {
+  const normalized = normalizeCrcCertificate(value);
+  if (!isValidCrcCertificate(normalized)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'J930.NUM_SEQ_CRC deve seguir UF/AAAA/NÚMERO (Manual ECD L9 p. 202), com UF da Tabela de UF.',
+    });
+    return z.NEVER;
+  }
+  return normalized;
+});
 
 /** Declarante — identificação do registro 0000 (manual pp. 64-67). */
 const DeclarantSchema = z
@@ -69,23 +126,91 @@ const BookSchema = z
   })
   .strict();
 
-/** Signatário — J930 (manual pp. 199-201). COD_ASSIN/IDENT_QUALIF validados por
- * shape; a tabela de qualificação (PVA-5) é responsabilidade do declarante. */
+/**
+ * Signatário — J930 (Manual ECD L9 pp. 199-203). Campo 04 (IDENT_QUALIF) NÃO é aceito (F-C12-1 → a):
+ * é derivado da tabela de qualificação pelo gerador a partir de COD_ASSIN — quem manda o campo recebe
+ * `unrecognized_keys` (`.strict()`), quebra de compat declarada. COD_ASSIN é fechado na Tabela de
+ * Qualificação do Assinante (pp. 201-202).
+ */
 const SignerSchema = z
   .object({
     identNom: z.string().min(1),
-    identCpfCnpj: cpfOrCnpj,
-    identQualif: z.string().min(1), // descrição (campo 04)
-    codAssin: z.string().regex(/^\d{3}$/, 'COD_ASSIN = 3 dígitos.'), // campo 05
-    indCrc: z.string().optional(),
+    identCpfCnpj: signerCpfOrCnpjSchema('J930'),
+    codAssin: z.enum(SPED_ECD_QUALIF_ASSINANTE_CODES, {
+      message:
+        'J930.COD_ASSIN fora da Tabela de Qualificação do Assinante (Manual ECD L9 pp. 201-202).',
+    }), // campo 05
+    indCrc: crcNumberField.optional(),
     email: z.string().optional(),
     fone: z.string().optional(),
     ufCrc: z.enum(UF_CODES).optional(),
-    numSeqCrc: z.string().optional(),
+    numSeqCrc: crcCertificateField.optional(),
     dtCrc: dateOnly.optional(),
     indRespLegal: z.enum(['S', 'N']),
   })
-  .strict();
+  .strict()
+  .superRefine((val, ctx) => {
+    // A UF embutida no IND_CRC tem de bater com UF_CRC (mesma técnica de
+    // AccountingContactDto.refineCrcUfMatches, reaplicada aos primitivos de
+    // AccountingContact.model.ts — os nomes de campo divergem: J930 usa indCrc/ufCrc, o contato usa
+    // crcNumber/crcUf, então não é o mesmo símbolo, é a mesma técnica).
+    if (val.indCrc && val.ufCrc) {
+      const embedded = crcNumberUf(val.indCrc);
+      if (embedded && embedded !== val.ufCrc) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['ufCrc'],
+          message: `J930.UF_CRC (${val.ufCrc}) diverge da UF embutida no IND_CRC (${embedded}).`,
+        });
+      }
+    }
+
+    // REGRA_OBRIGATORIO_CONTADOR (Manual ECD L9 p. 202): COD_ASSIN=900 ⇒ IND_CRC, EMAIL, FONE e
+    // UF_CRC obrigatórios. F-C12-6 → (a): + CPF de 11 posições (regra de assinatura 2, p. 198 — o
+    // contador/contabilista é sempre pessoa física; o DTO ECF já exige o mesmo).
+    if (val.codAssin === '900') {
+      if (val.identCpfCnpj.length !== 11) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['identCpfCnpj'],
+          message:
+            'J930.IDENT_CPF_CNPJ deve ser CPF (11 dígitos) quando COD_ASSIN=900 (o contador é pessoa física, Manual ECD L9 p. 198).',
+        });
+      }
+      if (!val.indCrc) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['indCrc'],
+          message:
+            'J930.IND_CRC é obrigatório quando COD_ASSIN=900 (REGRA_OBRIGATORIO_CONTADOR, Manual ECD L9 p. 202).',
+        });
+      }
+      if (!val.email) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['email'],
+          message:
+            'J930.EMAIL é obrigatório quando COD_ASSIN=900 (REGRA_OBRIGATORIO_CONTADOR, Manual ECD L9 p. 202).',
+        });
+      }
+      if (!val.fone) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['fone'],
+          message:
+            'J930.FONE é obrigatório quando COD_ASSIN=900 (REGRA_OBRIGATORIO_CONTADOR, Manual ECD L9 p. 202).',
+        });
+      }
+      if (!val.ufCrc) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['ufCrc'],
+          message:
+            'J930.UF_CRC é obrigatório quando COD_ASSIN=900 (REGRA_OBRIGATORIO_CONTADOR, Manual ECD L9 p. 202).',
+        });
+      }
+    }
+  });
 
 /**
  * POST /sped/ecd/generate body. `year` drives the annual window (Jan 1 → Dec 31,
@@ -121,6 +246,36 @@ export const SpedEcdRequestSchema = z
         message: 'A ECD exige um signatário contador (COD_ASSIN=900) e um não-contador.',
       });
     }
+
+    // F-C12-7 → (a), item 11 — REGRA_QUALIF_INV_RESP_LEGAL (Manual ECD L9 p. 202): o responsável
+    // legal nunca é o contador (é o próprio exemplo oficial da p. 203 que viola esta regra).
+    val.signers.forEach((s, i) => {
+      if (s.indRespLegal === 'S' && s.codAssin === '900') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['signers', i, 'indRespLegal'],
+          message:
+            'J930.IND_RESP_LEGAL=S é inválido com COD_ASSIN=900 (REGRA_QUALIF_INV_RESP_LEGAL, Manual ECD L9 p. 202 — o contador nunca é o responsável legal).',
+        });
+      }
+    });
+
+    // REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE (Manual ECD L9 p. 202): chave
+    // [IDENT_CPF_CNPJ + COD_ASSIN] única — a mesma pessoa pode assinar duas vezes com códigos
+    // diferentes (ex.: contador 900 e procurador 309), nunca duas vezes com o mesmo código.
+    const seen = new Set<string>();
+    val.signers.forEach((s, i) => {
+      const key = `${s.identCpfCnpj}|${s.codAssin}`;
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['signers', i],
+          message:
+            'J930 duplicado: a dupla IDENT_CPF_CNPJ + COD_ASSIN já aparece em outro signatário (REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE, Manual ECD L9 p. 202).',
+        });
+      }
+      seen.add(key);
+    });
   });
 
 export type SpedEcdRequestDto = z.infer<typeof SpedEcdRequestSchema>;

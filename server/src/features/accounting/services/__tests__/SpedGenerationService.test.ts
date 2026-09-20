@@ -47,9 +47,11 @@ function makeDto(over: Partial<SpedEcdRequestDto> = {}): SpedEcdRequestDto {
       identMf: 'N', indEscCons: 'N', indCentralizada: '0', indMudancPc: '0',
     },
     book: { numOrd: '1', natLivr: 'DIARIO GERAL', dtExSocial: '2026-12-31' },
+    // C12: IDENT_QUALIF (campo 04) não existe mais no DTO — SpedGenerationService.generate() deriva
+    // da tabela a partir de codAssin (ecdIdentQualifParaEmissao).
     signers: [
-      { identNom: 'RESP', identCpfCnpj: '11222333000181', identQualif: 'Administrador', codAssin: '205', indRespLegal: 'S' },
-      { identNom: 'CONTADOR', identCpfCnpj: '12345678909', identQualif: 'Contador', codAssin: '900', indCrc: 'SP1', indRespLegal: 'N' },
+      { identNom: 'RESP', identCpfCnpj: '11222333000181', codAssin: '205', indRespLegal: 'S' },
+      { identNom: 'CONTADOR', identCpfCnpj: '12345678909', codAssin: '900', indCrc: 'SP1', indRespLegal: 'N' },
     ],
     ...over,
   } as SpedEcdRequestDto;

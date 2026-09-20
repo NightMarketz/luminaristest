@@ -168,8 +168,10 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
       indNire: '0', indGrandePorte: '0',
     },
     book: { numOrd: '1', natLivr: 'Livro Diário', dtExSocial: '2026-12-31' },
+    // C12: IDENT_QUALIF (campo 04) não existe mais no DTO — é derivado de codAssin; CPF com DV
+    // válido (item 5, '55566677788' tinha DV inválido e só passava por ser regex de forma).
     signers: [
-      { identNom: 'Sócio', identCpfCnpj: '55566677788', identQualif: 'Sócio', codAssin: '309', indRespLegal: 'S' },
+      { identNom: 'Sócio', identCpfCnpj: '55566677720', codAssin: '309', indRespLegal: 'S' },
     ],
     ...over,
   });

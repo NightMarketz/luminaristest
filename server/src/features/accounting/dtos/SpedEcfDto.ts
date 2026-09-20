@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { UF_CODES } from './SpedEcdDto';
-import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX } from '../../../lib/cnpj';
+import { UF_CODES, signerCpfOrCnpjSchema } from './SpedEcdDto';
+import { CNPJ_REGEX } from '../../../lib/cnpj';
+import { SPED_ECF_QUALIF_ASSINANTE_CODES } from '../models/spedQualifAssinante';
 
 /**
  * Zod DTO for SPED ECF generation (ADR-INCR-SPED-ECF, D4 — TRANSIENTE).
@@ -24,9 +25,6 @@ import { CNPJ_REGEX, CPF_OR_CNPJ_REGEX } from '../../../lib/cnpj';
 const cnpj = z
   .string()
   .regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara: 12 alfanuméricas maiúsculas + 2 dígitos verificadores.');
-const cpfOrCnpj = z
-  .string()
-  .regex(CPF_OR_CNPJ_REGEX, 'CPF (11 dígitos) ou CNPJ (14 posições, alfanumérico maiúsculo).');
 
 /** Declarante — identificação (0000) + dados cadastrais (0030). Manual pp. 61-101. */
 export const DeclarantSchema = z
@@ -67,8 +65,10 @@ const FiscalSchema = z
 export const SignerSchema = z
   .object({
     identNom: z.string().min(1),
-    identCpfCnpj: cpfOrCnpj,
-    identQualif: z.string().regex(/^\d{3}$/, 'IDENT_QUALIF = 3 dígitos (tabela Sped).'),
+    identCpfCnpj: signerCpfOrCnpjSchema('0930'),
+    identQualif: z.enum(SPED_ECF_QUALIF_ASSINANTE_CODES, {
+      message: '0930.IDENT_QUALIF fora da tabela SPEDECF_QUALIF_ASSINANTE (Manual ECF L12 p. 105).',
+    }),
     indCrc: z.string().optional(),
     email: z.string().email('E-mail do signatário inválido.'),
     fone: z.string().min(1).max(14),
