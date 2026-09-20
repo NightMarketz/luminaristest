@@ -67,7 +67,8 @@
 | **SEED-MY** seed multi-exercício | [`SEED-MULTI-EXERCICIO-brief.md`](SEED-MULTI-EXERCICIO-brief.md) | ✅ BRIEF · bloqueado até B-4 | #325 |
 | **X6** custo D3 por regime | [`BE-INCR-NFE-COST-REGIME-brief.md`](BE-INCR-NFE-COST-REGIME-brief.md) | ✅ (emenda 15/09 + ERRATA) | #327 · #328 |
 | **C8** imobilizado + depreciação | [`BE-INCR-FIXED-ASSETS-brief.md`](BE-INCR-FIXED-ASSETS-brief.md) · [ADR](../adr/ADR-INCR-FIXED-ASSETS.md) · [`…-execution-plan.md`](BE-INCR-FIXED-ASSETS-execution-plan.md) | 📐 ADR+BRIEF · F-FA10/12/13 ✅ 16/09 · **plano granular 17/09 (5 PRs; F-FA14/15 ⏸)**; execução não autorizada | #330 · #333 |
-| **X12** · **X7/X8/X9** · **X10b** | — | ⬜ sem BRIEF (ver grafo §3) | — |
+| **X10b** emissão DF-e via porta (NFS-e nacional) | [`BE-INCR-DFE-brief.md`](BE-INCR-DFE-brief.md) | ✅ **MERGEADO 18/09** — PR-1 #348 `f00b304a` · PR-2 #349 `0dcbb22b` · PR-3 #350 `e61c0f6d`; NF-e 55 (Fase E) segue fora, aguarda MOC 7.0 | #345 · #348 · #349 · #350 |
+| **X12** · **X7/X8/X9** | — | ⬜ sem BRIEF (ver grafo §3) | — |
 | Ondas paralelas de 08/2026 | [`BRIEFS-WAVE1.md`](BRIEFS-WAVE1.md) · [`BRIEFS-WAVE2-BACKEND.md`](BRIEFS-WAVE2-BACKEND.md) · [`BRIEFS-WAVE2-SCHEMA.md`](BRIEFS-WAVE2-SCHEMA.md) · [`BRIEFS-WAVE2-FE.md`](BRIEFS-WAVE2-FE.md) | ✅ 📜 (estado de fork lá pode estar desatualizado — o master map vence) | cédula 08-31; `pr-bodies/` |
 
 ## 4. BRIEFs por nó — frontend
