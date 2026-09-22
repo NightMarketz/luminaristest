@@ -77,6 +77,18 @@ test('N/A explícito sem PROVA passa; ausência total não', () => {
   assert.equal(runRetorno(retorno({ raw: '' }), { cwd: dir }).status, 'FALHOU');
 });
 
+test('review #1 — fence yaml anterior ao PROVA não esconde a PROVA', () => {
+  const f = retorno({ exitCode: 0, exit: 0 });
+  writeFileSync(f, readFileSync(f, 'utf8').replace('### Checks executados', ['```yaml', 'foo: bar', '```', '### Checks executados'].join('\n')));
+  assert.equal(runRetorno(f, { cwd: dir }).status, 'PASSOU');
+});
+
+test('review #2 — `#` dentro de aspas do command não é comentário', () => {
+  const f = retorno({ exitCode: 0, exit: 0 });
+  writeFileSync(f, readFileSync(f, 'utf8').replace('process.exit(0)', 'process.exit(0) // #x'));
+  assert.equal(runRetorno(f, { cwd: dir }).status, 'PASSOU');
+});
+
 test('item 7 — ordem do pipeline é prova → invariantes → review-llm (não-gate)', () => {
   assert.equal(STAGES[0], 'prova');
   assert.equal(STAGES[1], 'invariantes');

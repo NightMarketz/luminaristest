@@ -20,13 +20,15 @@ const TIMEOUT_MS = 10 * 60 * 1000; // F-3 (a): reexecuta tudo, sem allowlist
 // ponytail: YAML mínimo — só `PROVA:` + lista de mapas planos + `VEREDITO:`. Qualquer outra forma = SEM-PROVA.
 export function parseProva(text) {
   const t = text.replace(/\r\n/g, '\n');
-  const m = t.match(/```ya?ml\n([\s\S]*?)```/);
-  if (!m || !/^PROVA:\s*$/m.test(m[1])) return null;
+  // review a8409e1c #1: escolhe o fence que contém PROVA, não o primeiro
+  const m = [...t.matchAll(/```ya?ml\n([\s\S]*?)```/g)].find((x) => /^PROVA:\s*$/m.test(x[1]));
+  if (!m) return null;
   const items = [];
   let cur = null;
   let veredito = null;
   for (const raw of m[1].split('\n')) {
-    const line = raw.replace(/\s+#.*$/, '').trimEnd();
+    // review a8409e1c #2: `#` só é comentário fora de aspas (nº par de `"` antes dele)
+    const line = raw.replace(/\s+#.*$/, (c, off) => ((raw.slice(0, off).match(/(?<!\\)"/g) || []).length % 2 ? c : '')).trimEnd();
     if (/^PROVA:/.test(line)) continue;
     const v = line.match(/^VEREDITO:\s*(\S+)/);
     if (v) { veredito = v[1]; continue; }
