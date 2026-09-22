@@ -2,7 +2,7 @@
 
 **Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
-**Entrada (medida em 2026-09-22, no worktree `orquestrador-passos-9-13-fixes-050716`):** `origin/main` = `0548d19a` (C8 PR-3 #356; `edb80ec8`/C12 #353 já é ancestral). **O passo 9 folda contra este SHA.** O commit do passo 10 — `4b5b04c5` — **não** é ancestral de `origin/main`: ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
+**Entrada (re-medida em 2026-09-22, após `git fetch`):** `origin/main` = `be80ea47` (#359, cerca de execução PR-2); `0548d19a` (C8 PR-3 #356) e `edb80ec8` (C12 #353) são ancestrais. **O passo 9 folda contra o tip de `origin/main` — não contra um SHA congelado neste doc; re-meça com `git fetch` antes de foldar** (entre a 1ª e a 2ª medição desta mesma sessão o tip andou de `0548d19a` para `be80ea47`). O passo 10 **não** está em `origin/main`: está em voo no PR #357 — ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
 
 **Saída:** `origin/main` com passos 9–13 completados (ou bloqueados por aguardar autorização do dono) — `main` aqui é sempre o **remoto**, nunca o local; ver § Passo 10.
 
@@ -51,7 +51,7 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 
 ## Passo 10 — Docs PR (Haiku)
 
-**Status (medido 2026-09-22, não inferido):** o commit existe como `4b5b04c5` — mas **em `main` LOCAL, não em `origin/main`**. `git merge-base --is-ancestor 4b5b04c5 origin/main` retorna **falso**; `origin/main` = `0548d19a`. Ele vive em `main` local (3 commits à frente de `origin/main`: `4b5b04c5`, `ba966a29`, `26e75bf2`) e em 4 branches (`claude/cerca-de-execucao-pr1`, `claude/claude-code-docs-org-a3f3f4`, `claude/dynamic-table-immutable-after-8db704`, `claude/prova-runner-next-steps-31051b`). **Consequência:** os passos 11–13, que pedem "passo 10 mergeado", seguem bloqueados até `main` local subir — "mergeado em `main`" sem dizer **qual** `main` é exatamente a ambiguidade que este parágrafo fecha.
+**Status (re-medido 2026-09-22, não inferido):** o passo 10 **não está mergeado**. O conteúdo está **em voo no PR #357** (`claude/domain-motor-architecture-7ec49d`, OPEN, não-draft); em `main` local e nesta branch ele aparece como o commit `4b5b04c5`, e `git merge-base --is-ancestor 4b5b04c5 origin/main` retorna **falso** (`origin/main` = `be80ea47`). **Consequência:** os passos 11–13, que pedem "passo 10 mergeado", seguem bloqueados até o **#357** mergear — "mergeado em `main`" sem dizer **qual** `main` é exatamente a ambiguidade que este parágrafo fecha. **Ordem de merge:** #357 primeiro; só depois o que estiver empilhado em cima dele (classe `squash-merge-quebra-prs-empilhados`).
 
 **Confirmação (a 1ª linha é a que decide):**
 ```bash
@@ -159,7 +159,7 @@ tempo=120min (após 13 verde)
 | Passo | Modelo | Esforço | Autorização | Bloqueador |
 |---|---|---|---|---|
 | 9 | Haiku | — | D1 ✅ ratificado 22/09 (ramo (a)); falta "executa" | sim (aguarda "executa" do dono) |
-| 10 | Haiku | — | — | **sim** — commit existe (`4b5b04c5`) mas não está em `origin/main`; falta subir `main` local (§ Passo 10) |
+| 10 | Haiku | — | — | **sim** — conteúdo em voo no **PR #357**; `4b5b04c5` não é ancestral de `origin/main` (§ Passo 10) |
 | 11 | Haiku | — | "instrumenta" | sim (aguarda auth dono) |
 | 12 | Haiku + Sonnet | — / **medium** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
 | 13 | Haiku | — | "executa" | sim (depende 10 verde + aguarda auth) |
