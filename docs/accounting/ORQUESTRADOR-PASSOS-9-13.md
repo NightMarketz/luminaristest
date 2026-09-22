@@ -2,9 +2,9 @@
 
 **Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
-**Entrada:** `origin/main` = `0548d19a` (C8 PR-3 mergeado 20/09). Nenhuma tarefa deste documento roda antes disso.
+**Entrada (medida em 2026-09-22, no worktree `orquestrador-passos-9-13-fixes-050716`):** `origin/main` = `0548d19a` (C8 PR-3 #356; `edb80ec8`/C12 #353 já é ancestral). **O passo 9 folda contra este SHA.** O commit do passo 10 — `4b5b04c5` — **não** é ancestral de `origin/main`: ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
 
-**Saída:** `main` com passos 9–13 completados (ou bloqueados por aguardar autorização do dono).
+**Saída:** `origin/main` com passos 9–13 completados (ou bloqueados por aguardar autorização do dono) — `main` aqui é sempre o **remoto**, nunca o local; ver § Passo 10.
 
 ---
 
@@ -14,32 +14,48 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 
 | Passo | Task | Modelo | Esforço | Entrada | Saída | Gate | Próximo |
 |---|---|---|---|---|---|---|---|
-| **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → 47/57 (C12 ✅ + C8 espera PR-5 ou declaração); GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | grep "46/57\|47/57\|contábil.*20/22" | ✅ → 10 |
-| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit mergeado em `main`; 22 arquivos; skill-audit 0 findings | `git log --oneline main -1 \| grep -c "atomicUntil"` → ≥1 | ✅ → espera "11 instrumenta" |
-| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `main` com passo 10 mergeado; arquivo `NoOverlapConcurrency.integration.test.ts` como molde | `server/src/features/dynamicTables/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `npx jest UniqueFieldConcurrency --no-coverage 2>&1 \| grep failing` | espera "instrumenta" dono |
-| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `main` com passo 10 mergeado; `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `npx jest immutableAfter.test --no-coverage 2>&1 \| grep failing` | espera dono: fork + "corrige" |
-| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `main` com passo 10 mergeado; población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `npx jest atomicUntil.boundary --no-coverage` = verde | espera "executa" dono |
+| **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → **46/57 — contábil 20/22 · financeiro 17/19 · fiscal 9/16** (ramo (a), ratificado 22/09); C12 ✅; C8 aberto até PR-5; GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | `grep -cE "46/57" docs/accounting/ACCOUNTING-MASTER-MAP.md` → ≥1 | ✅ → 10 |
+| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit em `origin/main`; 22 arquivos; skill-audit 0 findings | `git merge-base --is-ancestor 4b5b04c5 origin/main` → exit 0 (hoje exit 1) | ✅ → espera "11 instrumenta" |
+| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); molde `server/src/features/dynamicTables/services/__tests__/NoOverlapConcurrency.integration.test.ts` | `server/src/features/dynamicTables/services/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `cd server && npm run test:integration -- UniqueFieldConcurrency` | espera "instrumenta" dono |
+| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `cd server && npm run test:unit -- immutableAfter` | espera dono: fork + "corrige" |
+| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `cd server && npm run test:unit -- atomicUntil.boundary` = verde | espera "executa" dono |
+
+**Por que os gates de teste são os scripts do repositório (`server/package.json:30-31`), e nunca uma chamada crua de `npx jest` com a flag de coverage desligada:** `test:unit` = `jest --selectProjects unit --forceExit` e `test:integration` = `jest --selectProjects integration --runInBand --forceExit` — o `--runInBand` é o que serializa as suítes que tocam o `test-integration.db` (classes `integration-suite-precisa-de-runinband` e `jest-concorrente-windows-ebusy`: um 2º jest concorrente derruba 44–50 suítes com EBUSY no Windows, e o exit code 0 não serve de gate), e o `--selectProjects` é o que decide se o arquivo `*.integration.test.ts` sequer é coletado. Chamada crua perde as duas coisas — **não "simplifique" de volta**.
 
 ---
 
 ## Passo 9 — Fold (Haiku)
 
+> **✅ Fork D1 RATIFICADO pelo dono em 2026-09-22 — ramo (a)** (*"Pode seguir em a"*). A régua é **soma das três parciais**.
+> Estado de partida, medido: `45/57 — contábil 19/22 · financeiro 17/19 · fiscal 9/16` (19+17+9 = 45).
+> **Alvo do fold:** `46/57 — contábil 20/22 · financeiro 17/19 · fiscal 9/16` (20+17+9 = 46).
+> Só **C12** (#353 `edb80ec8`) fecha nó; **C8 segue aberto até PR-5** — #356 (`0548d19a`) abre com
+> *"Terceiro dos 5 PRs seriais do incremento"*, e PR-4 (retificação/J801/J932) e PR-5 (NF-e modo 4) não existem
+> em `origin/main`.
+>
+> Ramo **não** escolhido, registrado para não reabrir: `47/57 — contábil 21/22 · financeiro 17/19 · fiscal 9/16`
+> — teria declarado C8 fechado já no PR-3. O defeito que originou o fork (pedir total 47 junto de uma parcial
+> contábil de 20 em 22, quando 20+17+9 = 46) está fechado.
+>
+> **Ratificação não é "executa".** O número está decidido; o fold em si **não foi executado** — segue esperando
+> a chamada do dono, como os demais passos.
+
 **O quê:**
-1. Atualizar `docs/accounting/ACCOUNTING-MASTER-MAP.md` §5: banner 45/57 → 47/57; C12 ✅; C8 depende PR-5.
+1. Atualizar `docs/accounting/ACCOUNTING-MASTER-MAP.md` §5 (banner do topo, linha da Régua e linha **Total** da tabela): banner 45/57 → **46/57** com as parciais do ramo (a) acima; C12 ✅; C8 **aberto até PR-5** (não marcar nó fechado).
 2. Atualizar `docs/accounting/GRAFO-DEPENDENCIAS-2026-09-14.md`: C9 absorvido no C8.
 3. Atualizar `PROXIMOS-PASSOS-2026-09-17.md`: coluna Estado para passos 4–5; seção "Estado em 2026-09-22".
 
-**Gate:** `grep "contábil 20/22" docs/accounting/ACCOUNTING-MASTER-MAP.md | wc -l` → ≥1
+**Gate:** `grep -cE "46/57" docs/accounting/ACCOUNTING-MASTER-MAP.md` → ≥1 **e** a linha da Régua tem de trazer as três parciais do ramo (a) (20 em 22 · 17 em 19 · 9 em 16) — total sem as parciais na mesma linha deixa a soma inauditável, que é exatamente o defeito D1. A ratificação de 22/09 vai citada no commit do fold.
 
 ---
 
 ## Passo 10 — Docs PR (Haiku)
 
-**Status:** ✅ cherry-pickado como `4b5b04c5` em `main` (22/09).
+**Status (medido 2026-09-22, não inferido):** o commit existe como `4b5b04c5` — mas **em `main` LOCAL, não em `origin/main`**. `git merge-base --is-ancestor 4b5b04c5 origin/main` retorna **falso**; `origin/main` = `0548d19a`. Ele vive em `main` local (3 commits à frente de `origin/main`: `4b5b04c5`, `ba966a29`, `26e75bf2`) e em 4 branches (`claude/cerca-de-execucao-pr1`, `claude/claude-code-docs-org-a3f3f4`, `claude/dynamic-table-immutable-after-8db704`, `claude/prova-runner-next-steps-31051b`). **Consequência:** os passos 11–13, que pedem "passo 10 mergeado", seguem bloqueados até `main` local subir — "mergeado em `main`" sem dizer **qual** `main` é exatamente a ambiguidade que este parágrafo fecha.
 
-**Confirmação:**
+**Confirmação (a 1ª linha é a que decide):**
 ```bash
-git log --oneline main | grep -i "atomicUntil\|motor de domínio" | head -1
+git merge-base --is-ancestor 4b5b04c5 origin/main && echo "passo 10 EM origin/main" || echo "AINDA NAO — 11/12/13 bloqueados"
 ls docs/adr/ADR-DOMAIN-MOTOR-rejected.md
 node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 ```
@@ -51,15 +67,15 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 **Autorização:** "instrumenta" (dono).
 
 **O quê:**
-1. Criar `server/src/features/dynamicTables/__tests__/UniqueFieldConcurrency.integration.test.ts`:
-   - Molde: `NoOverlapConcurrency.integration.test.ts` (Promise.all + `expect(count).toBe(1)`).
+1. Criar `server/src/features/dynamicTables/services/__tests__/UniqueFieldConcurrency.integration.test.ts` (mesmo diretório do molde):
+   - Molde: `server/src/features/dynamicTables/services/__tests__/NoOverlapConcurrency.integration.test.ts` (Promise.all + `expect(count).toBe(1)`). No mesmo diretório há também `NoOverlapUpdateConcurrency.integration.test.ts` — não confundir: o molde é o de *create*.
    - Preset com `compositeUnique: ['email', 'tenant']`.
    - 8 writes concorrentes do mesmo (email, tenant) → esperado: 1 persistido, 7 falhos.
    - `it.failing` com comentário citando GAP-MAP lacuna 7.
 
 2. Referenciar no GAP-MAP "Nível 4 — Runtime sistêmico".
 
-**Gate:** `npx jest UniqueFieldConcurrency --no-coverage 2>&1 | grep "failing"` → vermelho esperado.
+**Gate:** `cd server && npm run test:integration -- UniqueFieldConcurrency` → vermelho esperado (o `it.failing` aparece como *failing*). Integração **só** por este script — ver a razão abaixo da tabela de despacho.
 
 ---
 
@@ -82,7 +98,7 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 
 **Por que `medium`, não `low`/`high`:** as 2 opções já vêm esboçadas no GAP-MAP original (não é design aberto — `low` bastaria só para confirmar que ainda batem com o código); mas a tarefa exige ler os 2 métodos de verdade antes de perguntar, não só citar de memória (`low` arriscaria alucinar a linha). Não é `high`/`xhigh`: escopo é 2 métodos de 1 arquivo já localizado, sem exploração do resto do codebase, e a decisão não é irreversível (o dono ratifica antes de qualquer código).
 
-**Gate:** `npx jest immutableAfter.test --no-coverage 2>&1 | grep "failing"` → vermelho esperado.
+**Gate:** `cd server && npm run test:unit -- immutableAfter` → vermelho esperado (o arquivo não é `*.integration.test.ts`, então cai no projeto `unit`).
 
 ---
 
@@ -109,9 +125,9 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 
 **Gate:**
 ```bash
-npx jest atomicUntil.boundary --no-coverage  # → verde (0 ofensores)
-npx tsc --noEmit  # → limpo
-npm run test:integration  # → sem regressão
+cd server && npm run test:unit -- atomicUntil.boundary  # → verde (0 ofensores)
+cd server && npx tsc --noEmit  # → limpo
+cd server && npm run test:integration  # → sem regressão
 node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 ```
 
@@ -142,8 +158,8 @@ tempo=120min (após 13 verde)
 
 | Passo | Modelo | Esforço | Autorização | Bloqueador |
 |---|---|---|---|---|
-| 9 | Haiku | — | — | não |
-| 10 | Haiku | — | — | não (já feito) |
+| 9 | Haiku | — | D1 ✅ ratificado 22/09 (ramo (a)); falta "executa" | sim (aguarda "executa" do dono) |
+| 10 | Haiku | — | — | **sim** — commit existe (`4b5b04c5`) mas não está em `origin/main`; falta subir `main` local (§ Passo 10) |
 | 11 | Haiku | — | "instrumenta" | sim (aguarda auth dono) |
 | 12 | Haiku + Sonnet | — / **medium** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
 | 13 | Haiku | — | "executa" | sim (depende 10 verde + aguarda auth) |
