@@ -85,7 +85,7 @@ DynamicTable é um **motor de tabelas definidas pelo usuário em tempo de execu�
 
 #### O que é um módulo ERP first-class Prisma
 
-Um módulo first-class Prisma tem **tabelas definidas pelo desenvolvedor com invariantes que o banco deve garantir.** O usuário não configura o esquema — ele opera dentro do módulo. Contabilidade (`Account`, `JournalEntry`, `Posting`) é o módulo canônico: `Σdébito = Σcrédito` exige inteiros reais, `@@unique` real e atomicidade de transação real — impossível em `data: Json`.
+Um módulo first-class Prisma tem **tabelas definidas pelo desenvolvedor com invariantes que o banco deve garantir.** O usuário não configura o esquema — ele opera dentro do módulo. Contabilidade (`Account`, `JournalEntry`, `Posting`) é o módulo canônico: `Σdébito = Σcrédito` exige inteiros reais, `@@unique` real, índice por conta/período e evidência de adulteração independente do caminho de escrita. Em `data: Json` nada disso vem do banco: o motor DynamicTable **consegue** reimplementar quase tudo no serviço (guards, gate in-tx + lock, deleteConstraints), mas sem constraint nem índice de expressão, e com `isSystem` passando pelos guards — é custo de reimplementação sem invariante novo, não impossibilidade (re-leitura do motor 2026-09-21).
 
 **Módulos first-class servem para:** Contabilidade, Folha de Pagamento, Fiscal/NF-e, RH, qualquer domínio com invariantes financeiros/legais/regulatórios.
 
@@ -108,7 +108,7 @@ Em caso de dúvida: **Prisma first-class.** DynamicTable é exceção justificad
 - [ ] **[AC-2.1-B2] NUNCA modele uma entidade financeira, legal ou regulatória como linha de DynamicTable.** `JournalEntry`, `Posting`, `PayrollEntry`, `FiscalDocument` são Prisma first-class — ponto final.
 - [ ] **[AC-2.1-B3] NUNCA use preset DynamicTable como camada de persistência de módulo ERP.** O preset é UI/entrada; o dado autoritativo fica nas tabelas Prisma do módulo.
 - [ ] **[AC-2.1-B4] NUNCA modifique `DynamicTableService.ts` para acomodar integração cross-módulo.** Se você está editando `DynamicTableService` para conectar dois domínios, o design está errado — pare e redesenhe.
-- [ ] **[AC-2.1-B5] NUNCA confie em `unique`/`compositeUnique` de preset para idempotência financeira.** É scan em JS dentro do tx (TOCTOU). Idempotência real = `@@unique` no model Prisma do módulo.
+- [ ] **[AC-2.1-B5] NUNCA confie em `unique`/`compositeUnique` de preset para idempotência financeira.** É SQL `json_extract` (`countByFieldValue`) em `validateAdvancedRules`, que roda **antes** de `prisma.$transaction(writeCreate)` — dentro da tx só `noOverlap` é re-checado (TOCTOU). Idempotência real = `@@unique` no model Prisma do módulo.
 
 #### Onde a integração entre DynamicTable e módulos Prisma deve acontecer
 
@@ -121,11 +121,37 @@ A integração (ex.: "venda finalizada → lançamento contábil") sobe ao **ní
 Toda linha de DynamicTable mora em `DynamicTableData.data Json` sobre **SQLite**. Isso impõe quatro limites que **nenhuma skill remove** — assumir o contrário foi o que furou o primeiro plano do módulo de Contabilidade. Respeite-os ou o gate reprova:
 
 - [ ] **[AC-2.2-1] Dinheiro = inteiro em centavos** (`numberFormat:'integer'`), nunca decimal/float. Não existe tipo Decimal; `number` é IEEE-754 e `0.1+0.2` deriva. Invariantes monetários (ex.: `Σdébito=Σcrédito` de um razão) são **igualdade inteira exata, sem epsilon**. (A linha "Money/`addMoney()`" da §2 continua valendo para somatórios de **exibição**; centavos é para **armazenamento** e para qualquer **invariante de fechamento**.)
-- [ ] **[AC-2.2-2] `unique`/`compositeUnique` de preset NÃO é constraint de banco.** É um scan `json_extract` em app-layer dentro do tx (TOCTOU) — pega re-post já commitado, **não** pega dois writes concorrentes da mesma chave. Para idempotência (ex.: `unique(sourceType,sourceId)`), use `compositeUnique` + check no service e **nomeie o teto** com um comentário `ponytail:`. Upgrade = promover a model Prisma com `@@unique` real — que **porém** perde o path de lentes schema-driven (`@@PRESET_TABLE_KEY::`), então é trade-off, não upgrade grátis. Não trate como garantia de corrida.
+- [ ] **[AC-2.2-2] `unique`/`compositeUnique` de preset NÃO é constraint de banco.** É SQL `json_extract` em `validateAdvancedRules`, executado **antes** da tx de escrita (`DynamicTableService.createTableData`/`updateTableData`); dentro de `writeCreate`/`writeUpdate` só `enforceNoOverlap` é re-checado (TOCTOU) — pega re-post já commitado, **não** pega dois writes concorrentes da mesma chave. `compositeUnique` é full scan (dívida declarada em `validation-and-governance.md §3`). Para idempotência (ex.: `unique(sourceType,sourceId)`), use `compositeUnique` + check no service e **nomeie o teto** com um comentário `ponytail:`. Dois upgrades possíveis: (a) promover a model Prisma com `@@unique` real — que **porém** perde o path de lentes schema-driven (`@@PRESET_TABLE_KEY::`), trade-off, não grátis; (b) estender a `unique`/`compositeUnique` o padrão que já fecha `noOverlap` no próprio motor — `runSerializedIfNoOverlap` → `withTableWriteLock(table.id)` + re-checagem in-tx com repo tx-bound (`93945426`) — sem perder as lentes; lacuna registrada no GAP-MAP (Nível 4, 2026-09-21). Não trate como garantia de corrida enquanto (b) não existir.
 - [ ] **[AC-2.2-3] Sem self-relation provada.** Nenhum preset aponta uma `relation` para a **própria** tabela; a resolução self-`@@PRESET_TABLE_KEY` é não-testada e não há componente de árvore no frontend (`GenericTable` é plano). Modele hierarquia por **chave codificada** (`1.1.2` → pai = prefixo do code), não por `parentId` auto-relacional; renderize com `GenericTabbedView` plano indentado pela profundidade do code. Relations **cross-table** (por id) continuam normais/provadas.
 - [ ] **[AC-2.2-4] Soft-delete ignora `immutableAfter`/`lifecycle`.** Esses guards declarativos só rodam em `updateTableData`, **não** em `deleteTableData`. Tornar um registro postado/terminal de fato imutável exige guarda de status na **camada de serviço** (ou `deleteConstraints` RESTRICT no pai) — o edit-block sozinho não cobre o delete.
 
-> Evidência de grafo (2026-06-22): money em `data Json`/SQLite sem Decimal; `unique` enforced via `countByFieldValue`/`findAllDataByTableId` em JS dentro do tx; zero preset com self-relation; `deleteTableData` não consulta `immutableAfter`. Detalhe na memória `dynamictable-money-and-uniqueness-limits`.
+> Evidência de grafo (2026-06-22, corrigida por leitura do motor em 2026-09-21): money em `data Json`/SQLite sem Decimal; `unique` enforced via `countByFieldValue` (SQL `json_extract`) em `validateAdvancedRules`, **antes** da tx — só `noOverlap` tem gate in-tx + lock; `isSystem` dribla os 3 guards e o `noOverlap` (doc §8); zero preset com self-relation; `deleteTableData` não consulta `immutableAfter`/`lifecycle`. Detalhe na memória `dynamictable-money-and-uniqueness-limits`.
+
+### 2.3 Orquestração razão + subrazão — teto de atomicidade (decisão 2026-09-21, `docs/adr/ADR-DOMAIN-MOTOR-rejected.md`)
+
+`PostingService.postEntry` abre `runTransaction` **raiz própria** e não aceita `tx` de fora (`PostingService.ts:286/:323`; `ADR-INCR-FIXED-ASSETS.md` §1). Logo todo service Prisma first-class que posta no razão **e** muda um subrazão (AP/AR/estoque/imobilizado/banco) faz **dois commits**. Isso é decisão, não descuido — e é o que um "motor de domínio" genérico (DAG + fila + plugins + AuditLog central) tentou substituir e foi **rejeitado** (master map §4). O padrão se declara no arquivo e se prova por teste; não se abstrai em engine.
+
+- [ ] **[AC-2.3-1] Dois commits + reconcile é o padrão.** Commit 1 = `postEntry` (idempotente por `sourceType/sourceId` no `@@unique`; gate de período **dentro** da tx). Commit 2 = CAS no subrazão em `runTransaction` separado, com `tx` propagado ao repo (`server/CLAUDE.md` gate 5). Convergência = read-first idempotente + `reconcile*()` re-drivável. **Proibido:** tentar "mesma tx"; compensar com `try/catch` + delete; gate autoritativo fora da tx. Precedentes: AP `PayableService.ts:50-54`, estoque `InventoryService.ts:67-71` (precedente do padrão; fora do gate `[AC-2.3-2]` porque quem chama `postEntry` ali é o mapper), C11 `AccountingReviewService.ts:76-80`, C8 `DepreciationService.ts:44-50`.
+- [ ] **[AC-2.3-2] Cabeçalho `atomicUntil` obrigatório** em todo service que satisfaz o predicado mecânico "chama `.postEntry(` fora do `PostingService`" — **com ou sem** subrazão: quem só posta (ex.: `ExerciseClosingService`) também declara, com `commit 2 — nenhum` (exclui `PostingService`, que É o commit 1, e as bridges do lado DynamicTable no controller — `crmController.ts:92-107` — que já anotam "post-commit best-effort + reconcile"). É o **primeiro JSDoc do arquivo**, com 5 linhas fixas, no vocabulário do `[SEL-004]` (evento, bridge, idempotência, reconcile). Cada linha aponta o teste que a prova; linha sem teste escreve `teste: [sem teste — GAP-MAP]`, nunca omite. Os 3 testes: (i) gate falha dentro da tx → nada persiste; (ii) commit 2 falha → razão intacto e o reconcile converge; (iii) reconcile 2× = idempotente, **asserindo a segunda chamada** (classe `comentario-de-teste-afirma-o-que-nao-assere`). Template (copiar literal, preencher `<…>`):
+
+  ```ts
+  /**
+   * <NomeService> — <módulo>. FIRST-CLASS PRISMA.
+   *
+   * atomicUntil: postEntry
+   *   commit 1 — razão: postEntry(sourceType='<x>', sourceId=<id>); gate de período dentro da tx
+   *              teste: <arquivo> › "<caso>"
+   *   commit 2 — subrazão: CAS <STATUS_A → STATUS_B> + <campo>EntryId, runTransaction próprio
+   *              teste: <arquivo> › "<caso>"
+   *   reconcile — <reconcileFn>(): read-first, idempotente; fecha "commit 1 ok, commit 2 falhou"
+   *              teste: <arquivo> › "<caso — assere a 2ª chamada>"
+   *   fora da tx — <nada | emissão fiscal via porta X10b | notificação best-effort>
+   */
+  ```
+  Service de commit único (ex.: fechamento de exercício) está **dentro** do predicado e escreve `commit 2 — nenhum` e `reconcile — n/a (postEntry idempotente por sourceId)`.
+- [ ] **[AC-2.3-3] Sem motor.** Não existe engine de workflow/mutação neste repo. A primitiva `commitThenReconcile(...)` **só nasce de incidente** da classe reconcile (ADR-DOMAIN-MOTOR §3, extensão do gatilho (b) do `ADR-RC-SUBLEDGER-AP-AR-reuse-sanction.md`), migrando só o serviço quebrado; não entra em fila. Motor genérico = decisão rejeitada; reabrir exige ADR citando um dos 4 gatilhos.
+
+> Evidência (2026-09-21, leitura direta): 56 services contábeis, 18 com padrão reconcile em prosa livre, 5 orquestrando razão + outro domínio, **8 chamam `.postEntry(` fora do `PostingService` e nenhum tem cabeçalho** (`grep -rlE "\.postEntry\(" server/src/features/*/services --include=*.ts | grep -v -e __tests__ -e PostingService`); 0 ocorrências de "2 commits"/"reconcile" neste contrato antes desta §. Gate executável (`atomicUntil.boundary.test.ts`) chega no PR-B (GAP-MAP fila 9); até lá a regra é `[PAPEL]` cobrada pelo revisor.
 
 ---
 

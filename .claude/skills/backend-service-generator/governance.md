@@ -46,6 +46,12 @@ rules:
     gates:
       - type: eval
         target: ./evals/evals.json#happy-1
+  # Adicionada em 2026-09-22 (Contrato §2.3, cabeçalho atomicUntil — ADR-DOMAIN-MOTOR-rejected).
+  # Verificador executável (atomicUntil.boundary.test.ts) entra no PR-B; até lá só o eval estrutural.
+  SVC-008:
+    gates:
+      - type: eval
+        target: ./evals/evals.json#happy-2
 ---
 
 # Governança — `backend-service-generator`
@@ -66,6 +72,7 @@ Regras normativas da camada Service, cada uma coberta por pelo menos um caso de 
 - `SVC-005` — zero `prisma.*` direto e zero Express/HTTP no service (agnóstico a transporte).
 - `SVC-006` — `actor: IUser | null` importado de `../../users/models/User.model`, nunca `@prisma/client`.
 - `SVC-007` — registro em `lib/factory.ts`: repo/policy antes do service + getter `get<Resource>Service()`.
+- `SVC-008` — service que chama `postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil` (5 linhas) + 3 testes por linha; 2 commits + reconcile, nunca "mesma tx" (Contrato §2.3) — caso `happy-2`. Verificador real = `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (PR-B, GAP-MAP fila 9); até lá `[PAPEL]`.
 
 Status `draft`: ainda **não validado** — sem `governance-eval-score`/`REPORT.md`. `eval-score`/`last-evaluated`
 no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; só aparecem quando a

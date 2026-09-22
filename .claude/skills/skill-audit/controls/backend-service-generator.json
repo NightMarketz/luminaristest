@@ -5,5 +5,12 @@
     "assertion": "absent:new InvoiceRepository(",
     "good": "export class InvoiceService {\n  constructor(private repo: IInvoiceRepository, private policy: IInvoicePolicy) {}\n}",
     "bad": "export class InvoiceService {\n  private repo = new InvoiceRepository();\n}"
+  },
+  {
+    "rule": "SVC-008",
+    "corrected": "happy-2: assertion `contains:atomicUntil:` — cabeçalho §2.3 no primeiro JSDoc; a variante má tem JSDoc mas sem as 5 linhas",
+    "assertion": "contains:atomicUntil:",
+    "good": "/**\n * SettlementService — Contas a Pagar. FIRST-CLASS PRISMA.\n *\n * atomicUntil: postEntry\n *   commit 1 — razão: postEntry(sourceType='ap.payment', sourceId=paymentId); gate de período dentro da tx\n *              teste: SettlementService.test.ts › \"período fechado → nada persiste\"\n *   commit 2 — subrazão: CAS PAYING → PAID + paymentEntryId, runTransaction próprio\n *              teste: SettlementService.test.ts › \"commit 2 falha → razão intacto\"\n *   reconcile — reconcilePayables(): read-first, idempotente; fecha \"commit 1 ok, commit 2 falhou\"\n *              teste: SettlementService.test.ts › \"reconcile 2× — assere a 2ª chamada\"\n *   fora da tx — nada\n */\nexport class SettlementService {}\n",
+    "bad": "/**\n * SettlementService — posta via postEntry e atualiza o status do título.\n */\nexport class SettlementService {}\n"
   }
 ]

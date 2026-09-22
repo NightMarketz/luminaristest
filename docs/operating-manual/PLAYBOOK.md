@@ -16,6 +16,7 @@
 | Tuning por modelo | `docs/operating-manual/MODEL-TUNING.md` | Opus 4.8 ativo: gatilhos explícitos, micro-autonomia |
 | Trio de agentes | `luminaris-orchestrator` → `luminaris-implementer` → `luminaris-reviewer` | Planeja → executa → reprova/aprova com evidência |
 | Gates mecânicos | `tsc` ×2, `skill-audit governance-check`, `skill-audit wiring`, CI | O que não depende de ninguém lembrar |
+| Contrato de arquitetura (§2.1 fronteira · §2.2 limites · §2.3 teto de atomicidade) | `.claude/skills/_ARCHITECTURE-CONTRACT.md` | O que o revisor cobra por ID (`AC-*`); §2.3 = 2 commits + reconcile, sem motor |
 
 Validação: teste de sistema 2026-07-07 — 9/10, mutação de controle reprovada por forma
 (`_OPERATING-GATES.md § Validação empírica`).

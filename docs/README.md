@@ -27,7 +27,7 @@
 | Dependências e próximo nó | `accounting/GRAFO-DEPENDENCIAS-2026-09-14.md` | supersede 09-11 e 09-07 |
 | Ordem de execução + detalhamento por passo | `accounting/PROXIMOS-PASSOS-2026-09-17.md` | supersede 09-14 (11/12 ✅) /09-02/09-01/08-31/08-28 |
 | Decisões do dono (citáveis) | `accounting/CEDULA-DECISAO-*.md` (7) | a de **14/09 forks-ratificações prevalece** onde diverge da de 14/09 gates-humanos |
-| Decisões de arquitetura | `adr/` (42 ADRs + pareceres/ratificações, [`adr/INDEX.md`](adr/INDEX.md)) | ADR emendado ganha bloco `EMENDA <data>` no corpo, nunca arquivo novo |
+| Decisões de arquitetura | `adr/` (43 ADRs + pareceres/ratificações, [`adr/INDEX.md`](adr/INDEX.md)) | ADR emendado ganha bloco `EMENDA <data>` no corpo, nunca arquivo novo; primeiro ADR `Rejected` = `ADR-DOMAIN-MOTOR-rejected.md` (2026-09-21) |
 | Gates humanos | `accounting/RUNBOOK-{B4,X2,H1,H2,H2-WIZARD,H3,M2}.md` | **todos em branco** (0 desfecho marcado em 14/09); formato em `operating-manual/RUNBOOK-FORMAT.md` |
 | Horizonte de plataforma (fábrica de verticais) | `ROADMAP-PLATAFORMA.md` | camada de horizonte; não é fila |
 | Sequência executável dos 3 degraus | `PLANO-MODULO-COMPLETO-REPLICAVEL.md` | ponteiro de estado 14/09 no topo; vale como definição de pronto |
@@ -47,7 +47,7 @@
 | `accounting/fontes-oficiais/` | corpus de 23 normas (Manual ECD/ECF, IN 1.700 + anexos, LC 116, CNAB 240, NFS-e) — `MANIFEST.md` com sha256 | ✅ em `main` desde #311 (D3b) |
 | `accounting/fixtures/incr6-validation/` | fixtures da validação funcional do INCR-6 (import/export) | histórico, ainda usado por testes |
 | `accounting/pr-bodies/` | corpos de PR do lote paralelo de 07/2026 (PR 1–7) | histórico |
-| `adr/` | 42 ADRs + 5 pareceres do `luminaris-accounting-architect` + 2 ratificações D0 (50 arquivos) | `INDEX.md` |
+| `adr/` | 43 ADRs + 5 pareceres do `luminaris-accounting-architect` + 2 ratificações D0 (51 arquivos) | `INDEX.md` |
 | `architecture/` | `lint-layer-gate.md` (gate de camadas no CI — **parcial**, não é prova) | vigente |
 | `claude-skills/` | contratos de geração, registro de átomos, matriz de skills, relatório de auditoria de skills, `SKILLS_GUIDE.html` | vigente (auditoria via `skill-audit`) |
 | `crm/` | roadmap/remediação, councils de 07/2026, kit de validação D6, `specs/` (Parte B P0 fatias 1–6 + Fases 0–2) | roadmap vigente; specs = histórico executado |

@@ -127,6 +127,7 @@ consequência mecânica da mudança, e o CI cobra:
 | Rota nova ou alterada | Guard de path-count do openapi (`npm run docs:generate`) |
 | String de UI | Paridade i18n pt/en |
 | Migração em tabela com dado | `npm run smoke:migration` sobre cópia do `dev.db` real (`server/prisma/prisma/dev.db`) |
+| Service que chama `postEntry` (com ou sem subrazão) | Cabeçalho `atomicUntil` no primeiro JSDoc (Contrato §2.3, `AC-2.3-2`) + os 3 testes das linhas, **na mesma mudança**; 2 commits + reconcile, nunca "mesma tx" |
 
 Se a spec não listar o gate que a mudança aciona, isso é **lacuna de spec** (regra 2) — não improvise
 nem ignore.

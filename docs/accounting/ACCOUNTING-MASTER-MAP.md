@@ -611,6 +611,7 @@ O grafo aspiracional propõe estes; o projeto **decidiu contra** (registrado). S
 | PostgreSQL / exclusion constraints | 🔴 **Rejeitada** | Vencedor: SQLite tunado + gate transacional + `@@unique`. `stay-on-sqlite-no-postgres`. |
 | Contabilidade como preset DynamicTable | 🔴 **Rejeitada** | Vencedor: Prisma first-class. Contrato §2.1. |
 | **Motor de Regras Contábeis** (`conditionsJson`/`templateJson` gera lançamento) | 🔴 **Rejeitada (recomendação de domínio)** | Vencedor: **bridge pós-commit explícita por origem**. Um engine dirigido por template no caminho do ledger reintroduz o "motor de plugins" no ponto mais crítico (quem valida que o template balanceia? versionamento?). ADR-C01 fixou o padrão de bridge. |
+| **Motor de Domínio** (MutationEngine + OrchestrationEngine em DAG + PluginRegistry + AuditLog central + fila) | 🔴 **Rejeitada 2026-09-21** | Vencedor: **2 commits + reconcile declarados no cabeçalho `atomicUntil`** (Contrato §2.3, `[AC-2.3-1..3]`); primitiva `commitThenReconcile` só nasce de incidente. Irmã da linha acima: o mesmo "motor de plugins no caminho do razão", um nível acima. Das 5 falhas alegadas, 3 já tinham resposta na casa, 1 era meio verdadeira e 1 invertia a guarda de PII da allowlist de auditoria; o pseudo-código central não sustentava a promessa ACID. 4 gatilhos de reabertura em `docs/adr/ADR-DOMAIN-MOTOR-rejected.md` §3. |
 | Multi-moeda (`transactionCurrencyCode`/`exchangeRate`) | 🔴 **Fora / ADR próprio** | BRL-only. Campo reservado no `AccountingScope` como slot futuro, sem implementação. |
 
 ---
