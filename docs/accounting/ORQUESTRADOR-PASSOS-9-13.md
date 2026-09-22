@@ -1,6 +1,6 @@
 # Orquestrador — Passos 9–13 (Fold + Motor + Boundary Test)
 
-**Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold) e Sonnet (decisão/fork).
+**Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
 **Entrada:** `origin/main` = `0548d19a` (C8 PR-3 mergeado 20/09). Nenhuma tarefa deste documento roda antes disso.
 
@@ -10,13 +10,15 @@
 
 ## Despacho (sequência de agentes)
 
-| Passo | Task | Modelo | Entrada | Saída | Gate | Próximo |
-|---|---|---|---|---|---|---|
-| **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | `origin/main` + arquivo de estado 22/09 | banner 45/57 → 47/57 (C12 ✅ + C8 espera PR-5 ou declaração); GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | grep "46/57\|47/57\|contábil.*20/22" | ✅ → 10 |
-| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit mergeado em `main`; 22 arquivos; skill-audit 0 findings | `git log --oneline main -1 \| grep -c "atomicUntil"` → ≥1 | ✅ → espera "11 instrumenta" |
-| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | `main` com passo 10 mergeado; arquivo `NoOverlapConcurrency.integration.test.ts` como molde | `server/src/features/dynamicTables/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `npx jest UniqueFieldConcurrency --no-coverage 2>&1 \| grep failing` | espera "instrumenta" dono |
-| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku + Sonnet** | `main` com passo 10 mergeado; `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `npx jest immutableAfter.test --no-coverage 2>&1 \| grep failing` | espera dono: fork + "corrige" |
-| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | `main` com passo 10 mergeado; población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `npx jest atomicUntil.boundary --no-coverage` = verde | espera "executa" dono |
+Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o dial — "—" na coluna.
+
+| Passo | Task | Modelo | Esforço | Entrada | Saída | Gate | Próximo |
+|---|---|---|---|---|---|---|---|
+| **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → 47/57 (C12 ✅ + C8 espera PR-5 ou declaração); GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | grep "46/57\|47/57\|contábil.*20/22" | ✅ → 10 |
+| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit mergeado em `main`; 22 arquivos; skill-audit 0 findings | `git log --oneline main -1 \| grep -c "atomicUntil"` → ≥1 | ✅ → espera "11 instrumenta" |
+| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `main` com passo 10 mergeado; arquivo `NoOverlapConcurrency.integration.test.ts` como molde | `server/src/features/dynamicTables/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `npx jest UniqueFieldConcurrency --no-coverage 2>&1 \| grep failing` | espera "instrumenta" dono |
+| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `main` com passo 10 mergeado; `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `npx jest immutableAfter.test --no-coverage 2>&1 \| grep failing` | espera dono: fork + "corrige" |
+| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `main` com passo 10 mergeado; población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `npx jest atomicUntil.boundary --no-coverage` = verde | espera "executa" dono |
 
 ---
 
@@ -71,12 +73,14 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
    - Linha em status `Paid` → `deleteTableData(id)` deve lançar.
    - `it.failing` citando GAP-MAP lacuna 8.
 
-**Sonnet:**
+**Sonnet — esforço `medium`:**
 1. Ler `DynamicTableService.ts` `deleteTableData` + Guards 2/3 do `updateTableData`.
 2. Apresentar fork:
    - **(a)** Guard no delete (+20 linhas, cobre raiz).
    - **(b)** `deleteConstraints: RESTRICT` no preset (não cobre raiz).
 3. Aguardar resposta do dono.
+
+**Por que `medium`, não `low`/`high`:** as 2 opções já vêm esboçadas no GAP-MAP original (não é design aberto — `low` bastaria só para confirmar que ainda batem com o código); mas a tarefa exige ler os 2 métodos de verdade antes de perguntar, não só citar de memória (`low` arriscaria alucinar a linha). Não é `high`/`xhigh`: escopo é 2 métodos de 1 arquivo já localizado, sem exploração do resto do codebase, e a decisão não é irreversível (o dono ratifica antes de qualquer código).
 
 **Gate:** `npx jest immutableAfter.test --no-coverage 2>&1 | grep "failing"` → vermelho esperado.
 
@@ -134,14 +138,16 @@ tempo=120min (após 13 verde)
 
 ---
 
-## Modelo × Autorização × Bloqueador
+## Modelo × Esforço × Autorização × Bloqueador
 
-| Passo | Modelo | Autorização | Bloqueador |
-|---|---|---|---|
-| 9 | Haiku | — | não |
-| 10 | Haiku | — | não (já feito) |
-| 11 | Haiku | "instrumenta" | sim (aguarda auth dono) |
-| 12 | Haiku + Sonnet | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
-| 13 | Haiku | "executa" | sim (depende 10 verde + aguarda auth) |
+| Passo | Modelo | Esforço | Autorização | Bloqueador |
+|---|---|---|---|---|
+| 9 | Haiku | — | — | não |
+| 10 | Haiku | — | — | não (já feito) |
+| 11 | Haiku | — | "instrumenta" | sim (aguarda auth dono) |
+| 12 | Haiku + Sonnet | — / **medium** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
+| 13 | Haiku | — | "executa" | sim (depende 10 verde + aguarda auth) |
 
-**Padrão:** Haiku executa; Sonnet apenas quando há leitura de código + decisão design. "instrumenta" = teste vermelho sem lógica; "executa" = código com lógica.
+**Padrão:** Haiku executa mecânico (grep/fold/retrofit de comentário — 0 dial de esforço). Sonnet só entra quando há leitura de código + decisão de design, e mesmo aí no piso que a tarefa aguenta: aqui `medium`, porque o espaço de busca é 2 métodos de 1 arquivo já apontado e as opções já vêm esboçadas — nem `low` (risco de citar linha de memória sem ler), nem `high+` (isso é para decisão sem precedente ou sem teto de escopo, que não é o caso). "instrumenta" = teste vermelho sem lógica; "executa" = código com lógica.
+
+**Regra geral para próximas tarefas deste tipo (T4 — decisão que se repete, cite-a):** esforço do Sonnet acompanha o tamanho do espaço de busca e o custo de errar, não o "peso" aparente da tarefa — fork já esboçado + arquivo já localizado = `medium` teto; escalar para `high`/`xhigh` só quando a leitura precisar cruzar múltiplos arquivos sem localização prévia, ou a decisão for difícil de reverter depois de tomada.
