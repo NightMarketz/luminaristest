@@ -2,7 +2,7 @@
 
 **Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
-**Entrada (re-medida em 2026-09-22, após `git fetch`):** `origin/main` = `be80ea47` (#359, cerca de execução PR-2); `0548d19a` (C8 PR-3 #356) e `edb80ec8` (C12 #353) são ancestrais. **O passo 9 folda contra o tip de `origin/main` — não contra um SHA congelado neste doc; re-meça com `git fetch` antes de foldar** (entre a 1ª e a 2ª medição desta mesma sessão o tip andou de `0548d19a` para `be80ea47`). O passo 10 **não** está em `origin/main`: está em voo no PR #357 — ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
+**Entrada (re-medida em 2026-09-22, após `git fetch`):** `origin/main` = `be80ea47` (#359, cerca de execução PR-2); `0548d19a` (C8 PR-3 #356) e `edb80ec8` (C12 #353) são ancestrais. **O passo 9 folda contra o tip de `origin/main` — não contra um SHA congelado neste doc; re-meça com `git fetch` antes de foldar** (entre a 1ª e a 2ª medição desta mesma sessão o tip andou de `0548d19a` para `be80ea47`). O passo 10 **está em `origin/main`** — entrou por **squash** no #358, ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
 
 **Saída:** `origin/main` com passos 9–13 completados (ou bloqueados por aguardar autorização do dono) — `main` aqui é sempre o **remoto**, nunca o local; ver § Passo 10.
 
@@ -15,10 +15,10 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 | Passo | Task | Modelo | Esforço | Entrada | Saída | Gate | Próximo |
 |---|---|---|---|---|---|---|---|
 | **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → **46/57 — contábil 20/22 · financeiro 17/19 · fiscal 9/16** (ramo (a), ratificado 22/09); C12 ✅; C8 aberto até PR-5; GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | `grep -cE "46/57" docs/accounting/ACCOUNTING-MASTER-MAP.md` → ≥1 | ✅ → 10 |
-| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit em `origin/main`; 22 arquivos; skill-audit 0 findings | `git merge-base --is-ancestor 4b5b04c5 origin/main` → exit 0 (hoje exit 1) | ✅ → espera "11 instrumenta" |
-| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); molde `server/src/features/dynamicTables/services/__tests__/NoOverlapConcurrency.integration.test.ts` | `server/src/features/dynamicTables/services/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `cd server && npm run test:integration -- UniqueFieldConcurrency` | espera "instrumenta" dono |
-| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `cd server && npm run test:unit -- immutableAfter` | espera dono: fork + "corrige" |
-| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `origin/main` contendo `4b5b04c5` (hoje **não** contém — § Passo 10); población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `cd server && npm run test:unit -- atomicUntil.boundary` = verde | espera "executa" dono |
+| **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Conteúdo em `origin/main`; 22 arquivos; skill-audit 0 findings | `git cat-file -e origin/main:docs/adr/ADR-DOMAIN-MOTOR-rejected.md` → exit 0 ✅ (predicado de **conteúdo**; ancestralidade de SHA não serve — ver § Passo 10) | ✅ → espera "11 instrumenta" |
+| **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); molde `server/src/features/dynamicTables/services/__tests__/NoOverlapConcurrency.integration.test.ts` | `server/src/features/dynamicTables/services/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `cd server && npm run test:integration -- UniqueFieldConcurrency` | espera "instrumenta" dono |
+| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `cd server && npm run test:unit -- immutableAfter` | espera dono: fork + "corrige" |
+| **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `cd server && npm run test:unit -- atomicUntil.boundary` = verde | espera "executa" dono |
 
 **Por que os gates de teste são os scripts do repositório (`server/package.json:30-31`), e nunca uma chamada crua de `npx jest` com a flag de coverage desligada:** `test:unit` = `jest --selectProjects unit --forceExit` e `test:integration` = `jest --selectProjects integration --runInBand --forceExit` — o `--runInBand` é o que serializa as suítes que tocam o `test-integration.db` (classes `integration-suite-precisa-de-runinband` e `jest-concorrente-windows-ebusy`: um 2º jest concorrente derruba 44–50 suítes com EBUSY no Windows, e o exit code 0 não serve de gate), e o `--selectProjects` é o que decide se o arquivo `*.integration.test.ts` sequer é coletado. Chamada crua perde as duas coisas — **não "simplifique" de volta**.
 
@@ -51,11 +51,16 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 
 ## Passo 10 — Docs PR (Haiku)
 
-**Status (re-medido 2026-09-22, não inferido):** o passo 10 **não está mergeado**. O conteúdo está **em voo no PR #357** (`claude/domain-motor-architecture-7ec49d`, OPEN, não-draft); em `main` local e nesta branch ele aparece como o commit `4b5b04c5`, e `git merge-base --is-ancestor 4b5b04c5 origin/main` retorna **falso** (`origin/main` = `be80ea47`). **Consequência:** os passos 11–13, que pedem "passo 10 mergeado", seguem bloqueados até o **#357** mergear — "mergeado em `main`" sem dizer **qual** `main` é exatamente a ambiguidade que este parágrafo fecha. **Ordem de merge:** #357 primeiro; só depois o que estiver empilhado em cima dele (classe `squash-merge-quebra-prs-empilhados`).
+**Status (3ª medição, 2026-09-22 — e as duas primeiras erraram por motivos diferentes):** o passo 10 **ESTÁ em `origin/main`**. O conteúdo entrou por **squash** no **#358** (cerca de execução PR-1), cuja branch carregava também o commit `4b5b04c5`. Medido: `git cat-file -e origin/main:docs/adr/ADR-DOMAIN-MOTOR-rejected.md` → exit 0; `atomicUntil` aparece 3× em `_ARCHITECTURE-CONTRACT.md` de `origin/main`; `git diff 4b5b04c5 origin/main` **vazio** para os 22 arquivos do commit.
+
+> **⚠️ A armadilha, e ela é de CLASSE:** `git merge-base --is-ancestor 4b5b04c5 origin/main` continua retornando **falso**, porque **squash-merge não preserva o SHA** — o conteúdo entra, a ancestralidade não. Um gate escrito sobre ancestralidade de SHA **nunca ficaria verde**, e leria "não mergeado" para sempre. Este doc já nasceu com esse gate na 2ª medição e ele foi trocado por **predicado de conteúdo** (`git cat-file -e` no artefato que o passo 10 cria). Regra para próximos passos: **onde o repo faz squash-merge, o gate de "já está lá?" se escreve sobre ARTEFATO, nunca sobre SHA** (classe `squash-merge-quebra-prs-empilhados`).
+
+**Consequência:** os passos 11–13 **não estão mais bloqueados pelo passo 10** — falta só a autorização do dono ("instrumenta" / "executa"). **Pendura aberta:** o PR **#357** (`claude/domain-motor-architecture-7ec49d`) segue OPEN com o mesmo conteúdo já em `main` — virou duplicata; fechá-lo ou não é decisão do dono.
 
 **Confirmação (a 1ª linha é a que decide):**
 ```bash
-git merge-base --is-ancestor 4b5b04c5 origin/main && echo "passo 10 EM origin/main" || echo "AINDA NAO — 11/12/13 bloqueados"
+# predicado de CONTEUDO: sobrevive a squash-merge, ao contrario de --is-ancestor
+git cat-file -e origin/main:docs/adr/ADR-DOMAIN-MOTOR-rejected.md && echo "passo 10 EM origin/main" || echo "AINDA NAO — 11/12/13 bloqueados"
 ls docs/adr/ADR-DOMAIN-MOTOR-rejected.md
 node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 ```
@@ -159,10 +164,10 @@ tempo=120min (após 13 verde)
 | Passo | Modelo | Esforço | Autorização | Bloqueador |
 |---|---|---|---|---|
 | 9 | Haiku | — | D1 ✅ ratificado 22/09 (ramo (a)); falta "executa" | sim (aguarda "executa" do dono) |
-| 10 | Haiku | — | — | **sim** — conteúdo em voo no **PR #357**; `4b5b04c5` não é ancestral de `origin/main` (§ Passo 10) |
+| 10 | Haiku | — | — | **não** — conteúdo em `origin/main` desde o #358 (squash); PR #357 ficou duplicado (§ Passo 10) |
 | 11 | Haiku | — | "instrumenta" | sim (aguarda auth dono) |
 | 12 | Haiku + Sonnet | — / **medium** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
-| 13 | Haiku | — | "executa" | sim (depende 10 verde + aguarda auth) |
+| 13 | Haiku | — | "executa" | sim (só aguarda auth — o passo 10 já está em `origin/main`) |
 
 **Padrão:** Haiku executa mecânico (grep/fold/retrofit de comentário — 0 dial de esforço). Sonnet só entra quando há leitura de código + decisão de design, e mesmo aí no piso que a tarefa aguenta: aqui `medium`, porque o espaço de busca é 2 métodos de 1 arquivo já apontado e as opções já vêm esboçadas — nem `low` (risco de citar linha de memória sem ler), nem `high+` (isso é para decisão sem precedente ou sem teto de escopo, que não é o caso). "instrumenta" = teste vermelho sem lógica; "executa" = código com lógica.
 
