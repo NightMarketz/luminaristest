@@ -75,6 +75,25 @@
         "absent:new InvoicePolicy(",
         "absent:prisma."
       ]
+    },
+    {
+      "id": "happy-2",
+      "type": "happy",
+      "rules": [
+        "SVC-008"
+      ],
+      "prompt": "Gere o SettlementService (Contas a Pagar) que liquida um título: CAS OPEN→PAYING no subrazão, posta no razão via PostingService.postEntry e finaliza PAYING→PAID; inclua reconcilePayables. Saída: o conteúdo completo de SettlementService.ts, começando pelo JSDoc do topo.",
+      "target_files": [
+        "server/src/features/accounting/services/SettlementService.ts"
+      ],
+      "assertions": [
+        "contains:atomicUntil:",
+        "regex:commit 1 — razão",
+        "regex:commit 2 — subrazão",
+        "regex:reconcile —",
+        "regex:fora da tx —",
+        "absent:$transaction(async"
+      ]
     }
   ]
 }

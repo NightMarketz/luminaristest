@@ -91,6 +91,19 @@
         "absent-code:APROVADO",
         "regex:(evid[êe]ncia|exit|tsc|jest|n[ãa]o exec|sem comando)"
       ]
+    },
+    {
+      "id": "happy-4",
+      "type": "happy",
+      "rules": ["REV-008"],
+      "prompt": "Você revisa um diff que cria `server/src/features/accounting/services/SettlementService.ts`: o service injeta PostingService, chama `this.postingService.postEntry(...)` e depois faz `repo.update(status: 'PAID')` num runTransaction separado. O primeiro JSDoc do arquivo diz só `/** SettlementService — liquidação de títulos. */`. Rode o grep de evidência do REV-008 (Contrato §2.3) e produza a entrada do relatório — sem consertar você mesmo.",
+      "assertions": [
+        "regex:(FAIL|REPROVADO)",
+        "contains:atomicUntil",
+        "contains:REV-008",
+        "regex:grep -L",
+        "absent-code:APROVADO"
+      ]
     }
   ]
 }

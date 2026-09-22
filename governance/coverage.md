@@ -30,6 +30,9 @@ incremental — skills sem `governance.md` ainda não aparecem aqui e **não** f
 | `AC-2.1-B4` | Não editar DynamicTableService p/ integração | backend-workflow-transition-generator | `luminaris-reviewer/fronteira-2.1` | design-time | ✅ coberto |
 | `AC-2.2-2` | `unique` de preset ≠ constraint de DB | dynamic-table-preset-generator | `skill-audit/P6` | design-time | ✅ coberto |
 | `AC-2.2-3` | Sem self-relation provada | dynamic-table-preset-generator | `skill-audit/G5` | executável (grep) — **declarado, nunca executado** | ⚠️ **G5 NÃO ENFORÇADO** (mesmo mecanismo). Sem cobertura substituta conhecida |
+| `AC-2.3-1` | Razão + subrazão = 2 commits + reconcile; nunca "mesma tx" nem compensação `try/catch` | backend-service-generator / luminaris-reviewer | `SVC-008` (eval `happy-2`) · `REV-008` (eval `happy-4`) | design-time | ✅ coberto (revisor) — 2026-09-22 |
+| `AC-2.3-2` | Cabeçalho `atomicUntil` (5 linhas) + 3 testes por linha em service que chama `postEntry` (com ou sem subrazão) | backend-service-generator / luminaris-reviewer | `SVC-008` · `REV-008` | design-time | 📄 **PAPEL até o PR-B** (GAP-MAP Nível 3 + fila 9): verificador real = `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts`, mesma classe do `no-accounting-imports.boundary.test.ts` (roda no job `Server – typecheck & test`); hoje 8/8 chamadores sem cabeçalho |
+| `AC-2.3-3` | Sem motor de domínio; primitiva `commitThenReconcile` só por incidente | luminaris-reviewer | `REV-008` (c) | design-time | ✅ coberto (revisor) — reabertura só por ADR com gatilho (`ADR-DOMAIN-MOTOR-rejected.md` §3) |
 
 ### Nota — o que "executável (grep)" significa hoje (2026-08-10)
 

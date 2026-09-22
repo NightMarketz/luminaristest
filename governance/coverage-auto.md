@@ -65,6 +65,7 @@ generated-by: skill-audit coverage
 | `SVC-005` | backend-service-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
 | `SVC-006` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SVC-007` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
+| `SVC-008` | backend-service-generator | eval:./evals/evals.json#happy-2 | ✅ |
 | `TEST-001` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-002` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-003` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
@@ -216,6 +217,7 @@ generated-by: skill-audit coverage
 | `REV-005` | luminaris-reviewer | eval:./evals/evals.json#happy-1 | ✅ |
 | `REV-006` | luminaris-reviewer | eval:./evals/evals.json#happy-2 | ✅ |
 | `REV-007` | luminaris-reviewer | eval:./evals/evals.json#happy-3 | ✅ |
+| `REV-008` | luminaris-reviewer | eval:./evals/evals.json#happy-4 | ✅ |
 | `SEL-001` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
 | `SEL-002` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
 | `SEL-003` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |

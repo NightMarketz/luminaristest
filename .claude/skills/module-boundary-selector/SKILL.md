@@ -69,6 +69,7 @@ Checklist da alfândega no registro:
 - [ ] Arquétipo existente (`revenue_recognition | settlement | reversal | performance_liability | cogs | subledger_command`) ou incremento de catálogo sinalizado.
 - [ ] `sourceType/sourceId` definidos para o `@@unique` do `JournalEntry` (ou do subledger alvo).
 - [ ] Se o regulador enxerga a operação (lente setorial): qual registro fiscal consome esse espelho.
+- [ ] No código, a alfândega vira o cabeçalho `atomicUntil` do service Prisma que posta (com ou sem subrazão) (Contrato §2.3, `AC-2.3-2`) — **mesmas palavras** deste registro (evento, bridge, idempotência, reconcile), para o revisor conferir linha a linha.
 
 ## Etapa 4 — Saída: Registro de Fronteira
 

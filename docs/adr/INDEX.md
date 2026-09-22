@@ -6,7 +6,7 @@
 >
 > **Convenção:** `ADR-<trilho><n>` = decisão; `D0-*` = registro de ratificação humana (gate G0) de uma fase.
 > Onde uma decisão de módulo **não** tem ADR próprio, o ponteiro para onde ela vive está em §Fora-de-ADR.
-> Última atualização: **2026-07-22**.
+> Última atualização: **2026-09-22** (primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
 
 ## Buildout contábil (INCR-*)
 
@@ -64,6 +64,8 @@ Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/PLANO-MODULO-C
 |---|---|---|---|---|
 | [ANALYTICS-DEFS](ADR-ANALYTICS-DEFS-write-unblock.md) | Escrita de definições de analytics — destravar × apagar as rotas × manter congelado (forks F-AD0..F-AD6) | **Accepted (parcial) — F-AD0 → (c) MANTER CONGELADO, ratificado 2026-08-01**; barreira implementada e mutation-testada (`DynamicTableService.systemTableWriteLock.test.ts`, 8 casos). **F-AD6 → (a) MANTER, RATIFICADO POR SINAL HUMANO 2026-08-02** (dono confirmou superfície de execução ad-hoc de KPI no roadmap) — **duas análises independentes rodaram o `_REUSE-CRITERION.md` e divergiram na Etapa 1** (§2.4 "diferente em espécie" × §2.6 "mesmo objeto"); **convergem em que o critério NÃO obriga (c)**, e a §2.6 concede a §2.4. **Objeção de (b) registrada e NÃO vista pelo dono ao decidir: F-AD6.5.** Consertos do passivo de `custom-kpis` **fechados por PR #162** (doc no controller 137→138, teste, teto por recusa, `tableId` divergente → 400) + comentário da policy por `424bc56`; **furo do gate de wiring FECHADO** (`route-spec-wiring.test.ts`, mutation-testado 4/4). **3 sessões paralelas tocaram este fork** — nota de colisão em F-AD6.6. **F-AD5 (a tela) segue ABERTO**; F-AD1..F-AD4 dormentes. Origem: achado N1 da revisão independente do PR #157 (`6500249`) | 2026-08-01 (emendas 2026-08-02) | DECISÃO ARQUITETURAL (DynamicTable / policy) |
 | [M2-DEPLOY](ADR-M2-deploy-topology.md) | Topologia de deploy — VPS própria com encaixe CLEAN para PaaS, uma instância por cliente, BYOK por env da instância, migração como etapa separada do pipeline | **Accepted — RATIFICADO PELO DONO 2026-08-22** (via `AskUserQuestion`, sem fork/parecer intermediário): (1) alvo→VPS própria agora + encaixe CLEAN p/ PaaS; (2) topologia→1 instância/cliente; (3) BYOK→chave de IA do cliente, custo zero de código, KMS/BYOC explicitamente fora de escopo; (4) migração→job próprio separado do swap de container, nunca boot/manual. Desbloqueia a pré-condição de alvo do `RUNBOOK-M2-DEPLOY-SMOKE.md`; **aberto:** VPS/provedor concreto, Qdrant gerenciado ou não | 2026-08-22 | DECISÃO ARQUITETURAL (deploy / infraestrutura) |
+
+| [DOMAIN-MOTOR](ADR-DOMAIN-MOTOR-rejected.md) | Motor de domínio genérico (MutationEngine + OrchestrationEngine em DAG + PluginRegistry + AuditLog + fila) × convenção `atomicUntil` (2 commits + reconcile) | **Rejected 2026-09-21 (dono, via sessão)** — motor rejeitado; vencedor = Contrato §2.3 (`AC-2.3-1..3`) + cabeçalho `atomicUntil` cobrado por `SVC-008`/`REV-008`; primitiva `commitThenReconcile` só no próximo incidente (estende o gatilho (b) do ADR-RC); **4 gatilhos de reabertura** no §3; retrofit dos 8 chamadores = PR-B (GAP-MAP fila 9) | 2026-09-21 | DECISÃO ARQUITETURAL (rejeição — teto de atomicidade) |
 
 ## Fora-de-ADR — decisões de módulo que vivem em outro lugar
 

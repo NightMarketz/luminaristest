@@ -80,6 +80,11 @@ A-23 fold (consolidação do Trecho A no master map)
 
 ## 4. Pendente — HANDOFF
 
+> **[Fold 2026-09-21] HISTÓRICO.** As duas frases foram dadas em **18/09** (corpos de #353 e #354). Estado em
+> `origin/main` `0548d19a`: **A-01 C12 ✅ #353** · **A-04 C8 PR-1 ✅ #354 · PR-2 ✅ #355 · PR-3 ✅ #356 · PR-4 ⬜ ·
+> PR-5 ⬜** (PR-4 destravado pelo merge do C12) · **A-23 fold ⬜** (master map sem fold desde #351). Fila vigente:
+> [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md), fold 21/09.
+
 As frases literais **"executa C12"** e **"executa C8"** (que agora inclui, explicitamente, a
 retificação versionada ECD/ECF ex-"C9") ainda não foram dadas pelo dono. Sem elas, **A-01 não abre**
 — este documento fecha o planejamento e a ratificação dos forks, não autoriza código.
