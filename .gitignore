@@ -25,3 +25,6 @@ next-env.d.ts
 CLAUDE.local.md
 **/CLAUDE.local.md
 .claude/settings.local.json
+
+# cerca de execução (F-2 b): versiona retorno + .sha256, nunca o log
+.claude/retornos/_logs/*.log

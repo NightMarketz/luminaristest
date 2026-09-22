@@ -182,21 +182,52 @@ Retenção: **14 dias**, o mesmo número já usado pelo sink NDJSON de erros do 
 captura, conta em `podados_por_retencao`, e desliga com
 `LUMINARIS_RETORNOS_RETENCAO_DIAS=0`. Medido: 3 arquivos de 30 dias removidos, o recente preservado.
 
-## A guarda
+## A guarda — o runner de prova é o único emissor de `PASSOU` (2026-09-22)
+
+> **⚠️ Errata 2026-09-22.** As seções acima citam `scripts/retorno-check.mjs`,
+> `scripts/reporte-humano-check.mjs`, `.claude/hooks/capture-subagent-return.mjs` e `.gitignore:32`.
+> **Nenhum desses artefatos existe no repo nem em commit algum** (`git log --all --diff-filter=AD`
+> vazio em `26e75bf2`). O texto descrevia um harness que só viveu numa máquina. O que existe a partir
+> desta data é o que está abaixo; BRIEF e ratificação em `CERCA-DE-EXECUCAO-brief.md`.
 
 ```bash
-node scripts/retorno-check.mjs            # modo diretório — uma linha por retorno, exit 1 se algum reprova
-node scripts/retorno-check.mjs --path <f>
-node scripts/retorno-check.mjs --self-test
+node scripts/prova-runner.mjs .claude/retornos/<slug>.md   # reexecuta, sobrescreve `veredicto:`
+node scripts/prova-runner.mjs --all                         # diretório vazio = exit 1 (captura desligada ≠ sucesso)
+node --test scripts/prova-runner.test.mjs                   # inclui o controle negativo N1
 ```
 
-Regras, todas com nome no relatório: `SEM-CABECALHO` · `VEREDICTO-INVALIDO` · `SEM-OPS001` ·
-`OPS001-INCOMPLETO` · `OPS001-VAZIO` (molde preenchido com o próprio molde) · `CHECK-SEM-EVIDENCIA` ·
-`PASS-SEM-CHECK`.
+**Princípio:** o estado observável é a autoridade; o LLM só interpreta. `PASSOU` não é palavra que o
+subagente escreve — é o resultado de reexecutar o comando. A seção "Checks executados" passa a carregar
+um bloco `PROVA` (YAML mínimo — lista de mapas planos, nada mais):
 
-**Não vai para o CI, e isso é decisão, não esquecimento.** `.claude/retornos/` não é versionado — um
-job de CI olharia para um diretório sempre vazio e ficaria verde para sempre. Isso é decoração, não
-cobertura. A guarda roda na máquina que despachou.
+```yaml
+PROVA:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/<slug>-1.log     # `cmd > log 2>&1; echo $?` — gravado pelo subagente
+    sha256: <sha256 do log>
+VEREDITO: PASS
+```
+
+| Veredito escrito pelo runner | Quando |
+|---|---|
+| `PASSOU` | todo `command` reexecutado sai 0 **e** `VEREDITO: PASS` **e** invariantes (abaixo) verdes |
+| `FALHOU` | algum exit ≠ 0; log ausente; sha256 não bate; `PROVA` como string solta (`SEM-PROVA`); ausência de `PROVA` sem `veredicto: N/A` |
+| `INCONSISTENTE` | exit real ≠ declarado com comando verde, ou tudo 0 com `VEREDITO` ≠ PASS — a alegação não bate com o fato |
+| `N/A` | sem `PROVA` **e** `veredicto: N/A` explícito (tarefa read-only); o runner não reescreve |
+
+**Ordem do pipeline — fixa e nomeada no código (`STAGES`):** `prova` (reexecução) → `invariantes`
+(`tsc` quando "Arquivos" toca `server/src/` ou `my-app/`; `skill-audit` quando toca `.claude/skills/`)
+→ review LLM, **opcional e nunca condição de `PASSOU`**. **Voto de modelo não é gate:** nove juízes
+LLM valem tanto quanto dois votos correlacionados; um segundo modelo de outra família pode comentar
+no PR, nunca aceitar. Timeout de reexecução 10 min, sem allowlist de comando caro (F-3 ratificado).
+
+**O que se versiona (F-2 ratificado):** o retorno e o `.sha256`; `.claude/retornos/_logs/*.log` é
+gitignored. A CI que rodar o runner reexecuta o comando de qualquer forma.
+
+**Hook bloqueante (item 3 do BRIEF) é edição do dono** — `settings.json` está em `deny` para o agente.
+Sem o hook, o runner é gate só quando alguém o chama; com ele, `Stop`/`SubagentStop` devolvem
+`decision: block` e o turno não encerra em `FALHOU`/`INCONSISTENTE`.
 
 ## Baseline — 2026-09-08, primeiro lote real
 
@@ -296,7 +327,8 @@ confissão e a forma; **não pega a mentira bem escrita** — para isso só serv
 ## O que ele não alcança
 
 - **Mérito.** Seção preenchida não é caso adversarial bom.
-- **Veracidade do exit code.** O retorno é texto; a evidência dura é rodar o comando de novo.
+- ~~**Veracidade do exit code.**~~ Fechado em 2026-09-22 pelo `prova-runner` (reexecuta). O que ele
+  ainda não alcança: comando não-determinístico (flake) — reexecução verde de teste flaky é PASSOU.
 - **Despacho não capturado.** A guarda só vê o que chegou ao disco. Diretório vazio depois de um lote
   significa **captura desligada**, e o script diz isso em vez de sair verde — é o único jeito de a
   ausência não passar por sucesso.
