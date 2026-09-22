@@ -42,6 +42,12 @@ rules:
     gates:
       - type: eval
         target: ./evals/evals.json#happy-3
+  # Adicionada em 2026-09-22 (Contrato §2.3, cabeçalho atomicUntil — ADR-DOMAIN-MOTOR-rejected).
+  # Eval estrutural em happy-4; verificador de repo (atomicUntil.boundary.test.ts) chega no PR-B.
+  REV-008:
+    gates:
+      - type: eval
+        target: ./evals/evals.json#happy-4
 ---
 
 # Governança — `luminaris-reviewer`
@@ -62,6 +68,7 @@ Agente **revisor** — papel: verificar de forma independente e reportar evidên
 - `REV-005` — fronteira §2.1 (serviço Prisma first-class no motor DynamicTable) e veredicto de ilha (shape+posse) são FAIL-direto.
 - `REV-006` — não aprova sem rodar o gate de wiring (`skill-audit.mjs wiring`) — registro central tsc-cego (rota/KPI/preset/i18n); `exit≠0` = FAIL.
 - `REV-007` — **só em contexto de slice de Fase A** (lote paralelo, `_PARALLELIZATION-CONTRACT.md` PAR-003): o diff não pode tocar choke point PAR-001 (routes/index.ts, factory.ts, schema.prisma, seed.ts, openapi.json) — pertence à Fase B; interseção = FAIL. N/A em feature regular (2-toques normal). Gate: `happy-3`.
+- `REV-008` — service que chama `.postEntry(` (com ou sem subrazão) sem o cabeçalho `atomicUntil` (5 linhas, primeiro JSDoc) ou sem os 3 testes por linha = FAIL; idem "mesma tx", compensação `try/catch` ou engine (Contrato §2.3; ADR-DOMAIN-MOTOR-rejected). Gate: `happy-4`.
 
 Status `validated`: avaliado em 2026-06-25 (score 1.00 — ver `REPORT.md`). `governance-eval-score`/
 `governance-last-evaluated` no frontmatter são **projeção** do `REPORT.md` (SG-011); materializados na promoção (SG-048).

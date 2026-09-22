@@ -17,6 +17,22 @@
 > D5 segue sem parceiro real (porta com `Null`/`File`, decisão do BRIEF, não um bloqueio que sobrou).
 > Detalhe do fold em [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) (régua 45/57, fiscal 9/16).
 >
+> **[Fold 2026-09-21 — Trecho A da CADEIA-A em voo; dois itens novos de motor (fora da régua).]** Verificado
+> em `origin/main` **`0548d19a`** (`gh pr list --state merged` + corpo dos PRs): **"executa C12"** e **"executa C8"**
+> dados pelo dono em **18/09** (citados nos corpos de #353 e #354) — o `STOP` do `CADEIA-A.md` §4 é **HISTÓRICO**.
+> **C12 ✅ #353 `edb80ec8`** (passo 4 fecha). **C8: PR-1 ✅ #354 `077cbdbe` · PR-2 ✅ #355 `5f9c71d7` · PR-3 ✅ #356
+> `0548d19a`**; PR-4 (retificação versionada, Bloco G) e PR-5 (NF-e modo 4) **não abertos** — a dependência
+> C12 → PR-4 (`SignerSchema`, CADEIA-A §3) está **satisfeita**. Nenhum PR aberto em 21/09. **Master map NÃO
+> foldado desde #351** (banner 45/57, linha do C12 ainda "falta executa") — é o passo 9, pendente. **Novo:** a
+> leitura do motor DynamicTable ao avaliar "contabilidade em `DynamicTableData`" achou 2 lacunas de **classe**
+> (não contábeis) e 1 erro de texto no Contrato §2.1/§2.2 (dizia "impossível"/"scan em JS" onde é
+> `json_extract` antes da tx sem gate) → passos **10** (PR docs desta branch), **11** e **12** (GAP-MAP fila 7/8,
+> só com "instrumenta"). Linhas 4/5 da tabela e Detalhamento atualizados; o resto do texto segue como escrito.
+> **[22/09]** Decisão do **motor de domínio** (MutationEngine + OrchestrationEngine + fila), tomada em **21/09** e encaixada nos docs em 22/09: **REJEITADA** — `docs/adr/ADR-DOMAIN-MOTOR-rejected.md`
+> (primeiro ADR `Rejected`), master map §4. Vencedor = Contrato **§2.3** (`[AC-2.3-1..3]`) + cabeçalho `atomicUntil` cobrado por
+> `SVC-008`/`REV-008`; primitiva `commitThenReconcile` só por incidente. Docs entram no passo **10**; boundary test + retrofit dos
+> 8 chamadores de `postEntry` = passo **13** (PR-B, [H]).
+>
 > **Por que este doc existe:** o de 14/09 fechou **11 de 12 passos** (fold 16/09) e não tinha sucessor — a
 > "fila" seguinte vivia só na tabela "O que esta cédula destrava" da `CEDULA-DECISAO-2026-09-16-…`. Este
 > doc é essa fila, com o algoritmo do grafo 09-14 §4 aplicado sobre `origin/main` **`daf76279`** (#337).
@@ -69,12 +85,16 @@ runbook em branco, nunca preencha.
 | 1 | **C6b PR-2** (#338) | contábil | review independente → `sessao-integracao` | Passos 8–10 do plano (`EXPORT_BANK_RECONCILIATION`, `EXPORT_ENTRY_SAMPLE`, F-C6b-5/8 → a); CI 5/5 verde, MERGEABLE, **0 reviews** | PASS + merge (squash) | "executa C6b" 16/09 | ✅ #338 `15c8bf53` (17/09) — fold 1.3 neste PR |
 | 2 | **C6b PR-3** ✅ #340 `373d00d4` | contábil | `sessao-feature` | Passos 11–14: `AccountingDeliveryItem` + `packageProfile` (1 migração, 2 tabelas, prólogo `IF NOT EXISTS`), manifesto N-ário, backfill, extras; 14 arquivos, ~20 casos + `smoke:migration` | PR + review + merge; **C6b `done`** | "executa C6b" 16/09 | 🔄 **#340** `71b87c63` (review independente em voo; CI server pending 17/09) |
 | 3 | **Docs C12 + GAP-MAP + este doc** | docs | `sessao-integracao` docs (PR docs-only) | branch `claude/pos-c6b-queue-blockers-35f6f9`: transcrição J930/0930, BRIEF C12 (item 11, F-C12-5..7), adendo da cédula 16/09, GAP-MAP l.39 `[FECHADO #267]`, este doc | merge; C12 `ready` citável em `main` | dono 17/09 ("faz os dois") | 🔄 (este worktree) |
-| 4 | **C12** máscaras de identidade no SPED | contábil | `sessao-feature` | BRIEF itens 1–11; write-set = `SpedEcdDto/SpedEcfDto/SpedEcfRealDto`, const nova `models/spedQualifAssinante.ts`, serviço de geração (resolução de `contactId`), snapshots; **disjunto do C6b** (PAR-001) — pode correr em worktree paralelo ao passo 2 se o dono autorizar 2 sessões | PR + review + merge; contábil 18→19/22 | **falta "executa"** | ⬜ [H] |
-| 5 | **C8** imobilizado + depreciação | contábil | `sessao-feature` | 37 comportamentos; ADR Proposed → Accepted no PR de código; 2 txs (`postentry-tx-raiz-subrazao-2-commits`); J801/J932; quota cumulativa; Anexo III do corpus (chave = ordinal da fonte) | PR(s) + review + merge; contábil +1 | **falta "executa"** | ⬜ [H] — **5.2 ✅ plano granular 17/09** (`BE-INCR-FIXED-ASSETS-execution-plan.md`, 5 PRs; F-FA14/15 [H]); 5.3 ✅ sha no plano (arquivo **não em disco**: A1) |
+| 4 | **C12** máscaras de identidade no SPED | contábil | `sessao-feature` | BRIEF itens 1–11; write-set = `SpedEcdDto/SpedEcfDto/SpedEcfRealDto`, const nova `models/spedQualifAssinante.ts`, serviço de geração (resolução de `contactId`), snapshots; **disjunto do C6b** (PAR-001) — pode correr em worktree paralelo ao passo 2 se o dono autorizar 2 sessões | PR + review + merge; contábil ~~18→19/22~~ **19→20/22** (o 19 veio do C6b em 17/09; corrigido 22/09) | ~~falta "executa"~~ **"Executa C12" 18/09** (corpo do #353) | ✅ **#353 `edb80ec8`** (20/09) — fold no master map pendente (passo 9) |
+| 5 | **C8** imobilizado + depreciação | contábil | `sessao-feature` | 37 comportamentos; ADR Proposed → Accepted no PR de código; 2 txs (`postentry-tx-raiz-subrazao-2-commits`); J801/J932; quota cumulativa; Anexo III do corpus (chave = ordinal da fonte) | PR(s) + review + merge; contábil +1 | ~~falta "executa"~~ **"Executa C8" 18/09** (corpo do #354; F-FA14 → b, F-FA15 → a em `CADEIA-A.md` §1) | 🔄 **PR-1 ✅ #354 · PR-2 ✅ #355 · PR-3 ✅ #356** · **PR-4 ⬜ · PR-5 ⬜** (permutáveis; PR-4 destravado pelo #353) — **5.2 ✅ plano granular 17/09** (`BE-INCR-FIXED-ASSETS-execution-plan.md`, 5 PRs); 5.3 ✅ sha no plano (arquivo **não em disco**: A1) |
 | 6 | **FE-INCR-LALUR PR 2** (M410 + fechar trimestre + diagnóstico na tela) | contábil (crescimento X4) | `sessao-feature` | BRIEF FE-LALUR §3; `withAuth` ⇒ verificar contra build de produção; vitest com shim `React` global | PR + review + merge; numerador inalterado | **falta "executa"** | ⬜ [H] |
 | 7 | **FE-INCR-BANK-SETTLEMENT** (tela do F7) | financeiro (crescimento F7) | `sessao-planejamento` | insumos: `BE-INCR-BANK-SETTLEMENT-brief.md`, 5 rotas do #326, aba Conciliação existente (reuse canônico: GenericTable/Modal/StandardPagination) | BRIEF + forks PENDENTES | dono 17/09 (`PLANO-SESSAO-2026-09-17-pontas-nao-codigo.md`, F-PS-1 → a) | ✅ **BRIEF 17/09 (sessão 6)** — `FE-INCR-BANK-SETTLEMENT-brief.md`, F-FE-BS-1..4 [H] |
 | 8 | **SEED-MY** | pré-gate | `job-generator` | BRIEF ✅; forks ✅ (F-SEED-2 a · F-SEED-3 b) | seed 2025+2026; `RUNBOOK-H1` P0 | **B-4 assinado** (`RUNBOOK-B4`: 0 `[x]` hoje) | ⬜ [H] gate |
-| 9 | **Fold** | docs | `sessao-integracao` docs | master map §5.1/§7.1 + grafo §4.2 + este doc (coluna Estado) após cada merge de código | régua atualizada | — | contínuo |
+| 9 | **Fold** | docs | `sessao-integracao` docs | master map §5.1/§7.1 + grafo §4.2 + este doc (coluna Estado) após cada merge de código | régua atualizada | — | contínuo — **⬜ atrasado em 21/09:** #352/#353/#354/#355/#356 sem fold (banner 45/57; C12 conta como nó → contábil 19→20; C8 só quando PR-5 mergear, ou declarar leitura alternativa); corrigir `GRAFO-DEPENDENCIAS-2026-09-14.md` (C9 absorvido no C8, CADEIA-A §2) no mesmo fold |
+| 10 | **Docs: Contrato §2.1/§2.2 + GAP-MAP 7/8** | docs (motor) | `sessao-integracao` docs (PR docs-only) | branch `claude/domain-motor-architecture-7ec49d`: `_ARCHITECTURE-CONTRACT.md` (4 trechos, IDs preservados — "impossível em `data: Json`" → custo sem invariante; `[AC-2.1-B5]`/`[AC-2.2-2]` mecanismo real = `json_extract` antes da tx, `compositeUnique` full scan, upgrade (b) = padrão do `noOverlap`), `GAP-MAP.md` (célula `noOverlap` → FECHADO `93945426`; linhas novas Nível 4 e Nível 3; fila 7/8), este fold. **+ 22/09, encaixe da decisão do motor (tomada 21/09):** Contrato **§2.3** novo (`[AC-2.3-1..3]` + template), `ADR-DOMAIN-MOTOR-rejected.md` + `INDEX.md`, master map §4 (linha, sem régua), GAP-MAP Nível 3 (`[PAPEL]`, comando → 8) + fila 9, skills (`SVC-008` + etapa 9 + governance/eval/controls; `REV-008` + governance/eval; linha em `sessao-feature`; cláusula em `SEL-004`), `server/CLAUDE.md` gate 6, `governance/coverage.md` (3 linhas), PLAYBOOK §0, READMEs. Gate: `skill-audit run --all` 0 findings **após** as skills | merge; GAP-MAP 7/8/9 + §2.3 citáveis em `main` | dono 21/09 ("atualiza o plano…") + 22/09 (plano de encaixe aprovado, 4 forks fechados) — **commit/PR ainda não pedido** | 🔄 (este worktree, sem commit) |
+| 11 | **GAP-MAP 7 — `unique`/`compositeUnique` sem gate in-tx** | motor DynamicTable (fora da régua; beneficia CRM/vendas) | `sessao-instrumentacao` → `sessao-correcao` | `validateAdvancedRules` (`json_extract`) roda **antes** de `prisma.$transaction`; só `enforceNoOverlap` re-checa dentro; `runSerializedIfNoOverlap` só arma `withTableWriteLock` com regra `noOverlap`. Teste = gêmeo `it.failing` do `NoOverlapConcurrency.integration.test.ts` (N writes da mesma chave → 1 persistido). **Só a CI Linux prova o vermelho** (`windows-serializa-sqlite-ci-linux-nao`) | teste-guarda vermelho na CI → fix pelo padrão `93945426` (lock + re-check in-tx com repo tx-bound) | **falta "instrumenta"** | ⬜ [H] |
+| 12 | **GAP-MAP 8 — `deleteTableData` ignora `immutableAfter`/`lifecycle`** | motor DynamicTable (fora da régua) | `sessao-instrumentacao`; fix só após fork | Guards 2/3 rodam só em `updateTableData`; delete = `beforeDelete` → `deleteConstraints` → soft delete. Teste = `immutableAfter scope:'all'` satisfeito → `deleteTableData` deve lançar. **Fork do fix é do dono:** (a) guard no delete × (b) `deleteConstraints` RESTRICT no pai | teste-guarda vermelho; fork ratificado; depois `sessao-correcao` | **falta "instrumenta"** + fork | ⬜ [H] |
+| 13 | **PR-B — `atomicUntil` boundary test + retrofit dos 8** | motor contábil (fora da régua) | `sessao-instrumentacao` (teste vermelho: 8 ofensores) → `sessao-correcao` (8 cabeçalhos) no **mesmo PR** | Contrato `[AC-2.3-2]`; população calculada pelo próprio teste (`grep .postEntry(` em `features/*/services`, exclui `PostingService`) — sem registro a manter; cada linha cita teste existente; linha sem teste escreve `[sem teste — GAP-MAP]`, **não** inventa teste de comportamento; 0 lógica tocada | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; `governance.md` de `backend-service-generator` ganha gate `type: static`; `coverage.md` `AC-2.3-2` ✅ | **falta "executa"** (ADR-DOMAIN-MOTOR §2 item 4) | ⬜ [H] |
 
 Fora da régua e sem fila própria (só quando o dono chamar): `FE-INCR-REVIEW` (aba do C11) — **✅ BRIEF 17/09 sessão 6,
 F-FE-RV-1..4 [H]**; `FE-INCR-DELIVERY` (consome C6b; `files[].kind` = `ExportKind` **registrado como contrato**) — **✅ BRIEF
@@ -90,7 +110,13 @@ pedido ao contador** (#331, itens 6–13 — dono envia), D2, D5, D6.
 Regras de fila: passo 1 antes do 2 (serial obrigatório, plano §7); 3 intercala enquanto 1 espera review;
 4/5/6 só com "executa" — a ordem entre eles é sugestão (C12 é o menor e tem transcrição fresca; C8 é a
 maior peça contábil restante); 7 só com autorização citável de BRIEF. **Nada abaixo do passo 3 roda sem
-sinal do dono.**
+sinal do dono.** **[21/09]** Com 4 ✅ e 5 em PR-4/PR-5, a ordem sugerida agora é: **9** (fold atrasado, docs) →
+**10** (PR docs deste worktree) → **5 PR-4/PR-5** (já autorizados, serial no domínio contábil) → 6 [H]. **11/12 são
+motor, não contábil** (write-set `DynamicTableService.ts` + teste de integração; disjunto do C8, PAR-001) — podem
+correr em paralelo ao C8 se o dono der "instrumenta", mas **não contam na régua** e não se somam ao
+"aparato de auditoria" (bancada desligada 2026-08-09): são a Fase 3 do GAP-MAP aplicada à regra vizinha.
+**[22/09]** 13 depende de 10 mergeado (cita a §2.3); write-set = 8 JSDocs + 1 teste novo, disjunto do C8 PR-4/PR-5 —
+pode correr em paralelo se o dono der "executa"; também fora da régua.
 
 ### Não fazer
 
@@ -185,6 +211,45 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 | 8.2 | `job-generator` → seed 2025+2026 com `--i-have-a-backup` (F-SEED-2 a), 2 tenants (F-SEED-3 b); **não** tocar `db:seed` do admin (`parked-unmerged-worktrees`: upsert de senha) | fixture + `trial-balance` balanceado nos 2 exercícios | ⬜ bloqueado |
 | 8.3 | `RUNBOOK-H1-PVA.md` P0 → alvo = seed; sem tocar evidência/desfecho/assinatura | diff só em P0 | ⬜ bloqueado |
 
+### Passo 10 — PR docs: Contrato §2.1/§2.2 + GAP-MAP 7/8 🔄 (21/09)
+
+| Sub | O quê | Comando / evidência | Estado |
+|---|---|---|---|
+| 10.1 | Diff aplicado neste worktree (`claude/domain-motor-architecture-7ec49d`): contrato (4 trechos), GAP-MAP (3 trechos), este fold, `README.md` da pasta, nota em `CADEIA-A.md` §4 | `git status` → 5 arquivos | ✅ |
+| 10.2 | Gate de skill: `node .claude/skills/skill-audit/skill-audit.mjs run --all` → 0 findings; `tsc` não se aplica (markdown) | saída do audit no PR | ✅ rodado na leitura de 21/09 (re-rodar no commit) |
+| 10.3 | Adversarial já feito: "`noOverlap` está mesmo fechado antes de escrever FECHADO?" → `git log -S withTableWriteLock` = `93945426`; teste é `it`, não `it.failing`, lock em `create` e `update` (linhas 592/816) | citado na célula do GAP-MAP | ✅ |
+| 10.4 | **[H] commit + PR** (`docs(contract): corrige mecanismo do unique de preset + abre GAP-MAP 7/8`) — o dono ainda não pediu | `gh pr create` | [H] |
+| 10.5 | **[22/09] Decisão do motor encaixada** (plano aprovado pelo dono, 4 forks fechados por questionário): §2.3 + ADR + INDEX + master map §4 + GAP-MAP Nível 3/fila 9 + `SVC-008`/`REV-008` (SKILL + governance + eval + controls) + `sessao-feature` + `SEL-004` + `server/CLAUDE.md` gate 6 + `coverage.md` + PLAYBOOK + READMEs. IDs `AC-2.1-*`/`AC-2.2-*` intactos; em skill governada o contrato é citado **sem colchetes** (o `RULE_ID_RE` do skill-audit leria `[AC-2.3-x]` como regra da skill) | `git status` → 22 entradas (21 M + 1 novo, `ADR-DOMAIN-MOTOR-rejected.md`); `grep -c "AC-2.3-"` ≥1 em contrato/coverage/reviewer | ✅ |
+| 10.6 | Re-rodar `node .claude/skills/skill-audit/skill-audit.mjs run --all` **depois** das skills (o 10.2 foi antes) → 0 findings; `skill-audit.mjs coverage` regenera `governance/coverage-auto.md` (já dirty por CRLF) com `SVC-008`/`REV-008`; comando da célula nova do GAP-MAP → 8 | saída dos 3 comandos no PR | ✅ 22/09: `run --all` → **0 finding(s)**, self-check íntegro; comando do GAP-MAP → **8**; `coverage` regenerado; 9 IDs `AC-2.1/2.2` preservados; 0 `[AC-2.3-*]` com colchetes em skill governada |
+
+### Passo 11 — GAP-MAP 7: `unique`/`compositeUnique` sem gate in-tx ⬜ [H]
+
+| Sub | O quê | Comando / evidência | Estado |
+|---|---|---|---|
+| 11.1 | **[H] "instrumenta"** | citação do dono | [H] |
+| 11.2 | `sessao-instrumentacao`: teste de integração gêmeo do `NoOverlapConcurrency` — preset com `unique` num campo, N `createTableData` concorrentes com o mesmo valor via `Promise.all`, assere `count === 1`; marca `it.failing` e cita a célula do GAP-MAP. Zero código de aplicação | `cd server && npx jest --selectProjects integration -t "unique.*concorr"` | ⬜ |
+| 11.3 | Vermelho **só conta na CI Linux** — Windows serializa SQLite e o teste passa verde localmente (`windows-serializa-sqlite-ci-linux-nao`). Relatório declara isso; não "confirma" a lacuna por run local | `gh pr checks` do PR de instrumentação | ⬜ |
+| 11.4 | `sessao-correcao` (autorização própria): estender `runSerializedIfNoOverlap` para armar `withTableWriteLock` também com `unique`/`compositeUnique` + re-rodar `validateAdvancedRules` dentro da tx com o repo tx-bound (padrão `93945426`); `it.failing` → `it` no mesmo PR; `compositeUnique` segue full scan (dívida declarada no Contrato `[AC-2.2-2]`) | par vermelho→verde no mesmo PR (`protocolo-conserto-de-gate`) | ⬜ |
+
+### Passo 12 — GAP-MAP 8: `deleteTableData` × `immutableAfter`/`lifecycle` ⬜ [H]
+
+| Sub | O quê | Comando / evidência | Estado |
+|---|---|---|---|
+| 12.1 | **[H] "instrumenta"** | citação do dono | [H] |
+| 12.2 | `sessao-instrumentacao`: preset com `immutableAfter { scope:'all' }` satisfeito (ex.: status `Paid`) → `deleteTableData` **deve** lançar; hoje faz soft delete. `it.failing`, cita a célula. Comando da célula prova a ausência: `awk '/async deleteTableData\(/,/^  }$/' …/DynamicTableService.ts \| grep -c immutableAfter` → 0 | teste vermelho (aqui o vermelho é local, não depende de concorrência) | ⬜ |
+| 12.3 | **[H] fork do fix** — (a) guard `immutableAfter`/`lifecycle` no `deleteTableData` (mesmo helper dos Guards 2/3 do update) × (b) `deleteConstraints` RESTRICT declarado no preset pai. Recomendação: (a) — a regra está no schema do próprio registro, e (b) não cobre tabela sem pai. Custo de errar: (b) deixa a lacuna aberta em preset raiz | `AskUserQuestion` com contexto (§57) | [H] |
+| 12.4 | `sessao-correcao` após fork; `it.failing` → `it` | par vermelho→verde no mesmo PR | ⬜ |
+
+### Passo 13 — PR-B: `atomicUntil` boundary test + retrofit dos 8 ⬜ [H]
+
+| Sub | O quê | Comando / evidência | Estado |
+|---|---|---|---|
+| 13.1 | **[H] "executa"** (ADR-DOMAIN-MOTOR §2 item 4; depende do passo 10 em `main`) | citação do dono | [H] |
+| 13.2 | `sessao-instrumentacao`: `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (~35 linhas, molde `dynamicTables/__tests__/no-accounting-imports.boundary.test.ts`): varre `features/**/services/*.ts` (exclui `__tests__`, `PostingService.ts`), população = fonte casa `/\.postEntry\(/`, ofensor = arquivo cujo **primeiro** bloco `/** … */` (em qualquer posição — os 8 têm `import` na linha 1, verificado 22/09) não contém `atomicUntil:` **ou** não tem os 4 rótulos (`commit 1`, `commit 2`, `reconcile`, `fora da tx`); `expect(offenders).toEqual([])`. Vermelho esperado: **8** (se o scan der outro número, esse é o número — reportar) | `cd server && npx jest atomicUntil.boundary` → 8 ofensores | ⬜ |
+| 13.3 | `sessao-correcao` no mesmo PR: **inserir** o cabeçalho da §2.3 **acima da linha 1** (antes do 1º `import`) nos 8 e enxugar o comentário de padrão já existente, que hoje fica **depois** dos imports (por isso não conta como "primeiro JSDoc"), **só comentário, 0 lógica** — `PayableService.ts:40-58`, `ReceivableService.ts:50-54`, `DepreciationService.ts:40-52`, `FixedAssetService.ts` (`:272/:283` tx1/tx2), `AccountingReviewService.ts:67-84`, `BankSettlementService.ts:66-75` (fora da tx = nada), `DataExchangeImportService.ts`, `ExerciseClosingService.ts` (`commit 2 — nenhum`). Cada linha cita teste existente (`arquivo › caso`); sem teste ⇒ `[sem teste — GAP-MAP]` + linha nova no GAP-MAP Nível 3 por lacuna achada. `InventoryService`/`PhysicalStockSync` não chamam `postEntry`: cabeçalho recomendado, fora do gate | teste verde; `git diff --stat` **em código** = 8 arquivos de service + 1 teste (docs de 13.4/13.5 à parte) | ⬜ |
+| 13.4 | Gates: `npx tsc --noEmit`; `npm run test:integration` sem regressão; `skill-audit run --all` 0 findings (governance de `backend-service-generator` ganha `- type: static target: ../../../server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` em `SVC-008`); review independente em worktree; par vermelho→verde nos commits do PR (`protocolo-conserto-de-gate`) | relatório OPS-001 | ⬜ |
+| 13.5 | Fold: GAP-MAP Nível 3 `[PAPEL]→[COBERTO]` + comando → 0; `coverage.md` `AC-2.3-2` ✅; esta linha ✅; ADR §2 item 4 ganha `EMENDA <data>` com os SHAs | diff docs no mesmo PR | ⬜ |
+
 ---
 
 ## Estado no momento da escrita (verificado 2026-09-17)
@@ -204,3 +269,22 @@ Comece pelo **passo 0** e reporte o estado dele antes do passo 1.
 - Vieses desta leitura (T8): escrita pela mesma sessão que fez a transcrição C12 — a ordem sugerida 4 < 5 < 6
   favorece o item que ela conhece; a alternativa (C8 primeiro, maior valor contábil) está declarada e é
   igualmente válida sob R6.
+
+## Estado em 2026-09-21 (fold, verificado)
+
+- `origin/main` = **`0548d19a`** (#356, C8 PR-3). **0 PRs abertos** (`gh pr list --state open`). Últimos merges:
+  #351 fold 18/09 · #352 CADEIA-A A-00 · #353 **C12** · #354/#355/#356 **C8 PR-1/2/3** (18–20/09).
+- **Autorizações novas em `main`:** "Executa C12" e "Executa C8" (18/09, corpos de #353/#354). Sobra do C8:
+  **PR-4** (retificação versionada + J801/J932 + lista de jobs — F-FA15 a: quem mergear primeiro cria
+  `GET /data-exchange/jobs`) e **PR-5** (NF-e modo 4), já autorizados, serial no domínio contábil.
+- **Régua:** banner do master map segue **45/57** — fold de #352–#356 **não feito** (passo 9). Leitura esperada
+  ao foldar: contábil 19→20/22 pelo C12 (nó); C8 conta quando PR-5 fechar (ou declarar alternativa 47/57).
+- **Ready sem "executa":** FE-LALUR PR 2 (passo 6). **BRIEFs prontos sem chamada:** FE-INCR-BANK-SETTLEMENT,
+  FE-INCR-REVIEW, FE-INCR-DELIVERY; FE-INCR-FIXED-ASSETS/FE-INCR-SPED-SIGNERS esperam o resto do C8.
+  **Bloqueado por gate:** SEED-MY (B-4, 0 checkbox). Gates humanos e dado externo: inalterados desde 17/09.
+- **Motor (fora da régua), 21/09:** GAP-MAP fila **7** (`unique`/`compositeUnique` sem gate in-tx, Nível 4) e
+  **8** (`deleteTableData` ignora `immutableAfter`/`lifecycle`, Nível 3) — ambos `[ABERTO]`, sem teste-guarda,
+  esperam "instrumenta". Contrato §2.1/§2.2 corrigido no mesmo diff (passo 10, sem commit).
+- Vieses desta leitura (T8): quem achou 7/8 é quem os põe na fila — o peso "beneficia CRM/vendas" é inferido
+  (nenhum incidente registrado); a alternativa é deixá-los no GAP-MAP sem passo aqui até um caso real. E o
+  fold do master map (passo 9) é a única linha desta seção que muda a régua — este doc não a altera.
