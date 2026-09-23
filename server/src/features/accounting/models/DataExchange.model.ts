@@ -83,6 +83,10 @@ export interface CreateJobInput {
   totalRows?: number;
   validRows?: number;
   invalidRows?: number;
+  // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G, itens 26-31): retificação versionada ECD/ECF.
+  supersedesJobId?: string | null;
+  ecfRectificationRequired?: boolean;
+  verificationTermStorageKey?: string | null;
 }
 
 /** Partial mutation of a job (status transitions, artifact metadata, commit counters). */
@@ -99,6 +103,10 @@ export interface UpdateJobInput {
   committedRows?: number;
   committedById?: string | null;
   committedAt?: Date | null;
+  // BE-INCR-FIXED-ASSETS PR-4: dispensa da exigência de ECF retificadora (item 22).
+  ecfRectificationRequired?: boolean;
+  ecfRectificationWaivedAt?: Date | null;
+  ecfRectificationWaiverReason?: string | null;
 }
 
 /**

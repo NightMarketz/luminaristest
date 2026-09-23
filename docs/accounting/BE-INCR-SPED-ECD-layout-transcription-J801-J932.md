@@ -246,3 +246,23 @@ novo PDF: Obrig. = Sim.
 nenhuma é nova no J801/J932. Nota sobre A3: o novo PDF mostra que o **J935** existe logo depois (p. 205
 em diante), mas como "Identificação dos Auditores Independentes", sem relação com os signatários do termo.
 A remissão do J801 ao "J935" continua errada; o registro certo é o J932.
+
+---
+
+## 5. Decisões do dono (2026-09-23, sessão PR-4) sobre as ambiguidades acima
+
+Registradas aqui (padrão desta transcrição) e replicadas no JSDoc dos pontos de código que as
+implementam (`SpedEcdDto.ts`, `lib/sped.ts`). Cobrem exatamente A2, A13/A10, A4/A5 e A3 — as
+demais (A1, A6-A9, A11, A12, A14) **não mudam comportamento implementado** e continuam em aberto
+como registro histórico do manual, sem decisão pendente sobre elas nesta sessão.
+
+| Ambiguidade | Decisão do dono | Onde entra no código |
+|---|---|---|
+| **A2** (facultativo × obrigatório) | J801 é **obrigatório** na ECD substituta — sem `.rtf` anexado, `400`. | `SpedGenerationService.generate`: `isSubstituta && !rtfFile` → `ValidationError`. |
+| **A13/A10** (obrigatoriedade do J932 × códigos 910/920) | J932 é **obrigatório** na substituta; **1 a 2 signatários**; **pelo menos um código 910**; **920 (Auditor Independente) fica fora do escopo** desta implementação. | `SpedEcdDto.ts` `VerificationTermSignerSchema.codAssin = z.literal('910')`; `VerificationTermSchema` exige `signers.min(1).max(2)` com ≥1 `910`. |
+| **A4/A5** (tamanhos de campo vs. tabela de valores) | Validar pelo **conteúdo real**: `COD_MOT_SUBS` = enum de 3 dígitos (001..005, 099), nunca o "Tamanho 010" do leiaute; `HASH_RTF`/`0000.COD_HASH_SUB` = **40 hex** (SHA-1), nunca o "Tamanho 041" do leiaute. | `SpedEcdDto.ts`: `COD_MOT_SUBS_CODES`, `hash40Hex`; `SpedGenerationService.composeFile` calcula `hashRtf = sha1(rtfFile.buffer)`. |
+| **A3** (remissão ao J935) | Confirmado erro material do manual: os signatários do Termo vão no **J932**, nunca no J935 (que trata de auditores independentes, sem relação com o termo). | `lib/sped.ts`: só `buildJ801`/`buildJ932` implementados; `J935` fica fora (comentário explícito no `buildEcdFile`). |
+
+**Regra de prazo (art. 8º §4)** aplicada no DTO (Passo 19 do execution-plan) é **grau INFERIDO**,
+não coberta por esta transcrição (que cobre só o leiaute J801/J932, não o texto normativo do
+prazo) — ver comentário em `SpedEcdDto.ts`/`SpedEcfDto.ts` (`refineEcfRectification`).

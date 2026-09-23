@@ -16,7 +16,7 @@ import type { ImportKind } from '../models/DataExchange.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
-import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
+import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
   AccountLedgerReport,
@@ -465,6 +465,28 @@ export class DataExchangeExportService {
   }
 
   /**
+   * BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a). `GET /data-exchange/jobs` — lista paginada,
+   * escopada, com `supersedesJobId`/`supersededByJobId` (item 21). A regra "quem cria" (F-FA15
+   * fork, ratificado 2026-09-18): quem mergear primeiro cria a rota; o segundo estende. Nasce
+   * aqui porque `origin/main` não a tinha (achado A2 do execution-plan).
+   */
+  public async listJobs(
+    scope: AccountingScope,
+    filter: { direction?: string; kind?: string; status?: string; year?: number; page: number; limit: number },
+  ): Promise<{ items: DataExchangeJobListItem[]; total: number; page: number; limit: number }> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Não autorizado a consultar jobs de dados contábeis.');
+    }
+    const { items, total } = await this.repo.listJobs(scope, filter);
+    const listItems: DataExchangeJobListItem[] = [];
+    for (const job of items) {
+      const successor = await this.repo.findJobBySupersedesJobId(scope, job.id);
+      listItems.push(toJobListItem(job, successor?.id ?? null));
+    }
+    return { items: listItems, total, page: filter.page, limit: filter.limit };
+  }
+
+  /**
    * Resolves metadata + absolute path for streaming an export artifact. Download audit is
    * feature-flagged (AUDIT_DATA_EXCHANGE_DOWNLOADS=true) like attachment downloads.
    */
@@ -493,5 +515,51 @@ export class DataExchangeExportService {
       fileName: job.originalName ?? `${job.kind.toLowerCase()}`,
       mimeType: job.mimeType ?? 'application/octet-stream',
     };
+  }
+
+  /**
+   * BE-INCR-FIXED-ASSETS PR-4 (item 22). Dispensa a exigência de ECF retificadora que uma ECD
+   * substituta gravou no PRÓPRIO job (`ecfRectificationRequired`). Idempotente: uma 2ª chamada
+   * sobre um job já dispensado devolve o mesmo job sem reemitir o evento (nunca duas dispensas
+   * na trilha para a mesma decisão).
+   */
+  public async waiveEcfRectification(
+    scope: AccountingScope,
+    jobId: string,
+    justification: string,
+  ): Promise<DataExchangeJobResponse> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Não autorizado a dispensar retificação de ECF.');
+    }
+    const job = await this.repo.findJobById(scope, jobId);
+    if (!job) throw new NotFoundError(`Job '${jobId}' não encontrado.`);
+    if (!job.ecfRectificationRequired) {
+      throw new ValidationError(
+        `O job '${jobId}' não exige retificação de ECF — nada a dispensar.`,
+      );
+    }
+    if (job.ecfRectificationWaivedAt) {
+      return toJobResponse(job); // idempotente: já dispensado.
+    }
+
+    const year = job.periodStart ? job.periodStart.getUTCFullYear() : undefined;
+    const updated = await this.repo.runTransaction(async (tx) => {
+      const j = await this.repo.updateJob(
+        scope,
+        jobId,
+        { ecfRectificationWaivedAt: new Date(), ecfRectificationWaiverReason: justification },
+        tx,
+      );
+      await this.audit.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: 'sped.ecf_rectification_waived',
+        targetType: 'data_exchange_job',
+        targetId: jobId,
+        // `justification` NUNCA entra no payload (texto livre do operador) — só jobId/year (item 22).
+        payload: { jobId, year: year !== undefined ? String(year) : '' },
+      });
+      return j;
+    });
+    return toJobResponse(updated);
   }
 }

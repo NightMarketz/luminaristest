@@ -166,3 +166,34 @@ export const CommitImportSchema = z.object({ unitId: z.string().min(1) });
 
 /** GET /templates/:kind param. */
 export const TemplateKindSchema = z.enum(IMPORT_KINDS);
+
+/**
+ * `GET /data-exchange/jobs` — lista paginada (BE-INCR-FIXED-ASSETS PR-4, item 23, F-FA15 a).
+ * Shape fixado no fork (execution-plan §1): `{ unitId, direction?, kind?, status?, year?, page,
+ * limit }` — o mesmo contrato que `FE-INCR-REVIEW-brief.md §2.2` cita, para não divergir de quem
+ * mergear depois. `.strict()` recusa chave desconhecida.
+ */
+export const ListDataExchangeJobsQuerySchema = z
+  .object({
+    unitId: z.string().min(1),
+    direction: z.enum(['IMPORT', 'EXPORT']).optional(),
+    kind: z.string().min(1).optional(),
+    status: z.string().min(1).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .strict();
+export type ListDataExchangeJobsQueryDto = z.infer<typeof ListDataExchangeJobsQuerySchema>;
+
+/**
+ * `POST /data-exchange/jobs/:jobId/waive-ecf-rectification` (item 22). `justification` ≥ 20
+ * caracteres (texto livre do operador — mascarado no audit, nunca allowlistado).
+ */
+export const WaiveEcfRectificationSchema = z
+  .object({
+    unitId: z.string().min(1),
+    justification: z.string().min(20, 'Justificativa da dispensa deve ter ao menos 20 caracteres.'),
+  })
+  .strict();
+export type WaiveEcfRectificationDto = z.infer<typeof WaiveEcfRectificationSchema>;

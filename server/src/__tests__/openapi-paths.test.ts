@@ -84,7 +84,9 @@ const { options } = require('../../scripts/generate-openapi');
 // fixed-assets, fixed-assets/{id}, fixed-assets/{id}/activate, fixed-assets/{id}/dispose.
 // +2 (BE-INCR-FIXED-ASSETS PR-3, nó C8, item 12/13/17): fixed-assets/depreciation/run,
 // fixed-assets/reconcile (208 → 210).
-const BASELINE = 210;
+// BE-INCR-FIXED-ASSETS PR-4 (item 23/F-FA15 a + item 22): +2 paths — GET /data-exchange/jobs
+// (lista) e POST /data-exchange/jobs/{jobId}/waive-ecf-rectification.
+const BASELINE = 212;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

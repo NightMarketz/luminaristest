@@ -40,8 +40,59 @@ export class DataExchangeRepository implements IDataExchangeRepository {
         totalRows: data.totalRows ?? 0,
         validRows: data.validRows ?? 0,
         invalidRows: data.invalidRows ?? 0,
+        // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G): retificação versionada ECD/ECF.
+        supersedesJobId: data.supersedesJobId ?? null,
+        ecfRectificationRequired: data.ecfRectificationRequired ?? false,
+        verificationTermStorageKey: data.verificationTermStorageKey ?? null,
       },
     });
+  }
+
+  public async findJobBySupersedesJobId(
+    scope: AccountingScope,
+    supersedesJobId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDataExchangeJob | null> {
+    return (tx ?? prisma).accountingDataExchangeJob.findFirst({
+      where: { supersedesJobId, ...accountingScopeWhere(scope) },
+    });
+  }
+
+  public async listJobs(
+    scope: AccountingScope,
+    filter: {
+      direction?: string;
+      kind?: string;
+      status?: string;
+      year?: number;
+      page: number;
+      limit: number;
+    },
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ items: AccountingDataExchangeJob[]; total: number }> {
+    const where: Prisma.AccountingDataExchangeJobWhereInput = {
+      ...accountingScopeWhere(scope),
+      ...(filter.direction ? { direction: filter.direction } : {}),
+      ...(filter.kind ? { kind: filter.kind } : {}),
+      ...(filter.status ? { status: filter.status } : {}),
+      ...(filter.year
+        ? {
+            periodStart: { gte: new Date(Date.UTC(filter.year, 0, 1)) },
+            periodEnd: { lte: new Date(Date.UTC(filter.year, 11, 31, 23, 59, 59, 999)) },
+          }
+        : {}),
+    };
+    const client = tx ?? prisma;
+    const [items, total] = await Promise.all([
+      client.accountingDataExchangeJob.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (filter.page - 1) * filter.limit,
+        take: filter.limit,
+      }),
+      client.accountingDataExchangeJob.count({ where }),
+    ]);
+    return { items, total };
   }
 
   public async findJobById(

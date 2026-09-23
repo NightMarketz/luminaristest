@@ -128,6 +128,7 @@ export class AccountingDeliveryService {
       throw new ForbiddenError('Você não tem permissão para montar entregas ao contador.');
     }
     const { ecd, ecf, period } = await this.resolveJobs(scope, dto.ecdJobId, dto.ecfJobId);
+    this.assertEcfRectificationSatisfied(ecd);
     await this.assertPeriodHardClosed(scope, period);
     await this.reviewService.assertPairSignedOff(scope, ecd.id, ecf.id);
     const extras = await this.resolveExtras(scope, dto.extraJobIds, period);
@@ -169,6 +170,10 @@ export class AccountingDeliveryService {
     const { delivery, manifest } = await this.deliveryRepo.runTransaction(async (tx) => {
       // GATE AUTORITATIVO — re-checado DENTRO da tx com `tx` propagado ao repo. O preflight do
       // buildDeliveryPackage não fecha o TOCTOU: um mês reaberto no meio do caminho passaria.
+      // Item 22 (BE-INCR-FIXED-ASSETS PR-4): idem para a exigência de ECF retificadora — uma
+      // dispensa ou uma ECF 'S' concedida entre o preflight e esta confirmação tem de contar.
+      const ecdFresh = await this.dataExchangeRepo.findJobById(scope, ecd.id, tx);
+      this.assertEcfRectificationSatisfied(ecdFresh ?? ecd);
       await this.assertPeriodHardClosed(scope, period, tx);
       // C11 item 14 — gate da revisão também DENTRO da tx: assinar/rejeitar entre o preflight e a
       // confirmação não pode passar.
@@ -323,6 +328,21 @@ export class AccountingDeliveryService {
    * períodos diferentes é 400: é o furo F3 do review (arquivos de 2025 rotulados 2026) fechado na
    * origem — a entrega nunca mais depende de um ano digitado (Fork Novo A → b).
    */
+  /**
+   * BE-INCR-FIXED-ASSETS PR-4 (item 22) — o pacote não sai enquanto a ECD do núcleo exigir uma
+   * ECF retificadora do mesmo ano (`ecfRectificationRequired`) sem ela ter sido gerada (que zera
+   * a flag, `SpedEcfGenerationService`/`SpedEcfRealGenerationService`) OU dispensada
+   * (`waiveEcfRectification`). 400 nomeado — nunca um pacote com ECD substituta e ECF órfã.
+   */
+  private assertEcfRectificationSatisfied(ecd: AccountingDataExchangeJob): void {
+    if (ecd.ecfRectificationRequired && !ecd.ecfRectificationWaivedAt) {
+      throw new ValidationError(
+        `A ECD '${ecd.id}' é substituta e exige uma ECF retificadora do mesmo ano (ou dispensa) antes ` +
+          'de montar o pacote ao contador (item 22).',
+      );
+    }
+  }
+
   private async resolveJobs(
     scope: AccountingScope,
     ecdJobId: string,

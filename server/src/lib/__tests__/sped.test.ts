@@ -31,8 +31,11 @@ import {
   buildJ005,
   buildJ100,
   buildJ150,
+  buildJ801,
   buildJ900,
   buildJ930,
+  buildJ932,
+  J932_QUALIF_910,
   buildBlockOpen,
   buildBlockClose,
   buildEcdFile,
@@ -294,6 +297,44 @@ describe('register builders', () => {
     expect(f[11]).toBe('N'); // IND_RESP_LEGAL
   });
 
+  // BE-INCR-FIXED-ASSETS PR-4 (Passo 20) — J801/J932 (transcrição J801-J932.md §1/§2).
+  it('J801 = 7 fields, TIPO_DOC fixo "001", IND_FIM_RTF fixo "J801FIM" (pp. 192-194)', () => {
+    const line = buildJ801({
+      codMotSubs: '001',
+      hashRtf: '1234567890abcdefabcdefabcdefab1234567890',
+      arqRtf: '{\\rtf1\\ansi...}',
+    });
+    const f = line.slice(1, -1).split('|');
+    expect(f).toHaveLength(7);
+    expect(f[0]).toBe('J801');
+    expect(f[1]).toBe('001'); // TIPO_DOC
+    expect(f[3]).toBe('001'); // COD_MOT_SUBS
+    expect(f[6]).toBe('J801FIM');
+  });
+
+  it('J801 sem descRtf emite campo vazio (campo 03 é opcional)', () => {
+    const line = buildJ801({ codMotSubs: '099', hashRtf: 'a'.repeat(40), arqRtf: 'x' });
+    const f = line.slice(1, -1).split('|');
+    expect(f[2]).toBe('');
+  });
+
+  it('J932 = 11 fields, IDENT_QUALIF_T derivado (J932_QUALIF_910), COD_ASSIN_T=910 (pp. 203-205)', () => {
+    const line = buildJ932({
+      identNom: 'FULANO BELTRANO',
+      identCpfCnpj: '12345678900',
+      codAssin: '910',
+      indCrc: 'SP-123456/O-1',
+      email: 'fulano@gmail.com',
+      fone: '2199999999',
+      ufCrc: 'SP',
+    });
+    const f = line.slice(1, -1).split('|');
+    expect(f).toHaveLength(11);
+    expect(f[0]).toBe('J932');
+    expect(f[3]).toBe(J932_QUALIF_910); // IDENT_QUALIF_T
+    expect(f[4]).toBe('910'); // COD_ASSIN_T
+  });
+
   it('block open = REG + 0; block close = REG + count', () => {
     expect(buildBlockOpen('I001')).toBe('|I001|0|');
     expect(buildBlockClose('I990', 42)).toBe('|I990|42|');
@@ -366,6 +407,29 @@ describe('buildEcdFile — assembly', () => {
     expect(regs.indexOf('0990')).toBeLessThan(regs.indexOf('I001'));
     expect(regs.indexOf('I990')).toBeLessThan(regs.indexOf('J001'));
     expect(regs.indexOf('J990')).toBeLessThan(regs.indexOf('9001'));
+  });
+
+  // BE-INCR-FIXED-ASSETS PR-4 (item 21/25 adversarial): substituta contém |J801| e |J932|,
+  // original não contém nenhum.
+  it('emite J801+J932 SÓ quando verificationTerm está presente (substituta); ausente na original', () => {
+    const original = buildEcdFile(minimalInput()).join('\n');
+    expect(original).not.toContain('|J801|');
+    expect(original).not.toContain('|J932|');
+
+    const substituta = buildEcdFile({
+      ...minimalInput(),
+      verificationTerm: {
+        j801: { codMotSubs: '001', hashRtf: 'a'.repeat(40), arqRtf: 'x' },
+        signers: [
+          {
+            identNom: 'FULANO', identCpfCnpj: '12345678900', codAssin: '910',
+            indCrc: 'SP-123456/O-1', email: 'f@x.com', fone: '119999', ufCrc: 'SP',
+          },
+        ],
+      },
+    }).join('\n');
+    expect(substituta).toContain('|J801|');
+    expect(substituta).toContain('|J932|');
   });
 
   it('9999 equals the true total line count', () => {

@@ -649,6 +649,20 @@ model AccountingDataExchangeJob {
   // propósito: NOT NULL com default forçaria rebuild da tabela no SQLite (lição do expenseAccountId).
   periodStart     DateTime?
   periodEnd       DateTime?
+  // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G — retificação versionada ECD/ECF, itens 26-31).
+  // Plain-id columns (não FK — mesma convenção de requestedById/committedById): rebuild de
+  // tabela custa caro no SQLite e nenhuma delas precisa de integridade referencial forte, só
+  // unicidade (supersedesJobId) e leitura pontual. `supersedesJobId` é o id do job EXPORTED
+  // (ECD ou ECF) que ESTE job substitui/retifica; @unique fecha "2º substituto do mesmo job"
+  // em P2002 (item 21). `ecfRectificationRequired` nasce true numa ECD substituta e trava o
+  // pacote ao contador (item 22) até uma ECF retificadora do mesmo ano zerar a flag OU até a
+  // dispensa (`ecfRectificationWaivedAt`/`WaiverReason`). `verificationTermStorageKey` é o
+  // caminho do .rtf do Termo de Verificação (J801.ARQ_RTF) no `attachmentStorage` reusado.
+  supersedesJobId               String?   @unique
+  ecfRectificationRequired      Boolean   @default(false)
+  ecfRectificationWaivedAt      DateTime?
+  ecfRectificationWaiverReason  String?
+  verificationTermStorageKey    String?
   rows            AccountingDataExchangeRow[]
   // Reverse relations of AccountingDeliveryLog (BE-INCR-CONTADOR-DELIVERY, F-CD4-a). ÚNICA mudança
   // neste model: zero coluna nova, zero backfill — o log de entrega REFERENCIA o job de origem

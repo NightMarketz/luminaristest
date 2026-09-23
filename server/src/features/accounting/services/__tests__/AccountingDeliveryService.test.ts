@@ -77,6 +77,9 @@ const job = (
   committedAt: null,
   periodStart: period.start,
   periodEnd: period.end,
+  // BE-INCR-FIXED-ASSETS PR-4 (item 22) — default = comportamento pré-existente (nunca trava).
+  ecfRectificationRequired: false as boolean,
+  ecfRectificationWaivedAt: null as Date | null,
 });
 
 const deliveryRow = {
@@ -706,6 +709,40 @@ describe('AccountingDeliveryService', () => {
       await expect(service.retryDelivery(scope, 'delivery-1', retryDto)).rejects.toThrow(
         NotFoundError,
       );
+    });
+  });
+
+  // BE-INCR-FIXED-ASSETS PR-4 (item 22) — pacote não sai enquanto a ECD substituta exigir uma ECF
+  // retificadora do mesmo ano e não houver dispensa.
+  describe('gate de retificação de ECF (item 22)', () => {
+    it('pacote sem ECF "S" e sem dispensa é 400 (ecfRectificationRequired=true, waivedAt=null)', async () => {
+      const { service } = build({
+        ecdJob: { ...job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD), ecfRectificationRequired: true, ecfRectificationWaivedAt: null },
+      });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).rejects.toThrow(ValidationError);
+    });
+
+    it('com dispensa (ecfRectificationWaivedAt preenchido) o pacote sai', async () => {
+      const { service } = build({
+        ecdJob: {
+          ...job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD),
+          ecfRectificationRequired: true,
+          ecfRectificationWaivedAt: new Date('2026-01-05'),
+        },
+      });
+      await expect(service.buildDeliveryPackage(scope, buildDto)).resolves.toBeDefined();
+    });
+
+    it('sem ecfRectificationRequired (ECD original) o pacote sai — comportamento inalterado', async () => {
+      const { service } = build();
+      await expect(service.buildDeliveryPackage(scope, buildDto)).resolves.toBeDefined();
+    });
+
+    it('confirmDelivery re-checa o gate DENTRO da tx (findJobById re-lido) — 400 mesmo se o preflight já tivesse passado', async () => {
+      const { service } = build({
+        ecdJob: { ...job('job-ecd', 'EXPORT_SPED_ECD', SHA_ECD), ecfRectificationRequired: true, ecfRectificationWaivedAt: null },
+      });
+      await expect(service.confirmDelivery(scope, confirmDto)).rejects.toThrow(ValidationError);
     });
   });
 });

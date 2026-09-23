@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
+import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
@@ -169,6 +170,15 @@ export class SpedEcfRealGenerationService {
     }
 
     const { year } = dto;
+    const isRetificadora = dto.retificadora === 'S';
+    const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
+    const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
+    if (isRetificadora && dto.supersedesJobId) {
+      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, SPED_ECF_REAL_JOB_KIND, {
+        start: periodStart,
+        end: periodEnd,
+      });
+    }
     // Fork 7→(a): ano sem leiaute é 400 explícito (a lib lança Error puro; aqui vira ValidationError
     // para a OpenAPI "a year with no known layout is a 400" ser verdade em produção — review I-1).
     let codVer: string;
@@ -315,25 +325,36 @@ export class SpedEcfRealGenerationService {
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecf_real_${dto.declarant.cnpj}_${year}.txt`;
 
-    const job = await this.repo.createJob({
-      userId: scope.ownerUserId,
-      unitId: scope.unitId,
-      direction: 'EXPORT',
-      kind: SPED_ECF_REAL_JOB_KIND,
-      status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
-      requestedById: scope.actorUserId,
-      // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
-      // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
-      // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
-      // selecionado, é este par que muda — a entrega não precisa saber.
-      periodStart: new Date(`${year}-01-01T00:00:00.000Z`),
-      periodEnd: new Date(`${year}-12-31T00:00:00.000Z`),
-      originalName: fileName,
-      mimeType: 'text/plain',
-      sizeBytes: buffer.length,
-      sha256,
-      totalRows: lines.length,
-    });
+    let job;
+    try {
+      job = await this.repo.createJob({
+        userId: scope.ownerUserId,
+        unitId: scope.unitId,
+        direction: 'EXPORT',
+        kind: SPED_ECF_REAL_JOB_KIND,
+        status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
+        requestedById: scope.actorUserId,
+        // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
+        // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
+        // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
+        // selecionado, é este par que muda — a entrega não precisa saber.
+        periodStart,
+        periodEnd,
+        originalName: fileName,
+        mimeType: 'text/plain',
+        sizeBytes: buffer.length,
+        sha256,
+        totalRows: lines.length,
+        supersedesJobId: isRetificadora ? dto.supersedesJobId : undefined,
+      });
+    } catch (error) {
+      if (isSupersedesUniqueViolation(error)) {
+        throw new ConflictError(
+          `O job '${dto.supersedesJobId}' já foi retificado por outro job — só um sucessor por job (item 21).`,
+        );
+      }
+      throw error;
+    }
 
     // Mesma camada de métrica do Presumido (BRIEF-W2-D, F4, layer 1) — nome próprio por regime.
     const endTimer = metrics.startTimer('sped_ecf_real_generation');
@@ -382,6 +403,31 @@ export class SpedEcfRealGenerationService {
           lalurEntries: String(lalur.length), // item 18: contagem, não conteúdo
         },
       });
+      if (isRetificadora) {
+        await this.audit.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'sped.ecf_rectified',
+          targetType: 'data_exchange_job',
+          targetId: job.id,
+          payload: {
+            jobId: job.id,
+            supersedesJobId: dto.supersedesJobId ?? '',
+            kind: SPED_ECF_REAL_JOB_KIND,
+            year: String(year),
+            sha256,
+          },
+        });
+        const { items: ecdJobsOfYear } = await this.repo.listJobs(
+          scope,
+          { kind: 'EXPORT_SPED_ECD', status: 'EXPORTED', year, page: 1, limit: 100 },
+          tx,
+        );
+        for (const ecdJob of ecdJobsOfYear) {
+          if (ecdJob.ecfRectificationRequired && !ecdJob.ecfRectificationWaivedAt) {
+            await this.repo.updateJob(scope, ecdJob.id, { ecfRectificationRequired: false }, tx);
+          }
+        }
+      }
       return j;
     });
 

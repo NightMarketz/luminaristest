@@ -319,3 +319,36 @@ describe('depreciation.posted — nenhum texto livre sobrevive à canonicalizaç
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-4 (nó C8, Bloco G, itens 21/22) — teste-guarda no MESMO PR que introduz
+// os 3 eventTypes (classe `accounting-audit-allowlist-guards`). `descRtf` (J801, texto livre do
+// Termo de Verificação) e `justification` (dispensa, texto livre do operador) NUNCA sobrevivem.
+describe('sped.ecd_substituted / sped.ecf_rectified / sped.ecf_rectification_waived — texto livre nunca sobrevive', () => {
+  it.each([
+    [
+      'sped.ecd_substituted',
+      { jobId: 'job-2', supersedesJobId: 'job-1', kind: 'EXPORT_SPED_ECD', year: '2026', sha256: 'abc' },
+    ],
+    [
+      'sped.ecf_rectified',
+      { jobId: 'job-4', supersedesJobId: 'job-3', kind: 'EXPORT_SPED_ECF', year: '2026', sha256: 'def' },
+    ],
+  ])('%s derruba descRtf passado a mais', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, {
+      ...allowed,
+      descRtf: 'Erro de saldo apontado pelo contador João da Silva',
+    });
+    expect(out).not.toContain('João');
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+
+  it('sped.ecf_rectification_waived derruba justification passada a mais', () => {
+    const allowed = { jobId: 'job-2', year: '2026' };
+    const out = canonicalizeAuditPayload('sped.ecf_rectification_waived', {
+      ...allowed,
+      justification: 'Dispensado porque o contador João da Silva confirmou por telefone',
+    });
+    expect(out).not.toContain('João');
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
+  });
+});

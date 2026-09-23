@@ -309,3 +309,80 @@ describe('SpedEcdRequestSchema — C12 item 11: REGRA_QUALIF_INV_RESP_LEGAL + RE
     expect(sameCpfAsProcurador.success).toBe(true);
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-4 (Passo 19) — retificação versionada: indFinEsc='1' (substituta) exige
+// codHashSub (40 hex) + supersedesJobId + verificationTerm (J801+J932); '0' proíbe os três.
+describe('SpedEcdRequestSchema — retificação versionada (indFinEsc=1)', () => {
+  const verificationTerm = {
+    codMotSubs: '001' as const,
+    signers: [
+      {
+        identNom: 'Contador Termo',
+        identCpfCnpj: '11122233396',
+        codAssin: '910' as const,
+        indCrc: 'SP-123456/O-1',
+        email: 'termo@escritorio.com.br',
+        fone: '1133334444',
+        ufCrc: 'SP' as const,
+      },
+    ],
+  };
+
+  it('IND_FIN_ESC=0 (original) rejeita codHashSub/supersedesJobId/verificationTerm', () => {
+    const withExtras = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '0' as const, codHashSub: 'a'.repeat(40) },
+      supersedesJobId: 'job-1',
+      verificationTerm,
+    });
+    expect(withExtras.success).toBe(false);
+  });
+
+  it('IND_FIN_ESC=1 sem codHashSub/supersedesJobId/verificationTerm é 400', () => {
+    const missingAll = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const },
+    });
+    expect(missingAll.success).toBe(false);
+  });
+
+  it('codHashSub com 39 caracteres (não 40 hex) é 400 (adversarial ratificado)', () => {
+    const short = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const, codHashSub: 'a'.repeat(39) },
+      supersedesJobId: 'job-1',
+      verificationTerm,
+    });
+    expect(short.success).toBe(false);
+  });
+
+  it('IND_FIN_ESC=1 com os três campos completos e válidos passa', () => {
+    const ok = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const, codHashSub: 'a'.repeat(40) },
+      supersedesJobId: 'job-1',
+      verificationTerm,
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it('verificationTerm.signers só aceita codAssin=910 (920/Auditor Independente fora do escopo)', () => {
+    const with920 = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const, codHashSub: 'a'.repeat(40) },
+      supersedesJobId: 'job-1',
+      verificationTerm: { ...verificationTerm, signers: [{ ...verificationTerm.signers[0], codAssin: '920' as unknown as '910' }] },
+    });
+    expect(with920.success).toBe(false);
+  });
+
+  it('COD_MOT_SUBS fora da tabela (001..005, 099) é 400', () => {
+    const badCode = SpedEcdRequestSchema.safeParse({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const, codHashSub: 'a'.repeat(40) },
+      supersedesJobId: 'job-1',
+      verificationTerm: { ...verificationTerm, codMotSubs: '007' as unknown as '001' },
+    });
+    expect(badCode.success).toBe(false);
+  });
+});
