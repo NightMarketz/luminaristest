@@ -4,19 +4,19 @@ tipo: "motor"
 dominio: "motor"
 titulo: "GAP-MAP 7 — unique/compositeUnique sem gate in-tx (teste-guarda it.failing)"
 estado: "done"
-estado_detalhe: "Instrumentado: teste-guarda it.failing em main via #362; vermelho provado na CI Linux (run 35899842191, PASS de it.failing). Correção (sessao-correcao) exige autorização própria"
-autorizacao: "\"autorizo o passo 11\" (dono, 23/09)"
-prs: ["#362"]
+estado_detalhe: "Instrumentado (#362, vermelho provado na CI Linux) e CORRIGIDO (#365 fec0804b: lock + re-check in-tx de unique/compositeUnique; review independente PASS; CI verde)"
+autorizacao: "\"autorizo o passo 11\" + \"Corrige o passo 11\" (dono, 23/09)"
+prs: ["#362", "#364", "#365"]
 ancora_sdd: "§III.1 passo 11 · §III.4"
 atualizado: "2026-09-23"
 ---
 # PASSO-11 — GAP-MAP 7 — unique/compositeUnique sem gate in-tx (teste-guarda it.failing)
 
-**Estado:** `done` — Instrumentado: teste-guarda it.failing em main via #362; vermelho provado na CI Linux (run 35899842191, PASS de it.failing). Correção (sessao-correcao) exige autorização própria  
+**Estado:** `done` — Instrumentado (#362, vermelho provado na CI Linux) e CORRIGIDO (#365 fec0804b: lock + re-check in-tx de unique/compositeUnique; review independente PASS; CI verde)  
 **Autorização:** "autorizo o passo 11" (dono, 23/09)  
 **Depende de:** —  
 **Desbloqueia:** —  
-**PRs:** #362  
+**PRs:** #362, #364, #365  
 **Âncora no SDD consolidado:** §III.1 passo 11 · §III.4
 
 ## Docs
