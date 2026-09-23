@@ -27,6 +27,7 @@ import {
   type RegI355Input,
   type RegJ100Line,
   type RegJ150Line,
+  sanitizeRtfForSped,
 } from '../../../lib/sped';
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
 import { ecdIdentQualifParaEmissao, type SpedEcdQualifAssinanteCode } from '../models/spedQualifAssinante';
@@ -112,6 +113,13 @@ export class SpedGenerationService {
     if (isSubstituta && !rtfFile) {
       throw new ValidationError(
         'ECD substituta (IND_FIN_ESC=1) exige o .rtf do Termo de Verificação (J801.ARQ_RTF) via multipart (campo "rtf").',
+      );
+    }
+    // Review PR #368 (param-aceito-e-ignorado): um .rtf enviado numa ECD ORIGINAL (indFinEsc=0
+    // ou sem verificationTerm) não pode ser silenciosamente descartado — ou implementa, ou 400.
+    if (!isSubstituta && rtfFile) {
+      throw new ValidationError(
+        'O .rtf do Termo de Verificação só é aceito quando declarant.indFinEsc=1 (substituta) e verificationTerm está presente.',
       );
     }
 
@@ -206,7 +214,14 @@ export class SpedGenerationService {
       }
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
-      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Correção review PR #368: um FAILED com `supersedesJobId` ainda preenchido trava o
+      // original PARA SEMPRE (a `@unique` recusaria toda nova tentativa com 409, sem rota de
+      // saída — o job FAILED nunca é apagado). Limpar `supersedesJobId=null` na MESMA escrita
+      // libera a chave; o pré-cheque (`resolveSupersededJob`) já só considera sucessor
+      // EXPORTED (nunca FAILED), então mesmo sem este `null` o P2002 real seria a única
+      // trava — este `null` fecha a folga por completo e mantém a coluna honesta (um FAILED
+      // não é, de fato, o sucessor de nada).
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
       // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
       // ALERT_WEBHOOK_URL is unset.
       sendAlertWebhook({
@@ -278,6 +293,17 @@ export class SpedGenerationService {
     rtfFile?: { buffer: Buffer },
   ): Promise<EcdFileInput> {
     const { year } = dto;
+    // Review PR #368: sanitiza + traduz o erro cru de `sanitizeRtfForSped` (lib pura, D2) para
+    // ValidationError (400) nomeado ANTES de qualquer leitura cara do ledger — mesmo padrão do
+    // `Campo SPED não pode conter '|'` do `SpedEcfRealGenerationService`.
+    let sanitizedArqRtf: string | undefined;
+    if (dto.verificationTerm && rtfFile) {
+      try {
+        sanitizedArqRtf = sanitizeRtfForSped(rtfFile.buffer.toString('latin1'));
+      } catch (e) {
+        throw new ValidationError(e instanceof Error ? e.message : String(e));
+      }
+    }
     const accounts = await this.accountRepo.findManyByUnit(scope); // ordered by code
     const mappings = await this.referential.listMappings(scope, dto.mappingVersion);
     const refByAccount = new Map(mappings.map((m) => [m.accountId, m.referentialCode]));
@@ -475,15 +501,18 @@ export class SpedGenerationService {
       })),
       // BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20) — J801+J932, só na substituta. HASH_RTF é
       // CALCULADO AQUI (sistema, nunca input do usuário — manual p. 192: "preenchido
-      // automaticamente pelo sistema"), sha1 hex dos bytes do .rtf (dono 23/09, A5: 40 hex).
+      // automaticamente pelo sistema"), sha1 hex do CONTEÚDO JÁ SANITIZADO (dono 23/09, A5: 40
+      // hex) — o hash descreve exatamente o que vai no ARQ_RTF, não o upload cru (review
+      // PR #368: `sanitizeRtfForSped` rejeita `\bin`/tags proibidas/`|` e normaliza CR/LF antes
+      // de qualquer coisa tocar o registro; ver `lib/sped.ts` para a justificativa RTF/SPED).
       verificationTerm:
-        dto.verificationTerm && rtfFile
+        dto.verificationTerm && sanitizedArqRtf !== undefined
           ? {
               j801: {
                 descRtf: dto.verificationTerm.descRtf,
                 codMotSubs: dto.verificationTerm.codMotSubs,
-                hashRtf: createHash('sha1').update(rtfFile.buffer).digest('hex'),
-                arqRtf: rtfFile.buffer.toString('latin1'),
+                hashRtf: createHash('sha1').update(Buffer.from(sanitizedArqRtf, 'latin1')).digest('hex'),
+                arqRtf: sanitizedArqRtf,
               },
               signers: dto.verificationTerm.signers,
             }

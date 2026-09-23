@@ -173,6 +173,42 @@ export class DataExchangeRepository implements IDataExchangeRepository {
     }
   }
 
+  public async findEcdJobsPendingRectificationForYear(
+    scope: AccountingScope,
+    year: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDataExchangeJob[]> {
+    return (tx ?? prisma).accountingDataExchangeJob.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind: 'EXPORT_SPED_ECD',
+        status: 'EXPORTED',
+        ecfRectificationRequired: true,
+        ecfRectificationWaivedAt: null,
+        periodStart: { gte: new Date(Date.UTC(year, 0, 1)) },
+        periodEnd: { lte: new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)) },
+      },
+      // Sem `take` — item 21/review PR #368: TODAS as pendentes do ano, nunca só as 100 primeiras.
+    });
+  }
+
+  public async findSuccessorsByJobIds(
+    scope: AccountingScope,
+    jobIds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<Map<string, string>> {
+    if (jobIds.length === 0) return new Map();
+    const successors = await (tx ?? prisma).accountingDataExchangeJob.findMany({
+      where: { ...accountingScopeWhere(scope), supersedesJobId: { in: jobIds } },
+      select: { id: true, supersedesJobId: true },
+    });
+    const map = new Map<string, string>();
+    for (const s of successors) {
+      if (s.supersedesJobId) map.set(s.supersedesJobId, s.id);
+    }
+    return map;
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

@@ -558,7 +558,61 @@ export interface RegJ801Input {
   descRtf?: string; // campo 03 — opcional no leiaute.
   codMotSubs: string; // campo 04 — "001".."005" | "099".
   hashRtf: string; // campo 05 — 40 hex, calculado pelo chamador (nunca pelo `sped.ts`, D2).
-  arqRtf: string; // campo 06 — bytes do .rtf como string (latin1).
+  arqRtf: string; // campo 06 — bytes do .rtf JÁ SANITIZADOS (`sanitizeRtfForSped`) como string (latin1).
+}
+
+/** Tags que o PGE do Sped Contábil proíbe dentro de J801.ARQ_RTF (REGRA_REGISTRO_NAO_DEVE_
+ * EXISTIR_NO_RTF, Manual ECD L9 p. 194, transcrição §1.5.III). */
+const FORBIDDEN_RTF_TAGS = ['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'] as const;
+
+/**
+ * Sanitiza o conteúdo de um .rtf para caber em J801.ARQ_RTF (review PR #368 — o .rtf chegava
+ * cru e um `|` nele virava um `Error` genérico de `spedLine` sem tradução para 400).
+ *
+ * - `\bin`: RTF permite embutir dados BINÁRIOS crus depois de `\binN` (N bytes seguintes,
+ *   sem escape) — nesse trecho um `\r`/`\n`/`|` pode ser dado real, não controle de texto, e
+ *   removê-lo CORROMPERIA o binário. Como o registro J801 é uma LINHA de texto Latin-1
+ *   pipe-delimited, não há como carregar `\bin` com segurança — rejeitado explicitamente
+ *   (o autor deve salvar o Termo sem imagens/objetos OLE embutidos, como o próprio
+ *   procedimento do manual prescreve: Word → .rtf → Bloco de Notas → colar, um caminho que
+ *   por natureza não preserva binário).
+ * - CR/LF (fora de `\bin`): pela especificação RTF (Rich Text Format, versão 1.9.1, seção
+ *   "Ignoring Text" / convenção universal dos leitores RTF), quebras de linha FORA de uma
+ *   sequência de controle são whitespace insignificante — o leitor as ignora ao interpretar o
+ *   documento. Removê-las aqui é NORMALIZAÇÃO SEM PERDA de conteúdo visível, e é exigida pelo
+ *   próprio formato do SPED: um registro é UMA linha física (CRLF é terminador de REGISTRO,
+ *   nunca separador dentro de um campo — `SPED_LINE_TERMINATOR`).
+ * - Tags proibidas (`FORBIDDEN_RTF_TAGS`): verificadas no texto JÁ normalizado (uma quebra de
+ *   linha no meio de uma tag por acidente de diagramação ainda é pega).
+ * - `|`: verificado por último — depois deste ponto o texto está seguro para `spedLine`, que
+ *   mantém sua própria guarda (`|` alto) como defesa em profundidade, nunca alcançada no
+ *   caminho feliz.
+ */
+export function sanitizeRtfForSped(rtfText: string): string {
+  if (rtfText.includes('\\bin')) {
+    throw new Error(
+      'RTF_CONTAINS_BIN: o .rtf usa \\bin (dado binário embutido, ex.: imagem/objeto OLE) — não ' +
+        'suportado no registro J801; salve o Termo novamente sem elementos binários.',
+    );
+  }
+  // CR/LF fora de \bin são whitespace insignificante para o leitor RTF — remover não perde
+  // conteúdo e é exigido pelo formato de 1-linha-por-registro do SPED.
+  const normalized = rtfText.replace(/\r\n|\r|\n/g, '');
+  for (const tag of FORBIDDEN_RTF_TAGS) {
+    if (normalized.includes(`|${tag}|`) || normalized.includes(tag)) {
+      throw new Error(
+        `RTF_FORBIDDEN_TAG: o .rtf contém a tag proibida '${tag}' ` +
+          '(REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194) — remova-a do texto antes de anexar.',
+      );
+    }
+  }
+  if (normalized.includes('|')) {
+    throw new Error(
+      'RTF_CONTAINS_PIPE: o .rtf contém o caractere "|", que corromperia o registro SPED — ' +
+        'remova-o do texto antes de anexar.',
+    );
+  }
+  return normalized;
 }
 
 /**

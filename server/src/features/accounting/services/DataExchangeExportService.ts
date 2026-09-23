@@ -478,11 +478,10 @@ export class DataExchangeExportService {
       throw new ForbiddenError('Não autorizado a consultar jobs de dados contábeis.');
     }
     const { items, total } = await this.repo.listJobs(scope, filter);
-    const listItems: DataExchangeJobListItem[] = [];
-    for (const job of items) {
-      const successor = await this.repo.findJobBySupersedesJobId(scope, job.id);
-      listItems.push(toJobListItem(job, successor?.id ?? null));
-    }
+    // Review PR #368 (N+1): 1 consulta EM LOTE (`IN`) para os sucessores de toda a página, em
+    // vez de 1 consulta por item.
+    const successorByOriginalId = await this.repo.findSuccessorsByJobIds(scope, items.map((j) => j.id));
+    const listItems = items.map((job) => toJobListItem(job, successorByOriginalId.get(job.id) ?? null));
     return { items: listItems, total, page: filter.page, limit: filter.limit };
   }
 
@@ -522,28 +521,34 @@ export class DataExchangeExportService {
    * substituta gravou no PRÓPRIO job (`ecfRectificationRequired`). Idempotente: uma 2ª chamada
    * sobre um job já dispensado devolve o mesmo job sem reemitir o evento (nunca duas dispensas
    * na trilha para a mesma decisão).
+   *
+   * Review PR #368:
+   * - Policy: `canManage` (não `canRead`) — é um comando que MUTA estado (mesmo padrão de
+   *   `DataExchangeImportService.commit`), não uma materialização de leitura como os exports.
+   * - Idempotência DENTRO da tx: o job é RE-LIDO com `tx` propagado — duas chamadas
+   *   concorrentes não podem ambas passar pelo `!job.ecfRectificationWaivedAt` e escrever/
+   *   auditar duas vezes (o preflight fora da tx não fechava esse TOCTOU).
    */
   public async waiveEcfRectification(
     scope: AccountingScope,
     jobId: string,
     justification: string,
   ): Promise<DataExchangeJobResponse> {
-    if (!this.policy.canRead(scope)) {
+    if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Não autorizado a dispensar retificação de ECF.');
     }
-    const job = await this.repo.findJobById(scope, jobId);
-    if (!job) throw new NotFoundError(`Job '${jobId}' não encontrado.`);
-    if (!job.ecfRectificationRequired) {
-      throw new ValidationError(
-        `O job '${jobId}' não exige retificação de ECF — nada a dispensar.`,
-      );
-    }
-    if (job.ecfRectificationWaivedAt) {
-      return toJobResponse(job); // idempotente: já dispensado.
-    }
-
-    const year = job.periodStart ? job.periodStart.getUTCFullYear() : undefined;
     const updated = await this.repo.runTransaction(async (tx) => {
+      const job = await this.repo.findJobById(scope, jobId, tx);
+      if (!job) throw new NotFoundError(`Job '${jobId}' não encontrado.`);
+      if (!job.ecfRectificationRequired) {
+        throw new ValidationError(
+          `O job '${jobId}' não exige retificação de ECF — nada a dispensar.`,
+        );
+      }
+      if (job.ecfRectificationWaivedAt) {
+        return job; // idempotente: já dispensado — nem novo write, nem novo evento.
+      }
+      const year = job.periodStart ? job.periodStart.getUTCFullYear() : undefined;
       const j = await this.repo.updateJob(
         scope,
         jobId,

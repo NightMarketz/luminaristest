@@ -32,6 +32,7 @@ import {
   buildJ100,
   buildJ150,
   buildJ801,
+  sanitizeRtfForSped,
   buildJ900,
   buildJ930,
   buildJ932,
@@ -316,6 +317,34 @@ describe('register builders', () => {
     const line = buildJ801({ codMotSubs: '099', hashRtf: 'a'.repeat(40), arqRtf: 'x' });
     const f = line.slice(1, -1).split('|');
     expect(f[2]).toBe('');
+  });
+
+  // Review PR #368, item 3 — sanitizeRtfForSped: '|' hoje virava Error cru (500) do spedLine;
+  // tags proibidas pela Receita; \bin rejeitado; CR/LF normalizados sem perda (spec RTF).
+  describe('sanitizeRtfForSped', () => {
+    it('remove CR/LF (whitespace insignificante fora de \\bin, spec RTF) sem perder o resto do texto', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\ansi\r\nHello\r\nWorld}')).toBe('{\\rtf1\\ansiHelloWorld}');
+      expect(sanitizeRtfForSped('a\nb\rc\r\nd')).toBe('abcd');
+    });
+
+    it('rejeita "|" (corromperia o registro SPED)', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1|x}')).toThrow(/RTF_CONTAINS_PIPE/);
+    });
+
+    it('rejeita \\bin (dado binário embutido — CR/LF ali dentro seria dado real, não controle)', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1\\bin5 ABCDE}')).toThrow(/RTF_CONTAINS_BIN/);
+    });
+
+    it.each(['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'])(
+      'rejeita a tag proibida %s (REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194)',
+      (tag) => {
+        expect(() => sanitizeRtfForSped(`{\\rtf1 texto ${tag} mais texto}`)).toThrow(/RTF_FORBIDDEN_TAG/);
+      },
+    );
+
+    it('texto limpo passa inalterado (controle)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\ansi Termo de Verificação}')).toBe('{\\rtf1\\ansi Termo de Verificação}');
+    });
   });
 
   it('J932 = 11 fields, IDENT_QUALIF_T derivado (J932_QUALIF_910), COD_ASSIN_T=910 (pp. 203-205)', () => {

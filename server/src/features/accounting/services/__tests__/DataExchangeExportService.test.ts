@@ -60,10 +60,25 @@ function makeRepo() {
     const items = [...store.values()];
     return { items, total: items.length, page: filter.page, limit: filter.limit };
   });
+  const findSuccessorsByJobIds = jest.fn(async (_s: unknown, jobIds: string[]) => {
+    const map = new Map<string, string>();
+    for (const j of store.values()) {
+      if (j.supersedesJobId && jobIds.includes(j.supersedesJobId)) map.set(j.supersedesJobId, j.id);
+    }
+    return map;
+  });
+  const findEcdJobsPendingRectificationForYear = jest.fn(async () =>
+    [...store.values()].filter(
+      (j) => j.kind === 'EXPORT_SPED_ECD' && j.ecfRectificationRequired && !j.ecfRectificationWaivedAt,
+    ));
   const repo = {
     createJob, findJobById, updateJob, runTransaction, findJobBySupersedesJobId, listJobs,
+    findSuccessorsByJobIds, findEcdJobsPendingRectificationForYear,
   } as unknown as IDataExchangeRepository;
-  return { repo, createJob, findJobById, updateJob, findJobBySupersedesJobId, listJobs, store };
+  return {
+    repo, createJob, findJobById, updateJob, findJobBySupersedesJobId, listJobs,
+    findSuccessorsByJobIds, store,
+  };
 }
 
 function makeReports(): IReportReader {

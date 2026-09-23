@@ -224,7 +224,9 @@ export class SpedEcfGenerationService {
       ));
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
-      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Review PR #368: limpa supersedesJobId no FAILED — senão a `@unique` trava o job
+      // original para sempre (toda nova retificação bateria em 409 sem rota de saída).
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
       // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
       // ALERT_WEBHOOK_URL is unset.
       sendAlertWebhook({
@@ -273,15 +275,12 @@ export class SpedEcfGenerationService {
         // Item 21 — "ECF 'S' do mesmo ano zera a flag": a ECF retificadora do MESMO ano destrava
         // o pacote ao contador que uma ECD substituta tinha travado (item 22). Zera só a flag
         // (nunca toca sha256/status/storageKey — a ECD substituída fica intocada por construção).
-        const { items: ecdJobsOfYear } = await this.repo.listJobs(
-          scope,
-          { kind: 'EXPORT_SPED_ECD', status: 'EXPORTED', year, page: 1, limit: 100 },
-          tx,
-        );
-        for (const ecdJob of ecdJobsOfYear) {
-          if (ecdJob.ecfRectificationRequired && !ecdJob.ecfRectificationWaivedAt) {
-            await this.repo.updateJob(scope, ecdJob.id, { ecfRectificationRequired: false }, tx);
-          }
+        // Review PR #368: TODAS as pendentes do ano (sem `limit`/paginação) —
+        // `findEcdJobsPendingRectificationForYear` já filtra `ecfRectificationRequired=true` E
+        // `ecfRectificationWaivedAt IS NULL`, então o loop não precisa reconferir.
+        const ecdJobsPending = await this.repo.findEcdJobsPendingRectificationForYear(scope, year, tx);
+        for (const ecdJob of ecdJobsPending) {
+          await this.repo.updateJob(scope, ecdJob.id, { ecfRectificationRequired: false }, tx);
         }
       }
       return j;

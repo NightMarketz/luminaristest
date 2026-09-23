@@ -44,8 +44,12 @@ export async function resolveSupersededJob(
     );
   }
   // Pré-cheque legível (não fecha o TOCTOU — quem fecha é a `@unique` no createJob abaixo).
+  // Review PR #368: só conta como sucessor um job EXPORTED — um FAILED tem `supersedesJobId`
+  // limpo na própria escrita (ver `updateJob(status:'FAILED', supersedesJobId:null)` nos 3
+  // serviços de geração), então nunca deveria aparecer aqui; o filtro por status é defesa em
+  // profundidade caso a coluna fique com um valor de uma versão anterior do dado.
   const existingSuccessor = await repo.findJobBySupersedesJobId(scope, supersedesJobId);
-  if (existingSuccessor) {
+  if (existingSuccessor && existingSuccessor.status === 'EXPORTED') {
     throw new ConflictError(
       `O job '${supersedesJobId}' já foi substituído/retificado pelo job '${existingSuccessor.id}' — só um sucessor por job.`,
     );

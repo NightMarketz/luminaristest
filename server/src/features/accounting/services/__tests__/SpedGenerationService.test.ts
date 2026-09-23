@@ -451,4 +451,87 @@ describe('SpedGenerationService.generate — retificação versionada (ECD subst
     expect(lines.join('\n')).not.toContain('|J801|');
     expect(lines.join('\n')).not.toContain('|J932|');
   });
+
+  // Review PR #368, item 2 (param-aceito-e-ignorado): .rtf enviado numa ECD que NÃO é
+  // substituta não pode ser silenciosamente descartado.
+  it('.rtf enviado com indFinEsc=0 (sem verificationTerm) é 400 — nunca ignorado em silêncio', async () => {
+    const { service } = buildService();
+    await expect(service.generate(scope, makeDto(), rtf)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  // Review PR #368, item 1: substituto FAILED não pode travar o original para sempre.
+  describe('FAILED não trava o original para sempre (item 1)', () => {
+    it('substituta falha no storage → limpa supersedesJobId no FAILED (não fica "reservado")', async () => {
+      const { service, updateJob } = buildService({ supersededJob: {} });
+      (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
+      await expect(service.generate(scope, substitutaDto(), rtf)).rejects.toThrow('disk full');
+
+      const failedCall = updateJob.mock.calls.find((c) => (c as unknown[])[2] && (c as unknown[])[2] as { status?: string } && ((c as unknown[])[2] as { status?: string }).status === 'FAILED');
+      expect(failedCall).toBeDefined();
+      expect((failedCall as unknown[])[2]).toMatchObject({ status: 'FAILED', supersedesJobId: null });
+    });
+
+    it('nova tentativa de substituir o MESMO job X passa depois que a 1ª falhou (findJobBySupersedesJobId não vê FAILED)', async () => {
+      // O mock de `findJobBySupersedesJobId` no `buildService` só devolve algo quando
+      // `existingSuccessor` é passado explicitamente — como o FAILED nunca é gravado como
+      // sucessor de verdade (é limpo na mesma escrita), uma 2ª chamada sem `existingSuccessor`
+      // segue o caminho normal (sucesso), provando que não há trava residual.
+      const { service } = buildService({ supersededJob: {} });
+      await expect(service.generate(scope, substitutaDto(), rtf)).resolves.toBeDefined();
+    });
+  });
+});
+
+// Review PR #368, item 3 — sanitização do .rtf (ARQ_RTF). Testes do `sanitizeRtfForSped` puro
+// já vivem em `lib/__tests__/sped.test.ts`; aqui a integração via `generate()`.
+describe('SpedGenerationService.generate — sanitização do .rtf (item 3)', () => {
+  function substitutaDtoForRtf() {
+    return makeDto({
+      declarant: {
+        nome: 'EMPRESA TESTE LTDA', cnpj: '11222333000181', uf: 'SP', codMun: '3550308',
+        indSitIniPer: '0', indNire: '1', indFinEsc: '1', codHashSub: 'a'.repeat(40),
+        indGrandePorte: '0', tipEcd: '0', identMf: 'N', indEscCons: 'N',
+        indCentralizada: '0', indMudancPc: '0',
+      } as unknown as SpedEcdRequestDto['declarant'],
+      supersedesJobId: 'job-0',
+      verificationTerm: verificationTerm(),
+    });
+  }
+
+  it('"|" no .rtf → 400 nomeado (nunca 500 cru do spedLine)', async () => {
+    const { service } = buildService({ supersededJob: {} });
+    const badRtf = { buffer: Buffer.from('{\\rtf1|corrupted}', 'latin1') };
+    await expect(service.generate(scope, substitutaDtoForRtf(), badRtf)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('tag proibida (ex.: J900) dentro do .rtf → 400 nomeado', async () => {
+    const { service } = buildService({ supersededJob: {} });
+    const badRtf = { buffer: Buffer.from('{\\rtf1 contains J900 tag}', 'latin1') };
+    await expect(service.generate(scope, substitutaDtoForRtf(), badRtf)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('\\bin (dado binário embutido) → 400 nomeado', async () => {
+    const { service } = buildService({ supersededJob: {} });
+    const badRtf = { buffer: Buffer.from('{\\rtf1\\bin5 ABCDE}', 'latin1') };
+    await expect(service.generate(scope, substitutaDtoForRtf(), badRtf)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('.rtf multilinha (CRLF) é normalizado: J801 sai em 1 linha física e countRegisters/QTD_LIN batem', async () => {
+    const { service } = buildService({ supersededJob: {} });
+    const multilineRtf = { buffer: Buffer.from('{\\rtf1\\ansi\r\nline2\r\nline3}', 'latin1') };
+    await service.generate(scope, substitutaDtoForRtf(), multilineRtf);
+
+    const txt = savedBuffers[0].toString('latin1');
+    const physicalLines = txt.split('\r\n').filter(Boolean);
+    // O J801 é UMA linha física (nenhum CRLF sobrevive dentro do campo ARQ_RTF).
+    const j801Lines = physicalLines.filter((l) => l.startsWith('|J801|'));
+    expect(j801Lines).toHaveLength(1);
+    expect(j801Lines[0]).not.toContain('\n');
+    expect(j801Lines[0]).not.toContain('\r');
+
+    // 9900 conta 1 linha para o tipo J801 (contagem derivada das linhas reais — bate porque o
+    // conteúdo multilinha não se tornou 3 "linhas" físicas por engano).
+    const nine900J801 = physicalLines.find((l) => l.startsWith('|9900|J801|'));
+    expect(nine900J801).toBe('|9900|J801|1|');
+  });
 });

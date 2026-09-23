@@ -107,6 +107,10 @@ export interface UpdateJobInput {
   ecfRectificationRequired?: boolean;
   ecfRectificationWaivedAt?: Date | null;
   ecfRectificationWaiverReason?: string | null;
+  // Review PR #368: liberado no `updateJob(status: 'FAILED')` para limpar a chave da
+  // `@unique` quando a tentativa de substituir/retificar falha na escrita do arquivo — um
+  // FAILED nunca deve seguir contando como "sucessor" do job original.
+  supersedesJobId?: string | null;
 }
 
 /**

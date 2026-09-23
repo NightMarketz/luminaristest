@@ -1,5 +1,91 @@
 # Retorno — C8 PR-4: Retificação versionada ECD/ECF (J801/J932/dispensa/gate/lista de jobs)
 
+## Atualização — correções do review independente (PR #368 FAIL)
+
+Rebase feito em `origin/main` (PR-5 #366 já mergeado, sha `68583f75`) — sem conflito nos choke
+points (`routes/accounting.ts`, `docs.paths.ts`, `factory.ts`); `openapi.json` regenerado,
+BASELINE final = 212 (main 210 + as 2 rotas deste PR; PR-5 não somou path). 6 achados do review
+corrigidos:
+
+1. **Substituto FAILED travava o original para sempre** — `updateJob(status:'FAILED')` agora
+   limpa `supersedesJobId: null` na MESMA escrita, nos 3 serviços (ECD/ECF/ECF-Real);
+   `UpdateJobInput` ganhou o campo. O pré-cheque (`resolveSupersededJob`) só conta sucessor com
+   `status === 'EXPORTED'` (defesa em profundidade). Provado com Prisma REAL (item 6 abaixo,
+   3ª asserção) e com unit (`SpedGenerationService.test.ts`, describe "FAILED não trava...").
+2. **Param aceito-e-ignorado** — `.rtf` enviado com `indFinEsc='0'`/sem `verificationTerm` agora
+   é 400 explícito (`SpedGenerationService.generate`).
+3. **ARQ_RTF cru virava 500** — `lib/sped.ts` ganhou `sanitizeRtfForSped` (pura, testada
+   isoladamente): `\bin` → 400 nomeado; tags proibidas (`C001/I001/J001/K001/J800/J801/J900`,
+   transcrição §1.5.III) → 400 nomeado; CR/LF fora de `\bin` são removidos (spec RTF: whitespace
+   insignificante para o leitor, normalização sem perda — JSDoc cita a fonte); `|` remanescente →
+   400 nomeado (nunca mais o `Error` cru do `spedLine`). `HASH_RTF` agora é calculado sobre o
+   conteúdo JÁ sanitizado (consistência hash↔ARQ_RTF). Teste com RTF multilinha prova 1 linha
+   física + `9900|J801|1` batendo.
+4. **Migração não retry-seguro** — troquei os 5 `ALTER TABLE ADD COLUMN` sequenciais pelo padrão
+   RedefineTables da casa (`PRAGMA defer_foreign_keys` + `DROP TABLE IF EXISTS "new_..."` como
+   prólogo idempotente), mesmo padrão de `20260918100000_add_fixed_assets`. `smoke:migration`
+   confirma 0 perda de linha sobre o `dev.db` real.
+5. **Menores**: `waiveEcfRectification` passou a `canManage` (era `canRead`) + idempotência
+   movida PARA DENTRO da tx (job re-lido com `tx`, fechando o TOCTOU entre 2 chamadas
+   concorrentes); "ECF 'S' zera a flag" agora usa `findEcdJobsPendingRectificationForYear` (sem
+   `limit`/paginação — TODAS as ECDs pendentes do ano); `listJobs` resolve os sucessores em LOTE
+   (`findSuccessorsByJobIds`, 1 consulta `IN`) em vez de 1 consulta por item da página.
+6. **409 provado com Prisma real** — novo
+   `DataExchangeRepository.integration.test.ts` (SQLite real, sem mock): 2º substituto do mesmo
+   job dispara `PrismaClientKnownRequestError` `P2002` de verdade, com `meta.target` confirmado
+   por `isSupersedesUniqueViolation`; controle de NULL-não-colide-com-NULL; e o caso do item 1
+   (FAILED limpo libera nova tentativa) provado no mesmo arquivo.
+
+### PROVA — rodada pós-review
+
+```yaml
+PROVA:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-tsc-server.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd my-app && npm ci && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-tsc-myapp.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd server && npm run docs:generate"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-docs-generate.log
+    sha256: df0c0897749b1814c8feaaac56eee196abf3bf42a11bc27ddf24a4500919c59d
+  - command: "cd server && npx jest src/__tests__/openapi-paths.test.ts src/__tests__/route-spec-wiring.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-openapi.log
+    sha256: 2e431be8a574b2ee818159fb187c8eddee84154d78a375ca2bb36f300a396e70
+  - command: "cd server && npm run test:unit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-unit.log
+    sha256: dab62d3714b804594b98301ebe1491310f469ae510081ed14f69496dbc570793
+  - command: "cd server && npm run smoke:migration"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-smoke.log
+    sha256: cabe145fc190a863f6ff518209b696c0439394e7fea7cece9e6dacfbfcd38092
+  - command: "cd server && npx jest --selectProjects integration --runInBand src/features/accounting/repositories/__tests__/DataExchangeRepository.integration.test.ts"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-integration-dxr.log
+    sha256: 2976e36ba4265d3fff21c03eafe49a918d8019c93d074473502aed3b5b10b429
+  - command: "cd server && npx jest --selectProjects integration --runInBand src/controllers/__tests__/spedController.ecfReal.integration.test.ts src/features/accounting/repositories/__tests__/AccountingDelivery.integration.test.ts"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review1-integration-others.log
+    sha256: aa0db9361bfe5f3004b0faa55030c323f0a8f1c025241fece1f49c8b668fda6b
+VEREDITO: PASS — todos os gates pedidos pelo review verdes nesta rodada (tsc server + my-app,
+  unit 224/224 suítes = 3072 testes, docs:generate + openapi-paths/route-spec-wiring, smoke:migration
+  sobre cópia do dev.db real, integração afetada 25/25 testes com Prisma real --runInBand).
+```
+
+**Nota de ambiente:** a suíte de integração COMPLETA (`npm run test:integration` sem escopo) só
+foi rodada de forma parcial nesta rodada — as 3 suítes diretamente afetadas por este diff
+(`DataExchangeRepository`, `AccountingDelivery`, `spedController.ecfReal`) passam limpo e
+isoladas; rodar a completa numa máquina compartilhada e sob carga (30+ processos `node.exe`
+concorrentes, medido via `tasklist`) reproduz a classe documentada `jest-concorrente-windows-
+ebusy-test-db` (ver seção anterior). Não é um FAIL do diff — é o ambiente.
+
+---
+
 **Autorização:** "Executa C8" (dono, 18/09, corpo do PR #354) + decisões do dono de 23/09
 registradas na transcrição (`docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md
 §5`).
