@@ -3916,11 +3916,14 @@
               "productRef": {
                 "type": "string",
                 "minLength": 1
+              },
+              "classId": {
+                "type": "string",
+                "minLength": 1
               }
             },
             "required": [
-              "cProd",
-              "productRef"
+              "cProd"
             ],
             "additionalProperties": false
           }
@@ -4493,6 +4496,42 @@
               "productRef",
               "qty",
               "valueCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "fixedAssetItems": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "classId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cProd": {
+                "type": "string",
+                "minLength": 1
+              },
+              "costCents": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 2147483647
+              },
+              "ncm": {
+                "type": "string",
+                "minLength": 1
+              },
+              "qty": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "classId",
+              "cProd",
+              "costCents"
             ],
             "additionalProperties": false
           }

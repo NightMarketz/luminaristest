@@ -24,6 +24,7 @@ import type {
 } from '../dtos/PayableDto';
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
+import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
@@ -84,6 +85,10 @@ export class PayableService {
     // (DT stockMovements→productUnits). Best-effort como o receiveStock — a passada de reconcile
     // re-dirige o que faltar; wiring ausente degrada com warn (o físico é derivado, não verdade).
     private readonly physicalStockSync?: IPhysicalStockSync,
+    // OPTIONAL (BE-INCR-FIXED-ASSETS PR-5 / F-FA12 → a): modo 4 (fixedAssetItems) resolve
+    // `class.costAccountId` por item para debitar 1.2.x — NUNCA estoque. Optional pela mesma razão de
+    // wiring do inventoryService; um payable com fixedAssetItems e este repo ausente falha loud.
+    private readonly fixedAssetClassRepo?: IFixedAssetClassRepository,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -153,9 +158,21 @@ export class PayableService {
     // persistidos na linha (JSON) para o re-drive reconstruir o mesmo entry.
     const recoverableLines = await this.resolveRecoverableLines(scope, dto);
 
+    // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 resolve class.costAccountId por item ANTES da
+    // tx (mesmo padrão de recoverableLines) — persistido na linha para o re-drive reconstruir o
+    // MESMO entry e para o rascunho (item 22, fora desta PR — ver F-FA-DRAFT-RATE no retorno) ler
+    // qty/ncm/cProd por item.
+    const hasFixedAssetItems = (dto.fixedAssetItems?.length ?? 0) > 0;
+    const fixedAssetLines = hasFixedAssetItems ? await this.resolveFixedAssetLines(scope, dto) : [];
+
+    // A note has STOCK lines only when it carries a single-SKU pair or a non-empty inventoryItems[]
+    // (F-FA12 → a: a nota pode ser 100% CFOP 1551/2551, com inventoryItems=[]/ausente — o wiring de
+    // estoque não deve ser exigido de um payable sem nenhum item de estoque).
+    const hasInventoryLines = hasSingleInventorySku(dto) || (dto.inventoryItems?.length ?? 0) > 0;
+
     // Inventory purchases MUST have the subledger wired (the dep is optional until Fase B factory
     // wiring). Fail LOUD before minting a row we could never value, never silently skip the INBOUND.
-    if (inventoryPurchase && !this.inventoryService) {
+    if (hasInventoryLines && !this.inventoryService) {
       throw new ValidationError(
         'Compra de estoque requer o serviço de estoque configurado (wiring de inventário pendente).',
       );
@@ -164,7 +181,7 @@ export class PayableService {
     // LAC-E F-E2 (ratificado): o productRef precisa existir no catálogo `products` do tenant ANTES
     // de qualquer escrita — typo em string livre criaria camada de custo órfã invisível ao CMV.
     // Mesmo padrão fail-loud do inventoryService para wiring ausente.
-    if (inventoryPurchase) {
+    if (hasInventoryLines) {
       if (!this.productRefLookup) {
         throw new ValidationError(
           'Compra de estoque requer o catálogo de produtos configurado (wiring de lookup pendente).',
@@ -210,6 +227,7 @@ export class PayableService {
             inventoryQty: dto.inventoryQty ?? null,
             inventoryMultiItem: dto.inventoryMultiItem ?? false,
             recoverableTaxLines: recoverableLines.length > 0 ? JSON.stringify(recoverableLines) : null,
+            fixedAssetItems: fixedAssetLines.length > 0 ? JSON.stringify(fixedAssetLines) : null,
             status: 'OPEN',
             createdById: scope.actorUserId,
           },
@@ -998,27 +1016,43 @@ export class PayableService {
         documentDate: dto.issueDate,
         attachmentId: dto.attachmentId,
       },
-      lines: this.recognitionLines(payable, expenseAccount, dto.amountCents, this.parseRecoverableLines(payable)),
+      lines: this.recognitionLines(
+        payable,
+        expenseAccount,
+        dto.amountCents,
+        this.parseRecoverableLines(payable),
+        this.groupFixedAssetDebits(this.parseFixedAssetLines(payable)),
+      ),
     };
   }
 
   /**
-   * X6 F-X6-8 (a): `D estoque/despesa (amountCents − Σ recuperáveis) + D conta(s) a recuperar / C fornecedores
-   * (amountCents)`. Sem linhas recuperáveis é o par de sempre. Os códigos das contas a recuperar vêm
-   * resolvidos no create (`resolveRecoverableLines`) e persistidos na linha para o re-drive.
+   * X6 F-X6-8 (a) + BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): `D estoque/despesa (amountCents − Σ
+   * recuperáveis − Σ imobilizado) + D conta(s) a recuperar + D conta(s) do imobilizado (class.costAccountId,
+   * agrupada por conta) / C fornecedores (amountCents)`. Uma nota mista gera 2 débitos (1.1.6 + 1.2.x);
+   * uma nota 100% CFOP 1551/2551 tem o débito principal ZERADO — a linha é OMITIDA (postEntry rejeita
+   * linha de valor zero) e só as linhas de imobilizado carregam o débito. Sem linhas extra é o par de
+   * sempre. Os códigos vêm resolvidos no create (`resolveRecoverableLines`/`resolveFixedAssetLines`) e
+   * persistidos na linha para o re-drive.
    */
   private recognitionLines(
     payable: Payable,
     expenseAccount: Account | null,
     amountCents: number,
     recoverable: { accountCode: string; amountCents: number }[],
+    fixedAsset: { accountCode: string; amountCents: number }[] = [],
   ): PostEntryInput['lines'] {
     const recoverableSum = recoverable.reduce((a, l) => a + l.amountCents, 0);
-    return [
-      { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: amountCents - recoverableSum, creditCents: 0 },
-      ...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })),
-      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents },
-    ];
+    const fixedAssetSum = fixedAsset.reduce((a, l) => a + l.amountCents, 0);
+    const mainDebitCents = amountCents - recoverableSum - fixedAssetSum;
+    const lines: PostEntryInput['lines'] = [];
+    if (mainDebitCents > 0) {
+      lines.push({ accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: mainDebitCents, creditCents: 0 });
+    }
+    lines.push(...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
+    lines.push(...fixedAsset.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
+    lines.push({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents });
+    return lines;
   }
 
   private parseRecoverableLines(payable: Payable): { accountCode: string; amountCents: number }[] {
@@ -1026,6 +1060,36 @@ export class PayableService {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as { accountCode: string; amountCents: number }[];
     return parsed.map((l) => ({ accountCode: l.accountCode, amountCents: l.amountCents }));
+  }
+
+  /** Item-level breakdown persisted on the row (BE-INCR-FIXED-ASSETS PR-5) — `classId`/`cProd`/`ncm`/
+   *  `qty` feed the eventual `FixedAsset` draft (item 22); `accountCode` feeds the recognition re-drive. */
+  private parseFixedAssetLines(
+    payable: Payable,
+  ): { classId: string; accountCode: string; cProd: string; costCents: number; ncm?: string; qty: number }[] {
+    const raw = (payable as Payable & { fixedAssetItems?: string | null }).fixedAssetItems;
+    if (!raw) return [];
+    return JSON.parse(raw) as {
+      classId: string;
+      accountCode: string;
+      cProd: string;
+      costCents: number;
+      ncm?: string;
+      qty: number;
+    }[];
+  }
+
+  /** Groups the item-level breakdown by `accountCode` (Σ per class' costAccountId) into the recognition
+   *  debit lines (item 21: "debita class.costAccountId por item" — several items of the same class
+   *  fold into ONE line, several classes ⇒ several lines). */
+  private groupFixedAssetDebits(
+    items: { accountCode: string; costCents: number }[],
+  ): { accountCode: string; amountCents: number }[] {
+    const byAccount = new Map<string, number>();
+    for (const it of items) {
+      byAccount.set(it.accountCode, (byAccount.get(it.accountCode) ?? 0) + it.costCents);
+    }
+    return [...byAccount.entries()].map(([accountCode, amountCents]) => ({ accountCode, amountCents }));
   }
 
   /** X6: valida as contas a recuperar (existem no escopo, folha, natureza Asset) e devolve o que se persiste. */
@@ -1041,6 +1105,45 @@ export class PayableService {
         throw new ValidationError(`Conta a recuperar '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
       }
       out.push({ accountId: account.id, accountCode: account.code, amountCents: line.amountCents, kind: line.kind });
+    }
+    return out;
+  }
+
+  /**
+   * BE-INCR-FIXED-ASSETS PR-5 (item 21, F-FA12 → a): resolve `class.costAccountId` de cada item de
+   * `fixedAssetItems` — existência da classe (cross-tenant 404-like via `findById` escopado) e da
+   * conta (folha, ativo). Wiring ausente falha loud (mesma disciplina de `inventoryService`).
+   */
+  private async resolveFixedAssetLines(
+    scope: AccountingScope,
+    dto: CreatePayableInput,
+  ): Promise<{ classId: string; accountCode: string; cProd: string; costCents: number; ncm?: string; qty: number }[]> {
+    if (!this.fixedAssetClassRepo) {
+      throw new ValidationError(
+        'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
+      );
+    }
+    const out: { classId: string; accountCode: string; cProd: string; costCents: number; ncm?: string; qty: number }[] = [];
+    for (const item of dto.fixedAssetItems ?? []) {
+      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
+      if (!klass || klass.deletedAt) {
+        throw new ValidationError(`Classe de bem '${item.classId}' não existe nesta unidade.`);
+      }
+      const account = await this.accountRepo.findById(scope, klass.costAccountId);
+      if (!account || account.deletedAt) {
+        throw new ValidationError(`Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo.`);
+      }
+      if (!account.acceptsEntries) {
+        throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
+      }
+      out.push({
+        classId: klass.id,
+        accountCode: account.code,
+        cProd: item.cProd,
+        costCents: item.costCents,
+        ncm: item.ncm,
+        qty: item.qty ?? 1,
+      });
     }
     return out;
   }
@@ -1063,7 +1166,13 @@ export class PayableService {
         externalRef: payable.documentNumber ?? undefined,
         documentDate: this.toDateOnly(payable.issueDate),
       },
-      lines: this.recognitionLines(payable, expenseAccount, centsFromDb(payable.amountCents), this.parseRecoverableLines(payable)),
+      lines: this.recognitionLines(
+        payable,
+        expenseAccount,
+        centsFromDb(payable.amountCents),
+        this.parseRecoverableLines(payable),
+        this.groupFixedAssetDebits(this.parseFixedAssetLines(payable)),
+      ),
     };
   }
 

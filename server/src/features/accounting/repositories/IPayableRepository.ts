@@ -29,6 +29,10 @@ export interface CreatePayableData {
   inventoryMultiItem: boolean | null;
   // X6 F-X6-8 (a): JSON [{accountId, amountCents, kind}] — persistido para o re-drive reconstruir o MESMO entry.
   recoverableTaxLines?: string | null;
+  // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): JSON [{classId, accountCode, cProd, costCents, ncm, qty}]
+  // dos itens CFOP 1551/2551 — persistido para o re-drive reconstruir o MESMO entry e para o rascunho
+  // de FixedAsset (item 22) ler o breakdown.
+  fixedAssetItems?: string | null;
   status: string;
   createdById: string | null;
 }

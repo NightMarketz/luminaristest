@@ -709,6 +709,9 @@ export class ApplicationFactory {
       new DynamicTableProductRefLookup(this.repositories.dynamicTable),
       // F-D2=(b): espelho físico da compra (movimento DT via escrita isSystem, best-effort).
       new DynamicTablePhysicalStockSync(dynamicTableService, this.repositories.dynamicTable),
+      // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 (fixedAssetItems) resolve class.costAccountId
+      // via este repo — mesma instância do resto do módulo C8.
+      this.repositories.fixedAssetClass,
     );
 
     // Extracted from the literal so CrmReceivableBridge (below) shares the same instance.

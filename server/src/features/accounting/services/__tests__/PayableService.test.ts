@@ -131,6 +131,16 @@ function build(opts: Opts = {}) {
     reversePurchaseInbound: jest.fn(async () => 'reversed' as const),
   };
 
+  // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): catálogo de classes — `findById` devolve uma classe com
+  // `costAccountId`/`code` fixos por padrão; testes que precisam de MAIS de uma classe sobrescrevem.
+  const fixedAssetClassRepo = {
+    findById: jest.fn(async (_s: unknown, id: string) => ({
+      id, userId: 'owner-1', unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true,
+      costAccountId: 'acc-maq', accumulatedDepreciationAccountId: 'acc-maq-dep',
+      createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+    })),
+  };
+
   const service = new PayableService(
     payableRepo as never,
     accountRepo as never,
@@ -141,8 +151,9 @@ function build(opts: Opts = {}) {
     inventoryService as never,
     productRefLookup as never,
     physicalStockSync as never,
+    fixedAssetClassRepo as never,
   );
-  return { service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo, inventoryService, productRefLookup, physicalStockSync };
+  return { service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo, inventoryService, productRefLookup, physicalStockSync, fixedAssetClassRepo };
 }
 
 /** A PayableService constructed WITHOUT the optional inventory dep (pre-Fase-B wiring state). */
@@ -1007,6 +1018,86 @@ describe('PayableService.createPayable — multi-item inventory purchase (BE-INC
     expect(redriven.map((c) => c.productRef)).toEqual(['p1', 'p2', 'p3']);
     expect(redriven.every((c) => c.sourceId === 'pay-new')).toBe(true);
     expect(redriven.find((c) => c.productRef === 'p2')).toMatchObject({ qty: 2, totalValueCents: 5000 });
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 27, F-FA12 → a): modo 4 (fixedAssetItems) ─────────────
+describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class.costAccountId)', () => {
+  const pureAssetDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-MAQ', description: 'NF-e imobilizado',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 85000,
+    inventoryMultiItem: true,
+    fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }],
+  };
+
+  it('nota 100% imobilizado: debita class.costAccountId (NUNCA 1.1.6 Estoques), sem StockMovement', async () => {
+    const { service, postEntry, inventoryService } = build();
+    await service.createPayable(scope, pureAssetDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines.find((l) => l.accountCode === ESTOQUES_CODE)).toBeUndefined();
+    expect(input.lines).toContainEqual({ accountCode: '4.1', debitCents: 85000, creditCents: 0 }); // acc-maq resolvido pelo accountRepo mock
+    expect(input.lines).toContainEqual({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 85000 });
+    expect(inventoryService.receiveStock).not.toHaveBeenCalled();
+  });
+
+  it('nota mista (estoque + imobilizado): 2 débitos — 1.1.6 (itens) e a conta do bem (F-FA12 → a)', async () => {
+    const { service, postEntry, inventoryService } = build();
+    const mistaDto = {
+      unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-MISTA', description: 'NF-e mista',
+      issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 100000,
+      inventoryMultiItem: true,
+      inventoryItems: [{ productRef: 'prod-1', qty: 1, valueCents: 15000 }],
+      fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, qty: 1 }],
+    };
+    await service.createPayable(scope, mistaDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const estoqueLine = input.lines.find((l) => l.accountCode === ESTOQUES_CODE);
+    const maqLine = input.lines.find((l) => l.accountCode === '4.1');
+    expect(estoqueLine).toMatchObject({ debitCents: 15000 });
+    expect(maqLine).toMatchObject({ debitCents: 85000 });
+    // Σ dos 2 débitos === amountCents (tie-out do lançamento).
+    expect(estoqueLine!.debitCents + maqLine!.debitCents).toBe(100000);
+    expect(inventoryService.receiveStock).toHaveBeenCalledTimes(1); // só o item de estoque
+  });
+
+  it('agrupa por conta: 2 itens da MESMA classe → 1 única linha de débito somada', async () => {
+    const { service, postEntry } = build();
+    const dto2 = {
+      ...pureAssetDto,
+      amountCents: 170000,
+      fixedAssetItems: [
+        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, qty: 1 },
+      ],
+    };
+    await service.createPayable(scope, dto2 as never);
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const maqLines = input.lines.filter((l) => l.accountCode === '4.1');
+    expect(maqLines).toHaveLength(1);
+    expect(maqLines[0].debitCents).toBe(170000);
+  });
+
+  it('classId inexistente no escopo → 400, nada é postado', async () => {
+    const { service, postEntry, fixedAssetClassRepo } = build();
+    (fixedAssetClassRepo.findById as jest.Mock).mockResolvedValueOnce(null);
+    await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toThrow(ValidationError);
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('wiring ausente (sem fixedAssetClassRepo) → 400 loud, nunca silencioso', async () => {
+    const { service } = buildWithoutInventory();
+    await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toThrow(ValidationError);
+  });
+
+  it('persiste fixedAssetItems na linha (JSON) para o re-drive reconstruir o mesmo entry', async () => {
+    const { service, payableRepo } = build();
+    await service.createPayable(scope, pureAssetDto as never);
+    const created = (payableRepo.create.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
+    expect(created.fixedAssetItems).toBeTruthy();
+    const parsed = JSON.parse(created.fixedAssetItems as string);
+    expect(parsed).toEqual([{ classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }]);
   });
 });
 
