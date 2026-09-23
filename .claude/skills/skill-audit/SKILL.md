@@ -172,7 +172,7 @@ A única trava do §2.1 detectável no grafo/source é a **self-relation** (as o
 >
 > **Não conserte um sem o outro.** Corrigir só o grep produz um gate que parece consertado e segue
 > inerte (sai do radar); implementar só a execução liga um gate que reprova árvore limpa. Os dois
-> entram juntos, quando o Bloco A do `ACCOUNTING-MASTER-MAP.md` §5.1 fechar (moratória do
+> entram juntos, quando o Bloco A (`docs/plano/gates/`, ex-master map §5.1) fechar (moratória do
 > `CLAUDE.md`). Decisão registrada em [`governance/coverage.md`](../../../governance/coverage.md).
 >
 > **A regra `AC-2.1-B1` não está desprotegida:** quem a guarda hoje é o teste jest acima, que roda

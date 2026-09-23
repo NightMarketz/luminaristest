@@ -1,5 +1,8 @@
 # Review Backlog — lembretes para revisar depois
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](docs/SDD-LUMINARIS.md) — histórico; itens ainda abertos foram listados na **§IV.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > Lista viva de pontos adiados durante as revisões gold do back-end. Atualizado em **2026-06-25**.
 > Alguns itens vêm de anotações antigas — **verificar contra o código atual** antes de agir.
 > Status das features já revisadas (gold): `dashboardLayout`, `users`, `chat`, `chatInstances`,

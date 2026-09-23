@@ -70,8 +70,8 @@ Agente de **orquestração** — papel: decompor, rotear e rastrear. Os evals av
 - `ORCH-003` — NUNCA atribui implementação/revisão a si mesmo: delega ao `luminaris-implementer` e ao `luminaris-reviewer`.
 - `ORCH-004` — o handoff carrega escopo + passos/skills + ordem/dependências + checks de validação + riscos.
 - `ORCH-005` — não inventa skills (só as do SKILL_MATRIX); em ambiguidade, pergunta antes de planejar.
-- `ORCH-006` — tarefa contábil: lê `docs/accounting/ACCOUNTING-MASTER-MAP.md` primeiro; o mapa é o veredito de posição e a guarda de roteamento (§1 travadas / §4 rejeitadas → `DECISÃO ARQUITETURAL`, não roteia). Gate: `happy-accounting-1`.
-- `ORCH-007` — plano que fecha incremento contábil inclui passo de closeout que promove o nó no mapa (executado pelo implementer, não pelo orquestrador). Gate: `happy-accounting-1`.
+- `ORCH-006` — tarefa contábil: lê o vault `docs/plano/` (`_INDEX.md` + nota do nó; ex-master map) primeiro; o mapa é o veredito de posição e a guarda de roteamento (`trilhos/` travadas / `rejeitadas/` → `DECISÃO ARQUITETURAL`, não roteia). Gate: `happy-accounting-1`.
+- `ORCH-007` — plano que fecha incremento contábil inclui passo de closeout que promove o nó no mapa (frontmatter da nota no vault `docs/plano/` + `plano-vault.mjs index`) (executado pelo implementer, não pelo orquestrador). Gate: `happy-accounting-1`.
 - `ORCH-008` — pedido com ≥2 slices: o fatiamento paralelo é decidido pelo `_PARALLELIZATION-CONTRACT.md` (Phase 3.5), não inline; o plano emite a seção **Plano de paralelização** (lote paralelo Fase A + delta serial Fase 0/B). Gate: `happy-parallel-1`.
 
 Status `validated`: a v1.1.0 adicionou `ORCH-006/007` (mapa-mestre contábil) e a v1.2.0 adicionou `ORCH-008`

@@ -1,5 +1,8 @@
 # Plano SDD multiagente sequencial — até fechar os três módulos (2026-09-07)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **O que este doc é:** a sequência executável de **ciclos SDD** (spec-driven: spec → ratificação →
 > implementação → review independente → integração → fold) que consome todos os nós do
 > [GRAFO-DEPENDENCIAS-2026-09-07.md](GRAFO-DEPENDENCIAS-2026-09-07.md), intercalada com os gates humanos

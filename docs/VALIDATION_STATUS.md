@@ -1,7 +1,7 @@
 # FE-INCR-1 Validation Status — Final
 
 > ⚠️ **HISTÓRICO (2026-06-30).** Registro de validação do FE-INCR-1, mergeado há meses. O estado vigente do
-> módulo está em [`accounting/ACCOUNTING-MASTER-MAP.md`](accounting/ACCOUNTING-MASTER-MAP.md); os
+> módulo está na Parte II de [`SDD-LUMINARIS.md`](SDD-LUMINARIS.md) (plano único; ex-master map); os
 > registros de validação por incremento estão indexados em [`accounting/README.md`](accounting/README.md).
 
 **Date:** 2026-06-30  

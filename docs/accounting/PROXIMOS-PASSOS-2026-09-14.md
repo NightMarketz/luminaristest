@@ -1,5 +1,8 @@
 # Próximos passos — 2026-09-14 — prompt de orquestração pós-decisões
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **⏭️ SUPERSEDIDO em 2026-09-17** por [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) — este
 > doc fechou 11/12 passos (fold 16/09); o resíduo (4.2 transcrição C12 ✅ 16/09, 6.x SEED-MY bloqueado por B-4,
 > 11.5 envio ao contador [H]) foi transportado para lá. Segue como histórico, não edite.

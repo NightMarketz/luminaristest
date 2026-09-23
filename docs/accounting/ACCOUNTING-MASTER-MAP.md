@@ -1,5 +1,8 @@
 # Grafo-Mestre REAL — Módulo Contábil Luminaris
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — conteúdo inteiro migrado verbatim para a **Parte II** (seções `§N` → `§MN`: "master map §5.1" = SDD §M5.1). **Congelado — não faça fold aqui**; os folds agora são na Parte II do SDD. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Fonte de verdade do roadmap contábil.** Este documento é o grafo-mestre **reconciliado com as
 > decisões commitadas** do projeto — não a visão aspiracional de "sistema contábil universal".
 > Onde um grafo aspiracional (o de 35 seções) diverge deste, **este vence** até que um ADR mude a

@@ -44,7 +44,7 @@ preparador e plantão de diagnóstico.
 
 1. Leia o runbook alvo em `docs/accounting/RUNBOOK-*.md` **e** o formato em
    `docs/operating-manual/RUNBOOK-FORMAT.md`.
-2. Leia o doc de fila vigente (`docs/accounting/PROXIMOS-PASSOS-*.md` mais recente) — a ordem
+2. Leia a fila vigente (`docs/plano/_INDEX.md` + a nota do gate em `docs/plano/gates/`, com `depende_de`; os `PROXIMOS-PASSOS-*.md` estão supersedidos) — a ordem
    entre gates é dependência, não preferência (ex.: B-4 antes de H1 porque o backup É o rollback).
 3. Confirme em `origin/main` que o runbook não foi emendado depois do seu último contato.
 

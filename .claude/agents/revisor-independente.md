@@ -1,6 +1,6 @@
 ---
 name: revisor-independente
-description: Revisor INDEPENDENTE de um commit ou branch — checa invariantes ANTES de ler o diff, sem acesso ao transcript nem aos retornos do executor, e reporta só corretude e requisito declarado. Mecanismo do item 5 da cerca de execução (docs/operating-manual/CERCA-DE-EXECUCAO-brief.md). Despachar SEMPRE com isolation worktree. F-1 ratificado — fica versionado, NÃO é despachado enquanto o Bloco A do ACCOUNTING-MASTER-MAP tiver oráculo externo aberto (CLAUDE.md §⛔).
+description: Revisor INDEPENDENTE de um commit ou branch — checa invariantes ANTES de ler o diff, sem acesso ao transcript nem aos retornos do executor, e reporta só corretude e requisito declarado. Mecanismo do item 5 da cerca de execução (docs/operating-manual/CERCA-DE-EXECUCAO-brief.md). Despachar SEMPRE com isolation worktree. F-1 ratificado — fica versionado, NÃO é despachado enquanto o Bloco A (docs/plano/gates/, ex-ACCOUNTING-MASTER-MAP) tiver oráculo externo aberto (CLAUDE.md §⛔).
 model: opus
 tools: Read, Grep, Glob, Bash
 ---

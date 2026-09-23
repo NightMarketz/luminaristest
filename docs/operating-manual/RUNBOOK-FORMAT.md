@@ -29,7 +29,7 @@ O formato abaixo tem três propriedades que um prompt não teria, e cada uma res
 
 | ID | Gate | Rastreio a atualizar |
 |---|---|---|
-| **H1** | Sign-off no PVA — ECD → Apuração → ECF (nessa ordem: a ECD de-risca a família) | Master map §5.1 Bloco A, item 3 |
+| **H1** | Sign-off no PVA — ECD → Apuração → ECF (nessa ordem: a ECD de-risca a família) | `docs/plano/gates/H1.md` (Bloco A, item 3; ex-master map §5.1) |
 | **H2** | Browser sign-off final — carimbo humano, upload de extrato **por clique** (OFX/CNAB), recibos PDF | §5.1 Bloco A, item 4 (+ §5.2 se achar bug) |
 | **M2** | 1º deploy real + Chromium smoke-launch-gate | §5.1 Bloco A, item 5 |
 | **X1** | NF-e 4.00 real anonimizada como fixture | §3 e fila item 11 — destrava o merge P1 |

@@ -1,5 +1,8 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-14) — SUPERSEDE o de 11/09
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — grafo e quadro nó a nó migrados para a **§III.2**; ondas de destino na §18. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **O que este doc é:** o [grafo de 11/09](GRAFO-DEPENDENCIAS-2026-09-11.md) **reconciliado** com as duas
 > cédulas de 14/09 ([forks-ratificações, #319](CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md) — que
 > prevalece onde diverge — e [gates-humanos, #318](CEDULA-DECISAO-2026-09-14-gates-humanos.md)), com os
