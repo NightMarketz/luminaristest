@@ -51,6 +51,7 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
   canManageCounterparty?: boolean;
+  ratesByNcm?: { id: string; ncm: string | null; annualRateBp: number; hiddenAt: Date | null }[];
 }
 
 function build(opts: Opts = {}) {
@@ -131,6 +132,29 @@ function build(opts: Opts = {}) {
     reversePurchaseInbound: jest.fn(async () => 'reversed' as const),
   };
 
+  // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): catálogo de classes — `findById` devolve uma classe com
+  // `costAccountId`/`code` fixos por padrão; testes que precisam de MAIS de uma classe sobrescrevem.
+  const fixedAssetClassRepo = {
+    findById: jest.fn(async (_s: unknown, id: string) => ({
+      id, userId: 'owner-1', unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true,
+      costAccountId: 'acc-maq', accumulatedDepreciationAccountId: 'acc-maq-dep',
+      createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+    })),
+  };
+
+  // Review #366 (achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a validação por
+  // NCM roda ANTES do tx1 (`resolveFixedAssetLines`), nunca só no rascunho. Default: 1 linha que
+  // casa com o NCM `8452.10` dos fixtures deste arquivo; testes de ambiguidade/ausência sobrescrevem.
+  const depreciationRateRepo = {
+    findManyByUnit: jest.fn(async () => opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }]),
+  };
+
+  // BE-INCR-FIXED-ASSETS PR-5 (item 22/28): dep de leitura do rawJson da recognition (redrive) e o
+  // criador de rascunho (setter-injected — quebra o ciclo com FixedAssetService, ver
+  // IFixedAssetDraftCreator.ts). Default: sem sources (o teste de redrive sobrescreve).
+  const sourceProvenanceRepo = { findSourcesByEntry: jest.fn(async () => []) };
+  const fixedAssetDraftCreator = { createDraftFromPayable: jest.fn(async () => ({ created: 1 })) };
+
   const service = new PayableService(
     payableRepo as never,
     accountRepo as never,
@@ -141,8 +165,15 @@ function build(opts: Opts = {}) {
     inventoryService as never,
     productRefLookup as never,
     physicalStockSync as never,
+    fixedAssetClassRepo as never,
+    depreciationRateRepo as never,
+    sourceProvenanceRepo as never,
   );
-  return { service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo, inventoryService, productRefLookup, physicalStockSync };
+  service.setFixedAssetDraftCreator(fixedAssetDraftCreator as never);
+  return {
+    service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo,
+    inventoryService, productRefLookup, physicalStockSync, fixedAssetClassRepo, depreciationRateRepo, sourceProvenanceRepo, fixedAssetDraftCreator,
+  };
 }
 
 /** A PayableService constructed WITHOUT the optional inventory dep (pre-Fase-B wiring state). */
@@ -1007,6 +1038,257 @@ describe('PayableService.createPayable — multi-item inventory purchase (BE-INC
     expect(redriven.map((c) => c.productRef)).toEqual(['p1', 'p2', 'p3']);
     expect(redriven.every((c) => c.sourceId === 'pay-new')).toBe(true);
     expect(redriven.find((c) => c.productRef === 'p2')).toMatchObject({ qty: 2, totalValueCents: 5000 });
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 27, F-FA12 → a): modo 4 (fixedAssetItems) ─────────────
+describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class.costAccountId)', () => {
+  const pureAssetDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-MAQ', description: 'NF-e imobilizado',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 85000,
+    inventoryMultiItem: true,
+    fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }],
+  };
+
+  it('nota 100% imobilizado: debita class.costAccountId (NUNCA 1.1.6 Estoques), sem StockMovement', async () => {
+    const { service, postEntry, inventoryService } = build();
+    await service.createPayable(scope, pureAssetDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines.find((l) => l.accountCode === ESTOQUES_CODE)).toBeUndefined();
+    expect(input.lines).toContainEqual({ accountCode: '4.1', debitCents: 85000, creditCents: 0 }); // acc-maq resolvido pelo accountRepo mock
+    expect(input.lines).toContainEqual({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 85000 });
+    expect(inventoryService.receiveStock).not.toHaveBeenCalled();
+  });
+
+  it('nota mista (estoque + imobilizado): 2 débitos — 1.1.6 (itens) e a conta do bem (F-FA12 → a)', async () => {
+    const { service, postEntry, inventoryService } = build();
+    const mistaDto = {
+      unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-MISTA', description: 'NF-e mista',
+      issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 100000,
+      inventoryMultiItem: true,
+      inventoryItems: [{ productRef: 'prod-1', qty: 1, valueCents: 15000 }],
+      fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }],
+    };
+    await service.createPayable(scope, mistaDto as never);
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const estoqueLine = input.lines.find((l) => l.accountCode === ESTOQUES_CODE);
+    const maqLine = input.lines.find((l) => l.accountCode === '4.1');
+    expect(estoqueLine).toMatchObject({ debitCents: 15000 });
+    expect(maqLine).toMatchObject({ debitCents: 85000 });
+    // Σ dos 2 débitos === amountCents (tie-out do lançamento).
+    expect(estoqueLine!.debitCents + maqLine!.debitCents).toBe(100000);
+    expect(inventoryService.receiveStock).toHaveBeenCalledTimes(1); // só o item de estoque
+  });
+
+  it('agrupa por conta: 2 itens da MESMA classe → 1 única linha de débito somada', async () => {
+    const { service, postEntry } = build();
+    const dto2 = {
+      ...pureAssetDto,
+      amountCents: 170000,
+      fixedAssetItems: [
+        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, ncm: '8452.10', qty: 1 },
+      ],
+    };
+    await service.createPayable(scope, dto2 as never);
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const maqLines = input.lines.filter((l) => l.accountCode === '4.1');
+    expect(maqLines).toHaveLength(1);
+    expect(maqLines[0].debitCents).toBe(170000);
+  });
+
+  // Re-review do #366: 2 itens SEM nItem (fallback por índice) → sourceItemRef 1-based distinto
+  // ("1"/"2", nunca "0"/"0" ou qualquer colisão) — os 2 chegam ao draftCreator como 2 rascunhos,
+  // custos preservados (nenhum "ledger com custo total, 1 rascunho só, sem erro").
+  it('2 itens SEM nItem (fallback por índice, 1-based) → 2 entradas com sourceItemRef distinto, sem colisão', async () => {
+    const { service, fixedAssetDraftCreator } = build();
+    const dto2 = {
+      ...pureAssetDto,
+      amountCents: 170000,
+      fixedAssetItems: [
+        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, ncm: '8452.10', qty: 1 },
+      ],
+    };
+    await service.createPayable(scope, dto2 as never);
+    const args = fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[];
+    const items = args[2] as { sourceItemRef: string; costCents: number }[];
+    expect(items.map((i) => i.sourceItemRef)).toEqual(['1', '2']); // 1-based, distinto — nunca ["0","0"] ou repetido
+    expect(items.map((i) => i.costCents)).toEqual([85000, 85000]); // nenhum custo fundido/perdido
+  });
+
+  it('classId inexistente no escopo → 400, nada é postado', async () => {
+    const { service, postEntry, fixedAssetClassRepo } = build();
+    (fixedAssetClassRepo.findById as jest.Mock).mockResolvedValueOnce(null);
+    await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toThrow(ValidationError);
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('wiring ausente (sem fixedAssetClassRepo) → 400 loud, nunca silencioso', async () => {
+    const { service } = buildWithoutInventory();
+    await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toThrow(ValidationError);
+  });
+
+  // Review #366, achado 1: a validação por NCM tem de rodar ANTES de qualquer efeito — nenhum
+  // Payable, nenhuma JournalEntry, nenhum 201. Antes desta correção o erro só aparecia DEPOIS do
+  // postEntry (dentro de createDraftFromPayable), engolido por um logger.warn best-effort.
+  it('achado 1: NCM sem correspondência no Anexo III (9999.99) → 400 ANTES de qualquer efeito — 0 payables, 0 entries', async () => {
+    const { service, payableRepo, postEntry, fixedAssetDraftCreator } = build();
+    const dto = { ...pureAssetDto, fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '9999.99', qty: 1 }] };
+    await expect(service.createPayable(scope, dto as never)).rejects.toThrow(/Nenhuma taxa de depreciação/);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+  });
+
+  // Review #366, achado 2: NCM 8417 (dado REAL do fixture do Anexo III) tem 2 taxas distintas sob
+  // o mesmo prefixo (fornos industriais 10% × fornos p/ vidro, Nota 1, 33,3%) — ambíguo, 400 ANTES
+  // de qualquer efeito, nunca escolhe uma das duas pela ordem do seed.
+  it('achado 2: NCM 8417 com 2 taxas distintas (Anexo III) → 400 ambíguo ANTES de qualquer efeito', async () => {
+    const { service, payableRepo, postEntry } = build({
+      ratesByNcm: [
+        { id: 'rate-8417-geral', ncm: '8417', annualRateBp: 1000, hiddenAt: null },
+        { id: 'rate-8417-vidro', ncm: '8417', annualRateBp: 3330, hiddenAt: null },
+      ],
+    });
+    const dto = { ...pureAssetDto, fixedAssetItems: [{ classId: 'class-maq', cProd: 'FORNO-1', costCents: 85000, ncm: '8417.10', qty: 1 }] };
+    await expect(service.createPayable(scope, dto as never)).rejects.toThrow(/MAIS DE UMA taxa/);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('NÃO persiste fixedAssetItems na linha do Payable (decisão do dono 23/09) — o breakdown vai no rawJson do SourceDocument da recognition', async () => {
+    const { service, payableRepo, postEntry } = build();
+    await service.createPayable(scope, pureAssetDto as never);
+    const created = (payableRepo.create.mock.calls[0] as unknown[])[0] as Record<string, unknown>;
+    expect(created.fixedAssetItems).toBeUndefined();
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.sourceDocument?.rawJson).toBeTruthy();
+    const parsed = JSON.parse(input.sourceDocument!.rawJson as string);
+    expect(parsed).toEqual({
+      fixedAssetItems: [{
+        classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
+        ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+      }],
+    });
+  });
+
+  it('chama fixedAssetDraftCreator.createDraftFromPayable após a recognition (best-effort)', async () => {
+    const { service, fixedAssetDraftCreator } = build();
+    const payable = await service.createPayable(scope, pureAssetDto as never);
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(1);
+    const args = fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[];
+    expect(args[1]).toBe(payable);
+    expect(args[2]).toEqual([{
+      classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
+      ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+    }]);
+  });
+
+  it('falha do draftCreator é best-effort — createPayable ainda resolve (reconcile re-drive depois)', async () => {
+    const { service, fixedAssetDraftCreator } = build();
+    (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mockRejectedValueOnce(new Error('boom'));
+    await expect(service.createPayable(scope, pureAssetDto as never)).resolves.toBeDefined();
+  });
+
+  it('sem itens de imobilizado, o draftCreator NUNCA é chamado', async () => {
+    const { service, fixedAssetDraftCreator } = build();
+    await service.createPayable(scope, createDto as never);
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+  });
+
+  // Passo 29 (adversarial, decisão do dono 23/09): "re-upload da mesma chave → 409 e 0 rascunhos".
+  it('re-upload da mesma NF-e (mesma supplierName+documentNumber) → P2002/409, 0 rascunhos NOVOS', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator } = build();
+    await service.createPayable(scope, pureAssetDto as never); // 1ª importação — 1 rascunho
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(1);
+
+    payableRepo.create.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('unique', { code: 'P2002', clientVersion: 'x' }),
+    );
+    await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toBeInstanceOf(ValidationError);
+    // O 2º createPayable nunca chega à recognition nem ao draft creator — a @@unique do Payable
+    // (tx1) rejeita ANTES de qualquer efeito de imobilizado.
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(1); // ainda 1, não 2
+  });
+
+  // Passo 29 (adversarial): "crash entre payable e rascunho → reconcile cria 1×" — o draftCreator
+  // falha na chamada síncrona (crash simulado); o redrive relê o MESMO rawJson já postado e
+  // completa o rascunho exatamente 1 vez (idempotente pelo read-first do FixedAssetService real —
+  // aqui dublê, então a idempotência em si é provada em FixedAssetService.test.ts; este teste prova
+  // que o REDRIVE É CHAMADO com o MESMO breakdown que a recognition realmente persistiu).
+  it('crash entre payable e rascunho: createPayable resolve mesmo com o draftCreator falhando; redriveMissingDrafts relê o MESMO rawJson e tenta de novo', async () => {
+    const { service, postEntry, fixedAssetDraftCreator, sourceProvenanceRepo, payableRepo, findEntryBySource } = build();
+    (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mockRejectedValueOnce(new Error('crash simulado'));
+
+    const payable = await service.createPayable(scope, pureAssetDto as never);
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(1); // tentou, crashou
+
+    // O redrive relê o rawJson que a recognition REALMENTE persistiu (não um valor inventado pelo teste).
+    const postedInput = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const rawJson = postedInput.sourceDocument!.rawJson as string;
+
+    payableRepo.findAllActive.mockResolvedValueOnce([payable]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => ({ id: 'entry-redrive' }));
+    (sourceProvenanceRepo.findSourcesByEntry as jest.Mock).mockResolvedValueOnce([
+      { sourceDocumentId: 'doc-redrive', sourceDocument: { id: 'doc-redrive', rawJson } },
+    ]);
+    (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mockResolvedValueOnce({ created: 1 }); // 2ª tentativa cria
+
+    const created = await service.redriveMissingDrafts(scope);
+
+    expect(created).toBe(1);
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(2); // 1ª crashou, 2ª (redrive) criou
+    const secondCallItems = (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mock.calls[1][2];
+    expect(secondCallItems).toEqual(JSON.parse(rawJson).fixedAssetItems); // MESMO breakdown, não recomputado
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (Passo 28/29, F-FA12 → a): redriveMissingDrafts (IFixedAssetDraftRedriver) ──
+describe('PayableService.redriveMissingDrafts — gancho do reconcile (item 13/28)', () => {
+  it('relê o SourceDocument.rawJson da recognition e chama createDraftFromPayable', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator, sourceProvenanceRepo, findEntryBySource } = build();
+    const payable = { ...payableRow(), id: 'pay-asset', inventoryMultiItem: true };
+    payableRepo.findAllActive.mockResolvedValueOnce([payable]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => ({ id: 'entry-asset' }));
+    const items = [{ classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', costCents: 85000, qty: 1 }];
+    (sourceProvenanceRepo.findSourcesByEntry as jest.Mock).mockResolvedValueOnce([
+      { sourceDocumentId: 'doc-1', sourceDocument: { id: 'doc-1', rawJson: JSON.stringify({ fixedAssetItems: items }) } },
+    ]);
+
+    const created = await service.redriveMissingDrafts(scope);
+
+    expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledWith(scope, payable, items, 'doc-1');
+    expect(created).toBe(1);
+  });
+
+  it('sem SourceDocument (recognition ainda não postada) — pula o payable, 0 criado', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator, findEntryBySource } = build();
+    const payable = { ...payableRow(), id: 'pay-asset', inventoryMultiItem: true };
+    payableRepo.findAllActive.mockResolvedValueOnce([payable]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => null);
+
+    const created = await service.redriveMissingDrafts(scope);
+
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+    expect(created).toBe(0);
+  });
+
+  it('payable não-multiItem é ignorado (nunca tem itens de imobilizado)', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator } = build();
+    payableRepo.findAllActive.mockResolvedValueOnce([payableRow({ inventoryMultiItem: false })]);
+
+    const created = await service.redriveMissingDrafts(scope);
+
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+    expect(created).toBe(0);
+  });
+
+  it('sem wiring (fixedAssetDraftCreator OU sourceProvenanceRepo ausente), devolve 0 sem lançar', async () => {
+    const { service } = buildWithoutInventory();
+    await expect(service.redriveMissingDrafts(scope)).resolves.toBe(0);
   });
 });
 

@@ -2039,19 +2039,23 @@
           },
           "itemMappings": {
             "type": "array",
-            "description": "Mapeamento cProd→productRef confirmado pelo operador (D6). TODO item da nota precisa de um mapeamento; item sem mapeamento é rejeitado.",
+            "description": "Mapeamento cProd→productRef (estoque) OU cProd→classId (imobilizado, CFOP 1551/2551, BE-INCR-FIXED-ASSETS PR-5) confirmado pelo operador (D6/F-FA12). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento, ou com o mapeamento errado para o CFOP, é rejeitado.",
             "items": {
               "type": "object",
               "required": [
-                "cProd",
-                "productRef"
+                "cProd"
               ],
               "properties": {
                 "cProd": {
                   "type": "string"
                 },
                 "productRef": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Exige o item NÃO ser CFOP 1551/2551 — XOR com classId"
+                },
+                "classId": {
+                  "type": "string",
+                  "description": "Exige o item SER CFOP 1551/2551 — XOR com productRef"
                 }
               }
             }
@@ -2327,6 +2331,45 @@
             "type": "integer",
             "minimum": 1,
             "description": "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)."
+          },
+          "fixedAssetItems": {
+            "type": "array",
+            "description": "BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): itens de imobilizado (CFOP 1551/2551) da NF-e — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement.",
+            "items": {
+              "type": "object",
+              "required": [
+                "classId",
+                "cProd",
+                "costCents"
+              ],
+              "properties": {
+                "classId": {
+                  "type": "string"
+                },
+                "cProd": {
+                  "type": "string"
+                },
+                "costCents": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                },
+                "ncm": {
+                  "type": "string",
+                  "description": "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita"
+                },
+                "qty": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "default": 1
+                },
+                "nItem": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array"
+                }
+              }
+            }
           },
           "attachmentId": {
             "type": "string",

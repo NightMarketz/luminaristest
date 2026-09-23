@@ -937,6 +937,13 @@ model Payable {
   status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
   paidCents           BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): cache atomico de SUM(payments ACTIVE); gate de soma `paidCents <= amountCents - novo`; nunca fonte de relatorio oficial
   recoverableTaxLines String? // X6 F-X6-8 a: JSON [{accountId, amountCents}] dos créditos a recuperar reconhecidos NO MESMO entry (D estoque líquido + D a recuperar / C fornecedores = amountCents); persistido para o re-drive do reconcile reconstruir o mesmo entry
+  // BE-INCR-FIXED-ASSETS PR-5 (nó C8, item 20-21, F-FA12 a): itens CFOP 1551/2551 desta NF-e NÃO
+  // ganham coluna própria aqui (decisão do dono, 23/09 — ver PayableService.buildRecognitionInput):
+  // o breakdown {classId, accountCode, cProd, costCents, ncm, qty} vai no `rawJson` do
+  // `SourceDocument` da RECOGNITION (campo já existente, reuso — nenhum schema novo neste ponto).
+  // O re-drive do rascunho (item 22/28) relê esse `SourceDocument` pelo `sourceDocumentId` da
+  // entry (`PayableService.redriveFixedAssetDrafts` via `ISourceProvenanceRepository`), nunca uma
+  // 2ª cópia JSON na própria linha do Payable.
   createdById         String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById       String? // actor who cancelled; plain string
   cancelReason        String?
@@ -1628,6 +1635,12 @@ model FixedAsset {
   sourceDocument               SourceDocument?   @relation(fields: [sourceDocumentId], references: [id])
   payableId                    String? // payable de origem quando criado pelo modo 4 (item 22)
   payable                      Payable?          @relation(fields: [payableId], references: [id])
+  // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): chave do item DENTRO da NF-e
+  // (`cProd`) — o `createDraftFromPayable` é read-first por `(payableId, sourceItemRef)`: um
+  // re-drive (reconcile) que releia a mesma NF-e e chame de novo com os MESMOS itens nunca duplica
+  // o rascunho. NULL para todo ativo que não nasceu de NF-e (SQLite trata NULL como distinto —
+  // muitas linhas com payableId/sourceItemRef ambos null coexistem sem colidir no unique).
+  sourceItemRef                String?
   version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
   createdById                  String?
   createdAt                    DateTime          @default(now())
@@ -1635,6 +1648,7 @@ model FixedAsset {
   deletedAt                    DateTime?
 
   @@unique([userId, unitId, code])
+  @@unique([payableId, sourceItemRef])
   @@index([userId, unitId, status])
   @@map("fixed_assets")
 }

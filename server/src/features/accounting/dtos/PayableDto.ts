@@ -41,6 +41,19 @@ const dateOnly = (field: string) =>
  *         expenseAccountId:    { type: string, description: "Id de uma conta-folha nature=Expense (contrapartida do reconhecimento). XOR com inventoryProductRef+inventoryQty (INCR-INVENTORY D3(b))." }
  *         inventoryProductRef: { type: string, description: "Compra de estoque (INCR-INVENTORY D3(b)): ref DynamicTable do produto; débito vai a 1.1.6 Estoques + emite StockMovement INBOUND. Exige inventoryQty; XOR com expenseAccountId." }
  *         inventoryQty:        { type: integer, minimum: 1, description: "Unidades recebidas nesta compra de estoque; pareado com inventoryProductRef. amountCents é o valor TOTAL (evita arredondamento por-unidade)." }
+ *         fixedAssetItems:
+ *           type: array
+ *           description: "BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): itens de imobilizado (CFOP 1551/2551) da NF-e — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement."
+ *           items:
+ *             type: object
+ *             required: [classId, cProd, costCents]
+ *             properties:
+ *               classId:   { type: string }
+ *               cProd:     { type: string }
+ *               costCents: { type: integer, minimum: 1, maximum: 2147483647 }
+ *               ncm:       { type: string, description: "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita" }
+ *               qty:       { type: integer, minimum: 1, default: 1 }
+ *               nItem:     { type: integer, minimum: 1, description: "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array" }
  *         attachmentId:        { type: string, description: "Id de um DocumentAttachment já enviado, anexado ao lançamento de reconhecimento (F4)" }
  */
 /** One received SKU of a multi-item NF-e purchase (BE-INCR-NFE A2). `valueCents` is the item's SHARE
@@ -64,6 +77,24 @@ const inventoryItem = z
   })
   .strict();
 
+/** One CFOP 1551/2551 item of a multi-item NF-e purchase (BE-INCR-FIXED-ASSETS PR-5, F-FA12 → a):
+ *  debits `class.costAccountId` (1.2.x) — NEVER a StockMovement. `qty` feeds the eventual
+ *  `FixedAsset.quantity` (item 22); optional/default 1 for a direct (non-NF-e) mode-4 payable, where
+ *  there is no `qCom` to derive it from. */
+const fixedAssetItem = z
+  .object({
+    classId: z.string().min(1),
+    cProd: z.string().min(1),
+    costCents: cents,
+    ncm: z.string().min(1).optional(),
+    qty: z.number().int().positive().optional(),
+    // BE-INCR-FIXED-ASSETS PR-5 (review #366, achado 3): posição da linha na NF-e — a chave real
+    // do sourceItemRef do rascunho (nunca cProd, que pode repetir em 2 linhas de imobilizado
+    // distintas). Ausente numa criação MANUAL (fora de NF-e) → o service usa o índice no array.
+    nItem: z.number().int().positive().optional(),
+  })
+  .strict();
+
 export const CreatePayableSchema = z
   .object({
     unitId: z.string().min(1),
@@ -83,8 +114,13 @@ export const CreatePayableSchema = z
     // carries the per-SKU breakdown the create path drives as N StockMovement INBOUND (sourceId=payableId).
     inventoryMultiItem: z.boolean().optional(),
     inventoryItems: z.array(inventoryItem).optional(),
+    // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4, combinável SÓ com o modo 3 (inventoryMultiItem).
+    // Uma nota mista tem AMBOS inventoryItems e fixedAssetItems não-vazios; uma nota 100% CFOP
+    // 1551/2551 tem inventoryItems=[]/ausente — o gate abaixo exige ao menos um dos dois.
+    fixedAssetItems: z.array(fixedAssetItem).optional(),
     // X6 F-X6-8 (a): só com inventoryMultiItem; `amountCents` (o que se deve ao fornecedor) = Σ itens (estoque
-    // líquido) + Σ recoverableTaxLines (créditos). Ausente = comportamento anterior (Σ itens === amountCents).
+    // líquido) + Σ fixedAssetItems (imobilizado) + Σ recoverableTaxLines (créditos). Ausente = comportamento
+    // anterior (Σ itens === amountCents).
     recoverableTaxLines: z.array(recoverableTaxLine).max(2).optional(),
     attachmentId: z.string().min(1).optional(),
   })
@@ -102,6 +138,7 @@ export const CreatePayableSchema = z
     const hasInventory = hasProductRef && hasQty;
     const isMultiItem = val.inventoryMultiItem === true;
     const hasItems = val.inventoryItems != null && val.inventoryItems.length > 0;
+    const hasFixedAssetItems = val.fixedAssetItems != null && val.fixedAssetItems.length > 0;
 
     // Mode 3 — multi-item NF-e purchase: the flag is set; items required; NO expense / single-SKU fields.
     if (!isMultiItem && val.recoverableTaxLines && val.recoverableTaxLines.length > 0) {
@@ -109,6 +146,15 @@ export const CreatePayableSchema = z
         code: z.ZodIssueCode.custom,
         message: 'recoverableTaxLines só cabe em compra multi-item (NF-e, inventoryMultiItem).',
         path: ['recoverableTaxLines'],
+      });
+      return;
+    }
+    // Mode 4 (fixedAssetItems) é combinável SÓ com o modo 3 (F-FA12 → a) — nunca sozinho fora dele.
+    if (!isMultiItem && hasFixedAssetItems) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'fixedAssetItems só cabe em compra multi-item (NF-e, inventoryMultiItem).',
+        path: ['fixedAssetItems'],
       });
       return;
     }
@@ -122,21 +168,51 @@ export const CreatePayableSchema = z
         });
         return;
       }
-      if (!hasItems) {
+      if (!hasItems && !hasFixedAssetItems) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Compra multi-item (inventoryMultiItem) exige inventoryItems (ao menos 1).',
+          message:
+            'Compra multi-item (inventoryMultiItem) exige inventoryItems e/ou fixedAssetItems (ao menos 1 no total).',
           path: ['inventoryItems'],
         });
         return;
       }
-      // Tie-out (ACC-014/T4): the per-SKU shares must sum EXACTLY to the note total on the row.
-      const itemsSum = val.inventoryItems!.reduce((acc, it) => acc + it.valueCents, 0);
+      // Review #366 (re-review): `nItem` é opcional POR ITEM, mas nunca por metade do array — uma
+      // mistura de item-com-nItem e item-sem-nItem faria o service resolver sourceItemRef por dois
+      // esquemas diferentes no MESMO array (explícito × fallback por índice) e um dos dois podia
+      // colidir com o outro em silêncio (achado do re-review: `[{nItem:1},{sem nItem}]` → os dois
+      // acabavam em sourceItemRef "1"). Regra: `nItem` em TODOS os itens (e todos ÚNICOS) OU em
+      // NENHUM (o service cai no fallback por índice, sem risco de colisão com um explícito).
+      if (hasFixedAssetItems) {
+        const withNItem = val.fixedAssetItems!.filter((it) => it.nItem != null).length;
+        if (withNItem > 0 && withNItem < val.fixedAssetItems!.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'fixedAssetItems: nItem deve estar presente em TODOS os itens ou em NENHUM — nunca só em parte (risco de colisão com o fallback por índice).',
+            path: ['fixedAssetItems'],
+          });
+          return;
+        }
+        if (withNItem === val.fixedAssetItems!.length) {
+          const nItems = val.fixedAssetItems!.map((it) => it.nItem);
+          if (new Set(nItems).size !== nItems.length) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'fixedAssetItems: nItem repetido entre itens — cada item precisa de um nItem único (a chave do rascunho).',
+              path: ['fixedAssetItems'],
+            });
+            return;
+          }
+        }
+      }
+      // Tie-out (ACC-014/T4): the per-SKU + per-ativo shares must sum EXACTLY to the note total on the row.
+      const itemsSum = (val.inventoryItems ?? []).reduce((acc, it) => acc + it.valueCents, 0);
+      const fixedAssetSum = (val.fixedAssetItems ?? []).reduce((acc, it) => acc + it.costCents, 0);
       const recoverableSum = (val.recoverableTaxLines ?? []).reduce((acc, l) => acc + l.amountCents, 0);
-      if (itemsSum + recoverableSum !== val.amountCents) {
+      if (itemsSum + fixedAssetSum + recoverableSum !== val.amountCents) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Σ dos itens (${itemsSum}) + Σ créditos a recuperar (${recoverableSum}) deve igualar amountCents (${val.amountCents}).`,
+          message: `Σ dos itens (${itemsSum}) + Σ itens de imobilizado (${fixedAssetSum}) + Σ créditos a recuperar (${recoverableSum}) deve igualar amountCents (${val.amountCents}).`,
           path: ['inventoryItems'],
         });
       }

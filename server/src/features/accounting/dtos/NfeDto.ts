@@ -20,14 +20,31 @@ import { NFE_CHAVE_REGEX } from '../../../lib/cnpj';
 const dateOnly = (field: string) =>
   z.string().refine(isValidDateOnly, `${field} deve ser uma data real YYYY-MM-DD`);
 
-/** One operator-confirmed mapping of a note item (`cProd` from the XML) to a known inventory
- *  `productRef` (D6 — never auto-create a product from the note). */
+/** One operator-confirmed mapping of a note item (`cProd` from the XML). EXACTLY one of
+ *  `productRef` (estoque, D6 — never auto-create a product from the note) or `classId` (imobilizado,
+ *  BE-INCR-FIXED-ASSETS PR-5 / F-FA12 → a — item com CFOP 1551/2551) — never both, never neither. The
+ *  service (`NfeImportService.allocate`) checks the mapping AGAINST the parsed CFOP of the item: a
+ *  1551/2551 item requires `classId` and forbids `productRef`; any other item requires `productRef`
+ *  and forbids `classId` (param-aceito-e-ignorado-e-bug — a `classId` on a non-1551 item, or a
+ *  `productRef` on a 1551 item, is a silent-misroute risk and rejects loud rather than guessing). */
 const itemMapping = z
   .object({
     cProd: z.string().min(1),
-    productRef: z.string().min(1),
+    productRef: z.string().min(1).optional(),
+    classId: z.string().min(1).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((val, ctx) => {
+    const hasProductRef = val.productRef != null;
+    const hasClassId = val.classId != null;
+    if (hasProductRef === hasClassId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Item '${val.cProd}': informe EXATAMENTE UM de productRef (estoque) ou classId (imobilizado).`,
+        path: ['productRef'],
+      });
+    }
+  });
 
 /** @openapi
  * components:
@@ -41,13 +58,14 @@ const itemMapping = z
  *         dueDate:        { type: string, description: "Data-only YYYY-MM-DD de vencimento; ausente ⇒ usa a data de emissão da NF-e (dhEmi)" }
  *         itemMappings:
  *           type: array
- *           description: "Mapeamento cProd→productRef confirmado pelo operador (D6). TODO item da nota precisa de um mapeamento; item sem mapeamento é rejeitado."
+ *           description: "Mapeamento cProd→productRef (estoque) OU cProd→classId (imobilizado, CFOP 1551/2551, BE-INCR-FIXED-ASSETS PR-5) confirmado pelo operador (D6/F-FA12). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento, ou com o mapeamento errado para o CFOP, é rejeitado."
  *           items:
  *             type: object
- *             required: [cProd, productRef]
+ *             required: [cProd]
  *             properties:
  *               cProd:      { type: string }
- *               productRef: { type: string }
+ *               productRef: { type: string, description: "Exige o item NÃO ser CFOP 1551/2551 — XOR com classId" }
+ *               classId:    { type: string, description: "Exige o item SER CFOP 1551/2551 — XOR com productRef" }
  */
 export const ImportNfePurchaseSchema = z
   .object({

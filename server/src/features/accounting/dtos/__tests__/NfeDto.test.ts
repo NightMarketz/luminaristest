@@ -9,7 +9,7 @@ import { acquisitionCost } from '../../../../lib/nfeCost';
 import { join } from 'path';
 import { parseNfe } from '../../../../lib/nfe';
 import { cnpjCheckDigits, nfeChaveCheckDigit } from '../../../../lib/cnpj';
-import { NfePreviewSchema, PreviewNfeSchema } from '../NfeDto';
+import { ImportNfePurchaseSchema, NfePreviewSchema, PreviewNfeSchema } from '../NfeDto';
 import { toNfePreview } from '../../services/NfePreviewService';
 
 const FIXTURE_DIR = join(__dirname, '../../../../lib/__tests__/fixtures/nfe');
@@ -37,6 +37,36 @@ describe('PreviewNfeSchema (comportamento 1)', () => {
   it('rejeita campo extra (.strict()) — saleId ou itemMappings não pertencem ao preview', () => {
     expect(PreviewNfeSchema.safeParse({ unitId: 'unit-1', saleId: 'x' }).success).toBe(false);
     expect(PreviewNfeSchema.safeParse({ unitId: 'unit-1', itemMappings: [] }).success).toBe(false);
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, F-FA12 → a): itemMapping XOR productRef/classId ─────────────
+describe('ImportNfePurchaseSchema — itemMapping XOR (productRef estoque × classId imobilizado)', () => {
+  const base = { unitId: 'unit-1' };
+
+  it('aceita productRef sozinho (estoque)', () => {
+    expect(
+      ImportNfePurchaseSchema.safeParse({ ...base, itemMappings: [{ cProd: 'p1', productRef: 'prod-1' }] }).success,
+    ).toBe(true);
+  });
+
+  it('aceita classId sozinho (imobilizado)', () => {
+    expect(
+      ImportNfePurchaseSchema.safeParse({ ...base, itemMappings: [{ cProd: 'p1', classId: 'class-1' }] }).success,
+    ).toBe(true);
+  });
+
+  it('rejeita nem productRef nem classId', () => {
+    expect(ImportNfePurchaseSchema.safeParse({ ...base, itemMappings: [{ cProd: 'p1' }] }).success).toBe(false);
+  });
+
+  it('rejeita productRef E classId juntos no mesmo item', () => {
+    expect(
+      ImportNfePurchaseSchema.safeParse({
+        ...base,
+        itemMappings: [{ cProd: 'p1', productRef: 'prod-1', classId: 'class-1' }],
+      }).success,
+    ).toBe(false);
   });
 });
 

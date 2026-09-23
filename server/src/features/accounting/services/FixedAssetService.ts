@@ -1,4 +1,4 @@
-import type { FixedAsset } from 'generated/prisma';
+import type { FixedAsset, Payable } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type {
   ActivateFixedAssetInput,
@@ -18,6 +18,7 @@ import type { AuditService } from './AuditService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { IFixedAssetDraftCreator, ResolvedFixedAssetItem } from './IFixedAssetDraftCreator';
 
 export const FIXED_ASSET_CREATED = 'fixed_asset.created';
 export const FIXED_ASSET_ACTIVATED = 'fixed_asset.activated';
@@ -33,7 +34,7 @@ export const FIXED_ASSET_DISPOSED = 'fixed_asset.disposed';
  * do `runMonth`) ANTES de montar o entry de baixa — troca o 400 temporário do PR-2 pela postagem
  * automática.
  */
-export class FixedAssetService {
+export class FixedAssetService implements IFixedAssetDraftCreator {
   constructor(
     private readonly assetRepo: IFixedAssetRepository,
     private readonly classRepo: IFixedAssetClassRepository,
@@ -299,6 +300,93 @@ export class FixedAssetService {
       });
       return updated;
     });
+  }
+
+  // ── Rascunho por NF-e modo 4 (execution-plan Passo 28, F-FA12 → a) ──────────────────────────
+
+  /**
+   * Cria 1 `FixedAsset` `PENDING_ACTIVATION` por item de imobilizado de uma NF-e (BRIEF item 22).
+   * **Read-first** por `(payableId, sourceItemRef)` — item já com rascunho é PULADO (a chamada é
+   * idempotente por desenho: um re-drive que releia a MESMA NF-e e chame de novo com os MESMOS
+   * itens nunca duplica, `@@unique` fecha a corrida). `sourceItemRef` é o `nItem` da NF-e (posição
+   * da linha, nunca `cProd` — review #366, achado 3: 2 linhas de imobilizado podem repetir o
+   * `cProd`, e chavear por ele faria a 2ª ler o rascunho da 1ª como "já existe" e perder o custo).
+   * `quantity` = `item.qty` (qCom inteiro da NF-e, resolvido em `NfeImportService.allocate`);
+   * `acquiredAt` = `payable.issueDate` (a `dhEmi` da nota, já a data usada para o reconhecimento).
+   *
+   * **Taxa (fork "annualRateBp do rascunho", decidido pelo dono 23/09; review #366, achado 1):**
+   * `item.rateId`/`item.annualRateBp` chegam JÁ RESOLVIDOS por `PayableService.resolveFixedAssetLines`
+   * (`resolveRateForNcm`, `models/FixedAsset.model.ts`) — **ANTES** do `postEntry`. Esta função NÃO
+   * re-deriva a taxa: fazê-lo aqui reabriria o buraco que o review achou (a validação só rodava
+   * DEPOIS do débito estar postado, e a falha aqui era só `logger.warn` best-effort — a nota subia
+   * com `201` e o ativo nunca nascia).
+   */
+  async createDraftFromPayable(
+    scope: AccountingScope,
+    payable: Payable,
+    items: ResolvedFixedAssetItem[],
+    sourceDocumentId?: string | null,
+  ): Promise<{ created: number }> {
+    if (!this.policy.canManageFixedAssets(scope)) {
+      throw new ForbiddenError('Você não tem permissão para criar ativos.');
+    }
+    const { userId, unitId } = accountingScopeWhere(scope);
+    let created = 0;
+    for (const item of items) {
+      // Read-first (idempotência do re-drive) — ANTES de resolver a classe, para um item já
+      // rascunhado nunca pagar o custo (nem o risco de erro) de reprocessar dado que já convergiu.
+      const existing = await this.assetRepo.findByPayableAndSourceItemRef(scope, payable.id, item.sourceItemRef);
+      if (existing) continue;
+
+      const klass = await this.classRepo.findById(scope, item.classId);
+      if (!klass) {
+        throw new NotFoundError(
+          `Classe de bem '${item.classId}' não foi encontrada (rascunho do payable '${payable.id}', item '${item.cProd}').`,
+        );
+      }
+
+      await this.assetRepo.runTransaction(async (tx) => {
+        const draft = await this.assetRepo.create(
+          {
+            userId,
+            unitId,
+            classId: klass.id,
+            code: this.draftCode(payable, item.sourceItemRef),
+            description: `${klass.name} — NF-e ${payable.documentNumber ?? payable.id} (item ${item.cProd})`,
+            ncmPrefix: item.ncm ?? null,
+            quantity: item.qty,
+            costCents: BigInt(item.costCents),
+            residualValueCents: 0n,
+            rateId: item.rateId,
+            annualRateBp: item.annualRateBp,
+            bookAnnualRateBp: null,
+            bookRateJustification: null,
+            acquiredAt: payable.issueDate,
+            createdById: scope.actorUserId,
+            payableId: payable.id,
+            sourceDocumentId: sourceDocumentId ?? null,
+            sourceItemRef: item.sourceItemRef,
+          },
+          tx,
+        );
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: FIXED_ASSET_CREATED,
+          targetType: 'fixed_asset',
+          targetId: draft.id,
+          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId: item.rateId, annualRateBp: item.annualRateBp },
+        });
+      });
+      created += 1;
+    }
+    return { created };
+  }
+
+  /** Chave determinística e estável do rascunho (mesma em toda chamada de re-drive — não é decisão
+   *  de negócio, só um identificador único e legível): `NFE-<documentNumber ou payableId>-<sourceItemRef>`. */
+  private draftCode(payable: Payable, sourceItemRef: string): string {
+    const doc = payable.documentNumber ?? payable.id;
+    return `NFE-${doc}-${sourceItemRef}`.slice(0, 190); // folga sob qualquer teto de coluna razoável
   }
 
   private async requireEntryAccount(scope: AccountingScope, id: string, label: string) {
