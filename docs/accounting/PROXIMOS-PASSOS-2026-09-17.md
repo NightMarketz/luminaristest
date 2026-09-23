@@ -1,5 +1,8 @@
 # Próximos passos — 2026-09-17 — prompt de orquestração pós-C6b (sucede o de 14/09)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — ordem de execução e estado migrados para a **§III.1**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Uso:** cole o bloco "PROMPT" numa sessão nova com `luminaris-orchestrator`. Autocontido: cita as
 > autorizações, fixa a ordem (R6) e diz o que NÃO fazer. **Uma sessão executora de código por vez** —
 > hoje há uma viva no C6b PR-2 (#338, worktree `agent-a3bb9869f94170417`); quem colar isto **não abre

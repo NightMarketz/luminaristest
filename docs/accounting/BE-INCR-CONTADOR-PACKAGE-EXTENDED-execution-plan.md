@@ -1,5 +1,8 @@
 # C6b — Plano de execução granular: BE-INCR-CONTADOR-PACKAGE-EXTENDED
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **✅ EXECUTADO 2026-09-17: PR-1 #337 `daf76279` · PR-2 #338 `15c8bf53` · PR-3 #340 `373d00d4`. Reviews independentes: PR-1 PASS (+1 MÉDIO fechado), PR-2 FAIL→PASS (2 ALTO + 1 MÉDIO), PR-3 FAIL→PASS (1 BLOQUEANTE na migração). Desvios registrados nos PRs; nenhum fork novo.**
 >
 > **Estado: plano de execução (granularização do BRIEF), 2026-09-16.** Forks F-C6b-1..5 → (a) ✅

@@ -27,8 +27,8 @@ Validação: teste de sistema 2026-07-07 — 9/10, mutação de controle reprova
 
 Consulte nesta ordem — a primeira que der tarefa concreta vence:
 
-1. **`docs/accounting/ACCOUNTING-MASTER-MAP.md`** — roadmap contábil real. O nó **⏳** é a
-   próxima tarefa de produto por definição; §1/§4 dizem o que NÃO propor. (ORCH-006 manda o
+1. **`docs/plano/_INDEX.md`** (vault do plano; nota do nó em `docs/plano/nos/`; ex-master map) — roadmap real. O nó **⏳** é a
+   próxima tarefa de produto por definição; `trilhos/`/`rejeitadas/` dizem o que NÃO propor. (ORCH-006 manda o
    orquestrador lê-lo; você também deve.)
 2. **`MEMORY.md` do projeto** (auto-memória do agente) — quase toda entrada carrega "pending:"
    explícito (sign-off humano, smoke em dev.db real, FE deferido, re-run A–K…). Grep mental:
@@ -70,7 +70,7 @@ Fluxo:
 4. Se REPROVADO: devolva os FAILs ao implementer (nunca ao revisor), re-submeta à revisão.
    Máximo 3 ciclos; travou → pare e me traga o aberto.
 5. Closeout: registre "Decisões a registrar" via learning-log; se contábil, promova o nó no
-   ACCOUNTING-MASTER-MAP (ORCH-007).
+   vault docs/plano/ + `node scripts/plano-vault.mjs index` (ORCH-007).
 
 Relatório final: 1ª linha = veredicto; 2ª = risco principal; depois evidências.
 ```
@@ -107,7 +107,7 @@ Persona afiada muda a mira do revisor, não a abertura dele.
 
 ```
 Monte a fila de trabalho atual deste repo. Consulte nesta ordem e cite evidência:
-(1) docs/accounting/ACCOUNTING-MASTER-MAP.md — nó ⏳ e pendências dos ✅ recentes;
+(1) docs/plano/_INDEX.md — destravados, fila aberta e nota de cada nó (estado, autorização, pendências);
 (2) MEMORY.md — entradas com pending/deferred/HELD;
 (3) docs/operating-manual/system-test-*/ — não-conformidades preteridas;
 (4) docs/learnings/ — pitfalls sem fix;
@@ -124,7 +124,7 @@ escreva o prompt de incremento (§2) pronto pra colar. Não implemente nada.
 - **Fix de 1 linha óbvio / typo / doc:** sessão direta, gates de envio manuais (OPS-001 no
   texto da resposta), sem trio. O pipeline custa mais que o bug.
 - **Pergunta/diagnóstico:** o deliverable é o parecer — nada de implementar (T-boundary).
-- **Decisão arquitetural** (colide com §1/§4 do master map, novo módulo Prisma vs DynamicTable
+- **Decisão arquitetural** (colide com `docs/plano/trilhos/`/`rejeitadas/`, ex-master map §1/§4, novo módulo Prisma vs DynamicTable
   ambíguo): não roteie geração — exija ADR + seu sinal humano primeiro.
 - **Tarefa contábil:** sempre com a persona `luminaris-accounting-architect` anexando parecer
   ao plano (o orquestrador já faz; confira que o parecer veio).

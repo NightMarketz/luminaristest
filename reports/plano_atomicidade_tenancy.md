@@ -1,5 +1,8 @@
 # Plano de Execução — Atomicidade & Tenancy
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../docs/SDD-LUMINARIS.md) — histórico; itens ainda abertos foram listados na **§IV.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Data**: 2026-06-11 · **Pré-requisito de leitura**: `auditoria_consolidada.md` (R1–R4) e `auditoria_profunda_areas.md` (RE-*, PR-*, DOC-2)
 > **Escopo**: resolver as duas fundações apontadas como "ficam mais caras a cada dia": (A) atomicidade das escritas multi-tabela e (B) isolamento de tenant.
 > **Nada neste plano foi implementado** — é o blueprint para execução.

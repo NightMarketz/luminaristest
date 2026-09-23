@@ -1,5 +1,8 @@
 # Orquestrador — Passos 9–13 (Fold + Motor + Boundary Test)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — migrado para a **§III.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 **Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
 **Entrada (re-medida em 2026-09-22, após `git fetch`):** `origin/main` = `be80ea47` (#359, cerca de execução PR-2); `0548d19a` (C8 PR-3 #356) e `edb80ec8` (C12 #353) são ancestrais. **O passo 9 folda contra o tip de `origin/main` — não contra um SHA congelado neste doc; re-meça com `git fetch` antes de foldar** (entre a 1ª e a 2ª medição desta mesma sessão o tip andou de `0548d19a` para `be80ea47`). O passo 10 **está em `origin/main`** — entrou por **squash** no #358, ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.

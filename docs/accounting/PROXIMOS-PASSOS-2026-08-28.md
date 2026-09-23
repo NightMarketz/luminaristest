@@ -1,5 +1,8 @@
 # Próximos passos — 2026-08-28
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > ⚠️ **SUPERSEDED em 2026-08-31** por `PROXIMOS-PASSOS-2026-08-31.md` (cadeia: 08-31 → 09-01 → 09-02 →
 > grafos 09-07/09-11/**09-14** → [`PROXIMOS-PASSOS-2026-09-14.md`](PROXIMOS-PASSOS-2026-09-14.md)). Mantido
 > como registro histórico.

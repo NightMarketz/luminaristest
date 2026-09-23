@@ -1,5 +1,8 @@
 # Roadmap da Plataforma — do fechamento do trilho contábil à fábrica de verticais
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](SDD-LUMINARIS.md) — migrado para a **§IV.1**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Relação com o master map:** `docs/accounting/ACCOUNTING-MASTER-MAP.md` continua sendo a **fonte de
 > verdade operacional** do módulo contábil (nós, gates, decisões travadas §1, rejeitadas §4, diferidos §5).
 > Este documento é a **camada de horizonte**: (A) consolida o que "terminar o roadmap atual" significa, em

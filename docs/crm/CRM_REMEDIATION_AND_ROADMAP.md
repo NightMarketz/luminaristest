@@ -1,5 +1,8 @@
 # CRM — Plano de Remediação + Roadmap (gap vs. Salesforce)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — migrado para a **§IV.3**; destino do CRM na §6.2. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > Documento de planejamento. **Parte A** = plano detalhado para corrigir o CRM atual (aplicando as skills endurecidas + `_ARCHITECTURE-CONTRACT.md`). **Parte B** = análise de lacunas vs. um CRM maduro (Salesforce Sales Cloud), priorizada e aterrada na arquitetura Luminaris.
 >
 > Baseado na auditoria de `feature/crm-module`: frontend em `my-app/features/crm/` + `my-app/pages/crm/`, backend em `server/src/features/crm/`.

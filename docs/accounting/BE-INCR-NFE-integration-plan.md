@@ -1,5 +1,8 @@
 # PLANO DA SESSÃO DE INTEGRAÇÃO — BE-INCR-NFE (`claude/nfe-fase-a` → `main`)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **O que este documento é.** Mapa de execução para a futura `sessao-integracao` que vai transportar
 > `claude/nfe-fase-a` para `main`. Produzido por uma tarefa de PREPARAÇÃO (A3) — só documentação, nenhum
 > git de escrita foi rodado para gerar isto (`log`/`diff`/`merge-base`/`show`/`ls-tree` apenas). **Não

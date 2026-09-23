@@ -35,14 +35,14 @@ a fricção: pedido pronto para enviar, resposta triada no dia em que chegar.
 - **[CTD-003] PII não entra no repositório.** O pedido exige anonimização ANTES do envio pelo
   contador (CNPJ, nomes, IE trocados) e diz como. Se chegar dado real não-anonimizado, ele não
   é commitado — reporte ao dono e devolva o passo de anonimização.
-- **[CTD-004] O pedido pede o que a fila vigente precisa — nada além.** Confira o
-  `PROXIMOS-PASSOS-*.md` mais recente antes de montar: itens saem (o arquivo RFB saiu do pedido
+- **[CTD-004] O pedido pede o que a fila vigente precisa — nada além.** Confira a
+  fila vigente (`docs/plano/_INDEX.md` + notas em `docs/plano/gates/` — os `PROXIMOS-PASSOS-*.md` estão supersedidos) antes de montar: itens saem (o arquivo RFB saiu do pedido
   em 2026-08-31 — foi baixado direto) e pedir o que já se tem queima a paciência do oráculo
   mais escasso do projeto.
 
 ## Phase 1 — Ancorar no que a fila realmente precisa
 
-1. `docs/accounting/PROXIMOS-PASSOS-*.md` mais recente + `ACCOUNTING-MASTER-MAP.md` §5.1 —
+1. `docs/plano/_INDEX.md` (fila) + `docs/plano/gates/D1*.md` e demais dados externos (Bloco A) —
    quais itens têm o contador como fonte HOJE.
 2. Estado conhecido (verifique antes de citar): **X1** — 1 XML de NF-e 4.00 de compra + 1 de
    venda, anonimizados; o critério de aceite é objetivo: `nfe-fixture-provenance.test.ts` sai

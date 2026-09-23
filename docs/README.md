@@ -13,8 +13,8 @@
 
 | Papel | Leia nesta ordem |
 |---|---|
-| **Dono** (decidir / assinar) | [`accounting/PROXIMOS-PASSOS-2026-09-17.md`](accounting/PROXIMOS-PASSOS-2026-09-17.md) (o que está em voo e onde há stop humano) → [`accounting/GRAFO-DEPENDENCIAS-2026-09-14.md`](accounting/GRAFO-DEPENDENCIAS-2026-09-14.md) §4 → runbooks em branco (`accounting/RUNBOOK-*.md`) → [`operating-manual/PLAYBOOK.md`](operating-manual/PLAYBOOK.md) |
-| **Orquestrador de agente** | `CLAUDE.md` (raiz) → [`accounting/ACCOUNTING-MASTER-MAP.md`](accounting/ACCOUNTING-MASTER-MAP.md) §1/§4 (travadas/rejeitadas) → grafo 14/09 → plano 14/09 §Detalhamento → [`operating-manual/GAP-MAP.md`](operating-manual/GAP-MAP.md) |
+| **Dono** (decidir / assinar) | [`plano/_INDEX.md`](plano/_INDEX.md) (régua, destravados, fila; stops humanos em `plano/gates/`) → [`plano/DUVIDAS-INVENTARIO.md`](plano/DUVIDAS-INVENTARIO.md) e [`plano/destino/18-caminho.md`](plano/destino/18-caminho.md) §18.4 (o que espera decisão sua) → `plano/destino/` (visão) |
+| **Orquestrador de agente** | `CLAUDE.md` (raiz) → [`plano/README.md`](plano/README.md) (protocolo) → [`plano/_INDEX.md`](plano/_INDEX.md) → nota do nó → só `trilhos/`/`rejeitadas/` que ela linka → [`operating-manual/GAP-MAP.md`](operating-manual/GAP-MAP.md) |
 | **Sessão de feature / correção** | BRIEF do nó (índice em `accounting/README.md`) → ADR citado no BRIEF ([`adr/INDEX.md`](adr/INDEX.md)) → [`claude-skills/GENERATION_CONTRACTS.md`](claude-skills/GENERATION_CONTRACTS.md) → `server/CLAUDE.md` / `my-app/CLAUDE.md` |
 | **Revisor independente** | PR + BRIEF + [`operating-manual/CONTRATO-DE-RETORNO.md`](operating-manual/CONTRATO-DE-RETORNO.md) + [`operating-manual/REPORTE-HUMANO-FORMAT.md`](operating-manual/REPORTE-HUMANO-FORMAT.md) |
 | **Contador / parceiro** (via dono) | [`accounting/PEDIDO-CONTADOR-2026-09-03.md`](accounting/PEDIDO-CONTADOR-2026-09-03.md) · [`adr/ADR-CONTADOR-DELIVERY.md`](adr/ADR-CONTADOR-DELIVERY.md) · [`adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md`](adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) |
@@ -23,18 +23,18 @@
 
 | Assunto | Doc vigente | Sucessão / observação |
 |---|---|---|
-| Roadmap contábil (nós, estados, régua) | `accounting/ACCOUNTING-MASTER-MAP.md` | fold no topo a cada merge; §5.1 fila; §7.1 régua **44/57** (fold 17/09) |
-| Dependências e próximo nó | `accounting/GRAFO-DEPENDENCIAS-2026-09-14.md` | supersede 09-11 e 09-07 |
-| Ordem de execução + detalhamento por passo | `accounting/PROXIMOS-PASSOS-2026-09-17.md` | supersede 09-14 (11/12 ✅) /09-02/09-01/08-31/08-28 |
+| **Plano único** — destino, estado, fila, horizonte | vault [`plano/`](plano/README.md) | desde 2026-09-23; estado vivo no frontmatter das notas, índice gerado por `node scripts/plano-vault.mjs index` (`check` = gate); `SDD-LUMINARIS.md` = snapshot consolidado da mesma data (master map, grafo, PROXIMOS-PASSOS, CADEIA-A, roadmaps — todos SUPERSEDIDOS); régua **46/57** (fold 22/09) |
+| Dependências e próximo nó | `plano/_INDEX.md` (destravados + `depende_de` de cada nota) + `plano/destino/18-caminho.md` (ondas) | `accounting/GRAFO-DEPENDENCIAS-*.md` = histórico |
+| Ordem de execução + detalhamento por passo | `plano/_INDEX.md` + nota do nó; detalhamento por passo em `SDD-LUMINARIS.md` §III.1/§III.4 (snapshot) | `accounting/PROXIMOS-PASSOS-*.md` e `ORQUESTRADOR-PASSOS-9-13.md` = histórico |
 | Decisões do dono (citáveis) | `accounting/CEDULA-DECISAO-*.md` (7) | a de **14/09 forks-ratificações prevalece** onde diverge da de 14/09 gates-humanos |
 | Decisões de arquitetura | `adr/` (43 ADRs + pareceres/ratificações, [`adr/INDEX.md`](adr/INDEX.md)) | ADR emendado ganha bloco `EMENDA <data>` no corpo, nunca arquivo novo; primeiro ADR `Rejected` = `ADR-DOMAIN-MOTOR-rejected.md` (2026-09-21) |
 | Gates humanos | `accounting/RUNBOOK-{B4,X2,H1,H2,H2-WIZARD,H3,M2}.md` | **todos em branco** (0 desfecho marcado em 14/09); formato em `operating-manual/RUNBOOK-FORMAT.md` |
-| Horizonte de plataforma (fábrica de verticais) | `ROADMAP-PLATAFORMA.md` | camada de horizonte; não é fila |
-| Sequência executável dos 3 degraus | `PLANO-MODULO-COMPLETO-REPLICAVEL.md` | ponteiro de estado 14/09 no topo; vale como definição de pronto |
+| Horizonte de plataforma (fábrica de verticais) | `SDD-LUMINARIS.md` Parte IV §IV.1 | ex-`ROADMAP-PLATAFORMA.md` (histórico); não é fila |
+| Sequência executável dos 3 degraus | `SDD-LUMINARIS.md` §IV.2 | ex-`PLANO-MODULO-COMPLETO-REPLICAVEL.md` (histórico); vale como definição de pronto |
 | Lacunas × instrumentos (medido) | `operating-manual/GAP-MAP.md` | coluna Status derivada de comando — não edite à mão |
 | Disciplina operacional | `operating-manual/{PORTABLE-GUIDE,REASONING-TRAITS,MODEL-TUNING,PLAYBOOK}.md` | detalhe das regras do `CLAUDE.md`; `ORACLE-DEFICIT.md` explica por que a bancada foi desligada (09/08) |
 | Scaffolding por camada | `claude-skills/GENERATION_CONTRACTS.md` (+ `ATOM_REGISTRY`, `SKILL_MATRIX`) | contrato de qualidade em `.claude/skills/_ARCHITECTURE-CONTRACT.md` |
-| CRM | `crm/CRM_REMEDIATION_AND_ROADMAP.md` + `crm/BE-INCR-CRM-MODULE-COMPOSITION-brief.md` | councils de 20/07 = histórico de decisão |
+| CRM | `SDD-LUMINARIS.md` §6.2 (destino) + §IV.3 (remediação e gap Salesforce) + `crm/BE-INCR-CRM-MODULE-COMPOSITION-brief.md` | `crm/CRM_REMEDIATION_AND_ROADMAP.md` = histórico; councils de 20/07 = histórico de decisão |
 | Deploy / operação | `runbooks/DEPLOYMENT.md`, `runbooks/accounting-sync-reconciliation.md` | M2 (1º deploy) segue gate humano em branco |
 | Dívida técnica registrada | `tech-debt/avoidable-any-remediation.md`, `tech-debt/rag-vector-store-reanalysis.md` | a 2ª é ponto de re-análise de IA/RAG, **não** autorização |
 | Aprendizados / wiki | `learnings/accounting-buildout.md` → `wiki/index.md` (ingest log em `wiki/log.md`) | memória de agente fora do repo é outra coisa (`~/.claude/projects/.../memory`) |
@@ -57,7 +57,7 @@
 | `system-test/` | rodadas 2–3 de teste de sistema do pipeline de agentes (07/2026) | histórico |
 | `tech-debt/` | `any` evitáveis; RAG/Qdrant | vigente |
 | `wiki/` | índice de conceitos + log de ingest | vigente |
-| raiz | `ROADMAP-PLATAFORMA.md`, `PLANO-MODULO-COMPLETO-REPLICAVEL.md` (vigentes); `RESUME-PROMPTS.md`, `VALIDATION_STATUS.md`, `RELATORIO-CONSOLIDADO.html` (**históricos**, 06–07/2026, banner no topo) | — |
+| raiz | `SDD-LUMINARIS.md` (**plano único, vigente**); `ROADMAP-PLATAFORMA.md`, `PLANO-MODULO-COMPLETO-REPLICAVEL.md` (**supersedidos 23/09**); `RESUME-PROMPTS.md`, `VALIDATION_STATUS.md`, `RELATORIO-CONSOLIDADO.html` (**históricos**, 06–07/2026, banner no topo) | — |
 
 ## Convenções que os docs seguem
 
@@ -67,6 +67,6 @@
 - **Cédula** = registro citável (ORCH-006) de decisão do dono por questionário. Duas cédulas no mesmo dia
   → a tabela de reconciliação diz qual prevalece.
 - **Runbook** = evidência colada, desfecho em 3 estados, assinatura humana. Agente prepara em branco.
-- **Fold** = parágrafo no topo do master map + linhas de §5.1/§7.1 após cada merge; o grafo ganha sucessor
-  datado quando muda estado de nó.
-- **Régua** = 1 nó = 1 ciclo SDD; nó que só cresce não vira nó novo (regra 2 do §7.1). Hoje **44/57** (fold 17/09).
+- **Fold** = editar o frontmatter da nota do nó em `plano/` → `node scripts/plano-vault.mjs index` → `check` (exit 0), após
+  cada merge. Não se cria mais `PROXIMOS-PASSOS-*`/`GRAFO-*` datado nem se edita o `SDD-LUMINARIS.md` (snapshot).
+- **Régua** = 1 nó = 1 ciclo SDD; nó que só cresce não vira nó novo (regra 2 do §M7.1). Hoje **46/57** (fold 22/09).

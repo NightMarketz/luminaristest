@@ -1,5 +1,8 @@
 # PLANO DE EXECUÇÃO / BRIEF — BE-INCR-NFE (ingestão fiscal de NF-e)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > Artefato de handoff para o `luminaris-implementer`, produzido pelo orquestrador a partir de
 > `docs/adr/ADR-INCR-NFE-fiscal-ingestion.md` (ratificado fork-a-fork 2026-07-20). O orquestrador NÃO
 > implementa (ORCH-001); este é o plano. Item 11 da fila §5.1 do master map.

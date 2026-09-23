@@ -1,5 +1,8 @@
 # Plano de Correção — Luminaris (modelo Orquestrador / Executor / Revisor)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../docs/SDD-LUMINARIS.md) — histórico; itens ainda abertos foram listados na **§IV.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > Derivado de `auditoria_consolidada.md` §20–§21. Cobre os 38 riscos (R1–R38) / 40 recomendações + Onda 0 de fundação.
 > **Fonte da verdade:** toda correção aponta para `arquivo:linha` da auditoria. Nenhum item inventa escopo novo.
 > Data: 2026-06-11.

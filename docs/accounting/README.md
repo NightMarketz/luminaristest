@@ -2,7 +2,7 @@
 
 > **Como usar:** a pasta é plana de propósito (~130 arquivos na raiz; mover quebraria ~60 referências em
 > memória, skills e testes, e conflitaria com PRs em voo). Este índice é a organização. **Status** aqui é
-> apontador para a evidência (PR/sha/cédula), não a evidência — em dúvida, o [master map](ACCOUNTING-MASTER-MAP.md)
+> apontador para a evidência (PR/sha/cédula), não a evidência — em dúvida, o [vault do plano](../plano/_INDEX.md) (ex-master map)
 > vence, e `git merge-base --is-ancestor <sha> origin/main` é o oráculo de "mergeado".
 > Legenda: ✅ mergeado em `main` · 🔄 em voo (PR aberto / branch) · 📐 spec pronta (BRIEF, forks
 > ratificados) · ⏸ BRIEF com forks pendentes · 📜 histórico (superado, mantido por registro) · 🧑 gate
@@ -12,9 +12,9 @@
 
 | Doc | Papel | Estado 14/09 |
 |---|---|---|
-| [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) | grafo-mestre reconciliado: §1 travadas · §4 rejeitadas · §5 diferidos · **§5.1 fila** · **§7.1 régua** · fold no topo | régua **44/57**; último fold: 17/09 sessão 5 (#342, C6b ✅) |
-| [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) | dependências nó a nó + algoritmo do próximo nó (R6) | vigente — supersede [09-11](GRAFO-DEPENDENCIAS-2026-09-11.md) 📜 e [09-07](GRAFO-DEPENDENCIAS-2026-09-07.md) 📜 |
-| [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) | prompt de orquestração pós-C6b + **detalhamento por passo** (sucede o 09-14, que fechou 11/12) | vigente — fold 21–22/09: 1–4 ✅, 5 🔄 (C8 PR-1..3 ✅ #354/#355/#356; PR-4/5 ⬜), 7 ✅ BRIEF, 9 ⬜ fold atrasado, 10 🔄 docs (GAP-MAP 7/8/9 + §2.3 + ADR-DOMAIN-MOTOR), 6/8/11/12/13 [H] |
+| [`../plano/_INDEX.md`](../plano/_INDEX.md) | **plano único desde 2026-09-23** — vault de notas (nó a nó em `plano/nos/`, gates em `plano/gates/`, trilhos/rejeitadas/diferidos); régua calculada do frontmatter | régua **46/57** (fold 22/09). [`../SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) = snapshot consolidado; [`ACCOUNTING-MASTER-MAP.md`](ACCOUNTING-MASTER-MAP.md) 📜 congelado |
+| [`GRAFO-DEPENDENCIAS-2026-09-14.md`](GRAFO-DEPENDENCIAS-2026-09-14.md) 📜 | dependências nó a nó | **supersedido 23/09** → SDD §III.2 |
+| [`PROXIMOS-PASSOS-2026-09-17.md`](PROXIMOS-PASSOS-2026-09-17.md) 📜 | prompt de orquestração pós-C6b | **supersedido 23/09** → SDD §III.1 |
 
 ## 2. Cédulas de decisão (citáveis, ORCH-006) — cronológicas
 

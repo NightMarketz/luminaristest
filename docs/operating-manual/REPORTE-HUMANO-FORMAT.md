@@ -65,7 +65,7 @@ destinatario: dono — quem executa o gate e assina
 momento: derivado; gerado após <o quê>, nunca durante o loop
 estado: em-branco            # em-branco | assinado
 derivado-de:
-  - docs/accounting/ACCOUNTING-MASTER-MAP.md
+  - docs/plano/_INDEX.md + nota do nó (vault do plano; ex-master map)
 proibido-ao-agente:
   - EVIDÊNCIA
   - desfecho

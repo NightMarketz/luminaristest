@@ -1,5 +1,8 @@
 # 📈 Roadmap: Evolução do Motor de KPIs (Escala B2B)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../docs/SDD-LUMINARIS.md) — histórico; itens ainda abertos foram listados na **§IV.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 Este documento registra o estado atual, as melhorias de infraestrutura já realizadas e os próximos passos críticos para transformar o motor de analytics em uma "usina de dados" de alta performance.
 
 ---

@@ -1,5 +1,8 @@
 # Plano de UMA sessão — 2026-09-17 — fechar as pontas que NÃO são implementação de código
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **✅ EXECUTADO 2026-09-17 (mesma data): F-PS-1..5 → (a) RATIFICADOS pelo dono** (*"Vai na recomendação dos 5 e abre a
 > sessão"*) e a sessão rodou pela `sessao-planejamento` contra `origin/main` `85378005`. Itens 0–6 ✅ (preflight limpo:
 > 0 PR aberto; cédula com §0; 3 BRIEFs; plano C8; fold), item 7 = o PR que carrega este arquivo. **Correção de fato ao

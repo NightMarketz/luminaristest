@@ -28,7 +28,7 @@ autorizado num BRIEF que a `sessao-feature` consegue executar sem inventar nada.
 
 ## Onde achar os campos do formulário
 
-- **Autorização:** `docs/accounting/ACCOUNTING-MASTER-MAP.md` §5.1 (fila ratificada) ou `docs/adr/`.
+- **Autorização:** campo `autorizacao` da nota do nó no vault `docs/plano/` (fila ratificada; ex-master map §5.1) ou `docs/adr/`.
   Re-fetch `origin/main` antes de citar — a fila muda, e já houve near-miss de planejar sobre `main` stale.
 - **Insumos:** ADR do item, BRIEFs irmãos em `docs/accounting/`, e o código que o item toca.
 - **Nós vizinhos:** use o codebase-memory para localizar (`search_graph`, `trace_path`) e **confirme lendo
@@ -39,7 +39,7 @@ autorizado num BRIEF que a `sessao-feature` consegue executar sem inventar nada.
 ## O formulário — preencher ANTES de executar
 
 > Pré-requisito: este prompt só é preenchível para item que já tem
-> autorização citável do dono (ADR, ratificação em master map, decisão
+> autorização citável do dono (ADR, ratificação na nota do nó em `docs/plano/`, decisão
 > datada). Frente nova NUNCA nasce de iniciativa do agente — nasce de
 > ADR + sinal humano (ORCH-006). Sem autorização citável, a resposta
 > correta é recusar o preenchimento, não planejar "provisoriamente".
