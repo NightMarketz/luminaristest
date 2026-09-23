@@ -43,7 +43,9 @@ de `depende_de`).
 
 ## Fold (depois de cada merge)
 
-1. Edite o frontmatter da nota do nó (`estado`, `estado_detalhe`, `prs`, `atualizado`).
+1. Edite o frontmatter da nota do nó (`estado`, `estado_detalhe`, `prs`, `atualizado`) **e** as linhas
+   `**Estado:**`/`**PRs:**` do cabeçalho do corpo, que o espelham (o `check` não as confere — o frontmatter
+   vence se divergirem). `done` só com merge em `main`: estado = trabalho por evidência.
 2. `node scripts/plano-vault.mjs index` — regenera índice e régua.
 3. `node scripts/plano-vault.mjs check` — tem de sair 0 (links, dependências, índice em dia).
 4. Decisão nova do dono → nota em `decisoes/` citando a cédula.
