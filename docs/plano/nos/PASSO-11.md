@@ -3,18 +3,20 @@ id: "PASSO-11"
 tipo: "motor"
 dominio: "motor"
 titulo: "GAP-MAP 7 — unique/compositeUnique sem gate in-tx (teste-guarda it.failing)"
-estado: "inflight"
-estado_detalhe: "Teste escrito e verificado local (Expected 1, Received 8), sem PR; vermelho só a CI Linux prova"
+estado: "done"
+estado_detalhe: "Instrumentado: teste-guarda it.failing em main via #362; vermelho provado na CI Linux (run 35899842191, PASS de it.failing). Correção (sessao-correcao) exige autorização própria"
 autorizacao: "\"autorizo o passo 11\" (dono, 23/09)"
+prs: ["#362"]
 ancora_sdd: "§III.1 passo 11 · §III.4"
 atualizado: "2026-09-23"
 ---
 # PASSO-11 — GAP-MAP 7 — unique/compositeUnique sem gate in-tx (teste-guarda it.failing)
 
-**Estado:** `inflight` — Teste escrito e verificado local (Expected 1, Received 8), sem PR; vermelho só a CI Linux prova  
+**Estado:** `done` — Instrumentado: teste-guarda it.failing em main via #362; vermelho provado na CI Linux (run 35899842191, PASS de it.failing). Correção (sessao-correcao) exige autorização própria  
 **Autorização:** "autorizo o passo 11" (dono, 23/09)  
 **Depende de:** —  
 **Desbloqueia:** —  
+**PRs:** #362  
 **Âncora no SDD consolidado:** §III.1 passo 11 · §III.4
 
 ## Docs
