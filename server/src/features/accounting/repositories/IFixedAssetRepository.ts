@@ -18,6 +18,10 @@ export interface CreateFixedAssetData {
   bookRateJustification: string | null;
   acquiredAt: Date;
   createdById: string | null;
+  // BE-INCR-FIXED-ASSETS PR-5 (item 22/28) — presentes só no rascunho nascido de NF-e (modo 4).
+  payableId?: string | null;
+  sourceDocumentId?: string | null;
+  sourceItemRef?: string | null;
 }
 
 export interface UpdateFixedAssetData {
@@ -56,6 +60,16 @@ export interface IFixedAssetRepository {
     filter: { status?: string; classId?: string },
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset[]>;
+
+  /** Read-first do rascunho (item 22/28): `null` quando este item da NF-e ainda não tem
+   *  `FixedAsset` — chave `(payableId, sourceItemRef)` (o `@@unique`). Usado por
+   *  `createDraftFromPayable` ANTES de criar, e pelo re-drive do reconcile para não duplicar. */
+  findByPayableAndSourceItemRef(
+    scope: AccountingScope,
+    payableId: string,
+    sourceItemRef: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<FixedAsset | null>;
 
   /**
    * Ativos `ACTIVE` de classe `depreciable=true` com `activatedAt <= asOfDate` (BE-INCR-FIXED-ASSETS,

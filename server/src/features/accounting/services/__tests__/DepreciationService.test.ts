@@ -338,6 +338,24 @@ describe('DepreciationService.reconcile — tie-out (item 13/14, espelho de reco
   });
 });
 
+// ── BE-INCR-FIXED-ASSETS PR-5 (item 13/28, decisão do dono 23/09): draftsCreated via IFixedAssetDraftRedriver ──
+describe('DepreciationService.reconcile — draftsCreated (setter injection, quebra o ciclo com PayableService)', () => {
+  it('sem setFixedAssetDraftRedriver (wiring pendente) — draftsCreated permanece 0 (comportamento desde o PR-3)', async () => {
+    const { service } = makeHarness();
+    const result = await service.reconcile(scope, { unitId: 'unit-1' });
+    expect(result.draftsCreated).toBe(0);
+  });
+
+  it('com o redriver wired, draftsCreated reflete o retorno de redriveMissingDrafts', async () => {
+    const { service } = makeHarness();
+    const redriveMissingDrafts = jest.fn(async () => 2);
+    service.setFixedAssetDraftRedriver({ redriveMissingDrafts });
+    const result = await service.reconcile(scope, { unitId: 'unit-1' });
+    expect(result.draftsCreated).toBe(2);
+    expect(redriveMissingDrafts).toHaveBeenCalledWith(scope);
+  });
+});
+
 describe('DepreciationService.postQuotaForDisposal — chamado pelo FixedAssetService.disposeAsset (Passo 14)', () => {
   it('classe depreciable=false (LAND) é no-op', async () => {
     const landClass = { ...classRow, id: 'class-land', depreciable: false, accumulatedDepreciationAccountId: null } as unknown as FixedAssetClass;

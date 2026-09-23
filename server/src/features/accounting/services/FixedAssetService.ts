@@ -1,4 +1,4 @@
-import type { FixedAsset } from 'generated/prisma';
+import type { FixedAsset, Payable } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type {
   ActivateFixedAssetInput,
@@ -18,6 +18,7 @@ import type { AuditService } from './AuditService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import type { IFixedAssetDraftCreator, ResolvedFixedAssetItem } from './IFixedAssetDraftCreator';
 
 export const FIXED_ASSET_CREATED = 'fixed_asset.created';
 export const FIXED_ASSET_ACTIVATED = 'fixed_asset.activated';
@@ -33,7 +34,7 @@ export const FIXED_ASSET_DISPOSED = 'fixed_asset.disposed';
  * do `runMonth`) ANTES de montar o entry de baixa — troca o 400 temporário do PR-2 pela postagem
  * automática.
  */
-export class FixedAssetService {
+export class FixedAssetService implements IFixedAssetDraftCreator {
   constructor(
     private readonly assetRepo: IFixedAssetRepository,
     private readonly classRepo: IFixedAssetClassRepository,
@@ -299,6 +300,135 @@ export class FixedAssetService {
       });
       return updated;
     });
+  }
+
+  // ── Rascunho por NF-e modo 4 (execution-plan Passo 28, F-FA12 → a) ──────────────────────────
+
+  /**
+   * Cria 1 `FixedAsset` `PENDING_ACTIVATION` por item de imobilizado de uma NF-e (BRIEF item 22).
+   * **Read-first** por `(payableId, sourceItemRef=cProd)` — item já com rascunho é PULADO (a
+   * chamada é idempotente por desenho: um re-drive que releia a MESMA NF-e e chame de novo com os
+   * MESMOS itens nunca duplica, `@@unique` fecha a corrida). `quantity` = `item.qty` (qCom inteiro
+   * da NF-e, resolvido em `NfeImportService.allocate`); `acquiredAt` = `payable.issueDate` (a
+   * `dhEmi` da nota, já a data usada para o reconhecimento do passivo).
+   *
+   * **Taxa (fork "annualRateBp do rascunho", decidido pelo dono 23/09):** derivada do NCM do item
+   * pelo Anexo III — `resolveRateForNcm` busca, entre as taxas VIVAS do escopo (`hiddenAt: null`),
+   * a de MAIOR prefixo NCM que bate com o NCM do item (normalizado sem pontuação); NCM ausente ou
+   * sem nenhuma correspondência → 400 nomeado, **nunca** um default silencioso (a classe de bug
+   * `param-aceito-e-ignorado-e-bug` do próprio ADR, agora do lado da taxa — um placeholder faria o
+   * bem nunca depreciar em silêncio). A taxa casada é snapshotada (`rateId` + `annualRateBp`), como
+   * toda ativação manual (item 4) — nunca uma referência viva à tabela.
+   */
+  async createDraftFromPayable(
+    scope: AccountingScope,
+    payable: Payable,
+    items: ResolvedFixedAssetItem[],
+    sourceDocumentId?: string | null,
+  ): Promise<{ created: number }> {
+    if (!this.policy.canManageFixedAssets(scope)) {
+      throw new ForbiddenError('Você não tem permissão para criar ativos.');
+    }
+    const { userId, unitId } = accountingScopeWhere(scope);
+    let created = 0;
+    for (const item of items) {
+      // Read-first (idempotência do re-drive) — ANTES de resolver classe/taxa, para um item já
+      // rascunhado nunca pagar o custo (nem o risco de erro) de reprocessar dado que já convergiu.
+      const existing = await this.assetRepo.findByPayableAndSourceItemRef(scope, payable.id, item.cProd);
+      if (existing) continue;
+
+      const klass = await this.classRepo.findById(scope, item.classId);
+      if (!klass) {
+        throw new NotFoundError(
+          `Classe de bem '${item.classId}' não foi encontrada (rascunho do payable '${payable.id}', item '${item.cProd}').`,
+        );
+      }
+      const { rateId, annualRateBp } = await this.resolveRateForNcm(scope, item.ncm, item.cProd);
+
+      await this.assetRepo.runTransaction(async (tx) => {
+        const draft = await this.assetRepo.create(
+          {
+            userId,
+            unitId,
+            classId: klass.id,
+            code: this.draftCode(payable, item.cProd),
+            description: `${klass.name} — NF-e ${payable.documentNumber ?? payable.id} (item ${item.cProd})`,
+            ncmPrefix: item.ncm ?? null,
+            quantity: item.qty,
+            costCents: BigInt(item.costCents),
+            residualValueCents: 0n,
+            rateId,
+            annualRateBp,
+            bookAnnualRateBp: null,
+            bookRateJustification: null,
+            acquiredAt: payable.issueDate,
+            createdById: scope.actorUserId,
+            payableId: payable.id,
+            sourceDocumentId: sourceDocumentId ?? null,
+            sourceItemRef: item.cProd,
+          },
+          tx,
+        );
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: FIXED_ASSET_CREATED,
+          targetType: 'fixed_asset',
+          targetId: draft.id,
+          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId, annualRateBp },
+        });
+      });
+      created += 1;
+    }
+    return { created };
+  }
+
+  /** Chave determinística e estável do rascunho (mesma em toda chamada de re-drive — não é decisão
+   *  de negócio, só um identificador único e legível): `NFE-<documentNumber ou payableId>-<cProd>`. */
+  private draftCode(payable: Payable, cProd: string): string {
+    const doc = payable.documentNumber ?? payable.id;
+    return `NFE-${doc}-${cProd}`.slice(0, 190); // folga sob qualquer teto de coluna razoável
+  }
+
+  /**
+   * Deriva a taxa de depreciação do NCM do item pelo Anexo III (decisão do dono 23/09, fork
+   * "annualRateBp do rascunho"). `DepreciationRate.ncm` tem granularidade VARIÁVEL (capítulo de 4
+   * dígitos até subposição de 6, com ou sem ponto — `anexo-iii-in-1700-2017.json`); o NCM do item
+   * da NF-e vem com 8 dígitos sem pontuação. Casa por PREFIXO normalizado (dígitos só) e escolhe o
+   * prefixo MAIS ESPECÍFICO (mais longo) entre os que batem — uma subposição de 6 dígitos vence o
+   * capítulo de 4 quando ambos casam. Ausência de NCM no item, ou nenhuma taxa viva cujo prefixo
+   * bata, rejeita loud (nunca `annualRateBp = 0`).
+   */
+  private async resolveRateForNcm(
+    scope: AccountingScope,
+    ncmRaw: string | undefined,
+    cProd: string,
+  ): Promise<{ rateId: string; annualRateBp: number }> {
+    if (!ncmRaw || ncmRaw.trim() === '') {
+      throw new ValidationError(
+        `Item de imobilizado '${cProd}' sem NCM — não é possível derivar a taxa de depreciação pelo Anexo III.`,
+      );
+    }
+    const targetDigits = ncmRaw.replace(/\D/g, '');
+    const rates = await this.rateRepo.findManyByUnit(scope, false); // includeHidden=false — só taxas VIVAS
+    let bestRateId: string | null = null;
+    let bestAnnualRateBp = 0;
+    let bestLen = -1;
+    for (const rate of rates) {
+      if (!rate.ncm) continue;
+      const prefixDigits = rate.ncm.replace(/\D/g, '');
+      if (prefixDigits.length === 0) continue;
+      if (targetDigits.startsWith(prefixDigits) && prefixDigits.length > bestLen) {
+        bestRateId = rate.id;
+        bestAnnualRateBp = rate.annualRateBp;
+        bestLen = prefixDigits.length;
+      }
+    }
+    if (!bestRateId) {
+      throw new ValidationError(
+        `Nenhuma taxa de depreciação do Anexo III casa com o NCM '${ncmRaw}' do item '${cProd}' — cadastre uma taxa CUSTOM (POST /api/accounting/depreciation-rates) antes de importar esta NF-e.`,
+      );
+    }
+    return { rateId: bestRateId, annualRateBp: bestAnnualRateBp };
   }
 
   private async requireEntryAccount(scope: AccountingScope, id: string, label: string) {

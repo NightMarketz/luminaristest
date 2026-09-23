@@ -13,6 +13,7 @@ import type { PostingService } from './PostingService';
 import type { AuditService } from './AuditService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { IFixedAssetDraftRedriver } from './IFixedAssetDraftCreator';
 
 export const DEPRECIATION_POSTED = 'depreciation.posted';
 
@@ -52,6 +53,16 @@ function yearMonthOf(dateOnly: string): string {
  * drift que (a) não pegou (ex.: ninguém rodou aquele mês de novo).
  */
 export class DepreciationService {
+  // BE-INCR-FIXED-ASSETS PR-5 (setter injection — quebra o ciclo de construção
+  // DepreciationService ← FixedAssetService ← [este dep, implementado por PayableService] ←
+  // DepreciationService; ver IFixedAssetDraftCreator.ts). `undefined` até o factory wirar:
+  // `draftsCreated` fica 0 (o gancho documentado desde o PR-3 — "vazio até o PR-5 existir").
+  private fixedAssetDraftRedriver?: IFixedAssetDraftRedriver;
+
+  setFixedAssetDraftRedriver(redriver: IFixedAssetDraftRedriver): void {
+    this.fixedAssetDraftRedriver = redriver;
+  }
+
   constructor(
     private readonly assetRepo: IFixedAssetRepository,
     private readonly classRepo: IFixedAssetClassRepository,
@@ -273,9 +284,10 @@ export class DepreciationService {
       }
     }
 
-    // Gancho de re-drive de payables com fixedAssetItems sem rascunho (item 13/22) — vazio até o
-    // PR-5 existir; o teste desta PR chama e espera 0 (o gancho, não o vazio).
-    const draftsCreated = 0;
+    // Gancho de re-drive de payables com itens de imobilizado sem rascunho (item 13/22/28) —
+    // delega a `IFixedAssetDraftRedriver` (setter-injected; ver ctor). Sem wiring, 0 (mesmo
+    // comportamento documentado desde o PR-3 — "vazio até o PR-5 existir").
+    const draftsCreated = (await this.fixedAssetDraftRedriver?.redriveMissingDrafts(scope)) ?? 0;
 
     logger.info('Fixed asset reconcile pass complete', { checked, repaired, draftsCreated });
     return { checked, repaired, draftsCreated };
