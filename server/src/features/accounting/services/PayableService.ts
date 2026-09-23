@@ -25,6 +25,8 @@ import type {
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
+import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
+import { resolveRateForNcm } from '../models/FixedAsset.model';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -101,6 +103,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // `class.costAccountId` por item para debitar 1.2.x — NUNCA estoque. Optional pela mesma razão de
     // wiring do inventoryService; um payable com fixedAssetItems e este repo ausente falha loud.
     private readonly fixedAssetClassRepo?: IFixedAssetClassRepository,
+    // OPTIONAL (review #366, achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a
+    // validação por NCM roda ANTES do tx1 (ver `resolveFixedAssetLines`), nunca só no rascunho.
+    private readonly depreciationRateRepo?: IDepreciationRateRepository,
     // OPTIONAL (BE-INCR-FIXED-ASSETS PR-5, item 22/28): lê o `SourceDocument.rawJson` da
     // recognition para o re-drive de rascunho relê-la (`redriveFixedAssetDrafts`) — nunca uma 2ª
     // cópia do breakdown na linha do Payable (decisão do dono 23/09).
@@ -1198,6 +1203,18 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * `fixedAssetItems` — existência da classe (cross-tenant 404-like via `findById` escopado) e da
    * conta (folha, ativo). Wiring ausente falha loud (mesma disciplina de `inventoryService`).
    */
+  /**
+   * BE-INCR-FIXED-ASSETS PR-5 (item 21, F-FA12 → a; review independente #366, achado 1): resolve
+   * `class.costAccountId` E a TAXA de depreciação (`resolveRateForNcm`, casamento por NCM/Anexo
+   * III) de cada item de `fixedAssetItems` — **ANTES do tx1** (esta função roda antes de
+   * `payableRepo.runTransaction` em `createPayable`). Um NCM sem correspondência única rejeita
+   * loud AQUI: nenhum `Payable`, nenhuma `JournalEntry`, nenhum `201` — o achado do review era
+   * exatamente o inverso (a validação só rodava dentro de `createDraftFromPayable`, DEPOIS do
+   * `postEntry`, e a falha lá era só `logger.warn` best-effort — a nota subia com débito no
+   * imobilizado e NUNCA ganhava o `FixedAsset`, e o reconcile falharia para sempre pelo mesmo
+   * motivo). `sourceItemRef` (chave do rascunho) é o `nItem` da NF-e — nunca `cProd` (2 linhas de
+   * imobilizado podem repetir o `cProd`; um índice de fallback cobre a criação manual sem `nItem`).
+   */
   private async resolveFixedAssetLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
@@ -1207,8 +1224,17 @@ export class PayableService implements IFixedAssetDraftRedriver {
         'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
       );
     }
+    if (!this.depreciationRateRepo) {
+      throw new ValidationError(
+        'Compra com itens de imobilizado requer o catálogo de taxas de depreciação configurado (wiring pendente).',
+      );
+    }
+    const items = dto.fixedAssetItems ?? [];
+    if (items.length === 0) return [];
+    // O catálogo de taxas VIVAS é lido UMA vez para todos os itens (evita N queries idênticas).
+    const rates = await this.depreciationRateRepo.findManyByUnit(scope, false);
     const out: ResolvedFixedAssetItem[] = [];
-    for (const item of dto.fixedAssetItems ?? []) {
+    for (const [index, item] of items.entries()) {
       const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
       if (!klass || klass.deletedAt) {
         throw new ValidationError(`Classe de bem '${item.classId}' não existe nesta unidade.`);
@@ -1220,13 +1246,17 @@ export class PayableService implements IFixedAssetDraftRedriver {
       if (!account.acceptsEntries) {
         throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
       }
+      const { rateId, annualRateBp } = resolveRateForNcm(rates, item.ncm, item.cProd);
       out.push({
         classId: klass.id,
         accountCode: account.code,
         cProd: item.cProd,
+        sourceItemRef: String(item.nItem ?? index),
         costCents: item.costCents,
         ncm: item.ncm,
         qty: item.qty ?? 1,
+        rateId,
+        annualRateBp,
       });
     }
     return out;

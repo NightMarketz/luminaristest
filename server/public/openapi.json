@@ -2355,12 +2355,18 @@
                   "maximum": 2147483647
                 },
                 "ncm": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita"
                 },
                 "qty": {
                   "type": "integer",
                   "minimum": 1,
                   "default": 1
+                },
+                "nItem": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array"
                 }
               }
             }

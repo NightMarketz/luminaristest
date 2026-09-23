@@ -290,6 +290,9 @@ export class NfeImportService {
           costCents: share,
           ncm: it.ncm || undefined,
           qty: this.qComToUnits(it.qCom, it.cProd),
+          // review #366 (achado 3): nItem é a chave do rascunho, NUNCA cProd (2 linhas de
+          // imobilizado podem repetir o mesmo cProd — chavear por cProd perderia a 2ª).
+          nItem: it.nItem,
         });
         continue;
       }

@@ -1,16 +1,29 @@
 import type { Payable } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
-/** One CFOP 1551/2551 item of a multi-item NF-e purchase, resolved (class + account) at
- *  `PayableService.resolveFixedAssetLines` time — the shape both the CREATE path and the re-drive
- *  path pass to `createDraftFromPayable`. */
+/**
+ * One CFOP 1551/2551 item of a multi-item NF-e purchase, resolved (class + account + TAXA) at
+ * `PayableService.resolveFixedAssetLines` time — BEFORE the tx1 of the `Payable` (review #366,
+ * achado 1: a taxa por NCM tem de ser validada ANTES de qualquer efeito, nunca só na hora do
+ * rascunho, senão um NCM sem match some silenciosamente num `logger.warn` best-effort depois do
+ * `postEntry`/`201` já ter saído). `rateId`/`annualRateBp` chegam JÁ RESOLVIDOS aqui —
+ * `createDraftFromPayable` NUNCA re-deriva a taxa, só usa o snapshot.
+ *
+ * `sourceItemRef` (review #366, achado 3): a chave do `@@unique([payableId, sourceItemRef])` do
+ * rascunho — o `nItem` da NF-e (posição da linha, SEMPRE único dentro de uma nota), NUNCA `cProd`
+ * (uma nota pode repetir o mesmo `cProd` em 2 linhas de imobilizado distintas; chavear por `cProd`
+ * faria a 2ª linha ler o rascunho da 1ª como "já existe" e perder o custo).
+ */
 export interface ResolvedFixedAssetItem {
   classId: string;
   accountCode: string;
-  cProd: string; // BE-INCR-FIXED-ASSETS PR-5 (item 22/28): chave do `sourceItemRef` do rascunho.
+  cProd: string; // display/mensagens — NÃO é mais a chave do sourceItemRef (ver acima).
+  sourceItemRef: string;
   costCents: number;
   ncm?: string;
   qty: number;
+  rateId: string;
+  annualRateBp: number;
 }
 
 /**

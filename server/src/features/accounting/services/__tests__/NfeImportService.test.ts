@@ -455,7 +455,7 @@ describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobili
     const input = createPayable.mock.calls[0][1] as CreatePayableInput;
     expect(input.inventoryItems).toHaveLength(2);
     expect(input.fixedAssetItems).toHaveLength(1);
-    expect(input.fixedAssetItems![0]).toEqual({ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 });
+    expect(input.fixedAssetItems![0]).toEqual({ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1, nItem: 3 });
     // Tie-out: Σ estoque (15000) + Σ imobilizado (85000) = amountCents (100000).
     expect(input.inventoryItems!.reduce((a, i) => a + i.valueCents, 0) + input.fixedAssetItems!.reduce((a, i) => a + i.costCents, 0)).toBe(
       input.amountCents,
@@ -509,5 +509,25 @@ describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobili
     expect(input.inventoryItems).toBeUndefined();
     expect(input.fixedAssetItems).toHaveLength(1);
     expect(input.fixedAssetItems![0].costCents).toBe(85000);
+  });
+
+  // Review #366, achado 3: 2 linhas de imobilizado com o MESMO cProd (repetido na nota — ex.: 2
+  // máquinas idênticas do mesmo catálogo do fornecedor) — allocate carrega o `nItem` de CADA
+  // linha (a chave real do rascunho, resolvida depois em PayableService), nunca funde os custos.
+  it('2 itens CFOP 1551 com o MESMO cProd (nItem distinto) → 2 entradas em fixedAssetItems, custos distintos preservados', async () => {
+    const xml = inlineNfe(
+      [
+        { cProd: 'MAQ-REPETIDO', xProd: 'Máquina 1', qCom: '1', vProd: '500.00', cfop: '1551' },
+        { cProd: 'MAQ-REPETIDO', xProd: 'Máquina 2', qCom: '1', vProd: '350.00', cfop: '1551' },
+      ],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-REPETIDO', classId: 'class-maq' }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems).toHaveLength(2);
+    expect(input.fixedAssetItems!.map((i) => i.cProd)).toEqual(['MAQ-REPETIDO', 'MAQ-REPETIDO']);
+    expect(input.fixedAssetItems!.map((i) => i.nItem)).toEqual([1, 2]); // nItem distingue as 2 linhas
+    expect(input.fixedAssetItems!.map((i) => i.costCents)).toEqual([50000, 35000]); // Σ = 85000, nenhum cent perdido
   });
 });

@@ -51,8 +51,9 @@ const dateOnly = (field: string) =>
  *               classId:   { type: string }
  *               cProd:     { type: string }
  *               costCents: { type: integer, minimum: 1, maximum: 2147483647 }
- *               ncm:       { type: string }
+ *               ncm:       { type: string, description: "Exigido para o casamento da taxa pelo Anexo III — ausente ou sem correspondência única → 400 ANTES de qualquer escrita" }
  *               qty:       { type: integer, minimum: 1, default: 1 }
+ *               nItem:     { type: integer, minimum: 1, description: "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array" }
  *         attachmentId:        { type: string, description: "Id de um DocumentAttachment já enviado, anexado ao lançamento de reconhecimento (F4)" }
  */
 /** One received SKU of a multi-item NF-e purchase (BE-INCR-NFE A2). `valueCents` is the item's SHARE
@@ -87,6 +88,10 @@ const fixedAssetItem = z
     costCents: cents,
     ncm: z.string().min(1).optional(),
     qty: z.number().int().positive().optional(),
+    // BE-INCR-FIXED-ASSETS PR-5 (review #366, achado 3): posição da linha na NF-e — a chave real
+    // do sourceItemRef do rascunho (nunca cProd, que pode repetir em 2 linhas de imobilizado
+    // distintas). Ausente numa criação MANUAL (fora de NF-e) → o service usa o índice no array.
+    nItem: z.number().int().positive().optional(),
   })
   .strict();
 

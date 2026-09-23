@@ -306,19 +306,20 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
 
   /**
    * Cria 1 `FixedAsset` `PENDING_ACTIVATION` por item de imobilizado de uma NF-e (BRIEF item 22).
-   * **Read-first** por `(payableId, sourceItemRef=cProd)` — item já com rascunho é PULADO (a
-   * chamada é idempotente por desenho: um re-drive que releia a MESMA NF-e e chame de novo com os
-   * MESMOS itens nunca duplica, `@@unique` fecha a corrida). `quantity` = `item.qty` (qCom inteiro
-   * da NF-e, resolvido em `NfeImportService.allocate`); `acquiredAt` = `payable.issueDate` (a
-   * `dhEmi` da nota, já a data usada para o reconhecimento do passivo).
+   * **Read-first** por `(payableId, sourceItemRef)` — item já com rascunho é PULADO (a chamada é
+   * idempotente por desenho: um re-drive que releia a MESMA NF-e e chame de novo com os MESMOS
+   * itens nunca duplica, `@@unique` fecha a corrida). `sourceItemRef` é o `nItem` da NF-e (posição
+   * da linha, nunca `cProd` — review #366, achado 3: 2 linhas de imobilizado podem repetir o
+   * `cProd`, e chavear por ele faria a 2ª ler o rascunho da 1ª como "já existe" e perder o custo).
+   * `quantity` = `item.qty` (qCom inteiro da NF-e, resolvido em `NfeImportService.allocate`);
+   * `acquiredAt` = `payable.issueDate` (a `dhEmi` da nota, já a data usada para o reconhecimento).
    *
-   * **Taxa (fork "annualRateBp do rascunho", decidido pelo dono 23/09):** derivada do NCM do item
-   * pelo Anexo III — `resolveRateForNcm` busca, entre as taxas VIVAS do escopo (`hiddenAt: null`),
-   * a de MAIOR prefixo NCM que bate com o NCM do item (normalizado sem pontuação); NCM ausente ou
-   * sem nenhuma correspondência → 400 nomeado, **nunca** um default silencioso (a classe de bug
-   * `param-aceito-e-ignorado-e-bug` do próprio ADR, agora do lado da taxa — um placeholder faria o
-   * bem nunca depreciar em silêncio). A taxa casada é snapshotada (`rateId` + `annualRateBp`), como
-   * toda ativação manual (item 4) — nunca uma referência viva à tabela.
+   * **Taxa (fork "annualRateBp do rascunho", decidido pelo dono 23/09; review #366, achado 1):**
+   * `item.rateId`/`item.annualRateBp` chegam JÁ RESOLVIDOS por `PayableService.resolveFixedAssetLines`
+   * (`resolveRateForNcm`, `models/FixedAsset.model.ts`) — **ANTES** do `postEntry`. Esta função NÃO
+   * re-deriva a taxa: fazê-lo aqui reabriria o buraco que o review achou (a validação só rodava
+   * DEPOIS do débito estar postado, e a falha aqui era só `logger.warn` best-effort — a nota subia
+   * com `201` e o ativo nunca nascia).
    */
   async createDraftFromPayable(
     scope: AccountingScope,
@@ -332,9 +333,9 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const { userId, unitId } = accountingScopeWhere(scope);
     let created = 0;
     for (const item of items) {
-      // Read-first (idempotência do re-drive) — ANTES de resolver classe/taxa, para um item já
+      // Read-first (idempotência do re-drive) — ANTES de resolver a classe, para um item já
       // rascunhado nunca pagar o custo (nem o risco de erro) de reprocessar dado que já convergiu.
-      const existing = await this.assetRepo.findByPayableAndSourceItemRef(scope, payable.id, item.cProd);
+      const existing = await this.assetRepo.findByPayableAndSourceItemRef(scope, payable.id, item.sourceItemRef);
       if (existing) continue;
 
       const klass = await this.classRepo.findById(scope, item.classId);
@@ -343,7 +344,6 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
           `Classe de bem '${item.classId}' não foi encontrada (rascunho do payable '${payable.id}', item '${item.cProd}').`,
         );
       }
-      const { rateId, annualRateBp } = await this.resolveRateForNcm(scope, item.ncm, item.cProd);
 
       await this.assetRepo.runTransaction(async (tx) => {
         const draft = await this.assetRepo.create(
@@ -351,21 +351,21 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
             userId,
             unitId,
             classId: klass.id,
-            code: this.draftCode(payable, item.cProd),
+            code: this.draftCode(payable, item.sourceItemRef),
             description: `${klass.name} — NF-e ${payable.documentNumber ?? payable.id} (item ${item.cProd})`,
             ncmPrefix: item.ncm ?? null,
             quantity: item.qty,
             costCents: BigInt(item.costCents),
             residualValueCents: 0n,
-            rateId,
-            annualRateBp,
+            rateId: item.rateId,
+            annualRateBp: item.annualRateBp,
             bookAnnualRateBp: null,
             bookRateJustification: null,
             acquiredAt: payable.issueDate,
             createdById: scope.actorUserId,
             payableId: payable.id,
             sourceDocumentId: sourceDocumentId ?? null,
-            sourceItemRef: item.cProd,
+            sourceItemRef: item.sourceItemRef,
           },
           tx,
         );
@@ -374,7 +374,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
           eventType: FIXED_ASSET_CREATED,
           targetType: 'fixed_asset',
           targetId: draft.id,
-          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId, annualRateBp },
+          payload: { assetId: draft.id, payableId: payable.id, cProd: item.cProd, rateId: item.rateId, annualRateBp: item.annualRateBp },
         });
       });
       created += 1;
@@ -383,52 +383,10 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   }
 
   /** Chave determinística e estável do rascunho (mesma em toda chamada de re-drive — não é decisão
-   *  de negócio, só um identificador único e legível): `NFE-<documentNumber ou payableId>-<cProd>`. */
-  private draftCode(payable: Payable, cProd: string): string {
+   *  de negócio, só um identificador único e legível): `NFE-<documentNumber ou payableId>-<sourceItemRef>`. */
+  private draftCode(payable: Payable, sourceItemRef: string): string {
     const doc = payable.documentNumber ?? payable.id;
-    return `NFE-${doc}-${cProd}`.slice(0, 190); // folga sob qualquer teto de coluna razoável
-  }
-
-  /**
-   * Deriva a taxa de depreciação do NCM do item pelo Anexo III (decisão do dono 23/09, fork
-   * "annualRateBp do rascunho"). `DepreciationRate.ncm` tem granularidade VARIÁVEL (capítulo de 4
-   * dígitos até subposição de 6, com ou sem ponto — `anexo-iii-in-1700-2017.json`); o NCM do item
-   * da NF-e vem com 8 dígitos sem pontuação. Casa por PREFIXO normalizado (dígitos só) e escolhe o
-   * prefixo MAIS ESPECÍFICO (mais longo) entre os que batem — uma subposição de 6 dígitos vence o
-   * capítulo de 4 quando ambos casam. Ausência de NCM no item, ou nenhuma taxa viva cujo prefixo
-   * bata, rejeita loud (nunca `annualRateBp = 0`).
-   */
-  private async resolveRateForNcm(
-    scope: AccountingScope,
-    ncmRaw: string | undefined,
-    cProd: string,
-  ): Promise<{ rateId: string; annualRateBp: number }> {
-    if (!ncmRaw || ncmRaw.trim() === '') {
-      throw new ValidationError(
-        `Item de imobilizado '${cProd}' sem NCM — não é possível derivar a taxa de depreciação pelo Anexo III.`,
-      );
-    }
-    const targetDigits = ncmRaw.replace(/\D/g, '');
-    const rates = await this.rateRepo.findManyByUnit(scope, false); // includeHidden=false — só taxas VIVAS
-    let bestRateId: string | null = null;
-    let bestAnnualRateBp = 0;
-    let bestLen = -1;
-    for (const rate of rates) {
-      if (!rate.ncm) continue;
-      const prefixDigits = rate.ncm.replace(/\D/g, '');
-      if (prefixDigits.length === 0) continue;
-      if (targetDigits.startsWith(prefixDigits) && prefixDigits.length > bestLen) {
-        bestRateId = rate.id;
-        bestAnnualRateBp = rate.annualRateBp;
-        bestLen = prefixDigits.length;
-      }
-    }
-    if (!bestRateId) {
-      throw new ValidationError(
-        `Nenhuma taxa de depreciação do Anexo III casa com o NCM '${ncmRaw}' do item '${cProd}' — cadastre uma taxa CUSTOM (POST /api/accounting/depreciation-rates) antes de importar esta NF-e.`,
-      );
-    }
-    return { rateId: bestRateId, annualRateBp: bestAnnualRateBp };
+    return `NFE-${doc}-${sourceItemRef}`.slice(0, 190); // folga sob qualquer teto de coluna razoável
   }
 
   private async requireEntryAccount(scope: AccountingScope, id: string, label: string) {

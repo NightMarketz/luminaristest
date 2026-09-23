@@ -51,6 +51,7 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
   canManageCounterparty?: boolean;
+  ratesByNcm?: { id: string; ncm: string | null; annualRateBp: number; hiddenAt: Date | null }[];
 }
 
 function build(opts: Opts = {}) {
@@ -141,6 +142,13 @@ function build(opts: Opts = {}) {
     })),
   };
 
+  // Review #366 (achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a validação por
+  // NCM roda ANTES do tx1 (`resolveFixedAssetLines`), nunca só no rascunho. Default: 1 linha que
+  // casa com o NCM `8452.10` dos fixtures deste arquivo; testes de ambiguidade/ausência sobrescrevem.
+  const depreciationRateRepo = {
+    findManyByUnit: jest.fn(async () => opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }]),
+  };
+
   // BE-INCR-FIXED-ASSETS PR-5 (item 22/28): dep de leitura do rawJson da recognition (redrive) e o
   // criador de rascunho (setter-injected — quebra o ciclo com FixedAssetService, ver
   // IFixedAssetDraftCreator.ts). Default: sem sources (o teste de redrive sobrescreve).
@@ -158,12 +166,13 @@ function build(opts: Opts = {}) {
     productRefLookup as never,
     physicalStockSync as never,
     fixedAssetClassRepo as never,
+    depreciationRateRepo as never,
     sourceProvenanceRepo as never,
   );
   service.setFixedAssetDraftCreator(fixedAssetDraftCreator as never);
   return {
     service, payableRepo, accountRepo, auditService, postEntry, reverseEntry, findEntryBySource, counterpartyRepo,
-    inventoryService, productRefLookup, physicalStockSync, fixedAssetClassRepo, sourceProvenanceRepo, fixedAssetDraftCreator,
+    inventoryService, productRefLookup, physicalStockSync, fixedAssetClassRepo, depreciationRateRepo, sourceProvenanceRepo, fixedAssetDraftCreator,
   };
 }
 
@@ -1059,7 +1068,7 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
       issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 100000,
       inventoryMultiItem: true,
       inventoryItems: [{ productRef: 'prod-1', qty: 1, valueCents: 15000 }],
-      fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, qty: 1 }],
+      fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }],
     };
     await service.createPayable(scope, mistaDto as never);
 
@@ -1079,8 +1088,8 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
       ...pureAssetDto,
       amountCents: 170000,
       fixedAssetItems: [
-        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, qty: 1 },
-        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, ncm: '8452.10', qty: 1 },
       ],
     };
     await service.createPayable(scope, dto2 as never);
@@ -1102,6 +1111,34 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     await expect(service.createPayable(scope, pureAssetDto as never)).rejects.toThrow(ValidationError);
   });
 
+  // Review #366, achado 1: a validação por NCM tem de rodar ANTES de qualquer efeito — nenhum
+  // Payable, nenhuma JournalEntry, nenhum 201. Antes desta correção o erro só aparecia DEPOIS do
+  // postEntry (dentro de createDraftFromPayable), engolido por um logger.warn best-effort.
+  it('achado 1: NCM sem correspondência no Anexo III (9999.99) → 400 ANTES de qualquer efeito — 0 payables, 0 entries', async () => {
+    const { service, payableRepo, postEntry, fixedAssetDraftCreator } = build();
+    const dto = { ...pureAssetDto, fixedAssetItems: [{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '9999.99', qty: 1 }] };
+    await expect(service.createPayable(scope, dto as never)).rejects.toThrow(/Nenhuma taxa de depreciação/);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+  });
+
+  // Review #366, achado 2: NCM 8417 (dado REAL do fixture do Anexo III) tem 2 taxas distintas sob
+  // o mesmo prefixo (fornos industriais 10% × fornos p/ vidro, Nota 1, 33,3%) — ambíguo, 400 ANTES
+  // de qualquer efeito, nunca escolhe uma das duas pela ordem do seed.
+  it('achado 2: NCM 8417 com 2 taxas distintas (Anexo III) → 400 ambíguo ANTES de qualquer efeito', async () => {
+    const { service, payableRepo, postEntry } = build({
+      ratesByNcm: [
+        { id: 'rate-8417-geral', ncm: '8417', annualRateBp: 1000, hiddenAt: null },
+        { id: 'rate-8417-vidro', ncm: '8417', annualRateBp: 3330, hiddenAt: null },
+      ],
+    });
+    const dto = { ...pureAssetDto, fixedAssetItems: [{ classId: 'class-maq', cProd: 'FORNO-1', costCents: 85000, ncm: '8417.10', qty: 1 }] };
+    await expect(service.createPayable(scope, dto as never)).rejects.toThrow(/MAIS DE UMA taxa/);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
   it('NÃO persiste fixedAssetItems na linha do Payable (decisão do dono 23/09) — o breakdown vai no rawJson do SourceDocument da recognition', async () => {
     const { service, payableRepo, postEntry } = build();
     await service.createPayable(scope, pureAssetDto as never);
@@ -1111,7 +1148,10 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(input.sourceDocument?.rawJson).toBeTruthy();
     const parsed = JSON.parse(input.sourceDocument!.rawJson as string);
     expect(parsed).toEqual({
-      fixedAssetItems: [{ classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }],
+      fixedAssetItems: [{
+        classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '0', costCents: 85000,
+        ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+      }],
     });
   });
 
@@ -1121,7 +1161,10 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(fixedAssetDraftCreator.createDraftFromPayable).toHaveBeenCalledTimes(1);
     const args = fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[];
     expect(args[1]).toBe(payable);
-    expect(args[2]).toEqual([{ classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 }]);
+    expect(args[2]).toEqual([{
+      classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '0', costCents: 85000,
+      ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+    }]);
   });
 
   it('falha do draftCreator é best-effort — createPayable ainda resolve (reconcile re-drive depois)', async () => {

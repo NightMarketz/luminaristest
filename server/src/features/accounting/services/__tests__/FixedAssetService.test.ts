@@ -308,7 +308,13 @@ describe('FixedAssetService.disposeAsset — item 18 (3 casos: >, =, <) + baixa 
 
 // ── BE-INCR-FIXED-ASSETS PR-5 (execution-plan Passo 28, F-FA12 → a): createDraftFromPayable ───────
 describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4', () => {
-  const item = { classId: 'class-1', accountCode: '1.2.1', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 2 };
+  // Review #366 (achados 1/3): a taxa (rateId/annualRateBp) chega JÁ RESOLVIDA por
+  // `PayableService.resolveFixedAssetLines` — `createDraftFromPayable` NUNCA re-deriva. A chave do
+  // rascunho é `sourceItemRef` (o `nItem` da NF-e), NUNCA `cProd` (que pode repetir em 2 linhas).
+  const item = {
+    classId: 'class-1', accountCode: '1.2.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
+    ncm: '8452.10', qty: 2, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+  };
 
   it('nega ANTES de tocar o repo quando canManageFixedAssets=false', async () => {
     const { service, create } = build({ canManage: false });
@@ -316,8 +322,8 @@ describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4'
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('deriva a taxa pelo NCM do item (Anexo III) — casa 8452.10 com a linha 8452, snapshot rateId+annualRateBp', async () => {
-    const { service, create } = build();
+  it('usa o rateId/annualRateBp JÁ RESOLVIDOS do item — nunca consulta o catálogo de taxas de novo', async () => {
+    const { service, create, findManyByUnit } = build();
     const result = await service.createDraftFromPayable(scope, makePayable() as never, [item]);
     expect(result.created).toBe(1);
     const [data] = create.mock.calls[0] as [Record<string, unknown>];
@@ -326,34 +332,8 @@ describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4'
     expect(data.quantity).toBe(2);
     expect(data.costCents).toBe(85000n);
     expect(data.payableId).toBe('pay-1');
-    expect(data.sourceItemRef).toBe('MAQ-1');
-  });
-
-  it('casamento por prefixo MAIS ESPECÍFICO vence: linha 6 dígitos bate antes da linha de 4', async () => {
-    const { service, create } = build({
-      ratesByNcm: [
-        { id: 'rate-chapter', ncm: '8452', annualRateBp: 1000, hiddenAt: null },
-        { id: 'rate-subheading', ncm: '8452.10', annualRateBp: 2000, hiddenAt: null }, // mais específica
-      ],
-    });
-    await service.createDraftFromPayable(scope, makePayable() as never, [item]);
-    const [data] = create.mock.calls[0] as [Record<string, unknown>];
-    expect(data.rateId).toBe('rate-subheading');
-    expect(data.annualRateBp).toBe(2000);
-  });
-
-  it('NCM sem correspondência no Anexo III → 400 nomeado, nada é criado (nunca annualRateBp=0)', async () => {
-    const { service, create } = build({ ratesByNcm: [{ id: 'rate-other', ncm: '0101', annualRateBp: 2000, hiddenAt: null }] });
-    await expect(service.createDraftFromPayable(scope, makePayable() as never, [item])).rejects.toThrow(/Nenhuma taxa de depreciação/);
-    expect(create).not.toHaveBeenCalled();
-  });
-
-  it('item sem NCM → 400 nomeado (não é possível derivar a taxa)', async () => {
-    const { service, create } = build();
-    await expect(
-      service.createDraftFromPayable(scope, makePayable() as never, [{ ...item, ncm: undefined }]),
-    ).rejects.toThrow(/sem NCM/);
-    expect(create).not.toHaveBeenCalled();
+    expect(data.sourceItemRef).toBe('1');
+    expect(findManyByUnit).not.toHaveBeenCalled(); // achado 1: sem re-derivação de taxa aqui
   });
 
   it('classe inexistente no escopo → 400, nada é criado', async () => {
@@ -367,7 +347,24 @@ describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4'
     const result = await service.createDraftFromPayable(scope, makePayable() as never, [item]);
     expect(result.created).toBe(0);
     expect(create).not.toHaveBeenCalled();
-    expect(findByPayableAndSourceItemRef).toHaveBeenCalledWith(scope, 'pay-1', 'MAQ-1');
+    expect(findByPayableAndSourceItemRef).toHaveBeenCalledWith(scope, 'pay-1', '1');
+  });
+
+  // Review #366, achado 3: 2 itens de imobilizado com o MESMO cProd (repetido na NF-e) — a chave
+  // do rascunho é sourceItemRef (nItem), então os 2 nascem SEM se pisar, cada um com seu custo.
+  it('2 itens com o MESMO cProd, sourceItemRef (nItem) distinto → 2 rascunhos, custos NÃO somados/perdidos', async () => {
+    const { service, create, findByPayableAndSourceItemRef } = build();
+    const item1 = { ...item, cProd: 'MAQ-REPETIDO', sourceItemRef: '1', costCents: 50000 };
+    const item2 = { ...item, cProd: 'MAQ-REPETIDO', sourceItemRef: '2', costCents: 35000 };
+    const result = await service.createDraftFromPayable(scope, makePayable() as never, [item1, item2]);
+    expect(result.created).toBe(2);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(findByPayableAndSourceItemRef).toHaveBeenNthCalledWith(1, scope, 'pay-1', '1');
+    expect(findByPayableAndSourceItemRef).toHaveBeenNthCalledWith(2, scope, 'pay-1', '2');
+    const costs = (create.mock.calls as unknown[][]).map((c) => (c[0] as Record<string, unknown>).costCents);
+    expect(costs).toEqual([50000n, 35000n]); // Σ = 85000 = o débito total da nota, nenhum cent perdido
+    const refs = (create.mock.calls as unknown[][]).map((c) => (c[0] as Record<string, unknown>).sourceItemRef);
+    expect(refs).toEqual(['1', '2']); // NUNCA ['MAQ-REPETIDO', 'MAQ-REPETIDO']
   });
 
   it('nota mista: 2 itens, 1 já rascunhado e 1 novo → cria só o novo (created=1)', async () => {
@@ -375,12 +372,12 @@ describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4'
     (findByPayableAndSourceItemRef as jest.Mock)
       .mockResolvedValueOnce(makeAsset({ id: 'asset-existing' })) // 1º item já tem rascunho
       .mockResolvedValueOnce(null); // 2º item é novo
-    const item2 = { ...item, cProd: 'MAQ-2' };
+    const item2 = { ...item, sourceItemRef: '2' };
     const result = await service.createDraftFromPayable(scope, makePayable() as never, [item, item2]);
     expect(result.created).toBe(1);
     expect(create).toHaveBeenCalledTimes(1);
     const [data] = create.mock.calls[0] as [Record<string, unknown>];
-    expect(data.sourceItemRef).toBe('MAQ-2');
+    expect(data.sourceItemRef).toBe('2');
   });
 
   it('grava sourceDocumentId quando informado (drill-down do rascunho, item 22)', async () => {

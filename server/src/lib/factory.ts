@@ -712,6 +712,9 @@ export class ApplicationFactory {
       // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 (fixedAssetItems) resolve class.costAccountId
       // via este repo — mesma instância do resto do módulo C8.
       this.repositories.fixedAssetClass,
+      // Review #366 (achado 1): catálogo de taxas VIVAS para resolveRateForNcm — a validação por
+      // NCM roda ANTES do tx1 do Payable (resolveFixedAssetLines), nunca só no rascunho.
+      this.repositories.depreciationRate,
       // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): lê o SourceDocument.rawJson
       // da recognition para redriveFixedAssetDrafts — nunca uma 2ª cópia do breakdown no Payable.
       this.repositories.sourceProvenance,
