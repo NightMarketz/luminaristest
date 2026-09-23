@@ -1251,7 +1251,11 @@ export class PayableService implements IFixedAssetDraftRedriver {
         classId: klass.id,
         accountCode: account.code,
         cProd: item.cProd,
-        sourceItemRef: String(item.nItem ?? index),
+        // Review #366 (re-review): fallback 1-based (index+1), alinhado ao nItem do XML (que
+        // também é 1-based) — nunca colide com um nItem explícito de OUTRO item. O DTO já garante
+        // (superRefine) que dentro do MESMO array é "nItem em TODOS, único" OU "em NENHUM" — nunca
+        // uma mistura que faria um explícito e um fallback colidirem.
+        sourceItemRef: String(item.nItem ?? index + 1),
         costCents: item.costCents,
         ncm: item.ncm,
         qty: item.qty ?? 1,

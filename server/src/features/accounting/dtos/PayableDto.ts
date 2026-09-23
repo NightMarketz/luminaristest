@@ -177,6 +177,34 @@ export const CreatePayableSchema = z
         });
         return;
       }
+      // Review #366 (re-review): `nItem` é opcional POR ITEM, mas nunca por metade do array — uma
+      // mistura de item-com-nItem e item-sem-nItem faria o service resolver sourceItemRef por dois
+      // esquemas diferentes no MESMO array (explícito × fallback por índice) e um dos dois podia
+      // colidir com o outro em silêncio (achado do re-review: `[{nItem:1},{sem nItem}]` → os dois
+      // acabavam em sourceItemRef "1"). Regra: `nItem` em TODOS os itens (e todos ÚNICOS) OU em
+      // NENHUM (o service cai no fallback por índice, sem risco de colisão com um explícito).
+      if (hasFixedAssetItems) {
+        const withNItem = val.fixedAssetItems!.filter((it) => it.nItem != null).length;
+        if (withNItem > 0 && withNItem < val.fixedAssetItems!.length) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'fixedAssetItems: nItem deve estar presente em TODOS os itens ou em NENHUM — nunca só em parte (risco de colisão com o fallback por índice).',
+            path: ['fixedAssetItems'],
+          });
+          return;
+        }
+        if (withNItem === val.fixedAssetItems!.length) {
+          const nItems = val.fixedAssetItems!.map((it) => it.nItem);
+          if (new Set(nItems).size !== nItems.length) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'fixedAssetItems: nItem repetido entre itens — cada item precisa de um nItem único (a chave do rascunho).',
+              path: ['fixedAssetItems'],
+            });
+            return;
+          }
+        }
+      }
       // Tie-out (ACC-014/T4): the per-SKU + per-ativo shares must sum EXACTLY to the note total on the row.
       const itemsSum = (val.inventoryItems ?? []).reduce((acc, it) => acc + it.valueCents, 0);
       const fixedAssetSum = (val.fixedAssetItems ?? []).reduce((acc, it) => acc + it.costCents, 0);

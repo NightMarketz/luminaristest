@@ -1099,6 +1099,26 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     expect(maqLines[0].debitCents).toBe(170000);
   });
 
+  // Re-review do #366: 2 itens SEM nItem (fallback por índice) → sourceItemRef 1-based distinto
+  // ("1"/"2", nunca "0"/"0" ou qualquer colisão) — os 2 chegam ao draftCreator como 2 rascunhos,
+  // custos preservados (nenhum "ledger com custo total, 1 rascunho só, sem erro").
+  it('2 itens SEM nItem (fallback por índice, 1-based) → 2 entradas com sourceItemRef distinto, sem colisão', async () => {
+    const { service, fixedAssetDraftCreator } = build();
+    const dto2 = {
+      ...pureAssetDto,
+      amountCents: 170000,
+      fixedAssetItems: [
+        { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1 },
+        { classId: 'class-maq', cProd: 'MAQ-2', costCents: 85000, ncm: '8452.10', qty: 1 },
+      ],
+    };
+    await service.createPayable(scope, dto2 as never);
+    const args = fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[];
+    const items = args[2] as { sourceItemRef: string; costCents: number }[];
+    expect(items.map((i) => i.sourceItemRef)).toEqual(['1', '2']); // 1-based, distinto — nunca ["0","0"] ou repetido
+    expect(items.map((i) => i.costCents)).toEqual([85000, 85000]); // nenhum custo fundido/perdido
+  });
+
   it('classId inexistente no escopo → 400, nada é postado', async () => {
     const { service, postEntry, fixedAssetClassRepo } = build();
     (fixedAssetClassRepo.findById as jest.Mock).mockResolvedValueOnce(null);
@@ -1149,7 +1169,7 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     const parsed = JSON.parse(input.sourceDocument!.rawJson as string);
     expect(parsed).toEqual({
       fixedAssetItems: [{
-        classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '0', costCents: 85000,
+        classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
         ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
       }],
     });
@@ -1162,7 +1182,7 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
     const args = fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[];
     expect(args[1]).toBe(payable);
     expect(args[2]).toEqual([{
-      classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '0', costCents: 85000,
+      classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
       ncm: '8452.10', qty: 1, rateId: 'rate-ncm-8452', annualRateBp: 1000,
     }]);
   });

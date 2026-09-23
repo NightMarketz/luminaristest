@@ -3,56 +3,43 @@
 tarefa: implementar BE-INCR-FIXED-ASSETS PR-5 (Bloco E, execution-plan Passos 26-29 + A7; BRIEF itens
   20-22 + §5) — modo 4 NF-e (CFOP 1551/2551 → imobilizado), nota mista, rascunho de FixedAsset, re-drive
   no reconcile. Autorização citável: "Executa C8" (dono, 18/09, corpo do PR #354); F-FA12 → (a) ratificado.
-  **3ª rodada:** review independente do PR #366 (o PR já existe — sem PR novo) achou FAIL em 3 pontos;
-  esta rodada corrige os 3 na MESMA branch.
-agente: sessão de execução direta (sem sub-agente `sessao-feature` dedicado — trabalhei pelo formulário:
-  li o achado do review linha a linha antes de codar, 1 correção por vez, gate por gate), worktree
-  própria `agent-ab644b678c007f6c8`, branch `claude/c8-pr5-nfe-modo4`.
+  **4ª rodada:** re-review do #366 achou os 3 achados anteriores corrigidos, mas uma REGRESSÃO NOVA
+  introduzida pela correção do achado 3 (fallback por índice colide com `nItem` explícito parcial).
+  Esta rodada corrige só isso — sem PR novo.
+agente: sessão de execução direta, worktree própria `agent-ab644b678c007f6c8`, branch
+  `claude/c8-pr5-nfe-modo4`.
 veredicto: PASSOU
 
-## Os 3 achados do review #366 e a correção
+## A regressão e a correção
 
-**1. A regra "NCM sem match → 400" era engolida** — `createDraftFromPayable` rodava DEPOIS do
-`postEntry`, e o catch virava `logger.warn` best-effort: a nota subia com `201`, o débito no
-imobilizado ia pro razão, e o `FixedAsset` nunca nascia (reconcile falharia pra sempre pelo mesmo
-motivo, sem sinal nenhum pro operador). **Correção:** a taxa (`resolveRateForNcm`) agora é resolvida
-dentro de `PayableService.resolveFixedAssetLines` — que já rodava ANTES do `tx1` do `Payable` (não
-precisou mover nada, só ACRESCENTAR a validação no lugar certo que já existia). `ResolvedFixedAssetItem`
-ganhou `rateId`/`annualRateBp` PRÉ-RESOLVIDOS; `createDraftFromPayable` não re-deriva a taxa NUNCA MAIS
-(removi a cópia duplicada da lógica que vivia em `FixedAssetService`). Um NCM sem match agora rejeita
-ANTES de `payableRepo.create`, ANTES de `postEntry` — 0 `Payable`, 0 `JournalEntry`.
+**Achado do re-review:** o fallback `sourceItemRef = String(item.nItem ?? índice)` (índice 0-based) da
+rodada anterior colide quando o array MISTURA itens com `nItem` explícito e itens sem ele —
+`[{nItem:1}, {sem nItem}]`: item 0 tem `nItem=1` → `sourceItemRef "1"`; item 1 (índice 1, SEM `nItem`)
+cai no fallback → `String(1)` = `"1"` também. Os dois colidem. `[{nItem:2},{nItem:2}]` (dois `nItem`
+explícitos IGUAIS) também não era pego — nada validava unicidade entre os `nItem` informados. As duas
+colisões dão o MESMO sintoma: o 2º item é lido pelo read-first como "já tem rascunho" e é pulado — 1
+rascunho só, custo do 2º item incorporado ao débito do razão mas SEM `FixedAsset` correspondente, e
+SEM ERRO NENHUM (o read-first não distingue "já existe de propósito" de "colidiu por acidente").
 
-**2. Prefixo ambíguo (2+ taxas distintas sob o mesmo prefixo NCM)** — o desempate antigo pegava a
-PRIMEIRA batida na ordem de iteração do array (= ordem do seed), uma escolha silenciosa. `NCM '8417'`
-tem 2 linhas REAIS no fixture do Anexo III com taxas distintas (fornos industriais 10% × fornos p/
-vidro, Nota 1, 33,3%); `'3926.90'` também (correias 20% × artigos de laboratório 10%). **Correção:**
-`resolveRateForNcm` (extraída para função PURA em `models/FixedAsset.model.ts`, testável sem qualquer
-dublê de repositório) agora coleta TODOS os candidatos de maior prefixo e, se houver `annualRateBp`
-DISTINTOS entre eles, rejeita com 400 nomeando os ids/taxas em conflito — nunca escolhe pela ordem.
+**Correção — 2 partes:**
+1. **`PayableDto` (`CreatePayableSchema.superRefine`):** nova regra sobre `fixedAssetItems` — `nItem`
+   tem de estar presente em **TODOS** os itens do array **ou em NENHUM** (nunca uma mistura); quando
+   presente em todos, tem de ser **único** entre eles. Ambas violações → 400 ANTES de chegar ao service.
+2. **`PayableService.resolveFixedAssetLines`:** o fallback (usado só quando NENHUM item tem `nItem`,
+   já garantido pelo DTO) passou de `índice` (0-based) para `índice + 1` (**1-based**, alinhado ao
+   `nItem` real do XML, que também é 1-based) — nunca mais gera um valor que colidiria com um `nItem`
+   explícito de outro cenário.
 
-**3. `cProd` repetido em 2 itens 1551 perdia custo** — o `sourceItemRef` do rascunho era o `cProd`; uma
-nota com 2 linhas de imobilizado do MESMO `cProd` (2 máquinas do mesmo item de catálogo do fornecedor)
-faria a 2ª linha ler o rascunho da 1ª via `findByPayableAndSourceItemRef` como "já existe" e pular,
-perdendo o custo da 2ª. **Correção:** `sourceItemRef` agora é o `nItem` da NF-e (posição da linha,
-sempre único dentro de uma nota) — `NfeImportService.allocate` carrega `nItem` em cada
-`fixedAssetItem`; `PayableService.resolveFixedAssetLines` grava `sourceItemRef = String(item.nItem ??
-índice-no-array)` (fallback só para criação manual sem NF-e). `cProd` continua no shape só para
-mensagens/descrição — nunca mais é chave de nada.
+`NfeImportService.allocate` já carregava `nItem` em **TODOS** os itens de `fixedAssetItems` (nunca
+parcial) — nenhuma mudança necessária lá; a regressão só era alcançável por uma criação **manual**
+(fora de NF-e) que misturasse `nItem` explícito com item sem `nItem` no mesmo corpo.
 
-## Arquivos (delta desta rodada sobre `16b274c3`)
+## Arquivos (delta desta rodada sobre `9f8fa7e0`)
 
-- `server/src/features/accounting/models/FixedAsset.model.ts` (EDIT — `resolveRateForNcm` extraída como função PURA + ambiguidade)
-- `server/src/features/accounting/models/__tests__/FixedAsset.model.test.ts` (EDIT — 8 casos novos, incluindo os dados REAIS 8417/3926.90 do fixture)
-- `server/src/features/accounting/services/IFixedAssetDraftCreator.ts` (EDIT — `ResolvedFixedAssetItem` ganha `sourceItemRef`/`rateId`/`annualRateBp`)
-- `server/src/features/accounting/services/PayableService.ts` (EDIT — `resolveFixedAssetLines` valida NCM/ambiguidade ANTES do tx1; deriva `sourceItemRef` do `nItem`; novo dep `depreciationRateRepo`)
-- `server/src/features/accounting/services/FixedAssetService.ts` (EDIT — `createDraftFromPayable` usa `item.rateId`/`item.annualRateBp`/`item.sourceItemRef` diretos, sem re-derivar; removida a cópia de `resolveRateForNcm` que vivia aqui)
-- `server/src/features/accounting/services/NfeImportService.ts` (EDIT — `allocate` carrega `nItem` em cada `fixedAssetItem`)
-- `server/src/features/accounting/dtos/PayableDto.ts` (EDIT — `fixedAssetItem.nItem` opcional)
-- `server/src/lib/factory.ts` (EDIT — `depreciationRate` repo injetado no `PayableService`)
-- `server/src/features/accounting/services/__tests__/FixedAssetService.test.ts` (EDIT — testes reescritos para o item pré-resolvido + adversarial de `cProd` repetido)
-- `server/src/features/accounting/services/__tests__/PayableService.test.ts` (EDIT — +2 adversariais do review: NCM 9999.99 e NCM 8417 ambíguo, ambos ANTES de qualquer efeito)
-- `server/src/features/accounting/services/__tests__/NfeImportService.test.ts` (EDIT — adversarial de `cProd` repetido com `nItem` distinto)
-- `server/src/features/accounting/dtos/__tests__/__dto-shapes__.json` (EDIT — snapshot regenerado, `nItem`)
+- `server/src/features/accounting/dtos/PayableDto.ts` (EDIT — `superRefine`: `nItem` all-or-nothing + único)
+- `server/src/features/accounting/services/PayableService.ts` (EDIT — fallback `índice + 1`, 1-based)
+- `server/src/features/accounting/dtos/__tests__/PayableDto.test.ts` (EDIT — 4 casos: nItem parcial → 400, nItem repetido → 400, nItem ausente em todos → aceita, nItem presente e único → aceita)
+- `server/src/features/accounting/services/__tests__/PayableService.test.ts` (EDIT — `sourceItemRef` esperado `'1'` em vez de `'0'` nos 2 testes que usavam o fallback; +1 caso: 2 itens sem `nItem` → `sourceItemRef` `['1','2']`, custos preservados)
 
 ## PROVA
 
@@ -60,78 +47,44 @@ mensagens/descrição — nunca mais é chave de nada.
 PROVA:
   - command: "cd server && npx tsc --noEmit"
     exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-tsc-1.log
+    log: .claude/retornos/_logs/c8-r366b-tsc-1.log
     sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-  - command: "cd server && npx jest src/features/accounting/models/__tests__/FixedAsset.model.test.ts --runInBand"
+  - command: "cd server && npx jest src/features/accounting/services/__tests__/PayableService.test.ts src/features/accounting/dtos/__tests__/PayableDto.test.ts src/features/accounting/services/__tests__/NfeImportService.test.ts src/features/accounting/dtos/__tests__/NfeDto.test.ts src/features/accounting/services/__tests__/FixedAssetService.test.ts src/features/accounting/models/__tests__/FixedAsset.model.test.ts --runInBand"
     exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-model-1.log
-    sha256: 5b9686c09fcdfbcde38281af7d33303dcb4ab6040c0d8a60adb5797c40ea184e
-    result: "13/13 passed — resolveRateForNcm como função pura: especificidade de prefixo, sem NCM, sem match, ambiguidade 8417 e 3926.90 (dados reais do fixture, nas 2 ordens), duplicata não-ambígua, taxa CUSTOM ignorada"
-  - command: "cd server && npx jest src/features/accounting/services/__tests__/FixedAssetService.test.ts --runInBand"
-    exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-fixedassetservice-1.log
-    sha256: 70d901234ede7110c0e2038212b7770463f7c22a0e972799215d13c286d9c41f
-    result: "31/31 passed — createDraftFromPayable usa rateId/annualRateBp pré-resolvidos (findManyByUnit NUNCA chamado); 2 itens de mesmo cProd/sourceItemRef distinto → 2 rascunhos, custos [50000n,35000n] preservados"
-  - command: "cd server && npx jest src/features/accounting/services/__tests__/PayableService.test.ts --runInBand"
-    exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-payableservice-1.log
-    sha256: b93ecc3f253be95584ebc9fd37e91d700aa9fccb3fa4363476caca1c226c3e64
-    result: "93/93 passed — achado 1 (NCM 9999.99 → 400, 0 payables/entries/drafts) e achado 2 (NCM 8417 ambíguo → 400, 0 payables/entries) provados aqui"
-  - command: "cd server && npx jest src/features/accounting/services/__tests__/NfeImportService.test.ts src/features/accounting/dtos/__tests__/PayableDto.test.ts src/features/accounting/dtos/__tests__/NfeDto.test.ts --runInBand"
-    exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-nfeimport-dto-1.log
-    sha256: 405006ce4cc43f367a2228bd8fc63784da2522f504ca4ea306eb68e39101c8e0
-    result: "62/62 passed — achado 3 (2 itens 1551 mesmo cProd, nItem 1/2, custos [50000,35000] Σ=85000) provado em NfeImportService.test.ts"
-  - command: "cd server && npx jest src/features/accounting/services/__tests__/DepreciationService.test.ts --runInBand"
-    exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-depreciationservice-1.log
-    sha256: 6ef9fe8c6fd9945e3c5206158d308ed7f5a49e236519d9c544c4503150836dfa
-    result: "24/24 passed — sem regressão do gancho draftsCreated"
+    log: .claude/retornos/_logs/c8-r366b-touched-1.log
+    sha256: f4f56215bd23d25ed7ca0bada4522a2c865039259ad03c45bfc7e1777c41e182
+    result: "208/208 passed — os 2 cenários de colisão (nItem parcial; nItem repetido) → 400 no DTO; o caso sem nItem com 2 itens → sourceItemRef ['1','2'], 2 rascunhos, custos preservados"
   - command: "cd server && npx jest --selectProjects unit dtoShapeSnapshot"
     exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-dtosnapshot-1.log
-    sha256: 7ce1b4bcb14398f16b30643f077daff9095f7de9537ef81db5dfd1d5d248fe93
-    result: "224 suites / 3017 tests passed — snapshot atualizado de propósito (fixedAssetItem.nItem)"
+    log: .claude/retornos/_logs/c8-r366b-dtosnapshot-1.log
+    sha256: 82305d1669a2a9d3c5ee1ebd752093a06b3b1633a93908eeeec960f72a65ef4e
+    result: "224 suites / 3022 tests passed — snapshot inalterado (superRefine é invisível ao JSON Schema, limite já documentado do próprio gate)"
   - command: "cd server && npm run docs:generate"
     exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-docsgen-1.log
+    log: .claude/retornos/_logs/c8-r366b-docsgen-1.log
     sha256: ea2565be68c6d3fcd044b289855dc831b075b69764d074f4e2b90b052f1d790a
-    result: "210 paths — BASELINE inalterado (só shape de body, nenhuma rota nova)"
-  - command: "cd server && npm run smoke:migration"
-    exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-smokemigration-1.log
-    sha256: 6ffd345a5cc198b9321aedf09d5ea19587fe1c66218698e256126f1e3c4cd4da
-    result: "migração aplicada na CÓPIA do dev.db real sem perda; original intocado (S1) — nenhuma migração nova nesta rodada de review, só código"
+    result: "210 paths — openapi.json inalterado (nenhum JSDoc/rota mudou nesta rodada)"
   - command: "cd server && npx jest --selectProjects integration --runInBand --forceExit src/controllers/__tests__/nfeController.purchase.regime.integration.test.ts src/controllers/__tests__/fixedAssetController.integration.test.ts src/controllers/__tests__/depreciationRateController.integration.test.ts src/controllers/__tests__/payableController.settlements.integration.test.ts"
     exit_code: 0
-    log: .claude/retornos/_logs/c8-r366-integration-1.log
-    sha256: 46d3fb94b3b6542a4eed3ebd0701420f94362e7aa6c0056c9a06121a40c40edf
-    result: "4 suites / 37 tests passed contra SQLite real — só as suítes AFETADAS, por instrução do coordenador ('rode só as suítes afetadas... a CI Linux decide')"
+    log: .claude/retornos/_logs/c8-r366b-integration-1.log
+    sha256: 5ee4e9b6826c4bdadff52a4c1c2bbf054f0f87d9f916caac23d13e1da466dee4
+    result: "4 suites / 37 tests passed contra SQLite real — só as suítes AFETADAS"
 VEREDITO: PASS
 ```
 
 ## Gates de envio OPS-001
 
-1. **Objetivo:** fechar os 3 achados do review #366 sem reabrir escopo — nenhuma correção além das 3.
-2. **Grau por claim:** verificado (comandos reexecutados, exit 0). `npm run test:integration` completo
-   não foi tentado nesta rodada (mesma instrução do coordenador da rodada anterior).
-3. **Caso adversarial tentado:** os 3 exatos do review — NCM 9999.99 (0 efeitos), NCM 8417 ambíguo
-   (0 efeitos, nas 2 ordens de array para provar que não depende do seed), 2 itens mesmo cProd/nItem
-   distinto (2 rascunhos, custos corretos, testado em 3 camadas: função pura, FixedAssetService,
-   NfeImportService).
-4. **Checagem que teria falhado se eu estivesse errado:** sim — o teste "findManyByUnit NUNCA chamado"
-   em `FixedAssetService.test.ts` falha se eu tivesse deixado a re-derivação de taxa lá; o teste de
-   ambiguidade nas 2 ordens falha se o desempate ainda dependesse de posição no array.
+1. **Objetivo:** fechar a regressão específica do re-review sem reabrir nem tocar em mais nada.
+2. **Grau por claim:** verificado (reexecução, exit 0). Snapshot/openapi conferidos como INALTERADOS
+   (não é omissão — a mudança é só lógica de `superRefine`, invisível ao JSON Schema e sem novo campo).
+3. **Caso adversarial tentado:** os 2 exatos citados (`[{nItem:1},{sem nItem}]`; `[{nItem:2},{nItem:2}]`)
+   → 400 no DTO; o caso "sem nItem, 2 itens" → 2 rascunhos (não 1), custos corretos.
+4. **Checagem que teria falhado se eu estivesse errado:** sim — o teste
+   `sourceItemRef ['1','2']` falha se o fallback ainda fosse 0-based (daria `['0','1']`, que não é
+   necessariamente errado isoladamente, mas o teste do DTO com `nItem` explícito em 1 e ausente no
+   outro FALHARIA a aceitar se a regra all-or-nothing não estivesse lá).
 5. **Duas primeiras linhas entregam verdade + risco:** `veredicto: PASS`; risco residual é o mesmo já
-   nomeado (crash pré-recognition não reconstrói split de imobilizado) — nenhum risco novo introduzido.
-
-## Residual (herdado, sem mudança)
-
-Mesmo residual named da rodada anterior: a janela de crash ENTRE o tx1 do `Payable` e o `postEntry`
-(antes de o `SourceDocument` existir) não tem de onde reconstruir o split por classe — comentário em
-`buildRecognitionInputFromRow`. Não afetado por esta correção (a correção do achado 1 é sobre a
-VALIDAÇÃO da taxa, que já roda antes do tx1; este residual é sobre RE-DRIVE de uma recognition
-ausente, cenário distinto).
+   nomeado nas rodadas anteriores (crash pré-recognition), nenhum risco novo.
 
 ## Aberto
 
