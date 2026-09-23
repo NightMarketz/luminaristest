@@ -18,7 +18,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **As 5 sessões de agente (um formulário por tipo de trabalho):** `sessao-planejamento` (produz
   BRIEF, não ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao`
   (teste-guarda que falha pelo motivo certo) → `sessao-correcao` (fix mínimo) · `sessao-integracao`
-  (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006),
+  (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006; no vault, o campo `autorizacao` da nota
+  do nó — vazio não roteia, e o texto limita o escopo: "só ADR"/"sem 'executa'" não autoriza código),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
   **O uso é pela natureza do trabalho, não pela frase-gatilho:** tarefa autorizada que É planejar /
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**

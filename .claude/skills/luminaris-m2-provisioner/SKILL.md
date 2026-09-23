@@ -42,6 +42,8 @@ está **Accepted e ratificado**; seu trabalho começa depois dele, nunca por cim
    de 2026-08-30: Dockerfile multi-stage já existe; `npm run deploy:migrate` já wireado).
 2. `docker-compose.yml`, `server/Dockerfile`, `scripts/migrate-deploy.mjs`,
    `docs/accounting/RUNBOOK-M2-DEPLOY-SMOKE.md` — o artefato real, não a lembrança dele.
+   Estado e dependência do gate: `docs/plano/gates/M2.md` (`depende_de` H2, aresta condicional `?`) — o `estado` dela só muda no
+   fold que cita o runbook assinado, nunca por este agente.
 3. Restrições de seleção que o código impõe (elimine provedor que falhe em qualquer uma):
    - **disco local com lock POSIX real** — SQLite+WAL descarta serverless puro e storage de
      rede (EFS/NFS) para o banco;

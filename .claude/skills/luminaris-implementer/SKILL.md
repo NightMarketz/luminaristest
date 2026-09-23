@@ -41,6 +41,20 @@ Para cada passo do plano:
 
 **O `_ARCHITECTURE-CONTRACT.md` é gate em todo "VERIFIQUE".** Se a skill executada omitir um ponto do contrato que se aplica à camada tocada, o contrato prevalece — implemente-o mesmo assim.
 
+## Closeout do vault do plano (ORCH-007) — só quando o plano trouxer o passo
+
+O estado vive no frontmatter das notas de `docs/plano/` (protocolo em `docs/plano/README.md` §Fold):
+
+1. Edite a nota do nó (`docs/plano/nos/<ID>.md`): `estado`, `estado_detalhe`, `prs`, `atualizado` no
+   frontmatter, e as linhas `**Estado:**`/`**PRs:**` do cabeçalho do corpo, que os espelham.
+   `done` só com merge em `main` (estado = trabalho por evidência); antes do merge, `inflight` + o PR.
+2. `node scripts/plano-vault.mjs index` — regenera `_INDEX.md`/`_ANCORAS.md` e a régua.
+3. `node scripts/plano-vault.mjs check` — exit 0 real no relatório (IMPL-002).
+4. Decisão nova do dono → nota em `docs/plano/decisoes/` citando a cédula — só se o plano pedir.
+
+Nunca edite à mão `_INDEX.md`/`_ANCORAS.md`, nem `docs/SDD-LUMINARIS.md` ou `ACCOUNTING-MASTER-MAP.md`
+(congelados desde 23/09).
+
 ## Protocolo detalhado por skill
 
 ### Para skills de camada backend individual

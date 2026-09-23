@@ -18,6 +18,7 @@ Arquivos de **edição compartilhada**: todo feature novo os toca. Dois trabalho
 | `server/prisma/seed.ts` | fixtures compartilhadas | ponto único |
 | `my-app/public/openapi.json` (+ geração) | artefato derivado; dois regens sempre conflitam | derivado |
 | `my-app/public/locales/*/<dom>.json` | i18n **por domínio** | **disjunto entre domínios, compartilhado dentro do mesmo domínio** |
+| `docs/plano/_INDEX.md` + `_ANCORAS.md` (+ `node scripts/plano-vault.mjs index`) | índice e régua gerados de todas as notas; dois folds sempre conflitam | derivado — a nota de cada nó é disjunta; o regen vai para a Fase B |
 
 > **A tabela drifta.** Um 6º registro compartilhado adicionado ao repo (ex.: um índice de plugins) é um choke point novo — atualize **este** arquivo, e todo consumidor (orquestrador, integrador, reviewer) herda. `skill-audit` deve checar esta lista contra a realidade do repo. Nunca replique a lista dentro de uma skill.
 
@@ -34,7 +35,7 @@ Todo lote paralelizável se decompõe em três fases — nunca uma:
 
 - **Fase 0 — schema (serial, na main, rápida).** *Todas* as mudanças de `schema.prisma` do lote juntas, **uma** migração, antes do fanout. Schema/migração é o que menos paraleliza (histórico diverge entre worktrees). Depois disso cada worktree nasce com suas tabelas prontas.
 - **Fase A — corpos (paralela, 1 worktree por slice).** O **corpo** de cada feature contra o schema congelado. Corpo = `dtos/`, `repositories/`, `policies/`, `services/`, `controllers/`, o `routes/<feature>.ts` **próprio**, páginas/componentes, o **namespace i18n do domínio**. Write-sets disjuntos → zero contenção. Cada agente commita no seu branch; reviewer roda **por branch antes do merge**.
-- **Fase B — registro (serial, integrador único, fina).** Só as **deltas de registro** nos choke points PAR-001: a linha do `router.use`, os registros no factory, regen do openapi, seed. Uma de cada vez, `tsc` verde entre cada. O conflito aqui vira **append trivial de 1 linha em série**, não 3-way merge de feature inteira.
+- **Fase B — registro (serial, integrador único, fina).** Só as **deltas de registro** nos choke points PAR-001: a linha do `router.use`, os registros no factory, regen do openapi, seed, regen do índice do vault (`plano-vault.mjs index` + `check`). Uma de cada vez, `tsc` verde entre cada. O conflito aqui vira **append trivial de 1 linha em série**, não 3-way merge de feature inteira.
 
 ## [PAR-004] Isolamento e ordem
 

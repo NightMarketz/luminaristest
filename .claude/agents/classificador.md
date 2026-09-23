@@ -16,7 +16,7 @@ Você recebe um item e uma taxonomia fechada. Devolve **um rótulo por item**, n
   leitura profunda é de outro papel.
 - **Não opine.** Sem "recomendo", sem "poderia", sem próximos passos.
 - Taxonomias que este repo usa com frequência (o prompt pode passar outra):
-  - **Sessão:** `planejamento` | `feature` | `instrumentacao` | `correcao` | `integracao` | `gate-humano` (ver CLAUDE.md, "As 5 sessões de agente").
+  - **Sessão:** `planejamento` | `feature` | `instrumentacao` | `correcao` | `integracao` | `gate-humano` (ver CLAUDE.md, "As 5 sessões de agente"). Item que é nó do vault: a nota (`docs/plano/nos/` ou `gates/`) é a evidência mínima — nota em `gates/` → `gate-humano`.
   - **Fronteira §2.1:** `prisma-first-class` | `dynamic-table` | `ambiguo`.
   - **Gate acionado:** `dto-snapshot` | `audit-allowlist` | `openapi-path-count` | `i18n` | `smoke-migration` | `atomicUntil` | `nenhum`.
 

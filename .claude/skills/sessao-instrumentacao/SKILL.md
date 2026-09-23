@@ -32,7 +32,11 @@ seguinte**, que vai bater na regra 3 dela e parar.
 
 - **Lacuna:** `docs/operating-manual/GAP-MAP.md` — a linha exata, com nível (1–5 ou O) e a coluna Status.
 - **Autorização:** a decisão do dono que priorizou aquela linha (o GAP-MAP registra que a triagem é
-  decisão do dono sobre a lista, sem aparato novo).
+  decisão do dono sobre a lista, sem aparato novo). Se a lacuna virou nó do vault
+  (`docs/plano/nos/PASSO-*.md` — ex.: GAP-MAP 7 = `PASSO-11`), a autorização é o campo `autorizacao` da
+  nota; vazio = não roteia (ORCH-006).
+- **Nó do vault, se houver:** o passo 4 atualiza o GAP-MAP; a nota do nó **não** — o relatório traz a
+  linha de fold (`estado_detalhe` com caminho do teste + PR) para o fold pós-merge do `docs/plano/README.md`.
 - **Comportamento correto esperado:** uma frase. Se houver mais de uma leitura possível, **pare** — a
   regra 5 diz que interpretar comportamento esperado é decisão do dono.
 

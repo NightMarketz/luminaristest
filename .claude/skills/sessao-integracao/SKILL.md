@@ -109,8 +109,16 @@ cd server && npx tsc --noEmit && npm run test:integration
 ```
 
 `npx jest --selectProjects integration` cru faz 29 de 41 suítes colidirem no mesmo SQLite. Some
-`cd my-app && npx tsc --noEmit`, `npm run docs:generate` (se tocou rota/DTO documentado) e
-`npm run smoke:migration` (se a origem traz migração).
+`cd my-app && npx tsc --noEmit`, `npm run docs:generate` (se tocou rota/DTO documentado),
+`npm run smoke:migration` (se a origem traz migração) e `node scripts/plano-vault.mjs check` (se a origem
+toca `docs/plano/`).
+
+**Vault do plano como superfície de conflito.** `docs/plano/_INDEX.md` e `_ANCORAS.md` são gerados
+("nunca edite à mão", `docs/plano/README.md`): dois folds sempre conflitam neles. Se entrarem na lista de
+superfícies conhecidas, a regra coerente é a do openapi abaixo — resolver as notas, regenerar com
+`node scripts/plano-vault.mjs index`, gate `check` exit 0. Conflito no frontmatter da **mesma nota** (dois
+folds no mesmo nó) é superfície nova (regra 3). O fold pós-merge não é desta sessão (regra 1): o relatório
+lista nó + merge para quem faz o fold.
 
 **Armadilhas de histórico que a regra 4 cobre:**
 
