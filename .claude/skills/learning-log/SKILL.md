@@ -46,6 +46,10 @@ Regra de decisão: *"daqui a 3 meses, numa tarefa não relacionada, isto ainda i
 Sim → também grava na memória (seguindo as regras de memória do projeto: um fato por arquivo,
 frontmatter, `**Why:**`/`**How to apply:**`, link wikilink pro slug). Não → só o ledger.
 
+> Fora desta skill: **decisão ratificada do dono** (fork, cédula) e **estado de nó** vivem no vault
+> `docs/plano/` (`decisoes/` e o frontmatter da nota — `docs/plano/README.md` §Fold). A entrada
+> `decision` do ledger aponta para a nota; não a duplica.
+
 ## Formato de uma entrada no ledger
 
 Cada entrada é um bloco `###`. Mantenha curto — uma entrada que precisa de três parágrafos

@@ -55,6 +55,10 @@ parecer, leia o estado real e reconcilie — **nunca** planeje em cima do doc se
    `server/src/features/accounting/` (o que já existe).
 4. Se o codebase-memory (cbm) estiver disponível: `search_graph`/`get_architecture` para
    localizar o canônico contábil antes de sugerir "novo" (localiza; a evidência final é o código — CBM-001).
+5. Vault do plano (protocolo em `docs/plano/README.md`): a nota do nó (`docs/plano/nos/<ID>.md` — estado,
+   `autorizacao`, `depende_de`) e **só** as notas de `docs/plano/trilhos/` (T1–T12), `rejeitadas/` e
+   `diferidos/` que a tarefa encosta — são as decisões commitadas em forma citável. Nunca o
+   `docs/SDD-LUMINARIS.md` inteiro; "master map §N" resolve em `docs/plano/_ANCORAS.md`.
 
 ### ⚠️ Tensões conhecidas: doc aspiracional × decisão commitada
 
@@ -120,8 +124,9 @@ Formato — enxuto, acionável, para o orquestrador colar no plano:
 ## PARECER DE DOMÍNIO CONTÁBIL — [tarefa]
 
 **Bloco do roadmap:** [1 fundação | 2 núcleo | 3 governança | 4 operação | 5 automação | 6 controle | 7 compliance]
+**Nó do vault:** [`docs/plano/nos/<ID>.md` — estado + `autorizacao` | sem nota → frente nova, exige ADR + sinal humano]
 **Já existe no projeto?** [o que já está mergeado que cobre/reusa isto — cite INCR-N / arquivo]
-**Colisão com decisão commitada?** [NÃO | SIM → qual, exige ADR+sinal humano]
+**Colisão com decisão commitada?** [NÃO | SIM → qual nota (`trilhos/T<n>` · `rejeitadas/R-*`), exige ADR+sinal humano]
 
 ### Invariantes que o plano DEVE garantir
 - [ACC-0xx] ... (só os aplicáveis, com o "como")
@@ -145,6 +150,6 @@ Depois: `PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano 
 - **[ACC-001] NÃO crie/edite arquivo** — só parecer.
 - **[ACC-002] NÃO escolha as skills nem monte o plano de execução** — isso é do orquestrador; você dá a lente de domínio.
 - **[ACC-003] NÃO aprove** — reviewer valida o artefato.
-- **NÃO planeje em cima do doc aspiracional sem cruzar com as memórias `accounting-*`** — o doc contradiz decisões commitadas.
+- **NÃO planeje em cima do doc aspiracional sem cruzar com as memórias `accounting-*` e as notas de `docs/plano/trilhos/`/`rejeitadas/`** — o doc contradiz decisões commitadas.
 - **Em dúvida sobre onde o dado vive → Prisma first-class.** Contabilidade nunca é DynamicTable.
 - **Toda afirmação sobre "o projeto já faz X" tem de vir de código/memória lidos** (CBM-001), nunca de suposição.

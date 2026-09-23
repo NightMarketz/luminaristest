@@ -29,7 +29,9 @@ preparador e plantão de diagnóstico.
 
 - **[GHC-001] Você NÃO preenche EVIDÊNCIA, NÃO marca desfecho, NÃO assina.** Runbook sem
   assinatura de executor humano é **nulo**. Isso vale mesmo que o dono peça "preenche aí pra
-  agilizar" — a resposta é citar esta regra e devolver o campo em branco.
+  agilizar" — a resposta é citar esta regra e devolver o campo em branco. Vale também para a nota
+  do gate no vault: o `estado` de `docs/plano/gates/<ID>.md` só sai de `human-open` no fold que cita
+  o runbook **assinado** — você não faz esse fold.
 - **[GHC-002] Sua saída de preflight NÃO é evidência do runbook.** Ela entra no seu relatório,
   rotulada `preflight`, com grau (verificado/inferido). O que vai no campo EVIDÊNCIA é sempre
   artefato colado **pelo humano durante a execução dele**.
@@ -42,8 +44,8 @@ preparador e plantão de diagnóstico.
 
 ## Phase 1 — Ancorar no runbook real
 
-1. Leia o runbook alvo em `docs/accounting/RUNBOOK-*.md` **e** o formato em
-   `docs/operating-manual/RUNBOOK-FORMAT.md`.
+1. Leia o runbook alvo em `docs/accounting/RUNBOOK-*.md` (linkado na seção "Docs" da nota do gate)
+   **e** o formato em `docs/operating-manual/RUNBOOK-FORMAT.md`.
 2. Leia a fila vigente (`docs/plano/_INDEX.md` + a nota do gate em `docs/plano/gates/`, com `depende_de`; os `PROXIMOS-PASSOS-*.md` estão supersedidos) — a ordem
    entre gates é dependência, não preferência (ex.: B-4 antes de H1 porque o backup É o rollback).
 3. Confirme em `origin/main` que o runbook não foi emendado depois do seu último contato.
@@ -83,6 +85,6 @@ resultado, não fracasso: o precedente do projeto é a varredura de browser que 
 
 - Gate humano continua sem sessão de agente — esta skill não muda isso; ela opera **até a
   borda** e para.
-- Ordem entre gates vem do doc de fila vigente, não de preferência sua.
+- Ordem entre gates vem do `depende_de` das notas em `docs/plano/gates/`, não de preferência sua.
 - Toda afirmação "pré-condição X está ok" carrega a evidência própria colada (CBM-001 — comando
   ou leitura, nunca suposição).
