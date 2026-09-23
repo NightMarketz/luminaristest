@@ -12,17 +12,17 @@
 
 | id | documento | arquivo | sha256 conferido nesta sessão | páginas usadas |
 |---|---|---|---|---|
-| `manual-ecd-l9` | Manual de Orientação do Leiaute 9 da ECD — Anexo ao ADE Cofis 01/2026, *Atualização: maio de 2026*, 236 pp. | `docs/accounting/fontes-oficiais/Manual-ECD-Leiaute-9.pdf` (gitignored; `node scripts/baixar-fontes-oficiais.mjs --so=manual-ecd-l9`) | `bc63f0a893ce4b2262b73426717e1cb5546704db58eaf81791fb296468bacc91` | J801: pp. 193-195 · J932: pp. 204-206 |
+| `manual-ecd-l9` | Manual de Orientação do Leiaute 9 da ECD — Anexo ao ADE Cofis 01/2026, *Atualização: janeiro de 2026*, 235 pp. — **redação vigente, fornecida pelo dono em 23/09** (original `Manual_de_Orientação_da_ECD_Leiaute_9_janeiro_2026.pdf`) | `docs/accounting/fontes-oficiais/Manual-ECD-Leiaute-9.pdf` (gitignored; copiar à mão — o script baixa a versão maio/2026, ver MANIFEST) | `7ddf47755f616ecd76671b8be9c8b61e30adbb0e8408634e45af95f616119b2e` | J801: pp. 192-194 · J932: pp. 203-205 |
 
-Procedimento: `pdftotext -layout -enc UTF-8 -f 185 -l 206`; a coluna "Obrigatório" de J801 campo 07
+Procedimento: `pdftotext -layout -enc UTF-8` do PDF inteiro; a coluna "Obrigatório" de J801 campo 07
 saiu vazia no `-layout` e foi reconferida com `pdftotext -raw` (resultado: **Sim**). Paginação impressa
-== índice do PDF ("Página N de 236"), como no precedente.
+== índice do PDF ("Página N de 235"; confere com o sumário: J801 → 192, J932 → 203), como no precedente.
 
 ---
 
-## 1. ECD — Registro J801: Termo de Verificação para Fins de Substituição da ECD (pp. 193-195)
+## 1. ECD — Registro J801: Termo de Verificação para Fins de Substituição da ECD (pp. 192-194)
 
-### 1.1 Texto introdutório (p. 193) — transcrito
+### 1.1 Texto introdutório (p. 192) — transcrito
 
 > O registro J801, com limite de 30 MB, deve ser utilizado obrigatoriamente no caso de substituição de
 > um arquivo da ECD, conforme previsão da Instrução Normativa RFB no 2.003/2021.
@@ -58,7 +58,7 @@ saiu vazia no `-layout` e foi reconferida com `pdftotext -raw` (resultado: **Sim
 > São nulas as alterações efetuadas em desacordo com as regras supramencionadas ou com o Termo de
 > Verificação para Fins de Substituição.
 
-Procedimento de anexação (p. 193), transcrito: 1 – Digite o documento que deseja anexar no Word;
+Procedimento de anexação (p. 192), transcrito: 1 – Digite o documento que deseja anexar no Word;
 2 – Salve o documento como .rtf; 3 – Abra o documento no Bloco de Notas; 4 – Copie todo o conteúdo do
 arquivo aberto no Bloco de Notas; 5 – Cole o conteúdo copiado no registro J801; 6 – Importe o arquivo,
 de acordo com o Leiaute da ECD, para o programa da ECD.
@@ -70,12 +70,12 @@ armazena o nome o local e o hash da cópia do arquivo selecionado. 6 – O siste
 no campo descrição. Exclusão: 1 – Selecionar um registro e solicitar a exclusão (Botão "-"). 2 – O
 sistema exclui o registro J801 e o arquivo na pasta.
 
-### 1.2 Cabeçalho do registro (p. 193)
+### 1.2 Cabeçalho do registro (p. 192)
 
 - Regras de validação do registro: `[REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO RTF]` (grafia do manual, com espaço)
 - **Nível Hierárquico – 2** · **Ocorrência – 0:1** · Campo(s) chave: `[REG]`
 
-### 1.3 Leiaute (pp. 194-195)
+### 1.3 Leiaute (pp. 193-194)
 
 | Nº | Campo | Descrição (manual) | Tipo | Tam. | Dec. | Valores válidos | Obrig. | Regras do campo |
 |---|---|---|---|---|---|---|---|---|
@@ -87,7 +87,7 @@ sistema exclui o registro J801 e o arquivo na pasta.
 | 06 | `ARQ_RTF` | Sequência de bytes que representem um único arquivo no formato RTF (Rich Text Format). | C | 30 megabytes | - | - | Sim | - |
 | 07 | `IND_FIM_RTF` | Indicador de fim do arquivo RTF. Texto fixo contendo "J801FIM". | C | 007 | - | "J801FIM" | Sim (conferido no `-raw`) | - |
 
-### 1.4 `COD_MOT_SUBS` — valores (p. 194, redação do manual)
+### 1.4 `COD_MOT_SUBS` — valores (p. 193, redação do manual)
 
 | Código | Descrição |
 |---|---|
@@ -98,7 +98,7 @@ sistema exclui o registro J801 e o arquivo na pasta.
 | `005` | Alteração do número do livro |
 | `099` | Outros |
 
-### 1.5 Observações, regras e exemplo (p. 195)
+### 1.5 Observações, regras e exemplo (p. 194)
 
 - I – Observações: *Registro facultativo* · *Nível hierárquico: 3* · *Ocorrência: Um por arquivo, se for o arquivo de uma ECD substituta.*
 - II – Tabelas do Registro: não há.
@@ -117,9 +117,9 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
 
 ---
 
-## 2. ECD — Registro J932: Signatários do Termo de Verificação para Fins de Substituição da ECD (pp. 204-206)
+## 2. ECD — Registro J932: Signatários do Termo de Verificação para Fins de Substituição da ECD (pp. 203-205)
 
-### 2.1 Texto introdutório (p. 204) — transcrito
+### 2.1 Texto introdutório (p. 203) — transcrito
 
 > O registro J932, que identifica os signatários do Termo de Verificação para Fins de Substituição da ECD.
 >
@@ -137,12 +137,12 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
 > independente, deve ser assinado por um contador/contabilista (códigos 910 ou 920), o mesmo que assinou
 > a ECD (código 900).
 
-### 2.2 Cabeçalho do registro (p. 204)
+### 2.2 Cabeçalho do registro (p. 203)
 
 - Regras de validação do registro: `[REGRA_OBRIGATORIO_CONTADOR_ASS_TERMO]`, `[REGRA_IDENT_CPF_COD_ASSIN_DUPLICIDADE]`
 - **Nível Hierárquico – 3** · **Ocorrência – 0:2** · Campo(s) chave: `[IDENT_CPF_CNPJ_T]+[COD_ASSIN_T]`
 
-### 2.3 Leiaute (pp. 204-205)
+### 2.3 Leiaute (pp. 203-204)
 
 | Nº | Campo | Descrição (manual) | Tipo | Tam. | Dec. | Valores válidos | Obrig. | Regras do campo |
 |---|---|---|---|---|---|---|---|---|
@@ -158,7 +158,7 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
 | 10 | `NUM_SEQ_CRC_T` | Número da Certidão de Regularidade Profissional do Contador no seguinte formato: UF/ano/número | C | - | - | - | Não | `[REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC]`, `[REGRA_ADV_ASS_CONTADOR_TERMO]` |
 | 11 | `DT_CRC_T` | Data de validade da Certidão de Regularidade Profissional do Contador | N | 008 | - | - | Não | `[REGRA_ADV_ASS_CONTADOR_TERMO]` |
 
-### 2.4 Observações e tabela (p. 205)
+### 2.4 Observações e tabela (p. 204)
 
 - I – Observações: *Registro obrigatório quando a ECD for substituta (Campo IND_FIN_ESC – Campo 14 – do
   registro 0000 – igual a "1 – Substituta).* · *Nível hierárquico: 3* · *Ocorrência: 0-2 por arquivo.*
@@ -169,7 +169,7 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
 | `910` | Contador/Contabilista Responsável Pelo Termo de Verificação para Fins de Substituição da ECD |
 | `920` | Auditor Independente Responsável pelo Termo de Verificação para Fins de Substituição da ECD |
 
-### 2.5 Regras de validação do registro (p. 205) — redação do manual
+### 2.5 Regras de validação do registro (p. 204) — redação do manual
 
 - **REGRA_OBRIGATORIO_CONTADOR_ASS_TERMO**: "Verifica se existe, no mínimo, um registro J932 cujo código de
   qualificação do assinante do termo – COD_ASSIN_T (Campo 05) – seja igual a 910 (Contador ou Contabilista
@@ -179,7 +179,7 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
   chave CPF ou CNPJ e código de identificação do assinante (IDENT_CPF_CNPJ_T + COD_ASSIN_T). Se a regra não
   for cumprida, o PGE do Sped Contábil gera um erro."
 
-### 2.6 Regras de validação dos campos (p. 206) — redação do manual
+### 2.6 Regras de validação dos campos (p. 205) — redação do manual
 
 | Regra | Texto | Severidade |
 |---|---|---|
@@ -194,7 +194,7 @@ Campo 04 do exemplo = `001`; campo 05 do exemplo = 40 caracteres hex.
 
 Todas as regras "de erro" terminam em "Se a regra não for cumprida, o PGE do Sped Contábil gera um erro."; as duas de aviso, "…gera um aviso.".
 
-### 2.7 Exemplo (p. 206, literal)
+### 2.7 Exemplo (p. 205, literal)
 
 ```
 |J932|FULANO BELTRANO|12345678900|CONTADOR/CONTABILISTA RESPONSÁVEL PELO TERMO
@@ -208,17 +208,41 @@ ECD|910|1SP123456|FULANO@GMAIL.COM|2199999999|RJ|RJ/2012/001|31122023|
 
 | # | Local | Achado |
 |---|---|---|
-| A1 | J801 p. 193 × p. 195 | Cabeçalho diz **Nível Hierárquico – 2**; Observações dizem **Nível hierárquico: 3**. |
-| A2 | J801 p. 193 × p. 195 | Intro: "deve ser utilizado **obrigatoriamente** no caso de substituição"; Observações: "**Registro facultativo**"; ocorrência 0:1. Leitura consistente possível: facultativo no leiaute, obrigatório quando substituta — mas o manual não declara regra PGE que o exija. |
-| A3 | J801 p. 193 | Assinantes do termo "serão preenchidos no registro **J935**" — o registro de signatários do termo é o **J932** (p. 204); J935 não é descrito nestas páginas. Provável erro material. |
+| A1 | J801 p. 192 × p. 194 | Cabeçalho diz **Nível Hierárquico – 2**; Observações dizem **Nível hierárquico: 3**. |
+| A2 | J801 p. 192 × p. 194 | Intro: "deve ser utilizado **obrigatoriamente** no caso de substituição"; Observações: "**Registro facultativo**"; ocorrência 0:1. Leitura consistente possível: facultativo no leiaute, obrigatório quando substituta — mas o manual não declara regra PGE que o exija. |
+| A3 | J801 p. 192 | Assinantes do termo "serão preenchidos no registro **J935**" — o registro de signatários do termo é o **J932** (p. 203); J935 não é descrito nestas páginas. Provável erro material. |
 | A4 | J801 campo 04 | `COD_MOT_SUBS` tem **Tamanho 010**, mas todos os valores válidos têm 3 dígitos. |
 | A5 | J801 campo 05 | `HASH_RTF` Tamanho **041**; o exemplo traz hash de **40** caracteres (SHA-1 hex). Algoritmo do hash não é declarado. |
 | A6 | J801 campo 06 | `ARQ_RTF` Tamanho "30 megabytes" (não é contagem de caracteres). Regra de escape de `|`/quebra de linha dentro do RTF não é declarada. |
 | A7 | J801 campo 07 | Obrigatório vazio no `-layout`; `-raw` dá **Sim**. |
 | A8 | J801 exemplo | Campo 03 começa com espaço (" Termo de…") e o registro quebra linha no exemplo — artefato de diagramação provável. |
-| A9 | J932 p. 204 × p. 205 | Nome da regra no cabeçalho `REGRA_IDENT_CPF_COD_ASSIN_DUPLICIDADE` ≠ no corpo `REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE`. |
-| A10 | J932 p. 204 (exemplo) | "deve ser assinado por um contador/contabilista (**códigos 910 ou 920**)" — pela tabela, 920 é **Auditor Independente**; e a regra PGE exige ≥1 **910**. |
+| A9 | J932 p. 203 × p. 204 | Nome da regra no cabeçalho `REGRA_IDENT_CPF_COD_ASSIN_DUPLICIDADE` ≠ no corpo `REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE`. |
+| A10 | J932 p. 203 (exemplo) | "deve ser assinado por um contador/contabilista (**códigos 910 ou 920**)" — pela tabela, 920 é **Auditor Independente**; e a regra PGE exige ≥1 **910**. |
 | A11 | J932 REGRA_QUALIF_INVALIDA_ASS_TERMO | Cita "COD_ASSIN (Campo 05)" sem o sufixo `_T`. Semântica: CNPJ ⇒ código tem de ser 920; CPF não é restringido por esta regra. |
 | A12 | J932 REGRA_TABELA_ASSINANTE_DESC | Só confere a descrição quando código = **910**; para 920 o manual não declara conferência. |
 | A13 | J932 Observações | "obrigatório quando a ECD for substituta" (0000.IND_FIN_ESC = 1), mas **não há regra PGE** listada que imponha a presença do J932; a única regra de presença (OBRIGATORIO_CONTADOR_ASS_TERMO) exige 910 *se* houver J932. Ocorrência 0:2 limita a um contador + um auditor (com a chave CPF/CNPJ+código). |
 | A14 | J932 exemplo | `IND_CRC_T` = `1SP123456` com `UF_CRC_T` = `RJ` e `NUM_SEQ_CRC_T` = `RJ/2012/001` — UFs divergentes no próprio exemplo. |
+
+---
+
+## 4. Revisão 2026-09-23 — troca de fonte (bc63f0a893ce → 7ddf47755f61)
+
+Decisão do dono (23/09, sessão): o vigente é a redação **janeiro/2026** (`7ddf47755f61`), não a
+**maio/2026** baixada da URL do script (`bc63f0a893ce`). A 1ª versão desta transcrição (commit
+`20f9c85e`) foi feita sobre a maio/2026.
+
+**Método da comparação (checagem que teria falhado):** as seções J801 (do título até "Registro J900") e
+J932 (do título até o fim do exemplo) foram extraídas com `pdftotext -layout` dos dois PDFs,
+normalizadas (espaços, rodapé "Página N de 235/236", "Atualização: <mês> de 2026") e comparadas palavra
+a palavra com `diff`. **J801: 0 diferenças. J932: 0 diferenças** (o único excedente no novo foi o J935
+seguinte, por causa do recorte, e não o conteúdo do J932). Campo 07 do J801 reconferido com `-raw` no
+novo PDF: Obrig. = Sim.
+
+**Diff de conteúdo: nenhum.** Mudou só:
+- fonte / sha256 / "Atualização" / total de páginas (236 → 235);
+- **paginação, -1 em tudo:** J801 pp. 193-195 → **192-194**; J932 pp. 204-206 → **203-205**.
+
+**Ambiguidades A1–A14: as 14 persistem** com texto idêntico, porque a redação não mudou. Nenhuma sumiu e
+nenhuma é nova no J801/J932. Nota sobre A3: o novo PDF mostra que o **J935** existe logo depois (p. 205
+em diante), mas como "Identificação dos Auditores Independentes", sem relação com os signatários do termo.
+A remissão do J801 ao "J935" continua errada; o registro certo é o J932.
