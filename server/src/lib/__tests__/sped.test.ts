@@ -322,8 +322,28 @@ describe('register builders', () => {
   // Review PR #368, item 3 — sanitizeRtfForSped: '|' hoje virava Error cru (500) do spedLine;
   // tags proibidas pela Receita; \bin rejeitado; CR/LF normalizados sem perda (spec RTF).
   describe('sanitizeRtfForSped', () => {
-    it('remove CR/LF (whitespace insignificante fora de \\bin, spec RTF) sem perder o resto do texto', () => {
-      expect(sanitizeRtfForSped('{\\rtf1\\ansi\r\nHello\r\nWorld}')).toBe('{\\rtf1\\ansiHelloWorld}');
+    // Bug relatado no review PR #368 (2ª rodada): CR/LF logo depois de uma palavra de controle
+    // é o DELIMITADOR que a fecha — o leitor RTF o CONSOME como um espaço. Removê-lo sem
+    // substituir cola a palavra de controle no texto seguinte (`\par\r\nTermo` → `\parTermo`,
+    // apagando o parágrafo E a palavra "Termo" em silêncio — o HASH_RTF descreveria um
+    // documento corrompido). Correção: delimitador → espaço; qualquer OUTRA quebra de linha
+    // (entre texto puro) → removida sem substituto (não delimita nada).
+    it('CR/LF logo após palavra de controle vira UM espaço (nunca é removido sem substituto)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\par\r\nTermo \\b\r\nnegrito}')).toBe(
+        '{\\rtf1\\par Termo \\b negrito}',
+      );
+    });
+
+    it('\\par\\r\\n isolado vira "\\par " (caso citado no review)', () => {
+      expect(sanitizeRtfForSped('a\\par\r\nb')).toBe('a\\par b');
+    });
+
+    it('palavra de controle com contador numérico (\\fs24\\n) também recebe o espaço delimitador', () => {
+      expect(sanitizeRtfForSped('a\\fs24\nb')).toBe('a\\fs24 b');
+    });
+
+    it('CR/LF que NÃO segue palavra de controle é removido sem substituto (whitespace insignificante)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\ansi\r\nHello\r\nWorld}')).toBe('{\\rtf1\\ansi HelloWorld}');
       expect(sanitizeRtfForSped('a\nb\rc\r\nd')).toBe('abcd');
     });
 
@@ -331,8 +351,15 @@ describe('register builders', () => {
       expect(() => sanitizeRtfForSped('{\\rtf1|x}')).toThrow(/RTF_CONTAINS_PIPE/);
     });
 
-    it('rejeita \\bin (dado binário embutido — CR/LF ali dentro seria dado real, não controle)', () => {
+    it('rejeita \\bin como PALAVRA DE CONTROLE real (dado binário embutido)', () => {
       expect(() => sanitizeRtfForSped('{\\rtf1\\bin5 ABCDE}')).toThrow(/RTF_CONTAINS_BIN/);
+    });
+
+    // Review PR #368 (2ª rodada), "menores": \bin como SUBSTRING crua daria falso positivo no
+    // texto literal "\bin" (que no .rtf chega ESCAPADO como "\\bin" — barra dupla). A forma
+    // escapada nunca deve disparar a rejeição.
+    it('texto literal "\\bin" (escapado como "\\\\bin" no .rtf) NÃO dispara \\bin — não é palavra de controle', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1 caminho \\\\bin do sistema}')).not.toThrow();
     });
 
     it.each(['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'])(
@@ -342,7 +369,7 @@ describe('register builders', () => {
       },
     );
 
-    it('texto limpo passa inalterado (controle)', () => {
+    it('texto limpo (sem quebra de linha) passa inalterado (controle)', () => {
       expect(sanitizeRtfForSped('{\\rtf1\\ansi Termo de Verificação}')).toBe('{\\rtf1\\ansi Termo de Verificação}');
     });
   });

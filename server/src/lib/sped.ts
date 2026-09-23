@@ -561,45 +561,77 @@ export interface RegJ801Input {
   arqRtf: string; // campo 06 — bytes do .rtf JÁ SANITIZADOS (`sanitizeRtfForSped`) como string (latin1).
 }
 
-/** Tags que o PGE do Sped Contábil proíbe dentro de J801.ARQ_RTF (REGRA_REGISTRO_NAO_DEVE_
- * EXISTIR_NO_RTF, Manual ECD L9 p. 194, transcrição §1.5.III). */
+/**
+ * Tags que o PGE do Sped Contábil proíbe dentro de J801.ARQ_RTF (REGRA_REGISTRO_NAO_DEVE_
+ * EXISTIR_NO_RTF, Manual ECD L9 p. 194, transcrição §1.5.III). A transcrição transcreve a regra
+ * como "verifica... se existem as tags" sem descrever o algoritmo de busca (substring vs.
+ * ciente da gramática RTF) — grau INFERIDO: mantido como substring simples (comportamento
+ * pré-existente) por não haver base na transcrição para outra escolha; se o PVA divergir
+ * (falso positivo/negativo), é achado de PVA, não bug deste código.
+ */
 const FORBIDDEN_RTF_TAGS = ['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'] as const;
+
+/** Palavra de controle RTF: `\` + letras + contador numérico opcional (ex.: `\par`, `\fs24`,
+ * `\up-6`). Usada para (a) achar o delimitador de quebra-de-linha que o leitor CONSOME como
+ * espaço e (b) reconhecer `\bin` como PALAVRA DE CONTROLE de verdade, não substring. */
+const CONTROL_WORD_RE = /\\[a-zA-Z]+(-?\d+)?/g;
+
+/** `\bin` como palavra de controle REAL — `\` único (não `\\`, que é o ESCAPE do caractere `\`
+ * literal: um autor cujo texto contém a sequência visível "\bin" grava `\\bin` no .rtf, e essa
+ * sequência NÃO pode disparar a rejeição — review PR #368, "menores"). */
+const REAL_BIN_CONTROL_WORD_RE = /(?<!\\)\\bin(-?\d+)?/;
 
 /**
  * Sanitiza o conteúdo de um .rtf para caber em J801.ARQ_RTF (review PR #368 — o .rtf chegava
- * cru e um `|` nele virava um `Error` genérico de `spedLine` sem tradução para 400).
+ * cru e um `|` nele virava um `Error` genérico de `spedLine` sem tradução para 400; correção
+ * subsequente do mesmo review: a 1ª versão removia TODO CR/LF, mas no RTF a quebra de linha
+ * também é o DELIMITADOR que fecha uma palavra de controle — remover sem substituir por espaço
+ * cola a palavra de controle no texto seguinte, ex. `\par\r\nTermo` virava `\parTermo`,
+ * apagando o parágrafo E a palavra "Termo" em silêncio; o `HASH_RTF` então descrevia um
+ * documento corrompido).
  *
- * - `\bin`: RTF permite embutir dados BINÁRIOS crus depois de `\binN` (N bytes seguintes,
- *   sem escape) — nesse trecho um `\r`/`\n`/`|` pode ser dado real, não controle de texto, e
- *   removê-lo CORROMPERIA o binário. Como o registro J801 é uma LINHA de texto Latin-1
- *   pipe-delimited, não há como carregar `\bin` com segurança — rejeitado explicitamente
- *   (o autor deve salvar o Termo sem imagens/objetos OLE embutidos, como o próprio
- *   procedimento do manual prescreve: Word → .rtf → Bloco de Notas → colar, um caminho que
- *   por natureza não preserva binário).
- * - CR/LF (fora de `\bin`): pela especificação RTF (Rich Text Format, versão 1.9.1, seção
- *   "Ignoring Text" / convenção universal dos leitores RTF), quebras de linha FORA de uma
- *   sequência de controle são whitespace insignificante — o leitor as ignora ao interpretar o
- *   documento. Removê-las aqui é NORMALIZAÇÃO SEM PERDA de conteúdo visível, e é exigida pelo
- *   próprio formato do SPED: um registro é UMA linha física (CRLF é terminador de REGISTRO,
- *   nunca separador dentro de um campo — `SPED_LINE_TERMINATOR`).
+ * - `\bin` (`REAL_BIN_CONTROL_WORD_RE`): RTF permite embutir dados BINÁRIOS crus depois de
+ *   `\binN` (N bytes seguintes, sem escape) — nesse trecho um `\r`/`\n`/`|` pode ser dado real,
+ *   não controle de texto, e removê-lo CORROMPERIA o binário. Como o registro J801 é uma LINHA
+ *   de texto Latin-1 pipe-delimited, não há como carregar `\bin` com segurança — rejeitado
+ *   explicitamente (o autor deve salvar o Termo sem imagens/objetos OLE embutidos, como o
+ *   próprio procedimento do manual prescreve: Word → .rtf → Bloco de Notas → colar, um caminho
+ *   que por natureza não preserva binário). Detectado como PALAVRA DE CONTROLE (lookbehind
+ *   nega `\\bin`, a forma ESCAPADA do texto literal "\bin") — nunca substring crua.
+ * - CR/LF: pela especificação RTF (versão 1.9.1) e pela convenção universal dos leitores, uma
+ *   quebra de linha IMEDIATAMENTE depois de uma palavra de controle É o delimitador que a
+ *   encerra — o leitor a CONSOME como um espaço (o mesmo papel que um espaço literal teria ali).
+ *   Removê-la SEM substituir coalesce a palavra de controle com o texto seguinte (bug relatado
+ *   no review). Por isso: CR/LF logo após uma palavra de controle → UM espaço; qualquer OUTRA
+ *   quebra de linha (entre texto puro, ou entre grupos) é whitespace insignificante para o
+ *   leitor e é removida sem substituto — normalização sem perda de conteúdo VISÍVEL, exigida
+ *   pelo formato de 1-linha-por-registro do SPED (CRLF é terminador de REGISTRO, nunca
+ *   separador dentro de um campo — `SPED_LINE_TERMINATOR`).
  * - Tags proibidas (`FORBIDDEN_RTF_TAGS`): verificadas no texto JÁ normalizado (uma quebra de
- *   linha no meio de uma tag por acidente de diagramação ainda é pega).
+ *   linha no meio de uma tag por acidente de diagramação ainda é pega); grau de fidelidade ao
+ *   manual documentado no comentário de `FORBIDDEN_RTF_TAGS` acima.
  * - `|`: verificado por último — depois deste ponto o texto está seguro para `spedLine`, que
  *   mantém sua própria guarda (`|` alto) como defesa em profundidade, nunca alcançada no
  *   caminho feliz.
  */
 export function sanitizeRtfForSped(rtfText: string): string {
-  if (rtfText.includes('\\bin')) {
+  if (REAL_BIN_CONTROL_WORD_RE.test(rtfText)) {
     throw new Error(
       'RTF_CONTAINS_BIN: o .rtf usa \\bin (dado binário embutido, ex.: imagem/objeto OLE) — não ' +
         'suportado no registro J801; salve o Termo novamente sem elementos binários.',
     );
   }
-  // CR/LF fora de \bin são whitespace insignificante para o leitor RTF — remover não perde
-  // conteúdo e é exigido pelo formato de 1-linha-por-registro do SPED.
-  const normalized = rtfText.replace(/\r\n|\r|\n/g, '');
+  // 1) CR/LF logo após uma palavra de controle → o delimitador é CONSUMIDO como um espaço
+  //    (nunca removido sem substituto — senão a palavra de controle cola no texto seguinte).
+  const withDelimitersPreserved = rtfText.replace(
+    new RegExp(`(${CONTROL_WORD_RE.source})(\\r\\n|\\r|\\n)`, 'g'),
+    '$1 ',
+  );
+  // 2) Qualquer OUTRA quebra de linha é whitespace insignificante para o leitor RTF — removida
+  //    sem substituto (não delimita nada; a normalização não perde conteúdo visível).
+  const normalized = withDelimitersPreserved.replace(/\r\n|\r|\n/g, '');
   for (const tag of FORBIDDEN_RTF_TAGS) {
-    if (normalized.includes(`|${tag}|`) || normalized.includes(tag)) {
+    if (normalized.includes(tag)) {
       throw new Error(
         `RTF_FORBIDDEN_TAG: o .rtf contém a tag proibida '${tag}' ` +
           '(REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194) — remova-a do texto antes de anexar.',

@@ -10,15 +10,26 @@
 -- existente), o que É o comportamento aceito nos precedentes de 1-2 colunas — mas com 5 ele
 -- some as colunas 3-5 se o operador destrancar o erro sem investigar. Troca para o padrão
 -- RedefineTables (PRAGMA + tabela temporária) já usado em `20260918100000_add_fixed_assets`
--- para `accounting_scope_settings`: `DROP TABLE IF EXISTS "new_..."` como prólogo idempotente —
--- um retry após aborto no meio do rebuild (DROP do original já feito, RENAME ainda não) seria a
--- ÚNICA janela não-segura, e é a MESMA janela aceita nos precedentes (nunca fechada por completo
--- no SQLite sem uma transação real, que `prisma migrate deploy` não dá — memória
--- `migracao-sqlite-nao-e-transacional`). Tabela SEM FK própria (só um índice) — não precisa de
--- `PRAGMA foreign_keys=OFF` para si mesma, mas mantém-se por disciplina (filhas com FK
--- apontando para esta tabela, ex. `accounting_data_exchange_rows`, `accounting_delivery_items`,
--- `accounting_reviews`, `accounting_delivery_log`, continuam válidas: SQLite resolve FK por
--- NOME de tabela, não por referência interna — a tabela recriada com o mesmo nome as satisfaz).
+-- para `accounting_scope_settings`.
+--
+-- Janelas de abort, nomeadas (mesmo padrão do comentário de `20260918100000_add_fixed_assets`,
+-- não uma promessa genérica de "retry-seguro" — `prisma migrate deploy` não dá transação real
+-- no SQLite, memória `migracao-sqlite-nao-e-transacional`):
+--   * abort ANTES do `DROP TABLE IF EXISTS "new_..."` ou durante o `CREATE`/`INSERT` de
+--     `new_accounting_data_exchange_jobs`: retry SEGURO — o prólogo `DROP TABLE IF EXISTS`
+--     limpa a `new_` órfã da tentativa anterior antes de recriá-la; a tabela original,
+--     intocada até aqui, ainda tem todas as linhas.
+--   * abort ENTRE o `DROP TABLE "accounting_data_exchange_jobs"` (linha com o nome original) e
+--     o `ALTER TABLE ... RENAME TO` que devolve o nome: esta é a ÚNICA janela NÃO segura —
+--     nem a tabela original (já dropada) nem o nome final existem; um retry recriaria do zero a
+--     partir de `new_...` (que sobreviveu ao DROP anterior por ainda estar com outro nome) via
+--     o mesmo prólogo, mas só se o operador rodar a migração de novo manualmente entendendo o
+--     estado. É a mesma janela, com o mesmo limite, do precedente — não fechada por completo.
+-- Tabela SEM FK própria (só um índice) — não precisa de `PRAGMA foreign_keys=OFF` para si mesma,
+-- mas mantém-se por disciplina (filhas com FK apontando para esta tabela, ex.
+-- `accounting_data_exchange_rows`, `accounting_delivery_items`, `accounting_reviews`,
+-- `accounting_delivery_log`, continuam válidas: SQLite resolve FK por NOME de tabela, não por
+-- referência interna — a tabela recriada com o mesmo nome as satisfaz).
 PRAGMA defer_foreign_keys=ON;
 PRAGMA foreign_keys=OFF;
 DROP TABLE IF EXISTS "new_accounting_data_exchange_jobs";

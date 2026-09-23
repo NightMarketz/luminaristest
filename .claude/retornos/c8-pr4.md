@@ -86,6 +86,58 @@ ebusy-test-db` (ver seção anterior). Não é um FAIL do diff — é o ambiente
 
 ---
 
+## Atualização — 2ª rodada do review (achado 3 FAIL: bug de corrupção silenciosa)
+
+Achados 1, 2, 4, 5, 6 confirmados OK e rebase OK na 1ª correção. Achado 3 tinha um bug novo: a
+1ª versão de `sanitizeRtfForSped` removia TODO CR/LF — mas no RTF a quebra de linha também é o
+DELIMITADOR que fecha uma palavra de controle (`\par\r\nTermo` → sem o delimitador virava
+`\parTermo`, apagando o parágrafo E a palavra "Termo" em silêncio; `HASH_RTF` descrevia um
+documento corrompido). Corrigido:
+
+- **CR/LF logo após uma palavra de controle** (`\[a-zA-Z]+(-?\d+)?`) → **UM espaço** (o
+  delimitador é CONSUMIDO como espaço pelo leitor, nunca simplesmente descartado).
+- **Qualquer OUTRA quebra de linha** → removida sem substituto (continua sendo whitespace
+  insignificante fora de palavra de controle).
+- **`\bin`**: trocado de substring crua para PALAVRA DE CONTROLE real via
+  `(?<!\\)\\bin(-?\d+)?` — o texto literal `"\bin"` chega ESCAPADO no .rtf como `"\\bin"` (barra
+  dupla) e não deve mais disparar 400 (testado).
+- **Tags proibidas**: mantidas como substring — a transcrição J801/J932 não descreve o
+  algoritmo de busca do PGE, então não há base para inferir uma checagem mais estrita; grau
+  INFERIDO registrado no JSDoc de `FORBIDDEN_RTF_TAGS`.
+- **Migração**: comentário reescrito para nomear EXPLICITAMENTE as duas janelas de abort (segura
+  antes do DROP+CREATE/INSERT; insegura entre o DROP do original e o RENAME) — mesmo padrão do
+  comentário de `20260918100000_add_fixed_assets`, sem alegar "retry-seguro" genérico.
+
+Testes novos: delimitador-vira-espaço (`\par\r\nTermo` → `\par Termo`), `\par\r\n` isolado,
+`\fs24\n` com contador numérico, CR/LF-sem-controle continua removido, `\bin` como palavra de
+controle real, texto literal `"\bin"` escapado NÃO dispara.
+
+### PROVA — 2ª rodada
+
+```yaml
+PROVA:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review2-tsc.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd server && npm run smoke:migration"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review2-smoke.log
+    sha256: c3c235f332c4247af83c73cee067f79b8b5598e0da02f792bdb76aada7109e38
+  - command: "cd server && npx jest src/lib/__tests__/sped.test.ts src/features/accounting/services/__tests__/SpedGenerationService.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review2-touched.log
+    sha256: 8510c76700ea1f33fd638b4ee217f3d4fea7630fbd112266d6df3bd0bcf21efc
+  - command: "cd server && npm run test:unit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review2-unit.log
+    sha256: d5d73a9e6455e31be2c788f3c6504cae333ebf0ac0a13caa7bc712177ef679d0
+VEREDITO: PASS — bug de corrupção silenciosa do CR/LF corrigido; tsc limpo; smoke:migration sem
+  perda; suítes tocadas + unit completo (224/224 suítes, 3076 testes) verdes.
+```
+
+---
+
 **Autorização:** "Executa C8" (dono, 18/09, corpo do PR #354) + decisões do dono de 23/09
 registradas na transcrição (`docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md
 §5`).
