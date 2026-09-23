@@ -580,6 +580,7 @@ export class DynamicTableService {
       // que leiam antes do primeiro commit leem todos count=0. Não existe exclusion-constraint no SQLite,
       // então a última palavra tem de ser esta re-contagem com o repo tx-bound, logo antes do insert.
       await this.enforceNoOverlap(table, table.schema as unknown as ITableSchema, validatedData, isSystem, txRepo);
+      await this.validateAdvancedRules(table, validatedData, undefined, txRepo);
       const record = await txRepo.createData(tableId, validatedData);
       // Include created id in 'after' context so plugins can reference the new entry
       const afterWithId = { ...validatedData, id: record.id };
@@ -804,6 +805,7 @@ export class DynamicTableService {
       // preflight; a re-contagem tx-bound (com excludeId, para a linha não colidir consigo mesma)
       // é o que fecha a janela read-then-write de um reagendamento concorrente.
       await this.enforceNoOverlap(table, schema, mergedData, isSystem, txRepo, dataId);
+      await this.validateAdvancedRules(table, mergedData, dataId, txRepo);
       // Extract the (possibly mutated) data from afterWithId, stripping the synthetic id field.
       const { id: _afterId, ...persistedData } = afterWithId;
       const record = await txRepo.updateData(dataId, persistedData);
@@ -1132,8 +1134,11 @@ export class DynamicTableService {
    * escrita segue direto, sem custo nenhum.
    */
   private runSerializedIfNoOverlap<T>(table: IDynamicTable, isSystem: boolean, write: () => Promise<T>): Promise<T> {
-    const rules = (table.schema as unknown as ITableSchema)?.noOverlap ?? [];
-    if (isSystem || rules.length === 0) return write();
+    const schema = table.schema as unknown as ITableSchema;
+    // `unique`/`compositeUnique` valem também para escrita de sistema (validateAdvancedRules não a isenta).
+    const hasUnique = (schema?.compositeUnique ?? []).length > 0 || (schema?.fields ?? []).some(f => f.unique);
+    const hasNoOverlap = !isSystem && (schema?.noOverlap ?? []).length > 0;
+    if (!hasUnique && !hasNoOverlap) return write();
     return withTableWriteLock(table.id, write);
   }
 

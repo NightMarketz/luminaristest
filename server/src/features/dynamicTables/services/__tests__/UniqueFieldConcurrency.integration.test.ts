@@ -102,7 +102,7 @@ describe('compositeUnique sob concorrência (TOCTOU)', () => {
   });
 
   // A LACUNA: com as N leituras entrelaçadas antes do primeiro commit, todas persistem.
-  it.failing(`${N} pedidos SIMULTÂNEOS com a mesma (email, tenant): exatamente um persiste`, async () => {
+  it(`${N} pedidos SIMULTÂNEOS com a mesma (email, tenant): exatamente um persiste`, async () => {
     const service = new DynamicTableService(new BarrierRepo(N), new DynamicTablePolicy());
     await prisma.user.create({ data: { id: 'u-cu-conc', username: 'u-cu-conc', email: 'u-cu-conc@test.co', password: 'x', role: Role.USER } });
     const t = await service.createTableAsSystem('u-cu-conc', {
