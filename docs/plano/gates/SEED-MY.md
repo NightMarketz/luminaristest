@@ -4,7 +4,7 @@ tipo: "gate"
 dominio: "gate"
 titulo: "Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)"
 estado: "ready"
-estado_detalhe: "BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 ✅ 24/09 — execução destravada"
+estado_detalhe: "BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada"
 depende_de: ["[[B-4]]"]
 autorizacao: "cédula 14/09 (#318/#319) SEED-MY autorizado"
 prs: ["#325"]
@@ -13,7 +13,7 @@ atualizado: "2026-09-24"
 ---
 # SEED-MY — Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)
 
-**Estado:** `ready` — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 ✅ 24/09 — execução destravada  
+**Estado:** `ready` — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada  
 **Autorização:** cédula 14/09 (#318/#319) SEED-MY autorizado  
 **Depende de:** [[B-4]]  
 **Desbloqueia:** [[H1]] (pontilhada), [[H1b]] (pontilhada)  

@@ -53,7 +53,7 @@
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
 | [[M2]] | Host + 1º deploy (VPS, 1 instância por cliente, BYOK; conta de emissão por unidade R8) | human-open — Alvo decidido 22/08; runbook em branco | [[H2]] ✗ | — |
 | [[P4]] | Instalar validadores (PVA ECD/ECF) | human-open — PVA 10.4.1/12.2.6 instalados (i4jparams.conf, reconciliação 17/09); evidência do P4 segue do dono | — | — |
-| [[SEED-MY]] | Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3) | ready — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 ✅ 24/09 — execução destravada | [[B-4]] | cédula 14/09 (#318/#319) SEED-MY autorizado |
+| [[SEED-MY]] | Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3) | ready — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada | [[B-4]] | cédula 14/09 (#318/#319) SEED-MY autorizado |
 | [[X2]] | Import do arquivo oficial RFB (referencial / catálogo) | human-open — Executado 24/09 (catálogo 2025 = 1.123 contas, validação viva provada); evidência no runbook — falta desfecho + assinatura do dono | — | dono em chat, 24/09: opção B (X2 antes do mapeamento do H1) + "Isso aqui é algo que vc pode fazer por mim, assino no final" |
 | [[Z0-a]] | Contador com CRC aceita assinar escrituração que não conduziu? (premissa do F-Z0) | human-open — Cédula 10/09 resposta 1 fechou F-Z0 pelo produto e descondicionou o trilho; SDD §18/§19 ainda o tratam como aberto (item 0 do pedido) | — | — |
 
