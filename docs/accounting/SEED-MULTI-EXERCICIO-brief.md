@@ -93,6 +93,19 @@ migração.
 2. `activate-salon-binding.mjs` é do salão; o tenant `clinic` (H3) usa `CLINIC_BINDING_V1` via
    `activateAccountingBindingCli.ts` — confirmar na feature qual CLI serve cada tenant.
 
+## 4b. Lacunas de spec decididas pelo dono (2026-09-24, questionário na sessão de feature)
+
+| # | Lacuna | Decisão |
+|---|---|---|
+| L1 | Item 2 (`username='seed-accounting'`) × F-SEED-3 b (dois tenants) × `--tenant salon\|clinic` | 2 usuários por regime: `seed-presumido`, `seed-real`, ambos salão; marcador = username; `--tenant clinic` fica para o H3 (recusado com erro) |
+| L2 | O que torna o tenant "Real" no dado (regime só existe como parâmetro da ECF) | `FiscalProfile` por unidade: PRESUMIDO/CUMULATIVO · REAL/NAO_CUMULATIVO; sem ajustes de LALUR |
+| L3 | Encerramento do resultado de 2025 antes do hard close | **Sim**, pelo `ExerciseClosingService.closeExercise` canônico (BE-INCR-SPED-APURACAO: I355, IND_LCTO='E') |
+| L4 | Pacote pré-pago sem contrapartida nem reconhecimento; faixa de valores | Venda D 1.1.1 / C 2.1.1; consumo no mês seguinte D 2.1.1 / C 3.1; R$ 100–5.000 por lançamento, determinístico por `--seed` |
+
+Derivados sem decisão nova: compra de mercadoria D 1.1.6 / C 1.1.1 ≥ CMV no mês (estoque nunca negativo,
+exigência do item 5 "CMV × 1.1.6"); senha dos tenants via `SEED_ACCOUNTING_PASSWORD` (mesma convenção do
+`SEED_ADMIN_PASSWORD` do `prisma/seed.ts`, nunca reescrita); `--unit-id` default `seed-unit`.
+
 ## 5. Achados fora de escopo
 
 1. `seed.ts` reescreve a senha do admin a cada `db:seed` (memória) — não tocar aqui.
