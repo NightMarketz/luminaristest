@@ -15,7 +15,7 @@
 > curls opcionais. Pré-condição nova: **Python 3 no PATH** (o repo não tem `sqlite3` CLI nem
 > `better-sqlite3`; o Python vem com `sqlite3` embutido).
 
-Executor: [nome — humano]           Data: [____]
+Executor: agente (Claude), sessão acompanhada pelo dono — ver §Registro/Assinatura           Data: 2026-09-23/24
 Autorização: item B-1/B-4 do plano pré-dados-reais (Wave 1, "Pode disparar" — dono, 2026-08-30);
 BRIEF-W1-C. Não há entrada B-1/B-4 explícita em `docs/accounting/ACCOUNTING-MASTER-MAP.md` nem em
 `docs/accounting/PROXIMOS-PASSOS-2026-08-28.md` no momento em que este runbook foi preparado
@@ -79,7 +79,14 @@ python "$TEMP/db-fingerprint.py" server/prisma/prisma/dev.db
 Guarde a saída inteira — é a base de comparação do passo 4. Se `integrity_check` não for `ok` aqui,
 o problema é o ORIGINAL, não o backup: desfecho **BLOQUEADO** em P5.
 
-EVIDÊNCIA P5: [colar a saída completa]
+EVIDÊNCIA P5 (2ª tentativa, após `migrate deploy`; nada em LISTEN nas portas 3000/3001):
+```
+integrity_check: ok
+migracoes: 50
+journal_entries/postings/accounts/accounting_bindings: [15, 30, 44, 1]
+postings debito/credito: (1897300, 1897300)
+tabelas: 68 | sha256(linhas): c0da602d0d7048aef37628179e3d68d28a3ced9e2a3235e13b60fc14b9e46bc1
+```
 ---
 
 ## Passos
@@ -97,7 +104,15 @@ Resultado esperado: stdout terminando em `OK: backup íntegro em <path>.`, com `
 e a contagem de `journal_entries` da fonte igual à da cópia. Anote o `<path>` impresso — é o
 arquivo do passo 2.
 
-EVIDÊNCIA: [colar a saída completa do comando, incluindo o path do backup gerado]
+EVIDÊNCIA:
+```
+origem: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+backup gerado: C:\Users\smurf\Downloads\Luminaris\server\prisma\backups\dev-20260924031153.db
+integrity_check: ok
+journal_entries: fonte=15 · cópia=15
+
+OK: backup íntegro em C:\Users\smurf\Downloads\Luminaris\server\prisma\backups\dev-20260924031153.db.
+```
 
 > **Se sair `FALHOU`:** desfecho **FALHOU** neste passo — não prossiga para o passo 2. A causa
 > (`integrity_check` distinto de `ok`, ou contagem de `journal_entries` divergente) é achado de
@@ -118,7 +133,11 @@ cp "<path do backup do passo 1>" "<path absoluto fora do repo>/restored-<data>.d
 
 Resultado esperado: arquivo copiado, mesmo tamanho em bytes do backup de origem.
 
-EVIDÊNCIA: [colar `ls -la` do arquivo restaurado com tamanho em bytes, e o path absoluto usado]
+EVIDÊNCIA (path absoluto `C:/Users/smurf/luminaris-restore/restored-20260924.db`):
+```
+-rw-r--r-- 1 smurf 197609 1658880 Sep 24 00:21 /c/Users/smurf/luminaris-restore/restored-20260924.db
+-rw-r--r-- 1 smurf 197609 1658880 Sep 24 00:11 prisma/backups/dev-20260924031153.db
+```
 
 ### 3. Subir o server apontando para a restauração
 
@@ -170,8 +189,18 @@ Resultado esperado: log de boot chegando em `Luminaris Server running on ...` (n
 >   `docs/adr/ADR-INCR-BINDING-FEEDER.md` §5/§8. Também achado do próprio ensaio, não falha de
 >   script; registre e trate como **FALHOU** ou **BLOQUEADO** conforme o caso.
 
-EVIDÊNCIA: [colar as linhas de log do boot até "running on", e a linha `DATABASE_URL` usada no
-`.env` durante o teste]
+EVIDÊNCIA:
+```
+DATABASE_URL=file:C:/Users/smurf/luminaris-restore/restored-20260924.db
+$ npx prisma migrate status
+50 migrations found in prisma/migrations
+Database schema is up to date!
+$ npm run build   → exit 0
+$ npm start
+Luminaris Server running on http://localhost:3001
+```
+(o log de boot também trouxe `Falha ao verificar ou criar a coleção no Qdrant ... fetch failed` —
+Qdrant não estava de pé; dívida RAG/Qdrant já conhecida (#318), não relacionada à restauração.)
 
 ### 4. Conferência — impressão digital SQL do restaurado
 
@@ -187,8 +216,18 @@ Resultado esperado: as 5 linhas **idênticas** às de P5 — em especial `sha256
 passo 3); `sha256` diferente com contagens iguais = alguma linha mudou entre P5 e o passo 1 (o
 server estava de pé durante P5? — refaça P5 com o server parado antes de concluir FALHOU).
 
-EVIDÊNCIA: [colar a saída do restaurado + a linha `sha256(linhas)` de P5 lado a lado — iguais ou
-diferença exata]
+EVIDÊNCIA (restaurado, com o server do passo 3 no ar):
+```
+integrity_check: ok
+migracoes: 50
+journal_entries/postings/accounts/accounting_bindings: [15, 30, 44, 1]
+postings debito/credito: (1897300, 1897300)
+tabelas: 68 | sha256(linhas): c0da602d0d7048aef37628179e3d68d28a3ced9e2a3235e13b60fc14b9e46bc1
+```
+P5:          `c0da602d0d7048aef37628179e3d68d28a3ced9e2a3235e13b60fc14b9e46bc1`
+restaurado:  `c0da602d0d7048aef37628179e3d68d28a3ced9e2a3235e13b60fc14b9e46bc1` — **iguais**; as 5 linhas idênticas.
+Curls opcionais não rodados (exigem credencial). Encerramento feito: server derrubado, `.env`
+revertido para `DATABASE_URL=file:./prisma/dev.db`, restaurado + `-wal`/`-shm` apagados.
 
 *(Opcional — prova de que a API lê o restaurado, exige P7 e credencial; não substitui a comparação
 SQL acima.)*
@@ -212,7 +251,7 @@ Esperado: balancete cujos Σdébito/Σcrédito batem com `select sum(debitCents)
 
 ## Desfecho (marcar UM)
 
-- [ ] **PASSOU** — todos os passos com evidência conferindo com o esperado (restauração sobe e as
+- [x] **PASSOU** — todos os passos com evidência conferindo com o esperado (restauração sobe e as
       leituras batem com o original)
 - [ ] **FALHOU** — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte
       foi executado após a falha
@@ -220,7 +259,20 @@ Esperado: balancete cujos Σdébito/Σcrédito batem com `select sum(debitCents)
 
 ## Registro
 
-- Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
-- Atualização do artefato de rastreio: [linha do plano/mapa atualizada com o desfecho + data —
-  aponte a linha correta se `ACCOUNTING-MASTER-MAP.md` ganhar uma entrada B-1/B-4 explícita]
-- Assinatura do executor: ____________
+- Achados no caminho (fora do escopo deste runbook):
+  1. **1ª tentativa (23/09) — FALHOU no passo 3:** backup `dev-20260924014123.db` (P5 com
+     `migracoes: 49`, mesmo sha256) tinha a migração `20260923200000_add_fixed_asset_source_item_ref`
+     (C8 PR-5, #366) pendente — o `dev.db` real estava 1 migração atrás do código. Não aplicada no
+     restaurado; `.env` revertido, nada subido.
+  2. **Correção:** `npx prisma migrate deploy` no `dev.db` real, autorizado pelo dono em chat
+     ("autorizo o migrate deploy, pode seguir"). Pós-estado verificado: 50 linhas em
+     `_prisma_migrations`, última = `20260923200000_add_fixed_asset_source_item_ref`. Ressalva: a
+     saída capturada do comando mostrou só "No pending migrations to apply" (tail cortado) — o
+     pós-estado está provado, a linha de aplicação não. Rollback disponível: o backup pré-migração
+     `dev-20260924014123.db`.
+  3. 2ª tentativa (evidência acima) = PASSOU.
+- Atualização do artefato de rastreio: `docs/plano/gates/B-4.md` (frontmatter `estado`) — 2026-09-24
+- Assinatura do executor: **assinado pelo agente (Claude) por autorização expressa do dono em chat,
+  2026-09-24** — citações literais: "pode assinar mesmo sem necessidade isso" · "Assinatura digital
+  cara, eu estou autorizando". O agente executou os passos; o dono acompanhou e autorizou cada um
+  ("pode seguir pro passo 2/3", "autorizo o migrate deploy").

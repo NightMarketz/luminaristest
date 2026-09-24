@@ -3,17 +3,17 @@ id: "SEED-MY"
 tipo: "gate"
 dominio: "gate"
 titulo: "Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)"
-estado: "blocked"
-estado_detalhe: "BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; execução espera B-4 assinado"
+estado: "ready"
+estado_detalhe: "BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 ✅ 24/09 — execução destravada"
 depende_de: ["[[B-4]]"]
 autorizacao: "cédula 14/09 (#318/#319) SEED-MY autorizado"
 prs: ["#325"]
 ancora_sdd: "§III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8"
-atualizado: "2026-09-23"
+atualizado: "2026-09-24"
 ---
 # SEED-MY — Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)
 
-**Estado:** `blocked` — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; execução espera B-4 assinado  
+**Estado:** `ready` — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 ✅ 24/09 — execução destravada  
 **Autorização:** cédula 14/09 (#318/#319) SEED-MY autorizado  
 **Depende de:** [[B-4]]  
 **Desbloqueia:** [[H1]] (pontilhada), [[H1b]] (pontilhada)  
