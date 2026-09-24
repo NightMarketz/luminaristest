@@ -255,16 +255,19 @@ export async function seedTenant(
   today: string,
 ): Promise<SeedTenantReport> {
   const userId = await ensureUser(t, password);
+  // Uma unidade POR tenant: o AccountingSyncService registra os mappers por UNIDADE — dois bindings do
+  // salão na mesma unidade colidem em 'sale.finalized' e o boot aborta (achado no boot real, 24/09).
+  const unitId = `${args.unitId}-${t.username.replace(/^seed-/, '')}`;
   const scope: AccountingScope = {
     ownerUserId: userId,
     actorUserId: userId,
-    unitId: args.unitId,
+    unitId: unitId,
     ledgerCode: 'DEFAULT',
     baseCurrencyCode: 'BRL',
     timeZone: 'America/Sao_Paulo',
   };
   const report: SeedTenantReport = {
-    username: t.username, regime: t.regime, userId, unitId: args.unitId,
+    username: t.username, regime: t.regime, userId, unitId: unitId,
     entriesCreated: 0, entriesExisting: 0, payablesCreated: 0, receivablesCreated: 0, closedYears: [], tieOut: [],
   };
 
@@ -272,7 +275,7 @@ export async function seedTenant(
   // Consumo de janeiro do 1º ano pedido: pacote de dezembro do ano anterior, se ele foi semeado
   // (rodar só `--years 2026` depois de 2025 não pode perder o reconhecimento — review 24/09).
   const firstYear = args.years[0];
-  const priorDecSold = await prisma.journalEntry.count({ where: { userId, unitId: args.unitId, sourceType: SEED_SOURCE_TYPE, sourceId: `${firstYear - 1}-12-pacote-venda` } });
+  const priorDecSold = await prisma.journalEntry.count({ where: { userId, unitId: unitId, sourceType: SEED_SOURCE_TYPE, sourceId: `${firstYear - 1}-12-pacote-venda` } });
   let priorPackage = priorDecSold > 0 ? buildMonthPlan(args.seed, tenantIndex, firstYear - 1, 12, 31, 0).packageSoldCents : 0;
 
   for (const year of args.years) {
@@ -307,46 +310,46 @@ export async function seedTenant(
       priorPackage = plan.packageSoldCents;
 
       for (const e of plan.entries) {
-        const before = await prisma.journalEntry.count({ where: { userId, unitId: args.unitId, sourceType: SEED_SOURCE_TYPE, sourceId: e.sourceId } });
-        await services.posting.postEntry(scope, { ...e, unitId: args.unitId });
+        const before = await prisma.journalEntry.count({ where: { userId, unitId: unitId, sourceType: SEED_SOURCE_TYPE, sourceId: e.sourceId } });
+        await services.posting.postEntry(scope, { ...e, unitId: unitId });
         if (before === 0) report.entriesCreated++;
         else report.entriesExisting++;
       }
 
       const expenseId = await accountId(scope, '4.1');
       for (const ap of plan.payables) {
-        let payable = await prisma.payable.findFirst({ where: { userId, unitId: args.unitId, documentNumber: ap.documentNumber } });
+        let payable = await prisma.payable.findFirst({ where: { userId, unitId: unitId, documentNumber: ap.documentNumber } });
         if (!payable) {
           payable = await services.payable.createPayable(scope, {
-            unitId: args.unitId, supplierName: 'Fornecedor Seed', documentNumber: ap.documentNumber, description: ap.description,
+            unitId: unitId, supplierName: 'Fornecedor Seed', documentNumber: ap.documentNumber, description: ap.description,
             issueDate: ap.issueDate, dueDate: ap.dueDate, amountCents: ap.amountCents, expenseAccountId: expenseId,
           });
           report.payablesCreated++;
         }
         if ((await prisma.payablePayment.count({ where: { payableId: payable.id } })) === 0) {
-          await services.payable.registerPayment(scope, payable.id, { unitId: args.unitId, method: 'Pix', paidAt: ap.paidAt, amountCents: ap.paidCents });
+          await services.payable.registerPayment(scope, payable.id, { unitId: unitId, method: 'Pix', paidAt: ap.paidAt, amountCents: ap.paidCents });
         }
       }
 
       const revenueId = await accountId(scope, '3.1');
       for (const ar of plan.receivables) {
-        let receivable = await prisma.receivable.findFirst({ where: { userId, unitId: args.unitId, documentNumber: ar.documentNumber } });
+        let receivable = await prisma.receivable.findFirst({ where: { userId, unitId: unitId, documentNumber: ar.documentNumber } });
         if (!receivable) {
           receivable = await services.receivable.createReceivable(scope, {
-            unitId: args.unitId, customerName: 'Cliente Seed', documentNumber: ar.documentNumber, description: ar.description,
+            unitId: unitId, customerName: 'Cliente Seed', documentNumber: ar.documentNumber, description: ar.description,
             issueDate: ar.issueDate, dueDate: ar.dueDate, amountCents: ar.amountCents, revenueAccountId: revenueId,
           });
           report.receivablesCreated++;
         }
         if (ar.receivedCents > 0 && (await prisma.receivableReceipt.count({ where: { receivableId: receivable.id } })) === 0) {
-          await services.receivable.registerReceipt(scope, receivable.id, { unitId: args.unitId, method: 'Pix', receivedAt: ar.receivedAt, amountCents: ar.receivedCents });
+          await services.receivable.registerReceipt(scope, receivable.id, { unitId: unitId, method: 'Pix', receivedAt: ar.receivedAt, amountCents: ar.receivedCents });
         }
       }
     }
 
     if (closedYear) {
       // Encerramento canônico (idempotente por sourceId=ano) ANTES do hard close — dezembro precisa estar OPEN.
-      const closed = await prisma.journalEntry.count({ where: { userId, unitId: args.unitId, sourceType: CLOSING_SOURCE_TYPE, sourceId: closingSourceId(year) } });
+      const closed = await prisma.journalEntry.count({ where: { userId, unitId: unitId, sourceType: CLOSING_SOURCE_TYPE, sourceId: closingSourceId(year) } });
       if (closed === 0) await services.exerciseClosing.closeExercise(scope, year);
       const fresh = await services.period.listPeriods(scope, year);
       for (const p of fresh.sort((a, b) => a.month - b.month)) {
@@ -362,7 +365,7 @@ export async function seedTenant(
   // FiscalProfile (decisão 24/09): o regime do tenant fica persistido. Upsert = idempotente.
   await services.fiscalProfile.upsert(
     scope,
-    UpsertFiscalProfileSchema.parse({ unitId: args.unitId, regimeTributario: t.regime, icmsContribuinte: false, pisCofinsRegime: t.pisCofinsRegime }),
+    UpsertFiscalProfileSchema.parse({ unitId: unitId, regimeTributario: t.regime, icmsContribuinte: false, pisCofinsRegime: t.pisCofinsRegime }),
   );
 
   // Item 8 — tie-out por ano: balancete fecha E BP fecha (ativo = passivo + PL + resultado).

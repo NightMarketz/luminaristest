@@ -98,7 +98,7 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > **[EMENDA 2026-09-24 — SEED-MY] Alvo = seed multi-exercício (`db:seed:accounting`).** O `dev.db` é
 > seed de testes (decisão do dono 12/09). Depois do `npm run db:backup`, rode
 > `cd server && SEED_ACCOUNTING_PASSWORD=<senha> npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup`:
-> cria os tenants `seed-presumido`/`seed-real` (unidade `seed-unit`) com o chart completo (19 contas,
+> cria os tenants `seed-presumido`/`seed-real` (unidades `seed-unit-presumido` / `seed-unit-real` — uma por tenant) com o chart completo (19 contas,
 > `1.1.6/3.3/4.2` inclusas), 2025 encerrado + `HARD_CLOSED`, 2026 `OPEN` até o mês corrente, AP/AR e
 > `FiscalProfile` por regime; sai 1 se o tie-out não fechar. Em seguida rode o
 > `activate-salon-binding.mjs` impresso pelo comando para cada tenant (o seed não ativa binding). Com isso o

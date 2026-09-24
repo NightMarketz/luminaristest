@@ -105,7 +105,7 @@ migração.
 
 Derivados sem decisão nova: compra de mercadoria D 1.1.6 / C 1.1.1 ≥ CMV no mês (estoque nunca negativo,
 exigência do item 5 "CMV × 1.1.6"); senha dos tenants via `SEED_ACCOUNTING_PASSWORD` (mesma convenção do
-`SEED_ADMIN_PASSWORD` do `prisma/seed.ts`, nunca reescrita); `--unit-id` default `seed-unit`.
+`SEED_ADMIN_PASSWORD` do `prisma/seed.ts`, nunca reescrita); `--unit-id` default `seed-unit` é a BASE: cada tenant ganha `seed-unit-presumido` / `seed-unit-real` (dois bindings do salão na mesma unidade colidem em `sale.finalized` e o boot aborta — achado no boot real 24/09).
 
 ## 5. Achados fora de escopo
 
