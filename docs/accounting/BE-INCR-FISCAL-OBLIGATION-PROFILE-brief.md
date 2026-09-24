@@ -1,8 +1,9 @@
 # BRIEF — BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13 · perfil de obrigações por empresa, regime × porte)
 
 > **Estado: BRIEF pronto.** Forks do PRE-ADR (F-OBP-0..9) **RATIFICADOS pelo dono em 2026-09-24**, todos na
-> recomendação. **8 forks novos de implementação (F-XP-1..8) com RATIFICAÇÃO PENDENTE** (§3). Implementação exige
-> **"executa"** do dono (ORCH-006). Escrito em `sessao-planejamento`, 2026-09-24.
+> recomendação. **8 forks novos de implementação (F-XP-1..8) ✅ RATIFICADOS pelo dono em 2026-09-24, todos na
+> recomendação** (chat: *"Ratifico todos os F-XP na recomendação, executa X13 PR-1"*). **PR-1 autorizado**; PR-2 e PR-3
+> ainda exigem "executa" próprio. Escrito em `sessao-planejamento`, 2026-09-24.
 
 ---
 
@@ -137,7 +138,7 @@ Cada item é testável sozinho. **[N]** = fonte normativa citada; **[D]** = deci
     (reusa o resolvedor do item 4).
 22. **Gates do PR-3** — snapshot do DTO de criação, i18n, integração do create com e sem `fiscal`.
 
-## 3. Forks — RATIFICAÇÃO PENDENTE (novos; os F-OBP já estão ratificados)
+## 3. Forks — ✅ RATIFICADOS 2026-09-24 (todos na recomendação: F-XP-1 c · 2 a · 3 a · 4 a · 5 a · 6 a · 7 a · 8 a)
 
 - **F-XP-1 — Geração SPED sem perfil no ano.** (a) 400 `PERFIL_FISCAL_AUSENTE` desde o PR-2. (b) Segue como hoje,
   com `avisos: ['perfil fiscal ausente']`. (c) (b) até o PR-3 entrar e (a) depois. **Recomendação: (c).** O F-OBP-6

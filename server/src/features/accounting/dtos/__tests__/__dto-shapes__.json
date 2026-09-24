@@ -926,6 +926,640 @@
       "additionalProperties": false
     }
   },
+  "CompanyFiscalProfileDto.ts": {
+    "CompanyFiscalProfileAnoParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": 2014,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "ano"
+      ],
+      "additionalProperties": false
+    },
+    "CompanyFiscalProfileCopyParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ano": {
+          "type": "integer",
+          "minimum": 2014,
+          "maximum": 2100
+        },
+        "anoAnterior": {
+          "type": "integer",
+          "minimum": 2014,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "ano",
+        "anoAnterior"
+      ],
+      "additionalProperties": false
+    },
+    "CompanyFiscalProfileScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CompanyDeclaranteSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "cnpj": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+        },
+        "uf": {
+          "type": "string",
+          "enum": [
+            "AC",
+            "AL",
+            "AM",
+            "AP",
+            "BA",
+            "CE",
+            "DF",
+            "ES",
+            "GO",
+            "MA",
+            "MG",
+            "MS",
+            "MT",
+            "PA",
+            "PB",
+            "PE",
+            "PI",
+            "PR",
+            "RJ",
+            "RN",
+            "RO",
+            "RR",
+            "RS",
+            "SC",
+            "SE",
+            "SP",
+            "TO"
+          ]
+        },
+        "codMun": {
+          "type": "string",
+          "pattern": "^\\d{7}$"
+        },
+        "ie": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "im": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "codNat": {
+          "type": "string",
+          "pattern": "^\\d{3,4}$"
+        },
+        "cnaeFiscal": {
+          "type": "string",
+          "pattern": "^\\d{7}$"
+        },
+        "endereco": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "num": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 6
+        },
+        "compl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "bairro": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "cep": {
+          "type": "string",
+          "pattern": "^\\d{8}$"
+        },
+        "numTel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 15
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "UpsertCompanyFiscalProfileSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regime": {
+          "type": "string",
+          "enum": [
+            "MEI",
+            "SIMPLES",
+            "PRESUMIDO",
+            "REAL"
+          ]
+        },
+        "grandePorte": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inativa": {
+          "default": false,
+          "type": "boolean"
+        },
+        "condicoes": {
+          "default": {
+            "aporteInvestidorAnjo": null,
+            "livroCaixaSemEscrituracao": null,
+            "distribuicaoAcimaBase": null
+          },
+          "type": "object",
+          "properties": {
+            "aporteInvestidorAnjo": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "livroCaixaSemEscrituracao": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "distribuicaoAcimaBase": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "declarante": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "nome": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 150
+                },
+                "cnpj": {
+                  "type": "string",
+                  "pattern": "^[A-Z0-9]{12}[0-9]{2}$"
+                },
+                "uf": {
+                  "type": "string",
+                  "enum": [
+                    "AC",
+                    "AL",
+                    "AM",
+                    "AP",
+                    "BA",
+                    "CE",
+                    "DF",
+                    "ES",
+                    "GO",
+                    "MA",
+                    "MG",
+                    "MS",
+                    "MT",
+                    "PA",
+                    "PB",
+                    "PE",
+                    "PI",
+                    "PR",
+                    "RJ",
+                    "RN",
+                    "RO",
+                    "RR",
+                    "RS",
+                    "SC",
+                    "SE",
+                    "SP",
+                    "TO"
+                  ]
+                },
+                "codMun": {
+                  "type": "string",
+                  "pattern": "^\\d{7}$"
+                },
+                "ie": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 20
+                },
+                "im": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 20
+                },
+                "codNat": {
+                  "type": "string",
+                  "pattern": "^\\d{3,4}$"
+                },
+                "cnaeFiscal": {
+                  "type": "string",
+                  "pattern": "^\\d{7}$"
+                },
+                "endereco": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 150
+                },
+                "num": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 6
+                },
+                "compl": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                "bairro": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                "cep": {
+                  "type": "string",
+                  "pattern": "^\\d{8}$"
+                },
+                "numTel": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 15
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ecd": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "indNire": {
+                  "type": "string",
+                  "enum": [
+                    "0",
+                    "1"
+                  ]
+                },
+                "nire": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "numOrd": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "natLivr": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "indNire",
+                "numOrd",
+                "natLivr"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ecf": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "indAliqCsll": {
+                  "type": "string",
+                  "enum": [
+                    "1",
+                    "4"
+                  ]
+                },
+                "indRecReceita": {
+                  "type": "string",
+                  "enum": [
+                    "1",
+                    "2"
+                  ]
+                }
+              },
+              "required": [
+                "indAliqCsll",
+                "indRecReceita"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "contadorContactId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "representanteLegalSignerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "regime"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "CompanySignerDto.ts": {
+    "CompanySignerScopeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CompanySignerIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "CreateCompanySignerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "cpf": {
+          "type": "string"
+        },
+        "qualifEcd": {
+          "type": "string",
+          "enum": [
+            "203",
+            "204",
+            "205",
+            "206",
+            "207",
+            "220",
+            "222",
+            "223",
+            "226",
+            "309",
+            "312",
+            "313",
+            "315",
+            "401",
+            "801",
+            "900",
+            "940",
+            "999",
+            "001"
+          ]
+        },
+        "qualifEcf": {
+          "type": "string",
+          "enum": [
+            "203",
+            "204",
+            "205",
+            "206",
+            "207",
+            "220",
+            "222",
+            "223",
+            "226",
+            "309",
+            "312",
+            "313",
+            "315",
+            "401",
+            "801",
+            "900",
+            "999"
+          ]
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "fone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "cpf",
+        "qualifEcd",
+        "qualifEcf",
+        "email",
+        "fone"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateCompanySignerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "cpf": {
+          "type": "string"
+        },
+        "qualifEcd": {
+          "type": "string",
+          "enum": [
+            "203",
+            "204",
+            "205",
+            "206",
+            "207",
+            "220",
+            "222",
+            "223",
+            "226",
+            "309",
+            "312",
+            "313",
+            "315",
+            "401",
+            "801",
+            "900",
+            "940",
+            "999",
+            "001"
+          ]
+        },
+        "qualifEcf": {
+          "type": "string",
+          "enum": [
+            "203",
+            "204",
+            "205",
+            "206",
+            "207",
+            "220",
+            "222",
+            "223",
+            "226",
+            "309",
+            "312",
+            "313",
+            "315",
+            "401",
+            "801",
+            "900",
+            "999"
+          ]
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        },
+        "fone": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "cpf",
+        "qualifEcd",
+        "qualifEcf",
+        "email",
+        "fone"
+      ],
+      "additionalProperties": false
+    }
+  },
   "CounterpartyDto.ts": {
     "CreateCounterpartySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

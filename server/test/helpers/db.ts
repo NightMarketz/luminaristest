@@ -116,6 +116,10 @@ export async function resetDb(): Promise<void> {
   await prisma.bankStatement.deleteMany();
   await prisma.dimensionDefinition.deleteMany();
   await prisma.counterparty.deleteMany();
+  // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13): o perfil da empresa tem FK RESTRICT para o contador e para o
+  // signatário — cai ANTES dos dois; o signatário cai antes do User.
+  await prisma.companyFiscalProfile.deleteMany();
+  await prisma.companySigner.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 
   // BE-INCR-FIXED-ASSETS (nó C8): fixedAssetClass tem FK Restrict para account — cai antes dele;
