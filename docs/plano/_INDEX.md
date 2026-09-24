@@ -39,7 +39,7 @@
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
 | [[B-4]] | Ensaio de restauração de backup (pré-condição do H1 / SEED-MY) | human-open — Executado por referência SQL no #318; desfecho não marcado, não assinado (0 [x]) | — | — |
-| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open | — | — |
+| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open — Resposta recebida 23/09; triagem em docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md (3 críticas PIS/COFINS, requisitos novos). Faltam: códigos do referencial, cClassTrib, D8 | — | — |
 | [[D1f]] | Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib) | human-open — Pode virar campo obrigatório do FiscalProfile (técnica X6) — decisão do dono | [[D1]] ✗ | — |
 | [[D2]] | XML de NF-e real (compra da própria empresa, ago/set 2026) | human-open | — | — |
 | [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open | — | — |
@@ -47,7 +47,6 @@
 | [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão | [[X10i]] ✗ | — |
 | [[D8]] | Dados P6 do contador (declarante/signatários para o H1) | human-open | [[D1]] ✗ | — |
 | [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Autorização citável em main (G-6, 17/09); espera D2 | [[D2]] ✗ | — |
-| [[ENVIO-PEDIDO-CONTADOR]] | Envio do pedido ao contador (itens 6–13; o dono envia) | human-open — Pedido montado #331 3f61c4b0; envio não registrado | — | F-M5 (2026-09-03) |
 | [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Runbook em branco; alvo = SEED-MY (pontilhada) | [[P4]] ✗, [[D8]] ✗, [[SEED-MY]] ✗ | — |
 | [[H1b]] | H1 2ª passada em Lucro Real (2P-1..2P-4) | human-open — 2P-1..2P-4 preparados em branco | [[X4]], [[X4-14]], [[SEED-MY]] ✗, [[FE-INCR-LALUR-PR2]] ✗ | — |
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco | — | — |
@@ -109,7 +108,7 @@
 
 ## Fechados, decididos e referência
 
-- **dado-externo** (2): [[D-NFSE]] · [[D3b]]
+- **dado-externo** (3): [[D-NFSE]] · [[D3b]] · [[ENVIO-PEDIDO-CONTADOR]]
 - **decisao** (19): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **motor** (1): [[PASSO-11]]
