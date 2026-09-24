@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { getFactory } from '@/lib/factory';
@@ -7,19 +6,9 @@ import { getFactory } from '@/lib/factory';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
 
-const QuickCreationSchema = z.object({
-  mode: z.literal('quick').optional(),
-  suiteKey: z.string().min(1, 'suiteKey é obrigatório'),
-});
-
-const CustomCreationSchema = z.object({
-  mode: z.literal('custom'),
-  presetKey: z.string().min(1, 'presetKey é obrigatório'),
-  removedTables: z.array(z.string()).optional(),
-  addedFields: z.record(z.string(), z.array(z.unknown())).optional(),
-});
-
-const UnifiedCreationSchema = z.union([QuickCreationSchema, CustomCreationSchema]);
+import { UnifiedCreationSchema } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
+import type { UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
+import type { UserContext } from '@/lib/authUtils';
 
 import { UnauthorizedError, ValidationError } from '@/lib/errors';
 import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
@@ -43,7 +32,7 @@ export async function createDashboard(req: Request, res: Response) {
       });
     }
 
-    const payload = validationResult.data as z.infer<typeof UnifiedCreationSchema>;
+    const payload = validationResult.data;
 
     const dynamicTableService = getFactory().getDynamicTableService();
     const existingTables = await dynamicTableService.getTablesForUser(ctx.userId);
@@ -58,16 +47,18 @@ export async function createDashboard(req: Request, res: Response) {
 
     if (payload.mode === 'custom') {
       return await handleCustomCreation(
-        ctx.id,
+        ctx,
         payload.presetKey,
         payload.removedTables || [],
         payload.addedFields || {},
+        payload.unit,
         res
       );
     } else {
       return await handleQuickCreation(
-        ctx.id,
+        ctx,
         payload.suiteKey,
+        payload.unit,
         res
       );
     }
@@ -76,13 +67,68 @@ export async function createDashboard(req: Request, res: Response) {
   }
 }
 
+/**
+ * Limpa o sistema gerado do usuário: tabelas dinâmicas + KnowledgeGraph + ActionProposals (R27). Fonte única do
+ * reset (`deleteUserSystem`) e da compensação do onboarding (I1, F-I1-4 b) — "o mesmo que o reset faz".
+ */
+async function purgeUserSystem(userId: string): Promise<void> {
+  await getFactory().getDynamicTableService().deleteAllTablesForUser(userId);
+  await prisma.knowledgeGraph.deleteMany({ where: { userId } });
+  await prisma.actionProposal.deleteMany({ where: { userId } });
+}
+
+/**
+ * BE-INCR-ONBOARDING-FIRST-UNIT (nó I1, BRIEF itens 2–3; F-I1-1 → b, F-I1-4 → b).
+ *
+ * Passo 2 do create: a primeira linha de `units` nasce pelo caminho de escrita NORMAL (`createTableData`), para que os
+ * plugins de `units` rodem (pipeline de CRM, estoque por unidade). `units` é tabela do Core — sempre instalada.
+ * Falha aqui ⇒ COMPENSAÇÃO: apaga o sistema recém-instalado (mesma limpeza do reset) e responde 500
+ * `ONBOARDING_ROLLED_BACK`, de modo que um novo create não esbarre no 403 "setup já concluído". Janela residual
+ * declarada no BRIEF: entre a instalação e a compensação, um 2º request concorrente do mesmo usuário vê o 403.
+ * Devolve o id da unidade, ou `null` quando já respondeu (compensado).
+ */
+async function createFirstUnitOrRollback(ctx: UserContext, unit: UnitInput, res: Response): Promise<string | null> {
+  const service = getFactory().getDynamicTableService();
+  try {
+    const unitsTable = (await service.getTablesForUser(ctx.userId)).find((t) => t.internalName === 'units');
+    if (!unitsTable) throw new Error("Tabela 'units' ausente após a instalação do preset.");
+    const data: Record<string, unknown> = { name: unit.name };
+    if (unit.cnpj) data.cnpj = unit.cnpj;
+    if (unit.type) data.type = unit.type;
+    const row = await service.createTableData(ctx, unitsTable.id, { data });
+    return row.id;
+  } catch (error) {
+    logger.error(`Onboarding: falha ao criar a primeira unidade do usuário ${ctx.userId} — compensando.`, { error });
+    try {
+      await purgeUserSystem(ctx.userId);
+    } catch (purgeError) {
+      logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
+      res.status(500).json({
+        success: false,
+        errorCode: 'ONBOARDING_ROLLBACK_FAILED',
+        error: 'A unidade não foi criada e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.',
+      });
+      return null;
+    }
+    const detail = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      success: false,
+      errorCode: 'ONBOARDING_ROLLED_BACK',
+      error: `Não foi possível criar a unidade (${detail}). A instalação foi desfeita; tente novamente.`,
+    });
+    return null;
+  }
+}
+
 async function handleCustomCreation(
-  userId: string,
+  ctx: UserContext,
   presetKey: string,
   removedTables: string[],
   addedFields: Record<string, unknown[]>,
+  unit: UnitInput,
   res: Response
 ) {
+  const userId = ctx.id;
   try {
     const originalPreset = await getPresetByKey(presetKey);
 
@@ -171,11 +217,22 @@ async function handleCustomCreation(
     }
 
     const result = await service.installPresetAsSystem(userId, finalPayload);
+    const unitId = await createFirstUnitOrRollback(ctx, unit, res);
+    if (unitId === null) return;
 
+    const coreTableList = Object.keys(CoreSystemPreset.tables);
     return res.status(201).json({
       success: true,
       message: 'Dashboard criado com sucesso usando configurações customizadas!',
-      data: result,
+      data: {
+        ...result,
+        presetKey,
+        unitId,
+        tables: {
+          core: coreTableList,
+          business: Object.keys(finalPayload.tables).filter((k) => !coreTableList.includes(k)),
+        },
+      },
     });
   } catch (error) {
     return handleApiError(error, res);
@@ -183,10 +240,12 @@ async function handleCustomCreation(
 }
 
 async function handleQuickCreation(
-  userId: string,
+  ctx: UserContext,
   suiteKey: string,
+  unit: UnitInput,
   res: Response
 ) {
+  const userId = ctx.id;
   try {
     let selectedPreset: PresetSuite | undefined;
     for (const category in tablePresetSuites) {
@@ -233,6 +292,8 @@ async function handleQuickCreation(
     }
 
     await service.installPresetAsSystem(userId, mergedPreset);
+    const unitId = await createFirstUnitOrRollback(ctx, unit, res);
+    if (unitId === null) return;
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     const businessTableList = Object.keys(selectedPreset.tables || {});
@@ -242,6 +303,7 @@ async function handleQuickCreation(
       message: 'Dashboard e tabelas criados com sucesso!',
       data: {
         suiteKey,
+        unitId,
         tables: {
           core: coreTableList,
           business: businessTableList,
@@ -356,13 +418,8 @@ export async function deleteUserSystem(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    const service = getFactory().getDynamicTableService();
-    await service.deleteAllTablesForUser(ctx.id);
-
-    // Clean up stale KnowledgeGraph and orphaned ActionProposals so the agent
-    // does not inject references to now-deleted tables into prompts (R27).
-    await prisma.knowledgeGraph.deleteMany({ where: { userId: ctx.id } });
-    await prisma.actionProposal.deleteMany({ where: { userId: ctx.id } });
+    // Tabelas + KnowledgeGraph + ActionProposals órfãs — o agente não injeta referências a tabelas apagadas (R27).
+    await purgeUserSystem(ctx.id);
 
     logger.info(`User system reset: tables, KnowledgeGraph, and proposals cleaned for user ${ctx.id}`);
 

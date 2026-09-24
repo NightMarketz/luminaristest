@@ -660,7 +660,10 @@
  *       summary: Create a new dashboard (installs table preset suite for the user)
  *       description: >
  *         Accepts either a quick creation payload (suiteKey) or a custom preset
- *         payload (presetKey + optional removedTables / addedFields).
+ *         payload (presetKey + optional removedTables / addedFields). Both require `unit`
+ *         (BE-INCR-ONBOARDING-FIRST-UNIT, F-I1-2 b) - the first row of `units` is created through
+ *         the normal write path (plugins run) and its id is returned as `data.unitId`. If creating
+ *         the unit fails the install is undone and the answer is 500 ONBOARDING_ROLLED_BACK.
  *         Returns 403 if the user already has tables configured.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
@@ -671,15 +674,31 @@
  *             schema:
  *               oneOf:
  *                 - type: object
- *                   required: [suiteKey]
+ *                   required: [suiteKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [quick] }
  *                     suiteKey: { type: string, description: Preset suite key, e.g. "agronegocio" }
+ *                     unit:
+ *                       type: object
+ *                       required: [name]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         name: { type: string, maxLength: 120 }
+ *                         cnpj: { type: string, maxLength: 18 }
+ *                         type: { type: string, enum: [Own, Franchise, Department] }
  *                 - type: object
- *                   required: [mode, presetKey]
+ *                   required: [mode, presetKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [custom] }
  *                     presetKey: { type: string }
+ *                     unit:
+ *                       type: object
+ *                       required: [name]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         name: { type: string, maxLength: 120 }
+ *                         cnpj: { type: string, maxLength: 18 }
+ *                         type: { type: string, enum: [Own, Franchise, Department] }
  *                     removedTables:
  *                       type: array
  *                       items: { type: string }

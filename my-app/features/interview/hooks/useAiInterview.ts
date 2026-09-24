@@ -4,6 +4,23 @@ import { getCookie } from 'cookies-next';
 import { IMessage, ICustomizationState } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
 
+/**
+ * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
+ * escreve ao fechar a descoberta (o texto depois do marcador, até 120 caracteres — limite do DTO); sem ele, a chave do
+ * preset. O nome é editável depois, na tabela `units`.
+ */
+export function nomeDaUnidadeDaEntrevista(conversa: IMessage[], presetKey: string): string {
+  for (let i = conversa.length - 1; i >= 0; i -= 1) {
+    const m = conversa[i];
+    const idx = m.sender === 'ai' ? m.text.indexOf('SUMMARY:') : -1;
+    if (idx >= 0) {
+      const resumo = m.text.slice(idx + 'SUMMARY:'.length).trim().slice(0, 120).trim();
+      if (resumo) return resumo;
+    }
+  }
+  return presetKey;
+}
+
 export function useAiInterview() {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
@@ -70,7 +87,7 @@ export function useAiInterview() {
     });
   };
 
-  async function handleCreateSystem(key: string) {
+  async function handleCreateSystem(key: string, conversa: IMessage[]) {
     setIsCreating(true);
     setCreationError(null);
     try {
@@ -81,7 +98,7 @@ export function useAiInterview() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ suiteKey: key }),
+        body: JSON.stringify({ suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) } }),
       });
 
       if (!response.ok) {
@@ -142,7 +159,7 @@ export function useAiInterview() {
 
       if (nextStage === 'COMPLETED' && (newPresetKey || presetKey)) {
         if (!startCustomization) {
-          handleCreateSystem(newPresetKey || presetKey!);
+          handleCreateSystem(newPresetKey || presetKey!, [...newMessages, { sender: 'ai', text: aiResponse }]);
         }
       }
 
