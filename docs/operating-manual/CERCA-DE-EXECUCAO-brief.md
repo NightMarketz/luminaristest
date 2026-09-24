@@ -77,7 +77,7 @@ Ordem = ordem de execução. 1–4 são um script e um caso; 5–6 são dois arq
    (d) proibido ler `.claude/retornos/` do executor e transcript. Isolamento: despachado com
    `isolation: worktree`. Não substitui `luminaris-reviewer` (que é doutrina); é o mecanismo.
 6. **Modelo por papel commitado (item 6).** Três agentes em `.claude/agents/`: `classificador.md`
-   (`model: haiku` — triagem/rotulagem), `executor.md` (`model: sonnet` — implementa spec),
+   (`model: haiku` — triagem/rotulagem), `executor.md` (`model: opus` + `effort: low` — implementa spec; era `sonnet` até 23/09, decisão do dono),
    `revisor-independente.md` (`model: opus`, item 5). `.gitignore` não os cobre (verificado: nada em
    `.claude/agents`). Item 6 ✔ = `git ls-files .claude/agents` lista os 3.
 7. **Ordem do pipeline (item 7).** No runner e no hook, a ordem é fixa e nomeada no código:
