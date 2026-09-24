@@ -119,5 +119,11 @@ Pré-condições (verificar antes de começar):
      entrou como `2026` (201, 1.123 contas) e ficou no banco; não há rota de exclusão. Refeito como `2025`.
      Armadilha de UI: candidato a ajuste (default = ano do exercício a escriturar, ou campo vazio).
   2. Mesmo default `2026` no campo "Versão" do painel de mapeamento.
+  3. **Reimport após recuperação do `dev.db` (24/09):** outra sessão rodou o ensaio B-4 (#371) no MESMO
+     `dev.db` em paralelo e o banco voltou ao estado pré-seed, levando o seed junto (o catálogo importado
+     acima sobreviveu). O dono restaurou o backup pós-seed `dev-20260924144512.db` (sem catálogo) e
+     reimportou pela mesma UI: *"Catálogo importado: 1123 conta(s) (975 analítica(s), 148 sintética(s))."*
+     — banco: versão `2025` = 1.123 / 975 analíticas. Os passos 3–4 acima valem para o mesmo arquivo e o
+     mesmo código; a versão `2026` acidental não existe mais neste banco (o backup é anterior a ela).
 - Atualização do artefato de rastreio: `docs/plano/gates/X2.md` (frontmatter `estado`) — 2026-09-24, no fold pós-assinatura
 - Assinatura do executor: ____________
