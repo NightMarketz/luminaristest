@@ -55,7 +55,7 @@ passo 4 roda sobre o restaurado; a comparação só vale se o texto for idêntic
 cat > "$TEMP/db-fingerprint.py" <<'EOF'
 import sqlite3, hashlib, sys
 c = sqlite3.connect(f"file:{sys.argv[1]}?mode=ro", uri=True)
-tabs = [r[0] for r in c.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%' and name<>'_prisma_migrations' order by name")]
+tabs = [r[0] for r in c.execute("select name from sqlite_master where type='table' and name not like 'sqlite_%' and name not in ('_prisma_migrations','job_watermarks') order by name")]
 print("integrity_check:", c.execute("pragma integrity_check").fetchone()[0])
 print("migracoes:", c.execute("select count(*) from _prisma_migrations").fetchone()[0])
 print("journal_entries/postings/accounts/accounting_bindings:", [c.execute(f"select count(*) from {t}").fetchone()[0] for t in ("journal_entries","postings","accounts","accounting_bindings")])
@@ -69,8 +69,19 @@ EOF
 ```
 
 Abre em `mode=ro` (nunca escreve no arquivo lido) e cobre **todas** as tabelas, exceto
-`_prisma_migrations` (só a contagem — o conteúdo tem timestamps de aplicação). O `sha256(linhas)`
-é sobre todas as linhas de todas as tabelas, ordenadas pela 1ª coluna (o `id`).
+`_prisma_migrations` (só a contagem — o conteúdo tem timestamps de aplicação) e `job_watermarks`
+(ver ERRATA abaixo). O `sha256(linhas)` é sobre todas as linhas das demais tabelas, ordenadas pela
+1ª coluna (o `id`).
+
+> **[ERRATA 2026-09-24 — `job_watermarks` fora do hash]** No ensaio de 24/09 o passo 4 (server de
+> pé, como pede o passo) divergiu do P5 (`25c787d2…` × `c0da602d…`) por **1 linha** em
+> `job_watermarks` — `('accounting_sync_reconcile', …)`, gravada pelo próprio job do boot do passo 3
+> no restaurado; as outras 67 tabelas eram idênticas, e o backup (nunca aberto pelo server) bateu
+> com o P5. A emenda de 14/09 previa a escrita do job no P5, não no passo 4. `job_watermarks` é
+> estado operacional do agendador, não dado contábil — excluída do hash. Consequência: `tabelas:`
+> cai de 68 para 67; o `sha256` de um banco com `job_watermarks` vazia **não muda** (conferido nos
+> 3 arquivos do ensaio de 24/09: os três dão `c0da602d…` com o filtro novo). P5 e passo 4 precisam
+> rodar a MESMA versão do script — não compare hash do script antigo com o novo.
 
 ```bash
 python "$TEMP/db-fingerprint.py" server/prisma/prisma/dev.db
@@ -185,7 +196,10 @@ python "$TEMP/db-fingerprint.py" "<path absoluto do passo 2>/restored-<data>.db"
 Resultado esperado: as 5 linhas **idênticas** às de P5 — em especial `sha256(linhas)` igual e
 `integrity_check: ok`. `migracoes` diferente = o backup NÃO é do schema atual (achado, ver nota do
 passo 3); `sha256` diferente com contagens iguais = alguma linha mudou entre P5 e o passo 1 (o
-server estava de pé durante P5? — refaça P5 com o server parado antes de concluir FALHOU).
+server estava de pé durante P5? — refaça P5 com o server parado antes de concluir FALHOU) **ou o
+server do passo 3 gravou no restaurado** — desempate rodando o mesmo script sobre o **backup** do
+passo 1 (o server nunca o abre): backup = P5 ⇒ a cópia é fiel e a diferença é escrita do próprio
+ensaio; localize a tabela comparando hash por tabela antes de concluir (ERRATA 2026-09-24).
 
 EVIDÊNCIA: [colar a saída do restaurado + a linha `sha256(linhas)` de P5 lado a lado — iguais ou
 diferença exata]
