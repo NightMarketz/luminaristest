@@ -101,6 +101,7 @@ migração.
 | L2 | O que torna o tenant "Real" no dado (regime só existe como parâmetro da ECF) | `FiscalProfile` por unidade: PRESUMIDO/CUMULATIVO · REAL/NAO_CUMULATIVO; sem ajustes de LALUR |
 | L3 | Encerramento do resultado de 2025 antes do hard close | **Sim**, pelo `ExerciseClosingService.closeExercise` canônico (BE-INCR-SPED-APURACAO: I355, IND_LCTO='E') |
 | L4 | Pacote pré-pago sem contrapartida nem reconhecimento; faixa de valores | Venda D 1.1.1 / C 2.1.1; consumo no mês seguinte D 2.1.1 / C 3.1; R$ 100–5.000 por lançamento, determinístico por `--seed` |
+| L5 | Banco `1.1.1` ficou com saldo credor (R$ −71 mil no `seed-real`) no 1º run no `dev.db` | Banco **nunca negativo em nenhum dia**: depósito do caixa e liquidação do cartão no banco no mesmo mês; compra ≤ revenda, despesa ≤ serviços, fornecedores ≤ pacote + sobras (teste varre dia a dia, 20 seeds) |
 
 Derivados sem decisão nova: compra de mercadoria D 1.1.6 / C 1.1.1 ≥ CMV no mês (estoque nunca negativo,
 exigência do item 5 "CMV × 1.1.6"); senha dos tenants via `SEED_ACCOUNTING_PASSWORD` (mesma convenção do

@@ -166,20 +166,33 @@ export function buildMonthPlan(
   const src = (k: string): string => `${year}-${mm}-${k}`;
   const leg = (accountCode: string, debitCents: number, creditCents: number) => ({ accountCode, debitCents, creditCents });
 
+  // Banco (1.1.1) nunca negativo em NENHUM dia (decisão do dono 24/09): toda saída do banco é limitada ao
+  // que já entrou nele antes, no mesmo mês — vale até no 1º mês do 1º ano, com o banco partindo de zero.
+  // Ordem no mês: caixa depositado (5) → serviço no banco (8) → revenda liquidada (12) → compra (13) →
+  // pacote (15) → despesa (20) → cliente recebe (24) → fornecedores (25/26).
   const cmv = amount();
-  const purchase = cmv + amount(); // estoque nunca fica negativo: compra ≥ CMV no mesmo mês
-  const resale = cmv + amount(); // revenda com margem
+  const margin = amount();
+  const resale = cmv + margin; // revenda com margem
+  const purchase = cmv + Math.floor(margin / 2); // CMV ≤ compra ≤ revenda: estoque e banco nunca negativos
   const service1 = amount();
   const service2 = amount();
-  const expense = amount();
+  const expense = Math.min(amount(), service1 + service2); // coberta pelos serviços do mês
   const packageSold = amount();
+  const ap1 = Math.min(amount(), Math.floor(packageSold / 2)); // coberto pelo pacote
+  // sobra garantida antes do fornecedor parcial: (revenda − compra) + (serviços − despesa) + (pacote − ap1) ≥ pacote/2
+  const headroom = resale - purchase + (service1 + service2 - expense) + (packageSold - ap1);
+  const ap2 = Math.min(amount(), 2 * headroom); // pago pela metade: ≤ headroom
+  const ar1 = amount();
+  const ar2 = amount();
 
   const entries: MonthPlan['entries'] = [
-    { date: day(2), description: `Seed: compra de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('estoque'), lines: [leg('1.1.6', purchase, 0), leg('1.1.1', 0, purchase)] },
     { date: day(5), description: `Seed: receita de serviços (caixa) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-caixa'), lines: [leg('1.1.3', service1, 0), leg('3.1', 0, service1)] },
+    { date: day(5), description: `Seed: depósito do caixa no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('deposito-caixa'), lines: [leg('1.1.1', service1, 0), leg('1.1.3', 0, service1)] },
     { date: day(8), description: `Seed: receita de serviços (banco) ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('servico-banco'), lines: [leg('1.1.1', service2, 0), leg('3.1', 0, service2)] },
     { date: day(12), description: `Seed: revenda de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('revenda'), lines: [leg('1.1.4', resale, 0), leg('3.3', 0, resale)] },
-    { date: day(12), description: `Seed: CMV ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('cmv'), lines: [leg('4.2', cmv, 0), leg('1.1.6', 0, cmv)] },
+    { date: day(12), description: `Seed: liquidação do cartão no banco ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('liquidacao-cartao'), lines: [leg('1.1.1', resale, 0), leg('1.1.4', 0, resale)] },
+    { date: day(13), description: `Seed: compra de mercadorias ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('estoque'), lines: [leg('1.1.6', purchase, 0), leg('1.1.1', 0, purchase)] },
+    { date: day(13), description: `Seed: CMV ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('cmv'), lines: [leg('4.2', cmv, 0), leg('1.1.6', 0, cmv)] },
     { date: day(15), description: `Seed: venda de pacote pré-pago ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-venda'), lines: [leg('1.1.1', packageSold, 0), leg('2.1.1', 0, packageSold)] },
     { date: day(20), description: `Seed: despesas operacionais ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('despesa'), lines: [leg('4.1', expense, 0), leg('1.1.1', 0, expense)] },
   ];
@@ -187,10 +200,6 @@ export function buildMonthPlan(
     entries.push({ date: day(3), description: `Seed: consumo do pacote do mês anterior ${mm}/${year}`, sourceType: SEED_SOURCE_TYPE, sourceId: src('pacote-consumo'), lines: [leg('2.1.1', consumePriorPackageCents, 0), leg('3.1', 0, consumePriorPackageCents)] });
   }
 
-  const ap1 = amount();
-  const ap2 = amount();
-  const ar1 = amount();
-  const ar2 = amount();
   return {
     entries,
     // item 6: 2 payables (1 liquidado, 1 parcial) e 2 receivables (1 recebido, 1 aberto)

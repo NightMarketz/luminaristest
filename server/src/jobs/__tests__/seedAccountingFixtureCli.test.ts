@@ -105,6 +105,40 @@ describe('seedAccountingFixtureCli', () => {
       expect(buildMonthPlan(7, 0, 2025, 1, 31, 0).entries.some((e) => e.sourceId?.endsWith('pacote-consumo'))).toBe(false);
     });
 
+    it('banco (1.1.1) e estoque (1.1.6) nunca negativos em NENHUM dia — 20 seeds × 2 tenants × 2025..set/2026, partindo de zero', () => {
+      for (let seed = 0; seed < 20; seed++) {
+        for (const tenant of [0, 1]) {
+          const bal: Record<string, number> = { '1.1.1': 0, '1.1.6': 0 };
+          let prior = 0;
+          for (const [year, lastMonth] of [[2025, 12], [2026, 9]] as const) {
+            for (let month = 1; month <= lastMonth; month++) {
+              const lastDay = year === 2026 && month === 9 ? 4 : 28;
+              const p = buildMonthPlan(seed, tenant, year, month, lastDay, prior);
+              prior = p.packageSoldCents;
+              // movimentos datados: lançamentos + pagamentos/recebimentos (Pix → 1.1.1)
+              const moves: { date: string; code: string; delta: number }[] = [];
+              for (const e of p.entries) for (const l of e.lines) moves.push({ date: e.date, code: l.accountCode, delta: l.debitCents - l.creditCents });
+              for (const ap of p.payables) moves.push({ date: ap.paidAt, code: '1.1.1', delta: -ap.paidCents });
+              for (const ar of p.receivables) if (ar.receivedCents > 0) moves.push({ date: ar.receivedAt, code: '1.1.1', delta: ar.receivedCents });
+              const days = [...new Set(moves.map((m) => m.date))].sort();
+              for (const d of days) {
+                for (const m of moves) if (m.date === d && m.code in bal) bal[m.code] += m.delta;
+                expect({ seed, tenant, d, bank: bal['1.1.1'] >= 0, stock: bal['1.1.6'] >= 0 }).toEqual({ seed, tenant, d, bank: true, stock: true });
+              }
+            }
+          }
+        }
+      }
+    });
+
+    it('fornecedor parcial continua parcial mesmo com o teto de caixa (0 < pago < valor)', () => {
+      for (let seed = 0; seed < 20; seed++) {
+        const ap2 = buildMonthPlan(seed, 0, 2025, 1, 31, 0).payables[1];
+        expect(ap2.paidCents).toBeGreaterThan(0);
+        expect(ap2.paidCents).toBeLessThan(ap2.amountCents);
+      }
+    });
+
     it('AP: 1 liquidado + 1 parcial; AR: 1 recebido + 1 aberto', () => {
       expect(plan.payables[0].paidCents).toBe(plan.payables[0].amountCents);
       expect(plan.payables[1].paidCents).toBeGreaterThan(0);
