@@ -16,9 +16,11 @@
   - C-1: CST de sem-crédito decide antes do NCM.
   - C-2: faltam na lista de monofásicos as bebidas frias (Lei 13.097) e os combustíveis.
   - C-3: CST 02 com NCM comum fica sem crédito, e o contador toma o crédito pela alíquota básica.
-- **1 correção contra o nosso próprio pedido:** 1071/2210/3130 são **códigos de linha do M300/M350**, não contas
-  da Parte B. Conferido: `ecf-l12-linhas.json:6765` descreve o 1071 como "Depreciação - diferença entre as
-  depreciações contábil e fiscal". A pergunta 13(c) estava mal formulada.
+- **13(c) — o contador está incompleto, o pedido estava certo** (verificado): 1071/2210/3130 ficam na aba
+  **`PARTEB_PADRAO`** de `ecf-l12-linhas.json` (a aba começa na linha 6609; o 1071 está na 6765). É o universo do campo
+  `M010.COD_PB_RFB`, já validado em `LalurDto.ts:239`. A conta da Parte B é aberta pela empresa, como ele diz, mas
+  aponta para um código da tabela da RFB. A pergunta segue de pé: qual dos três ele usa. *(Correção de 23/09: a
+  1ª versão desta triagem chamou isto de "crítica contra o nosso pedido"; foi erro de leitura do agente.)*
 - **Requisitos novos, fora do que a fila prevê:**
   - destinação por item na entrada (revenda × insumo do serviço);
   - amortização de benfeitoria em imóvel alugado;
@@ -71,7 +73,7 @@
 | 12 | Acrescentar ao pacote: memória de cálculo IRPJ/CSLL/PIS/COFINS; créditos por nota e item com a regra; aging conciliado; ficha individual do imobilizado; inventário; conciliação apurado × contabilizado × pago; XLSX para ele, CSV para importação | **dado** → C6b / FE-INCR-DELIVERY | — | Emenda do C6b (hoje só CSV). Dono decide o escopo; parte depende de X7 |
 | 13a | Anexo III: 10% / 20% / 4% / terreno 0; até R$1.200 direto na despesa; contábil = fiscal por padrão | **confirma** (C8) + 1 dado | lembrado | Conferir se o C8 tem o limite de R$1.200 para despesa direta. Se não tiver → requisito |
 | 13b | Códigos do referencial: "mapeio no seu plano" | **não respondido** | — | Segue aberto em D1 |
-| 13c | 1071/2210/3130 não são contas da Parte B; M010 é aberto pela empresa | **crítica contra o NOSSO pedido** | lembrado; conferido por nós | Confere com `ecf-l12-linhas.json` (linhas do M300/M350). Revisar onde o C8/X4 chama esses códigos de "conta Parte B" |
+| 13c | 1071/2210/3130 não são contas da Parte B; M010 é aberto pela empresa | **dado incompleto do contador** | lembrado | O M010 é aberto pela empresa **e** leva `COD_PB_RFB` da aba `PARTEB_PADRAO`, onde estão 1071/2210/3130 (verificado). Devolver a pergunta com essa explicação |
 | 13d | CIAP fora; ICMS no custo do bem | **confirma** (C8) | lembrado | — |
 | 13e | Depreciação acelerada por turnos fora | **confirma** | — | — |
 
@@ -88,8 +90,7 @@
    - art. 10 da LC 214;
    - ST no custo do X6;
    - assinatura XML no parser;
-   - limite de R$1.200 no C8;
-   - uso de 1071/2210/3130 como "conta".
+   - limite de R$1.200 no C8.
 6. **Ainda pedir ao contador:**
    - códigos do referencial (itens 6/13b);
    - declarante/signatários (D8);
