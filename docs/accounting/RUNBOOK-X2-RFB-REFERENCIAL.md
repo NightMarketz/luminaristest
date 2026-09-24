@@ -108,7 +108,7 @@ Pré-condições (verificar antes de começar):
    Analíticas: 14 · Mapeadas: 0 · Pendentes: 14"* — cobertura calculada sobre o catálogo oficial.
 
 ## Desfecho (marcar UM)
-[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
     NENHUM passo seguinte foi executado após a falha
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
@@ -126,4 +126,5 @@ Pré-condições (verificar antes de começar):
      — banco: versão `2025` = 1.123 / 975 analíticas. Os passos 3–4 acima valem para o mesmo arquivo e o
      mesmo código; a versão `2026` acidental não existe mais neste banco (o backup é anterior a ela).
 - Atualização do artefato de rastreio: `docs/plano/gates/X2.md` (frontmatter `estado`) — 2026-09-24, no fold pós-assinatura
-- Assinatura do executor: ____________
+- Assinatura do executor: Raphael
+
