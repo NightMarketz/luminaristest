@@ -29,14 +29,14 @@ Rastreio a atualizar no fim: `docs/plano/gates/B-4.md` (frontmatter `estado`)
 
 | # | Pré-condição | Como verificar | OK? |
 |---|---|---|---|
-| P1 | Código = `main` `41884c8a` ou posterior, com `server/scripts/db-backup.mjs` e `npm run db:backup` presentes | `git log origin/main --oneline -1`; `cat server/package.json \| grep db:backup` | [ x ] |
-| P2 | `dev.db` real existe e está populado (o passo 1 só LÊ, mas confirme antes de mexer) | `ls -la server/prisma/prisma/dev.db` (o populado; `server/prisma/dev.db` é isca de 0 byte) | [ x ] |
-| P3 | `cd server && npm ci && npx prisma generate` rodado (client do Prisma presente) | `ls server/generated/prisma` | [ x ] |
-| P4 | Porta 3001 (server) e 3000 (app) livres para o boot do passo 3 | `netstat -ano \| grep ":3001\|:3000"` sem processo Luminaris já ativo | [ x ] |
-| P5 | Impressão digital SQL do banco ORIGINAL anotada ANTES do passo 1, **com o server parado** (P4) — comparar depois contra o restaurado | ver "Leitura de referência por SQL" abaixo | [ x ] |
-| P5b | `python --version` responde (3.x) — o script de referência usa o `sqlite3` embutido do Python | `python --version` | [ x ] |
-| P6 | `OPENAI_API_KEY` presente em `server/.env`, qualquer valor não vazio — sem ela `new OpenAIService()` lança na construção do factory e o boot aborta ANTES de tocar no banco (verificado); nenhum passo deste runbook exercita IA, então um valor dummy serve só para este ensaio | `grep OPENAI_API_KEY server/.env` — se vazio/ausente, acrescente uma linha como `OPENAI_API_KEY=sk-rehearsal-dummy-nao-real` | [ x ] |
-| P7 | *(opcional — só se for rodar os curls opcionais do passo 4)* `unitId` da unidade a testar | ver "Como descobrir o unitId" abaixo | [ x ] |
+| P1 | Código = `main` `41884c8a` ou posterior, com `server/scripts/db-backup.mjs` e `npm run db:backup` presentes | `git log origin/main --oneline -1`; `cat server/package.json \| grep db:backup` | [x] |
+| P2 | `dev.db` real existe e está populado (o passo 1 só LÊ, mas confirme antes de mexer) | `ls -la server/prisma/prisma/dev.db` (o populado; `server/prisma/dev.db` é isca de 0 byte) | [x] |
+| P3 | `cd server && npm ci && npx prisma generate` rodado (client do Prisma presente) | `ls server/generated/prisma` | [x] |
+| P4 | Porta 3001 (server) e 3000 (app) livres para o boot do passo 3 | `netstat -ano \| grep ":3001\|:3000"` sem processo Luminaris já ativo | [x] |
+| P5 | Impressão digital SQL do banco ORIGINAL anotada ANTES do passo 1, **com o server parado** (P4) — comparar depois contra o restaurado | ver "Leitura de referência por SQL" abaixo | [x] |
+| P5b | `python --version` responde (3.x) — o script de referência usa o `sqlite3` embutido do Python | `python --version` | [x] |
+| P6 | `OPENAI_API_KEY` presente em `server/.env`, qualquer valor não vazio — sem ela `new OpenAIService()` lança na construção do factory e o boot aborta ANTES de tocar no banco (verificado); nenhum passo deste runbook exercita IA, então um valor dummy serve só para este ensaio | `grep OPENAI_API_KEY server/.env` — se vazio/ausente, acrescente uma linha como `OPENAI_API_KEY=sk-rehearsal-dummy-nao-real` | [x] |
+| P7 | *(opcional — só se for rodar os curls opcionais do passo 4)* `unitId` da unidade a testar | ver "Como descobrir o unitId" abaixo | [ n/a ] |
 
 EVIDÊNCIA pré-condições:
 > _Transcrito pelo agente, sem edição, das saídas do terminal do executor nesta sessão (24/09). O executor confere antes de assinar._
@@ -362,7 +362,7 @@ Esperado: balancete cujos Σdébito/Σcrédito batem com `select sum(debitCents)
 
 ## Desfecho (marcar UM)
 
-- [ x ] **PASSOU** — todos os passos com evidência conferindo com o esperado (restauração sobe e as
+- [x] **PASSOU** — todos os passos com evidência conferindo com o esperado (restauração sobe e as
       leituras batem com o original)
 - [ ] **FALHOU** — passo __ divergiu; evidência da divergência colada acima; NENHUM passo seguinte
       foi executado após a falha
