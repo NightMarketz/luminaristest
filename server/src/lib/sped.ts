@@ -571,15 +571,34 @@ export interface RegJ801Input {
  */
 const FORBIDDEN_RTF_TAGS = ['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'] as const;
 
-/** Palavra de controle RTF: `\` + letras + contador numérico opcional (ex.: `\par`, `\fs24`,
+/**
+ * Palavra de controle RTF: `\` + letras + contador numérico opcional (ex.: `\par`, `\fs24`,
  * `\up-6`). Usada para (a) achar o delimitador de quebra-de-linha que o leitor CONSOME como
- * espaço e (b) reconhecer `\bin` como PALAVRA DE CONTROLE de verdade, não substring. */
-const CONTROL_WORD_RE = /\\[a-zA-Z]+(-?\d+)?/g;
+ * espaço e (b) reconhecer `\bin` como PALAVRA DE CONTROLE de verdade, não substring.
+ *
+ * Review PR #368 (3ª rodada): `\` só INICIA palavra de controle quando é a barra "sobrando" de
+ * um número ÍMPAR de barras consecutivas — `\\` é o ESCAPE de UMA barra literal (RTF spec), e
+ * um run de barras se consome em PARES da esquerda pra direita: `\\par` (2 barras) = 1 barra
+ * literal + "par" como TEXTO PURO (nenhuma palavra de controle); `\\\bin4` (3 barras) = 1 par
+ * (1 barra literal) + 1 barra ÍMPAR sobrando que INICIA a palavra de controle real `\bin4`. A
+ * 1ª versão desta guarda usava `(?<!\\)` (nega só UMA barra anterior) — falha em runs de 2+
+ * barras: `\\par` era lido como controle (barra 2 "vendo" a barra 1 no lookbehind de 1
+ * caractere só bloqueia o CASAMENTO NAQUELA posição, mas o regex tenta a posição seguinte
+ * mesmo assim quando não há guarda de veredito global) e `\\\bin4` era lido como NÃO-controle
+ * (a barra 3, vendo a barra 2 no lookbehind, era descartada por engano). Correção: a barra que
+ * inicia o casamento só é aceita se (i) a posição anterior a ELA não é uma barra (mesma ideia
+ * de antes) E (ii) entre essa posição e o início do run não sobra nenhuma barra ímpar — expresso
+ * como "zero-ou-mais PARES de barras, então UMA barra" a partir de um ponto não-precedido por
+ * barra: `(?<!\\)(?:\\\\)*\\`. O backtracking do regex garante que só a barra IMPAR de cada run
+ * complete o casamento (ver testes em `sped.test.ts`).
+ */
+const CONTROL_WORD_RE = /(?<!\\)(?:\\\\)*\\[a-zA-Z]+(-?\d+)?/g;
 
-/** `\bin` como palavra de controle REAL — `\` único (não `\\`, que é o ESCAPE do caractere `\`
- * literal: um autor cujo texto contém a sequência visível "\bin" grava `\\bin` no .rtf, e essa
- * sequência NÃO pode disparar a rejeição — review PR #368, "menores"). */
-const REAL_BIN_CONTROL_WORD_RE = /(?<!\\)\\bin(-?\d+)?/;
+/** `\bin` como palavra de controle REAL — mesma guarda de paridade de barras do
+ * `CONTROL_WORD_RE` acima (review PR #368, 3ª rodada): um texto literal "\bin" grava `\\bin`
+ * (barra dupla = escape) e NÃO pode disparar a rejeição; um run ÍMPAR de barras antes de "bin"
+ * (ex.: `\\\bin4`, 3 barras) é `\bin4` de verdade e DEVE disparar. */
+const REAL_BIN_CONTROL_WORD_RE = /(?<!\\)(?:\\\\)*\\bin(-?\d+)?/;
 
 /**
  * Sanitiza o conteúdo de um .rtf para caber em J801.ARQ_RTF (review PR #368 — o .rtf chegava

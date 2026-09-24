@@ -138,6 +138,52 @@ VEREDITO: PASS — bug de corrupção silenciosa do CR/LF corrigido; tsc limpo; 
 
 ---
 
+## Atualização — 3ª rodada do review (2 defeitos baixos + 1 comentário errado)
+
+Review: PASS com 2 defeitos baixos + 1 comentário errado. Corrigidos:
+
+1. **Paridade de barras não contada.** `(?<!\\)` (lookbehind de 1 caractere) não distingue um
+   run de barras PAR (`\\par` = 1 barra literal ESCAPADA + "par" como texto puro — NENHUMA
+   palavra de controle) de um run ÍMPAR (`\\\bin4` = 1 par escapado + 1 barra sobrando que É
+   `\bin4` de verdade). A 1ª correção deixava `\\par⏎X` ganhar espaço indevido (era lido como
+   controle) e `\\\bin4` passar sem 400 (era lido como NÃO-controle). Trocado por
+   `(?<!\\)(?:\\\\)*\\` — "zero-ou-mais pares de barra, então UMA barra, a partir de uma posição
+   não precedida por barra": o backtracking do regex garante que só a barra ÍMPAR de cada run
+   completa o casamento. Aplica-se a `CONTROL_WORD_RE` (delimitador → espaço) e
+   `REAL_BIN_CONTROL_WORD_RE` (`\bin`). Testes novos com `.repeat()` (para o número de barras
+   não se perder em escaping de string JS): `\\par⏎X` → `\\parX` (sem espaço); `\\\bin4 abcd` →
+   400.
+2. **Comentário da migração alegava recuperação inexistente.** A redação anterior dizia que um
+   abort entre o `DROP` do original e o `RENAME` "recuperaria a partir de `new_...`" num retry —
+   falso: nesse instante `new_accounting_data_exchange_jobs` é a ÚNICA cópia das linhas, e o
+   PRÓPRIO prólogo `DROP TABLE IF EXISTS "new_..."` do retry a apaga antes de recriá-la vazia
+   (a partir de um `SELECT` sobre a tabela original, que não existe mais). Reescrito para
+   declarar a janela como PERDA DE DADO, sem promessa de recuperação — mesmo padrão do
+   precedente `20260918100000_add_fixed_assets`, que também não promete diferente.
+
+### PROVA — 3ª rodada
+
+```yaml
+PROVA:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review3-tsc.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd server && npm run smoke:migration"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review3-smoke.log
+    sha256: 6f9eff438b64aeb7cc4a7da95354534f719447fc8b4bf2739387a82cbc9a4dc2
+  - command: "cd server && npx jest src/lib/__tests__/sped.test.ts src/features/accounting/services/__tests__/SpedGenerationService.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/c8-pr4-review3-touched.log
+    sha256: c35d7a3270c5bb0e1779c03eaf22c9882b81b38e9b0248114a3c8fff14de1609
+VEREDITO: PASS — paridade de barras corrigida (2 testes novos provando os 2 casos citados pelo
+  review); comentário da migração não promete mais recuperação inexistente. tsc limpo; smoke
+  sem perda; 91/91 testes das suítes tocadas.
+```
+
+---
+
 **Autorização:** "Executa C8" (dono, 18/09, corpo do PR #354) + decisões do dono de 23/09
 registradas na transcrição (`docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md
 §5`).

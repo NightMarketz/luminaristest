@@ -20,11 +20,15 @@
 --     limpa a `new_` órfã da tentativa anterior antes de recriá-la; a tabela original,
 --     intocada até aqui, ainda tem todas as linhas.
 --   * abort ENTRE o `DROP TABLE "accounting_data_exchange_jobs"` (linha com o nome original) e
---     o `ALTER TABLE ... RENAME TO` que devolve o nome: esta é a ÚNICA janela NÃO segura —
---     nem a tabela original (já dropada) nem o nome final existem; um retry recriaria do zero a
---     partir de `new_...` (que sobreviveu ao DROP anterior por ainda estar com outro nome) via
---     o mesmo prólogo, mas só se o operador rodar a migração de novo manualmente entendendo o
---     estado. É a mesma janela, com o mesmo limite, do precedente — não fechada por completo.
+--     o `ALTER TABLE ... RENAME TO` que devolve o nome: esta é a ÚNICA janela NÃO segura, e é
+--     PERDA DE DADO, não recuperável por retry — review PR #368 (3ª rodada) corrigiu a redação
+--     anterior, que alegava (ERRADO) que um retry "recriaria a partir de new_...". Não recria:
+--     nesse instante `new_accounting_data_exchange_jobs` (RENOMEADA ainda) é a ÚNICA cópia das
+--     linhas — a tabela original já foi dropada. Um retry roda o script DO INÍCIO, e o próprio
+--     prólogo `DROP TABLE IF EXISTS "new_accounting_data_exchange_jobs"` APAGA essa única cópia
+--     antes de recriá-la vazia a partir de um `SELECT` sobre a tabela original, que NÃO EXISTE
+--     MAIS. Mesma janela e mesmo limite do precedente (`20260918100000_add_fixed_assets` não
+--     promete diferente) — não fechada por completo no SQLite sem uma transação real.
 -- Tabela SEM FK própria (só um índice) — não precisa de `PRAGMA foreign_keys=OFF` para si mesma,
 -- mas mantém-se por disciplina (filhas com FK apontando para esta tabela, ex.
 -- `accounting_data_exchange_rows`, `accounting_delivery_items`, `accounting_reviews`,

@@ -362,6 +362,22 @@ describe('register builders', () => {
       expect(() => sanitizeRtfForSped('{\\rtf1 caminho \\\\bin do sistema}')).not.toThrow();
     });
 
+    // Review PR #368 (3ª rodada) — a guarda de barra ÚNICA (`(?<!\\)`) não contava PARIDADE de
+    // barras: um run de 2 barras (`\\par` — 1 barra literal ESCAPADA + "par" como texto puro,
+    // NENHUMA palavra de controle) ainda "casava" como controle e ganhava espaço visível
+    // indevido; um run de 3 barras (`\\\bin4` — 1 par escapado + 1 barra ÍMPAR que É `\bin4` de
+    // verdade) era lido como NÃO-controle e passava sem 400. Construído com `.repeat()` para o
+    // número de barras não se perder em escaping de string JS.
+    it('run de 2 barras (`\\\\par`, escape+texto puro) NÃO é palavra de controle — CRLF some sem espaço', () => {
+      const twoBackslashesParCRLFx = `${'\\'.repeat(2)}par\r\nX`;
+      expect(sanitizeRtfForSped(twoBackslashesParCRLFx)).toBe(`${'\\'.repeat(2)}parX`);
+    });
+
+    it('run de 3 barras (`\\\\\\bin4`, escape+controle real) É \\bin de verdade — 400', () => {
+      const threeBackslashesBin4 = `${'\\'.repeat(3)}bin4 abcd`;
+      expect(() => sanitizeRtfForSped(threeBackslashesBin4)).toThrow(/RTF_CONTAINS_BIN/);
+    });
+
     it.each(['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'])(
       'rejeita a tag proibida %s (REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194)',
       (tag) => {
