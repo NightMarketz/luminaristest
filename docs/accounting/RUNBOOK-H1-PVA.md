@@ -22,6 +22,7 @@ Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
 | P5 | Mapeamento referencial com cobertura pronta + **nome da versão** em mãos (a ECD exige `mappingVersion`) | aba **Compliance** → painel de mapeamento; ou `GET /api/accounting/referential/coverage?unitId=…` | [ ] |
 | P6 | Dados do declarante/livro/signatários fornecidos pelo contador (lista exata abaixo) | conferir campo a campo | [ ] |
 | P7 | Dezembro do ano-calendário **OPEN** no controle de períodos (o encerramento tem gate de período) | aba **Períodos** | [ ] |
+| P7-seed | **[EMENDA 2026-09-24 — decisão do dono (a)] Tenants do seed (`seed-presumido`/`seed-real`): P7 NÃO SE APLICA** — o exercício 2025 já foi encerrado (`closeExercise`) e `HARD_CLOSED` pelo `db:seed:accounting`. Confira em vez disso que dezembro/2025 está `HARD_CLOSED` | aba **Períodos** (ano 2025) | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
 
@@ -289,6 +290,13 @@ Cada passo tem três campos. **EVIDÊNCIA é obrigatória e é sempre artefato c
 protocolo, saída de comando) — nunca uma frase dizendo que deu certo.
 
 ### 1. Encerramento do exercício (apuração do resultado)
+
+> **[EMENDA 2026-09-24 — decisão do dono (a)] Tenants do seed:** NÃO chame o `POST /closing/exercise`
+> (dezembro/2025 está `HARD_CLOSED`; o `postEntry` checa o período antes da idempotência e responderia
+> erro de período). O passo 1 vira **conferir que o encerramento de 2025 já está no razão**: aba
+> **Razão/Lançamentos** do ano 2025 → existe o lançamento *"Encerramento do exercício 2025 — apuração do
+> resultado"* datado de 31/12/2025 (origem `closing`, `sourceId` 2025), zerando 3.x/4.x contra `2.3.1`.
+> EVIDÊNCIA do passo 1 nesse caso = screenshot desse lançamento. Os passos 2–6 seguem iguais.
 
 Não há tela para isto — é chamada de API. Pegue o token e dispare (substitua `SEU_USUARIO`,
 `SUA_SENHA`, `SEU_UNIT_ID`, `ANO`):
