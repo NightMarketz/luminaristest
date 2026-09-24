@@ -45,9 +45,8 @@
 | [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open | — | — |
 | [[D6]] | Convênio/leiaute do banco do 1º cliente | human-open | — | — |
 | [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão | [[X10i]] ✗ | — |
-| [[D8]] | Dados P6 do contador (declarante/signatários para o H1) | human-open | [[D1]] ✗ | — |
 | [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Autorização citável em main (G-6, 17/09); espera D2 | [[D2]] ✗ | — |
-| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Preflight 24/09: alvo = seed-presumido (SEED-MY aplicado; X2 + mapeamento 2025 ready); bloqueado em P6 (D8 sem resposta) | [[P4]] ✗, [[D8]] ✗, [[SEED-MY]] ✗ | dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" |
+| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Preflight 24/09: alvo = seed-presumido (SEED-MY aplicado; X2 + mapeamento 2025 ready); bloqueado em P6 (D8 sem resposta) | [[P4]] ✗, [[D8]], [[SEED-MY]] ✗ | dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" |
 | [[H1b]] | H1 2ª passada em Lucro Real (2P-1..2P-4) | human-open — 2P-1..2P-4 preparados em branco | [[X4]], [[X4-14]], [[SEED-MY]] ✗, [[FE-INCR-LALUR-PR2]] ✗ | — |
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco | — | — |
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
@@ -107,7 +106,7 @@
 
 ## Fechados, decididos e referência
 
-- **dado-externo** (3): [[D-NFSE]] · [[D3b]] · [[ENVIO-PEDIDO-CONTADOR]]
+- **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
 - **decisao** (19): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (2): [[B-4]] · [[X2]]
