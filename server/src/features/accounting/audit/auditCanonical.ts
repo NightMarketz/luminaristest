@@ -148,6 +148,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'company_fiscal_profile.updated': ['anoCalendario', 'regime', 'grandePorte', 'inativa', 'aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase',
     'ecdIndNire', 'ecfIndAliqCsll', 'ecfIndRecReceita', 'contadorContactId', 'representanteLegalSignerId', 'copiadoDe'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
+  // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
+  'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],
   // X13 (item 10; F-OBP-9 a) — signatário da empresa: só as qualificações (códigos de tabela). Nome/CPF/e-mail/fone
   // são PII e NUNCA entram (guarda em auditCanonical.test.ts).
   'company_signer.created': ['signerId', 'qualifEcd', 'qualifEcf'],

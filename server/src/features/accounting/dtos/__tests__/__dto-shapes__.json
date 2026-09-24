@@ -977,6 +977,26 @@
       ],
       "additionalProperties": false
     },
+    "EcfTransmitidaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recibo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "unitId",
+        "recibo"
+      ],
+      "additionalProperties": false
+    },
     "CompanyDeclaranteSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

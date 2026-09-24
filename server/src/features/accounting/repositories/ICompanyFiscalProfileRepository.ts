@@ -28,5 +28,7 @@ export interface ICompanyFiscalProfileRepository {
   findByYear(scope: AccountingScope, ano: number, tx?: Prisma.TransactionClient): Promise<CompanyFiscalProfile | null>;
   upsert(scope: AccountingScope, ano: number, data: CompanyFiscalProfileData, tx?: Prisma.TransactionClient): Promise<CompanyFiscalProfile>;
   softDelete(scope: AccountingScope, ano: number, tx?: Prisma.TransactionClient): Promise<number>;
+  /** PR-2 item 16 (F-XP-5 a): grava o recibo da ECF transmitida e trava o regime do ano. */
+  setEcfTransmitida(scope: AccountingScope, ano: number, recibo: string, travadoEm: Date, tx?: Prisma.TransactionClient): Promise<CompanyFiscalProfile>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

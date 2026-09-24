@@ -771,6 +771,7 @@ export class ApplicationFactory {
       this.repositories.account,
       this.policies.accounting,
       auditService,
+      this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
     );
     // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação, seed lazy do Anexo III.
     const depreciationRateSeedService = new DepreciationRateSeedService(this.repositories.depreciationRate);
@@ -876,6 +877,8 @@ export class ApplicationFactory {
         this.repositories.accountingContact,
         this.policies.accounting,
         auditService,
+        this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
+        accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
       ),
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
       depreciationRateSeed: depreciationRateSeedService,

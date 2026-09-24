@@ -341,6 +341,7 @@ describe('company_signer.* / company_fiscal_profile.* — PII do signatário e d
     ['company_signer.deleted', { signerId: 's-1' }],
     ['company_fiscal_profile.updated', { anoCalendario: '2026', regime: 'PRESUMIDO', grandePorte: 'false', representanteLegalSignerId: 's-1', copiadoDe: '2025' }],
     ['company_fiscal_profile.deleted', { anoCalendario: '2026' }],
+    ['company_fiscal_profile.ecf_transmitted', { anoCalendario: '2026', ecfRecibo: 'RECIBO-123', regime: 'REAL' }],
   ])('%s derruba nome/CPF/e-mail/fone/declarante e mantém a allowlist', (eventType, allowed) => {
     const out = canonicalizeAuditPayload(eventType, { ...allowed, ...PII });
     for (const v of Object.values(PII)) expect(out).not.toContain(v);

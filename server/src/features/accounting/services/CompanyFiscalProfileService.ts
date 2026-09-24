@@ -7,6 +7,11 @@ import type { ICompanyFiscalProfileRepository, CompanyFiscalProfileData } from '
 import type { ICompanySignerRepository } from '../repositories/ICompanySignerRepository';
 import type { IAccountingContactRepository } from '../repositories/IAccountingContactRepository';
 import type { AuditService } from './AuditService';
+import type { AccountingReportService } from './AccountingReportService';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import { scopeToday } from '../models/dates';
+import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
+import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
 import type { CompanyDeclarante, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
 import { resolverObrigacoes } from '../models/obrigacoesPorRegime';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
@@ -14,6 +19,16 @@ import type { RegimeEmpresa } from '../models/regimeEmpresa';
 
 export const COMPANY_FISCAL_PROFILE_UPDATED = 'company_fiscal_profile.updated';
 export const COMPANY_FISCAL_PROFILE_DELETED = 'company_fiscal_profile.deleted';
+export const COMPANY_FISCAL_PROFILE_ECF_TRANSMITTED = 'company_fiscal_profile.ecf_transmitted';
+
+/** Lei 11.638/2007 art. 3º p.ú. — grande porte: ativo total > R$ 240 mi OU receita bruta anual > R$ 300 mi, no exercício anterior. */
+const GRANDE_PORTE_ATIVO_CENTS = 240_000_000_00;
+const GRANDE_PORTE_RECEITA_CENTS = 300_000_000_00;
+
+/** Ano-calendário corrente no fuso do escopo (ADR do fuso) — nunca `new Date().getFullYear()`. */
+export function anoCorrente(scope: AccountingScope): number {
+  return Number(scopeToday(scope).slice(0, 4));
+}
 
 export interface CompanyFiscalProfileView {
   ano: number;
@@ -29,6 +44,11 @@ export interface CompanyFiscalProfileView {
   ecfRecibo: string | null;
   regimeTravadoEm: string | null;
   updatedAt: string;
+}
+
+/** PUT (F-XP-8 a): o perfil salvo + unidades cujo `FiscalProfile.regimeTributario` diverge do regime do ano corrente. */
+export interface CompanyFiscalProfileUpsertView extends CompanyFiscalProfileView {
+  unidadesDivergentes: string[];
 }
 
 export interface ObrigacaoComFaltantes {
@@ -73,6 +93,9 @@ export class CompanyFiscalProfileService {
     private readonly contactRepo: IAccountingContactRepository,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    // PR-2: unidades do dono (F-XP-8 a) e BP/DRE do exercício anterior para o aviso de grande porte (F-XP-6 a).
+    private readonly fiscalProfileRepo: IFiscalProfileRepository,
+    private readonly reportService: AccountingReportService,
   ) {}
 
   async get(scope: AccountingScope, ano: number): Promise<CompanyFiscalProfileView | null> {
@@ -81,20 +104,101 @@ export class CompanyFiscalProfileService {
     return row ? toView(row) : null;
   }
 
-  async upsert(scope: AccountingScope, ano: number, input: UpsertCompanyFiscalProfileInput): Promise<CompanyFiscalProfileView> {
+  /**
+   * PR-2 item 16 (F-XP-5 a): depois de `ecf-transmitida`, mudar o regime do ano → 409 REGIME_TRAVADO — a ECF
+   * retificadora não pode mudar o regime (IN RFB 2.004/2021 art. 7º §2º). Os demais campos seguem editáveis.
+   * F-XP-8 (a): no ano corrente, devolve as unidades cujo perfil diverge do regime (aceita, não bloqueia).
+   */
+  async upsert(scope: AccountingScope, ano: number, input: UpsertCompanyFiscalProfileInput): Promise<CompanyFiscalProfileUpsertView> {
     this.assertManage(scope);
     const data = toData(input);
     return this.repo.runTransaction(async (tx) => {
+      const atual = await this.repo.findByYear(scope, ano, tx);
+      if (atual?.regimeTravadoEm && atual.regime !== data.regime) {
+        throw new ConflictError(
+          `REGIME_TRAVADO: a ECF de ${ano} foi transmitida (recibo ${atual.ecfRecibo}) — o regime não muda depois disso (IN RFB 2.004/2021 art. 7º §2º).`,
+        );
+      }
       await this.assertRefs(scope, data, tx);
       const row = await this.repo.upsert(scope, ano, data, tx);
       await this.auditUpdated(tx, scope, row);
+      const esperado = regimeUnidadeEsperado(data.regime as RegimeEmpresa);
+      const unidadesDivergentes =
+        ano === anoCorrente(scope)
+          ? (await this.fiscalProfileRepo.findManyByOwner(scope.ownerUserId, tx)).filter((u) => u.regimeTributario !== esperado).map((u) => u.unitId)
+          : [];
+      return { ...toView(row), unidadesDivergentes };
+    });
+  }
+
+  /** PR-2 item 16 (F-XP-5 a): o operador informa o recibo da ECF transmitida no PVA; o regime do ano trava. */
+  async marcarEcfTransmitida(scope: AccountingScope, ano: number, recibo: string): Promise<CompanyFiscalProfileView> {
+    this.assertManage(scope);
+    return this.repo.runTransaction(async (tx) => {
+      const atual = await this.repo.findByYear(scope, ano, tx);
+      if (!atual) throw new NotFoundError(`company_fiscal_profile_missing: sem perfil fiscal da empresa para ${ano}.`);
+      // Retificadora = recibo novo; a trava mantém a data da PRIMEIRA transmissão.
+      const row = await this.repo.setEcfTransmitida(scope, ano, recibo, atual.regimeTravadoEm ?? new Date(), tx);
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: COMPANY_FISCAL_PROFILE_ECF_TRANSMITTED,
+        targetType: 'company_fiscal_profile',
+        targetId: row.id,
+        payload: { anoCalendario: String(ano), ecfRecibo: recibo, regime: row.regime },
+      });
       return toView(row);
     });
+  }
+
+  /** PR-2 item 12 — o que a geração SPED lê do perfil do ano (`null` = sem perfil; F-XP-1 c decide o que fazer). */
+  async perfilParaGeracao(scope: AccountingScope, ano: number): Promise<PerfilParaPrefill | null> {
+    this.assertRead(scope);
+    const row = await this.repo.findByYear(scope, ano);
+    if (!row) return null;
+    const rep = row.representanteLegalSignerId ? await this.signerRepo.findById(scope, row.representanteLegalSignerId) : null;
+    return {
+      regime: row.regime as RegimeEmpresa,
+      grandePorte: row.grandePorte,
+      declarante: (row.declarante as Record<string, unknown> | null) ?? null,
+      ecdIndNire: row.ecdIndNire,
+      ecdNire: row.ecdNire,
+      ecdNumOrd: row.ecdNumOrd,
+      ecdNatLivr: row.ecdNatLivr,
+      ecfIndAliqCsll: row.ecfIndAliqCsll,
+      ecfIndRecReceita: row.ecfIndRecReceita,
+      contadorContactId: row.contadorContactId,
+      representante: rep ? { nome: rep.nome, cpf: rep.cpf, qualifEcd: rep.qualifEcd, qualifEcf: rep.qualifEcf, email: rep.email, fone: rep.fone } : null,
+    };
+  }
+
+  /**
+   * PR-2 item 14 (F-OBP-5 c; F-XP-6 a) — aviso, nunca bloqueio: ativo total (BP) e receita bruta (DRE) do escopo no fim
+   * do exercício N-1, pelo mapeamento de demonstrativos já existente (`AccountingReportService`, reuso). Relatório
+   * INVALID (mapeamento ausente/incompleto) ⇒ sem aviso. Limites declarados: o "conjunto sob controle comum" da lei não
+   * é visível ao sistema, e o número é o da unidade do escopo, não a soma das filiais.
+   */
+  async avisoGrandePorte(scope: AccountingScope, ano: number): Promise<string | null> {
+    const fimAnterior = new Date(Date.UTC(ano - 1, 11, 31, 23, 59, 59, 999));
+    const [bp, dre] = await Promise.all([this.reportService.balanceSheet(scope, fimAnterior), this.reportService.incomeStatement(scope, fimAnterior)]);
+    if (bp.reportStatus === 'INVALID' || dre.reportStatus === 'INVALID') return null;
+    const ativo = Math.abs(Number(bp.assets.totalCents));
+    const receita = Math.abs(Number(dre.grossRevenue.totalCents));
+    if (ativo <= GRANDE_PORTE_ATIVO_CENTS && receita <= GRANDE_PORTE_RECEITA_CENTS) return null;
+    const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    return (
+      `grande porte provável em ${ano - 1}: ativo total ${brl(ativo)}, receita bruta ${brl(receita)} ` +
+      `(limites R$ 240 mi / R$ 300 mi, Lei 11.638/2007 art. 3º p.ú.) — o perfil de ${ano} não marca grande porte; confira o IND_GRANDE_PORTE.`
+    );
   }
 
   async remove(scope: AccountingScope, ano: number): Promise<void> {
     this.assertManage(scope);
     await this.repo.runTransaction(async (tx) => {
+      // Lacuna de spec L2 (registrada no relatório do PR-2): apagar um perfil TRAVADO e recriá-lo com outro regime
+      // contornaria o item 16 — recusado pelo mesmo fundamento (IN RFB 2.004/2021 art. 7º §2º).
+      if ((await this.repo.findByYear(scope, ano, tx))?.regimeTravadoEm) {
+        throw new ConflictError(`REGIME_TRAVADO: o perfil de ${ano} tem ECF transmitida e não pode ser excluído.`);
+      }
       const n = await this.repo.softDelete(scope, ano, tx);
       if (n === 0) throw new NotFoundError(`company_fiscal_profile_missing: sem perfil fiscal da empresa para ${ano}.`);
       await this.auditService.append(tx, scope, {

@@ -7,6 +7,7 @@ import {
   CompanyFiscalProfileAnoParamSchema,
   CompanyFiscalProfileCopyParamSchema,
   CompanyFiscalProfileScopeSchema,
+  EcfTransmitidaSchema,
   UpsertCompanyFiscalProfileSchema,
 } from '../features/accounting/dtos/CompanyFiscalProfileDto';
 
@@ -93,6 +94,24 @@ export const copyCompanyFiscalProfile = async (req: Request, res: Response) => {
       .getCompanyFiscalProfileService()
       .copyFrom(resolveAccountingScope(user, b.data.unitId), p.data.ano, p.data.anoAnterior);
     return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** PR-2 item 16 (F-XP-5 a) — POST /company-fiscal-profile/:ano/ecf-transmitida { unitId, recibo }. */
+export const markEcfTransmitida = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const p = CompanyFiscalProfileAnoParamSchema.safeParse(req.params);
+    if (!p.success) return bad(res, p.error.flatten());
+    const b = EcfTransmitidaSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await getFactory()
+      .getCompanyFiscalProfileService()
+      .marcarEcfTransmitida(resolveAccountingScope(user, b.data.unitId), p.data.ano, b.data.recibo);
+    return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

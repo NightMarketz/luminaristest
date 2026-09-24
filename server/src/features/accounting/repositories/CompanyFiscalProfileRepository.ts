@@ -30,6 +30,13 @@ export class CompanyFiscalProfileRepository implements ICompanyFiscalProfileRepo
     return r.count;
   }
 
+  public async setEcfTransmitida(scope: AccountingScope, ano: number, recibo: string, travadoEm: Date, tx?: Prisma.TransactionClient): Promise<CompanyFiscalProfile> {
+    return this.db(tx).companyFiscalProfile.update({
+      where: { userId_anoCalendario: { userId: scope.ownerUserId, anoCalendario: ano } },
+      data: { ecfRecibo: recibo, regimeTravadoEm: travadoEm, updatedById: scope.actorUserId },
+    });
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

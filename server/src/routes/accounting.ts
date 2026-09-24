@@ -110,6 +110,7 @@ import {
   deleteCompanyFiscalProfile,
   getCompanyFiscalProfile,
   getCompanyObligations,
+  markEcfTransmitida,
   upsertCompanyFiscalProfile,
 } from '../controllers/companyFiscalProfileController';
 import {
@@ -305,6 +306,7 @@ router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile
 // signatários não-contador; segmentos estáticos, antes de /:unitId/periods.
 router.get('/company-fiscal-profile/:ano/obligations', getCompanyObligations);
 router.post('/company-fiscal-profile/:ano/copiar-de/:anoAnterior', copyCompanyFiscalProfile);
+router.post('/company-fiscal-profile/:ano/ecf-transmitida', markEcfTransmitida); // PR-2 item 16
 router.get('/company-fiscal-profile/:ano', getCompanyFiscalProfile);
 router.put('/company-fiscal-profile/:ano', upsertCompanyFiscalProfile);
 router.delete('/company-fiscal-profile/:ano', deleteCompanyFiscalProfile);

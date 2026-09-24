@@ -26,6 +26,11 @@ export const CompanyFiscalProfileCopyParamSchema = z
 
 export const CompanyFiscalProfileScopeSchema = z.object({ unitId: z.string().min(1) }).strict();
 
+/** PR-2 item 16 (F-XP-5 a) — recibo da ECF transmitida no PVA (retificadora = recibo novo; a trava fica). */
+export const EcfTransmitidaSchema = z
+  .object({ unitId: z.string().min(1), recibo: z.string().trim().min(1).max(100) })
+  .strict();
+
 export const CompanyDeclaranteSchema = z
   .object({
     nome: z.string().min(1).max(150),

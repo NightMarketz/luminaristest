@@ -2236,6 +2236,9 @@
  *         plain-text (ISO-8859-1) artifact as an EXPORT job. Download via
  *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any
  *         leaf account is unmapped in the referential version (coverage gate).
+ *         X13 PR-2 - with a company fiscal profile for the year, missing declarant/book/signer fields are
+ *         prefilled from it (body wins, listed in perfilFiscal.sobrescritos); avisos carries the large-company
+ *         warning (Lei 11.638 art. 3) and the missing-profile notice. The ECD is never refused by regime.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2308,6 +2311,9 @@
  *         Recovered blocks (C, E, J, K) are emitted as empty markers. Download via
  *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedRevenueAccounts
  *         when a Revenue account with movement is not one of 3.1 / 3.3 (revenue exhaustiveness gate).
+ *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
+ *         body overrides). 400 REGIME_DIVERGENTE when the profile is not PRESUMIDO and 400
+ *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES (IN RFB 2.004/2021 art. 1 par. 1 I).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2385,6 +2391,9 @@
  *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
  *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
  *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
+ *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
+ *         body overrides). 400 REGIME_DIVERGENTE when the profile is not REAL and 400
+ *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4837,6 +4846,35 @@
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
  *         '200': { description: 'deleted' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/company-fiscal-profile/{ano}/ecf-transmitida:
+ *     post:
+ *       summary: Record the receipt of the transmitted ECF and lock the year's regime (X13 PR-2, F-XP-5 a)
+ *       description: >-
+ *         After this call a PUT that changes regime answers 409 REGIME_TRAVADO and DELETE of the profile
+ *         answers 409 (an ECF correction cannot change the regime, IN RFB 2.004/2021 art. 7 par. 2). Posting again
+ *         replaces the receipt (correction) and keeps the original lock date. Audited as
+ *         company_fiscal_profile.ecf_transmitted.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, recibo]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 recibo: { type: string, maxLength: 100 }
+ *       responses:
+ *         '200': { description: 'CompanyFiscalProfileView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
