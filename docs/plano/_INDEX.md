@@ -47,7 +47,7 @@
 | [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão | [[X10i]] ✗ | — |
 | [[D8]] | Dados P6 do contador (declarante/signatários para o H1) | human-open | [[D1]] ✗ | — |
 | [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Autorização citável em main (G-6, 17/09); espera D2 | [[D2]] ✗ | — |
-| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Runbook em branco; alvo = SEED-MY (pontilhada) | [[P4]] ✗, [[D8]] ✗, [[SEED-MY]] ✗ | — |
+| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Preflight 24/09: alvo = seed-presumido (SEED-MY aplicado; X2 + mapeamento 2025 ready); bloqueado em P6 (D8 sem resposta) | [[P4]] ✗, [[D8]] ✗, [[SEED-MY]] ✗ | dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" |
 | [[H1b]] | H1 2ª passada em Lucro Real (2P-1..2P-4) | human-open — 2P-1..2P-4 preparados em branco | [[X4]], [[X4-14]], [[SEED-MY]] ✗, [[FE-INCR-LALUR-PR2]] ✗ | — |
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco | — | — |
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
