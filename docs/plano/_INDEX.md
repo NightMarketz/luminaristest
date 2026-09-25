@@ -92,7 +92,7 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned — Fase 5 do plano pós-contador — PROPOSTO, o maior e o mais de produto. Pelo README do vault, só vira nó de régua depois de PRE-ADR ratificado; fica como subno fora da régua até lá. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) | [[C11]], [[Z0-a]] ✗ | — |
+| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned — Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) | [[C11]], [[Z0-a]] ✗ | — |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready — BRIEF no I1; F-I1b-1 → (b); código não iniciado | — | F-I1-3 → (b) 2026-09-07 |
 | [[I3]] | activate-default + período OPEN (backend da LAC-B) | planned — F-I3-1 → (a) openCurrentPeriodIfMissing; demais forks pendentes | [[LAC-B]] ✗ | LAC-B ativada + F-I3-1 → (a) (07/09) |
 | [[I4]] | Onboarding chama activate-default | planned — Forks F-I4-1..3 pendentes | [[I1]], [[I3]] ✗, [[I5]] ✗ | — |
