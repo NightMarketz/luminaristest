@@ -3,10 +3,14 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
+import type { RegimeEmpresa } from '../models/regimeEmpresa';
+import { scopeToday } from '../models/dates';
 import type { AuditService } from './AuditService';
 import type { UpsertFiscalProfileInput } from '../dtos/FiscalProfileDto';
 import type { CostRegime } from '../../../lib/nfeCost';
-import type { FiscalProfile } from 'generated/prisma';
+import type { FiscalProfile, Prisma } from 'generated/prisma';
 
 export const FISCAL_PROFILE_UPDATED = 'fiscal_profile.updated';
 
@@ -68,8 +72,14 @@ export interface FiscalProfileView extends CostRegime {
  * Função pura (BRIEF item 7): o que falta no perfil da UNIDADE para emitir NFS-e. Cada linha cita o leiaute
  * (Anexo I v1.01) / RN que a exige. Perfil de serviço e tomador são checados na emissão (item 14), não aqui.
  */
-export function fiscalProfileEmissaoStatus(row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado'>): FiscalProfileEmissaoStatus {
+export function fiscalProfileEmissaoStatus(
+  row: Pick<FiscalProfile, 'regimeTributario' | 'codMun' | 'ibsCbsInformar' | 'ibsCbsCst' | 'ibsCbsClassTrib' | 'pTotTribFedCent' | 'pTotTribEstCent' | 'pTotTribMunCent' | 'pTotTribSNCent' | 'd1fConfirmado'>,
+  regimeEmpresa: RegimeEmpresa | null = null,
+): FiscalProfileEmissaoStatus {
   const faltantes: string[] = [];
+  // X13 PR-2 item 17 (F-XP-4 a): opSimpNac=2 (MEI) está fora do MVP da DPS (`DpsPayloadDto.ts:38`) — a emissão de
+  // empresa MEI fica BLOQUEADA com o motivo explícito, em vez de sair como ME/EPP (opSimpNac=3), que seria errado.
+  if (regimeEmpresa === 'MEI') faltantes.push('regime MEI — emissão fora do escopo (opSimpNac=2)');
   if (!row.codMun) faltantes.push('codMun'); // cLocEmi [112] 1-1
   if (row.regimeTributario === 'SIMPLES') {
     if (row.pTotTribSNCent == null) faltantes.push('pTotTribSNCent'); // totTrib [325] 1-1; ME/EPP => pTotTribSN (RN E0712)
@@ -104,12 +114,20 @@ export class FiscalProfileService {
     private readonly accountRepo: IAccountRepository,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    // X13 PR-2 (itens 15/17): regime da EMPRESA no ano corrente — consistência da unidade e bloqueio de emissão MEI.
+    private readonly companyRepo: ICompanyFiscalProfileRepository,
   ) {}
+
+  /** Regime da empresa no ano corrente (fuso do escopo), ou `null` sem perfil da empresa naquele ano. */
+  private async regimeEmpresaHoje(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<RegimeEmpresa | null> {
+    const row = await this.companyRepo.findByYear(scope, Number(scopeToday(scope).slice(0, 4)), tx);
+    return (row?.regime as RegimeEmpresa | undefined) ?? null;
+  }
 
   async get(scope: AccountingScope): Promise<FiscalProfileView | null> {
     if (!this.policy.canReadFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para ler o perfil fiscal.');
     const row = await this.repo.findByScope(scope);
-    return row ? this.toView(row) : null;
+    return row ? this.toView(row, await this.regimeEmpresaHoje(scope)) : null;
   }
 
   /** F-X6-6 (a): sem perfil o import/preview NÃO inventa default — 400 nomeado. */
@@ -120,7 +138,7 @@ export class FiscalProfileService {
         'fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile) — nenhum custo é calculado sem ele (F-X6-6 a).',
       );
     }
-    return this.toView(row);
+    return this.toView(row, await this.regimeEmpresaHoje(scope));
   }
 
   async upsert(scope: AccountingScope, input: UpsertFiscalProfileInput): Promise<FiscalProfileView> {
@@ -134,6 +152,13 @@ export class FiscalProfileService {
       d1fConfirmado: true,
     };
     return this.repo.runTransaction(async (tx) => {
+      // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
+      const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
+      if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
+        throw new ValidationError(
+          `regime_divergente_da_empresa: a empresa está em ${regimeEmpresa} no ano corrente — a unidade deve ser ${regimeUnidadeEsperado(regimeEmpresa)}, não ${input.regimeTributario}.`,
+        );
+      }
       const row = await this.repo.upsert(scope, data, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
@@ -167,7 +192,7 @@ export class FiscalProfileService {
           emissaoForaDoMes: row.emissaoForaDoMes,
         },
       });
-      return this.toView(row);
+      return this.toView(row, regimeEmpresa);
     });
   }
 
@@ -180,7 +205,7 @@ export class FiscalProfileService {
     }
   }
 
-  private toView(row: FiscalProfile): FiscalProfileView {
+  private toView(row: FiscalProfile, regimeEmpresa: RegimeEmpresa | null): FiscalProfileView {
     return {
       unitId: row.unitId,
       regimeTributario: row.regimeTributario,
@@ -210,7 +235,7 @@ export class FiscalProfileService {
       pTotTribSNCent: row.pTotTribSNCent,
       emissaoForaDoMes: row.emissaoForaDoMes,
       d1fConfirmado: row.d1fConfirmado,
-      emissao: fiscalProfileEmissaoStatus(row),
+      emissao: fiscalProfileEmissaoStatus(row, regimeEmpresa),
       updatedAt: row.updatedAt.toISOString(),
     };
   }

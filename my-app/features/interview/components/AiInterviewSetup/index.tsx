@@ -3,6 +3,7 @@ import { useAiInterview } from '../../hooks/useAiInterview';
 import ChatArea from './ChatArea';
 import InputArea from './InputArea';
 import CreationArea from './CreationArea';
+import FiscalQuestion from './FiscalQuestion';
 import LeftSidebar from '../LeftSidebar';
 import RightSidebar from '../RightSidebar';
 
@@ -69,7 +70,9 @@ function AiInterviewSetup() {
     handleUpdateTable,
     logState,
     handleRetry,
-    presetKey
+    presetKey,
+    fiscalPendente,
+    confirmarFiscal
   } = useAiInterview();
 
   if (isCreating || creationError) {
@@ -154,14 +157,18 @@ function AiInterviewSetup() {
           isLoading={isLoading}
           chatEndRef={chatEndRef}
         />
-        <InputArea
-          userInput={userInput}
-          setUserInput={setUserInput}
-          handleSendMessage={handleSendMessage}
-          isLoading={isLoading}
-          isCreating={isCreating}
-          inputRef={inputRef}
-        />
+        {fiscalPendente ? (
+          <FiscalQuestion onConfirm={confirmarFiscal} />
+        ) : (
+          <InputArea
+            userInput={userInput}
+            setUserInput={setUserInput}
+            handleSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            isCreating={isCreating}
+            inputRef={inputRef}
+          />
+        )}
       </div>
     </div>
   );

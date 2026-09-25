@@ -15,7 +15,7 @@ vi.mock('cookies-next', () => ({
   getCookie: (name: string) => (name === 'auth_token' ? 'tok-teste-guarda' : undefined),
 }));
 
-import { useAiInterview } from '../useAiInterview';
+import { useAiInterview, nomeDaUnidadeDaEntrevista } from '../useAiInterview';
 
 type FetchMock = ReturnType<typeof vi.fn>;
 
@@ -64,5 +64,59 @@ describe('useAiInterview — Bearer na rota protegida /dashboard/ai/ChatIntervie
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(authHeaderOf(fetchMock.mock.calls[1])).toBe('Bearer tok-teste-guarda');
+  });
+});
+
+// BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5; F-I1-2 b): a Entrevista monta `unit` no create — o servidor
+// responde 400 sem ele. Nome = texto do `SUMMARY:` da IA (até 120), fallback = chave do preset.
+describe('useAiInterview — create da Entrevista manda a primeira unidade (I1)', () => {
+  let fetchMock: FetchMock;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://api.test/api');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it('ao chegar em COMPLETED pergunta regime/porte; ao confirmar, POST /dashboard/create leva { suiteKey, unit: <SUMMARY>, fiscal }', async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ response: 'Olá!', nextStage: 'DISCOVERING_BUSINESS' }))
+      .mockResolvedValueOnce(
+        jsonResponse({ response: 'SUMMARY: Salão Bela Vista, atende mulheres', nextStage: 'COMPLETED', presetKey: 'beautySalon' }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ success: true, data: { unitId: 'u-1' } }));
+
+    const { result } = renderHook(() => useAiInterview());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    act(() => result.current.setUserInput('Tenho um salão'));
+    await act(async () => {
+      await result.current.handleSendMessage();
+    });
+
+    // X13 PR-3 item 20: COMPLETED não cria direto — primeiro a pergunta FECHADA de regime/porte
+    await waitFor(() => expect(result.current.fiscalPendente).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    act(() => result.current.confirmarFiscal({ regime: 'PRESUMIDO', grandePorte: false }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    const [url, init] = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect(url).toBe('http://api.test/api/dashboard/create');
+    expect(JSON.parse(String(init.body))).toEqual({
+      suiteKey: 'beautySalon',
+      unit: { name: 'Salão Bela Vista, atende mulheres' },
+      fiscal: { regime: 'PRESUMIDO', grandePorte: false },
+    });
+    expect(result.current.fiscalPendente).toBe(false);
+  });
+
+  it('nomeDaUnidadeDaEntrevista: sem SUMMARY usa a chave do preset; corta em 120; ignora mensagem do usuário', () => {
+    expect(nomeDaUnidadeDaEntrevista([{ sender: 'ai', text: 'Olá' }], 'beautySalon')).toBe('beautySalon');
+    expect(nomeDaUnidadeDaEntrevista([{ sender: 'user', text: 'SUMMARY: eu' }], 'k')).toBe('k');
+    expect(nomeDaUnidadeDaEntrevista([{ sender: 'ai', text: `SUMMARY: ${'x'.repeat(200)}` }], 'k')).toHaveLength(120);
   });
 });

@@ -4,6 +4,7 @@
  * o schema é provado em FiscalDocument.integration.test.ts (repos reais).
  */
 import { FiscalProfileService, fiscalProfileEmissaoStatus, D1F_FIELDS } from '../FiscalProfileService';
+import type { ICompanyFiscalProfileRepository } from '../../repositories/ICompanyFiscalProfileRepository';
 import { ServiceFiscalProfileService } from '../ServiceFiscalProfileService';
 import { UpsertFiscalProfileSchema } from '../../dtos/FiscalProfileDto';
 import { UpsertServiceFiscalProfileSchema } from '../../dtos/ServiceFiscalProfileDto';
@@ -33,7 +34,7 @@ function rowFrom(data: Partial<FiscalProfileData> & { regimeTributario: string }
   } as FiscalProfile;
 }
 
-function build(opts: { existing?: FiscalProfile | null; canManage?: boolean } = {}) {
+function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; regimeEmpresa?: string | null } = {}) {
   let stored: FiscalProfile | null = opts.existing ?? null;
   const repo: IFiscalProfileRepository = {
     findByScope: jest.fn(async () => stored),
@@ -51,7 +52,11 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean } = 
   } as unknown as IAccountingPolicy;
   const append = jest.fn(async () => undefined);
   const audit = { append } as unknown as AuditService;
-  return { svc: new FiscalProfileService(repo, accounts, policy, audit), repo, append };
+  // X13 PR-2: perfil da EMPRESA no ano corrente (itens 15/17) — `null` = sem perfil da empresa.
+  const companyRepo = {
+    findByYear: jest.fn(async () => (opts.regimeEmpresa ? { regime: opts.regimeEmpresa } : null)),
+  } as unknown as ICompanyFiscalProfileRepository;
+  return { svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo), repo, append, companyRepo };
 }
 
 describe('fiscalProfileEmissaoStatus (BRIEF item 7 — função pura)', () => {
@@ -156,5 +161,33 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     const { svc, repo } = buildSvc({ canManage: false });
     await expect(svc.upsert(scope, 'svc-x', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '060101' }))).rejects.toBeInstanceOf(ForbiddenError);
     expect(repo.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('X13 PR-2 — regime da EMPRESA governa a unidade (itens 15 e 17)', () => {
+  const base = { unitId: 'u1', icmsContribuinte: false, pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, dpsSerie: 1, regEspTrib: 0, issRetidoTomadorPj: false, pacoteFatoGerador: 'CONSUMO', emissaoForaDoMes: 'AVISAR' } as const;
+
+  it('item 15: unidade REAL sob empresa PRESUMIDO no ano corrente → 400 regime_divergente_da_empresa, nada gravado', async () => {
+    const { svc, repo } = build({ regimeEmpresa: 'PRESUMIDO' });
+    await expect(svc.upsert(scope, { ...base, regimeTributario: 'REAL', pisCofinsRegime: 'NAO_CUMULATIVO' } as never)).rejects.toThrow(/regime_divergente_da_empresa/);
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
+
+  it('item 15: empresa MEI → a unidade é SIMPLES (LC 123 art. 18-A §1º) e passa; sem perfil da empresa, nada é exigido', async () => {
+    await expect(build({ regimeEmpresa: 'MEI' }).svc.upsert(scope, { ...base, regimeTributario: 'SIMPLES', pisCofinsRegime: 'SIMPLES' } as never)).resolves.toBeDefined();
+    await expect(build({ regimeEmpresa: null }).svc.upsert(scope, { ...base, regimeTributario: 'REAL', pisCofinsRegime: 'NAO_CUMULATIVO' } as never)).resolves.toBeDefined();
+  });
+
+  it('item 17 (F-XP-4 a): empresa MEI → a emissão fica incompleta com o motivo explícito (opSimpNac=2 fora do MVP)', () => {
+    const s = fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }), 'MEI');
+    expect(s.completo).toBe(false);
+    expect(s.faltantes).toEqual(['regime MEI — emissão fora do escopo (opSimpNac=2)']);
+    // a mesma unidade sob empresa SIMPLES emite
+    expect(fiscalProfileEmissaoStatus(rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }), 'SIMPLES').completo).toBe(true);
+  });
+
+  it('item 17: GET da unidade devolve emissao com o faltante do MEI (lê o regime da empresa)', async () => {
+    const { svc } = build({ regimeEmpresa: 'MEI', existing: rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }) });
+    expect((await svc.get(scope))?.emissao.faltantes).toContain('regime MEI — emissão fora do escopo (opSimpNac=2)');
   });
 });

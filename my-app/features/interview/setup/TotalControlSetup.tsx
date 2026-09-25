@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
 import { useAuth } from '../../../lib/context/AuthContext';
+import { useTranslation } from 'next-i18next';
 import { SetupService, type CustomDashboardPayload } from '../../../lib/services/setup.service';
 
 // Local lightweight types for frontend-only usage
@@ -52,6 +53,9 @@ export default function TotalControlSetup() {
   const [isLoading, setIsLoading] = useState(true); // Loading inicial de presets
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
   const [isCreating, setIsCreating] = useState(false); // Loading para criação final
+  // I1 (F-I1-2 b): nome da primeira unidade — sem default, obrigatório antes do submit.
+  const [unitName, setUnitName] = useState('');
+  const { t } = useTranslation('common');
   const [error, setError] = useState<string | null>(null);
 
   const groupedPresets = useMemo(() => {
@@ -158,6 +162,7 @@ export default function TotalControlSetup() {
       setError('Os detalhes do preset não foram carregados.');
       return;
     }
+    if (!unitName.trim()) return; // o botão já fica desabilitado; o servidor responderia 400
 
     setIsCreating(true);
     setError(null);
@@ -175,6 +180,7 @@ export default function TotalControlSetup() {
         presetKey: selectedPreset.key,
         removedTables: removedTableKeys,
         addedFields: newCustomFields,
+        unit: { name: unitName.trim() },
       };
 
       await SetupService.createDashboard(payload);
@@ -336,6 +342,23 @@ export default function TotalControlSetup() {
           })}
         </div>
 
+        <div className="mt-12 mx-auto w-full max-w-sm">
+          <label htmlFor="custom-unit-name" className="mb-2 block text-sm font-bold text-neutral-700 dark:text-neutral-300">
+            {t('unitNameLabel')}
+          </label>
+          <input
+            id="custom-unit-name"
+            type="text"
+            maxLength={120}
+            value={unitName}
+            onChange={(e) => setUnitName(e.target.value)}
+            disabled={isCreating}
+            placeholder={t('unitNamePlaceholder')}
+            className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-neutral-900 focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          />
+          {!unitName.trim() && <p className="mt-2 text-sm italic text-neutral-400">{t('unitNameRequired')}</p>}
+        </div>
+
         <footer className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4">
           <button
             onClick={() => setCurrentStep('selecting_preset')}
@@ -346,7 +369,7 @@ export default function TotalControlSetup() {
           </button>
           <button
             onClick={handleCreateCustomDashboard}
-            disabled={isCreating}
+            disabled={isCreating || !unitName.trim()}
             className="w-full sm:w-auto px-12 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {isCreating ? (
