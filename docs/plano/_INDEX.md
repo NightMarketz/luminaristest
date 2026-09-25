@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 20 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 9 | 16 |
-| **total** | **46** | **57** |
+| fiscal | 9 | 17 |
+| **total** | **46** | **58** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -87,6 +87,7 @@
 | [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
 | [[X11]] | Eventos de DF-e com prazo legal validado (cancelamento, substituição, CC-e) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: materializou dentro de X10b (F-DFE-12; cancelamento com janela existe); grafo 14/09 e §18.1 ainda o listam a | [[X10i]] ✗ | resposta 13 (10/09) |
 | [[X12]] | Catálogo de adições/exclusões dirigido por dado (F-COB-1 → b) | planned — estado do grafo 14/09 (planned); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09 diz que materializou dentro de X10b (improvável: é bloco M/e-Lalur); grafo 14/09: plan (BRIEF); §18.1 Onda 1  | [[X4]], [[D3b]] | resposta 4 + F-COB-1 → (b) (10/09) |
+| [[X13]] | Perfil de obrigações por empresa — regime × porte, capturado no onboarding (BE-INCR-FISCAL-OBLIGATION-PROFILE) | planned — PRE-ADR aceito 24/09 (10 forks na recomendação); BRIEF 24/09; F-XP-1..8 ratificados 24/09; PR-1/2/3 implementados em #373 (não mergeado; PR-3 depende do I1 em #374); lacuna L-PR3-1 (FiscalProfile da unidade no onboarding) ao dono | [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]], [[I1]] ✗ | F-OBP-0..9 + F-XP-1..8 ratificados; "executa X13 PR-1/PR-2/PR-3" (dono, 24/09) |
 | [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | blocked — ADR não aberto; espera D1 itens 1/1b; Serpro adiado (R5) | [[D1]] ✗ | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral) |
 | [[X8]] | EFD-Contribuições (+ apuração PIS/COFINS, raso, por último) | blocked — ADR não aberto; depende de X7 | [[X7]] ✗ | F-M2 (2026-09-03) — só ADR |
 | [[X9]] | DCTF / DCTFWeb (MIT) | blocked — ADR não aberto; depende de X7 (pode fundir) | [[X7]] ✗ | F-M2 (2026-09-03) — só ADR |
@@ -109,7 +110,7 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (3): [[D-NFSE]] · [[D3b]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (19): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (20): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (1): [[B-4]]
 - **motor** (1): [[PASSO-11]]

@@ -6,7 +6,29 @@ import { getFactory } from '@/lib/factory';
 import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
 
-import { UnifiedCreationSchema } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
+import { z } from 'zod';
+import { CustomCreationSchema, QuickCreationSchema } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
+import { OnboardingFiscalSchema, UpsertCompanyFiscalProfileSchema } from '@/features/accounting/dtos/CompanyFiscalProfileDto';
+import type { OnboardingFiscalInput } from '@/features/accounting/dtos/CompanyFiscalProfileDto';
+import { anoCorrente } from '@/features/accounting/services/CompanyFiscalProfileService';
+import { resolverObrigacoes } from '@/features/accounting/models/obrigacoesPorRegime';
+import type { ObrigacaoResolvida } from '@/features/accounting/models/obrigacoesPorRegime';
+import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+
+/**
+ * X13 PR-3 item 19: o controller (camada de integração — Contrato §2.1) compõe o body do motor de tabelas com o bloco
+ * `fiscal` da contabilidade. O DTO do `dynamicTables` não conhece a contabilidade.
+ */
+const UnifiedCreationSchema = z.union([
+  QuickCreationSchema.extend({ fiscal: OnboardingFiscalSchema.optional() }),
+  CustomCreationSchema.extend({ fiscal: OnboardingFiscalSchema.optional() }),
+]);
+
+interface FiscalDoOnboarding {
+  status: 'criado' | 'pendente';
+  ano: number;
+  obrigacoes?: ObrigacaoResolvida[];
+}
 import type { UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
 import type { UserContext } from '@/lib/authUtils';
 
@@ -52,6 +74,7 @@ export async function createDashboard(req: Request, res: Response) {
         payload.removedTables || [],
         payload.addedFields || {},
         payload.unit,
+        payload.fiscal,
         res
       );
     } else {
@@ -59,6 +82,7 @@ export async function createDashboard(req: Request, res: Response) {
         ctx,
         payload.suiteKey,
         payload.unit,
+        payload.fiscal,
         res
       );
     }
@@ -120,12 +144,59 @@ async function createFirstUnitOrRollback(ctx: UserContext, unit: UnitInput, res:
   }
 }
 
+/**
+ * X13 PR-3 itens 19 e 21 (F-OBP-6 → c) — passo 3 do create, DEPOIS da unidade (mesmo padrão de dois passos +
+ * compensação do F-I1-4 b): com regime conhecido, nasce o perfil fiscal da EMPRESA do ano corrente (fuso do escopo)
+ * pelo serviço da contabilidade (policy + auditoria + gates dele). `NAO_SEI` ou bloco ausente ⇒ nada é criado e a
+ * resposta diz `pendente`. Falha ⇒ o sistema recém-instalado é desfeito (500 ONBOARDING_ROLLED_BACK).
+ * O `FiscalProfile` da UNIDADE não é criado aqui — lacuna de spec L-PR3-1 (o F-X6-6 a proíbe inventar
+ * `icmsContribuinte`/`pisCofinsRegime`); a consistência com a empresa é cobrada quando ele for cadastrado (item 15).
+ * Devolve o resumo, ou `null` quando já respondeu (compensado).
+ */
+async function createCompanyFiscalProfileOrRollback(
+  ctx: UserContext,
+  unitId: string,
+  fiscal: OnboardingFiscalInput | undefined,
+  res: Response
+): Promise<FiscalDoOnboarding | null> {
+  const scope = resolveAccountingScope(ctx, unitId);
+  const ano = anoCorrente(scope);
+  if (!fiscal || fiscal.regime === 'NAO_SEI') return { status: 'pendente', ano };
+  const regime = fiscal.regime;
+  try {
+    const input = UpsertCompanyFiscalProfileSchema.parse({ unitId, regime, grandePorte: fiscal.grandePorte ?? null });
+    const perfil = await getFactory().getCompanyFiscalProfileService().upsert(scope, ano, input);
+    return { status: 'criado', ano, obrigacoes: resolverObrigacoes({ regime, inativa: perfil.inativa, condicoes: perfil.condicoes }) };
+  } catch (error) {
+    logger.error(`Onboarding: falha ao criar o perfil fiscal da empresa do usuário ${ctx.userId} — compensando.`, { error });
+    try {
+      await purgeUserSystem(ctx.userId);
+    } catch (purgeError) {
+      logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
+      res.status(500).json({
+        success: false,
+        errorCode: 'ONBOARDING_ROLLBACK_FAILED',
+        error: 'O perfil fiscal não foi criado e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.',
+      });
+      return null;
+    }
+    const detail = error instanceof Error ? error.message : String(error);
+    res.status(500).json({
+      success: false,
+      errorCode: 'ONBOARDING_ROLLED_BACK',
+      error: `Não foi possível criar o perfil fiscal da empresa (${detail}). A instalação foi desfeita; tente novamente.`,
+    });
+    return null;
+  }
+}
+
 async function handleCustomCreation(
   ctx: UserContext,
   presetKey: string,
   removedTables: string[],
   addedFields: Record<string, unknown[]>,
   unit: UnitInput,
+  fiscal: OnboardingFiscalInput | undefined,
   res: Response
 ) {
   const userId = ctx.id;
@@ -219,6 +290,8 @@ async function handleCustomCreation(
     const result = await service.installPresetAsSystem(userId, finalPayload);
     const unitId = await createFirstUnitOrRollback(ctx, unit, res);
     if (unitId === null) return;
+    const fiscalDoOnboarding = await createCompanyFiscalProfileOrRollback(ctx, unitId, fiscal, res);
+    if (fiscalDoOnboarding === null) return;
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     return res.status(201).json({
@@ -228,6 +301,7 @@ async function handleCustomCreation(
         ...result,
         presetKey,
         unitId,
+        fiscal: fiscalDoOnboarding,
         tables: {
           core: coreTableList,
           business: Object.keys(finalPayload.tables).filter((k) => !coreTableList.includes(k)),
@@ -243,6 +317,7 @@ async function handleQuickCreation(
   ctx: UserContext,
   suiteKey: string,
   unit: UnitInput,
+  fiscal: OnboardingFiscalInput | undefined,
   res: Response
 ) {
   const userId = ctx.id;
@@ -294,6 +369,8 @@ async function handleQuickCreation(
     await service.installPresetAsSystem(userId, mergedPreset);
     const unitId = await createFirstUnitOrRollback(ctx, unit, res);
     if (unitId === null) return;
+    const fiscalDoOnboarding = await createCompanyFiscalProfileOrRollback(ctx, unitId, fiscal, res);
+    if (fiscalDoOnboarding === null) return;
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     const businessTableList = Object.keys(selectedPreset.tables || {});
@@ -304,6 +381,7 @@ async function handleQuickCreation(
       data: {
         suiteKey,
         unitId,
+        fiscal: fiscalDoOnboarding,
         tables: {
           core: coreTableList,
           business: businessTableList,

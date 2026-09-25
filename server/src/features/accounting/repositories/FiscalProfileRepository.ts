@@ -14,6 +14,10 @@ export class FiscalProfileRepository implements IFiscalProfileRepository {
     return this.db(tx).fiscalProfile.findFirst({ where: { ...accountingScopeWhere(scope), deletedAt: null } });
   }
 
+  public async findManyByOwner(ownerUserId: string, tx?: Prisma.TransactionClient): Promise<FiscalProfile[]> {
+    return this.db(tx).fiscalProfile.findMany({ where: { userId: ownerUserId, deletedAt: null }, orderBy: { unitId: 'asc' } });
+  }
+
   public async upsert(scope: AccountingScope, data: FiscalProfileData, tx?: Prisma.TransactionClient): Promise<FiscalProfile> {
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.db(tx).fiscalProfile.upsert({
