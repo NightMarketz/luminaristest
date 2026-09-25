@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 21 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 10 | 17 |
-| **total** | **48** | **58** |
+| fiscal | 10 | 18 |
+| **total** | **48** | **59** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -79,7 +79,7 @@
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — BRIEF próprio, ainda não aberto | [[X10b]] | — |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready — Crescimento do X4; falta 'executa' | [[X4]] | — |
 | [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
-| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned — Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1 | [[FIS-08]] | — |
+| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned — **Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1 | [[FIS-08]] | — |
 | [[X10a]] | Adaptador por TIPO de documento fiscal (NFS-e, NF-e 55…) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: 'materializou dentro do nó X10b' (só NFS-e existe; NF-e 55 fora); §18.1 Onda 1 e grafo 14/09 ainda o listam  | [[X10b]] | resposta 9 (10/09) — requisito, sem 'executa' |
 | [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
 | [[X11]] | Eventos de DF-e com prazo legal validado (cancelamento, substituição, CC-e) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: materializou dentro de X10b (F-DFE-12; cancelamento com janela existe); grafo 14/09 e §18.1 ainda o listam a | [[X10i]] ✗ | resposta 13 (10/09) |
@@ -106,7 +106,7 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (22): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (23): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (2): [[B-4]] · [[X2]]
 - **motor** (1): [[PASSO-11]]

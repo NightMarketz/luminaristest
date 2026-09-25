@@ -14,14 +14,13 @@
 | §III.1 passo 13 · §III.4 | [[PASSO-13]] |
 | §III.1 passo 6 · §III.2 | [[FE-INCR-LALUR-PR2]] |
 | §III.1 passo 7 · §III.2 | [[FE-INCR-BANK-SETTLEMENT]] |
-| §III.2 | [[D-NFSE]] · [[D1]] · [[D1f]] · [[D2]] · [[D3b]] · [[D5]] · [[D6]] · [[D7]] · [[D8]] · [[FF7]] · [[H1b]] · [[H3]] · [[P4]] · [[X10]] · [[X10i]] · [[X4-14]] |
+| §III.2 | [[D-NFSE]] · [[D1]] · [[D1f]] · [[D2]] · [[D3b]] · [[D5]] · [[D6]] · [[D7]] · [[D8]] · [[FF7]] · [[H1b]] · [[H3]] · [[P4]] · [[SIG-NFE]] · [[X10]] · [[X10i]] · [[X4-14]] |
 | §III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8 | [[SEED-MY]] |
 | §III.2 · §M5.1 Bloco A | [[B-4]] |
 | §III.2 · §M5.1 Bloco A item 3 | [[H1]] |
 | §III.2 · §M5.1 Bloco A item 4 | [[H2]] |
 | §III.2 · §M5.1 Bloco A item 5 | [[M2]] |
 | §III.2 · §M5.1 Bloco A item 6 | [[X2]] |
-| §III.2 (fora da régua — correção de comportamento do nó NF-e) | [[SIG-NFE]] |
 | §III.2 (fora da régua até BRIEF/ADR próprios) | [[ITEM-DESTINATION]] |
 | §III.2 quadro | [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]] |
 | §III.3 §2 · §III.2 quadro | [[C9]] |

@@ -1,21 +1,21 @@
 ---
 id: "SIG-NFE"
-tipo: "subno"
+tipo: "regua"
 dominio: "fiscal"
 titulo: "Verificação da assinatura (XMLDSig) do XML de NF-e importado"
 estado: "planned"
-estado_detalhe: "Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1"
+estado_detalhe: "**Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1"
 depende_de: ["[[FIS-08]]"]
-ancora_sdd: "§III.2 (fora da régua — correção de comportamento do nó NF-e)"
+ancora_sdd: "§III.2"
 atualizado: "2026-09-25"
 ---
 # SIG-NFE — Verificação da assinatura (XMLDSig) do XML de NF-e importado
 
-**Estado:** `planned` — Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1  
+**Estado:** `planned` — **Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006). O plano pede duas: "instrumenta a assinatura" e depois a resposta ao F-SIG-1  
 **Depende de:** [[FIS-08]]  
 **Desbloqueia:** —  
-**Âncora no SDD consolidado:** §III.2 (fora da régua — correção de comportamento do nó NF-e)
+**Âncora no SDD consolidado:** §III.2
 
 ## Docs
 
