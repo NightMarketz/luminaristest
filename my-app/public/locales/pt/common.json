@@ -365,6 +365,9 @@
   "retail": "Varejo",
   "services": "Serviços",
   "selectModelToEnable": "Selecione um modelo para habilitar a criação.",
+  "unitNameLabel": "Nome da unidade",
+  "unitNamePlaceholder": "Ex.: Matriz Centro",
+  "unitNameRequired": "Informe o nome da unidade para criar o sistema.",
 
   "record_details": "Detalhes do Registro",
   "generic_table": "Tabela Genérica",

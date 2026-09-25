@@ -26,7 +26,7 @@
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready | — |
 | [[FE-INCR-REVIEW]] | Aba do C11 (revisão profissional) | planned | — |
 | [[GET-DATA-EXCHANGE-JOBS]] | Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria | planned | F-FA15 → (a) (dono, 18/09) |
-| [[I1]] | Primeira unidade nasce no onboarding (BE-INCR-ONBOARDING-FIRST-UNIT) | ready | forks F-I1-* ratificados 2026-09-07 (execução sem 'executa') |
+| [[I1]] | Primeira unidade nasce no onboarding (BE-INCR-ONBOARDING-FIRST-UNIT) | ready | forks F-I1-* ratificados 2026-09-07; 'Executa I1' (dono, 24/09, questionário da sessão X13 PR-3) |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready | F-I1-3 → (b) 2026-09-07 |
 | [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned | — |
 | [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | planned | dono 'Ativar agora' 2026-09-07 |
@@ -95,7 +95,7 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[I1]] | Primeira unidade nasce no onboarding (BE-INCR-ONBOARDING-FIRST-UNIT) | ready — BRIEF pronto, forks ratificados 07/09; código não iniciado; exige 'executa' | — | forks F-I1-* ratificados 2026-09-07 (execução sem 'executa') |
+| [[I1]] | Primeira unidade nasce no onboarding (BE-INCR-ONBOARDING-FIRST-UNIT) | ready — I1 itens 1–7 implementados (PR aberto, não mergeado); item 6 = sign-off de browser humano; I1b segue ADR próprio | — | forks F-I1-* ratificados 2026-09-07; 'Executa I1' (dono, 24/09, questionário da sessão X13 PR-3) |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready — BRIEF no I1; F-I1b-1 → (b); código não iniciado | — | F-I1-3 → (b) 2026-09-07 |
 | [[I3]] | activate-default + período OPEN (backend da LAC-B) | planned — F-I3-1 → (a) openCurrentPeriodIfMissing; demais forks pendentes | [[LAC-B]] ✗ | LAC-B ativada + F-I3-1 → (a) (07/09) |
 | [[I4]] | Onboarding chama activate-default | planned — Forks F-I4-1..3 pendentes | [[I1]] ✗, [[I3]] ✗, [[I5]] ✗ | — |

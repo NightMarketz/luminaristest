@@ -25,9 +25,17 @@ export interface PresetDetails {
   tables: Record<string, { name?: string; schema: PresetTableSchema | null }>;
 }
 
+/** BE-INCR-ONBOARDING-FIRST-UNIT (I1, F-I1-2 b): a primeira unidade é obrigatória no create. */
+export interface DashboardUnitInput {
+  name: string;
+  cnpj?: string;
+  type?: 'Own' | 'Franchise' | 'Department';
+}
+
 export interface QuickDashboardPayload {
   mode: 'quick';
   suiteKey: string;
+  unit: DashboardUnitInput;
 }
 
 export interface CustomDashboardPayload {
@@ -35,6 +43,7 @@ export interface CustomDashboardPayload {
   presetKey: string;
   removedTables: string[];
   addedFields: Record<string, unknown>;
+  unit: DashboardUnitInput;
 }
 
 export type CreateDashboardPayload = QuickDashboardPayload | CustomDashboardPayload;

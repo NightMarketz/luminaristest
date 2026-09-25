@@ -366,6 +366,9 @@
   "retail": "Retail",
   "services": "Services",
   "selectModelToEnable": "Select a model to enable creation.",
+  "unitNameLabel": "Unit name",
+  "unitNamePlaceholder": "e.g. Downtown Main Store",
+  "unitNameRequired": "Enter the unit name to create the system.",
 
   "record_details": "Record Details",
   "generic_table": "Generic Table",
