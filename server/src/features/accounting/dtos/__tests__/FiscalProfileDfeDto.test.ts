@@ -25,6 +25,13 @@ describe('UpsertFiscalProfileSchema — campos BE-INCR-DFE', () => {
     expect(r.ibsCbsInformar).toBeUndefined();
   });
 
+  it('pisCofinsCreditIncludesIpi=true → 400: IPI fora da base do crédito é regra fixa (STJ Tema 1.373, triagem P1)', () => {
+    const r = UpsertFiscalProfileSchema.safeParse({ ...normal, pisCofinsCreditIncludesIpi: true });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues[0].path).toEqual(['pisCofinsCreditIncludesIpi']);
+    expect(UpsertFiscalProfileSchema.parse({ ...normal, pisCofinsCreditIncludesIpi: false }).pisCofinsCreditIncludesIpi).toBe(false);
+  });
+
   it('dpsSerie fora da faixa 1–49999 (serie [106], RN E0010) → 400', () => {
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, dpsSerie: 0 }).success).toBe(false);
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, dpsSerie: 50000 }).success).toBe(false);

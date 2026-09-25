@@ -40,6 +40,8 @@ As Fases 0 e 1 podem rodar em paralelo. O C8 PR-4 (#368) segue independente.
 **Autorização que falta:** "instrumenta a Fase 1" e depois "corrige a Fase 1" (ou as duas juntas).
 
 > **2026-09-25 — 1.1–1.6 instrumentados (PR #379, `f8029916`)**, autorização do dono 25/09. V6 (0.6) confirmou IPI na base via flag (`nfeCost.ts:130`) → 1.4 existe. 4 `it.failing` (GAP-MAP 10–13). **C-2 só a metade bebidas:** combustíveis BLOQUEADO — a Lei 9.718 art. 4º nomeia produtos, sem NCM (`fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md` §B). **Achado para 1.8:** Lei 13.097 art. 29 veda crédito só na revenda do varejista (art. 28/17); não-varejista credita pelo valor da nota (art. 30) — regra que o modelo não tem. Falta: "corrige a Fase 1" + F-PC-1/F-PC-2.
+>
+> **2026-09-25 — 1.7–1.8 corrigidos (PR #381, `c1937b1a`)**: F-PC-1 → (b), F-PC-2 → (a), flag de IPI → DTO rejeita `true` ([`D-2026-09-25-FASE1-PIS-COFINS`](../plano/decisoes/D-2026-09-25-FASE1-PIS-COFINS.md)). GAP-MAP 10–12 fechados, 13 só bebidas. Aberto: combustíveis (fonte do NCM), não-varejista de bebida (art. 30), CST 05..09 antes do NCM.
 
 | # | Passo | Sessão | Arquivo | Critério |
 |---|---|---|---|---|
