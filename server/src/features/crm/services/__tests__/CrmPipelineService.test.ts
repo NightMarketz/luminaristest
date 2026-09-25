@@ -342,7 +342,13 @@ describe('CrmPipelineService', () => {
     // The opportunity row read by advanceOpportunity's cross-tenant guard (FIX 2). Belongs to
     // THIS tenant's crmOpportunities table (id is `${internal}-table` per the repo mock).
     const oppRow = { id: 'opp-1', dynamicTableId: 'crmOpportunities-table', data: {} };
-    const oppRepo = { findDataById: jest.fn(async () => ({ ...oppRow })) };
+    // Target stages are STORED rows of this tenant's leadStages; Won/Lost comes from their `type`.
+    const stageRows: Record<string, any> = {
+      s2: { id: 's2', dynamicTableId: 'leadStages-table', data: { type: 'proposal' } },
+      's-won': { id: 's-won', dynamicTableId: 'leadStages-table', data: { type: 'closed_won' } },
+      's-lost': { id: 's-lost', dynamicTableId: 'leadStages-table', data: { type: 'closed_lost' } },
+    };
+    const oppRepo = { findDataById: jest.fn(async (id: string) => stageRows[id] ?? { ...oppRow }) };
 
     it('aplica o patch de stage (+amount/currency/winProbability) com isSystem', async () => {
       const { svc, dynamicTableService } = buildService({
@@ -380,7 +386,7 @@ describe('CrmPipelineService', () => {
 
     // Lacuna (teste vivo 2026-09-25): o status Won é decidido pelo `stageType` que o CLIENTE
     // manda, não pelo tipo gravado da etapa-destino — Won foi aceito numa etapa `negotiation`.
-    it.failing('stageType do cliente diverge da etapa gravada → NÃO fecha como Won (vale o tipo da etapa)', async () => {
+    it('stageType do cliente diverge da etapa gravada → NÃO fecha como Won (vale o tipo da etapa)', async () => {
       const rows: Record<string, any> = {
         'opp-1': { ...oppRow },
         's-neg': { id: 's-neg', dynamicTableId: 'leadStages-table', data: { type: 'negotiation' } },

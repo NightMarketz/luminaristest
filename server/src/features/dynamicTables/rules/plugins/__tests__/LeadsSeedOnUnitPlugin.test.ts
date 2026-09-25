@@ -4,7 +4,7 @@ import { LeadsSeedOnUnitPlugin } from '../LeadsSeedOnUnitPlugin';
 // init/meeting/proposal/negotiation. Sem etapa closed_won/closed_lost, uma oportunidade
 // nunca pode ser Ganha/Perdida pela UI (o board fecha Won/Lost só ao mover para essas etapas).
 describe('LeadsSeedOnUnitPlugin — pipeline padrão', () => {
-  it.failing('semeia etapas de fechamento (closed_won e closed_lost)', async () => {
+  it('semeia etapas de fechamento (closed_won e closed_lost)', async () => {
     const created: Array<{ tableId: string; data: Record<string, unknown> }> = [];
     const tables: Record<string, { id: string; category: string; internalName: string; name: string }> = {
       leadPipelines: { id: 'pipes', category: 'leads', internalName: 'leadPipelines', name: 'Pipelines de Lead' },
