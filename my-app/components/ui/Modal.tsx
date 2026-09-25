@@ -94,8 +94,11 @@ export function Modal({
       // This is necessary because Portals are technically outside the modalRef DOM tree
       const target = event.target as HTMLElement;
       const isPortalClick = target.closest('[data-modal-portal="true"]');
+      // A nested Modal is portaled to <body> too: clicks inside ANOTHER modal's overlay are not ours to handle.
+      const overlay = target.closest('[data-modal-overlay="true"]');
+      const isOtherModalClick = overlay !== null && overlay !== modalRef.current?.parentElement;
 
-      if (modalRef.current && !modalRef.current.contains(target) && !isPortalClick) {
+      if (modalRef.current && !modalRef.current.contains(target) && !isPortalClick && !isOtherModalClick) {
         handleClose();
       }
     };
@@ -122,7 +125,7 @@ export function Modal({
   if (!mounted || !isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
+    <div data-modal-overlay="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
       <div
         ref={modalRef}
         role="dialog"

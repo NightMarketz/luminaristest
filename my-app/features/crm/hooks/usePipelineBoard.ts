@@ -116,7 +116,8 @@ export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardStat
       }
       try {
         const meta = await DynamicTableService.getTableById(recordsTableId);
-        const sch = (meta?.schema ?? null) as ITableSchema | null;
+        // GET /dynamic-tables/:id answers { success, data: table } and apiClient does not unwrap.
+        const sch = ((meta as { data?: { schema?: unknown } })?.data?.schema ?? null) as ITableSchema | null;
         if (!cancelled) setSchema(sch);
       } catch {
         if (!cancelled) setSchema(null);

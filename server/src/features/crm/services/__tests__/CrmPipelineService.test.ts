@@ -378,6 +378,24 @@ describe('CrmPipelineService', () => {
       expect(typeof call[2].data.closedAt).toBe('string');
     });
 
+    // Lacuna (teste vivo 2026-09-25): o status Won é decidido pelo `stageType` que o CLIENTE
+    // manda, não pelo tipo gravado da etapa-destino — Won foi aceito numa etapa `negotiation`.
+    it.failing('stageType do cliente diverge da etapa gravada → NÃO fecha como Won (vale o tipo da etapa)', async () => {
+      const rows: Record<string, any> = {
+        'opp-1': { ...oppRow },
+        's-neg': { id: 's-neg', dynamicTableId: 'leadStages-table', data: { type: 'negotiation' } },
+      };
+      const { svc, dynamicTableService } = buildService({
+        dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
+        repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
+      });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-neg', stageType: 'closed_won' });
+
+      const call = dynamicTableService.updateTableData.mock.calls[0];
+      expect(call[2].data.status).not.toBe('Won');
+      expect(call[2].data.closedAt).toBeUndefined();
+    });
+
     it('closed_lost → status Lost + closedAt', async () => {
       const { svc, dynamicTableService } = buildService({
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
