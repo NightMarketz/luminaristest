@@ -86,6 +86,12 @@ via `CrmReceivableBridge` (`server/src/features/accounting/sync/bridges/CrmRecei
   presente. Resolver o nome real da conta CRM fica para quando a linkagem importar.
 - **Sem reversão automática de "des-ganho"** — igual antes (o CRM não tem guard terminal); o
   operador cancela o receivable manualmente (estorno automático do reconhecimento).
+  **EMENDA 2026-09-25 (decisão do dono, chat: "decide pós-Won: travar"):** oportunidade Won/Lost
+  passa a ser **terminal** — nenhuma mudança de valor, etapa ou status depois do fechamento, nem pela
+  edição genérica (preset `immutableAfter`) nem pelo `advanceOpportunity` (`isSystem`). Correção de um
+  ganho errado = cancelar o receivable (caminho acima) e abrir outra oportunidade. Motivo: teste vivo
+  mostrou drift CRM R$90k × título/razão R$60k após mudar o valor pós-Won. Guard:
+  `opportunityTerminalLock.test.ts` (GAP-MAP). Implementação ainda não autorizada.
 
 ## Efeito no tie-out
 
