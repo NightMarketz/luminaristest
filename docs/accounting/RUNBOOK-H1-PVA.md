@@ -22,6 +22,7 @@ Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
 | P5 | Mapeamento referencial com cobertura pronta + **nome da versão** em mãos (a ECD exige `mappingVersion`) | aba **Compliance** → painel de mapeamento; ou `GET /api/accounting/referential/coverage?unitId=…` | [ ] |
 | P6 | Dados do declarante/livro/signatários fornecidos pelo contador (lista exata abaixo) | conferir campo a campo | [ ] |
 | P7 | Dezembro do ano-calendário **OPEN** no controle de períodos (o encerramento tem gate de período) | aba **Períodos** | [ ] |
+| P7-seed | **[EMENDA 2026-09-24 — decisão do dono (a)] Tenants do seed (`seed-presumido`/`seed-real`): P7 NÃO SE APLICA** — o exercício 2025 já foi encerrado (`closeExercise`) e `HARD_CLOSED` pelo `db:seed:accounting`. Confira em vez disso que dezembro/2025 está `HARD_CLOSED` | aba **Períodos** (ano 2025) | [ ] |
 
 Se qualquer pré-condição não se sustentar → desfecho **BLOQUEADO**, não execute nada.
 
@@ -93,6 +94,16 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 (cédula de módulos F-M7), não deste gate.
 
 ### P0 de boot (EMENDA 2026-08-27 — fazer ANTES de "Subir o ambiente")
+
+> **[EMENDA 2026-09-24 — SEED-MY] Alvo = seed multi-exercício (`db:seed:accounting`).** O `dev.db` é
+> seed de testes (decisão do dono 12/09). Depois do `npm run db:backup`, rode
+> `cd server && SEED_ACCOUNTING_PASSWORD=<senha> npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup`:
+> cria os tenants `seed-presumido`/`seed-real` (unidades `seed-unit-presumido` / `seed-unit-real` — uma por tenant) com o chart completo (19 contas,
+> `1.1.6/3.3/4.2` inclusas), 2025 encerrado + `HARD_CLOSED`, 2026 `OPEN` até o mês corrente, AP/AR e
+> `FiscalProfile` por regime; sai 1 se o tie-out não fechar. Em seguida rode o
+> `activate-salon-binding.mjs` impresso pelo comando para cada tenant (o seed não ativa binding). Com isso o
+> P0.2b (completar chart + abrir mês) fica coberto para esses tenants. A 2ª passada (Lucro Real) usa
+> `seed-real`.
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -279,6 +290,13 @@ Cada passo tem três campos. **EVIDÊNCIA é obrigatória e é sempre artefato c
 protocolo, saída de comando) — nunca uma frase dizendo que deu certo.
 
 ### 1. Encerramento do exercício (apuração do resultado)
+
+> **[EMENDA 2026-09-24 — decisão do dono (a)] Tenants do seed:** NÃO chame o `POST /closing/exercise`
+> (dezembro/2025 está `HARD_CLOSED`; o `postEntry` checa o período antes da idempotência e responderia
+> erro de período). O passo 1 vira **conferir que o encerramento de 2025 já está no razão**: aba
+> **Razão/Lançamentos** do ano 2025 → existe o lançamento *"Encerramento do exercício 2025 — apuração do
+> resultado"* datado de 31/12/2025 (origem `closing`, `sourceId` 2025), zerando 3.x/4.x contra `2.3.1`.
+> EVIDÊNCIA do passo 1 nesse caso = screenshot desse lançamento. Os passos 2–6 seguem iguais.
 
 Não há tela para isto — é chamada de API. Pegue o token e dispare (substitua `SEU_USUARIO`,
 `SUA_SENHA`, `SEU_UNIT_ID`, `ANO`):
