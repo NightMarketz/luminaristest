@@ -3,21 +3,21 @@ id: "SEED-MY"
 tipo: "gate"
 dominio: "gate"
 titulo: "Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)"
-estado: "ready"
-estado_detalhe: "BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada"
+estado: "done"
+estado_detalhe: "MERGEADO em main (#372 `85068f76`, 25/09) e aplicado no dev.db real: seed-presumido/seed-real com 204 lançamentos 2025 + 153 em 2026, 1 lançamento closing e 12/2025 HARD_CLOSED cada (consulta read-only 25/09)"
 depende_de: ["[[B-4]]"]
 autorizacao: "cédula 14/09 (#318/#319) SEED-MY autorizado"
-prs: ["#325"]
+prs: ["#325", "#372"]
 ancora_sdd: "§III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8"
-atualizado: "2026-09-24"
+atualizado: "2026-09-25"
 ---
 # SEED-MY — Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)
 
-**Estado:** `ready` — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada  
+**Estado:** `done` — MERGEADO em main (#372 `85068f76`, 25/09) e aplicado no dev.db real: seed-presumido/seed-real com 204 lançamentos 2025 + 153 em 2026, 1 lançamento closing e 12/2025 HARD_CLOSED cada (consulta read-only 25/09)  
 **Autorização:** cédula 14/09 (#318/#319) SEED-MY autorizado  
 **Depende de:** [[B-4]]  
 **Desbloqueia:** [[H1]] (pontilhada), [[H1b]] (pontilhada)  
-**PRs:** #325  
+**PRs:** #325, #372  
 **Âncora no SDD consolidado:** §III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8
 
 ## Docs
@@ -40,3 +40,7 @@ atualizado: "2026-09-24"
 `SDD:1733`
 
 | **SEED-MY** | plan (BRIEF curto → `job-generator`) — **pára** se B-4 não estiver assinado | B-4 assinado | cédula #318 §4; #319 autorizações |
+
+## Fold 25/09 (Fase 6 do PLANO-POS-CONTADOR)
+
+- Fold 25/09 — evidência: commit `85068f76` "SEED-MY: db:seed:accounting multi-exercício + B-4 PASSOU (#372)" em `origin/main`; CLI `server/src/jobs/seedAccountingFixtureCli.ts` (`npm run db:seed:accounting`). Consulta read-only em `server/prisma/prisma/dev.db` (25/09): usuários `seed-presumido` e `seed-real` existem; cada um com `journal_entries` 2025 Posted = 204, 2026 Posted = 153, `sourceType='closing'` = 1, `accounting_periods` 2025/12 = `HARD_CLOSED`.
