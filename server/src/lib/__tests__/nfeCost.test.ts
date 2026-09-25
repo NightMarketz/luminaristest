@@ -66,9 +66,10 @@ describe('acquisitionCost — X6 por regime', () => {
     expect(c.custoEstoqueCents).toBe(19333 - 784);
   });
 
-  it('as 3 flags mudam a base de forma determinística: ICMS na base (+1800) e IPI na base (+300)', () => {
+  // ERRATA 2026-09-25 (triagem P1, STJ Tema 1.373): IPI saiu da base como regra fixa — a flag de IPI não soma mais.
+  it('a flag de ICMS muda a base de forma determinística (+1800); a de IPI não soma (regra fixa)', () => {
     const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditExcludesIcms: false, pisCofinsCreditIncludesIpi: true }));
-    expect(c.itens[0].basePisCofinsCents).toBe(8473 + 1800 + 300);
+    expect(c.itens[0].basePisCofinsCents).toBe(8473 + 1800);
   });
 
   it('fornecedor do Simples (CRT=1) com a flag OFF: crédito 0 + warning; com a flag ON: crédito normal', () => {
@@ -97,26 +98,25 @@ describe('acquisitionCost — X6 por regime', () => {
     }
   });
 
-  // ── Teste-guarda da Fase 1 (PLANO-POS-CONTADOR-2026-09-23, sessao-instrumentacao 25/09) ─────────────────
-  // Fonte do esperado: TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md. Vermelhos até a sessao-correcao (passo 1.7,
-  // NÃO autorizada; depende de F-PC-1/F-PC-2). Base/crédito esperados = o oráculo à mão do cabeçalho (8473 / 784).
-  // A correção vai tornar obsoletas asserções vizinhas que hoje fixam o comportamento antigo — ver GAP-MAP.
+  // ── Teste-guarda da Fase 1 (PLANO-POS-CONTADOR-2026-09-23): instrumentado em 25/09 (#379), verde desde a
+  // correção de 25/09 (F-PC-1 → b, F-PC-2 → a). Fonte do esperado: TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md.
+  // Base/crédito esperados = o oráculo à mão do cabeçalho (8473 / 784).
   const naoCumul = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
   const comCstNoItem1 = (cst: string) => ITENS.map((it, i) => (i === 0 ? { ...it, cstPis: cst, cstCofins: cst } : it));
 
-  it.failing('GAP C-1 — NCM fora da tabela + CST 04 na nota: o NCM decide → TRIBUTADO (crédito 784) + alerta de CST divergente (triagem P5)', () => {
+  it('GAP C-1 — NCM fora da tabela + CST 04 na nota: o NCM decide → TRIBUTADO (crédito 784) + alerta de CST divergente (triagem P5)', () => {
     const c = acquisitionCost(NFE, comCstNoItem1('04'), naoCumul);
     expect({ classe: c.itens[0].classe, credito: c.itens[0].creditoPisCofinsCents, alertaCst04: c.warnings.some((w) => /item 1\b.*CST 04/.test(w)) })
       .toEqual({ classe: 'TRIBUTADO', credito: 784, alertaCst04: true });
   });
 
-  it.failing('GAP C-3 — NCM comum + CST 02: crédito 1,65% + 7,6% sobre base sem ICMS e sem IPI (8473 → 784), alerta mantido (triagem item 8)', () => {
+  it('GAP C-3 — NCM comum + CST 02: crédito 1,65% + 7,6% sobre base sem ICMS e sem IPI (8473 → 784), alerta mantido (triagem item 8)', () => {
     const c = acquisitionCost(NFE, comCstNoItem1('02'), naoCumul);
     expect({ base: c.itens[0].basePisCofinsCents, credito: c.itens[0].creditoPisCofinsCents, alertaCst02: c.warnings.some((w) => /item 1\b.*CST 02/.test(w)) })
       .toEqual({ base: 8473, credito: 784, alertaCst02: true });
   });
 
-  it.failing('GAP IPI-BASE — vIPI > 0: IPI fora da base do crédito como regra FIXA, mesmo com a flag ligada (STJ Tema 1.373, triagem P1)', () => {
+  it('GAP IPI-BASE — vIPI > 0: IPI fora da base do crédito como regra FIXA, mesmo com a flag ligada (STJ Tema 1.373, triagem P1)', () => {
     const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditIncludesIpi: true }));
     expect(c.itens[0].basePisCofinsCents).toBe(8473);
   });
