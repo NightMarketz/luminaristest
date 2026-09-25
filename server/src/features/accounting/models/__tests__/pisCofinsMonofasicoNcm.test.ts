@@ -10,7 +10,7 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
   it('toda entrada cita a lei, o artigo e o arquivo do corpus; prefixo só dígitos (2–8)', () => {
     for (const r of PIS_COFINS_MONOFASICO_NCM) {
       expect(r.fonte).toMatch(
-        /^(Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)|Tabela 4\.3\.10 EFD-Contribuições v1\.25 código [\d/]+ — .+ \(TABELA-4310-EFD-CONTRIBUICOES-v1\.25\.txt\))$/,
+        /^(Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)|Tabela 4\.3\.10 EFD-Contribuições v1\.25 código \d{3}(\/\d{3})? — .+ \(TABELA-4310-EFD-CONTRIBUICOES-v1\.25\.txt\))$/,
       );
       expect(r.prefixo).toMatch(/^\d{2,8}$/);
       for (const ex of r.exceto ?? []) expect(ex).toMatch(/^\d{8}$/);

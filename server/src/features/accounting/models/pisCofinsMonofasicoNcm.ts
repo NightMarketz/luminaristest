@@ -16,8 +16,9 @@
  * nota do não-varejista (art. 30) NÃO é modelado (conservador = sem crédito).
  * Combustíveis: a Lei 9.718/1998 art. 4º nomeia PRODUTOS, não NCM. A correspondência produto → NCM vem da
  * **Tabela 4.3.10 da EFD-Contribuições v1.25** (corpus `tabela-4310-efd`; transcrição §B.1, chaves `T4310-NNN`),
- * só com as linhas de "Término de Escrituração" VAZIO — as encerradas (2710.11.59, 3824.90.29, 2207.10.00 pós
- * 30/04/2025) ficam de fora de propósito. `2208.90.00 Ex 01` (álcool dentro de código de bebida) NÃO entra: aqui
+ * só com as linhas de "Término de Escrituração" VAZIO — a encerrada 3824.90.29 (biodiesel até 31/12/2011) fica de
+ * fora de propósito. `2710.11.59` (gasolina pré-2012) também está fora, mas por outro motivo: ela existe no `.doc`
+ * da RFB e **não** no texto do corpus, que o `antiword` extrai sem essa linha (ver §B.1 da transcrição). `2208.90.00 Ex 01` (álcool dentro de código de bebida) NÃO entra: aqui
  * o conservador é o inverso do usual — marcar a posição inteira classificaria bebida comum como sem crédito.
  *
  * Guarda: `__tests__/pisCofinsMonofasicoNcm.test.ts` assere que toda `fonte` cita lei+artigo do MANIFEST

@@ -106,3 +106,6 @@ que citava o antigo precisa ser reconferido.
   das linhas — a extracao crua do stream `WordDocument` a perde. Para reconferir: `curl -sL -o t.doc
   http://sped.rfb.gov.br/arquivo/download/1638 && antiword t.doc | diff - TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt`.
   A versao 1.16 de 2016 (`/arquivo/download/64`) foi lida e descartada: e historica e traz as MESMAS linhas de combustivel.
+  **Extracao LOSSY (medido no review de 27/09):** o `antiword` nao emite a linha encerrada do codigo 101
+  (`2710.11.59`, 01/2011-31/12/2011), que existe no `.doc` (1 ocorrencia no stream `WordDocument`). As linhas
+  VIGENTES conferem uma a uma; para historico de linha encerrada, leia o `.doc` pelo sha256 acima, nao este `.txt`.
