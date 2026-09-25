@@ -18,7 +18,7 @@ describe('seedAccountingFixtureCli (integração)', () => {
   beforeAll(async () => {
     pushTestSchema();
     await resetDb();
-  });
+  }, 120000);
 
   afterAll(async () => {
     await prisma.$disconnect();
