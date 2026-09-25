@@ -113,6 +113,21 @@ import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
 import { getFiscalProfile, upsertFiscalProfile } from '../controllers/fiscalProfileController';
 import {
+  copyCompanyFiscalProfile,
+  deleteCompanyFiscalProfile,
+  getCompanyFiscalProfile,
+  getCompanyObligations,
+  markEcfTransmitida,
+  upsertCompanyFiscalProfile,
+} from '../controllers/companyFiscalProfileController';
+import {
+  createCompanySigner,
+  deleteCompanySigner,
+  getCompanySigner,
+  listCompanySigners,
+  updateCompanySigner,
+} from '../controllers/companySignerController';
+import {
   listDepreciationRates,
   createDepreciationRate,
   hideDepreciationRate,
@@ -301,6 +316,19 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1, BRIEF itens 6/8/9; F-XP-2/3 a) — perfil da EMPRESA por ano +
+// signatários não-contador; segmentos estáticos, antes de /:unitId/periods.
+router.get('/company-fiscal-profile/:ano/obligations', getCompanyObligations);
+router.post('/company-fiscal-profile/:ano/copiar-de/:anoAnterior', copyCompanyFiscalProfile);
+router.post('/company-fiscal-profile/:ano/ecf-transmitida', markEcfTransmitida); // PR-2 item 16
+router.get('/company-fiscal-profile/:ano', getCompanyFiscalProfile);
+router.put('/company-fiscal-profile/:ano', upsertCompanyFiscalProfile);
+router.delete('/company-fiscal-profile/:ano', deleteCompanyFiscalProfile);
+router.get('/company-signers', listCompanySigners);
+router.post('/company-signers', createCompanySigner);
+router.get('/company-signers/:id', getCompanySigner);
+router.put('/company-signers/:id', updateCompanySigner);
+router.delete('/company-signers/:id', deleteCompanySigner);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).

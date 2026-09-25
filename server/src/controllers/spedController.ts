@@ -13,6 +13,8 @@ import {
 import type { UserContext } from '../lib/authUtils';
 import { ValidationError } from '../lib/errors';
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
+import { aplicarPerfilNoCorpo, recusaDeRegime } from '../features/accounting/models/spedPerfilPrefill';
+import type { SpedTarget } from '../features/accounting/models/spedPerfilPrefill';
 
 /**
  * BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20): o .rtf do Termo de Verificação (J801.ARQ_RTF) chega
@@ -56,6 +58,43 @@ function decodeMultipartJsonFields(body: unknown, keys: string[]): unknown {
     if (!Number.isNaN(n)) raw.year = n;
   }
   return raw;
+}
+
+interface ExpansaoDoPerfil {
+  body: unknown;
+  perfilFiscal: { aplicado: boolean; sobrescritos: string[] };
+  avisos: string[];
+}
+
+/**
+ * BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-2, BRIEF itens 12–14) — roda ANTES de `expandSignerContacts`, na
+ * mesma fronteira (serviços e DTOs de geração seguem intocados). Com perfil da empresa no `year` do corpo:
+ *  - item 13: ECF para o regime errado → 400 (`recusaDeRegime`); a ECD nunca é recusada por regime;
+ *  - item 12: preenche o que o corpo não trouxe (`aplicarPerfilNoCorpo`) e devolve `sobrescritos`;
+ *  - item 14: ECD sem grande porte marcado → aviso se o BP/DRE de N-1 passar dos limites (não bloqueia).
+ * Sem perfil no ano: F-XP-1 → (c) — segue pelo corpo, com aviso, até o PR-3 (onboarding) entrar; depois vira 400.
+ * Sem `unitId` string ou `year` numérico não há o que resolver: o corpo passa e o DTO responde 400, como sempre.
+ */
+async function expandCompanyProfile(body: unknown, user: UserContext, target: SpedTarget): Promise<ExpansaoDoPerfil> {
+  const nada: ExpansaoDoPerfil = { body, perfilFiscal: { aplicado: false, sobrescritos: [] }, avisos: [] };
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return nada;
+  const raw = body as Record<string, unknown>;
+  if (typeof raw.unitId !== 'string' || raw.unitId.length === 0 || typeof raw.year !== 'number') return nada;
+  const scope = resolveAccountingScope(user, raw.unitId);
+  const perfis = getFactory().getCompanyFiscalProfileService();
+  const perfil = await perfis.perfilParaGeracao(scope, raw.year);
+  if (!perfil) {
+    return { ...nada, avisos: [`perfil fiscal da empresa ausente para ${raw.year}: a geração usou só o corpo da requisição (F-XP-1 c).`] };
+  }
+  const recusa = recusaDeRegime(target, perfil.regime, raw.year);
+  if (recusa) throw new ValidationError(`${recusa.code}: ${recusa.message}`);
+  const { body: preenchido, sobrescritos } = aplicarPerfilNoCorpo(raw, perfil, target);
+  const avisos: string[] = [];
+  if (target === 'ecd' && perfil.grandePorte !== true) {
+    const aviso = await perfis.avisoGrandePorte(scope, raw.year);
+    if (aviso) avisos.push(aviso);
+  }
+  return { body: preenchido, perfilFiscal: { aplicado: true, sobrescritos }, avisos };
 }
 
 /**
@@ -127,7 +166,8 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
     const decoded = decodeMultipartJsonFields(req.body, ['declarant', 'book', 'signers', 'verificationTerm']);
-    const parsed = SpedEcdRequestSchema.safeParse(await expandSignerContacts(decoded, user, 'ecd'));
+    const perfil = await expandCompanyProfile(decoded, user, 'ecd');
+    const parsed = SpedEcdRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecd'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
@@ -137,7 +177,7 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
     const data = await getFactory()
       .getSpedGenerationService()
       .generate(scope, parsed.data, rtf ? { buffer: rtf.buffer } : undefined);
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }
@@ -155,14 +195,15 @@ export const generateSpedEcf = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = SpedEcfRequestSchema.safeParse(await expandSignerContacts(req.body, user, 'ecf'));
+    const perfil = await expandCompanyProfile(req.body, user, 'ecf');
+    const parsed = SpedEcfRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecf'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getSpedEcfGenerationService().generate(scope, parsed.data);
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }
@@ -182,14 +223,15 @@ export const generateSpedEcfReal = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = SpedEcfRealRequestSchema.safeParse(await expandSignerContacts(req.body, user, 'ecf'));
+    const perfil = await expandCompanyProfile(req.body, user, 'ecfReal');
+    const parsed = SpedEcfRealRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecf'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getSpedEcfRealGenerationService().generate(scope, parsed.data);
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }

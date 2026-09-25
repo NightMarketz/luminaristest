@@ -23,6 +23,8 @@ export default function QuickSetup() {
   const [error, setError] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  // I1 (F-I1-2 b): nome da primeira unidade — sem default, obrigatório antes do submit.
+  const [unitName, setUnitName] = useState('');
 
   const groupedPresets = useMemo(() => {
     return presets.reduce((acc, preset) => {
@@ -58,12 +60,12 @@ export default function QuickSetup() {
   }, [user, authLoading, router]);
 
   async function handleCreateDashboard() {
-    if (!selectedPreset) return;
+    if (!selectedPreset || !unitName.trim()) return;
 
     setIsCreating(true);
     setError(null);
     try {
-      await SetupService.createDashboard({ mode: 'quick', suiteKey: selectedPreset });
+      await SetupService.createDashboard({ mode: 'quick', suiteKey: selectedPreset, unit: { name: unitName.trim() } });
 
       router.push('/dashboard');
 
@@ -126,6 +128,21 @@ export default function QuickSetup() {
       </div>
 
       <footer className="mt-16 flex flex-col items-center">
+        <div className="mb-8 w-full max-w-sm">
+          <label htmlFor="quick-unit-name" className="mb-2 block text-sm font-bold text-neutral-700 dark:text-neutral-300">
+            {t('unitNameLabel')}
+          </label>
+          <input
+            id="quick-unit-name"
+            type="text"
+            maxLength={120}
+            value={unitName}
+            onChange={(e) => setUnitName(e.target.value)}
+            disabled={isCreating}
+            placeholder={t('unitNamePlaceholder')}
+            className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-neutral-900 focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+          />
+        </div>
         {error && isCreating && (
           <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 text-red-600 border border-red-100 dark:border-red-900 text-sm">
             {error}
@@ -133,7 +150,7 @@ export default function QuickSetup() {
         )}
         <button
           onClick={handleCreateDashboard}
-          disabled={!selectedPreset || isCreating}
+          disabled={!selectedPreset || !unitName.trim() || isCreating}
           className="group relative w-full max-w-sm overflow-hidden rounded-2xl bg-blue-600 p-px font-bold text-white shadow-xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           <div className="relative flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-8 py-4 transition-colors group-hover:bg-blue-700">
@@ -151,6 +168,9 @@ export default function QuickSetup() {
           <p className="mt-4 text-slate-400 text-sm font-medium italic">
             {t('selectModelToEnable')}
           </p>
+        )}
+        {selectedPreset && !unitName.trim() && (
+          <p className="mt-4 text-neutral-400 text-sm font-medium italic">{t('unitNameRequired')}</p>
         )}
       </footer>
     </div>

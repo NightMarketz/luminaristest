@@ -3,8 +3,8 @@ id: "ENVIO-PEDIDO-CONTADOR"
 tipo: "dado-externo"
 dominio: "externo"
 titulo: "Envio do pedido ao contador (itens 6–13; o dono envia)"
-estado: "human-open"
-estado_detalhe: "Pedido montado #331 3f61c4b0; envio não registrado"
+estado: "done"
+estado_detalhe: "Enviado pelo dono (data não informada); resposta recebida 23/09 → triagem TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md"
 autorizacao: "F-M5 (2026-09-03)"
 prs: ["#331"]
 ancora_sdd: "§III.1 · §M5.1 (apontadores)"
@@ -12,7 +12,7 @@ atualizado: "2026-09-23"
 ---
 # ENVIO-PEDIDO-CONTADOR — Envio do pedido ao contador (itens 6–13; o dono envia)
 
-**Estado:** `human-open` — Pedido montado #331 3f61c4b0; envio não registrado  
+**Estado:** `done` — Enviado pelo dono (data não informada); resposta recebida 23/09 → triagem TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md  
 **Autorização:** F-M5 (2026-09-03)  
 **Depende de:** —  
 **Desbloqueia:** —  

@@ -84,9 +84,13 @@ const { options } = require('../../scripts/generate-openapi');
 // fixed-assets, fixed-assets/{id}, fixed-assets/{id}/activate, fixed-assets/{id}/dispose.
 // +2 (BE-INCR-FIXED-ASSETS PR-3, nó C8, item 12/13/17): fixed-assets/depreciation/run,
 // fixed-assets/reconcile (208 → 210).
-// BE-INCR-FIXED-ASSETS PR-4 (item 23/F-FA15 a + item 22): +2 paths — GET /data-exchange/jobs
-// (lista) e POST /data-exchange/jobs/{jobId}/waive-ecf-rectification.
-const BASELINE = 212;
+// +5 (BE-INCR-FISCAL-OBLIGATION-PROFILE PR-1, nó X13): company-fiscal-profile/{ano} (GET/PUT/DELETE),
+// .../{ano}/obligations, .../{ano}/copiar-de/{anoAnterior}, company-signers (GET/POST), company-signers/{id}
+// (GET/PUT/DELETE) — 5 PATHS e 11 OPERAÇÕES (210 → 215, medido com docs:generate).
+// +1 (X13 PR-2, item 16): company-fiscal-profile/{ano}/ecf-transmitida (POST) — 215 → 216.
+// +2 (BE-INCR-FIXED-ASSETS PR-4, item 23/F-FA15 a + item 22): GET /data-exchange/jobs (lista) e
+// POST /data-exchange/jobs/{jobId}/waive-ecf-rectification — 216 → 218.
+const BASELINE = 218;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
