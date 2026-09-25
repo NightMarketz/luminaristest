@@ -17,7 +17,7 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 | **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → 47/57 (C12 ✅ + C8 espera PR-5 ou declaração); GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | grep "46/57\|47/57\|contábil.*20/22" | ✅ → 10 |
 | **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Commit mergeado em `main`; 22 arquivos; skill-audit 0 findings | `git log --oneline main -1 \| grep -c "atomicUntil"` → ≥1 | ✅ → espera "11 instrumenta" |
 | **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `main` com passo 10 mergeado; arquivo `NoOverlapConcurrency.integration.test.ts` como molde | `server/src/features/dynamicTables/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `npx jest UniqueFieldConcurrency --no-coverage 2>&1 \| grep failing` | espera "instrumenta" dono |
-| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `main` com passo 10 mergeado; `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `npx jest immutableAfter.test --no-coverage 2>&1 \| grep failing` | espera dono: fork + "corrige" |
+| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `main` com passo 10 mergeado; `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | gate padrão `--json`: `total:2, failed:0` | espera dono: fork + "corrige" |
 | **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `main` com passo 10 mergeado; población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `npx jest atomicUntil.boundary --no-coverage` = verde | espera "executa" dono |
 
 ---
@@ -59,7 +59,7 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 
 2. Referenciar no GAP-MAP "Nível 4 — Runtime sistêmico".
 
-**Gate:** `npx jest UniqueFieldConcurrency --no-coverage 2>&1 | grep "failing"` → vermelho esperado.
+**Gate:** mesmo formato do "Gate de teste-guarda" (fim do doc) com `UniqueFieldConcurrency` e `/tmp/g11.json`; esperado `failed:0` e o `it.failing` em `:passed`.
 
 ---
 
@@ -69,20 +69,37 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
 
 **Haiku:**
 1. Criar `server/src/features/dynamicTables/__tests__/DynamicTableService.immutableAfter.test.ts`:
-   - Preset com `immutableAfter: {scope: 'all', statusField: 'status'}`.
-   - Linha em status `Paid` → `deleteTableData(id)` deve lançar.
-   - `it.failing` citando GAP-MAP lacuna 8.
+   - Preset com o shape REAL (array; `statusField` não existe — cf. `DynamicTable.dto.ts:160`,
+     exemplo vivo em `SalesModule.ts:165`):
+     `immutableAfter: [{ condition: { field: 'status', op: 'eq', value: 'Paid' }, scope: 'all' }]`.
+   - Teste 1 (`it.failing`, cita GAP-MAP lacuna 8): linha em status `Paid` → `deleteTableData(id)`
+     deve lançar `ValidationError`.
+   - Teste 2 (`it`, controle positivo, VERDE): mesma tabela, linha em status `Draft` →
+     `deleteTableData(id)` resolve e a linha some. Prova que a fixture é válida — sem ele, um
+     preset rejeitado pelo Zod deixa o teste 1 vermelho pelo motivo errado.
+   - Nota para o fork: `deleteTableData` não recebe `options.isSystem`; Guard 2 só roda em `!isSystem`.
+     Deixar no teste um comentário `// TODO fork: delete de sistema (cascata/job) isento?`.
 
 **Sonnet — esforço `medium`:**
 1. Ler `DynamicTableService.ts` `deleteTableData` + Guards 2/3 do `updateTableData`.
 2. Apresentar fork:
    - **(a)** Guard no delete (+20 linhas, cobre raiz).
-   - **(b)** `deleteConstraints: RESTRICT` no preset (não cobre raiz).
+   - **(b)** `deleteConstraints: RESTRICT` no preset — **não cobre o caso**: `deleteConstraints` só
+     avalia linhas de OUTRAS tabelas que referenciam o registro (`DynamicTableService.ts:832-861`),
+     nunca o status do próprio registro. Apresentar como descartada, com a linha.
+   - Citar que `deleteTableDataBatch` reusa `deleteTableData` (linha ~920): (a) cobre o batch de graça.
+   - Levar ao dono a pergunta do `isSystem` (delete de sistema isento, espelhando Guard 2?).
 3. Aguardar resposta do dono.
 
 **Por que `medium`, não `low`/`high`:** as 2 opções já vêm esboçadas no GAP-MAP original (não é design aberto — `low` bastaria só para confirmar que ainda batem com o código); mas a tarefa exige ler os 2 métodos de verdade antes de perguntar, não só citar de memória (`low` arriscaria alucinar a linha). Não é `high`/`xhigh`: escopo é 2 métodos de 1 arquivo já localizado, sem exploração do resto do codebase, e a decisão não é irreversível (o dono ratifica antes de qualquer código).
 
-**Gate:** `npx jest immutableAfter.test --no-coverage 2>&1 | grep "failing"` → vermelho esperado.
+**Gate (formato padrão de instrumentação — ver "Gate de teste-guarda" no fim):**
+```bash
+cd server && npx jest immutableAfter.test --no-coverage --json --outputFile=/tmp/g12.json >/dev/null 2>&1; node -e "const r=require('/tmp/g12.json');console.log(JSON.stringify({total:r.numTotalTests,failed:r.numFailedTests,names:r.testResults.flatMap(t=>t.assertionResults.map(a=>a.fullName+':'+a.status))}))"
+```
+Esperado: `{"total":2,"failed":0,...}` com os DOIS `:passed`. Leitura: o `it.failing` só conta como
+`passed` se lançou (lacuna provada); o controle `Draft` só conta como `passed` se a fixture é válida.
+Qualquer `failed>0` = fixture quebrada ou lacuna já fechada → não avança, reportar o `names`.
 
 ---
 
@@ -151,3 +168,20 @@ tempo=120min (após 13 verde)
 **Padrão:** Haiku executa mecânico (grep/fold/retrofit de comentário — 0 dial de esforço). Sonnet só entra quando há leitura de código + decisão de design, e mesmo aí no piso que a tarefa aguenta: aqui `medium`, porque o espaço de busca é 2 métodos de 1 arquivo já apontado e as opções já vêm esboçadas — nem `low` (risco de citar linha de memória sem ler), nem `high+` (isso é para decisão sem precedente ou sem teto de escopo, que não é o caso). "instrumenta" = teste vermelho sem lógica; "executa" = código com lógica.
 
 **Regra geral para próximas tarefas deste tipo (T4 — decisão que se repete, cite-a):** esforço do Sonnet acompanha o tamanho do espaço de busca e o custo de errar, não o "peso" aparente da tarefa — fork já esboçado + arquivo já localizado = `medium` teto; escalar para `high`/`xhigh` só quando a leitura precisar cruzar múltiplos arquivos sem localização prévia, ou a decisão for difícil de reverter depois de tomada.
+
+---
+
+## Gate de teste-guarda (formato único para passos 11 e 12)
+
+Nunca `grep` na saída humana do jest (ícones `✓`/`✕`, cor, idioma e reporter variam entre Haiku,
+Sonnet, Windows e CI). Sempre `--json --outputFile` e ler campos:
+
+```bash
+cd server && npx jest <padrão> --no-coverage --json --outputFile=/tmp/g<passo>.json >/dev/null 2>&1; node -e "const r=require('/tmp/g<passo>.json');console.log(JSON.stringify({total:r.numTotalTests,failed:r.numFailedTests,names:r.testResults.flatMap(t=>t.assertionResults.map(a=>a.fullName+':'+a.status))}))"
+```
+
+Regras de leitura:
+1. `it.failing` que lança → `status:"passed"`. É isso que prova a lacuna. `it.failing` que NÃO lança → `failed` (lacuna já fechada ou teste não exercita o caminho).
+2. Controle positivo (`it` normal) → `passed` prova que a fixture é válida.
+3. `failed:0` com `total` = nº esperado de testes é o único verde. Colar o JSON inteiro no relatório do passo — a frase "ficou vermelho" não é evidência.
+4. `total:0` = padrão de arquivo não casou; não é verde.
