@@ -32,7 +32,7 @@ const wonOpp = {
 };
 
 describe('Oportunidade Won/Lost é terminal', () => {
-  it.failing('caminho genérico (edição inline da tabela): mudar amount de opp Won → ValidationError', async () => {
+  it('caminho genérico (edição inline da tabela): mudar amount de opp Won → ValidationError', async () => {
     const repository = {
       findTableByDataId: jest.fn(async () => ({
         id: 'crmOpportunities-table',
@@ -53,7 +53,7 @@ describe('Oportunidade Won/Lost é terminal', () => {
     ).rejects.toBeInstanceOf(ValidationError);
   });
 
-  it.failing('advanceOpportunity (isSystem): opp já Won → ValidationError, sem escrita', async () => {
+  it('advanceOpportunity (isSystem): opp já Won → ValidationError, sem escrita', async () => {
     const updateTableData = jest.fn(async () => ({ id: 'opp-1', data: {} }));
     const repository = {
       findTableByInternalName: jest.fn(async (_u: string, internal: string) => ({

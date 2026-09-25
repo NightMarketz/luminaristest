@@ -308,6 +308,11 @@ export class CrmPipelineService {
     if (!oppRow || oppRow.dynamicTableId !== opportunitiesTableId) {
       throw new NotFoundError(`Opportunity '${input.opportunityId}' não foi encontrada.`);
     }
+    // isSystem skips the preset's immutableAfter, so the terminal state is checked here too.
+    const currentStatus = (oppRow.data as Record<string, unknown> | null)?.status;
+    if (currentStatus === 'Won' || currentStatus === 'Lost') {
+      throw new ValidationError('Oportunidade fechada (Won/Lost) não pode ser alterada.');
+    }
 
     const patch: Record<string, unknown> = { stageId: input.stageId };
     if (input.amount != null) patch.amount = input.amount;
