@@ -104,4 +104,17 @@ export const UpsertCompanyFiscalProfileSchema = z
   });
 
 export type UpsertCompanyFiscalProfileInput = z.infer<typeof UpsertCompanyFiscalProfileSchema>;
+
+/**
+ * X13 PR-3 item 19 (F-OBP-6 → c): bloco `fiscal` do `POST /dashboard/create` — o onboarding pergunta SÓ regime e porte,
+ * com "não sei" (`NAO_SEI` ⇒ nada é criado; o resto do perfil vem depois, no formulário). Pergunta fechada: o modelo
+ * da entrevista não infere o regime (item 20).
+ */
+export const OnboardingFiscalSchema = z
+  .object({
+    regime: z.enum([...REGIMES_EMPRESA, 'NAO_SEI']),
+    grandePorte: z.boolean().nullable().optional(),
+  })
+  .strict();
+export type OnboardingFiscalInput = z.infer<typeof OnboardingFiscalSchema>;
 export type CompanyDeclarante = z.infer<typeof CompanyDeclaranteSchema>;

@@ -1384,6 +1384,36 @@
         "regime"
       ],
       "additionalProperties": false
+    },
+    "OnboardingFiscalSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "regime": {
+          "type": "string",
+          "enum": [
+            "MEI",
+            "SIMPLES",
+            "PRESUMIDO",
+            "REAL",
+            "NAO_SEI"
+          ]
+        },
+        "grandePorte": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "regime"
+      ],
+      "additionalProperties": false
     }
   },
   "CompanySignerDto.ts": {

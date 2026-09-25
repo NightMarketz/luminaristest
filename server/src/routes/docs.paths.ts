@@ -664,6 +664,8 @@
  *         (BE-INCR-ONBOARDING-FIRST-UNIT, F-I1-2 b) - the first row of `units` is created through
  *         the normal write path (plugins run) and its id is returned as `data.unitId`. If creating
  *         the unit fails the install is undone and the answer is 500 ONBOARDING_ROLLED_BACK.
+ *         With `fiscal.regime` known, the company fiscal profile of the current year is created after the
+ *         unit and `data.fiscal` carries status criado and the resolved SPED obligations (X13 PR-3).
  *         Returns 403 if the user already has tables configured.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
@@ -686,6 +688,14 @@
  *                         name: { type: string, maxLength: 120 }
  *                         cnpj: { type: string, maxLength: 18 }
  *                         type: { type: string, enum: [Own, Franchise, Department] }
+ *                     fiscal:
+ *                       type: object
+ *                       description: 'X13 PR-3 - regime and size asked at onboarding; NAO_SEI creates nothing (data.fiscal.status pendente)'
+ *                       required: [regime]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
+ *                         grandePorte: { type: boolean, nullable: true }
  *                 - type: object
  *                   required: [mode, presetKey, unit]
  *                   properties:
@@ -699,6 +709,14 @@
  *                         name: { type: string, maxLength: 120 }
  *                         cnpj: { type: string, maxLength: 18 }
  *                         type: { type: string, enum: [Own, Franchise, Department] }
+ *                     fiscal:
+ *                       type: object
+ *                       description: 'X13 PR-3 - regime and size asked at onboarding; NAO_SEI creates nothing (data.fiscal.status pendente)'
+ *                       required: [regime]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
+ *                         grandePorte: { type: boolean, nullable: true }
  *                     removedTables:
  *                       type: array
  *                       items: { type: string }

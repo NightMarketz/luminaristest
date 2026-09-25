@@ -83,7 +83,7 @@ describe('useAiInterview — create da Entrevista manda a primeira unidade (I1)'
     vi.unstubAllEnvs();
   });
 
-  it('ao chegar em COMPLETED, POST /dashboard/create leva { suiteKey, unit: { name: <SUMMARY> } }', async () => {
+  it('ao chegar em COMPLETED pergunta regime/porte; ao confirmar, POST /dashboard/create leva { suiteKey, unit: <SUMMARY>, fiscal }', async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse({ response: 'Olá!', nextStage: 'DISCOVERING_BUSINESS' }))
       .mockResolvedValueOnce(
@@ -98,10 +98,20 @@ describe('useAiInterview — create da Entrevista manda a primeira unidade (I1)'
       await result.current.handleSendMessage();
     });
 
+    // X13 PR-3 item 20: COMPLETED não cria direto — primeiro a pergunta FECHADA de regime/porte
+    await waitFor(() => expect(result.current.fiscalPendente).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    act(() => result.current.confirmarFiscal({ regime: 'PRESUMIDO', grandePorte: false }));
+
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     const [url, init] = fetchMock.mock.calls[2] as [string, RequestInit];
     expect(url).toBe('http://api.test/api/dashboard/create');
-    expect(JSON.parse(String(init.body))).toEqual({ suiteKey: 'beautySalon', unit: { name: 'Salão Bela Vista, atende mulheres' } });
+    expect(JSON.parse(String(init.body))).toEqual({
+      suiteKey: 'beautySalon',
+      unit: { name: 'Salão Bela Vista, atende mulheres' },
+      fiscal: { regime: 'PRESUMIDO', grandePorte: false },
+    });
+    expect(result.current.fiscalPendente).toBe(false);
   });
 
   it('nomeDaUnidadeDaEntrevista: sem SUMMARY usa a chave do preset; corta em 120; ignora mensagem do usuário', () => {

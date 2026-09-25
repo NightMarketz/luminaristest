@@ -21,6 +21,13 @@ export function nomeDaUnidadeDaEntrevista(conversa: IMessage[], presetKey: strin
   return presetKey;
 }
 
+/** X13 PR-3 item 20: resposta da pergunta fechada de regime/porte (espelha `OnboardingFiscalSchema` do servidor). */
+export type RegimeOnboarding = 'MEI' | 'SIMPLES' | 'PRESUMIDO' | 'REAL' | 'NAO_SEI';
+export interface FiscalOnboarding {
+  regime: RegimeOnboarding;
+  grandePorte: boolean | null;
+}
+
 export function useAiInterview() {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
@@ -30,6 +37,8 @@ export function useAiInterview() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState<string | null>(null);
+  // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
+  const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
   const [customizationState, setCustomizationState] = useState<ICustomizationState | null>(null);
   const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -87,7 +96,7 @@ export function useAiInterview() {
     });
   };
 
-  async function handleCreateSystem(key: string, conversa: IMessage[]) {
+  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding) {
     setIsCreating(true);
     setCreationError(null);
     try {
@@ -98,7 +107,7 @@ export function useAiInterview() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) } }),
+        body: JSON.stringify({ suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal }),
       });
 
       if (!response.ok) {
@@ -159,7 +168,8 @@ export function useAiInterview() {
 
       if (nextStage === 'COMPLETED' && (newPresetKey || presetKey)) {
         if (!startCustomization) {
-          handleCreateSystem(newPresetKey || presetKey!, [...newMessages, { sender: 'ai', text: aiResponse }]);
+          // X13 PR-3 item 20: regime/porte vêm de pergunta FECHADA ao usuário — o modelo não os infere da conversa.
+          setFiscalPendente({ key: newPresetKey || presetKey!, conversa: [...newMessages, { sender: 'ai', text: aiResponse }] });
         }
       }
 
@@ -204,6 +214,14 @@ export function useAiInterview() {
     setSelectedTable(tableWithKey);
   };
 
+  /** X13 PR-3 item 20: o usuário respondeu regime/porte (ou "não sei") — agora sim o sistema é criado. */
+  function confirmarFiscal(fiscal: FiscalOnboarding) {
+    if (!fiscalPendente) return;
+    const { key, conversa } = fiscalPendente;
+    setFiscalPendente(null);
+    void handleCreateSystem(key, conversa, fiscal);
+  }
+
   const handleRetry = () => {
     window.location.reload();
   }
@@ -229,6 +247,8 @@ export function useAiInterview() {
     handleUpdateTable,
     logState,
     handleRetry,
-    presetKey
+    presetKey,
+    fiscalPendente: fiscalPendente !== null,
+    confirmarFiscal
   };
 }
