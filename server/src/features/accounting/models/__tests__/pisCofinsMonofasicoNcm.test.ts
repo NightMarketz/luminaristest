@@ -49,4 +49,12 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
     expect(classifyPisCofinsItem({ ncm: '', cstPis: '01', cstCofins: '01' }).classe).toBe('UNKNOWN');
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '49', cstCofins: '49' }).classe).toBe('UNKNOWN');
   });
+
+  // Teste-guarda da Fase 1 (PLANO-POS-CONTADOR-2026-09-23, passo 1.6; sessao-instrumentacao 25/09). NCM tirado da
+  // transcrição `docs/accounting/fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`, chave
+  // `L13097-art14-IV` ("22.03" — cerveja de malte). CST 01 para isolar a TABELA (com CST 04 o C-1 já daria MONOFASICO).
+  // Metade "combustível" BLOQUEADA: a lei lida não traz NCM (transcrição §B) — não se escreve NCM de memória.
+  it.failing('GAP C-2 — bebida fria (NCM 2203.00.00, Lei 13.097 art. 14 IV) com CST 01 → MONOFASICO (sem crédito)', () => {
+    expect(classifyPisCofinsItem({ ncm: '22030000', cstPis: '01', cstCofins: '01' }).classe).toBe('MONOFASICO');
+  });
 });
