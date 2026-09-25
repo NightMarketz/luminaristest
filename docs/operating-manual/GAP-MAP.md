@@ -193,6 +193,10 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    do DynamicForm SAI do lote (blast radius é o dashboard, não a contabilidade) e vira item próprio,
 >    levando junto o teste-guarda dele — o lote da correção é de **12 sites**; **F5(a)** #250 primeiro,
 >    rebase por cima, os dois registros mantidos (esta resolução).
+>    **Item próprio F4(b) — INSTRUMENTADO em `main` 2026-09-25** (autorização do dono no chat): o guarda
+>    `my-app/features/dashboard/components/forms/__tests__/DynamicForm.todayButton.test.tsx` › "guarda:
+>    clicar em "Hoje" na janela 21h-00h BRT…" entra como `it.fails` (vermelho por desenho; falha na
+>    asserção final: `expected '2026-09-01' to be '2026-08-31'`). ABERTO — a correção troca para `it()`.
 >
 >    **CORRIGIDO 2026-09-02** — os 12 sites do lote (13 menos o DynamicForm, que F4(b) tirou para item
 >    próprio): BP/DRE/DFC pelo backend (`asOf` opcional + `scopeToday` no Service) e os 9 restantes no
