@@ -108,6 +108,57 @@ export const refineEcfSigners = (
   }
 };
 
+/**
+ * 0000.RETIFICADORA/NUM_REC (BE-INCR-FIXED-ASSETS PR-4, Passo 19). `'N'` = original (default);
+ * `'S'` = retificadora, exige `numRec` (C 40 — hash do recibo da ECF anterior) e
+ * `supersedesJobId` (id do job EXPORTED que está sendo retificado). `'F'` NÃO existe na tabela
+ * do manual — `z.enum(['N','S'])` já reprova (400) de propósito, sem precisar de um `.refine`.
+ */
+export const refineEcfRectification = (
+  val: { year: number; retificadora?: string; numRec?: string; supersedesJobId?: string; deadlineJustification?: string },
+  ctx: z.RefinementCtx,
+): void => {
+  if (val.retificadora === 'S') {
+    if (!val.numRec || val.numRec.length !== 40) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['numRec'],
+        message: '0000.NUM_REC é obrigatório (40 caracteres) quando RETIFICADORA=S.',
+      });
+    }
+    if (!val.supersedesJobId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['supersedesJobId'],
+        message: 'supersedesJobId é obrigatório quando RETIFICADORA=S.',
+      });
+    }
+    // Prazo (art. 8º §4 — grau INFERIDO, mesma regra do DTO da ECD, execution-plan Passo 19).
+    const currentYear = new Date().getUTCFullYear();
+    const diff = currentYear - val.year;
+    if (diff > 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['year'],
+        message: `Fora do prazo de retificação da ECF (art. 8º §4): o exercício ${val.year} é anterior a ${currentYear - 2}.`,
+      });
+    } else if (diff === 2 && !val.deadlineJustification) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['deadlineJustification'],
+        message: `deadlineJustification é obrigatória: o exercício ${val.year} está no limite do prazo de retificação (ano-2, art. 8º §4).`,
+      });
+    }
+  } else {
+    if (val.numRec) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['numRec'], message: '0000.NUM_REC só é aceito quando RETIFICADORA=S.' });
+    }
+    if (val.supersedesJobId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['supersedesJobId'], message: 'supersedesJobId só é aceito quando RETIFICADORA=S.' });
+    }
+  }
+};
+
 export const SpedEcfRequestSchema = z
   .object({
     unitId: z.string().min(1),
@@ -115,9 +166,14 @@ export const SpedEcfRequestSchema = z
     declarant: DeclarantSchema,
     fiscal: FiscalSchema.default({ indAliqCsll: '1', indRecReceita: '2' }),
     signers: z.array(SignerSchema).min(1).max(2),
+    retificadora: z.enum(['N', 'S']).default('N'),
+    numRec: z.string().optional(),
+    supersedesJobId: z.string().min(1).optional(),
+    deadlineJustification: z.string().min(1).optional(),
   })
   .strict()
-  .superRefine(refineEcfSigners);
+  .superRefine(refineEcfSigners)
+  .superRefine((val, ctx) => refineEcfRectification(val, ctx));
 
 export type SpedEcfRequestDto = z.infer<typeof SpedEcfRequestSchema>;
 export type SpedEcfDeclarantDto = z.infer<typeof DeclarantSchema>;

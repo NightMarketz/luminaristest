@@ -13,7 +13,7 @@ que citava o antigo precisa ser reconferido.
 | in-2003-2021 | Retificacao da ECD | IN RFB 2.003/2021 | `IN-RFB-2003-2021-ECD.json` | 54.552 | `c508c8a37d17` |
 | in-2004-2021 | Retificacao da ECF | IN RFB 2.004/2021 | `IN-RFB-2004-2021-ECF.json` | 48.771 | `11b9af63d919` |
 | manual-ecf-l12 | ECF Fase 3 — blocos L/M/N, e-Lalur | Manual de Orientacao do Leiaute 12 da ECF (ADE Cofis 02/2026) | `Manual-ECF-Leiaute-12.pdf` | 6.410.931 | `7216ec2bd62d` |
-| manual-ecd-l9 | ECD / J930 — o campo que trava o PVA (D8) | Manual de Orientacao do Leiaute 9 da ECD (ADE Cofis 01/2026) | `Manual-ECD-Leiaute-9.pdf` | 2.990.432 | `bc63f0a893ce` |
+| manual-ecd-l9 | ECD / J930 — o campo que trava o PVA (D8) | Manual de Orientacao do Leiaute 9 da ECD (ADE Cofis 01/2026) — **Atualização: janeiro de 2026**, 235 pp. | `Manual-ECD-Leiaute-9.pdf` | 2.971.696 | `7ddf47755f61` |
 | tabelas-dinamicas-ecf | X2 (plano referencial) + linhas de L/M/N/P (TIPO e FORMULA) | Tabelas Dinamicas e Planos Referenciais da ECF, Leiaute 12 (28/05/2026) | `RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx` | 1.724.077 | `366b8d9030a0` |
 | guia-efd-contrib | EFD-Contribuicoes | Guia Pratico da EFD-Contribuicoes v1.35 | `Guia-Pratico-EFD-Contribuicoes-v1.35.pdf` | 4.105.830 | `60eace459169` |
 | indice-sped | PVA e manuais — indice | Indice de manuais e validadores do SPED | `SPED-indice-manuais.html` | 40.577 | `d63a09d5e50a` |
@@ -49,6 +49,7 @@ que citava o antigo precisa ser reconferido.
 - **in-2004-2021** — <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/114966/visao/multivigente>
 - **manual-ecf-l12** — <http://sped.rfb.gov.br/arquivo/download/8003>
 - **manual-ecd-l9** — <http://sped.rfb.gov.br/arquivo/download/7990>
+  - **2026-09-23:** redação vigente jan/2026 fornecida pelo dono em 23/09 (arquivo `Manual_de_Orientação_da_ECD_Leiaute_9_janeiro_2026.pdf`, copiado à mão; o script NÃO a baixa); substitui bc63f0a893ce ("Atualização: maio de 2026", 236 pp., da URL acima). sha256 completo: `7ddf47755f616ecd76671b8be9c8b61e30adbb0e8408634e45af95f616119b2e`. Rodar o script com `--so=manual-ecd-l9` sobrescreve o PDF com a versão maio/2026.
 - **tabelas-dinamicas-ecf** — <http://sped.rfb.gov.br/arquivo/download/8002>
 - **guia-efd-contrib** — <http://sped.rfb.gov.br/arquivo/download/5836>
 - **indice-sped** — <http://sped.rfb.gov.br/pasta/show/1644>

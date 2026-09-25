@@ -11,6 +11,8 @@ import {
   JobRowsQuerySchema,
   ImportUploadSchema,
   CommitImportSchema,
+  ListDataExchangeJobsQuerySchema,
+  WaiveEcfRectificationSchema,
 } from '../features/accounting/dtos/DataExchangeDto';
 
 // Import files are CSV/XLSX only (spreadsheet subset of the shared allowlist). 10 MB cap (D4).
@@ -44,6 +46,54 @@ export const createDataExchangeExport = async (req: Request, res: Response) => {
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getDataExchangeExportService().export(scope, parsed.data);
     return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * GET /api/accounting/data-exchange/jobs?unitId=...&direction=&kind=&status=&year=&page=&limit=
+ * BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a): lista paginada, com `supersedesJobId`/
+ * `supersededByJobId` — quem cria a rota primeiro (regra do fork: "quem mergear primeiro cria").
+ */
+export const listDataExchangeJobs = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const parsed = ListDataExchangeJobsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+
+    const { unitId, ...filter } = parsed.data;
+    const scope = resolveAccountingScope(user, unitId);
+    const data = await getFactory().getDataExchangeExportService().listJobs(scope, filter);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * POST /api/accounting/data-exchange/jobs/:jobId/waive-ecf-rectification — dispensa a exigência
+ * de ECF retificadora que uma ECD substituta gravou no próprio job (item 22).
+ */
+export const waiveEcfRectification = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const parsed = WaiveEcfRectificationSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    }
+
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = await getFactory()
+      .getDataExchangeExportService()
+      .waiveEcfRectification(scope, req.params.jobId, parsed.data.justification);
+    return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

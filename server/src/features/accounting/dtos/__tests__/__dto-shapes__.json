@@ -1852,6 +1852,71 @@
         "IMPORT_OPENING_BALANCES",
         "IMPORT_JOURNAL_ENTRIES"
       ]
+    },
+    "ListDataExchangeJobsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "IMPORT",
+            "EXPORT"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 2100
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 20,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "WaiveEcfRectificationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "justification": {
+          "type": "string",
+          "minLength": 20
+        }
+      },
+      "required": [
+        "unitId",
+        "justification"
+      ],
+      "additionalProperties": false
     }
   },
   "DepreciationDto.ts": {
@@ -7260,6 +7325,118 @@
             ],
             "additionalProperties": false
           }
+        },
+        "supersedesJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verificationTerm": {
+          "type": "object",
+          "properties": {
+            "codMotSubs": {
+              "type": "string",
+              "enum": [
+                "001",
+                "002",
+                "003",
+                "004",
+                "005",
+                "099"
+              ]
+            },
+            "descRtf": {
+              "type": "string"
+            },
+            "signers": {
+              "minItems": 1,
+              "maxItems": 2,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "identNom": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "identCpfCnpj": {
+                    "type": "string"
+                  },
+                  "codAssin": {
+                    "type": "string",
+                    "const": "910"
+                  },
+                  "indCrc": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "fone": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "ufCrc": {
+                    "type": "string",
+                    "enum": [
+                      "AC",
+                      "AL",
+                      "AM",
+                      "AP",
+                      "BA",
+                      "CE",
+                      "DF",
+                      "ES",
+                      "GO",
+                      "MA",
+                      "MG",
+                      "MS",
+                      "MT",
+                      "PA",
+                      "PB",
+                      "PE",
+                      "PI",
+                      "PR",
+                      "RJ",
+                      "RN",
+                      "RO",
+                      "RR",
+                      "RS",
+                      "SC",
+                      "SE",
+                      "SP",
+                      "TO"
+                    ]
+                  },
+                  "numSeqCrc": {
+                    "type": "string"
+                  },
+                  "dtCrc": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "identNom",
+                  "identCpfCnpj",
+                  "codAssin",
+                  "indCrc",
+                  "email",
+                  "fone",
+                  "ufCrc"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "deadlineJustification": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "codMotSubs",
+            "signers"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -7635,6 +7812,25 @@
             ],
             "additionalProperties": false
           }
+        },
+        "retificadora": {
+          "default": "N",
+          "type": "string",
+          "enum": [
+            "N",
+            "S"
+          ]
+        },
+        "numRec": {
+          "type": "string"
+        },
+        "supersedesJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deadlineJustification": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -7867,6 +8063,25 @@
             ],
             "additionalProperties": false
           }
+        },
+        "retificadora": {
+          "default": "N",
+          "type": "string",
+          "enum": [
+            "N",
+            "S"
+          ]
+        },
+        "numRec": {
+          "type": "string"
+        },
+        "supersedesJobId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deadlineJustification": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [

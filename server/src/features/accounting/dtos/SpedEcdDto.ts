@@ -212,9 +212,101 @@ const SignerSchema = z
     }
   });
 
+/** J801.COD_MOT_SUBS (Manual ECD L9 p. 193, transcrição §1.4) — 3 dígitos, a tabela de valores
+ * (não o "Tamanho 010" do leiaute, que a própria tabela contradiz — dono 23/09, A4). */
+export const COD_MOT_SUBS_CODES = ['001', '002', '003', '004', '005', '099'] as const;
+
+/** HASH_RTF / 0000.COD_HASH_SUB — 40 hex (dono 23/09, A5: o manual não declara o algoritmo; o
+ * exemplo do J801 tem 40 caracteres — SHA-1 hex). */
+const hash40Hex = z.string().regex(/^[0-9a-fA-F]{40}$/, 'Hash de 40 caracteres hexadecimais (SHA-1).');
+
+/**
+ * J932 — Signatário do Termo de Verificação para Fins de Substituição da ECD (Manual ECD L9 pp.
+ * 203-205, transcrição §2). Dono 23/09: só o código 910 está no escopo (920/Auditor Independente
+ * fora); `identQualif` (campo 04) NÃO é aceito — mesmo padrão F-C12-1 do J930, derivado
+ * server-side de `codAssin` (`J932_QUALIF_910` em `lib/sped.ts`). REGRA_OBRIGATORIO_ASS_TERMO
+ * (p. 204): IND_CRC/EMAIL/FONE/UF_CRC obrigatórios quando COD_ASSIN_T=910 — como todo signatário
+ * aqui é 910, são obrigatórios sempre (nunca opcionais como no leiaute genérico).
+ */
+const VerificationTermSignerSchema = z
+  .object({
+    identNom: z.string().min(1),
+    identCpfCnpj: signerCpfOrCnpjSchema('J930'), // mesmo objeto de domínio (CPF/CNPJ), reg. J932.
+    codAssin: z.literal('910', {
+      message: 'J932.COD_ASSIN_T só aceita 910 (920/Auditor Independente fora do escopo, dono 23/09).',
+    }),
+    indCrc: crcNumberField,
+    email: z.string().min(1),
+    fone: z.string().min(1),
+    ufCrc: z.enum(UF_CODES),
+    numSeqCrc: crcCertificateField.optional(),
+    dtCrc: dateOnly.optional(),
+  })
+  .strict()
+  .superRefine((val, ctx) => {
+    const embedded = crcNumberUf(val.indCrc);
+    if (embedded && embedded !== val.ufCrc) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ufCrc'],
+        message: `J932.UF_CRC_T (${val.ufCrc}) diverge da UF embutida no IND_CRC_T (${embedded}).`,
+      });
+    }
+  });
+
+/**
+ * Termo de Verificação para Fins de Substituição da ECD (J801 + J932). Presente SÓ quando
+ * `declarant.indFinEsc='1'` (substituta). `signers`: 1 a 2, ao menos um 910 (dono 23/09, A13/A10
+ * — como só 910 está no escopo, TODOS são 910; a checagem "≥1 910" é trivialmente satisfeita e
+ * mantida por legibilidade do contrato). REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE (p. 204):
+ * a dupla CPF/CNPJ+código não pode repetir.
+ */
+const VerificationTermSchema = z
+  .object({
+    codMotSubs: z.enum(COD_MOT_SUBS_CODES, {
+      message: 'J801.COD_MOT_SUBS fora da tabela (Manual ECD L9 p. 193): 001..005 ou 099.',
+    }),
+    descRtf: z.string().optional(),
+    signers: z.array(VerificationTermSignerSchema).min(1).max(2),
+    // Art. 8º §4 (prazo de substituição) — grau INFERIDO, sem página do manual transcrita para
+    // esta regra específica (a transcrição J801/J932 cobre o leiaute, não o prazo legal); exigido
+    // só quando o exercício está no limite (ver superRefine do schema pai).
+    deadlineJustification: z.string().min(1).optional(),
+  })
+  .strict()
+  .superRefine((val, ctx) => {
+    const hasContador = val.signers.some((s) => s.codAssin === '910');
+    if (!hasContador) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['signers'],
+        message: 'REGRA_OBRIGATORIO_CONTADOR_ASS_TERMO: exige ao menos um signatário 910 (Manual ECD L9 p. 204).',
+      });
+    }
+    const seen = new Set<string>();
+    val.signers.forEach((s, i) => {
+      const key = `${s.identCpfCnpj}|${s.codAssin}`;
+      if (seen.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['signers', i],
+          message:
+            'J932 duplicado: a dupla IDENT_CPF_CNPJ_T + COD_ASSIN_T já aparece em outro signatário (REGRA_IDENT_CPF_CNPJ_COD_ASSIN_DUPLICIDADE, Manual ECD L9 p. 204).',
+        });
+      }
+      seen.add(key);
+    });
+  });
+
 /**
  * POST /sped/ecd/generate body. `year` drives the annual window (Jan 1 → Dec 31,
  * D11); the MVP is annual only (D4), so no dtIni/dtFin override is exposed.
+ *
+ * Retificação versionada (BE-INCR-FIXED-ASSETS PR-4, Passo 19): `declarant.indFinEsc='1'`
+ * (substituta) exige `declarant.codHashSub` (40 hex), `supersedesJobId` (id do job EXPORTED que
+ * está sendo substituído) e `verificationTerm` (J801+J932); `'0'` (original, default) proíbe os
+ * três. O .rtf em si (J801.ARQ_RTF) chega por multipart — a rota valida a presença do arquivo
+ * fora deste DTO (o Zod não carrega binário).
  */
 export const SpedEcdRequestSchema = z
   .object({
@@ -224,9 +316,78 @@ export const SpedEcdRequestSchema = z
     declarant: DeclarantSchema,
     book: BookSchema,
     signers: z.array(SignerSchema).min(1),
+    supersedesJobId: z.string().min(1).optional(),
+    verificationTerm: VerificationTermSchema.optional(),
   })
   .strict()
   .superRefine((val, ctx) => {
+    // Passo 19 — indFinEsc='1' ⇒ codHashSub + supersedesJobId + verificationTerm obrigatórios;
+    // '0' ⇒ os três proibidos (nunca uma ECD "meio substituta").
+    if (val.declarant.indFinEsc === '1') {
+      if (!val.declarant.codHashSub || !hash40Hex.safeParse(val.declarant.codHashSub).success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['declarant', 'codHashSub'],
+          message: '0000.COD_HASH_SUB é obrigatório (40 hex) quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+      if (!val.supersedesJobId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['supersedesJobId'],
+          message: 'supersedesJobId é obrigatório quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+      if (!val.verificationTerm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['verificationTerm'],
+          message: 'verificationTerm (J801+J932) é obrigatório quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+    } else {
+      if (val.declarant.codHashSub) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['declarant', 'codHashSub'],
+          message: '0000.COD_HASH_SUB só é aceito quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+      if (val.supersedesJobId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['supersedesJobId'],
+          message: 'supersedesJobId só é aceito quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+      if (val.verificationTerm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['verificationTerm'],
+          message: 'verificationTerm só é aceito quando IND_FIN_ESC=1 (substituta).',
+        });
+      }
+    }
+    // Prazo de substituição (art. 8º §4 — grau INFERIDO, execution-plan Passo 19; sem página do
+    // manual transcrita especificamente para esta regra): exercício anterior a ano-2 → 400;
+    // exatamente ano-2 → aviso, exige `verificationTerm.deadlineJustification`.
+    if (val.declarant.indFinEsc === '1') {
+      const currentYear = new Date().getUTCFullYear();
+      const diff = currentYear - val.year;
+      if (diff > 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['year'],
+          message: `Fora do prazo de substituição da ECD (art. 8º §4): o exercício ${val.year} é anterior a ${currentYear - 2}.`,
+        });
+      } else if (diff === 2 && !val.verificationTerm?.deadlineJustification) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['verificationTerm', 'deadlineJustification'],
+          message: `deadlineJustification é obrigatória: o exercício ${val.year} está no limite do prazo de substituição (ano-2, art. 8º §4).`,
+        });
+      }
+    }
     // J930 compliance (REGRA_OBRIGATORIO_ASSIN_CONTADOR / _UM_RESP_LEGAL, p. 200):
     // exactly one legal responsible, at least one contador (900) and one non-900.
     const respLegal = val.signers.filter((s) => s.indRespLegal === 'S');
@@ -282,3 +443,5 @@ export type SpedEcdRequestDto = z.infer<typeof SpedEcdRequestSchema>;
 export type SpedDeclarantDto = z.infer<typeof DeclarantSchema>;
 export type SpedBookDto = z.infer<typeof BookSchema>;
 export type SpedSignerDto = z.infer<typeof SignerSchema>;
+export type SpedVerificationTermDto = z.infer<typeof VerificationTermSchema>;
+export type SpedVerificationTermSignerDto = z.infer<typeof VerificationTermSignerSchema>;

@@ -40,8 +40,59 @@ export class DataExchangeRepository implements IDataExchangeRepository {
         totalRows: data.totalRows ?? 0,
         validRows: data.validRows ?? 0,
         invalidRows: data.invalidRows ?? 0,
+        // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G): retificação versionada ECD/ECF.
+        supersedesJobId: data.supersedesJobId ?? null,
+        ecfRectificationRequired: data.ecfRectificationRequired ?? false,
+        verificationTermStorageKey: data.verificationTermStorageKey ?? null,
       },
     });
+  }
+
+  public async findJobBySupersedesJobId(
+    scope: AccountingScope,
+    supersedesJobId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDataExchangeJob | null> {
+    return (tx ?? prisma).accountingDataExchangeJob.findFirst({
+      where: { supersedesJobId, ...accountingScopeWhere(scope) },
+    });
+  }
+
+  public async listJobs(
+    scope: AccountingScope,
+    filter: {
+      direction?: string;
+      kind?: string;
+      status?: string;
+      year?: number;
+      page: number;
+      limit: number;
+    },
+    tx?: Prisma.TransactionClient,
+  ): Promise<{ items: AccountingDataExchangeJob[]; total: number }> {
+    const where: Prisma.AccountingDataExchangeJobWhereInput = {
+      ...accountingScopeWhere(scope),
+      ...(filter.direction ? { direction: filter.direction } : {}),
+      ...(filter.kind ? { kind: filter.kind } : {}),
+      ...(filter.status ? { status: filter.status } : {}),
+      ...(filter.year
+        ? {
+            periodStart: { gte: new Date(Date.UTC(filter.year, 0, 1)) },
+            periodEnd: { lte: new Date(Date.UTC(filter.year, 11, 31, 23, 59, 59, 999)) },
+          }
+        : {}),
+    };
+    const client = tx ?? prisma;
+    const [items, total] = await Promise.all([
+      client.accountingDataExchangeJob.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (filter.page - 1) * filter.limit,
+        take: filter.limit,
+      }),
+      client.accountingDataExchangeJob.count({ where }),
+    ]);
+    return { items, total };
   }
 
   public async findJobById(
@@ -120,6 +171,42 @@ export class DataExchangeRepository implements IDataExchangeRepository {
     if (count === 0) {
       throw new NotFoundError(`Linha de importação '${id}' não encontrada.`);
     }
+  }
+
+  public async findEcdJobsPendingRectificationForYear(
+    scope: AccountingScope,
+    year: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<AccountingDataExchangeJob[]> {
+    return (tx ?? prisma).accountingDataExchangeJob.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind: 'EXPORT_SPED_ECD',
+        status: 'EXPORTED',
+        ecfRectificationRequired: true,
+        ecfRectificationWaivedAt: null,
+        periodStart: { gte: new Date(Date.UTC(year, 0, 1)) },
+        periodEnd: { lte: new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999)) },
+      },
+      // Sem `take` — item 21/review PR #368: TODAS as pendentes do ano, nunca só as 100 primeiras.
+    });
+  }
+
+  public async findSuccessorsByJobIds(
+    scope: AccountingScope,
+    jobIds: string[],
+    tx?: Prisma.TransactionClient,
+  ): Promise<Map<string, string>> {
+    if (jobIds.length === 0) return new Map();
+    const successors = await (tx ?? prisma).accountingDataExchangeJob.findMany({
+      where: { ...accountingScopeWhere(scope), supersedesJobId: { in: jobIds } },
+      select: { id: true, supersedesJobId: true },
+    });
+    const map = new Map<string, string>();
+    for (const s of successors) {
+      if (s.supersedesJobId) map.set(s.supersedesJobId, s.id);
+    }
+    return map;
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

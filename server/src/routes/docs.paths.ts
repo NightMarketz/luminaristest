@@ -2254,6 +2254,11 @@
  *         plain-text (ISO-8859-1) artifact as an EXPORT job. Download via
  *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any
  *         leaf account is unmapped in the referential version (coverage gate).
+ *         BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA
+ *         (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job
+ *         EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por
+ *         multipart/form-data (campo "rtf", até 30 MB) — a ECD original continua indo por
+ *         application/json puro (o multer é no-op fora de multipart).
  *         X13 PR-2 - with a company fiscal profile for the year, missing declarant/book/signer fields are
  *         prefilled from it (body wins, listed in perfilFiscal.sobrescritos); avisos carries the large-company
  *         warning (Lei 11.638 art. 3) and the missing-profile notice. The ECD is never refused by regime.
@@ -2271,6 +2276,30 @@
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 mappingVersion: { type: string }
  *                 year:           { type: integer, example: 2026 }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando declarant.indFinEsc=1 (substituta) — id do job ECD EXPORTED sendo substituído.' }
+ *                 verificationTerm:
+ *                   type: object
+ *                   description: 'J801+J932 — obrigatório quando declarant.indFinEsc=1 (substituta), proibido quando =0.'
+ *                   required: [codMotSubs, signers]
+ *                   properties:
+ *                     codMotSubs: { type: string, enum: ['001','002','003','004','005','099'] }
+ *                     descRtf:    { type: string }
+ *                     deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo (ano-2, art. 8º §4).' }
+ *                     signers:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required: [identNom, identCpfCnpj, codAssin, indCrc, email, fone, ufCrc]
+ *                         properties:
+ *                           identNom:     { type: string }
+ *                           identCpfCnpj: { type: string }
+ *                           codAssin:     { type: string, enum: ['910'], description: '920 (Auditor Independente) fora do escopo.' }
+ *                           indCrc:       { type: string }
+ *                           email:        { type: string }
+ *                           fone:         { type: string }
+ *                           ufCrc:        { type: string }
+ *                           numSeqCrc:    { type: string }
+ *                           dtCrc:        { type: string, description: 'YYYY-MM-DD' }
  *                 declarant:
  *                   type: object
  *                   required: [nome, cnpj, uf, codMun, indNire, indGrandePorte]
@@ -2281,6 +2310,8 @@
  *                     codMun: { type: string, description: 'IBGE 7 digits' }
  *                     indNire:        { type: string, enum: ['0', '1'] }
  *                     indGrandePorte: { type: string, enum: ['0', '1'] }
+ *                     indFinEsc:      { type: string, enum: ['0', '1'], description: '0=Original (default), 1=Substituta' }
+ *                     codHashSub:     { type: string, description: '40 hex — obrigatório quando indFinEsc=1' }
  *                 book:
  *                   type: object
  *                   required: [numOrd, natLivr, dtExSocial]
@@ -2304,6 +2335,12 @@
  *                       numSeqCrc:     { type: string, description: 'CRC certificate, format UF/AAAA/NUMERO' }
  *                       dtCrc:         { type: string, description: 'YYYY-MM-DD' }
  *                       indRespLegal:  { type: string, enum: [S, N] }
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               description: 'Mesmos campos do application/json acima (declarant/book/signers/verificationTerm como JSON string), mais o arquivo do Termo.'
+ *               properties:
+ *                 rtf: { type: string, format: binary, description: 'J801.ARQ_RTF — obrigatório quando a ECD é substituta.' }
  *       responses:
  *         '201':
  *           description: ECD export job created
@@ -2345,6 +2382,10 @@
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
+ *                 retificadora: { type: string, enum: ['N', 'S'], description: 'N=Original (default), S=Retificadora — exige numRec + supersedesJobId (BE-INCR-FIXED-ASSETS PR-4, item 26-31).' }
+ *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
+ *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]
@@ -2425,6 +2466,10 @@
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
+ *                 retificadora: { type: string, enum: ['N', 'S'], description: 'N=Original (default), S=Retificadora — exige numRec + supersedesJobId (BE-INCR-FIXED-ASSETS PR-4, item 26-31).' }
+ *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
+ *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]
@@ -2513,6 +2558,84 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/data-exchange/jobs:
+ *     get:
+ *       summary: List data-exchange jobs (paginated), with supersedesJobId/supersededByJobId
+ *       description: >-
+ *         BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a) — shape compartilhado com
+ *         FE-INCR-REVIEW/FE-INCR-DELIVERY: quem mergear primeiro cria esta rota, o segundo
+ *         estende. `supersededByJobId` é derivado por consulta inversa (nunca coluna própria).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: direction, schema: { type: string, enum: [IMPORT, EXPORT] } }
+ *         - { in: query, name: kind, schema: { type: string } }
+ *         - { in: query, name: status, schema: { type: string } }
+ *         - { in: query, name: year, schema: { type: integer } }
+ *         - { in: query, name: page, schema: { type: integer, default: 1 } }
+ *         - { in: query, name: limit, schema: { type: integer, default: 20 } }
+ *       responses:
+ *         '200':
+ *           description: Paginated list
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success: { type: boolean, example: true }
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       items:
+ *                         type: array
+ *                         items:
+ *                           allOf:
+ *                             - { $ref: '#/components/schemas/DataExchangeJob' }
+ *                             - type: object
+ *                               properties:
+ *                                 supersedesJobId:   { type: string, nullable: true }
+ *                                 supersededByJobId: { type: string, nullable: true }
+ *                       total: { type: integer }
+ *                       page:  { type: integer }
+ *                       limit: { type: integer }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
+ *   /api/accounting/data-exchange/jobs/{jobId}/waive-ecf-rectification:
+ *     post:
+ *       summary: Waive the ECF-rectification requirement a substitute ECD recorded on itself
+ *       description: >-
+ *         BE-INCR-FIXED-ASSETS PR-4 (item 22). Idempotent: a 2nd call over an already-waived job
+ *         returns the same job without re-emitting the audit event.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: jobId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, justification]
+ *               properties:
+ *                 unitId:        { type: string }
+ *                 justification: { type: string, minLength: 20 }
+ *       responses:
+ *         '200':
+ *           description: Job with the waiver recorded
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success: { type: boolean, example: true }
+ *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}:
  *     get:

@@ -135,3 +135,42 @@ describe('SpedEcfRequestSchema — C12 item 5: CPF com DV no signatário (REGRA_
     expect(SpedEcfRequestSchema.safeParse({ ...valid, signers: [contador, { ...socio, identCpfCnpj: '11111111111' }] }).success).toBe(false);
   });
 });
+
+// BE-INCR-FIXED-ASSETS PR-4 (Passo 19) — retificação versionada: RETIFICADORA='S' exige numRec
+// (40 chars) + supersedesJobId; 'N' proíbe os dois. 'F' não existe na tabela do manual — 400 de
+// propósito, adversarial ratificado.
+describe('SpedEcfRequestSchema — retificação versionada (RETIFICADORA)', () => {
+  it('RETIFICADORA=F (fora da tabela) é 400', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, retificadora: 'F' }).success).toBe(false);
+  });
+
+  it('RETIFICADORA=S sem numRec/supersedesJobId é 400', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, retificadora: 'S' }).success).toBe(false);
+  });
+
+  it('RETIFICADORA=S com numRec de 39 caracteres é 400', () => {
+    expect(
+      SpedEcfRequestSchema.safeParse({
+        ...valid,
+        retificadora: 'S',
+        numRec: 'a'.repeat(39),
+        supersedesJobId: 'job-1',
+      }).success,
+    ).toBe(false);
+  });
+
+  it('RETIFICADORA=S com numRec (40) + supersedesJobId passa', () => {
+    expect(
+      SpedEcfRequestSchema.safeParse({
+        ...valid,
+        retificadora: 'S',
+        numRec: 'a'.repeat(40),
+        supersedesJobId: 'job-1',
+      }).success,
+    ).toBe(true);
+  });
+
+  it('RETIFICADORA=N (default) com numRec informado é 400', () => {
+    expect(SpedEcfRequestSchema.safeParse({ ...valid, numRec: 'a'.repeat(40) }).success).toBe(false);
+  });
+});

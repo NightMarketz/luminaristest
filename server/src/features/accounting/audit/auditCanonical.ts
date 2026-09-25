@@ -214,6 +214,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'fixed_asset.disposed':  ['assetId', 'entryId', 'gainLossCents'],
   // BE-INCR-FIXED-ASSETS PR-3 (nó C8, item 17). Nenhum texto livre no payload.
   'depreciation.posted':   ['assetId', 'yearMonth', 'quotaCents', 'entryId'],
+  // BE-INCR-FIXED-ASSETS PR-4 (nó C8, Bloco G, itens 21/22). `descRtf`/`justification` são texto
+  // livre do operador (o RTF do Termo, a justificativa da dispensa) e NUNCA entram — só
+  // ids/kind/sha256/year (accountingRectification classe accounting-audit-allowlist-guards).
+  'sped.ecd_substituted':          ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
+  'sped.ecf_rectified':            ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
+  'sped.ecf_rectification_waived': ['jobId', 'year'],
 };
 
 /**

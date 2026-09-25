@@ -12,8 +12,53 @@ import {
 } from '../features/accounting/models/AccountingContact.model';
 import type { UserContext } from '../lib/authUtils';
 import { ValidationError } from '../lib/errors';
+import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import { aplicarPerfilNoCorpo, recusaDeRegime } from '../features/accounting/models/spedPerfilPrefill';
 import type { SpedTarget } from '../features/accounting/models/spedPerfilPrefill';
+
+/**
+ * BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20): o .rtf do Termo de Verificação (J801.ARQ_RTF) chega
+ * por multipart, mesmo padrão do NF-e (`nfeController.ts`). `.rtf` não tem MIME padronizado
+ * confiável entre browsers — `application/rtf`, `text/rtf` e o fallback `application/octet-stream`
+ * entram todos (mesma justificativa O-3 do NF-e: magic bytes OFF, quem valida é o parser/hash).
+ */
+const RTF_MIME_TYPES = new Set(['application/rtf', 'text/rtf', 'application/octet-stream', 'text/plain']);
+const MAX_RTF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB (J801 campo 06, Manual ECD L9 p. 193).
+
+/** Multer middleware for the optional `rtf` field — no-op on a plain JSON request (multer only
+ * engages on `multipart/form-data`), então a ECD original continua indo por JSON puro. */
+export const spedEcdRtfUpload = makeUploadMiddleware(RTF_MIME_TYPES, 'rtf', MAX_RTF_SIZE_BYTES, false);
+
+/** Read the uploaded `rtf` field, or null when absent (ECD original / corpo JSON puro). */
+function uploadedRtf(req: Request): Express.Multer.File | null {
+  return (req as Request & { file?: Express.Multer.File }).file ?? null;
+}
+
+/**
+ * Multipart flattens nested objects/arrays em strings — os mesmos campos que a rota JSON aceita
+ * estruturados (`declarant`, `book`, `signers`, `verificationTerm`) chegam como texto quando o
+ * cliente sobe o .rtf (mesmo padrão `decodeItemMappings` do NF-e). Um corpo JÁ estruturado
+ * (cliente JSON puro, sem arquivo) passa intocado.
+ */
+function decodeMultipartJsonFields(body: unknown, keys: string[]): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const raw = { ...(body as Record<string, unknown>) };
+  for (const key of keys) {
+    const value = raw[key];
+    if (typeof value === 'string') {
+      try {
+        raw[key] = JSON.parse(value);
+      } catch {
+        throw new ValidationError(`Campo '${key}' não é um JSON válido no corpo multipart.`);
+      }
+    }
+  }
+  if (typeof raw.year === 'string') {
+    const n = Number(raw.year);
+    if (!Number.isNaN(n)) raw.year = n;
+  }
+  return raw;
+}
 
 interface ExpansaoDoPerfil {
   body: unknown;
@@ -120,14 +165,18 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const perfil = await expandCompanyProfile(req.body, user, 'ecd');
+    const decoded = decodeMultipartJsonFields(req.body, ['declarant', 'book', 'signers', 'verificationTerm']);
+    const perfil = await expandCompanyProfile(decoded, user, 'ecd');
     const parsed = SpedEcdRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecd'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const data = await getFactory().getSpedGenerationService().generate(scope, parsed.data);
+    const rtf = uploadedRtf(req);
+    const data = await getFactory()
+      .getSpedGenerationService()
+      .generate(scope, parsed.data, rtf ? { buffer: rtf.buffer } : undefined);
     return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);

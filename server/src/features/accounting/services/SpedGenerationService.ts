@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
@@ -27,9 +27,11 @@ import {
   type RegI355Input,
   type RegJ100Line,
   type RegJ150Line,
+  sanitizeRtfForSped,
 } from '../../../lib/sped';
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
 import { ecdIdentQualifParaEmissao, type SpedEcdQualifAssinanteCode } from '../models/spedQualifAssinante';
+import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 
 /** Account.nature -> I050 COD_NAT (manual p. 118 table). */
 export function natureToCodNat(nature: string): string {
@@ -91,7 +93,14 @@ export class SpedGenerationService {
     private readonly audit: AuditService,
   ) {}
 
-  public async generate(scope: AccountingScope, dto: SpedEcdRequestDto): Promise<DataExchangeJobResponse> {
+  public async generate(
+    scope: AccountingScope,
+    dto: SpedEcdRequestDto,
+    // BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20): o .rtf do Termo de Verificação chega por multipart
+    // (J801.ARQ_RTF) — só presente quando `dto.verificationTerm` existe (substituta). O DTO Zod
+    // não carrega binário (D2); o controller resolve o `req.file` e passa aqui.
+    rtfFile?: { buffer: Buffer },
+  ): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Não autorizado a gerar a ECD.');
     }
@@ -99,6 +108,20 @@ export class SpedGenerationService {
     const { year } = dto;
     const dtIni = `${year}-01-01`;
     const dtFin = `${year}-12-31`;
+    const isSubstituta = dto.declarant.indFinEsc === '1';
+
+    if (isSubstituta && !rtfFile) {
+      throw new ValidationError(
+        'ECD substituta (IND_FIN_ESC=1) exige o .rtf do Termo de Verificação (J801.ARQ_RTF) via multipart (campo "rtf").',
+      );
+    }
+    // Review PR #368 (param-aceito-e-ignorado): um .rtf enviado numa ECD ORIGINAL (indFinEsc=0
+    // ou sem verificationTerm) não pode ser silenciosamente descartado — ou implementa, ou 400.
+    if (!isSubstituta && rtfFile) {
+      throw new ValidationError(
+        'O .rtf do Termo de Verificação só é aceito quando declarant.indFinEsc=1 (substituta) e verificationTerm está presente.',
+      );
+    }
 
     // ── Coverage gate (D5) — bloqueia a geração se houver conta-folha sem mapeamento.
     const coverage = await this.referential.coverage(scope, dto.mappingVersion);
@@ -109,32 +132,59 @@ export class SpedGenerationService {
       );
     }
 
-    const input = await this.composeFile(scope, dto, dtIni, dtFin);
+    const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
+    const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
+
+    // ── Gate da retificação versionada (item 21, ACC-011) — pré-cheque legível ANTES de gerar
+    // o arquivo (nunca gasta a geração/gravação em disco para um pedido que já falharia).
+    if (isSubstituta && dto.supersedesJobId) {
+      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECD', {
+        start: periodStart,
+        end: periodEnd,
+      });
+    }
+
+    const input = await this.composeFile(scope, dto, dtIni, dtFin, rtfFile);
     const lines = buildEcdFile(input);
     const text = serializeEcd(lines);
     const buffer = Buffer.from(text, 'latin1'); // ISO-8859-1 (PVA-7)
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecd_${dto.declarant.cnpj}_${year}.txt`;
 
-    const job = await this.repo.createJob({
-      userId: scope.ownerUserId,
-      unitId: scope.unitId,
-      direction: 'EXPORT',
-      kind: 'EXPORT_SPED_ECD',
-      status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
-      requestedById: scope.actorUserId,
-      // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
-      // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
-      // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
-      // selecionado, é este par que muda — a entrega não precisa saber.
-      periodStart: new Date(`${year}-01-01T00:00:00.000Z`),
-      periodEnd: new Date(`${year}-12-31T00:00:00.000Z`),
-      originalName: fileName,
-      mimeType: 'text/plain',
-      sizeBytes: buffer.length,
-      sha256,
-      totalRows: lines.length,
-    });
+    let job;
+    try {
+      job = await this.repo.createJob({
+        userId: scope.ownerUserId,
+        unitId: scope.unitId,
+        direction: 'EXPORT',
+        kind: 'EXPORT_SPED_ECD',
+        status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
+        requestedById: scope.actorUserId,
+        // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
+        // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
+        // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
+        // selecionado, é este par que muda — a entrega não precisa saber.
+        periodStart,
+        periodEnd,
+        originalName: fileName,
+        mimeType: 'text/plain',
+        sizeBytes: buffer.length,
+        sha256,
+        totalRows: lines.length,
+        // BE-INCR-FIXED-ASSETS PR-4 (item 21): `ecfRectificationRequired` nasce true no PRÓPRIO
+        // job substituto — trava o pacote ao contador (item 22) até uma ECF retificadora do
+        // mesmo ano ou dispensa.
+        supersedesJobId: isSubstituta ? dto.supersedesJobId : undefined,
+        ecfRectificationRequired: isSubstituta,
+      });
+    } catch (error) {
+      if (isSupersedesUniqueViolation(error)) {
+        throw new ConflictError(
+          `O job '${dto.supersedesJobId}' já foi substituído por outro job — só um sucessor por job (item 21).`,
+        );
+      }
+      throw error;
+    }
 
     // BRIEF-W2-D (F4, layer 1): spans job PROCESSING -> the return below, or the throw in the
     // catch FAILED right after. No warnThresholdMs (F-W2D-1 residual: the brief's checklist
@@ -144,6 +194,7 @@ export class SpedGenerationService {
     const endTimer = metrics.startTimer('sped_ecd_generation');
 
     let storageKey: string;
+    let verificationTermStorageKey: string | undefined;
     try {
       ({ storageKey } = await storage.saveFile(
         scope.ownerUserId,
@@ -152,9 +203,25 @@ export class SpedGenerationService {
         fileName,
         buffer,
       ));
+      if (isSubstituta && rtfFile) {
+        ({ storageKey: verificationTermStorageKey } = await storage.saveFile(
+          scope.ownerUserId,
+          scope.unitId,
+          job.id,
+          `${fileName}.termo.rtf`,
+          rtfFile.buffer,
+        ));
+      }
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
-      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Correção review PR #368: um FAILED com `supersedesJobId` ainda preenchido trava o
+      // original PARA SEMPRE (a `@unique` recusaria toda nova tentativa com 409, sem rota de
+      // saída — o job FAILED nunca é apagado). Limpar `supersedesJobId=null` na MESMA escrita
+      // libera a chave; o pré-cheque (`resolveSupersededJob`) já só considera sucessor
+      // EXPORTED (nunca FAILED), então mesmo sem este `null` o P2002 real seria a única
+      // trava — este `null` fecha a folga por completo e mantém a coluna honesta (um FAILED
+      // não é, de fato, o sucessor de nada).
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
       // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
       // ALERT_WEBHOOK_URL is unset.
       sendAlertWebhook({
@@ -172,7 +239,12 @@ export class SpedGenerationService {
     }
 
     const updated = await this.repo.runTransaction(async (tx) => {
-      const j = await this.repo.updateJob(scope, job.id, { storageKey, status: 'EXPORTED' }, tx);
+      const j = await this.repo.updateJob(
+        scope,
+        job.id,
+        { storageKey, status: 'EXPORTED', ...(verificationTermStorageKey ? { verificationTermStorageKey } : {}) },
+        tx,
+      );
       await this.audit.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'sped.ecd_generated',
@@ -187,6 +259,24 @@ export class SpedGenerationService {
           lineCount: String(lines.length),
         },
       });
+      // Item 21 — evento próprio da retificação versionada, ADITIVO ao `sped.ecd_generated`
+      // acima (a trilha registra os dois fatos: "gerou um export" e "substituiu outro job").
+      // O job SUBSTITUÍDO nunca é escrito aqui (status/sha256/storageKey inalterados, item 25).
+      if (isSubstituta) {
+        await this.audit.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'sped.ecd_substituted',
+          targetType: 'data_exchange_job',
+          targetId: job.id,
+          payload: {
+            jobId: job.id,
+            supersedesJobId: dto.supersedesJobId ?? '',
+            kind: 'EXPORT_SPED_ECD',
+            year: String(year),
+            sha256,
+          },
+        });
+      }
       return j;
     });
 
@@ -200,8 +290,20 @@ export class SpedGenerationService {
     dto: SpedEcdRequestDto,
     dtIni: string,
     dtFin: string,
+    rtfFile?: { buffer: Buffer },
   ): Promise<EcdFileInput> {
     const { year } = dto;
+    // Review PR #368: sanitiza + traduz o erro cru de `sanitizeRtfForSped` (lib pura, D2) para
+    // ValidationError (400) nomeado ANTES de qualquer leitura cara do ledger — mesmo padrão do
+    // `Campo SPED não pode conter '|'` do `SpedEcfRealGenerationService`.
+    let sanitizedArqRtf: string | undefined;
+    if (dto.verificationTerm && rtfFile) {
+      try {
+        sanitizedArqRtf = sanitizeRtfForSped(rtfFile.buffer.toString('latin1'));
+      } catch (e) {
+        throw new ValidationError(e instanceof Error ? e.message : String(e));
+      }
+    }
     const accounts = await this.accountRepo.findManyByUnit(scope); // ordered by code
     const mappings = await this.referential.listMappings(scope, dto.mappingVersion);
     const refByAccount = new Map(mappings.map((m) => [m.accountId, m.referentialCode]));
@@ -397,6 +499,24 @@ export class SpedGenerationService {
         ...s,
         identQualif: ecdIdentQualifParaEmissao(s.codAssin as SpedEcdQualifAssinanteCode),
       })),
+      // BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20) — J801+J932, só na substituta. HASH_RTF é
+      // CALCULADO AQUI (sistema, nunca input do usuário — manual p. 192: "preenchido
+      // automaticamente pelo sistema"), sha1 hex do CONTEÚDO JÁ SANITIZADO (dono 23/09, A5: 40
+      // hex) — o hash descreve exatamente o que vai no ARQ_RTF, não o upload cru (review
+      // PR #368: `sanitizeRtfForSped` rejeita `\bin`/tags proibidas/`|` e normaliza CR/LF antes
+      // de qualquer coisa tocar o registro; ver `lib/sped.ts` para a justificativa RTF/SPED).
+      verificationTerm:
+        dto.verificationTerm && sanitizedArqRtf !== undefined
+          ? {
+              j801: {
+                descRtf: dto.verificationTerm.descRtf,
+                codMotSubs: dto.verificationTerm.codMotSubs,
+                hashRtf: createHash('sha1').update(Buffer.from(sanitizedArqRtf, 'latin1')).digest('hex'),
+                arqRtf: sanitizedArqRtf,
+              },
+              signers: dto.verificationTerm.signers,
+            }
+          : undefined,
     };
   }
 

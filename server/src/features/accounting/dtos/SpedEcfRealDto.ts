@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DeclarantSchema, SignerSchema, refineEcfSigners } from './SpedEcfDto';
+import { DeclarantSchema, SignerSchema, refineEcfSigners, refineEcfRectification } from './SpedEcfDto';
 
 /**
  * Zod DTO for SPED ECF generation — Lucro Real (ADR-INCR-SPED-ECF-FASE3, esqueleto;
@@ -56,6 +56,11 @@ const FiscalRealSchema = z
  * `fiscal` é OBRIGATÓRIO (não tem default de bloco) porque `formaTribPer` não tem default —
  * omitir o bloco é 400. Só `formaTrib` tem default ratificado (`'1'`).
  */
+/**
+ * Retificação versionada (BE-INCR-FIXED-ASSETS PR-4, Passo 19): mesmo objeto de domínio do
+ * Presumido — `retificadora`/`numRec`/`supersedesJobId`/`deadlineJustification` reusam
+ * `refineEcfRectification` de `SpedEcfDto.ts` em vez de reescrever a regra.
+ */
 export const SpedEcfRealRequestSchema = z
   .object({
     unitId: z.string().min(1),
@@ -63,8 +68,13 @@ export const SpedEcfRealRequestSchema = z
     declarant: DeclarantSchema,
     fiscal: FiscalRealSchema,
     signers: z.array(SignerSchema).min(1).max(2),
+    retificadora: z.enum(['N', 'S']).default('N'),
+    numRec: z.string().optional(),
+    supersedesJobId: z.string().min(1).optional(),
+    deadlineJustification: z.string().min(1).optional(),
   })
   .strict()
-  .superRefine(refineEcfSigners);
+  .superRefine(refineEcfSigners)
+  .superRefine((val, ctx) => refineEcfRectification(val, ctx));
 
 export type SpedEcfRealRequestDto = z.infer<typeof SpedEcfRealRequestSchema>;
