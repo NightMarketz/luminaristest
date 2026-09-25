@@ -40,6 +40,7 @@ que citava o antigo precisa ser reconferido.
 | lei-10485-2002 | Monofasico — autopecas/veiculos (NCM. F-X6-7 a) | Lei 10.485/2002 | `Lei-10485-2002-monofasico-autopecas.html` | 40.944 | `8ba63d7b856a` |
 | lei-10865-2004 | PIS/COFINS-Importacao e aliquotas por produto (monofasico. F-X6-7 a) | Lei 10.865/2004 | `Lei-10865-2004.html` | 389.869 | `5c7376321f17` |
 | lei-9718-1998 | Monofasico — combustiveis (art. 4. F-X6-7 a) | Lei 9.718/1998 | `Lei-9718-1998.html` | 196.422 | `a71cf61cb7b3` |
+| lei-13097-2015 | Monofasico — bebidas frias (art. 14 NCM; arts. 17/28/29/30 credito) | Lei 13.097/2015 | `Lei-13097-2015-bebidas-frias.html` | 638.654 | `c6679a9a9fa3` |
 | lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
 
 ## URLs de origem
@@ -95,4 +96,6 @@ que citava o antigo precisa ser reconferido.
 - **lei-10485-2002** — <http://www.planalto.gov.br/ccivil_03/leis/2002/l10485.htm>
 - **lei-10865-2004** — <http://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.865.htm>
 - **lei-9718-1998** — <http://www.planalto.gov.br/ccivil_03/leis/l9718.htm>
+  - **2026-09-25:** rebaixada p/ a Fase 1 (C-2): mesmos 196.422 bytes, sha256 agora `dab540ec7cd2` (Planalto reeditou sem mudar o tamanho). Art. 4º relido nesta data — ver `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`. Idem `lei-10865-2004`: 389.869 bytes, sha256 agora `fb07460dfb92`.
+- **lei-13097-2015** — <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13097.htm> — acrescentada 2026-09-25 (Fase 1 do PLANO-POS-CONTADOR, passo 1.5); sha256 completo `c6679a9a9fa3ee541c63e915cbcc0a190b97764b388a21d372c59c273e1f393f`; transcrição em `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`.
 - **lc-123-2006** — <http://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>
