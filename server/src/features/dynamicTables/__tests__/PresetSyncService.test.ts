@@ -21,6 +21,7 @@ import type { IDynamicTable, ISchemaField, ITableSchema } from '../models/Dynami
 import { NotFoundError, ValidationError } from '../../../lib/errors';
 import { Role } from '../../users/models/User.model';
 import { leadsModule } from '../presets/modules/core/LeadsModule';
+import { opportunitiesModule } from '../presets/modules/crm/OpportunitiesModule';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -235,6 +236,27 @@ describe('PresetSyncService.syncInstalledTableFromPreset', () => {
       service.syncInstalledTableFromPreset(ADMIN_USER, 'leads'),
     ).rejects.toBeInstanceOf(ValidationError);
     expect(updateTableSchemaAsSystem).toHaveBeenCalledTimes(1);
+  });
+
+  // Lacuna (2026-09-25): o sync só une campos/opções — regra de schema nova no preset (aqui o
+  // immutableAfter Won/Lost de crmOpportunities, trava pós-Won) nunca chega a tenant já instalado,
+  // e a edição inline genérica segue aberta nele. Autorização do dono 2026-09-25 (chat):
+  // "autorizo corrigir o sync do preset para tenants existentes".
+  test('une as regras immutableAfter do preset que faltam no schema instalado (trava pós-Won)', async () => {
+    const installedSchema: ITableSchema = JSON.parse(JSON.stringify(opportunitiesModule.schema));
+    delete installedSchema.immutableAfter;
+    const installedTable = { ...buildInstalledTable(installedSchema), id: 'tbl-opps-1', internalName: 'crmOpportunities' } as IDynamicTable;
+    const repository = buildMockRepository();
+    repository.findTableByInternalName.mockImplementation(async (_userId, internalName) =>
+      internalName === 'crmOpportunities' ? installedTable : null,
+    );
+    const { service, updateTableSchemaAsSystem } = buildService({ repository });
+
+    await service.syncInstalledTableFromPreset(ADMIN_USER, 'crmOpportunities');
+
+    expect(updateTableSchemaAsSystem).toHaveBeenCalledTimes(1);
+    const appliedSchema = updateTableSchemaAsSystem.mock.calls[0][1].schema as ITableSchema;
+    expect(appliedSchema.immutableAfter).toEqual(opportunitiesModule.schema.immutableAfter);
   });
 
   test('cross-tenant: NotFoundError when the table is not installed for the user', async () => {
