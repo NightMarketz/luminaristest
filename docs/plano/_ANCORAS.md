@@ -7,6 +7,7 @@
 | §18.2 | [[X10i]] |
 | §III.1 · §III.3 §1 | [[GET-DATA-EXCHANGE-JOBS]] |
 | §III.1 · §M5.1 (apontadores) | [[ENVIO-PEDIDO-CONTADOR]] |
+| §III.1 (fora da régua — PROPOSTO) | [[GOV-CONTADOR]] |
 | §III.1 (fora da régua) | [[FE-INCR-DELIVERY]] · [[FE-INCR-FIXED-ASSETS]] · [[FE-INCR-REVIEW]] · [[FE-INCR-SPED-SIGNERS]] |
 | §III.1 passo 11 · §III.4 | [[PASSO-11]] |
 | §III.1 passo 12 · §III.4 | [[PASSO-12]] |
@@ -20,6 +21,8 @@
 | §III.2 · §M5.1 Bloco A item 4 | [[H2]] |
 | §III.2 · §M5.1 Bloco A item 5 | [[M2]] |
 | §III.2 · §M5.1 Bloco A item 6 | [[X2]] |
+| §III.2 (fora da régua — correção de comportamento do nó NF-e) | [[SIG-NFE]] |
+| §III.2 (fora da régua até BRIEF/ADR próprios) | [[ITEM-DESTINATION]] |
 | §III.2 quadro | [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]] |
 | §III.3 §2 · §III.2 quadro | [[C9]] |
 | §IV.1 Fase P-i18n | [[P-i18n]] |

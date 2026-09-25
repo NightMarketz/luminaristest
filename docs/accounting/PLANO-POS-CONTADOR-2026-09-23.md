@@ -1,5 +1,21 @@
 # Plano pós-resposta do contador — 2026-09-23
 
+> **⚠️ ESTADO VIVO NÃO MORA AQUI (desde 2026-09-25).** A fonte única de estado e fila é o vault [`docs/plano/`](../plano/README.md) — este documento é **insumo**: guarda o raciocínio da ordem, os critérios de pronto e o texto dos forks. Cada fase tem nó ou ponteiro lá, e é lá que se lê o que está aberto:
+>
+> | Fase | Onde vive no vault |
+> |---|---|
+> | 0 verificações V4/V5/V7 | [`X7`](../plano/nos/X7.md) (V4) · este doc (V5/V7, sem nó — checagens de leitura) |
+> | 0.8 follow-up ao contador | [`ENVIO-PEDIDO-CONTADOR`](../plano/gates/ENVIO-PEDIDO-CONTADOR.md) · [`D1`](../plano/gates/D1.md) |
+> | 1 PIS/COFINS | [`X6`](../plano/nos/X6.md) — **fechada 25/09** (#379 + #381); residual combustíveis no GAP-MAP 13 |
+> | 2 assinatura XML | [`SIG-NFE`](../plano/nos/SIG-NFE.md) |
+> | 3.1 destinação por item | [`ITEM-DESTINATION`](../plano/nos/ITEM-DESTINATION.md) |
+> | 3.2 · 3.3 · 3.4 emendas | [`C8`](../plano/nos/C8.md) · [`F7`](../plano/nos/F7.md) + [`X4`](../plano/nos/X4.md) · [`C6b`](../plano/nos/C6b.md) |
+> | 4 ADR do X7 | [`X7`](../plano/nos/X7.md) |
+> | 5 governança do contador | [`GOV-CONTADOR`](../plano/nos/GOV-CONTADOR.md) |
+> | 6 registros sem código | folds das notas citadas em cada item |
+>
+> Divergência entre este doc e o frontmatter de uma nota → **a nota vence** (regra do [`README` do vault](../plano/README.md)).
+
 > Pedido do dono (23/09): *"Planeje na ordem com granularidade"*. Insumo:
 > `TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md`.
 >
