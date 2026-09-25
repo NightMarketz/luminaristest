@@ -45,16 +45,14 @@
 | [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open | — | — |
 | [[D6]] | Convênio/leiaute do banco do 1º cliente | human-open | — | — |
 | [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão | [[X10i]] ✗ | — |
-| [[D8]] | Dados P6 do contador (declarante/signatários para o H1) | human-open | [[D1]] ✗ | — |
 | [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Autorização citável em main (G-6, 17/09); espera D2 | [[D2]] ✗ | — |
-| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Runbook em branco; alvo = SEED-MY (pontilhada) | [[P4]] ✗, [[D8]] ✗, [[SEED-MY]] ✗ | — |
+| [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — Preflight 24/09: alvo = seed-presumido (SEED-MY aplicado; X2 + mapeamento 2025 ready); bloqueado em P6 (D8 sem resposta) | [[P4]] ✗, [[D8]], [[SEED-MY]] ✗ | dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" |
 | [[H1b]] | H1 2ª passada em Lucro Real (2P-1..2P-4) | human-open — 2P-1..2P-4 preparados em branco | [[X4]], [[X4-14]], [[SEED-MY]] ✗, [[FE-INCR-LALUR-PR2]] ✗ | — |
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco | — | — |
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
 | [[M2]] | Host + 1º deploy (VPS, 1 instância por cliente, BYOK; conta de emissão por unidade R8) | human-open — Alvo decidido 22/08; runbook em branco | [[H2]] ✗ | — |
 | [[P4]] | Instalar validadores (PVA ECD/ECF) | human-open — PVA 10.4.1/12.2.6 instalados (i4jparams.conf, reconciliação 17/09); evidência do P4 segue do dono | — | — |
 | [[SEED-MY]] | Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3) | ready — BRIEF ✅ #325; forks F-SEED-2 a · F-SEED-3 b; B-4 assinado 24/09 (#371) — execução liberada | [[B-4]] | cédula 14/09 (#318/#319) SEED-MY autorizado |
-| [[X2]] | Import do arquivo oficial RFB (referencial / catálogo) | human-open — Executável desde 31/08 (arquivo no corpus); runbook em branco | — | — |
 | [[Z0-a]] | Contador com CRC aceita assinar escrituração que não conduziu? (premissa do F-Z0) | human-open — Cédula 10/09 resposta 1 fechou F-Z0 pelo produto e descondicionou o trilho; SDD §18/§19 ainda o tratam como aberto (item 0 do pedido) | — | — |
 
 ### Contábil
@@ -109,10 +107,10 @@
 
 ## Fechados, decididos e referência
 
-- **dado-externo** (3): [[D-NFSE]] · [[D3b]] · [[ENVIO-PEDIDO-CONTADOR]]
+- **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
 - **decisao** (21): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
-- **gate** (1): [[B-4]]
+- **gate** (2): [[B-4]] · [[X2]]
 - **motor** (1): [[PASSO-11]]
 - **plataforma** (6): [[P-i18n]] · [[P1]] · [[P2]] · [[P3]] · [[P4-fase]] · [[P5]]
 - **regua** (47): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[X10b]] · [[X4]] · [[X6]]
