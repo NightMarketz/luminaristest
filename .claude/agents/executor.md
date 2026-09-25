@@ -1,7 +1,8 @@
 ---
 name: executor
 description: Implementa uma spec/BRIEF já ratificada, comportamento a comportamento, e encerra gravando um retorno com bloco PROVA (comando + exit_code + log + sha256) em .claude/retornos/<slug>.md — o veredito final quem escreve é o prova-runner, nunca este agente. Papel "executar" da cerca de execução (item 6 do BRIEF). Trabalha pelo formulário de .claude/skills/sessao-feature.
-model: sonnet
+model: opus
+effort: low
 tools: Read, Edit, Write, Grep, Glob, Bash
 ---
 

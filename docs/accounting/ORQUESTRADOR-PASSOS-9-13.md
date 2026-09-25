@@ -3,6 +3,8 @@
 > **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — migrado para a **§III.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
 
 
+> **[EMENDA 2026-09-23 — decisão do dono]** Todo papel que era **Sonnet** passa a ser **Opus 5.5 com esforço `low`** (*"todas as sessões que deveriam ser sonnet vão ser opus 5.5 no baixo"*). Os esforços por passo abaixo (`medium` etc.) ficam **substituídos por `low`**; o texto original fica como histórico da calibração.
+
 **Escopo:** automação de 5 passos doc-only + testes mecânicos, alternando Haiku (tarefas de leitura/grep/fold, sem dial de esforço) e Sonnet (decisão/fork, esforço `low…max` conforme o passo).
 
 **Entrada (re-medida em 2026-09-22, após `git fetch`):** `origin/main` = `be80ea47` (#359, cerca de execução PR-2); `0548d19a` (C8 PR-3 #356) e `edb80ec8` (C12 #353) são ancestrais. **O passo 9 folda contra o tip de `origin/main` — não contra um SHA congelado neste doc; re-meça com `git fetch` antes de foldar** (entre a 1ª e a 2ª medição desta mesma sessão o tip andou de `0548d19a` para `be80ea47`). O passo 10 **está em `origin/main`** — entrou por **squash** no #358, ver § Passo 10. Nenhuma tarefa deste documento roda antes de `0548d19a`.
@@ -20,7 +22,7 @@ Esforço só se aplica a chamadas Sonnet (dial `low…max`); Haiku não tem o di
 | **9** | **Fold**: master map + grafo + PROXIMOS-PASSOS | **Haiku** | — | `origin/main` + arquivo de estado 22/09 | banner 45/57 → **46/57 — contábil 20/22 · financeiro 17/19 · fiscal 9/16** (ramo (a), ratificado 22/09); C12 ✅; C8 aberto até PR-5; GRAFO corrigido; PROXIMOS-PASSOS coluna Estado atualizada | `grep -cE "46/57" docs/accounting/ACCOUNTING-MASTER-MAP.md` → ≥1 | ✅ → 10 |
 | **10** | **Docs PR**: Contrato §2.1/§2.2/§2.3 + ADR + GAP-MAP + skills + gates | **Haiku** | — | branch `claude/domain-motor-architecture-7ec49d` (uncommitted no worktree, ou committed localmente) | Conteúdo em `origin/main`; 22 arquivos; skill-audit 0 findings | `git cat-file -e origin/main:docs/adr/ADR-DOMAIN-MOTOR-rejected.md` → exit 0 ✅ (predicado de **conteúdo**; ancestralidade de SHA não serve — ver § Passo 10) | ✅ → espera "11 instrumenta" |
 | **11** | **GAP-MAP 7**: teste `it.failing` — `unique`/`compositeUnique` sem gate in-tx | **Haiku** | — | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); molde `server/src/features/dynamicTables/services/__tests__/NoOverlapConcurrency.integration.test.ts` | `server/src/features/dynamicTables/services/__tests__/UniqueFieldConcurrency.integration.test.ts` vermelho na CI Linux | `cd server && npm run test:integration -- UniqueFieldConcurrency` | espera "instrumenta" dono |
-| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Sonnet** (fork) | — / **medium** | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `cd server && npm run test:unit -- immutableAfter` | espera dono: fork + "corrige" |
+| **12** | **GAP-MAP 8**: teste `it.failing` — `deleteTableData` ignora `immutableAfter` | **Haiku** (teste) **Opus 5.5** (fork) | — / **low** | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); `DynamicTableService.ts` + schema | teste vermelho; fork (a) vs (b) apresentado ao dono | `cd server && npm run test:unit -- immutableAfter` | espera dono: fork + "corrige" |
 | **13** | **PR-B**: `atomicUntil.boundary.test.ts` (população=8) + retrofit 8 JSDocs | **Haiku** | — | `origin/main` com o conteúdo do passo 10 (✅ desde #358 — § Passo 10); población validada = 8 arquivos | teste verde; GAP-MAP Nível 3 `[PAPEL]→[COBERTO]`; coverage `AC-2.3-2` ✅ | `cd server && npm run test:unit -- atomicUntil.boundary` = verde | espera "executa" dono |
 
 **Por que os gates de teste são os scripts do repositório (`server/package.json:30-31`), e nunca uma chamada crua de `npx jest` com a flag de coverage desligada:** `test:unit` = `jest --selectProjects unit --forceExit` e `test:integration` = `jest --selectProjects integration --runInBand --forceExit` — o `--runInBand` é o que serializa as suítes que tocam o `test-integration.db` (classes `integration-suite-precisa-de-runinband` e `jest-concorrente-windows-ebusy`: um 2º jest concorrente derruba 44–50 suítes com EBUSY no Windows, e o exit code 0 não serve de gate), e o `--selectProjects` é o que decide se o arquivo `*.integration.test.ts` sequer é coletado. Chamada crua perde as duas coisas — **não "simplifique" de volta**.
@@ -97,7 +99,7 @@ node .claude/skills/skill-audit/skill-audit.mjs run --all  # → 0 findings
    - Linha em status `Paid` → `deleteTableData(id)` deve lançar.
    - `it.failing` citando GAP-MAP lacuna 8.
 
-**Sonnet — esforço `medium`:**
+**Opus 5.5 — esforço `low`** *(era Sonnet `medium`; emenda 23/09)*:
 1. Ler `DynamicTableService.ts` `deleteTableData` + Guards 2/3 do `updateTableData`.
 2. Apresentar fork:
    - **(a)** Guard no delete (+20 linhas, cobre raiz).
@@ -151,7 +153,7 @@ tempo=30min (após 10 verde)
 Despachar: passo 11 (Haiku) + passo 12-Haiku (Haiku) em paralelo
 
 tempo=45min (após 12-Haiku verde)
-Sonnet avalia fork de passo 12; aguarda resposta do dono
+Opus 5.5 (low) avalia fork de passo 12; aguarda resposta do dono
 
 tempo=60min (após dono responde fork 12 + 11 verde)
 Despachar: passo 13 (Haiku) [depende 10 verde]
@@ -169,7 +171,7 @@ tempo=120min (após 13 verde)
 | 9 | Haiku | — | D1 ✅ ratificado 22/09 (ramo (a)); falta "executa" | sim (aguarda "executa" do dono) |
 | 10 | Haiku | — | — | **não** — conteúdo em `origin/main` desde o #358 (squash); PR #357 ficou duplicado (§ Passo 10) |
 | 11 | Haiku | — | "instrumenta" | sim (aguarda auth dono) |
-| 12 | Haiku + Sonnet | — / **medium** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
+| 12 | Haiku + Opus 5.5 | — / **low** | "instrumenta" + fork | sim (aguarda auth + decisão fork) |
 | 13 | Haiku | — | "executa" | sim (só aguarda auth — o passo 10 já está em `origin/main`) |
 
 **Padrão:** Haiku executa mecânico (grep/fold/retrofit de comentário — 0 dial de esforço). Sonnet só entra quando há leitura de código + decisão de design, e mesmo aí no piso que a tarefa aguenta: aqui `medium`, porque o espaço de busca é 2 métodos de 1 arquivo já apontado e as opções já vêm esboçadas — nem `low` (risco de citar linha de memória sem ler), nem `high+` (isso é para decisão sem precedente ou sem teto de escopo, que não é o caso). "instrumenta" = teste vermelho sem lógica; "executa" = código com lógica.
