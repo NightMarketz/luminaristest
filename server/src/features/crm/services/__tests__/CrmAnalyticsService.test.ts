@@ -5,7 +5,7 @@ import { CrmAnalyticsService } from '../CrmAnalyticsService';
 // Decisão do dono (2026-09-25, AskUserQuestion): "Incluir oportunidades" — ganhos, win rate,
 // ticket e receita vêm de crmOpportunities; leads ficam com funil/qualificação.
 describe('CrmAnalyticsService — oportunidades', () => {
-  it.failing('conta a oportunidade Ganha em wonLeads e no ticket médio', async () => {
+  it('conta a oportunidade Ganha em wonLeads e no ticket médio', async () => {
     const tables: Record<string, { id: string; internalName: string; schema: { fields: [] } }> = {
       leads: { id: 'leads-t', internalName: 'leads', schema: { fields: [] } },
       crmOpportunities: { id: 'opps-t', internalName: 'crmOpportunities', schema: { fields: [] } },
