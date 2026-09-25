@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 21 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 10 | 18 |
-| **total** | **48** | **59** |
+| fiscal | 10 | 19 |
+| **total** | **48** | **60** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -78,7 +78,7 @@
 | --- | --- | --- | --- | --- |
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — BRIEF próprio, ainda não aberto | [[X10b]] | — |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready — Crescimento do X4; falta 'executa' | [[X4]] | — |
-| [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
+| [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
 | [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned — **Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1 | [[FIS-08]] | — |
 | [[X10a]] | Adaptador por TIPO de documento fiscal (NFS-e, NF-e 55…) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: 'materializou dentro do nó X10b' (só NFS-e existe; NF-e 55 fora); §18.1 Onda 1 e grafo 14/09 ainda o listam  | [[X10b]] | resposta 9 (10/09) — requisito, sem 'executa' |
 | [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
