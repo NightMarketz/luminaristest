@@ -11,8 +11,10 @@
  *    aquisição de bens para revenda, só no regime NÃO-CUMULATIVO (item 10, F-X6-3 b).
  *  - Lei 10.833/2003 art. 3º §2º II: sem crédito em bem sujeito a alíquota zero/monofásico (item 11).
  *  - Lei 14.592/2023 art. 6º: ICMS fora da base do crédito (flag `pisCofinsCreditExcludesIcms`, default true).
- *  - IN RFB 2.121/2022 art. 170 (IPI na base — contestada) e ADI SRF 15/2007 (fornecedor do Simples):
- *    [NC] fora do corpus → flags com default CONSERVADOR (sem crédito), cédula 14/09.
+ *  - IPI fora da base do crédito como regra FIXA (STJ Tema 1.373; triagem do contador P1, 23/09) — a flag
+ *    `pisCofinsCreditIncludesIpi` não é lida aqui e o DTO só aceita `false`.
+ *  - ADI SRF 15/2007 (fornecedor do Simples): [NC] fora do corpus → flag com default CONSERVADOR (sem
+ *    crédito), cédula 14/09; F-PC-1 → (b) em 25/09 mantém o default.
  *  - LC 123/2006 art. 23: Simples Nacional não apura crédito (regime `SIMPLES` = crédito 0).
  *
  * Invariante (item 9): Σ custo_item === custoEstoqueCents em qualquer ramo (resíduo na última linha, BigInt).
@@ -123,13 +125,13 @@ export function acquisitionCost(nfe: Pick<ParsedNfe, 'totais' | 'emit'>, itens: 
       const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins });
       classe = c.classe;
       if (c.classe === 'TRIBUTADO') {
-        // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 14.592) ; + IPI (flag)
+        // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 14.592); IPI nunca (P1)
         base =
           it.vProdCents - it.vDescCents - descRest[i] + it.vFreteCents + freteRest[i] + it.vSegCents + segRest[i] + it.vOutroCents + outroRest[i];
         if (regime.pisCofinsCreditExcludesIcms) base -= it.vICMSCents;
-        if (regime.pisCofinsCreditIncludesIpi) base += it.vIPICents;
         if (base < 0) base = 0;
         creditoPisCofins = bp(base, PIS_CREDIT_BP) + bp(base, COFINS_CREDIT_BP);
+        if (c.alerta) warnings.push(`item ${it.nItem} (${it.cProd}): ${c.alerta}`);
       } else if (c.classe === 'UNKNOWN') {
         warnings.push(`item ${it.nItem} (${it.cProd}): sem crédito de PIS/COFINS — ${c.motivo}`);
       }

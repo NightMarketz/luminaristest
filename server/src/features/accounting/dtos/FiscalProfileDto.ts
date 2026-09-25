@@ -90,6 +90,13 @@ export const UpsertFiscalProfileSchema = z
         message: 'pTotTrib{Fed,Est,Mun}Cent não cabem em regimeTributario=SIMPLES (RN E0712: ME/EPP usa pTotTribSN).',
       });
     }
+    if (v.pisCofinsCreditIncludesIpi) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['pisCofinsCreditIncludesIpi'],
+        message: 'IPI não integra a base do crédito de PIS/COFINS (STJ Tema 1.373) — regra fixa, só aceita false.',
+      });
+    }
     if (v.ibsCbsCst != null && v.ibsCbsClassTrib != null && !v.ibsCbsClassTrib.startsWith(v.ibsCbsCst)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
