@@ -7,10 +7,10 @@
 
 | Domínio | Fechados | Total |
 | --- | --- | --- |
-| contabil | 20 | 22 |
+| contabil | 21 | 22 |
 | financeiro | 17 | 19 |
 | fiscal | 9 | 17 |
-| **total** | **46** | **58** |
+| **total** | **47** | **58** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -18,8 +18,6 @@
 
 | Nó | Título | Estado | Autorização |
 | --- | --- | --- | --- |
-| [[C8]] | Imobilizado + depreciação (+ retificação versionada ECD/ECF, ex-C9) | ready | "Executa C8" (dono, 18/09, corpo do #354) |
-| [[C9]] | Retificação de ECD/ECF versionada (absorvida no C8 Bloco G / PR-4) | ready | "Executa C8" 18/09 (cobre a retificação; CADEIA-A §2) |
 | [[FE-INCR-BANK-SETTLEMENT]] | Tela do F7 (baixa por retorno bancário) | planned | dono 17/09 (F-PS-1 → a) — só BRIEF |
 | [[FE-INCR-DELIVERY]] | Tela do pacote ao contador (consome C6b; files[].kind = ExportKind) | planned | — |
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned | — |
@@ -61,10 +59,8 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[C8]] | Imobilizado + depreciação (+ retificação versionada ECD/ECF, ex-C9) | ready — PR-1..3 ✅ #354-#356; PR-4 (retificação/J801/J932/lista de jobs) e PR-5 (NF-e modo 4) ⬜ não abertos; conta no numerador só no PR-5 | [[D3b]], [[C12]] | "Executa C8" (dono, 18/09, corpo do #354) |
-| [[C9]] | Retificação de ECD/ECF versionada (absorvida no C8 Bloco G / PR-4) | ready — Sem elo próprio (dono 18/09 'Pode seguir'); implementada no C8 PR-4, não aberto; fold 22/09 diz que não é linha própria da régua | [[X4]], [[C12]] | "Executa C8" 18/09 (cobre a retificação; CADEIA-A §2) |
 | [[FE-INCR-DELIVERY]] | Tela do pacote ao contador (consome C6b; files[].kind = ExportKind) | planned — BRIEF ✅ 17/09; forks F-FE-DL-1..4 pendentes | [[C6b]] | — |
-| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | blocked — Espera merge do BE (F-PS-4 → a); sem BRIEF | [[C8]] ✗ | — |
+| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | blocked — Espera merge do BE (F-PS-4 → a); sem BRIEF | [[C8]] | — |
 | [[FE-INCR-REVIEW]] | Aba do C11 (revisão profissional) | planned — BRIEF ✅ 17/09; forks F-FE-RV-1..4 pendentes | [[C11]] | — |
 | [[FE-INCR-SPED-SIGNERS]] | Combobox de qualificação de signatário (BRIEF C12 §6.3, rota nova) | blocked — BE C12 já mergeado (#353); texto de 17/09 ainda diz 'espera merge do BE' | [[C12]] | — |
 | [[GET-DATA-EXCHANGE-JOBS]] | Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria | planned — Não existe; previsto no C8 PR-4 ou no FE-INCR-REVIEW (F-FA15 → a) | — | F-FA15 → (a) (dono, 18/09) |
@@ -115,7 +111,7 @@
 - **gate** (1): [[B-4]]
 - **motor** (1): [[PASSO-11]]
 - **plataforma** (6): [[P-i18n]] · [[P1]] · [[P2]] · [[P3]] · [[P4-fase]] · [[P5]]
-- **regua** (47): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[X10b]] · [[X4]] · [[X6]]
+- **regua** (49): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[C8]] · [[C9]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[X10b]] · [[X4]] · [[X6]]
 - **rejeitada** (6): [[R-contab-preset-dt]] · [[R-motor-dominio]] · [[R-motor-regras]] · [[R-multimoeda]] · [[R-postgresql]] · [[R-torre-multiempresa]]
 - **subno** (2): [[X10]] · [[X4-14]]
 - **trilho** (12): [[T1]] · [[T10]] · [[T11]] · [[T12]] · [[T2]] · [[T3]] · [[T4]] · [[T5]] · [[T6]] · [[T7]] · [[T8]] · [[T9]]
