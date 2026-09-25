@@ -25,8 +25,7 @@ const schema: ITableSchema = {
 describe('DynamicForm — botão "Hoje" (classe date-only UTC shift)', () => {
   afterEach(() => cleanup());
 
-  // it.fails: vermelho POR DESENHO até a sessão de correção — ela troca para it() (mesma convenção do it.failing do #379).
-  it.fails('guarda: clicar em "Hoje" na janela 21h-00h BRT escreve o hoje do escopo, não o amanhã UTC', () => {
+  it('guarda: clicar em "Hoje" na janela 21h-00h BRT escreve o hoje do escopo, não o amanhã UTC', () => {
     const { container } = render(
       <DynamicForm schema={schema} onSubmit={() => {}} onClose={() => {}} />,
     );

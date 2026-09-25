@@ -196,7 +196,10 @@ suporte/configuração em 759 achados de revisão — é a classe que ninguém e
 >    **Item próprio F4(b) — INSTRUMENTADO em `main` 2026-09-25** (autorização do dono no chat): o guarda
 >    `my-app/features/dashboard/components/forms/__tests__/DynamicForm.todayButton.test.tsx` › "guarda:
 >    clicar em "Hoje" na janela 21h-00h BRT…" entra como `it.fails` (vermelho por desenho; falha na
->    asserção final: `expected '2026-09-01' to be '2026-08-31'`). ABERTO — a correção troca para `it()`.
+>    asserção final: `expected '2026-09-01' to be '2026-08-31'`). **CORRIGIDO 2026-09-25** (mesmo PR): o
+>    botão usa `scopeToday()`, agora CENTRALIZADO em `features/dashboard/shared/utils/formatters.ts`
+>    (decisão do dono 2026-09-25, supersede as 2 cópias do F3(b)); `accounting/lib/formatDate.ts`
+>    re-exporta, `useSalesWizard` importa. Guarda volta a `it()`; suíte my-app 307/307.
 >
 >    **CORRIGIDO 2026-09-02** — os 12 sites do lote (13 menos o DynamicForm, que F4(b) tirou para item
 >    próprio): BP/DRE/DFC pelo backend (`asOf` opcional + `scopeToday` no Service) e os 9 restantes no
