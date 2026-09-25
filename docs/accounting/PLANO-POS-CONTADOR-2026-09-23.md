@@ -39,6 +39,8 @@ As Fases 0 e 1 podem rodar em paralelo. O C8 PR-4 (#368) segue independente.
 
 **Autorização que falta:** "instrumenta a Fase 1" e depois "corrige a Fase 1" (ou as duas juntas).
 
+> **2026-09-25 — 1.1–1.6 instrumentados (PR #379, `f8029916`)**, autorização do dono 25/09. V6 (0.6) confirmou IPI na base via flag (`nfeCost.ts:130`) → 1.4 existe. 4 `it.failing` (GAP-MAP 10–13). **C-2 só a metade bebidas:** combustíveis BLOQUEADO — a Lei 9.718 art. 4º nomeia produtos, sem NCM (`fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md` §B). **Achado para 1.8:** Lei 13.097 art. 29 veda crédito só na revenda do varejista (art. 28/17); não-varejista credita pelo valor da nota (art. 30) — regra que o modelo não tem. Falta: "corrige a Fase 1" + F-PC-1/F-PC-2.
+
 | # | Passo | Sessão | Arquivo | Critério |
 |---|---|---|---|---|
 | 1.1 | Registrar 4 lacunas no GAP-MAP (C-1, C-3, IPI-base se o V6 confirmar, C-2) | instrumentação | `docs/operating-manual/GAP-MAP.md` | 4 linhas com comando que prova |
