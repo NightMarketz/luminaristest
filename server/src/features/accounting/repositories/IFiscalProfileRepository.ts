@@ -35,6 +35,8 @@ export interface FiscalProfileData {
 /** BE-INCR-NFE-COST-REGIME (nó X6, item 2) — único lugar com `prisma.fiscalProfile.*`. `tx?` em todos. */
 export interface IFiscalProfileRepository {
   findByScope(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<FiscalProfile | null>;
+  /** X13 PR-2 (F-XP-8 a): perfis vivos de TODAS as unidades do dono — instância = CNPJ raiz (R8). */
+  findManyByOwner(ownerUserId: string, tx?: Prisma.TransactionClient): Promise<FiscalProfile[]>;
   upsert(scope: AccountingScope, data: FiscalProfileData, tx?: Prisma.TransactionClient): Promise<FiscalProfile>;
   softDelete(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<number>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;

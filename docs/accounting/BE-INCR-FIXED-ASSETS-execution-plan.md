@@ -1,5 +1,8 @@
 # C8 — Plano de execução granular: BE-INCR-FIXED-ASSETS (imobilizado + depreciação + retificação versionada)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Estado: plano de execução (granularização do BRIEF), 2026-09-17.** ADR `ADR-INCR-FIXED-ASSETS.md` (Proposed +
 > parecer §4); BRIEF `BE-INCR-FIXED-ASSETS-brief.md` com **37 comportamentos**; F-FA1..9 delegados, **F-FA10/12/13 → (a)
 > ✅ ratificados 2026-09-16** (`CEDULA-DECISAO-2026-09-16-forks-c11-c12-c6b-c8-seed.md`). **Implementação continua exigindo

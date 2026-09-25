@@ -31,8 +31,12 @@ import {
   buildJ005,
   buildJ100,
   buildJ150,
+  buildJ801,
+  sanitizeRtfForSped,
   buildJ900,
   buildJ930,
+  buildJ932,
+  J932_QUALIF_910,
   buildBlockOpen,
   buildBlockClose,
   buildEcdFile,
@@ -294,6 +298,115 @@ describe('register builders', () => {
     expect(f[11]).toBe('N'); // IND_RESP_LEGAL
   });
 
+  // BE-INCR-FIXED-ASSETS PR-4 (Passo 20) — J801/J932 (transcrição J801-J932.md §1/§2).
+  it('J801 = 7 fields, TIPO_DOC fixo "001", IND_FIM_RTF fixo "J801FIM" (pp. 192-194)', () => {
+    const line = buildJ801({
+      codMotSubs: '001',
+      hashRtf: '1234567890abcdefabcdefabcdefab1234567890',
+      arqRtf: '{\\rtf1\\ansi...}',
+    });
+    const f = line.slice(1, -1).split('|');
+    expect(f).toHaveLength(7);
+    expect(f[0]).toBe('J801');
+    expect(f[1]).toBe('001'); // TIPO_DOC
+    expect(f[3]).toBe('001'); // COD_MOT_SUBS
+    expect(f[6]).toBe('J801FIM');
+  });
+
+  it('J801 sem descRtf emite campo vazio (campo 03 é opcional)', () => {
+    const line = buildJ801({ codMotSubs: '099', hashRtf: 'a'.repeat(40), arqRtf: 'x' });
+    const f = line.slice(1, -1).split('|');
+    expect(f[2]).toBe('');
+  });
+
+  // Review PR #368, item 3 — sanitizeRtfForSped: '|' hoje virava Error cru (500) do spedLine;
+  // tags proibidas pela Receita; \bin rejeitado; CR/LF normalizados sem perda (spec RTF).
+  describe('sanitizeRtfForSped', () => {
+    // Bug relatado no review PR #368 (2ª rodada): CR/LF logo depois de uma palavra de controle
+    // é o DELIMITADOR que a fecha — o leitor RTF o CONSOME como um espaço. Removê-lo sem
+    // substituir cola a palavra de controle no texto seguinte (`\par\r\nTermo` → `\parTermo`,
+    // apagando o parágrafo E a palavra "Termo" em silêncio — o HASH_RTF descreveria um
+    // documento corrompido). Correção: delimitador → espaço; qualquer OUTRA quebra de linha
+    // (entre texto puro) → removida sem substituto (não delimita nada).
+    it('CR/LF logo após palavra de controle vira UM espaço (nunca é removido sem substituto)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\par\r\nTermo \\b\r\nnegrito}')).toBe(
+        '{\\rtf1\\par Termo \\b negrito}',
+      );
+    });
+
+    it('\\par\\r\\n isolado vira "\\par " (caso citado no review)', () => {
+      expect(sanitizeRtfForSped('a\\par\r\nb')).toBe('a\\par b');
+    });
+
+    it('palavra de controle com contador numérico (\\fs24\\n) também recebe o espaço delimitador', () => {
+      expect(sanitizeRtfForSped('a\\fs24\nb')).toBe('a\\fs24 b');
+    });
+
+    it('CR/LF que NÃO segue palavra de controle é removido sem substituto (whitespace insignificante)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\ansi\r\nHello\r\nWorld}')).toBe('{\\rtf1\\ansi HelloWorld}');
+      expect(sanitizeRtfForSped('a\nb\rc\r\nd')).toBe('abcd');
+    });
+
+    it('rejeita "|" (corromperia o registro SPED)', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1|x}')).toThrow(/RTF_CONTAINS_PIPE/);
+    });
+
+    it('rejeita \\bin como PALAVRA DE CONTROLE real (dado binário embutido)', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1\\bin5 ABCDE}')).toThrow(/RTF_CONTAINS_BIN/);
+    });
+
+    // Review PR #368 (2ª rodada), "menores": \bin como SUBSTRING crua daria falso positivo no
+    // texto literal "\bin" (que no .rtf chega ESCAPADO como "\\bin" — barra dupla). A forma
+    // escapada nunca deve disparar a rejeição.
+    it('texto literal "\\bin" (escapado como "\\\\bin" no .rtf) NÃO dispara \\bin — não é palavra de controle', () => {
+      expect(() => sanitizeRtfForSped('{\\rtf1 caminho \\\\bin do sistema}')).not.toThrow();
+    });
+
+    // Review PR #368 (3ª rodada) — a guarda de barra ÚNICA (`(?<!\\)`) não contava PARIDADE de
+    // barras: um run de 2 barras (`\\par` — 1 barra literal ESCAPADA + "par" como texto puro,
+    // NENHUMA palavra de controle) ainda "casava" como controle e ganhava espaço visível
+    // indevido; um run de 3 barras (`\\\bin4` — 1 par escapado + 1 barra ÍMPAR que É `\bin4` de
+    // verdade) era lido como NÃO-controle e passava sem 400. Construído com `.repeat()` para o
+    // número de barras não se perder em escaping de string JS.
+    it('run de 2 barras (`\\\\par`, escape+texto puro) NÃO é palavra de controle — CRLF some sem espaço', () => {
+      const twoBackslashesParCRLFx = `${'\\'.repeat(2)}par\r\nX`;
+      expect(sanitizeRtfForSped(twoBackslashesParCRLFx)).toBe(`${'\\'.repeat(2)}parX`);
+    });
+
+    it('run de 3 barras (`\\\\\\bin4`, escape+controle real) É \\bin de verdade — 400', () => {
+      const threeBackslashesBin4 = `${'\\'.repeat(3)}bin4 abcd`;
+      expect(() => sanitizeRtfForSped(threeBackslashesBin4)).toThrow(/RTF_CONTAINS_BIN/);
+    });
+
+    it.each(['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'])(
+      'rejeita a tag proibida %s (REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194)',
+      (tag) => {
+        expect(() => sanitizeRtfForSped(`{\\rtf1 texto ${tag} mais texto}`)).toThrow(/RTF_FORBIDDEN_TAG/);
+      },
+    );
+
+    it('texto limpo (sem quebra de linha) passa inalterado (controle)', () => {
+      expect(sanitizeRtfForSped('{\\rtf1\\ansi Termo de Verificação}')).toBe('{\\rtf1\\ansi Termo de Verificação}');
+    });
+  });
+
+  it('J932 = 11 fields, IDENT_QUALIF_T derivado (J932_QUALIF_910), COD_ASSIN_T=910 (pp. 203-205)', () => {
+    const line = buildJ932({
+      identNom: 'FULANO BELTRANO',
+      identCpfCnpj: '12345678900',
+      codAssin: '910',
+      indCrc: 'SP-123456/O-1',
+      email: 'fulano@gmail.com',
+      fone: '2199999999',
+      ufCrc: 'SP',
+    });
+    const f = line.slice(1, -1).split('|');
+    expect(f).toHaveLength(11);
+    expect(f[0]).toBe('J932');
+    expect(f[3]).toBe(J932_QUALIF_910); // IDENT_QUALIF_T
+    expect(f[4]).toBe('910'); // COD_ASSIN_T
+  });
+
   it('block open = REG + 0; block close = REG + count', () => {
     expect(buildBlockOpen('I001')).toBe('|I001|0|');
     expect(buildBlockClose('I990', 42)).toBe('|I990|42|');
@@ -366,6 +479,29 @@ describe('buildEcdFile — assembly', () => {
     expect(regs.indexOf('0990')).toBeLessThan(regs.indexOf('I001'));
     expect(regs.indexOf('I990')).toBeLessThan(regs.indexOf('J001'));
     expect(regs.indexOf('J990')).toBeLessThan(regs.indexOf('9001'));
+  });
+
+  // BE-INCR-FIXED-ASSETS PR-4 (item 21/25 adversarial): substituta contém |J801| e |J932|,
+  // original não contém nenhum.
+  it('emite J801+J932 SÓ quando verificationTerm está presente (substituta); ausente na original', () => {
+    const original = buildEcdFile(minimalInput()).join('\n');
+    expect(original).not.toContain('|J801|');
+    expect(original).not.toContain('|J932|');
+
+    const substituta = buildEcdFile({
+      ...minimalInput(),
+      verificationTerm: {
+        j801: { codMotSubs: '001', hashRtf: 'a'.repeat(40), arqRtf: 'x' },
+        signers: [
+          {
+            identNom: 'FULANO', identCpfCnpj: '12345678900', codAssin: '910',
+            indCrc: 'SP-123456/O-1', email: 'f@x.com', fone: '119999', ufCrc: 'SP',
+          },
+        ],
+      },
+    }).join('\n');
+    expect(substituta).toContain('|J801|');
+    expect(substituta).toContain('|J932|');
   });
 
   it('9999 equals the true total line count', () => {

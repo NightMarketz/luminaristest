@@ -57,6 +57,12 @@ export interface NfeIgnoredItem {
   reason: 'indTot-0';
 }
 
+/** CFOPs de entrada de imobilizado (compra para o ativo imobilizado — dentro e fora do estado). Um
+ *  item com um destes CFOPs NUNCA compõe o rateio de estoque (BE-INCR-FIXED-ASSETS PR-5 / F-FA12 →
+ *  a; ADR §F-FA3 (b)) — sai para `fixedAssetItems` mesmo que o operador não tenha mapeado nada
+ *  (mapeamento ausente/errado rejeita loud, nunca cai em silêncio no estoque). */
+const FIXED_ASSET_CFOPS = new Set(['1551', '2551']);
+
 /** Result of a purchase import: the created liability + the lines that were deliberately ignored. */
 export interface NfePurchaseImportResult {
   payable: Payable;
@@ -97,9 +103,15 @@ export class NfeImportService {
 
     const supplierName = this.resolveSupplierName(nfe);
 
-    // Item→produto D6 — every note item needs an operator mapping cProd→productRef. Build the lookup and
-    // reject the whole import if any item is unmapped (loud, never a silent skip).
-    const mappingByCProd = new Map(dto.itemMappings.map((m) => [m.cProd, m.productRef]));
+    // Item→produto D6 — every note item needs an operator mapping cProd→productRef (estoque) OU
+    // cProd→classId (imobilizado, PR-5). Build both lookups and reject the whole import if any item
+    // is unmapped or mapped to the wrong shape for its CFOP (loud, never a silent skip/misroute).
+    const productRefByCProd = new Map(
+      dto.itemMappings.filter((m) => m.productRef != null).map((m) => [m.cProd, m.productRef!]),
+    );
+    const classIdByCProd = new Map(
+      dto.itemMappings.filter((m) => m.classId != null).map((m) => [m.cProd, m.classId!]),
+    );
 
     // X6: custo POR REGIME (BRIEF itens 6–11 + EMENDA 2026-09-15). Sem perfil fiscal → 400 (F-X6-6 a).
     // `amountCents` = custo BRUTO (o que se deve ao fornecedor, F-X6-8 a); o estoque recebe o LÍQUIDO;
@@ -117,7 +129,12 @@ export class NfeImportService {
       );
     }
     const recoverableTaxLines = this.recoverableLines(custo, regime);
-    const { inventoryItems, ignoredItems } = this.allocate(nfe.itens, custo, mappingByCProd);
+    const { inventoryItems, fixedAssetItems, ignoredItems } = this.allocate(
+      nfe.itens,
+      custo,
+      productRefByCProd,
+      classIdByCProd,
+    );
 
     const issueDate = nfe.ide.dhEmiDate; // YYYY-MM-DD (reslice literal from the parser)
 
@@ -133,7 +150,10 @@ export class NfeImportService {
       dueDate: dto.dueDate ?? issueDate,
       amountCents: custoTotalCents,
       inventoryMultiItem: true,
-      inventoryItems,
+      // F-FA12 → a (nota mista): uma NF-e 100% CFOP 1551/2551 tem `inventoryItems=[]` — o modo 3
+      // (multi-item) fica de pé só pelo `fixedAssetItems` (o DTO aceita "ao menos um dos dois").
+      ...(inventoryItems.length > 0 ? { inventoryItems } : {}),
+      ...(fixedAssetItems.length > 0 ? { fixedAssetItems } : {}),
       ...(recoverableTaxLines.length > 0 ? { recoverableTaxLines } : {}),
     };
 
@@ -203,13 +223,23 @@ export class NfeImportService {
    * The `custoTotalCents × vProd_item` product is computed in `BigInt`: both factors are cents and their
    * `Number` product can exceed `Number.MAX_SAFE_INTEGER` (e.g. 2e9 × 1e9), which would silently drift.
    * BigInt division truncates toward zero — identical to `Math.floor` for these non-negative values.
+   *
+   * **3rd output (BE-INCR-FIXED-ASSETS PR-5, F-FA12 → a):** a costed item whose CFOP is in
+   * `FIXED_ASSET_CFOPS` (1551/2551) NEVER joins the stock rateio weight — it routes to
+   * `fixedAssetItems` instead, keyed by the operator's `classId` mapping. The CFOP is the single
+   * source of truth for the branch (execution-plan Passo 26/adversarial): a 1551 item mapped with
+   * `productRef` rejects loud (would silently misroute the machine into estoque/CMV — the exact
+   * `param-aceito-e-ignorado-e-bug` class the ADR names), and a non-1551 item mapped with `classId`
+   * rejects loud too (the inverse misroute).
    */
   private allocate(
     itens: NfeItem[],
     custo: AcquisitionCost,
-    mappingByCProd: Map<string, string>,
+    productRefByCProd: Map<string, string>,
+    classIdByCProd: Map<string, string>,
   ): {
     inventoryItems: NonNullable<CreatePayableInput['inventoryItems']>;
+    fixedAssetItems: NonNullable<CreatePayableInput['fixedAssetItems']>;
     ignoredItems: NfeIgnoredItem[];
   } {
     const ignoredItems: NfeIgnoredItem[] = itens
@@ -228,28 +258,66 @@ export class NfeImportService {
       throw new ValidationError('NF-e de compra sem valor de produtos (Σ vProd = 0) — rejeitada.');
     }
     // X6: a parcela de cada item já vem do `acquisitionCost` (rateio do BRUTO por vProd, resíduo na última,
-    // menos os créditos DO PRÓPRIO item) — Σ custoLiquido === custoEstoqueCents (item 9).
+    // menos os créditos DO PRÓPRIO item) — Σ custoLiquido === custoEstoqueCents (item 9). A MESMA fórmula
+    // D3 vale para o item de imobilizado (ADR F-FA3 b: "custo do rascunho usa a mesma fórmula D3").
     const liquidoByItem = new Map(custo.itens.map((c) => [c.nItem, c.custoLiquidoCents]));
-    const inventoryItems = costed.map((it) => {
-      const productRef = mappingByCProd.get(it.cProd);
+    const inventoryItems: NonNullable<CreatePayableInput['inventoryItems']> = [];
+    const fixedAssetItems: NonNullable<CreatePayableInput['fixedAssetItems']> = [];
+
+    for (const it of costed) {
+      const isFixedAsset = FIXED_ASSET_CFOPS.has(it.cfop);
+      const share = liquidoByItem.get(it.nItem);
+      if (share === undefined) {
+        throw new ValidationError(`Item ${it.nItem} ('${it.cProd}') sem custo calculado — rejeitado.`);
+      }
+
+      if (isFixedAsset) {
+        const productRef = productRefByCProd.get(it.cProd);
+        if (productRef) {
+          throw new ValidationError(
+            `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (imobilizado) mas foi mapeado com productRef — use classId (a nota não pode virar estoque em silêncio).`,
+          );
+        }
+        const classId = classIdByCProd.get(it.cProd);
+        if (!classId) {
+          throw new ValidationError(
+            `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (imobilizado) e não tem classId confirmado (F-FA12) — rejeitado.`,
+          );
+        }
+        fixedAssetItems.push({
+          classId,
+          cProd: it.cProd,
+          costCents: share,
+          ncm: it.ncm || undefined,
+          qty: this.qComToUnits(it.qCom, it.cProd),
+          // review #366 (achado 3): nItem é a chave do rascunho, NUNCA cProd (2 linhas de
+          // imobilizado podem repetir o mesmo cProd — chavear por cProd perderia a 2ª).
+          nItem: it.nItem,
+        });
+        continue;
+      }
+
+      const classId = classIdByCProd.get(it.cProd);
+      if (classId) {
+        throw new ValidationError(
+          `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (não é imobilizado) mas foi mapeado com classId — use productRef.`,
+        );
+      }
+      const productRef = productRefByCProd.get(it.cProd);
       if (!productRef) {
         throw new ValidationError(
           `Item '${it.cProd}' (${it.xProd}) não tem mapeamento de produto confirmado (D6) — rejeitado.`,
         );
       }
-      const share = liquidoByItem.get(it.nItem);
-      if (share === undefined) {
-        throw new ValidationError(`Item ${it.nItem} ('${it.cProd}') sem custo calculado — rejeitado.`);
-      }
-      return {
+      inventoryItems.push({
         productRef,
         qty: this.qComToUnits(it.qCom, it.cProd),
         valueCents: share,
         description: it.xProd,
-      };
-    });
+      });
+    }
 
-    return { inventoryItems, ignoredItems };
+    return { inventoryItems, fixedAssetItems, ignoredItems };
   }
 
   /**

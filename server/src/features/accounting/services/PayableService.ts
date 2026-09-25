@@ -24,7 +24,11 @@ import type {
 } from '../dtos/PayableDto';
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
+import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
+import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
+import { resolveRateForNcm } from '../models/FixedAsset.model';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
+import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
 import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
@@ -33,6 +37,7 @@ import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
 import type { IProductRefLookup } from './ProductRefLookup';
 import type { IPhysicalStockSync } from './PhysicalStockSync';
+import type { IFixedAssetDraftCreator, IFixedAssetDraftRedriver, ResolvedFixedAssetItem } from './IFixedAssetDraftCreator';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
@@ -64,7 +69,17 @@ function withBalance(payable: PayableWithPayments): PayableWithBalance {
   return { ...payable, remainingCents: payable.amountCents - payable.paidCents };
 }
 
-export class PayableService {
+export class PayableService implements IFixedAssetDraftRedriver {
+  // BE-INCR-FIXED-ASSETS PR-5 (setter injection — quebra o ciclo de construção
+  // PayableService → FixedAssetService → DepreciationService → [redriver] → PayableService; ver
+  // IFixedAssetDraftCreator.ts). `undefined` até o factory wirar: createPayable degrada para
+  // best-effort logado (reconcile relê depois), redriveFixedAssetDrafts devolve 0.
+  private fixedAssetDraftCreator?: IFixedAssetDraftCreator;
+
+  setFixedAssetDraftCreator(creator: IFixedAssetDraftCreator): void {
+    this.fixedAssetDraftCreator = creator;
+  }
+
   constructor(
     private readonly payableRepo: IPayableRepository,
     private readonly accountRepo: IAccountRepository,
@@ -84,6 +99,17 @@ export class PayableService {
     // (DT stockMovements→productUnits). Best-effort como o receiveStock — a passada de reconcile
     // re-dirige o que faltar; wiring ausente degrada com warn (o físico é derivado, não verdade).
     private readonly physicalStockSync?: IPhysicalStockSync,
+    // OPTIONAL (BE-INCR-FIXED-ASSETS PR-5 / F-FA12 → a): modo 4 (fixedAssetItems) resolve
+    // `class.costAccountId` por item para debitar 1.2.x — NUNCA estoque. Optional pela mesma razão de
+    // wiring do inventoryService; um payable com fixedAssetItems e este repo ausente falha loud.
+    private readonly fixedAssetClassRepo?: IFixedAssetClassRepository,
+    // OPTIONAL (review #366, achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a
+    // validação por NCM roda ANTES do tx1 (ver `resolveFixedAssetLines`), nunca só no rascunho.
+    private readonly depreciationRateRepo?: IDepreciationRateRepository,
+    // OPTIONAL (BE-INCR-FIXED-ASSETS PR-5, item 22/28): lê o `SourceDocument.rawJson` da
+    // recognition para o re-drive de rascunho relê-la (`redriveFixedAssetDrafts`) — nunca uma 2ª
+    // cópia do breakdown na linha do Payable (decisão do dono 23/09).
+    private readonly sourceProvenanceRepo?: ISourceProvenanceRepository,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -153,9 +179,21 @@ export class PayableService {
     // persistidos na linha (JSON) para o re-drive reconstruir o mesmo entry.
     const recoverableLines = await this.resolveRecoverableLines(scope, dto);
 
+    // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 resolve class.costAccountId por item ANTES da
+    // tx (mesmo padrão de recoverableLines) — persistido na linha para o re-drive reconstruir o
+    // MESMO entry e para o rascunho (item 22, fora desta PR — ver F-FA-DRAFT-RATE no retorno) ler
+    // qty/ncm/cProd por item.
+    const hasFixedAssetItems = (dto.fixedAssetItems?.length ?? 0) > 0;
+    const fixedAssetLines = hasFixedAssetItems ? await this.resolveFixedAssetLines(scope, dto) : [];
+
+    // A note has STOCK lines only when it carries a single-SKU pair or a non-empty inventoryItems[]
+    // (F-FA12 → a: a nota pode ser 100% CFOP 1551/2551, com inventoryItems=[]/ausente — o wiring de
+    // estoque não deve ser exigido de um payable sem nenhum item de estoque).
+    const hasInventoryLines = hasSingleInventorySku(dto) || (dto.inventoryItems?.length ?? 0) > 0;
+
     // Inventory purchases MUST have the subledger wired (the dep is optional until Fase B factory
     // wiring). Fail LOUD before minting a row we could never value, never silently skip the INBOUND.
-    if (inventoryPurchase && !this.inventoryService) {
+    if (hasInventoryLines && !this.inventoryService) {
       throw new ValidationError(
         'Compra de estoque requer o serviço de estoque configurado (wiring de inventário pendente).',
       );
@@ -164,7 +202,7 @@ export class PayableService {
     // LAC-E F-E2 (ratificado): o productRef precisa existir no catálogo `products` do tenant ANTES
     // de qualquer escrita — typo em string livre criaria camada de custo órfã invisível ao CMV.
     // Mesmo padrão fail-loud do inventoryService para wiring ausente.
-    if (inventoryPurchase) {
+    if (hasInventoryLines) {
       if (!this.productRefLookup) {
         throw new ValidationError(
           'Compra de estoque requer o catálogo de produtos configurado (wiring de lookup pendente).',
@@ -244,8 +282,13 @@ export class PayableService {
     }
 
     // Recognition posting (SEPARATE tx). Compensate the row on synchronous failure.
+    let recognitionEntryId: string | undefined;
     try {
-      await this.posting.postEntry(scope, this.buildRecognitionInput(scope, payable, expenseAccount, dto));
+      const entry = await this.posting.postEntry(
+        scope,
+        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines),
+      );
+      recognitionEntryId = entry.id;
     } catch (error) {
       await this.compensateFailedRecognition(scope, payable);
       throw error;
@@ -305,7 +348,39 @@ export class PayableService {
         }
       }
     }
+
+    // BE-INCR-FIXED-ASSETS PR-5 (item 22, F-FA12 → a) — AFTER the recognition is booked, mint the
+    // FixedAsset PENDING_ACTIVATION draft(s). Same staging as the inventory INBOUND above: the
+    // recognition is already committed, so a failure here must NOT compensate it — best-effort, log
+    // and let `redriveFixedAssetDrafts` (reconcile gancho) complete it later by re-reading the
+    // recognition's `SourceDocument.rawJson` (never a 2nd copy of the breakdown on the Payable row).
+    if (fixedAssetLines.length > 0) {
+      const sourceDocumentId = await this.findRecognitionSourceDocumentId(scope, recognitionEntryId);
+      try {
+        await this.fixedAssetDraftCreator?.createDraftFromPayable(scope, payable, fixedAssetLines, sourceDocumentId);
+      } catch (error) {
+        logger.warn('AP createPayable: fixed-asset draft creation failed — reconcile will re-drive', {
+          payableId: payable.id,
+          error,
+        });
+      }
+    }
     return payable;
+  }
+
+  /** Resolve o `sourceDocumentId` da recognition (drill-down do rascunho, item 22) — best-effort,
+   *  `undefined` se o dep não está wired ou a entry não tem origem formal (nunca bloqueia o create). */
+  private async findRecognitionSourceDocumentId(
+    scope: AccountingScope,
+    entryId: string | undefined,
+  ): Promise<string | undefined> {
+    if (!entryId || !this.sourceProvenanceRepo) return undefined;
+    try {
+      const sources = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entryId);
+      return sources[0]?.sourceDocumentId;
+    } catch {
+      return undefined;
+    }
   }
 
   /** Best-effort do movimento físico da compra (nunca desfaz razão/subrazão já commitados). */
@@ -926,6 +1001,50 @@ export class PayableService {
     return { recognitionsPosted, settlementsPosted, finalized, blocked, failed };
   }
 
+  /**
+   * `IFixedAssetDraftRedriver` (execution-plan Passo 13/28) — o gancho que
+   * `DepreciationService.reconcile` chama para `draftsCreated`. Para cada payable ATIVO
+   * (`inventoryMultiItem=true`, o único modo que carrega itens de imobilizado): acha a recognition
+   * (`this.posting.findEntryBySource`); se ela existe, relê o `SourceDocument.rawJson` vinculado
+   * (`sourceProvenanceRepo.findSourcesByEntry`) — **nunca** uma 2ª cópia do breakdown na linha do
+   * Payable (decisão do dono 23/09); se o JSON tem `fixedAssetItems`, chama
+   * `createDraftFromPayable` (read-first por `sourceItemRef` — item já rascunhado é PULADO, então
+   * chamar de novo para TODOS os payables em toda passada é seguro e idempotente, nunca duplica).
+   * Sem `fixedAssetDraftCreator`/`sourceProvenanceRepo` wired, devolve 0 (degrada, não lança —
+   * mesma disciplina do resto do reconcile best-effort).
+   */
+  async redriveMissingDrafts(scope: AccountingScope): Promise<number> {
+    if (!this.fixedAssetDraftCreator || !this.sourceProvenanceRepo) return 0;
+    if (!this.policy.canManagePayable(scope)) return 0;
+    let created = 0;
+    const payables = await this.payableRepo.findAllActive(scope);
+    for (const payable of payables) {
+      if (payable.status === 'CANCELLED' || !payable.inventoryMultiItem) continue;
+      try {
+        const entry = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payable.id);
+        if (!entry) continue; // sem recognition ainda — nada a reler (residual named acima).
+        const sources = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id);
+        const doc = sources[0]?.sourceDocument;
+        if (!doc?.rawJson) continue;
+        const parsed = JSON.parse(doc.rawJson) as { fixedAssetItems?: ResolvedFixedAssetItem[] };
+        if (!parsed.fixedAssetItems || parsed.fixedAssetItems.length === 0) continue;
+        const result = await this.fixedAssetDraftCreator.createDraftFromPayable(
+          scope,
+          payable,
+          parsed.fixedAssetItems,
+          doc.id,
+        );
+        created += result.created;
+      } catch (error) {
+        logger.warn('AP redriveMissingDrafts: payable falhou — próxima passada tenta de novo', {
+          payableId: payable.id,
+          error,
+        });
+      }
+    }
+    return created;
+  }
+
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
@@ -985,6 +1104,7 @@ export class PayableService {
     payable: Payable,
     expenseAccount: Account | null,
     dto: CreatePayableInput,
+    fixedAssetLines: ResolvedFixedAssetItem[],
   ): PostEntryInput {
     return {
       unitId: scope.unitId,
@@ -997,28 +1117,48 @@ export class PayableService {
         externalRef: dto.documentNumber,
         documentDate: dto.issueDate,
         attachmentId: dto.attachmentId,
+        // BE-INCR-FIXED-ASSETS PR-5 (decisão do dono 23/09): o breakdown do modo 4 vai AQUI (campo
+        // já existente do SourceDocument, reuso — NENHUMA coluna nova no Payable). O re-drive do
+        // rascunho (`redriveFixedAssetDrafts`) relê este `rawJson` pelo `sourceDocumentId` da entry.
+        rawJson: fixedAssetLines.length > 0 ? JSON.stringify({ fixedAssetItems: fixedAssetLines }) : undefined,
       },
-      lines: this.recognitionLines(payable, expenseAccount, dto.amountCents, this.parseRecoverableLines(payable)),
+      lines: this.recognitionLines(
+        payable,
+        expenseAccount,
+        dto.amountCents,
+        this.parseRecoverableLines(payable),
+        this.groupFixedAssetDebits(fixedAssetLines),
+      ),
     };
   }
 
   /**
-   * X6 F-X6-8 (a): `D estoque/despesa (amountCents − Σ recuperáveis) + D conta(s) a recuperar / C fornecedores
-   * (amountCents)`. Sem linhas recuperáveis é o par de sempre. Os códigos das contas a recuperar vêm
-   * resolvidos no create (`resolveRecoverableLines`) e persistidos na linha para o re-drive.
+   * X6 F-X6-8 (a) + BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): `D estoque/despesa (amountCents − Σ
+   * recuperáveis − Σ imobilizado) + D conta(s) a recuperar + D conta(s) do imobilizado (class.costAccountId,
+   * agrupada por conta) / C fornecedores (amountCents)`. Uma nota mista gera 2 débitos (1.1.6 + 1.2.x);
+   * uma nota 100% CFOP 1551/2551 tem o débito principal ZERADO — a linha é OMITIDA (postEntry rejeita
+   * linha de valor zero) e só as linhas de imobilizado carregam o débito. Sem linhas extra é o par de
+   * sempre. Os códigos vêm resolvidos no create (`resolveRecoverableLines`/`resolveFixedAssetLines`) e
+   * persistidos na linha para o re-drive.
    */
   private recognitionLines(
     payable: Payable,
     expenseAccount: Account | null,
     amountCents: number,
     recoverable: { accountCode: string; amountCents: number }[],
+    fixedAsset: { accountCode: string; amountCents: number }[] = [],
   ): PostEntryInput['lines'] {
     const recoverableSum = recoverable.reduce((a, l) => a + l.amountCents, 0);
-    return [
-      { accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: amountCents - recoverableSum, creditCents: 0 },
-      ...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })),
-      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents },
-    ];
+    const fixedAssetSum = fixedAsset.reduce((a, l) => a + l.amountCents, 0);
+    const mainDebitCents = amountCents - recoverableSum - fixedAssetSum;
+    const lines: PostEntryInput['lines'] = [];
+    if (mainDebitCents > 0) {
+      lines.push({ accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: mainDebitCents, creditCents: 0 });
+    }
+    lines.push(...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
+    lines.push(...fixedAsset.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
+    lines.push({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents });
+    return lines;
   }
 
   private parseRecoverableLines(payable: Payable): { accountCode: string; amountCents: number }[] {
@@ -1026,6 +1166,19 @@ export class PayableService {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as { accountCode: string; amountCents: number }[];
     return parsed.map((l) => ({ accountCode: l.accountCode, amountCents: l.amountCents }));
+  }
+
+  /** Groups the item-level breakdown by `accountCode` (Σ per class' costAccountId) into the recognition
+   *  debit lines (item 21: "debita class.costAccountId por item" — several items of the same class
+   *  fold into ONE line, several classes ⇒ several lines). */
+  private groupFixedAssetDebits(
+    items: { accountCode: string; costCents: number }[],
+  ): { accountCode: string; amountCents: number }[] {
+    const byAccount = new Map<string, number>();
+    for (const it of items) {
+      byAccount.set(it.accountCode, (byAccount.get(it.accountCode) ?? 0) + it.costCents);
+    }
+    return [...byAccount.entries()].map(([accountCode, amountCents]) => ({ accountCode, amountCents }));
   }
 
   /** X6: valida as contas a recuperar (existem no escopo, folha, natureza Asset) e devolve o que se persiste. */
@@ -1045,8 +1198,91 @@ export class PayableService {
     return out;
   }
 
-  /** Recognition input rebuilt from a persisted row (reconcile re-drive). `expenseAccount` is null for
-   *  an inventory purchase (debit routes to 1.1.6). */
+  /**
+   * BE-INCR-FIXED-ASSETS PR-5 (item 21, F-FA12 → a): resolve `class.costAccountId` de cada item de
+   * `fixedAssetItems` — existência da classe (cross-tenant 404-like via `findById` escopado) e da
+   * conta (folha, ativo). Wiring ausente falha loud (mesma disciplina de `inventoryService`).
+   */
+  /**
+   * BE-INCR-FIXED-ASSETS PR-5 (item 21, F-FA12 → a; review independente #366, achado 1): resolve
+   * `class.costAccountId` E a TAXA de depreciação (`resolveRateForNcm`, casamento por NCM/Anexo
+   * III) de cada item de `fixedAssetItems` — **ANTES do tx1** (esta função roda antes de
+   * `payableRepo.runTransaction` em `createPayable`). Um NCM sem correspondência única rejeita
+   * loud AQUI: nenhum `Payable`, nenhuma `JournalEntry`, nenhum `201` — o achado do review era
+   * exatamente o inverso (a validação só rodava dentro de `createDraftFromPayable`, DEPOIS do
+   * `postEntry`, e a falha lá era só `logger.warn` best-effort — a nota subia com débito no
+   * imobilizado e NUNCA ganhava o `FixedAsset`, e o reconcile falharia para sempre pelo mesmo
+   * motivo). `sourceItemRef` (chave do rascunho) é o `nItem` da NF-e — nunca `cProd` (2 linhas de
+   * imobilizado podem repetir o `cProd`; um índice de fallback cobre a criação manual sem `nItem`).
+   */
+  private async resolveFixedAssetLines(
+    scope: AccountingScope,
+    dto: CreatePayableInput,
+  ): Promise<ResolvedFixedAssetItem[]> {
+    if (!this.fixedAssetClassRepo) {
+      throw new ValidationError(
+        'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
+      );
+    }
+    if (!this.depreciationRateRepo) {
+      throw new ValidationError(
+        'Compra com itens de imobilizado requer o catálogo de taxas de depreciação configurado (wiring pendente).',
+      );
+    }
+    const items = dto.fixedAssetItems ?? [];
+    if (items.length === 0) return [];
+    // O catálogo de taxas VIVAS é lido UMA vez para todos os itens (evita N queries idênticas).
+    const rates = await this.depreciationRateRepo.findManyByUnit(scope, false);
+    const out: ResolvedFixedAssetItem[] = [];
+    for (const [index, item] of items.entries()) {
+      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
+      if (!klass || klass.deletedAt) {
+        throw new ValidationError(`Classe de bem '${item.classId}' não existe nesta unidade.`);
+      }
+      const account = await this.accountRepo.findById(scope, klass.costAccountId);
+      if (!account || account.deletedAt) {
+        throw new ValidationError(`Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo.`);
+      }
+      if (!account.acceptsEntries) {
+        throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
+      }
+      const { rateId, annualRateBp } = resolveRateForNcm(rates, item.ncm, item.cProd);
+      out.push({
+        classId: klass.id,
+        accountCode: account.code,
+        cProd: item.cProd,
+        // Review #366 (re-review): fallback 1-based (index+1), alinhado ao nItem do XML (que
+        // também é 1-based) — nunca colide com um nItem explícito de OUTRO item. O DTO já garante
+        // (superRefine) que dentro do MESMO array é "nItem em TODOS, único" OU "em NENHUM" — nunca
+        // uma mistura que faria um explícito e um fallback colidirem.
+        sourceItemRef: String(item.nItem ?? index + 1),
+        costCents: item.costCents,
+        ncm: item.ncm,
+        qty: item.qty ?? 1,
+        rateId,
+        annualRateBp,
+      });
+    }
+    return out;
+  }
+
+  /**
+   * Recognition input rebuilt from a persisted row (reconcile re-drive). `expenseAccount` is null for
+   * an inventory purchase (debit routes to 1.1.6).
+   *
+   * **Residual NAMED (decisão do dono 23/09 — remoção de `Payable.fixedAssetItems`):** o breakdown
+   * de imobilizado NÃO está persistido em NENHUM campo escalar da linha (ao contrário de
+   * `expenseAccountId`/`inventoryProductRef`) — só no `SourceDocument.rawJson` da recognition JÁ
+   * postada. Esta função reconstrói a entry quando ela está AUSENTE (a janela de crash entre o tx1
+   * do `Payable` e o `postEntry`), e nessa janela o `SourceDocument` também não existe ainda — não
+   * há de onde ler o split por classe. `fixedAsset=[]` aqui é o mesmo tratamento já dado ao breakdown
+   * MULTI-ITEM de estoque (`dto.inventoryItems`, também nunca persistido — ver comentário de
+   * `reconcilePayables`, "Closing this fully inside reconcile would require PERSISTING the
+   * breakdown... the residual is named, not hidden"): se ESTA janela específica de crash coincidir
+   * com um payable modo 4, o re-drive posta a recognition com o débito principal cobrindo o
+   * `amountCents` inteiro na conta de estoque/despesa em vez de dividir por classe — bug estreito,
+   * de janela rara, registrado aqui e no retorno da sessão, não escondido.
+   */
   private buildRecognitionInputFromRow(
     scope: AccountingScope,
     payable: Payable,
@@ -1063,7 +1299,13 @@ export class PayableService {
         externalRef: payable.documentNumber ?? undefined,
         documentDate: this.toDateOnly(payable.issueDate),
       },
-      lines: this.recognitionLines(payable, expenseAccount, centsFromDb(payable.amountCents), this.parseRecoverableLines(payable)),
+      lines: this.recognitionLines(
+        payable,
+        expenseAccount,
+        centsFromDb(payable.amountCents),
+        this.parseRecoverableLines(payable),
+        [],
+      ),
     };
   }
 

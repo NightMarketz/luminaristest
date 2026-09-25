@@ -1,5 +1,8 @@
 # PLANO DE EXECUÇÃO — INCR-INVENTORY (estoque perpétuo + CMV + ponte de compra AP)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > Artefato de handoff para o `luminaris-implementer`, produzido pelo par orquestrador + council +
 > workflow `inventory-impl-plan` (4 leitores paralelos → planner → **crítico de completude adversarial** →
 > reviser). Materializa `docs/adr/ADR-INCR-INVENTORY-stock-subledger.md` (ratificado fork-a-fork 2026-07-20).

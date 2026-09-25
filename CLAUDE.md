@@ -3,6 +3,9 @@
 Monorepo: `server/` (Express + Prisma, **camadas estritas**) e `my-app/` (Next.js Pages Router).
 As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação sempre-ativa que aponta pra eles:
 
+- **Plano (estado, fila, régua, destino):** vault `docs/plano/` — leia `docs/plano/_INDEX.md` → a nota do nó →
+  só o trilho/rejeitada que ela linka (protocolo em `docs/plano/README.md`). **Não abra o `docs/SDD-LUMINARIS.md`
+  inteiro** (snapshot consolidado de 23/09); citação "master map §N" resolve em `docs/plano/_ANCORAS.md`.
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
@@ -15,7 +18,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **As 5 sessões de agente (um formulário por tipo de trabalho):** `sessao-planejamento` (produz
   BRIEF, não ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao`
   (teste-guarda que falha pelo motivo certo) → `sessao-correcao` (fix mínimo) · `sessao-integracao`
-  (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006),
+  (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006; no vault, o campo `autorizacao` da nota
+  do nó — vazio não roteia, e o texto limita o escopo: "só ADR"/"sem 'executa'" não autoriza código),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
   **O uso é pela natureza do trabalho, não pela frase-gatilho:** tarefa autorizada que É planejar /
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
@@ -32,7 +36,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 Removidos: `scripts/bancada-gate.mjs`, `scripts/review-ledger-check.mjs`, todo o `docs/audit/`
 (34 arquivos) e os dois passos do `ci.yml`. **Não os recrie.** Recuperáveis em `b617d8f1`.
 
-**Regra permanente:** enquanto houver item do Bloco A do `ACCOUNTING-MASTER-MAP.md` com **oráculo
+**Regra permanente:** enquanto houver item do Bloco A (gates humanos/dado externo em `docs/plano/gates/`, ex-master map §5.1) com **oráculo
 externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de auditoria novo** — nem
 gate, nem rodada, nem mais um revisor. A medida que fundamenta isso: 5 rodadas, 31 itens triados, **17
 sobre o próprio instrumento**, **0 linha de código de aplicação alterada** — contra 28 linhas de uma

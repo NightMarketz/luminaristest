@@ -4,7 +4,7 @@
 > O conversor está pronto (`server/scripts/rfb-referential-to-catalog.mjs`); o que falta é o DADO
 > oficial — do contador ou do portal SPED da RFB.
 
-Executor: [nome — humano]           Data: [____]
+Executor: dono (upload/UI) + agente (preparo do CSV e registro da evidência, por autorização do dono em chat: "Isso aqui é algo que vc pode fazer por mim, assino no final")           Data: 2026-09-24
 Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5.1 Bloco A item 6
   (Fork 2 do referencial, BE-INCR9).
 Pré-condições (verificar antes de começar):
@@ -73,7 +73,12 @@ Pré-condições (verificar antes de começar):
    `server/src/lib/referentialCatalog.ts:42`: `code`,`name`,`isAnalytic` obrigatórios,
    `parentCode` opcional).
    Resultado esperado: catálogo convertido gerado, contagem de contas plausível.
-   EVIDÊNCIA: [saída completa do conversor]
+   EVIDÊNCIA: conversor NÃO usado — caminho (a) da EMENDA 2026-08-31 (import direto). Arquivo oficial
+   `Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx`, 1.724.077 bytes (igual ao da emenda).
+   Abas conferidas: `L100A` 732 linhas (631 A / 101 S), `L300A` 391 linhas (344 A / 47 S), colunas
+   `CÓDIGO · DESCRIÇÃO · DT_INI · DT_FIM · TIPO · CONTA SUPERIOR · NÍVEL · NATUREZA`. CSV gerado
+   `referencial-rfb-2025-L100A-L300A.csv`: cabeçalho `code,name,isAnalytic,parentCode`, 1.123 linhas,
+   `TIPO` A→`true` / S→`false`, 0 códigos duplicados.
 
 2. Importar o catálogo (upload multipart, campo `file`, CSV/XLSX ≤10MB) via
    `POST /api/accounting/referential/catalog/import` (rota registrada em
@@ -84,25 +89,42 @@ Pré-condições (verificar antes de começar):
    devolve 403 (`referentialCatalogController.ts:38-42`) — qualquer outro papel não passa daqui.
    Na UI isso corresponde ao upload do catálogo referencial na aba **Compliance**.
    Resultado esperado: catálogo versionado ativo no painel.
-   EVIDÊNCIA: [screenshot do painel com a versão importada]
+   EVIDÊNCIA: mensagem da UI — *"Catálogo importado: 1123 conta(s) (975 analítica(s), 148 sintética(s))."*
+   Resposta do `POST /api/accounting/referential/catalog/import` (201):
+   `{"success":true,"data":{"layoutVersion":"2025","totalRows":1123,"imported":1123,"analyticCount":975,"syntheticCount":148}}`
+   Banco: `referential_accounts` versão `2025` = 1.123 linhas, 975 analíticas (= 631 + 344).
 
 3. **Prova de validação viva:** tentar salvar um de-para INVÁLIDO (conta-folha → código
    referencial inexistente no catálogo).
    Resultado esperado: REJEITADO com o erro específico — é a prova de que a validação ficou
    viva, não só instalada.
-   EVIDÊNCIA: [print da rejeição]
+   EVIDÊNCIA: tentativa de gravar `1.1.1 Banco → 9.99.99.99.99` (versão 2025, unidade Matriz, admin):
+   *"A conta referencial "9.99.99.99.99" não existe no catálogo da versão "2025"."* —
+   `referential_mappings` continuou com 0 linhas (nada gravado).
 
 4. Conferir a cobertura na aba Compliance após o import (a geração de ECD depende dela).
    Resultado esperado: cobertura calculada sobre o catálogo oficial.
-   EVIDÊNCIA: [print da cobertura]
+   EVIDÊNCIA: painel Mapeamento Referencial, versão 2025, unidade Matriz: *"14 conta(s) sem mapeamento ·
+   Analíticas: 14 · Mapeadas: 0 · Pendentes: 14"* — cobertura calculada sobre o catálogo oficial.
 
 ## Desfecho (marcar UM)
-[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
     NENHUM passo seguinte foi executado após a falha
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
 ## Registro
-- Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
-- Atualização do artefato de rastreio: [§5.1 Bloco A item 6 do master map + data]
-- Assinatura do executor: ____________
+- Achados no caminho (fora do escopo deste runbook):
+  1. O campo "Versão do layout" vem PREENCHIDO com `2026` (valor real, não placeholder) — o 1º import
+     entrou como `2026` (201, 1.123 contas) e ficou no banco; não há rota de exclusão. Refeito como `2025`.
+     Armadilha de UI: candidato a ajuste (default = ano do exercício a escriturar, ou campo vazio).
+  2. Mesmo default `2026` no campo "Versão" do painel de mapeamento.
+  3. **Reimport após recuperação do `dev.db` (24/09):** outra sessão rodou o ensaio B-4 (#371) no MESMO
+     `dev.db` em paralelo e o banco voltou ao estado pré-seed, levando o seed junto (o catálogo importado
+     acima sobreviveu). O dono restaurou o backup pós-seed `dev-20260924144512.db` (sem catálogo) e
+     reimportou pela mesma UI: *"Catálogo importado: 1123 conta(s) (975 analítica(s), 148 sintética(s))."*
+     — banco: versão `2025` = 1.123 / 975 analíticas. Os passos 3–4 acima valem para o mesmo arquivo e o
+     mesmo código; a versão `2026` acidental não existe mais neste banco (o backup é anterior a ela).
+- Atualização do artefato de rastreio: `docs/plano/gates/X2.md` (frontmatter `estado`) — 2026-09-24, no fold pós-assinatura
+- Assinatura do executor: Raphael
+

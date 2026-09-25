@@ -660,7 +660,12 @@
  *       summary: Create a new dashboard (installs table preset suite for the user)
  *       description: >
  *         Accepts either a quick creation payload (suiteKey) or a custom preset
- *         payload (presetKey + optional removedTables / addedFields).
+ *         payload (presetKey + optional removedTables / addedFields). Both require `unit`
+ *         (BE-INCR-ONBOARDING-FIRST-UNIT, F-I1-2 b) - the first row of `units` is created through
+ *         the normal write path (plugins run) and its id is returned as `data.unitId`. If creating
+ *         the unit fails the install is undone and the answer is 500 ONBOARDING_ROLLED_BACK.
+ *         With `fiscal.regime` known, the company fiscal profile of the current year is created after the
+ *         unit and `data.fiscal` carries status criado and the resolved SPED obligations (X13 PR-3).
  *         Returns 403 if the user already has tables configured.
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
@@ -671,15 +676,47 @@
  *             schema:
  *               oneOf:
  *                 - type: object
- *                   required: [suiteKey]
+ *                   required: [suiteKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [quick] }
  *                     suiteKey: { type: string, description: Preset suite key, e.g. "agronegocio" }
+ *                     unit:
+ *                       type: object
+ *                       required: [name]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         name: { type: string, maxLength: 120 }
+ *                         cnpj: { type: string, maxLength: 18 }
+ *                         type: { type: string, enum: [Own, Franchise, Department] }
+ *                     fiscal:
+ *                       type: object
+ *                       description: 'X13 PR-3 - regime and size asked at onboarding; NAO_SEI creates nothing (data.fiscal.status pendente)'
+ *                       required: [regime]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
+ *                         grandePorte: { type: boolean, nullable: true }
  *                 - type: object
- *                   required: [mode, presetKey]
+ *                   required: [mode, presetKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [custom] }
  *                     presetKey: { type: string }
+ *                     unit:
+ *                       type: object
+ *                       required: [name]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         name: { type: string, maxLength: 120 }
+ *                         cnpj: { type: string, maxLength: 18 }
+ *                         type: { type: string, enum: [Own, Franchise, Department] }
+ *                     fiscal:
+ *                       type: object
+ *                       description: 'X13 PR-3 - regime and size asked at onboarding; NAO_SEI creates nothing (data.fiscal.status pendente)'
+ *                       required: [regime]
+ *                       additionalProperties: false
+ *                       properties:
+ *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
+ *                         grandePorte: { type: boolean, nullable: true }
  *                     removedTables:
  *                       type: array
  *                       items: { type: string }
@@ -2217,6 +2254,14 @@
  *         plain-text (ISO-8859-1) artifact as an EXPORT job. Download via
  *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any
  *         leaf account is unmapped in the referential version (coverage gate).
+ *         BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA
+ *         (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job
+ *         EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por
+ *         multipart/form-data (campo "rtf", até 30 MB) — a ECD original continua indo por
+ *         application/json puro (o multer é no-op fora de multipart).
+ *         X13 PR-2 - with a company fiscal profile for the year, missing declarant/book/signer fields are
+ *         prefilled from it (body wins, listed in perfilFiscal.sobrescritos); avisos carries the large-company
+ *         warning (Lei 11.638 art. 3) and the missing-profile notice. The ECD is never refused by regime.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2231,6 +2276,30 @@
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 mappingVersion: { type: string }
  *                 year:           { type: integer, example: 2026 }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando declarant.indFinEsc=1 (substituta) — id do job ECD EXPORTED sendo substituído.' }
+ *                 verificationTerm:
+ *                   type: object
+ *                   description: 'J801+J932 — obrigatório quando declarant.indFinEsc=1 (substituta), proibido quando =0.'
+ *                   required: [codMotSubs, signers]
+ *                   properties:
+ *                     codMotSubs: { type: string, enum: ['001','002','003','004','005','099'] }
+ *                     descRtf:    { type: string }
+ *                     deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo (ano-2, art. 8º §4).' }
+ *                     signers:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         required: [identNom, identCpfCnpj, codAssin, indCrc, email, fone, ufCrc]
+ *                         properties:
+ *                           identNom:     { type: string }
+ *                           identCpfCnpj: { type: string }
+ *                           codAssin:     { type: string, enum: ['910'], description: '920 (Auditor Independente) fora do escopo.' }
+ *                           indCrc:       { type: string }
+ *                           email:        { type: string }
+ *                           fone:         { type: string }
+ *                           ufCrc:        { type: string }
+ *                           numSeqCrc:    { type: string }
+ *                           dtCrc:        { type: string, description: 'YYYY-MM-DD' }
  *                 declarant:
  *                   type: object
  *                   required: [nome, cnpj, uf, codMun, indNire, indGrandePorte]
@@ -2241,6 +2310,8 @@
  *                     codMun: { type: string, description: 'IBGE 7 digits' }
  *                     indNire:        { type: string, enum: ['0', '1'] }
  *                     indGrandePorte: { type: string, enum: ['0', '1'] }
+ *                     indFinEsc:      { type: string, enum: ['0', '1'], description: '0=Original (default), 1=Substituta' }
+ *                     codHashSub:     { type: string, description: '40 hex — obrigatório quando indFinEsc=1' }
  *                 book:
  *                   type: object
  *                   required: [numOrd, natLivr, dtExSocial]
@@ -2264,6 +2335,12 @@
  *                       numSeqCrc:     { type: string, description: 'CRC certificate, format UF/AAAA/NUMERO' }
  *                       dtCrc:         { type: string, description: 'YYYY-MM-DD' }
  *                       indRespLegal:  { type: string, enum: [S, N] }
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               description: 'Mesmos campos do application/json acima (declarant/book/signers/verificationTerm como JSON string), mais o arquivo do Termo.'
+ *               properties:
+ *                 rtf: { type: string, format: binary, description: 'J801.ARQ_RTF — obrigatório quando a ECD é substituta.' }
  *       responses:
  *         '201':
  *           description: ECD export job created
@@ -2289,6 +2366,9 @@
  *         Recovered blocks (C, E, J, K) are emitted as empty markers. Download via
  *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedRevenueAccounts
  *         when a Revenue account with movement is not one of 3.1 / 3.3 (revenue exhaustiveness gate).
+ *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
+ *         body overrides). 400 REGIME_DIVERGENTE when the profile is not PRESUMIDO and 400
+ *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES (IN RFB 2.004/2021 art. 1 par. 1 I).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2302,6 +2382,10 @@
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
+ *                 retificadora: { type: string, enum: ['N', 'S'], description: 'N=Original (default), S=Retificadora — exige numRec + supersedesJobId (BE-INCR-FIXED-ASSETS PR-4, item 26-31).' }
+ *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
+ *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]
@@ -2366,6 +2450,9 @@
  *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
  *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
  *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
+ *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
+ *         body overrides). 400 REGIME_DIVERGENTE when the profile is not REAL and 400
+ *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -2379,6 +2466,10 @@
  *                 unitId: { type: string }
  *                 signerContactIds: { type: array, items: { type: string }, description: 'Via barata (F-CD8-a) - ids de AccountingContact expandidos em signatarios do contador (J930 na ECD, 0930 na ECF) ANTES da validacao; cross-tenant e 404; contato sem telefone e 400 na ECF' }
  *                 year:   { type: integer, example: 2025 }
+ *                 retificadora: { type: string, enum: ['N', 'S'], description: 'N=Original (default), S=Retificadora — exige numRec + supersedesJobId (BE-INCR-FIXED-ASSETS PR-4, item 26-31).' }
+ *                 numRec: { type: string, description: 'Obrigatório (40 caracteres) quando retificadora=S — hash do recibo da ECF anterior.' }
+ *                 supersedesJobId: { type: string, description: 'Obrigatório quando retificadora=S — id do job ECF EXPORTED sendo retificado.' }
+ *                 deadlineJustification: { type: string, description: 'Obrigatória quando o exercício está no limite do prazo de retificação (ano-2, art. 8º §4).' }
  *                 declarant:
  *                   type: object
  *                   required: [cnpj, nome, codNat, cnaeFiscal, endereco, bairro, uf, codMun, cep, email]
@@ -2467,6 +2558,84 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/data-exchange/jobs:
+ *     get:
+ *       summary: List data-exchange jobs (paginated), with supersedesJobId/supersededByJobId
+ *       description: >-
+ *         BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a) — shape compartilhado com
+ *         FE-INCR-REVIEW/FE-INCR-DELIVERY: quem mergear primeiro cria esta rota, o segundo
+ *         estende. `supersededByJobId` é derivado por consulta inversa (nunca coluna própria).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: direction, schema: { type: string, enum: [IMPORT, EXPORT] } }
+ *         - { in: query, name: kind, schema: { type: string } }
+ *         - { in: query, name: status, schema: { type: string } }
+ *         - { in: query, name: year, schema: { type: integer } }
+ *         - { in: query, name: page, schema: { type: integer, default: 1 } }
+ *         - { in: query, name: limit, schema: { type: integer, default: 20 } }
+ *       responses:
+ *         '200':
+ *           description: Paginated list
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success: { type: boolean, example: true }
+ *                   data:
+ *                     type: object
+ *                     properties:
+ *                       items:
+ *                         type: array
+ *                         items:
+ *                           allOf:
+ *                             - { $ref: '#/components/schemas/DataExchangeJob' }
+ *                             - type: object
+ *                               properties:
+ *                                 supersedesJobId:   { type: string, nullable: true }
+ *                                 supersededByJobId: { type: string, nullable: true }
+ *                       total: { type: integer }
+ *                       page:  { type: integer }
+ *                       limit: { type: integer }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
+ *   /api/accounting/data-exchange/jobs/{jobId}/waive-ecf-rectification:
+ *     post:
+ *       summary: Waive the ECF-rectification requirement a substitute ECD recorded on itself
+ *       description: >-
+ *         BE-INCR-FIXED-ASSETS PR-4 (item 22). Idempotent: a 2nd call over an already-waived job
+ *         returns the same job without re-emitting the audit event.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: jobId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, justification]
+ *               properties:
+ *                 unitId:        { type: string }
+ *                 justification: { type: string, minLength: 20 }
+ *       responses:
+ *         '200':
+ *           description: Job with the waiver recorded
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   success: { type: boolean, example: true }
+ *                   data:    { $ref: '#/components/schemas/DataExchangeJob' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/accounting/data-exchange/jobs/{jobId}:
  *     get:
@@ -4738,6 +4907,254 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/company-fiscal-profile/{ano}:
+ *     get:
+ *       summary: Read the company fiscal profile of a calendar year (BE-INCR-FISCAL-OBLIGATION-PROFILE, nó X13)
+ *       description: >-
+ *         One profile per company (owner = CNPJ raiz, R8) and year (F-OBP-8 a). unitId only resolves the
+ *         scope and the policy. 404 company_fiscal_profile_missing when the year has no profile.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer, minimum: 2014, maximum: 2100 } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CompanyFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { description: 'company_fiscal_profile_missing' }
+ *     put:
+ *       summary: Create or replace the company fiscal profile of a year (idempotent upsert)
+ *       description: >-
+ *         regime in MEI, SIMPLES, PRESUMIDO, REAL (F-OBP-2 a). The ecf block is refused for MEI and SIMPLES
+ *         (IN RFB 2.004/2021 art. 1 par. 1 I); livroCaixaSemEscrituracao and distribuicaoAcimaBase only apply
+ *         to PRESUMIDO (IN RFB 2.003/2021 art. 3). contadorContactId must be a live AccountingContact of the
+ *         scope and representanteLegalSignerId a live CompanySigner of the owner, else 404. Audited as
+ *         company_fiscal_profile.updated (year, enums, booleans and ids only).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer, minimum: 2014, maximum: 2100 } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, regime]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL] }
+ *                 grandePorte: { type: boolean, nullable: true }
+ *                 inativa: { type: boolean, default: false }
+ *                 condicoes:
+ *                   type: object
+ *                   properties:
+ *                     aporteInvestidorAnjo: { type: boolean, nullable: true }
+ *                     livroCaixaSemEscrituracao: { type: boolean, nullable: true }
+ *                     distribuicaoAcimaBase: { type: boolean, nullable: true }
+ *                 declarante: { type: object, nullable: true, description: 'Registers 0000/0030 fields, all optional (F-XP-2 a)' }
+ *                 ecd:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     indNire: { type: string, enum: ['0', '1'] }
+ *                     nire: { type: string }
+ *                     numOrd: { type: string }
+ *                     natLivr: { type: string }
+ *                 ecf:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     indAliqCsll: { type: string, enum: ['1', '4'] }
+ *                     indRecReceita: { type: string, enum: ['1', '2'] }
+ *                 contadorContactId: { type: string, nullable: true }
+ *                 representanteLegalSignerId: { type: string, nullable: true }
+ *       responses:
+ *         '200': { description: 'CompanyFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Soft-delete the company fiscal profile of a year
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'deleted' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/company-fiscal-profile/{ano}/ecf-transmitida:
+ *     post:
+ *       summary: Record the receipt of the transmitted ECF and lock the year's regime (X13 PR-2, F-XP-5 a)
+ *       description: >-
+ *         After this call a PUT that changes regime answers 409 REGIME_TRAVADO and DELETE of the profile
+ *         answers 409 (an ECF correction cannot change the regime, IN RFB 2.004/2021 art. 7 par. 2). Posting again
+ *         replaces the receipt (correction) and keeps the original lock date. Audited as
+ *         company_fiscal_profile.ecf_transmitted.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, recibo]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 recibo: { type: string, maxLength: 100 }
+ *       responses:
+ *         '200': { description: 'CompanyFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/accounting/company-fiscal-profile/{ano}/obligations:
+ *     get:
+ *       summary: Which SPED obligations (ECD, ECF) apply to the company in the year, with the source rule
+ *       description: >-
+ *         Status per obligation is OBRIGATORIA, CONDICIONAL (with perguntaPendente), FACULTATIVA or
+ *         NAO_SE_APLICA, resolved from a data matrix that cites IN RFB 2.003/2021 and 2.004/2021 (F-OBP-3/4 a).
+ *         faltantes lists what the profile still lacks for obligations that are OBRIGATORIA or CONDICIONAL.
+ *         No profile for the year returns 200 with perfil AUSENTE.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CompanyObligationsView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/company-fiscal-profile/{ano}/copiar-de/{anoAnterior}:
+ *     post:
+ *       summary: Copy the company fiscal profile from a previous year (F-XP-2/3 a)
+ *       description: >-
+ *         Copies everything except the book order number (numOrd changes every year) and the ECF receipt and
+ *         lock. 404 when the source year has no profile; 409 company_fiscal_profile_exists when the target
+ *         year already has one (use PUT to edit).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: ano, required: true, schema: { type: integer } }
+ *         - { in: path, name: anoAnterior, required: true, schema: { type: integer } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *       responses:
+ *         '201': { description: 'CompanyFiscalProfileView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'company_fiscal_profile_exists' }
+ *
+ *   /api/accounting/company-signers:
+ *     get:
+ *       summary: List the company signers that are not the accountant (nó X13, F-OBP-9 a)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CompanySignerView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Register a company signer (legal representative, partner, administrator)
+ *       description: >-
+ *         qualifEcd uses the J930 table and qualifEcf the 0930 table (they differ, F-C12-2 a); code 900
+ *         (accountant) is refused in both. CPF with check digits. Audited as company_signer.created with the
+ *         qualification codes only (name, CPF, e-mail and phone never enter the audit trail).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, nome, cpf, qualifEcd, qualifEcf, email, fone]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 nome: { type: string }
+ *                 cpf: { type: string }
+ *                 qualifEcd: { type: string }
+ *                 qualifEcf: { type: string }
+ *                 email: { type: string }
+ *                 fone: { type: string }
+ *       responses:
+ *         '201': { description: 'CompanySignerView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/company-signers/{id}:
+ *     get:
+ *       summary: Read one company signer
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'CompanySignerView' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     put:
+ *       summary: Replace a company signer
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, nome, cpf, qualifEcd, qualifEcf, email, fone]
+ *       responses:
+ *         '200': { description: 'CompanySignerView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *     delete:
+ *       summary: Soft-delete a company signer; 409 signer_in_use when it is the legal representative of a live profile
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'deleted' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'signer_in_use' }
  *
  *   /api/nfe/dfe/status:
  *     get:

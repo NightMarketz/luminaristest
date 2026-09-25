@@ -1,5 +1,8 @@
 # FE-INCR-6 Import/Export — Functional Validation Plan
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 **Purpose:** the gate that a production build does NOT cover — actually clicking upload → preview → commit → export in a running app. FE-INCR-1 shipped 2 Majors (DRE-always-INVALID, date off-by-one) precisely through the "build-clean but never clicked" hole. This tab renders preview/commit/**PARTIAL** states that only surface on interaction.
 
 **Run AFTER `#20 → #21` are merged** (the opening-balance case below requires the #20 fix present). **Pass criterion:** every target case behaves as stated; any deviation is a Major and blocks calling INCR-6 done.

@@ -24,22 +24,34 @@ autorizado num BRIEF que a `sessao-feature` consegue executar sem inventar nada.
 | Existe teste-guarda vermelho reproduzindo a lacuna | `sessao-correcao` |
 | **Não há autorização citável do dono** | **Nenhuma — recuse o preenchimento** (ORCH-006) |
 | Gate humano (PVA, sign-off de browser, deploy) ou dado externo (XML de NF-e, arquivo RFB) | **Nenhuma** — é runbook humano; agente não substitui oráculo |
-| Rebase/merge de branch pronta (ex.: `claude/nfe-fase-a`) | **Nenhuma das quatro** — é sessão de integração, ainda sem template |
+| Rebase/merge de branch pronta (ex.: `claude/nfe-fase-a`) | `sessao-integracao` |
+| O item só existe em `docs/plano/destino/` (PROPOSTO), sem nota em `docs/plano/nos/` | **Nenhuma** — vira nó só depois de PRE-ADR ratificado (`docs/plano/README.md`) |
 
 ## Onde achar os campos do formulário
 
-- **Autorização:** `docs/accounting/ACCOUNTING-MASTER-MAP.md` §5.1 (fila ratificada) ou `docs/adr/`.
+Leia o plano pelo protocolo do vault (`docs/plano/README.md`): `_INDEX.md` → a nota do nó → só o
+trilho/rejeitada que ela linka. O `docs/SDD-LUMINARIS.md` é snapshot de 23/09 — nunca leia inteiro;
+citação antiga "master map §N" resolve em `docs/plano/_ANCORAS.md`.
+
+- **Item a planejar:** a nota do nó (`docs/plano/nos/<ID>.md`) — é o "documento e linha" do formulário.
+- **Autorização:** campo `autorizacao` do frontmatter da nota (fila ratificada; ex-master map §5.1) ou `docs/adr/`.
+  **`autorizacao` vazio/`null` = não roteia** → recuse o preenchimento (ORCH-006). O texto do campo diz o
+  escopo: "só ADR" autoriza o ADR, não o BRIEF — é a divergência "cobre mais ou menos" do passo 1.
   Re-fetch `origin/main` antes de citar — a fila muda, e já houve near-miss de planejar sobre `main` stale.
-- **Insumos:** ADR do item, BRIEFs irmãos em `docs/accounting/`, e o código que o item toca.
-- **Nós vizinhos:** use o codebase-memory para localizar (`search_graph`, `trace_path`) e **confirme lendo
-  o arquivo** — CBM-001: nenhuma conclusão comportamental se sustenta só no grafo.
+- **Insumos:** a seção "Docs" da nota (ADR, BRIEFs irmãos em `docs/accounting/`) e o código que o item toca.
+- **Nós vizinhos:** `depende_de` e "Desbloqueia" da nota dão os vizinhos de plano; para os de código, use o
+  codebase-memory para localizar (`search_graph`, `trace_path`) e **confirme lendo o arquivo** — CBM-001:
+  nenhuma conclusão comportamental se sustenta só no grafo.
+- **Ambiguidade já registrada:** se o nó aparece em `docs/plano/DUVIDAS-INVENTARIO.md` ou numa divergência
+  §18.4 de `docs/plano/destino/18-caminho.md`, o ponto é do dono → entra no BRIEF como fork PENDENTE,
+  nunca resolvido.
 
 ---
 
 ## O formulário — preencher ANTES de executar
 
 > Pré-requisito: este prompt só é preenchível para item que já tem
-> autorização citável do dono (ADR, ratificação em master map, decisão
+> autorização citável do dono (ADR, ratificação na nota do nó em `docs/plano/`, decisão
 > datada). Frente nova NUNCA nasce de iniciativa do agente — nasce de
 > ADR + sinal humano (ORCH-006). Sem autorização citável, a resposta
 > correta é recusar o preenchimento, não planejar "provisoriamente".
@@ -126,8 +138,8 @@ Registradas, **não aplicadas** — o texto acima segue valendo como está até 
    (F-NFE7 nota multi-item, F-NFE8 `saleId` ausente) que teriam travado a implementação no primeiro XML
    real. Proposta: estreitar para *"descoberta de lacuna fora do item"*, deixando explícito que ler o
    código tocado é insumo, não varredura.
-2. **Regra 1 órfã o BRIEF.** "Saída é um documento novo, nada mais" impede registrar o BRIEF na fila do
-   master map — o artefato nasce sem quem aponte para ele. Proposta: permitir a linha de índice, ou
-   aceitar um fold posterior.
+2. **Regra 1 órfã o BRIEF.** "Saída é um documento novo, nada mais" impede registrar o BRIEF na nota do
+   nó (`docs/plano/nos/<ID>.md`, seção "Docs") — o artefato nasce sem quem aponte para ele. Proposta:
+   permitir essa linha na nota (sem tocar `estado`), ou aceitar um fold posterior (`docs/plano/README.md` §Fold).
 3. **"Decisão é do dono, fora desta sessão"** é mais estrito que a prática registrada: os forks da NF-e e
    do INCR-DIM foram ratificados **dentro** da sessão, fork-a-fork, com o dono respondendo na hora.

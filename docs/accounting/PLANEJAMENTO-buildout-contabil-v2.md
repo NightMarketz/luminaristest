@@ -1,5 +1,8 @@
 # Planejamento v2 — Buildout Contábil (INCR-1 a INCR-4) — fonte de execução
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > 🟢 **Este é o ÚNICO documento implementável.** Substitui `PLANEJAMENTO-buildout-contabil.md`
 > (histórico) e incorpora as emendas ratificadas em 2026-06-27 **dentro do corpo** de cada
 > incremento — sem texto stale. Em qualquer divergência, o **ADR ratificado** (`docs/adr/ADR-INCRn-*.md`)

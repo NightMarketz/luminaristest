@@ -32,6 +32,11 @@ docs/claude-skills/GENERATION_CONTRACTS.md ← contratos de geração por camada
 .claude/skills/_ARCHITECTURE-CONTRACT.md   ← bar de qualidade cross-cutting (gate)
 ```
 
+> **Plano (qualquer domínio):** se a tarefa corresponde a um nó do vault `docs/plano/` (`nos/` ou `gates/` —
+> onboarding, FE, motor e plataforma também, não só contábil), leia a nota pelo protocolo de
+> `docs/plano/README.md` antes de rotear: estado, `autorizacao`, `depende_de`. Nota em `gates/` é gate humano
+> ou dado externo — não roteia skill geradora. Tarefa contábil segue o ORCH-006 abaixo.
+
 > **Vertical-slice de referência:** a feature `server/src/features/users/` (DTO → Repository → Policy → Service → `controllers/userController.ts` → `routes/users.ts` → `my-app/lib/services/user.service.ts`) é o exemplar mais limpo do repo. Ao planejar uma feature/CRUD/contrato, assuma que o implementador a espelha. (Backend de CRM como `server/src/features/crm/services/CrmPipelineService.ts` é exemplar de service-orquestra-DynamicTable; o frontend do CRM NÃO é modelo.)
 
 > **Regra fixa (aprender com decisões passadas — rastreabilidade de entrada):** se existir um **ledger de
@@ -62,15 +67,19 @@ Se a tarefa cria um **módulo/entidade nova**, rode o teste binário do `_ARCHIT
 Se a tarefa toca o módulo **contábil** (ledger, lançamento, conta, período, BP/DRE, conciliação,
 fechamento, ECD/ECF, ou qualquer coisa em `server/src/features/accounting/`), execute **nesta ordem**:
 
-**1. [ORCH-006] Leia o grafo-mestre real — `docs/accounting/ACCOUNTING-MASTER-MAP.md` — ANTES de tudo.**
-É a **fonte única do roadmap contábil** (reconciliado com as decisões commitadas). Use-o para três coisas:
-   - **Posição:** §2/§3 dizem o que já está ✅ fechado (não re-planeje o que existe) e qual é o nó ⏳
-     corrente. §6 lista os blocos canônicos a reusar.
-   - **Guarda de roteamento (dura):** se a tarefa colide com **§1 (decisões travadas T1–T12)** ou pede algo
-     de **§4 (rejeitadas: torre multiempresa, Postgres, DynamicTable p/ contábil, rule engine dirigido por
+**1. [ORCH-006] Leia o grafo-mestre real — o vault `docs/plano/` (ex-`ACCOUNTING-MASTER-MAP.md`; protocolo em `docs/plano/README.md`) — ANTES de tudo.**
+É a **fonte única do estado e da fila**: `_INDEX.md` (régua, destravados, fila) → a nota do nó → só os trilhos/rejeitadas que ela linka. Citação "master map §N" resolve em `_ANCORAS.md`. Use-o para três coisas:
+   - **Posição:** `_INDEX.md` diz o que já está ✅ fechado (não re-planeje o que existe) e o que está destravado;
+     a nota do nó dá estado, dependências e autorização. Blocos canônicos a reusar: Contrato §0.
+     **`autorizacao` vazio → não roteie a execução** (Phase 3, pergunte); preenchido, o texto limita o escopo
+     ("só ADR", "só BRIEF", "sem 'executa'" não autorizam código). Nó fora de "Destravados agora" tem
+     dependência aberta — não roteie a execução dele. Ponto listado em `docs/plano/DUVIDAS-INVENTARIO.md` é
+     decisão do dono: o plano o carrega como pergunta, não como escolha.
+   - **Guarda de roteamento (dura):** se a tarefa colide com **`docs/plano/trilhos/` (decisões travadas T1–T12)** ou pede algo
+     de **`docs/plano/rejeitadas/` (rejeitadas: torre multiempresa, Postgres, DynamicTable p/ contábil, rule engine dirigido por
      template, multi-moeda)**, isso é **`DECISÃO ARQUITETURAL`** — **não roteie skills de geração**; leve à
      Phase 3 (perguntar) e exija ADR + sinal humano. O mapa (não a memória do agente) é o veredito.
-   - **Diferidos (§5):** nós ⚫ são domínios de ADR próprio — não os puxe para o plano do incremento corrente.
+   - **Diferidos (`docs/plano/diferidos/`):** nós ⚫ são domínios de ADR próprio — não os puxe para o plano do incremento corrente.
 
 **2. Rode a persona `luminaris-accounting-architect`** e anexe o PARECER DE DOMÍNIO ao plano. Ela dá o que
 a tabela de sinais não vê: invariantes (TOCTOU dentro da tx, idempotência por evento, entryNumber no POST,
@@ -203,7 +212,7 @@ melhores conhecendo o objetivo, não só a letra do pedido]
 ### Decisões a registrar (rastreabilidade)
 
 - [toda escolha de roteamento/arquitetura NÃO-óbvia feita neste plano: Prisma vs DynamicTable e por quê;
-   rota recusada por colidir com §1/§4 do master map; divisão de PR; reuso-vs-bespoke sancionado]
+   rota recusada por colidir com §M1/§M4 do SDD (ex-master map §1/§4); divisão de PR; reuso-vs-bespoke sancionado]
 - [categoria: `decision` (com ponteiro pro ADR, se houver) | `pitfall` | `pattern`]
 - [destino: efêmero → `docs/learnings/<esforço>.md`; durável → auto-memória — a skill `learning-log` decide]
 ```
@@ -211,8 +220,10 @@ melhores conhecendo o objetivo, não só a letra do pedido]
 > Todo passo herda o `_ARCHITECTURE-CONTRACT.md` — o plano não precisa repetir as regras cross-cutting, mas DEVE assumir que o implementador as aplica em cada arquivo.
 
 > **[ORCH-007] Closeout do mapa (só tarefas contábeis).** Todo plano que fecha um incremento contábil DEVE
-> incluir, como último passo, **atualizar `docs/accounting/ACCOUNTING-MASTER-MAP.md`**: promover o nó de
-> ⏳→✅ (com o ADR/merge de referência) ou registrar a decisão nova em §1/§4/§5. Esse passo é do
+> incluir, como último passo, **atualizar o vault `docs/plano/`** (master map e SDD consolidado estão congelados
+> desde 2026-09-23): editar o frontmatter da nota do nó (`estado`, `estado_detalhe`, `prs`) com o ADR/merge de
+> referência, rodar `node scripts/plano-vault.mjs index` e `check` (exit 0), ou registrar a decisão nova em
+> `decisoes/`/`trilhos/`/`rejeitadas/`. Esse passo é do
 > **`luminaris-implementer`** (o orquestrador não edita arquivos — ORCH-001); o orquestrador só o coloca no
 > plano. É assim que o progresso fica registrado num lugar só — nunca hardcode progresso nesta skill.
 
@@ -228,7 +239,7 @@ Confirme com o usuário antes de iniciar se o risco for HIGH.
 
 Closeout: ao fechar, capture cada item de "Decisões a registrar" via a skill `learning-log`
 (ledger do esforço ou auto-memória, conforme a durabilidade) e, se contábil, promova o nó no
-master map (ORCH-007). O orquestrador NÃO escreve — quem fecha o loop registra.
+vault `docs/plano/` (ORCH-007). O orquestrador NÃO escreve — quem fecha o loop registra.
 ```
 
 ## Restrições do orquestrador

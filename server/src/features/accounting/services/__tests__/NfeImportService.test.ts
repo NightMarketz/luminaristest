@@ -107,7 +107,7 @@ function dto(over: Partial<ImportNfePurchaseInput> = {}): ImportNfePurchaseInput
  * arithmetic vehicle does not belong there. Only the tags `parseNfe` reads are emitted.
  */
 function inlineNfe(
-  items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string }>,
+  items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string; cfop?: string; ncm?: string }>,
   totals: { vProd: string; vFrete?: string; vSeg?: string; vDesc?: string; vIPI?: string; vNF: string },
 ): string {
   const chave = '35250712345678000195550010000000021000000028';
@@ -117,6 +117,8 @@ function inlineNfe(
         <prod>
           <cProd>${it.cProd}</cProd>
           <xProd>${it.xProd}</xProd>
+          ${it.ncm ? `<NCM>${it.ncm}</NCM>` : ''}
+          ${it.cfop ? `<CFOP>${it.cfop}</CFOP>` : ''}
           <uCom>UN</uCom>
           <qCom>${it.qCom}</qCom>
           <vUnCom>1.0000000000</vUnCom>
@@ -424,5 +426,108 @@ describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-
     ]);
     // item 1 (TRIBUTADO) carrega o crédito de PIS/COFINS; itens 2/3 (monofásicos) só o de ICMS
     expect(input.inventoryItems!.map((it) => it.valueCents)).toEqual([10545 - 1800 - 784, 5272 - 900, 3516 - 600]);
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 26, F-FA12 → a): CFOP 1551/2551 → fixedAssetItems ─────
+describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobilizado)', () => {
+  it('nota mista: 2 itens de estoque + 1 item CFOP 1551 → inventoryItems=2, fixedAssetItems=1', async () => {
+    const xml = inlineNfe(
+      [
+        { cProd: 'EST-1', xProd: 'Item de estoque 1', qCom: '2', vProd: '100.00', cfop: '5102' },
+        { cProd: 'EST-2', xProd: 'Item de estoque 2', qCom: '1', vProd: '50.00', cfop: '5102' },
+        { cProd: 'MAQ-1', xProd: 'Máquina de corte', qCom: '1', vProd: '850.00', cfop: '1551', ncm: '8452.10' },
+      ],
+      { vProd: '1000.00', vNF: '1000.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(
+      scope,
+      xml,
+      dto({
+        itemMappings: [
+          { cProd: 'EST-1', productRef: 'prod-1' },
+          { cProd: 'EST-2', productRef: 'prod-2' },
+          { cProd: 'MAQ-1', classId: 'class-maq' },
+        ],
+      }),
+    );
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.inventoryItems).toHaveLength(2);
+    expect(input.fixedAssetItems).toHaveLength(1);
+    expect(input.fixedAssetItems![0]).toEqual({ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1, nItem: 3 });
+    // Tie-out: Σ estoque (15000) + Σ imobilizado (85000) = amountCents (100000).
+    expect(input.inventoryItems!.reduce((a, i) => a + i.valueCents, 0) + input.fixedAssetItems!.reduce((a, i) => a + i.costCents, 0)).toBe(
+      input.amountCents,
+    );
+  });
+
+  it('item CFOP 1551 sem classId → 400, nada é criado', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'MAQ-1', xProd: 'Máquina', qCom: '1', vProd: '850.00', cfop: '1551' }],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await expect(
+      service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1' }] })),
+    ).rejects.toThrow(); // itemMapping XOR rejeita já no DTO (nem chega ao service)
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('item CFOP 1551 mapeado com productRef → 400 (nunca vira estoque em silêncio)', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'MAQ-1', xProd: 'Máquina', qCom: '1', vProd: '850.00', cfop: '1551' }],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await expect(
+      service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', productRef: 'prod-maq' }] })),
+    ).rejects.toThrow(ValidationError);
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('classId em item NÃO 1551 → 400 (param-aceito-e-ignorado-e-bug — nunca a classe errada em silêncio)', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'EST-1', xProd: 'Item comum', qCom: '1', vProd: '100.00', cfop: '5102' }],
+      { vProd: '100.00', vNF: '100.00' },
+    );
+    const { service, createPayable } = build();
+    await expect(
+      service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'EST-1', classId: 'class-x' }] })),
+    ).rejects.toThrow(ValidationError);
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('nota 100% CFOP 1551 (sem item de estoque): inventoryItems ausente, fixedAssetItems com todos', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'MAQ-1', xProd: 'Máquina', qCom: '1', vProd: '850.00', cfop: '1551' }],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', classId: 'class-maq' }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.inventoryItems).toBeUndefined();
+    expect(input.fixedAssetItems).toHaveLength(1);
+    expect(input.fixedAssetItems![0].costCents).toBe(85000);
+  });
+
+  // Review #366, achado 3: 2 linhas de imobilizado com o MESMO cProd (repetido na nota — ex.: 2
+  // máquinas idênticas do mesmo catálogo do fornecedor) — allocate carrega o `nItem` de CADA
+  // linha (a chave real do rascunho, resolvida depois em PayableService), nunca funde os custos.
+  it('2 itens CFOP 1551 com o MESMO cProd (nItem distinto) → 2 entradas em fixedAssetItems, custos distintos preservados', async () => {
+    const xml = inlineNfe(
+      [
+        { cProd: 'MAQ-REPETIDO', xProd: 'Máquina 1', qCom: '1', vProd: '500.00', cfop: '1551' },
+        { cProd: 'MAQ-REPETIDO', xProd: 'Máquina 2', qCom: '1', vProd: '350.00', cfop: '1551' },
+      ],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-REPETIDO', classId: 'class-maq' }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems).toHaveLength(2);
+    expect(input.fixedAssetItems!.map((i) => i.cProd)).toEqual(['MAQ-REPETIDO', 'MAQ-REPETIDO']);
+    expect(input.fixedAssetItems!.map((i) => i.nItem)).toEqual([1, 2]); // nItem distingue as 2 linhas
+    expect(input.fixedAssetItems!.map((i) => i.costCents)).toEqual([50000, 35000]); // Σ = 85000, nenhum cent perdido
   });
 });

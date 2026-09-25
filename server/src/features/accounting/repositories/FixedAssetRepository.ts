@@ -24,6 +24,17 @@ export class FixedAssetRepository implements IFixedAssetRepository {
     });
   }
 
+  public async findByPayableAndSourceItemRef(
+    scope: AccountingScope,
+    payableId: string,
+    sourceItemRef: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<FixedAsset | null> {
+    return (tx ?? prisma).fixedAsset.findFirst({
+      where: { payableId, sourceItemRef, ...accountingScopeWhere(scope) },
+    });
+  }
+
   public async findByCode(
     scope: AccountingScope,
     code: string,

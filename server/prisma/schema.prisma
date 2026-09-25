@@ -51,6 +51,8 @@ model User {
   accountingScopeSettings AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
   fiscalProfiles          FiscalProfile[] // Relation to FiscalProfile (BE-INCR-NFE-COST-REGIME, nó X6)
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
+  companyFiscalProfiles   CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
+  companySigners          CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   accountingReviews       AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
@@ -649,6 +651,20 @@ model AccountingDataExchangeJob {
   // propósito: NOT NULL com default forçaria rebuild da tabela no SQLite (lição do expenseAccountId).
   periodStart     DateTime?
   periodEnd       DateTime?
+  // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G — retificação versionada ECD/ECF, itens 26-31).
+  // Plain-id columns (não FK — mesma convenção de requestedById/committedById): rebuild de
+  // tabela custa caro no SQLite e nenhuma delas precisa de integridade referencial forte, só
+  // unicidade (supersedesJobId) e leitura pontual. `supersedesJobId` é o id do job EXPORTED
+  // (ECD ou ECF) que ESTE job substitui/retifica; @unique fecha "2º substituto do mesmo job"
+  // em P2002 (item 21). `ecfRectificationRequired` nasce true numa ECD substituta e trava o
+  // pacote ao contador (item 22) até uma ECF retificadora do mesmo ano zerar a flag OU até a
+  // dispensa (`ecfRectificationWaivedAt`/`WaiverReason`). `verificationTermStorageKey` é o
+  // caminho do .rtf do Termo de Verificação (J801.ARQ_RTF) no `attachmentStorage` reusado.
+  supersedesJobId               String?   @unique
+  ecfRectificationRequired      Boolean   @default(false)
+  ecfRectificationWaivedAt      DateTime?
+  ecfRectificationWaiverReason  String?
+  verificationTermStorageKey    String?
   rows            AccountingDataExchangeRow[]
   // Reverse relations of AccountingDeliveryLog (BE-INCR-CONTADOR-DELIVERY, F-CD4-a). ÚNICA mudança
   // neste model: zero coluna nova, zero backfill — o log de entrega REFERENCIA o job de origem
@@ -937,6 +953,13 @@ model Payable {
   status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
   paidCents           BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): cache atomico de SUM(payments ACTIVE); gate de soma `paidCents <= amountCents - novo`; nunca fonte de relatorio oficial
   recoverableTaxLines String? // X6 F-X6-8 a: JSON [{accountId, amountCents}] dos créditos a recuperar reconhecidos NO MESMO entry (D estoque líquido + D a recuperar / C fornecedores = amountCents); persistido para o re-drive do reconcile reconstruir o mesmo entry
+  // BE-INCR-FIXED-ASSETS PR-5 (nó C8, item 20-21, F-FA12 a): itens CFOP 1551/2551 desta NF-e NÃO
+  // ganham coluna própria aqui (decisão do dono, 23/09 — ver PayableService.buildRecognitionInput):
+  // o breakdown {classId, accountCode, cProd, costCents, ncm, qty} vai no `rawJson` do
+  // `SourceDocument` da RECOGNITION (campo já existente, reuso — nenhum schema novo neste ponto).
+  // O re-drive do rascunho (item 22/28) relê esse `SourceDocument` pelo `sourceDocumentId` da
+  // entry (`PayableService.redriveFixedAssetDrafts` via `ISourceProvenanceRepository`), nunca uma
+  // 2ª cópia JSON na própria linha do Payable.
   createdById         String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById       String? // actor who cancelled; plain string
   cancelReason        String?
@@ -1340,6 +1363,69 @@ model FiscalProfile {
   @@map("fiscal_profiles")
 }
 
+// BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF §4.1; PRE-ADR F-OBP-1/8 a) — perfil fiscal da EMPRESA por
+// ano-calendário. Instância = CNPJ raiz (R8) ⇒ chave = (userId dono, ano); o unitId da requisição só resolve
+// escopo/policy. Diz quais obrigações SPED se aplicam (models/obrigacoesPorRegime.ts) e guarda o que hoje é
+// redigitado a cada geração ECD/ECF. Soft-delete; o upsert REVIVE a linha (mesma @@unique) — padrão FiscalProfile.
+model CompanyFiscalProfile {
+  id                         String             @id @default(cuid())
+  userId                     String
+  user                       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anoCalendario              Int
+  regime                     String // MEI | SIMPLES | PRESUMIDO | REAL (models/regimeEmpresa.ts)
+  grandePorte                Boolean? // null = "não sei" (F-OBP-5 c) — Lei 11.638 art. 3º p.ú.
+  inativa                    Boolean            @default(false) // IN 2.003 art. 3º §1º III; IN 2.004 art. 1º §1º III
+  aporteInvestidorAnjo       Boolean? // IN 2.003 art. 3º §2º
+  livroCaixaSemEscrituracao  Boolean? // só PRESUMIDO — IN 2.003 art. 3º §1º V
+  distribuicaoAcimaBase      Boolean? // só PRESUMIDO — IN 2.003 art. 3º §3º
+  declarante                 Json? // F-XP-2 a: 0000/0030 (nome, cnpj, endereço, IE, IM, codMun…) — shape em CompanyFiscalProfileDto
+  ecdIndNire                 String? // '0' | '1'
+  ecdNire                    String?
+  ecdNumOrd                  String?
+  ecdNatLivr                 String?
+  ecfIndAliqCsll             String? // '1' (9%) | '4' (15%) — só PRESUMIDO/REAL
+  ecfIndRecReceita           String? // '1' caixa | '2' competência
+  contadorContactId          String?
+  contadorContact            AccountingContact? @relation(fields: [contadorContactId], references: [id], onDelete: Restrict)
+  representanteLegalSignerId String?
+  representanteLegalSigner   CompanySigner?     @relation(fields: [representanteLegalSignerId], references: [id], onDelete: Restrict)
+  ecfRecibo                  String? // F-XP-5 a — preenchido no PR-2
+  regimeTravadoEm            DateTime? // F-XP-5 a — PR-2 (IN 2.004 art. 7º §2º)
+  createdById                String?
+  updatedById                String?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  deletedAt                  DateTime?
+
+  @@unique([userId, anoCalendario])
+  @@index([contadorContactId])
+  @@index([representanteLegalSignerId])
+  @@map("company_fiscal_profiles")
+}
+
+// X13 (F-OBP-9 a) — signatário da empresa que NÃO é o contador (sócio/administrador, responsável legal). O contador
+// (COD_ASSIN 900) segue em AccountingContact. Qualificações separadas: J930 (ECD) e 0930 (ECF) são tabelas
+// diferentes (F-C12-2 a, models/spedQualifAssinante.ts). Nome/CPF/e-mail/fone são PII — nunca em auditoria.
+model CompanySigner {
+  id          String                 @id @default(cuid())
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome        String
+  cpf         String // 11 dígitos com DV (lib/cpf)
+  qualifEcd   String // J930 COD_ASSIN (≠ 900)
+  qualifEcf   String // 0930 IDENT_QUALIF (≠ 900)
+  email       String
+  fone        String // 0930 exige FONE
+  createdById String?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  deletedAt   DateTime?
+  profiles    CompanyFiscalProfile[]
+
+  @@index([userId])
+  @@map("company_signers")
+}
+
 // BE-INCR-DFE (nó X10b, BRIEF item 2; ADR-DFE F-DFE-6 → a) — dado fiscal DO SERVIÇO (item da lista
 // nacional LC 116, NBS, INDOP). Prisma first-class (§2.1: invariante legal nunca vira campo de preset).
 // `serviceRef` = id da linha `services` do DynamicTable — plain string escopada, NÃO FK (precedente
@@ -1628,6 +1714,12 @@ model FixedAsset {
   sourceDocument               SourceDocument?   @relation(fields: [sourceDocumentId], references: [id])
   payableId                    String? // payable de origem quando criado pelo modo 4 (item 22)
   payable                      Payable?          @relation(fields: [payableId], references: [id])
+  // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): chave do item DENTRO da NF-e
+  // (`cProd`) — o `createDraftFromPayable` é read-first por `(payableId, sourceItemRef)`: um
+  // re-drive (reconcile) que releia a mesma NF-e e chame de novo com os MESMOS itens nunca duplica
+  // o rascunho. NULL para todo ativo que não nasceu de NF-e (SQLite trata NULL como distinto —
+  // muitas linhas com payableId/sourceItemRef ambos null coexistem sem colidir no unique).
+  sourceItemRef                String?
   version                      Int               @default(1) // optimistic-lock counter da CAS de addAccumulated (item 14) e de activate/dispose (item 9/18)
   createdById                  String?
   createdAt                    DateTime          @default(now())
@@ -1635,6 +1727,7 @@ model FixedAsset {
   deletedAt                    DateTime?
 
   @@unique([userId, unitId, code])
+  @@unique([payableId, sourceItemRef])
   @@index([userId, unitId, status])
   @@map("fixed_assets")
 }
@@ -1695,6 +1788,7 @@ model AccountingContact {
   // SUGESTÃO, não gate (o corpo do build pode divergir e passa normalmente). `Json?` porque SQLite
   // não tem array nativo; `null` = nenhum perfil salvo ainda (GET devolve `kinds: []`).
   packageProfile           Json?
+  companyFiscalProfiles    CompanyFiscalProfile[] // X13: contador do perfil da empresa (FK Restrict)
 
   @@index([userId, unitId])
   @@index([deletedAt])

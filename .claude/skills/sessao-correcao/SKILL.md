@@ -86,6 +86,11 @@ Nada além disso.
 
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
+**Autorização quando a lacuna é nó do vault.** Lacuna priorizada pode ter nota em `docs/plano/nos/PASSO-*.md`
+(ex.: GAP-MAP 7 = `PASSO-11`): aí a autorização é o campo `autorizacao` dela — vazio = não roteia
+(ORCH-006). A nota não entra no diff (regra 1); o relatório traz a linha de fold para o fold pós-merge do
+`docs/plano/README.md`.
+
 **Comandos do passo 1 e 3:**
 
 ```bash

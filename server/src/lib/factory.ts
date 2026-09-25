@@ -35,6 +35,8 @@ import { ReconcilePendingRepository } from '../features/accounting/repositories/
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
 import { FiscalProfileRepository } from '../features/accounting/repositories/FiscalProfileRepository';
 import { ServiceFiscalProfileRepository } from '../features/accounting/repositories/ServiceFiscalProfileRepository';
+import { CompanyFiscalProfileRepository } from '../features/accounting/repositories/CompanyFiscalProfileRepository';
+import { CompanySignerRepository } from '../features/accounting/repositories/CompanySignerRepository';
 import { DepreciationRateRepository } from '../features/accounting/repositories/DepreciationRateRepository';
 import { FixedAssetClassRepository } from '../features/accounting/repositories/FixedAssetClassRepository';
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
@@ -112,6 +114,8 @@ import { BankSettlementService } from '../features/accounting/services/BankSettl
 import { AccountingScopeSettingsService } from '../features/accounting/services/AccountingScopeSettingsService';
 import { FiscalProfileService } from '../features/accounting/services/FiscalProfileService';
 import { ServiceFiscalProfileService } from '../features/accounting/services/ServiceFiscalProfileService';
+import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
+import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { DepreciationRateSeedService } from '../features/accounting/services/DepreciationRateSeedService';
 import { DepreciationRateService } from '../features/accounting/services/DepreciationRateService';
 import { FixedAssetClassService } from '../features/accounting/services/FixedAssetClassService';
@@ -200,6 +204,8 @@ import type { IReconcilePendingRepository } from '../features/accounting/reposit
 import type { IBankSettlementRepository } from '../features/accounting/repositories/IBankSettlementRepository';
 import type { IFiscalProfileRepository } from '../features/accounting/repositories/IFiscalProfileRepository';
 import type { IServiceFiscalProfileRepository } from '../features/accounting/repositories/IServiceFiscalProfileRepository';
+import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
+import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IDepreciationRateRepository } from '../features/accounting/repositories/IDepreciationRateRepository';
 import type { IFixedAssetClassRepository } from '../features/accounting/repositories/IFixedAssetClassRepository';
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
@@ -354,6 +360,8 @@ export class ApplicationFactory {
     bankSettlement: IBankSettlementRepository;
     fiscalProfile: IFiscalProfileRepository;
     serviceFiscalProfile: IServiceFiscalProfileRepository;
+    companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
+    companySigner: ICompanySignerRepository; // X13
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
@@ -432,6 +440,8 @@ export class ApplicationFactory {
     accountingScopeSettings: AccountingScopeSettingsService;
     fiscalProfile: FiscalProfileService;
     serviceFiscalProfile: ServiceFiscalProfileService;
+    companyFiscalProfile: CompanyFiscalProfileService; // X13
+    companySigner: CompanySignerService; // X13
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
@@ -491,6 +501,8 @@ export class ApplicationFactory {
       bankSettlement: new BankSettlementRepository(),
       fiscalProfile: new FiscalProfileRepository(),
       serviceFiscalProfile: new ServiceFiscalProfileRepository(),
+      companyFiscalProfile: new CompanyFiscalProfileRepository(),
+      companySigner: new CompanySignerRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
@@ -709,6 +721,15 @@ export class ApplicationFactory {
       new DynamicTableProductRefLookup(this.repositories.dynamicTable),
       // F-D2=(b): espelho físico da compra (movimento DT via escrita isSystem, best-effort).
       new DynamicTablePhysicalStockSync(dynamicTableService, this.repositories.dynamicTable),
+      // BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): modo 4 (fixedAssetItems) resolve class.costAccountId
+      // via este repo — mesma instância do resto do módulo C8.
+      this.repositories.fixedAssetClass,
+      // Review #366 (achado 1): catálogo de taxas VIVAS para resolveRateForNcm — a validação por
+      // NCM roda ANTES do tx1 do Payable (resolveFixedAssetLines), nunca só no rascunho.
+      this.repositories.depreciationRate,
+      // BE-INCR-FIXED-ASSETS PR-5 (item 22/28, decisão do dono 23/09): lê o SourceDocument.rawJson
+      // da recognition para redriveFixedAssetDrafts — nunca uma 2ª cópia do breakdown no Payable.
+      this.repositories.sourceProvenance,
     );
 
     // Extracted from the literal so CrmReceivableBridge (below) shares the same instance.
@@ -750,6 +771,7 @@ export class ApplicationFactory {
       this.repositories.account,
       this.policies.accounting,
       auditService,
+      this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
     );
     // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação, seed lazy do Anexo III.
     const depreciationRateSeedService = new DepreciationRateSeedService(this.repositories.depreciationRate);
@@ -835,6 +857,12 @@ export class ApplicationFactory {
       auditService,
       this.policies.accounting,
     );
+    // BE-INCR-FIXED-ASSETS PR-5 (item 22/28) — setter injection dos 2 pontos que fechariam um
+    // ciclo de construção (PayableService → FixedAssetService → DepreciationService →
+    // [redriver] → PayableService; ver IFixedAssetDraftCreator.ts). Ambos os lados JÁ existem
+    // aqui — só liga a ponta que faltava.
+    payableService.setFixedAssetDraftCreator(fixedAssetService);
+    depreciationService.setFixedAssetDraftRedriver(payableService);
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
@@ -842,6 +870,17 @@ export class ApplicationFactory {
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
+      // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
+      companyFiscalProfile: new CompanyFiscalProfileService(
+        this.repositories.companyFiscalProfile,
+        this.repositories.companySigner,
+        this.repositories.accountingContact,
+        this.policies.accounting,
+        auditService,
+        this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
+        accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
+      ),
+      companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
       depreciationRateSeed: depreciationRateSeedService,
       depreciationRate: depreciationRateService,
       fixedAssetClass: fixedAssetClassService,
@@ -1227,6 +1266,8 @@ export class ApplicationFactory {
   public getAccountingScopeSettingsService = (): AccountingScopeSettingsService => this.services.accountingScopeSettings;
   public getFiscalProfileService = (): FiscalProfileService => this.services.fiscalProfile;
   public getServiceFiscalProfileService = (): ServiceFiscalProfileService => this.services.serviceFiscalProfile;
+  public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
+  public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getDepreciationRateService = (): DepreciationRateService => this.services.depreciationRate;
   public getFixedAssetClassService = (): FixedAssetClassService => this.services.fixedAssetClass;
   public getFixedAssetService = (): FixedAssetService => this.services.fixedAsset;

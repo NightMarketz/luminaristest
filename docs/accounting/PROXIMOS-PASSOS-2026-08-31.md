@@ -1,5 +1,8 @@
 # Próximos passos — 2026-08-31
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Substitui** `PROXIMOS-PASSOS-2026-08-28.md`, que segue válido como registro histórico. O que mudou
 > em três dias: o arquivo da RFB deixou de ser espera por terceiro, a ordem dos gates ganhou uma
 > dependência que não era preferência, e o insumo ausente §8.3 daquele doc foi **fechado por varredura**.

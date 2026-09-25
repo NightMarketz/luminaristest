@@ -1,5 +1,8 @@
 # Backend Hardening Plan v2 — path to gold standard (infra + libraries)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../docs/SDD-LUMINARIS.md) — histórico; itens ainda abertos foram listados na **§IV.4**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 Consolidated, staged plan to bring the **whole backend** (not just features) to gold standard. Companion
 to [`TEST_ROLLOUT_PLAN.md`](./TEST_ROLLOUT_PLAN.md) (per-feature tests) and [`../REVIEW_BACKLOG.md`](../REVIEW_BACKLOG.md)
 (deferred debt). Two interleaved concerns, ordered into phases:

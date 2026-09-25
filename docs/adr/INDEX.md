@@ -48,7 +48,7 @@
 |---|---|---|---|---|
 | [CRM-LEAD-OPP](ADR-CRM-lead-opportunity-model.md) | Modelo de produto Lead × Opportunity no molde salão (quantas pipelines de valor; portadora de fechamento) | **Draft — PRE-ADR, ratificação humana PENDENTE (§5.1)**; devolvido ao dono pelo board v3 (D3: 4 defer + 1 abstain); recomendação = interino reversível (ocultar 2ª pipeline sem deletar código) | 2026-07-20 | PRODUTO / MODELAGEM DE MOLDE (DynamicTable) |
 
-## Fábrica de verticais (Parte B do roadmap — `docs/ROADMAP-PLATAFORMA.md`)
+## Fábrica de verticais (Parte B do roadmap — `docs/SDD-LUMINARIS.md` §IV.1, ex-`docs/ROADMAP-PLATAFORMA.md`)
 
 | ADR | Título | Status | Data | Classe |
 |---|---|---|---|---|
@@ -56,7 +56,7 @@
 | [BINDING-FEEDER](ADR-INCR-BINDING-FEEDER.md) | O alimentador — bindings `Active` do banco chegando ao dispatcher (`AccountingSyncService`), fechando o gap entre `POST /accounting-binding/compile` e o runtime | **Accepted — RATIFICADO PELO DONO 2026-08-22** (via AskUserQuestion, duas rodadas, sobre `docs/accounting/BE-INCR-BINDING-FEEDER-brief.md`): F-FEEDER-1→ADR próprio (não emenda ao P1); F-FEEDER-2→`factory.ts` DENTRO do perímetro zero-diff do P2 (emenda incorporada ao `ADR-P2-second-vertical.md` §2); F-FEEDER-3→chave composta `unitId:sourceType` no `Map` de mappers (fora do BRIEF original, medição posterior; premissa de unicidade de `unitId` ABERTA); F-FEEDER-4→boot FALHA sem binding `Active`; F-FEEDER-5→PRÉ-BOOT (`server.ts` aguarda o alimentador antes de `listen()` — 1ª vez que o bootstrap bloqueia; Qdrant é fire-and-forget, precedente contrário); F-FEEDER-6→migração de dado via `BindingCompileService.compile()` real (não seed, não auto-compilação no boot), encaixa no job do ADR-M2 decisão 4; impl. NÃO iniciada | 2026-08-22 | DECISÃO ARQUITETURAL (bootstrap / dispatcher) |
 | [P2](ADR-P2-second-vertical.md) | O segundo vertical — prova da prensa (setor novo sem diff em motor/ledger/intérprete/`factory.ts`; entrevista→ERP→fechamento→ECD própria; métrica *time-to-first-ECD*) | **Draft — F-P2-1 RATIFICADO 2026-08-21 → CLÍNICA ESTÉTICA** (corroborado por OQ-1 do dossiê: barbearia casaria o preset beautySalon existente e a prova seria vácua); F-P2-2 RATIFICADO 2026-08-22 → (a) tenant-fixture sintético; **EMENDA 2026-08-22 ao §2 incorporada**: `server/src/lib/factory.ts` entra no perímetro zero-diff (recomendação do [PARECER-ARCHITECT-ADR-P2](PARECER-ARCHITECT-ADR-P2.md) §1.5, alcançável só após [BINDING-FEEDER](ADR-INCR-BINDING-FEEDER.md) Accepted); F-P2-3 aberto por dependência (H1/PVA); F-P2-4 pendente | 2026-08-21 (emenda 2026-08-22) | PROVA DE PRODUTO (preset + binding; zero código de motor) |
 
-Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/PLANO-MODULO-COMPLETO-REPLICAVEL.md`.
+Plano-sequência dos degraus (gates humanos → P1 → P2): `docs/SDD-LUMINARIS.md` §IV.2 (ex-`docs/PLANO-MODULO-COMPLETO-REPLICAVEL.md`).
 
 ## Plataforma (não-contábil)
 
@@ -77,7 +77,7 @@ Registrado aqui para a rastreabilidade não ter buraco silencioso:
 | INCR-5 Anexos/Evidências | `docs/accounting/BE-INCR5-attachments-evidence-brief.md` | Mergeado (sem ADR dedicado) |
 | INCR-6 Data Exchange (import/export) | `docs/accounting/BE-INCR6-data-exchange-brief.md` (+ closeouts) | Mergeado (sem ADR dedicado) |
 | ~~INCR-7 Conciliação Bancária~~ | ~~PRE-ADR~~ → **backend implementado** [ADR-INCR7](ADR-INCR7-bank-reconciliation.md) | 7 decisões travadas 2026-07-03; backend mergeado (PRs #32–#37+); FE deferido |
-| Roadmap/decisões travadas & rejeitadas | `docs/accounting/ACCOUNTING-MASTER-MAP.md` (§1, §4) | Fonte de verdade do roadmap |
+| Roadmap/decisões travadas & rejeitadas | `docs/SDD-LUMINARIS.md` Parte II (§M1, §M4) — ex-`docs/accounting/ACCOUNTING-MASTER-MAP.md` (congelado 23/09) | Fonte de verdade do roadmap (plano único) |
 | ADR-B01 (idempotência AccountingSync) | referenciado por C01/D01 como *Related* | **Ausente deste dir** — decisão vive na memória `accounting-sync-b1` |
 
 > **Manutenção:** ao ratificar um ADR novo, adicione uma linha aqui na mesma tarefa (é o passo de

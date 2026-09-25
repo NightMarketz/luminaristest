@@ -1,5 +1,8 @@
 # FE-INCR7 — Plano de Frontend: Conciliação Bancária
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — **registro de execução** deste incremento; o estado do nó vive na §M5.1 e a fila na Parte III. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Proveniência.** Autorado 2026-07-08 a partir do **contrato de backend já mergeado na main**
 > (fonte de verdade), não de um rascunho verbatim. A sessão de planejamento original
 > (*"Bank reconciliation frontend planning"*, 2026-07-03) nunca commitou artefato — este doc a

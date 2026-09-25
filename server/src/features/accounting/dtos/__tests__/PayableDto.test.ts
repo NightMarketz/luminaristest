@@ -148,3 +148,124 @@ describe('CreatePayableSchema — 3-mode gate (expense / single-SKU / multi-item
     expect(CreatePayableSchema.safeParse(base).success).toBe(false);
   });
 });
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 27, F-FA12 → a): modo 4 (fixedAssetItems) ─────────────
+describe('CreatePayableSchema — modo 4 (fixedAssetItems, combinável só com o modo 3)', () => {
+  const base = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'NF-1', description: 'x',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 85000,
+  };
+
+  it('accepts a note 100% imobilizado: inventoryMultiItem + fixedAssetItems só, sem inventoryItems', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      inventoryMultiItem: true,
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 85000 }],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('nota mista: inventoryItems + fixedAssetItems juntos, Σ ambos === amountCents (2 débitos)', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 100000,
+      inventoryMultiItem: true,
+      inventoryItems: [{ productRef: 'p1', qty: 1, valueCents: 15000 }],
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 85000 }],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects fixedAssetItems fora do modo 3 (sem inventoryMultiItem)', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 85000 }],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects modo 4 + modo 1 (expenseAccountId) juntos', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      inventoryMultiItem: true,
+      expenseAccountId: 'exp-1',
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 85000 }],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects quando a soma (itens + imobilizado) não tie-out com amountCents', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 100000,
+      inventoryMultiItem: true,
+      inventoryItems: [{ productRef: 'p1', qty: 1, valueCents: 15000 }],
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 80000 }], // 15000+80000 ≠ 100000
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects unknown keys on a fixedAssetItem (.strict)', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      inventoryMultiItem: true,
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 85000, productRef: 'oops' }],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  // Re-review do #366: nItem parcial (só em ALGUNS itens) faz o item sem nItem cair no fallback
+  // por índice, que podia colidir com o nItem explícito de outro item — 400 ANTES de chegar ao
+  // service (a colisão nunca deve virar dado a resolver silenciosamente).
+  it('rejects nItem presente em SÓ UM dos 2 itens (achado do re-review — risco de colisão com o fallback)', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 60000,
+      inventoryMultiItem: true,
+      fixedAssetItems: [
+        { classId: 'class-1', cProd: 'MAQ-1', costCents: 30000, nItem: 1 },
+        { classId: 'class-1', cProd: 'MAQ-2', costCents: 30000 }, // sem nItem — cairia no índice 0/fallback "1"
+      ],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejects nItem repetido entre 2 itens (ex.: [{nItem:2},{nItem:2}]) — colidiria no rascunho', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 60000,
+      inventoryMultiItem: true,
+      fixedAssetItems: [
+        { classId: 'class-1', cProd: 'MAQ-1', costCents: 30000, nItem: 2 },
+        { classId: 'class-1', cProd: 'MAQ-2', costCents: 30000, nItem: 2 },
+      ],
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it('aceita nItem AUSENTE em TODOS os itens (fallback por índice 1-based, sem risco de colisão)', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 60000,
+      inventoryMultiItem: true,
+      fixedAssetItems: [
+        { classId: 'class-1', cProd: 'MAQ-1', costCents: 30000 },
+        { classId: 'class-1', cProd: 'MAQ-2', costCents: 30000 },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('aceita nItem presente e ÚNICO em TODOS os itens', () => {
+    const r = CreatePayableSchema.safeParse({
+      ...base,
+      amountCents: 60000,
+      inventoryMultiItem: true,
+      fixedAssetItems: [
+        { classId: 'class-1', cProd: 'MAQ-1', costCents: 30000, nItem: 5 },
+        { classId: 'class-1', cProd: 'MAQ-2', costCents: 30000, nItem: 7 },
+      ],
+    });
+    expect(r.success).toBe(true);
+  });
+});

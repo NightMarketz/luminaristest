@@ -1,5 +1,8 @@
 # Plano de alto nível — módulo contábil 100% + replicável para outros setores
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](SDD-LUMINARIS.md) — migrado para a **§IV.2**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Estado em 2026-09-14 (ponteiro, não reescrita):** Degrau 1 (prensa) ✅ #211 · Degrau 2 (P2 clínica) código
 > ✅ #282, comportamento 11 em PR #320, sign-off H3 em branco · Degrau 0 segue **aberto nos 4 oráculos**
 > (B-4 executado por referência e não assinado; X2, H1/H1 2ª passada, H2, M2 em branco). Régua por módulo

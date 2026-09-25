@@ -249,6 +249,15 @@ const FONTES = [
     url: 'http://www.planalto.gov.br/ccivil_03/leis/l9718.htm',
     arquivo: 'Lei-9718-1998.html',
   },
+  // Fase 1 do PLANO-POS-CONTADOR-2026-09-23 (passo 1.5, C-2) — autorizado pelo dono em 2026-09-25.
+  {
+    id: 'lei-13097-2015',
+    assunto: 'Monofasico — bebidas frias (art. 14 e ss., NCM; substitui o art. 58-A da Lei 10.833)',
+    titulo: 'Lei 13.097/2015',
+    tipo: 'arquivo',
+    url: 'http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13097.htm',
+    arquivo: 'Lei-13097-2015-bebidas-frias.html',
+  },
   {
     id: 'lc-123-2006',
     assunto: 'Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4)',

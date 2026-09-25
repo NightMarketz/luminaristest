@@ -31,7 +31,12 @@ function makeJob(over: Partial<AccountingDataExchangeJob> = {}): AccountingDataE
     sizeBytes: null, sha256: null, storageKey: null, totalRows: 0, validRows: 0,
     invalidRows: 0, committedRows: 0, requestedById: 'owner-1', committedById: null,
     createdAt: new Date('2026-07-01T00:00:00Z'), updatedAt: new Date('2026-07-01T00:00:00Z'),
-    committedAt: null, periodStart: null, periodEnd: null, ...over,
+    committedAt: null, periodStart: null, periodEnd: null,
+    // BE-INCR-FIXED-ASSETS PR-4: colunas aditivas — default = comportamento pré-existente.
+    supersedesJobId: null, ecfRectificationRequired: false,
+    ecfRectificationWaivedAt: null, ecfRectificationWaiverReason: null,
+    verificationTermStorageKey: null,
+    ...over,
   };
 }
 
@@ -49,8 +54,31 @@ function makeRepo() {
     return job;
   });
   const runTransaction = jest.fn((fn: (tx: never) => Promise<unknown>) => fn({} as never));
-  const repo = { createJob, findJobById, updateJob, runTransaction } as unknown as IDataExchangeRepository;
-  return { repo, createJob, findJobById, updateJob };
+  const findJobBySupersedesJobId = jest.fn(async (_s: unknown, supersedesJobId: string) =>
+    [...store.values()].find((j) => j.supersedesJobId === supersedesJobId) ?? null);
+  const listJobs = jest.fn(async (_s: unknown, filter: { page: number; limit: number }) => {
+    const items = [...store.values()];
+    return { items, total: items.length, page: filter.page, limit: filter.limit };
+  });
+  const findSuccessorsByJobIds = jest.fn(async (_s: unknown, jobIds: string[]) => {
+    const map = new Map<string, string>();
+    for (const j of store.values()) {
+      if (j.supersedesJobId && jobIds.includes(j.supersedesJobId)) map.set(j.supersedesJobId, j.id);
+    }
+    return map;
+  });
+  const findEcdJobsPendingRectificationForYear = jest.fn(async () =>
+    [...store.values()].filter(
+      (j) => j.kind === 'EXPORT_SPED_ECD' && j.ecfRectificationRequired && !j.ecfRectificationWaivedAt,
+    ));
+  const repo = {
+    createJob, findJobById, updateJob, runTransaction, findJobBySupersedesJobId, listJobs,
+    findSuccessorsByJobIds, findEcdJobsPendingRectificationForYear,
+  } as unknown as IDataExchangeRepository;
+  return {
+    repo, createJob, findJobById, updateJob, findJobBySupersedesJobId, listJobs,
+    findSuccessorsByJobIds, store,
+  };
 }
 
 function makeReports(): IReportReader {
@@ -572,6 +600,52 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       // node:crypto antes de escrever o teste, não assumido — outra seed poderia empatar.
       const third = await run('seed-c');
       expect(third).not.toBe(first);
+    });
+  });
+
+  // BE-INCR-FIXED-ASSETS PR-4 (item 22/23) — waiveEcfRectification + listJobs.
+  describe('waiveEcfRectification (item 22)', () => {
+    it('dispensa idempotente: 2ª chamada não reemite o audit event', async () => {
+      const { repo, store } = makeRepo();
+      store.set('job-ecd', makeJob({ id: 'job-ecd', kind: 'EXPORT_SPED_ECD', ecfRectificationRequired: true }));
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
+
+      const first = await svc.waiveEcfRectification(scope, 'job-ecd', 'Justificativa com pelo menos 20 caracteres.');
+      expect(first.id).toBe('job-ecd');
+      const appendCallsAfterFirst = (audit.append as jest.Mock).mock.calls.length;
+      expect(appendCallsAfterFirst).toBeGreaterThan(0);
+
+      await svc.waiveEcfRectification(scope, 'job-ecd', 'Outra justificativa igualmente longa o bastante.');
+      expect((audit.append as jest.Mock).mock.calls.length).toBe(appendCallsAfterFirst); // sem novo evento
+    });
+
+    it('job sem ecfRectificationRequired é 400 — nada a dispensar', async () => {
+      const { repo, store } = makeRepo();
+      store.set('job-ecd', makeJob({ id: 'job-ecd', kind: 'EXPORT_SPED_ECD', ecfRectificationRequired: false }));
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
+      await expect(svc.waiveEcfRectification(scope, 'job-ecd', 'Justificativa com pelo menos 20 caracteres.')).rejects.toBeInstanceOf(ValidationError);
+    });
+
+    it('job de outro escopo é 404', async () => {
+      const { repo } = makeRepo();
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
+      await expect(svc.waiveEcfRectification(scope, 'job-inexistente', 'Justificativa com pelo menos 20 caracteres.')).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe('listJobs (item 23, F-FA15 a)', () => {
+    it('devolve supersededByJobId derivado (nunca coluna própria)', async () => {
+      const { repo, store } = makeRepo();
+      store.set('job-old', makeJob({ id: 'job-old', kind: 'EXPORT_SPED_ECD' }));
+      store.set('job-new', makeJob({ id: 'job-new', kind: 'EXPORT_SPED_ECD', supersedesJobId: 'job-old' }));
+      const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo());
+
+      const { items } = await svc.listJobs(scope, { page: 1, limit: 20 });
+      const old = items.find((i) => i.id === 'job-old')!;
+      const nw = items.find((i) => i.id === 'job-new')!;
+      expect(old.supersededByJobId).toBe('job-new');
+      expect(nw.supersedesJobId).toBe('job-old');
+      expect(nw.supersededByJobId).toBeNull();
     });
   });
 });

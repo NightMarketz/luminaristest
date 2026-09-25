@@ -11,10 +11,11 @@
  * dentro de um código) NÃO são avaliáveis pelo NCM — conservador: o código inteiro conta como monofásico
  * (sem crédito), nunca o contrário.
  *
- * FORA (default conservador do item 11 = sem crédito + warning, não desta tabela): combustíveis da Lei
- * 9.718/1998 art. 4º (a lei nomeia PRODUTOS, não NCM — a correspondência TIPI não está no corpus);
- * bebidas frias (Lei 10.833 art. 58-A foi REVOGADO pela Lei 13.097/2015 — regime atual fora do corpus).
- * Ambas entram quando a fonte entrar; até lá o item cai em `UNKNOWN`.
+ * Bebidas frias: Lei 13.097/2015 art. 14 (transcrição `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`,
+ * chaves `L13097-art14-I..IV`) — sem crédito pela leitura do VAREJISTA (arts. 28+29); o crédito pelo valor da
+ * nota do não-varejista (art. 30) NÃO é modelado (conservador = sem crédito).
+ * FORA: combustíveis da Lei 9.718/1998 art. 4º (a lei nomeia PRODUTOS, não NCM — a correspondência TIPI não
+ * está no corpus). Entram quando a fonte entrar.
  *
  * Guarda: `__tests__/pisCofinsMonofasicoNcm.test.ts` assere que toda `fonte` cita lei+artigo do MANIFEST
  * e que nenhum prefixo é vazio/não-numérico.
@@ -32,6 +33,7 @@ const L10147 = 'Lei 10.147/2000 art. 1º (Lei-10147-2000-monofasico-farmacia.htm
 const L10485_1 = 'Lei 10.485/2002 art. 1º + art. 3º II (Lei-10485-2002-monofasico-autopecas.html)';
 const L10485_A1 = 'Lei 10.485/2002 art. 3º I, Anexo I (Lei-10485-2002-monofasico-autopecas.html)';
 const L10485_A2 = 'Lei 10.485/2002 art. 3º I, Anexo II (Lei-10485-2002-monofasico-autopecas.html)';
+const L13097 = (inciso: string) => `Lei 13.097/2015 art. 14 ${inciso} (Lei-13097-2015-bebidas-frias.html)`;
 
 const p = (prefixo: string, fonte: string, exceto?: readonly string[]): MonofasicoNcmRule =>
   exceto ? { prefixo, exceto, fonte } : { prefixo, fonte };
@@ -79,6 +81,10 @@ export const PIS_COFINS_MONOFASICO_NCM: readonly MonofasicoNcmRule[] = [
   p('84122190', L10485_A2), p('84123110', L10485_A2), p('84136019', L10485_A2), p('84148019', L10485_A2),
   p('84149039', L10485_A2), p('84329000', L10485_A2), p('84811000', L10485_A2), p('84812090', L10485_A2),
   p('84818092', L10485_A2), p('8483601', L10485_A2), p('85011019', L10485_A2),
+
+  // ── Lei 13.097/2015 art. 14 — bebidas frias. "Ex" da TIPI não é avaliável pelo NCM: conservador = o
+  //    código inteiro conta (2106.90.10 só vale no Ex 02; 22.01/22.02 excluem Ex de 2201.10.00/2202.90.00) ─
+  p('21069010', L13097('I')), p('2201', L13097('II')), p('2202', L13097('III')), p('2203', L13097('IV')),
 ];
 
 export type PisCofinsItemClass = 'MONOFASICO' | 'TRIBUTADO' | 'UNKNOWN';
@@ -100,38 +106,39 @@ export function findMonofasicoRule(ncm8: string): MonofasicoNcmRule | null {
 /** CST de PIS/COFINS de SAÍDA do fornecedor que já declaram "sem crédito" na aquisição (item 11, regra dura; §4 f9 [NC]). */
 export const CST_SEM_CREDITO = ['04', '05', '06', '07', '08', '09'] as const;
 /**
- * CST tributado na saída do fornecedor — SÓ o 01 habilita o crédito (com NCM fora da tabela). O 02 ("alíquota
- * diferenciada") é a saída típica do fabricante/importador monofásico (Leis 10.147 art. 1º, 10.485 art. 1º); como a
- * tabela de NCM é transcrição versionada e pode ficar atrás da TIPI, CST 02 cai no default conservador do item 11
- * (UNKNOWN = sem crédito + warning) até o contador confirmar (pedido do passo 11).
+ * CST tributado na saída do fornecedor que habilita o crédito com NCM fora da tabela. O 02 ("alíquota
+ * diferenciada", saída típica do monofásico) credita pela alíquota básica COM alerta — posição do contador
+ * (TRIAGEM-RESPOSTA-CONTADOR-2026-09-23 item 8).
  */
-export const CST_TRIBUTADO = ['01'] as const;
+export const CST_TRIBUTADO = ['01', '02'] as const;
 
 /**
- * Classificação do item para o crédito (item 11): a NOTA manda quando diz "sem crédito"; a TABELA manda
- * quando a nota diz "tributado" mas o NCM é monofásico; sem CST ou CST fora dos dois alfabetos → UNKNOWN
- * (default conservador = sem crédito + warning).
+ * Classificação do item para o crédito (item 11 + triagem do contador P5): o NCM decide — NCM na tabela →
+ * MONOFASICO qualquer que seja o CST; CST 04 (monofásico) com NCM fora da tabela → TRIBUTADO + `alerta` de CST
+ * divergente (F-PC-2 a: só no `warnings` da importação). CST 05..09 da nota seguem mandando (sem crédito); sem
+ * CST ou CST fora dos alfabetos → UNKNOWN (default conservador = sem crédito + warning).
  */
 export function classifyPisCofinsItem(input: { ncm: string | null | undefined; cstPis: string | null; cstCofins: string | null }): {
   classe: PisCofinsItemClass;
   motivo: string;
+  alerta?: string;
 } {
   const cst = input.cstPis ?? input.cstCofins;
-  if (cst && (CST_SEM_CREDITO as readonly string[]).includes(cst)) return { classe: 'MONOFASICO', motivo: `CST ${cst} na nota` };
   const ncm8 = normalizeNcm(input.ncm);
-  if (ncm8) {
-    const rule = findMonofasicoRule(ncm8);
-    if (rule) return { classe: 'MONOFASICO', motivo: `NCM ${ncm8} — ${rule.fonte}` };
+  const rule = ncm8 ? findMonofasicoRule(ncm8) : null;
+  if (rule) return { classe: 'MONOFASICO', motivo: `NCM ${ncm8} — ${rule.fonte}` };
+  if (cst === '04' && ncm8) {
+    return { classe: 'TRIBUTADO', motivo: `NCM ${ncm8} fora da tabela monofásica`, alerta: `CST 04 (monofásico) diverge do NCM ${ncm8}, fora da tabela monofásica — o NCM decide: crédito calculado` };
   }
-  if (cst && (CST_TRIBUTADO as readonly string[]).includes(cst) && ncm8) return { classe: 'TRIBUTADO', motivo: `CST ${cst}, NCM ${ncm8} fora da tabela monofásica` };
+  if (cst && (CST_SEM_CREDITO as readonly string[]).includes(cst)) return { classe: 'MONOFASICO', motivo: `CST ${cst} na nota` };
+  if (cst && (CST_TRIBUTADO as readonly string[]).includes(cst) && ncm8) {
+    const motivo = `CST ${cst}, NCM ${ncm8} fora da tabela monofásica`;
+    return cst === '02'
+      ? { classe: 'TRIBUTADO', motivo, alerta: `CST 02 (alíquota diferenciada) com NCM ${ncm8} fora da tabela monofásica — crédito pela alíquota básica; confira o produto` }
+      : { classe: 'TRIBUTADO', motivo };
+  }
   return {
     classe: 'UNKNOWN',
-    motivo: !cst
-      ? 'item sem grupo PIS/COFINS (CST ausente)'
-      : !ncm8
-        ? 'NCM ausente ou inválido'
-        : cst === '02'
-          ? `CST 02 (alíquota diferenciada — saída monofásica típica) com NCM ${ncm8} fora da tabela: sem crédito até confirmação do contador`
-          : `CST ${cst} fora de {01} e de {04..09}`,
+    motivo: !cst ? 'item sem grupo PIS/COFINS (CST ausente)' : !ncm8 ? 'NCM ausente ou inválido' : `CST ${cst} fora de {01,02} e de {04..09}`,
   };
 }

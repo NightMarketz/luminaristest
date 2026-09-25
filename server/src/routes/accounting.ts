@@ -58,6 +58,8 @@ import {
   createDataExchangeImport,
   listDataExchangeRows,
   commitDataExchangeImport,
+  listDataExchangeJobs,
+  waiveEcfRectification,
 } from '../controllers/dataExchangeController';
 import {
   setReferentialMapping,
@@ -73,7 +75,12 @@ import {
   importReferentialCatalog,
   listReferentialCatalog,
 } from '../controllers/referentialCatalogController';
-import { generateSpedEcd, generateSpedEcf, generateSpedEcfReal } from '../controllers/spedController';
+import {
+  generateSpedEcd,
+  generateSpedEcf,
+  generateSpedEcfReal,
+  spedEcdRtfUpload,
+} from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
 import {
@@ -105,6 +112,21 @@ import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
 import { getFiscalProfile, upsertFiscalProfile } from '../controllers/fiscalProfileController';
+import {
+  copyCompanyFiscalProfile,
+  deleteCompanyFiscalProfile,
+  getCompanyFiscalProfile,
+  getCompanyObligations,
+  markEcfTransmitida,
+  upsertCompanyFiscalProfile,
+} from '../controllers/companyFiscalProfileController';
+import {
+  createCompanySigner,
+  deleteCompanySigner,
+  getCompanySigner,
+  listCompanySigners,
+  updateCompanySigner,
+} from '../controllers/companySignerController';
 import {
   listDepreciationRates,
   createDepreciationRate,
@@ -178,13 +200,20 @@ router.get('/journal-entries/:entryId/source-documents', listSourceDocuments);
 // Data Exchange — CSV/XLSX import + report export (BE-INCR-6).
 router.post('/data-exchange/exports', createDataExchangeExport);
 router.post('/data-exchange/imports', dataExchangeImportUpload, createDataExchangeImport);
+// BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a): lista — segmento ESTÁTICO antes de
+// '/data-exchange/jobs/:jobId' (mesma disciplina de ordenação de rota do resto do módulo).
+router.get('/data-exchange/jobs', listDataExchangeJobs);
 router.get('/data-exchange/jobs/:jobId', getDataExchangeJob);
 router.get('/data-exchange/jobs/:jobId/rows', listDataExchangeRows);
 router.get('/data-exchange/jobs/:jobId/download', downloadDataExchangeArtifact);
 router.post('/data-exchange/jobs/:jobId/commit', commitDataExchangeImport);
+// Item 22 — dispensa da exigência de ECF retificadora que uma ECD substituta gravou no job.
+router.post('/data-exchange/jobs/:jobId/waive-ecf-rectification', waiveEcfRectification);
 
 // SPED Contábil (ECD) — generate the `.txt` file (download reuses the job route above).
-router.post('/sped/ecd/generate', generateSpedEcd);
+// `spedEcdRtfUpload` (multer) é NO-OP num corpo JSON puro (ECD original) — só ativa quando o
+// cliente sobe o .rtf do Termo de Verificação (ECD substituta, Passo 19-20).
+router.post('/sped/ecd/generate', spedEcdRtfUpload, generateSpedEcd);
 
 // SPED Fiscal (ECF) — Lucro Presumido; generate the `.txt` (download reuses the job route).
 router.post('/sped/ecf/generate', generateSpedEcf);
@@ -287,6 +316,19 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1, BRIEF itens 6/8/9; F-XP-2/3 a) — perfil da EMPRESA por ano +
+// signatários não-contador; segmentos estáticos, antes de /:unitId/periods.
+router.get('/company-fiscal-profile/:ano/obligations', getCompanyObligations);
+router.post('/company-fiscal-profile/:ano/copiar-de/:anoAnterior', copyCompanyFiscalProfile);
+router.post('/company-fiscal-profile/:ano/ecf-transmitida', markEcfTransmitida); // PR-2 item 16
+router.get('/company-fiscal-profile/:ano', getCompanyFiscalProfile);
+router.put('/company-fiscal-profile/:ano', upsertCompanyFiscalProfile);
+router.delete('/company-fiscal-profile/:ano', deleteCompanyFiscalProfile);
+router.get('/company-signers', listCompanySigners);
+router.post('/company-signers', createCompanySigner);
+router.get('/company-signers/:id', getCompanySigner);
+router.put('/company-signers/:id', updateCompanySigner);
+router.delete('/company-signers/:id', deleteCompanySigner);
 
 // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação; segmento estático, antes
 // de /:unitId/periods. /:id/hide antes de qualquer /:id genérico futuro (nenhum hoje neste recurso).

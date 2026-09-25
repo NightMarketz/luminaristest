@@ -42,6 +42,28 @@ export function toJobResponse(job: AccountingDataExchangeJob): DataExchangeJobRe
   };
 }
 
+/**
+ * BE-INCR-FIXED-ASSETS PR-4 (item 23, F-FA15 a): item da lista `GET /data-exchange/jobs`.
+ * Estende o resumo do job com `supersedesJobId` (gravado no próprio job) e
+ * `supersededByJobId` (derivado por consulta inversa, nunca coluna própria — a fonte da
+ * verdade é sempre `supersedesJobId` do job novo).
+ */
+export interface DataExchangeJobListItem extends DataExchangeJobResponse {
+  supersedesJobId: string | null;
+  supersededByJobId: string | null;
+}
+
+export function toJobListItem(
+  job: AccountingDataExchangeJob,
+  supersededByJobId: string | null,
+): DataExchangeJobListItem {
+  return {
+    ...toJobResponse(job),
+    supersedesJobId: job.supersedesJobId,
+    supersededByJobId,
+  };
+}
+
 /** Client-facing import row (for preview + error reports). */
 export interface DataExchangeRowResponse {
   rowNumber: number;

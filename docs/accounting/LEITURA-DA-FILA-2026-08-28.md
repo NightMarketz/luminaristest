@@ -1,5 +1,8 @@
 # Leitura da fila — 2026-08-28 (pós-merge do #228 e apagamento da `claude/nfe-fase-b`)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **O que este documento é:** uma **leitura** da fila §5.1 do [ACCOUNTING-MASTER-MAP](ACCOUNTING-MASTER-MAP.md)
 > depois do merge do PR #228 e do apagamento da `claude/nfe-fase-b`. Enumera e **formula forks**.
 >

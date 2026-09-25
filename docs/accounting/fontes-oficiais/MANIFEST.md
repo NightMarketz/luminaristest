@@ -13,7 +13,7 @@ que citava o antigo precisa ser reconferido.
 | in-2003-2021 | Retificacao da ECD | IN RFB 2.003/2021 | `IN-RFB-2003-2021-ECD.json` | 54.552 | `c508c8a37d17` |
 | in-2004-2021 | Retificacao da ECF | IN RFB 2.004/2021 | `IN-RFB-2004-2021-ECF.json` | 48.771 | `11b9af63d919` |
 | manual-ecf-l12 | ECF Fase 3 — blocos L/M/N, e-Lalur | Manual de Orientacao do Leiaute 12 da ECF (ADE Cofis 02/2026) | `Manual-ECF-Leiaute-12.pdf` | 6.410.931 | `7216ec2bd62d` |
-| manual-ecd-l9 | ECD / J930 — o campo que trava o PVA (D8) | Manual de Orientacao do Leiaute 9 da ECD (ADE Cofis 01/2026) | `Manual-ECD-Leiaute-9.pdf` | 2.990.432 | `bc63f0a893ce` |
+| manual-ecd-l9 | ECD / J930 — o campo que trava o PVA (D8) | Manual de Orientacao do Leiaute 9 da ECD (ADE Cofis 01/2026) — **Atualização: janeiro de 2026**, 235 pp. | `Manual-ECD-Leiaute-9.pdf` | 2.971.696 | `7ddf47755f61` |
 | tabelas-dinamicas-ecf | X2 (plano referencial) + linhas de L/M/N/P (TIPO e FORMULA) | Tabelas Dinamicas e Planos Referenciais da ECF, Leiaute 12 (28/05/2026) | `RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx` | 1.724.077 | `366b8d9030a0` |
 | guia-efd-contrib | EFD-Contribuicoes | Guia Pratico da EFD-Contribuicoes v1.35 | `Guia-Pratico-EFD-Contribuicoes-v1.35.pdf` | 4.105.830 | `60eace459169` |
 | indice-sped | PVA e manuais — indice | Indice de manuais e validadores do SPED | `SPED-indice-manuais.html` | 40.577 | `d63a09d5e50a` |
@@ -40,6 +40,7 @@ que citava o antigo precisa ser reconferido.
 | lei-10485-2002 | Monofasico — autopecas/veiculos (NCM. F-X6-7 a) | Lei 10.485/2002 | `Lei-10485-2002-monofasico-autopecas.html` | 40.944 | `8ba63d7b856a` |
 | lei-10865-2004 | PIS/COFINS-Importacao e aliquotas por produto (monofasico. F-X6-7 a) | Lei 10.865/2004 | `Lei-10865-2004.html` | 389.869 | `5c7376321f17` |
 | lei-9718-1998 | Monofasico — combustiveis (art. 4. F-X6-7 a) | Lei 9.718/1998 | `Lei-9718-1998.html` | 196.422 | `a71cf61cb7b3` |
+| lei-13097-2015 | Monofasico — bebidas frias (art. 14 NCM; arts. 17/28/29/30 credito) | Lei 13.097/2015 | `Lei-13097-2015-bebidas-frias.html` | 638.654 | `c6679a9a9fa3` |
 | lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
 
 ## URLs de origem
@@ -49,6 +50,7 @@ que citava o antigo precisa ser reconferido.
 - **in-2004-2021** — <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/114966/visao/multivigente>
 - **manual-ecf-l12** — <http://sped.rfb.gov.br/arquivo/download/8003>
 - **manual-ecd-l9** — <http://sped.rfb.gov.br/arquivo/download/7990>
+  - **2026-09-23:** redação vigente jan/2026 fornecida pelo dono em 23/09 (arquivo `Manual_de_Orientação_da_ECD_Leiaute_9_janeiro_2026.pdf`, copiado à mão; o script NÃO a baixa); substitui bc63f0a893ce ("Atualização: maio de 2026", 236 pp., da URL acima). sha256 completo: `7ddf47755f616ecd76671b8be9c8b61e30adbb0e8408634e45af95f616119b2e`. Rodar o script com `--so=manual-ecd-l9` sobrescreve o PDF com a versão maio/2026.
 - **tabelas-dinamicas-ecf** — <http://sped.rfb.gov.br/arquivo/download/8002>
 - **guia-efd-contrib** — <http://sped.rfb.gov.br/arquivo/download/5836>
 - **indice-sped** — <http://sped.rfb.gov.br/pasta/show/1644>
@@ -94,4 +96,6 @@ que citava o antigo precisa ser reconferido.
 - **lei-10485-2002** — <http://www.planalto.gov.br/ccivil_03/leis/2002/l10485.htm>
 - **lei-10865-2004** — <http://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.865.htm>
 - **lei-9718-1998** — <http://www.planalto.gov.br/ccivil_03/leis/l9718.htm>
+  - **2026-09-25:** rebaixada p/ a Fase 1 (C-2): mesmos 196.422 bytes, sha256 agora `dab540ec7cd2` (Planalto reeditou sem mudar o tamanho). Art. 4º relido nesta data — ver `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`. Idem `lei-10865-2004`: 389.869 bytes, sha256 agora `fb07460dfb92`.
+- **lei-13097-2015** — <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13097.htm> — acrescentada 2026-09-25 (Fase 1 do PLANO-POS-CONTADOR, passo 1.5); sha256 completo `c6679a9a9fa3ee541c63e915cbcc0a190b97764b388a21d372c59c273e1f393f`; transcrição em `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`.
 - **lc-123-2006** — <http://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>

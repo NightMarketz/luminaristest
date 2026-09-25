@@ -21,6 +21,7 @@
     "prove:p2-zero-diff": "ts-node -r tsconfig-paths/register src/jobs/proveP2ZeroDiffCli.ts",
     "smoke:migration": "node ../scripts/smoke-migration-gate.mjs",
     "db:backup": "node ./scripts/db-backup.mjs",
+    "db:seed:accounting": "ts-node -r tsconfig-paths/register src/jobs/seedAccountingFixtureCli.ts",
     "deploy:migrate": "node ../scripts/migrate-deploy.mjs",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",

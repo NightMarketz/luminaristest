@@ -1,5 +1,8 @@
 # CADEIA-A — Trecho A (núcleo contábil em código: C12 → C8)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — migrado para a **§III.3**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **Elo A-00, 2026-09-18.** Registro citável (ORCH-006) das decisões tomadas na abertura do Trecho A,
 > sessão interativa com o dono. Trecho 0 (X10b) já fechou fora desta cadeia (PR-1 #348, PR-2 #349,
 > PR-3 #350, todos MERGED em `origin/main`, confirmado 2026-09-18 via `git merge-base --is-ancestor` +

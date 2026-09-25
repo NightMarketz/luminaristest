@@ -1,5 +1,8 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-07)
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **⚠️ SUPERSEDIDO em 2026-09-11 por [GRAFO-DEPENDENCIAS-2026-09-11.md](GRAFO-DEPENDENCIAS-2026-09-11.md).**
 > O review de dependência de 2026-09-10 provou 6 arestas mortas (D1→C8, D1→X6, D1→R2, F-Z0 como gate do C6,
 > D4→X7, R4→X10) e 8 nós a menos (re-baseline 49 → 57). Mantido como histórico; **não use para escolher nó.**

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
+import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
@@ -75,6 +76,17 @@ export class SpedEcfGenerationService {
 
     const { year } = dto;
     const windows = quarterWindows(year);
+    const isRetificadora = dto.retificadora === 'S';
+    const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
+    const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
+
+    // ── Gate da retificação versionada (item 21, ACC-011) — pré-cheque legível ANTES de gerar.
+    if (isRetificadora && dto.supersedesJobId) {
+      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECF', {
+        start: periodStart,
+        end: periodEnd,
+      });
+    }
 
     const accounts = await this.accountRepo.findManyByUnit(scope);
     const accountByCode = new Map(accounts.map((a) => [a.code, a]));
@@ -141,6 +153,11 @@ export class SpedEcfGenerationService {
         cep: dto.declarant.cep,
         numTel: dto.declarant.numTel,
         email: dto.declarant.email,
+        // BE-INCR-FIXED-ASSETS PR-4 (Passo 19-21): retificação versionada da ECF. `numRec` só
+        // viaja quando RETIFICADORA=S (o DTO já garante o par); `lib/ecf.ts` já emite os dois
+        // campos (:142-143) — só passar.
+        retificadora: dto.retificadora,
+        numRec: dto.numRec,
       },
       fiscal: { indRecReceita: dto.fiscal.indRecReceita },
       params: { indAliqCsll: dto.fiscal.indAliqCsll },
@@ -161,25 +178,36 @@ export class SpedEcfGenerationService {
     const sha256 = createHash('sha256').update(buffer).digest('hex');
     const fileName = `ecf_${dto.declarant.cnpj}_${year}.txt`;
 
-    const job = await this.repo.createJob({
-      userId: scope.ownerUserId,
-      unitId: scope.unitId,
-      direction: 'EXPORT',
-      kind: 'EXPORT_SPED_ECF',
-      status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
-      requestedById: scope.actorUserId,
-      // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
-      // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
-      // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
-      // selecionado, é este par que muda — a entrega não precisa saber.
-      periodStart: new Date(`${year}-01-01T00:00:00.000Z`),
-      periodEnd: new Date(`${year}-12-31T00:00:00.000Z`),
-      originalName: fileName,
-      mimeType: 'text/plain',
-      sizeBytes: buffer.length,
-      sha256,
-      totalRows: lines.length,
-    });
+    let job;
+    try {
+      job = await this.repo.createJob({
+        userId: scope.ownerUserId,
+        unitId: scope.unitId,
+        direction: 'EXPORT',
+        kind: 'EXPORT_SPED_ECF',
+        status: 'PROCESSING', // A1: só vira EXPORTED depois que o arquivo existe (abaixo).
+        requestedById: scope.actorUserId,
+        // BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) (cédula 10/09 §6, F3): o job persiste o
+        // período que o arquivo cobre, para a entrega ao contador ler DAQUI em vez de um ano
+        // digitado. Hoje = exercício-calendário inteiro (D4); quando a geração aceitar período
+        // selecionado, é este par que muda — a entrega não precisa saber.
+        periodStart,
+        periodEnd,
+        originalName: fileName,
+        mimeType: 'text/plain',
+        sizeBytes: buffer.length,
+        sha256,
+        totalRows: lines.length,
+        supersedesJobId: isRetificadora ? dto.supersedesJobId : undefined,
+      });
+    } catch (error) {
+      if (isSupersedesUniqueViolation(error)) {
+        throw new ConflictError(
+          `O job '${dto.supersedesJobId}' já foi retificado por outro job — só um sucessor por job (item 21).`,
+        );
+      }
+      throw error;
+    }
 
     // BRIEF-W2-D (F4, layer 1): spans job PROCESSING -> the return below, or the throw in the
     // catch FAILED right after. No warnThresholdMs — see SpedGenerationService.generate() for why.
@@ -196,7 +224,9 @@ export class SpedEcfGenerationService {
       ));
     } catch (error) {
       // A1: a falha de escrita não pode deixar a linha afirmando sucesso.
-      await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      // Review PR #368: limpa supersedesJobId no FAILED — senão a `@unique` trava o job
+      // original para sempre (toda nova retificação bateria em 409 sem rota de saída).
+      await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
       // Fire-and-forget — never awaited, never throws (see alertWebhook.ts). No-op when
       // ALERT_WEBHOOK_URL is unset.
       sendAlertWebhook({
@@ -228,6 +258,31 @@ export class SpedEcfGenerationService {
           lineCount: String(lines.length),
         },
       });
+      if (isRetificadora) {
+        await this.audit.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'sped.ecf_rectified',
+          targetType: 'data_exchange_job',
+          targetId: job.id,
+          payload: {
+            jobId: job.id,
+            supersedesJobId: dto.supersedesJobId ?? '',
+            kind: 'EXPORT_SPED_ECF',
+            year: String(year),
+            sha256,
+          },
+        });
+        // Item 21 — "ECF 'S' do mesmo ano zera a flag": a ECF retificadora do MESMO ano destrava
+        // o pacote ao contador que uma ECD substituta tinha travado (item 22). Zera só a flag
+        // (nunca toca sha256/status/storageKey — a ECD substituída fica intocada por construção).
+        // Review PR #368: TODAS as pendentes do ano (sem `limit`/paginação) —
+        // `findEcdJobsPendingRectificationForYear` já filtra `ecfRectificationRequired=true` E
+        // `ecfRectificationWaivedAt IS NULL`, então o loop não precisa reconferir.
+        const ecdJobsPending = await this.repo.findEcdJobsPendingRectificationForYear(scope, year, tx);
+        for (const ecdJob of ecdJobsPending) {
+          await this.repo.updateJob(scope, ecdJob.id, { ecfRectificationRequired: false }, tx);
+        }
+      }
       return j;
     });
 

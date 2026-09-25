@@ -543,6 +543,187 @@ export function buildJ900(i: RegJ900Input): string {
   ]);
 }
 
+/**
+ * J801 — Termo de Verificação para Fins de Substituição da ECD (7 campos). Manual ECD L9 pp.
+ * 192-194 (transcrição `docs/accounting/BE-INCR-SPED-ECD-layout-transcription-J801-J932.md`).
+ * TIPO_DOC é sempre "001" (o único valor da tabela do campo 02 — o Anexo não descreve outro).
+ * COD_MOT_SUBS: enum de 3 dígitos (001..005, 099 — dono 23/09, A4: valida pelo CONTEÚDO, não pelo
+ * Tamanho "010" do manual, que a própria tabela de valores contradiz). HASH_RTF: 40 hex (dono
+ * 23/09, A5 — o manual não declara o algoritmo; o exemplo tem 40 caracteres, SHA-1 hex). ARQ_RTF
+ * é o CONTEÚDO do .rtf como texto (latin1, mesma codificação do arquivo inteiro) — `spedLine`
+ * já rejeita `|` alto (a mesma guarda da classe A6: um `|` cru no RTF corromperia o registro; a
+ * rejeição loud é preferível a produzir um arquivo inválido).
+ */
+export interface RegJ801Input {
+  descRtf?: string; // campo 03 — opcional no leiaute.
+  codMotSubs: string; // campo 04 — "001".."005" | "099".
+  hashRtf: string; // campo 05 — 40 hex, calculado pelo chamador (nunca pelo `sped.ts`, D2).
+  arqRtf: string; // campo 06 — bytes do .rtf JÁ SANITIZADOS (`sanitizeRtfForSped`) como string (latin1).
+}
+
+/**
+ * Tags que o PGE do Sped Contábil proíbe dentro de J801.ARQ_RTF (REGRA_REGISTRO_NAO_DEVE_
+ * EXISTIR_NO_RTF, Manual ECD L9 p. 194, transcrição §1.5.III). A transcrição transcreve a regra
+ * como "verifica... se existem as tags" sem descrever o algoritmo de busca (substring vs.
+ * ciente da gramática RTF) — grau INFERIDO: mantido como substring simples (comportamento
+ * pré-existente) por não haver base na transcrição para outra escolha; se o PVA divergir
+ * (falso positivo/negativo), é achado de PVA, não bug deste código.
+ */
+const FORBIDDEN_RTF_TAGS = ['C001', 'I001', 'J001', 'K001', 'J800', 'J801', 'J900'] as const;
+
+/**
+ * Palavra de controle RTF: `\` + letras + contador numérico opcional (ex.: `\par`, `\fs24`,
+ * `\up-6`). Usada para (a) achar o delimitador de quebra-de-linha que o leitor CONSOME como
+ * espaço e (b) reconhecer `\bin` como PALAVRA DE CONTROLE de verdade, não substring.
+ *
+ * Review PR #368 (3ª rodada): `\` só INICIA palavra de controle quando é a barra "sobrando" de
+ * um número ÍMPAR de barras consecutivas — `\\` é o ESCAPE de UMA barra literal (RTF spec), e
+ * um run de barras se consome em PARES da esquerda pra direita: `\\par` (2 barras) = 1 barra
+ * literal + "par" como TEXTO PURO (nenhuma palavra de controle); `\\\bin4` (3 barras) = 1 par
+ * (1 barra literal) + 1 barra ÍMPAR sobrando que INICIA a palavra de controle real `\bin4`. A
+ * 1ª versão desta guarda usava `(?<!\\)` (nega só UMA barra anterior) — falha em runs de 2+
+ * barras: `\\par` era lido como controle (barra 2 "vendo" a barra 1 no lookbehind de 1
+ * caractere só bloqueia o CASAMENTO NAQUELA posição, mas o regex tenta a posição seguinte
+ * mesmo assim quando não há guarda de veredito global) e `\\\bin4` era lido como NÃO-controle
+ * (a barra 3, vendo a barra 2 no lookbehind, era descartada por engano). Correção: a barra que
+ * inicia o casamento só é aceita se (i) a posição anterior a ELA não é uma barra (mesma ideia
+ * de antes) E (ii) entre essa posição e o início do run não sobra nenhuma barra ímpar — expresso
+ * como "zero-ou-mais PARES de barras, então UMA barra" a partir de um ponto não-precedido por
+ * barra: `(?<!\\)(?:\\\\)*\\`. O backtracking do regex garante que só a barra IMPAR de cada run
+ * complete o casamento (ver testes em `sped.test.ts`).
+ */
+const CONTROL_WORD_RE = /(?<!\\)(?:\\\\)*\\[a-zA-Z]+(-?\d+)?/g;
+
+/** `\bin` como palavra de controle REAL — mesma guarda de paridade de barras do
+ * `CONTROL_WORD_RE` acima (review PR #368, 3ª rodada): um texto literal "\bin" grava `\\bin`
+ * (barra dupla = escape) e NÃO pode disparar a rejeição; um run ÍMPAR de barras antes de "bin"
+ * (ex.: `\\\bin4`, 3 barras) é `\bin4` de verdade e DEVE disparar. */
+const REAL_BIN_CONTROL_WORD_RE = /(?<!\\)(?:\\\\)*\\bin(-?\d+)?/;
+
+/**
+ * Sanitiza o conteúdo de um .rtf para caber em J801.ARQ_RTF (review PR #368 — o .rtf chegava
+ * cru e um `|` nele virava um `Error` genérico de `spedLine` sem tradução para 400; correção
+ * subsequente do mesmo review: a 1ª versão removia TODO CR/LF, mas no RTF a quebra de linha
+ * também é o DELIMITADOR que fecha uma palavra de controle — remover sem substituir por espaço
+ * cola a palavra de controle no texto seguinte, ex. `\par\r\nTermo` virava `\parTermo`,
+ * apagando o parágrafo E a palavra "Termo" em silêncio; o `HASH_RTF` então descrevia um
+ * documento corrompido).
+ *
+ * - `\bin` (`REAL_BIN_CONTROL_WORD_RE`): RTF permite embutir dados BINÁRIOS crus depois de
+ *   `\binN` (N bytes seguintes, sem escape) — nesse trecho um `\r`/`\n`/`|` pode ser dado real,
+ *   não controle de texto, e removê-lo CORROMPERIA o binário. Como o registro J801 é uma LINHA
+ *   de texto Latin-1 pipe-delimited, não há como carregar `\bin` com segurança — rejeitado
+ *   explicitamente (o autor deve salvar o Termo sem imagens/objetos OLE embutidos, como o
+ *   próprio procedimento do manual prescreve: Word → .rtf → Bloco de Notas → colar, um caminho
+ *   que por natureza não preserva binário). Detectado como PALAVRA DE CONTROLE (lookbehind
+ *   nega `\\bin`, a forma ESCAPADA do texto literal "\bin") — nunca substring crua.
+ * - CR/LF: pela especificação RTF (versão 1.9.1) e pela convenção universal dos leitores, uma
+ *   quebra de linha IMEDIATAMENTE depois de uma palavra de controle É o delimitador que a
+ *   encerra — o leitor a CONSOME como um espaço (o mesmo papel que um espaço literal teria ali).
+ *   Removê-la SEM substituir coalesce a palavra de controle com o texto seguinte (bug relatado
+ *   no review). Por isso: CR/LF logo após uma palavra de controle → UM espaço; qualquer OUTRA
+ *   quebra de linha (entre texto puro, ou entre grupos) é whitespace insignificante para o
+ *   leitor e é removida sem substituto — normalização sem perda de conteúdo VISÍVEL, exigida
+ *   pelo formato de 1-linha-por-registro do SPED (CRLF é terminador de REGISTRO, nunca
+ *   separador dentro de um campo — `SPED_LINE_TERMINATOR`).
+ * - Tags proibidas (`FORBIDDEN_RTF_TAGS`): verificadas no texto JÁ normalizado (uma quebra de
+ *   linha no meio de uma tag por acidente de diagramação ainda é pega); grau de fidelidade ao
+ *   manual documentado no comentário de `FORBIDDEN_RTF_TAGS` acima.
+ * - `|`: verificado por último — depois deste ponto o texto está seguro para `spedLine`, que
+ *   mantém sua própria guarda (`|` alto) como defesa em profundidade, nunca alcançada no
+ *   caminho feliz.
+ */
+export function sanitizeRtfForSped(rtfText: string): string {
+  if (REAL_BIN_CONTROL_WORD_RE.test(rtfText)) {
+    throw new Error(
+      'RTF_CONTAINS_BIN: o .rtf usa \\bin (dado binário embutido, ex.: imagem/objeto OLE) — não ' +
+        'suportado no registro J801; salve o Termo novamente sem elementos binários.',
+    );
+  }
+  // 1) CR/LF logo após uma palavra de controle → o delimitador é CONSUMIDO como um espaço
+  //    (nunca removido sem substituto — senão a palavra de controle cola no texto seguinte).
+  const withDelimitersPreserved = rtfText.replace(
+    new RegExp(`(${CONTROL_WORD_RE.source})(\\r\\n|\\r|\\n)`, 'g'),
+    '$1 ',
+  );
+  // 2) Qualquer OUTRA quebra de linha é whitespace insignificante para o leitor RTF — removida
+  //    sem substituto (não delimita nada; a normalização não perde conteúdo visível).
+  const normalized = withDelimitersPreserved.replace(/\r\n|\r|\n/g, '');
+  for (const tag of FORBIDDEN_RTF_TAGS) {
+    if (normalized.includes(tag)) {
+      throw new Error(
+        `RTF_FORBIDDEN_TAG: o .rtf contém a tag proibida '${tag}' ` +
+          '(REGRA_REGISTRO_NAO_DEVE_EXISTIR_NO_RTF, Manual ECD L9 p. 194) — remova-a do texto antes de anexar.',
+      );
+    }
+  }
+  if (normalized.includes('|')) {
+    throw new Error(
+      'RTF_CONTAINS_PIPE: o .rtf contém o caractere "|", que corromperia o registro SPED — ' +
+        'remova-o do texto antes de anexar.',
+    );
+  }
+  return normalized;
+}
+
+/**
+ * J801 (7 campos). Ordem: REG, TIPO_DOC, DESC_RTF, COD_MOT_SUBS, HASH_RTF, ARQ_RTF, IND_FIM_RTF
+ * (texto fixo "J801FIM", campo 07 — Obrig.=Sim conferido no `-raw`, achado A7 da transcrição).
+ */
+export function buildJ801(i: RegJ801Input): string {
+  return spedLine([
+    'J801',
+    '001', // TIPO_DOC — único valor da tabela (Termo de Verificação para Fins de Substituição da ECD).
+    i.descRtf ?? EMPTY,
+    i.codMotSubs,
+    i.hashRtf,
+    i.arqRtf,
+    'J801FIM',
+  ]);
+}
+
+/**
+ * IDENT_QUALIF_T (J932 campo 04) — descrição fixa da Tabela de Qualificação do Assinante do
+ * Termo (Manual ECD L9 p. 204). Só o código 910 está no escopo (dono 23/09: "920 fora do
+ * escopo") — a descrição é DERIVADA aqui, nunca aceita do DTO (mesmo padrão F-C12-1 do J930/
+ * `ecdIdentQualifParaEmissao`, para não deixar o campo 04 e o campo 05 divergirem por engano).
+ */
+export const J932_QUALIF_910 =
+  'Contador/Contabilista Responsável Pelo Termo de Verificação para Fins de Substituição da ECD';
+
+export interface RegJ932Signer {
+  identNom: string; // campo 02
+  identCpfCnpj: string; // campo 03 — CPF ou CNPJ
+  codAssin: '910'; // campo 05 — só 910 no escopo (920/Auditor Independente fora, dono 23/09)
+  indCrc: string; // campo 06 — obrigatório (REGRA_OBRIGATORIO_ASS_TERMO, todo signatário é 910)
+  email: string; // campo 07 — idem
+  fone: string; // campo 08 — idem
+  ufCrc: string; // campo 09 — idem
+  numSeqCrc?: string; // campo 10 — aviso, não erro (REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC)
+  dtCrc?: string; // campo 11 — ISO
+}
+
+/**
+ * J932 — Signatários do Termo de Verificação para Fins de Substituição da ECD (11 campos).
+ * Manual ECD L9 pp. 203-205. Ordem: REG, IDENT_NOM_T, IDENT_CPF_CNPJ_T, IDENT_QUALIF_T,
+ * COD_ASSIN_T, IND_CRC_T, EMAIL_T, FONE_T, UF_CRC_T, NUM_SEQ_CRC_T, DT_CRC_T.
+ */
+export function buildJ932(s: RegJ932Signer): string {
+  return spedLine([
+    'J932',
+    s.identNom,
+    s.identCpfCnpj,
+    J932_QUALIF_910,
+    s.codAssin,
+    s.indCrc,
+    s.email,
+    s.fone,
+    s.ufCrc,
+    s.numSeqCrc ?? EMPTY,
+    s.dtCrc ? spedDate(s.dtCrc) : EMPTY,
+  ]);
+}
+
 export interface RegJ930Signer {
   identNom: string; // nome
   identCpfCnpj: string; // CPF ou CNPJ
@@ -638,6 +819,14 @@ export interface EcdFileInput {
   balanceSheet: RegJ100Line[];
   incomeStatement: RegJ150Line[];
   signers: RegJ930Signer[];
+  /**
+   * Presente SÓ quando a ECD é substituta (0000.IND_FIN_ESC='1' — Passo 20/PR-4). `verificationTerm`
+   * ausente ⇒ nem J801 nem J932 são emitidos (a ECD original nunca carrega o Termo).
+   */
+  verificationTerm?: {
+    j801: RegJ801Input;
+    signers: RegJ932Signer[]; // 1 a 2 (dono 23/09: A13/A10) — ≥1 código 910.
+  };
 }
 
 const TOTAL_PLACEHOLDER = -1;
@@ -720,9 +909,17 @@ export function buildEcdFile(input: EcdFileInput): string[] {
   blockJ.push(buildJ005({ dtIni: input.declarant.dtIni, dtFin: input.declarant.dtFin }));
   for (const l of input.balanceSheet) blockJ.push(buildJ100(l));
   for (const l of input.incomeStatement) blockJ.push(buildJ150(l));
+  // J801 (Termo de Verificação) — só na substituta, antes do J900 (mesma posição relativa do
+  // manual: o Termo encerra o assunto "substituição" antes do encerramento do livro).
+  if (input.verificationTerm) blockJ.push(buildJ801(input.verificationTerm.j801));
   blockJ.push(buildJ900({ ...j900Base, qtdLin: TOTAL_PLACEHOLDER }));
   const j900Index = blockJ.length - 1;
   for (const s of input.signers) blockJ.push(buildJ930(s));
+  // J932 (signatários do Termo) — logo depois dos J930 (mesmo padrão par aberto/fecho de
+  // signatários usado pelo bloco: quem assina o livro, depois quem assina o Termo).
+  if (input.verificationTerm) {
+    for (const s of input.verificationTerm.signers) blockJ.push(buildJ932(s));
+  }
   blockJ.push(EMPTY); // slot do J990
   blockJ[blockJ.length - 1] = buildBlockClose('J990', blockJ.length);
 

@@ -1,5 +1,8 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-11) — SUPERSEDE o de 07/09
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — histórico — a fila vigente é a **Parte III** e o estado é a **Parte II**. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **⚠️ SUPERSEDIDO em 2026-09-14 por [GRAFO-DEPENDENCIAS-2026-09-14.md](GRAFO-DEPENDENCIAS-2026-09-14.md).**
 > O fold de 14/09 fechou R5..R10 (cédulas #318/#319), marcou X4 ✅ parcial (#313/#315/#316) e D3b ✅, e
 > **corrigiu a aresta "parser CNAB 240 retorno ✅"** (é parser de extrato; retorno de cobrança não existe —

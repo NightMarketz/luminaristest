@@ -55,6 +55,8 @@ function build(opts: {
   activateResult?: ReturnType<typeof makeAsset> | null;
   disposeResult?: ReturnType<typeof makeAsset> | null;
   settings?: { disposalGainAccountId?: string | null; disposalLossAccountId?: string | null };
+  existingDraft?: ReturnType<typeof makeAsset> | null;
+  ratesByNcm?: { id: string; ncm: string | null; annualRateBp: number; hiddenAt: Date | null }[];
 } = {}) {
   const asset = opts.asset === undefined ? makeAsset() : opts.asset;
   const klass = opts.klass === undefined ? classRow : opts.klass;
@@ -66,13 +68,23 @@ function build(opts: {
   const activate = jest.fn(async () => (opts.activateResult !== undefined ? opts.activateResult : makeAsset({ status: 'ACTIVE' })));
   const dispose = jest.fn(async () => (opts.disposeResult !== undefined ? opts.disposeResult : makeAsset({ status: 'DISPOSED' })));
   const runTransaction = jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true }));
-  const assetRepo = { create, findById, update, softDelete, activate, dispose, runTransaction } as unknown as IFixedAssetRepository;
+  // BE-INCR-FIXED-ASSETS PR-5 (item 22/28): read-first do rascunho por (payableId, sourceItemRef).
+  // Default: nenhum rascunho existe ainda (o teste de idempotência sobrescreve).
+  const findByPayableAndSourceItemRef = jest.fn(async () => opts.existingDraft ?? null);
+  const assetRepo = {
+    create, findById, update, softDelete, activate, dispose, runTransaction, findByPayableAndSourceItemRef,
+  } as unknown as IFixedAssetRepository;
 
   const classFindById = jest.fn(async () => klass);
   const classRepo = { findById: classFindById } as unknown as IFixedAssetClassRepository;
 
   const rateFindById = jest.fn(async () => ({ id: 'rate-1', annualRateBp: 1000 }));
-  const rateRepo = { findById: rateFindById } as unknown as IDepreciationRateRepository;
+  // BE-INCR-FIXED-ASSETS PR-5 (fork "annualRateBp do rascunho", decisão do dono 23/09): catálogo
+  // vivo do escopo para o casamento por NCM — 1 linha default `8452` (Anexo III, 4 dígitos) que
+  // casa com o NCM `8452.10` do fixture; testes de matching mais específico sobrescrevem.
+  const ratesByNcm = opts.ratesByNcm ?? [{ id: 'rate-ncm-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null }];
+  const findManyByUnit = jest.fn(async () => ratesByNcm);
+  const rateRepo = { findById: rateFindById, findManyByUnit } as unknown as IDepreciationRateRepository;
 
   const accountFindById = jest.fn(async (_s: unknown, id: string) => accountOf(id, `code-${id}`));
   const accountRepo = { findById: accountFindById } as unknown as IAccountRepository;
@@ -104,9 +116,14 @@ function build(opts: {
 
   return {
     service: new FixedAssetService(assetRepo, classRepo, rateRepo, accountRepo, periodRepo, settingsService, postingService, depreciationService, auditService, policy),
-    create, findById, update, softDelete, activate, dispose, runTransaction,
-    classFindById, rateFindById, accountFindById, findEarliestOpenOrSoftClosed, settingsGet, postEntry, postQuotaForDisposal, auditAppend,
+    create, findById, update, softDelete, activate, dispose, runTransaction, findByPayableAndSourceItemRef,
+    classFindById, rateFindById, findManyByUnit, accountFindById, findEarliestOpenOrSoftClosed, settingsGet, postEntry, postQuotaForDisposal, auditAppend,
   };
+}
+
+/** Payable mínimo p/ o rascunho (item 22/28) — só os campos que `createDraftFromPayable` lê. */
+function makePayable(over: Partial<Record<string, unknown>> = {}) {
+  return { id: 'pay-1', documentNumber: 'CHAVE-1', issueDate: new Date('2026-06-10T00:00:00Z'), ...over };
 }
 
 describe('FixedAssetService.createAsset', () => {
@@ -286,5 +303,97 @@ describe('FixedAssetService.disposeAsset — item 18 (3 casos: >, =, <) + baixa 
       service.disposeAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: 'acc-caixa', version: 1 }),
     ).rejects.toBeInstanceOf(ConflictError);
     expect(postEntry).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── BE-INCR-FIXED-ASSETS PR-5 (execution-plan Passo 28, F-FA12 → a): createDraftFromPayable ───────
+describe('FixedAssetService.createDraftFromPayable — rascunho por NF-e modo 4', () => {
+  // Review #366 (achados 1/3): a taxa (rateId/annualRateBp) chega JÁ RESOLVIDA por
+  // `PayableService.resolveFixedAssetLines` — `createDraftFromPayable` NUNCA re-deriva. A chave do
+  // rascunho é `sourceItemRef` (o `nItem` da NF-e), NUNCA `cProd` (que pode repetir em 2 linhas).
+  const item = {
+    classId: 'class-1', accountCode: '1.2.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000,
+    ncm: '8452.10', qty: 2, rateId: 'rate-ncm-8452', annualRateBp: 1000,
+  };
+
+  it('nega ANTES de tocar o repo quando canManageFixedAssets=false', async () => {
+    const { service, create } = build({ canManage: false });
+    await expect(service.createDraftFromPayable(scope, makePayable() as never, [item])).rejects.toBeInstanceOf(ForbiddenError);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('usa o rateId/annualRateBp JÁ RESOLVIDOS do item — nunca consulta o catálogo de taxas de novo', async () => {
+    const { service, create, findManyByUnit } = build();
+    const result = await service.createDraftFromPayable(scope, makePayable() as never, [item]);
+    expect(result.created).toBe(1);
+    const [data] = create.mock.calls[0] as [Record<string, unknown>];
+    expect(data.rateId).toBe('rate-ncm-8452');
+    expect(data.annualRateBp).toBe(1000);
+    expect(data.quantity).toBe(2);
+    expect(data.costCents).toBe(85000n);
+    expect(data.payableId).toBe('pay-1');
+    expect(data.sourceItemRef).toBe('1');
+    expect(findManyByUnit).not.toHaveBeenCalled(); // achado 1: sem re-derivação de taxa aqui
+  });
+
+  it('classe inexistente no escopo → 400, nada é criado', async () => {
+    const { service, create } = build({ klass: null });
+    await expect(service.createDraftFromPayable(scope, makePayable() as never, [item])).rejects.toBeInstanceOf(NotFoundError);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it('read-first: item que já tem rascunho (mesmo payableId+sourceItemRef) é PULADO — idempotente', async () => {
+    const { service, create, findByPayableAndSourceItemRef } = build({ existingDraft: makeAsset({ id: 'asset-existing' }) });
+    const result = await service.createDraftFromPayable(scope, makePayable() as never, [item]);
+    expect(result.created).toBe(0);
+    expect(create).not.toHaveBeenCalled();
+    expect(findByPayableAndSourceItemRef).toHaveBeenCalledWith(scope, 'pay-1', '1');
+  });
+
+  // Review #366, achado 3: 2 itens de imobilizado com o MESMO cProd (repetido na NF-e) — a chave
+  // do rascunho é sourceItemRef (nItem), então os 2 nascem SEM se pisar, cada um com seu custo.
+  it('2 itens com o MESMO cProd, sourceItemRef (nItem) distinto → 2 rascunhos, custos NÃO somados/perdidos', async () => {
+    const { service, create, findByPayableAndSourceItemRef } = build();
+    const item1 = { ...item, cProd: 'MAQ-REPETIDO', sourceItemRef: '1', costCents: 50000 };
+    const item2 = { ...item, cProd: 'MAQ-REPETIDO', sourceItemRef: '2', costCents: 35000 };
+    const result = await service.createDraftFromPayable(scope, makePayable() as never, [item1, item2]);
+    expect(result.created).toBe(2);
+    expect(create).toHaveBeenCalledTimes(2);
+    expect(findByPayableAndSourceItemRef).toHaveBeenNthCalledWith(1, scope, 'pay-1', '1');
+    expect(findByPayableAndSourceItemRef).toHaveBeenNthCalledWith(2, scope, 'pay-1', '2');
+    const costs = (create.mock.calls as unknown[][]).map((c) => (c[0] as Record<string, unknown>).costCents);
+    expect(costs).toEqual([50000n, 35000n]); // Σ = 85000 = o débito total da nota, nenhum cent perdido
+    const refs = (create.mock.calls as unknown[][]).map((c) => (c[0] as Record<string, unknown>).sourceItemRef);
+    expect(refs).toEqual(['1', '2']); // NUNCA ['MAQ-REPETIDO', 'MAQ-REPETIDO']
+  });
+
+  it('nota mista: 2 itens, 1 já rascunhado e 1 novo → cria só o novo (created=1)', async () => {
+    const { service, create, findByPayableAndSourceItemRef } = build();
+    (findByPayableAndSourceItemRef as jest.Mock)
+      .mockResolvedValueOnce(makeAsset({ id: 'asset-existing' })) // 1º item já tem rascunho
+      .mockResolvedValueOnce(null); // 2º item é novo
+    const item2 = { ...item, sourceItemRef: '2' };
+    const result = await service.createDraftFromPayable(scope, makePayable() as never, [item, item2]);
+    expect(result.created).toBe(1);
+    expect(create).toHaveBeenCalledTimes(1);
+    const [data] = create.mock.calls[0] as [Record<string, unknown>];
+    expect(data.sourceItemRef).toBe('2');
+  });
+
+  it('grava sourceDocumentId quando informado (drill-down do rascunho, item 22)', async () => {
+    const { service, create } = build();
+    await service.createDraftFromPayable(scope, makePayable() as never, [item], 'doc-1');
+    const [data] = create.mock.calls[0] as [Record<string, unknown>];
+    expect(data.sourceDocumentId).toBe('doc-1');
+  });
+
+  it('código do rascunho é determinístico (mesmo em 2 chamadas) — read-first depende disso para não duplicar código', async () => {
+    const { service, create } = build();
+    await service.createDraftFromPayable(scope, makePayable() as never, [item]);
+    const [data1] = create.mock.calls[0] as [Record<string, unknown>];
+    create.mockClear();
+    await service.createDraftFromPayable(scope, makePayable() as never, [item]);
+    const [data2] = create.mock.calls[0] as [Record<string, unknown>];
+    expect(data1.code).toBe(data2.code);
   });
 });

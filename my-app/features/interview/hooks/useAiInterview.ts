@@ -4,6 +4,30 @@ import { getCookie } from 'cookies-next';
 import { IMessage, ICustomizationState } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
 
+/**
+ * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
+ * escreve ao fechar a descoberta (o texto depois do marcador, até 120 caracteres — limite do DTO); sem ele, a chave do
+ * preset. O nome é editável depois, na tabela `units`.
+ */
+export function nomeDaUnidadeDaEntrevista(conversa: IMessage[], presetKey: string): string {
+  for (let i = conversa.length - 1; i >= 0; i -= 1) {
+    const m = conversa[i];
+    const idx = m.sender === 'ai' ? m.text.indexOf('SUMMARY:') : -1;
+    if (idx >= 0) {
+      const resumo = m.text.slice(idx + 'SUMMARY:'.length).trim().slice(0, 120).trim();
+      if (resumo) return resumo;
+    }
+  }
+  return presetKey;
+}
+
+/** X13 PR-3 item 20: resposta da pergunta fechada de regime/porte (espelha `OnboardingFiscalSchema` do servidor). */
+export type RegimeOnboarding = 'MEI' | 'SIMPLES' | 'PRESUMIDO' | 'REAL' | 'NAO_SEI';
+export interface FiscalOnboarding {
+  regime: RegimeOnboarding;
+  grandePorte: boolean | null;
+}
+
 export function useAiInterview() {
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [userInput, setUserInput] = useState('');
@@ -13,6 +37,8 @@ export function useAiInterview() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [creationError, setCreationError] = useState<string | null>(null);
+  // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
+  const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
   const [customizationState, setCustomizationState] = useState<ICustomizationState | null>(null);
   const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -70,7 +96,7 @@ export function useAiInterview() {
     });
   };
 
-  async function handleCreateSystem(key: string) {
+  async function handleCreateSystem(key: string, conversa: IMessage[], fiscal: FiscalOnboarding) {
     setIsCreating(true);
     setCreationError(null);
     try {
@@ -81,7 +107,7 @@ export function useAiInterview() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ suiteKey: key }),
+        body: JSON.stringify({ suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal }),
       });
 
       if (!response.ok) {
@@ -142,7 +168,8 @@ export function useAiInterview() {
 
       if (nextStage === 'COMPLETED' && (newPresetKey || presetKey)) {
         if (!startCustomization) {
-          handleCreateSystem(newPresetKey || presetKey!);
+          // X13 PR-3 item 20: regime/porte vêm de pergunta FECHADA ao usuário — o modelo não os infere da conversa.
+          setFiscalPendente({ key: newPresetKey || presetKey!, conversa: [...newMessages, { sender: 'ai', text: aiResponse }] });
         }
       }
 
@@ -187,6 +214,14 @@ export function useAiInterview() {
     setSelectedTable(tableWithKey);
   };
 
+  /** X13 PR-3 item 20: o usuário respondeu regime/porte (ou "não sei") — agora sim o sistema é criado. */
+  function confirmarFiscal(fiscal: FiscalOnboarding) {
+    if (!fiscalPendente) return;
+    const { key, conversa } = fiscalPendente;
+    setFiscalPendente(null);
+    void handleCreateSystem(key, conversa, fiscal);
+  }
+
   const handleRetry = () => {
     window.location.reload();
   }
@@ -212,6 +247,8 @@ export function useAiInterview() {
     handleUpdateTable,
     logState,
     handleRetry,
-    presetKey
+    presetKey,
+    fiscalPendente: fiscalPendente !== null,
+    confirmarFiscal
   };
 }

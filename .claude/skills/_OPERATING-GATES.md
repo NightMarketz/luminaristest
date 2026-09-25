@@ -183,7 +183,7 @@ contra dados reais** — o padrão exato de `sintetico-nao-cobre-formato-de-dado
 nada*: o agente construía direto a cada "segue". Além disso a `luminaris-orchestrator` é **estruturalmente
 incapaz** de pegar isto: todo o vocabulário de saída dela é "quais skills geradoras rodar" (Phase 4 emite uma
 tabela de passos); ela não tem representação de fila, gate ou merge. Seu único freio (ORCH-006) é colisão com
-§1/§4 do master map — não saturação da fila. Por isso a regra vive aqui: camada **sempre-ativa**, sem invocação.
+`docs/plano/trilhos/`/`rejeitadas/` (ex-master map §1/§4) — não saturação da fila. Por isso a regra vive aqui: camada **sempre-ativa**, sem invocação.
 
 ---
 

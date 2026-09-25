@@ -23,7 +23,21 @@ da spec é **lacuna de spec**: registra e pausa, nunca escolhe.
 | Existem forks `RATIFICAÇÃO PENDENTE` na spec | **Nenhuma** — o dono ratifica primeiro |
 | É defeito em comportamento que já deveria funcionar | `sessao-instrumentacao` → `sessao-correcao` |
 | O contrato de entrada de um nó vizinho é insuficiente | **Nenhuma** — regra 3: é lacuna de spec, não conserto no vizinho |
-| Rebase/merge de branch já implementada | **Nenhuma das quatro** — sessão de integração, ainda sem template |
+| Rebase/merge de branch já implementada | `sessao-integracao` |
+| A nota do nó tem `autorizacao` vazio, ou o nó não está em "Destravados agora" do `docs/plano/_INDEX.md` | **Nenhuma** — não roteia (ORCH-006); reporte a dependência aberta, o dono decide se a aresta `?` (condicional) segura |
+
+## Onde achar os campos
+
+Leia o plano pelo protocolo do vault (`docs/plano/README.md`): `_INDEX.md` → a nota do nó → só o
+trilho/rejeitada que ela linka. Nunca o `docs/SDD-LUMINARIS.md` inteiro.
+
+- **Feature / spec:** a seção "Docs" da nota do nó (`docs/plano/nos/<ID>.md`) aponta ADR, BRIEF e plano de
+  execução. Banner **SUPERSEDIDO (23/09)** num BRIEF ou plano de execução tira o doc do papel de fila/estado,
+  não do de spec: comportamentos e contratos seguem valendo; estado e autorização vêm da nota.
+- **Autorização:** campo `autorizacao` do frontmatter da nota — citação + data. **Preenchido não basta: o
+  texto tem de cobrir a execução.** "só ADR", "só BRIEF", "execução sem 'executa'" ou forks ratificados sem
+  "executa" (ex.: `I1`) não autorizam implementar → PARE e reporte.
+- **Nó do grafo:** `depende_de` e "Desbloqueia" da nota.
 
 ---
 
@@ -134,3 +148,8 @@ nem ignore.
 
 **Review independente não é opcional:** PASS emitido pela mesma sequência que implementou é rejeitado;
 delegue a agente isolado.
+
+**Vault do plano fora do diff da feature (regra 1).** Só edite `docs/plano/` se a spec ou o plano do
+orquestrador listar o passo de closeout (ORCH-007); o procedimento está no `luminaris-implementer`. Sem esse
+passo, o relatório final traz a linha de fold pronta (`id`, `estado`, `estado_detalhe`, `prs`) para o fold
+pós-merge do `docs/plano/README.md`.

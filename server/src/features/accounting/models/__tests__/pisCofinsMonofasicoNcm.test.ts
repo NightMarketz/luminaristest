@@ -9,7 +9,7 @@ import {
 describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
   it('toda entrada cita a lei, o artigo e o arquivo do corpus; prefixo só dígitos (2–8)', () => {
     for (const r of PIS_COFINS_MONOFASICO_NCM) {
-      expect(r.fonte).toMatch(/^Lei 10\.(147|485)\/20(00|02) art\. \d+º.*\(Lei-10(147|485)-20(00|02)-monofasico-.*\.html\)$/);
+      expect(r.fonte).toMatch(/^Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)$/);
       expect(r.prefixo).toMatch(/^\d{2,8}$/);
       for (const ex of r.exceto ?? []) expect(ex).toMatch(/^\d{8}$/);
     }
@@ -40,13 +40,24 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
     expect(normalizeNcm('')).toBeNull();
   });
 
-  it('classificação (item 11): CST 04..09 da nota manda; tabela manda sobre CST 01; CST 02 e sem CST = UNKNOWN (default conservador)', () => {
-    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '02', cstCofins: '02' })).toEqual({ classe: 'UNKNOWN', motivo: expect.stringContaining('CST 02') });
-    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '04', cstCofins: '04' }).classe).toBe('MONOFASICO');
+  // ERRATA 2026-09-25 (correção da Fase 1, triagem do contador P5/item 8): o NCM decide; CST 04 e 02 com NCM fora
+  // da tabela creditam com alerta (antes: MONOFASICO e UNKNOWN). CST 05..09 seguem mandando.
+  it('classificação (item 11): NCM decide; CST 04/02 fora da tabela → TRIBUTADO + alerta; CST 05..09 da nota manda; sem CST = UNKNOWN', () => {
+    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '02', cstCofins: '02' })).toEqual({ classe: 'TRIBUTADO', motivo: expect.any(String), alerta: expect.stringContaining('CST 02') });
+    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '04', cstCofins: '04' })).toEqual({ classe: 'TRIBUTADO', motivo: expect.any(String), alerta: expect.stringContaining('CST 04') });
+    expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '06', cstCofins: '06' }).classe).toBe('MONOFASICO');
     expect(classifyPisCofinsItem({ ncm: '33051000', cstPis: '01', cstCofins: '01' }).classe).toBe('MONOFASICO');
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '01', cstCofins: '01' }).classe).toBe('TRIBUTADO');
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: null, cstCofins: null }).classe).toBe('UNKNOWN');
     expect(classifyPisCofinsItem({ ncm: '', cstPis: '01', cstCofins: '01' }).classe).toBe('UNKNOWN');
     expect(classifyPisCofinsItem({ ncm: '63026000', cstPis: '49', cstCofins: '49' }).classe).toBe('UNKNOWN');
+  });
+
+  // Teste-guarda da Fase 1 (PLANO-POS-CONTADOR-2026-09-23, passo 1.6; instrumentado #379). NCM tirado da
+  // transcrição `docs/accounting/fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`, chave
+  // `L13097-art14-IV` ("22.03" — cerveja de malte). CST 01 para isolar a TABELA. Verde desde a correção de 25/09.
+  // Metade "combustível" BLOQUEADA: a lei lida não traz NCM (transcrição §B) — não se escreve NCM de memória.
+  it('GAP C-2 — bebida fria (NCM 2203.00.00, Lei 13.097 art. 14 IV) com CST 01 → MONOFASICO (sem crédito)', () => {
+    expect(classifyPisCofinsItem({ ncm: '22030000', cstPis: '01', cstCofins: '01' }).classe).toBe('MONOFASICO');
   });
 });

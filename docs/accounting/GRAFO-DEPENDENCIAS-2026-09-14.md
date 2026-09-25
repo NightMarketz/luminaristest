@@ -1,5 +1,8 @@
 # Grafo de dependências — contábil · financeiro · fiscal (2026-09-14) — SUPERSEDE o de 11/09
 
+> **⛔ SUPERSEDIDO em 2026-09-23** pelo plano único [`docs/SDD-LUMINARIS.md`](../SDD-LUMINARIS.md) — grafo e quadro nó a nó migrados para a **§III.2**; ondas de destino na §18. Mantido no mesmo caminho só como registro; não é fonte de fila nem de estado.
+
+
 > **O que este doc é:** o [grafo de 11/09](GRAFO-DEPENDENCIAS-2026-09-11.md) **reconciliado** com as duas
 > cédulas de 14/09 ([forks-ratificações, #319](CEDULA-DECISAO-2026-09-14-forks-ratificacoes.md) — que
 > prevalece onde diverge — e [gates-humanos, #318](CEDULA-DECISAO-2026-09-14-gates-humanos.md)), com os
@@ -43,7 +46,7 @@
 | Nó | Artefato | Onde está | Forks |
 |---|---|---|---|
 | **C11** revisão profissional editável | `BE-INCR-REVIEW-LAYER-brief.md` | **✅ `main` #321 `8e79b8cb`** (fold 16/09) → **✅ feature #334 `a2c974cb`** (sessão 4, 16/09) | ~~6 pendentes~~ → (a) ×6 ratificados 16/09 (#333) |
-| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **✅ `main` #322 `1c469e2f`** (fold 16/09) | **4 pendentes** (ao dono) + 1 transcrição |
+| **C12** máscaras de identidade no SPED | `BE-INCR-SPED-IDENTITY-MASKS-brief.md` | **✅ `main` #322 `1c469e2f`** (fold 16/09) → **✅ feature #353 `edb80ec8`** (fold 22/09) | ~~4 pendentes~~ (a) ×4 ratificados 16/09 (#333); transcrição ✅ |
 | **F7** baixa por retorno bancário | `BE-INCR-BANK-SETTLEMENT-brief.md` | `main` (#319) → **✅ feature #326 `22b97252`** (fold 16/09) | F-F7-1..5 → (a), ratificados 15/09 pelo dono via `AskUserQuestion` — cabeçalho do BRIEF F7 |
 | **X6** custo D3 por regime | `BE-INCR-NFE-COST-REGIME-brief.md` (#309) | emenda #327 → **✅ feature #328 `fb7ae649`** (fold 16/09; ERRATA transcrição × corpus) | ratificados (5a+1b) |
 
@@ -128,7 +131,7 @@ flowchart LR
     C6["C6 CONTADOR-DELIVERY ✅ #305"]:::done
     C6b["C6b Pacote ampliado<br/>tabela filha + migração — BRIEF"]:::plan
     C8["C8 Imobilizado + depreciação<br/>ADR → parecer → BRIEF"]:::plan
-    C9["C9 Retificação ECD/ECF VERSIONADA"]:::blocked
+    C9["C9 Retificação ECD/ECF VERSIONADA<br/>ABSORVIDO no C8 (Bloco G / PR-4) — CADEIA-A §2"]:::plan
     C10["C10 P2 clínica ✅ #282<br/>comportamento 11 = PR #320"]:::inflight
     C11["C11 Revisão profissional editável<br/>BRIEF = PR #321"]:::inflight
     C12["C12 Máscaras de identidade no SPED<br/>BRIEF = PR #322"]:::inflight
@@ -233,7 +236,7 @@ flowchart LR
 | **C12** | inflight — BRIEF em **PR #322** (4 forks + transcrição obrigatória) | merge do #322 → forks ao dono | `gh pr view 322` |
 | **C6b** | plan (BRIEF) | C6 ✅ | resposta 8 (cédula 10/09) |
 | **C8** | plan (ADR `ADR-INCR-FIXED-ASSETS` → parecer → forks **delegados quando há recomendação** → BRIEF) | D3b ✅ (Anexo III no corpus) | cédula #319 "C8 delegação condicionada" |
-| **C9** | blocked | X4 (retificação versionada) | resposta 7 |
+| **C9** | ~~blocked~~ **absorvido no C8** (Bloco G = PR-4 do plano C8; não é nó separado, sem BRIEF próprio — dono 18/09 "Pode seguir") | X4 ✅ · C12 ✅ #353 (`SignerSchema`) | `CADEIA-A.md` §2; fold 22/09 |
 | **F7** | plan — BRIEF em `main`, desenho fechado (tabela irmã), **5 forks pendentes** | R9 ✅ · **F-F7-1..5** (dono) · D1 (contas de encargo — só Fase C) | BRIEF F7 §3/§5 |
 | **FE-INCR-BANK-SETTLEMENT** | blocked | F7 | BRIEF F7 §0 |
 | **F5 · F6** | blocked (ADR) | D6 (· P-IA para F5) | F-M3; resposta 21 |
@@ -309,6 +312,11 @@ arquivos, gates, evidência de "feito", stop humano) está em
   existe hoje; regra "quem mergear primeiro cria" (F-FE-RV-1 a / F-FA15 a). Achado de FE: `ImportExportPanel` não gera exports
   com período ⇒ extras do pacote C6b só nascem pela tela após crescimento do painel (BRIEF FE-DELIVERY §6.2). Grafo 09-17
   **não** aberto: nenhuma aresta de nó mudou (só crescimento + plano).
+- **[Fold 2026-09-22 — Trecho A da CADEIA-A: C12 ✅, C8 3/5]** `origin/main` = **`be80ea47`** (#359). "Executa C12"/"Executa C8"
+  dados 18/09 (corpos de #353/#354). **C12 ✅ #353 `edb80ec8`** → régua **46/57** (contábil **20/22**). **C8** PR-1 #354 · PR-2 #355 ·
+  PR-3 #356 em `main`; PR-4 (retificação versionada, ex-C9) e PR-5 (NF-e modo 4) não abertos — C8 conta no PR-5 (alternativa
+  declarada 47/57). **Correção deste grafo:** `C9` deixa de ser nó `blocked` independente — absorvido no C8 Bloco G (`CADEIA-A.md`
+  §2); a aresta `X4 --> C9` fica como dependência do PR-4. Fora da régua: #357 (docs motor, aberto) · #358/#359 (harness).
 
 ### 4.2 Estado ao fim da sessão 3 — 2026-09-16 (fold) — verificado
 

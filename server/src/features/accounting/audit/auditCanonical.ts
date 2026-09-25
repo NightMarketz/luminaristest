@@ -143,6 +143,18 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF item 10) — perfil da EMPRESA: só ano/enum/boolean/id. O
+  // declarante (nome/CNPJ/endereço/e-mail), NIRE, nº de ordem e natureza do livro (texto) ficam FORA do evento.
+  'company_fiscal_profile.updated': ['anoCalendario', 'regime', 'grandePorte', 'inativa', 'aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase',
+    'ecdIndNire', 'ecfIndAliqCsll', 'ecfIndRecReceita', 'contadorContactId', 'representanteLegalSignerId', 'copiadoDe'],
+  'company_fiscal_profile.deleted': ['anoCalendario'],
+  // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
+  'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],
+  // X13 (item 10; F-OBP-9 a) — signatário da empresa: só as qualificações (códigos de tabela). Nome/CPF/e-mail/fone
+  // são PII e NUNCA entram (guarda em auditCanonical.test.ts).
+  'company_signer.created': ['signerId', 'qualifEcd', 'qualifEcf'],
+  'company_signer.updated': ['signerId', 'qualifEcd', 'qualifEcf'],
+  'company_signer.deleted': ['signerId'],
   // BE-INCR-DFE (nó X10b, PR-2, item 40) — ciclo SENT (Fase D acrescenta authorized/rejected/cancelled).
   'dfe.emitted': ['documentId', 'kind', 'attemptNo', 'ref', 'vServCents', 'ambiente'],
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
@@ -202,6 +214,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'fixed_asset.disposed':  ['assetId', 'entryId', 'gainLossCents'],
   // BE-INCR-FIXED-ASSETS PR-3 (nó C8, item 17). Nenhum texto livre no payload.
   'depreciation.posted':   ['assetId', 'yearMonth', 'quotaCents', 'entryId'],
+  // BE-INCR-FIXED-ASSETS PR-4 (nó C8, Bloco G, itens 21/22). `descRtf`/`justification` são texto
+  // livre do operador (o RTF do Termo, a justificativa da dispensa) e NUNCA entram — só
+  // ids/kind/sha256/year (accountingRectification classe accounting-audit-allowlist-guards).
+  'sped.ecd_substituted':          ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
+  'sped.ecf_rectified':            ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
+  'sped.ecf_rectification_waived': ['jobId', 'year'],
 };
 
 /**

@@ -12,6 +12,90 @@ import {
 } from '../features/accounting/models/AccountingContact.model';
 import type { UserContext } from '../lib/authUtils';
 import { ValidationError } from '../lib/errors';
+import { makeUploadMiddleware } from '../lib/uploadSecurity';
+import { aplicarPerfilNoCorpo, recusaDeRegime } from '../features/accounting/models/spedPerfilPrefill';
+import type { SpedTarget } from '../features/accounting/models/spedPerfilPrefill';
+
+/**
+ * BE-INCR-FIXED-ASSETS PR-4 (Passo 19-20): o .rtf do Termo de Verificação (J801.ARQ_RTF) chega
+ * por multipart, mesmo padrão do NF-e (`nfeController.ts`). `.rtf` não tem MIME padronizado
+ * confiável entre browsers — `application/rtf`, `text/rtf` e o fallback `application/octet-stream`
+ * entram todos (mesma justificativa O-3 do NF-e: magic bytes OFF, quem valida é o parser/hash).
+ */
+const RTF_MIME_TYPES = new Set(['application/rtf', 'text/rtf', 'application/octet-stream', 'text/plain']);
+const MAX_RTF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB (J801 campo 06, Manual ECD L9 p. 193).
+
+/** Multer middleware for the optional `rtf` field — no-op on a plain JSON request (multer only
+ * engages on `multipart/form-data`), então a ECD original continua indo por JSON puro. */
+export const spedEcdRtfUpload = makeUploadMiddleware(RTF_MIME_TYPES, 'rtf', MAX_RTF_SIZE_BYTES, false);
+
+/** Read the uploaded `rtf` field, or null when absent (ECD original / corpo JSON puro). */
+function uploadedRtf(req: Request): Express.Multer.File | null {
+  return (req as Request & { file?: Express.Multer.File }).file ?? null;
+}
+
+/**
+ * Multipart flattens nested objects/arrays em strings — os mesmos campos que a rota JSON aceita
+ * estruturados (`declarant`, `book`, `signers`, `verificationTerm`) chegam como texto quando o
+ * cliente sobe o .rtf (mesmo padrão `decodeItemMappings` do NF-e). Um corpo JÁ estruturado
+ * (cliente JSON puro, sem arquivo) passa intocado.
+ */
+function decodeMultipartJsonFields(body: unknown, keys: string[]): unknown {
+  if (!body || typeof body !== 'object') return body;
+  const raw = { ...(body as Record<string, unknown>) };
+  for (const key of keys) {
+    const value = raw[key];
+    if (typeof value === 'string') {
+      try {
+        raw[key] = JSON.parse(value);
+      } catch {
+        throw new ValidationError(`Campo '${key}' não é um JSON válido no corpo multipart.`);
+      }
+    }
+  }
+  if (typeof raw.year === 'string') {
+    const n = Number(raw.year);
+    if (!Number.isNaN(n)) raw.year = n;
+  }
+  return raw;
+}
+
+interface ExpansaoDoPerfil {
+  body: unknown;
+  perfilFiscal: { aplicado: boolean; sobrescritos: string[] };
+  avisos: string[];
+}
+
+/**
+ * BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-2, BRIEF itens 12–14) — roda ANTES de `expandSignerContacts`, na
+ * mesma fronteira (serviços e DTOs de geração seguem intocados). Com perfil da empresa no `year` do corpo:
+ *  - item 13: ECF para o regime errado → 400 (`recusaDeRegime`); a ECD nunca é recusada por regime;
+ *  - item 12: preenche o que o corpo não trouxe (`aplicarPerfilNoCorpo`) e devolve `sobrescritos`;
+ *  - item 14: ECD sem grande porte marcado → aviso se o BP/DRE de N-1 passar dos limites (não bloqueia).
+ * Sem perfil no ano: F-XP-1 → (c) — segue pelo corpo, com aviso, até o PR-3 (onboarding) entrar; depois vira 400.
+ * Sem `unitId` string ou `year` numérico não há o que resolver: o corpo passa e o DTO responde 400, como sempre.
+ */
+async function expandCompanyProfile(body: unknown, user: UserContext, target: SpedTarget): Promise<ExpansaoDoPerfil> {
+  const nada: ExpansaoDoPerfil = { body, perfilFiscal: { aplicado: false, sobrescritos: [] }, avisos: [] };
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return nada;
+  const raw = body as Record<string, unknown>;
+  if (typeof raw.unitId !== 'string' || raw.unitId.length === 0 || typeof raw.year !== 'number') return nada;
+  const scope = resolveAccountingScope(user, raw.unitId);
+  const perfis = getFactory().getCompanyFiscalProfileService();
+  const perfil = await perfis.perfilParaGeracao(scope, raw.year);
+  if (!perfil) {
+    return { ...nada, avisos: [`perfil fiscal da empresa ausente para ${raw.year}: a geração usou só o corpo da requisição (F-XP-1 c).`] };
+  }
+  const recusa = recusaDeRegime(target, perfil.regime, raw.year);
+  if (recusa) throw new ValidationError(`${recusa.code}: ${recusa.message}`);
+  const { body: preenchido, sobrescritos } = aplicarPerfilNoCorpo(raw, perfil, target);
+  const avisos: string[] = [];
+  if (target === 'ecd' && perfil.grandePorte !== true) {
+    const aviso = await perfis.avisoGrandePorte(scope, raw.year);
+    if (aviso) avisos.push(aviso);
+  }
+  return { body: preenchido, perfilFiscal: { aplicado: true, sobrescritos }, avisos };
+}
 
 /**
  * A "via barata" do F-CD8-a (BE-INCR-CONTADOR-DELIVERY, cédula 10/09 §6 F2 — "crie a via
@@ -81,14 +165,19 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = SpedEcdRequestSchema.safeParse(await expandSignerContacts(req.body, user, 'ecd'));
+    const decoded = decodeMultipartJsonFields(req.body, ['declarant', 'book', 'signers', 'verificationTerm']);
+    const perfil = await expandCompanyProfile(decoded, user, 'ecd');
+    const parsed = SpedEcdRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecd'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const data = await getFactory().getSpedGenerationService().generate(scope, parsed.data);
-    return res.status(201).json({ success: true, data });
+    const rtf = uploadedRtf(req);
+    const data = await getFactory()
+      .getSpedGenerationService()
+      .generate(scope, parsed.data, rtf ? { buffer: rtf.buffer } : undefined);
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }
@@ -106,14 +195,15 @@ export const generateSpedEcf = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = SpedEcfRequestSchema.safeParse(await expandSignerContacts(req.body, user, 'ecf'));
+    const perfil = await expandCompanyProfile(req.body, user, 'ecf');
+    const parsed = SpedEcfRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecf'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getSpedEcfGenerationService().generate(scope, parsed.data);
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }
@@ -133,14 +223,15 @@ export const generateSpedEcfReal = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = SpedEcfRealRequestSchema.safeParse(await expandSignerContacts(req.body, user, 'ecf'));
+    const perfil = await expandCompanyProfile(req.body, user, 'ecfReal');
+    const parsed = SpedEcfRealRequestSchema.safeParse(await expandSignerContacts(perfil.body, user, 'ecf'));
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const data = await getFactory().getSpedEcfRealGenerationService().generate(scope, parsed.data);
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
   } catch (error) {
     return handleApiError(error, res);
   }
