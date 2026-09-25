@@ -319,3 +319,32 @@ describe('depreciation.posted — nenhum texto livre sobrevive à canonicalizaç
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(String(v));
   });
 });
+
+// BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF item 10) — teste-guarda de PII no MESMO PR que introduz os 5
+// eventTypes (classe `accounting-audit-allowlist-guards`). Nome/CPF/e-mail/fone do signatário e o declarante da
+// empresa (nome, CNPJ, e-mail) NÃO sobrevivem à canonicalização, mesmo passados por engano.
+describe('company_signer.* / company_fiscal_profile.* — PII do signatário e do declarante nunca sobrevive', () => {
+  const PII = {
+    nome: 'Maria Sócia',
+    cpf: '52998224725',
+    email: 'maria@empresa.com.br',
+    fone: '11987654321',
+    declarante: 'Salão Bela LTDA',
+    cnpj: '12345678000195',
+    ecdNumOrd: '7',
+    ecdNatLivr: 'DIARIO GERAL',
+  };
+
+  it.each([
+    ['company_signer.created', { signerId: 's-1', qualifEcd: '203', qualifEcf: '203' }],
+    ['company_signer.updated', { signerId: 's-1', qualifEcd: '205', qualifEcf: '205' }],
+    ['company_signer.deleted', { signerId: 's-1' }],
+    ['company_fiscal_profile.updated', { anoCalendario: '2026', regime: 'PRESUMIDO', grandePorte: 'false', representanteLegalSignerId: 's-1', copiadoDe: '2025' }],
+    ['company_fiscal_profile.deleted', { anoCalendario: '2026' }],
+    ['company_fiscal_profile.ecf_transmitted', { anoCalendario: '2026', ecfRecibo: 'RECIBO-123', regime: 'REAL' }],
+  ])('%s derruba nome/CPF/e-mail/fone/declarante e mantém a allowlist', (eventType, allowed) => {
+    const out = canonicalizeAuditPayload(eventType, { ...allowed, ...PII });
+    for (const v of Object.values(PII)) expect(out).not.toContain(v);
+    for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(v);
+  });
+});

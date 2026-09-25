@@ -2,6 +2,9 @@ import type { ITableSchema } from '../../../models/DynamicTable.model';
 import { city, stateUF } from '../../fields/text/TextPresets';
 import { isActive } from '../../fields/boolean/BooleanPresets';
 
+/** Opções do campo `type` — fonte única, reusada pelo DTO de criação do onboarding (BE-INCR-ONBOARDING-FIRST-UNIT, I1). */
+export const UNIT_TYPE_OPTIONS = ['Own', 'Franchise', 'Department'] as const;
+
 /**
  * @description Core module for the "units" table.
  * Represents physical or virtual business units (stores, branches, franchises).
@@ -30,7 +33,7 @@ export const unitsModule = {
         name: 'type',
         label: 'Type',
         type: 'select',
-        options: ['Own', 'Franchise', 'Department'],
+        options: [...UNIT_TYPE_OPTIONS],
         required: false,
       },
       { ...isActive, label: 'Is Active' },
