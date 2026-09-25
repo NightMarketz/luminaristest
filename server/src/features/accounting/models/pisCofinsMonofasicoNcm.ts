@@ -14,8 +14,11 @@
  * Bebidas frias: Lei 13.097/2015 art. 14 (transcrição `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`,
  * chaves `L13097-art14-I..IV`) — sem crédito pela leitura do VAREJISTA (arts. 28+29); o crédito pelo valor da
  * nota do não-varejista (art. 30) NÃO é modelado (conservador = sem crédito).
- * FORA: combustíveis da Lei 9.718/1998 art. 4º (a lei nomeia PRODUTOS, não NCM — a correspondência TIPI não
- * está no corpus). Entram quando a fonte entrar.
+ * Combustíveis: a Lei 9.718/1998 art. 4º nomeia PRODUTOS, não NCM. A correspondência produto → NCM vem da
+ * **Tabela 4.3.10 da EFD-Contribuições v1.25** (corpus `tabela-4310-efd`; transcrição §B.1, chaves `T4310-NNN`),
+ * só com as linhas de "Término de Escrituração" VAZIO — as encerradas (2710.11.59, 3824.90.29, 2207.10.00 pós
+ * 30/04/2025) ficam de fora de propósito. `2208.90.00 Ex 01` (álcool dentro de código de bebida) NÃO entra: aqui
+ * o conservador é o inverso do usual — marcar a posição inteira classificaria bebida comum como sem crédito.
  *
  * Guarda: `__tests__/pisCofinsMonofasicoNcm.test.ts` assere que toda `fonte` cita lei+artigo do MANIFEST
  * e que nenhum prefixo é vazio/não-numérico.
@@ -34,6 +37,8 @@ const L10485_1 = 'Lei 10.485/2002 art. 1º + art. 3º II (Lei-10485-2002-monofas
 const L10485_A1 = 'Lei 10.485/2002 art. 3º I, Anexo I (Lei-10485-2002-monofasico-autopecas.html)';
 const L10485_A2 = 'Lei 10.485/2002 art. 3º I, Anexo II (Lei-10485-2002-monofasico-autopecas.html)';
 const L13097 = (inciso: string) => `Lei 13.097/2015 art. 14 ${inciso} (Lei-13097-2015-bebidas-frias.html)`;
+const T4310 = (codigo: string, produto: string) =>
+  `Tabela 4.3.10 EFD-Contribuições v1.25 código ${codigo} — ${produto} (TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt)`;
 
 const p = (prefixo: string, fonte: string, exceto?: readonly string[]): MonofasicoNcmRule =>
   exceto ? { prefixo, exceto, fonte } : { prefixo, fonte };
@@ -85,6 +90,17 @@ export const PIS_COFINS_MONOFASICO_NCM: readonly MonofasicoNcmRule[] = [
   // ── Lei 13.097/2015 art. 14 — bebidas frias. "Ex" da TIPI não é avaliável pelo NCM: conservador = o
   //    código inteiro conta (2106.90.10 só vale no Ex 02; 22.01/22.02 excluem Ex de 2201.10.00/2202.90.00) ─
   p('21069010', L13097('I')), p('2201', L13097('II')), p('2202', L13097('III')), p('2203', L13097('IV')),
+
+  // ── Tabela 4.3.10 da EFD-Contribuições v1.25 (30.03.2026), grupo COMBUSTÍVEIS — só linhas VIGENTES
+  //    (término vazio). Os códigos 105–108 e 150–153 (correntes, nafta) trazem NCM `-` na fonte e por isso
+  //    não têm entrada: sem NCM, a classificação cai no caminho do CST. ────────────────────────────────────
+  p('27101259', T4310('101', 'gasolinas, exceto de aviação')),
+  p('27101921', T4310('102', 'óleo diesel')),
+  p('27111910', T4310('103', 'GLP')),
+  p('27101911', T4310('104', 'querosene de aviação')),
+  p('38260000', T4310('109', 'biodiesel')),
+  p('220710', T4310('112/117', 'álcool, inclusive para fins carburantes')),
+  p('2207201', T4310('112/117', 'álcool, inclusive para fins carburantes')),
 ];
 
 export type PisCofinsItemClass = 'MONOFASICO' | 'TRIBUTADO' | 'UNKNOWN';

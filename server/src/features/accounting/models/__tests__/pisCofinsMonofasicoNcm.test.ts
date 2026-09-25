@@ -9,7 +9,9 @@ import {
 describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
   it('toda entrada cita a lei, o artigo e o arquivo do corpus; prefixo só dígitos (2–8)', () => {
     for (const r of PIS_COFINS_MONOFASICO_NCM) {
-      expect(r.fonte).toMatch(/^Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)$/);
+      expect(r.fonte).toMatch(
+        /^(Lei (10\.(147|485)\/20(00|02)|13\.097\/2015) art\. \d+º?.*\((Lei-10(147|485)-20(00|02)-monofasico-.*|Lei-13097-2015-bebidas-frias)\.html\)|Tabela 4\.3\.10 EFD-Contribuições v1\.25 código [\d/]+ — .+ \(TABELA-4310-EFD-CONTRIBUICOES-v1\.25\.txt\))$/,
+      );
       expect(r.prefixo).toMatch(/^\d{2,8}$/);
       for (const ex of r.exceto ?? []) expect(ex).toMatch(/^\d{8}$/);
     }
@@ -56,8 +58,36 @@ describe('PIS_COFINS_MONOFASICO_NCM — guarda da transcrição', () => {
   // Teste-guarda da Fase 1 (PLANO-POS-CONTADOR-2026-09-23, passo 1.6; instrumentado #379). NCM tirado da
   // transcrição `docs/accounting/fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`, chave
   // `L13097-art14-IV` ("22.03" — cerveja de malte). CST 01 para isolar a TABELA. Verde desde a correção de 25/09.
-  // Metade "combustível" BLOQUEADA: a lei lida não traz NCM (transcrição §B) — não se escreve NCM de memória.
+  // Metade "combustível" DESTRAVADA em 27/09: a correspondência produto → NCM saiu da Tabela 4.3.10 da
+  // EFD-Contribuições v1.25 (corpus `tabela-4310-efd`, transcrição §B.1), que a lei não traz.
   it('GAP C-2 — bebida fria (NCM 2203.00.00, Lei 13.097 art. 14 IV) com CST 01 → MONOFASICO (sem crédito)', () => {
     expect(classifyPisCofinsItem({ ncm: '22030000', cstPis: '01', cstCofins: '01' }).classe).toBe('MONOFASICO');
+  });
+
+  // Metade combustível do C-2 (GAP-MAP 13). CST 01 isola a TABELA: se o NCM não estiver nela, o retorno é
+  // TRIBUTADO — é exatamente o que esta asserção pega. NCMs e chaves vêm da transcrição §B.1 (só linhas com
+  // "Término de Escrituração" vazio na v1.25).
+  it('GAP C-2 — combustíveis vigentes da Tabela 4.3.10 com CST 01 → MONOFASICO', () => {
+    const vigentes: readonly [string, string][] = [
+      ['27101259', 'T4310-101 gasolina, exceto de aviação'],
+      ['27101921', 'T4310-102 óleo diesel'],
+      ['27111910', 'T4310-103 GLP'],
+      ['27101911', 'T4310-104 querosene de aviação'],
+      ['38260000', 'T4310-109 biodiesel'],
+      ['22071000', 'T4310-112/117 álcool carburante (prefixo 2207.10)'],
+      ['22072010', 'T4310-112/117 álcool carburante (prefixo 2207.20.1)'],
+    ];
+    for (const [ncm, rotulo] of vigentes) {
+      const r = classifyPisCofinsItem({ ncm, cstPis: '01', cstCofins: '01' });
+      expect([ncm, rotulo, r.classe]).toEqual([ncm, rotulo, 'MONOFASICO']);
+    }
+  });
+
+  // O outro lado da transcrição: linha ENCERRADA não entra (2710.11.59 valeu até 31/12/2011; a vigente é a
+  // 2710.12.59) e "Ex" da TIPI dentro de código de bebida não vira monofásico (2208.90.00 Ex 01).
+  it('linhas encerradas e "Ex" da TIPI NÃO entram na tabela (2710.11.59, 3824.90.29, 2208.90.00)', () => {
+    for (const ncm of ['27101159', '38249029', '22089000']) {
+      expect([ncm, classifyPisCofinsItem({ ncm, cstPis: '01', cstCofins: '01' }).classe]).toEqual([ncm, 'TRIBUTADO']);
+    }
   });
 });
