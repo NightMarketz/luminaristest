@@ -3847,10 +3847,6 @@
           "stageId": {
             "type": "string"
           },
-          "stageType": {
-            "type": "string",
-            "description": "init|meeting|proposal|negotiation|closed_won|closed_lost"
-          },
           "meetingAt": {
             "type": "string",
             "format": "date-time"

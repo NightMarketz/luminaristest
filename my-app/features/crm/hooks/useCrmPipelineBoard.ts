@@ -72,7 +72,6 @@ export function useCrmPipelineBoard(): CrmPipelineBoardState {
       CrmService.advanceStage({
         leadId: args.recordId,
         stageId: args.stageId,
-        stageType: args.stageType,
         amount: args.amount,
         currency: args.currency,
         winProbability: args.winProbability,

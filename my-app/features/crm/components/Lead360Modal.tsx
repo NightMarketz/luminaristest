@@ -88,7 +88,6 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
-        stageType: String(nextStage.data?.type ?? ''),
         ...(capture
           ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
           : {}),

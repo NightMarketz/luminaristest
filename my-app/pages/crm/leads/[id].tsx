@@ -50,7 +50,6 @@ function LeadDetailInner() {
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
-        stageType: String(nextStage.data?.type ?? ''),
       });
       await reload();
     } catch (err) {

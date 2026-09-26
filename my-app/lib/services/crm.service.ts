@@ -11,7 +11,6 @@ import { notify } from '../notifications/notify';
 export interface AdvanceStagePayload {
   leadId: string;
   stageId: string;
-  stageType?: string;
   meetingAt?: string;
   amount?: number;
   currency?: 'BRL' | 'USD' | 'EUR';

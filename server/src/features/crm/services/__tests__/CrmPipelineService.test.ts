@@ -63,9 +63,9 @@ describe('CrmPipelineService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('advanceStage', () => {
-    it('cria proposta + atualiza lead na MESMA transação quando stageType=proposal', async () => {
+    it('cria proposta + atualiza lead na MESMA transação quando a etapa gravada é proposal', async () => {
       const { svc, dynamicTableService } = buildService();
-      await svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 1000, currency: 'BRL' });
+      await svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 1000, currency: 'BRL' });
 
       expect(dynamicTableService.runInTransaction).toHaveBeenCalledTimes(1);
       expect(dynamicTableService.createTableData).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('CrmPipelineService', () => {
     it('propaga o erro (sem swallow) se o update do lead falhar — rollback fica a cargo da transação', async () => {
       const { svc } = buildService({ dts: { updateTableData: jest.fn(async () => { throw new Error('boom'); }) } });
       await expect(
-        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 500 }),
+        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 500 }),
       ).rejects.toThrow('boom');
     });
 
@@ -100,7 +100,7 @@ describe('CrmPipelineService', () => {
         repo: { findDataById: jest.fn(async (id: string) => ({ id, dynamicTableId: 'someone-else-leads-table', data: {} })) },
       });
       await expect(
-        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 1000 }),
+        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 1000 }),
       ).rejects.toBeInstanceOf(NotFoundError);
       expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe('CrmPipelineService', () => {
       const { svc, dynamicTableService } = buildService({
         repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
       });
-      await svc.advanceStage(user, { leadId: 'l1', stageId: 's-neg', stageType: 'proposal', amount: 1000, currency: 'BRL' });
+      await svc.advanceStage(user, { leadId: 'l1', stageId: 's-neg', stageType: 'proposal', amount: 1000, currency: 'BRL' } as any);
 
       expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
     });
