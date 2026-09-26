@@ -3782,10 +3782,6 @@
           "stageId": {
             "type": "string"
           },
-          "stageType": {
-            "type": "string",
-            "description": "init|meeting|proposal|negotiation|closed_won|closed_lost"
-          },
           "amount": {
             "type": "number"
           },
@@ -3799,14 +3795,6 @@
           },
           "winProbability": {
             "type": "number"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "Open",
-              "Won",
-              "Lost"
-            ]
           }
         }
       },
@@ -3858,10 +3846,6 @@
           },
           "stageId": {
             "type": "string"
-          },
-          "stageType": {
-            "type": "string",
-            "description": "init|meeting|proposal|negotiation|closed_won|closed_lost"
           },
           "meetingAt": {
             "type": "string",

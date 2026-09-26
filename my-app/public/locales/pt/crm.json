@@ -129,6 +129,11 @@
     "cancel": "Cancelar",
     "confirm": "Confirmar"
   },
+  "meeting_capture": {
+    "title": "Agendar Reunião",
+    "subtitle": "Informe a data e o horário da reunião para mover o lead para",
+    "when": "Data e horário"
+  },
   "detail": {
     "title": "Lead",
     "back": "← Pipeline",

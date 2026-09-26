@@ -37,7 +37,7 @@ function mockRes(): Response {
 }
 
 const baseReq = {
-  body: { opportunityId: 'opp-1', stageId: 'stage-1', stageType: 'closed_won' },
+  body: { opportunityId: 'opp-1', stageId: 'stage-1' },
 } as unknown as Request;
 
 const wonRow = {
