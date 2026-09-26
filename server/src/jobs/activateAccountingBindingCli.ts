@@ -26,9 +26,10 @@
  */
 import { ApplicationFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
-import { SALE_BINDING_V1, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/saleBinding';
-import { CLINIC_BINDING_V1, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../features/accountingBinding/fixtures/clinicBinding';
-import type { AccountingBindingV1 } from '../features/accountingBinding/dtos/AccountingBindingDto';
+import {
+  DEFAULT_SECTOR_KEY,
+  SECTOR_BINDING_REGISTRY,
+} from '../features/accountingBinding/fixtures/sectorBindingRegistry';
 import type { BindingScope } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
 
 export interface ActivateBindingArgs {
@@ -38,20 +39,8 @@ export interface ActivateBindingArgs {
   sectorKey: string;
 }
 
-/**
- * BE-INCR-P2-VERTICAL-CLINICA, comportamento 6 — F-P2-7 → RATIFICADO (a): registry
- * `sectorKey → {binding, operationalSchema}` DENTRO deste CLI. Antes deste registry, `--sector-key`
- * só trocava o RÓTULO gravado e a chave de idempotência — o payload compilado era SEMPRE
- * `SALE_BINDING_V1`/`SALE_OPERATIONAL_SCHEMA_SNAPSHOT` (footgun verificado: rodar
- * `--sector-key aestheticClinic` gravava o binding DO SALÃO sob o rótulo da clínica, uma linha
- * `Active`, válida, com os `descriptionTemplate` errados, sem nenhum erro). Este CLI está FORA do
- * perímetro zero-diff da prova de saída (ADR-P2 §2 item 2) — editá-lo é legítimo, ao contrário de
- * tocar o binding/preset em si.
- */
-const SECTOR_BINDING_REGISTRY: Record<string, { binding: AccountingBindingV1; operationalSchema: Record<string, unknown> }> = {
-  [SALE_BINDING_V1.sectorKey]: { binding: SALE_BINDING_V1, operationalSchema: SALE_OPERATIONAL_SCHEMA_SNAPSHOT },
-  [CLINIC_BINDING_V1.sectorKey]: { binding: CLINIC_BINDING_V1, operationalSchema: CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT },
-};
+// Registry `sectorKey → {binding, operationalSchema}` (F-P2-7 → a) — hoje em
+// `fixtures/sectorBindingRegistry.ts`, compartilhado com `POST /accounting-binding/activate-default` (LAC-B).
 
 /** Lê `--flag valor` de um array argv — mesma convenção de `scripts/migrate-deploy.mjs`. */
 function readFlag(argv: string[], name: string): string | undefined {
@@ -75,7 +64,7 @@ export function parseArgs(argv: string[]): ActivateBindingArgs {
     ownerUserId,
     unitId,
     actorUserId: readFlag(argv, '--actor-user-id') || ownerUserId,
-    sectorKey: readFlag(argv, '--sector-key') || SALE_BINDING_V1.sectorKey,
+    sectorKey: readFlag(argv, '--sector-key') || DEFAULT_SECTOR_KEY,
   };
 }
 

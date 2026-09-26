@@ -15,6 +15,7 @@ describe('AccountingBindingPolicy', () => {
     ['canCompile', (s: BindingScope) => policy.canCompile(s)],
     ['canValidate', (s: BindingScope) => policy.canValidate(s)],
     ['canRead', (s: BindingScope) => policy.canRead(s)],
+    ['canActivateDefault', (s: BindingScope) => policy.canActivateDefault(s)],
   ])('%s permite com ator autenticado e nega sem ator', (_name, call) => {
     expect(call(comAtor)).toBe(true);
     expect(call(semAtor)).toBe(false);

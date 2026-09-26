@@ -287,6 +287,30 @@
           }
         }
       },
+      "AccountingBindingActivateDefaultRequest": {
+        "type": "object",
+        "required": [
+          "unitId"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "unitId": {
+            "type": "string"
+          },
+          "sectorKey": {
+            "type": "string",
+            "description": "default 'beautySalon'; setores com binding padrão: beautySalon, aestheticClinic"
+          },
+          "installChartIfEmpty": {
+            "type": "boolean",
+            "description": "plano de contas vazio ⇒ instala o plano canônico antes do compile"
+          },
+          "openCurrentPeriodIfMissing": {
+            "type": "boolean",
+            "description": "período do mês corrente ausente/FUTURE ⇒ seed-year + open"
+          }
+        }
+      },
       "RegisterAccountingContactInput": {
         "type": "object",
         "required": [
@@ -15119,6 +15143,44 @@
         "responses": {
           "200": {
             "description": "candidate (AccountingBindingV1) + validation result — nunca persistido"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting-binding/activate-default": {
+      "post": {
+        "summary": "Activate the sector's DEFAULT binding (server-side fixture) — HTTP twin of the activation CLI",
+        "description": "LAC-B. Idempotente (Active existente ⇒ status 'already-active', nada compilado). Pré-condições checadas ANTES de gravar qualquer coisa: plano de contas vazio sem installChartIfEmpty ⇒ bloqueante CHART_OF_ACCOUNTS_EMPTY; período do mês corrente ausente/FUTURE sem openCurrentPeriodIfMissing (ou fechado) ⇒ bloqueante ACCOUNTING_PERIOD_NOT_OPEN — em ambos status 'Draft' sem bindingVersion. Passando, roda o MESMO compile de /compile (Active ou Draft com os bloqueantes do validador).",
+        "tags": [
+          "AccountingBinding"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountingBindingActivateDefaultRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message }] }"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

@@ -150,8 +150,11 @@ export class PostingService {
    * account exists ONLY as a soft-deleted row, findByCode returns null → create trips P2002
    * → and swallowing it would leave the leaf permanently missing. We therefore try to
    * RESTORE the soft-deleted row on P2002.
+   *
+   * Public since LAC-B: `POST /accounting-binding/activate-default` with `installChartIfEmpty`
+   * installs the canonical chart through this same method (adapter in `lib/factory.ts`).
    */
-  private async ensureChartOfAccounts(scope: AccountingScope): Promise<void> {
+  public async ensureChartOfAccounts(scope: AccountingScope): Promise<void> {
     const { userId, unitId } = accountingScopeWhere(scope);
     for (const account of CANONICAL_ACCOUNTS) {
       const existing = await this.accountRepo.findByCode(scope, account.code);
