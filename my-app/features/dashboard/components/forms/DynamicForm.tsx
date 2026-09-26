@@ -13,6 +13,7 @@ import SliderDiscrete from './dynamic-form-fields/SliderDiscrete';
 import CepAddressField from './dynamic-form-fields/CepAddressField';
 import { useTranslation } from 'next-i18next';
 import { notify } from '@/lib/notifications/notify';
+import { scopeToday } from '../../shared/utils/formatters';
 
 // Technical fields that should be ignored in the UI
 const TECHNICAL_FIELDS = ['id', 'order', 'createdAt', 'updatedAt', 'internalName', 'userId', 'dynamicTableId'];
@@ -298,7 +299,7 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
           {field.type === 'date' && !field.readOnly && (
             <button
               type="button"
-              onClick={() => handleFieldChange(field.name, new Date().toISOString().split('T')[0])}
+              onClick={() => handleFieldChange(field.name, scopeToday())}
               className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors text-[10px] font-bold"
             >
               {t('common:today', 'Today')}
