@@ -129,6 +129,11 @@
     "cancel": "Cancel",
     "confirm": "Confirm"
   },
+  "meeting_capture": {
+    "title": "Schedule Meeting",
+    "subtitle": "Enter the meeting date and time to move the lead to",
+    "when": "Date and time"
+  },
   "detail": {
     "title": "Lead",
     "back": "← Pipeline",

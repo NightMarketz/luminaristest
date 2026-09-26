@@ -15,6 +15,7 @@ import { GradientHeader } from '../../../features/crm/components/ui/GradientHead
 import { ScoreGauge } from '../../../features/crm/components/ui/ScoreGauge';
 import { StatusBadge } from '../../../features/crm/components/ui/StatusBadge';
 import { BantBars } from '../../../features/crm/components/ui/BantBars';
+import { MeetingCaptureModal } from '../../../features/crm/components/MeetingCaptureModal';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -31,6 +32,8 @@ function LeadDetailInner() {
   const leadId = String(router.query.id ?? '');
   const { loading, leads, stages, reload } = useCrmData();
   const [advancing, setAdvancing] = useState(false);
+  // Set while the next stage is a `meeting` and we await the meeting date.
+  const [capturingMeeting, setCapturingMeeting] = useState(false);
 
   const lead: CrmRecord | undefined = leads.find((l) => l.id === leadId);
   const d = lead?.data ?? {};
@@ -43,13 +46,14 @@ function LeadDetailInner() {
     return idx >= 0 ? ordered[idx + 1] : undefined;
   }, [stages, d.pipelineId, d.stageId]);
 
-  const handleAdvance = async () => {
+  const runAdvance = async (meetingAt?: string) => {
     if (!lead || !nextStage) return;
     setAdvancing(true);
     try {
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
+        ...(meetingAt ? { meetingAt } : {}),
       });
       await reload();
     } catch (err) {
@@ -57,6 +61,16 @@ function LeadDetailInner() {
     } finally {
       setAdvancing(false);
     }
+  };
+
+  const handleAdvance = async () => {
+    if (!lead || !nextStage) return;
+    // Meeting stages need a future meeting date (LeadsPlugin rejects the move without it).
+    if (String(nextStage.data?.type ?? '') === 'meeting') {
+      setCapturingMeeting(true);
+      return;
+    }
+    await runAdvance();
   };
 
   return (
@@ -115,6 +129,15 @@ function LeadDetailInner() {
           </SectionCard>
         </div>
       )}
+      <MeetingCaptureModal
+        isOpen={capturingMeeting}
+        stageName={String(nextStage?.data?.name ?? '')}
+        onCancel={() => setCapturingMeeting(false)}
+        onConfirm={async (meetingAt) => {
+          setCapturingMeeting(false);
+          await runAdvance(meetingAt);
+        }}
+      />
     </CrmLayout>
   );
 }

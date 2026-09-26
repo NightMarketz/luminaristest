@@ -30,6 +30,8 @@ export interface PipelineAdvanceArgs {
   amount?: number;
   currency?: 'BRL' | 'USD' | 'EUR';
   winProbability?: number;
+  /** ISO datetime captured before entering a `meeting` stage (see `captureMeetingAt`). */
+  meetingAt?: string;
 }
 
 /** Pending transition awaiting proposal-capture input from the board modal. */
@@ -54,6 +56,8 @@ export interface PipelineBoardConfig {
   logLabel: string;
   /** Optional extra grouping filter (e.g. lead name search). */
   recordFilter?: (r: CrmRecord) => boolean;
+  /** Defer moves into a `meeting` stage until the meeting date is captured (leads: LeadsPlugin requires it). */
+  captureMeetingAt?: boolean;
 }
 
 export interface PipelineBoardState {
@@ -81,6 +85,10 @@ export interface PipelineBoardState {
   handleDragEnd: (event: DragEndEvent) => void;
   confirmProposal: (capture: ProposalCapture) => Promise<void>;
   cancelProposal: () => void;
+  /** Set while a drop targeted a `meeting` stage and awaits the meeting date (captureMeetingAt only). */
+  pendingMeeting: PendingTransition | null;
+  confirmMeeting: (meetingAt: string) => Promise<void>;
+  cancelMeeting: () => void;
   reload: () => Promise<void>;
 }
 
@@ -93,12 +101,14 @@ export interface PipelineBoardState {
  * `useOppPipelineBoard`) supply the data source + transition and re-label outputs.
  */
 export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardState {
-  const { records, recordsTableId, stages, pipelines, loading, error, reload, advance, logLabel, recordFilter } = config;
+  const { records, recordsTableId, stages, pipelines, loading, error, reload, advance, logLabel, recordFilter, captureMeetingAt } =
+    config;
 
   const [pipelineOverride, setPipelineOverride] = useState<string | null>(null);
   const [localRecords, setLocalRecords] = useState<CrmRecord[]>([]);
   const [activeRecord, setActiveRecord] = useState<CrmRecord | null>(null);
   const [pending, setPending] = useState<PendingTransition | null>(null);
+  const [pendingMeeting, setPendingMeeting] = useState<PendingTransition | null>(null);
   const [schema, setSchema] = useState<ITableSchema | null>(null);
 
   // Optimistic mirror of the server records (pattern of useKanbanLogic.localTasks).
@@ -267,10 +277,14 @@ export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardStat
         setPending({ recordId, stage: targetStage });
         return;
       }
+      if (captureMeetingAt && targetStage.stageType === 'meeting') {
+        setPendingMeeting({ recordId, stage: targetStage });
+        return;
+      }
 
       void runTransition({ recordId, stageId: targetStage.id, stageType: targetStage.stageType }, snapshot);
     },
-    [columns, localRecords, applyOptimisticMove, runTransition],
+    [columns, localRecords, applyOptimisticMove, runTransition, captureMeetingAt],
   );
 
   const confirmProposal = useCallback(
@@ -306,6 +320,27 @@ export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardStat
     setPending(null);
   }, [pending, records]);
 
+  const confirmMeeting = useCallback(
+    async (meetingAt: string) => {
+      if (!pendingMeeting) return;
+      const { recordId, stage } = pendingMeeting;
+      // Same rollback snapshot as confirmProposal: the record back at its server-side stage.
+      const serverRecord = records.find((r) => r.id === recordId);
+      const snapshot = localRecords.map((r) =>
+        r.id === recordId && serverRecord ? { ...r, data: { ...serverRecord.data } } : r,
+      );
+      setPendingMeeting(null);
+      await runTransition({ recordId, stageId: stage.id, stageType: stage.stageType, meetingAt }, snapshot);
+    },
+    [pendingMeeting, records, localRecords, runTransition],
+  );
+
+  const cancelMeeting = useCallback(() => {
+    if (!pendingMeeting) return;
+    setLocalRecords(records.map((r) => ({ ...r, data: { ...r.data } })));
+    setPendingMeeting(null);
+  }, [pendingMeeting, records]);
+
   return {
     loading,
     error,
@@ -331,6 +366,9 @@ export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardStat
     handleDragEnd,
     confirmProposal,
     cancelProposal,
+    pendingMeeting,
+    confirmMeeting,
+    cancelMeeting,
     reload,
   };
 }

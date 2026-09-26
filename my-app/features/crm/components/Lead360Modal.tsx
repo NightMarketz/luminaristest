@@ -13,6 +13,7 @@ import { StatusBadge } from './ui/StatusBadge';
 import { BantBars } from './ui/BantBars';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
 import { NoShowCaptureModal } from './NoShowCaptureModal';
+import { MeetingCaptureModal } from './MeetingCaptureModal';
 import { LeadConvertModal } from './LeadConvertModal';
 import { OpportunityCreateModal } from './OpportunityCreateModal';
 import { LeadTasksPanel } from './LeadTasksPanel';
@@ -48,6 +49,8 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
   const [advancing, setAdvancing] = useState(false);
   // Set while the next stage is a `proposal` and we await amount input.
   const [capturingProposal, setCapturingProposal] = useState(false);
+  // Set while the next stage is a `meeting` and we await the meeting date.
+  const [capturingMeeting, setCapturingMeeting] = useState(false);
   // Set while collecting account/contact input for the lead conversion.
   const [converting, setConverting] = useState(false);
   // Set while collecting input to create a first-class opportunity from the lead.
@@ -81,13 +84,14 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
 
   // Run the transition; proposal stages pass the captured amount/currency/win%
   // so the backend can create the proposal (it requires an amount).
-  const runAdvance = async (capture?: ProposalCapture) => {
+  const runAdvance = async (capture?: ProposalCapture, meetingAt?: string) => {
     if (!lead || !nextStage) return;
     setAdvancing(true);
     try {
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
+        ...(meetingAt ? { meetingAt } : {}),
         ...(capture
           ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
           : {}),
@@ -108,7 +112,17 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
       setCapturingProposal(true);
       return;
     }
+    // Meeting stages need a future meeting date (LeadsPlugin rejects the move without it).
+    if (String(nextStage.data?.type ?? '') === 'meeting') {
+      setCapturingMeeting(true);
+      return;
+    }
     await runAdvance();
+  };
+
+  const handleConfirmMeeting = async (meetingAt: string) => {
+    setCapturingMeeting(false);
+    await runAdvance(undefined, meetingAt);
   };
 
   const handleConfirmProposal = async (capture: ProposalCapture) => {
@@ -277,6 +291,13 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
         stageName={String(nextStage?.data?.name ?? '')}
         onCancel={() => setCapturingProposal(false)}
         onConfirm={handleConfirmProposal}
+      />
+
+      <MeetingCaptureModal
+        isOpen={capturingMeeting}
+        stageName={String(nextStage?.data?.name ?? '')}
+        onCancel={() => setCapturingMeeting(false)}
+        onConfirm={handleConfirmMeeting}
       />
 
       <NoShowCaptureModal

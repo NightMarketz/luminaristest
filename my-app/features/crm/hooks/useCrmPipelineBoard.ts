@@ -54,6 +54,10 @@ export interface CrmPipelineBoardState {
   handleDragEnd: (event: DragEndEvent) => void;
   confirmProposal: (capture: ProposalCapture) => Promise<void>;
   cancelProposal: () => void;
+  /** Set while a drop targeted a `meeting` stage and awaits the meeting date. */
+  pendingMeeting: PendingProposal | null;
+  confirmMeeting: (meetingAt: string) => Promise<void>;
+  cancelMeeting: () => void;
   reload: () => Promise<void>;
 }
 
@@ -75,6 +79,7 @@ export function useCrmPipelineBoard(): CrmPipelineBoardState {
         amount: args.amount,
         currency: args.currency,
         winProbability: args.winProbability,
+        meetingAt: args.meetingAt,
       }),
     [],
   );
@@ -96,10 +101,14 @@ export function useCrmPipelineBoard(): CrmPipelineBoardState {
     advance,
     logLabel: 'CrmPipelineBoard',
     recordFilter,
+    captureMeetingAt: true,
   });
 
   const pendingProposal = board.pending
     ? { leadId: board.pending.recordId, stage: board.pending.stage }
+    : null;
+  const pendingMeeting = board.pendingMeeting
+    ? { leadId: board.pendingMeeting.recordId, stage: board.pendingMeeting.stage }
     : null;
 
   return {
@@ -129,6 +138,9 @@ export function useCrmPipelineBoard(): CrmPipelineBoardState {
     handleDragEnd: board.handleDragEnd,
     confirmProposal: board.confirmProposal,
     cancelProposal: board.cancelProposal,
+    pendingMeeting,
+    confirmMeeting: board.confirmMeeting,
+    cancelMeeting: board.cancelMeeting,
     reload: board.reload,
   };
 }
