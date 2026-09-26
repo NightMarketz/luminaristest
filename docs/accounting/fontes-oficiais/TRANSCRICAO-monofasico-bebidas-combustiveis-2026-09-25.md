@@ -40,7 +40,76 @@ bebida, art. 28 + art. 29 ⇒ **sem crédito** — é o `MONOFASICO` do código.
 art. 30 dá crédito **pelo valor da nota**, regra que o modelo atual (`TRIBUTADO` = 1,65% + 7,6% sobre base) não
 tem. Isso é ACHADO para a correção (1.8), não decisão desta transcrição.
 
-## B. Combustíveis — BLOQUEADO (fonte oficial abre, mas não traz NCM)
+## B. Combustíveis — DESTRAVADO 2026-09-27 (fonte: Tabela 4.3.10 da EFD-Contribuições, v1.25)
+
+> **O que estava bloqueado e por quê.** A leitura de 25/09 (mantida abaixo, em B.2) concluiu certo: a Lei
+> 9.718/1998 art. 4º nomeia **produtos**, não códigos TIPI, e nenhuma das leis lidas traz a correspondência.
+> Ela também nomeou a fonte que faltava — a **Tabela 4.3.10 da EFD-Contribuições** — e registrou que a página
+> de consulta não expôs link de download. Em 27/09 o link foi obtido (`/arquivo/download/1638`), o arquivo
+> baixado e adicionado ao corpus (`tabela-4310-efd` no MANIFEST). A conclusão de 25/09 não estava errada;
+> faltava o arquivo.
+
+### B.1 Linhas VIGENTES do grupo COMBUSTÍVEIS (chave = **código da própria tabela**)
+
+Critério: só entram linhas com **"Término de Escrituração" vazio** na v1.25 (30.03.2026) e com NCM preenchido.
+As alíquotas são por unidade de medida (R$/m³, R$/t) e **não** são usadas pelo modelo — ele classifica regime,
+não calcula tributo do vendedor.
+
+| chave | descrição (literal) | NCM na tabela | prefixo derivado | início |
+|---|---|---|---|---|
+| `T4310-101` | Gasolinas, Exceto Gasolina de Aviação | 2710.12.59 | `27101259` | 01/2012 |
+| `T4310-102` | Óleo Diesel | 2710.19.21 | `27101921` | 01/2011 |
+| `T4310-103` | Gás Liqüefeito de Petróleo – GLP | 2711.19.10 | `27111910` | 01/2011 |
+| `T4310-104` | Querosene de Aviação | 2710.19.11 | `27101911` | 01/2011 |
+| `T4310-109` | Biodiesel | 3826.00.00 (+ Ex 01) | `38260000` | 01/2012 |
+| `T4310-112` | Álcool, Inclusive para Fins Carburantes – Venda por Produtor ou Importador | 2207.10 · 2207.20.1 · 2208.90.00 Ex 01 | `220710` · `2207201` | 01/05/2025 |
+| `T4310-117` | Álcool … venda direta do produtor/importador às PJ do art. 68-B II e III da Lei 9.478/1997 | 2207.10.00 · 2207.20.10 · 2208.90.00 Ex 01 | (mesmos prefixos do 112) | 01/05/2025 |
+
+**Encerradas — NÃO entram** (a tabela as mantém por histórico de escrituração), conferidas no texto do corpus:
+`109` com 3824.90.29 (linha 29, 01/2011–31/12/2011) e `112`/`113` com 2207.10.00/2207.20.10 (até 30/04/2025),
+substituídas em 01/05/2025 pelos prefixos `2207.10`/`2207.20.1`. Aplica a memória
+`tabela-transcrita-de-lei-conferir-redacao-vigente`: a versão compilada tem as duas redações e só a de término
+vazio vale.
+
+> ⚠️ **Correção do review independente (27/09), dois pontos que a 1ª redação desta seção errou:**
+>
+> 1. **`2207.10.00` não está encerrado.** O código **117** tem duas linhas: uma até 30/04/2025 (encerrada) e
+>    **uma vigente desde 01/05/2025, com término vazio** (linha 61 do corpus), ambas com `2207.10.00` e
+>    `2207.20.10`. Chamar o código de encerrado era errado. Sem efeito no runtime — os prefixos `220710` e
+>    `2207201` já cobrem `22071000`/`22072010`.
+> 2. **`2710.11.59` não está no texto do corpus.** A gasolina pré-2012 existe no `.doc` da RFB (1 ocorrência no
+>    stream `WordDocument`, verificado) mas **o `antiword` não a emite** — `grep "11.59"` no
+>    `TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt` devolve zero, e o código 101 aparece com **uma** linha só
+>    (2710.12.59, vigente). **O texto do corpus é, portanto, LOSSY em pelo menos essa linha.** Consequência
+>    prática: nenhuma — a linha perdida é encerrada e não entraria de qualquer forma. Consequência de método:
+>    afirmação sobre linha ENCERRADA não pode se apoiar só neste `.txt`; para o histórico completo, ler o
+>    `.doc` (o `MANIFEST` traz o sha256 dele).
+>
+> O caso de teste que usa `27101159` **continua válido** — ele afirma "NCM que não está na tabela → TRIBUTADO",
+> que é verdade por qualquer dos dois caminhos.
+
+**Sem NCM na fonte (não modeláveis):** `105`/`106` correntes destinadas à formulação de gasolina/diesel,
+`107`/`108` nafta petroquímica para formulação, `150`–`153` nafta/condensado para centrais petroquímicas — a
+coluna NCM traz `-`. Continuam fora da tabela do código; se aparecerem numa nota, caem no caminho do CST.
+
+**`2208.90.00 Ex 01`** (álcool etílico dentro de um código de bebida) **não entra**: "Ex" da TIPI não é
+avaliável pelo NCM de 8 dígitos, e aqui o conservador é o inverso do usual — marcar `22089000` inteiro como
+monofásico classificaria bebida alcoólica comum como sem crédito. Mesmo tratamento que o `2106.90.10 Ex 02`
+recebeu em A (lá o código inteiro entrou porque a exceção é do próprio grupo de bebidas frias).
+
+**Limite declarado (2) — prefixo curto do álcool.** `2207.10` e `2207.20.1` são **posição**, não código de 8
+dígitos: por `startsWith`, todo `2207.10.xx` e `2207.20.1x` casa — inclusive álcool etílico **não** carburante
+(uso industrial, farmacêutico, antisséptico). É fidelidade à fonte (a tabela escreve o NCM assim, sob
+"Álcool, **Inclusive** para Fins Carburantes") e a direção do erro é conservadora (nega crédito, não infla),
+mas atinge um caso real do vertical: **salão/clínica que compra álcool 70% passa a não creditar PIS/COFINS
+nessa nota**. Registrado como achado do review independente; emitir `alerta` nesse casamento seria mudança de
+comportamento e **exige decisão do dono** — não foi feito aqui.
+
+**Limite declarado (1):** a tabela distingue vendedor (produtor/importador × distribuidor × varejista) por
+**código**, não por NCM. O modelo classifica só o regime do produto — a distinção de vendedor muda alíquota,
+não o fato de ser monofásico, e é isso que a regra do crédito usa.
+
+### B.2 Leitura de 25/09 — por que as leis não bastavam (mantida como registro)
 
 | fonte lida (Planalto, versão compilada, 2026-09-25) | o que traz |
 |---|---|

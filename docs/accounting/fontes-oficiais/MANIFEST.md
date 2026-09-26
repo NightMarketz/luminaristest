@@ -42,6 +42,7 @@ que citava o antigo precisa ser reconferido.
 | lei-9718-1998 | Monofasico — combustiveis (art. 4. F-X6-7 a) | Lei 9.718/1998 | `Lei-9718-1998.html` | 196.422 | `a71cf61cb7b3` |
 | lei-13097-2015 | Monofasico — bebidas frias (art. 14 NCM; arts. 17/28/29/30 credito) | Lei 13.097/2015 | `Lei-13097-2015-bebidas-frias.html` | 638.654 | `c6679a9a9fa3` |
 | lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
+| tabela-4310-efd | Monofasico — correspondencia PRODUTO -> NCM dos combustiveis (o que a Lei 9.718 art. 4 nao traz) | Tabela 4.3.10 da EFD-Contribuicoes, versao 1.25 (30.03.2026) | `TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt` | 85.624 | `f6a000e5e898` |
 
 ## URLs de origem
 
@@ -99,3 +100,12 @@ que citava o antigo precisa ser reconferido.
   - **2026-09-25:** rebaixada p/ a Fase 1 (C-2): mesmos 196.422 bytes, sha256 agora `dab540ec7cd2` (Planalto reeditou sem mudar o tamanho). Art. 4º relido nesta data — ver `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`. Idem `lei-10865-2004`: 389.869 bytes, sha256 agora `fb07460dfb92`.
 - **lei-13097-2015** — <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13097.htm> — acrescentada 2026-09-25 (Fase 1 do PLANO-POS-CONTADOR, passo 1.5); sha256 completo `c6679a9a9fa3ee541c63e915cbcc0a190b97764b388a21d372c59c273e1f393f`; transcrição em `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`.
 - **lc-123-2006** — <http://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>
+- **tabela-4310-efd** — <http://sped.rfb.gov.br/arquivo/download/1638> (host so responde em `http://`) — baixada 2026-09-27;
+  binario `.doc` (OLE2/Word) de 293.888 bytes, sha256 `82441544f8ac556c26bdbc6193777e42afaeef797621ac5199df7a7b05cad917`.
+  No corpus vai o TEXTO extraido com `antiword` (85.624 bytes, sha256 `f6a000e5e898`), que preserva a coluna **Codigo**
+  das linhas — a extracao crua do stream `WordDocument` a perde. Para reconferir: `curl -sL -o t.doc
+  http://sped.rfb.gov.br/arquivo/download/1638 && antiword t.doc | diff - TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt`.
+  A versao 1.16 de 2016 (`/arquivo/download/64`) foi lida e descartada: e historica e traz as MESMAS linhas de combustivel.
+  **Extracao LOSSY (medido no review de 27/09):** o `antiword` nao emite a linha encerrada do codigo 101
+  (`2710.11.59`, 01/2011-31/12/2011), que existe no `.doc` (1 ocorrencia no stream `WordDocument`). As linhas
+  VIGENTES conferem uma a uma; para historico de linha encerrada, leia o `.doc` pelo sha256 acima, nao este `.txt`.
