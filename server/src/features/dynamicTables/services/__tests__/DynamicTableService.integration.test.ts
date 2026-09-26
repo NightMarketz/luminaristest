@@ -150,6 +150,27 @@ describe('Governance: immutableAfter', () => {
     const updated = await update(ctxFor('userA'), row.id, { title: 'Changed' });
     expect((updated.data as any).title).toBe('Changed');
   });
+
+  /**
+   * GAP-MAP 8 (Nível 3, PASSO-12) — `deleteTableData` ignora `immutableAfter`: os Guards 2/3 rodam
+   * só em `updateTableData`; o delete vai `beforeDelete` → `deleteConstraints` → soft delete sem
+   * consultá-los. Registro que não pode ser EDITADO pode ser APAGADO. Asserção neutra quanto ao fork
+   * do conserto (a guard no delete × b RESTRICT no pai — decisão do dono): só exige que o delete
+   * lance e que a linha continue viva.
+   *
+   * Instrumentado VERMELHO 2026-09-25 como `it.failing` ("Received promise resolved instead of
+   * rejected" na asserção do delete); FECHADO 2026-09-26 pelo fork (a) — guard scope:'all' no delete.
+   */
+  it('GAP-MAP 8: blocks DELETING a record that immutableAfter scope:all makes immutable (status = Closed)', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'basic_tbl', BASIC_SCHEMA);
+    const row = await create(ctxFor('userA'), t.id, { title: 'Hi', status: 'Closed' });
+    // Controle: a MESMA linha já é imutável para o update (o caso acima) — o cenário está armado.
+    await expect(update(ctxFor('userA'), row.id, { title: 'Changed' })).rejects.toBeInstanceOf(ValidationError);
+
+    await expect(service.deleteTableData(ctxFor('userA'), row.id)).rejects.toBeInstanceOf(ValidationError);
+    expect(await isSoftDeleted(row.id)).toBe(false);
+  });
 });
 
 describe('Governance: unique', () => {
@@ -435,6 +456,30 @@ describe('Delete constraints', () => {
     await service.deleteTableData(ctxFor('userA'), p.id);
     expect(await isSoftDeleted(p.id)).toBe(true);
     expect(await isSoftDeleted(c.id)).toBe(true);
+  });
+
+  // GAP-MAP 8, fork (a) — decisão do dono 2026-09-26: o CASCADE também não apaga filha imutável
+  // (immutableAfter scope:'all' satisfeito na linha-filha) — o delete do pai inteiro é bloqueado.
+  it('GAP-MAP 8: CASCADE is blocked when a referencing child row is immutable (scope:all)', async () => {
+    await seedUser('userA');
+    const parent = await seedTable('userA', 'parent_tbl', {
+      fields: [{ name: 'pname', label: 'Name', type: 'string', required: true }],
+      deleteConstraints: [{ type: 'CASCADE', targetTable: 'child_tbl' }],
+    }, 'Parent');
+    const child = await seedTable('userA', 'child_tbl', {
+      fields: [
+        { name: 'clabel', label: 'Label', type: 'string', required: true },
+        { name: 'status', label: 'Status', type: 'select', required: true, options: ['Open', 'Closed'] },
+        { name: 'parentRef', label: 'Parent', type: 'relation', required: true, relation: { targetTable: parent.id } },
+      ],
+      immutableAfter: [{ condition: { field: 'status', op: 'eq', value: 'Closed' }, scope: 'all' }],
+    }, 'Child');
+    const p = await create(ctxFor('userA'), parent.id, { pname: 'P1' });
+    const c = await create(ctxFor('userA'), child.id, { clabel: 'C1', status: 'Closed', parentRef: p.id });
+
+    await expect(service.deleteTableData(ctxFor('userA'), p.id)).rejects.toBeInstanceOf(ValidationError);
+    expect(await isSoftDeleted(p.id)).toBe(false);
+    expect(await isSoftDeleted(c.id)).toBe(false);
   });
 
   it('allows deleting a row that nothing references', async () => {
