@@ -2,7 +2,7 @@
 
 **Nó:** [`SIG-NFE`](../plano/nos/SIG-NFE.md) · **Plano:** [`PLANO-POS-CONTADOR-2026-09-23.md`](PLANO-POS-CONTADOR-2026-09-23.md) Fase 2, passo 2.3
 **Autorização deste BRIEF:** dono em chat, 26/09. Depois do relatório que listava *"SIG-NFE: dá para escrever o BRIEF 2.3"*, veio a ordem *"Termina as pendências e depois segue no fiscal"*. A ordem cobre **só o planejamento**. Não é `executa` para o 2.4, e nenhum fork abaixo fica ratificado por ela.
-**Estado:** BRIEF — **5 forks com RATIFICAÇÃO PENDENTE**. Sem código.
+**Estado:** BRIEF — **5/5 forks RATIFICADOS 26/09** (dono, questionário em sessão): F-SIG-1 → (a) · F-SIG-2 → (a) · F-SIG-3 → (b) · F-SIG-4 → (b) · F-SIG-5 → (a), todos na recomendação. Sem código; o 2.4 ainda exige `executa` e o B0.
 
 ## 0. Fatos consumados (insumos lidos, não rediscutir)
 
@@ -60,28 +60,28 @@ export interface ParsedNfe { /* …campos atuais… */ signature?: SignatureChec
 
 HTTP: sem rota nova. Assinatura inválida → **400** `ValidationError`, com mensagem `NF-e inválida: assinatura …`. O mesmo shape do erro de chave.
 
-## 3. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido aqui)
+## 3. Forks — ✅ RATIFICADOS 26/09 (dono, em sessão)
 
-- **F-SIG-1 — nota sem assinatura válida** (fork do plano). (a) Rejeita toda nota com assinatura inválida **ou ausente**. (b) Só avisa em `warnings`.
+- **F-SIG-1 → (a) ✅ RATIFICADO 26/09 —nota sem assinatura válida** (fork do plano). (a) Rejeita toda nota com assinatura inválida **ou ausente**. (b) Só avisa em `warnings`.
   **Recomendação: (a).** É o que o contador pediu (triagem item 3: "obrigatória em produção"). Contabilizar a partir de XML adulterado é justamente o risco do nó. Custo: fixtures e E9 passam a depender do F-SIG-4.
 
-- **F-SIG-2 — como canonicalizar.** (a) Dependência nova: `xml-crypto` + `@xmldom/xmldom`, a pilha usual de XMLDSig em Node. (b) C14N escrito à mão, restrito ao subconjunto da NF-e (sem DTD, que já é rejeitado, e sem comentários).
+- **F-SIG-2 → (a) ✅ RATIFICADO 26/09 —como canonicalizar.** (a) Dependência nova: `xml-crypto` + `@xmldom/xmldom`, a pilha usual de XMLDSig em Node. (b) C14N escrito à mão, restrito ao subconjunto da NF-e (sem DTD, que já é rejeitado, e sem comentários).
   **Recomendação: (a).** C14N à mão é exatamente o código que erra em borda (namespace herdado, ordem de atributo, escape) e que ninguém revisa bem. O `xml-crypto` já teve CVEs de signature wrapping; o B3 existe para não depender só da lib, e o B1 fixa a versão com `npm audit`.
 
-- **F-SIG-3 — até onde confiar no certificado.**
+- **F-SIG-3 → (b) ✅ RATIFICADO 26/09 —até onde confiar no certificado.**
   - (a) Só integridade: a assinatura confere com o certificado embutido.
   - (b) (a) + CNPJ-raiz do certificado = raiz do `emit/CNPJ` + `dhEmi` dentro da validade do certificado.
   - (c) (b) + cadeia até a raiz ICP-Brasil.
 
   **Recomendação: (b) agora, (c) como nó seguinte.** Limite, dito por escrito: sem (c), quem **re-assina** o XML adulterado com um certificado autoassinado que carregue o CNPJ passa. (a)/(b) pegam a edição sem re-assinatura, que é o cenário do guarda. Só (c) fecha a falsificação deliberada, e (c) precisa das raízes do ITI (dado externo, §4.2).
 
-- **F-SIG-4 — modo de teste.**
+- **F-SIG-4 → (b) ✅ RATIFICADO 26/09 —modo de teste.**
   - (a) Flag `skipSignature` em `ParseNfeOptions`, aceita só sob `JEST_WORKER_ID`. As fixtures seguem como estão.
   - (b) Sem skip. Um helper de teste assina as fixtures com uma chave de teste, e a âncora de confiança de teste entra via factory. O caminho de verificação real roda em todo teste.
 
   **Recomendação: (b).** Com ela, produção não tem **nenhum** bypass, e o B9 fica resolvido: a nota real anonimizada é re-assinada com a chave de teste. Isso diverge da letra do contador ("pule a verificação"), mas atende ao objetivo dele (fixture não trava o teste). (b) depende do F-SIG-2 = (a), porque a mesma lib assina.
 
-- **F-SIG-5 — quais chamadores verificam.** (a) Todos os 3: import de compra, conciliação de venda e preview. (b) Só os que escrevem (import e venda); o preview só mostra o status.
+- **F-SIG-5 → (a) ✅ RATIFICADO 26/09 —quais chamadores verificam.** (a) Todos os 3: import de compra, conciliação de venda e preview. (b) Só os que escrevem (import e venda); o preview só mostra o status.
   **Recomendação: (a).** A verificação fica no funil, e um preview que aceita o que o import recusa confunde quem opera. Se o F-SIG-1 for (b), vale a (b) deste.
 
 ## 4. Pendente de validação externa
