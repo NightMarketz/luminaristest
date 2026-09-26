@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import { ValidationError } from './errors';
 import { NFE_CHAVE_REGEX, isValidNfeChave } from './cnpj';
+import { verifyNfeSignature } from './nfeSignature';
 
 /**
  * Pure NF-e 4.00 (modelo 55) parser for the fiscal-ingestion increment (BE-INCR-NFE / F0-2).
@@ -20,7 +21,8 @@ import { NFE_CHAVE_REGEX, isValidNfeChave } from './cnpj';
  * `mod !== '55'`, or `tpAmb === '2'` (homologação, unless the explicit test flag is set) → reject
  * loud. The access key (`infNFe/@Id`.slice(3)) is validated for `NFe` prefix, length 47, and
  * equality with `protNFe/infProt/chNFe`. A document carrying `<!DOCTYPE` is rejected before parse
- * (XXE / billion-laughs) and no external-entity processing is enabled.
+ * (XXE / billion-laughs) and no external-entity processing is enabled. The XMLDSig `<Signature>` is
+ * verified first (`lib/nfeSignature.ts`, SIG-NFE): absent or not matching `infNFe` → reject (F-SIG-1 a).
  */
 
 // ---------------------------------------------------------------------------------------------
@@ -275,6 +277,9 @@ export function parseNfe(input: string | Buffer, options: ParseNfeOptions = {}):
     throw new ValidationError('NF-e inválida: documento com DTD (<!DOCTYPE>) não é aceito.');
   }
   if (!xml) throw new ValidationError('NF-e inválida: documento vazio.');
+
+  // SIG-NFE (B4): assinatura XMLDSig verificada ANTES de extrair qualquer campo — sem bypass (F-SIG-4 b).
+  verifyNfeSignature(xml);
 
   let root: Record<string, unknown>;
   try {

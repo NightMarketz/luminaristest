@@ -16,6 +16,7 @@ import type { IPayableRepository } from '../../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import type { Payable } from 'generated/prisma';
+import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const FIXTURE_DIR = join(__dirname, '../../../../lib/__tests__/fixtures/nfe');
 const PURCHASE = readFileSync(join(FIXTURE_DIR, 'purchase-multi-item.SYNTHETIC.xml'), 'utf8');
@@ -74,7 +75,8 @@ describe('NfePreviewService.preview', () => {
     const cstat110 = PURCHASE.replace('<cStat>100</cStat>', '<cStat>110</cStat>');
     await expect(service.preview(scope, cstat110)).rejects.toThrow(ValidationError);
     await expect(service.preview(scope, cstat110)).rejects.toThrow(/cStat "110"/);
-    const badDv = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017');
+    // SIG-NFE: a chave vive no <infNFe> — re-assina para o cDV ser o que falha (F-SIG-4 b).
+    const badDv = signNfeForTest(PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017'));
     await expect(service.preview(scope, badDv)).rejects.toThrow(/dígito verificador da chave/);
     await expect(service.preview(scope, '<!DOCTYPE x><NFe/>')).rejects.toThrow(ValidationError);
     expect(findByDocumentNumber).not.toHaveBeenCalled();

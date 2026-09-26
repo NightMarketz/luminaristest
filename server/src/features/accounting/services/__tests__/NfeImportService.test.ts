@@ -6,6 +6,7 @@ import { resolveAccountingScope } from '../../scope/AccountingScope';
 import type { CreatePayableInput } from '../../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../../dtos/NfeDto';
 import type { Payable } from 'generated/prisma';
+import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
@@ -104,7 +105,8 @@ function dto(over: Partial<ImportNfePurchaseInput> = {}): ImportNfePurchaseInput
 /**
  * A minimal authorized NF-e built INLINE. Deliberately NOT a new file under `lib/__tests__/fixtures/nfe`
  * — that directory is the F0-3 merge gate (`nfe-fixture-provenance.test.ts` scans it), so a throwaway
- * arithmetic vehicle does not belong there. Only the tags `parseNfe` reads are emitted.
+ * arithmetic vehicle does not belong there. Only the tags `parseNfe` reads are emitted. Signed with the
+ * test key (SIG-NFE, F-SIG-4 b) — `parseNfe` verifies the XMLDSig before anything else.
  */
 function inlineNfe(
   items: Array<{ cProd: string; xProd: string; qCom: string; vProd: string; indTot?: string; cfop?: string; ncm?: string }>,
@@ -128,7 +130,7 @@ function inlineNfe(
       </det>`,
     )
     .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  return signNfeForTest(`<?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
   <NFe>
     <infNFe Id="NFe${chave}" versao="4.00">
@@ -157,7 +159,7 @@ ${dets}
       <nProt>135250000000025</nProt><cStat>100</cStat>
     </infProt>
   </protNFe>
-</nfeProc>`;
+</nfeProc>`);
 }
 
 describe('NfeImportService.importPurchase', () => {
@@ -295,9 +297,8 @@ describe('NfeImportService.importPurchase — vSeg entra no custo D3 (decisão E
 describe('NfeImportService.importPurchase — indTot=0 (item que não compõe o total)', () => {
   /** The fixture's 2nd item (COND-500, vProd 50.00) flipped to indTot=0. The header totals are left as
    *  they are: what is under test is what the ALLOCATION does with the flag. */
-  const XML_INDTOT_0 = PURCHASE_XML.replace(
-    /(<vProd>50\.00<\/vProd>\s*)<indTot>1<\/indTot>/,
-    '$1<indTot>0</indTot>',
+  const XML_INDTOT_0 = signNfeForTest(
+    PURCHASE_XML.replace(/(<vProd>50\.00<\/vProd>\s*)<indTot>1<\/indTot>/, '$1<indTot>0</indTot>'),
   );
 
   it('exclui o item indTot=0 do rateio E do estoque, e o reporta no resultado', async () => {
@@ -335,7 +336,7 @@ describe('NfeImportService.importPurchase — indTot=0 (item que não compõe o 
   });
 
   it('rejeita loud uma nota em que TODOS os itens são indTot=0 (nada a custear)', async () => {
-    const allZero = PURCHASE_XML.replace(/<indTot>1<\/indTot>/g, '<indTot>0</indTot>');
+    const allZero = signNfeForTest(PURCHASE_XML.replace(/<indTot>1<\/indTot>/g, '<indTot>0</indTot>'));
     const { service, createPayable } = build();
     await expect(service.importPurchase(scope, allZero, dto())).rejects.toThrow(ValidationError);
     expect(createPayable).not.toHaveBeenCalled();

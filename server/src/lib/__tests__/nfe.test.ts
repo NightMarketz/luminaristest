@@ -18,6 +18,9 @@ import { join } from 'path';
 import { parseNfe } from '../nfe';
 import { ValidationError } from '../errors';
 import { cnpjCheckDigits, isValidCnpj, isValidNfeChave, nfeChaveCheckDigit } from '../cnpj';
+// SIG-NFE: mutação DENTRO do <infNFe> invalida a assinatura — re-assina com a chave de teste para o gate
+// sob teste ser o que falha, não a assinatura (F-SIG-4 b). Mutação em protNFe fica fora do escopo assinado.
+import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const FIXTURE_DIR = join(__dirname, 'fixtures', 'nfe');
 const readFixture = (name: string) => readFileSync(join(FIXTURE_DIR, name), 'utf8');
@@ -120,12 +123,12 @@ describe('parseNfe — gates de rejeição (rejeita loud)', () => {
   });
 
   it('modelo != 55 (ex.: NFC-e 65) → rejeita', () => {
-    const mod65 = PURCHASE.replace('<mod>55</mod>', '<mod>65</mod>');
+    const mod65 = signNfeForTest(PURCHASE.replace('<mod>55</mod>', '<mod>65</mod>'));
     expect(() => parseNfe(mod65)).toThrow(/modelo/i);
   });
 
   it('homologação (tpAmb=2) rejeita por default; aceita sob flag explícita', () => {
-    const homolog = PURCHASE.replace('<tpAmb>1</tpAmb>', '<tpAmb>2</tpAmb>');
+    const homolog = signNfeForTest(PURCHASE.replace('<tpAmb>1</tpAmb>', '<tpAmb>2</tpAmb>'));
     expect(() => parseNfe(homolog)).toThrow(/homologa/i);
     // sob flag de teste, passa (chave/cStat ainda válidos)
     expect(parseNfe(homolog, { allowHomologacao: true }).ide.mod).toBe('55');
@@ -145,9 +148,11 @@ function alnumVariant(): { xml: string; chave: string; cnpj: string } {
   const cnpj = '12ABC34501DE' + cnpjCheckDigits('12ABC34501DE');
   const base43 = '352509' + cnpj + '55' + '001' + '000000003' + '1' + '00000003';
   const chave = base43 + String(nfeChaveCheckDigit(base43));
-  const xml = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, chave).replace(
-    '<CNPJ>12345678000195</CNPJ>',
-    `<CNPJ>${cnpj}</CNPJ>`,
+  const xml = signNfeForTest(
+    PURCHASE.replace(/35250712345678000195550010000000011000000012/g, chave).replace(
+      '<CNPJ>12345678000195</CNPJ>',
+      `<CNPJ>${cnpj}</CNPJ>`,
+    ),
   );
   return { xml, chave, cnpj };
 }
@@ -174,19 +179,19 @@ describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)
   });
 
   it('rejeita chave fora do formato (letra fora das posições 7–20)', () => {
-    const bad = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '3525071234567800019555001000000001100000001A');
+    const bad = signNfeForTest(PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '3525071234567800019555001000000001100000001A'));
     expect(() => parseNfe(bad)).toThrow(ValidationError);
     expect(() => parseNfe(bad)).toThrow(/44 posições/);
   });
 
   it('rejeita cDV errado (a chave antiga do fixture, …017, morre aqui)', () => {
-    const bad = PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017');
+    const bad = signNfeForTest(PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017'));
     expect(() => parseNfe(bad)).toThrow(ValidationError);
     expect(() => parseNfe(bad)).toThrow(/dígito verificador da chave/);
   });
 
   it('rejeita CNPJ do emitente que diverge das posições 7–20 da chave', () => {
-    const bad = PURCHASE.replace('<CNPJ>12345678000195</CNPJ>', '<CNPJ>98765432000198</CNPJ>');
+    const bad = signNfeForTest(PURCHASE.replace('<CNPJ>12345678000195</CNPJ>', '<CNPJ>98765432000198</CNPJ>'));
     expect(() => parseNfe(bad)).toThrow(ValidationError);
     expect(() => parseNfe(bad)).toThrow(/diverge de emit\/CNPJ/);
   });

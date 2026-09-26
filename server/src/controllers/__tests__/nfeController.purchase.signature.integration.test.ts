@@ -13,6 +13,11 @@
  * conferem com o conteúdo. Para um verificador isso é a mesma coisa (assinatura presente e inválida);
  * o caso "nota sem nenhuma assinatura" é o fork F-SIG-1 e NÃO é afirmado aqui.
  *
+ * IMPLEMENTADO 2026-09-26 (passo 2.4, BRIEF `BE-INCR-NFE-SIGNATURE` B8): `it.failing` → `it`. O fixture agora vem
+ * assinado com a chave de teste (F-SIG-4 b), então o cenário original TROCA a `<Signature>` válida pela que não
+ * confere, e entram os casos que a lib tornou possíveis: assinar-e-depois-adulterar de verdade e, pelo F-SIG-1 (a),
+ * "nota sem assinatura → 400" — no import, na venda e no preview (F-SIG-5 a).
+ *
  * Arquivo próprio (dono e unidade próprios): no arquivo do X6 a mesma chave de acesso colidiria com a
  * importação feliz — ou quebrando-a, ou fazendo este caso passar pela idempotência, não pela assinatura.
  */
@@ -21,6 +26,7 @@ import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const app = makeApp();
 const UNIT = 'unit-sig-nfe';
@@ -48,8 +54,16 @@ const SIGNATURE_QUE_NAO_CONFERE = `
       <KeyInfo><X509Data><X509Certificate>QUFBQQ==</X509Certificate></X509Data></KeyInfo>
     </Signature>`;
 
-// O fixture é CRLF — ancorar só na tag fechada, nunca no fim de linha.
-const ADULTERADA = ORIGINAL.replace('</infNFe>', `</infNFe>${SIGNATURE_QUE_NAO_CONFERE}`);
+const ASSINATURA_DO_FIXTURE = /<Signature xmlns="http:\/\/www\.w3\.org\/2000\/09\/xmldsig#">[\s\S]*?<\/Signature>/;
+const ADULTERADA = ORIGINAL.replace(ASSINATURA_DO_FIXTURE, SIGNATURE_QUE_NAO_CONFERE);
+/** Assinada de verdade e adulterada depois: o vNF sobe R$ 1.000,00 sem re-assinar. */
+const ASSINADA_E_ADULTERADA = signNfeForTest(ORIGINAL).replace(/<vNF>([^<]+)<\/vNF>/, (_m, v: string) => `<vNF>${(Number(v) + 1000).toFixed(2)}</vNF>`);
+const SEM_ASSINATURA = ORIGINAL.replace(ASSINATURA_DO_FIXTURE, '');
+
+const postPurchase = (xml: string) =>
+  request(app).post('/api/nfe/purchase').set(authHeader(dono))
+    .field('unitId', UNIT).field('itemMappings', MAPPINGS)
+    .attach('file', Buffer.from(xml, 'utf8'), { filename: 'nfe.xml', contentType: 'text/xml' });
 
 let dono: { id: string; username: string };
 let MAPPINGS = '[]';
@@ -83,17 +97,56 @@ describe('SIG-NFE — import de compra com <Signature> que não confere', () => 
     await prisma.$disconnect();
   });
 
-  // Instrumentado VERMELHO 2026-09-26 como `it.failing`: "Expected: 400 / Received: 201" — a nota com
-  // assinatura inválida é importada. A implementação (passo 2.4, pelo BRIEF do 2.3 + F-SIG-1) troca por `it`.
-  it.failing('SIG-NFE: NF-e com assinatura que não confere é recusada (400) e nada é escrito', async () => {
-    // Controle do cenário: o bloco foi mesmo inserido, dentro de <NFe>, irmão de <infNFe>.
+  // Instrumentado VERMELHO 2026-09-26 como `it.failing` ("Expected: 400 / Received: 201"); verde no passo 2.4.
+  it('SIG-NFE: NF-e com assinatura que não confere é recusada (400) e nada é escrito', async () => {
+    // Controle do cenário: a assinatura do fixture foi trocada pela que não confere, dentro de <NFe>, irmã de <infNFe>.
     expect(ADULTERADA).toMatch(/<\/infNFe>\s*<Signature xmlns="http:\/\/www\.w3\.org\/2000\/09\/xmldsig#">/);
+    expect(ADULTERADA).toContain('<DigestValue>AAAAAAAAAAAAAAAAAAAAAAAAAAA=</DigestValue>');
 
-    const res = await request(app).post('/api/nfe/purchase').set(authHeader(dono))
-      .field('unitId', UNIT).field('itemMappings', MAPPINGS)
-      .attach('file', Buffer.from(ADULTERADA, 'utf8'), { filename: 'nfe.xml', contentType: 'text/xml' });
+    const res = await postPurchase(ADULTERADA);
 
     expect(res.status).toBe(400);
     expect(await prisma.payable.count({ where: { userId: dono.id } })).toBe(0);
+  });
+
+  it('SIG-NFE: NF-e assinada e adulterada depois (vNF +1000) → 400 "não confere", nada escrito', async () => {
+    expect(ASSINADA_E_ADULTERADA).not.toBe(signNfeForTest(ORIGINAL)); // controle: a adulteração aconteceu
+    const res = await postPurchase(ASSINADA_E_ADULTERADA);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/assinatura digital não confere/);
+    expect(await prisma.payable.count({ where: { userId: dono.id } })).toBe(0);
+  });
+
+  describe('F-SIG-1 (a): nota SEM <Signature> → 400 nos 3 chamadores (F-SIG-5 a)', () => {
+    it('controle: o XML de teste não tem assinatura xmldsig', () => {
+      expect(SEM_ASSINATURA).not.toContain('xmldsig#"');
+    });
+
+    it('import de compra → 400, nada escrito', async () => {
+      const res = await postPurchase(SEM_ASSINATURA);
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toMatch(/assinatura digital ausente/);
+      expect(await prisma.payable.count({ where: { userId: dono.id } })).toBe(0);
+    });
+
+    it('preview → 400', async () => {
+      const res = await request(app).post('/api/nfe/preview').set(authHeader(dono)).field('unitId', UNIT)
+        .attach('file', Buffer.from(SEM_ASSINATURA, 'utf8'), { filename: 'nfe.xml', contentType: 'text/xml' });
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toMatch(/assinatura digital ausente/);
+    });
+
+    it('conciliação de venda → 400 pela assinatura (o parse vem antes da âncora; sem ele seria 404 de venda órfã)', async () => {
+      const res = await request(app).post('/api/nfe/sale').set(authHeader(dono)).field('unitId', UNIT).field('saleId', 'venda-inexistente')
+        .attach('file', Buffer.from(SEM_ASSINATURA, 'utf8'), { filename: 'nfe.xml', contentType: 'text/xml' });
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(res.body)).toMatch(/assinatura digital ausente/);
+    });
+
+    it('controle positivo: a MESMA nota, assinada, passa a conciliação da assinatura e cai na âncora (404)', async () => {
+      const res = await request(app).post('/api/nfe/sale').set(authHeader(dono)).field('unitId', UNIT).field('saleId', 'venda-inexistente')
+        .attach('file', Buffer.from(ORIGINAL, 'utf8'), { filename: 'nfe.xml', contentType: 'text/xml' });
+      expect(res.status).toBe(404);
+    });
   });
 });
