@@ -150,6 +150,27 @@ describe('Governance: immutableAfter', () => {
     const updated = await update(ctxFor('userA'), row.id, { title: 'Changed' });
     expect((updated.data as any).title).toBe('Changed');
   });
+
+  /**
+   * GAP-MAP 8 (Nível 3, PASSO-12) — `deleteTableData` ignora `immutableAfter`: os Guards 2/3 rodam
+   * só em `updateTableData`; o delete vai `beforeDelete` → `deleteConstraints` → soft delete sem
+   * consultá-los. Registro que não pode ser EDITADO pode ser APAGADO. Asserção neutra quanto ao fork
+   * do conserto (a guard no delete × b RESTRICT no pai — decisão do dono): só exige que o delete
+   * lance e que a linha continue viva.
+   *
+   * `it.failing` (instrumentado VERMELHO 2026-09-25: "Received promise resolved instead of rejected"
+   * na asserção do delete — o controle do update acima dela passa). A sessão de correção troca por `it`.
+   */
+  it.failing('GAP-MAP 8: blocks DELETING a record that immutableAfter scope:all makes immutable (status = Closed)', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'basic_tbl', BASIC_SCHEMA);
+    const row = await create(ctxFor('userA'), t.id, { title: 'Hi', status: 'Closed' });
+    // Controle: a MESMA linha já é imutável para o update (o caso acima) — o cenário está armado.
+    await expect(update(ctxFor('userA'), row.id, { title: 'Changed' })).rejects.toBeInstanceOf(ValidationError);
+
+    await expect(service.deleteTableData(ctxFor('userA'), row.id)).rejects.toBeInstanceOf(ValidationError);
+    expect(await isSoftDeleted(row.id)).toBe(false);
+  });
 });
 
 describe('Governance: unique', () => {
