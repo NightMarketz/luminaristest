@@ -1,8 +1,6 @@
 import { z } from 'zod';
 import { CURRENCIES, DEFAULT_CURRENCY } from '../constants';
 
-const OPPORTUNITY_STATUS = ['Open', 'Won', 'Lost'] as const;
-
 /** @openapi
  * components:
  *   schemas:
@@ -12,20 +10,17 @@ const OPPORTUNITY_STATUS = ['Open', 'Won', 'Lost'] as const;
  *       properties:
  *         opportunityId:  { type: string }
  *         stageId:        { type: string }
- *         stageType:      { type: string, description: "init|meeting|proposal|negotiation|closed_won|closed_lost" }
  *         amount:         { type: number }
  *         currency:       { type: string, enum: [BRL, USD, EUR] }
  *         winProbability: { type: number }
- *         status:         { type: string, enum: [Open, Won, Lost] }
  */
-export const AdvanceOpportunitySchema = z.object({
+// strict: Won/Lost vem do type gravado da etapa; stageType/status do cliente são 400, não descarte silencioso.
+export const AdvanceOpportunitySchema = z.strictObject({
   opportunityId: z.string().min(1),
   stageId: z.string().min(1),
-  stageType: z.string().optional(),
   amount: z.number().positive().optional(),
   currency: z.enum(CURRENCIES).optional(),
   winProbability: z.number().min(0).max(100).optional(),
-  status: z.enum(OPPORTUNITY_STATUS).optional(),
 });
 
 /** @openapi

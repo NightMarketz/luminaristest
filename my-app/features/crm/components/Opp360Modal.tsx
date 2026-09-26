@@ -63,19 +63,15 @@ export function Opp360Modal({ isOpen, onClose, opportunity, stages, ownerNames, 
     return (id && ownerNames?.get(id)) || '—';
   }, [d.ownerId, ownerNames]);
 
-  // Run the transition; closing stages close the opp (Won/Lost) on the backend via
-  // the stageType. Proposal stages pass the captured amount/currency/win%.
+  // Run the transition; the backend closes the opp (Won/Lost) from the target stage's
+  // stored type. Proposal stages pass the captured amount/currency/win%.
   const runAdvance = async (capture?: ProposalCapture) => {
     if (!opportunity || !nextStage) return;
-    const stageType = String(nextStage.data?.type ?? '');
     setAdvancing(true);
     try {
       await CrmService.advanceOpportunity({
         opportunityId: opportunity.id,
         stageId: nextStage.id,
-        stageType,
-        ...(stageType === 'closed_won' ? { status: 'Won' as const } : {}),
-        ...(stageType === 'closed_lost' ? { status: 'Lost' as const } : {}),
         ...(capture
           ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
           : {}),

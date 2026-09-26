@@ -46,7 +46,11 @@ function buildService(over: { dts?: any; repo?: any } = {}) {
     })),
     // Default lead row belongs to THIS tenant's leads table ('leads-table'), so the
     // cross-tenant guard in advanceStage/createProposal/recordNoShow passes by default.
-    findDataById: jest.fn(async (id: string) => ({ id, dynamicTableId: 'leads-table', data: {} })),
+    // 's2' is this tenant's stored `proposal` stage (advanceStage reads the target stage's type).
+    findDataById: jest.fn(async (id: string) =>
+      id === 's2'
+        ? { id, dynamicTableId: 'leadStages-table', data: { type: 'proposal' } }
+        : { id, dynamicTableId: 'leads-table', data: {} }),
     ...over.repo,
   };
   const svc = new CrmPipelineService(dynamicTableService as any, repository as any);
@@ -106,7 +110,7 @@ describe('CrmPipelineService', () => {
     // Lacuna (teste vivo 2026-09-25, GAP-MAP "advanceStage decide proposta pelo stageType do cliente"):
     // mesma classe já corrigida em advanceOpportunity — a proposta nasce pelo `stageType` que o
     // CLIENTE manda, não pelo `type` gravado da etapa-destino. Aqui a etapa gravada é `negotiation`.
-    it.failing('stageType do cliente diverge da etapa gravada → NÃO cria proposta (vale o tipo da etapa)', async () => {
+    it('stageType do cliente diverge da etapa gravada → NÃO cria proposta (vale o tipo da etapa)', async () => {
       const rows: Record<string, any> = {
         l1: { id: 'l1', dynamicTableId: 'leads-table', data: {} },
         's-neg': { id: 's-neg', dynamicTableId: 'leadStages-table', data: { type: 'negotiation' } },
@@ -392,7 +396,7 @@ describe('CrmPipelineService', () => {
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
         repo: oppRepo,
       });
-      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won', stageType: 'closed_won' });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won' });
 
       const call = dynamicTableService.updateTableData.mock.calls[0];
       expect(call[3]).toEqual({ isSystem: true });
@@ -411,7 +415,7 @@ describe('CrmPipelineService', () => {
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
         repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
       });
-      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-neg', stageType: 'closed_won' });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-neg', stageType: 'closed_won' } as any);
 
       const call = dynamicTableService.updateTableData.mock.calls[0];
       expect(call[2].data.status).not.toBe('Won');
@@ -423,7 +427,7 @@ describe('CrmPipelineService', () => {
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
         repo: oppRepo,
       });
-      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-lost', stageType: 'closed_lost' });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-lost' });
 
       const call = dynamicTableService.updateTableData.mock.calls[0];
       expect(call[2].data).toEqual(expect.objectContaining({ status: 'Lost' }));
@@ -456,7 +460,7 @@ describe('CrmPipelineService', () => {
     // Lacuna (teste vivo 2026-09-25, GAP-MAP "advanceOpportunity aceita etapa de outro pipeline"):
     // a etapa-destino só é conferida contra o tenant (leadStages), não contra o pipeline da
     // oportunidade — etapa `closed_won` de OUTRO pipeline do mesmo tenant fecha a opp como Won.
-    it.failing('etapa de outro pipeline do mesmo tenant → recusa, sem update', async () => {
+    it('etapa de outro pipeline do mesmo tenant → recusa, sem update', async () => {
       const rows: Record<string, any> = {
         'opp-1': { id: 'opp-1', dynamicTableId: 'crmOpportunities-table', data: { pipelineId: 'p1', status: 'Open' } },
         's-other': { id: 's-other', dynamicTableId: 'leadStages-table', data: { pipelineId: 'p2', type: 'closed_won' } },

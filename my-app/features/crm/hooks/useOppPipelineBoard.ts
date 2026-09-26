@@ -77,7 +77,6 @@ export function useOppPipelineBoard(): OppPipelineBoardState {
       CrmService.advanceOpportunity({
         opportunityId: args.recordId,
         stageId: args.stageId,
-        stageType: args.stageType,
         amount: args.amount,
         currency: args.currency,
         winProbability: args.winProbability,

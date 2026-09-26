@@ -66,7 +66,7 @@ describe('Oportunidade Won/Lost é terminal', () => {
     const svc = new CrmPipelineService({ updateTableData } as any, repository as any);
 
     await expect(
-      svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won', stageType: 'closed_won', amount: 90000 }),
+      svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won', amount: 90000 }),
     ).rejects.toBeInstanceOf(ValidationError);
     expect(updateTableData).not.toHaveBeenCalled();
   });

@@ -49,8 +49,16 @@ export class CrmPipelineService {
       throw new NotFoundError(`Lead '${input.leadId}' não foi encontrado.`);
     }
 
+    // The proposal side effect comes from the STORED type of the target stage — never from the client's stageType.
+    const stagesTableId = await this.resolveTableId(user, 'leadStages');
+    const stageRow = await this.repository.findDataById(input.stageId);
+    if (!stageRow || stageRow.dynamicTableId !== stagesTableId) {
+      throw new NotFoundError(`Etapa '${input.stageId}' não foi encontrada.`);
+    }
+    const stageType = String((stageRow.data as Record<string, unknown> | null)?.type ?? '').toLowerCase();
+
     const proposalsTableId =
-      (input.stageType || '').toLowerCase() === 'proposal' && input.amount != null
+      stageType === 'proposal' && input.amount != null
         ? await this.resolveTableId(user, 'leadProposals')
         : null;
 
@@ -320,13 +328,17 @@ export class CrmPipelineService {
     if (!stageRow || stageRow.dynamicTableId !== stagesTableId) {
       throw new NotFoundError(`Etapa '${input.stageId}' não foi encontrada.`);
     }
+    const stageData = (stageRow.data as Record<string, unknown> | null) ?? {};
+    if (stageData.pipelineId !== (oppRow.data as Record<string, unknown> | null)?.pipelineId) {
+      throw new ValidationError('A etapa não pertence ao pipeline da oportunidade.');
+    }
 
     const patch: Record<string, unknown> = { stageId: input.stageId };
     if (input.amount != null) patch.amount = input.amount;
     if (input.currency != null) patch.currency = input.currency;
     if (input.winProbability != null) patch.winProbability = input.winProbability;
 
-    const stageType = String((stageRow.data as Record<string, unknown> | null)?.type ?? '').toLowerCase();
+    const stageType = String(stageData.type ?? '').toLowerCase();
     if (stageType === 'closed_won' || stageType === 'closed_lost') {
       patch.status = stageType === 'closed_won' ? 'Won' : 'Lost';
       patch.closedAt = new Date().toISOString();
