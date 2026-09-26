@@ -1,9 +1,9 @@
 # BE-INCR-CRM-REPORT-BUILDER — BRIEF (sessão de planejamento)
 
-> **Estado:** BRIEF — **7 forks RATIFICAÇÃO PENDENTE**. Sem código. Nó do vault: [`docs/plano/nos/CRM-RB.md`](../plano/nos/CRM-RB.md).
+> **Estado:** BRIEF — **7/7 forks RATIFICADOS 2026-09-26 (dono, AskUserQuestion)**; F-RB4 diverge da recomendação. Sem código; execução exige "executa". Nó do vault: [`docs/plano/nos/CRM-RB.md`](../plano/nos/CRM-RB.md).
 > **Risco principal (2 linhas):** o builder **é** a resposta de produto ao `F-AD5` aberto do
 > [`ADR-ANALYTICS-DEFS`](../adr/ADR-ANALYTICS-DEFS-write-unblock.md) — decidir onde a definição mora (F-RB1) reverte ou
-> contorna o `F-AD0=(c)` ratificado, e isso é decisão do dono, não do BRIEF. Sem F-RB1/F-RB2 fechados, nada abaixo é executável.
+> contorna o `F-AD0=(c)` ratificado — **resolvido 26/09: F-RB1=(a) contorna (Prisma), F-AD0 segue congelado**. Resta só o "executa".
 
 ## 0. Formulário
 
@@ -31,7 +31,7 @@
 
 ```
 ## Registro de Fronteira — ReportDefinition (definição salva de relatório/dashboard do CRM)
-- Camada: FORK F-RB1 — recomendação Prisma first-class               [inferido]
+- Camada: Prisma first-class — F-RB1=(a) RATIFICADO 2026-09-26         [decisão do dono sobre evidência inferida]
     SEL-001 4 perguntas: todas caem no lado DynamicTable (errado-e-corrigido é aceitável; nenhum número é fonte
     de verdade — o relatório LÊ, não é razão; unicidade só de UX; sem write-path fora do motor). Tripwires: nenhum
     (sem dinheiro autoritativo, sem self-relation, sem atomicidade cross-tabela). => o seletor PERMITE DT, não obriga.
@@ -54,30 +54,42 @@
 - Roteamento (se F-RB1=a): backend-prisma-model-generator → backend-repository-generator → backend-policy-generator
     → backend-service-generator → backend-dto-generator → backend-controller-generator → backend-route-generator
     → backend-test-suite-generator (+ api-contract-sync-generator p/ openapi).
-- Forks do dono: F-RB1..F-RB7 (§4).
+- Forks do dono: F-RB1..F-RB7 — todos RATIFICADOS 2026-09-26 (§4).
 ```
 
 ## 2. Checklist numerado (cada item testável isolado) — escopo BE
 
-Dependente do fork indicado; itens sem fork são diretos.
+Forks resolvidos: F-RB1=(a), F-RB2=(a), F-RB3=(b), F-RB4=(c), F-RB5=(a), F-RB6=(a), F-RB7=(a).
 
-1. **Modelo `CrmReportDefinition`** (F-RB1=a): `id cuid`, `userId` (FK User, cascade como `SavedTableView`), `name`,
+1. **Modelo `CrmReportDefinition`** (F-RB1=(a)): `id cuid`, `userId` (FK User, cascade como `SavedTableView`), `name`,
    `description?`, `kind` (`chart|table|kpi`), `spec Json` (validado por §3 `ReportSpecSchema`), `chartType`,
    `createdAt/updatedAt/deletedAt` (soft-delete). `@@index([userId])`. Teste: migração aplica em SQLite e é idempotente no prólogo (memória `migracao-sqlite-nao-e-transacional`).
 2. **Repository** `ICrmReportDefinitionRepository` + impl — `findManyByUser`, `findById`, `create`, `update`, `softDelete`; aceita `tx` opcional. Teste: listagem exclui `deletedAt != null`.
-3. **Policy** `CrmReportDefinitionPolicy` — ver/editar/apagar só o dono (F-RB4 pode estender a compartilhamento). Teste: outro usuário → 404 (não 403, padrão anti-enumeração do CRM — confirmar com o precedente `SavedTableViewPolicy` na execução).
+3. **Policy** `CrmReportDefinitionPolicy` (F-RB4=(c)): **ver/rodar** = dono **ou** `ADMIN` (todos os relatórios);
+   **editar/apagar** = só o dono (a cédula ratificou visibilidade do ADMIN, não escrita — escrita de ADMIN seria
+   decisão nova). Não-dono não-ADMIN → 404 (anti-enumeração; confirmar contra `SavedTableViewPolicy` na execução).
+   **Run de relatório alheio pelo ADMIN resolve a fonte contra as tabelas do DONO do relatório (`report.userId`),
+   não do ADMIN** — senão o ADMIN vê os próprios dados com o rótulo de outro. Testes: dono lista só os seus;
+   ADMIN lista todos; ADMIN PUT/DELETE em alheio → 403; outro usuário comum → 404; run pelo ADMIN lê linhas do dono.
+   **D4 não reaberto (verificado contra `COUNCIL-BOARD-CRM-2026-07-20-v3-resolution.md` e o descongelamento de
+   25/09):** o que o D4 congela é *team selling* — equipe, hierarquia, compartilhamento entre vendedores.
+   F-RB4=(c) usa só o papel global `ADMIN` que já existe (mesmo eixo do `canView` do motor, `DynamicTablePolicy`),
+   sem modelo de equipe, sem compartilhamento par-a-par. Se a execução precisar de "equipe", PARE: é D4.
 4. **DTO Zod `.strict()`** (§3) — `CreateCrmReportSchema`, `UpdateCrmReportSchema` (partial + refine não-vazio, cuidado Zod 4 `.partial()` × `.default()`: nenhum `.default()` no create — memória `zod4-partial-aplica-default-reseta-campo`), `RunCrmReportSchema`. Teste de snapshot de shape + testes de refine (source whitelist, measures ≥1, campo inexistente).
 5. **Whitelist de fonte**: `source` só pode ser tabela CRM do próprio usuário (F-RB3 define o conjunto). Resolução por `internalName` (padrão `CrmAnalyticsService.resolveTable`), nunca `tableId` arbitrário vindo do cliente sem checagem de posse. Teste: `tableId` de outro usuário → 404.
 6. **Validação de campos contra o schema vivo da tabela** no save **e** no run: campo inexistente → `400 REPORT_FIELD_NOT_FOUND` com o nome do campo (fecha a classe E8 "descarta em silêncio" para este caminho). Teste: salvar ok → renomear campo no schema → run devolve erro nomeado, não série vazia.
 7. **Service `CrmReportService.run(user, id | spec)`** — traduz `ReportSpec` → `PipelineSpec` e executa via `AggregatePipelineProcessor` (reuso; nada de agregador novo). Saída = `ChartDataPoint[]` (mesmo contrato do `CrmAnalyticsBundle`, consumível por `ChartRenderer`). Teste: fixture com 3 leads em 2 status → contagem por status bate.
 8. **Preview sem salvar** (`POST /api/crm/reports/run` com spec inline) — mesmo caminho do item 7. Teste: spec inválido → 400 na fronteira.
-9. **Limites** (F-RB5): `limit` de pontos na saída e teto de linhas lidas; acima → `422 REPORT_TOO_LARGE`, nunca truncamento silencioso. Teste nos dois lados do teto.
+9. **Limites** (F-RB5=(a), teto conservador): `limit` de pontos na saída e teto de linhas lidas; acima → `422 REPORT_TOO_LARGE`, nunca truncamento silencioso. Teste nos dois lados do teto.
 10. **Rotas** `GET/POST /api/crm/reports`, `GET/PUT/DELETE /api/crm/reports/:id`, `POST /api/crm/reports/run`, `POST /api/crm/reports/:id/run` — registro em 2 toques (`routes/crm*` + `docs.paths.ts`), auth deny-by-default. Gate: guard de path-count do openapi atualizado + `public/openapi.json` regenerado.
 11. **Factory** — `getCrmReportService()` no `lib/factory`. Sem `new` de repo dentro de service.
-12. **Dashboard** (F-RB2): conforme o fork — (a) widget `crmReport` no `DashboardLayout` existente referenciando `reportId` em `widgetConfig`, **ou** (b) entidade própria. Teste do caminho escolhido: widget com `reportId` apagado → erro nomeado.
-13. **Templates iniciais** (F-RB7): os 6 gráficos fixos do `CrmAnalyticsBundle` expressos como `ReportSpec` para o usuário clonar. Teste: cada template roda e bate com o bundle fixo na mesma fixture (paridade).
+12. **Dashboard** (F-RB2=(a)): widget `crmReport` no `DashboardLayout` existente, `widgetConfig: { reportId }`. Validação do `reportId` no service (o DTO do layout tem `widgetConfig: z.any()`). Teste: widget com `reportId` apagado → erro nomeado; `reportId` alheio → 404 (ADMIN: visível, F-RB4).
+13. **Templates iniciais** (F-RB7=(a)): os 6 gráficos fixos do `CrmAnalyticsBundle` expressos como `ReportSpec` para o usuário clonar. Teste: cada template roda e bate com o bundle fixo na mesma fixture (paridade).
 14. **i18n pt/en** das mensagens de erro novas (`REPORT_FIELD_NOT_FOUND`, `REPORT_TOO_LARGE`, `REPORT_SOURCE_NOT_ALLOWED`) — gate de paridade.
-15. **Audit**: sem `eventType` novo previsto (não é dado financeiro). Se F-RB4 abrir compartilhamento, reavaliar allowlist do `auditCanonical.ts`.
+15. **Audit**: sem `eventType` novo previsto (não é dado financeiro; F-RB4=(c) é leitura do ADMIN, sem compartilhamento).
+16. **Remover `POST /api/analytics/custom-kpis`** (F-RB6=(a), emenda do ADR-ANALYTICS-DEFS 26/09): rota, controller,
+    `CustomKpiExecutor`, `KpiSchema` se sem outro consumidor (grep na execução), entrada no `docs.paths.ts` e
+    guard de path-count do openapi. Teste: rota responde 404; `tsc` limpo. PR próprio, antes ou depois do builder.
 
 ## 3. Contratos (esboço — materializar na sessão de feature)
 
@@ -166,17 +178,17 @@ model CrmReportDefinition {
 }
 ```
 
-## 4. Forks — RATIFICAÇÃO PENDENTE (nenhum auto-ratificado)
+## 4. Forks — ✅ 7/7 RATIFICADOS 2026-09-26 (dono, AskUserQuestion)
 
-| Fork | Pergunta | Opções | Recomendação |
-|---|---|---|---|
-| **F-RB1** | Onde a definição salva mora? | **(a)** Prisma first-class `CrmReportDefinition` (padrão `SavedTableView`); **(b)** destravar a tabela DT `analyticsDefinitions` (reverte F-AD0=(c) — policy+preset+4 docs, ADR §2); **(c)** tabela DT **não-system** nova de preset CRM | **(a)** — metadado de plataforma, precedente vivo do mesmo shape em Prisma, não toca o F-AD0 ratificado. Custo: F-AD0/`analyticsDefinitions` continua existindo em paralelo (duas casas de "definição") → F-RB6. |
-| **F-RB2** | O "dashboard" do builder é o quê? | **(a)** widget novo no `DashboardLayout` existente (`widgetConfig.reportId`); **(b)** entidade `CrmDashboard` própria no CRM (lista ordenada de reportIds); **(c)** v1 só relatórios, dashboard depois | **(a)** — reuso do grid canônico; evita segunda casa de layout. Risco: `widgetConfig: z.any()` no DTO do layout (validação fraca herdada). |
-| **F-RB3** | Quais fontes o builder enxerga? | **(a)** só `leads` + `crmOpportunities`; **(b)** todas as tabelas CRM instaladas (whitelist por internalName); **(c)** qualquer tabela do usuário (vira builder genérico, não do CRM) | **(b)** — cobre o gap #14 sem virar builder de plataforma (c = frente nova, exige nova autorização). |
-| **F-RB4** | Visibilidade | **(a)** só o dono; **(b)** dono + "compartilhar com o tenant/equipe"; **(c)** ADMIN vê todos | **(a)** no v1 — compartilhamento depende de modelo de equipe que o D4 manteve congelado (team selling). |
-| **F-RB5** | Expressividade/limites do v1 | **(a)** sem `formula`, ≤2 joins, ≤2 dimensões, ≤4 medidas, teto de linhas lidas com 422; **(b)** paridade total com `PipelineSpec` (inclui `formula` via ExpressionEvaluator); **(c)** sem joins | **(a)** — menor superfície; `formula` executa expressão do usuário e merece revisão própria. Teto numérico = a medir na execução (Insumo ausente §6). |
-| **F-RB6** | Destino dos irmãos `analyticsDefinitions` (congelado) e `custom-kpis` (órfão, F-AD6 "manter até F-AD5 fechar") | **(a)** este nó fecha F-AD5 ⇒ reabrir ADR-ANALYTICS-DEFS com emenda: F-AD5→(b) builder dedicado (no CRM), F-AD6→ deletar `custom-kpis`; **(b)** manter ambos intocados e só registrar; **(c)** convergir `custom-kpis` no `ReportSpec` (medida escalar = `kind:'kpi'`) | **(a)** — o gatilho do F-AD6 é literalmente F-AD5 fechar; deixar dois caminhos órfãos é o risco E12. Decisão de ADR = dono. |
-| **F-RB7** | Templates iniciais | **(a)** os 6 gráficos do `CrmAnalyticsBundle` viram templates clonáveis (paridade testada); **(b)** sem templates; **(c)** substituir o bundle fixo pelos templates (apagar `CrmAnalyticsService` fixo) | **(a)** — destrava o usuário sem tela em branco; (c) é refatoração de algo vivo, fora do #14. |
+| Fork | Pergunta | Opções | Recomendação | Decisão |
+|---|---|---|---|---|
+| **F-RB1** | Onde a definição salva mora? | **(a)** Prisma first-class `CrmReportDefinition` (padrão `SavedTableView`); **(b)** destravar a tabela DT `analyticsDefinitions` (reverte F-AD0=(c) — policy+preset+4 docs, ADR §2); **(c)** tabela DT **não-system** nova de preset CRM | **(a)** — metadado de plataforma, precedente vivo do mesmo shape em Prisma, não toca o F-AD0 ratificado. Custo: F-AD0/`analyticsDefinitions` continua existindo em paralelo (duas casas de "definição") → F-RB6. | ✅ (a) RATIFICADO 2026-09-26 |
+| **F-RB2** | O "dashboard" do builder é o quê? | **(a)** widget novo no `DashboardLayout` existente (`widgetConfig.reportId`); **(b)** entidade `CrmDashboard` própria no CRM (lista ordenada de reportIds); **(c)** v1 só relatórios, dashboard depois | **(a)** — reuso do grid canônico; evita segunda casa de layout. Risco: `widgetConfig: z.any()` no DTO do layout (validação fraca herdada). | ✅ (a) RATIFICADO 2026-09-26 |
+| **F-RB3** | Quais fontes o builder enxerga? | **(a)** só `leads` + `crmOpportunities`; **(b)** todas as tabelas CRM instaladas (whitelist por internalName); **(c)** qualquer tabela do usuário (vira builder genérico, não do CRM) | **(b)** — cobre o gap #14 sem virar builder de plataforma (c = frente nova, exige nova autorização). | ✅ (b) RATIFICADO 2026-09-26 |
+| **F-RB4** | Visibilidade | **(a)** só o dono; **(b)** dono + "compartilhar com o tenant/equipe"; **(c)** ADMIN vê todos | **(a)** no v1 — compartilhamento depende de modelo de equipe que o D4 manteve congelado (team selling). | ✅ **(c)** RATIFICADO 2026-09-26 — **diverge** da recomendação; checklist 3 ajustado; D4 não reaberto |
+| **F-RB5** | Expressividade/limites do v1 | **(a)** sem `formula`, ≤2 joins, ≤2 dimensões, ≤4 medidas, teto de linhas lidas com 422; **(b)** paridade total com `PipelineSpec` (inclui `formula` via ExpressionEvaluator); **(c)** sem joins | **(a)** — menor superfície; `formula` executa expressão do usuário e merece revisão própria. Teto numérico = a medir na execução (Insumo ausente §6). | ✅ (a) RATIFICADO 2026-09-26 |
+| **F-RB6** | Destino dos irmãos `analyticsDefinitions` (congelado) e `custom-kpis` (órfão, F-AD6 "manter até F-AD5 fechar") | **(a)** este nó fecha F-AD5 ⇒ reabrir ADR-ANALYTICS-DEFS com emenda: F-AD5→(b) builder dedicado (no CRM), F-AD6→ deletar `custom-kpis`; **(b)** manter ambos intocados e só registrar; **(c)** convergir `custom-kpis` no `ReportSpec` (medida escalar = `kind:'kpi'`) | **(a)** — o gatilho do F-AD6 é literalmente F-AD5 fechar; deixar dois caminhos órfãos é o risco E12. Decisão de ADR = dono. | ✅ (a) RATIFICADO 2026-09-26 — emenda registrada no ADR |
+| **F-RB7** | Templates iniciais | **(a)** os 6 gráficos do `CrmAnalyticsBundle` viram templates clonáveis (paridade testada); **(b)** sem templates; **(c)** substituir o bundle fixo pelos templates (apagar `CrmAnalyticsService` fixo) | **(a)** — destrava o usuário sem tela em branco; (c) é refatoração de algo vivo, fora do #14. | ✅ (a) RATIFICADO 2026-09-26 |
 
 ## 5. Pendente de validação externa
 
