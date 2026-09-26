@@ -14,7 +14,8 @@ atualizado: "2026-09-26"
 
 **Estado:** `planned` — BRIEF em PR #395; 7/7 forks RATIFICADOS 26/09 (F-RB4=(c) diverge da recomendação); F-AD5→(b) e custom-kpis→apagar emendados no ADR; planned (sem PRE-ADR do nó); código não iniciado; exige 'executa'  
 **Autorização:** "autorizo planejar o builder de relatórios do CRM" — dono, chat, 2026-09-26; forks F-RB1..F-RB7 ratificados 2026-09-26 via AskUserQuestion (1a·2a·3b·**4c**·5a·6a·7a). Não autoriza código.  
-**Por que `planned` e não `ready`:** `docs/plano/README.md` exige PRE-ADR ratificado antes de nó novo em `nos/`; este nó nasceu por instrução com autorização citável, mas sem PRE-ADR próprio. A emenda do ADR-ANALYTICS-DEFS cobre F-AD5/F-AD6, não a abertura do nó — promover a `ready` fica para o dono (ou um PRE-ADR).  
+**Por que `planned` e não `ready`:** `docs/plano/README.md` exige PRE-ADR ratificado antes de nó novo em `nos/`; este nó nasceu por instrução com autorização citável, mas sem PRE-ADR próprio. A emenda do ADR-ANALYTICS-DEFS cobre F-AD5/F-AD6, não a abertura do nó. **Decisão do dono 2026-09-26 (AskUserQuestion): nó segue `planned`; o PRE-ADR é passo próprio, antes do 'executa'.**  
+**F-RB4 complemento (dono, 2026-09-26):** ADMIN com controle total (lê/roda/edita/apaga qualquer relatório).  
 **Depende de:** [[I8]]? (condicional: fontes do builder = tabelas CRM instaladas; com I8 elas passam a depender de módulo ligado)  
 **Desbloqueia:** —  
 **Âncora:** gap **#14** da Parte B de `docs/crm/CRM_REMEDIATION_AND_ROADMAP.md` ("Relatórios & Dashboards customizáveis … builder self-service"), congelado pelo D4 do conselho CRM de 20/07 e **descongelado pelo dono em 25/09** (discordância só neste item; o resto do D4 segue congelado).
