@@ -9,6 +9,11 @@ import {
   ValidateBindingRequestSchema,
 } from '../dtos/CompileBindingDto';
 import type { BindingCompileService } from '../services/BindingCompileService';
+import type { BindingActivationService } from '../services/BindingActivationService';
+import {
+  ActivateDefaultBindingRequestSchema,
+  ActivateDefaultBindingResultSchema,
+} from '../dtos/ActivateDefaultBindingDto';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1) — handlers das 3 rotas do módulo (Corpo C, item 15
@@ -18,6 +23,7 @@ import type { BindingCompileService } from '../services/BindingCompileService';
  *   POST /accounting-binding/compile   → compila e persiste (auto-ativa OU Draft, F-BP-2b)
  *   POST /accounting-binding/validate  → roda o validador SEM persistir
  *   GET  /accounting-binding           → lista os bindings do escopo
+ *   POST /accounting-binding/activate-default → binding PADRÃO do setor (LAC-B, equivalente HTTP do CLI)
  *
  * Não há rota `activate` separada (F-BP-2b: a ativação é efeito do compile).
  *
@@ -34,10 +40,12 @@ import type { BindingCompileService } from '../services/BindingCompileService';
  */
 export interface AccountingBindingControllerDeps {
   buildCompileService: (scope: BindingScope) => BindingCompileService;
+  /** LAC-B — mesma fábrica-por-escopo, para o `activate-default`. */
+  buildActivationService: (scope: BindingScope) => BindingActivationService;
 }
 
 export function createAccountingBindingController(deps: AccountingBindingControllerDeps) {
-  const { buildCompileService } = deps;
+  const { buildCompileService, buildActivationService } = deps;
 
   /** POST /accounting-binding/compile */
   const compileBinding = async (req: Request, res: Response) => {
@@ -106,5 +114,24 @@ export function createAccountingBindingController(deps: AccountingBindingControl
     }
   };
 
-  return { compileBinding, validateBinding, listBindings };
+  /** POST /accounting-binding/activate-default — LAC-B (FE-INCR-BINDING-ACTIVATION + emenda F-I3-1 a). */
+  const activateDefaultBinding = async (req: Request, res: Response) => {
+    try {
+      const user = getUserContextFromRequest(req);
+      if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+      const parsed = ActivateDefaultBindingRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ success: false, error: parsed.error.flatten() });
+      }
+      const { unitId, ...options } = parsed.data;
+      const scope = resolveBindingScope(user, unitId);
+      const result = await buildActivationService(scope).activateDefault(scope, options);
+      return res.json({ success: true, data: ActivateDefaultBindingResultSchema.parse(result) });
+    } catch (error) {
+      return handleApiError(error, res);
+    }
+  };
+
+  return { compileBinding, validateBinding, listBindings, activateDefaultBinding };
 }

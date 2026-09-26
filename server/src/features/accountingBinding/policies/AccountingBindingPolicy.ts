@@ -18,4 +18,8 @@ export class AccountingBindingPolicy implements IAccountingBindingPolicy {
   canRead(scope: BindingScope): boolean {
     return !!scope.actorUserId;
   }
+
+  canActivateDefault(scope: BindingScope): boolean {
+    return !!scope.actorUserId;
+  }
 }
