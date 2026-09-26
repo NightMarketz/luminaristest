@@ -99,6 +99,7 @@ que citava o antigo precisa ser reconferido.
 - **lei-9718-1998** — <http://www.planalto.gov.br/ccivil_03/leis/l9718.htm>
   - **2026-09-25:** rebaixada p/ a Fase 1 (C-2): mesmos 196.422 bytes, sha256 agora `dab540ec7cd2` (Planalto reeditou sem mudar o tamanho). Art. 4º relido nesta data — ver `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`. Idem `lei-10865-2004`: 389.869 bytes, sha256 agora `fb07460dfb92`.
 - **lei-13097-2015** — <http://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13097.htm> — acrescentada 2026-09-25 (Fase 1 do PLANO-POS-CONTADOR, passo 1.5); sha256 completo `c6679a9a9fa3ee541c63e915cbcc0a190b97764b388a21d372c59c273e1f393f`; transcrição em `TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md`.
+
 - **lc-123-2006** — <http://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>
 - **tabela-4310-efd** — <http://sped.rfb.gov.br/arquivo/download/1638> (host so responde em `http://`) — baixada 2026-09-27;
   binario `.doc` (OLE2/Word) de 293.888 bytes, sha256 `82441544f8ac556c26bdbc6193777e42afaeef797621ac5199df7a7b05cad917`.
@@ -109,3 +110,7 @@ que citava o antigo precisa ser reconferido.
   **Extracao LOSSY (medido no review de 27/09):** o `antiword` nao emite a linha encerrada do codigo 101
   (`2710.11.59`, 01/2011-31/12/2011), que existe no `.doc` (1 ocorrencia no stream `WordDocument`). As linhas
   VIGENTES conferem uma a uma; para historico de linha encerrada, leia o `.doc` pelo sha256 acima, nao este `.txt`.
+- **lc-214-2025** — <https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm> — baixada 2026-09-27 (V5 da Fase 0),
+  5.402.213 bytes, sha256 `ddeafec2054c`. **Nao commitada** (5,4 MB de HTML): o trecho que interessa esta transcrito em
+  `TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md` (art. 10 caput, §§ 1o III, 3o, 4o, 5o, 7o — redacao
+  vigente, ja com a LC 227/2026). O host recusa conexao sem `User-Agent` de navegador.

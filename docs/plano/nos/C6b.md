@@ -4,7 +4,7 @@ tipo: "regua"
 dominio: "contabil"
 titulo: "Pacote ampliado ao contador (tabela filha AccountingDeliveryItem)"
 estado: "done"
-estado_detalhe: "✅ #337/#338/#340 → 373d00d4 (17/09); residual FE-INCR-DELIVERY"
+estado_detalhe: "✅ #337/#338/#340 → 373d00d4 (17/09); residual FE-INCR-DELIVERY. **Emenda ABERTA (Fase 3.4 do plano pós-contador, sem BRIEF):** memória de cálculo, créditos por nota e item, aging conciliado, ficha do imobilizado, inventário, conciliação apurado × contabilizado × pago, XLSX (dependência nova? checar antes) — a memória de IRPJ/CSLL depende do [[X7]]"
 depende_de: ["[[C6]]"]
 autorizacao: "\"executa C6b\" (dono, 16/09)"
 prs: ["#324", "#336", "#337", "#338", "#340"]
@@ -13,7 +13,7 @@ atualizado: "2026-09-23"
 ---
 # C6b — Pacote ampliado ao contador (tabela filha AccountingDeliveryItem)
 
-**Estado:** `done` — ✅ #337/#338/#340 → 373d00d4 (17/09); residual FE-INCR-DELIVERY  
+**Estado:** `done` — ✅ #337/#338/#340 → 373d00d4 (17/09); residual FE-INCR-DELIVERY. **Emenda ABERTA (Fase 3.4 do plano pós-contador, sem BRIEF):** memória de cálculo, créditos por nota e item, aging conciliado, ficha do imobilizado, inventário, conciliação apurado × contabilizado × pago, XLSX (dependência nova? checar antes) — a memória de IRPJ/CSLL depende do [[X7]]  
 **Autorização:** "executa C6b" (dono, 16/09)  
 **Depende de:** [[C6]]  
 **Desbloqueia:** [[FE-INCR-DELIVERY]]  
@@ -24,6 +24,7 @@ atualizado: "2026-09-23"
 
 - [`docs/accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](../../accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md)
 - [`docs/accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md`](../../accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md)
+- [`PLANO-POS-CONTADOR-2026-09-23.md`](../../accounting/PLANO-POS-CONTADOR-2026-09-23.md) — fila viva das fases pós-contador — Fase 3.4 (emenda: relatórios do pacote)
 
 ## Evidência
 

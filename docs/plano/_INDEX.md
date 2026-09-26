@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 21 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 10 | 17 |
-| **total** | **48** | **58** |
+| fiscal | 10 | 19 |
+| **total** | **48** | **60** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -24,10 +24,12 @@
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready | — |
 | [[FE-INCR-REVIEW]] | Aba do C11 (revisão profissional) | planned | — |
 | [[GET-DATA-EXCHANGE-JOBS]] | Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria | planned | F-FA15 → (a) (dono, 18/09) |
+| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned | — |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready | F-I1-3 → (b) 2026-09-07 |
 | [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned | — |
 | [[I8]] | CRM como categoria composta por módulos (BE-INCR-CRM-MODULE-COMPOSITION) | ready | F-I8-1 → (d) + 9/9 forks 2026-09-07 (execução sem 'executa') |
 | [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | planned | dono 'Ativar agora' 2026-09-07 |
+| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned | — |
 | [[X12]] | Catálogo de adições/exclusões dirigido por dado (F-COB-1 → b) | planned | resposta 4 + F-COB-1 → (b) (10/09) |
 
 ## Fila aberta
@@ -36,7 +38,7 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open — Resposta recebida 23/09; triagem em docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md (3 críticas PIS/COFINS, requisitos novos). Faltam: códigos do referencial, cClassTrib, D8 | — | — |
+| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open — Resposta recebida 23/09; triagem em docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md. Das 3 críticas de PIS/COFINS: C-1 e C-3 FECHADAS 25/09 (#381), C-2 metade (bebidas frias sim, combustíveis ABERTO — GAP-MAP 13). Requisitos novos viraram [[ITEM-DESTINATION]] (3.1) e emendas em [[C8]]/[[F7]]/[[X4]]/[[C6b]]. Faltam do contador: códigos do referencial, cClassTrib, D8, follow-up 0.8 (a–e) não enviado | — | — |
 | [[D1f]] | Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib) | human-open — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib | [[D1]] ✗ | — |
 | [[D2]] | XML de NF-e real (compra da própria empresa, ago/set 2026) | human-open | — | — |
 | [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open — Critério do parceiro: N contas sob 1 chave (R8) + emitir NFC-e 65 (triagem 23/09 P3) + NFS-e nacional do Simples até 01/11/2026 | — | — |
@@ -74,11 +76,13 @@
 | --- | --- | --- | --- | --- |
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — BRIEF próprio, ainda não aberto | [[X10b]] | — |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready — Crescimento do X4; falta 'executa' | [[X4]] | — |
+| [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
+| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned — **Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Lacuna MEDIDA 23/09 (V2): nenhum `Signature`/xmldsig em `server/src` — produção importa XML sem verificar assinatura. Falta instrumentar (teste-guarda: XML com `<Signature>` adulterada hoje importa; esperado 400) e o fork F-SIG-1 | [[FIS-08]] | — |
 | [[X10a]] | Adaptador por TIPO de documento fiscal (NFS-e, NF-e 55…) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: 'materializou dentro do nó X10b' (só NFS-e existe; NF-e 55 fora); §18.1 Onda 1 e grafo 14/09 ainda o listam  | [[X10b]] | resposta 9 (10/09) — requisito, sem 'executa' |
 | [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte. Triagem 23/09: NFS-e Simples obrigatória 01/11/2026 (sem facultativo), NBS obrigatório, NF-e antecipada 01/12/2026 p/ não contribuinte ICMS, gate de fechamento com prestação sem nota | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
 | [[X11]] | Eventos de DF-e com prazo legal validado (cancelamento, substituição, CC-e) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: materializou dentro de X10b (F-DFE-12; cancelamento com janela existe); grafo 14/09 e §18.1 ainda o listam a | [[X10i]] ✗ | resposta 13 (10/09) |
 | [[X12]] | Catálogo de adições/exclusões dirigido por dado (F-COB-1 → b) | planned — estado do grafo 14/09 (planned); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09 diz que materializou dentro de X10b (improvável: é bloco M/e-Lalur); grafo 14/09: plan (BRIEF); §18.1 Onda 1  | [[X4]], [[D3b]] | resposta 4 + F-COB-1 → (b) (10/09) |
-| [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | blocked — ADR não aberto; espera D1 itens 1/1b; Serpro adiado (R5) | [[D1]] ✗ | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral) |
+| [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | blocked — ADR não aberto; espera D1 itens 1/1b; Serpro adiado (R5). **Fase 4 do plano pós-contador**: insumos = tabela de obrigações do contador + verificação V4 (DIRF extinta? DCTFWeb absorveu IRPJ/CSLL/PIS/COFINS em 2025? GIA-SP/SAT?) — V4 ABERTA. Fork F-X7-1 PENDENTE: o F-M8 fixou trimestral, o contador pede também estimativa mensal com balancete de suspensão/redução, por cliente (recomendação do plano: reabrir o F-M8) | [[D1]] ✗ | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral) |
 | [[X8]] | EFD-Contribuições (+ apuração PIS/COFINS, raso, por último) | blocked — ADR não aberto; depende de X7 | [[X7]] ✗ | F-M2 (2026-09-03) — só ADR |
 | [[X9]] | DCTF / DCTFWeb (MIT) | blocked — ADR não aberto; depende de X7 (pode fundir) | [[X7]] ✗ | F-M2 (2026-09-03) — só ADR |
 
@@ -86,6 +90,7 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
+| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned — Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) | [[C11]], [[Z0-a]] | — |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready — BRIEF no I1; F-I1b-1 → (b); código não iniciado | — | F-I1-3 → (b) 2026-09-07 |
 | [[I3]] | activate-default + período OPEN (backend da LAC-B) | planned — F-I3-1 → (a) openCurrentPeriodIfMissing; demais forks pendentes | [[LAC-B]] ✗ | LAC-B ativada + F-I3-1 → (a) (07/09) |
 | [[I4]] | Onboarding chama activate-default | planned — Forks F-I4-1..3 pendentes | [[I1]], [[I3]] ✗, [[I5]] ✗ | — |
@@ -99,7 +104,7 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (22): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (23): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (4): [[B-4]] · [[SEED-MY]] · [[X2]] · [[Z0-a]]
 - **motor** (1): [[PASSO-11]]

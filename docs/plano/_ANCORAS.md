@@ -7,13 +7,14 @@
 | §18.2 | [[X10i]] |
 | §III.1 · §III.3 §1 | [[GET-DATA-EXCHANGE-JOBS]] |
 | §III.1 · §M5.1 (apontadores) | [[ENVIO-PEDIDO-CONTADOR]] |
+| §III.1 (fora da régua — PROPOSTO) | [[GOV-CONTADOR]] |
 | §III.1 (fora da régua) | [[FE-INCR-DELIVERY]] · [[FE-INCR-FIXED-ASSETS]] · [[FE-INCR-REVIEW]] · [[FE-INCR-SPED-SIGNERS]] |
 | §III.1 passo 11 · §III.4 | [[PASSO-11]] |
 | §III.1 passo 12 · §III.4 | [[PASSO-12]] |
 | §III.1 passo 13 · §III.4 | [[PASSO-13]] |
 | §III.1 passo 6 · §III.2 | [[FE-INCR-LALUR-PR2]] |
 | §III.1 passo 7 · §III.2 | [[FE-INCR-BANK-SETTLEMENT]] |
-| §III.2 | [[D-NFSE]] · [[D1]] · [[D1f]] · [[D2]] · [[D3b]] · [[D5]] · [[D6]] · [[D7]] · [[D8]] · [[FF7]] · [[H1b]] · [[H3]] · [[P4]] · [[X10]] · [[X10i]] · [[X4-14]] |
+| §III.2 | [[D-NFSE]] · [[D1]] · [[D1f]] · [[D2]] · [[D3b]] · [[D5]] · [[D6]] · [[D7]] · [[D8]] · [[FF7]] · [[H1b]] · [[H3]] · [[ITEM-DESTINATION]] · [[P4]] · [[SIG-NFE]] · [[X10]] · [[X10i]] · [[X4-14]] |
 | §III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8 | [[SEED-MY]] |
 | §III.2 · §M5.1 Bloco A | [[B-4]] |
 | §III.2 · §M5.1 Bloco A item 3 | [[H1]] |

@@ -1,5 +1,21 @@
 # Plano pós-resposta do contador — 2026-09-23
 
+> **⚠️ ESTADO VIVO NÃO MORA AQUI (desde 2026-09-25).** A fonte única de estado e fila é o vault [`docs/plano/`](../plano/README.md) — este documento é **insumo**: guarda o raciocínio da ordem, os critérios de pronto e o texto dos forks. Cada fase tem nó ou ponteiro lá, e é lá que se lê o que está aberto:
+>
+> | Fase | Onde vive no vault |
+> |---|---|
+> | 0 verificações V4/V5/V7 | [`X7`](../plano/nos/X7.md) (V4) · este doc (V5/V7, sem nó — checagens de leitura) |
+> | 0.8 follow-up ao contador | [`ENVIO-PEDIDO-CONTADOR`](../plano/gates/ENVIO-PEDIDO-CONTADOR.md) · [`D1`](../plano/gates/D1.md) |
+> | 1 PIS/COFINS | [`X6`](../plano/nos/X6.md) — **fechada 25/09** (#379 + #381); residual combustíveis no GAP-MAP 13 |
+> | 2 assinatura XML | [`SIG-NFE`](../plano/nos/SIG-NFE.md) |
+> | 3.1 destinação por item | [`ITEM-DESTINATION`](../plano/nos/ITEM-DESTINATION.md) |
+> | 3.2 · 3.3 · 3.4 emendas | [`C8`](../plano/nos/C8.md) · [`F7`](../plano/nos/F7.md) + [`X4`](../plano/nos/X4.md) · [`C6b`](../plano/nos/C6b.md) |
+> | 4 ADR do X7 | [`X7`](../plano/nos/X7.md) |
+> | 5 governança do contador | [`GOV-CONTADOR`](../plano/nos/GOV-CONTADOR.md) |
+> | 6 registros sem código | folds das notas citadas em cada item |
+>
+> Divergência entre este doc e o frontmatter de uma nota → **a nota vence** (regra do [`README` do vault](../plano/README.md)).
+
 > Pedido do dono (23/09): *"Planeje na ordem com granularidade"*. Insumo:
 > `TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md`.
 >
@@ -31,13 +47,13 @@ As Fases 0 e 1 podem rodar em paralelo. O C8 PR-4 (#368) segue independente.
 | 0.3 | ✅ **V3** Limite de R$1.200 no C8: inexistente | vira o passo 3.2 | feito 23/09 (verificado por grep) |
 | 0.4 | **V4** DIRF extinta? DCTFWeb absorveu IRPJ/CSLL/PIS/COFINS em 2025? GIA-SP/SAT? — nas fontes oficiais (corpus ou gov.br) | nota com fonte + data de cada um | 3 respostas com link oficial; o que não achar fica "não verificado" |
 | 0.5 | **V5** Art. 10 da LC 214 (pagamento antecipado × pacote pré-pago) — texto da lei no corpus | trecho + leitura | trecho transcrito, com a leitura rotulada como inferida |
-| 0.6 | **V6** Base do crédito de PIS/COFINS hoje inclui IPI? Ler `nfeCost.ts` (base do crédito, não do custo) | confirma ou vira caso do 1.4 | linha exata citada |
+| 0.6 | ✅ **V6** (23–25/09: incluía, via flag `pisCofinsCreditIncludesIpi`, `nfeCost.ts:130`) Base do crédito de PIS/COFINS hoje inclui IPI? Ler `nfeCost.ts` (base do crédito, não do custo) | confirma ou vira caso do 1.4 | linha exata citada |
 | 0.7 | **V7** Pacote pré-pago lança em passivo (adiantamento de cliente)? Localizar o fluxo no código | confirma ou vira achado | arquivo:linha |
 | 0.8 | **Follow-up ao contador** (skill `luminaris-contador-liaison`, rascunho; **o dono envia**): (a) 13c reformulado — o M010 é aberto pela empresa **com** `COD_PB_RFB` da tabela PARTEB_PADRAO; qual dos 1071/2210/3130 ele usa; (b) códigos do referencial para juros/multa/descontos e imobilizado; (c) dados do declarante/signatários (D8); (d) `cClassTrib` dos serviços 6.01/6.02; (e) se ele aceita a leitura "monofásico como insumo dá crédito" sem solução de consulta (P4) | `PEDIDO-CONTADOR-2026-09-23-followup.md` | texto curto + critério de aceite interno por item |
 
 ## Fase 1 — PIS/COFINS (cadeia instrumentação → correção)
 
-**Autorização que falta:** "instrumenta a Fase 1" e depois "corrige a Fase 1" (ou as duas juntas).
+**Autorização:** ✅ dada 25/09 — "instrumenta a Fase 1" (PR #379) e "Corrige a Fase 1" (PR #381), com **F-PC-1 → (b)** e **F-PC-2 → (a)** ratificados na mesma data. **Fase 1 FECHADA**, com um residual nomeado (combustíveis, abaixo).
 
 > **2026-09-25 — 1.1–1.6 instrumentados (PR #379, `f8029916`)**, autorização do dono 25/09. V6 (0.6) confirmou IPI na base via flag (`nfeCost.ts:130`) → 1.4 existe. 4 `it.failing` (GAP-MAP 10–13). **C-2 só a metade bebidas:** combustíveis BLOQUEADO — a Lei 9.718 art. 4º nomeia produtos, sem NCM (`fontes-oficiais/TRANSCRICAO-monofasico-bebidas-combustiveis-2026-09-25.md` §B). **Achado para 1.8:** Lei 13.097 art. 29 veda crédito só na revenda do varejista (art. 28/17); não-varejista credita pelo valor da nota (art. 30) — regra que o modelo não tem. Falta: "corrige a Fase 1" + F-PC-1/F-PC-2.
 >
@@ -51,13 +67,17 @@ As Fases 0 e 1 podem rodar em paralelo. O C8 PR-4 (#368) segue independente.
 | 1.4 | Teste-guarda **IPI** (só se o V6 mostrar IPI na base): vIPI > 0 → base do crédito sem IPI | instrumentação | `nfeCost.test.ts` | idem |
 | 1.5 | **Transcrição** das Leis 13.097/2015 (bebidas frias) e da legislação de combustíveis, pela redação **vigente** e versão compilada, com chave = ordinal da fonte (memória `tabela-transcrita-de-lei`) | planejamento/insumo | corpus `fontes-oficiais/` + MANIFEST | sha da fonte registrado |
 | 1.6 | Teste-guarda **C-2**: um NCM de bebida fria e um de combustível → hoje `TRIBUTADO`; esperado `MONOFASICO` | instrumentação | `pisCofinsMonofasicoNcm.test.ts` | `it.failing` vermelho |
-| 1.7 | Correção C-1 + C-3 (+ IPI): NCM decide; CST divergente vira `warning`; CST 02 fora da lista credita pela alíquota básica | correção | `pisCofinsMonofasicoNcm.ts:115-137`, `nfeCost.ts` | 1.2/1.3/1.4 viram `it`; suíte X6 verde |
-| 1.8 | Correção C-2: ampliar `PIS_COFINS_MONOFASICO_NCM` com a transcrição do 1.5 | correção | `pisCofinsMonofasicoNcm.ts` | 1.6 vira `it` |
-| 1.9 | Review independente + CI Linux + merge; fold do X6 (emenda) e do GAP-MAP | integração | — | PASS + CI verde |
+| 1.7 | ✅ **#381** — Correção C-1 + C-3 (+ IPI): NCM decide; CST divergente vira `warning`; CST 02 fora da lista credita pela alíquota básica | correção | `pisCofinsMonofasicoNcm.ts:115-137`, `nfeCost.ts` | 1.2/1.3/1.4 viram `it`; suíte X6 verde |
+| 1.8 | ✅ **#381** (metade bebidas) — Correção C-2: ampliar `PIS_COFINS_MONOFASICO_NCM` com a transcrição do 1.5 | correção | `pisCofinsMonofasicoNcm.ts` | 1.6 vira `it` |
+| 1.9 | ✅ **#381 mergeado** (`c1937b1a`, 25/09) — GAP-MAP 10–13 `FECHADO` no próprio PR; fold do X6 neste commit | integração | — | PASS + CI verde |
 
-**Forks pendentes da Fase 1:**
-- **F-PC-1** — Crédito de compra de fornecedor do Simples (`nfeCost.ts:111`, hoje zerado por default conservador). O contador toma o crédito integral (ADI 15/2007). (a) O default passa a ser "credita", configurável por cliente. (b) O default continua "não credita", e o cliente liga com a aprovação do contador. **Recomendação: (b)** — casa com o item 0, em que política é aprovada pelo contador, e não muda o comportamento de quem já usa.
-- **F-PC-2** — O alerta de CST divergente aparece: (a) só no retorno da importação (`warnings`), ou (b) também persistido para a revisão do contador (C11). **Recomendação: (a) agora, (b) quando a Fase 5 existir.**
+> **2026-09-25 (tarde) — CORRIGIDA E MERGEADA: PR #381 `c1937b1a`.** `classifyPisCofinsItem` passa a decidir **pelo NCM** (CST 04 com NCM fora da tabela → `TRIBUTADO` + alerta); `CST_TRIBUTADO = [01, 02]` (CST 02 credita com alerta); `nfeCost.ts` **nunca** soma IPI à base e `UpsertFiscalProfileSchema` passa a **rejeitar** `pisCofinsCreditIncludesIpi=true` com 400 (STJ Tema 1.373 — regra fixa, não parâmetro); tabela recebe a **Lei 13.097/2015 art. 14 I–IV** (bebidas frias). Os 4 `it.failing` de #379 viraram `it`; 3 asserções que fixavam o comportamento antigo foram trocadas com comentário `ERRATA 2026-09-25` (declarado no GAP-MAP, não é regressão).
+>
+> **Residual ABERTO (não vira fase nova):** **combustíveis** seguem fora de `PIS_COFINS_MONOFASICO_NCM` — falta a fonte oficial dos NCM (o 1.5 só rendeu a Lei 13.097); e o crédito do não-varejista pelo valor da nota (art. 30) não está modelado — conservador = sem crédito. Registrado na linha 13 do [`GAP-MAP`](../operating-manual/GAP-MAP.md), que segue **aberto** nessa metade.
+
+**Forks da Fase 1 — ✅ RATIFICADOS 25/09 (dono, em sessão; registro no corpo do PR #381):**
+- **F-PC-1 → (b)** (mantém o default conservador; zero código) — Crédito de compra de fornecedor do Simples (`nfeCost.ts:111`, hoje zerado por default conservador). O contador toma o crédito integral (ADI 15/2007). (a) O default passa a ser "credita", configurável por cliente. (b) O default continua "não credita", e o cliente liga com a aprovação do contador. **Recomendação: (b)** — casa com o item 0, em que política é aprovada pelo contador, e não muda o comportamento de quem já usa.
+- **F-PC-2 → (a)** (alerta só no `warnings` da importação) — O alerta de CST divergente aparece: (a) só no retorno da importação (`warnings`), ou (b) também persistido para a revisão do contador (C11). **Recomendação: (a) agora, (b) quando a Fase 5 existir.**
 
 ## Fase 2 — Assinatura XML da NF-e
 
@@ -123,7 +143,7 @@ As Fases 0 e 1 podem rodar em paralelo. O C8 PR-4 (#368) segue independente.
 ## Autorizações que destravam tudo, em uma linha cada
 
 1. "Executa a Fase 0" (verificações V4–V7 + rascunho do follow-up ao contador).
-2. "Instrumenta e corrige a Fase 1" + respostas a F-PC-1/F-PC-2.
+2. ~~"Instrumenta e corrige a Fase 1" + respostas a F-PC-1/F-PC-2.~~ ✅ **feito 25/09** (#379 + #381).
 3. "Instrumenta a assinatura" + F-SIG-1.
 4. "Planeja a Fase 3".
 5. "Abre o ADR do X7" + F-X7-1.
