@@ -38,6 +38,8 @@ export const ActivationBlockingIssueSchema = z
     message: z.string().min(1),
     slot: z.string().optional(),
     accountCode: z.string().optional(),
+    /** Só em `ACCOUNTING_PERIOD_NOT_OPEN` — contrato da emenda I3 (ONBOARDING-WIZARD-plano-grafo-brief §3). */
+    period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   })
   .strict();
 export type ActivationBlockingIssue = z.infer<typeof ActivationBlockingIssueSchema>;

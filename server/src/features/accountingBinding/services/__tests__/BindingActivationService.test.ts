@@ -139,7 +139,10 @@ describe('BindingActivationService.activateDefault', () => {
     async (period) => {
       const b = build({ period });
       const r = await b.service.activateDefault(scope, {});
-      expect(r).toEqual({ status: 'Draft', blocking: [expect.objectContaining({ code: 'ACCOUNTING_PERIOD_NOT_OPEN' })] });
+      expect(r).toEqual({
+        status: 'Draft',
+        blocking: [expect.objectContaining({ code: 'ACCOUNTING_PERIOD_NOT_OPEN', period: '2026-09' })],
+      });
       expect(b.periodPort.status).toHaveBeenCalledWith(2026, 9);
       nothingWritten(b);
     },

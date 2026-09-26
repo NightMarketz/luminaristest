@@ -4217,7 +4217,7 @@
  *           application/json:
  *             schema: { $ref: '#/components/schemas/AccountingBindingActivateDefaultRequest' }
  *       responses:
- *         '200': { description: "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message }] }" }
+ *         '200': { description: "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message, period? ('YYYY-MM', só em ACCOUNTING_PERIOD_NOT_OPEN) }] }" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

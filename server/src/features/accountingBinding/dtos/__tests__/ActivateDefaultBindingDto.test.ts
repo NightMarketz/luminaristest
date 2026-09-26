@@ -36,9 +36,14 @@ describe('ActivateDefaultBindingResultSchema (LAC-B, contrato de saída)', () =>
     expect(
       ActivateDefaultBindingResultSchema.safeParse({
         status: 'Draft',
-        blocking: [{ code: 'ACCOUNTING_PERIOD_NOT_OPEN', message: 'x' }],
+        blocking: [{ code: 'ACCOUNTING_PERIOD_NOT_OPEN', period: '2026-09', message: 'x' }],
       }).success,
     ).toBe(true);
+  });
+
+  it("period segue 'YYYY-MM' (contrato da emenda I3)", () => {
+    const issue = (period: string) => ({ status: 'Draft', blocking: [{ code: 'ACCOUNTING_PERIOD_NOT_OPEN', period, message: 'x' }] });
+    expect(ActivateDefaultBindingResultSchema.safeParse(issue('2026/09')).success).toBe(false);
   });
 
   it('rejeita status fora do enum e chave extra', () => {

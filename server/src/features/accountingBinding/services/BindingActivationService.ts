@@ -87,7 +87,7 @@ export class BindingActivationService {
     const [year, month] = this.today().split('-').map(Number);
     const chart = await this.chartPort.listChart();
     const periodStatus = await this.periodPort.status(year, month);
-    const periodLabel = `${year}/${String(month).padStart(2, '0')}`;
+    const period = `${year}-${String(month).padStart(2, '0')}`;
 
     const blocking: ActivationBlockingIssue[] = [];
     if (chart.length === 0 && !input.installChartIfEmpty) {
@@ -100,12 +100,14 @@ export class BindingActivationService {
     if (periodMissing && !input.openCurrentPeriodIfMissing) {
       blocking.push({
         code: 'ACCOUNTING_PERIOD_NOT_OPEN',
-        message: `O período ${periodLabel} não está aberto. Envie openCurrentPeriodIfMissing: true para abri-lo.`,
+        period,
+        message: `O período ${period} não está aberto. Envie openCurrentPeriodIfMissing: true para abri-lo.`,
       });
     } else if (periodStatus === 'SOFT_CLOSED' || periodStatus === 'HARD_CLOSED') {
       blocking.push({
         code: 'ACCOUNTING_PERIOD_NOT_OPEN',
-        message: `O período ${periodLabel} está fechado (${periodStatus}); reabra-o antes de ativar o binding.`,
+        period,
+        message: `O período ${period} está fechado (${periodStatus}); reabra-o antes de ativar o binding.`,
       });
     }
     if (blocking.length > 0) return { status: 'Draft', blocking };

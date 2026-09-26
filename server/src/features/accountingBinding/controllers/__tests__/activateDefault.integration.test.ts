@@ -10,7 +10,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
-import { CANONICAL_ACCOUNTS } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
 
 const app = makeApp();
 const URL = '/api/accounting-binding/activate-default';
@@ -65,6 +65,8 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
       'CHART_OF_ACCOUNTS_EMPTY',
       'ACCOUNTING_PERIOD_NOT_OPEN',
     ]);
+    const { year, month } = hoje();
+    expect(res.body.data.blocking[1].period).toBe(`${year}-${String(month).padStart(2, '0')}`);
     expect(await foto(dono.id)).toEqual({ bindings: 0, contas: 0, periodos: 0 });
   });
 
@@ -80,9 +82,13 @@ describe('POST /api/accounting-binding/activate-default (LAC-B)', () => {
     const { year, month } = hoje();
     const periodo = await prisma.accountingPeriod.findFirst({ where: { userId: dono.id, unitId: UNIT, year, month } });
     expect(periodo?.status).toBe('OPEN');
-    expect(await prisma.account.count({ where: { userId: dono.id, unitId: UNIT, deletedAt: null } })).toBe(
-      CANONICAL_ACCOUNTS.length,
-    );
+    // Chart instalado: toda conta que o binding do salão referencia existe como folha. (Sem importar
+    // o fixture de `features/accounting` — a fronteira do importBoundary.test.ts vale para testes.)
+    const codigos = [...new Set(SALE_BINDING_V1.eventBindings.flatMap((e) => e.roleSlots.map((r) => r.accountCode)))];
+    const folhas = await prisma.account.findMany({
+      where: { userId: dono.id, unitId: UNIT, deletedAt: null, code: { in: codigos }, acceptsEntries: true },
+    });
+    expect(folhas.map((a) => a.code).sort()).toEqual(codigos.sort());
     const ativo = await prisma.accountingBinding.findMany({ where: { userId: dono.id, unitId: UNIT, status: 'Active' } });
     expect(ativo).toHaveLength(1);
     expect(ativo[0].sectorKey).toBe('beautySalon');
