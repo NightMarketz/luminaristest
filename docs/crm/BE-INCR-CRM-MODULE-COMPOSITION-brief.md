@@ -226,6 +226,18 @@ class ModuleNotInstalledError extends AppError { statusCode = 409; errorCode = '
   (RH, Estoque, Compras) não muda o DTO; a validação de dependência vive no registro. Contrato acima
   fica como (a) por legibilidade; se (b), `modules: z.array(moduleKeyEnum)`. **✅ RATIFICADO 2026-09-07 → (b) lista plana.**
 
+### Forks da execução (sessão de feature, PR #397) — RATIFICADOS 2026-09-26 (dono, via `AskUserQuestion`)
+
+Levantados ao executar o comportamento 3 (leads saem do Core): o BRIEF não cobria dois consumidores do Core.
+
+- **F-I8-COMP3-a · clínica sem CRM:** o `aestheticClinic` só tinha CRM porque o Core instalava as 5 tabelas
+  de lead. **✅ RATIFICADO 2026-09-26 → `aestheticClinic` recebe CRM-0 + CRM-1 por padrão, igual ao salão.**
+- **F-I8-COMP3-b · sync-preset de tenant existente:** `PresetSyncService` lia a definição de tabela em
+  `CoreSystemPreset.tables`. **✅ RATIFICADO 2026-09-26 → passa a resolver a definição pelo registro de
+  módulos (Core + módulos), de modo que o sync-preset de tenant existente com as 5 tabelas de lead continue
+  achando a fonte; nenhum dado de tenant existente muda.** Prova exigida: tenant legado com leads instalados
+  → sync-preset acha as definições e não altera linhas.
+
 ## 5. Pendente de validação externa
 
 - Nenhuma regra contábil ou fiscal nasce aqui. O seam AR (`CrmReceivableBridge`) só é acionado por
