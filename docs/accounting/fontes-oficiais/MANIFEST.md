@@ -44,6 +44,8 @@ que citava o antigo precisa ser reconferido.
 | lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
 | tabela-4310-efd | Monofasico — correspondencia PRODUTO -> NCM dos combustiveis (o que a Lei 9.718 art. 4 nao traz) | Tabela 4.3.10 da EFD-Contribuicoes, versao 1.25 (30.03.2026) | `TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt` | 85.624 | `f6a000e5e898` |
 | moc70-visao-geral | SIG-NFE — padrao de assinatura digital da NF-e 4.00 (§4.2.3-4.2.5) | Manual de Orientacao ao Contribuinte (MOC) versao 7.0 — Visao Geral, NF-e e NFC-e | `MOC-7.0-Visao-Geral.pdf` | 4.304.647 | `f664dcf94b77` |
+| moc70-anexo-i | SIG-NFE — regras de rejeicao do certificado/assinatura (E/F) e quem assina por serie (B07) | MOC 7.0 Anexo I — Leiaute e Regras de Validacao da NF-e e NFC-e | `MOC-7.0-Anexo-I.pdf` | 4.106.196 | `5eb4cf2010b1` |
+| doc-icp-04 | SIG-NFE — formato dos otherName CPF/CNPJ do certificado ICP-Brasil | DOC-ICP-04 v8.3 (Resolucao CG ICP-Brasil 179/2020 compilada; 7.1.2.2 pela Res. 211/2024) | `DOC-ICP-04-v8.3.pdf` | 732.810 | `0603dbb47ea9` |
 
 ## URLs de origem
 
@@ -120,3 +122,8 @@ que citava o antigo precisa ser reconferido.
   `f664dcf94b77cabb32311620d85a7eb02cdf86adb2d4632ce178af2572dd2ad1`. **Nao commitado**; os parametros de assinatura
   estao transcritos, com pagina, em `TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md`. O host exige cookie
   de sessao (redireciona com `AspxAutoDetectCookieSupport=1`): `curl -c cj -b cj -L -A "<UA de navegador>" <url>`.
+- **moc70-anexo-i** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=J%20I%20v4eN00E=> — baixado 2026-09-26,
+  sha256 `5eb4cf2010b10b0b62f78197c4eb64025f24535d4c6e61158bc7806dd008f55d`, mesmo cookie de sessao do moc70-visao-geral.
+  Transcrito (§3) em `TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md`.
+- **doc-icp-04** — <https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/resolucao179_doc-icp-04_compilada.pdf> —
+  baixado 2026-09-26, sha256 `0603dbb47ea9f1928a5e6f72168a2f6dfe1ad2796b394aa6ad6ac92282a9c9a8`. Transcrito (§4) no mesmo arquivo.

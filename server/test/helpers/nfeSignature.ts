@@ -44,11 +44,14 @@ function time(date: string): Buffer {
 const cnName = (cn: string) => seq(tlv(0x31, seq(oid('2.5.4.3'), tlv(0x0c, Buffer.from(cn, 'utf8')))));
 const SHA256_RSA = seq(oid('1.2.840.113549.1.1.11'), Buffer.from([0x05, 0x00]));
 
-/** Tag ASN.1 do valor do OtherName — o MOC não fixa (transcrição §3); o teste exercita as duas formas. */
-export type OtherNameEncoding = 'octet' | 'printable';
+/** Tag ASN.1 do valor do OtherName. DOC-ICP-04 7.1.2.2 a): só OCTET/PRINTABLE; 'utf8' existe para o teste negativo. */
+export type OtherNameEncoding = 'octet' | 'printable' | 'utf8';
+const ENCODING_TAG: Record<OtherNameEncoding, number> = { octet: 0x04, printable: 0x13, utf8: 0x0c };
 
 export interface TestCertOptions {
-  cnpj?: string; // OtherName 2.16.76.1.3.3; ausente = certificado sem CNPJ
+  cnpj?: string; // OtherName 2.16.76.1.3.3 (e-CNPJ); ausente = certificado sem CNPJ
+  cpf?: string; // OtherName 2.16.76.1.3.1 (e-CPF): nascimento 01011980 + CPF + NIS/RG zerados
+  responsavelCpf?: string; // OtherName 2.16.76.1.3.4 do e-CNPJ: CPF do RESPONSÁVEL, não do titular
   notBefore?: string; // AAAA-MM-DD
   notAfter?: string;
   encoding?: OtherNameEncoding;
@@ -62,21 +65,23 @@ function testKey(): KeyObject {
 }
 
 export function makeTestCert(opts: TestCertOptions = {}, key: KeyObject = testKey()): string {
-  const { cnpj, notBefore = '2020-01-01', notAfter = '2049-12-31', encoding = 'octet' } = opts;
+  const { cnpj, cpf, responsavelCpf, notBefore = '2020-01-01', notAfter = '2049-12-31', encoding = 'octet' } = opts;
   const spki = createPublicKey(key).export({ type: 'spki', format: 'der' });
-  const extensions: Buffer[] = [];
-  if (cnpj) {
-    const value = tlv(encoding === 'octet' ? 0x04 : 0x13, Buffer.from(cnpj, 'ascii'));
-    const otherName = tlv(0xa0, Buffer.concat([oid('2.16.76.1.3.3'), tlv(0xa0, value)]));
-    extensions.push(seq(oid('2.5.29.17'), tlv(0x04, seq(otherName))));
-  }
+  const otherName = (dotted: string, value: string) =>
+    tlv(0xa0, Buffer.concat([oid(dotted), tlv(0xa0, tlv(ENCODING_TAG[encoding], Buffer.from(value, 'ascii')))]));
+  const pessoa = (c: string) => `01011980${c}${'0'.repeat(11 + 15)}`; // DOC-ICP-04: nascimento + CPF + NIS + RG
+  const names: Buffer[] = [];
+  if (cnpj) names.push(otherName('2.16.76.1.3.3', cnpj));
+  if (cpf) names.push(otherName('2.16.76.1.3.1', pessoa(cpf)));
+  if (responsavelCpf) names.push(otherName('2.16.76.1.3.4', pessoa(responsavelCpf)));
+  const extensions = names.length ? [seq(oid('2.5.29.17'), tlv(0x04, seq(...names)))] : [];
   const tbs = seq(
     tlv(0xa0, tlv(0x02, Buffer.from([0x02]))), // v3
     tlv(0x02, Buffer.from([0x01, ...Array.from({ length: 7 }, (_, i) => i + 1)])),
     SHA256_RSA,
     cnName('AC TESTE LUMINARIS — NAO E ICP-BRASIL'),
     seq(time(notBefore), time(notAfter)),
-    cnName(`TESTE LUMINARIS:${cnpj ?? 'SEM-CNPJ'}`),
+    cnName(`TESTE LUMINARIS:${cnpj ?? cpf ?? 'SEM-TITULAR'}`),
     spki,
     ...(extensions.length ? [tlv(0xa3, seq(...extensions))] : []),
   );
@@ -96,13 +101,15 @@ export interface SignNfeOptions extends TestCertOptions {
 
 /**
  * Assina (ou re-assina) a NF-e: remove a `<Signature>` que estiver logo após `</infNFe>` e insere uma nova,
- * enveloped, como irmã de `<infNFe>` [SIG-ENVELOPED]. O CNPJ do certificado é o `emit/CNPJ` da própria nota,
- * salvo `opts.cnpj`.
+ * enveloped, como irmã de `<infNFe>` [SIG-ENVELOPED]. O titular do certificado é o emitente da própria nota
+ * (`emit/CNPJ` → e-CNPJ; `emit/CPF` → e-CPF), salvo `opts.cnpj`/`opts.cpf`.
  */
 export function signNfeForTest(xml: string, opts: SignNfeOptions = {}): string {
   const key = opts.key ?? testKey();
   const emitCnpj = /<emit>\s*<CNPJ>([^<]+)<\/CNPJ>/.exec(xml)?.[1];
-  const certPem = opts.certPem ?? makeTestCert({ ...opts, cnpj: 'cnpj' in opts ? opts.cnpj : emitCnpj }, key);
+  const emitCpf = /<emit>\s*<CPF>([^<]+)<\/CPF>/.exec(xml)?.[1];
+  const titular = 'cnpj' in opts || 'cpf' in opts ? {} : { cnpj: emitCnpj, cpf: emitCnpj ? undefined : emitCpf };
+  const certPem = opts.certPem ?? makeTestCert({ ...titular, ...opts }, key);
   const sig = new SignedXml({
     privateKey: key.export({ type: 'pkcs1', format: 'pem' }),
     publicCert: certPem,

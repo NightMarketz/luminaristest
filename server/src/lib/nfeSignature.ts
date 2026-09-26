@@ -12,9 +12,11 @@ import { ValidationError } from './errors';
  * Parâmetros transcritos do MOC 7.0 §4.2.3–4.2.5 em
  * `docs/accounting/fontes-oficiais/TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md` — chaves `[SIG-…]`.
  *
- * LIMITE DECLARADO (F-SIG-3 b): confere integridade + CNPJ-raiz do certificado = raiz de `emit/CNPJ` + `dhEmi`
- * dentro da validade. NÃO monta a cadeia ICP-Brasil nem consulta LCR (F-SIG-3 c, nó seguinte): quem re-assina o
- * XML adulterado com certificado próprio que carregue o CNPJ do emitente PASSA.
+ * LIMITE DECLARADO (F-SIG-3 b + emenda do dono 26/09): confere integridade + titular do certificado × emitente
+ * (CNPJ-raiz, rejeição 213; CPF do e-CPF, rejeição 227) + `dhEmi` dentro da validade. NF-e avulsa assinada pela
+ * SEFAZ (`procEmi=1`) só exige certificado com CNPJ/CPF (292) — o emissor fica para a cadeia. NÃO monta a cadeia
+ * ICP-Brasil nem consulta LCR (F-SIG-3 c, nó seguinte): quem re-assina o XML adulterado com certificado próprio que
+ * carregue o CNPJ do emitente PASSA.
  */
 
 const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
@@ -27,7 +29,8 @@ const ID_ATTRS = ['Id', 'ID', 'id']; // os mesmos que o xml-crypto usa para reso
 
 export interface SignatureCheck {
   status: 'valid'; // F-SIG-1 (a): ausente/inválida lança; não existe 'absent'
-  certSubjectCnpj: string;
+  certSubjectCnpj?: string; // OtherName 2.16.76.1.3.3 (e-CNPJ)
+  certSubjectCpf?: string; // OtherName 2.16.76.1.3.1, posições 9–19 (e-CPF)
   certNotBefore: string; // AAAA-MM-DD (reslice do DER, nunca new Date)
   certNotAfter: string;
 }
@@ -84,8 +87,10 @@ function children(buf: Buffer, parent: Tlv): Tlv[] {
 }
 
 const OID_SAN = '551d11'; // 2.5.29.17
+const OID_ICP_CPF = '604c010301'; // 2.16.76.1.3.1 [SIG-CERT-CPF-OID]
 const OID_ICP_CNPJ = '604c010303'; // 2.16.76.1.3.3 [SIG-CERT-CNPJ-OID]
-const STRING_TAGS = new Set([0x04, 0x0c, 0x13, 0x16]); // OCTET, UTF8, Printable, IA5 — o MOC não fixa (transcrição §3)
+// DOC-ICP-04 v8.3 item 7.1.2.2 a) [SIG-OTHERNAME-TIPO]: OCTET STRING ou PRINTABLE STRING — nenhum outro tipo.
+const OTHERNAME_TAGS = new Set([0x04, 0x13]);
 
 /** UTCTime 'AAMMDDhhmmssZ' / GeneralizedTime 'AAAAMMDDhhmmssZ' → 'AAAA-MM-DD' por reslice. */
 function derDate(buf: Buffer, t: Tlv): string {
@@ -99,8 +104,17 @@ function derDate(buf: Buffer, t: Tlv): string {
 
 interface CertFacts {
   cnpj: string | null;
+  cpf: string | null;
   notBefore: string;
   notAfter: string;
+}
+
+/**
+ * Número de um OtherName ICP-Brasil, ou null. DOC-ICP-04 7.1.2.2: só A–Z/0–9 (g); número indisponível vem
+ * preenchido com "zero" (b) — todo-zero é ausência, não um CNPJ/CPF.
+ */
+function icpNumber(raw: string, pattern: RegExp): string | null {
+  return pattern.test(raw) && !/^0+$/.test(raw) ? raw : null;
 }
 
 function readCertFacts(der: Buffer): CertFacts {
@@ -114,6 +128,7 @@ function readCertFacts(der: Buffer): CertFacts {
   if (!nb || !na) return fail('— certificado sem validade.');
 
   let cnpj: string | null = null;
+  let cpf: string | null = null;
   const extWrap = fields.find((f) => f.tag === 0xa3);
   for (const ext of extWrap ? children(der, children(der, extWrap)[0]) : []) {
     const parts = children(der, ext);
@@ -123,12 +138,18 @@ function readCertFacts(der: Buffer): CertFacts {
     for (const gn of children(der, generalNames)) {
       if (gn.tag !== 0xa0) continue; // otherName
       const [typeId, wrapped] = children(der, gn);
-      if (!typeId || !wrapped || der.toString('hex', typeId.start, typeId.end) !== OID_ICP_CNPJ) continue;
+      if (!typeId || !wrapped) continue;
       const value = children(der, wrapped)[0];
-      if (value && STRING_TAGS.has(value.tag)) cnpj = der.toString('latin1', value.start, value.end).trim();
+      if (!value || !OTHERNAME_TAGS.has(value.tag)) continue;
+      const raw = der.toString('latin1', value.start, value.end);
+      const oid = der.toString('hex', typeId.start, typeId.end);
+      if (oid === OID_ICP_CNPJ) cnpj = icpNumber(raw, /^[A-Z0-9]{14}$/);
+      // 2.16.76.1.3.1 = nascimento (ddmmaaaa, 8) + CPF (11) + NIS + RG… [SIG-CERT-CPF-OID]. O CPF do responsável
+      // que o e-CNPJ carrega em 2.16.76.1.3.4 NÃO é lido: não é o titular.
+      if (oid === OID_ICP_CPF) cpf = /^[A-Z0-9]+$/.test(raw) ? icpNumber(raw.slice(8, 19), /^\d{11}$/) : null;
     }
   }
-  return { cnpj, notBefore: derDate(der, nb), notAfter: derDate(der, na) };
+  return { cnpj, cpf, notBefore: derDate(der, nb), notAfter: derDate(der, na) };
 }
 
 /**
@@ -207,7 +228,7 @@ export function verifyNfeSignature(xml: string): SignatureCheck {
   }
 
   // B2 — digest do infNFe canonicalizado + SignatureValue contra a chave pública do certificado.
-  const verifier = new SignedXml({ publicCert: cert.toString() }) // idAttributes padrão = ID_ATTRS;
+  const verifier = new SignedXml({ publicCert: cert.toString() }); // idAttributes padrão = ID_ATTRS
   let valid = false;
   try {
     verifier.loadSignature(signature as unknown as Node);
@@ -217,25 +238,37 @@ export function verifyNfeSignature(xml: string): SignatureCheck {
   }
   if (!valid) fail('não confere com o conteúdo do <infNFe> (digest ou SignatureValue inválido).');
 
-  // B5 — F-SIG-3 (b): CNPJ-raiz do certificado = raiz de emit/CNPJ [SIG-CERT-CNPJ]; dhEmi na validade [SIG-CERT-VALIDADE].
+  // B5 — titular do certificado × emitente (Anexo I, Grupos E/F) e validade [SIG-CERT-VALIDADE].
   const facts = readCertFacts(cert.raw);
+  if (!facts.cnpj && !facts.cpf) fail('— certificado sem CNPJ/CPF (OtherName 2.16.76.1.3.3 / 2.16.76.1.3.1).'); // [SIG-REJ-292]
+  const ide = elementChildren(infNFe, 'ide')[0];
   const emit = elementChildren(infNFe, 'emit')[0];
   const emitCnpj = text(emit && elementChildren(emit, 'CNPJ')[0]);
-  if (!emitCnpj) {
-    // e-CPF [SIG-CERT-ECPF] não está no F-SIG-3 (b) — lacuna de spec registrada; até lá, recusa.
-    fail('— emitente sem CNPJ (pessoa física/e-CPF): verificação não suportada.');
+  const emitCpf = text(emit && elementChildren(emit, 'CPF')[0]);
+  const procEmi = text(ide && elementChildren(ide, 'procEmi')[0]);
+  if (procEmi === '1') {
+    // NFA-e emitida no site do Fisco: assinada pelo e-CNPJ da SEFAZ, não do emitente [SIG-SERIE-NFAE]. Decisão do
+    // dono 26/09 (c): exige só o 292 acima; quem é a SEFAZ só a cadeia ICP (F-SIG-3 c) prova. Sem risco novo: com
+    // F-SIG-3 (b) quem re-assina já escolhe o CNPJ do próprio certificado.
+  } else if (facts.cnpj) {
+    if (!emitCnpj || facts.cnpj.slice(0, 8) !== emitCnpj.slice(0, 8)) {
+      fail(`— CNPJ-base do emitente (${emitCnpj || `CPF ${emitCpf}`}) difere do CNPJ-base do certificado (${facts.cnpj}).`); // [SIG-REJ-213]
+    }
+  } else if (facts.cpf !== emitCpf) {
+    fail(`— CPF do emitente (${emitCpf || `CNPJ ${emitCnpj}`}) difere do CPF do certificado (${facts.cpf}).`); // [SIG-REJ-227]
   }
-  if (!facts.cnpj || facts.cnpj.length !== 14) fail('— certificado sem CNPJ no OtherName 2.16.76.1.3.3.');
-  if (facts.cnpj!.slice(0, 8) !== emitCnpj.slice(0, 8)) {
-    fail(`— CNPJ do certificado (${facts.cnpj}) não é da mesma empresa do emitente (${emitCnpj}).`);
-  }
-  const ide = elementChildren(infNFe, 'ide')[0];
   const dhEmi = text(ide && elementChildren(ide, 'dhEmi')[0]);
   if (!/^\d{4}-\d{2}-\d{2}/.test(dhEmi)) fail('— ide/dhEmi ausente ou mal-formado para conferir a validade do certificado.');
   const emissao = dhEmi.slice(0, 10);
   if (emissao < facts.notBefore || emissao > facts.notAfter) {
-    fail(`— certificado fora da validade na emissão (${emissao} ∉ [${facts.notBefore}, ${facts.notAfter}]).`);
+    fail(`— certificado fora da validade na emissão (${emissao} ∉ [${facts.notBefore}, ${facts.notAfter}]).`); // [SIG-REJ-291]
   }
 
-  return { status: 'valid', certSubjectCnpj: facts.cnpj!, certNotBefore: facts.notBefore, certNotAfter: facts.notAfter };
+  return {
+    status: 'valid',
+    ...(facts.cnpj ? { certSubjectCnpj: facts.cnpj } : {}),
+    ...(facts.cpf ? { certSubjectCpf: facts.cpf } : {}),
+    certNotBefore: facts.notBefore,
+    certNotAfter: facts.notAfter,
+  };
 }
