@@ -58,4 +58,4 @@ Regras normativas da camada Frontend Table Screen, cada uma coberta por um caso 
 - `FETABLE-005` — a página carrega o namespace `database` em `serverSideTranslations`; caso dedicado `regression-1`.
 - `FETABLE-006` — leitura paginada (fetch-all) + Galaxy theme: `neutral-*` (nunca `zinc-*`), `rounded-2xl`, container full-height.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

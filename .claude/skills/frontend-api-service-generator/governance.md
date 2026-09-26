@@ -60,4 +60,4 @@ Regras normativas da camada Frontend Service, cada uma coberta por um caso de ev
 - `FEAPI-005` — zero `any` (caso `edge-1`).
 - `FEAPI-006` — path bate exatamente com `/api/<x>` registrado no backend.
 
-`eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão. Skill em `draft`: ainda não validada pelo skill-audit (SG-048), sem `governance-eval-score` no frontmatter do `SKILL.md`.
+`eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão. `status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).

@@ -68,5 +68,5 @@ Regras normativas da camada Policy, cada uma coberta por um caso de eval comport
 - `POL-007` — actor `IUser | null`; `null` → `false` (exceto signup público explícito) (caso `edge-1`).
 - `POL-008` — imports de `../../users/models/User.model` (`IUser` type-only + `Role` local), nunca `@prisma/client`.
 
-`status: draft` — skill ainda não validada; sem `score` projetado até o `REPORT.md` existir (SG-011).
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 `eval-score`/`last-evaluated` serão **projeção** do `REPORT.md` quando a skill for promovida — nunca editados à mão.

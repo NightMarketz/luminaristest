@@ -62,4 +62,4 @@ Regras normativas da camada Route, cada uma coberta por um caso de eval comporta
 - `ROUTE-005` — zero lógica no arquivo de rota (sem auth inline, validação ou try/catch).
 - `ROUTE-006` — handlers importados por funções nomeadas existentes do controller.
 
-`eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão. Status `draft`: ainda não promovida a `validated` pelo skill-audit (SG-048).
+`eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão. Status `validated` (frontmatter é autoritativo — ver `REPORT.md`).

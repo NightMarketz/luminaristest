@@ -51,7 +51,7 @@ rules:
 | Coerência | `skill-audit governance-check` |
 | Evidência de execução | `evals/evals.json` + `../skill-audit/reports/backend-prisma-model-generator/REPORT.md` |
 
-Skill **com efeito destrutivo** (`prisma migrate dev` altera o banco real) → `disable-model-invocation: true` (SG-013) e `criticality: high`. Estado `draft`: ainda não validada pelo skill-audit; nenhum `REPORT.md` gerado, logo sem `score`/`governance-eval-score` projetado (SG-011).
+Skill **com efeito destrutivo** (`prisma migrate dev` altera o banco real) → `disable-model-invocation: true` (SG-013) e `criticality: high`. `status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 
 Regras normativas da camada Prisma Model, cada uma coberta por um caso de eval comportamental:
 
@@ -62,4 +62,4 @@ Regras normativas da camada Prisma Model, cada uma coberta por um caso de eval c
 - `PRISMA-005` — `@@index([userId])` + `@@index([deletedAt])` (evita full-scan).
 - `PRISMA-006` — `@@map("table_name")` em snake_case plural.
 
-`score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; ausentes enquanto a skill estiver em `draft`.
+`score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

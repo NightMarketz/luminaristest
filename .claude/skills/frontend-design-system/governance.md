@@ -51,7 +51,7 @@ rules:
 | Coerência | `skill-audit governance-check` |
 | Evidência de execução | `evals/evals.json` + `../skill-audit/reports/frontend-design-system/REPORT.md` |
 
-Skill de conhecimento de apoio (SG-014 `user-invocable: false`): não é geradora standalone, mas ainda precisa de governança + evals (happy case que gera um componente pequeno aplicando o sistema). Estado `draft` — ainda não validada pelo skill-audit (SG-005/SG-048); sem `score`/`governance-eval-score` até existir REPORT.
+Skill de conhecimento de apoio (SG-014 `user-invocable: false`): não é geradora standalone, mas ainda precisa de governança + evals (happy case que gera um componente pequeno aplicando o sistema). `status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 
 Regras normativas da camada visual, cada uma coberta por um caso de eval comportamental:
 
