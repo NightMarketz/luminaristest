@@ -403,7 +403,7 @@ quando há revisor; `revisado_pass` exigiria zero achado aberto — e as seis re
 um valor.** Um campo cuja distribuição é 100% num valor carrega 0 bit de informação: o razão prova que
 alguém escreveu um arquivo, não que a revisão discriminou nada.
 
-Some-se a isto o que o `MODEL-TUNING.md:32-35` já registra sobre este modelo — instrução conservadora
+Some-se a isto o que o `MODEL-TUNING.md` (guarda de recall — item 5 da seção Opus 5.5) já registra sobre este modelo — instrução conservadora
 é seguida **literalmente** e move o recall medido. O `PLAYBOOK.md:86-90` instrui o revisor a *"reportar
 TODO achado"*, e o revisor do PR #173 nomeia o efeito em si mesmo (`REVIEW-PR173.md:178`): *"Fui
 instruído a refutar, e um revisor instruído a refutar acha o que procura."* Revisor instruído a atacar,
@@ -1082,7 +1082,7 @@ elas têm medidas diferentes:
 | O que a delegação troca | Compra independência? | Medida |
 |---|---|---|
 | **Contexto** (worktree isolada, sem o prompt de produção) | **sim, e bastante** | ponto-cego de auto-correção é de procedência: **64,5%** em 14 modelos, e some quando o texto chega como input (§9.2) |
-| **Persona** (instrução de papel: "refute", "ataque a alegação central") | **muda a mira, não a abertura** | o `MODEL-TUNING.md:32-35` já registra que instrução é seguida **literalmente** e move recall medido; e o `REVIEW-PR173.md:178` nomeia o efeito de dentro: *"um revisor instruído a refutar acha o que procura"* |
+| **Persona** (instrução de papel: "refute", "ataque a alegação central") | **muda a mira, não a abertura** | o `MODEL-TUNING.md` (guarda de recall — item 5 da seção Opus 5.5) já registra que instrução é seguida **literalmente** e move recall medido; e o `REVIEW-PR173.md:178` nomeia o efeito de dentro: *"um revisor instruído a refutar acha o que procura"* |
 | **Pesos** (mesma família de modelo) | **não** | Knight & Leveson: 27 versões, duas universidades, sem comunicação, individualmente >99% confiáveis → independência rejeitada a **z=100,51**. Aqui os "atores distintos" compartilham pesos e treino — são **menos** diversos que aqueles estudantes |
 
 **O que isso prevê, e o repositório confirma:** a delegação funcionou onde o defeito estava **no
