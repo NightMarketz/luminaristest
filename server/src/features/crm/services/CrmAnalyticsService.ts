@@ -1,5 +1,5 @@
 import type { UserContext } from '../../../lib/authUtils';
-import { NotFoundError } from '../../../lib/errors';
+import { moduleNotInstalled } from './CrmPipelineService';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTable, ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
@@ -40,7 +40,7 @@ export class CrmAnalyticsService {
 
   private async resolveTable(user: UserContext, internalName: string): Promise<IDynamicTable> {
     const table = await this.repository.findTableByInternalName(user.userId, internalName);
-    if (!table) throw new NotFoundError(`CRM table '${internalName}' não está instalada para este usuário.`);
+    if (!table) throw moduleNotInstalled(internalName);
     return table;
   }
 

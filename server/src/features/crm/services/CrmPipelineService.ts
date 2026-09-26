@@ -1,5 +1,6 @@
 import type { UserContext } from '../../../lib/authUtils';
-import { NotFoundError, ValidationError } from '../../../lib/errors';
+import { ModuleNotInstalledError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { moduleOfTable } from '../../dynamicTables/presets/modules/registry';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
@@ -17,19 +18,29 @@ import { DEFAULT_CURRENCY } from '../constants';
  * go through `DynamicTableService`, which enforces validation, rules and policy.
  * CRM tables are resolved by their stable `internalName` (preset key).
  */
+/** Table absent for the tenant → its registered module is not installed (I8 comportamento 7). */
+export function moduleNotInstalled(internalName: string): ModuleNotInstalledError {
+  return new ModuleNotInstalledError(moduleOfTable(internalName) ?? 'unknown', internalName);
+}
+
 export class CrmPipelineService {
   constructor(
     private readonly dynamicTableService: DynamicTableService,
     private readonly repository: IDynamicTableRepository,
   ) {}
 
-  /** Resolve a CRM table id by its stable preset internalName, or throw. */
-  private async resolveTableId(user: UserContext, internalName: string): Promise<string> {
+  /**
+   * Resolve a CRM table by its stable preset internalName. A missing table means its module is
+   * not installed → `ModuleNotInstalledError` (409 CRM_MODULE_NOT_INSTALLED, I8 comportamento 7).
+   */
+  private async resolveTable(user: UserContext, internalName: string) {
     const table = await this.repository.findTableByInternalName(user.userId, internalName);
-    if (!table) {
-      throw new NotFoundError(`CRM table '${internalName}' is not installed for this user.`);
-    }
-    return table.id;
+    if (!table) throw moduleNotInstalled(internalName);
+    return table;
+  }
+
+  private async resolveTableId(user: UserContext, internalName: string): Promise<string> {
+    return (await this.resolveTable(user, internalName)).id;
   }
 
   /**
@@ -106,10 +117,7 @@ export class CrmPipelineService {
     // user.userId → NotFoundError if missing/foreign). We reuse it for BOTH the ownership
     // check (its id) and the partial-sync guard (its schema). The other CRM tables only
     // need their ids.
-    const leadsTable = await this.repository.findTableByInternalName(user.userId, 'leads');
-    if (!leadsTable) {
-      throw new NotFoundError(`CRM table 'leads' is not installed for this user.`);
-    }
+    const leadsTable = await this.resolveTable(user, 'leads');
     const leadsTableId = leadsTable.id;
     const accountsTableId = await this.resolveTableId(user, 'crmAccounts');
     const contactsTableId = await this.resolveTableId(user, 'crmContacts');
@@ -376,10 +384,7 @@ export class CrmPipelineService {
     const opportunitiesTableId = await this.resolveTableId(user, 'crmOpportunities');
 
     // Resolve the leads table object once (tenant-scoped via user.userId → NotFoundError).
-    const leadsTable = await this.repository.findTableByInternalName(user.userId, 'leads');
-    if (!leadsTable) {
-      throw new NotFoundError(`CRM table 'leads' is not installed for this user.`);
-    }
+    const leadsTable = await this.resolveTable(user, 'leads');
     const leadsTableId = leadsTable.id;
 
     // Snapshot the source lead (we inherit unit + owner). findDataById is NOT tenant-scoped.

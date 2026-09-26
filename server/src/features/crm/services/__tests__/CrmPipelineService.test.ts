@@ -1,5 +1,5 @@
 import { CrmPipelineService } from '../CrmPipelineService';
-import { NotFoundError, ValidationError } from '../../../../lib/errors';
+import { ModuleNotInstalledError, NotFoundError, ValidationError } from '../../../../lib/errors';
 
 /**
  * CrmPipelineService orchestrates multi-step writes over DynamicTableService.
@@ -88,9 +88,11 @@ describe('CrmPipelineService', () => {
       ).rejects.toThrow('boom');
     });
 
-    it('lança NotFoundError se o módulo CRM (tabela leads) não está instalado', async () => {
+    it('I8 c7: tabela leads ausente → ModuleNotInstalledError 409 com moduleKey CRM-0', async () => {
       const { svc } = buildService({ repo: { findTableByInternalName: jest.fn(async () => null) } });
-      await expect(svc.advanceStage(user, { leadId: 'l1', stageId: 's2' })).rejects.toBeInstanceOf(NotFoundError);
+      await expect(svc.advanceStage(user, { leadId: 'l1', stageId: 's2' })).rejects.toMatchObject({
+        statusCode: 409, errorCode: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-0' },
+      });
     });
 
     // FIX 1 — cross-tenant read: a leadId whose row belongs to another table/tenant must be
@@ -303,9 +305,20 @@ describe('CrmPipelineService', () => {
       expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
     });
 
-    it('cross-tenant / tabela ausente → NotFoundError', async () => {
+    it('I8 c7: tabela leads ausente → ModuleNotInstalledError (CRM-0)', async () => {
       const { svc } = buildService({ repo: { findTableByInternalName: jest.fn(async () => null) } });
-      await expect(svc.convertLead(user, baseInput)).rejects.toBeInstanceOf(NotFoundError);
+      await expect(svc.convertLead(user, baseInput)).rejects.toMatchObject({ details: { moduleKey: 'CRM-0' } });
+    });
+
+    it('I8 c7 (BRIEF §2.7): convertLead em tenant sem CRM-2 → 409 com moduleKey CRM-2, sem escritas', async () => {
+      const { svc, dynamicTableService, repository } = buildService();
+      const base = repository.findTableByInternalName.getMockImplementation()!;
+      repository.findTableByInternalName.mockImplementation(async (uid: string, internal: string) =>
+        internal === 'crmAccounts' || internal === 'crmContacts' ? null : base(uid, internal));
+      const err = await svc.convertLead(user, baseInput).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ModuleNotInstalledError);
+      expect(err).toMatchObject({ statusCode: 409, errorCode: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2' } });
+      expect(dynamicTableService.runInTransaction).not.toHaveBeenCalled();
     });
 
     it('lead inexistente → NotFoundError', async () => {
@@ -434,11 +447,11 @@ describe('CrmPipelineService', () => {
       expect(typeof call[2].data.closedAt).toBe('string');
     });
 
-    it('NotFoundError se crmOpportunities não está instalada', async () => {
+    it('I8 c7: crmOpportunities ausente → ModuleNotInstalledError (CRM-3)', async () => {
       const { svc } = buildService({ repo: { findTableByInternalName: jest.fn(async () => null) } });
       await expect(
         svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's2' }),
-      ).rejects.toBeInstanceOf(NotFoundError);
+      ).rejects.toMatchObject({ details: { moduleKey: 'CRM-3' } });
     });
 
     // FIX 2 — cross-tenant read: a row whose dynamicTableId !== the caller's resolved
@@ -592,9 +605,9 @@ describe('CrmPipelineService', () => {
       await expect(svc.convertLeadToOpportunity(user, oppInput)).rejects.toBeInstanceOf(NotFoundError);
     });
 
-    it('NotFoundError se crmOpportunities não está instalada', async () => {
+    it('I8 c7: crmOpportunities ausente → ModuleNotInstalledError (CRM-3)', async () => {
       const { svc } = buildService({ repo: { findTableByInternalName: jest.fn(async () => null) } });
-      await expect(svc.convertLeadToOpportunity(user, oppInput)).rejects.toBeInstanceOf(NotFoundError);
+      await expect(svc.convertLeadToOpportunity(user, oppInput)).rejects.toMatchObject({ details: { moduleKey: 'CRM-3' } });
     });
   });
 });

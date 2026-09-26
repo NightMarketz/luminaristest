@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 import { ZodError, ZodIssue } from 'zod';
-import { AppError, ValidationError } from './errors';
+import { AppError, ModuleNotInstalledError, ValidationError } from './errors';
 import { logger } from './logger';
 
 /**
@@ -38,7 +38,7 @@ export function handleApiError(error: unknown, res: Response): void {
       code: error.errorCode,
       message: error.message,
     };
-    if (error instanceof ValidationError && error.details) {
+    if ((error instanceof ValidationError || error instanceof ModuleNotInstalledError) && error.details) {
       responseBody.details = error.details;
     }
   } else if (prismaCode === 'P2002') {
