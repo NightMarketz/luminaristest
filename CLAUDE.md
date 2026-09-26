@@ -12,8 +12,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Disciplina operacional do agente (OPS-001..004):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
-  tuning por modelo — Opus 4.8 ativo, gatilhos explícitos + micro-autonomia + guarda de recall
-  em review: `docs/operating-manual/MODEL-TUNING.md`)
+  tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo
+  disciplinado + guarda de recall em review: `docs/operating-manual/MODEL-TUNING.md`)
 - **Por que auditoria não substitui oráculo:** `docs/operating-manual/ORACLE-DEFICIT.md`.
 - **As 5 sessões de agente (um formulário por tipo de trabalho):** `sessao-planejamento` (produz
   BRIEF, não ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao`
