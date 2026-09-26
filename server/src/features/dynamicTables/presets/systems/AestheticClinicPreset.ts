@@ -15,6 +15,7 @@ import { suppliersModule } from '../modules/people/SuppliersModule';
 import { otherRevenuesModule } from '../modules/finance/OtherRevenuesModule';
 import { financialBaselinesModule } from '../modules/finance/FinancialBaselinesModule';
 import { commissionsModule } from '../modules/finance/CommissionsModule';
+import type { ModuleKey } from '../modules/registry';
 
 /**
  * BE-INCR-P2-VERTICAL-CLINICA — Bloco I, comportamento 1. O segundo vertical da prova (ADR-P2,
@@ -44,6 +45,8 @@ const AestheticClinicPreset = {
   description:
     'Complete management solution for aesthetic clinics: appointments, clinical customer registry, ' +
     'inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.',
+  // I8, F-I8-COMP3-a (ratificado 2026-09-26): CRM-0 + CRM-1 por padrão, igual ao salão (antes vinham do Core).
+  modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
   tables: {
     customers: createTableFromModule(aestheticClinicCustomerModule),
     suppliers: createTableFromModule(suppliersModule),

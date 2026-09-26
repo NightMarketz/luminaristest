@@ -6,6 +6,7 @@ import {
   getDashboardPresetByKey,
   getDashboardSidebar,
   deleteUserSystem,
+  installModule,
 } from '@/controllers/dashboardController';
 import { postChatInterview } from '@/controllers/interviewController';
 
@@ -26,6 +27,9 @@ router.get('/presets/:presetKey', getDashboardPresetByKey);
 
 // GET /api/dashboard/sidebar
 router.get('/sidebar', getDashboardSidebar);
+
+// POST /api/dashboard/modules/install — I8 comportamento 8 (admin-only, checado no controller)
+router.post('/modules/install', installModule);
 
 // DELETE /api/dashboard/system
 router.delete('/system', deleteUserSystem);

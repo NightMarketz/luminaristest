@@ -16,6 +16,7 @@ export const CrmModulePreset: PresetSuite = {
   key: 'crmModule',
   name: 'Módulo CRM',
   description: 'CRM completo: funil de leads, propostas, atividades, contas e contatos.',
+  modules: [...MODULE_KEYS],
   tables: composeModuleTables(MODULE_KEYS),
 };
 

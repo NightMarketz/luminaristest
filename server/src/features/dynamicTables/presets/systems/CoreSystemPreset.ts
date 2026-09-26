@@ -5,16 +5,11 @@ import { unitsModule } from '../modules/core/UnitsModule';
 import { employeesModule } from '../modules/core/EmployeesModule';
 import { tasksModule } from '../modules/core/TasksModule';
 import { stakeholdersModule } from '../modules/core/StakeholdersModule';
-import { leadPipelinesModule } from '../modules/core/LeadPipelinesModule';
-import { leadStagesModule } from '../modules/core/LeadStagesModule';
-import { leadsModule } from '../modules/core/LeadsModule';
-import { leadProposalsModule } from '../modules/core/LeadProposalsModule';
-import { leadActivitiesModule } from '../modules/core/LeadActivitiesModule';
 
 /**
  * @description
  * The core system preset — installed for every user on account creation.
- * Provides infrastructure tables (employees, units, tasks/kanban, leads CRM)
+ * Provides infrastructure tables (employees, units, tasks/kanban)
  * that all other business presets (e.g. BeautySalon) depend on.
  *
  * Rule: `analyticsDefinitions` stays inline here — it is system infrastructure,
@@ -29,12 +24,8 @@ export const CoreSystemPreset: PresetSuite = {
     tasks:      createTableFromModule(tasksModule),
     stakeholders: createTableFromModule(stakeholdersModule),
 
-    // --- Leads CRM ---
-    leadPipelines:  createTableFromModule(leadPipelinesModule),
-    leadStages:     createTableFromModule(leadStagesModule),
-    leads:          createTableFromModule(leadsModule),
-    leadProposals:  createTableFromModule(leadProposalsModule),
-    leadActivities: createTableFromModule(leadActivitiesModule),
+    // --- Leads CRM: saíram do Core no I8 (F-CRM-1 → a). Agora são o módulo CRM-0 (+ CRM-1 propostas) do
+    // registro `../modules/registry.ts`, instalados só quando o tenant tem CRM. Tenants existentes não mudam.
 
     // --- System-only: Analytics Definitions ---
     // Kept inline intentionally — this is internal system infrastructure,

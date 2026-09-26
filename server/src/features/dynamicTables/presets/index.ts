@@ -5,6 +5,7 @@ import CrmModulePreset from './systems/CrmModulePreset';
 import { ITableSchema } from '../models/DynamicTable.model';
 import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
 import { DynamicTableCategory } from '../models/TableCategories';
+import type { ModuleKey } from './modules/registry';
 
 /**
  * The core system preset that is installed for every user.
@@ -71,6 +72,11 @@ export type PresetSuite = {
   description?: string;
   /** @deprecated Use `name`. Kept for backward compatibility with older suites. */
   suiteName?: string;
+  /**
+   * BE-INCR-CRM-MODULE-COMPOSITION (I8): módulos do registro que a suíte compõe por padrão (somados ao
+   * `modules` do body do create). Salão e clínica: CRM-0 + CRM-1 (F-CRM-2 → a, F-I8-COMP3-a); crmModule: CRM-0..3.
+   */
+  modules?: ModuleKey[];
 };
 
 export type PresetSuiteCategory = keyof typeof tablePresetSuites;

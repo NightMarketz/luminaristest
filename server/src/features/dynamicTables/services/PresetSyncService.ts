@@ -6,6 +6,7 @@ import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepos
 import type { ISchemaField, ITableSchema } from '../models/DynamicTable.model';
 import { CoreSystemPreset } from '../presets/systems/CoreSystemPreset';
 import { tablePresetSuites } from '../presets';
+import { composeModuleTables, moduleOfTable } from '../presets/modules/registry';
 import type { PresetTableDefinition } from '../presets';
 import type { CreateDynamicTableDtoType } from '../dtos/DynamicTable.dto';
 
@@ -45,20 +46,11 @@ export class PresetSyncService {
 
   /**
    * Resolve the preset module schema for a given `internalName` across the Core system
-   * preset and every selectable preset suite. Preset table keys ARE the internalName
+   * preset, the module registry (I8) and every selectable preset suite. Preset table keys ARE the internalName
    * (installPresetAsSystem keys created tables by presetKey), so a lookup by key works.
    */
   private getPresetSchemaForInternalName(internalName: string): ITableSchema | null {
-    const coreDef = CoreSystemPreset.tables[internalName];
-    if (coreDef?.schema) return coreDef.schema;
-
-    for (const category of Object.values(tablePresetSuites)) {
-      for (const suite of Object.values(category)) {
-        const def = suite.tables[internalName];
-        if (def?.schema) return def.schema;
-      }
-    }
-    return null;
+    return this.getPresetDefinitionForInternalName(internalName)?.schema ?? null;
   }
 
   /**
@@ -67,9 +59,18 @@ export class PresetSyncService {
    * Used by installTableFromPreset to build the CreateDynamicTableDto exactly like
    * installPresetAsSystem does. Preset table keys ARE the internalName.
    */
-  private getPresetDefinitionForInternalName(internalName: string): PresetTableDefinition | null {
+  public getPresetDefinitionForInternalName(internalName: string): PresetTableDefinition | null {
     const coreDef = CoreSystemPreset.tables[internalName];
     if (coreDef?.schema) return coreDef;
+
+    // I8, F-I8-COMP3-b (ratificado 2026-09-26): as tabelas de lead saíram do Core para o registro de
+    // módulos — a definição é resolvida por lá ANTES das suítes, para que o sync-preset de tenant
+    // existente (que tem as 5 tabelas de lead desde o Core antigo) continue achando a mesma fonte.
+    const moduleKey = moduleOfTable(internalName);
+    if (moduleKey) {
+      const moduleDef = composeModuleTables([moduleKey])[internalName];
+      if (moduleDef?.schema) return moduleDef;
+    }
 
     for (const category of Object.values(tablePresetSuites)) {
       for (const suite of Object.values(category)) {
