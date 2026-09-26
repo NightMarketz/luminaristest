@@ -63,7 +63,7 @@ describe('avanço de lead para etapa de proposta captura valor, moeda e Win %', 
     vi.clearAllMocks();
   });
 
-  it.fails('(a) página do lead NÃO avança para proposal sem amount/currency/winProbability', async () => {
+  it('(a) página do lead NÃO avança para proposal sem amount/currency/winProbability', async () => {
     render(<LeadDetailPage />);
     fireEvent.click(screen.getByRole('button', { name: /Avançar para: Proposta Enviada/ }));
     await new Promise((r) => setTimeout(r, 0));
@@ -92,7 +92,7 @@ describe('avanço de lead para etapa de proposta captura valor, moeda e Win %', 
     );
   });
 
-  it.fails('(b) ProposalCaptureModal não permite confirmar com Win % vazio', async () => {
+  it('(b) ProposalCaptureModal não permite confirmar com Win % vazio', async () => {
     const onConfirm = vi.fn();
     render(<ProposalCaptureModal isOpen stageName="Proposta Enviada" onCancel={vi.fn()} onConfirm={onConfirm} />);
     const [amountInput] = Array.from(document.querySelectorAll('input[type="number"]')) as HTMLInputElement[];

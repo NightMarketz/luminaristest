@@ -12,6 +12,8 @@ interface ProposalCaptureModalProps {
   stageName: string;
   onCancel: () => void;
   onConfirm: (capture: ProposalCapture) => void | Promise<void>;
+  /** LeadsPlugin exige Win % ao entrar em `proposal`; oportunidade não exige (opt-out). */
+  requireWinProbability?: boolean;
 }
 
 /**
@@ -19,7 +21,7 @@ interface ProposalCaptureModalProps {
  * BEFORE running the transition into a `proposal` stage. Cancel rolls back the
  * optimistic move (handled by the board hook).
  */
-export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm }: ProposalCaptureModalProps) {
+export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm, requireWinProbability = true }: ProposalCaptureModalProps) {
   const { t } = useTranslation('crm');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<Currency>(DEFAULT_CURRENCY as Currency);
@@ -37,7 +39,10 @@ export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm }:
   }, [isOpen]);
 
   const amountValue = Number(amount);
-  const isValid = amount.trim() !== '' && Number.isFinite(amountValue) && amountValue > 0;
+  const probValue = Number(winProbability);
+  const probValid = winProbability.trim() !== '' && Number.isFinite(probValue) && probValue >= 0 && probValue <= 100;
+  const isValid =
+    amount.trim() !== '' && Number.isFinite(amountValue) && amountValue > 0 && (!requireWinProbability || probValid);
 
   const handleConfirm = async () => {
     if (!isValid || submitting) return;

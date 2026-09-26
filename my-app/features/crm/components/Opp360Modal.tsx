@@ -174,6 +174,7 @@ export function Opp360Modal({ isOpen, onClose, opportunity, stages, ownerNames, 
         stageName={String(nextStage?.data?.name ?? '')}
         onCancel={() => setCapturingProposal(false)}
         onConfirm={handleConfirmProposal}
+        requireWinProbability={false}
       />
     </>
   );

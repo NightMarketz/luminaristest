@@ -16,6 +16,8 @@ import { ScoreGauge } from '../../../features/crm/components/ui/ScoreGauge';
 import { StatusBadge } from '../../../features/crm/components/ui/StatusBadge';
 import { BantBars } from '../../../features/crm/components/ui/BantBars';
 import { MeetingCaptureModal } from '../../../features/crm/components/MeetingCaptureModal';
+import { ProposalCaptureModal } from '../../../features/crm/components/ProposalCaptureModal';
+import type { ProposalCapture } from '../../../features/crm/hooks/useCrmPipelineBoard';
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -34,6 +36,8 @@ function LeadDetailInner() {
   const [advancing, setAdvancing] = useState(false);
   // Set while the next stage is a `meeting` and we await the meeting date.
   const [capturingMeeting, setCapturingMeeting] = useState(false);
+  // Set while the next stage is a `proposal` and we await amount/currency/win%.
+  const [capturingProposal, setCapturingProposal] = useState(false);
 
   const lead: CrmRecord | undefined = leads.find((l) => l.id === leadId);
   const d = lead?.data ?? {};
@@ -46,7 +50,7 @@ function LeadDetailInner() {
     return idx >= 0 ? ordered[idx + 1] : undefined;
   }, [stages, d.pipelineId, d.stageId]);
 
-  const runAdvance = async (meetingAt?: string) => {
+  const runAdvance = async (meetingAt?: string, capture?: ProposalCapture) => {
     if (!lead || !nextStage) return;
     setAdvancing(true);
     try {
@@ -54,6 +58,9 @@ function LeadDetailInner() {
         leadId: lead.id,
         stageId: nextStage.id,
         ...(meetingAt ? { meetingAt } : {}),
+        ...(capture
+          ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
+          : {}),
       });
       await reload();
     } catch (err) {
@@ -68,6 +75,11 @@ function LeadDetailInner() {
     // Meeting stages need a future meeting date (LeadsPlugin rejects the move without it).
     if (String(nextStage.data?.type ?? '') === 'meeting') {
       setCapturingMeeting(true);
+      return;
+    }
+    // Proposal stages need amount/currency/win% (LeadsPlugin rejects the move without them).
+    if (String(nextStage.data?.type ?? '') === 'proposal') {
+      setCapturingProposal(true);
       return;
     }
     await runAdvance();
@@ -136,6 +148,15 @@ function LeadDetailInner() {
         onConfirm={async (meetingAt) => {
           setCapturingMeeting(false);
           await runAdvance(meetingAt);
+        }}
+      />
+      <ProposalCaptureModal
+        isOpen={capturingProposal}
+        stageName={String(nextStage?.data?.name ?? '')}
+        onCancel={() => setCapturingProposal(false)}
+        onConfirm={async (capture) => {
+          setCapturingProposal(false);
+          await runAdvance(undefined, capture);
         }}
       />
     </CrmLayout>
