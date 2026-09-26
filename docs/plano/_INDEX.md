@@ -96,7 +96,7 @@
 | [[I3]] | activate-default + período OPEN (backend da LAC-B) | planned — F-I3-1 → (a) openCurrentPeriodIfMissing; demais forks pendentes | [[LAC-B]] ✗ | LAC-B ativada + F-I3-1 → (a) (07/09) |
 | [[I4]] | Onboarding chama activate-default | planned — Forks F-I4-1..3 pendentes | [[I1]], [[I3]] ✗, [[I5]] ✗ | — |
 | [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned — Forks F-I5-1/2 pendentes | — | — |
-| [[I8]] | CRM como categoria composta por módulos (BE-INCR-CRM-MODULE-COMPOSITION) | inflight — PR #397 aberto: comportamentos 1–10 e 13 implementados (F-I8-COMP3-a/b ratificados 2026-09-26); PARADOS: c11 (lacuna: leads.source/crmAccounts.segment são string, não select) e c12 (depende de F-W5-1, pendente) | [[I1]] | F-I8-1 → (d) + 9/9 forks 2026-09-07; 'executa o I8' (dono, chat, 2026-09-26) |
+| [[I8]] | CRM como categoria composta por módulos (BE-INCR-CRM-MODULE-COMPOSITION) | inflight — PR #397 aberto: comportamentos 1–11 e 13 implementados (F-I8-COMP3-a/b e F-I8-C11 ratificados 2026-09-26); c12 ADIADO — pendência vinculada ao F-W5-1 | [[I1]] | F-I8-1 → (d) + 9/9 forks 2026-09-07; 'executa o I8' (dono, chat, 2026-09-26) |
 | [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | planned — ⏳ ATIVADA 07/09 pelo dono; executar pelo BRIEF + emenda F-I3-1 (a) | — | dono 'Ativar agora' 2026-09-07 |
 | [[P-IA]] | Extração genérica de documento por IA (F-BANK-1 → b), fora da régua | blocked — ADR adiado (R10) até D6 | [[R10]], [[D6]] ✗ | F-BANK-1 → (b) (10/09, contra a recomendação); R10 adia |
 | [[PASSO-12]] | GAP-MAP 8 — deleteTableData ignora immutableAfter/lifecycle (teste + fork a/b) | blocked — Espera 'instrumenta' + fork do dono (a guard no delete × b RESTRICT) | — | — |

@@ -64,3 +64,42 @@ export function assertAddedFieldsRespectModules(
     }
   }
 }
+
+/**
+ * Comportamento 11 (F-CRM-8 → a; F-I8-C11 ratificado 2026-09-26). Troca as opções de selects LIVRES na criação.
+ * Só campos que JÁ são `select` e estão na allowlist `freeSelects` do módulo; campo texto → 400 nomeado; nenhum
+ * tipo de coluna muda. Devolve um NOVO mapa de tabelas (nunca muta a definição compartilhada do preset).
+ */
+export function applySelectOverrides(
+  overrides: Record<string, Record<string, string[]>> | undefined,
+  tables: Readonly<Record<string, PresetTableDefinition>>,
+): Record<string, PresetTableDefinition> {
+  const out: Record<string, PresetTableDefinition> = { ...tables };
+  for (const [tableKey, byField] of Object.entries(overrides ?? {})) {
+    const def = out[tableKey];
+    if (!def) {
+      throw new ValidationError(`selectOverrides.${tableKey}: a tabela não será instalada.`, { table: tableKey });
+    }
+    const moduleKey = moduleOfTable(tableKey);
+    const allow = moduleKey ? MODULE_REGISTRY[moduleKey].freeSelects[tableKey] ?? [] : [];
+    const fields = def.schema.fields.map((f: ISchemaField) => ({ ...f }));
+    for (const [fieldName, options] of Object.entries(byField)) {
+      const field = fields.find((f) => f.name === fieldName);
+      if (field && field.type !== 'select') {
+        throw new ValidationError(
+          `selectOverrides.${tableKey}.${fieldName}: o campo é do tipo '${field.type}', não select — override só vale para select.`,
+          { table: tableKey, field: fieldName, reason: 'NOT_A_SELECT' },
+        );
+      }
+      if (!field || !allow.includes(fieldName)) {
+        throw new ValidationError(
+          `selectOverrides.${tableKey}.${fieldName}: campo fora da allowlist de selects livres.`,
+          { table: tableKey, field: fieldName, reason: 'NOT_ALLOWLISTED' },
+        );
+      }
+      field.options = [...options];
+    }
+    out[tableKey] = { ...def, schema: { ...def.schema, fields } };
+  }
+  return out;
+}

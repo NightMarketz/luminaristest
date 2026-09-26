@@ -24,6 +24,8 @@ export const UnitInputSchema = z
  */
 const moduleSelection = {
   modules: z.array(moduleKeySchema).default([]),
+  // I8 c11 (F-CRM-8 → a, F-I8-C11): { tabela: { campo: opções } } — só selects da allowlist `freeSelects`.
+  selectOverrides: z.record(z.string(), z.record(z.string(), z.array(z.string().min(1)).min(1))).optional(),
 };
 
 export const QuickCreationSchema = z

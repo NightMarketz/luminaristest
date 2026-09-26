@@ -50,7 +50,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: true,
     tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'],
     dependsOn: [],
-    freeSelects: { leads: ['source'] },
+    freeSelects: {},
   },
   'CRM-1': {
     key: 'CRM-1',
@@ -72,7 +72,8 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['crmAccounts', 'crmContacts'],
     dependsOn: ['CRM-0'],
-    freeSelects: { crmAccounts: ['segment', 'size'], crmContacts: ['role'] },
+    // F-I8-C11 (2026-09-26): só campos JÁ `select`; `segment` (texto) ficou fora.
+    freeSelects: { crmAccounts: ['size'], crmContacts: ['role'] },
   },
   'CRM-3': {
     key: 'CRM-3',

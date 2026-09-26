@@ -700,6 +700,10 @@
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
  *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                     selectOverrides:
+ *                       type: object
+ *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
+ *                       additionalProperties: { type: object, additionalProperties: { type: array, items: { type: string } } }
  *                 - type: object
  *                   required: [mode, presetKey, unit]
  *                   properties:
@@ -734,6 +738,10 @@
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
  *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                     selectOverrides:
+ *                       type: object
+ *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
+ *                       additionalProperties: { type: object, additionalProperties: { type: array, items: { type: string } } }
  *       responses:
  *         '201':
  *           description: Dashboard created successfully

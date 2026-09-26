@@ -151,9 +151,14 @@ por nome ou compara por valor.** Tudo que aparece em `resolveTableId(...)`, `fin
 10. **Customização de campos por módulo na criação** — `addedFields` por tabela (já existente) passa a
     ser validado contra a lista FIXA de campos do módulo: não pode sombrear campo declarado nem tocar
     select lido por serviço. Testável: `addedFields.leads: [{ name: 'status' }]` → 400.
-11. **Opções de select livres** (fork F-CRM-8) — `selectOverrides: { leads: { source: [...] } }` aceito
-    só para a allowlist de selects livres do módulo. Testável: override em `leads.status` → 400.
-12. **KB da IA** deriva `aiDescription` do registro (W5, F-W5-1 b) e a entrevista pergunta CRM sim/não
+11. **Opções de select livres** (fork F-CRM-8; forma fechada por **F-I8-C11**) — `selectOverrides:
+    { crmAccounts: { size: [...] } }` aceito só para campos que JÁ são `select` e estão na allowlist
+    `freeSelects` do módulo (`crmAccounts.size`, `crmContacts.role`). Campo texto → 400 nomeado
+    (`NOT_A_SELECT`); nenhum tipo de coluna muda. *(Corrigido 2026-09-26: o exemplo original
+    `leads.source` não serve — `source` e `crmAccounts.segment` são `string`.)* Testável: override em
+    `crmAccounts.segment` → 400; em `crmAccounts.size` → 201 com as opções; em `leads.status` → 400.
+
+12. **[ADIADO 2026-09-26 — pendência vinculada ao F-W5-1, ainda não ratificado]** **KB da IA** deriva `aiDescription` do registro (W5, F-W5-1 b) e a entrevista pergunta CRM sim/não
     quando o preset casado não fixa a categoria. Testável: turno `MATCHING_PRESET` devolve
     `categories` sugeridas junto do `presetKey`.
 13. **Gates mecânicos do diff:** snapshot de shape do DTO de criação; path-count do OpenAPI (+1 rota);
@@ -237,6 +242,11 @@ Levantados ao executar o comportamento 3 (leads saem do Core): o BRIEF não cobr
   módulos (Core + módulos), de modo que o sync-preset de tenant existente com as 5 tabelas de lead continue
   achando a fonte; nenhum dado de tenant existente muda.** Prova exigida: tenant legado com leads instalados
   → sync-preset acha as definições e não altera linhas.
+- **F-I8-C11 · forma do `selectOverrides`:** **✅ RATIFICADO 2026-09-26 → a allowlist aceita SÓ campos já do
+  tipo `select`; override em campo texto → 400 nomeado; nenhum tipo de coluna muda em tenant existente.**
+  `freeSelects` do registro passa a `{ crmAccounts: ['size'], crmContacts: ['role'] }`.
+- **c12 (KB da IA + pergunta CRM sim/não):** **ADIADO 2026-09-26 (dono)** — pendência vinculada ao F-W5-1
+  (derivar o KB do registro), que segue sem ratificação. Não implementado no PR #397.
 
 ## 5. Pendente de validação externa
 

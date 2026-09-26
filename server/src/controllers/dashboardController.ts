@@ -38,7 +38,7 @@ import { Role } from '@/features/users/models/User.model';
 import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
 import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
 import { composeModuleTables, type ModuleKey } from '@/features/dynamicTables/presets/modules/registry';
-import { assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { CoreSystemPreset, tablePresetSuites, PresetSuite, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -80,6 +80,7 @@ export async function createDashboard(req: Request, res: Response) {
         payload.unit,
         payload.fiscal,
         payload.modules,
+        payload.selectOverrides,
         res
       );
     } else {
@@ -89,6 +90,7 @@ export async function createDashboard(req: Request, res: Response) {
         payload.unit,
         payload.fiscal,
         payload.modules,
+        payload.selectOverrides,
         res
       );
     }
@@ -204,6 +206,7 @@ async function handleCustomCreation(
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
   modules: ModuleKey[],
+  selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
   const userId = ctx.id;
@@ -248,6 +251,9 @@ async function handleCustomCreation(
         }
       }
     }
+
+    // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.
+    Object.assign(finalTablesConfig, applySelectOverrides(selectOverrides, finalTablesConfig));
 
     if (Object.keys(finalTablesConfig).length === 0) {
       res.status(400).json({
@@ -333,6 +339,7 @@ async function handleQuickCreation(
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
   modules: ModuleKey[],
+  selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
   const userId = ctx.id;
@@ -362,6 +369,8 @@ async function handleQuickCreation(
         ...(selectedPreset.tables || {}),
       },
     };
+    // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.
+    mergedPreset.tables = applySelectOverrides(selectOverrides, mergedPreset.tables);
 
     // Validate analytics configurations if present
     const analyticsConfigs = (selectedPreset as { analytics?: unknown[] }).analytics;

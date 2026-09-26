@@ -6857,6 +6857,19 @@
                             "CRM-3"
                           ]
                         }
+                      },
+                      "selectOverrides": {
+                        "type": "object",
+                        "description": "I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT",
+                        "additionalProperties": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
                       }
                     }
                   },
@@ -6953,6 +6966,19 @@
                             "CRM-2",
                             "CRM-3"
                           ]
+                        }
+                      },
+                      "selectOverrides": {
+                        "type": "object",
+                        "description": "I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT",
+                        "additionalProperties": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
                         }
                       }
                     }

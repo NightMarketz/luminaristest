@@ -43,6 +43,26 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
         },
         "type": "array",
       },
+      "selectOverrides": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "items": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "minItems": 1,
+            "type": "array",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      },
       "unit": {
         "additionalProperties": false,
         "properties": {
@@ -147,6 +167,26 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
           "type": "string",
         },
         "type": "array",
+      },
+      "selectOverrides": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "items": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "minItems": 1,
+            "type": "array",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
       },
       "suiteKey": {
         "minLength": 1,

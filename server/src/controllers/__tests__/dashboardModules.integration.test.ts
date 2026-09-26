@@ -113,6 +113,19 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(ok.status).toBe(201);
   });
 
+  it('c11 (F-I8-C11): override em campo texto → 400 nomeado; em select da allowlist → 201 com as opções', async () => {
+    const u = await novoUsuario();
+    const bad = await criar(u, { suiteKey: 'crmModule', unit: { name: 'M' }, selectOverrides: { crmAccounts: { segment: ['Varejo'] } } });
+    expect(bad.status).toBe(400);
+    expect(bad.body.details).toEqual({ table: 'crmAccounts', field: 'segment', reason: 'NOT_A_SELECT' });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+    const ok = await criar(u, { suiteKey: 'crmModule', unit: { name: 'M' }, selectOverrides: { crmAccounts: { size: ['P', 'G'] } } });
+    expect(ok.status).toBe(201);
+    const size = ((await tabela(u.id, 'crmAccounts'))!.schema as unknown as { fields: { name: string; type: string; options?: string[] }[] })
+      .fields.find((f) => f.name === 'size');
+    expect(size).toMatchObject({ type: 'select', options: ['P', 'G'] });
+  });
+
   it('c7: convertLead em tenant sem CRM-2 → 409 CRM_MODULE_NOT_INSTALLED com moduleKey CRM-2', async () => {
     const u = await novoUsuario();
     expect((await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' } })).status).toBe(201);

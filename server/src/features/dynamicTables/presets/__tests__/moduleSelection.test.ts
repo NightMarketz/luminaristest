@@ -3,7 +3,7 @@
  */
 import { ValidationError } from '../../../../lib/errors';
 import { MODULE_REGISTRY, composeModuleTables, type ModuleDef, type ModuleKey } from '../modules/registry';
-import { assertAddedFieldsRespectModules, resolveModuleSelection } from '../modules/moduleSelection';
+import { applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '../modules/moduleSelection';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -61,5 +61,40 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
         { ...tables, customers: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
       ),
     ).not.toThrow();
+  });
+});
+
+describe('applySelectOverrides (comportamento 11, F-I8-C11)', () => {
+  const tables = composeModuleTables(['CRM-0', 'CRM-2']);
+  const reason = (fn: () => unknown) => {
+    try { fn(); } catch (e) { return (e as ValidationError).details; }
+    return null;
+  };
+
+  it('select da allowlist (crmAccounts.size) troca as opções sem mutar a definição de origem', () => {
+    const before = JSON.stringify(tables);
+    const out = applySelectOverrides({ crmAccounts: { size: ['P', 'G'] } }, tables);
+    expect(out.crmAccounts.schema.fields.find((f) => f.name === 'size')?.options).toEqual(['P', 'G']);
+    expect(out.crmAccounts.schema.fields.find((f) => f.name === 'size')?.type).toBe('select');
+    expect(JSON.stringify(tables)).toBe(before);
+  });
+
+  it('campo texto (leads.source, crmAccounts.segment) → 400 NOT_A_SELECT nomeado', () => {
+    expect(reason(() => applySelectOverrides({ leads: { source: ['Instagram'] } }, tables))).toEqual({ table: 'leads', field: 'source', reason: 'NOT_A_SELECT' });
+    expect(reason(() => applySelectOverrides({ crmAccounts: { segment: ['Varejo'] } }, tables))).toEqual({ table: 'crmAccounts', field: 'segment', reason: 'NOT_A_SELECT' });
+  });
+
+  it('select lido por serviço (leads.status) → 400 NOT_ALLOWLISTED; tabela não instalada → 400', () => {
+    expect(reason(() => applySelectOverrides({ leads: { status: ['X'] } }, tables))).toMatchObject({ reason: 'NOT_ALLOWLISTED' });
+    expect(reason(() => applySelectOverrides({ crmOpportunities: { status: ['X'] } }, tables))).toEqual({ table: 'crmOpportunities' });
+  });
+
+  it('allowlist do registro só contém campos que já são select', () => {
+    const all = composeModuleTables(['CRM-0', 'CRM-1', 'CRM-2', 'CRM-3']);
+    for (const def of Object.values(MODULE_REGISTRY)) {
+      for (const [t, fields] of Object.entries(def.freeSelects)) {
+        for (const f of fields) expect({ t, f, type: all[t].schema.fields.find((x) => x.name === f)?.type }).toEqual({ t, f, type: 'select' });
+      }
+    }
   });
 });
