@@ -265,6 +265,8 @@ describe('LeadsSeedOnUnitPlugin — seeds a default pipeline + stages on unit cr
   it('creates a default pipeline and 6 stages (incl. closed_won/closed_lost) for the new unit', async () => {
     const pipelines = await seedTbl({ name: 'Lead Pipelines', internalName: 'leadPipelines', category: 'leads', fields: [f('name', 'string', true), f('unitId', 'string'), f('isDefault', 'boolean')] });
     const stages = await seedTbl({ name: 'Lead Stages', internalName: 'leadStages', category: 'leads', fields: [f('name', 'string', true), f('pipelineId', 'string'), f('order', 'number'), f('type', 'string'), f('defaultWinProbability', 'number')] });
+    // I8 comportamento 6: a etapa `proposal` só nasce com o módulo CRM-1 (leadProposals) instalado.
+    await seedTbl({ name: 'Lead Proposals', internalName: 'leadProposals', category: 'leads', fields: [f('leadId', 'string')] });
     const units = await seedTbl({ name: 'Units', internalName: 'units', category: 'business', fields: [f('name', 'string', true)] });
 
     await create(units.id, { name: 'Centro' });

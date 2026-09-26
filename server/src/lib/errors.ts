@@ -89,6 +89,25 @@ export class ServiceError extends AppError {
 }
 
 /**
+ * BE-INCR-CRM-MODULE-COMPOSITION (I8) — comportamento 7 (F-I8-2). A CRM service resolved a table
+ * whose module is not installed for this tenant. Degrades by contract (409 + the missing module
+ * named in `details.moduleKey`), never by a generic 404/crash.
+ */
+export class ModuleNotInstalledError extends AppError {
+  public readonly details: { moduleKey: string };
+
+  constructor(moduleKey: string, internalName: string) {
+    super(
+      `O módulo '${moduleKey}' não está instalado para este usuário (tabela '${internalName}').`,
+      409,
+      'CRM_MODULE_NOT_INSTALLED',
+    );
+    this.details = { moduleKey };
+    Object.setPrototypeOf(this, ModuleNotInstalledError.prototype);
+  }
+}
+
+/**
  * Raised when a posting leg exceeds the MAX_CENTS policy ceiling (ACC-014).
  * Thrown by the PostingService choke-point guard (Council 1.5) with its OWN code,
  * DISTINCT from ACCOUNTING_PERIOD_NOT_OPEN: bridges/reconcile treat both as

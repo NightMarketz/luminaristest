@@ -1,0 +1,229 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comportamento 13) 1`] = `
+{
+  "CustomCreationSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "addedFields": {
+        "additionalProperties": {
+          "items": {},
+          "type": "array",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      },
+      "mode": {
+        "const": "custom",
+        "type": "string",
+      },
+      "modules": {
+        "default": [],
+        "items": {
+          "enum": [
+            "CRM-0",
+            "CRM-1",
+            "CRM-2",
+            "CRM-3",
+          ],
+          "type": "string",
+        },
+        "type": "array",
+      },
+      "presetKey": {
+        "minLength": 1,
+        "type": "string",
+      },
+      "removedTables": {
+        "items": {
+          "type": "string",
+        },
+        "type": "array",
+      },
+      "selectOverrides": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "items": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "minItems": 1,
+            "type": "array",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      },
+      "unit": {
+        "additionalProperties": false,
+        "properties": {
+          "cnpj": {
+            "maxLength": 18,
+            "type": "string",
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": {
+            "enum": [
+              "Own",
+              "Franchise",
+              "Department",
+            ],
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+        ],
+        "type": "object",
+      },
+    },
+    "required": [
+      "mode",
+      "presetKey",
+      "unit",
+    ],
+    "type": "object",
+  },
+  "InstallModuleResultSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "status": {
+        "enum": [
+          "installed",
+          "already-installed",
+        ],
+        "type": "string",
+      },
+      "synced": {
+        "items": {
+          "type": "string",
+        },
+        "type": "array",
+      },
+      "tables": {
+        "items": {
+          "type": "string",
+        },
+        "type": "array",
+      },
+    },
+    "required": [
+      "status",
+      "tables",
+      "synced",
+    ],
+    "type": "object",
+  },
+  "InstallModuleSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "moduleKey": {
+        "enum": [
+          "CRM-0",
+          "CRM-1",
+          "CRM-2",
+          "CRM-3",
+        ],
+        "type": "string",
+      },
+    },
+    "required": [
+      "moduleKey",
+    ],
+    "type": "object",
+  },
+  "QuickCreationSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "mode": {
+        "const": "quick",
+        "type": "string",
+      },
+      "modules": {
+        "default": [],
+        "items": {
+          "enum": [
+            "CRM-0",
+            "CRM-1",
+            "CRM-2",
+            "CRM-3",
+          ],
+          "type": "string",
+        },
+        "type": "array",
+      },
+      "selectOverrides": {
+        "additionalProperties": {
+          "additionalProperties": {
+            "items": {
+              "minLength": 1,
+              "type": "string",
+            },
+            "minItems": 1,
+            "type": "array",
+          },
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+        "propertyNames": {
+          "type": "string",
+        },
+        "type": "object",
+      },
+      "suiteKey": {
+        "minLength": 1,
+        "type": "string",
+      },
+      "unit": {
+        "additionalProperties": false,
+        "properties": {
+          "cnpj": {
+            "maxLength": 18,
+            "type": "string",
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": {
+            "enum": [
+              "Own",
+              "Franchise",
+              "Department",
+            ],
+            "type": "string",
+          },
+        },
+        "required": [
+          "name",
+        ],
+        "type": "object",
+      },
+    },
+    "required": [
+      "suiteKey",
+      "unit",
+    ],
+    "type": "object",
+  },
+}
+`;
