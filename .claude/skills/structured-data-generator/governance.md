@@ -67,6 +67,5 @@ Regras normativas da camada Structured Data, cada uma coberta por pelo menos um 
 - `SDATA-006` — novo `HeaderType` propaga nos 4 pontos casados (model enum + `ExcelHeader` + `inferColumnType` + `z.enum` do DTO).
 - `SDATA-007` — normalizar single-sheet vs multi-sheet ao ler (`getByDocumentId()`); paginar grandes volumes.
 
-Status `draft`: ainda **não validado** — sem `governance-eval-score`/`REPORT.md`. `eval-score`/`last-evaluated`
-no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; só aparecem quando a
-skill for promovida a `validated` pelo skill-audit (SG-048).
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

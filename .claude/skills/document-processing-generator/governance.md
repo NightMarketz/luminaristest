@@ -56,6 +56,5 @@ Regras normativas do pipeline de ingestão documental (RAG), cada uma coberta po
 - `DOCPROC-005` — `DocumentPurpose` correto: `KNOWLEDGE_BASE` (PDF/DOCX) vs `DATA_ANALYSIS` (XLSX/CSV → `structured-data-generator`).
 - `DOCPROC-006` — pipeline é camada de serviço pura: async, sem React/JSX, sem Express/HTTP no extractor/pipeline/service; buffer fora do banco.
 
-Status `draft`: ainda **não validado** — sem `governance-eval-score`/`REPORT.md`. `eval-score`/`last-evaluated`
-no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; só aparecem quando a
-skill for promovida a `validated`. `criticality: high` reflete o risco de isolamento de tenant (`DOCPROC-004`).
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão. `criticality: high` reflete o risco de isolamento de tenant (`DOCPROC-004`).

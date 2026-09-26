@@ -58,4 +58,4 @@ Regras normativas da camada Frontend Modal, cada uma coberta por um caso de eval
 - `FEMODAL-005` — props tipadas sem `any` (`interface <Name>Props`).
 - `FEMODAL-006` — Galaxy theme: `neutral-*` (nunca `zinc-*`), `rounded-2xl`/`3xl`, dark, `font-black`.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

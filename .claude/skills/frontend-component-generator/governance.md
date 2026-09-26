@@ -60,4 +60,4 @@ Regras normativas da camada Frontend Component, cada uma coberta por um caso de 
 - `FECOMP-005` — tipo `modal`: props `isOpen`/`onClose`/`onConfirm?`.
 - `FECOMP-006` — tipo `form-field`/`card` com dados: loading (`LoadingSpinner`) e empty state.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

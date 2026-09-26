@@ -65,4 +65,4 @@ Regras normativas da camada Frontend Widget, cada uma coberta por um caso de eva
 - `FEWIDGET-006` — props interface tipada e exportada, sem `any`.
 - `FEWIDGET-007` — Galaxy theme (tokens `neutral`/`lumi-*`), nunca `zinc-*` (caso de regressão `regression-1`).
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

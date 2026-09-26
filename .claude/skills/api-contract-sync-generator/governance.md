@@ -58,6 +58,6 @@ Regras normativas da fronteira de contrato backend↔frontend, cada uma coberta 
 - `SYNC-005` — tipos espelhados localmente (`my-app/types/`), nunca importados do `server/`.
 - `SYNC-006` — resposta envelopada (`{ success, data }` / paginação) é desempacotada, não tratada como `T` cru.
 
-Skill em `status: draft` — ainda não validada pelo skill-audit (SG-048); sem `score` projetado no frontmatter (SG-011) até o `REPORT.md` existir.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 
 `eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

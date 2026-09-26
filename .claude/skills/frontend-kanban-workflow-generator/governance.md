@@ -58,4 +58,4 @@ Regras normativas da camada Frontend Kanban Workflow, cada uma coberta por um ca
 - `FEKANBAN-005` — criar via `FloatingActionButton`; filtros via filter bar; resolve tabelas por `internalName` e pagina (fetch-all) ao ler.
 - `FEKANBAN-006` — container full-height (`flex h-full … flex-col`) + Galaxy theme: `neutral-*` (nunca `zinc-*`), `rounded-2xl`, sem `max-w-*` no board.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

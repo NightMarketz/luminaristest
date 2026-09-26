@@ -55,4 +55,4 @@ Regras normativas da camada Frontend Feature Module, cada uma coberta por ao men
 - `FEMOD-004` — acesso a dados vive no hook (service layer / `DynamicTableService`); caso dedicado `edge-1`.
 - `FEMOD-005` — registro do dynamic import (`{ ssr: false }`) em `pages/dashboard/index.tsx` + switch do dashboard.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` no frontmatter até existir `REPORT.md`. `governance-eval-score`/`governance-last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `governance-eval-score`/`governance-last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
