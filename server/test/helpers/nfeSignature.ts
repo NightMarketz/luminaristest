@@ -124,6 +124,31 @@ export function signNfeForTest(xml: string, opts: SignNfeOptions = {}): string {
 /** Lê um fixture e o devolve assinado — para os testes que MUTAM o `infNFe` e precisam re-assinar. */
 export const readSignedFixture = (path: string, opts?: SignNfeOptions) => signNfeForTest(readFileSync(path, 'utf8'), opts);
 
+/** CNPJ fictício (DV válido) do "sistema gerador" nos testes de NFS-e — quem assina a NFS-e nacional é a Sefin, não o
+ *  prestador (transcrição NFS-e §6), então o titular do certificado de teste NÃO é o emitente. */
+export const NFSE_TEST_SIGNER_CNPJ = '11444777000161';
+const INF_NFSE = "//*[local-name(.)='infNFSe']";
+const EXISTING_NFSE_SIGNATURE = /(<\/infNFSe>)\s*<Signature xmlns="http:\/\/www\.w3\.org\/2000\/09\/xmldsig#">[\s\S]*?<\/Signature>/;
+
+/**
+ * BE-INCR-DFE-MANUAL (F-MAN-1 a) — assina (ou re-assina) a NFS-e autorizada com a chave de teste: `ds:Signature`
+ * enveloped como irmã de `<infNFSe>` (filha direta de `<NFSe>`, XSD `TCNFSe`). Titular padrão = `NFSE_TEST_SIGNER_CNPJ`.
+ */
+export function signNfseForTest(xml: string, opts: SignNfeOptions = {}): string {
+  const key = opts.key ?? testKey();
+  const titular = 'cnpj' in opts || 'cpf' in opts ? {} : { cnpj: NFSE_TEST_SIGNER_CNPJ };
+  const certPem = opts.certPem ?? makeTestCert({ ...titular, ...opts }, key);
+  const sig = new SignedXml({
+    privateKey: key.export({ type: 'pkcs1', format: 'pem' }),
+    publicCert: certPem,
+    signatureAlgorithm: RSA_SHA1,
+    canonicalizationAlgorithm: C14N,
+  });
+  sig.addReference({ xpath: INF_NFSE, transforms: [ENVELOPED, C14N], digestAlgorithm: SHA1 });
+  sig.computeSignature(xml.replace(EXISTING_NFSE_SIGNATURE, '$1'), { location: { reference: INF_NFSE, action: 'after' } });
+  return sig.getSignedXml();
+}
+
 // CLI: re-assina os arquivos passados, no lugar.
 if (require.main === module) {
   for (const file of process.argv.slice(2)) {

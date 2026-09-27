@@ -16,6 +16,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parseNfe } from '../nfe';
+import { custoBrutoCents } from '../nfeCost';
 import { ValidationError } from '../errors';
 import { cnpjCheckDigits, isValidCnpj, isValidNfeChave, nfeChaveCheckDigit } from '../cnpj';
 // SIG-NFE: mutação DENTRO do <infNFe> invalida a assinatura — re-assina com a chave de teste para o gate
@@ -194,5 +195,50 @@ describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)
     const bad = signNfeForTest(PURCHASE.replace('<CNPJ>12345678000195</CNPJ>', '<CNPJ>98765432000198</CNPJ>'));
     expect(() => parseNfe(bad)).toThrow(ValidationError);
     expect(() => parseNfe(bad)).toThrow(/diverge de emit\/CNPJ/);
+  });
+});
+
+/**
+ * E9 reescopado (dono, 2026-09-26): nota FICTÍCIA com leiaute COMPLETO — todos os grupos que uma nota real de
+ * distribuidor traz (endereços, CEST, trib, ICMS10/ST, IPINT, vTotTrib, transp, cobr com 2 dup, pag, infAdic,
+ * infRespTec, digVal, <Signature> de TESTE). Prova que o parser lê o que importa no meio desse ruído, já passando
+ * pela verificação XMLDSig do SIG-NFE (#403). Ponta solta: assinatura ICP-Brasil e o leiaute de um emissor real —
+ * trocar pela nota real anonimizada (D2) é substituir o arquivo.
+ */
+describe('parseNfe — compra com leiaute completo (fictícia, E9 reescopado)', () => {
+  const FULL = readFixture('purchase-full-layout.SYNTHETIC.xml');
+
+  it('chave e CNPJs fictícios passam nos mesmos validadores de uma nota real', () => {
+    const nfe = parseNfe(FULL);
+    expect(nfe.chaveAcesso).toBe('35260911222333000181550010000123451482135790');
+    expect(isValidNfeChave(nfe.chaveAcesso)).toBe(true);
+    expect(isValidCnpj(nfe.emit.cnpj!)).toBe(true);
+    expect(isValidCnpj(nfe.dest.cnpj!)).toBe(true);
+    expect(nfe.emit).toEqual({ cnpj: '11222333000181', nome: 'DISTRIBUIDORA FICTICIA DE COSMETICOS LTDA', ie: '111222333444', crt: '3' });
+    expect(nfe.ide).toMatchObject({ numero: '12345', serie: '1', dhEmiDate: '2026-09-15', tpNF: '1', mod: '55' });
+    expect(nfe.protocolo).toMatchObject({ cStat: '100', nProt: '135260000123456', dhRecbtoDate: '2026-09-15' });
+  });
+
+  it('lê item a item: frete/desconto por item, ST do ICMS10, IPITrib × IPINT, CST de PIS/COFINS', () => {
+    const [shampoo, toalha, luva] = parseNfe(FULL).itens;
+    expect(shampoo).toMatchObject({
+      nItem: 1, cProd: 'SHAMP-1L', ncm: '33051000', cfop: '1403', qCom: '12.0000', vUnComStr: '18.5000000000',
+      vProdCents: 22200, vDescCents: 600, vFreteCents: 750,
+      vICMSCents: 4023, vICMSSTCents: 1494, vIPICents: 0, cstPis: '04', cstCofins: '04',
+    });
+    expect(toalha).toMatchObject({ cEAN: 'SEM GTIN', vProdCents: 19800, vDescCents: 400, vFreteCents: 500, vICMSCents: 3582, vICMSSTCents: 0, vIPICents: 995, cstPis: '01' });
+    expect(luva).toMatchObject({ uCom: 'CX', vProdCents: 9500, vDescCents: 0, vFreteCents: 250, vIPICents: 0, cstCofins: '01' });
+  });
+
+  it('totais fecham a fórmula D3: custo bruto = vNF (544,89), Σ itens = totais', () => {
+    const nfe = parseNfe(FULL);
+    expect(nfe.totais).toMatchObject({
+      vProdCents: 51500, vDescCents: 1000, vFreteCents: 1500, vIPICents: 995, vSTCents: 1494, vICMSCents: 9360, vNFCents: 54489,
+    });
+    expect(custoBrutoCents(nfe.totais)).toBe(nfe.totais.vNFCents);
+    const soma = (k: 'vProdCents' | 'vDescCents' | 'vFreteCents' | 'vIPICents' | 'vICMSSTCents') =>
+      nfe.itens.reduce((a, i) => a + i[k], 0);
+    expect([soma('vProdCents'), soma('vDescCents'), soma('vFreteCents'), soma('vIPICents'), soma('vICMSSTCents')])
+      .toEqual([nfe.totais.vProdCents, nfe.totais.vDescCents, nfe.totais.vFreteCents, nfe.totais.vIPICents, nfe.totais.vSTCents]);
   });
 });

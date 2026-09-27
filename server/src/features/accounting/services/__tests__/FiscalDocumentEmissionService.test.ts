@@ -433,3 +433,99 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect(payload.infDPS.IBSCBS).toBeUndefined();
   });
 });
+
+describe('FiscalDocumentEmissionService — modo manual (BE-INCR-DFE-MANUAL item 8, F-MAN-4 a)', () => {
+  function setup(partner: 'manual' | 'null') {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: partner, DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+    return makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: '126021000', cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+  }
+
+  it('o portal numera: a sequência local NÃO é consumida e a DPS sai sem id/serie/nDPS', async () => {
+    const { service, repo } = setup('manual');
+    await service.emit(SCOPE, SALE_ID, 'NFSE');
+    expect(repo.nextNumber).not.toHaveBeenCalled();
+    const data = repo.createSent.mock.calls[0][1] as { numero: bigint | null; payloadJson: string };
+    expect(data.numero).toBeNull();
+    const infDPS = JSON.parse(data.payloadJson).infDPS;
+    expect(infDPS).not.toHaveProperty('id');
+    expect(infDPS).not.toHaveProperty('serie');
+    expect(infDPS).not.toHaveProperty('nDPS');
+    expect(infDPS.prest.CNPJ).toBe('11222333000181'); // o resto da DPS continua lá
+  });
+
+  it('contraprova: com numeração local (NullEmissor) a sequência é consumida e a DPS sai numerada', async () => {
+    const { service, repo } = setup('null');
+    await service.emit(SCOPE, SALE_ID, 'NFSE');
+    expect(repo.nextNumber).toHaveBeenCalledTimes(1);
+    const data = repo.createSent.mock.calls[0][1] as { payloadJson: string };
+    expect(JSON.parse(data.payloadJson).infDPS.nDPS).toBe(1);
+  });
+});
+
+
+describe('FiscalDocumentEmissionService — pendências do status divergente e ficha (BE-INCR-DFE-MANUAL F-MAN-2 c, item 14)', () => {
+  function docRow(status: string) {
+    return {
+      id: 'doc-m', kind: 'NFSE', status, saleId: SALE_ID, cTribNac: '060101', anchorEntryId: ANCHOR_ID, ambiente: 'producao',
+      partner: 'manual', partnerRef: 'doc-m:1', serie: 70001, numero: 15n, nNFSe: '42', chaveOuCodigo: 'X', dCompet: '2026-09-15',
+      vServCents: 15000n, tpRetISSQN: 1, vIssCents: null, vIbsCents: null, vCbsCents: null, currentAttemptNo: 1,
+      authorizedAt: new Date(), cancelledAt: null, errorsJson: null, sourceDocumentId: 'src-1',
+      attempts: [{ attemptNo: 1, ref: 'doc-m:1', payloadJson: JSON.stringify({ versao: '1.01', infDPS: { dCompet: '2026-09-15' } }), sentAt: new Date(), resultStatus: 'AUTHORIZED' }],
+    };
+  }
+  function setup(status: string, saleStatus: string) {
+    jest.clearAllMocks();
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => (name === 'sales' ? SALES_TABLE : null));
+    findDataById.mockResolvedValue({ id: SALE_ID, data: { status: saleStatus } });
+    const s = makeService({});
+    s.repo.findById.mockResolvedValue(docRow(status));
+    s.repo.listBySale.mockResolvedValue([docRow(status)]);
+    return s;
+  }
+
+  it('AUTHORIZED_DIVERGENT mostra a pendência releitura_divergente', async () => {
+    const { service } = setup('AUTHORIZED_DIVERGENT', 'Finalized');
+    expect((await service.getById(SCOPE, 'doc-m')).pendencias).toEqual(['releitura_divergente']);
+  });
+
+  it('venda cancelada com nota DIVERGENTE viva também acusa sale_cancelled_with_live_document (a nota existe no fisco)', async () => {
+    const { service } = setup('AUTHORIZED_DIVERGENT', 'Cancelled');
+    expect((await service.getById(SCOPE, 'doc-m')).pendencias).toEqual(['sale_cancelled_with_live_document', 'releitura_divergente']);
+  });
+
+  it('contraprova: AUTHORIZED sem divergência não tem pendência de releitura', async () => {
+    const { service } = setup('AUTHORIZED', 'Finalized');
+    expect((await service.getById(SCOPE, 'doc-m')).pendencias).toEqual([]);
+  });
+
+  it('ficha devolve a DPS CRUA da tentativa corrente', async () => {
+    const { service } = setup('SENT', 'Finalized');
+    expect(await service.ficha(SCOPE, 'doc-m')).toEqual({
+      documentId: 'doc-m',
+      status: 'SENT',
+      currentAttemptNo: 1,
+      payload: { versao: '1.01', infDPS: { dCompet: '2026-09-15' } },
+    });
+  });
+});

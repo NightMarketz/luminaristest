@@ -144,7 +144,7 @@ function reqStr(v: unknown, field: string): string {
  * concatena). NUNCA `Number(x) * 100`. Rejeita loud se houver 3ª casa significativa (13v2 tem
  * exatamente 2 decimais). Campo ausente/opcional é tratado por `moneyToCentsOpt`.
  */
-function moneyToCents(raw: string, field: string): number {
+export function moneyToCents(raw: string, field: string): number {
   const s = raw.trim();
   const m = /^(\d+)(?:\.(\d+))?$/.exec(s); // valor de NF-e é não-negativo
   if (!m) throw new ValidationError(`NF-e inválida: valor monetário "${raw}" em "${field}" mal-formado.`);
