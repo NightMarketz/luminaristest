@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 21 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 10 | 19 |
-| **total** | **48** | **60** |
+| fiscal | 11 | 19 |
+| **total** | **49** | **60** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -29,7 +29,6 @@
 | [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned | — |
 | [[I8]] | CRM como categoria composta por módulos (BE-INCR-CRM-MODULE-COMPOSITION) | ready | F-I8-1 → (d) + 9/9 forks 2026-09-07 (execução sem 'executa') |
 | [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | planned | dono 'Ativar agora' 2026-09-07 |
-| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned | dono em chat 26/09: "instrumenta a assinatura" (2.1–2.2) — sem 'executa' para 2.4; F-SIG-1 pendente |
 | [[X12]] | Catálogo de adições/exclusões dirigido por dado (F-COB-1 → b) | planned | resposta 4 + F-COB-1 → (b) (10/09) |
 
 ## Fila aberta
@@ -77,7 +76,6 @@
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — BRIEF próprio, ainda não aberto | [[X10b]] | — |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready — Crescimento do X4; falta 'executa' | [[X4]] | — |
 | [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
-| [[SIG-NFE]] | Verificação da assinatura (XMLDSig) do XML de NF-e importado | planned — **Nó de régua** por decisão do dono (25/09) — conta no denominador fiscal, ver [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]. Fase 2 do plano pós-contador. Passos 2.1–2.2 FEITOS: instrumentado vermelho 26/09 (#391 `1e1e82b7` — `nfeController.purchase.signature.integration.test.ts`, `it.failing`, Expected 400 / Received 201; GAP-MAP 14). Próximo: BRIEF 2.3 + F-SIG-1 (dono), implementação 2.4 | [[FIS-08]] | dono em chat 26/09: "instrumenta a assinatura" (2.1–2.2) — sem 'executa' para 2.4; F-SIG-1 pendente |
 | [[X10a]] | Adaptador por TIPO de documento fiscal (NFS-e, NF-e 55…) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: 'materializou dentro do nó X10b' (só NFS-e existe; NF-e 55 fora); §18.1 Onda 1 e grafo 14/09 ainda o listam  | [[X10b]] | resposta 9 (10/09) — requisito, sem 'executa' |
 | [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte. Triagem 23/09: NFS-e Simples obrigatória 01/11/2026 (sem facultativo), NBS obrigatório, NF-e antecipada 01/12/2026 p/ não contribuinte ICMS, gate de fechamento com prestação sem nota | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
 | [[X11]] | Eventos de DF-e com prazo legal validado (cancelamento, substituição, CC-e) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: materializou dentro de X10b (F-DFE-12; cancelamento com janela existe); grafo 14/09 e §18.1 ainda o listam a | [[X10i]] ✗ | resposta 13 (10/09) |
@@ -105,12 +103,12 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (23): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (24): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[D-2026-09-26-SIG-NFE-FORKS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (4): [[B-4]] · [[SEED-MY]] · [[X2]] · [[Z0-a]]
 - **motor** (1): [[PASSO-11]]
 - **plataforma** (7): [[I1]] · [[P-i18n]] · [[P1]] · [[P2]] · [[P3]] · [[P4-fase]] · [[P5]]
-- **regua** (50): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[C8]] · [[C9]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[X10b]] · [[X13]] · [[X4]] · [[X6]]
+- **regua** (51): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[C8]] · [[C9]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[SIG-NFE]] · [[X10b]] · [[X13]] · [[X4]] · [[X6]]
 - **rejeitada** (6): [[R-contab-preset-dt]] · [[R-motor-dominio]] · [[R-motor-regras]] · [[R-multimoeda]] · [[R-postgresql]] · [[R-torre-multiempresa]]
 - **subno** (2): [[X10]] · [[X4-14]]
 - **trilho** (12): [[T1]] · [[T10]] · [[T11]] · [[T12]] · [[T2]] · [[T3]] · [[T4]] · [[T5]] · [[T6]] · [[T7]] · [[T8]] · [[T9]]
