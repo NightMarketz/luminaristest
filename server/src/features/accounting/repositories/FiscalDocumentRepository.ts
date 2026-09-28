@@ -71,7 +71,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   }
 
   public async findByChaveOuCodigo(scope: AccountingScope, chaveOuCodigo: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
-    return this.db(tx).fiscalDocument.findFirst({ where: { chaveOuCodigo, ...accountingScopeWhere(scope), deletedAt: null } });
+    return this.db(tx).fiscalDocument.findFirst({ where: { chaveOuCodigo, userId: scope.ownerUserId, deletedAt: null } });
   }
 
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
