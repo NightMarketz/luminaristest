@@ -63,4 +63,4 @@ Regras normativas da camada Frontend Page, cada uma coberta por um caso de eval 
 - `FEPAGE-006` — container full-height do shell (sem `max-w-*` divergente) + design system (`neutral-*`, nunca `zinc-*`).
 - `FEPAGE-007` — dados derivados memoizados (`useMemo`).
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

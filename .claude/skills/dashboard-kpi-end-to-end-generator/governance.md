@@ -55,4 +55,4 @@ Regras normativas da cadeia KPI ponta-a-ponta, cada uma coberta por um caso de e
 - `DASHKPI-004` — KPI card widget que consome o hook e reusa o card canônico `DashboardKpiCard`, sem `zinc-*`; regressão `regression-1` cobre o anti-padrão CRM (card/gráfico bespoke).
 - `DASHKPI-005` — cadeia inteira ligada (widget→hook→service→template→processor registrado); um elo faltando = FAIL.
 
-`status: draft` — esta skill ainda não foi promovida a `validated` pelo skill-audit; sem `score`/`eval-score` até existir `REPORT.md`. `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated` no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

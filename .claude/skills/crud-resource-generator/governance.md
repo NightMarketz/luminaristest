@@ -58,6 +58,5 @@ Regras normativas do slice CRUD, cada uma coberta por um caso de eval comportame
 - `CRUD-005` — routing pelo teste §2.1: recurso com invariante financeiro/legal vai para Prisma first-class, nunca `dynamic-table`.
 - `CRUD-006` — registro de rota em 2 toques (`routes/index.ts` + `@openapi` em `docs.paths.ts`); auth é deny-by-default — rota protegida NÃO edita `middleware/auth.ts` (não existe `protectedApiPaths`); rota pública = regra explícita em `publicApiRoutes`.
 
-`status: draft` — esta skill ainda NÃO foi validada; sem bloco de `score`/`governance-eval-score`
-até o `skill-audit` gerar o `REPORT.md` correspondente (SG-011). `eval-score`/`last-evaluated` no
-frontmatter da SKILL.md são **projeção** do `REPORT.md` — nunca editados à mão.
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

@@ -65,4 +65,5 @@ Regras normativas da camada Hook, cada uma coberta por pelo menos um caso de eva
 - `FEHOOK-006` — sem regra de negócio no hook; dados derivados em `useMemo([deps])`.
 - `FEHOOK-007` — sem `any`/`any[]` local; interfaces mínimas + `catch (e)` com narrowing por `unknown`.
 
-Status `draft`: a skill ainda **não** é descobrível em produção (SG-005). `eval-score`/`governance-eval-score` só são projetados no frontmatter (SG-011) após o `REPORT.md` ser gerado pelo `skill-audit` e a skill ser promovida a `validated` (SG-048).
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

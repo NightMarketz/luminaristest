@@ -73,9 +73,9 @@ Cada item marcado `[DASHKPI-*]` abaixo é uma REGRA DE GERAÇÃO auditável. Est
 
 ## Sub-skills invocadas
 
-- `analytics-kpi-generator` (passos 1-4)
-- `frontend-hook-generator` (passo 5-6)
-- `frontend-widget-generator` (passos 7-9)
+- `analytics-kpi-generator` (passos 1-3)
+- `frontend-hook-generator` (passo 4)
+- `frontend-widget-generator` (passos 5-7)
 
 ## Files usually created or changed
 
