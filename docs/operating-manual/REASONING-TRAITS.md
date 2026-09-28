@@ -15,7 +15,7 @@
 > um subconjunto dos traços como padrões documentados do modelo forte — claims auditados contra
 > tool results (≈ gates 2/4), verificador de contexto fresco > autocrítica (≈ passo 3 do guia),
 > lead-with-outcome (≈ gate 5), fronteira assess-first, memória um-fato-por-arquivo. Convergência
-> independente entre transcript e doc oficial. Tuning modelo-específico (Opus 4.8 vs Fable 5) em
+> independente entre transcript e doc oficial. Tuning modelo-específico (Opus 5.5 ativo; 4.8 e Fable 5 de referência) em
 > `MODEL-TUNING.md` — inclusive a assimetria de prescrição que este doc NÃO cobre.
 
 Formato de cada traço: **gatilho** (quando dispara) → **política** (o que fazer) → **anti-default**

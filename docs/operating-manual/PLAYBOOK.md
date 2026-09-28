@@ -13,7 +13,7 @@
 | Gates de envio OPS-001..004 | `.claude/skills/_OPERATING-GATES.md` | O que todo relatório/handoff precisa provar |
 | Guia portável (6 passos) | `docs/operating-manual/PORTABLE-GUIDE.md` | Como o sistema compensa o modelo |
 | Traços T1–T8 | `docs/operating-manual/REASONING-TRAITS.md` | Como o agente pensa durante o trabalho |
-| Tuning por modelo | `docs/operating-manual/MODEL-TUNING.md` | Opus 4.8 ativo: gatilhos explícitos, micro-autonomia |
+| Tuning por modelo | `docs/operating-manual/MODEL-TUNING.md` | Opus 5.5 ativo: delegar pouco, sem verificação genérica, escopo |
 | Trio de agentes | `luminaris-orchestrator` → `luminaris-implementer` → `luminaris-reviewer` | Planeja → executa → reprova/aprova com evidência |
 | Gates mecânicos | `tsc` ×2, `skill-audit governance-check`, `skill-audit wiring`, CI | O que não depende de ninguém lembrar |
 | Contrato de arquitetura (§2.1 fronteira · §2.2 limites · §2.3 teto de atomicidade) | `.claude/skills/_ARCHITECTURE-CONTRACT.md` | O que o revisor cobra por ID (`AC-*`); §2.3 = 2 commits + reconcile, sem motor |

@@ -1,41 +1,71 @@
-# Tuning por modelo — Opus 4.8 (ativo) e Fable 5 (referência)
+# Tuning por modelo — Opus 5.5 (ativo), Opus 4.8 e Fable 5 (referência)
 
 > Complemento **modelo-específico** das três camadas portáveis (gates / guia / traços — que são
 > agnósticas de modelo). Fonte: documentação oficial Anthropic (migration guide → "Migrating to
-> Opus 4.8" e "Migrating to Claude Fable 5"; "Prompting Claude Fable 5"). Grau: **verificado nas
-> docs oficiais**, não reproduzido em benchmark próprio.
+> Claude Opus 5", "Migrating to Claude Opus 5.5", "Migrating to Claude Fable 5"; guia de
+> prompt-audit da skill `claude-api`). Grau: **verificado nas docs oficiais** (2026-09-26), não
+> reproduzido em benchmark próprio.
 >
-> **O achado central — assimetria direcional de prescrição:**
-> - **Fable 5:** prompts/skills prescritivos demais *degradam* o output. Dê objetivo + restrições;
->   deixe o modelo escolher os passos. Ao migrar PARA Fable, faça A/B removendo scaffolding
->   passo-a-passo — **mas só scaffolding, nunca contrato** (ver escopo do A/B na seção Fable 5).
-> - **Opus 4.8:** *sub-alcança* capacidades que exigem decisão explícita (subagentes, memória,
->   busca, custom tools). Prescreva **gatilhos** — "chame isto quando…" na descrição de cada
->   tool/skill dá ganho medido. Ao rodar em Opus, o sistema prescritivo deste repo está **certo** —
->   não des-prescrever.
+> **O achado central — a direção da prescrição muda por geração:**
+> - **Opus 5 / 5.5 (ativo):** *super*-alcança — delega a subagentes livremente, verifica o próprio
+>   trabalho sem pedir, pode expandir escopo. Guidance "delegue mais / verifique no fim" escrita
+>   para o 4.8 agora **causa** custo e over-verification. Contrato fica; empurrão sai.
+> - **Opus 4.8 (histórico):** *sub*-alcançava capacidades de decisão explícita — precisava de
+>   gatilhos "chame isto quando…". Gatilho em `description` de skill continua certo (skills ainda
+>   sub-disparam); o que saiu foi o empurrão de delegação no corpo.
+> - **Fable 5:** prescrição passo-a-passo *degrada* o output (ver seção própria).
 
-## Opus 4.8 — snippets oficiais (modelo ativo deste repo)
+## Opus 5.5 — o que vale neste repo (modelo ativo)
 
-**1. Autonomia em micro-decisões** (corta ~12pp da taxa de perguntas sem aumentar over-reach):
+**1. Contrato ≠ empurrão.** Contratos deste repo (STOP DynamicTable×Prisma, cadeia de camadas,
+gates binários OPS-001..004, review independente por agente separado, sessões com autorização
+citável) **não entram em nenhuma dose** — restrição explícita com motivo não degrada modelo nenhum.
+O que se ajusta por modelo é só o empurrão comportamental abaixo.
 
-> Para escolhas menores (nomes, formatação, valores default, qual entre abordagens equivalentes),
-> escolha uma opção razoável e anote-a em vez de perguntar. Para mudanças de escopo ou ações
-> destrutivas, continue perguntando antes.
+**2. Subagentes — delegar pouco, não mais** (inversão do 4.8). Delegue só trabalho grande,
+genuinamente independente e paralelizável (investigação larga multi-arquivo); não para meia dúzia
+de leituras/edições nem para "conferir o próprio trabalho". A exceção sancionada é o **revisor
+independente** (`sessao-feature` regra de review, memória `reviewer-independence-separate-agent`):
+é contrato de independência, não verificação de rotina — fica.
 
-**2. Gatilhos explícitos por capacidade** (memória, subagentes, busca):
+**3. Sem scaffolding de verificação genérico.** O modelo já verifica sozinho; "faça uma checagem
+final", "re-verifique antes de responder", "use um subagente para verificar" causam
+over-verification sem ganho — **delete, não reescreva**. Não confundir com os gates OPS-001 (que
+pedem *artefato* no texto, não re-trabalho) nem com gate mecânico (`tsc`, `skill-audit`, CI).
 
-> Antes de qualquer tarefa com mais de alguns turnos, cheque seu arquivo de memória por contexto
-> prévio relevante e escreva descobertas novas nele. Quando uma tarefa se espalha por itens
-> independentes (muitos arquivos, muitos testes, muitos candidatos), delegue a subagentes em vez
-> de iterar em série.
+**4. Escopo e acabamento** (snippet oficial, reduz expansão de escopo a ~0):
 
-**3. Guarda de recall em review** — instrução conservadora ("só reporte high-severity", "seja
-conservador") é seguida **literalmente** e derruba recall medido mesmo com bug-finding melhor.
-Padrão: reporte-tudo com confiança+severidade, filtre num passo downstream. Status no repo:
-`luminaris-reviewer` verificado limpo do padrão por grep (2026-07-07) — manter limpo é regra.
+> Entregue o que foi pedido, no escopo pretendido. Resolva ambiguidade como um colega cuidadoso:
+> faça as escolhas de rotina você mesmo e só pergunte quando leituras diferentes levariam a
+> trabalho materialmente diferente. Se concluir que o pedido está errado ou há abordagem melhor,
+> diga numa frase e siga com o pedido como feito. Termine a tarefa inteira; se algo não puder ser
+> concluído, faça o resto e diga claramente o que falta e por quê.
 
-**4. Narração** — Opus 4.8 já narra progresso sozinho; **remova** scaffolding "resuma a cada N
-tool calls". Se verboso demais, default de silêncio explícito.
+Isto subsume a antiga "autonomia em micro-decisões" do 4.8 (mesma regra em `luminaris-implementer`).
+
+**5. Guarda de recall em review — continua valendo.** "Só reporte high-severity" / "seja
+conservador" é seguido literalmente e derruba recall. Reporte-tudo com confiança+severidade,
+filtre downstream. `luminaris-reviewer` limpo do padrão (grep 2026-09-26) — manter limpo é regra.
+
+**6. Nunca pedir reprodução do raciocínio interno** no texto da resposta ("mostre seu raciocínio",
+seção obrigatória de raciocínio) — no Opus 5.5 pode ser recusado como `reasoning_extraction`
+(sem retry em fallback). Pedir *evidência* (comando + saída, arquivo:linha) é outra coisa e fica.
+
+**7. Pensamento é sempre ligado; `effort` é o controle** (default da API = `medium`). Não
+escreva "pense mais/menos/passo a passo" em skill — ajuste `effort` na sessão. Regra "não pense"
+não pode ser cumprida.
+
+**8. Frontend:** "evite cara de IA genérica" só troca um default por outro; lista que **nomeia**
+os padrões a evitar funciona (o `frontend-design-system` já faz isso com tokens `neutral-*`/`zinc-*`).
+
+**9. Narração** — atualizações entre tool calls vêm como blocos de thinking; não adicione
+supressores ("não narre", "segure os achados até o fim") nem cadência "resuma a cada N".
+
+## Opus 4.8 — histórico (se o repo voltar a rodar nele)
+
+Gatilhos explícitos por capacidade ("quando a tarefa se espalha por itens independentes, delegue
+a subagentes"; "cheque a memória antes de tarefas longas"), autonomia em micro-decisões e guarda
+de recall. **Não reaplicar o empurrão de delegação em Opus 5.x.**
 
 ## Fable 5 — referência (se este repo voltar a rodar nele)
 
