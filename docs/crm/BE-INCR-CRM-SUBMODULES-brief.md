@@ -6,6 +6,8 @@
 > (item de onboarding/DynamicTable, não contábil). **Não há nó no vault**: pelo `docs/plano/README.md`, proposta
 > nova só vira nota em `nos/` depois de ratificada.
 
+> **Ratificação 2026-09-28:** F-SUB-1..8 ratificados conforme as recomendações da §5 — "Pode seguir com as recomendações e executa cada uma das duas" (dono, chat, 2026-09-28). Com isso o **F-CRM-4 do I8 (07/09, "Contas + Contatos num módulo") fica REVERTIDO** pelo corte CRM-2A/2B. Execução autorizada (`sessao-feature`); depende do PR #411 em `main`.
+
 ## 0. Contexto fixo
 
 - **Item:** dividir os módulos de CRM do registro que agrupam tabelas separáveis em submódulos, de modo que
@@ -252,50 +254,50 @@ type PresetModuleView = { key: ModuleKey; group?: ModuleGroupKey; name: { pt: st
 export type CrmModuleKey = 'CRM-0' | 'CRM-1' | 'CRM-2A' | 'CRM-2B' | 'CRM-3';
 ```
 
-## 5. Forks — todos em RATIFICAÇÃO PENDENTE
+## 5. Forks — RATIFICADOS 2026-09-28
 
 - **F-SUB-1 · O CRM-0 também se divide?** (a) Não. CRM-0 segue atômico e fixo (4 tabelas), e a remoção parcial
   continua 400 (#411). (b) Separar `leadActivities` num submódulo opcional "Histórico" (a FK permite). (c) Separar
   em `{leadPipelines, leadStages}` + `{leads, leadActivities}`. **Recomendação: (a).** A coesão do CRM-0 é de
   serviço (board, `advanceStage`, `recordNoShow`, Lead360 leem as quatro). (b)/(c) reabrem a razão ratificada no I8
   §1.2 ("um CRM sem histórico, que nenhuma tela sabe renderizar") e criariam tenants que o FE não renderiza. A
-  frase de 28/09 responde a um achado sobre módulo **não-fixo**. **RATIFICAÇÃO PENDENTE.**
+  frase de 28/09 responde a um achado sobre módulo **não-fixo**. **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-2 · Nome das chaves e compatibilidade de `'CRM-2'`.** (a) `CRM-2A`/`CRM-2B` e `'CRM-2'` continua aceito
   **como grupo** na entrada (`modules`, `install`), expandindo para os dois. A saída só tem chaves atômicas.
   (b) `CRM-2A`/`CRM-2B` e `'CRM-2'` sai do enum (cliente que enviar recebe 400). (c) `CRM-2` passa a ser só Contas e
   entra um `CRM-4` Contatos. **Recomendação: (a).** Mantém o sentido de "ligar CRM-2" (B2B completo) sem quebra.
   Hoje nenhum cliente FE envia `modules` (só testes e OpenAPI), então o custo do alias é uma função pura. (c) muda
-  em silêncio o que `'CRM-2'` significa para quem já o envia. **RATIFICAÇÃO PENDENTE.**
+  em silêncio o que `'CRM-2'` significa para quem já o envia. **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-3 · Contatos depende de Contas?** (a) Não: `CRM-2B` depende só de `CRM-0`, e `accountId` é enriquecimento
   opcional (descartado e restaurado por sync). (b) Sim: `CRM-2B.dependsOn = ['CRM-0','CRM-2A']`. **Recomendação:
   (a).** É a mesma regra que decidiu o F-CRM-5 (dependência = relação required ou serviço que exige a tabela para
   existir), citada aqui pela 2ª vez (T4). A relação é opcional, e contato sem empresa (B2C) é caso real. Com (b), a
   combinação "só Contatos" deixa de ser escolhível, e remover Contas mantendo Contatos cai no F-SUB-6.
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-4 · Remoção parcial de módulo com >1 tabela, em geral.** (a) 400 para **qualquer** módulo (fixo ou não),
   com `reason:'MODULE_PARTIAL'`. O `FIXED_MODULE_PARTIAL` do #411 fica como está, porque hoje só o CRM-0 é
   atingido. (b) Invariante "não-fixo ⇒ 1 tabela" no teste (item 1d) **e** nenhum código novo no
   `applyModuleRemovals`. (c) Permitir módulo não-fixo com >1 tabela desde que as tabelas se liguem por relação
   required, com 400 na remoção parcial. **Recomendação: (a) + o teste do item 1d.** O teste impede o reagrupamento,
   e o 400 genérico fecha a classe se o teste for relaxado depois. Custo: um ramo no `applyModuleRemovals`.
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-5 · Forma do "submódulo" no registro.** (a) Lista **plana** de módulos atômicos com `group` opcional (só
   UI/alias). `dependsOn`, `resolveModuleSelection`, `applyModuleRemovals` e `ModuleInstallService` não mudam de
   forma. (b) Hierarquia: `ModuleDef.submodules[]`, com seleção e dependência nos dois níveis. **Recomendação:
   (a).** O F-CRM-9 (b) já escolheu a lista plana pelo mesmo motivo: a validação mora no registro e o DTO não
-  cresce por categoria. (b) duplica a regra de dependência em dois níveis. **RATIFICAÇÃO PENDENTE.**
+  cresce por categoria. (b) duplica a regra de dependência em dois níveis. **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-6 · Remover módulo que tem dependente mantido.** (a) 400 nomeado `DEPENDENT_MODULE_KEPT` com a lista de
   dependentes, e nada instalado. (b) Cascata no servidor: os dependentes saem junto e a resposta lista os
   removidos. (c) Manter o 400 genérico da relação required (hoje). **Recomendação: (a).** Espelha o
   `resolveModuleSelection` (dependência faltante → 400 nomeando). A cascata é decisão de UI (confirmação do item
   14), não um efeito silencioso do servidor. Observação: sem o F-SUB-3 (b), nenhum par CRM-2A/2B dispara este
-  caso. **RATIFICAÇÃO PENDENTE.**
+  caso. **RATIFICADO (a) — dono 2026-09-28.**
 - **F-SUB-7 · `convertLead` com só um dos dois submódulos.** (a) Continua exigindo os dois: 409
   `CRM_MODULE_NOT_INSTALLED` nomeando o primeiro que falta (comportamento atual de `resolveTableId`, só a chave
   muda). (a′) Igual, mas com `details.missingModules` listando todos. (b) Degradar: converte só no que existe
   (conta sem contato, ou contato sem conta). **Recomendação: (a′).** Não muda a semântica da conversão, e a UI
   consegue nomear tudo que falta de uma vez. (b) muda a regra de negócio do `convertLead` (transação de 3
-  escritas) e é frente própria. **RATIFICAÇÃO PENDENTE.**
+  escritas) e é frente própria. **RATIFICADO (a′) — dono 2026-09-28.**
 - **F-SUB-8 · Empacotamento e contrato com a UI.** (a) BE + FE-mínimo (itens 1–12, 15) neste incremento. Os itens
   13–14 viram `FE-INCR-CRM-SUBMODULES`, e o registro é exposto no `GET /dashboard/presets/:key` (item 11) com
   `removedTables` mantido no payload. (b) Igual, mas sem o item 11: o FE estende o espelho `crmModules.ts` com
@@ -303,7 +305,7 @@ export type CrmModuleKey = 'CRM-0' | 'CRM-1' | 'CRM-2A' | 'CRM-2B' | 'CRM-3';
   ModuleSelector[]` novo no DTO) em vez de `removedTables`. **Recomendação: (a).** A casa separa BE-INCR de
   FE-INCR, e o espelho já é duplicação declarada: aumentar o espelho com dependências (b) é a classe "cópia manual
   que diverge". (c) muda o DTO sem necessidade, porque depois do corte tabela ≅ módulo em tudo, menos no CRM-0,
-  que o item 14 agrupa na UI. **RATIFICAÇÃO PENDENTE.**
+  que o item 14 agrupa na UI. **RATIFICADO (a) — dono 2026-09-28.**
 
 ## 6. Pendente de validação externa
 
