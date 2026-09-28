@@ -160,6 +160,13 @@ DevTools → Network e leia o parâmetro `unitId=` de qualquer request da tela.
 > [SpedEcfDto.ts](../../server/src/features/accounting/dtos/SpedEcfDto.ts). Campo **obrigatório**
 > sem default → a geração recusa com 400 se faltar; campo com **default** pode ficar de fora do
 > formulário, o backend preenche sozinho.
+>
+> **[EMENDA 2026-09-28]** A frase acima sobre `identQualif` **deixou de valer com o C12** (#353, commit
+> `edb80ec8`, 20/09): o J930 **não aceita mais** `identQualif` (derivado de `codAssin` pelo gerador —
+> F-C12-1 → a; mandar a chave = 400), e o signatário contador (`codAssin = '900'`) passou a exigir
+> CPF de 11 dígitos + `indCrc` + `ufCrc` + `email` + `fone` (REGRA_OBRIGATORIO_CONTADOR, Manual ECD
+> L9 p. 202). A tabela *ECD — signatários (J930)* abaixo foi reescrita por
+> [SpedEcdDto.ts:128-210 e :391-438](../../server/src/features/accounting/dtos/SpedEcdDto.ts).
 
 **Separe por origem antes de escrever para o contador** — o formulário da tela mistura os dois, mas
 pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-volta desnecessária:
@@ -170,7 +177,7 @@ pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-vo
 
 | Campo | Origem | Formato | Obrigatório / default |
 |---|---|---|---|
-| `cnpj` | 🏢 dono | 14 dígitos | **obrigatório** |
+| `cnpj` | 🏢 dono | 14 posições sem máscara (12 alfanuméricas maiúsculas + 2 dígitos verificadores; o CNPJ numérico de hoje cabe) | **obrigatório** |
 | `nome` | 🏢 dono | texto ≤150 | **obrigatório** |
 | `uf` | 🏢 dono | sigla UF | **obrigatório** |
 | `codMun` | 🏢 dono | 7 dígitos (IBGE) | **obrigatório** |
@@ -183,7 +190,7 @@ pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-vo
 | `indFinEsc` | 📗 contador | `0`/`1` | opcional — **default `'0'` (Original)** |
 | `tipEcd` | 📗 contador | `0`/`1`/`2` | opcional — **default `'0'`** |
 | `codHashSub` | 📗 contador | texto | opcional |
-| `codScp` | 📗 contador | CNPJ, 14 dígitos | opcional |
+| `codScp` | 📗 contador | CNPJ, 14 posições (alfanumérico, como `cnpj`) | opcional |
 | `identMf` | 📗 contador | `S`/`N` | opcional — **default `'N'`** |
 | `indEscCons` | 📗 contador | `S`/`N` | opcional — **default `'N'`** |
 | `indCentralizada` | 📗 contador | `0`/`1` | opcional — **default `'0'`** |
@@ -204,31 +211,39 @@ pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-vo
 
 #### ECD — signatários (J930; lista, mínimo 1)
 
-⚠️ `identQualif` é **obrigatório** e estava **ausente** na versão anterior — sem ele o backend
-rejeita a geração (400). Regra do backend (rejeita fora disso —
-[SpedEcdDto.ts:96-116](../../server/src/features/accounting/dtos/SpedEcdDto.ts)): **exatamente um**
-signatário com `indRespLegal = 'S'`; **pelo menos um** com `codAssin = '900'` (contador) **e pelo
-menos um** com `codAssin` diferente de `'900'`.
+⚠️ **`identQualif` não existe mais no J930** (ver [EMENDA 2026-09-28] acima) — a qualificação sai de
+`codAssin`. Regras do backend sobre a lista (rejeita fora disso —
+[SpedEcdDto.ts:391-438](../../server/src/features/accounting/dtos/SpedEcdDto.ts)):
+- **exatamente um** signatário com `indRespLegal = 'S'`, e ele **nunca** é o de `codAssin = '900'`
+  (o contador nunca é o responsável legal);
+- **pelo menos um** contador (`codAssin = '900'`) **e pelo menos um** não-contador;
+- a dupla `identCpfCnpj` + `codAssin` não se repete (a mesma pessoa pode assinar com códigos diferentes).
 
-| Campo | Formato | Obrigatório / default |
-|---|---|---|
-| `identNom` | texto | **obrigatório** |
-| `identCpfCnpj` | CPF (11) ou CNPJ (14) dígitos | **obrigatório** |
-| `identQualif` | texto (descrição da qualificação) | **obrigatório** |
-| `codAssin` | 3 dígitos | **obrigatório** |
-| `indRespLegal` | `S`/`N` | **obrigatório** |
-| `indCrc` | texto | opcional (o DTO da ECD não exige CRC nem do signatário contador) |
-| `email` | texto | opcional |
-| `fone` | texto | opcional |
-| `ufCrc` | sigla UF | opcional |
-| `numSeqCrc` | texto | opcional |
-| `dtCrc` | `YYYY-MM-DD` | opcional |
+⚠️ `indCrc`/`ufCrc`/`numSeqCrc`/`dtCrc` mandados **vazios** (`''`) são 400 de formato, e `email`/`fone`
+vazios contam como ausentes na linha `900` — no formulário, deixe em branco o que não tiver (a tela omite a chave).
+
+> **Dependência:** CRC / UF do CRC / e-mail / fone só aparecem na **tela** após o merge da correção
+> FE-FIX-SPED-ECD-SIGNERS (branch `claude/fe-dto-asymmetry-scan-fb5c0a`, ainda não mergeada); até lá a ECD pela tela dá 400.
+
+| Campo | Origem | Formato | Obrigatório / default |
+|---|---|---|---|
+| `identNom` | 🏢 dono (não-contador) · 📗 contador (linha `900`) | texto | **obrigatório** |
+| `identCpfCnpj` | 🏢 dono (não-contador) · 📗 contador (linha `900`) | CPF (11, com DV) ou CNPJ (14) | **obrigatório** — **CPF de 11 dígitos se `codAssin = '900'`** |
+| `codAssin` | 🏢 dono (não-contador) · 📗 contador (`900`) | código da Tabela de Qualificação do Assinante (Manual ECD L9 pp. 201-202: `001`, `203`–`207`, `220`, `222`, `223`, `226`, `309`, `312`, `313`, `315`, `401`, `801`, `900`, `940`, `999`) | **obrigatório** |
+| `indRespLegal` | 🏢 dono | `S`/`N` | **obrigatório** |
+| `indCrc` | 📗 contador | CRC no formato do CFC `UF-NNNNNN/O-D` (ex.: `SP-123456/O-1`); registro transferido/secundário com o sufixo: `SP-123456/O-3 T-MG`; a grafia compacta `SP1234567` é aceita e convertida. Recusados: sem dígito verificador (`1SP123456`) e provisório (`/P-`, extinto) | **obrigatório se `codAssin = '900'`**; opcional nos demais |
+| `ufCrc` | 📗 contador | sigla UF, **igual à UF embutida no `indCrc`** (transferido/secundário: a de origem **ou** a do sufixo — confirme com o contador qual o CRC dele usa) | **obrigatório se `codAssin = '900'`**; opcional nos demais |
+| `email` | 📗 contador | texto | **obrigatório se `codAssin = '900'`**; opcional nos demais |
+| `fone` | 📗 contador | texto | **obrigatório se `codAssin = '900'`**; opcional nos demais |
+| `numSeqCrc` | 📗 contador | `UF/AAAA/NÚMERO` (nº da Certidão de Regularidade Profissional) | opcional no backend — **no `900`, em branco gera AVISO no PVA** (`REGRA_ADVERTENCIA_CONTADOR`) |
+| `dtCrc` | 📗 contador | `YYYY-MM-DD` (validade da certidão) | opcional no backend — **no `900`, em branco gera AVISO no PVA** (`REGRA_ADVERTENCIA_CONTADOR`) |
+| ~~`identQualif`~~ | — | — | **NÃO mande** — chave desconhecida = 400 (derivado de `codAssin`) |
 
 #### ECF — declarante (registros 0000/0030)
 
 | Campo | Origem | Formato | Obrigatório / default |
 |---|---|---|---|
-| `cnpj` | 🏢 dono | 14 dígitos | **obrigatório** |
+| `cnpj` | 🏢 dono | 14 posições sem máscara (12 alfanuméricas maiúsculas + 2 dígitos verificadores; o CNPJ numérico de hoje cabe) | **obrigatório** |
 | `nome` | 🏢 dono | texto ≤150 | **obrigatório** |
 | `codNat` | 🏢 dono | 3–4 dígitos (natureza jurídica) | **obrigatório** |
 | `cnaeFiscal` | 🏢 dono | 7 dígitos | **obrigatório** |
@@ -270,17 +285,21 @@ O bloco inteiro pode ficar de fora do request — se omitido, o backend assume
 
 #### ECF — signatários (0930; lista, 1 a 2)
 
+> **[EMENDA 2026-09-28]** Tabela conferida contra o Manual ECF Leiaute 12 (abril/2026, pp. 103-105) e o
+> [SpedEcfDto.ts](../../server/src/features/accounting/dtos/SpedEcfDto.ts): `identQualif` é fechado na
+> tabela da ECF (≠ tabela da ECD), CPF com dígito verificador, CNPJ alfanumérico.
+
 Regra do backend: **pelo menos um** com `identQualif = '900'` (contador — exige `identCpfCnpj` de
 11 dígitos **e** `indCrc` preenchido) **e pelo menos um** não-`900`.
 
 | Campo | Formato | Obrigatório / default |
 |---|---|---|
 | `identNom` | texto | **obrigatório** |
-| `identCpfCnpj` | CPF (11) ou CNPJ (14) dígitos | **obrigatório** |
-| `identQualif` | 3 dígitos | **obrigatório** |
+| `identCpfCnpj` | CPF (11, com DV) ou CNPJ (14 posições, alfanumérico) | **obrigatório** — CPF de 11 se `identQualif = '900'` |
+| `identQualif` | código da tabela da ECF (Manual ECF L12 p. 104 — 17 códigos: `203`–`207`, `220`, `222`, `223`, `226`, `309`, `312`, `313`, `315`, `401`, `801`, `900`, `999`). **`001` e `940` valem na ECD mas NÃO na ECF** — não copie o código do J930 sem conferir | **obrigatório** |
 | `email` | e-mail válido | **obrigatório** |
 | `fone` | texto ≤14 | **obrigatório** |
-| `indCrc` | texto | opcional — **na prática obrigatório se `identQualif = '900'`** |
+| `indCrc` | mesmo formato do J930 da ECD (`UF-NNNNNN/O-D`, transferido com sufixo `T-UF`) — o PVA não valida formato (Manual ECF L12 pp. 103-105), a máscara é da casa para ECD e ECF saírem iguais | opcional — **obrigatório se `identQualif = '900'`** (`REGRA_OBRIGATORIO_CONTADOR`) |
 
 ---
 
