@@ -434,6 +434,46 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
   });
 });
 
+describe('FiscalDocumentEmissionService — Id da DPS [102] (GAP-MAP: tpInsc do Id)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+  });
+
+  // Anexo I v1.01, aba LEIAUTE, linha 102: "Tipo de inscrição Federal = 1 / CPF …; = 2 / CNPJ".
+  // Spec X10b (BE-INCR-DFE-brief.md §1 [102]): "DPS" + cLocEmi(7) + "2" + CNPJ(14) + serie(5) + nDPS(15).
+  it('emitente CNPJ: o tipo de inscrição do Id é 2 (CNPJ), não 1 (CPF)', async () => {
+    const { service } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    const id = result.payloads[0].infDPS.id;
+    expect({ tpInsc: id.slice(10, 11), id }).toEqual({
+      tpInsc: '2',
+      id: 'DPS' + '3550308' + '2' + '11222333000181' + '00001' + '0'.repeat(15),
+    });
+  });
+});
+
 describe('FiscalDocumentEmissionService — modo manual (BE-INCR-DFE-MANUAL item 8, F-MAN-4 a)', () => {
   function setup(partner: 'manual' | 'null') {
     jest.clearAllMocks();
