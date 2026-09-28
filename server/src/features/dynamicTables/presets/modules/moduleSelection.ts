@@ -40,6 +40,30 @@ export function resolveModuleSelection(
 }
 
 /**
+ * GAP-MAP Nível 3 "CRM-0 instalável pela metade": aplica `removedTables` (Controle Total) aos módulos selecionados.
+ * Módulo `fixed` existe inteiro ou não existe — remover só parte dele → 400 nomeando o módulo. Devolve os módulos
+ * com TODAS as tabelas mantidas (o que de fato será instalado), na ordem recebida.
+ */
+export function applyModuleRemovals(
+  selected: readonly ModuleKey[],
+  removedTables: readonly string[],
+  registry: Readonly<Record<ModuleKey, ModuleDef>> = MODULE_REGISTRY,
+): ModuleKey[] {
+  const removed = new Set(removedTables);
+  return selected.filter((key) => {
+    const { tables, fixed } = registry[key];
+    const gone = tables.filter((t) => removed.has(t));
+    if (fixed && gone.length > 0 && gone.length < tables.length) {
+      throw new ValidationError(
+        `O módulo '${key}' é fixo: remova todas as suas tabelas ou nenhuma (removidas: ${gone.join(', ')}).`,
+        { moduleKey: key, removedTables: gone, reason: 'FIXED_MODULE_PARTIAL' },
+      );
+    }
+    return gone.length === 0;
+  });
+}
+
+/**
  * Comportamento 10 (F-CRM-7 → a, só na criação). `addedFields` numa tabela de módulo não pode sombrear campo
  * declarado pelo módulo — o que inclui todo select lido por serviço (`leads.status`, `leadStages.type`...), já
  * que eles são campos declarados. Tabela fora de módulo segue a regra anterior (só o DTO de campo).

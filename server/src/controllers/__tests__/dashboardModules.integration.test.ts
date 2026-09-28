@@ -165,6 +165,24 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect((await request(app).post('/api/dashboard/modules/install').set(authHeader(a as never)).send({ moduleKey: 'X' })).status).toBe(400);
   });
 
+  // GAP-MAP Nível 3 "CRM — módulo fixo CRM-0 instalável pela metade (REGRESSÃO do #397)". Regra desta correção
+  // (autorização do dono 2026-09-28, "Pode seguir as correções"): módulo `fixed` existe INTEIRO ou NÃO existe —
+  // remover parte dele → 400 nomeado com o módulo; remover tudo segue permitido; `modules.installed` reflete o que
+  // foi de fato instalado.
+  it('GAP-MAP CRM-0 parcial: removedTables com PARTE do módulo fixo → 400 nomeando CRM-0, nada instalado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['leadActivities'], unit: { name: 'M' } });
+    expect({ status: r.status, details: r.body.details }).toMatchObject({ status: 400, details: { moduleKey: 'CRM-0' } });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('GAP-MAP CRM-0 parcial: salão custom sem as 5 tabelas de lead → modules.installed sem CRM-0 nem CRM-1', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules).toEqual({ installed: [] });
+  });
+
   it('F-I8-COMP3-b: tenant legado (leads vindos do Core antigo) → sync-preset acha as 5 definições e não altera linhas', async () => {
     const u = await novoUsuario('ADMIN');
     // O Core antigo = Core atual + as 5 tabelas de lead (mesmos módulos, mesma fábrica) — é o que um tenant
