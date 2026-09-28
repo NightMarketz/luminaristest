@@ -3,7 +3,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/err
 import {
   ACCOUNTING_CONTACT_ARCHIVED,
   ACCOUNTING_CONTACT_REGISTERED,
-  crcNumberUf,
+  crcNumberUfs,
 } from '../models/AccountingContact.model';
 import type { RegisterContactInput, UpdateContactInput } from '../dtos/AccountingContactDto';
 import type { IAccountingContactRepository } from '../repositories/IAccountingContactRepository';
@@ -131,10 +131,10 @@ export class AccountingContactService {
       if (!current) throw new NotFoundError(`Contador '${id}' não foi encontrado.`);
       const nextNumber = dto.crcNumber ?? current.crcNumber;
       const nextUf = dto.crcUf ?? current.crcUf;
-      const embedded = crcNumberUf(nextNumber);
-      if (embedded && embedded !== nextUf) {
+      const embedded = crcNumberUfs(nextNumber);
+      if (embedded.length && !embedded.includes(nextUf)) {
         throw new ValidationError(
-          `crcUf (${nextUf}) diverge da UF do número do CRC (${embedded}) — ajuste os dois juntos.`,
+          `crcUf (${nextUf}) diverge da UF do número do CRC (${embedded.join(' ou ')}) — ajuste os dois juntos.`,
         );
       }
       return this.contactRepo.update(scope, id, {

@@ -344,7 +344,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D (grafias usuais aceitas e normalizadas); a UF tem de bater com crcUf"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
           },
           "crcUf": {
             "type": "string",
@@ -392,7 +392,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "UF-NNNNNN/O-D (CFC)"
+            "description": "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'"
           },
           "crcUf": {
             "type": "string",
@@ -742,7 +742,7 @@
           },
           "reviewerCrc": {
             "type": "string",
-            "description": "Máscara CFC UF-NNNNNN/O-D (mesma do contato, #305)"
+            "description": "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)"
           },
           "statement": {
             "type": "string",
@@ -10428,7 +10428,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D; required when codAssin=900"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when codAssin=900"
                         },
                         "email": {
                           "type": "string",

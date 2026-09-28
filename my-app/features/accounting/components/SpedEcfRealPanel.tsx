@@ -15,6 +15,7 @@ import {
   UF_CODES,
   EcfSignersEditor,
   emptyEcfSigner,
+  toEcfSignersPayload,
   validateEcfSigners,
 } from './SpedGenerationPanel';
 import { resolveError } from '../lib/resolveError';
@@ -100,7 +101,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
         year: y,
         declarant,
         fiscal,
-        signers,
+        signers: toEcfSignersPayload(signers),
       });
     } catch (err) {
       setError(resolveError(err, genericError()));

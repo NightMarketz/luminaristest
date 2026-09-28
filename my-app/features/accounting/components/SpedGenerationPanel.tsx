@@ -64,6 +64,14 @@ export function validateEcfSigners(signers: EcfSigner[]): string | null {
   return null;
 }
 
+/**
+ * Exported for `SpedEcfRealPanel.tsx`. O CRC vazio da linha não-contador sai do payload em vez de ir
+ * como `''` — ausência é o único "vazio" que o BE aceita (BE-INCR-CRC-CFC-FOLLOWUPS §7).
+ */
+export function toEcfSignersPayload(signers: EcfSigner[]): EcfSigner[] {
+  return signers.map(({ indCrc, ...rest }) => (indCrc?.trim() ? { ...rest, indCrc: indCrc.trim() } : rest));
+}
+
 const emptyEcdSigner = (): EcdSigner => ({
   identNom: '',
   identCpfCnpj: '',
@@ -195,7 +203,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
         year,
         declarant: ecfDeclarant,
         fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
-        signers: ecfSigners,
+        signers: toEcfSignersPayload(ecfSigners),
       });
     } catch (err) {
       setEcfError(resolveError(err, genericError()));

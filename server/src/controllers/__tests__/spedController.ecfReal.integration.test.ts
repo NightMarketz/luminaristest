@@ -41,7 +41,7 @@ const body = (over: Record<string, unknown> = {}) => ({
   // C12 item 5: IDENT_CPF_CNPJ do contador agora exige DV válido (`isValidCpf`) — '12345678900'
   // tinha DV inválido e só passava porque o campo era regex de forma.
   signers: [
-    { identNom: 'CONTADOR', identCpfCnpj: '11122233396', identQualif: '900', indCrc: '1DF123', email: 'c@d.com', fone: '6133334444' },
+    { identNom: 'CONTADOR', identCpfCnpj: '11122233396', identQualif: '900', indCrc: 'DF-123456/O-1', email: 'c@d.com', fone: '6133334444' },
     { identNom: 'SOCIO', identCpfCnpj: '98765432100', identQualif: '205', email: 's@d.com', fone: '6133335555' },
   ],
   ...over,

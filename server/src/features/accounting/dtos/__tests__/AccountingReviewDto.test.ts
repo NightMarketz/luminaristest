@@ -100,6 +100,15 @@ describe('SignOffReviewSchema (item 9) — CRC pelo canônico do #305', () => {
     expect(JSON.stringify(r.error?.issues)).toContain('UF-NNNNNN/O-D');
   });
 
+  // BE-INCR-CRC-CFC-FOLLOWUPS item 5: o reviewerCrc herda a máscara do contato — transferido aceito,
+  // `T` no lugar do `O` recusado (F-1 → a).
+  it('transferido é aceito e normalizado; /T- como tipo é 400', () => {
+    const r = SignOffReviewSchema.safeParse({ ...base, reviewerCrc: 'sp-123456/o-3 t-mg' });
+    expect(r.success).toBe(true);
+    expect(r.data?.reviewerCrc).toBe('SP-123456/O-3 T-MG');
+    expect(SignOffReviewSchema.safeParse({ ...base, reviewerCrc: 'SP-123456/T-7' }).success).toBe(false);
+  });
+
   it('nome < 3 e statement vazio são 400', () => {
     expect(SignOffReviewSchema.safeParse({ ...base, reviewerName: 'Jo', reviewerCrc: 'SP-123456/O-1' }).success).toBe(false);
     expect(SignOffReviewSchema.safeParse({ ...base, statement: '', reviewerCrc: 'SP-123456/O-1' }).success).toBe(false);

@@ -52,27 +52,73 @@ export const ACCOUNTING_CONTACT_CRC_NUMBER_MAX_LENGTH = 30;
 
 /**
  * Número de registro no CRC no formato do CFC, já normalizado: `UF-NNNNNN/O-D`. Grupos: UF, 6
- * dígitos, categoria de registro (`O` originário, `T` transferido), dígito verificador.
+ * dígitos, tipo `O` (originário — o único vigente, Res. CFC 1.494/2015 arts. 3º e 36), dígito
+ * verificador, e o sufixo opcional ` T-UF`/` S-UF` do registro transferido/secundário (Manual de
+ * Registro CFC pp. 13-14: `SP-123456/O-3 T-MG`; GAP-MAP 15). `T` nunca ocupa o lugar do `O` (F-1 → a).
  */
-export const CRC_NUMBER_RE = /^([A-Z]{2})-(\d{6})\/([OT])-(\d)$/;
+export const CRC_NUMBER_RE = /^([A-Z]{2})-(\d{6})\/(O)-(\d)(?: ([TS])-([A-Z]{2}))?$/;
+
+/** Formato esperado, para as mensagens de 400 de todas as bordas que recebem número de CRC. */
+export const CRC_NUMBER_FORMAT =
+  'UF-NNNNNN/O-D (ex.: SP-123456/O-1; transferido/secundário com sufixo: SP-123456/O-3 T-MG)';
+
+export type CrcNumberParse =
+  | { ok: true; normalized: string }
+  | { ok: false; reason: 'formato' | 'provisorio_extinto' | 'sem_dv' };
+
+const CRC_FULL_RE = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})\/([OP])-?(\d)(?:([TS])-?([A-Z]{2}))?$/;
+// F-3 → a: `SP1234567`/`1SP1234567` (grafia dos ERPs: 6 dígitos + DV, sem letra de tipo) → tipo `O`.
+const CRC_COMPACT_RE = /^1?([A-Z]{2})(\d{6})(\d)$/;
+// `1SP123456` (exemplo dos manuais ECD/ECF): sem DV, e o DV não é calculável (algoritmo não publicado).
+const CRC_NO_DV_RE = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})(?:\/[OP])?$/;
 
 /**
- * Aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D`, ou `null` se não casar:
- * `SP-123456/O-1` · `SP123456/O-1` · `1SP123456/O-1` (categoria profissional na frente) ·
- * `CRC-SP 123456/O-1` · `CRC/SP 123456/O-1` · minúsculas e espaços sobrando.
+ * Aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D[ T-UF|S-UF]`, ou o motivo da
+ * recusa: `SP-123456/O-1` · `SP123456/O-1` · `1SP123456/O-1` (categoria profissional na frente) ·
+ * `CRC-SP 123456/O-1` · `CRC/SP 123456/O-1` · `SP-123456/O-3 T-MG` · `SP1234567` · minúsculas e
+ * espaços sobrando. Provisório (`/P-`) é recusado com motivo próprio (F-2 → a, Res. CFC 1.494/2015
+ * art. 36: provisórios deviam virar originários até dez/2016).
  */
-export function normalizeCrcNumber(value: string): string | null {
+export function parseCrcNumber(value: string): CrcNumberParse {
   const flat = value.toUpperCase().replace(/\s+/g, '');
-  const m = /^(?:CRC[-\/]?)?1?([A-Z]{2})-?(\d{6})\/([OT])-?(\d)$/.exec(flat);
-  if (!m) return null;
-  const [, uf, seq, cat, dv] = m;
-  return `${uf}-${seq}/${cat}-${dv}`;
+  const m = CRC_FULL_RE.exec(flat);
+  if (m) {
+    const [, uf, seq, cat, dv, sfx, sfxUf] = m;
+    if (cat === 'P') return { ok: false, reason: 'provisorio_extinto' };
+    return { ok: true, normalized: `${uf}-${seq}/O-${dv}${sfx ? ` ${sfx}-${sfxUf}` : ''}` };
+  }
+  const c = CRC_COMPACT_RE.exec(flat);
+  if (c) return { ok: true, normalized: `${c[1]}-${c[2]}/O-${c[3]}` };
+  if (CRC_NO_DV_RE.test(flat)) return { ok: false, reason: 'sem_dv' };
+  return { ok: false, reason: 'formato' };
 }
 
-/** UF embutida num número de CRC já normalizado (`SP-123456/O-1` → `SP`). */
-export function crcNumberUf(normalized: string): string | null {
+/** Mensagem do 400 por motivo — o prefixo (nome do campo) fica com cada borda. */
+export function crcNumberRejectMessage(reason: Exclude<CrcNumberParse, { ok: true }>['reason']): string {
+  if (reason === 'provisorio_extinto') {
+    return `registro provisório foi extinto (Res. CFC 1.494/2015 art. 36) — informe o número originário, ${CRC_NUMBER_FORMAT}`;
+  }
+  if (reason === 'sem_dv') {
+    return `falta o dígito verificador (está na carteira/certidão do CRC) — ${CRC_NUMBER_FORMAT}`;
+  }
+  return `deve seguir o formato do CFC ${CRC_NUMBER_FORMAT}`;
+}
+
+/** Forma canônica ou `null` — atalho de `parseCrcNumber` para quem não precisa do motivo. */
+export function normalizeCrcNumber(value: string): string | null {
+  const r = parseCrcNumber(value);
+  return r.ok ? r.normalized : null;
+}
+
+/**
+ * UFs aceitas como UF do CRC para um número já normalizado: a de origem e, se houver sufixo
+ * transferido/secundário, também a do sufixo (`SP-123456/O-3 T-MG` → `['SP', 'MG']`; decisão do dono
+ * 28/09, GAP-MAP 15). Vazio se o número não casar.
+ */
+export function crcNumberUfs(normalized: string): string[] {
   const m = CRC_NUMBER_RE.exec(normalized);
-  return m ? m[1] : null;
+  if (!m) return [];
+  return m[6] ? [m[1], m[6]] : [m[1]];
 }
 
 /** J930 campo 08 `FONE` — só dígitos, 10 (fixo) ou 11 (móvel) com DDD. Tira a máscara usual. */

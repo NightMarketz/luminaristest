@@ -93,6 +93,17 @@ describe('SpedEcfRequestSchema — 0930 (superRefine)', () => {
     failsOnSigners({ ...valid, signers: [{ ...contador, indCrc: '' }, socio] });
   });
 
+  // BE-INCR-CRC-CFC-FOLLOWUPS F-4 → a: mesma máscara CFC do J930 (o leiaute ECF não declara formato,
+  // Manual ECF L12 pp. 103-105 — escolha da casa, coerência ECD × ECF).
+  it('IND_CRC do 0930 passa pela máscara CFC: normaliza, e fora do formato é 400 com prefixo 0930', () => {
+    const ok = SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, indCrc: 'crc-sp 123456/o-1' }, socio] });
+    expect(ok.success).toBe(true);
+    expect(ok.data?.signers[0].indCrc).toBe('SP-123456/O-1');
+    const bad = SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, indCrc: '1DF123' }, socio] });
+    expect(bad.success).toBe(false);
+    expect(JSON.stringify(bad.error?.issues)).toContain('0930.IND_CRC');
+  });
+
   it('rejects um único signatário, seja ele contador ou não', () => {
     failsOnSigners({ ...valid, signers: [contador] });
     failsOnSigners({ ...valid, signers: [socio] });

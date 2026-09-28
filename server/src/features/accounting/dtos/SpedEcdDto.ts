@@ -5,8 +5,9 @@ import { isValidCpf } from '../../../lib/cpf';
 import {
   isValidCrcCertificate,
   normalizeCrcCertificate,
-  normalizeCrcNumber,
-  crcNumberUf,
+  crcNumberRejectMessage,
+  parseCrcNumber,
+  crcNumberUfs,
 } from '../models/AccountingContact.model';
 import { SPED_ECD_QUALIF_ASSINANTE_CODES } from '../models/spedQualifAssinante';
 
@@ -61,19 +62,23 @@ export function signerCpfOrCnpjSchema(registro: 'J930' | '0930') {
   });
 }
 
-/** J930 campo 06 (IND_CRC) — mesma máscara CFC do contato (#305, F-C12-3 → a): `normalizeCrcNumber`
- * aceita as grafias usuais e devolve a forma canônica `UF-NNNNNN/O-D`, ou reprova. */
-const crcNumberField = z.string().transform((value, ctx) => {
-  const normalized = normalizeCrcNumber(value);
-  if (!normalized) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'J930.IND_CRC deve seguir o formato do CRC: UF-NNNNNN/O-D (ex.: SP-123456/O-1).',
-    });
-    return z.NEVER;
-  }
-  return normalized;
-});
+/** J930 campo 06 / 0930 campo 5 (IND_CRC) — mesma máscara CFC do contato (#305, F-C12-3 → a; na ECF,
+ * BE-INCR-CRC-CFC-FOLLOWUPS F-4 → a): `parseCrcNumber` aceita as grafias usuais e devolve a forma
+ * canônica `UF-NNNNNN/O-D[ T-UF|S-UF]`, ou reprova. Exportado para o DTO da ECF reusar. */
+export function crcNumberFieldFor(registro: 'J930' | '0930') {
+  return z.string().transform((value, ctx) => {
+    const parsed = parseCrcNumber(value);
+    if (!parsed.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${registro}.IND_CRC ${crcNumberRejectMessage(parsed.reason)}`,
+      });
+      return z.NEVER;
+    }
+    return parsed.normalized;
+  });
+}
+const crcNumberField = crcNumberFieldFor('J930');
 
 /** J930 campo 10 (NUM_SEQ_CRC) — `REGRA_VALIDA_FORMATO_SEQUENCIAL_CRC`: UF/AAAA/NÚMERO, UF na tabela. */
 const crcCertificateField = z.string().transform((value, ctx) => {
@@ -155,12 +160,12 @@ const SignerSchema = z
     // AccountingContact.model.ts — os nomes de campo divergem: J930 usa indCrc/ufCrc, o contato usa
     // crcNumber/crcUf, então não é o mesmo símbolo, é a mesma técnica).
     if (val.indCrc && val.ufCrc) {
-      const embedded = crcNumberUf(val.indCrc);
-      if (embedded && embedded !== val.ufCrc) {
+      const embedded = crcNumberUfs(val.indCrc);
+      if (embedded.length && !embedded.includes(val.ufCrc)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['ufCrc'],
-          message: `J930.UF_CRC (${val.ufCrc}) diverge da UF embutida no IND_CRC (${embedded}).`,
+          message: `J930.UF_CRC (${val.ufCrc}) diverge da UF embutida no IND_CRC (${embedded.join(' ou ')}).`,
         });
       }
     }
@@ -244,12 +249,12 @@ const VerificationTermSignerSchema = z
   })
   .strict()
   .superRefine((val, ctx) => {
-    const embedded = crcNumberUf(val.indCrc);
-    if (embedded && embedded !== val.ufCrc) {
+    const embedded = crcNumberUfs(val.indCrc);
+    if (embedded.length && !embedded.includes(val.ufCrc)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['ufCrc'],
-        message: `J932.UF_CRC_T (${val.ufCrc}) diverge da UF embutida no IND_CRC_T (${embedded}).`,
+        message: `J932.UF_CRC_T (${val.ufCrc}) diverge da UF embutida no IND_CRC_T (${embedded.join(' ou ')}).`,
       });
     }
   });

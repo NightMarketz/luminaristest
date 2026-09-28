@@ -2374,7 +2374,7 @@
  *                       identNom:      { type: string }
  *                       identCpfCnpj:  { type: string, description: 'CPF (11 digits, DV validated) or CNPJ (14 alphanumeric positions, format only)' }
  *                       codAssin:      { type: string, description: '3-digit code from the Manual ECD L9 pp. 201-202 qualification table; 900 = Contador. IDENT_QUALIF (description) is NOT accepted — it is derived from this code' }
- *                       indCrc:        { type: string, description: 'CFC format UF-NNNNNN/O-D; required when codAssin=900' }
+ *                       indCrc:        { type: string, description: 'CFC format UF-NNNNNN/O-D (transferred/secondary: + " T-UF"/" S-UF"); required when codAssin=900' }
  *                       email:         { type: string, description: 'required when codAssin=900' }
  *                       fone:          { type: string, description: 'required when codAssin=900' }
  *                       ufCrc:         { type: string, description: 'required when codAssin=900; must match the UF embedded in indCrc' }
