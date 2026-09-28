@@ -14,6 +14,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
+import { ambienteFromTpAmb, assertTpAmb } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import { resolveAccountingScope } from '../scope/AccountingScope';
@@ -165,12 +166,21 @@ export class FiscalDocumentLifecycleService {
       });
     }
     const port = this.portFor(doc);
+    // BE-INCR-DFE-TPAMB (F-AMB-2 a): a porta do env aponta para o ambiente do env; documento de outro ambiente
+    // não sai por ela (uma nota de teste sairia como produção). O operador cancela e emite de novo.
+    const envSelection = selectDfeEmissor(process.env);
+    if (envSelection.port.name === doc.partner && envSelection.ambiente !== doc.ambiente) {
+      throw new ValidationError('reenvio_bloqueado: ambiente_divergente', {
+        faltantes: [`documento em ${doc.ambiente}, emissão configurada em ${envSelection.ambiente ?? 'nenhum'}`],
+      });
+    }
 
     const reassembled = await this.emissionService.reassembleGroupForReenvio(
       scope,
       doc.saleId,
       doc.kind as FiscalDocumentKind,
       doc.cTribNac,
+      doc.ambiente as DfeAmbiente,
     );
     // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
     const payload = port.capabilities.numbersDps
@@ -180,6 +190,8 @@ export class FiscalDocumentLifecycleService {
             ? { ...reassembled.payload, infDPS: { ...reassembled.payload.infDPS, nDPS: Number(doc.numero) } }
             : reassembled.payload,
         );
+
+    assertTpAmb(payload, doc.ambiente as DfeAmbiente);
 
     const nextAttemptNo = doc.currentAttemptNo + 1;
     const ref = attemptRef(doc.id, nextAttemptNo);
@@ -364,7 +376,7 @@ export class FiscalDocumentLifecycleService {
     if (nota.ambGer !== '2' || !(nota.procEmi === '2' || nota.procEmi === '3')) {
       identidade.push(`origem: ambGer=${nota.ambGer}, procEmi=${nota.procEmi ?? 'ausente'} — não é nota emitida no portal público`);
     }
-    const ambienteNota = nota.tpAmb === '1' ? 'producao' : 'homologacao';
+    const ambienteNota = ambienteFromTpAmb(nota.tpAmb);
     if (ambienteNota !== doc.ambiente) {
       identidade.push(`ambiente: nota de ${ambienteNota} (tpAmb=${nota.tpAmb}), documento de ${doc.ambiente}`);
     }

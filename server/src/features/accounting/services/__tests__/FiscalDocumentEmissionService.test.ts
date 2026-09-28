@@ -564,6 +564,20 @@ describe('FiscalDocumentEmissionService — tpAmb [103] = ambiente do documento 
     expect(result.ok).toBe(false);
     expect(result.payloads).toEqual([]);
   });
+
+  it('item 7 (F-AMB-3 a) — tpAmb adulterado na montagem: emit lança dfe_tpamb_invariant e createSent nunca é chamado', async () => {
+    const { service, repo } = setup('null', 'homologacao');
+    type Assembled = { groups: Array<{ payload: { infDPS: { tpAmb: number } } }> };
+    const internals = service as unknown as { assemble: (...args: unknown[]) => Promise<Assembled> };
+    const original = internals.assemble.bind(service);
+    jest.spyOn(internals, 'assemble').mockImplementation(async (...args: unknown[]) => {
+      const assembled = await original(...args);
+      for (const g of assembled.groups) g.payload.infDPS.tpAmb = 1; // um 3º caminho de montagem que errasse o tpAmb
+      return assembled;
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/dfe_tpamb_invariant/);
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
 });
 
 describe('FiscalDocumentEmissionService — modo manual (BE-INCR-DFE-MANUAL item 8, F-MAN-4 a)', () => {

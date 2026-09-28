@@ -13,6 +13,46 @@ import type { DpsPayload } from '../dtos/DpsPayloadDto';
 export type DfeKind = 'NFSE' | 'NFE';
 export type DfeAmbiente = 'producao' | 'homologacao';
 
+/** `infDPS/tpAmb` [103] — Anexo I v1.01, aba LEIAUTE, linha 103: 1 = Produção, 2 = Homologação. */
+export type DpsTpAmb = 1 | 2;
+
+/** BE-INCR-DFE-TPAMB (item 8) — o `tpAmb` da DPS é o ambiente do DOCUMENTO. Inversa exata de `ambienteFromTpAmb`. */
+export function tpAmbFor(ambiente: DfeAmbiente): DpsTpAmb {
+  switch (ambiente) {
+    case 'producao':
+      return 1;
+    case 'homologacao':
+      return 2;
+    default: {
+      const unknownAmbiente: never = ambiente;
+      throw new Error(`dfe_ambiente_unknown: ${String(unknownAmbiente)}`);
+    }
+  }
+}
+
+/** Leitura do `tpAmb` de uma nota (XML: '1' | '2') ou DPS (1 | 2) — o MESMO mapeamento de `tpAmbFor` (F-AMB-6 a). */
+export function ambienteFromTpAmb(tpAmb: '1' | '2' | DpsTpAmb): DfeAmbiente {
+  switch (tpAmb) {
+    case 1:
+    case '1':
+      return 'producao';
+    case 2:
+    case '2':
+      return 'homologacao';
+    default: {
+      const unknownTpAmb: never = tpAmb;
+      throw new Error(`dfe_tpamb_unknown: ${String(unknownTpAmb)}`);
+    }
+  }
+}
+
+/** BE-INCR-DFE-TPAMB (item 7, F-AMB-3 a) — DPS com `tpAmb` ≠ ambiente do documento é bug nosso (500), nunca 400. */
+export function assertTpAmb(payload: { infDPS: { tpAmb: number } }, ambiente: DfeAmbiente): void {
+  if (payload.infDPS.tpAmb !== tpAmbFor(ambiente)) {
+    throw new Error(`dfe_tpamb_invariant: DPS com tpAmb=${payload.infDPS.tpAmb} num documento de ${ambiente}.`);
+  }
+}
+
 export interface DfeCapabilities {
   /** true quando o parceiro numera a DPS/NF-e (a sequência local NÃO é consumida nesse caso). */
   numbersDps: boolean;

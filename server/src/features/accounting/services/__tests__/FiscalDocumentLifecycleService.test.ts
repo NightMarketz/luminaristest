@@ -81,7 +81,7 @@ const REASSEMBLED_PAYLOAD = {
   versao: '1.01' as const,
   infDPS: {
     id: 'DPS' + '0'.repeat(42),
-    tpAmb: 1 as const,
+    tpAmb: 2 as const, // baseDoc é homologacao (BE-INCR-DFE-TPAMB)
     dhEmi: new Date().toISOString(),
     verAplic: 'x',
     serie: 1,
@@ -360,6 +360,20 @@ describe('FiscalDocumentLifecycleService — reenviar e tpAmb [103] (BE-INCR-DFE
       audit: 0,
       porta: 0,
     });
+  });
+
+  it('item 7 (F-AMB-3 a) — tpAmb da remontagem ≠ ambiente do documento: lança dfe_tpamb_invariant antes de qualquer escrita', async () => {
+    const { service, repo, auditService, emissionService } = makeService({ docs: { 'doc-1': baseDoc({ status: 'REJECTED', ambiente: 'homologacao' }) } });
+    emissionService.reassembleGroupForReenvio.mockResolvedValueOnce({
+      vServCents: 10000,
+      payload: { ...REASSEMBLED_PAYLOAD, infDPS: { ...REASSEMBLED_PAYLOAD.infDPS, tpAmb: 1 as never } },
+      cnpjEmitente: '11222333000181',
+      partnerAccountRef: null,
+    });
+    await expect(service.reenviar(SCOPE, 'doc-1')).rejects.toThrow(/dfe_tpamb_invariant/);
+    expect(repo.appendAttempt).not.toHaveBeenCalled();
+    expect(auditService.append).not.toHaveBeenCalled();
+    expect(mockPort.emitir).not.toHaveBeenCalled();
   });
 });
 

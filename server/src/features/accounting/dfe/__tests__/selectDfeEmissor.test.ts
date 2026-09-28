@@ -3,6 +3,25 @@ import { NullEmissor } from '../NullEmissor';
 import { ManualEmissor } from '../ManualEmissor';
 import { resolveEmissorFor } from '../resolveEmissor';
 import { DfeDisabledEmissor } from '../DfeDisabledEmissor';
+import { ambienteFromTpAmb, tpAmbFor } from '../DfeEmissorPort';
+
+describe('tpAmbFor / ambienteFromTpAmb — BE-INCR-DFE-TPAMB item 8 (Anexo I v1.01, LEIAUTE linha 103)', () => {
+  it('producao → 1, homologacao → 2', () => {
+    expect([tpAmbFor('producao'), tpAmbFor('homologacao')]).toEqual([1, 2]);
+  });
+
+  it('round-trip com a leitura da nota (guarda (v) do retorno manual, F-AMB-6 a): uma tabela só nas duas direções', () => {
+    for (const ambiente of ['producao', 'homologacao'] as const) {
+      expect(ambienteFromTpAmb(tpAmbFor(ambiente))).toBe(ambiente);
+      expect(ambienteFromTpAmb(String(tpAmbFor(ambiente)) as '1' | '2')).toBe(ambiente);
+    }
+  });
+
+  it('valor fora do domínio não cai em default silencioso', () => {
+    expect(() => tpAmbFor('producao-restrita' as never)).toThrow(/dfe_ambiente_unknown/);
+    expect(() => ambienteFromTpAmb('3' as never)).toThrow(/dfe_tpamb_unknown/);
+  });
+});
 
 describe('selectDfeEmissor — BRIEF item 13 (3+ combinações de env)', () => {
   it('DFE_PARTNER ausente => desabilitada com motivo nomeado', () => {
