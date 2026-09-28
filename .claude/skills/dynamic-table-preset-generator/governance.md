@@ -47,5 +47,5 @@ sem self-relation).
 
 **`eval-score` é projeção** do `REPORT.md` do skill-audit — não há número materializado aqui
 até o harness produzir um (`STALE_EVALUATION` compara `last-evaluated` com a última corrida do
-relatório). `last-evaluated: 2026-06-24` reflete a auditoria §2.1 desta sessão, que achou e
+relatório). `last-evaluated: 2026-06-25` reflete a auditoria §2.1 desta sessão, que achou e
 corrigiu o isco "preset ERP" + adicionou o STOP §2.1 nesta skill.

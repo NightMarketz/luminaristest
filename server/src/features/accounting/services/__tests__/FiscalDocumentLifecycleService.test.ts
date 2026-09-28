@@ -1,5 +1,5 @@
 // Mock da SELEÇÃO da porta — controle total sobre emitir/consultar/cancelar por teste, sem
-// depender das particularidades de NullEmissor/FileEmissor (mesmo espírito do mock de
+// depender das particularidades de NullEmissor/ManualEmissor (mesmo espírito do mock de
 // getFactory() em FiscalDocumentEmissionService.test.ts: isola o que este arquivo testa).
 const mockPort = {
   name: 'null',
@@ -408,5 +408,53 @@ describe('FiscalDocumentLifecycleService — webhookReceived (item 28)', () => {
     expect(result.status).toBe(200);
     expect(mockPort.consultar).toHaveBeenCalledWith('doc-1:1');
     expect(repo.transition).toHaveBeenCalledWith(SCOPE, 'doc-1', expect.objectContaining({ status: 'PROCESSING' }));
+  });
+});
+
+describe('BE-INCR-DFE-MANUAL — adaptador do documento (item 9) e documento que não consulta (item 10)', () => {
+  it('job: documento do modo manual é PULADO sem escrita — nunca consultado pelo adaptador do env (null)', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT', partner: 'manual' }) } });
+    const summary = await service.pollPendingOnce(new Date());
+    expect(summary).toEqual({ total: 1, updated: 0, skipped: 1, failed: 0 });
+    expect(mockPort.consultar).not.toHaveBeenCalled();
+    expect(repo.transition).not.toHaveBeenCalled();
+  });
+
+  it('job: documento do parceiro do env continua sendo consultado (a mudança não cega o caminho normal)', async () => {
+    const { service } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT', partner: 'null' }) } });
+    mockPort.consultar.mockResolvedValueOnce({ status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [] } as EmissaoResult);
+    const summary = await service.pollPendingOnce(new Date());
+    expect(summary.updated).toBe(1);
+    expect(mockPort.consultar).toHaveBeenCalledTimes(1);
+  });
+
+  it('job: documento de parceiro sem adaptador (ex.: o antigo file) → skip+log por dfe_adapter_unknown', async () => {
+    const { service } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT', partner: 'file' }) } });
+    const summary = await service.pollPendingOnce(new Date());
+    expect(summary).toEqual({ total: 1, updated: 0, skipped: 1, failed: 0 });
+  });
+
+  it('consultar um documento manual → 409 DFE_CONSULTA_MANUAL, porta nunca tocada', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT', partner: 'manual' }) } });
+    await expect(service.consultarUm(SCOPE, 'doc-1')).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_CONSULTA_MANUAL' });
+    expect(mockPort.consultar).not.toHaveBeenCalled();
+    expect(repo.transition).not.toHaveBeenCalled();
+  });
+
+  it('cancelar pela porta um documento manual → 409 DFE_CANCEL_MANUAL (o caminho é o cancelamento-manual)', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'AUTHORIZED', partner: 'manual' }) } });
+    await expect(service.cancelar(SCOPE, 'doc-1', { cMotivo: 1, xMotivo: 'erro de digitação no portal' })).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_CANCEL_MANUAL' });
+    expect(mockPort.cancelar).not.toHaveBeenCalled();
+    expect(repo.transition).not.toHaveBeenCalled();
+  });
+
+  it('reenviar um documento manual REJECTED: a DPS reenviada sai sem id/serie/nDPS (F-MAN-4 a)', async () => {
+    const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'REJECTED', partner: 'manual', numero: null }) } });
+    await service.reenviar(SCOPE, 'doc-1');
+    const payload = JSON.parse((repo.appendAttempt.mock.calls[0] as unknown[])[1] ? ((repo.appendAttempt.mock.calls[0] as unknown[])[1] as { payloadJson: string }).payloadJson : '{}');
+    expect(payload.infDPS).not.toHaveProperty('nDPS');
+    expect(payload.infDPS).not.toHaveProperty('serie');
+    expect(payload.infDPS).not.toHaveProperty('id');
+    expect(mockPort.emitir).not.toHaveBeenCalled(); // o adaptador do documento é o ManualEmissor, não o do env
   });
 });

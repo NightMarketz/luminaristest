@@ -4191,6 +4191,15 @@
  *           type: array
  *           minItems: 1
  *           items: { $ref: '#/components/schemas/AccountingBindingEventBinding' }
+ *     AccountingBindingActivateDefaultRequest:
+ *       type: object
+ *       required: [unitId]
+ *       additionalProperties: false
+ *       properties:
+ *         unitId:                     { type: string }
+ *         sectorKey:                  { type: string, description: "default 'beautySalon'; setores com binding padrão: beautySalon, aestheticClinic" }
+ *         installChartIfEmpty:        { type: boolean, description: 'plano de contas vazio ⇒ instala o plano canônico antes do compile' }
+ *         openCurrentPeriodIfMissing: { type: boolean, description: 'período do mês corrente ausente/FUTURE ⇒ seed-year + open' }
  *
  * paths:
  *
@@ -4230,6 +4239,29 @@
  *             schema: { $ref: '#/components/schemas/AccountingBindingCompileRequest' }
  *       responses:
  *         '200': { description: 'candidate (AccountingBindingV1) + validation result — nunca persistido' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting-binding/activate-default:
+ *     post:
+ *       summary: Activate the sector's DEFAULT binding (server-side fixture) — HTTP twin of the activation CLI
+ *       description: >-
+ *         LAC-B. Idempotente (Active existente ⇒ status 'already-active', nada compilado). Pré-condições
+ *         checadas ANTES de gravar qualquer coisa: plano de contas vazio sem installChartIfEmpty ⇒
+ *         bloqueante CHART_OF_ACCOUNTS_EMPTY; período do mês corrente ausente/FUTURE sem
+ *         openCurrentPeriodIfMissing (ou fechado) ⇒ bloqueante ACCOUNTING_PERIOD_NOT_OPEN — em ambos
+ *         status 'Draft' sem bindingVersion. Passando, roda o MESMO compile de /compile (Active ou Draft
+ *         com os bloqueantes do validador).
+ *       tags: [AccountingBinding]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/AccountingBindingActivateDefaultRequest' }
+ *       responses:
+ *         '200': { description: "{ status: 'Active' | 'already-active' | 'Draft', bindingVersion?, blocking?: [{ code, message, period? ('YYYY-MM', só em ACCOUNTING_PERIOD_NOT_OPEN) }] }" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -5357,6 +5389,117 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '409': { description: 'OUT_OF_WINDOW (E0822) ou REJECTED pelo parceiro' }
+ *
+ *   /api/nfe/dfe/documents/{id}/ficha:
+ *     get:
+ *       summary: DPS of the current attempt, raw, for the manual-mode form (BE-INCR-DFE-MANUAL item 14)
+ *       description: >-
+ *         Devolve a DPS da tentativa corrente sem formatação (a máscara, a vírgula decimal e a ordem das etapas do
+ *         portal são da tela). Contém dado do tomador: só com canReadFiscalDocument.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: '{ documentId, status, currentAttemptNo, payload }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/nfe/dfe/documents/{id}/retorno-manual:
+ *     post:
+ *       summary: Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)
+ *       description: >-
+ *         Só documento do modo manual (partner=manual) em SENT/PROCESSING. O XML tem a assinatura conferida (E1630/E1634),
+ *         é relido contra a DPS enviada e autoriza o documento. Identidade divergente (prestador, chave já usada, nota
+ *         anterior ao documento, origem fora do portal) ⇒ 422 sem escrita. Conteúdo divergente ⇒ AUTHORIZED_DIVERGENT
+ *         (só sai cancelando).
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               required: [unitId, file]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 file: { type: string, format: binary, description: 'XML da NFS-e autorizada' }
+ *                 pdf: { type: string, format: binary, description: 'DANFSe (opcional)' }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView (AUTHORIZED ou AUTHORIZED_DIVERGENT) + releitura' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *         '422': { description: 'XML inválido, assinatura inválida ou identidade divergente' }
+ *
+ *   /api/nfe/dfe/documents/{id}/rejeicao-manual:
+ *     post:
+ *       summary: Register that the public portal rejected the data (manual mode, item 12)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, errors]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 errors:
+ *                   type: array
+ *                   minItems: 1
+ *                   maxItems: 20
+ *                   items:
+ *                     type: object
+ *                     required: [code, message]
+ *                     properties:
+ *                       code: { type: string, maxLength: 20 }
+ *                       message: { type: string, maxLength: 500 }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView (status REJECTED)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'documento não é do modo manual ou não está SENT/PROCESSING' }
+ *
+ *   /api/nfe/dfe/documents/{id}/cancelamento-manual:
+ *     post:
+ *       summary: Register a cancellation done on the public portal, with the e101101 event XML (manual mode, item 13)
+ *       description: >-
+ *         Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o
+ *         do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           multipart/form-data:
+ *             schema:
+ *               type: object
+ *               required: [unitId, cMotivo, xMotivo, file]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 cMotivo: { type: integer, enum: [1, 2, 9] }
+ *                 xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *                 file: { type: string, format: binary, description: 'XML do evento de cancelamento e101101' }
+ *       responses:
+ *         '200': { description: 'FiscalDocumentView (status CANCELLED)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'documento não é do modo manual ou não está autorizado' }
+ *         '422': { description: 'evento inválido, de outra NFS-e ou com cMotivo diferente' }
  *
  *   /api/nfe/dfe/webhook/{partner}:
  *     post:

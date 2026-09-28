@@ -11,6 +11,7 @@ import { parseNfe } from '../../../../lib/nfe';
 import { cnpjCheckDigits, nfeChaveCheckDigit } from '../../../../lib/cnpj';
 import { ImportNfePurchaseSchema, NfePreviewSchema, PreviewNfeSchema } from '../NfeDto';
 import { toNfePreview } from '../../services/NfePreviewService';
+import { signNfeForTest } from '@test/helpers/nfeSignature';
 
 const FIXTURE_DIR = join(__dirname, '../../../../lib/__tests__/fixtures/nfe');
 const PURCHASE = readFileSync(join(FIXTURE_DIR, 'purchase-multi-item.SYNTHETIC.xml'), 'utf8');
@@ -21,9 +22,12 @@ function alnumVariant(): string {
   const cnpj = '12ABC34501DE' + cnpjCheckDigits('12ABC34501DE');
   const base43 = '352509' + cnpj + '55' + '001' + '000000003' + '1' + '00000003';
   const chave = base43 + String(nfeChaveCheckDigit(base43));
-  return PURCHASE.replace(/35250712345678000195550010000000011000000012/g, chave).replace(
-    '<CNPJ>12345678000195</CNPJ>',
-    `<CNPJ>${cnpj}</CNPJ>`,
+  // SIG-NFE: a mutação toca o <infNFe> — re-assina com a chave de teste (F-SIG-4 b).
+  return signNfeForTest(
+    PURCHASE.replace(/35250712345678000195550010000000011000000012/g, chave).replace(
+      '<CNPJ>12345678000195</CNPJ>',
+      `<CNPJ>${cnpj}</CNPJ>`,
+    ),
   );
 }
 

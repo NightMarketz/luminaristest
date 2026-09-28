@@ -4,8 +4,13 @@ import type { AccountingScope } from '../scope/AccountingScope';
 export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE'] as const;
 export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 
-export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'REJECTED', 'CANCELLED'] as const;
+// AUTHORIZED_DIVERGENT — BE-INCR-DFE-MANUAL F-MAN-2 (c): nota autorizada no ambiente nacional cuja releitura (XML ×
+// DPS enviada) achou divergência de conteúdo. Só sai cancelando (F-MAN-2b → b).
+export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED'] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
+
+/** Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). */
+export const AUTHORIZED_STATUSES: readonly FiscalDocumentStatus[] = ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'];
 
 /** Dados do documento no `SENT` inicial (BRIEF item 20 — criado junto com a tentativa 1 e o número). */
 export interface CreateSentFiscalDocumentData {
@@ -39,6 +44,8 @@ export interface TransitionData {
   nNFSe?: string | null;
   chaveOuCodigo?: string | null;
   numero?: bigint | null;
+  /** BE-INCR-DFE-MANUAL (F-MAN-4 a): série da DPS atribuída pelo portal, lida do XML autorizado. */
+  serie?: number;
   baseIssCents?: bigint | null;
   aliqIssBp?: number | null;
   vIssCents?: bigint | null;
@@ -55,6 +62,11 @@ export interface TransitionData {
   currentAttemptNo?: number;
   /** rename-on-cancel: `cancelled:<id>:<saleId>` libera o @@unique (memória unique-de-idempotencia-x-soft-delete). */
   saleKey?: string;
+  /**
+   * Guarda autoritativa DENTRO da escrita (memória authoritative-gate-inside-tx): a transição só acontece se o status
+   * atual estiver aqui; senão o repositório lança `fiscal_document_status_changed`.
+   */
+  whenStatusIn?: readonly FiscalDocumentStatus[];
   /** resultado gravado na tentativa corrente, quando houver. */
   attemptResult?: { attemptNo: number; resultStatus: string; resultJson: string | null };
 }
@@ -82,6 +94,11 @@ export interface IFiscalDocumentRepository {
    * mesmo padrão do job de polling). Só documentos vivos (`SENT`/`PROCESSING`) interessam.
    */
   findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
+  /**
+   * BE-INCR-DFE-MANUAL (item 11 ii) — documento vivo (deletedAt null) do escopo com esta chave de NFS-e. Chamado DENTRO
+   * da tx do retorno manual (guarda autoritativa: a mesma nota não autoriza dois documentos).
+   */
+  findByChaveOuCodigo(scope: AccountingScope, chaveOuCodigo: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
   /** Cria documento em SENT + tentativa 1 (`ref = <id>:1`). */
   createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts>;
   appendAttempt(scope: AccountingScope, data: AppendAttemptData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentAttempt>;

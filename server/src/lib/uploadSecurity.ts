@@ -108,25 +108,70 @@ export function makeUploadMiddleware(
         next();
         return;
       }
-      if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          res.status(413).json({
-            success: false,
-            error: `File too large. Maximum size is ${maxMb} MB.`,
-          });
-          return;
+      handleUploadError(err, res, next, maxMb);
+    });
+  };
+}
+
+/** Erros do multer → HTTP (compartilhado pelos middlewares de 1 campo e de vários campos). */
+function handleUploadError(err: unknown, res: Response, next: NextFunction, maxMb: number): void {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(413).json({
+        success: false,
+        error: `File too large. Maximum size is ${maxMb} MB.`,
+      });
+      return;
+    }
+    res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+    return;
+  }
+  if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
+    res.status(415).json({
+      success: false,
+      error: 'File type not supported. Allowed: PDF, PNG, JPEG, DOCX, XLSX, CSV, TXT.',
+    });
+    return;
+  }
+  next(err);
+}
+
+/**
+ * BE-INCR-DFE-MANUAL (item 11) — vários campos de arquivo, cada um com a sua allowlist (ex.: `file` = XML da NFS-e,
+ * `pdf` = DANFSe opcional). Mesmo teto de tamanho e mesmo mapeamento de erro do `makeUploadMiddleware`; campo
+ * declarado como PDF tem de trazer a assinatura `%PDF` (anti content-type spoofing).
+ */
+export function makeUploadFieldsMiddleware(
+  fields: Array<{ name: string; allowedTypes: Set<string> }>,
+  maxFileSizeBytes: number,
+) {
+  const byName = new Map(fields.map((f) => [f.name, f.allowedTypes]));
+  const instance = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxFileSizeBytes, files: fields.length, fields: 10 },
+    fileFilter: (_req, file, cb) => {
+      if (byName.get(file.fieldname)?.has(file.mimetype)) cb(null, true);
+      else cb(new Error('INVALID_FILE_TYPE'));
+    },
+  });
+  const handler = instance.fields(fields.map((f) => ({ name: f.name, maxCount: 1 })));
+  const maxMb = Math.round(maxFileSizeBytes / (1024 * 1024));
+
+  return (req: Request, res: Response, next: NextFunction): void => {
+    handler(req, res, (err: unknown) => {
+      if (!err) {
+        const files = (req as Request & { files?: Record<string, Express.Multer.File[]> }).files ?? {};
+        for (const list of Object.values(files)) {
+          const f = list[0];
+          if (f && f.mimetype === 'application/pdf' && !validateMagicBytes(f.buffer, f.mimetype)) {
+            res.status(415).json({ success: false, error: 'File content does not match its declared type.' });
+            return;
+          }
         }
-        res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
+        next();
         return;
       }
-      if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
-        res.status(415).json({
-          success: false,
-          error: 'File type not supported. Allowed: PDF, PNG, JPEG, DOCX, XLSX, CSV, TXT.',
-        });
-        return;
-      }
-      next(err);
+      handleUploadError(err, res, next, maxMb);
     });
   };
 }

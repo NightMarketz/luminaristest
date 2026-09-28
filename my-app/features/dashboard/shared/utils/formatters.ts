@@ -94,6 +94,24 @@ export function calcPercent(value: number, total: number): number {
  *  - `null`/`undefined`/empty → `'—'`;
  *  - unparseable → the raw string if a string was passed, else `'—'`.
  */
+/**
+ * Hoje (`YYYY-MM-DD`) no fuso do ESCOPO contábil — nunca em UTC.
+ *
+ * Por que não `new Date().toISOString().slice(0,10)`: o produto opera em UTC-3, então das 21h às
+ * 23h59 BRT o dia-calendário UTC já é o de AMANHÃ. Num write-path isso GRAVA o dia errado em
+ * silêncio. `en-CA` formata exatamente como `YYYY-MM-DD` — mesmo caminho de stdlib que `scopeDay`
+ * usa no backend (server/src/features/accounting/models/dates.ts).
+ *
+ * ponytail: a constante de fuso é ESPELHADA de `AccountingScope.timeZone` (backend) — cópia ÚNICA
+ * no frontend (decisão do dono 2026-09-25, supersede as duas cópias do F3(b) de 2026-09-02). Vira
+ * dado do backend quando o fuso for por tenant.
+ */
+const SCOPE_TIME_ZONE = 'America/Sao_Paulo';
+
+export function scopeToday(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: SCOPE_TIME_ZONE });
+}
+
 export function formatDateNumericBR(value?: string | Date | null): string {
     if (!value) return '—';
     let d: Date;

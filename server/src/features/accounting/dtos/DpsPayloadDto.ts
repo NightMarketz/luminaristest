@@ -90,7 +90,7 @@ export const DpsPayloadSchema = z
                   .object({
                     tribISSQN: z.literal(1), // [301]
                     tpRetISSQN: z.union([z.literal(1), z.literal(2)]), // [311]
-                    pAliq: Pct2.optional(), // [312] <= 5.00 (E0595)
+                    pAliq: z.string().regex(/^\d\.\d{2}$/).optional(), // [312] 1V2 (TSDec1V2) <= 5.00 (E0595)
                   })
                   .strict(),
                 totTrib: z.union([
@@ -131,3 +131,24 @@ export const DpsPayloadSchema = z
   .strict();
 
 export type DpsPayload = z.infer<typeof DpsPayloadSchema>;
+
+/**
+ * BE-INCR-DFE-MANUAL (item 8, F-MAN-4 → a) — DPS do MODO MANUAL: o portal público numera a DPS (Guia do Emissor
+ * Web v1.2, p. 20–21; RN E0010: série 70000–79999 no emissor web), então `id`, `serie` e `nDPS` NÃO existem no
+ * payload que o Luminaris entrega à ficha — série e número voltam pelo XML autorizado. Mesmo leiaute, mesmo `.strict()`.
+ */
+export const DpsManualPayloadSchema = z
+  .object({
+    versao: DpsPayloadSchema.shape.versao,
+    infDPS: DpsPayloadSchema.shape.infDPS.omit({ id: true, serie: true, nDPS: true }).strict(),
+  })
+  .strict();
+
+export type DpsManualPayload = z.infer<typeof DpsManualPayloadSchema>;
+
+/** Remove os campos de numeração que o portal atribui (F-MAN-4 a). */
+export function toManualDps(payload: DpsPayload): DpsManualPayload {
+  const { id: _id, serie: _serie, nDPS: _nDPS, ...infDPS } = payload.infDPS;
+  void _id; void _serie; void _nDPS;
+  return { versao: payload.versao, infDPS };
+}

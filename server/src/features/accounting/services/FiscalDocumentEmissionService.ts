@@ -12,6 +12,7 @@ import type { FiscalProfileService } from './FiscalProfileService';
 import type { ServiceFiscalProfileService, ServiceFiscalProfileView } from './ServiceFiscalProfileService';
 import type { AuditService } from './AuditService';
 import { attemptRef } from '../repositories/FiscalDocumentRepository';
+import { AUTHORIZED_STATUSES } from '../repositories/IFiscalDocumentRepository';
 import type {
   FiscalDocumentKind,
   FiscalDocumentStatus,
@@ -22,8 +23,8 @@ import { loadSalePackageInfo, loadSaleServiceLines } from '../sync/bridges/saleI
 import type { SaleServiceLine } from '../sync/bridges/saleItems';
 import { SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
 import { splitCents } from '../dfe/splitCents';
-import { DpsPayloadSchema } from '../dtos/DpsPayloadDto';
-import type { DpsPayload } from '../dtos/DpsPayloadDto';
+import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
+import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
@@ -188,11 +189,17 @@ export class FiscalDocumentEmissionService {
         if (!selection.port.capabilities.numbersDps) {
           numero = await this.repo.nextNumber(scope, kind, assembly.serie, tx);
         }
-        const payload = { ...group.payload };
-        if (numero != null) {
-          payload.infDPS = { ...payload.infDPS, nDPS: Number(numero) };
+        let payload: DpsPayload | DpsManualPayload;
+        if (selection.port.capabilities.numbersDps) {
+          // BE-INCR-DFE-MANUAL (item 8, F-MAN-4 a): quem numera é o adaptador/portal — a DPS sai SEM id/serie/nDPS.
+          payload = DpsManualPayloadSchema.parse(toManualDps(group.payload));
+        } else {
+          const numerada = { ...group.payload };
+          if (numero != null) {
+            numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero) };
+          }
+          payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
         }
-        DpsPayloadSchema.parse(payload); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
         const createdDoc = await this.repo.createSent(
           scope,
           {
@@ -277,6 +284,20 @@ export class FiscalDocumentEmissionService {
     return filter.pendencias ? views.filter((v) => v.pendencias.length > 0) : views;
   }
 
+  /**
+   * GET …/documents/:id/ficha (BE-INCR-DFE-MANUAL item 14) — a DPS da tentativa corrente, CRUA (sem máscara, vírgula
+   * decimal ou ordem das etapas do portal: isso é da tela, FE-INCR-DFE). Contém dado do tomador: só com
+   * `canReadFiscalDocument`, nunca em audit.
+   */
+  async ficha(scope: AccountingScope, id: string): Promise<{ documentId: string; status: string; currentAttemptNo: number; payload: unknown }> {
+    if (!this.policy.canReadFiscalDocument(scope)) throw new ForbiddenError('Você não tem permissão para ler documentos fiscais.');
+    const doc = await this.repo.findById(scope, id);
+    if (!doc) throw new ValidationError(`Documento fiscal '${id}' não encontrado.`, null);
+    const attempt = doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
+    if (!attempt) throw new Error(`fiscal_document_attempt_not_found: ${doc.id}:${doc.currentAttemptNo}`);
+    return { documentId: doc.id, status: doc.status, currentAttemptNo: doc.currentAttemptNo, payload: JSON.parse(attempt.payloadJson) };
+  }
+
   async getById(scope: AccountingScope, id: string): Promise<FiscalDocumentView> {
     if (!this.policy.canReadFiscalDocument(scope)) throw new ForbiddenError('Você não tem permissão para ler documentos fiscais.');
     const row = await this.repo.findById(scope, id);
@@ -312,8 +333,13 @@ export class FiscalDocumentEmissionService {
       const saleStatus = saleStatusCache.get(doc.saleId);
       const siblings = siblingsCache.get(doc.saleId)!;
       const pendencias: string[] = [];
-      if ((saleStatus === 'Cancelled' || saleStatus === 'Returned') && doc.status === 'AUTHORIZED') {
+      // BE-INCR-DFE-MANUAL F-MAN-2 (c): a nota divergente também é nota viva no ambiente nacional.
+      if ((saleStatus === 'Cancelled' || saleStatus === 'Returned') && AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
         pendencias.push('sale_cancelled_with_live_document');
+      }
+      // F-MAN-2 (c) efeito 4 + F-MAN-2b (b): a releitura achou divergência — só sai cancelando e reemitindo.
+      if (doc.status === 'AUTHORIZED_DIVERGENT') {
+        pendencias.push('releitura_divergente');
       }
       if (doc.status === 'CANCELLED') {
         const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED');

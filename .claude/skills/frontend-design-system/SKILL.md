@@ -20,7 +20,7 @@ metadata:
 
 As regras estruturais cross-cutting vivem em `.claude/skills/_ARCHITECTURE-CONTRACT.md`; esta skill detalha a camada visual.
 
-As outras skills de frontend garantem a **estrutura** correta (auth, i18n, hooks, dark mode, paginação) mas NÃO a **identidade visual**. Esta skill encoda a linguagem de design real do Luminaris para que as telas geradas pareçam parte do produto — não Tailwind genérico (`zinc`, `rounded-xl`, `font-semibold`). Aplique-a sempre que estilizar qualquer componente/tela.
+As outras skills de frontend garantem a **estrutura** correta (auth, i18n, hooks, dark mode, paginação) mas NÃO a **identidade visual**. Esta skill encoda a linguagem de design real do Luminaris para que as telas geradas pareçam parte do produto — não Tailwind genérico (`zinc-*` em superfície dark, `rounded-xl` em *card*, `font-black` ausente em título/KPI). Aplique-a sempre que estilizar qualquer componente/tela.
 
 ## When to use
 

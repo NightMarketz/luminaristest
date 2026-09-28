@@ -65,5 +65,5 @@ Regras normativas da camada Repository, cada uma coberta por um caso de eval com
 - `REPO-006` — `select` explícito excluindo campos sensíveis (password, tokens) em queries públicas.
 - `REPO-007` — tipos Prisma de `'generated/prisma'`, nunca `@prisma/client` (output path customizado).
 
-`status: draft` — skill ainda não validada; `evaluation.score` ausente até o primeiro REPORT.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 `eval-score`/`last-evaluated` são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

@@ -4,14 +4,14 @@ tipo: "dado-externo"
 dominio: "externo"
 titulo: "Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)"
 estado: "human-open"
-estado_detalhe: "Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib"
+estado_detalhe: "Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
-atualizado: "2026-09-25"
+atualizado: "2026-09-27"
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
-**Estado:** `human-open` — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib  
+**Estado:** `human-open` — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** [[D1]]  
 **Desbloqueia:** [[X10b]]  
