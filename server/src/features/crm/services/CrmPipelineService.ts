@@ -119,8 +119,19 @@ export class CrmPipelineService {
     // need their ids.
     const leadsTable = await this.resolveTable(user, 'leads');
     const leadsTableId = leadsTable.id;
-    const accountsTableId = await this.resolveTableId(user, 'crmAccounts');
-    const contactsTableId = await this.resolveTableId(user, 'crmContacts');
+    // BE-INCR-CRM-SUBMODULES item 8 (F-SUB-7 → a′): a conversão exige CRM-2A (Contas) E CRM-2B (Contatos); se
+    // faltar algum, o 409 nomeia o primeiro em `moduleKey` e TODOS em `details.missingModules`.
+    const accountsTable = await this.repository.findTableByInternalName(user.userId, 'crmAccounts');
+    const contactsTable = await this.repository.findTableByInternalName(user.userId, 'crmContacts');
+    if (!accountsTable || !contactsTable) {
+      const absent = [!accountsTable && 'crmAccounts', !contactsTable && 'crmContacts'].filter(
+        (t): t is string => Boolean(t),
+      );
+      const missingModules = absent.map((t) => moduleOfTable(t) ?? 'unknown');
+      throw new ModuleNotInstalledError(missingModules[0], absent[0], missingModules);
+    }
+    const accountsTableId = accountsTable.id;
+    const contactsTableId = contactsTable.id;
 
     // FIX 2 — partial-sync guard: a leads table not yet synced with the preset would have
     // the engine silently strip accountId/contactId/convertedAt and mark the lead Converted

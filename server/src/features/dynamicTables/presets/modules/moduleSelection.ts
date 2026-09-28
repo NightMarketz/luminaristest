@@ -41,8 +41,11 @@ export function resolveModuleSelection(
 
 /**
  * GAP-MAP Nível 3 "CRM-0 instalável pela metade": aplica `removedTables` (Controle Total) aos módulos selecionados.
- * Módulo `fixed` existe inteiro ou não existe — remover só parte dele → 400 nomeando o módulo. Devolve os módulos
- * com TODAS as tabelas mantidas (o que de fato será instalado), na ordem recebida.
+ * Módulo existe inteiro ou não existe — remover só parte dele → 400 nomeando o módulo: `FIXED_MODULE_PARTIAL` para
+ * módulo fixo (#411, inalterado) e `MODULE_PARTIAL` para qualquer outro módulo com mais de uma tabela
+ * (BE-INCR-CRM-SUBMODULES item 5, F-SUB-4 → a). Remover módulo mantendo um dependente selecionado → 400
+ * `DEPENDENT_MODULE_KEPT` com os dependentes nomeados (item 6, F-SUB-6 → a; sem cascata no servidor). Devolve os
+ * módulos com TODAS as tabelas mantidas (o que de fato será instalado), na ordem recebida.
  */
 export function applyModuleRemovals(
   selected: readonly ModuleKey[],
@@ -50,17 +53,30 @@ export function applyModuleRemovals(
   registry: Readonly<Record<ModuleKey, ModuleDef>> = MODULE_REGISTRY,
 ): ModuleKey[] {
   const removed = new Set(removedTables);
-  return selected.filter((key) => {
+  const kept = selected.filter((key) => {
     const { tables, fixed } = registry[key];
     const gone = tables.filter((t) => removed.has(t));
-    if (fixed && gone.length > 0 && gone.length < tables.length) {
+    if (gone.length > 0 && gone.length < tables.length) {
       throw new ValidationError(
-        `O módulo '${key}' é fixo: remova todas as suas tabelas ou nenhuma (removidas: ${gone.join(', ')}).`,
-        { moduleKey: key, removedTables: gone, reason: 'FIXED_MODULE_PARTIAL' },
+        fixed
+          ? `O módulo '${key}' é fixo: remova todas as suas tabelas ou nenhuma (removidas: ${gone.join(', ')}).`
+          : `O módulo '${key}' existe inteiro ou não existe: remova todas as suas tabelas ou nenhuma (removidas: ${gone.join(', ')}).`,
+        { moduleKey: key, removedTables: gone, reason: fixed ? 'FIXED_MODULE_PARTIAL' : 'MODULE_PARTIAL' },
       );
     }
     return gone.length === 0;
   });
+  for (const key of selected) {
+    if (kept.includes(key)) continue;
+    const dependents = kept.filter((k) => registry[k].dependsOn.includes(key));
+    if (dependents.length > 0) {
+      throw new ValidationError(
+        `O módulo '${key}' não pode ser removido: ${dependents.join(', ')} depende(m) dele e foi(ram) mantido(s).`,
+        { reason: 'DEPENDENT_MODULE_KEPT', moduleKey: key, dependents },
+      );
+    }
+  }
+  return kept;
 }
 
 /**

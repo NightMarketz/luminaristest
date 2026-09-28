@@ -310,15 +310,22 @@ describe('CrmPipelineService', () => {
       await expect(svc.convertLead(user, baseInput)).rejects.toMatchObject({ details: { moduleKey: 'CRM-0' } });
     });
 
-    it('I8 c7 (BRIEF §2.7): convertLead em tenant sem CRM-2 → 409 com moduleKey CRM-2, sem escritas', async () => {
+    // BE-INCR-CRM-SUBMODULES item 8 (F-SUB-7 → a′): a conversão exige CRM-2A E CRM-2B; o 409 nomeia o primeiro que
+    // falta em `moduleKey` e todos em `missingModules`, sem escritas.
+    it.each([
+      ['sem Contas nem Contatos', ['crmAccounts', 'crmContacts'], 'CRM-2A', ['CRM-2A', 'CRM-2B']],
+      ['sem Contas (com Contatos)', ['crmAccounts'], 'CRM-2A', ['CRM-2A']],
+      ['com Contas e sem Contatos', ['crmContacts'], 'CRM-2B', ['CRM-2B']],
+    ])('convertLead em tenant %s → 409 nomeando o submódulo', async (_label, ausentes, moduleKey, missingModules) => {
       const { svc, dynamicTableService, repository } = buildService();
       const base = repository.findTableByInternalName.getMockImplementation()!;
       repository.findTableByInternalName.mockImplementation(async (uid: string, internal: string) =>
-        internal === 'crmAccounts' || internal === 'crmContacts' ? null : base(uid, internal));
+        (ausentes as string[]).includes(internal) ? null : base(uid, internal));
       const err = await svc.convertLead(user, baseInput).catch((e: unknown) => e);
       expect(err).toBeInstanceOf(ModuleNotInstalledError);
-      expect(err).toMatchObject({ statusCode: 409, errorCode: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2' } });
+      expect(err).toMatchObject({ statusCode: 409, errorCode: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey, missingModules } });
       expect(dynamicTableService.runInTransaction).not.toHaveBeenCalled();
+      expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
     });
 
     it('lead inexistente → NotFoundError', async () => {

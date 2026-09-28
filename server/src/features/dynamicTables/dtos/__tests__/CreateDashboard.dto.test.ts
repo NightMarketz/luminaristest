@@ -12,8 +12,10 @@ beforeEach(() => jest.clearAllMocks());
 const unit = { name: 'Matriz' };
 
 describe('CreateDashboard DTO — modules (F-CRM-9 → b)', () => {
-  it('modules default [] e aceita lista plana de ModuleKey', () => {
+  it('modules default [] e aceita lista plana de ModuleKey ou chave de grupo (F-SUB-2 → a)', () => {
     expect(QuickCreationSchema.parse({ suiteKey: 'beautySalon', unit }).modules).toEqual([]);
+    expect(QuickCreationSchema.parse({ suiteKey: 'beautySalon', unit, modules: ['CRM-2A', 'CRM-2B'] }).modules).toEqual(['CRM-2A', 'CRM-2B']);
+    // o grupo passa pelo DTO como está; a expansão para CRM-2A+CRM-2B é do controller (expandModuleSelectors)
     expect(QuickCreationSchema.parse({ suiteKey: 'beautySalon', unit, modules: ['CRM-2'] }).modules).toEqual(['CRM-2']);
   });
 
@@ -27,10 +29,14 @@ describe('CreateDashboard DTO — modules (F-CRM-9 → b)', () => {
   });
 
   it('InstallModule: moduleKey obrigatório, strict; resultado com status fechado', () => {
+    expect(InstallModuleSchema.safeParse({ moduleKey: 'CRM-2B' }).success).toBe(true);
     expect(InstallModuleSchema.safeParse({ moduleKey: 'CRM-2' }).success).toBe(true);
     expect(InstallModuleSchema.safeParse({}).success).toBe(false);
     expect(InstallModuleSchema.safeParse({ moduleKey: 'CRM-2', x: 1 }).success).toBe(false);
     expect(InstallModuleResultSchema.safeParse({ status: 'installed', tables: [], synced: [] }).success).toBe(true);
+    expect(InstallModuleResultSchema.safeParse({ status: 'installed', tables: [], synced: [], modules: ['CRM-2A', 'CRM-2B'] }).success).toBe(true);
+    // a saída só tem chaves atômicas
+    expect(InstallModuleResultSchema.safeParse({ status: 'installed', tables: [], synced: [], modules: ['CRM-2'] }).success).toBe(false);
     expect(InstallModuleResultSchema.safeParse({ status: 'removed', tables: [], synced: [] }).success).toBe(false);
   });
 

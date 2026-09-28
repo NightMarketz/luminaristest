@@ -23,13 +23,24 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
       "modules": {
         "default": [],
         "items": {
-          "enum": [
-            "CRM-0",
-            "CRM-1",
-            "CRM-2",
-            "CRM-3",
+          "anyOf": [
+            {
+              "enum": [
+                "CRM-0",
+                "CRM-1",
+                "CRM-2A",
+                "CRM-2B",
+                "CRM-3",
+              ],
+              "type": "string",
+            },
+            {
+              "enum": [
+                "CRM-2",
+              ],
+              "type": "string",
+            },
           ],
-          "type": "string",
         },
         "type": "array",
       },
@@ -101,6 +112,19 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "additionalProperties": false,
     "properties": {
+      "modules": {
+        "items": {
+          "enum": [
+            "CRM-0",
+            "CRM-1",
+            "CRM-2A",
+            "CRM-2B",
+            "CRM-3",
+          ],
+          "type": "string",
+        },
+        "type": "array",
+      },
       "status": {
         "enum": [
           "installed",
@@ -133,13 +157,24 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
     "additionalProperties": false,
     "properties": {
       "moduleKey": {
-        "enum": [
-          "CRM-0",
-          "CRM-1",
-          "CRM-2",
-          "CRM-3",
+        "anyOf": [
+          {
+            "enum": [
+              "CRM-0",
+              "CRM-1",
+              "CRM-2A",
+              "CRM-2B",
+              "CRM-3",
+            ],
+            "type": "string",
+          },
+          {
+            "enum": [
+              "CRM-2",
+            ],
+            "type": "string",
+          },
         ],
-        "type": "string",
       },
     },
     "required": [
@@ -158,13 +193,24 @@ exports[`CreateDashboard DTO — modules (F-CRM-9 → b) shape snapshot (comport
       "modules": {
         "default": [],
         "items": {
-          "enum": [
-            "CRM-0",
-            "CRM-1",
-            "CRM-2",
-            "CRM-3",
+          "anyOf": [
+            {
+              "enum": [
+                "CRM-0",
+                "CRM-1",
+                "CRM-2A",
+                "CRM-2B",
+                "CRM-3",
+              ],
+              "type": "string",
+            },
+            {
+              "enum": [
+                "CRM-2",
+              ],
+              "type": "string",
+            },
           ],
-          "type": "string",
         },
         "type": "array",
       },

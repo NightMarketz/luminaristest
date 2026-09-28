@@ -10,6 +10,9 @@ import {
   moduleKeySchema,
   moduleOfTable,
   composeModuleTables,
+  moduleSelectorSchema,
+  MODULE_GROUPS,
+  MODULE_GROUP_KEYS,
   type ModuleKey,
 } from '../modules/registry';
 import { CrmModulePreset } from '../systems/CrmModulePreset';
@@ -26,16 +29,20 @@ describe('registro de módulos — contrato Zod (BRIEF §3)', () => {
 
   it('moduleKeySchema recusa chave fora do registro', () => {
     expect(moduleKeySchema.safeParse('CRM-9').success).toBe(false);
-    expect(moduleKeySchema.safeParse('CRM-2').success).toBe(true);
+    expect(moduleKeySchema.safeParse('CRM-2A').success).toBe(true);
+    // BE-INCR-CRM-SUBMODULES (F-SUB-2 → a): 'CRM-2' deixou de ser módulo; é grupo, aceito só como seletor de entrada.
+    expect(moduleKeySchema.safeParse('CRM-2').success).toBe(false);
+    expect(moduleSelectorSchema.safeParse('CRM-2').success).toBe(true);
+    expect(moduleSelectorSchema.safeParse('CRM-9').success).toBe(false);
   });
 
   it('moduleDefSchema recusa campo extra (strict)', () => {
     expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], extra: 1 }).success).toBe(false);
   });
 
-  it('CRM-0 é o único fixo; CRM-1/2/3 dependem de CRM-0 (F-CRM-3/4/5 → a)', () => {
+  it('CRM-0 é o único fixo; CRM-1/2A/2B/3 dependem só de CRM-0 (F-CRM-3/5 → a; F-SUB-3 → a)', () => {
     expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].fixed)).toEqual(['CRM-0']);
-    for (const k of ['CRM-1', 'CRM-2', 'CRM-3'] as const) {
+    for (const k of ['CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] as const) {
       expect(MODULE_REGISTRY[k].dependsOn).toEqual(['CRM-0']);
     }
   });
@@ -84,6 +91,34 @@ describe('registro de módulos — invariantes (BRIEF §2.1)', () => {
     }
     // falsificador: se o scan não achasse nenhuma relação required intra-CRM, o teste seria vazio.
     expect(checked).toBeGreaterThanOrEqual(4);
+  });
+
+  it('(d) BE-INCR-CRM-SUBMODULES §2: todo módulo não-fixo tem exatamente uma tabela', () => {
+    const naoFixos = MODULE_KEYS.filter((k) => !MODULE_REGISTRY[k].fixed);
+    expect(naoFixos.length).toBeGreaterThanOrEqual(4);
+    for (const k of naoFixos) {
+      expect({ k, tables: MODULE_REGISTRY[k].tables.length }).toEqual({ k, tables: 1 });
+    }
+  });
+
+  it('(e) todo membro de grupo existe, pertence a um único grupo e declara esse grupo', () => {
+    const vistos = new Map<ModuleKey, string>();
+    for (const g of MODULE_GROUP_KEYS) {
+      expect(MODULE_GROUPS[g].members.length).toBeGreaterThanOrEqual(2);
+      for (const m of MODULE_GROUPS[g].members) {
+        expect(MODULE_KEYS).toContain(m);
+        expect(vistos.has(m)).toBe(false);
+        vistos.set(m, g);
+        expect(MODULE_REGISTRY[m].group).toBe(g);
+      }
+    }
+    for (const k of MODULE_KEYS) {
+      if (MODULE_REGISTRY[k].group) expect(vistos.get(k)).toBe(MODULE_REGISTRY[k].group);
+    }
+    // o corte ratificado: CRM-2 = Contas + Contatos
+    expect(MODULE_GROUPS['CRM-2'].members).toEqual(['CRM-2A', 'CRM-2B']);
+    expect(MODULE_REGISTRY['CRM-2A'].tables).toEqual(['crmAccounts']);
+    expect(MODULE_REGISTRY['CRM-2B'].tables).toEqual(['crmContacts']);
   });
 
   it('moduleOfTable devolve undefined para tabela de core', () => {

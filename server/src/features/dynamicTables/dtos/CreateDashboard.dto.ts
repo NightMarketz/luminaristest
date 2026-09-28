@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { UNIT_TYPE_OPTIONS } from '../presets/modules/core/UnitsModule';
-import { moduleKeySchema } from '../presets/modules/registry';
+import { moduleSelectorSchema } from '../presets/modules/registry';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (nó I1, BRIEF item 1 e §2) — body do `POST /dashboard/create`.
@@ -23,7 +23,8 @@ export const UnitInputSchema = z
  * (o BRIEF §3 fecha o body do create): chave desconhecida → 400.
  */
 const moduleSelection = {
-  modules: z.array(moduleKeySchema).default([]),
+  // BE-INCR-CRM-SUBMODULES (F-SUB-2 → a): chave atômica OU chave de grupo ('CRM-2' → CRM-2A + CRM-2B).
+  modules: z.array(moduleSelectorSchema).default([]),
   // I8 c11 (F-CRM-8 → a, F-I8-C11): { tabela: { campo: opções } } — só selects da allowlist `freeSelects`.
   selectOverrides: z.record(z.string(), z.record(z.string(), z.array(z.string().min(1)).min(1))).optional(),
 };
