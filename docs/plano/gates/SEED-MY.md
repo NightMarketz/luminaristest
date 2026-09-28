@@ -9,14 +9,14 @@ depende_de: ["[[B-4]]"]
 autorizacao: "cédula 14/09 (#318/#319) SEED-MY autorizado"
 prs: ["#325", "#372"]
 ancora_sdd: "§III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8"
-atualizado: "2026-09-25"
+atualizado: "2026-09-28"
 ---
 # SEED-MY — Seed multi-exercício 2025+2026 (alvo dos runbooks H1/H2/H3)
 
 **Estado:** `done` — MERGEADO em main (#372 `85068f76`, 25/09) e aplicado no dev.db real: seed-presumido/seed-real com 204 lançamentos 2025 + 153 em 2026, 1 lançamento closing e 12/2025 HARD_CLOSED cada (consulta read-only 25/09)  
 **Autorização:** cédula 14/09 (#318/#319) SEED-MY autorizado  
 **Depende de:** [[B-4]]  
-**Desbloqueia:** [[H1]] (pontilhada), [[H1b]] (pontilhada)  
+**Desbloqueia:** [[H1]] (pontilhada), [[H1b]] (pontilhada), [[SEED-UNITS]]  
 **PRs:** #325, #372  
 **Âncora no SDD consolidado:** §III.2 · §M5.1 (apontadores 14/09) · §III.1 passo 8
 
@@ -44,3 +44,9 @@ atualizado: "2026-09-25"
 ## Fold 25/09 (Fase 6 do PLANO-POS-CONTADOR)
 
 - Fold 25/09 — evidência: commit `85068f76` "SEED-MY: db:seed:accounting multi-exercício + B-4 PASSOU (#372)" em `origin/main`; CLI `server/src/jobs/seedAccountingFixtureCli.ts` (`npm run db:seed:accounting`). Consulta read-only em `server/prisma/prisma/dev.db` (25/09): usuários `seed-presumido` e `seed-real` existem; cada um com `journal_entries` 2025 Posted = 204, 2026 Posted = 153, `sourceType='closing'` = 1, `accounting_periods` 2025/12 = `HARD_CLOSED`.
+
+## Fold 28/09 — resíduo achado no teste de browser
+
+- Os tenants `seed-presumido`/`seed-real` nascem **sem** tabela `units`; o razão fica sob o id literal
+  `seed-unit-*`, que a tela não oferece — o seed é alvo dos runbooks, mas não é selecionável pela tela. O trabalho
+  mergeado deste nó continua `done`; o resíduo é o nó [[SEED-UNITS]].
