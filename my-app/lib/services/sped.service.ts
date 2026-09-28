@@ -32,9 +32,14 @@ export interface EcdBook {
 export interface EcdSigner {
   identNom: string;
   identCpfCnpj: string;
-  identQualif: string; // free description
   codAssin: string; // 3 digits ('900' = contador)
   indRespLegal: 'S' | 'N';
+  // Required by the server when codAssin === '900' (REGRA_OBRIGATORIO_CONTADOR); an empty
+  // string is a 400, so absent is the only "empty" the payload may carry.
+  indCrc?: string;
+  email?: string;
+  fone?: string;
+  ufCrc?: string;
 }
 export interface GenerateEcdPayload {
   unitId: string;

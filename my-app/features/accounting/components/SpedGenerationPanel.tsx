@@ -45,7 +45,32 @@ export function validateEcdSigners(signers: EcdSigner[]): string | null {
   const hasContador = signers.some((s) => s.codAssin.trim() === '900');
   const hasNonContador = signers.some((s) => s.codAssin.trim() !== '900');
   if (!hasContador || !hasNonContador) return 'ecdContador';
+  const contadores = signers.filter((s) => s.codAssin.trim() === '900');
+  if (
+    contadores.some(
+      (c) =>
+        c.identCpfCnpj.trim().length !== 11 ||
+        !c.indCrc?.trim() || !c.email?.trim() || !c.fone?.trim() || !c.ufCrc?.trim(),
+    )
+  )
+    return 'ecdContadorCrc';
   return null;
+}
+
+/** Pure: one J930 row → the exact SignerSchema keys, trimmed; blank optional keys are omitted
+ * (the server rejects '' for indCrc/ufCrc). Never send the editor state as-is. */
+export function toEcdSignerPayload(s: EcdSigner): EcdSigner {
+  const out: EcdSigner = {
+    identNom: s.identNom.trim(),
+    identCpfCnpj: s.identCpfCnpj.trim(),
+    codAssin: s.codAssin.trim(),
+    indRespLegal: s.indRespLegal,
+  };
+  for (const k of ['indCrc', 'email', 'fone', 'ufCrc'] as const) {
+    const v = s[k]?.trim();
+    if (v) out[k] = v;
+  }
+  return out;
 }
 
 /**
@@ -67,9 +92,12 @@ export function validateEcfSigners(signers: EcfSigner[]): string | null {
 const emptyEcdSigner = (): EcdSigner => ({
   identNom: '',
   identCpfCnpj: '',
-  identQualif: '',
   codAssin: '',
   indRespLegal: 'N',
+  indCrc: '',
+  email: '',
+  fone: '',
+  ufCrc: '',
 });
 /** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same 0930 signer shape. */
 export const emptyEcfSigner = (): EcfSigner => ({
@@ -167,7 +195,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
         year,
         declarant: ecdDeclarant,
         book: ecdBook,
-        signers: ecdSigners,
+        signers: ecdSigners.map(toEcdSignerPayload),
       });
     } catch (err) {
       setEcdError(resolveError(err, genericError()));
@@ -382,24 +410,32 @@ function EcdSignersEditor({
       </div>
       <div className="space-y-2">
         {signers.map((s, i) => (
-          <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 p-3 sm:grid-cols-6">
+          <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 p-3 sm:grid-cols-4">
             <input className={inputClass} placeholder={t('sped.field.identNom', 'Nome')} value={s.identNom} onChange={(e) => update(i, 'identNom', e.target.value)} />
             <input className={inputClass} placeholder={t('sped.field.cpfCnpj', 'CPF/CNPJ')} value={s.identCpfCnpj} onChange={(e) => update(i, 'identCpfCnpj', e.target.value)} />
-            <input className={inputClass} placeholder={t('sped.field.qualifDesc', 'Qualificação')} value={s.identQualif} onChange={(e) => update(i, 'identQualif', e.target.value)} />
             <input className={inputClass} placeholder={t('sped.field.codAssin', 'Cód. (900=contador)')} value={s.codAssin} onChange={(e) => update(i, 'codAssin', e.target.value)} />
             <select className={inputClass} value={s.indRespLegal} onChange={(e) => update(i, 'indRespLegal', e.target.value)}>
               <option value="N">{t('sped.signers.notResp', 'Não resp. legal')}</option>
               <option value="S">{t('sped.signers.resp', 'Resp. legal')}</option>
             </select>
-            <button
-              type="button"
-              onClick={() => setSigners((p) => p.filter((_, idx) => idx !== i))}
-              disabled={signers.length <= 1}
-              className="inline-flex items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 px-2 text-neutral-400 hover:bg-neutral-700 disabled:opacity-40"
-              aria-label={t('sped.signers.remove', 'Remover')}
-            >
-              <FiTrash2 size={14} />
-            </button>
+            <input className={inputClass} placeholder={t('sped.field.indCrc', 'CRC')} value={s.indCrc ?? ''} onChange={(e) => update(i, 'indCrc', e.target.value)} />
+            <select className={inputClass} aria-label={t('sped.field.ufCrc', 'UF do CRC')} value={s.ufCrc ?? ''} onChange={(e) => update(i, 'ufCrc', e.target.value)}>
+              <option value="">{t('sped.field.ufCrc', 'UF do CRC')}</option>
+              {UF_CODES.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
+            </select>
+            <input className={inputClass} placeholder={t('sped.field.email', 'E-mail')} value={s.email ?? ''} onChange={(e) => update(i, 'email', e.target.value)} />
+            <div className="flex gap-2">
+              <input className={`${inputClass} flex-1`} placeholder={t('sped.field.fone', 'Fone')} value={s.fone ?? ''} onChange={(e) => update(i, 'fone', e.target.value)} />
+              <button
+                type="button"
+                onClick={() => setSigners((p) => p.filter((_, idx) => idx !== i))}
+                disabled={signers.length <= 1}
+                className="inline-flex items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 px-2 text-neutral-400 hover:bg-neutral-700 disabled:opacity-40"
+                aria-label={t('sped.signers.remove', 'Remover')}
+              >
+                <FiTrash2 size={14} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
