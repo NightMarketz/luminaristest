@@ -4,21 +4,21 @@ tipo: "regua"
 dominio: "fiscal"
 titulo: "Emissão manual de NFS-e sem parceiro (ficha + retorno pelo XML) e releitura XML × DPS (BE-INCR-DFE-MANUAL)"
 estado: "done"
-estado_detalhe: "✅ BE mergeado: #405 21d87689 (27/09) + #406 e49fa6a0 (28/09, pAliq TSDec1V2); integração provada na CI Linux (local EBUSY). Residual: FE-INCR-DFE (tela) → runbook H2-DFE-MANUAL (gate humano); merge sem revisão independente por decisão do dono (28/09)"
+estado_detalhe: "✅ BE mergeado: #405 21d87689 (27/09) + #406 e49fa6a0 (28/09, pAliq TSDec1V2); integração provada na CI Linux (local EBUSY). Residual: FE-INCR-DFE (tela) → runbook H2-DFE-MANUAL (gate humano); merge sem revisão independente por decisão do dono (28/09) · 28/09 tarde: #410 53389d61 fecha 4 achados da revisão (guarda (v) de ambiente tpAmb, chave única por usuário, dhProc de calendário real, teste da re-checagem na tx); #416 7ce5fdd2 = [[DFE-TPAMB]] (tpAmb e tpInsc da DPS). Abertos no GAP-MAP (#417): anexo/proveniência antes da tx no applyResult; assinatura do evento de cancelamento"
 depende_de: ["[[X10b]]"]
 autorizacao: "dono em chat 27/09: \"1. executa 2. só cancelando\" (execução do BRIEF BE-INCR-DFE-MANUAL; F-MAN-2b → b) — planejamento autorizado antes em 27/09 (\"Certo, planeje com granularidade…\")"
-prs: ["#405", "#406"]
+prs: ["#405", "#406", "#410", "#416"]
 ancora_sdd: "§III.2"
 atualizado: "2026-09-28"
 ---
 # DFE-MANUAL — Emissão manual de NFS-e sem parceiro (ficha + retorno pelo XML) e releitura XML × DPS (BE-INCR-DFE-MANUAL)
 
-**Estado:** `done` — ✅ BE mergeado: #405 21d87689 (27/09) + #406 e49fa6a0 (28/09, pAliq TSDec1V2); integração provada na CI Linux (local EBUSY). Residual: FE-INCR-DFE (tela) → runbook H2-DFE-MANUAL (gate humano); merge sem revisão independente por decisão do dono (28/09)  
+**Estado:** `done` — ✅ BE mergeado: #405 21d87689 (27/09) + #406 e49fa6a0 (28/09, pAliq TSDec1V2); integração provada na CI Linux (local EBUSY). Residual: FE-INCR-DFE (tela) → runbook H2-DFE-MANUAL (gate humano); merge sem revisão independente por decisão do dono (28/09) · 28/09 tarde: #410 53389d61 fecha 4 achados da revisão (guarda (v) de ambiente tpAmb, chave única por usuário, dhProc de calendário real, teste da re-checagem na tx); #416 7ce5fdd2 = [[DFE-TPAMB]] (tpAmb e tpInsc da DPS). Abertos no GAP-MAP (#417): anexo/proveniência antes da tx no applyResult; assinatura do evento de cancelamento  
 **Autorização:** dono em chat 27/09: "1. executa 2. só cancelando" (execução do BRIEF BE-INCR-DFE-MANUAL; F-MAN-2b → b) — planejamento autorizado antes em 27/09 ("Certo, planeje com granularidade…")  
 **Depende de:** [[X10b]]  
 **Desbloqueia:** [[FE-INCR-DFE]], [[X10i]] (releitura e adaptador por documento)  
 **Âncora no SDD consolidado:** §III.2  
-**PRs:** #405, #406
+**PRs:** #405, #406, #410, #416
 
 ## Docs
 
