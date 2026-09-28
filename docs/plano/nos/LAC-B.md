@@ -3,19 +3,21 @@ id: "LAC-B"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION)"
-estado: "planned"
-estado_detalhe: "⏳ ATIVADA 07/09 pelo dono; executar pelo BRIEF + emenda F-I3-1 (a)"
+estado: "inflight"
+estado_detalhe: "BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente"
 autorizacao: "dono 'Ativar agora' 2026-09-07"
+prs: ["#389"]
 ancora_sdd: "§M5.1 Bloco A LAC-B"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # LAC-B — UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION)
 
-**Estado:** `planned` — ⏳ ATIVADA 07/09 pelo dono; executar pelo BRIEF + emenda F-I3-1 (a)  
+**Estado:** `inflight` — BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente  
 **Autorização:** dono 'Ativar agora' 2026-09-07  
 **Depende de:** —  
 **Desbloqueia:** [[I3]]  
-**Âncora no SDD consolidado:** §M5.1 Bloco A LAC-B
+**Âncora no SDD consolidado:** §M5.1 Bloco A LAC-B  
+**PRs:** #389
 
 ## Docs
 
