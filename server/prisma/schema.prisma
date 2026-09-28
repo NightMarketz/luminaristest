@@ -1465,13 +1465,13 @@ model FiscalDocument {
   userId           String
   unitId           String
   kind             String // NFSE | NFE
-  status           String // SENT | PROCESSING | AUTHORIZED | REJECTED | CANCELLED
+  status           String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
   saleId           String
   saleKey          String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
   cTribNac         String                  @default("") // F-DFE-16 (b); "" para NFE
   anchorEntryId    String // JournalEntry âncora: sale.finalized | sale.package.sold (pacote VENDA, 5c)
   ambiente         String // producao | homologacao (ADR §9.2 item 5 — só producao vira SourceDocument)
-  partner          String // null | file | <parceiro> (DFE_PARTNER)
+  partner          String // null | manual | <parceiro> (DFE_PARTNER) — o adaptador do documento (BE-INCR-DFE-MANUAL item 9)
   partnerRef       String?
   serie            Int
   numero           BigInt? // nDPS (nosso) | nNF (NF-e)

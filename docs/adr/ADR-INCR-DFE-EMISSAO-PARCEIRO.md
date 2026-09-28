@@ -4,6 +4,9 @@
 - **Status:** **Accepted 2026-09-08 — forks F-DFE-1..11 RATIFICADOS fork a fork pelo dono (§10; 4 contra a
   recomendação: F-DFE-1, 5, 7, 8).** Implementação continua condicionada ao parceiro contratado (D5) e ao
   manual da NFS-e nacional (gate 1 do parecer). **R4 ratificado 2026-09-08** (BYOK — §3 D2). **NENHUM código escrito.**
+  **EMENDA 2026-09-27 (§11):** D5 = Focus NFe (dono, 26/09); só parceiro BYOK — Emissor Nacional por API e SEFAZ
+  direto fora; o `FileEmissor` evolui para **modo manual** (ficha + retorno pelo XML autorizado); **releitura**
+  XML × DPS em todo adaptador.
 - **Autores:** orquestrador (esta sessão) + parecer do `luminaris-accounting-architect` **anexado 2026-09-08**
   ([PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md](PARECER-ARCHITECT-ADR-INCR-DFE-EMISSAO-PARCEIRO.md):
   "apto a ratificação com 6 ajustes e 3 forks novos" — ajustes aplicados na §9; forks F-DFE-9..11 na §9.3).
@@ -340,3 +343,64 @@ tomador obrigatório, regime incluindo Simples) só abre depois dos gates 1 ∥ 
 nacional — **primária, ainda não obtida**: o portal gov.br devolve 403 a cliente automatizado, o dono baixa
 pelo navegador — e a resposta do contador aos itens novos: item LC 116 + alíquota do município, ISS retido,
 fato gerador em pacote, regras do Simples na DPS). Implementação do adaptador espera **D5**.
+
+## 11. EMENDA 2026-09-27 — decisões do dono na entrevista dos gates (26/09)
+
+Registro: [`D-2026-09-26-EMISSAO-FISCAL-BYOK`](../plano/decisoes/D-2026-09-26-EMISSAO-FISCAL-BYOK.md). Plano que executa:
+[`PLANO-EMISSAO-FISCAL-2026-09-27.md`](../accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md). BRIEF do modo manual:
+[`BE-INCR-DFE-MANUAL-brief.md`](../accounting/BE-INCR-DFE-MANUAL-brief.md).
+
+### 11.1 O que muda neste ADR
+
+1. **F-DFE-4 (parceiro) → Focus NFe**, BYOK. Conta, contrato e certificado ainda não conferidos (D5 segue aberto).
+   O BRIEF do adaptador continua **depois** de D5, como a §10 manda.
+2. **D1 fica mais estrito: só parceiro.** Um adaptador que fale direto com o governo (Emissor Nacional por API ou
+   webservice de SEFAZ) exigiria o Luminaris guardar e usar o A1 do cliente (mTLS + assinatura), o que contraria a
+   consequência do D1 ("o Luminaris nunca guarda certificado A1/A3"). Decisão delegada pelo dono (*"Então decida"*,
+   26/09) e tomada por: custódia do A1 (maior risco), cobertura (o Emissor Nacional só emite NFS-e; o salão também
+   precisa de NFC-e e de NF-e recebidas) e manutenção de leiaute durante a Reforma. **Reabre só com as duas
+   condições juntas** da nota de decisão (demanda de cliente só-serviço + aceite de custódia do A1 com cifra em
+   repouso decidida no M2). Achado da pesquisa de 26/09 que barateia a reabertura: há bibliotecas Node/TS públicas
+   para a API nacional — a custódia continua sendo o impedimento, não o esforço.
+3. **Regra de adaptador:** um adaptador por **protocolo** que o nosso código chama. Diferença entre estados e
+   municípios (endereço de autorizadora, CSC da NFC-e, ISS municipal, ST) é **configuração ou dado do perfil
+   fiscal**, nunca um adaptador por UF. Hoje o único protocolo externo previsto é o da Focus.
+4. **O `FileEmissor` (a "válvula" da §6) vira modo manual de verdade:** o cliente sem parceiro emite no portal
+   público da NFS-e a partir de uma ficha que espelha as telas do portal, e devolve o **XML autorizado** ao
+   Luminaris. Só NFS-e (não há portal público de NFC-e/NF-e). BRIEF `BE-INCR-DFE-MANUAL`.
+5. **Releitura em todo adaptador:** ao autorizar, o XML autorizado é lido e comparado campo a campo com a DPS
+   enviada. É o que transforma "a nota saiu certa" em fato conferido nota a nota. O governo aceita código
+   **válido porém errado**; a defesa contra isso continua sendo o perfil fiscal aprovado pelo contador (D1f).
+6. **O adaptador de cada documento é o do documento, não o do env.** Hoje `consultarUm`, `pollPendingOnce`,
+   `cancelar` e `webhookReceived` usam `selectDfeEmissor(process.env)` e ignoram `FiscalDocument.partner`. Com dois
+   modos convivendo (manual + Focus) isso consulta documento pelo adaptador errado. O env passa a escolher só o
+   adaptador das **novas** emissões (BRIEF `BE-INCR-DFE-MANUAL`, item 9).
+
+### 11.2 Fatos da Focus conferidos na documentação pública (26/09) — insumo do BRIEF do adaptador
+
+| Fato | Fonte | Consequência |
+|---|---|---|
+| NFS-e nacional: `POST /nfsen?ref=…`, processamento **assíncrono** (`processando_autorizacao`) | `doc.focusnfe.com.br/reference/emitir_dps_nacional.md` | Confirma a §10 F-DFE-5: resultado imediato descartado, consulta + webhook depois |
+| `ref` é **única por token** e fica **presa à nota depois de autorizada**; antes disso pode ser reusada após corrigir o payload | `…/reference/referencia.md` | Compatível com `ref = <documentId>:<tentativa>` (F-DFE-10): consultar pela `ref` resolve queda de rede sem nota em dobro |
+| Webhook autenticado por **segredo em cabeçalho** definido na criação (`authorization` + `authorization_header`), sem HMAC | `…/reference/criar_webhook.md` | `verifyWebhook` = comparação em tempo constante do segredo; o webhook só **acorda** a consulta (já é o desenho da §10) |
+| Retentativas do webhook: 1 min, 30 min, 1 h, 3 h, 24 h — depois **desiste** | `…/reference/webhooks.md` | Polling é obrigatório, não opcional |
+| Eventos incluem `nfsen`, `nfe_recebida`, `nfsen_recebida` | `…/reference/criar_webhook.md` | "NF-e recebidas" pode chegar por push (fork F-PLAN-3) |
+| API de empresas, NFC-e, NFS-e nacional e NF-e recebidas existem | `doc.focusnfe.com.br` (índice) | Cobertura do D5 — falta conferir **contrato e preço**, que a doc não mostra |
+| Homologação: `homologacao.focusnfe.com.br`, documentos "sem validade fiscal" | `…/reference/ambiente.md` | **Não** diz se a homologação passa pelo ambiente de testes do governo — continua inferido |
+
+### 11.3 Prazos conferidos no ato oficial (27/09)
+
+Ato Conjunto RFB/CGIBS nº 4/2026 (PDF oficial, `luminaris-gates\Ato_Conjunto_RFB_CGIBS_4_2026.pdf`, 3 páginas):
+
+| Documento | Data | Dispositivo |
+|---|---|---|
+| NFS-e — serviços do ISS fora das alíneas a–c (**salão**, subitens 6.01/6.02) | **01/10/2026** | art. 1º, III, d |
+| NF-e 55 e NFC-e 65 | 03/08/2026 | art. 1º, I e II |
+| NF-e para quem não é contribuinte do ICMS | 01/12/2026 | § 4º |
+| **Optantes do Simples**, todos os documentos do artigo | **01/01/2027** | § 1º |
+
+**Divergência aberta:** o contador disse NFS-e do Simples em **01/11/2026** (triagem 23/09, P7). O Ato 4 regula os
+documentos do art. 112 dos regulamentos do IBS/CBS; o 01/11 pode vir de outra norma (ex.: resolução do CGSN sobre o
+padrão nacional), e aí as duas valem. Pergunta 5 do follow-up ao contador. **Consequência prática:** o salão em
+regime normal emite NFS-e nacional a partir de 01/10/2026. Até existir um adaptador pronto, o caminho é o portal
+público — com ou sem o Luminaris.

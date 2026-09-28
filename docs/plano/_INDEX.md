@@ -9,8 +9,8 @@
 | --- | --- | --- |
 | contabil | 21 | 22 |
 | financeiro | 17 | 19 |
-| fiscal | 11 | 19 |
-| **total** | **49** | **60** |
+| fiscal | 11 | 20 |
+| **total** | **49** | **61** |
 
 ## Destravados agora (abertos, todas as dependências fechadas)
 
@@ -18,9 +18,9 @@
 
 | Nó | Título | Estado | Autorização |
 | --- | --- | --- | --- |
+| [[DFE-MANUAL]] | Emissão manual de NFS-e sem parceiro (ficha + retorno pelo XML) e releitura XML × DPS (BE-INCR-DFE-MANUAL) | planned | dono em chat 27/09: "1. executa 2. só cancelando" (execução do BRIEF BE-INCR-DFE-MANUAL; F-MAN-2b → b) — planejamento autorizado antes em 27/09 ("Certo, planeje com granularidade…") |
 | [[FE-INCR-BANK-SETTLEMENT]] | Tela do F7 (baixa por retorno bancário) | planned | dono 17/09 (F-PS-1 → a) — só BRIEF |
 | [[FE-INCR-DELIVERY]] | Tela do pacote ao contador (consome C6b; files[].kind = ExportKind) | planned | — |
-| [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned | — |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready | — |
 | [[FE-INCR-REVIEW]] | Aba do C11 (revisão profissional) | planned | — |
 | [[GET-DATA-EXCHANGE-JOBS]] | Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria | planned | F-FA15 → (a) (dono, 18/09) |
@@ -37,18 +37,18 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open — Resposta recebida 23/09; triagem em docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md. Das 3 críticas de PIS/COFINS: C-1 e C-3 FECHADAS 25/09 (#381), C-2 metade (bebidas frias sim, combustíveis ABERTO — GAP-MAP 13). Requisitos novos viraram [[ITEM-DESTINATION]] (3.1) e emendas em [[C8]]/[[F7]]/[[X4]]/[[C6b]]. Faltam do contador: códigos do referencial, cClassTrib, D8, follow-up 0.8 (a–e) não enviado | — | — |
-| [[D1f]] | Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib) | human-open — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib | [[D1]] ✗ | — |
-| [[D2]] | XML de NF-e real (compra da própria empresa, ago/set 2026) | human-open | — | — |
-| [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open — Critério do parceiro: N contas sob 1 chave (R8) + emitir NFC-e 65 (triagem 23/09 P3) + NFS-e nacional do Simples até 01/11/2026 | — | — |
-| [[D6]] | Convênio/leiaute do banco do 1º cliente | human-open | — | — |
-| [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão. PNCT: corrigir até 31/12/2026 com contador responsável; prazos 01/11 (NFS-e Simples) e 01/12/2026 (NF-e antecipada) | [[X10i]] ✗ | — |
-| [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Autorização citável em main (G-6, 17/09); espera D2 | [[D2]] ✗ | — |
+| [[D1]] | Resposta do contador (itens 1/1b · P6 (D8) · 5a-5f · encargo/desconto F7 · exceções PIS/COFINS X6 · linhas E) | human-open — Resposta recebida 23/09; triagem em docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md. As 3 críticas de PIS/COFINS FECHADAS: C-1 e C-3 (#381, 25/09); C-2 bebidas frias (#381) e combustíveis (#387 `96aac889`, 25/09). Requisitos novos viraram [[ITEM-DESTINATION]] (3.1) e emendas em [[C8]]/[[F7]]/[[X4]]/[[C6b]]. D8 fechado 24/09. Faltam do contador: códigos do referencial (juros/multa/descontos/imobilizado), alíquota de ISS + cClassTrib (D1f), COD_PB_RFB do M010, crédito do monofásico usado como insumo e a data do Simples — follow-up rascunhado 26/09, não enviado | — | — |
+| [[D1f]] | Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib) | human-open — Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado | [[D1]] ✗ | — |
+| [[D2]] | XML de NF-e real (compra da própria empresa, ago/set 2026) | human-open — Sem XML real até o 1º cliente (dono 26/09). Ponte: NF-e fictícia de leiaute completo (`purchase-full-layout.SYNTHETIC.xml`, assinada com a chave de teste do SIG-NFE) — a troca pela real é a ponta solta declarada. Fechamento provável: NF-e recebidas via Focus com o 1º cliente (F-PLAN-3, pendente) | — | — |
+| [[D5]] | Parceiro emissor + certificado A1 (critério: N contas sob 1 chave, R8) | human-open — **Dono escolheu Focus NFe (26/09), BYOK.** Falta: conta (token de homologação), contrato conferido (API de empresas, NFC-e 65, NFS-e nacional e municipal, NF-e recebidas — existem na doc pública, conferido 26/09; preço não aparece na doc) e A1 de teste. Critério R8 (N contas sob 1 chave): a doc pública diz que a API de empresas atende vários clientes por integração — conferir no contrato | — | — |
+| [[D6]] | Convênio/leiaute do banco do 1º cliente | human-open — Dono 26/09: **Mercado Pago agora, banco/CNAB depois** — o 1º provedor de cobrança é a API do MP; o convênio/leiaute bancário deste gate fica para quando houver cliente com banco. Muda a premissa de F5/F6; o ADR deles não foi aberto (F-M3: só ADR) | — | — |
+| [[D7]] | Vigilância de comunicações PNCT até 31/12/2026 | human-open — Obrigação operacional; nasce com a emissão. PNCT: corrigir até 31/12/2026 com contador responsável. Prazos conferidos no Ato Conjunto RFB/CGIBS 4/2026 (27/09): NFS-e do salão 01/10/2026 (art. 1º III d); NF-e p/ não contribuinte de ICMS 01/12/2026 (§ 4º); Simples 01/01/2027 (§ 1º) × 01/11/2026 dito pelo contador (pergunta 5 do follow-up) | [[X10i]] ✗ | — |
+| [[E9]] | Trocar fixtures *.SYNTHETIC.xml da NF-e por NF-e 4.00 real anonimizada | blocked — Espera D2 (sem XML real até o 1º cliente — dono 26/09). Ponte 26/09: nota fictícia de leiaute completo `purchase-full-layout.SYNTHETIC.xml` + 3 testes em `nfe.test.ts`, assinada com a chave de teste desde o #403 — a troca pela real é a ponta solta; caminho provável: NF-e recebidas (F-PLAN-3) | [[D2]] ✗ | — |
 | [[H1]] | PVA em Lucro Presumido (ECD + apuração + ECF) | human-open — D8 ✅ 24/09 (TRIAGEM-RESPOSTA-CONTADOR-2026-09-24-D8.md) e SEED-MY ✅ (#372, conferido no dev.db 25/09); falta: evidência do P4 colada pelo dono + execução/assinatura do RUNBOOK-H1 pelo dono | [[P4]] ✗, [[D8]], [[SEED-MY]] | dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" |
 | [[H1b]] | H1 2ª passada em Lucro Real (2P-1..2P-4) | human-open — 2P-1..2P-4 preparados em branco | [[X4]], [[X4-14]], [[SEED-MY]], [[FE-INCR-LALUR-PR2]] ✗ | — |
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco | — | — |
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
-| [[M2]] | Host + 1º deploy (VPS, 1 instância por cliente, BYOK; conta de emissão por unidade R8) | human-open — Alvo decidido 22/08; runbook em branco | [[H2]] ✗ | — |
+| [[M2]] | Host + 1º deploy (VPS, 1 instância por cliente, BYOK; conta de emissão por unidade R8) | human-open — Alvo decidido 22/08; **VPS contratada (dono, 26/09)**; runbook em branco. Ordem do dono: H1 → H2 → M2 | [[H2]] ✗ | — |
 | [[P4]] | Instalar validadores (PVA ECD/ECF) | human-open — PVA 10.4.1/12.2.6 instalados (i4jparams.conf, reconciliação 17/09); evidência do P4 segue do dono | — | — |
 
 ### Contábil
@@ -73,11 +73,12 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — BRIEF próprio, ainda não aberto | [[X10b]] | — |
+| [[DFE-MANUAL]] | Emissão manual de NFS-e sem parceiro (ficha + retorno pelo XML) e releitura XML × DPS (BE-INCR-DFE-MANUAL) | planned — Nó de régua por decisão do dono (F-PLAN-1 → b, 27/09). BRIEF 27/09 (itens 1–18); forks F-MAN-1..5 RATIFICADOS 27/09 (F-MAN-1 assinatura já, F-MAN-2 status novo AUTHORIZED_DIVERGENT); sub-fork F-MAN-2b pendente; corpus baixado e transcrito 27/09 (PR-0 ✅: TRANSCRICAO-NFSe-infNFSe-E0010-evento-v1.01-2026-09-27.md). Telas e numeração do portal: guia oficial do emissor web v1.2. Execução autorizada 27/09 (sessao-feature). | [[X10b]] | dono em chat 27/09: "1. executa 2. só cancelando" (execução do BRIEF BE-INCR-DFE-MANUAL; F-MAN-2b → b) — planejamento autorizado antes em 27/09 ("Certo, planeje com granularidade…") |
+| [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned — Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) | [[X10b]], [[DFE-MANUAL]] ✗ | dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa' |
 | [[FE-INCR-LALUR-PR2]] | FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela | ready — Crescimento do X4; falta 'executa' | [[X4]] | — |
 | [[ITEM-DESTINATION]] | Destinação por item na entrada (revenda × insumo do serviço) | planned — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product | [[FIS-08]], [[X6]], [[D1]] ✗ | — |
 | [[X10a]] | Adaptador por TIPO de documento fiscal (NFS-e, NF-e 55…) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: 'materializou dentro do nó X10b' (só NFS-e existe; NF-e 55 fora); §18.1 Onda 1 e grafo 14/09 ainda o listam  | [[X10b]] | resposta 9 (10/09) — requisito, sem 'executa' |
-| [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte. Triagem 23/09: NFS-e Simples obrigatória 01/11/2026 (sem facultativo), NBS obrigatório, NF-e antecipada 01/12/2026 p/ não contribuinte ICMS, gate de fechamento com prestação sem nota | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗ | — |
+| [[X10i]] | Emissão de DF-e — implementação (cadeia crítica) | blocked — cadeia crítica: emissão ← D1f · D5 · M2; regra 'não X10b/emissão' só o dono reverte ('executa' da emissão real). D5 = Focus (26/09): este nó é a Fase E do PLANO-EMISSAO-FISCAL-2026-09-27 — BRIEF do adaptador só depois do D5, reusando a releitura do DFE-MANUAL. Triagem 23/09: NBS obrigatório, NF-e antecipada 01/12/2026 p/ não contribuinte ICMS, gate de fechamento com prestação sem nota; Simples: 01/11/2026 (contador) × 01/01/2027 (Ato 4 § 1º) | [[X10b]], [[X10a]] ✗, [[D1f]] ✗, [[D5]] ✗, [[M2]] ✗, [[DFE-MANUAL]] ✗ | dono em chat 27/09: "planeje com granularidade e atualize a documentação com nossas decisões do fiscal" — só planejamento; a emissão real exige 'executa' |
 | [[X11]] | Eventos de DF-e com prazo legal validado (cancelamento, substituição, CC-e) | blocked — estado do grafo 14/09 (blocked); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09: materializou dentro de X10b (F-DFE-12; cancelamento com janela existe); grafo 14/09 e §18.1 ainda o listam a | [[X10i]] ✗ | resposta 13 (10/09) |
 | [[X12]] | Catálogo de adições/exclusões dirigido por dado (F-COB-1 → b) | planned — estado do grafo 14/09 (planned); fold 18/09 diz que 'materializou dentro do X10b' — ver DUVIDAS-INVENTARIO D-2. Fold 18/09 diz que materializou dentro de X10b (improvável: é bloco M/e-Lalur); grafo 14/09: plan (BRIEF); §18.1 Onda 1  | [[X4]], [[D3b]] | resposta 4 + F-COB-1 → (b) (10/09) |
 | [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | blocked — ADR não aberto; espera D1 itens 1/1b; Serpro adiado (R5). **Fase 4 do plano pós-contador**: insumos = tabela de obrigações do contador + verificação V4 (DIRF extinta? DCTFWeb absorveu IRPJ/CSLL/PIS/COFINS em 2025? GIA-SP/SAT?) — V4 ABERTA. Fork F-X7-1 PENDENTE: o F-M8 fixou trimestral, o contador pede também estimativa mensal com balancete de suspensão/redução, por cliente (recomendação do plano: reabrir o F-M8) | [[D1]] ✗ | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral) |
@@ -103,7 +104,7 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (24): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[D-2026-09-26-SIG-NFE-FORKS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (25): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[D-2026-09-26-EMISSAO-FISCAL-BYOK]] · [[D-2026-09-26-SIG-NFE-FORKS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (4): [[B-4]] · [[SEED-MY]] · [[X2]] · [[Z0-a]]
 - **motor** (1): [[PASSO-11]]

@@ -1,5 +1,5 @@
 import { DfeDisabledEmissor } from './DfeDisabledEmissor';
-import { FileEmissor } from './FileEmissor';
+import { ManualEmissor } from './ManualEmissor';
 import { NullEmissor } from './NullEmissor';
 import type { DfeAmbiente, DfeEmissorPort } from './DfeEmissorPort';
 
@@ -25,7 +25,8 @@ export function selectDfeEmissor(env: NodeJS.ProcessEnv): DfeSelection {
   const ambienteRaw = env.DFE_PARTNER_ENV;
   const ambiente = KNOWN_AMBIENTES.includes(ambienteRaw as DfeAmbiente) ? (ambienteRaw as DfeAmbiente) : null;
 
-  if (partner !== 'null' && partner !== 'file') {
+  // BE-INCR-DFE-MANUAL (F-MAN-3 → a): 'file' deixou de existir — o modo manual é 'manual'.
+  if (partner !== 'null' && partner !== 'manual') {
     const reason = partner
       ? `parceiro '${partner}' não tem adaptador implementado neste BRIEF`
       : 'DFE_PARTNER não configurado';
@@ -37,6 +38,6 @@ export function selectDfeEmissor(env: NodeJS.ProcessEnv): DfeSelection {
     return { port: new DfeDisabledEmissor(reason), ambiente: null, enabled: false, reason };
   }
 
-  const port = partner === 'null' ? new NullEmissor() : new FileEmissor(env.DFE_FILE_DIR || './var/dfe-files');
+  const port = partner === 'null' ? new NullEmissor() : new ManualEmissor();
   return { port, ambiente, enabled: true };
 }
