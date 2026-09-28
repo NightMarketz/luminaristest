@@ -41,12 +41,14 @@ describe('accountingBindingController — handlers criados por createAccountingB
   const compile = jest.fn();
   const validateOnly = jest.fn();
   const list = jest.fn();
+  const activateDefault = jest.fn();
   const controller = createAccountingBindingController({
     // buildCompileService(scope) — fábrica por escopo (item 15 do BRIEF, achado da fiação real:
     // ChartLookupPort não recebe scope, então o service real não pode ser uma instância fixa; ver
     // comentário em `accountingBindingController.ts`). O dublê devolve o MESMO trio de mocks
     // pra toda chamada — suficiente pra este teste, que só prova delegação de handler.
     buildCompileService: () => ({ compile, validateOnly, list } as never),
+    buildActivationService: () => ({ activateDefault } as never),
   });
 
   beforeEach(() => {
@@ -148,6 +150,44 @@ describe('accountingBindingController — handlers criados por createAccountingB
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(list).not.toHaveBeenCalled();
+    });
+  });
+  describe('activateDefaultBinding (LAC-B)', () => {
+    it('401 sem usuário autenticado — e NÃO chama o service', async () => {
+      getUserContextFromRequest.mockReturnValueOnce(null);
+      const res = mockRes();
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1' } } as unknown as Request, res);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(activateDefault).not.toHaveBeenCalled();
+    });
+
+    it('400 com chave desconhecida (.strict) — e NÃO chama o service', async () => {
+      const res = mockRes();
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1', chart: [] } } as unknown as Request, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(activateDefault).not.toHaveBeenCalled();
+    });
+
+    it('corpo válido: escopo do unitId do body, flags repassadas SEM o unitId, resposta no envelope', async () => {
+      activateDefault.mockResolvedValueOnce({ status: 'Active', bindingVersion: 1 });
+      const res = mockRes();
+      await controller.activateDefaultBinding(
+        { body: { unitId: 'unit-9', installChartIfEmpty: true } } as unknown as Request,
+        res,
+      );
+      expect(activateDefault).toHaveBeenCalledWith(
+        { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-9' },
+        { installChartIfEmpty: true },
+      );
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: { status: 'Active', bindingVersion: 1 } });
+    });
+
+    it('erro do service vai para handleApiError (403/400 mapeados lá)', async () => {
+      const boom = new Error('x');
+      activateDefault.mockRejectedValueOnce(boom);
+      const res = mockRes();
+      await controller.activateDefaultBinding({ body: { unitId: 'unit-1' } } as unknown as Request, res);
+      expect(handleApiError).toHaveBeenCalledWith(boom, res);
     });
   });
 });
