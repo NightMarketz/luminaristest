@@ -171,6 +171,26 @@ describe('Governance: immutableAfter', () => {
     await expect(service.deleteTableData(ctxFor('userA'), row.id)).rejects.toBeInstanceOf(ValidationError);
     expect(await isSoftDeleted(row.id)).toBe(false);
   });
+
+  /**
+   * Resíduo do GAP-MAP 8 (Nível 3, revisão independente 2026-09-28) — `deleteTableDataBatch`
+   * (`POST /dynamic-tables/:tableId/data/batch-delete`, "Delete selected" no CRM) apaga sem a guarda
+   * immutableAfter scope:'all' que o #390 pôs no delete individual. Esperado: mesma regra do
+   * individual — uma linha travada no lote faz o lote inteiro lançar ValidationError e NENHUMA linha
+   * (nem a mutável) é apagada.
+   */
+  it('GAP-MAP 8 (lote): deleteTableDataBatch rejects the whole batch when any row is immutable (scope:all)', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'basic_tbl', BASIC_SCHEMA);
+    const open = await create(ctxFor('userA'), t.id, { title: 'Open one', status: 'Open' });
+    const closed = await create(ctxFor('userA'), t.id, { title: 'Closed one', status: 'Closed' });
+    // Controle: a linha Closed já é imutável para o update — o cenário está armado.
+    await expect(update(ctxFor('userA'), closed.id, { title: 'Changed' })).rejects.toBeInstanceOf(ValidationError);
+
+    await expect(service.deleteTableDataBatch(ctxFor('userA'), t.id, [open.id, closed.id])).rejects.toBeInstanceOf(ValidationError);
+    expect(await isSoftDeleted(closed.id)).toBe(false);
+    expect(await isSoftDeleted(open.id)).toBe(false);
+  });
 });
 
 describe('Governance: unique', () => {

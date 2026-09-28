@@ -978,6 +978,10 @@ export class DynamicTableService {
         if (!rowTable || rowTable.id !== tableId || rowTable.userId !== table.userId) {
           throw new NotFoundError('One or more rows do not exist in the requested table.');
         }
+        const row = await txRepo.findDataById(dataId);
+        this.assertNotImmutableForDelete(table.schema as unknown as ITableSchema, row?.data as Record<string, unknown> | undefined);
+      }
+      for (const dataId of uniqueIds) {
         await txRepo.deleteData(dataId);
         deleted++;
       }

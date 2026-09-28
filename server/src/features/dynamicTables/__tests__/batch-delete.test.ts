@@ -60,6 +60,7 @@ jest.mock('../repositories/TransactionalDynamicTableRepository', () => ({
         schema: { fields: [] },
       } as unknown as IDynamicTable;
     }),
+    findDataById: jest.fn(async (dataId: string) => (rowIndex.has(dataId) ? { id: dataId, data: {} } : null)),
     deleteData: jest.fn(async (dataId: string) => {
       txDeletes.push(dataId);
     }),
