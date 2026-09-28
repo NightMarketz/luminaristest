@@ -821,6 +821,23 @@ export class DynamicTableService {
     return updated;
   }
 
+  /** Lança se alguma regra immutableAfter scope:'all' do schema estiver satisfeita pela linha. */
+  private assertNotImmutableForDelete(schema: ITableSchema, data: Record<string, unknown> | undefined) {
+    if (!data) return;
+    for (const rule of schema.immutableAfter ?? []) {
+      if (rule.scope !== 'all') continue;
+      const value = data[rule.condition.field];
+      const conditionMet = rule.condition.op === 'eq'
+        ? value === rule.condition.value
+        : Array.isArray(rule.condition.value) && rule.condition.value.includes(String(value));
+      if (conditionMet) {
+        throw new ValidationError(
+          rule.errorMessage ?? `This record cannot be deleted in its current state (${rule.condition.field}: ${value}).`
+        );
+      }
+    }
+  }
+
   async deleteTableData(user: UserContext, dataId: string) {
     const table = await this.findTableForData(user, dataId);
     if (!this.policy.canManageData(user, table)) {
@@ -829,6 +846,11 @@ export class DynamicTableService {
     const parentSchema = table.schema as unknown as ITableSchema;
     const constraints = parentSchema.deleteConstraints || [];
     const cascadeIds: { tableId: string, dataId: string }[] = [];
+
+    // GAP-MAP 8, fork (a) (dono 2026-09-26): a linha que immutableAfter scope:'all' torna imutável
+    // no update também não pode ser apagada. Regras de lista de campos seguem permitindo o delete.
+    const target = await this.repository.findDataById(dataId);
+    this.assertNotImmutableForDelete(parentSchema, target?.data as Record<string, unknown> | undefined);
 
     // Verify references to this record in other tables (relation fields)
     const allTables = await this.repository.findTablesByUserId(table.userId);
@@ -886,6 +908,8 @@ export class DynamicTableService {
         }
         if (constraint.type === 'CASCADE') {
           for (const row of referencingRows) {
+            // ...nem apagada por CASCADE do pai (mesma decisão).
+            this.assertNotImmutableForDelete(schema, row.data as Record<string, unknown>);
             cascadeIds.push({ tableId: t.id, dataId: row.id });
           }
         }
