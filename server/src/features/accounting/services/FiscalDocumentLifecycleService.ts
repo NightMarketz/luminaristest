@@ -670,7 +670,16 @@ export class FiscalDocumentLifecycleService {
         rawJson: JSON.stringify({ status: result.status, partnerRef: result.partnerRef, numero: result.numero, nNFSe: result.nNFSe, chaveOuCodigo: result.chaveOuCodigo, valores: result.valores }),
       });
       sourceDocumentId = sourceDoc.id;
-      await this.repo.transition(scope, doc.id, { status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED', xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
+      const autorizado = divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED';
+      try {
+        // Guarda na 2ª escrita: um cancelamento entre as duas escritas já aposentou a proveniência que conhecia (nenhuma);
+        // esta não pode ficar viva num documento cancelado.
+        await this.repo.transition(scope, doc.id, { status: autorizado, whenStatusIn: [autorizado], xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
+      } catch (e) {
+        if (!(e instanceof Error && e.message.startsWith('fiscal_document_status_changed'))) throw e;
+        await this.postingService.retireSourceDocument(scope, sourceDocumentId, 'dfe_status_changed');
+        logger.warn('dfe_authorized: status mudou antes de gravar anexos — proveniência aposentada', { documentId: doc.id });
+      }
     }
   }
 }
