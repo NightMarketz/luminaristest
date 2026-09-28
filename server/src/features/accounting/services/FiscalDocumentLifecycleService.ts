@@ -364,6 +364,10 @@ export class FiscalDocumentLifecycleService {
     if (nota.ambGer !== '2' || !(nota.procEmi === '2' || nota.procEmi === '3')) {
       identidade.push(`origem: ambGer=${nota.ambGer}, procEmi=${nota.procEmi ?? 'ausente'} — não é nota emitida no portal público`);
     }
+    const ambienteNota = nota.tpAmb === '1' ? 'producao' : 'homologacao';
+    if (ambienteNota !== doc.ambiente) {
+      identidade.push(`ambiente: nota de ${ambienteNota} (tpAmb=${nota.tpAmb}), documento de ${doc.ambiente}`);
+    }
     if (identidade.length) {
       throw new AppError(`dfe_identidade_divergente: ${identidade.join('; ')}`, 422, 'DFE_IDENTIDADE_DIVERGENTE');
     }

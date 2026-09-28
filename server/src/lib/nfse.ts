@@ -22,6 +22,7 @@ export interface ParsedNfse {
   cStat: '100' | '102' | '103' | '107'; // [18]
   dhProc: string; // [19] TSDateTimeUTC, com fuso
   emitDoc: string; // [22]/[23] CNPJ | CPF do emitente da NFS-e
+  tpAmb: '1' | '2'; // [103] infDPS/tpAmb — 1 = produção, 2 = produção restrita
   valores: { baseIssCents?: string; aliqIssBp?: number; vIssCents?: string; vLiqCents: string }; // [41]–[45]
   dps: {
     serie: string; // [106] — faixa E0010
@@ -130,6 +131,8 @@ export function parseNfseAutorizada(input: string | Buffer): ParsedNfse {
 
   const tomaCnpj = txt(toma?.CNPJ);
   const tomaCpf = txt(toma?.CPF);
+  const tpAmb = req(dpsInf, 'tpAmb', P);
+  if (tpAmb !== '1' && tpAmb !== '2') fail(`${P}/tpAmb "${tpAmb}" inválido.`);
   const tpRet = req(tribMun, 'tpRetISSQN', `${P}/valores/trib/tribMun`);
   if (tpRet !== '1' && tpRet !== '2') fail(`tpRetISSQN "${tpRet}" inválido.`);
 
@@ -141,6 +144,7 @@ export function parseNfseAutorizada(input: string | Buffer): ParsedNfse {
     cStat: cStat as ParsedNfse['cStat'],
     dhProc,
     emitDoc,
+    tpAmb: tpAmb as '1' | '2',
     valores: {
       baseIssCents: centsOpt(val, 'vBC', 'infNFSe/valores'),
       aliqIssBp: bpOpt(val, 'pAliqAplic', 'infNFSe/valores'),
