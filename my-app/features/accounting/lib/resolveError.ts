@@ -1,3 +1,5 @@
+import { humanizeZodFlatten, isZodFlatten } from '../../../lib/api/api-client';
+
 /**
  * Canonical error resolver for the accounting frontend.
  *
@@ -8,15 +10,16 @@
  *
  * This module promotes the `resolveError` technique that was re-inlined in 14
  * accounting components (Council N7) into a single canonical helper — same
- * precedent as `formatDateNumericBR` (see `./formatDate.ts`). All 14 call
- * sites import from here; new accounting components must not re-inline it.
+ * precedent as `formatDateNumericBR` (see `./formatDate.ts`). Every accounting
+ * call site imports from here; new accounting components must not re-inline it.
  *
  * Field precedence is `message` → `error` (the majority order among the former
  * clones): controller errors carry only `error`, while the global 500 handler
  * sends both (`error: 'Internal server error'` + a more specific `message`),
- * so `message`-first surfaces the more useful text. Only STRING fields are ever
- * returned — an object `error` (e.g. a flattened Zod 400) falls through to the
- * caller's fallback, never rendering as "[object Object]".
+ * so `message`-first surfaces the more useful text. After the string fields, a
+ * flattened Zod 400 `error` is humanized with the SAME helper the apiClient toast
+ * uses ("campo: msg; …"); an empty flatten or any other object `error` falls
+ * through to the caller's fallback, never rendering as "[object Object]".
  */
 
 /** Extract a human message + optional error code from apiClient's thrown error object. */
@@ -29,6 +32,7 @@ export function resolveErrorWithCode(
     const code = typeof o.code === 'string' ? o.code : undefined;
     if (typeof o.message === 'string') return { message: o.message, code };
     if (typeof o.error === 'string') return { message: o.error, code };
+    if (isZodFlatten(o.error)) return { message: humanizeZodFlatten(o.error, fallback), code };
     return { message: fallback, code };
   }
   return { message: fallback };
