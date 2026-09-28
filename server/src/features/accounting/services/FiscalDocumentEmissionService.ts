@@ -91,9 +91,9 @@ function bpToPctString(bp: number): string {
   return (bp / 100).toFixed(2);
 }
 
-/** [102]: "DPS" + cMun7 + tpInsc1 + insc14 + serie5 + nDPS15 (42 dígitos após o prefixo). */
+/** [102]: "DPS" + cMun7 + tpInsc1 + insc14 + serie5 + nDPS15 (42 dígitos após o prefixo); tpInsc 2 = CNPJ (1 = CPF). */
 function buildDpsId(cMun: string, cnpj: string, serie: number, nDPS: number): string {
-  return `DPS${cMun}1${cnpj.padStart(14, '0')}${String(serie).padStart(5, '0')}${String(nDPS).padStart(15, '0')}`;
+  return `DPS${cMun}2${cnpj.padStart(14, '0')}${String(serie).padStart(5, '0')}${String(nDPS).padStart(15, '0')}`;
 }
 
 /**
