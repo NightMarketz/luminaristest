@@ -21,6 +21,7 @@
 | §III.2 · §M5.1 Bloco A item 4 | [[H2]] |
 | §III.2 · §M5.1 Bloco A item 5 | [[M2]] |
 | §III.2 · §M5.1 Bloco A item 6 | [[X2]] |
+| §III.2 (fora da régua — correção) | [[DFE-TPAMB]] |
 | §III.2 quadro | [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]] |
 | §III.3 §2 · §III.2 quadro | [[C9]] |
 | §IV.1 Fase P-i18n | [[P-i18n]] |
@@ -38,7 +39,7 @@
 | §M5.1 (apontadores 14/09) · §III.2 | [[X6]] |
 | §M5.1 Bloco A · §III.2 | [[E9]] |
 | §M5.1 Bloco A I1/I1b | [[I1]] · [[I1b]] |
-| §M5.1 Bloco A I8 | [[I8]] |
+| §M5.1 Bloco A I8 | [[I8]] · [[I8b]] |
 | §M5.1 Bloco A LAC-B | [[LAC-B]] |
 | §M5.1 Bloco A ONB | [[I4]] · [[I5]] |
 | §M5.1 Bloco A ONB · §18.2 | [[I3]] |

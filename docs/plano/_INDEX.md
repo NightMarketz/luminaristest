@@ -100,13 +100,13 @@
 ## Fechados, decididos e referência
 
 - **dado-externo** (4): [[D-NFSE]] · [[D3b]] · [[D8]] · [[ENVIO-PEDIDO-CONTADOR]]
-- **decisao** (25): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[D-2026-09-26-EMISSAO-FISCAL-BYOK]] · [[D-2026-09-26-SIG-NFE-FORKS]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
+- **decisao** (26): [[D-2026-09-23-C8-PR4-AMBIGUIDADES-MANUAL]] · [[D-2026-09-23-C8-PR5-TAXA-NCM]] · [[D-2026-09-23-MANUAL-ECD-L9-VIGENTE]] · [[D-2026-09-23-PASSO-11-CORRECAO]] · [[D-2026-09-23-SONNET-PARA-OPUS-LOW]] · [[D-2026-09-24-FISCAL-OBLIGATION-PROFILE]] · [[D-2026-09-25-FASE1-PIS-COFINS]] · [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]] · [[D-2026-09-26-EMISSAO-FISCAL-BYOK]] · [[D-2026-09-26-SIG-NFE-FORKS]] · [[D-2026-09-28-CRM-SUBMODULOS-E-DFE-TPAMB]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FF7]] · [[R10]] · [[R2]] · [[R5]] · [[R6]] · [[R7]] · [[R8]] · [[R9]]
 - **diferido** (28): [[M5-apuracao-encerramento]] · [[M5-apuracao-tributos]] · [[M5-baixa-parcial]] · [[M5-caixa-projetado]] · [[M5-cnab-nfe]] · [[M5-cnpj-alfa]] · [[M5-contas-a-pagar]] · [[M5-dctf]] · [[M5-dimensoes]] · [[M5-ecd]] · [[M5-ecf]] · [[M5-efd-contribuicoes]] · [[M5-emissao-dfe]] · [[M5-envio-contador]] · [[M5-ia-analytics]] · [[M5-ibs-cbs]] · [[M5-imobilizado]] · [[M5-inbox-outbox]] · [[M5-lgpd-rbac]] · [[M5-ofx]] · [[M5-referencial]] · [[M5-remessa]] · [[M5-seam-crm-ar]] · [[M5-source-document]] · [[M5-split-receita]] · [[M5-subrazoes-restantes]] · [[M5-telas-ja-existente]] · [[M5-torre-aprovacao]]
 - **gate** (4): [[B-4]] · [[SEED-MY]] · [[X2]] · [[Z0-a]]
 - **motor** (2): [[PASSO-11]] · [[PASSO-12]]
-- **plataforma** (8): [[I1]] · [[I8]] · [[P-i18n]] · [[P1]] · [[P2]] · [[P3]] · [[P4-fase]] · [[P5]]
+- **plataforma** (9): [[I1]] · [[I8]] · [[I8b]] · [[P-i18n]] · [[P1]] · [[P2]] · [[P3]] · [[P4-fase]] · [[P5]]
 - **regua** (52): [[C11]] · [[C12]] · [[C6]] · [[C6b]] · [[C7]] · [[C8]] · [[C9]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[DFE-MANUAL]] · [[F1]] · [[F3]] · [[F4]] · [[F7]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] · [[SIG-NFE]] · [[X10b]] · [[X13]] · [[X4]] · [[X6]]
 - **rejeitada** (6): [[R-contab-preset-dt]] · [[R-motor-dominio]] · [[R-motor-regras]] · [[R-multimoeda]] · [[R-postgresql]] · [[R-torre-multiempresa]]
-- **subno** (2): [[X10]] · [[X4-14]]
+- **subno** (3): [[DFE-TPAMB]] · [[X10]] · [[X4-14]]
 - **trilho** (12): [[T1]] · [[T10]] · [[T11]] · [[T12]] · [[T2]] · [[T3]] · [[T4]] · [[T5]] · [[T6]] · [[T7]] · [[T8]] · [[T9]]
 
