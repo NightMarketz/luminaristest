@@ -3,19 +3,25 @@ id: "GET-DATA-EXCHANGE-JOBS"
 tipo: "fe"
 dominio: "contabil"
 titulo: "Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria"
-estado: "planned"
-estado_detalhe: "Não existe; previsto no C8 PR-4 ou no FE-INCR-REVIEW (F-FA15 → a)"
+estado: "done"
+estado_detalhe: "✅ #368 89d0c6a5 (C8 PR-4): GET /api/accounting/data-exchange/jobs no shape do F-FA15 (ListDataExchangeJobsQuerySchema, DataExchangeDto.ts:176). Consequência: F-FE-RV-1 do FE-INCR-REVIEW superado"
 autorizacao: "F-FA15 → (a) (dono, 18/09)"
+prs: ["#368"]
 ancora_sdd: "§III.1 · §III.3 §1"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # GET-DATA-EXCHANGE-JOBS — Insumo GET /api/accounting/data-exchange/jobs (lista) — quem mergear primeiro cria
 
-**Estado:** `planned` — Não existe; previsto no C8 PR-4 ou no FE-INCR-REVIEW (F-FA15 → a)  
+**Estado:** `done` — ✅ #368 89d0c6a5 (C8 PR-4): GET /api/accounting/data-exchange/jobs no shape do F-FA15 (ListDataExchangeJobsQuerySchema, DataExchangeDto.ts:176). Consequência: F-FE-RV-1 do FE-INCR-REVIEW superado  
 **Autorização:** F-FA15 → (a) (dono, 18/09)  
 **Depende de:** —  
 **Desbloqueia:** —  
-**Âncora no SDD consolidado:** §III.1 · §III.3 §1
+**Âncora no SDD consolidado:** §III.1 · §III.3 §1  
+**PRs:** #368
+
+## Docs
+
+- Decisão: [[D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE]]
 
 ## Evidência
 

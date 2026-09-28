@@ -3,16 +3,17 @@ id: "FE-INCR-SPED-SIGNERS"
 tipo: "fe"
 dominio: "contabil"
 titulo: "Combobox de qualificação de signatário (BRIEF C12 §6.3, rota nova)"
-estado: "blocked"
-estado_detalhe: "BE C12 já mergeado (#353); texto de 17/09 ainda diz 'espera merge do BE'"
+estado: "planned"
+estado_detalhe: "BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (PLANO-PENDENCIAS-FE-DTO §B1: item 4 feito lá; guarda por placeholder a manter). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6 (depois do FE-FIX e do contrato PR-2); falta 'executa'"
 depende_de: ["[[C12]]"]
+autorizacao: "dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'"
 ancora_sdd: "§III.1 (fora da régua)"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # FE-INCR-SPED-SIGNERS — Combobox de qualificação de signatário (BRIEF C12 §6.3, rota nova)
 
-**Estado:** `blocked` — BE C12 já mergeado (#353); texto de 17/09 ainda diz 'espera merge do BE'  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
+**Estado:** `planned` — BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (PLANO-PENDENCIAS-FE-DTO §B1: item 4 feito lá; guarda por placeholder a manter). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6 (depois do FE-FIX e do contrato PR-2); falta 'executa'  
+**Autorização:** dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'  
 **Depende de:** [[C12]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 (fora da régua)
@@ -20,6 +21,9 @@ atualizado: "2026-09-23"
 ## Docs
 
 - [`docs/accounting/BE-INCR-SPED-IDENTITY-MASKS-brief.md`](../../accounting/BE-INCR-SPED-IDENTITY-MASKS-brief.md)
+- [`docs/accounting/PLANO-ONDA1-FE-2026-09-28.md`](../../accounting/PLANO-ONDA1-FE-2026-09-28.md) — plano granular da Onda 1 de FE (28/09)
+- [`docs/accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md`](../../accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md) — sequência mestre (§4) e contrato gerado
+- Decisão: [[D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE]]
 
 ## Evidência
 
