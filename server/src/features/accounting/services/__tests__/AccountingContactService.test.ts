@@ -230,6 +230,39 @@ describe('AccountingContactService', () => {
     expect(update).toHaveBeenCalledTimes(1);
   });
 
+  // GAP-MAP 15: o número gravado pode ser de registro transferido — a UF do patch vale a de origem OU a do sufixo.
+  it('updateContact com CRC transferido gravado: patch de UF aceita a de origem OU a do sufixo; outra é 400', async () => {
+    const transferido = { ...contactRow, crcNumber: 'SP-123456/O-3 T-MG', crcUf: 'SP' };
+    const ok = build({ found: transferido });
+    await ok.service.updateContact(scope, 'contact-1', { unitId: 'unit-1', contactId: 'contact-1', crcUf: 'MG' });
+    expect(ok.update).toHaveBeenCalledTimes(1);
+
+    const bad = build({ found: transferido });
+    await expect(
+      bad.service.updateContact(scope, 'contact-1', { unitId: 'unit-1', contactId: 'contact-1', crcUf: 'RJ' }),
+    ).rejects.toThrow(/SP ou MG/);
+    expect(bad.update).not.toHaveBeenCalled();
+  });
+
+  // Revisão independente do #426: um número gravado no formato antigo (`/T-` no lugar do `O`) não tem
+  // sigla para cruzar — sem esta recusa, o patch de UF passava sem conferência.
+  it('updateContact com número gravado fora do formato atual recusa patch de UF; patch sem CRC segue', async () => {
+    const legado = { ...contactRow, crcNumber: 'SP-123456/T-7', crcUf: 'SP' };
+    const { service, update } = build({ found: legado });
+    await expect(
+      service.updateContact(scope, 'contact-1', { unitId: 'unit-1', contactId: 'contact-1', crcUf: 'RJ' }),
+    ).rejects.toThrow(/formato do CFC/);
+    expect(update).not.toHaveBeenCalled();
+
+    // controle: patch que não toca o CRC continua passando
+    await service.updateContact(scope, 'contact-1', {
+      unitId: 'unit-1',
+      contactId: 'contact-1',
+      email: 'novo@exemplo.com.br',
+    });
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
   // Review-delta M7: tirar o `tx` do `findById` dentro do `runTransaction` sobrevivia — o gate
   // "leitura + cruzamento + escrita na MESMA tx" era prosa. Aqui as DUAS chamadas têm de carregar o
   // handle da tx (server/CLAUDE.md gate 5).

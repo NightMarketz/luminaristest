@@ -84,13 +84,22 @@ export function parseCrcNumber(value: string): CrcNumberParse {
   const m = CRC_FULL_RE.exec(flat);
   if (m) {
     const [, uf, seq, cat, dv, sfx, sfxUf] = m;
+    // As duas siglas têm de ser UF da tabela: com "origem OU sufixo" no cruzamento com a UF do CRC, uma
+    // sigla inventada no lado não cruzado passaria (revisão independente do #426, achado A).
+    if (!isUf(uf) || (sfx && !isUf(sfxUf))) return { ok: false, reason: 'formato' };
     if (cat === 'P') return { ok: false, reason: 'provisorio_extinto' };
     return { ok: true, normalized: `${uf}-${seq}/O-${dv}${sfx ? ` ${sfx}-${sfxUf}` : ''}` };
   }
   const c = CRC_COMPACT_RE.exec(flat);
-  if (c) return { ok: true, normalized: `${c[1]}-${c[2]}/O-${c[3]}` };
-  if (CRC_NO_DV_RE.test(flat)) return { ok: false, reason: 'sem_dv' };
+  if (c) return isUf(c[1]) ? { ok: true, normalized: `${c[1]}-${c[2]}/O-${c[3]}` } : { ok: false, reason: 'formato' };
+  const semDv = CRC_NO_DV_RE.exec(flat);
+  if (semDv && isUf(semDv[1])) return { ok: false, reason: 'sem_dv' };
   return { ok: false, reason: 'formato' };
+}
+
+/** Sigla da Tabela de UF (`UF_CODES`, abaixo) — mesma checagem do `isValidCrcCertificate`. */
+function isUf(uf: string): boolean {
+  return (UF_CODES as readonly string[]).includes(uf);
 }
 
 /** Mensagem do 400 por motivo — o prefixo (nome do campo) fica com cada borda. */

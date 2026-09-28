@@ -83,8 +83,9 @@ export const emptyEcfSigner = (): EcfSigner => ({
 
 /**
  * Pure: one 0930 row → the exact SignerSchema keys, trimmed; a blank `indCrc` is omitted — the server
- * masks IND_CRC (BE-INCR-CRC-CFC-FOLLOWUPS F-4) and rejects ''. Pair of `toEcdSignerPayload` (J930);
- * exported for `SpedEcfRealPanel.tsx`. Never send the editor state as-is.
+ * masks IND_CRC (BE-INCR-CRC-CFC-FOLLOWUPS F-4) and rejects ''. Same shape as the J930 `toEcdSignerPayload`
+ * that FE-FIX-SPED-ECD-SIGNERS (#427) introduces; exported for `SpedEcfRealPanel.tsx`. Never send the editor
+ * state as-is.
  */
 export function toEcfSignerPayload(s: EcfSigner): EcfSigner {
   const out: EcfSigner = {

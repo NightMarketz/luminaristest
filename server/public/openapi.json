@@ -10308,7 +10308,8 @@
                               "description": "920 (Auditor Independente) fora do escopo."
                             },
                             "indCrc": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\")"
                             },
                             "email": {
                               "type": "string"
@@ -10317,7 +10318,8 @@
                               "type": "string"
                             },
                             "ufCrc": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF"
                             },
                             "numSeqCrc": {
                               "type": "string"
@@ -10440,7 +10442,7 @@
                         },
                         "ufCrc": {
                           "type": "string",
-                          "description": "required when codAssin=900; must match the UF embedded in indCrc"
+                          "description": "required when codAssin=900; UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF"
                         },
                         "numSeqCrc": {
                           "type": "string",
@@ -10670,7 +10672,8 @@
                           "description": "3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista"
                         },
                         "indCrc": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -10901,7 +10904,8 @@
                           "description": "3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista"
                         },
                         "indCrc": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"

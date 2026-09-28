@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { SpedGenerationPanel, toEcfSignerPayload, validateEcdSigners, validateEcfSigners } from '../SpedGenerationPanel';
 import { SpedEcfRealPanel } from '../SpedEcfRealPanel';
 import type { EcdSigner, EcfSigner } from '../../../../lib/services/sped.service';
@@ -175,6 +175,10 @@ describe('SpedEcfRealPanel (render + validation)', () => {
       indRecReceita: '2',
     });
     expect(payload.fiscal).not.toHaveProperty('formaApur');
+    // 0930 pelo toEcfSignerPayload: o CRC em branco da linha do sócio sai do payload (o BE com a máscara
+    // recusa '') — sem esta fiação toda ECF Real pela tela dá 400 (revisão independente do #426, achado C).
+    expect(payload.signers[0].indCrc).toBe('SP-1');
+    expect(payload.signers[1]).not.toHaveProperty('indCrc');
   });
 });
 
@@ -186,9 +190,12 @@ describe('toEcfSignerPayload (0930)', () => {
   });
 
   it('devolve só as chaves do SignerSchema, aparadas (nunca o estado do editor como está)', () => {
-    const out = toEcfSignerPayload(
-      ecf({ identNom: ' Contador ', identCpfCnpj: ' 12345678901 ', identQualif: ' 900 ', indCrc: 'SP-1', email: ' c@d.com ', fone: ' 1133334444 ' }),
-    );
+    // chave fora do SignerSchema de propósito: tem de ser descartada (revisão independente do #426, achado D)
+    const comExtra = {
+      ...ecf({ identNom: ' Contador ', identCpfCnpj: ' 12345678901 ', identQualif: ' 900 ', indCrc: 'SP-1', email: ' c@d.com ', fone: ' 1133334444 ' }),
+      rascunho: 'estado do editor',
+    } as unknown as EcfSigner;
+    const out = toEcfSignerPayload(comExtra);
     expect(out).toEqual({
       identNom: 'Contador',
       identCpfCnpj: '12345678901',
@@ -197,5 +204,35 @@ describe('toEcfSignerPayload (0930)', () => {
       email: 'c@d.com',
       fone: '1133334444',
     });
+  });
+});
+
+// ── ECF Presumido: o submit passa o 0930 pelo toEcfSignerPayload (revisão independente do #426, achado C)
+describe('SpedGenerationPanel — submit da ECF Presumido', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('a linha do sócio sai sem indCrc e os campos do contador vão aparados', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedGenerationPanel unitId="u1" />);
+    const ecfBox = within(screen.getByRole('heading', { name: 'Gerar SPED ECF' }).closest('section') as HTMLElement);
+
+    fireEvent.change(ecfBox.getAllByPlaceholderText('Nome')[0], { target: { value: ' Fulano ' } });
+    fireEvent.change(ecfBox.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '12345678901' } });
+    fireEvent.change(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[0], { target: { value: '900' } });
+    fireEvent.change(ecfBox.getAllByPlaceholderText('CRC')[0], { target: { value: ' SP-123456/O-1 ' } });
+    fireEvent.click(ecfBox.getByRole('button', { name: /Adicionar/ }));
+    fireEvent.change(ecfBox.getAllByPlaceholderText('Nome')[1], { target: { value: 'Beltrano' } });
+    fireEvent.change(ecfBox.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '98765432100' } });
+    fireEvent.change(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[1], { target: { value: '205' } });
+
+    fireEvent.click(ecfBox.getByRole('button', { name: 'Gerar e baixar ECF' }));
+
+    await waitFor(() => expect(spedService.generateAndDownloadEcf).toHaveBeenCalledTimes(1));
+    const payload = (spedService.generateAndDownloadEcf as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(payload.signers[0]).toMatchObject({ identNom: 'Fulano', indCrc: 'SP-123456/O-1' });
+    expect(payload.signers[1]).not.toHaveProperty('indCrc');
   });
 });

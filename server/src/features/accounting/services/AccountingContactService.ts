@@ -132,6 +132,13 @@ export class AccountingContactService {
       const nextNumber = dto.crcNumber ?? current.crcNumber;
       const nextUf = dto.crcUf ?? current.crcUf;
       const embedded = crcNumberUfs(nextNumber);
+      // Número gravado fora do formato atual (o `/T-` que a máscara antiga aceitava; 0 linhas no dev.db):
+      // sem sigla para cruzar, um patch de UF passaria sem conferência (revisão independente do #426).
+      if (embedded.length === 0 && (dto.crcUf !== undefined || dto.crcNumber !== undefined)) {
+        throw new ValidationError(
+          'o número do CRC gravado não segue o formato do CFC — envie crcNumber (UF-NNNNNN/O-D) junto com crcUf.',
+        );
+      }
       if (embedded.length && !embedded.includes(nextUf)) {
         throw new ValidationError(
           `crcUf (${nextUf}) diverge da UF do número do CRC (${embedded.join(' ou ')}) — ajuste os dois juntos.`,

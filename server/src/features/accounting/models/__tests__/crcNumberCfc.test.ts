@@ -112,3 +112,16 @@ describe('CRC — tipo, provisório e grafia compacta (BE-INCR-CRC-CFC-FOLLOWUPS
     expect(JSON.stringify(r.error?.issues)).toContain('falta o dígito verificador');
   });
 });
+
+describe('CRC — as siglas do número são UFs da tabela (revisão independente do #426, achado A)', () => {
+  it('origem ou sufixo fora da Tabela de UF é formato inválido, mesmo com a outra sigla batendo com a UF do CRC', () => {
+    expect(parseCrcNumber('ZZ-123456/O-3 T-MG')).toEqual({ ok: false, reason: 'formato' });
+    expect(parseCrcNumber('SP-123456/O-3 T-ZZ')).toEqual({ ok: false, reason: 'formato' });
+    expect(parseCrcNumber('ZZ1234567')).toEqual({ ok: false, reason: 'formato' });
+    expect(parseCrcNumber('ZZ123456')).toEqual({ ok: false, reason: 'formato' });
+    expect(RegisterContactSchema.safeParse(contact('ZZ-123456/O-3 T-MG', 'MG')).success).toBe(false);
+    expect(SpedEcdRequestSchema.safeParse(ecd('SP-123456/O-3 T-ZZ', 'SP')).success).toBe(false);
+    // controle: as mesmas formas com UF real passam
+    expect(RegisterContactSchema.safeParse(contact('SP-123456/O-3 T-MG', 'MG')).success).toBe(true);
+  });
+});
