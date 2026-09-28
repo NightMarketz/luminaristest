@@ -27,6 +27,7 @@ Nó: [[FE-CONTRACT-TYPES]]. Explicação didática: https://claude.ai/artifact/Q
 | 2 | Gerador `json-schema-to-typescript` | questionário |
 | 3 | Todos os services migram (F-CT-4 → b), exceto DynamicTable | questionário (**contra** a recomendação de só piloto) |
 | 4 | Um JSON de snapshot por domínio (F-CT-6 → a) | questionário |
+| 4a | **Gerador com `maxItems: -1`, mantendo `minItems`** (28/09, na execução do PR-1): arrays `.min(n)` saem como tupla (`[T, ...T[]]`) e o FE monta com `nonEmpty()`/`atLeastTwo()`; `.max(n)` deixa de virar união de tuplas. Fato novo que motivou: a forma do D7 (`.map(toX)`) dava TS2322 contra as tuplas | questionário: *"maxItems:-1, mantém mínimo"* |
 
 ## Decididas pelo agente sob a delegação de 28/09
 
