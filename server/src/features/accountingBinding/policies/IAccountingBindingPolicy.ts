@@ -14,4 +14,7 @@ export interface IAccountingBindingPolicy {
 
   /** Pode listar/ler os bindings do escopo (GET /accounting-binding). */
   canRead(scope: BindingScope): boolean;
+
+  /** Pode ativar o binding padrão do setor (POST /accounting-binding/activate-default, LAC-B). */
+  canActivateDefault(scope: BindingScope): boolean;
 }

@@ -144,6 +144,11 @@ import { AccountingBindingFeederService } from '../features/accountingBinding/se
 import { BindingCompileService } from '../features/accountingBinding/services/BindingCompileService';
 import type { IBindingAuditPort } from '../features/accountingBinding/services/BindingCompileService';
 import { BindingValidationService } from '../features/accountingBinding/services/BindingValidationService';
+import { BindingActivationService } from '../features/accountingBinding/services/BindingActivationService';
+import type {
+  ActivationChartPort,
+  ActivationPeriodPort,
+} from '../features/accountingBinding/services/BindingActivationService';
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -270,6 +275,46 @@ function buildAccountingBindingChartLookup(accountRepo: IAccountRepository, scop
       const account = await accountRepo.findByCode(scope, code);
       if (!account) return null;
       return { code: account.code, nature: account.nature, acceptsEntries: account.acceptsEntries };
+    },
+  };
+}
+
+/**
+ * LAC-B — portas de pré-condição do `activate-default` (`BindingActivationService`), fechadas sobre o
+ * escopo pelo mesmo motivo do `ChartLookupPort` acima. O chart instala pelo canônico
+ * `PostingService.ensureChartOfAccounts` (cria-se-faltar, restaura soft-deleted); o período passa
+ * pelo `PeriodService` (policy `canClosePeriod` + transição auditada `period.opened`).
+ */
+function buildActivationChartPort(
+  accountRepo: IAccountRepository,
+  postingService: PostingService,
+  scope: AccountingScope,
+): ActivationChartPort {
+  return {
+    async listChart() {
+      const accounts = await accountRepo.findManyByUnit(scope);
+      return accounts.map((a) => ({ code: a.code, nature: a.nature, acceptsEntries: a.acceptsEntries }));
+    },
+    async installCanonicalChart() {
+      await postingService.ensureChartOfAccounts(scope);
+    },
+  };
+}
+
+function buildActivationPeriodPort(
+  periodRepo: IAccountingPeriodRepository,
+  periodService: PeriodService,
+  scope: AccountingScope,
+): ActivationPeriodPort {
+  return {
+    async status(year, month) {
+      const period = await periodRepo.findByYearMonth(scope, year, month);
+      return period ? (period.status as 'FUTURE' | 'OPEN' | 'SOFT_CLOSED' | 'HARD_CLOSED') : 'MISSING';
+    },
+    async seedAndOpen(year, month) {
+      const periods = await periodService.seedYear(scope, year);
+      const period = periods.find((p) => p.month === month);
+      if (period && period.status === 'FUTURE') await periodService.openPeriod(scope, period.id);
     },
   };
 }
@@ -1148,6 +1193,18 @@ export class ApplicationFactory {
       new AccountingBindingPolicy(),
       validationService,
       auditPort,
+    );
+  }
+
+  /** LAC-B — `BindingActivationService` por escopo (mesmo motivo do getter acima: portas fechadas sobre o escopo). */
+  public getAccountingBindingActivationService(scope: BindingScope): BindingActivationService {
+    const accountingScope = bindingScopeToAccountingScope(scope);
+    return new BindingActivationService(
+      new AccountingBindingPolicy(),
+      new AccountingBindingRepository(),
+      this.getAccountingBindingCompileService(scope),
+      buildActivationChartPort(this.repositories.account, this.services.posting, accountingScope),
+      buildActivationPeriodPort(this.repositories.accountingPeriod, this.services.period, accountingScope),
     );
   }
 

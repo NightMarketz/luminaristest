@@ -92,7 +92,8 @@ const { options } = require('../../scripts/generate-openapi');
 // POST /data-exchange/jobs/{jobId}/waive-ecf-rectification — 216 → 218.
 // +4 (BE-INCR-DFE-MANUAL, itens 11–14): /nfe/dfe/documents/{id}/{ficha,retorno-manual,rejeicao-manual,
 // cancelamento-manual} — 218 → 222.
-const BASELINE = 222;
+// +1 (LAC-B, FE-INCR-BINDING-ACTIVATION item 1): POST /accounting-binding/activate-default — 222 → 223.
+const BASELINE = 223;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

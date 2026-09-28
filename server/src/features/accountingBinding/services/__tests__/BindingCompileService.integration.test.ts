@@ -256,6 +256,7 @@ describe('BindingCompileService — contrato em SQLite real', () => {
       canCompile: () => false,
       canValidate: () => false,
       canRead: () => false,
+      canActivateDefault: () => false,
     };
     const auditPort = new RecordingAuditPort();
     const service = new BindingCompileService(repo, negaTudo, new StubValidationService(OK), auditPort);
