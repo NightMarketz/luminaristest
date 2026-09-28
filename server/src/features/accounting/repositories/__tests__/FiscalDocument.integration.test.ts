@@ -118,6 +118,15 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect(await docRepo.findAttemptById(escopo(DONO_A), doc.attempts[0].id)).not.toBeNull();
   });
 
+  it('BE-INCR-DFE-MANUAL 11.3(ii): findByChaveOuCodigo acha a chave em documento do MESMO usuário em OUTRA unidade (GAP-MAP #405)', async () => {
+    const chave = '35503082211222333000181000000000004226091234567891';
+    const doc = await docRepo.createSent(escopo(DONO_A), sent('sale-chave-unidade'));
+    await docRepo.transition(escopo(DONO_A), doc.id, { status: 'AUTHORIZED', chaveOuCodigo: chave });
+    // controle: na própria unidade a chave é achada (o setup gravou a chave)
+    expect((await docRepo.findByChaveOuCodigo(escopo(DONO_A), chave))?.id).toBe(doc.id);
+    expect((await docRepo.findByChaveOuCodigo(escopo(DONO_A, 'unit-dfe-outra'), chave))?.id).toBe(doc.id);
+  });
+
   it('item 2: ServiceFiscalProfile delete → re-create não dá P2002 (rename-on-delete libera a chave)', async () => {
     const primeiro = await svcRepo.upsert(escopo(DONO_A), 'svc-corte', { cTribNac: '060101', cIndOp: '030101' });
     expect(await svcRepo.softDelete(escopo(DONO_A), 'svc-corte')).toBe(1);
