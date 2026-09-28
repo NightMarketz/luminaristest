@@ -90,7 +90,7 @@ export const DpsPayloadSchema = z
                   .object({
                     tribISSQN: z.literal(1), // [301]
                     tpRetISSQN: z.union([z.literal(1), z.literal(2)]), // [311]
-                    pAliq: Pct2.optional(), // [312] <= 5.00 (E0595)
+                    pAliq: z.string().regex(/^\d\.\d{2}$/).optional(), // [312] 1V2 (TSDec1V2) <= 5.00 (E0595)
                   })
                   .strict(),
                 totTrib: z.union([
