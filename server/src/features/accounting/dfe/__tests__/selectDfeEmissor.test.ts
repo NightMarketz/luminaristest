@@ -1,6 +1,7 @@
 import { selectDfeEmissor } from '../selectDfeEmissor';
 import { NullEmissor } from '../NullEmissor';
-import { FileEmissor } from '../FileEmissor';
+import { ManualEmissor } from '../ManualEmissor';
+import { resolveEmissorFor } from '../resolveEmissor';
 import { DfeDisabledEmissor } from '../DfeDisabledEmissor';
 
 describe('selectDfeEmissor — BRIEF item 13 (3+ combinações de env)', () => {
@@ -18,10 +19,10 @@ describe('selectDfeEmissor — BRIEF item 13 (3+ combinações de env)', () => {
     expect(s.ambiente).toBe('homologacao');
   });
 
-  it("DFE_PARTNER='file' + DFE_PARTNER_ENV válido => FileEmissor habilitado", () => {
-    const s = selectDfeEmissor({ DFE_PARTNER: 'file', DFE_PARTNER_ENV: 'producao', DFE_FILE_DIR: './tmp-dfe' });
+  it("DFE_PARTNER='manual' + DFE_PARTNER_ENV válido => ManualEmissor habilitado (F-MAN-3 a)", () => {
+    const s = selectDfeEmissor({ DFE_PARTNER: 'manual', DFE_PARTNER_ENV: 'producao' });
     expect(s.enabled).toBe(true);
-    expect(s.port).toBeInstanceOf(FileEmissor);
+    expect(s.port).toBeInstanceOf(ManualEmissor);
     expect(s.ambiente).toBe('producao');
   });
 
@@ -66,16 +67,44 @@ describe('NullEmissor — item 11', () => {
   });
 });
 
-describe('FileEmissor — item 12', () => {
-  it('cancelar NUNCA devolve CANCELLED sem prova', async () => {
-    const emissor = new FileEmissor('./tmp-dfe-test');
-    const r = await emissor.cancelar('ref-1', { cMotivo: 1, xMotivo: 'x' });
-    expect(r.status).not.toBe('CANCELLED');
+describe('ManualEmissor — BE-INCR-DFE-MANUAL item 7', () => {
+  it("'file' deixou de existir (F-MAN-3 a): vira parceiro sem adaptador => desabilitado", () => {
+    const s = selectDfeEmissor({ DFE_PARTNER: 'file', DFE_PARTNER_ENV: 'producao' });
+    expect(s.enabled).toBe(false);
   });
 
-  it('consultar sem arquivo-resposta continua PROCESSING', async () => {
-    const emissor = new FileEmissor('./tmp-dfe-test-empty');
-    const r = await emissor.consultar('ref-inexistente-' + Date.now());
-    expect(r.status).toBe('PROCESSING');
+  it('capabilities: o portal numera (F-MAN-4 a) e não há consulta/cancelamento por máquina', () => {
+    expect(new ManualEmissor().capabilities).toEqual({ numbersDps: true, consultar: false, cancelar: false, webhook: false });
+  });
+
+  it('emitir devolve PROCESSING com partnerRef = ref e NÃO toca o disco', async () => {
+    const fs = jest.requireActual<typeof import('fs')>('fs');
+    const spies = [jest.spyOn(fs, 'writeFileSync'), jest.spyOn(fs.promises, 'writeFile'), jest.spyOn(fs.promises, 'mkdir')];
+    const r = await new ManualEmissor().emitir({ kind: 'NFSE', ref: 'doc-1:1', ambiente: 'producao', cnpjEmitente: '11222333000181', partnerAccountRef: null, payload: {} });
+    expect(r).toEqual({ status: 'PROCESSING', partnerRef: 'doc-1:1', errors: [] });
+    for (const s of spies) expect(s).not.toHaveBeenCalled();
+    spies.forEach((s) => s.mockRestore());
+  });
+
+  it('consultar/cancelar nunca inventam resultado: erro de código próprio dfe_manual', async () => {
+    const m = new ManualEmissor();
+    await expect(m.consultar('doc-1:1')).rejects.toThrow(/^dfe_manual:/);
+    await expect(m.cancelar('doc-1:1')).rejects.toThrow(/^dfe_manual:/);
+  });
+});
+
+describe('resolveEmissorFor — item 9 (adaptador do DOCUMENTO, não do env)', () => {
+  it('documento manual com o env em null: resolve o ManualEmissor, nunca o NullEmissor do env', () => {
+    const port = resolveEmissorFor('manual', { DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' });
+    expect(port).toBeInstanceOf(ManualEmissor);
+  });
+
+  it('documento do mesmo parceiro do env: devolve a instância do env', () => {
+    const port = resolveEmissorFor('manual', { DFE_PARTNER: 'manual', DFE_PARTNER_ENV: 'producao' });
+    expect(port.name).toBe('manual');
+  });
+
+  it('parceiro sem adaptador (ex.: o antigo file) => dfe_adapter_unknown', () => {
+    expect(() => resolveEmissorFor('file', {})).toThrow(/^dfe_adapter_unknown:/);
   });
 });

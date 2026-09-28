@@ -70,6 +70,10 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async findByChaveOuCodigo(scope: AccountingScope, chaveOuCodigo: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
+    return this.db(tx).fiscalDocument.findFirst({ where: { chaveOuCodigo, ...accountingScopeWhere(scope), deletedAt: null } });
+  }
+
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
     const { payloadJson, ...doc } = data;
@@ -99,12 +103,19 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   }
 
   public async transition(scope: AccountingScope, id: string, data: TransitionData, tx?: Prisma.TransactionClient): Promise<FiscalDocument> {
-    const { attemptResult, ...fields } = data;
+    const { attemptResult, whenStatusIn, ...fields } = data;
     const r = await this.db(tx).fiscalDocument.updateMany({
-      where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      where: {
+        id,
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        ...(whenStatusIn ? { status: { in: [...whenStatusIn] } } : {}),
+      },
       data: fields,
     });
-    if (r.count !== 1) throw new Error(`fiscal_document_not_found: ${id}`);
+    if (r.count !== 1) {
+      throw new Error(whenStatusIn ? `fiscal_document_status_changed: ${id}` : `fiscal_document_not_found: ${id}`);
+    }
     if (attemptResult) {
       await this.db(tx).fiscalDocumentAttempt.update({
         where: { documentId_attemptNo: { documentId: id, attemptNo: attemptResult.attemptNo } },

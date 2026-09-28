@@ -9,6 +9,12 @@ import {
   previewFiscalDocument,
   receiveDfeWebhook,
   reenviarFiscalDocument,
+  retornoManualUpload,
+  eventoManualUpload,
+  retornoManualFiscalDocument,
+  rejeicaoManualFiscalDocument,
+  cancelamentoManualFiscalDocument,
+  getFichaFiscalDocument,
 } from '../controllers/fiscalDocumentController';
 
 /**
@@ -31,6 +37,11 @@ router.get('/documents/:id', getFiscalDocument);
 router.post('/documents/:id/consultar', consultarFiscalDocument);
 router.post('/documents/:id/reenviar', reenviarFiscalDocument);
 router.post('/documents/:id/cancelar', cancelarFiscalDocument);
+// BE-INCR-DFE-MANUAL (itens 11–14) — modo manual: o retorno vem do portal público, por upload do XML.
+router.get('/documents/:id/ficha', getFichaFiscalDocument);
+router.post('/documents/:id/retorno-manual', retornoManualUpload, retornoManualFiscalDocument);
+router.post('/documents/:id/rejeicao-manual', rejeicaoManualFiscalDocument);
+router.post('/documents/:id/cancelamento-manual', eventoManualUpload, cancelamentoManualFiscalDocument);
 // PÚBLICA (F-DFE-12) — listada em publicApiRoutes (middleware/auth.ts); NUNCA GET (HEAD deriva de
 // GET no Express — memória critical-auth-bypass-case-sensitive-guard — por isso só POST aqui).
 router.post('/webhook/:partner', receiveDfeWebhook);

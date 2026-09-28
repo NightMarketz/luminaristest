@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC-FIXTURE-NOT-REAL: NFS-e nacional AUTORIZADA fictícia (BE-INCR-DFE-MANUAL, item 2), montada pela
+     transcrição docs/accounting/fontes-oficiais/TRANSCRICAO-NFSe-infNFSe-E0010-evento-v1.01-2026-09-27.md (§1–§3).
+     Emitida "pelo portal": ambGer=2 (Sefin Nacional), procEmi=2 (Web do fisco), série 70001 (faixa do Emissor Web,
+     E0010). SEM <Signature> no arquivo: o teste assina na hora com a chave de teste (signNfseForTest), o que permite
+     adulterar e re-assinar. Nenhum dado real. -->
+<NFSe xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">
+  <infNFSe Id="NFS35503082211222333000181000000000004226091234567890">
+    <xLocEmi>São Paulo</xLocEmi>
+    <xLocPrestacao>São Paulo</xLocPrestacao>
+    <nNFSe>42</nNFSe>
+    <cLocIncid>3550308</cLocIncid>
+    <xLocIncid>São Paulo</xLocIncid>
+    <xTribNac>Barbearia, cabeleireiros, manicuros, pedicuros e congêneres.</xTribNac>
+    <xNBS>Serviços de cabeleireiros</xNBS>
+    <verAplic>SefinNac_1.4.0</verAplic>
+    <ambGer>2</ambGer>
+    <tpEmis>1</tpEmis>
+    <procEmi>2</procEmi>
+    <cStat>100</cStat>
+    <dhProc>2026-09-15T14:32:10-03:00</dhProc>
+    <nDFSe>77</nDFSe>
+    <emit>
+      <CNPJ>11222333000181</CNPJ>
+      <IM>1234567</IM>
+      <xNome>SALAO FICTICIO LTDA</xNome>
+      <enderNac>
+        <xLgr>AVENIDA DO TESTE</xLgr>
+        <nro>200</nro>
+        <xBairro>CENTRO</xBairro>
+        <cMun>3550308</cMun>
+        <UF>SP</UF>
+        <CEP>01001000</CEP>
+      </enderNac>
+    </emit>
+    <valores>
+      <vBC>135.00</vBC>
+      <pAliqAplic>5.00</pAliqAplic>
+      <vISSQN>6.75</vISSQN>
+      <vLiq>135.00</vLiq>
+    </valores>
+    <DPS versao="1.01">
+      <infDPS Id="DPS355030821122233300018170001000000000000015">
+        <tpAmb>1</tpAmb>
+        <dhEmi>2026-09-15T14:31:55-03:00</dhEmi>
+        <verAplic>EmissorWeb_1.4.0</verAplic>
+        <serie>70001</serie>
+        <nDPS>15</nDPS>
+        <dCompet>2026-09-15</dCompet>
+        <tpEmit>1</tpEmit>
+        <cLocEmi>3550308</cLocEmi>
+        <prest>
+          <CNPJ>11222333000181</CNPJ>
+          <regTrib>
+            <opSimpNac>1</opSimpNac>
+            <regEspTrib>0</regEspTrib>
+          </regTrib>
+        </prest>
+        <toma>
+          <CPF>12345678909</CPF>
+          <xNome>CLIENTE FICTICIA</xNome>
+        </toma>
+        <serv>
+          <locPrest>
+            <cLocPrestacao>3550308</cLocPrestacao>
+          </locPrest>
+          <cServ>
+            <cTribNac>060101</cTribNac>
+            <xDescServ>Corte e escova</xDescServ>
+            <cNBS>126021000</cNBS>
+          </cServ>
+        </serv>
+        <valores>
+          <vServPrest>
+            <vServ>150.00</vServ>
+          </vServPrest>
+          <vDescCondIncond>
+            <vDescIncond>15.00</vDescIncond>
+          </vDescCondIncond>
+          <trib>
+            <tribMun>
+              <tribISSQN>1</tribISSQN>
+              <tpRetISSQN>1</tpRetISSQN>
+            </tribMun>
+            <totTrib>
+              <pTotTrib>
+                <pTotTribFed>4.00</pTotTribFed>
+                <pTotTribEst>0.00</pTotTribEst>
+                <pTotTribMun>5.00</pTotTribMun>
+              </pTotTrib>
+            </totTrib>
+          </trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>

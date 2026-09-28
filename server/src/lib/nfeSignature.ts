@@ -39,7 +39,7 @@ const fail = (motivo: string): never => {
   throw new ValidationError(`NF-e inválida: assinatura digital ${motivo}`);
 };
 
-const elementChildren = (node: Element, localName?: string): Element[] =>
+export const elementChildren = (node: Element, localName?: string): Element[] =>
   Array.from(node.childNodes as unknown as ArrayLike<Node>).filter(
     (n): n is Element => n.nodeType === 1 && (!localName || (n as Element).localName === localName),
   );
@@ -102,7 +102,7 @@ function derDate(buf: Buffer, t: Tlv): string {
   return `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`;
 }
 
-interface CertFacts {
+export interface CertFacts {
   cnpj: string | null;
   cpf: string | null;
   notBefore: string;
@@ -117,7 +117,7 @@ function icpNumber(raw: string, pattern: RegExp): string | null {
   return pattern.test(raw) && !/^0+$/.test(raw) ? raw : null;
 }
 
-function readCertFacts(der: Buffer): CertFacts {
+export function readCertFacts(der: Buffer): CertFacts {
   const cert = readTlv(der, 0, der.length);
   const tbs = children(der, cert)[0];
   if (!tbs) return fail('— certificado mal-formado.');
