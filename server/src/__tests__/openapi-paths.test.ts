@@ -93,7 +93,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +4 (BE-INCR-DFE-MANUAL, itens 11–14): /nfe/dfe/documents/{id}/{ficha,retorno-manual,rejeicao-manual,
 // cancelamento-manual} — 218 → 222.
 // +1 (LAC-B, FE-INCR-BINDING-ACTIVATION item 1): POST /accounting-binding/activate-default — 222 → 223.
-const BASELINE = 223;
+// +1 (BE-INCR-CRM-MODULE-COMPOSITION, I8 comportamento 8): POST /dashboard/modules/install — 223 → 224.
+const BASELINE = 224;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
