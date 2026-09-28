@@ -33,6 +33,21 @@ describe('CrmNav — áreas por módulo (I8 c9)', () => {
     expect(screen.queryByText('Oportunidades')).toBeNull();
   });
 
+  // BE-INCR-CRM-SUBMODULES item 12: Contas (CRM-2A) e Contatos (CRM-2B) aparecem cada um pelo próprio submódulo.
+  it('Contas sem Contatos: mostra Contas e esconde Contatos', async () => {
+    getTables.mockResolvedValue(tabelas(...CRM0, 'crmAccounts'));
+    render(<CrmNav />);
+    await waitFor(() => expect(screen.getByText('Contas')).toBeInTheDocument());
+    expect(screen.queryByText('Contatos')).toBeNull();
+  });
+
+  it('Contatos sem Contas: mostra Contatos e esconde Contas', async () => {
+    getTables.mockResolvedValue(tabelas(...CRM0, 'crmContacts'));
+    render(<CrmNav />);
+    await waitFor(() => expect(screen.getByText('Contatos')).toBeInTheDocument());
+    expect(screen.queryByText('Contas')).toBeNull();
+  });
+
   it('CRM completo: todas as áreas', async () => {
     getTables.mockResolvedValue(tabelas(...CRM0, 'leadProposals', 'crmAccounts', 'crmContacts', 'crmOpportunities'));
     render(<CrmNav />);
