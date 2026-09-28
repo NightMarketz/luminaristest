@@ -698,8 +698,8 @@
  *                         grandePorte: { type: boolean, nullable: true }
  *                     modules:
  *                       type: array
- *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -736,8 +736,8 @@
  *                         items: { type: object }
  *                     modules:
  *                       type: array
- *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -763,8 +763,10 @@
  *       description: >
  *         BE-INCR-CRM-MODULE-COMPOSITION (I8) behavior 8. Installs the module tables in registry order
  *         (install-table primitive), then runs the additive sync-preset on installed tables whose preset
- *         relates to the module (e.g. leads.accountId after CRM-2). Idempotent - an installed module answers
+ *         relates to the module (e.g. leads.accountId after CRM-2A). Idempotent - an installed module answers
  *         status already-installed. A dependency module not installed yields 400 naming it. Requires ADMIN.
+ *         The group key CRM-2 (BE-INCR-CRM-SUBMODULES F-SUB-2 a) installs CRM-2A then CRM-2B and answers the
+ *         aggregated result plus modules (atomic keys).
  *       tags: [Dashboard]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -776,10 +778,10 @@
  *               required: [moduleKey]
  *               additionalProperties: false
  *               properties:
- *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
  *       responses:
  *         '200':
- *           description: 'Install result { status: installed | already-installed, tables, synced }'
+ *           description: 'Install result { status: installed | already-installed, tables, synced, modules? } - modules only for a group key'
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -813,7 +815,7 @@
  *           required: true
  *           schema: { type: string }
  *       responses:
- *         '200': { description: Preset detail }
+ *         '200': { description: 'Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, group?, name, fixed, tables, dependsOn }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *

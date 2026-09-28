@@ -6,7 +6,7 @@ import { composeModuleTables, MODULE_KEYS } from '../modules/registry';
  * CRM Module — a **selectable** preset suite (NOT auto-installed in CoreSystemPreset).
  *
  * BE-INCR-CRM-MODULE-COMPOSITION (I8) — comportamento 4: a suíte é a COMPOSIÇÃO
- * CRM-0 (Funil) + CRM-1 (Propostas) + CRM-2 (Contas e contatos) + CRM-3 (Oportunidades)
+ * CRM-0 (Funil) + CRM-1 (Propostas) + CRM-2A (Contas) + CRM-2B (Contatos) + CRM-3 (Oportunidades)
  * do registro de módulos (`../modules/registry.ts`) — as mesmas 8 tabelas, com os mesmos
  * schemas, que ela já instalava (prova em `__tests__/CrmModulePreset.test.ts`).
  *

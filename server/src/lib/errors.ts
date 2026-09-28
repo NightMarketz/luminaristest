@@ -94,15 +94,19 @@ export class ServiceError extends AppError {
  * named in `details.moduleKey`), never by a generic 404/crash.
  */
 export class ModuleNotInstalledError extends AppError {
-  public readonly details: { moduleKey: string };
+  public readonly details: { moduleKey: string; missingModules?: string[] };
 
-  constructor(moduleKey: string, internalName: string) {
+  /**
+   * `missingModules` (BE-INCR-CRM-SUBMODULES item 8, F-SUB-7 → a′): quando a operação exige vários módulos,
+   * lista TODOS os que faltam; `moduleKey` segue sendo o primeiro deles.
+   */
+  constructor(moduleKey: string, internalName: string, missingModules?: string[]) {
     super(
       `O módulo '${moduleKey}' não está instalado para este usuário (tabela '${internalName}').`,
       409,
       'CRM_MODULE_NOT_INSTALLED',
     );
-    this.details = { moduleKey };
+    this.details = missingModules ? { moduleKey, missingModules } : { moduleKey };
     Object.setPrototypeOf(this, ModuleNotInstalledError.prototype);
   }
 }

@@ -62,7 +62,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     for (const x of B2B) expect(t).not.toContain(x);
   });
 
-  it('c2: salão + modules [CRM-3] instala oportunidades sem CRM-2; c4: crmModule segue com as 8 tabelas', async () => {
+  it('c2: salão + modules [CRM-3] instala oportunidades sem CRM-2A/2B; c4: crmModule segue com as 8 tabelas', async () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'Matriz' }, modules: ['CRM-3'] });
     expect(r.status).toBe(201);
@@ -74,7 +74,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const v = await novoUsuario();
     const r2 = await criar(v, { suiteKey: 'crmModule', unit: { name: 'Matriz' } });
     expect(r2.status).toBe(201);
-    expect(r2.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2', 'CRM-3']);
+    expect(r2.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
     const t2 = await tabelasDe(v.id);
     for (const x of [...LEADS, ...B2B]) expect(t2).toContain(x);
   });
@@ -126,7 +126,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(size).toMatchObject({ type: 'select', options: ['P', 'G'] });
   });
 
-  it('c7: convertLead em tenant sem CRM-2 → 409 CRM_MODULE_NOT_INSTALLED com moduleKey CRM-2', async () => {
+  // BE-INCR-CRM-SUBMODULES item 8 (F-SUB-7 → a′): o 409 nomeia o submódulo que falta (e todos em missingModules).
+  it('c7: convertLead em tenant sem Contas nem Contatos → 409 moduleKey CRM-2A, missingModules [CRM-2A, CRM-2B]', async () => {
     const u = await novoUsuario();
     expect((await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' } })).status).toBe(201);
     const r = await request(app)
@@ -134,10 +135,21 @@ describe('I8 — CRM como categoria composta por módulos', () => {
       .set(authHeader(u as never))
       .send({ leadId: 'qualquer', account: { name: 'ACME' } });
     expect(r.status).toBe(409);
-    expect(r.body).toMatchObject({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2' } });
+    expect(r.body).toMatchObject({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2A', missingModules: ['CRM-2A', 'CRM-2B'] } });
   });
 
-  it('c8: tenant CRM-0 → instala CRM-2 → leads volta a ter accountId apontando para crmAccounts real; 2ª vez = already-installed', async () => {
+  it('c7: convertLead em tenant com Contas e sem Contatos → 409 moduleKey CRM-2B', async () => {
+    const u = await novoUsuario();
+    expect((await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['crmContacts'], unit: { name: 'M' } })).status).toBe(201);
+    const r = await request(app)
+      .post('/api/crm/pipeline/convert-lead')
+      .set(authHeader(u as never))
+      .send({ leadId: 'qualquer', account: { name: 'ACME' } });
+    expect(r.status).toBe(409);
+    expect(r.body).toMatchObject({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2B', missingModules: ['CRM-2B'] } });
+  });
+
+  it("c8: tenant CRM-0 → instala o grupo 'CRM-2' → leads volta a ter accountId apontando para crmAccounts real; 2ª vez = already-installed", async () => {
     const u = await novoUsuario('ADMIN');
     expect((await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' } })).status).toBe(201);
     const leadsAntes = (await tabela(u.id, 'leads'))!;
@@ -145,7 +157,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
 
     const r = await request(app).post('/api/dashboard/modules/install').set(authHeader(u as never)).send({ moduleKey: 'CRM-2' });
     expect(r.status).toBe(200);
-    expect(r.body.data).toMatchObject({ status: 'installed', tables: ['crmAccounts', 'crmContacts'] });
+    expect(r.body.data).toMatchObject({ status: 'installed', tables: ['crmAccounts', 'crmContacts'], modules: ['CRM-2A', 'CRM-2B'] });
     expect(r.body.data.synced).toContain('leads');
 
     const accounts = (await tabela(u.id, 'crmAccounts'))!;
@@ -155,7 +167,98 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(accountId?.relation?.targetTable).toBe(accounts.id);
 
     const again = await request(app).post('/api/dashboard/modules/install').set(authHeader(u as never)).send({ moduleKey: 'CRM-2' });
-    expect(again.body.data).toEqual({ status: 'already-installed', tables: ['crmAccounts', 'crmContacts'], synced: [] });
+    expect(again.body.data).toEqual({ status: 'already-installed', tables: ['crmAccounts', 'crmContacts'], synced: [], modules: ['CRM-2A', 'CRM-2B'] });
+  });
+
+  // ---- BE-INCR-CRM-SUBMODULES (forks F-SUB-1..8 ratificados 2026-09-28) ----
+  const campos = async (userId: string, internalName: string) =>
+    ((await tabela(userId, internalName))!.schema as unknown as { fields: { name: string; relation?: { targetTable: string } }[] }).fields;
+  const instalar = (who: { id: string; username: string; role?: string }, moduleKey: string) =>
+    request(app).post('/api/dashboard/modules/install').set(authHeader(who as never)).send({ moduleKey });
+
+  it("item 3: salão + modules ['CRM-2'] → 201, installed com CRM-2A e CRM-2B (só chaves atômicas)", async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' }, modules: ['CRM-2'] });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B']);
+    const t = await tabelasDe(u.id);
+    for (const x of [...LEADS, 'crmAccounts', 'crmContacts']) expect(t).toContain(x);
+    expect(t).not.toContain('crmOpportunities');
+  });
+
+  it('item 4: crmModule custom − crmContacts → 201, installed sem CRM-2B; contactId descartado de leads e oportunidades', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['crmContacts'], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-3']);
+    const t = await tabelasDe(u.id);
+    expect(t).toContain('crmAccounts');
+    expect(t).not.toContain('crmContacts');
+    expect((await campos(u.id, 'leads')).map((f) => f.name)).not.toContain('contactId');
+    expect((await campos(u.id, 'crmOpportunities')).map((f) => f.name)).not.toContain('contactId');
+  });
+
+  it('item 4 (simétrico): crmModule custom − crmAccounts → 201, installed sem CRM-2A; crmContacts SEM accountId', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['crmAccounts'], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2B', 'CRM-3']);
+    expect(await tabelasDe(u.id)).toContain('crmContacts');
+    expect((await campos(u.id, 'crmContacts')).map((f) => f.name)).not.toContain('accountId');
+  });
+
+  it('item 6 (F-SUB-6 → a): crmModule custom − as 4 tabelas do CRM-0 → 400 DEPENDENT_MODULE_KEPT, nada instalado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, {
+      mode: 'custom', presetKey: 'crmModule', unit: { name: 'M' },
+      removedTables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'],
+    });
+    expect(r.status).toBe(400);
+    expect(r.body.details).toEqual({ reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'CRM-0', dependents: ['CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('itens 7a + 9: tenant com Contas só → CRM-2A already-installed; CRM-2B instala só crmContacts, com accountId na crmAccounts real', async () => {
+    const u = await novoUsuario('ADMIN');
+    expect((await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['crmContacts'], unit: { name: 'M' } })).status).toBe(201);
+    const a = await instalar(u, 'CRM-2A');
+    expect(a.body.data).toEqual({ status: 'already-installed', tables: ['crmAccounts'], synced: [] });
+    const b = await instalar(u, 'CRM-2B');
+    expect(b.status).toBe(200);
+    expect(b.body.data).toMatchObject({ status: 'installed', tables: ['crmContacts'] });
+    const accounts = (await tabela(u.id, 'crmAccounts'))!;
+    expect((await campos(u.id, 'crmContacts')).find((f) => f.name === 'accountId')?.relation?.targetTable).toBe(accounts.id);
+    // 7c: segunda chamada = already-installed
+    expect((await instalar(u, 'CRM-2B')).body.data).toEqual({ status: 'already-installed', tables: ['crmContacts'], synced: [] });
+  });
+
+  it('item 7b: tenant com Contatos só → CRM-2A sincroniza crmContacts e leads; crmContacts.accountId volta', async () => {
+    const u = await novoUsuario('ADMIN');
+    expect((await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['crmAccounts'], unit: { name: 'M' } })).status).toBe(201);
+    const r = await instalar(u, 'CRM-2A');
+    expect(r.status).toBe(200);
+    expect(r.body.data).toMatchObject({ status: 'installed', tables: ['crmAccounts'] });
+    expect(r.body.data.synced).toEqual(expect.arrayContaining(['crmContacts', 'leads']));
+    const accounts = (await tabela(u.id, 'crmAccounts'))!;
+    expect((await campos(u.id, 'crmContacts')).find((f) => f.name === 'accountId')?.relation?.targetTable).toBe(accounts.id);
+  });
+
+  it('item 11 (F-SUB-8 → a): GET /dashboard/presets/:key expõe moduleViews (aditivo; modules inalterado)', async () => {
+    const u = await novoUsuario();
+    const crm = await request(app).get('/api/dashboard/presets/crmModule').set(authHeader(u as never));
+    expect(crm.status).toBe(200);
+    expect(crm.body.data.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(crm.body.data.moduleViews).toHaveLength(5);
+    expect(crm.body.data.moduleViews[0]).toEqual({
+      key: 'CRM-0', name: { pt: 'Funil', en: 'Funnel' }, fixed: true,
+      tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'], dependsOn: [],
+    });
+    expect(crm.body.data.moduleViews.find((m: { key: string }) => m.key === 'CRM-2B')).toMatchObject({
+      group: 'CRM-2', fixed: false, tables: ['crmContacts'], dependsOn: ['CRM-0'],
+    });
+    expect(Object.keys(crm.body.data.tables)).toHaveLength(8);
+    const salao = await request(app).get('/api/dashboard/presets/beautySalon').set(authHeader(u as never));
+    expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1']);
   });
 
   it('c8: não-admin → 403; body inválido → 400', async () => {

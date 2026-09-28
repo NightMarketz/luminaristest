@@ -13,9 +13,18 @@ beforeEach(() => jest.clearAllMocks());
 it('ModuleNotInstalledError → 409 { code: CRM_MODULE_NOT_INSTALLED, details: { moduleKey } }', () => {
   const res = { status: jest.fn(), json: jest.fn() } as unknown as Response;
   (res.status as jest.Mock).mockReturnValue(res);
-  handleApiError(new ModuleNotInstalledError('CRM-2', 'crmAccounts'), res);
+  handleApiError(new ModuleNotInstalledError('CRM-2A', 'crmAccounts'), res);
   expect(res.status).toHaveBeenCalledWith(409);
   expect(res.json).toHaveBeenCalledWith(
-    expect.objectContaining({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2' } }),
+    expect.objectContaining({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2A' } }),
+  );
+});
+
+it('BE-INCR-CRM-SUBMODULES item 8 (F-SUB-7 → a′): missingModules chega ao cliente', () => {
+  const res = { status: jest.fn(), json: jest.fn() } as unknown as Response;
+  (res.status as jest.Mock).mockReturnValue(res);
+  handleApiError(new ModuleNotInstalledError('CRM-2A', 'crmAccounts', ['CRM-2A', 'CRM-2B']), res);
+  expect(res.json).toHaveBeenCalledWith(
+    expect.objectContaining({ code: 'CRM_MODULE_NOT_INSTALLED', details: { moduleKey: 'CRM-2A', missingModules: ['CRM-2A', 'CRM-2B'] } }),
   );
 });

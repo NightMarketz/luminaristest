@@ -1,6 +1,7 @@
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (I8) — comportamento 4: `crmModule` vira composição
  * CRM-0 + CRM-1 + CRM-2 + CRM-3 "sem alterar o resultado para quem a escolhe".
+ * BE-INCR-CRM-SUBMODULES item 2: com CRM-2 dividido em CRM-2A + CRM-2B, as MESMAS 8 tabelas (BEFORE inalterado).
  * O "antes" está congelado aqui: a composição literal que o arquivo declarava até ab5c42a3.
  */
 import { createTableFromModule } from '../../../utils/TableFactory';
@@ -32,6 +33,12 @@ describe('crmModule = composição dos módulos CRM-0..3 (comportamento 4)', () 
   it('instala exatamente as mesmas tabelas, com os mesmos schemas', () => {
     expect(Object.keys(CrmModulePreset.tables).sort()).toEqual(Object.keys(BEFORE).sort());
     expect(CrmModulePreset.tables).toEqual(BEFORE);
+  });
+
+  it('BE-INCR-CRM-SUBMODULES item 2: crmModule compõe as 5 chaves atômicas; salão e clínica seguem CRM-0 + CRM-1', () => {
+    expect(CrmModulePreset.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(tablePresetSuites.services.beautySalon.modules).toEqual(['CRM-0', 'CRM-1']);
+    expect(tablePresetSuites.services.aestheticClinic.modules).toEqual(['CRM-0', 'CRM-1']);
   });
 
   it('identidade da suíte e registro no catálogo inalterados', () => {

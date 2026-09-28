@@ -3,7 +3,7 @@ import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import type { PresetSyncService } from './PresetSyncService';
-import { MODULE_REGISTRY, type ModuleKey } from '../presets/modules/registry';
+import { MODULE_REGISTRY, expandModuleSelectors, type ModuleKey, type ModuleSelector } from '../presets/modules/registry';
 import type { InstallModuleResult } from '../dtos/InstallModule.dto';
 
 const PRESET_TABLE_KEY_PREFIX = '@@PRESET_TABLE_KEY::';
@@ -29,7 +29,25 @@ export class ModuleInstallService {
     return Boolean(await this.repository.findTableByInternalName(user.userId, internalName));
   }
 
-  async installModule(user: UserContext, moduleKey: ModuleKey): Promise<InstallModuleResult> {
+  /**
+   * BE-INCR-CRM-SUBMODULES item 7 (F-SUB-2 → a): chave de grupo ('CRM-2') instala os membros em ordem, cada um
+   * pela mesma lógica da chave atômica. Resultado agregado: `installed` se algum membro foi instalado; `tables` e
+   * `synced` concatenados (sem repetição); `modules` = membros atômicos.
+   */
+  async installModule(user: UserContext, selector: ModuleSelector): Promise<InstallModuleResult> {
+    const keys = expandModuleSelectors([selector]);
+    if (keys.length === 1 && keys[0] === selector) return this.installAtomicModule(user, keys[0]);
+    const results: InstallModuleResult[] = [];
+    for (const k of keys) results.push(await this.installAtomicModule(user, k));
+    return {
+      status: results.some((r) => r.status === 'installed') ? 'installed' : 'already-installed',
+      tables: results.flatMap((r) => r.tables),
+      synced: [...new Set(results.flatMap((r) => r.synced))],
+      modules: keys,
+    };
+  }
+
+  private async installAtomicModule(user: UserContext, moduleKey: ModuleKey): Promise<InstallModuleResult> {
     const def = MODULE_REGISTRY[moduleKey];
 
     for (const dep of def.dependsOn) {

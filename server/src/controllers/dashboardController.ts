@@ -37,7 +37,7 @@ import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule
 import { Role } from '@/features/users/models/User.model';
 import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
 import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
-import { composeModuleTables, type ModuleKey } from '@/features/dynamicTables/presets/modules/registry';
+import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { CoreSystemPreset, tablePresetSuites, PresetSuite, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
@@ -205,7 +205,7 @@ async function handleCustomCreation(
   addedFields: Record<string, unknown[]>,
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
-  modules: ModuleKey[],
+  modules: ModuleSelector[],
   selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
@@ -215,7 +215,8 @@ async function handleCustomCreation(
 
     // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
     // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
-    const installedModules = resolveModuleSelection(modules, originalPreset.modules ?? []);
+    // BE-INCR-CRM-SUBMODULES item 3 (F-SUB-2 → a): chave de grupo expande para os membros antes da resolução.
+    const installedModules = resolveModuleSelection(expandModuleSelectors(modules), originalPreset.modules ?? []);
     const finalTablesConfig: Record<string, PresetTableDefinition> = {
       ...CoreSystemPreset.tables,
       ...composeModuleTables(installedModules),
@@ -339,7 +340,7 @@ async function handleQuickCreation(
   suiteKey: string,
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
-  modules: ModuleKey[],
+  modules: ModuleSelector[],
   selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
@@ -361,7 +362,8 @@ async function handleQuickCreation(
 
     const service = getFactory().getDynamicTableService();
     // I8 comportamentos 2–3: módulos selecionados (body ∪ default da suíte) entram entre o Core e a suíte.
-    const installedModules = resolveModuleSelection(modules, selectedPreset.modules ?? []);
+    // BE-INCR-CRM-SUBMODULES item 3 (F-SUB-2 → a): chave de grupo expande para os membros antes da resolução.
+    const installedModules = resolveModuleSelection(expandModuleSelectors(modules), selectedPreset.modules ?? []);
     // Mescla Core + Módulos + Business em um único preset para permitir referências cruzadas via @@PRESET_TABLE_KEY::
     const mergedPreset = {
       tables: {
@@ -455,7 +457,7 @@ export async function getDashboardPresetByKey(req: Request, res: Response) {
     const { presetKey } = req.params;
     if (!presetKey) throw new ValidationError('Invalid preset key');
 
-    const preset = presetService.getPresetByKey(presetKey);
+    const preset = presetService.getPresetDetailByKey(presetKey);
     if (preset) {
       return res.status(200).json({ success: true, data: preset });
     } else {
