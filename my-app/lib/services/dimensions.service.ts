@@ -1,5 +1,10 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  ArchiveDimensionInput,
+  CreateDimensionDefinitionInput,
+  CreateDimensionValueInput,
+} from '@/types/contracts/accounting/DimensionDto.gen';
 
 /**
  * Dimensões (INCR-DIM) service — thin typed client over `/api/dimensions/*`. A dimension is an
@@ -120,19 +125,10 @@ export interface ListDimensionsQuery {
   includeArchived?: boolean;
 }
 
-export interface CreateDefinitionPayload {
-  unitId: string;
-  code: string;
-  name: string;
-}
-
-export interface CreateValuePayload {
-  unitId: string;
-  definitionId: string;
-  code: string;
-  name: string;
-  parentId?: string;
-}
+// Contrato gerado (DimensionDto) — nunca espelho à mão.
+export type CreateDefinitionPayload = CreateDimensionDefinitionInput;
+export type CreateValuePayload = CreateDimensionValueInput;
+const archiveBody = (unitId: string): ArchiveDimensionInput => ({ unitId });
 
 export interface DimensionReportQuery {
   unitId: string;
@@ -171,7 +167,7 @@ export const dimensionsService = {
   async archiveDefinition(id: string, unitId: string): Promise<DimensionDefinition> {
     const res = await apiClient.post<ApiEnvelope<DimensionDefinition>>(
       `/dimensions/definitions/${encodeURIComponent(id)}/archive`,
-      { unitId },
+      archiveBody(unitId),
     );
     notify('Eixo arquivado.', 'success', CTX);
     return res.data;
@@ -188,7 +184,7 @@ export const dimensionsService = {
   async archiveValue(id: string, unitId: string): Promise<DimensionValue> {
     const res = await apiClient.post<ApiEnvelope<DimensionValue>>(
       `/dimensions/values/${encodeURIComponent(id)}/archive`,
-      { unitId },
+      archiveBody(unitId),
     );
     notify('Valor arquivado.', 'success', CTX);
     return res.data;

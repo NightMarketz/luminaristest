@@ -9,3 +9,10 @@ export function nonEmpty<T>(xs: readonly T[]): [T, ...T[]] | null {
   const [head, ...tail] = xs;
   return [head, ...tail];
 }
+
+/** `.min(2)` (lançamento: ≥ 2 pernas) vira `[T, T, ...T[]]`. `null` = menos de 2. */
+export function atLeastTwo<T>(xs: readonly T[]): [T, T, ...T[]] | null {
+  if (xs.length < 2) return null;
+  const [a, b, ...rest] = xs;
+  return [a, b, ...rest];
+}

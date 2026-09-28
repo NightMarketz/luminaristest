@@ -1,6 +1,22 @@
 import { multipartAuthHeaders, multipartBaseUrl, multipartParseError } from './multipart';
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  PostEntryInput,
+  ReverseEntryInput,
+  CreateAccountInput,
+  SetAccountRequiresDimensionInput,
+  SeedYearInput,
+  ClosePeriodInput,
+  ReopenPeriodInput,
+} from '@/types/contracts/accounting/PostingDto.gen';
+import type { CloseExerciseInput } from '@/types/contracts/accounting/ClosingDto.gen';
+import type {
+  AutoMatchStatementInput,
+  ManualMatchInput,
+  SetLineIgnoredInput,
+  UnmatchInput,
+} from '@/types/contracts/accounting/ReconciliationDto.gen';
 
 /**
  * Accounting service — thin typed client over the deterministic double-entry
@@ -9,35 +25,12 @@ import { notify } from '../notifications/notify';
  * this only shapes requests/responses. Money is INTEGER CENTS end to end — the UI formats.
  */
 
-// ── Requests ──────────────────────────────────────────────────────────────────
-export interface PostingLineInput {
-  accountCode: string;
-  debitCents: number;
-  creditCents: number;
-  /** Optional dimension VALUE ids tagging this leg (INCR-DIM). Metadata only — never enters
-   *  Σdébito=Σcrédito (ACC-024). At most one value per axis (backend rejects duplicates). */
-  dimensions?: string[];
-}
-
-export interface PostEntryPayload {
-  /** Business unit (second tenancy axis); required. */
-  unitId: string;
-  /** ISO date/datetime string. */
-  date: string;
-  description: string;
-  sourceType?: string;
-  sourceId?: string;
-  /** At least 2 legs; each leg moves exactly one side (debit XOR credit). */
-  lines: PostingLineInput[];
-}
-
-export interface ReverseEntryPayload {
-  unitId: string;
-  lancamentoId: string;
-  /** ISO date for the reversal entry — gates on the period that date belongs to. */
-  reversalPostingDate: string;
-  reason?: string;
-}
+// ── Requests (contrato gerado — `@/types/contracts/accounting/*.gen`, nunca espelho à mão) ──
+/** Um lançamento: ≥ 2 pernas (`[T, T, ...T[]]`, monte com `atLeastTwo`); cada perna move um
+ *  lado só (débito XOR crédito); `dimensions` é metadado (INCR-DIM, fora do Σd=Σc). */
+export type PostEntryPayload = PostEntryInput;
+export type PostingLineInput = PostEntryInput['lines'][number];
+export type ReverseEntryPayload = ReverseEntryInput;
 
 export interface TrialBalanceQuery {
   unitId: string;
@@ -733,13 +726,7 @@ export const accountingService = {
   },
 
   /** Create a new account in the chart of accounts for a unit. */
-  async createAccount(data: {
-    code: string;
-    name: string;
-    nature: string;
-    acceptsEntries: boolean;
-    unitId: string;
-  }): Promise<{ account: Account }> {
+  async createAccount(data: CreateAccountInput): Promise<{ account: Account }> {
     const res = await apiClient.post<ApiEnvelope<{ account: Account }>>('/accounting/accounts', data);
     notify('Conta criada com sucesso.', 'success', 'Contabilidade');
     return res.data;
@@ -755,9 +742,10 @@ export const accountingService = {
     unitId: string,
     requiresDimension: boolean,
   ): Promise<{ account: Account }> {
+    const body: SetAccountRequiresDimensionInput = { unitId, requiresDimension };
     const res = await apiClient.patch<ApiEnvelope<{ account: Account }>>(
       `/accounting/accounts/${encodeURIComponent(id)}/requires-dimension`,
-      { unitId, requiresDimension },
+      body,
     );
     notify(
       requiresDimension
@@ -788,7 +776,8 @@ export const accountingService = {
 
   /** Seed 12 FUTURE periods for the given year in a unit. */
   async seedYear(unitId: string, year: number): Promise<AccountingPeriod[]> {
-    const res = await apiClient.post<ApiEnvelope<AccountingPeriod[]>>(`/accounting/${encodeURIComponent(unitId)}/periods/seed-year`, { unitId, year });
+    const body: SeedYearInput = { unitId, year };
+    const res = await apiClient.post<ApiEnvelope<AccountingPeriod[]>>(`/accounting/${encodeURIComponent(unitId)}/periods/seed-year`, body);
     notify('Períodos do exercício criados.', 'success', 'Contabilidade');
     return res.data;
   },
@@ -800,35 +789,41 @@ export const accountingService = {
    * HTTP 201, with no flag distinguishing "closed now" from "already closed".
    */
   async closeExercise(unitId: string, year: number): Promise<JournalEntry> {
-    const res = await apiClient.post<ApiEnvelope<JournalEntry>>('/accounting/closing/exercise', { unitId, year });
+    const body: CloseExerciseInput = { unitId, year };
+    const res = await apiClient.post<ApiEnvelope<JournalEntry>>('/accounting/closing/exercise', body);
     notify('Exercício encerrado.', 'success', 'Contabilidade');
     return res.data;
   },
 
   /** Transition a period to OPEN. */
   async openPeriod(periodId: string, unitId: string): Promise<AccountingPeriod> {
-    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/open`, { unitId });
+    // Sem tipo gerado: `openPeriod` lê `req.body.unitId` sem DTO Zod (GAP-MAP Nível 3, [ABERTO]).
+    const body: { unitId: string } = { unitId };
+    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/open`, body);
     notify('Período aberto.', 'success', 'Contabilidade');
     return res.data;
   },
 
   /** Transition a period to SOFT_CLOSED. */
   async softClosePeriod(periodId: string, unitId: string, reason?: string): Promise<AccountingPeriod> {
-    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/soft-close`, { unitId, reason });
+    const body: ClosePeriodInput = { unitId, reason };
+    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/soft-close`, body);
     notify('Período fechado (parcial).', 'success', 'Contabilidade');
     return res.data;
   },
 
   /** Transition a period to HARD_CLOSED (terminal). */
   async hardClosePeriod(periodId: string, unitId: string, reason?: string): Promise<AccountingPeriod> {
-    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/hard-close`, { unitId, reason });
+    const body: ClosePeriodInput = { unitId, reason };
+    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/hard-close`, body);
     notify('Período fechado definitivamente.', 'success', 'Contabilidade');
     return res.data;
   },
 
   /** Transition a SOFT_CLOSED period back to OPEN. */
   async reopenPeriod(periodId: string, unitId: string, reason?: string): Promise<AccountingPeriod> {
-    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/reopen`, { unitId, periodId, reason });
+    const body: ReopenPeriodInput = { unitId, periodId, reason };
+    const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/reopen`, body);
     notify('Período reaberto.', 'success', 'Contabilidade');
     return res.data;
   },
@@ -937,9 +932,11 @@ export const accountingService = {
 
   /** Run the deterministic auto-match over a statement's UNMATCHED lines (D6). */
   async autoMatchStatement(statementId: string, unitId: string): Promise<AutoMatchSummary> {
+    // Parse composto: o controller junta `statementId` do path ao body (D8).
+    const body: Pick<AutoMatchStatementInput, 'unitId'> = { unitId };
     const res = await apiClient.post<ApiEnvelope<AutoMatchSummary>>(
       `/accounting/reconciliation/statements/${encodeURIComponent(statementId)}/auto-match`,
-      { unitId },
+      body,
     );
     return res.data;
   },
@@ -955,19 +952,17 @@ export const accountingService = {
 
   /** Mark/unmark a line as IGNORED (e.g. a fee to be posted separately via /post). */
   async setLineIgnored(lineId: string, unitId: string, ignored: boolean): Promise<{ id: string }> {
+    // Parse composto: `statementLineId` vem do path (D8).
+    const body: Pick<SetLineIgnoredInput, 'unitId' | 'ignored'> = { unitId, ignored };
     const res = await apiClient.post<ApiEnvelope<{ id: string }>>(
       `/accounting/reconciliation/lines/${encodeURIComponent(lineId)}/ignore`,
-      { unitId, ignored },
+      body,
     );
     return res.data;
   },
 
   /** Manual match — link N postings to 1 statement line (D3 aggregation). */
-  async createMatch(payload: {
-    unitId: string;
-    statementLineId: string;
-    postingIds: string[];
-  }): Promise<{ matchedPostings: number }> {
+  async createMatch(payload: ManualMatchInput): Promise<{ matchedPostings: number }> {
     const res = await apiClient.post<ApiEnvelope<{ matchedPostings: number }>>(
       '/accounting/reconciliation/matches',
       payload,
@@ -978,9 +973,11 @@ export const accountingService = {
 
   /** Soft-undo of an active match (D7) — reverts Reconciled->Posted; trail preserved. */
   async unmatch(matchId: string, unitId: string, reason?: string): Promise<{ id: string }> {
+    // Parse composto: `matchId` vem do path (D8).
+    const body: Pick<UnmatchInput, 'unitId' | 'reason'> = reason ? { unitId, reason } : { unitId };
     const res = await apiClient.post<ApiEnvelope<{ id: string }>>(
       `/accounting/reconciliation/matches/${encodeURIComponent(matchId)}/unmatch`,
-      reason ? { unitId, reason } : { unitId },
+      body,
     );
     notify('Vínculo desfeito.', 'success', 'Conciliação');
     return res.data;
