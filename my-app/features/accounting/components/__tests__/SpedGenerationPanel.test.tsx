@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { SpedGenerationPanel, toEcfSignersPayload, validateEcdSigners, validateEcfSigners } from '../SpedGenerationPanel';
+import { SpedGenerationPanel, toEcfSignerPayload, validateEcdSigners, validateEcfSigners } from '../SpedGenerationPanel';
 import { SpedEcfRealPanel } from '../SpedEcfRealPanel';
 import type { EcdSigner, EcfSigner } from '../../../../lib/services/sped.service';
 
@@ -32,14 +32,6 @@ const ecf = (o: Partial<EcfSigner> = {}): EcfSigner => ({
   email: 'a@b.com',
   fone: '11999999999',
   ...o,
-});
-
-describe('toEcfSignersPayload (0930)', () => {
-  it('omite o indCrc vazio (ausência é o único vazio que o BE aceita) e apara o preenchido', () => {
-    const out = toEcfSignersPayload([ecf({ identQualif: '900', indCrc: ' SP-123456/O-1 ' }), ecf({ indCrc: '  ' })]);
-    expect(out[0].indCrc).toBe('SP-123456/O-1');
-    expect('indCrc' in out[1]).toBe(false);
-  });
 });
 
 describe('validateEcdSigners (J930)', () => {
@@ -183,5 +175,27 @@ describe('SpedEcfRealPanel (render + validation)', () => {
       indRecReceita: '2',
     });
     expect(payload.fiscal).not.toHaveProperty('formaApur');
+  });
+});
+
+describe('toEcfSignerPayload (0930)', () => {
+  it('omite o indCrc vazio ou só com espaço (o BE recusa \'\') e apara o preenchido', () => {
+    expect(toEcfSignerPayload(ecf({ identQualif: '900', indCrc: ' SP-123456/O-1 ' })).indCrc).toBe('SP-123456/O-1');
+    expect('indCrc' in toEcfSignerPayload(ecf({ indCrc: '  ' }))).toBe(false);
+    expect('indCrc' in toEcfSignerPayload(ecf({ indCrc: undefined }))).toBe(false);
+  });
+
+  it('devolve só as chaves do SignerSchema, aparadas (nunca o estado do editor como está)', () => {
+    const out = toEcfSignerPayload(
+      ecf({ identNom: ' Contador ', identCpfCnpj: ' 12345678901 ', identQualif: ' 900 ', indCrc: 'SP-1', email: ' c@d.com ', fone: ' 1133334444 ' }),
+    );
+    expect(out).toEqual({
+      identNom: 'Contador',
+      identCpfCnpj: '12345678901',
+      identQualif: '900',
+      indCrc: 'SP-1',
+      email: 'c@d.com',
+      fone: '1133334444',
+    });
   });
 });
