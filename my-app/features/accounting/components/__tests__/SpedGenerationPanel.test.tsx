@@ -19,7 +19,6 @@ vi.mock('../../../../lib/services/sped.service', () => ({
 const ecd = (o: Partial<EcdSigner> = {}): EcdSigner => ({
   identNom: 'Fulano',
   identCpfCnpj: '12345678901',
-  identQualif: 'Sócio',
   codAssin: '205',
   indRespLegal: 'N',
   ...o,
@@ -37,7 +36,7 @@ const ecf = (o: Partial<EcfSigner> = {}): EcfSigner => ({
 describe('validateEcdSigners (J930)', () => {
   it('accepts one legal-rep + one contador(900) + one non-contador', () => {
     const signers = [
-      ecd({ codAssin: '900', indRespLegal: 'N' }),
+      ecd({ codAssin: '900', indRespLegal: 'N', indCrc: 'SP123456/O-8', email: 'c@x.com', fone: '11999999999', ufCrc: 'SP' }),
       ecd({ codAssin: '205', indRespLegal: 'S' }),
     ];
     expect(validateEcdSigners(signers)).toBeNull();
@@ -234,5 +233,71 @@ describe('SpedGenerationPanel — submit da ECF Presumido', () => {
     const payload = (spedService.generateAndDownloadEcf as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(payload.signers[0]).toMatchObject({ identNom: 'Fulano', indCrc: 'SP-123456/O-1' });
     expect(payload.signers[1]).not.toHaveProperty('indCrc');
+  });
+});
+
+// ── GAP-MAP N3 "SPED ECD pela tela" — J930 no contrato do SignerSchema (BRIEF FE-FIX-SPED-ECD-SIGNERS §2) ──
+// Desde o C12 (#353, `edb80ec8`) o SignerSchema do J930 (`server/src/features/accounting/dtos/SpedEcdDto.ts:135-210`)
+// é `.strict()` SEM `identQualif` e, com codAssin='900', exige indCrc + email + fone + ufCrc (REGRA_OBRIGATORIO_CONTADOR,
+// Manual ECD L9 p. 202) — chave opcional com '' também é 400. Sondas 28/09 (SpedEcdRequestSchema.safeParse):
+// payload da tela → unrecognized_keys ["identQualif"]; sem ela → 4 issues no contador; com os 4 e sem vazios → OK.
+// Os testes do FE mockam o service, por isso a regressão passou verde: aqui a asserção é sobre o payload.
+describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('cada linha oferece CRC/E-mail/Fone/UF do CRC e o payload sai no contrato (sem identQualif; contador com os 4; vazio omitido)', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedGenerationPanel unitId="u1" />);
+    const section = screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement;
+    const ecdForm = within(section);
+    fireEvent.click(ecdForm.getByRole('button', { name: /Adicionar/ }));
+
+    // O contador (900) só é aceito pelo BE com os 4 campos — a linha tem de oferecê-los (F-3 → a: em toda linha).
+    expect(ecdForm.queryAllByPlaceholderText('CRC')).toHaveLength(2);
+    expect(ecdForm.queryAllByPlaceholderText('E-mail')).toHaveLength(2);
+    expect(ecdForm.queryAllByPlaceholderText('Fone')).toHaveLength(2);
+    expect(ecdForm.queryAllByLabelText('UF do CRC')).toHaveLength(2); // F-2 → a: <select> de UF
+
+    fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('Nome')[0], { target: { value: 'Contador' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '11144477735' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[0], { target: { value: '900' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('CRC')[0], { target: { value: 'SP123456/O-8' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('E-mail')[0], { target: { value: 'c@x.com' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('Fone')[0], { target: { value: '11999999999' } });
+    fireEvent.change(ecdForm.getAllByLabelText('UF do CRC')[0], { target: { value: 'SP' } });
+    // Linha 2: não-contador, responsável legal, CRC/e-mail/fone/UF em branco.
+    fireEvent.change(ecdForm.getAllByPlaceholderText('Nome')[1], { target: { value: 'Sócio' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '52998224725' } });
+    fireEvent.change(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[1], { target: { value: '205' } });
+    fireEvent.change(ecdForm.getAllByDisplayValue('Não resp. legal')[1], { target: { value: 'S' } });
+
+    fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
+
+    await waitFor(() => expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1));
+    const payload = (spedService.generateAndDownloadEcd as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    for (const signer of payload.signers) expect(signer).not.toHaveProperty('identQualif');
+    // toStrictEqual: chave com '' ou undefined reprova — o BE recusa '' (F6 do BRIEF).
+    expect(payload.signers).toStrictEqual([
+      {
+        identNom: 'Contador', identCpfCnpj: '11144477735', codAssin: '900', indRespLegal: 'N',
+        indCrc: 'SP123456/O-8', email: 'c@x.com', fone: '11999999999', ufCrc: 'SP',
+      },
+      { identNom: 'Sócio', identCpfCnpj: '52998224725', codAssin: '205', indRespLegal: 'S' },
+    ]);
+  });
+
+  it('validateEcdSigners: contador (900) exige CPF de 11 dígitos + CRC + e-mail + fone + UF do CRC', () => {
+    const crc = { indCrc: 'SP123456/O-8', email: 'c@x.com', fone: '11999999999', ufCrc: 'SP' };
+    const socio = ecd({ codAssin: '205', indRespLegal: 'S' });
+    const contador = (o: Record<string, string> = {}) => ecd({ codAssin: '900', identCpfCnpj: '11144477735', ...crc, ...o });
+    expect(validateEcdSigners([contador(), socio])).toBeNull();
+    for (const k of ['indCrc', 'email', 'fone', 'ufCrc']) {
+      expect(validateEcdSigners([contador({ [k]: ' ' }), socio]), k).toBe('ecdContadorCrc');
+    }
+    expect(validateEcdSigners([contador({ identCpfCnpj: '11222333000181' }), socio])).toBe('ecdContadorCrc');
   });
 });

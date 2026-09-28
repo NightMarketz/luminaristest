@@ -415,10 +415,10 @@
       "csll": "CSLL rate",
       "identNom": "Name",
       "cpfCnpj": "Tax ID",
-      "qualifDesc": "Qualification",
       "codAssin": "Code (900=accountant)",
       "qualifCode": "Qualif. (900=accountant)",
       "indCrc": "CRC",
+      "ufCrc": "CRC state",
       "fone": "Phone",
       "formaTrib": "Taxation form (0010)",
       "formaTribPer": "Period taxation form (0010, 4 characters)"
@@ -447,7 +447,8 @@
       "ecdContador": "The ECD requires an accountant signer (code 900) and a non-accountant.",
       "ecfSignerCount": "The ECF accepts 1 or 2 signers.",
       "ecfContador": "The ECF requires an accountant signer (qualification 900) and a non-accountant.",
-      "ecfContadorCrc": "The accountant signer (900) requires an 11-digit CPF and a CRC."
+      "ecfContadorCrc": "The accountant signer (900) requires an 11-digit CPF and a CRC.",
+      "ecdContadorCrc": "The accountant signer (900) requires an 11-digit CPF, CRC, CRC state, email and phone."
     }
   },
   "trialBalance": {

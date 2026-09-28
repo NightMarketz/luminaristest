@@ -415,10 +415,10 @@
       "csll": "Alíquota CSLL",
       "identNom": "Nome",
       "cpfCnpj": "CPF/CNPJ",
-      "qualifDesc": "Qualificação",
       "codAssin": "Cód. (900=contador)",
       "qualifCode": "Qualif. (900=contador)",
       "indCrc": "CRC",
+      "ufCrc": "UF do CRC",
       "fone": "Fone",
       "formaTrib": "Forma de tributação (0010)",
       "formaTribPer": "Forma trib. do período (0010, 4 posições)"
@@ -447,7 +447,8 @@
       "ecdContador": "A ECD exige um signatário contador (código 900) e um não-contador.",
       "ecfSignerCount": "A ECF aceita 1 ou 2 signatários.",
       "ecfContador": "A ECF exige um signatário contador (qualificação 900) e um não-contador.",
-      "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC."
+      "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC.",
+      "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone."
     }
   },
   "trialBalance": {
