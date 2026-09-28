@@ -7,7 +7,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { FiscalDocumentLifecycleService, isValidResultTransition } from '../FiscalDocumentLifecycleService';
 import type { AccountingScope } from '../../scope/AccountingScope';
-import { signNfseForTest } from '@test/helpers/nfeSignature';
+import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
 
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
@@ -230,16 +230,17 @@ describe('rejeicaoManual — item 12', () => {
 });
 
 describe('cancelamentoManual — item 13 (F-MAN-5 a) e F-MAN-2b (b)', () => {
-  const evento = (chNFSe: string, cMotivo: string) =>
-    Buffer.from(
+  const eventoXml = (chNFSe: string, cMotivo: string) =>
+    (
       '<?xml version="1.0" encoding="UTF-8"?><evento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">' +
         `<infEvento Id="EVT${'1'.repeat(59)}"><verAplic>SefinNac</verAplic><ambGer>2</ambGer><nSeqEvento>001</nSeqEvento>` +
         '<dhProc>2026-09-16T10:00:00-03:00</dhProc><nDFSe>88</nDFSe><pedRegEvento versao="1.01">' +
         `<infPedReg Id="PRE${'2'.repeat(56)}"><tpAmb>1</tpAmb><verAplic>EmissorWeb</verAplic>` +
         '<dhEvento>2026-09-16T09:59:00-03:00</dhEvento><CNPJAutor>11222333000181</CNPJAutor>' +
         `<chNFSe>${chNFSe}</chNFSe><e101101><xDesc>Cancelamento de NFS-e</xDesc><cMotivo>${cMotivo}</cMotivo>` +
-        '<xMotivo>valor digitado errado no portal</xMotivo></e101101></infPedReg></pedRegEvento></infEvento></evento>',
+        '<xMotivo>valor digitado errado no portal</xMotivo></e101101></infPedReg></pedRegEvento></infEvento></evento>'
     );
+  const evento = (chNFSe: string, cMotivo: string) => Buffer.from(signNfseEventoForTest(eventoXml(chNFSe, cMotivo)));
   const autorizado = (status = 'AUTHORIZED') => manualDoc({ status, chaveOuCodigo: CHAVE, sourceDocumentId: 'src-1' });
 
   it('evento da chave deste documento → CANCELLED com o texto do XML, proveniência aposentada', async () => {
@@ -291,7 +292,7 @@ describe('cancelamentoManual — item 13 (F-MAN-5 a) e F-MAN-2b (b)', () => {
    */
   it('GAP-MAP evento: XML de evento sem assinatura, com a chave e o cMotivo certos → 422, nada escrito', async () => {
     const { service, repo, postingService } = makeService(autorizado());
-    const forjado = evento(CHAVE, '1');
+    const forjado = Buffer.from(eventoXml(CHAVE, '1'));
     expect(forjado.toString('utf8')).not.toMatch(/<(\w+:)?Signature[\s>]/); // cenário: nenhuma assinatura no XML
     await expect(service.cancelamentoManual(SCOPE, 'doc-m', { cMotivo: 1, xMotivo: 'valor digitado errado no portal' }, forjado)).rejects.toMatchObject({
       statusCode: 422,

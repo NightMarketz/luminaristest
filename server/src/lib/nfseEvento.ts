@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { ValidationError } from './errors';
+import { verifyNfseEventoSignature } from './nfseSignature';
 
 /**
  * BE-INCR-DFE-MANUAL (item 13, F-MAN-5 → a) — leitor PURO do XML do EVENTO de cancelamento `e101101` que o portal
@@ -34,6 +35,7 @@ export function parseEventoCancelamento(input: string | Buffer): EventoCancelame
   const xml = (typeof input === 'string' ? input : input.toString('utf8')).trim();
   if (!xml) fail('documento vazio.');
   if (/<!DOCTYPE/i.test(xml)) fail('documento com DTD (<!DOCTYPE>) não é aceito.');
+  verifyNfseEventoSignature(xml);
   let root: Node;
   try {
     root = parser.parse(xml) as Node;

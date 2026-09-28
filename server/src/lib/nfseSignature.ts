@@ -19,6 +19,10 @@ import { elementChildren, readCertFacts } from './nfeSignature';
  * Os algoritmos não estão fixados no corpus da NFS-e: aceita os que a assinatura declara, dentro de uma lista segura
  * (a E1630 exige assinatura VÁLIDA, não um algoritmo). LIMITE DECLARADO: cadeia ICP-Brasil e LCR (resto da E1632)
  * = F-SIG-3 (c), nó futuro.
+ *
+ * `verifyNfseEventoSignature` (GAP-MAP evento, fork do dono 28/09): as MESMAS regras sobre `evento/ds:Signature`
+ * (XSD `TCEvento`, 1-1) com Reference = `#` + `infEvento/@Id` e validade no `infEvento/dhProc`. A assinatura do pedido
+ * (`pedRegEvento/ds:Signature`, 0-1) não é exigida.
  */
 
 const DSIG_NS = 'http://www.w3.org/2000/09/xmldsig#';
@@ -53,6 +57,14 @@ function onlyChild(node: Element, localName: string, where: string): Element {
 }
 
 export function verifyNfseSignature(xml: string): NfseSignatureCheck {
+  return verifySignedGroup(xml, 'NFSe', 'infNFSe');
+}
+
+export function verifyNfseEventoSignature(xml: string): NfseSignatureCheck {
+  return verifySignedGroup(xml, 'evento', 'infEvento');
+}
+
+function verifySignedGroup(xml: string, rootName: string, infName: string): NfseSignatureCheck {
   const parseErrors: string[] = [];
   const doc = new DOMParser({
     locator: {},
@@ -61,10 +73,10 @@ export function verifyNfseSignature(xml: string): NfseSignatureCheck {
   if (parseErrors.length || !doc?.documentElement) fail(`XML mal-formado (${parseErrors[0] ?? 'sem elemento raiz'}).`);
 
   const nfse = doc.documentElement;
-  if (nfse.localName !== 'NFSe') fail('elemento raiz <NFSe> não encontrado.');
-  const infNFSe = onlyChild(nfse, 'infNFSe', 'NFSe');
+  if (nfse.localName !== rootName) fail(`elemento raiz <${rootName}> não encontrado.`);
+  const infNFSe = onlyChild(nfse, infName, rootName);
   const id = infNFSe.getAttribute('Id') ?? '';
-  if (!id) fail('<infNFSe> sem atributo Id.');
+  if (!id) fail(`<${infName}> sem atributo Id.`);
 
   // @Id único no documento — a Reference só pode resolver para este infNFSe (defesa XSW, mesma do SIG-NFE).
   const seen = new Set<string>();
@@ -80,8 +92,8 @@ export function verifyNfseSignature(xml: string): NfseSignatureCheck {
 
   // E1630 / XSD: 1 Signature FILHA DIRETA de <NFSe>. A `DPS/Signature` (0-1) é outra assinatura e não conta aqui.
   const signatures = elementChildren(nfse, 'Signature').filter((s) => s.namespaceURI === DSIG_NS);
-  if (signatures.length === 0) fail('ausente (<Signature> não encontrada em <NFSe>).');
-  if (signatures.length > 1) fail(`esperada 1 <Signature> em <NFSe>, encontradas ${signatures.length}.`);
+  if (signatures.length === 0) fail(`ausente (<Signature> não encontrada em <${rootName}>).`);
+  if (signatures.length > 1) fail(`esperada 1 <Signature> em <${rootName}>, encontradas ${signatures.length}.`);
   const signature = signatures[0];
 
   const signedInfo = onlyChild(signature, 'SignedInfo', 'Signature');
@@ -91,7 +103,7 @@ export function verifyNfseSignature(xml: string): NfseSignatureCheck {
   if (!SIGNATURE_METHODS.has(sigAlg)) fail(`SignatureMethod fora da lista aceita (${sigAlg}).`);
   const reference = onlyChild(signedInfo, 'Reference', 'SignedInfo');
   if (reference.getAttribute('URI') !== `#${id}`) {
-    fail(`Reference URI "${reference.getAttribute('URI')}" não aponta para o infNFSe lido (#${id}).`);
+    fail(`Reference URI "${reference.getAttribute('URI')}" não aponta para o ${infName} lido (#${id}).`);
   }
   const transforms = elementChildren(onlyChild(reference, 'Transforms', 'Reference'), 'Transform').map(
     (t) => t.getAttribute('Algorithm') ?? '',
@@ -119,12 +131,12 @@ export function verifyNfseSignature(xml: string): NfseSignatureCheck {
   } catch {
     valid = false;
   }
-  if (!valid) fail('não confere com o conteúdo do <infNFSe> (digest ou SignatureValue inválido).');
+  if (!valid) fail(`não confere com o conteúdo do <${infName}> (digest ou SignatureValue inválido).`);
 
   const facts = readCertFacts(cert.raw);
   if (!facts.cnpj && !facts.cpf) fail('certificado sem CNPJ/CPF (OtherName 2.16.76.1.3.3 / 2.16.76.1.3.1) — E1634.');
   const dhProc = text(elementChildren(infNFSe, 'dhProc')[0]);
-  if (!/^\d{4}-\d{2}-\d{2}/.test(dhProc)) fail('infNFSe/dhProc ausente ou mal-formado para conferir a validade do certificado.');
+  if (!/^\d{4}-\d{2}-\d{2}/.test(dhProc)) fail(`${infName}/dhProc ausente ou mal-formado para conferir a validade do certificado.`);
   const processamento = dhProc.slice(0, 10);
   if (processamento < facts.notBefore || processamento > facts.notAfter) {
     fail(`certificado fora da validade no processamento (${processamento} ∉ [${facts.notBefore}, ${facts.notAfter}]) — E1632.`);

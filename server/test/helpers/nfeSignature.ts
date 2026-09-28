@@ -135,6 +135,15 @@ const EXISTING_NFSE_SIGNATURE = /(<\/infNFSe>)\s*<Signature xmlns="http:\/\/www\
  * enveloped como irmã de `<infNFSe>` (filha direta de `<NFSe>`, XSD `TCNFSe`). Titular padrão = `NFSE_TEST_SIGNER_CNPJ`.
  */
 export function signNfseForTest(xml: string, opts: SignNfeOptions = {}): string {
+  return signGroupForTest(xml.replace(EXISTING_NFSE_SIGNATURE, '$1'), INF_NFSE, opts);
+}
+
+/** GAP-MAP evento — assina o evento de cancelamento: `ds:Signature` enveloped como irmã de `<infEvento>` (filha de `<evento>`). */
+export function signNfseEventoForTest(xml: string, opts: SignNfeOptions = {}): string {
+  return signGroupForTest(xml, "//*[local-name(.)='infEvento']", opts);
+}
+
+function signGroupForTest(xml: string, infXpath: string, opts: SignNfeOptions): string {
   const key = opts.key ?? testKey();
   const titular = 'cnpj' in opts || 'cpf' in opts ? {} : { cnpj: NFSE_TEST_SIGNER_CNPJ };
   const certPem = opts.certPem ?? makeTestCert({ ...titular, ...opts }, key);
@@ -144,8 +153,8 @@ export function signNfseForTest(xml: string, opts: SignNfeOptions = {}): string 
     signatureAlgorithm: RSA_SHA1,
     canonicalizationAlgorithm: C14N,
   });
-  sig.addReference({ xpath: INF_NFSE, transforms: [ENVELOPED, C14N], digestAlgorithm: SHA1 });
-  sig.computeSignature(xml.replace(EXISTING_NFSE_SIGNATURE, '$1'), { location: { reference: INF_NFSE, action: 'after' } });
+  sig.addReference({ xpath: infXpath, transforms: [ENVELOPED, C14N], digestAlgorithm: SHA1 });
+  sig.computeSignature(xml, { location: { reference: infXpath, action: 'after' } });
   return sig.getSignedXml();
 }
 
