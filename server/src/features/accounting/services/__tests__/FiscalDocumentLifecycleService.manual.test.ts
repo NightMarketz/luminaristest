@@ -154,6 +154,18 @@ describe('retornoManual — item 11', () => {
     semEscrita(s);
   });
 
+  it('identidade (ii) DENTRO da tx: pré-checagem vê vazio, outro documento grava a chave antes da escrita → 422 pela re-checagem, status não escrito (GAP-MAP #405 insideTx)', async () => {
+    const s = makeService(manualDoc());
+    // sem tx = pré-checagem (ainda não há outro); com tx = re-checagem autoritativa (o concorrente já gravou)
+    s.repo.findByChaveOuCodigo.mockImplementation(async (...args: unknown[]) => (args[2] ? { id: 'doc-concorrente' } : null) as never);
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK)).rejects.toMatchObject({
+      statusCode: 422,
+      errorCode: 'DFE_IDENTIDADE_DIVERGENTE',
+      message: expect.stringMatching(/doc-concorrente/),
+    });
+    expect(s.repo.transition).not.toHaveBeenCalled();
+  });
+
   it('identidade (iii): nota processada ANTES de o documento existir → 422', async () => {
     const s = makeService(manualDoc({ createdAt: new Date('2026-09-16T00:00:00Z') }));
     await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK)).rejects.toThrow(/antes de o documento existir/);
