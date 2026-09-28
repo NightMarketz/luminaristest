@@ -2531,7 +2531,7 @@
                         },
                         "pAliq": {
                           "type": "string",
-                          "pattern": "^\\d{1,2}\\.\\d{2}$"
+                          "pattern": "^\\d\\.\\d{2}$"
                         }
                       },
                       "required": [
@@ -2976,7 +2976,7 @@
                         },
                         "pAliq": {
                           "type": "string",
-                          "pattern": "^\\d{1,2}\\.\\d{2}$"
+                          "pattern": "^\\d\\.\\d{2}$"
                         }
                       },
                       "required": [
