@@ -211,6 +211,34 @@ Desfecho dos passos 12–14 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passos 12–14): ____________
 
+### [EMENDA 2026-09-28] Passo 15 — telas contábeis com o body tipado (contrato gerado PR-2)
+
+> Preparado por agente em 2026-09-28, **em branco** (`PLANO-FE-CONTRACT-TYPES-2026-09-28.md` §7). O PR-2
+> trocou o body de escrita destas telas pelo tipo gerado do DTO; o fio deveria ser o mesmo de antes. Mesmas
+> pré-condições dos passos 12–14 (commit do merge do PR-2 ou posterior, build de produção, cópia do `dev.db`).
+> Em cada linha: executar a ação uma vez e colar status + corpo do request no Network.
+
+15. Resultado esperado em todas: 2xx, sem 400 de `unrecognized_keys`/`invalid_type`.
+    - a) Contas a Pagar: criar (braço despesa **e** braço estoque), pagar, cancelar pagamento, cancelar título.
+      EVIDÊNCIA: [ ]
+    - b) Contas a Receber: criar, receber, cancelar recebimento, cancelar título. EVIDÊNCIA: [ ]
+    - c) e-Lalur: criar/editar/arquivar um ajuste; criar/editar/arquivar uma conta da Parte B. EVIDÊNCIA: [ ]
+    - d) Aprovações: criar rascunho, editar, enviar, aprovar; outro rascunho rejeitado com motivo. EVIDÊNCIA: [ ]
+    - e) Lançamentos: postar um lançamento com dimensão numa perna; estornar. EVIDÊNCIA: [ ]
+    - f) Dimensões: criar eixo e valor; arquivar valor e eixo. EVIDÊNCIA: [ ]
+    - g) Conciliação: auto-match, ignorar linha, vínculo manual, desfazer vínculo. EVIDÊNCIA: [ ]
+    - h) Import/Export: confirmar uma importação; exportar um relatório. EVIDÊNCIA: [ ]
+    - i) Referencial: salvar um lote de-para; copiar versão. EVIDÊNCIA: [ ]
+    - j) Contrapartes: cadastrar (com e sem referência); arquivar. EVIDÊNCIA: [ ]
+    - k) Plano de contas: criar conta; ligar/desligar "exige dimensão". Períodos: criar exercício, abrir,
+      fechar (parcial/definitivo), reabrir; encerrar exercício. EVIDÊNCIA: [ ]
+
+Desfecho do passo 15 (marcar UM):
+[ ] PASSOU — a) a k) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 15): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
