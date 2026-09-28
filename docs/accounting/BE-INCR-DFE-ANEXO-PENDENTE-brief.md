@@ -3,8 +3,9 @@
 > Produzido em `sessao-planejamento` (2026-09-28). **Este documento NÃO escreve código**: checklist, contratos
 > esboçados e forks. **Forks F-PA-1..7: RATIFICADOS 2026-09-28** (dono, questionário em sessão): F-PA-1 → (a) ·
 > F-PA-2 → (a) · F-PA-3 → (a) · F-PA-4 → (a) · F-PA-5 → **(c)** · F-PA-6 → (a) · F-PA-7 → **(b)**. As duas escolhas
-> fora da recomendação estão em negrito. **F-PA-8 (nascido do F-PA-7 b): RATIFICAÇÃO PENDENTE.** A execução
-> depende do F-PA-8 e de uma autorização de execução (`executa`), que este BRIEF não traz.
+> fora da recomendação estão em negrito. **F-PA-8 (nascido do F-PA-7 b) → (b) automático em todo tick, RATIFICADO
+> 2026-09-28**, também fora da recomendação. Todos os forks estão ratificados. A execução ainda depende de uma
+> autorização de execução (`executa`), que este BRIEF não traz.
 
 **Resumo:** desde o #420 ("autorizar antes, anexar depois"), uma falha no anexo ou na proveniência **depois** da tx
 de autorização deixa o documento AUTHORIZED sem `xmlAttachmentId`/`sourceDocumentId`. No retorno manual o XML só
@@ -97,7 +98,9 @@ Recusa da autorização não deixa pendência nenhuma.
     - se o retorno trouxer `xml`, cria a pendência (PENDING) e deixa a varredura drenar.
 
     Modo manual e retorno sem XML: não há de onde tirar o arquivo, então é skip + `logger.warn` com o `documentId`
-    (lista para ação humana). Onde roda: F-PA-8. Teste:
+    (lista para ação humana). Onde roda: F-PA-8 → (b), a varredura do F-PA-2 procura os candidatos em todo tick.
+    **Custo declarado:** um documento manual, ou de parceiro que não devolve XML, é reconsultado a cada 2 min
+    para sempre, e o `warn` se repete. Hoje o conjunto é vazio. Se isso pesar, a mitigação é frente nova. Teste:
     - reconsulta com XML → pendência criada;
     - manual → skip nomeado;
     - rodar 2× → uma pendência só (`documentId @unique`).
@@ -146,10 +149,10 @@ drainPendingAttachmentsOnce(limit?: number): Promise<{ total: number; done: numb
 
 ## 6. Sessão de execução recomendada
 
-`sessao-feature`, um PR: modelo + repo + serviço + backfill + testes. Pré-condições: F-PA-8 ratificado, #420
-mergeado e autorização de execução do dono.
+`sessao-feature`, um PR: modelo + repo + serviço + backfill + testes. Pré-condições: #420 mergeado e autorização de
+execução do dono.
 
-## 7. Forks — F-PA-1..7 RATIFICADOS 2026-09-28 · F-PA-8 PENDENTE
+## 7. Forks — F-PA-1..8 RATIFICADOS 2026-09-28
 
 ### F-PA-1 — onde ficam os bytes da pendência
 - (a) Coluna `Bytes` na própria pendência, dentro da tx: atômico, sem arquivo órfão. Os bytes são zerados no DONE.
@@ -210,7 +213,7 @@ escritas. Um caminho só para os dois casos, e a trilha fica explícita (criada 
 acha nada (não há nota real emitida), mas fica pronto para quando houver. Os limites (manual e retorno sem XML
 viram skip nomeado) estão no item 11. Onde roda: F-PA-8.
 
-### F-PA-8 — onde roda o backfill (nasce do F-PA-7 b) — RATIFICAÇÃO PENDENTE
+### F-PA-8 — onde roda o backfill (nasce do F-PA-7 b)
 - (a) CLI de disparo único, no padrão do `accountingSyncReconcileCli.ts`: roda quando o dono mandar e imprime o
   resumo (criadas / skip manual / sem XML).
 - (b) Automático: a varredura do F-PA-2 procura os candidatos a cada tick.
@@ -219,6 +222,9 @@ viram skip nomeado) estão no item 11. Onde roda: F-PA-8.
 **Recomendação: (a).** A reconsulta chama a API do parceiro (custo/quota, inferido), e o conjunto de candidatos só
 existe por causa do passado (documentos de antes deste incremento). Rodar em todo tick consulta o parceiro de novo
 para cada documento manual ou sem XML que nunca vai resolver.
+
+✅ **RATIFICADO (b)**, fora da recomendação: automático em todo tick, sem ação manual. O custo de reconsulta
+repetida está declarado no item 11.
 
 ## 8. Pendente de validação externa
 
