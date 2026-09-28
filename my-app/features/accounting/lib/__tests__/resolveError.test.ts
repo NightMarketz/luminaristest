@@ -28,9 +28,42 @@ describe('resolveErrorWithCode (canonical accounting error resolver)', () => {
     expect(resolveErrorWithCode({ error: 'x', code: 42 }, FALLBACK).code).toBeUndefined();
   });
 
-  it('falls back when `error` is a non-string (flattened Zod 400) — never "[object Object]"', () => {
-    const zod400 = { success: false, error: { fieldErrors: { date: ['Invalid'] }, formErrors: [] }, status: 400 };
-    expect(resolveErrorWithCode(zod400, FALLBACK)).toEqual({ message: FALLBACK, code: undefined });
+  it('humanizes a flattened Zod 400 `error` — same "campo: msg" text as the apiClient toast', () => {
+    const zod400 = {
+      success: false,
+      error: { formErrors: [], fieldErrors: { signers: ['0930.IND_CRC falta o dígito verificador'] } },
+      status: 400,
+    };
+    expect(resolveErrorWithCode(zod400, FALLBACK)).toEqual({
+      message: 'signers: 0930.IND_CRC falta o dígito verificador',
+      code: undefined,
+    });
+  });
+
+  it('joins fieldErrors and formErrors of a Zod flatten', () => {
+    const err = { error: { formErrors: ['Body inválido'], fieldErrors: { date: ['Invalid', 'Required'] } } };
+    expect(resolveError(err, FALLBACK)).toBe('date: Invalid, Required; Body inválido');
+  });
+
+  it("falls back to the caller's (translated) fallback on an EMPTY Zod flatten", () => {
+    expect(resolveError({ error: { formErrors: [], fieldErrors: {} } }, FALLBACK)).toBe(FALLBACK);
+  });
+
+  it('keeps string precedence: `message` wins over a Zod flatten `error`', () => {
+    const err = { message: 'Mais específico', error: { formErrors: [], fieldErrors: { x: ['y'] } } };
+    expect(resolveError(err, FALLBACK)).toBe('Mais específico');
+  });
+
+  it('carries `code` alongside a humanized Zod flatten', () => {
+    const err = { error: { fieldErrors: { a: ['b'] } }, code: 'VALIDATION' };
+    expect(resolveErrorWithCode(err, FALLBACK)).toEqual({ message: 'a: b', code: 'VALIDATION' });
+  });
+
+  it('falls back when `error` is a non-flatten object — never "[object Object]"', () => {
+    expect(resolveErrorWithCode({ error: { foo: 1 }, status: 400 }, FALLBACK)).toEqual({
+      message: FALLBACK,
+      code: undefined,
+    });
   });
 
   it('falls back on null / undefined / primitive throws', () => {
