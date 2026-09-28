@@ -160,6 +160,13 @@ describe('retornoManual — item 11', () => {
     semEscrita(s);
   });
 
+  it('identidade (iii): dhProc que não é data-hora real (mês 13) → 422, nada escrito (GAP-MAP #405 dhProc)', async () => {
+    const xmlMes13 = Buffer.from(signNfseForTest(RAW.replace('<dhProc>2026-09-15T14:32:10-03:00</dhProc>', '<dhProc>2026-13-01T14:32:10-03:00</dhProc>')));
+    const s = makeService(manualDoc());
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', xmlMes13)).rejects.toMatchObject({ statusCode: 422, message: expect.stringMatching(/dhProc/) });
+    semEscrita(s);
+  });
+
   it('identidade (iv): nota emitida por API de terceiro (procEmi=1) não é da ficha → 422', async () => {
     const xmlApi = Buffer.from(signNfseForTest(RAW.replace('<procEmi>2</procEmi>', '<procEmi>1</procEmi>')));
     const s = makeService(manualDoc());
