@@ -1,7 +1,10 @@
 # BRIEF — BE-INCR-DFE-ANEXO-PENDENTE (anexo e proveniência da NFS-e autorizada não se perdem se falharem depois da autorização)
 
 > Produzido em `sessao-planejamento` (2026-09-28). **Este documento NÃO escreve código**: checklist, contratos
-> esboçados e forks. **Forks F-PA-1..7: RATIFICAÇÃO PENDENTE.** Execução só depois da ratificação.
+> esboçados e forks. **Forks F-PA-1..7: RATIFICADOS 2026-09-28** (dono, questionário em sessão): F-PA-1 → (a) ·
+> F-PA-2 → (a) · F-PA-3 → (a) · F-PA-4 → (a) · F-PA-5 → **(c)** · F-PA-6 → (a) · F-PA-7 → **(b)**. As duas escolhas
+> fora da recomendação estão em negrito. **F-PA-8 (nascido do F-PA-7 b): RATIFICAÇÃO PENDENTE.** A execução
+> depende do F-PA-8 e de uma autorização de execução (`executa`), que este BRIEF não traz.
 
 **Resumo:** desde o #420 ("autorizar antes, anexar depois"), uma falha no anexo ou na proveniência **depois** da tx
 de autorização deixa o documento AUTHORIZED sem `xmlAttachmentId`/`sourceDocumentId`. No retorno manual o XML só
@@ -70,24 +73,35 @@ Recusa da autorização não deixa pendência nenhuma.
    - `attachSourceDocument`, que já é idempotente;
    - 2ª `transition` com `whenStatusIn` (código atual do #420);
    - `markPendingDone`.
-6. **Status mudou no meio** (cancelamento) → F-PA-5. O ramo `retireSourceDocument` do #420 é reaproveitado.
+6. **Status mudou no meio** (cancelamento), F-PA-5 → (c): anexa XML (e PDF), cria a proveniência e a aposenta em
+   seguida (`retireSourceDocument(…, 'dfe_status_changed')`, o ramo do #420). A pendência vai para DONE. O XML da
+   nota que existiu fica guardado.
 7. **Varredura**: `drainPendingAttachmentsOnce(limit)` no `FiscalDocumentLifecycleService`, chamado pelo MESMO
    tick do `DfePollScheduler` depois do `pollPendingOnce` (F-PA-2). `PollSummary` ganha `attachments: { total, done, failed }`.
 8. **Backoff e teto** (F-PA-6): `attempts++`, `nextAttemptAt` com backoff, `lastError` truncado. Passou do teto
    → `status = FAILED` + `logger.error` (o alerta no sink NDJSON já existente).
-9. **Sem eventType novo**: `attachment.uploaded` e o audit do `attachSourceDocument` já registram os efeitos. Se o
-   F-PA-5 escolher registrar o descarte, entra `dfe.attachment_discarded` na allowlist do `auditCanonical.ts` na
-   mesma mudança.
+9. **Sem eventType novo**: `attachment.uploaded`, o audit do `attachSourceDocument` e o `entry.source_retired`
+   (F-PA-5 c) já registram os efeitos.
 10. **Testes** (unit com repositório dublê + 1 integração SQLite real):
     - recusa na tx → 0 pendências (a guarda do #420 continua);
     - falha no upload inline → pendência PENDING com os bytes, documento AUTHORIZED;
     - a varredura drena → ids gravados, bytes zerados, DONE;
     - retentativa depois de falha **entre** upload e `markPendingStep` não duplica anexo (é o teste que morde o
       F-PA-3);
-    - cancelado no meio → F-PA-5;
+    - cancelado no meio → XML anexado, proveniência criada e aposentada, DONE (F-PA-5 c);
     - teto → FAILED + `logger.error`;
     - homologação → sem pendência.
-11. **Gates**: `tsc` limpo; suíte unit; integração isolada `--runInBand`. Sem rota nova (sem DTO nem openapi). A
+11. **Backfill por reconsulta** (F-PA-7 → b): documentos `AUTHORIZED|AUTHORIZED_DIVERGENT` em produção, com
+    `xmlAttachmentId` e `sourceDocumentId` nulos e sem pendência, de parceiro com `capabilities.consultar`:
+    - `port.consultar(partnerRef)`;
+    - se o retorno trouxer `xml`, cria a pendência (PENDING) e deixa a varredura drenar.
+
+    Modo manual e retorno sem XML: não há de onde tirar o arquivo, então é skip + `logger.warn` com o `documentId`
+    (lista para ação humana). Onde roda: F-PA-8. Teste:
+    - reconsulta com XML → pendência criada;
+    - manual → skip nomeado;
+    - rodar 2× → uma pendência só (`documentId @unique`).
+12. **Gates**: `tsc` limpo; suíte unit; integração isolada `--runInBand`. Sem rota nova (sem DTO nem openapi). A
     migração entra no `resetDb()`, com a lista de tabelas contábeis do F-Q3 (memória `resetdb-nao-limpa-contabilidade`).
 
 ## 4. Contratos esboçados
@@ -132,9 +146,10 @@ drainPendingAttachmentsOnce(limit?: number): Promise<{ total: number; done: numb
 
 ## 6. Sessão de execução recomendada
 
-`sessao-feature`, um PR: modelo + repo + serviço + testes. Pré-condição: F-PA-1..7 ratificados e #420 mergeado.
+`sessao-feature`, um PR: modelo + repo + serviço + backfill + testes. Pré-condições: F-PA-8 ratificado, #420
+mergeado e autorização de execução do dono.
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — F-PA-1..7 RATIFICADOS 2026-09-28 · F-PA-8 PENDENTE
 
 ### F-PA-1 — onde ficam os bytes da pendência
 - (a) Coluna `Bytes` na própria pendência, dentro da tx: atômico, sem arquivo órfão. Os bytes são zerados no DONE.
@@ -143,14 +158,14 @@ drainPendingAttachmentsOnce(limit?: number): Promise<{ total: number; done: numb
   pendência guardando só o `storageKey`. Reusa o storage, mas deixa arquivo órfão quando a tx recusa (o mesmo
   padrão que o `upload` já tem), e a varredura precisaria de coleta de lixo.
 
-**Recomendação: (a).** XML de NFS-e tem dezenas de KB e a DANFSe centenas de KB (inferido, sem medição). O SQLite
+**Recomendação: (a).** ✅ **RATIFICADO (a).** XML de NFS-e tem dezenas de KB e a DANFSe centenas de KB (inferido, sem medição). O SQLite
 aguenta, e a atomicidade é justamente o que o GAP pede.
 
 ### F-PA-2 — quem drena
 - (a) O mesmo tick do `DfePollScheduler`, depois do `pollPendingOnce`.
 - (b) Um scheduler próprio (clone mínimo, como o `DfePollScheduler` já é do `AccountingSyncScheduler`).
 
-**Recomendação: (a).** É a mesma frente (DF-e), com o mesmo lock e o mesmo intervalo. Um clone só se justifica
+**Recomendação: (a).** ✅ **RATIFICADO (a).** É a mesma frente (DF-e), com o mesmo lock e o mesmo intervalo. Um clone só se justifica
 se o intervalo precisar ser diferente.
 
 ### F-PA-3 — idempotência da retentativa
@@ -158,14 +173,14 @@ se o intervalo precisar ser diferente.
   cada passo).
 - (b) Deduplicar no `upload` por (alvo, `sha256`). Muda um serviço compartilhado com os anexos de lançamento.
 
-**Recomendação: (a).** O diff fica no dono do problema. A janela que sobra (upload commitou e a gravação do id
+**Recomendação: (a).** ✅ **RATIFICADO (a).** O diff fica no dono do problema. A janela que sobra (upload commitou e a gravação do id
 falhou) gera no máximo um anexo duplicado, nunca uma perda, e é esse o caso que o teste do item 10 morde.
 
 ### F-PA-4 — manter a tentativa inline
 - (a) Sim: o caminho feliz continua síncrono (a ficha já mostra os anexos na resposta) e a varredura é só a rede.
 - (b) Não: tudo vai pela varredura (até 2 min de atraso para o anexo aparecer).
 
-**Recomendação: (a).**
+**Recomendação: (a).** ✅ **RATIFICADO (a).**
 
 ### F-PA-5 — documento cancelado antes da pendência drenar
 - (a) Anexa o XML como evidência (a nota existiu), **não** cria proveniência, marca DISCARDED.
@@ -176,24 +191,40 @@ falhou) gera no máximo um anexo duplicado, nunca uma perda, e é esse o caso qu
 **Recomendação: (a).** Guardar o XML da nota que existiu parece o correto, mas **a obrigação legal de guarda é
 inferida** (ver §8). A proveniência de nota cancelada não entra no razão.
 
+✅ **RATIFICADO (c)**, fora da recomendação: o mesmo comportamento do #420 para o cancelamento entre as duas
+escritas. Um caminho só para os dois casos, e a trilha fica explícita (criada → aposentada, com
+`entry.source_retired`).
+
 ### F-PA-6 — teto, backoff e retenção
 - (a) Teto de 10 tentativas, backoff exponencial de 2 min até 1 h, FAILED + `logger.error`; bytes zerados só no
   DONE/DISCARDED (FAILED guarda os bytes para reprocesso manual).
 - (b) Sem teto (retenta para sempre a cada tick).
 
-**Recomendação: (a).**
+**Recomendação: (a).** ✅ **RATIFICADO (a).**
 
 ### F-PA-7 — documentos autorizados antes deste incremento sem anexo
 - (a) Sem backfill (não há nota real emitida: D5/M2 abertos). A migração é só criativa.
 - (b) Backfill que reconsulta o parceiro. Não funciona no manual (sem XML).
 
-**Recomendação: (a).**
+**Recomendação: (a).** ✅ **RATIFICADO (b)**, fora da recomendação → item 11 do checklist. Hoje o backfill não
+acha nada (não há nota real emitida), mas fica pronto para quando houver. Os limites (manual e retorno sem XML
+viram skip nomeado) estão no item 11. Onde roda: F-PA-8.
+
+### F-PA-8 — onde roda o backfill (nasce do F-PA-7 b) — RATIFICAÇÃO PENDENTE
+- (a) CLI de disparo único, no padrão do `accountingSyncReconcileCli.ts`: roda quando o dono mandar e imprime o
+  resumo (criadas / skip manual / sem XML).
+- (b) Automático: a varredura do F-PA-2 procura os candidatos a cada tick.
+- (c) Automático, mas só uma vez no boot do scheduler.
+
+**Recomendação: (a).** A reconsulta chama a API do parceiro (custo/quota, inferido), e o conjunto de candidatos só
+existe por causa do passado (documentos de antes deste incremento). Rodar em todo tick consulta o parceiro de novo
+para cada documento manual ou sem XML que nunca vai resolver.
 
 ## 8. Pendente de validação externa
 
-- **Guarda do XML de NFS-e cancelada:** existe obrigação de manter o arquivo? Por quanto tempo (o prazo
-  decadencial de 5 anos do CTN é a hipótese)? Decide o F-PA-5 (a) × (b). Sem artefato, pergunta para o contador
-  (`luminaris-contador-liaison`).
+- **Guarda do XML de NFS-e cancelada:** existe obrigação de manter o arquivo, e por quanto tempo (o prazo
+  decadencial de 5 anos do CTN é a hipótese)? Com o F-PA-5 = (c) o XML é guardado de qualquer jeito, então a
+  pergunta deixou de decidir fork. Só vale para uma política de retenção futura (fora deste item).
 
 ## 9. Insumos ausentes
 
