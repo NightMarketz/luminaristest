@@ -6871,14 +6871,16 @@
                       },
                       "modules": {
                         "type": "array",
-                        "description": "I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)",
+                        "description": "I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys",
                         "items": {
                           "type": "string",
                           "enum": [
                             "CRM-0",
                             "CRM-1",
-                            "CRM-2",
-                            "CRM-3"
+                            "CRM-2A",
+                            "CRM-2B",
+                            "CRM-3",
+                            "CRM-2"
                           ]
                         }
                       },
@@ -6981,14 +6983,16 @@
                       },
                       "modules": {
                         "type": "array",
-                        "description": "I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)",
+                        "description": "I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys",
                         "items": {
                           "type": "string",
                           "enum": [
                             "CRM-0",
                             "CRM-1",
-                            "CRM-2",
-                            "CRM-3"
+                            "CRM-2A",
+                            "CRM-2B",
+                            "CRM-3",
+                            "CRM-2"
                           ]
                         }
                       },
@@ -7050,7 +7054,7 @@
     "/api/dashboard/modules/install": {
       "post": {
         "summary": "Turn on ONE module of the registry for an existing tenant (admin-only)",
-        "description": "BE-INCR-CRM-MODULE-COMPOSITION (I8) behavior 8. Installs the module tables in registry order (install-table primitive), then runs the additive sync-preset on installed tables whose preset relates to the module (e.g. leads.accountId after CRM-2). Idempotent - an installed module answers status already-installed. A dependency module not installed yields 400 naming it. Requires ADMIN.\n",
+        "description": "BE-INCR-CRM-MODULE-COMPOSITION (I8) behavior 8. Installs the module tables in registry order (install-table primitive), then runs the additive sync-preset on installed tables whose preset relates to the module (e.g. leads.accountId after CRM-2A). Idempotent - an installed module answers status already-installed. A dependency module not installed yields 400 naming it. Requires ADMIN. The group key CRM-2 (BE-INCR-CRM-SUBMODULES F-SUB-2 a) installs CRM-2A then CRM-2B and answers the aggregated result plus modules (atomic keys).\n",
         "tags": [
           "Dashboard"
         ],
@@ -7075,8 +7079,10 @@
                     "enum": [
                       "CRM-0",
                       "CRM-1",
-                      "CRM-2",
-                      "CRM-3"
+                      "CRM-2A",
+                      "CRM-2B",
+                      "CRM-3",
+                      "CRM-2"
                     ]
                   }
                 }
@@ -7086,7 +7092,7 @@
         },
         "responses": {
           "200": {
-            "description": "Install result { status: installed | already-installed, tables, synced }"
+            "description": "Install result { status: installed | already-installed, tables, synced, modules? } - modules only for a group key"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -7165,7 +7171,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Preset detail"
+            "description": "Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, group?, name, fixed, tables, dependsOn }"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
