@@ -4,15 +4,16 @@ tipo: "fe"
 dominio: "contabil"
 titulo: "Tela do pacote ao contador (consome C6b; files[].kind = ExportKind)"
 estado: "planned"
-estado_detalhe: "BRIEF ✅ 17/09; forks F-FE-DL-1..4 pendentes"
+estado_detalhe: "BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8; falta 'executa'"
 depende_de: ["[[C6b]]"]
+autorizacao: "dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'"
 ancora_sdd: "§III.1 (fora da régua)"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # FE-INCR-DELIVERY — Tela do pacote ao contador (consome C6b; files[].kind = ExportKind)
 
-**Estado:** `planned` — BRIEF ✅ 17/09; forks F-FE-DL-1..4 pendentes  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
+**Estado:** `planned` — BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8; falta 'executa'  
+**Autorização:** dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'  
 **Depende de:** [[C6b]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 (fora da régua)
@@ -20,6 +21,9 @@ atualizado: "2026-09-23"
 ## Docs
 
 - [`docs/accounting/FE-INCR-DELIVERY-brief.md`](../../accounting/FE-INCR-DELIVERY-brief.md)
+- [`docs/accounting/PLANO-ONDA1-FE-2026-09-28.md`](../../accounting/PLANO-ONDA1-FE-2026-09-28.md) — plano granular da Onda 1 de FE (28/09)
+- [`docs/accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md`](../../accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md) — sequência mestre (§4) e contrato gerado
+- Decisão: [[D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE]]
 
 ## Evidência
 

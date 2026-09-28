@@ -4,15 +4,16 @@ tipo: "fe"
 dominio: "fiscal"
 titulo: "FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela"
 estado: "ready"
-estado_detalhe: "Crescimento do X4; falta 'executa'"
+estado_detalhe: "Crescimento do X4. Detalhe granular do item 13 do BRIEF (M410, fechar/reabrir trimestre, diagnóstico) em PLANO-ONDA1-FE-2026-09-28 §4; forks F-FE-L2-1/2 → a decididos 28/09 sob delegação. Nasce tipado pelo contrato gerado: sequência mestre passo 5 (depois do contrato PR-2); falta 'executa'"
 depende_de: ["[[X4]]"]
+autorizacao: "dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'"
 ancora_sdd: "§III.1 passo 6 · §III.2"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # FE-INCR-LALUR-PR2 — FE-INCR-LALUR PR 2 — M410 + fechar trimestre + diagnóstico na tela
 
-**Estado:** `ready` — Crescimento do X4; falta 'executa'  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
+**Estado:** `ready` — Crescimento do X4. Detalhe granular do item 13 do BRIEF (M410, fechar/reabrir trimestre, diagnóstico) em PLANO-ONDA1-FE-2026-09-28 §4; forks F-FE-L2-1/2 → a decididos 28/09 sob delegação. Nasce tipado pelo contrato gerado: sequência mestre passo 5 (depois do contrato PR-2); falta 'executa'  
+**Autorização:** dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'  
 **Depende de:** [[X4]]  
 **Desbloqueia:** [[H1b]] (pontilhada)  
 **Âncora no SDD consolidado:** §III.1 passo 6 · §III.2
@@ -20,6 +21,9 @@ atualizado: "2026-09-23"
 ## Docs
 
 - [`docs/accounting/FE-INCR-LALUR-brief.md`](../../accounting/FE-INCR-LALUR-brief.md)
+- [`docs/accounting/PLANO-ONDA1-FE-2026-09-28.md`](../../accounting/PLANO-ONDA1-FE-2026-09-28.md) — plano granular da Onda 1 de FE (28/09)
+- [`docs/accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md`](../../accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md) — sequência mestre (§4) e contrato gerado
+- Decisão: [[D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE]]
 
 ## Evidência
 
