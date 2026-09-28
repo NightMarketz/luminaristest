@@ -38,7 +38,7 @@ import { Role } from '@/features/users/models/User.model';
 import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
 import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
 import { composeModuleTables, type ModuleKey } from '@/features/dynamicTables/presets/modules/registry';
-import { applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { CoreSystemPreset, tablePresetSuites, PresetSuite, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -222,6 +222,7 @@ async function handleCustomCreation(
       ...originalPreset.tables,
     };
 
+    const keptModules = applyModuleRemovals(installedModules, removedTables);
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
 
     for (const tableKey of removedTables) {
@@ -321,7 +322,7 @@ async function handleCustomCreation(
         presetKey,
         unitId,
         fiscal: fiscalDoOnboarding,
-        modules: { installed: installedModules },
+        modules: { installed: keptModules },
         tables: {
           core: coreTableList,
           business: Object.keys(finalPayload.tables).filter((k) => !coreTableList.includes(k)),
