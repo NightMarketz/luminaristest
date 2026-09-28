@@ -58,3 +58,4 @@
 | §M7.1 · §M5.1 item 10 · §III.2 | [[X4]] |
 | §M7.1 · §M5.1 item 11 | [[F1]] |
 | CRM_REMEDIATION_AND_ROADMAP Parte B gap #14 (supersedido → SDD §IV.3) | [[CRM-RB]] |
+| fora do SDD consolidado (nó de 28/09) | [[FE-CONTRACT-TYPES]] |
