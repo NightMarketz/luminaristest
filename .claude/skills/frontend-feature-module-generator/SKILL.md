@@ -104,6 +104,6 @@ cd my-app && npx tsc --noEmit
 - Não esqueça de registrar no switch do dashboard
 - Não use default export na View se o módulo exporta múltiplas coisas — use named export
 - **Não renderize um board agrupando por TODAS as etapas/relações** — filtre pelo pai ativo, senão múltiplos pais (pipelines/units) produzem colunas duplicadas. Sempre teste a view com >1 registro-pai.
-- **Estilize as telas aplicando `frontend-design-system`** (tokens reais + componentes-assinatura) — Tailwind genérico (`zinc`/`rounded-xl`/`semibold`) deixa o módulo off-brand, fora do padrão do app.
+- **Estilize as telas aplicando `frontend-design-system`** (tokens reais + componentes-assinatura) — Tailwind genérico (`zinc-*`, card `rounded-xl` em vez de `2xl`, título/KPI sem `font-black`) deixa o módulo off-brand, fora do padrão do app.
 - **Não recrie tabela/paginação/layout/analytics do zero** — reuse `GenericTable`/`GenericTabbedView`, `StandardPagination`, o container full-height e `AnalyticsDashboard`. Bespoke = módulo "ilha" (erro do CRM).
 - **Não use rota `[id].tsx` para detalhe de registro** — use modal (`Modal.tsx`).

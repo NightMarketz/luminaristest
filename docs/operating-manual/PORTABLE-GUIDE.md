@@ -149,9 +149,10 @@ script é mais barato e mais confiável que re-derivar os passos. Complementos:
 
 **Calibre a prescrição ao modelo** (assimetria documentada pela Anthropic): modelos do topo
 **degradam** com scaffolding passo-a-passo — dê objetivo + restrições e deixe-os escolher os
-passos; modelos um degrau abaixo **sub-alcançam** capacidades que exigem decisão (memória,
-subagentes, busca) — escreva o *gatilho* na própria descrição de cada tool/skill ("chame isto
-quando…"), não só o que ela faz.
+passos; alguns modelos **sub-alcançam** capacidades que exigem decisão (memória, subagentes,
+busca) e outros **super-alcançam** (delegam e re-verificam demais) — a direção muda por geração,
+então confira a doc do modelo em uso. Constante: escreva o *gatilho* na própria descrição de cada
+tool/skill ("chame isto quando…"), não só o que ela faz; o empurrão no corpo é que se calibra.
 
 A dosagem se aplica a **uma só das duas espécies de prescrição**:
 
