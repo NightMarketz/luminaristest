@@ -312,7 +312,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
         await entryApprovalsService.reject(entry.id, {
           unitId,
           expectedVersion: entry.version,
-          ...(reason.trim() ? { reason: reason.trim() } : {}),
+          reason: reason.trim() || undefined,
         });
       }
       setAction(null);
@@ -520,7 +520,10 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
             const entry = editing.entry;
             if (entry) {
               return entryApprovalsService.updateDraft(entry.id, {
-                ...value,
+                unitId: value.unitId,
+                date: value.date,
+                description: value.description,
+                lines: value.lines,
                 expectedVersion: entry.version,
               });
             }

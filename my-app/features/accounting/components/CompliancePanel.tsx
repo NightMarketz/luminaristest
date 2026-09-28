@@ -11,6 +11,7 @@ import {
 } from '../../../lib/services/referential.service';
 import { resolveError } from '../lib/resolveError';
 import { useAuth } from '../../../lib/context/AuthContext';
+import { nonEmpty } from '../../../lib/utils/nonEmpty';
 
 const inputClass =
   'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50';
@@ -125,11 +126,12 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
     coverage && loadedVersion ? buildBatchItems(drafts, coverage.unmappedAccounts) : [];
 
   async function handleSave() {
-    if (!coverage || !loadedVersion || pendingItems.length === 0) return;
+    const items = nonEmpty(pendingItems);
+    if (!coverage || !loadedVersion || !items) return;
     setSaving(true);
     setError(null);
     try {
-      await referentialService.batchSet(unitId, loadedVersion, pendingItems);
+      await referentialService.batchSet(unitId, loadedVersion, items);
       await loadCoverage(loadedVersion); // refetch → unmapped list shrinks, ready flag updates
     } catch (err) {
       setError(resolveError(err, genericError()));
