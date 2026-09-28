@@ -9,7 +9,7 @@
   `/P-` recusado; (A3) grafias `1SP123456`/`SP1234567` recusadas; (A4) `IND_CRC` da ECF 0930 sem
   máscara; (A5) `reviewerCrc` herda a regex sem teste; (A6) openapi/mensagens citam só `UF-NNNNNN/O-D`.
 - **Autorização:** dono, chat 28/09/2026 — *"Planeje o que estava fora do escopo e pesquise as melhores
-  soluções"*. Cobre exatamente A1–A6. **Não** autoriza implementação: forks abaixo são PENDENTES.
+  soluções"*. Cobre exatamente A1–A6. *(Atualização 28/09: F-1..F-4 ratificados e executados — §4, §6.1; PR #426.)*
 - **Pré-requisito:** a correção do GAP-MAP 15 (sufixo ` T-UF`/` S-UF`, `crcNumberUfs`) precisa estar
   mergeada antes — este BRIEF parte dela (`AccountingContact.model.ts:57-83` do worktree).
 - **Escopo:** backend + docs. O ajuste de FE do item 4 é nó vizinho (§7).
@@ -104,7 +104,7 @@ indCrc: crcNumberField.optional(),          // F-4b (a): '' continua 400 (regra 
 - **Padrão de mercado (pesquisado):** texto livre; ERPs gravam `SP1234567`/`1SP…` (N4).
 - **Consequência:** a máscara na ECF é **escolha da casa** (coerência com F-C12-3), não exigência do
   leiaute — o PVA aceita qualquer texto. O exemplo oficial `1SP123456` seria recusado por falta de DV.
-- **F-4b resolvido pela execução:** a tela da ECF já não manda `indCrc: ''` (`toEcfSignersPayload`,
+- **F-4b resolvido pela execução:** a tela da ECF já não manda `indCrc: ''` (`toEcfSignerPayload`, por signatário,
   28/09) — os dois caminhos do F-4b deixam de quebrar a tela.
 
 ## 5. Pendente de validação externa
@@ -130,7 +130,7 @@ indCrc: crcNumberField.optional(),          // F-4b (a): '' continua 400 (regra 
 | 4 (F-4) | ✅ `crcNumberFieldFor('0930')` no `SignerSchema` da ECF (cobre o DTO Real); fixture de integração `1DF123` → `DF-123456/O-1` | `SpedEcfDto.test.ts` "IND_CRC do 0930 passa pela máscara CFC…" |
 | 5 | ✅ | `AccountingReviewDto.test.ts` "transferido é aceito…" |
 | 6 | ✅ textos + `public/openapi.json` regenerado | — |
-| §7 FE | ✅ `toEcfSignersPayload` nas duas telas da ECF | `SpedGenerationPanel.test.tsx` "toEcfSignersPayload" |
+| §7 FE | ✅ `toEcfSignerPayload` (por signatário, par do `toEcdSignerPayload` do #427) nas duas telas da ECF | `SpedGenerationPanel.test.tsx` "toEcfSignerPayload (0930)" + submit da ECF Presumido e da ECF Real |
 | §7 runbook | ✅ aviso `REGRA_ADVERTENCIA_CONTADOR`; ECF: tabela de 17 códigos, CPF/CNPJ, `indCrc` | — |
 | §7 CFC | 📝 planejado em `BE-INCR-CRC-CFC-VALIDACAO-brief.md` | — |
 

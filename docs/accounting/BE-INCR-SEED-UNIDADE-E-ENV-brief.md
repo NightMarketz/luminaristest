@@ -12,7 +12,7 @@
   escolhe `productUnits` (`useAccountingData.ts:45-47`) e mensagens de 400 do Zod escondidas pelo
   `resolveError`. Não planejar aqui — colidiria com elas.
 - **Autorização:** dono, chat 28/09/2026 — *"Prepare planos para os achados fora do escopo"*. Autoriza o
-  plano; **não** autoriza código. Forks PENDENTES.
+  plano; **não** autoriza código. *(Atualização 28/09: todos os forks decididos — §4 e §4.1; código ainda sem 'executa'.)*
 - **Sessão executora depois da ratificação:** S1 e S2 são lacunas → `sessao-instrumentacao` →
   `sessao-correcao` (entram no GAP-MAP com a ratificação).
 

@@ -166,7 +166,7 @@ DevTools → Network e leia o parâmetro `unitId=` de qualquer request da tela.
 > F-C12-1 → a; mandar a chave = 400), e o signatário contador (`codAssin = '900'`) passou a exigir
 > CPF de 11 dígitos + `indCrc` + `ufCrc` + `email` + `fone` (REGRA_OBRIGATORIO_CONTADOR, Manual ECD
 > L9 p. 202). A tabela *ECD — signatários (J930)* abaixo foi reescrita por
-> [SpedEcdDto.ts:128-210 e :391-438](../../server/src/features/accounting/dtos/SpedEcdDto.ts).
+> [SpedEcdDto.ts:134-218 e :396-445](../../server/src/features/accounting/dtos/SpedEcdDto.ts).
 
 **Separe por origem antes de escrever para o contador** — o formulário da tela mistura os dois, mas
 pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-volta desnecessária:
@@ -213,7 +213,7 @@ pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-vo
 
 ⚠️ **`identQualif` não existe mais no J930** (ver [EMENDA 2026-09-28] acima) — a qualificação sai de
 `codAssin`. Regras do backend sobre a lista (rejeita fora disso —
-[SpedEcdDto.ts:391-438](../../server/src/features/accounting/dtos/SpedEcdDto.ts)):
+[SpedEcdDto.ts:396-445](../../server/src/features/accounting/dtos/SpedEcdDto.ts)):
 - **exatamente um** signatário com `indRespLegal = 'S'`, e ele **nunca** é o de `codAssin = '900'`
   (o contador nunca é o responsável legal);
 - **pelo menos um** contador (`codAssin = '900'`) **e pelo menos um** não-contador;
