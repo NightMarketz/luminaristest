@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { ValidationError } from './errors';
 import { moneyToCents } from './nfe';
 import { verifyNfseSignature } from './nfseSignature';
+import { isValidDateOnly } from '../features/accounting/models/dates';
 
 /**
  * BE-INCR-DFE-MANUAL (item 2) — leitor PURO da NFS-e AUTORIZADA (padrão nacional v1.01). Sem Prisma, sem tx.
@@ -109,6 +110,7 @@ export function parseNfseAutorizada(input: string | Buffer): ParsedNfse {
   if (!['100', '102', '103', '107'].includes(cStat)) fail(`infNFSe/cStat "${cStat}" fora do TStat.`);
   const dhProc = req(inf, 'dhProc', 'infNFSe');
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(dhProc)) fail(`infNFSe/dhProc "${dhProc}" sem fuso.`);
+  if (!isValidDateOnly(dhProc.slice(0, 10)) || Number.isNaN(Date.parse(dhProc))) fail(`infNFSe/dhProc "${dhProc}" não é data-hora real.`);
 
   const emit = obj(inf!.emit);
   const emitDoc = txt(emit?.CNPJ) || txt(emit?.CPF);
