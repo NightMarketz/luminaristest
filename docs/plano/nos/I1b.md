@@ -3,19 +3,21 @@ id: "I1b"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)"
-estado: "ready"
-estado_detalhe: "BRIEF no I1; F-I1b-1 → (b); código não iniciado"
+estado: "blocked"
+estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado"
 autorizacao: "F-I1-3 → (b) 2026-09-07"
+prs: ["#392"]
 ancora_sdd: "§M5.1 Bloco A I1/I1b"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # I1b — Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)
 
-**Estado:** `ready` — BRIEF no I1; F-I1b-1 → (b); código não iniciado  
+**Estado:** `blocked` — ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado  
 **Autorização:** F-I1-3 → (b) 2026-09-07  
 **Depende de:** —  
 **Desbloqueia:** —  
-**Âncora no SDD consolidado:** §M5.1 Bloco A I1/I1b
+**Âncora no SDD consolidado:** §M5.1 Bloco A I1/I1b  
+**PRs:** #392
 
 ## Docs
 
