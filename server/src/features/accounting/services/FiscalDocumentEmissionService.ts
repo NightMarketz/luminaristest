@@ -26,6 +26,7 @@ import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
+import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
 import { centsFromDb } from '../models/money';
@@ -91,9 +92,9 @@ function bpToPctString(bp: number): string {
   return (bp / 100).toFixed(2);
 }
 
-/** [102]: "DPS" + cMun7 + tpInsc1 + insc14 + serie5 + nDPS15 (42 dígitos após o prefixo). */
+/** [102]: "DPS" + cMun7 + tpInsc1 + insc14 + serie5 + nDPS15 (42 dígitos após o prefixo); tpInsc 2 = CNPJ (1 = CPF). */
 function buildDpsId(cMun: string, cnpj: string, serie: number, nDPS: number): string {
-  return `DPS${cMun}1${cnpj.padStart(14, '0')}${String(serie).padStart(5, '0')}${String(nDPS).padStart(15, '0')}`;
+  return `DPS${cMun}2${cnpj.padStart(14, '0')}${String(serie).padStart(5, '0')}${String(nDPS).padStart(15, '0')}`;
 }
 
 /**
@@ -137,7 +138,7 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     try {
-      const assembly = await this.assemble(scope, saleId, kind);
+      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente);
       const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents, 0);
       return {
         ok: true,
@@ -176,8 +177,8 @@ export class FiscalDocumentEmissionService {
     if (!this.policy.canEmitFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
-    const assembly = await this.assemble(scope, saleId, kind);
     const selection = selectDfeEmissor(process.env);
+    const assembly = await this.assemble(scope, saleId, kind, selection.ambiente);
     if (!selection.enabled) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
     }
@@ -200,6 +201,7 @@ export class FiscalDocumentEmissionService {
           }
           payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
         }
+        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
         const createdDoc = await this.repo.createSent(
           scope,
           {
@@ -363,8 +365,9 @@ export class FiscalDocumentEmissionService {
     saleId: string,
     kind: FiscalDocumentKind,
     cTribNac: string,
+    ambiente: DfeAmbiente,
   ): Promise<{ vServCents: number; payload: DpsPayload; cnpjEmitente: string; partnerAccountRef: string | null }> {
-    const assembly = await this.assemble(scope, saleId, kind);
+    const assembly = await this.assemble(scope, saleId, kind, ambiente);
     const group = assembly.groups.find((g) => g.cTribNac === cTribNac);
     if (!group) {
       throw new ValidationError(
@@ -381,6 +384,7 @@ export class FiscalDocumentEmissionService {
     scope: AccountingScope,
     saleId: string,
     kind: FiscalDocumentKind,
+    ambiente: DfeAmbiente | null,
   ): Promise<{
     groups: Array<{ cTribNac: string; vServCents: number; payload: DpsPayload }>;
     ledgerCents: number;
@@ -523,6 +527,10 @@ export class FiscalDocumentEmissionService {
     if (faltantes.length > 0) {
       throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
     }
+    if (ambiente === null) {
+      // null só com a porta desabilitada, e aí (viii) já agregou o faltante acima: buildPayload nunca vê null.
+      throw new Error('dfe_tpamb_invariant: montagem sem ambiente com a porta habilitada.');
+    }
 
     // ---- Montagem (a partir daqui todas as pré-condições passaram) ----
     const anchor = await this.journalEntryRepo.findBySource(scope, anchorSourceType, saleId);
@@ -581,6 +589,7 @@ export class FiscalDocumentEmissionService {
         xDescServ,
         dCompet,
         tomador,
+        ambiente,
       });
       return { cTribNac: g.cTribNac, vServCents, payload };
     });
@@ -614,6 +623,7 @@ export class FiscalDocumentEmissionService {
     xDescServ: string;
     dCompet: string;
     tomador: { cnpj?: string; cpf?: string; xNome: string } | null;
+    ambiente: DfeAmbiente;
   }): DpsPayload {
     const { fp, group, vServCents, xDescServ, dCompet, tomador } = args;
     const dhEmi = new Date().toISOString();
@@ -622,7 +632,7 @@ export class FiscalDocumentEmissionService {
       versao: '1.01',
       infDPS: {
         id: buildDpsId(fp.codMun ?? '0000000', args.cnpjEmitente, fp.dpsSerie, 0), // nDPS real é injetado após nextNumber()
-        tpAmb: 1,
+        tpAmb: tpAmbFor(args.ambiente),
         dhEmi,
         verAplic: DPS_VERAPLIC,
         serie: fp.dpsSerie,

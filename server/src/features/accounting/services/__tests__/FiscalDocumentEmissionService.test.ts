@@ -18,6 +18,7 @@ jest.mock('../../../../lib/factory', () => ({
 }));
 
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
+import { NullEmissor } from '../../dfe/NullEmissor';
 import { SERVICE_REVENUE_ACCOUNT } from '../../sync/mappers/revenueSplit';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
@@ -431,6 +432,151 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect(payload.infDPS.prest.regTrib.opSimpNac).toBe(3);
     expect('pTotTribSN' in payload.infDPS.valores.trib.totTrib).toBe(true);
     expect(payload.infDPS.IBSCBS).toBeUndefined();
+  });
+});
+
+describe('FiscalDocumentEmissionService — Id da DPS [102] (GAP-MAP: tpInsc do Id)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+  });
+
+  // Anexo I v1.01, aba LEIAUTE, linha 102: "Tipo de inscrição Federal = 1 / CPF …; = 2 / CNPJ".
+  // Spec X10b (BE-INCR-DFE-brief.md §1 [102]): "DPS" + cLocEmi(7) + "2" + CNPJ(14) + serie(5) + nDPS(15).
+  it('emitente CNPJ: o tipo de inscrição do Id é 2 (CNPJ), não 1 (CPF)', async () => {
+    const { service } = makeService({
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    const id = result.payloads[0].infDPS.id;
+    expect({ tpInsc: id.slice(10, 11), id }).toEqual({
+      tpInsc: '2',
+      id: 'DPS' + '3550308' + '2' + '11222333000181' + '00001' + '0'.repeat(15),
+    });
+  });
+});
+
+describe('FiscalDocumentEmissionService — tpAmb [103] = ambiente do documento (BE-INCR-DFE-TPAMB itens 1-4)', () => {
+  function setup(partner: 'manual' | 'null' | '', ambiente: 'producao' | 'homologacao' | '') {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: partner, DFE_PARTNER_ENV: ambiente, NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    // Dois cTribNac distintos → dois grupos: a prévia precisa acertar TODOS os payloads (item 4).
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+      { data: { serviceId: 'srv-B', type: 'Service', description: 'Escova', quantity: 1, unitPrice: 100 } },
+    ]);
+    return makeService({
+      serviceProfiles: {
+        'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null },
+        'srv-B': { cTribNac: '060201', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null },
+      },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 20000n }],
+    });
+  }
+
+  function createSentArgs(repo: ReturnType<typeof makeService>['repo']) {
+    return (repo.createSent.mock.calls as unknown as Array<[unknown, { ambiente: string; payloadJson: string }]>).map((c) => c[1]);
+  }
+
+  it('item 1 — emissão em homologacao (null): createSent grava tpAmb 2 junto de ambiente homologacao, e a porta recebe tpAmb 2', async () => {
+    const { service, repo } = setup('null', 'homologacao');
+    const emitir = jest.spyOn(NullEmissor.prototype, 'emitir');
+    await service.emit(SCOPE, SALE_ID, 'NFSE');
+    const gravados = createSentArgs(repo).map((d) => ({ ambiente: d.ambiente, tpAmb: JSON.parse(d.payloadJson).infDPS.tpAmb }));
+    const enviados = emitir.mock.calls.map((c) => ({ ambiente: c[0].ambiente, tpAmb: (c[0].payload as { infDPS: { tpAmb: number } }).infDPS.tpAmb }));
+    expect({ gravados, enviados }).toEqual({
+      gravados: [{ ambiente: 'homologacao', tpAmb: 2 }, { ambiente: 'homologacao', tpAmb: 2 }],
+      enviados: [{ ambiente: 'homologacao', tpAmb: 2 }, { ambiente: 'homologacao', tpAmb: 2 }],
+    });
+  });
+
+  it('item 2 — controle: emissão em producao (null) grava e envia tpAmb 1', async () => {
+    const { service, repo } = setup('null', 'producao');
+    const emitir = jest.spyOn(NullEmissor.prototype, 'emitir');
+    await service.emit(SCOPE, SALE_ID, 'NFSE');
+    const gravados = createSentArgs(repo).map((d) => ({ ambiente: d.ambiente, tpAmb: JSON.parse(d.payloadJson).infDPS.tpAmb }));
+    const enviados = emitir.mock.calls.map((c) => (c[0].payload as { infDPS: { tpAmb: number } }).infDPS.tpAmb);
+    expect({ gravados, enviados }).toEqual({
+      gravados: [{ ambiente: 'producao', tpAmb: 1 }, { ambiente: 'producao', tpAmb: 1 }],
+      enviados: [1, 1],
+    });
+  });
+
+  it('item 3 — modo manual em homologacao: a DPS gravada e a ficha mostram tpAmb 2', async () => {
+    const { service, repo } = setup('manual', 'homologacao');
+    const views = await service.emit(SCOPE, SALE_ID, 'NFSE');
+    const createdDocs = await Promise.all(
+      (repo.createSent.mock.results as Array<{ value: Promise<Record<string, unknown>> }>).map((r) => r.value),
+    );
+    repo.findById.mockImplementation(async (_s: unknown, id: string) => createdDocs.find((d) => d.id === id) ?? null);
+    const gravados = createSentArgs(repo).map((d) => JSON.parse(d.payloadJson).infDPS.tpAmb);
+    const fichas = await Promise.all(views.map((v) => service.ficha(SCOPE, v.id)));
+    expect({ gravados, ficha: fichas.map((f) => (f.payload as { infDPS: { tpAmb: number } }).infDPS.tpAmb) }).toEqual({
+      gravados: [2, 2],
+      ficha: [2, 2],
+    });
+  });
+
+  it('item 4 — prévia em homologacao: todo payload sai com tpAmb 2', async () => {
+    const { service } = setup('null', 'homologacao');
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    expect(result.payloads.map((p) => p.infDPS.tpAmb)).toEqual([2, 2]);
+  });
+
+  it('item 4 — prévia com porta desabilitada: ok=false, nenhum payload montado (nenhum tpAmb "neutro")', async () => {
+    const { service } = setup('', '');
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(false);
+    expect(result.payloads).toEqual([]);
+  });
+
+  it('item 7 (F-AMB-3 a) — tpAmb adulterado na montagem: emit lança dfe_tpamb_invariant e createSent nunca é chamado', async () => {
+    const { service, repo } = setup('null', 'homologacao');
+    type Assembled = { groups: Array<{ payload: { infDPS: { tpAmb: number } } }> };
+    const internals = service as unknown as { assemble: (...args: unknown[]) => Promise<Assembled> };
+    const original = internals.assemble.bind(service);
+    jest.spyOn(internals, 'assemble').mockImplementation(async (...args: unknown[]) => {
+      const assembled = await original(...args);
+      for (const g of assembled.groups) g.payload.infDPS.tpAmb = 1; // um 3º caminho de montagem que errasse o tpAmb
+      return assembled;
+    });
+    await expect(service.emit(SCOPE, SALE_ID, 'NFSE')).rejects.toThrow(/dfe_tpamb_invariant/);
+    expect(repo.createSent).not.toHaveBeenCalled();
   });
 });
 
