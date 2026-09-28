@@ -152,6 +152,7 @@ import type {
 import { SalesCancellationService } from '../features/sales/services/SalesCancellationService';
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
+import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
 
@@ -496,6 +497,7 @@ export class ApplicationFactory {
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
+    moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
     depreciationRateSeed: DepreciationRateSeedService;
@@ -725,6 +727,8 @@ export class ApplicationFactory {
       dynamicTableService,
       this.repositories.dynamicTable
     );
+    // I8 comportamento 8 — ligar módulo depois (orquestra install + sync do PresetSyncService).
+    const moduleInstallService = new ModuleInstallService(presetSyncService, this.repositories.dynamicTable);
 
     const referentialMappingService = new ReferentialMappingService(
       this.repositories.referentialMapping,
@@ -1149,6 +1153,7 @@ export class ApplicationFactory {
       accountingReview: accountingReviewService,
       packageBalance: packageBalanceService,
       presetSync: presetSyncService,
+      moduleInstall: moduleInstallService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
       savedTableView: new SavedTableViewService(
         this.repositories.savedTableView,
@@ -1335,6 +1340,7 @@ export class ApplicationFactory {
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
+  public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
 

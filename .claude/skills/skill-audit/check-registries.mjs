@@ -44,6 +44,21 @@ const REGISTRIES = [
     registry: 'server/src/features/dynamicTables/presets/index.ts',
     ref: (f) => basename(f, '.ts'), // identificador importado e usado no objeto tablePresetSuites
   },
+  // I8 (BE-INCR-CRM-MODULE-COMPOSITION) c13: tabela de preset do CRM sem módulo no registro — a tabela
+  // ficaria fora de CRM-0..3 (não instala por módulo, não aparece no sync/nav). Categoria `leads` hoje =
+  // os módulos Lead* de core/ + todo crm/.
+  {
+    name: 'tabela de preset CRM em modules/registry.ts (core/Lead*)',
+    dir: 'server/src/features/dynamicTables/presets/modules/core', kind: 'files', match: /^Lead.*Module\.ts$/,
+    registry: 'server/src/features/dynamicTables/presets/modules/registry.ts',
+    ref: (f) => `'./core/${basename(f, '.ts')}'`,
+  },
+  {
+    name: 'tabela de preset CRM em modules/registry.ts (crm/)',
+    dir: 'server/src/features/dynamicTables/presets/modules/crm', kind: 'files', match: /Module\.ts$/,
+    registry: 'server/src/features/dynamicTables/presets/modules/registry.ts',
+    ref: (f) => `'./crm/${basename(f, '.ts')}'`,
+  },
   // STUBS desativados — reativar só com falha real:
   // { name:'chat tool com handler', ... }  // getTools()↔handleToolCall(): string-key, intra-arquivo
   // { name:'widget no switch', ... }       // WIDGET_TYPES↔renderWidgetContent

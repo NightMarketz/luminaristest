@@ -39,7 +39,11 @@ async function ensureDefaultPipelineAndStages(ctx: RuleContext, unitId: string) 
     { name: 'Ganho', order: 5, defaultWinProbability: 100, type: 'closed_won' },
     { name: 'Perdido', order: 6, defaultWinProbability: 0, type: 'closed_lost' },
   ];
-  for (const s of stages) {
+  // I8 comportamento 6: sem o módulo CRM-1 (Propostas → tabela leadProposals), o funil não ganha etapa do
+  // tipo `proposal` — o ramo de proposta do advanceStage não teria onde gravar. Tenants com Propostas: inalterado.
+  const proposalsTable = await getTable(ctx, 'leads', 'leadProposals', 'Lead Proposals');
+  const seeded = proposalsTable ? stages : stages.filter((s) => s.type !== 'proposal');
+  for (const s of seeded) {
     await ctx.repository.createData(stagesTable.id, {
       pipelineId: pipeline.id,
       name: s.name,

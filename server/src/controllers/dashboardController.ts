@@ -32,9 +32,13 @@ interface FiscalDoOnboarding {
 import type { UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
 import type { UserContext } from '@/lib/authUtils';
 
-import { UnauthorizedError, ValidationError } from '@/lib/errors';
+import { ForbiddenError, UnauthorizedError, ValidationError } from '@/lib/errors';
+import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
+import { Role } from '@/features/users/models/User.model';
 import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
 import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
+import { composeModuleTables, type ModuleKey } from '@/features/dynamicTables/presets/modules/registry';
+import { applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { CoreSystemPreset, tablePresetSuites, PresetSuite, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -75,6 +79,8 @@ export async function createDashboard(req: Request, res: Response) {
         payload.addedFields || {},
         payload.unit,
         payload.fiscal,
+        payload.modules,
+        payload.selectOverrides,
         res
       );
     } else {
@@ -83,6 +89,8 @@ export async function createDashboard(req: Request, res: Response) {
         payload.suiteKey,
         payload.unit,
         payload.fiscal,
+        payload.modules,
+        payload.selectOverrides,
         res
       );
     }
@@ -197,14 +205,20 @@ async function handleCustomCreation(
   addedFields: Record<string, unknown[]>,
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
+  modules: ModuleKey[],
+  selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
   const userId = ctx.id;
   try {
     const originalPreset = await getPresetByKey(presetKey);
 
+    // I8 comportamentos 2–3: as tabelas de lead não vêm mais do Core; entram pelos módulos selecionados
+    // (body `modules` ∪ default da suíte, fechado pelas dependências do registro).
+    const installedModules = resolveModuleSelection(modules, originalPreset.modules ?? []);
     const finalTablesConfig: Record<string, PresetTableDefinition> = {
       ...CoreSystemPreset.tables,
+      ...composeModuleTables(installedModules),
       ...originalPreset.tables,
     };
 
@@ -217,6 +231,8 @@ async function handleCustomCreation(
     }
 
     if (addedFields) {
+      // I8 comportamento 10 (F-CRM-7 → a): campo extra não sombreia campo declarado por módulo.
+      assertAddedFieldsRespectModules(addedFields, finalTablesConfig);
       for (const tableKey in addedFields) {
         const fields = addedFields[tableKey] || [];
         // Validação forte de cada campo adicionado usando o DTO de criação (schema.fields)
@@ -235,6 +251,9 @@ async function handleCustomCreation(
         }
       }
     }
+
+    // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.
+    Object.assign(finalTablesConfig, applySelectOverrides(selectOverrides, finalTablesConfig));
 
     if (Object.keys(finalTablesConfig).length === 0) {
       res.status(400).json({
@@ -302,6 +321,7 @@ async function handleCustomCreation(
         presetKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        modules: { installed: installedModules },
         tables: {
           core: coreTableList,
           business: Object.keys(finalPayload.tables).filter((k) => !coreTableList.includes(k)),
@@ -318,6 +338,8 @@ async function handleQuickCreation(
   suiteKey: string,
   unit: UnitInput,
   fiscal: OnboardingFiscalInput | undefined,
+  modules: ModuleKey[],
+  selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
   const userId = ctx.id;
@@ -337,13 +359,18 @@ async function handleQuickCreation(
     }
 
     const service = getFactory().getDynamicTableService();
-    // Mescla Core + Business em um único preset para permitir referências cruzadas via @@PRESET_TABLE_KEY::
+    // I8 comportamentos 2–3: módulos selecionados (body ∪ default da suíte) entram entre o Core e a suíte.
+    const installedModules = resolveModuleSelection(modules, selectedPreset.modules ?? []);
+    // Mescla Core + Módulos + Business em um único preset para permitir referências cruzadas via @@PRESET_TABLE_KEY::
     const mergedPreset = {
       tables: {
         ...CoreSystemPreset.tables,
+        ...composeModuleTables(installedModules),
         ...(selectedPreset.tables || {}),
       },
     };
+    // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.
+    mergedPreset.tables = applySelectOverrides(selectOverrides, mergedPreset.tables);
 
     // Validate analytics configurations if present
     const analyticsConfigs = (selectedPreset as { analytics?: unknown[] }).analytics;
@@ -373,7 +400,7 @@ async function handleQuickCreation(
     if (fiscalDoOnboarding === null) return;
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
-    const businessTableList = Object.keys(selectedPreset.tables || {});
+    const businessTableList = Object.keys(mergedPreset.tables).filter((k) => !coreTableList.includes(k));
 
     return res.status(201).json({
       success: true,
@@ -382,6 +409,7 @@ async function handleQuickCreation(
         suiteKey,
         unitId,
         fiscal: fiscalDoOnboarding,
+        modules: { installed: installedModules },
         tables: {
           core: coreTableList,
           business: businessTableList,
@@ -508,3 +536,23 @@ export async function deleteUserSystem(req: Request, res: Response) {
 }
 
 
+
+/**
+ * POST /api/dashboard/modules/install — BE-INCR-CRM-MODULE-COMPOSITION (I8), comportamento 8.
+ * Liga UM módulo do registro num tenant existente. ADMIN-ONLY (cria tabelas), como o `install-table`.
+ */
+export async function installModule(req: Request, res: Response) {
+  try {
+    const ctx = getUserContextFromRequest(req);
+    if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
+    if (ctx.role !== Role.ADMIN) {
+      throw new ForbiddenError('Apenas administradores podem instalar módulos.');
+    }
+    const body = InstallModuleSchema.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ success: false, error: 'Payload inválido', details: body.error.issues });
+    const data = await getFactory().getModuleInstallService().installModule(ctx, body.data.moduleKey);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+}

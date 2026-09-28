@@ -1,47 +1,23 @@
 import type { PresetSuite } from '..';
-import { createTableFromModule } from '../../utils/TableFactory';
-import { leadPipelinesModule } from '../modules/core/LeadPipelinesModule';
-import { leadStagesModule } from '../modules/core/LeadStagesModule';
-import { leadsModule } from '../modules/core/LeadsModule';
-import { leadProposalsModule } from '../modules/core/LeadProposalsModule';
-import { leadActivitiesModule } from '../modules/core/LeadActivitiesModule';
-import { crmContactsModule } from '../modules/crm/CrmContactsModule';
-import { crmAccountsModule } from '../modules/crm/CrmAccountsModule';
-import { opportunitiesModule } from '../modules/crm/OpportunitiesModule';
+import { composeModuleTables, MODULE_KEYS } from '../modules/registry';
 
 /**
  * @description
  * CRM Module — a **selectable** preset suite (NOT auto-installed in CoreSystemPreset).
  *
- * It expands the lead ecosystem (already part of Core) into a complete CRM:
- * pipelines, stages, leads, proposals and activities PLUS dedicated
- * Accounts (companies) and Contacts (people).
+ * BE-INCR-CRM-MODULE-COMPOSITION (I8) — comportamento 4: a suíte é a COMPOSIÇÃO
+ * CRM-0 (Funil) + CRM-1 (Propostas) + CRM-2 (Contas e contatos) + CRM-3 (Oportunidades)
+ * do registro de módulos (`../modules/registry.ts`) — as mesmas 8 tabelas, com os mesmos
+ * schemas, que ela já instalava (prova em `__tests__/CrmModulePreset.test.ts`).
  *
- * Depends on Core infrastructure tables (`units`, `employees`) for its relations,
- * exactly like the existing leads tables do.
- *
- * Isolation note: this file does not mutate any Core module. The leads↔contact/account
- * cross-links live on the CRM-side tables (crmContacts.leadId, crmContacts.accountId).
+ * Depends on Core infrastructure tables (`units`, `employees`) for its relations.
  */
 export const CrmModulePreset: PresetSuite = {
   key: 'crmModule',
   name: 'Módulo CRM',
   description: 'CRM completo: funil de leads, propostas, atividades, contas e contatos.',
-  tables: {
-    // --- Pipeline core (reused from the lead ecosystem) ---
-    leadPipelines:  createTableFromModule(leadPipelinesModule),
-    leadStages:     createTableFromModule(leadStagesModule),
-    leads:          createTableFromModule(leadsModule),
-    leadProposals:  createTableFromModule(leadProposalsModule),
-    leadActivities: createTableFromModule(leadActivitiesModule),
-
-    // --- CRM-specific entities ---
-    crmAccounts:    createTableFromModule(crmAccountsModule),
-    crmContacts:    createTableFromModule(crmContactsModule),
-
-    // --- First-class Opportunity (parallel to the lead pipeline) ---
-    crmOpportunities: createTableFromModule(opportunitiesModule),
-  },
+  modules: [...MODULE_KEYS],
+  tables: composeModuleTables(MODULE_KEYS),
 };
 
 export default CrmModulePreset;

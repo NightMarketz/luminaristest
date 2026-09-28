@@ -16,6 +16,7 @@ import { suppliersModule } from '../modules/people/SuppliersModule';
 import { otherRevenuesModule } from '../modules/finance/OtherRevenuesModule';
 import { financialBaselinesModule } from '../modules/finance/FinancialBaselinesModule';
 import { commissionsModule } from '../modules/finance/CommissionsModule';
+import type { ModuleKey } from '../modules/registry';
 
 /**
  * @description
@@ -31,6 +32,8 @@ const BeautySalonPreset = {
   key: 'beautySalon',
   name: 'Advanced Beauty Salon ERP',
   description: 'Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.',
+  // I8 comportamento 5 (F-CRM-2 → a, ratificado 2026-09-07): CRM-0 (Funil) + CRM-1 (Propostas); CRM-2/3 OFF.
+  modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
   tables: {
     customers: createTableFromModule(customerModule),
     suppliers: createTableFromModule(suppliersModule),

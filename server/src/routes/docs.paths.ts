@@ -696,6 +696,14 @@
  *                       properties:
  *                         regime: { type: string, enum: [MEI, SIMPLES, PRESUMIDO, REAL, NAO_SEI] }
  *                         grandePorte: { type: boolean, nullable: true }
+ *                     modules:
+ *                       type: array
+ *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                     selectOverrides:
+ *                       type: object
+ *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
+ *                       additionalProperties: { type: object, additionalProperties: { type: array, items: { type: string } } }
  *                 - type: object
  *                   required: [mode, presetKey, unit]
  *                   properties:
@@ -722,9 +730,18 @@
  *                       items: { type: string }
  *                     addedFields:
  *                       type: object
+ *                       description: 'I8 - a field declared by a module table cannot be shadowed (400)'
  *                       additionalProperties:
  *                         type: array
  *                         items: { type: object }
+ *                     modules:
+ *                       type: array
+ *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit)'
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *                     selectOverrides:
+ *                       type: object
+ *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
+ *                       additionalProperties: { type: object, additionalProperties: { type: array, items: { type: string } } }
  *       responses:
  *         '201':
  *           description: Dashboard created successfully
@@ -736,6 +753,33 @@
  *                   success: { type: boolean, example: true }
  *                   message: { type: string }
  *                   data: { type: object }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/dashboard/modules/install:
+ *     post:
+ *       summary: Turn on ONE module of the registry for an existing tenant (admin-only)
+ *       description: >
+ *         BE-INCR-CRM-MODULE-COMPOSITION (I8) behavior 8. Installs the module tables in registry order
+ *         (install-table primitive), then runs the additive sync-preset on installed tables whose preset
+ *         relates to the module (e.g. leads.accountId after CRM-2). Idempotent - an installed module answers
+ *         status already-installed. A dependency module not installed yields 400 naming it. Requires ADMIN.
+ *       tags: [Dashboard]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [moduleKey]
+ *               additionalProperties: false
+ *               properties:
+ *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2, CRM-3] }
+ *       responses:
+ *         '200':
+ *           description: 'Install result { status: installed | already-installed, tables, synced }'
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
