@@ -55,6 +55,5 @@ Regras normativas da camada Analytics KPI, cada uma coberta por pelo menos um ca
 - `AKPI-004` — `previousValue` é `undefined` (tipado `number | undefined`) quando não há período anterior, nunca `0`.
 - `AKPI-005` — registro em `kpis/<category>/index.ts` via `registerProcessor` + `import` do template (auto-`registerTemplate`); KPI não-registrado é órfão.
 
-Status `draft`: ainda **não validado** — sem `governance-eval-score`/`REPORT.md`. `eval-score`/`last-evaluated`
-no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; só aparecem quando a
-skill for promovida a `validated` pelo `skill-audit`.
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

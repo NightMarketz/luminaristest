@@ -60,6 +60,5 @@ Regras normativas da camada Controller, cada uma coberta por um caso de eval com
 - `CTL-005` — `handleApiError(error, res)` em todo `catch`, nunca `res.status(500).json()` manual.
 - `CTL-006` — `return` antes de cada `res.json` para evitar "headers already sent" (caso `edge-1`).
 
-Status `draft`: os gates ainda não foram executados pelo skill-audit. `eval-score`/`last-evaluated`
-são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; a promoção a `validated` cabe só
-ao skill-audit (SG-048).
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.

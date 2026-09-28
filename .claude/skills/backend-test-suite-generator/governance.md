@@ -63,4 +63,4 @@ Regras normativas da camada Test Suite, cada uma coberta por um caso de eval com
 - `TEST-006` — shape da suíte middleware: token ausente/inválido rejeita, token válido popula `req`.
 - `TEST-007` — determinismo: `referenceDate` fixo e money via `toBeCloseTo(value, 2)`, nunca `new Date()` solto nem `toBe`/`toEqual` em float.
 
-`status: draft` — skill ainda não validada; `eval-score`/`score` ausentes de propósito (serão projeção do `REPORT.md` por SG-011 após a primeira execução do auditor). `last_evaluated` registra a data de autoria das regras, não uma execução de eval aprovada.
+`status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `last_evaluated` registra a data de autoria das regras, não uma execução de eval aprovada.

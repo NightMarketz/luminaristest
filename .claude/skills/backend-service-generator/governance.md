@@ -74,6 +74,5 @@ Regras normativas da camada Service, cada uma coberta por pelo menos um caso de 
 - `SVC-007` — registro em `lib/factory.ts`: repo/policy antes do service + getter `get<Resource>Service()`.
 - `SVC-008` — service que chama `postEntry` (com ou sem subrazão) nasce com o cabeçalho `atomicUntil` (5 linhas) + 3 testes por linha; 2 commits + reconcile, nunca "mesma tx" (Contrato §2.3) — caso `happy-2`. Verificador real = `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (PR-B, GAP-MAP fila 9); até lá `[PAPEL]`.
 
-Status `draft`: ainda **não validado** — sem `governance-eval-score`/`REPORT.md`. `eval-score`/`last-evaluated`
-no frontmatter da skill são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão; só aparecem quando a
-skill for promovida a `validated`.
+Status `validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit). `eval-score`/`last-evaluated`
+são **projeção** do `REPORT.md` (SG-011) — nunca editados à mão.
