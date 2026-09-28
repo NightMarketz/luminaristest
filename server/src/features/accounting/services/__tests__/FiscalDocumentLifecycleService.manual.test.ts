@@ -282,6 +282,24 @@ describe('cancelamentoManual — item 13 (F-MAN-5 a) e F-MAN-2b (b)', () => {
     const { service } = makeService(manualDoc());
     await expect(service.cancelamentoManual(SCOPE, 'doc-m', { cMotivo: 1, xMotivo: 'x'.repeat(20) }, evento(CHAVE, '1'))).rejects.toMatchObject({ statusCode: 409 });
   });
+
+  /**
+   * GAP-MAP [ABERTO] "NFS-e manual — assinatura do XML do evento de cancelamento não é verificada" (validado em
+   * 7ce5fdd2, 28/09). Autorização do dono (questionário, 28/09/2026): "GAP 3, 4 e 5" — instrumentação → correção.
+   * Esperado: como o retorno manual (F-MAN-1 a, `verifyNfseSignature`), um XML de evento SEM assinatura — forjável com
+   * a chave do documento e o cMotivo informado — é recusado com 422 e o documento não vira CANCELLED.
+   */
+  it('GAP-MAP evento: XML de evento sem assinatura, com a chave e o cMotivo certos → 422, nada escrito', async () => {
+    const { service, repo, postingService } = makeService(autorizado());
+    const forjado = evento(CHAVE, '1');
+    expect(forjado.toString('utf8')).not.toMatch(/<(\w+:)?Signature[\s>]/); // cenário: nenhuma assinatura no XML
+    await expect(service.cancelamentoManual(SCOPE, 'doc-m', { cMotivo: 1, xMotivo: 'valor digitado errado no portal' }, forjado)).rejects.toMatchObject({
+      statusCode: 422,
+      message: expect.stringMatching(/assinatura/),
+    });
+    expect(repo.transition).not.toHaveBeenCalled();
+    expect(postingService.retireSourceDocument).not.toHaveBeenCalled();
+  });
 });
 
 describe('F-MAN-2 (c) + F-MAN-2b (b) — tabela de transições', () => {
