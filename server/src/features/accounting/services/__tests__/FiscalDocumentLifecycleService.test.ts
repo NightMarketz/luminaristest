@@ -207,8 +207,14 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
     expect(repo.transition).toHaveBeenCalledWith(
       SCOPE,
       'doc-1',
-      expect.objectContaining({ status: 'AUTHORIZED', chaveOuCodigo: 'CHAVE-XYZ', sourceDocumentId: 'srcdoc-1' }),
+      expect.objectContaining({ status: 'AUTHORIZED', chaveOuCodigo: 'CHAVE-XYZ' }),
       expect.anything(),
+    );
+    // GAP-MAP applyResult (fork do dono 28/09): anexos e proveniência gravados DEPOIS da tx de autorização.
+    expect(repo.transition).toHaveBeenLastCalledWith(
+      SCOPE,
+      'doc-1',
+      { status: 'AUTHORIZED', xmlAttachmentId: expect.any(String), pdfAttachmentId: expect.any(String), sourceDocumentId: 'srcdoc-1' },
     );
     expect(auditService.append).toHaveBeenCalledWith(
       expect.anything(),
