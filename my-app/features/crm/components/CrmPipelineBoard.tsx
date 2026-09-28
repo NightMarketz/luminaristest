@@ -17,6 +17,7 @@ import FloatingActionButton from '../../dashboard/components/shared/FloatingActi
 import { LeadCard } from './LeadCard';
 import { Lead360Modal } from './Lead360Modal';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
+import { MeetingCaptureModal } from './MeetingCaptureModal';
 import { useCrmPipelineBoard, type PipelineColumn } from '../hooks/useCrmPipelineBoard';
 import { OWNER_FILTER_ALL } from '../hooks/useOwnerFilter';
 import type { CrmRecord } from '../hooks/useCrmData';
@@ -114,6 +115,9 @@ export function CrmPipelineBoard() {
     handleDragEnd,
     confirmProposal,
     cancelProposal,
+    pendingMeeting,
+    confirmMeeting,
+    cancelMeeting,
     reload,
   } = useCrmPipelineBoard();
 
@@ -254,6 +258,13 @@ export function CrmPipelineBoard() {
         stageName={pendingProposal?.stage.title ?? ''}
         onCancel={cancelProposal}
         onConfirm={confirmProposal}
+      />
+
+      <MeetingCaptureModal
+        isOpen={pendingMeeting !== null}
+        stageName={pendingMeeting?.stage.title ?? ''}
+        onCancel={cancelMeeting}
+        onConfirm={confirmMeeting}
       />
     </div>
   );

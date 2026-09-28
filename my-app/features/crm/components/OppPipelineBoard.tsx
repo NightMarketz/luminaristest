@@ -278,6 +278,7 @@ export function OppPipelineBoard() {
         stageName={pendingProposal?.stage.title ?? ''}
         onCancel={cancelProposal}
         onConfirm={confirmProposal}
+        requireWinProbability={false}
       />
     </div>
   );

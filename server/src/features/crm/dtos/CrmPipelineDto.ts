@@ -10,16 +10,15 @@ import { CURRENCIES, DEFAULT_CURRENCY } from '../constants';
  *       properties:
  *         leadId:    { type: string }
  *         stageId:   { type: string }
- *         stageType: { type: string, description: "init|meeting|proposal|negotiation|closed_won|closed_lost" }
  *         meetingAt: { type: string, format: date-time }
  *         amount:    { type: number }
  *         currency:  { type: string, enum: [BRL, USD, EUR] }
  *         winProbability: { type: number }
  */
-export const AdvanceStageSchema = z.object({
+// strict: a proposta vem do type gravado da etapa; stageType do cliente é 400, não descarte silencioso.
+export const AdvanceStageSchema = z.strictObject({
   leadId: z.string().min(1),
   stageId: z.string().min(1),
-  stageType: z.string().optional(),
   meetingAt: z.string().datetime().optional(),
   amount: z.number().positive().optional(),
   currency: z.enum(CURRENCIES).optional(),

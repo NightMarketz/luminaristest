@@ -1,6 +1,11 @@
 # ADR-ANALYTICS-DEFS — Escrita de definições de analytics (destravar × apagar × congelar)
 
 - **Data:** 2026-08-01 · **Emendas de F-AD6:** 2026-08-02 (duas análises independentes — ver aviso abaixo)
+- **Emenda 2026-09-26 (DECISÃO DO DONO, via AskUserQuestion, planejamento do builder CRM — nó `CRM-RB`):**
+  **`F-AD5` → (b) builder dedicado** — nasce no CRM como `CrmReportDefinition` (Prisma first-class, **não** reabre
+  `F-AD0`: `analyticsDefinitions` segue congelada); **`F-AD6` → apagar `/api/analytics/custom-kpis`** (o gatilho
+  "manter até F-AD5 fechar" disparou). Origem: fork `F-RB6=(a)` de `docs/crm/BE-INCR-CRM-REPORT-BUILDER-brief.md`.
+  A remoção é código — entra no checklist do BRIEF e exige "executa"; esta emenda só registra a decisão.
 - **Status:** **Accepted (parcial) — RATIFICADO POR SINAL HUMANO 2026-08-01: `F-AD0 → (c) manter
   congelado`.** `F-AD5` (a tela) fica **explicitamente aberto** — e é ele que reabre este ADR.
   `F-AD1`, `F-AD2`, `F-AD3`, `F-AD4` ficam **dormentes** (só existem sob `F-AD0=(a)`).
@@ -340,7 +345,7 @@ cru voltar a ser necessário. **(b)** só se o dono quiser a garantia independen
 robusta e a mais cara. Fechar o oráculo de §2.2 (mover o `getTableById` de `:329` para dentro do `try`, ou
 uniformizar a resposta) é item pequeno e independente destes três.
 
-### F-AD5 — A tela — 🔓 **ABERTO** (é ela que reabre este ADR)
+### F-AD5 — A tela — ✅ **DECIDIDO 2026-09-26 (dono, AskUserQuestion): (b) builder dedicado** — no CRM, `CrmReportDefinition` Prisma (F-RB1/F-RB6 do BRIEF `BE-INCR-CRM-REPORT-BUILDER`); F-AD0 permanece (c)
 
 | Opção | Consequência | Custo |
 |---|---|---|
@@ -352,7 +357,7 @@ uniformizar a resposta) é item pequeno e independente destes três.
 **(c) torna todo o resto deste ADR desnecessário**, porque o caminho de seed/sistema nunca passou por
 `canManageData`. Se a resposta for (c), F-AD0 deve fechar em (b) ou (c).
 
-### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **DECIDIDO: (a) MANTER até F-AD5 fechar**
+### F-AD6 — `/api/analytics/custom-kpis` (E12): o irmão órfão — ✅ **DECIDIDO: (a) MANTER até F-AD5 fechar** → **EMENDA 2026-09-26 (dono): F-AD5 fechou ⇒ (b) APAGAR** (execução no checklist do BRIEF CRM-RB, sob 'executa')
 
 > **RATIFICADO POR SINAL HUMANO 2026-08-02: `F-AD6 → (a) manter`.** Perguntado se **há superfície de
 > execução ad-hoc de KPI no roadmap** — preview de builder, painel "monte seu KPI", ferramenta de KPI do

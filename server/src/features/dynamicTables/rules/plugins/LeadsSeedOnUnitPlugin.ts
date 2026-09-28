@@ -36,6 +36,8 @@ async function ensureDefaultPipelineAndStages(ctx: RuleContext, unitId: string) 
     { name: 'Reunião Agendada', order: 2, defaultWinProbability: 30, type: 'meeting' },
     { name: 'Proposta Enviada', order: 3, defaultWinProbability: 60, type: 'proposal' },
     { name: 'Fechamento', order: 4, defaultWinProbability: 80, type: 'negotiation' },
+    { name: 'Ganho', order: 5, defaultWinProbability: 100, type: 'closed_won' },
+    { name: 'Perdido', order: 6, defaultWinProbability: 0, type: 'closed_lost' },
   ];
   for (const s of stages) {
     await ctx.repository.createData(stagesTable.id, {

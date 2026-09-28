@@ -90,8 +90,10 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (X13 PR-2, item 16): company-fiscal-profile/{ano}/ecf-transmitida (POST) — 215 → 216.
 // +2 (BE-INCR-FIXED-ASSETS PR-4, item 23/F-FA15 a + item 22): GET /data-exchange/jobs (lista) e
 // POST /data-exchange/jobs/{jobId}/waive-ecf-rectification — 216 → 218.
-// +1 (LAC-B, FE-INCR-BINDING-ACTIVATION item 1): POST /accounting-binding/activate-default — 218 → 219.
-const BASELINE = 219;
+// +4 (BE-INCR-DFE-MANUAL, itens 11–14): /nfe/dfe/documents/{id}/{ficha,retorno-manual,rejeicao-manual,
+// cancelamento-manual} — 218 → 222.
+// +1 (LAC-B, FE-INCR-BINDING-ACTIVATION item 1): POST /accounting-binding/activate-default — 222 → 223.
+const BASELINE = 223;
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

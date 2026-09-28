@@ -113,5 +113,14 @@ export const opportunitiesModule = {
       { name: 'closedAt', label: 'Closed At', type: 'datetime', required: false, readOnly: true, searchable: false },
       notes,
     ],
+    // Won/Lost is terminal (owner decision 2026-09-25, ADR-CRM-AR-SEAM amendment): a won deal already
+    // booked its receivable, so edits would drift CRM × ledger. Fix a wrong win by cancelling the receivable.
+    immutableAfter: [
+      {
+        condition: { field: 'status', op: 'in', value: ['Won', 'Lost'] },
+        scope: 'all',
+        errorMessage: 'Closed opportunities (Won/Lost) cannot be edited.',
+      },
+    ],
   } as ITableSchema,
 };

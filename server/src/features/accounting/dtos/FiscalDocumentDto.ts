@@ -29,7 +29,7 @@ export const FiscalDocumentListQuerySchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().optional(),
-    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'REJECTED', 'CANCELLED']).optional(),
+    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED']).optional(), // AUTHORIZED_DIVERGENT: F-MAN-2 (c)
     // item 30 (PR-3): true = só documentos com pendências (sale_cancelled_with_live_document |
     // cancelled_without_replacement). `queryBoolean()`, nunca `z.coerce.boolean()` (memória
     // zod-coerce-boolean-inverte-query-string) — ausente = false = sem filtro.
@@ -58,3 +58,27 @@ export const WebhookParamsSchema = z.object({ partner: z.string().min(1) }).stri
 /** BE-INCR-DFE (itens 26/27) — corpo mínimo de /consultar e /reenviar: só o escopo (o :id já
  *  identifica o documento). */
 export const FiscalDocumentActionBodySchema = z.object({ unitId: z.string().min(1) }).strict();
+
+/**
+ * BE-INCR-DFE-MANUAL (itens 11–13) — retorno manual. O arquivo (XML da NFS-e autorizada / XML do evento de
+ * cancelamento) chega pelo multer; o corpo só carrega o escopo e, na rejeição, os erros que o portal mostrou.
+ */
+export const RetornoManualBodySchema = z.object({ unitId: z.string().min(1) }).strict();
+
+export const RejeicaoManualSchema = z
+  .object({
+    unitId: z.string().min(1),
+    errors: z
+      .array(z.object({ code: z.string().min(1).max(20), message: z.string().min(1).max(500) }).strict())
+      .min(1)
+      .max(20),
+  })
+  .strict();
+export type RejeicaoManualInput = z.infer<typeof RejeicaoManualSchema>;
+
+/**
+ * F-MAN-5 (a) — cancelamento manual: o corpo reusa `CancelFiscalDocumentSchema` (item 13) e o XML do evento
+ * `e101101` chega pelo multer. O `cMotivo` do corpo tem de ser o do XML (senão 422 — parâmetro aceito e ignorado é
+ * bug); o texto gravado é o `xMotivo` do XML (transcrição §7).
+ */
+export const CancelamentoManualSchema = CancelFiscalDocumentSchema;

@@ -176,8 +176,13 @@ export class PresetSyncService {
       }
     }
 
+    // Schema-level immutableAfter rules: union by structural equality (add missing, never remove).
+    const installedRules = installedSchema.immutableAfter ?? [];
+    const installedRuleKeys = new Set(installedRules.map((r) => JSON.stringify(r)));
+    const missingRules = (presetSchema.immutableAfter ?? []).filter((r) => !installedRuleKeys.has(JSON.stringify(r)));
+
     // 6) Idempotent no-op when there is nothing to add.
-    if (added.length === 0 && Object.keys(optionsAdded).length === 0) {
+    if (added.length === 0 && Object.keys(optionsAdded).length === 0 && missingRules.length === 0) {
       logger.info('PresetSync: no additive delta — schema already up to date', {
         userId: user.userId,
         internalName,
@@ -189,6 +194,7 @@ export class PresetSyncService {
     const mergedSchema: ITableSchema = {
       ...installedSchema,
       fields: [...mergedFields, ...newFields],
+      ...(missingRules.length > 0 ? { immutableAfter: [...installedRules, ...missingRules] } : {}),
     };
 
     // 5.1) Prove the merge is purely ADDITIVE (superset) before applying with revalidate 'none'.

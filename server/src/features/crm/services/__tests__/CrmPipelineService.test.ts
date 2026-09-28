@@ -46,7 +46,11 @@ function buildService(over: { dts?: any; repo?: any } = {}) {
     })),
     // Default lead row belongs to THIS tenant's leads table ('leads-table'), so the
     // cross-tenant guard in advanceStage/createProposal/recordNoShow passes by default.
-    findDataById: jest.fn(async (id: string) => ({ id, dynamicTableId: 'leads-table', data: {} })),
+    // 's2' is this tenant's stored `proposal` stage (advanceStage reads the target stage's type).
+    findDataById: jest.fn(async (id: string) =>
+      id === 's2'
+        ? { id, dynamicTableId: 'leadStages-table', data: { type: 'proposal' } }
+        : { id, dynamicTableId: 'leads-table', data: {} }),
     ...over.repo,
   };
   const svc = new CrmPipelineService(dynamicTableService as any, repository as any);
@@ -59,9 +63,9 @@ describe('CrmPipelineService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('advanceStage', () => {
-    it('cria proposta + atualiza lead na MESMA transação quando stageType=proposal', async () => {
+    it('cria proposta + atualiza lead na MESMA transação quando a etapa gravada é proposal', async () => {
       const { svc, dynamicTableService } = buildService();
-      await svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 1000, currency: 'BRL' });
+      await svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 1000, currency: 'BRL' });
 
       expect(dynamicTableService.runInTransaction).toHaveBeenCalledTimes(1);
       expect(dynamicTableService.createTableData).toHaveBeenCalledTimes(1);
@@ -80,7 +84,7 @@ describe('CrmPipelineService', () => {
     it('propaga o erro (sem swallow) se o update do lead falhar — rollback fica a cargo da transação', async () => {
       const { svc } = buildService({ dts: { updateTableData: jest.fn(async () => { throw new Error('boom'); }) } });
       await expect(
-        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 500 }),
+        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 500 }),
       ).rejects.toThrow('boom');
     });
 
@@ -96,11 +100,27 @@ describe('CrmPipelineService', () => {
         repo: { findDataById: jest.fn(async (id: string) => ({ id, dynamicTableId: 'someone-else-leads-table', data: {} })) },
       });
       await expect(
-        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', stageType: 'proposal', amount: 1000 }),
+        svc.advanceStage(user, { leadId: 'l1', stageId: 's2', amount: 1000 }),
       ).rejects.toBeInstanceOf(NotFoundError);
       expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
       expect(dynamicTableService.runInTransaction).not.toHaveBeenCalled();
+    });
+
+    // Lacuna (teste vivo 2026-09-25, GAP-MAP "advanceStage decide proposta pelo stageType do cliente"):
+    // mesma classe já corrigida em advanceOpportunity — a proposta nasce pelo `stageType` que o
+    // CLIENTE manda, não pelo `type` gravado da etapa-destino. Aqui a etapa gravada é `negotiation`.
+    it('stageType do cliente diverge da etapa gravada → NÃO cria proposta (vale o tipo da etapa)', async () => {
+      const rows: Record<string, any> = {
+        l1: { id: 'l1', dynamicTableId: 'leads-table', data: {} },
+        's-neg': { id: 's-neg', dynamicTableId: 'leadStages-table', data: { type: 'negotiation' } },
+      };
+      const { svc, dynamicTableService } = buildService({
+        repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
+      });
+      await svc.advanceStage(user, { leadId: 'l1', stageId: 's-neg', stageType: 'proposal', amount: 1000, currency: 'BRL' } as any);
+
+      expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
     });
   });
 
@@ -342,7 +362,13 @@ describe('CrmPipelineService', () => {
     // The opportunity row read by advanceOpportunity's cross-tenant guard (FIX 2). Belongs to
     // THIS tenant's crmOpportunities table (id is `${internal}-table` per the repo mock).
     const oppRow = { id: 'opp-1', dynamicTableId: 'crmOpportunities-table', data: {} };
-    const oppRepo = { findDataById: jest.fn(async () => ({ ...oppRow })) };
+    // Target stages are STORED rows of this tenant's leadStages; Won/Lost comes from their `type`.
+    const stageRows: Record<string, any> = {
+      s2: { id: 's2', dynamicTableId: 'leadStages-table', data: { type: 'proposal' } },
+      's-won': { id: 's-won', dynamicTableId: 'leadStages-table', data: { type: 'closed_won' } },
+      's-lost': { id: 's-lost', dynamicTableId: 'leadStages-table', data: { type: 'closed_lost' } },
+    };
+    const oppRepo = { findDataById: jest.fn(async (id: string) => stageRows[id] ?? { ...oppRow }) };
 
     it('aplica o patch de stage (+amount/currency/winProbability) com isSystem', async () => {
       const { svc, dynamicTableService } = buildService({
@@ -370,7 +396,7 @@ describe('CrmPipelineService', () => {
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
         repo: oppRepo,
       });
-      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won', stageType: 'closed_won' });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-won' });
 
       const call = dynamicTableService.updateTableData.mock.calls[0];
       expect(call[3]).toEqual({ isSystem: true });
@@ -378,12 +404,30 @@ describe('CrmPipelineService', () => {
       expect(typeof call[2].data.closedAt).toBe('string');
     });
 
+    // Lacuna (teste vivo 2026-09-25): o status Won é decidido pelo `stageType` que o CLIENTE
+    // manda, não pelo tipo gravado da etapa-destino — Won foi aceito numa etapa `negotiation`.
+    it('stageType do cliente diverge da etapa gravada → NÃO fecha como Won (vale o tipo da etapa)', async () => {
+      const rows: Record<string, any> = {
+        'opp-1': { ...oppRow },
+        's-neg': { id: 's-neg', dynamicTableId: 'leadStages-table', data: { type: 'negotiation' } },
+      };
+      const { svc, dynamicTableService } = buildService({
+        dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
+        repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
+      });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-neg', stageType: 'closed_won' } as any);
+
+      const call = dynamicTableService.updateTableData.mock.calls[0];
+      expect(call[2].data.status).not.toBe('Won');
+      expect(call[2].data.closedAt).toBeUndefined();
+    });
+
     it('closed_lost → status Lost + closedAt', async () => {
       const { svc, dynamicTableService } = buildService({
         dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
         repo: oppRepo,
       });
-      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-lost', stageType: 'closed_lost' });
+      await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-lost' });
 
       const call = dynamicTableService.updateTableData.mock.calls[0];
       expect(call[2].data).toEqual(expect.objectContaining({ status: 'Lost' }));
@@ -410,6 +454,27 @@ describe('CrmPipelineService', () => {
       await expect(
         svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's2' }),
       ).rejects.toBeInstanceOf(NotFoundError);
+      expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
+    });
+
+    // Lacuna (teste vivo 2026-09-25, GAP-MAP "advanceOpportunity aceita etapa de outro pipeline"):
+    // a etapa-destino só é conferida contra o tenant (leadStages), não contra o pipeline da
+    // oportunidade — etapa `closed_won` de OUTRO pipeline do mesmo tenant fecha a opp como Won.
+    it('etapa de outro pipeline do mesmo tenant → recusa, sem update', async () => {
+      const rows: Record<string, any> = {
+        'opp-1': { id: 'opp-1', dynamicTableId: 'crmOpportunities-table', data: { pipelineId: 'p1', status: 'Open' } },
+        's-other': { id: 's-other', dynamicTableId: 'leadStages-table', data: { pipelineId: 'p2', type: 'closed_won' } },
+      };
+      const { svc, dynamicTableService } = buildService({
+        dts: { updateTableData: jest.fn(async () => ({ id: 'opp-1', data: {} })) },
+        repo: { findDataById: jest.fn(async (id: string) => rows[id] ?? null) },
+      });
+      const outcome = await svc.advanceOpportunity(user, { opportunityId: 'opp-1', stageId: 's-other' }).then(
+        () => 'aceita',
+        () => 'recusada',
+      );
+
+      expect(outcome).toBe('recusada');
       expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
     });
   });

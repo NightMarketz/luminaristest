@@ -986,7 +986,8 @@ export class DynamicTableService {
 
   private validateDataAgainstSchema(data: Record<string, unknown>, tableSchema: ITableSchema, isPartial = false) {
     try {
-      let schema = this.buildZodSchema(tableSchema);
+      // Zod 4's .partial() still fills .default() for absent keys: a partial update must not reset them.
+      let schema = this.buildZodSchema(tableSchema, !isPartial);
       if (isPartial) schema = schema.partial();
       return schema.parse(data);
     } catch (error) {
@@ -1009,7 +1010,7 @@ export class DynamicTableService {
     }
   }
 
-  private buildZodSchema(tableSchema: ITableSchema): z.ZodObject<z.ZodRawShape> {
+  private buildZodSchema(tableSchema: ITableSchema, applyDefaults = true): z.ZodObject<z.ZodRawShape> {
     const shape: { [key: string]: z.ZodTypeAny } = {};
     if (!tableSchema || !Array.isArray(tableSchema.fields)) {
       throw new ValidationError('Invalid table schema definition.');
@@ -1111,7 +1112,7 @@ export class DynamicTableService {
           throw new ValidationError(`Tipo de campo desconhecido: ${field.type}`);
       }
 
-      if (field.defaultValue !== undefined) {
+      if (applyDefaults && field.defaultValue !== undefined) {
         zodField = zodField.default(field.defaultValue);
       }
 

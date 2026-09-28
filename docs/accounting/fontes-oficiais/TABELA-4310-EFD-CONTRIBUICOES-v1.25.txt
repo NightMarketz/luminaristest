@@ -1,0 +1,857 @@
+
+
+   Tabela 4.3.10 – Produtos Sujeitos a Alíquotas Diferenciadas: Incidência
+   Monofásica e por Pauta (Bebidas Frias) - CST 02 e 04
+
+
+|Código |Descrição do Produto           |NCM                   |Alíquota|Alíquot|Início de|Término de |
+|       |                               |                      |s       |as     |Escritura|Escrituraçã|
+|       |                               |                      |PIS     |COFINS |ção      |o          |
+|       |                               |                      |%       |%      |Mês/Ano  |Mês/Ano    |
+|-      |REVENDA PRODUTO MONOFÁSICO OU  |                      |        |       |         |           |
+|       |POR PAUTA (Bebidas Frias)      |                      |        |       |         |           |
+|101    |Gasolinas, Exceto Gasolina de  |2710.12.59            |5,08    |23,44  |01/2012  |           |
+|       |Aviação                        |                      |        |       |         |           |
+|102    |Óleo Diesel                    |2710.19.21            |4,21    |19,42  |01/2011  |           |
+|103    |Gás Liqüefeito de Petróleo –   |2711.19.10            |10,20   |47,40  |01/2011  |           |
+|       |GLP                            |                      |        |       |         |           |
+|104    |Querosene de Aviação           |2710.19.11            |5,00    |23,20  |01/2011  |           |
+|105    |Correntes Destinadas à         |-                     |5,08    |23,44  |01/2011  |           |
+|       |Formulação de Gasolinas        |                      |        |       |         |           |
+|106    |Correntes Destinadas à         |-                     |4,21    |19,42  |01/2011  |           |
+|       |Formulação de Óleo Diesel      |                      |        |       |         |           |
+|107    |Nafta Petroquímica Destinada à |-                     |5,08    |23,44  |01/2011  |           |
+|       |Formulação de Gasolina ou de   |                      |        |       |         |           |
+|       |Óleo Diesel                    |                      |        |       |         |           |
+|108    |Nafta Petroquímica Destinada à |-                     |4,21    |19,42  |01/2011  |           |
+|       |Formulação Exclusivamente de   |                      |        |       |         |           |
+|       |Óleo Diesel                    |                      |        |       |         |           |
+|109    |Biodiesel                      |3824.90.29            |6,15    |28,32  |01/2011  |31/12/2011 |
+|       |                               |3824.90.29 Ex 01      |        |       |         |           |
+|109    |Biodiesel                      |3826.00.00            |6,15    |28,32  |01/2012  |           |
+|       |                               |3826.00.00Ex 01       |        |       |         |           |
+|112    |Álcool, Inclusive para Fins    |2207.10.00            |1,50    |6,90   |01/2011  |09/2011    |
+|       |Carburantes – Venda por        |2207.20.10            |        |       |         |           |
+|       |Produtor ou Importador.        |2208.90.00 Ex 01      |        |       |         |           |
+|112    |Álcool, Inclusive para Fins    |2207.10               |1,50    |6,90   |10/2011  |30/04/2025 |
+|       |Carburantes – Venda por        |2207.20.1             |        |       |         |           |
+|       |Produtor ou Importador.        |2208.90.00 Ex 01      |        |       |         |           |
+|112    |Álcool, Inclusive para Fins    |2207.10               |5,25    |24,15  |01/05/202|           |
+|       |Carburantes – Venda por        |2207.20.1             |        |       |5        |           |
+|       |Produtor ou Importador.        |2208.90.00 Ex 01      |        |       |         |           |
+|113    |Álcool, Inclusive para Fins    |2207.10.00            |3,75    |17,25  |01/2011  |09/2011    |
+|       |Carburantes – Venda por        |2207.20.10            |        |       |         |           |
+|       |Distribuidor ou Comerciante Não|2208.90.00 Ex 01      |        |       |         |           |
+|       |Varejista.                     |                      |        |       |         |           |
+|113    |Álcool, Inclusive para Fins    |2207.10               |3,75    |17,25  |10/2011  |30/04/2025 |
+|       |Carburantes – Venda por        |2207.20.1             |        |       |         |           |
+|       |Distribuidor ou Comerciante Não|2208.90.00 Ex 01      |        |       |         |           |
+|       |Varejista.                     |                      |        |       |         |           |
+|114    |Etanol Não Combustível - PJ não|                      |5,25    |24,15  |01/05/202|31/12/2025 |          |
+|       |optante pelo regime especial de|                      |        |       |5        |           |          |
+|       |apuração e pagamento em 2025   |                      |        |       |         |           |          |
+|117    |Álcool, Inclusive para Fins    |2207.10.00            |5,25    |24,15  |01/12/202|30/04/2025 |          |
+|       |Carburantes – Venda efetuada   |2207.20.10            |        |       |1        |           |          |
+|       |diretamente do produtor ou do  |2208.90.00 Ex 01      |        |       |         |           |          |
+|       |importador para as pessoas     |                      |        |       |         |           |          |
+|       |jurídicas de que tratam os     |                      |        |       |         |           |          |
+|       |incisos II e III do caput do   |                      |        |       |         |           |          |
+|       |art. 68-B da Lei nº 9.478, de 6|                      |        |       |         |           |          |
+|       |de agosto de 1997              |                      |        |       |         |           |          |
+|117    |Álcool, Inclusive para Fins    |2207.10.00            |5,25    |24,15  |01/05/202|           |          |
+|       |Carburantes – Venda efetuada   |2207.20.10            |        |       |5        |           |          |
+|       |diretamente do produtor ou do  |2208.90.00 Ex 01      |        |       |         |           |          |
+|       |importador para as pessoas     |                      |        |       |         |           |          |
+|       |jurídicas de que tratam os     |                      |        |       |         |           |          |
+|       |incisos II e III do caput do   |                      |        |       |         |           |          |
+|       |art. 68-B da Lei nº 9.478, de 6|                      |        |       |         |           |          |
+|       |de agosto de 1997              |                      |        |       |         |           |          |
+|150    |Nafta Petroquímica Destinada às|-                     |1,00    |4,60   |01/2011  |17/09/2012 |
+|       |Centrais Petroquímicas         |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,00    |4,60   |18/09/201|07/05/2013 |
+|       |Destinados às Centrais         |                      |        |       |2        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |0,18    |0,82   |08/05/201|31/12/2015 |
+|       |Destinados às Centrais         |                      |        |       |3        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,11    |5,02   |01/01/201|08/03/2016 |
+|       |Destinados às Centrais         |                      |        |       |6        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |0,54    |2,46   |09/03/201|31/12/2016 |
+|       |Destinados às Centrais         |                      |        |       |6        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |0,90    |4,10   |01/01/201|31/12/2017 |
+|       |Destinados às Centrais         |                      |        |       |7        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,0     |4,6    |01/01/201|30/06/2021 |
+|       |Destinados às Centrais         |                      |        |       |8        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,13    |5,20   |01/07/202|31/12/2021 |
+|       |Destinados às Centrais         |                      |        |       |1        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,26    |5,80   |01/01/202|31/03/2022 |
+|       |Destinados às Centrais         |                      |        |       |2        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,39    |6,40   |01/01/202|31/12/2023 |
+|       |Destinados às Centrais         |                      |        |       |3        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,52    |7,00   |01/01/202|31/12/2024 |
+|       |Destinados às Centrais         |                      |        |       |4        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |1,52    |7,00   |01/01/202|28/02/2026 |
+|       |Destinados às Centrais         |                      |        |       |5        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|150    |Nafta Petroquímica e Condensado|-                     |0,62    |2,83   |01/03/202|31/12/2026 |
+|       |Destinados às Centrais         |                      |        |       |6        |           |
+|       |Petroquímicas                  |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |-                     |1,00    |4,60   |01/2011  |07/05/2013 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |         |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno e Propeno             |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |-                     |0,18    |0,82   |08/05/201|31/12/2015 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |3        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |-                     |1,11    |5,02   |01/01/201|08/03/2016 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |6        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |-                     |0,54    |2,46   |09/03/201|31/12/2016 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |6        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |0,90    |4,10   |01/01/201|31/12/2017 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |7        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,0     |4,6    |01/01/201|30/06/2021 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |8        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,13    |5,20   |01/07/202|31/12/2021 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |1        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,26    |5,80   |01/01/202|31/03/2022 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |2        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,39    |6,40   |01/01/202|31/12/2023 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |3        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,52    |7,00   |01/01/202|31/12/2024 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |4        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |1,52    |7,00   |01/01/202|28/02/2026 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |5        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|151    |Etano, Propano, Butano e       |                      |0,62    |2,83   |01/03/202|31/12/2026 |
+|       |Correntes Gasosas de Refinaria |                      |        |       |6        |           |
+|       |- HLR - Hidrocarbonetos Leves  |                      |        |       |         |           |
+|       |de Refino Destinados à Produção|                      |        |       |         |           |
+|       |de Eteno, Propeno, buteno,     |                      |        |       |         |           |
+|       |butadieno, orto-xileno,        |                      |        |       |         |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno                     |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |0,18    |0,82   |08/05/201|31/12/2015 |
+|       |butadieno, orto-xileno,        |                      |        |       |3        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,11    |5,02   |01/01/201|08/03/2016 |
+|       |butadieno, orto-xileno,        |                      |        |       |6        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |0,54    |2,46   |09/03/201|31/12/2016 |
+|       |butadieno, orto-xileno,        |                      |        |       |6        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |0,90    |4,10   |01/01/201|31/12/2017 |
+|       |butadieno, orto-xileno,        |                      |        |       |7        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,0     |4,6    |01/01/201|30/06/2021 |
+|       |butadieno, orto-xileno,        |                      |        |       |8        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,13    |5,20   |01/07/202|31/12/2021 |
+|       |butadieno, orto-xileno,        |                      |        |       |1        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,26    |5,80   |01/01/202|31/03/2022 |
+|       |butadieno, orto-xileno,        |                      |        |       |2        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,39    |6,40   |01/01/202|31/12/2023 |
+|       |butadieno, orto-xileno,        |                      |        |       |3        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,52    |7,00   |01/01/202|31/12/2024 |
+|       |butadieno, orto-xileno,        |                      |        |       |4        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,52    |7,00   |01/01/202|31/12/2027 |
+|       |butadieno, orto-xileno,        |                      |        |       |5        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Eteno, propeno, buteno,        |                      |1,52    |7,00   |01/01/202|28/02/2026 |
+|       |butadieno, orto-xileno,        |                      |        |       |5        |           |
+|       |benzeno, tolueno, isopreno e   |                      |        |       |         |           |
+|       |paraxileno para indústrias     |                      |        |       |         |           |
+|       |químicas para serem utilizados |                      |        |       |         |           |
+|       |como insumo produtivo          |                      |        |       |         |           |
+|152    |Venda de eteno, propeno,       |                      |0,62    |2,83   |01/03/202|31/12/2026 |
+|       |buteno, butenos, butadieno,    |                      |        |       |6        |           |
+|       |orto-xileno, benzeno, tolueno, |                      |        |       |         |           |
+|       |isopreno, paraxileno,          |                      |        |       |         |           |
+|       |n-parafina, óleo de palmiste,  |                      |        |       |         |           |
+|       |cumeno e 1,2-dicloroetano,     |                      |        |       |         |           |
+|       |efetuadas por indústrias       |                      |        |       |         |           |
+|       |químicas, para serem utilizados|                      |        |       |         |           |
+|       |como insumo na produção de     |                      |        |       |         |           |
+|       |polietileno, polipropileno,    |                      |        |       |         |           |
+|       |dicloroetano, etilbenzeno,     |                      |        |       |         |           |
+|       |óxido de eteno, monômero de    |                      |        |       |         |           |
+|       |cloreto de vinila, policloreto |                      |        |       |         |           |
+|       |de vinila em suspensão,        |                      |        |       |         |           |
+|       |policloreto de vinila em       |                      |        |       |         |           |
+|       |emulsão, estireno,             |                      |        |       |         |           |
+|       |acrilonitrila, acetonitrila,   |                      |        |       |         |           |
+|       |octanol, EK FILM 10 – trímeros,|                      |        |       |         |           |
+|       |álcoois secundários, resinas   |                      |        |       |         |           |
+|       |estireno-acrilato e            |                      |        |       |         |           |
+|       |estireno-butadieno, látex SB,  |                      |        |       |         |           |
+|       |anidrido ftálico, ácido        |                      |        |       |         |           |
+|       |fumárico, alquilados pesados,  |                      |        |       |         |           |
+|       |alquilbenzeno linear, anidrido |                      |        |       |         |           |
+|       |maléico, n-butanol,            |                      |        |       |         |           |
+|       |iso-butanol, ácido 2EH, ácido  |                      |        |       |         |           |
+|       |tereftálico – PTA, fenol e seus|                      |        |       |         |           |
+|       |derivados, acetona e seus      |                      |        |       |         |           |
+|       |derivados, ácidos graxos       |                      |        |       |         |           |
+|       |destilados, álcoois graxos e   |                      |        |       |         |           |
+|       |glicerinas.                    |                      |        |       |         |           |
+|153    |Vendas de gás natural e amônia |                      |0,62    |2,83   |01/03/202|31/12/2026 |
+|       |para produção de cianeto de    |                      |        |       |6        |           |
+|       |sódio, ácido cianídrico,       |                      |        |       |         |           |
+|       |metacrilatos, acetona          |                      |        |       |         |           |
+|       |cianidrina, ácido metacrílico, |                      |        |       |         |           |
+|       |hidrogênio, monóxido de carbono|                      |        |       |         |           |
+|       |e dióxido de carbono           |                      |        |       |         |           |
+|199    |Revenda de combustíveis –      |-                     |0,00    |0,00   |01/2011  |31/01/2013 |
+|       |Alíquota zero                  |                      |        |       |         |           |
+|200    |FÁRMACOS E PERFUMARIAS         |                      |        |       |         |           |
+|202    |Produtos de Perfumaria, de     |1 – Posições:         |2,20    |10,30  |01/2011  |07/03/2013 |
+|       |Toucador ou de Higiene Pessoal.|33.03 a 33.07;        |        |       |         |           |
+|       |                               |2- Códigos:           |        |       |         |           |
+|       |                               |3401.11.90, 3401.20.10|        |       |         |           |
+|       |                               |e 96.03.21.00.        |        |       |         |           |
+|202    |Produtos de Perfumaria, de     |1 – Posições:         |2,20    |10,30  |08/03/201|           |
+|       |Toucador ou de Higiene Pessoal.|33.03, 33.04, 33.05 e |        |       |3        |           |
+|       |                               |33.07;                |        |       |         |           |
+|       |                               |2- Códigos:           |        |       |         |           |
+|       |                               |3401.11.90 (exceto    |        |       |         |           |
+|       |                               |3401.11.90 Ex 01),    |        |       |         |           |
+|       |                               |3401.20.10 e          |        |       |         |           |
+|       |                               |96.03.21.00.          |        |       |         |           |
+|299    |Revenda de fármacos e          |-                     |0,00    |0,00   |01/2011  |31/01/2013 |
+|       |perfumarias – Alíquota zero    |                      |        |       |         |           |
+|300    |VEICULOS, MAQUINAS E AUTOPEÇAS |                      |        |       |         |           |
+|301    |Veículos Automotores e Máquinas|73.09, 7310.29,       |2,00    |9,60   |14/05/201|           |
+|       |Agrícolas                      |7612.90.12, 8424.81,  |        |       |4        |           |
+|       |(*) Relativamente aos produtos |84.29, 8430.69.90,    |        |       |         |           |
+|       |classificados no Capítulo 84 da|84.32, 84.33, 84.34,  |        |       |         |           |
+|       |TIPI, aplica-se aos produtos   |84.35, 84.36, 84.37,  |        |       |         |           |
+|       |autopropulsados ou não.        |87.01, 87.02, 87.03,  |        |       |         |           |
+|       |                               |87.04, 87.05, 87.06 e |        |       |         |           |
+|       |                               |8716.20.00            |        |       |         |           |
+|302    |Autopeças - Vendas para        |Anexos I e II da Lei  |2,30    |10,80  |01/2011  |           |
+|       |Atacadistas, Varejistas e      |nº 10.485/02          |        |       |         |           |
+|       |Consumidores                   |                      |        |       |         |           |
+|303    |Autopeças - Vendas para        |Anexos I e II da Lei  |1,65    |7,60   |01/2011  |           |
+|       |Fabricantes de Veículos e      |nº 10.485/02          |        |       |         |           |
+|       |Máquinas e de Autopeças        |                      |        |       |         |           |
+|304    |Pneumáticos (Pneus Novos e     |40.11 e 40.13         |2,00    |9,50   |01/2011  |           |
+|       |Câmaras-de-Ar)                 |                      |        |       |         |           |
+|399    |Revenda de veículos, maquinas e|-                     |0,00    |0,00   |01/2011  |31/01/2013 |
+|       |autopeças – Alíquota zero      |                      |        |       |         |           |
+|400    |BEBIDAS FRIAS – Alíquotas aplicáveis para os fatos geradores até 30.04.2015                  |
+|401    |Águas Minerais Artificiais e   |2201.10.00            |3,50    |16,65  |01/2011  |30/04/2015 |
+|       |Águas Gaseificadas Artificiais |                      |        |       |         |           |
+|402    |Águas Minerais Naturais,       |2201.10.00 Ex01 e Ex02|3,50    |16,65  |01/2011  |17/09/2012 |
+|       |Incluídas as Naturalmente      |                      |        |       |         |           |
+|       |Gaseificadas                   |                      |        |       |         |           |
+|403    |Refrigerantes                  |                      |3,50    |16,65  |01/2011  |30/04/2015 |
+|404    |Preparações Compostas, não     |                      |3,50    |16,65  |01/2011  |30/04/2015 |
+|       |Alcoólicas, para Elaboração de |                      |        |       |         |           |
+|       |Bebida Refrigerante            |                      |        |       |         |           |
+|405    |Refrescos, Isotônicos e        |                      |3,50    |16,65  |01/2011  |30/04/2015 |
+|       |Energéticos                    |                      |        |       |         |           |
+|406    |Cervejas de Malte e Cervejas   |                      |3,50    |16,65  |01/2011  |30/04/2015 |
+|       |Sem Álcool                     |                      |        |       |         |           |
+|407    |Chope e Cervejas de Malte      |                      |3,50    |16,65  |01/2011  |30/04/2015 |
+|       |Quando Vendidas a Granel       |                      |        |       |         |           |
+|400    |BEBIDAS FRIAS – Nova tributação para os fatos geradores a partir de 01.05.2015 (Art. 25, 26 e|
+|       |34 c/c Anexo III da Lei nº 13.097/2015)                                                      |
+|411    |Preparações compostas, não     |21.06.90.10 Ex 02     |1,49    |6,83   |01/05/201|31/12/2015 |
+|       |alcoólicas (extratos           |                      |        |       |5        |           |
+|       |concentrados ou sabores        |                      |        |       |         |           |
+|       |concentrados), para elaboração |                      |        |       |         |           |
+|       |de bebida refrigerante do      |                      |        |       |         |           |
+|       |Capítulo 22, com capacidade de |                      |        |       |         |           |
+|       |diluição de até 10 partes da   |                      |        |       |         |           |
+|       |bebida para cada parte do      |                      |        |       |         |           |
+|       |concentrado – Volume de        |                      |        |       |         |           |
+|       |embalagem até 500 ml.          |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,58    |7,26   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,67    |7.69   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|412    |Preparações compostas, não     |21.06.90.10 Ex 02     |1,67    |7,69   |01/05/201|31/12/2015 |
+|       |alcoólicas (extratos           |                      |        |       |5        |           |
+|       |concentrados ou sabores        |                      |        |       |         |           |
+|       |concentrados), para elaboração |                      |        |       |         |           |
+|       |de bebida refrigerante do      |                      |        |       |         |           |
+|       |Capítulo 22, com capacidade de |                      |        |       |         |           |
+|       |diluição de até 10 partes da   |                      |        |       |         |           |
+|       |bebida para cada parte do      |                      |        |       |         |           |
+|       |concentrado – Volume de        |                      |        |       |         |           |
+|       |embalagem acima de 500 ml.     |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|413    |Preparações compostas, não     |21.06.90.10 Ex 02     |1,86    |8,54   |01/05/201|31/12/2015 |
+|       |alcoólicas (extratos           |                      |        |       |5        |           |
+|       |concentrados ou sabores        |                      |        |       |         |           |
+|       |concentrados), para elaboração |                      |        |       |         |           |
+|       |de bebida refrigerante do      |                      |        |       |         |           |
+|       |Capítulo 22, com capacidade de |                      |        |       |         |           |
+|       |diluição de até 10 partes da   |                      |        |       |         |           |
+|       |bebida para cada parte do      |                      |        |       |         |           |
+|       |concentrado – Volume de        |                      |        |       |         |           |
+|       |embalagem até 500 ml.          |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |1,97    |9,08   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|414    |Preparações compostas, não     |21.06.90.10 Ex 02     |2,09    |9,61   |01/05/201|31/12/2015 |
+|       |alcoólicas (extratos           |                      |        |       |5        |           |
+|       |concentrados ou sabores        |                      |        |       |         |           |
+|       |concentrados), para elaboração |                      |        |       |         |           |
+|       |de bebida refrigerante do      |                      |        |       |         |           |
+|       |Capítulo 22, com capacidade de |                      |        |       |         |           |
+|       |diluição de até 10 partes da   |                      |        |       |         |           |
+|       |bebida para cada parte do      |                      |        |       |         |           |
+|       |concentrado – Volume de        |                      |        |       |         |           |
+|       |embalagem acima de 500 ml.     |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|                                                                                                     |
+|415    |Águas, incluindo as águas      |22.01, exceto os Ex 01|1,49    |6,83   |01/05/201|31/12/2015 |
+|       |minerais, naturais ou          |e Ex 02 do código     |        |       |5        |           |
+|       |artificiais, e as águas        |22.01.10.00           |        |       |         |           |
+|       |gaseificadas, não adicionadas  |                      |        |       |         |           |
+|       |de açúcar ou de outros         |                      |        |       |         |           |
+|       |edulcorantes nem aromatizadas –|                      |        |       |         |           |
+|       |Volume de embalagem até 500 ml.|                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,58    |7,26   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,67    |7.69   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|416    |Águas, incluindo as águas      |22.01, exceto os Ex 01|1,67    |7,69   |01/05/201|31/12/2015 |
+|       |minerais, naturais ou          |e Ex 02 do código     |        |       |5        |           |
+|       |artificiais, e as águas        |22.01.10.00           |        |       |         |           |
+|       |gaseificadas, não adicionadas  |                      |        |       |         |           |
+|       |de açúcar ou de outros         |                      |        |       |         |           |
+|       |edulcorantes nem aromatizadas –|                      |        |       |         |           |
+|       |Volume de embalagem acima de   |                      |        |       |         |           |
+|       |500 ml.                        |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|417    |Águas, incluindo as águas      |22.01, exceto os Ex 01|1,86    |8,54   |01/05/201|31/12/2015 |
+|       |minerais, naturais ou          |e Ex 02 do código     |        |       |5        |           |
+|       |artificiais, e as águas        |22.01.10.00           |        |       |         |           |
+|       |gaseificadas, não adicionadas  |                      |        |       |         |           |
+|       |de açúcar ou de outros         |                      |        |       |         |           |
+|       |edulcorantes nem aromatizadas –|                      |        |       |         |           |
+|       |Volume de embalagem até 500 ml.|                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |1,97    |9,08   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|418    |Águas, incluindo as águas      |22.01, exceto os Ex 01|2,09    |9,61   |01/05/201|31/12/2015 |
+|       |minerais, naturais ou          |e Ex 02 do código     |        |       |5        |           |
+|       |artificiais, e as águas        |22.01.10.00           |        |       |         |           |
+|       |gaseificadas, não adicionadas  |                      |        |       |         |           |
+|       |de açúcar ou de outros         |                      |        |       |         |           |
+|       |edulcorantes nem aromatizadas –|                      |        |       |         |           |
+|       |Volume de embalagem acima de   |                      |        |       |         |           |
+|       |500 ml.                        |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|                                                                                                     |
+|419    |Águas, incluindo as águas      |22.02, exceto os Ex 01|1,49    |6,83   |01/05/201|31/12/2015 |
+|       |minerais e as águas            |e Ex 02 do código     |        |       |5        |           |
+|       |gaseificadas, adicionadas de   |22.02.90.00           |        |       |         |           |
+|       |açúcar ou de outros            |                      |        |       |         |           |
+|       |edulcorantes ou aromatizadas e |                      |        |       |         |           |
+|       |outras bebidas não alcoólicas, |                      |        |       |         |           |
+|       |exceto sucos (sumos) de frutas |                      |        |       |         |           |
+|       |ou de produtos hortícolas, da  |                      |        |       |         |           |
+|       |posição 20.09 – Volume de      |                      |        |       |         |           |
+|       |embalagem até 500 ml.          |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,58    |7,26   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,67    |7,69   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|420    |Águas, incluindo as águas      |22.02, exceto os Ex 01|1,67    |7,69   |01/05/201|31/12/2015 |
+|       |minerais e as águas            |e Ex 02 do código     |        |       |5        |           |
+|       |gaseificadas, adicionadas de   |22.02.90.00           |        |       |         |           |
+|       |açúcar ou de outros            |                      |        |       |         |           |
+|       |edulcorantes ou aromatizadas e |                      |        |       |         |           |
+|       |outras bebidas não alcoólicas, |                      |        |       |         |           |
+|       |exceto sucos (sumos) de frutas |                      |        |       |         |           |
+|       |ou de produtos hortícolas, da  |                      |        |       |         |           |
+|       |posição 20.09 – Volume de      |                      |        |       |         |           |
+|       |embalagem acima de 500 ml.     |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|421    |Águas, incluindo as águas      |22.02, exceto os Ex 01|1,86    |8,54   |01/05/201|31/12/2015 |
+|       |minerais e as águas            |e Ex 02 do código     |        |       |5        |           |
+|       |gaseificadas, adicionadas de   |22.02.90.00           |        |       |         |           |
+|       |açúcar ou de outros            |                      |        |       |         |           |
+|       |edulcorantes ou aromatizadas e |                      |        |       |         |           |
+|       |outras bebidas não alcoólicas, |                      |        |       |         |           |
+|       |exceto sucos (sumos) de frutas |                      |        |       |         |           |
+|       |ou de produtos hortícolas, da  |                      |        |       |         |           |
+|       |posição 20.09 – Volume de      |                      |        |       |         |           |
+|       |embalagem até 500 ml.          |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |1,97    |9,08   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|422    |Águas, incluindo as águas      |22.02, exceto os Ex 01|2,09    |9,61   |01/05/201|31/12/2015 |
+|       |minerais e as águas            |e Ex 02 do código     |        |       |5        |           |
+|       |gaseificadas, adicionadas de   |22.02.90.00           |        |       |         |           |
+|       |açúcar ou de outros            |                      |        |       |         |           |
+|       |edulcorantes ou aromatizadas e |                      |        |       |         |           |
+|       |outras bebidas não alcoólicas, |                      |        |       |         |           |
+|       |exceto sucos (sumos) de frutas |                      |        |       |         |           |
+|       |ou de produtos hortícolas, da  |                      |        |       |         |           |
+|       |posição 20.09 – Volume de      |                      |        |       |         |           |
+|       |embalagem acima de 500 ml.     |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|                                                                                                     |
+|Cervejas de malte                                                                                    |
+|423    |Cervejas de malte – Volume de  |22.03                 |1,49    |6,83   |01/05/201|31/12/2015 |
+|       |embalagem até 400 ml.          |                      |        |       |5        |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,58    |7,26   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,67    |7,69   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|424    |Cervejas de malte – Volume de  |22.03                 |1,67    |7,69   |01/05/201|31/12/2015 |
+|       |embalagem acima de 400 ml.     |                      |        |       |5        |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas a PJ varejista ou       |                      |        |       |         |           |
+|       |consumidor final               |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|425    |Cervejas de malte – Volume de  |22.03                 |1,86    |8,54   |01/05/201|31/12/2015 |
+|       |embalagem até 400 ml.          |                      |        |       |5        |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |1,97    |9,08   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|426    |Cervejas de malte – Volume de  |22.03                 |2,09    |9,61   |01/05/201|31/12/2015 |
+|       |embalagem acima de 400 ml.     |                      |        |       |5        |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às demais pessoas       |                      |        |       |         |           |
+|       |jurídicas                      |                      |        |       |         |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |2,20    |10,15  |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,32    |10,68  |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|Cervejas e chopes especiais                                                                          |
+|427    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,49    |6,83   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção até   |                      |        |       |         |           |
+|       |5.000.000 de litros, no        |                      |        |       |         |           |
+|       |ano-calendário anterior) -     |                      |        |       |         |           |
+|       |Volume de embalagem até 400 ml.|                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas em |                      |        |       |         |           |
+|       |geral (não varejistas)         |                      |        |       |         |           |
+|       |                               |                      |1,58    |7,26   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,67    |7,69   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|428    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,67    |7,69   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção até   |                      |        |       |         |           |
+|       |5.000.000 de litros, no        |                      |        |       |         |           |
+|       |ano-calendário anterior) -     |                      |        |       |         |           |
+|       |Volume de embalagem acima de   |                      |        |       |         |           |
+|       |400 ml.                        |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas em |                      |        |       |         |           |
+|       |geral (não varejistas)         |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,86    |8,54   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|429    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,67    |7,69   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção acima |                      |        |       |         |           |
+|       |de 5.000.000 e até 10.000.000  |                      |        |       |         |           |
+|       |de litros, no ano-calendário   |                      |        |       |         |           |
+|       |anterior) - Volume de embalagem|                      |        |       |         |           |
+|       |até 400 ml.                    |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas em |                      |        |       |         |           |
+|       |geral (não varejistas)         |                      |        |       |         |           |
+|       |                               |                      |1,77    |8,11   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,88    |8,65   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|430    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,88    |8,65   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção acima |                      |        |       |         |           |
+|       |de 5.000.000 e até 10.000.000  |                      |        |       |         |           |
+|       |de litros, no ano-calendário   |                      |        |       |         |           |
+|       |anterior) - Volume de embalagem|                      |        |       |         |           |
+|       |acima de 400 ml.               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas em |                      |        |       |         |           |
+|       |geral (não varejistas)         |                      |        |       |         |           |
+|       |                               |                      |1,98    |9,13   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,98    |9,13   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |2,09    |9,61   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|431    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,19    |5,46   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção até   |                      |        |       |         |           |
+|       |5.000.000 de litros, no        |                      |        |       |         |           |
+|       |ano-calendário anterior) -     |                      |        |       |         |           |
+|       |Volume de embalagem até 400 ml.|                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas    |                      |        |       |         |           |
+|       |varejistas ou consumidor final |                      |        |       |         |           |
+|       |                               |                      |1,26    |5,81   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,34    |6,15   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,49    |6,83   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|432    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,34    |6,15   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção até   |                      |        |       |         |           |
+|       |5.000.000 de litros, no        |                      |        |       |         |           |
+|       |ano-calendário anterior) -     |                      |        |       |         |           |
+|       |Volume de embalagem acima de   |                      |        |       |         |           |
+|       |400 ml.                        |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas    |                      |        |       |         |           |
+|       |varejistas ou consumidor final |                      |        |       |         |           |
+|       |                               |                      |1,42    |6,53   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,42    |6,53   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,49    |6,83   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|433    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,34    |6,15   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção acima |                      |        |       |         |           |
+|       |de 5.000.000 e até 10.000.000  |                      |        |       |         |           |
+|       |de litros, no ano-calendário   |                      |        |       |         |           |
+|       |anterior) - Volume de embalagem|                      |        |       |         |           |
+|       |até 400 ml.                    |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas    |                      |        |       |         |           |
+|       |varejistas ou consumidor final |                      |        |       |         |           |
+|       |                               |                      |1,42    |6,53   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,50    |6,92   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,67    |7,69   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|434    |Cervejas e chopes especiais    |22.02.90.00 Ex 03 e   |1,50    |6,92   |01/05/201|31/12/2015 |
+|       |classificados nos códigos      |22.03                 |        |       |5        |           |
+|       |22.02.90.00 Ex 03 e 22.03 da   |                      |        |       |         |           |
+|       |TIPI (pessoa jurídica com      |                      |        |       |         |           |
+|       |volume total de produção acima |                      |        |       |         |           |
+|       |de 5.000.000 e até 10.000.000  |                      |        |       |         |           |
+|       |de litros, no ano-calendário   |                      |        |       |         |           |
+|       |anterior) - Volume de embalagem|                      |        |       |         |           |
+|       |acima de 400 ml.               |                      |        |       |         |           |
+|       |                               |                      |        |       |         |           |
+|       |Vendas às pessoas jurídicas    |                      |        |       |         |           |
+|       |varejistas ou consumidor final |                      |        |       |         |           |
+|       |                               |                      |1,59    |7,30   |01/01/201|31/12/2016 |
+|       |                               |                      |        |       |6        |           |
+|       |                               |                      |1,59    |7,30   |01/01/201|31/12/2017 |
+|       |                               |                      |        |       |7        |           |
+|       |                               |                      |1,67    |7,69   |01/01/201|           |
+|       |                               |                      |        |       |8        |           |
+|                                                                                                     |
+
+
+Alterações da versão anterior (1.18):
+
+   1. Tributação para bebidas frias (códigos do grupo  400):  Inclusão  das
+   alíquotas aplicáveis para os fatos geradores de 01.01.2016 a 31.12.2017,
+   conforme art. 34 e Anexo III da Lei nº 13.097,  de  2015  e  Decreto  nº
+   8.442/2015;
+
+2. Tributação da nafta petroquímica e outros produtos (códigos 150, 151 e
+152): Inclusão das alíquotas aplicáveis para os fatos geradores de
+01.01.2017 a 31.12.2017, conforme art. 3º da MP nº 694, de 2015, cuja
+vigência expirou em 08.03.2016, conforme Ato Declaratório do Presidente da
+Mesa do Congresso Nacional nº 5, de 2016.
+
+OBS:
+I. As tabelas da EFD-Contribuições foram construídas com base na  legislação
+vigente do PIS e da COFINS. Dessa forma, em diversos casos a legislação  não
+atribui a um código  NCM  específico  o  tratamento  tributário,  assim  são
+listados somente os códigos que se  amoldam  ao  texto  legal.  Ou  seja,  a
+ausência de determinado código da NCM nas tabelas da  EFD-Contribuições  não
+significa que aquele código não possa receber  o  tratamento  tributário  de
+determinada tabela da EFD-Contribuições.
+
+II. No caso de comercialização dos produtos relacionados nesta tabela com  o
+CST 04 (Operação Tributável Monofásica - Revenda a Alíquota Zero), deve  ser
+considerada a alíquota zero, quando a pessoa jurídica não  se  enquadrar  na
+condição de fabricante, industrial, importador ou a estes equiparados.
+
+III. As alíquotas reduzidas do Grupo 400, nos termos dos  art.  34  (bebidas
+frias em geral) e 26 (cervejas e chopes especiais) da Lei nº 13.097/2015,  a
+vigorar para os fatos geradores a partir de  01  de  janeiro  de  2018,  não
+contemplam as reduções de alíquotas relacionadas no Anexo  III  da  referida
+lei, as quais foram vigentes tão somente para os fatos  geradores  dos  anos
+de 2015, 2016 e 2017.
+
+IV. Legislação de Referência:
+1. Grupo 100 – Combustíveis e Álcool:
+Códigos 101, 102, 103, 105, 106: Art. 4º da Lei nº 9.718/98;
+Código104: Art. 2º da Lei nº 10.560/02;
+Códigos 107 e 108: art. 14 da Lei nº 10.336/01;
+Código109: art. 3º da Lei nº 11.116/05;
+Códigos 112 e 113: Art. 5º da Lei nº 9.718/98; A LC/214/2025 revogou as
+alíquotas.
+Códigos 112: o caput do art. 5º da Lei nº 9.718/98, alterado pela
+LC/214/2025, estabeleceu novas alíquotas.
+Códigos 113: O art. 5º, § 1º, IV, inserido pela LC 214/2025
+Código 114: art. 2º, inciso I, do Decreto nº 12.525, de 24 de junho de
+2025.
+Código 115: art. 2º, inciso II, do Decreto nº 12.525, de 24 de junho de
+2025.
+Código 116: art. 2º, Parágrafo único, do Decreto nº 12.525, de 24 de junho
+de 2025.
+Código 117: § 4º-A do art. 5º da Lei nº 9.718, de 1998, revogado pelo
+LC/214/2025.
+Código 117: Caput do art. 5º da Lei nº 9.718/98, alterada pela LC/214/2025.
+Códigos 150, 151, 152 e 153: art. 56 da Lei nº 11.196/05, atualizado pela
+MP nº 694/2015 e AD Congresso Nacional nº 5/2016. Atualizado pela LC
+228/2026.
+
+
+2. Grupo 200 – Medicamentos e Artigos de Perfumaria:
+Código 201: Inciso I, “a”, do art. 1º da Lei nº 10.147/00;
+Código 202: Inciso I, “b”, do art. 1º da Lei nº 10.147/00, com as
+alterações da MP nº 609, de 2013.
+
+3. Grupo 300 – Veículos, Autopeças e Pneus:
+Código 301: Art. 1º da Lei nº 10.485/02 com a redação dada pelo art. 103 da
+Lei nº 12.973/2014;
+Código 302: Inciso II, do art. 3º da Lei nº 10.485/02;
+Código 303: Inciso I, do art. 3º da Lei nº 10.485/02;
+Código 304: Art. 5º da Lei nº 10.485/02.
+
+4. Grupo 400 – Bebidas Frias:
+Códigos 401, 403, 404, 405, 406 e 407: Art. 58-I da Lei nº 10.833/03;
+Código 402: Art. 58-I da Lei nº 10.833/03 c/c art. 76 da Lei nº 12.715, de
+2012;
+Códigos 411 a 426: Arts. 25 e 34 c/c Anexo III da Lei nº 13.097/2015;
+Códigos 427 a 430: Art. 25 e 34 c/c Anexo III, com art. 26 c/c Anexo II, da
+Lei nº 13.097/2015.
+Códigos 431 a 434: Art. 25 e 34 c/c Anexo III, com art. 26 c/c Anexo II, da
+Lei nº 13.097/2015 e Decreto nº 8.442/2015
+

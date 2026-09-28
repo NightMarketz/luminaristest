@@ -62,7 +62,8 @@ export function useActorNames(tableId: string | null, relationField: string): Ac
       }
       try {
         const meta = await DynamicTableService.getTableById(tableId);
-        const sch = (meta as { schema?: unknown })?.schema;
+        // GET /dynamic-tables/:id answers { success, data: table } and apiClient does not unwrap.
+        const sch = (meta as { data?: { schema?: unknown } })?.data?.schema;
         if (!isTableSchema(sch)) {
           if (!cancelled) {
             setActors([]);

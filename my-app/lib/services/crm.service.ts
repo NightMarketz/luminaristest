@@ -11,7 +11,6 @@ import { notify } from '../notifications/notify';
 export interface AdvanceStagePayload {
   leadId: string;
   stageId: string;
-  stageType?: string;
   meetingAt?: string;
   amount?: number;
   currency?: 'BRL' | 'USD' | 'EUR';
@@ -57,11 +56,9 @@ export interface ConvertLeadPayload {
 export interface AdvanceOpportunityPayload {
   opportunityId: string;
   stageId: string;
-  stageType?: string;
   amount?: number;
   currency?: 'BRL' | 'USD' | 'EUR';
   winProbability?: number;
-  status?: 'Open' | 'Won' | 'Lost';
 }
 
 /** Create an opportunity from a lead (mirror of ConvertLeadPayload). The lead stays Open. */
@@ -174,8 +171,8 @@ export const CrmService = {
 
   /**
    * Advance a first-class opportunity to a target stage via the atomic
-   * orchestration endpoint (mirror of `advanceStage`). When `stageType` is a
-   * closing stage the backend sets status Won/Lost + closedAt.
+   * orchestration endpoint (mirror of `advanceStage`). When the target stage's stored
+   * type is a closing stage the backend sets status Won/Lost + closedAt.
    */
   async advanceOpportunity(payload: AdvanceOpportunityPayload): Promise<ApiResult> {
     const res = await apiClient.post<ApiResult>('/crm/pipeline/advance-opportunity', payload);

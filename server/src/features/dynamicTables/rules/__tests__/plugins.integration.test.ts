@@ -262,7 +262,7 @@ describe('LeadsPlugin — lead coherence, defaults, transitions, score, snapshot
 
 // ---------------------------------------------------------------------------------------------
 describe('LeadsSeedOnUnitPlugin — seeds a default pipeline + stages on unit creation', () => {
-  it('creates a default pipeline and 4 stages for the new unit', async () => {
+  it('creates a default pipeline and 6 stages (incl. closed_won/closed_lost) for the new unit', async () => {
     const pipelines = await seedTbl({ name: 'Lead Pipelines', internalName: 'leadPipelines', category: 'leads', fields: [f('name', 'string', true), f('unitId', 'string'), f('isDefault', 'boolean')] });
     const stages = await seedTbl({ name: 'Lead Stages', internalName: 'leadStages', category: 'leads', fields: [f('name', 'string', true), f('pipelineId', 'string'), f('order', 'number'), f('type', 'string'), f('defaultWinProbability', 'number')] });
     const units = await seedTbl({ name: 'Units', internalName: 'units', category: 'business', fields: [f('name', 'string', true)] });
@@ -270,7 +270,7 @@ describe('LeadsSeedOnUnitPlugin — seeds a default pipeline + stages on unit cr
     await create(units.id, { name: 'Centro' });
 
     expect(await rowsOf(pipelines.id)).toHaveLength(1);
-    expect(await rowsOf(stages.id)).toHaveLength(4);
+    expect(await rowsOf(stages.id)).toHaveLength(6);
   });
 });
 

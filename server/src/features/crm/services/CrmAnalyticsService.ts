@@ -82,6 +82,21 @@ export class CrmAnalyticsService {
       Promise.resolve(crmActivitiesByTypeProcessor(ctx)),
     ]);
 
+    // Decisão do dono 2026-09-25: ganhos, win rate, ticket e receita vêm de crmOpportunities
+    // (a portadora de receita); leads ficam com funil/qualificação. Sem a tabela, segue por leads.
+    const oppsTable = await this.repository.findTableByInternalName(user.userId, 'crmOpportunities');
+    if (oppsTable) {
+      const oppRows = (await this.loadRows(user, oppsTable)).map((r) => ({
+        id: r.id,
+        data: { ...r.data, latestProposalAmount: r.data.amount, latestProposalWinProbability: r.data.winProbability },
+      }));
+      const oppCards = await crmConversionProcessor({ ...ctx, table: oppsTable, schema: oppsTable.schema as unknown as ITableSchema, rows: oppRows });
+      const fromOpps = new Set(['wonLeads', 'winRate', 'pipelineValue', 'forecast', 'avgTicket']);
+      for (const c of cards) {
+        if (fromOpps.has(c.name)) c.value = oppCards.find((o) => o.name === c.name)?.value ?? 0;
+      }
+    }
+
     return { cards, funnel, source, status, bant, proposals, activities };
   }
 }
