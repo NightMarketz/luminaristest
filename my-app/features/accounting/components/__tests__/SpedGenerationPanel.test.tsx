@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
-import { SpedGenerationPanel, validateEcdSigners, validateEcfSigners } from '../SpedGenerationPanel';
+import { SpedGenerationPanel, validateEcdSigners, validateEcfSigners, toEcfSignerPayload } from '../SpedGenerationPanel';
 import { SpedEcfRealPanel } from '../SpedEcfRealPanel';
-import type { EcdSigner, EcfSigner } from '../../../../lib/services/sped.service';
+import type { EcdSignerDraft as EcdSigner, EcfSignerDraft as EcfSigner } from '../../../../lib/services/sped.service';
 
 // Stub the download service so mounting the panel never touches the network. SpedGenerationPanel
 // now mounts SpedEcfRealPanel too (FE-INCR-COMPLIANCE-2), so generateAndDownloadEcfReal is stubbed
@@ -240,5 +240,14 @@ describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)'
       expect(validateEcdSigners([contador({ [k]: ' ' }), socio]), k).toBe('ecdContadorCrc');
     }
     expect(validateEcdSigners([contador({ identCpfCnpj: '11222333000181' }), socio])).toBe('ecdContadorCrc');
+  });
+});
+
+// ── toEcfSignerPayload (0930): indCrc em branco é omitido (a máscara CFC do CRC-CFC faz '' ser 400) ──
+describe('toEcfSignerPayload (0930)', () => {
+  it('omite indCrc vazio ou só-espaço e apara o preenchido', () => {
+    expect(toEcfSignerPayload(ecf({ indCrc: '' }))).not.toHaveProperty('indCrc');
+    expect(toEcfSignerPayload(ecf({ indCrc: '   ' }))).not.toHaveProperty('indCrc');
+    expect(toEcfSignerPayload(ecf({ indCrc: ' SP-123456/O-1 ' })).indCrc).toBe('SP-123456/O-1');
   });
 });
