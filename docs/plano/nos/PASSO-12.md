@@ -3,18 +3,20 @@ id: "PASSO-12"
 tipo: "motor"
 dominio: "motor"
 titulo: "GAP-MAP 8 — deleteTableData ignora immutableAfter/lifecycle (teste + fork a/b)"
-estado: "blocked"
-estado_detalhe: "Espera 'instrumenta' + fork do dono (a guard no delete × b RESTRICT)"
+estado: "done"
+estado_detalhe: "✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12)"
+prs: ["#384", "#390"]
 ancora_sdd: "§III.1 passo 12 · §III.4"
-atualizado: "2026-09-23"
+atualizado: "2026-09-28"
 ---
 # PASSO-12 — GAP-MAP 8 — deleteTableData ignora immutableAfter/lifecycle (teste + fork a/b)
 
-**Estado:** `blocked` — Espera 'instrumenta' + fork do dono (a guard no delete × b RESTRICT)  
+**Estado:** `done` — ✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12)  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** —  
 **Desbloqueia:** —  
-**Âncora no SDD consolidado:** §III.1 passo 12 · §III.4
+**Âncora no SDD consolidado:** §III.1 passo 12 · §III.4  
+**PRs:** #384, #390
 
 ## Docs
 
