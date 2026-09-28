@@ -5,12 +5,15 @@ import { useTranslation } from 'next-i18next';
 import { FiDownload, FiRefreshCw, FiPlus, FiTrash2 } from 'react-icons/fi';
 import {
   spedService,
-  type EcdDeclarant,
-  type EcdBook,
-  type EcdSigner,
-  type EcfDeclarant,
-  type EcfSigner,
+  type EcdDeclarantDraft,
+  type EcdBookDraft,
+  type EcdSignerDraft,
+  type EcfDeclarantDraft,
+  type EcfSignerDraft,
+  type GenerateEcdPayload,
+  type GenerateEcfPayload,
 } from '../../../lib/services/sped.service';
+import { nonEmpty } from '../../../lib/utils/nonEmpty';
 import { resolveError } from '../lib/resolveError';
 import { SpedEcfRealPanel } from './SpedEcfRealPanel';
 
@@ -36,7 +39,7 @@ export const inputClass =
  * null when the signer set is valid. Exactly one legal responsible; at least one
  * contador (COD_ASSIN='900') and one non-contador.
  */
-export function validateEcdSigners(signers: EcdSigner[]): string | null {
+export function validateEcdSigners(signers: EcdSignerDraft[]): string | null {
   if (signers.length < 1) return 'signersRequired';
   if (signers.some((s) => !s.identNom.trim() || !s.identCpfCnpj.trim() || !s.codAssin.trim()))
     return 'signersIncomplete';
@@ -57,27 +60,88 @@ export function validateEcdSigners(signers: EcdSigner[]): string | null {
   return null;
 }
 
+// ── Rascunho → payload (contrato gerado; regra do mapper em my-app/CLAUDE.md) ────────
+// Retorno declarado em toda função: é o que faz o `tsc` recusar chave fora do DTO (G10).
+// `as` só em folha string → união, e o servidor valida o enum de qualquer forma.
+type EcdSignerInput = GenerateEcdPayload['signers'][number];
+type EcfSignerInput = GenerateEcfPayload['signers'][number];
+
 /** Pure: one J930 row → the exact SignerSchema keys, trimmed; blank optional keys are omitted
  * (the server rejects '' for indCrc/ufCrc). Never send the editor state as-is. */
-export function toEcdSignerPayload(s: EcdSigner): EcdSigner {
-  const out: EcdSigner = {
+export function toEcdSignerPayload(s: EcdSignerDraft): EcdSignerInput {
+  const out: EcdSignerInput = {
     identNom: s.identNom.trim(),
     identCpfCnpj: s.identCpfCnpj.trim(),
-    codAssin: s.codAssin.trim(),
+    // ponytail: folha string → união; o input é livre até o FE-INCR-SPED-SIGNERS (combobox).
+    codAssin: s.codAssin.trim() as EcdSignerInput['codAssin'],
     indRespLegal: s.indRespLegal,
   };
-  for (const k of ['indCrc', 'email', 'fone', 'ufCrc'] as const) {
-    const v = s[k]?.trim();
-    if (v) out[k] = v;
-  }
+  const indCrc = s.indCrc?.trim();
+  if (indCrc) out.indCrc = indCrc;
+  const email = s.email?.trim();
+  if (email) out.email = email;
+  const fone = s.fone?.trim();
+  if (fone) out.fone = fone;
+  // ponytail: folha string → união (o <select> só oferece UF_CODES).
+  const ufCrc = s.ufCrc?.trim();
+  if (ufCrc) out.ufCrc = ufCrc as EcdSignerInput['ufCrc'];
   return out;
+}
+
+export function toEcdDeclarantPayload(d: EcdDeclarantDraft): GenerateEcdPayload['declarant'] {
+  return {
+    nome: d.nome,
+    cnpj: d.cnpj,
+    uf: d.uf as GenerateEcdPayload['declarant']['uf'], // ponytail: folha string → união (<select> de UF_CODES)
+    codMun: d.codMun,
+    indNire: d.indNire,
+    indGrandePorte: d.indGrandePorte,
+  };
+}
+
+export function toEcdBookPayload(b: EcdBookDraft): GenerateEcdPayload['book'] {
+  return { numOrd: b.numOrd, natLivr: b.natLivr, dtExSocial: b.dtExSocial };
+}
+
+/** Exported for `SpedEcfRealPanel.tsx` — same 0930 SignerSchema on the server. A blank
+ * `indCrc` is OMITTED and a filled one trimmed: `indCrc` is optional, and the CFC mask of the
+ * CRC-CFC work makes `''` a 400 (the contador row is already forced to carry one by
+ * `validateEcfSigners`). */
+export function toEcfSignerPayload(s: EcfSignerDraft): EcfSignerInput {
+  const out: EcfSignerInput = {
+    identNom: s.identNom.trim(),
+    identCpfCnpj: s.identCpfCnpj.trim(),
+    // ponytail: folha string → união; input livre até o FE-INCR-SPED-SIGNERS (combobox).
+    identQualif: s.identQualif.trim() as EcfSignerInput['identQualif'],
+    email: s.email.trim(),
+    fone: s.fone.trim(),
+  };
+  const indCrc = s.indCrc?.trim();
+  if (indCrc) out.indCrc = indCrc;
+  return out;
+}
+
+/** Exported for `SpedEcfRealPanel.tsx` — same DeclarantSchema on the server. */
+export function toEcfDeclarantPayload(d: EcfDeclarantDraft): GenerateEcfPayload['declarant'] {
+  return {
+    cnpj: d.cnpj,
+    nome: d.nome,
+    codNat: d.codNat,
+    cnaeFiscal: d.cnaeFiscal,
+    endereco: d.endereco,
+    bairro: d.bairro,
+    uf: d.uf as GenerateEcfPayload['declarant']['uf'], // ponytail: folha string → união (<select> de UF_CODES)
+    codMun: d.codMun,
+    cep: d.cep,
+    email: d.email,
+  };
 }
 
 /**
  * Pure: mirror the ECF 0930 superRefine (SpedEcfDto). At least one contador
  * (IDENT_QUALIF='900' with CPF 11 digits + IND_CRC) and one non-contador; max 2.
  */
-export function validateEcfSigners(signers: EcfSigner[]): string | null {
+export function validateEcfSigners(signers: EcfSignerDraft[]): string | null {
   if (signers.length < 1 || signers.length > 2) return 'ecfSignerCount';
   if (signers.some((s) => !s.identNom.trim() || !s.identCpfCnpj.trim() || !s.identQualif.trim()))
     return 'signersIncomplete';
@@ -89,7 +153,7 @@ export function validateEcfSigners(signers: EcfSigner[]): string | null {
   return null;
 }
 
-const emptyEcdSigner = (): EcdSigner => ({
+const emptyEcdSigner = (): EcdSignerDraft => ({
   identNom: '',
   identCpfCnpj: '',
   codAssin: '',
@@ -100,7 +164,7 @@ const emptyEcdSigner = (): EcdSigner => ({
   ufCrc: '',
 });
 /** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same 0930 signer shape. */
-export const emptyEcfSigner = (): EcfSigner => ({
+export const emptyEcfSigner = (): EcfSignerDraft => ({
   identNom: '',
   identCpfCnpj: '',
   identQualif: '',
@@ -138,22 +202,22 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   // ── ECD state ──────────────────────────────────────────────────────────────
   const [ecdYear, setEcdYear] = useState(String(currentYear - 1));
   const [ecdVersion, setEcdVersion] = useState('');
-  const [ecdDeclarant, setEcdDeclarant] = useState<EcdDeclarant>({
+  const [ecdDeclarant, setEcdDeclarant] = useState<EcdDeclarantDraft>({
     nome: '', cnpj: '', uf: 'SP', codMun: '', indNire: '0', indGrandePorte: '0',
   });
-  const [ecdBook, setEcdBook] = useState<EcdBook>({ numOrd: '', natLivr: '', dtExSocial: '' });
-  const [ecdSigners, setEcdSigners] = useState<EcdSigner[]>([emptyEcdSigner()]);
+  const [ecdBook, setEcdBook] = useState<EcdBookDraft>({ numOrd: '', natLivr: '', dtExSocial: '' });
+  const [ecdSigners, setEcdSigners] = useState<EcdSignerDraft[]>([emptyEcdSigner()]);
   const [ecdBusy, setEcdBusy] = useState(false);
   const [ecdError, setEcdError] = useState<string | null>(null);
 
   // ── ECF state ──────────────────────────────────────────────────────────────
   const [ecfYear, setEcfYear] = useState(String(currentYear - 1));
-  const [ecfDeclarant, setEcfDeclarant] = useState<EcfDeclarant>({
+  const [ecfDeclarant, setEcfDeclarant] = useState<EcfDeclarantDraft>({
     cnpj: '', nome: '', codNat: '', cnaeFiscal: '', endereco: '', bairro: '',
     uf: 'SP', codMun: '', cep: '', email: '',
   });
   const [ecfCsll, setEcfCsll] = useState<'1' | '4'>('1');
-  const [ecfSigners, setEcfSigners] = useState<EcfSigner[]>([emptyEcfSigner()]);
+  const [ecfSigners, setEcfSigners] = useState<EcfSignerDraft[]>([emptyEcfSigner()]);
   const [ecfBusy, setEcfBusy] = useState(false);
   const [ecfError, setEcfError] = useState<string | null>(null);
 
@@ -161,13 +225,13 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const signerError = (code: string) =>
     t(`sped.error.${code}`, t('sped.error.signersInvalid', 'Signatários inválidos.'));
 
-  function setEcdD<K extends keyof EcdDeclarant>(k: K, v: EcdDeclarant[K]) {
+  function setEcdD<K extends keyof EcdDeclarantDraft>(k: K, v: EcdDeclarantDraft[K]) {
     setEcdDeclarant((p) => ({ ...p, [k]: v }));
   }
-  function setEcdB<K extends keyof EcdBook>(k: K, v: EcdBook[K]) {
+  function setEcdB<K extends keyof EcdBookDraft>(k: K, v: EcdBookDraft[K]) {
     setEcdBook((p) => ({ ...p, [k]: v }));
   }
-  function setEcfD<K extends keyof EcfDeclarant>(k: K, v: EcfDeclarant[K]) {
+  function setEcfD<K extends keyof EcfDeclarantDraft>(k: K, v: EcfDeclarantDraft[K]) {
     setEcfDeclarant((p) => ({ ...p, [k]: v }));
   }
 
@@ -187,16 +251,22 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       setEcdError(signerError(signerIssue));
       return;
     }
+    const signers = nonEmpty(ecdSigners.map(toEcdSignerPayload));
+    if (!signers) {
+      setEcdError(signerError('signersRequired'));
+      return;
+    }
+    const body: GenerateEcdPayload = {
+      unitId,
+      mappingVersion: ecdVersion.trim(),
+      year,
+      declarant: toEcdDeclarantPayload(ecdDeclarant),
+      book: toEcdBookPayload(ecdBook),
+      signers,
+    };
     setEcdBusy(true);
     try {
-      await spedService.generateAndDownloadEcd({
-        unitId,
-        mappingVersion: ecdVersion.trim(),
-        year,
-        declarant: ecdDeclarant,
-        book: ecdBook,
-        signers: ecdSigners.map(toEcdSignerPayload),
-      });
+      await spedService.generateAndDownloadEcd(body);
     } catch (err) {
       setEcdError(resolveError(err, genericError()));
     } finally {
@@ -216,15 +286,21 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       setEcfError(signerError(signerIssue));
       return;
     }
+    const signers = nonEmpty(ecfSigners.map(toEcfSignerPayload));
+    if (!signers) {
+      setEcfError(signerError('ecfSignerCount'));
+      return;
+    }
+    const body: GenerateEcfPayload = {
+      unitId,
+      year,
+      declarant: toEcfDeclarantPayload(ecfDeclarant),
+      fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
+      signers,
+    };
     setEcfBusy(true);
     try {
-      await spedService.generateAndDownloadEcf({
-        unitId,
-        year,
-        declarant: ecfDeclarant,
-        fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
-        signers: ecfSigners,
-      });
+      await spedService.generateAndDownloadEcf(body);
     } catch (err) {
       setEcfError(resolveError(err, genericError()));
     } finally {
@@ -390,10 +466,10 @@ function EcdSignersEditor({
   setSigners,
 }: {
   t: TFn;
-  signers: EcdSigner[];
-  setSigners: React.Dispatch<React.SetStateAction<EcdSigner[]>>;
+  signers: EcdSignerDraft[];
+  setSigners: React.Dispatch<React.SetStateAction<EcdSignerDraft[]>>;
 }) {
-  function update(i: number, k: keyof EcdSigner, v: string) {
+  function update(i: number, k: keyof EcdSignerDraft, v: string) {
     setSigners((prev) => prev.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)));
   }
   return (
@@ -452,10 +528,10 @@ export function EcfSignersEditor({
   setSigners,
 }: {
   t: TFn;
-  signers: EcfSigner[];
-  setSigners: React.Dispatch<React.SetStateAction<EcfSigner[]>>;
+  signers: EcfSignerDraft[];
+  setSigners: React.Dispatch<React.SetStateAction<EcfSignerDraft[]>>;
 }) {
-  function update(i: number, k: keyof EcfSigner, v: string) {
+  function update(i: number, k: keyof EcfSignerDraft, v: string) {
     setSigners((prev) => prev.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)));
   }
   return (

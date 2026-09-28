@@ -4,3 +4,4 @@
 .claude/workflows/*.js   text eol=lf
 .claude/workflows/*.mjs  text eol=lf
 .claude/skills/**/*.mjs  text eol=lf
+my-app/types/contracts/**/*.gen.ts text eol=lf linguist-generated=true

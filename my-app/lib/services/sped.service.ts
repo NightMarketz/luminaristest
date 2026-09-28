@@ -1,13 +1,19 @@
 import { apiClient } from '../api/api-client';
 import { dataExchangeService, type DataExchangeJob } from './dataExchange.service';
+import type { SpedEcdRequestInput } from '@/types/contracts/accounting/SpedEcdDto.gen';
+import type { SpedEcfRequestInput } from '@/types/contracts/accounting/SpedEcfDto.gen';
+import type { SpedEcfRealRequestInput } from '@/types/contracts/accounting/SpedEcfRealDto.gen';
 
 /**
  * SPED generation service — typed client over `/api/accounting/sped/{ecd,ecf}/generate`
  * (BE-INCR-SPED-ECD / ECF). Each endpoint stages an EXPORT_SPED_* job and returns its
  * summary; the `.txt` downloads through the existing data-exchange job route
- * (`dataExchangeService.downloadArtifact`). Only the REQUIRED DTO fields are sent —
- * the backend schemas default the rest (`.strict()` rejects only UNKNOWN keys, so
- * omitting a defaulted/optional key is safe).
+ * (`dataExchangeService.downloadArtifact`).
+ *
+ * CONTRATO: o body é o tipo GERADO do DTO do servidor (`@/types/contracts/accounting/*.gen`,
+ * PRE-ADR-FE-CONTRACT-TYPES) — nunca espelho à mão. Os `*Draft` abaixo são o estado de TELA
+ * (strings livres dos inputs); o painel converte rascunho → payload por funções `to*Payload`
+ * com retorno declarado (regra do mapper, my-app/CLAUDE.md).
  */
 
 interface Envelope<T> {
@@ -15,8 +21,13 @@ interface Envelope<T> {
   data: T;
 }
 
-// ── ECD (SpedEcdRequestSchema, required subset) ────────────────────────────────
-export interface EcdDeclarant {
+// ── Payloads (contrato gerado) ──────────────────────────────────────────────────
+export type GenerateEcdPayload = SpedEcdRequestInput;
+export type GenerateEcfPayload = SpedEcfRequestInput;
+export type GenerateEcfRealPayload = SpedEcfRealRequestInput;
+
+// ── Rascunhos de tela (ECD) ─────────────────────────────────────────────────────
+export interface EcdDeclarantDraft {
   nome: string;
   cnpj: string;
   uf: string;
@@ -24,34 +35,26 @@ export interface EcdDeclarant {
   indNire: '0' | '1';
   indGrandePorte: '0' | '1';
 }
-export interface EcdBook {
+export interface EcdBookDraft {
   numOrd: string;
   natLivr: string;
   dtExSocial: string; // YYYY-MM-DD
 }
-export interface EcdSigner {
+export interface EcdSignerDraft {
   identNom: string;
   identCpfCnpj: string;
   codAssin: string; // 3 digits ('900' = contador)
   indRespLegal: 'S' | 'N';
   // Required by the server when codAssin === '900' (REGRA_OBRIGATORIO_CONTADOR); an empty
-  // string is a 400, so absent is the only "empty" the payload may carry.
+  // string is a 400, so the mapper omits blanks.
   indCrc?: string;
   email?: string;
   fone?: string;
   ufCrc?: string;
 }
-export interface GenerateEcdPayload {
-  unitId: string;
-  mappingVersion: string;
-  year: number;
-  declarant: EcdDeclarant;
-  book: EcdBook;
-  signers: EcdSigner[];
-}
 
-// ── ECF (SpedEcfRequestSchema, required subset) ────────────────────────────────
-export interface EcfDeclarant {
+// ── Rascunhos de tela (ECF / ECF Real — mesmo DeclarantSchema/SignerSchema no servidor) ──
+export interface EcfDeclarantDraft {
   cnpj: string;
   nome: string;
   codNat: string;
@@ -63,43 +66,13 @@ export interface EcfDeclarant {
   cep: string;
   email: string;
 }
-export interface EcfSigner {
+export interface EcfSignerDraft {
   identNom: string;
   identCpfCnpj: string;
   identQualif: string; // 3 digits ('900' = contador)
   indCrc?: string;
   email: string;
   fone: string;
-}
-export interface GenerateEcfPayload {
-  unitId: string;
-  year: number;
-  declarant: EcfDeclarant;
-  fiscal?: { indAliqCsll: '1' | '4'; indRecReceita: '1' | '2' };
-  signers: EcfSigner[];
-}
-
-// ── ECF Lucro Real (SpedEcfRealRequestSchema, FE-INCR-COMPLIANCE-2) ────────────
-// `declarant`/`signers` REUSE EcfDeclarant/EcfSigner above — SpedEcfRealDto.ts imports
-// the SAME DeclarantSchema/SignerSchema (+ refineEcfSigners) from SpedEcfDto.ts on the
-// server, so this is the identical domain object, not a parallel shape.
-export interface EcfRealFiscal {
-  /** 0010.FORMA_TRIB — optional on the wire; server defaults '1' when absent (Fork
-   *  F-COMP2-2 → (b): the field is editable in the UI, pre-filled with '1'). */
-  formaTrib?: string;
-  /** 0010.FORMA_TRIB_PER — REQUIRED, 4 chars, NO server default (Manual do Leiaute 12
-   *  for the Real regime not transcribed yet — the server/PVA is the oracle). */
-  formaTribPer: string;
-  indAliqCsll: '1' | '4';
-  /** Hardcoded '2' by the caller, same as the Presumido form — not exposed as a field. */
-  indRecReceita: '1' | '2';
-}
-export interface GenerateEcfRealPayload {
-  unitId: string;
-  year: number;
-  declarant: EcfDeclarant;
-  fiscal: EcfRealFiscal;
-  signers: EcfSigner[];
 }
 
 export const spedService = {

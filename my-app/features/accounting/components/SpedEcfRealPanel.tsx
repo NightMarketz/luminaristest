@@ -5,9 +5,9 @@ import { useTranslation } from 'next-i18next';
 import { FiDownload, FiRefreshCw, FiAlertTriangle } from 'react-icons/fi';
 import {
   spedService,
-  type EcfDeclarant,
-  type EcfSigner,
-  type EcfRealFiscal,
+  type EcfDeclarantDraft,
+  type EcfSignerDraft,
+  type GenerateEcfRealPayload,
 } from '../../../lib/services/sped.service';
 import {
   Field,
@@ -16,7 +16,10 @@ import {
   EcfSignersEditor,
   emptyEcfSigner,
   validateEcfSigners,
+  toEcfDeclarantPayload,
+  toEcfSignerPayload,
 } from './SpedGenerationPanel';
+import { nonEmpty } from '../../../lib/utils/nonEmpty';
 import { resolveError } from '../lib/resolveError';
 
 /**
@@ -25,7 +28,7 @@ import { resolveError } from '../lib/resolveError';
  * Separate file (Fork F-COMP2-1 → (b)): the Presumido form (`SpedGenerationPanel.tsx`,
  * already tested + independently reviewed) stays untouched by the churn Forks 2/3/4 of
  * the ADR will bring (blocks L/M/N transcription) — that churn lands only here from now
- * on. `declarant`/`signers` reuse `EcfDeclarant`/`EcfSigner`/`EcfSignersEditor`/
+ * on. `declarant`/`signers` reuse `EcfDeclarantDraft`/`EcfSignerDraft`/`EcfSignersEditor`/
  * `validateEcfSigners`/`emptyEcfSigner`/`Field`/`inputClass`/`UF_CODES` exported by
  * `SpedGenerationPanel.tsx` — the server's `SpedEcfRealDto.ts` imports the identical
  * `DeclarantSchema`/`SignerSchema` (+ `refineEcfSigners`) from `SpedEcfDto.ts`, so this is
@@ -48,7 +51,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
   const currentYear = new Date().getFullYear();
 
   const [year, setYear] = useState(String(currentYear - 1));
-  const [declarant, setDeclarant] = useState<EcfDeclarant>({
+  const [declarant, setDeclarant] = useState<EcfDeclarantDraft>({
     cnpj: '', nome: '', codNat: '', cnaeFiscal: '', endereco: '', bairro: '',
     uf: 'SP', codMun: '', cep: '', email: '',
   });
@@ -57,7 +60,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
   // No default on the server (Manual do Real not transcribed) — starts blank, 4 chars required.
   const [formaTribPer, setFormaTribPer] = useState('');
   const [csll, setCsll] = useState<'1' | '4'>('1');
-  const [signers, setSigners] = useState<EcfSigner[]>([emptyEcfSigner()]);
+  const [signers, setSigners] = useState<EcfSignerDraft[]>([emptyEcfSigner()]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +68,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
   const signerError = (code: string) =>
     t(`sped.error.${code}`, t('sped.error.signersInvalid', 'Signatários inválidos.'));
 
-  function setD<K extends keyof EcfDeclarant>(k: K, v: EcfDeclarant[K]) {
+  function setD<K extends keyof EcfDeclarantDraft>(k: K, v: EcfDeclarantDraft[K]) {
     setDeclarant((p) => ({ ...p, [k]: v }));
   }
 
@@ -87,21 +90,26 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
       setError(signerError(signerIssue));
       return;
     }
-    const fiscal: EcfRealFiscal = {
-      formaTrib: formaTrib.trim() || undefined,
-      formaTribPer: formaTribPer.trim(),
-      indAliqCsll: csll,
-      indRecReceita: '2',
+    const payloadSigners = nonEmpty(signers.map(toEcfSignerPayload));
+    if (!payloadSigners) {
+      setError(signerError('ecfSignerCount'));
+      return;
+    }
+    const body: GenerateEcfRealPayload = {
+      unitId,
+      year: y,
+      declarant: toEcfDeclarantPayload(declarant),
+      fiscal: {
+        formaTrib: formaTrib.trim() || undefined,
+        formaTribPer: formaTribPer.trim(),
+        indAliqCsll: csll,
+        indRecReceita: '2',
+      },
+      signers: payloadSigners,
     };
     setBusy(true);
     try {
-      await spedService.generateAndDownloadEcfReal({
-        unitId,
-        year: y,
-        declarant,
-        fiscal,
-        signers,
-      });
+      await spedService.generateAndDownloadEcfReal(body);
     } catch (err) {
       setError(resolveError(err, genericError()));
     } finally {

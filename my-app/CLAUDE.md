@@ -16,6 +16,9 @@ Docs de referência (leia sob demanda — não carregam sozinhos):
 3. `tsc` limpo é gate: `cd my-app && npx tsc --noEmit` — não avance vermelho.
 4. Telas atrás de `withAuth` → verifique contra **build de produção**, não `next dev`.
 5. Composição JSX não é aresta `CALLS` no grafo — para liveness de componente React, use existência + `SIMILAR_TO`, não in-degree.
+6. **Body de escrita tipado pelo contrato gerado** — `@/types/contracts/<domínio>/*.gen.ts` (gerado do `dtoShapeSnapshot` do server; `<X>Schema` → `<X>Input`). Nunca espelhe o DTO à mão nem importe do backend. Array `.min(1)` vira `[T, ...T[]]`: monte com `nonEmpty()` (`lib/utils/nonEmpty.ts`).
+7. **Regra do mapper** — objeto aninhado sai de função com retorno declarado (`toX(d): XInput['y']`) ou `satisfies`; arrays por `.map(toX)` ou `.map((d): T => …)`. **Proibido** `.map` sem anotação, `{ ...rascunho }` e `as` no objeto (os três escapam da checagem de chave extra); `as` só em folha string → união, com `// ponytail:`.
+8. **`.gen.ts` nunca se edita** — mudou o DTO: `cd server && UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot` e comite o JSON + os `.gen.ts`.
 
 ## Ao escrever testes (`**/__tests__/*`)
 

@@ -172,6 +172,45 @@ Pré-condições (verificar antes de começar):
     confirmação linha-a-linha dos lançamentos dos passos 6–10, ou divergência registrada em
     Achados]
 
+---
+
+### [EMENDA 2026-09-28] Passos 12–14 — SPED pela tela (FE-FIX-SPED-ECD-SIGNERS + contrato gerado PR-1)
+
+> Preparado por agente em 2026-09-28, **em branco** (A3 do `PLANO-PENDENCIAS-FE-DTO-2026-09-28.md`, F-A3 → a;
+> item 19 do `PLANO-FE-CONTRACT-TYPES-2026-09-28.md` §6.4). Cobre a aba **Contabilidade → Compliance**
+> depois do FE-FIX-SPED-ECD-SIGNERS (J930 sem `identQualif`, CRC/UF do CRC/e-mail/fone na linha) e do
+> PR-1 do contrato gerado (o body dos três formulários passou a ser o tipo gerado do DTO). O H1 (PVA)
+> herda o `.txt` do passo 12.
+>
+> Pré-condições: server e app no **commit do merge do PR-1** (ou posterior), **build de produção**
+> (`npm run build && npm start` no my-app — a tela está atrás de `withAuth`); cópia do `dev.db` real
+> (`server/prisma/prisma/dev.db`, `npm run db:backup` antes); unidade com mapeamento referencial "Pronto".
+
+12. **ECD — signatários J930.** Compliance → Gerar SPED ECD. Preencher declarante, livro e **2
+    signatários**: (a) contador, código `900`, CPF de 11 dígitos, CRC no formato `UF-NNNNNN/O-D`, UF do
+    CRC, e-mail e fone, **não** responsável legal; (b) não-contador (ex.: `205`), responsável legal.
+    Gerar.
+    Resultado esperado: download do `.txt`; nenhum 400.
+    EVIDÊNCIA: [status + corpo da resposta do `POST /api/accounting/sped/ecd/generate` (DevTools →
+    Network) + a 1ª linha do `.txt` baixado (`|0000|…`)]
+
+13. **ECD — recusa local.** Repetir o passo 12 apagando o CRC do contador.
+    Resultado esperado: a tela recusa **antes** do envio, com a mensagem "O signatário contador (900)
+    exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone." e **nenhum** request no Network.
+    EVIDÊNCIA: [print da mensagem + print do Network sem o POST]
+
+14. **ECF (Presumido) e ECF Real pela tela.** Gerar a ECF (Lucro Presumido) e a ECF Real, cada uma
+    com um contador `900` (CPF 11 + CRC) e um não-contador.
+    Resultado esperado: download dos dois `.txt`; nenhum 400.
+    EVIDÊNCIA: [status + corpo de `POST /api/accounting/sped/ecf/generate` e de
+    `POST /api/accounting/sped/ecf/real/generate` + a 1ª linha de cada `.txt`]
+
+Desfecho dos passos 12–14 (marcar UM):
+[ ] PASSOU — 12, 13 e 14 com evidência conferindo com o esperado
+[ ] FALHOU — passo __ divergiu; evidência colada acima; nenhum passo seguinte executado
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passos 12–14): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
