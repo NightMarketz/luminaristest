@@ -61,6 +61,7 @@ jest.mock('../repositories/TransactionalDynamicTableRepository', () => ({
       } as unknown as IDynamicTable;
     }),
     findDataById: jest.fn(async (dataId: string) => (rowIndex.has(dataId) ? { id: dataId, data: {} } : null)),
+    findTablesByUserId: jest.fn(async () => []),
     deleteData: jest.fn(async (dataId: string) => {
       txDeletes.push(dataId);
     }),

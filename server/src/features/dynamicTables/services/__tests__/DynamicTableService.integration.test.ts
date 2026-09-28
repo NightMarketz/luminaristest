@@ -511,6 +511,126 @@ describe('Delete constraints', () => {
   });
 });
 
+/**
+ * GAP-MAP Nível 3 — `deleteTableDataBatch` pula as regras de delete do individual (2026-09-28).
+ * Autorização do dono (chat, 28/09/2026): "Sim deve respeitar as regras de delete". Esperado: o lote
+ * aplica, por linha, exatamente as regras de `deleteTableData` — RESTRICT recusa nomeada, CASCADE
+ * checa imutabilidade das filhas e as apaga, `beforeDelete`/`afterDelete` são chamados — e é atômico:
+ * uma linha recusada não apaga nada nem deixa efeito de `beforeDelete`.
+ */
+const hookCalls: { phase: 'beforeDelete' | 'afterDelete'; title: string }[] = [];
+const batchHookPlugin: RulePlugin = {
+  name: 'TestBatchDeleteHookPlugin',
+  supports: (ctx) => ctx.table.internalName === 'batch_hook_tbl',
+  beforeDelete: async (ctx) => {
+    const title = String(ctx.before?.title ?? '');
+    hookCalls.push({ phase: 'beforeDelete', title });
+    // Efeito colateral no estilo StockMovementsApplyPlugin (escreve via ctx.repository) numa linha-sentinela.
+    const sentinel = (await ctx.repository.findRowsByFieldValue(ctx.table.id, 'title', 'SENTINEL'))[0];
+    if (sentinel) {
+      const d = sentinel.data as Record<string, unknown>;
+      await ctx.repository.updateData(sentinel.id, { ...d, hits: String(Number(d.hits ?? 0) + 1) });
+    }
+    if (title === 'Blocked') throw new ValidationError('beforeDelete refused this row.');
+  },
+  afterDelete: (ctx) => {
+    hookCalls.push({ phase: 'afterDelete', title: String(ctx.before?.title ?? '') });
+  },
+};
+globalRuleRegistry.register(batchHookPlugin);
+
+const HOOK_SCHEMA = {
+  fields: [
+    { name: 'title', label: 'Title', type: 'string', required: true },
+    { name: 'hits', label: 'Hits', type: 'string' },
+  ],
+};
+
+describe('Delete constraints (lote — deleteTableDataBatch)', () => {
+  beforeEach(() => { hookCalls.length = 0; });
+
+  it('RESTRICT: the batch is refused (named) when any row is referenced, and nothing is deleted', async () => {
+    await seedUser('userA');
+    const { parent, child } = await seedParentChild('userA'); // no explicit constraint → default RESTRICT
+    const free = await create(ctxFor('userA'), parent.id, { pname: 'Free' });
+    const referenced = await create(ctxFor('userA'), parent.id, { pname: 'Referenced' });
+    await create(ctxFor('userA'), child.id, { clabel: 'C1', parentRef: referenced.id });
+    // Controle: o delete individual da MESMA linha já recusa — o cenário está armado.
+    await expect(service.deleteTableData(ctxFor('userA'), referenced.id)).rejects.toThrow(/referenced by data in table 'Child'/);
+
+    await expect(service.deleteTableDataBatch(ctxFor('userA'), parent.id, [free.id, referenced.id]))
+      .rejects.toThrow(/referenced by data in table 'Child'/);
+    expect(await isSoftDeleted(referenced.id)).toBe(false);
+    expect(await isSoftDeleted(free.id)).toBe(false);
+  });
+
+  it('CASCADE: the batch soft-deletes the referencing child rows along with the parents', async () => {
+    await seedUser('userA');
+    const { parent, child } = await seedParentChild('userA', 'CASCADE');
+    const p1 = await create(ctxFor('userA'), parent.id, { pname: 'P1' });
+    const p2 = await create(ctxFor('userA'), parent.id, { pname: 'P2' });
+    const c1 = await create(ctxFor('userA'), child.id, { clabel: 'C1', parentRef: p1.id });
+    const c2 = await create(ctxFor('userA'), child.id, { clabel: 'C2', parentRef: p2.id });
+
+    await expect(service.deleteTableDataBatch(ctxFor('userA'), parent.id, [p1.id, p2.id])).resolves.toEqual({ deleted: 2 });
+    expect(await isSoftDeleted(p1.id)).toBe(true);
+    expect(await isSoftDeleted(p2.id)).toBe(true);
+    expect(await isSoftDeleted(c1.id)).toBe(true);
+    expect(await isSoftDeleted(c2.id)).toBe(true);
+  });
+
+  it('CASCADE: the batch is refused when a child the cascade would delete is immutable (scope:all)', async () => {
+    await seedUser('userA');
+    const parent = await seedTable('userA', 'parent_tbl', {
+      fields: [{ name: 'pname', label: 'Name', type: 'string', required: true }],
+      deleteConstraints: [{ type: 'CASCADE', targetTable: 'child_tbl' }],
+    }, 'Parent');
+    const child = await seedTable('userA', 'child_tbl', {
+      fields: [
+        { name: 'clabel', label: 'Label', type: 'string', required: true },
+        { name: 'status', label: 'Status', type: 'select', required: true, options: ['Open', 'Closed'] },
+        { name: 'parentRef', label: 'Parent', type: 'relation', required: true, relation: { targetTable: parent.id } },
+      ],
+      immutableAfter: [{ condition: { field: 'status', op: 'eq', value: 'Closed' }, scope: 'all' }],
+    }, 'Child');
+    const pFree = await create(ctxFor('userA'), parent.id, { pname: 'Free' });
+    const pLocked = await create(ctxFor('userA'), parent.id, { pname: 'Locked' });
+    const c = await create(ctxFor('userA'), child.id, { clabel: 'C1', status: 'Closed', parentRef: pLocked.id });
+
+    await expect(service.deleteTableDataBatch(ctxFor('userA'), parent.id, [pFree.id, pLocked.id])).rejects.toBeInstanceOf(ValidationError);
+    expect(await isSoftDeleted(pFree.id)).toBe(false);
+    expect(await isSoftDeleted(pLocked.id)).toBe(false);
+    expect(await isSoftDeleted(c.id)).toBe(false);
+  });
+
+  it('hooks: beforeDelete and afterDelete run for every row of the batch', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'batch_hook_tbl', HOOK_SCHEMA, 'Hook');
+    const a = await create(ctxFor('userA'), t.id, { title: 'A' });
+    const b = await create(ctxFor('userA'), t.id, { title: 'B' });
+
+    await service.deleteTableDataBatch(ctxFor('userA'), t.id, [a.id, b.id]);
+    const titlesOf = (phase: string) => hookCalls.filter(c => c.phase === phase).map(c => c.title).sort();
+    expect(titlesOf('beforeDelete')).toEqual(['A', 'B']);
+    expect(titlesOf('afterDelete')).toEqual(['A', 'B']);
+  });
+
+  it('hooks: a row refused by beforeDelete aborts the batch — nothing deleted, no beforeDelete effect survives', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'batch_hook_tbl', HOOK_SCHEMA, 'Hook');
+    const sentinel = await create(ctxFor('userA'), t.id, { title: 'SENTINEL', hits: '0' });
+    const ok = await create(ctxFor('userA'), t.id, { title: 'Ok' });
+    const blocked = await create(ctxFor('userA'), t.id, { title: 'Blocked' });
+
+    await expect(service.deleteTableDataBatch(ctxFor('userA'), t.id, [ok.id, blocked.id]))
+      .rejects.toThrow('beforeDelete refused this row.');
+    expect(await isSoftDeleted(ok.id)).toBe(false);
+    expect(await isSoftDeleted(blocked.id)).toBe(false);
+    const s = await prisma.dynamicTableData.findUnique({ where: { id: sentinel.id } });
+    expect((s!.data as any).hits).toBe('0');
+  });
+});
+
 describe('Preset installation (installPresetAsSystem)', () => {
   it('creates all tables and resolves cross-table relations in the 2-pass install', async () => {
     await seedUser('userA');

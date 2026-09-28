@@ -838,22 +838,23 @@ export class DynamicTableService {
     }
   }
 
-  async deleteTableData(user: UserContext, dataId: string) {
-    const table = await this.findTableForData(user, dataId);
-    if (!this.policy.canManageData(user, table)) {
-      throw new ForbiddenError('You do not have permission to delete data from this table.');
-    }
+  /**
+   * Regras de delete de UMA linha, compartilhadas pelo delete individual e pelo lote: immutableAfter
+   * scope:'all' na linha, deleteConstraints (RESTRICT/RESTRICT_IF_AGGREGATE lançam) e, para CASCADE,
+   * a imutabilidade de cada filha. Devolve as filhas que o CASCADE deve apagar.
+   */
+  private async checkDeleteRules(table: IDynamicTable, dataId: string, repo: IDynamicTableRepository): Promise<{ tableId: string, dataId: string }[]> {
     const parentSchema = table.schema as unknown as ITableSchema;
     const constraints = parentSchema.deleteConstraints || [];
     const cascadeIds: { tableId: string, dataId: string }[] = [];
 
     // GAP-MAP 8, fork (a) (dono 2026-09-26): a linha que immutableAfter scope:'all' torna imutável
     // no update também não pode ser apagada. Regras de lista de campos seguem permitindo o delete.
-    const target = await this.repository.findDataById(dataId);
+    const target = await repo.findDataById(dataId);
     this.assertNotImmutableForDelete(parentSchema, target?.data as Record<string, unknown> | undefined);
 
     // Verify references to this record in other tables (relation fields)
-    const allTables = await this.repository.findTablesByUserId(table.userId);
+    const allTables = await repo.findTablesByUserId(table.userId);
     for (const t of allTables) {
       const schema = t.schema as unknown as ITableSchema;
       if (!schema?.fields) continue;
@@ -867,7 +868,7 @@ export class DynamicTableService {
       // Query only rows that actually reference this dataId — no full table scan
       let referencingRows: IDynamicTableData[] = [];
       for (const field of relationFields) {
-        const rows = await this.repository.findRowsReferencingId(t.id, field.name, dataId);
+        const rows = await repo.findRowsReferencingId(t.id, field.name, dataId);
         for (const row of rows) {
           if (!referencingRows.find(r => r.id === row.id)) referencingRows.push(row);
         }
@@ -915,6 +916,16 @@ export class DynamicTableService {
         }
       }
     }
+    return cascadeIds;
+  }
+
+  async deleteTableData(user: UserContext, dataId: string) {
+    const table = await this.findTableForData(user, dataId);
+    if (!this.policy.canManageData(user, table)) {
+      throw new ForbiddenError('You do not have permission to delete data from this table.');
+    }
+    const cascadeIds = await this.checkDeleteRules(table, dataId, this.repository);
+
     // Rules: beforeDelete runs outside the transaction (validation-focused, avoids long locks).
     const existing = await this.repository.findDataById(dataId);
     await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: this.repository }, 'beforeDelete');
@@ -943,10 +954,10 @@ export class DynamicTableService {
    * entire transaction rolls back (all-or-nothing). The size cap (200) is enforced
    * by the controller. Returns the count deleted.
    *
-   * Reuses the same validated delete primitive as deleteTableData (resolve the row's
-   * table → canManageData → soft-delete), but bound to the shared transaction so the
-   * batch is atomic. Cascade/constraint handling intentionally NOT applied here: bulk
-   * delete targets leaf CRM rows (leads/contacts) selected in the table UI.
+   * Applies, per row, the same rules as deleteTableData (checkDeleteRules: immutableAfter,
+   * RESTRICT, CASCADE + child immutability; beforeDelete/afterDelete hooks), all inside the
+   * shared transaction: every row is checked before any hook or write, and beforeDelete runs
+   * with the tx repository, so a refused row leaves no delete and no hook effect behind.
    *
    * @param user - Authenticated user context
    * @param tableId - The table all ids must belong to
@@ -970,6 +981,7 @@ export class DynamicTableService {
     let deleted = 0;
     await this.runInTransaction(async (tx) => {
       const txRepo = new TransactionalDynamicTableRepository(tx);
+      const cascadeIds = new Set<string>();
       for (const dataId of uniqueIds) {
         // Resolve the row's parent table inside the tx. A missing/soft-deleted row,
         // a row in another table, or a row owned by another user is reported as
@@ -978,12 +990,23 @@ export class DynamicTableService {
         if (!rowTable || rowTable.id !== tableId || rowTable.userId !== table.userId) {
           throw new NotFoundError('One or more rows do not exist in the requested table.');
         }
-        const row = await txRepo.findDataById(dataId);
-        this.assertNotImmutableForDelete(table.schema as unknown as ITableSchema, row?.data as Record<string, unknown> | undefined);
+        for (const c of await this.checkDeleteRules(table, dataId, txRepo)) cascadeIds.add(c.dataId);
+      }
+      const befores = new Map<string, Record<string, unknown> | null>();
+      for (const dataId of uniqueIds) {
+        const before = ((await txRepo.findDataById(dataId))?.data ?? null) as Record<string, unknown> | null;
+        befores.set(dataId, before);
+        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before, after: null, repository: txRepo }, 'beforeDelete');
       }
       for (const dataId of uniqueIds) {
         await txRepo.deleteData(dataId);
         deleted++;
+      }
+      for (const cascadeId of cascadeIds) {
+        await txRepo.deleteData(cascadeId);
+      }
+      for (const dataId of uniqueIds) {
+        await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: befores.get(dataId) ?? null, after: null, repository: txRepo }, 'afterDelete');
       }
     });
 
