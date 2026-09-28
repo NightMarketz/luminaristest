@@ -4,19 +4,19 @@ tipo: "motor"
 dominio: "motor"
 titulo: "GAP-MAP 8 — deleteTableData ignora immutableAfter/lifecycle (teste + fork a/b)"
 estado: "done"
-estado_detalhe: "✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12) · 28/09 tarde: #409 a090ce5f — o lote (deleteTableDataBatch) respeita immutableAfter scope:'all'; #415 6d8f651e — o lote aplica RESTRICT/CASCADE/hooks do individual (dono: \"Sim deve respeitar as regras de delete\"). Abertos no GAP-MAP: guarda lida fora do tx (TOCTOU); beforeDelete do individual fora da tx (#417)"
-prs: ["#384", "#390", "#409", "#415"]
+estado_detalhe: "✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12) · 28/09 tarde: #409 a090ce5f — o lote (deleteTableDataBatch) respeita immutableAfter scope:'all'; #415 6d8f651e — o lote aplica RESTRICT/CASCADE/hooks do individual (dono: \"Sim deve respeitar as regras de delete\"). 28/09 noite: #419 2024512a — beforeDelete do delete individual roda dentro da tx (GAP-MAP #417 fechado) · [[D-2026-09-28-GAP-MAP-3-4-5-E-ANEXO-PENDENTE]]. Aberto no GAP-MAP: guarda lida fora do tx (TOCTOU)"
+prs: ["#384", "#390", "#409", "#415", "#419"]
 ancora_sdd: "§III.1 passo 12 · §III.4"
 atualizado: "2026-09-28"
 ---
 # PASSO-12 — GAP-MAP 8 — deleteTableData ignora immutableAfter/lifecycle (teste + fork a/b)
 
-**Estado:** `done` — ✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12) · 28/09 tarde: #409 a090ce5f — o lote (deleteTableDataBatch) respeita immutableAfter scope:'all'; #415 6d8f651e — o lote aplica RESTRICT/CASCADE/hooks do individual (dono: "Sim deve respeitar as regras de delete"). Abertos no GAP-MAP: guarda lida fora do tx (TOCTOU); beforeDelete do individual fora da tx (#417)  
+**Estado:** `done` — ✅ #390 c9c16540 (28/09): GAP-MAP 8 instrumentado + corrigido pelo fork (a) do dono (26/09) — delete respeita immutableAfter scope:'all'; #384 992b7254 = shape/fork/gate do orquestrador (passos 11–12) · 28/09 tarde: #409 a090ce5f — o lote (deleteTableDataBatch) respeita immutableAfter scope:'all'; #415 6d8f651e — o lote aplica RESTRICT/CASCADE/hooks do individual (dono: "Sim deve respeitar as regras de delete"). 28/09 noite: #419 2024512a — beforeDelete do delete individual roda dentro da tx (GAP-MAP #417 fechado) · [[D-2026-09-28-GAP-MAP-3-4-5-E-ANEXO-PENDENTE]]. Aberto no GAP-MAP: guarda lida fora do tx (TOCTOU)  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** —  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 passo 12 · §III.4  
-**PRs:** #384, #390, #409, #415
+**PRs:** #384, #390, #409, #415, #419
 
 ## Docs
 
