@@ -167,6 +167,17 @@ describe('retornoManual — item 11', () => {
     semEscrita(s);
   });
 
+  it('identidade (v): nota de produção restrita (infDPS/tpAmb=2) num documento de produção → 422, nada escrito (GAP-MAP #405 tpAmb)', async () => {
+    const xmlRestrita = Buffer.from(signNfseForTest(RAW.replace('<tpAmb>1</tpAmb>', '<tpAmb>2</tpAmb>')));
+    const s = makeService(manualDoc({ ambiente: 'producao' }));
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', xmlRestrita)).rejects.toMatchObject({
+      statusCode: 422,
+      errorCode: 'DFE_IDENTIDADE_DIVERGENTE',
+      message: expect.stringMatching(/ambiente/),
+    });
+    semEscrita(s);
+  });
+
   it('XML sem assinatura → 422 NFSE_INVALIDA (F-MAN-1 a)', async () => {
     const s = makeService(manualDoc());
     await expect(s.service.retornoManual(SCOPE, 'doc-m', Buffer.from(RAW))).rejects.toMatchObject({ statusCode: 422, errorCode: 'NFSE_INVALIDA' });
