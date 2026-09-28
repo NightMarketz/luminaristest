@@ -1,7 +1,7 @@
 # BRIEF — BE-INCR-DFE-TPAMB (o `tpAmb` da DPS vem do ambiente do documento)
 
 > Produzido em `sessao-planejamento` (2026-09-28). **Este documento NÃO escreve código**: checklist, contratos
-> esboçados e forks. **Forks F-AMB-1..6: RATIFICAÇÃO PENDENTE.** Nada aqui está decidido; quem decide é o dono.
+> esboçados e forks. **Forks F-AMB-1..6: RATIFICADOS 2026-09-28** conforme as recomendações — "Pode seguir com as recomendações e executa cada uma das duas" (dono, chat, 2026-09-28). Execução autorizada (instrumentação → correção).
 
 **Em duas linhas:** `FiscalDocumentEmissionService.buildPayload` grava `tpAmb: 1` (produção) em **toda** DPS,
 inclusive quando o `FiscalDocument` nasce `homologacao`. Isso contraria a spec ratificada do X10b (BRIEF
@@ -232,7 +232,7 @@ não mudam, e o shape de `FiscalDocumentView` também não.
 **Pré-requisito da instrumentação:** este BRIEF com F-AMB-1..6 ratificados, mais a autorização do dono para as duas
 sessões. O "Planeje para corrigir" autoriza **só este BRIEF**.
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — RATIFICADOS 2026-09-28
 
 ### F-AMB-1 — onde o ambiente entra na montagem
 - **(a)** `assemble`/`buildPayload` recebem `ambiente` como parâmetro, e o `tpAmb` nasce certo.
@@ -240,7 +240,7 @@ sessões. O "Planeje para corrigir" autoriza **só este BRIEF**.
 - **(c)** O payload montado não tem `tpAmb` e o adaptador o injeta.
 - **Recomendação: (a).** A prévia também precisa do valor certo, e a (b) deixa a prévia errada ou exige um terceiro
   patch. A (c) quebra o `DpsPayloadSchema` (`tpAmb` é 1-1) e a ficha manual, que não passa por adaptador de rede.
-  Na (a), a ordem `selection → assemble` em `emit` passa a ser obrigatória. **PENDENTE.**
+  Na (a), a ordem `selection → assemble` em `emit` passa a ser obrigatória. **RATIFICADO (a) — dono 2026-09-28.**
 
 ### F-AMB-2 — reenvio quando o ambiente do documento ≠ o do env
 - **(a)** Recusa com 400 `reenvio_bloqueado: ambiente_divergente` e 0 escrita.
@@ -250,7 +250,7 @@ sessões. O "Planeje para corrigir" autoriza **só este BRIEF**.
 - **Recomendação: (a).** É o único caminho silencioso de §1, e (b) depende de um comportamento do parceiro que não
   conhecemos. A (c) reescreve a identidade do documento: um documento de homologação que "vira" produção mexe no
   `SourceDocument` (ADR §9.2 item 5). O custo da (a) é o operador cancelar e emitir de novo no ambiente certo.
-  **PENDENTE.**
+  **RATIFICADO (a) — dono 2026-09-28.** A recusa de reenvio com ambiente divergente (400 `ambiente_divergente`, nada escrito) é parte DESTA lacuna, não escopo alheio para a `sessao-correcao`.
 
 ### F-AMB-3 — invariante defensiva antes de persistir (item 7)
 - **(a)** Checagem no serviço, com 500 `dfe_tpamb_invariant`.
@@ -258,20 +258,20 @@ sessões. O "Planeje para corrigir" autoriza **só este BRIEF**.
 - **(c)** `refine` no Zod. Inviável: o schema não conhece o ambiente do documento.
 - **Recomendação: (a).** São duas linhas, e o teste de mutação prova que a checagem morde. É defesa contra
   regressão por um terceiro caminho de montagem (NF-e 55, Fase E), que não passaria pelos testes 1–5.
-  **PENDENTE.**
+  **RATIFICADO (a) — dono 2026-09-28.**
 
 ### F-AMB-4 — documentos já gravados com `tpAmb` errado
 - **(a)** Nada a migrar (M8: 0 documentos no `dev.db`; produção não implantada, M2 aberto), mais uma nota no PR.
 - **(b)** Migração de dado que reescreve `payloadJson` das tentativas `homologacao`.
 - **Recomendação: (a).** A (b) reescreveria uma tentativa **já enviada**, e a tentativa é registro do que saiu
-  (`appendAttempt` nunca sobrescreve). Se aparecer dado antes do merge, é fork novo. **PENDENTE.**
+  (`appendAttempt` nunca sobrescreve). Se aparecer dado antes do merge, é fork novo. **RATIFICADO (a) — dono 2026-09-28.**
 
 ### F-AMB-5 — exibir o ambiente na ficha manual
 - **(a)** `ficha()` passa a devolver `ambiente` (aditivo, mexe no openapi e no snapshot).
 - **(b)** A tela deriva de `payload.infDPS.tpAmb`.
 - **(c)** Decidir no BRIEF `FE-INCR-DFE`.
 - **Recomendação: (c).** É exibição, e a regra de escopo 5 manda não dimensionar além do item. Depois da correção,
-  o `tpAmb` do payload já é a verdade. **PENDENTE.**
+  o `tpAmb` do payload já é a verdade. **RATIFICADO (c) — dono 2026-09-28.**
 
 ### F-AMB-6 — ordem com o PR #410 (guarda (v), ainda aberto)
 - **(a)** O #410 mergeia primeiro e a correção troca o ternário da guarda (v) por `ambienteFromTpAmb`, uma função só
@@ -279,7 +279,7 @@ sessões. O "Planeje para corrigir" autoriza **só este BRIEF**.
 - **(b)** A correção mergeia primeiro e o #410 é rebaseado para usar `tpAmbFor`/`ambienteFromTpAmb`.
 - **(c)** Independentes: cada um com o seu mapeamento, e um teste de round-trip amarrando os dois.
 - **Recomendação: (a).** O #410 está pronto e revisado. Tocar nele depois é uma linha, na regra de
-  `sessao-integracao` ("rebaseie o filho antes do pai"). A (c) deixa duas fontes da mesma tabela. **PENDENTE.**
+  `sessao-integracao` ("rebaseie o filho antes do pai"). A (c) deixa duas fontes da mesma tabela. **RATIFICADO (a) — dono 2026-09-28.**
 
 ## 8. Pendente de validação externa
 
