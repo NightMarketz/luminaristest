@@ -534,7 +534,10 @@ const batchHookPlugin: RulePlugin = {
     if (title === 'Blocked') throw new ValidationError('beforeDelete refused this row.');
   },
   afterDelete: (ctx) => {
-    hookCalls.push({ phase: 'afterDelete', title: String(ctx.before?.title ?? '') });
+    const title = String(ctx.before?.title ?? '');
+    hookCalls.push({ phase: 'afterDelete', title });
+    // Falha DENTRO da tx do delete (GAP-MAP beforeDelete individual): força o rollback depois do beforeDelete.
+    if (title === 'FailAfter') throw new ValidationError('afterDelete failed inside the delete tx.');
   },
 };
 globalRuleRegistry.register(batchHookPlugin);
@@ -626,6 +629,30 @@ describe('Delete constraints (lote — deleteTableDataBatch)', () => {
       .rejects.toThrow('beforeDelete refused this row.');
     expect(await isSoftDeleted(ok.id)).toBe(false);
     expect(await isSoftDeleted(blocked.id)).toBe(false);
+    const s = await prisma.dynamicTableData.findUnique({ where: { id: sentinel.id } });
+    expect((s!.data as any).hits).toBe('0');
+  });
+});
+
+/**
+ * GAP-MAP [ABERTO] "DynamicTable — `beforeDelete` do delete INDIVIDUAL roda fora da tx" (validado em 7ce5fdd2, 28/09).
+ * Autorização do dono (questionário, 28/09/2026): "GAP 3, 4 e 5" — instrumentação → correção. Esperado: como no lote
+ * (#415), se a tx do delete individual falhar, nenhum efeito do `beforeDelete` sobrevive (sem drift no estilo
+ * StockMovementsApplyPlugin: estoque ajustado com a linha ainda viva).
+ */
+describe('Delete individual — beforeDelete e a tx do delete', () => {
+  beforeEach(() => { hookCalls.length = 0; });
+
+  it('GAP-MAP beforeDelete individual: when the delete tx fails, no beforeDelete effect survives', async () => {
+    await seedUser('userA');
+    const t = await seedTable('userA', 'batch_hook_tbl', HOOK_SCHEMA, 'Hook');
+    const sentinel = await create(ctxFor('userA'), t.id, { title: 'SENTINEL', hits: '0' });
+    const row = await create(ctxFor('userA'), t.id, { title: 'FailAfter' });
+
+    await expect(service.deleteTableData(ctxFor('userA'), row.id)).rejects.toThrow('afterDelete failed inside the delete tx.');
+    // Cenário armado: o beforeDelete rodou e a tx do delete foi desfeita (a linha continua viva).
+    expect(hookCalls.map(c => c.phase)).toEqual(['beforeDelete', 'afterDelete']);
+    expect(await isSoftDeleted(row.id)).toBe(false);
     const s = await prisma.dynamicTableData.findUnique({ where: { id: sentinel.id } });
     expect((s!.data as any).hits).toBe('0');
   });

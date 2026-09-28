@@ -926,14 +926,13 @@ export class DynamicTableService {
     }
     const cascadeIds = await this.checkDeleteRules(table, dataId, this.repository);
 
-    // Rules: beforeDelete runs outside the transaction (validation-focused, avoids long locks).
-    const existing = await this.repository.findDataById(dataId);
-    await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: this.repository }, 'beforeDelete');
-
-    // Wrap the main delete + cascade + afterDelete side-effects in a single transaction so that
-    // a plugin failure rolls back the soft-delete and any cascade deletions.
+    // Wrap beforeDelete + the main delete + cascade + afterDelete side-effects in a single transaction so
+    // that a failure rolls back the soft-delete, any cascade deletions and the beforeDelete effects.
     await prisma.$transaction(async (tx) => {
       const txRepo = new TransactionalDynamicTableRepository(tx);
+      const existing = await txRepo.findDataById(dataId);
+      await this.runRules({ userId: table.userId, table, schema: table.schema as unknown as ITableSchema, operation: 'delete', before: existing?.data as Record<string, unknown> | null, after: null, repository: txRepo }, 'beforeDelete');
+
       await txRepo.deleteData(dataId);
 
       // Execute cascade soft deletes recursively (within the same transaction)
