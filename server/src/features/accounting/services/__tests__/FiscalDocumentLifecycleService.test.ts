@@ -207,14 +207,31 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
     expect(repo.transition).toHaveBeenCalledWith(
       SCOPE,
       'doc-1',
-      expect.objectContaining({ status: 'AUTHORIZED', chaveOuCodigo: 'CHAVE-XYZ', sourceDocumentId: 'srcdoc-1' }),
+      expect.objectContaining({ status: 'AUTHORIZED', chaveOuCodigo: 'CHAVE-XYZ' }),
       expect.anything(),
+    );
+    // GAP-MAP applyResult (fork do dono 28/09): anexos e proveniência gravados DEPOIS da tx de autorização.
+    expect(repo.transition).toHaveBeenLastCalledWith(
+      SCOPE,
+      'doc-1',
+      { status: 'AUTHORIZED', whenStatusIn: ['AUTHORIZED'], xmlAttachmentId: expect.any(String), pdfAttachmentId: expect.any(String), sourceDocumentId: 'srcdoc-1' },
     );
     expect(auditService.append).toHaveBeenCalledWith(
       expect.anything(),
       SCOPE,
       expect.objectContaining({ eventType: 'dfe.authorized' }),
     );
+  });
+
+  it('AUTHORIZED em producao: status mudou (cancelamento) entre a autorização e a gravação dos anexos → proveniência aposentada, sem erro', async () => {
+    const { service, repo, postingService } = makeService({ docs: { 'doc-1': baseDoc({ ambiente: 'producao' }) } });
+    mockPort.consultar.mockResolvedValueOnce({ status: 'AUTHORIZED', partnerRef: 'ref-1', numero: '123', chaveOuCodigo: 'CHAVE-XYZ', xml: Buffer.from('<xml/>'), errors: [] } as EmissaoResult);
+    repo.transition
+      .mockImplementationOnce(async () => baseDoc({ status: 'AUTHORIZED' }))
+      .mockRejectedValueOnce(new Error('fiscal_document_status_changed: doc-1'));
+    await expect(service.consultarUm(SCOPE, 'doc-1')).resolves.toBeDefined();
+    expect(repo.transition).toHaveBeenLastCalledWith(SCOPE, 'doc-1', expect.objectContaining({ whenStatusIn: ['AUTHORIZED'], sourceDocumentId: 'srcdoc-1' }));
+    expect(postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'srcdoc-1', 'dfe_status_changed');
   });
 
   it('AUTHORIZED em homologacao: NÃO anexa attachment nem proveniência (ADR §9.2 item 5)', async () => {

@@ -219,6 +219,32 @@ describe('retornoManual — item 11', () => {
     s.repo.transition.mockRejectedValueOnce(new Error('fiscal_document_status_changed: doc-m'));
     await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK)).rejects.toMatchObject({ statusCode: 409, errorCode: 'DFE_STATUS_INVALIDO' });
   });
+
+  /**
+   * GAP-MAP [ABERTO] "NFS-e — `applyResult` grava anexo e proveniência ANTES da tx de autorização" (validado em
+   * 7ce5fdd2, 28/09). Autorização do dono (questionário, 28/09/2026): "GAP 3, 4 e 5" — instrumentação → correção.
+   * Esperado: se a guarda interna (insideTx) ou a corrida (whenStatusIn) recusar a autorização, nenhum anexo nem
+   * SourceDocument fica gravado para o documento não autorizado (em produção, onde o applyResult anexa).
+   */
+  it.each([
+    [
+      'guarda interna: outro documento grava a chave entre a pré-checagem e a tx',
+      (s: ReturnType<typeof makeService>) =>
+        s.repo.findByChaveOuCodigo.mockImplementation(async (...args: unknown[]) => (args[2] ? { id: 'doc-concorrente' } : null) as never),
+      { statusCode: 422, errorCode: 'DFE_IDENTIDADE_DIVERGENTE' },
+    ],
+    [
+      'corrida: outro pedido muda o status antes da escrita',
+      (s: ReturnType<typeof makeService>) => s.repo.transition.mockRejectedValueOnce(new Error('fiscal_document_status_changed: doc-m')),
+      { statusCode: 409, errorCode: 'DFE_STATUS_INVALIDO' },
+    ],
+  ])('GAP-MAP applyResult: autorização recusada na tx (%s) → nenhum anexo nem proveniência gravados', async (_caso, armar, erro) => {
+    const s = makeService(manualDoc({ ambiente: 'producao' }));
+    armar(s);
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK, Buffer.from('%PDF-1.4 fake'))).rejects.toMatchObject(erro);
+    expect(s.documentAttachmentService.upload).not.toHaveBeenCalled();
+    expect(s.postingService.attachSourceDocument).not.toHaveBeenCalled();
+  });
 });
 
 describe('rejeicaoManual — item 12', () => {

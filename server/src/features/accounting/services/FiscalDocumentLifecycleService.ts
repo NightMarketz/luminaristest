@@ -573,13 +573,72 @@ export class FiscalDocumentLifecycleService {
       );
     }
 
+    const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
+    await this.repo.runTransaction(async (tx) => {
+      if (manual?.insideTx) await manual.insideTx(tx);
+      await this.repo.transition(
+        scope,
+        doc.id,
+        {
+          status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
+          ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
+          ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}),
+          partnerRef: result.partnerRef,
+          nNFSe: result.nNFSe ?? null,
+          chaveOuCodigo: result.chaveOuCodigo,
+          numero: result.numero ? BigInt(result.numero) : undefined,
+          baseIssCents: result.valores?.baseIssCents != null ? BigInt(result.valores.baseIssCents) : undefined,
+          aliqIssBp: result.valores?.aliqIssBp,
+          vIssCents: result.valores?.vIssCents != null ? BigInt(result.valores.vIssCents) : undefined,
+          vIbsCents: result.valores?.vIbsCents != null ? BigInt(result.valores.vIbsCents) : undefined,
+          vCbsCents: result.valores?.vCbsCents != null ? BigInt(result.valores.vCbsCents) : undefined,
+          authorizedAt: new Date(),
+          xmlAttachmentId: null,
+          pdfAttachmentId: null,
+          sourceDocumentId: null,
+          attemptResult,
+        },
+        tx,
+      );
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: 'dfe.authorized',
+        targetType: 'fiscal_document',
+        targetId: doc.id,
+        payload: {
+          documentId: doc.id,
+          partnerRef: result.partnerRef ?? '',
+          nNFSe: result.nNFSe ?? '',
+          chaveOuCodigo: result.chaveOuCodigo ?? '',
+          // proveniência só existe DEPOIS da autorização (GAP-MAP applyResult); o vínculo fica no audit do attachSourceDocument.
+          sourceDocumentId: '',
+        },
+      });
+      if (manual?.releitura) {
+        await this.auditService.append(tx, scope, {
+          actorUserId: scope.actorUserId,
+          eventType: 'dfe.manual_result',
+          targetType: 'fiscal_document',
+          targetId: doc.id,
+          payload: {
+            documentId: doc.id,
+            attemptNo: String(doc.currentAttemptNo),
+            releitura: manual.releitura.releitura.status,
+            nDivergencias: String(manual.releitura.releitura.divergencias.length),
+          },
+        });
+      }
+    });
+
     let xmlAttachmentId: string | null = null;
     let pdfAttachmentId: string | null = null;
     let sourceDocumentId: string | null = null;
 
     // Em produção: (1) XML/PDF -> DocumentAttachment; (2) attachSourceDocument (0 lançamentos
     // novos, idempotente por externalRef). Em homologação: grava o documento, NÃO anexa nada
-    // (ADR §9.2 item 5).
+    // (ADR §9.2 item 5). Só DEPOIS da tx de autorização (GAP-MAP applyResult, fork do dono 28/09):
+    // guarda recusada não deixa anexo nem proveniência. Falha aqui deixa AUTHORIZED sem anexo —
+    // reexecutável (attachSourceDocument é idempotente por externalRef).
     if (doc.ambiente === 'producao') {
       if (result.xml) {
         const att = await this.documentAttachmentService.upload(scope, {
@@ -611,62 +670,16 @@ export class FiscalDocumentLifecycleService {
         rawJson: JSON.stringify({ status: result.status, partnerRef: result.partnerRef, numero: result.numero, nNFSe: result.nNFSe, chaveOuCodigo: result.chaveOuCodigo, valores: result.valores }),
       });
       sourceDocumentId = sourceDoc.id;
-    }
-
-    const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
-    await this.repo.runTransaction(async (tx) => {
-      if (manual?.insideTx) await manual.insideTx(tx);
-      await this.repo.transition(
-        scope,
-        doc.id,
-        {
-          status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
-          ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
-          ...(manual ? { whenStatusIn: PENDING_STATUSES } : {}),
-          partnerRef: result.partnerRef,
-          nNFSe: result.nNFSe ?? null,
-          chaveOuCodigo: result.chaveOuCodigo,
-          numero: result.numero ? BigInt(result.numero) : undefined,
-          baseIssCents: result.valores?.baseIssCents != null ? BigInt(result.valores.baseIssCents) : undefined,
-          aliqIssBp: result.valores?.aliqIssBp,
-          vIssCents: result.valores?.vIssCents != null ? BigInt(result.valores.vIssCents) : undefined,
-          vIbsCents: result.valores?.vIbsCents != null ? BigInt(result.valores.vIbsCents) : undefined,
-          vCbsCents: result.valores?.vCbsCents != null ? BigInt(result.valores.vCbsCents) : undefined,
-          authorizedAt: new Date(),
-          xmlAttachmentId,
-          pdfAttachmentId,
-          sourceDocumentId,
-          attemptResult,
-        },
-        tx,
-      );
-      await this.auditService.append(tx, scope, {
-        actorUserId: scope.actorUserId,
-        eventType: 'dfe.authorized',
-        targetType: 'fiscal_document',
-        targetId: doc.id,
-        payload: {
-          documentId: doc.id,
-          partnerRef: result.partnerRef ?? '',
-          nNFSe: result.nNFSe ?? '',
-          chaveOuCodigo: result.chaveOuCodigo ?? '',
-          sourceDocumentId: sourceDocumentId ?? '',
-        },
-      });
-      if (manual?.releitura) {
-        await this.auditService.append(tx, scope, {
-          actorUserId: scope.actorUserId,
-          eventType: 'dfe.manual_result',
-          targetType: 'fiscal_document',
-          targetId: doc.id,
-          payload: {
-            documentId: doc.id,
-            attemptNo: String(doc.currentAttemptNo),
-            releitura: manual.releitura.releitura.status,
-            nDivergencias: String(manual.releitura.releitura.divergencias.length),
-          },
-        });
+      const autorizado = divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED';
+      try {
+        // Guarda na 2ª escrita: um cancelamento entre as duas escritas já aposentou a proveniência que conhecia (nenhuma);
+        // esta não pode ficar viva num documento cancelado.
+        await this.repo.transition(scope, doc.id, { status: autorizado, whenStatusIn: [autorizado], xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
+      } catch (e) {
+        if (!(e instanceof Error && e.message.startsWith('fiscal_document_status_changed'))) throw e;
+        await this.postingService.retireSourceDocument(scope, sourceDocumentId, 'dfe_status_changed');
+        logger.warn('dfe_authorized: status mudou antes de gravar anexos — proveniência aposentada', { documentId: doc.id });
       }
-    });
+    }
   }
 }
