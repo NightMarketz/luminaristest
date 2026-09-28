@@ -305,6 +305,64 @@ describe('FiscalDocumentLifecycleService — reenviar (item 26)', () => {
   });
 });
 
+describe('FiscalDocumentLifecycleService — reenviar e tpAmb [103] (BE-INCR-DFE-TPAMB itens 5-6)', () => {
+  // A remontagem real (FiscalDocumentEmissionService) deriva tpAmb do ambiente que recebe; sem ambiente
+  // (o contrato de hoje) ela grava 1. O mock reproduz as duas coisas para o teste medir o que o reenvio PASSA.
+  function withAmbienteAwareReassemble(emissionService: ReturnType<typeof makeService>['emissionService']) {
+    emissionService.reassembleGroupForReenvio.mockImplementation((async (...args: unknown[]) => ({
+      vServCents: 10000,
+      payload: { ...REASSEMBLED_PAYLOAD, infDPS: { ...REASSEMBLED_PAYLOAD.infDPS, tpAmb: args[4] === 'homologacao' ? 2 : 1 } },
+      cnpjEmitente: '11222333000181',
+      partnerAccountRef: null,
+    })) as never);
+  }
+
+  it('item 5 — mesmo ambiente (homologacao): remonta com o ambiente do documento e a tentativa + a porta levam tpAmb 2', async () => {
+    const { service, repo, emissionService } = makeService({ docs: { 'doc-1': baseDoc({ status: 'REJECTED', ambiente: 'homologacao', numero: 42n }) } });
+    withAmbienteAwareReassemble(emissionService);
+    mockPort.emitir.mockResolvedValueOnce({ status: 'PROCESSING', partnerRef: 'doc-1:2', errors: [] });
+
+    await service.reenviar(SCOPE, 'doc-1');
+
+    const appendAttemptCalls = repo.appendAttempt.mock.calls as unknown as Array<[unknown, { payloadJson: string }]>;
+    const emitirCalls = mockPort.emitir.mock.calls as unknown as Array<[{ ambiente: string; payload: { infDPS: { tpAmb: number } } }]>;
+    expect({
+      remontadoCom: (emissionService.reassembleGroupForReenvio.mock.calls[0] as unknown[])[4],
+      tentativa: JSON.parse(appendAttemptCalls[0][1].payloadJson).infDPS.tpAmb,
+      porta: { ambiente: emitirCalls[0][0].ambiente, tpAmb: emitirCalls[0][0].payload.infDPS.tpAmb },
+    }).toEqual({ remontadoCom: 'homologacao', tentativa: 2, porta: { ambiente: 'homologacao', tpAmb: 2 } });
+  });
+
+  it.each([
+    ['homologacao', 'producao'],
+    ['producao', 'homologacao'],
+  ])('item 6 (F-AMB-2 a) — tpAmb: documento em %s com a emissão configurada em %s → 400 ambiente_divergente, nada escrito', async (docAmbiente, envAmbiente) => {
+    const { service, repo, auditService, emissionService } = makeService({ docs: { 'doc-1': baseDoc({ status: 'REJECTED', ambiente: docAmbiente }) } });
+    withAmbienteAwareReassemble(emissionService);
+    mockSelection.ambiente = envAmbiente;
+
+    let caught: unknown;
+    try {
+      await service.reenviar(SCOPE, 'doc-1');
+    } catch (e) {
+      caught = e;
+    }
+    expect({
+      erro: caught instanceof ValidationError ? caught.message : String(caught),
+      faltantes: (caught as { details?: { faltantes?: string[] } } | undefined)?.details?.faltantes ?? [],
+      appendAttempt: repo.appendAttempt.mock.calls.length,
+      audit: auditService.append.mock.calls.length,
+      porta: mockPort.emitir.mock.calls.length,
+    }).toEqual({
+      erro: expect.stringContaining('reenvio_bloqueado: ambiente_divergente'),
+      faltantes: [expect.stringMatching(new RegExp(`${docAmbiente}.*${envAmbiente}`))],
+      appendAttempt: 0,
+      audit: 0,
+      porta: 0,
+    });
+  });
+});
+
 describe('FiscalDocumentLifecycleService — cancelar (item 29)', () => {
   it('só de AUTHORIZED — outro status bloqueia sem tocar a porta', async () => {
     const { service, repo } = makeService({ docs: { 'doc-1': baseDoc({ status: 'SENT' }) } });
