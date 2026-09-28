@@ -223,7 +223,7 @@ pedir ao contador o que já está no CNPJ/contrato social da empresa é ida-e-vo
 vazios contam como ausentes na linha `900` — no formulário, deixe em branco o que não tiver (a tela omite a chave).
 
 > **Dependência:** CRC / UF do CRC / e-mail / fone só aparecem na **tela** após o merge da correção
-> FE-FIX-SPED-ECD-SIGNERS (branch `claude/fe-dto-asymmetry-scan-fb5c0a`, ainda não mergeada); até lá a ECD pela tela dá 400.
+> FE-FIX-SPED-ECD-SIGNERS (branch `claude/fe-dto-asymmetry-scan-fb5c0a`, ainda não mergeada); até lá a ECD pela tela dá 400. *(Atualização 28/09: mergeada no #427 — os campos já estão na tela.)*
 
 | Campo | Origem | Formato | Obrigatório / default |
 |---|---|---|---|
