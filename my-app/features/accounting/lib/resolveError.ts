@@ -1,4 +1,4 @@
-import { humanizeZodFlatten, isZodFlatten } from '../../../lib/api/api-client';
+import { humanizeZodFlatten, isZodFlatten } from '../../../lib/api/zodFlatten';
 
 /**
  * Canonical error resolver for the accounting frontend.
