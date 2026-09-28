@@ -154,9 +154,28 @@ describe('retornoManual — item 11', () => {
     semEscrita(s);
   });
 
+  it('identidade (ii) DENTRO da tx: pré-checagem vê vazio, outro documento grava a chave antes da escrita → 422 pela re-checagem, status não escrito (GAP-MAP #405 insideTx)', async () => {
+    const s = makeService(manualDoc());
+    // sem tx = pré-checagem (ainda não há outro); com tx = re-checagem autoritativa (o concorrente já gravou)
+    s.repo.findByChaveOuCodigo.mockImplementation(async (...args: unknown[]) => (args[2] ? { id: 'doc-concorrente' } : null) as never);
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK)).rejects.toMatchObject({
+      statusCode: 422,
+      errorCode: 'DFE_IDENTIDADE_DIVERGENTE',
+      message: expect.stringMatching(/doc-concorrente/),
+    });
+    expect(s.repo.transition).not.toHaveBeenCalled();
+  });
+
   it('identidade (iii): nota processada ANTES de o documento existir → 422', async () => {
     const s = makeService(manualDoc({ createdAt: new Date('2026-09-16T00:00:00Z') }));
     await expect(s.service.retornoManual(SCOPE, 'doc-m', XML_OK)).rejects.toThrow(/antes de o documento existir/);
+    semEscrita(s);
+  });
+
+  it('identidade (iii): dhProc que não é data-hora real (mês 13) → 422, nada escrito (GAP-MAP #405 dhProc)', async () => {
+    const xmlMes13 = Buffer.from(signNfseForTest(RAW.replace('<dhProc>2026-09-15T14:32:10-03:00</dhProc>', '<dhProc>2026-13-01T14:32:10-03:00</dhProc>')));
+    const s = makeService(manualDoc());
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', xmlMes13)).rejects.toMatchObject({ statusCode: 422, message: expect.stringMatching(/dhProc/) });
     semEscrita(s);
   });
 
@@ -164,6 +183,17 @@ describe('retornoManual — item 11', () => {
     const xmlApi = Buffer.from(signNfseForTest(RAW.replace('<procEmi>2</procEmi>', '<procEmi>1</procEmi>')));
     const s = makeService(manualDoc());
     await expect(s.service.retornoManual(SCOPE, 'doc-m', xmlApi)).rejects.toThrow(/não é nota emitida no portal/);
+    semEscrita(s);
+  });
+
+  it('identidade (v): nota de produção restrita (infDPS/tpAmb=2) num documento de produção → 422, nada escrito (GAP-MAP #405 tpAmb)', async () => {
+    const xmlRestrita = Buffer.from(signNfseForTest(RAW.replace('<tpAmb>1</tpAmb>', '<tpAmb>2</tpAmb>')));
+    const s = makeService(manualDoc({ ambiente: 'producao' }));
+    await expect(s.service.retornoManual(SCOPE, 'doc-m', xmlRestrita)).rejects.toMatchObject({
+      statusCode: 422,
+      errorCode: 'DFE_IDENTIDADE_DIVERGENTE',
+      message: expect.stringMatching(/ambiente/),
+    });
     semEscrita(s);
   });
 
