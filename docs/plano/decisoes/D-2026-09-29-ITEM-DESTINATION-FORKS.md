@@ -41,6 +41,8 @@ Existe um oráculo mais barato, registrado sem ação: a regra de validação do
 CFOP com o `tpNF`. O conteúdo da regra é **NV** nesta sessão: o arquivo está no MANIFEST, mas não no disco. Para
 usá-lo seria preciso autorizar o download e a instrumentação.
 
+**Atualização (mesmo dia, dono: *"Baixa o arquivo pra ler e escreve o teste-guarda"*):** a regra é a I08-10 do Anexo I (rejeição 518, facultativa por UF), lida no PDF de sha256 igual ao MANIFEST. O teste-guarda `it.failing` e a linha [ABERTO] do GAP-MAP estão no PR #443. A correção inverte um caso ratificado do C8 (F-FA12), por isso é decisão do dono.
+
 ## Próximo passo
 
 "Executa ITEM-DESTINATION PR-1" (BRIEF §7) abre a `sessao-feature`.
