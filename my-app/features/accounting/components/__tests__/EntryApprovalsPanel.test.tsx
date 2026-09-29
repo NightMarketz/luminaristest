@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // This panel compiles JSX to bare `React.createElement` (esbuild classic runtime) and does not
 // `import React` — expose it globally for the render, like the AccountsPayablePanel test.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-library/react';
 import { EntryApprovalsPanel } from '../EntryApprovalsPanel';
 import { entryApprovalsService, type ApprovalEntry } from '../../../../lib/services/entryApprovals.service';
 import { accountingService } from '../../../../lib/services/accounting.service';
@@ -320,11 +320,13 @@ describe('EntryApprovalsPanel', () => {
   });
 
   it('approving the last row on a page beyond page 1 steps back a page instead of showing a false empty state', async () => {
-    const pendingPage2 = entry({ id: 'e-pending-2', status: 'PendingApproval', version: 1, submittedById: 'o1' });
+    const pendingPage2 = entry({ id: 'e-pending-2', status: 'PendingApproval', version: 1, submittedById: 'o1', description: 'Aluguel de julho' });
     vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
     vi.mocked(entryApprovalsService.listPending)
       .mockResolvedValueOnce({ entries: [pending], total: 51 }) // page 1
-      .mockResolvedValueOnce({ entries: [pendingPage2], total: 51 }) // page 2 (its only row)
+      // Page 2 (its only row) answers in a macrotask, like a real request: `listPending` is called
+      // synchronously in the effect, so a wait on the CALL is not a wait on the ROW (flaked on #426).
+      .mockImplementationOnce(() => new Promise((r) => setTimeout(() => r({ entries: [pendingPage2], total: 51 }), 5)))
       .mockResolvedValue({ entries: [pending], total: 50 }); // back on page 1 after approve
     vi.mocked(entryApprovalsService.approve).mockResolvedValue(pendingPage2);
 
@@ -334,7 +336,8 @@ describe('EntryApprovalsPanel', () => {
     fireEvent.click(screen.getByTitle('Next'));
     await waitFor(() => expect(entryApprovalsService.listPending).toHaveBeenCalledTimes(2));
 
-    fireEvent.click(screen.getByText('Aprovar'));
+    const page2Row = (await screen.findByText('Aluguel de julho')).closest('tr') as HTMLElement;
+    fireEvent.click(within(page2Row).getByText('Aprovar'));
     fireEvent.click(await screen.findByRole('button', { name: 'Aprovar e postar' }));
 
     await waitFor(() => expect(entryApprovalsService.approve).toHaveBeenCalledTimes(1));
