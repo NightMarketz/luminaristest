@@ -10512,6 +10512,56 @@
         }
       }
     },
+    "/api/accounting/sped/qualif-assinante": {
+      "get": {
+        "summary": "Signer qualification table (J930 for ECD, 0930 for ECF) for the SPED screen combobox",
+        "description": "FE-INCR-SPED-SIGNERS (F-FE-SG-1 - a). Read-only view of the transcribed Tabela de Qualificacao do Assinante - J930 (Manual ECD L9 pp. 201-202, 19 codes) when layout=ECD, 0930 (Manual ECF L12 p. 105, 17 codes) when layout=ECF; the two tables differ (F-C12-2 - a). 900 = Contador in both. The description is the manual text, not translated. Same read policy as SPED generation.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "layout",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ECD",
+                "ECF"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[{ code, description }] - code is 3 digits"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
     "/api/accounting/sped/ecf/generate": {
       "post": {
         "summary": "Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Presumido)",

@@ -8628,6 +8628,29 @@
       "additionalProperties": false
     }
   },
+  "SpedQualifAssinanteDto.ts": {
+    "SpedQualifAssinanteQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layout": {
+          "type": "string",
+          "enum": [
+            "ECD",
+            "ECF"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "layout"
+      ]
+    }
+  },
   "aging.dto.ts": {
     "AgingReportQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

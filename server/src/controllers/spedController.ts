@@ -6,6 +6,7 @@ import { resolveAccountingScope } from '../features/accounting/scope/AccountingS
 import { SpedEcdRequestSchema } from '../features/accounting/dtos/SpedEcdDto';
 import { SpedEcfRequestSchema } from '../features/accounting/dtos/SpedEcfDto';
 import { SpedEcfRealRequestSchema } from '../features/accounting/dtos/SpedEcfRealDto';
+import { SpedQualifAssinanteQuerySchema } from '../features/accounting/dtos/SpedQualifAssinanteDto';
 import {
   contactToEcf0930Signer,
   contactToJ930Signer,
@@ -153,6 +154,24 @@ async function expandSignerContacts(
   const existing = Array.isArray(rest.signers) ? rest.signers : [];
   return { ...rest, signers: [...existing, ...fromContacts] };
 }
+
+/**
+ * GET /api/accounting/sped/qualif-assinante?unitId=&layout=ECD|ECF — Tabela de Qualificação do
+ * Assinante (J930/0930) para o combobox da tela (FE-INCR-SPED-SIGNERS, F-FE-SG-1 → a). Leitura.
+ */
+export const getSpedQualifAssinante = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = SpedQualifAssinanteQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    const data = getFactory().getSpedGenerationService().qualifAssinante(scope, parsed.data.layout);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
 
 /**
  * POST /api/accounting/sped/ecd/generate — generate the SPED ECD (.txt) for a

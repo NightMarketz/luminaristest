@@ -30,7 +30,12 @@ import {
   sanitizeRtfForSped,
 } from '../../../lib/sped';
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
-import { ecdIdentQualifParaEmissao, type SpedEcdQualifAssinanteCode } from '../models/spedQualifAssinante';
+import {
+  ecdIdentQualifParaEmissao,
+  SPED_ECD_QUALIF_ASSINANTE,
+  SPED_ECF_QUALIF_ASSINANTE,
+  type SpedEcdQualifAssinanteCode,
+} from '../models/spedQualifAssinante';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 
 /** Account.nature -> I050 COD_NAT (manual p. 118 table). */
@@ -92,6 +97,19 @@ export class SpedGenerationService {
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
   ) {}
+
+  /**
+   * Tabela de Qualificação do Assinante para o combobox da tela (FE-INCR-SPED-SIGNERS, F-FE-SG-1 → a).
+   * Leitura pura das consts transcritas (J930 = ECD, 0930 = ECF — tabelas diferentes, F-C12-2 → a);
+   * mesma policy de leitura do SPED. A descrição é o texto do manual (não traduzido).
+   */
+  public qualifAssinante(scope: AccountingScope, layout: 'ECD' | 'ECF'): Array<{ code: string; description: string }> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Não autorizado a ler as tabelas do SPED.');
+    }
+    const table = layout === 'ECD' ? SPED_ECD_QUALIF_ASSINANTE : SPED_ECF_QUALIF_ASSINANTE;
+    return Object.entries(table).map(([code, description]) => ({ code, description }));
+  }
 
   public async generate(
     scope: AccountingScope,
