@@ -382,7 +382,7 @@ correção); aqui só fica listado.
     valor > 0; `server/src/features/crm/services/CrmAnalyticsService.ts:86-97` troca `pipelineValue` (e ganhos, win rate,
     forecast, ticket) por `crmOpportunities.amount` quando a tabela existe — decisão do dono de 25/09. Ignora `currency`.
   - GAP-MAP: linha "**CRM — valor de pipeline diverge entre visão geral e analytics, e soma moedas**"
-    (`docs/operating-manual/GAP-MAP.md:106`), `[ABERTO]`, só registro.
+    (`docs/operating-manual/GAP-MAP.md:107`), `[ABERTO]`, só registro.
 - **Leads × oportunidades — a diferença real (pergunta do dono, 29/09; lido no código em `4b3b7711`):**
   - **Lead** (módulo base CRM-0, `registry.ts:60-66`) é a **pré-qualificação**: quem é o contato, origem, BANT, score, etapa
     no funil. O valor que carrega é um **retrato da última proposta** (`latestProposalAmount/Currency`, `LeadsModule.ts:81-97`),
@@ -406,6 +406,10 @@ correção); aqui só fica listado.
       registrada** em lugar nenhum que esta sessão tenha lido.
   - **Por isso os números divergem:** a visão geral soma o **retrato** nos leads, inclusive Won e Converted. O analytics
     soma os **negócios abertos** nas oportunidades. Não é arredondamento: são coisas diferentes.
+- **Sinal do dono sobre o modelo (29/09), só documentado:** *"Pode atrelar a oportunidade ao lead tendo historico de informações e se atualizar a oportunidade atualiza o lead"*. Está registrado no §9 do PRE-ADR
+  `docs/adr/ADR-CRM-lead-opportunity-model.md` como a opção "vincular e espelhar", com as perguntas abertas. Se for
+  implementado, a visão geral e o analytics passam a ver o mesmo valor nos negócios vinculados. A divergência que sobra
+  é o filtro e os registros sem vínculo.
 - **Status após a pergunta:** o dono pediu a diferença antes de escolher. A recomendação (a) continua: "pipeline" é negócio
   aberto, e negócio mora na oportunidade.
 - **Caminhos:** (a) a visão geral passa a ler o mesmo que o analytics (oportunidades, só Open; leads como fallback sem a

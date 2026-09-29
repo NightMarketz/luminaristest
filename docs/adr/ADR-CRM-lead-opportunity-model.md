@@ -8,6 +8,8 @@ Escrito em `C:/Users/smurf/Downloads/Luminaris/.claude/worktrees/council-account
   Este documento **abre o desenho** e recomenda um default; a decisão é do **dono** (produto). O Conselho de
   CRM (boards v1/v2/v3, 2026-07-20) devolveu este item ao dono — foi o **único** da cédula sem voto de
   ratify (D3: 4 defer + 1 abstain). Nenhum código de mudança de modelo é escrito antes de sinal humano.
+- **Sinal do dono 2026-09-29:** direção "vincular e espelhar" (oportunidade atrelada ao lead, com histórico; atualizar a
+  oportunidade atualiza o lead) — **§9**. Só documentado; não ratifica, não autoriza.
 - **Data:** 2026-07-20
 - **Decision class:** PRODUTO / MODELAGEM DE MÓLDE (DynamicTable). **NÃO** é decisão de fronteira
   (o balde tecnológico — Lead e Opportunity como presets DynamicTable — está **correto** e não se reabre) e
@@ -205,3 +207,45 @@ ratificado pelo dono**, escolhendo (a)/(b)/manter-(c) com o fato do operador rea
 pipeline no preset do salão sem deletar código) como default de menor arrependimento, com reabertura no
 gatilho **kit verde + sinal do 1º operador de salão real**. A escolha definitiva (a)/(b)/manter-(c) é do
 **dono** — nenhuma cadeira executiva a fecha. Este PRE-ADR abre o desenho; não escreve código de modelo.
+
+## 9. Sinal do dono — 2026-09-29 (registrado; NÃO ratifica este ADR)
+
+> Dono, chat, 29/09, na sessão da emenda do BRIEF CRM-RB (PR #448): *"Pode atrelar a oportunidade ao lead tendo historico de informações e se atualizar a oportunidade atualiza o lead"*.
+> Na mesma sessão: *"Aqui vamos apenas documentar, quem vai autorizar oque, é em outra sessão"*. Esta seção só documenta.
+
+**Leitura (inferida, a confirmar na sessão que autorizar):** é uma opção **(d) VINCULAR E ESPELHAR**, fora de
+(a)/(b)/(c). Lead e Oportunidade continuam existindo. A oportunidade fica atrelada ao lead que a originou, com o histórico
+do lead à vista, e passa a ser a **fonte**: mudar a oportunidade atualiza o lead, num sentido só. Difere de (a) porque o
+lead não é rebaixado nem consumido. Difere de (c) porque decide o modelo em vez de adiar.
+
+**O que o código faz hoje (lido em `origin/main` `251f0fd9`):**
+- O vínculo existe e é **opcional**: `crmOpportunities.leadId` tem `required: false` (`OpportunitiesModule.ts:28-35`).
+  `convert-lead-to-opportunity` preenche o vínculo e **não consome** o lead (`CrmPipelineService.ts:383-386`).
+- **Nada sobe da oportunidade para o lead:** `advanceOpportunity` (`CrmPipelineService.ts:327-380`) só grava a
+  oportunidade. O único espelho que existe é proposta → lead (`createProposal`, `CrmPipelineService.ts:271-278`, campos
+  `latestProposal*`).
+- O **histórico mora no lead:** `leadActivities` tem `leadId` e não tem vínculo com oportunidade (`LeadActivitiesModule.ts:16`).
+- Não achei trava de "uma oportunidade por lead" em `convertLeadToOpportunity` (grep no corpo, `:394-480`). **Inferido**:
+  um lead pode gerar várias.
+- Desde 20/07 o contexto mudou:
+  - Oportunidades virou submódulo selecionável (`registry.ts:108-117`, `fixed: false`).
+  - O Won gera título a receber (`crmController.ts:94-135`) e fica imutável (dono, 25/09; `OpportunitiesModule.ts:116`).
+  - As métricas de receita vêm da oportunidade (dono, 25/09; `CrmAnalyticsService.ts:86-97`).
+
+**Perguntas abertas para a sessão que autorizar (nenhuma decidida aqui):**
+1. O vínculo passa a ser obrigatório? Hoje uma oportunidade sem lead é válida.
+2. "Histórico de informações" quer dizer: a oportunidade **mostra** o histórico do lead (atividades, propostas, BANT)
+   pelo vínculo; e/ou cada atualização espelhada **vira registro** no histórico do lead (ex.: atividade "valor atualizado
+   pela oportunidade X" — `leadActivities` tem `type` e `payload`)?
+3. Quais campos sobem: valor **com** moeda (sempre em par — F-RB8 do CRM-RB), probabilidade, previsão, etapa, status?
+   Espelhar o Won/Lost no lead reabre o CA1 ("o lead ainda carrega Won").
+4. Com N oportunidades por lead, qual atualiza o lead: a última alterada, todas (lista no lead), ou só uma é permitida?
+5. Sentido contrário (lead → oportunidade): a frase cobre só oportunidade → lead.
+6. Por onde a oportunidade é editada: o caminho do pipeline (`advanceOpportunity`) é serviço de aplicação; a edição pela
+   tela genérica da tabela passa pelo motor DynamicTable. Espelhar ali pede regra/plugin do preset CRM (é intra-CRM; o
+   AC-2.1-B4 proíbe mexer em `DynamicTableService` para isso).
+7. O §6 põe como gatilho o kit verde + o operador real. Este sinal chega antes do gatilho. Se valer como decisão de
+   sucessão, a sessão que autorizar registra que o dono dispensou o gatilho.
+8. Efeito no "valor de pipeline" (BRIEF CRM-RB §4.2): com o lead espelhando a oportunidade, a visão geral e o analytics
+   passam a ver o mesmo valor nos negócios vinculados. A diferença que sobra é o filtro (Won incluído) e os registros sem
+   vínculo.
