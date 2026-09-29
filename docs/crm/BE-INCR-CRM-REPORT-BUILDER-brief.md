@@ -425,6 +425,9 @@ correção); aqui só fica listado.
     chance de venda"), pipeline = oportunidades abertas = R$ 50 mil, que é o caminho (a) abaixo. A e C apareceriam em
     números próprios ("em qualificação", "ganho"). Qualquer que seja o caminho, o F-RB8 vale: se B fosse US$ 50 mil, hoje
     os dois somariam como R$ 50 mil.
+- **Direção do dono sobre o lead (29/09, só documentada — ADR lead × oportunidade §9.2):** ao criar a oportunidade, o
+  lead vira `Converted` e sai do funil de leads. No exemplo acima, A seria o único lead em qualificação, e B e C
+  contariam só pelas oportunidades.
 - **Status após a pergunta:** o dono pediu a diferença antes de escolher. A recomendação (a) continua: "pipeline" é negócio
   aberto, e negócio mora na oportunidade.
 - **Caminhos:** (a) a visão geral passa a ler o mesmo que o analytics (oportunidades, só Open; leads como fallback sem a

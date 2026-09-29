@@ -317,3 +317,37 @@ encerra o lead, mas cria conta + contato, não oportunidade (`CrmPipelineService
 cria a oportunidade e **não** encerra o lead (`:383-386`). No modelo do dono ("o lead vira oportunidade"), o natural é
 **unificar**: converter cria a oportunidade (mais conta + contato quando houver) e leva o lead para `Converted`, como
 ficha + histórico espelhado. Isso muda duas ações e a UX do botão; não decidido aqui.
+
+### 9.2 O lead encerra ao virar oportunidade? (29/09) — documentado, não ratificado
+
+**Pergunta do dono:** *"Antes de tudo, o lead deveria encerrar ao virar oportunidade?"* Na primeira rodada, ele devolveu:
+*"Mas lead que não fechou negócio é lead fechado?"*. Esclarecido na sessão: o que acaba é a **fase de lead** (a
+qualificação), não o negócio. O status é **"Convertido"**, que já existe em `leads.status` (`LeadsModule.ts:109-113`), e
+não "fechado". Ganho e perda são status **só da oportunidade**.
+
+| Situação do lead | Significado | Onde está o negócio |
+|---|---|---|
+| Aberto | em qualificação, sem oportunidade | não existe ainda |
+| Convertido | virou oportunidade | na oportunidade: aberta, ganha ou perdida |
+| Desqualificado | nunca virou oportunidade | não existe |
+
+**Respostas (questionário, 29/09):**
+- *"Sim, vira 'Convertido'"*: criar a oportunidade leva o lead para `Converted`. Ele sai do funil de leads, mas continua
+  como ficha (histórico + espelho da oportunidade aberta). "Converter Lead" e "Criar Oportunidade" viram **um botão só**.
+  Isso responde, como direção, à "pergunta nova" do §9.1 (unificar as duas conversões).
+- Se a oportunidade for **perdida**: *"Fica Convertido; nova oportunidade"*. O lead não reabre nem herda o resultado; uma
+  nova tentativa é uma nova oportunidade a partir dele, e o histórico mostra todas. Hoje isso já é possível: o botão
+  "Criar Oportunidade" aparece para lead convertido (`Lead360Modal.tsx:182-188`) e o serviço não barra.
+
+**Consequências para quem autorizar (não decididas aqui):**
+1. **O espelho encolhe.** Com o lead fora do funil, etapa/funil e status **não** são espelhados. Saem do mapa do §9.1 as
+   linhas `pipelineId + stageId` e `status`, e caem os riscos 2 e 3. Ficam: valor + moeda, probabilidade, previsão,
+   responsável, conta e contato. O andamento do negócio aparece pelo vínculo.
+2. **`Won`/`Lost` do lead perdem uso.** Resultado é da oportunidade. Isso resolve o CA1 do conselho na direção. Em aberto:
+   o que fazer com as opções `Won`/`Lost` do preset de leads e com os leads que já estão marcados assim.
+3. **Um botão só.** A ação unificada cria a oportunidade (mais conta + contato quando houver) e leva o lead para
+   `Converted`. A trava atual de `convertLead` ("Lead already converted", `CrmPipelineService.ts:167-168`) muda de sentido: num
+   lead já convertido, converter de novo é **criar outra oportunidade**, respeitando "uma aberta por vez" (resposta 4 do §9.1).
+4. **Valor de pipeline** (BRIEF CRM-RB §4.2): com os convertidos fora do funil de leads, somar leads passa a medir só quem
+   está em qualificação. O pipeline de negócios fica nas oportunidades, que é o caminho (a) do §4.2. A escolha do número
+   continua do dono.
