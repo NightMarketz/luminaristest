@@ -152,6 +152,14 @@ molde já existe no mesmo model: `regimeTravadoEm` (F-XP-5 a). **Quando** a trav
 **D6 — Compensação limitada a 30% do lucro ajustado** (IN 1.700 art. 64), com IRPJ e CSLL separados. O serviço
 recusa (400) a apuração cuja compensação lançada na Parte A passe do teto. Hoje o e-Lalur só confere o saldo da
 Parte B (§2).
+- **O PVA não cobre isso (verificado em 29/09).** Nas Tabelas Dinâmicas, as linhas de compensação de períodos
+  anteriores (M300A/M350A 173–174; M300R/M350R 347–348) são `E`, informadas pela PJ, e não calculadas.
+- A única checagem do PVA é a regra 360 (370 no rural) de `SPEDECF_DINAMICA_M300_A_REGRAS` / `M350_A_REGRAS`
+  (pasta `recursos/tabelas` do PVA ECF instalado, versão 15 do arquivo de regras, instalação de 01/09/2026):
+  `SE ((M300(171)>0) E (M300(173)+M300(174)>(ARRED(0,3*M300(169))))) ENTAO AVISO()`.
+- Essa regra é **AVISO, não ERRO**: a ECF transmite assim mesmo.
+- E ela só roda na ECF do ano seguinte, depois que o DARF do trimestre já foi pago. Então o teto tem de ser
+  aplicado aqui, na apuração.
 
 **D7 — Adicional de IRPJ** = 10% × máx(0, base − R$ 20.000 × meses do período) (IN 1.700 art. 29 § 1º). Os meses
 do período valem:
