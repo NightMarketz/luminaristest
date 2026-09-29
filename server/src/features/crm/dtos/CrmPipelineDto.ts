@@ -90,7 +90,8 @@ export const ConvertLeadSchema = z.object({
   account: z.object({
     name: z.string().min(1),
     segment: z.string().optional(),
-    size: z.enum(['Micro', 'Small', 'Medium', 'Large', 'Enterprise']).optional(),
+    // freeSelects: o valor é validado contra as opções INSTALADAS do tenant no createTableData.
+    size: z.string().trim().min(1).optional(),
     website: z.string().optional(),
     taxId: z.string().optional(),
     city: z.string().optional(),
@@ -102,7 +103,8 @@ export const ConvertLeadSchema = z.object({
       email: z.string().optional(),
       phone: z.string().optional(),
       jobTitle: z.string().optional(),
-      role: z.enum(['Decision Maker', 'Influencer', 'Champion', 'Gatekeeper', 'User']).optional(),
+      // freeSelects: idem size — autoridade = select instalado de crmContacts.
+      role: z.string().trim().min(1).optional(),
     })
     .optional(),
 });

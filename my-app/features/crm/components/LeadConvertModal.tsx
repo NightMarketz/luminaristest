@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { CrmService, type ConvertLeadPayload } from '../../../lib/services/crm.service';
+import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { resolveErrorMessage } from '../../../lib/utils/error-handler';
 
 interface LeadConvertModalProps {
@@ -32,6 +33,35 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Porte/Papel são freeSelects: as opções são as do schema INSTALADO do tenant (o servidor valida contra elas).
+  // Tabela/campo ausente → sem opções → o controle não aparece e nada é enviado.
+  const [sizeOptions, setSizeOptions] = useState<string[]>([]);
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
+  useEffect(() => {
+    if (!isOpen) return;
+    let alive = true;
+    type Table = { internalName?: string; schema?: { fields?: { name: string; options?: string[] }[] } };
+    DynamicTableService.getTables()
+      .then((res) => {
+        if (!alive) return;
+        const tables = (res?.data ?? []) as Table[];
+        const options = (table: string, field: string) =>
+          tables.find((tb) => tb.internalName === table)?.schema?.fields?.find((f) => f.name === field)?.options ?? [];
+        setSizeOptions(options('crmAccounts', 'size'));
+        setRoleOptions(options('crmContacts', 'role'));
+      })
+      .catch((err) => {
+        if (alive) {
+          setSizeOptions([]);
+          setRoleOptions([]);
+          setError(resolveErrorMessage(err, t));
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps -- `t` instável (memória t-identity); só reabrir refaz a busca
 
   // Reset the form each time the modal (re)opens — prefill the account name with
   // the lead name as a sensible default.
@@ -152,10 +182,19 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
               <label className={labelClass}>{t('convert.segment', 'Segmento')}</label>
               <input type="text" value={segment} onChange={(e) => setSegment(e.target.value)} className={inputClass} />
             </div>
-            <div>
-              <label className={labelClass}>{t('convert.size', 'Porte')}</label>
-              <input type="text" value={size} onChange={(e) => setSize(e.target.value)} className={inputClass} />
-            </div>
+            {sizeOptions.length > 0 ? (
+              <div>
+                <label className={labelClass}>{t('convert.size', 'Porte')}</label>
+                <select value={size} onChange={(e) => setSize(e.target.value)} className={inputClass}>
+                  <option value="">—</option>
+                  {sizeOptions.map((o) => (
+                    <option key={o} value={o}>
+                      {t(`database:options.${o}`, o)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -181,15 +220,19 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
           </h3>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelClass}>{t('convert.contact_role', 'Papel')}</label>
-              <input
-                type="text"
-                value={contactRole}
-                onChange={(e) => setContactRole(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+            {roleOptions.length > 0 ? (
+              <div>
+                <label className={labelClass}>{t('convert.contact_role', 'Papel')}</label>
+                <select value={contactRole} onChange={(e) => setContactRole(e.target.value)} className={inputClass}>
+                  <option value="">—</option>
+                  {roleOptions.map((o) => (
+                    <option key={o} value={o}>
+                      {t(`database:options.${o}`, o)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div>
               <label className={labelClass}>{t('convert.contact_job_title', 'Cargo')}</label>
               <input

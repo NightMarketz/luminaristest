@@ -14,7 +14,7 @@
  *   3. boolean        -> badge verde/vermelho
  *   4. number         -> renderTypedValue com numberFormat do schema (locale-aware)
  *   5. date/datetime  -> renderTypedValue (locale do usuario via CurrencyContext)
- *   6. enum           -> badge azul
+ *   6. enum/select    -> badge azul, rótulo database:options (o servidor emite 'select')
  *   7. object/array   -> resumo simples
  *   8. default        -> String(val) com bold se for o displayField
  */
@@ -201,9 +201,9 @@ export function GenericRow({
                     );
                 }
 
-                // ── Enum: blue badge ──────────────────────────────────────
-                if (fieldType === 'enum') {
-                    const label = renderTypedValue(val, 'enum');
+                // ── Enum / Select: blue badge ─────────────────────────────
+                if (fieldType === 'enum' || fieldType === 'select') {
+                    const label = String(t(`database:options.${String(val)}`, renderTypedValue(val, 'enum')));
                     return (
                         <td key={`col-${colId}`} className="px-2 py-3 text-center">
                             <span

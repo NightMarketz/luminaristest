@@ -154,7 +154,16 @@
         "Pix": "Pix",
         "Package Balance": "Saldo de Pacote",
         "Scheduled": "Agendado",
-        "No-Show": "Não Compareceu"
+        "No-Show": "Não Compareceu",
+        "Micro": "Micro",
+        "Small": "Pequena",
+        "Large": "Grande",
+        "Enterprise": "Corporação",
+        "Decision Maker": "Decisor",
+        "Influencer": "Influenciador",
+        "Champion": "Defensor",
+        "Gatekeeper": "Guardião",
+        "User": "Usuário"
     },
     "services_view": {
         "title": "Serviços",

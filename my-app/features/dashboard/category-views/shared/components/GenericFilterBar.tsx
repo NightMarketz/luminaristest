@@ -55,7 +55,7 @@ export function GenericFilterBar({
 
             {/* Dynamic Schema Filters */}
             {schema?.fields?.map((field: ISchemaField) => {
-                if (field.type === 'enum' && field.options) {
+                if ((field.type === 'enum' || field.type === 'select') && field.options) {
                     return (
                         <FilterGroup key={field.name} label={String(t(`database:fields.${field.name}`, field.label || field.name))} className="w-full md:w-48 shrink-0">
                             <select

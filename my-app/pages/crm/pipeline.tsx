@@ -38,7 +38,7 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
   const { locale } = context;
   return {
     props: {
-      ...(await serverSideTranslations(locale ?? 'en', ['common', 'crm'])),
+      ...(await serverSideTranslations(locale ?? 'en', ['common', 'crm', 'database'])),
     },
   };
 };
