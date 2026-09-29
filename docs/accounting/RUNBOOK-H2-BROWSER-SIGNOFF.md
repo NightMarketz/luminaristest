@@ -263,6 +263,92 @@ Desfecho do passo 16 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 16): ____________
 
+### [EMENDA 2026-09-28] Passo 17 — SPED: qualificação do assinante e contador do cadastro (FE-INCR-SPED-SIGNERS)
+
+> Preparado por agente em 2026-09-28, **em branco** (`PLANO-ONDA1-FE-2026-09-28.md` §5). Mesmas pré-condições dos
+> passos 12–14 (commit do merge do FE-INCR-SPED-SIGNERS ou posterior). Para o item c), um contador cadastrado em
+> `/api/accounting/contacts` na unidade (com e sem telefone).
+
+17. Contabilidade → Compliance → Gerar SPED.
+    - a) O código do signatário (ECD `COD_ASSIN`, ECF/ECF Real `IDENT_QUALIF`) é um combobox com "código · descrição",
+      busca por texto e **sem texto livre**: digitar um código fora da tabela e sair do campo limpa o valor. A ECD
+      oferece `001` (só na J930); a ECF não. EVIDÊNCIA: [ ]
+    - b) Gerar a ECD escolhendo `900` e `205` pelo combobox. Resultado esperado: 2xx. EVIDÊNCIA: [ ]
+    - c) "Contador do cadastro": escolher o contador e deixar só a linha do responsável legal. Resultado esperado: o
+      request leva `signerContactIds: [id]` e 2xx; na ECF com um contador **sem telefone** no cadastro, a tela mostra o
+      400 do servidor ("não tem telefone") inteiro. EVIDÊNCIA: [ ]
+
+Desfecho do passo 17 (marcar UM):
+[ ] PASSOU — a) a c) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 17): ____________
+
+### [EMENDA 2026-09-28] Passo 18 — Revisão profissional (FE-INCR-REVIEW)
+
+> Preparado por agente em 2026-09-28, **em branco** (BRIEF `FE-INCR-REVIEW-brief.md` §1). Mesmas pré-condições dos
+> passos 12–14, com a ECD e a ECF do exercício já geradas pela tela (passo 12/14).
+
+18. Contabilidade → Compliance → "Revisão profissional".
+    - a) "Abrir revisão": os selects listam os arquivos EXPORTED do exercício; abrir com a ECD e a ECF. Abrir de novo
+      o mesmo par dá 409 com a mensagem e a lista recarrega. EVIDÊNCIA: [ ]
+    - b) No detalhe: adicionar um achado BLOCKER (I050) e um NOTE (I200). "Assinar" fica desabilitado enquanto o
+      BLOCKER estiver aberto. EVIDÊNCIA: [ ]
+    - c) Resolver o BLOCKER por "Apontar dado editado" (conta) — o link leva ao Plano de Contas; resolver o NOTE por
+      "Lançar acerto" com "Estornar também o lançamento original" (só aparece no I200). EVIDÊNCIA: [ ]
+    - d) Assinar (nome + CRC `UF-NNNNNN/O-D` + declaração). Se vier 409 `REVIEW_STALE`, regerar, "Trocar jobs" e
+      assinar de novo. Resultado esperado: status "assinada". EVIDÊNCIA: [ ]
+    - e) Em outra revisão: "Rejeitar" com motivo → status "rejeitada", sem mais ações. EVIDÊNCIA: [ ]
+
+Desfecho do passo 18 (marcar UM):
+[ ] PASSOU — a) a e) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 18): ____________
+
+### [EMENDA 2026-09-28] Passo 19 — Entrega ao contador (FE-INCR-DELIVERY PR-D1/PR-D2)
+
+> Preparado por agente em 2026-09-28, **em branco** (BRIEF `FE-INCR-DELIVERY-brief.md` §1). Pré-condições dos passos
+> 12–14 + revisão do par ECD/ECF **assinada** (passo 18) + os 12 meses do exercício `HARD_CLOSED`. O sistema **não
+> envia nada**: `SENT` registra que o operador despachou pelo canal dele (F-CD1-a).
+
+19. Contabilidade → Compliance → "Entrega ao contador".
+    - a) Contadores: cadastrar um (CPF, CRC `UF-NNNNNN/O-D`, UF do CRC); editar limpando a certidão; salvar um perfil de
+      pacote com "Balancete". EVIDÊNCIA: [ ]
+    - b) Montar pacote: escolher o contador (o balancete do exercício vem pré-marcado pelo perfil), a ECD e a ECF;
+      "Validar pacote" → manifesto com ECD, ECF e os extras na ordem, sha256 e período. Sem revisão assinada: 409
+      `REVIEW_REQUIRED` com o link "Revisão profissional ↑". EVIDÊNCIA: [ ]
+    - c) Baixar os arquivos pelo manifesto e conferir o sha256; marcar "Confirmo que despachei…" e "Registrar despacho"
+      → recibo com `SENT`, o significado devolvido pelo servidor, o contador e o signatário J930. EVIDÊNCIA: [ ]
+    - d) Entregas: a entrega aparece no histórico; o detalhe lista os itens; "Reprocessar" só aparece em `FAILED`.
+      EVIDÊNCIA: [ ]
+
+Desfecho do passo 19 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 19): ____________
+
+### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
+
+> Preparado por agente em 2026-09-29, **em branco** (BRIEF `FE-INCR-BANK-SETTLEMENT-brief.md` §1). Pré-condições dos
+> passos 12–14 + um extrato importado (fixture OFX do repo) na conta bancária e uma conta a pagar aberta que case com
+> uma linha dele. O `dev.db` tem `bank_settlement_items` vazia (o F7 nunca rodou fora de teste).
+
+20. Contabilidade → Conciliação → sub-aba "Baixas por retorno".
+    - a) "Varrer extrato": o resumo mostra novos/já existentes/ambíguos/sem título/desatualizados; a lista abre em
+      PENDING. Varrer de novo não duplica (sobe "já existentes"). EVIDÊNCIA: [ ]
+    - b) Confirmar um item com o meio certo (Pix/TED…): status CONFIRMED, o balancete recarrega e o lançamento aparece.
+      Um item com encargo e sem conta configurada mostra o 400 `charge_account_not_configured` inteiro. EVIDÊNCIA: [ ]
+    - c) Rejeitar outro item com motivo: REJECTED, sem ações. EVIDÊNCIA: [ ]
+    - d) Item FAILED (se houver) mostra a etapa e o motivo; "Reprocessar" disponível. EVIDÊNCIA: [ ]
+
+Desfecho do passo 20 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 20): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;

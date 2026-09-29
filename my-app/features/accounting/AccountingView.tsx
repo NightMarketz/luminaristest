@@ -15,6 +15,8 @@ import { ReconciliationPanel } from './components/ReconciliationPanel';
 import { NfePanel } from './components/NfePanel';
 import { CompliancePanel } from './components/CompliancePanel';
 import { SpedGenerationPanel } from './components/SpedGenerationPanel';
+import { ReviewPanel } from './components/ReviewPanel';
+import { DeliveryPanel } from './components/DeliveryPanel';
 import { LalurPanel } from './components/LalurPanel';
 import { DFCPanel } from './components/DFCPanel';
 import { PeriodComparisonPanel } from './components/PeriodComparisonPanel';
@@ -357,6 +359,8 @@ export function AccountingView() {
           <CompliancePanel unitId={unitId} />
           <LalurPanel unitId={unitId} />
           <SpedGenerationPanel unitId={unitId} />
+          <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
+          <DeliveryPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
         </div>
       )}
 

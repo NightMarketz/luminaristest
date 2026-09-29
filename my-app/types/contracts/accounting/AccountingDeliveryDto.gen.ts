@@ -37,3 +37,10 @@ deliveryId: string
 export interface AccountingDeliveryScopeQueryInput {
 unitId: string
 }
+export interface ListDeliveriesQueryInput {
+unitId: string
+status?: ("QUEUED" | "SENT" | "FAILED")
+year?: number
+page?: number
+limit?: number
+}

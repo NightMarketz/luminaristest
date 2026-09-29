@@ -449,6 +449,12 @@
       "ecfContador": "The ECF requires an accountant signer (qualification 900) and a non-accountant.",
       "ecfContadorCrc": "The accountant signer (900) requires an 11-digit CPF and a CRC.",
       "ecdContadorCrc": "The accountant signer (900) requires an 11-digit CPF, CRC, CRC state, email and phone."
+    },
+    "qualif": {
+      "contadorCadastro": "Registered accountant (optional)",
+      "contadorManual": "— fill the accountant in by hand —",
+      "contadorHint": "The accountant data comes from the registry; no 900 row is needed below.",
+      "loadError": "Error loading the signer qualification table."
     }
   },
   "trialBalance": {
@@ -864,7 +870,8 @@
     "noBankAccounts": "No account available",
     "subtabs": {
       "statements": "Bank statements",
-      "pending": "Pending queue"
+      "pending": "Pending queue",
+      "settlements": "Bank-return settlements"
     },
     "import": {
       "title": "Import statement",
@@ -1599,6 +1606,283 @@
         "remove": "Remove process",
         "title": "Processes (M415) — optional"
       }
+    }
+  },
+  "review": {
+    "action": {
+      "addFinding": "Add finding",
+      "adjustment": "Post adjustment",
+      "dataEdit": "Point to edited data",
+      "noAction": "No action",
+      "reject": "Reject",
+      "replaceJobs": "Replace files",
+      "signOff": "Sign off",
+      "view": "Open"
+    },
+    "adjustment": {
+      "periodHint": "The adjustment date needs an OPEN period — late posting is allowed.",
+      "reverseOriginal": "Also reverse the original entry (I200)",
+      "submit": "Post adjustment",
+      "title": "Adjustment entry — {{register}} {{locator}}"
+    },
+    "col": {
+      "actions": "Actions",
+      "closure": "Signed by / reason",
+      "jobs": "Files (ECD · ECF)",
+      "openedAt": "Opened at",
+      "status": "Status",
+      "year": "Year"
+    },
+    "confirm": "Confirm",
+    "dataEdit": {
+      "hint": "The data is edited in its owner panel; here only the pointer to it is recorded.",
+      "pickAccount": "Select the account…",
+      "targetId": "Which (id)",
+      "targetType": "Data type"
+    },
+    "detail": {
+      "blockers": "{{n}} open BLOCKER",
+      "noFindings": "No findings recorded.",
+      "rejectedNote": "Review rejected: the package for this pair cannot be delivered (REVIEW_REJECTED).",
+      "title": "Review {{year}}"
+    },
+    "empty": "No reviews in this selection.",
+    "error": {
+      "generic": "The operation could not be completed.",
+      "load": "Error loading the reviews."
+    },
+    "filter": {
+      "allStatus": "All statuses",
+      "status": "Status",
+      "year": "Year"
+    },
+    "finding": {
+      "description": "Description",
+      "freeTextHint": "Free text — never goes to the audit trail.",
+      "locator": "Locator",
+      "open": "open",
+      "openOwner": "Open {{type}} {{id}} in its owner panel",
+      "register": "Register",
+      "severity": "Severity",
+      "state": "State"
+    },
+    "job": {
+      "ecd": "ECD file (EXPORTED)",
+      "ecf": "ECF file (EXPORTED)",
+      "none": "— none —",
+      "superseded": "superseded"
+    },
+    "noAction": {
+      "hint": "A finding dismissed without justification is refused.",
+      "note": "Justification (required)"
+    },
+    "open": "Open review",
+    "openModal": {
+      "hint": "Choose at least one file generated in the section above.",
+      "submit": "Open",
+      "title": "Open review"
+    },
+    "reject": {
+      "hint": "Rejection is final: the package for this pair cannot be delivered (REVIEW_REJECTED).",
+      "reason": "Reason"
+    },
+    "replaceJobs": {
+      "hint": "The previous pair is recorded in the review.jobs_replaced event."
+    },
+    "saving": "Saving…",
+    "signOff": {
+      "crc": "CRC",
+      "crcHint": "CFC mask UF-NNNNNN/O-D.",
+      "name": "Reviewer name",
+      "statement": "Statement"
+    },
+    "subtitle": "Finding → pointer/adjustment → regeneration → sign-off (the file is never edited).",
+    "title": "Professional review",
+    "status": {
+      "OPEN": "open",
+      "SIGNED_OFF": "signed off",
+      "REJECTED": "rejected"
+    },
+    "register": {
+      "0000": "opening",
+      "I050": "chart of accounts",
+      "I051": "referential",
+      "I200": "entry",
+      "I250": "entry line",
+      "J150": "income statement",
+      "J930": "signers",
+      "M300": "Parte A (IRPJ)",
+      "M350": "Parte A (CSLL)",
+      "M410": "Parte B",
+      "N630": "IRPJ"
+    },
+    "resolution": {
+      "DATA_EDIT": "data edited",
+      "ADJUSTMENT_ENTRY": "adjustment entry",
+      "NO_ACTION": "no action"
+    },
+    "target": {
+      "account": "account",
+      "referential_mapping": "referential mapping",
+      "counterparty": "counterparty",
+      "generation_input": "generation input",
+      "journal_entry": "entry"
+    }
+  },
+  "contacts": {
+    "archiveNote": "The accountant leaves the list and the dispatch; past deliveries stay in the history.",
+    "archiveTitle": "Archive accountant",
+    "col": {
+      "certificate": "Certificate (valid until)",
+      "email": "Email",
+      "name": "Name"
+    },
+    "editTitle": "Edit accountant",
+    "empty": "No accountant registered.",
+    "field": {
+      "certificate": "Good-standing certificate (optional)",
+      "cpf": "CPF",
+      "crcNumber": "CRC",
+      "crcUf": "CRC state",
+      "email": "Email",
+      "name": "Name",
+      "phone": "Phone (optional; the ECF requires it)",
+      "validUntil": "Certificate valid until (optional)"
+    },
+    "heading": "Accountants",
+    "new": "New accountant",
+    "newTitle": "New accountant",
+    "profile": "Package profile",
+    "profileHint": "Suggestion: these extras come pre-selected when building the package for this accountant.",
+    "profileTitle": "Package profile — {{name}}"
+  },
+  "delivery": {
+    "action": {
+      "archive": "Archive",
+      "edit": "Edit"
+    },
+    "build": {
+      "contact": "Recipient accountant",
+      "extras": "Extras (max 20) — only reports generated with a period",
+      "heading": "Build package",
+      "noExtras": "No EXPORTED report in the year — generate it in the Import/Export tab.",
+      "pickContact": "Select…",
+      "stale": "The selection changed after validation — validate again.",
+      "toExports": "Generate the report with a period in the Import/Export tab",
+      "toPeriods": "Periods",
+      "toReview": "Professional review ↑",
+      "validate": "Validate package",
+      "year": "Year"
+    },
+    "col": {
+      "actions": "Actions"
+    },
+    "confirmAction": "Confirm",
+    "confirm": {
+      "checkbox": "I confirm I dispatched this package to the accountant through my own channel (email/portal); the system does not send it.",
+      "submit": "Record dispatch"
+    },
+    "error": {
+      "contacts": "Error loading the accountants.",
+      "generic": "The operation could not be completed.",
+      "history": "Error loading the deliveries."
+    },
+    "history": {
+      "allStatus": "All statuses",
+      "attempts": "Attempts",
+      "contact": "Accountant",
+      "detail": "Detail",
+      "detailTitle": "Delivery {{id}}",
+      "empty": "No deliveries recorded.",
+      "heading": "Deliveries",
+      "retry": "Retry",
+      "status": "Delivery status",
+      "when": "When / reason"
+    },
+    "manifest": {
+      "copySha": "Copy sha256",
+      "download": "Download",
+      "ledger": "Ledger",
+      "period": "Period"
+    },
+    "receipt": {
+      "copyManifest": "Copy manifest (JSON)",
+      "signer": "Signer (J930)",
+      "title": "Dispatch recorded"
+    },
+    "save": "Save",
+    "subtitle": "The system sends nothing — it records that you dispatched the package through your own channel.",
+    "title": "Delivery to the accountant",
+    "kind": {
+      "EXPORT_SPED_ECD": "ECD",
+      "EXPORT_SPED_ECF": "ECF (Presumido)",
+      "EXPORT_SPED_ECF_REAL": "ECF (Lucro Real)",
+      "EXPORT_TRIAL_BALANCE": "Trial balance",
+      "EXPORT_GENERAL_LEDGER": "General ledger",
+      "EXPORT_BALANCE_SHEET": "Balance sheet",
+      "EXPORT_INCOME_STATEMENT": "Income statement",
+      "EXPORT_BANK_RECONCILIATION": "Bank reconciliation",
+      "EXPORT_ENTRY_SAMPLE": "Entry sample"
+    }
+  },
+  "bankSettlement": {
+    "action": {
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "retry": "Retry"
+    },
+    "chargeAccountHint": "Configure the charge account in PUT /api/accounting/settings (no screen yet; the codes are pending with the accountant).",
+    "chargeEntry": "charge",
+    "chargeHint": "|line| − balance, 20% cap",
+    "col": {
+      "actions": "Actions",
+      "amount": "Amount",
+      "charge": "Charge",
+      "date": "Date",
+      "line": "Statement line",
+      "proposed": "Proposed",
+      "status": "Status",
+      "title": "Title"
+    },
+    "due": "due",
+    "empty": "No settlements in this selection — scan the statement.",
+    "entry": "entry",
+    "error": {
+      "generic": "The operation could not be completed.",
+      "load": "Error loading the settlements."
+    },
+    "filter": {
+      "all": "All",
+      "status": "Status"
+    },
+    "method": "Payment method",
+    "methodHint": "The method must resolve to this statement account.",
+    "noStatement": "Import a statement in the Statements sub-tab.",
+    "open": "open",
+    "payment": "payment",
+    "reason": "Reason (required)",
+    "receipt": "receipt",
+    "scan": "Scan statement",
+    "staleHint": "Title cancelled or already settled after the scan — scan again to re-evaluate the line.",
+    "statement": "Statement",
+    "subtitle": "Statement line → payable/receivable title. Unlike the Pending queue, here you confirm each settlement.",
+    "summary": {
+      "ambiguous": "ambiguous",
+      "ambiguousHint": "Ambiguous = more than one title fits the window; reconcile by hand in the Pending queue.",
+      "created": "new",
+      "none": "no title",
+      "skipped": "already existing",
+      "stale": "stale"
+    },
+    "title": "Bank-return settlements",
+    "titleUnavailable": "title unavailable",
+    "status": {
+      "PENDING": "pending",
+      "CONFIRMING": "confirming",
+      "CONFIRMED": "confirmed",
+      "REJECTED": "rejected",
+      "FAILED": "failed",
+      "STALE": "stale"
     }
   }
 }

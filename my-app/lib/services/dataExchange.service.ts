@@ -41,6 +41,21 @@ export interface DataExchangeJob {
   createdAt: string;
 }
 
+/** Item de `GET /accounting/data-exchange/jobs` (#368): o job + a cadeia de retificação. */
+export interface DataExchangeJobListItem extends DataExchangeJob {
+  supersedesJobId: string | null;
+  supersededByJobId: string | null;
+}
+
+export interface ListDataExchangeJobsFilter {
+  direction?: 'IMPORT' | 'EXPORT';
+  kind?: string;
+  status?: string;
+  year?: number;
+  page?: number;
+  limit?: number;
+}
+
 export interface DataExchangeRow {
   rowNumber: number;
   groupKey: string | null;
@@ -137,6 +152,16 @@ export const dataExchangeService = {
     const statusQs = status ? `&status=${encodeURIComponent(status)}` : '';
     const res = await apiClient.get<Envelope<DataExchangeRow[]>>(
       `/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}/rows?unitId=${encodeURIComponent(unitId)}${statusQs}`,
+    );
+    return res.data;
+  },
+
+  /** Lista paginada de jobs (#368) — a revisão profissional escolhe os `EXPORTED` de ECD/ECF daqui. */
+  async listJobs(unitId: string, filter: ListDataExchangeJobsFilter = {}): Promise<{ items: DataExchangeJobListItem[]; total: number; page: number; limit: number }> {
+    const params = new URLSearchParams({ unitId });
+    for (const [k, v] of Object.entries(filter)) if (v !== undefined) params.set(k, String(v));
+    const res = await apiClient.get<Envelope<{ items: DataExchangeJobListItem[]; total: number; page: number; limit: number }>>(
+      `/accounting/data-exchange/jobs?${params.toString()}`,
     );
     return res.data;
   },

@@ -28,6 +28,7 @@ import { formatDate } from '../lib/formatDate';
 import { ReconciliationMatchModal } from './ReconciliationMatchModal';
 import { resolveError } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
+import { BankSettlementPanel } from './BankSettlementPanel';
 
 const STATEMENTS_PER_PAGE = 10;
 
@@ -855,7 +856,7 @@ interface ReconciliationPanelProps {
   onLedgerChange?: () => void;
 }
 
-type SubTab = 'extratos' | 'pendentes';
+type SubTab = 'extratos' | 'pendentes' | 'baixas';
 
 /**
  * ReconciliationPanel — bank reconciliation workspace (FE-INCR-7). A shared bank
@@ -903,6 +904,7 @@ export function ReconciliationPanel({ unitId, onLedgerChange }: ReconciliationPa
   const SUBTABS: Array<{ id: SubTab; labelKey: string; label: string }> = [
     { id: 'extratos', labelKey: 'reconciliation.subtabs.statements', label: 'Extratos' },
     { id: 'pendentes', labelKey: 'reconciliation.subtabs.pending', label: 'Fila pendente' },
+    { id: 'baixas', labelKey: 'reconciliation.subtabs.settlements', label: 'Baixas por retorno' },
   ];
 
   return (
@@ -955,6 +957,9 @@ export function ReconciliationPanel({ unitId, onLedgerChange }: ReconciliationPa
       )}
       {sub === 'pendentes' && (
         <PendingSubView unitId={unitId} glAccountId={glAccountId} onLedgerChange={onLedgerChange} />
+      )}
+      {sub === 'baixas' && (
+        <BankSettlementPanel unitId={unitId} glAccountId={glAccountId} onLedgerChange={onLedgerChange} />
       )}
     </div>
   );

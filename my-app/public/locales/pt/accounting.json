@@ -449,6 +449,12 @@
       "ecfContador": "A ECF exige um signatário contador (qualificação 900) e um não-contador.",
       "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC.",
       "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone."
+    },
+    "qualif": {
+      "contadorCadastro": "Contador do cadastro (opcional)",
+      "contadorManual": "— preencher o contador à mão —",
+      "contadorHint": "Os dados do contador vêm do cadastro; não é preciso uma linha 900 abaixo.",
+      "loadError": "Erro ao carregar a tabela de qualificação do assinante."
     }
   },
   "trialBalance": {
@@ -864,7 +870,8 @@
     "noBankAccounts": "Nenhuma conta disponível",
     "subtabs": {
       "statements": "Extratos",
-      "pending": "Fila pendente"
+      "pending": "Fila pendente",
+      "settlements": "Baixas por retorno"
     },
     "import": {
       "title": "Importar extrato",
@@ -1599,6 +1606,283 @@
         "user": "usuário",
         "system": "sistema (PF/BC derivado)"
       }
+    }
+  },
+  "review": {
+    "action": {
+      "addFinding": "Adicionar achado",
+      "adjustment": "Lançar acerto",
+      "dataEdit": "Apontar dado editado",
+      "noAction": "Sem ação",
+      "reject": "Rejeitar",
+      "replaceJobs": "Trocar jobs",
+      "signOff": "Assinar",
+      "view": "Abrir"
+    },
+    "adjustment": {
+      "periodHint": "A data do acerto precisa de período OPEN — extemporâneo é permitido.",
+      "reverseOriginal": "Estornar também o lançamento original (I200)",
+      "submit": "Lançar acerto",
+      "title": "Lançamento de acerto — {{register}} {{locator}}"
+    },
+    "col": {
+      "actions": "Ações",
+      "closure": "Assinada por / motivo",
+      "jobs": "Arquivos (ECD · ECF)",
+      "openedAt": "Aberta em",
+      "status": "Status",
+      "year": "Exercício"
+    },
+    "confirm": "Confirmar",
+    "dataEdit": {
+      "hint": "O dado é editado no painel dono; aqui só se registra o ponteiro para ele.",
+      "pickAccount": "Selecione a conta…",
+      "targetId": "Qual (id)",
+      "targetType": "Tipo do dado"
+    },
+    "detail": {
+      "blockers": "{{n}} BLOCKER abertos",
+      "noFindings": "Nenhum achado registrado.",
+      "rejectedNote": "Revisão rejeitada: o pacote deste par não pode ser entregue (REVIEW_REJECTED).",
+      "title": "Revisão {{year}}"
+    },
+    "empty": "Nenhuma revisão neste recorte.",
+    "error": {
+      "generic": "Não foi possível concluir a operação.",
+      "load": "Erro ao carregar as revisões."
+    },
+    "filter": {
+      "allStatus": "Todos os status",
+      "status": "Status",
+      "year": "Exercício"
+    },
+    "finding": {
+      "description": "Descrição",
+      "freeTextHint": "Texto livre — nunca entra na trilha de auditoria.",
+      "locator": "Localizador",
+      "open": "aberto",
+      "openOwner": "Abrir {{type}} {{id}} no painel dono",
+      "register": "Registro",
+      "severity": "Severidade",
+      "state": "Estado"
+    },
+    "job": {
+      "ecd": "Arquivo da ECD (EXPORTED)",
+      "ecf": "Arquivo da ECF (EXPORTED)",
+      "none": "— nenhum —",
+      "superseded": "substituído"
+    },
+    "noAction": {
+      "hint": "Achado descartado sem justificativa é recusado.",
+      "note": "Justificativa (obrigatória)"
+    },
+    "open": "Abrir revisão",
+    "openModal": {
+      "hint": "Escolha pelo menos um arquivo gerado na seção acima.",
+      "submit": "Abrir",
+      "title": "Abrir revisão"
+    },
+    "reject": {
+      "hint": "Rejeição é terminal: o pacote deste par não poderá ser entregue (REVIEW_REJECTED).",
+      "reason": "Motivo"
+    },
+    "replaceJobs": {
+      "hint": "O par antigo fica registrado no evento review.jobs_replaced."
+    },
+    "saving": "Salvando…",
+    "signOff": {
+      "crc": "CRC",
+      "crcHint": "Máscara CFC UF-NNNNNN/O-D.",
+      "name": "Nome do revisor",
+      "statement": "Declaração"
+    },
+    "subtitle": "Achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é editado).",
+    "title": "Revisão profissional",
+    "status": {
+      "OPEN": "aberta",
+      "SIGNED_OFF": "assinada",
+      "REJECTED": "rejeitada"
+    },
+    "register": {
+      "0000": "abertura",
+      "I050": "plano de contas",
+      "I051": "referencial",
+      "I200": "lançamento",
+      "I250": "partida",
+      "J150": "DRE",
+      "J930": "signatários",
+      "M300": "Parte A (IRPJ)",
+      "M350": "Parte A (CSLL)",
+      "M410": "Parte B",
+      "N630": "IRPJ"
+    },
+    "resolution": {
+      "DATA_EDIT": "dado editado",
+      "ADJUSTMENT_ENTRY": "lançamento de acerto",
+      "NO_ACTION": "sem ação"
+    },
+    "target": {
+      "account": "conta",
+      "referential_mapping": "mapeamento referencial",
+      "counterparty": "contraparte",
+      "generation_input": "dado de geração",
+      "journal_entry": "lançamento"
+    }
+  },
+  "contacts": {
+    "archiveNote": "O contador sai da lista e do despacho; as entregas antigas continuam no histórico.",
+    "archiveTitle": "Arquivar contador",
+    "col": {
+      "certificate": "Certidão (validade)",
+      "email": "E-mail",
+      "name": "Nome"
+    },
+    "editTitle": "Editar contador",
+    "empty": "Nenhum contador cadastrado.",
+    "field": {
+      "certificate": "Certidão de regularidade (opcional)",
+      "cpf": "CPF",
+      "crcNumber": "CRC",
+      "crcUf": "UF do CRC",
+      "email": "E-mail",
+      "name": "Nome",
+      "phone": "Fone (opcional; a ECF exige)",
+      "validUntil": "Validade da certidão (opcional)"
+    },
+    "heading": "Contadores",
+    "new": "Novo contador",
+    "newTitle": "Novo contador",
+    "profile": "Perfil de pacote",
+    "profileHint": "Sugestão: estes extras vêm pré-marcados ao montar o pacote para este contador.",
+    "profileTitle": "Perfil de pacote — {{name}}"
+  },
+  "delivery": {
+    "action": {
+      "archive": "Arquivar",
+      "edit": "Editar"
+    },
+    "build": {
+      "contact": "Contador destinatário",
+      "extras": "Extras (máx. 20) — só relatórios gerados com período",
+      "heading": "Montar pacote",
+      "noExtras": "Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação.",
+      "pickContact": "Selecione…",
+      "stale": "A seleção mudou depois da validação — valide de novo.",
+      "toExports": "Gere o relatório com período na aba Importação/Exportação",
+      "toPeriods": "Períodos",
+      "toReview": "Revisão profissional ↑",
+      "validate": "Validar pacote",
+      "year": "Exercício"
+    },
+    "col": {
+      "actions": "Ações"
+    },
+    "confirm": {
+      "checkbox": "Confirmo que despachei este pacote ao contador pelo meu canal (e-mail/portal); o sistema não envia.",
+      "submit": "Registrar despacho"
+    },
+    "confirmAction": "Confirmar",
+    "error": {
+      "contacts": "Erro ao carregar os contadores.",
+      "generic": "Não foi possível concluir a operação.",
+      "history": "Erro ao carregar as entregas."
+    },
+    "history": {
+      "allStatus": "Todos os status",
+      "attempts": "Tentativas",
+      "contact": "Contador",
+      "detail": "Detalhe",
+      "detailTitle": "Entrega {{id}}",
+      "empty": "Nenhuma entrega registrada.",
+      "heading": "Entregas",
+      "retry": "Reprocessar",
+      "status": "Status das entregas",
+      "when": "Quando / motivo"
+    },
+    "manifest": {
+      "copySha": "Copiar sha256",
+      "download": "Baixar",
+      "ledger": "Livro",
+      "period": "Período"
+    },
+    "receipt": {
+      "copyManifest": "Copiar manifesto (JSON)",
+      "signer": "Signatário (J930)",
+      "title": "Despacho registrado"
+    },
+    "save": "Salvar",
+    "subtitle": "O sistema não envia nada — registra que você despachou o pacote pelo seu canal.",
+    "title": "Entrega ao contador",
+    "kind": {
+      "EXPORT_SPED_ECD": "ECD",
+      "EXPORT_SPED_ECF": "ECF (Presumido)",
+      "EXPORT_SPED_ECF_REAL": "ECF (Lucro Real)",
+      "EXPORT_TRIAL_BALANCE": "Balancete",
+      "EXPORT_GENERAL_LEDGER": "Razão geral",
+      "EXPORT_BALANCE_SHEET": "Balanço patrimonial",
+      "EXPORT_INCOME_STATEMENT": "DRE",
+      "EXPORT_BANK_RECONCILIATION": "Conciliação bancária",
+      "EXPORT_ENTRY_SAMPLE": "Amostra de lançamentos"
+    }
+  },
+  "bankSettlement": {
+    "action": {
+      "confirm": "Confirmar",
+      "reject": "Rejeitar",
+      "retry": "Reprocessar"
+    },
+    "chargeAccountHint": "Configure a conta de encargo em PUT /api/accounting/settings (ainda sem tela; os códigos são pendência do contador).",
+    "chargeEntry": "encargo",
+    "chargeHint": "|linha| − saldo, limite de 20%",
+    "col": {
+      "actions": "Ações",
+      "amount": "Valor",
+      "charge": "Encargo",
+      "date": "Data",
+      "line": "Linha do extrato",
+      "proposed": "Proposto",
+      "status": "Status",
+      "title": "Título"
+    },
+    "due": "vence",
+    "empty": "Nenhuma baixa neste recorte — varra o extrato.",
+    "entry": "lançamento",
+    "error": {
+      "generic": "Não foi possível concluir a operação.",
+      "load": "Erro ao carregar as baixas."
+    },
+    "filter": {
+      "all": "Todos",
+      "status": "Status"
+    },
+    "method": "Meio de pagamento",
+    "methodHint": "O método tem de resolver para a conta deste extrato.",
+    "noStatement": "Importe um extrato na sub-aba Extratos.",
+    "open": "aberto",
+    "payment": "pagamento",
+    "reason": "Motivo (obrigatório)",
+    "receipt": "recebimento",
+    "scan": "Varrer extrato",
+    "staleHint": "Título cancelado ou já baixado depois da varredura — varra de novo para reavaliar a linha.",
+    "statement": "Extrato",
+    "subtitle": "Linha do extrato → título a pagar/receber. Diferente da Fila pendente: aqui cada baixa é confirmada por você.",
+    "summary": {
+      "ambiguous": "ambíguos",
+      "ambiguousHint": "Ambíguo = mais de um título cabe na janela; concilie à mão na Fila pendente.",
+      "created": "novos",
+      "none": "sem título",
+      "skipped": "já existentes",
+      "stale": "desatualizados"
+    },
+    "title": "Baixas por retorno bancário",
+    "titleUnavailable": "título indisponível",
+    "status": {
+      "PENDING": "pendente",
+      "CONFIRMING": "confirmando",
+      "CONFIRMED": "confirmada",
+      "REJECTED": "rejeitada",
+      "FAILED": "falhou",
+      "STALE": "desatualizada"
     }
   }
 }
