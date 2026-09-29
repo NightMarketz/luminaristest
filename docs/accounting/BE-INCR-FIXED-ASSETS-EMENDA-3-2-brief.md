@@ -19,6 +19,22 @@
 - **Nós vizinhos:** consome [[D3b]] (Anexo III), X4/e-Lalur (`LalurService.closeParteB`, `:825`), NF-e modo 4
   (`NfeImportService`); é consumido por [[FE-INCR-FIXED-ASSETS]] (FE fora deste BRIEF — casa separa BE/FE).
 
+## 0.1 Fontes legais lidas nesta sessão (3ª passada, 29/09 — pedido do dono: "pesquise a lei e baseie-se nela")
+
+| # | Fonte | Onde / integridade | O que fixa |
+|---|---|---|---|
+| L1 | **RIR/2018** (Decreto 9.580) arts. 301, 313, 317, 321, 330, 331, 333 — texto oficial | `planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm` (baixado 29/09, sha256 `c9d72e667a52…`; trechos `<strike>` removidos) | 313 § 1º I "valor unitário não superior a R$ 1.200,00"; § 2º conjunto; § 3º ativar o que dura > 1 ano. 331 III benfeitoria em bem de terceiro é amortizável **"quando não houver direito ao recebimento de seu valor"**. 333 taxa "tendo em vista o número de anos restantes de existência do direito". 330 § 3º saldo não amortizado vira encargo quando o uso termina. 321 = contábil < fiscal → exclusão; § único → adição quando o fiscal atinge o custo. 301 § 3º tributos recuperáveis fora do custo (texto sobre **mercadorias**) |
+| L2 | **IN RFB 1.700/2017** arts. 120, 121 § 3º, 123, 124 §§ 4º-5º, 310 § 2º | corpus `fontes-oficiais/IN-RFB-1700-2017.txt:2493-2571` e art. 310 | 124 § 4º: contábil < fiscal → exclusão **"com registro na Parte B do e-Lalur e do e-Lacs"** (logo IRPJ **e** CSLL); § 5º adição + baixa. 123: quota fiscal = taxa × **custo de aquisição** (sem residual). 310 § 2º I a 2: ajuste da Parte A com **"identificação das contas analíticas … e indicação discriminada por lançamento … quando presentes"** |
+| L3 | **Tabelas Dinâmicas ECF Leiaute 12** — abas `PARTEB_PADRAO`, `PARTEB_PARTEA`, `M300A`, `M350A` | `sped.rfb.gov.br/arquivo/download/8002`, sha256 `366b8d9030a0…` = **idêntico ao MANIFEST** do corpus | `1071` e `2210`, tributo **`A` (ambos)**. Relacionamento PG em Geral (qualif 01): **1071 ↔ {86, 161, 260}**; **2210 ↔ {86, 161, 335, 265.01, 91.01}**; 3130 ↔ {91.85, 166.85} (IN 1.778, petróleo). 86/161/91.01 existem em M300A **e** M350A |
+| L4 | **Manual ECF L12** — tabela de sinais do M300/M305 e `REGRA_RELACAO_INEXISTENTE` | transcrição do corpus `BE-INCR-SPED-ECF-FASE3-layout-transcription-LMN.md:167,190` | Adição com Parte B devedora = "constituição de saldo para posterior exclusão"; exclusão com Parte B credora = "constituição de saldo para posterior adição". `indRelacao` 1 = só Parte B (M305); 3 = Parte B + conta contábil (M305 + M310) |
+| L5 | **PN CST 210/1973** e **PN CST 104/1975** | **fonte secundária** (normasbrasil.com.br; normaslegais.com.br) — a página oficial do SIJUT não foi alcançada | 210/73: com direito a indenização (inclusive **por silêncio do contrato**, CC da época) **não** amortiza — **deprecia às taxas normais** até o fim do contrato, resultado apurado na indenização. 104/75: não amortizável também quando a **locação é por prazo indeterminado**; vida útil ≤ 1 exercício ou mera conservação → **despesa direta**. **Nenhum dos dois estabelece "min(contrato, vida útil)"** |
+
+**Consequências para este BRIEF** (aplicadas abaixo): (i) a regra "min" **sai** — não existe nas normas lidas;
+(ii) benfeitoria ganha um pré-requisito legal novo: **sem direito a indenização e prazo determinado**; (iii) o sentido
+de 1071/2210 passa de "inferido" para **inferido com 3 fontes oficiais concordantes** (L2 § 4º, L3 relacionamento,
+L4 tabela de sinais); (iv) CSLL entra (**V**); (v) o F-EM-9 recomendado na 1ª versão estava **errado** (contagem
+dupla — ver E17).
+
 ## 1. Estado medido do código (V = lido nesta sessão)
 
 | # | Fato | Onde | Grau |
@@ -78,8 +94,15 @@ Artefato: RIR/2018 art. 313 § 1º I e § 2º; IN RFB 1.700/2017 art. 120 caput 
 
 ### Parte 2 — benfeitoria em imóvel de terceiro
 
-Artefato: RIR/2018 art. 331 III, 333; art. 330 § 3º (via dossiê §8, grau V). A regra "min(prazo do contrato, vida
-útil)" **não** foi verificada (PN CST 210/73 e 104/75 não lidos) → **não entra no checklist**; está em §5 e F-EM-5.
+Artefato: RIR/2018 arts. 330 § 3º, 331 III, 333 (L1, oficial); PN CST 210/73 e 104/75 (L5, secundária). A regra
+"min(prazo do contrato, vida útil)" **não existe** nas normas lidas → removida (F-EM-5 revisto).
+
+- **E8b.** Pré-requisito legal da amortização (RIR 331 III + PN 210/73 + PN 104/75): o ativo só pode ser
+  `AMORTIZATION_LEASEHOLD` se `leaseIndemnifiable = false` **e** o contrato tem prazo determinado (`leaseEndDate`
+  presente). `leaseIndemnifiable = true` ou prazo indeterminado → 400 orientando a classe `DEPRECIATION` (taxa
+  normal, Anexo III — edificação/instalação). O campo é **declaração obrigatória** do usuário (sem default): o
+  silêncio do contrato gera direito a indenização (PN 210/73 item 4), então "não sei" não pode virar `false`.
+  Teste: `leaseIndemnifiable` ausente → 400; `true` → 400 com a orientação; `false` + `leaseEndDate` → aceita.
 
 - **E9.** `FixedAssetClass.kind: 'DEPRECIATION' | 'AMORTIZATION_LEASEHOLD'` (default `DEPRECIATION`; linhas
   existentes migram para o default). Onde mora o prazo: F-EM-6.
@@ -100,26 +123,49 @@ Artefato: RIR/2018 art. 331 III, 333; art. 330 § 3º (via dossiê §8, grau V).
 
 ### Parte 3 — retomada do Bloco F (itens 23-25 do BRIEF-mãe)
 
-Artefato: BRIEF-mãe itens 23-25; Leiaute 12 linhas 86/161/91.01 (S8); planilha PARTEB_PADRAO L12 (dossiê §8/D-6):
-`1071` contábil > fiscal, `2210` fiscal > contábil (RIR art. 321), `3130` petróleo/gás — **sentido = inferido**.
+Artefato: IN 1.700 art. 124 §§ 4º-5º e 310 § 2º (L2); RIR 321 (L1); Tabelas Dinâmicas L12 `PARTEB_PARTEA` (L3);
+Manual L12 tabela de sinais (L4). Leitura: **`1071` = saldo nascido de ADIÇÃO** (contábil > fiscal; Parte B devedora,
+excluída depois); **`2210` = saldo nascido de EXCLUSÃO** (contábil < fiscal, RIR 321/IN 124 § 4º; Parte B credora,
+adicionada depois — § 5º). Grau: **inferido com 3 fontes oficiais concordantes** (nenhuma diz o sentido em uma
+frase; L3 só lista os relacionamentos). `3130` = IN 1.778 (petróleo/gás) — nunca para salão.
 
 - **E15.** `IFixedAssetReader.listForParteB(scope, year, quarter)` (interface, execution-plan A6) injetada via factory
   no `LalurService`; devolve só ativos com `bookAnnualRateBp ≠ null` **ou** `residualValueCents > 0`, status
   `ACTIVE | FULLY_DEPRECIATED | DISPOSED-no-trimestre`, com quota contábil postada e quota fiscal teórica do trimestre.
 - **E16.** Diferença trimestral por ativo = Σ(quota fiscal − quota contábil) — fórmula do item 23 inalterada;
-  contábil > fiscal → **adição** (linha `86`); fiscal > contábil → **exclusão** (linha `161`); baixa/alienação com
-  saldo → `91.01`. Fiscal acumulada atingiu `costCents` (art. 124 § 5) → adição do excedente e baixa do controle.
-- **E17.** Registro: forma decidida em **F-EM-9** (o conflito M312 × Parte B que pausou o PR-3). Recomendação (a):
-  `LalurEntry` Parte A `origem`-sistema com `indRelacao='1'` + `parteBId` **e** `LalurParteBMovement system` na
-  mesma tx do `closeParteB`, substituídos a cada refechamento (padrão `:838`). Sem M312 nesta emenda.
+  por ativo, a linha e a conta da Parte B saem do relacionamento L3:
+
+  | Situação no trimestre | Linha (M300 **e** M350) | Conta Parte B | Grau |
+  |---|---|---|---|
+  | contábil > fiscal (constitui) | `86` adição | `1071` (devedora) | L3+L4 |
+  | contábil acabou, fiscal continua (realiza 1071) | `161` exclusão | `1071` (baixa) | L3+L4 |
+  | contábil < fiscal (constitui) | `161` exclusão | `2210` (credora) | L2 § 4º + L3 |
+  | fiscal atingiu `costCents` (§ 5º), realiza 2210 | `86` adição | `2210` (baixa) | L2 § 5º + L3 |
+  | baixa/alienação com saldo 2210 | `91.01` adição | `2210` | L3 (91.01 só se relaciona com 2210) |
+  | baixa/alienação com saldo 1071 | `161` exclusão | `1071` | L3 (1071 não se relaciona com 91.01) |
+
+  Quota fiscal = taxa × `costCents` **sem** residual (IN 123, V) — confirma a fórmula do item 23.
+- **E16b.** Tudo em dobro: IRPJ (livro `lalur`, conta M010 `I`) **e** CSLL (livro `lacs`, conta M010 `C`) — IN 124 § 4º
+  "e-Lalur e do e-Lacs" + tributo `A` (L2/L3, **V**). Teste: 1 ativo com override → 2 lançamentos por trimestre.
+- **E17.** Registro (resolve a pausa do PR-3): **só** `LalurEntry` Parte A `origem`-sistema com `parteBId` (M305),
+  **nenhum** `LalurParteBMovement` — o saldo da Parte B já anda pelo M305 (`lalurParteBBalances.ts:13`, L4); gravar os
+  dois contaria em dobro. `indRelacao` por linha (IN 310 § 2º I a 2, "quando presentes"): **adição** (86/91.01)
+  reflete despesa contábil que **existe** → `'3'` + `accountId` = `depreciationExpenseAccountId` + M312
+  (`journalLinks`) = lançamentos de quota do trimestre — **era o que o item 24 original pedia**, e o schema já
+  comporta (S9); **exclusão** (161) é valor só fiscal → `'1'`, sem M310/M312. Substituído a cada refechamento na
+  mesma tx (padrão `:838`). Grau: indRelacao por linha = **inferido** da IN 310 + L4; o PVA é o oráculo.
 - **E18.** Conta da Parte B escolhida por `codPbRfb` + `codTributo` (como o PF/BC em `LalurService.ts:~850`):
   diferença ≠ 0 sem conta → `ValidationError` nomeando o código esperado (`1071` ou `2210`) e o tributo. Forma da
   configuração: F-EM-10.
 - **E19.** Guard: `codPbRfb = '3130'` nunca é escolhido automaticamente (teste: escopo só com conta 3130 → 400, não usa).
 - **E20.** Default (sem override, residual 0, sem benfeitoria) → diferença **exatamente 0** → **0** `LalurEntry`/
   movimentos `system` novos (item 25 do BRIEF-mãe).
-- **E21.** Benfeitoria (Parte 2) entra no Bloco F **só** se F-EM-11 disser que amortização contábil ≠ fiscal;
-  até lá, `listForParteB` exclui `AMORTIZATION_LEASEHOLD` (diferença = 0 por construção).
+- **E21.** Benfeitoria amortizada fica fora do Bloco F: a amortização pelo prazo (RIR 333) **é** a regra fiscal, e o
+  lançamento contábil usa o mesmo prazo (E11) → diferença 0 por construção. `listForParteB` exclui
+  `AMORTIZATION_LEASEHOLD`. (Se o dono quiser amortização contábil por outro critério, isso reabre — F-EM-11.)
+- **E21b.** Uma linha pode precisar de **duas** contas da Parte B no mesmo trimestre (ex.: `161` realizando 1071 de
+  um ativo e constituindo 2210 de outro), mas `LalurEntry` tem **um** `parteBId` e é única por código/período (S9).
+  Forma: F-EM-14.
 - **E22.** Colisão com `@@unique(... livro, codigo)` (S9): se já existe `LalurEntry` **do usuário** com `86`/`161`
   no período → comportamento de F-EM-12. Até ratificar: 400 explicando a colisão.
 
@@ -173,6 +219,7 @@ amortizationExpenseAccountId: z.string().min(1).optional(), // só se F-EM-7 →
 
 // FixedAssetDto (create) — só se F-EM-6 → a (prazo no ativo)
 leaseEndDate: dateOnly('leaseEndDate').optional(), // obrigatório (serviço) quando class.kind = AMORTIZATION_LEASEHOLD
+leaseIndemnifiable: z.boolean().optional(),        // E8b — obrigatório (serviço) com AMORTIZATION_LEASEHOLD; true → 400
 
 // AccountingScopeSettingsDto — F-EM-10 (b recomendado): nenhum campo novo; depreciationParteBAccountId
 // é DEPRECADO de leitura (resolve por codPbRfb). Se F-EM-10 → a: 4 FKs {1071,2210} × {I,C}.
@@ -184,9 +231,11 @@ leaseEndDate: dateOnly('leaseEndDate').optional(), // obrigatório (serviço) qu
 -- sem tabela nova; só colunas, no fim (SQLite ADD COLUMN não tem IF NOT EXISTS — memória migracao-sqlite-nao-e-transacional)
 ALTER TABLE fixed_asset_classes ADD COLUMN kind TEXT NOT NULL DEFAULT 'DEPRECIATION';
 ALTER TABLE fixed_assets        ADD COLUMN leaseEndDate DATETIME;           -- F-EM-6 a
+ALTER TABLE fixed_assets        ADD COLUMN leaseIndemnifiable BOOLEAN;      -- E8b (NULL = não declarado)
+-- condicional a F-EM-14 a: CREATE TABLE IF NOT EXISTS lalur_entry_parte_b_links (... ) ANTES das colunas
 -- condicional a F-EM-7 b:
 ALTER TABLE fixed_asset_classes ADD COLUMN amortizationExpenseAccountId TEXT REFERENCES accounts(id) ON DELETE RESTRICT;
--- condicional a F-EM-9 a: coluna de origem em lalur_entries (hoje não existe — S9)
+-- E17: coluna de origem em lalur_entries (hoje não existe — S9)
 ALTER TABLE lalur_entries       ADD COLUMN origem TEXT NOT NULL DEFAULT 'user';
 ```
 
@@ -214,26 +263,32 @@ export interface IFixedAssetReader {
 | **F-EM-2** | `unitCostCents` quando `costCents` não divide por `qty` | (a) comparar `costCents ≤ limite × qty` (sem divisão) · (b) teto da divisão | **(a)** — exato em inteiros, sem arredondamento. **Base comparada = custo líquido do item** (rateio D3 com frete, sem os créditos recuperáveis — S3); que o "valor unitário" do art. 120 seja o custo de aquisição nesse sentido é **inferido** (RIR art. 301 não lido nesta sessão) → §5 item 5 |
 | **F-EM-3** | Hipótese "vida útil ≤ 1 ano" (2ª do caput do art. 120) | (a) fora desta emenda · (b) flag `usefulLifeUpToOneYear` que libera EXPENSE acima do limite | **(a)** — a decisão 16 nomeia só o R$1.200; (b) vira achado fora de escopo |
 | **F-EM-4** | Exceção de conjunto (§ 1º) | (a) só declarativa: `setDeclared` força CAPITALIZE, sem heurística · (b) heurística por NCM/qty · (c) ignorar | **(a)** — a lei fala da atividade, que o sistema não conhece |
-| **F-EM-5** | Prazo da benfeitoria | (a) só prazo restante do contrato (V) · (b) min(contrato, vida útil) (NV) | **(a)** agora; (b) só após leitura do PN CST 210/73 e 104/75 (§5) |
+| **F-EM-5** | Prazo da benfeitoria | (a) prazo restante do contrato (RIR 333, **V**) · ~~(b) min(contrato, vida útil)~~ | **(a)** — (b) **retirado**: PN 210/73 e 104/75 (L5) não trazem a regra; o que trazem é a condição de E8b |
 | **F-EM-6** | Onde mora o prazo | (a) `leaseEndDate` no **ativo** · (b) na classe | **(a)** — contratos diferentes por imóvel; a classe diz só o *tipo* |
 | **F-EM-7** | Conta de despesa da amortização | (a) reusa `depreciationExpenseAccountId` · (b) `amortizationExpenseAccountId` na classe | **(b)** — DRE/referencial separa depreciação de amortização; confirmar código referencial com o contador (§5) |
 | **F-EM-8** | Renovação/rescisão do contrato | (a) imutável após ativação; rescisão = dispose · (b) comando `extendLease` com recálculo prospectivo | **(a)** nesta emenda; (b) quando o 1º cliente tiver contrato renovado |
-| **F-EM-9** | Forma do registro Bloco F (a pausa do PR-3) | (a) `LalurEntry` Parte A (86/161/91.01, `indRelacao='1'`, `parteBId`) + `LalurParteBMovement system` · (b) só `LalurParteBMovement` · (c) (a) + M312 ligando os lançamentos de quota | **(a)** — Parte A é onde a adição/exclusão afeta a base; Parte B é o controle; M312 (c) não é exigido por indRelacao 1 (S9). **Inferido:** `indRelacao='1'` (só Parte B) × `'3'` (Parte B + conta contábil, exige `accountId`) não foi conferido no manual da ECF — o executor confere p.245-247 antes de fixar |
+| **F-EM-9** | Forma do registro Bloco F (a pausa do PR-3) | (a) `LalurEntry` Parte A (86/161/91.01, `indRelacao='1'`, `parteBId`) + `LalurParteBMovement system` · (b) só `LalurParteBMovement` · (c) (a) + M312 ligando os lançamentos de quota | ~~(a)~~ **retirada na 3ª passada** — gravaria M305 **e** M410 para o mesmo valor (contagem dupla, L4). **Nova recomendação (d):** só Parte A com M305; `indRelacao='3'` + M310/M312 na adição, `'1'` na exclusão (E17, IN 310 § 2º) |
 | **F-EM-10** | Configuração da conta Parte B | (a) 4 FKs em settings (`1071`/`2210` × IRPJ/CSLL) · (b) resolver por `codPbRfb`+`codTributo` nas contas M010 do exercício, como o PF/BC (S11) | **(b)** — reuso do padrão existente; a coluna S7 (já exposta na API de settings) fica deprecada — remoção = mudança de contrato, fold posterior |
-| **F-EM-11** | Benfeitoria tem diferença contábil × fiscal? | (a) não — contábil = fiscal pelo prazo · (b) sim | **(a)** até o contador dizer o contrário |
+| **F-EM-11** | Benfeitoria tem diferença contábil × fiscal? | (a) não — contábil = fiscal pelo prazo · (b) sim | **(a)** — RIR 333 é a regra fiscal e E11 usa o mesmo prazo (E21) |
+| **F-EM-14** | Linha 86/161 que precisa de 2 contas da Parte B (E21b) | (a) tabela filha `LalurEntryParteBLink` (M305 1:N, migração) · (b) 400 no fechamento quando ocorrer · (c) quebrar em 2 `LalurEntry` (proibido pela unique) | **(a)** — o leiaute permite vários M305 por M300 (`REGRA_VALOR_DETALHADO` soma M305); (b) trava fechamento legítimo |
 | **F-EM-12** | Colisão com LalurEntry manual 86/161 | (a) 400 · (b) somar sistema ao manual numa linha só · (c) mudar a unique para incluir `origem` | **(a)** — explícito; (c) mexe em invariante do e-Lalur |
-| **F-EM-13** | Fatiamento | (a) 1 PR · (b) 3 PRs seriais (P1 R$1.200 → P2 benfeitoria → P3 Bloco F), migração no P1 com todas as colunas | **(b)** — partes independentes; P3 depende da confirmação do contador (§5) |
+| **F-EM-13** | Fatiamento | (a) 1 PR · (b) 3 PRs seriais (P1 R$1.200 → P2 benfeitoria → P3 Bloco F), migração no P1 com todas as colunas | **(b)** — partes independentes; P3 não depende mais do contador (§5 item 1 resolvido por lei), só do PVA como oráculo |
 
 ## 5. Pendente de validação externa (não entra no checklist como decidido)
 
-1. **Sentido dos códigos PARTEB_PADRAO** `1071` (contábil > fiscal) × `2210` (fiscal > contábil, RIR 321) — inferido
-   da planilha L12; **confirmar com o contador** (alinhado ao follow-up 0.8a do plano pós-contador). Bloqueia P3.
-2. **PN CST 210/1973 e 104/1975** — regra "min(contrato, vida útil)". Não lidos. Bloqueia F-EM-5 (b).
-3. **Código do referencial** para despesa de amortização de benfeitoria (F-EM-7) — contador.
-4. **CSLL**: a diferença de depreciação se aplica também ao e-Lacs (linha `86` existe no lacs, S8)? — inferido que sim;
-   confirmar. Define se E16 gera 1 ou 2 linhas por ativo.
-5. **Base do limite de R$1.200** = custo de aquisição líquido dos tributos recuperáveis, com frete rateado (F-EM-2) —
-   inferido; contador confirma.
+Pesquisa de lei feita antes (§0.1). O que **resolveu** saiu daqui; o que resta:
+
+1. ~~Sentido de 1071/2210~~ → **resolvido por lei** a grau "inferido com 3 fontes oficiais concordantes" (§0.1, E16).
+   Oráculo final = PVA (a `REGRA_PARTE_B_PARTE_A` valida o par conta×linha, não o sentido). **Não bloqueia mais P3.**
+2. ~~PN CST 210/73 e 104/75~~ → **lidos** (fonte secundária, L5): a regra "min" não existe. Resta reconferir o texto
+   no SIJUT oficial (`normas.receita.fazenda.gov.br`) — não muda o desenho.
+3. **Código do plano referencial** para a despesa de amortização (F-EM-7) — é dado da tabela do referencial (X2), não
+   norma: consultar na execução; não precisa de contador.
+4. ~~CSLL~~ → **resolvido (V)**: IN 124 § 4º + tributo `A` + linhas em M350A. E16b.
+5. **Base do limite de R$1.200** — RIR 301 § 3º exclui tributo recuperável do custo, mas o texto é de **mercadorias**;
+   aplicar ao imobilizado é analogia (**inferido**). Frete no custo: mesmo artigo (§ 1º), mesma analogia.
+6. **Direito à indenização no Código Civil vigente** (PN 210/73 cita o art. 547 do CC/1916): a regra atual (CC/2002 e
+   Lei 8.245/91 art. 35) **não foi lida** — por isso E8b exige declaração explícita em vez de inferir do contrato.
 
 ## 6. Insumos ausentes (pausados, não varridos — regra 2)
 
