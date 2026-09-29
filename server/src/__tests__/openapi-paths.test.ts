@@ -94,7 +94,7 @@ const { options } = require('../../scripts/generate-openapi');
 // cancelamento-manual} — 218 → 222.
 // +1 (LAC-B, FE-INCR-BINDING-ACTIVATION item 1): POST /accounting-binding/activate-default — 222 → 223.
 // +1 (BE-INCR-CRM-MODULE-COMPOSITION, I8 comportamento 8): POST /dashboard/modules/install — 223 → 224.
-const BASELINE = 225; // +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS)
+const BASELINE = 226; // +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {

@@ -94,6 +94,7 @@ import {
   buildDeliveryPackage,
   confirmDelivery,
   getDelivery,
+  listDeliveries,
   getPackageProfile,
   retryDelivery,
   setPackageProfile,
@@ -291,6 +292,7 @@ router.post('/delivery/confirm', deliveryConfirmLimiter, confirmDelivery);
 // C6b PR-3 (F-C6b-2 a) — segmento estático `/delivery/profile`, ANTES de `/delivery/:id/retry` e
 // `/delivery/:id`: senão "profile" casaria como o parâmetro `:id` (mesma disciplina das rotas de
 // revisão, comentário abaixo).
+router.get('/delivery', listDeliveries); // FE-INCR-DELIVERY PR-D1 — histórico (lista), segmento vazio
 router.get('/delivery/profile', getPackageProfile);
 router.put('/delivery/profile', setPackageProfile);
 router.post('/delivery/:id/retry', retryDelivery);

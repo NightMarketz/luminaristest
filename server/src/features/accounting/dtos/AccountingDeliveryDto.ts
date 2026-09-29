@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DELIVERABLE_EXPORT_KINDS } from '../models/AccountingDelivery.model';
+import { DELIVERABLE_EXPORT_KINDS, DELIVERY_STATUSES } from '../models/AccountingDelivery.model';
 
 /**
  * AccountingDeliveryDto — comandos da entrega do pacote ECD/ECF ao contador
@@ -130,6 +130,22 @@ export const AccountingDeliveryScopeQuerySchema = z.object({
   unitId: z.string().min(1),
 });
 
+/**
+ * Query DTO — GET /api/accounting/delivery?unitId=&status=&year=&page=&limit= (FE-INCR-DELIVERY PR-D1, F-FE-DL-4
+ * → a): o histórico de entregas do escopo, paginado, cada entrega JÁ com os seus `items[]` (achado §6.6 do BRIEF).
+ * `year` filtra pelo `periodStart` do pacote. `.strict()` como a lista de jobs (`ListDataExchangeJobsQuerySchema`).
+ */
+export const ListDeliveriesQuerySchema = z
+  .object({
+    unitId: z.string().min(1),
+    status: z.enum(DELIVERY_STATUSES).optional(),
+    year: z.coerce.number().int().min(2000).max(2100).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .strict();
+
+export type ListDeliveriesQueryInput = z.infer<typeof ListDeliveriesQuerySchema>;
 export type BuildDeliveryPackageInput = z.infer<typeof BuildDeliveryPackageSchema>;
 export type ConfirmDeliveryInput = z.infer<typeof ConfirmDeliverySchema>;
 export type RetryDeliveryInput = z.infer<typeof RetryDeliverySchema>;

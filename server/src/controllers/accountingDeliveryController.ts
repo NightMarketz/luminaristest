@@ -7,6 +7,7 @@ import {
   AccountingDeliveryScopeQuerySchema,
   BuildDeliveryPackageSchema,
   ConfirmDeliverySchema,
+  ListDeliveriesQuerySchema,
   PackageProfileQuerySchema,
   PackageProfileSchema,
   RetryDeliverySchema,
@@ -116,6 +117,22 @@ export const setPackageProfile = async (req: Request, res: Response) => {
 };
 
 /** GET /api/accounting/delivery/:id?unitId= — o log de uma entrega (escopado; cross-tenant → 404). */
+/** GET /api/accounting/delivery?unitId=&status=&year=&page=&limit= — histórico paginado (FE-INCR-DELIVERY PR-D1). */
+export const listDeliveries = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = ListDeliveriesQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const { unitId, ...filter } = parsed.data;
+    const scope = resolveAccountingScope(user, unitId);
+    const data = await getFactory().getAccountingDeliveryService().listDeliveries(scope, filter);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
 export const getDelivery = async (req: Request, res: Response) => {
   try {
     const user = getUserContextFromRequest(req);

@@ -85,5 +85,11 @@ export interface IAccountingDeliveryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<AccountingDeliveryItem[]>;
 
+  /** Histórico escopado e paginado (mais recente primeiro), cada log com os itens em `position`. */
+  listDeliveries(
+    scope: AccountingScope,
+    filter: { status?: string; year?: number; page: number; limit: number },
+  ): Promise<{ items: Array<AccountingDeliveryLog & { items: AccountingDeliveryItem[] }>; total: number }>;
+
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

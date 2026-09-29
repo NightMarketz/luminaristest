@@ -1,5 +1,5 @@
 import { Prisma } from 'generated/prisma';
-import type { AccountingContact, AccountingDataExchangeJob, AccountingDeliveryLog } from 'generated/prisma';
+import type { AccountingContact, AccountingDataExchangeJob, AccountingDeliveryItem, AccountingDeliveryLog } from 'generated/prisma';
 import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import {
   buildDeliveryManifest,
@@ -295,6 +295,21 @@ export class AccountingDeliveryService {
   }
 
   // ── Read ───────────────────────────────────────────────────────────────────
+  /**
+   * Histórico de entregas do escopo (FE-INCR-DELIVERY PR-D1, F-FE-DL-4 → a) — leitura sob
+   * `canReadAccountingContact`, como o `getDelivery`; cada entrega com os seus itens (núcleo + extras).
+   */
+  async listDeliveries(
+    scope: AccountingScope,
+    filter: { status?: string; year?: number; page: number; limit: number },
+  ): Promise<{ items: Array<AccountingDeliveryLog & { items: AccountingDeliveryItem[] }>; total: number; page: number; limit: number }> {
+    if (!this.policy.canReadAccountingContact(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler entregas ao contador.');
+    }
+    const { items, total } = await this.deliveryRepo.listDeliveries(scope, filter);
+    return { items, total, page: filter.page, limit: filter.limit };
+  }
+
   async getDelivery(scope: AccountingScope, id: string): Promise<AccountingDeliveryLog> {
     if (!this.policy.canReadAccountingContact(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler entregas ao contador.');

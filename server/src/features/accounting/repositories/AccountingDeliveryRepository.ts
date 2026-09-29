@@ -80,6 +80,28 @@ export class AccountingDeliveryRepository implements IAccountingDeliveryReposito
     });
   }
 
+  public async listDeliveries(
+    scope: AccountingScope,
+    filter: { status?: string; year?: number; page: number; limit: number },
+  ): Promise<{ items: Array<AccountingDeliveryLog & { items: AccountingDeliveryItem[] }>; total: number }> {
+    const where: Prisma.AccountingDeliveryLogWhereInput = { ...accountingScopeWhere(scope) };
+    if (filter.status) where.status = filter.status;
+    if (filter.year !== undefined) {
+      where.periodStart = { gte: new Date(Date.UTC(filter.year, 0, 1)), lt: new Date(Date.UTC(filter.year + 1, 0, 1)) };
+    }
+    const [items, total] = await Promise.all([
+      prisma.accountingDeliveryLog.findMany({
+        where,
+        include: { items: { orderBy: [{ position: 'asc' }] } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (filter.page - 1) * filter.limit,
+        take: filter.limit,
+      }),
+      prisma.accountingDeliveryLog.count({ where }),
+    ]);
+    return { items, total };
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }
