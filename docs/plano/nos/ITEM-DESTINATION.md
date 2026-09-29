@@ -22,6 +22,7 @@ atualizado: "2026-09-29"
 
 - [`docs/accounting/PLANO-POS-CONTADOR-2026-09-23.md`](../../accounting/PLANO-POS-CONTADOR-2026-09-23.md) — Fase 3, item 3.1
 - [`docs/accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md`](../../accounting/TRIAGEM-RESPOSTA-CONTADOR-2026-09-23.md)
+- [`docs/accounting/BE-INCR-ITEM-DESTINATION-brief.md`](../../accounting/BE-INCR-ITEM-DESTINATION-brief.md) — BRIEF (29/09, `sessao-planejamento`): 20 itens, forks F-ID-1..9 **pendentes**; a espera pelo 0.8(e) foi dispensada para planejar (decisão 16 de 29/09) e virou F-ID-4 + pendência P-1
 
 ## Insumo que falta antes do BRIEF
 
