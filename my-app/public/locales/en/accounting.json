@@ -449,6 +449,12 @@
       "ecfContador": "The ECF requires an accountant signer (qualification 900) and a non-accountant.",
       "ecfContadorCrc": "The accountant signer (900) requires an 11-digit CPF and a CRC.",
       "ecdContadorCrc": "The accountant signer (900) requires an 11-digit CPF, CRC, CRC state, email and phone."
+    },
+    "qualif": {
+      "contadorCadastro": "Registered accountant (optional)",
+      "contadorManual": "— fill the accountant in by hand —",
+      "contadorHint": "The accountant data comes from the registry; no 900 row is needed below.",
+      "loadError": "Error loading the signer qualification table."
     }
   },
   "trialBalance": {

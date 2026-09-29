@@ -449,6 +449,12 @@
       "ecfContador": "A ECF exige um signatário contador (qualificação 900) e um não-contador.",
       "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC.",
       "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone."
+    },
+    "qualif": {
+      "contadorCadastro": "Contador do cadastro (opcional)",
+      "contadorManual": "— preencher o contador à mão —",
+      "contadorHint": "Os dados do contador vêm do cadastro; não é preciso uma linha 900 abaixo.",
+      "loadError": "Erro ao carregar a tabela de qualificação do assinante."
     }
   },
   "trialBalance": {

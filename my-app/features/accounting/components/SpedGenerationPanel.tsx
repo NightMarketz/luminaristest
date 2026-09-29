@@ -1,6 +1,6 @@
 // React default import: tsconfig uses jsx:"preserve", so vitest/esbuild transforms JSX with the
 // classic runtime and needs React in scope (same pattern as ImportExportPanel, the tested precedent).
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { FiDownload, FiRefreshCw, FiPlus, FiTrash2 } from 'react-icons/fi';
 import {
@@ -12,8 +12,11 @@ import {
   type EcfSignerDraft,
   type GenerateEcdPayload,
   type GenerateEcfPayload,
+  type QualifAssinante,
 } from '../../../lib/services/sped.service';
+import { accountingContactsService, type AccountingContact } from '../../../lib/services/accountingContacts.service';
 import { nonEmpty } from '../../../lib/utils/nonEmpty';
+import { QualifAssinanteSelect } from './QualifAssinanteSelect';
 import { resolveError } from '../lib/resolveError';
 import { SpedEcfRealPanel } from './SpedEcfRealPanel';
 
@@ -37,15 +40,17 @@ export const inputClass =
  * Pure: mirror the ECD J930 superRefine (SpedEcdDto) so the owner gets an inline
  * error before the round-trip. Returns an i18n key suffix under `sped.error.*`, or
  * null when the signer set is valid. Exactly one legal responsible; at least one
- * contador (COD_ASSIN='900') and one non-contador.
+ * contador (COD_ASSIN='900') and one non-contador. `contadorDoCadastro`: um contato
+ * escolhido no select vira, NO SERVIDOR, um signatário 900 não responsável legal
+ * (`contactToJ930Signer`) — conta como o contador; os dados dele são do cadastro.
  */
-export function validateEcdSigners(signers: EcdSignerDraft[]): string | null {
+export function validateEcdSigners(signers: EcdSignerDraft[], contadorDoCadastro = false): string | null {
   if (signers.length < 1) return 'signersRequired';
   if (signers.some((s) => !s.identNom.trim() || !s.identCpfCnpj.trim() || !s.codAssin.trim()))
     return 'signersIncomplete';
   const respLegal = signers.filter((s) => s.indRespLegal === 'S');
   if (respLegal.length !== 1) return 'ecdRespLegal';
-  const hasContador = signers.some((s) => s.codAssin.trim() === '900');
+  const hasContador = contadorDoCadastro || signers.some((s) => s.codAssin.trim() === '900');
   const hasNonContador = signers.some((s) => s.codAssin.trim() !== '900');
   if (!hasContador || !hasNonContador) return 'ecdContador';
   const contadores = signers.filter((s) => s.codAssin.trim() === '900');
@@ -141,13 +146,15 @@ export function toEcfDeclarantPayload(d: EcfDeclarantDraft): GenerateEcfPayload[
  * Pure: mirror the ECF 0930 superRefine (SpedEcfDto). At least one contador
  * (IDENT_QUALIF='900' with CPF 11 digits + IND_CRC) and one non-contador; max 2.
  */
-export function validateEcfSigners(signers: EcfSignerDraft[]): string | null {
-  if (signers.length < 1 || signers.length > 2) return 'ecfSignerCount';
+export function validateEcfSigners(signers: EcfSignerDraft[], contadorDoCadastro = false): string | null {
+  // O contato do cadastro ocupa uma das 2 vagas do 0930 (o servidor o ANEXA a `signers`).
+  const total = signers.length + (contadorDoCadastro ? 1 : 0);
+  if (signers.length < 1 || total > 2) return 'ecfSignerCount';
   if (signers.some((s) => !s.identNom.trim() || !s.identCpfCnpj.trim() || !s.identQualif.trim()))
     return 'signersIncomplete';
   const contadores = signers.filter((s) => s.identQualif.trim() === '900');
   const hasNonContador = signers.some((s) => s.identQualif.trim() !== '900');
-  if (contadores.length < 1 || !hasNonContador) return 'ecfContador';
+  if ((contadores.length < 1 && !contadorDoCadastro) || !hasNonContador) return 'ecfContador';
   if (contadores.some((c) => c.identCpfCnpj.trim().length !== 11 || !c.indCrc?.trim()))
     return 'ecfContadorCrc';
   return null;
@@ -172,6 +179,40 @@ export const emptyEcfSigner = (): EcfSignerDraft => ({
   email: '',
   fone: '',
 });
+
+/**
+ * "Contador do cadastro" (FE-INCR-SPED-SIGNERS item 5, F-FE-SG-2 → d) — opcional: o id escolhido vai em
+ * `signerContactIds` e o SERVIDOR monta o signatário 900 a partir do cadastro (uma máscara só, a do BE).
+ * A linha manual continua para quem não cadastrou o contador. Some quando não há contato cadastrado.
+ */
+export function ContadorDoCadastroSelect({
+  t,
+  contacts,
+  value,
+  onChange,
+}: {
+  t: TFn;
+  contacts: AccountingContact[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  if (contacts.length === 0) return null;
+  return (
+    <div className="mt-5 max-w-md">
+      <Field label={t('sped.qualif.contadorCadastro', 'Contador do cadastro (opcional)')}>
+        <select value={value} onChange={(e) => onChange(e.target.value)} className={inputClass}>
+          <option value="">{t('sped.qualif.contadorManual', '— preencher o contador à mão —')}</option>
+          {contacts.map((c) => (
+            <option key={c.id} value={c.id}>{c.name} — CRC {c.crcNumber}</option>
+          ))}
+        </select>
+        {value && (
+          <span className="text-neutral-500">{t('sped.qualif.contadorHint', 'Os dados do contador vêm do cadastro; não é preciso uma linha 900 abaixo.')}</span>
+        )}
+      </Field>
+    </div>
+  );
+}
 
 /** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same field wrapper. */
 export function Field({
@@ -221,6 +262,30 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const [ecfBusy, setEcfBusy] = useState(false);
   const [ecfError, setEcfError] = useState<string | null>(null);
 
+  // ── Tabelas de qualificação (BE, F-FE-SG-1 → a) e contadores do cadastro (F-FE-SG-2 → d) ──
+  const [qualif, setQualif] = useState<{ ECD: QualifAssinante[]; ECF: QualifAssinante[] }>({ ECD: [], ECF: [] });
+  const [qualifLoading, setQualifLoading] = useState(true);
+  const [qualifError, setQualifError] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<AccountingContact[]>([]);
+  const [ecdContactId, setEcdContactId] = useState('');
+  const [ecfContactId, setEcfContactId] = useState('');
+
+  useEffect(() => {
+    if (!unitId) return;
+    let cancelled = false;
+    setQualifLoading(true);
+    Promise.all([spedService.getQualifAssinante(unitId, 'ECD'), spedService.getQualifAssinante(unitId, 'ECF')])
+      .then(([ECD, ECF]) => { if (!cancelled) { setQualif({ ECD, ECF }); setQualifError(null); } })
+      .catch((err: unknown) => { if (!cancelled) setQualifError(resolveError(err, t('sped.qualif.loadError', 'Erro ao carregar a tabela de qualificação do assinante.'))); })
+      .finally(() => { if (!cancelled) setQualifLoading(false); });
+    accountingContactsService
+      .listContacts(unitId)
+      .then((cs) => { if (!cancelled) setContacts(cs.filter((c) => c.deletedAt === null)); })
+      .catch(() => { if (!cancelled) setContacts([]); }); // sem permissão ou sem cadastro: o select some, a linha manual segue
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` identity is unstable without an i18n instance (see useAccountingT)
+  }, [unitId]);
+
   const genericError = () => t('sped.error.generic', 'Ocorreu um erro. Verifique os campos e tente novamente.');
   const signerError = (code: string) =>
     t(`sped.error.${code}`, t('sped.error.signersInvalid', 'Signatários inválidos.'));
@@ -246,7 +311,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       setEcdError(t('sped.error.versionRequired', 'Informe a versão do mapeamento referencial.'));
       return;
     }
-    const signerIssue = validateEcdSigners(ecdSigners);
+    const signerIssue = validateEcdSigners(ecdSigners, !!ecdContactId);
     if (signerIssue) {
       setEcdError(signerError(signerIssue));
       return;
@@ -264,6 +329,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       book: toEcdBookPayload(ecdBook),
       signers,
     };
+    if (ecdContactId) body.signerContactIds = [ecdContactId];
     setEcdBusy(true);
     try {
       await spedService.generateAndDownloadEcd(body);
@@ -281,7 +347,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       setEcfError(t('sped.error.yearEcf', 'Informe um ano válido (≥ 2015).'));
       return;
     }
-    const signerIssue = validateEcfSigners(ecfSigners);
+    const signerIssue = validateEcfSigners(ecfSigners, !!ecfContactId);
     if (signerIssue) {
       setEcfError(signerError(signerIssue));
       return;
@@ -298,6 +364,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
       signers,
     };
+    if (ecfContactId) body.signerContactIds = [ecfContactId];
     setEcfBusy(true);
     try {
       await spedService.generateAndDownloadEcf(body);
@@ -310,6 +377,9 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
 
   return (
     <div className="space-y-8">
+      {qualifError && (
+        <div role="alert" className="rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{qualifError}</div>
+      )}
       {/* ── ECD ─────────────────────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
         <h2 className="mb-1 text-lg font-semibold text-neutral-200">{t('sped.ecd.title', 'Gerar SPED ECD')}</h2>
@@ -365,7 +435,8 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
           </Field>
         </div>
 
-        <EcdSignersEditor t={t} signers={ecdSigners} setSigners={setEcdSigners} />
+        <ContadorDoCadastroSelect t={t} contacts={contacts} value={ecdContactId} onChange={setEcdContactId} />
+        <EcdSignersEditor t={t} signers={ecdSigners} setSigners={setEcdSigners} qualifOptions={qualif.ECD} qualifLoading={qualifLoading} />
 
         {ecdError && (
           <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{ecdError}</div>
@@ -433,7 +504,8 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
           </Field>
         </div>
 
-        <EcfSignersEditor t={t} signers={ecfSigners} setSigners={setEcfSigners} />
+        <ContadorDoCadastroSelect t={t} contacts={contacts} value={ecfContactId} onChange={setEcfContactId} />
+        <EcfSignersEditor t={t} signers={ecfSigners} setSigners={setEcfSigners} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} />
 
         {ecfError && (
           <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{ecfError}</div>
@@ -451,7 +523,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       </section>
 
       {/* ── ECF Lucro Real (esqueleto, FE-INCR-COMPLIANCE-2) ───────────────────── */}
-      <SpedEcfRealPanel unitId={unitId} />
+      <SpedEcfRealPanel unitId={unitId} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} contacts={contacts} />
     </div>
   );
 }
@@ -464,10 +536,14 @@ function EcdSignersEditor({
   t,
   signers,
   setSigners,
+  qualifOptions,
+  qualifLoading,
 }: {
   t: TFn;
   signers: EcdSignerDraft[];
   setSigners: React.Dispatch<React.SetStateAction<EcdSignerDraft[]>>;
+  qualifOptions: QualifAssinante[];
+  qualifLoading: boolean;
 }) {
   function update(i: number, k: keyof EcdSignerDraft, v: string) {
     setSigners((prev) => prev.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)));
@@ -489,7 +565,7 @@ function EcdSignersEditor({
           <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 p-3 sm:grid-cols-4">
             <input className={inputClass} placeholder={t('sped.field.identNom', 'Nome')} value={s.identNom} onChange={(e) => update(i, 'identNom', e.target.value)} />
             <input className={inputClass} placeholder={t('sped.field.cpfCnpj', 'CPF/CNPJ')} value={s.identCpfCnpj} onChange={(e) => update(i, 'identCpfCnpj', e.target.value)} />
-            <input className={inputClass} placeholder={t('sped.field.codAssin', 'Cód. (900=contador)')} value={s.codAssin} onChange={(e) => update(i, 'codAssin', e.target.value)} />
+            <QualifAssinanteSelect layout="ECD" options={qualifOptions} loading={qualifLoading} placeholder={t('sped.field.codAssin', 'Cód. (900=contador)')} value={s.codAssin} onChange={(code) => update(i, 'codAssin', code)} />
             <select className={inputClass} value={s.indRespLegal} onChange={(e) => update(i, 'indRespLegal', e.target.value)}>
               <option value="N">{t('sped.signers.notResp', 'Não resp. legal')}</option>
               <option value="S">{t('sped.signers.resp', 'Resp. legal')}</option>
@@ -526,10 +602,14 @@ export function EcfSignersEditor({
   t,
   signers,
   setSigners,
+  qualifOptions,
+  qualifLoading,
 }: {
   t: TFn;
   signers: EcfSignerDraft[];
   setSigners: React.Dispatch<React.SetStateAction<EcfSignerDraft[]>>;
+  qualifOptions: QualifAssinante[];
+  qualifLoading: boolean;
 }) {
   function update(i: number, k: keyof EcfSignerDraft, v: string) {
     setSigners((prev) => prev.map((s, idx) => (idx === i ? { ...s, [k]: v } : s)));
@@ -552,7 +632,7 @@ export function EcfSignersEditor({
           <div key={i} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-800 p-3 sm:grid-cols-6">
             <input className={inputClass} placeholder={t('sped.field.identNom', 'Nome')} value={s.identNom} onChange={(e) => update(i, 'identNom', e.target.value)} />
             <input className={inputClass} placeholder={t('sped.field.cpfCnpj', 'CPF/CNPJ')} value={s.identCpfCnpj} onChange={(e) => update(i, 'identCpfCnpj', e.target.value)} />
-            <input className={inputClass} placeholder={t('sped.field.qualifCode', 'Qualif. (900=contador)')} value={s.identQualif} onChange={(e) => update(i, 'identQualif', e.target.value)} />
+            <QualifAssinanteSelect layout="ECF" options={qualifOptions} loading={qualifLoading} placeholder={t('sped.field.qualifCode', 'Qualif. (900=contador)')} value={s.identQualif} onChange={(code) => update(i, 'identQualif', code)} />
             <input className={inputClass} placeholder={t('sped.field.indCrc', 'CRC')} value={s.indCrc ?? ''} onChange={(e) => update(i, 'indCrc', e.target.value)} />
             <input className={inputClass} placeholder={t('sped.field.email', 'E-mail')} value={s.email} onChange={(e) => update(i, 'email', e.target.value)} />
             <div className="flex gap-2">
