@@ -80,6 +80,7 @@ import {
   generateSpedEcf,
   generateSpedEcfReal,
   spedEcdRtfUpload,
+  getSpedQualifAssinante,
 } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
@@ -209,6 +210,9 @@ router.get('/data-exchange/jobs/:jobId/download', downloadDataExchangeArtifact);
 router.post('/data-exchange/jobs/:jobId/commit', commitDataExchangeImport);
 // Item 22 — dispensa da exigência de ECF retificadora que uma ECD substituta gravou no job.
 router.post('/data-exchange/jobs/:jobId/waive-ecf-rectification', waiveEcfRectification);
+
+// Tabela de Qualificação do Assinante (J930/0930) para o combobox da tela (FE-INCR-SPED-SIGNERS).
+router.get('/sped/qualif-assinante', getSpedQualifAssinante);
 
 // SPED Contábil (ECD) — generate the `.txt` file (download reuses the job route above).
 // `spedEcdRtfUpload` (multer) é NO-OP num corpo JSON puro (ECD original) — só ativa quando o
