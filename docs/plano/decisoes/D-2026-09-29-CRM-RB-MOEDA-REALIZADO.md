@@ -23,8 +23,9 @@ atualizado: "2026-09-29"
 | 4 | Achado: Won em USD/EUR vira título a receber em R$ nominal | **Registrar no GAP-MAP `[ABERTO]`** (Nível 3); o conserto vai para o ADR de moeda | *"Registrar; corrige no ADR"* |
 | 5 | F-RB8b, 8c, 8d, 8e, `avg`, fontes `leadPipelines`/`leadStages` | **Fechados pela sessão por regra** (um só caminho razoável). O dono foi avisado ("fecho por regra, se você não vetar") e não vetou | — |
 
-**O que a #1 autoriza:** redigir o ADR de moeda no Contas a Receber, com o monitor dentro dele. Nada de código. O nó do ADR
-só nasce em `nos/` depois de PRE-ADR ratificado (`docs/plano/README.md`).
+**Esta nota só documenta a direção.** A autorização do que for executado (inclusive redigir o ADR de moeda) é decidida em
+outra sessão; nada aqui autoriza trabalho novo (dono, 29/09: *"Aqui vamos apenas documentar, quem vai autorizar oque, é em
+outra sessão"*). O nó do ADR só nasce em `nos/` depois de PRE-ADR ratificado (`docs/plano/README.md`).
 
 ## Perguntas que o ADR de moeda herda (não decididas)
 

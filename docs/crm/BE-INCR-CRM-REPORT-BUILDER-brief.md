@@ -22,7 +22,9 @@
   texto da decisão: "Emenda do BRIEF, mais corrigir os nomes de campo (`leads.value` → `latestProposalAmount`, etc.) antes do
   'executa'". Evidência: `docs/accounting/DOSSIE-DECISOES-2026-09-29.md` §7 (D-11). **Cobertura:** F-RB8 + nomes de campo +
   registro da decisão ortogonal do valor de pipeline (pedido do dono no chat de 29/09). **Não** cobre: código, ratificar os
-  sub-forks F-RB8a..f, editar o GAP-MAP (achado novo do §7 só é **proposto**).
+  sub-forks F-RB8a..f (fechados depois, na 2ª rodada — §4.1), editar o GAP-MAP (feito só depois do OK do dono na 2ª
+  rodada — §7). **Esta sessão só documenta** (dono, 29/09: *"Aqui vamos apenas documentar, quem vai autorizar oque, é em
+  outra sessão"*): nenhuma linha deste BRIEF autoriza trabalho; autorização é dada em outra sessão.
 - **Insumos (lidos no arquivo — grau verificado salvo nota):**
   - `server/src/features/analytics/core/pipeline/Pipeline.ts` — `PipelineSpec` {source: presetTable|tableId, joins, filters(eq/ne/in/nin/gt/gte/lt/lte), dimensions(field|period), measures(sum/count/avg/formula) 1..n, sort, limit}.
   - `server/src/features/analytics/dynamic/processors/AggregatePipelineProcessor.ts` — executa o spec via `fetchByPresetTableKey`/`fetchByTableId`.
@@ -388,10 +390,20 @@ correção); aqui só fica listado.
   - **Oportunidade** (módulo opcional, `registry.ts:108-117`: "oportunidade ganha gera conta a receber") é o **negócio**:
     valor, moeda, probabilidade, previsão de fechamento, status Open/Won/Lost e `closedAt`. **Só ela gera dinheiro no
     razão**: o Won dispara o título a receber (`crmController.ts:94-135`) e fica imutável (`OpportunitiesModule.ts:116`).
-  - **O elo é fraco:** criar oportunidade a partir de um lead **não consome o lead** (`CrmPipelineService.ts:383-386`: "The
-    lead is NOT consumed/terminated"). O `amount` da oportunidade é digitado na criação, sem cópia do valor do lead
-    (`:454`). Os dois usam as mesmas etapas. Na prática, o mesmo negócio pode aparecer **duas vezes**: no lead (retrato da
-    proposta) e na oportunidade. O conselho CRM de 20/07 já tinha chamado isso de separação "nominal" (CA1).
+  - **O lead não "vira" oportunidade — ele pode gerar uma, e continua existindo.** Há duas ações distintas, e nenhuma
+    faz o que o nome "conversão" sugere por inteiro:
+    - `POST /api/crm/pipeline/convert-lead-to-opportunity` (`routes/crm.ts:21`) cria a oportunidade ligada ao lead e
+      **não consome o lead** (`CrmPipelineService.ts:383-386`: "The lead is NOT consumed/terminated — it stays as-is").
+      O lead segue com o próprio status e o retrato da proposta. O `amount` da oportunidade é digitado, sem cópia do
+      valor do lead (`:454`).
+    - `POST /api/crm/pipeline/convert-lead` (`routes/crm.ts:17`) é a única que **encerra** o lead (status `Converted` +
+      `convertedAt`). Ela cria **conta + contato**, **não** oportunidade (`CrmPipelineService.ts:106-113`).
+    - Uma oportunidade também existe **sem lead**: `crmOpportunities.leadId` é opcional (`OpportunitiesModule.ts:28-35`,
+      `required: false`).
+    - Os dois funis usam as mesmas etapas. Na prática, o mesmo negócio pode aparecer **duas vezes**: no lead (retrato da
+      proposta) e na oportunidade. O conselho CRM de 20/07 já tinha chamado isso de separação "nominal" (CA1). Se o
+      desenho pretendido é "o lead vira oportunidade" (encerra ao gerar), isso é decisão de produto em aberto, **não
+      registrada** em lugar nenhum que esta sessão tenha lido.
   - **Por isso os números divergem:** a visão geral soma o **retrato** nos leads, inclusive Won e Converted. O analytics
     soma os **negócios abertos** nas oportunidades. Não é arredondamento: são coisas diferentes.
 - **Status após a pergunta:** o dono pediu a diferença antes de escolher. A recomendação (a) continua: "pipeline" é negócio
@@ -488,6 +500,10 @@ nome inventado não aparece no `grep`); o comportamento do fim de semana e do "a
 - **GAP-MAP:** o achado "Won em USD/EUR vira título em R$ nominal" entrou no Nível 3 como `[ABERTO]`, com o conserto no ADR.
 - **§4.2** ganhou a resposta factual à pergunta do dono ("qual a real diferença entre leads e oportunidades?"). A decisão
   do valor de pipeline segue pendente.
+- **Só documentação** (dono, 29/09): o ADR de moeda e o monitor ficam registrados como direção; quem autoriza o quê é
+  decidido em outra sessão.
+- **§4.2** também passou a responder "o lead se torna oportunidade?": não. O lead gera uma oportunidade e continua
+  existindo; a única ação que encerra o lead cria conta + contato, não oportunidade; e a oportunidade não exige lead.
 - **Caso adversarial tentado contra "realizado = CRM à mão"** (a opção mais barata): contradiz a imutabilidade do Won
   decidida em 25/09 (`OpportunitiesModule.ts:116`, "edits would drift CRM × ledger") e cria uma segunda fonte do valor
   recebido. O dono escolheu o ADR, o que mantém uma fonte só.
