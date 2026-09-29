@@ -4,16 +4,16 @@ tipo: "fe"
 dominio: "fiscal"
 titulo: "Tela da emissão de DF-e"
 estado: "planned"
-estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09)"
+estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS"
 depende_de: ["[[X10b]]", "[[DFE-MANUAL]]"]
-autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'"
+autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')"
 ancora_sdd: "§M5 · §M0 fold 18/09"
-atualizado: "2026-09-27"
+atualizado: "2026-09-29"
 ---
 # FE-INCR-DFE — Tela da emissão de DF-e
 
-**Estado:** `planned` — Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09)  
-**Autorização:** dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'  
+**Estado:** `planned` — Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS  
+**Autorização:** dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')  
 **Depende de:** [[X10b]], [[DFE-MANUAL]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §M5 · §M0 fold 18/09

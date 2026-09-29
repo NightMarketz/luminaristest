@@ -3,20 +3,22 @@ id: "FE-INCR-SPED-SIGNERS"
 tipo: "fe"
 dominio: "contabil"
 titulo: "Combobox de qualificação de signatário (BRIEF C12 §6.3, rota nova)"
-estado: "inflight"
-estado_detalhe: "BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (item 4 absorvido pelo #427 `0eb0799d`; guarda por placeholder a manter — PLANO-PENDENCIAS-FE-DTO §B1). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6: PR aberto 28/09 (rota GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro via signerContactIds)"
+estado: "done"
+estado_detalhe: "✅ MERGEADO #436 `c793b4bb` (29/09): GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro (o #435 foi fechado e o conteúdo entrou no #436); residual = sign-off de browser (H2) · BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (item 4 absorvido pelo #427 `0eb0799d`; guarda por placeholder a manter — PLANO-PENDENCIAS-FE-DTO §B1). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6: PR aberto 28/09 (rota GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro via signerContactIds)"
 depende_de: ["[[C12]]"]
 autorizacao: "dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: \"Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui\" (lançamento da sessão de execução, passos 5–9) + \"Pode criar pr e comittar\""
 ancora_sdd: "§III.1 (fora da régua)"
-atualizado: "2026-09-28"
+prs: ["#436"]
+atualizado: "2026-09-29"
 ---
 # FE-INCR-SPED-SIGNERS — Combobox de qualificação de signatário (BRIEF C12 §6.3, rota nova)
 
-**Estado:** `inflight` — BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (item 4 absorvido pelo #427 `0eb0799d`; guarda por placeholder a manter — PLANO-PENDENCIAS-FE-DTO §B1). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6: PR aberto 28/09 (rota GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro via signerContactIds)  
+**Estado:** `done` — ✅ MERGEADO #436 `c793b4bb` (29/09): GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro (o #435 foi fechado e o conteúdo entrou no #436); residual = sign-off de browser (H2) · BE C12 em main desde #353. BRIEF em PLANO-ONDA1-FE-2026-09-28 §5 + delta do FE-FIX-SPED-ECD-SIGNERS (item 4 absorvido pelo #427 `0eb0799d`; guarda por placeholder a manter — PLANO-PENDENCIAS-FE-DTO §B1). Forks decididos 28/09 sob delegação: F-FE-SG-1 → a (GET /sped/qualif-assinante), SG-2 → (d) contador do cadastro via signerContactIds. Sequência mestre passo 6: PR aberto 28/09 (rota GET /sped/qualif-assinante + QualifAssinanteSelect + contador do cadastro via signerContactIds)  
 **Autorização:** dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução, passos 5–9) + "Pode criar pr e comittar"  
 **Depende de:** [[C12]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 (fora da régua)
+**PRs:** #436  
 
 ## Docs
 

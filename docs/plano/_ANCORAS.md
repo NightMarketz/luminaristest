@@ -4,6 +4,7 @@
 
 | Âncora | Notas |
 | --- | --- |
+| — | [[PACOTE-VALIDADE]] |
 | §18.2 | [[X10i]] |
 | §III.1 · §III.3 §1 | [[GET-DATA-EXCHANGE-JOBS]] |
 | §III.1 · §M5.1 (apontadores) | [[ENVIO-PEDIDO-CONTADOR]] |
@@ -43,7 +44,7 @@
 | §M5.1 Bloco A I1/I1b | [[I1]] · [[I1b]] |
 | §M5.1 Bloco A I8 | [[I8]] · [[I8b]] |
 | §M5.1 Bloco A LAC-B | [[LAC-B]] |
-| §M5.1 Bloco A ONB | [[I4]] · [[I5]] |
+| §M5.1 Bloco A ONB | [[I11]] · [[I2]] · [[I4]] · [[I5]] · [[I6]] · [[I7]] · [[W1]] · [[W2]] · [[W3]] · [[W4]] · [[W5]] · [[W6]] · [[W7]] |
 | §M5.1 Bloco A ONB · §18.2 | [[I3]] |
 | §M5.1 Bloco B · §III.1 passo 5 · §III.3 | [[C8]] |
 | §M7.1 | [[C7]] · [[CONT-01]] · [[CONT-02]] · [[CONT-03]] · [[CONT-04]] · [[CONT-05]] · [[CONT-06]] · [[CONT-07]] · [[CONT-08]] · [[CONT-09]] · [[CONT-10]] · [[CONT-11]] · [[CONT-12]] · [[CONT-13]] · [[CONT-14]] · [[CONT-15]] · [[F-M1]] · [[F-M2]] · [[F-M3]] · [[F-M4]] · [[F-M5]] · [[F-M6]] · [[F-Z0]] · [[FIN-01]] · [[FIN-02]] · [[FIN-03]] · [[FIN-04]] · [[FIN-05]] · [[FIN-06]] · [[FIN-07]] · [[FIN-08]] · [[FIN-09]] · [[FIN-10]] · [[FIN-11]] · [[FIN-12]] · [[FIN-13]] · [[FIS-01]] · [[FIS-02]] · [[FIS-03]] · [[FIS-04]] · [[FIS-05]] · [[FIS-06]] · [[FIS-08]] |
