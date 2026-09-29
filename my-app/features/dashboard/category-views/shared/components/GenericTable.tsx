@@ -234,7 +234,7 @@ export function GenericTable({
                                 let alignClass = 'text-left';
                                 let justifyClass = 'flex-start';
                                 
-                                if (col.id === 'actions' || fieldType === 'boolean' || fieldType === 'enum' || fieldType === 'relation') {
+                                if (col.id === 'actions' || fieldType === 'boolean' || fieldType === 'enum' || fieldType === 'select' || fieldType === 'relation') {
                                     alignClass = 'text-center';
                                     justifyClass = 'center';
                                 } else if (fieldType === 'number') {

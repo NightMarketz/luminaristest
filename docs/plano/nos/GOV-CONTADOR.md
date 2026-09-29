@@ -4,15 +4,16 @@ tipo: "subno"
 dominio: "plataforma"
 titulo: "Governança do contador responsável (CRC, política versionada, reabertura de período)"
 estado: "planned"
-estado_detalhe: "Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) · 28/09: BRIEF BE-INCR-CRC-CFC-VALIDACAO (conferir no CFC se o contador está ativo; API oficial aberta por CPF) — 4 forks pendentes, recomendação: depois do M2"
+estado_detalhe: "Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) · 28/09: BRIEF BE-INCR-CRC-CFC-VALIDACAO (conferir no CFC se o contador está ativo; API oficial aberta por CPF) — 4 forks pendentes, recomendação: depois do M2 · 29/09: forks ratificados — F-GOV-2 a · 3 a · 4 a · 5 a · 6 b · F-V1 c · V2 a · V3 b · V4 a; escopo inclui openPeriod (2º caminho de reabertura) e configurações/imobilizado na mesma policy. F-GOV-1 (CRC-SP) é do dono"
 depende_de: ["[[C11]]", "[[Z0-a]]"]
 ancora_sdd: "§III.1 (fora da régua — PROPOSTO)"
-atualizado: "2026-09-28"
+autorizacao: "dono, 2026-09-29: \"Ratificar recomendações\" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa')"
+atualizado: "2026-09-29"
 ---
 # GOV-CONTADOR — Governança do contador responsável (CRC, política versionada, reabertura de período)
 
-**Estado:** `planned` — Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) · 28/09: BRIEF BE-INCR-CRC-CFC-VALIDACAO (conferir no CFC se o contador está ativo; API oficial aberta por CPF) — 4 forks pendentes, recomendação: depois do M2  
-**Autorização:** **falta** para código. O PRE-ADR foi escrito sob a autorização do dono de 27/09 ("1. segue o caminho"), que cobre **o caminho do README** (PRE-ADR → ratificação → nó), não implementação  
+**Estado:** `planned` — Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 27/09** (`PRE-ADR-ACCOUNTANT-GOVERNANCE.md`, Proposed, 6 forks PENDENTES) com o inventário 5.1 medido: o razão já é imutável e tem proveniência, as 3 lacunas são de POLICY — não existe papel de contador (`Role {USER,ADMIN}`), qualquer autenticado reabre período (`canClosePeriod = !!actorUserId`) e assina a revisão. Vira nó de régua SE o dono ratificar; até lá segue subno. NÃO bloqueia o H1 (1ª passada com declarante fictício, G-2) · 28/09: BRIEF BE-INCR-CRC-CFC-VALIDACAO (conferir no CFC se o contador está ativo; API oficial aberta por CPF) — 4 forks pendentes, recomendação: depois do M2 · 29/09: forks ratificados — F-GOV-2 a · 3 a · 4 a · 5 a · 6 b · F-V1 c · V2 a · V3 b · V4 a; escopo inclui openPeriod (2º caminho de reabertura) e configurações/imobilizado na mesma policy. F-GOV-1 (CRC-SP) é do dono  
+**Autorização:** dono, 2026-09-29: "Ratificar recomendações" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa')  
 **Depende de:** [[C11]], [[Z0-a]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 (fora da régua — PROPOSTO)

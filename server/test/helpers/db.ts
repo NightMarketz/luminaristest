@@ -15,10 +15,13 @@ import prisma from '@/lib/prisma';
 const SERVER_DIR = path.resolve(__dirname, '../..'); // test/helpers -> server
 const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
 
-/** Drops any existing test DB and recreates the schema via `prisma db push`. */
+/** Empties any existing test DB and recreates the schema via `prisma db push`. */
 export function pushTestSchema(): void {
   for (const f of [DB_FILE, `${DB_FILE}-journal`]) {
-    if (fs.existsSync(f)) fs.rmSync(f);
+    // Truncar, não apagar: no Windows o SQLite abre sem FILE_SHARE_DELETE e o engine do Prisma de uma suíte anterior
+    // (mesmo processo jest, já desconectado) ainda segura o handle → unlink = EBUSY. Truncar é permitido e um arquivo
+    // vazio é um SQLite vazio; o `db push` abaixo recria o schema.
+    if (fs.existsSync(f)) fs.truncateSync(f, 0);
   }
   execSync('npx prisma db push --skip-generate --accept-data-loss', {
     cwd: SERVER_DIR,

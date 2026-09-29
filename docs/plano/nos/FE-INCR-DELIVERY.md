@@ -3,20 +3,22 @@ id: "FE-INCR-DELIVERY"
 tipo: "fe"
 dominio: "contabil"
 titulo: "Tela do pacote ao contador (consome C6b; files[].kind = ExportKind)"
-estado: "inflight"
-estado_detalhe: "BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8: PR-D1 (GET /accounting/delivery com items[]) e PR-D2 (DeliveryPanel: contadores + perfil, montar/confirmar pacote, histórico com retry) abertos 28/09"
+estado: "done"
+estado_detalhe: "✅ MERGEADO #436 `c793b4bb` (29/09): PR-D1 (GET /accounting/delivery) + PR-D2 (DeliveryPanel); residual = sign-off de browser (H2) · BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8: PR-D1 (GET /accounting/delivery com items[]) e PR-D2 (DeliveryPanel: contadores + perfil, montar/confirmar pacote, histórico com retry) abertos 28/09"
 depende_de: ["[[C6b]]"]
 autorizacao: "dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: \"Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui\" (lançamento da sessão de execução, passos 5–9) + \"Pode criar pr e comittar\""
 ancora_sdd: "§III.1 (fora da régua)"
-atualizado: "2026-09-28"
+prs: ["#436"]
+atualizado: "2026-09-29"
 ---
 # FE-INCR-DELIVERY — Tela do pacote ao contador (consome C6b; files[].kind = ExportKind)
 
-**Estado:** `inflight` — BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8: PR-D1 (GET /accounting/delivery com items[]) e PR-D2 (DeliveryPanel: contadores + perfil, montar/confirmar pacote, histórico com retry) abertos 28/09  
+**Estado:** `done` — ✅ MERGEADO #436 `c793b4bb` (29/09): PR-D1 (GET /accounting/delivery) + PR-D2 (DeliveryPanel); residual = sign-off de browser (H2) · BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-DL-1..4 → a; F-FE-DL-5 → a (PR-D1 BE GET /delivery → PR-D2 FE). Sequência mestre passo 8: PR-D1 (GET /accounting/delivery com items[]) e PR-D2 (DeliveryPanel: contadores + perfil, montar/confirmar pacote, histórico com retry) abertos 28/09  
 **Autorização:** dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução, passos 5–9) + "Pode criar pr e comittar"  
 **Depende de:** [[C6b]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 (fora da régua)
+**PRs:** #436  
 
 ## Docs
 
