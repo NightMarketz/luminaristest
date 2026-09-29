@@ -130,7 +130,7 @@ indCrc: crcNumberField.optional(),          // F-4b (a): '' continua 400 (regra 
 | 4 (F-4) | ✅ `crcNumberFieldFor('0930')` no `SignerSchema` da ECF (cobre o DTO Real); fixture de integração `1DF123` → `DF-123456/O-1` | `SpedEcfDto.test.ts` "IND_CRC do 0930 passa pela máscara CFC…" |
 | 5 | ✅ | `AccountingReviewDto.test.ts` "transferido é aceito…" |
 | 6 | ✅ textos + `public/openapi.json` regenerado | — |
-| §7 FE | ✅ `toEcfSignerPayload` (por signatário, par do `toEcdSignerPayload` do #427) nas duas telas da ECF | `SpedGenerationPanel.test.tsx` "toEcfSignerPayload (0930)" + submit da ECF Presumido e da ECF Real |
+| §7 FE | ✅ omissão do `indCrc` vazio nas duas telas da ECF — o helper que ficou é o `toEcfSignerPayload` tipado do #428 (a cópia do #426 saiu no merge `4d097bb7`) | `SpedGenerationPanel.test.tsx` "toEcfSignerPayload (0930)" + submit da ECF Presumido e da ECF Real |
 | §7 runbook | ✅ aviso `REGRA_ADVERTENCIA_CONTADOR`; ECF: tabela de 17 códigos, CPF/CNPJ, `indCrc` | — |
 | §7 CFC | 📝 planejado em `BE-INCR-CRC-CFC-VALIDACAO-brief.md` | — |
 
