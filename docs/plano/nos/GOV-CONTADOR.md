@@ -22,6 +22,7 @@ atualizado: "2026-09-28"
 - [`docs/adr/PRE-ADR-ACCOUNTANT-GOVERNANCE.md`](../../adr/PRE-ADR-ACCOUNTANT-GOVERNANCE.md) — **Proposed 27/09**: inventário 5.1 com `arquivo:linha` + proposta + 6 forks PENDENTES (F-GOV-1..6)
 - [`docs/accounting/PLANO-POS-CONTADOR-2026-09-23.md`](../../accounting/PLANO-POS-CONTADOR-2026-09-23.md) — Fase 5 (passos 5.1–5.2)
 - [`BE-INCR-CRC-CFC-VALIDACAO-brief.md`](../../accounting/BE-INCR-CRC-CFC-VALIDACAO-brief.md) — conferir no CFC se o contador está ativo (28/09; F-V1..F-V4 pendentes; recomendação: depois do [[M2]]). Relacionado: [[CRC-CFC]] (máscara do número), [[D-2026-09-28-CRC-CFC-SEED-UNIDADE-E-ORDEM]]
+- [`BE-INCR-ACCOUNTANT-GOVERNANCE-brief.md`](../../accounting/BE-INCR-ACCOUNTANT-GOVERNANCE-brief.md) — **BRIEF 29/09** (passo 5.2, sob os forks ratificados em 29/09): `AccountantAssignment` com aceite e vigência, os 2 caminhos de reabertura (`openPeriod` + `reopenPeriod`) e sign-off/reject com gate dentro da tx, CAS no `setStatus`, errata do PRE-ADR (`:34` = `seedYear`; máscara CRC). 4 forks novos PENDENTES (F-GOV-7..10). Código exige "executa"
 
 ## Cadeia (do plano)
 

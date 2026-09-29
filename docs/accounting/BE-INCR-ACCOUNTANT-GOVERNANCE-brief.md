@@ -1,0 +1,406 @@
+# BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável: atribuição por escopo, reabertura e assinatura (PLANO, não executar)
+
+## 0. Cabeçalho
+
+- **Item:** nó [[GOV-CONTADOR]] (`docs/plano/nos/GOV-CONTADOR.md`), passo **5.2** da Fase 5 do
+  [`PLANO-POS-CONTADOR-2026-09-23`](PLANO-POS-CONTADOR-2026-09-23.md) (linhas 119–130).
+- **Autorização:** dono, entrevista de 29/09/2026, decisão **15** de
+  `docs/plano/decisoes/D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE.md`, nas palavras *"Ratificar recomendações"*:
+  *"F-GOV-2 a · 3 a · 4 a · 5 a · 6 b · F-V1 c · V2 a · V3 b · V4 a. Entram no escopo as 2 lacunas novas
+  (`openPeriod` como 2º caminho de reabertura; configurações/imobilizado na mesma policy). **Planejar autorizado.**
+  F-GOV-1 (consulta ao CRC-SP) fica com o dono."* Evidência no dossiê
+  `docs/accounting/DOSSIE-DECISOES-2026-09-29.md` §8 (D-12). Os dois arquivos estão no PR #440, ainda aberto
+  quando este BRIEF foi escrito. Por isso foram lidos de `origin/claude/docs-decisoes-2026-09-29` (`b5398c87`).
+  **Autoriza o BRIEF, não o código.** Código exige "executa" (ORCH-006).
+- **A autorização cobre exatamente este item?** Sim, com dois recortes que ela mesma fez. O passo 5.2 lista cinco
+  peças. **Três entram:** papel com CRC, reabertura só pelo contador e login do contador. **Uma fica fora:** a
+  política versionada, que vai para incremento próprio (F-GOV-6 b). **Uma já está atendida por construção:** o
+  bloqueio do operador do fornecedor (§2, linha I-9). A consulta ao CFC também fica fora (F-V1 c). Nada aqui
+  cobre mais do que foi autorizado.
+- **Base:** `origin/main` `9dd690b3`. Todo `arquivo:linha` abaixo foi lido nesse commit.
+- **Intenção (T1).** O objetivo não é ter um "papel de contador". É fazer a escrituração ter **a quem imputar**
+  (PRE-ADR §1) sem travar o salão que lança todo dia (F-GOV-3 a) e sem quebrar quem já usa (F-GOV-4 a).
+- **Risco principal.** A assinatura dentro do app prova **login + aceite**, não identidade. Nada no sistema
+  prova que quem entrou como contador é a pessoa do CRC. A assinatura legal continua sendo o e-CPF no PVA. Em
+  segundo lugar: o dono pode encerrar a atribuição e reabrir sozinho (F-GOV-10). A trava deixa rastro, mas não é
+  absoluta.
+
+## 1. Forks já decididos (29/09) — o que cada um fixa no desenho
+
+| Fork | Decisão | O que fixa aqui |
+|---|---|---|
+| F-GOV-2 | (a) `AccountantAssignment` por escopo, com vigência | Model Prisma first-class por `userId+unitId`. `enum Role` **não muda** |
+| F-GOV-3 | (a) o contador tranca reabertura + assinatura da revisão | `canReopenPeriod` e `canSignOffReview` mudam. `canClosePeriod` e a família dele **não mudam** |
+| F-GOV-4 | (a) empresa sem contador não trava | Sem atribuição `ACTIVE`, o comportamento é idêntico ao de hoje |
+| F-GOV-5 | (a) CRC só formato | Reusa o `parseCrcNumber` canônico. Nenhuma chamada externa |
+| F-GOV-6 | (b) política versionada em incremento próprio, depois | Fora deste BRIEF (§6) |
+| F-V1 | (c) consulta ao CFC só depois do M2 | Fora deste BRIEF. O desenho não pode impedir que ela entre depois (§6) |
+| F-V2 · F-V3 · F-V4 | (a) conferir no cadastro do contato · (b) inativo gera aviso, não 400 · (a) base legal no RoPA | Valem para o `BE-INCR-CRC-CFC-VALIDACAO` quando o F-V1 virar (a). Aqui só registram a compatibilidade: o status do CFC mora no **contato**, e a atribuição aponta para o contato |
+| F-GOV-1 | consulta ao CRC-SP (software × serviço contábil) | **Do dono, fora do código.** Só registro (§5) |
+
+## 2. Inventário conferido (corrige o PRE-ADR)
+
+Grau: **V** = lido no código em `9dd690b3` · **I** = inferido do código lido (só um teste prova).
+
+| # | Fato | Evidência | Grau |
+|---|---|---|---|
+| I-1 | **Errata do PRE-ADR §2:** `PeriodService.ts:34` é o gate do `seedYear`. A reabertura tem **dois** caminhos: `reopenPeriod` (`:137-171`, gate `:142`) e `openPeriod` (`:45-70`, gate `:46`), que aceita `SOFT_CLOSED` como origem (`:53`) e leva a `OPEN`. Os dois usam `canClosePeriod` | `server/src/features/accounting/services/PeriodService.ts` | V |
+| I-2 | `canClosePeriod = !!scope.actorUserId` | `policies/AccountingPolicy.ts:23-25` | V |
+| I-3 | A família de `canClosePeriod` é **maior** que a citada na decisão 15. Ela lista configurações (`:125-127`) e imobilizado (`:152-154`). Há um **3º dependente**: `canManageFiscalProfile` (`:138-140`), que por sua vez alimenta `canManageServiceFiscalProfile` (`:143-145`). Quem consome: `AccountingScopeSettingsService.ts:59`; `FiscalProfileService.ts:145`; `CompanyFiscalProfileService.ts:315`; `CompanySignerService.ts:108`; `ServiceFiscalProfileService.ts:53,76`; `FixedAssetService.ts` (6 pontos); `FixedAssetClassService.ts` (3); `DepreciationService.ts` (3); `DepreciationRateService.ts` (2) | grep `canManage…` em `server/src` | V |
+| I-4 | `canSignOffReview → canManage` (`:169-171`, `:10-12`). O `reject` usa o **mesmo** método (`AccountingReviewService.ts:403`). No `signOff`, o gate da policy fica **fora** da tx (`:354`). A tx (`:363`) relê só os achados | `AccountingReviewService.ts:352-422` | V |
+| I-5 | O `signOff` grava `reviewerName`/`reviewerCrc` **digitados** no DTO (`AccountingReviewDto.ts:135-152`). O CRC passa pela máscara, mas nada o liga a um responsável | idem | V |
+| I-6 | `setStatus` **não é CAS**: faz `tx.accountingPeriod.update` sem condição de status (`AccountingPeriodRepository.ts:67-74`). O status é checado **fora** da tx (`PeriodService.ts:149-158`). Numa corrida, um `hardClose` pode confirmar entre a checagem e a escrita, e o `reopen` então leva a `OPEN` um período `HARD_CLOSED` ("terminal", `:19`). Os 4 chamadores já passam `fromStatus` (`:60,92,124,161`) | leitura | mecanismo V; corrida I |
+| I-7 | `resolveAccountingScope` é síncrono e sempre devolve `owner === actor` (`scope/AccountingScope.ts:31-44`). Tem **214** chamadas fora de teste. Hoje o contador não tem como agir nos livros do cliente | grep | V |
+| I-8 | `enum Role { USER ADMIN }` | `prisma/schema.prisma:145-149` | V |
+| I-9 | **O bloqueio do operador do fornecedor já vale por construção.** Nenhum ponto do módulo contábil usa `Role.ADMIN`. As ocorrências estão só em `dashboardController`, `dynamicTablesController`, `attachments` e `dashboardLayout`. Como o escopo é sempre `owner === actor` (I-7), ninguém de fora do tenant chega aos livros pela API | grep `Role.ADMIN` | V |
+| I-10 | **Errata do PRE-ADR §3.1 e F-GOV-5:** o formato "`NNNNNN/UF`" está velho. O canônico é `parseCrcNumber` (`models/AccountingContact.model.ts:82`, `CRC_NUMBER_RE` `:59`), com máscara `UF-NNNNNN/O-D` e sufixo ` T-UF`/` S-UF` (#305/#426) | leitura | V |
+| I-11 | O contato do contador é **editável** (`AccountingContactService.ts:115`, `PATCH /contacts/:id`). Por isso o CRC de uma atribuição precisa de snapshot para guardar histórico | leitura | V |
+| I-12 | Unique com NULL no SQLite já tem precedente: `AccountingReview @@unique([ecdJobId, ecfJobId])` (`schema.prisma:1869,1892`). Não há índice parcial em nenhuma migração, e o Prisma 6.16 não o expressa | leitura + grep | V |
+| I-13 | O `ForbiddenError` não aceita código (`lib/errors.ts:34`). O padrão para 403/409 nomeado é uma classe própria (`AccountingPeriodNotOpenError`, `:137`) | leitura | V |
+| I-14 | Os chamadores internos de `openPeriod` só abrem `FUTURE` (`lib/factory.ts:318`, `jobs/seedAccountingFixtureCli.ts:296`). Não são afetados pelo gate de reabertura | leitura | V |
+
+## 3. Checklist numerado (cada item testável sozinho)
+
+> Padrão de camada é requisito: Route → Controller → Service → Repository → Prisma, mais Policy, Factory, DTO Zod
+> `.strict()` e soft-delete (Contrato §2/§3). Todo gate de invariante mutável roda em **dois níveis**: preflight
+> fora da tx (erro rápido) e re-checagem autoritativa **dentro** do `runTransaction`, com `tx` propagado ao repo
+> (memórias `authoritative-gate-inside-tx`, `tx-nao-propagado-ao-repo`).
+
+1. **Status e constantes.** `ASSIGNMENT_STATUSES = ['PENDING','ACTIVE','ENDED'] as const` em
+   `models/ledgerStatus.ts` (padrão `REVIEW_STATUSES` `:25`). Os eventTypes vão em
+   `models/AccountantAssignment.model.ts`. **Direto:** três estados bastam. Quem encerrou e por quê ficam em
+   `endedById` e `endReason`, sem estados `DECLINED`/`CANCELLED` separados.
+2. **Migração aditiva `accountant_assignments`** (§4.3). A unicidade "no máximo 1 `ACTIVE` e 1 `PENDING` por
+   escopo" usa colunas-slot anuláveis em `@@unique` (precedente I-12), não índice parcial. O slot volta a `NULL`
+   em toda saída de estado (memória `unique-de-idempotencia-x-soft-delete`). A migração abre com o prólogo
+   `IF NOT EXISTS` (memória `migracao-sqlite-nao-e-transacional`). `resetDb()` (`test/helpers/db.ts`) apaga a
+   tabela nova **antes** de `accountingContact` (`:123`, por causa da FK Restrict).
+3. **Repositório** `IAccountantAssignmentRepository` + `AccountantAssignmentRepository` (§4.2). Toda leitura
+   filtra `deletedAt: null`. Toda escrita recebe `tx`. `transition` é **CAS**: `updateMany` com
+   `where status = from`, e contagem 0 vira `ConflictError('ASSIGNMENT_STATUS_CHANGED')`.
+4. **Policy pura** (§4.2). Cinco métodos novos ou alterados, nenhum lê o banco:
+   - `canManageAccountantAssignment(scope)`: `!!actor && owner === actor`, nunca em escopo delegado.
+   - `canRespondToAssignment(actorUserId, a)`: `actor === a.accountantUserId`.
+   - `canEndAssignment(actorUserId, a)`: `actor === a.userId || actor === a.accountantUserId`. O alcance para o
+     dono depende do F-GOV-10.
+   - `canReopenPeriod(scope, active)`: com `active`, exige `actor === active.accountantUserId` e
+     `owner === active.ownerUserId`. Sem `active`, exige **`owner === actor`** e cai em `canClosePeriod(scope)`,
+     como hoje (F-GOV-4 a).
+   - `canSignOffReview(scope, active)`: mesma regra, com fallback em `canManage(scope)`, como hoje.
+   - **Por que o fallback exige `owner === actor`:** o resolver (item 5) roda fora da tx. Se a atribuição for
+     encerrada entre o resolver e a tx, a releitura dentro da tx devolve `null`. Com um fallback só em
+     `canClosePeriod` (`!!actor`), o **ex-contador**, ainda com escopo delegado, passaria. O fallback do
+     F-GOV-4 (a) vale só para quem age no próprio livro.
+   **O corpo de `canClosePeriod` e da família I-3 não muda** (F-GOV-3 a). O item 17a fixa isso em teste.
+5. **Resolver de escopo delegado.** Novo método `AccountantAssignmentService.resolveGovernanceScope(user, unitId)`,
+   assíncrono. Se existe atribuição `ACTIVE` com `accountantUserId = user.userId` e aquele `unitId`, devolve
+   `{ ownerUserId: a.userId, actorUserId: user.userId, … }`. Senão devolve exatamente
+   `resolveAccountingScope(user, unitId)`. **`resolveAccountingScope` não muda** (I-7: 214 chamadas). Só os
+   handlers do alcance do F-GOV-7 usam o resolver novo. Na recomendação (a) são 7:
+   `listPeriods` (`accountingController.ts:530`), `openPeriod` (`:588`), `reopenPeriod` (`:676`), `listReviews`
+   (`accountingReviewController.ts:40`), `getReview` (`:55`), `signOffReview` (`:134`) e `rejectReview` (`:149`).
+6. **Convite (dono)** `POST /api/accounting/accountant-assignments`. Passos:
+   1. Aplica `canManageAccountantAssignment`.
+   2. Exige o contato no escopo (`requireContact`); senão 404.
+   3. Busca o usuário do contador por `accountantEmail`. Se não existir, 400 `ACCOUNTANT_USER_NOT_FOUND`
+      (depende do F-GOV-8).
+   4. Recusa se o contador for o próprio dono: 400 `SELF_ASSIGNMENT`.
+   5. Grava o snapshot `crcNumber`/`crcUf` do contato, que já vem normalizado pelo DTO do contato.
+   6. **Dentro da tx:** se já existe `PENDING` no escopo, 409 `ASSIGNMENT_PENDING_EXISTS`. O slot unique é a
+      rede, não a mensagem.
+   7. Emite a auditoria `accountant_assignment.invited`.
+7. **Aceite (contador)** `POST /api/accounting/accountant-assignments/:id/accept`. Passos:
+   1. Busca por `id`. Se o ator não for o `accountantUserId`, responde 404, para não vazar que a atribuição
+      existe.
+   2. **Na mesma tx, nesta ordem:**
+      1. Se há `ACTIVE` no escopo, faz CAS `ACTIVE → ENDED` com `activeUntil = now`,
+         `endReason = 'SUPERSEDED'`, `endedById = ator`.
+      2. Faz CAS `PENDING → ACTIVE` com `activeFrom = now`.
+      A troca de contador acontece sem janela destravada.
+   3. Emite as auditorias `accepted` (e `ended` do substituído). O serviço monta o `AccountingScope` a partir da
+      linha: `ownerUserId = a.userId`, `unitId = a.unitId`, `actorUserId = contador`. O `AuditService.append`
+      grava `scopeUserId = scope.ownerUserId` (`AuditService.ts:115,134`), então o evento cai na cadeia do dono.
+8. **Encerramento** `POST /api/accounting/accountant-assignments/:id/end`. Passos:
+   1. Recebe `reason` obrigatório.
+   2. Aplica `canEndAssignment`. Se o ator não for nenhuma das duas partes, 404.
+   3. Faz CAS `PENDING|ACTIVE → ENDED`. `activeUntil = now` só se a origem era `ACTIVE`.
+   4. Emite `accountant_assignment.ended` com `endedBy: 'OWNER' | 'ACCOUNTANT'`, com o escopo montado a partir
+      da linha, como no item 7.
+9. **Listagens.** O dono usa `GET /api/accounting/accountant-assignments?unitId=` (histórico do escopo, do mais
+   novo ao mais velho). O contador usa `GET /api/accounting/accountant-assignments/mine`, que devolve
+   `PENDING`+`ACTIVE` com `ownerEmail`, para ele saber em que `unitId` agir. A rota `/mine` é registrada antes de
+   qualquer `/:id`.
+10. **Reabertura: os dois caminhos passam pelo mesmo gate** (lacuna 1 da decisão 15). O `PeriodService` recebe
+    o repo de atribuição.
+    - `reopenPeriod` e `openPeriod` **quando `fromStatus === 'SOFT_CLOSED'`**: preflight
+      `canReopenPeriod(scope, active)`, depois releitura de `active` **com `tx`** dentro do `runTransaction`,
+      antes do `setStatus`. Se falhar, `AccountantRequiredError` (403 `ACCOUNTANT_REQUIRED`).
+    - `openPeriod` a partir de `FUTURE` continua em `canClosePeriod` (I-14). **Efeito declarado do resolver
+      delegado:** o contador também consegue abrir um período `FUTURE` no livro do cliente, porque
+      `canClosePeriod` é `!!actor`. Abrir `FUTURE` é rotina, então não há dano.
+    - A auditoria de `period.reopened` e `period.opened` ganha `assignmentId`, quando há atribuição.
+    - **Direto:** o gate vai dentro do `openPeriod`, sem proibir `SOFT_CLOSED` ali. Proibir mudaria o contrato
+      da rota `/open` para quem a chama hoje. O mesmo gate nos dois caminhos fecha a lacuna sem mudar a API.
+11. **`setStatus` passa a ser CAS** (I-6). Faz `updateMany` com `where status = fromStatus`; contagem 0 vira
+    `ConflictError('PERIOD_STATUS_CHANGED')`; depois relê a linha. É o segundo invariante mutável do mesmo gate
+    (o status do período). **Efeito colateral declarado:** vale para as 4 transições, porque todas já passam
+    `fromStatus`. É menos código do que restringir o CAS só à reabertura.
+12. **Assinatura e rejeição da revisão** (`AccountingReviewService`). O serviço recebe o repo de atribuição.
+    - `signOff` e `reject`: preflight `canSignOffReview(scope, active)`, depois re-checagem **dentro** da tx que
+      já existe (`:363`, ao lado da releitura de achados) e da tx do `reject`.
+    - Se houver `active`, aplica a regra do F-GOV-9.
+    - A auditoria de `review.signed_off` e `review.rejected` ganha `assignmentId`.
+13. **Erro nomeado** `AccountantRequiredError extends AppError` (403, `ACCOUNTANT_REQUIRED`) em `lib/errors.ts`,
+    no padrão do `:137`. A mensagem diz que existe contador responsável ativo e que só ele reabre ou assina.
+14. **Controller, rotas e docs.** Criar `controllers/accountantAssignmentController.ts` com 5 handlers.
+    Registrar em `routes/accounting.ts` e em `routes/docs.paths.ts` (4 paths novos). Subir o `BASELINE` do
+    `openapi-paths.test.ts:97` em +4 e regenerar o `public/openapi.json` commitado (memória
+    `openapi-wiring-static-artifact`). Os 7 handlers do item 5 passam a `await` o resolver novo.
+15. **Factory.** Adicionar `getAccountantAssignmentService()`. Injetar o repo novo no `PeriodService` e no
+    `AccountingReviewService`. `buildActivationPeriodPort` (`factory.ts:318`) só muda na assinatura do
+    construtor.
+16. **Auditoria.** Entra na allowlist do `auditCanonical.ts` **na mesma mudança**:
+    - `accountant_assignment.invited`: `['assignmentId','accountingContactId','crcNumber','crcUf']`, espelhando
+      `contact.registered` (`:173`), que já expõe o CRC.
+    - `accountant_assignment.accepted`: `['assignmentId','supersededAssignmentId']`.
+    - `accountant_assignment.ended`: `['assignmentId','fromStatus','endedBy','reason']`. `reason` entra também em
+      `MASKABLE_FREE_TEXT_KEYS` (`auditFreeTextMask.ts:48`).
+    - `'assignmentId'` entra em `period.opened`, `period.reopened`, `review.signed_off` e `review.rejected`.
+    - **Nunca** vão para o payload: e-mail, nome ou CPF (D5).
+    - Precisa de prova (I): chave nova na allowlist não muda o hash de evento antigo, porque o evento antigo não
+      tem a chave. O item 17i verifica.
+17. **Testes** (unit com dublês; integração com `npm run test:integration`, `--runInBand`):
+    a. **Matriz da policy:** 3 atores (dono sem atribuição; dono com atribuição ativa; contador delegado) × 7
+       ações (reabrir, assinar, rejeitar, fechar, configurações, perfil fiscal, imobilizado). As 4 últimas ficam
+       **iguais a hoje** para o dono com atribuição ativa. Isso trava a família I-3.
+    b. **Reabertura, cada caminho com a própria mordida:** `reopenPeriod` **e** `openPeriod(SOFT_CLOSED)`, cada
+       um com 3 casos: dono sem atribuição dá 200 (F-GOV-4 a); dono com atribuição dá 403
+       `ACCOUNTANT_REQUIRED`; contador delegado dá 200. Apagar o gate de **qualquer um** dos caminhos tem de
+       derrubar um teste (memória `authoritative-gate-inside-tx`: o gate do update do #184 sobreviveu à suíte).
+       `openPeriod(FUTURE)` não é afetado.
+    c. **Gate dentro da tx, nas duas direções:**
+       - Um dublê do repo devolve `null` no preflight e `ACTIVE` na releitura com `tx`. O dono recebe 403.
+       - Um dublê devolve `ACTIVE` no preflight e `null` na releitura (a atribuição foi encerrada no meio). O
+         contador, com escopo delegado, recebe 403. Este caso mata o fallback sem `owner === actor` (item 4).
+       Testes determinísticos, não de concorrência (memória `windows-serializa-sqlite-ci-linux-nao`).
+    d. **CAS do período:** o status muda entre a leitura e a escrita e o resultado é 409
+       `PERIOD_STATUS_CHANGED`. Um `HARD_CLOSED` nunca volta a `OPEN`.
+    e. **Revisão:** a mesma matriz do (b) para `signOff` e `reject`, mais o re-check dentro da tx e o caso do
+       F-GOV-9.
+    f. **Atribuição:**
+       - Convite: contato de outro escopo dá 404; e-mail inexistente dá 400; autoatribuição dá 400; `PENDING`
+         duplicado dá 409.
+       - Aceite: ator que não é o contador dá 404; substituição encerra a anterior na mesma tx.
+       - Encerramento: dono e contador conseguem; terceiro dá 404; `reason` vazio dá 400.
+       - Integração: o slot unique segura 2 `ACTIVE` mesmo sem o check do serviço.
+    g. **Resolver:** sem atribuição, o resultado é igual a `resolveAccountingScope`; `PENDING` e `ENDED` não
+       delegam; `ACTIVE` delega só no `unitId` dela.
+    h. **Integração ponta a ponta (supertest):** dono convida, contador aceita, dono tenta reabrir e recebe 403,
+       contador reabre e recebe 200. A cadeia de auditoria tem `actor = contador` e `scopeUserId = dono`. Um
+       usuário `ADMIN` sem atribuição recebe o próprio silo (I-9: prova o "bloqueio do operador do
+       fornecedor").
+    i. **Contratos:** teste de allowlist do `auditCanonical`, teste de contrato do `auditFreeTextMask` e
+       verificação de uma cadeia gravada **antes** da mudança da allowlist.
+18. **Gates do diff:**
+    - `cd server && npx tsc --noEmit`, limpo. Em `services/__tests__/`, 15 arquivos citam `IAccountingPolicy`.
+      Dois são literais tipados (`: IAccountingPolicy = {`) e quebram o tsc sem os métodos novos. Os que usam
+      `as unknown as` não quebram o tsc, mas os que exercitam reabertura ou assinatura precisam dos métodos
+      para o teste ter sentido.
+    - `dtoShapeSnapshot`: `UPDATE_DTO_SNAPSHOT=1` e commitar o diff.
+    - `openapi-paths` e `route-spec-wiring`, verdes.
+    - Suíte unit + integração, verdes.
+
+## 4. Contratos (esboço materializável)
+
+### 4.1 DTOs (`dtos/AccountantAssignmentDto.ts`)
+
+```ts
+export const InviteAccountantSchema = z
+  .object({
+    unitId: z.string().min(1),
+    accountingContactId: z.string().min(1),
+    accountantEmail: z.string().trim().toLowerCase().email().max(254),
+  })
+  .strict();
+
+export const ListAccountantAssignmentsQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
+
+export const AcceptAccountantAssignmentSchema = z.object({}).strict();
+
+export const EndAccountantAssignmentSchema = z
+  .object({ reason: z.string().trim().min(1).max(500) })
+  .strict();
+
+// Resposta (datas ISO; instantes, não date-only — ver 4.3)
+export interface AccountantAssignmentView {
+  id: string;
+  unitId: string;
+  status: 'PENDING' | 'ACTIVE' | 'ENDED';
+  accountingContactId: string;
+  accountantUserId: string;
+  crcNumber: string; // snapshot normalizado (parseCrcNumber)
+  crcUf: string;
+  activeFrom: string | null;
+  activeUntil: string | null;
+  endReason: string | null;
+  createdAt: string;
+}
+export interface MyAccountantAssignmentView extends AccountantAssignmentView {
+  ownerEmail: string;
+}
+```
+
+O `SignOffReviewSchema` **não muda de forma** (`AccountingReviewDto.ts:135-152`). O F-GOV-9 muda só a regra do
+serviço.
+
+### 4.2 Policy, repositório e resolver
+
+```ts
+// policies/IAccountingPolicy.ts (+)
+export interface ActiveAccountant {
+  id: string;
+  ownerUserId: string;       // = AccountantAssignment.userId
+  unitId: string;
+  accountantUserId: string;
+  crcNumber: string;         // snapshot normalizado
+}
+canManageAccountantAssignment(scope: AccountingScope): boolean;
+canRespondToAssignment(actorUserId: string, a: { accountantUserId: string }): boolean;
+canEndAssignment(actorUserId: string, a: { userId: string; accountantUserId: string }): boolean;
+// active ? (actor === active.accountantUserId && owner === active.ownerUserId)
+//        : (owner === actor && canClosePeriod(scope))            — item 4
+canReopenPeriod(scope: AccountingScope, active: ActiveAccountant | null): boolean;
+// idem, fallback owner === actor && canManage(scope)
+canSignOffReview(scope: AccountingScope, active: ActiveAccountant | null): boolean; // assinatura muda
+
+// repositories/IAccountantAssignmentRepository.ts
+export interface IAccountantAssignmentRepository {
+  findActive(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<ActiveAccountant | null>;
+  findPending(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<AccountantAssignment | null>;
+  findActiveForAccountant(accountantUserId: string, unitId: string): Promise<ActiveAccountant | null>;
+  findById(id: string, tx?: Prisma.TransactionClient): Promise<AccountantAssignment | null>;
+  listByScope(scope: AccountingScope): Promise<AccountantAssignment[]>;
+  listLiveForAccountant(accountantUserId: string): Promise<Array<AccountantAssignment & { ownerEmail: string }>>;
+  create(data: NewAssignment, tx: Prisma.TransactionClient): Promise<AccountantAssignment>;
+  /** CAS: where { id, status: from } — 0 linhas → ConflictError('ASSIGNMENT_STATUS_CHANGED'). */
+  transition(id: string, from: AssignmentStatus, to: AssignmentStatus,
+             patch: TransitionPatch, tx: Prisma.TransactionClient): Promise<AccountantAssignment>;
+  runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
+}
+
+// services/AccountantAssignmentService.ts
+resolveGovernanceScope(user: { userId: string }, unitId: string): Promise<AccountingScope>;
+invite(scope, dto: InviteAccountantInput): Promise<AccountantAssignment>;
+accept(actorUserId: string, id: string): Promise<AccountantAssignment>;
+end(actorUserId: string, id: string, dto: EndAccountantAssignmentInput): Promise<AccountantAssignment>;
+listByScope(scope): Promise<AccountantAssignment[]>;
+listMine(actorUserId: string): Promise<MyAccountantAssignmentView[]>;
+```
+
+### 4.3 Prisma (migração aditiva)
+
+```prisma
+model AccountantAssignment {
+  id                  String            @id @default(cuid())
+  userId              String            // dono do escopo (ownerUserId)
+  user                User              @relation("AssignmentOwner", fields: [userId], references: [id], onDelete: Restrict)
+  unitId              String
+  accountantUserId    String            // login do contador
+  accountant          User              @relation("AssignmentAccountant", fields: [accountantUserId], references: [id], onDelete: Restrict)
+  accountingContactId String            // fonte do CRC e do J930 (signatário 900)
+  accountingContact   AccountingContact @relation(fields: [accountingContactId], references: [id], onDelete: Restrict)
+  crcNumber           String            // snapshot na criação (I-11) — imutável na linha
+  crcUf               String            // snapshot
+  status              String            // PENDING | ACTIVE | ENDED (ASSIGNMENT_STATUSES)
+  activeSlot          String?           // 'ACTIVE' enquanto ACTIVE, senão NULL — unique abaixo
+  pendingSlot         String?           // 'PENDING' enquanto PENDING, senão NULL
+  activeFrom          DateTime?         // instante do aceite
+  activeUntil         DateTime?         // instante do encerramento
+  createdById         String
+  endedById           String?
+  endReason           String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletedAt           DateTime?         // contrato §2; nenhuma rota apaga — histórico encerra, não some
+
+  @@unique([userId, unitId, activeSlot])   // NULL distinto no SQLite (precedente I-12)
+  @@unique([userId, unitId, pendingSlot])
+  @@index([accountantUserId, status])
+  @@map("accountant_assignments")
+}
+// User: + assignmentsOwned AccountantAssignment[] @relation("AssignmentOwner")
+//       + assignmentsAsAccountant AccountantAssignment[] @relation("AssignmentAccountant")
+// AccountingContact: + accountantAssignments AccountantAssignment[]
+```
+
+**Direto:**
+- **FK Restrict nos dois `User`.** A atribuição é trilha de responsabilidade; apagar usuário não pode levá-la
+  junto (memória `audit-log-no-fk-cascade`).
+- **Vigência em instantes, não em datas.** Evita as duas classes de bug de date-only registradas
+  (`date-only-regex-nao-valida-calendario`, `date-only-rendering-utc-shift-class-bug`).
+- **Qual atribuição governa: a ativa no momento da ação**, não a que cobria o período que se quer reabrir. É a
+  leitura literal do F-GOV-4 (a), "a trava nasce com a atribuição". A outra leitura deixaria sem ninguém para
+  reabrir o período de um contador que já saiu.
+- **FK para o contato mais snapshot do CRC**, em vez de CRC digitado de novo (PRE-ADR §3.1). O contato já é a
+  fonte canônica do J930 (`contactToJ930Signer`). Digitar de novo cria duas verdades. O snapshot existe porque o
+  contato é editável (I-11) e a vigência pede histórico.
+
+### 4.4 Rotas
+
+| Método | Path | Quem | Resolver |
+|---|---|---|---|
+| POST | `/api/accounting/accountant-assignments` | dono | padrão |
+| GET | `/api/accounting/accountant-assignments?unitId=` | dono | padrão |
+| GET | `/api/accounting/accountant-assignments/mine` | contador | nenhum (por `actorUserId`) |
+| POST | `/api/accounting/accountant-assignments/:id/accept` | contador | nenhum (pela linha) |
+| POST | `/api/accounting/accountant-assignments/:id/end` | dono ou contador | nenhum (pela linha) |
+| GET/POST | os 7 handlers do item 5 | dono ou contador | **delegado** |
+
+## 5. Forks — RATIFICAÇÃO PENDENTE
+
+As decisões de 29/09 não cobrem estes quatro. A leitura do código mostrou que o desenho não fecha sem eles.
+
+| Ref | Pergunta | (a) | (b) | (c) | Recomendação |
+|---|---|---|---|---|---|
+| **F-GOV-7** | O que o contador alcança nos livros do cliente | **Mínimo de governança:** ler períodos e revisões; reabrir; assinar e rejeitar (7 handlers, item 5) | **O C11 inteiro:** (a) mais abrir revisão, lançar e resolver achado e fazer lançamento de ajuste no livro do cliente | **O módulo inteiro:** `resolveAccountingScope` passa a ser assíncrono e a consultar a atribuição (214 chamadas) | **(a).** Fecha as 3 lacunas medidas com o menor raio de impacto. Em (b) e (c), `owner ≠ actor` **liga a SoD** (`EntryApprovalService.ts:230`) e o contador passa a escrever no razão do cliente, o que pede plano de teste próprio. O "login do contador que cresce o C11" vira o próximo incremento, com (b). Custo de (a): o contador assina achados que o operador registrou, como já acontece hoje no C11 |
+| **F-GOV-8** | Como o dono aponta o contador, e se o contador precisa aceitar | **E-mail de usuário existente + aceite do contador** (`PENDING → ACTIVE`, item 7) | E-mail de usuário existente, ativo na criação | Convite por token enviado por e-mail (fluxo novo) | **(a).** Sem aceite, o sistema imputa responsabilidade a quem nunca concordou, e isso é o contrário do objetivo do nó. (c) exige envio de e-mail, que hoje é canal do dono, sem credencial no servidor (F-CD1-a). Custo de (a): a rota revela se o e-mail tem conta (400 nomeado). Só o dono autenticado chama a rota, e ela fica no escopo dele |
+| **F-GOV-9** | Com atribuição ativa, de onde vêm o nome e o CRC do sign-off | **O `reviewerCrc` digitado tem de bater com o CRC da atribuição** (os dois normalizados); se divergir, 400 `REVIEWER_CRC_MISMATCH`. O nome continua digitado | O servidor preenche nome e CRC a partir da atribuição e o DTO passa a recusar os campos (**quebra o contrato** do FE-INCR-REVIEW, #436) | Só o gate de ator muda; os campos continuam livres | **(a).** Fecha o "CRC arbitrário" (I-5) sem quebrar a tela que já existe. (c) deixa o contador assinar com o CRC de outra pessoa |
+| **F-GOV-10** | O dono pode encerrar a atribuição sozinho (e então reabrir, pelo F-GOV-4 a)? | **Sim.** O encerramento e a reabertura seguinte ficam na trilha (`accountant_assignment.ended` + `period.reopened` sem `assignmentId`) | Só com a concordância do contador | Encerrar vale só depois de N dias | **(a).** O dono é livre para dispensar o contador; a governança aqui é **rastro**, não custódia. (b) prende o cliente a um contador que sumiu. **Risco declarado:** a trava é contornável pelo dono, com rastro. Se a resposta do CRC-SP (F-GOV-1) exigir custódia, este fork reabre |
+
+## 6. Fora deste BRIEF (decidido) e compatibilidade exigida
+
+- **Política versionada** (`AccountingPolicyVersion`, F-GOV-6 b): vai em incremento próprio. As configurações da
+  família I-3 continuam com o operador até lá. É esse incremento que entrega a "aprovação do contador" citada no
+  F-PC-1 (b) e no F-PC-2 (b) do plano pós-contador (linhas 79–80).
+- **Consulta ao CFC** (F-V1 c): só depois do M2. **Compatibilidade exigida:** o status do CFC mora no
+  `AccountingContact` (BRIEF CRC-CFC, item 2) e a atribuição aponta para o contato (§4.3). Nada neste desenho
+  bloqueia o F-V2 (a), o F-V3 (b) ou o F-V4 (a).
+- **FE:** telas de convite, aceite e encerramento, e o tratamento de `ACCOUNTANT_REQUIRED` e
+  `REVIEWER_CRC_MISMATCH` nas telas de período e revisão. É nó vizinho (`FE-INCR-*`), com BRIEF e autorização
+  próprios. Até a FE existir, a tela de revisão do #436 mostra 403/400 genérico ao dono com atribuição ativa.
+
+## 7. Pendente de validação externa
+
+- **F-GOV-1**: consulta ao CRC-SP sobre a linha software × serviço contábil. É do dono, fora do código. Cruza com
+  [[Z0-a]] ("assina sob condições"). A resposta pode reabrir o F-GOV-10.
+- **O contador não revalidou este desenho.** Ele respondeu ao item 0 em 23/09, antes do PRE-ADR. Falta saber se
+  assinatura interna + trilha satisfazem o que ele pediu. O `luminaris-contador-liaison` pode montar a pergunta;
+  o dono envia.
+- **Valor da assinatura interna:** é atestado interno, não assinatura legal (a legal é o e-CPF no PVA). Tratar
+  como fato consumado exige a leitura do contador.
+
+## 8. Insumos ausentes
+
+- O texto integral da resposta do contador ao item 0 (23/09) não foi relido. Este BRIEF se apoia no resumo do
+  PRE-ADR §5. Pedir a leitura não foi necessário para desenhar, mas é necessário para o item 2 de §7.
+
+## 9. Achados fora de escopo (não planejados)
+
+- **`POST /periods/:id/open` lê `unitId` de `req.body` sem DTO Zod** (`accountingController.ts:592`), contra o
+  Contrato §2. O item 5 troca só o resolver ali.
+- **`reopen` aceita `reason` opcional** (`PostingDto.ts:312-318`). Para governança, motivo obrigatório na
+  reabertura faria sentido, mas isso não foi ratificado.
+- **`ReopenPeriodSchema` exige `periodId` no corpo, mas o controller usa `req.params.id`** (`:685`). O campo do
+  corpo é aceito e ignorado (memória `param-aceito-e-ignorado-e-bug`).
+- **Errata do PRE-ADR** (I-1, I-10): este BRIEF registra a correção. Aplicar no PRE-ADR é um fold separado, porque
+  a regra 1 desta sessão proíbe editar doc de outro item.
