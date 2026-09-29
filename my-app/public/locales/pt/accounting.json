@@ -1606,5 +1606,126 @@
         "system": "sistema (PF/BC derivado)"
       }
     }
+  },
+  "review": {
+    "action": {
+      "addFinding": "Adicionar achado",
+      "adjustment": "Lançar acerto",
+      "dataEdit": "Apontar dado editado",
+      "noAction": "Sem ação",
+      "reject": "Rejeitar",
+      "replaceJobs": "Trocar jobs",
+      "signOff": "Assinar",
+      "view": "Abrir"
+    },
+    "adjustment": {
+      "periodHint": "A data do acerto precisa de período OPEN — extemporâneo é permitido.",
+      "reverseOriginal": "Estornar também o lançamento original (I200)",
+      "submit": "Lançar acerto",
+      "title": "Lançamento de acerto — {{register}} {{locator}}"
+    },
+    "col": {
+      "actions": "Ações",
+      "closure": "Assinada por / motivo",
+      "jobs": "Arquivos (ECD · ECF)",
+      "openedAt": "Aberta em",
+      "status": "Status",
+      "year": "Exercício"
+    },
+    "confirm": "Confirmar",
+    "dataEdit": {
+      "hint": "O dado é editado no painel dono; aqui só se registra o ponteiro para ele.",
+      "pickAccount": "Selecione a conta…",
+      "targetId": "Qual (id)",
+      "targetType": "Tipo do dado"
+    },
+    "detail": {
+      "blockers": "{{n}} BLOCKER abertos",
+      "noFindings": "Nenhum achado registrado.",
+      "rejectedNote": "Revisão rejeitada: o pacote deste par não pode ser entregue (REVIEW_REJECTED).",
+      "title": "Revisão {{year}}"
+    },
+    "empty": "Nenhuma revisão neste recorte.",
+    "error": {
+      "generic": "Não foi possível concluir a operação.",
+      "load": "Erro ao carregar as revisões."
+    },
+    "filter": {
+      "allStatus": "Todos os status",
+      "status": "Status",
+      "year": "Exercício"
+    },
+    "finding": {
+      "description": "Descrição",
+      "freeTextHint": "Texto livre — nunca entra na trilha de auditoria.",
+      "locator": "Localizador",
+      "open": "aberto",
+      "openOwner": "Abrir {{type}} {{id}} no painel dono",
+      "register": "Registro",
+      "severity": "Severidade",
+      "state": "Estado"
+    },
+    "job": {
+      "ecd": "Arquivo da ECD (EXPORTED)",
+      "ecf": "Arquivo da ECF (EXPORTED)",
+      "none": "— nenhum —",
+      "superseded": "substituído"
+    },
+    "noAction": {
+      "hint": "Achado descartado sem justificativa é recusado.",
+      "note": "Justificativa (obrigatória)"
+    },
+    "open": "Abrir revisão",
+    "openModal": {
+      "hint": "Escolha pelo menos um arquivo gerado na seção acima.",
+      "submit": "Abrir",
+      "title": "Abrir revisão"
+    },
+    "reject": {
+      "hint": "Rejeição é terminal: o pacote deste par não poderá ser entregue (REVIEW_REJECTED).",
+      "reason": "Motivo"
+    },
+    "replaceJobs": {
+      "hint": "O par antigo fica registrado no evento review.jobs_replaced."
+    },
+    "saving": "Salvando…",
+    "signOff": {
+      "crc": "CRC",
+      "crcHint": "Máscara CFC UF-NNNNNN/O-D.",
+      "name": "Nome do revisor",
+      "statement": "Declaração"
+    },
+    "subtitle": "Achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é editado).",
+    "title": "Revisão profissional",
+    "status": {
+      "OPEN": "aberta",
+      "SIGNED_OFF": "assinada",
+      "REJECTED": "rejeitada"
+    },
+    "register": {
+      "0000": "abertura",
+      "I050": "plano de contas",
+      "I051": "referencial",
+      "I200": "lançamento",
+      "I250": "partida",
+      "J150": "DRE",
+      "J930": "signatários",
+      "M300": "Parte A (IRPJ)",
+      "M350": "Parte A (CSLL)",
+      "M410": "Parte B",
+      "N630": "IRPJ"
+    },
+    "resolution": {
+      "DATA_EDIT": "dado editado",
+      "ADJUSTMENT_ENTRY": "lançamento de acerto",
+      "NO_ACTION": "sem ação"
+    },
+    "target": {
+      "account": "conta",
+      "referential_mapping": "mapeamento referencial",
+      "counterparty": "contraparte",
+      "generation_input": "dado de geração",
+      "journal_entry": "lançamento"
+    }
   }
 }

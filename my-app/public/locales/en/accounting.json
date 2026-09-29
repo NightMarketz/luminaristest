@@ -1606,5 +1606,126 @@
         "title": "Processes (M415) — optional"
       }
     }
+  },
+  "review": {
+    "action": {
+      "addFinding": "Add finding",
+      "adjustment": "Post adjustment",
+      "dataEdit": "Point to edited data",
+      "noAction": "No action",
+      "reject": "Reject",
+      "replaceJobs": "Replace files",
+      "signOff": "Sign off",
+      "view": "Open"
+    },
+    "adjustment": {
+      "periodHint": "The adjustment date needs an OPEN period — late posting is allowed.",
+      "reverseOriginal": "Also reverse the original entry (I200)",
+      "submit": "Post adjustment",
+      "title": "Adjustment entry — {{register}} {{locator}}"
+    },
+    "col": {
+      "actions": "Actions",
+      "closure": "Signed by / reason",
+      "jobs": "Files (ECD · ECF)",
+      "openedAt": "Opened at",
+      "status": "Status",
+      "year": "Year"
+    },
+    "confirm": "Confirm",
+    "dataEdit": {
+      "hint": "The data is edited in its owner panel; here only the pointer to it is recorded.",
+      "pickAccount": "Select the account…",
+      "targetId": "Which (id)",
+      "targetType": "Data type"
+    },
+    "detail": {
+      "blockers": "{{n}} open BLOCKER",
+      "noFindings": "No findings recorded.",
+      "rejectedNote": "Review rejected: the package for this pair cannot be delivered (REVIEW_REJECTED).",
+      "title": "Review {{year}}"
+    },
+    "empty": "No reviews in this selection.",
+    "error": {
+      "generic": "The operation could not be completed.",
+      "load": "Error loading the reviews."
+    },
+    "filter": {
+      "allStatus": "All statuses",
+      "status": "Status",
+      "year": "Year"
+    },
+    "finding": {
+      "description": "Description",
+      "freeTextHint": "Free text — never goes to the audit trail.",
+      "locator": "Locator",
+      "open": "open",
+      "openOwner": "Open {{type}} {{id}} in its owner panel",
+      "register": "Register",
+      "severity": "Severity",
+      "state": "State"
+    },
+    "job": {
+      "ecd": "ECD file (EXPORTED)",
+      "ecf": "ECF file (EXPORTED)",
+      "none": "— none —",
+      "superseded": "superseded"
+    },
+    "noAction": {
+      "hint": "A finding dismissed without justification is refused.",
+      "note": "Justification (required)"
+    },
+    "open": "Open review",
+    "openModal": {
+      "hint": "Choose at least one file generated in the section above.",
+      "submit": "Open",
+      "title": "Open review"
+    },
+    "reject": {
+      "hint": "Rejection is final: the package for this pair cannot be delivered (REVIEW_REJECTED).",
+      "reason": "Reason"
+    },
+    "replaceJobs": {
+      "hint": "The previous pair is recorded in the review.jobs_replaced event."
+    },
+    "saving": "Saving…",
+    "signOff": {
+      "crc": "CRC",
+      "crcHint": "CFC mask UF-NNNNNN/O-D.",
+      "name": "Reviewer name",
+      "statement": "Statement"
+    },
+    "subtitle": "Finding → pointer/adjustment → regeneration → sign-off (the file is never edited).",
+    "title": "Professional review",
+    "status": {
+      "OPEN": "open",
+      "SIGNED_OFF": "signed off",
+      "REJECTED": "rejected"
+    },
+    "register": {
+      "0000": "opening",
+      "I050": "chart of accounts",
+      "I051": "referential",
+      "I200": "entry",
+      "I250": "entry line",
+      "J150": "income statement",
+      "J930": "signers",
+      "M300": "Parte A (IRPJ)",
+      "M350": "Parte A (CSLL)",
+      "M410": "Parte B",
+      "N630": "IRPJ"
+    },
+    "resolution": {
+      "DATA_EDIT": "data edited",
+      "ADJUSTMENT_ENTRY": "adjustment entry",
+      "NO_ACTION": "no action"
+    },
+    "target": {
+      "account": "account",
+      "referential_mapping": "referential mapping",
+      "counterparty": "counterparty",
+      "generation_input": "generation input",
+      "journal_entry": "entry"
+    }
   }
 }

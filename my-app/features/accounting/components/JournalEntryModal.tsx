@@ -64,6 +64,12 @@ export interface JournalEntryModalProps {
   title?: string;
   submitLabel?: string;
   busyLabel?: string;
+  /**
+   * Campos extras do comando hospedeiro, renderizados antes do erro (FE-INCR-REVIEW, F-FE-RV-4 → a: o
+   * lançamento de acerto da revisão reusa este editor e acrescenta o `reverseOriginal`). O modal não lê
+   * nem valida esses campos — o hospedeiro os guarda e os junta no `submit`.
+   */
+  extraFields?: React.ReactNode;
 }
 
 interface Line {
@@ -155,6 +161,7 @@ export function JournalEntryModal({
   title,
   submitLabel,
   busyLabel,
+  extraFields,
 }: JournalEntryModalProps) {
   const { t } = useTranslation('accounting');
   const [date, setDate] = useState<string>(() => initial?.date ?? scopeToday());
@@ -473,6 +480,8 @@ export function JournalEntryModal({
             </span>
           )}
         </div>
+
+        {extraFields}
 
         {/* ── Error ── */}
         {error && (
