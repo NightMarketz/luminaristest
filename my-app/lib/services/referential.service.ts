@@ -1,6 +1,10 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
 import { postMultipart } from './multipart';
+import type {
+  BatchSetReferentialMappingInput,
+  CopyReferentialMappingInput,
+} from '@/types/contracts/accounting/ReferentialMappingDto.gen';
 
 /**
  * Referential mapping service — typed client over the RFB chart-mapping endpoints
@@ -55,12 +59,8 @@ export interface ReferentialMapping {
   mappingVersion: string;
 }
 
-/** One item of a batch de-para write (accountId → RFB code + label). */
-export interface ReferentialMappingItem {
-  accountId: string;
-  referentialCode: string;
-  label: string;
-}
+/** One item of a batch de-para write (accountId → RFB code + label) — contrato gerado. */
+export type ReferentialMappingItem = BatchSetReferentialMappingInput['items'][number];
 
 /** Response of `POST /referential/catalog/import` — the official RFB layout catalog. */
 export interface ReferentialCatalogImportResult {
@@ -104,11 +104,12 @@ export const referentialService = {
   async batchSet(
     unitId: string,
     mappingVersion: string,
-    items: ReferentialMappingItem[],
+    items: BatchSetReferentialMappingInput['items'],
   ): Promise<ReferentialMapping[]> {
+    const body: BatchSetReferentialMappingInput = { unitId, mappingVersion, items };
     const res = await apiClient.post<Envelope<ReferentialMapping[]>>(
       '/accounting/referential/mappings/batch',
-      { unitId, mappingVersion, items },
+      body,
     );
     notify('Mapeamento referencial salvo.', 'success', 'Contabilidade');
     return res.data;
@@ -120,9 +121,10 @@ export const referentialService = {
     fromVersion: string,
     toVersion: string,
   ): Promise<ReferentialMapping[]> {
+    const body: CopyReferentialMappingInput = { unitId, fromVersion, toVersion };
     const res = await apiClient.post<Envelope<ReferentialMapping[]>>(
       '/accounting/referential/mappings/copy',
-      { unitId, fromVersion, toVersion },
+      body,
     );
     notify('Versão copiada.', 'success', 'Contabilidade');
     return res.data;

@@ -71,7 +71,7 @@ export function CreateCounterpartyModal({
       unitId,
       type: effectiveType,
       name: name.trim(),
-      ...(ref.trim() ? { ref: ref.trim() } : {}),
+      ref: ref.trim() || undefined,
     };
 
     setIsSubmitting(true);

@@ -162,12 +162,12 @@ export function LalurParteBModal({ isOpen, onClose, unitId, year, editing, onSuc
           descricao: descricao.trim(),
           dtCriacao,
           codPbRfb,
-          ...(dtLimite ? { dtLimite } : {}),
           codTributo,
           saldoIniCents,
           indSaldoIni,
-          ...(cnpjDigits ? { cnpjSitEsp: cnpjDigits } : {}),
         };
+        if (dtLimite) body.dtLimite = dtLimite;
+        if (cnpjDigits) body.cnpjSitEsp = cnpjDigits;
         await lalurService.createParteB(body);
       }
       onSuccess();

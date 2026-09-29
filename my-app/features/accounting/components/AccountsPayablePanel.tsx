@@ -339,13 +339,13 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
         await accountsPayableService.cancelPayable(action.payable.id, {
           unitId,
           reversalDate: actionDate,
-          ...(reason.trim() ? { reason: reason.trim() } : {}),
+          reason: reason.trim() || undefined,
         });
       } else {
         await accountsPayableService.cancelPayment(action.payable.id, action.payment.id, {
           unitId,
           reversalDate: actionDate,
-          ...(reason.trim() ? { reason: reason.trim() } : {}),
+          reason: reason.trim() || undefined,
         });
       }
       setAction(null);

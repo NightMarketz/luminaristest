@@ -333,13 +333,13 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
         await accountsReceivableService.cancelReceivable(action.receivable.id, {
           unitId,
           reversalDate: actionDate,
-          ...(reason.trim() ? { reason: reason.trim() } : {}),
+          reason: reason.trim() || undefined,
         });
       } else {
         await accountsReceivableService.cancelReceipt(action.receivable.id, action.receipt.id, {
           unitId,
           reversalDate: actionDate,
-          ...(reason.trim() ? { reason: reason.trim() } : {}),
+          reason: reason.trim() || undefined,
         });
       }
       setAction(null);

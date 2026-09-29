@@ -48,6 +48,7 @@ module.exports = {
             ...base,
             displayName: 'integration',
             testMatch: ['**/__tests__/**/*.integration.test.ts'],
+            setupFilesAfterEnv: ['<rootDir>/test/jest.integrationTeardown.ts'],
             testPathIgnorePatterns: ['/node_modules/', '/legacy_kpis/'],
         },
     ],

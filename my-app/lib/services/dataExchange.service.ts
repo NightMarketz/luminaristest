@@ -1,6 +1,7 @@
 import { getCookie } from 'cookies-next';
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type { CommitImportInput, ExportRequestInput } from '@/types/contracts/accounting/DataExchangeDto.gen';
 
 /**
  * Data Exchange service — typed client over the accounting CSV/XLSX import/export
@@ -52,14 +53,8 @@ export interface DataExchangeRow {
   raw: unknown;
 }
 
-export interface ExportPayload {
-  kind: ExportKind;
-  format: SpreadsheetFormat;
-  unitId: string;
-  asOf?: string;
-  accountCode?: string;
-  templateKind?: ImportKind;
-}
+/** Body of `POST /accounting/data-exchange/exports` — contrato gerado (DataExchangeDto). */
+export type ExportPayload = ExportRequestInput;
 
 interface Envelope<T> {
   success: boolean;
@@ -148,9 +143,10 @@ export const dataExchangeService = {
 
   /** Commit a staged import — writes accounts / entries through the posting services. */
   async commit(jobId: string, unitId: string): Promise<DataExchangeJob> {
+    const body: CommitImportInput = { unitId };
     const res = await apiClient.post<Envelope<DataExchangeJob>>(
       `/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}/commit`,
-      { unitId },
+      body,
     );
     notify('Importação confirmada.', 'success', 'Contabilidade');
     return res.data;
