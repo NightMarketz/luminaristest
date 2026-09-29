@@ -249,3 +249,71 @@ lead não é rebaixado nem consumido. Difere de (c) porque decide o modelo em ve
 8. Efeito no "valor de pipeline" (BRIEF CRM-RB §4.2): com o lead espelhando a oportunidade, a visão geral e o analytics
    passam a ver o mesmo valor nos negócios vinculados. A diferença que sobra é o filtro (Won incluído) e os registros sem
    vínculo.
+
+### 9.1 Respostas do dono às perguntas do §9 (29/09) — documentadas, não ratificadas
+
+| # | Pergunta | Resposta (literal) | Leitura registrada |
+|---|---|---|---|
+| 1 | Vínculo obrigatório? | *"sim"* | Toda oportunidade nasce de um lead (hoje `leadId` é opcional, `OpportunitiesModule.ts:28-35`) |
+| 2 | Histórico: mostrar × registrar | *"ambos"* | A oportunidade mostra o histórico do lead, **e** cada espelho vira registro em `leadActivities` |
+| 3 | Quais campos sobem | *"Somente os campos que tem sinergia com o lead"* (+ pergunta: "como espelhar poderia ser um problema?") | Só campos com correspondente no lead — mapa e riscos abaixo |
+| 4 | N oportunidades por lead | *"Atualiza o lead a oportunidade em aberto"* | Só a oportunidade **aberta** espelha. Consequência a confirmar: no máximo **uma aberta por lead** (hoje não há trava — inferido) |
+| 5 | Sentido lead → oportunidade | *"Esse é o caminho correto não? O lead vira oportunidade, pq oportunidade é chance de venda"* | Modelo do dono: o lead se **converte** em oportunidade (a chance de venda); o espelho tem **um sentido só** (oportunidade → lead) e o lead vira ficha + histórico |
+| 6 | Onde o espelho mora | *"Me de sugestoes"* | Sugestões abaixo; recomendação (A) |
+| 7 | Gatilho do §6 | *"Pode disparar a decsião a partir da validação"* | Leitura **inferida**: a decisão é disparada quando o **kit de validação** (§6.1) fechar; o sinal do operador real (§6.2) deixa de ser condição. Confirmar |
+| 8 | Efeito no valor de pipeline | *"Preciso de mais informação"* | Explicação com exemplo no BRIEF CRM-RB §4.2; segue aberta |
+
+**Mapa de campos com sinergia (lido em `LeadsModule.ts` e `OpportunitiesModule.ts`):**
+
+| Oportunidade | → Lead | Observação |
+|---|---|---|
+| `amount` + `currency` | `latestProposalAmount` + `latestProposalCurrency` | sempre **em par** (F-RB8 do CRM-RB) |
+| `winProbability` | `latestProposalWinProbability` | — |
+| `estimatedCloseDate` | `latestProposalEtaClose` | — |
+| `pipelineId` + `stageId` | `pipelineId` + `stageId` | sempre **juntos** (risco 2) |
+| `ownerId` | `assigneeId` | — |
+| `accountId`, `contactId` | `accountId`, `contactId` | — |
+| `status` (Open/Won/Lost) | `status`? | risco 3 — sugestão: não espelhar o status |
+| `name`, `notes`, `closedAt` | — | sem correspondente no lead |
+
+**Por que espelhar pode ser um problema (resposta à pergunta do item 3).** Espelhar em si não é o problema; estes são os
+pontos que precisam de regra:
+1. **Dois escritores no mesmo campo.** A proposta **já** escreve `latestProposal*` no lead (`LeadsPlugin.ts:194-213`,
+   `upsertLatestProposalSnapshot` em `:335-353`). Se a oportunidade também escrever ali, vale quem escreveu por último, e o
+   lead pode voltar a mostrar a proposta velha depois que a oportunidade mudou. Sugestão, coerente com a resposta 4:
+   **enquanto houver oportunidade aberta, ela manda**, e a proposta só atualiza o lead sem oportunidade aberta.
+2. **Etapa sem o funil.** Lead e oportunidade usam as mesmas etapas, mas a oportunidade pode estar em outro funil
+   (`pipelineId` escolhido na criação). Espelhar `stageId` sem `pipelineId` põe o lead numa etapa de outro funil. Os dois
+   vão juntos, ou nenhum vai.
+3. **Status.** Só o Won da **oportunidade** gera título a receber (`crmController.ts:94-135`); o Won do lead não gera
+   nada. Espelhar o status não duplica dinheiro no razão, mas faz o lead parecer "ganho" nos números que somam leads (a
+   visão geral soma leads Won — BRIEF CRM-RB §4.2), e reabre o CA1 ("o lead ainda carrega Won"). Sugestão: na conversão
+   o lead vai para `Converted` e **fica** assim; o resultado aparece pelo vínculo com a oportunidade.
+4. **Edição do lado do lead.** Se alguém editar no lead um campo espelhado, ele diverge até a próxima mudança da
+   oportunidade. Sugestão: com oportunidade aberta, os campos espelhados ficam **só-leitura no lead**; a edição é na
+   oportunidade. É isso que a resposta 5 pede (sentido único).
+5. **Depois do ganho.** A oportunidade ganha é imutável (25/09, `OpportunitiesModule.ts:116`). O último espelho é o do
+   ganho, e o lead não muda mais por ela. Está correto.
+
+**Sugestões para o item 6 (onde o espelho mora):**
+- **(A) Recomendada — um ramo novo no `LeadsPlugin`.** Hoje ele **não** roda para oportunidades: o `supports` exige a
+  categoria **e** o nome interno da tabela (`rules/shared/tableFinder.ts`, `tableMatches`). A categoria já bate
+  (`category: 'leads'`, `OpportunitiesModule.ts:23`); falta pôr `crmOpportunities` na lista de nomes do plugin
+  (`LeadsPlugin.ts:80-86`). O padrão do espelho já existe: proposta → lead + registro em `leadActivities`
+  (`LeadsPlugin.ts:194-213,335-367`). No `afterCreate`/`afterUpdate` da oportunidade aberta, o ramo atualiza o lead e grava
+  a atividade. Vantagens:
+  - roda em **todo** caminho de escrita — API do pipeline (mesmo com `isSystem`), tela genérica da tabela e importação;
+  - roda **dentro da mesma transação**: `runRules` recebe o repositório da tx (`DynamicTableService.ts:587,812`);
+  - é intra-CRM: não injeta serviço Prisma (AC-2.1-B1) nem mexe no `DynamicTableService` (AC-2.1-B4);
+  - a escrita no lead usa `ctx.repository.updateData`, a mesma do espelho de proposta, que não dispara as regras de novo.
+- **(B) No serviço do pipeline (`CrmPipelineService.advanceOpportunity`).** Cobre só a API do pipeline; a edição pela tela
+  genérica escapa e diverge. Só serve se os campos da oportunidade virarem só-leitura na tela genérica.
+- **(C) Sem cópia: o lead lê a oportunidade aberta na hora de mostrar.** Não há divergência possível, mas lista, kanban
+  e relatórios de leads teriam de juntar as duas tabelas (o construtor de relatórios limita a 2 joins), e o registro no
+  histórico (resposta 2) não nasce sozinho.
+
+**Pergunta nova que as respostas abrem (para a sessão que autorizar):** hoje existem duas "conversões". `convert-lead`
+encerra o lead, mas cria conta + contato, não oportunidade (`CrmPipelineService.ts:106-113`). `convert-lead-to-opportunity`
+cria a oportunidade e **não** encerra o lead (`:383-386`). No modelo do dono ("o lead vira oportunidade"), o natural é
+**unificar**: converter cria a oportunidade (mais conta + contato quando houver) e leva o lead para `Converted`, como
+ficha + histórico espelhado. Isso muda duas ações e a UX do botão; não decidido aqui.

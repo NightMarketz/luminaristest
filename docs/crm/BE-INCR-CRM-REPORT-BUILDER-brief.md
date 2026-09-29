@@ -410,6 +410,21 @@ correção); aqui só fica listado.
   `docs/adr/ADR-CRM-lead-opportunity-model.md` como a opção "vincular e espelhar", com as perguntas abertas. Se for
   implementado, a visão geral e o analytics passam a ver o mesmo valor nos negócios vinculados. A divergência que sobra
   é o filtro e os registros sem vínculo.
+  - **Efeito do espelho no número — exemplo (resposta ao "preciso de mais informação", 29/09).** Três negócios:
+    lead A só com proposta de R$ 10 mil, sem oportunidade; lead B → oportunidade **aberta** de R$ 50 mil (a proposta
+    antiga no lead dizia R$ 40 mil); lead C → oportunidade **ganha** de R$ 30 mil (o lead marcado Won com a proposta de
+    R$ 25 mil).
+
+    | | Visão geral (leads ≠ Lost/Disqualified) | Analytics (oportunidades Open) |
+    |---|---|---|
+    | Hoje | A 10 + B 40 + C 25 = **R$ 75 mil** | B 50 = **R$ 50 mil** |
+    | Com o espelho | A 10 + B 50 + C 30 = **R$ 90 mil** | B 50 = **R$ 50 mil** |
+
+    O espelho acerta o **valor de cada negócio** (B passa a mostrar 50 nos dois), mas **não** a **definição** de
+    pipeline: a visão geral continua contando A (pré-qualificação) e C (já ganho). Pela definição do dono ("oportunidade é
+    chance de venda"), pipeline = oportunidades abertas = R$ 50 mil, que é o caminho (a) abaixo. A e C apareceriam em
+    números próprios ("em qualificação", "ganho"). Qualquer que seja o caminho, o F-RB8 vale: se B fosse US$ 50 mil, hoje
+    os dois somariam como R$ 50 mil.
 - **Status após a pergunta:** o dono pediu a diferença antes de escolher. A recomendação (a) continua: "pipeline" é negócio
   aberto, e negócio mora na oportunidade.
 - **Caminhos:** (a) a visão geral passa a ler o mesmo que o analytics (oportunidades, só Open; leads como fallback sem a
