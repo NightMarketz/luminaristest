@@ -50,6 +50,10 @@ const diag = (o: Partial<LalurParteBBalancesDiagnostic> = {}): LalurParteBBalanc
   ...o,
 });
 
+// O diagnóstico responde como request real (padrão do #434): salto de 0 ms + 50 ms — a chamada sai no
+// effect, a resposta chega depois. Sem isso o mock resolve na microtask e esconde a corrida da CI do #436.
+const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+
 function renderSection(props: Partial<React.ComponentProps<typeof LalurParteBMovementsSection>> = {}) {
   const onShowEntry = vi.fn();
   const onForbidden = vi.fn();
@@ -73,7 +77,7 @@ describe('LalurParteBMovementsSection', () => {
     vi.clearAllMocks();
     cleanup();
     vi.mocked(lalurService.listMovements).mockResolvedValue([mov({}), mov({ id: 'm2', indicador: 'PF', origem: 'system' })]);
-    vi.mocked(lalurService.getParteBBalances).mockResolvedValue(diag());
+    vi.mocked(lalurService.getParteBBalances).mockImplementation(() => later(diag()));
     vi.mocked(lalurService.archiveMovement).mockResolvedValue(mov({}));
     vi.mocked(lalurService.closeParteB).mockResolvedValue(undefined);
   });
@@ -99,8 +103,9 @@ describe('LalurParteBMovementsSection', () => {
 
   it('fechar T02 pede confirmação, chama o BE e recarrega o diagnóstico', async () => {
     renderSection();
-    await waitFor(() => expect(lalurService.getParteBBalances).toHaveBeenCalledTimes(1));
-    fireEvent.click(within(screen.getByTestId('lalur-closing-T02')).getByRole('button', { name: /Fechar/ }));
+    const fechar = () => within(screen.getByTestId('lalur-closing-T02')).getByRole('button', { name: /Fechar/ }) as HTMLButtonElement;
+    await waitFor(() => expect(fechar().disabled).toBe(false));
+    fireEvent.click(fechar());
     expect(screen.getByText(/materializa o M500/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     await waitFor(() => expect(lalurService.closeParteB).toHaveBeenCalledWith('u1', 2025, 'T02'));
