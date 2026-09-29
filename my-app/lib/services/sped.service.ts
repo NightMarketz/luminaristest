@@ -22,9 +22,19 @@ interface Envelope<T> {
 }
 
 // ── Payloads (contrato gerado) ──────────────────────────────────────────────────
-export type GenerateEcdPayload = SpedEcdRequestInput;
-export type GenerateEcfPayload = SpedEcfRequestInput;
-export type GenerateEcfRealPayload = SpedEcfRealRequestInput;
+// ponytail: `signerContactIds` é consumida por spedController.expandSignerContacts ANTES do .strict()
+// (F-C12-4; D9 do PLANO-FE-CONTRACT-TYPES): o contador do cadastro vira signatário 900 no servidor.
+type SignerContacts = { signerContactIds?: string[] };
+export type GenerateEcdPayload = SpedEcdRequestInput & SignerContacts;
+export type GenerateEcfPayload = SpedEcfRequestInput & SignerContacts;
+export type GenerateEcfRealPayload = SpedEcfRealRequestInput & SignerContacts;
+
+/** Linha da Tabela de Qualificação do Assinante (J930/0930) — descrição = texto do manual, sem tradução. */
+export interface QualifAssinante {
+  code: string;
+  description: string;
+}
+export type QualifLayout = 'ECD' | 'ECF';
 
 // ── Rascunhos de tela (ECD) ─────────────────────────────────────────────────────
 export interface EcdDeclarantDraft {
@@ -76,6 +86,12 @@ export interface EcfSignerDraft {
 }
 
 export const spedService = {
+  /** Tabela de Qualificação do Assinante servida pelo BE (F-FE-SG-1 → a: um dono só). */
+  async getQualifAssinante(unitId: string, layout: QualifLayout): Promise<QualifAssinante[]> {
+    const qs = `?unitId=${encodeURIComponent(unitId)}&layout=${layout}`;
+    return (await apiClient.get<Envelope<QualifAssinante[]>>(`/accounting/sped/qualif-assinante${qs}`)).data;
+  },
+
   /** Generate the ECD .txt and immediately download it. Requires coverage.ready. */
   async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<DataExchangeJob> {
     const res = await apiClient.post<Envelope<DataExchangeJob>>(

@@ -8,6 +8,7 @@ import {
   type EcfDeclarantDraft,
   type EcfSignerDraft,
   type GenerateEcfRealPayload,
+  type QualifAssinante,
 } from '../../../lib/services/sped.service';
 import {
   Field,
@@ -18,7 +19,9 @@ import {
   validateEcfSigners,
   toEcfDeclarantPayload,
   toEcfSignerPayload,
+  ContadorDoCadastroSelect,
 } from './SpedGenerationPanel';
+import type { AccountingContact } from '../../../lib/services/accountingContacts.service';
 import { nonEmpty } from '../../../lib/utils/nonEmpty';
 import { resolveError } from '../lib/resolveError';
 
@@ -46,7 +49,17 @@ import { resolveError } from '../lib/resolveError';
 /** id of this panel's section — the "Gerar ECF Real ↓" link in `LalurPanel` scrolls to it (FE-INCR-LALUR item 12). */
 export const SPED_ECF_REAL_ANCHOR = 'sped-ecf-real';
 
-export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
+export interface SpedEcfRealPanelProps {
+  unitId: string;
+  /** Tabela 0930 carregada pelo `SpedGenerationPanel` (uma chamada para os três formulários). */
+  qualifOptions: QualifAssinante[];
+  qualifLoading: boolean;
+  /** Contadores do cadastro (F-FE-SG-2 → d) — o mesmo select da ECF Presumido. */
+  contacts: AccountingContact[];
+}
+
+export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contacts }: SpedEcfRealPanelProps) {
+  const [contactId, setContactId] = useState('');
   const { t } = useTranslation('accounting');
   const currentYear = new Date().getFullYear();
 
@@ -85,7 +98,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
       );
       return;
     }
-    const signerIssue = validateEcfSigners(signers);
+    const signerIssue = validateEcfSigners(signers, !!contactId);
     if (signerIssue) {
       setError(signerError(signerIssue));
       return;
@@ -107,6 +120,7 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
       },
       signers: payloadSigners,
     };
+    if (contactId) body.signerContactIds = [contactId];
     setBusy(true);
     try {
       await spedService.generateAndDownloadEcfReal(body);
@@ -203,7 +217,8 @@ export function SpedEcfRealPanel({ unitId }: { unitId: string }) {
         </Field>
       </div>
 
-      <EcfSignersEditor t={t} signers={signers} setSigners={setSigners} />
+      <ContadorDoCadastroSelect t={t} contacts={contacts} value={contactId} onChange={setContactId} />
+      <EcfSignersEditor t={t} signers={signers} setSigners={setSigners} qualifOptions={qualifOptions} qualifLoading={qualifLoading} />
 
       {error && (
         <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">

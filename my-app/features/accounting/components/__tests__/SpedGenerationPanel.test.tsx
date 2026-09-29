@@ -1,6 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
+
+// O QualifAssinanteSelect/CatalogCombobox não importam React (jsx preserve + runtime clássico) — shim só no teste.
+(globalThis as unknown as { React: typeof React }).React = React;
+import { render, screen, fireEvent, waitFor, cleanup, within, act } from '@testing-library/react';
 import { SpedGenerationPanel, validateEcdSigners, validateEcfSigners, toEcfSignerPayload } from '../SpedGenerationPanel';
 import { SpedEcfRealPanel } from '../SpedEcfRealPanel';
 import type { EcdSignerDraft as EcdSigner, EcfSignerDraft as EcfSigner } from '../../../../lib/services/sped.service';
@@ -13,8 +16,26 @@ vi.mock('../../../../lib/services/sped.service', () => ({
     generateAndDownloadEcd: vi.fn(),
     generateAndDownloadEcf: vi.fn(),
     generateAndDownloadEcfReal: vi.fn(),
+    // FE-INCR-SPED-SIGNERS: a tabela de qualificação vem do BE (recorte das consts transcritas).
+    getQualifAssinante: vi.fn(async (_unitId: string, layout: 'ECD' | 'ECF') =>
+      layout === 'ECD'
+        ? [{ code: '205', description: 'Administrador' }, { code: '900', description: 'Contador/Contabilista' }]
+        : [{ code: '205', description: 'Administrador' }, { code: '900', description: 'Contador' }]),
   },
 }));
+vi.mock('../../../../lib/services/accountingContacts.service', () => ({
+  accountingContactsService: { listContacts: vi.fn(async () => []) },
+}));
+
+const ECF_TABLE = [{ code: '205', description: 'Administrador' }, { code: '900', description: 'Contador' }];
+const realProps = { qualifOptions: ECF_TABLE, qualifLoading: false, contacts: [] };
+/** Deixa as cargas do mount (tabelas e contatos) resolverem antes de preencher. */
+const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });
+/** O código é um combobox sem texto livre: digitar + sair do campo seleciona o código exato. */
+const pick = (el: HTMLElement, value: string) => {
+  fireEvent.change(el, { target: { value } });
+  fireEvent.blur(el);
+};
 
 const ecd = (o: Partial<EcdSigner> = {}): EcdSigner => ({
   identNom: 'Fulano',
@@ -127,19 +148,19 @@ describe('SpedEcfRealPanel (render + validation)', () => {
   });
 
   it('always shows the permanent skeleton banner (Fork F-COMP2-4 → a)', () => {
-    render(<SpedEcfRealPanel unitId="u1" />);
+    render(<SpedEcfRealPanel unitId="u1" {...realProps} />);
     expect(screen.getByText(/Esqueleto — blocos L, M e N saem vazios/)).toBeInTheDocument();
   });
 
   it('pre-fills formaTrib editable with the server default (Fork F-COMP2-2 → b)', () => {
-    render(<SpedEcfRealPanel unitId="u1" />);
+    render(<SpedEcfRealPanel unitId="u1" {...realProps} />);
     const formaTribInput = screen.getByPlaceholderText('1') as HTMLInputElement;
     expect(formaTribInput.value).toBe('1');
   });
 
   it('blocks submit client-side when formaTribPer is not exactly 4 characters', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
-    render(<SpedEcfRealPanel unitId="u1" />);
+    render(<SpedEcfRealPanel unitId="u1" {...realProps} />);
     fireEvent.click(screen.getByRole('button', { name: /Gerar e baixar ECF \(Real\)/ }));
     expect(screen.getByText(/deve ter exatamente 4 posições/)).toBeInTheDocument();
     expect(spedService.generateAndDownloadEcfReal).not.toHaveBeenCalled();
@@ -147,7 +168,7 @@ describe('SpedEcfRealPanel (render + validation)', () => {
 
   it('sends a payload without formaApur once formaTribPer and signers are valid', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
-    render(<SpedEcfRealPanel unitId="u1" />);
+    render(<SpedEcfRealPanel unitId="u1" {...realProps} />);
 
     fireEvent.change(screen.getByPlaceholderText('PPPP'), { target: { value: 'PPPP' } });
     fireEvent.change(screen.getByPlaceholderText('14 dígitos'), { target: { value: '12345678000199' } });
@@ -156,12 +177,12 @@ describe('SpedEcfRealPanel (render + validation)', () => {
     // Presumido form (validateEcfSigners reused as-is — fiação, não regra nova, item 23).
     fireEvent.change(screen.getAllByPlaceholderText('Nome')[0], { target: { value: 'Fulano' } });
     fireEvent.change(screen.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '12345678901' } });
-    fireEvent.change(screen.getAllByPlaceholderText('Qualif. (900=contador)')[0], { target: { value: '900' } });
+    pick(screen.getAllByPlaceholderText('Qualif. (900=contador)')[0], '900');
     fireEvent.change(screen.getAllByPlaceholderText('CRC')[0], { target: { value: 'SP-1' } });
     fireEvent.click(screen.getByRole('button', { name: /Adicionar/ }));
     fireEvent.change(screen.getAllByPlaceholderText('Nome')[1], { target: { value: 'Beltrano' } });
     fireEvent.change(screen.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '98765432100' } });
-    fireEvent.change(screen.getAllByPlaceholderText('Qualif. (900=contador)')[1], { target: { value: '205' } });
+    pick(screen.getAllByPlaceholderText('Qualif. (900=contador)')[1], '205');
 
     fireEvent.click(screen.getByRole('button', { name: /Gerar e baixar ECF \(Real\)/ }));
 
@@ -216,16 +237,17 @@ describe('SpedGenerationPanel — submit da ECF Presumido', () => {
   it('a linha do sócio sai sem indCrc e os campos do contador vão aparados', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
     render(<SpedGenerationPanel unitId="u1" />);
+    await flush(); // a tabela de qualificação (combobox, FE-INCR-SPED-SIGNERS) carrega no mount
     const ecfBox = within(screen.getByRole('heading', { name: 'Gerar SPED ECF' }).closest('section') as HTMLElement);
 
     fireEvent.change(ecfBox.getAllByPlaceholderText('Nome')[0], { target: { value: ' Fulano ' } });
     fireEvent.change(ecfBox.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '12345678901' } });
-    fireEvent.change(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[0], { target: { value: '900' } });
+    pick(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[0], '900');
     fireEvent.change(ecfBox.getAllByPlaceholderText('CRC')[0], { target: { value: ' SP-123456/O-1 ' } });
     fireEvent.click(ecfBox.getByRole('button', { name: /Adicionar/ }));
     fireEvent.change(ecfBox.getAllByPlaceholderText('Nome')[1], { target: { value: 'Beltrano' } });
     fireEvent.change(ecfBox.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '98765432100' } });
-    fireEvent.change(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[1], { target: { value: '205' } });
+    pick(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[1], '205');
 
     fireEvent.click(ecfBox.getByRole('button', { name: 'Gerar e baixar ECF' }));
 
@@ -251,6 +273,7 @@ describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)'
   it('cada linha oferece CRC/E-mail/Fone/UF do CRC e o payload sai no contrato (sem identQualif; contador com os 4; vazio omitido)', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
     render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
     const section = screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement;
     const ecdForm = within(section);
     fireEvent.click(ecdForm.getByRole('button', { name: /Adicionar/ }));
@@ -264,7 +287,7 @@ describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)'
     fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
     fireEvent.change(ecdForm.getAllByPlaceholderText('Nome')[0], { target: { value: 'Contador' } });
     fireEvent.change(ecdForm.getAllByPlaceholderText('CPF/CNPJ')[0], { target: { value: '11144477735' } });
-    fireEvent.change(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[0], { target: { value: '900' } });
+    pick(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[0], '900');
     fireEvent.change(ecdForm.getAllByPlaceholderText('CRC')[0], { target: { value: 'SP123456/O-8' } });
     fireEvent.change(ecdForm.getAllByPlaceholderText('E-mail')[0], { target: { value: 'c@x.com' } });
     fireEvent.change(ecdForm.getAllByPlaceholderText('Fone')[0], { target: { value: '11999999999' } });
@@ -272,7 +295,7 @@ describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)'
     // Linha 2: não-contador, responsável legal, CRC/e-mail/fone/UF em branco.
     fireEvent.change(ecdForm.getAllByPlaceholderText('Nome')[1], { target: { value: 'Sócio' } });
     fireEvent.change(ecdForm.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '52998224725' } });
-    fireEvent.change(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[1], { target: { value: '205' } });
+    pick(ecdForm.getAllByPlaceholderText('Cód. (900=contador)')[1], '205');
     fireEvent.change(ecdForm.getAllByDisplayValue('Não resp. legal')[1], { target: { value: 'S' } });
 
     fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
@@ -302,3 +325,59 @@ describe('SpedGenerationPanel — J930 no contrato do SignerSchema (GAP-MAP N3)'
   });
 });
 
+// ── FE-INCR-SPED-SIGNERS item 5 (F-FE-SG-2 → d): "Contador do cadastro" → signerContactIds ──────────────
+describe('SpedGenerationPanel — contador do cadastro (signerContactIds)', () => {
+  const contato = { id: 'ct1', unitId: 'u1', name: 'Contadora', email: 'c@x.com', cpf: '11144477735', phone: null, crcNumber: 'SP-123456/O-8', crcUf: 'SP', deletedAt: null };
+
+  beforeEach(async () => {
+    cleanup();
+    vi.clearAllMocks();
+    const { accountingContactsService } = await import('../../../../lib/services/accountingContacts.service');
+    vi.mocked(accountingContactsService.listContacts).mockResolvedValue([contato]);
+  });
+
+  it('validadores: o contato conta como o signatário 900 (ECD) e ocupa uma das 2 vagas (ECF)', () => {
+    const socioResp = { identNom: 'Sócio', identCpfCnpj: '52998224725', codAssin: '205', indRespLegal: 'S' as const };
+    expect(validateEcdSigners([socioResp])).toBe('ecdContador');
+    expect(validateEcdSigners([socioResp], true)).toBeNull();
+    expect(validateEcfSigners([ecf()], true)).toBeNull();
+    expect(validateEcfSigners([ecf(), ecf()], true)).toBe('ecfSignerCount');
+  });
+
+  it('ECD: escolher o contato manda signerContactIds [id] e só a linha manual do responsável legal (sem 900 duplicado)', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
+    const ecdForm = within(screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement);
+    fireEvent.change(ecdForm.getByLabelText('Contador do cadastro (opcional)'), { target: { value: 'ct1' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('Nome'), { target: { value: 'Sócio' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('CPF/CNPJ'), { target: { value: '52998224725' } });
+    pick(ecdForm.getByPlaceholderText('Cód. (900=contador)'), '205');
+    fireEvent.change(ecdForm.getByDisplayValue('Não resp. legal'), { target: { value: 'S' } });
+    fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
+
+    await waitFor(() => expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1));
+    const payload = vi.mocked(spedService.generateAndDownloadEcd).mock.calls[0][0];
+    expect(payload.signerContactIds).toEqual(['ct1']);
+    expect(payload.signers).toStrictEqual([{ identNom: 'Sócio', identCpfCnpj: '52998224725', codAssin: '205', indRespLegal: 'S' }]);
+  });
+
+  it('ECF: o 400 do servidor ("não tem telefone") aparece íntegro', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    vi.mocked(spedService.generateAndDownloadEcf).mockRejectedValue({ success: false, error: "O contador 'ct1' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.", status: 400 });
+    render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
+    const ecfForm = within(screen.getByRole('heading', { name: 'Gerar SPED ECF' }).closest('section') as HTMLElement);
+    fireEvent.change(ecfForm.getByLabelText('Contador do cadastro (opcional)'), { target: { value: 'ct1' } });
+    fireEvent.change(ecfForm.getByPlaceholderText('Nome'), { target: { value: 'Sócio' } });
+    fireEvent.change(ecfForm.getByPlaceholderText('CPF/CNPJ'), { target: { value: '52998224725' } });
+    pick(ecfForm.getByPlaceholderText('Qualif. (900=contador)'), '205');
+    fireEvent.change(ecfForm.getByPlaceholderText('E-mail'), { target: { value: 's@x.com' } });
+    fireEvent.change(ecfForm.getByPlaceholderText('Fone'), { target: { value: '11999999999' } });
+    fireEvent.click(ecfForm.getByRole('button', { name: 'Gerar e baixar ECF' }));
+
+    await waitFor(() => expect(ecfForm.getByText(/não tem telefone no cadastro/)).toBeTruthy());
+    expect(vi.mocked(spedService.generateAndDownloadEcf).mock.calls[0][0].signerContactIds).toEqual(['ct1']);
+  });
+});
