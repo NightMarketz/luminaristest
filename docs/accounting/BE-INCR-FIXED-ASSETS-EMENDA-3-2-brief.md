@@ -290,6 +290,17 @@ Pesquisa de lei feita antes (§0.1). O que **resolveu** saiu daqui; o que resta:
 6. **Direito à indenização no Código Civil vigente** (PN 210/73 cita o art. 547 do CC/1916): a regra atual (CC/2002 e
    Lei 8.245/91 art. 35) **não foi lida** — por isso E8b exige declaração explícita em vez de inferir do contrato.
 
+### 5.1 FLAGS abertas — decisão do dono 29/09: "deixe uma flag, não tem como resolver agora"
+
+Estado **aceito como está**. Não bloqueiam a execução; o executor **não** tenta resolver, só preserva o comportamento
+indicado. Quem fechar uma flag risca a linha e cita a fonte.
+
+| Flag | O que fica em aberto | Comportamento até fechar |
+|---|---|---|
+| **FLAG-3.2-A** | Base do limite de R$1.200 = custo sem tributo recuperável (RIR 301 § 3º é de mercadorias → analogia ao imobilizado) | F-EM-2 (a) sobre o custo líquido do item, como está |
+| **FLAG-3.2-B** | Direito à indenização da benfeitoria pela lei vigente (CC/2002; Lei 8.245/91 art. 35) não lido — PN 210/73 cita o CC/1916 | E8b: declaração explícita do usuário, sem default, sem inferir do contrato |
+| **FLAG-3.2-C** | PN CST 210/73 e 104/75 lidos só em fonte secundária; reconferir no SIJUT (`normas.receita.fazenda.gov.br`) | Desenho atual (E8b, F-EM-5 a); não muda |
+
 ## 6. Insumos ausentes (pausados, não varridos — regra 2)
 
 - Nenhum restante: os dois ausentes da 1ª versão (persistência dos itens; DTO do mapeamento) foram lidos na
