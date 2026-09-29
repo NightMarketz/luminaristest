@@ -4,7 +4,9 @@
 > [`PLANO-POS-CONTADOR-2026-09-23.md`](PLANO-POS-CONTADOR-2026-09-23.md) (linha 102) e o nó
 > [`docs/plano/nos/ITEM-DESTINATION.md`](../plano/nos/ITEM-DESTINATION.md).
 > **Este documento NÃO escreve código.** Tem checklist, contratos esboçados e forks.
-> **Forks F-ID-1..9: todos com RATIFICAÇÃO PENDENTE.** Nenhum item vira código sem "executa" do dono (ORCH-006).
+> **Forks F-ID-1..9: ✅ RATIFICADOS em 29/09, todos na recomendação** (dono, chat: *"Pode seguir as recomendações"*;
+> registro em [`D-2026-09-29-ITEM-DESTINATION-FORKS`](../plano/decisoes/D-2026-09-29-ITEM-DESTINATION-FORKS.md)).
+> Nenhum item vira código sem "executa" do dono (ORCH-006).
 >
 > **Alcance, dito antes de tudo:** o 1º cliente é do **Simples** (decisão de 29/09, questionário 1). No Simples não
 > há crédito de ICMS nem de PIS/COFINS pelo regime normal (LC 123 art. 23; código: `nfeCost.ts:111` só credita
@@ -389,9 +391,9 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 
 ---
 
-## 3. Forks — todos RATIFICAÇÃO PENDENTE
+## 3. Forks — ✅ RATIFICADOS 29/09, todos na recomendação (texto original mantido como registro)
 
-### F-ID-1 — Quais destinações existem
+### F-ID-1 — Quais destinações existem — ✅ (a)
 
 - **(a) Duas: `REVENDA` e `INSUMO_SERVICO`.** É o escopo do nó. O enum aceita um 3º valor de forma aditiva.
 - (b) Três, com `USO_CONSUMO` (café, limpeza): sem crédito de PIS/COFINS, sem crédito de ICMS, direto na despesa.
@@ -399,7 +401,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 - **Recomendação: (a).** O `USO_CONSUMO` vai para o achado A-2 (é lacuna real, porque hoje café comprado por NF-e
   só entra como estoque). Abrir agora dimensionaria o item além da autorização (regra 5).
 
-### F-ID-2 — Onde mora o default por produto
+### F-ID-2 — Onde mora o default por produto — ✅ (a)
 
 - **(a) Tabela Prisma `ProductDestinationDefault`** por (`userId`, `unitId`, `productRef`), com CRUD próprio
   (itens 16–20).
@@ -413,7 +415,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
   exige ADR; segue o padrão do `InventoryItem`/F-INV5 (`productRef` string escopada). O escopo é por unidade
   porque o `FiscalProfile` é por unidade, e uma filial pode revender o que outra usa.
 
-### F-ID-3 — Efeito em estoque do `INSUMO_SERVICO`
+### F-ID-3 — Efeito em estoque do `INSUMO_SERVICO` — ✅ (a)
 
 - **(a) Despesa na entrada:** D `insumoExpenseAccountId`, sem `StockMovement` e sem estoque físico. O insumo sai
   do subrazão e do tie-out LAC-E dos dois lados ao mesmo tempo.
@@ -428,7 +430,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 - **Pendente do contador (P-4):** se, no Presumido/Real, material de serviço relevante deve ser estoque até o
   consumo (CPC 16) e não despesa na entrada.
 
-### F-ID-4 — Crédito de PIS/COFINS do monofásico comprado como insumo (a posição oficial é **fork**, não fato)
+### F-ID-4 — Crédito de PIS/COFINS do monofásico comprado como insumo (a posição oficial é **fork**, não fato) — ✅ (a) em 2 etapas: (c) até a P-1
 
 - **(a) Posição da RFB:**
   - **Normas:** IN RFB 2.121/2022 art. 160 I e arts. 534/536 § 1º II; SC SRRF04 nº 4.024/2021 (ambas citadas
@@ -451,7 +453,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
   (c) é seguro, mas perde crédito lícito. **A decisão final depende do contador** (P-1: pergunta reformulada do
   D-6 item 4); este fork só fixa o que o código faz enquanto isso.
 
-### F-ID-5 — Conta de despesa do insumo
+### F-ID-5 — Conta de despesa do insumo — ✅ (a)
 
 - **(a) Uma conta por unidade em `FiscalProfile.insumoExpenseAccountId`**, com o código dado pelo contador e 400
   nomeado se faltar. É o padrão F-X6-8 (a).
@@ -461,7 +463,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
   que o contador precisa aprovar (item 0 da triagem / [[GOV-CONTADOR]]). Se o contador pedir granularidade, (b) é
   1 coluna a mais na tabela do F-ID-2.
 
-### F-ID-6 — Item sem override e sem default de produto
+### F-ID-6 — Item sem override e sem default de produto — ✅ (a)
 
 - **(a) `REVENDA`, com origem `FALLBACK` e warning** no preview e no import.
 - (b) 400: toda linha precisa de destinação explícita.
@@ -471,7 +473,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 - **Risco declarado de (a):** num contribuinte de ICMS, um insumo não marcado credita `vICMS` como revenda, que é
   o erro de hoje, agora com aviso.
 
-### F-ID-7 — Notas já importadas
+### F-ID-7 — Notas já importadas — ✅ (a)
 
 - **(a) Não reprocessar** (ACC-018; precedente F-X6-5 a). A correção sai por estorno + reimportação ou por ajuste
   manual.
@@ -480,7 +482,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
 - **Recomendação: (a).** O 1º cliente é Simples, onde a reclassificação só mexe em estoque × despesa, e não há
   nota de cliente importada em produção (I: os gates de implantação do Bloco A seguem abertos).
 
-### F-ID-8 — Preview
+### F-ID-8 — Preview — ✅ (a)
 
 - **(a) O preview aceita `itemMappings` opcional** e aplica o **mesmo** resolver e os mesmos `destinos` do import.
 - (b) O preview segue sem mapeamento (tudo `REVENDA`) e só avisa que a destinação é assumida.
@@ -488,7 +490,7 @@ No `CUMULATIVO` (Presumido), a coluna de PIS/COFINS é sempre 0 e só a do ICMS 
   insumo, e o operador confirmaria um número que não é o lançado. O custo de (a) é um campo opcional + o decoder
   que já existe.
 
-### F-ID-9 — O override do import atualiza o default do produto?
+### F-ID-9 — O override do import atualiza o default do produto? — ✅ (a)
 
 - **(a) Não.** O default só muda pelo `PUT` explícito, sob a policy fiscal e com evento de auditoria.
 - (b) Sim: o último override vira o default.
@@ -531,7 +533,7 @@ escolher F-ID-2 (b) ou F-ID-3 (b), abre-se ADR antes do "executa".
 
 | # | Achado | Grau | Encaminhamento sugerido |
 |---|---|---|---|
-| **A-1** | **O roteamento de imobilizado do C8 lê o CFOP do XML do fornecedor.** `NfeImportService.ts:64` roteia pelo `prod/CFOP` (I08) = 1551/2551. Numa NF-e emitida pelo fornecedor, o CFOP é o da **saída dele** (5xxx/6xxx). 1551/2551 é o código de **entrada do comprador**, que o XML do fornecedor não traz. O teste mistura 5102 e 1551 na mesma nota (`NfeImportService.test.ts:438-440`), o que uma nota real não teria. Se isso se confirmar, a rota de imobilizado **nunca dispara com XML real**: a máquina cai no `productRef` ou é rejeitada | código V; semântica do I08 **I** (MOC não relido) | `sessao-instrumentacao` com XML real (E9/D2) → GAP-MAP. Um caminho natural é o imobilizado virar uma **destinação declarada** (como esta), não um CFOP lido. Decisão do dono |
+| **A-1** | **O roteamento de imobilizado do C8 lê o CFOP do XML do fornecedor.** `NfeImportService.ts:64` roteia pelo `prod/CFOP` (I08) = 1551/2551. Numa NF-e emitida pelo fornecedor, o CFOP é o da **saída dele** (5xxx/6xxx). 1551/2551 é o código de **entrada do comprador**, que o XML do fornecedor não traz. O teste mistura 5102 e 1551 na mesma nota (`NfeImportService.test.ts:438-440`), o que uma nota real não teria. Se isso se confirmar, a rota de imobilizado **nunca dispara com XML real**: a máquina cai no `productRef` ou é rejeitada | código V; semântica do I08 **I** (MOC não relido) | **29/09, dono:** *"não vai ter xml real tão cedo"*, então fica **registrado, sem ação**. Oráculo sem XML real: a regra do MOC 7.0 Anexo I que casa o 1º dígito do CFOP com o `tpNF` (NV; o arquivo está no MANIFEST, mas não no disco). Usá-lo exige autorizar o download e a instrumentação. Um caminho natural é o imobilizado virar uma **destinação declarada** (como esta), não um CFOP lido |
 | A-2 | `USO_CONSUMO` (café, limpeza) comprado por NF-e não tem caminho: todo item fora de 1551 exige `productRef` e vira estoque (`NfeImportService.ts:306-317`) | V | Emenda F-ID-1 (b), com autorização própria |
 | A-3 | DIFAL do contribuinte de ICMS na compra interestadual de uso e consumo/insumo não é modelado | I | Onda de ICMS (X8) |
 | A-4 | Reclassificação posterior (comprado como revenda, usado como insumo) e o estorno de crédito correspondente | I | BRIEF próprio, se o contador pedir |
@@ -564,7 +566,7 @@ O item 7 entra no PR-1 como (c) e só vira (a) depois da P-1 (F-ID-4). Revisor i
 4. **Checagem que teria falhado:** o item 4 exige a saída **idêntica** à de hoje sem `destinos` (igualdade
    profunda), e o item 14 exige preview = import com o mesmo mapeamento. Um resolver divergente, ou um ramo
    `REVENDA` alterado sem querer, fica vermelho.
-5. **Duas primeiras linhas:** o cabeçalho diz que este documento não é código, que os 9 forks estão pendentes e que
+5. **Duas primeiras linhas:** o cabeçalho diz que este documento não é código, que os 9 forks foram ratificados na recomendação em 29/09 (sem "executa") e que
    o 1º cliente (Simples) só sente o efeito em estoque × despesa.
 6. **Meus vieses (T8):** (i) tendência a confirmar a posição da RFB porque ela veio pronta no pedido do dono. Por
    isso ela está como fork, com a leitura do contador ao lado. (ii) O achado A-1 é inferência sobre o C8 feita por
