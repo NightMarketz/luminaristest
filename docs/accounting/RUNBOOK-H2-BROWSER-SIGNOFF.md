@@ -306,6 +306,29 @@ Desfecho do passo 18 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 18): ____________
 
+### [EMENDA 2026-09-28] Passo 19 — Entrega ao contador (FE-INCR-DELIVERY PR-D1/PR-D2)
+
+> Preparado por agente em 2026-09-28, **em branco** (BRIEF `FE-INCR-DELIVERY-brief.md` §1). Pré-condições dos passos
+> 12–14 + revisão do par ECD/ECF **assinada** (passo 18) + os 12 meses do exercício `HARD_CLOSED`. O sistema **não
+> envia nada**: `SENT` registra que o operador despachou pelo canal dele (F-CD1-a).
+
+19. Contabilidade → Compliance → "Entrega ao contador".
+    - a) Contadores: cadastrar um (CPF, CRC `UF-NNNNNN/O-D`, UF do CRC); editar limpando a certidão; salvar um perfil de
+      pacote com "Balancete". EVIDÊNCIA: [ ]
+    - b) Montar pacote: escolher o contador (o balancete do exercício vem pré-marcado pelo perfil), a ECD e a ECF;
+      "Validar pacote" → manifesto com ECD, ECF e os extras na ordem, sha256 e período. Sem revisão assinada: 409
+      `REVIEW_REQUIRED` com o link "Revisão profissional ↑". EVIDÊNCIA: [ ]
+    - c) Baixar os arquivos pelo manifesto e conferir o sha256; marcar "Confirmo que despachei…" e "Registrar despacho"
+      → recibo com `SENT`, o significado devolvido pelo servidor, o contador e o signatário J930. EVIDÊNCIA: [ ]
+    - d) Entregas: a entrega aparece no histórico; o detalhe lista os itens; "Reprocessar" só aparece em `FAILED`.
+      EVIDÊNCIA: [ ]
+
+Desfecho do passo 19 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 19): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
