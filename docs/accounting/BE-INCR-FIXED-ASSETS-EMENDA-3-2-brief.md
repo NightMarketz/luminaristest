@@ -35,6 +35,10 @@
 | S10 | `LalurParteBMovement` não tem vínculo a lançamento contábil; `origem ∈ {user, system}` | `schema.prisma:2019-2041` | V |
 | S11 | `closeParteB` já deriva movimentos `system` (PF/BC) dentro da tx e escolhe conta por `codPbRfb` | `LalurService.ts:825-870` | V |
 | S12 | Nenhuma ocorrência de `1071`/`2210` no código contábil | grep | V |
+| S13 | Nota multi-item **não aceita** `expenseAccountId` no topo (modos XOR); o modo 4 só combina com o modo 3 | `PayableDto.ts:129-166` | V |
+| S14 | O detalhamento do modo 4 **não** mora no `Payable`: vai para `SourceDocument.rawJson` como `{fixedAssetItems}`; os débitos são agrupados por `accountCode` (`groupFixedAssetDebits`); `redriveMissingDrafts` relê esse JSON e cria rascunho para **todo** item nele | `PayableService.ts:1005-1045,1118-1130,1171` | V |
+| S15 | `resolveFixedAssetLines` resolve, antes da tx, a conta da classe **e a taxa por NCM** de cada item | `PayableService.ts:182-187,1202-1244` | V |
+| S16 | O mapeamento do import é por item: `productRef` XOR `classId`, e o CFOP 1551/2551 **exige** `classId` | `dtos/` do mapeamento NF-e, `:24-39` | V |
 
 ## 2. Checklist de comportamentos
 
@@ -52,13 +56,19 @@ Artefato: RIR/2018 art. 313 § 1º I e § 2º; IN RFB 1.700/2017 art. 120 caput 
   → elegível; 1 item × R$1.300 → inelegível; nota com 2 linhas somando R$2.000, cada uma ≤ R$1.200 → ambas elegíveis.
 - **E3.** A escolha é **explícita por item, no lançamento da aquisição** (PN 100/78 item 13): o mapeamento do import
   e o `fixedAssetItem` ganham `treatment: 'CAPITALIZE' | 'EXPENSE'` (default e forma do mapeamento: F-EM-1).
-  `EXPENSE` exige `expenseAccountId` (conta de resultado, analítica, ativa — mesmas guardas do `expenseAccountId` do
-  payable) e **não** exige `classId`.
+  `EXPENSE` exige `expenseAccountId` **por item** (conta de resultado, analítica, ativa — mesmas guardas do
+  `expenseAccountId` do payable) e **não** exige `classId`. A regra XOR de S13 no topo do DTO **não muda**: a conta
+  mora no item, não no topo. Mudanças forçadas: (i) o gate de S16 passa a aceitar `classId` **ou**
+  `{treatment:'EXPENSE', expenseAccountId}` para 1551/2551; (ii) `resolveFixedAssetLines` (S15) **pula** a resolução
+  de taxa/classe de item EXPENSE (senão um NCM sem taxa derruba uma compra que nem vai ao ativo).
 - **E4.** `EXPENSE` com `unitCostCents > limite` → `ValidationError` 400 citando art. 120. (A outra hipótese do caput —
   vida útil ≤ 1 ano — fica em F-EM-3.)
 - **E5.** Item `EXPENSE` debita `expenseAccountId` no mesmo lançamento do payable (mesma tx, mesma fórmula D3 de custo
-  líquido) e **não** cria `FixedAsset` nem rascunho; o re-drive do `reconcile` (item 22 do BRIEF-mãe) ignora itens
-  `EXPENSE` (teste: reconcile sobre payable com 1 CAPITALIZE + 1 EXPENSE cria 1 rascunho, 0 no 2º run).
+  líquido) e **não** cria `FixedAsset` nem rascunho. O débito entra pelo mesmo agrupamento por `accountCode` (S14).
+  O `rawJson` guarda os itens EXPENSE **com** `treatment` (trilha da escolha, PN 100/78 item 13) e o
+  `redriveMissingDrafts` **filtra** `treatment==='EXPENSE'` antes de `createDraftFromPayable` — hoje ele rascunha
+  tudo que está no JSON (S14), então sem o filtro o reconcile ativaria o que o usuário expensou. Teste: payable com
+  1 CAPITALIZE + 1 EXPENSE → reconcile cria 1 rascunho; 2º run cria 0. JSON legado sem `treatment` = CAPITALIZE.
 - **E6.** Irreversibilidade (PN 100/78 item 20): **não existe** comando "expensar ativo existente". Teste negativo
   documental: nenhum endpoint novo sobre `FixedAsset` além dos do BRIEF-mãe (guard de path-count do openapi).
 - **E7.** Exceção de conjunto (IN 1.700 art. 120 § 1º): o sistema **não decide** — é declaração do usuário. Forma: F-EM-4.
@@ -180,8 +190,7 @@ ALTER TABLE fixed_asset_classes ADD COLUMN amortizationExpenseAccountId TEXT REF
 ALTER TABLE lalur_entries       ADD COLUMN origem TEXT NOT NULL DEFAULT 'user';
 ```
 
-Payable: se o item `EXPENSE` precisar ser persistido por item (hoje o payable guarda linhas? — **insumo ausente**,
-§6), a coluna entra aqui.
+Payable: **nenhuma coluna** — o item EXPENSE vive no `SourceDocument.rawJson` junto com os de imobilizado (S14).
 
 ### 3.4 Leitor do Bloco F
 
@@ -202,14 +211,14 @@ export interface IFixedAssetReader {
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
 | **F-EM-1** | Default do `treatment` e onde o usuário escolhe | (a) default `CAPITALIZE`; EXPENSE só explícito, por item, no mapeamento do import · (b) sugerir `EXPENSE` automaticamente quando unitário ≤ limite · (c) default `EXPENSE` abaixo do limite | **(a)** — PN 100/78 item 13 põe a escolha no lançamento; auto-sugestão (b) é FE, não muda o contrato; (c) decide pelo contribuinte |
-| **F-EM-2** | `unitCostCents` quando `costCents` não divide por `qty` | (a) comparar `costCents ≤ limite × qty` (sem divisão) · (b) teto da divisão | **(a)** — exato em inteiros, sem arredondamento |
+| **F-EM-2** | `unitCostCents` quando `costCents` não divide por `qty` | (a) comparar `costCents ≤ limite × qty` (sem divisão) · (b) teto da divisão | **(a)** — exato em inteiros, sem arredondamento. **Base comparada = custo líquido do item** (rateio D3 com frete, sem os créditos recuperáveis — S3); que o "valor unitário" do art. 120 seja o custo de aquisição nesse sentido é **inferido** (RIR art. 301 não lido nesta sessão) → §5 item 5 |
 | **F-EM-3** | Hipótese "vida útil ≤ 1 ano" (2ª do caput do art. 120) | (a) fora desta emenda · (b) flag `usefulLifeUpToOneYear` que libera EXPENSE acima do limite | **(a)** — a decisão 16 nomeia só o R$1.200; (b) vira achado fora de escopo |
 | **F-EM-4** | Exceção de conjunto (§ 1º) | (a) só declarativa: `setDeclared` força CAPITALIZE, sem heurística · (b) heurística por NCM/qty · (c) ignorar | **(a)** — a lei fala da atividade, que o sistema não conhece |
 | **F-EM-5** | Prazo da benfeitoria | (a) só prazo restante do contrato (V) · (b) min(contrato, vida útil) (NV) | **(a)** agora; (b) só após leitura do PN CST 210/73 e 104/75 (§5) |
 | **F-EM-6** | Onde mora o prazo | (a) `leaseEndDate` no **ativo** · (b) na classe | **(a)** — contratos diferentes por imóvel; a classe diz só o *tipo* |
 | **F-EM-7** | Conta de despesa da amortização | (a) reusa `depreciationExpenseAccountId` · (b) `amortizationExpenseAccountId` na classe | **(b)** — DRE/referencial separa depreciação de amortização; confirmar código referencial com o contador (§5) |
 | **F-EM-8** | Renovação/rescisão do contrato | (a) imutável após ativação; rescisão = dispose · (b) comando `extendLease` com recálculo prospectivo | **(a)** nesta emenda; (b) quando o 1º cliente tiver contrato renovado |
-| **F-EM-9** | Forma do registro Bloco F (a pausa do PR-3) | (a) `LalurEntry` Parte A (86/161/91.01, `indRelacao='1'`, `parteBId`) + `LalurParteBMovement system` · (b) só `LalurParteBMovement` · (c) (a) + M312 ligando os lançamentos de quota | **(a)** — Parte A é onde a adição/exclusão afeta a base; Parte B é o controle; M312 (c) não é exigido por indRelacao 1 (S9) |
+| **F-EM-9** | Forma do registro Bloco F (a pausa do PR-3) | (a) `LalurEntry` Parte A (86/161/91.01, `indRelacao='1'`, `parteBId`) + `LalurParteBMovement system` · (b) só `LalurParteBMovement` · (c) (a) + M312 ligando os lançamentos de quota | **(a)** — Parte A é onde a adição/exclusão afeta a base; Parte B é o controle; M312 (c) não é exigido por indRelacao 1 (S9). **Inferido:** `indRelacao='1'` (só Parte B) × `'3'` (Parte B + conta contábil, exige `accountId`) não foi conferido no manual da ECF — o executor confere p.245-247 antes de fixar |
 | **F-EM-10** | Configuração da conta Parte B | (a) 4 FKs em settings (`1071`/`2210` × IRPJ/CSLL) · (b) resolver por `codPbRfb`+`codTributo` nas contas M010 do exercício, como o PF/BC (S11) | **(b)** — reuso do padrão existente; a coluna S7 (já exposta na API de settings) fica deprecada — remoção = mudança de contrato, fold posterior |
 | **F-EM-11** | Benfeitoria tem diferença contábil × fiscal? | (a) não — contábil = fiscal pelo prazo · (b) sim | **(a)** até o contador dizer o contrário |
 | **F-EM-12** | Colisão com LalurEntry manual 86/161 | (a) 400 · (b) somar sistema ao manual numa linha só · (c) mudar a unique para incluir `origem` | **(a)** — explícito; (c) mexe em invariante do e-Lalur |
@@ -223,11 +232,13 @@ export interface IFixedAssetReader {
 3. **Código do referencial** para despesa de amortização de benfeitoria (F-EM-7) — contador.
 4. **CSLL**: a diferença de depreciação se aplica também ao e-Lacs (linha `86` existe no lacs, S8)? — inferido que sim;
    confirmar. Define se E16 gera 1 ou 2 linhas por ativo.
+5. **Base do limite de R$1.200** = custo de aquisição líquido dos tributos recuperáveis, com frete rateado (F-EM-2) —
+   inferido; contador confirma.
 
 ## 6. Insumos ausentes (pausados, não varridos — regra 2)
 
-- Como o `Payable` persiste linhas de itens (se persiste) — define se `EXPENSE` precisa de coluna nova (§3.3).
-- Forma atual do DTO de mapeamento do import (`cProd → classId`) — não lida; E3 descreve o alvo, não o diff.
+- Nenhum restante: os dois ausentes da 1ª versão (persistência dos itens; DTO do mapeamento) foram lidos na
+  2ª passada → S14/S16.
 
 ## 7. Achados fora de escopo
 
