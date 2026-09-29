@@ -113,8 +113,12 @@ do dossiê.
 | DCTFWeb: fatos a partir de 01/01/2025 (art. 1º § 1º); é confissão de dívida (art. 2º); **prazo: último dia útil do mês seguinte (art. 6º)**; IRPJ, CSLL, PIS e Cofins entram pelo **MIT** (arts. 8º–9º); os **retidos na fonte** vão para a EFD-Reinf (art. 9º § 1º I); o Simples não informa o que está no DAS (art. 8º § 4º) | IN RFB 2.237/2024, texto compilado | V-fonte. **Corrige o dossiê**, que punha o prazo nos arts. 8º–9º |
 | GIA dispensada a partir de 01/01/2026 para quem está no regime periódico de apuração | Portaria SRE 2/2025 art. 2º I (item 5 do § 4º do art. 1º do Anexo IV da Portaria CAT 92/98) | V-fonte |
 | PIS/Cofins revogados a partir de 01/01/2027 (LC 7 art. 3º b; LC 70 arts. 1º–6º; Lei 9.718 arts. 2º–8º-B; Lei 10.637 arts. 1º–5º-A; Lei 10.833 arts. 1º–16; entre outros) | LC 214/2025 art. 542; efeito pelo art. 544 III (redação da LC 227/2026) | V-fonte |
-| ECF: `0010.FORMA_APUR` `[T;A]`, e `FORMA_TRIB_PER` com `E` **só no caso REFIS** (p.73); `MES_BAL_RED` = 12 posições `[0;E;B]`, E = receita bruta, B = balanço/balancete (p.74); `PER_APUR` `A00` = anual e `A01..A12` = "receita bruta do mês / balanço até o mês" (p.128); `L030` até 13 ocorrências, L100/L300 também nos meses `B` (p.47); N620/N660 só em `A01..A12`, N630/N670 em `A00` ou `T0x` (p.49) | Manual da ECF L12, atualização jul/2026 | V-fonte. O TIPO (`CNA` × `E`) das linhas N620/N660 está só na planilha de Tabelas Dinâmicas (pp.297–298), **não lida** |
-| O MIT **importa arquivo JSON** no leiaute oficial; a importação cria a apuração "Em Edição" e **o usuário tem de encerrá-la** para ela ir à DCTFWeb; também exporta no mesmo leiaute (§§ 8.3 e 9, pp.24–26). Leiaute 1.0 (retificado em 20/02/2025): `BalancoLucroReal` (booleano do mês), objetos `Irpj`/`Csll` com `ListaDebitos` → `CodigoDebito` (6 dígitos, ex. `"022012"`), `ValorDebito`, `AnoDebito` (ajuste anual) | Manual do MIT (jan/2025); leiaute JSON de importação 1.0 | V-fonte. A tabela de códigos de receita **não** está no leiaute |
+| ECF: `0010.FORMA_APUR` `[T;A]`, e `FORMA_TRIB_PER` com `E` **só no caso REFIS** (p.73); `MES_BAL_RED` = 12 posições `[0;E;B]`, E = receita bruta, B = balanço/balancete (p.74); `PER_APUR` `A00` = anual e `A01..A12` = "receita bruta do mês / balanço até o mês" (p.128); `L030` até 13 ocorrências, L100/L300 também nos meses `B` (p.47); N620/N660 só em `A01..A12`, N630/N670 em `A00` ou `T0x` (p.49) | Manual da ECF L12, atualização jul/2026 | V-fonte |
+| O MIT **importa arquivo JSON** no leiaute oficial; a importação cria a apuração "Em Edição" e **o usuário tem de encerrá-la** para ela ir à DCTFWeb; também exporta no mesmo leiaute (§§ 8.3 e 9, pp.24–26). Leiaute 1.0 (retificado em 20/02/2025): `BalancoLucroReal` (booleano do mês), objetos `Irpj`/`Csll` com `ListaDebitos` → `CodigoDebito` (6 dígitos, ex. `"022012"`), `ValorDebito`, `AnoDebito` (ajuste anual) | Manual do MIT (jan/2025); leiaute JSON de importação 1.0 | V-fonte. A tabela de códigos de receita **não** está no leiaute (ver a linha seguinte) |
+| Tabelas Dinâmicas, N620 e N660: base, 15%, adicional (fórmula com `MESES_PERIODO()` no balancete), "devido em meses anteriores" (soma dos `A01..` anteriores quando `B`) e "devido no mês" são `CNA`/`CA`, ou seja, **fórmula do PVA**. Só são `E` (informadas pela PJ) as deduções de incentivo e as retenções/pagamentos (N620 linhas 5, 7–17.50, 21–25.99, 27; N660 10–11.02, 13–17.99, 19). Contagem: N620 = 14 CNA, 3 CA, 24 E, 2 R; N660 = 5 CNA, 7 CA, 19 E, 3 R | Tabelas Dinâmicas da ECF L12 (planilha da página de 28/05/2026, arquivo atual 24/09/2026) | V-fonte |
+| Códigos de receita (código/variação): IRPJ Presumido **2089/01**; Real trimestral **0220/01** (obrigada) ou **3373/01** (optante); estimativa mensal **2362/01** (obrigada) ou **5993/01** (optante); saldo do ajuste anual **2430/01** (obrigada) ou **2456/01** (optante), declarado na competência de março. CSLL Presumido **2372/01**; Real trimestral **6012/01**; estimativa **2484/01**; ajuste anual **6773/01**. A diferença postergada do 16% tem código próprio (2089/02, 2362/02, 5993/02) | Receita, "DCTF — Tabelas de códigos/extensões" IRPJ e CSLL (atualizadas em 12/03/2024) | V-fonte (a tabela). Que o MIT usa a mesma tabela é **I**: o formato bate (código + variação, 6 dígitos; o exemplo do leiaute é `"022012"` = 0220/12) |
+| Transmitir a ECD **supre** a obrigação de transcrever no Diário o balancete de suspensão/redução do art. 35 da Lei 8.981 | IN RFB 2.003/2021 art. 9º III (corpus `IN-RFB-2003-2021-ECD.txt:105-108`); repetido no Manual da ECD L9, jan/2026, p.8 | V-corpus + V-fonte |
+| O acréscimo da LC 224 está contestado no STF: **ADI 7936** (CNS, relator Fux) e **ADI 7944** (OAB, relator Fux). Nenhuma das duas tem decisão cautelar: a 7936 está conclusa ao relator desde 27/08/2026, depois de AGU e PGR; a 7944, desde 20/05/2026 | Portal do STF, andamentos das duas ADIs, lidos em 29/09 | V-fonte |
 
 ## 4. Decisões fixadas (sem fork: a lei ou um precedente ratificado já decide)
 
@@ -182,7 +186,7 @@ fork citam o fork.
 
 | # | Comportamento | Toca | Fork |
 |---|---|---|---|
-| A1 | Perfil ganha `formaApuracaoIrpjCsll` e `formaApuracaoTravadaEm` (migração aditiva, nullable). O DTO aplica as regras do D1 e bloqueia a troca depois da trava | `CompanyFiscalProfile` + DTO + service | F-X7-5 |
+| A1 | Perfil ganha `formaApuracaoIrpjCsll` e `formaApuracaoTravadaEm` (migração aditiva, nullable), e o dado "Lucro Real **obrigatório** ou **por opção**", porque o código de receita do IRPJ muda com isso (0220 × 3373; 2362 × 5993; 2430 × 2456 — §3). O DTO aplica as regras do D1 e bloqueia a troca depois da trava | `CompanyFiscalProfile` + DTO + service | F-X7-5 |
 | A2 | Tabela de parâmetros versionada (D3): IRPJ 15%, adicional 10% / R$ 20 mil·mês, percentuais dos arts. 33–34, teto de 30%, cada um com `fonte`/`vigenteDesde` | arquivo novo em `models/` | F-X7-10, F-X7-14 |
 | A3 | Model `TaxAssessment`, com memória de cálculo | Prisma + repo + factory | F-X7-3 |
 | A4 | **Presumido trimestral:** base por atividade (D5) × percentual → IRPJ (15% + adicional, D7) e CSLL (D8) | serviço de apuração | F-X7-10, F-X7-14 |
@@ -199,7 +203,7 @@ fork citam o fork.
 |---|---|---|---|
 | B1 | `ANUAL` liberado no DTO do perfil (só com `regime = REAL`), com a trava | perfil | F-X7-5 |
 | B2 | **Estimativa por receita bruta** no mês m: base = receita × percentual (D10) → IRPJ com adicional mensal (D7) e CSLL | serviço | F-X7-10, F-X7-14 |
-| B3 | **Balancete de suspensão/redução** do mês m: calcula o devido do período em curso (01/01 → fim de m; só Parte A, D9) e subtrai a soma das estimativas **devidas e confirmadas** dos meses anteriores (art. 47). Resultado ≤ 0 suspende; > 0 reduz. A CSLL do mês usa o mesmo modo do IRPJ (art. 47 § 1º). O balancete tem de estar **transcrito no livro Diário** (Lei 8.981 art. 35 § 1º a) e escriturado até o vencimento, senão é desconsiderado (IN 1.700 art. 52 § 4º) | serviço + e-Lalur + ECD (§10) | F-X7-6 |
+| B3 | **Balancete de suspensão/redução** do mês m: calcula o devido do período em curso (01/01 → fim de m; só Parte A, D9) e subtrai a soma das estimativas **devidas e confirmadas** dos meses anteriores (art. 47). Resultado ≤ 0 suspende; > 0 reduz. A CSLL do mês usa o mesmo modo do IRPJ (art. 47 § 1º). A transcrição no Diário (Lei 8.981 art. 35 § 1º a) é **suprida pela transmissão da ECD** (IN 2.003 art. 9º III), sem registro especial. O que continua valendo é a escrituração até a data do pagamento, senão o balancete é desconsiderado (IN 1.700 art. 52 § 4º): os lançamentos do mês têm de estar no razão antes de confirmar o balancete | serviço + e-Lalur | F-X7-6 |
 | B4 | A forma de cada mês (receita bruta × balancete) fica registrada; é o `MES_BAL_RED` da ECF | `TaxAssessment.modo` | — |
 | B5 | Janeiro por balancete (art. 48) e início de atividade (art. 54 § 2º) | serviço | F-X7-5 |
 | B6 | **Ajuste anual em 31/12:** lucro real anual (Parte A + Parte B) − soma das estimativas → saldo a pagar (quota única até o último dia útil de março, com juros Selic desde 1º de fevereiro) ou saldo negativo (restituição/compensação) — Lei 9.430 art. 6º. A estimativa de dezembro vence no último dia útil de janeiro (§ 3º) | serviço | — |
@@ -349,12 +353,13 @@ Por padrão (deny-by-default no middleware), tudo fica atrás de policy. Quem co
 
 ## 9. Pendente de validação externa (contador ou oráculo; nada disso entra no checklist como decidido)
 
-1. **LC 224 no caso concreto:** a regra está verificada (§3). Resta saber se algum cliente tem decisão judicial
-   própria contra o acréscimo (há notícia de liminares individuais, só em fonte secundária, **não conferida**). Isso
-   só o contador ou o jurídico do cliente sabe.
-2. **Códigos de receita** do DARF / DCTFWeb por tributo e forma (Presumido, Real trimestral, estimativa, ajuste
-   anual). **Não inventar**: tabela oficial da RFB. O leiaute JSON do MIT usa `CodigoDebito` de 6 dígitos (ex.
-   `"022012"`), mas não traz a lista.
+1. **LC 224 no caso concreto:** a regra está verificada, e as ADIs 7936 e 7944 não têm cautelar (§3). As liminares
+   dos TRFs noticiadas por escritórios não foram conferidas no tribunal. Por natureza, valem só para quem as obteve
+   (**I**), então o que importa é se **o cliente** tem uma. Isso só o contador ou o jurídico dele sabe. Se tiver, o
+   acréscimo precisa poder ser desligado por cliente. Se o STF der cautelar, desliga-se para todos. Nos dois casos,
+   a tabela versionada (D3) já comporta a mudança.
+2. ~~Códigos de receita~~ — **resolvido** pela tabela oficial (§3). Fica só a confirmação, com o contador ou na 1ª
+   importação no MIT, de que o MIT aceita exatamente essa tabela (hoje é inferência pelo formato).
 3. **Contas** de provisão e o código do referencial correspondente (despesa IRPJ/CSLL, IRPJ/CSLL a recolher, saldo
    negativo a compensar) — F-X7-4.
 4. **"Demais receitas" do Presumido** (receitas financeiras, ganhos de capital; Lei 9.430 art. 25 II; IN 1.700 art.
@@ -367,20 +372,18 @@ Por padrão (deny-by-default no middleware), tudo fica atrás de policy. Quem co
 
 ## 10. Insumos ausentes (pausa registrada; não varri além dos insumos, regra 2)
 
-1. **Tabelas Dinâmicas da ECF L12** (planilha; MANIFEST `tabelas-dinamicas-ecf`, não lida): o TIPO (`CNA` × `E`)
-   das linhas de N620/N660. O resto do que a Fase B precisa do Manual foi lido em 29/09 (§3). Transcrever antes do
-   BRIEF da Fase B, no molde `TRANSCRICAO-*.md`.
+1. ~~Tabelas Dinâmicas: TIPO das linhas N620/N660~~ — **resolvido** (§3). Os cálculos são do PVA, o que confirma o
+   F-X7-2 (a) também para a Fase B. Transcrever as duas abas antes do BRIEF da Fase B, no molde `TRANSCRICAO-*.md`.
 2. ~~Manual do MIT: existe leiaute de importação de arquivo?~~ — **resolvido**: existe (§3), e mudou a recomendação
    do F-X7-9.
 3. **Compensação no e-Lalur em detalhe.** Li `LalurService.ts:226-229,279-288` (linha tipo P, `indRelacao = 1`,
    limitada ao saldo da Parte B). O BRIEF confirma se a linha P é a única fonte da compensação que o D6 vai
    limitar.
-4. **Tabela oficial de códigos de receita** (§9 item 2).
+4. ~~Tabela oficial de códigos de receita~~ — **resolvido** (§3).
 5. **Retenções** (IRRF/CSRF): não há modelo (F-X7-11).
 6. ~~IN 1.700 do corpus possivelmente defasada~~ — **retirado**: a LC 224 foi regulamentada numa IN própria
    (2.305/2025), não por alteração da IN 1.700, então a ausência no corpus não indica defasagem.
-7. **Balancete no Diário × ECD:** como a ECD representa o balancete de suspensão/redução transcrito no Diário
-   (Lei 8.981 art. 35 § 1º a). Fonte: Manual da ECD L9 (MANIFEST `manual-ecd-l9`), não lido. Decide parte do B3.
+7. ~~Balancete no Diário × ECD~~ — **resolvido**: a ECD supre a transcrição (IN 2.003 art. 9º III). Ver B3.
 
 ## 11. Achados fora de escopo (registrados, não planejados — regra 5)
 
@@ -486,8 +489,21 @@ Pedido do dono, depois da 1ª versão: *"Se são artigos de lei, precisa ter pes
 9. **CSLL:** os 9% foram conferidos (Lei 7.689 art. 3º III). As alíquotas novas de financeiras ficaram registradas
    como fora do alvo (D8; §11 item 3).
 
+**Segunda rodada (29/09, pedido do dono: "Tenta verificar esses"):**
+
+| Documento | Origem | sha256 (12) | Observação |
+|---|---|---|---|
+| Tabelas Dinâmicas da ECF L12 (.xlsx, 79 abas) | gov.br/sped, página "atualização 28/05/2026"; o arquivo servido é o de 24/09/2026 | `2a4c9688df7a` | fora do MANIFEST (`366b8d9030a0` era outra versão) |
+| Manual da ECD L9, jan/2026 | gov.br/sped | `7ddf47755f61` | **igual** ao MANIFEST |
+| Tabelas de códigos IRPJ e CSLL | páginas HTML da Receita (navegador) | — | atualizadas em 12/03/2024 |
+| ADI 7936 e ADI 7944 | `portal.stf.jus.br/processos` (navegador) | — | andamentos lidos em 29/09 |
+
+**O que mudou por causa da segunda rodada:**
+1. Os cálculos de N620/N660 são do PVA, o que reforça o F-X7-2 (a).
+2. O código de receita depende de Lucro Real obrigatório × por opção, então o A1 ganha esse dado.
+3. A transcrição do balancete no Diário é suprida pela ECD, então o B3 fica mais simples.
+4. As ADIs contra a LC 224 estão sem cautelar, e as liminares individuais viraram uma chave por cliente (§9 item 1).
+
 **O que continua sem verificação:**
-- o TIPO das linhas N620/N660 (planilha de Tabelas Dinâmicas);
-- a tabela de códigos de receita;
-- como a ECD representa o balancete;
-- as liminares contra a LC 224 (só fonte secundária).
+- se o MIT usa exatamente a tabela de códigos da DCTF (inferido pelo formato);
+- as liminares dos TRFs, que não foram conferidas no tribunal e valem só para quem as obteve.
