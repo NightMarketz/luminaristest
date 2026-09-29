@@ -51,6 +51,12 @@ que citava o antigo precisa ser reconferido.
 | nfe-nt-2025-002-v151 | Reforma tributaria — IBS/CBS na NF-e/NFC-e (X10a, PRE-ADR IBS/CBS) | NT 2025.002-RTC v1.51 (julho/2026; portal: publicada 04/08/2026, `conteudo=AKD/muSmiIY=`) | `NFe-NT-2025.002-v1.51.pdf` | 2.182.361 | `a4aaaa181522` |
 | nfe-nt-2026-006 | Split payment — vinculacao DF-e × transacao de pagamento (onda 3) | NT 2026.006 v1.00 (agosto/2026; portal: publicada 25/08/2026, `conteudo=k7zG06n5M6I=`) | `NFe-NT-2026.006-v1.00.pdf` | 767.681 | `47a65abde315` |
 | nfe-nt-2026-007 | NF-e por contribuinte exclusivo do IBS/CBS (sem IE; Ato 4 § 4º) | NT 2026.007 v1.00 (julho/2026; portal: publicada 04/08/2026, `conteudo=jVEAeMhv83w=`) | `NFe-NT-2026.007-v1.00.pdf` | 733.482 | `559fcd7d1b49` |
+| res-cgsn-140-2018 | Simples — PGDAS-D (art. 38), DAS dia 20 (art. 40), Defis 31/03 (art. 72), livro caixa (art. 63), fator r (art. 26), segregacao (art. 25) | Resolucao CGSN 140/2018, texto multivigente (idAto 92278) + 24 anexos. **Compilacao da RFB vai ate a Res. CGSN 183/2025 — a 191/2026 NAO esta compilada** | `Res-CGSN-140-2018.json` | 1.460.719 | `8d9b024965c1` |
+| manual-pgdas-defis | Simples — arvore de atividades/segregacoes do PGDAS-D (item 6.5) e campos da Defis (item 9.4) | Manual do PGDAS-D e DEFIS, **versao 17/06/2025** (URL ainda diz `_2018_V4`); sem IBS/CBS | `Manual-PGDAS-D-DEFIS-2018-v4.pdf` | 6.516.324 | `e73b2bfc7ede` |
+| rfb-noticia-cgsn-191 | Simples — NFS-e nacional obrigatoria para ME/EPP desde 01/11/2026 (Res. CGSN 191/2026) | Noticia RFB, ago/2026 (o texto da resolucao nao esta compilado no Normas) | `RFB-noticia-CGSN-191-2026-NFSe.html` | 199.485 | `be6cc4a38faf` |
+| lei-12592-2012 | Simples — salao-parceiro: cota do profissional fora da receita bruta (art. 1o-A §§ 4o e 5o) | Lei 12.592/2012, compilada (red. Lei 13.352/2016) | `Lei-12592-2012-salao-parceiro.html` | 21.926 | `b31a63e3a20f` |
+| ricms-sp-313e | Simples — ICMS-ST de perfumaria/higiene em SP (arts. 313-E e 313-F) | RICMS/SP (Decreto 45.490/2000), pagina dos arts. 313-E a 313-F | `RICMS-SP-art313E-313F.html` | 158.517 | `76c6377a3513` |
+| portaria-sre-94-2025 | Simples — perfumaria/higiene SAI da ST em SP a partir de 01/04/2026 (arts. 1o e 4o) | Portaria SRE 94/2025 (SP) | `Portaria-SRE-94-2025-SP.html` | 148.094 | `68c1b46cafca` |
 
 ## URLs de origem
 
@@ -134,3 +140,13 @@ que citava o antigo precisa ser reconferido.
   baixado 2026-09-26, sha256 `0603dbb47ea9f1928a5e6f72168a2f6dfe1ad2796b394aa6ad6ac92282a9c9a8`. Transcrito (§4) no mesmo arquivo.
 
 **29/09/2026** — 5 documentos baixados à mão (autorização do dono na entrevista de 29/09, decisão 10 de `docs/plano/decisoes/D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE.md`), com o título conferido no texto da 1ª página de cada PDF. O portal da NF-e exige cookie de sessão (GET na lista de NTs antes do `exibirArquivo`).
+
+**29/09/2026 (tarde)** — 6 fontes do Simples baixadas por `node scripts/baixar-fontes-oficiais.mjs --so=<id>` (entradas novas no script),
+autorizadas pelo dono em chat ("Pode Baixar", sobre os insumos ausentes do `PRE-ADR-SIMPLES-NACIONAL-CALCULO` §9); linhas
+acrescentadas a mao com o sha do disco (o script reescreve o manifesto so com a ultima entrada). Titulo conferido no conteudo de cada uma.
+- **res-cgsn-140-2018** — <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente> — sha256 `8d9b024965c1568c12560992791181d1560a0c24982d65b451cc407231374d80`; texto em `Res-CGSN-140-2018.txt` (versionado).
+- **manual-pgdas-defis** — <https://www8.receita.fazenda.gov.br/SimplesNacional/Arquivos/manual/MANUAL_PGDAS-D_2018_V4.pdf> — sha256 `e73b2bfc7eded9e419ddd5c516cf37cc49a78540fcd79faf4d84b77988f3f316`.
+- **rfb-noticia-cgsn-191** — <https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/agosto/simples-nacional-nfs-e-nacional-sera-obrigatoria-para-me-e-epp-a-partir-de-1o-de-novembro-de-2026> — sha256 `be6cc4a38faf376524ffc80eccd66c00bd49f2b9101f41fdc17016b7c58b3167`.
+- **lei-12592-2012** — <https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12592.htm> — sha256 `b31a63e3a20fc5c040e094b06d0a0bcaacc9898f577c366171c6908c956da092`.
+- **ricms-sp-313e** — <https://legislacao.fazenda.sp.gov.br/Paginas/art313e.aspx> — sha256 `76c6377a35133dcce14ccdeb81c29d643ed2c6841bba45d0bbebfb1e201cd91b`.
+- **portaria-sre-94-2025** — <https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-94-de-2025.aspx> — sha256 `68c1b46cafca446320f493bd33929f51ad105c4944952db0f369945cbd77563f`.
