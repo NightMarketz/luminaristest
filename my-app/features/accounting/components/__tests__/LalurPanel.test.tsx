@@ -20,6 +20,8 @@ vi.mock('../../../../lib/services/lalur.service', async (importOriginal) => {
     lalurService: {
       listEntries: vi.fn(), listParteB: vi.fn(), getCatalog: vi.fn(), getParteBPadrao: vi.fn(),
       archiveEntry: vi.fn(), archiveParteB: vi.fn(), createEntry: vi.fn(), updateEntry: vi.fn(), createParteB: vi.fn(), updateParteB: vi.fn(),
+      // FE-INCR-LALUR-PR2: a seção de movimentos/diagnóstico monta junto com o painel.
+      listMovements: vi.fn(), getParteBBalances: vi.fn(),
     },
   };
 });
@@ -50,6 +52,8 @@ describe('LalurPanel', () => {
     vi.mocked(lalurService.getCatalog).mockResolvedValue([{ codigo: '7', descricao: 'Custos não dedutíveis', tipo: 'E', tipoLanc: 'A', vigencia: { de: null, ate: null } }]);
     vi.mocked(lalurService.getParteBPadrao).mockResolvedValue([{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional', tributo: 'I' }]);
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [] });
+    vi.mocked(lalurService.listMovements).mockResolvedValue([]);
+    vi.mocked(lalurService.getParteBBalances).mockResolvedValue({ year: 2025, periods: [], divergences: [], warnings: [] });
   });
 
   it('renders the section with both sub-sections, the empty states and the exercício from scopeToday (never UTC)', async () => {

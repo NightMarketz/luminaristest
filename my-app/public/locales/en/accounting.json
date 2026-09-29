@@ -1389,7 +1389,8 @@
       "filter": {
         "allLivros": "All books",
         "allQuarters": "All quarters",
-        "parteB": "Parte B: {{code}} ×"
+        "parteB": "Parte B: {{code}} ×",
+        "focus": "Warning adjustment ×"
       },
       "heading": "Parte A — adjustments (M300/M350) and Block N entry lines",
       "modal": {
@@ -1498,6 +1499,106 @@
     "tributo": {
       "C": "C — CSLL (e-Lacs)",
       "I": "I — IRPJ (e-Lalur)"
+    },
+    "closing": {
+      "close": "Close {{q}}",
+      "closeEffect": "Closing materializes the quarter M500 and derives PF/BC. Requires the previous quarter closed.",
+      "closeTitle": "Close {{q}}/{{year}}",
+      "closed": "closed",
+      "confirm": "Confirm",
+      "error": "The quarter operation could not be completed.",
+      "heading": "Quarter closing — {{year}}",
+      "open": "open",
+      "reopen": "Reopen {{q}}",
+      "reopenEffect": "Reopening deletes this quarter M500 materialization (and the derived PF/BC). Only allowed when no later quarter is closed.",
+      "reopenTitle": "Reopen {{q}}/{{year}}",
+      "running": "Processing…"
+    },
+    "diagnostic": {
+      "divergences": "Differences between the materialized and the recomputed balance",
+      "empty": "No Parte B balances in this year.",
+      "error": {
+        "load": "Error loading the balance diagnostic."
+      },
+      "heading": "Balance diagnostic — materialized × recomputed",
+      "legend": "Top line: recomputed from the entries. Bottom line (closed quarters): materialized at closing.",
+      "materialized": "materialized",
+      "showEntry": "Show the adjustment in Parte A",
+      "warnings": "Warnings — only the PVA settles exact equality",
+      "field": {
+        "sdIni": "Opening balance",
+        "vlA": "Parte A entries",
+        "vlB": "Parte B entries",
+        "sdFim": "Closing balance"
+      }
+    },
+    "movements": {
+      "archiveTitle": "Archive Parte B movement",
+      "col": {
+        "conta": "Account",
+        "contrapartida": "Counter-account",
+        "indLanAnt": "Prior entry",
+        "indicador": "Ind.",
+        "origem": "Origin"
+      },
+      "empty": "No Parte B movements in this selection.",
+      "error": {
+        "load": "Error loading the Parte B movements."
+      },
+      "field": {
+        "conta": "Parte B account (COD_CTA_B)",
+        "contaPlaceholder": "Select the account…",
+        "contrapartida": "Counter-account (COD_CTA_B_CTP) — optional, same tax",
+        "historico": "Description (HIST_LAN_LALB, up to 500)",
+        "historicoLong": "The description has at most 500 characters.",
+        "historicoPipe": "The description cannot contain \"|\" — it is the SPED file field separator.",
+        "indLanAnt": "Prior entry (IND_LAN_ANT)",
+        "indicador": "Indicator (IND_VAL_LAN_LALB_PB)",
+        "indicadorPlaceholder": "Select…",
+        "noContrapartida": "— no counter-account —",
+        "quarter": "Year / quarter",
+        "quarterPlaceholder": "Quarter of {{year}}…",
+        "valor": "Amount (VAL_LAN_LALB_PB)"
+      },
+      "filter": {
+        "allContas": "All accounts",
+        "conta": "Parte B account",
+        "quarter": "Movements quarter",
+        "year": "Movements year"
+      },
+      "heading": "Parte B movements (M410)",
+      "indLanAnt": {
+        "N": "N — no",
+        "S": "S — realization of a deferred-tax amount"
+      },
+      "indicador": {
+        "CR": "CR — credit",
+        "DB": "DB — debit",
+        "PF": "PF — tax loss of the year",
+        "BC": "BC — CSLL negative base"
+      },
+      "modal": {
+        "error": {
+          "failed": "Error saving the Parte B movement.",
+          "invalid": "Fill in account, quarter, indicator, amount, description and the prior-entry flag."
+        },
+        "title": "New Parte B movement (M410)",
+        "titleEdit": "Edit Parte B movement"
+      },
+      "new": "New movement",
+      "origem": {
+        "user": "user",
+        "system": "system (derived PF/BC)"
+      },
+      "processos": {
+        "add": "Add process",
+        "indProc": "Process type",
+        "indProc1": "1 — judicial",
+        "indProc2": "2 — administrative",
+        "numProc": "Process number",
+        "remove": "Remove process",
+        "title": "Processes (M415) — optional"
+      }
     }
   }
 }
