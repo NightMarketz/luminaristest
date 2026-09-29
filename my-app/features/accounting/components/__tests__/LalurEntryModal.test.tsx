@@ -27,6 +27,15 @@ const catalogLalur = [
 ];
 const catalogN = [{ codigo: '1', descricao: 'Linha N', tipo: 'E' as const, vigencia: { de: null, ate: null } }];
 
+/**
+ * Answers like a real request. `getCatalog` is called synchronously in the effect, so a wait on the CALL
+ * is not a wait on the OPTIONS — and CatalogCombobox.commitText() matches the typed code against the
+ * options of the current render. The 0 ms hop starts the 50 ms clock at the test's first yield: a plain
+ * timer started at the call gets absorbed by slow synchronous work under load (in the full-suite run a
+ * plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
+ */
+const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+
 const parteB = (over: Partial<LalurParteBAccount>): LalurParteBAccount => ({
   id: 'b', userId: 'o1', unitId: 'u1', codCtaB: 'PF', descricao: 'Prejuízo', dtCriacao: '2024-12-31T00:00:00.000Z',
   codPbRfb: '1000', dtLimite: null, codTributo: 'I', saldoIniCents: 0, indSaldoIni: 'D', cnpjSitEsp: null,
@@ -49,8 +58,8 @@ function renderModal(over: Partial<React.ComponentProps<typeof LalurEntryModal>>
 }
 
 async function pickCode(codigo: string) {
-  await waitFor(() => expect(lalurService.getCatalog).toHaveBeenCalled());
   const combo = screen.getByRole('combobox', { name: 'Código da linha (Tabela Dinâmica)' });
+  await waitFor(() => expect(combo).not.toHaveAttribute('placeholder', 'Carregando catálogo…'));
   fireEvent.change(combo, { target: { value: codigo } });
   fireEvent.blur(combo);
 }
@@ -64,7 +73,7 @@ describe('LalurEntryModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
-    vi.mocked(lalurService.getCatalog).mockImplementation(async (_u, livro) => (livro === 'lalur' || livro === 'lacs' ? catalogLalur : catalogN));
+    vi.mocked(lalurService.getCatalog).mockImplementation((_u, livro) => later(livro === 'lalur' || livro === 'lacs' ? catalogLalur : catalogN));
     vi.mocked(lalurService.createEntry).mockResolvedValue({} as LalurEntry);
     vi.mocked(lalurService.updateEntry).mockResolvedValue({} as LalurEntry);
   });
