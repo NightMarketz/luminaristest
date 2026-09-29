@@ -284,6 +284,28 @@ Desfecho do passo 17 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 17): ____________
 
+### [EMENDA 2026-09-28] Passo 18 — Revisão profissional (FE-INCR-REVIEW)
+
+> Preparado por agente em 2026-09-28, **em branco** (BRIEF `FE-INCR-REVIEW-brief.md` §1). Mesmas pré-condições dos
+> passos 12–14, com a ECD e a ECF do exercício já geradas pela tela (passo 12/14).
+
+18. Contabilidade → Compliance → "Revisão profissional".
+    - a) "Abrir revisão": os selects listam os arquivos EXPORTED do exercício; abrir com a ECD e a ECF. Abrir de novo
+      o mesmo par dá 409 com a mensagem e a lista recarrega. EVIDÊNCIA: [ ]
+    - b) No detalhe: adicionar um achado BLOCKER (I050) e um NOTE (I200). "Assinar" fica desabilitado enquanto o
+      BLOCKER estiver aberto. EVIDÊNCIA: [ ]
+    - c) Resolver o BLOCKER por "Apontar dado editado" (conta) — o link leva ao Plano de Contas; resolver o NOTE por
+      "Lançar acerto" com "Estornar também o lançamento original" (só aparece no I200). EVIDÊNCIA: [ ]
+    - d) Assinar (nome + CRC `UF-NNNNNN/O-D` + declaração). Se vier 409 `REVIEW_STALE`, regerar, "Trocar jobs" e
+      assinar de novo. Resultado esperado: status "assinada". EVIDÊNCIA: [ ]
+    - e) Em outra revisão: "Rejeitar" com motivo → status "rejeitada", sem mais ações. EVIDÊNCIA: [ ]
+
+Desfecho do passo 18 (marcar UM):
+[ ] PASSOU — a) a e) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 18): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
