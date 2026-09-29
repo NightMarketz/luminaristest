@@ -43,6 +43,8 @@ usá-lo seria preciso autorizar o download e a instrumentação.
 
 **Atualização (mesmo dia, dono: *"Baixa o arquivo pra ler e escreve o teste-guarda"*):** a regra é a I08-10 do Anexo I (rejeição 518, facultativa por UF), lida no PDF de sha256 igual ao MANIFEST. O teste-guarda `it.failing` e a linha [ABERTO] do GAP-MAP estão no PR #443. A correção inverte um caso ratificado do C8 (F-FA12), por isso é decisão do dono.
 
+**Decisão (mesmo dia):** *"Fazer do imobilizado uma destinação declarada, no mesmo modelo do ITEM-DESTINATION."* O `classId` do operador declara `IMOBILIZADO`; o CFOP deixa de rotear. Detalhe na EMENDA do BRIEF (itens 21–26), entregue no PR-1.
+
 ## Próximo passo
 
 "Executa ITEM-DESTINATION PR-1" (BRIEF §7) abre a `sessao-feature`.

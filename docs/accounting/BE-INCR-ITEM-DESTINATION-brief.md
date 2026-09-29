@@ -571,3 +571,29 @@ O item 7 entra no PR-1 como (c) e só vira (a) depois da P-1 (F-ID-4). Revisor i
 6. **Meus vieses (T8):** (i) tendência a confirmar a posição da RFB porque ela veio pronta no pedido do dono. Por
    isso ela está como fork, com a leitura do contador ao lado. (ii) O achado A-1 é inferência sobre o C8 feita por
    uma sessão de outro nó e precisa de XML real antes de virar defeito.
+
+---
+
+## EMENDA 29/09 — imobilizado vira destinação declarada (achado A-1)
+
+**Autorização:** dono, chat, 29/09: *"Fazer do imobilizado uma destinação declarada, no mesmo modelo do ITEM-DESTINATION."*
+Sem "executa". Substitui o roteamento por CFOP do C8 (F-FA12 a, `NfeImportService.ts:64,268,300-305`), que é
+inalcançável com XML de fornecedor (MOC 7.0 Anexo I, I08-10; teste-guarda `it.failing` "GAP-MAP imobilizado-cfop-do-fornecedor").
+
+21. **`ITEM_DESTINATIONS` ganha `IMOBILIZADO`.** O enum passa a ser `REVENDA | INSUMO_SERVICO | IMOBILIZADO`.
+22. **O `classId` do operador é a declaração.** Item mapeado com `classId` tem destinação `IMOBILIZADO`, origem
+    `OVERRIDE`, qualquer que seja o CFOP. `destination: 'IMOBILIZADO'` sem `classId` → 400; `classId` com
+    `destination` diferente de `IMOBILIZADO` → 400. O `productRef` segue para `REVENDA`/`INSUMO_SERVICO`.
+23. **O CFOP deixa de rotear.** `FIXED_ASSET_CFOPS` sai do caminho de decisão. Um CFOP 1551/2551 no XML (nota de
+    entrada própria) mapeado com `productRef` passa a gerar só **warning** ("CFOP de imobilizado mapeado como
+    estoque/insumo — confira"), nunca a rota.
+24. **Testes:** o `it.failing` do GAP-MAP vira `it`; o caso "classId em item NÃO 1551 → 400" é **invertido**
+    (vira aceito); "CFOP 1551 com productRef → 400" vira aceito + warning; o fixture "nota mista" deixa de
+    misturar 5102 e 1551 (usa 5102 nos três itens).
+25. **Default por produto** (F-ID-2): `IMOBILIZADO` **não** entra como default de produto, porque o imobilizado
+    precisa da classe, que não é do produto. O default aceita só `REVENDA | INSUMO_SERVICO`.
+26. **Preview/resposta:** `destinacoes[]` mostra `IMOBILIZADO` com `origem: OVERRIDE`.
+
+**Efeito sobre os forks ratificados:** F-ID-1 (a) foi ampliado pelo dono com `IMOBILIZADO`; o resto segue.
+A mudança toca o contrato do C8 (F-FA12), mas não o modelo de `FixedAsset`: continua sem ADR.
+**Entrega:** entra no PR-1 da §7 (é o mesmo `allocate`).
