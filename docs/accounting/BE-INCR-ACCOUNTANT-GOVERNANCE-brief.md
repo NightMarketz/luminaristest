@@ -478,6 +478,9 @@ do corpus). Grau: todas **V**, lidas.
   (2.971.696 bytes, sha `7ddf47755f61`). A mesma URL serviu em 29/09 a "Atualização: maio de 2026" (2.990.432
   bytes, sha `bc63f0a893ce`). Números de página citados em outros BRIEFs a partir da versão de janeiro precisam ser
   reconferidos. O procedimento está no `LEIA-ME.md` do corpus (`--forcar`).
+  **Dono, 29/09: o corpus fica em janeiro/2026 por enquanto, porque a versão nova está fora do ar.** As citações
+  "maio/2026, p. 12/18/20" deste BRIEF vêm de uma cópia baixada às 12h42 de 29/09, que está fora do git. Falta
+  conferir se o trecho da p. 12 (mudança de contador) existe igual na versão de janeiro.
 - **Carta de responsabilidade da administração:** o contratante deve entregá-la ao contador todo ano, para o
   encerramento do exercício (Res. CFC 1.590 art. 3º). O sistema não a registra. Poderia ser pré-condição do
   sign-off anual do C11, mas isso não está ratificado.
