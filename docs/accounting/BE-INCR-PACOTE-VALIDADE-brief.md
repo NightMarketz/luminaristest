@@ -349,6 +349,12 @@ export const ReconcilePendingReasonCode = z.enum([
 
 A skill `luminaris-contador-liaison` monta o pacote do pedido PE-1..PE-5. **O dono envia.**
 
+**Jurisprudência (29/09):** ver [`PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md`](PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md).
+Nenhum precedente trata de pacote de salão que vence; todos são análogos.
+- **PE-6, o maior risco:** o STJ julga abusiva a **perda integral** do valor pago antecipado quando o consumidor desiste (REsp 1.321.655; retenção limitada a 20% no REsp 1.580.278). Já a validade de vale-presente **informada com destaque** foi aceita como decadência convencional (TJRS 70080293178, fonte secundária). O "vence → 100% receita" da decisão 18 fica entre as duas linhas. O jurídico deve avaliar; o BRIEF não muda sem ratificação.
+- **PE-4, contra-argumento:** para o STF, "estar à disposição" pode ser serviço tributável pelo ISS (Tema 581).
+- **PE-2, apoio fraco à leitura de 32%:** SC Cosit 144/2023 ("irrelevante a denominação que se lhe dê ou a suas parcelas").
+
 ## 7. Insumos ausentes
 
 - **ADR-G01** (Incremento G). O código cita o ADR (`IPackageBalanceRepository.ts:2`), mas ele não está em

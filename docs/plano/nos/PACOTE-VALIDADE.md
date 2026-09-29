@@ -30,3 +30,9 @@ Origem: [[D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE]] (decisão 18). Vizinho: a
   - regulamento da CBS existe (Decreto 12.955/2026, art. 11 § 6º → art. 57);
   - CC art. 132 § 1º (vencimento em feriado vai para o dia útil seguinte);
   - não há lei específica de validade de crédito pré-pago.
+- [`docs/accounting/PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md`](../../accounting/PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md) — jurisprudência dos pontos em aberto (pedido do dono, 29/09). Só análogos. Achados:
+  - STJ REsp 1.321.655 e 1.580.278: perda integral do valor antecipado é abusiva, retenção até 20%;
+  - TJRS 70080293178 (secundária): validade de vale-presente informada é aceita;
+  - STF Tema 581: disponibilidade como serviço, contra-argumento no ISS;
+  - SC Cosit 144/2023: preço independe da denominação;
+  - nenhuma decisão sobre IBS/CBS nem sobre CARF/breakage.
