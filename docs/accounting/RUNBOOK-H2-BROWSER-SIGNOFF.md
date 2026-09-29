@@ -239,6 +239,30 @@ Desfecho do passo 15 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 15): ____________
 
+### [EMENDA 2026-09-28] Passo 16 — e-Lalur: movimentos M410, fechamento do trimestre e diagnóstico (FE-INCR-LALUR-PR2)
+
+> Preparado por agente em 2026-09-28, **em branco** (`PLANO-ONDA1-FE-2026-09-28.md` §4). Mesmas pré-condições dos
+> passos 12–14 (commit do merge do FE-INCR-LALUR-PR2 ou posterior, build de produção, cópia do `dev.db`), num
+> tenant em Lucro Real com ao menos 2 contas da Parte B do mesmo tributo (seed `seed-real`).
+
+16. Contabilidade → Compliance → e-Lalur → "Movimentos da Parte B (M410)".
+    - a) Criar um movimento `CR` com contrapartida (a lista só oferece contas do mesmo tributo, sem a própria) e
+      um `PF` (a contrapartida some). Resultado esperado: 2xx; o `PF` sai sem `contrapartidaId` no request.
+      EVIDÊNCIA: [ ]
+    - b) Histórico com `|`: a tela recusa antes do envio. EVIDÊNCIA: [ ]
+    - c) Fechar T01, depois T02 (o botão de T03 só habilita com T02 fechado); reabrir T02 (o de T01 fica
+      desabilitado enquanto T02 estiver fechado). Resultado esperado: 2xx; o chip muda de estado e o
+      diagnóstico recarrega. EVIDÊNCIA: [ ]
+    - d) Diagnóstico: saldos por trimestre × conta; se houver divergência, a linha fica vermelha e aparece na
+      lista do topo; se houver aviso M312, "Ver o ajuste na Parte A" filtra o ajuste. EVIDÊNCIA: [ ]
+    - e) Usuário sem `canManageLalur`: sem botões de escrita; a leitura segue. EVIDÊNCIA: [ ]
+
+Desfecho do passo 16 (marcar UM):
+[ ] PASSOU — a) a e) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 16): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;

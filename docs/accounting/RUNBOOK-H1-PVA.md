@@ -521,6 +521,12 @@ Resultado esperado: recuperação sem erro; `E020` × `M010` iguais para cada `C
 
 EVIDÊNCIA: [tela do PVA após a recuperação — hash do 0010 e lista E020/M010, tarjados]
 
+> **[EMENDA 2026-09-28 — FE-INCR-LALUR-PR2]** Antes de gerar a ECF Real que o 2P-2 importa, os movimentos
+> M410 da Parte B, o fechamento de cada trimestre (materializa o M500 e deriva o PF/BC) e o diagnóstico de saldos
+> (materializado × recomputado, com os avisos X4-14) **podem ser feitos pela tela**: Contabilidade → Compliance →
+> e-Lalur, sub-seção "Movimentos da Parte B (M410)". Antes eram só API. Os passos 2P-2/2P-3 e a evidência pedida
+> não mudam.
+
 ### 2P-2. Importar a ECF do Real no PVA — e o que fazer se recusar E990/M990/S990
 
 Importar o `.txt` gerado. Tabela de Registros do Manual (pp.44/47): `E990` e `M990` têm **Entrada = N**
