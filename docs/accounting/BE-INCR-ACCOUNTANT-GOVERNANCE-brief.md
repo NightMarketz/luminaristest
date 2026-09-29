@@ -23,7 +23,10 @@
 - **Risco principal.** A assinatura dentro do app prova **login + aceite**, não identidade. Nada no sistema
   prova que quem entrou como contador é a pessoa do CRC. A assinatura legal continua sendo o e-CPF no PVA. Em
   segundo lugar: o dono pode encerrar a atribuição e reabrir sozinho (F-GOV-10). A trava deixa rastro, mas não é
-  absoluta.
+  absoluta. O F-GOV-11 (b) reduz esse risco aos períodos que nenhum contador cobriu.
+- **Revisão de 29/09 (pedido do dono: ancorar na lei antes de ratificar):** os forks F-GOV-7 a F-GOV-11 trazem a
+  base legal em §5, e as fontes, com sha256, estão em §5.1. A pesquisa mudou duas coisas. O F-GOV-7 passou a
+  (a+), com leitura do objeto assinado. Uma escolha que este BRIEF marcava como "direta" virou o F-GOV-11.
 
 ## 1. Forks já decididos (29/09) — o que cada um fixa no desenho
 
@@ -92,6 +95,11 @@ Grau: **V** = lido no código em `9dd690b3` · **I** = inferido do código lido 
      `canClosePeriod` (`!!actor`), o **ex-contador**, ainda com escopo delegado, passaria. O fallback do
      F-GOV-4 (a) vale só para quem age no próprio livro.
    **O corpo de `canClosePeriod` e da família I-3 não muda** (F-GOV-3 a). O item 17a fixa isso em teste.
+   **Se o F-GOV-11 for (b):** `canReopenPeriod` passa a receber também o período e a cobertura.
+   - Período coberto pela atribuição ativa: só o contador ativo reabre.
+   - Período coberto só por atribuição encerrada: ninguém reabre; a correção vai por extemporâneo.
+   - Período sem cobertura: segue a regra acima.
+   A cobertura vai de `responsibleFrom` até o mês de `activeUntil`. Numa sobreposição, a atribuição ativa vence.
 5. **Resolver de escopo delegado.** Novo método `AccountantAssignmentService.resolveGovernanceScope(user, unitId)`,
    assíncrono. Se existe atribuição `ACTIVE` com `accountantUserId = user.userId` e aquele `unitId`, devolve
    `{ ownerUserId: a.userId, actorUserId: user.userId, … }`. Senão devolve exatamente
@@ -99,6 +107,8 @@ Grau: **V** = lido no código em `9dd690b3` · **I** = inferido do código lido 
    handlers do alcance do F-GOV-7 usam o resolver novo. Na recomendação (a) são 7:
    `listPeriods` (`accountingController.ts:530`), `openPeriod` (`:588`), `reopenPeriod` (`:676`), `listReviews`
    (`accountingReviewController.ts:40`), `getReview` (`:55`), `signOffReview` (`:134`) e `rejectReview` (`:149`).
+   Com a recomendação revisada (a+), entram mais 2 leituras do objeto assinado: `getDataExchangeJob` e
+   `downloadDataExchangeArtifact` (`routes/accounting.ts:208,210`), somando 9.
 6. **Convite (dono)** `POST /api/accounting/accountant-assignments`. Passos:
    1. Aplica `canManageAccountantAssignment`.
    2. Exige o contato no escopo (`requireContact`); senão 404.
@@ -225,7 +235,15 @@ export const InviteAccountantSchema = z
 
 export const ListAccountantAssignmentsQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
-export const AcceptAccountantAssignmentSchema = z.object({}).strict();
+// Forma final depende de F-GOV-8 e F-GOV-11. Com as recomendações (a reforçada / b):
+export const AcceptAccountantAssignmentSchema = z
+  .object({
+    declaresWrittenContract: z.literal(true),              // F-GOV-8: Res. CFC 1.590 arts. 1º/5º
+    responsibleFromYear: z.number().int().min(2000).max(2100), // F-GOV-11 (b): início da responsabilidade
+    responsibleFromMonth: z.number().int().min(1).max(12),
+  })
+  .strict();
+// Sem F-GOV-8 reforçada nem F-GOV-11 (b): z.object({}).strict()
 
 export const EndAccountantAssignmentSchema = z
   .object({ reason: z.string().trim().min(1).max(500) })
@@ -338,9 +356,10 @@ model AccountantAssignment {
   junto (memória `audit-log-no-fk-cascade`).
 - **Vigência em instantes, não em datas.** Evita as duas classes de bug de date-only registradas
   (`date-only-regex-nao-valida-calendario`, `date-only-rendering-utc-shift-class-bug`).
-- **Qual atribuição governa: a ativa no momento da ação**, não a que cobria o período que se quer reabrir. É a
-  leitura literal do F-GOV-4 (a), "a trava nasce com a atribuição". A outra leitura deixaria sem ninguém para
-  reabrir o período de um contador que já saiu.
+- ~~Qual atribuição governa: a ativa no momento da ação.~~ **Retirado do "direto" em 29/09, depois da pesquisa
+  legal (§5.1).** O Manual da ECD e a Res. CFC 1.590 amarram a responsabilidade ao **período**, não ao momento
+  da ação. A escolha virou o fork **F-GOV-11**. Se a recomendação (b) for aceita, o model ganha
+  `responsibleFromYear`/`responsibleFromMonth`, declarados no aceite.
 - **FK para o contato mais snapshot do CRC**, em vez de CRC digitado de novo (PRE-ADR §3.1). O contato já é a
   fonte canônica do J930 (`contactToJ930Signer`). Digitar de novo cria duas verdades. O snapshot existe porque o
   contato é editável (I-11) e a vigência pede histórico.
@@ -354,18 +373,59 @@ model AccountantAssignment {
 | GET | `/api/accounting/accountant-assignments/mine` | contador | nenhum (por `actorUserId`) |
 | POST | `/api/accounting/accountant-assignments/:id/accept` | contador | nenhum (pela linha) |
 | POST | `/api/accounting/accountant-assignments/:id/end` | dono ou contador | nenhum (pela linha) |
-| GET/POST | os 7 handlers do item 5 | dono ou contador | **delegado** |
+| GET/POST | os 7 handlers do item 5 (9 com o F-GOV-7 a+) | dono ou contador | **delegado** |
 
 ## 5. Forks — RATIFICAÇÃO PENDENTE
 
-As decisões de 29/09 não cobrem estes quatro. A leitura do código mostrou que o desenho não fecha sem eles.
+As decisões de 29/09 não cobrem estes cinco. A leitura do código mostrou que o desenho não fecha sem eles.
+**Em 29/09 o dono pediu que eles fossem ancorados na lei antes de qualquer ratificação.** A coluna "O que a lei
+diz" cita a fonte (§5.1). "A lei decide" quer dizer que um caminho fica sem base legal. "A lei deixa aberto" quer
+dizer que mais de um caminho é compatível com a lei, e a escolha é de produto.
 
-| Ref | Pergunta | (a) | (b) | (c) | Recomendação |
-|---|---|---|---|---|---|
-| **F-GOV-7** | O que o contador alcança nos livros do cliente | **Mínimo de governança:** ler períodos e revisões; reabrir; assinar e rejeitar (7 handlers, item 5) | **O C11 inteiro:** (a) mais abrir revisão, lançar e resolver achado e fazer lançamento de ajuste no livro do cliente | **O módulo inteiro:** `resolveAccountingScope` passa a ser assíncrono e a consultar a atribuição (214 chamadas) | **(a).** Fecha as 3 lacunas medidas com o menor raio de impacto. Em (b) e (c), `owner ≠ actor` **liga a SoD** (`EntryApprovalService.ts:230`) e o contador passa a escrever no razão do cliente, o que pede plano de teste próprio. O "login do contador que cresce o C11" vira o próximo incremento, com (b). Custo de (a): o contador assina achados que o operador registrou, como já acontece hoje no C11 |
-| **F-GOV-8** | Como o dono aponta o contador, e se o contador precisa aceitar | **E-mail de usuário existente + aceite do contador** (`PENDING → ACTIVE`, item 7) | E-mail de usuário existente, ativo na criação | Convite por token enviado por e-mail (fluxo novo) | **(a).** Sem aceite, o sistema imputa responsabilidade a quem nunca concordou, e isso é o contrário do objetivo do nó. (c) exige envio de e-mail, que hoje é canal do dono, sem credencial no servidor (F-CD1-a). Custo de (a): a rota revela se o e-mail tem conta (400 nomeado). Só o dono autenticado chama a rota, e ela fica no escopo dele |
-| **F-GOV-9** | Com atribuição ativa, de onde vêm o nome e o CRC do sign-off | **O `reviewerCrc` digitado tem de bater com o CRC da atribuição** (os dois normalizados); se divergir, 400 `REVIEWER_CRC_MISMATCH`. O nome continua digitado | O servidor preenche nome e CRC a partir da atribuição e o DTO passa a recusar os campos (**quebra o contrato** do FE-INCR-REVIEW, #436) | Só o gate de ator muda; os campos continuam livres | **(a).** Fecha o "CRC arbitrário" (I-5) sem quebrar a tela que já existe. (c) deixa o contador assinar com o CRC de outra pessoa |
-| **F-GOV-10** | O dono pode encerrar a atribuição sozinho (e então reabrir, pelo F-GOV-4 a)? | **Sim.** O encerramento e a reabertura seguinte ficam na trilha (`accountant_assignment.ended` + `period.reopened` sem `assignmentId`) | Só com a concordância do contador | Encerrar vale só depois de N dias | **(a).** O dono é livre para dispensar o contador; a governança aqui é **rastro**, não custódia. (b) prende o cliente a um contador que sumiu. **Risco declarado:** a trava é contornável pelo dono, com rastro. Se a resposta do CRC-SP (F-GOV-1) exigir custódia, este fork reabre |
+| Ref | Pergunta | (a) | (b) | (c) | O que a lei diz | Recomendação |
+|---|---|---|---|---|---|---|
+| **F-GOV-7** | O que o contador alcança nos livros do cliente | **Mínimo de governança:** ler períodos e revisões; reabrir; assinar e rejeitar (7 handlers, item 5) | **O C11 inteiro:** (a) mais abrir revisão, lançar e resolver achado e fazer lançamento de ajuste no livro do cliente | **O módulo inteiro:** `resolveAccountingScope` passa a ser assíncrono e a consultar a atribuição (214 chamadas) | **Deixa aberto.** A escrituração é "atribuição e responsabilidade exclusivas" do contador (ITG 2000 item 12; CC art. 1.182). O cliente pode executar parte do serviço se o contrato disser (NBC PG 01 item 10), e o lançamento de preposto vale como do preponente (CC art. 1.177). **Mas** o contador não pode assinar o que não passou pela orientação, supervisão ou revisão dele (NBC PG 01 5c) e deve se munir de documentos antes de opinar (4j). Em (a), o **objeto assinado** (o par ECD/ECF da revisão) fica fora do alcance do contador dentro do app | **Muda para (a+):** (a) mais leitura dos jobs do par em revisão, com `getDataExchangeJob` e `downloadDataExchangeArtifact` (`routes/accounting.ts:208,210`) em escopo delegado, somando 9 handlers. Assim ele assina o que consegue ler. Continua sem escrever no razão e sem ligar a SoD (`EntryApprovalService.ts:230`). O "login do contador que cresce o C11" (b) segue como próximo incremento |
+| **F-GOV-8** | Como o dono aponta o contador, e se o contador precisa aceitar | **E-mail de usuário existente + aceite do contador** (`PENDING → ACTIVE`, item 7) | E-mail de usuário existente, ativo na criação | Convite por token enviado por e-mail (fluxo novo) | **Decide contra (b).** A relação nasce de "aceitação formal da proposta" e de contrato escrito, que "comprova a extensão e os limites da responsabilidade técnica" (Res. CFC 1.590 arts. 1º e 5º; NBC PG 01 item 9). Um meio eletrônico fora da ICP-Brasil só vale entre as partes "desde que admitido pelas partes como válido" (MP 2.200-2 art. 10 § 2º). Base LGPD para os dados do contador: execução de contrato a pedido do titular (art. 7º V), limitada ao necessário (art. 6º III) | **(a) reforçada:** no aceite, o contador também declara que existe contrato escrito de prestação de serviços (`declaresWrittenContract: z.literal(true)`). A declaração é o gancho para a Res. 1.590 e para o § 2º da MP. Sem aceite, o sistema imputa responsabilidade técnica sem a aceitação que a norma exige |
+| **F-GOV-9** | Com atribuição ativa, de onde vêm o nome e o CRC do sign-off | **O `reviewerCrc` digitado tem de bater com o CRC da atribuição** (os dois normalizados); se divergir, 400 `REVIEWER_CRC_MISMATCH`. O nome continua digitado | O servidor preenche nome e CRC a partir da atribuição e o DTO passa a recusar os campos (**quebra o contrato** do FE-INCR-REVIEW, #436) | Só o gate de ator muda; os campos continuam livres | **Decide contra (c).** O contador deve "informar o número de registro, o nome e a categoria profissional após a assinatura em trabalho de contabilidade" (NBC PG 01 4r). A profissão só se exerce com registro no CRC (DL 9.295 art. 12). Em (c), o contador assina com o CRC de outra pessoa. **(a) e (b) cumprem a norma** | **(a) mantida.** Fecha o CRC arbitrário (I-5) sem quebrar a tela do #436. (b) é a forma mais fiel à norma (o CRC é do signatário por construção) e fica como evolução quando a FE for refeita |
+| **F-GOV-10** | O dono pode encerrar a atribuição sozinho? | **Sim.** Motivo obrigatório; o encerramento fica na trilha (`accountant_assignment.ended`) | Só com a concordância do contador | Encerrar vale só depois de N dias (aviso prévio) | **Decide contra (b).** Qualquer das partes pode resolver o contrato sem prazo, "a seu arbítrio, mediante prévio aviso" (CC art. 599). O contador renuncia "respeitando os prazos estabelecidos em contrato" (NBC PG 01 4k). O distrato é obrigatório e fixa a cessação das responsabilidades (Res. CFC 1.590 art. 6º); o prazo do aviso é cláusula de contrato (art. 2º "l"). **Entre (a) e (c), a lei deixa aberto:** o prazo é contratual, e o sistema não enxerga o contrato | **(a) mantida.** (c) prende no sistema um prazo que só o contrato conhece. **O risco declarado antes (o dono encerra e depois reabre) fica pequeno com o F-GOV-11 (b):** encerrar deixa de destravar os períodos que o contador cobriu |
+| **F-GOV-11** *(novo; era "direto" em §4.3)* | Quem reabre um período que esteve sob a responsabilidade de um contador | **A atribuição ativa agora governa tudo:** o contador ativo reabre qualquer período `SOFT_CLOSED`. Sem ativo, o dono reabre tudo (F-GOV-4 a) | **Cada período fica com o contador que respondia por ele:** no aceite, o contador declara o início da responsabilidade (`responsibleFrom` ano/mês). O ativo reabre só a partir daí. Um período coberto por um contador **anterior** não reabre mais e é corrigido por lançamento extemporâneo (ITG 2000 item 36). Um período que nenhum contador cobriu segue o F-GOV-4 (a) | — | **Aponta para (b).** Na mudança de contador no meio do período, "o período da escrituração pode ser fracionado para que cada contabilista assine o período pelo qual é responsável técnico" (Manual ECD Leiaute 9, maio/2026, p. 12). Por padrão, as demonstrações e as obrigações acessórias do período ficam com o contador que sai, "salvo disposição expressa em contrário no distrato" (Res. CFC 1.590 art. 9º § único e art. 10). Na substituição de ECD, quem não assina a nova pode se manifestar sobre as mudanças (IN RFB 2.003 art. 8º § 3º). O contador também deve se abster de opinar no trabalho de outro contador sem ter sido contratado para isso (NBC PG 01 4h) | **(b).** Segue o padrão da norma e deixa o contrato de cada caso fixar a fronteira, pelo `responsibleFrom` declarado. Nunca trava correção: o extemporâneo em período `OPEN` continua disponível, e é o caminho que o C11 já escolheu (F-C11-4 a). **Custo:** `canReopenPeriod` passa a receber o período e a cobertura (§4.2 muda). Aceite ganha 2 campos. O teste 17b ganha o caso "período do contador anterior dá 403 mesmo sem atribuição ativa" |
+
+### 5.1 Base legal consultada em 29/09
+
+Todas as fontes foram baixadas nesta sessão, e o texto foi lido no arquivo, não em resumo de busca. Coluna
+`sha256`: os 12 primeiros hex do arquivo baixado, para reconferir se o órgão reeditar (padrão do `MANIFEST.md`
+do corpus). Grau: todas **V**, lidas.
+
+| Fonte | Dispositivos usados | URL | sha256 (12) |
+|---|---|---|---|
+| Código Civil, Lei 10.406/2002 (compilada) | arts. 599; 1.169; 1.177; 1.178; 1.179 § 2º; 1.182; 1.183 | planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm | `00a0b585843c` |
+| Decreto-Lei 9.295/1946 | arts. 12, 25, 26 | planalto.gov.br/ccivil_03/decreto-lei/del9295.htm | `cc3c15e7e0b5` |
+| MP 2.200-2/2001 | art. 10 §§ 1º e 2º | planalto.gov.br/ccivil_03/mpv/antigas_2001/2200-2.htm | `81399b8ed0d2` |
+| Lei 14.063/2020 | arts. 1º, 2º, 4º (o capítulo da classificação trata de interação com ente público; para o atestado interno vale a MP 2.200-2 art. 10 § 2º) | planalto.gov.br/ccivil_03/_ato2019-2022/2020/lei/l14063.htm | `5ec86bd567bd` |
+| LGPD, Lei 13.709/2018 (compilada) | arts. 6º (III, VII) e 7º (V) | planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709compilado.htm | `fdc6f222d95c` |
+| LC 123/2006 | arts. 26 § 2º, 27, 68 | planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm | `f3daaf2efcd0` |
+| Res. CFC 1.590/2020 (contrato e distrato) | arts. 1º a 10 | www1.cfc.org.br/sisweb/SRE/docs/RES_1590.pdf | `ecaa931e8404` |
+| NBC PG 01 (Código de Ética, 2019) | itens 4 (h, j, k, l, r), 5 (c, r), 6 (b, c), 9, 10 | www1.cfc.org.br/sisweb/SRE/docs/NBCPG01.pdf | `cb3ca0a1aca8` |
+| ITG 2000 (R1) — Escrituração Contábil | itens 10, 12, 13, 31–36 | www1.cfc.org.br/sisweb/SRE/docs/ITG2000(R1).pdf | `6b4355f83fb7` |
+| Manual da ECD, Leiaute 9 (ADE Cofis 01/2026, **atualização maio/2026**) | p. 12 (mudança de contador), p. 18 e 20 (assinatura: e-CPF do contador obrigatório) | sped.rfb.gov.br/arquivo/download/7990 | `bc63f0a893ce` |
+| IN RFB 2.003/2021 | art. 8º §§ 2º e 3º; parágrafo único do art. 2º (assinatura ICP-Brasil) | corpus `docs/accounting/fontes-oficiais/IN-RFB-2003-2021-ECD.txt:17,97-99` | (versionado) |
+
+### 5.2 O que a pesquisa diz sobre forks já ratificados (registro; nada reabre sozinho)
+
+- **F-GOV-3 (a)** é compatível com a lei **sob uma condição**: o operador do salão lança, e isso vale porque o
+  assento de preposto vale como do preponente (CC art. 1.177). A parte do serviço feita pelo cliente precisa estar
+  **explícita na proposta e no contrato** (NBC PG 01 item 10). Para vender "com contador incluso", o contrato-modelo
+  tem de trazer essa cláusula (§7).
+- **F-GOV-4 (a)** tem uma **tensão**, não um conflito. A lei não manda o software travar. Mas, sem atribuição, o
+  sign-off do C11 continua aceitando qualquer nome e CRC digitados. Isso registra um atestado profissional sem
+  profissional identificado. O Código de Ética obriga o contador, não quem usa o sistema, e pressupõe que a
+  assinatura acompanhada de CRC é ato do próprio contador (NBC PG 01 4r). Além disso, só o pequeno empresário é dispensado
+  da escrituração (CC art. 1.179 § 2º; LC 123 art. 68: empresário individual até o teto do MEI). Uma ME/EPP do
+  Simples continua obrigada à escrituração (a LC 123 art. 27 só a simplifica), e o CC art. 1.182 põe essa
+  escrituração sob responsabilidade de contabilista. **Se o dono quiser reabrir**, o caminho é um fork próprio:
+  "sign-off exige atribuição ativa, a reabertura continua pelo F-GOV-4 (a)". Não está aberto aqui.
+- **F-GOV-5 (a)** não conflita: a lei exige o registro para exercer (DL 9.295 art. 12), não que o software o
+  confira. A conferência é o F-V1, depois do M2.
 
 ## 6. Fora deste BRIEF (decidido) e compatibilidade exigida
 
@@ -386,8 +446,18 @@ As decisões de 29/09 não cobrem estes quatro. A leitura do código mostrou que
 - **O contador não revalidou este desenho.** Ele respondeu ao item 0 em 23/09, antes do PRE-ADR. Falta saber se
   assinatura interna + trilha satisfazem o que ele pediu. O `luminaris-contador-liaison` pode montar a pergunta;
   o dono envia.
-- **Valor da assinatura interna:** é atestado interno, não assinatura legal (a legal é o e-CPF no PVA). Tratar
+- **Valor da assinatura interna:** é atestado interno, não assinatura legal. A legal é o e-CPF do contador na
+  ECD (Manual ECD L9, p. 18) e a assinatura digital dos livros (ITG 2000 item 10a). Entre as partes, o atestado
+  interno vale se admitido por elas (MP 2.200-2 art. 10 § 2º), e por isso o aceite do F-GOV-8 importa. Tratar
   como fato consumado exige a leitura do contador.
+- **Revisão do C11 é "revisão de escritas"?** O DL 9.295 art. 25 alínea "c" lista a "revisão permanente ou
+  periódica de escritas", e o art. 26 torna a alínea "c" privativa de contador diplomado, ressalvados direitos
+  adquiridos. Se a revisão do C11 se enquadra, o sign-off seria do contador, não do técnico em contabilidade, e a
+  atribuição precisaria registrar a categoria. **Inferência (I), não decisão:** a pergunta vai ao contador ou ao
+  CRC-SP junto com o F-GOV-1.
+- **Contrato-modelo "com contador incluso":** precisa da cláusula do que o cliente executa (NBC PG 01 item 10;
+  Res. CFC 1.590 art. 2º "c"), da carta de responsabilidade da administração anual (Res. 1.590 arts. 2º "j" e 3º)
+  e do prazo de aviso prévio (art. 2º "l"). É documento do dono com o contador, não código.
 
 ## 8. Insumos ausentes
 
@@ -404,3 +474,13 @@ As decisões de 29/09 não cobrem estes quatro. A leitura do código mostrou que
   corpo é aceito e ignorado (memória `param-aceito-e-ignorado-e-bug`).
 - **Errata do PRE-ADR** (I-1, I-10): este BRIEF registra a correção. Aplicar no PRE-ADR é um fold separado, porque
   a regra 1 desta sessão proíbe editar doc de outro item.
+- **O Manual da ECD foi reeditado depois do corpus.** O `MANIFEST.md` registra a "Atualização: janeiro de 2026"
+  (2.971.696 bytes, sha `7ddf47755f61`). A mesma URL serviu em 29/09 a "Atualização: maio de 2026" (2.990.432
+  bytes, sha `bc63f0a893ce`). Números de página citados em outros BRIEFs a partir da versão de janeiro precisam ser
+  reconferidos. O procedimento está no `LEIA-ME.md` do corpus (`--forcar`).
+- **Carta de responsabilidade da administração:** o contratante deve entregá-la ao contador todo ano, para o
+  encerramento do exercício (Res. CFC 1.590 art. 3º). O sistema não a registra. Poderia ser pré-condição do
+  sign-off anual do C11, mas isso não está ratificado.
+- **Equipe do contador:** o contador pode transferir parcialmente a execução mantendo a responsabilidade técnica
+  (NBC PG 01 6c). O preposto não se faz substituir sem autorização escrita (CC art. 1.169). Hoje a atribuição é um
+  login só; a equipe dele é frente nova.
