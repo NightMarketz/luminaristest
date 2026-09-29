@@ -351,3 +351,40 @@ não "fechado". Ganho e perda são status **só da oportunidade**.
 4. **Valor de pipeline** (BRIEF CRM-RB §4.2): com os convertidos fora do funil de leads, somar leads passa a medir só quem
    está em qualificação. O pipeline de negócios fica nas oportunidades, que é o caminho (a) do §4.2. A escolha do número
    continua do dono.
+
+### 9.3 Comparação com o Salesforce (pesquisa pedida pelo dono, 29/09) — documentado
+
+Fontes oficiais lidas em 29/09 no navegador: *SOAP API Developer Guide*, `convertLead()`
+(developer.salesforce.com/docs/platform/api/guide/sforce-api-calls-convertlead.html) e *Object Reference*, `Lead`
+(developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_lead.htm).
+
+**O que o Salesforce faz (verificado nas fontes):**
+- A conversão é **uma ação só**: o lead vira conta + contato e, **por padrão, também oportunidade**. O flag
+  `doNotCreateOpportunity` existe para quando não se quer a oportunidade (*"An opportunity is created by default"*).
+  Também dá para converter para uma conta/contato/oportunidade **já existentes** (merge) ou para *person account* (B2C).
+- Quando converter: *"Typically, a lead can be converted when it becomes a real opportunity that you want to forecast."*
+- O lead ganha um status do tipo convertido (o exemplo oficial usa `"Closed - Converted"`), `IsConverted = true`,
+  `ConvertedDate` e os vínculos `ConvertedOpportunityId`, `ConvertedAccountId` e `ConvertedContactId`.
+- Depois disso o lead **congela**: *"After a lead has been converted, it's read only."* Só quem tem a permissão *View and
+  Edit Converted Leads* consegue editá-lo.
+
+**Comparação com as direções do §9.1–9.2:**
+
+| Ponto | Salesforce | Direção do dono (29/09) | |
+|---|---|---|---|
+| Converter = criar oportunidade, uma ação só | sim (oportunidade por padrão) | sim (botão único) | **igual** |
+| Lead sai do funil com status convertido | sim ("Closed - Converted") | sim ("Convertido") | **igual** |
+| Vínculo lead → oportunidade guardado | sim (`ConvertedOpportunityId`) | sim (vínculo obrigatório) | **igual** |
+| Lead convertido recebe atualização da oportunidade | **não** — fica só-leitura, congelado | **sim** — espelho da oportunidade aberta | **diverge** |
+| Nova venda depois (ou após perda) | nova oportunidade na **conta/contato**; o lead não converte de novo | nova oportunidade **a partir do lead** | **diverge** |
+| Onde fica a "ficha" viva do cliente | conta + contato (ou *person account*) | o lead | **diverge** |
+
+**Leitura (inferida):** o Salesforce confirma a espinha do modelo: converter = virar oportunidade, lead convertido fora
+do funil, vínculo guardado. As três divergências têm a mesma raiz. No Salesforce a ficha permanente é **conta/contato**,
+e o lead é descartável depois de convertido. Na direção de 29/09, a ficha permanente é o **próprio lead**. Aqui, contas e
+contatos são submódulos opcionais (`registry.ts`, CRM-2A/2B), o que ajuda a explicar a escolha, sobretudo no balcão B2C.
+Quem autorizar escolhe entre:
+- manter o lead como ficha (espelho + nova oportunidade a partir dele);
+- seguir o Salesforce: lead congelado; espelho e novas oportunidades na conta/contato. Isso exigiria contatos sempre
+  instalados.
+Não decidido aqui.
