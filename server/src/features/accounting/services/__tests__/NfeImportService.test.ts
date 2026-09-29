@@ -430,6 +430,29 @@ describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-
   });
 });
 
+// ── GAP-MAP "imobilizado em NF-e de fornecedor" (achado A-1 do BRIEF ITEM-DESTINATION): teste-guarda `it.failing` (vira `it` na correção) ─────────────
+// Na NF-e do fornecedor (tpNF=1, saída), o `prod/CFOP` é o da operação DELE (5xxx/6xxx). CFOP de entrada
+// (1551/2551) numa nota de saída é rejeição 518 (MOC 7.0 Anexo I, regra I08-10, "CFOP de Entrada (inicia
+// por 1, 2, 3) para NF-e de Saída (tpNF=1)"; Facul. = a critério da UF; sha256 5eb4cf20… no MANIFEST).
+// O fixture de cima mistura 5102 e 1551 na mesma nota, uma nota que a SEFAZ pode recusar. Com XML de
+// forma real, a rota de imobilizado fica inalcançável: o `classId` do operador é recusado porque o CFOP
+// não é 1551. Comportamento esperado: a máquina comprada com nota de fornecedor chega a `fixedAssetItems`.
+describe('GAP-MAP imobilizado-cfop-do-fornecedor — imobilizado em NF-e de fornecedor (tpNF=1, CFOP de saída)', () => {
+  it.failing('máquina com CFOP 5102 mapeada com classId pelo operador → fixedAssetItems (não 400)', async () => {
+    const xml = inlineNfe(
+      [{ cProd: 'MAQ-1', xProd: 'Máquina de corte', qCom: '1', vProd: '850.00', cfop: '5102', ncm: '8452.10' }],
+      { vProd: '850.00', vNF: '850.00' },
+    );
+    const { service, createPayable } = build();
+    const outcome = await service
+      .importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', classId: 'class-maq' }] }))
+      .then(() => 'importada', (e: Error) => `recusada: ${e.message}`);
+    expect(outcome).toBe('importada');
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems).toEqual([{ classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1, nItem: 1 }]);
+  });
+});
+
 // ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 26, F-FA12 → a): CFOP 1551/2551 → fixedAssetItems ─────
 describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobilizado)', () => {
   it('nota mista: 2 itens de estoque + 1 item CFOP 1551 → inventoryItems=2, fixedAssetItems=1', async () => {
