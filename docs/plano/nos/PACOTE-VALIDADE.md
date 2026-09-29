@@ -23,3 +23,10 @@ Origem: [[D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE]] (decisão 18). Vizinho: a
 ## Docs
 
 - [`docs/accounting/BE-INCR-PACOTE-VALIDADE-brief.md`](../../accounting/BE-INCR-PACOTE-VALIDADE-brief.md) — BRIEF 29/09: checklist de 22 itens, contratos, **11 forks F-PV-1..11 PENDENTES**, PE-1..PE-6 (tratamento contábil do vencido e efeito fiscal com o contador; validade no direito do consumidor com o jurídico), fronteira com o E-1 (§2). Não autoriza código: exige os forks ratificados + "executa"
+- [`docs/accounting/PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md`](../../accounting/PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) — pesquisa legal de PE-1..PE-6 (pedido do dono, 29/09). Não decide nada. Achados:
+  - CPC 47 B46 tem 2 ramos, e o dono escolheu o 2º;
+  - NBC TG 1002, item 23.7 (microentidade reconhece a receita na nota);
+  - Simples a partir de 2027 reconhece a receita na emissão do documento fiscal (Res. CGSN 190/2026);
+  - regulamento da CBS existe (Decreto 12.955/2026, art. 11 § 6º → art. 57);
+  - CC art. 132 § 1º (vencimento em feriado vai para o dia útil seguinte);
+  - não há lei específica de validade de crédito pré-pago.
