@@ -26,3 +26,9 @@ atualizado: "2026-09-27"
 ## Fold 27/09
 
 - Passos C.1–C.6 do [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](../../accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md). A ficha e o upload consomem as rotas do [[DFE-MANUAL]] (BRIEF itens 11–14).
+
+## Docs
+
+- [`docs/accounting/FE-INCR-DFE-brief.md`](../../accounting/FE-INCR-DFE-brief.md) — BRIEF (29/09, passo C.1): 29 itens em 3 PRs (PR-0 perfil fiscal da unidade e dos serviços → PR-1 toque no BE → PR-2 tela), contratos, mapa DPS → portal pelo Guia do Emissor Web v1.2, PV-1..10 para o `RUNBOOK-H2-DFE-MANUAL`. Forks F-FE-DFE-1..5 decididos em 29/09; **F-FE-DFE-6..9 PENDENTES** (o 9 reabre o F-MAN-5 se o portal não entregar o XML do evento — guia p. 80). Sem 'executa'; na fila, depois do [[SEED-UNITS]]
+- [`docs/accounting/BE-INCR-DFE-MANUAL-brief.md`](../../accounting/BE-INCR-DFE-MANUAL-brief.md) — rotas consumidas (itens 11–14) e forks F-MAN-1..5
+- [`docs/accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md`](../../accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md) — Fase C
