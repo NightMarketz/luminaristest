@@ -15,6 +15,11 @@
   (`docs/plano/README.md`, última linha), ele só vira nota em `nos/` **depois** deste PRE-ADR ratificado. A proposta de
   id está em F-SN-1.
 - **Autor:** `sessao-planejamento` (agente). Os forks são decididos pelo dono, fora desta sessão.
+- **2ª passada (29/09, tarde):** o dono autorizou baixar os insumos ausentes (*"Pode Baixar"*). Entraram no corpus a
+  Res. CGSN 140/2018, o Manual do PGDAS-D e DEFIS, a Lei 12.592/2012 e duas fontes de SP (RICMS arts. 313-E/F e Portaria
+  SRE 94/2025), mais a notícia oficial da RFB sobre a Res. CGSN 191/2026 (MANIFEST). O que elas mudaram está em §2.3-b e
+  nos forks F-SN-3, 6, 7, 8, 9 e 12. **O F-SN-1 espera o ADR do X7**, que está sendo escrito em paralelo (dono: *"espera
+  ele acabar e reavalie"*).
 - **Base:** `origin/main` = `251f0fd9` (código lido em `9dd690b3`; o #439 e o #440 não tocam o código citado).
 
 ## TLDR
@@ -145,11 +150,34 @@ tem o mesmo sha. A extração **descartou o texto tachado** (263 `<strike>` e 12
 | art. 519 + Anexo XVIII (novo Anexo I) | **2027–2028**: CBS 15,33% + IBS 0,17% no lugar de COFINS 12,74% + PIS 2,76%; 6ª faixa 18,90%. Partilha **anual** em 2029, 2030, 2031 e 2032 (o ICMS migra para o IBS). A partir de 2033, só IBS |
 | art. 519 + Anexo XX (novo Anexo III) | **2027–2028**: nas faixas 1–5, CBS + IBS somam exatamente o que PIS + COFINS somavam; 6ª faixa 32,90%. Teto do ISS: 5% (2027–28), 4,5% (2029), 4% (2030), 3,5% (2031), 3% (2032). **Anomalia da fonte:** a nota diz "14,92537%" e o cabeçalho da linha 2027–28 diz "14,93%" |
 
+**2ª passada — fontes baixadas em 29/09 (MANIFEST, 6 entradas novas).** Todos os dispositivos abaixo são **V**.
+
+| Fonte · dispositivo | O que diz (resumo) |
+|---|---|
+| Res. CGSN 140/2018 (multivigente; **a compilação da RFB vai só até a Res. 183/2025**) art. 21 II, III "b", p.ú. | Fórmula da alíquota efetiva; regra do ICMS/ISS quando o RBT12 passa da 5ª faixa sem estourar o sublimite; RBT12 = 0 conta como R$ 1,00 |
+| Res. 140 art. 22 §§ 2º–4º | Início de atividade: 1º mês = receita do mês × 12; meses 2–12 = média dos meses anteriores × 12 |
+| Res. 140 art. 25 § 1º III "m" | Vão ao **Anexo III** os "outros serviços" que **não** decorrem de atividade intelectual, técnica, científica, desportiva, artística ou cultural, nem estão nos incisos IV a IX. **É a base oficial do enquadramento do salão** |
+| Res. 140 Anexo VI (PDF id 50966) | É a lista de **CNAEs impeditivos** ao Simples, **não** uma tabela CNAE × anexo. 9602-5/01 e 9602-5/02 **não** constam. Não existe tabela oficial CNAE × anexo na Res. 140 (lista de anexos I–XI lida) |
+| Res. 140 art. 26 §§ 1º–7º | Fator r: folha com encargos e pró-labore (bases da Lei 8.212), sem aluguel nem lucros; regras para folha ou receita zero (0,28 / 0,01) |
+| Res. 140 art. 18 | Documento cancelado é deduzido **no período da tributação original** |
+| Res. 140 art. 19 I, p.ú. | A opção pelo regime de caixa é registrada no PGDAS-D de **novembro**, para o ano seguinte; limites e alíquota seguem por competência |
+| Res. 140 art. 38 §§ 1º–2º | PGDAS-D: informar a totalidade das receitas do mês; declaração até o vencimento |
+| Res. 140 art. 40 | DAS vence no **dia 20** do mês seguinte (dia útil seguinte se não houver expediente bancário) |
+| Res. 140 art. 63 I e § 3º | Livro caixa obrigatório, **dispensado pela escrituração contábil** (Diário e Razão) |
+| Res. 140 art. 72 § 1º | Defis pelo módulo do PGDAS-D até **31/03** do ano seguinte |
+| Manual PGDAS-D e DEFIS, **versão 17/06/2025**, item 6.5 | Árvore oficial de atividades. Revenda: "sem" / "com ST / monofásico / antecipação". Serviços: "não sujeitos ao fator r, Anexo III, sem retenção, ISS devido ao próprio município", entre outros |
+| Manual, item 6.6.4 | Monofásico: selecionar a atividade "com" e marcar **PIS e COFINS** como "tributação monofásica"; o resto da receita segue na base |
+| Manual, item 9.4.3 | Defis: ganho de capital, empregados no início e no fim, **lucro contábil**, sócios (rendimentos isentos e tributáveis, participação, IRRF), aplicações, estoques por estabelecimento |
+| Manual (sumário inteiro) | Não há capítulo de importação de arquivo nem cálculo de IBS/CBS |
+| Lei 12.592/2012 art. 1º-A §§ 3º–5º, 8º, 10 | Salão-parceiro retém a sua cota e os tributos do profissional; a cota do salão é "aluguel de bens móveis e utensílios" e/ou "gestão, apoio administrativo…"; a cota do profissional **não é receita bruta do salão, mesmo com nota unificada**; contrato escrito **homologado pelo sindicato**, com cláusulas obrigatórias |
+| Portaria SRE 94/2025 (SP) arts. 1º e 4º | Revoga o Anexo XI da Portaria CAT 68/2019: **perfumaria e higiene fora da ST desde 01/04/2026** |
+| Notícia RFB (ago/2026) | Res. CGSN 191/2026: NFS-e nacional obrigatória para ME/EPP desde 01/11/2026. **O texto da 191 não está compilado no Normas** |
+
 **Fatos que este PRE-ADR não releu:**
 
 | Claim | Grau | Evidência |
 |---|---|---|
-| Emissor Nacional de NFS-e **obrigatório e exclusivo** para o Simples desde 01/11/2026 | V-dossiê | Res. CGSN 191/2026, art. 3º I |
+| Emissor Nacional de NFS-e **obrigatório** para o Simples desde 01/11/2026 | **V** na 2ª passada (notícia RFB, MANIFEST `rfb-noticia-cgsn-191`); o texto da resolução é NV | Res. CGSN 191/2026, art. 3º I |
 | Campos de IBS/CBS na NFS-e do Simples só a partir de 01/01/2027 | V-dossiê | Ato Conjunto 4 § 1º |
 | Escolha do regime de IBS/CBS feita em set/2026, vale para jan–jun/2027 | V-dossiê | notícia do CGSN de 17/04/2026 (U1). A LC 123 art. 13 § 10 (§ acima) agora confirma a regra: **V** |
 
@@ -159,7 +187,7 @@ tem o mesmo sha. A extração **descartou o texto tachado** (263 `<strike>` e 12
 |---|---|
 | Simples Nacional, **ME/EPP** (não MEI) | Anexos + PGDAS-D. DASN-SIMEI fica fora (F-SN-0) |
 | São Paulo capital | O ISS da repartição vai para SP (LC 123 art. 22 I). NFS-e pelo Emissor Nacional |
-| **Com IE**, venda de produto no balcão | A revenda entra no **Anexo I**, com parcela de ICMS no DAS, salvo ST. Cosméticos: ST em SP é **NV** (RICMS-SP fora do corpus); PIS/COFINS monofásico por NCM 3303–3307 é **V** na lei e **I** na aplicação |
+| **Com IE**, venda de produto no balcão | A revenda entra no **Anexo I**, com a parcela de ICMS no DAS. **Perfumaria e higiene saíram da ST em SP em 01/04/2026** (Portaria SRE 94/2025 arts. 1º e 4º, **V**), então não sobra ST a segregar nesses produtos. Até 2026 sobra o monofásico de PIS/COFINS por NCM 3303–3307 (lei **V**; quais produtos o salão vende é pendência) |
 | Serviços LC 116 **6.01, 6.02, 6.03** | **Anexo III** por art. 17 § 2º + art. 18 § 5º-F (**I**). Sem fator R |
 | IBS/CBS **dentro do DAS** em jan–jun/2027 | As parcelas de IBS/CBS são cobradas no DAS (Anexos XVIII/XX). Sem crédito para o salão (LC 214 art. 47 § 9º I) |
 
@@ -206,11 +234,12 @@ o erro de transcrever de memória. São **7 vigências de partilha por anexo**: 
 **F-SN-3 — Enquadramento atividade → anexo.**
 - (a) Mapa por (natureza, `cTribNac`) só com linhas que têm fonte. Salão 6.01/6.02/6.03 → III; revenda → I. O que
   não estiver no mapa **bloqueia** a apuração com `ATIVIDADE_SEM_ANEXO`.
-- (b) Mapa por CNAE (Res. CGSN 140/2018, Anexo VI — **insumo ausente**).
+- (b) Mapa por CNAE. *2ª passada:* a Res. 140 **não tem** tabela CNAE × anexo; o Anexo VI é a lista de impeditivos.
 - (c) O operador declara o anexo de cada serviço.
 
 **Recomendação: (a).** Mesmo precedente do F-XP-7 → a ("fica fora até ter fonte"). (c) põe a decisão tributária na mão
-de quem não a sabe. (b) fica para quando o Anexo VI entrar no corpus.
+de quem não a sabe. (b) não tem fonte oficial. A linha do salão passa a citar a Res. 140 art. 25 § 1º III "m" (V); o
+único juízo que sobra é "serviço de beleza não é atividade intelectual", e o contador confirma.
 
 **F-SN-4 — Fator R agora?**
 - (a) Implementar agora: é regra verificada e pequena (≥ 28% → III, senão V; janela por vigência). A folha de 12 meses
@@ -238,16 +267,20 @@ NFS-e manual pode faltar.
 - (b) Declarar à mão, por competência, o valor de revenda com ST ou monofásico, com aviso.
 - (c) Não segregar: paga-se a parcela cheia.
 
-**Recomendação: (a) + (b) interino.** (c) paga ICMS e PIS/COFINS que já foram recolhidos na cadeia. No exemplo do §7
-isso quase dobra o DAS da revenda. Em 2027 a conta muda: a CBS não tem monofásico para cosmético (**I**), então a
-segregação de PIS/COFINS some. O atributo do produto é do X10a: criar um atributo concorrente aqui seria ilha.
+**Recomendação: (a) + (b) interino.** (c) paga PIS/COFINS que já foram recolhidos na cadeia. *2ª passada:* em SP,
+perfumaria e higiene **saíram da ST em 01/04/2026** (Portaria SRE 94/2025), então para o salão a segregação relevante
+é só o monofásico de PIS/COFINS, marcado por tributo no PGDAS-D (manual 6.6.4). Em 2027 ela some: a CBS não tem
+monofásico para cosmético (**I**). O estoque comprado com ST antes de abril segue a Portaria CAT 28/20 (**NV**). O
+atributo do produto é do X10a: criar um atributo concorrente aqui seria ilha.
 
 **F-SN-7 — Competência ou caixa (art. 18 § 3º).**
 - (a) Só competência (receita auferida).
 - (b) As duas.
 
 **Recomendação: (a).** A opção pela receita recebida some da redação de 2027 (**I**). Se o 1º cliente optou por caixa em
-2026, os meses de 2026 vão por orientação manual. O contador confirma (§8).
+2026, os meses de 2026 vão por orientação manual. O contador confirma (§8). *2ª passada:* a Res. 140 art. 19 manda
+registrar a opção no PGDAS-D de **novembro** para o ano seguinte, e ainda não foi atualizada para a redação de 2027. Não
+fica claro se o portal oferecerá a opção em nov/2026 para 2027.
 
 **F-SN-8 — PGDAS-D: gerar arquivo, orientar ou API.**
 - (a) Gerar arquivo de importação. **Nenhum leiaute de importação do PGDAS-D está no corpus nem foi citado por fonte
@@ -258,8 +291,9 @@ segregação de PIS/COFINS some. O atributo do produto é do X10a: criar um atri
 - (c) API do Integra Contador.
 
 **Recomendação: (b).** (a) não tem fonte. (c) colide com o R5. (b) põe o oráculo (o portal) no centro e usa o cálculo
-como conferência. É também o que a declaração assistida de 2027 pede: conferir o que a RFB apresentar. A lista de
-campos do portal é insumo ausente (§9).
+como conferência. É também o que a declaração assistida de 2027 pede: conferir o que a RFB apresentar. *2ª passada:*
+o espelho segue a **árvore oficial do manual** (item 6.5, atividade e segregação) e as qualificações por tributo
+(item 6.6); o manual não tem importação de arquivo, o que reforça (b).
 
 **F-SN-9 — DEFIS.**
 - (a) Espelho anual mínimo, só para anos-calendário com meses apurados no Luminaris e só enquanto existir declaração
@@ -269,7 +303,9 @@ campos do portal é insumo ausente (§9).
 
 **Recomendação: (a), depois do PGDAS-D.** A redação de 2027 do art. 25 torna a declaração **mensal**, com os dados
 socioeconômicos dentro (**I**: a DEFIS anual pode acabar depois do ano-calendário 2026). O 1º cliente só terá, no
-máximo, nov–dez/2026 no sistema. O contador confirma.
+máximo, nov–dez/2026 no sistema. O contador confirma. *2ª passada:* prazo **31/03** (Res. 140 art. 72 § 1º); dos
+campos (manual 9.4.3), o razão já dá o lucro contábil e os estoques (1.1.6). Sócios, empregados e aplicações seriam
+digitados.
 
 **F-SN-10 — Contabilização do DAS.**
 - (a) Provisão por competência **ao registrar o DAS oficial**, pelo valor oficial, não pelo calculado: débito numa conta
@@ -296,8 +332,11 @@ regime único"). O cálculo delas no regime regular é do PRE-ADR de IBS/CBS 202
   recolhimento dos tributos do parceiro.
 - (c) Perguntar primeiro. Default (a) com aviso; (b) entra por emenda se o cliente usar.
 
-**Recomendação: (c).** Em salão a diferença pode ser grande, mas a Lei 12.592 não está no corpus (**NV**: exigência
-de contrato homologado, forma da retenção), e não se sabe se o 1º cliente usa parceria.
+**Recomendação: (c).** Em salão a diferença pode ser grande, e não se sabe se o 1º cliente usa parceria. *2ª passada
+(Lei 12.592 lida):* o contrato precisa ser escrito e homologado pelo sindicato (§ 8º); a cota do profissional sai da
+receita bruta mesmo com nota unificada (§ 5º); e a cota do salão tem natureza de **aluguel de bens móveis e/ou
+gestão** (§ 4º). Se for aluguel de bem móvel, a LC 123 art. 18 § 4º V manda o Anexo III **sem a parcela do ISS** (**I**,
+contador confirma). Com parceria, (b) muda o anexo de parte da receita, não só a base.
 
 ## 5. Comportamentos candidatos do futuro BRIEF (esqueleto — não é checklist executável)
 
@@ -308,18 +347,18 @@ Regra 3 da sessão: comportamento com regra fiscal leva a fonte. Onde o enquadra
 |---|---|---|---|
 | 1 | Tabelas dos Anexos I–V com as 7 vigências, geradas por script, com contagens e anomalias asseridas (inclui "14,93%" × "14,92537%") | fork | F-SN-2; LC 123 Anexos; LC 214 art. 519 + Anexos XVIII–XXII |
 | 2 | Mapa atividade → anexo com fonte; o que não estiver no mapa bloqueia com `ATIVIDADE_SEM_ANEXO` | fork · **confirmação do contador** | F-SN-3; art. 17 § 2º, art. 18 §§ 4º, 5º-F |
-| 3 | RBT12 com janela **por vigência** (até 2026: 12 meses anteriores ao PA; 2027+: 12 meses antecedentes ao mês anterior) e proporcionalização no início de atividade | direto | art. 18 §§ 1º, 1º-A, 2º; LC 214 art. 517 |
-| 4 | Alíquota efetiva, percentuais por tributo, teto do ISS com transferência (a federais até 2026; a federais **e IBS** a partir de 2027), diferença centesimal | direto · **arredondamento NV** | art. 18 §§ 1º-A, 1º-B; Anexos (*) |
+| 3 | RBT12 com janela **por vigência** (até 2026: 12 meses anteriores ao PA; 2027+: 12 meses antecedentes ao mês anterior); início de atividade (1º mês × 12, depois média × 12); RBT12 = 0 conta como R$ 1,00 | direto | art. 18 §§ 1º, 1º-A, 2º; LC 214 art. 517; Res. 140 art. 21 p.ú., art. 22 §§ 2º–4º |
+| 4 | Alíquota efetiva, percentuais por tributo, teto do ISS com transferência (a federais até 2026; a federais **e IBS** a partir de 2027), diferença centesimal, regra do ICMS/ISS acima da 5ª faixa | direto · **arredondamento NV** | art. 18 §§ 1º-A, 1º-B; Anexos (*); Res. 140 art. 21 III |
 | 5 | Segregação por atividade e das receitas do § 4º-A (monofásico, ST, ISS retido, ISS de outro município), com redução da parcela | fork | F-SN-6; art. 18 §§ 4º-A, 12, 13 |
 | 6 | Fator R com folha declarada (janela por vigência) | fork | F-SN-4; art. 18 §§ 5º-J/K/M, 24–26 |
 | 7 | Histórico **pré-adoção** declarado (receita mensal e, opcionalmente, folha) com a evidência anexada. Sem ele não há RBT12 no 1º ano | direto | art. 18 § 1º; dado externo (§8 item 5) |
 | 8 | Alertas: passagem ME/EPP; excesso de R$ 4,8 mi (≤ 20% → ano seguinte); sublimite de R$ 3,6 mi (ICMS/ISS, e IBS a partir de 2027); histórico incompleto | direto | art. 3º I, II, §§ 7º–9º-A; art. 13-A (e red. 2027) |
 | 9 | Subrazão fiscal de receita alimentado pela ponte, com tie-out contra 3.1 + 3.3 − 3.2 | fork | F-SN-5 |
 | 10 | Apuração persistida por competência (rascunho → DAS registrado), recálculo idempotente, soft-delete e eventos de auditoria na allowlist | direto | Contrato §2/§3; `auditCanonical.ts` |
-| 11 | Espelho do PGDAS-D + registro do DAS oficial + divergência | fork · **campos NV** | F-SN-8; art. 18 §§ 15, 15-A |
+| 11 | Espelho do PGDAS-D na árvore oficial de atividades e qualificações + registro do DAS oficial (vencimento dia 20) + divergência; cancelamento deduzido no período original | fork | F-SN-8; art. 18 §§ 15, 15-A; Res. 140 arts. 18, 38, 40; manual 6.5–6.6 |
 | 12 | Contabilização do DAS registrado | fork · **códigos do contador** | F-SN-10 |
 | 13 | Opção semestral de IBS/CBS no perfil; com REGULAR, as parcelas de IBS/CBS saem do DAS | fork | F-SN-11; LC 123 art. 13 §§ 9º–10 (2027) |
-| 14 | Linhas `PGDAS_D` (mensal) e `DEFIS` (anual; vigência a confirmar) na matriz de obrigações, com a fonte | direto · DEFIS **I** | art. 18 § 15-A; art. 25 (e red. 2027); `obrigacoesPorRegime.ts` |
+| 14 | Linhas `PGDAS_D` (mensal, dia 20), `DEFIS` (anual, 31/03; vigência depois de 2026 a confirmar) e `LIVRO_CAIXA` (dispensado por escrituração contábil) na matriz de obrigações, com a fonte | direto · DEFIS pós-2026 **I** | art. 18 § 15-A; art. 25; Res. 140 arts. 40, 63 § 3º, 72 § 1º |
 | 15 | Saída para os documentos: alíquota efetiva de ISS do mês anterior (retenção) e, a partir de 2027, os percentuais de ICMS, IBS e CBS da faixa (crédito do adquirente B2B). Quem consome são os nós de emissão | direto | art. 21 § 4º I; LC 123 art. 23 § 2º (2027) |
 | 16 | Conferência: NFS-e emitidas × receita de serviços da competência | direto | art. 26 § 10 (2027); art. 25 §§ 6º–8º (2027) |
 | 17 | Parceria (cota-parte, retenção) | fork | F-SN-12 — só se ratificado (b) |
@@ -431,8 +470,10 @@ duas atividades estão na 3ª faixa. Conferido com `Decimal` nesta sessão.
   - ISS efetivo de 3,432%, abaixo do teto de 5%.
 - **Anexo I**: alíquota efetiva **7,19%**.
   - Sem segregar: R$ 359,50.
-  - Com monofásico (PIS/COFINS) e ICMS-ST, sobra só IRPJ + CSLL + CPP (51%): **R$ 183,35** em 2026.
-  - Em 2027 a CBS/IBS não tem monofásico para cosmético (**I**) e fica cheia: **R$ 239,07**.
+  - 2026, com monofásico de PIS/COFINS (sem ST: perfumaria saiu da ST em SP em 01/04/2026), sobram 84,50% da
+    repartição: **R$ 303,78**.
+  - 2027: sem segregação (a CBS não tem monofásico para cosmético, **I**): **R$ 359,50**.
+  - (A 1ª versão deste PRE-ADR usava também ICMS-ST e chegava a R$ 183,35 / R$ 239,07; a 2ª passada derrubou a ST.)
 
 O oráculo é o DAS que o portal gera para o cliente real (§11, gate humano). O arredondamento por tributo do PGDAS-D é
 **NV**.
@@ -443,30 +484,35 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 
 1. **Enquadramento** de 6.01/6.02/6.03 no Anexo III (**I**). Confirmar também os CNAEs do cliente (a Res. CGSN 140,
    Anexo VI, não foi lida).
-2. **Revenda em SP**: quais NCMs o salão vende; se há **ICMS-ST** nesses produtos em SP (RICMS-SP é **NV**); se o
-   monofásico da Lei 10.147 se aplica a eles (lei **V**, aplicação **I**).
+2. **Revenda em SP**: quais NCMs o salão vende; se o monofásico da Lei 10.147 se aplica a eles (lei **V**, aplicação
+   **I**). A ST de perfumaria e higiene acabou em 01/04/2026 (**V**). Há estoque comprado com ST antes disso (Portaria CAT
+   28/20)?
 3. **Caixa ou competência** em 2026: qual foi a opção do cliente.
-4. **Parceria da Lei 12.592**: o cliente usa? O contrato é homologado? Qual a cota-parte? Como é a retenção?
+4. **Parceria da Lei 12.592**: o cliente usa? O contrato é homologado pelo sindicato (§ 8º)? Qual a cota-parte? A cota
+   do salão é aluguel de bem móvel ou gestão (§ 4º)? Isso muda o anexo e o ISS dessa parcela.
 5. **Histórico de 12 a 13 meses** de receita (e folha, se houver fator R): extratos do PGDAS-D do cliente. **Dado externo.**
 6. **Contas** para a provisão do DAS e para o mapeamento na DRE. A CPP dentro do DAS é dedução da receita ou despesa?
 7. **Pacote pré-pago**: para o Simples, a receita bruta nasce na venda ou no consumo? (`pacoteFatoGerador`; contexto
    E-1/E-2 da D-2026-09-29.)
 8. **DEFIS**: quem entrega a de 2026? A declaração anual continua depois de 2027? (**I** pela nova redação do art. 25.)
-9. **Arredondamento** do PGDAS-D: casas decimais da alíquota efetiva e arredondamento por tributo.
+9. **Arredondamento** do PGDAS-D: casas decimais da alíquota efetiva e arredondamento por tributo. A Res. 140 e o
+   manual foram buscados por "arredond" e não trazem a regra: só o DAS real responde.
 10. **ISS em SP**: SP adota valor fixo (§ 18)? Há retenção por tomador PJ nos itens 6.xx? **DIFAL** nas compras de outro
     estado (fica fora do DAS, art. 13 § 1º XIII "h")?
 11. **Opção de IBS/CBS no 2º semestre de 2027** (março de 2027): decisão do dono e do contador.
-12. **Livro-caixa** (art. 26 § 2º): a escrituração contábil completa o dispensa? (**NV**, Res. CGSN 140.)
+12. ~~**Livro-caixa**~~: **resolvido** na 2ª passada. A escrituração contábil dispensa o livro caixa (Res. 140 art. 63 § 3º).
 13. **`pTotTribSN` da DPS**: é a alíquota efetiva do Simples? (Semântica **NV**.) Se for, o cálculo o alimenta em vez
     do campo digitado.
 
 ## 9. Insumos ausentes
 
-- **Res. CGSN 140/2018 compilada**: vencimento regulamentado do DAS, procedimento do PGDAS-D, prazo da DEFIS, Anexo VI
-  (CNAE × anexo), arredondamento. Baixar exige autorização do dono (precedente: decisão 10 de 29/09).
-- **Res. CGSN 191/2026**: só pelo dossiê (V-dossiê).
-- **Manual do PGDAS-D e da DEFIS**: a lista de campos do espelho (F-SN-8 b).
-- **Lei 12.592/2012** (salão-parceiro) e **RICMS-SP** (ST de cosméticos).
+*2ª passada:* os seis insumos da 1ª versão entraram no corpus (§2.3-b). Sobram:
+
+- **Texto da Res. CGSN 191/2026** e das Res. 184–190 e 192. A compilação da Res. 140 no Normas vai só até a 183/2025,
+  e a consulta do Normas não renderiza fora do navegador. Fonte possível: o DOU.
+- **Regulamentação de 2027**: manual do PGDAS-D com IBS/CBS e ato do CGSN sobre a opção semestral. O manual baixado
+  (jun/2025) não trata disso.
+- **Portaria CAT 28/20** (SP): tratamento do estoque que saiu da ST.
 
 ## 10. Achados fora de escopo (registrados, não planejados)
 
@@ -502,8 +548,12 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 
 ## Riscos desta proposta (incluindo os vieses do autor)
 
-- **O enquadramento do salão é inferência.** Ela sai de listas lidas por inteiro, mas a confirmação oficial (Anexo VI da
-  Res. CGSN 140 ou o contador) não foi lida. Se o 6.02 ou o 6.03 caírem em outro anexo, a alíquota muda por inteiro.
+- **O enquadramento do salão ainda depende de um juízo.** A 2ª passada achou a base oficial (Res. 140 art. 25 § 1º III
+  "m"), mas "serviço de beleza não é atividade intelectual" continua sendo leitura, e não existe tabela oficial CNAE ×
+  anexo. Se o contador puser o 6.02 (estética) em outro inciso, a alíquota muda por inteiro.
+- **A 1ª versão errou dois fatos que a 2ª passada corrigiu:** chamou o Anexo VI da Res. 140 de "CNAE × anexo" (é a
+  lista de impeditivos), e supôs ICMS-ST em cosméticos em SP (acabou em 01/04/2026). Os dois vieram de busca, não de
+  leitura. É o motivo desta regra: fonte não lida é NV.
 - **Desenho puxado pela lei, não pelo portal.** O PGDAS-D pode pedir a segregação com granularidade diferente da do
   §6. O espelho (F-SN-8 b) depende de um manual que ninguém leu.
 - **Viés do autor:** tendência a tratar como fato consumado a aritmética que eu mesmo fiz (§7), e a recomendar a opção
