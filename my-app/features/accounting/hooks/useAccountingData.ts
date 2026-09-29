@@ -42,9 +42,9 @@ export function useAccountingData() {
       try {
         const tables = await DynamicTableService.getTables();
         const list: TableMetaLike[] = Array.isArray(tables?.data) ? (tables.data as TableMetaLike[]) : [];
-        const unitsTable = list.find(
-          (t) => t.internalName === 'units' || /unidade|units/i.test(String(t.name ?? '')),
-        );
+        const unitsTable =
+          list.find((t) => t.internalName === 'units') ??
+          list.find((t) => /unidade|units/i.test(String(t.name ?? '')));
         if (!unitsTable?.id) {
           if (active) {
             setUnits([]);
