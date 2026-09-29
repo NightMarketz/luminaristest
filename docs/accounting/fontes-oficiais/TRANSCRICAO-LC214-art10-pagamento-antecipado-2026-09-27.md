@@ -58,6 +58,9 @@ Sob a LC 214 vigente isso implicaria, a partir da entrada em vigor do IBS/CBS:
 
 **Grau:** inferido — da leitura do texto para o caso do salão, sem confirmação de contador e sem o regulamento
 do § 7º, que ainda não existe. Não vira requisito nem nó de trabalho por conta desta transcrição.
+*(Errata 29/09: o **regulamento da CBS existe** desde 30/04/2026 (Decreto 12.955/2026). O art. 11 §§ 5º–6º reproduz
+a antecipação e remete o "não fornecimento" ao art. 57 (cancelamento). A hipótese dos 5 dias do § 7º não foi
+localizada nele. O regulamento do IBS não foi lido. Ver `../PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md` §5.)*
 
 ## 3. O que isto muda hoje: **nada no razão**
 
