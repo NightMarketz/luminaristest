@@ -64,7 +64,7 @@ const update = (user: UserContext, dataId: string, data: any) =>
 
 beforeAll(() => {
   const dbFile = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
-  for (const f of [dbFile, `${dbFile}-journal`]) if (fs.existsSync(f)) fs.rmSync(f);
+  for (const f of [dbFile, `${dbFile}-journal`]) if (fs.existsSync(f)) fs.truncateSync(f, 0); // truncar, não apagar: ver pushTestSchema (EBUSY no Windows)
   execSync('npx prisma db push --skip-generate --accept-data-loss', {
     cwd: SERVER_DIR,
     env: { ...process.env, DATABASE_URL: 'file:./test-integration.db' },

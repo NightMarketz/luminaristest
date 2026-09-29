@@ -154,7 +154,16 @@
         "Pix": "Pix",
         "Package Balance": "Package Balance",
         "Scheduled": "Scheduled",
-        "No-Show": "No-Show"
+        "No-Show": "No-Show",
+        "Micro": "Micro",
+        "Small": "Small",
+        "Large": "Large",
+        "Enterprise": "Enterprise",
+        "Decision Maker": "Decision Maker",
+        "Influencer": "Influencer",
+        "Champion": "Champion",
+        "Gatekeeper": "Gatekeeper",
+        "User": "User"
     },
     "services_view": {
         "title": "Services",

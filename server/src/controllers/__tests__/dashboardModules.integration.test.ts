@@ -286,6 +286,44 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(r.body.data.modules).toEqual({ installed: [] });
   });
 
+  // GAP-MAP Nível 3 "CRM — convertLead fixa enum inglês em campo freeSelects" (FIX-CRM-CONVERT-LEAD-SELECTS).
+  // Forks do dono 2026-09-28: F-B3-2 (b) + F-B3-3 (a) — a autoridade de Porte/Papel é o select INSTALADO do tenant.
+  describe('GAP-MAP convertLead × opções instaladas (selectOverrides)', () => {
+    const tenantCustom = async () => {
+      const u = await novoUsuario();
+      const r = await criar(u, {
+        suiteKey: 'crmModule', unit: { name: 'M' },
+        selectOverrides: { crmAccounts: { size: ['P', 'G'] }, crmContacts: { role: ['Decisor', 'Usuário'] } },
+      });
+      expect(r.status).toBe(201);
+      const dts = getFactory().getDynamicTableService();
+      const ctx = { id: u.id, userId: u.id, role: u.role } as never;
+      const unit = (await linhasDe(u.id, 'units'))[0];
+      const stage = (await linhasDe(u.id, 'leadStages'))[0];
+      const lead = await dts.createTableData(ctx, (await tabela(u.id, 'leads'))!.id, {
+        data: { unitId: unit.id, leadName: 'Maria', phone: '11999990000', pipelineId: (stage.data as { pipelineId: string }).pipelineId, stageId: stage.id, status: 'Open' },
+      });
+      const converter = (body: Record<string, unknown>) =>
+        request(app).post('/api/crm/pipeline/convert-lead').set(authHeader(u as never)).send({ leadId: lead.id, ...body });
+      return { u, converter };
+    };
+
+    it('T-1: size/role nas opções do tenant (P, Decisor) → 201 e a conta grava size P', async () => {
+      const { u, converter } = await tenantCustom();
+      const r = await converter({ account: { name: 'ACME', size: 'P' }, contact: { role: 'Decisor' } });
+      expect({ status: r.status, error: r.body.error }).toEqual({ status: 201, error: undefined });
+      expect((await linhasDe(u.id, 'crmAccounts')).map((a) => (a.data as { size?: string }).size)).toEqual(['P']);
+      expect((await linhasDe(u.id, 'crmContacts')).map((c) => (c.data as { role?: string }).role)).toEqual(['Decisor']);
+    });
+
+    it('T-2 (guarda de regressão, verde antes do fix): size fora das opções instaladas → 400, nenhuma conta', async () => {
+      const { u, converter } = await tenantCustom();
+      const r = await converter({ account: { name: 'ACME', size: 'Enorme' } });
+      expect(r.status).toBe(400);
+      expect(await linhasDe(u.id, 'crmAccounts')).toHaveLength(0);
+    });
+  });
+
   it('F-I8-COMP3-b: tenant legado (leads vindos do Core antigo) → sync-preset acha as 5 definições e não altera linhas', async () => {
     const u = await novoUsuario('ADMIN');
     // O Core antigo = Core atual + as 5 tabelas de lead (mesmos módulos, mesma fábrica) — é o que um tenant
