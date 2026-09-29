@@ -58,8 +58,8 @@ function renderModal(over: Partial<React.ComponentProps<typeof LalurEntryModal>>
 }
 
 async function pickCode(codigo: string) {
-  await waitFor(() => expect(lalurService.getCatalog).toHaveBeenCalled());
   const combo = screen.getByRole('combobox', { name: 'Código da linha (Tabela Dinâmica)' });
+  await waitFor(() => expect(combo).not.toHaveAttribute('placeholder', 'Carregando catálogo…'));
   fireEvent.change(combo, { target: { value: codigo } });
   fireEvent.blur(combo);
 }

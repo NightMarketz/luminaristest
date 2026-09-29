@@ -104,7 +104,7 @@ describe('LalurPanel', () => {
     const counters = screen.getByTestId('lalur-counters');
     expect(counters).toHaveAttribute('data-entries', '1'); // e2 is archived
     expect(counters).toHaveAttribute('data-accounts', '1'); // bFuture nasce em 2026, bDead arquivada
-    expect(screen.getAllByText('Prejuízo Fiscal Operacional')).toHaveLength(3); // RFB standard description, from PARTEB_PADRAO
+    expect(await screen.findAllByText('Prejuízo Fiscal Operacional')).toHaveLength(3); // RFB standard description, from PARTEB_PADRAO
     expect(screen.getAllByText('31/12/2024')).toHaveLength(2); // b1 + bDead — date-only, no UTC shift
 
     const liveRow = screen.getByText('Custos não dedutíveis').closest('tr')!;
@@ -151,8 +151,8 @@ describe('LalurPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Nova conta da Parte B/ }));
     fireEvent.change(screen.getByPlaceholderText('PF-2024'), { target: { value: 'X' } });
     fireEvent.change(screen.getByLabelText('Descrição (DESC_CTA_LAL)'), { target: { value: 'd' } });
-    await waitFor(() => expect(lalurService.getParteBPadrao).toHaveBeenCalled());
     const combo = screen.getByRole('combobox', { name: 'Código padrão RFB (COD_PB_RFB)' });
+    await waitFor(() => expect(combo).not.toHaveAttribute('placeholder', 'Carregando catálogo…'));
     fireEvent.change(combo, { target: { value: '1000' } });
     fireEvent.blur(combo);
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));

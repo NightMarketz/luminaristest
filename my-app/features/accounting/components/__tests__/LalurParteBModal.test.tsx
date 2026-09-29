@@ -42,7 +42,7 @@ async function fillRequired(codPbRfb = '1000') {
   fireEvent.change(screen.getByPlaceholderText('PF-2024'), { target: { value: 'PF-2024' } });
   fireEvent.change(screen.getByLabelText('Descrição (DESC_CTA_LAL)'), { target: { value: 'Prejuízo fiscal 2024' } });
   const combo = screen.getByRole('combobox', { name: 'Código padrão RFB (COD_PB_RFB)' });
-  await waitFor(() => expect(lalurService.getParteBPadrao).toHaveBeenCalled());
+  await waitFor(() => expect(combo).not.toHaveAttribute('placeholder', 'Carregando catálogo…'));
   fireEvent.change(combo, { target: { value: codPbRfb } });
   fireEvent.blur(combo);
 }
