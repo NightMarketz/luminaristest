@@ -38,7 +38,7 @@
 | S13 | Nota multi-item **não aceita** `expenseAccountId` no topo (modos XOR); o modo 4 só combina com o modo 3 | `PayableDto.ts:129-166` | V |
 | S14 | O detalhamento do modo 4 **não** mora no `Payable`: vai para `SourceDocument.rawJson` como `{fixedAssetItems}`; os débitos são agrupados por `accountCode` (`groupFixedAssetDebits`); `redriveMissingDrafts` relê esse JSON e cria rascunho para **todo** item nele | `PayableService.ts:1005-1045,1118-1130,1171` | V |
 | S15 | `resolveFixedAssetLines` resolve, antes da tx, a conta da classe **e a taxa por NCM** de cada item | `PayableService.ts:182-187,1202-1244` | V |
-| S16 | O mapeamento do import é por item: `productRef` XOR `classId`, e o CFOP 1551/2551 **exige** `classId` | `dtos/` do mapeamento NF-e, `:24-39` | V |
+| S16 | O mapeamento do import é por item: `productRef` XOR `classId`, e o CFOP 1551/2551 **exige** `classId` | `NfeDto.ts:24-39` | V |
 
 ## 2. Checklist de comportamentos
 
