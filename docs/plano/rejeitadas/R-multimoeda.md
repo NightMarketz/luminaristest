@@ -13,7 +13,8 @@ atualizado: "2026-09-23"
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** —  
 **Desbloqueia:** —  
-**Âncora no SDD consolidado:** §M4
+**Âncora no SDD consolidado:** §M4  
+**Reabertura pedida (29/09):** o dono escolheu um **ADR de moeda no Contas a Receber** (câmbio realizado + monitor de câmbio) — [[D-2026-09-29-CRM-RB-MOEDA-REALIZADO]]. O estado segue `rejected` até esse ADR ser ratificado; a tabela `PtaxRate` do [[CRM-RB]] é só exibição e não reabre nada por si.
 
 ## Evidência
 

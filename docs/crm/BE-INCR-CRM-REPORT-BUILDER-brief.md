@@ -1,9 +1,9 @@
 # BE-INCR-CRM-REPORT-BUILDER — BRIEF (sessão de planejamento)
 
-> **Estado:** BRIEF — **7/7 forks RATIFICADOS 2026-09-26 (dono, AskUserQuestion)**; F-RB4 diverge da recomendação. **Emenda 2026-09-29 (§8):** fork novo **F-RB8 moeda DECIDIDO** pelo dono (soma por moeda + visão convertida à parte pela PTAX do BCB); **6 sub-forks F-RB8a..f PENDENTES**; nomes de campo corrigidos. Sem código; execução exige "executa". Nó do vault: [`docs/plano/nos/CRM-RB.md`](../plano/nos/CRM-RB.md).
-> **Risco principal (2 linhas):** até 29/09 o BRIEF somava valores sem olhar a moeda e citava campos inexistentes
-> (`leads.value`, `proposals`) — executado assim, repetiria o defeito do GAP-MAP (USD/EUR somados como R$). O F-RB8 fecha
-> isso; o que resta é ratificar F-RB8a..f (§4.1) — sobretudo a data da taxa (F-RB8a) — antes do "executa".
+> **Estado:** BRIEF — **7/7 forks RATIFICADOS 2026-09-26 (dono, AskUserQuestion)**; F-RB4 diverge da recomendação. **Emenda 2026-09-29 (§8):** fork novo **F-RB8 moeda DECIDIDO** pelo dono (soma por moeda + visão convertida à parte pela PTAX do BCB); sub-forks **fechados** na 2ª rodada (F-RB8a ratificado; 8f resolvido pela 8a; 8b–8e fechados por regra sem veto — §4.1); nomes de campo corrigidos. Sem código; execução exige "executa". Nó do vault: [`docs/plano/nos/CRM-RB.md`](../plano/nos/CRM-RB.md).
+> **Risco principal (2 linhas):** este nó entrega só o câmbio **simulado** (PTAX do momento da consulta). O **realizado** e o
+> monitor de câmbio dependem de um ADR de moeda no Contas a Receber que reabre a R-multimoeda e ainda não existe (F-RB8a, §4.1).
+> Resta pendente só o valor de pipeline (§4.2, não bloqueia); antes do "executa" falta o PRE-ADR do nó (decidido em 26/09).
 > Histórico (26/09): o builder é a resposta ao `F-AD5` do [`ADR-ANALYTICS-DEFS`](../adr/ADR-ANALYTICS-DEFS-write-unblock.md);
 > F-RB1=(a) contorna o `F-AD0=(c)` (Prisma), F-AD0 segue congelado.
 
@@ -91,8 +91,11 @@
     `ReferentialAccount` (schema.prisma:516 — plano referencial da RFB, global, @@unique de importação, sem soft-delete).
 - Soft-delete: não se aplica — append-only, sem rota de escrita nem de delete (mesmo precedente).
 - Integração: lida pelo CrmReportService (serviço de aplicação); nada entra no motor DT (AC-2.1-B1/B4 intactos).
+- Módulo: NEUTRO, server/src/features/fx/ (não features/crm) — o ADR de moeda e o monitor de câmbio vão reusar
+    tabela, client e job (decisão D-2026-09-29-CRM-RB-MOEDA-REALIZADO).
 - Alfândega: nenhuma — não gera lançamento, evento nem título. NÃO é o slot `exchangeRate` do AccountingScope
-    (R-multimoeda, rejeitada) — fronteira a confirmar pelo dono no F-RB8f.
+    (R-multimoeda, rejeitada). F-RB8f resolvido 29/09 pela 8a: aqui é só exibição; a parte contábil vai
+    para o ADR de moeda no Contas a Receber, que deve reusar esta tabela.
 - Roteamento: backend-prisma-model-generator → backend-repository-generator → job-generator (scheduler)
     → backend-test-suite-generator. Sem controller/rota (a taxa viaja dentro do `run`, checklist 24).
 ```
@@ -100,8 +103,8 @@
 ## 2. Checklist numerado (cada item testável isolado) — escopo BE
 
 Forks resolvidos: F-RB1=(a), F-RB2=(a), F-RB3=(b), F-RB4=(c), F-RB5=(a), F-RB6=(a), F-RB7=(a), **F-RB8 (decidido 29/09)**.
-Itens 17-26 (emenda 29/09) seguem a recomendação dos sub-forks F-RB8a..f, **PENDENTES** — se o dono escolher outro caminho, muda o
-item que cita o sub-fork.
+Sub-forks (29/09, 2ª rodada — §4.1): **F-RB8a ratificado** (simulado aqui; realizado + monitor → ADR de moeda), **F-RB8f
+resolvido** pela 8a, **F-RB8b–8e fechados por regra** (um só caminho razoável; dono avisado, sem veto). Os itens 17-26 já refletem isso.
 
 1. **Modelo `CrmReportDefinition`** (F-RB1=(a)): `id cuid`, `userId` (FK User, cascade como `SavedTableView`), `name`,
    `description?`, `kind` (`chart|table|kpi`), `spec Json` (validado por §3 `ReportSpecSchema`), `chartType`,
@@ -144,11 +147,11 @@ item que cita o sub-fork.
     que cita só `sum`; se o dono discordar, sai uma linha. Testes: `sum` sem moeda → 400; com dimensão de moeda → 200 e um
     ponto por moeda; filtro `eq USD` → 200; `ne`, `nin` ou `in` com 2 valores → 400; medida sobre fonte de join exige o par
     do join, não o da fonte principal.
-18. **Moeda nula na linha** (F-RB8c, recomendação (a)): o grupo de moeda vazia — que hoje vira a chave `''`
+18. **Moeda nula na linha** (F-RB8c, fechado por regra 29/09): o grupo de moeda vazia — que hoje vira a chave `''`
     (`AggregatePipelineProcessor.ts:143`) — sai com chave estável `__NO_CURRENCY__` e rótulo i18n, nunca como string vazia,
     e fica fora da visão convertida. Caso real: `leads.latestProposalCurrency` é opcional e sem default. Teste: 2 leads USD +
     1 lead com valor e sem moeda → 2 pontos, um deles "sem moeda".
-19. **Campo monetário sem par** (F-RB8d, recomendação (a)): campo `numberFormat:'currency'` fora de
+19. **Campo monetário sem par** (F-RB8d, fechado por regra 29/09): campo `numberFormat:'currency'` fora de
     `CRM_MONEY_CURRENCY_PAIRS` (customização do usuário) ou cujo par sumiu do schema vivo → `sum`/`avg` permitidos, saída
     marcada `meta.currency = { mode: 'undeclared' }` e fora da visão convertida (`excluded[].reason = 'UNDECLARED_CURRENCY'`).
     Teste: campo custom de dinheiro soma sem 400 e sem `converted.points`.
@@ -173,9 +176,9 @@ item que cita o sub-fork.
     (`crm/constants.ts:1`). Falha do BCB → `warn` e nova tentativa no tick seguinte; nunca derruba o boot. Testes: lacuna de 3
     dias fechada numa chamada; sem lacuna → zero chamadas ao client; client lança → job não lança.
 24. **Visão convertida à parte** (F-RB8, decidido): `spec.convertTo: 'BRL'` opcional. Com ele, o `run` devolve `converted`
-    **ao lado** de `points`, nunca no lugar. Regras: cada grupo de moeda × PTAX de **venda** (recomendação do F-RB8e) da data
-    de referência (recomendação do F-RB8a: o dia da consulta, em Brasília); sem PTAX nessa data, usa a última ≤ data
-    (recomendação do F-RB8b), com `rateDate` e
+    **ao lado** de `points`, nunca no lugar. Regras: cada grupo de moeda × PTAX de **venda** (F-RB8e) da data
+    de referência (F-RB8a ratificado: o momento da consulta, em Brasília — é o câmbio **simulado**; o realizado é do ADR de moeda); sem PTAX nessa data, usa a última ≤ data
+    (F-RB8b), com `rateDate` e
     `stale = (referência − rateDate) > 5 dias corridos` por moeda; BRL passa com taxa 1; a dimensão de moeda colapsa com
     `addMoney` (`analytics/utils/CurrencyUtils.ts:6`); `avg` convertida = Σ(soma_c × taxa_c) ÷ Σ n_c, com uma medida `count`
     interna que não conta no teto de 4 do F-RB5; grupos sem moeda, sem par ou sem taxa vão para `excluded[]` com o número de
@@ -186,8 +189,9 @@ item que cita o sub-fork.
     taxa de 6 dias → `stale: true`.
 25. **Snapshot de shape**: `ReportSpecSchema` com `convertTo` e o `RunCrmReportOutput` (com `meta.currency` e `converted`)
     entram no snapshot de DTO; i18n no item 14.
-26. **Fronteira com a contabilidade** (F-RB8f, recomendação (a)): nada em `server/src/features/accounting/**` importa
-    `PtaxRate*`/`IPtaxClient` — conferido por grep no review (um consumidor só; teste mecânico de import só se o dono pedir).
+26. **Fronteira com a contabilidade** (F-RB8f, resolvido pela 8a): tabela, repositório, client e job moram em
+    `server/src/features/fx/` (módulo neutro), porque o ADR de moeda e o monitor de câmbio vão reusá-los. Até esse ADR ser
+    ratificado, nada em `server/src/features/accounting/**` importa `features/fx` — conferido por grep no review.
 
 ## 3. Contratos (esboço — materializar na sessão de feature)
 
@@ -347,19 +351,21 @@ model PtaxRate {
 | **F-RB7** | Templates iniciais | **(a)** os 6 gráficos do `CrmAnalyticsBundle` viram templates clonáveis (paridade testada); **(b)** sem templates; **(c)** substituir o bundle fixo pelos templates (apagar `CrmAnalyticsService` fixo) | **(a)** — destrava o usuário sem tela em branco; (c) é refatoração de algo vivo, fora do #14. | ✅ (a) RATIFICADO 2026-09-26 |
 | **F-RB8** *(emenda 29/09)* | Moeda: como somar valores de moedas diferentes? | (A) moeda única por tenant; **(B)** somar por moeda, nunca misturar, 400 no `sum` sem dimensão de moeda; (C) câmbio; (D) só a moeda-base + "N fora do total" (dossiê 29/09 §7, D-11) | **(B)** (dossiê) | ✅ **DECIDIDO 2026-09-29** (dono, questionário; decisão 14): **(B) + visão convertida à parte** — *"Soma por moeda e conversão a parte com cambio"* + *"PTAX do BCB, taxa do dia"*: tabela de taxas, cotada 1×/dia, com a data exibida. Checklist 17-26 |
 
-### 4.1 Sub-forks do F-RB8 — ⏳ RATIFICAÇÃO PENDENTE (6)
+### 4.1 Sub-forks do F-RB8 — ✅ fechados em 29/09 (2ª rodada)
 
-O dono decidiu o **quê** (por moeda + convertida à parte pela PTAX do dia). Estes são os **como** com mais de um caminho
-razoável. Nenhum se auto-ratifica; o checklist 17-26 segue a recomendação e muda no item citado se o dono escolher outra.
+O dono decidiu o **quê** (por moeda + convertida à parte pela PTAX do dia). Estes eram os **como**. Na 2ª rodada (29/09) o
+dono ratificou o 8a (com acréscimo) e, com isso, resolveu o 8f. A sessão reavaliou 8b–8e: em cada um só um caminho é
+razoável dada a decisão. Por isso foram fechados por regra, depois de aviso explícito ao dono ("fecho por regra, se você não
+vetar"), que não vetou. Colunas de caminhos e recomendação mantidas como registro.
 
 | Sub-fork | Pergunta | Caminhos | Recomendação | Status |
 |---|---|---|---|---|
-| **F-RB8a** | Que data de PTAX converte uma oportunidade **ganha**? | **(a)** o dia da consulta para todas as linhas (abertas e ganhas); **(b)** ganha pela PTAX do dia do ganho (`crmOpportunities.closedAt`), aberta pela do dia da consulta; **(c)** (b) só quando o relatório tem dimensão de período sobre `closedAt` | **(a)** — é a leitura literal de "taxa do dia" e dá **uma** data por moeda para exibir (o dono pediu "a data da taxa", no singular). A verdade histórica já está preservada na soma por moeda. (b) exige converter linha a linha **antes** de agregar (o agregador soma por grupo, `AggregatePipelineProcessor.ts:153`), um histórico de PTAX desde o `closedAt` mais antigo e só vale para `crmOpportunities` — leads e propostas não têm data de ganho (`closedAt` só em `OpportunitiesModule.ts:113`). **Custo de (a):** num relatório "ganhos por mês" convertido, os meses antigos saem pelo câmbio de hoje; o rótulo com a data da taxa deixa isso visível | ⏳ PENDENTE |
-| **F-RB8b** | Sem PTAX na data de referência (fim de semana, feriado, antes da publicação, BCB fora do ar) | **(a)** a última PTAX de fechamento ≤ data de referência, com a data dela exibida e `stale: true` se tiver mais de 5 dias corridos; **(b)** sem visão convertida (`RATE_UNAVAILABLE`); **(c)** buscar ao vivo no BCB durante o `run` | **(a)** — (b) deixaria a visão vazia em todo fim de semana e em toda manhã antes das ~13h (em 29/09, às 12h26, o dia ainda não tinha fechamento — §8); (c) prende o relatório à disponibilidade do BCB e contradiz "cotada 1×/dia, guardada". Os 5 dias cobrem o Carnaval (da sexta até a manhã da quarta de Cinzas = 5 dias; calendário **inferido**, não conferido no BCB); passar disso indica job parado, não calendário. Tabela vazia para a moeda → `excluded RATE_UNAVAILABLE` (item 24) | ⏳ PENDENTE |
-| **F-RB8c** | Linha com valor e **moeda nula** | **(a)** grupo explícito "sem moeda" na verdade, fora da conversão, com contagem; **(b)** assumir BRL (`DEFAULT_CURRENCY`); **(c)** excluir a linha | **(a)** — não inventa moeda. (b) é a mistura que o dono proibiu, aplicada ao desconhecido; (c) some com dado em silêncio. O caso existe: `leads.latestProposalCurrency` é opcional e sem default | ⏳ PENDENTE |
-| **F-RB8d** | Campo monetário **sem par de moeda** (campo `currency` criado pelo usuário numa tabela CRM, ou par apagado do schema) | **(a)** `sum`/`avg` permitidos, marcados "moeda não declarada", fora da conversão; **(b)** 400 `REPORT_CURRENCY_UNKNOWN`; **(c)** o spec declara o par (`currencyField`) | **(a)** — sem coluna de moeda, o dado não consegue guardar duas moedas, então não há mistura a detectar; (b) bloqueia o dinheiro do próprio usuário; (c) aumenta a superfície do spec por um caso raro | ⏳ PENDENTE |
-| **F-RB8e** | PTAX de **compra** ou de **venda**? | **(a)** venda; **(b)** compra; **(c)** média das duas | **(a)** — é a referência usual de mercado ("PTAX venda") — **não verificado**, convenção. A diferença é imaterial para exibição: 0,0006 R$/US$ (≈0,01%) nas amostras de 24–28/09 (verificado). As duas são guardadas, então trocar não exige migração | ⏳ PENDENTE |
-| **F-RB8f** | A tabela de taxas **colide** com a rejeitada [`R-multimoeda`](../plano/rejeitadas/R-multimoeda.md) (ledger BRL-only; slot `exchangeRate` no `AccountingScope`)? Pelo protocolo do vault, colisão com rejeitada = ADR antes | **(a)** não colide: é exibição do CRM, sem lançamento; a tabela tem o nome da fonte (`PtaxRate`), não o do slot contábil, e a contabilidade não a lê (item 26); **(b)** colide → ADR antes do "executa" | **(a)** — a rejeição é sobre moeda **no razão**; nada aqui toca `features/accounting`. O lugar onde multi-moeda contábil de fato morde é outro (§7: o ganho em USD vira título a receber em R$) — esse, sim, é território da R-multimoeda | ⏳ PENDENTE |
+| **F-RB8a** | Que data de PTAX converte uma oportunidade **ganha**? | **(a)** o dia da consulta para todas as linhas (abertas e ganhas); **(b)** ganha pela PTAX do dia do ganho (`crmOpportunities.closedAt`), aberta pela do dia da consulta; **(c)** (b) só quando o relatório tem dimensão de período sobre `closedAt` | **(a)** — é a leitura literal de "taxa do dia" e dá **uma** data por moeda para exibir (o dono pediu "a data da taxa", no singular). A verdade histórica já está preservada na soma por moeda. (b) exige converter linha a linha **antes** de agregar (o agregador soma por grupo, `AggregatePipelineProcessor.ts:153`), um histórico de PTAX desde o `closedAt` mais antigo e só vale para `crmOpportunities` — leads e propostas não têm data de ganho (`closedAt` só em `OpportunitiesModule.ts:113`). **Custo de (a):** num relatório "ganhos por mês" convertido, os meses antigos saem pelo câmbio de hoje; o rótulo com a data da taxa deixa isso visível | ✅ **RATIFICADO 29/09 (dono), com acréscimo**: *"8a é a simulação do cambio do momento da simulação e depois calcular se foi feito o cambio mesmo com os dados do cambio real"* + *"ADR moeda no A Receber e ainda um monitor que avisa quando vale a pena fazer esse câmbio"*. **Simulado** = (a), neste nó. **Realizado** (o câmbio de fato, do recebimento no Contas a Receber) e **monitor de câmbio** → ADR de moeda, fora deste nó (`docs/plano/decisoes/D-2026-09-29-CRM-RB-MOEDA-REALIZADO.md`) |
+| **F-RB8b** | Sem PTAX na data de referência (fim de semana, feriado, antes da publicação, BCB fora do ar) | **(a)** a última PTAX de fechamento ≤ data de referência, com a data dela exibida e `stale: true` se tiver mais de 5 dias corridos; **(b)** sem visão convertida (`RATE_UNAVAILABLE`); **(c)** buscar ao vivo no BCB durante o `run` | **(a)** — (b) deixaria a visão vazia em todo fim de semana e em toda manhã antes das ~13h (em 29/09, às 12h26, o dia ainda não tinha fechamento — §8); (c) prende o relatório à disponibilidade do BCB e contradiz "cotada 1×/dia, guardada". Os 5 dias cobrem o Carnaval (da sexta até a manhã da quarta de Cinzas = 5 dias; calendário **inferido**, não conferido no BCB); passar disso indica job parado, não calendário. Tabela vazia para a moeda → `excluded RATE_UNAVAILABLE` (item 24) | ✅ **FECHADO por regra 29/09** — (a); (b) e (c) não são razoáveis pelos motivos ao lado; dono avisado, sem veto |
+| **F-RB8c** | Linha com valor e **moeda nula** | **(a)** grupo explícito "sem moeda" na verdade, fora da conversão, com contagem; **(b)** assumir BRL (`DEFAULT_CURRENCY`); **(c)** excluir a linha | **(a)** — não inventa moeda. (b) é a mistura que o dono proibiu, aplicada ao desconhecido; (c) some com dado em silêncio. O caso existe: `leads.latestProposalCurrency` é opcional e sem default | ✅ **FECHADO por regra 29/09** — (a); decorre do "nunca misturar"; dono avisado, sem veto |
+| **F-RB8d** | Campo monetário **sem par de moeda** (campo `currency` criado pelo usuário numa tabela CRM, ou par apagado do schema) | **(a)** `sum`/`avg` permitidos, marcados "moeda não declarada", fora da conversão; **(b)** 400 `REPORT_CURRENCY_UNKNOWN`; **(c)** o spec declara o par (`currencyField`) | **(a)** — sem coluna de moeda, o dado não consegue guardar duas moedas, então não há mistura a detectar; (b) bloqueia o dinheiro do próprio usuário; (c) aumenta a superfície do spec por um caso raro | ✅ **FECHADO por regra 29/09** — (a); sem coluna de moeda não há mistura possível; dono avisado, sem veto |
+| **F-RB8e** | PTAX de **compra** ou de **venda**? | **(a)** venda; **(b)** compra; **(c)** média das duas | **(a)** — é a referência usual de mercado ("PTAX venda") — **não verificado**, convenção. A diferença é imaterial para exibição: 0,0006 R$/US$ (≈0,01%) nas amostras de 24–28/09 (verificado). As duas são guardadas, então trocar não exige migração | ✅ **FECHADO por regra 29/09** — (a); imaterial e reversível sem migração; dono avisado, sem veto |
+| **F-RB8f** | A tabela de taxas **colide** com a rejeitada [`R-multimoeda`](../plano/rejeitadas/R-multimoeda.md) (ledger BRL-only; slot `exchangeRate` no `AccountingScope`)? Pelo protocolo do vault, colisão com rejeitada = ADR antes | **(a)** não colide: é exibição do CRM, sem lançamento; a tabela tem o nome da fonte (`PtaxRate`), não o do slot contábil, e a contabilidade não a lê (item 26); **(b)** colide → ADR antes do "executa" | **(a)** — a rejeição é sobre moeda **no razão**; nada aqui toca `features/accounting`. O lugar onde multi-moeda contábil de fato morde é outro (§7: o ganho em USD vira título a receber em R$) — esse, sim, é território da R-multimoeda | ✅ **RESOLVIDO pela 8a (29/09)** — (a) para este nó; a parte contábil vai explicitamente para o ADR de moeda, que reabre a R-multimoeda e deve reusar a `PtaxRate` (módulo neutro `features/fx`, item 26) |
 
 ### 4.2 Decisão ortogonal PENDENTE — fonte e filtro do "valor de pipeline" (não é deste nó)
 
@@ -374,7 +380,22 @@ correção); aqui só fica listado.
     valor > 0; `server/src/features/crm/services/CrmAnalyticsService.ts:86-97` troca `pipelineValue` (e ganhos, win rate,
     forecast, ticket) por `crmOpportunities.amount` quando a tabela existe — decisão do dono de 25/09. Ignora `currency`.
   - GAP-MAP: linha "**CRM — valor de pipeline diverge entre visão geral e analytics, e soma moedas**"
-    (`docs/operating-manual/GAP-MAP.md:105`), `[ABERTO]`, só registro.
+    (`docs/operating-manual/GAP-MAP.md:106`), `[ABERTO]`, só registro.
+- **Leads × oportunidades — a diferença real (pergunta do dono, 29/09; lido no código em `4b3b7711`):**
+  - **Lead** (módulo base CRM-0, `registry.ts:60-66`) é a **pré-qualificação**: quem é o contato, origem, BANT, score, etapa
+    no funil. O valor que carrega é um **retrato da última proposta** (`latestProposalAmount/Currency`, `LeadsModule.ts:81-97`),
+    não um negócio próprio. Status: Open/Won/Lost/Disqualified/Converted (`LeadsModule.ts:109-113`).
+  - **Oportunidade** (módulo opcional, `registry.ts:108-117`: "oportunidade ganha gera conta a receber") é o **negócio**:
+    valor, moeda, probabilidade, previsão de fechamento, status Open/Won/Lost e `closedAt`. **Só ela gera dinheiro no
+    razão**: o Won dispara o título a receber (`crmController.ts:94-135`) e fica imutável (`OpportunitiesModule.ts:116`).
+  - **O elo é fraco:** criar oportunidade a partir de um lead **não consome o lead** (`CrmPipelineService.ts:383-386`: "The
+    lead is NOT consumed/terminated"). O `amount` da oportunidade é digitado na criação, sem cópia do valor do lead
+    (`:454`). Os dois usam as mesmas etapas. Na prática, o mesmo negócio pode aparecer **duas vezes**: no lead (retrato da
+    proposta) e na oportunidade. O conselho CRM de 20/07 já tinha chamado isso de separação "nominal" (CA1).
+  - **Por isso os números divergem:** a visão geral soma o **retrato** nos leads, inclusive Won e Converted. O analytics
+    soma os **negócios abertos** nas oportunidades. Não é arredondamento: são coisas diferentes.
+- **Status após a pergunta:** o dono pediu a diferença antes de escolher. A recomendação (a) continua: "pipeline" é negócio
+  aberto, e negócio mora na oportunidade.
 - **Caminhos:** (a) a visão geral passa a ler o mesmo que o analytics (oportunidades, só Open; leads como fallback sem a
   tabela); (b) o analytics volta para leads; (c) os dois convivem com rótulos distintos ("pipeline de leads" × "pipeline de
   oportunidades").
@@ -410,8 +431,8 @@ correção); aqui só fica listado.
 - `DashboardLayoutDto` `widgetConfig: z.any()` — validação fraca pré-existente.
 - `AnalyticsService` descarta definição inválida em silêncio (E8 do ADR) para o caminho `analyticsDefinitions` — não corrigido aqui.
 - `FE-INCR-CRM-REPORT-BUILDER` (tela: builder fonte→dimensões→medidas→filtros + preview com `ChartRenderer`) — nó vizinho, BRIEF próprio. Emenda 29/09: herda do F-RB8 a exibição por moeda, o bloco convertido separado com a data da taxa e o aviso `stale`, e o KPI (`kind:'kpi'`) com um valor por moeda.
-- **Emenda 29/09 — NOVO, candidato ao GAP-MAP (o registro exige OK do dono):** uma **oportunidade ganha em USD/EUR vira
-  título a receber em R$ pelo valor nominal**. `crmController.ts:126-133` monta o `WonOpportunityFact` com `amount` e sem
+- **Emenda 29/09 — NOVO, REGISTRADO no GAP-MAP (Nível 3) com OK do dono 29/09 (*"Registrar; corrige no ADR"*):** uma
+  **oportunidade ganha em USD/EUR vira título a receber em R$ pelo valor nominal**. `crmController.ts:126-133` monta o `WonOpportunityFact` com `amount` e sem
   `currency`; `CrmReceivableBridge.ts:61` documenta `amount` como "reais"; não há guarda BRL-only em lugar nenhum de
   `server/src` (grep). Grau: **leitura verificada; efeito inferido** (sem execução nem teste). É aqui que moeda no razão morde
   de fato — território da [`R-multimoeda`](../plano/rejeitadas/R-multimoeda.md), não deste nó.
@@ -455,3 +476,18 @@ tabela 'system' é justamente a que o F-AD0 congelou. A conclusão se manteve.
 
 **Checagem que teria falhado se a emenda estivesse errada:** os nomes da tabela acima foram lidos nos arquivos citados (um
 nome inventado não aparece no `grep`); o comportamento do fim de semana e do "antes das 13h" veio da API, não de memória.
+
+### 8.1 Segunda rodada (29/09, mesma sessão)
+
+- **F-RB8a ratificado com acréscimo:** o simulado (PTAX do momento da consulta) fica neste nó. O realizado (o câmbio de
+  fato, que vem do recebimento no Contas a Receber) e um **monitor que avisa quando vale a pena fazer o câmbio** vão para um
+  **ADR de moeda no Contas a Receber**, que reabre a R-multimoeda. Registro: `docs/plano/decisoes/D-2026-09-29-CRM-RB-MOEDA-REALIZADO.md`.
+- **F-RB8f** resolvido pela 8a. **F-RB8b–8e** fechados por regra, depois de aviso ao dono, sem veto.
+- **Consequência de desenho:** a `PtaxRate`, o repositório, o client e o job vão para um módulo neutro, `server/src/features/fx/`
+  (§1.1, item 26), porque o ADR e o monitor vão reusá-los.
+- **GAP-MAP:** o achado "Won em USD/EUR vira título em R$ nominal" entrou no Nível 3 como `[ABERTO]`, com o conserto no ADR.
+- **§4.2** ganhou a resposta factual à pergunta do dono ("qual a real diferença entre leads e oportunidades?"). A decisão
+  do valor de pipeline segue pendente.
+- **Caso adversarial tentado contra "realizado = CRM à mão"** (a opção mais barata): contradiz a imutabilidade do Won
+  decidida em 25/09 (`OpportunitiesModule.ts:116`, "edits would drift CRM × ledger") e cria uma segunda fonte do valor
+  recebido. O dono escolheu o ADR, o que mantém uma fonte só.
