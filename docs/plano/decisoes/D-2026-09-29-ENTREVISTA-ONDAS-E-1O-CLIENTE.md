@@ -60,3 +60,52 @@ Consequências registradas (fonte no dossiê §0):
 - "Hoje só CSV" (triagem 23/09, 3.4) está errado: o XLSX existe (`exceljs`, `DataExchangeDto.ts:59`).
 - A citação `PeriodService.ts:34` no PRE-ADR GOV aponta para o `seedYear`; a reabertura fica em `:137-142` e em `openPeriod` `:45-53`.
 - Nota do MANIFEST "Planalto reeditou sem mudar o tamanho": provável falso positivo (o token antirrobô `f5_p` muda o sha).
+
+## Adendo 29/09 (tarde) — pesquisa do PRE-ADR do Simples (decisão 8)
+
+Adendo de **evidência**. Não altera nenhuma das 19 decisões acima. Origem:
+[`PRE-ADR-SIMPLES-NACIONAL-CALCULO`](../../adr/PRE-ADR-SIMPLES-NACIONAL-CALCULO.md) (PR #452, Proposed, forks F-SN-0..13
+pendentes). As fontes foram lidas no corpus, com o sha conferido no MANIFEST. As 6 novas foram baixadas com a autorização
+do dono ("Pode Baixar").
+
+**O que a pesquisa confirmou ou corrigiu nesta nota:**
+- **Decisão 1 (fica no DAS).** Agora é V pela lei, não mais inferência: LC 123 art. 13 §§ 9º–10, na redação da LC 214
+  art. 517, vigente em 01/01/2027. O regime regular de IBS/CBS é **facultativo** e escolhido **por semestre** (em setembro
+  e em março), sem volta dentro do semestre. Sem opção, o IBS/CBS é cobrado no DAS. Isso fecha o ponto "não verificado"
+  do dossiê §10 (U1).
+- **Decisão 1, efeito no valor.** Nas faixas 1–5 dos Anexos I e III de 2027–2028 (LC 214, Anexos XVIII e XX), a soma
+  CBS + IBS é igual à soma PIS + COFINS de hoje. Na venda de serviço, **o DAS total do cliente não muda em 2027**.
+- **Fatos do 1º cliente, "com IE e vende no balcão".** **Perfumaria e higiene saíram da substituição tributária do ICMS
+  em SP em 01/04/2026** (Portaria SRE 94/2025, arts. 1º e 4º). Na revenda de cosmético, o ICMS volta para dentro do DAS.
+  Até 2026 sobra só o PIS/COFINS monofásico (NCM 3303–3307). A partir de 2027 ele acaba, porque a CBS não tem monofásico
+  para cosmético (inferido).
+- **Obrigações do Simples** (complementa a linha "ECF não se aplica, ECD facultativa"). Pela Res. CGSN 140:
+  - o DAS e o PGDAS-D vencem no **dia 20** (art. 40);
+  - a DEFIS é entregue até **31/03** (art. 72 § 1º);
+  - o livro-caixa é **dispensado pela escrituração contábil** (art. 63 § 3º).
+
+  A partir de 2027, a declaração passa a ser **mensal**, traz as informações socioeconômicas e ganha uma "declaração
+  assistida" da Receita (LC 123 art. 25, redação 2027). Que a DEFIS anual acabe depois do ano-calendário 2026 é
+  inferência.
+- **Enquadramento dos serviços 6.01/6.02/6.03.** Os três caem no **Anexo III, sem fator R**, pela Res. 140 art. 25 § 1º
+  III "m" (serviços que não são atividade intelectual). O único juízo que sobra é o do contador. O Anexo VI da Res. 140 é
+  a lista de **CNAEs impeditivos** (o salão não está nela), e **não** uma tabela de atividade por anexo.
+- **Janela do RBT12 muda em 2027.** A receita dos 12 meses que define a faixa passa a ser a dos "doze meses antecedentes
+  ao mês anterior" (LC 214 art. 517). O cálculo precisa saber qual regra vale em cada período.
+- **Profissional-parceiro (Lei 12.592 art. 1º-A).** A parte do profissional **não é receita bruta do salão**. O contrato
+  precisa ser escrito e **homologado pelo sindicato**. A parte do salão tem natureza de aluguel de bem móvel e/ou gestão.
+  Pode reduzir bastante o DAS, mas só se o cliente usar parceria formal (pergunta ao contador/cliente).
+- **Res. CGSN 191/2026.** A obrigação da NFS-e nacional desde 01/11/2026 é V pela notícia oficial da Receita. O texto da
+  resolução não foi lido: a versão consolidada da Res. 140 no portal de normas da Receita só vai até a Res. 183/2025.
+- **Fronteira com o X7.** O `ADR-INCR-TAX-ASSESSMENT` (PR #446) exclui Simples e MEI (D12). A decisão 8 (PRE-ADR
+  próprio) não colide com ele. O reuso do modelo de apuração ficou como fork (F-SN-13).
+
+**Perguntas novas para o contador** (entram no próximo pedido pela `luminaris-contador-liaison`; quem envia é o dono):
+1. Confirmar o enquadramento de 6.01, 6.02 e 6.03 no Anexo III.
+2. Quais NCMs o salão vende, e se há estoque comprado com ST antes de 01/04/2026.
+3. O cliente optou pelo regime de caixa em 2026?
+4. Há contrato de parceria homologado, e qual é a cota-parte?
+5. Extratos do PGDAS-D dos últimos 12 a 13 meses.
+6. Quais contas usar para a provisão do DAS.
+
+A lista completa, com 13 itens, está no §8 do PRE-ADR.

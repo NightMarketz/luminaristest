@@ -280,5 +280,5 @@ Estado real (V):
 
 ## 10. Onde este dossiê é fraco (declarado)
 - **Fonte secundária:** conteúdo das NTs 2026.007 e 2025.002 v1.51; datas 2027/2028 do split; estimativa da alíquota da CBS.
-- **Não verificado:** PN CST 210/73 e 104/75 (regra "min"); efeito da LC 224 na CSLL; liberação do Payouts do MP para lojista comum; o que acontece se ninguém escolher no Simples (U1).
+- **Não verificado:** PN CST 210/73 e 104/75 (regra "min"); efeito da LC 224 na CSLL; liberação do Payouts do MP para lojista comum. ~~O que acontece se ninguém escolher no Simples (U1)~~ → **resolvido em 29/09 (tarde)**: o regime regular é facultativo e semestral, e sem opção o IBS/CBS fica no DAS (LC 123 art. 13 §§ 9º–10, red. LC 214 art. 517). Ver o adendo da `D-2026-09-29` e o `PRE-ADR-SIMPLES-NACIONAL-CALCULO`.
 - **Viés:** as frentes legais tendem a confirmar o contador onde a norma é silenciosa. O cClassTrib 000001, o sentido dos blocos da Parte B e o monofásico são **inferências**, por isso viraram perguntas de confirmação, não fatos.
