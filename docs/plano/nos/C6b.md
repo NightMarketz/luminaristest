@@ -25,6 +25,7 @@ atualizado: "2026-09-29"
 - [`docs/accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md`](../../accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-brief.md)
 - [`docs/accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md`](../../accounting/BE-INCR-CONTADOR-PACKAGE-EXTENDED-execution-plan.md)
 - [`PLANO-POS-CONTADOR-2026-09-23.md`](../../accounting/PLANO-POS-CONTADOR-2026-09-23.md) — fila viva das fases pós-contador — Fase 3.4 (emenda: relatórios do pacote)
+- [`docs/accounting/BE-INCR-CONTADOR-PACKAGE-EMENDA-3-4-brief.md`](../../accounting/BE-INCR-CONTADOR-PACKAGE-EMENDA-3-4-brief.md) — BRIEF da emenda 3.4 (29/09; planejar autorizado na decisão 16 de D-2026-09-29): AGORA = inventário, fichas do imobilizado, aging AP/AR conciliado na data e créditos por nota (5 `ExportKind` novos, zero migração); memória de cálculo e conciliação de tributos depois do [[X7]]; créditos por item → fork; 11 forks F-C6bE PENDENTES
 
 ## Evidência
 
