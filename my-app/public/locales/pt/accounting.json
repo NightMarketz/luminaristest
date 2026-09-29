@@ -1727,5 +1727,101 @@
       "generation_input": "dado de geração",
       "journal_entry": "lançamento"
     }
+  },
+  "contacts": {
+    "archiveNote": "O contador sai da lista e do despacho; as entregas antigas continuam no histórico.",
+    "archiveTitle": "Arquivar contador",
+    "col": {
+      "certificate": "Certidão (validade)",
+      "email": "E-mail",
+      "name": "Nome"
+    },
+    "editTitle": "Editar contador",
+    "empty": "Nenhum contador cadastrado.",
+    "field": {
+      "certificate": "Certidão de regularidade (opcional)",
+      "cpf": "CPF",
+      "crcNumber": "CRC",
+      "crcUf": "UF do CRC",
+      "email": "E-mail",
+      "name": "Nome",
+      "phone": "Fone (opcional; a ECF exige)",
+      "validUntil": "Validade da certidão (opcional)"
+    },
+    "heading": "Contadores",
+    "new": "Novo contador",
+    "newTitle": "Novo contador",
+    "profile": "Perfil de pacote",
+    "profileHint": "Sugestão: estes extras vêm pré-marcados ao montar o pacote para este contador.",
+    "profileTitle": "Perfil de pacote — {{name}}"
+  },
+  "delivery": {
+    "action": {
+      "archive": "Arquivar",
+      "edit": "Editar"
+    },
+    "build": {
+      "contact": "Contador destinatário",
+      "extras": "Extras (máx. 20) — só relatórios gerados com período",
+      "heading": "Montar pacote",
+      "noExtras": "Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação.",
+      "pickContact": "Selecione…",
+      "stale": "A seleção mudou depois da validação — valide de novo.",
+      "toExports": "Gere o relatório com período na aba Importação/Exportação",
+      "toPeriods": "Períodos",
+      "toReview": "Revisão profissional ↑",
+      "validate": "Validar pacote",
+      "year": "Exercício"
+    },
+    "col": {
+      "actions": "Ações"
+    },
+    "confirm": {
+      "checkbox": "Confirmo que despachei este pacote ao contador pelo meu canal (e-mail/portal); o sistema não envia.",
+      "submit": "Registrar despacho"
+    },
+    "confirmAction": "Confirmar",
+    "error": {
+      "contacts": "Erro ao carregar os contadores.",
+      "generic": "Não foi possível concluir a operação.",
+      "history": "Erro ao carregar as entregas."
+    },
+    "history": {
+      "allStatus": "Todos os status",
+      "attempts": "Tentativas",
+      "contact": "Contador",
+      "detail": "Detalhe",
+      "detailTitle": "Entrega {{id}}",
+      "empty": "Nenhuma entrega registrada.",
+      "heading": "Entregas",
+      "retry": "Reprocessar",
+      "status": "Status das entregas",
+      "when": "Quando / motivo"
+    },
+    "manifest": {
+      "copySha": "Copiar sha256",
+      "download": "Baixar",
+      "ledger": "Livro",
+      "period": "Período"
+    },
+    "receipt": {
+      "copyManifest": "Copiar manifesto (JSON)",
+      "signer": "Signatário (J930)",
+      "title": "Despacho registrado"
+    },
+    "save": "Salvar",
+    "subtitle": "O sistema não envia nada — registra que você despachou o pacote pelo seu canal.",
+    "title": "Entrega ao contador",
+    "kind": {
+      "EXPORT_SPED_ECD": "ECD",
+      "EXPORT_SPED_ECF": "ECF (Presumido)",
+      "EXPORT_SPED_ECF_REAL": "ECF (Lucro Real)",
+      "EXPORT_TRIAL_BALANCE": "Balancete",
+      "EXPORT_GENERAL_LEDGER": "Razão geral",
+      "EXPORT_BALANCE_SHEET": "Balanço patrimonial",
+      "EXPORT_INCOME_STATEMENT": "DRE",
+      "EXPORT_BANK_RECONCILIATION": "Conciliação bancária",
+      "EXPORT_ENTRY_SAMPLE": "Amostra de lançamentos"
+    }
   }
 }

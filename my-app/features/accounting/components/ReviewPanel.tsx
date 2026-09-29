@@ -111,7 +111,7 @@ export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
   };
 
   return (
-    <section className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5" data-testid="review-panel">
+    <section id="review-panel" className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5" data-testid="review-panel">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="mb-1 text-lg font-semibold text-neutral-200">{t('review.title', 'Revisão profissional')}</h2>
