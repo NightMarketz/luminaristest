@@ -263,6 +263,27 @@ Desfecho do passo 16 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 16): ____________
 
+### [EMENDA 2026-09-28] Passo 17 — SPED: qualificação do assinante e contador do cadastro (FE-INCR-SPED-SIGNERS)
+
+> Preparado por agente em 2026-09-28, **em branco** (`PLANO-ONDA1-FE-2026-09-28.md` §5). Mesmas pré-condições dos
+> passos 12–14 (commit do merge do FE-INCR-SPED-SIGNERS ou posterior). Para o item c), um contador cadastrado em
+> `/api/accounting/contacts` na unidade (com e sem telefone).
+
+17. Contabilidade → Compliance → Gerar SPED.
+    - a) O código do signatário (ECD `COD_ASSIN`, ECF/ECF Real `IDENT_QUALIF`) é um combobox com "código · descrição",
+      busca por texto e **sem texto livre**: digitar um código fora da tabela e sair do campo limpa o valor. A ECD
+      oferece `001` (só na J930); a ECF não. EVIDÊNCIA: [ ]
+    - b) Gerar a ECD escolhendo `900` e `205` pelo combobox. Resultado esperado: 2xx. EVIDÊNCIA: [ ]
+    - c) "Contador do cadastro": escolher o contador e deixar só a linha do responsável legal. Resultado esperado: o
+      request leva `signerContactIds: [id]` e 2xx; na ECF com um contador **sem telefone** no cadastro, a tela mostra o
+      400 do servidor ("não tem telefone") inteiro. EVIDÊNCIA: [ ]
+
+Desfecho do passo 17 (marcar UM):
+[ ] PASSOU — a) a c) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 17): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
