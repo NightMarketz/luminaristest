@@ -103,8 +103,9 @@ describe('LalurParteBMovementsSection', () => {
 
   it('fechar T02 pede confirmação, chama o BE e recarrega o diagnóstico', async () => {
     renderSection();
-    await waitFor(() => expect(lalurService.getParteBBalances).toHaveBeenCalledTimes(1));
-    fireEvent.click(within(screen.getByTestId('lalur-closing-T02')).getByRole('button', { name: /Fechar/ }));
+    const fechar = () => within(screen.getByTestId('lalur-closing-T02')).getByRole('button', { name: /Fechar/ }) as HTMLButtonElement;
+    await waitFor(() => expect(fechar().disabled).toBe(false));
+    fireEvent.click(fechar());
     expect(screen.getByText(/materializa o M500/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     await waitFor(() => expect(lalurService.closeParteB).toHaveBeenCalledWith('u1', 2025, 'T02'));
