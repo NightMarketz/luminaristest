@@ -18,8 +18,10 @@
 - **2ª passada (29/09, tarde):** o dono autorizou baixar os insumos ausentes (*"Pode Baixar"*). Entraram no corpus a
   Res. CGSN 140/2018, o Manual do PGDAS-D e DEFIS, a Lei 12.592/2012 e duas fontes de SP (RICMS arts. 313-E/F e Portaria
   SRE 94/2025), mais a notícia oficial da RFB sobre a Res. CGSN 191/2026 (MANIFEST). O que elas mudaram está em §2.3-b e
-  nos forks F-SN-3, 6, 7, 8, 9 e 12. **O F-SN-1 espera o ADR do X7**, que está sendo escrito em paralelo (dono: *"espera
-  ele acabar e reavalie"*).
+  nos forks F-SN-3, 6, 7, 8, 9 e 12.
+- **Reavaliação depois do ADR do X7** (dono: *"espera ele acabar e reavalie"*). O `ADR-INCR-TAX-ASSESSMENT` (PR #446,
+  Proposed) exclui o Simples (D12). F-SN-1 mantém a recomendação; o reuso do `TaxAssessment` virou o F-SN-13; o F-SN-10
+  se alinha ao F-X7-4.
 - **Base:** `origin/main` = `251f0fd9` (código lido em `9dd690b3`; o #439 e o #440 não tocam o código citado).
 
 ## TLDR
@@ -199,7 +201,7 @@ tem o mesmo sha. A extração **descartou o texto tachado** (263 `<strike>` e 12
 | DynamicTable × Prisma (`CLAUDE.md`, Contrato §2.1) | Não | Invariante fiscal → **Prisma first-class**. Nenhum serviço Prisma entra no motor. A receita chega pela **ponte contábil** que já existe (`sync/bridges`), o mesmo ponto de integração que alimenta 3.1/3.3, CMV e estoque |
 | R5 (Serpro adiado, sem desenho de adaptador) | Sim, se F-SN-8 → (c) | Recomendação (b): sem porta e sem adaptador para Integra Contador |
 | R6 (contábil → financeiro → fiscal) | Não | Este nó é fiscal e vai para a onda 3 (decisão 2: "o cálculo do Simples espera a onda 3") |
-| X7 (apuração IRPJ/CSLL do regime normal) | **Parcial** → F-SN-1 | O ADR do perfil tinha mandado o Simples para "X7 / Onda 3". A decisão 8 abriu PRE-ADR próprio. O X7 depende do D1 e do R5; este nó não depende de nenhum dos dois |
+| X7 (apuração IRPJ/CSLL do regime normal) | **Não** (reavaliado) → F-SN-1, F-SN-13 | O `ADR-INCR-TAX-ASSESSMENT` (PR #446) fixa **D12: Simples e MEI ficam fora do X7** (SIMPLES/MEI → 400) e diz que este PRE-ADR "pode avaliar o reuso do `TaxAssessment`". Não há disputa de escopo; sobra a questão de modelo (F-SN-13) |
 | Decisão 5 (`icmsContribuinte` → conserto no BRIEF do X10a) | Não, se F-SN-6 → (a) | Este PRE-ADR **não** corrige o DTO. Ele consome o que o X10a decidir sobre o atributo fiscal do produto e sobre a IE (aresta X10a → este nó, §11) |
 
 ## 4. Decisões propostas e forks (todos PENDENTES)
@@ -217,7 +219,8 @@ emissão do MEI (`opSimpNac=2`) já está bloqueada (`DpsPayloadDto.ts:38`).
 - (b) Absorver no X7.
 
 **Recomendação: (a).** O X7 é regime normal (IRPJ/CSLL trimestral, F-M8) e está `blocked` por D1 1/1b e R5. O Simples
-não depende de nenhum dos dois. Juntar os dois prenderia o Simples a gargalos que não são dele.
+não depende de nenhum dos dois. Juntar os dois prenderia o Simples a gargalos que não são dele. *Reavaliado depois do
+ADR do X7 (PR #446):* o próprio X7 exclui o Simples (D12). A recomendação (a) fica, sem colisão.
 
 **F-SN-2 — Forma das tabelas dos Anexos.**
 - (a) `const` TS **gerada por script** a partir do HTML do Planalto (LC 123 compilada + Anexos XVIII–XXII da LC 214).
@@ -314,7 +317,9 @@ digitados.
 - (b) Só relatório; o contador lança.
 - (c) Lançar só no pagamento (caixa).
 
-**Recomendação: (a).** "Contabilidade automática" é a tese do produto (`destino/03`), e usar o valor oficial evita
+**Recomendação: (a)**, no mesmo molde do **F-X7-4** do ADR do X7: bridge explícita (ADR-C01), contas configuradas no
+perfil, 2 commits (`postEntry` abre tx raiz) com reconcile idempotente, e substituição = estorno + novo lançamento.
+Dois moldes de provisão de tributo no mesmo razão seriam ilha. "Contabilidade automática" é a tese do produto (`destino/03`), e usar o valor oficial evita
 propagar ao razão o erro do nosso cálculo. Os **códigos** das contas e o tratamento da CPP dentro do DAS (dedução da
 receita ou despesa?) são do contador (§8). Conta nova é folha irmã (ACC-018 não é acionado, como no `2.1.2`).
 
@@ -325,6 +330,28 @@ receita ou despesa?) são do contador (§8). Conta nova é folha irmã (ACC-018 
 **Recomendação: (a).** O perfil já é por ano (F-OBP-8 → a) e a opção é irretratável por semestre: dois campos cobrem
 isso sem tabela nova. Com REGULAR, a apuração **exclui** as parcelas de IBS/CBS do DAS (§ 9º: "não serão cobradas pelo
 regime único"). O cálculo delas no regime regular é do PRE-ADR de IBS/CBS 2027.
+
+**F-SN-13 — Modelo da apuração: reusar o `TaxAssessment` do X7?** (nasceu da reavaliação pedida pelo dono)
+
+Critério de reuso (`.claude/skills/_REUSE-CRITERION.md`):
+- **Etapa 1 (é o mesmo objeto?):** o ciclo de vida é o mesmo (prévia → confirmação imutável → substituição que nomeia a
+  anterior, provisão por bridge, memória de cálculo em Json, versão da tabela usada) e a chave é a mesma (PJ, ano,
+  período). O **shape difere**: o DAS é **uma** guia com repartição entre 8 a 10 tributos, sai por atividade e anexo,
+  e o valor que vale é o **oficial**, registrado de fora (número, vencimento, divergência). O `TaxAssessment` é uma
+  linha por tributo, e o valor é o calculado.
+- **Etapa 2 (os dois lados estão vivos?):** nenhum existe no código. O X7 é Proposed (#446), com F-X7-3 pendente.
+
+Caminhos:
+- (a) **Um modelo só.** `TaxAssessment` com `tributo = 'SIMPLES_DAS'`, `periodo = Mnn`, a repartição e as atividades
+  na `memoria`, mais colunas opcionais do documento oficial (`documentoNumero`, `valorOficialCents`, `vencimento`).
+  Quem for implementado primeiro cria o modelo com os campos dos dois ADRs.
+- (b) **Modelo próprio** (`SimplesApuracao`), reusando só o molde de ciclo de vida e o de provisão.
+- (c) **Decidir depois**, no BRIEF do segundo a ser implementado.
+
+**Recomendação: (a), condicionada ao F-X7-3 → (a).** O X7 já nomeia `tributo` como String "para a onda 3 alargar sem
+migração" (F-X7-13). Dois modelos de "apuração confirmada de tributo" no mesmo razão seriam o caso clássico de ilha, com
+a mesma posse (a PJ) e a mesma derivação (razão + perfil). A divergência de shape cabe em colunas opcionais e na
+`memoria`. Se o F-X7-3 for (b) (sem persistência), vale (b) daqui.
 
 **F-SN-12 — Profissional-parceiro (Lei 12.592; LC 123 art. 13 § 1º-A).**
 - (a) Ignorar: a receita bruta é o total. Paga a mais se o salão usa parceria.
@@ -354,7 +381,7 @@ Regra 3 da sessão: comportamento com regra fiscal leva a fonte. Onde o enquadra
 | 7 | Histórico **pré-adoção** declarado (receita mensal e, opcionalmente, folha) com a evidência anexada. Sem ele não há RBT12 no 1º ano | direto | art. 18 § 1º; dado externo (§8 item 5) |
 | 8 | Alertas: passagem ME/EPP; excesso de R$ 4,8 mi (≤ 20% → ano seguinte); sublimite de R$ 3,6 mi (ICMS/ISS, e IBS a partir de 2027); histórico incompleto | direto | art. 3º I, II, §§ 7º–9º-A; art. 13-A (e red. 2027) |
 | 9 | Subrazão fiscal de receita alimentado pela ponte, com tie-out contra 3.1 + 3.3 − 3.2 | fork | F-SN-5 |
-| 10 | Apuração persistida por competência (rascunho → DAS registrado), recálculo idempotente, soft-delete e eventos de auditoria na allowlist | direto | Contrato §2/§3; `auditCanonical.ts` |
+| 10 | Apuração persistida por competência (rascunho → DAS registrado), recálculo idempotente, soft-delete e eventos de auditoria na allowlist | fork (modelo) | F-SN-13; Contrato §2/§3; `auditCanonical.ts` |
 | 11 | Espelho do PGDAS-D na árvore oficial de atividades e qualificações + registro do DAS oficial (vencimento dia 20) + divergência; cancelamento deduzido no período original | fork | F-SN-8; art. 18 §§ 15, 15-A; Res. 140 arts. 18, 38, 40; manual 6.5–6.6 |
 | 12 | Contabilização do DAS registrado | fork · **códigos do contador** | F-SN-10 |
 | 13 | Opção semestral de IBS/CBS no perfil; com REGULAR, as parcelas de IBS/CBS saem do DAS | fork | F-SN-11; LC 123 art. 13 §§ 9º–10 (2027) |
@@ -532,12 +559,14 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
 
 ## 11. Como entra na fila (depois da ratificação)
 
-1. O dono ratifica (ou não) F-SN-0..12. A decisão vira nota em `docs/plano/decisoes/`.
+1. O dono ratifica (ou não) F-SN-0..13. A decisão vira nota em `docs/plano/decisoes/`.
 2. Nasce o nó `nos/X14.md` (id de F-SN-1). Arestas propostas:
    - `depende_de`: [[X13]] ✅ (perfil e matriz);
    - [[X10a]]? pontilhada: atributo fiscal do produto e semântica da IE, pela decisão 5; F-SN-6 (b) cobre o
      intervalo;
-   - [[FE-INCR-DFE]]? pontilhada: conferência NFS-e × receita.
+   - [[FE-INCR-DFE]]? pontilhada: conferência NFS-e × receita;
+   - [[X7]]? pontilhada, **só se F-SN-13 → (a)**: o modelo `TaxAssessment` é compartilhado, e quem for implementado
+     primeiro o cria.
 
    Desbloqueia o PRE-ADR de IBS/CBS 2027 **só** na parte do DAS; o regime regular fica no PRE-ADR de IBS/CBS.
 3. `sessao-planejamento` escreve o BRIEF `docs/accounting/BE-INCR-SIMPLES-NACIONAL-brief.md`, só backend (o FE é
@@ -561,5 +590,6 @@ Contador e dado do cliente. Vira pedido pela `luminaris-contador-liaison`; quem 
   humano no §11.5.
 - **Fonte lida fora do repo.** O HTML das duas leis não é versionado. Li cópias locais com o sha do MANIFEST, e
   qualquer releitura precisa baixar de novo e conferir o sha.
-- **Sessões paralelas:** o "ADR do X7" está sendo escrito ao mesmo tempo. Se ele reivindicar o Simples, F-SN-1 decide
-  quem fica com o quê.
+- **Sessões paralelas:** o ADR do X7 foi escrito ao mesmo tempo e terminou (PR #446). Ele não reivindica o Simples; o
+  acoplamento que sobra é de modelo (F-SN-13) e de molde de provisão (F-SN-10 × F-X7-4). Se o dono ratificar os dois
+  ADRs com escolhas diferentes nesses pontos, o BRIEF do segundo reabre.
