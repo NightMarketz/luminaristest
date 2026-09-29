@@ -69,7 +69,9 @@ describe('RegisterContactSchema', () => {
       ['sp123456/o-1', 'SP-123456/O-1'],
       ['1SP123456/O-1', 'SP-123456/O-1'],
       ['CRC-SP 123456/O-1', 'SP-123456/O-1'],
-      ['CRC/SP 123456/T-7', 'SP-123456/T-7'],
+      // ERRATA 2026-09-28 (BE-INCR-CRC-CFC-FOLLOWUPS F-1 → a): `/T-7` no lugar do `O` não é formato do
+      // CFC e passou a 400; o transferido real é o sufixo (Manual de Registro CFC pp. 13-14).
+      ['CRC/SP 123456/O-7 T-MG', 'SP-123456/O-7 T-MG'],
     ]) {
       const parsed = RegisterContactSchema.safeParse({ ...validContact, crcNumber: input });
       expect(parsed.success).toBe(true);

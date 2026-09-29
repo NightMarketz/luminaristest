@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
-import { CRC_NUMBER_RE, normalizeCrcNumber } from '../models/AccountingContact.model';
+import { crcNumberRejectMessage, parseCrcNumber } from '../models/AccountingContact.model';
 import {
   FINDING_SEVERITIES,
   RESOLUTION_TARGETS,
@@ -129,7 +129,7 @@ export const AdjustmentEntrySchema = z
  *       properties:
  *         unitId:       { type: string }
  *         reviewerName: { type: string, minLength: 3, maxLength: 120 }
- *         reviewerCrc:  { type: string, description: "Máscara CFC UF-NNNNNN/O-D (mesma do contato, #305)" }
+ *         reviewerCrc:  { type: string, description: "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)" }
  *         statement:    { type: string, maxLength: 500 }
  */
 export const SignOffReviewSchema = z
@@ -141,12 +141,12 @@ export const SignOffReviewSchema = z
       .string()
       .min(1)
       .transform((v, ctx) => {
-        const n = normalizeCrcNumber(v);
-        if (!n || !CRC_NUMBER_RE.test(n)) {
-          ctx.addIssue({ code: 'custom', message: 'reviewerCrc deve seguir a máscara CFC UF-NNNNNN/O-D (ex.: SP-123456/O-1).' });
+        const parsed = parseCrcNumber(v);
+        if (!parsed.ok) {
+          ctx.addIssue({ code: 'custom', message: `reviewerCrc ${crcNumberRejectMessage(parsed.reason)}` });
           return z.NEVER;
         }
-        return n;
+        return parsed.normalized;
       }),
     statement: z.string().min(1).max(500),
   })

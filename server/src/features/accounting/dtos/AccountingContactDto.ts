@@ -2,10 +2,11 @@ import { z } from 'zod';
 import {
   ACCOUNTING_CONTACT_CRC_NUMBER_MAX_LENGTH,
   ACCOUNTING_CONTACT_NAME_MAX_LENGTH,
-  crcNumberUf,
+  crcNumberUfs,
   isValidCrcCertificate,
   normalizeCrcCertificate,
-  normalizeCrcNumber,
+  crcNumberRejectMessage,
+  parseCrcNumber,
   normalizePhone,
   PHONE_RE,
   UF_CODES,
@@ -20,7 +21,7 @@ import { isValidCpf, stripCpfMask } from '../../../lib/cpf';
  *
  * **Máscara em TODOS os campos de identidade** (decisão do dono 2026-09-10, cédula §6, F13 —
  * "pode fazer máscara em todos os campos"): `cpf` com dígitos verificadores, `crcNumber` no
- * formato do CFC normalizado para `UF-NNNNNN/O-D` **e cruzado com `crcUf`**, `phone` só dígitos,
+ * formato do CFC normalizado para `UF-NNNNNN/O-D` (+ sufixo ` T-UF`/` S-UF` do transferido/secundário) **e cruzado com `crcUf`**, `phone` só dígitos,
  * `crcUf` enum da Tabela de UF, `crcCertificate` `UF/AAAA/NÚMERO`, `crcCertificateValidUntil`
  * date-only real. Fontes: Manual do Leiaute 9 da ECD (J930 03/06/08/09/10/11) e Manual de
  * Registro do Sistema CFC/CRCs (formato do número do CRC).
@@ -44,15 +45,15 @@ const crcNumberSchema = z
   .min(1)
   .max(ACCOUNTING_CONTACT_CRC_NUMBER_MAX_LENGTH)
   .transform((v, ctx) => {
-    const normalized = normalizeCrcNumber(v);
-    if (!normalized) {
+    const parsed = parseCrcNumber(v);
+    if (!parsed.ok) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'crcNumber deve seguir o formato do CFC UF-NNNNNN/O-D (ex.: SP-123456/O-1)',
+        message: `crcNumber ${crcNumberRejectMessage(parsed.reason)}`,
       });
       return z.NEVER;
     }
-    return normalized;
+    return parsed.normalized;
   });
 
 const crcCertificateSchema = z
@@ -73,12 +74,12 @@ function refineCrcUfMatches(
   ctx: z.RefinementCtx,
 ): void {
   if (!val.crcNumber || !val.crcUf) return;
-  const embedded = crcNumberUf(val.crcNumber);
-  if (embedded && embedded !== val.crcUf) {
+  const embedded = crcNumberUfs(val.crcNumber);
+  if (embedded.length && !embedded.includes(val.crcUf)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['crcUf'],
-      message: `crcUf (${val.crcUf}) diverge da UF do número do CRC (${embedded})`,
+      message: `crcUf (${val.crcUf}) diverge da UF do número do CRC (${embedded.join(' ou ')})`,
     });
   }
 }
@@ -95,7 +96,7 @@ function refineCrcUfMatches(
  *         email:     { type: string, format: email, description: "Canal de contato; o ENVIO é do dono (F-CD1-a, zero credencial no servidor)" }
  *         cpf:       { type: string, description: "J930 campo 03 IDENT_CPF_CNPJ — 11 dígitos com DV; máscara aceita e removida" }
  *         phone:     { type: string, description: "J930 campo 08 FONE — 10 ou 11 dígitos com DDD; máscara aceita e removida" }
- *         crcNumber: { type: string, description: "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D (grafias usuais aceitas e normalizadas); a UF tem de bater com crcUf" }
+ *         crcNumber: { type: string, description: "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo" }
  *         crcUf:     { type: string, description: "J930 campo 09 UF_CRC — sigla da UF que expediu o CRC (Tabela de UF)" }
  *         crcCertificate: { type: string, description: "J930 campo 10 NUM_SEQ_CRC — Certidão de Regularidade Profissional no formato UF/AAAA/NÚMERO" }
  *         crcCertificateValidUntil: { type: string, description: "J930 campo 11 DT_CRC — data-only YYYY-MM-DD de validade da certidão" }
@@ -128,7 +129,7 @@ export const RegisterContactSchema = z
  *         email:     { type: string, format: email }
  *         cpf:       { type: string, description: "11 dígitos com DV" }
  *         phone:     { type: string, nullable: true, description: "10-11 dígitos — null LIMPA" }
- *         crcNumber: { type: string, description: "UF-NNNNNN/O-D (CFC)" }
+ *         crcNumber: { type: string, description: "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'" }
  *         crcUf:     { type: string, description: "Sigla da UF (Tabela de UF)" }
  *         crcCertificate: { type: string, nullable: true, description: "UF/AAAA/NÚMERO — null LIMPA a certidão" }
  *         crcCertificateValidUntil: { type: string, nullable: true, description: "Data-only YYYY-MM-DD — null LIMPA a validade" }

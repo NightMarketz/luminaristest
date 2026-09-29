@@ -344,7 +344,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D (grafias usuais aceitas e normalizadas); a UF tem de bater com crcUf"
+            "description": "J930 campo 06 IND_CRC no formato do CFC UF-NNNNNN/O-D, transferido/secundário com sufixo (SP-123456/O-3 T-MG); grafias usuais aceitas e normalizadas; crcUf tem de ser a UF de origem ou a do sufixo"
           },
           "crcUf": {
             "type": "string",
@@ -392,7 +392,7 @@
           },
           "crcNumber": {
             "type": "string",
-            "description": "UF-NNNNNN/O-D (CFC)"
+            "description": "UF-NNNNNN/O-D (CFC); transferido/secundário: + ' T-UF'/' S-UF'"
           },
           "crcUf": {
             "type": "string",
@@ -742,7 +742,7 @@
           },
           "reviewerCrc": {
             "type": "string",
-            "description": "Máscara CFC UF-NNNNNN/O-D (mesma do contato, #305)"
+            "description": "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)"
           },
           "statement": {
             "type": "string",
@@ -10308,7 +10308,8 @@
                               "description": "920 (Auditor Independente) fora do escopo."
                             },
                             "indCrc": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\")"
                             },
                             "email": {
                               "type": "string"
@@ -10317,7 +10318,8 @@
                               "type": "string"
                             },
                             "ufCrc": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF"
                             },
                             "numSeqCrc": {
                               "type": "string"
@@ -10428,7 +10430,7 @@
                         },
                         "indCrc": {
                           "type": "string",
-                          "description": "CFC format UF-NNNNNN/O-D; required when codAssin=900"
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when codAssin=900"
                         },
                         "email": {
                           "type": "string",
@@ -10440,7 +10442,7 @@
                         },
                         "ufCrc": {
                           "type": "string",
-                          "description": "required when codAssin=900; must match the UF embedded in indCrc"
+                          "description": "required when codAssin=900; UF embedded in indCrc — for a transferred/secondary number, the origin UF or the suffix UF"
                         },
                         "numSeqCrc": {
                           "type": "string",
@@ -10670,7 +10672,8 @@
                           "description": "3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista"
                         },
                         "indCrc": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"
@@ -10901,7 +10904,8 @@
                           "description": "3-digit code from the SPEDECF_QUALIF_ASSINANTE table (Manual ECF L12 p. 105); 900 = Contador/Contabilista"
                         },
                         "indCrc": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "CFC format UF-NNNNNN/O-D (transferred/secondary: + \" T-UF\"/\" S-UF\"); required when identQualif=900; omit when blank (an empty string is 400)"
                         },
                         "email": {
                           "type": "string"

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UF_CODES, signerCpfOrCnpjSchema } from './SpedEcdDto';
+import { UF_CODES, crcNumberFieldFor, signerCpfOrCnpjSchema } from './SpedEcdDto';
 import { CNPJ_REGEX } from '../../../lib/cnpj';
 import { SPED_ECF_QUALIF_ASSINANTE_CODES } from '../models/spedQualifAssinante';
 
@@ -69,7 +69,9 @@ export const SignerSchema = z
     identQualif: z.enum(SPED_ECF_QUALIF_ASSINANTE_CODES, {
       message: '0930.IDENT_QUALIF fora da tabela SPEDECF_QUALIF_ASSINANTE (Manual ECF L12 p. 105).',
     }),
-    indCrc: z.string().optional(),
+    // F-4 → a (BE-INCR-CRC-CFC-FOLLOWUPS): o leiaute não declara formato (Manual ECF L12 pp. 103-105),
+    // a máscara CFC é escolha da casa — o mesmo contador sai igual na ECD e na ECF.
+    indCrc: crcNumberFieldFor('0930').optional(),
     email: z.string().email('E-mail do signatário inválido.'),
     fone: z.string().min(1).max(14),
   })

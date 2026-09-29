@@ -89,8 +89,25 @@ describe('SpedEcfRequestSchema — 0930 (superRefine)', () => {
     expect(SpedEcfRequestSchema.safeParse(valid).success).toBe(true);
   });
 
-  it('rejects indCrc string vazia no contador (presença vazia não é presença)', () => {
-    failsOnSigners({ ...valid, signers: [{ ...contador, indCrc: '' }, socio] });
+  // Desde o F-4 (máscara do CFC no 0930) o '' cai na máscara do CAMPO, antes da regra de presença do
+  // superRefine — a asserção prova qual das duas caiu (revisão independente do #426).
+  it("rejects indCrc '' no contador — pela máscara do CRC (F-4), em signers.0.indCrc", () => {
+    const parsed = SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, indCrc: '' }, socio] });
+    expect(parsed.success).toBe(false);
+    expect(
+      parsed.error?.issues.some((i) => i.path.join('.') === 'signers.0.indCrc' && i.message.startsWith('0930.IND_CRC')),
+    ).toBe(true);
+  });
+
+  // BE-INCR-CRC-CFC-FOLLOWUPS F-4 → a: mesma máscara CFC do J930 (o leiaute ECF não declara formato,
+  // Manual ECF L12 pp. 103-105 — escolha da casa, coerência ECD × ECF).
+  it('IND_CRC do 0930 passa pela máscara CFC: normaliza, e fora do formato é 400 com prefixo 0930', () => {
+    const ok = SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, indCrc: 'crc-sp 123456/o-1' }, socio] });
+    expect(ok.success).toBe(true);
+    expect(ok.data?.signers[0].indCrc).toBe('SP-123456/O-1');
+    const bad = SpedEcfRequestSchema.safeParse({ ...valid, signers: [{ ...contador, indCrc: '1DF123' }, socio] });
+    expect(bad.success).toBe(false);
+    expect(JSON.stringify(bad.error?.issues)).toContain('0930.IND_CRC');
   });
 
   it('rejects um único signatário, seja ele contador ou não', () => {

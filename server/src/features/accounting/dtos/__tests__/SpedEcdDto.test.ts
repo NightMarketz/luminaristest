@@ -356,6 +356,23 @@ describe('SpedEcdRequestSchema — retificação versionada (indFinEsc=1)', () =
     expect(short.success).toBe(false);
   });
 
+  it('J932: CRC transferido aceita a UF de origem OU a do sufixo; outra UF é 400 (GAP-MAP 15)', () => {
+    const req = (ufCrc: 'SP' | 'MG' | 'RJ') => ({
+      ...valid,
+      declarant: { ...declarant, indFinEsc: '1' as const, codHashSub: 'a'.repeat(40) },
+      supersedesJobId: 'job-1',
+      verificationTerm: {
+        ...verificationTerm,
+        signers: [{ ...verificationTerm.signers[0], indCrc: 'SP-123456/O-3 T-MG', ufCrc }],
+      },
+    });
+    expect(SpedEcdRequestSchema.safeParse(req('SP')).success).toBe(true);
+    expect(SpedEcdRequestSchema.safeParse(req('MG')).success).toBe(true);
+    const rj = SpedEcdRequestSchema.safeParse(req('RJ'));
+    expect(rj.success).toBe(false);
+    expect(JSON.stringify(rj.error?.issues)).toContain('J932.UF_CRC_T (RJ) diverge');
+  });
+
   it('IND_FIN_ESC=1 com os três campos completos e válidos passa', () => {
     const ok = SpedEcdRequestSchema.safeParse({
       ...valid,
