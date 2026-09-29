@@ -329,6 +329,26 @@ Desfecho do passo 19 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 19): ____________
 
+### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
+
+> Preparado por agente em 2026-09-29, **em branco** (BRIEF `FE-INCR-BANK-SETTLEMENT-brief.md` §1). Pré-condições dos
+> passos 12–14 + um extrato importado (fixture OFX do repo) na conta bancária e uma conta a pagar aberta que case com
+> uma linha dele. O `dev.db` tem `bank_settlement_items` vazia (o F7 nunca rodou fora de teste).
+
+20. Contabilidade → Conciliação → sub-aba "Baixas por retorno".
+    - a) "Varrer extrato": o resumo mostra novos/já existentes/ambíguos/sem título/desatualizados; a lista abre em
+      PENDING. Varrer de novo não duplica (sobe "já existentes"). EVIDÊNCIA: [ ]
+    - b) Confirmar um item com o meio certo (Pix/TED…): status CONFIRMED, o balancete recarrega e o lançamento aparece.
+      Um item com encargo e sem conta configurada mostra o 400 `charge_account_not_configured` inteiro. EVIDÊNCIA: [ ]
+    - c) Rejeitar outro item com motivo: REJECTED, sem ações. EVIDÊNCIA: [ ]
+    - d) Item FAILED (se houver) mostra a etapa e o motivo; "Reprocessar" disponível. EVIDÊNCIA: [ ]
+
+Desfecho do passo 20 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 20): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;

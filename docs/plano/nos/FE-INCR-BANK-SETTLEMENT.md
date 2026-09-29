@@ -3,17 +3,17 @@ id: "FE-INCR-BANK-SETTLEMENT"
 tipo: "fe"
 dominio: "financeiro"
 titulo: "Tela do F7 (baixa por retorno bancário)"
-estado: "planned"
-estado_detalhe: "BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-BS-1..4 → a; F-FE-BS-5 → a (retry de CONFIRMING sempre visível; o 400 explica). Sequência mestre passo 9 (pode correr em paralelo depois do contrato PR-2); falta 'executa'"
+estado: "inflight"
+estado_detalhe: "BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-BS-1..4 → a; F-FE-BS-5 → a (retry de CONFIRMING sempre visível; o 400 explica). Sequência mestre passo 9: PR aberto 29/09 (3ª sub-aba da Conciliação; lacuna L-BS1: o JournalEntriesPanel não filtra por lançamento, então os ids do lançamento/encargo aparecem sem link)"
 depende_de: ["[[F7]]", "[[FF7]]"]
-autorizacao: "dono 17/09 (F-PS-1 → a) — só BRIEF; + dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'"
+autorizacao: "dono 17/09 (F-PS-1 → a) — só BRIEF; + dono, chat, 2026-09-28: \"Planeja com granularidade\" + \"pode decidir tudo\" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: \"Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui\" (lançamento da sessão de execução, passos 5–9) + \"Pode criar pr e comittar\""
 ancora_sdd: "§III.1 passo 7 · §III.2"
 atualizado: "2026-09-28"
 ---
 # FE-INCR-BANK-SETTLEMENT — Tela do F7 (baixa por retorno bancário)
 
-**Estado:** `planned` — BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-BS-1..4 → a; F-FE-BS-5 → a (retry de CONFIRMING sempre visível; o 400 explica). Sequência mestre passo 9 (pode correr em paralelo depois do contrato PR-2); falta 'executa'  
-**Autorização:** dono 17/09 (F-PS-1 → a) — só BRIEF; + dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; sem 'executa'  
+**Estado:** `inflight` — BRIEF ✅ 17/09. Forks decididos 28/09 sob delegação: F-FE-BS-1..4 → a; F-FE-BS-5 → a (retry de CONFIRMING sempre visível; o 400 explica). Sequência mestre passo 9: PR aberto 29/09 (3ª sub-aba da Conciliação; lacuna L-BS1: o JournalEntriesPanel não filtra por lançamento, então os ids do lançamento/encargo aparecem sem link)  
+**Autorização:** dono 17/09 (F-PS-1 → a) — só BRIEF; + dono, chat, 2026-09-28: "Planeja com granularidade" + "pode decidir tudo" (forks decididos sob delegação — D-2026-09-28-FE-CONTRATO-GERADO-E-FORKS-FE) — plano e forks; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução, passos 5–9) + "Pode criar pr e comittar"  
 **Depende de:** [[F7]], [[FF7]]  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 passo 7 · §III.2
