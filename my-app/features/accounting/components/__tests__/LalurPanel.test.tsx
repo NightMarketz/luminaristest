@@ -42,6 +42,16 @@ const entry = (over: Partial<LalurEntry>): LalurEntry => ({
   id: 'e1', userId: 'o1', unitId: 'u1', year: 2025, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 123456,
   indRelacao: '1', histLancamento: 'Custos do trimestre', parteBId: 'b1', accountId: null, createdById: null, createdAt: '', updatedAt: '', deletedAt: null, ...over,
 });
+const padraoRows = [{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional', tributo: 'I' as const }];
+
+/**
+ * Answers like a real request. The panel AND the Parte B modal call `getParteBPadrao` synchronously in an
+ * effect, so a wait on the CALL is not a wait on the modal's combobox OPTIONS (CatalogCombobox.commitText()
+ * matches the typed code against the options of the current render). The 0 ms hop starts the 50 ms clock at
+ * the test's first yield: a plain timer started at the call gets absorbed by slow synchronous work under load
+ * (in the full-suite run a plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
+ */
+const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
 
 describe('LalurPanel', () => {
   beforeEach(() => {
@@ -50,7 +60,7 @@ describe('LalurPanel', () => {
     vi.mocked(lalurService.listEntries).mockResolvedValue([]);
     vi.mocked(lalurService.listParteB).mockResolvedValue([]);
     vi.mocked(lalurService.getCatalog).mockResolvedValue([{ codigo: '7', descricao: 'Custos não dedutíveis', tipo: 'E', tipoLanc: 'A', vigencia: { de: null, ate: null } }]);
-    vi.mocked(lalurService.getParteBPadrao).mockResolvedValue([{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional', tributo: 'I' }]);
+    vi.mocked(lalurService.getParteBPadrao).mockImplementation(() => later(padraoRows));
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [] });
     vi.mocked(lalurService.listMovements).mockResolvedValue([]);
     vi.mocked(lalurService.getParteBBalances).mockResolvedValue({ year: 2025, periods: [], divergences: [], warnings: [] });
@@ -81,8 +91,14 @@ describe('LalurPanel', () => {
       entry({}),
       entry({ id: 'e2', quarter: 'T02', codigo: 'deleted:e2:7', deletedAt: '2025-05-01T00:00:00.000Z' }),
     ]);
+    // PARTEB_PADRAO answers only AFTER the catalog rendered — the order in which reading its descriptions
+    // right after waiting for the CATALOG's DOM breaks. Two loaders racing: only an explicit order is
+    // deterministic (a 200 ms timer still lost to the catalog in the loaded full-suite run).
+    let answerPadrao!: () => void;
+    vi.mocked(lalurService.getParteBPadrao).mockImplementation(() => new Promise((resolve) => { answerPadrao = () => resolve(padraoRows); }));
     render(<LalurPanel unitId="u1" />);
     await waitFor(() => expect(screen.getByText('Custos não dedutíveis')).toBeInTheDocument());
+    answerPadrao();
     expect(lalurService.getCatalog).toHaveBeenCalledWith('u1', 'lalur', 2025);
     // no i18next instance here ⇒ `{{vars}}` stay raw; the numbers are asserted through the data-* mirror
     const counters = screen.getByTestId('lalur-counters');

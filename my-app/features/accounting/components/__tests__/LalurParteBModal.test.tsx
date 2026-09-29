@@ -29,6 +29,15 @@ const padrao = [
   { codigo: '1003', descricao: 'BC negativa CSLL', tributo: 'C' as const },
 ];
 
+/**
+ * Answers like a real request. `getParteBPadrao` is called synchronously in the effect, so a wait on the
+ * CALL is not a wait on the OPTIONS — and CatalogCombobox.commitText() matches the typed code against the
+ * options of the current render. The 0 ms hop starts the 50 ms clock at the test's first yield: a plain
+ * timer started at the call gets absorbed by slow synchronous work under load (in the full-suite run a
+ * plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
+ */
+const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+
 async function fillRequired(codPbRfb = '1000') {
   fireEvent.change(screen.getByPlaceholderText('PF-2024'), { target: { value: 'PF-2024' } });
   fireEvent.change(screen.getByLabelText('Descrição (DESC_CTA_LAL)'), { target: { value: 'Prejuízo fiscal 2024' } });
@@ -42,7 +51,7 @@ describe('LalurParteBModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
-    vi.mocked(lalurService.getParteBPadrao).mockResolvedValue(padrao);
+    vi.mocked(lalurService.getParteBPadrao).mockImplementation(() => later(padrao));
     vi.mocked(lalurService.createParteB).mockResolvedValue({} as LalurParteBAccount);
     vi.mocked(lalurService.updateParteB).mockResolvedValue({} as LalurParteBAccount);
   });
@@ -99,6 +108,8 @@ describe('LalurParteBModal', () => {
   it('switching the tributo reloads PARTEB_PADRAO for that tributo and clears the chosen code', async () => {
     render(<LalurParteBModal isOpen onClose={() => {}} unitId="u1" year={2025} onSuccess={() => {}} />);
     await fillRequired();
+    // precondition: the code committed — without it the final assertion holds vacuously (Salvar never enabled)
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeEnabled();
     fireEvent.click(screen.getByLabelText('C — CSLL (e-Lacs)'));
     await waitFor(() => expect(lalurService.getParteBPadrao).toHaveBeenLastCalledWith('u1', 'C'));
     expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled(); // codPbRfb cleared
