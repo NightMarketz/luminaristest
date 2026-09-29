@@ -1389,7 +1389,8 @@
       "filter": {
         "allLivros": "Todos os livros",
         "allQuarters": "Todos os trimestres",
-        "parteB": "Parte B: {{code}} ×"
+        "parteB": "Parte B: {{code}} ×",
+        "focus": "Ajuste do aviso ×"
       },
       "heading": "Parte A — ajustes (M300/M350) e linhas E do Bloco N",
       "modal": {
@@ -1498,6 +1499,106 @@
     "tributo": {
       "C": "C — CSLL (e-Lacs)",
       "I": "I — IRPJ (e-Lalur)"
+    },
+    "closing": {
+      "close": "Fechar {{q}}",
+      "closeEffect": "Fechar materializa o M500 do trimestre e deriva o PF/BC. Exige o trimestre anterior fechado.",
+      "closeTitle": "Fechar {{q}}/{{year}}",
+      "closed": "fechado",
+      "confirm": "Confirmar",
+      "error": "Não foi possível concluir a operação no trimestre.",
+      "heading": "Fechamento do trimestre — {{year}}",
+      "open": "aberto",
+      "reopen": "Reabrir {{q}}",
+      "reopenEffect": "Reabrir apaga a materialização do M500 deste trimestre (e o PF/BC derivado). Só é permitido se nenhum trimestre posterior estiver fechado.",
+      "reopenTitle": "Reabrir {{q}}/{{year}}",
+      "running": "Processando…"
+    },
+    "diagnostic": {
+      "divergences": "Divergências entre o saldo materializado e o recomputado",
+      "empty": "Sem saldos da Parte B neste exercício.",
+      "error": {
+        "load": "Erro ao carregar o diagnóstico de saldos."
+      },
+      "heading": "Diagnóstico de saldos — materializado × recomputado",
+      "legend": "Linha de cima: recomputado a partir dos lançamentos. Linha de baixo (trimestres fechados): materializado no fechamento.",
+      "materialized": "materializado",
+      "showEntry": "Ver o ajuste na Parte A",
+      "warnings": "Avisos — a igualdade exata só o PVA fecha",
+      "field": {
+        "sdIni": "Saldo inicial",
+        "vlA": "Lanç. Parte A",
+        "vlB": "Lanç. Parte B",
+        "sdFim": "Saldo final"
+      }
+    },
+    "movements": {
+      "archiveTitle": "Arquivar movimento da Parte B",
+      "col": {
+        "conta": "Conta",
+        "contrapartida": "Contrapartida",
+        "indLanAnt": "Lanç. ant.",
+        "indicador": "Ind.",
+        "origem": "Origem"
+      },
+      "empty": "Nenhum movimento da Parte B neste recorte.",
+      "error": {
+        "load": "Erro ao carregar os movimentos da Parte B."
+      },
+      "field": {
+        "conta": "Conta da Parte B (COD_CTA_B)",
+        "contaPlaceholder": "Selecione a conta…",
+        "contrapartida": "Contrapartida (COD_CTA_B_CTP) — opcional, mesmo tributo",
+        "historico": "Histórico (HIST_LAN_LALB, até 500)",
+        "historicoLong": "O histórico tem no máximo 500 caracteres.",
+        "historicoPipe": "O histórico não pode conter \"|\" — é o separador de campo do arquivo SPED.",
+        "indLanAnt": "Lançamento anterior (IND_LAN_ANT)",
+        "indicador": "Indicador (IND_VAL_LAN_LALB_PB)",
+        "indicadorPlaceholder": "Selecione…",
+        "noContrapartida": "— sem contrapartida —",
+        "quarter": "Exercício / trimestre",
+        "quarterPlaceholder": "Trimestre de {{year}}…",
+        "valor": "Valor (VAL_LAN_LALB_PB)"
+      },
+      "filter": {
+        "allContas": "Todas as contas",
+        "conta": "Conta da Parte B",
+        "quarter": "Trimestre dos movimentos",
+        "year": "Exercício dos movimentos"
+      },
+      "heading": "Movimentos da Parte B (M410)",
+      "indLanAnt": {
+        "N": "N — não",
+        "S": "S — realização de valor com tributação diferida"
+      },
+      "modal": {
+        "error": {
+          "failed": "Erro ao salvar o movimento da Parte B.",
+          "invalid": "Preencha conta, trimestre, indicador, valor, histórico e o indicador de lançamento anterior."
+        },
+        "title": "Novo movimento da Parte B (M410)",
+        "titleEdit": "Editar movimento da Parte B"
+      },
+      "new": "Novo movimento",
+      "processos": {
+        "add": "Adicionar processo",
+        "indProc": "Tipo do processo",
+        "indProc1": "1 — judicial",
+        "indProc2": "2 — administrativo",
+        "numProc": "Número do processo",
+        "remove": "Remover processo",
+        "title": "Processos (M415) — opcional"
+      },
+      "indicador": {
+        "CR": "CR — crédito",
+        "DB": "DB — débito",
+        "PF": "PF — prejuízo do exercício",
+        "BC": "BC — base negativa da CSLL"
+      },
+      "origem": {
+        "user": "usuário",
+        "system": "sistema (PF/BC derivado)"
+      }
     }
   }
 }

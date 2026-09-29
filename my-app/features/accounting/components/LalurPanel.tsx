@@ -22,6 +22,7 @@ import { inputClass } from './SpedGenerationPanel';
 import { SPED_ECF_REAL_ANCHOR } from './SpedEcfRealPanel';
 import { LalurEntryModal, LIVRO_LABEL } from './LalurEntryModal';
 import { LalurParteBModal } from './LalurParteBModal';
+import { LalurParteBMovementsSection } from './LalurParteBMovementsSection';
 
 interface LalurPanelProps {
   unitId: string;
@@ -55,6 +56,8 @@ export function LalurPanel({ unitId }: LalurPanelProps) {
   const [livroFilter, setLivroFilter] = useState<LalurLivro | ''>('');
   const [includeArchivedA, setIncludeArchivedA] = useState(false);
   const [parteBFilter, setParteBFilter] = useState<LalurParteBAccount | null>(null);
+  /** Aviso X4-14 do diagnóstico → foco num único ajuste (FE-INCR-LALUR-PR2 item 8). */
+  const [entryFocus, setEntryFocus] = useState<string | null>(null);
   // Filters — Parte B
   const [tributoFilter, setTributoFilter] = useState<LalurTributo | ''>('');
   const [includeArchivedB, setIncludeArchivedB] = useState(false);
@@ -140,7 +143,9 @@ export function LalurPanel({ unitId }: LalurPanelProps) {
   const liveEntries = entries.filter((e) => e.deletedAt === null);
   const parteBInYear = parteB.filter((a) => a.deletedAt === null && a.dtCriacao.slice(0, 10) <= `${year}-12-31`);
   const visibleEntries = entries.filter(
-    (e) => (!quarterFilter || e.quarter === quarterFilter) && (!livroFilter || e.livro === livroFilter) && (!parteBFilter || e.parteBId === parteBFilter.id),
+    (e) =>
+      (!quarterFilter || e.quarter === quarterFilter) && (!livroFilter || e.livro === livroFilter) &&
+      (!parteBFilter || e.parteBId === parteBFilter.id) && (!entryFocus || e.id === entryFocus),
   );
   const visibleParteB = parteB.filter((a) => !tributoFilter || a.codTributo === tributoFilter);
   const parteBById = new Map(parteB.map((a) => [a.id, a]));
@@ -166,6 +171,12 @@ export function LalurPanel({ unitId }: LalurPanelProps) {
     } finally {
       setBusy(false);
     }
+  }
+
+  function showEntry(entryId: string, entryYear: number) {
+    setYear(entryYear);
+    setEntryFocus(entryId);
+    document.getElementById('lalur-parte-a')?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
   }
 
   function showRelated(account: LalurParteBAccount) {
@@ -296,6 +307,16 @@ export function LalurPanel({ unitId }: LalurPanelProps) {
         )}
       </div>
 
+      {/* ── Parte B — movimentos (M410), fechamento e diagnóstico (FE-INCR-LALUR-PR2) ── */}
+      <LalurParteBMovementsSection
+        unitId={unitId}
+        initialYear={year}
+        parteBAccounts={parteB}
+        readOnly={readOnly}
+        onForbidden={() => setReadOnly(true)}
+        onShowEntry={showEntry}
+      />
+
       {/* ── Parte A — ajustes (M300/M350 + linhas E do Bloco N) ─────────────── */}
       <div id="lalur-parte-a">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -330,6 +351,11 @@ export function LalurPanel({ unitId }: LalurPanelProps) {
           {parteBFilter && (
             <button type="button" onClick={() => setParteBFilter(null)} className={`${smallBtn} border-emerald-800 text-emerald-300`}>
               {t('lalur.entry.filter.parteB', 'Parte B: {{code}} ×', { code: parteBFilter.codCtaB })}
+            </button>
+          )}
+          {entryFocus && (
+            <button type="button" onClick={() => setEntryFocus(null)} className={`${smallBtn} border-amber-800 text-amber-300`}>
+              {t('lalur.entry.filter.focus', 'Ajuste do aviso ×')}
             </button>
           )}
         </div>

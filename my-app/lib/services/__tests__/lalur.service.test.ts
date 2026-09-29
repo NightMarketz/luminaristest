@@ -100,3 +100,62 @@ describe('lalurService', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 });
+
+// ── FE-INCR-LALUR-PR2 (PLANO-ONDA1 §4.1 item 1): M410, fechamento e diagnóstico da Parte B ──
+describe('lalurService — Parte B: movimentos, fechamento e diagnóstico', () => {
+  beforeEach(() => {
+    vi.mocked(notify).mockReset();
+    globalThis.fetch = vi.fn();
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse([]));
+  });
+
+  it('listMovements: GET /lalur/parte-b/movements com filtros; includeArchived só quando true; sem notificação', async () => {
+    await lalurService.listMovements({ unitId: 'u1', year: 2025, quarter: 'T03', parteBId: 'pb1', includeArchived: false });
+    expect(lastCall().url).toMatch(/\/lalur\/parte-b\/movements\?unitId=u1&year=2025&quarter=T03&parteBId=pb1$/);
+    expect(lastCall().init.method).toBe('GET');
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it('createMovement: POST com o body exato; notifica', async () => {
+    const body = { unitId: 'u1', parteBId: 'pb1', year: 2025, quarter: 'T01' as const, valorCents: 5000, indicador: 'CR' as const, contrapartidaId: 'pb2', historico: 'transferência', indLanAnt: 'N' as const };
+    await lalurService.createMovement(body);
+    const { url, init } = lastCall();
+    expect(url).toMatch(/\/lalur\/parte-b\/movements$/);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual(body);
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('updateMovement: PATCH /movements/:id — contrapartidaId null sobrevive à serialização', async () => {
+    await lalurService.updateMovement('m 1', { unitId: 'u1', indicador: 'PF', contrapartidaId: null });
+    const { url, init } = lastCall();
+    expect(url).toMatch(/\/lalur\/parte-b\/movements\/m%201$/);
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body as string)).toEqual({ unitId: 'u1', indicador: 'PF', contrapartidaId: null });
+  });
+
+  it('archiveMovement: POST /movements/:id/archive com { unitId }', async () => {
+    await lalurService.archiveMovement('m1', 'u1');
+    const { url, init } = lastCall();
+    expect(url).toMatch(/\/lalur\/parte-b\/movements\/m1\/archive$/);
+    expect(JSON.parse(init.body as string)).toEqual({ unitId: 'u1' });
+  });
+
+  it('closeParteB / reopenParteB: POST com { unitId, year, quarter }; notificam', async () => {
+    await lalurService.closeParteB('u1', 2025, 'T02');
+    expect(lastCall().url).toMatch(/\/lalur\/parte-b\/close$/);
+    expect(JSON.parse(lastCall().init.body as string)).toEqual({ unitId: 'u1', year: 2025, quarter: 'T02' });
+    await lalurService.reopenParteB('u1', 2025, 'T02');
+    expect(lastCall().url).toMatch(/\/lalur\/parte-b\/reopen$/);
+    expect(JSON.parse(lastCall().init.body as string)).toEqual({ unitId: 'u1', year: 2025, quarter: 'T02' });
+    expect(notify).toHaveBeenCalledTimes(2);
+  });
+
+  it('getParteBBalances: GET /parte-b/balances?unitId=&year=; sem notificação', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({ year: 2025, periods: [], divergences: [], warnings: [] }));
+    const out = await lalurService.getParteBBalances('u1', 2025);
+    expect(lastCall().url).toMatch(/\/lalur\/parte-b\/balances\?unitId=u1&year=2025$/);
+    expect(out.year).toBe(2025);
+    expect(notify).not.toHaveBeenCalled();
+  });
+});

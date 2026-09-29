@@ -2,6 +2,9 @@ import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
 import type {
   ArchiveLalurInput,
+  CreateLalurParteBMovementInput,
+  UpdateLalurParteBMovementInput,
+  LalurParteBPeriodInput,
   CreateLalurEntryInput,
   UpdateLalurEntryInput,
   CreateLalurParteBAccountInput,
@@ -32,10 +35,16 @@ export type LalurQuarter = 'T01' | 'T02' | 'T03' | 'T04';
 export type LalurIndRelacao = '1' | '2' | '3' | '4';
 export type LalurTributo = 'I' | 'C';
 export type LalurIndSaldo = 'D' | 'C';
+/** M410.IND_VAL_LAN_LALB_PB — CR crédito · DB débito · PF prejuízo do exercício · BC base negativa da CSLL. */
+export type LalurIndicador = CreateLalurParteBMovementInput['indicador'];
+export type LalurIndLanAnt = CreateLalurParteBMovementInput['indLanAnt'];
 
 export const LALUR_LIVROS: readonly LalurLivro[] = ['lalur', 'lacs', 'n500', 'n630', 'n670'];
 export const LALUR_QUARTERS: readonly LalurQuarter[] = ['T01', 'T02', 'T03', 'T04'];
 export const LALUR_IND_RELACAO: readonly LalurIndRelacao[] = ['1', '2', '3', '4'];
+export const LALUR_INDICADORES: readonly LalurIndicador[] = ['CR', 'DB', 'PF', 'BC'];
+/** REGRA_NAO_PREENCHER_CTP (Manual p.269, `LalurDto.ts` `refineLalurMovement`): PF/BC não têm contrapartida. */
+export const isPrejuizoIndicador = (i: string): i is 'PF' | 'BC' => i === 'PF' || i === 'BC';
 /** Livros whose lines carry M300/M350 fields (indRelacao, Parte B, conta, histórico) — D-M3. */
 export const isParteALivro = (livro: string): livro is 'lalur' | 'lacs' => livro === 'lalur' || livro === 'lacs';
 /** livro → tributo da conta da Parte B que ele pode relacionar (REGRA_PARTE_B_PARTE_A, p.237/p.250). */
@@ -85,6 +94,9 @@ export interface LalurParteBAccount {
 
 // ── Request payloads — contrato gerado (LalurDto.ts, `.strict()`) ─────────────────────────────────
 export type {
+  CreateLalurParteBMovementInput,
+  UpdateLalurParteBMovementInput,
+  LalurParteBPeriodInput,
   CreateLalurEntryInput,
   UpdateLalurEntryInput,
   CreateLalurParteBAccountInput,
@@ -103,6 +115,70 @@ export interface ListLalurParteBQuery {
   unitId: string;
   codTributo?: LalurTributo;
   includeArchived?: boolean;
+}
+
+// ── Parte B — movimentos (M410), fechamento e diagnóstico (ECF Fase 3C) — RESPOSTAS ──────────────────
+// Respostas ficam fora do contrato gerado (D11 do PLANO-FE-CONTRACT-TYPES); espelham o model Prisma
+// `LalurParteBMovement` e `LalurParteBBalancesDiagnostic` (`LalurService.ts`).
+export interface LalurParteBMovement {
+  id: string;
+  unitId: string;
+  parteBId: string;
+  year: number;
+  quarter: LalurQuarter;
+  codTributo: LalurTributo;
+  /** BigInt no servidor, number no fio (jsonBigintReplacer). */
+  valorCents: number;
+  indicador: LalurIndicador;
+  contrapartidaId: string | null;
+  historico: string;
+  indLanAnt: LalurIndLanAnt;
+  /** 'system' = PF/BC derivado no fechamento — só arquiva, não edita valor/indicador. */
+  origem: 'user' | 'system';
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface ListLalurMovementsQuery {
+  unitId: string;
+  year?: number;
+  quarter?: LalurQuarter;
+  parteBId?: string;
+  includeArchived?: boolean;
+}
+
+/** Valores em STRING (BigInt seguro no JSON) — centavos, com sinal. */
+export interface LalurBalanceView { sdIni: string; vlA: string; vlB: string; sdFim: string }
+
+export interface LalurParteBBalancesDiagnostic {
+  year: number;
+  periods: Array<{
+    quarter: LalurQuarter;
+    closed: boolean;
+    closedAt?: string;
+    accounts: Array<{
+      parteBId: string;
+      codCtaB: string;
+      codTributo: string;
+      materialized?: LalurBalanceView;
+      recomputed: LalurBalanceView;
+      divergent: boolean;
+    }>;
+  }>;
+  divergences: Array<{ quarter: LalurQuarter; codCtaB: string; codTributo: string; field: string; materialized: string; recomputed: string }>;
+  /** X4-14: AVISO, nunca erro — a igualdade exata só o PVA fecha. */
+  warnings: Array<{
+    code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT';
+    quarter: LalurQuarter;
+    livro: string;
+    codigo: string;
+    entryId: string;
+    accountCode: string;
+    valorCents: string;
+    aggregates: { sumDebitCents: string; sumCreditCents: string; saldoPeriodoCents: string; saldoFinalCents: string };
+    message: string;
+  }>;
 }
 
 // ── Catalog (GET /api/lalur/catalog — §2.2) ───────────────────────────────────────────────────────
@@ -132,6 +208,7 @@ function buildQuery(params: Record<string, string | undefined>): string {
 
 const enc = encodeURIComponent;
 const archiveBody = (unitId: string): ArchiveLalurInput => ({ unitId });
+const periodBody = (unitId: string, year: number, quarter: LalurQuarter): LalurParteBPeriodInput => ({ unitId, year, quarter });
 
 export const lalurService = {
   // ── Parte A (M300/M350 + linhas E do Bloco N) ──────────────────────────────
@@ -190,6 +267,53 @@ export const lalurService = {
     const res = await apiClient.post<ApiEnvelope<LalurParteBAccount>>(`/lalur/parte-b/${enc(id)}/archive`, archiveBody(unitId));
     notify('Conta da Parte B arquivada.', 'success', CTX);
     return res.data;
+  },
+
+  // ── Parte B — movimentos (M410) ──────────────────────────────────────────────
+  async listMovements(query: ListLalurMovementsQuery): Promise<LalurParteBMovement[]> {
+    const qs = buildQuery({
+      unitId: query.unitId,
+      year: query.year === undefined ? undefined : String(query.year),
+      quarter: query.quarter,
+      parteBId: query.parteBId,
+      includeArchived: query.includeArchived ? 'true' : undefined,
+    });
+    return (await apiClient.get<ApiEnvelope<LalurParteBMovement[]>>(`/lalur/parte-b/movements${qs}`)).data;
+  },
+
+  async createMovement(payload: CreateLalurParteBMovementInput): Promise<LalurParteBMovement> {
+    const res = await apiClient.post<ApiEnvelope<LalurParteBMovement>>('/lalur/parte-b/movements', payload);
+    notify('Movimento da Parte B registrado.', 'success', CTX);
+    return res.data;
+  },
+
+  async updateMovement(id: string, payload: UpdateLalurParteBMovementInput): Promise<LalurParteBMovement> {
+    const res = await apiClient.patch<ApiEnvelope<LalurParteBMovement>>(`/lalur/parte-b/movements/${enc(id)}`, payload);
+    notify('Movimento da Parte B atualizado.', 'success', CTX);
+    return res.data;
+  },
+
+  async archiveMovement(id: string, unitId: string): Promise<LalurParteBMovement> {
+    const res = await apiClient.post<ApiEnvelope<LalurParteBMovement>>(`/lalur/parte-b/movements/${enc(id)}/archive`, archiveBody(unitId));
+    notify('Movimento da Parte B arquivado.', 'success', CTX);
+    return res.data;
+  },
+
+  // ── Parte B — fechamento trimestral (materializa o M500 e deriva o PF/BC) ────
+  async closeParteB(unitId: string, year: number, quarter: LalurQuarter): Promise<void> {
+    await apiClient.post<ApiEnvelope<unknown>>('/lalur/parte-b/close', periodBody(unitId, year, quarter));
+    notify(`Parte B: ${quarter}/${year} fechado.`, 'success', CTX);
+  },
+
+  async reopenParteB(unitId: string, year: number, quarter: LalurQuarter): Promise<void> {
+    await apiClient.post<ApiEnvelope<unknown>>('/lalur/parte-b/reopen', periodBody(unitId, year, quarter));
+    notify(`Parte B: ${quarter}/${year} reaberto.`, 'success', CTX);
+  },
+
+  /** Diagnóstico materializado × recomputado + avisos X4-14. Leitura; sem notificação. */
+  async getParteBBalances(unitId: string, year: number): Promise<LalurParteBBalancesDiagnostic> {
+    const qs = buildQuery({ unitId, year: String(year) });
+    return (await apiClient.get<ApiEnvelope<LalurParteBBalancesDiagnostic>>(`/lalur/parte-b/balances${qs}`)).data;
   },
 
   // ── Catálogo (Leiaute 12) ──────────────────────────────────────────────────

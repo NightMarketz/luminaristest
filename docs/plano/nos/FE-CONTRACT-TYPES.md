@@ -4,17 +4,17 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Tipos de payload do FE gerados do snapshot de DTOs (fim do espelho à mão)"
 estado: "inflight"
-prs: ["#428"]
-estado_detalhe: "PRE-ADR ratificado 28/09 (F-CT-1 snapshot, gerador json-schema-to-typescript 15.0.4, F-CT-4 b, F-CT-6 a) + decisões delegadas; plano v2 com 3 PRs seriais (gerador+contábil+piloto SPED → 9 services contábil/financeiro → todos os domínios + 7 services); gerador provado no Jest real (258 schemas, 17 domínios, 0 falhas). FE-FIX em main (#427); PR-1 (gerador + 43 contábeis + piloto SPED) MERGEADO #428 `354bc78c`; PR-2 (9 services contábil/financeiro) aberto; PR-3 pendente (depende do CRM Porte/Papel); decisão nova do dono 28/09: maxItems:-1, mantém mínimo (arrays .min(n) viram tupla; FE usa nonEmpty/atLeastTwo)"
+prs: ["#428", "#430"]
+estado_detalhe: "PRE-ADR ratificado 28/09 (F-CT-1 snapshot, gerador json-schema-to-typescript 15.0.4, F-CT-4 b, F-CT-6 a) + decisões delegadas; plano v2 com 3 PRs seriais (gerador+contábil+piloto SPED → 9 services contábil/financeiro → todos os domínios + 7 services); gerador provado no Jest real (258 schemas, 17 domínios, 0 falhas). FE-FIX em main (#427); PR-1 (gerador + 43 contábeis + piloto SPED) MERGEADO #428 `354bc78c`; PR-2 (9 services contábil/financeiro) MERGEADO #430 `ad87aa2a`; PR-3 pendente (depende do CRM Porte/Papel); decisão nova do dono 28/09: maxItems:-1, mantém mínimo (arrays .min(n) viram tupla; FE usa nonEmpty/atLeastTwo)"
 autorizacao: "dono, chat, 2026-09-28: \"Vamos planejar então usando a solução de snapshot\" + questionários + \"pode decidir tudo\" (delegação) — plano e decisões; EXECUTA: \"Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui\" (lançamento da sessão de execução) + \"Pode criar pr e comittar\""
 ancora_sdd: "fora do SDD consolidado (nó de 28/09)"
 atualizado: "2026-09-28"
 ---
 # FE-CONTRACT-TYPES — Tipos de payload do FE gerados do snapshot de DTOs (fim do espelho à mão)
 
-**Estado:** `inflight` — PRE-ADR ratificado 28/09 (F-CT-1 snapshot, gerador json-schema-to-typescript 15.0.4, F-CT-4 b, F-CT-6 a) + decisões delegadas; plano v2 com 3 PRs seriais (gerador+contábil+piloto SPED → 9 services contábil/financeiro → todos os domínios + 7 services); gerador provado no Jest real (258 schemas, 17 domínios, 0 falhas). FE-FIX em main (#427); PR-1 (gerador + 43 contábeis + piloto SPED) MERGEADO #428 `354bc78c`; PR-2 (9 services contábil/financeiro) aberto; PR-3 pendente (depende do CRM Porte/Papel); decisão nova do dono 28/09: maxItems:-1, mantém mínimo (arrays .min(n) viram tupla; FE usa nonEmpty/atLeastTwo)  
+**Estado:** `inflight` — PRE-ADR ratificado 28/09 (F-CT-1 snapshot, gerador json-schema-to-typescript 15.0.4, F-CT-4 b, F-CT-6 a) + decisões delegadas; plano v2 com 3 PRs seriais (gerador+contábil+piloto SPED → 9 services contábil/financeiro → todos os domínios + 7 services); gerador provado no Jest real (258 schemas, 17 domínios, 0 falhas). FE-FIX em main (#427); PR-1 (gerador + 43 contábeis + piloto SPED) MERGEADO #428 `354bc78c`; PR-2 (9 services contábil/financeiro) MERGEADO #430 `ad87aa2a`; PR-3 pendente (depende do CRM Porte/Papel); decisão nova do dono 28/09: maxItems:-1, mantém mínimo (arrays .min(n) viram tupla; FE usa nonEmpty/atLeastTwo)  
 **Autorização:** dono, chat, 2026-09-28: "Vamos planejar então usando a solução de snapshot" + questionários + "pode decidir tudo" (delegação) — plano e decisões; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução) + "Pode criar pr e comittar"  
-**PRs:** #428  
+**PRs:** #428, #430  
 **Depende de:** —  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** fora do SDD consolidado (nó de 28/09)
@@ -44,3 +44,4 @@ própria pasta, e o `tsc` do FE quebra no mesmo PR que muda o DTO.
 - 28/09 (execução): o gerador emite **tupla** para `minItems`/`maxItems` (`FiscalDocumentDto.gen.ts` com 681 linhas de uniões; `signers: drafts.map(toX)` dava TS2322). Dono, questionário: *"maxItems:-1, mantém mínimo"* → 2.463 → 1.807 linhas; `.min(1)`/`.min(2)` seguem tupla, montadas por `nonEmpty()`/`atLeastTwo()` (`my-app/lib/utils/nonEmpty.ts`).
 - #427 (`0eb0799d`): FE-FIX-SPED-ECD-SIGNERS em `main` — pré-requisito do PR-1 cumprido.
 - #428 (`354bc78c`, 28/09): PR-1 em `main` — 43 `.gen.ts`, snapshot 89/89, SPED tipado, 4 mordidas do §6.3 coladas no PR (a iv prova que `.map` sem anotação passa verde).
+- #430 (`ad87aa2a`, 29/09): PR-2 em `main` — 9 services tipados; 4 casts `as unknown as` e 13 spreads condicionais removidos dos bodies; nenhum D1/D2.
