@@ -1,5 +1,11 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  CreatePayableInput,
+  RegisterPaymentInput,
+  CancelPayableInput,
+  CancelPaymentInput,
+} from '@/types/contracts/accounting/PayableDto.gen';
 
 /**
  * Accounts Payable (Contas a Pagar) service — thin typed client over the AP
@@ -89,55 +95,15 @@ export interface ListPayablesQuery {
   limit?: number;
 }
 
-export interface CreatePayablePayload {
-  unitId: string;
-  supplierName: string;
-  supplierRef?: string;
-  documentNumber?: string;
-  description: string;
-  /** YYYY-MM-DD */
-  issueDate: string;
-  /** YYYY-MM-DD */
-  dueDate: string;
-  /** TOTAL da compra em centavos (nunca por unidade) — no braço de inventário valora qty unidades. */
-  amountCents: number;
-  /**
-   * Chart-of-accounts account **id** (analytic, nature=Expense) — EXPENSE arm.
-   * XOR duro no servidor (LAC-D): exatamente UM dos braços — `expenseAccountId` OU o par
-   * `inventoryProductRef`+`inventoryQty`; par meio-preenchido é 400.
-   */
-  expenseAccountId?: string;
-  /** INVENTORY arm: DT `products` row id (validado no servidor contra o catálogo do tenant). */
-  inventoryProductRef?: string;
-  /** INVENTORY arm: quantidade inteira > 0. */
-  inventoryQty?: number;
-  /** Optional FK to a Counterparty(SUPPLIER) of this unit (re-scoped on the backend). */
-  counterpartyId?: string;
-  attachmentId?: string;
-}
-
-export interface RegisterPaymentPayload {
-  unitId: string;
-  method: PaymentMethod;
-  /** YYYY-MM-DD — effective bank-debit date. */
-  paidAt: string;
-  /** Must equal the full remaining balance (partial payment not supported). */
-  amountCents: number;
-}
-
-export interface CancelPayablePayload {
-  unitId: string;
-  /** YYYY-MM-DD — gates on the period this date belongs to. */
-  reversalDate: string;
-  reason?: string;
-}
-
-export interface CancelPaymentPayload {
-  unitId: string;
-  /** YYYY-MM-DD */
-  reversalDate: string;
-  reason?: string;
-}
+// ── Requests — contrato gerado (accounting/PayableDto; o `RegisterPaymentInput` homônimo de
+// sales/RegisterPaymentDto é outro DTO, G5). Datas YYYY-MM-DD; dinheiro em centavos inteiros.
+// CreatePayable: `amountCents` é o TOTAL da compra; XOR duro no servidor (LAC-D) entre
+// `expenseAccountId` (id da conta analítica, nature=Expense) e o par `inventoryProductRef`+
+// `inventoryQty`. RegisterPayment: `amountCents` = saldo restante inteiro (sem pagamento parcial).
+export type CreatePayablePayload = CreatePayableInput;
+export type RegisterPaymentPayload = RegisterPaymentInput;
+export type CancelPayablePayload = CancelPayableInput;
+export type CancelPaymentPayload = CancelPaymentInput;
 
 export interface ListPayablesResult {
   payables: PayableWithPayments[];

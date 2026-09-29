@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ConfirmModal } from '../../../components/ui/feedback/ConfirmModal';
 import { accountingService } from '../../../lib/services/accounting.service';
+import type { CreateAccountInput } from '@/types/contracts/accounting/PostingDto.gen';
 import { useAccountingT } from '../lib/useAccountingT';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -88,9 +89,7 @@ export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanel
     setError(null);
     try {
       // accountingService.getAccounts will be wired by the integration agent
-      const res = await (accountingService as unknown as {
-        getAccounts(unitId: string): Promise<{ accounts: Account[] }>;
-      }).getAccounts(unitId);
+      const res = await accountingService.getAccounts(unitId);
       setAccounts(res.accounts);
     } catch (err) {
       const msg = err instanceof Error ? err.message : tRef.current('chartOfAccounts.error.load', 'Erro ao carregar contas.');
@@ -111,15 +110,14 @@ export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanel
     setIsSubmitting(true);
     setError(null);
     try {
-      await (accountingService as unknown as {
-        createAccount(data: {
-          code: string;
-          name: string;
-          nature: string;
-          acceptsEntries: boolean;
-          unitId: string;
-        }): Promise<{ account: Account }>;
-      }).createAccount({ ...newAccount, unitId });
+      const body: CreateAccountInput = {
+        code: newAccount.code,
+        name: newAccount.name,
+        nature: newAccount.nature,
+        acceptsEntries: newAccount.acceptsEntries,
+        unitId,
+      };
+      await accountingService.createAccount(body);
       setNewAccount(EMPTY_FORM);
       setShowAddForm(false);
       await fetchAccounts();
@@ -136,9 +134,7 @@ export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanel
     setIsSubmitting(true);
     setDeleteError(null);
     try {
-      await (accountingService as unknown as {
-        deleteAccount(id: string, unitId: string): Promise<{ success: boolean }>;
-      }).deleteAccount(confirmDeleteId, unitId);
+      await accountingService.deleteAccount(confirmDeleteId, unitId);
       setConfirmDeleteId(null);
       await fetchAccounts();
     } catch (err) {
@@ -156,13 +152,7 @@ export function ChartOfAccountsPanel({ unitId, canManage }: ChartOfAccountsPanel
     setTogglingId(account.id);
     setAccounts((prev) => prev.map((a) => (a.id === account.id ? { ...a, requiresDimension: next } : a)));
     try {
-      await (accountingService as unknown as {
-        setAccountRequiresDimension(
-          id: string,
-          unitId: string,
-          requiresDimension: boolean,
-        ): Promise<{ account: Account }>;
-      }).setAccountRequiresDimension(account.id, unitId, next);
+      await accountingService.setAccountRequiresDimension(account.id, unitId, next);
     } catch (err) {
       // Roll the optimistic flip back to the previous value.
       setAccounts((prev) => prev.map((a) => (a.id === account.id ? { ...a, requiresDimension: !next } : a)));

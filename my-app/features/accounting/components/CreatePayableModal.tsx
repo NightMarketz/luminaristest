@@ -163,13 +163,18 @@ export function CreatePayableModal({
       issueDate,
       dueDate,
       amountCents,
-      // XOR do servidor: exatamente UM braço entra no payload.
-      ...(mode === 'expense'
-        ? { expenseAccountId }
-        : { inventoryProductRef, inventoryQty }),
-      ...(counterpartyId ? { counterpartyId } : {}),
-      ...(documentNumber.trim() ? { documentNumber: documentNumber.trim() } : {}),
     };
+    // XOR do servidor: exatamente UM braço entra no payload. Atribuição tipada em vez de spread
+    // condicional — chave fora do DTO é erro de `tsc` (regra do mapper) e o braço ausente fica ausente.
+    if (mode === 'expense') {
+      payload.expenseAccountId = expenseAccountId;
+    } else {
+      payload.inventoryProductRef = inventoryProductRef;
+      payload.inventoryQty = inventoryQty;
+    }
+    if (counterpartyId) payload.counterpartyId = counterpartyId;
+    const doc = documentNumber.trim();
+    if (doc) payload.documentNumber = doc;
 
     setIsSubmitting(true);
     try {

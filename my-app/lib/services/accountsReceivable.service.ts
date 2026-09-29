@@ -1,5 +1,11 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  CreateReceivableInput,
+  RegisterReceiptInput,
+  CancelReceivableInput,
+  CancelReceiptInput,
+} from '@/types/contracts/accounting/ReceivableDto.gen';
 
 /**
  * Accounts Receivable (Contas a Receber) service — thin typed client over the AR
@@ -85,46 +91,13 @@ export interface ListReceivablesQuery {
   limit?: number;
 }
 
-export interface CreateReceivablePayload {
-  unitId: string;
-  customerName: string;
-  customerRef?: string;
-  documentNumber?: string;
-  description: string;
-  /** YYYY-MM-DD */
-  issueDate: string;
-  /** YYYY-MM-DD */
-  dueDate: string;
-  amountCents: number;
-  /** Chart-of-accounts account **id** (analytic, nature=Revenue). */
-  revenueAccountId: string;
-  /** Optional FK to a Counterparty(CUSTOMER) of this unit (re-scoped on the backend). */
-  counterpartyId?: string;
-  attachmentId?: string;
-}
-
-export interface RegisterReceiptPayload {
-  unitId: string;
-  method: ReceiptMethod;
-  /** YYYY-MM-DD — effective bank-credit date. */
-  receivedAt: string;
-  /** Must equal the full remaining balance (partial receipt not supported). */
-  amountCents: number;
-}
-
-export interface CancelReceivablePayload {
-  unitId: string;
-  /** YYYY-MM-DD — gates on the period this date belongs to. */
-  reversalDate: string;
-  reason?: string;
-}
-
-export interface CancelReceiptPayload {
-  unitId: string;
-  /** YYYY-MM-DD */
-  reversalDate: string;
-  reason?: string;
-}
+// ── Requests — contrato gerado (accounting/ReceivableDto). Datas YYYY-MM-DD; centavos inteiros.
+// `revenueAccountId` é o id da conta analítica (nature=Revenue); RegisterReceipt: `amountCents` =
+// saldo restante inteiro (sem recebimento parcial).
+export type CreateReceivablePayload = CreateReceivableInput;
+export type RegisterReceiptPayload = RegisterReceiptInput;
+export type CancelReceivablePayload = CancelReceivableInput;
+export type CancelReceiptPayload = CancelReceiptInput;
 
 export interface ListReceivablesResult {
   receivables: ReceivableWithReceipts[];

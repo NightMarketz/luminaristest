@@ -1,5 +1,9 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  ArchiveCounterpartyInput,
+  CreateCounterpartyInput,
+} from '@/types/contracts/accounting/CounterpartyDto.gen';
 
 /**
  * Counterparty (Contraparte — fornecedor/cliente) service — thin typed client over
@@ -49,12 +53,8 @@ export interface ListCounterpartiesQuery {
   includeArchived?: boolean;
 }
 
-export interface CreateCounterpartyPayload {
-  unitId: string;
-  type: CounterpartyType;
-  name: string;
-  ref?: string;
-}
+// Contrato gerado (CounterpartyDto) — nunca espelho à mão.
+export type CreateCounterpartyPayload = CreateCounterpartyInput;
 
 /** Build a `?a=x&b=y` query string, dropping undefined/empty values and encoding. */
 function buildQuery(params: Record<string, string | undefined>): string {
@@ -85,9 +85,10 @@ export const counterpartiesService = {
 
   /** Soft-archive a counterparty (frees the name for reuse). Historical AP/AR links stay intact. */
   async archiveCounterparty(id: string, unitId: string): Promise<Counterparty> {
+    const body: ArchiveCounterpartyInput = { unitId };
     const res = await apiClient.post<ApiEnvelope<Counterparty>>(
       `/counterparties/${encodeURIComponent(id)}/archive`,
-      { unitId },
+      body,
     );
     notify('Contraparte arquivada.', 'success', CTX);
     return res.data;

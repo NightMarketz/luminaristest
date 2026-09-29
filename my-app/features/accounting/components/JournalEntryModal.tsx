@@ -5,7 +5,12 @@ import { parseBrl } from '../lib/parseBrl';
 import { formatCents } from '../lib/formatCents';
 import { resolveError } from '../lib/resolveError';
 import { scopeToday } from '../lib/formatDate';
-import { accountingService } from '../../../lib/services/accounting.service';
+import {
+  accountingService,
+  type PostEntryPayload,
+  type PostingLineInput,
+} from '../../../lib/services/accounting.service';
+import { atLeastTwo } from '../../../lib/utils/nonEmpty';
 import type { DimensionCatalogEntry } from '../../../lib/services/dimensions.service';
 
 export interface AccountOption {
@@ -33,14 +38,9 @@ export interface JournalEntryDraftValue {
   }>;
 }
 
-/** What the modal hands to its write command: the edited value plus the tenancy axis + dim tags. */
-export interface JournalEntrySubmitValue {
-  unitId: string;
-  /** YYYY-MM-DD */
-  date: string;
-  description: string;
-  lines: Array<{ accountCode: string; debitCents: number; creditCents: number; dimensions?: string[] }>;
-}
+/** What the modal hands to its write command: the edited value plus the tenancy axis + dim tags
+ *  — the header + legs of the generated `PostEntryInput` (`CreateDraftEntryInput` has the same keys). */
+export type JournalEntrySubmitValue = Pick<PostEntryPayload, 'unitId' | 'date' | 'description' | 'lines'>;
 
 export interface JournalEntryModalProps {
   isOpen: boolean;
@@ -73,6 +73,18 @@ interface Line {
   amountBrl: string;
   /** definitionId → valueId (one value per axis by construction). */
   dims: Record<string, string>;
+}
+
+/** Editor line → wire leg (retorno declarado: chave fora do DTO é erro de `tsc`). */
+function toPostingLine(l: Line): PostingLineInput {
+  const out: PostingLineInput = {
+    accountCode: l.accountCode,
+    debitCents: l.side === 'DEBIT' ? parseBrl(l.amountBrl) : 0,
+    creditCents: l.side === 'CREDIT' ? parseBrl(l.amountBrl) : 0,
+  };
+  const dimensions = Object.values(l.dims).filter(Boolean);
+  if (dimensions.length) out.dimensions = dimensions;
+  return out;
 }
 
 /** An axis with only its leaf, active values — the only ones taggable (backend rejects non-leaf). */
@@ -235,22 +247,13 @@ export function JournalEntryModal({
       return;
     }
 
+    // ponytail: removeLine mantém ≥ 2 linhas, então o null é inalcançável — só prova a tupla ao tsc.
+    const legs = atLeastTwo(lines.map(toPostingLine));
+    if (!legs) return;
+
     setIsSubmitting(true);
     try {
-      const payload = {
-        date,
-        description,
-        unitId,
-        lines: lines.map((l) => {
-          const dimensions = Object.values(l.dims).filter(Boolean);
-          return {
-            accountCode: l.accountCode,
-            debitCents: l.side === 'DEBIT' ? parseBrl(l.amountBrl) : 0,
-            creditCents: l.side === 'CREDIT' ? parseBrl(l.amountBrl) : 0,
-            ...(dimensions.length ? { dimensions } : {}),
-          };
-        }),
-      };
+      const payload: JournalEntrySubmitValue = { date, description, unitId, lines: legs };
       // Default command = post straight to the ledger; the approval tower injects its own.
       await (submit ? submit(payload) : accountingService.postEntry(payload));
       // Reset form state before closing

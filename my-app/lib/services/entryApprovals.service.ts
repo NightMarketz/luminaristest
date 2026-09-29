@@ -1,6 +1,13 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
-import type { JournalEntryWithFullPostings, PostingLineInput } from './accounting.service';
+import type { JournalEntryWithFullPostings } from './accounting.service';
+import type {
+  CreateDraftEntryInput,
+  UpdateDraftEntryInput,
+  SubmitEntryInput,
+  ApproveEntryInput,
+  RejectEntryInput,
+} from '@/types/contracts/accounting/EntryApprovalDto.gen';
 
 /**
  * Maker-checker approval tower (ADR-INCR-APPROVAL) — thin typed client over
@@ -41,28 +48,10 @@ export interface ListPendingResult {
   total: number;
 }
 
-export interface CreateDraftPayload {
-  unitId: string;
-  /** YYYY-MM-DD */
-  date: string;
-  description: string;
-  /** At least 2 legs; each leg moves exactly one side (debit XOR credit). */
-  lines: PostingLineInput[];
-}
-
-export interface UpdateDraftPayload extends CreateDraftPayload {
-  /** The `version` last read from the server (ACC-023 CAS). */
-  expectedVersion: number;
-}
-
-export interface VersionedPayload {
-  unitId: string;
-  expectedVersion: number;
-}
-
-export interface RejectPayload extends VersionedPayload {
-  reason?: string;
-}
+// Contrato gerado (EntryApprovalDto). `expectedVersion` = a `version` lida por último (ACC-023 CAS).
+export type CreateDraftPayload = CreateDraftEntryInput;
+export type UpdateDraftPayload = UpdateDraftEntryInput;
+export type RejectPayload = RejectEntryInput;
 
 /** Build a `?a=x&b=y` query string, dropping undefined/empty values and encoding. */
 function buildQuery(params: Record<string, string | undefined>): string {
@@ -102,7 +91,7 @@ export const entryApprovalsService = {
   },
 
   /** Submit a Draft for approval — freezes the content hash, moves to PendingApproval. */
-  async submitDraft(id: string, payload: VersionedPayload): Promise<ApprovalEntry> {
+  async submitDraft(id: string, payload: SubmitEntryInput): Promise<ApprovalEntry> {
     const res = await apiClient.post<ApiEnvelope<ApprovalEntry>>(
       `/entry-approvals/drafts/${encodeURIComponent(id)}/submit`,
       payload,
@@ -112,7 +101,7 @@ export const entryApprovalsService = {
   },
 
   /** Approve AND post (F5). The number is born here; the server enforces SoD and the period gate. */
-  async approve(id: string, payload: VersionedPayload): Promise<ApprovalEntry> {
+  async approve(id: string, payload: ApproveEntryInput): Promise<ApprovalEntry> {
     const res = await apiClient.post<ApiEnvelope<ApprovalEntry>>(
       `/entry-approvals/${encodeURIComponent(id)}/approve`,
       payload,

@@ -1,13 +1,20 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  ArchiveLalurInput,
+  CreateLalurEntryInput,
+  UpdateLalurEntryInput,
+  CreateLalurParteBAccountInput,
+  UpdateLalurParteBAccountInput,
+} from '@/types/contracts/accounting/LalurDto.gen';
 
 /**
  * e-Lalur / e-Lacs service — thin typed client over `/api/lalur/*` (BE-INCR-SPED-ECF-FASE3B
  * item 11, PR #313) + the read-only catalog `GET /api/lalur/catalog` (FE-INCR-LALUR, Fork
  * F-FE-1 → a). FIRST-CLASS Prisma on the backend (`LalurService`); this only shapes requests/
- * responses. Types mirror `server/src/features/accounting/dtos/LalurDto.ts` field by field, BY
- * HAND (no OpenAPI codegen — precedent `sped.service.ts`); `valorCents`/`saldoIniCents` travel as
- * integer cents (BigInt on the server, number on the wire). Archive is a COMMAND (POST …/archive),
+ * responses. Request bodies are the GENERATED contract of `LalurDto.ts`
+ * (`@/types/contracts/accounting/LalurDto.gen`, PRE-ADR-FE-CONTRACT-TYPES — the old by-hand mirror is
+ * revoked); `valorCents`/`saldoIniCents` travel as integer cents (BigInt on the server, number on the wire). Archive is a COMMAND (POST …/archive),
  * never a DELETE. `includeArchived` is sent as `'true'` or omitted — NEVER `'false'` (the server
  * reads it with `queryBoolean`, same contract as `overdue` in the AP/AR filter bar).
  */
@@ -76,29 +83,13 @@ export interface LalurParteBAccount {
   deletedAt: string | null;
 }
 
-// ── Request payloads (LalurDto.ts, `.strict()` — send ONLY declared keys) ─────────────────────────
-export interface CreateLalurEntryInput {
-  unitId: string;
-  year: number;
-  quarter: LalurQuarter;
-  livro: LalurLivro;
-  codigo: string;
-  valorCents: number;
-  histLancamento?: string;
-  indRelacao?: LalurIndRelacao;
-  parteBId?: string;
-  accountId?: string;
-}
-
-/** Patch; `null` clears (the DTO is `nullable`). year/quarter/livro/codigo never change — archive and recreate. */
-export interface UpdateLalurEntryInput {
-  unitId: string;
-  valorCents?: number;
-  histLancamento?: string | null;
-  indRelacao?: LalurIndRelacao;
-  parteBId?: string | null;
-  accountId?: string | null;
-}
+// ── Request payloads — contrato gerado (LalurDto.ts, `.strict()`) ─────────────────────────────────
+export type {
+  CreateLalurEntryInput,
+  UpdateLalurEntryInput,
+  CreateLalurParteBAccountInput,
+  UpdateLalurParteBAccountInput,
+} from '@/types/contracts/accounting/LalurDto.gen';
 
 export interface ListLalurEntriesQuery {
   unitId: string;
@@ -106,33 +97,6 @@ export interface ListLalurEntriesQuery {
   quarter?: LalurQuarter;
   livro?: LalurLivro;
   includeArchived?: boolean;
-}
-
-export interface CreateLalurParteBAccountInput {
-  unitId: string;
-  codCtaB: string;
-  descricao: string;
-  /** YYYY-MM-DD — data FINAL do período de apuração em que a conta nasceu (M010.DT_AP_LAL). */
-  dtCriacao: string;
-  codPbRfb: string;
-  dtLimite?: string;
-  codTributo: LalurTributo;
-  saldoIniCents: number;
-  indSaldoIni: LalurIndSaldo;
-  /** 14 digits. */
-  cnpjSitEsp?: string;
-}
-
-/** Patch; codCtaB/codTributo (the M010 key) never change — archive and recreate. */
-export interface UpdateLalurParteBAccountInput {
-  unitId: string;
-  descricao?: string;
-  dtCriacao?: string;
-  codPbRfb?: string;
-  dtLimite?: string | null;
-  saldoIniCents?: number;
-  indSaldoIni?: LalurIndSaldo;
-  cnpjSitEsp?: string | null;
 }
 
 export interface ListLalurParteBQuery {
@@ -167,6 +131,7 @@ function buildQuery(params: Record<string, string | undefined>): string {
 }
 
 const enc = encodeURIComponent;
+const archiveBody = (unitId: string): ArchiveLalurInput => ({ unitId });
 
 export const lalurService = {
   // ── Parte A (M300/M350 + linhas E do Bloco N) ──────────────────────────────
@@ -194,7 +159,7 @@ export const lalurService = {
   },
 
   async archiveEntry(id: string, unitId: string): Promise<LalurEntry> {
-    const res = await apiClient.post<ApiEnvelope<LalurEntry>>(`/lalur/entries/${enc(id)}/archive`, { unitId });
+    const res = await apiClient.post<ApiEnvelope<LalurEntry>>(`/lalur/entries/${enc(id)}/archive`, archiveBody(unitId));
     notify('Ajuste arquivado.', 'success', CTX);
     return res.data;
   },
@@ -222,7 +187,7 @@ export const lalurService = {
   },
 
   async archiveParteB(id: string, unitId: string): Promise<LalurParteBAccount> {
-    const res = await apiClient.post<ApiEnvelope<LalurParteBAccount>>(`/lalur/parte-b/${enc(id)}/archive`, { unitId });
+    const res = await apiClient.post<ApiEnvelope<LalurParteBAccount>>(`/lalur/parte-b/${enc(id)}/archive`, archiveBody(unitId));
     notify('Conta da Parte B arquivada.', 'success', CTX);
     return res.data;
   },

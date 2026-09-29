@@ -6,6 +6,7 @@ import {
   type DimensionCatalogEntry,
   type DimensionDefinition,
   type DimensionValue,
+  type CreateValuePayload,
 } from '../../../lib/services/dimensions.service';
 import { Modal } from '../../../components/ui/Modal';
 import { DimensionReports } from './DimensionReports';
@@ -554,13 +555,14 @@ function CreateValueModal({
     setBusy(true);
     setError(null);
     try {
-      await dimensionsService.createValue({
+      const body: CreateValuePayload = {
         unitId,
         definitionId: entry.definition.id,
         code: code.trim(),
         name: name.trim(),
-        ...(parentId ? { parentId } : {}),
-      });
+      };
+      if (parentId) body.parentId = parentId;
+      await dimensionsService.createValue(body);
       reset();
       onSuccess();
     } catch (err: unknown) {

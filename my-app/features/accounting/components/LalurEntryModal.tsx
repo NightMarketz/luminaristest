@@ -173,18 +173,15 @@ export function LalurEntryModal({
     setIsSubmitting(true);
     try {
       if (editing) {
-        const body: UpdateLalurEntryInput = {
-          unitId,
-          valorCents,
-          ...(parteA
-            ? {
-                indRelacao: effectiveInd as LalurIndRelacao,
-                parteBId: needsB ? parteBId : null,
-                accountId: needsCta ? accountId : null,
-                histLancamento: hist.trim() || null,
-              }
-            : {}),
-        };
+        // Fora da Parte A as chaves ficam AUSENTES (null limparia o campo) — atribuição tipada,
+        // não spread condicional (regra do mapper: chave fora do DTO é erro de tsc).
+        const body: UpdateLalurEntryInput = { unitId, valorCents };
+        if (parteA) {
+          body.indRelacao = effectiveInd as LalurIndRelacao;
+          body.parteBId = needsB ? parteBId : null;
+          body.accountId = needsCta ? accountId : null;
+          body.histLancamento = hist.trim() || null;
+        }
         await lalurService.updateEntry(editing.id, body);
       } else {
         const body: CreateLalurEntryInput = {
@@ -194,15 +191,14 @@ export function LalurEntryModal({
           livro,
           codigo,
           valorCents,
-          ...(parteA
-            ? {
-                indRelacao: effectiveInd as LalurIndRelacao,
-                ...(needsB ? { parteBId } : {}),
-                ...(needsCta ? { accountId } : {}),
-                ...(hist.trim() ? { histLancamento: hist.trim() } : {}),
-              }
-            : {}),
         };
+        if (parteA) {
+          body.indRelacao = effectiveInd as LalurIndRelacao;
+          if (needsB) body.parteBId = parteBId;
+          if (needsCta) body.accountId = accountId;
+          const histLancamento = hist.trim();
+          if (histLancamento) body.histLancamento = histLancamento;
+        }
         await lalurService.createEntry(body);
       }
       onSuccess();

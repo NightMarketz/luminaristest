@@ -115,8 +115,8 @@ export function CreateReceivableModal({
       dueDate,
       amountCents,
       revenueAccountId,
-      ...(counterpartyId ? { counterpartyId } : {}),
-      ...(documentNumber.trim() ? { documentNumber: documentNumber.trim() } : {}),
+      counterpartyId: counterpartyId || undefined,
+      documentNumber: documentNumber.trim() || undefined,
     };
 
     setIsSubmitting(true);
