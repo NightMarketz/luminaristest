@@ -870,7 +870,8 @@
     "noBankAccounts": "Nenhuma conta disponível",
     "subtabs": {
       "statements": "Extratos",
-      "pending": "Fila pendente"
+      "pending": "Fila pendente",
+      "settlements": "Baixas por retorno"
     },
     "import": {
       "title": "Importar extrato",
@@ -1822,6 +1823,66 @@
       "EXPORT_INCOME_STATEMENT": "DRE",
       "EXPORT_BANK_RECONCILIATION": "Conciliação bancária",
       "EXPORT_ENTRY_SAMPLE": "Amostra de lançamentos"
+    }
+  },
+  "bankSettlement": {
+    "action": {
+      "confirm": "Confirmar",
+      "reject": "Rejeitar",
+      "retry": "Reprocessar"
+    },
+    "chargeAccountHint": "Configure a conta de encargo em PUT /api/accounting/settings (ainda sem tela; os códigos são pendência do contador).",
+    "chargeEntry": "encargo",
+    "chargeHint": "|linha| − saldo, limite de 20%",
+    "col": {
+      "actions": "Ações",
+      "amount": "Valor",
+      "charge": "Encargo",
+      "date": "Data",
+      "line": "Linha do extrato",
+      "proposed": "Proposto",
+      "status": "Status",
+      "title": "Título"
+    },
+    "due": "vence",
+    "empty": "Nenhuma baixa neste recorte — varra o extrato.",
+    "entry": "lançamento",
+    "error": {
+      "generic": "Não foi possível concluir a operação.",
+      "load": "Erro ao carregar as baixas."
+    },
+    "filter": {
+      "all": "Todos",
+      "status": "Status"
+    },
+    "method": "Meio de pagamento",
+    "methodHint": "O método tem de resolver para a conta deste extrato.",
+    "noStatement": "Importe um extrato na sub-aba Extratos.",
+    "open": "aberto",
+    "payment": "pagamento",
+    "reason": "Motivo (obrigatório)",
+    "receipt": "recebimento",
+    "scan": "Varrer extrato",
+    "staleHint": "Título cancelado ou já baixado depois da varredura — varra de novo para reavaliar a linha.",
+    "statement": "Extrato",
+    "subtitle": "Linha do extrato → título a pagar/receber. Diferente da Fila pendente: aqui cada baixa é confirmada por você.",
+    "summary": {
+      "ambiguous": "ambíguos",
+      "ambiguousHint": "Ambíguo = mais de um título cabe na janela; concilie à mão na Fila pendente.",
+      "created": "novos",
+      "none": "sem título",
+      "skipped": "já existentes",
+      "stale": "desatualizados"
+    },
+    "title": "Baixas por retorno bancário",
+    "titleUnavailable": "título indisponível",
+    "status": {
+      "PENDING": "pendente",
+      "CONFIRMING": "confirmando",
+      "CONFIRMED": "confirmada",
+      "REJECTED": "rejeitada",
+      "FAILED": "falhou",
+      "STALE": "desatualizada"
     }
   }
 }

@@ -870,7 +870,8 @@
     "noBankAccounts": "No account available",
     "subtabs": {
       "statements": "Bank statements",
-      "pending": "Pending queue"
+      "pending": "Pending queue",
+      "settlements": "Bank-return settlements"
     },
     "import": {
       "title": "Import statement",
@@ -1822,6 +1823,66 @@
       "EXPORT_INCOME_STATEMENT": "Income statement",
       "EXPORT_BANK_RECONCILIATION": "Bank reconciliation",
       "EXPORT_ENTRY_SAMPLE": "Entry sample"
+    }
+  },
+  "bankSettlement": {
+    "action": {
+      "confirm": "Confirm",
+      "reject": "Reject",
+      "retry": "Retry"
+    },
+    "chargeAccountHint": "Configure the charge account in PUT /api/accounting/settings (no screen yet; the codes are pending with the accountant).",
+    "chargeEntry": "charge",
+    "chargeHint": "|line| − balance, 20% cap",
+    "col": {
+      "actions": "Actions",
+      "amount": "Amount",
+      "charge": "Charge",
+      "date": "Date",
+      "line": "Statement line",
+      "proposed": "Proposed",
+      "status": "Status",
+      "title": "Title"
+    },
+    "due": "due",
+    "empty": "No settlements in this selection — scan the statement.",
+    "entry": "entry",
+    "error": {
+      "generic": "The operation could not be completed.",
+      "load": "Error loading the settlements."
+    },
+    "filter": {
+      "all": "All",
+      "status": "Status"
+    },
+    "method": "Payment method",
+    "methodHint": "The method must resolve to this statement account.",
+    "noStatement": "Import a statement in the Statements sub-tab.",
+    "open": "open",
+    "payment": "payment",
+    "reason": "Reason (required)",
+    "receipt": "receipt",
+    "scan": "Scan statement",
+    "staleHint": "Title cancelled or already settled after the scan — scan again to re-evaluate the line.",
+    "statement": "Statement",
+    "subtitle": "Statement line → payable/receivable title. Unlike the Pending queue, here you confirm each settlement.",
+    "summary": {
+      "ambiguous": "ambiguous",
+      "ambiguousHint": "Ambiguous = more than one title fits the window; reconcile by hand in the Pending queue.",
+      "created": "new",
+      "none": "no title",
+      "skipped": "already existing",
+      "stale": "stale"
+    },
+    "title": "Bank-return settlements",
+    "titleUnavailable": "title unavailable",
+    "status": {
+      "PENDING": "pending",
+      "CONFIRMING": "confirming",
+      "CONFIRMED": "confirmed",
+      "REJECTED": "rejected",
+      "FAILED": "failed",
+      "STALE": "stale"
     }
   }
 }
