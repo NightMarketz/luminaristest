@@ -9,7 +9,7 @@ titulo: "Dúvidas do inventário do vault"
 > SDD × repo em [[18-caminho]].
 
 - D-1 X6: cédula 03/09 o conta como nó 12 do fiscal (merge #328 → fiscal 10/16); §M5.1 e o fold 22/09 o tratam como crescimento do nó NF-e → 9/16. Vault segue a leitura ratificada (fecha_regua=false). Decisão do dono.
-- D-2 X10a/X11/X12: fold 18/09 diz que materializaram dentro do X10b, mas estão no denominador 16 e o grafo 14/09 os lista abertos. Vault usa o estado do grafo. X12 (catálogo de adições/exclusões) dentro de um nó de DF-e parece improvável.
+- ~~D-2 X10a/X11/X12~~ **DECIDIDO 29/09 pelo dono ([[D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE]], decisão 6): X10a e X11 abertos; X12 done (materializado pelo X4/FE-LALUR).** Texto original: X10a/X11/X12: fold 18/09 diz que materializaram dentro do X10b, mas estão no denominador 16 e o grafo 14/09 os lista abertos. Vault usa o estado do grafo. X12 (catálogo de adições/exclusões) dentro de um nó de DF-e parece improvável.
 - ~~D-3 C9~~ **DECIDIDO 25/09 pelo dono: C9 não conta, absorvido no C8 (fecha_regua=false).** Texto original: nó 19 da cédula 03/09, mas o fold 22/09 diz que 'não é linha própria' (absorvido no C8 PR-4). Sem ele o contábil teria 21 linhas; não está claro se o C8 PR-5 soma +1 ou +2.
 - D-4 Numeração: não há esquema único para os 57 nós; IDs do grafo onde 1:1, senão CONT-nn/FIN-nn/FIS-nn pelo número da cédula. Associações C7, F1, F4, X10b são inferência do extrator.
 - D-5 Z0-a: cédula 10/09 resposta 1 já fecha F-Z0 pelo produto e descondicionou o trilho, mas o SDD (§18/§19) o trata como aberto. Vault mantém human-open; fechar é decisão do dono.

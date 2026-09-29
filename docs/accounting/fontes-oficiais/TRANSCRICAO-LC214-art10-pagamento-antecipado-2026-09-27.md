@@ -32,8 +32,14 @@ data do fornecimento; b) caso os valores das antecipações sejam **inferiores**
 constarão como **débitos**; e c) caso sejam **superiores**, observar-se-ão as regras do pagamento indevido ou a
 maior (redação da LC 227/2026; a redação anterior mandava apropriar como **créditos**)."
 
-**§ 5º** — não ocorrendo o fornecimento, "inclusive em decorrência de distrato, o fornecedor poderá apropriar
-créditos com base no valor das parcelas das antecipações devolvidas".
+**§ 5º (redação da LC 227/2026)** — "Na hipótese do § 4º deste artigo, caso não ocorra o fornecimento a que se
+refere o pagamento, inclusive em decorrência de distrato, observar-se-ão as regras aplicáveis ao cancelamento."
+*(Errata 29/09: esta transcrição trazia a redação **revogada** — "o fornecedor poderá apropriar créditos com base
+no valor das parcelas das antecipações devolvidas" —, que o compilado mostra tachada. Conferido no HTML do
+Planalto em 29/09.)*
+
+**§ 6º (LC 227/2026)** — "A extinção dos débitos de que trata o § 4º permitirá ao adquirente a apropriação de
+crédito nos termos dos arts. 47 a 57 desta Lei Complementar."
 
 **§ 7º (LC 227/2026)** — "O regulamento estabelecerá hipóteses em que, observado o prazo máximo de **5 (cinco)
 dias** entre o pagamento antecipado e a data do fornecimento, as antecipações … poderão constar como débitos no
@@ -47,7 +53,7 @@ Sob a LC 214 vigente isso implicaria, a partir da entrada em vigor do IBS/CBS:
 1. **débito de antecipação na venda do pacote** (base = valor pago), não na prestação;
 2. **acerto na prestação de cada sessão** (base = valor total da operação; diferença a maior vira débito, a
    menor segue a regra do pagamento indevido);
-3. **crédito na devolução** se o pacote for cancelado sem uso (§ 5º);
+3. **regras do cancelamento** se o pacote for cancelado sem uso (§ 5º, redação vigente — errata 29/09);
 4. a janela de 5 dias do § 7º **não** cobre o pacote típico (sessões ao longo de meses).
 
 **Grau:** inferido — da leitura do texto para o caso do salão, sem confirmação de contador e sem o regulamento
@@ -62,6 +68,9 @@ passivo** pelo `SaleSettledMapper`, com guarda dura quando o binding não resolv
 (`blocked_missing_prepaid_liability_account`, `SaleSettledMapper.ts:83-87`; papel `passivo-adiantamento` em
 `accountingBinding/interpreter/interpret.ts:341-370`). Ou seja: o **diferimento de receita** está correto e é
 o mesmo diferimento que o § 4º pressupõe.
+
+*(Errata 29/09: vale para venda e consumo; **cancelar ou devolver** uma venda de pacote contabiliza errado —
+o estorno não alcança `sale.package.sold` (GAP-MAP Nível 5, linha de 29/09, só registro).)*
 
 **O que falta é fiscal, não contábil:** não existe apuração de IBS/CBS no produto ([[M5-ibs-cbs]], diferido), e
 é lá — não no razão — que a antecipação do § 4º precisaria aparecer quando o regime entrar. Registrado como

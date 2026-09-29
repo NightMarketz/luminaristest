@@ -46,6 +46,11 @@ que citava o antigo precisa ser reconferido.
 | moc70-visao-geral | SIG-NFE — padrao de assinatura digital da NF-e 4.00 (§4.2.3-4.2.5) | Manual de Orientacao ao Contribuinte (MOC) versao 7.0 — Visao Geral, NF-e e NFC-e | `MOC-7.0-Visao-Geral.pdf` | 4.304.647 | `f664dcf94b77` |
 | moc70-anexo-i | SIG-NFE — regras de rejeicao do certificado/assinatura (E/F) e quem assina por serie (B07) | MOC 7.0 Anexo I — Leiaute e Regras de Validacao da NF-e e NFC-e | `MOC-7.0-Anexo-I.pdf` | 4.106.196 | `5eb4cf2010b1` |
 | doc-icp-04 | SIG-NFE — formato dos otherName CPF/CNPJ do certificado ICP-Brasil | DOC-ICP-04 v8.3 (Resolucao CG ICP-Brasil 179/2020 compilada; 7.1.2.2 pela Res. 211/2024) | `DOC-ICP-04-v8.3.pdf` | 732.810 | `0603dbb47ea9` |
+| nfse-guia-emissor-web | Emissao NFS-e — modo manual (ficha espelho do portal, FE-INCR-DFE C.1) | Guia do Emissor Publico Nacional Web v1.2 (gov.br/nfse, documentacao atual) — mesmo sha do BRIEF BE-INCR-DFE-MANUAL (27/09) | `NFSe-Guia-Emissor-Publico-Nacional-Web-v1.2.pdf` | 4.849.267 | `85982d1ee76b` |
+| nfse-anexo-iv-adn | Emissao NFS-e — ADN (X10i) | ANEXO IV — ADN, v1.00 (16/12/2025) `anexo_iv-adn-snnfse-v1-00-20251216.xlsx` | `NFSe-ANEXO-IV-ADN-v1.00.xlsx` | 26.231 | `fa778d0b6e58` |
+| nfe-nt-2025-002-v151 | Reforma tributaria — IBS/CBS na NF-e/NFC-e (X10a, PRE-ADR IBS/CBS) | NT 2025.002-RTC v1.51 (julho/2026; portal: publicada 04/08/2026, `conteudo=AKD/muSmiIY=`) | `NFe-NT-2025.002-v1.51.pdf` | 2.182.361 | `a4aaaa181522` |
+| nfe-nt-2026-006 | Split payment — vinculacao DF-e × transacao de pagamento (onda 3) | NT 2026.006 v1.00 (agosto/2026; portal: publicada 25/08/2026, `conteudo=k7zG06n5M6I=`) | `NFe-NT-2026.006-v1.00.pdf` | 767.681 | `47a65abde315` |
+| nfe-nt-2026-007 | NF-e por contribuinte exclusivo do IBS/CBS (sem IE; Ato 4 § 4º) | NT 2026.007 v1.00 (julho/2026; portal: publicada 04/08/2026, `conteudo=jVEAeMhv83w=`) | `NFe-NT-2026.007-v1.00.pdf` | 733.482 | `559fcd7d1b49` |
 
 ## URLs de origem
 
@@ -127,3 +132,5 @@ que citava o antigo precisa ser reconferido.
   Transcrito (§3) em `TRANSCRICAO-MOC70-assinatura-digital-NFe-2026-09-26.md`.
 - **doc-icp-04** — <https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/resolucao179_doc-icp-04_compilada.pdf> —
   baixado 2026-09-26, sha256 `0603dbb47ea9f1928a5e6f72168a2f6dfe1ad2796b394aa6ad6ac92282a9c9a8`. Transcrito (§4) no mesmo arquivo.
+
+**29/09/2026** — 5 documentos baixados à mão (autorização do dono na entrevista de 29/09, decisão 10 de `docs/plano/decisoes/D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE.md`), com o título conferido no texto da 1ª página de cada PDF. O portal da NF-e exige cookie de sessão (GET na lista de NTs antes do `exibirArquivo`).
