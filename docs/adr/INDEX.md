@@ -6,7 +6,7 @@
 >
 > **Convenção:** `ADR-<trilho><n>` = decisão; `D0-*` = registro de ratificação humana (gate G0) de uma fase.
 > Onde uma decisão de módulo **não** tem ADR próprio, o ponteiro para onde ela vive está em §Fora-de-ADR.
-> Última atualização: **2026-09-22** (primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
+> Última atualização: **2026-09-29** (`ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md`, Proposed; antes: 2026-09-22, primeiro ADR com status `Rejected`: `ADR-DOMAIN-MOTOR-rejected.md`).
 
 ## Buildout contábil (INCR-*)
 
@@ -31,6 +31,7 @@
 | [INCR-NFE](ADR-INCR-NFE-fiscal-ingestion.md) | Ingestão fiscal de NF-e — parser puro `lib/nfe.ts` (XML→`ParsedNfe`) que pré-preenche a `Payable`/entrada de estoque (compra) e cruza com a venda de salão (venda), sem subrazão fiscal novo | **Accepted — RATIFICADO FORK-A-FORK 2026-07-20** (**F-NFE1→(b) COMPRA+VENDA** divergiu da rec. compra-only; F-NFE5→(a) impl bloqueada até PR #130 mergear; F-NFE6→(a) custo = `vProd−vDesc+vFrete+vOutro+vIPI+vICMS-ST`; F-NFE2→(a) `fast-xml-parser`; F-NFE3→(a) ingestão; F-NFE4→(a) `SourceDocument`); impl. NÃO iniciada (bloqueada por #130) | 2026-07-20 | INGESTÃO (reusa Payable/estoque/SourceDocument) |
 | [INCR-DFE-EMISSAO-PARCEIRO](ADR-INCR-DFE-EMISSAO-PARCEIRO.md) | Documento fiscal de SAÍDA (NFS-e nacional onda 1; NF-e 55 onda 2) montado até a borda e entregue a parceiro emissor por API via porta `DfeEmissorPort`; `FiscalDocument`/`FiscalProfile` Prisma first-class; BYOK por env (R4); retorno autorizado vira `SourceDocument` (seam NFE-X) | **Accepted** 2026-09-08 — parecer anexado (§9); **forks F-DFE-1..11 ratificados** (4 contra a recomendação: NFS-e+NF-e no mesmo BRIEF, webhook+polling, tomador obrigatório, Simples desde já); BRIEF espera manual da NFS-e nacional + contador; adaptador espera parceiro (D5) |
 | [RC](ADR-RC-SUBLEDGER-AP-AR-reuse-sanction.md) | Reuso vs. divergência sancionada AP × AR — where-builder de filtro compartilhado (`buildSubledgerFilterWhere`) + sanção por escrito da criação/liquidação | **Ratificado 2026-08-13 (dono, via sessão)** — extração escopada da fatia de listagem (espelho literal, F6/`ea91f406`); 5 pontos sancionados (direção contábil, estoque só-AP, `CrmReceivableBridge` só-AR, naming cosmético, cláusula viva); gatilhos de reversão (`if` de lado na função compartilhada; cópia manual de CAS num 3º subrazão). Pré-requisito de A2 Imobilizado / A3 Folha | 2026-08-13 | REUSE-VS-BESPOKE (gate de reuso) |
+| [PAYMENT-PROVIDER-COLLECTION](ADR-INCR-PAYMENT-PROVIDER-COLLECTION.md) | Cobrança por provedor de pagamento (nós F5/F6): porta `CollectionProviderPort`, Mercado Pago 1º adaptador, remessa CNAB 240 2º (D6); `PaymentAccount` + `CollectionCharge` Prisma first-class; baixa só pelo F7 (resposta 20); Pix de saída (F6) bloqueado pelo Payouts do MP | **Proposed 2026-09-29** — F-M3 "só ADR"; forks **F-PP-1..11 pendentes** (rec. credencial própria do cliente, cifra AES-GCM em repouso, Orders API, baixa pelo relatório de liberações); nenhum código | 2026-09-29 | PRISMA_FIRST_CLASS |
 
 ## Bridges de integração (venda DynamicTable → ledger Prisma)
 

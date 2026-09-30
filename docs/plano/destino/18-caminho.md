@@ -71,3 +71,4 @@ O SDD de 23/09 afirmava as arestas abaixo; o repo não as sustenta. A tabela §1
 | D-10 | Ondas por edição (Essencial antes de Gestão) | Ordem ratificada entre domínios da régua = R6 contábil → financeiro → fiscal | §M5.1 R6 |
 | D-11 | "I3b", "Telas Fase 4 (~8 telas)" | sem ocorrência no repo | — |
 | D-12 | "P4" como fase | colide com "P4 Instalar validadores" (gate humano do GRAFO) | GRAFO 09-14 l.111 |
+| D-13 | Onda 3 lista Simples/MEI em 4º, e o prazo legal de IBS/CBS "puxa a Onda 3" (§18.3); a NFC-e estava na onda 3 | **Intenção nova do dono (29/09, decisão 8): o Simples vem antes.** É o 1º PRE-ADR da onda 3, e IBS/CBS 2027 vem em seguida. Motivo: o 1º cliente é do Simples e fica no DAS em jan–jun/2027. A mesma decisão tira a NFC-e da onda 3 e a leva para o [[X10a]]. PRE-ADR [`PRE-ADR-SIMPLES-NACIONAL-CALCULO`](../../adr/PRE-ADR-SIMPLES-NACIONAL-CALCULO.md), **Proposed**, sem nó até ratificar | [[D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE]] #8 |
