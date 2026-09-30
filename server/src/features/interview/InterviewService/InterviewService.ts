@@ -1,6 +1,6 @@
 import { logger } from '../../../lib/logger';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
-import { IMessage, InterviewStage, IInterviewTurnResult, ProcessableStage } from '../models/InterviewTypes';
+import { IMessage, InterviewStage, IInterviewTurnResult, ProcessableStage, CreationChoice } from '../models/InterviewTypes';
 import { PresetMatcher } from './PresetMatcher';
 import { StageHandlers } from './StageHandlers';
 import { stageConfig } from './PromptConfig';
@@ -45,7 +45,8 @@ export class InterviewService {
     stage: InterviewStage, 
     messages: IMessage[], 
     presetKey?: string, 
-    sessionId?: string
+    sessionId?: string,
+    choice?: CreationChoice
   ): Promise<IInterviewTurnResult> {
     try {
       logger.info(`[InterviewService] Processando turno no estágio: ${stage}`);
@@ -98,12 +99,13 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
         return { 
           response, 
           nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION', 
-          presetKey: matchedPreset.key 
+          presetKey: matchedPreset.key,
+          choicePrompt: { kind: 'creation_type', reason: 'initial' }
         };
       } 
       
       else if (stage === 'AWAITING_CREATION_TYPE_CONFIRMATION' && presetKey) {
-        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey);
+        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, choice);
       } 
       
       else if (stage === 'CUSTOMIZATION_IN_PROGRESS' && sessionId) {
