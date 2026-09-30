@@ -13,7 +13,6 @@ reusing **field presets** when possible. It is a **singleton** — the class liv
 |---|---|
 | `getInstance()` | Access the singleton. |
 | `processMessage(sessionId, tableKey, userMessage, conversationHistory?)` | Processes a field-customization request for a table and returns `IFieldCustomizationResult` (`updatedTable`, `aiMessage`, `modified`, `conversationHistory`). |
-| `validateFields(table)` | Suggests improvements for a table's fields → `{ suggestions, valid }`. |
 
 ## `processMessage` flow
 
@@ -38,7 +37,7 @@ reusing **field presets** when possible. It is a **singleton** — the class liv
 - **`FieldPresetMatcher`** — `findFieldPreset(description, existingFields)` matches a field with a
   `dynamicTables` field preset.
 - **`PromptConfig`** — templates (`FIELD_CUSTOMIZATION_PROMPT`, `FIELD_PRESET_FOUND_PROMPT`,
-  `FIELD_PRESET_NOT_FOUND_PROMPT`, `FIELD_VALIDATION_PROMPT`).
+  `FIELD_PRESET_NOT_FOUND_PROMPT`).
 - **`StateManager`** (singleton, shared) — the source of session state.
 
 > ⚠️ There are no `AIFieldInteraction` nor `FieldExtractor` (mentioned in old docs). The AI is called
