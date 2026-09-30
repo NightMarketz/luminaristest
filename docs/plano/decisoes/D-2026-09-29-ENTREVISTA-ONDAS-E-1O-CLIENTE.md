@@ -61,6 +61,30 @@ Consequências registradas (fonte no dossiê §0):
 - A citação `PeriodService.ts:34` no PRE-ADR GOV aponta para o `seedYear`; a reabertura fica em `:137-142` e em `openPeriod` `:45-53`.
 - Nota do MANIFEST "Planalto reeditou sem mudar o tamanho": provável falso positivo (o token antirrobô `f5_p` muda o sha).
 
+## Errata e fatos novos da sessão do ADR do X7 (29/09, PR #446)
+
+Fontes primárias lidas na sessão que escreveu o [`ADR-INCR-TAX-ASSESSMENT`](../../adr/ADR-INCR-TAX-ASSESSMENT.md)
+(§3 e §15 do ADR, com link e sha de cada uma). **Nenhuma decisão acima muda.** Corrigem-se fatos citados na decisão 9
+e no dossiê §4:
+
+- **DCTFWeb:** o prazo (último dia útil do mês seguinte) está no **art. 6º** da IN RFB 2.237/2024. Os arts. 8º–9º
+  são os tributos e o MIT; o § 1º I do art. 9º manda os **retidos na fonte** para a EFD-Reinf.
+- **DIRF:** foi **substituída** para fatos a partir de 01/01/2025 (IN 2.181/2024 art. 1º, que dá nova redação ao
+  art. 3º § 1º da IN 2.043/2021).
+- **LC 224:**
+  - o limite de R$ 5 mi está no art. 4º **§ 5º**, não no § 4º VII (este só traz o +10%);
+  - a lei já traz o rateio, e a **IN RFB 2.305/2025** (redação da 2.306/2026) o detalha: R$ 1,25 mi por trimestre,
+    sobra transportada e acerto no 4º trimestre;
+  - **CSLL desde 01/04/2026**, IRPJ desde 01/01/2026 (art. 3º da IN);
+  - a estimativa do Lucro Real **não** é atingida (§ 2º II a cita só os arts. 25–26 da Lei 9.430);
+  - ADI 7936 e ADI 7944 no STF, **sem cautelar** até 29/09.
+- **MIT:** importa arquivo **JSON** no leiaute oficial 1.0; o usuário encerra a apuração importada. Isso resolve a
+  "pendência MIT: arquivo × HTTP" do X7/X9 (F-X7-9 → recomendação (b)).
+- **Balancete de suspensão/redução:** tem de ser transcrito no Diário (Lei 8.981 art. 35 § 1º a); a transmissão da
+  ECD supre essa transcrição (IN 2.003 art. 9º III).
+- **Códigos de receita:** mudam se o Lucro Real é **obrigatório ou por opção** (IRPJ 0220 × 3373; 2362 × 5993;
+  2430 × 2456).
+
 ## Adendo 29/09 (tarde) — pesquisa do PRE-ADR do Simples (decisão 8)
 
 Adendo de **evidência**. Não altera nenhuma das 19 decisões acima. Origem:

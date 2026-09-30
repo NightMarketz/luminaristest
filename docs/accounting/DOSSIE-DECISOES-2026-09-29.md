@@ -123,6 +123,15 @@ eventos (`BE-INCR-DFE-brief.md:652`, V). Resultado por nó:
 - **Insumo novo para o X7 (V):** LC 224/2025, art. 4º § 4º VII — no Presumido, a presunção sobe 10% sobre a receita acima de R$ 5 milhões por ano, desde 01/01/2026 para o IRPJ. O efeito na CSLL é NV.
 - **Quem decide:** o dono.
 
+> **Errata (29/09, sessão do ADR do X7, PR #446 — fontes primárias no ADR §3/§15):**
+> - **D-4:** o prazo da DCTFWeb é o **art. 6º** da IN 2.237 (os arts. 8º–9º são tributos e MIT). A DIRF foi
+>   "substituída" (IN 2.181 art. 1º).
+> - **D-5:** a LC 224 põe o limite de R$ 5 mi no **§ 5º** do art. 4º, com rateio. Pela IN 2.305/2025 (red. 2.306/2026),
+>   o efeito na CSLL começa em **01/04/2026** (era NV). A estimativa do Real não é atingida.
+> - **D-5, Manual ECF L12 (jul/2026):** `MES_BAL_RED` tem 12 posições `[0;E;B]` (p.74); o período anual é `A00`
+>   (p.128); o `E` de `FORMA_TRIB_PER` só vale no caso REFIS (p.73).
+> - **Nota de grau:** as leis de D-5 (Lei 9.430, 8.981, RIR) foram relidas no Planalto e confirmam o texto acima.
+
 ### D-6 — Follow-up ao contador: de 5 perguntas para 3, mais 4 fatos do cliente
 Quatro das perguntas do rascunho de 26/09 (`PEDIDO-CONTADOR-2026-09-23-followup.md`) a lei responde:
 
