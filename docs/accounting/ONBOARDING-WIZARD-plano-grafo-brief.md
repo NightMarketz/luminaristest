@@ -329,7 +329,8 @@ o "depois" só o teste garante). Sem fork.
     elimina a classe; (b) é remendo. **RATIFICAÇÃO PENDENTE.**
   - **F-W3-2 · escolha criar/customizar:** (a) três saídas: `create` / `customize` / `unclear` → em
     `unclear` repete a pergunta com as duas opções em negrito; (b) manter binário. **Recomendação: (a).**
-    **RATIFICAÇÃO PENDENTE.**
+    **RATIFICADO (a) — dono, 30/09** (`docs/plano/decisoes/D-2026-09-30-W3-ESCOLHA-CRIACAO.md`); parte (a) corrigida, a tela
+    (botões + modais) segue em `WIZARD-W3-ESCOLHA-CRIACAO-brief.md`.
 
 ### W4 — `InterviewSession` persistida, com dono e TTL
 - **Lacuna:** achados sup. 9, 10, 11 (estado em `Map`; sem TTL; sessão não ligada ao usuário).
