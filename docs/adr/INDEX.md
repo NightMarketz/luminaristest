@@ -48,7 +48,7 @@
 
 | ADR | Título | Status | Data | Classe |
 |---|---|---|---|---|
-| [CRM-LEAD-OPP](ADR-CRM-lead-opportunity-model.md) | Modelo de produto Lead × Opportunity no molde salão (quantas pipelines de valor; portadora de fechamento) | **Draft — PRE-ADR, ratificação humana PENDENTE (§5.1)**; devolvido ao dono pelo board v3 (D3: 4 defer + 1 abstain); recomendação = interino reversível (ocultar 2ª pipeline sem deletar código) | 2026-07-20 | PRODUTO / MODELAGEM DE MOLDE (DynamicTable) |
+| [CRM-LEAD-OPP](ADR-CRM-lead-opportunity-model.md) | Modelo de produto Lead × Opportunity no molde salão (quantas pipelines de valor; portadora de fechamento) | **Draft — PRE-ADR, ratificação humana PENDENTE (§5.1)**; devolvido ao dono pelo board v3 (D3: 4 defer + 1 abstain); recomendação = interino reversível (ocultar 2ª pipeline sem deletar código); **sinal do dono 29/09 (§9): "vincular e espelhar" — oportunidade atrelada ao lead, atualizar a oportunidade atualiza o lead; só documentado** | 2026-07-20 | PRODUTO / MODELAGEM DE MOLDE (DynamicTable) |
 
 ## Fábrica de verticais (Parte B do roadmap — `docs/SDD-LUMINARIS.md` §IV.1, ex-`docs/ROADMAP-PLATAFORMA.md`)
 
