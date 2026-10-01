@@ -28,6 +28,9 @@ Todo subagente encerra devolvendo isto — e **gravando o mesmo texto** em
 
 tarefa: <o que foi pedido, uma linha>
 agente: <qual persona/skill, e onde rodou — worktree própria?>
+modelo: <modelo/esforço que rodou, ex. opus-5.5/low>
+perfil-previsto: <rótulo "Perfil de execução" do classificador, ou "—">
+rodadas-de-review: <quem integra preenche: rodadas até PASS e achados por rodada, ex. "2 (5 → 0)"; "—" antes do review>
 veredicto: PASS | FAIL | BLOCKED
 
 ### Arquivos
@@ -45,6 +48,12 @@ veredicto: PASS | FAIL | BLOCKED
 ### Aberto
 - <o que ficou; ou "nada">
 ```
+
+**`modelo` / `perfil-previsto` / `rodadas-de-review`** (dono, 2026-10-01) existem para calibrar a
+escolha de modelo por medição, não por opinião (`MODEL-TUNING.md` §Regra de manutenção): após 4–6
+retornos, compare rodadas de review por modelo/esforço. São campos de um artefato que já existe —
+não há gate nem script sobre eles (regra do §⛔ do CLAUDE.md). `.claude/retornos/` é gitignored:
+a comparação é local.
 
 ### A metade humana, quando existe
 

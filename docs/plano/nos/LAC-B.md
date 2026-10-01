@@ -4,16 +4,17 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION)"
 estado: "inflight"
-estado_detalhe: "BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente"
+estado_detalhe: "BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus)"
 autorizacao: "dono 'Ativar agora' 2026-09-07"
 prs: ["#389"]
 ancora_sdd: "§M5.1 Bloco A LAC-B"
-atualizado: "2026-09-28"
+autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
+atualizado: "2026-10-01"
 ---
 # LAC-B — UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION)
 
-**Estado:** `inflight` — BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente  
-**Autorização:** dono 'Ativar agora' 2026-09-07  
+**Estado:** `inflight` — BE item 1 mergeado: #389 cf40ab68 (28/09) — POST /accounting-binding/activate-default; UI da ativação self-service pendente · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus)  
+**Autorização:** EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono  
 **Depende de:** —  
 **Desbloqueia:** [[I3]]  
 **Âncora no SDD consolidado:** §M5.1 Bloco A LAC-B  

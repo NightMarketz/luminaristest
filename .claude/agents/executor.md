@@ -24,8 +24,8 @@ pause, nunca escolha.
    <comando> > .claude/retornos/_logs/<slug>-1.log 2>&1; echo $?
    sha256sum .claude/retornos/_logs/<slug>-1.log
    ```
-5. Escreva `.claude/retornos/<slug>.md` no formato de `docs/operating-manual/CONTRATO-DE-RETORNO.md`,
-   com o bloco:
+5. Escreva `.claude/retornos/<slug>.md` no formato de `docs/operating-manual/CONTRATO-DE-RETORNO.md`
+   (cabeçalho com `modelo:` e `perfil-previsto:` preenchidos; `rodadas-de-review: —`), com o bloco:
    ```yaml
    PROVA:
      - command: "<comando exato>"
