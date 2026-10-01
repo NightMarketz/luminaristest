@@ -1,3 +1,16 @@
+/**
+ * AccountingReviewService — revisão profissional (C11). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry(sourceType='review_adjustment', sourceId=findingId); gate de período dentro da tx
+ *              teste: AccountingReviewService.test.ts › "1ª chamada: postEntry com sourceType=review_adjustment/sourceId=findingId, depois o achado aponta journal_entry"
+ *   commit 2 — subrazão: achado → resolution=ADJUSTMENT_ENTRY + resolutionTargetId=entryId, runTransaction próprio (read-first no tx)
+ *              teste: [sem teste — GAP-MAP] (commit 2 falhando com razão intacto não é exercitado)
+ *   reconcile — postAdjustment() de novo: read-first acha a entry e só refaz o commit 2; não reposta nem estorna
+ *              teste: AccountingReviewService.test.ts › "reconcile: commit 1 passou e o 2 não — a repetição NÃO reposta nem estorna, só aponta o lançamento existente"
+ *   fora da tx — reverseEntry (estorno opcional do I200) ANTES do commit 1, depois de validateEntry (#334 B1)
+ *              teste: AccountingReviewService.test.ts › "B1 (#334): corpo inválido é rejeitado ANTES do estorno — validateEntry roda primeiro, reverseEntry não é chamado"
+ */
 import { Prisma } from 'generated/prisma';
 import type {
   AccountingDataExchangeJob,

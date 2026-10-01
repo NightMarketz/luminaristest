@@ -1,3 +1,16 @@
+/**
+ * BankSettlementService — baixa bancária (F7). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: baixa via PayableService.registerPayment / ReceivableService.registerReceipt (2 commits deles) + postEntry(sourceType='bank.charge', sourceId=itemId) do encargo; gate de período dentro da tx
+ *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"] (serviço sem teste próprio; só o predicado puro em models/__tests__/bankSettlementCandidacy.test.ts)
+ *   commit 2 — subrazão: settlementId/chargeEntryId gravados no item a cada etapa + CONFIRMING → CONFIRMED com auditoria, runTransaction próprio
+ *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"]
+ *   reconcile — retry(): FAILED (ou CONFIRMING preso além da janela) → CONFIRMING; etapas já feitas são puladas pelos ids gravados
+ *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"]
+ *   fora da tx — conciliação ReconciliationService.manualMatch (etapa MATCH); falha grava FAILED + failedStep
+ *              teste: [sem teste — GAP-MAP N3 "BankSettlementService sem teste de serviço"]
+ */
 import type { Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';

@@ -65,7 +65,7 @@ generated-by: skill-audit coverage
 | `SVC-005` | backend-service-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
 | `SVC-006` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SVC-007` | backend-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
-| `SVC-008` | backend-service-generator | eval:./evals/evals.json#happy-2 | ✅ |
+| `SVC-008` | backend-service-generator | eval:./evals/evals.json#happy-2 | static:../../../server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts | ✅ |
 | `TEST-001` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-002` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `TEST-003` | backend-test-suite-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |

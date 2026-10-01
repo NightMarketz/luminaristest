@@ -3,15 +3,16 @@ id: "PASSO-13"
 tipo: "motor"
 dominio: "motor"
 titulo: "PR-B — atomicUntil boundary test + retrofit dos 8 JSDocs"
-estado: "blocked"
-estado_detalhe: "Espera 'executa' (passo 10 já em main via #358)"
+estado: "ready"
+estado_detalhe: "'executa' dado em 2026-10-01 (passo 10 já em main via #358)"
 ancora_sdd: "§III.1 passo 13 · §III.4"
-atualizado: "2026-09-23"
+autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
+atualizado: "2026-10-01"
 ---
 # PASSO-13 — PR-B — atomicUntil boundary test + retrofit dos 8 JSDocs
 
-**Estado:** `blocked` — Espera 'executa' (passo 10 já em main via #358)  
-**Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
+**Estado:** `ready` — 'executa' dado em 2026-10-01 (passo 10 já em main via #358)  
+**Autorização:** EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono  
 **Depende de:** —  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §III.1 passo 13 · §III.4

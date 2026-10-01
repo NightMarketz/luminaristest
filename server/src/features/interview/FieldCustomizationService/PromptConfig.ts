@@ -113,32 +113,6 @@ export const promptConfig = {
   `,
 
   /**
-   * Prompt para validação de campos
-   */
-  FIELD_VALIDATION_PROMPT: `
-    Você é um especialista em design de sistemas e precisa validar as informações que foram solicitadas para uma funcionalidade.
-    
-    Funcionalidade: {{TABLE_NAME}}
-    Descrição: {{TABLE_DESCRIPTION}}
-    
-    Campos atuais: {{TABLE_FIELDS}}
-    
-    Por favor, analise os campos acima e identifique:
-    1. Se há campos redundantes ou que podem ser consolidados
-    2. Se existem campos obrigatórios para este tipo de funcionalidade que estão faltando
-    3. Se os tipos de dados estão apropriados para cada campo
-    
-    Responda em formato JSON com:
-    1. "recommendations": Lista de recomendações, cada uma com:
-       - "type": "add", "remove", "update" ou "consolidate"
-       - "field": Objeto com as propriedades do campo (para add/update)
-       - "fields": Array de nomes de campos (para consolidate)
-       - "reason": Explicação clara da recomendação
-    
-    2. "friendlyMessage": Uma mensagem amigável explicando suas recomendações
-  `,
-
-  /**
    * Prompt para informar o usuário sobre campos encontrados nos presets
    */
   FIELD_PRESET_FOUND_PROMPT: `
