@@ -1,3 +1,14 @@
+/**
+ * ExerciseClosingService — encerramento do exercício. FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry(sourceType='closing', sourceId=String(year)); gate de período dentro da tx
+ *              teste: PostingService.test.ts › "postEntry: throws AccountingPeriodNotOpenError when period is missing (null)"
+ *   commit 2 — nenhum
+ *   reconcile — n/a (postEntry idempotente por sourceId)
+ *              teste: PostingService.test.ts › "idempotency: existing (sourceType, sourceId) returns the existing entry, no re-post"
+ *   fora da tx — nada
+ */
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import { MAX_CENTS } from '../models/money';
 import { CLOSING_SOURCE_TYPE, closingSourceId } from '../models/closing';

@@ -1,3 +1,16 @@
+/**
+ * PayableService — contas a pagar (AP). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry(sourceType='ap.payable', sourceId=payableId) no reconhecimento; postEntry(sourceType='ap.payment', sourceId=paymentId) na baixa; gate de período dentro da tx
+ *              teste: PayableService.test.ts › "books D 2.1.2 / C method-account keyed sourceType=ap.payment, sourceId=paymentId (NOT payableId)"
+ *   commit 2 — subrazão: CAS OPEN → PAYING (claimForPayment) ANTES do post; finalize PAYING → PAID/PARTIALLY_PAID + settlementEntryId, runTransaction próprio
+ *              teste: PayableService.test.ts › "does NOT revert the claim after a successful post (never revert over a booked ledger)"
+ *   reconcile — reconcilePayables(): read-first, reposta só o que falta e finaliza PAYING preso
+ *              teste: PayableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
+ *   fora da tx — entrada de estoque (receiveStock; falha não compensa, o reconcile re-dirige) e rascunho de imobilizado (modo 4)
+ *              teste: PayableService.test.ts › "does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)"
+ */
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';

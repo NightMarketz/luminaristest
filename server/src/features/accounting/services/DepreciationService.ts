@@ -1,3 +1,16 @@
+/**
+ * DepreciationService — imobilizado — depreciação (C8). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry(sourceType='fixed_asset.depreciation', sourceId=`${assetId}:${yearMonth}`); gate de período dentro da tx
+ *              teste: PostingService.test.ts › "postEntry: throws AccountingPeriodNotOpenError when period is missing (null)"
+ *   commit 2 — subrazão: CAS addAccumulated (+ FULLY_DEPRECIATED ao esgotar a base) + auditoria, runTransaction próprio
+ *              teste: DepreciationService.test.ts › "CAS: addAccumulated devolve null (conflito de version) → ConflictError propaga e aborta (nunca vira failed[])"
+ *   reconcile — runMonth() de novo completa SÓ o commit 2; reconcile() recompõe o acumulado pela soma do razão
+ *              teste: DepreciationService.test.ts › "drift (accumulated diverge da soma do razão) → repara 1×; 2ª chamada não repara mais nada"
+ *   fora da tx — re-drive best-effort de rascunhos (redriveMissingDrafts) dentro do reconcile
+ *              teste: DepreciationService.test.ts › "item re-drive falhando não aborta o passo (best-effort, espelho de reconcileInventory)"
+ */
 import type { FixedAsset, FixedAssetClass } from 'generated/prisma';
 import logger from '../../../lib/logger';
 import { AccountingPeriodNotOpenError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
