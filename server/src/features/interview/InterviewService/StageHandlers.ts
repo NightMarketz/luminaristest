@@ -63,15 +63,14 @@ export class StageHandlers {
 
       const userContent = lastMessage.content.toLowerCase();
       
-      // Verifica se o usuário quer customizar o sistema
-      const wantsToCustomize = 
-        userContent.includes('custom') || 
-        userContent.includes('personaliz') || 
-        userContent.match(/option\s*1/i) || 
-        userContent.match(/op[çc][ãa]o\s*1/i);
-        
-      // Se o usuário não quer customizar, vai direto para a conclusão
-      if (!wantsToCustomize) {
+      // Escolha só vale se explícita; negação de customizar não conta como customizar.
+      // ponytail: palavra-chave; o modal de confirmação (GAP-MAP, parte b) substitui o texto livre.
+      const mentionsCustomize = /custom|personaliz|option\s*1|op[çc][ãa]o\s*1/.test(userContent);
+      const negatesCustomize = /\b(n[ãa]o|sem|nunca)\b[^.,;!?]*(custom|personaliz)/.test(userContent);
+      const wantsToCustomize = mentionsCustomize && !negatesCustomize;
+      const wantsToCreate = /\b(cri[ae]r?|agora|diret[oa]|padr[ãa]o)\b|option\s*2|op[çc][ãa]o\s*2/.test(userContent);
+
+      if (!wantsToCustomize && wantsToCreate) {
         logger.info('[StageHandlers] Usuário escolheu criar diretamente');
         return {
           response: "Ótimo! Seu sistema será criado diretamente com as configurações padrão.",
@@ -79,7 +78,15 @@ export class StageHandlers {
           presetKey
         };
       }
-      
+
+      if (!wantsToCustomize) {
+        return {
+          response: "Não entendi sua escolha. Você prefere **criar o sistema agora** ou **customizar** primeiro?",
+          nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION',
+          presetKey
+        };
+      }
+
       // Cria uma sessão de customização
       logger.info('[StageHandlers] Usuário escolheu customizar o sistema');
       
@@ -92,8 +99,8 @@ export class StageHandlers {
       if (!customizationState) {
         logger.error(`[StageHandlers] Falha ao criar sessão de customização para preset ${presetKey}`);
         return {
-          response: "Desculpe, houve um erro ao preparar a customização. Vamos criar seu sistema com as configurações padrão.",
-          nextStage: 'COMPLETED',
+          response: "Desculpe, houve um erro ao preparar a customização. Quer tentar **customizar** de novo ou **criar o sistema agora**?",
+          nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION',
           presetKey
         };
       }
@@ -113,8 +120,8 @@ export class StageHandlers {
     } catch (error) {
       logger.error(`[StageHandlers] Erro ao processar confirmação do tipo de criação: ${error}`);
       return {
-        response: "Desculpe, houve um erro ao processar sua escolha. Vamos criar o sistema com as configurações padrão.",
-        nextStage: 'COMPLETED',
+        response: "Desculpe, houve um erro ao processar sua escolha. Quer tentar **customizar** de novo ou **criar o sistema agora**?",
+        nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION',
         presetKey
       };
     }
