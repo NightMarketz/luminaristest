@@ -25,7 +25,8 @@ pause, nunca escolha.
    sha256sum .claude/retornos/_logs/<slug>-1.log
    ```
 5. Escreva `.claude/retornos/<slug>.md` no formato de `docs/operating-manual/CONTRATO-DE-RETORNO.md`
-   (cabeçalho com `modelo:` e `perfil-previsto:` preenchidos; `rodadas-de-review: —`), com o bloco:
+   (cabeçalho com `modelo:` e `perfil-previsto:` preenchidos; `rodadas-de-review: —`; `custo:` = última
+   linha de `node scripts/session-cost.mjs`), com o bloco:
    ```yaml
    PROVA:
      - command: "<comando exato>"

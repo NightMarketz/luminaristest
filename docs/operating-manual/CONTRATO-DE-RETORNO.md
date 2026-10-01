@@ -31,6 +31,7 @@ agente: <qual persona/skill, e onde rodou — worktree própria?>
 modelo: <modelo/esforço que rodou, ex. opus-5.5/low>
 perfil-previsto: <rótulo "Perfil de execução" do classificador, ou "—">
 rodadas-de-review: <quem integra preenche: rodadas até PASS e achados por rodada, ex. "2 (5 → 0)"; "—" antes do review>
+custo: <última linha de `node scripts/session-cost.mjs`, rodado como último passo, ex. "US$ 3.10 · claude-sonnet-5-5 US$ 2.40 + claude-opus-5-5 US$ 0.70 · 42 min">
 veredicto: PASS | FAIL | BLOCKED
 
 ### Arquivos
@@ -49,9 +50,11 @@ veredicto: PASS | FAIL | BLOCKED
 - <o que ficou; ou "nada">
 ```
 
-**`modelo` / `perfil-previsto` / `rodadas-de-review`** (dono, 2026-10-01) existem para calibrar a
+**`modelo` / `perfil-previsto` / `rodadas-de-review` / `custo`** (dono, 2026-10-01) existem para calibrar a
 escolha de modelo por medição, não por opinião (`MODEL-TUNING.md` §Regra de manutenção): após 4–6
-retornos, compare rodadas de review por modelo/esforço. São campos de um artefato que já existe —
+retornos, compare rodadas de review e custo por modelo/esforço. `custo` vem dos transcripts que o
+Claude Code grava (`scripts/session-cost.mjs`; inclui o revisor despachado como subagente, separado por
+modelo) — é **custo equivalente em API**; em plano de assinatura não é o valor cobrado. São campos de um artefato que já existe —
 não há gate nem script sobre eles (regra do §⛔ do CLAUDE.md). `.claude/retornos/` é gitignored:
 a comparação é local.
 
