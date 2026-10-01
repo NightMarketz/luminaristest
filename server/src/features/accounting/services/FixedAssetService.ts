@@ -7,7 +7,7 @@
  *   commit 2 — subrazão: CAS ACTIVE → DISPOSED + disposalEntryId + auditoria, runTransaction próprio
  *              teste: FixedAssetService.test.ts › "CAS: version divergente (repo devolve null) → ConflictError; 1 entry só (postEntry chamado 1×)"
  *   reconcile — disposeAsset() de novo: postEntry devolve a MESMA entry por sourceId; sem reconcile dedicado ao commit 2
- *              teste: PostingService.test.ts › "idempotency: existing (sourceType, sourceId) returns the existing entry, no re-post"
+ *              teste: (genérico — PostingService) PostingService.test.ts › "idempotency: existing (sourceType, sourceId) returns the existing entry, no re-post"
  *   fora da tx — nada (createDraftFromPayable é read-first e não posta razão)
  *              teste: FixedAssetService.test.ts › "read-first: item que já tem rascunho (mesmo payableId+sourceItemRef) é PULADO — idempotente"
  */

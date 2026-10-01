@@ -3,10 +3,10 @@
  *
  * atomicUntil: postEntry
  *   commit 1 — razão: postEntry(sourceType='closing', sourceId=String(year)); gate de período dentro da tx
- *              teste: PostingService.test.ts › "postEntry: throws AccountingPeriodNotOpenError when period is missing (null)"
+ *              teste: (genérico — PostingService) PostingService.test.ts › "postEntry TOCTOU: preflight passes (OPEN) but authoritative tx-gate fails (period closed between checks) — no write"
  *   commit 2 — nenhum
  *   reconcile — n/a (postEntry idempotente por sourceId)
- *              teste: PostingService.test.ts › "idempotency: existing (sourceType, sourceId) returns the existing entry, no re-post"
+ *              teste: (genérico — PostingService) PostingService.test.ts › "idempotency: existing (sourceType, sourceId) returns the existing entry, no re-post"
  *   fora da tx — nada
  */
 import { ForbiddenError, ValidationError } from '../../../lib/errors';

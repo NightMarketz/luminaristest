@@ -3,10 +3,13 @@
  *
  * atomicUntil: postEntry
  *   commit 1 — razão: postEntry(sourceType='ar.receivable', sourceId=receivableId) no reconhecimento; postEntry(sourceType='ar.receipt', sourceId=receiptId) no recebimento; gate de período dentro da tx
+ *              teste: ReceivableService.test.ts › "books D 1.1.5 / C revenueAccount keyed sourceType=ar.receivable, sourceId=receivableId"
  *              teste: ReceivableService.test.ts › "books D method-account / C 1.1.5 keyed sourceType=ar.receipt, sourceId=receiptId (NOT receivableId)"
  *   commit 2 — subrazão: CAS OPEN → RECEIVING (claimForReceipt) ANTES do post; finalize RECEIVING → RECEIVED/PARTIALLY_RECEIVED + settlementEntryId, runTransaction próprio
+ *              teste: ReceivableService.test.ts › "TOCTOU: two parallel receipts → exactly one succeeds (claimForReceipt CAS)"
  *              teste: ReceivableService.test.ts › "does NOT revert the claim after a successful post (never revert over a booked ledger)"
  *   reconcile — reconcileReceivables(): read-first, reposta só o que falta e finaliza RECEIVING preso
+ *              teste: ReceivableService.test.ts › "re-posts a missing receipt AND finalizes a RECEIVING receivable"
  *              teste: ReceivableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
  *   fora da tx — nada
  */
