@@ -2,10 +2,11 @@
 
 tarefa: boundary test atomicUntil vermelho com os 8 ofensores → 8 cabeçalhos JSDoc, mesmo PR, zero lógica
 agente: sessão principal (sessao-instrumentacao → sessao-correcao), worktree zen-cannon-23c6ee; review por Agent isolado (model opus, worktree própria)
+base: 6cf3f244 (stale; origin/main era df67e5ca)
 modelo: opus-5.5/low
 perfil-previsto: opus-baixo
-rodadas-de-review: 2 até PASS — r1: PASS + 8 não-bloqueantes (6 corrigidos, 2 por desenho); r2: PASS + 2 não-bloqueantes de texto (ambos corrigidos)
-custo: US$ 12.86 · claude-opus-5-5 US$ 12.86 · 46 min
+rodadas-de-review: 3 — r1: 8 → 6 corrigidos; r2: 2 → 0; r3 (avaliação externa pós-PASS): 3 → 0 (autorização falsa por base stale, retorno sem PROVA, BankSettlement sem linha própria no GAP-MAP)
+custo: US$ 13.65 · claude-opus-5-5 US$ 13.65 · 87 min
 veredicto: PASSOU
 
 ### Arquivos
