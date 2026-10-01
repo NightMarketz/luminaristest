@@ -854,6 +854,59 @@
  *         '204': { description: All user tables deleted }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *
+ *   /api/dashboard/ai/ChatInterview:
+ *     post:
+ *       summary: One turn of the AI onboarding interview
+ *       description: >
+ *         The client keeps the stage and sends it back each turn. In AWAITING_CREATION_TYPE_CONFIRMATION a
+ *         `choice` (button, W3 b) decides create x customize without reading the text; without it only an
+ *         explicit text decides. Every turn that asks the choice again carries `choicePrompt.reason`.
+ *       tags: [Dashboard]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stage: { type: string, description: 'InterviewStage; unknown values fall back to GREETING' }
+ *                 messages:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       role: { type: string, enum: [user, assistant] }
+ *                       sender: { type: string, enum: [user, ai] }
+ *                       content: { type: string }
+ *                       text: { type: string }
+ *                 presetKey: { type: string }
+ *                 sessionId: { type: string }
+ *                 choice: { type: string, enum: [create, customize] }
+ *       responses:
+ *         '200':
+ *           description: Interview turn result
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 required: [response, nextStage]
+ *                 properties:
+ *                   response: { type: string }
+ *                   nextStage: { type: string }
+ *                   presetKey: { type: string }
+ *                   startCustomization: { type: boolean }
+ *                   sessionId: { type: string }
+ *                   customizationState: { type: object }
+ *                   choicePrompt:
+ *                     type: object
+ *                     description: 'Only with nextStage AWAITING_CREATION_TYPE_CONFIRMATION'
+ *                     properties:
+ *                       kind: { type: string, enum: [creation_type] }
+ *                       reason: { type: string, enum: [initial, unclear, declined_customize, error] }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *
  *   # ─── DASHBOARD LAYOUT: documented inline in controllers/dashboardLayoutController.ts ───
  *
  *   # ─── SAVED VIEWS ────────────────────────────────────────────────────────

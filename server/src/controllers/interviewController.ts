@@ -23,6 +23,8 @@ const ChatInterviewSchema = z.object({
   messages: z.array(MessageSchema).optional().default([]),
   presetKey: z.string().optional(),
   sessionId: z.string().optional(),
+  // W3 (b), F-W3-B1 a: escolha por botão — decide sem ler o texto.
+  choice: z.enum(['create', 'customize']).optional(),
 });
 
 /**
@@ -57,11 +59,13 @@ function normaliseMessages(raw: z.infer<typeof MessageSchema>[]): IMessage[] {
  * must have set x-user-id etc. in the request headers upstream).
  *
  * Request body:
- *   { stage?: InterviewStage, messages?: IMessage[], presetKey?: string, sessionId?: string }
+ *   { stage?: InterviewStage, messages?: IMessage[], presetKey?: string, sessionId?: string,
+ *     choice?: 'create' | 'customize' }
  *
  * Response:
  *   { response: string, nextStage: InterviewStage, presetKey?: string,
- *     sessionId?: string, startCustomization?: boolean, customizationState?: object }
+ *     sessionId?: string, startCustomization?: boolean, customizationState?: object,
+ *     choicePrompt?: { kind: 'creation_type', reason: 'initial' | 'unclear' | 'declined_customize' | 'error' } }
  */
 export async function postChatInterview(req: Request, res: Response) {
   try {
@@ -75,7 +79,7 @@ export async function postChatInterview(req: Request, res: Response) {
       return res.status(400).json({ success: false, error: parse.error.flatten() });
     }
 
-    const { stage, messages: rawMessages, presetKey, sessionId } = parse.data;
+    const { stage, messages: rawMessages, presetKey, sessionId, choice } = parse.data;
 
     // Validate that the stage is a known InterviewStage (fall back to GREETING if unknown)
     const validStages: InterviewStage[] = [
@@ -102,7 +106,8 @@ export async function postChatInterview(req: Request, res: Response) {
       currentStage,
       messages,
       presetKey,
-      sessionId
+      sessionId,
+      choice
     );
 
     return res.status(200).json(result);

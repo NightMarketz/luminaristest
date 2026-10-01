@@ -36,6 +36,10 @@ export interface IMessage {
 /**
  * Resultado do processamento de um turno da entrevista
  */
+/** W3 (b): por que a escolha criar × customizar está sendo pedida — o front decide botões e modal por isto. */
+export type CreationChoiceReason = 'initial' | 'unclear' | 'declined_customize' | 'error';
+export type CreationChoice = 'create' | 'customize';
+
 export interface IInterviewTurnResult {
   response: string;
   nextStage: InterviewStage;
@@ -43,6 +47,8 @@ export interface IInterviewTurnResult {
   startCustomization?: boolean;
   sessionId?: string;
   customizationState?: ICustomizationState;
+  /** Só com nextStage AWAITING_CREATION_TYPE_CONFIRMATION. */
+  choicePrompt?: { kind: 'creation_type'; reason: CreationChoiceReason };
 }
 
 /**
