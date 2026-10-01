@@ -268,45 +268,6 @@ export class FieldCustomizationService {
       return processedResult; // Em caso de erro, mantém as modificações originais
     }
   }
-
-  /**
-   * Valida os campos de uma tabela e sugere melhorias (opcional)
-   * @param table A tabela a ser validada
-   * @returns Sugestões de melhoria para os campos
-   */
-  public async validateFields(table: ICustomizableTable): Promise<{
-    suggestions: string;
-    valid: boolean;
-  }> {
-    try {
-      logger.info(`[FieldCustomizationService] Validando campos da tabela '${table.key}'`);
-      
-      // Preparar prompt para validação
-      const validationPrompt = promptConfig.FIELD_VALIDATION_PROMPT
-        .replace('{{TABLE_NAME}}', table.name)
-        .replace('{{TABLE_DESCRIPTION}}', table.description)
-        .replace('{{TABLE_FIELDS}}', JSON.stringify(table.fields || []));
-      
-      // BUG FIX (R28): getChatCompletion(userMessage, systemPrompt) — 'gpt-4-turbo' was
-      // being passed as the systemPrompt instead of the actual prompt. Fixed to use
-      // getChatCompletionWithHistory so the model is kept at the correct parameter position.
-      const response = await this.openaiService.getChatCompletionWithHistory([
-        { role: 'system', content: validationPrompt },
-        { role: 'user', content: `Valide os campos da tabela ${table.name}.` },
-      ]);
-      
-      return {
-        suggestions: response || 'Não foi possível validar os campos.',
-        valid: !response?.toLowerCase().includes('recomend')
-      };
-    } catch (error) {
-      logger.error(`[FieldCustomizationService] Erro ao validar campos: ${error}`);
-      return {
-        suggestions: 'Ocorreu um erro durante a validação dos campos.',
-        valid: true // Assumir válido em caso de erro
-      };
-    }
-  }
 }
 
 // Exporta a instância única do serviço para uso em outros módulos
