@@ -1,3 +1,17 @@
+/**
+ * DataExchangeImportService — importação contábil (planilha). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: postEntry por grupo (sourceType='IMPORT_JOURNAL_ENTRIES' | 'ACCOUNTING_OPENING_BALANCE_IMPORT', sourceId = externalReference, ou `di:`+sha256(arquivo|entryKey; abertura: arquivo|opening) sem referência); gate de período dentro da tx
+ *              teste: DataExchangeImportService.test.ts › "posts one entry per group with sourceId=externalReference"
+ *   commit 2 — subrazão: linha VALID → COMMITTED + targetId=entryId (update por linha, sem tx) e status do job + auditoria num runTransaction próprio
+ *              teste: [sem teste — GAP-MAP] (commit 2 falhando com razão intacto não é exercitado)
+ *   reconcile — commit() de novo: só re-tenta linhas ainda VALID; postEntry deduplica por sourceId (também entre jobs do mesmo arquivo)
+ *              teste: DataExchangeImportService.test.ts › "derives a stable sourceId across re-imports of the same file (cross-job idempotency)" (estabilidade do sourceId; dedup = PostingService)
+ *              retry de job PARTIAL (só linhas VALID): [sem teste — GAP-MAP]
+ *   fora da tx — arquivo-fonte salvo no storage antes do tx do upload (compensação TX-001 apaga o órfão)
+ *              teste: [sem teste — GAP-MAP]
+ */
 import { createHash } from 'node:crypto';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
