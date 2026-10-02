@@ -158,3 +158,8 @@ regime normal que começar a emitir antes disso emite no portal público, fora d
    campo `EVIDÊNCIA P4` do `RUNBOOK-H1-PVA.md` só vale colado pelo executor (RUNBOOK-FORMAT).
 3. **Datas "27/09" escritas no vault antes de 27/09** — notas de 25/09 citam 27/09 (ex.: X6 dizia combustíveis fechados
    "27/09"; o merge do #387 é de 25/09 23:04). A do X6 foi corrigida neste registro; as demais (ex.: `GOV-CONTADOR`) não.
+4. **Registro de 02/10 — [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md).** Três pontos que este plano não cobria, cada um com fork **pendente** do
+   dono: entregar a nota ao tomador (F-COB-1, toca a Fase C); captura de NFS-e tomadas e busca sem parceiro
+   (F-COB-2, toca a Fase G: o passo G.2 só usa o evento `nfe_recebida`); e como o A1 do cliente chega à Focus
+   (F-COB-3, insumo do BRIEF do passo E.3). O mapa também mede o que faltaria para emitir direto no Emissor
+   Nacional (§3.4), **sem** reabrir a decisão 2 de 26/09.
