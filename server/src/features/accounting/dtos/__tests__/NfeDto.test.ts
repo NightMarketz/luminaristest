@@ -38,9 +38,57 @@ describe('PreviewNfeSchema (comportamento 1)', () => {
     expect(PreviewNfeSchema.safeParse({}).success).toBe(false);
   });
 
-  it('rejeita campo extra (.strict()) — saleId ou itemMappings não pertencem ao preview', () => {
+  it('rejeita campo extra (.strict()) — saleId não pertence ao preview', () => {
     expect(PreviewNfeSchema.safeParse({ unitId: 'unit-1', saleId: 'x' }).success).toBe(false);
-    expect(PreviewNfeSchema.safeParse({ unitId: 'unit-1', itemMappings: [] }).success).toBe(false);
+  });
+
+  // ITEM-DESTINATION item 3 / F-ID-8 (a): preview = import a seco — aceita o MESMO itemMapping, opcional.
+  it('aceita itemMappings opcional com o mesmo shape do import (F-ID-8 a)', () => {
+    expect(
+      PreviewNfeSchema.safeParse({
+        unitId: 'unit-1',
+        itemMappings: [{ cProd: 'p1', productRef: 'prod-1', destination: 'INSUMO_SERVICO' }],
+      }).success,
+    ).toBe(true);
+    expect(
+      PreviewNfeSchema.safeParse({ unitId: 'unit-1', itemMappings: [{ cProd: 'p1', productRef: 'prod-1', classId: 'c' }] })
+        .success,
+    ).toBe(false);
+  });
+});
+
+// ── ITEM-DESTINATION item 3 + EMENDA 29/09 item 22: destination no itemMapping ─────────────────────
+describe('ImportNfePurchaseSchema — destination por item (ITEM-DESTINATION)', () => {
+  const parse = (m: Record<string, unknown>) =>
+    ImportNfePurchaseSchema.safeParse({ unitId: 'unit-1', itemMappings: [{ cProd: 'p1', ...m }] });
+
+  it('productRef aceita REVENDA e INSUMO_SERVICO, e destination ausente', () => {
+    expect(parse({ productRef: 'prod-1', destination: 'REVENDA' }).success).toBe(true);
+    expect(parse({ productRef: 'prod-1', destination: 'INSUMO_SERVICO' }).success).toBe(true);
+    expect(parse({ productRef: 'prod-1' }).success).toBe(true);
+  });
+
+  it('classId aceita IMOBILIZADO e destination ausente (o classId É a declaração, item 22)', () => {
+    expect(parse({ classId: 'class-1', destination: 'IMOBILIZADO' }).success).toBe(true);
+    expect(parse({ classId: 'class-1' }).success).toBe(true);
+  });
+
+  it('destination IMOBILIZADO sem classId → issue em destination (item 22)', () => {
+    const r = parse({ productRef: 'prod-1', destination: 'IMOBILIZADO' });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues.some((i) => i.path.join('.') === 'itemMappings.0.destination')).toBe(true);
+  });
+
+  it('classId com destination ≠ IMOBILIZADO → issue em destination (item 22)', () => {
+    for (const destination of ['REVENDA', 'INSUMO_SERVICO']) {
+      const r = parse({ classId: 'class-1', destination });
+      expect(r.success).toBe(false);
+      if (!r.success) expect(r.error.issues.some((i) => i.path.join('.') === 'itemMappings.0.destination')).toBe(true);
+    }
+  });
+
+  it('destination fora do enum → falha', () => {
+    expect(parse({ productRef: 'prod-1', destination: 'USO_CONSUMO' }).success).toBe(false);
   });
 });
 

@@ -58,10 +58,12 @@ interface FiscalProfileStub {
   pisCofinsCreditFromSimplesSupplier: boolean;
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
+  insumoExpenseAccountId: string | null;
 }
 const NEUTRAL_PROFILE: FiscalProfileStub = {
   icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false,
   pisCofinsCreditFromSimplesSupplier: false, icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null,
+  insumoExpenseAccountId: null,
 };
 
 function build(opts: Opts = {}) {
@@ -430,7 +432,7 @@ describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-
   });
 });
 
-// ── GAP-MAP "imobilizado em NF-e de fornecedor" (achado A-1 do BRIEF ITEM-DESTINATION): teste-guarda `it.failing` (vira `it` na correção) ─────────────
+// ── GAP-MAP "imobilizado em NF-e de fornecedor" (achado A-1 do BRIEF ITEM-DESTINATION): era `it.failing`; virou `it` com a EMENDA 29/09 (item 24) ─────────────
 // Na NF-e do fornecedor (tpNF=1, saída), o `prod/CFOP` é o da operação DELE (5xxx/6xxx). CFOP de entrada
 // (1551/2551) numa nota de saída é rejeição 518 (MOC 7.0 Anexo I, regra I08-10, "CFOP de Entrada (inicia
 // por 1, 2, 3) para NF-e de Saída (tpNF=1)"; Facul. = a critério da UF; sha256 5eb4cf20… no MANIFEST).
@@ -438,7 +440,7 @@ describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-
 // forma real, a rota de imobilizado fica inalcançável: o `classId` do operador é recusado porque o CFOP
 // não é 1551. Comportamento esperado: a máquina comprada com nota de fornecedor chega a `fixedAssetItems`.
 describe('GAP-MAP imobilizado-cfop-do-fornecedor — imobilizado em NF-e de fornecedor (tpNF=1, CFOP de saída)', () => {
-  it.failing('máquina com CFOP 5102 mapeada com classId pelo operador → fixedAssetItems (não 400)', async () => {
+  it('máquina com CFOP 5102 mapeada com classId pelo operador → fixedAssetItems (não 400)', async () => {
     const xml = inlineNfe(
       [{ cProd: 'MAQ-1', xProd: 'Máquina de corte', qCom: '1', vProd: '850.00', cfop: '5102', ncm: '8452.10' }],
       { vProd: '850.00', vNF: '850.00' },
@@ -453,14 +455,15 @@ describe('GAP-MAP imobilizado-cfop-do-fornecedor — imobilizado em NF-e de forn
   });
 });
 
-// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, Passo 26, F-FA12 → a): CFOP 1551/2551 → fixedAssetItems ─────
-describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobilizado)', () => {
-  it('nota mista: 2 itens de estoque + 1 item CFOP 1551 → inventoryItems=2, fixedAssetItems=1', async () => {
+// ── BE-INCR-FIXED-ASSETS PR-5 (nó C8, F-FA12 → a) → ITEM-DESTINATION EMENDA 29/09 (itens 22–24): o classId do
+// operador declara o imobilizado; o CFOP deixa de rotear (1551 + productRef vira warning).
+describe('NfeImportService.importPurchase — modo 4 (imobilizado declarado pelo classId)', () => {
+  it('nota mista: 2 itens de estoque + 1 máquina com classId, CFOP 5102 nos três (EMENDA item 24) → inventoryItems=2, fixedAssetItems=1', async () => {
     const xml = inlineNfe(
       [
         { cProd: 'EST-1', xProd: 'Item de estoque 1', qCom: '2', vProd: '100.00', cfop: '5102' },
         { cProd: 'EST-2', xProd: 'Item de estoque 2', qCom: '1', vProd: '50.00', cfop: '5102' },
-        { cProd: 'MAQ-1', xProd: 'Máquina de corte', qCom: '1', vProd: '850.00', cfop: '1551', ncm: '8452.10' },
+        { cProd: 'MAQ-1', xProd: 'Máquina de corte', qCom: '1', vProd: '850.00', cfop: '5102', ncm: '8452.10' },
       ],
       { vProd: '1000.00', vNF: '1000.00' },
     );
@@ -498,28 +501,29 @@ describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobili
     expect(createPayable).not.toHaveBeenCalled();
   });
 
-  it('item CFOP 1551 mapeado com productRef → 400 (nunca vira estoque em silêncio)', async () => {
+  it('EMENDA item 23/24 — item CFOP 1551 mapeado com productRef: aceito como estoque + warning (o CFOP não roteia)', async () => {
     const xml = inlineNfe(
       [{ cProd: 'MAQ-1', xProd: 'Máquina', qCom: '1', vProd: '850.00', cfop: '1551' }],
       { vProd: '850.00', vNF: '850.00' },
     );
     const { service, createPayable } = build();
-    await expect(
-      service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', productRef: 'prod-maq' }] })),
-    ).rejects.toThrow(ValidationError);
-    expect(createPayable).not.toHaveBeenCalled();
+    const result = await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'MAQ-1', productRef: 'prod-maq' }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.inventoryItems).toEqual([{ productRef: 'prod-maq', qty: 1, valueCents: 85000, description: 'Máquina' }]);
+    expect(input.fixedAssetItems).toBeUndefined();
+    expect(result.warnings.join(' ')).toMatch(/CFOP de imobilizado mapeado como estoque\/insumo — confira/);
   });
 
-  it('classId em item NÃO 1551 → 400 (param-aceito-e-ignorado-e-bug — nunca a classe errada em silêncio)', async () => {
+  it('EMENDA item 22/24 — classId em item NÃO 1551 é aceito: o classId do operador é a declaração (IMOBILIZADO/OVERRIDE)', async () => {
     const xml = inlineNfe(
       [{ cProd: 'EST-1', xProd: 'Item comum', qCom: '1', vProd: '100.00', cfop: '5102' }],
       { vProd: '100.00', vNF: '100.00' },
     );
     const { service, createPayable } = build();
-    await expect(
-      service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'EST-1', classId: 'class-x' }] })),
-    ).rejects.toThrow(ValidationError);
-    expect(createPayable).not.toHaveBeenCalled();
+    const result = await service.importPurchase(scope, xml, dto({ itemMappings: [{ cProd: 'EST-1', classId: 'class-x' }] }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.fixedAssetItems).toEqual([{ classId: 'class-x', cProd: 'EST-1', costCents: 10000, qty: 1, nItem: 1 }]);
+    expect(result.destinacoes).toEqual([{ nItem: 1, cProd: 'EST-1', destination: 'IMOBILIZADO', origem: 'OVERRIDE' }]);
   });
 
   it('nota 100% CFOP 1551 (sem item de estoque): inventoryItems ausente, fixedAssetItems com todos', async () => {
@@ -553,5 +557,72 @@ describe('NfeImportService.importPurchase — modo 4 (CFOP 1551/2551 → imobili
     expect(input.fixedAssetItems!.map((i) => i.cProd)).toEqual(['MAQ-REPETIDO', 'MAQ-REPETIDO']);
     expect(input.fixedAssetItems!.map((i) => i.nItem)).toEqual([1, 2]); // nItem distingue as 2 linhas
     expect(input.fixedAssetItems!.map((i) => i.costCents)).toEqual([50000, 35000]); // Σ = 85000, nenhum cent perdido
+  });
+});
+
+// ── ITEM-DESTINATION (BRIEF itens 10, 11, 15; F-ID-3 a, F-ID-5 a, F-ID-6 a) ─────────────────────────────
+describe('ITEM-DESTINATION — rota por destinação no import', () => {
+  const INSUMO_PROFILE = { insumoExpenseAccountId: 'acc-insumo' };
+  const MIX = (destCond?: 'INSUMO_SERVICO' | 'REVENDA'): ImportNfePurchaseInput['itemMappings'] => [
+    { cProd: 'SHAMP-500', productRef: 'prod-shamp', destination: 'REVENDA' },
+    { cProd: 'COND-500', productRef: 'prod-cond', ...(destCond ? { destination: destCond } : {}) },
+    { cProd: 'MASC-300', productRef: 'prod-masc', destination: 'INSUMO_SERVICO' },
+  ];
+
+  it('item 10 — nota mista: REVENDA → inventoryItems, INSUMO_SERVICO → insumoItems na conta do perfil; tie-out = bruto', async () => {
+    const { service, createPayable } = build({ profile: INSUMO_PROFILE });
+    await service.importPurchase(scope, PURCHASE_XML, dto({ itemMappings: MIX('INSUMO_SERVICO') }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.inventoryItems!.map((i) => i.productRef)).toEqual(['prod-shamp']);
+    expect(input.insumoItems!.map((i) => [i.accountId, i.productRef, i.cProd, i.nItem])).toEqual([
+      ['acc-insumo', 'prod-cond', 'COND-500', 2],
+      ['acc-insumo', 'prod-masc', 'MASC-300', 3],
+    ]);
+    const sum = input.inventoryItems!.reduce((a, i) => a + i.valueCents, 0) + input.insumoItems!.reduce((a, i) => a + i.costCents, 0);
+    expect(sum).toBe(CUSTO_TOTAL);
+    expect(input.amountCents).toBe(CUSTO_TOTAL);
+  });
+
+  it('item 10 — nota 100% insumo: inventoryItems ausente (o modo 3 fica de pé só pelo insumoItems)', async () => {
+    const { service, createPayable } = build({ profile: INSUMO_PROFILE });
+    await service.importPurchase(scope, PURCHASE_XML, dto({ itemMappings: FULL_MAPPINGS.map((m) => ({ ...m, destination: 'INSUMO_SERVICO' as const })) }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.inventoryItems).toBeUndefined();
+    expect(input.insumoItems).toHaveLength(3);
+  });
+
+  it('item 11 — INSUMO_SERVICO sem insumoExpenseAccountId no perfil → 400 insumo_account_not_configured, nada é criado', async () => {
+    const { service, createPayable } = build();
+    await expect(service.importPurchase(scope, PURCHASE_XML, dto({ itemMappings: MIX() }))).rejects.toThrow(
+      /^insumo_account_not_configured: .*insumoExpenseAccountId \(PUT \/api\/accounting\/fiscal-profile — código é do contador\)/,
+    );
+    expect(createPayable).not.toHaveBeenCalled();
+  });
+
+  it('item 11 — sem item de insumo, a conta de insumo não é exigida (comportamento de hoje)', async () => {
+    const { service, createPayable } = build();
+    await service.importPurchase(scope, PURCHASE_XML, dto());
+    expect((createPayable.mock.calls[0][1] as CreatePayableInput).insumoItems).toBeUndefined();
+  });
+
+  it('item 15 + F-ID-6 (a) — resposta traz destinacoes com origem por item e warning do FALLBACK', async () => {
+    const { service } = build({ profile: INSUMO_PROFILE });
+    const result = await service.importPurchase(scope, PURCHASE_XML, dto({ itemMappings: MIX() }));
+    expect(result.destinacoes).toEqual([
+      { nItem: 1, cProd: 'SHAMP-500', destination: 'REVENDA', origem: 'OVERRIDE' },
+      { nItem: 2, cProd: 'COND-500', destination: 'REVENDA', origem: 'FALLBACK' },
+      { nItem: 3, cProd: 'MASC-300', destination: 'INSUMO_SERVICO', origem: 'OVERRIDE' },
+    ]);
+    expect(result.warnings.filter((w) => /FALLBACK/.test(w))).toEqual([expect.stringMatching(/^item 2 \(COND-500\)/)]);
+  });
+
+  it('item 5 no import — contribuinte de ICMS: o vICMS dos itens de insumo (900 + 600) fica no custo; só o da revenda (1800) vai a recuperar', async () => {
+    const { service, createPayable } = build({ profile: { ...INSUMO_PROFILE, icmsContribuinte: true, icmsRecuperavelAccountId: 'acc-icms' } });
+    await service.importPurchase(scope, PURCHASE_XML, dto({ itemMappings: MIX('INSUMO_SERVICO') }));
+    const input = createPayable.mock.calls[0][1] as CreatePayableInput;
+    expect(input.recoverableTaxLines).toEqual([{ accountId: 'acc-icms', amountCents: 1800, kind: 'ICMS' }]);
+    // rateio do bruto [10545, 5272, 3516] (X6): insumo = bruto, revenda = bruto − 1800
+    expect(input.inventoryItems!.map((i) => i.valueCents)).toEqual([10545 - 1800]);
+    expect(input.insumoItems!.map((i) => i.costCents)).toEqual([5272, 3516]);
   });
 });

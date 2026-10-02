@@ -269,3 +269,46 @@ describe('CreatePayableSchema — modo 4 (fixedAssetItems, combinável só com o
     expect(r.success).toBe(true);
   });
 });
+
+// ── ITEM-DESTINATION item 3 / F-ID-3 (a): insumoItems (despesa na entrada), só no modo 3 ────────────
+describe('CreatePayableSchema — insumoItems (ITEM-DESTINATION, só com inventoryMultiItem)', () => {
+  const base = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'NF-1', description: 'x',
+    issueDate: '2026-06-10', dueDate: '2026-07-10',
+  };
+  const insumo = { accountId: 'exp-insumo', productRef: 'tinta-1', cProd: 'T1', nItem: 2, costCents: 3000 };
+
+  it('aceita nota 100% insumo: inventoryMultiItem + insumoItems só (gate "ao menos um dos três")', () => {
+    expect(CreatePayableSchema.safeParse({ ...base, amountCents: 3000, inventoryMultiItem: true, insumoItems: [insumo] }).success).toBe(true);
+  });
+
+  it('tie-out: Σ estoque + Σ imobilizado + Σ insumo + Σ créditos === amountCents', () => {
+    const ok = {
+      ...base,
+      amountCents: 10000,
+      inventoryMultiItem: true,
+      inventoryItems: [{ productRef: 'p1', qty: 1, valueCents: 4000 }],
+      fixedAssetItems: [{ classId: 'class-1', cProd: 'MAQ-1', costCents: 2000 }],
+      insumoItems: [insumo],
+      recoverableTaxLines: [{ accountId: 'rec-1', amountCents: 1000, kind: 'ICMS' }],
+    };
+    expect(CreatePayableSchema.safeParse(ok).success).toBe(true);
+    const r = CreatePayableSchema.safeParse({ ...ok, amountCents: 7000 }); // sem contar o insumo
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0].message).toMatch(/insumo \(3000\)/);
+  });
+
+  it('rejeita insumoItems fora do modo 3', () => {
+    const r = CreatePayableSchema.safeParse({ ...base, amountCents: 3000, expenseAccountId: 'exp-1', insumoItems: [insumo] });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0].path).toEqual(['insumoItems']);
+  });
+
+  it('linha de insumo é .strict() e exige centavos positivos', () => {
+    const p = (it: Record<string, unknown>) =>
+      CreatePayableSchema.safeParse({ ...base, amountCents: 3000, inventoryMultiItem: true, insumoItems: [it] }).success;
+    expect(p({ ...insumo, qty: 1 })).toBe(false);
+    expect(p({ ...insumo, costCents: 0 })).toBe(false);
+    expect(p({ ...insumo, description: 'Tinta 7.0' })).toBe(true);
+  });
+});

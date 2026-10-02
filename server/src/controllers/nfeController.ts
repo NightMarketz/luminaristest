@@ -148,13 +148,25 @@ export const previewNfe = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'File is required (field name: file)' });
     }
 
-    const parsed = PreviewNfeSchema.safeParse(req.body ?? {});
+    // ITEM-DESTINATION item 14 (F-ID-8 a): o MESMO decoder do import — itemMappings é opcional no preview.
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    let candidate: Record<string, unknown>;
+    try {
+      candidate = body.itemMappings === undefined ? body : { ...body, itemMappings: decodeItemMappings(body.itemMappings) };
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: 'itemMappings deve ser um JSON válido (array de { cProd, productRef }).',
+      });
+    }
+
+    const parsed = PreviewNfeSchema.safeParse(candidate);
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
     const scope = resolveAccountingScope(user, parsed.data.unitId);
-    const data = await getFactory().getNfePreviewService().preview(scope, file.buffer);
+    const data = await getFactory().getNfePreviewService().preview(scope, file.buffer, parsed.data.itemMappings);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

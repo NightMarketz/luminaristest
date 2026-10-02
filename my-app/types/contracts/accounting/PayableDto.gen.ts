@@ -28,6 +28,14 @@ ncm?: string
 qty?: number
 nItem?: number
 }[]
+insumoItems?: {
+accountId: string
+productRef: string
+cProd: string
+nItem: number
+costCents: number
+description?: string
+}[]
 /**
  * @maxItems 2
  */

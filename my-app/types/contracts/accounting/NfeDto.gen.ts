@@ -11,10 +11,12 @@ itemMappings: [{
 cProd: string
 productRef?: string
 classId?: string
+destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
 }, ...({
 cProd: string
 productRef?: string
 classId?: string
+destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
 })[]]
 }
 export interface ImportNfeSaleInput {
@@ -23,10 +25,29 @@ saleId: string
 }
 export interface PreviewNfeInput {
 unitId: string
+itemMappings?: {
+cProd: string
+productRef?: string
+classId?: string
+destination?: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+}[]
+}
+export interface NfeItemDestinationInput {
+nItem: number
+cProd: string
+destination: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+origem: ("OVERRIDE" | "PRODUTO" | "FALLBACK")
 }
 export interface NfeCostPreviewInput {
 custoBrutoCents: number
 custoEstoqueCents: number
+custoInsumoCents: number
+destinacoes: {
+nItem: number
+cProd: string
+destination: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+origem: ("OVERRIDE" | "PRODUTO" | "FALLBACK")
+}[]
 creditoIcmsCents: number
 creditoPisCofinsCents: number
 baseCreditoPisCofinsCents: number
@@ -125,6 +146,13 @@ existingPayableId: (string | null)
 custo: {
 custoBrutoCents: number
 custoEstoqueCents: number
+custoInsumoCents: number
+destinacoes: {
+nItem: number
+cProd: string
+destination: ("REVENDA" | "INSUMO_SERVICO" | "IMOBILIZADO")
+origem: ("OVERRIDE" | "PRODUTO" | "FALLBACK")
+}[]
 creditoIcmsCents: number
 creditoPisCofinsCents: number
 baseCreditoPisCofinsCents: number

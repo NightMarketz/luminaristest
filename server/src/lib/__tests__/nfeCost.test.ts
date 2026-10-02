@@ -128,3 +128,71 @@ describe('acquisitionCost — X6 por regime', () => {
     expect(rateio(7, [0, 0])).toEqual([0, 7]);
   });
 });
+
+/**
+ * ITEM-DESTINATION (BRIEF itens 4–8 + EMENDA 29/09 item 21). Mesmo fixture: item 1 TRIBUTADO (vICMS 1800,
+ * crédito PIS/COFINS 784 sobre base 8473), item 2 MONOFÁSICO pela tabela de NCM (CST 01), item 3 CST 04.
+ */
+describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
+  const real = regime({ icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO' });
+  const dest = (m: Record<number, 'REVENDA' | 'INSUMO_SERVICO' | 'IMOBILIZADO'>) => new Map(Object.entries(m).map(([k, v]) => [Number(k), v]));
+
+  it('item 4 — destinos todo REVENDA dá saída IDÊNTICA à chamada sem destinos (igualdade profunda), nos 3 regimes', () => {
+    for (const r of [regime(), regime({ icmsContribuinte: true }), real]) {
+      expect(acquisitionCost(NFE, ITENS, r, dest({ 1: 'REVENDA', 2: 'REVENDA', 3: 'REVENDA' }))).toEqual(acquisitionCost(NFE, ITENS, r));
+    }
+    const c = acquisitionCost(NFE, ITENS, real);
+    expect(c.itens.map((i) => i.destination)).toEqual(['REVENDA', 'REVENDA', 'REVENDA']);
+    expect(c.custoInsumoCents).toBe(0);
+  });
+
+  it('item 5 — contribuinte: INSUMO_SERVICO não credita o vICMS (fica no custo); a mesma nota como REVENDA credita', () => {
+    const r = regime({ icmsContribuinte: true });
+    const revenda = acquisitionCost(NFE, ITENS, r);
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }));
+    expect(revenda.itens[0].creditoIcmsCents).toBe(1800);
+    expect(insumo.itens[0].creditoIcmsCents).toBe(0);
+    expect(insumo.itens[0].custoLiquidoCents - revenda.itens[0].custoLiquidoCents).toBe(1800);
+    expect(insumo.creditoIcmsCents).toBe(3300 - 1800);
+    expect(insumo.custoInsumoCents).toBe(insumo.itens[0].custoLiquidoCents);
+  });
+
+  it('item 6 — PIS/COFINS de insumo TRIBUTADO: mesma base e mesmo crédito da REVENDA (784 sobre 8473)', () => {
+    const r = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }));
+    expect(insumo.itens[0].basePisCofinsCents).toBe(8473);
+    expect(insumo.itens[0].creditoPisCofinsCents).toBe(784);
+    expect(insumo.itens[0].creditoPisCofinsCents).toBe(acquisitionCost(NFE, ITENS, r).itens[0].creditoPisCofinsCents);
+  });
+
+  it('item 7 (c, até a P-1) — insumo MONOFÁSICO: crédito 0 + warning que cita a pendência; REVENDA monofásica segue 0 sem esse warning', () => {
+    const r = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }));
+    expect(insumo.itens[1].classe).toBe('MONOFASICO');
+    expect([insumo.itens[1].creditoPisCofinsCents, insumo.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
+    expect(insumo.warnings.filter((w) => /insumo monofásico/.test(w))).toHaveLength(2);
+    expect(insumo.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico .*P-1/);
+    const revenda = acquisitionCost(NFE, ITENS, r);
+    expect([revenda.itens[1].creditoPisCofinsCents, revenda.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
+    expect(revenda.warnings.join(' ')).not.toMatch(/insumo monofásico/);
+  });
+
+  it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
+    const mix = dest({ 1: 'INSUMO_SERVICO', 2: 'REVENDA', 3: 'INSUMO_SERVICO' });
+    const c = acquisitionCost(NFE, ITENS, real, mix);
+    expect(c.itens.reduce((a, i) => a + i.custoLiquidoCents, 0)).toBe(c.custoEstoqueCents);
+    expect(c.custoInsumoCents).toBe(c.itens[0].custoLiquidoCents + c.itens[2].custoLiquidoCents);
+    for (const r of [regime({ pisCofinsRegime: 'SIMPLES' }), regime({ pisCofinsRegime: 'CUMULATIVO' })]) {
+      const m = acquisitionCost(NFE, ITENS, r, mix);
+      expect([m.creditoIcmsCents, m.creditoPisCofinsCents]).toEqual([0, 0]);
+      expect(m.custoEstoqueCents).toBe(acquisitionCost(NFE, ITENS, r).custoEstoqueCents);
+    }
+  });
+
+  it('EMENDA item 21 (decisão do dono 02/10) — IMOBILIZADO credita como hoje (mesmo ramo da REVENDA); só o rótulo muda', () => {
+    const imob = acquisitionCost(NFE, ITENS, real, dest({ 1: 'IMOBILIZADO' }));
+    const hoje = acquisitionCost(NFE, ITENS, real);
+    expect(imob.itens[0]).toEqual({ ...hoje.itens[0], destination: 'IMOBILIZADO' });
+    expect(imob.custoInsumoCents).toBe(0);
+  });
+});

@@ -7,6 +7,7 @@ import type { ImportNfePurchaseInput } from '../dtos/NfeDto';
 import type { PayableService } from './PayableService';
 import type { FiscalProfileService } from './FiscalProfileService';
 import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
+import { resolveDestinations, type ItemDestination, type ItemDestinationMapping, type ResolvedItemDestination } from '../models/itemDestination';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -57,16 +58,14 @@ export interface NfeIgnoredItem {
   reason: 'indTot-0';
 }
 
-/** CFOPs de entrada de imobilizado (compra para o ativo imobilizado — dentro e fora do estado). Um
- *  item com um destes CFOPs NUNCA compõe o rateio de estoque (BE-INCR-FIXED-ASSETS PR-5 / F-FA12 →
- *  a; ADR §F-FA3 (b)) — sai para `fixedAssetItems` mesmo que o operador não tenha mapeado nada
- *  (mapeamento ausente/errado rejeita loud, nunca cai em silêncio no estoque). */
-const FIXED_ASSET_CFOPS = new Set(['1551', '2551']);
-
-/** Result of a purchase import: the created liability + the lines that were deliberately ignored. */
+/** Result of a purchase import: the created liability + the lines that were deliberately ignored.
+ *  ITEM-DESTINATION item 15: `destinacoes` (destinação + origem por item costeado — o operador vê o
+ *  FALLBACK) e `warnings` (os do resolver — F-ID-6 a, EMENDA item 23 — e os do custo, os mesmos do preview). */
 export interface NfePurchaseImportResult {
   payable: Payable;
   ignoredItems: NfeIgnoredItem[];
+  destinacoes: ResolvedItemDestination[];
+  warnings: string[];
 }
 
 export class NfeImportService {
@@ -103,22 +102,19 @@ export class NfeImportService {
 
     const supplierName = this.resolveSupplierName(nfe);
 
-    // Item→produto D6 — every note item needs an operator mapping cProd→productRef (estoque) OU
-    // cProd→classId (imobilizado, PR-5). Build both lookups and reject the whole import if any item
-    // is unmapped or mapped to the wrong shape for its CFOP (loud, never a silent skip/misroute).
-    const productRefByCProd = new Map(
-      dto.itemMappings.filter((m) => m.productRef != null).map((m) => [m.cProd, m.productRef!]),
-    );
-    const classIdByCProd = new Map(
-      dto.itemMappings.filter((m) => m.classId != null).map((m) => [m.cProd, m.classId!]),
-    );
+    // Item→produto D6 — every note item needs an operator mapping cProd→productRef (estoque/insumo) OU
+    // cProd→classId (imobilizado). ITEM-DESTINATION (item 9 + EMENDA 22–23): a destinação de cada item vem
+    // do mapeamento (classId ⇒ IMOBILIZADO; `destination` ⇒ override) ou cai em REVENDA/FALLBACK — o CFOP
+    // não roteia mais. O unmapped item still rejects loud in `allocate`.
+    const mappingByCProd = new Map<string, ItemDestinationMapping>(dto.itemMappings.map((m) => [m.cProd, m]));
 
     // X6: custo POR REGIME (BRIEF itens 6–11 + EMENDA 2026-09-15). Sem perfil fiscal → 400 (F-X6-6 a).
     // `amountCents` = custo BRUTO (o que se deve ao fornecedor, F-X6-8 a); o estoque recebe o LÍQUIDO;
     // a diferença nasce como crédito a recuperar no MESMO entry (recoverableTaxLines).
     const regime = await this.fiscalProfile.requireCostRegime(scope);
     const costed = nfe.itens.filter((it) => it.indTot !== '0');
-    const custo = acquisitionCost(nfe, costed, regime);
+    const resolved = resolveDestinations(costed, mappingByCProd);
+    const custo = acquisitionCost(nfe, costed, regime, resolved.byNItem);
     const custoTotalCents = custo.custoBrutoCents;
     if (custoTotalCents <= 0) {
       throw new ValidationError('NF-e de compra com custo de aquisição não positivo — rejeitada.');
@@ -129,11 +125,12 @@ export class NfeImportService {
       );
     }
     const recoverableTaxLines = this.recoverableLines(custo, regime);
-    const { inventoryItems, fixedAssetItems, ignoredItems } = this.allocate(
+    const { inventoryItems, fixedAssetItems, insumoItems, ignoredItems } = this.allocate(
       nfe.itens,
       custo,
-      productRefByCProd,
-      classIdByCProd,
+      mappingByCProd,
+      resolved.byNItem,
+      regime.insumoExpenseAccountId,
     );
 
     const issueDate = nfe.ide.dhEmiDate; // YYYY-MM-DD (reslice literal from the parser)
@@ -150,10 +147,11 @@ export class NfeImportService {
       dueDate: dto.dueDate ?? issueDate,
       amountCents: custoTotalCents,
       inventoryMultiItem: true,
-      // F-FA12 → a (nota mista): uma NF-e 100% CFOP 1551/2551 tem `inventoryItems=[]` — o modo 3
-      // (multi-item) fica de pé só pelo `fixedAssetItems` (o DTO aceita "ao menos um dos dois").
+      // Nota 100% imobilizado e/ou insumo tem `inventoryItems=[]` — o modo 3 (multi-item) fica de pé pelo
+      // `fixedAssetItems`/`insumoItems` (o DTO aceita "ao menos um dos três").
       ...(inventoryItems.length > 0 ? { inventoryItems } : {}),
       ...(fixedAssetItems.length > 0 ? { fixedAssetItems } : {}),
+      ...(insumoItems.length > 0 ? { insumoItems } : {}),
       ...(recoverableTaxLines.length > 0 ? { recoverableTaxLines } : {}),
     };
 
@@ -166,7 +164,7 @@ export class NfeImportService {
     // externalRef HUMANO). Um evento em 2ª tx poderia falhar DEPOIS do dinheiro commitar → `Payable`
     // sem evento e sem reemissão possível (bate no @@unique no reimport). O que se perde é só o
     // `itemCount` informativo, recuperável do próprio `Payable`.
-    return { payable, ignoredItems };
+    return { payable, ignoredItems, destinacoes: resolved.destinacoes, warnings: [...resolved.warnings, ...custo.warnings] };
   }
 
   // ---------------------------------------------------------------------------
@@ -224,22 +222,23 @@ export class NfeImportService {
    * `Number` product can exceed `Number.MAX_SAFE_INTEGER` (e.g. 2e9 × 1e9), which would silently drift.
    * BigInt division truncates toward zero — identical to `Math.floor` for these non-negative values.
    *
-   * **3rd output (BE-INCR-FIXED-ASSETS PR-5, F-FA12 → a):** a costed item whose CFOP is in
-   * `FIXED_ASSET_CFOPS` (1551/2551) NEVER joins the stock rateio weight — it routes to
-   * `fixedAssetItems` instead, keyed by the operator's `classId` mapping. The CFOP is the single
-   * source of truth for the branch (execution-plan Passo 26/adversarial): a 1551 item mapped with
-   * `productRef` rejects loud (would silently misroute the machine into estoque/CMV — the exact
-   * `param-aceito-e-ignorado-e-bug` class the ADR names), and a non-1551 item mapped with `classId`
-   * rejects loud too (the inverse misroute).
+   * **Rota por DESTINAÇÃO (ITEM-DESTINATION item 10 + EMENDA 29/09 itens 22–23):** REVENDA →
+   * `inventoryItems` (D 1.1.6, INBOUND, físico — sem mudança); INSUMO_SERVICO → `insumoItems` (D conta de
+   * insumo do perfil, sem StockMovement nem físico, F-ID-3 a); IMOBILIZADO (o `classId` do operador) →
+   * `fixedAssetItems`. O CFOP deixou de rotear: o XML do fornecedor traz o CFOP da saída dele (MOC 7.0
+   * Anexo I, I08-10), então 1551/2551 nunca aparecia numa nota real (achado A-1).
+   * Item de insumo sem `insumoExpenseAccountId` no perfil → 400 nomeado ANTES de qualquer escrita (item 11).
    */
   private allocate(
     itens: NfeItem[],
     custo: AcquisitionCost,
-    productRefByCProd: Map<string, string>,
-    classIdByCProd: Map<string, string>,
+    mappingByCProd: Map<string, ItemDestinationMapping>,
+    destinationByNItem: Map<number, ItemDestination>,
+    insumoExpenseAccountId: string | null,
   ): {
     inventoryItems: NonNullable<CreatePayableInput['inventoryItems']>;
     fixedAssetItems: NonNullable<CreatePayableInput['fixedAssetItems']>;
+    insumoItems: NonNullable<CreatePayableInput['insumoItems']>;
     ignoredItems: NfeIgnoredItem[];
   } {
     const ignoredItems: NfeIgnoredItem[] = itens
@@ -263,29 +262,19 @@ export class NfeImportService {
     const liquidoByItem = new Map(custo.itens.map((c) => [c.nItem, c.custoLiquidoCents]));
     const inventoryItems: NonNullable<CreatePayableInput['inventoryItems']> = [];
     const fixedAssetItems: NonNullable<CreatePayableInput['fixedAssetItems']> = [];
+    const insumoItems: NonNullable<CreatePayableInput['insumoItems']> = [];
 
     for (const it of costed) {
-      const isFixedAsset = FIXED_ASSET_CFOPS.has(it.cfop);
       const share = liquidoByItem.get(it.nItem);
       if (share === undefined) {
         throw new ValidationError(`Item ${it.nItem} ('${it.cProd}') sem custo calculado — rejeitado.`);
       }
+      const mapping = mappingByCProd.get(it.cProd);
+      const destination = destinationByNItem.get(it.nItem);
 
-      if (isFixedAsset) {
-        const productRef = productRefByCProd.get(it.cProd);
-        if (productRef) {
-          throw new ValidationError(
-            `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (imobilizado) mas foi mapeado com productRef — use classId (a nota não pode virar estoque em silêncio).`,
-          );
-        }
-        const classId = classIdByCProd.get(it.cProd);
-        if (!classId) {
-          throw new ValidationError(
-            `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (imobilizado) e não tem classId confirmado (F-FA12) — rejeitado.`,
-          );
-        }
+      if (destination === 'IMOBILIZADO' && mapping?.classId) {
         fixedAssetItems.push({
-          classId,
+          classId: mapping.classId,
           cProd: it.cProd,
           costCents: share,
           ncm: it.ncm || undefined,
@@ -297,17 +286,27 @@ export class NfeImportService {
         continue;
       }
 
-      const classId = classIdByCProd.get(it.cProd);
-      if (classId) {
-        throw new ValidationError(
-          `Item '${it.cProd}' (${it.xProd}) tem CFOP ${it.cfop} (não é imobilizado) mas foi mapeado com classId — use productRef.`,
-        );
-      }
-      const productRef = productRefByCProd.get(it.cProd);
+      const productRef = mapping?.productRef;
       if (!productRef) {
         throw new ValidationError(
           `Item '${it.cProd}' (${it.xProd}) não tem mapeamento de produto confirmado (D6) — rejeitado.`,
         );
+      }
+      if (destination === 'INSUMO_SERVICO') {
+        if (!insumoExpenseAccountId) {
+          throw new ValidationError(
+            `insumo_account_not_configured: o item ${it.nItem} ('${it.cProd}') é insumo do serviço e o perfil fiscal não tem insumoExpenseAccountId (PUT /api/accounting/fiscal-profile — código é do contador).`,
+          );
+        }
+        insumoItems.push({
+          accountId: insumoExpenseAccountId,
+          productRef,
+          cProd: it.cProd,
+          nItem: it.nItem,
+          costCents: share,
+          description: it.xProd,
+        });
+        continue;
       }
       inventoryItems.push({
         productRef,
@@ -317,7 +316,7 @@ export class NfeImportService {
       });
     }
 
-    return { inventoryItems, fixedAssetItems, ignoredItems };
+    return { inventoryItems, fixedAssetItems, insumoItems, ignoredItems };
   }
 
   /**

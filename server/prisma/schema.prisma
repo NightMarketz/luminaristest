@@ -458,6 +458,7 @@ model Account {
   bankChargeExpenseOf                AccountingScopeSettings[] @relation("ScopeSettingsBankChargeExpense") // conta de encargo PAGO (F7 Fase C)
   bankChargeIncomeOf                 AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
   icmsRecuperavelOf                  FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
+  insumoExpenseOf                    FiscalProfile[]           @relation("FiscalProfileInsumoExpense") // ITEM-DESTINATION F-ID-5 a: despesa do insumo do serviço
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
@@ -1331,6 +1332,8 @@ model FiscalProfile {
   icmsRecuperavelAccount             Account?  @relation("FiscalProfileIcmsRecuperavel", fields: [icmsRecuperavelAccountId], references: [id], onDelete: Restrict)
   pisCofinsRecuperavelAccountId      String? // F-X6-8 a: conta 1.1.x "PIS/COFINS a recuperar"
   pisCofinsRecuperavelAccount        Account?  @relation("FiscalProfilePisCofinsRecuperavel", fields: [pisCofinsRecuperavelAccountId], references: [id], onDelete: Restrict)
+  insumoExpenseAccountId             String? // ITEM-DESTINATION F-ID-5 a: conta de resultado (Expense, folha) do insumo do serviço — código do contador
+  insumoExpenseAccount               Account?  @relation("FiscalProfileInsumoExpense", fields: [insumoExpenseAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                  String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6

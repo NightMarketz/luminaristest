@@ -95,3 +95,13 @@ describe('UpsertServiceFiscalProfileSchema (BRIEF item 8)', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, serviceRef: 'x' }).success).toBe(false);
   });
 });
+
+// ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa do insumo do serviço, opcional/anulável.
+describe('UpsertFiscalProfileSchema — insumoExpenseAccountId (ITEM-DESTINATION)', () => {
+  it('aceita id, null e ausente; rejeita string vazia', () => {
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, insumoExpenseAccountId: 'acc-1' }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, insumoExpenseAccountId: null }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.parse(normal).insumoExpenseAccountId).toBeUndefined();
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, insumoExpenseAccountId: '' }).success).toBe(false);
+  });
+});

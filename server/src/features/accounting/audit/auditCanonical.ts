@@ -55,7 +55,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'referential.mapping.set':   ['accountId', 'referentialCode', 'mappingVersion'],
   'referential.mapping.unset': ['accountId', 'referentialCode', 'mappingVersion'],
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
-  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents'], // X6 item 13
+  'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents'], // X6 item 13 + ITEM-DESTINATION item 13
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
   // BE-INCR-PARTIAL-SETTLEMENT (F-PS9 → a): `payment_*` → `settlement_*`; payload ganha o saldo após o
   // recibo (money-as-string, id-only, sem PII — mesmo padrão dos 8 eventos originais).
@@ -138,6 +138,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
   'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId',
+    'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)

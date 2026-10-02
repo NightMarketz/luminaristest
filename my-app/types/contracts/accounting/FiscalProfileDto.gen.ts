@@ -13,6 +13,7 @@ pisCofinsCreditIncludesIpi?: boolean
 pisCofinsCreditFromSimplesSupplier?: boolean
 icmsRecuperavelAccountId?: (string | null)
 pisCofinsRecuperavelAccountId?: (string | null)
+insumoExpenseAccountId?: (string | null)
 partnerAccountRef?: (string | null)
 codMun?: (string | null)
 inscricaoMunicipal?: (string | null)
