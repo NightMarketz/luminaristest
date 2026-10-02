@@ -21,7 +21,6 @@
 | [[CRM-RB]] | Builder de relatórios/dashboards self-service do CRM (BE-INCR-CRM-REPORT-BUILDER) | planned | "autorizo planejar o builder de relatórios do CRM" 2026-09-26 + 7/7 forks F-RB ratificados 2026-09-26 (AskUserQuestion) — sem 'executa'; F-RB8 (dono, 29/09, decisão 14): "Soma por moeda e conversão a parte com cambio" + "PTAX do BCB, taxa do dia" + 2ª rodada 29/09: "ADR moeda no A Receber e ainda um monitor que avisa quando vale a pena fazer esse câmbio" — emenda do BRIEF, sem 'executa' |
 | [[FE-CONTRACT-TYPES]] | Tipos de payload do FE gerados do snapshot de DTOs (fim do espelho à mão) | inflight | dono, chat, 2026-09-28: "Vamos planejar então usando a solução de snapshot" + questionários + "pode decidir tudo" (delegação) — plano e decisões; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução) + "Pode criar pr e comittar" |
 | [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned | dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa') |
-| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | planned | — |
 | [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned | dono, 2026-09-29: "Ratificar recomendações" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa') |
 | [[I11]] | Agente de chat: permissão e custo por mensagem | planned | — |
 | [[I1b]] | Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes) | ready | F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação ("Toma a decisão logica aqui entao e feche as pendencia") — sem 'executa' |
@@ -62,7 +61,7 @@
 
 | Nó | Título | Estado | Depende de (✗ = aberto) | Autorização |
 | --- | --- | --- | --- | --- |
-| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | planned — BE do C8 em main (5/5 PRs: #354–#356, #366, #368) — o bloqueio 'espera merge do BE' venceu. Sem BRIEF. A fatia NF-e classId (CFOP 1551/2551; PLANO-PENDENCIAS-FE-DTO §B2) entra como seção do BRIEF (F-B2-1/F-B2-2 → a, decididos 28/09 sob delegação). Falta autorização para planejar | [[C8]] | — |
+| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | planned — BE do C8 em main (5/5 PRs: #354–#356, #366, #368). 02/10: BRIEF escrito (sessao-planejamento) — 34 itens em 2 PRs (aba Imobilizado: bens/classes/taxas/contas + depreciação/reconcile; fatia NF-e classId); 7 forks F-FAFE-1..7 PENDENTES com recomendação. Fato novo: #461 (ITEM-DESTINATION, EMENDA item 23) tirou o CFOP do roteamento — F-B2-2 → a ficou sem objeto (F-FAFE-1). Falta ratificar os forks e o 'executa' | [[C8]], [[ITEM-DESTINATION]] ✗ | dono, chat, 2026-10-02: "Autorizo planejar o BRIEF FE-INCR-FIXED-ASSETS (dono, 02/10) — só o BRIEF, sem 'executa'." |
 
 ### Financeiro
 
