@@ -8,6 +8,8 @@ estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks
 autorizacao: "F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação (\"Toma a decisão logica aqui entao e feche as pendencia\") — sem 'executa'"
 prs: ["#392"]
 ancora_sdd: "§M5.1 Bloco A I1/I1b"
+perfil_previsto: "opus-medio"
+perfil_evidencia: "regra 2: re-key do unitId nas 31 tabelas contábeis. A spec é o ADR-INCR-UNIT-REKEY; os 12/12 forks F-RK que a regra 1 esperava foram fechados em 02/10 (#463), F-RK-2 incluso, e o B-4 está done; falta só o executa"
 atualizado: "2026-10-02"
 depende_de: []
 ---
