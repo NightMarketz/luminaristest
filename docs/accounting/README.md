@@ -112,7 +112,7 @@
 | Councils 07/2026 | [`COUNCIL-BOARD-2026-07-20-decisions-review.md`](COUNCIL-BOARD-2026-07-20-decisions-review.md) · [`…-v1-v2-comparison.md`](COUNCIL-BOARD-2026-07-20-v1-v2-comparison.md) · [`…-v2-rebuttal.md`](COUNCIL-BOARD-2026-07-20-v2-rebuttal.md) | 📜 (decisões viraram ADR-CRM-*) |
 | Registros pontuais | [`LIMITE-MAX-CENTS.md`](LIMITE-MAX-CENTS.md) (teto é política, BigInt desde #245) · [`PRE-DADOS-REAIS-2026-08-30.md`](PRE-DADOS-REAIS-2026-08-30.md) (inventário de 16 itens) | ✅ 📜 |
 | Emissão fiscal — cobertura própria (02/10) | [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) | registro; forks F-COB-1..3 **pendentes** do dono |
-| NFC-e 65 + NF-e 55 própria, seleção por tipo (X10a, 02/10) | [`BE-INCR-NFCE-brief.md`](BE-INCR-NFCE-brief.md) | BRIEF; forks F-NFCE-1..12 **pendentes**; adaptador Focus = lacuna até o D5 |
+| NFC-e 65 + NF-e 55 própria, seleção por tipo (X10a, 02/10) | [`BE-INCR-NFCE-brief.md`](BE-INCR-NFCE-brief.md) | BRIEF; forks F-NFCE-1..12 ✅ ratificados 02/10 (3 contra a recomendação), F-NFCE-12b **pendente**; adaptador Focus = lacuna até o D5 |
 
 ## 7. Smoke-migration gates (um por migração; histórico de deploy-clear)
 

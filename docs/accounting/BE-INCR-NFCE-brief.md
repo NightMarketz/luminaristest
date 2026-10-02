@@ -4,8 +4,11 @@
 > [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](PLANO-EMISSAO-FISCAL-2026-09-27.md). Base:
 > [`ADR-INCR-DFE-EMISSAO-PARCEIRO`](../adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) (§3, §9, §10, §11),
 > [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md), o próprio plano.
-> **Este documento NÃO escreve código** — checklist + contratos esboçados + forks. **Forks F-NFCE-1..12:
-> RATIFICAÇÃO PENDENTE.** A `sessao-feature` só abre com "executa" do dono.
+> **Este documento NÃO escreve código** — checklist + contratos esboçados + forks. **Forks F-NFCE-1..12: ✅
+> RATIFICADOS 2026-10-02** pelo dono, por questionário (3 lotes); **F-NFCE-3, F-NFCE-7 e F-NFCE-12 contra a
+> recomendação** — registro e efeitos no fim da §5 e em
+> [`D-2026-10-02-X10A-NFCE-FORKS`](../plano/decisoes/D-2026-10-02-X10A-NFCE-FORKS.md). **Sub-fork F-NFCE-12b
+> PENDENTE.** A `sessao-feature` só abre com "executa" do dono.
 >
 > **Em duas linhas:** tudo o que não depende da conta Focus (D5) cabe aqui — seleção do adaptador por `kind`,
 > `NFCE` na porta, perfil fiscal do produto, IE do emitente, montagem do leiaute 55/65 validada localmente,
@@ -156,7 +159,8 @@ Cada item termina no teste que o prova.
 1. **[direto]** PR-0: `fontes-oficiais/TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-XX.md` — tabela do leiaute de
    **saída** dos grupos que a montagem usa (`ide`, `emit`, `dest`, `det/prod`, `det/imposto/ICMS` com `ICMSSN102`/
    `ICMSSN500` e `ICMS00`, `PIS`, `COFINS`, `total/ICMSTot`, `transp`, `pag`, `infAdic`), com id, ocorrência,
-   tamanho e as regras da §2 por chave. Ponto de partida: a §2 deste BRIEF. A transcrição de entrada
+   tamanho e as regras da §2 por chave. **F-NFCE-12 (b):** inclui o grupo **UB inteiro** (`det/imposto/IBSCBS`, NT
+   2025.002 v1.51 pp. 19–30, com as regras de validação do grupo) e os totais do IBS/CBS. Ponto de partida: a §2 deste BRIEF. A transcrição de entrada
    (`BE-INCR-NFE-layout-transcription.md`) **não** serve (só as tags lidas pelo parser — BRIEF X10b item 32).
 2. **[direto]** Emenda do ADR (§12, docs): `NFCE` entra na porta (F-PLAN-2 a), seleção por `kind`, a regra do
    `icmsContribuinte` (resultado do F-NFCE-2), e os forks ratificados deste BRIEF.
@@ -190,14 +194,17 @@ Cada item termina no teste que o prova.
    perfil continua com `creditoIcms = 0` (`nfeCost`); perfil sem IE ⇒ 400 listando o campo.
 9. **[direto]** Séries por tipo no `FiscalProfile`: `nfceSerie Int @default(1)` e `nfeSerie Int @default(1)`,
    faixa 0–889 (`[NFE-SERIE]`). Teste: 890 ⇒ 400.
-10. **[cond:F-NFCE-3]** `ProductFiscalProfile` Prisma first-class (§2.1 — invariante legal), molde do
-    `ServiceFiscalProfile`: `productRef` = id da linha `products` (string escopada, não FK), `@@unique([userId,
-    unitId, productRef])`, soft-delete com rename. Campos: `ncm` (8 díg.), `cest?`, `origem` (0–8),
+10. **[F-NFCE-3 ✅ b]** `ProductFiscalProfile` Prisma first-class (§2.1 — invariante legal), molde do
+    `ServiceFiscalProfile` **sem `unitId`**: `productRef` = id da linha `products` (string escopada, não FK),
+    `@@unique([userId, productRef])` — um perfil por produto, valendo para todas as unidades; soft-delete com rename.
+    `csosn` e `cstIcms` convivem no mesmo perfil; a montagem escolhe pelo CRT do **perfil da unidade emitente**
+    (CRT 1 ⇒ `csosn` obrigatório; CRT 3 ⇒ `cstIcms`). Campos: `ncm` (8 díg.), `cest?`, `origem` (0–8),
     `cfopPadrao` (4 díg.), `csosn?` (CRT 1) / `cstIcms?` (CRT 3), `uCom`, `cEan` (GTIN ou "SEM GTIN"),
     `cstPis`/`cstCofins`, `ibsCbsCst?`/`ibsCbsClassTrib?` (2027 / CRT 3), `xProd?` (null ⇒ `products.name`).
     Valores admitidos de cada código = transcrição do PR-0, nunca de memória. Cadeia completa: Route → Controller →
     `ProductFiscalProfileService` → Repository → Prisma + Policy (`canManageProductFiscalProfile` delegando a `canManageFiscalProfile`, molde de `AccountingPolicy.ts:143-144`) + Factory +
-    DTO `.strict()` + audit `product_fiscal_profile.updated`. Teste: CRUD + tenancy + rename-on-delete.
+    DTO `.strict()` + audit `product_fiscal_profile.updated`. Teste: CRUD + tenancy por `userId` + rename-on-delete;
+    duas unidades do mesmo dono leem o mesmo perfil.
 11. **[direto]** Pré-condição de emissão por item: todo `productLine` da venda tem `ProductFiscalProfile`; o
     `CFOP` está na lista `[NFCE-CFOP]` quando `kind=NFCE`; CSOSN só com CRT 1, CST ICMS só com CRT 3.
     Teste: venda com 1 produto sem perfil ⇒ 400 `faltantes: ['produto <ref>: perfil fiscal']`, nada enviado.
@@ -220,17 +227,21 @@ Cada item termina no teste que o prova.
     Teste: `tpAmb` homologação ⇒ 2; cUF ≠ prefixo do `codMun` impossível por construção.
 16. **[direto]** Homologação: `xProd` do 1º item = literal de `[NFCE-HOMOLOG]`. Teste: payload de homologação ⇒
     literal; produção ⇒ nome do produto.
-17. **[cond:F-NFCE-7]** `dest`: NFC-e com cliente com `taxId` válido por DV ⇒ `CPF`/`CNPJ` + `indIEDest=9`; sem
-    cliente ⇒ sem `dest`; NF-e 55 exige `dest` (`[NFCE-DEST]`). Teste: os três casos.
+17. **[F-NFCE-7 ✅ b]** `dest` **obrigatório nos dois modelos** (F-DFE-7 b mantido também na NFC-e): venda ligada a
+    cliente com `taxId` válido por DV ⇒ `CPF`/`CNPJ` + `indIEDest=9` (NFC-e, `[NFCE-DEST]`); venda sem cliente ou
+    sem documento ⇒ 400 com `faltantes: ['cliente com CPF/CNPJ']`, **nada enviado** — mesma pré-condição da NFS-e.
+    Teste: cliente com CPF válido ⇒ `dest/CPF`; venda só com `simpleCustomerName` ⇒ 400; CPF com DV errado ⇒ 400.
 18. **[direto]** `pag`: `tPag` mapeado de `sales.paymentMethod` — Cash→01, Credit Card→03, Debit Card→04, Pix→17
     (`[NFE-PAG]`); `Package Balance` ⇒ recusa nomeada até o §6 responder. `vPag = vNF`. Teste: tabela de mapeamento.
 19. **[direto]** ICMS do Simples (CRT 1): grupo `ICMSSN` com o `csosn` do perfil do produto; nenhum valor de ICMS
     calculado (o Simples recolhe no DAS); IBS/CBS: CRT 1 **não** leva o grupo `IBSCBS` antes de 04/01/2027
     (`[RTC-SIMPLES]`); a partir daí o documento é **recusado com motivo nomeado** até a NT futura ser transcrita
     (F-NFCE-12). Teste: data 2026 ⇒ sem grupo; data ≥ 04/01/2027 ⇒ 400 `rtc_simples_nao_transcrito`.
-20. **[cond:F-NFCE-12]** CRT 3 (regime normal): grupo `IBSCBS` obrigatório desde 03/08/2026 (`[RTC-SIMPLES]`,
-    Obs. 2) ⇒ fatia própria depois da transcrição do grupo UB da NT 2025.002; até lá, regime normal + NFC-e/NF-e
-    ⇒ 400 nomeado. Teste: perfil PRESUMIDO ⇒ 400 `rtc_regime_normal_nao_transcrito`.
+20. **[F-NFCE-12 ✅ b; subgrupos = F-NFCE-12b]** CRT 3 (regime normal): grupo `IBSCBS` obrigatório desde
+    03/08/2026 (`[RTC-SIMPLES]`, Obs. 2) **atendido neste ciclo**: montagem do grupo pela transcrição do PR-0 (item
+    1), com `ibsCbsCst`/`ibsCbsClassTrib` do perfil do produto e as regras do grupo como `superRefine` (código da
+    rejeição na mensagem). Quais subgrupos entram = F-NFCE-12b. Teste: perfil PRESUMIDO + produto com
+    CST/cClassTrib ⇒ grupo montado e validado; produto sem CST ⇒ 400 nos faltantes.
 21. **[direto]** Chave de acesso montada localmente (`[NFE-CHAVE]`; `nfeChaveCheckDigit`, `lib/cnpj.ts:82`;
     `cNF` aleatório de 8 dígitos ≠ nNF) **só** quando o adaptador declara `numbersDps: false`. Teste: DV confere
     com `NFE_CHAVE_REGEX`; mutação de 1 dígito ⇒ DV diferente.
@@ -264,19 +275,20 @@ Cada item termina no teste que o prova.
     aviso, e `OUT_OF_WINDOW` passa a significar "o fisco rejeitou com **501**" para 55/65 (`[NFCE-CANC-FORA]`: na
     NFC-e é terminal). Teste: autorizada há 25 h, prazo nulo ⇒ resposta com `avisos: ['fora_da_janela_configurada']`
     e porta chamada; porta falsa devolvendo 501 ⇒ 409 `OUT_OF_WINDOW`.
-28. **[cond:F-NFCE-9]** CC-e (110110) **só** para `kind='NFE'`; NFC-e ⇒ 400 citando `[NFCE-SEM-CCE]`.
-29. **[cond:F-NFCE-9]** Cancelamento por substituição (110112) e EPEC: o BRIEF do X11 (§7, PR #466) os entrega ao
-    X10a; a recomendação aqui é **não** implementar — os dois só existem com contingência, que é do parceiro
-    (`[NFCE-CANC-SUBST]`; ADR §3 D1), e o Luminaris não sabe que uma NFC-e saiu em contingência.
+28. **[F-NFCE-9 ✅ c]** CC-e (110110): **não implementada**. A porta ganha `cce?` e `capabilities.cce` (contrato §4)
+    sem implementação e sem rota; nenhum adaptador declara `cce: true`. Teste: `tsc`.
+29. **[F-NFCE-9 ✅ c]** Cancelamento por substituição (110112) e EPEC: **fora** — os dois só existem com contingência,
+    que é do parceiro (`[NFCE-CANC-SUBST]`; ADR §3 D1). O BRIEF do X11 (§7, PR #466) os entregava ao X10a; a
+    ratificação os deixa fora dos dois nós até haver contingência no Luminaris.
 
 ### Fase F — Rotas, DTOs, gates
 
 30. **[direto]** Rotas novas em 2 toques (`index.ts` + `docs.paths.ts`; `npm run docs:generate`; BASELINE do
     `openapi-paths.test.ts`): `GET/PUT/DELETE /api/accounting/product-fiscal-profiles[…]`, `POST
-    /api/nfe/dfe/inutilizacoes`, `GET /api/nfe/dfe/inutilizacoes/pendentes`, `POST /api/nfe/dfe/documents/:id/cce`
-    (cond. F-NFCE-9). Deny-by-default; `canEmit*`/`canCancel*` existentes.
+    /api/nfe/dfe/inutilizacoes`, `GET /api/nfe/dfe/inutilizacoes/pendentes` (sem rota de CC-e: F-NFCE-9 c).
+    Deny-by-default; `canEmit*`/`canCancel*` existentes.
 31. **[direto]** DTOs `.strict()` + snapshot de shape: `UpsertProductFiscalProfileSchema`,
-    `VoidNumberRangeSchema`, `CceSchema`, `CancelFiscalDocumentSchema` (união), `EmitFiscalDocumentSchema`
+    `VoidNumberRangeSchema`, `CancelFiscalDocumentSchema` (união), `EmitFiscalDocumentSchema`
     (`kind` com `NFCE`). Booleans de query por `queryBoolean()`.
 32. **[direto]** Gates: `tsc` ×2; `npm run test:integration`; snapshot DTO; `docs:generate` sem diff; allowlist;
     paridade i18n se houver mensagem nova exposta; mutação manual: trocar crédito 3.3 por 3.1 no tie-out e aceitar
@@ -355,10 +367,9 @@ nfeSerie          Int     @default(1)
 nfeCancelPrazoHoras  Int?           // cond. F-NFCE-10: null => 24 (MOC VG Tabela 5-38); irmão do cancelPrazoDias do X11
 nfceCancelPrazoHoras Int?           // idem; valor de SP = §6 (NV)
 
-model ProductFiscalProfile {        // cond. F-NFCE-3 — molde ServiceFiscalProfile
+model ProductFiscalProfile {        // F-NFCE-3 ✅ b — por produto (sem unitId)
   id String @id @default(cuid())
   userId String
-  unitId String
   productRef String                  // id da linha `products` (saleItems.productId), plain string
   ncm String                         // 8 dígitos
   cest String?
@@ -378,7 +389,7 @@ model ProductFiscalProfile {        // cond. F-NFCE-3 — molde ServiceFiscalPro
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
-  @@unique([userId, unitId, productRef])
+  @@unique([userId, productRef])
   @@map("product_fiscal_profiles")
 }
 
@@ -408,7 +419,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 // linhas NFSE existentes recebem ambiente = '' (lacuna da NFS-e segue no GAP-MAP, fora deste BRIEF).
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ✅ RATIFICADOS 2026-10-02 (F-NFCE-12b pendente)
 
 ### F-NFCE-1 — Como a seleção passa a considerar o tipo
 - **(a)** Um parceiro por instância (`DFE_PARTNER`) que declara `kinds`; tipo não suportado ⇒ desabilitado.
@@ -416,7 +427,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **(c)** As duas: variável por tipo com fallback para `DFE_PARTNER` **e** `kinds` declarado pelo adaptador.
 - **Recomendação: (c).** O 1º cliente precisa de NFS-e pelo modo manual e NFC-e por parceiro ao mesmo tempo — (a)
   não permite; (b) sozinho deixa ligar `manual` para NFC-e e só descobrir no envio. Custo de errar com (a): o
-  cliente escolhe entre NFS-e e NFC-e. **PENDENTE.**
+  cliente escolhe entre NFS-e e NFC-e. **✅ RATIFICADO 02/10 → (c).**
 
 ### F-NFCE-2 — Conserto do `icmsContribuinte` no Simples (GAP-MAP Nível 5)
 - **(a)** Como o GAP-MAP descreve: liberar `icmsContribuinte=true` no Simples.
@@ -425,13 +436,13 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **(c)** (b) + renomear `icmsContribuinte` → `icmsCreditoCompra` (migração + DTO + OpenAPI + 12 testes).
 - **Recomendação: (b).** (a) faz a compra do Simples tirar o ICMS do custo (`nfeCost.ts:140`), contra a LC 123
   art. 23. (c) corrige o nome, com blast radius em 12 arquivos de teste e no contrato público, sem mudar
-  comportamento. Custo de errar com (a): custo de estoque subavaliado em toda compra do 1º cliente. **PENDENTE.**
+  comportamento. Custo de errar com (a): custo de estoque subavaliado em toda compra do 1º cliente. **✅ RATIFICADO 02/10 → (b).**
 
 ### F-NFCE-3 — Granularidade do perfil fiscal do produto
 - **(a)** Por unidade: `@@unique([userId, unitId, productRef])`, como o `ServiceFiscalProfile`.
 - **(b)** Por produto: `@@unique([userId, productRef])`; NCM é natureza da mercadoria.
 - **Recomendação: (a).** Unidade = filial com regime e UF próprios (R8); CSOSN/CFOP dependem disso. Custo: o NCM se
-  repete por unidade (o cliente de hoje tem uma). **PENDENTE.**
+  repete por unidade (o cliente de hoje tem uma). **✅ RATIFICADO 02/10 → (b).**
 
 ### F-NFCE-4 — Quem numera NF-e/NFC-e, e a sequência separa ambiente?
 - **(a)** Numeração local gapless por `(kind, ambiente, serie)` sempre que o adaptador declarar `numbersDps: false`
@@ -439,14 +450,14 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **(b)** Esperar o D5 e só numerar se a Focus exigir.
 - **Recomendação: (a).** A Tabela 2-4 diz "sequencial por CNPJ, controlado pelo emitente" na série 000–889; não
   depende do D5 e o `NullEmissor` exercita. O ambiente entra na chave porque a chave natural o inclui
-  (`[NFE-CHAVE-NATURAL]`). Custo de errar com (b): o BRIEF da Focus reabre a sequência. **PENDENTE.**
+  (`[NFE-CHAVE-NATURAL]`). Custo de errar com (b): o BRIEF da Focus reabre a sequência. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-5 — Inutilização: quem detecta, quem pede
 - **(a)** Tabela `FiscalNumberVoid` + método da porta + rota; o sistema **lista** as lacunas, o operador pede.
 - **(b)** (a) + pedido automático das lacunas no fim do dia (job).
 - **(c)** Só registrar a inutilização feita no painel do parceiro (sem método na porta).
 - **Recomendação: (a).** Segue o gatilho manual ratificado (F-DFE-3). (b) inutilizaria um número cuja tentativa ainda
-  pode voltar autorizada (241 do lado da SEFAZ). (c) deixa a lacuna invisível no Luminaris. **PENDENTE.**
+  pode voltar autorizada (241 do lado da SEFAZ). (c) deixa a lacuna invisível no Luminaris. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-6 — Momento da emissão da NFC-e × gatilho manual (F-DFE-3)
 - **(a)** Manual, com `dhEmi` = momento da montagem; aviso quando a venda foi finalizada há mais de N minutos
@@ -455,20 +466,20 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
   NFC-e).
 - **Recomendação: (a)** agora, com o botão no fluxo de finalizar a venda (FE). (b) depois do H2 em homologação,
   como o ADR já previa para o lote. A rejeição 704 (`[NFCE-TEMPO-REAL]`) não morde em (a), porque `dhEmi` é o
-  momento do envio; o risco é **legal** (nota emitida depois da venda), não técnico. **PENDENTE.**
+  momento do envio; o risco é **legal** (nota emitida depois da venda), não técnico. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-7 — Consumidor sem documento × F-DFE-7 (b) ratificado
 - **(a)** Para `NFCE`, `dest` opcional (`[NFCE-DEST]`): cliente com CPF/CNPJ válido entra; consumidor anônimo
   emite sem `dest`, dentro do limite de valor da UF (§6). F-DFE-7 (b) continua valendo para NFS-e e NF-e 55.
 - **(b)** Manter F-DFE-7 (b) também para a NFC-e: sem CPF/CNPJ, sem nota.
 - **Recomendação: (a).** Venda de balcão a consumidor anônimo é o caso típico do 1º cliente; (b) o deixa sem
-  documento fiscal, e o SAT está vedado (`[SP-SAT-VEDADO]`). **Reabre decisão ratificada — só o dono.** **PENDENTE.**
+  documento fiscal, e o SAT está vedado (`[SP-SAT-VEDADO]`). **Reabre decisão ratificada — só o dono.** **✅ RATIFICADO 02/10 → (b).**
 
 ### F-NFCE-8 — CSC (e A1) da NFC-e até o parceiro
 - **(a)** O cliente cadastra o CSC no painel da Focus; o Luminaris não vê o CSC (mesma linha do F-COB-3 a).
 - **(b)** O Luminaris recebe e repassa pela API de empresas, sem gravar.
 - **Recomendação: (a)**, decidido junto com o F-COB-3. O CSC entra no hash do QR Code (`[NFCE-QRCODE]`) — é segredo
-  do contribuinte, como o A1. Depende de conferir o painel no D5. **PENDENTE.**
+  do contribuinte, como o A1. Depende de conferir o painel no D5. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-9 — Eventos além do cancelamento: CC-e (110110, só 55) e cancelamento por substituição (110112, só 65)
 - **(a)** Os dois neste BRIEF (o BRIEF do X11, §7, entrega os dois ao X10a).
@@ -477,7 +488,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **Recomendação: (c).** O 1º cliente emite NFC-e, que não admite CC-e (`[NFCE-SEM-CCE]`); a NF-e 55 só é obrigatória
   para quem movimenta bem sem IE a partir de 01/12/2026 (Ato 4 § 4º) ou em venda a contribuinte. O 110112 só cabe
   quando outra NFC-e **em contingência** acobertou a venda (`[NFCE-CANC-SUBST]`), e contingência é do parceiro.
-  Quem prefere completude escolhe (b): +1 rota, +1 evento de audit. **PENDENTE.**
+  Quem prefere completude escolhe (b): +1 rota, +1 evento de audit. **✅ RATIFICADO 02/10 → (c).**
 
 ### F-NFCE-10 — Janela do cancelamento 55/65 × F-EVT-1 do X11
 - **(a)** Seguir o F-EVT-1 do X11 (PR #466), qualquer que seja a escolha do dono lá: uma só função `janelaEventos`
@@ -487,13 +498,13 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
   (`[NFCE-CANC-FORA]`).
 - **Recomendação: (a).** Duas regras de janela no mesmo serviço divergem na primeira manutenção; o custo de (a) para a
   NFC-e é uma chamada rejeitada ao parceiro, sem escrita errada. A "exceção estadual" (Tabela 5-38) torna o 24 h
-  local tão incerto quanto o prazo municipal da NFS-e — o argumento do F-EVT-1 vale igual. **PENDENTE.**
+  local tão incerto quanto o prazo municipal da NFS-e — o argumento do F-EVT-1 vale igual. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-11 — Desconto no item da NF-e/NFC-e
 - **(a)** Preço líquido: `vUnCom` já descontado, `vDesc = 0` (mesma escolha do F-DFE-15 a na DPS).
 - **(b)** Preço bruto + `vDesc` rateado por item.
 - **Recomendação: (a).** O crédito 3.3 já é líquido; (a) fecha o tie-out por construção. Custo de errar: o DANFE não
-  mostra o desconto ao consumidor — a confirmar com o contador (§6). **PENDENTE.**
+  mostra o desconto ao consumidor — a confirmar com o contador (§6). **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-12 — IBS/CBS na NF-e/NFC-e
 - **(a)** Simples primeiro: CRT 1 sem grupo em 2026; ≥ 04/01/2027 recusa nomeada até a NT futura; regime normal
@@ -501,7 +512,33 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **(b)** Transcrever o grupo UB agora e atender o regime normal neste ciclo.
 - **Recomendação: (a)**, com o PR do regime normal no mesmo BRIEF (como F-DFE-13 a fatiou a NF-e). O grupo UB tem
   monofásico, diferimento, crédito presumido e ajuste de competência (NT pp. 19–30); o salão em regime normal usa
-  um subconjunto que só o contador confirma. **PENDENTE.**
+  um subconjunto que só o contador confirma. **✅ RATIFICADO 02/10 → (b).**
+
+### F-NFCE-12b — Quais subgrupos do UB o regime normal atende neste ciclo (aberto pela ratificação do F-NFCE-12 b)
+- **(a)** Grupo base (CST, cClassTrib, base, `gIBSUF`, `gIBSMun`, `gCBS`, totais) + `gRed` (redução de alíquota);
+  `cClassTrib` que exige diferimento, monofásico, crédito presumido ou ajuste de competência ⇒ 400 nomeado.
+- **(b)** Todos os subgrupos da NT 2025.002 v1.51 pp. 19–30.
+- **Recomendação: (a).** Monofásico (combustíveis), diferimento e crédito presumido dependem de `cClassTrib` que um
+  salão em regime normal não usa (inferido); a recusa nomeada aponta o que falta se o contador indicar uso.
+  Custo de errar (a): produto do cliente cai num `cClassTrib` recusado e a nota não sai até a fatia seguinte.
+  **PENDENTE.**
+
+### RATIFICAÇÃO — 2026-10-02 (dono, questionário, 3 lotes; pedido: *"ratifica os forks F-NFCE por questionário"*)
+
+| Fork | Escolha do dono | Contra a recomendação? | Efeito no BRIEF |
+|---|---|---|---|
+| F-NFCE-1 | (c) env por tipo + `kinds` declarado | não | item 5 |
+| F-NFCE-2 | (b) `inscricaoEstadual` separado; `icmsContribuinte` segue = crédito | não | item 8; o GAP-MAP Nível 5 corrige o diagnóstico na mesma mudança (§8 achado 1) |
+| **F-NFCE-3** | **(b) por produto** | **SIM** | item 10 e schema: sem `unitId`, `@@unique([userId, productRef])`; `csosn` e `cstIcms` no mesmo perfil, escolhidos pelo CRT da unidade emitente. Limite declarado: duas unidades com regimes ou UF diferentes não podem ter CSOSN/CFOP diferentes para o mesmo produto |
+| F-NFCE-4 | (a) numeração local por (tipo, ambiente, série) | não | item 23 |
+| F-NFCE-5 | (a) o sistema lista, o operador pede | não | itens 24–25 |
+| F-NFCE-6 | (a) manual, no fluxo de finalizar a venda | não | item 15 (`dhEmi` = envio); botão no FE |
+| **F-NFCE-7** | **(b) manter F-DFE-7 b: sem CPF/CNPJ, sem nota** | **SIM** | item 17: `dest` obrigatório na NFC-e. **Consequência declarada:** com o SAT vedado em SP (`[SP-SAT-VEDADO]`), a venda de produto no balcão só tem documento fiscal pelo Luminaris se o operador cadastrar o CPF/CNPJ do consumidor; venda anônima fica sem NFC-e |
+| F-NFCE-8 | (a) CSC e A1 cadastrados pelo cliente no painel da Focus | não | item 33 (pré-condição do D5) |
+| F-NFCE-9 | (c) nem CC-e nem 110112 | não | itens 28–30: métodos opcionais na porta, sem rota |
+| F-NFCE-10 | (a) seguir o F-EVT-1 do X11 | não | item 27 |
+| F-NFCE-11 | (a) preço líquido, `vDesc = 0` | não | item 14 |
+| **F-NFCE-12** | **(b) transcrever o UB agora e atender o regime normal neste ciclo** | **SIM** | item 1 (PR-0 com o UB); item 20 deixa de recusar o regime normal; insumo ausente 6 sai da §7; abre o **F-NFCE-12b** (subgrupos) |
 
 ## 6. Pendente de validação externa (fonte citada, grau declarado)
 
@@ -509,7 +546,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 |---|---|---|
 | CSOSN dos produtos do salão (102 × 500) e CFOP (5.102 × 5.405): perfumaria/higiene saíram da ST em SP em 01/04/2026 (Portaria SRE 94/2025, lida 29/09); estoque comprado com ST antes dessa data | contador (pergunta 2 da lista de 29/09) | I |
 | NCM de cada produto vendido | contador / cliente | NV |
-| SP: prazo de cancelamento da NFC-e (MOC: 24 h com exceção estadual), limite de valor da NFC-e e do consumidor não identificado (W16), contingência offline aceita (712), entrega a domicílio (785) | ato da SEFAZ-SP que regula a NFC-e — **não identificado nesta sessão** | NV |
+| SP: prazo de cancelamento da NFC-e (MOC: 24 h com exceção estadual), limite de valor da NFC-e (W16; o do consumidor não identificado deixou de importar com F-NFCE-7 b), contingência offline aceita (712), entrega a domicílio (785) | ato da SEFAZ-SP que regula a NFC-e — **não identificado nesta sessão** | NV |
 | CRT 2 (excesso de sublimite) | contador | NV |
 | Venda paga com saldo de pacote (`Package Balance`): `tPag` | contador (casa com F-DFE-9) | NV |
 | Desconto: líquido no item basta ao consumidor? (F-NFCE-11) | contador | I |
@@ -524,7 +561,8 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 3. Manual de Contingência NFC-e (MOC Anexo IV/V) — contingência é do parceiro.
 4. Ajuste SINIEF 19/16 (texto) — o MOC cita a cláusula 15ª-A; lida só pela citação.
 5. Tabela de unidades comerciais (regra 734) e tabela de origem da mercadoria — PR-0.
-6. Grupo UB (IBS/CBS) da NT 2025.002 — transcrição para F-NFCE-12.
+6. ~~Grupo UB (IBS/CBS) da NT 2025.002~~ → entra no PR-0 (item 1), F-NFCE-12 (b). O PDF está no disco de outra
+   worktree (`execucao-sequencia-fe-luminaris-7fa341`), não nesta — a sessão do PR-0 copia ou rebaixa (sha `a4aaaa181522`).
 7. NT futura do IBS/CBS para o Simples — anunciada na NT 2025.002 v1.51 (p. 7); não está no corpus e não procurei se já saiu.
 
 ## 8. Achados fora de escopo
@@ -543,13 +581,13 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 
 | PR | Itens | Depende |
 |---|---|---|
-| PR-0 (docs) | 1, 2 | ratificação dos forks |
+| PR-0 (docs) | 1 (com o grupo UB), 2 | ✅ forks ratificados; F-NFCE-12b |
 | PR-1 porta + seleção | 3–7 | F-NFCE-1 |
 | PR-2 perfis | 8–11, 26 (parte), 30–31 (parte) | F-NFCE-2, F-NFCE-3 |
-| PR-3 montagem Simples | 12–22 | PR-0, F-NFCE-7, F-NFCE-11 |
+| PR-3 montagem (Simples) | 12–19, 21–22 | PR-0 |
 | PR-4 numeração + inutilização | 23–26 | F-NFCE-4, F-NFCE-5 |
 | PR-5 eventos | 27–29 | F-NFCE-9, F-NFCE-10; `janelaEventos` do X11 mergeado (item 3 do PR #466) |
-| PR-6 regime normal | 20 | F-NFCE-12, transcrição UB |
+| PR-6 regime normal (IBS/CBS) | 20 | PR-0 com o UB; F-NFCE-12b |
 | — Focus | 33 | D5 + "executa" da emissão real (X10i) |
 
 ## 10. Gates de envio [OPS-001]
