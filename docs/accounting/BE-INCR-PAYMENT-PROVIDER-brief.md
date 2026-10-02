@@ -4,7 +4,8 @@
 > Saída: este documento, mais o fold da nota [F5](../plano/nos/F5.md) (Docs/autorização) e uma linha de pré-condição
 > na nota [M2](../plano/gates/M2.md).
 > **Forks do ADR (F-PP-1..11): ratificados** em [D-2026-10-02-PAYMENT-PROVIDER-FORKS](../plano/decisoes/D-2026-10-02-PAYMENT-PROVIDER-FORKS.md).
-> **Forks novos deste BRIEF (F-PPB-1..9): RATIFICAÇÃO PENDENTE** (§5). Nenhum se auto-ratifica.
+> **Forks novos deste BRIEF (F-PPB-1..9): RATIFICADOS 02/10** (§5.1; mesma cédula, rodadas 4–6). Divergem da
+> recomendação: **F-PPB-1 → (c)** (PR-3 bloqueado até a sonda de colunas em produção) e **F-PPB-8 → (b)** (status novos).
 
 ## 0. Contexto fixo (não rediscutir)
 
@@ -144,11 +145,14 @@ Formato: **Pn-k [direto | fork F-…]**. Cada item tem teste próprio. Ordem por
   200 em menos de 22 s (M8). Invariantes 1, 2, 4.
 - **P2-6 [direto, PP-D4 item 4]** Idempotência por **CAS de status dentro da tx**: `PENDING → PAID` acontece uma vez.
   O teste chama duas vezes e **assere a 2ª** (zero transição, zero audit novo; invariante 3).
-- **P2-7 [fork F-PPB-8]** Mapa status MP → `CollectionCharge.status` (M6): `processed/accredited` → `PAID`
+- **P2-7 [direto, F-PPB-8 b]** Mapa status MP → `CollectionCharge.status` (M6): `processed/accredited` → `PAID`
   (`paidAt` = instante da re-consulta, porque M5 não traz data de aprovação; é **informativo**, a baixa usa a data do
   relatório) · `expired` → `EXPIRED` · `canceled` → `CANCELLED` · `failed` → `FAILED` · `refunded` → `REFUNDED` ·
-  `action_required/*`, `created`, `processing` → continua `PENDING` · `processed/partially_refunded` e `charged_back/*`
-  → ver F-PPB-8. O `status`/`status_detail` cru é gravado em `providerStatus`/`providerStatusDetail` em todos os casos.
+  `action_required/*`, `created`, `processing` → continua `PENDING` · `processed/partially_refunded` →
+  `PARTIALLY_REFUNDED` · `charged_back/*` → `CHARGED_BACK` (o detalhe `in_process`/`settled`/`reimbursed` fica em
+  `providerStatusDetail`). As transições entre `PAID`, `PARTIALLY_REFUNDED`, `CHARGED_BACK` e `REFUNDED` seguem o
+  estado atual do MP (CAS na tx); `REFUNDED` é terminal. **Nenhum** desses status tem efeito no razão (P4 do
+  contador); a view mostra o aviso. O `status`/`status_detail` cru é gravado em `providerStatus`/`providerStatusDetail` em todos os casos.
 - **P2-8 [direto, PP-D5]** Nenhuma transição da cobrança gera `JournalEntry` nem `ReceivableReceipt` (invariante 7:
   teste conta as linhas antes e depois de um webhook `PAID`).
 - **P2-9 [direto]** Job `collectionChargePoll` (clone mínimo do `DfePollScheduler`, S15): a cada 15 min, re-consulta
@@ -164,7 +168,8 @@ Formato: **Pn-k [direto | fork F-…]**. Cada item tem teste próprio. Ordem por
 - **P2-12 [direto, PP-D1 + memória `param-aceito-e-ignorado-e-bug`]** Pedido que exige capacidade não anunciada
   (juros, multa, desconto, vencimento acima de 30 dias) ⇒ 400 nomeado, nunca aceita e ignora (invariante 13). O DTO
   não tem esses campos; o teste manda o campo e espera 400 do `.strict()`.
-- **P2-13 [fork F-PPB-7]** Cancelar `Receivable` com cobrança viva.
+- **P2-13 [direto, F-PPB-7 a]** Cancelar `Receivable` com cobrança viva (`CREATING`/`PENDING`) ⇒ 409
+  `receivable_has_live_charge`, com gate dentro da tx do cancelamento do AR; nenhuma chamada ao MP dentro dele.
 - **P2-14 [direto]** Audit: `collection_charge.created` / `.status_changed` (`from`, `to`, `providerStatus`) /
   `.cancelled` / `.failed`, **sem** pagador (PII; ADR P5) nem instrumento.
 - **P2-15 [direto]** `GET /api/receivables/:id/charges` e `GET /api/collection-charges/:id` (view com `instrument`,
@@ -181,19 +186,23 @@ Formato: **Pn-k [direto | fork F-…]**. Cada item tem teste próprio. Ordem por
 - **P3-2 [direto, PP-D6 + ADR-TZ F-TZ1 b]** `DATE` é lido como instante com offset e convertido em dia-calendário de
   `America/Sao_Paulo`. Fixture: `2026-10-01T23:30:00-04:00` ⇒ **2026-10-02** (invariante 8). `grep` de guarda: nenhum
   `slice(0, 10)` no parser.
-- **P3-3 [fork F-PPB-2]** Colunas obrigatórias ausentes no arquivo ⇒ 400 `release_report_missing_columns` com a
-  lista. Quem garante a configuração do relatório na conta do cliente é o F-PPB-2.
-- **P3-4 [fork F-PPB-4]** Faixa sobreposta: arquivo com `SOURCE_ID` + `DESCRIPTION` já importado para a mesma
-  `PaymentAccount` (invariante 9).
-- **P3-5 [direto, PP-D6]** Job `mpReleaseReportFetch` (diário, por `PaymentAccount` MP `ACTIVE`): watermark
+- **P3-3 [direto, F-PPB-2 a]** Colunas obrigatórias ausentes no arquivo ⇒ 400 `release_report_missing_columns` com a
+  lista. A configuração do relatório na conta do cliente é passo do runbook de provisionamento (§6.2); o Luminaris
+  **não** escreve na config da conta.
+- **P3-4 [direto, F-PPB-4 a]** Faixa sobreposta: arquivo com `SOURCE_ID` + `DESCRIPTION` já importado para a mesma
+  `PaymentAccount` ⇒ 400 `release_report_overlap` listando os `SOURCE_ID` repetidos; **nada** é importado
+  (invariante 9).
+- **P3-5 [direto, PP-D6 + F-PPB-6 a]** Job `mpReleaseReportFetch` (diário, por `PaymentAccount` MP `ACTIVE`): watermark
   `mp_release:<accountId>` no `JobWatermarkRepository`; pede `[watermark, hoje 00:00 BRT)` em UTC (`…Z`, M10),
   fechado-aberto e contíguo; espera o 202, lista, baixa e importa contra `PaymentAccount.glAccountId`. A watermark só
   avança depois do import. O upload manual do CSV continua como válvula (mesmo endpoint de import, `format =
   mp_release`).
-- **P3-6 [fork F-PPB-5]** Scan do F7 sobre extrato de `PaymentAccount`: passo novo **antes** do `pickCandidate`. Linha
+- **P3-6 [direto, F-PPB-5 a + F-PPB-1 c]** Scan do F7 sobre extrato de `PaymentAccount`: passo novo **antes** do `pickCandidate`. Linha
   `release` de `DESCRIPTION = payment` cujo `externalRef` é o `id` de uma `CollectionCharge` do escopo **com
   `paymentAccountId` = conta do extrato** ⇒ título exato da cobrança, sem janela e sem valor aproximado
-  (F-PP-5 a). Chave de fallback: F-PPB-1.
+  (F-PP-5 a). Se `EXTERNAL_REFERENCE` não casar, tenta `SOURCE_ID = providerPaymentRef` (F-PPB-1). Em extrato de
+  `PaymentAccount` o `pickCandidate` genérico **não** roda: o que não casa fica `UNMATCHED` para o manual
+  (F-PPB-5 a). **A ordem das duas chaves é reconferida contra o CSV da sonda (§6.2) antes do merge do PR-3.**
 - **P3-7 [direto, F-PP-6 b]** Para a linha casada pelo passo novo: `grossCents = GROSS_AMOUNT`,
   `feeCents = GROSS − NET` (soma das deduções da linha, conferida contra as colunas `*_FEE_AMOUNT` + `TAXES_AMOUNT`;
   diferença ⇒ linha não vira candidata e o scan conta `ambiguous`), `proposedCents = min(gross, saldo)`,
@@ -208,7 +217,8 @@ Formato: **Pn-k [direto | fork F-…]**. Cada item tem teste próprio. Ordem por
 - **P3-9 [direto, F-PP-7 a]** Método `ProviderBalance` nos mapas de método do AR e do F7: **não** resolve por código
   fixo. No confirm, o F7 exige que exista `PaymentAccount` `ACTIVE` com `glAccountId = statement.glAccountId` e passa
   essa conta ao `registerReceipt`. `ProviderBalance` fora desse caminho (recibo avulso, extrato de banco) ⇒ 400
-  `provider_balance_requires_payment_account`. Persistência da conta no recibo: F-PPB-3.
+  `provider_balance_requires_payment_account`. O recibo grava `debitAccountId` (F-PPB-3 a), e o estorno (`ReceivableService.ts:533`) lança nessa conta quando
+  ela não é nula; `null` mantém o mapa fechado de hoje.
 - **P3-10 [direto, S6 + S17]** Etapa `MATCH`: as pernas da conta da `PaymentAccount` (recibo a débito, encargo a
   débito, tarifa a **crédito**) fecham a linha líquida. O executor **lê** o gate do `manualMatch` (S17, grau I) e, se
   a soma não for com sinal, isso é insumo ausente: pausa, não conserta o gate por conta própria. Teste: o caso de
@@ -276,7 +286,7 @@ model CollectionCharge {         // PR-2 — PP-D3; sem efeito no razão
   providerPaymentRef   String?   // PAY01… (M3)
   providerStatus       String?   // cru (M6)
   providerStatusDetail String?
-  status               String    // CREATING | PENDING | PAID | EXPIRED | CANCELLED | REFUNDED | FAILED
+  status               String    // CREATING | PENDING | PAID | PARTIALLY_REFUNDED | CHARGED_BACK | REFUNDED | EXPIRED | CANCELLED | FAILED (F-PPB-8 b)
   paidAt               DateTime? // instante da re-consulta que viu accredited — informativo (P2-7)
   payerSnapshotJson    String    // PII — fora do AuditEvent
   instrumentJson       String?
@@ -295,7 +305,7 @@ model CollectionCharge {         // PR-2 — PP-D3; sem efeito no razão
 // PR-3 — acréscimos (ALTER aditivo; ordenar com a emenda 3.3, S16)
 model BankSettlementItem       { /* … */ feeCents BigInt @default(0)  feeEntryId String? }
 model AccountingScopeSettings  { /* … */ providerFeeExpenseAccountId String? /* FK Account, Restrict */ }
-model ReceivableReceipt        { /* … */ debitAccountId String? }   // só se F-PPB-3 → (a)
+model ReceivableReceipt        { /* … */ debitAccountId String? }   // F-PPB-3 a — null = mapa fechado (legado)
 ```
 
 ### 4.2 Porta (ADR §5, com os ajustes da ratificação)
@@ -394,7 +404,24 @@ PAYMENT_CREDENTIAL_KEYS="1:<base64 32 bytes>"     # M2 provisiona; backup separa
 PAYMENT_CREDENTIAL_KEY_ACTIVE=1
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — RATIFICADOS 2026-10-02
+
+### 5.1 Resultado ([cédula](../plano/decisoes/D-2026-10-02-PAYMENT-PROVIDER-FORKS.md), rodadas 4–6)
+
+| Fork | Decisão | Itens |
+|---|---|---|
+| F-PPB-1 | ✅ **(c)** duas chaves + **PR-3 bloqueado até a sonda de colunas** em produção (PR-1 + PR-2 implantados) — divergente | P3-6, §6.2, §9 |
+| F-PPB-2 | ✅ (a) runbook + 400 | P3-3, §6.2 |
+| F-PPB-3 | ✅ (a) `debitAccountId` no recibo | P3-9, §4.1 |
+| F-PPB-4 | ✅ (a) rejeita o arquivo | P3-4 |
+| F-PPB-5 | ✅ (a) só o passo novo | P3-6 |
+| F-PPB-6 | ✅ (a) job diário + upload | P3-5 |
+| F-PPB-7 | ✅ (a) 409 | P2-13 |
+| F-PPB-8 | ✅ **(b)** status `PARTIALLY_REFUNDED` / `CHARGED_BACK` — divergente | P2-7, §4.1 |
+| F-PPB-9 | ✅ (a) 3 PRs seriais | §9 |
+
+### 5.2 Tabela original (mantida como foi proposta)
+
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
@@ -425,9 +452,13 @@ PAYMENT_CREDENTIAL_KEY_ACTIVE=1
 - **Conta MP do 1º cliente:** PJ, **chave Pix cadastrada** (M4), aplicação própria criada no painel (F-PP-1 b),
   webhook de produção apontando para `https://<instância>/api/payment-collection/webhook/MERCADO_PAGO/<accountId>`
   (M8), relatório configurado com as colunas exigidas (F-PPB-2 a).
-- **Prova em produção** (M13): uma cobrança Pix real de valor baixo, paga, liberada, importada e confirmada no F7, com
-  o CSV colado como evidência. A **mesma** prova fecha o F-PPB-1 (qual coluna traz o `charge.id`/`PAY01…`).
-  Formato `docs/operating-manual/RUNBOOK-FORMAT.md`.
+- **Sonda de colunas — gate do merge do PR-3 (F-PPB-1 c):** com PR-1 + PR-2 implantados no M2, uma cobrança Pix
+  real de valor baixo criada pelo Luminaris (o PR-2 grava `charge.id` e `PAY01…`), paga e liberada; o CSV do
+  relatório é baixado **à mão** no painel do MP e colado no runbook. Evidência: em qual coluna aparece o `charge.id`
+  (`EXTERNAL_REFERENCE`?) e o `PAY01…` (`SOURCE_ID`?), além de separador, formato decimal e datas. Desfecho em 3
+  estados; sem assinatura do dono o PR-3 não mergeia.
+- **Prova ponta a ponta** (M13), depois do PR-3: a cobrança seguinte importada pelo job e confirmada no F7, com o CSV
+  colado. Formato `docs/operating-manual/RUNBOOK-FORMAT.md`.
 
 ### 6.3 Pré-condição de deploy do M2 (instrução do dono: "não invente KMS")
 
@@ -462,13 +493,15 @@ PAYMENT_CREDENTIAL_KEY_ACTIVE=1
 - **Teste de serviço do `BankSettlementService`** (GAP-MAP N3, cabeçalho do arquivo): o PR-3 acrescenta etapas a um
   serviço sem teste próprio. Os testes do PR-3 cobrem as etapas novas; cobrir as antigas é a lacuna N3, não este nó.
 
-## 9. Ordem sugerida para a `sessao-feature` (se F-PPB-9 → a, depois de "executa")
+## 9. Ordem para a `sessao-feature` (F-PPB-9 → a; só depois de "executa")
 
 1. PR-1 (P1-1..P1-10). Não depende de nada além do "executa".
 2. PR-2 (P2-1..P2-15). Depende do PR-1. Pode ser provado em sandbox com credencial de teste, exceto a parte do
    relatório (M13).
-3. PR-3 (P3-1..P3-12). Depende do PR-2, de F-PPB-1..5 ratificados e da ordem da migração com a emenda 3.3.
-4. Runbook §6.2 depois do M2: é o único oráculo da conciliação.
+3. **Gate humano:** M2 com PR-1 + PR-2 implantados → sonda de colunas (§6.2), assinada pelo dono (F-PPB-1 c).
+4. PR-3 (P3-1..P3-12). Pode ser escrito antes da sonda, mas **só mergeia depois dela**, com a fixture do parser
+   trocada pelo CSV real colado. Coordena a ordem da migração com a emenda 3.3.
+5. Prova ponta a ponta (§6.2) depois do PR-3: é o oráculo da conciliação.
 
 ## 10. Riscos e vieses declarados (T8)
 

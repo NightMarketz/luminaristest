@@ -2,14 +2,14 @@
 id: "D-2026-10-02-PAYMENT-PROVIDER-FORKS"
 tipo: "decisao"
 dominio: "financeiro"
-titulo: "Ratificação por questionário: forks F-PP-1..11 do ADR de cobrança por provedor (F5, Mercado Pago)"
+titulo: "Ratificação por questionário: forks F-PP-1..11 do ADR e F-PPB-1..9 do BRIEF de cobrança por provedor (F5, Mercado Pago)"
 estado: "decided"
 autorizacao: "dono, chat, 2026-10-02 (AskUserQuestion, sessão de ratificação) — sem 'executa'"
 atualizado: "2026-10-02"
 ---
 # D-2026-10-02-PAYMENT-PROVIDER-FORKS — cédulas da sessão de ratificação
 
-**Estado:** `decided` (11/11)
+**Estado:** `decided` (F-PP 11/11 · F-PPB 9/9)
 **Autorização:** dono, chat, 02/10/2026: *"(1) rodada de ratificação dos 11 forks F-PP do
 ADR-INCR-PAYMENT-PROVIDER-COLLECTION por questionário comigo agora; (2) depois, planejar o BRIEF do F5 (Mercado Pago
 como 1º adaptador) (dono, 02/10) — sem 'executa'"*. O agente apresentou e o dono decidiu.
@@ -120,3 +120,74 @@ BRIEF que nasce desta cédula: [`BE-INCR-PAYMENT-PROVIDER-brief.md`](../../accou
 **Viés (T8):** 11/11 terminaram na recomendação. O F-PP-5 só chegou lá depois de o agente mostrar o conflito com a
 doc, e o F-PP-11 ganhou um refino. Recomendação aceita em bloco pode ser clique reflexo: o contexto de cada pergunta
 listou o que a opção fecha e o custo dela.
+
+## Rodadas 4–6 — forks F-PPB do BRIEF (mesmo dia, depois do PR #469 aberto)
+
+**Autorização:** dono, chat, 02/10/2026: *"ratifica os forks F-PPB-1..9 por questionário"*. Documento dos forks:
+[`BE-INCR-PAYMENT-PROVIDER-brief.md`](../../accounting/BE-INCR-PAYMENT-PROVIDER-brief.md) §5. Continua **sem "executa"**.
+
+### F-PPB-1 — chave de casamento da linha do relatório
+- **Contexto dado:** a doc oficial não prova, para a Orders API, que o `external_reference` da ordem chega à coluna
+  `EXTERNAL_REFERENCE`, nem que `SOURCE_ID` é o `PAY01…`; em teste o relatório sai vazio.
+- **Opções:** (b) duas chaves, `EXTERNAL_REFERENCE` com fallback `SOURCE_ID = providerPaymentRef` (**recomendada**) ·
+  (a) só `EXTERNAL_REFERENCE` · (c) (b) + o PR-3 só mergeia depois da prova em produção.
+- **Resposta literal (1ª):** *"(c) Duas chaves + bloqueio"*
+- **Conflito mostrado antes de registrar:** a prova do §6.2 importava e confirmava no F7, que é o próprio PR-3, e a
+  ordem ficava circular. Reformulação: **sonda de colunas** em produção com PR-1 + PR-2 implantados (cobrança Pix
+  real criada pelo Luminaris, paga e liberada; CSV baixado à mão no painel e colado no runbook). O PR-3 mergeia depois
+  dela. Opções: (c) com sonda (**recomendada**) · trocar para (b).
+- **Resposta literal (2ª):** *"(c) com sonda de colunas (Recomendado)"* → ✅ **(c) com sonda**, divergente da
+  recomendação original (b). O PR-3 passa a esperar o M2 e uma liberação real.
+
+### F-PPB-2 — configuração do relatório na conta do cliente
+- **Opções:** (a) runbook humano + 400 com as colunas faltantes (**recomendada**) · (b) o job faz `PUT` na config.
+- **Resposta literal:** *"(a) Runbook + 400 (Recomendado)"* → ✅ (a).
+
+### F-PPB-4 — faixa sobreposta
+- **Opções:** (a) rejeita o arquivo inteiro (**recomendada**) · (b) pula as repetidas.
+- **Resposta literal:** *"(a) Rejeita o arquivo (Recomendado)"* → ✅ (a).
+
+### F-PPB-6 — quem dispara a busca do relatório
+- **Opções:** (a) job diário + upload manual (**recomendada**) · (b) só botão.
+- **Resposta literal:** *"(a) Job diário + upload (Recomendado)"* → ✅ (a).
+
+### F-PPB-3 — conta de débito do recibo `ProviderBalance`
+- **Opções:** (a) coluna `debitAccountId` em `receivable_receipts` (**recomendada**) · (b) `paymentAccountId`.
+- **Resposta literal:** *"(a) debitAccountId (Recomendado)"* → ✅ (a).
+
+### F-PPB-5 — `pickCandidate` genérico em extrato de `PaymentAccount`
+- **Opções:** (a) só o passo novo; o resto fica no manual (**recomendada**) · (b) o genérico roda também.
+- **Resposta literal:** *"(a) Só o passo novo (Recomendado)"* → ✅ (a).
+
+### F-PPB-8 — `partially_refunded` e `charged_back`
+- **Opções:** (a) continua `PAID` + aviso (**recomendada**) · (b) status novos na máquina.
+- **Resposta literal:** *"(b) Status novos"* → ✅ **(b)**, divergente da recomendação.
+- **Checagem antes de registrar (sem conflito):** os status novos não contam como "vivos" (o gate de 1 cobrança viva por
+  título olha só `CREATING`/`PENDING`). Continuam sem efeito no razão (PP-D5 e P4 do contador intactos), e a
+  máquina segue o estado do MP pelo mapa fechado. Itens do BRIEF ajustados: P2-7 e §4.1.
+
+### F-PPB-7 — cancelar título com cobrança viva
+- **Opções:** (a) 409 `receivable_has_live_charge` (**recomendada**) · (b) cancelamento em cascata no MP.
+- **Resposta literal:** *"(a) 409 (Recomendado)"* → ✅ (a).
+
+### F-PPB-9 — fatiamento
+- **Contexto dado:** com o F-PPB-1 (c), um PR único esperaria a sonda, e a sonda precisa do PR-2 implantado.
+- **Opções:** (a) 3 PRs seriais (**recomendada**) · (b) 1 PR.
+- **Resposta literal:** *"(a) 3 PRs seriais (Recomendado)"* → ✅ (a): PR-1 → PR-2 → [sonda em produção] → PR-3.
+
+### Resumo F-PPB
+
+| Fork | Decisão | Igual à recomendação? |
+|---|---|---|
+| F-PPB-1 | (c) duas chaves + PR-3 bloqueado até a **sonda de colunas** em produção | não (escolha do dono, reformulada com sonda para evitar a ordem circular) |
+| F-PPB-2 | (a) runbook + 400 | sim |
+| F-PPB-3 | (a) `debitAccountId` no recibo | sim |
+| F-PPB-4 | (a) rejeita o arquivo | sim |
+| F-PPB-5 | (a) só o passo novo | sim |
+| F-PPB-6 | (a) job diário + upload | sim |
+| F-PPB-7 | (a) 409 | sim |
+| F-PPB-8 | (b) status `PARTIALLY_REFUNDED` / `CHARGED_BACK` | não |
+| F-PPB-9 | (a) 3 PRs seriais | sim |
+
+**Estado final:** ADR com 11/11 e BRIEF com 9/9 forks ratificados; nenhum fork pendente. Seguem abertos P1–P5 do
+contador e os gates humanos (runbook do §6.2, agora com a sonda). Nenhum nó recebeu "executa".
