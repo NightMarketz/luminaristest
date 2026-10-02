@@ -3,8 +3,10 @@
 > Produzido em `sessao-planejamento` em 02/10/2026, sobre `origin/main` `4dd8fcb4`. Herda o esqueleto da §5 (Fase A,
 > itens A1–A10) do [`ADR-INCR-TAX-ASSESSMENT`](../adr/ADR-INCR-TAX-ASSESSMENT.md), que está **Accepted** desde 02/10
 > (14/14 forks ratificados: [`D-2026-10-02-X7-TAX-ASSESSMENT-FORKS`](../plano/decisoes/D-2026-10-02-X7-TAX-ASSESSMENT-FORKS.md)).
-> **Este documento NÃO escreve código.** Ele traz checklist, contratos esboçados e forks **F-TA-1..10, todos com
-> RATIFICAÇÃO PENDENTE**. Nenhum item vira código sem "executa" do dono (ORCH-006).
+> **Este documento NÃO escreve código.** Ele traz checklist, contratos esboçados e forks **F-TA-1..10, ✅ RATIFICADOS
+> em 02/10** por questionário (9 na recomendação; **F-TA-5 → (a), divergente**: a chave da liminar entra, item 2b).
+> Registro: [`D-2026-10-02-X7-TAX-ASSESSMENT-FORKS`](../plano/decisoes/D-2026-10-02-X7-TAX-ASSESSMENT-FORKS.md),
+> rodadas 5–7. Nenhum item vira código sem "executa" do dono (ORCH-006).
 >
 > **Alcance, dito antes de tudo:** o 1º cliente é **Simples**, e para ele esta fase vale **zero** (D12: o X7 responde
 > 400). O X7 é régua (Presumido/Real). O número que ele produz **só tem oráculo** quando o H1 (Presumido) ou o X5
@@ -101,6 +103,17 @@ pendência externa (§4), e a implementação usa o valor marcado como default, 
 2. **[F-TA-4] Início e encerramento de atividade no ano** (IN 2.305 art. 15 § 9º), no perfil. Recomendação:
    `inicioAtividadeEm String?` e `encerramentoAtividadeEm String?`, ambos date-only com validação de calendário. O
    regex sozinho não basta (classe `date-only-regex-nao-valida-calendario`).
+2b. **[F-TA-5 → a] Chave da liminar contra a LC 224, por PJ × ano** (`CompanyFiscalProfile`):
+   `lc224AcrescimoSuspenso Boolean @default(false)` e `lc224LiminarReferencia String?` (nº do processo, até 60
+   caracteres).
+   - `true` sem referência ⇒ 400 *"informe o processo da liminar"*.
+   - Efeito no cálculo (item 9): com a chave ligada, o acréscimo do trimestre **sendo apurado** é 0 para IRPJ e CSLL, e
+     a memória ganha a linha `LC224_SUSPENSO` com a referência.
+   - **Não é afetada pela trava da forma** (item 1): uma liminar pode sair no meio do ano.
+   - Trimestres **já confirmados** não mudam sozinhos: corrigir = substituição explícita (item 14). O acerto do T04
+     lê as memórias confirmadas como estão (F-TA-3 a). Se a liminar retroage ou não é pergunta jurídica (P-11).
+   - Audit `company_fiscal_profile.updated`: só `lc224AcrescimoSuspenso` entra na allowlist. A referência é texto livre
+     e fica fora (classe do `BE-INCR-AUDIT-FREETEXT-MASK`).
 3. **[F-TA-6] Contas da provisão em `FiscalProfile` (unidade).** Recomendação: 4 FKs nullable
    (`irpjDespesaAccountId`, `csllDespesaAccountId`: natureza `Expense`; `irpjRecolherAccountId`,
    `csllRecolherAccountId`: natureza `Liability`), checadas como `assertAssetAccount`. O código das contas vem do
@@ -165,6 +178,8 @@ pendência externa (§4), e a implementação usa o valor marcado como default, 
        acréscimo no T04, com rateio da excedente anual pela razão do item 1 e recálculo/dedução pelo item 3;
      - **III:** excedente anual maior ⇒ a excedente do T04 fica limitada à diferença;
    - o "poderá" dos ramos I-b e II-b vira **sempre aplicar a dedução** (P-3);
+   - chave da liminar ligada (item 2b) ⇒ acréscimo 0 no trimestre apurado, linha `LC224_SUSPENSO`; o limite e a
+     sobra continuam sendo contados (a receita existe), para o caso de a chave ser desligada depois;
    - dedução maior que o devido do T04 ⇒ excedente para restituição/compensação (§ 7º), registrado como
      `saldoNegativoCents` com a linha da memória *"§ 7º — pedido fora do sistema"*;
    - CSLL com `vigenteDesde 2026-04-01`: o acréscimo da CSLL é 0 nos trimestres anteriores a abril de 2026, e o
@@ -266,6 +281,8 @@ formaApuracaoTravadaEm  DateTime? // gravado na tx da 1ª confirmação do ano (
 lucroRealObrigatorio    Boolean?  // só REAL: 0220 (obrigada) × 3373 (optante)
 inicioAtividadeEm       String?   // F-TA-4 (b) — YYYY-MM-DD, calendário validado
 encerramentoAtividadeEm String?   // F-TA-4 (b)
+lc224AcrescimoSuspenso  Boolean   @default(false) // F-TA-5 (a) — liminar do cliente
+lc224LiminarReferencia  String?   // nº do processo; obrigatório se suspenso (fora da auditoria)
 
 // FiscalProfile (unidade) — aditivo (item 3, F-TA-6 a)
 irpjDespesaAccountId  String?  // Expense
@@ -340,7 +357,7 @@ export const TaxAssessmentListQuerySchema = z.object({
 // Saída
 type MemoriaLinha = { codigo: string; descricao: string; valorCents: string; fonte: string };
 // codigo estável p/ teste e p/ o pacote do contador: RECEITA_SERVICO, RECEITA_REVENDA, PRESUNCAO_SERVICO,
-// LC224_LIMITE_TRIMESTRE, LC224_SOBRA_ANTERIOR, LC224_EXCEDENTE, LC224_ACERTO_T04, LAIR, ADICOES, EXCLUSOES,
+// LC224_LIMITE_TRIMESTRE, LC224_SOBRA_ANTERIOR, LC224_EXCEDENTE, LC224_ACERTO_T04, LC224_SUSPENSO, LAIR, ADICOES, EXCLUSOES,
 // LUCRO_AJUSTADO, COMPENSACAO, COMPENSACAO_TETO, BASE, ALIQUOTA, ADICIONAL, DEVIDO, DEDUCAO_<i>, A_PAGAR, SALDO_NEGATIVO
 type TaxAssessmentView = {
   id: string; tributo: 'IRPJ' | 'CSLL'; periodo: string; modo: string; codigoReceita: string;
@@ -375,20 +392,20 @@ type ParametroApuracao = {
 | `POST /api/accounting/tax-assessments/:id/provisao` | manage | reconcile idempotente |
 | `GET /api/accounting/tax-assessments` · `GET …/:id` | read | lista / detalhe com memória |
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — ✅ RATIFICADOS 02/10 (texto original mantido como registro)
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
-| **F-TA-1** X8/X9 fundem no BRIEF da Fase A? (pedido do dono) | **(a)** BRIEFs separados: a Fase A entrega apurações confirmadas com `codigoReceita` (o insumo que o C1 consome sem migrar). O X9 segue para o **ADR próprio** (F-X7-8 → a), que herda o F-X7-9 → b (arquivo JSON do MIT); o X8 segue para o ADR dele (F-X7-13 → a) · **(b)** fundir o X9 (contrato C1 + gerador do JSON do MIT) nesta fase · **(c)** fundir o X8 e o X9 | **(a).** (1) O dono ratificou hoje o F-X7-8 → (a) (ADR próprio do X9) e o F-X7-13 → (a) (PIS/COFINS no X8). Fundir no BRIEF reabre os dois sem ADR. (2) A autorização do X8 e do X9 é *"F-M2 — só ADR"* e nenhum dos dois tem ADR: um BRIEF fundido planejaria código sobre desenho não ratificado. (3) O MIT recebe também PIS, Cofins e IRRF (IN 2.237 art. 8º I, II, VI, VII e art. 9º caput), e o arquivo do X9 não fecha só com IRPJ/CSLL. (4) Os retidos vão para a EFD-Reinf, não para o MIT (art. 9º § 1º I), outra fronteira que o ADR do X9 precisa desenhar. (5) Para o 1º cliente (Simples) o MIT não recebe o que está no DAS (art. 8º § 4º, V-fonte 29/09), então fundir não antecipa valor ao cliente. **O que (a) já garante:** o `codigoReceita` gravado por linha deixa o X9 a uma leitura de distância. **Caso adversarial tentado:** *"o prazo da DCTFWeb (último dia útil do mês seguinte, art. 6º) torna o X9 urgente assim que o X7 confirmar"*. Não se sustenta para o público atual: não há tenant Presumido/Real em produção, e a ficha manual cobre o intervalo | baixo em (a); médio em (b)/(c) (planeja sobre ADR inexistente) |
-| **F-TA-2** Arredondamento das frações de centavo | **(a)** meia unidade para cima (half-up) ao centavo em **cada** linha da memória, numa função única · (b) truncar (desprezar a fração) · (c) arredondar só o total | **(a).** Não achei regra primária de arredondamento para a base ou o imposto (nem na IN 1.700 do corpus nem nas fontes desta fase; P-4). O PVA usa `ARRED(…)` nas regras da Tabela Dinâmica (regra 360, citada no ADR D6). Linha a linha deixa a memória conferível contra as linhas do PVA. Oráculo: H1/X5 | baixo: diferença de centavos, que a conciliação acha |
-| **F-TA-3** Ordem dos trimestres e fonte do "valor apurado anteriormente" | **(a)** confirmação sequencial (Tq exige T(q−1) `CONFIRMED` no mesmo ano, salvo q = T01 ou trimestre anterior ao início de atividade). A sobra do § 4º e o acerto do § 5º leem a **memória confirmada** dos trimestres anteriores, não o razão de novo · (b) qualquer ordem, relendo o razão | **(a).** O § 5º fala em diferença em relação aos *"valores apurados anteriormente"* / *"valores devidos efetivamente apurados"*; reler o razão depois de um lançamento retroativo mudaria o que foi confessado (mesma razão do F-X7-3). Corrigir trimestre anterior = substituição explícita, que força reconfirmar os seguintes (409 com a lista) | médio em (b): T04 com acerto errado |
-| **F-TA-4** Início/encerramento de atividade no ano (IN 2.305 § 9º) | (a) `trimestresEmAtividade Int?` (1–4, nulo = 4) no perfil · **(b)** `inicioAtividadeEm` / `encerramentoAtividadeEm` date-only no perfil; os trimestres saem das datas · (c) não tratar: limite anual sempre 4 × 1,25 mi | **(b).** É o dado de verdade, serve também a Fase B (art. 54 § 2º: a opção no início de atividade) e a ordem do F-TA-3 (o 1º trimestre em atividade não exige anterior). (c) aplica o acréscimo a menos para quem começa no meio do ano | médio em (c): paga a menos |
-| **F-TA-5** Chave por cliente para desligar o acréscimo (liminar; ADR §9 item 1) | (a) boolean `lc224AcrescimoSuspenso` no perfil, com documento · **(b)** não construir agora | **(b).** Sem a chave, o cliente com liminar paga **a mais** (recuperável). Nenhum cliente-alvo declarou liminar, e cautelar do STF (ADIs 7936/7944) desliga para todos pela tabela versionada (D3), sem código. Reabrir quando o contador responder P-11 | baixo |
-| **F-TA-6** Onde moram as contas da provisão | **(a)** 4 FKs no `FiscalProfile` (unidade): despesa IRPJ, despesa CSLL, IRPJ a recolher, CSLL a recolher · (b) 2 FKs (uma despesa, um passivo) · (c) no `CompanyFiscalProfile` (PJ × ano) | **(a).** `Account` é por unidade e o lançamento cai no razão da unidade lida (F-X7-7 a), então a conta tem de ser da unidade, como as do ICMS/PIS a recuperar. Separar por tributo segue a separação usual do plano referencial (**I**, o código é do contador, P-5). (c) amarra FK de conta de unidade a uma linha por ano da PJ | baixo |
-| **F-TA-7** Confirmar sem as contas da provisão configuradas | **(a)** confirma; a provisão fica pendente (`provisaoPendente`, motivo *"contas não configuradas"*) até configurar + reconcile (item 16) · (b) a confirmação recusa (400) | **(a).** O valor confirmado serve à guia e à DCTFWeb, que têm prazo; travar a confissão pela falta de uma conta contábil inverte a prioridade. O F-TA-8 (a) impede que a pendência passe do encerramento | médio em (a) sem o F-TA-8 |
-| **F-TA-8** Encerramento do exercício × provisão pendente | **(a)** `ExerciseClosingService` recusa (400) encerrar o ano com apuração `CONFIRMED` sem provisão, listando os ids · (b) só aviso no GET | **(a).** O ADR §7 põe a provisão **antes** do encerramento, e sem isso a DRE e a ECD do ano saem sem IRPJ/CSLL (F-Z0). Toca o serviço de outro item (C11/encerramento), por isso é fork, não item direto | médio em (b): DRE sem imposto |
-| **F-TA-9** Dedução maior que o devido (retenção > imposto) | **(a)** a pagar = 0; o excedente vai para `saldoNegativoCents`, com a linha da memória *"restituição/compensação fora do sistema"* · (b) 400 se dedução > devido | **(a).** Retenção acima do devido acontece de fato (tomador PJ grande, trimestre fraco). Recusar impediria apurar. O tratamento (PER/DCOMP) não é deste nó; a regra exata do saldo negativo trimestral não foi relida (P-12) | baixo |
-| **F-TA-10** Fatiamento | **(a)** 3 PRs seriais: **PR-1** perfil + parâmetros + funções puras (itens 1–11), sem rota · **PR-2** model + preview/confirmação/leitura (12–14, 17, 19–22) · **PR-3** provisão + reconcile + encerramento (15, 16, 18) · (b) 1 PR | **(a).** O PR-1 é verificável só com teste de tabela (o maior risco é a aritmética da LC 224); o PR-3 concentra o padrão de 2 commits. É o molde ratificado no F-EM-13 (C8) | baixo |
+| **F-TA-1** X8/X9 fundem no BRIEF da Fase A? (pedido do dono) | **(a)** BRIEFs separados: a Fase A entrega apurações confirmadas com `codigoReceita` (o insumo que o C1 consome sem migrar). O X9 segue para o **ADR próprio** (F-X7-8 → a), que herda o F-X7-9 → b (arquivo JSON do MIT); o X8 segue para o ADR dele (F-X7-13 → a) · **(b)** fundir o X9 (contrato C1 + gerador do JSON do MIT) nesta fase · **(c)** fundir o X8 e o X9 | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** (1) O dono ratificou hoje o F-X7-8 → (a) (ADR próprio do X9) e o F-X7-13 → (a) (PIS/COFINS no X8). Fundir no BRIEF reabre os dois sem ADR. (2) A autorização do X8 e do X9 é *"F-M2 — só ADR"* e nenhum dos dois tem ADR: um BRIEF fundido planejaria código sobre desenho não ratificado. (3) O MIT recebe também PIS, Cofins e IRRF (IN 2.237 art. 8º I, II, VI, VII e art. 9º caput), e o arquivo do X9 não fecha só com IRPJ/CSLL. (4) Os retidos vão para a EFD-Reinf, não para o MIT (art. 9º § 1º I), outra fronteira que o ADR do X9 precisa desenhar. (5) Para o 1º cliente (Simples) o MIT não recebe o que está no DAS (art. 8º § 4º, V-fonte 29/09), então fundir não antecipa valor ao cliente. **O que (a) já garante:** o `codigoReceita` gravado por linha deixa o X9 a uma leitura de distância. **Caso adversarial tentado:** *"o prazo da DCTFWeb (último dia útil do mês seguinte, art. 6º) torna o X9 urgente assim que o X7 confirmar"*. Não se sustenta para o público atual: não há tenant Presumido/Real em produção, e a ficha manual cobre o intervalo | baixo em (a); médio em (b)/(c) (planeja sobre ADR inexistente) |
+| **F-TA-2** Arredondamento das frações de centavo | **(a)** meia unidade para cima (half-up) ao centavo em **cada** linha da memória, numa função única · (b) truncar (desprezar a fração) · (c) arredondar só o total | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** Não achei regra primária de arredondamento para a base ou o imposto (nem na IN 1.700 do corpus nem nas fontes desta fase; P-4). O PVA usa `ARRED(…)` nas regras da Tabela Dinâmica (regra 360, citada no ADR D6). Linha a linha deixa a memória conferível contra as linhas do PVA. Oráculo: H1/X5 | baixo: diferença de centavos, que a conciliação acha |
+| **F-TA-3** Ordem dos trimestres e fonte do "valor apurado anteriormente" | **(a)** confirmação sequencial (Tq exige T(q−1) `CONFIRMED` no mesmo ano, salvo q = T01 ou trimestre anterior ao início de atividade). A sobra do § 4º e o acerto do § 5º leem a **memória confirmada** dos trimestres anteriores, não o razão de novo · (b) qualquer ordem, relendo o razão | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O § 5º fala em diferença em relação aos *"valores apurados anteriormente"* / *"valores devidos efetivamente apurados"*; reler o razão depois de um lançamento retroativo mudaria o que foi confessado (mesma razão do F-X7-3). Corrigir trimestre anterior = substituição explícita, que força reconfirmar os seguintes (409 com a lista) | médio em (b): T04 com acerto errado |
+| **F-TA-4** Início/encerramento de atividade no ano (IN 2.305 § 9º) | (a) `trimestresEmAtividade Int?` (1–4, nulo = 4) no perfil · **(b)** `inicioAtividadeEm` / `encerramentoAtividadeEm` date-only no perfil; os trimestres saem das datas · (c) não tratar: limite anual sempre 4 × 1,25 mi | ✅ **RATIFICADO (b) — dono, 02/10.** **(b).** É o dado de verdade, serve também a Fase B (art. 54 § 2º: a opção no início de atividade) e a ordem do F-TA-3 (o 1º trimestre em atividade não exige anterior). (c) aplica o acréscimo a menos para quem começa no meio do ano | médio em (c): paga a menos |
+| **F-TA-5** Chave por cliente para desligar o acréscimo (liminar; ADR §9 item 1) | (a) boolean `lc224AcrescimoSuspenso` no perfil, com documento · **(b)** não construir agora | ✅ **RATIFICADO (a) — dono, 02/10, DIVERGENTE da recomendação (b); ver item 2b.** **(b).** Sem a chave, o cliente com liminar paga **a mais** (recuperável). Nenhum cliente-alvo declarou liminar, e cautelar do STF (ADIs 7936/7944) desliga para todos pela tabela versionada (D3), sem código. Reabrir quando o contador responder P-11 | baixo |
+| **F-TA-6** Onde moram as contas da provisão | **(a)** 4 FKs no `FiscalProfile` (unidade): despesa IRPJ, despesa CSLL, IRPJ a recolher, CSLL a recolher · (b) 2 FKs (uma despesa, um passivo) · (c) no `CompanyFiscalProfile` (PJ × ano) | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** `Account` é por unidade e o lançamento cai no razão da unidade lida (F-X7-7 a), então a conta tem de ser da unidade, como as do ICMS/PIS a recuperar. Separar por tributo segue a separação usual do plano referencial (**I**, o código é do contador, P-5). (c) amarra FK de conta de unidade a uma linha por ano da PJ | baixo |
+| **F-TA-7** Confirmar sem as contas da provisão configuradas | **(a)** confirma; a provisão fica pendente (`provisaoPendente`, motivo *"contas não configuradas"*) até configurar + reconcile (item 16) · (b) a confirmação recusa (400) | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O valor confirmado serve à guia e à DCTFWeb, que têm prazo; travar a confissão pela falta de uma conta contábil inverte a prioridade. O F-TA-8 (a) impede que a pendência passe do encerramento | médio em (a) sem o F-TA-8 |
+| **F-TA-8** Encerramento do exercício × provisão pendente | **(a)** `ExerciseClosingService` recusa (400) encerrar o ano com apuração `CONFIRMED` sem provisão, listando os ids · (b) só aviso no GET | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O ADR §7 põe a provisão **antes** do encerramento, e sem isso a DRE e a ECD do ano saem sem IRPJ/CSLL (F-Z0). Toca o serviço de outro item (C11/encerramento), por isso é fork, não item direto | médio em (b): DRE sem imposto |
+| **F-TA-9** Dedução maior que o devido (retenção > imposto) | **(a)** a pagar = 0; o excedente vai para `saldoNegativoCents`, com a linha da memória *"restituição/compensação fora do sistema"* · (b) 400 se dedução > devido | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** Retenção acima do devido acontece de fato (tomador PJ grande, trimestre fraco). Recusar impediria apurar. O tratamento (PER/DCOMP) não é deste nó; a regra exata do saldo negativo trimestral não foi relida (P-12) | baixo |
+| **F-TA-10** Fatiamento | **(a)** 3 PRs seriais: **PR-1** perfil + parâmetros + funções puras (itens 1–11), sem rota · **PR-2** model + preview/confirmação/leitura (12–14, 17, 19–22) · **PR-3** provisão + reconcile + encerramento (15, 16, 18) · (b) 1 PR | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O PR-1 é verificável só com teste de tabela (o maior risco é a aritmética da LC 224); o PR-3 concentra o padrão de 2 commits. É o molde ratificado no F-EM-13 (C8) | baixo |
 
 ## 4. Pendente de validação externa (não entra no checklist como decidido)
 
@@ -404,7 +421,7 @@ type ParametroApuracao = {
 | P-8 | O MIT aceita a tabela de códigos da DCTF | ADR §9 item 2 (**I**) | 1ª importação no MIT (X9) |
 | P-9 | Oráculo do número: 1ª apuração X7 × PVA × contador | gate humano (RUNBOOK-FORMAT). O agente prepara o passo em branco no runbook H1/X5; não preenche, não marca desfecho, não assina | dono |
 | P-10 | Irretratabilidade do regime Presumido no ano | a trava do item 1 é consistência interna; a lei que a sustenta não foi relida nesta sessão | contador |
-| P-11 | O cliente tem liminar contra a LC 224? | ADR §9 item 1; decide o F-TA-5 | contador / jurídico do cliente |
+| P-11 | O cliente tem liminar contra a LC 224? Se tiver: ela alcança trimestres já pagos (substituição) ou só os seguintes? | ADR §9 item 1; a chave existe (F-TA-5 → a, item 2b), e o efeito retroativo é jurídico | contador / jurídico do cliente |
 | P-12 | Regra do saldo negativo trimestral (retenção > devido) | o F-TA-9 registra o valor e não o trata | contador |
 
 ## 5. Insumos ausentes
@@ -441,7 +458,8 @@ type ParametroApuracao = {
    o valor para o 1º cliente é zero e que o número não tem oráculo antes do H1/X5.
 
 **Vieses (T8):**
-- **Completude:** 10 forks a mais sobre 14 já ratificados. Os que mudam desenho são F-TA-1, 3, 7 e 8; os outros
-  podem ir em lote.
+- **Completude:** 10 forks a mais sobre 14 já ratificados; todos ratificados em 02/10. O único divergente (F-TA-5 a)
+  **amplia** o escopo em 2 colunas e uma regra de cálculo; o item 2b é a autorização citável dessa ampliação, só para
+  planejamento.
 - **Fonte legível:** a LC 224 entrou com leitura detalhada porque a IN estava acessível. A regra de quotas e a do
   saldo negativo trimestral ficaram como I, porque não as reli.
