@@ -532,6 +532,10 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
    tela mostra o faltante do BE, não resolve.
 7. **A7 — `ServiceFiscalProfile` por `serviceRef` lido com `limit=500`:** mesmo teto da técnica do `NfePanel` (memória
    `crm-shared-table-loader-fetch-all`).
+8. **A8 — Entregar a nota ao tomador (e-mail ou WhatsApp) não está planejado** (registro de 02/10). A tela só
+   oferece "Baixar XML" e "Baixar DANFSe" (item 24), e só em produção (F5); o servidor não tem transporte de
+   e-mail. Fork **F-COB-1**, pendente do dono, em [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1. A recomendação de lá acrescenta um passo ao
+   runbook do item 29: conferir se o portal envia a nota ao tomador.
 
 ---
 
