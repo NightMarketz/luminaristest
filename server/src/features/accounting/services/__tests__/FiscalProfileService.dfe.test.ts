@@ -56,7 +56,7 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; reg
   const companyRepo = {
     findByYear: jest.fn(async () => (opts.regimeEmpresa ? { regime: opts.regimeEmpresa } : null)),
   } as unknown as ICompanyFiscalProfileRepository;
-  return { svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo), repo, append, companyRepo };
+  return { svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo), repo, append, companyRepo, accounts };
 }
 
 describe('fiscalProfileEmissaoStatus (BRIEF item 7 — função pura)', () => {
@@ -189,5 +189,32 @@ describe('X13 PR-2 — regime da EMPRESA governa a unidade (itens 15 e 17)', () 
   it('item 17: GET da unidade devolve emissao com o faltante do MEI (lê o regime da empresa)', async () => {
     const { svc } = build({ regimeEmpresa: 'MEI', existing: rowFrom({ regimeTributario: 'SIMPLES', codMun: '3550308', pTotTribSNCent: 600, ibsCbsInformar: false }) });
     expect((await svc.get(scope))?.emissao.faltantes).toContain('regime MEI — emissão fora do escopo (opSimpNac=2)');
+  });
+});
+
+// ── ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa do insumo no perfil ──────────────────────────
+describe('FiscalProfileService.upsert — insumoExpenseAccountId (ITEM-DESTINATION item 20)', () => {
+  const base = UpsertFiscalProfileSchema.parse({ unitId: 'unit-1', regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO' });
+  const acc = (over: Record<string, unknown>) => ({ id: 'acc-1', code: '4.1.9', nature: 'Expense', acceptsEntries: true, deletedAt: null, ...over });
+
+  it.each([
+    ['de ATIVO', acc({ code: '1.1.6', nature: 'Asset' }), /natureza Asset; esperado Expense/],
+    ['de outro escopo (findById escopado devolve null)', null, /não existe neste escopo/],
+    ['sintética', acc({ acceptsEntries: false }), /não aceita lançamentos/],
+  ])('conta %s → 400, nada gravado', async (_n, found, msg) => {
+    const { svc, repo, accounts } = build();
+    (accounts.findById as jest.Mock).mockResolvedValue(found);
+    await expect(svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' })).rejects.toThrow(msg);
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
+
+  it('conta de despesa folha do escopo → gravada, devolvida na view e no evento fiscal_profile.updated (allowlist)', async () => {
+    const { svc, repo, accounts, append } = build();
+    (accounts.findById as jest.Mock).mockResolvedValue(acc({}));
+    const view = await svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' });
+    expect((repo.upsert as jest.Mock).mock.calls[0][1]).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
+    expect(view.insumoExpenseAccountId).toBe('acc-1');
+    const evt = (append.mock.calls[0] as unknown[])[2] as { eventType: string; payload: Record<string, unknown> };
+    expect(JSON.parse(canonicalizeAuditPayload(evt.eventType, evt.payload))).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
   });
 });

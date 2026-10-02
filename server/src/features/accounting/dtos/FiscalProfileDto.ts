@@ -38,6 +38,8 @@ export const UpsertFiscalProfileSchema = z
     pisCofinsCreditFromSimplesSupplier: z.boolean().default(false),
     icmsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     pisCofinsRecuperavelAccountId: z.string().min(1).nullable().optional(),
+    // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa (Expense, folha) do insumo do serviço — código do contador.
+    insumoExpenseAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

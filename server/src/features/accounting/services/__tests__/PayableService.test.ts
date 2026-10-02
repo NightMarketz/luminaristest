@@ -1453,3 +1453,105 @@ describe('PayableService.createPayable — multi-item × gates pós-fork (PR #26
     ]); // hoje: [[undefined, undefined, 19333]]
   });
 });
+
+// ── ITEM-DESTINATION (BRIEF itens 10–13, F-ID-3 a / F-ID-5 a): insumoItems → despesa na entrada ─────────
+describe('PayableService.createPayable — insumoItems (ITEM-DESTINATION)', () => {
+  const insumoAcc = expenseAcc({ id: 'acc-insumo', code: '4.1.9', name: 'Insumos do serviço' });
+  const icmsAcc = expenseAcc({ id: 'acc-icms', code: '1.1.8', name: 'ICMS a Recuperar', nature: 'Asset' });
+  const byId = (accs: Account[]) => async (_s: unknown, id: string) => accs.find((a) => a.id === id) ?? null;
+  const mistaDto = {
+    unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-INSUMO', description: 'NF-e mista',
+    issueDate: '2026-06-10', dueDate: '2026-07-10', amountCents: 10000,
+    inventoryMultiItem: true,
+    inventoryItems: [{ productRef: 'prod-revenda', qty: 1, valueCents: 5000 }],
+    insumoItems: [{ accountId: 'acc-insumo', productRef: 'prod-tinta', cProd: 'T1', nItem: 2, costCents: 4000 }],
+    recoverableTaxLines: [{ accountId: 'acc-icms', amountCents: 1000, kind: 'ICMS' }],
+  };
+
+  it('item 10 — nota mista: D 1.1.6 + D despesa de insumo + D a recuperar / C 2.1.2 = bruto; 1 INBOUND e 1 movimento físico', async () => {
+    const { service, postEntry, accountRepo, inventoryService, physicalStockSync } = build();
+    accountRepo.findById.mockImplementation(byId([insumoAcc, icmsAcc]) as never);
+    await service.createPayable(scope, CreatePayableSchema.parse(mistaDto));
+
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines).toEqual([
+      { accountCode: ESTOQUES_CODE, debitCents: 5000, creditCents: 0 },
+      { accountCode: '1.1.8', debitCents: 1000, creditCents: 0 },
+      { accountCode: '4.1.9', debitCents: 4000, creditCents: 0 },
+      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 10000 },
+    ]);
+    expect(inventoryService.receiveStock).toHaveBeenCalledTimes(1);
+    expect((inventoryService.receiveStock.mock.calls[0] as unknown[])[1]).toMatchObject({ productRef: 'prod-revenda' });
+    expect(physicalStockSync.recordPurchaseInbound).toHaveBeenCalledTimes(1);
+  });
+
+  it('item 10 — nota 100% insumo: só D despesa / C 2.1.2; nenhum StockMovement, nenhum físico, catálogo não consultado', async () => {
+    const { service, postEntry, accountRepo, inventoryService, physicalStockSync, productRefLookup } = build();
+    accountRepo.findById.mockImplementation(byId([insumoAcc]) as never);
+    await service.createPayable(scope, CreatePayableSchema.parse({
+      ...mistaDto, amountCents: 4000, inventoryItems: undefined, recoverableTaxLines: undefined,
+    }));
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines).toEqual([
+      { accountCode: '4.1.9', debitCents: 4000, creditCents: 0 },
+      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 4000 },
+    ]);
+    expect(inventoryService.receiveStock).not.toHaveBeenCalled();
+    expect(physicalStockSync.recordPurchaseInbound).not.toHaveBeenCalled();
+    expect(productRefLookup.productExists).not.toHaveBeenCalled();
+  });
+
+  it('item 10 — 2 itens de insumo na MESMA conta → 1 linha somada', async () => {
+    const { service, postEntry, accountRepo } = build();
+    accountRepo.findById.mockImplementation(byId([insumoAcc]) as never);
+    await service.createPayable(scope, CreatePayableSchema.parse({
+      ...mistaDto, amountCents: 7000, inventoryItems: undefined, recoverableTaxLines: undefined,
+      insumoItems: [mistaDto.insumoItems[0], { ...mistaDto.insumoItems[0], cProd: 'T2', nItem: 3, costCents: 3000 }],
+    }));
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines.filter((l) => l.accountCode === '4.1.9')).toEqual([{ accountCode: '4.1.9', debitCents: 7000, creditCents: 0 }]);
+  });
+
+  it.each([
+    ['inexistente no escopo', [] as Account[], /não existe/],
+    ['de ATIVO', [expenseAcc({ id: 'acc-insumo', code: '1.1.6', nature: 'Asset' })], /nature=Expense/],
+    ['sintética (não folha)', [expenseAcc({ id: 'acc-insumo', acceptsEntries: false })], /analítica/],
+  ])('item 11 (defesa em profundidade) — conta de insumo %s → 400, nada é criado', async (_n, accs, msg) => {
+    const { service, accountRepo, payableRepo, postEntry } = build();
+    accountRepo.findById.mockImplementation(byId(accs) as never);
+    const dto = CreatePayableSchema.parse({ ...mistaDto, recoverableTaxLines: undefined, amountCents: 9000 });
+    await expect(service.createPayable(scope, dto)).rejects.toThrow(msg);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('item 13 — payable.created carrega insumoCents (string); 0 quando não há insumo', async () => {
+    const { service, accountRepo, auditService } = build();
+    accountRepo.findById.mockImplementation(byId([insumoAcc, icmsAcc]) as never);
+    await service.createPayable(scope, CreatePayableSchema.parse(mistaDto));
+    const created = (svc: { auditService: { append: jest.Mock } }) =>
+      (svc.auditService.append.mock.calls.map((c) => (c as unknown[])[2] as { eventType: string; payload: Record<string, string> })
+        .find((e) => e.eventType === 'payable.created'))!.payload;
+    const payload = created({ auditService });
+    expect(payload.insumoCents).toBe('4000');
+
+    const plain = build();
+    await plain.service.createPayable(scope, createDto as never);
+    const p2 = created(plain);
+    expect(p2.insumoCents).toBe('0');
+  });
+
+  // Review #461 (achado 2): `reversePurchaseInbound` é por payable — esta chamada única NÃO distingue "1 Out" de
+  // "2 Outs" no físico; quem segura isso é o lado da criação (insumo nunca chama recordPurchaseInbound, item 10).
+  it('item 12 — cancelar nota com insumo: estorna o entry inteiro (1 reverseEntry) e dispara 1 estorno de estoque e 1 do físico por payable', async () => {
+    const { service, reverseEntry, payableRepo, physicalStockSync, inventoryService } = build({
+      findEntryBySource: (type) => (type === AP_PAYABLE_SOURCE_TYPE ? { id: 'entry-rec' } : null),
+    });
+    payableRepo.findByIdWithPayments.mockResolvedValue({ ...payableRow({ inventoryMultiItem: true, expenseAccountId: null } as Partial<Payable>), payments: [] } as never);
+    await service.cancelPayable(scope, 'pay-1', { unitId: 'unit-1', reversalDate: '2026-06-20', reason: 'erro' } as never);
+    expect(reverseEntry).toHaveBeenCalledTimes(1);
+    expect((reverseEntry.mock.calls[0] as unknown[])[1]).toMatchObject({ lancamentoId: 'entry-rec' });
+    expect(inventoryService.reverseStockForReceipt).toHaveBeenCalledTimes(1);
+    expect(physicalStockSync.reversePurchaseInbound).toHaveBeenCalledTimes(1);
+  });
+});

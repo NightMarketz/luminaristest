@@ -2063,7 +2063,7 @@
           },
           "itemMappings": {
             "type": "array",
-            "description": "Mapeamento cProd→productRef (estoque) OU cProd→classId (imobilizado, CFOP 1551/2551, BE-INCR-FIXED-ASSETS PR-5) confirmado pelo operador (D6/F-FA12). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento, ou com o mapeamento errado para o CFOP, é rejeitado.",
+            "description": "Mapeamento cProd→productRef (estoque/insumo) OU cProd→classId (imobilizado) confirmado pelo operador (D6/ITEM-DESTINATION). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento é rejeitado.",
             "items": {
               "type": "object",
               "required": [
@@ -2075,11 +2075,20 @@
                 },
                 "productRef": {
                   "type": "string",
-                  "description": "Exige o item NÃO ser CFOP 1551/2551 — XOR com classId"
+                  "description": "Estoque (REVENDA) ou despesa (INSUMO_SERVICO) — XOR com classId"
                 },
                 "classId": {
                   "type": "string",
-                  "description": "Exige o item SER CFOP 1551/2551 — XOR com productRef"
+                  "description": "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef"
+                },
+                "destination": {
+                  "type": "string",
+                  "enum": [
+                    "REVENDA",
+                    "INSUMO_SERVICO",
+                    "IMOBILIZADO"
+                  ],
+                  "description": "Override da destinação do item (ITEM-DESTINATION). Com productRef — REVENDA ou INSUMO_SERVICO (ausente ⇒ REVENDA com origem FALLBACK + warning); com classId — só IMOBILIZADO"
                 }
               }
             }
@@ -2110,6 +2119,13 @@
         "properties": {
           "unitId": {
             "type": "string"
+          },
+          "itemMappings": {
+            "type": "array",
+            "description": "Opcional (ITEM-DESTINATION F-ID-8 a): o MESMO itemMappings do import — o preview aplica o mesmo resolver de destinação (preview = import a seco). Ausente ⇒ todo item REVENDA/FALLBACK",
+            "items": {
+              "type": "object"
+            }
           }
         }
       },
@@ -2358,7 +2374,7 @@
           },
           "fixedAssetItems": {
             "type": "array",
-            "description": "BE-INCR-FIXED-ASSETS PR-5 (F-FA12 → a): itens de imobilizado (CFOP 1551/2551) da NF-e — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement.",
+            "description": "BE-INCR-FIXED-ASSETS PR-5: itens de imobilizado da NF-e (declarados pelo classId do operador — ITEM-DESTINATION emenda 29/09) — combinável SÓ com inventoryMultiItem/inventoryItems (nota mista, 2 débitos). Debita class.costAccountId; NUNCA StockMovement.",
             "items": {
               "type": "object",
               "required": [
@@ -2391,6 +2407,43 @@
                   "type": "integer",
                   "minimum": 1,
                   "description": "Posição da linha na NF-e — chave do rascunho; ausente numa criação manual usa o índice no array"
+                }
+              }
+            }
+          },
+          "insumoItems": {
+            "type": "array",
+            "description": "ITEM-DESTINATION (F-ID-3 a): itens de NF-e usados como insumo do serviço — combinável SÓ com inventoryMultiItem. Debitam accountId (conta de insumo do perfil fiscal, Expense folha); NUNCA StockMovement nem estoque físico.",
+            "items": {
+              "type": "object",
+              "required": [
+                "accountId",
+                "productRef",
+                "cProd",
+                "nItem",
+                "costCents"
+              ],
+              "properties": {
+                "accountId": {
+                  "type": "string"
+                },
+                "productRef": {
+                  "type": "string"
+                },
+                "cProd": {
+                  "type": "string"
+                },
+                "nItem": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "costCents": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 2147483647
+                },
+                "description": {
+                  "type": "string"
                 }
               }
             }

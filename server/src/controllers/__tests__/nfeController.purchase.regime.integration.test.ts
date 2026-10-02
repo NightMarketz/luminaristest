@@ -88,13 +88,19 @@ describe('X6 — perfil fiscal + import de compra por regime', () => {
     expect(await prisma.auditEvent.count({ where: { unitId: UNIT, eventType: 'fiscal_profile.updated' } })).toBe(2);
   });
 
-  it('preview ecoa o custo por regime ANTES do import (item 12): bruto 19333, estoque 15249, ICMS 3300, PIS/COFINS 784, warnings vazias', async () => {
+  // ITEM-DESTINATION (F-ID-6 a / item 14): sem itemMappings todo item sai REVENDA/FALLBACK — os números são os de
+  // antes; as únicas warnings são as 3 do FALLBACK (antes: nenhuma).
+  it('preview ecoa o custo por regime ANTES do import (item 12): bruto 19333, estoque 15249, ICMS 3300, PIS/COFINS 784, só warnings de FALLBACK', async () => {
     const res = await request(app).post('/api/nfe/preview').set(authHeader(dono)).field('unitId', UNIT).attach('file', XML, { filename: 'nfe.xml', contentType: 'text/xml' });
     expect(res.status).toBe(200);
-    expect(res.body.data.custo).toEqual({
-      custoBrutoCents: 19333, custoEstoqueCents: 19333 - 3300 - 784, creditoIcmsCents: 3300, creditoPisCofinsCents: 784, baseCreditoPisCofinsCents: 8473,
-      regimeAplicado: 'CONTRIBUINTE_ICMS', pisCofinsAplicado: 'NAO_CUMULATIVO', warnings: [],
+    const { warnings, destinacoes, ...custo } = res.body.data.custo;
+    expect(custo).toEqual({
+      custoBrutoCents: 19333, custoEstoqueCents: 19333 - 3300 - 784, custoInsumoCents: 0, creditoIcmsCents: 3300, creditoPisCofinsCents: 784, baseCreditoPisCofinsCents: 8473,
+      regimeAplicado: 'CONTRIBUINTE_ICMS', pisCofinsAplicado: 'NAO_CUMULATIVO',
     });
+    expect(destinacoes.map((d: { destination: string; origem: string }) => `${d.destination}/${d.origem}`)).toEqual(Array(3).fill('REVENDA/FALLBACK'));
+    expect(warnings).toHaveLength(3);
+    expect(warnings.every((w: string) => /FALLBACK/.test(w))).toBe(true);
     expect(res.body.data.emit.crt).toBe('3');
   });
 

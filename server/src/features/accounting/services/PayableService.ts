@@ -202,6 +202,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
     const hasFixedAssetItems = (dto.fixedAssetItems?.length ?? 0) > 0;
     const fixedAssetLines = hasFixedAssetItems ? await this.resolveFixedAssetLines(scope, dto) : [];
 
+    // ITEM-DESTINATION item 11 (F-ID-3 a): a conta de cada item de insumo é re-conferida aqui como folha
+    // Expense do escopo (defesa em profundidade — mesmo gate do `expenseAccountId`), ANTES do tx1.
+    const insumoLines = await this.resolveInsumoLines(scope, dto);
+
     // A note has STOCK lines only when it carries a single-SKU pair or a non-empty inventoryItems[]
     // (F-FA12 → a: a nota pode ser 100% CFOP 1551/2551, com inventoryItems=[]/ausente — o wiring de
     // estoque não deve ser exigido de um payable sem nenhum item de estoque).
@@ -281,6 +285,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
             // X6 F-X6-8 (a): o que foi RECONHECIDO como crédito a recuperar (derivado das linhas, nunca do perfil).
             recoverableIcmsCents: String(recoverableLines.filter((l) => l.kind === 'ICMS').reduce((acc, l) => acc + l.amountCents, 0)),
             recoverablePisCofinsCents: String(recoverableLines.filter((l) => l.kind === 'PIS_COFINS').reduce((acc, l) => acc + l.amountCents, 0)),
+            // ITEM-DESTINATION item 13: o que foi para DESPESA de insumo (precedente do X6 item 13).
+            insumoCents: String(insumoLines.reduce((acc, l) => acc + l.costCents, 0)),
             dueDate: dto.dueDate,
             // Debit leg of the recognition: an expense leaf, or 1.1.6 Estoques for an inventory purchase.
             expenseAccountCode: expenseAccount?.code ?? ESTOQUES_CODE,
@@ -302,7 +308,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     try {
       const entry = await this.posting.postEntry(
         scope,
-        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines),
+        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines, insumoLines),
       );
       recognitionEntryId = entry.id;
     } catch (error) {
@@ -1121,6 +1127,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     expenseAccount: Account | null,
     dto: CreatePayableInput,
     fixedAssetLines: ResolvedFixedAssetItem[],
+    insumoLines: { accountCode: string; costCents: number }[] = [],
   ): PostEntryInput {
     return {
       unitId: scope.unitId,
@@ -1144,6 +1151,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         dto.amountCents,
         this.parseRecoverableLines(payable),
         this.groupFixedAssetDebits(fixedAssetLines),
+        this.groupFixedAssetDebits(insumoLines),
       ),
     };
   }
@@ -1156,6 +1164,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * linha de valor zero) e só as linhas de imobilizado carregam o débito. Sem linhas extra é o par de
    * sempre. Os códigos vêm resolvidos no create (`resolveRecoverableLines`/`resolveFixedAssetLines`) e
    * persistidos na linha para o re-drive.
+   * ITEM-DESTINATION (F-ID-3 a): `insumo` = D conta(s) de despesa do insumo do serviço (agrupada por conta),
+   * subtraída do débito principal como o imobilizado; nota 100% insumo omite a linha de 1.1.6.
    */
   private recognitionLines(
     payable: Payable,
@@ -1163,16 +1173,19 @@ export class PayableService implements IFixedAssetDraftRedriver {
     amountCents: number,
     recoverable: { accountCode: string; amountCents: number }[],
     fixedAsset: { accountCode: string; amountCents: number }[] = [],
+    insumo: { accountCode: string; amountCents: number }[] = [],
   ): PostEntryInput['lines'] {
     const recoverableSum = recoverable.reduce((a, l) => a + l.amountCents, 0);
     const fixedAssetSum = fixedAsset.reduce((a, l) => a + l.amountCents, 0);
-    const mainDebitCents = amountCents - recoverableSum - fixedAssetSum;
+    const insumoSum = insumo.reduce((a, l) => a + l.amountCents, 0);
+    const mainDebitCents = amountCents - recoverableSum - fixedAssetSum - insumoSum;
     const lines: PostEntryInput['lines'] = [];
     if (mainDebitCents > 0) {
       lines.push({ accountCode: this.recognitionDebitCode(payable, expenseAccount), debitCents: mainDebitCents, creditCents: 0 });
     }
     lines.push(...recoverable.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
     lines.push(...fixedAsset.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
+    lines.push(...insumo.map((l) => ({ accountCode: l.accountCode, debitCents: l.amountCents, creditCents: 0 })));
     lines.push({ accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: amountCents });
     return lines;
   }
@@ -1195,6 +1208,23 @@ export class PayableService implements IFixedAssetDraftRedriver {
       byAccount.set(it.accountCode, (byAccount.get(it.accountCode) ?? 0) + it.costCents);
     }
     return [...byAccount.entries()].map(([accountCode, amountCents]) => ({ accountCode, amountCents }));
+  }
+
+  /** ITEM-DESTINATION item 11: cada `insumoItems[].accountId` é folha Expense do escopo (reusa o gate do
+   *  `expenseAccountId`); devolve o código por item para o débito agrupado. Uma leitura por conta distinta. */
+  private async resolveInsumoLines(
+    scope: AccountingScope,
+    dto: CreatePayableInput,
+  ): Promise<{ accountCode: string; costCents: number }[]> {
+    const codeById = new Map<string, string>();
+    const out: { accountCode: string; costCents: number }[] = [];
+    for (const item of dto.insumoItems ?? []) {
+      if (!codeById.has(item.accountId)) {
+        codeById.set(item.accountId, (await this.resolveExpenseAccount(scope, item.accountId)).code);
+      }
+      out.push({ accountCode: codeById.get(item.accountId)!, costCents: item.costCents });
+    }
+    return out;
   }
 
   /** X6: valida as contas a recuperar (existem no escopo, folha, natureza Asset) e devolve o que se persiste. */
@@ -1298,6 +1328,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * com um payable modo 4, o re-drive posta a recognition com o débito principal cobrindo o
    * `amountCents` inteiro na conta de estoque/despesa em vez de dividir por classe — bug estreito,
    * de janela rara, registrado aqui e no retorno da sessão, não escondido.
+   * ITEM-DESTINATION (F-ID-3 a): o MESMO residual vale para `insumoItems` — o breakdown de insumo também não
+   * está na linha (BRIEF item 2: nenhum ALTER em `payables`), então um re-drive NESTA janela debita o insumo
+   * em 1.1.6 em vez da despesa. Registrado no retorno da sessão.
    */
   private buildRecognitionInputFromRow(
     scope: AccountingScope,

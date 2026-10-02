@@ -18,9 +18,19 @@
  *  - LC 123/2006 art. 23: Simples Nacional não apura crédito (regime `SIMPLES` = crédito 0).
  *
  * Invariante (item 9): Σ custo_item === custoEstoqueCents em qualquer ramo (resíduo na última linha, BigInt).
+ *
+ * ITEM-DESTINATION (BRIEF itens 4–8, `docs/accounting/BE-INCR-ITEM-DESTINATION-brief.md`): `destinos`
+ * opcional por `nItem`; ausente ⇒ tudo REVENDA e a saída é idêntica à de antes (item 4).
+ *  - INSUMO_SERVICO: ICMS fica no custo (item 5 — contador P4 "ICMS uso e consumo"; RIR/2018 art. 301 §3º:
+ *    só o recuperável sai; a não-recuperabilidade é a pendência P-2 [NC], default conservador);
+ *    PIS/COFINS de item TRIBUTADO credita igual à revenda (item 6 — Leis 10.637/10.833 art. 3º II, I);
+ *    MONOFÁSICO não credita, com warning — F-ID-4 na etapa (c) até a transcrição da P-1 (item 7).
+ *  - IMOBILIZADO (EMENDA 29/09 item 21): mesmo ramo de crédito da REVENDA — a emenda muda a rota, não o
+ *    crédito (decisão do dono, 02/10).
  */
 import type { NfeItem, NfeTotais, ParsedNfe } from './nfe';
 import { classifyPisCofinsItem } from '../features/accounting/models/pisCofinsMonofasicoNcm';
+import type { ItemDestination } from '../features/accounting/models/itemDestination';
 
 export const PIS_CREDIT_BP = 165; // 1,65% — Lei 10.637/2002 art. 2º
 export const COFINS_CREDIT_BP = 760; // 7,6% — Lei 10.833/2003 art. 2º
@@ -44,6 +54,7 @@ export interface ItemCost {
   /** custoBruto − créditos — o que valoriza o estoque (1.1.6). */
   custoLiquidoCents: number;
   classe: 'MONOFASICO' | 'TRIBUTADO' | 'UNKNOWN' | 'SEM_REGIME';
+  destination: ItemDestination;
 }
 
 export interface AcquisitionCost {
@@ -51,6 +62,8 @@ export interface AcquisitionCost {
   custoBrutoCents: number;
   /** Valoriza o estoque: bruto − créditos (item 7/8/10). */
   custoEstoqueCents: number;
+  /** ITEM-DESTINATION item 14: Σ custoLiquido dos itens INSUMO_SERVICO (subconjunto de custoEstoqueCents). */
+  custoInsumoCents: number;
   creditoIcmsCents: number;
   creditoPisCofinsCents: number;
   /** Σ das bases pós-exceções — o número que o contador confere (regra (j)). */
@@ -90,7 +103,12 @@ function bp(value: number, basisPoints: number): number {
  * Custo por regime. Só os itens que compõem o total (`indTot !== '0'`) entram — o chamador já filtrou.
  * `emitCrt` = `emit/CRT` da nota ('1' = Simples Nacional).
  */
-export function acquisitionCost(nfe: Pick<ParsedNfe, 'totais' | 'emit'>, itens: NfeItem[], regime: CostRegime): AcquisitionCost {
+export function acquisitionCost(
+  nfe: Pick<ParsedNfe, 'totais' | 'emit'>,
+  itens: NfeItem[],
+  regime: CostRegime,
+  destinos?: ReadonlyMap<number, ItemDestination>,
+): AcquisitionCost {
   const warnings: string[] = [];
   const bruto = custoBrutoCents(nfe.totais);
   if (bruto !== nfe.totais.vNFCents) {
@@ -115,8 +133,11 @@ export function acquisitionCost(nfe: Pick<ParsedNfe, 'totais' | 'emit'>, itens: 
 
   const out: ItemCost[] = itens.map((it, i) => {
     const custoBruto = brutoPorItem[i];
-    // Item 8 (F-X6-2 a): ICMS próprio do ITEM sai do custo do contribuinte; ST nunca.
-    const creditoIcms = regime.icmsContribuinte ? it.vICMSCents : 0;
+    const destination = destinos?.get(it.nItem) ?? 'REVENDA';
+    const insumo = destination === 'INSUMO_SERVICO';
+    // Item 8 (F-X6-2 a): ICMS próprio do ITEM sai do custo do contribuinte; ST nunca. ITEM-DESTINATION item 5:
+    // no insumo do serviço o ICMS não é recuperável (P-2) — fica no custo.
+    const creditoIcms = regime.icmsContribuinte && !insumo ? it.vICMSCents : 0;
 
     let classe: ItemCost['classe'] = 'SEM_REGIME';
     let base = 0;
@@ -134,10 +155,14 @@ export function acquisitionCost(nfe: Pick<ParsedNfe, 'totais' | 'emit'>, itens: 
         if (c.alerta) warnings.push(`item ${it.nItem} (${it.cProd}): ${c.alerta}`);
       } else if (c.classe === 'UNKNOWN') {
         warnings.push(`item ${it.nItem} (${it.cProd}): sem crédito de PIS/COFINS — ${c.motivo}`);
+      } else if (insumo) {
+        // ITEM-DESTINATION item 7, F-ID-4 etapa (c): até a P-1 (IN RFB 2.121 art. 160 I / SC 4.024/2021) entrar
+        // no corpus, o insumo monofásico não credita em nenhum CST — o comportamento de hoje, agora visível.
+        warnings.push(`item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — sem crédito de PIS/COFINS até a validação da pendência P-1 (posição da RFB × contador)`);
       }
     }
     const custoLiquido = custoBruto - creditoIcms - creditoPisCofins;
-    return { nItem: it.nItem, cProd: it.cProd, custoBrutoCents: custoBruto, creditoIcmsCents: creditoIcms, creditoPisCofinsCents: creditoPisCofins, basePisCofinsCents: base, custoLiquidoCents: custoLiquido, classe };
+    return { nItem: it.nItem, cProd: it.cProd, custoBrutoCents: custoBruto, creditoIcmsCents: creditoIcms, creditoPisCofinsCents: creditoPisCofins, basePisCofinsCents: base, custoLiquidoCents: custoLiquido, classe, destination };
   });
 
   const creditoIcmsCents = out.reduce((a, it) => a + it.creditoIcmsCents, 0);
@@ -146,6 +171,7 @@ export function acquisitionCost(nfe: Pick<ParsedNfe, 'totais' | 'emit'>, itens: 
   return {
     custoBrutoCents: bruto,
     custoEstoqueCents: bruto - creditoIcmsCents - creditoPisCofinsCents,
+    custoInsumoCents: out.filter((it) => it.destination === 'INSUMO_SERVICO').reduce((a, it) => a + it.custoLiquidoCents, 0),
     creditoIcmsCents,
     creditoPisCofinsCents,
     baseCreditoPisCofinsCents,

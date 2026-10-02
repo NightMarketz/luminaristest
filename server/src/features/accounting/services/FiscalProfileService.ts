@@ -45,6 +45,7 @@ export interface FiscalProfileView extends CostRegime {
   regimeTributario: string;
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
+  insumoExpenseAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -145,6 +146,7 @@ export class FiscalProfileService {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar');
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
+    if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço');
     const { unitId: _unitId, ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
@@ -174,6 +176,7 @@ export class FiscalProfileService {
           pisCofinsCreditFromSimplesSupplier: String(row.pisCofinsCreditFromSimplesSupplier),
           icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
           pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
+          insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
           // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
           codMun: row.codMun ?? '',
           dpsSerie: String(row.dpsSerie),
@@ -205,6 +208,17 @@ export class FiscalProfileService {
     }
   }
 
+  /** ITEM-DESTINATION item 20 (F-ID-5 a): análogo ao `assertAssetAccount` — o insumo do serviço vai para
+   *  DESPESA na entrada (F-ID-3 a), então a conta é folha de resultado `nature = Expense` do escopo. */
+  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
+    if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
+    if (account.nature !== 'Expense') {
+      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Expense (insumo vai para despesa na entrada — ITEM-DESTINATION F-ID-3 a).`);
+    }
+  }
+
   private toView(row: FiscalProfile, regimeEmpresa: RegimeEmpresa | null): FiscalProfileView {
     return {
       unitId: row.unitId,
@@ -216,6 +230,7 @@ export class FiscalProfileService {
       pisCofinsCreditFromSimplesSupplier: row.pisCofinsCreditFromSimplesSupplier,
       icmsRecuperavelAccountId: row.icmsRecuperavelAccountId,
       pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId,
+      insumoExpenseAccountId: row.insumoExpenseAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

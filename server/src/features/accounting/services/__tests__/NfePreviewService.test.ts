@@ -12,6 +12,7 @@ import * as nfeLib from '../../../../lib/nfe';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { NfePreviewSchema } from '../../dtos/NfeDto';
 import { NfePreviewService } from '../NfePreviewService';
+import { NfeImportService } from '../NfeImportService';
 import type { IPayableRepository } from '../../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { AccountingScope } from '../../scope/AccountingScope';
@@ -95,5 +96,56 @@ describe('NfePreviewService.preview', () => {
     const imports = src.split('\n').filter((l) => l.startsWith('import ')).join('\n');
     expect(imports).not.toMatch(/auditCanonical|AuditService|runTransaction|PostingService|lib\/prisma|AttachmentService/);
     expect(src).not.toMatch(/runTransaction\(|\.create\(|\.update\(|\.delete\(/);
+  });
+});
+
+// ── ITEM-DESTINATION item 14 (F-ID-8 a): preview = import a seco ─────────────────────────────────────
+describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)', () => {
+  const profile = {
+    icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false,
+    pisCofinsCreditFromSimplesSupplier: false, icmsRecuperavelAccountId: 'acc-icms', pisCofinsRecuperavelAccountId: 'acc-pc',
+    insumoExpenseAccountId: 'acc-insumo',
+  };
+  const PC = readFileSync(join(FIXTURE_DIR, 'purchase-pis-cofins.SYNTHETIC.xml'), 'utf8');
+  const MAPPINGS = [
+    { cProd: 'SHAMP-500', productRef: 'p1', destination: 'INSUMO_SERVICO' as const },
+    { cProd: 'COND-500', productRef: 'p2' },
+    { cProd: 'MASC-300', productRef: 'p3', destination: 'INSUMO_SERVICO' as const },
+  ];
+  const previewSvc = () =>
+    new NfePreviewService(
+      { findByDocumentNumber: async () => null } as unknown as IPayableRepository,
+      { canManagePayable: () => true, canReconcile: () => false } as unknown as IAccountingPolicy,
+      { requireCostRegime: async () => profile } as never,
+    );
+
+  it('sem mapeamento: tudo REVENDA/FALLBACK, custoInsumoCents 0 e números iguais aos de hoje', async () => {
+    const preview = await previewSvc().preview(scope, PURCHASE);
+    expect(NfePreviewSchema.safeParse(preview).success).toBe(true);
+    expect(preview.custo.destinacoes.map((d) => `${d.destination}/${d.origem}`)).toEqual(Array(3).fill('REVENDA/FALLBACK'));
+    expect(preview.custo.custoInsumoCents).toBe(0);
+    expect(preview.custo.creditoIcmsCents).toBe(3300);
+  });
+
+  it('com o MESMO mapeamento do import: mesmos créditos, mesmo custo de insumo, mesmas destinações e warnings', async () => {
+    const preview = await previewSvc().preview(scope, PC, MAPPINGS);
+    expect(NfePreviewSchema.safeParse(preview).success).toBe(true);
+
+    let captured: { recoverableTaxLines?: { amountCents: number; kind: string }[]; insumoItems?: { costCents: number }[] } = {};
+    const importSvc = new NfeImportService(
+      { createPayable: async (_s: unknown, input: typeof captured) => { captured = input; return { id: 'pay-1' }; } } as never,
+      { findById: async () => null } as never,
+      { canManagePayable: () => true } as never,
+      { requireCostRegime: async () => profile } as never,
+    );
+    const imported = await importSvc.importPurchase(scope, PC, { unitId: 'unit-1', itemMappings: MAPPINGS });
+
+    const credit = (kind: string) => (captured.recoverableTaxLines ?? []).filter((l) => l.kind === kind).reduce((a, l) => a + l.amountCents, 0);
+    expect(preview.custo.creditoIcmsCents).toBe(credit('ICMS'));
+    expect(preview.custo.creditoPisCofinsCents).toBe(credit('PIS_COFINS'));
+    expect(preview.custo.custoInsumoCents).toBe((captured.insumoItems ?? []).reduce((a, i) => a + i.costCents, 0));
+    expect(preview.custo.custoInsumoCents).toBeGreaterThan(0);
+    expect(preview.custo.destinacoes).toEqual(imported.destinacoes);
+    expect(preview.custo.warnings).toEqual(imported.warnings);
   });
 });

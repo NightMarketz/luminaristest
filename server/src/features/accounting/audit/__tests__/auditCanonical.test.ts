@@ -381,3 +381,13 @@ describe('company_signer.* / company_fiscal_profile.* — PII do signatário e d
     for (const [k, v] of Object.entries(allowed)) expect(JSON.parse(out)[k]).toBe(v);
   });
 });
+
+// ITEM-DESTINATION item 13 / item 20 (gate da allowlist no mesmo PR).
+it('payable.created mantém insumoCents e fiscal_profile.updated mantém insumoExpenseAccountId', () => {
+  expect(JSON.parse(canonicalizeAuditPayload('payable.created', { payableId: 'p1', amountCents: '100', insumoCents: '40', extra: 'x' }))).toEqual({
+    payableId: 'p1', amountCents: '100', insumoCents: '40',
+  });
+  expect(JSON.parse(canonicalizeAuditPayload('fiscal_profile.updated', { regimeTributario: 'REAL', insumoExpenseAccountId: 'acc-1' }))).toEqual({
+    regimeTributario: 'REAL', insumoExpenseAccountId: 'acc-1',
+  });
+});

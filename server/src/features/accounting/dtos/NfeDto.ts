@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { isValidDateOnly } from '../models/dates';
 import { NFE_CHAVE_REGEX } from '../../../lib/cnpj';
+import { ITEM_DESTINATIONS, ITEM_DESTINATION_ORIGINS } from '../models/itemDestination';
 
 /**
  * NfeDto — request schemas for fiscal NF-e ingestion (BE-INCR-NFE): `ImportNfePurchaseSchema` (A2,
@@ -21,17 +22,18 @@ const dateOnly = (field: string) =>
   z.string().refine(isValidDateOnly, `${field} deve ser uma data real YYYY-MM-DD`);
 
 /** One operator-confirmed mapping of a note item (`cProd` from the XML). EXACTLY one of
- *  `productRef` (estoque, D6 — never auto-create a product from the note) or `classId` (imobilizado,
- *  BE-INCR-FIXED-ASSETS PR-5 / F-FA12 → a — item com CFOP 1551/2551) — never both, never neither. The
- *  service (`NfeImportService.allocate`) checks the mapping AGAINST the parsed CFOP of the item: a
- *  1551/2551 item requires `classId` and forbids `productRef`; any other item requires `productRef`
- *  and forbids `classId` (param-aceito-e-ignorado-e-bug — a `classId` on a non-1551 item, or a
- *  `productRef` on a 1551 item, is a silent-misroute risk and rejects loud rather than guessing). */
+ *  `productRef` (estoque/insumo, D6 — never auto-create a product from the note) or `classId`
+ *  (imobilizado, BE-INCR-FIXED-ASSETS PR-5) — never both, never neither.
+ *
+ *  ITEM-DESTINATION (BRIEF item 3 + EMENDA 29/09 itens 22–23): o CFOP deixa de rotear — o `classId` do
+ *  operador É a declaração de imobilizado. `destination` opcional é o override por item: com `productRef`,
+ *  `REVENDA | INSUMO_SERVICO` (ausente → FALLBACK REVENDA, F-ID-6 a); com `classId`, só `IMOBILIZADO`. */
 const itemMapping = z
   .object({
     cProd: z.string().min(1),
     productRef: z.string().min(1).optional(),
     classId: z.string().min(1).optional(),
+    destination: z.enum(ITEM_DESTINATIONS).optional(),
   })
   .strict()
   .superRefine((val, ctx) => {
@@ -42,6 +44,18 @@ const itemMapping = z
         code: z.ZodIssueCode.custom,
         message: `Item '${val.cProd}': informe EXATAMENTE UM de productRef (estoque) ou classId (imobilizado).`,
         path: ['productRef'],
+      });
+      return;
+    }
+    // EMENDA item 22: IMOBILIZADO ⇔ classId — `destination: 'IMOBILIZADO'` sem classId, ou classId com outra
+    // destinação, é ambíguo e rejeita loud.
+    if (val.destination != null && (val.destination === 'IMOBILIZADO') !== hasClassId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: hasClassId
+          ? `Item '${val.cProd}': item com classId é imobilizado — destination só pode ser IMOBILIZADO.`
+          : `Item '${val.cProd}': destination IMOBILIZADO exige classId (a classe do bem) — com productRef use REVENDA ou INSUMO_SERVICO.`,
+        path: ['destination'],
       });
     }
   });
@@ -58,14 +72,15 @@ const itemMapping = z
  *         dueDate:        { type: string, description: "Data-only YYYY-MM-DD de vencimento; ausente ⇒ usa a data de emissão da NF-e (dhEmi)" }
  *         itemMappings:
  *           type: array
- *           description: "Mapeamento cProd→productRef (estoque) OU cProd→classId (imobilizado, CFOP 1551/2551, BE-INCR-FIXED-ASSETS PR-5) confirmado pelo operador (D6/F-FA12). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento, ou com o mapeamento errado para o CFOP, é rejeitado."
+ *           description: "Mapeamento cProd→productRef (estoque/insumo) OU cProd→classId (imobilizado) confirmado pelo operador (D6/ITEM-DESTINATION). TODO item que compõe o total precisa de um mapeamento; item sem mapeamento é rejeitado."
  *           items:
  *             type: object
  *             required: [cProd]
  *             properties:
  *               cProd:      { type: string }
- *               productRef: { type: string, description: "Exige o item NÃO ser CFOP 1551/2551 — XOR com classId" }
- *               classId:    { type: string, description: "Exige o item SER CFOP 1551/2551 — XOR com productRef" }
+ *               productRef: { type: string, description: "Estoque (REVENDA) ou despesa (INSUMO_SERVICO) — XOR com classId" }
+ *               classId:    { type: string, description: "Imobilizado declarado pelo operador (ITEM-DESTINATION emenda 29/09 — o CFOP do XML não roteia) — XOR com productRef" }
+ *               destination: { type: string, enum: [REVENDA, INSUMO_SERVICO, IMOBILIZADO], description: "Override da destinação do item (ITEM-DESTINATION). Com productRef — REVENDA ou INSUMO_SERVICO (ausente ⇒ REVENDA com origem FALLBACK + warning); com classId — só IMOBILIZADO" }
  */
 export const ImportNfePurchaseSchema = z
   .object({
@@ -118,6 +133,7 @@ export type ImportNfeSaleInput = z.infer<typeof ImportNfeSaleSchema>;
  *       required: [unitId]
  *       properties:
  *         unitId: { type: string }
+ *         itemMappings: { type: array, description: "Opcional (ITEM-DESTINATION F-ID-8 a): o MESMO itemMappings do import — o preview aplica o mesmo resolver de destinação (preview = import a seco). Ausente ⇒ todo item REVENDA/FALLBACK", items: { type: object } }
  *     NfePreview:
  *       type: object
  *       description: "Dry-run do parser da NF-e (BE-INCR-NFE-PREVIEW): espelho integral do ParsedNfe menos protocolo.chNFe (redundante com chaveAcesso), mais o indicador de idempotência. Dinheiro em centavos INTEIROS (number). Nada é escrito."
@@ -133,7 +149,10 @@ export type ImportNfeSaleInput = z.infer<typeof ImportNfeSaleSchema>;
  *         alreadyImported:   { type: boolean, description: "true quando ja existe conta a pagar VIVA com documentNumber = chaveAcesso nesta unidade (F-PREV-3 → b)" }
  *         existingPayableId: { type: string, nullable: true }
  */
-export const PreviewNfeSchema = z.object({ unitId: z.string().min(1) }).strict();
+// ITEM-DESTINATION F-ID-8 (a): preview = import a seco — o mesmo `itemMapping`, opcional.
+export const PreviewNfeSchema = z
+  .object({ unitId: z.string().min(1), itemMappings: z.array(itemMapping).optional() })
+  .strict();
 export type PreviewNfeInput = z.infer<typeof PreviewNfeSchema>;
 
 const centsInt = z.number().int().nonnegative();
@@ -147,11 +166,26 @@ const nfeParty = z
   })
   .strict();
 
-/** X6 (BRIEF item 12 + EMENDA 2026-09-15): o operador vê ANTES de importar qual fórmula vai valer. */
+/** ITEM-DESTINATION (BRIEF §2, saída): destinação resolvida por item + de onde veio (F-ID-6 a). */
+export const NfeItemDestinationSchema = z
+  .object({
+    nItem: z.number().int().positive(),
+    cProd: z.string(),
+    destination: z.enum(ITEM_DESTINATIONS),
+    origem: z.enum(ITEM_DESTINATION_ORIGINS),
+  })
+  .strict();
+export type NfeItemDestination = z.infer<typeof NfeItemDestinationSchema>;
+
+/** X6 (BRIEF item 12 + EMENDA 2026-09-15): o operador vê ANTES de importar qual fórmula vai valer.
+ *  ITEM-DESTINATION item 14: `custoEstoqueCents` mantém o significado (custo LÍQUIDO de todos os itens
+ *  costeados); `custoInsumoCents` é o subconjunto que vai para despesa; `destinacoes` = o do import. */
 export const NfeCostPreviewSchema = z
   .object({
     custoBrutoCents: centsInt,
     custoEstoqueCents: centsInt,
+    custoInsumoCents: centsInt,
+    destinacoes: z.array(NfeItemDestinationSchema),
     creditoIcmsCents: centsInt,
     creditoPisCofinsCents: centsInt,
     baseCreditoPisCofinsCents: centsInt,
