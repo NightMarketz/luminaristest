@@ -3,6 +3,8 @@
 > Sessão: `sessao-planejamento` · 2026-09-29 · base `origin/main` `9dd690b3`. **Sem código.**
 > Saída: este documento + uma linha em §Docs de `docs/plano/nos/F7.md` e `docs/plano/nos/X4.md`.
 > **Nenhum fork é ratificado aqui.** Todos os forks estão em §5 com recomendação e status RATIFICAÇÃO PENDENTE.
+> **Atualização 2026-10-02:** F-ENC-6 → (a) ratificado junto com o F-EM-12 da emenda 3.2
+> ([`D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS`](../plano/decisoes/D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS.md)). Os demais seguem pendentes.
 
 ## 0. Contexto fixo
 
@@ -189,7 +191,8 @@ Fatiamento conforme F-ENC-10 (recomendação: 4 PRs seriais, com a migração no
 ### PR-4 — X4: adição automática da multa indedutível
 
 - **E15 [coord]** Coluna `lalur_entries.origem TEXT NOT NULL DEFAULT 'user'`, com os valores de `LALUR_ORIGENS`
-  (`Lalur.model.ts:69`). A DDL é **a mesma** do PR #441 (F-EM-9 a); só o PR que chegar primeiro a cria. Regras:
+  (`Lalur.model.ts:69`). A DDL é **a mesma** do PR #441 (a coluna `origem` do E17 de lá; o F-EM-9 foi ratificado em
+  02/10 como **(d)**, que mantém a coluna); só o PR que chegar primeiro a cria. Regras:
   - `createEntry` e `updateEntry` gravam ou mantêm `'user'`;
   - o DTO **não** aceita `origem` (`.strict()`);
   - PATCH de `valorCents`, `codigo` ou `accountId` numa linha `system` → 400 (padrão `LalurService.ts:656`, M410);
@@ -220,8 +223,8 @@ Fatiamento conforme F-ENC-10 (recomendação: 4 PRs seriais, com a migração no
     cada uma com `valorCents` 1000, e a base de cada tributo sobe 1000;
   - refechar sem movimento novo → idempotente.
 - **E17 [cond:F-ENC-6]** Colisão da chave (S14): se existe linha `user` viva no mesmo `(ano, trimestre, livro, código)` de
-  uma derivação com valor maior que zero, o comportamento é o do fork. Enquanto o fork não for ratificado, 400 que nomeia
-  a linha manual.
+  uma derivação com valor maior que zero → **400 que nomeia a linha manual** (F-ENC-6 → a, ratificado 02/10 junto com o
+  F-EM-12).
 - **E18 [cond:F-ENC-7]** A derivação só roda com regime **REAL** no ano, pela fonte que o fork fixar. Em outro regime:
   nenhuma derivação, e as linhas `system` que existiam são arquivadas.
 - **E19 [direto]** `diagnoseYear` passa a re-derivar as linhas `system` e acusa divergência entre materializado e
@@ -374,7 +377,7 @@ discountSettlementId: string | null;
 | **F-ENC-2** | Como o encargo único vira 4 classes | **(a)** `charges[]` obrigatório quando `chargeCents > 0` (E6), gravado em tabela-filha (E7); a alternativa de guardar é uma coluna por classe no item · **(b)** Sem `charges`, tudo vira `JUROS_MORA` · **(c)** Regra fixa (multa até 2% e o resto como juros) | **(a).** A classe tem efeito fiscal: o default (b) grava multa punitiva como dedutível e sub-adiciona no X4. O extrato não separa os componentes (S24), então só o humano sabe. A tela pode pré-preencher. (c) não tem fonte para salão |
 | **F-ENC-4** | Desconto condicional na baixa (linha menor que o saldo) | **(a)** Baixa de `kind = DISCOUNT` no protocolo do AP/AR (E13), com EMENDA ao ADR-PARTIAL-SETTLEMENT · **(b)** Lançamento avulso de desconto, com o título ainda PARTIALLY_*; isso quebra "soma dos abertos = saldo 2.1.2/1.1.5" · **(c)** Fora desta emenda (só PARTIAL). **Sub-fork do teto:** (a1) mesmo teto de 20% do encargo (F-F7-5) · (a2) sem teto | **(a) + (a1).** Só (a) mantém o subrazão amarrado ao razão. O teto repete o motivo do F-F7-5: sem ele, um clique transforma parcial de 10% em desconto de 90%. Acima do teto, o humano faz a parcial e ajusta à mão |
 | **F-ENC-5** | Quando a adição automática nasce | **(a)** Dentro do `closeParteB`, antes das bases (E16; padrão PF/BC e E17 do PR #441) · **(b)** Endpoint próprio de derivação, consumido pelo `close` · **(c)** Só na geração da ECF, sem persistir | **(a).** É o momento que já materializa a Parte B. A ECF exige os 4 trimestres fechados (S18), então a linha sempre existe na geração. Reabrir e refechar dá a prévia. (b) acrescenta path e guard sem ganho. (c) esconde a adição da tela e da base do M500 |
-| **F-ENC-6** | Colisão com linha manual do mesmo `(ano, trimestre, livro, código)` | **(a)** 400 no fechamento, nomeando a linha manual · **(b)** O manual vence: não deriva e só avisa (precedente PF/BC, review M2) · **(c)** Chave com `origem`, e o serializer funde num M300 com 2 filhos | **(a)**, ratificado **junto com F-EM-12** (PR #441, mesma recomendação). (b) perde a multa em silêncio quando o manual cobria outra coisa. (c) mexe na invariante D-M2 e no M310 de filho único (S17) |
+| **F-ENC-6** | Colisão com linha manual do mesmo `(ano, trimestre, livro, código)` | **(a)** 400 no fechamento, nomeando a linha manual · **(b)** O manual vence: não deriva e só avisa (precedente PF/BC, review M2) · **(c)** Chave com `origem`, e o serializer funde num M300 com 2 filhos | **(a)**, ratificado **junto com F-EM-12** (PR #441, mesma recomendação). (b) perde a multa em silêncio quando o manual cobria outra coisa. (c) mexe na invariante D-M2 e no M310 de filho único (S17) · ✅ **RATIFICADO 2026-10-02 → (a)**, pergunta única com o F-EM-12 — dono: *"(a) 400 no fechamento (Recomendado)"* ([cédula](../plano/decisoes/D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS.md)) |
 | **F-ENC-7** | De onde vem "só no Lucro Real" | **(a)** `CompanyFiscalProfile(ano).regime === 'REAL'` (X13, por ano). Sem perfil: 400 **só se** houver movimento em 4.4.x no trimestre · **(b)** `FiscalProfile.regimeTributario` (por unidade, "informativo", S23) · **(c)** Sem gate: e-Lalur já pressupõe o Real | **(a).** É a fonte por ano que decide as obrigações SPED. O 400 condicional não trava o fechamento de quem não tem multa. (b) é declarado informativo no próprio schema. (c) contraria o pedido do dono |
 | **F-ENC-8** | O que a emenda faz com PIS/COFINS de 0,65%/4% | **(a)** Só segrega a receita financeira em conta própria (3.5.x) e entrega alíquota e vigência (L6, L7) como insumo da apuração de PIS/COFINS: o X8, se F-X7-13 (a) for ratificado (PR #446) · **(b)** Provisiona o débito de PIS/COFINS no `confirm` | **(a).** Calcular débito é apuração. Ela fica no X8 pelo F-X7-13 (a), ou no X7, cuja autorização é "só ADR" (F-M2); nos dois casos, fora deste nó. A vigência termina em 31/12/2026 (L7): o código que fosse escrito agora morreria em 3 meses |
 | **F-ENC-9** | Como a receita financeira aparece na DRE | **(a)** Seção nova `financialResult` (E3, E4), com versão nova do mapeamento; o shape da resposta da DRE muda (FE, J150) · **(b)** Sem seção nova: 3.5 entra em `expenses` como redutor (Lei 6.404 art. 187 III, *"despesas financeiras, deduzidas das receitas"*) · **(c)** Nada: 3.5 some do resultado (S9) | **(a).** (c) quebra a base do e-Lalur (S10) e o BP (S11, grau I). (b) evita mudar o shape, mas põe conta de receita num grupo de despesa no J150, e o leiaute disso não foi lido (§7.5). (a) segue o precedente do CMV |

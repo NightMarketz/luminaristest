@@ -1,7 +1,9 @@
 # ADR-INCR-UNIT-REKEY — Migração de dado: `unitId` legado → linha real em `units` (nó I1b)
 
-> **Status: Proposed — 12 forks RATIFICAÇÃO PENDENTE (§6).** Produzido em `sessao-planejamento`,
-> 2026-09-26. Nenhum fork se auto-ratifica; `sessao-feature` só roda depois que o dono ratificar §6.
+> **Status: Proposed — forks em ratificação por questionário (§6, sessão de 2026-10-02;
+> cédulas em [`D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS`](../plano/decisoes/D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS.md)).**
+> Produzido em `sessao-planejamento`, 2026-09-26. Nenhum fork se auto-ratifica; `sessao-feature` só roda depois que o
+> dono ratificar §6 **e** der "executa" (ratificar fork não é "executa", ORCH-006). F-RK-2 decidido por delegação em 02/10.
 >
 > **Classe:** MIGRAÇÃO DE DADO (não de schema) — reescreve a coluna `unitId` de tabelas contábeis
 > Prisma first-class e cria linha em `dynamic_table_data` (`units`). **Sem tabela nova, sem migração
@@ -213,8 +215,9 @@ o ramo **recomendado**; se o dono escolher outro ramo, o item muda antes da `ses
    (`deletedAt IS NULL`) de `dynamic_table_data` cuja `dynamicTable` é a `units` **do mesmo dono** →
    `SKIP_REAL_UNIT`, nada escrito. Se é linha de `units` de **outro** dono → exit 1
    (`UNIT_OWNER_MISMATCH`), nada escrito. Testável: fixture com os dois casos.
-6. **Tenant sem tabela `units` (F-RK-2, ramo recomendado a).** Dono sem `dynamic_tables.internalName
-   = 'units'` → `EXCLUDED_TENANT` no plano e recusa (exit 1, `NO_UNITS_TABLE`) no `--apply`; o CLI nunca
+6. **Tenant excluído (F-RK-2 → a, decidido 02/10 por delegação).** Dono sem `dynamic_tables.internalName
+   = 'units'` **ou** `unitId ∈ EXCLUDED_UNIT_IDS = ['seed-unit-presumido', 'seed-unit-real']` (constante no CLI,
+   com comentário citando o F-RK-2) → `EXCLUDED_TENANT` no plano e recusa (exit 1, `NO_UNITS_TABLE`) no `--apply`; o CLI nunca
    cria tabela dinâmica. Testável: fixture de tenant seed.
 
 **Execução (`--apply`) — por unidade legada**
@@ -222,11 +225,12 @@ o ramo **recomendado**; se o dono escolher outro ramo, o item muda antes da `ses
 7. **Argumentos obrigatórios (F-RK-1, F-RK-9).** `--apply` exige `--owner-user-id`, `--from <legado>` e
    `--name <nome da unidade>`; `--type` opcional (enum do `UnitsModule.type`). Uma unidade por
    invocação (mesmo molde de `activateAccountingBindingCli.ts`). Args inválidos → exit 2 (Zod).
-8. **A linha nasce sem plugin (F-RK-8).** `prisma.dynamicTableData.create({ data: { dynamicTableId:
-   <units do dono>, data: { name, type?, isActive: true } } })` — id = `@default(cuid())` (F-I1b-1 b),
-   **sem** `createTableData` (não semeia "Pipeline Padrão" nem estoque em unidade legada — BRIEF §5
-   insumo 1). Testável: após `--apply`, `leadPipelines`/`stockMovements` do dono inalterados; linha nova
-   tem o shape da linha `Matriz` existente.
+8. **A linha nasce pelo caminho normal (F-RK-8 → b, ratificado 02/10).** `DynamicTableService.createTableData(
+   <owner>, <units do dono>, { name, type?, isActive: true }, { tx })` **dentro** da tx do item 9 — id =
+   `@default(cuid())` (F-I1b-1 b); roda os plugins de `afterCreate` (`LeadsSeedOnUnitPlugin`,
+   `UnitAutoStockPlugin`) na mesma tx, como no onboarding. O `UserContext` do dono é montado pelo CLI a partir de
+   `--owner-user-id` (sem sessão HTTP). Testável: após `--apply`, o dono tem 1 "Pipeline Padrão" e o estoque semeado
+   **para a unidade nova** (mesmo efeito do I1 sobre a 1ª unidade); a linha nova tem o shape da linha `Matriz`.
 9. **Re-key das 45 tabelas `REKEY` (F-RK-4 ramo a).** Numa única `prisma.$transaction` interativa (com
    `timeout` explícito, ≥ 60 s): cria a linha (item 8) → para cada tabela `REKEY`,
    `UPDATE <t> SET unitId = <novo> WHERE userId = <dono> AND unitId = <legado>` (via
@@ -237,7 +241,8 @@ o ramo **recomendado**; se o dono escolher outro ramo, o item muda antes da `ses
 10. **Contagem antes/depois por tabela, dentro da tx.** Para cada tabela: `before = COUNT(legado)`,
     `affected` = retorno do UPDATE, `after = COUNT(novo)`; se `affected ≠ before` ou `after ≠ before` ou
     `COUNT(legado) ≠ 0` ao fim → `throw` (rollback total). Testável: injetar falha na 20ª tabela → banco
-    idêntico ao pré (md5 das tabelas), nenhuma linha em `units` criada.
+    idêntico ao pré (md5 das tabelas), nenhuma linha em `units` criada **e nenhuma linha semeada pelos plugins do
+    item 8** (pipeline/estoque também voltam — estão na mesma tx).
 11. **Trilha preservada (F-RK-5 a, F-RK-7 a).** `audit_events` e `audit_chain_heads` do legado **não**
     mudam: a cadeia antiga fica selada sob o `unitId` legado; a unidade nova começa sua própria cadeia no
     genesis na 1ª escrita. Testável: após `--apply`, `verifyAuditChain({owner, unitId: legado})` → `ok`
@@ -249,8 +254,8 @@ o ramo **recomendado**; se o dono escolher outro ramo, o item muda antes da `ses
     mesma mudança, com o teste de allowlist (`auditCanonical.test.ts`) nas duas direções. Testável: evento
     `seq=1` na cadeia nova com `fromHeadHash` = `headHash` da cabeça legada.
 13. **Idempotência.** Segunda execução com o mesmo `--from` após sucesso: o plano classifica o legado
-    como ausente (0 linhas) → exit 0 com `NOTHING_TO_DO`, **nenhuma** linha nova em `units` e nenhum
-    evento. Execução interrompida (processo morto no meio): pelo item 10, nada foi commitado → re-rodar
+    como ausente (0 linhas) → exit 0 com `NOTHING_TO_DO`, **nenhuma** linha nova em `units`, nenhum pipeline/estoque
+    semeado de novo (item 8) e nenhum evento. Execução interrompida (processo morto no meio): pelo item 10, nada foi commitado → re-rodar
     é o caminho. Testável: rodar 2× → 1 linha em `units`, 1 evento `unit.rekeyed`.
 14. **Rastreio (BRIEF item 10).** Após o COMMIT, `logger.info({ event: 'unit_rekeyed', ownerUserId,
     from, to, tables: {…contagens} })` e o mesmo JSON em stdout (é o que o executor humano cola no
@@ -271,7 +276,8 @@ o ramo **recomendado**; se o dono escolher outro ramo, o item muda antes da `ses
     (os cuids só existem depois da execução).
 17. **Verificação dirigida sobre cópia (F-RK-11 a) — substitui o S6.** `--verify --against <backup>`
     (ou script de teste de integração) compara pré × pós: (a) toda tabela fora do inventário `REKEY`
-    byte-idêntica, exceto `dynamic_table_data` (+1 linha por unidade) e `audit_events`/`audit_chain_heads`
+    byte-idêntica, exceto `dynamic_table_data` (+1 linha de `units` por unidade **+ as linhas semeadas pelos plugins
+    do item 8**, contadas e listadas por tabela dinâmica) e `audit_events`/`audit_chain_heads`
     (+1 evento e +1 cabeça da unidade nova); (b) nas 45 `REKEY`, hash por tabela de **todas as colunas
     exceto `unitId`** idêntico e contagens iguais; (c) `PRAGMA integrity_check = ok`,
     `PRAGMA foreign_key_check` = 0; (d) S8 (Σdébito = Σcrédito por `journal_entry`); (e) item 11.
@@ -344,13 +350,13 @@ antes de qualquer escrita.
 
 ---
 
-## 6. Forks — RATIFICAÇÃO PENDENTE
+## 6. Forks — ratificação em curso (02/10)
 
 - **F-RK-1 · Descoberta dos legados.** (a) `--plan` descobre automaticamente pela união das 47 tabelas;
   `--apply` exige `--from` explícito, uma unidade por execução; (b) `--apply` sem argumentos re-chaveia
   tudo que o plano marcar `LEGACY`; (c) sem descoberta — lista dada à mão. **Recomendação: (a)** — o
   humano vê o plano inteiro e decide unidade a unidade (nome exigido por F-RK-9); (b) cria unidades sem
-  nome escolhido. **PENDENTE.**
+  nome escolhido. ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) Plano auto + 1 por vez (Recomendado)"*.
 - **F-RK-2 · Tenants do SEED-MY (`seed-unit-presumido`/`seed-unit-real`).** Os donos não têm tabela
   `units`; H1 está aberto e os runbooks H1/H2 citam esses ids literalmente
   (`RUNBOOK-H1-PVA.md:101`, `RUNBOOK-H2-BROWSER-SIGNOFF.md:28`). (a) excluir do I1b (`EXCLUDED_TENANT`);
@@ -358,7 +364,7 @@ antes de qualquer escrita.
   dinâmica `units` para esses donos (instalação de preset/cópia de schema pelo CLI); (c) incluir só depois
   de H1/H2 assinados. **Recomendação: (a)** — criar tabela dinâmica por migração é outra frente, e
   re-chavear no meio do H1 invalida o texto dos runbooks abertos. **Consequência a ratificar junto:** com
-  I6 ativo, os tenants seed recebem 400 até a frente do seed existir (ver §9). **PENDENTE.**
+  I6 ativo, os tenants seed recebem 400 até a frente do seed existir (ver §9). ✅ **DECIDIDO 2026-10-02 por delegação do dono** (*"Toma a decisão logica aqui entao e feche as pendencia"*) → **(a) excluir, por lista explícita**: `EXCLUDED_TENANT` passa a valer para (i) dono sem tabela `units` (critério atual do item 6) **ou** (ii) `unitId ∈ {seed-unit-presumido, seed-unit-real}` — o critério (ii) é o que sobrevive ao [[SEED-UNITS]], que dá `units` a esses donos (nota do I1b, fold 28/09). Lógica: a ratificação do dono F-S1c → (a) "re-semear" (BRIEF SEED-UNIDADE §4, 28/09) já recria o razão do seed sob a unidade nova, e os lançamentos sob `seed-unit-*` **ficam** (F-P5 → a); re-chavear esses ids criaria uma 2ª unidade com o mesmo razão duplicado no mesmo tenant. O próprio BRIEF do SEED-UNITS registra que "re-semear" **implica** o F-RK-2 (a). Não depende mais do merge do SEED-UNITS: o critério (ii) vale antes e depois.
 - **F-RK-3 · `unit-incr6-val` e `unit-incr6-val-1782938879534` (admin).** São resíduo de validação do
   INCR-6 (import/export): 14 contas, 4 lançamentos, 15 jobs cada. (a) re-chavear como qualquer legado
   (letra do F-I1b-1 b: "para cada `unitId` legado") — viram duas unidades visíveis no ERP do admin;
@@ -366,48 +372,48 @@ antes de qualquer escrita.
   (c) purgar — descartado (hard delete de trilha contábil). **Recomendação: (b)** — promover resíduo de
   teste a unidade real polui a lista de unidades do tenant do dono; *registro de viés (T8):* a
   preferência do dono de 2026-09-07 ("cobrir todas as lacunas, não MVP") aponta para (a), e a
-  recomendação do agente pode estar calibrada para menos dado. **PENDENTE.**
+  recomendação do agente pode estar calibrada para menos dado. ✅ **RATIFICADO 2026-10-02 → (b)** — dono: *"(b) Não re-chavear (Recomendado)"*, perguntado com o registro de viés (T8) acima e o insumo ausente §8.1. Efeito: o `--plan` continua listando os dois como `LEGACY` (descoberta é por dado); o runbook do item 16 **não** os aplica e registra os dois como órfãos documentados. Com F-RK-1 (a) (`--apply` explícito por unidade) não há mudança de código.
 - **F-RK-4 · Modelo transacional.** (a) uma `prisma.$transaction` interativa por unidade (linha em
   `units` + 45 UPDATEs + âncora), atômica; a idempotência vem de, após o commit, não sobrar linha com o
   legado; (b) passos por tabela fora de tx, cada um re-executável (letra do BRIEF item 8) — exige
   persistir o mapa legado→novo antes do 1º passo para que a re-execução reuse o mesmo cuid, o que pede
   um marcador (coluna/tabela nova ou chave extra no JSON de `units`, que o Zod do motor removeria no
   próximo update — classe `zod-strip-mata-discriminador-de-plugin`). **Recomendação: (a)** — no CLI TS o
-  SQLite é transacional; (b) importa a premissa do arquivo SQL sem ter o problema dele. **PENDENTE.**
+  SQLite é transacional; (b) importa a premissa do arquivo SQL sem ter o problema dele. ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) 1 transação por unidade (Recomendado)"*.
 - **F-RK-5 · `audit_chain_heads`.** (a) não re-chavear: a cadeia legada fica selada sob o `unitId`
   antigo; a unidade nova começa no genesis; (b) re-chavear a cabeça — rejeitável: `verifyAuditChain`
   do novo `unitId` falha com `MISSING_GENESIS` para sempre (§3.4); (c) re-chavear e mudar
   `verifyAuditChain` para aceitar continuação — altera código da trilha (ADR-INCR2) fora deste item.
-  **Recomendação: (a).** **PENDENTE.**
+  **Recomendação: (a).** ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) Não mexer (Recomendado)"*.
 - **F-RK-6 · Âncora documental na trilha nova.** (a) só log estruturado + runbook (letra do BRIEF
   item 10); (b) log + evento genesis `unit.rekeyed` na cadeia nova com `fromHeadHash`/`fromNextSeq` —
   liga criptograficamente as duas cadeias; custa um eventType novo na allowlist. **Recomendação: (b)** —
   sem ela, "o `unitId` antigo" do `AuditEvent` é só convenção documental, não verificável pela própria
-  trilha. **PENDENTE.**
+  trilha. ✅ **RATIFICADO 2026-10-02 → (b)** — dono: *"(b) Log + evento âncora (Recomendado)"*. Item 12 vale como está (gate da allowlist).
 - **F-RK-7 · Leitura do histórico pré-re-key.** Depois do re-key, `listByTarget(novo, JournalEntry, X)`
   não mostra os eventos anteriores de X (estão sob o legado). (a) aceitar — histórico antigo legível via
   CLI/SQL sob o `unitId` legado, com o evento de F-RK-6 (b) apontando para ele; (b) `AuditRepository`
   passa a resolver alias legado→novo — exige persistir o alias (coluna/tabela nova, colide com "sem
-  tabela nova" do BRIEF item 10). **Recomendação: (a).** **PENDENTE.**
+  tabela nova" do BRIEF item 10). **Recomendação: (a).** ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) Aceitar (Recomendado)"*.
 - **F-RK-8 · Como a linha de `units` nasce.** (a) `prisma.dynamicTableData.create` direto, sem plugins,
   shape igual à linha `Matriz` existente; (b) `createTableData` (roda `LeadsSeedOnUnitPlugin` e
   `UnitAutoStockPlugin`). **Recomendação: (a)** — é o registrado como desejado no BRIEF §5 insumo 1
-  ("backfill não deve semear pipeline em unidade legada"). **PENDENTE.**
+  ("backfill não deve semear pipeline em unidade legada"). ✅ **RATIFICADO 2026-10-02 → (b)** (diverge da recomendação) — dono: *"(b) Pelo caminho normal"*. Sem conflito com fork ratificado: o "desejado" do BRIEF do I1 §5 insumo 1 é texto do agente, não ratificação. Compatível com F-RK-4 (a): `createTableData(user, tableId, dto, { tx })` reusa a tx do chamador (`DynamicTableService.ts:546,591-593`, lido 02/10). Itens ajustados: **8, 10, 13, 17**.
 - **F-RK-9 · Nome/tipo da unidade nova.** (a) `--name` obrigatório, sem default; (b) default = a string
-  legada. **Recomendação: (a)** — mesma linha do F-I1-2 → (b) ("`unit` obrigatório, 400"). **PENDENTE.**
+  legada. **Recomendação: (a)** — mesma linha do F-I1-2 → (b) ("`unit` obrigatório, 400"). ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) --name obrigatório (Recomendado)"*.
 - **F-RK-10 · Concorrência com o servidor.** (a) servidor parado é passo obrigatório do runbook; o CLI só
   avisa; (b) o CLI tenta detectar servidor vivo (porta/health) e recusa. **Recomendação: (a)** — detecção
   por porta é predicado de ambiente frágil (classe `gate-predicate-environment-class`: `PORT` do `.env`
   sobrescreve); o risco real é um cliente com `unitId` legado recriar chart lazy sob o legado depois do
-  re-key, que I6 fecha. **PENDENTE.**
+  re-key, que I6 fecha. ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) Passo do runbook (Recomendado)"*.
 - **F-RK-11 · Gate de verificação.** (a) verificação dirigida própria (comportamento 17), `smoke:migration`
   roda só como integridade; (b) emendar `smoke-migration-gate.mjs` para aceitar "coluna X muda" —
   aparato de auditoria sob a moratória do CLAUDE.md raiz (decisão do dono). **Recomendação: (a).**
-  **PENDENTE.**
+  ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) Verificação própria (Recomendado)"*.
 - **F-RK-12 · Ordem com I6.** (a) I1b mergeado e executado (runbook assinado) antes de I6 mergear;
   (b) I6 antes — os legados ficam inalcançáveis até o re-key (dado intacto). **Recomendação: (a)** — o
   admin não perde acesso a nada em nenhum momento; com F-RK-3 (b), os `incr6` ficam inalcançáveis de
-  qualquer forma. **PENDENTE.**
+  qualquer forma. ✅ **RATIFICADO 2026-10-02 → (a)** — dono: *"(a) I1b antes do I6 (Recomendado)"*.
 
 ---
 
