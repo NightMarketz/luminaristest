@@ -1,6 +1,7 @@
 # BE-INCR-DFE-EVENTOS — BRIEF (nó X11): janela de cancelamento, substituição de NFS-e e o que falta no `e101101`
 
-> Sessão de planejamento (`sessao-planejamento`), 2026-10-02. **Não escreve código, não ratifica fork.**
+> Sessão de planejamento (`sessao-planejamento`), 2026-10-02. **Não escreve código.** Forks F-EVT-1..7
+> **ratificados pelo dono no mesmo dia** por questionário (§5 "RATIFICAÇÃO", [`D-2026-10-02-X11-EVENTOS-FORKS`](../plano/decisoes/D-2026-10-02-X11-EVENTOS-FORKS.md)); sem "executa".
 > Grau: **V** = verificado (lido na fonte ou no código) · **I** = inferido · **NV** = não verificado.
 >
 > **Em duas linhas:** a fonte primária **não traz número de prazo** — cancelamento (RN E0822) e substituição (RN
@@ -339,7 +340,22 @@ DFE_SUBST_NAO_SUPORTADA` · 422 `substituicao_bloqueada` (E0060/E0061).
 
 ---
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido aqui)
+## 5. Forks
+
+### RATIFICAÇÃO — 2026-10-02 (dono, chat: *"ratifica os forks F-EVT por questionário"*, AskUserQuestion em 2 rodadas)
+
+| Fork | Decisão | Contra a recomendação? | Efeito no checklist |
+|---|---|---|---|
+| F-EVT-1 | **(a)** prazo por unidade, só avisa; (d) medido no D5 | não | itens 2, 3, 5, 11 como escritos |
+| F-EVT-2 | **(b)** `nfseDhProc`, dias de calendário em America/Sao_Paulo, "estimado" até PV-2 | não | item 3 |
+| F-EVT-3 | **(a)** `saleKey` temporária + troca na tx | não | itens 11, 14 |
+| F-EVT-4 | **(b)** dentro, PR-3 | não | item 20 entra; guarda E0068 do item 11 entra |
+| F-EVT-5 | **(b)** `consultarEventos(chave)` | não | itens 18, 19 |
+| F-EVT-6 | **(a)** fato do fisco vence + `substituicao_sobre_cancelada` | não | item 14 |
+| F-EVT-7 | **(a)** PR-1 sem o X10i; PR-2/PR-3 esperam | não | ordem dos PRs |
+
+Cédulas literais: [`D-2026-10-02-X11-EVENTOS-FORKS`](../plano/decisoes/D-2026-10-02-X11-EVENTOS-FORKS.md). O texto
+abaixo é o registro das opções apresentadas.
 
 ### F-EVT-1 — De onde vem o prazo, e se ele bloqueia
 
