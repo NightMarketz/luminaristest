@@ -9,7 +9,7 @@ atualizado: "2026-10-02"
 ---
 # D-2026-10-02-X7-TAX-ASSESSMENT-FORKS — cédulas da sessão de ratificação
 
-**Estado:** `decided` (F-X7: 13/13; F-TA: 10/10).
+**Estado:** `decided` (F-X7: 13/13; F-TA: 10/10; rodada 8 — roteamento X8/X9: 1/1).
 **Autorização:** dono, chat, 02/10/2026: *"Autorizo: (1) rodada de ratificação dos forks F-X7-2..14 do
 ADR-INCR-TAX-ASSESSMENT por questionário comigo agora; (2) depois, planejar o BRIEF da Fase A do X7 e decidir se
 X8/X9 fundem nele (dono, 02/10) — sem 'executa'"*. As respostas vieram pelo AskUserQuestion: o agente apresentou e
@@ -158,3 +158,21 @@ Promoção do ADR a `Accepted` registrada no próprio ADR (§14 previa a promoç
 - **Resposta literal:** *"(a) 3 PRs seriais (Recomendado)"* → ✅ (a).
 
 **BRIEF da Fase A: 10/10 forks ratificados (9 na recomendação, F-TA-5 divergente).**
+
+---
+
+# Rodada 8 — roteamento X8/X9 depois do F-TA-1 → (a)
+
+**Pedido do dono (chat, 02/10):** *"BRIEF próprio do X8 e/ou do X9 (o X9 já ficou reduzido a DCTFWeb + MIT), já que
+eles não fundem na Fase A."*
+**Divergência do passo 1 (sessao-planejamento), reportada antes de escrever:** as notas [[X8]] e [[X9]] trazem
+`autorizacao: "F-M2 (2026-09-03) — só ADR"`, e nenhuma das duas tem ADR. O F-X7-8 → (a) exige ADR próprio do X9. Um
+BRIEF sem ADR contradiz um fork ratificado.
+
+### R8-1 — Como seguir com X8/X9?
+- **Opções:** (a) ADR do X9 agora, BRIEF depois da ratificação; X8 em espera (**recomendada**) · (b) ADR do X9 + ADR
+  do X8 · (c) ADR + ratificação + BRIEF do X9 numa sessão · (d) BRIEF sem ADR (não recomendada).
+- **Resposta literal:** *"ADR do X9 agora (Recomendado)"* → ✅ (a).
+- **Efeito:** [`ADR-INCR-DCTFWEB-MIT.md`](../../adr/ADR-INCR-DCTFWEB-MIT.md) **Proposed**, com F-X9-1..6 pendentes.
+  O X8 continua sem ADR, e o ADR dele começa pelo custo-benefício da revogação de 01/01/2027. Sem BRIEF e sem
+  "executa".
