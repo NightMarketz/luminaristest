@@ -1,8 +1,11 @@
 # ADR-INCR-PAYMENT-PROVIDER-COLLECTION — Cobrança por provedor de pagamento: uma porta, Mercado Pago como 1º adaptador, remessa CNAB 240 como 2º; Pix de saída bloqueado
 
 - **Data:** 2026-09-29
-- **Status:** **Proposed.** Nenhum fork ratificado (§8). **Nenhum código escrito.** BRIEF e código exigem autorização
-  nova do dono ("executa"); este documento não a substitui.
+- **Status:** **Accepted 2026-10-02 — forks F-PP-1..11 RATIFICADOS fork a fork pelo dono** (§8.1; cédula
+  [D-2026-10-02-PAYMENT-PROVIDER-FORKS](../plano/decisoes/D-2026-10-02-PAYMENT-PROVIDER-FORKS.md)). 11/11 na
+  recomendação (F-PP-5 depois de uma 1ª resposta (b); F-PP-11 com refino (a1)). **Nenhum código escrito.** O dono
+  autorizou o **BRIEF** ([BE-INCR-PAYMENT-PROVIDER-brief](../accounting/BE-INCR-PAYMENT-PROVIDER-brief.md)), **sem
+  "executa"**.
 - **Autorização (ORCH-006):**
   - **F5:** F-M3, 03/09 (cédula de módulos, C.1 item 16 e §E linha F5: *"ADR-INCR-BANK-OUTBOUND: conta bancária
     como entidade + remessa CNAB 240 + boleto + Pix"*, coluna de sessão = "ADR"). Nota do nó: *"autoriza abrir ADR,
@@ -386,7 +389,26 @@ export const CreateChargeSchema = z.object({
 6. De onde vêm e-mail e endereço do pagador: `Counterparty` não tem; a linha DynamicTable referenciada por `ref`
    talvez tenha. Não conferido; é o F-PP-11.
 
-## 8. FORKS — RATIFICAÇÃO PENDENTE (dono, fork a fork)
+## 8. FORKS — RATIFICADOS 2026-10-02 (dono, fork a fork; resultado em §8.1)
+
+### 8.1 Resultado da ratificação
+
+| Fork | Decisão | Nota |
+|---|---|---|
+| F-PP-1 | ✅ **(b) BYOK**; porta com `credentialSource: 'OWN' \| 'OAUTH'` | perguntado com a colisão OAuth × 1 instância/cliente à vista; diverge do dossiê D-3 |
+| F-PP-2 | ✅ **(b)** coluna cifrada | — |
+| F-PP-3 | ✅ **(a)** AES-256-GCM | chave-mestra no env da instância, provisionada pelo M2 = **pré-condição de deploy** do [M2](../plano/gates/M2.md); sem KMS |
+| F-PP-4 | ✅ **(a)** Orders API | — |
+| F-PP-5 | ✅ **(a)** só pelo relatório | 1ª resposta (b); voltou a (a) depois do conflito: o `GET /v1/orders/{id}` não traz tarifa nem data de aprovação (referência oficial, lida em 02/10) |
+| F-PP-6 | ✅ **(b)** `feeCents` no item | shortfall calculado sobre o **bruto**; conta = P3 (contador); coordenar a migração com a emenda 3.3 |
+| F-PP-7 | ✅ **(a)** folha própria + `ProviderBalance` | folha = P1 (contador) |
+| F-PP-8 | ✅ **(c)** 15 dias, em ms | — |
+| F-PP-9 | ✅ **(a)** uma ativa por (escopo, provedor) | — |
+| F-PP-10 | ✅ **(a)** manual por título | — |
+| F-PP-11 | ✅ **(a1)** DTO + sugestão pela última cobrança do mesmo `Counterparty`, editável | refino de (a) pedido pelo dono ("preenchimento automático e edição na hora"); snapshot congela o enviado |
+
+### 8.2 Tabela original dos forks (mantida como foi proposta)
+
 
 | Fork | Caminhos | Recomendação | Custo / risco da recomendação |
 |---|---|---|---|
@@ -461,8 +483,9 @@ export const CreateChargeSchema = z.object({
 
 | Item | Estado |
 |---|---|
-| ADR | **Proposed**, 29/09 |
-| Forks F-PP-1..11 | **todos pendentes**; nenhum se auto-ratifica |
+| ADR | **Accepted**, 02/10 (Proposed em 29/09) |
+| Forks F-PP-1..11 | **11/11 ratificados** em 02/10 (§8.1) |
 | Pendências do contador P1–P5 | abertas; entram no próximo pedido ao contador (`luminaris-contador-liaison`), se o dono quiser |
-| BRIEF / código | **não autorizados** (F-M3: só ADR) |
+| BRIEF | **autorizado** em 02/10 e escrito ([BE-INCR-PAYMENT-PROVIDER-brief](../accounting/BE-INCR-PAYMENT-PROVIDER-brief.md)) |
+| Código | **não autorizado** (sem "executa") |
 | F6 | bloqueado por gate externo (§6.2) |
