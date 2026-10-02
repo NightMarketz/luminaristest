@@ -8,7 +8,9 @@ estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, fi
 depende_de: ["[[X10b]]", "[[DFE-MANUAL]]"]
 autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')"
 ancora_sdd: "§M5 · §M0 fold 18/09"
-atualizado: "2026-09-29"
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "regra 1 (BRIEF lido na íntegra): F-FE-DFE-6..9 pendentes. Depois deles: sonnet-alto (regra 4: 29 itens, BE+FE). Por PR: PR-1 (itens 10–13, só BE, sem fork pendente nem migração) = sonnet-medio; PR-0 espera só o F-6; PR-2 espera F-7/8/9. Fila: depois do SEED-UNITS"
+atualizado: "2026-10-01"
 ---
 # FE-INCR-DFE — Tela da emissão de DF-e
 

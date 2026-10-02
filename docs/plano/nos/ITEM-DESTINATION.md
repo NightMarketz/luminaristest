@@ -10,6 +10,8 @@ ancora_sdd: "§III.2"
 autorizacao: "dono, 2026-09-29: Fase 3.1 — PLANEJAR; forks F-ID-1..9: \"Pode seguir as recomendações\" (chat) — sem 'executa'"
 prs: ["#443"]
 autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
+perfil_previsto: "opus-medio"
+perfil_evidencia: "regra 2: nó de régua fiscal, BRIEF com migração de schema e de dado (20 itens, forks ratificados 29/09)"
 atualizado: "2026-10-01"
 ---
 # ITEM-DESTINATION — Destinação por item na entrada (revenda × insumo do serviço)

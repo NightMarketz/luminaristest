@@ -9,7 +9,9 @@ depende_de: ["[[C6]]"]
 autorizacao: "\"executa C6b\" (dono, 16/09); dono, 2026-09-29: Fase 3 — PLANEJAR a emenda (sem 'executa')"
 prs: ["#324", "#336", "#337", "#338", "#340"]
 ancora_sdd: "§M7.1 · §M5.1"
-atualizado: "2026-09-29"
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "EMENDA 3.4 (o nó segue done; BRIEF lido na íntegra) — regra 1: 11 forks F-C6bE pendentes. Depois deles: opus-medio (regra 2: nó de régua; 30 itens, zero migração, 5 exports reconstruídos do razão com tie-out)"
+atualizado: "2026-10-01"
 ---
 # C6b — Pacote ampliado ao contador (tabela filha AccountingDeliveryItem)
 
