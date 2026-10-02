@@ -3,19 +3,19 @@ id: "I1b"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)"
-estado: "blocked"
-estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele"
-autorizacao: "F-I1-3 → (b) 2026-09-07"
+estado: "ready"
+estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook)"
+autorizacao: "F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação (\"Toma a decisão logica aqui entao e feche as pendencia\") — sem 'executa'"
 prs: ["#392"]
 ancora_sdd: "§M5.1 Bloco A I1/I1b"
-atualizado: "2026-09-28"
-depende_de: ["[[SEED-UNITS]]?"]
+atualizado: "2026-10-02"
+depende_de: []
 ---
 # I1b — Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)
 
-**Estado:** `blocked` — ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele  
-**Autorização:** F-I1-3 → (b) 2026-09-07  
-**Depende de:** [[SEED-UNITS]] (pontilhada — premissa do F-RK-2)  
+**Estado:** `ready` — ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook)  
+**Autorização:** F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação ("Toma a decisão logica aqui entao e feche as pendencia") — sem 'executa'  
+**Depende de:** — (a aresta pontilhada com [[SEED-UNITS]] caiu em 02/10: F-RK-2 decidido por lista explícita, vale antes e depois do merge)  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §M5.1 Bloco A I1/I1b  
 **PRs:** #392
