@@ -10,6 +10,8 @@ autorizacao: "planejar: \"Prepare planos para os achados fora do escopo\"; F-S1 
 prs: []
 ancora_sdd: "§III.2 (fora da régua — pré-requisito de H1/H2)"
 autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
+perfil_previsto: "sonnet-alto"
+perfil_evidencia: "regra 4 (BRIEF lido na íntegra): 19 itens em 5 partes (a Parte E é humana); forks todos decididos; sem migração de schema e sem regra contábil (§5) — a regra 2 não casa"
 atualizado: "2026-10-01"
 ---
 # SEED-UNITS — Tenants do seed nascem com unidade real + seed lê o .env (BE-INCR-SEED-UNIDADE-E-ENV)

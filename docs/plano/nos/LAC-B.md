@@ -9,6 +9,8 @@ autorizacao: "dono 'Ativar agora' 2026-09-07"
 prs: ["#389"]
 ancora_sdd: "§M5.1 Bloco A LAC-B"
 autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "regra 1 (BRIEF lido na íntegra): não resta item especificado. O #389 entregou os itens 1–3 e 5; o item 4 (\"UI conforme F-B1\") segue o F-B1 ratificado = (a) só endpoint agora, (c) chamada automática no onboarding depois — e (c) é o nó I4. O \"executa\" de 01/10 não tem spec de tela: ou o nó fecha como done, ou a tela ganha BRIEF"
 atualizado: "2026-10-01"
 ---
 # LAC-B — UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION)

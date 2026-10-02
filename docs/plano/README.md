@@ -40,6 +40,10 @@ de `depende_de`).
 - `estado`: `done` · `inflight` · `ready` · `planned` · `blocked` · `human-open` · `decided` · `rejected` · `deferred`
 - `depende_de`: `["[[C12]]"]` — sufixo `?` = aresta pontilhada (condicional/inferida).
 - `autorizacao`: citação curta + data. **Vazio = não roteia** (ORCH-006).
+- `perfil_previsto` + `perfil_evidencia`: modelo/esforço previsto para o executor, pela taxonomia "Perfil de
+  execução" do `.claude/agents/classificador.md` (`opus-medio` · `opus-baixo` · `sonnet-alto` · `sonnet-medio` ·
+  `precisa-de-planejamento`). É **previsão, não decisão**; a calibração vem do `perfil-previsto` × `custo` dos
+  retornos. Só em nó com BRIEF; em nó `done`, refere-se à emenda aberta citada na evidência.
 
 ## Fold (depois de cada merge)
 

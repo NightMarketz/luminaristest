@@ -8,7 +8,9 @@ estado_detalhe: "BRIEF em PR #395; 7/7 forks RATIFICADOS 26/09 (F-RB4=(c) diverg
 depende_de: ["[[I8]]?"]
 autorizacao: "\"autorizo planejar o builder de relatórios do CRM\" 2026-09-26 + 7/7 forks F-RB ratificados 2026-09-26 (AskUserQuestion) — sem 'executa'; F-RB8 (dono, 29/09, decisão 14): \"Soma por moeda e conversão a parte com cambio\" + \"PTAX do BCB, taxa do dia\" + 2ª rodada 29/09: \"ADR moeda no A Receber e ainda um monitor que avisa quando vale a pena fazer esse câmbio\" — emenda do BRIEF, sem 'executa'"
 ancora_sdd: "CRM_REMEDIATION_AND_ROADMAP Parte B gap #14 (supersedido → SDD §IV.3)"
-atualizado: "2026-09-29"
+perfil_previsto: "opus-medio"
+perfil_evidencia: "regra 2 pela letra (BRIEF lido na íntegra): 2 migrações de schema (CrmReportDefinition, PtaxRate); 26 itens, só BE; forks fechados. Ambiguidade da regra: o BRIEF não toca invariante contábil (builder só lê) — se a regra 2 valer só para invariante, cai em sonnet-alto (regra 4). Item 16 (remover custom-kpis) é PR próprio. Antes do \"executa\" falta o PRE-ADR do nó"
+atualizado: "2026-10-01"
 ---
 # CRM-RB — Builder de relatórios/dashboards self-service do CRM (BE-INCR-CRM-REPORT-BUILDER)
 

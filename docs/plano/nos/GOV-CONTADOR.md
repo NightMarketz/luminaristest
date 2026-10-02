@@ -8,7 +8,9 @@ estado_detalhe: "Fase 5 do plano pós-contador — PROPOSTO. **PRE-ADR ESCRITO 2
 depende_de: ["[[C11]]", "[[Z0-a]]"]
 ancora_sdd: "§III.1 (fora da régua — PROPOSTO)"
 autorizacao: "dono, 2026-09-29: \"Ratificar recomendações\" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa')"
-atualizado: "2026-09-29"
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "regra 1 (BRIEF lido na íntegra): F-GOV-7..11 pendentes. Depois deles: opus-medio (regra 2: migração aditiva + gate de reabertura de período dentro da tx, CAS do status). O BRIEF CRC-CFC-VALIDACAO fica para depois do M2 (F-V1 c)"
+atualizado: "2026-10-01"
 ---
 # GOV-CONTADOR — Governança do contador responsável (CRC, política versionada, reabertura de período)
 
