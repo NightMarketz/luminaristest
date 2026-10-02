@@ -8,7 +8,9 @@ estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks
 autorizacao: "F-I1-3 → (b) 2026-09-07"
 prs: ["#392"]
 ancora_sdd: "§M5.1 Bloco A I1/I1b"
-atualizado: "2026-09-28"
+perfil_previsto: "precisa-de-planejamento"
+perfil_evidencia: "regra 1 (BRIEF lido na íntegra): a spec do I1b é o ADR-INCR-UNIT-REKEY, com 12 forks pendentes e o F-RK-2 a re-decidir depois do SEED-UNITS; exige B-4 assinado antes. Depois: opus-medio (regra 2: re-key do unitId nas 31 tabelas contábeis)"
+atualizado: "2026-10-01"
 depende_de: ["[[SEED-UNITS]]?"]
 ---
 # I1b — Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)

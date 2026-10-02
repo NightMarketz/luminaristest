@@ -16,26 +16,26 @@
 
 > Candidatos a próximo passo — **ainda exigem autorização citável do dono** (ORCH-006).
 
-| Nó | Título | Estado | Autorização |
-| --- | --- | --- | --- |
-| [[CRM-RB]] | Builder de relatórios/dashboards self-service do CRM (BE-INCR-CRM-REPORT-BUILDER) | planned | "autorizo planejar o builder de relatórios do CRM" 2026-09-26 + 7/7 forks F-RB ratificados 2026-09-26 (AskUserQuestion) — sem 'executa'; F-RB8 (dono, 29/09, decisão 14): "Soma por moeda e conversão a parte com cambio" + "PTAX do BCB, taxa do dia" + 2ª rodada 29/09: "ADR moeda no A Receber e ainda um monitor que avisa quando vale a pena fazer esse câmbio" — emenda do BRIEF, sem 'executa' |
-| [[FE-CONTRACT-TYPES]] | Tipos de payload do FE gerados do snapshot de DTOs (fim do espelho à mão) | inflight | dono, chat, 2026-09-28: "Vamos planejar então usando a solução de snapshot" + questionários + "pode decidir tudo" (delegação) — plano e decisões; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução) + "Pode criar pr e comittar" |
-| [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned | dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa') |
-| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | planned | — |
-| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned | dono, 2026-09-29: "Ratificar recomendações" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa') |
-| [[I11]] | Agente de chat: permissão e custo por mensagem | planned | — |
-| [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned | dono, 2026-09-29: "Ratificar as recomendações" — forks F-I5-1/2 + PLANEJAR (sem 'executa') |
-| [[I7]] | Reset consistente (`DELETE /dashboard/system`) | planned | — |
-| [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | inflight | EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono |
-| [[PACOTE-VALIDADE]] | Validade do pacote pré-pago e receita por não uso | planned | dono, 2026-09-29: "Validade por pacote" — decisão de produto; BRIEF próprio (sem 'executa') |
-| [[SEED-UNITS]] | Tenants do seed nascem com unidade real (SystemProvisioningService) + seed lê o .env (BE-INCR-SEED-UNIDADE-E-ENV) | ready | EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono |
-| [[W2]] | `isCore` real | planned | — |
-| [[W3]] | Gates determinísticos da entrevista | inflight | "autorizo as 5 correções por código, começa pela #12" + "(a), corrige e depois b" + "Autorizar W3 + ratificar F-W3-2" (dono, 30/09) — só a escolha criar × customizar; F-W3-1 não |
-| [[W4]] | `InterviewSession` persistida, com dono e TTL | planned | — |
-| [[W5]] | KB multi-preset + fonte única de presets | planned | — |
-| [[W6]] | Painel de campos: rota `CustomizeFields` ou remoção | planned | — |
-| [[W7]] | Higiene do FE do wizard | planned | — |
-| [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | planned | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral); F-X7-1 → (a) reabrir o F-M8 no ADR (dono, 29/09) |
+| Nó | Título | Estado | Perfil previsto | Autorização |
+| --- | --- | --- | --- | --- |
+| [[CRM-RB]] | Builder de relatórios/dashboards self-service do CRM (BE-INCR-CRM-REPORT-BUILDER) | planned | opus-medio | "autorizo planejar o builder de relatórios do CRM" 2026-09-26 + 7/7 forks F-RB ratificados 2026-09-26 (AskUserQuestion) — sem 'executa'; F-RB8 (dono, 29/09, decisão 14): "Soma por moeda e conversão a parte com cambio" + "PTAX do BCB, taxa do dia" + 2ª rodada 29/09: "ADR moeda no A Receber e ainda um monitor que avisa quando vale a pena fazer esse câmbio" — emenda do BRIEF, sem 'executa' |
+| [[FE-CONTRACT-TYPES]] | Tipos de payload do FE gerados do snapshot de DTOs (fim do espelho à mão) | inflight | — | dono, chat, 2026-09-28: "Vamos planejar então usando a solução de snapshot" + questionários + "pode decidir tudo" (delegação) — plano e decisões; EXECUTA: "Me da o prompt para a proxima sessão que vai fazer o 1 a 4 que destrava, cria pr e mergeia esse aqui" (lançamento da sessão de execução) + "Pode criar pr e comittar" |
+| [[FE-INCR-DFE]] | Tela da emissão de DF-e | planned | precisa-de-planejamento | dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa') |
+| [[FE-INCR-FIXED-ASSETS]] | Tela do C8 (imobilizado) | planned | — | — |
+| [[GOV-CONTADOR]] | Governança do contador responsável (CRC, política versionada, reabertura de período) | planned | precisa-de-planejamento | dono, 2026-09-29: "Ratificar recomendações" — PLANEJAR o BRIEF BE-INCR-ACCOUNTANT-GOVERNANCE (sem 'executa') |
+| [[I11]] | Agente de chat: permissão e custo por mensagem | planned | — | — |
+| [[I5]] | Venda sem mapper = blocked visível, não loop de erro | planned | precisa-de-planejamento | dono, 2026-09-29: "Ratificar as recomendações" — forks F-I5-1/2 + PLANEJAR (sem 'executa') |
+| [[I7]] | Reset consistente (`DELETE /dashboard/system`) | planned | — | — |
+| [[LAC-B]] | UI da prensa de binding — ativação self-service (FE-INCR-BINDING-ACTIVATION) | inflight | precisa-de-planejamento | EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono |
+| [[PACOTE-VALIDADE]] | Validade do pacote pré-pago e receita por não uso | planned | precisa-de-planejamento | dono, 2026-09-29: "Validade por pacote" — decisão de produto; BRIEF próprio (sem 'executa') |
+| [[SEED-UNITS]] | Tenants do seed nascem com unidade real (SystemProvisioningService) + seed lê o .env (BE-INCR-SEED-UNIDADE-E-ENV) | ready | sonnet-alto | EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono |
+| [[W2]] | `isCore` real | planned | — | — |
+| [[W3]] | Gates determinísticos da entrevista | inflight | sonnet-medio | "autorizo as 5 correções por código, começa pela #12" + "(a), corrige e depois b" + "Autorizar W3 + ratificar F-W3-2" (dono, 30/09) — só a escolha criar × customizar; F-W3-1 não |
+| [[W4]] | `InterviewSession` persistida, com dono e TTL | planned | — | — |
+| [[W5]] | KB multi-preset + fonte única de presets | planned | — | — |
+| [[W6]] | Painel de campos: rota `CustomizeFields` ou remoção | planned | — | — |
+| [[W7]] | Higiene do FE do wizard | planned | — | — |
+| [[X7]] | Apuração de tributos (IRPJ/CSLL trimestral; PIS/COFINS, ISS) — ADR-INCR-TAX-ASSESSMENT | planned | — | F-M2 (2026-09-03) — só ADR; F-M8 (trimestral); F-X7-1 → (a) reabrir o F-M8 no ADR (dono, 29/09) |
 
 ## Fila aberta
 

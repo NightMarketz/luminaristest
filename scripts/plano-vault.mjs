@@ -80,8 +80,8 @@ export function buildIndex(notes) {
   const livres = aberto.filter((n) => ['ready', 'planned', 'inflight'].includes(n.fm.estado) && deps(n).every(done));
   out.push('## Destravados agora (abertos, todas as dependências fechadas)', '',
     '> Candidatos a próximo passo — **ainda exigem autorização citável do dono** (ORCH-006).', '',
-    row(['Nó', 'Título', 'Estado', 'Autorização']), row(['---', '---', '---', '---']));
-  for (const n of [...livres].sort((a, b) => a.fm.id.localeCompare(b.fm.id))) out.push(row([link(n.fm.id), n.fm.titulo, n.fm.estado, n.fm.autorizacao]));
+    row(['Nó', 'Título', 'Estado', 'Perfil previsto', 'Autorização']), row(['---', '---', '---', '---', '---']));
+  for (const n of [...livres].sort((a, b) => a.fm.id.localeCompare(b.fm.id))) out.push(row([link(n.fm.id), n.fm.titulo, n.fm.estado, n.fm.perfil_previsto, n.fm.autorizacao]));
   out.push('');
 
   const grupos = [
