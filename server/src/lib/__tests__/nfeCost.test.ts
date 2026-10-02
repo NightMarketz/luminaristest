@@ -177,6 +177,16 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
     expect(revenda.warnings.join(' ')).not.toMatch(/insumo monofásico/);
   });
 
+  // Review #461 (achado 3): um `it` por ramo de CST (item 7). Na etapa (c) os três dão o mesmo resultado; este é o
+  // caso que muda quando a P-1 fechar e o F-ID-4 virar (a) — CST 02 (fabricante/importador) passará a creditar.
+  it('item 7 (c) — insumo MONOFÁSICO por NCM com CST 02: crédito 0 + warning (até a P-1)', () => {
+    const itens = ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: '02', cstCofins: '02' } : it));
+    const c = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), dest({ 2: 'INSUMO_SERVICO' }));
+    expect(c.itens[1].classe).toBe('MONOFASICO');
+    expect(c.itens[1].creditoPisCofinsCents).toBe(0);
+    expect(c.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico/);
+  });
+
   it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
     const mix = dest({ 1: 'INSUMO_SERVICO', 2: 'REVENDA', 3: 'INSUMO_SERVICO' });
     const c = acquisitionCost(NFE, ITENS, real, mix);

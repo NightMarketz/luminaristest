@@ -1541,7 +1541,9 @@ describe('PayableService.createPayable — insumoItems (ITEM-DESTINATION)', () =
     expect(p2.insumoCents).toBe('0');
   });
 
-  it('item 12 — cancelar nota com insumo: estorna o entry inteiro (1 reverseEntry) e o contra-movimento físico é 1 só (o do payable)', async () => {
+  // Review #461 (achado 2): `reversePurchaseInbound` é por payable — esta chamada única NÃO distingue "1 Out" de
+  // "2 Outs" no físico; quem segura isso é o lado da criação (insumo nunca chama recordPurchaseInbound, item 10).
+  it('item 12 — cancelar nota com insumo: estorna o entry inteiro (1 reverseEntry) e dispara 1 estorno de estoque e 1 do físico por payable', async () => {
     const { service, reverseEntry, payableRepo, physicalStockSync, inventoryService } = build({
       findEntryBySource: (type) => (type === AP_PAYABLE_SOURCE_TYPE ? { id: 'entry-rec' } : null),
     });
