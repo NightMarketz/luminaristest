@@ -150,3 +150,11 @@ acrescentadas a mao com o sha do disco (o script reescreve o manifesto so com a 
 - **lei-12592-2012** — <https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2012/lei/l12592.htm> — sha256 `b31a63e3a20fc5c040e094b06d0a0bcaacc9898f577c366171c6908c956da092`.
 - **ricms-sp-313e** — <https://legislacao.fazenda.sp.gov.br/Paginas/art313e.aspx> — sha256 `76c6377a35133dcce14ccdeb81c29d643ed2c6841bba45d0bbebfb1e201cd91b`.
 - **portaria-sre-94-2025** — <https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-94-de-2025.aspx> — sha256 `68c1b46cafca446320f493bd33929f51ad105c4944952db0f369945cbd77563f`.
+
+**02/10/2026** — X10a (`BE-INCR-NFCE-brief.md`), downloads autorizados pelo dono em questionário ("Baixar os 3"):
+- **moc70-visao-geral** e **moc70-anexo-i** rebaixados das URLs acima (cookie de sessão); sha256 **iguais** aos de 26/09
+  (`f664dcf94b77…`, `5eb4cf2010b1…`). Lidos para o leiaute e as regras do modelo 65 (seções citadas no BRIEF §2).
+- **portaria-sre-79-2024** — <https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-79-de-2024.aspx> — HTML de
+  147.695 bytes, sha256 `f197f7e5a5bf8895dc28b939b1798f3d1b76f041c6c6b5d9b364806c38c11144`. Art. 1º acrescenta os arts.
+  34-C e 34-D à Portaria CAT 147/12; 34-D: CF-e-SAT vedado a partir de 01/01/2026. Conteúdo no HTML servido (sem JS).
+- **nfe-nt-2025-002-v151** lido de outra worktree, sha256 `a4aaaa181522…` (igual ao registrado em 29/09).
