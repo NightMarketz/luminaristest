@@ -88,6 +88,15 @@ export class AccountingSyncService implements AccountingSyncPort {
     this.retryDelayMs = opts.retryDelayMs ?? 50;
   }
 
+  /**
+   * BE-INCR-PACOTE-VALIDADE (item 9.3, F-PV-6 a) — read-only: would `sync()` find a mapper for this
+   * (unit, sourceType)? SAME resolution as `sync()` (composite key, then global). Lets the expiry job skip
+   * a unit whose Active binding predates `sale.package.expired` BEFORE touching the balance.
+   */
+  hasMapper(unitId: string, sourceType: AccountingEvent['sourceType']): boolean {
+    return this.mappers.has(`${unitId}:${sourceType}`) || this.mappers.has(sourceType);
+  }
+
   async sync(scope: AccountingScope, event: AccountingEvent): Promise<SyncResult> {
     // BE-INCR-BINDING-FEEDER (Fatia B) — DECISÃO SOBRE O FALLBACK GLOBAL (mantido, com
     // justificativa; a alternativa considerada e rejeitada foi removê-lo — ver ADR-INCR-BINDING-

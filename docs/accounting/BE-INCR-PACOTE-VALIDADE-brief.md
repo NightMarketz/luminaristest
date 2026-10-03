@@ -447,6 +447,18 @@ export const ReconcilePendingReasonCode = z.enum([
 - **Fronteira:** o item 13a toca o modelo do [[X10b]]/DFE (`FiscalProfile`) e o caminho `VENDA` do
   `EmissionService`. A `sessao-feature` deste nó leva o toque inteiro. Nenhum outro BRIEF o reivindica.
 
+### 5.3 Lacunas da execução — respostas do dono, 03/10/2026 (chat, questionário da `sessao-feature`)
+
+A execução ("Executa o BE-INCR-PACOTE-VALIDADE", dono, 03/10) achou quatro pontos do item 14a que o §5.2 não fixava.
+A sessão registrou e perguntou; não escolheu.
+
+| Ref | Lacuna | Resposta do dono | Contra a recomendação? |
+|---|---|---|---|
+| L1 | NFS-e do vencido **cancelada**: o re-drive do item 9.5 procura documento por `saleKey`, e o cancelamento renomeia o `saleKey` (`FiscalDocumentLifecycleService`) | **Reemite** (letra do §5.2): o próximo tick emite outra nota | **SIM** (a recomendação era não reemitir) |
+| L2 | NFS-e do vencido **rejeitada**: o reenvio remontava pela venda de origem (100% pacote) e recusaria em `CONSUMO` | Reenvio remonta **pelo vencimento** (`saleKey` = chave do movimento) | não |
+| L7 | `xDescServ` da nota do vencido | `Pacote <nome no catálogo> — saldo não utilizado, vencido em <expiresOn>` (sem a linha do catálogo: `Pacote — …`) | não |
+| L8 | `cIndOp` do grupo IBSCBS da nota do vencido | Reusar `030101` (o mesmo do caminho pacote `VENDA`); pendente do contador junto com o PE-5 | não |
+
 ## 6. Pendente de validação externa (follow-up; nada disto entra no checklist como decidido)
 
 | # | Pergunta | A quem | Pesa em |

@@ -3656,7 +3656,8 @@
               "reversal",
               "performance_liability",
               "cogs",
-              "subledger_command"
+              "subledger_command",
+              "performance_liability_release"
             ]
           },
           "fieldSlots": {
@@ -4274,6 +4275,11 @@
           },
           "customerId": {
             "type": "string"
+          },
+          "expiresOnOrBefore": {
+            "type": "string",
+            "format": "date",
+            "description": "BE-INCR-PACOTE-VALIDADE F-PV-11 a — só saldos com validade até esta data (YYYY-MM-DD real)"
           }
         }
       },
@@ -15813,11 +15819,21 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "expiresOnOrBefore",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "BE-INCR-PACOTE-VALIDADE (F-PV-11 a) — só saldos com validade (expiresAt) até esta data; YYYY-MM-DD real, senão 400"
           }
         ],
         "responses": {
           "200": {
-            "description": "balances (CustomerPackageBalance[] — id, unitId, customerId, packageId, balanceCents, expiresAt)"
+            "description": "balances (CustomerPackageBalance[] — id, unitId, customerId, packageId, balanceCents, expiresAt = último dia válido, date-only à meia-noite UTC; null = sem validade)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -15863,7 +15879,11 @@
                 "ACCOUNTING_PERIOD_NOT_OPEN",
                 "MAX_CENTS_EXCEEDED",
                 "OPENING_ENTRY_MISSING",
-                "MISSING_PAID_WITH_PACKAGE_ID"
+                "MISSING_PAID_WITH_PACKAGE_ID",
+                "NO_MAPPER_FOR_UNIT",
+                "PACKAGE_CONSUMPTION_PENDING",
+                "PACKAGE_ORIGIN_REVERSED",
+                "PACKAGE_EXPIRY_NFSE_PENDING"
               ]
             }
           },
@@ -16555,6 +16575,18 @@
                     ],
                     "default": "CONSUMO",
                     "description": "5c"
+                  },
+                  "pacoteCTribNac": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^\\d{6}$",
+                    "description": "BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a) — cTribNac do pacote (lista nacional); NFS-e do pacote VENDA e do saldo vencido em CONSUMO"
+                  },
+                  "pacoteCNBS": {
+                    "type": "string",
+                    "nullable": true,
+                    "pattern": "^\\d{9}$",
+                    "description": "BE-INCR-PACOTE-VALIDADE 13a — cNBS do pacote (Anexo B)"
                   },
                   "ibsCbsInformar": {
                     "type": "boolean",

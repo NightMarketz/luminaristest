@@ -19,6 +19,7 @@ describe('ArchetypeCatalog — fechado', () => {
       'performance_liability',
       'cogs',
       'subledger_command',
+      'performance_liability_release', // BE-INCR-PACOTE-VALIDADE item 12
     ];
     for (const key of expectedKeys) {
       expect(archetypeCatalog.get(key)).toBeDefined();
@@ -26,13 +27,13 @@ describe('ArchetypeCatalog — fechado', () => {
     }
   });
 
-  it('all() devolve exatamente 6 arquétipos — 5 de kind postEntry, 1 de kind createSubledgerRecord', () => {
+  it('all() devolve exatamente 7 arquétipos — 6 de kind postEntry, 1 de kind createSubledgerRecord', () => {
     const all = archetypeCatalog.all();
-    expect(all).toHaveLength(6);
+    expect(all).toHaveLength(7);
 
     const postEntryCount = all.filter((a) => a.kind === 'postEntry').length;
     const subledgerCount = all.filter((a) => a.kind === 'createSubledgerRecord').length;
-    expect(postEntryCount).toBe(5);
+    expect(postEntryCount).toBe(6);
     expect(subledgerCount).toBe(1);
   });
 

@@ -28,7 +28,7 @@ acceptsEntries: boolean
  */
 eventBindings: [{
 eventKey: string
-archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command")
+archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command" | "performance_liability_release")
 /**
  * @minItems 1
  */
@@ -54,7 +54,7 @@ accountCode: string
 descriptionTemplate?: string
 }, ...({
 eventKey: string
-archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command")
+archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command" | "performance_liability_release")
 /**
  * @minItems 1
  */
@@ -103,7 +103,7 @@ acceptsEntries: boolean
  */
 eventBindings: [{
 eventKey: string
-archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command")
+archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command" | "performance_liability_release")
 /**
  * @minItems 1
  */
@@ -129,7 +129,7 @@ accountCode: string
 descriptionTemplate?: string
 }, ...({
 eventKey: string
-archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command")
+archetypeKey: ("revenue_recognition" | "settlement" | "reversal" | "performance_liability" | "cogs" | "subledger_command" | "performance_liability_release")
 /**
  * @minItems 1
  */

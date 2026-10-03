@@ -105,3 +105,18 @@ describe('UpsertFiscalProfileSchema — insumoExpenseAccountId (ITEM-DESTINATION
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, insumoExpenseAccountId: '' }).success).toBe(false);
   });
 });
+
+// BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a): cTribNac/cNBS do PACOTE no perfil, validados como o ServiceFiscalProfile.
+describe('UpsertFiscalProfileSchema — pacoteCTribNac / pacoteCNBS (13a)', () => {
+  it('aceita cTribNac de 6 dígitos da lista nacional e cNBS de 9; ausentes/null continuam válidos', () => {
+    expect(UpsertFiscalProfileSchema.parse({ ...normal, pacoteCTribNac: '060101', pacoteCNBS: '123456789' })).toMatchObject({ pacoteCTribNac: '060101', pacoteCNBS: '123456789' });
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCTribNac: null, pacoteCNBS: null }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.safeParse(normal).success).toBe(true);
+  });
+
+  it('cTribNac fora da lista nacional, ou fora do formato, → 400', () => {
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCTribNac: '999999' }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCTribNac: '06010' }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCNBS: '12345678' }).success).toBe(false);
+  });
+});

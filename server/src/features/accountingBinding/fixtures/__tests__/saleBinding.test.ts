@@ -20,12 +20,13 @@ describe('SALE_BINDING_V1 — CONTROLE', () => {
   });
 });
 
-describe('SALE_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do BRIEF)', () => {
+describe('SALE_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (item 10 do BRIEF) + sale.package.expired', () => {
   const eventKeys = SALE_BINDING_V1.eventBindings.map((eb) => eb.eventKey);
 
-  it('cobre exatamente os 5 sourceTypes dos mappers de produção — nem a mais nem a menos', () => {
+  it('cobre exatamente os 5 sourceTypes dos mappers de produção + o vencimento de pacote — nem a mais nem a menos', () => {
     expect(eventKeys.sort()).toEqual(
       [
+        'sale.package.expired', // BE-INCR-PACOTE-VALIDADE item 12 (1º eventKey sem mapper à mão)
         'sale.package.sold',
         'sale.cogs',
         'sale.finalized',
@@ -72,6 +73,16 @@ describe('SALE_BINDING_V1 — accountCodes citados dos mappers, por eventKey', (
   it('sale.package.sold — 1.1.2 (D) / 2.1.1 (C), SalePackageSoldMapper.ts', () => {
     expect(codes('sale.package.sold').sort()).toEqual(['1.1.2', '2.1.1']);
     expect(byEvent('sale.package.sold').archetypeKey).toBe('performance_liability');
+  });
+
+  it('sale.package.expired — 2.1.1 (D) / 3.4 (C), releasedCents já em centavos (BE-INCR-PACOTE-VALIDADE)', () => {
+    const eb = byEvent('sale.package.expired');
+    expect(eb.archetypeKey).toBe('performance_liability_release');
+    expect(eb.roleSlots).toEqual([
+      { role: 'passivo-diferido', accountCode: '2.1.1' },
+      { role: 'receita-nao-uso', accountCode: '3.4' },
+    ]);
+    expect(eb.fieldSlots[0]).toMatchObject({ slotName: 'releasedCents', sourceField: 'event.releasedCents', transform: 'identity' });
   });
 
   it('sale.cogs — 4.2 (D) / 1.1.6 (C), SaleCogsMapper.ts — costCents já em centavos', () => {
@@ -133,6 +144,7 @@ describe('SALE_BINDING_V1 — compiledFromHash é determinístico', () => {
         'sale.returned': ['amount', 'dimension'],
         'sale.package.sold': ['amount', 'dimension'],
         'sale.cogs': ['costCents', 'dimension'],
+        'sale.package.expired': ['releasedCents', 'dimension'],
       },
       [
         { code: '1.1.1', nature: 'Asset', acceptsEntries: true },
@@ -144,6 +156,7 @@ describe('SALE_BINDING_V1 — compiledFromHash é determinístico', () => {
         { code: '3.1', nature: 'Revenue', acceptsEntries: true },
         { code: '3.2', nature: 'Revenue', acceptsEntries: true },
         { code: '3.3', nature: 'Revenue', acceptsEntries: true },
+        { code: '3.4', nature: 'Revenue', acceptsEntries: true }, // BE-INCR-PACOTE-VALIDADE
         { code: '4.2', nature: 'Expense', acceptsEntries: true },
       ],
     );

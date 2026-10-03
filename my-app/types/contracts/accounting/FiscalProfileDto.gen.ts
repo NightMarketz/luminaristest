@@ -28,6 +28,8 @@ regApTribSN?: (number | null)
 issAliquotaBp?: (number | null)
 issRetidoTomadorPj?: boolean
 pacoteFatoGerador?: ("CONSUMO" | "VENDA")
+pacoteCTribNac?: (string | null)
+pacoteCNBS?: (string | null)
 ibsCbsInformar?: boolean
 ibsCbsCst?: (string | null)
 ibsCbsClassTrib?: (string | null)

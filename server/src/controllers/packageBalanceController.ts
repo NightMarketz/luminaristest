@@ -8,7 +8,7 @@ import { ListPackageBalancesQuerySchema } from '../features/packages/dtos/Packag
 
 /**
  * Read-only listing of prepaid-package balances for a unit, optionally filtered to one
- * customer. Mutations (credit/debit) are driven internally by the package-sale bridge and
+ * customer and/or to the ones expiring on or before a date (BE-INCR-PACOTE-VALIDADE F-PV-11 a). Mutations (credit/debit) are driven internally by the package-sale bridge and
  * RegisterPaymentService — never exposed as a raw HTTP write.
  */
 export const listPackageBalances = async (req: Request, res: Response) => {
@@ -22,7 +22,10 @@ export const listPackageBalances = async (req: Request, res: Response) => {
     const scope = resolveAccountingScope(user, parsed.data.unitId);
     const balances = await getFactory()
       .getPackageBalanceService()
-      .listBalances(scope, parsed.data.customerId);
+      .listBalances(scope, {
+        customerId: parsed.data.customerId,
+        expiresOnOrBefore: parsed.data.expiresOnOrBefore,
+      });
     return res.json({ success: true, data: { balances } });
   } catch (error) {
     return handleApiError(error, res);

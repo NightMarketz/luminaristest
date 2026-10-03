@@ -94,7 +94,9 @@ describe('C7r — os 2 "blocked" sem reasonCode passam a ser capturados na tabel
     expect(codeA).toBeDefined(); // LACUNA: hoje undefined (nenhuma captura)
     expect(codeB).toBeDefined();
     expect(codeA).not.toBe(codeB);
-    // O enum ratificado tinha 3 valores; (a) acrescenta exatamente os 2.
-    expect(ReconcilePendingReasonCode.options).toHaveLength(5);
+    // O enum ratificado tinha 3 valores; (a) acrescenta exatamente os 2 (e o BE-INCR-PACOTE-VALIDADE, item 15
+    // + §5.2 item 9.5, mais 4 — os 2 desta guarda continuam lá).
+    expect(ReconcilePendingReasonCode.options).toEqual(expect.arrayContaining(['OPENING_ENTRY_MISSING', 'MISSING_PAID_WITH_PACKAGE_ID']));
+    expect(ReconcilePendingReasonCode.options).toHaveLength(9);
   });
 });

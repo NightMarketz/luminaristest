@@ -32,6 +32,7 @@ export const ArchetypeKeySchema = z.enum([
   'performance_liability',
   'cogs',
   'subledger_command',
+  'performance_liability_release', // BE-INCR-PACOTE-VALIDADE item 12 — pacote vencido sem uso (D 2.1.1 / C 3.4)
 ]);
 export type ArchetypeKey = z.infer<typeof ArchetypeKeySchema>;
 
@@ -80,7 +81,7 @@ export type RoleSlot = z.infer<typeof RoleSlotSchema>;
  *       required: [eventKey, archetypeKey, fieldSlots, roleSlots]
  *       properties:
  *         eventKey:           { type: string, description: "ex.: 'salon.sale.finalized' — mesma chave de AccountingEvent.sourceType" }
- *         archetypeKey:       { type: string, enum: [revenue_recognition, settlement, reversal, performance_liability, cogs, subledger_command] }
+ *         archetypeKey:       { type: string, enum: [revenue_recognition, settlement, reversal, performance_liability, cogs, subledger_command, performance_liability_release] }
  *         fieldSlots:         { type: array, minItems: 1, items: { $ref: '#/components/schemas/AccountingBindingFieldSlot' } }
  *         roleSlots:          { type: array, minItems: 1, items: { $ref: '#/components/schemas/AccountingBindingRoleSlot' } }
  *         descriptionTemplate: { type: string, description: "texto setorial da descrição do lançamento, placeholder {sourceId} — opcional, default event.label" }

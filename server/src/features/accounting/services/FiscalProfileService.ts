@@ -61,6 +61,8 @@ export interface FiscalProfileView extends CostRegime {
   issAliquotaBp: number | null;
   issRetidoTomadorPj: boolean;
   pacoteFatoGerador: string;
+  pacoteCTribNac: string | null;
+  pacoteCNBS: string | null;
   ibsCbsInformar: boolean;
   ibsCbsCst: string | null;
   ibsCbsClassTrib: string | null;
@@ -200,6 +202,9 @@ export class FiscalProfileService {
           issAliquotaBp: row.issAliquotaBp == null ? '' : String(row.issAliquotaBp),
           issRetidoTomadorPj: String(row.issRetidoTomadorPj),
           pacoteFatoGerador: row.pacoteFatoGerador,
+          // BE-INCR-PACOTE-VALIDADE 13a: códigos da lista nacional/NBS — sem texto livre
+          pacoteCTribNac: row.pacoteCTribNac ?? '',
+          pacoteCNBS: row.pacoteCNBS ?? '',
           ibsCbsInformar: String(row.ibsCbsInformar),
           ibsCbsCst: row.ibsCbsCst ?? '',
           ibsCbsClassTrib: row.ibsCbsClassTrib ?? '',
@@ -270,6 +275,8 @@ export class FiscalProfileService {
       issAliquotaBp: row.issAliquotaBp,
       issRetidoTomadorPj: row.issRetidoTomadorPj,
       pacoteFatoGerador: row.pacoteFatoGerador,
+      pacoteCTribNac: row.pacoteCTribNac,
+      pacoteCNBS: row.pacoteCNBS,
       ibsCbsInformar: row.ibsCbsInformar,
       ibsCbsCst: row.ibsCbsCst,
       ibsCbsClassTrib: row.ibsCbsClassTrib,

@@ -8,7 +8,7 @@
  *   - F-P1-1(b): `archetypeKey` aceita as 5 chaves classe-1 + `subledger_command` (6 no total).
  *   - invariante 5 do ADR: `fieldSlots[].transform` é um enum FECHADO de 2 valores, nunca string livre.
  */
-import { AccountingBindingV1Schema, EventBindingSchema, FieldSlotSchema, RoleSlotSchema } from '../AccountingBindingDto';
+import { AccountingBindingV1Schema, ArchetypeKeySchema, EventBindingSchema, FieldSlotSchema, RoleSlotSchema } from '../AccountingBindingDto';
 
 const roleSlot = (role = 'controle-recebível', accountCode = '1.1.2') => ({ role, accountCode });
 const fieldSlot = (slotName = 'amountCents', sourceField = 'event.amount', transform?: string) =>
@@ -63,7 +63,13 @@ describe('RoleSlotSchema — F-P1-5(a) ratificada: accountCode OBRIGATÓRIO', ()
   });
 });
 
-describe('archetypeKey — enum FECHADO de 6 chaves (F-P1-1b ratificada)', () => {
+describe('archetypeKey — enum FECHADO de 7 chaves (F-P1-1b ratificada + BE-INCR-PACOTE-VALIDADE item 12)', () => {
+  it('o enum é exatamente as 7 chaves do catálogo', () => {
+    expect([...ArchetypeKeySchema.options].sort()).toEqual(
+      ['revenue_recognition', 'settlement', 'reversal', 'performance_liability', 'cogs', 'subledger_command', 'performance_liability_release'].sort(),
+    );
+  });
+
   it.each([
     'revenue_recognition',
     'settlement',
@@ -71,6 +77,7 @@ describe('archetypeKey — enum FECHADO de 6 chaves (F-P1-1b ratificada)', () =>
     'performance_liability',
     'cogs',
     'subledger_command',
+    'performance_liability_release',
   ])('accepts a chave classe-1/classe-2 "%s"', (archetypeKey) => {
     expect(
       EventBindingSchema.safeParse({ ...validEventBinding, archetypeKey }).success,

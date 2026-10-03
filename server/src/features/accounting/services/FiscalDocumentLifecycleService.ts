@@ -181,6 +181,7 @@ export class FiscalDocumentLifecycleService {
       doc.kind as FiscalDocumentKind,
       doc.cTribNac,
       doc.ambiente as DfeAmbiente,
+      doc.saleKey, // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): nota de saldo vencido remonta pelo vencimento
     );
     // A numeração NÃO é reconsumida no reenvio — é a MESMA DPS, uma nova tentativa de envio dela.
     const payload = port.capabilities.numbersDps

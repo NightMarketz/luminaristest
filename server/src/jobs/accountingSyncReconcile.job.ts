@@ -79,7 +79,19 @@ import {
   buildSaleReturnedEvent,
   buildSaleSettledEvent,
   buildSalePackageSoldEvent,
+  buildSalePackageExpiredEvent,
 } from '../features/accounting/sync/AccountingSyncPort';
+import { AppError, AccountingPeriodNotOpenError, NoMapperForUnitError, PackageConsumptionPendingError, PackageOriginReversedError } from '../lib/errors';
+import { AccountingPeriodRepository } from '../features/accounting/repositories/AccountingPeriodRepository';
+import { scopeToday } from '../features/accounting/models/dates';
+import type { ExpireDueResult } from '../features/packages/services/PackageBalanceService';
+import {
+  expiresOnFromDb,
+  expiryCompetence,
+  expiryMovementKey,
+  isDueForExpiry,
+  parseExpiryMovementKey,
+} from '../features/packages/models/validity';
 import type {
   CrmBridgeOutcome,
   WonOpportunityFact,
@@ -88,7 +100,9 @@ import type { AccountingEvent, SyncResult } from '../features/accounting/sync/Ac
 import { syncSkipErrorCode } from '../features/accounting/sync/AccountingSyncPort';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
-import { loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
+import { loadPackageValidityDays, loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
+import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
+import { scopeDay } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
 import { JobWatermarkRepository } from './JobWatermarkRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
@@ -1081,8 +1095,17 @@ export interface SalePackageOriginReconcileDeps extends ReconcileOutcomeReporter
   hasCreditMovement: (scope: AccountingScope, saleId: string) => Promise<boolean>;
   creditBalance: (
     scope: AccountingScope,
-    cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
+    cmd: {
+      customerId: string;
+      packageId: string;
+      saleId: string;
+      amountCents: number;
+      saleDate: string;
+      validityDays: number | null;
+    },
   ) => Promise<void>;
+  /** BE-INCR-PACOTE-VALIDADE item 3 — the catalog's `validityDays` (the same helper the bridge uses). */
+  loadValidityDays: (ownerUserId: string, packageId: string) => Promise<number | null>;
 }
 
 /**
@@ -1131,6 +1154,9 @@ export async function reconcileSalePackageOrigin(
             packageId: sale.packageId,
             saleId: sale.saleId,
             amountCents: Math.round(sale.amount * 100),
+            // Same accounting day the bridge uses (`scopeDay`: a date-only `date` passes intact).
+            saleDate: scopeDay(scope, sale.occurredAt),
+            validityDays: await deps.loadValidityDays(sale.ownerUserId, sale.packageId),
           });
           logger.info('Reconcile credited package balance', { saleId: sale.saleId });
         }
@@ -1335,6 +1361,298 @@ export async function reconcilePackageBalanceVsLiability(
   return { checked: rows.length, divergences };
 }
 
+// ───────────────────────────────────────────────────────────────────────────
+// BE-INCR-PACOTE-VALIDADE — vencimento do saldo pré-pago (itens 9, 11, 14, 14a, 15; F-PV-5/6/7/8/9 ratificados).
+// Passe novo DENTRO do reconcile (F-PV-7 a), fora do merge do summary (como `reconcilePhysicalInventory`) para
+// nunca segurar a marca d'água. Desenho de 2 commits (memória postentry-tx-raiz-subrazao-2-commits): o
+// movimento `expiry` (subrazão) fixa o valor e commita; o lançamento D 2.1.1 / C 3.4 vem depois, re-dirigível
+// (item 11); a NFS-e do vencido (14a) é efeito posterior, nunca gate.
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Pending-row identity for everything about one expiry: sourceType 'sale.package.expired', sourceId = movement key. */
+const PACKAGE_EXPIRED_SOURCE_TYPE = 'sale.package.expired';
+
+/** Codes this section classifies as BLOCKED (each guard has its OWN code — never a base error class). */
+const PACKAGE_EXPIRY_BLOCKED_CODES: readonly ReconcilePendingReasonCodeValue[] = [
+  'PACKAGE_CONSUMPTION_PENDING',
+  'PACKAGE_ORIGIN_REVERSED',
+  'NO_MAPPER_FOR_UNIT',
+  'ACCOUNTING_PERIOD_NOT_OPEN',
+  'MAX_CENTS_EXCEEDED',
+  'PACKAGE_EXPIRY_NFSE_PENDING',
+];
+
+function packageExpiryBlockedCode(error: unknown): ReconcilePendingReasonCodeValue | null {
+  return error instanceof AppError && (PACKAGE_EXPIRY_BLOCKED_CODES as readonly string[]).includes(error.errorCode)
+    ? (error.errorCode as ReconcilePendingReasonCodeValue)
+    : null;
+}
+
+/** One live balance with a validity and something left (item 14 listing). */
+export interface PackageExpiryCandidate {
+  ownerUserId: string;
+  unitId: string;
+  balanceId: string;
+  customerId: string;
+  packageId: string;
+  /** Last valid day, 'YYYY-MM-DD'. */
+  expiresOn: string;
+}
+
+/** Collaborators shared by the expiry pass and the post-expiry re-drive (posting + NFS-e). */
+export interface PackageExpiryEffectsDeps extends ReconcileOutcomeReporter {
+  sync: (scope: AccountingScope, event: AccountingEvent) => Promise<SyncResult>;
+  /** §5.2 item 14a: emits the expiry NFS-e when the unit profile is CONSUMO; throws PACKAGE_EXPIRY_NFSE_PENDING on a faltante. */
+  emitExpiryNfse: (scope: AccountingScope, movementKey: string) => Promise<'emitted' | 'exists' | 'not_applicable'>;
+}
+
+export interface PackageExpiryReconcileDeps extends PackageExpiryEffectsDeps {
+  listCandidates: () => Promise<PackageExpiryCandidate[]>;
+  /** "Today" in the scope's zone — injectable clock (the E2E test advances it to expiresOn + 2). */
+  today: (scope: AccountingScope) => string;
+  /** Guard 9.1: a Finalized+Paid 'Package Balance' sale of this package/customer WITHOUT its debit → its saleId. */
+  findPendingConsumption: (scope: AccountingScope, c: PackageExpiryCandidate) => Promise<string | null>;
+  /** Guard 9.2 (F-PV-8 a): a credit of this balance whose origin sale is Cancelled/Returned → its saleId. */
+  findReversedOrigin: (scope: AccountingScope, c: PackageExpiryCandidate) => Promise<string | null>;
+  /** Guard 9.3 (F-PV-6 a): `AccountingSyncService.hasMapper` — same resolution as `sync()`. */
+  hasMapper: (unitId: string, sourceType: AccountingEvent['sourceType']) => boolean;
+  /** Guard 9.4 (F-PV-5): is the period of the posting date OPEN? */
+  isPeriodOpen: (scope: AccountingScope, dateOnly: string) => Promise<boolean>;
+  expireDue: (scope: AccountingScope, balanceId: string, today: string) => Promise<ExpireDueResult | null>;
+  /** Pending-row identity while the guards run: the key the next expiry of this balance would take (achado 3). */
+  nextMovementKey: (scope: AccountingScope, c: PackageExpiryCandidate) => Promise<string>;
+}
+
+/**
+ * The effects AFTER the `expiry` movement, in order: (1) the posting `sale.package.expired` (D 2.1.1 / C 3.4,
+ * competence `expiresOn + 1`), idempotent on (sourceType, sourceId = movementKey); (2) the expiry NFS-e when the
+ * profile is CONSUMO. Throws the classified error of the first step that fails — the movement stays, and the
+ * post-expiry re-drive finishes the job later.
+ */
+async function applyPackageExpiryEffects(
+  deps: PackageExpiryEffectsDeps,
+  scope: AccountingScope,
+  movement: { movementKey: string; amountCents: number; expiresOn: string },
+  needsPosting: boolean,
+): Promise<'emitted' | 'exists' | 'not_applicable'> {
+  if (needsPosting) {
+    await deps.sync(
+      scope,
+      buildSalePackageExpiredEvent({
+        movementKey: movement.movementKey,
+        unitId: scope.unitId,
+        releasedCents: movement.amountCents,
+        occurredAt: expiryCompetence(movement.expiresOn),
+        label: `Pacote vencido sem uso — ${movement.movementKey}`,
+      }),
+    );
+  }
+  return deps.emitExpiryNfse(scope, movement.movementKey);
+}
+
+/** Shared catch for one expiry item: classified guard/skip code → BLOCKED + pending; anything else → FAILED + pending. */
+async function capturePackageExpiryFailure(
+  deps: ReconcileOutcomeReporter,
+  summary: ReconcileSummary,
+  item: { ownerUserId: string; unitId: string; movementKey: string },
+  error: unknown,
+): Promise<void> {
+  const reason = error instanceof Error ? error.message : String(error);
+  const code = packageExpiryBlockedCode(error);
+  if (code) {
+    summary.blocked = (summary.blocked ?? 0) + 1;
+    logger.warn('Reconcile blocked for package expiry — deterministic code, skipping', { movementKey: item.movementKey, code, error: reason });
+  } else {
+    summary.failed++;
+    logger.error('Reconcile failed for package expiry — continuing', { movementKey: item.movementKey, error: reason });
+  }
+  await reportPendingSafely(deps.reportPending, summary, {
+    ownerUserId: item.ownerUserId,
+    unitId: item.unitId,
+    sourceType: PACKAGE_EXPIRED_SOURCE_TYPE,
+    sourceId: item.movementKey,
+    reasonCode: code ?? 'FAILED',
+    reasonDetail: reason,
+  });
+}
+
+/**
+ * Item 14 — expires every due balance: guards of item 9 (each with its own code, in order, BEFORE the
+ * irreversible effect) → `expireDue` (movement + decrement, one tx) → posting → NFS-e (14a). Fault-isolated per
+ * balance; every blocked/failed item is captured as a pending row keyed by the movement key. Residual declared in
+ * the BRIEF: TOCTOU between guard 9.4 and the posting commit (the period closes in between) — the movement then
+ * stays without its posting and `reconcileSalePackageExpiryPosting` re-drives it when the period reopens.
+ */
+export async function reconcilePackageExpiry(deps: PackageExpiryReconcileDeps): Promise<ReconcileSummary> {
+  const candidates = await deps.listCandidates();
+  const due: Array<{ c: PackageExpiryCandidate; scope: AccountingScope; today: string }> = [];
+  for (const c of candidates) {
+    const scope = resolveAccountingScope({ userId: c.ownerUserId }, c.unitId);
+    const today = deps.today(scope);
+    if (isDueForExpiry(c.expiresOn, today)) due.push({ c, scope, today });
+  }
+  const summary: ReconcileSummary = { total: due.length, synced: 0, idempotentHits: 0, failed: 0, blocked: 0 };
+
+  for (const { c, scope, today } of due) {
+    let movementKey = expiryMovementKey(c.balanceId, c.expiresOn);
+    try {
+      movementKey = await deps.nextMovementKey(scope, c);
+      // 9.1 consumo pendente (transitório)
+      const pendingSale = await deps.findPendingConsumption(scope, c);
+      if (pendingSale) throw new PackageConsumptionPendingError(c.balanceId, pendingSale);
+      // 9.2 origem estornada (poison até o E-1)
+      const reversedSale = await deps.findReversedOrigin(scope, c);
+      if (reversedSale) throw new PackageOriginReversedError(c.balanceId, reversedSale);
+      // 9.3 sem mapper na unidade (binding Active anterior ao evento)
+      if (!deps.hasMapper(c.unitId, 'sale.package.expired')) throw new NoMapperForUnitError(c.unitId, 'sale.package.expired');
+      // 9.4 período da data do lançamento (expiresOn + 1) aberto
+      const competence = expiryCompetence(c.expiresOn);
+      if (!(await deps.isPeriodOpen(scope, competence))) {
+        throw new AccountingPeriodNotOpenError(Number(competence.slice(0, 4)), Number(competence.slice(5, 7)));
+      }
+
+      const expired = await deps.expireDue(scope, c.balanceId, today);
+      if (!expired) {
+        summary.idempotentHits++; // already expired (or emptied) by a concurrent run
+        continue;
+      }
+      movementKey = expired.movementKey; // the key the tx actually wrote (normally the same)
+      await applyPackageExpiryEffects(deps, scope, expired, true);
+      summary.synced++;
+      logger.info('Reconcile expired package balance', { movementKey, amountCents: expired.amountCents });
+      await reportResolvedSafely(deps.reportResolved, { ownerUserId: c.ownerUserId, unitId: c.unitId, sourceType: PACKAGE_EXPIRED_SOURCE_TYPE, sourceId: movementKey });
+    } catch (error) {
+      await capturePackageExpiryFailure(deps, summary, { ownerUserId: c.ownerUserId, unitId: c.unitId, movementKey }, error);
+    }
+  }
+
+  logger.info('Package expiry reconcile complete', { ...summary });
+  return summary;
+}
+
+/** One `expiry` movement (the subledger fact) with its owning tenant. */
+export interface PackageExpiryMovement {
+  ownerUserId: string;
+  unitId: string;
+  movementKey: string;
+  amountCents: number;
+}
+
+export interface PackageExpiryPostingReconcileDeps extends PackageExpiryEffectsDeps {
+  listExpiryMovements: () => Promise<PackageExpiryMovement[]>;
+  hasExistingEntry: (scope: AccountingScope, sourceType: string, sourceId: string) => Promise<boolean>;
+}
+
+/**
+ * Item 11 + §5.2 item 9.5 re-drive — for every `expiry` movement: books the missing posting
+ * `('sale.package.expired', movementKey)` (idempotent on PostingService's @@unique), then emits the missing
+ * expiry NFS-e when the profile is CONSUMO (idempotent on the document's @@unique). A movement already posted
+ * and already with its note (or not CONSUMO) is a silent no-op. Pending rows reuse the movement key.
+ * ponytail: lê todos os movimentos `expiry` a cada tick; upgrade = filtrar por "sem lançamento/sem nota" no SQL se a tabela crescer.
+ */
+export async function reconcileSalePackageExpiryPosting(deps: PackageExpiryPostingReconcileDeps): Promise<ReconcileSummary> {
+  const movements = await deps.listExpiryMovements();
+  const summary: ReconcileSummary = { total: movements.length, synced: 0, idempotentHits: 0, failed: 0, blocked: 0 };
+
+  for (const m of movements) {
+    try {
+      const parsed = parseExpiryMovementKey(m.movementKey);
+      if (!parsed) throw new Error(`Movimento de vencimento com chave inválida '${m.movementKey}'.`);
+      const scope = resolveAccountingScope({ userId: m.ownerUserId }, m.unitId);
+      const needsPosting = !(await deps.hasExistingEntry(scope, PACKAGE_EXPIRED_SOURCE_TYPE, m.movementKey));
+      const nfse = await applyPackageExpiryEffects(deps, scope, { movementKey: m.movementKey, amountCents: m.amountCents, expiresOn: parsed.expiresOn }, needsPosting);
+      if (needsPosting || nfse === 'emitted') {
+        summary.synced++;
+        logger.info('Reconcile completed package expiry effects', { movementKey: m.movementKey, posted: needsPosting, nfse });
+        await reportResolvedSafely(deps.reportResolved, { ownerUserId: m.ownerUserId, unitId: m.unitId, sourceType: PACKAGE_EXPIRED_SOURCE_TYPE, sourceId: m.movementKey });
+      } else {
+        summary.idempotentHits++;
+      }
+    } catch (error) {
+      await capturePackageExpiryFailure(deps, summary, m, error);
+    }
+  }
+
+  logger.info('Package expiry posting/NFS-e re-drive complete', { ...summary });
+  return summary;
+}
+
+/**
+ * Production collaborators of the two expiry passes. Exported so the integration test drives the SAME wiring
+ * with an advanced clock (`today`) instead of a parallel reimplementation.
+ */
+export function buildPackageExpiryDeps(opts: {
+  today?: (scope: AccountingScope) => string;
+  reportPending?: ReconcileOutcomeReporter['reportPending'];
+  reportResolved?: ReconcileOutcomeReporter['reportResolved'];
+} = {}): PackageExpiryReconcileDeps & PackageExpiryPostingReconcileDeps {
+  const factory = getFactory();
+  const dtRepo = factory.getDynamicTableRepository();
+  const pkgRepo = new PackageBalanceRepository();
+  const journalRepo = new JournalEntryRepository();
+  const periodRepo = new AccountingPeriodRepository();
+
+  const salesTableOf = async (ownerUserId: string) => dtRepo.findTableByInternalName(ownerUserId, 'sales');
+
+  return {
+    reportPending: opts.reportPending,
+    reportResolved: opts.reportResolved,
+    today: opts.today ?? ((scope) => scopeToday(scope)),
+    listCandidates: async () =>
+      (await pkgRepo.listExpiryCandidates()).map((b) => ({
+        ownerUserId: b.userId,
+        unitId: b.unitId,
+        balanceId: b.id,
+        customerId: b.customerId,
+        packageId: b.packageId,
+        expiresOn: expiresOnFromDb(b.expiresAt)!,
+      })),
+    // 9.1 — same predicate as the consumption pass' listing (Finalized + Paid + 'Package Balance' + persisted
+    // paidWithPackageId), but WITHOUT the trailing watermark: the job acts ≥ 2 days after the last valid day, long
+    // after a consumption's row left the 15-min window, so the watermarked listing would never see it.
+    findPendingConsumption: async (scope, c) => {
+      const salesTable = await salesTableOf(scope.ownerUserId);
+      if (!salesTable) return null;
+      const rows = await dtRepo.findRowsByFieldValue(salesTable.id, 'paidWithPackageId', c.packageId);
+      for (const row of rows) {
+        const d = (row.data ?? {}) as Record<string, unknown>;
+        if (d.unitId !== c.unitId || d.customerId !== c.customerId) continue;
+        if (d.status !== 'Finalized' || d.paymentStatus !== 'Paid' || d.paymentMethod !== 'Package Balance') continue;
+        if (!(await pkgRepo.findMovement(scope, row.id, 'debit'))) return row.id;
+      }
+      return null;
+    },
+    findReversedOrigin: async (scope, c) => {
+      const credits = await pkgRepo.listCreditMovements(scope, c.customerId, c.packageId);
+      if (credits.length === 0) return null;
+      const rows = await dtRepo.findDataByIds(credits.map((m) => m.saleId));
+      const reversed = rows.find((r) => {
+        const status = ((r.data ?? {}) as Record<string, unknown>).status;
+        return status === 'Cancelled' || status === 'Returned';
+      });
+      return reversed ? reversed.id : null;
+    },
+    hasMapper: (unitId, sourceType) => factory.getAccountingSyncService().hasMapper(unitId, sourceType),
+    isPeriodOpen: async (scope, dateOnly) => {
+      const period = await periodRepo.findByYearMonth(scope, Number(dateOnly.slice(0, 4)), Number(dateOnly.slice(5, 7)));
+      return period?.status === 'OPEN';
+    },
+    expireDue: (scope, balanceId, today) => factory.getPackageBalanceService().expireDue(scope, balanceId, today),
+    nextMovementKey: (scope, c) => factory.getPackageBalanceService().nextExpiryMovementKey(scope, c.balanceId, c.expiresOn),
+    sync: (scope, event) => factory.getAccountingSyncService().sync(scope, event),
+    emitExpiryNfse: (scope, movementKey) => factory.getFiscalDocumentEmissionService().emitPackageExpiry(scope, movementKey),
+    listExpiryMovements: async () =>
+      (await pkgRepo.listMovementsOfKind('expiry')).map((m) => ({
+        ownerUserId: m.userId,
+        unitId: m.unitId,
+        movementKey: m.saleId,
+        amountCents: centsFromDb(m.deltaCents),
+      })),
+    hasExistingEntry: (scope, sourceType, sourceId) =>
+      journalRepo.findBySource(scope, sourceType, sourceId).then((entry) => entry != null),
+  };
+}
+
 // ─── Physical × subledger inventory check (BE-INCR-INVENTORY-TIEOUT / LAC-E) ─────────────────
 
 export interface PhysicalInventoryDeps {
@@ -1521,10 +1839,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       pkgRepo.findMovement(scope, saleId, 'credit').then((m) => m != null);
     const hasDebitMovement = (scope: AccountingScope, saleId: string) =>
       pkgRepo.findMovement(scope, saleId, 'debit').then((m) => m != null);
-    const creditBalance = (
-      scope: AccountingScope,
-      cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
-    ) => pkgService.creditFromSale(scope, cmd);
+    const creditBalance = (scope: AccountingScope, cmd: PackageCreditCommand) => pkgService.creditFromSale(scope, cmd);
     const debitBalance = (
       scope: AccountingScope,
       cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
@@ -1708,6 +2023,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       sync: doSync,
       hasCreditMovement,
       creditBalance,
+      loadValidityDays: loadPackageValidityDays,
       reportPending,
       reportResolved,
     });
@@ -1832,6 +2148,19 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       // Warn-only por contrato: nem a enumeração de escopos pode derrubar runPasses (o watermark
       // e o summary das 8 passadas não pertencem a este check).
       logger.error('Physical × subledger inventory check aborted — continuing', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    // BE-INCR-PACOTE-VALIDADE (F-PV-7 a): vencimento + re-drive do lançamento/NFS-e do vencido. Fora do reduce
+    // do summary e num try/catch próprio — nunca seguram a marca d'água (como o check físico acima). Os itens
+    // falhos/bloqueados ficam na tabela de pendências (chave = movimento `expiry`).
+    try {
+      const expiryDeps = buildPackageExpiryDeps({ reportPending, reportResolved });
+      await reconcilePackageExpiry(expiryDeps);
+      await reconcileSalePackageExpiryPosting(expiryDeps);
+    } catch (error) {
+      logger.error('Package expiry passes aborted — continuing', {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -2061,10 +2390,7 @@ export async function retryOneReconcilePendingItem(
       const data = row.data;
       const hasCreditMovement = (s: AccountingScope, saleId: string) =>
         pkgRepo.findMovement(s, saleId, 'credit').then((m) => m != null);
-      const creditBalance = (
-        s: AccountingScope,
-        cmd: { customerId: string; packageId: string; saleId: string; amountCents: number },
-      ) => pkgService.creditFromSale(s, cmd);
+      const creditBalance = (s: AccountingScope, cmd: PackageCreditCommand) => pkgService.creditFromSale(s, cmd);
       const summary = await reconcileSalePackageOrigin({
         listPackageSales: async () => [
           {
@@ -2082,6 +2408,7 @@ export async function retryOneReconcilePendingItem(
         sync: doSync,
         hasCreditMovement,
         creditBalance,
+        loadValidityDays: loadPackageValidityDays,
       });
       return resolvedIfAny(summary);
     }
@@ -2108,6 +2435,41 @@ export async function retryOneReconcilePendingItem(
         ],
         hasDebitMovement,
         debitBalance,
+      });
+      return resolvedIfAny(summary);
+    }
+    case 'sale.package.expired': {
+      // BE-INCR-PACOTE-VALIDADE (item 15): sourceId = movement key. Movement already there → finish its effects
+      // (posting + NFS-e); otherwise the balance is still pending its guards → re-run the expiry pass on it.
+      const parsed = parseExpiryMovementKey(pending.sourceId);
+      if (!parsed) return { outcome: 'still_pending' };
+      const deps = buildPackageExpiryDeps();
+      const movement = await pkgRepo.findMovement(scope, pending.sourceId, 'expiry');
+      if (movement) {
+        const summary = await reconcileSalePackageExpiryPosting({
+          ...deps,
+          listExpiryMovements: async () => [
+            { ownerUserId: scope.ownerUserId, unitId: scope.unitId, movementKey: movement.saleId, amountCents: centsFromDb(movement.deltaCents) },
+          ],
+        });
+        return resolvedIfAny(summary);
+      }
+      const balance = await pkgRepo.findBalanceById(scope, parsed.balanceId);
+      // Esse vencimento deixou de existir (a recompra com saldo > 0 moveu o prazo, F-PV-2 a, ou o saldo sumiu):
+      // a pendência não tem mais objeto. Se o NOVO prazo bloquear, o passe captura sob a nova chave.
+      if (!balance || expiresOnFromDb(balance.expiresAt) !== parsed.expiresOn) return { outcome: 'resolved' };
+      const summary = await reconcilePackageExpiry({
+        ...deps,
+        listCandidates: async () => [
+          {
+            ownerUserId: scope.ownerUserId,
+            unitId: scope.unitId,
+            balanceId: balance.id,
+            customerId: balance.customerId,
+            packageId: balance.packageId,
+            expiresOn: parsed.expiresOn,
+          },
+        ],
       });
       return resolvedIfAny(summary);
     }

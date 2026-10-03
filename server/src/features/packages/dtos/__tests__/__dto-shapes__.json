@@ -11,6 +11,9 @@
         "customerId": {
           "type": "string",
           "minLength": 1
+        },
+        "expiresOnOrBefore": {
+          "type": "string"
         }
       },
       "required": [

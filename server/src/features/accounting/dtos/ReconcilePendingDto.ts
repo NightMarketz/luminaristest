@@ -20,6 +20,11 @@ export const ReconcilePendingReasonCode = z.enum([
   // C7r (cédula 2026-09-10 §2 resposta 23 → a): os 2 "blocked" que não tinham código passam a entrar.
   'OPENING_ENTRY_MISSING', // transitório — ordering-gate do settlement: resolve quando a abertura da venda postar
   'MISSING_PAID_WITH_PACKAGE_ID', // poison — consumo de pacote sem paidWithPackageId persistido; nunca inferido
+  // BE-INCR-PACOTE-VALIDADE (item 15 + §5.2 item 9.5) — guardas do passe de vencimento, código próprio cada uma.
+  'NO_MAPPER_FOR_UNIT', // transitório — o binding Active da unidade não tem o evento; resolve ao recompilar (nome do I5, F-I5-1 a)
+  'PACKAGE_CONSUMPTION_PENDING', // transitório — resolve quando o débito do consumo aplicar
+  'PACKAGE_ORIGIN_REVERSED', // poison — resolve só com a correção do E-1
+  'PACKAGE_EXPIRY_NFSE_PENDING', // transitório — falta dado para a NFS-e do vencido; o vencimento e o lançamento ficam
 ]);
 export type ReconcilePendingReasonCodeValue = z.infer<typeof ReconcilePendingReasonCode>;
 

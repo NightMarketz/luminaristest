@@ -1,3 +1,4 @@
+import { CANONICAL_ACCOUNTS, RECEITA_NAO_USO_CODE } from '../../fixtures/ChartOfAccountsFixture';
 import { SpedEcfGenerationService } from '../SpedEcfGenerationService';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { ForbiddenError, ValidationError } from '../../../../lib/errors';
@@ -58,6 +59,7 @@ interface Mocks {
   canRead?: boolean;
   accounts?: Account[];
   extraRevenueMove?: boolean; // add movement on a non-3.1/3.3 revenue account
+  extraRevenueAccountId?: string; // which account receives that movement (default rec39)
 }
 
 function buildService(m: Mocks = {}) {
@@ -77,7 +79,7 @@ function buildService(m: Mocks = {}) {
         { accountId: 'rec33', debitCents: 0, creditCents: isYear ? 20000000 : 5000000 },
       ];
       if (m.extraRevenueMove) {
-        rows.push({ accountId: 'rec39', debitCents: 0, creditCents: isYear ? 4000000 : 1000000 });
+        rows.push({ accountId: m.extraRevenueAccountId ?? 'rec39', debitCents: 0, creditCents: isYear ? 4000000 : 1000000 });
       }
       return rows;
     },
@@ -127,6 +129,25 @@ describe('SpedEcfGenerationService.generate', () => {
     });
     await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
     // The FAIL-1 guard: no silent drop, no file, no job.
+    expect(createJob).not.toHaveBeenCalled();
+    expect(savedBuffers).toHaveLength(0);
+  });
+
+  // BE-INCR-PACOTE-VALIDADE item 13 (F-PV-4 a): a 3.4 Receita de Pacotes Não Utilizados fica FORA do mapa de
+  // presunção até o contador (PE-2). Falhar alto é o comportamento DESEJADO, não efeito colateral.
+  it('ECF Presumido com movimento na 3.4 (pacote vencido) reprova o gate de exaustividade até o PE-2', async () => {
+    const naoUso = CANONICAL_ACCOUNTS.find((a) => a.code === RECEITA_NAO_USO_CODE)!;
+    const REC_NAO_USO = makeAccount({ id: 'rec34', code: naoUso.code, name: naoUso.name, nature: naoUso.nature, acceptsEntries: naoUso.acceptsEntries });
+    const { service, createJob } = buildService({
+      accounts: [GRUPO_REC, SERVICO, REVENDA, REC_NAO_USO],
+      extraRevenueMove: true,
+      extraRevenueAccountId: 'rec34',
+    });
+    const err = await service.generate(scope, makeDto()).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect((err as ValidationError).details).toEqual({
+      unmappedRevenueAccounts: [{ code: '3.4', name: 'Receita de Pacotes Não Utilizados' }],
+    });
     expect(createJob).not.toHaveBeenCalled();
     expect(savedBuffers).toHaveLength(0);
   });

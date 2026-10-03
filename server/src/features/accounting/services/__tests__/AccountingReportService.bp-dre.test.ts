@@ -379,6 +379,24 @@ describe('incomeStatement', () => {
     expect(report.reportStatus).not.toBe('INVALID'); // 3.3 is mapped, not an unmapped account
   });
 
+  // BE-INCR-PACOTE-VALIDADE item 13 (F-PV-4 a): a 3.4 só aparece na DRE porque ganhou a regra
+  // dre.gross_rev_breakage — sem ela sumiria em silêncio (a lição do 3.3, P9). Seção PROVISÓRIA até o PE-1.
+  it('receita de pacote vencido (3.4) entra em grossRevenue pela regra provisória, junto da 3.1', async () => {
+    const accounts = [
+      makeAccount({ code: '3.1', name: 'Receita de Serviços', nature: 'Revenue' }),
+      makeAccount({ code: '3.4', name: 'Receita de Pacotes Não Utilizados', nature: 'Revenue' }),
+    ];
+    const raw: MockGroupByResult[] = [
+      { accountId: '3.1', debitCents: 0, creditCents: 7000 },
+      { accountId: '3.4', debitCents: 0, creditCents: 7000 }, // pacote vencido sem uso
+    ];
+    const { svc } = buildService(accounts, raw);
+    const report = await svc.incomeStatement(SCOPE, AS_OF);
+    expect(report.grossRevenue.totalCents).toBe('14000');
+    expect(report.grossRevenue.accounts.map((a) => a.code).sort()).toEqual(['3.1', '3.4']);
+    expect(report.reportStatus).not.toBe('INVALID');
+  });
+
   it('expenses is debit_negative (debit 2000 → amountCents -2000)', async () => {
     const accounts = [makeAccount({ code: '4.1', nature: 'Expense' })];
     const { svc } = buildService(accounts, [
