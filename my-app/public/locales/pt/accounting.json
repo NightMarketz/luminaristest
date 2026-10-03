@@ -31,7 +31,8 @@
       "dimensoes": "Dimensões",
       "contrapartes": "Contrapartes",
       "aprovacoes": "Aprovações",
-      "nfe": "NF-e"
+      "nfe": "NF-e",
+      "imobilizado": "Imobilizado"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -1884,5 +1885,234 @@
       "FAILED": "falhou",
       "STALE": "desatualizada"
     }
+  },
+  "fixedAssets": {
+    "accounts": {
+      "depreciationExpense": "Despesa de depreciação",
+      "disposalGain": "Ganho na baixa",
+      "disposalLoss": "Perda na baixa",
+      "error": {
+        "load": "Erro ao carregar as contas.",
+        "save": "Não foi possível salvar as contas."
+      },
+      "help": "A depreciação mensal exige a conta de despesa; a baixa exige as contas de ganho e de perda.",
+      "saved": "Contas salvas."
+    },
+    "action": {
+      "activate": "Ativar",
+      "delete": "Remover",
+      "dispose": "Baixar",
+      "edit": "Editar"
+    },
+    "activate": {
+      "activating": "Ativando…",
+      "confirm": "Ativar",
+      "error": {
+        "dateRequired": "Informe a data de ativação.",
+        "generic": "Não foi possível ativar o bem."
+      },
+      "field": {
+        "date": "Data de ativação",
+        "opening": "Depreciação acumulada de abertura (R$, opcional)"
+      },
+      "help": "Obrigatória se a ativação for anterior ao 1º período aberto — o servidor avisa se faltar.",
+      "title": "Ativar bem"
+    },
+    "asset": {
+      "book": {
+        "justification": "Justificativa (obrigatória)",
+        "rate": "Taxa contábil (% a.a.)",
+        "summary": "Taxa contábil divergente da fiscal"
+      },
+      "empty": "Nenhum bem cadastrado.",
+      "error": {
+        "acquiredRequired": "Informe a data de aquisição.",
+        "bookJustificationRequired": "A taxa contábil divergente exige justificativa.",
+        "bookRateInvalid": "Informe a taxa contábil (entre 0,01% e 100%).",
+        "classRequired": "Selecione a classe.",
+        "codeRequired": "Informe o código.",
+        "costRequired": "Informe o custo de aquisição.",
+        "descriptionRequired": "Informe a descrição.",
+        "quantityInvalid": "A quantidade deve ser um inteiro maior ou igual a 1.",
+        "rateInvalid": "Informe a taxa explícita (entre 0,01% e 100%).",
+        "rateRequired": "Escolha uma taxa do catálogo.",
+        "residualTooHigh": "O valor residual deve ser menor que o custo.",
+        "save": "Não foi possível salvar o bem."
+      },
+      "field": {
+        "acquiredAt": "Data de aquisição",
+        "class": "Classe",
+        "classPlaceholder": "Selecione a classe…",
+        "code": "Código",
+        "cost": "Custo de aquisição (R$)",
+        "description": "Descrição",
+        "ncm": "NCM (opcional)",
+        "quantity": "Quantidade",
+        "rate": "Taxa de depreciação",
+        "residual": "Valor residual (R$)"
+      },
+      "modal": {
+        "titleEdit": "Editar bem",
+        "titleNew": "Novo bem"
+      },
+      "new": "Novo bem",
+      "rate": {
+        "catalog": "Do catálogo",
+        "catalogAria": "Taxa do catálogo",
+        "explicit": "Explícita",
+        "explicitAria": "Taxa explícita (% a.a.)",
+        "explicitPlaceholder": "Ex.: 10 (% ao ano)",
+        "search": "Buscar por NCM ou descrição…"
+      }
+    },
+    "cancel": "Cancelar",
+    "class": {
+      "col": {
+        "accumulatedAccount": "Conta de deprec. acumulada",
+        "costAccount": "Conta do bem",
+        "depreciable": "Depreciável",
+        "name": "Nome"
+      },
+      "delete": {
+        "title": "Remover classe"
+      },
+      "empty": "Nenhuma classe cadastrada.",
+      "error": {
+        "accumulatedRequired": "Selecione a conta de depreciação acumulada (classe depreciável).",
+        "codeRequired": "Informe o código.",
+        "costAccountRequired": "Selecione a conta do bem.",
+        "delete": "Não foi possível remover a classe.",
+        "nameRequired": "Informe o nome.",
+        "save": "Não foi possível salvar a classe."
+      },
+      "modal": {
+        "titleEdit": "Editar classe",
+        "titleNew": "Nova classe"
+      },
+      "new": "Nova classe"
+    },
+    "col": {
+      "accumulated": "Deprec. acumulada",
+      "acquired": "Aquisição",
+      "actions": "Ações",
+      "activated": "Ativação",
+      "asset": "Bem",
+      "class": "Classe",
+      "code": "Código",
+      "cost": "Custo",
+      "description": "Descrição",
+      "net": "Valor líquido",
+      "status": "Status"
+    },
+    "conflict": "O bem mudou — lista recarregada. Confira e tente de novo.",
+    "delete": {
+      "confirm": "Confirmar remoção",
+      "error": "Não foi possível remover o bem.",
+      "note": "O bem sai da lista; o histórico não é apagado.",
+      "removing": "Removendo…",
+      "title": "Remover bem"
+    },
+    "dismiss": "Fechar",
+    "dispose": {
+      "confirm": "Confirmar baixa",
+      "disposing": "Baixando…",
+      "error": {
+        "counterpartRequired": "Informe a conta de contrapartida do valor recebido.",
+        "dateRequired": "Informe a data da baixa.",
+        "generic": "Não foi possível baixar o bem."
+      },
+      "field": {
+        "counterpart": "Conta de contrapartida (onde o valor entrou)",
+        "date": "Data da baixa",
+        "proceeds": "Valor recebido (R$) — 0 se imprestável"
+      },
+      "title": "Baixar bem"
+    },
+    "error": {
+      "classes": "Não foi possível carregar as classes.",
+      "load": "Erro ao carregar os bens."
+    },
+    "filter": {
+      "allClasses": "Todas as classes",
+      "allStatus": "Todos os status",
+      "class": "Classe",
+      "status": "Status"
+    },
+    "fromNfe": "da NF-e",
+    "loading": "Carregando…",
+    "no": "Não",
+    "rate": {
+      "col": {
+        "justification": "Justificativa",
+        "life": "Vida útil (anos)",
+        "ncm": "NCM",
+        "rate": "Taxa (% a.a.)",
+        "source": "Origem"
+      },
+      "empty": "Nenhuma taxa cadastrada.",
+      "error": {
+        "descriptionRequired": "Informe a descrição.",
+        "hide": "Não foi possível ocultar a taxa.",
+        "justificationRequired": "A justificativa é obrigatória.",
+        "lifeYearsInvalid": "A vida útil deve ser um inteiro maior ou igual a 1.",
+        "load": "Erro ao carregar as taxas.",
+        "rateInvalid": "Informe a taxa (entre 0,01% e 100%).",
+        "save": "Não foi possível salvar a taxa."
+      },
+      "field": {
+        "justification": "Justificativa (obrigatória)",
+        "life": "Vida útil (anos)",
+        "ncm": "NCM (opcional)",
+        "percent": "Taxa (% a.a.)"
+      },
+      "hiddenBadge": "oculta",
+      "hide": "Ocultar",
+      "hideModal": {
+        "confirm": "Confirmar",
+        "note": "Deixa de aparecer na escolha; bens que já usam a taxa continuam com o snapshot.",
+        "title": "Ocultar taxa"
+      },
+      "hiding": "Ocultando…",
+      "modal": {
+        "title": "Nova taxa de depreciação"
+      },
+      "new": "Nova taxa",
+      "showHidden": "Mostrar ocultas",
+      "source": "fonte"
+    },
+    "reconcile": {
+      "button": "Reconciliar",
+      "error": "Não foi possível reconciliar.",
+      "result": "Reconciliação: {{checked}} verificado(s), {{repaired}} reparado(s), {{drafts}} rascunho(s) recriado(s) de NF-e.",
+      "running": "Reconciliando…"
+    },
+    "run": {
+      "button": "Rodar depreciação",
+      "error": "Não foi possível rodar a depreciação.",
+      "failure": "Falha",
+      "goToAccounts": "Configurar as contas do imobilizado",
+      "goToPeriods": "Abrir períodos",
+      "month": "Mês de competência",
+      "result": "Depreciação de {{month}}: {{posted}} lançada(s), {{skipped}} ignorada(s), {{failed}} com falha.",
+      "running": "Rodando…"
+    },
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "section": {
+      "accounts": "Contas",
+      "assets": "Bens",
+      "classes": "Classes",
+      "rates": "Taxas"
+    },
+    "selectAccount": "Selecione a conta…",
+    "status": {
+      "ACTIVE": "Ativo",
+      "DISPOSED": "Baixado",
+      "FULLY_DEPRECIATED": "Totalmente depreciado",
+      "PENDING_ACTIVATION": "Aguardando ativação"
+    },
+    "subtitle": "Bens, classes, taxas de depreciação e as contas que a depreciação mensal e a baixa usam.",
+    "title": "Imobilizado",
+    "yes": "Sim"
   }
 }

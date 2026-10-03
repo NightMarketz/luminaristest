@@ -105,12 +105,14 @@ export function OpportunityCreateModal({
     setSubmitting(true);
     setError(null);
 
+    const hasAmount = amount.trim() !== '' && Number.isFinite(amountValue);
     const payload: ConvertLeadToOpportunityPayload = {
       leadId,
       name: name.trim(),
       pipelineId,
-      ...(amount.trim() !== '' && Number.isFinite(amountValue) ? { amount: amountValue, currency } : {}),
-      ...(accountId ? { accountId } : {}),
+      amount: hasAmount ? amountValue : undefined,
+      currency: hasAmount ? currency : undefined,
+      accountId: accountId || undefined,
     };
 
     try {

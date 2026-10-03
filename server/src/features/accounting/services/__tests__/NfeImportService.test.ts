@@ -96,6 +96,7 @@ function build(opts: Opts = {}) {
     counterpartyRepo as never,
     policy as never,
     fiscalProfile as never,
+    { findManyByProductRefs: async () => [] } as never,
   );
   return { service, createPayable, counterpartyRepo };
 }

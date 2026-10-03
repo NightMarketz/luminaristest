@@ -1,0 +1,207 @@
+{
+  "DocumentDto.ts": {
+    "CreateDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fileType": {
+          "type": "string",
+          "enum": [
+            "PDF",
+            "DOCX",
+            "XLSX"
+          ]
+        },
+        "fileSize": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "documentPurpose": {
+          "default": "DATA_ANALYSIS",
+          "type": "string",
+          "enum": [
+            "DATA_ANALYSIS",
+            "KNOWLEDGE_BASE"
+          ]
+        }
+      },
+      "required": [
+        "fileName",
+        "fileType",
+        "fileSize"
+      ]
+    },
+    "UpdateDocumentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "contextJson": {
+          "type": "object",
+          "properties": {
+            "processing": {
+              "type": "object",
+              "properties": {
+                "totalChunks": {
+                  "type": "number"
+                },
+                "processedChunks": {
+                  "type": "number"
+                },
+                "failedChunks": {
+                  "type": "number"
+                },
+                "duration": {
+                  "type": "number"
+                },
+                "startTime": {
+                  "type": "string"
+                },
+                "endTime": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "totalChunks",
+                "processedChunks",
+                "failedChunks",
+                "duration",
+                "startTime",
+                "endTime"
+              ]
+            },
+            "statistics": {
+              "type": "object",
+              "properties": {
+                "wordCount": {
+                  "type": "number"
+                },
+                "charCount": {
+                  "type": "number"
+                },
+                "avgWordLength": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "wordCount",
+                "charCount",
+                "avgWordLength"
+              ]
+            },
+            "errors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "timestamp"
+                ]
+              }
+            }
+          },
+          "required": [
+            "processing",
+            "statistics"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "PROCESSING",
+            "COMPLETED",
+            "ERROR",
+            "FAILED"
+          ]
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processingDate": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processingError": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "summary",
+        "processingDate",
+        "processingError"
+      ]
+    },
+    "ListDocumentsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 10,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "SearchDocumentsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limit": {
+          "default": 10,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  }
+}

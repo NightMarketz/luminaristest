@@ -7,8 +7,9 @@ import type { ImportNfePurchaseInput } from '../dtos/NfeDto';
 import type { PayableService } from './PayableService';
 import type { FiscalProfileService } from './FiscalProfileService';
 import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
-import { resolveDestinations, type ItemDestination, type ItemDestinationMapping, type ResolvedItemDestination } from '../models/itemDestination';
+import { defaultByProductRefFrom, resolveDestinations, type ItemDestination, type ItemDestinationMapping, type ResolvedItemDestination } from '../models/itemDestination';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
+import type { IProductDestinationDefaultRepository } from '../repositories/IProductDestinationDefaultRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { Payable } from 'generated/prisma';
@@ -74,6 +75,7 @@ export class NfeImportService {
     private readonly counterpartyRepo: ICounterpartyRepository,
     private readonly policy: IAccountingPolicy,
     private readonly fiscalProfile: FiscalProfileService,
+    private readonly productDestinationDefaults: IProductDestinationDefaultRepository,
   ) {}
 
   /**
@@ -113,7 +115,9 @@ export class NfeImportService {
     // a diferença nasce como crédito a recuperar no MESMO entry (recoverableTaxLines).
     const regime = await this.fiscalProfile.requireCostRegime(scope);
     const costed = nfe.itens.filter((it) => it.indTot !== '0');
-    const resolved = resolveDestinations(costed, mappingByCProd);
+    // ITEM-DESTINATION PR-2 (item 9, F-ID-2 a): UMA query de defaults por unidade + productRefs mapeados.
+    const defaults = await this.productDestinationDefaults.findManyByProductRefs(scope, mappedProductRefs(dto.itemMappings));
+    const resolved = resolveDestinations(costed, mappingByCProd, defaultByProductRefFrom(defaults));
     const custo = acquisitionCost(nfe, costed, regime, resolved.byNItem);
     const custoTotalCents = custo.custoBrutoCents;
     if (custoTotalCents <= 0) {
@@ -371,4 +375,9 @@ export class NfeImportService {
   private purchaseDescription(nfe: ParsedNfe, supplierName: string): string {
     return `NF-e compra ${nfe.ide.serie}-${nfe.ide.numero} — ${supplierName}`;
   }
+}
+
+/** `productRef`s distintos do mapeamento (item com `classId` não tem default — EMENDA item 25). */
+export function mappedProductRefs(mappings: ReadonlyArray<{ productRef?: string }>): string[] {
+  return [...new Set(mappings.flatMap((m) => (m.productRef != null ? [m.productRef] : [])))];
 }

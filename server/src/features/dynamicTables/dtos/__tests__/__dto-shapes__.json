@@ -1,0 +1,1436 @@
+{
+  "CreateDashboard.dto.ts": {
+    "UnitInputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "cnpj": {
+          "type": "string",
+          "maxLength": 18
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "Own",
+            "Franchise",
+            "Department"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "QuickCreationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "const": "quick"
+        },
+        "suiteKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unit": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "cnpj": {
+              "type": "string",
+              "maxLength": 18
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Own",
+                "Franchise",
+                "Department"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "modules": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-0",
+                  "CRM-1",
+                  "CRM-2A",
+                  "CRM-2B",
+                  "CRM-3"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-2"
+                ]
+              }
+            ]
+          }
+        },
+        "selectOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "suiteKey",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "CustomCreationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "const": "custom"
+        },
+        "presetKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "removedTables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "addedFields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {}
+          }
+        },
+        "unit": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "cnpj": {
+              "type": "string",
+              "maxLength": 18
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "Own",
+                "Franchise",
+                "Department"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "modules": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-0",
+                  "CRM-1",
+                  "CRM-2A",
+                  "CRM-2B",
+                  "CRM-3"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "CRM-2"
+                ]
+              }
+            ]
+          }
+        },
+        "selectOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "required": [
+        "mode",
+        "presetKey",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "UnifiedCreationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "quick"
+            },
+            "suiteKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "unit": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "cnpj": {
+                  "type": "string",
+                  "maxLength": 18
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Own",
+                    "Franchise",
+                    "Department"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "modules": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "CRM-0",
+                      "CRM-1",
+                      "CRM-2A",
+                      "CRM-2B",
+                      "CRM-3"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "CRM-2"
+                    ]
+                  }
+                ]
+              }
+            },
+            "selectOverrides": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "suiteKey",
+            "unit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "const": "custom"
+            },
+            "presetKey": {
+              "type": "string",
+              "minLength": 1
+            },
+            "removedTables": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "addedFields": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "unit": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "cnpj": {
+                  "type": "string",
+                  "maxLength": 18
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Own",
+                    "Franchise",
+                    "Department"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "modules": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "CRM-0",
+                      "CRM-1",
+                      "CRM-2A",
+                      "CRM-2B",
+                      "CRM-3"
+                    ]
+                  },
+                  {
+                    "type": "string",
+                    "enum": [
+                      "CRM-2"
+                    ]
+                  }
+                ]
+              }
+            },
+            "selectOverrides": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "mode",
+            "presetKey",
+            "unit"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "DynamicTable.dto.ts": {
+    "CreateDynamicTableDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "commercial",
+            "products",
+            "services",
+            "inventory",
+            "finance",
+            "people",
+            "leads",
+            "planning",
+            "kanban",
+            "operations",
+            "marketing",
+            "business",
+            "administrative",
+            "other"
+          ]
+        },
+        "internalName": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "defaultDisplayField": {
+              "type": "string"
+            },
+            "fields": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "date",
+                      "datetime",
+                      "relation",
+                      "select",
+                      "textarea",
+                      "json"
+                    ]
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "unique": {
+                    "type": "boolean"
+                  },
+                  "defaultValue": {},
+                  "validation": {
+                    "type": "object",
+                    "properties": {
+                      "minLength": {
+                        "type": "number"
+                      },
+                      "maxLength": {
+                        "type": "number"
+                      },
+                      "minValue": {
+                        "type": "number"
+                      },
+                      "maxValue": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "relation": {
+                    "type": "object",
+                    "properties": {
+                      "targetTable": {
+                        "type": "string"
+                      },
+                      "allowMultiple": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "targetTable"
+                    ]
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "email",
+                      "phone",
+                      "cpf",
+                      "cnpj",
+                      "url",
+                      "custom"
+                    ]
+                  },
+                  "numberFormat": {
+                    "type": "string",
+                    "enum": [
+                      "currency",
+                      "percentage",
+                      "integer",
+                      "decimal"
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "regex": {
+                    "type": "string"
+                  },
+                  "hidden": {
+                    "type": "boolean"
+                  },
+                  "readOnly": {
+                    "type": "boolean"
+                  },
+                  "searchable": {
+                    "type": "boolean"
+                  },
+                  "requiredIf": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "op": {
+                        "type": "string",
+                        "enum": [
+                          "eq",
+                          "neq",
+                          "in"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "op",
+                      "value"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "label",
+                  "type",
+                  "required"
+                ]
+              }
+            },
+            "deleteConstraints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "RESTRICT",
+                      "CASCADE",
+                      "RESTRICT_IF_AGGREGATE",
+                      "IGNORE"
+                    ]
+                  },
+                  "targetTable": {
+                    "type": "string"
+                  },
+                  "aggregate": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "eq",
+                          "neq"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "operator",
+                      "value"
+                    ]
+                  },
+                  "cascadeCondition": {
+                    "type": "string",
+                    "enum": [
+                      "ALWAYS",
+                      "IF_AGGREGATE_MATCH"
+                    ]
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "targetTable"
+                ]
+              }
+            },
+            "compositeUnique": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fields": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fields"
+                ]
+              }
+            },
+            "immutableAfter": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "op": {
+                        "type": "string",
+                        "enum": [
+                          "eq",
+                          "in"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "op",
+                      "value"
+                    ]
+                  },
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "all"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "scope"
+                ]
+              }
+            },
+            "compare": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "left": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "eq",
+                      "neq"
+                    ]
+                  },
+                  "right": {
+                    "type": "string"
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "left",
+                  "op",
+                  "right"
+                ]
+              }
+            },
+            "lifecycle": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "transitions": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field",
+                  "transitions"
+                ]
+              }
+            },
+            "noOverlap": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "startField": {
+                    "type": "string"
+                  },
+                  "endField": {
+                    "type": "string"
+                  },
+                  "scopeFields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "startField",
+                  "endField"
+                ]
+              }
+            },
+            "ui": {
+              "type": "object",
+              "properties": {
+                "presentation": {
+                  "type": "string",
+                  "enum": [
+                    "standalone",
+                    "embedded",
+                    "system"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "fields"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "category",
+        "schema"
+      ]
+    },
+    "UpdateDynamicTableDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    },
+    "UpdateDynamicTableSchemaDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "defaultDisplayField": {
+              "type": "string"
+            },
+            "fields": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "date",
+                      "datetime",
+                      "relation",
+                      "select",
+                      "textarea",
+                      "json"
+                    ]
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "unique": {
+                    "type": "boolean"
+                  },
+                  "defaultValue": {},
+                  "validation": {
+                    "type": "object",
+                    "properties": {
+                      "minLength": {
+                        "type": "number"
+                      },
+                      "maxLength": {
+                        "type": "number"
+                      },
+                      "minValue": {
+                        "type": "number"
+                      },
+                      "maxValue": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "relation": {
+                    "type": "object",
+                    "properties": {
+                      "targetTable": {
+                        "type": "string"
+                      },
+                      "allowMultiple": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "targetTable"
+                    ]
+                  },
+                  "options": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "email",
+                      "phone",
+                      "cpf",
+                      "cnpj",
+                      "url",
+                      "custom"
+                    ]
+                  },
+                  "numberFormat": {
+                    "type": "string",
+                    "enum": [
+                      "currency",
+                      "percentage",
+                      "integer",
+                      "decimal"
+                    ]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "regex": {
+                    "type": "string"
+                  },
+                  "hidden": {
+                    "type": "boolean"
+                  },
+                  "readOnly": {
+                    "type": "boolean"
+                  },
+                  "searchable": {
+                    "type": "boolean"
+                  },
+                  "requiredIf": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "op": {
+                        "type": "string",
+                        "enum": [
+                          "eq",
+                          "neq",
+                          "in"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "op",
+                      "value"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "label",
+                  "type",
+                  "required"
+                ]
+              }
+            },
+            "deleteConstraints": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "RESTRICT",
+                      "CASCADE",
+                      "RESTRICT_IF_AGGREGATE",
+                      "IGNORE"
+                    ]
+                  },
+                  "targetTable": {
+                    "type": "string"
+                  },
+                  "aggregate": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "gt",
+                          "lt",
+                          "eq",
+                          "neq"
+                        ]
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "operator",
+                      "value"
+                    ]
+                  },
+                  "cascadeCondition": {
+                    "type": "string",
+                    "enum": [
+                      "ALWAYS",
+                      "IF_AGGREGATE_MATCH"
+                    ]
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "targetTable"
+                ]
+              }
+            },
+            "compositeUnique": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "fields": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "fields"
+                ]
+              }
+            },
+            "immutableAfter": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string"
+                      },
+                      "op": {
+                        "type": "string",
+                        "enum": [
+                          "eq",
+                          "in"
+                        ]
+                      },
+                      "value": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "op",
+                      "value"
+                    ]
+                  },
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "const": "all"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "scope"
+                ]
+              }
+            },
+            "compare": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "left": {
+                    "type": "string"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "gt",
+                      "gte",
+                      "lt",
+                      "lte",
+                      "eq",
+                      "neq"
+                    ]
+                  },
+                  "right": {
+                    "type": "string"
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "left",
+                  "op",
+                  "right"
+                ]
+              }
+            },
+            "lifecycle": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "transitions": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field",
+                  "transitions"
+                ]
+              }
+            },
+            "noOverlap": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "startField": {
+                    "type": "string"
+                  },
+                  "endField": {
+                    "type": "string"
+                  },
+                  "scopeFields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "errorMessage": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "startField",
+                  "endField"
+                ]
+              }
+            },
+            "ui": {
+              "type": "object",
+              "properties": {
+                "presentation": {
+                  "type": "string",
+                  "enum": [
+                    "standalone",
+                    "embedded",
+                    "system"
+                  ]
+                }
+              }
+            }
+          },
+          "required": [
+            "fields"
+          ]
+        }
+      },
+      "required": [
+        "schema"
+      ]
+    },
+    "CreateDynamicTableDataDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "data"
+      ]
+    },
+    "UpdateDynamicTableDataDto": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "data"
+      ]
+    }
+  },
+  "InstallModule.dto.ts": {
+    "InstallModuleSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "moduleKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "CRM-0",
+                "CRM-1",
+                "CRM-2A",
+                "CRM-2B",
+                "CRM-3"
+              ]
+            },
+            {
+              "type": "string",
+              "enum": [
+                "CRM-2"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "moduleKey"
+      ],
+      "additionalProperties": false
+    },
+    "InstallModuleResultSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "installed",
+            "already-installed"
+          ]
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "synced": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "CRM-0",
+              "CRM-1",
+              "CRM-2A",
+              "CRM-2B",
+              "CRM-3"
+            ]
+          }
+        }
+      },
+      "required": [
+        "status",
+        "tables",
+        "synced"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

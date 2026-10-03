@@ -53,6 +53,7 @@ export const REKEY_MODELS = [
   'AccountingScopeSettings', 'FixedAssetClass', 'DepreciationRate', 'FixedAsset', 'ReconcilePendingItem',
   'AccountingContact', 'AccountingDeliveryLog', 'AccountingReview', 'AccountingReviewFinding', 'LalurEntry',
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',
+  'ProductDestinationDefault', // #481 (ITEM-DESTINATION PR-2): parâmetro por unidade, sem hash → REKEY pelo critério do F-RK-5
 ] as const;
 
 /**

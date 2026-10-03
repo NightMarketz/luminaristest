@@ -5,6 +5,8 @@
  * sets DATABASE_URL/NODE_ENV=test, so that import-time validation passes. Here we exercise the pure
  * `buildEnvSchema` / `validateEnv` against controlled sources, including the production-only rule.
  */
+import fs from 'fs';
+import path from 'path';
 import { buildEnvSchema, validateEnv } from '../env';
 
 describe('buildEnvSchema', () => {
@@ -49,5 +51,12 @@ describe('validateEnv', () => {
     expect(() =>
       validateEnv({ NODE_ENV: 'production', DATABASE_URL: 'postgres://x' } as NodeJS.ProcessEnv),
     ).toThrow(/JWT_SECRET/);
+  });
+});
+
+describe('server/.env.example', () => {
+  it('não começa com BOM UTF-8 (EF BB BF): `set -a; . .env` apagaria em silêncio a 1ª linha, o DATABASE_URL (E9)', () => {
+    const head = fs.readFileSync(path.resolve(__dirname, '../../../.env.example')).subarray(0, 3);
+    expect([...head]).not.toEqual([0xef, 0xbb, 0xbf]);
   });
 });

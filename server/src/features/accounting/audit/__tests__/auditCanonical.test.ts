@@ -392,6 +392,15 @@ it('payable.created mantém insumoCents e fiscal_profile.updated mantém insumoE
   });
 });
 
+// ITEM-DESTINATION PR-2 item 17 (gate da allowlist no mesmo PR): os dois eventos do default por produto.
+it('product_destination.set / .cleared mantêm só productRef e destination', () => {
+  for (const ev of ['product_destination.set', 'product_destination.cleared']) {
+    expect(JSON.parse(canonicalizeAuditPayload(ev, { productRef: 'prod-1', destination: 'INSUMO_SERVICO', extra: 'x' }))).toEqual({
+      productRef: 'prod-1', destination: 'INSUMO_SERVICO',
+    });
+  }
+});
+
 // I1b (ADR-INCR-UNIT-REKEY item 12) — gate da allowlist no mesmo PR, nas duas direções: as 4 chaves sobrevivem, nada além.
 it('unit.rekeyed mantém fromUnitId/fromHeadHash/fromNextSeq/tables e derruba o resto', () => {
   const allowed = { fromUnitId: 'legacy-1', fromHeadHash: 'a'.repeat(64), fromNextSeq: '53', tables: '{"accounts":{"after":2}}' };
