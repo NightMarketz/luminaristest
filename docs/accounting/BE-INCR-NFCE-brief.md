@@ -479,9 +479,9 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
   documento fiscal, e o SAT está vedado (`[SP-SAT-VEDADO]`). **Reabre decisão ratificada — só o dono.** **✅ RATIFICADO 02/10 → (b).**
 
 ### F-NFCE-8 — CSC (e A1) da NFC-e até o parceiro
-- **(a)** O cliente cadastra o CSC no painel da Focus; o Luminaris não vê o CSC (mesma linha do F-COB-3 a).
+- **(a)** O cliente cadastra o CSC no painel da Focus; o Luminaris não vê o CSC (mesma linha do F-MCE-3 a).
 - **(b)** O Luminaris recebe e repassa pela API de empresas, sem gravar.
-- **Recomendação: (a)**, decidido junto com o F-COB-3. O CSC entra no hash do QR Code (`[NFCE-QRCODE]`) — é segredo
+- **Recomendação: (a)**, decidido junto com o F-MCE-3. O CSC entra no hash do QR Code (`[NFCE-QRCODE]`) — é segredo
   do contribuinte, como o A1. Depende de conferir o painel no D5. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-NFCE-9 — Eventos além do cancelamento: CC-e (110110, só 55) e cancelamento por substituição (110112, só 65)
@@ -574,12 +574,12 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 1. **Texto do GAP-MAP Nível 5 (`GAP-MAP.md:117`) diagnostica errado**: o campo é crédito, não inscrição (§1 item 2).
    Corrigir na mesma mudança que fechar o F-NFCE-2; não editado aqui (regra 1).
 2. **DANFE NFC-e ao consumidor no balcão** (impresso ou eletrônico, `tpImp` 4/5): tela e entrega — nó de FE
-   inexistente; casa com F-COB-1.
+   inexistente; casa com F-MCE-1.
 3. **Telas**: perfil fiscal do produto, IE no perfil da unidade, "Emitir NFC-e" no fluxo de finalizar venda,
    inutilizações — BRIEF `FE-INCR-NFCE` (exige autorização própria).
 4. **Numeração da NFS-e sem ambiente** (GAP-MAP, ABERTO) — o F-NFCE-4 só resolve 55/65.
 5. **`numbersDps`** fica com nome de NFS-e servindo aos três tipos — renomear é churn sem comportamento.
-6. **NF-e recebidas** (F-PLAN-3) e **NFS-e tomadas** (F-COB-2) — Fase G do plano.
+6. **NF-e recebidas** (F-PLAN-3) e **NFS-e tomadas** (F-MCE-2) — Fase G do plano.
 
 ## 9. Plano de execução por fatias (para a `sessao-feature`)
 

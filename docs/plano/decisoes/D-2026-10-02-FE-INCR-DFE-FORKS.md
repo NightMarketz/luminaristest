@@ -30,4 +30,4 @@ Documento dos forks: [`FE-INCR-DFE-brief.md`](../../accounting/FE-INCR-DFE-brief
 - F-FE-DFE-8 → (b) se o PV-3 mostrar que o portal exige o endereço.
 - F-FE-DFE-9 → o dono reabre o F-MAN-5 se o PV-1 confirmar que o portal só entrega HTML.
 
-Na mesma rodada, o F-COB-1 (a) ([[D-2026-10-02-MAPA-COBERTURA-FORKS]]) acrescentou o passo 8 ao runbook do PR-2.
+Na mesma rodada, o F-MCE-1 (a) ([[D-2026-10-02-MAPA-COBERTURA-FORKS]]) acrescentou o passo 8 ao runbook do PR-2.
