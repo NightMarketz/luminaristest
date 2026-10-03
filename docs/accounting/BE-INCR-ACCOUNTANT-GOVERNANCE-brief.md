@@ -27,6 +27,10 @@
 - **Revisão de 29/09 (pedido do dono: ancorar na lei antes de ratificar):** os forks F-GOV-7 a F-GOV-11 trazem a
   base legal em §5, e as fontes, com sha256, estão em §5.1. A pesquisa mudou duas coisas. O F-GOV-7 passou a
   (a+), com leitura do objeto assinado. Uma escolha que este BRIEF marcava como "direta" virou o F-GOV-11.
+- **Ratificação 02/10 (dono, questionário):** F-GOV-7 (a+), F-GOV-8 (a) reforçada, F-GOV-9 (a), F-GOV-10 (a) — na
+  recomendação — e **F-GOV-11 (a), contra a recomendação (b)**. Com o 11 (a), o segundo risco acima volta inteiro:
+  o dono que encerra a atribuição reabre sozinho também os períodos que o contador cobriu. Efeitos: §5.3.
+  Registro: [`D-2026-10-02-GOV-CONTADOR-FORKS`](../plano/decisoes/D-2026-10-02-GOV-CONTADOR-FORKS.md). Não é "executa".
 
 ## 1. Forks já decididos (29/09) — o que cada um fixa no desenho
 
@@ -235,15 +239,12 @@ export const InviteAccountantSchema = z
 
 export const ListAccountantAssignmentsQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
-// Forma final depende de F-GOV-8 e F-GOV-11. Com as recomendações (a reforçada / b):
+// ✅ 02/10: F-GOV-8 (a) reforçada + F-GOV-11 (a) — sem responsibleFrom.
 export const AcceptAccountantAssignmentSchema = z
   .object({
     declaresWrittenContract: z.literal(true),              // F-GOV-8: Res. CFC 1.590 arts. 1º/5º
-    responsibleFromYear: z.number().int().min(2000).max(2100), // F-GOV-11 (b): início da responsabilidade
-    responsibleFromMonth: z.number().int().min(1).max(12),
   })
   .strict();
-// Sem F-GOV-8 reforçada nem F-GOV-11 (b): z.object({}).strict()
 
 export const EndAccountantAssignmentSchema = z
   .object({ reason: z.string().trim().min(1).max(500) })
@@ -375,7 +376,7 @@ model AccountantAssignment {
 | POST | `/api/accounting/accountant-assignments/:id/end` | dono ou contador | nenhum (pela linha) |
 | GET/POST | os 7 handlers do item 5 (9 com o F-GOV-7 a+) | dono ou contador | **delegado** |
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ✅ RATIFICADOS 2026-10-02 (escolhas e efeitos em §5.3)
 
 As decisões de 29/09 não cobrem estes cinco. A leitura do código mostrou que o desenho não fecha sem eles.
 **Em 29/09 o dono pediu que eles fossem ancorados na lei antes de qualquer ratificação.** A coluna "O que a lei
@@ -426,6 +427,33 @@ do corpus). Grau: todas **V**, lidas.
   "sign-off exige atribuição ativa, a reabertura continua pelo F-GOV-4 (a)". Não está aberto aqui.
 - **F-GOV-5 (a)** não conflita: a lei exige o registro para exercer (DL 9.295 art. 12), não que o software o
   confira. A conferência é o F-V1, depois do M2.
+
+### 5.3 RATIFICAÇÃO — 2026-10-02 (dono, questionário; pedido: *"rodada de ratificação por questionário dos forks pendentes"*)
+
+| Fork | Escolha do dono | Contra a recomendação? | Efeito no BRIEF |
+|---|---|---|---|
+| F-GOV-7 | (a+) mínimo de governança + leitura do objeto assinado (9 handlers) | não | item 5: os 9 handlers, incluindo `getDataExchangeJob` e `downloadDataExchangeArtifact` em escopo delegado; sem escrita no razão |
+| F-GOV-8 | (a) reforçada: e-mail de usuário existente + aceite + `declaresWrittenContract: true` | não | itens 6–7; §4.1 `AcceptAccountantAssignmentSchema` só com a declaração |
+| F-GOV-9 | (a) o `reviewerCrc` digitado tem de bater com o da atribuição | não | item 12: 400 `REVIEWER_CRC_MISMATCH`; o DTO do #436 não muda |
+| F-GOV-10 | (a) o dono encerra sozinho, com motivo obrigatório | não | item 8 como escrito |
+| **F-GOV-11** | **(a) a atribuição ativa governa tudo** | **SIM** | ver abaixo |
+
+**Efeitos do F-GOV-11 (a):**
+
+- **Item 4:** o bloco "Se o F-GOV-11 for (b)" **sai**. `canReopenPeriod(scope, active)` mantém a assinatura de §4.2,
+  sem período nem cobertura.
+- **Item 7 e §4.3:** o aceite não ganha `responsibleFromYear`/`responsibleFromMonth`, e o model não ganha colunas de
+  cobertura.
+- **Item 17b:** sai o caso "período do contador anterior dá 403 sem atribuição ativa". Os 3 casos por caminho ficam
+  como escritos.
+- **Risco que volta:** o contador ativo reabre qualquer `SOFT_CLOSED`, incluindo período assinado por um contador
+  anterior. Sem atribuição ativa, o dono reabre tudo. Isso inclui encerrar a atribuição (F-GOV-10 a) e reabrir em
+  seguida. A trilha registra (`accountant_assignment.ended` + `period.reopened` com o ator), mas não impede.
+- **Tensão com a norma:** a regra "cada contador assina o seu período" (Manual ECD L9 p. 12; Res. CFC 1.590 art. 9º
+  § único e art. 10) fica **fora do sistema**. Ela passa a valer pelo contrato e pelo distrato, e pelo e-CPF na ECD.
+  Não é conflito de lei: a norma obriga o contador, não o software.
+- **Para reabrir:** o caminho é o (b) desta tabela de forks, com `responsibleFrom` no aceite. Até lá, o F-GOV-1
+  (CRC-SP) e a revalidação do contador (§7) podem trazer o motivo.
 
 ## 6. Fora deste BRIEF (decidido) e compatibilidade exigida
 
