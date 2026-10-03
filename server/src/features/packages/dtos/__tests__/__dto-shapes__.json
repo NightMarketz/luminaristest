@@ -1,0 +1,21 @@
+{
+  "PackageBalanceDto.ts": {
+    "ListPackageBalancesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "customerId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  }
+}

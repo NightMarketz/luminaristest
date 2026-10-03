@@ -1,0 +1,27 @@
+{
+  "AttachmentDto.ts": {
+    "CreateAttachmentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "entityType": {
+          "type": "string",
+          "enum": [
+            "lead",
+            "account",
+            "contact"
+          ]
+        },
+        "entityId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        }
+      },
+      "required": [
+        "entityType",
+        "entityId"
+      ]
+    }
+  }
+}

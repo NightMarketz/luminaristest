@@ -1,0 +1,196 @@
+{
+  "ChatInstanceDto.ts": {
+    "ListChatInstancesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 10,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        }
+      }
+    },
+    "GetOrCreateChatInstanceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "widgetInstanceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        }
+      },
+      "required": [
+        "widgetInstanceId",
+        "type"
+      ]
+    },
+    "ChatInstanceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "default": "DOCUMENT",
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        },
+        "widgetInstanceId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "createdAt": {},
+        "updatedAt": {}
+      },
+      "required": [
+        "id",
+        "title",
+        "widgetInstanceId",
+        "userId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CreateChatInstanceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "default": "DOCUMENT",
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        },
+        "widgetInstanceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "widgetInstanceId"
+      ]
+    },
+    "UpdateChatInstanceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "default": "DOCUMENT",
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        },
+        "widgetInstanceId": {
+          "type": "string"
+        }
+      }
+    },
+    "ChatInstanceSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "default": "DOCUMENT",
+          "type": "string",
+          "enum": [
+            "DOCUMENT",
+            "GENERIC"
+          ]
+        },
+        "widgetInstanceId": {
+          "type": "string"
+        },
+        "createdAt": {},
+        "updatedAt": {}
+      },
+      "required": [
+        "id",
+        "title",
+        "widgetInstanceId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  }
+}

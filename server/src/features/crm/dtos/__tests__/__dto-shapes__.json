@@ -1,0 +1,280 @@
+{
+  "CrmAnalyticsDto.ts": {
+    "CrmAnalyticsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "datePreset": {
+          "default": "thisYear",
+          "type": "string",
+          "enum": [
+            "today",
+            "thisWeek",
+            "thisMonth",
+            "last30Days",
+            "lastMonth",
+            "thisYear"
+          ]
+        },
+        "timeZone": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "CrmOpportunityDto.ts": {
+    "AdvanceOpportunitySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "opportunityId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "enum": [
+            "BRL",
+            "USD",
+            "EUR"
+          ]
+        },
+        "winProbability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "opportunityId",
+        "stageId"
+      ],
+      "additionalProperties": false
+    },
+    "ConvertLeadToOpportunitySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pipelineId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "currency": {
+          "default": "BRL",
+          "type": "string",
+          "enum": [
+            "BRL",
+            "USD",
+            "EUR"
+          ]
+        },
+        "accountId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "leadId",
+        "name",
+        "pipelineId"
+      ]
+    }
+  },
+  "CrmPipelineDto.ts": {
+    "AdvanceStageSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "meetingAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "enum": [
+            "BRL",
+            "USD",
+            "EUR"
+          ]
+        },
+        "winProbability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "leadId",
+        "stageId"
+      ],
+      "additionalProperties": false
+    },
+    "CreateProposalSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "currency": {
+          "default": "BRL",
+          "type": "string",
+          "enum": [
+            "BRL",
+            "USD",
+            "EUR"
+          ]
+        },
+        "winProbability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "estimatedCloseDate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "leadId",
+        "amount"
+      ]
+    },
+    "RecordNoShowSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "option": {
+          "type": "string",
+          "enum": [
+            "reschedule",
+            "revert"
+          ]
+        },
+        "rescheduleAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "previousStageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "leadId",
+        "option"
+      ]
+    },
+    "ConvertLeadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "leadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "account": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "segment": {
+              "type": "string"
+            },
+            "size": {
+              "type": "string",
+              "minLength": 1
+            },
+            "website": {
+              "type": "string"
+            },
+            "taxId": {
+              "type": "string"
+            },
+            "city": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ]
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "jobTitle": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "required": [
+        "leadId",
+        "account"
+      ]
+    }
+  }
+}
