@@ -1,0 +1,334 @@
+{
+  "AnalyticsDefinitionDto.ts": {
+    "CreateAnalyticsDefinitionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chartType": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "line",
+            "area",
+            "pie",
+            "donut",
+            "table"
+          ]
+        },
+        "pipeline": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "global",
+            "preset",
+            "table"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "presetKey": {
+          "type": "string"
+        },
+        "tableKey": {
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "access": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "createdAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {}
+          ]
+        },
+        "updatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {}
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "title",
+        "chartType",
+        "pipeline"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateAnalyticsDefinitionSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chartType": {
+          "type": "string",
+          "enum": [
+            "bar",
+            "line",
+            "area",
+            "pie",
+            "donut",
+            "table"
+          ]
+        },
+        "pipeline": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "global",
+            "preset",
+            "table"
+          ]
+        },
+        "version": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "presetKey": {
+          "type": "string"
+        },
+        "tableKey": {
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "access": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ]
+        },
+        "createdBy": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "createdAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {}
+          ]
+        },
+        "updatedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {}
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "AnalyticsQueryDto.ts": {
+    "ChartDataQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": {}
+    },
+    "ChartDetailsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "dataPointName": {
+          "type": "string"
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "search": {
+          "type": "string"
+        },
+        "sortBy": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "default": "desc",
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      }
+    },
+    "DrillDownQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tableId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recordIds": {
+          "default": "",
+          "type": "string"
+        },
+        "fields": {
+          "default": "",
+          "type": "string"
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "limit": {
+          "default": 20,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "required": [
+        "tableId"
+      ]
+    }
+  }
+}

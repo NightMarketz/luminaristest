@@ -19,6 +19,7 @@ import {
   IoReceiptOutline
 } from 'react-icons/io5';
 
+import type { UpdatePreferencesInput } from '@/types/contracts/users/UserDto.gen';
 import { UserService } from '../../lib/services/user.service';
 
 export function Navbar() {
@@ -41,7 +42,8 @@ export function Navbar() {
     // 2. Persist to DB in the background (only when authenticated)
     if (isAuthenticated && user) {
       try {
-        await UserService.updatePreferences({ locale });
+        // ponytail: `locale` vem de `languages` (pt|en); o servidor devolve 400 se divergir do contrato gerado.
+        await UserService.updatePreferences({ locale: locale as UpdatePreferencesInput['locale'] });
       } catch {
         // Silently ignore — language still changes locally
       }

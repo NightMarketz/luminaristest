@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // AccountingView doesn't `import React` — same shim as the other accounting panel tests
 // (jsx:"preserve" + esbuild's classic runtime expects React in scope).
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { AccountingView } from '../AccountingView';
 
 /**
@@ -59,6 +59,10 @@ vi.mock('../components/CounterpartiesPanel', () => ({ CounterpartiesPanel: () =>
 vi.mock('../components/DimensionsPanel', () => ({ DimensionsPanel: () => null }));
 vi.mock('../components/NfePanel', () => ({
   NfePanel: () => React.createElement('div', { 'data-testid': 'nfe-panel-mock' }),
+}));
+vi.mock('../components/FixedAssetsPanel', () => ({
+  FixedAssetsPanel: (p: { onNavigateToPeriods?: () => void }) =>
+    React.createElement('button', { 'data-testid': 'fixed-assets-panel-mock', onClick: p.onNavigateToPeriods }, 'fa'),
 }));
 vi.mock('../components/JournalEntryModal', () => ({ JournalEntryModal: () => null }));
 
@@ -144,5 +148,23 @@ describe('AccountingView — aba NF-e (FE-INCR-NFE V4/V18)', () => {
     const tab = await screen.findByRole('tab', { name: /NF-e/ });
     fireEvent.click(tab);
     expect(await screen.findByTestId('nfe-panel-mock')).toBeInTheDocument();
+  });
+});
+
+describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () => {
+  it('a barra de abas tem "Imobilizado" (22ª, depois de Dimensões) e clicar nela renderiza o FixedAssetsPanel', async () => {
+    render(<AccountingView />);
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs).toHaveLength(22);
+    expect(tabs[tabs.length - 1]).toHaveTextContent('Imobilizado');
+    fireEvent.click(tabs[tabs.length - 1]);
+    expect(await screen.findByTestId('fixed-assets-panel-mock')).toBeInTheDocument();
+  });
+
+  it('onNavigateToPeriods do painel troca para a aba Períodos', async () => {
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Imobilizado' }));
+    fireEvent.click(await screen.findByTestId('fixed-assets-panel-mock'));
+    await waitFor(() => expect(screen.getByRole('tab', { name: /Períodos/ })).toHaveAttribute('aria-selected', 'true'));
   });
 });

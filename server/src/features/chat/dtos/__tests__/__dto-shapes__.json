@@ -1,0 +1,149 @@
+{
+  "ChatDto.ts": {
+    "ChatRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "assistant",
+                  "system"
+                ]
+              },
+              "content": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "content"
+            ]
+          }
+        },
+        "chatInstanceId": {
+          "type": "string"
+        },
+        "confirmedProposalId": {
+          "type": "string"
+        }
+      }
+    },
+    "ChatResponseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "answer": {
+          "type": "string"
+        },
+        "type": {
+          "default": "TEXT",
+          "type": "string",
+          "enum": [
+            "TEXT",
+            "ACTION_PROPOSAL"
+          ]
+        },
+        "proposal": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ]
+            },
+            "tableName": {
+              "type": "string"
+            },
+            "tableLabel": {
+              "type": "string"
+            },
+            "data": {}
+          },
+          "required": [
+            "id",
+            "action",
+            "tableName",
+            "tableLabel",
+            "data"
+          ]
+        },
+        "sourceDocuments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "score": {
+                "type": "number"
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  },
+                  "textContent": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "chunkId": {
+                    "type": "string"
+                  },
+                  "index": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "documentId",
+                  "userId",
+                  "textContent",
+                  "fileName",
+                  "chunkId",
+                  "index"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "score",
+              "payload"
+            ]
+          }
+        }
+      },
+      "required": [
+        "answer"
+      ]
+    }
+  }
+}
