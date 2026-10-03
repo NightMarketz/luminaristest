@@ -35,8 +35,8 @@ veredito do review independente: **PASS COM RESSALVAS** (nada bloqueante).
 3. Chaves de audit não especificadas e DELETE sem evento listado → só ids/status, sem `label`; DELETE sem evento.
 4. Transições do PATCH e PUT em conta DISABLED → ao pé da letra (só ACTIVE↔DISABLED, o resto 409; PUT sempre ativa).
 
-**Aberta (decisão do dono, não escolhi):** PATCH para o **mesmo** status (`ACTIVE` numa ACTIVE) responde 200 sem
-efeito e sem evento. A decisão 4 não diz se isso entra no "resto ⇒ 409" (ressalva 3 do review).
+5. PATCH para o **mesmo** status (ressalva 3 do review) → **409** `payment_account_invalid_transition`, sem escrita
+   nem evento (dono, 03/10, depois do review). Teste asserindo ACTIVE→ACTIVE e DISABLED→DISABLED.
 
 ## Ressalvas do review e o que foi feito
 
@@ -45,7 +45,7 @@ efeito e sem evento. A decisão 4 não diz se isso entra no "resto ⇒ 409" (res
    não duas ACTIVE (grau **inferido**).
 2. Folha da conta contábil checada **fora** da tx → **corrigido** (patch pós-review): re-checagem dentro do
    `runTransaction` com `tx` (server/CLAUDE.md gate 5).
-3. PATCH no mesmo status → aberto acima; teste de sucesso DISABLED→ACTIVE com `.updated` **acrescentado**.
+3. PATCH no mesmo status → decidido pelo dono (409, lacuna 5) e implementado; teste de sucesso DISABLED→ACTIVE com `.updated` **acrescentado**.
 
 ## Gates
 

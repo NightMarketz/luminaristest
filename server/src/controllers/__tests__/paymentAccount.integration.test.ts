@@ -175,6 +175,15 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
     const upd2 = await eventos('payment_account.updated');
     expect(upd2).toHaveLength(2);
     expect(JSON.parse(upd2[1].payload)).toEqual({ paymentAccountId: a1, fromStatus: 'DISABLED', toStatus: 'ACTIVE' });
+
+    // mesmo status ⇒ 409, sem escrita nem evento (dono, 03/10) — vale para ACTIVE e para DISABLED
+    const auditBefore = await prisma.auditEvent.count();
+    const sameActive = await patch(a1, { status: 'ACTIVE', label: 'não grava' });
+    expect(sameActive.status).toBe(409);
+    expect(sameActive.body.code).toBe('payment_account_invalid_transition');
+    expect((await patch(a2, { status: 'DISABLED' })).status).toBe(409);
+    expect((await prisma.paymentAccount.findUniqueOrThrow({ where: { id: a1 } })).label).toBe('MP antiga');
+    expect(await prisma.auditEvent.count()).toBe(auditBefore);
   });
 
   it('cross-tenant ⇒ 404; DELETE é soft e a 2ª chamada é 404; sem evento de audit (P1-9)', async () => {

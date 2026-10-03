@@ -106,14 +106,15 @@ export class PaymentAccountService {
     });
   }
 
-  /** PATCH: só `label` e `ACTIVE → DISABLED` / `DISABLED → ACTIVE` (P1-9). Mesmo status = sem transição. */
+  /** PATCH: só `label` e `ACTIVE → DISABLED` / `DISABLED → ACTIVE` (P1-9). Qualquer outro `status`, inclusive o atual, é 409. */
   async update(scope: AccountingScope, id: string, dto: UpdatePaymentAccountInput): Promise<PaymentAccountView> {
     this.assertManage(scope);
     return this.repo.runTransaction(async (tx) => {
       const current = await this.require(scope, id, tx);
       const from = current.status;
       const to = dto.status ?? from;
-      if (to !== from) {
+      if (dto.status !== undefined) {
+        // Mesmo status também é 409 (dono, 03/10): não é transição, e aceitar-e-ignorar esconderia o engano.
         const allowed = (from === 'ACTIVE' && to === 'DISABLED') || (from === 'DISABLED' && to === 'ACTIVE');
         if (!allowed) {
           throw new ConflictError(

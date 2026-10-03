@@ -6,7 +6,7 @@
  * Máquina de status (BRIEF §4.1 + ratificação de lacuna, dono 03/10 — "ao pé da letra"):
  * - nasce `DRAFT` (sem credencial);
  * - `PUT …/credential` põe `ACTIVE` a partir de qualquer status (P1-6), com o gate de uma ativa (P1-4);
- * - `PATCH` só faz `ACTIVE → DISABLED` e `DISABLED → ACTIVE` (P1-9); qualquer outra transição é 409;
+ * - `PATCH` só faz `ACTIVE → DISABLED` e `DISABLED → ACTIVE` (P1-9); qualquer outra, inclusive o mesmo status, é 409 (dono, 03/10);
  * - `CREDENTIAL_INVALID` é escrito pelo PR-2 (401 do MP, P2-4); daqui só sai gravando a credencial de novo.
  */
 
