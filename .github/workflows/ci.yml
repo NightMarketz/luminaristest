@@ -77,6 +77,11 @@ jobs:
       # com o detector e FALHA se o Jest reportar qualquer open handle. Base limpa = verde.
       - name: Assert no leaked handles (forceExit tripwire)
         shell: bash
+        # GAP-MAP Nível 4 "CI — test:leaks estoura a heap": todas as suítes num processo só bateram o teto
+        # padrão (~4 GB) em 2 de 3 runs do #483 — o OOM mascara o próprio sinal deste passo. 8 GB de heap
+        # cabem no runner público ubuntu-latest (16 GB de RAM). Dono, 2026-10-03: "aplica o NODE_OPTIONS".
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -uo pipefail
           out=$(npm run test:leaks 2>&1) || { echo "$out"; exit 1; }
