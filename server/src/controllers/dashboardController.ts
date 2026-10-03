@@ -2,18 +2,13 @@ import type { Request, Response } from 'express';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { getFactory } from '@/lib/factory';
-// eslint-disable-next-line no-restricted-imports -- DEBT: prisma.* em controller, viola contrato §2 (só Repository). Backlog: docs/architecture/lint-layer-gate.md. Remover ao migrar para repository.
-import prisma from '@/lib/prisma';
 import logger from '@/lib/logger';
 
 import { z } from 'zod';
 import { CustomCreationSchema, QuickCreationSchema } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
-import { OnboardingFiscalSchema, UpsertCompanyFiscalProfileSchema } from '@/features/accounting/dtos/CompanyFiscalProfileDto';
+import { OnboardingFiscalSchema } from '@/features/accounting/dtos/CompanyFiscalProfileDto';
 import type { OnboardingFiscalInput } from '@/features/accounting/dtos/CompanyFiscalProfileDto';
-import { anoCorrente } from '@/features/accounting/services/CompanyFiscalProfileService';
-import { resolverObrigacoes } from '@/features/accounting/models/obrigacoesPorRegime';
-import type { ObrigacaoResolvida } from '@/features/accounting/models/obrigacoesPorRegime';
-import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { buildQuickPreset, InvalidAnalyticsConfigError, UnknownSuiteError } from '@/features/onboarding/services/buildQuickPreset';
 
 /**
  * X13 PR-3 item 19: o controller (camada de integração — Contrato §2.1) compõe o body do motor de tabelas com o bloco
@@ -24,22 +19,17 @@ const UnifiedCreationSchema = z.union([
   CustomCreationSchema.extend({ fiscal: OnboardingFiscalSchema.optional() }),
 ]);
 
-interface FiscalDoOnboarding {
-  status: 'criado' | 'pendente';
-  ano: number;
-  obrigacoes?: ObrigacaoResolvida[];
-}
 import type { UnitInput } from '@/features/dynamicTables/dtos/CreateDashboard.dto';
 import type { UserContext } from '@/lib/authUtils';
 
-import { ForbiddenError, UnauthorizedError, ValidationError } from '@/lib/errors';
+import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError, ValidationError } from '@/lib/errors';
 import { InstallModuleSchema } from '@/features/dynamicTables/dtos/InstallModule.dto';
 import { Role } from '@/features/users/models/User.model';
-import { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
+import { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
 import { getPresetByKey } from '@/features/dynamicTables/presets/PresetManager';
 import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
-import { CoreSystemPreset, tablePresetSuites, PresetSuite, PresetTableDefinition } from '@/features/dynamicTables/presets';
+import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
 import { CreateDynamicTableDto } from '@/features/dynamicTables/dtos/DynamicTable.dto';
@@ -60,15 +50,12 @@ export async function createDashboard(req: Request, res: Response) {
 
     const payload = validationResult.data;
 
-    const dynamicTableService = getFactory().getDynamicTableService();
-    const existingTables = await dynamicTableService.getTablesForUser(ctx.userId);
-
-    if (existingTables.length > 0) {
-      return res.status(403).json({
-        success: false,
-        error: 'Forbidden',
-        message: 'Setup já foi concluído. Este usuário já possui tabelas.',
-      });
+    // Guarda one-shot ANTES de qualquer montagem de preset (404/400 de montagem não vencem o 403) — a policy mora no serviço.
+    try {
+      await getFactory().getSystemProvisioningService().assertCanProvision(ctx);
+    } catch (error) {
+      if (error instanceof ForbiddenError) return respondProvisioningError(error, res);
+      throw error;
     }
 
     if (payload.mode === 'custom') {
@@ -100,102 +87,17 @@ export async function createDashboard(req: Request, res: Response) {
 }
 
 /**
- * Limpa o sistema gerado do usuário: tabelas dinâmicas + KnowledgeGraph + ActionProposals (R27). Fonte única do
- * reset (`deleteUserSystem`) e da compensação do onboarding (I1, F-I1-4 b) — "o mesmo que o reset faz".
+ * Mapeia os erros do `SystemProvisioningService` para os status/corpos que o `POST /dashboard/create` sempre devolveu
+ * (BE-INCR-SEED-UNIDADE-E-ENV item 5): 403 one-shot, 500 `ONBOARDING_ROLLED_BACK` / `ONBOARDING_ROLLBACK_FAILED`.
  */
-async function purgeUserSystem(userId: string): Promise<void> {
-  await getFactory().getDynamicTableService().deleteAllTablesForUser(userId);
-  await prisma.knowledgeGraph.deleteMany({ where: { userId } });
-  await prisma.actionProposal.deleteMany({ where: { userId } });
-}
-
-/**
- * BE-INCR-ONBOARDING-FIRST-UNIT (nó I1, BRIEF itens 2–3; F-I1-1 → b, F-I1-4 → b).
- *
- * Passo 2 do create: a primeira linha de `units` nasce pelo caminho de escrita NORMAL (`createTableData`), para que os
- * plugins de `units` rodem (pipeline de CRM, estoque por unidade). `units` é tabela do Core — sempre instalada.
- * Falha aqui ⇒ COMPENSAÇÃO: apaga o sistema recém-instalado (mesma limpeza do reset) e responde 500
- * `ONBOARDING_ROLLED_BACK`, de modo que um novo create não esbarre no 403 "setup já concluído". Janela residual
- * declarada no BRIEF: entre a instalação e a compensação, um 2º request concorrente do mesmo usuário vê o 403.
- * Devolve o id da unidade, ou `null` quando já respondeu (compensado).
- */
-async function createFirstUnitOrRollback(ctx: UserContext, unit: UnitInput, res: Response): Promise<string | null> {
-  const service = getFactory().getDynamicTableService();
-  try {
-    const unitsTable = (await service.getTablesForUser(ctx.userId)).find((t) => t.internalName === 'units');
-    if (!unitsTable) throw new Error("Tabela 'units' ausente após a instalação do preset.");
-    const data: Record<string, unknown> = { name: unit.name };
-    if (unit.cnpj) data.cnpj = unit.cnpj;
-    if (unit.type) data.type = unit.type;
-    const row = await service.createTableData(ctx, unitsTable.id, { data });
-    return row.id;
-  } catch (error) {
-    logger.error(`Onboarding: falha ao criar a primeira unidade do usuário ${ctx.userId} — compensando.`, { error });
-    try {
-      await purgeUserSystem(ctx.userId);
-    } catch (purgeError) {
-      logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
-      res.status(500).json({
-        success: false,
-        errorCode: 'ONBOARDING_ROLLBACK_FAILED',
-        error: 'A unidade não foi criada e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.',
-      });
-      return null;
-    }
-    const detail = error instanceof Error ? error.message : String(error);
-    res.status(500).json({
-      success: false,
-      errorCode: 'ONBOARDING_ROLLED_BACK',
-      error: `Não foi possível criar a unidade (${detail}). A instalação foi desfeita; tente novamente.`,
-    });
-    return null;
+function respondProvisioningError(error: unknown, res: Response): Response | null {
+  if (error instanceof ForbiddenError) {
+    return res.status(403).json({ success: false, error: 'Forbidden', message: error.message });
   }
-}
-
-/**
- * X13 PR-3 itens 19 e 21 (F-OBP-6 → c) — passo 3 do create, DEPOIS da unidade (mesmo padrão de dois passos +
- * compensação do F-I1-4 b): com regime conhecido, nasce o perfil fiscal da EMPRESA do ano corrente (fuso do escopo)
- * pelo serviço da contabilidade (policy + auditoria + gates dele). `NAO_SEI` ou bloco ausente ⇒ nada é criado e a
- * resposta diz `pendente`. Falha ⇒ o sistema recém-instalado é desfeito (500 ONBOARDING_ROLLED_BACK).
- * O `FiscalProfile` da UNIDADE não é criado aqui — lacuna de spec L-PR3-1 (o F-X6-6 a proíbe inventar
- * `icmsContribuinte`/`pisCofinsRegime`); a consistência com a empresa é cobrada quando ele for cadastrado (item 15).
- * Devolve o resumo, ou `null` quando já respondeu (compensado).
- */
-async function createCompanyFiscalProfileOrRollback(
-  ctx: UserContext,
-  unitId: string,
-  fiscal: OnboardingFiscalInput | undefined,
-  res: Response
-): Promise<FiscalDoOnboarding | null> {
-  const scope = resolveAccountingScope(ctx, unitId);
-  const ano = anoCorrente(scope);
-  if (!fiscal || fiscal.regime === 'NAO_SEI') return { status: 'pendente', ano };
-  const regime = fiscal.regime;
-  try {
-    const input = UpsertCompanyFiscalProfileSchema.parse({ unitId, regime, grandePorte: fiscal.grandePorte ?? null });
-    const perfil = await getFactory().getCompanyFiscalProfileService().upsert(scope, ano, input);
-    return { status: 'criado', ano, obrigacoes: resolverObrigacoes({ regime, inativa: perfil.inativa, condicoes: perfil.condicoes }) };
-  } catch (error) {
-    logger.error(`Onboarding: falha ao criar o perfil fiscal da empresa do usuário ${ctx.userId} — compensando.`, { error });
-    try {
-      await purgeUserSystem(ctx.userId);
-    } catch (purgeError) {
-      logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
-      res.status(500).json({
-        success: false,
-        errorCode: 'ONBOARDING_ROLLBACK_FAILED',
-        error: 'O perfil fiscal não foi criado e a limpeza do sistema instalado falhou. Use "Resetar sistema" antes de tentar de novo.',
-      });
-      return null;
-    }
-    const detail = error instanceof Error ? error.message : String(error);
-    res.status(500).json({
-      success: false,
-      errorCode: 'ONBOARDING_ROLLED_BACK',
-      error: `Não foi possível criar o perfil fiscal da empresa (${detail}). A instalação foi desfeita; tente novamente.`,
-    });
-    return null;
+  if (error instanceof OnboardingRolledBackError || error instanceof OnboardingRollbackFailedError) {
+    return res.status(500).json({ success: false, errorCode: error.errorCode, error: error.message });
   }
+  return null;
 }
 
 async function handleCustomCreation(
@@ -209,7 +111,6 @@ async function handleCustomCreation(
   selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
-  const userId = ctx.id;
   try {
     const originalPreset = await getPresetByKey(presetKey);
 
@@ -264,8 +165,6 @@ async function handleCustomCreation(
       return;
     }
 
-    const service = getFactory().getDynamicTableService();
-
     const finalPayload: { tables: Record<string, PresetTableDefinition & { internalName: string }> } = { tables: {} };
     for (const internalName in finalTablesConfig) {
       const tableData = finalTablesConfig[internalName];
@@ -308,11 +207,9 @@ async function handleCustomCreation(
       }
     }
 
-    const result = await service.installPresetAsSystem(userId, finalPayload);
-    const unitId = await createFirstUnitOrRollback(ctx, unit, res);
-    if (unitId === null) return;
-    const fiscalDoOnboarding = await createCompanyFiscalProfileOrRollback(ctx, unitId, fiscal, res);
-    if (fiscalDoOnboarding === null) return;
+    const { installResult: result, unitId, fiscal: fiscalDoOnboarding } = await getFactory()
+      .getSystemProvisioningService()
+      .provision(ctx, { preset: finalPayload, unit, fiscal });
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
     return res.status(201).json({
@@ -331,7 +228,7 @@ async function handleCustomCreation(
       },
     });
   } catch (error) {
-    return handleApiError(error, res);
+    return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
 
@@ -344,66 +241,12 @@ async function handleQuickCreation(
   selectOverrides: Record<string, Record<string, string[]>> | undefined,
   res: Response
 ) {
-  const userId = ctx.id;
   try {
-    let selectedPreset: PresetSuite | undefined;
-    for (const category in tablePresetSuites) {
-      const categoryPresets = tablePresetSuites[category as keyof typeof tablePresetSuites];
-      if (Object.prototype.hasOwnProperty.call(categoryPresets, suiteKey)) {
-        selectedPreset = categoryPresets[suiteKey as keyof typeof categoryPresets];
-        break;
-      }
-    }
-
-    if (!selectedPreset) {
-      res.status(404).json({ error: `Preset com chave '${suiteKey}' não encontrado.` });
-      return;
-    }
-
-    const service = getFactory().getDynamicTableService();
-    // I8 comportamentos 2–3: módulos selecionados (body ∪ default da suíte) entram entre o Core e a suíte.
-    // BE-INCR-CRM-SUBMODULES item 3 (F-SUB-2 → a): chave de grupo expande para os membros antes da resolução.
-    const installedModules = resolveModuleSelection(expandModuleSelectors(modules), selectedPreset.modules ?? []);
-    // Mescla Core + Módulos + Business em um único preset para permitir referências cruzadas via @@PRESET_TABLE_KEY::
-    const mergedPreset = {
-      tables: {
-        ...CoreSystemPreset.tables,
-        ...composeModuleTables(installedModules),
-        ...(selectedPreset.tables || {}),
-      },
-    };
-    // I8 c11 (F-I8-C11): opções de selects livres — só select da allowlist; campo texto → 400 nomeado.
-    mergedPreset.tables = applySelectOverrides(selectOverrides, mergedPreset.tables);
-
-    // Validate analytics configurations if present
-    const analyticsConfigs = (selectedPreset as { analytics?: unknown[] }).analytics;
-    if (Array.isArray(analyticsConfigs) && analyticsConfigs.length > 0) {
-      const { validateConfigurations } = await import('@/features/analytics/services/AnalyticsValidator');
-      const tableSchemas = new Map<string, ITableSchema>();
-
-      // Build schema map from preset tables
-      for (const [key, table] of Object.entries(mergedPreset.tables)) {
-        tableSchemas.set(key, table.schema);
-      }
-
-      const validationResult = validateConfigurations(analyticsConfigs as Parameters<typeof validateConfigurations>[0], tableSchemas);
-      if (!validationResult.valid) {
-        const errorMessages = validationResult.errors.map(e => `${e.field}: ${e.message}`).join('; ');
-        res.status(400).json({
-          error: `Analytics configuration validation failed: ${errorMessages}`
-        });
-        return;
-      }
-    }
-
-    await service.installPresetAsSystem(userId, mergedPreset);
-    const unitId = await createFirstUnitOrRollback(ctx, unit, res);
-    if (unitId === null) return;
-    const fiscalDoOnboarding = await createCompanyFiscalProfileOrRollback(ctx, unitId, fiscal, res);
-    if (fiscalDoOnboarding === null) return;
+    const { preset, installedModules } = buildQuickPreset(suiteKey, modules, selectOverrides);
+    const { unitId, fiscal: fiscalDoOnboarding } = await getFactory().getSystemProvisioningService().provision(ctx, { preset, unit, fiscal });
 
     const coreTableList = Object.keys(CoreSystemPreset.tables);
-    const businessTableList = Object.keys(mergedPreset.tables).filter((k) => !coreTableList.includes(k));
+    const businessTableList = Object.keys(preset.tables).filter((k) => !coreTableList.includes(k));
 
     return res.status(201).json({
       success: true,
@@ -420,7 +263,9 @@ async function handleQuickCreation(
       },
     });
   } catch (error) {
-    return handleApiError(error, res);
+    if (error instanceof UnknownSuiteError) return res.status(404).json({ error: error.message });
+    if (error instanceof InvalidAnalyticsConfigError) return res.status(400).json({ error: error.message });
+    return respondProvisioningError(error, res) ?? handleApiError(error, res);
   }
 }
 
@@ -528,7 +373,7 @@ export async function deleteUserSystem(req: Request, res: Response) {
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
     // Tabelas + KnowledgeGraph + ActionProposals órfãs — o agente não injeta referências a tabelas apagadas (R27).
-    await purgeUserSystem(ctx.id);
+    await getFactory().getSystemProvisioningService().purgeUserSystem(ctx.id);
 
     logger.info(`User system reset: tables, KnowledgeGraph, and proposals cleaned for user ${ctx.id}`);
 

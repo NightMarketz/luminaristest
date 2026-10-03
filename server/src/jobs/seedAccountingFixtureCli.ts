@@ -21,6 +21,11 @@
  *   - pacote pré-pago: venda D 1.1.1 / C 2.1.1; consumo no mês seguinte D 2.1.1 / C 3.1.
  *   - valores de R$ 100 a R$ 5.000 por lançamento, determinísticos por `--seed`.
  *
+ * Unidade (BE-INCR-SEED-UNIDADE-E-ENV, F-S1 → a1): o tenant nasce com o salão INTEIRO instalado e a unidade criada pelo
+ * `SystemProvisioningService` (o mesmo caminho do onboarding — plugins, estoque por unidade, funil de CRM, perfil fiscal da
+ * empresa). O razão fica sob o `unitId` GERADO (linha de `units`, selecionável na tela); `--unit-id` agora é o NOME da
+ * unidade. Tenant que já tem tabelas reaproveita a unidade de mesmo nome; sem ela, o seed recusa (não instala 2ª vez).
+ *
  * NÃO ativa binding (ADR-INCR-BINDING-FEEDER §7 proíbe seed direto) — imprime o comando a rodar.
  * NÃO é chamado por boot/Dockerfile.
  *
@@ -29,6 +34,7 @@
  */
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import type { User } from 'generated/prisma';
 import { randomBytes } from 'node:crypto';
 import { ApplicationFactory } from '../lib/factory';
 import prisma from '../lib/prisma';
@@ -38,6 +44,9 @@ import { CLOSING_SOURCE_TYPE, closingSourceId } from '../features/accounting/mod
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import { UpsertFiscalProfileSchema } from '../features/accounting/dtos/FiscalProfileDto';
+import { buildQuickPreset } from '../features/onboarding/services/buildQuickPreset';
+import { Role } from '../features/users/models/User.model';
+import type { UserContext } from '../types/UserContext';
 
 export const SEED_SOURCE_TYPE = 'seed';
 
@@ -48,6 +57,7 @@ export const SeedAccountingArgsSchema = z
     years: z.array(z.number().int().gte(2015).lte(2100)).min(1),
     tenant: z.literal('salon'),
     seed: z.number().int().min(0),
+    /** NOME-base da unidade (a unidade do tenant é `<nome>-<presumido|real>`); o id real é gerado pelo onboarding. */
     unitId: z.string().min(1),
     iHaveABackup: z.literal(true, {
       message:
@@ -222,14 +232,49 @@ if (MAX_SEED_CENTS * 3 > MAX_CENTS) throw new Error('MAX_SEED_CENTS incompatíve
 
 type Services = ApplicationFactory['services'];
 
-async function ensureUser(t: SeedTenant, password: string | undefined): Promise<string> {
+async function ensureUser(t: SeedTenant, password: string | undefined): Promise<User> {
   const existing = await prisma.user.findUnique({ where: { username: t.username } });
-  if (existing) return existing.id; // nunca reescreve senha (mesmo invariante do prisma/seed.ts)
+  if (existing) return existing; // nunca reescreve senha (mesmo invariante do prisma/seed.ts)
   const hash = await bcrypt.hash(password ?? randomBytes(24).toString('hex'), 10);
-  const created = await prisma.user.create({
+  return prisma.user.create({
     data: { username: t.username, email: `${t.username}@seed.local`, name: `Seed ${t.regime}`, password: hash, locale: 'pt' },
   });
-  return created.id;
+}
+
+/** `UserContext` do tenant a partir da linha `User` (role USER — os plugins de `units` e o perfil fiscal rodam com ele). */
+function tenantContext(user: User): UserContext {
+  return {
+    id: user.id, userId: user.id, name: user.name ?? '', username: user.username, email: user.email,
+    role: Role.USER, userRole: Role.USER, userEmail: user.email, userName: user.name ?? '',
+    createdAt: user.createdAt, updatedAt: user.updatedAt, timeZone: 'America/Sao_Paulo',
+  };
+}
+
+/**
+ * Unidade do tenant (itens 9–10 do BRIEF): 0 tabelas dinâmicas ⇒ instala o salão inteiro + unidade + perfil fiscal pelo
+ * `SystemProvisioningService` e devolve o id GERADO. Já tem tabelas ⇒ reaproveita a linha de `units` de mesmo `data.name`
+ * (idempotência); sem ela, RECUSA com mensagem nomeada — nunca instala uma 2ª vez (mesmo espírito da guarda one-shot).
+ */
+async function ensureTenantUnit(services: Services, ctx: UserContext, t: SeedTenant, unitName: string): Promise<string> {
+  const tables = await services.dynamicTable.getTablesForUser(ctx.userId);
+  if (tables.length === 0) {
+    const { unitId } = await services.systemProvisioning.provision(ctx, {
+      preset: buildQuickPreset('beautySalon', []).preset,
+      unit: { name: unitName },
+      fiscal: { regime: t.regime },
+    });
+    return unitId;
+  }
+  const unitsTable = tables.find((tb) => tb.internalName === 'units');
+  const rows = unitsTable ? await services.dynamicTable.getAllTableData(ctx, unitsTable.id) : [];
+  const row = rows.find((r) => (r.data as { name?: unknown } | null)?.name === unitName);
+  if (!row) {
+    throw new Error(
+      `recusado: ${t.username} já tem tabelas, mas nenhuma unidade chamada '${unitName}' — o seed não instala o sistema uma 2ª vez. ` +
+        `Use --unit-id com o nome da unidade existente ou semeie um usuário sem tabelas.`,
+    );
+  }
+  return row.id;
 }
 
 async function accountId(scope: AccountingScope, code: string): Promise<string> {
@@ -254,10 +299,12 @@ export async function seedTenant(
   password: string | undefined,
   today: string,
 ): Promise<SeedTenantReport> {
-  const userId = await ensureUser(t, password);
+  const user = await ensureUser(t, password);
+  const userId = user.id;
   // Uma unidade POR tenant: o AccountingSyncService registra os mappers por UNIDADE — dois bindings do
   // salão na mesma unidade colidem em 'sale.finalized' e o boot aborta (achado no boot real, 24/09).
-  const unitId = `${args.unitId}-${t.username.replace(/^seed-/, '')}`;
+  const unitName = `${args.unitId}-${t.username.replace(/^seed-/, '')}`;
+  const unitId = await ensureTenantUnit(services, tenantContext(user), t, unitName);
   const scope: AccountingScope = {
     ownerUserId: userId,
     actorUserId: userId,

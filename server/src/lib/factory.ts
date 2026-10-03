@@ -155,6 +155,8 @@ import { PresetSyncService } from '../features/dynamicTables/services/PresetSync
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
+import { SystemProvisioningPolicy } from '../features/onboarding/policies/SystemProvisioningPolicy';
 
 // Lib - External Services
 import { OpenAIService as ChatOpenAIService } from './openai/OpenAIService';
@@ -182,6 +184,7 @@ import type { IAttachmentRepository } from '../features/attachments/repositories
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
+import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
@@ -428,6 +431,7 @@ export class ApplicationFactory {
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
+    systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
     packageBalance: IPackageBalancePolicy;
   };
@@ -500,6 +504,7 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    systemProvisioning: SystemProvisioningService;
     depreciationRateSeed: DepreciationRateSeedService;
     depreciationRate: DepreciationRateService;
     fixedAssetClass: FixedAssetClassService;
@@ -571,6 +576,7 @@ export class ApplicationFactory {
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
       savedTableView: new SavedTableViewPolicy(),
+      systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
       packageBalance: new PackageBalancePolicy(),
     };
@@ -912,6 +918,15 @@ export class ApplicationFactory {
     // aqui — só liga a ponta que faltava.
     payableService.setFixedAssetDraftCreator(fixedAssetService);
     depreciationService.setFixedAssetDraftRedriver(payableService);
+    const companyFiscalProfileService = new CompanyFiscalProfileService(
+      this.repositories.companyFiscalProfile,
+      this.repositories.companySigner,
+      this.repositories.accountingContact,
+      this.policies.accounting,
+      auditService,
+      this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
+      accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
+    );
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
@@ -920,15 +935,7 @@ export class ApplicationFactory {
       fiscalProfile: fiscalProfileService,
       serviceFiscalProfile: serviceFiscalProfileService,
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
-      companyFiscalProfile: new CompanyFiscalProfileService(
-        this.repositories.companyFiscalProfile,
-        this.repositories.companySigner,
-        this.repositories.accountingContact,
-        this.policies.accounting,
-        auditService,
-        this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
-        accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
-      ),
+      companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
       depreciationRateSeed: depreciationRateSeedService,
       depreciationRate: depreciationRateService,
@@ -1159,6 +1166,14 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      // BE-INCR-SEED-UNIDADE-E-ENV (nó SEED-UNITS): monta o sistema do usuário (onboarding HTTP + seed contábil).
+      systemProvisioning: new SystemProvisioningService(
+        dynamicTableService,
+        companyFiscalProfileService,
+        this.repositories.actionProposal,
+        this.repositories.knowledgeGraph,
+        this.policies.systemProvisioning,
+      ),
     };
   }
 
@@ -1343,6 +1358,7 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getSystemProvisioningService = (): SystemProvisioningService => this.services.systemProvisioning;
 
   // Repository Getters — composition-root accessors. Some have no caller yet; kept as the consistent
   // public surface of the factory (re-add cost is annoying and dynamicTables/interview may need them).
