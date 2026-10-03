@@ -1,0 +1,9 @@
+{
+  // Só para o ts-jest: transpila arquivo a arquivo, sem type-check (5x mais rápido a frio — medido 03/10:
+  // PostingService.test.ts 13,5 s → 2,8 s). Os tipos dos testes continuam gate no CI via
+  // `tsc --noEmit -p tsconfig.test.json` (job server-static) — NÃO remova aquele passo achando que o Jest cobre.
+  "extends": "./tsconfig.test.json",
+  "compilerOptions": {
+    "isolatedModules": true
+  }
+}
