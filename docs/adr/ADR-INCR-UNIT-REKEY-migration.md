@@ -454,6 +454,8 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 > ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):
 > - L-RK-1 → (a) · L-RK-2 → (a) · L-RK-3 → (b) · L-RK-4 → (a) · L-RK-5 → (b);
 > - `ProductDestinationDefault` → REKEY (inventário 48 = 46 + 2);
+> - `PaymentAccount` (#484, F5) → REKEY (inventário 49 = 47 + 2) — dono, questionário, 2026-10-03, depois que o #480 e o
+>   #484 mergearam verdes em separado e o `main` ficou vermelho; registro em [`D-2026-10-03-PAYMENT-PROVIDER-PR1-LACUNAS`](../plano/decisoes/D-2026-10-03-PAYMENT-PROVIDER-PR1-LACUNAS.md);
 > - F-RKL-1 → (a).
 >
 > A correção vai em **PR novo depois do merge do #480** (o dono divergiu da recomendação, que era corrigir no
