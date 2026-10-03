@@ -1,4 +1,5 @@
 import { apiClient } from '../api/api-client';
+import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 import type {
   CustomCreationInput,
   QuickCreationInput,
@@ -39,7 +40,9 @@ export type QuickDashboardPayload = QuickCreationInput;
 
 export type CustomDashboardPayload = CustomCreationInput;
 
-export type CreateDashboardPayload = UnifiedCreationInput;
+// ponytail: `fiscal` é consumida por `dashboardController` (`UnifiedCreationSchema.extend({ fiscal })`) FORA do DTO gerado —
+// extensão explícita (plano §10 linha 4 / D9), nunca `as`. Quem manda é a Entrevista (`useAiInterview`).
+export type CreateDashboardPayload = UnifiedCreationInput & { fiscal?: OnboardingFiscalInput };
 
 /** Normalize an unknown API error into an Error with a friendly message. */
 function toError(err: unknown, fallback: string): Error {

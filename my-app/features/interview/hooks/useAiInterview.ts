@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
 import { IMessage, ICustomizationState } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
+import type { CreateDashboardPayload } from '../../../lib/services/setup.service';
+import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
 
 /**
  * BE-INCR-ONBOARDING-FIRST-UNIT (I1, BRIEF item 5): na Entrevista o nome da primeira unidade vem do `SUMMARY:` que a IA
@@ -21,12 +23,9 @@ export function nomeDaUnidadeDaEntrevista(conversa: IMessage[], presetKey: strin
   return presetKey;
 }
 
-/** X13 PR-3 item 20: resposta da pergunta fechada de regime/porte (espelha `OnboardingFiscalSchema` do servidor). */
-export type RegimeOnboarding = 'MEI' | 'SIMPLES' | 'PRESUMIDO' | 'REAL' | 'NAO_SEI';
-export interface FiscalOnboarding {
-  regime: RegimeOnboarding;
-  grandePorte: boolean | null;
-}
+/** X13 PR-3 item 20: resposta da pergunta fechada de regime/porte — contrato gerado de `OnboardingFiscalSchema` (nunca espelho à mão). */
+export type FiscalOnboarding = OnboardingFiscalInput;
+export type RegimeOnboarding = OnboardingFiscalInput['regime'];
 
 export function useAiInterview() {
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -101,13 +100,14 @@ export function useAiInterview() {
     setCreationError(null);
     try {
       const token = getCookie('auth_token');
+      const body: CreateDashboardPayload = { suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal };
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/dashboard/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ suiteKey: key, unit: { name: nomeDaUnidadeDaEntrevista(conversa, key) }, fiscal }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
