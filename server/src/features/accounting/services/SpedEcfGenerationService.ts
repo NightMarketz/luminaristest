@@ -13,6 +13,7 @@ import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
+import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { buildEcfFile, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
 
 /**
@@ -97,6 +98,7 @@ export class SpedEcfGenerationService {
     const yearTotals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
       from: yearFrom,
       to: yearTo,
+      excludeSourceTypes: [CLOSING_SOURCE_TYPE],
     });
     const movedById = new Map(yearTotals.map((t) => [t.accountId, t.creditCents - t.debitCents]));
 
@@ -128,6 +130,7 @@ export class SpedEcfGenerationService {
       const totals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
         from: w.from,
         to: w.to,
+        excludeSourceTypes: [CLOSING_SOURCE_TYPE],
       });
       const byId = new Map(totals.map((t) => [t.accountId, t.creditCents - t.debitCents]));
       // Receita bruta = crédito líquido (devoluções/descontos entram como débito). ≥ 0.
