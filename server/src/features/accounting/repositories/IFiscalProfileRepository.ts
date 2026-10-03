@@ -10,6 +10,11 @@ export interface FiscalProfileData {
   pisCofinsCreditFromSimplesSupplier: boolean;
   icmsRecuperavelAccountId?: string | null;
   pisCofinsRecuperavelAccountId?: string | null;
+  // X7 Fase A (BRIEF item 3, F-TA-6 a)
+  irpjDespesaAccountId?: string | null;
+  csllDespesaAccountId?: string | null;
+  irpjRecolherAccountId?: string | null;
+  csllRecolherAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;
