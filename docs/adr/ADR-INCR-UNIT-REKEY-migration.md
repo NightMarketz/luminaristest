@@ -456,6 +456,7 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 > - `ProductDestinationDefault` → REKEY (inventário 48 = 46 + 2);
 > - `PaymentAccount` (#484, F5) → REKEY (inventário 49 = 47 + 2) — dono, questionário, 2026-10-03, depois que o #480 e o
 >   #484 mergearam verdes em separado e o `main` ficou vermelho; registro em [`D-2026-10-03-PAYMENT-PROVIDER-PR1-LACUNAS`](../plano/decisoes/D-2026-10-03-PAYMENT-PROVIDER-PR1-LACUNAS.md);
+> - `AccountantAssignment` (#482, GOV-CONTADOR) → REKEY — mesma cédula; o inventário entrou em `main` como **50 = 48 + 2** pelo #482 (`db3a4465`), que levou as duas classificações; registro em [`D-2026-10-03-INTEGRACAO-REKEY-ECF-X7`](../plano/decisoes/D-2026-10-03-INTEGRACAO-REKEY-ECF-X7.md);
 > - F-RKL-1 → (a).
 >
 > A correção vai em **PR novo depois do merge do #480** (o dono divergiu da recomendação, que era corrigir no

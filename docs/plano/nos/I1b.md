@@ -3,24 +3,24 @@ id: "I1b"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)"
-estado: "ready"
-estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook)"
+estado: "inflight"
+estado_detalhe: "ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook) · 03/10: CLI + testes mergeados no #480 (`311dac6b`); runbook em branco em `RUNBOOK-I1B-UNIT-REKEY.md`. A colisão com o #484 deixou o `main` vermelho (`PaymentAccount` sem classificação); o dono decidiu REKEY para `PaymentAccount` e `AccountantAssignment`, e o inventário entrou em `main` como 50 = 48 REKEY + 2 KEEP pelo #482 ([[D-2026-10-03-INTEGRACAO-REKEY-ECF-X7]]). Falta: BRIEF das lacunas L-RK-1..5 (sem 'executa') e a execução no dev.db (gate humano, runbook)"
 autorizacao: "F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação (\"Toma a decisão logica aqui entao e feche as pendencia\") — sem 'executa'; dono, 2026-10-03: \"Executa o código do I1b — só o CLI e os testes; rodar contra o dev.db real NÃO está autorizado\" (execução no dev.db = runbook, gate humano)"
-prs: ["#392"]
+prs: ["#392", "#480", "#482"]
 ancora_sdd: "§M5.1 Bloco A I1/I1b"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "regra 2: re-key do unitId nas 31 tabelas contábeis. A spec é o ADR-INCR-UNIT-REKEY; os 12/12 forks F-RK que a regra 1 esperava foram fechados em 02/10 (#463), F-RK-2 incluso, e o B-4 está done; falta só o executa"
-atualizado: "2026-10-02"
+atualizado: "2026-10-03"
 depende_de: []
 ---
 # I1b — Backfill CLI do unitId legado (re-key como ADR de migração, B-4 antes)
 
-**Estado:** `ready` — ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook)  
+**Estado:** `inflight` — ADR-INCR-UNIT-REKEY mergeado #392 529c7463 (28/09) com 12 forks pendentes do dono; código não iniciado · 28/09: o [[SEED-UNITS]] muda a premissa do F-RK-2 (os donos do seed passam a ter units → seed-unit-* viram LEGACY no --plan, não EXCLUDED_TENANT); re-decidir o F-RK-2 depois dele · 02/10 (ratificação): ADR: 12/12 forks F-RK fechados ([[D-2026-10-02-C8-EMENDA-3-2-E-I1B-FORKS]]) — 11 ratificados pelo dono (1 a · 3 b · 4 a · 5 a · 6 b · 7 a · 8 b caminho normal · 9 a · 10 a · 11 a · 12 a) + F-RK-2 → a (exclusão por lista explícita dos 2 seed-unit-*) decidido por delegação; a premissa do SEED-UNITS deixou de bloquear; B-4 done; falta só 'executa' (execução no dev.db = gate humano, runbook) · 03/10: CLI + testes mergeados no #480 (`311dac6b`); runbook em branco em `RUNBOOK-I1B-UNIT-REKEY.md`. A colisão com o #484 deixou o `main` vermelho (`PaymentAccount` sem classificação); o dono decidiu REKEY para `PaymentAccount` e `AccountantAssignment`, e o inventário entrou em `main` como 50 = 48 REKEY + 2 KEEP pelo #482 ([[D-2026-10-03-INTEGRACAO-REKEY-ECF-X7]]). Falta: BRIEF das lacunas L-RK-1..5 (sem 'executa') e a execução no dev.db (gate humano, runbook)  
 **Autorização:** F-I1-3 → (b) 2026-09-07; dono, 2026-10-02 (ratificação por questionário): 11 forks F-RK ratificados + F-RK-2 decidido por delegação ("Toma a decisão logica aqui entao e feche as pendencia") — sem 'executa'; dono, 2026-10-03: "Executa o código do I1b — só o CLI e os testes; rodar contra o dev.db real NÃO está autorizado" (execução no dev.db = runbook, gate humano)  
 **Depende de:** — (a aresta pontilhada com [[SEED-UNITS]] caiu em 02/10: F-RK-2 decidido por lista explícita, vale antes e depois do merge)  
 **Desbloqueia:** —  
 **Âncora no SDD consolidado:** §M5.1 Bloco A I1/I1b  
-**PRs:** #392
+**PRs:** #392, #480, #482
 
 ## Docs
 
