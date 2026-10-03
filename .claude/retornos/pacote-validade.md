@@ -58,3 +58,7 @@ id: PACOTE-VALIDADE · estado: done (após merge) · estado_detalhe: "03/10: exe
 - Vermelho → verde no MESMO conjunto de testes: com o `PackageBalanceService` antigo os 2 testes E2E novos falham pelo motivo certo (âncora = recompra; saldo travado em 500 — `.claude` log local pv-red.log); com a correção, 10/10.
 - Unit: 3587 passed. Integração completa: 801/801. E2E `pacoteValidade`: 10/10. `tsc` server: 0.
 - Desvio declarado da letra do §3 item 6: a chave do movimento ganha sufixo `:n` só a partir da 2ª ocorrência na mesma data (a 1ª é idêntica ao BRIEF).
+
+### GAP-MAP (dono, 03/10: "Documente os achados restantes para o gap map")
+- Achados 2, 4 e 5 registrados em `docs/operating-manual/GAP-MAP.md` Nível 5, logo abaixo da linha do E-1: 2 e 4 [ABERTO], 5 [PARCIAL]; cada linha com o comando que prova o status.
+- Merge de `origin/main` (bf48780f): conflito só em `server/src/lib/errors.ts` (os dois lados acrescentavam classes; mantidos ambos). O main estendeu o snapshot de shape a `accountingBinding` e `packages` — regenerado (AccountingBindingDto, CompileBindingDto, PackageBalanceDto + tipos do FE). E2E 10/10; unit 3713 verde no re-run (1 flaky de concorrência conhecido na 1ª rodada).
