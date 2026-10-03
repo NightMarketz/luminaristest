@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getCookie } from 'cookies-next';
-import { IMessage, ICustomizationState } from '../types/InterviewTypes';
+import { IMessage, ICustomizationState, ICreationChoicePrompt, CreationChoice } from '../types/InterviewTypes';
 import { ITable } from '../types/RightSidebarTypes';
 import type { CreateDashboardPayload } from '../../../lib/services/setup.service';
 import type { OnboardingFiscalInput } from '@/types/contracts/accounting/CompanyFiscalProfileDto.gen';
@@ -38,6 +38,10 @@ export function useAiInterview() {
   const [creationError, setCreationError] = useState<string | null>(null);
   // X13 PR-3 item 20: a entrevista terminou; falta a pergunta fechada de regime/porte antes do create.
   const [fiscalPendente, setFiscalPendente] = useState<{ key: string; conversa: IMessage[] } | null>(null);
+  // W3 FE item 7: o servidor pede os botões criar × customizar (`choicePrompt` do último turno).
+  const [choicePrompt, setChoicePrompt] = useState<ICreationChoicePrompt | null>(null);
+  // W3 FE item 12: trava síncrona — `isLoading` só muda no próximo render, então dois cliques rápidos passariam.
+  const choiceInFlight = useRef(false);
   const [customizationState, setCustomizationState] = useState<ICustomizationState | null>(null);
   const [showCustomizationPanel, setShowCustomizationPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -124,13 +128,8 @@ export function useAiInterview() {
     }
   }
 
-  async function handleSendMessage() {
-    if (userInput.trim() === '' || isLoading || isCreating) return;
-
-    const userMessage: IMessage = { sender: 'user', text: userInput };
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    setUserInput('');
+  /** Posta um turno da entrevista; `choice` (W3 item 8/9) decide o estágio de criação sem ler o texto. */
+  async function postTurn(newMessages: IMessage[], choice?: CreationChoice) {
     setIsLoading(true);
 
     try {
@@ -140,18 +139,21 @@ export function useAiInterview() {
         body: JSON.stringify({ 
           messages: newMessages, 
           stage: currentStage, 
-          presetKey: presetKey,
-          sessionId: sessionId
+          // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
+          ...(presetKey ? { presetKey } : {}),
+          ...(sessionId ? { sessionId } : {}),
+          ...(choice ? { choice } : {})
         })
       });
 
       if (!response.ok) throw new Error('Failed to get response from AI');
 
       const result = await response.json();
-      const { response: aiResponse, nextStage, presetKey: newPresetKey, sessionId: newSessionId, startCustomization, customizationState: newCustomizationState } = result;
+      const { response: aiResponse, nextStage, presetKey: newPresetKey, sessionId: newSessionId, startCustomization, customizationState: newCustomizationState, choicePrompt: newChoicePrompt } = result;
 
       setMessages(prev => [...prev, { sender: 'ai', text: aiResponse }]);
       setCurrentStage(nextStage);
+      setChoicePrompt(newChoicePrompt ?? null);
 
       if (newPresetKey) {
         setPresetKey(newPresetKey);
@@ -178,6 +180,27 @@ export function useAiInterview() {
       setMessages(prev => [...prev, { sender: 'ai', text: 'Desculpe, ocorreu um erro de comunicação.' }]);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleSendMessage() {
+    if (userInput.trim() === '' || isLoading || isCreating) return;
+
+    const userMessage: IMessage = { sender: 'user', text: userInput };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setUserInput('');
+    await postTurn(newMessages);
+  }
+
+  /** W3 FE (itens 8–9, 12): clique nos botões criar × customizar — envia `choice` no corpo, uma vez por vez. */
+  async function sendCreationChoice(choice: CreationChoice) {
+    if (choiceInFlight.current || isLoading || isCreating) return;
+    choiceInFlight.current = true;
+    try {
+      await postTurn(messages, choice);
+    } finally {
+      choiceInFlight.current = false;
     }
   }
 
@@ -248,6 +271,8 @@ export function useAiInterview() {
     logState,
     handleRetry,
     presetKey,
+    choicePrompt,
+    sendCreationChoice,
     fiscalPendente: fiscalPendente !== null,
     confirmarFiscal
   };
