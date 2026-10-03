@@ -20,11 +20,7 @@ import type {
  */
 
 /** The serializable state captured by a saved view (mirrors GenericTabbedView state). */
-export interface SavedViewConfig {
-  query?: string;
-  fieldFilters?: Record<string, string>;
-  sortConfig?: { field: string; direction: 'asc' | 'desc' } | null;
-}
+export type SavedViewConfig = CreateSavedTableViewInput['config'];
 
 export interface SavedView {
   id: string;

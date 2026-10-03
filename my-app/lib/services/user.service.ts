@@ -67,7 +67,8 @@ export const UserService = {
    * Specialized method to change user role (ADMIN test feature).
    */
   async changeRole(userId: string, role: string): Promise<IUser> {
-    return this.updateProfile(userId, { role: role as NonNullable<UpdateUserInput['role']> });
+    // ponytail: `role` vem do botão de promoção (USER|ADMIN); o servidor devolve 400 se divergir do contrato gerado.
+    return this.updateProfile(userId, { role: role as UpdateUserInput['role'] });
   },
 
   /**

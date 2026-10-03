@@ -8,6 +8,7 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult, InferGetServe
 import { useTranslation } from 'next-i18next';
 import { getCookie } from 'cookies-next';
 import { UserService } from '../../lib/services/user.service';
+import type { CreateUserInput } from '@/types/contracts/users/UserDto.gen';
 import { resolveErrorMessage } from '../../lib/utils/error-handler';
 
 export async function getServerSideProps(context: GetServerSidePropsContext): Promise<GetServerSidePropsResult<Record<string, unknown>>> {
@@ -53,7 +54,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
     setSuccessMessage(null);
     setLoading(true);
 
-    const payload = {
+    const payload: CreateUserInput = {
       name: formData.name,
       username: formData.username,
       email: formData.email,
