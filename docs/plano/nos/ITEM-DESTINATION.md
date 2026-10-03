@@ -3,24 +3,24 @@ id: "ITEM-DESTINATION"
 tipo: "regua"
 dominio: "fiscal"
 titulo: "Destinação por item na entrada (revenda × insumo do serviço)"
-estado: "ready"
-estado_detalhe: "**Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product · 29/09: PLANEJAR autorizado sem esperar o contador — a posição oficial da RFB (IN 2.121 art. 160 I; SC SRRF04 4.024/2021: compra a alíquota zero, de revendedor, não dá crédito) entra como fork do BRIEF; LC 214 art. 57 I f (bens 'estéticos' = uso pessoal para crédito de IBS/CBS) é insumo · 29/09 (2ª): BRIEF #443 com 20 itens; forks F-ID-1..9 ratificados na recomendação ([[D-2026-09-29-ITEM-DESTINATION-FORKS]]): despesa na entrada para insumo, default em tabela Prisma, sem ADR; F-ID-4 roda sem crédito até a transcrição da P-1; falta 'executa' · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus)"
+estado: "done"
+estado_detalhe: "**Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product · 29/09: PLANEJAR autorizado sem esperar o contador — a posição oficial da RFB (IN 2.121 art. 160 I; SC SRRF04 4.024/2021: compra a alíquota zero, de revendedor, não dá crédito) entra como fork do BRIEF; LC 214 art. 57 I f (bens 'estéticos' = uso pessoal para crédito de IBS/CBS) é insumo · 29/09 (2ª): BRIEF #443 com 20 itens; forks F-ID-1..9 ratificados na recomendação ([[D-2026-09-29-ITEM-DESTINATION-FORKS]]): despesa na entrada para insumo, default em tabela Prisma, sem ADR; F-ID-4 roda sem crédito até a transcrição da P-1; falta 'executa' · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus) · 03/10: PR-1 #461 (núcleo, override por item, IMOBILIZADO declarado) e PR-2 #481 (default por produto, itens 2/9/16–19) em `main`; `done` por decisão do dono ([[D-2026-10-03-ITEM-DESTINATION-DONE]]) com o item 7 em (c) até a transcrição da P-1; par FE = achado A-6"
 depende_de: ["[[FIS-08]]", "[[X6]]", "[[D1]]?"]
 ancora_sdd: "§III.2"
 autorizacao: "dono, 2026-09-29: Fase 3.1 — PLANEJAR; forks F-ID-1..9: \"Pode seguir as recomendações\" (chat) — sem 'executa'"
-prs: ["#443"]
+prs: ["#443", "#461", "#481"]
 autorizacao: "EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): \"Vamos testar os sonnet e o opus para implementar as tarefas\" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "regra 2: nó de régua fiscal, BRIEF com migração de schema e de dado (20 itens, forks ratificados 29/09)"
-atualizado: "2026-10-01"
+atualizado: "2026-10-03"
 ---
 # ITEM-DESTINATION — Destinação por item na entrada (revenda × insumo do serviço)
 
-**Estado:** `ready` — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product · 29/09: PLANEJAR autorizado sem esperar o contador — a posição oficial da RFB (IN 2.121 art. 160 I; SC SRRF04 4.024/2021: compra a alíquota zero, de revendedor, não dá crédito) entra como fork do BRIEF; LC 214 art. 57 I f (bens 'estéticos' = uso pessoal para crédito de IBS/CBS) é insumo · 29/09 (2ª): BRIEF #443 com 20 itens; forks F-ID-1..9 ratificados na recomendação ([[D-2026-09-29-ITEM-DESTINATION-FORKS]]): despesa na entrada para insumo, default em tabela Prisma, sem ADR; F-ID-4 roda sem crédito até a transcrição da P-1; falta 'executa' · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus)  
+**Estado:** `done` — **Nó de régua** por decisão do dono (25/09, EMENDA de [[D-2026-09-25-SIG-NFE-NO-DE-REGUA]]). Fase 3.1 do plano pós-contador — requisito NOVO trazido pela resposta do contador (23/09), sem spec. Toca estoque, crédito do X6 e ICMS de uso e consumo; default por produto + override por item; migração. ADR se mudar o modelo de Product · 29/09: PLANEJAR autorizado sem esperar o contador — a posição oficial da RFB (IN 2.121 art. 160 I; SC SRRF04 4.024/2021: compra a alíquota zero, de revendedor, não dá crédito) entra como fork do BRIEF; LC 214 art. 57 I f (bens 'estéticos' = uso pessoal para crédito de IBS/CBS) é insumo · 29/09 (2ª): BRIEF #443 com 20 itens; forks F-ID-1..9 ratificados na recomendação ([[D-2026-09-29-ITEM-DESTINATION-FORKS]]): despesa na entrada para insumo, default em tabela Prisma, sem ADR; F-ID-4 roda sem crédito até a transcrição da P-1; falta 'executa' · 01/10: 'executa' dado pelo dono (teste Sonnet × Opus) · 03/10: PR-1 #461 (núcleo, override por item, IMOBILIZADO declarado) e PR-2 #481 (default por produto, itens 2/9/16–19) em `main`; `done` por decisão do dono ([[D-2026-10-03-ITEM-DESTINATION-DONE]]) com o item 7 em (c) até a transcrição da P-1; par FE = achado A-6  
 **Autorização:** EXECUTA: dono, chat, 2026-10-01 (AskUserQuestion): "Vamos testar os sonnet e o opus para implementar as tarefas" + 'executa' marcado para SEED-UNITS, ITEM-DESTINATION, PASSO-13 e LAC-B; PR + revisor Opus, merge após OK do dono  
 **Depende de:** [[FIS-08]], [[X6]], [[D1]]?  
 **Desbloqueia:** —  
-**PRs:** #443  
+**PRs:** #443, #461, #481  
 **Âncora no SDD consolidado:** §III.2
 
 ## Docs
