@@ -91,10 +91,10 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
-        ...(meetingAt ? { meetingAt } : {}),
-        ...(capture
-          ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
-          : {}),
+        meetingAt: meetingAt || undefined,
+        amount: capture?.amount,
+        currency: capture?.currency,
+        winProbability: capture?.winProbability,
       });
       await onChanged();
       onClose();
@@ -140,7 +140,8 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
       await CrmService.recordNoShow({
         leadId: lead.id,
         option: capture.option,
-        ...(capture.option === 'reschedule' ? { rescheduleAt: capture.rescheduleAt } : { previousStageId: prevStage?.id }),
+        rescheduleAt: capture.option === 'reschedule' ? capture.rescheduleAt : undefined,
+        previousStageId: capture.option === 'reschedule' ? undefined : prevStage?.id,
       });
       setRecordingNoShow(false);
       await onChanged();

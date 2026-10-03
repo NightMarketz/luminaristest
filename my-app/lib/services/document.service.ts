@@ -5,7 +5,6 @@ interface UploadResponse { id?: string; url?: string; [key: string]: unknown }
 interface TokenCostResponse { tokens?: number; cost?: number; [key: string]: unknown }
 interface QdrantStatusResponse { status?: string; [key: string]: unknown }
 interface QdrantPointsResponse { points?: unknown[]; [key: string]: unknown }
-interface QdrantInjectionResponse { success?: boolean; [key: string]: unknown }
 interface DeleteResponse { success?: boolean; [key: string]: unknown }
 
 export const DocumentService = {
@@ -51,10 +50,6 @@ export const DocumentService = {
 
   async getQdrantPoints(docId: string): Promise<QdrantPointsResponse> {
     return apiClient.get(`/documents/${docId}/qdrant`);
-  },
-
-  async triggerQdrantInjection(docId: string): Promise<QdrantInjectionResponse> {
-    return apiClient.post(`/documents/${docId}/qdrant`, {});
   },
 
   async deleteDocument(docId: string): Promise<DeleteResponse> {

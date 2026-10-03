@@ -1,5 +1,9 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  CreateSavedTableViewInput,
+  UpdateSavedTableViewInput,
+} from '@/types/contracts/savedViews/SavedTableViewDto.gen';
 
 /**
  * savedView.service.ts
@@ -11,8 +15,8 @@ import { notify } from '../notifications/notify';
  *   DELETE /api/saved-views/:id
  *
  * Used (opt-in) by the canonical table stack to persist per-user, cross-device
- * filter/sort presets. Types are local (not imported from backend) per the
- * frontend service-layer contract; zero `any`.
+ * filter/sort presets. Request bodies are typed by the generated contract
+ * (`@/types/contracts/savedViews`); response types are local; zero `any`.
  */
 
 /** The serializable state captured by a saved view (mirrors GenericTabbedView state). */
@@ -31,16 +35,10 @@ export interface SavedView {
   updatedAt: string;
 }
 
-export interface CreateSavedViewInput {
-  tableId: string;
-  name: string;
-  config: SavedViewConfig;
-}
+// Contrato gerado (savedViews/SavedTableViewDto) — nunca espelho à mão.
+export type CreateSavedViewInput = CreateSavedTableViewInput;
 
-export interface UpdateSavedViewInput {
-  name?: string;
-  config?: SavedViewConfig;
-}
+export type UpdateSavedViewInput = UpdateSavedTableViewInput;
 
 interface ListResponse {
   success: boolean;

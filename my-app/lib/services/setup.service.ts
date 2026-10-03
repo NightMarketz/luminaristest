@@ -1,7 +1,14 @@
 import { apiClient } from '../api/api-client';
+import type {
+  CustomCreationInput,
+  QuickCreationInput,
+  UnifiedCreationInput,
+  UnitInputInput,
+} from '@/types/contracts/dynamicTables/CreateDashboard.dto.gen';
 
-// Frontend types for the dashboard onboarding/setup endpoints (`/dashboard/*`).
-// Local to the frontend (not imported from the backend) per the architecture contract §3.
+// Types for the dashboard onboarding/setup endpoints (`/dashboard/*`). The request body is the generated
+// contract (`@/types/contracts/dynamicTables/CreateDashboard.dto.gen`); the response types below stay local
+// (not imported from the backend) per the architecture contract §3.
 
 export interface Preset {
   category: string;
@@ -26,27 +33,13 @@ export interface PresetDetails {
 }
 
 /** BE-INCR-ONBOARDING-FIRST-UNIT (I1, F-I1-2 b): a primeira unidade é obrigatória no create. */
-export interface DashboardUnitInput {
-  name: string;
-  cnpj?: string;
-  type?: 'Own' | 'Franchise' | 'Department';
-}
+export type DashboardUnitInput = UnitInputInput;
 
-export interface QuickDashboardPayload {
-  mode: 'quick';
-  suiteKey: string;
-  unit: DashboardUnitInput;
-}
+export type QuickDashboardPayload = QuickCreationInput;
 
-export interface CustomDashboardPayload {
-  mode: 'custom';
-  presetKey: string;
-  removedTables: string[];
-  addedFields: Record<string, unknown>;
-  unit: DashboardUnitInput;
-}
+export type CustomDashboardPayload = CustomCreationInput;
 
-export type CreateDashboardPayload = QuickDashboardPayload | CustomDashboardPayload;
+export type CreateDashboardPayload = UnifiedCreationInput;
 
 /** Normalize an unknown API error into an Error with a friendly message. */
 function toError(err: unknown, fallback: string): Error {
