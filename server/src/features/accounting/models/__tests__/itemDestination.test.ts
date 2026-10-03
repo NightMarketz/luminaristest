@@ -1,4 +1,4 @@
-import { resolveDestinations } from '../itemDestination';
+import { defaultByProductRefFrom, resolveDestinations } from '../itemDestination';
 
 /**
  * ITEM-DESTINATION item 9 (resolver puro) + EMENDA 29/09 itens 22–23. PR-1 (BRIEF §7): sem a origem PRODUTO —
@@ -46,5 +46,48 @@ describe('resolveDestinations', () => {
     );
     expect(r.destinacoes.map((d) => d.destination)).toEqual(['REVENDA', 'INSUMO_SERVICO']);
     expect(r.warnings.filter((w) => /CFOP de imobilizado mapeado como estoque\/insumo — confira/.test(w))).toHaveLength(2);
+  });
+});
+
+// ITEM-DESTINATION PR-2 (item 9, origem PRODUTO — F-ID-2 a; EMENDA item 25).
+describe('resolveDestinations — default por produto', () => {
+  it('3 itens, um por origem: OVERRIDE vence o default, PRODUTO sem override, FALLBACK sem default', () => {
+    const r = resolveDestinations(
+      [
+        { nItem: 1, cProd: 'TINTA', cfop: '5102' },
+        { nItem: 2, cProd: 'OXI', cfop: '5102' },
+        { nItem: 3, cProd: 'SHAMPOO', cfop: '5102' },
+      ],
+      new Map([
+        ['TINTA', { productRef: 'tinta-1', destination: 'REVENDA' as const }],
+        ['OXI', { productRef: 'oxi-1' }],
+        ['SHAMPOO', { productRef: 'shampoo-1' }],
+      ]),
+      new Map([
+        ['tinta-1', 'INSUMO_SERVICO' as const],
+        ['oxi-1', 'INSUMO_SERVICO' as const],
+      ]),
+    );
+    expect(r.destinacoes).toEqual([
+      { nItem: 1, cProd: 'TINTA', destination: 'REVENDA', origem: 'OVERRIDE' },
+      { nItem: 2, cProd: 'OXI', destination: 'INSUMO_SERVICO', origem: 'PRODUTO' },
+      { nItem: 3, cProd: 'SHAMPOO', destination: 'REVENDA', origem: 'FALLBACK' },
+    ]);
+    expect(r.warnings).toHaveLength(1); // só o FALLBACK avisa
+    expect(r.warnings[0]).toMatch(/item 3 \(SHAMPOO\)/);
+  });
+
+  it('classId (IMOBILIZADO) ignora o default; o default não alcança item sem productRef', () => {
+    const r = resolveDestinations(
+      [{ nItem: 1, cProd: 'MAQ', cfop: '5102' }, { nItem: 2, cProd: 'SOLTO', cfop: '5102' }],
+      new Map([['MAQ', { classId: 'class-1' }]]),
+      new Map([['maq-1', 'REVENDA' as const]]),
+    );
+    expect(r.destinacoes.map((d) => `${d.destination}/${d.origem}`)).toEqual(['IMOBILIZADO/OVERRIDE', 'REVENDA/FALLBACK']);
+  });
+
+  it('defaultByProductRefFrom: valor fora de REVENDA|INSUMO_SERVICO (inclusive IMOBILIZADO) falha alto', () => {
+    expect([...defaultByProductRefFrom([{ productRef: 'a', destination: 'REVENDA' }]).entries()]).toEqual([['a', 'REVENDA']]);
+    expect(() => defaultByProductRefFrom([{ productRef: 'a', destination: 'IMOBILIZADO' }])).toThrow(/destination inválida 'IMOBILIZADO'/);
   });
 });
