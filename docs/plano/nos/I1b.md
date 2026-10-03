@@ -24,7 +24,7 @@ depende_de: []
 
 ## Docs
 
-- **Lacunas abertas 03/10 (PR #480):** [`ADR-INCR-UNIT-REKEY-migration.md` §10](../../adr/ADR-INCR-UNIT-REKEY-migration.md) — L-RK-1..5, decisão do dono pendente
+- **Lacunas 03/10 (PR #480):** [`ADR-INCR-UNIT-REKEY-migration.md` §10](../../adr/ADR-INCR-UNIT-REKEY-migration.md) — L-RK-1..5 ratificadas em [[D-2026-10-03-I1B-LACUNAS-L-RK]]; BRIEF da correção: [`BE-INCR-UNIT-REKEY-LACUNAS-brief.md`](../../accounting/BE-INCR-UNIT-REKEY-LACUNAS-brief.md) (PR novo depois do merge do #480; sem "executa")
 
 - [`docs/accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md`](../../accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md)
 - [`docs/accounting/ONBOARDING-WIZARD-plano-grafo-brief.md`](../../accounting/ONBOARDING-WIZARD-plano-grafo-brief.md)

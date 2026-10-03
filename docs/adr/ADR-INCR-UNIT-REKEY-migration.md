@@ -448,7 +448,20 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 
 ---
 
-## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **DECISÃO DO DONO PENDENTE**
+## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **RATIFICADAS 2026-10-03, correção sem "executa"**
+
+> ✅ **Ratificação por questionário em 2026-10-03**
+> ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):
+> - L-RK-1 → (a) · L-RK-2 → (a) · L-RK-3 → (b) · L-RK-4 → (a) · L-RK-5 → (b);
+> - `ProductDestinationDefault` → REKEY (inventário 48 = 46 + 2);
+> - F-RKL-1 → (a).
+>
+> A correção vai em **PR novo depois do merge do #480** (o dono divergiu da recomendação, que era corrigir no
+> mesmo PR). O BRIEF está em [`BE-INCR-UNIT-REKEY-LACUNAS-brief.md`](../accounting/BE-INCR-UNIT-REKEY-LACUNAS-brief.md),
+> sem "executa". Os parágrafos abaixo ficam como registro da abertura das lacunas.
+>
+> **Emenda ao item 15 (L-RK-1 a):** "sem o flag → exit 1" passa a ser "sem o flag → **exit 2** (args inválidos, §5)".
+> "Com arquivo inexistente, inválido ou velho → exit 1" fica como está.
 
 > Registradas, não decididas (regra 2 da `sessao-feature`). Origem: a implementação (L-RK-1) e o review independente
 > do PR #480, veredito PASS-COM-RESSALVAS (L-RK-2..5). O código do PR segue a letra atual em cada uma. Nenhuma
