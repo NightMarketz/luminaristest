@@ -130,6 +130,14 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canRead(scope);
   }
 
+  canManagePaymentAccounts(scope: AccountingScope): boolean {
+    return this.canManageAccountingSettings(scope);
+  }
+
+  canReadPaymentAccounts(scope: AccountingScope): boolean {
+    return this.canReadAccountingSettings(scope);
+  }
+
   // BE-INCR-NFE-COST-REGIME (nó X6, item 2)
   canReadFiscalProfile(scope: AccountingScope): boolean {
     return this.canRead(scope);

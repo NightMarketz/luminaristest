@@ -105,6 +105,11 @@ export interface IAccountingPolicy {
   canManageAccountingSettings(scope: AccountingScope): boolean;
   canReadAccountingSettings(scope: AccountingScope): boolean;
 
+  /** BE-INCR-PAYMENT-PROVIDER PR-1 (P1-9): conta de pagamento — escrita = quem configura settings contábeis;
+   *  leitura = quem lê settings (lacuna ratificada pelo dono, 03/10). */
+  canManagePaymentAccounts(scope: AccountingScope): boolean;
+  canReadPaymentAccounts(scope: AccountingScope): boolean;
+
   /** BE-INCR-NFE-COST-REGIME (nó X6, item 2): perfil fiscal — escrita = mesma régua de fechar período. */
   canReadFiscalProfile(scope: AccountingScope): boolean;
   canManageFiscalProfile(scope: AccountingScope): boolean;

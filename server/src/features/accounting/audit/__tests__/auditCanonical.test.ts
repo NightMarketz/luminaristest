@@ -400,3 +400,9 @@ it('product_destination.set / .cleared mantêm só productRef e destination', ()
     });
   }
 });
+
+// I1b (ADR-INCR-UNIT-REKEY item 12) — gate da allowlist no mesmo PR, nas duas direções: as 4 chaves sobrevivem, nada além.
+it('unit.rekeyed mantém fromUnitId/fromHeadHash/fromNextSeq/tables e derruba o resto', () => {
+  const allowed = { fromUnitId: 'legacy-1', fromHeadHash: 'a'.repeat(64), fromNextSeq: '53', tables: '{"accounts":{"after":2}}' };
+  expect(JSON.parse(canonicalizeAuditPayload('unit.rekeyed', { ...allowed, name: 'Matriz', ownerEmail: 'x@y.z' }))).toEqual(allowed);
+});
