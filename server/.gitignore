@@ -14,3 +14,4 @@ logs/
 # Integration test database (created fresh per run)
 test-integration.db
 test-integration.db-journal
+.jest-cache/
