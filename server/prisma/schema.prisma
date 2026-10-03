@@ -462,6 +462,10 @@ model Account {
   bankChargeIncomeOf                 AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
   icmsRecuperavelOf                  FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
   insumoExpenseOf                    FiscalProfile[]           @relation("FiscalProfileInsumoExpense") // ITEM-DESTINATION F-ID-5 a: despesa do insumo do serviço
+  irpjDespesaOf                      FiscalProfile[]           @relation("FiscalProfileIrpjDespesa") // X7 F-TA-6 a
+  csllDespesaOf                      FiscalProfile[]           @relation("FiscalProfileCsllDespesa") // X7 F-TA-6 a
+  irpjRecolherOf                     FiscalProfile[]           @relation("FiscalProfileIrpjRecolher") // X7 F-TA-6 a
+  csllRecolherOf                     FiscalProfile[]           @relation("FiscalProfileCsllRecolher") // X7 F-TA-6 a
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
@@ -628,34 +632,34 @@ model DocumentAttachment {
 // NOT a DynamicTable preset. Imports commit through PostingService.postEntry/createAccount;
 // this model never writes ledger data directly. Tenancy = plain scoped strings (no User FK).
 model AccountingDataExchangeJob {
-  id              String                      @id @default(cuid())
-  userId          String // scope owner (AccountingScope.ownerUserId); plain scope key
-  unitId          String // business unit (scoped string, not a FK)
-  direction       String // IMPORT | EXPORT
-  kind            String // IMPORT_CHART_OF_ACCOUNTS | IMPORT_OPENING_BALANCES | IMPORT_JOURNAL_ENTRIES | EXPORT_*
-  status          String // UPLOADED | VALIDATED | COMMITTING | PROCESSING | COMMITTED | PARTIAL | FAILED | EXPORTED
-  originalName    String? // client-supplied upload name (display only)
-  mimeType        String?
-  sizeBytes       Int?
-  sha256          String? // 64-char hex of the uploaded/generated artifact
-  storageKey      String? // relative path within ATTACHMENTS_DIR (attachmentStorage); source or artifact
-  totalRows       Int                         @default(0)
-  validRows       Int                         @default(0)
-  invalidRows     Int                         @default(0)
-  committedRows   Int                         @default(0)
-  requestedById   String // actor who created the job; plain string
-  committedById   String? // actor who committed; plain string
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
-  committedAt     DateTime?
+  id                           String                      @id @default(cuid())
+  userId                       String // scope owner (AccountingScope.ownerUserId); plain scope key
+  unitId                       String // business unit (scoped string, not a FK)
+  direction                    String // IMPORT | EXPORT
+  kind                         String // IMPORT_CHART_OF_ACCOUNTS | IMPORT_OPENING_BALANCES | IMPORT_JOURNAL_ENTRIES | EXPORT_*
+  status                       String // UPLOADED | VALIDATED | COMMITTING | PROCESSING | COMMITTED | PARTIAL | FAILED | EXPORTED
+  originalName                 String? // client-supplied upload name (display only)
+  mimeType                     String?
+  sizeBytes                    Int?
+  sha256                       String? // 64-char hex of the uploaded/generated artifact
+  storageKey                   String? // relative path within ATTACHMENTS_DIR (attachmentStorage); source or artifact
+  totalRows                    Int                         @default(0)
+  validRows                    Int                         @default(0)
+  invalidRows                  Int                         @default(0)
+  committedRows                Int                         @default(0)
+  requestedById                String // actor who created the job; plain string
+  committedById                String? // actor who committed; plain string
+  createdAt                    DateTime                    @default(now())
+  updatedAt                    DateTime                    @updatedAt
+  committedAt                  DateTime?
   // Período coberto pelo ARTEFATO gerado (só exports SPED preenchem; imports e demais exports ficam
   // null). BE-INCR-CONTADOR-DELIVERY, Fork Novo A → (b) ratificado em 2026-09-10 (cédula §6, F3):
   // a entrega lê o período DAQUI, nunca de um `year` digitado — jobs de 2025 não podem virar um
   // pacote "pronto para assinar 2026". Date-only: 12 meses seguidos hoje (ADR-SPED-ECD D4), ou o
   // período selecionado quando a geração passar a aceitá-lo (situação especial). Nullable de
   // propósito: NOT NULL com default forçaria rebuild da tabela no SQLite (lição do expenseAccountId).
-  periodStart     DateTime?
-  periodEnd       DateTime?
+  periodStart                  DateTime?
+  periodEnd                    DateTime?
   // BE-INCR-FIXED-ASSETS PR-4 (C8, Bloco G — retificação versionada ECD/ECF, itens 26-31).
   // Plain-id columns (não FK — mesma convenção de requestedById/committedById): rebuild de
   // tabela custa caro no SQLite e nenhuma delas precisa de integridade referencial forte, só
@@ -665,24 +669,24 @@ model AccountingDataExchangeJob {
   // pacote ao contador (item 22) até uma ECF retificadora do mesmo ano zerar a flag OU até a
   // dispensa (`ecfRectificationWaivedAt`/`WaiverReason`). `verificationTermStorageKey` é o
   // caminho do .rtf do Termo de Verificação (J801.ARQ_RTF) no `attachmentStorage` reusado.
-  supersedesJobId               String?   @unique
-  ecfRectificationRequired      Boolean   @default(false)
-  ecfRectificationWaivedAt      DateTime?
-  ecfRectificationWaiverReason  String?
-  verificationTermStorageKey    String?
-  rows            AccountingDataExchangeRow[]
+  supersedesJobId              String?                     @unique
+  ecfRectificationRequired     Boolean                     @default(false)
+  ecfRectificationWaivedAt     DateTime?
+  ecfRectificationWaiverReason String?
+  verificationTermStorageKey   String?
+  rows                         AccountingDataExchangeRow[]
   // Reverse relations of AccountingDeliveryLog (BE-INCR-CONTADOR-DELIVERY, F-CD4-a). ÚNICA mudança
   // neste model: zero coluna nova, zero backfill — o log de entrega REFERENCIA o job de origem
   // (nunca copia o `.txt`), e a FK com onDelete: Restrict vive do lado do log.
-  deliveriesAsEcd AccountingDeliveryLog[]     @relation("DeliveryEcdJob")
-  deliveriesAsEcf AccountingDeliveryLog[]     @relation("DeliveryEcfJob")
+  deliveriesAsEcd              AccountingDeliveryLog[]     @relation("DeliveryEcdJob")
+  deliveriesAsEcf              AccountingDeliveryLog[]     @relation("DeliveryEcfJob")
   // BE-INCR-REVIEW-LAYER (C11, item 1): a revisão REFERENCIA o par de jobs, como a entrega.
-  reviewsAsEcd    AccountingReview[]          @relation("ReviewEcdJob")
-  reviewsAsEcf    AccountingReview[]          @relation("ReviewEcfJob")
+  reviewsAsEcd                 AccountingReview[]          @relation("ReviewEcdJob")
+  reviewsAsEcf                 AccountingReview[]          @relation("ReviewEcfJob")
   // C6b PR-3 (Bloco A): item de entrega (núcleo OU extra) que referencia este job — o mesmo job
   // pode ser núcleo de uma entrega e nunca é referenciado duas vezes na MESMA entrega
   // (@@unique([deliveryId, jobId]) do lado do item).
-  deliveryItems   AccountingDeliveryItem[]    @relation("DeliveryItemJob")
+  deliveryItems                AccountingDeliveryItem[]    @relation("DeliveryItemJob")
 
   @@index([userId, unitId, createdAt])
   @@map("accounting_data_exchange_jobs")
@@ -1338,6 +1342,15 @@ model FiscalProfile {
   pisCofinsRecuperavelAccount        Account?  @relation("FiscalProfilePisCofinsRecuperavel", fields: [pisCofinsRecuperavelAccountId], references: [id], onDelete: Restrict)
   insumoExpenseAccountId             String? // ITEM-DESTINATION F-ID-5 a: conta de resultado (Expense, folha) do insumo do serviço — código do contador
   insumoExpenseAccount               Account?  @relation("FiscalProfileInsumoExpense", fields: [insumoExpenseAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 3, F-TA-6 a): contas da provisão de IRPJ/CSLL — código do contador (P-5)
+  irpjDespesaAccountId               String? // Expense
+  irpjDespesaAccount                 Account?  @relation("FiscalProfileIrpjDespesa", fields: [irpjDespesaAccountId], references: [id], onDelete: Restrict)
+  csllDespesaAccountId               String? // Expense
+  csllDespesaAccount                 Account?  @relation("FiscalProfileCsllDespesa", fields: [csllDespesaAccountId], references: [id], onDelete: Restrict)
+  irpjRecolherAccountId              String? // Liability
+  irpjRecolherAccount                Account?  @relation("FiscalProfileIrpjRecolher", fields: [irpjRecolherAccountId], references: [id], onDelete: Restrict)
+  csllRecolherAccountId              String? // Liability
+  csllRecolherAccount                Account?  @relation("FiscalProfileCsllRecolher", fields: [csllRecolherAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                  String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -1398,6 +1411,15 @@ model CompanyFiscalProfile {
   representanteLegalSigner   CompanySigner?     @relation(fields: [representanteLegalSignerId], references: [id], onDelete: Restrict)
   ecfRecibo                  String? // F-XP-5 a — preenchido no PR-2
   regimeTravadoEm            DateTime? // F-XP-5 a — PR-2 (IN 2.004 art. 7º §2º)
+  // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 1, 2, 2b) — forma de apuração do IRPJ/CSLL (ADR D1/D2),
+  // atividade no ano (IN RFB 2.305 art. 15 § 9º, F-TA-4 b) e chave da liminar contra a LC 224 (F-TA-5 a).
+  formaApuracaoIrpjCsll      String? // TRIMESTRAL | ANUAL — Fase A aceita só TRIMESTRAL; REAL + null ⇒ TRIMESTRAL
+  formaApuracaoTravadaEm     DateTime? // gravado na tx da 1ª confirmação do ano (F-X7-5 a, PR-2)
+  lucroRealObrigatorio       Boolean? // só REAL: código 0220 (obrigada) × 3373 (optante)
+  inicioAtividadeEm          String? // YYYY-MM-DD, calendário validado
+  encerramentoAtividadeEm    String? // YYYY-MM-DD, calendário validado
+  lc224AcrescimoSuspenso     Boolean            @default(false) // liminar do cliente; fora da trava da forma
+  lc224LiminarReferencia     String? // nº do processo; obrigatório se suspenso (fora da auditoria)
   createdById                String?
   updatedById                String?
   createdAt                  DateTime           @default(now())

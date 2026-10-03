@@ -1,6 +1,6 @@
 import { Prisma } from 'generated/prisma';
 import type { CompanyFiscalProfile } from 'generated/prisma';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { ICompanyFiscalProfileRepository, CompanyFiscalProfileData } from '../repositories/ICompanyFiscalProfileRepository';
@@ -43,6 +43,14 @@ export interface CompanyFiscalProfileView {
   representanteLegalSignerId: string | null;
   ecfRecibo: string | null;
   regimeTravadoEm: string | null;
+  // X7 Fase A (BRIEF itens 1, 2, 2b)
+  formaApuracaoIrpjCsll: string | null;
+  formaApuracaoTravadaEm: string | null;
+  lucroRealObrigatorio: boolean | null;
+  inicioAtividadeEm: string | null;
+  encerramentoAtividadeEm: string | null;
+  lc224AcrescimoSuspenso: boolean;
+  lc224LiminarReferencia: string | null;
   updatedAt: string;
 }
 
@@ -119,6 +127,7 @@ export class CompanyFiscalProfileService {
           `REGIME_TRAVADO: a ECF de ${ano} foi transmitida (recibo ${atual.ecfRecibo}) — o regime não muda depois disso (IN RFB 2.004/2021 art. 7º §2º).`,
         );
       }
+      if (atual) assertFormaNaoTravada(atual, data, ano);
       await this.assertRefs(scope, data, tx);
       const row = await this.repo.upsert(scope, ano, data, tx);
       await this.auditUpdated(tx, scope, row);
@@ -196,8 +205,13 @@ export class CompanyFiscalProfileService {
     await this.repo.runTransaction(async (tx) => {
       // Lacuna de spec L2 (registrada no relatório do PR-2): apagar um perfil TRAVADO e recriá-lo com outro regime
       // contornaria o item 16 — recusado pelo mesmo fundamento (IN RFB 2.004/2021 art. 7º §2º).
-      if ((await this.repo.findByYear(scope, ano, tx))?.regimeTravadoEm) {
+      const atual = await this.repo.findByYear(scope, ano, tx);
+      if (atual?.regimeTravadoEm) {
         throw new ConflictError(`REGIME_TRAVADO: o perfil de ${ano} tem ECF transmitida e não pode ser excluído.`);
+      }
+      // X7 item 1 (D2, F-X7-5 a): apagar o perfil travado trocaria forma/regime/obrigatoriedade pela porta dos fundos.
+      if (atual?.formaApuracaoTravadaEm) {
+        throw new ValidationError(`FORMA_TRAVADA: o perfil de ${ano} tem apuração de IRPJ/CSLL confirmada e não pode ser excluído (ADR-INCR-TAX-ASSESSMENT D2).`);
       }
       const n = await this.repo.softDelete(scope, ano, tx);
       if (n === 0) throw new NotFoundError(`company_fiscal_profile_missing: sem perfil fiscal da empresa para ${ano}.`);
@@ -302,6 +316,11 @@ export class CompanyFiscalProfileService {
         ecfIndRecReceita: row.ecfIndRecReceita ?? '',
         contadorContactId: row.contadorContactId ?? '',
         representanteLegalSignerId: row.representanteLegalSignerId ?? '',
+        // X7 itens 1 e 2b — a referência da liminar (texto livre) e as datas de atividade ficam FORA do evento
+        formaApuracaoIrpjCsll: row.formaApuracaoIrpjCsll ?? '',
+        formaApuracaoTravadaEm: row.formaApuracaoTravadaEm ? row.formaApuracaoTravadaEm.toISOString() : '',
+        lucroRealObrigatorio: b(row.lucroRealObrigatorio),
+        lc224AcrescimoSuspenso: String(row.lc224AcrescimoSuspenso),
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -313,6 +332,32 @@ export class CompanyFiscalProfileService {
 
   private assertManage(scope: AccountingScope): void {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal da empresa.');
+  }
+}
+
+/**
+ * ADR D1: REAL com a forma nula ⇒ TRIMESTRAL efetivo; PRESUMIDO só é trimestral. Usado pela trava (null ×
+ * 'TRIMESTRAL' nesses regimes não é troca).
+ */
+export function formaEfetiva(regime: string, forma: string | null): string | null {
+  return forma ?? (regime === 'REAL' || regime === 'PRESUMIDO' ? 'TRIMESTRAL' : null);
+}
+
+/**
+ * X7 item 1 (D2, F-X7-5 a): com `formaApuracaoTravadaEm` preenchido, o PUT não troca forma, regime nem
+ * obrigatoriedade do Real — as apurações confirmadas copiam o regime (item 12). A chave da liminar (item 2b) e as
+ * demais colunas seguem editáveis.
+ */
+function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalProfileData, ano: number): void {
+  if (!atual.formaApuracaoTravadaEm) return;
+  const trocou: string[] = [];
+  if (atual.regime !== data.regime) trocou.push('regime');
+  if (formaEfetiva(atual.regime, atual.formaApuracaoIrpjCsll) !== formaEfetiva(data.regime, data.formaApuracaoIrpjCsll)) trocou.push('formaApuracaoIrpjCsll');
+  if (atual.lucroRealObrigatorio !== data.lucroRealObrigatorio) trocou.push('lucroRealObrigatorio');
+  if (trocou.length > 0) {
+    throw new ValidationError(
+      `FORMA_TRAVADA: ${ano} tem apuração de IRPJ/CSLL confirmada desde ${atual.formaApuracaoTravadaEm.toISOString().slice(0, 10)} — ${trocou.join(', ')} não muda(m) no ano (ADR-INCR-TAX-ASSESSMENT D2; IN RFB 1.700/2017 art. 54).`,
+    );
   }
 }
 
@@ -333,6 +378,12 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     ecfIndRecReceita: input.ecf?.indRecReceita ?? null,
     contadorContactId: input.contadorContactId ?? null,
     representanteLegalSignerId: input.representanteLegalSignerId ?? null,
+    formaApuracaoIrpjCsll: input.formaApuracaoIrpjCsll,
+    lucroRealObrigatorio: input.lucroRealObrigatorio,
+    inicioAtividadeEm: input.inicioAtividadeEm,
+    encerramentoAtividadeEm: input.encerramentoAtividadeEm,
+    lc224AcrescimoSuspenso: input.lc224AcrescimoSuspenso,
+    lc224LiminarReferencia: input.lc224LiminarReferencia,
   };
 }
 
@@ -353,6 +404,12 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     ecfIndRecReceita: row.ecfIndRecReceita,
     contadorContactId: row.contadorContactId,
     representanteLegalSignerId: row.representanteLegalSignerId,
+    formaApuracaoIrpjCsll: row.formaApuracaoIrpjCsll,
+    lucroRealObrigatorio: row.lucroRealObrigatorio,
+    inicioAtividadeEm: row.inicioAtividadeEm,
+    encerramentoAtividadeEm: row.encerramentoAtividadeEm,
+    lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
+    lc224LiminarReferencia: row.lc224LiminarReferencia,
   };
 }
 
@@ -374,6 +431,13 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     representanteLegalSignerId: row.representanteLegalSignerId,
     ecfRecibo: row.ecfRecibo,
     regimeTravadoEm: row.regimeTravadoEm ? row.regimeTravadoEm.toISOString() : null,
+    formaApuracaoIrpjCsll: row.formaApuracaoIrpjCsll,
+    formaApuracaoTravadaEm: row.formaApuracaoTravadaEm ? row.formaApuracaoTravadaEm.toISOString() : null,
+    lucroRealObrigatorio: row.lucroRealObrigatorio,
+    inicioAtividadeEm: row.inicioAtividadeEm,
+    encerramentoAtividadeEm: row.encerramentoAtividadeEm,
+    lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
+    lc224LiminarReferencia: row.lc224LiminarReferencia,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
