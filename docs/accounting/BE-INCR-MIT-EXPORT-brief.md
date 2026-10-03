@@ -5,8 +5,8 @@
 > ratificados: [`D-2026-10-02-X9-DCTFWEB-MIT-FORKS`](../plano/decisoes/D-2026-10-02-X9-DCTFWEB-MIT-FORKS.md)). **Reusa**,
 > sem redesenhar, o contrato C1 dos BRIEFs [X7 Fase A](BE-INCR-TAX-ASSESSMENT-A-brief.md) ("A-n"),
 > [X7 Fase B](BE-INCR-TAX-ASSESSMENT-B-brief.md) ("B-n") e [X8](BE-INCR-PIS-COFINS-brief.md) ("P-n").
-> **Este documento NÃO escreve código.** Os forks F-X9-1..6 não são reabertos. Os forks novos **F-MIT-1..3** estão
-> **PENDENTES**, com recomendação (§3). Nenhum item vira código sem "executa" do dono (ORCH-006).
+> **Este documento NÃO escreve código.** Os forks F-X9-1..6 não são reabertos. Os forks novos **F-MIT-1..3 foram ✅
+> RATIFICADOS em 03/10** por questionário, todos na recomendação (§3). Registro: [`D-2026-10-03-X9-MIT-EXPORT-FORKS`](../plano/decisoes/D-2026-10-03-X9-MIT-EXPORT-FORKS.md). Nenhum item vira código sem "executa" do dono (ORCH-006).
 >
 > **Alcance e risco, ditos antes de tudo:**
 > - **Nada daqui tem o que ler antes do PR-2 da Fase A do X7** (model `TaxAssessment` e confirmação). Hoje
@@ -85,13 +85,13 @@ Nada foi copiado para o repo (decisão 10 de 29/09).
 ## Definição de pronto
 
 (1) checklist numerado e testável (§1); (2) contratos materializáveis (§2); (3) forks com caminhos, recomendação e
-**RATIFICAÇÃO PENDENTE** (§3); (4) pendências externas (§4); (5) insumos ausentes (§5); (6) achados fora de escopo (§6).
+**RATIFICAÇÃO PENDENTE** (§3 — ratificados em 03/10); (4) pendências externas (§4); (5) insumos ausentes (§5); (6) achados fora de escopo (§6).
 
 ---
 
 ## 1. Checklist de comportamentos
 
-Notação: **[D]** = direto (ADR, lei, leiaute ou fork ratificado decidem); **[F-MIT-n]** = fork novo, pendente;
+Notação: **[D]** = direto (ADR, lei, leiaute ou fork ratificado decidem); **[F-MIT-n → x]** = fork novo, ratificado em 03/10;
 **[P-n]** = depende de pendência externa (§4 deste BRIEF ou §9 do ADR); usa-se o default marcado, parametrizado.
 
 **Pré-condição [D]:** o PR-2 da Fase A do X7 está mergeado (model, repo e interface do `TaxAssessment`). O X9 **só lê**
@@ -129,7 +129,8 @@ o `TaxAssessment` pela interface do repositório do X7 (precedente B-18); não e
 6. **[D + F-MIT-2] `BalancoLucroReal`** (PR-4; só com `TributacaoLucro = 1`, onde é obrigatório): `true` se a linha
    IRPJ `A0m` do PA tem `modo = BALANCETE_SUSPENSAO_REDUCAO`, `false` se `ESTIMATIVA_RECEITA`. O IRPJ e a CSLL estão
    sempre no mesmo modo (B-11), então não há conflito. **Sem linha `A0m` confirmada no PA** (ex.: só PIS/Cofins, ou só o
-   `A00` do ano anterior em março) ⇒ o valor do booleano é desconhecido: **F-MIT-2**.
+   `A00` do ano anterior em março) ⇒ 422 *"confirme a estimativa ou o balancete do mês no X7 antes de exportar"*
+   (**F-MIT-2 → a**).
 7. **[D, F-X9-3 → a] Responsável** = contador do perfil do ano do PA: `CpfResponsavel` = `cpf`; `TelResponsavel` =
    `{ Ddd: phone[0..2], NumTelefone: phone[2..] }` se `phone` tiver 10–11 dígitos, senão omitido;
    `EmailResponsavel` = `email` se tiver 5–40 caracteres, senão omitido com aviso (ADR §3: o Manual limita a 40);
@@ -178,7 +179,9 @@ o `TaxAssessment` pela interface do repositório do X7 (precedente B-18); não e
     segurado, reteve IR ou está em outra hipótese do art. 3º IX?"*.
     - **A inativa ganha fonte própria por linha:** `LinhaMatriz` recebe `inativa: { status; fonte; pergunta? }`
       obrigatório; ECD/ECF levam o que hoje sai do ternário (`INATIVA_ECD`/`INATIVA_ECF`, `NAO_SE_APLICA`), e o ternário
-      de `:125` some. O valor das linhas DCTFWEB inativas é o **F-MIT-3**.
+      de `:125` some. Linhas DCTFWEB inativas (**F-MIT-3 → a**): `CONDICIONAL`, fonte *"IN RFB 2.237/2024 art. 4º (sem dispensa
+      para inativa) e art. 6º § 2º II"*, pergunta *"Este ano contém o 1º mês sem movimento? Se sim, entregue a DCTFWeb
+      desse mês; nos seguintes, fica dispensada"*. Teste: inativa em REAL ⇒ DCTFWEB `CONDICIONAL` com essa fonte.
     - O comentário do cabeçalho (`:6-7`, *"DCTFWeb … ficam FORA"*) é atualizado. O teste `:23,25` passa a esperar 12
       linhas e `['DCTFWEB','ECD','ECF']` por regime — **mudança esperada**, não regressão.
 14. **[D] `faltantes` da DCTFWEB** (`CompanyFiscalProfileService.ts:243-251`): o ramo ECD/ECF vira explícito por
@@ -307,13 +310,13 @@ interface LinhaMatriz { /* …campos atuais… */ inativa: { status: StatusObrig
 | `POST /api/accounting/mit-exports` | manage (`canManageTaxAssessment`) | monta, grava `MitExport`, audita, devolve o arquivo |
 | `GET /api/accounting/mit-exports?anoCalendario=` | read (`canReadTaxAssessment`) | lista com `defasado` |
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — ✅ RATIFICADOS 03/10 ([`D-2026-10-03-X9-MIT-EXPORT-FORKS`](../plano/decisoes/D-2026-10-03-X9-MIT-EXPORT-FORKS.md); texto original mantido como registro)
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
-| **F-MIT-1** Fatiamento e ordem | **(a)** 4 PRs seriais, todos **depois do PR-2 da Fase A do X7** (instrução do dono): **PR-1** itens 1–9 e 13–14 (função pura IRPJ/CSLL trimestral + matriz; só teste-tabela, sem rota) · **PR-2** itens 10–12, 15–17 (model, serviço, rotas, auditoria) · **PR-3** item 18 (depois do PR-2 do X8) · **PR-4** item 19 (depois do PR-2 da Fase B do X7) · (b) igual a (a), mas a **matriz** (itens 13–14) sai antes, já — ela não lê o `TaxAssessment` · (c) 1 PR depois de X7-A, X7-B e X8 | ⏳ **PENDENTE.** Recomendação: **(a).** É o molde do F-TA-10/F-PCB-4, e a ordem é a que o dono amarrou. O (b) é o único caminho que entrega algo ao 1º cliente antes do X7 (a linha DCTFWeb da matriz serve o Simples, F-X9-6), mas contraria a instrução "código espera o PR-2 da Fase A"; fica como opção explícita, não como recomendação. O (c) junta 3 dependências num PR que espera a mais lenta | baixo |
-| **F-MIT-2** Real anual sem estimativa do mês confirmada (`BalancoLucroReal` desconhecido) | **(a)** 422 *"confirme a estimativa (ou o balancete) do mês no X7 antes de exportar"* quando `TributacaoLucro = 1` e não há linha IRPJ `A0m` confirmada no PA · (b) emitir `BalancoLucroReal: false` com aviso | ⏳ **PENDENTE.** Recomendação: **(a).** O booleano é uma **declaração** (*"levantou balancete no mês"*); emitir `false` sem saber é afirmar o que o sistema não sabe — a mesma razão do D7 (`SemMovimento`). E `false` obriga o código da estimativa (Manual §4.3): o arquivo sairia com pendência certa. O caso acontece em março de Y+1 (só o `A00` de Y) e em mês só com PIS/Cofins; a ordem sequencial do X7 (B-13) faz dele exceção. Só existe no PR-4 | médio em (b): pendência ou declaração falsa |
-| **F-MIT-3** DCTFWeb da PJ **inativa** na matriz | **(a)** `CONDICIONAL`, fonte *"IN RFB 2.237/2024 art. 4º (sem dispensa para inativa) e art. 6º § 2º II"*, pergunta *"Este ano contém o 1º mês sem movimento? Se sim, entregue a DCTFWeb desse mês; nos seguintes, fica dispensada"* · (b) `OBRIGATORIA`, mesma fonte · (c) `NAO_SE_APLICA` (herda o comportamento de hoje) | ⏳ **PENDENTE.** Recomendação: **(a).** O art. 4º (V-fonte, 03/10) não dispensa a inativa, então (c) afirma uma dispensa que a lei não dá. O art. 6º § 2º II torna a entrega **condicional ao mês**: uma PJ já inativa no ano anterior fica dispensada o ano inteiro; uma que parou neste ano entrega um mês. (b) cobra demais da primeira. Sem campo novo no perfil: a pergunta é texto da linha | baixo em (a)/(b); médio em (c): multa mínima de R$ 200 (art. 11 § 3º) |
+| **F-MIT-1** Fatiamento e ordem | **(a)** 4 PRs seriais, todos **depois do PR-2 da Fase A do X7** (instrução do dono): **PR-1** itens 1–9 e 13–14 (função pura IRPJ/CSLL trimestral + matriz; só teste-tabela, sem rota) · **PR-2** itens 10–12, 15–17 (model, serviço, rotas, auditoria) · **PR-3** item 18 (depois do PR-2 do X8) · **PR-4** item 19 (depois do PR-2 da Fase B do X7) · (b) igual a (a), mas a **matriz** (itens 13–14) sai antes, já — ela não lê o `TaxAssessment` · (c) 1 PR depois de X7-A, X7-B e X8 | ✅ **RATIFICADO (a) — dono, 03/10.** Recomendação era: **(a).** É o molde do F-TA-10/F-PCB-4, e a ordem é a que o dono amarrou. O (b) é o único caminho que entrega algo ao 1º cliente antes do X7 (a linha DCTFWeb da matriz serve o Simples, F-X9-6), mas contraria a instrução "código espera o PR-2 da Fase A"; fica como opção explícita, não como recomendação. O (c) junta 3 dependências num PR que espera a mais lenta | baixo |
+| **F-MIT-2** Real anual sem estimativa do mês confirmada (`BalancoLucroReal` desconhecido) | **(a)** 422 *"confirme a estimativa (ou o balancete) do mês no X7 antes de exportar"* quando `TributacaoLucro = 1` e não há linha IRPJ `A0m` confirmada no PA · (b) emitir `BalancoLucroReal: false` com aviso | ✅ **RATIFICADO (a) — dono, 03/10.** Recomendação era: **(a).** O booleano é uma **declaração** (*"levantou balancete no mês"*); emitir `false` sem saber é afirmar o que o sistema não sabe — a mesma razão do D7 (`SemMovimento`). E `false` obriga o código da estimativa (Manual §4.3): o arquivo sairia com pendência certa. O caso acontece em março de Y+1 (só o `A00` de Y) e em mês só com PIS/Cofins; a ordem sequencial do X7 (B-13) faz dele exceção. Só existe no PR-4 | médio em (b): pendência ou declaração falsa |
+| **F-MIT-3** DCTFWeb da PJ **inativa** na matriz | **(a)** `CONDICIONAL`, fonte *"IN RFB 2.237/2024 art. 4º (sem dispensa para inativa) e art. 6º § 2º II"*, pergunta *"Este ano contém o 1º mês sem movimento? Se sim, entregue a DCTFWeb desse mês; nos seguintes, fica dispensada"* · (b) `OBRIGATORIA`, mesma fonte · (c) `NAO_SE_APLICA` (herda o comportamento de hoje) | ✅ **RATIFICADO (a) — dono, 03/10.** Recomendação era: **(a).** O art. 4º (V-fonte, 03/10) não dispensa a inativa, então (c) afirma uma dispensa que a lei não dá. O art. 6º § 2º II torna a entrega **condicional ao mês**: uma PJ já inativa no ano anterior fica dispensada o ano inteiro; uma que parou neste ano entrega um mês. (b) cobra demais da primeira. Sem campo novo no perfil: a pergunta é texto da linha | baixo em (a)/(b); médio em (c): multa mínima de R$ 200 (art. 11 § 3º) |
 
 ## 4. Pendente de validação externa (não entra no checklist como decidido)
 
@@ -366,7 +369,7 @@ não assina). Novas:
 4. **Checagem que teria falhado:** os hashes do leiaute e do Manual baixados hoje batem com o ADR (`4e840b311cca`,
    `49da7ca21177`) — se a Receita tivesse trocado o PDF no mesmo endereço, a §Fontes mentiria. O art. 4º da IN 2.237
    lido no Sijut: se dispensasse a inativa, o F-MIT-3 não existiria.
-5. **Duas primeiras linhas:** o cabeçalho diz que não há código e que F-MIT-1..3 estão pendentes; o bloco de alcance
+5. **Duas primeiras linhas:** o cabeçalho diz que não há código e que F-MIT-1..3 foram ratificados (03/10); o bloco de alcance
    diz que nada roda antes do X7-A PR-2, que o 1º cliente só ganha a matriz e que o formato não tem oráculo interno.
 
 **Vieses (T8):**
