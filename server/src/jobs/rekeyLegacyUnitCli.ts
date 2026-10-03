@@ -54,6 +54,7 @@ export const REKEY_MODELS = [
   'AccountingContact', 'AccountingDeliveryLog', 'AccountingReview', 'AccountingReviewFinding', 'LalurEntry',
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',
   'ProductDestinationDefault', // #481 (ITEM-DESTINATION PR-2): parâmetro por unidade, sem hash → REKEY pelo critério do F-RK-5
+  'PaymentAccount', // #484 (F5 PR-1): AAD da credencial = id, não unitId → REKEY pelo critério do F-RK-5 (dono 2026-10-03)
 ] as const;
 
 /**
