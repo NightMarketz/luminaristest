@@ -4,9 +4,9 @@ tarefa: executar o PR-3 do FE-CONTRACT-TYPES (plano §8, regra do mapper §9, pr
 agente: sessão principal (sessao-feature); review por Agent isolado (revisor-independente, model opus, worktree própria)
 modelo: sonnet-5.5/default (sem scaffolding de verificação além do que a spec e o CLAUDE.md pedem)
 perfil-previsto: sonnet-alto
-rodadas-de-review: 2 — r1: 4 achados (1 médio, 1 médio-baixo, 2 baixos) → FAIL; r2 (delta b670d953): PASS, com o achado 1 aceito como lacuna de spec registrada
-custo: US$ 9.96 · claude-opus-5-5 US$ 3.39 + claude-sonnet-5-5 US$ 6.57 · 459 min (a duração mede a janela do transcript da worktree, inclusive o tempo parado; o custo inclui o revisor)
-veredicto: PASS (review r2) — com 1 lacuna de spec aberta para o dono
+rodadas-de-review: 3 — r1: 4 achados (1 médio, 1 médio-baixo, 2 baixos) → FAIL; r2 (delta b670d953): PASS, achado 1 aceito como lacuna registrada; r3 (delta 9765b253, opção 1 do dono): PASS, achado 1 fechado
+custo: US$ 12.71 · claude-opus-5-5 US$ 4.79 + claude-sonnet-5-5 US$ 7.92 · 496 min (a duração mede a janela do transcript da worktree, inclusive o tempo parado; o custo inclui o revisor)
+veredicto: PASS (review r3)
 base: d6530790 → rebase em b5d6f2eb (origin/main); PR https://github.com/NightMarketz/luminaristest/pull/485 · branch claude/fe-contract-types-pr3-2ab80e
 
 ### Arquivos
@@ -17,6 +17,8 @@ base: d6530790 → rebase em b5d6f2eb (origin/main); PR https://github.com/Night
 - chamadores (EDIT, spread condicional → `k: v || undefined`; casts de folha com ponytail; payload anotado): Lead360Modal, Opp360Modal, OpportunityCreateModal, pages/crm/leads/[id], useSalesData, Navbar, CurrencyContext, pages/users/{profile,create,edit/[id]}
 - my-app/features/documents/README.md (EDIT — tira `triggerQdrantInjection`)
 - docs/accounting/RUNBOOK-H2-BROWSER-SIGNOFF.md (EDIT — passo 21 em branco)
+- docs/accounting/FE-CONTRACT-TYPES-PR3-FORA-DE-ESCOPO-2026-10-03.md (NEW — achados fora do §8, a pedido do dono)
+- my-app/features/interview/hooks/useAiInterview.ts, my-app/lib/services/setup.service.ts (EDIT — opção 1: `fiscal` por extensão D9; `FiscalOnboarding`/`RegimeOnboarding` aliases do .gen.ts)
 - docs/plano/nos/FE-CONTRACT-TYPES.md, docs/plano/_INDEX.md (EDIT — registro da autorização do dono, 03/10)
 
 ### Checks executados
@@ -36,12 +38,12 @@ base: d6530790 → rebase em b5d6f2eb (origin/main); PR https://github.com/Night
 - Risco principal remanescente: chamadores que mandam body por `fetch` cru fora dos 7 services (dashboard-layout, widgets de chat, `useAiInterview`) seguem sem o tipo gerado, e o `tsc` do FE não morde neles quando o DTO muda. Vieses meus: executei um plano que eu não escrevi mas cujas mordidas e a regra do mapper desenhei/segui sem contraditório até o review; rodei só no Windows (o Linux depende da CI).
 
 ### Aberto
-- **Lacuna de spec (registrada, não escolhi):** `POST /dashboard/create` tem um 2º chamador (`my-app/features/interview/hooks/useAiInterview.ts:104`, fetch cru, fora dos 7 services do §8) que manda `fiscal`; o contrato gerado não tem `fiscal` (o `dashboardController.ts:22-25` estende o DTO fora de `dtos/`). Decisão do dono: migrar `useAiInterview` com extensão D9 explícita (`CreateDashboardPayload & { fiscal?: OnboardingFiscalInput }`) ou deixar.
-- Callers fora de `lib/services` sem tipo gerado em domínios que agora têm `.gen.ts`: `components/widgets/dashboard-grid/dashboard-layout.api.ts`, `components/widgets/{chat,shared}/hooks/useChat*.ts`, `features/interview/**`. Fora do §8.
+- **Decidido (dono, 03/10): opção 1** para o 2º chamador de `POST /dashboard/create` (`useAiInterview.ts`, `fiscal`): feito em `9765b253`, r3 PASS, mordida `bogus` → TS2353. Fica o limite de sempre: o `.extend({ fiscal })` mora no controller, fora do snapshot.
+- Achados fora do §8 (callers com `fetch` cru fora de `lib/services`, Zod fora de `dtos/`, rota `/dashboard/ai/CustomizeFields` inexistente no servidor, limites do contrato gerado, efeitos operacionais): **documento à parte** `docs/accounting/FE-CONTRACT-TYPES-PR3-FORA-DE-ESCOPO-2026-10-03.md`. Nada disso foi feito; cada item precisa de autorização.
 - Linha do GAP-MAP "Evolução assimétrica" ainda diz "demais domínios no PR-3": atualizar no fold (o §8 não lista a edição).
-- PR concorrente que mude DTO não contábil passa a precisar de `UPDATE_DTO_SNAPSHOT=1` (a CI do server reprova senão).
-- CI do PR #485 ainda pendente quando fechei (pendentes 7, falhas 0); merge só com o OK do dono.
-- Linha de fold pronta (após o merge): `id: FE-CONTRACT-TYPES` · `estado: done` · `estado_detalhe: PR-3 (todos os domínios + 7 services + remoção do triggerQdrantInjection) MERGEADO #485 <sha>; lacuna: /dashboard/create 2º caller (useAiInterview) com fiscal` · `prs: ["#428","#430","#485"]`; passo 21 do RUNBOOK-H2 em branco.
+- PR concorrente que mude DTO não contábil passa a precisar de `UPDATE_DTO_SNAPSHOT=1`.
+- CI do PR #485: 8 verdes, 2 pendentes na última leitura (antes das correções do review); merge só com o OK do dono.
+- Linha de fold pronta (após o merge): `id: FE-CONTRACT-TYPES` · `estado: done` · `estado_detalhe: PR-3 (todos os domínios + 7 services + /dashboard/create da Entrevista + remoção do triggerQdrantInjection) MERGEADO #485 <sha>; fora do §8 em docs/accounting/FE-CONTRACT-TYPES-PR3-FORA-DE-ESCOPO-2026-10-03.md` · `prs: ["#428","#430","#485"]`; passo 21 do RUNBOOK-H2 em branco.
 
 ## PROVA
 
@@ -70,10 +72,10 @@ PROVA:
   - command: "cd my-app && npx vitest run"
     exit_code: 0
     log: .claude/retornos/_logs/fe-contract-types-pr3-6.log
-    sha256: d37c5ea96cdfd42783ce2ca7b444daf19f3d25306bfbcaf71fa182363fa23469
+    sha256: f5eba2d6568abe98e66f2adc84de7df483bc198ffdf7479fe57fd0e2e5c57f6d
   - command: "cd my-app && npm run build"
     exit_code: 0
     log: .claude/retornos/_logs/fe-contract-types-pr3-7.log
-    sha256: 91b76c562fdace0a0a86d0159f79b7f873754158635cefa78d7d642c893d7945
+    sha256: 6741826d2ffe578ee1ce764125bfe7bb005062b102dc5f7b90b1a59a34b2fe98
 VEREDITO: PASS
 ```

@@ -59,7 +59,7 @@ Mover esses schemas para `dtos/` é mudança de servidor (e entra no snapshot): 
 - **Refinamentos invisíveis:** `LoginSchema` (`identifier|username|email` obrigatório um dos três) e `RegisterPaymentSchema`
   (`packageId` XOR `Package Balance`) são `.refine`/`.superRefine`; o tipo gerado deixa os três opcionais e o `packageId` livre.
   Limite já declarado no cabeçalho do `dtoShapeSnapshot` e no PRE-ADR.
-- **Cast de folha em `updatePreferences`:** 4 chamadas passam `string` onde o contrato quer `'en'|'pt'` / `'BRL'|'USD'|'EUR'`
+- **Cast de folha em `updatePreferences`:** 3 chamadas (4 casts) passam `string` onde o contrato quer `'en'|'pt'` / `'BRL'|'USD'|'EUR'`
   (Navbar, `CurrencyContext`, `profile.tsx`). Cast com `// ponytail:`; a origem (tipar `locale`/`currency` do contexto) é de outra frente.
 
 ## 5. Efeitos operacionais do PR-3
