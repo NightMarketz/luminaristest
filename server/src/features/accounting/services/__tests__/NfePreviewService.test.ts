@@ -25,6 +25,9 @@ const CHAVE = '35250712345678000195550010000000011000000012';
 
 const scope = { userId: 'user-1', unitId: 'unit-1', actorUserId: 'user-1', timeZone: 'America/Sao_Paulo' } as unknown as AccountingScope;
 
+/** ITEM-DESTINATION PR-2: repositório de defaults vazio — nenhum produto com destinação padrão. */
+const NO_DEFAULTS = { findManyByProductRefs: async () => [] } as never;
+
 function build(opts: { existing?: Payable | null; canManage?: boolean; canReconcile?: boolean } = {}) {
   const findByDocumentNumber = jest.fn(async () => opts.existing ?? null);
   const payableRepo = { findByDocumentNumber } as unknown as IPayableRepository;
@@ -39,7 +42,7 @@ function build(opts: { existing?: Payable | null; canManage?: boolean; canReconc
       icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null,
     }),
   } as never;
-  return { service: new NfePreviewService(payableRepo, policy, fiscalProfile), findByDocumentNumber };
+  return { service: new NfePreviewService(payableRepo, policy, fiscalProfile, NO_DEFAULTS), findByDocumentNumber };
 }
 
 describe('NfePreviewService.preview', () => {
@@ -117,6 +120,7 @@ describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)
       { findByDocumentNumber: async () => null } as unknown as IPayableRepository,
       { canManagePayable: () => true, canReconcile: () => false } as unknown as IAccountingPolicy,
       { requireCostRegime: async () => profile } as never,
+      NO_DEFAULTS,
     );
 
   it('sem mapeamento: tudo REVENDA/FALLBACK, custoInsumoCents 0 e números iguais aos de hoje', async () => {
@@ -137,6 +141,7 @@ describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)
       { findById: async () => null } as never,
       { canManagePayable: () => true } as never,
       { requireCostRegime: async () => profile } as never,
+      NO_DEFAULTS,
     );
     const imported = await importSvc.importPurchase(scope, PC, { unitId: 'unit-1', itemMappings: MAPPINGS });
 
@@ -147,5 +152,66 @@ describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)
     expect(preview.custo.custoInsumoCents).toBeGreaterThan(0);
     expect(preview.custo.destinacoes).toEqual(imported.destinacoes);
     expect(preview.custo.warnings).toEqual(imported.warnings);
+  });
+});
+
+// ── ITEM-DESTINATION PR-2 (item 9 origem PRODUTO, F-ID-2 a; item 19): default por produto no preview E no import ──
+describe('NfePreviewService.preview — default por produto (ITEM-DESTINATION PR-2)', () => {
+  const profile = {
+    icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false,
+    pisCofinsCreditFromSimplesSupplier: false, icmsRecuperavelAccountId: 'acc-icms', pisCofinsRecuperavelAccountId: 'acc-pc',
+    insumoExpenseAccountId: 'acc-insumo',
+  };
+  const PC = readFileSync(join(FIXTURE_DIR, 'purchase-pis-cofins.SYNTHETIC.xml'), 'utf8');
+  // p1 tem override explícito REVENDA (vence o default INSUMO de p1); p2 sem override → default; p3 sem default → FALLBACK.
+  const MAPPINGS = [
+    { cProd: 'SHAMP-500', productRef: 'p1', destination: 'REVENDA' as const },
+    { cProd: 'COND-500', productRef: 'p2' },
+    { cProd: 'MASC-300', productRef: 'p3' },
+  ];
+  const defaultsRepo = () => {
+    const findManyByProductRefs = jest.fn(async () => [
+      { productRef: 'p1', destination: 'INSUMO_SERVICO' },
+      { productRef: 'p2', destination: 'INSUMO_SERVICO' },
+    ]);
+    return { repo: { findManyByProductRefs } as never, findManyByProductRefs };
+  };
+
+  it('override > PRODUTO > FALLBACK; UMA query com os productRefs mapeados; preview = import', async () => {
+    const pd = defaultsRepo();
+    const preview = await new NfePreviewService(
+      { findByDocumentNumber: async () => null } as unknown as IPayableRepository,
+      { canManagePayable: () => true, canReconcile: () => false } as unknown as IAccountingPolicy,
+      { requireCostRegime: async () => profile } as never,
+      pd.repo,
+    ).preview(scope, PC, MAPPINGS);
+    expect(NfePreviewSchema.safeParse(preview).success).toBe(true);
+    expect(preview.custo.destinacoes.map((d) => `${d.cProd}:${d.destination}/${d.origem}`)).toEqual([
+      'SHAMP-500:REVENDA/OVERRIDE',
+      'COND-500:INSUMO_SERVICO/PRODUTO',
+      'MASC-300:REVENDA/FALLBACK',
+    ]);
+    expect(pd.findManyByProductRefs).toHaveBeenCalledTimes(1);
+    expect(pd.findManyByProductRefs).toHaveBeenCalledWith(scope, ['p1', 'p2', 'p3']);
+    expect(preview.custo.custoInsumoCents).toBeGreaterThan(0);
+
+    let captured: { recoverableTaxLines?: { amountCents: number; kind: string }[]; insumoItems?: { costCents: number; cProd: string }[] } = {};
+    const importDefaults = defaultsRepo();
+    const imported = await new NfeImportService(
+      { createPayable: async (_s: unknown, input: typeof captured) => { captured = input; return { id: 'pay-1' }; } } as never,
+      { findById: async () => null } as never,
+      { canManagePayable: () => true } as never,
+      { requireCostRegime: async () => profile } as never,
+      importDefaults.repo,
+    ).importPurchase(scope, PC, { unitId: 'unit-1', itemMappings: MAPPINGS });
+
+    expect(importDefaults.findManyByProductRefs).toHaveBeenCalledTimes(1);
+    expect(imported.destinacoes).toEqual(preview.custo.destinacoes);
+    expect(imported.warnings).toEqual(preview.custo.warnings);
+    expect((captured.insumoItems ?? []).map((i) => i.cProd)).toEqual(['COND-500']);
+    expect(preview.custo.custoInsumoCents).toBe((captured.insumoItems ?? []).reduce((a, i) => a + i.costCents, 0));
+    const credit = (kind: string) => (captured.recoverableTaxLines ?? []).filter((l) => l.kind === kind).reduce((a, l) => a + l.amountCents, 0);
+    expect(preview.custo.creditoIcmsCents).toBe(credit('ICMS'));
+    expect(preview.custo.creditoPisCofinsCents).toBe(credit('PIS_COFINS'));
   });
 });

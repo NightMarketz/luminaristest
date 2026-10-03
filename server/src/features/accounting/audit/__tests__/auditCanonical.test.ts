@@ -391,3 +391,12 @@ it('payable.created mantém insumoCents e fiscal_profile.updated mantém insumoE
     regimeTributario: 'REAL', insumoExpenseAccountId: 'acc-1',
   });
 });
+
+// ITEM-DESTINATION PR-2 item 17 (gate da allowlist no mesmo PR): os dois eventos do default por produto.
+it('product_destination.set / .cleared mantêm só productRef e destination', () => {
+  for (const ev of ['product_destination.set', 'product_destination.cleared']) {
+    expect(JSON.parse(canonicalizeAuditPayload(ev, { productRef: 'prod-1', destination: 'INSUMO_SERVICO', extra: 'x' }))).toEqual({
+      productRef: 'prod-1', destination: 'INSUMO_SERVICO',
+    });
+  }
+});
