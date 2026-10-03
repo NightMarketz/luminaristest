@@ -20,7 +20,7 @@
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
-import { execSync } from 'child_process';
+import { applyMigrations } from '@test/helpers/migrations';
 import { PrismaClient } from 'generated/prisma';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
@@ -114,12 +114,7 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     // Sem isto, um `;` a mais num comentário partiria um statement e o teste provaria meio backfill.
     backfill = readBackfillStatements();
     expect(backfill).toHaveLength(BACKFILL_STATEMENTS);
-    for (const dir of aplicar) {
-      execSync(
-        `npx prisma db execute --file "${path.join(migrationsDir, dir, 'migration.sql')}" --url "file:${dbPath}"`,
-        { cwd: SERVER_ROOT, env: { ...process.env }, stdio: 'pipe' },
-      );
-    }
+    applyMigrations(dbPath, aplicar);
     db = new PrismaClient({
       datasources: { db: { url: `file:${dbPath}?socket_timeout=60&connection_limit=1` } },
     });
@@ -171,9 +166,8 @@ describe('INCR-COUNTERPARTY backfill — real SQLite DB (SEC-A1-2 / SEC-A1-3)', 
     await seedReceivable('r-b1', 'u-B', 'Cliente X', 'FAT-1');
 
     await runBackfill(db, backfill);
-    // 60s era margem zero: o beforeAll spawna um `npx prisma db execute` POR migração. Medido em duas
-    // execuções seguidas da MESMA suíte: com npx frio estourou o timeout (suíte 78,9s), com cache
-    // quente passou (suíte 62,2s). Flake de ambiente, não de lógica — daí a folga.
+    // Folga histórica: quando o beforeAll spawnava um `npx prisma db execute` POR migração, 60s era margem
+    // zero (suíte 78,9s com npx frio). Hoje é um spawn só (applyMigrations); a folga ficou por barata.
   }, 180000);
 
   afterAll(async () => {

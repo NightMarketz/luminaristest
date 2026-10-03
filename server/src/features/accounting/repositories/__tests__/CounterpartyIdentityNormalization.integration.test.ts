@@ -10,15 +10,15 @@
  *   • comp. 3  taxId nasce NULL para toda linha pré-existente (não há dado histórico para popular);
  *   • o novo `@@unique([userId,unitId,type,nameNormalized])` está de fato em vigor pós-migração.
  *
- * A base PRÉ-migração é montada UMA VEZ (32 subprocessos `npx prisma db execute`, caro — memória do
- * gate irmão `CounterpartyBackfill.integration.test.ts`: "60s era margem zero" mesmo para UMA
- * construção) e COPIADA para cada cenário, no molde de `smoke-gate-incr-counterparty.mjs` — nunca
+ * A base PRÉ-migração é montada UMA VEZ (um `npx prisma db execute` com o histórico concatenado —
+ * `applyMigrations`; antes eram 32 subprocessos, ~1 s cada) e COPIADA para cada cenário, no molde de `smoke-gate-incr-counterparty.mjs` — nunca
  * reconstruída por cenário.
  */
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import { execSync } from 'child_process';
+import { applyMigrations } from '@test/helpers/migrations';
 import { copyFileSync } from 'fs';
 import { PrismaClient } from 'generated/prisma';
 
@@ -56,12 +56,7 @@ function buildPreMigrationDb(dbPath: string): void {
   expect(targetIdx).toBeGreaterThanOrEqual(0); // TARGET_MIGRATION existe no diretório
   const aplicar = todas.slice(0, targetIdx); // prefixo estrito — nunca inclui o alvo nem nada depois dele
   expect(aplicar).not.toContain(TARGET_MIGRATION);
-  for (const dir of aplicar) {
-    execSync(
-      `npx prisma db execute --file "${path.join(MIGRATIONS_DIR, dir, 'migration.sql')}" --url "file:${dbPath}"`,
-      { cwd: SERVER_ROOT, env: { ...process.env }, stdio: 'pipe' },
-    );
-  }
+  applyMigrations(dbPath, aplicar);
 }
 
 function cleanupDbFiles(dbPath: string): void {
@@ -71,7 +66,7 @@ function cleanupDbFiles(dbPath: string): void {
 }
 
 /**
- * Aplica a migração-alvo via `prisma db execute --file` (o MESMO mecanismo de `buildPreMigrationDb`) —
+ * Aplica a migração-alvo via `prisma db execute --file` (o MESMO mecanismo de `buildPreMigrationDb`/`applyMigrations`) —
  * NÃO via `$executeRawUnsafe(migrationSql)`. `$executeRawUnsafe` roda UM statement por chamada (é
  * exatamente por isso que `CounterpartyBackfill.integration.test.ts` fatia o backfill num loop
  * statement-a-statement); um arquivo inteiro com trigger + rebuild multi-statement precisa do CLI, não

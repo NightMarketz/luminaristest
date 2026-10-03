@@ -20,10 +20,11 @@ const base = {
         '^@qdrant/js-client-rest$': '<rootDir>/test/mocks/qdrantClient.ts',
     },
     transform: {
-        '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+        // tsconfig.jest.json = tsconfig.test.json + isolatedModules: ts-jest só transpila. O type-check dos testes
+        // é do passo `tsc --noEmit -p tsconfig.test.json` do CI, não do Jest (era feito em dobro).
+        '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
         // ESM-only deps (uuid v13, qdrant) ship no CJS build; ts-jest down-compiles them.
-        // isolatedModules: skip type-checking node_modules JS (only our TS is type-checked).
-        '^.+\\.jsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json', isolatedModules: true }],
+        '^.+\\.jsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
     },
     // Default ignores all of node_modules; the negative lookahead lets the ESM deps above through.
     transformIgnorePatterns: ['/node_modules/(?!(uuid|@qdrant/js-client-rest)/)'],
