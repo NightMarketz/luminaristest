@@ -2450,7 +2450,9 @@ export async function retryOneReconcilePendingItem(
         return resolvedIfAny(summary);
       }
       const balance = await pkgRepo.findBalanceById(scope, parsed.balanceId);
-      if (!balance || expiresOnFromDb(balance.expiresAt) !== parsed.expiresOn) return { outcome: 'still_pending' };
+      // Esse vencimento deixou de existir (a recompra com saldo > 0 moveu o prazo, F-PV-2 a, ou o saldo sumiu):
+      // a pendência não tem mais objeto. Se o NOVO prazo bloquear, o passe captura sob a nova chave.
+      if (!balance || expiresOnFromDb(balance.expiresAt) !== parsed.expiresOn) return { outcome: 'resolved' };
       const summary = await reconcilePackageExpiry({
         ...deps,
         listCandidates: async () => [

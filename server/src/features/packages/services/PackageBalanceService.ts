@@ -70,11 +70,11 @@ export class PackageBalanceService {
       throw new ForbiddenError('Sem permissão para creditar saldo de pacote.');
     }
     this.assertAmount(cmd.amountCents);
-    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays);
 
     // Fast path: already applied — skip the transaction entirely.
     const existing = await this.repo.findMovement(scope, cmd.saleId, 'credit');
     if (existing) return;
+    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays);
 
     try {
       await this.repo.runTransaction(async (tx) => {

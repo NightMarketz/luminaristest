@@ -280,3 +280,20 @@ describe('AccountingSyncService', () => {
     });
   });
 });
+
+// BE-INCR-PACOTE-VALIDADE item 9.3 (F-PV-6 a): leitura sem efeito, MESMA resolução do sync() (composta, depois global).
+describe('AccountingSyncService.hasMapper', () => {
+  const posting = { postEntry: jest.fn() } as unknown as ConstructorParameters<typeof AccountingSyncService>[0];
+
+  it('escopado: só a unidade registrada tem o mapper', () => {
+    const svc = new AccountingSyncService(posting, [{ unitId: 'unit-A', mapper: markedMapper('sale.finalized', 'A') }]);
+    expect(svc.hasMapper('unit-A', 'sale.finalized')).toBe(true);
+    expect(svc.hasMapper('unit-B', 'sale.finalized')).toBe(false);
+    expect(svc.hasMapper('unit-A', 'sale.package.expired')).toBe(false);
+  });
+
+  it('global (registro plain): qualquer unidade', () => {
+    const svc = new AccountingSyncService(posting, [markedMapper('sale.package.expired', 'G')]);
+    expect(svc.hasMapper('qualquer', 'sale.package.expired')).toBe(true);
+  });
+});

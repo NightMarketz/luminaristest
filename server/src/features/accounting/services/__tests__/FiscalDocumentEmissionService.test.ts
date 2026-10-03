@@ -4,6 +4,7 @@ const findTableByInternalName = jest.fn();
 const findDataById = jest.fn();
 const existsByIdInTable = jest.fn();
 const findRowsByFieldValue = jest.fn();
+const getExpiryContext = jest.fn();
 
 jest.mock('../../../../lib/factory', () => ({
   __esModule: true,
@@ -14,6 +15,7 @@ jest.mock('../../../../lib/factory', () => ({
       existsByIdInTable,
       findRowsByFieldValue,
     }),
+    getPackageBalanceService: () => ({ getExpiryContext }),
   }),
 }));
 
@@ -21,6 +23,7 @@ import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService'
 import { NullEmissor } from '../../dfe/NullEmissor';
 import { SERVICE_REVENUE_ACCOUNT } from '../../sync/mappers/revenueSplit';
 import type { AccountingScope } from '../../scope/AccountingScope';
+import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
@@ -78,8 +81,10 @@ function makeService(opts: {
   ledgerPostings?: Array<{ accountId: string; debitCents: bigint; creditCents: bigint }>;
   liveDocs?: Array<{ id: string; status: string; cTribNac: string }>;
   emitir?: jest.Mock;
+  anchorSourceType?: string;
 }) {
   const repo = {
+    findBySaleKey: jest.fn().mockResolvedValue(null),
     findLiveBySale: jest.fn().mockResolvedValue(opts.liveDocs ?? []),
     runTransaction: jest.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
     nextNumber: jest.fn().mockResolvedValue(1n),
@@ -106,7 +111,7 @@ function makeService(opts: {
     findByCode: jest.fn(async (_scope: unknown, code: string) => ({ id: `acc-${code}`, code })),
   };
   const journalEntryRepo = {
-    findBySource: jest.fn().mockResolvedValue({ id: ANCHOR_ID, sourceType: 'sale.finalized', postings: opts.ledgerPostings ?? [] }),
+    findBySource: jest.fn().mockResolvedValue({ id: ANCHOR_ID, sourceType: opts.anchorSourceType ?? 'sale.finalized', postings: opts.ledgerPostings ?? [] }),
   };
   const fiscalProfileService = { get: jest.fn().mockResolvedValue(opts.fiscalProfile === undefined ? baseFiscalProfileView() : opts.fiscalProfile) };
   const serviceFiscalProfileService = {
@@ -364,7 +369,7 @@ describe('FiscalDocumentEmissionService — pré-condições (item 14, porta nun
   });
 });
 
-describe('FiscalDocumentEmissionService — pacote VENDA (item 21, lacuna de spec)', () => {
+describe('FiscalDocumentEmissionService — pacote VENDA (item 21; destravado pelo pacoteCTribNac, BE-INCR-PACOTE-VALIDADE 13a)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
@@ -377,7 +382,7 @@ describe('FiscalDocumentEmissionService — pacote VENDA (item 21, lacuna de spe
     findDataById.mockResolvedValue({ id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', date: todayDateOnly() } });
   });
 
-  it('venda 100% pacote com pacoteFatoGerador=VENDA bloqueia com 400 nomeado — NUNCA emite um cTribNac fake', async () => {
+  it('venda 100% pacote com pacoteFatoGerador=VENDA e SEM pacoteCTribNac bloqueia com 400 nomeado — NUNCA emite um cTribNac fake', async () => {
     findRowsByFieldValue.mockResolvedValue([
       { data: { packageId: 'pkg-1', type: 'Package', quantity: 1, unitPrice: 200 } },
     ]);
@@ -393,7 +398,149 @@ describe('FiscalDocumentEmissionService — pacote VENDA (item 21, lacuna de spe
     expect(caught).toBeInstanceOf(Error);
     const faltantes = (caught as { details?: { faltantes?: string[] } }).details?.faltantes ?? [];
     expect(faltantes.some((f) => f.includes('cTribNac do pacote'))).toBe(true);
+    expect(faltantes.some((f) => f.includes("falta 'pacoteCTribNac'"))).toBe(true);
     expect(repo.runTransaction).not.toHaveBeenCalled();
+  });
+
+  it('13a: com pacoteCTribNac no perfil, a NFS-e do pacote VENDA sai com esse código e o valor do débito 1.1.2', async () => {
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: todayDateOnly() } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente Teste', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([{ data: { packageId: 'pkg-1', type: 'Package', quantity: 1, unitPrice: 200 } }]);
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ pacoteFatoGerador: 'VENDA', pacoteCTribNac: '060101', pacoteCNBS: null }),
+      ledgerPostings: [{ accountId: 'acc-1.1.2', debitCents: 20000n, creditCents: 0n }],
+      anchorSourceType: 'sale.package.sold',
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.faltantes).toEqual([]);
+    expect(result.ok).toBe(true);
+    expect(result.payloads).toHaveLength(1);
+    expect(result.payloads[0].infDPS.serv.cServ.cTribNac).toBe('060101');
+    expect(result.payloads[0].infDPS.valores.vServPrest.vServ).toBe('200.00');
+  });
+});
+
+describe('FiscalDocumentEmissionService.emitPackageExpiry (BE-INCR-PACOTE-VALIDADE §5.2 item 14a / 9.5)', () => {
+  const KEY = 'expiry:bal-1:2026-03-31';
+  const PACKAGES_TABLE = { id: 'tbl-packages', internalName: 'packages' };
+  const OLD_ENV = process.env;
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...OLD_ENV, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'packages') return PACKAGES_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente Teste', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      if (id === 'pkg-1') return { id: 'pkg-1', data: { name: '10 escovas', validityDays: 30 } };
+      return null;
+    });
+    getExpiryContext.mockResolvedValue({ customerId: CUSTOMER_ID, packageId: 'pkg-1', releasedCents: 7000, originSaleId: 'sale-origem' });
+  });
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  const consumo = () => baseFiscalProfileView({ pacoteFatoGerador: 'CONSUMO', pacoteCTribNac: '060101', pacoteCNBS: null });
+  const anchorPostings = [
+    { accountId: 'acc-2.1.1', debitCents: 7000n, creditCents: 0n },
+    { accountId: 'acc-3.4', debitCents: 0n, creditCents: 7000n },
+  ];
+
+  it('perfil CONSUMO: emite com âncora no lançamento do vencimento, saleId = venda de origem, saleKey = chave, dCompet = expiresOn+1', async () => {
+    const { service, repo, journalEntryRepo } = makeService({ fiscalProfile: consumo(), ledgerPostings: anchorPostings, anchorSourceType: 'sale.package.expired' });
+    expect(await service.emitPackageExpiry(SCOPE, KEY)).toBe('emitted');
+    expect(journalEntryRepo.findBySource).toHaveBeenCalledWith(SCOPE, 'sale.package.expired', KEY);
+    const data = (repo.createSent as jest.Mock).mock.calls[0][1] as Record<string, unknown>;
+    expect(data).toMatchObject({
+      kind: 'NFSE',
+      saleId: 'sale-origem',
+      saleKey: KEY,
+      cTribNac: '060101',
+      anchorEntryId: ANCHOR_ID,
+      dCompet: '2026-04-01',
+      vServCents: 7000n,
+    });
+    const payload = JSON.parse(data.payloadJson as string);
+    expect(payload.infDPS.valores.vServPrest.vServ).toBe('70.00'); // tie-out exato com o crédito 3.4
+    expect(payload.infDPS.serv.cServ.xDescServ).toBe('Pacote 10 escovas — saldo não utilizado, vencido em 2026-03-31'); // L7
+    expect(payload.infDPS.toma).toMatchObject({ CPF: '11144477735' });
+  });
+
+  it.each([
+    ['perfil VENDA (a nota saiu cheia na venda)', baseFiscalProfileView({ pacoteFatoGerador: 'VENDA', pacoteCTribNac: '060101' })],
+    ['sem perfil fiscal', null],
+  ])('%s → not_applicable, nada criado', async (_l, profile) => {
+    const { service, repo } = makeService({ fiscalProfile: profile as never });
+    expect(await service.emitPackageExpiry(SCOPE, KEY)).toBe('not_applicable');
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it('documento já existente com o saleKey → exists (idempotente)', async () => {
+    const { service, repo } = makeService({ fiscalProfile: consumo() });
+    (repo.findBySaleKey as jest.Mock).mockResolvedValue({ id: 'doc-x' });
+    expect(await service.emitPackageExpiry(SCOPE, KEY)).toBe('exists');
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['perfil sem pacoteCTribNac', { profile: { pacoteCTribNac: null } }, "falta 'pacoteCTribNac'"],
+    ['cliente sem CPF/CNPJ', { customerTaxId: '' }, 'taxId ausente ou inválido'],
+  ])('faltante (%s) → PACKAGE_EXPIRY_NFSE_PENDING com o motivo nomeado; nada criado', async (_l, over, motivo) => {
+    if ('customerTaxId' in over) {
+      findDataById.mockImplementation(async (id: string) =>
+        id === CUSTOMER_ID ? { id, data: { name: 'Sem doc', taxId: over.customerTaxId } } : id === 'unit-1' ? { id, data: { cnpj: '11222333000181' } } : null,
+      );
+    }
+    const profile = 'profile' in over ? baseFiscalProfileView({ pacoteFatoGerador: 'CONSUMO', ...over.profile }) : consumo();
+    const { service, repo } = makeService({ fiscalProfile: profile, ledgerPostings: anchorPostings, anchorSourceType: 'sale.package.expired' });
+    const err = await service.emitPackageExpiry(SCOPE, KEY).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(PackageExpiryNfsePendingError);
+    expect((err as PackageExpiryNfsePendingError).errorCode).toBe('PACKAGE_EXPIRY_NFSE_PENDING');
+    expect((err as Error).message).toContain(motivo);
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it('porta desabilitada → pendência nomeada', async () => {
+    process.env = { ...OLD_ENV, DFE_PARTNER: '', NODE_ENV: 'test' };
+    const { service } = makeService({ fiscalProfile: consumo(), ledgerPostings: anchorPostings, anchorSourceType: 'sale.package.expired' });
+    await expect(service.emitPackageExpiry(SCOPE, KEY)).rejects.toBeInstanceOf(PackageExpiryNfsePendingError);
+  });
+
+  it('tie-out quebrado (valor vencido ≠ crédito 3.4) falha ALTO — não vira pendência', async () => {
+    const { service, repo } = makeService({
+      fiscalProfile: consumo(),
+      ledgerPostings: [{ accountId: 'acc-3.4', debitCents: 0n, creditCents: 6999n }],
+      anchorSourceType: 'sale.package.expired',
+    });
+    const err = await service.emitPackageExpiry(SCOPE, KEY).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(PackageExpiryNfsePendingError);
+    expect((err as Error).message).toContain('tie-out');
+    expect(repo.createSent).not.toHaveBeenCalled();
+  });
+
+  it('L2 (dono 03/10): o reenvio de nota de vencido remonta pelo vencimento, não pela venda de origem', async () => {
+    const { service } = makeService({ fiscalProfile: consumo(), ledgerPostings: anchorPostings, anchorSourceType: 'sale.package.expired' });
+    const r = await service.reassembleGroupForReenvio(SCOPE, 'sale-origem', 'NFSE', '060101', 'homologacao', KEY);
+    expect(r.vServCents).toBe(7000);
+    expect(r.payload.infDPS.dCompet).toBe('2026-04-01');
   });
 });
 
