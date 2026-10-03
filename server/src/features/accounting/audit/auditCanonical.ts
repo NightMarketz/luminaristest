@@ -176,6 +176,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // registro profissional que dá sentido à entrega, não um dado de contato).
   'contact.registered':     ['contactId', 'crcNumber', 'crcUf'],
   'contact.archived':       ['contactId'],
+  // BE-INCR-PAYMENT-PROVIDER PR-1 (P1-10; PP-D7) — só ids/status: NUNCA credencial, last4 nem `label`
+  // (texto livre). Chaves ratificadas pelo dono em 03/10 (lacuna 3). DELETE (soft) não emite evento.
+  'payment_account.created':        ['paymentAccountId', 'provider', 'glAccountId', 'status'],
+  'payment_account.updated':        ['paymentAccountId', 'fromStatus', 'toStatus'],
+  'payment_account.credential_set': ['paymentAccountId', 'credentialKeyVersion', 'fromStatus', 'toStatus'],
+  'payment_account.disabled':       ['paymentAccountId', 'fromStatus'],
   // itemCount/kinds (C6b PR-3, Passo 12): tamanho e composição do pacote N-ário — números/enums,
   // nunca sha256 dos EXTRAS (só o do núcleo, que já estava aqui desde a origem).
   'delivery.package_built': ['deliveryId', 'ecdJobId', 'ecfJobId', 'periodStart', 'periodEnd', 'sha256Ecd', 'sha256Ecf', 'itemCount', 'kinds'],

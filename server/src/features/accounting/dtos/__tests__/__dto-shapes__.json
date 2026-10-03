@@ -6286,6 +6286,153 @@
       ]
     }
   },
+  "PaymentAccountDto.ts": {
+    "PaymentAccountConfigSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "MERCADO_PAGO"
+            },
+            "credentialSource": {
+              "type": "string",
+              "enum": [
+                "OWN",
+                "OAUTH"
+              ]
+            }
+          },
+          "required": [
+            "provider",
+            "credentialSource"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "CreatePaymentAccountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "const": "MERCADO_PAGO"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "glAccountId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "config": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string",
+                  "const": "MERCADO_PAGO"
+                },
+                "credentialSource": {
+                  "type": "string",
+                  "enum": [
+                    "OWN",
+                    "OAUTH"
+                  ]
+                }
+              },
+              "required": [
+                "provider",
+                "credentialSource"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "provider",
+        "label",
+        "glAccountId",
+        "config"
+      ],
+      "additionalProperties": false
+    },
+    "UpdatePaymentAccountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "DISABLED"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "SetCredentialSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accessToken": {
+          "type": "string",
+          "minLength": 20
+        },
+        "webhookSecret": {
+          "type": "string",
+          "minLength": 16
+        }
+      },
+      "required": [
+        "unitId",
+        "accessToken",
+        "webhookSecret"
+      ],
+      "additionalProperties": false
+    },
+    "PaymentAccountScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    }
+  },
   "PostingDto.ts": {
     "PostEntryLineSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
