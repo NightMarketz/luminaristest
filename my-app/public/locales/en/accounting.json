@@ -31,7 +31,8 @@
       "dimensoes": "Dimensions",
       "contrapartes": "Counterparties",
       "aprovacoes": "Approvals",
-      "nfe": "NF-e"
+      "nfe": "NF-e",
+      "imobilizado": "Fixed assets"
     },
     "error": {
       "units": "Failed to load units.",
@@ -1884,5 +1885,234 @@
       "FAILED": "failed",
       "STALE": "stale"
     }
+  },
+  "fixedAssets": {
+    "accounts": {
+      "depreciationExpense": "Depreciation expense",
+      "disposalGain": "Gain on disposal",
+      "disposalLoss": "Loss on disposal",
+      "error": {
+        "load": "Error loading the accounts.",
+        "save": "Could not save the accounts."
+      },
+      "help": "Monthly depreciation requires the expense account; disposal requires the gain and loss accounts.",
+      "saved": "Accounts saved."
+    },
+    "action": {
+      "activate": "Activate",
+      "delete": "Remove",
+      "dispose": "Dispose",
+      "edit": "Edit"
+    },
+    "activate": {
+      "activating": "Activating…",
+      "confirm": "Activate",
+      "error": {
+        "dateRequired": "Enter the activation date.",
+        "generic": "Could not activate the asset."
+      },
+      "field": {
+        "date": "Activation date",
+        "opening": "Opening accumulated depreciation (R$, optional)"
+      },
+      "help": "Required if the activation is before the first open period — the server tells you if it is missing.",
+      "title": "Activate asset"
+    },
+    "asset": {
+      "book": {
+        "justification": "Justification (required)",
+        "rate": "Book rate (% p.a.)",
+        "summary": "Book rate differs from the tax rate"
+      },
+      "empty": "No assets registered.",
+      "error": {
+        "acquiredRequired": "Enter the acquisition date.",
+        "bookJustificationRequired": "A diverging book rate requires a justification.",
+        "bookRateInvalid": "Enter the book rate (between 0.01% and 100%).",
+        "classRequired": "Select the class.",
+        "codeRequired": "Enter the code.",
+        "costRequired": "Enter the acquisition cost.",
+        "descriptionRequired": "Enter the description.",
+        "quantityInvalid": "Quantity must be an integer of at least 1.",
+        "rateInvalid": "Enter the explicit rate (between 0.01% and 100%).",
+        "rateRequired": "Pick a rate from the catalog.",
+        "residualTooHigh": "The residual value must be lower than the cost.",
+        "save": "Could not save the asset."
+      },
+      "field": {
+        "acquiredAt": "Acquisition date",
+        "class": "Class",
+        "classPlaceholder": "Select the class…",
+        "code": "Code",
+        "cost": "Acquisition cost (R$)",
+        "description": "Description",
+        "ncm": "NCM (optional)",
+        "quantity": "Quantity",
+        "rate": "Depreciation rate",
+        "residual": "Residual value (R$)"
+      },
+      "modal": {
+        "titleEdit": "Edit asset",
+        "titleNew": "New asset"
+      },
+      "new": "New asset",
+      "rate": {
+        "catalog": "From the catalog",
+        "catalogAria": "Catalog rate",
+        "explicit": "Explicit",
+        "explicitAria": "Explicit rate (% p.a.)",
+        "explicitPlaceholder": "E.g. 10 (% per year)",
+        "search": "Search by NCM or description…"
+      }
+    },
+    "cancel": "Cancel",
+    "class": {
+      "col": {
+        "accumulatedAccount": "Accumulated depreciation account",
+        "costAccount": "Asset account",
+        "depreciable": "Depreciable",
+        "name": "Name"
+      },
+      "delete": {
+        "title": "Remove class"
+      },
+      "empty": "No classes registered.",
+      "error": {
+        "accumulatedRequired": "Select the accumulated depreciation account (depreciable class).",
+        "codeRequired": "Enter the code.",
+        "costAccountRequired": "Select the asset account.",
+        "delete": "Could not remove the class.",
+        "nameRequired": "Enter the name.",
+        "save": "Could not save the class."
+      },
+      "modal": {
+        "titleEdit": "Edit class",
+        "titleNew": "New class"
+      },
+      "new": "New class"
+    },
+    "col": {
+      "accumulated": "Accum. depreciation",
+      "acquired": "Acquired",
+      "actions": "Actions",
+      "activated": "Activated",
+      "asset": "Asset",
+      "class": "Class",
+      "code": "Code",
+      "cost": "Cost",
+      "description": "Description",
+      "net": "Net value",
+      "status": "Status"
+    },
+    "conflict": "The asset changed — list reloaded. Check it and try again.",
+    "delete": {
+      "confirm": "Confirm removal",
+      "error": "Could not remove the asset.",
+      "note": "The asset leaves the list; history is not erased.",
+      "removing": "Removing…",
+      "title": "Remove asset"
+    },
+    "dismiss": "Close",
+    "dispose": {
+      "confirm": "Confirm disposal",
+      "disposing": "Disposing…",
+      "error": {
+        "counterpartRequired": "Enter the counterpart account for the proceeds.",
+        "dateRequired": "Enter the disposal date.",
+        "generic": "Could not dispose of the asset."
+      },
+      "field": {
+        "counterpart": "Counterpart account (where the proceeds went)",
+        "date": "Disposal date",
+        "proceeds": "Proceeds (R$) — 0 if scrapped"
+      },
+      "title": "Dispose of asset"
+    },
+    "error": {
+      "classes": "Could not load the classes.",
+      "load": "Error loading the assets."
+    },
+    "filter": {
+      "allClasses": "All classes",
+      "allStatus": "All statuses",
+      "class": "Class",
+      "status": "Status"
+    },
+    "fromNfe": "from NF-e",
+    "loading": "Loading…",
+    "no": "No",
+    "rate": {
+      "col": {
+        "justification": "Justification",
+        "life": "Useful life (years)",
+        "ncm": "NCM",
+        "rate": "Rate (% p.a.)",
+        "source": "Source"
+      },
+      "empty": "No rates registered.",
+      "error": {
+        "descriptionRequired": "Enter the description.",
+        "hide": "Could not hide the rate.",
+        "justificationRequired": "The justification is required.",
+        "lifeYearsInvalid": "Useful life must be an integer of at least 1.",
+        "load": "Error loading the rates.",
+        "rateInvalid": "Enter the rate (between 0.01% and 100%).",
+        "save": "Could not save the rate."
+      },
+      "field": {
+        "justification": "Justification (required)",
+        "life": "Useful life (years)",
+        "ncm": "NCM (optional)",
+        "percent": "Rate (% p.a.)"
+      },
+      "hiddenBadge": "hidden",
+      "hide": "Hide",
+      "hideModal": {
+        "confirm": "Confirm",
+        "note": "It stops appearing in the picker; assets already using the rate keep their snapshot.",
+        "title": "Hide rate"
+      },
+      "hiding": "Hiding…",
+      "modal": {
+        "title": "New depreciation rate"
+      },
+      "new": "New rate",
+      "showHidden": "Show hidden",
+      "source": "source"
+    },
+    "reconcile": {
+      "button": "Reconcile",
+      "error": "Could not reconcile.",
+      "result": "Reconciliation: {{checked}} checked, {{repaired}} repaired, {{drafts}} draft(s) recreated from NF-e.",
+      "running": "Reconciling…"
+    },
+    "run": {
+      "button": "Run depreciation",
+      "error": "Could not run the depreciation.",
+      "failure": "Failure",
+      "goToAccounts": "Set up the fixed-asset accounts",
+      "goToPeriods": "Open periods",
+      "month": "Reference month",
+      "result": "Depreciation of {{month}}: {{posted}} posted, {{skipped}} skipped, {{failed}} failed.",
+      "running": "Running…"
+    },
+    "save": "Save",
+    "saving": "Saving…",
+    "section": {
+      "accounts": "Accounts",
+      "assets": "Assets",
+      "classes": "Classes",
+      "rates": "Rates"
+    },
+    "selectAccount": "Select the account…",
+    "status": {
+      "ACTIVE": "Active",
+      "DISPOSED": "Disposed",
+      "FULLY_DEPRECIATED": "Fully depreciated",
+      "PENDING_ACTIVATION": "Pending activation"
+    },
+    "subtitle": "Assets, classes, depreciation rates and the accounts that monthly depreciation and disposal use.",
+    "title": "Fixed assets",
+    "yes": "Yes"
   }
 }

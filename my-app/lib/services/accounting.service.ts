@@ -11,6 +11,7 @@ import type {
   ReopenPeriodInput,
 } from '@/types/contracts/accounting/PostingDto.gen';
 import type { CloseExerciseInput } from '@/types/contracts/accounting/ClosingDto.gen';
+import type { UpdateAccountingScopeSettingsInput } from '@/types/contracts/accounting/AccountingScopeSettingsDto.gen';
 import type {
   AutoMatchStatementInput,
   ManualMatchInput,
@@ -172,6 +173,24 @@ export interface AccountLedgerReport {
   rows: AccountLedgerRow[];
   closingBalanceCents: number;
 }
+
+/** `GET/PUT /api/accounting/settings` — resposta à mão (decisão 9); os 6 ids são `null` até o operador configurar. */
+export interface AccountingScopeSettings {
+  unitId: string;
+  bankChargeExpenseAccountId: string | null;
+  bankChargeIncomeAccountId: string | null;
+  depreciationExpenseAccountId: string | null;
+  disposalGainAccountId: string | null;
+  disposalLossAccountId: string | null;
+  depreciationParteBAccountId: string | null;
+  updatedAt: string | null;
+}
+
+/** PATCH parcial das contas do imobilizado (FE-INCR-FIXED-ASSETS item 22) — nunca toca tarifa bancária nem Parte B. */
+export type FixedAssetAccountsPatch = Pick<
+  UpdateAccountingScopeSettingsInput,
+  'unitId' | 'depreciationExpenseAccountId' | 'disposalGainAccountId' | 'disposalLossAccountId'
+>;
 
 export interface Account {
   id: string;
@@ -717,6 +736,19 @@ export const accountingService = {
   async getAccounts(unitId: string): Promise<{ accounts: Account[] }> {
     const qs = buildQuery({ unitId });
     return (await apiClient.get<ApiEnvelope<{ accounts: Account[] }>>(`/accounting/accounts${qs}`)).data;
+  },
+
+  /** Configuração contábil do escopo (contas de encargo bancário + imobilizado). */
+  async getSettings(unitId: string): Promise<AccountingScopeSettings> {
+    const qs = buildQuery({ unitId });
+    return (await apiClient.get<ApiEnvelope<AccountingScopeSettings>>(`/accounting/settings${qs}`)).data;
+  },
+
+  /** PUT parcial — só os campos presentes no corpo mudam (`null` limpa). */
+  async updateSettings(input: FixedAssetAccountsPatch): Promise<AccountingScopeSettings> {
+    const res = await apiClient.put<ApiEnvelope<AccountingScopeSettings>>('/accounting/settings', input);
+    notify('Contas do imobilizado salvas.', 'success', 'Contabilidade');
+    return res.data;
   },
 
   /** List journal entries (lançamentos) for a unit — raw paginated list. */
