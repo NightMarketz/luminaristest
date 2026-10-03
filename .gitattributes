@@ -5,3 +5,13 @@
 .claude/workflows/*.mjs  text eol=lf
 .claude/skills/**/*.mjs  text eol=lf
 my-app/types/contracts/**/*.gen.ts text eol=lf linguist-generated=true
+
+# Artefatos GERADOS: conflito neles nunca se resolve à mão. O driver `regen` mantém o lado
+# atual sem conflito; depois do merge/rebase rode `scripts/regen-generated.sh` e comite.
+# O driver precisa ser registrado 1x por clone: `scripts/regen-generated.sh --setup`
+# (sem ele o git ignora o atributo e cai no merge de texto normal — degrada, não quebra).
+docs/plano/_INDEX.md                                               merge=regen
+docs/plano/_ANCORAS.md                                             merge=regen
+server/public/openapi.json                                         merge=regen
+server/src/features/*/dtos/__tests__/__dto-shapes__.json           merge=regen
+my-app/types/contracts/**/*.gen.ts                                 merge=regen
