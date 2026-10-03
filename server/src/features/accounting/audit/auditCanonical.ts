@@ -224,6 +224,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'sped.ecd_substituted':          ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
   'sped.ecf_rectified':            ['jobId', 'supersedesJobId', 'kind', 'year', 'sha256'],
   'sped.ecf_rectification_waived': ['jobId', 'year'],
+  // I1b (ADR-INCR-UNIT-REKEY item 12, F-RK-6 b) — âncora genesis na cadeia da unidade nova, ligando-a à cadeia selada
+  // do unitId legado. Ids/hash/contagens só (sem PII); `tables` é o JSON estável das contagens por tabela.
+  'unit.rekeyed': ['fromUnitId', 'fromHeadHash', 'fromNextSeq', 'tables'],
 };
 
 /**
