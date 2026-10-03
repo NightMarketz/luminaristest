@@ -147,8 +147,9 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
   it('§ 5º III: excedente anual maior ⇒ a do T04 fica limitada à diferença (excedente anual − anteriores)', () => {
     // T01 2.000.000 (excedente 750.000); T02/T03 0 (sobra acumulada 2.500.000 → limite do T04 3.750.000)
     // T04 6.000.000 → excedente do trimestre 2.250.000; acumulada 8.000.000, excedente anual 3.000.000
-    // diferença 3.000.000 − 750.000 = 2.250.000 → min(2.250.000, 2.250.000). Com a sobra cumulativa do § 4º a trava
-    // coincide com a regra trimestral; o caso em que ela morde é o do § 9º (abaixo).
+    // diferença 3.000.000 − 750.000 = 2.250.000 → min(2.250.000, 2.250.000). Com a sobra cumulativa do § 4º e a ordem
+    // sequencial do F-TA-3 a trava do § 5º III coincide com a regra trimestral — nenhum caso aqui a faz cortar (o
+    // `minB` é defesa para memória confirmada fora dessa cadeia). O teste fixa ramo e valor, não o corte.
     const r = apurarAno({ T01: [2_000_000, 0], T02: [0, 0], T03: [0, 0], T04: [6_000_000, 0] });
     expect(v(r.T04, 'LC224_EXCEDENTE')).toBe(String(R(2_250_000)));
     expect(r.T04.memoria.find((m) => m.codigo === 'LC224_EXCEDENTE')?.fonte).toMatch(/§ 5º III$/);
@@ -160,6 +161,7 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
     expect(trimestresEmAtividade(2026, '2025-03-10', '2026-05-15')).toEqual(['T01', 'T02']);
     // início 01/07: T03 1.000.000 (sobra 250.000); T04 2.000.000 → limite do trimestre 1.500.000, excedente 500.000
     // limite anual 2 × 1.250.000 = 2.500.000; acumulada 3.000.000 → excedente anual 500.000 ≥ 0 ⇒ III: 500.000
+    // (o que o § 9º muda aqui é o RAMO — III com a data, I sem ela —, não o corte do min)
     const com = apurarAno({ T03: [1_000_000, 0], T04: [2_000_000, 0] }, 'IRPJ', { inicioAtividadeEm: '2026-07-01' });
     expect(v(com.T04, 'LC224_LIMITE_ANUAL')).toBe(String(R(2_500_000)));
     expect(v(com.T04, 'LC224_EXCEDENTE')).toBe(String(R(500_000)));

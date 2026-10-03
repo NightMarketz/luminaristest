@@ -335,9 +335,12 @@ export class CompanyFiscalProfileService {
   }
 }
 
-/** ADR D1: REAL com a forma nula ⇒ TRIMESTRAL efetivo. Usado pela trava (null × 'TRIMESTRAL' no REAL não é troca). */
+/**
+ * ADR D1: REAL com a forma nula ⇒ TRIMESTRAL efetivo; PRESUMIDO só é trimestral. Usado pela trava (null ×
+ * 'TRIMESTRAL' nesses regimes não é troca).
+ */
 export function formaEfetiva(regime: string, forma: string | null): string | null {
-  return forma ?? (regime === 'REAL' ? 'TRIMESTRAL' : null);
+  return forma ?? (regime === 'REAL' || regime === 'PRESUMIDO' ? 'TRIMESTRAL' : null);
 }
 
 /**

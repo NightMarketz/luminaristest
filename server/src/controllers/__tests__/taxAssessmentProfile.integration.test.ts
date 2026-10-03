@@ -64,6 +64,13 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     }
     // REAL com forma nula = TRIMESTRAL efetivo (D1) — não é troca
     expect((await put(2026, { ...travado, formaApuracaoIrpjCsll: null })).status).toBe(200);
+    // PRESUMIDO só é trimestral (D1): nula × TRIMESTRAL também não é troca
+    await put(2027, { regime: 'PRESUMIDO', ecf: ECF });
+    await prisma.companyFiscalProfile.update({
+      where: { userId_anoCalendario: { userId: dono.id, anoCalendario: 2027 } },
+      data: { formaApuracaoTravadaEm: new Date('2027-04-30T12:00:00Z') },
+    });
+    expect((await put(2027, { regime: 'PRESUMIDO', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL' })).status).toBe(200);
     const del = await request(app).delete(`${BASE}/2026`).set(authHeader(dono)).query({ unitId: UNIT });
     expect(del.status).toBe(400);
     expect(JSON.stringify(del.body)).toContain('FORMA_TRAVADA');
