@@ -308,12 +308,14 @@ export const ClosePeriodSchema = z
  *         unitId:   { type: string }
  *         periodId: { type: string }
  *         reason:   { type: string }
+ *         ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário" }
  */
 export const ReopenPeriodSchema = z
   .object({
     unitId: z.string().min(1),
     periodId: z.string().min(1),
     reason: z.string().optional(),
+    ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
   })
   .strict();
 

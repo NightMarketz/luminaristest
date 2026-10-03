@@ -91,6 +91,7 @@ export interface ReopenPeriodInput {
 unitId: string
 periodId: string
 reason?: string
+ownerUserId?: string
 }
 export interface BalanceSheetQueryInput {
 unitId: string

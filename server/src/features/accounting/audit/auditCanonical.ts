@@ -32,10 +32,12 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'entry.source_retired': ['sourceDocumentId', 'sourceType', 'motivoCodigo'],
   'account.created': ['code', 'name', 'nature', 'acceptsEntries'],
   'account.deleted': ['code'],
-  'period.opened':      ['year', 'month', 'fromStatus', 'toStatus'],
+  // GOV-CONTADOR (BRIEF item 16): `assignmentId` quando há contador responsável ativo — evento antigo não tem a
+  // chave, então o hash dele não muda (canonicalize pula ausente).
+  'period.opened':      ['year', 'month', 'fromStatus', 'toStatus', 'assignmentId'],
   'period.soft_closed': ['year', 'month', 'fromStatus', 'toStatus', 'reason'],
   'period.hard_closed': ['year', 'month', 'fromStatus', 'toStatus', 'reason'],
-  'period.reopened':    ['year', 'month', 'fromStatus', 'toStatus', 'reason'],
+  'period.reopened':    ['year', 'month', 'fromStatus', 'toStatus', 'reason', 'assignmentId'],
   // BE-INCR-5 — document attachments. No file path, filename, or raw content (PII-safe).
   'attachment.uploaded':   ['journalEntryId', 'targetType', 'targetId', 'mimeType', 'sizeBytes', 'sha256'], // F-DFE-19 b: alvo polimórfico (journalEntryId = '' fora de JOURNAL_ENTRY)
   'attachment.deleted':    ['journalEntryId', 'targetType', 'targetId', 'mimeType', 'sizeBytes', 'sha256', 'deletedById'],
@@ -201,8 +203,13 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'review.finding_added':   ['reviewId', 'findingId', 'register', 'severity'],
   'review.finding_resolved': ['reviewId', 'findingId', 'resolution', 'targetType', 'targetId'],
   'review.jobs_replaced':   ['reviewId', 'fromEcdJobId', 'toEcdJobId', 'fromEcfJobId', 'toEcfJobId'],
-  'review.signed_off':      ['reviewId', 'reviewerName', 'reviewerCrc'],
-  'review.rejected':        ['reviewId', 'reason'],
+  'review.signed_off':      ['reviewId', 'reviewerName', 'reviewerCrc', 'assignmentId'],
+  'review.rejected':        ['reviewId', 'reason', 'assignmentId'],
+  // BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 16). CRC espelha `contact.registered`; nunca
+  // e-mail, nome ou CPF (D5).
+  'accountant_assignment.invited':  ['assignmentId', 'accountingContactId', 'crcNumber', 'crcUf'],
+  'accountant_assignment.accepted': ['assignmentId', 'supersededAssignmentId'],
+  'accountant_assignment.ended':    ['assignmentId', 'fromStatus', 'endedBy', 'reason'],
   // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
   // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
   // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).
