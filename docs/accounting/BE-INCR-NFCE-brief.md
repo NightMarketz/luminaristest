@@ -7,8 +7,9 @@
 > **Este documento NÃO escreve código** — checklist + contratos esboçados + forks. **Forks F-NFCE-1..12: ✅
 > RATIFICADOS 2026-10-02** pelo dono, por questionário (3 lotes); **F-NFCE-3, F-NFCE-7 e F-NFCE-12 contra a
 > recomendação** — registro e efeitos no fim da §5 e em
-> [`D-2026-10-02-X10A-NFCE-FORKS`](../plano/decisoes/D-2026-10-02-X10A-NFCE-FORKS.md). **Sub-fork F-NFCE-12b
-> PENDENTE.** A `sessao-feature` só abre com "executa" do dono.
+> [`D-2026-10-02-X10A-NFCE-FORKS`](../plano/decisoes/D-2026-10-02-X10A-NFCE-FORKS.md). **Sub-fork F-NFCE-12b:
+> ✅ RATIFICADO 2026-10-02 → (b) todos os subgrupos do UB, contra a recomendação.** Nenhum fork pendente. A
+> `sessao-feature` só abre com "executa" do dono.
 >
 > **Em duas linhas:** tudo o que não depende da conta Focus (D5) cabe aqui — seleção do adaptador por `kind`,
 > `NFCE` na porta, perfil fiscal do produto, IE do emitente, montagem do leiaute 55/65 validada localmente,
@@ -240,7 +241,9 @@ Cada item termina no teste que o prova.
 20. **[F-NFCE-12 ✅ b; subgrupos = F-NFCE-12b]** CRT 3 (regime normal): grupo `IBSCBS` obrigatório desde
     03/08/2026 (`[RTC-SIMPLES]`, Obs. 2) **atendido neste ciclo**: montagem do grupo pela transcrição do PR-0 (item
     1), com `ibsCbsCst`/`ibsCbsClassTrib` do perfil do produto e as regras do grupo como `superRefine` (código da
-    rejeição na mensagem). Quais subgrupos entram = F-NFCE-12b. Teste: perfil PRESUMIDO + produto com
+    rejeição na mensagem). **F-NFCE-12b (b): todos os subgrupos do UB** (base, `gRed`, diferimento, monofásico,
+    crédito presumido, ajuste de competência) — nenhum `cClassTrib` válido da transcrição é recusado por falta de
+    subgrupo. Teste: um caso por subgrupo, mais perfil PRESUMIDO + produto com
     CST/cClassTrib ⇒ grupo montado e validado; produto sem CST ⇒ 400 nos faltantes.
 21. **[direto]** Chave de acesso montada localmente (`[NFE-CHAVE]`; `nfeChaveCheckDigit`, `lib/cnpj.ts:82`;
     `cNF` aleatório de 8 dígitos ≠ nNF) **só** quando o adaptador declara `numbersDps: false`. Teste: DV confere
@@ -419,7 +422,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 // linhas NFSE existentes recebem ambiente = '' (lacuna da NFS-e segue no GAP-MAP, fora deste BRIEF).
 ```
 
-## 5. Forks — ✅ RATIFICADOS 2026-10-02 (F-NFCE-12b pendente)
+## 5. Forks — ✅ RATIFICADOS 2026-10-02 (F-NFCE-1..12 + 12b)
 
 ### F-NFCE-1 — Como a seleção passa a considerar o tipo
 - **(a)** Um parceiro por instância (`DFE_PARTNER`) que declara `kinds`; tipo não suportado ⇒ desabilitado.
@@ -521,7 +524,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 - **Recomendação: (a).** Monofásico (combustíveis), diferimento e crédito presumido dependem de `cClassTrib` que um
   salão em regime normal não usa (inferido); a recusa nomeada aponta o que falta se o contador indicar uso.
   Custo de errar (a): produto do cliente cai num `cClassTrib` recusado e a nota não sai até a fatia seguinte.
-  **PENDENTE.**
+  **✅ RATIFICADO 02/10 (2ª rodada) → (b), contra a recomendação.**
 
 ### RATIFICAÇÃO — 2026-10-02 (dono, questionário, 3 lotes; pedido: *"ratifica os forks F-NFCE por questionário"*)
 
@@ -539,6 +542,7 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 | F-NFCE-10 | (a) seguir o F-EVT-1 do X11 | não | item 27 |
 | F-NFCE-11 | (a) preço líquido, `vDesc = 0` | não | item 14 |
 | **F-NFCE-12** | **(b) transcrever o UB agora e atender o regime normal neste ciclo** | **SIM** | item 1 (PR-0 com o UB); item 20 deixa de recusar o regime normal; insumo ausente 6 sai da §7; abre o **F-NFCE-12b** (subgrupos) |
+| **F-NFCE-12b** (2ª rodada, 02/10) | **(b) todos os subgrupos do UB** (NT 2025.002 v1.51 pp. 19–30) | **SIM** | item 1: a transcrição cobre cada subgrupo com as regras de validação dele; item 20: o PR-6 monta todos, sem recusa nomeada por `cClassTrib` especial, com um teste vermelho por subgrupo. **Consequência declarada:** PR-0 e PR-6 maiores; monofásico (combustíveis) e crédito presumido entram sem uso conhecido no salão — código exercitado só por fixture até um cliente usar |
 
 ## 6. Pendente de validação externa (fonte citada, grau declarado)
 
@@ -581,13 +585,13 @@ model FiscalNumberVoid {            // cond. F-NFCE-5
 
 | PR | Itens | Depende |
 |---|---|---|
-| PR-0 (docs) | 1 (com o grupo UB), 2 | ✅ forks ratificados; F-NFCE-12b |
+| PR-0 (docs) | 1 (com o grupo UB inteiro, F-NFCE-12b b), 2 | ✅ forks ratificados |
 | PR-1 porta + seleção | 3–7 | F-NFCE-1 |
 | PR-2 perfis | 8–11, 26 (parte), 30–31 (parte) | F-NFCE-2, F-NFCE-3 |
 | PR-3 montagem (Simples) | 12–19, 21–22 | PR-0 |
 | PR-4 numeração + inutilização | 23–26 | F-NFCE-4, F-NFCE-5 |
 | PR-5 eventos | 27–29 | F-NFCE-9, F-NFCE-10; `janelaEventos` do X11 mergeado (item 3 do PR #466) |
-| PR-6 regime normal (IBS/CBS) | 20 | PR-0 com o UB; F-NFCE-12b |
+| PR-6 regime normal (IBS/CBS) | 20 (todos os subgrupos) | PR-0 com o UB |
 | — Focus | 33 | D5 + "executa" da emissão real (X10i) |
 
 ## 10. Gates de envio [OPS-001]
