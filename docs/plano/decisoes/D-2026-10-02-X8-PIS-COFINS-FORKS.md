@@ -2,14 +2,14 @@
 id: "D-2026-10-02-X8-PIS-COFINS-FORKS"
 tipo: "decisao"
 dominio: "fiscal"
-titulo: "Ratificação por questionário: forks F-X8-1..8 do ADR-INCR-PIS-COFINS — apuração mensal sem gerador de EFD"
+titulo: "Ratificação por questionário: forks F-X8-1..8 do ADR-INCR-PIS-COFINS (apuração mensal sem gerador de EFD) e F-PCB-1..5 do BRIEF"
 estado: "decided"
 autorizacao: "dono, chat, 2026-10-02 (AskUserQuestion, 2 lotes) — sem 'executa'"
 atualizado: "2026-10-02"
 ---
 # D-2026-10-02-X8-PIS-COFINS-FORKS — cédulas da ratificação do ADR do X8
 
-**Estado:** `decided` (8/8).
+**Estado:** `decided` (F-X8: 8/8; F-PCB: 5/5).
 **Autorização:** dono, chat, 02/10/2026: *"Autorizo: (1) abrir o ADR do X8 (PIS/COFINS) e ratificar os forks dele por
 questionário comigo agora; (2) depois, planejar o BRIEF do X8 (dono, 02/10) — sem 'executa'."* As respostas vieram
 pelo AskUserQuestion: o agente apresentou cada fork com contexto e recomendação; o dono decidiu.
@@ -62,5 +62,45 @@ Documento dos forks: [`ADR-INCR-PIS-COFINS.md`](../../adr/ADR-INCR-PIS-COFINS.md
 - **Resposta literal:** *"(a) Operador informa (Recomendado)"* → ✅ (a).
 
 **ADR-INCR-PIS-COFINS: 8/8 forks ratificados, todos na recomendação.** Promoção a `Accepted` registrada no ADR (§14).
-BRIEF: [`BE-INCR-PIS-COFINS-brief.md`](../../accounting/BE-INCR-PIS-COFINS-brief.md) — os forks dele (F-PCB-n) ficam
-**pendentes**: a autorização de 02/10 cobre planejar o BRIEF, não ratificá-lo.
+BRIEF: [`BE-INCR-PIS-COFINS-brief.md`](../../accounting/BE-INCR-PIS-COFINS-brief.md).
+
+---
+
+# BRIEF — forks F-PCB-1..5
+
+**Autorização:** dono, chat, 02/10/2026: *"Ratifica os F-PCB-1..5 por questionário agora"*. Documento dos forks:
+[`BE-INCR-PIS-COFINS-brief.md`](../../accounting/BE-INCR-PIS-COFINS-brief.md) §3. Continua sem "executa".
+
+## Rodada 3
+
+### F-PCB-1 — natureza da conta da provisão × gate de exaustividade da ECF
+- **Contexto dado:** a dedução da DRE é `Revenue` em `3.2`; a ECF Presumido recusa receita com movimento fora de
+  `3.1`/`3.3` (`SpedEcfGenerationService.ts:96-121`).
+- **Opções:** (a) `Revenue` em `3.2` + o gate ignora só as 2 contas configuradas (**recomendada**) · (b) natureza
+  `Expense` · (c) o gate ignora todo o `3.2`.
+- **Resposta literal:** *"(b) Natureza Expense"* → ✅ (b), **divergente da recomendação**.
+- **Checagem antes de registrar:** sem conflito com fork ratificado. O F-X8-4 → (a) decidiu provisionar por bridge; o
+  "(dedução)" do texto dele descrevia a conta, e passa a ser despesa (nota no ADR §14). Efeito aceito: na DRE, PIS/Cofins
+  aparecem em "despesas" (regra `dre.expenses`), não em "deduções da receita"; nenhum gate da ECF muda; a base do Real do
+  X7 continua deduzindo o valor.
+
+### F-PCB-2 — saldo credor anterior ao 1º mês apurado
+- **Opções:** (a) o operador informa só no 1º mês (**recomendada**) · (b) sempre zero.
+- **Resposta literal:** *"(a) Operador informa (Recomendado)"* → ✅ (a).
+
+### F-PCB-3 — outros créditos e retenções no lançamento
+- **Opções:** (a) não lança, como o X7 (**recomendada**) · (b) 5ª conta redutora.
+- **Resposta literal:** *"(a) Não lança, como o X7 (Recomendado)"* → ✅ (a).
+
+### F-PCB-4 — fatiamento
+- **Opções:** (a) 3 PRs seriais, PR-1 independente do X7 (**recomendada**) · (b) 1 PR depois do X7.
+- **Resposta literal:** *"(a) 3 PRs seriais (Recomendado)"* → ✅ (a).
+
+## Rodada 4
+
+### F-PCB-5 — perfis já gravados com `PRESUMIDO + NAO_CUMULATIVO`
+- **Opções:** (a) importação e preview da NF-e recusam (400) até corrigir o perfil (**recomendada**) · (b) só o DTO muda.
+- **Resposta literal:** *"(a) Importação recusa (Recomendado)"* → ✅ (a).
+
+**BRIEF: 5/5 forks ratificados (4 na recomendação, F-PCB-1 divergente).** O X8 fica pronto para "executa" do PR-1
+(BRIEF itens 1–6), que não depende do X7.

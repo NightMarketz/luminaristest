@@ -269,6 +269,9 @@ export const PisCofinsPreviewSchema = z.object({
   **diferido** (não rejeitado) e volta só com autorização nova. O §10 deixa de importar.
 - **Planejamento autorizado (02/10)** → [`BE-INCR-PIS-COFINS-brief.md`](../accounting/BE-INCR-PIS-COFINS-brief.md).
 - **`Accepted` em 02/10.**
+- **Efeito do BRIEF (02/10, F-PCB-1 → b, divergente):** a provisão do F-X8-4 debita conta de **despesa** (`Expense`),
+  não de dedução da receita (`3.2`) — o "(dedução)" do texto do F-X8-4 vale como descrição, não como natureza de conta.
+  Motivo: a dedução em `3.2` cairia no gate de exaustividade da ECF Presumido. Os demais F-PCB → (a).
 
 ## 15. Verificação na fonte primária (02/10)
 

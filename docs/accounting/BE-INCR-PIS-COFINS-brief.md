@@ -3,8 +3,11 @@
 > Produzido em `sessao-planejamento` em 02/10/2026, sobre `origin/main` `dafe594e`. Herda o esqueleto da §5 (P1–P12) do
 > [`ADR-INCR-PIS-COFINS`](../adr/ADR-INCR-PIS-COFINS.md), **Accepted** em 02/10 (8/8 forks ratificados, todos (a):
 > [`D-2026-10-02-X8-PIS-COFINS-FORKS`](../plano/decisoes/D-2026-10-02-X8-PIS-COFINS-FORKS.md)).
-> **Este documento NÃO escreve código.** Traz checklist, contratos esboçados e forks **F-PCB-1..5, RATIFICAÇÃO
-> PENDENTE**. Nenhum item vira código sem "executa" do dono (ORCH-006).
+> **Este documento NÃO escreve código.** Traz checklist, contratos esboçados e forks **F-PCB-1..5, ✅ RATIFICADOS em
+> 02/10** por questionário (4 na recomendação; **F-PCB-1 → (b), divergente**: as contas de PIS/Cofins da provisão são
+> `Expense`, e nenhum gate da ECF muda). Registro:
+> [`D-2026-10-02-X8-PIS-COFINS-FORKS`](../plano/decisoes/D-2026-10-02-X8-PIS-COFINS-FORKS.md), rodadas 3–4. Nenhum item
+> vira código sem "executa" do dono (ORCH-006).
 >
 > **Alcance, dito antes de tudo:** PIS/Cofins são revogados em **01/01/2027** (LC 214 art. 542) e o 1º cliente é
 > **Simples** (400 aqui). O X8 é régua de ~3 meses de fato gerador. Pelo F-X8-1 → (a), **não há gerador de
@@ -17,7 +20,8 @@
 
 - **Item a planejar:** nó [`X8`](../plano/nos/X8.md), ADR §5 itens P1–P10 e P12 (o P11, EFD, saiu pelo F-X8-1 → a).
 - **Autorização:** dono, chat, 02/10/2026: *"… (2) depois, planejar o BRIEF do X8 (dono, 02/10) — sem 'executa'."*
-  - **Cobre exatamente:** este BRIEF. **Não cobre:** código; ratificar os F-PCB-n; o gerador de EFD (diferido pelo
+  - **Cobre exatamente:** este BRIEF (os F-PCB-n foram ratificados depois, por autorização própria: *"Ratifica os
+    F-PCB-1..5 por questionário agora"*, 02/10). **Não cobre:** código; o gerador de EFD (diferido pelo
     F-X8-1); a correção na origem do salão-parceiro (ADR §11 item 1).
   - **Divergência do passo 1:** nenhuma. A nota do nó dizia "só ADR"; a mensagem de 02/10 amplia para o BRIEF.
 - **Fatos consumados que o BRIEF respeita** (lidos em `dafe594e`, grau V; caminhos sob `server/`):
@@ -33,7 +37,8 @@
     `AccountingReportService.computeDreNet`, `:243-271`).
   - **Conflito achado nesta sessão (V):** o gate de exaustividade da ECF Presumido recusa (400) **qualquer** conta
     `Revenue` folha com movimento no ano fora de `3.1`/`3.3` (`SpedEcfGenerationService.ts:96-121`). Uma provisão de
-    PIS/Cofins em `3.2.x` (dedução) faria a ECF Presumido falhar. É o F-PCB-1.
+    PIS/Cofins em `3.2.x` (dedução) faria a ECF Presumido falhar. **Resolvido pelo F-PCB-1 → (b):** as contas são
+    `Expense`, fora do gate.
   - X7 (dependência): `TaxAssessment`, `receitaBrutaPorAtividade` (item 6), o fluxo prévia/confirmação (itens 13–14), a
     provisão por bridge (item 15) e o reconcile (item 16) estão no BRIEF da Fase A (F-TA-10 → a: **PR-1** perfil +
     parâmetros + funções puras; **PR-2** model + rotas; **PR-3** provisão). **Nada disso existe em código ainda.**
@@ -59,7 +64,7 @@
 ## Definição de pronto
 
 (1) checklist numerado e testável (§1); (2) contratos materializáveis (§2); (3) forks com caminhos, recomendação e
-**RATIFICAÇÃO PENDENTE** (§3); (4) pendências externas (§4); (5) insumos ausentes (§5); (6) achados fora de escopo (§6).
+**RATIFICAÇÃO PENDENTE** (§3 — ratificados em 02/10); (4) pendências externas (§4); (5) insumos ausentes (§5); (6) achados fora de escopo (§6).
 
 ---
 
@@ -76,12 +81,14 @@ de pendência externa (§4).
    o X8 recusa na prévia (item 9).
    - **Teste:** o par ilegal ⇒ 400; `PRESUMIDO`+`CUMULATIVO` e `REAL`+`NAO_CUMULATIVO` passam; snapshot de shape sem
      mudança (o refine é invisível ao snapshot — o teste é este).
-1b. **[F-PCB-5] Linhas já gravadas com o par ilegal.** Recomendação (a): `FiscalProfileService.requireCostRegime` (`:135`, consumido
+1b. **[D, F-PCB-5 → a] Linhas já gravadas com o par ilegal.** `FiscalProfileService.requireCostRegime` (`:135`, consumido
    pela importação e pelo preview da NF-e) passa a responder 400 nomeado para `PRESUMIDO`+`NAO_CUMULATIVO`, em vez de
    creditar.
-2. **[D, F-TA-6 por analogia, F-X8-4 → a] Contas da provisão** em `FiscalProfile` (unidade), 4 FKs nullable:
-   `pisDeducaoAccountId`, `cofinsDeducaoAccountId` (natureza: [F-PCB-1]), `pisRecolherAccountId`,
-   `cofinsRecolherAccountId` (`Liability`). Checagem no molde `assertAssetAccount` (novo `assertLiabilityAccount`).
+2. **[D, F-TA-6 por analogia, F-X8-4 → a, F-PCB-1 → b] Contas da provisão** em `FiscalProfile` (unidade), 4 FKs
+   nullable: `pisDespesaAccountId`, `cofinsDespesaAccountId` (**`Expense`**, checadas pelo `assertExpenseAccount` que já
+   existe, `FiscalProfileService.ts:213`), `pisRecolherAccountId`, `cofinsRecolherAccountId` (`Liability`, novo
+   `assertLiabilityAccount` no mesmo molde). Na DRE, `Expense` fora de `4.2` cai em "despesas"
+   (`StatementMappingFixture.ts`, regra `dre.expenses`), não em "deduções da receita" — consequência aceita no F-PCB-1.
    Códigos = contador (P-1). Allowlist de `fiscal_profile.updated` (`auditCanonical.ts:140`) na mesma mudança.
 3. **[D, D9/D10] Tabela de parâmetros** `features/accounting/models/pisCofinsParams.ts`, no molde `obrigacoesPorRegime.ts`
    e da `taxAssessmentParams.ts` do X7:
@@ -114,7 +121,7 @@ de pendência externa (§4).
 ### Cálculo (funções puras: `(entrada, tabela vigente) → memória`)
 
 7. **[D, D3] Débito.** Receita do mês = `receitaBrutaPorAtividade(scope, from, to)` do X7 (mesmo gate de exaustividade,
-   com o ajuste do [F-PCB-1]). `base = servico + revenda − Σ ajustesBase`; débito = `bp(base, alíquota)` por tributo.
+   **sem mudança** — F-PCB-1 → b). `base = servico + revenda − Σ ajustesBase`; débito = `bp(base, alíquota)` por tributo.
    - `ajustesBase` (F-X8-5 a / F-X8-6 a): `ALIQUOTA_ZERO_REVENDA` ≤ revenda do mês, `COTA_PARTE_PARCEIRO` ≤ serviço do
      mês — senão 400 nomeando o tipo. Cada ajuste é uma linha da memória com a fonte (Lei 10.147 art. 2º / Lei 12.592
      art. 1º-A § 5º) e o documento.
@@ -131,10 +138,10 @@ de pendência externa (§4).
    modalidade derivada do regime da PJ (F-X8-3 a; inclui `REAL`+`CUMULATIVO`); outra unidade da PJ com movimento no mês
    (D5, listando as unidades).
 10. **[D, D7] Retenções** vêm do payload (`tributo`, `valorCents`, `documento?`), uma linha da memória cada.
-11. **[D, D4 + F-PCB-2] Saldo credor transportado.** A prévia de `Mxx` lê o `saldoNegativoCents` da apuração
+11. **[D, D4 + F-PCB-2 → a] Saldo credor transportado.** A prévia de `Mxx` lê o `saldoNegativoCents` da apuração
     `CONFIRMED` de `Mxx−1` do mesmo tributo (no `TaxAssessment` ele é o saldo credor — ADR §6). Ordem **sequencial**
     (precedente F-TA-3 → a): `Mxx` com `Mxx−1` do mesmo ano não confirmado ⇒ 409, salvo o 1º mês apurado no sistema,
-    cujo saldo credor anterior segue o [F-PCB-2]. Janeiro lê dezembro do ano anterior se existir.
+    cujo saldo credor anterior o operador informa (`saldoCredorAnterior`; em qualquer outro mês o campo ⇒ 400). Janeiro lê dezembro do ano anterior se existir.
 
 ### Persistência e fluxo (PR-2 — depois do PR-2 do X7)
 
@@ -158,12 +165,13 @@ de pendência externa (§4).
 
 ### Provisão (PR-3 — depois do PR-3 do X7)
 
-17. **[D, F-X8-4 → a + F-PCB-3] Provisão, commit 2**, bridge no molde do X7 item 15, `sourceType =
+17. **[D, F-X8-4 → a + F-PCB-1 → b + F-PCB-3 → a] Provisão, commit 2**, bridge no molde do X7 item 15, `sourceType =
     'tax.assessment.provision'`, `sourceId` = id da linha, data = último dia do mês:
-    - D dedução (`pis|cofinsDeducaoAccountId`) / C a recolher (`pis|cofinsRecolherAccountId`), valor = débito bruto;
+    - D despesa (`pis|cofinsDespesaAccountId`, `Expense`) / C a recolher (`pis|cofinsRecolherAccountId`), valor = débito bruto;
     - **não cumulativo:** + D a recolher / C `pisCofinsRecuperavelAccountId`, valor = crédito **da NF-e** aproveitado no
       mês (a parte do item 6 efetivamente usada; o saldo credor fica no ativo);
-    - outros créditos e retenções: [F-PCB-3];
+    - outros créditos e retenções: **não lançados** (F-PCB-3 → a) — ficam na memória, e a linha `A_RECOLHER_X_DARF`
+      mostra a diferença para o contador;
     - falha (conta faltando, período fechado) ⇒ `provisaoPendente = true`, commit 1 intacto; commit 3 grava
       `provisaoEntryId` com CAS; substituição = `reverseEntry` + `postEntry`. Cabeçalho `atomicUntil` (AC-2.3-2).
 18. **[D] Reconcile** = a rota do X7 (`POST …/:id/provisao`) serve as linhas PIS/COFINS; **o teste chama 2× e assere a
@@ -186,9 +194,10 @@ de pendência externa (§4).
     - (c) `pisCents + cofinsCents = amountCents` em nota nova; nota antiga ⇒ `DERIVADO` com a mesma soma;
     - (d) `ajustesBase` maior que a receita da atividade ⇒ 400;
     - (e) `2027-01` ⇒ 400; `SIMPLES` ⇒ 400; caixa ⇒ 400; unidade divergente ⇒ 400; multiunidade ⇒ 400;
-    - (f) a ECF Presumido de um ano com provisão de PIS/Cofins lançada **gera** (prova do [F-PCB-1]);
-    - (g) a base do Real do X7 (item 7 dele) **inclui** a dedução de PIS/Cofins provisionada (dedutível; não entra na
-      guarda de circularidade do X7).
+    - (f) a ECF Presumido de um ano com provisão de PIS/Cofins lançada **gera** (prova do F-PCB-1 → b: conta `Expense`,
+      gate intocado);
+    - (g) a base do Real do X7 (item 7 dele) **inclui** a despesa de PIS/Cofins provisionada (dedutível; não entra na
+      guarda de circularidade do X7, que exclui só as contas de IRPJ/CSLL).
 
 ## 2. Contratos esboçados
 
@@ -236,8 +245,8 @@ type RecoverableTaxLine =
 
 ```prisma
 // FiscalProfile (unidade) — aditivo (item 2)
-pisDeducaoAccountId    String?  // natureza: F-PCB-1
-cofinsDeducaoAccountId String?
+pisDespesaAccountId    String?  // Expense — F-PCB-1 (b)
+cofinsDespesaAccountId String?  // Expense
 pisRecolherAccountId   String?  // Liability
 cofinsRecolherAccountId String? // Liability
 // + 4 relations Account onDelete: Restrict (molde icmsRecuperavelAccount)
@@ -247,15 +256,15 @@ cofinsRecolherAccountId String? // Liability
 **Rotas:** `POST /accounting/tax-assessments/pis-cofins/preview` · `POST /accounting/tax-assessments/pis-cofins` (+ os GET
 e o reconcile do X7, reusados).
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS (02/10, [D-2026-10-02-X8-PIS-COFINS-FORKS](../plano/decisoes/D-2026-10-02-X8-PIS-COFINS-FORKS.md), rodadas 3–4)
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
-| **F-PCB-1** Natureza da conta de dedução × gate da ECF | **(a)** `Revenue` sob `3.2` (aparece em "Deduções da receita" na DRE, `StatementMappingFixture.ts:25`) **e** o gate de exaustividade de `receitaBrutaPorAtividade` passa a ignorar **exatamente** as contas `pis/cofinsDeducaoAccountId` configuradas · (b) natureza `Expense` (nenhum gate muda; a DRE mostra PIS/Cofins como despesa, não dedução) · (c) o gate ignora todo o prefixo `3.2` | **(a).** A DRE certa sem abrir o gate: só as duas contas configuradas saem dele. (c) deixaria passar devolução/cancelamento lançados em `3.2`, que **são** ajuste da receita bruta. A mudança toca a função que o X7 extrai (item 6 dele): o teste (f) prova que a ECF continua gerando | alto em (c): receita some da base em silêncio; médio em (b): DRE errada |
-| **F-PCB-2** Saldo credor anterior ao 1º mês apurado no sistema | **(a)** o operador informa (`saldoCredorAnterior`, por tributo) **só** no 1º mês apurado do PJ; nos demais o campo ⇒ 400 · (b) sempre zero | **(a).** O cliente que entra no meio do ano traz saldo credor real (art. 3º § 4º); (b) faz pagar a mais. Uma linha da memória, marcada *"informado"* | baixo |
-| **F-PCB-3** Outros créditos e retenções no lançamento | **(a)** a provisão **não** os lança (como o X7 item 15, que provisiona o devido e deixa as deduções na memória): o "a recolher" fica maior que o DARF nesse valor, e a memória lista a diferença para o contador · (b) 5ª conta (`pisCofinsCreditoOutrosAccountId`, redutora) e lançamento D a recolher / C redutora | **(a).** Coerência com o X7 e com o "raso"; o crédito de energia/aluguel nunca passou pelo ativo "a recuperar", então não há o que baixar dele. Declarado na memória | médio: razão diverge do DARF até o contador ajustar |
-| **F-PCB-4** Fatiamento | **(a)** 3 PRs seriais: **PR-1** itens 1–6 (DTO, contas, parâmetros, crédito separado — **independe do X7**, pode ir já) · **PR-2** itens 7–16, 20–23 (depois do PR-2 do X7) · **PR-3** itens 17–19 (depois do PR-3 do X7) · (b) 1 PR depois do X7 inteiro | **(a).** O PR-1 fecha já o crédito indevido do `PRESUMIDO + NAO_CUMULATIVO` (item 1/1b) e começa a gravar o crédito separado — cada mês sem ele vira mais uma nota `DERIVADO`. Mesmo molde do F-TA-10 | baixo |
-| **F-PCB-5** Perfis já gravados com `PRESUMIDO + NAO_CUMULATIVO` | **(a)** a importação e o preview da NF-e recusam (400 nomeado) até o perfil ser corrigido · (b) só o DTO muda; linhas antigas seguem creditando | **(a).** O par é ilegal (art. 122) e gera crédito indevido; a correção é um `PUT` do perfil. Custo: um check em `requireCostRegime` | alto em (b): crédito indevido silencioso |
+| **F-PCB-1** Natureza da conta de dedução × gate da ECF | **(a)** `Revenue` sob `3.2` (aparece em "Deduções da receita" na DRE, `StatementMappingFixture.ts:25`) **e** o gate de exaustividade de `receitaBrutaPorAtividade` passa a ignorar **exatamente** as contas `pis/cofinsDeducaoAccountId` configuradas · (b) natureza `Expense` (nenhum gate muda; a DRE mostra PIS/Cofins como despesa, não dedução) · (c) o gate ignora todo o prefixo `3.2` | ✅ **RATIFICADO (b) — dono, 02/10, DIVERGENTE da recomendação.** Efeito: contas `Expense`, nenhum gate muda, PIS/Cofins aparecem como despesa na DRE. *Recomendação original:* **(a).** A DRE certa sem abrir o gate: só as duas contas configuradas saem dele. (c) deixaria passar devolução/cancelamento lançados em `3.2`, que **são** ajuste da receita bruta. A mudança toca a função que o X7 extrai (item 6 dele): o teste (f) prova que a ECF continua gerando | alto em (c): receita some da base em silêncio; médio em (b): DRE errada |
+| **F-PCB-2** Saldo credor anterior ao 1º mês apurado no sistema | **(a)** o operador informa (`saldoCredorAnterior`, por tributo) **só** no 1º mês apurado do PJ; nos demais o campo ⇒ 400 · (b) sempre zero | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O cliente que entra no meio do ano traz saldo credor real (art. 3º § 4º); (b) faz pagar a mais. Uma linha da memória, marcada *"informado"* | baixo |
+| **F-PCB-3** Outros créditos e retenções no lançamento | **(a)** a provisão **não** os lança (como o X7 item 15, que provisiona o devido e deixa as deduções na memória): o "a recolher" fica maior que o DARF nesse valor, e a memória lista a diferença para o contador · (b) 5ª conta (`pisCofinsCreditoOutrosAccountId`, redutora) e lançamento D a recolher / C redutora | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** Coerência com o X7 e com o "raso"; o crédito de energia/aluguel nunca passou pelo ativo "a recuperar", então não há o que baixar dele. Declarado na memória | médio: razão diverge do DARF até o contador ajustar |
+| **F-PCB-4** Fatiamento | **(a)** 3 PRs seriais: **PR-1** itens 1–6 (DTO, contas, parâmetros, crédito separado — **independe do X7**, pode ir já) · **PR-2** itens 7–16, 20–23 (depois do PR-2 do X7) · **PR-3** itens 17–19 (depois do PR-3 do X7) · (b) 1 PR depois do X7 inteiro | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O PR-1 fecha já o crédito indevido do `PRESUMIDO + NAO_CUMULATIVO` (item 1/1b) e começa a gravar o crédito separado — cada mês sem ele vira mais uma nota `DERIVADO`. Mesmo molde do F-TA-10 | baixo |
+| **F-PCB-5** Perfis já gravados com `PRESUMIDO + NAO_CUMULATIVO` | **(a)** a importação e o preview da NF-e recusam (400 nomeado) até o perfil ser corrigido · (b) só o DTO muda; linhas antigas seguem creditando | ✅ **RATIFICADO (a) — dono, 02/10.** **(a).** O par é ilegal (art. 122) e gera crédito indevido; a correção é um `PUT` do perfil. Custo: um check em `requireCostRegime` | alto em (b): crédito indevido silencioso |
 
 ## 4. Pendente de validação externa
 
