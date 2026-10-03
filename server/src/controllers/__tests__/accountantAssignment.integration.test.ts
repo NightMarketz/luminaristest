@@ -10,6 +10,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, resetDb, authHeader } from '@test/helpers';
 import { AccountingPeriodRepository } from '@/features/accounting/repositories/AccountingPeriodRepository';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
+import { getFactory } from '@/lib/factory';
 
 const app = makeApp();
 const UNIT = 'unit-gov';
@@ -230,6 +231,31 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     // ENDED com slot NULL não colide (NULL distinto no SQLite).
     await prisma.accountantAssignment.create({ data: { ...base, accountantUserId: terceiro.id, status: 'ENDED', activeSlot: null } });
     await prisma.accountantAssignment.create({ data: { ...base, accountantUserId: terceiro.id, status: 'ENDED', activeSlot: null } });
+  });
+
+  // ─────────────────────────────────────────────── 17g — resolver contra o banco real (review do #482, achado 2)
+  it('17g: PENDING e ENDED não delegam; ACTIVE delega só no unitId dela', async () => {
+    const svc = getFactory().getAccountantAssignmentService();
+    const contato = await criarContato(dono.id);
+    const base = {
+      userId: dono.id, unitId: UNIT, accountantUserId: contador.id, accountingContactId: contato.id,
+      crcNumber: 'SP-123456/O-1', crcUf: 'SP', createdById: dono.id,
+    };
+    const proprio = resolveAccountingScope({ userId: contador.id }, UNIT);
+
+    const pend = await prisma.accountantAssignment.create({ data: { ...base, status: 'PENDING', pendingSlot: 'PENDING' } });
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(proprio);
+
+    await prisma.accountantAssignment.update({ where: { id: pend.id }, data: { status: 'ENDED', pendingSlot: null } });
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(proprio);
+
+    await prisma.accountantAssignment.create({ data: { ...base, status: 'ACTIVE', activeSlot: 'ACTIVE' } });
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual({
+      ...resolveAccountingScope({ userId: dono.id }, UNIT), actorUserId: contador.id,
+    });
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, 'outra-unidade')).toEqual(
+      resolveAccountingScope({ userId: contador.id }, 'outra-unidade'),
+    );
   });
 
   // ─────────────────────────────────────────────── 17d — CAS do período
