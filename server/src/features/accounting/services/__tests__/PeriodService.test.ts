@@ -31,7 +31,7 @@ function makePeriod(status: string, year = 2026, month = 6) {
   return { id: 'p-1', userId: 'u1', unitId: 'unit-1', year, month, status };
 }
 
-function buildService(over: { periodRepo?: any; policy?: any; postingRepo?: any; auditService?: any } = {}) {
+function buildService(over: { periodRepo?: any; policy?: any; postingRepo?: any; auditService?: any; assignmentRepo?: any; policyInstance?: any } = {}) {
   const periodRepo = {
     findById: jest.fn(async () => makePeriod('OPEN')),
     findByYearMonth: jest.fn(async () => makePeriod('OPEN')),
@@ -41,13 +41,16 @@ function buildService(over: { periodRepo?: any; policy?: any; postingRepo?: any;
     ...over.periodRepo,
   };
 
-  const policy = {
+  const policy: any = over.policyInstance ?? {
     canManage: jest.fn(() => true),
     canPost: jest.fn(() => true),
     canRead: jest.fn(() => true),
     canClosePeriod: jest.fn(() => true),
     ...over.policy,
   };
+  // GOV-CONTADOR: sem atribuição ativa a reabertura cai em canClosePeriod (F-GOV-4 a).
+  if (!over.policyInstance) policy.canReopenPeriod ??= jest.fn((s: any, active: any) => !active && policy.canClosePeriod(s));
+  const assignmentRepo = { findActive: jest.fn(async () => null), ...over.assignmentRepo };
 
   // runTransaction runs the callback immediately (no real tx needed).
   const postingRepo = {
@@ -56,8 +59,8 @@ function buildService(over: { periodRepo?: any; policy?: any; postingRepo?: any;
   };
 
   const auditService = { append: jest.fn(async () => {}), ...over.auditService };
-  const svc = new PeriodService(periodRepo as any, policy as any, postingRepo as any, auditService as any);
-  return { svc, periodRepo, policy, postingRepo };
+  const svc = new PeriodService(periodRepo as any, policy as any, postingRepo as any, auditService as any, assignmentRepo as any);
+  return { svc, periodRepo, policy, postingRepo, assignmentRepo, auditService };
 }
 
 describe('PeriodService', () => {
@@ -297,5 +300,72 @@ describe('PeriodService', () => {
       });
       await expect(svc.openPeriod(scope, 'p-1')).rejects.toThrow('audit boom');
     });
+  });
+});
+
+// ── GOV-CONTADOR (BE-INCR-ACCOUNTANT-GOVERNANCE, BRIEF itens 10 e 17b/17c) — policy REAL ────────────────────
+describe('PeriodService — reabertura governada pelo contador responsável', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { AccountingPolicy } = require('../../policies/AccountingPolicy');
+  const realPolicy = new AccountingPolicy();
+  const active = { id: 'asg-1', ownerUserId: 'u1', unitId: 'unit-1', accountantUserId: 'c1', crcNumber: 'SP-123456/O-1' };
+  const delegated: AccountingScope = { ...scope, actorUserId: 'c1' };
+  const soft = { findById: jest.fn(async () => makePeriod('SOFT_CLOSED')) };
+
+  const paths = {
+    reopenPeriod: (svc: PeriodService, sc: AccountingScope) => svc.reopenPeriod(sc, 'p-1', 'ajuste'),
+    'openPeriod(SOFT_CLOSED)': (svc: PeriodService, sc: AccountingScope) => svc.openPeriod(sc, 'p-1'),
+  };
+
+  for (const [name, call] of Object.entries(paths)) {
+    describe(name, () => {
+      it('dono sem atribuição reabre (F-GOV-4 a)', async () => {
+        const { svc, periodRepo } = buildService({ policyInstance: realPolicy, periodRepo: soft });
+        await call(svc, scope);
+        expect(periodRepo.setStatus).toHaveBeenCalledTimes(1);
+      });
+
+      it('dono com atribuição ativa → 403 ACCOUNTANT_REQUIRED, setStatus não roda', async () => {
+        const { svc, periodRepo } = buildService({
+          policyInstance: realPolicy, periodRepo: soft, assignmentRepo: { findActive: jest.fn(async () => active) },
+        });
+        await expect(call(svc, scope)).rejects.toMatchObject({ statusCode: 403, errorCode: 'ACCOUNTANT_REQUIRED' });
+        expect(periodRepo.setStatus).not.toHaveBeenCalled();
+      });
+
+      it('contador delegado reabre e o evento carrega assignmentId', async () => {
+        const { svc, periodRepo, auditService } = buildService({
+          policyInstance: realPolicy, periodRepo: soft, assignmentRepo: { findActive: jest.fn(async () => active) },
+        });
+        await call(svc, delegated);
+        expect(periodRepo.setStatus).toHaveBeenCalledTimes(1);
+        expect(auditService.append.mock.calls[0][2].payload).toMatchObject({ assignmentId: 'asg-1' });
+      });
+
+      it('gate DENTRO da tx: preflight sem atribuição, releitura com tx ACTIVE → dono 403', async () => {
+        const findActive = jest.fn(async (_s: unknown, tx?: unknown) => (tx ? active : null));
+        const { svc, periodRepo } = buildService({ policyInstance: realPolicy, periodRepo: soft, assignmentRepo: { findActive } });
+        await expect(call(svc, scope)).rejects.toMatchObject({ errorCode: 'ACCOUNTANT_REQUIRED' });
+        expect(findActive.mock.calls.some((c) => c[1] !== undefined)).toBe(true);
+        expect(periodRepo.setStatus).not.toHaveBeenCalled();
+      });
+
+      it('gate DENTRO da tx: atribuição encerrada no meio → ex-contador delegado 403 (mata o fallback sem owner === actor)', async () => {
+        const findActive = jest.fn(async (_s: unknown, tx?: unknown) => (tx ? null : active));
+        const { svc, periodRepo } = buildService({ policyInstance: realPolicy, periodRepo: soft, assignmentRepo: { findActive } });
+        await expect(call(svc, delegated)).rejects.toMatchObject({ statusCode: 403 });
+        expect(periodRepo.setStatus).not.toHaveBeenCalled();
+      });
+    });
+  }
+
+  it('openPeriod(FUTURE) não passa pelo gate de reabertura: o dono com atribuição ativa abre', async () => {
+    const { svc, periodRepo } = buildService({
+      policyInstance: realPolicy,
+      periodRepo: { findById: jest.fn(async () => makePeriod('FUTURE')) },
+      assignmentRepo: { findActive: jest.fn(async () => active) },
+    });
+    await svc.openPeriod(scope, 'p-1');
+    expect(periodRepo.setStatus).toHaveBeenCalledTimes(1);
   });
 });

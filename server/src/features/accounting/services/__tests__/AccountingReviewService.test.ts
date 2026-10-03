@@ -17,7 +17,9 @@ import type { IReferentialMappingRepository } from '@/features/accounting/reposi
 import type { ICounterpartyRepository } from '@/features/accounting/repositories/ICounterpartyRepository';
 import type { IJournalEntryRepository } from '@/features/accounting/repositories/IJournalEntryRepository';
 import type { IAuditRepository } from '@/features/accounting/repositories/IAuditRepository';
-import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
+import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
+import type { ActiveAccountant, IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
+import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
@@ -60,6 +62,9 @@ interface Opts {
   accountFound?: boolean;
   existingEntry?: { id: string } | null;
   validateRejects?: boolean;
+  /** GOV-CONTADOR: policy real no lugar do dublê, e a atribuição ACTIVE por chamada (com/sem tx). */
+  policy?: IAccountingPolicy;
+  findActive?: (s: unknown, tx?: unknown) => Promise<ActiveAccountant | null>;
 }
 
 function build(opts: Opts = {}) {
@@ -102,18 +107,20 @@ function build(opts: Opts = {}) {
   });
   const postingService = { postEntry, reverseEntry, validateEntry } as unknown as PostingService;
 
-  const policy = {
+  const policy = opts.policy ?? ({
     canReviewAccounting: () => opts.can ?? true,
     canSignOffReview: () => opts.can ?? true,
     canRead: () => true,
-  } as unknown as IAccountingPolicy;
+  } as unknown as IAccountingPolicy);
+  const findActive = jest.fn(opts.findActive ?? (async () => null));
+  const assignmentRepo = { findActive } as unknown as IAccountantAssignmentRepository;
   const audit = { append: auditAppend } as unknown as AuditService;
 
   const service = new AccountingReviewService(
     reviewRepo, dataExchangeRepo, accountRepo, mappingRepo, counterpartyRepo, journalEntryRepo,
-    auditRepo, postingService, audit, policy,
+    auditRepo, postingService, audit, policy, assignmentRepo,
   );
-  return { service, create, findByJobs, update, createFinding, updateFinding, auditAppend, postEntry, reverseEntry, validateEntry, findBySource, listByTarget };
+  return { service, findActive, create, findByJobs, update, createFinding, updateFinding, auditAppend, postEntry, reverseEntry, validateEntry, findBySource, listByTarget };
 }
 
 const lines = [
@@ -316,6 +323,76 @@ describe('AccountingReviewService', () => {
     expect(r.status).toBe('REJECTED');
     expect(update.mock.calls[0][2]).toMatchObject({ status: 'REJECTED', closeReason: 'saldo não bate' });
     expect(auditAppend.mock.calls[0][2]).toMatchObject({ eventType: 'review.rejected' });
+  });
+
+  // ------------------------------------------- GOV-CONTADOR (BRIEF item 12, 17e) — sign-off/reject governados
+  describe('governança do contador responsável (BE-INCR-ACCOUNTANT-GOVERNANCE)', () => {
+    const policy = new AccountingPolicy();
+    const active: ActiveAccountant = {
+      id: 'asg-1', ownerUserId: 'dono-a', unitId: 'unit-1', accountantUserId: 'contador-c', crcNumber: 'SP-123456/O-1',
+    };
+    const delegated = { ...scope, actorUserId: 'contador-c' };
+    const okJobs = { 'job-ecd': job('job-ecd', 'EXPORT_SPED_ECD', T2), 'job-ecf': job('job-ecf', 'EXPORT_SPED_ECF', T2) };
+    const dto = { unitId: 'unit-1', reviewerName: 'Maria Contadora', reviewerCrc: 'SP-123456/O-1', statement: 'Atesto.' };
+    const rejectDto = { unitId: 'unit-1', reason: 'saldo não bate' };
+    const always = (a: ActiveAccountant | null) => async () => a;
+
+    const run = {
+      signOff: (svc: ReturnType<typeof build>['service'], sc: typeof scope) => svc.signOff(sc, 'r-1', dto),
+      reject: (svc: ReturnType<typeof build>['service'], sc: typeof scope) => svc.reject(sc, 'r-1', rejectDto),
+    };
+
+    for (const action of ['signOff', 'reject'] as const) {
+      it(`${action}: dono sem atribuição passa (F-GOV-4 a)`, async () => {
+        const { service, update } = build({ policy, jobs: okJobs, findActive: always(null) });
+        await run[action](service, scope);
+        expect(update).toHaveBeenCalledTimes(1);
+      });
+
+      it(`${action}: dono com atribuição ativa → 403 ACCOUNTANT_REQUIRED, nada gravado`, async () => {
+        const { service, update } = build({ policy, jobs: okJobs, findActive: always(active) });
+        await expect(run[action](service, scope)).rejects.toMatchObject({ statusCode: 403, errorCode: 'ACCOUNTANT_REQUIRED' });
+        expect(update).not.toHaveBeenCalled();
+      });
+
+      it(`${action}: contador delegado passa e o evento carrega assignmentId`, async () => {
+        const { service, update, auditAppend } = build({ policy, jobs: okJobs, findActive: always(active) });
+        await run[action](service, delegated);
+        expect(update).toHaveBeenCalledTimes(1);
+        expect(auditAppend.mock.calls[0][2].payload).toMatchObject({ assignmentId: 'asg-1' });
+      });
+
+      it(`${action}: gate DENTRO da tx — preflight sem atribuição, releitura com tx ACTIVE → dono 403`, async () => {
+        const { service, update, findActive } = build({
+          policy, jobs: okJobs, findActive: async (_s, tx) => (tx ? active : null),
+        });
+        await expect(run[action](service, scope)).rejects.toMatchObject({ errorCode: 'ACCOUNTANT_REQUIRED' });
+        expect(findActive.mock.calls.some((c) => c[1] !== undefined)).toBe(true); // a releitura passou o tx
+        expect(update).not.toHaveBeenCalled();
+      });
+
+      it(`${action}: gate DENTRO da tx — atribuição encerrada no meio → ex-contador delegado 403`, async () => {
+        const { service, update } = build({
+          policy, jobs: okJobs, findActive: async (_s, tx) => (tx ? null : active),
+        });
+        await expect(run[action](service, delegated)).rejects.toMatchObject({ statusCode: 403 });
+        expect(update).not.toHaveBeenCalled();
+      });
+    }
+
+    it('F-GOV-9 (a): com atribuição ativa, reviewerCrc diferente do CRC da atribuição → 400 REVIEWER_CRC_MISMATCH', async () => {
+      const { service, update } = build({ policy, jobs: okJobs, findActive: always(active) });
+      await expect(service.signOff(delegated, 'r-1', { ...dto, reviewerCrc: 'RJ-654321/O-2' })).rejects.toMatchObject({
+        statusCode: 400, errorCode: 'REVIEWER_CRC_MISMATCH',
+      });
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('F-GOV-9 (a): sem atribuição ativa o CRC digitado continua livre (o DTO do #436 não muda)', async () => {
+      const { service, update } = build({ policy, jobs: okJobs, findActive: always(null) });
+      await service.signOff(scope, 'r-1', { ...dto, reviewerCrc: 'RJ-654321/O-2' });
+      expect(update.mock.calls[0][2]).toMatchObject({ reviewerCrc: 'RJ-654321/O-2' });
+    });
   });
 
   // ---------------------------------------------------------------- item 8 / F-C11-6 — troca de jobs

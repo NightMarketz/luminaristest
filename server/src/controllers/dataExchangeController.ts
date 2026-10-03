@@ -110,7 +110,8 @@ export const getDataExchangeJob = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
     const data = await getFactory().getDataExchangeExportService().getJob(scope, req.params.jobId);
     return res.json({ success: true, data });
   } catch (error) {
@@ -202,7 +203,8 @@ export const downloadDataExchangeArtifact = async (req: Request, res: Response) 
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
     const { absPath, fileName, mimeType } = await getFactory()
       .getDataExchangeExportService()
       .getArtifactForDownload(scope, req.params.jobId);

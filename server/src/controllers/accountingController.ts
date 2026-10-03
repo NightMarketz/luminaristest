@@ -535,7 +535,8 @@ export const listPeriods = async (req: Request, res: Response) => {
     if (!unitId) throw new ValidationError('unitId é obrigatório.');
     const year = parseInt(req.query.year as string, 10);
     if (!year || isNaN(year)) throw new ValidationError('year é obrigatório e deve ser inteiro.');
-    const scope = resolveAccountingScope(user, unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId);
     const data = await getFactory().getPeriodService().listPeriods(scope, year);
     return res.json({ success: true, data });
   } catch (error) {
@@ -591,7 +592,8 @@ export const openPeriod = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const unitId = req.body?.unitId;
     if (!unitId) throw new ValidationError('unitId é obrigatório.');
-    const scope = resolveAccountingScope(user, unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId);
     const data = await getFactory().getPeriodService().openPeriod(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -681,7 +683,8 @@ export const reopenPeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
     const data = await getFactory().getPeriodService().reopenPeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {

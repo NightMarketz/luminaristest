@@ -30,6 +30,7 @@ import { CounterpartyRepository } from '../features/accounting/repositories/Coun
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
+import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
@@ -104,6 +105,7 @@ import { DynamicTableProductRefLookup } from '../features/accounting/services/Pr
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
+import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -199,6 +201,7 @@ import type { IAccountingPeriodRepository } from '../features/accounting/reposit
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
+import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
@@ -420,6 +423,7 @@ export class ApplicationFactory {
     accountingContact: IAccountingContactRepository;
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
+    accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
     depreciationRate: IDepreciationRateRepository;
     fixedAssetClass: IFixedAssetClassRepository;
     fixedAsset: IFixedAssetRepository;
@@ -503,6 +507,7 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
+    accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
@@ -566,6 +571,7 @@ export class ApplicationFactory {
       accountingContact: new AccountingContactRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
+      accountantAssignment: new AccountantAssignmentRepository(),
       depreciationRate: new DepreciationRateRepository(),
       fixedAssetClass: new FixedAssetClassRepository(),
       fixedAsset: new FixedAssetRepository(),
@@ -681,6 +687,7 @@ export class ApplicationFactory {
       postingService,
       auditService,
       this.policies.accounting,
+      this.repositories.accountantAssignment, // GOV-CONTADOR (item 12): gate de assinatura/rejeição
     );
 
     // Maker-checker approval tower (ADR-INCR-APPROVAL) — the controlled Draft→PendingApproval→Posted
@@ -700,6 +707,7 @@ export class ApplicationFactory {
       this.policies.accounting,
       this.repositories.posting,
       auditService,
+      this.repositories.accountantAssignment, // GOV-CONTADOR (item 10): gate de reabertura
     );
 
     // AccountingSync — application-level integration adapter (NOT the DynamicTable
@@ -1168,6 +1176,14 @@ export class ApplicationFactory {
         auditService,
         this.policies.accounting,
       ),
+      // BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR): contador responsável por escopo + resolver delegado.
+      accountantAssignment: new AccountantAssignmentService(
+        this.repositories.accountantAssignment,
+        this.repositories.accountingContact,
+        this.repositories.user,
+        this.policies.accounting,
+        auditService,
+      ),
       accountingDelivery: new AccountingDeliveryService(
         this.repositories.accountingDelivery,
         this.repositories.accountingContact,
@@ -1353,6 +1369,7 @@ export class ApplicationFactory {
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
+  public getAccountantAssignmentService = (): AccountantAssignmentService => this.services.accountantAssignment;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>

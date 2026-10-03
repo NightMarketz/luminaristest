@@ -1,5 +1,14 @@
 import type { AccountingScope } from '../scope/AccountingScope';
 
+/** Atribuição ACTIVE do contador responsável, como a policy a enxerga (BE-INCR-ACCOUNTANT-GOVERNANCE §4.2). */
+export interface ActiveAccountant {
+  id: string;
+  ownerUserId: string; // = AccountantAssignment.userId
+  unitId: string;
+  accountantUserId: string;
+  crcNumber: string; // snapshot normalizado
+}
+
 /**
  * Authorization contract for the accounting posting engine. Gates the three
  * sensitive operations: managing the chart, posting/reversing entries, and reading
@@ -117,7 +126,26 @@ export interface IAccountingPolicy {
    * gerencia dado (`canManage`); identidade do atestado (nome + CRC) é DADO do sign-off, não de sessão.
    */
   canReviewAccounting(scope: AccountingScope): boolean;
-  canSignOffReview(scope: AccountingScope): boolean;
+  /**
+   * BE-INCR-ACCOUNTANT-GOVERNANCE (F-GOV-3 a): com contador responsável ACTIVE, só ele (no livro do dono da
+   * atribuição) assina/rejeita; sem ACTIVE, `owner === actor && canManage(scope)` — como antes (F-GOV-4 a).
+   */
+  canSignOffReview(scope: AccountingScope, active: ActiveAccountant | null): boolean;
+
+  /**
+   * BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 4). Puros — nenhum lê o banco; a
+   * atribuição ACTIVE é lida pelo service (preflight + releitura com `tx`) e passada aqui.
+   */
+  canManageAccountantAssignment(scope: AccountingScope): boolean;
+  canRespondToAssignment(actorUserId: string, a: { accountantUserId: string }): boolean;
+  /** F-GOV-10 (a): qualquer das duas partes encerra sozinha. */
+  canEndAssignment(actorUserId: string, a: { userId: string; accountantUserId: string }): boolean;
+  /**
+   * F-GOV-3 a / F-GOV-4 a / F-GOV-11 a: com ACTIVE, só o contador ativo no livro do dono reabre; sem ACTIVE,
+   * `owner === actor && canClosePeriod(scope)`. O `owner === actor` do fallback barra o ex-contador com escopo
+   * delegado cuja atribuição foi encerrada entre o resolver e a tx.
+   */
+  canReopenPeriod(scope: AccountingScope, active: ActiveAccountant | null): boolean;
 
   /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this

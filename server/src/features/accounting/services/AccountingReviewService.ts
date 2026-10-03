@@ -18,7 +18,14 @@ import type {
   AccountingReviewFinding,
   AuditEvent,
 } from 'generated/prisma';
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import {
+  AccountantRequiredError,
+  AppError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../../../lib/errors';
 import {
   RESOLUTION_TARGET_AUDIT_TYPE,
   REVIEW_ADJUSTMENT_SOURCE_TYPE,
@@ -52,7 +59,8 @@ import type { IReferentialMappingRepository } from '../repositories/IReferential
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IAuditRepository } from '../repositories/IAuditRepository';
-import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant, IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -107,7 +115,28 @@ export class AccountingReviewService {
     private readonly postingService: PostingService,
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
+    private readonly assignmentRepo: IAccountantAssignmentRepository,
   ) {}
+
+  /**
+   * BE-INCR-ACCOUNTANT-GOVERNANCE (BRIEF item 12): gate de assinatura/rejeição — o mesmo predicado no preflight
+   * e na releitura da atribuição ACTIVE com `tx`. Com ACTIVE, o CRC digitado tem de bater com o snapshot da
+   * atribuição (F-GOV-9 a; os dois já normalizados por `parseCrcNumber`).
+   */
+  private assertCanSignOff(scope: AccountingScope, active: ActiveAccountant | null, reviewerCrc?: string): void {
+    if (!this.policy.canSignOffReview(scope, active)) {
+      throw active
+        ? new AccountantRequiredError('assinar ou rejeitar a revisão')
+        : new ForbiddenError('Você não tem permissão para assinar ou rejeitar revisões.');
+    }
+    if (active && reviewerCrc !== undefined && reviewerCrc !== active.crcNumber) {
+      throw new AppError(
+        'reviewerCrc não confere com o CRC do contador responsável ativo deste escopo.',
+        400,
+        'REVIEWER_CRC_MISMATCH',
+      );
+    }
+  }
 
   // ── Ciclo de vida ──────────────────────────────────────────────────────────
 
@@ -364,9 +393,7 @@ export class AccountingReviewService {
 
   /** Itens 8/9: staleness + BLOCKER aberto → 409 `REVIEW_STALE`; senão `SIGNED_OFF`. */
   async signOff(scope: AccountingScope, reviewId: string, dto: SignOffReviewInput): Promise<AccountingReview> {
-    if (!this.policy.canSignOffReview(scope)) {
-      throw new ForbiddenError('Você não tem permissão para assinar revisões.');
-    }
+    this.assertCanSignOff(scope, await this.assignmentRepo.findActive(scope), dto.reviewerCrc);
     const review = await this.requireReview(scope, reviewId);
     this.assertOpen(review);
     const jobs: AccountingDataExchangeJob[] = [];
@@ -374,6 +401,9 @@ export class AccountingReviewService {
     if (review.ecfJobId) jobs.push(await this.requireJob(scope, review.ecfJobId, 'ECF', review.year));
 
     return this.reviewRepo.runTransaction(async (tx) => {
+      // GATE AUTORITATIVO — a atribuição pode ter mudado entre o preflight e a tx.
+      const active = await this.assignmentRepo.findActive(scope, tx);
+      this.assertCanSignOff(scope, active, dto.reviewerCrc);
       // GATE AUTORITATIVO — relê achados dentro da tx: um achado adicionado entre a leitura e o
       // sign-off não pode passar.
       const fresh = await this.reviewRepo.findById(scope, review.id, tx);
@@ -405,7 +435,12 @@ export class AccountingReviewService {
         eventType: REVIEW_SIGNED_OFF,
         targetType: 'accounting_review',
         targetId: review.id,
-        payload: { reviewId: review.id, reviewerName: dto.reviewerName, reviewerCrc: dto.reviewerCrc },
+        payload: {
+          reviewId: review.id,
+          reviewerName: dto.reviewerName,
+          reviewerCrc: dto.reviewerCrc,
+          ...(active ? { assignmentId: active.id } : {}),
+        },
       });
       return updated;
     });
@@ -413,12 +448,13 @@ export class AccountingReviewService {
 
   /** Item 10: `REJECTED` — o pacote não deve ser entregue (gate C6, item 14). */
   async reject(scope: AccountingScope, reviewId: string, dto: RejectReviewInput): Promise<AccountingReview> {
-    if (!this.policy.canSignOffReview(scope)) {
-      throw new ForbiddenError('Você não tem permissão para rejeitar revisões.');
-    }
+    this.assertCanSignOff(scope, await this.assignmentRepo.findActive(scope));
     const review = await this.requireReview(scope, reviewId);
     this.assertOpen(review);
     return this.reviewRepo.runTransaction(async (tx) => {
+      // GATE AUTORITATIVO — a atribuição pode ter mudado entre o preflight e a tx.
+      const active = await this.assignmentRepo.findActive(scope, tx);
+      this.assertCanSignOff(scope, active);
       const updated = await this.reviewRepo.update(
         scope,
         review.id,
@@ -430,7 +466,7 @@ export class AccountingReviewService {
         eventType: REVIEW_REJECTED,
         targetType: 'accounting_review',
         targetId: review.id,
-        payload: { reviewId: review.id, reason: dto.reason },
+        payload: { reviewId: review.id, reason: dto.reason, ...(active ? { assignmentId: active.id } : {}) },
       });
       return updated;
     });

@@ -110,6 +110,13 @@ import {
   resolveFinding,
   signOffReview,
 } from '../controllers/accountingReviewController';
+import {
+  acceptAccountantAssignment,
+  endAccountantAssignment,
+  inviteAccountant,
+  listAccountantAssignments,
+  listMyAccountantAssignments,
+} from '../controllers/accountantAssignmentController';
 import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
@@ -314,6 +321,14 @@ router.post('/reviews/:id/findings/:findingId/adjustment', postAdjustment);
 router.patch('/reviews/:id/jobs', replaceReviewJobs);
 router.post('/reviews/:id/sign-off', signOffReview);
 router.post('/reviews/:id/reject', rejectReview);
+
+// Contador responsável por escopo (BE-INCR-ACCOUNTANT-GOVERNANCE, nó GOV-CONTADOR). `/mine` é segmento
+// estático ANTES de qualquer `/:id` (BRIEF item 9).
+router.post('/accountant-assignments', inviteAccountant);
+router.get('/accountant-assignments', listAccountantAssignments);
+router.get('/accountant-assignments/mine', listMyAccountantAssignments);
+router.post('/accountant-assignments/:id/accept', acceptAccountantAssignment);
+router.post('/accountant-assignments/:id/end', endAccountantAssignment);
 
 // Configuração por escopo (AccountingScopeSettings, 2026-09-15) — segmento estático, antes de /:unitId/periods.
 router.get('/settings', getAccountingSettings);

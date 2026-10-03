@@ -96,7 +96,7 @@ const { options } = require('../../scripts/generate-openapi');
 // +1 (BE-INCR-CRM-MODULE-COMPOSITION, I8 comportamento 8): POST /dashboard/modules/install — 223 → 224.
 // +1 (BE-INCR-W3-CHOICE, item 5): POST /dashboard/ai/ChatInterview — rota antiga, saiu de KNOWN_UNDOCUMENTED — 226 → 227.
 // +2 (ITEM-DESTINATION PR-2, item 18): /accounting/product-destinations (GET+PUT) e /{productRef} (DELETE) — 227 → 229.
-const BASELINE = 229; // +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
+const BASELINE = 233; // +4: /accounting/accountant-assignments (+/mine, /{id}/accept, /{id}/end — GOV-CONTADOR) · +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
