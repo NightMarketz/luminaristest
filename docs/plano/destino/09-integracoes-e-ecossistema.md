@@ -13,7 +13,7 @@ titulo: "Integrações e ecossistema"
 - **Comunicação:** ⟨corr⟩ **pacote ao contador DECIDIDO, envio fora do sistema** — F-CD1 → (a): o produto gera o
   pacote e o dono envia pelo próprio e-mail; não há SMTP no server (`ADR-CONTADOR-DELIVERY.md:152-156`). WhatsApp
   Business, SMS, calendário PROPOSTO.
-  ⟨corr 02/10⟩ Entregar a **nota fiscal ao tomador** (e-mail ou WhatsApp) fica fora do produto: F-COB-1 (mapa 02/10)
+  ⟨corr 02/10⟩ Entregar a **nota fiscal ao tomador** (e-mail ou WhatsApp) fica fora do produto: F-MCE-1 (mapa 02/10)
   ratificado → (a) em 02/10 — o operador baixa e repassa; mede-se se o portal ou a Focus enviam.
 - **Comércio:** e-commerce, marketplaces, catálogo no WhatsApp PROPOSTO.
 - **Plataforma:** API REST documentada (OpenAPI estático já existe), webhooks por evento, OAuth para apps GATILHO P5.

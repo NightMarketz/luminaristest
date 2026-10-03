@@ -485,7 +485,7 @@ uma decisão ratificada; este BRIEF só o registra.
 | F-FE-DFE-8 | (a) a ficha mostra só o que a DPS tem | não | §3.4, linha do endereço do tomador, vira instrução; o PV-3 decide se (b) entra depois |
 | F-FE-DFE-9 | (a) manter o F-MAN-5 (a) e medir no runbook | não | item 23 como escrito (XML do evento obrigatório); o PV-1 é o gatilho de reabertura |
 
-Com os quatro, o PR-2 fica sem fork pendente. Junto, o F-COB-1 (a) do [`MAPA-COBERTURA`](MAPA-COBERTURA-EMISSAO-2026-10-02.md)
+Com os quatro, o PR-2 fica sem fork pendente. Junto, o F-MCE-1 (a) do [`MAPA-COBERTURA`](MAPA-COBERTURA-EMISSAO-2026-10-02.md)
 §3.1 acrescenta um passo ao runbook do item 29 (§5, passo 8).
 
 ---
@@ -518,7 +518,7 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
 5. Rejeição: o portal recusa → rejeição registrada → reenvio → ficha da tentativa 2.
 6. Cancelamento da nota 2 pelo portal ("Cancelar", não "Substituir") → XML do evento (PV-1) → documento `CANCELLED`.
 7. Desfecho em 3 estados e assinatura: **do dono**.
-8. (F-COB-1 a, 02/10) O portal envia a nota ao tomador quando o e-mail dele está no cadastro? Colar o que o portal
+8. (F-MCE-1 a, 02/10) O portal envia a nota ao tomador quando o e-mail dele está no cadastro? Colar o que o portal
    mostrou ou enviou. Só medição: a entrega segue fora do produto (o operador baixa e repassa).
 
 ---
@@ -550,7 +550,7 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
    `crm-shared-table-loader-fetch-all`).
 8. **A8 — Entregar a nota ao tomador (e-mail ou WhatsApp) não está planejado** (registro de 02/10). A tela só
    oferece "Baixar XML" e "Baixar DANFSe" (item 24), e só em produção (F5); o servidor não tem transporte de
-   e-mail. Fork **F-COB-1** do [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1:
+   e-mail. Fork **F-MCE-1** do [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1:
    **✅ ratificado 02/10 → (a)** — fora do produto; o passo 8 do runbook (§5) mede se o portal envia.
 
 ---

@@ -12,6 +12,10 @@
   `CONSUMO`, F-PV-9c (b) emissão automática no job.** Efeitos no checklist: §5.2. Registro:
   [`D-2026-10-02-PACOTE-VALIDADE-FORKS`](../plano/decisoes/D-2026-10-02-PACOTE-VALIDADE-FORKS.md). PE-1..PE-6
   continuam dado externo (contador e jurídico). Não é "executa".
+- **2ª rodada 02/10 (confirmação do §5.2):** o backfill deixa de ser CLI e vira **job no boot** (F-PV-3c b, contra a
+  recomendação). Com isso, **o incremento só vai a produção depois do PE-6** (F-PV-3d), e o job só toca saldos
+  anteriores ao deploy (F-PV-3e a). `PACKAGE_EXPIRY_NFSE_PENDING` e o `pacoteCTribNac` destravando o `VENDA` foram
+  confirmados como escritos. Efeitos: §5.1–§5.2.
 - **Decisão de produto, nas palavras da nota:** o pacote ganha prazo. Quando vence, o saldo do passivo 2.1.1
   (Pacotes Pré-pagos) vira receita por não uso. O tratamento contábil do vencido é **pendente de validação
   externa (contador)** e entra no follow-up (§6).
@@ -350,6 +354,9 @@ export const ReconcilePendingReasonCode = z.enum([
 | F-PV-2 | (a) por saldo, com junção na recompra (vale o maior prazo) | não |
 | **F-PV-3** | **(b) backfill dos saldos vendidos antes do deploy** | **SIM** |
 | F-PV-3b *(novo)* | (a) o prazo do backfill conta do deploy: `expiresAt = lastValidDay(dataDoBackfill, N)` | não |
+| **F-PV-3c** *(2ª rodada 02/10)* | **(b) job automático no boot**, não CLI rodado pelo dono (o agente tinha fixado CLI no §5.2) | **SIM** |
+| F-PV-3d *(aberto pelo 3c)* | **o incremento só vai a produção depois do PE-6** (sem trava no código). Recomendação era flag de ambiente desligada | **SIM** |
+| F-PV-3e *(aberto pelo 3c)* | (a) o job só toca saldos anteriores ao deploy, com marca de execução | não |
 | F-PV-4 | (a) folha nova 3.4 + regra DRE provisória + fora do Presumido | não |
 | F-PV-5 | (a) competência `expiresOn + 1` | não |
 | F-PV-6 | (a) evento `sale.package.expired` pelo binding; recompilação por runbook do dono | não |
@@ -364,25 +371,42 @@ export const ReconcilePendingReasonCode = z.enum([
 
 ### 5.2 Efeitos no checklist (a `sessao-feature` lê isto junto com o §3; onde divergir, vale isto)
 
-**F-PV-3 (b) + F-PV-3b (a) — backfill.**
-- **Item 2a (novo).** CLI de uma vez, idempotente (`jobs/backfillPackageValidityCli.ts`, molde de
-  `seedAccountingFixtureCli.ts`), rodado pelo dono como passo de runbook depois do deploy. Não é migração de dado,
-  porque o smoke-gate S6 reprova backfill por desenho (memória `smoke-gate-s6-x-migracao-de-dado`).
-- **Alvo:** saldos com `expiresAt null`, `balanceCents > 0` e `deletedAt null` cujo pacote tem `validityDays ≥ 1`
-  **hoje** no catálogo. Pacote com `null`/`0` continua sem validade.
+**F-PV-3 (b) + F-PV-3b (a) + F-PV-3c (b) + F-PV-3d + F-PV-3e (a) — backfill.**
+- **Item 2a (novo; emendado na 2ª rodada de 02/10).** Job **no boot**, idempotente
+  (`jobs/packageValidityBackfill.job.ts`), disparado uma vez por boot junto dos schedulers, dentro do callback de
+  `app.listen()` (`server.ts:49-50`, JOB-003). ~~CLI de uma vez rodado pelo dono~~: o dono escolheu o boot (3c b,
+  contra a recomendação). Continua **não sendo migração de dado**, porque o smoke-gate S6 reprova backfill por
+  desenho (memória `smoke-gate-s6-x-migracao-de-dado`).
+- **Marca de execução (3e a):** reusa o `JobWatermark` (`schema.prisma:326`, `job` + `watermarkAt`), com
+  `job = 'package-validity-backfill'`. Na 1ª execução, grava `watermarkAt` = o instante dessa execução (o "deploy"). Nas
+  seguintes, lê a marca e não a muda. Zero migração. A ausência da linha é a 1ª execução, como já é no reconcile.
+- **Alvo:** saldos com `expiresAt null`, `balanceCents > 0` e `deletedAt null`, cujo pacote tem `validityDays ≥ 1`
+  **hoje** no catálogo **e cujo crédito mais novo é anterior à marca** (3e a). Saldo vendido depois da marca nunca é
+  tocado: ele já nasce com `expiresAt` copiado no crédito (F-PV-1 a). Pacote com `null`/`0` continua sem validade.
+- **Efeito do 3e (a), registrado:** um saldo **anterior** ao deploy de pacote que estava sem prazo no catálogo no dia
+  do deploy, e que depois ganha prazo, recebe o prazo no boot seguinte, contado desse boot (3b a). Saldo vendido
+  depois do deploy sem validade continua sem validade, mesmo se o catálogo mudar (sem a retroatividade do F-PV-1 c).
 - **Valor:** `expiresAt = lastValidDay(scopeToday, validityDays)`. Pelo 3b (a),
   `max(dataDaVenda + N, dataDoBackfill + N)` é sempre `dataDoBackfill + N`. Nenhum saldo antigo vence no
   primeiro passe.
-- **Idempotência:** a 2ª execução não muda nada (o filtro `expiresAt null` já exclui).
-- **Teste:** saldo legado com N = 30 → `expiresAt = hoje + 30`; pacote sem validade → `null`; 2ª execução → 0 linhas.
+- **Idempotência:** o 2º boot não muda nada (o filtro `expiresAt null` já exclui o que foi preenchido).
+- **Teste:** saldo legado com N = 30 → `expiresAt = hoje + 30`; pacote sem validade → `null`; 2º boot → 0 linhas;
+  marca gravada só na 1ª execução; saldo com crédito **depois** da marca e `expiresAt null` (pacote sem prazo que
+  passa a ter) → continua `null`; saldo **anterior** à marca, de pacote que passa a ter prazo → recebe o prazo no boot
+  seguinte.
+- **Trava do PE-6 (3d):** **o incremento só vai a produção depois do parecer do jurídico (PE-6) triado.** Não há flag
+  no código: o job roda no 1º boot de qualquer ambiente onde o código estiver (dev, teste, ensaio). A trava é do
+  deploy (M2/implantação), e o código pode ser construído e testado antes. Recomendação recusada: flag de ambiente
+  desligada por padrão.
 - **Risco declarado (contra a recomendação):** quem comprou antes do deploy comprou sem prazo informado. CDC art. 46
   e TJDFT Ac. 1992212 ([pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §6). O 3b (a) dá o prazo inteiro a
-  partir da regra, mas não supre a informação na compra. Isso agrava o **PE-6** (jurídico), que fica como
-  pré-condição de rodar o CLI em produção.
+  partir da regra, mas não supre a informação na compra. Isso agrava o **PE-6** (jurídico). Pelo 3d, o PE-6 é
+  pré-condição do **deploy do incremento**, e com ele do backfill. A trava é de processo, não de código: um deploy
+  feito antes do PE-6 grava os prazos no 1º boot, e desfazê-los exigiria decisão nova. Com CLI, bastava não rodar.
 - **Item 1:** o "sem retroatividade" do teste do item 2 (saldo legado `null` continua `null`) **sai**. Passa a valer
   só para saldo legado de pacote **sem** `validityDays`.
 - **§7:** o insumo "quantos saldos vivos e quantas linhas do catálogo com prazo no `dev.db`" passa a pesar. Medir
-  antes do runbook do CLI.
+  antes do deploy (o job roda sozinho no 1º boot).
 
 **F-PV-9 (b) + 9b (a) + 9c (b) + 9d (a) — NFS-e do vencido em `CONSUMO`.**
 - **Item 13a (novo).** `FiscalProfile.pacoteCTribNac String?` e `pacoteCNBS String?`, em migração aditiva com o
