@@ -4,6 +4,7 @@ import ChatArea from './ChatArea';
 import InputArea from './InputArea';
 import CreationArea from './CreationArea';
 import FiscalQuestion from './FiscalQuestion';
+import CreationChoice from './CreationChoice';
 import LeftSidebar from '../LeftSidebar';
 import RightSidebar from '../RightSidebar';
 
@@ -71,6 +72,8 @@ function AiInterviewSetup() {
     logState,
     handleRetry,
     presetKey,
+    choicePrompt,
+    sendCreationChoice,
     fiscalPendente,
     confirmarFiscal
   } = useAiInterview();
@@ -157,6 +160,9 @@ function AiInterviewSetup() {
           isLoading={isLoading}
           chatEndRef={chatEndRef}
         />
+        {choicePrompt && !fiscalPendente && (
+          <CreationChoice prompt={choicePrompt} presetKey={presetKey} disabled={isLoading || isCreating} onChoose={sendCreationChoice} />
+        )}
         {fiscalPendente ? (
           <FiscalQuestion onConfirm={confirmarFiscal} />
         ) : (
