@@ -139,8 +139,9 @@ export function useAiInterview() {
         body: JSON.stringify({ 
           messages: newMessages, 
           stage: currentStage, 
-          presetKey: presetKey,
-          sessionId: sessionId,
+          // `ChatInterviewSchema` aceita string ou ausente, nunca null (400) — omite o que ainda não existe.
+          ...(presetKey ? { presetKey } : {}),
+          ...(sessionId ? { sessionId } : {}),
           ...(choice ? { choice } : {})
         })
       });

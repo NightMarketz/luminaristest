@@ -1,12 +1,12 @@
 # RETORNO — W3 FE-INCR-W3-CHOICE (itens 7–14)
 
 tarefa: botões "Criar o sistema agora" × "Customizar" no chat da Entrevista, com modal de confirmação (BRIEF `WIZARD-W3-ESCOLHA-CRIACAO-brief.md`, itens 7–14)
-agente: sessão principal (sessao-feature), worktree w3-choice-creation-fe-ababb9; review independente: pendente (agente Opus separado, worktree isolada — despachado após o PR)
+agente: sessão principal (sessao-feature), worktree w3-choice-creation-fe-ababb9; review independente: r1 por agente Opus separado em worktree isolada
 base: origin/main d6530790 (BE #455 já presente)
 modelo: sonnet-5.5/medio
 perfil-previsto: sonnet-medio
 custo: US$ 1.31 · claude-sonnet-5-5 US$ 1.31 · 5 min (`scripts/session-cost.mjs` na hora da escrita; não inclui o review)
-veredicto: AGUARDANDO REVIEW (não mergeado — merge só com OK do dono)
+veredicto: review r1 = FAIL (1 achado alto, corrigido em seguida; r2 não rodada) — não mergeado, merge só com OK do dono
 
 ## Checklist
 
@@ -33,6 +33,12 @@ veredicto: AGUARDANDO REVIEW (não mergeado — merge só com OK do dono)
 - `types/InterviewTypes.ts`: `CreationChoice`, `CreationChoiceReason`, `ICreationChoicePrompt` (espelho do BE).
 - `CreationChoice.tsx` (novo) + montagem em `AiInterviewSetup/index.tsx` (acima do `InputArea`, texto livre mantido — F-W3-B2).
 - 2 arquivos de teste novos; locales pt/en; runbook em branco.
+
+## Review r1 (independente, Opus)
+- **FAIL → corrigido:** `postTurn` mandava `presetKey`/`sessionId` = `null`; `ChatInterviewSchema` usa `z.string().optional()` e recusa `null` (400). Reproduzido pelo revisor com o schema; cadeia até o 400 do controller é inferida (não subiu servidor). Fix: omite os campos ausentes (`useAiInterview.ts`), teste do hook agora afirma que o corpo não tem `sessionId` nem `null`. **Atenção:** o defeito era anterior (mesma linha em `main`) e o envio por texto herda o fix — mudança de comportamento fora da letra dos itens 7–14, mas inevitável: os botões passam pela mesma chamada.  
+- Baixo: modal mostra `presetKey`, não o nome (lacuna 1 acima, inalterada).
+- Sabotagem do revisor: remover a trava `choiceInFlight` deixa o teste do item 12 vermelho (4 fetches em vez de 3).
+- Não verificado: o 400 ponta a ponta contra o servidor real (só schema isolado). Fica no runbook, passo 4.
 
 ## Lacunas de spec
 1. **Item 9 pede "o nome do preset" no modal.** A resposta do servidor só traz `presetKey` (não `presetName`; `ICustomizationState.presetName` só existe depois de customizar). Usei `presetKey` no texto. Se o dono quer o nome de exibição, é lacuna de contrato do BE (nó vizinho) — não alterei.

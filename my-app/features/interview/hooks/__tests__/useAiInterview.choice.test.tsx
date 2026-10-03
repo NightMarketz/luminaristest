@@ -54,6 +54,9 @@ describe('useAiInterview — escolha criar × customizar (W3 FE)', () => {
     const body = bodyOf(fetchMock, 2);
     expect(body).toMatchObject({ choice: 'customize', stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'salon' });
     expect(body.messages).toHaveLength(3);
+    // O servidor recusa null em campo opcional (z.string().optional() → 400): sessionId ainda não existe aqui.
+    expect(body).not.toHaveProperty('sessionId');
+    expect(Object.values(body)).not.toContain(null);
     expect(result.current.choicePrompt).toBeNull();
   });
 
