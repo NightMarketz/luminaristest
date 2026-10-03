@@ -25,3 +25,11 @@ export interface ICustomizationState {
   presetName: string;
   tables: ITable[];
 }
+
+/** W3 FE: espelha `CreationChoiceReason`/`choicePrompt` de `server/.../InterviewTypes.ts` (BE #455). */
+export type CreationChoice = 'create' | 'customize';
+export type CreationChoiceReason = 'initial' | 'unclear' | 'declined_customize' | 'error';
+export interface ICreationChoicePrompt {
+  kind: 'creation_type';
+  reason: CreationChoiceReason;
+}

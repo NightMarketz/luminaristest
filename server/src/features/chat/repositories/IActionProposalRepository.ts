@@ -6,4 +6,6 @@ export interface IActionProposalRepository {
     delete(id: string): Promise<void>;
     findByUserId(userId: string): Promise<ActionProposal[]>;
     deleteOldProposals(hours: number): Promise<void>;
+    /** Apaga TODAS as propostas do usuário (reset do sistema / compensação do onboarding). */
+    deleteByUserId(userId: string): Promise<void>;
 }

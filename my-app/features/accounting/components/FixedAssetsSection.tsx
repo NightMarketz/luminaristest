@@ -319,7 +319,8 @@ export function FixedAssetsSection({ unitId, classes, accounts, onLedgerChange, 
                     <td className={`${td} text-xs text-neutral-400`}>{klass ? klass.name : <span className="text-neutral-600">—</span>}</td>
                     <td className={`${td} text-right font-mono text-xs`}>{formatCents(a.costCents)}</td>
                     <td className={`${td} text-right font-mono text-xs`}>{formatCents(a.accumulatedDepreciationCents)}</td>
-                    <td className={`${td} text-right font-mono text-xs`}>{formatCents(a.costCents - a.openingAccumulatedCents - a.accumulatedDepreciationCents)}</td>
+                    {/* Líquido = custo − acumulada: o BE já inicializa a acumulada com a abertura (`FixedAssetRepository.activate`), então descontar a abertura de novo contaria 2× (mesma fórmula do líquido da baixa, `FixedAssetService.ts`). */}
+                    <td className={`${td} text-right font-mono text-xs`}>{formatCents(a.costCents - a.accumulatedDepreciationCents)}</td>
                     <td className={td}>
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_BADGE[a.status]}`}>{t(`fixedAssets.status.${a.status}`, a.status)}</span>
                     </td>

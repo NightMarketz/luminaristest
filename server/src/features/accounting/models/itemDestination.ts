@@ -7,8 +7,25 @@
 export const ITEM_DESTINATIONS = ['REVENDA', 'INSUMO_SERVICO', 'IMOBILIZADO'] as const;
 export type ItemDestination = (typeof ITEM_DESTINATIONS)[number];
 
-/** De onde veio a destinação do item (F-ID-6 a) — devolvida no preview/import, nunca inferida em silêncio.
- *  `PRODUTO` (default por produto, F-ID-2 a) só é produzida a partir do PR-2 (BRIEF §7). */
+/** Destinações aceitas como DEFAULT por produto (F-ID-2 a). EMENDA 29/09 item 25: `IMOBILIZADO` não entra —
+ *  o imobilizado precisa da classe, que não é do produto. */
+export const PRODUCT_DESTINATION_DEFAULTS = ['REVENDA', 'INSUMO_SERVICO'] as const;
+export type ProductDestinationDefaultValue = (typeof PRODUCT_DESTINATION_DEFAULTS)[number];
+
+/** Linhas `product_destination_defaults` → mapa do resolver. A coluna é `String` no SQLite: valor fora do enum
+ *  é dado corrompido e falha alto, nunca vira FALLBACK em silêncio. */
+export function defaultByProductRefFrom(rows: ReadonlyArray<{ productRef: string; destination: string }>): Map<string, ProductDestinationDefaultValue> {
+  return new Map(
+    rows.map((r) => {
+      if (!(PRODUCT_DESTINATION_DEFAULTS as readonly string[]).includes(r.destination)) {
+        throw new Error(`product_destination_defaults: destination inválida '${r.destination}' para o produto '${r.productRef}'`);
+      }
+      return [r.productRef, r.destination as ProductDestinationDefaultValue];
+    }),
+  );
+}
+
+/** De onde veio a destinação do item (F-ID-6 a) — devolvida no preview/import, nunca inferida em silêncio. */
 export const ITEM_DESTINATION_ORIGINS = ['OVERRIDE', 'PRODUTO', 'FALLBACK'] as const;
 export type ItemDestinationOrigin = (typeof ITEM_DESTINATION_ORIGINS)[number];
 
@@ -33,20 +50,21 @@ export interface ResolvedItemDestination {
 
 /**
  * ITEM-DESTINATION item 9 (função pura; a I/O fica no service). Ordem: `classId` → IMOBILIZADO/OVERRIDE
- * (EMENDA item 22) · `destination` do mapeamento → OVERRIDE · nada → REVENDA/FALLBACK + warning (F-ID-6 a).
- * A origem PRODUTO (default por produto, F-ID-2 a) entra no PR-2 (BRIEF §7). O resolver nunca grava default
- * (F-ID-9 a). Item sem mapeamento também cai em FALLBACK: quem exige mapeamento (D6) é o import, não aqui —
- * o preview aceita nota sem mapeamento (F-ID-8 a).
+ * (EMENDA item 22) · `destination` do mapeamento → OVERRIDE · default do `productRef` mapeado → PRODUTO
+ * (F-ID-2 a) · nada → REVENDA/FALLBACK + warning (F-ID-6 a). O resolver nunca grava default (F-ID-9 a).
+ * Item sem mapeamento também cai em FALLBACK: quem exige mapeamento (D6) é o import, não aqui — o preview aceita nota sem mapeamento (F-ID-8 a).
  */
 export function resolveDestinations(
   itens: ReadonlyArray<{ nItem: number; cProd: string; cfop: string }>,
   mappingByCProd: ReadonlyMap<string, ItemDestinationMapping>,
+  defaultByProductRef: ReadonlyMap<string, ProductDestinationDefaultValue> = new Map(),
 ): { byNItem: Map<number, ItemDestination>; destinacoes: ResolvedItemDestination[]; warnings: string[] } {
   const byNItem = new Map<number, ItemDestination>();
   const destinacoes: ResolvedItemDestination[] = [];
   const warnings: string[] = [];
   for (const it of itens) {
     const m = mappingByCProd.get(it.cProd);
+    const productDefault = m?.productRef != null ? defaultByProductRef.get(m.productRef) : undefined;
     let destination: ItemDestination = 'REVENDA';
     let origem: ItemDestinationOrigin = 'FALLBACK';
     if (m?.classId != null) {
@@ -55,6 +73,9 @@ export function resolveDestinations(
     } else if (m?.destination != null) {
       destination = m.destination;
       origem = 'OVERRIDE';
+    } else if (productDefault != null) {
+      destination = productDefault;
+      origem = 'PRODUTO';
     } else {
       warnings.push(`item ${it.nItem} (${it.cProd}): sem destinação declarada — tratado como REVENDA (FALLBACK); marque INSUMO_SERVICO se o item é usado no serviço`);
     }
