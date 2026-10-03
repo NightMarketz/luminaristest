@@ -118,6 +118,11 @@ CustomCreationSchema.extend({ unit: UnitInput.optional() })
 
 ## 3. Forks — 4 ratificados 2026-09-07 (todos na opção COMPLETA (preferência do dono registrada 2026-09-07: "cobrir todas as lacunas, não MVP"; a recomendação do agente estava calibrada para o menor diff)) + 1 absorvido
 
+> **[EMENDA 2026-10-03 — BE-INCR-SEED-UNIDADE-E-ENV item 8 / E24]** O **local** do F-I1-1 → (b) mudou de *controller* para o
+> `SystemProvisioningService` (`features/onboarding/`), por **F-S1 → (a1)** (dono, chat 28/09/2026). Propriedades ratificadas
+> **intactas**: após a instalação, pela escrita normal (`createTableData`, plugins de `units` rodam), dois passos + compensação,
+> fora da tx do schema. O controller continua dono só do mapeamento HTTP (status e corpos inalterados).
+
 - **F-I1-1 · onde a linha nasce** (do plano, PENDENTE): (a) dentro da tx de `installPresetAsSystem`;
   (b) no controller, após a instalação, via `createTableData`. **Recomendação revisada após ler o
   código: (a′) — um método novo `installSystemWithUnit` no PRÓPRIO `DynamicTableService`, que abre a
