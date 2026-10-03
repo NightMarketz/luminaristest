@@ -70,6 +70,12 @@ indRecReceita: ("1" | "2")
 } | null)
 contadorContactId?: (string | null)
 representanteLegalSignerId?: (string | null)
+formaApuracaoIrpjCsll?: (("TRIMESTRAL" | "ANUAL") | null)
+lucroRealObrigatorio?: (boolean | null)
+inicioAtividadeEm?: (string | null)
+encerramentoAtividadeEm?: (string | null)
+lc224AcrescimoSuspenso?: boolean
+lc224LiminarReferencia?: (string | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")

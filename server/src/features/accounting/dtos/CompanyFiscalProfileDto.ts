@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { UF_CODES } from './SpedEcdDto';
 import { CNPJ_REGEX } from '../../../lib/cnpj';
 import { REGIMES_EMPRESA } from '../models/regimeEmpresa';
+import { isValidDateOnly } from '../models/dates';
 
 /**
  * BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF item 5, §4.3) — perfil fiscal da EMPRESA por ano. `.strict()`.
@@ -10,6 +11,11 @@ import { REGIMES_EMPRESA } from '../models/regimeEmpresa';
  *  - bloco `ecf` só em PRESUMIDO/REAL — MEI/SIMPLES não entregam ECF (IN RFB 2.004/2021 art. 1º §1º I);
  *  - `livroCaixaSemEscrituracao`/`distribuicaoAcimaBase` só no PRESUMIDO (IN RFB 2.003/2021 art. 3º §1º V e §3º);
  *  - `ecd.nire` só com `ecd.indNire = '1'`.
+ * BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 1, 2, 2b; ADR D1):
+ *  - `formaApuracaoIrpjCsll` em SIMPLES/MEI ⇒ 400; PRESUMIDO + ANUAL ⇒ 400; nesta fase ANUAL ⇒ 400 (Fase B, item B1);
+ *  - `lucroRealObrigatorio` só no REAL (contrato §2: "só REAL: 0220 × 3373");
+ *  - `lc224AcrescimoSuspenso = true` exige `lc224LiminarReferencia` (F-TA-5 a);
+ *  - datas de atividade date-only com calendário validado (F-TA-4 b).
  * `declarante` (F-XP-2 → a): os campos de 0000/0030 que hoje vêm no corpo de cada geração, TODOS opcionais aqui —
  * o que falta aparece em `faltantes` do endpoint de obrigações. Regex/limites espelham `SpedEcdDto`/`SpedEcfDto`.
  */
@@ -23,6 +29,10 @@ export const CompanyFiscalProfileCopyParamSchema = z
   .object({ ano: z.coerce.number().int().gte(ANO_MIN).lte(2100), anoAnterior: z.coerce.number().int().gte(ANO_MIN).lte(2100) })
   .strict()
   .refine((v) => v.anoAnterior !== v.ano, { message: 'anoAnterior deve ser diferente de ano.', path: ['anoAnterior'] });
+
+export const FORMAS_APURACAO_IRPJ_CSLL = ['TRIMESTRAL', 'ANUAL'] as const;
+
+const dateOnly = (field: string) => z.string().refine(isValidDateOnly, `${field} deve ser uma data real YYYY-MM-DD`);
 
 export const CompanyFiscalProfileScopeSchema = z.object({ unitId: z.string().min(1) }).strict();
 
@@ -84,6 +94,12 @@ export const UpsertCompanyFiscalProfileSchema = z
       .optional(),
     contadorContactId: z.string().min(1).nullable().optional(),
     representanteLegalSignerId: z.string().min(1).nullable().optional(),
+    formaApuracaoIrpjCsll: z.enum(FORMAS_APURACAO_IRPJ_CSLL).nullable().default(null),
+    lucroRealObrigatorio: z.boolean().nullable().default(null),
+    inicioAtividadeEm: dateOnly('inicioAtividadeEm').nullable().default(null),
+    encerramentoAtividadeEm: dateOnly('encerramentoAtividadeEm').nullable().default(null),
+    lc224AcrescimoSuspenso: z.boolean().default(false),
+    lc224LiminarReferencia: z.string().trim().min(1).max(60).nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -100,6 +116,23 @@ export const UpsertCompanyFiscalProfileSchema = z
     }
     if (v.ecd?.nire && v.ecd.indNire !== '1') {
       ctx.addIssue({ code: 'custom', path: ['ecd', 'nire'], message: "nire só cabe com indNire = '1'." });
+    }
+    // X7 item 1 (ADR D1)
+    if (semEcf && v.formaApuracaoIrpjCsll !== null) {
+      ctx.addIssue({ code: 'custom', path: ['formaApuracaoIrpjCsll'], message: `Regime ${v.regime} não apura IRPJ/CSLL por forma trimestral/anual (ADR-INCR-TAX-ASSESSMENT D1).` });
+    } else if (v.formaApuracaoIrpjCsll === 'ANUAL') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['formaApuracaoIrpjCsll'],
+        message: v.regime === 'PRESUMIDO' ? 'Lucro Presumido é só trimestral (ADR-INCR-TAX-ASSESSMENT D1).' : 'forma anual é da Fase B.',
+      });
+    }
+    if (v.regime !== 'REAL' && v.lucroRealObrigatorio !== null) {
+      ctx.addIssue({ code: 'custom', path: ['lucroRealObrigatorio'], message: 'lucroRealObrigatorio só se aplica ao Lucro Real (código 0220 × 3373).' });
+    }
+    // X7 item 2b (F-TA-5 a)
+    if (v.lc224AcrescimoSuspenso && !v.lc224LiminarReferencia) {
+      ctx.addIssue({ code: 'custom', path: ['lc224LiminarReferencia'], message: 'informe o processo da liminar' });
     }
   });
 

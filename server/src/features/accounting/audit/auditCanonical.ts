@@ -139,6 +139,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
   'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId',
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
+    'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
@@ -150,7 +151,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF item 10) — perfil da EMPRESA: só ano/enum/boolean/id. O
   // declarante (nome/CNPJ/endereço/e-mail), NIRE, nº de ordem e natureza do livro (texto) ficam FORA do evento.
   'company_fiscal_profile.updated': ['anoCalendario', 'regime', 'grandePorte', 'inativa', 'aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase',
-    'ecdIndNire', 'ecfIndAliqCsll', 'ecfIndRecReceita', 'contadorContactId', 'representanteLegalSignerId', 'copiadoDe'],
+    'ecdIndNire', 'ecfIndAliqCsll', 'ecfIndRecReceita', 'contadorContactId', 'representanteLegalSignerId', 'copiadoDe',
+    // X7 Fase A (BRIEF itens 1 e 2b): enum/data/boolean. A referência da liminar (texto livre, classe
+    // BE-INCR-AUDIT-FREETEXT-MASK) e as datas de atividade ficam FORA.
+    'formaApuracaoIrpjCsll', 'formaApuracaoTravadaEm', 'lucroRealObrigatorio', 'lc224AcrescimoSuspenso'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
   'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],

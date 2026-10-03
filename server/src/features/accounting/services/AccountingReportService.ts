@@ -721,6 +721,23 @@ export class AccountingReportService {
   }
 
   /**
+   * BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 7; ADR D4) — resultado antes de IRPJ/CSLL na janela `[from, to]`
+   * (o LAIR do Real trimestral), na mesma regra da DRE: `getAccountBalances(…, [CLOSING_SOURCE_TYPE])` + `computeDreNet`.
+   *  - EXCLUI o lançamento de encerramento: sem isso o T04 de um exercício encerrado em 31/12 daria zero (a mesma
+   *    armadilha que a DRE já trata);
+   *  - EXCLUI as contas de `excluirAccountIds` — as despesas da provisão de IRPJ/CSLL (item 3): guarda de
+   *    circularidade, a base não muda depois de provisionar.
+   */
+  async resultadoAntesIrpjCsll(scope: AccountingScope, from: Date, to: Date, excluirAccountIds: readonly string[]): Promise<number> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler o resultado do período.');
+    }
+    const excluir = new Set(excluirAccountIds);
+    const rows = await this.getAccountBalances(scope, from, to, [CLOSING_SOURCE_TYPE]);
+    return this.computeDreNet(rows.filter((r) => !excluir.has(r.accountId))).netCents;
+  }
+
+  /**
    * Demonstração do Resultado do Exercício — year_to_date: de 1 Jan do ano de `asOf`
    * até `asOf` inclusive. Não aceita `from`/`to` externos (ADR-INCR4 Q3).
    */

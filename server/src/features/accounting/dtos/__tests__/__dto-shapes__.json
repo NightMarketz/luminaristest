@@ -1416,6 +1416,71 @@
               "type": "null"
             }
           ]
+        },
+        "formaApuracaoIrpjCsll": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "TRIMESTRAL",
+                "ANUAL"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lucroRealObrigatorio": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inicioAtividadeEm": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "encerramentoAtividadeEm": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lc224AcrescimoSuspenso": {
+          "default": false,
+          "type": "boolean"
+        },
+        "lc224LiminarReferencia": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -3744,6 +3809,50 @@
           ]
         },
         "insumoExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllDespesaAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllRecolherAccountId": {
           "anyOf": [
             {
               "type": "string",
