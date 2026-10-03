@@ -247,6 +247,17 @@ describe('PackageBalanceService', () => {
       expect(repo.createMovement).not.toHaveBeenCalled();
     });
 
+    it('review #483 achado 3: o saldo já venceu nessa data e voltou a ter valor → 2º vencimento com chave :2 (não no-op)', async () => {
+      const repo = buildRepo({
+        findBalanceById: jest.fn(async () => balanceRow(500n, '2026-03-31')),
+        findMovement: jest.fn(async (_s: unknown, key: string) => (key === 'expiry:bal-1:2026-03-31' ? { id: 'mv-1' } : null)),
+      });
+      const r = await new PackageBalanceService(repo, allowPolicy).expireDue(scope, 'bal-1', '2026-04-10');
+      expect(r).toEqual({ movementKey: 'expiry:bal-1:2026-03-31:2', amountCents: 500, expiresOn: '2026-03-31' });
+      expect(repo.findMovement).toHaveBeenCalledWith(scope, 'expiry:bal-1:2026-03-31', 'expiry', expect.anything()); // lido NA tx
+      expect(repo.createMovement).toHaveBeenCalledWith(expect.objectContaining({ saleId: 'expiry:bal-1:2026-03-31:2', deltaCents: 500 }), expect.anything());
+    });
+
     it('duplicata (P2002) → no-op', async () => {
       const repo = buildRepo({ runTransaction: jest.fn(async () => { throw p2002(); }) });
       expect(await new PackageBalanceService(repo, allowPolicy).expireDue(scope, 'bal-1', '2026-04-02')).toBeNull();
@@ -255,6 +266,22 @@ describe('PackageBalanceService', () => {
     it('policy canMutate', async () => {
       const deny: IPackageBalancePolicy = { canMutate: () => false, canRead: () => true };
       await expect(new PackageBalanceService(buildRepo(), deny).expireDue(scope, 'bal-1', '2026-04-02')).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  // Review #483, achado 1: a âncora da nota é o crédito mais novo ANTERIOR ao vencimento — nunca uma recompra posterior.
+  describe('getExpiryContext (F-PV-9d a)', () => {
+    it('ignora o crédito criado depois do movimento expiry', async () => {
+      const repo = buildRepo({
+        findMovement: jest.fn(async () => ({ customerId: 'cust-1', packageId: 'pkg-1', deltaCents: 7000n, createdAt: new Date('2026-04-02T10:00:00Z') })),
+        listCreditMovements: jest.fn(async () => [
+          { saleId: 'recompra', createdAt: new Date('2026-04-05T10:00:00Z') },
+          { saleId: 'origem-2', createdAt: new Date('2026-03-15T10:00:00Z') },
+          { saleId: 'origem-1', createdAt: new Date('2026-03-01T10:00:00Z') },
+        ]),
+      });
+      const ctx = await new PackageBalanceService(repo, allowPolicy).getExpiryContext(scope, 'expiry:bal-1:2026-03-31');
+      expect(ctx).toEqual({ customerId: 'cust-1', packageId: 'pkg-1', releasedCents: 7000, originSaleId: 'origem-2' });
     });
   });
 

@@ -54,7 +54,15 @@ describe('competência e chave', () => {
   it('chave round-trip', () => {
     const key = expiryMovementKey('cbal123', '2026-03-31');
     expect(key).toBe('expiry:cbal123:2026-03-31');
-    expect(parseExpiryMovementKey(key)).toEqual({ balanceId: 'cbal123', expiresOn: '2026-03-31' });
+    expect(parseExpiryMovementKey(key)).toEqual({ balanceId: 'cbal123', expiresOn: '2026-03-31', occurrence: 1 });
     expect(parseExpiryMovementKey('sale-1')).toBeNull();
+  });
+  it('review #483 achado 3: 2ª ocorrência na mesma data ganha sufixo; :0/:1 não são forma válida', () => {
+    expect(expiryMovementKey('cbal123', '2026-03-31', 1)).toBe('expiry:cbal123:2026-03-31');
+    expect(expiryMovementKey('cbal123', '2026-03-31', 2)).toBe('expiry:cbal123:2026-03-31:2');
+    expect(parseExpiryMovementKey('expiry:cbal123:2026-03-31:2')).toEqual({ balanceId: 'cbal123', expiresOn: '2026-03-31', occurrence: 2 });
+    expect(parseExpiryMovementKey('expiry:cbal123:2026-03-31:12')).toMatchObject({ occurrence: 12 });
+    expect(parseExpiryMovementKey('expiry:cbal123:2026-03-31:1')).toBeNull();
+    expect(parseExpiryMovementKey('expiry:cbal123:2026-03-31:0')).toBeNull();
   });
 });

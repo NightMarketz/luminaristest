@@ -167,7 +167,14 @@ export class PackageBalanceService {
    * the balance, checks it is due (grace of item 8, `today ≥ expiresOn + 2`), appends the `expiry`
    * movement (it FIXES the amount) and decrements with the existing conditional `tryDecrement`.
    * The journal entry comes AFTER, re-drivable (item 11) — 2 commits, as the credit/debit today.
-   * Not due, nothing left or no validity → null. A duplicate (P2002) → null (already expired).
+   * Not due, nothing left or no validity → null. A duplicate (P2002) → null: a concurrent expiry won the race
+   * and already drove the balance to 0 (the read and the decrement share the tx).
+   *
+   * Review #483, achado 3: a balance that ALREADY expired on this same `expiresOn` can hold value again (a
+   * credit re-driven late, or a re-purchase dated back, lands on an empty balance and takes the same last valid
+   * day). That is a NEW expiry; the base key `expiry:<balanceId>:<expiresOn>` is taken, so the key gets the
+   * next free suffix (`…:2`, `…:3`) — read IN the tx. Before, the P2002 was swallowed as "already expired" and
+   * the balance stayed > 0, overdue, with no pending row.
    */
   public async expireDue(
     scope: AccountingScope,
@@ -185,7 +192,7 @@ export class PackageBalanceService {
         if (expiresOn == null || !isDueForExpiry(expiresOn, today)) return null;
         const amountCents = centsFromDb(balance.balanceCents);
         if (amountCents <= 0) return null;
-        const movementKey = expiryMovementKey(balance.id, expiresOn);
+        const movementKey = await this.freeExpiryKey(scope, balance.id, expiresOn, tx);
         await this.repo.createMovement(
           {
             userId: scope.ownerUserId,
@@ -212,9 +219,35 @@ export class PackageBalanceService {
   }
 
   /**
+   * The key the NEXT expiry of this balance on `expiresOn` would take (review #483, achado 3) — the job uses it as
+   * the pending-row identity while a guard blocks, so a 2nd expiry never shares the row of the 1st (already done).
+   */
+  public async nextExpiryMovementKey(scope: AccountingScope, balanceId: string, expiresOn: string): Promise<string> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Sem permissão para ler saldo de pacote.');
+    }
+    return this.freeExpiryKey(scope, balanceId, expiresOn);
+  }
+
+  private async freeExpiryKey(
+    scope: AccountingScope,
+    balanceId: string,
+    expiresOn: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string> {
+    let occurrence = 1;
+    while (await this.repo.findMovement(scope, expiryMovementKey(balanceId, expiresOn, occurrence), 'expiry', tx)) {
+      occurrence++;
+    }
+    return expiryMovementKey(balanceId, expiresOn, occurrence);
+  }
+
+  /**
    * Read-only context of one expiry (BE-INCR-PACOTE-VALIDADE §5.2 item 14a / F-PV-9d a): who, how much and
-   * the anchor sale of the expiry NFS-e — the NEWEST origin credit of the balance. Null when the movement
-   * does not exist. Used by the fiscal emission (and its reenvio), which never touches the subledger itself.
+   * the anchor sale of the expiry NFS-e — the newest origin credit of the balance THAT EXISTED WHEN IT EXPIRED.
+   * Review #483, achado 1: a re-purchase after the expiry (note still pending, emitted later) must never become
+   * the anchor — the expired value came from the earlier credits. Null when the movement does not exist. Used by
+   * the fiscal emission (and its reenvio), which never touches the subledger itself.
    */
   public async getExpiryContext(
     scope: AccountingScope,
@@ -226,11 +259,12 @@ export class PackageBalanceService {
     const movement = await this.repo.findMovement(scope, movementKey, 'expiry');
     if (!movement) return null;
     const credits = await this.repo.listCreditMovements(scope, movement.customerId, movement.packageId);
+    const before = credits.find((c) => c.createdAt.getTime() <= movement.createdAt.getTime()); // newest first
     return {
       customerId: movement.customerId,
       packageId: movement.packageId,
       releasedCents: centsFromDb(movement.deltaCents),
-      originSaleId: credits[0]?.saleId ?? null,
+      originSaleId: before?.saleId ?? null,
     };
   }
 

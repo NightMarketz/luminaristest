@@ -1419,6 +1419,8 @@ export interface PackageExpiryReconcileDeps extends PackageExpiryEffectsDeps {
   /** Guard 9.4 (F-PV-5): is the period of the posting date OPEN? */
   isPeriodOpen: (scope: AccountingScope, dateOnly: string) => Promise<boolean>;
   expireDue: (scope: AccountingScope, balanceId: string, today: string) => Promise<ExpireDueResult | null>;
+  /** Pending-row identity while the guards run: the key the next expiry of this balance would take (achado 3). */
+  nextMovementKey: (scope: AccountingScope, c: PackageExpiryCandidate) => Promise<string>;
 }
 
 /**
@@ -1492,8 +1494,9 @@ export async function reconcilePackageExpiry(deps: PackageExpiryReconcileDeps): 
   const summary: ReconcileSummary = { total: due.length, synced: 0, idempotentHits: 0, failed: 0, blocked: 0 };
 
   for (const { c, scope, today } of due) {
-    const movementKey = expiryMovementKey(c.balanceId, c.expiresOn);
+    let movementKey = expiryMovementKey(c.balanceId, c.expiresOn);
     try {
+      movementKey = await deps.nextMovementKey(scope, c);
       // 9.1 consumo pendente (transitório)
       const pendingSale = await deps.findPendingConsumption(scope, c);
       if (pendingSale) throw new PackageConsumptionPendingError(c.balanceId, pendingSale);
@@ -1513,6 +1516,7 @@ export async function reconcilePackageExpiry(deps: PackageExpiryReconcileDeps): 
         summary.idempotentHits++; // already expired (or emptied) by a concurrent run
         continue;
       }
+      movementKey = expired.movementKey; // the key the tx actually wrote (normally the same)
       await applyPackageExpiryEffects(deps, scope, expired, true);
       summary.synced++;
       logger.info('Reconcile expired package balance', { movementKey, amountCents: expired.amountCents });
@@ -1634,6 +1638,7 @@ export function buildPackageExpiryDeps(opts: {
       return period?.status === 'OPEN';
     },
     expireDue: (scope, balanceId, today) => factory.getPackageBalanceService().expireDue(scope, balanceId, today),
+    nextMovementKey: (scope, c) => factory.getPackageBalanceService().nextExpiryMovementKey(scope, c.balanceId, c.expiresOn),
     sync: (scope, event) => factory.getAccountingSyncService().sync(scope, event),
     emitExpiryNfse: (scope, movementKey) => factory.getFiscalDocumentEmissionService().emitPackageExpiry(scope, movementKey),
     listExpiryMovements: async () =>

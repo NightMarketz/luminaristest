@@ -31,6 +31,7 @@ function deps(over: Partial<PackageExpiryReconcileDeps> = {}): PackageExpiryReco
     hasMapper: jest.fn(() => true),
     isPeriodOpen: jest.fn(async () => true),
     expireDue: jest.fn(async () => ({ movementKey: KEY, amountCents: 7000, expiresOn: '2026-03-31' })),
+    nextMovementKey: jest.fn(async () => KEY),
     sync: jest.fn(async () => ({ entryId: 'je-1' })),
     emitExpiryNfse: jest.fn(async () => 'not_applicable' as const),
     reportPending: jest.fn(async () => undefined),
@@ -127,6 +128,21 @@ describe('reconcilePackageExpiry (item 14)', () => {
     const s = await reconcilePackageExpiry(d);
     expect(s).toMatchObject({ failed: 1, synced: 1 });
     expect(pendingCode(d)?.reasonCode).toBe('FAILED');
+  });
+
+  it('review #483 achado 3: 2º vencimento na mesma data — guarda pendura sob a chave :2, e o lançamento usa a chave que a tx gravou', async () => {
+    const KEY2 = `${KEY}:2`;
+    const blocked = deps({ nextMovementKey: jest.fn(async () => KEY2), hasMapper: jest.fn(() => false) });
+    await reconcilePackageExpiry(blocked);
+    expect(pendingCode(blocked)?.sourceId).toBe(KEY2); // não reusa a linha do 1º vencimento (já resolvido)
+
+    const ok = deps({
+      nextMovementKey: jest.fn(async () => KEY2),
+      expireDue: jest.fn(async () => ({ movementKey: KEY2, amountCents: 500, expiresOn: '2026-03-31' })),
+    });
+    await reconcilePackageExpiry(ok);
+    expect(((ok.sync as jest.Mock).mock.calls[0][1] as AccountingEvent).sourceId).toBe(KEY2);
+    expect(ok.reportResolved).toHaveBeenCalledWith(expect.objectContaining({ sourceId: KEY2 }));
   });
 
   it('expireDue null (já vencido por outra rodada) → idempotent hit, sem lançamento', async () => {

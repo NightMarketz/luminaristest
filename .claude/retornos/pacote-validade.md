@@ -7,7 +7,7 @@ base: origin/main d6530790 (main andou 1 commit de docs depois — #476, sem con
 branch / PR: feat/be-incr-pacote-validade · NightMarketz/luminaristest#483 (aberto, NÃO mergeado — merge só com OK do dono)
 modelo: opus-5.5
 perfil-previsto: opus-medio
-rodadas-de-review: 1 — PASS com ressalvas (5 achados: 2 médios, 3 baixos; nenhum corrigido — a instrução era parar após o review)
+rodadas-de-review: 1 — PASS com ressalvas (5 achados: 2 médios, 3 baixos). Depois, a pedido do dono (03/10): achados 1 e 3 CORRIGIDOS; 2, 4 e 5 seguem abertos
 custo: US$ 29.70 · claude-opus-5-5 US$ 29.70 · 459 min (scripts/session-cost.mjs; inclui o revisor como subagente)
 veredicto: PASS com ressalvas (revisor independente) — aguardando o dono
 
@@ -39,10 +39,10 @@ veredicto: PASS com ressalvas (revisor independente) — aguardando o dono
 - Checagem que teria falhado se errado: sem a guarda 9.1/9.2 os saldos de F/G vão a 0 (E2E assere 2000/3000 e zero movimentos); sem a regra DRE 3.4 o teste da DRE dá 7000 em vez de 14000; sem a 3.4 fora do Presumido o teste da ECF não reprova.
 - Risco principal: achado 1 do review (nota do vencido pode ancorar na venda errada após recompra) e PE-1..PE-6 abertos.
 
-### Achados do review independente (NÃO corrigidos — decisão do dono)
-1. **Média** — `getExpiryContext` escolhe o crédito mais novo no momento da emissão; se a nota ficou pendente e o cliente recompra, a nota sai com `saleId` da venda nova (`PackageBalanceService.ts:228-233`). Correção provável: créditos com `createdAt ≤ movimento.createdAt`.
+### Achados do review independente
+1. **Média — CORRIGIDO** — `getExpiryContext` escolhe o crédito mais novo no momento da emissão; se a nota ficou pendente e o cliente recompra, a nota sai com `saleId` da venda nova (`PackageBalanceService.ts:228-233`). Correção: só créditos com `createdAt ≤ movimento.createdAt` (`PackageBalanceService.getExpiryContext`).
 2. **Média** — `emissaoForaDoMes = BLOQUEAR` + carência de +2 faz parte das notas ficar pendente para sempre (competência no último dia do mês, job no dia 1). Lacuna de spec.
-3. **Baixa/média** — dois vencimentos com a mesma `expiresOn` no mesmo saldo colidem na chave do movimento → P2002 vira "idempotente" e o saldo fica > 0 sem pendência. Plausível, não reproduzido.
+3. **Baixa/média — CORRIGIDO** — dois vencimentos com a mesma `expiresOn` no mesmo saldo colidem na chave do movimento → P2002 vira "idempotente" e o saldo fica > 0 sem pendência. Reproduzido no E2E (saldo travado em 500). Correção: a 2ª ocorrência na mesma data ganha sufixo (`expiry:<balanceId>:<expiresOn>:2`), escolhido DENTRO da tx; a 1ª ocorrência mantém a forma do BRIEF §3 item 6. O passe usa a próxima chave livre como identidade de pendência enquanto as guardas bloqueiam (`nextExpiryMovementKey`).
 4. **Baixa** — guarda 9.2 não vê venda de origem soft-deletada. Lacuna (BRIEF fala só de Cancelled/Returned).
 5. **Baixa** — guarda 9.1 pode bloquear para sempre com código "transitório" (débito impossível); o teste E2E de F não discrimina a escolha sem marca d'água.
 
@@ -53,3 +53,8 @@ veredicto: PASS com ressalvas (revisor independente) — aguardando o dono
 
 ### Fold pós-merge (docs/plano/README.md)
 id: PACOTE-VALIDADE · estado: done (após merge) · estado_detalhe: "03/10: executado em #483 (código + testes); produção só após PE-6; recompilar bindings Active por unidade" · prs: [483]
+
+### Correção dos achados 1 e 3 (dono, 03/10: "corrige os achados 1 e 3 do review")
+- Vermelho → verde no MESMO conjunto de testes: com o `PackageBalanceService` antigo os 2 testes E2E novos falham pelo motivo certo (âncora = recompra; saldo travado em 500 — `.claude` log local pv-red.log); com a correção, 10/10.
+- Unit: 3587 passed. Integração completa: 801/801. E2E `pacoteValidade`: 10/10. `tsc` server: 0.
+- Desvio declarado da letra do §3 item 6: a chave do movimento ganha sufixo `:n` só a partir da 2ª ocorrência na mesma data (a 1ª é idêntica ao BRIEF).

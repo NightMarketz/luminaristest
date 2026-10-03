@@ -113,6 +113,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
   let pkg30: string;
   let expiresOnA: string;
   let dueDay: string;
+  let originC: string; // venda de origem do saldo do UNIT_C (âncora esperada da nota do vencido)
   const pending: ReconcilePendingCaptureItem[] = [];
   const resolved: string[] = [];
 
@@ -234,7 +235,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
 
   it('item 17: em expiresOn + 2 o passe vence; saldo 0, 2.1.1 = 0, 3.4 = R$ 70, movimento 7000, NFS-e = 3.4; tie-out só diverge na unidade do TOCTOU', async () => {
     // Cenários paralelos nas outras unidades, vencendo no MESMO dia.
-    await sellPackage(UNIT_C, customerSemCpf, pkg30, 40, addDays(today, -10));
+    originC = await sellPackage(UNIT_C, customerSemCpf, pkg30, 40, addDays(today, -10));
     await sellPackage(UNIT_D, customer, pkg30, 25, addDays(today, -10));
     await sellPackage(UNIT_E, customer, pkg30, 15, addDays(today, -10));
     // 9.1: consumo pago (Paid + Package Balance + paidWithPackageId) cujo débito best-effort não aplicou.
@@ -340,6 +341,39 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     await reconcileSalePackageExpiryPosting(deps);
     expect(await count()).toEqual(before);
     expect(before).toEqual({ mv: 5, je: 5, docs: 1 }); // A, B, C, D, E vencidos; nota só no A
+  });
+
+  it('review #483 achado 1: recompra DEPOIS do vencimento não vira a âncora da nota pendente', async () => {
+    const recompra = await sellPackage(UNIT_C, customerSemCpf, pkg30, 40, today); // saldo 0 → prazo novo
+    await prisma.dynamicTableData.update({ where: { id: customerSemCpf }, data: { data: { name: 'Agora com CPF', taxId: CPF } as never } });
+    await reconcileSalePackageExpiryPosting(buildPackageExpiryDeps({ today: () => dueDay }));
+    const doc = await prisma.fiscalDocument.findFirstOrThrow({ where: { userId: user.id, unitId: UNIT_C } });
+    expect(doc.saleId).toBe(originC);
+    expect(doc.saleId).not.toBe(recompra);
+    expect(centsFromDb(doc.vServCents)).toBe(4000);
+  });
+
+  it('review #483 achado 3: crédito re-dirigido tarde cai no MESMO prazo de um saldo já vencido → vence de novo (chave :2), sem travar', async () => {
+    const b = await balanceOf(UNIT_A, customer, pkg30);
+    expect(centsFromDb(b.balanceCents)).toBe(0);
+    // venda antiga (hoje − 10, 30 dias → mesmo expiresOnA) cujo crédito só aplica agora
+    await ApplicationFactory.getInstance()
+      .getPackageBalanceService()
+      .creditFromSale(scopeOf(UNIT_A), { customerId: customer, packageId: pkg30, saleId: 'venda-atrasada', amountCents: 500, saleDate: addDays(today, -10), validityDays: 30 });
+    // o lançamento de origem dessa venda (C 2.1.1) — mesmo fato da ponte, postado direto para o tie-out fechar
+    await ApplicationFactory.getInstance().getAccountingSyncService().sync(scopeOf(UNIT_A), {
+      sourceType: 'sale.package.sold', sourceId: 'venda-atrasada', unitId: UNIT_A, amount: 5, currency: 'BRL', occurredAt: addDays(today, -10), label: 'venda atrasada',
+    });
+    const deps = buildPackageExpiryDeps({ today: () => dueDay });
+    await reconcilePackageExpiry(deps);
+    await reconcileSalePackageExpiryPosting(deps);
+
+    expect(centsFromDb((await balanceOf(UNIT_A, customer, pkg30)).balanceCents)).toBe(0);
+    const keys = (await prisma.packageBalanceMovement.findMany({ where: { userId: user.id, unitId: UNIT_A, kind: 'expiry' } })).map((m) => m.saleId).sort();
+    expect(keys).toEqual([`expiry:${b.id}:${expiresOnA}`, `expiry:${b.id}:${expiresOnA}:2`]);
+    expect(await creditNormalCents(UNIT_A, '3.4')).toBe(7500);
+    expect(await creditNormalCents(UNIT_A, '2.1.1')).toBe(0);
+    expect(await prisma.fiscalDocument.count({ where: { userId: user.id, unitId: UNIT_A } })).toBe(2); // uma nota por vencimento
   });
 
   it('item 16: GET /api/package-balances?expiresOnOrBefore filtra pela validade; data impossível → 400', async () => {
