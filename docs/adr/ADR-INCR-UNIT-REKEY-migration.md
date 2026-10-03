@@ -365,6 +365,13 @@ antes de qualquer escrita.
   de H1/H2 assinados. **Recomendação: (a)** — criar tabela dinâmica por migração é outra frente, e
   re-chavear no meio do H1 invalida o texto dos runbooks abertos. **Consequência a ratificar junto:** com
   I6 ativo, os tenants seed recebem 400 até a frente do seed existir (ver §9). ✅ **DECIDIDO 2026-10-02 por delegação do dono** (*"Toma a decisão logica aqui entao e feche as pendencia"*) → **(a) excluir, por lista explícita**: `EXCLUDED_TENANT` passa a valer para (i) dono sem tabela `units` (critério atual do item 6) **ou** (ii) `unitId ∈ {seed-unit-presumido, seed-unit-real}` — o critério (ii) é o que sobrevive ao [[SEED-UNITS]], que dá `units` a esses donos (nota do I1b, fold 28/09). Lógica: a ratificação do dono F-S1c → (a) "re-semear" (BRIEF SEED-UNIDADE §4, 28/09) já recria o razão do seed sob a unidade nova, e os lançamentos sob `seed-unit-*` **ficam** (F-P5 → a); re-chavear esses ids criaria uma 2ª unidade com o mesmo razão duplicado no mesmo tenant. O próprio BRIEF do SEED-UNITS registra que "re-semear" **implica** o F-RK-2 (a). Não depende mais do merge do SEED-UNITS: o critério (ii) vale antes e depois.
+  > **[NOTA DE FATO NOVO 2026-10-03 — BE-INCR-SEED-UNIDADE-E-ENV item 18; não ratifica nada]** Depois do BE-INCR-SEED-UNIDADE-E-ENV + a
+  > re-semeadura (Parte E, humana), os donos `seed-*` **TÊM** `units` (uma linha por tenant, id gerado, nome `seed-unit-presumido` /
+  > `seed-unit-real`). Consequências para o `--plan`: (1) o critério (i) do item 6 ("dono sem `units`") **deixa de excluí-los**;
+  > (2) os ids literais `seed-unit-presumido` / `seed-unit-real` (razão antigo, que FICA — F-P5) seguem excluídos só pelo critério (ii)
+  > (lista explícita) — sem ele o `--plan` os marcaria `LEGACY`; (3) os ids novos (linha viva de `units` do mesmo dono) caem em
+  > `SKIP_REAL_UNIT` (item 5). O critério (ii) é, portanto, o que sustenta a exclusão depois do seed novo. Registro de fato (E22 do BRIEF),
+  > sem decisão nova.
 - **F-RK-3 · `unit-incr6-val` e `unit-incr6-val-1782938879534` (admin).** São resíduo de validação do
   INCR-6 (import/export): 14 contas, 4 lançamentos, 15 jobs cada. (a) re-chavear como qualquer legado
   (letra do F-I1b-1 b: "para cada `unitId` legado") — viram duas unidades visíveis no ERP do admin;
