@@ -349,6 +349,33 @@ Desfecho do passo 20 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 20): ____________
 
+### [EMENDA 2026-10-03] Passo 21 — CRM, usuários, vendas, login e setup com o body tipado (contrato gerado PR-3)
+
+> Preparado por agente em 2026-10-03, **em branco** (`PLANO-FE-CONTRACT-TYPES-2026-09-28.md` §8, item 5). O PR-3
+> trocou o body de escrita destes 7 services pelo tipo gerado do DTO e tirou os spreads condicionais dos chamadores
+> (`k: v || undefined`); o fio deveria ser o mesmo de antes. Mesmas pré-condições dos passos 12–14 (commit do merge
+> do PR-3 ou posterior, build de produção, cópia do `dev.db`). Em cada linha: executar a ação uma vez e colar status
+> + corpo do request no Network.
+
+21. Resultado esperado em todas: 2xx, sem 400 de `unrecognized_keys`/`invalid_type`.
+    - a) CRM (lead): avançar etapa comum, etapa de reunião (com `meetingAt`) e de proposta (`amount`/`currency`/
+      `winProbability`); registrar no-show com reagendamento e com reversão; converter lead em conta/contato.
+      EVIDÊNCIA: [ ]
+    - b) CRM (oportunidade): criar a partir de um lead (com e sem valor, com e sem conta); avançar etapa comum e de
+      proposta. EVIDÊNCIA: [ ]
+    - c) Vendas: pagar (Pix **e** Package Balance com `packageId`), cancelar com e sem motivo, devolver com e sem
+      motivo. EVIDÊNCIA: [ ]
+    - d) Usuários: criar (admin), editar o perfil (nome, e-mail, senha), trocar idioma pela Navbar e moeda/idioma
+      pelo perfil (`PATCH /users/me/preferences`). EVIDÊNCIA: [ ]
+    - e) Login (por usuário e por e-mail) e cadastro (`/users/signup`). EVIDÊNCIA: [ ]
+    - f) Setup: criar o dashboard pelo caminho rápido e pelo personalizado (usuário novo, sem tabelas). EVIDÊNCIA: [ ]
+
+Desfecho do passo 21 (marcar UM):
+[ ] PASSOU — a) a f) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 21): ____________
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;

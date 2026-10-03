@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '../../lib/context/AuthContext';
 import withAuth from '../../lib/hoc/withAuth';
 import { IUser, UpdateUserDto } from '../../types/User';
+import type { UpdatePreferencesInput } from '@/types/contracts/users/UserDto.gen';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useTranslation } from 'next-i18next';
@@ -201,7 +202,11 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
     try {
       // Save to DB
-      await UserService.updatePreferences({ locale: preferencesLocale, currency: preferencesCurrency });
+      // ponytail: os dois vêm de <select> com as opções do contrato (pt|en, BRL|USD|EUR); o servidor devolve 400 se divergir.
+      await UserService.updatePreferences({
+        locale: preferencesLocale as UpdatePreferencesInput['locale'],
+        currency: preferencesCurrency as UpdatePreferencesInput['currency'],
+      });
 
       // Update auth context
       if (updateAuthContext) {

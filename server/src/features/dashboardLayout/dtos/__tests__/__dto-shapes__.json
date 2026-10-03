@@ -1,0 +1,316 @@
+{
+  "DashboardLayoutDto.ts": {
+    "DashboardLayoutSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "userId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "GRID",
+            "LIST",
+            "CUSTOM"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "widgets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "i": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "w": {
+                    "type": "number"
+                  },
+                  "h": {
+                    "type": "number"
+                  },
+                  "minW": {
+                    "type": "number"
+                  },
+                  "minH": {
+                    "type": "number"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "widgetConfig": {}
+                },
+                "required": [
+                  "id",
+                  "i",
+                  "x",
+                  "y",
+                  "w",
+                  "h",
+                  "type"
+                ]
+              }
+            },
+            "theme": {
+              "type": "string"
+            },
+            "customSettings": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "columns",
+            "widgets"
+          ]
+        },
+        "createdAt": {},
+        "updatedAt": {}
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "isActive",
+        "type",
+        "config",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CreateDashboardLayoutSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "GRID",
+            "LIST",
+            "CUSTOM"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "widgets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "i": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "w": {
+                    "type": "number"
+                  },
+                  "h": {
+                    "type": "number"
+                  },
+                  "minW": {
+                    "type": "number"
+                  },
+                  "minH": {
+                    "type": "number"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "widgetConfig": {}
+                },
+                "required": [
+                  "id",
+                  "i",
+                  "x",
+                  "y",
+                  "w",
+                  "h",
+                  "type"
+                ]
+              }
+            },
+            "theme": {
+              "type": "string"
+            },
+            "customSettings": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "columns",
+            "widgets"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "config"
+      ]
+    },
+    "UpdateDashboardLayoutSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 50
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "GRID",
+            "LIST",
+            "CUSTOM"
+          ]
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "columns": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "widgets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "positions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "i": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "w": {
+                    "type": "number"
+                  },
+                  "h": {
+                    "type": "number"
+                  },
+                  "minW": {
+                    "type": "number"
+                  },
+                  "minH": {
+                    "type": "number"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "widgetConfig": {}
+                },
+                "required": [
+                  "id",
+                  "i",
+                  "x",
+                  "y",
+                  "w",
+                  "h",
+                  "type"
+                ]
+              }
+            },
+            "theme": {
+              "type": "string"
+            },
+            "customSettings": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "columns",
+            "widgets"
+          ]
+        }
+      }
+    }
+  }
+}

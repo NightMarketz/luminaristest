@@ -1,0 +1,31 @@
+{
+  "GenerateReportDto.ts": {
+    "GenerateReportSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chatInstanceId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "cuid",
+            "pattern": "^[cC][^\\s-]{8,}$"
+          }
+        }
+      },
+      "required": [
+        "query",
+        "chatInstanceId"
+      ]
+    }
+  }
+}

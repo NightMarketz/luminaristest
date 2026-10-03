@@ -1,4 +1,5 @@
 import type { Role } from './Role';
+import type { UpdateUserInput } from './contracts/users/UserDto.gen';
 
 export interface IUser {
   id: string;
@@ -12,12 +13,5 @@ export interface IUser {
   updatedAt?: string | Date;
 }
 
-export type UpdateUserDto = Partial<{
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  role: Role;
-}>;
-
-
+// Contrato gerado (users/UserDto) — nunca espelho à mão.
+export type UpdateUserDto = UpdateUserInput;

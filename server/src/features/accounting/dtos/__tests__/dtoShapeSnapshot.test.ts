@@ -1,5 +1,5 @@
 /**
- * GATE DE CONTRATO DA FRONTEIRA — snapshot de shape dos DTOs Zod de accounting.
+ * GATE DE CONTRATO DA FRONTEIRA — snapshot de shape dos DTOs Zod de TODOS os domínios.
  *
  * Fase 4 do GAP-MAP (nível 3 · evolução assimétrica: B muda o schema, A continua lendo o
  * antigo, passa no teste e quebra no dado real — foi exatamente o BUG-2 do §5.2, o FE
@@ -7,22 +7,25 @@
  * ele a torna IMPOSSÍVEL DE SER SILENCIOSA: qualquer alteração de forma num DTO obriga um
  * diff legível em `__dto-shapes__.json` no MESMO PR, onde o revisor (humano ou não) a vê.
  *
- * COMO: importa TODOS os módulos de `../` (o diretório de DTOs), coleta todo export que é
- * schema Zod e serializa com o `z.toJSONSchema()` nativo do Zod 4 — sem dependência nova,
- * sem walker próprio. `io:'input'` (a fronteira valida entrada) e `unrepresentable:'any'`.
+ * COMO: para cada `src/features/<domínio>/dtos/`, importa TODOS os módulos do diretório,
+ * coleta todo export que é schema Zod e serializa com o `z.toJSONSchema()` nativo do Zod 4 —
+ * sem dependência nova, sem walker próprio. `io:'input'` (a fronteira valida entrada) e
+ * `unrepresentable:'any'`. O JSON de cada domínio mora em
+ * `features/<domínio>/dtos/__tests__/__dto-shapes__.json` (o teste fica aqui, no caminho que o
+ * GAP-MAP cita; o do contábil é o JSON histórico, inalterado).
  *
- * DESCOBERTA AUTOMÁTICA DE PROPÓSITO: DTO novo ou export novo REPROVA até entrar no snapshot
- * — a fronteira não cresce em silêncio (a mesma lógica do allowlist-coverage: emitido sem par
- * declarado é defeito de omissão).
+ * DESCOBERTA AUTOMÁTICA DE PROPÓSITO: DTO novo, export novo ou DOMÍNIO novo REPROVA até entrar
+ * no snapshot — a fronteira não cresce em silêncio (a mesma lógica do allowlist-coverage: emitido
+ * sem par declarado é defeito de omissão). Piso: todo domínio com `dtos/` tem ≥ 1 schema.
  *
  * PARA ATUALIZAR (mudança de forma INTENCIONAL):
  *   UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot
- * e comite o JSON e os `.gen.ts` juntos — o diff do snapshot É o registro da mudança de contrato.
+ * e comite os JSON e os `.gen.ts` juntos — o diff do snapshot É o registro da mudança de contrato.
  *
  * CONTRATO FE GERADO (docs/adr/PRE-ADR-FE-CONTRACT-TYPES.md; plano
- * docs/accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md §6): o mesmo JSON vira tipos TS em
- * `my-app/types/contracts/accounting/<Dto>.gen.ts` (json-schema-to-typescript, `<X>Schema` →
- * `<X>Input`). Este teste reprova se o `.gen.ts` comitado divergir do snapshot ou sobrar órfão;
+ * docs/accounting/PLANO-FE-CONTRACT-TYPES-2026-09-28.md §6 e §8): o mesmo JSON vira tipos TS em
+ * `my-app/types/contracts/<domínio>/<Dto>.gen.ts` (json-schema-to-typescript, `<X>Schema` →
+ * `<X>Input`). Este teste reprova se um `.gen.ts` comitado divergir do snapshot ou sobrar órfão;
  * o FE tipa o body por esses arquivos, então o `tsc` do my-app morde o lado de lá.
  *
  * LIMITES DECLARADOS:
@@ -47,14 +50,16 @@ jest.doMock(PRETTIER, () => ({
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { compile } = require(JSTT) as typeof import('json-schema-to-typescript');
 
+// __tests__ → dtos → accounting → features.
+const FEATURES_DIR = path.resolve(__dirname, '../../..');
 // 6 níveis: __tests__ → dtos → accounting → features → src → server → raiz do repo.
-const GEN_DIR = path.resolve(__dirname, '../../../../../../my-app/types/contracts/accounting');
+const CONTRACTS_DIR = path.resolve(__dirname, '../../../../../../my-app/types/contracts');
 const BANNER =
   '// GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.\n' +
   '// Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.\n';
 const toTypeName = (n: string) => n.replace(/Schema$/, '') + 'Input';
-const genFile = (f: string) => path.join(GEN_DIR, f.replace(/\.ts$/, '.gen.ts'));
 const eol = (s: string) => s.replace(/\r\n/g, '\n');
+const UPDATE = process.env.UPDATE_DTO_SNAPSHOT === '1';
 
 async function render(entry: Record<string, unknown>): Promise<string> {
   let out = BANNER;
@@ -71,20 +76,17 @@ async function render(entry: Record<string, unknown>): Promise<string> {
   return out;
 }
 
-const DTO_DIR = path.resolve(__dirname, '..');
-const SNAPSHOT_PATH = path.join(__dirname, '__dto-shapes__.json');
-
 type ShapeMap = Record<string, Record<string, unknown>>;
 
-function collectShapes(): ShapeMap {
+function collectShapes(dtoDir: string): ShapeMap {
   const files = fs
-    .readdirSync(DTO_DIR)
+    .readdirSync(dtoDir)
     .filter((f) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
     .sort();
   const shapes: ShapeMap = {};
   for (const file of files) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const mod = require(path.join(DTO_DIR, file)) as Record<string, unknown>;
+    const mod = require(path.join(dtoDir, file)) as Record<string, unknown>;
     const entry: Record<string, unknown> = {};
     for (const [name, value] of Object.entries(mod)) {
       if (value instanceof z.ZodType) {
@@ -96,72 +98,135 @@ function collectShapes(): ShapeMap {
   return shapes;
 }
 
+interface Dominio {
+  nome: string;
+  genDir: string;
+  snapshotPath: string;
+  atual: ShapeMap;
+  snapshot: ShapeMap;
+  snapshotExiste: boolean;
+  /** Fonte dos `.gen.ts`: no UPDATE, `atual`; fora dele, o snapshot COMITADO (o `.gen.ts` tem de
+   * bater com o JSON que o revisor leu, não com o DTO do working tree). */
+  fonte: ShapeMap;
+  arquivos: string[];
+  gerado: Map<string, string>;
+}
+
 // Coleta em escopo de módulo: o `it.each` precisa da lista de arquivos no momento da coleta
 // dos testes — e é o nome do teste que carrega o NOME DO ARQUIVO divergente (a primeira versão
 // embrulhava o shape em `{ [file]: … }` e o diff do Jest ELIDIA a chave igual dos dois lados:
 // vermelho sem endereço — medido na mordida, corrigido aqui).
-const atual = collectShapes();
-const snapshotExiste = fs.existsSync(SNAPSHOT_PATH);
-const snapshot: ShapeMap = snapshotExiste ? (JSON.parse(fs.readFileSync(SNAPSHOT_PATH, 'utf8')) as ShapeMap) : {};
-const arquivos = [...new Set([...Object.keys(atual), ...Object.keys(snapshot)])].sort();
+const dominios: Dominio[] = fs
+  .readdirSync(FEATURES_DIR, { withFileTypes: true })
+  .filter((d) => d.isDirectory() && fs.existsSync(path.join(FEATURES_DIR, d.name, 'dtos')))
+  .map((d) => d.name)
+  .sort()
+  .map((nome) => {
+    const dtoDir = path.join(FEATURES_DIR, nome, 'dtos');
+    const snapshotPath = path.join(dtoDir, '__tests__', '__dto-shapes__.json');
+    const atual = collectShapes(dtoDir);
+    const snapshotExiste = fs.existsSync(snapshotPath);
+    const snapshot: ShapeMap = snapshotExiste ? (JSON.parse(fs.readFileSync(snapshotPath, 'utf8')) as ShapeMap) : {};
+    const arquivos = [...new Set([...Object.keys(atual), ...Object.keys(snapshot)])].sort();
+    if (UPDATE) {
+      fs.mkdirSync(path.dirname(snapshotPath), { recursive: true });
+      fs.writeFileSync(snapshotPath, JSON.stringify(atual, null, 2) + '\n');
+    }
+    return {
+      nome,
+      genDir: path.join(CONTRACTS_DIR, nome),
+      snapshotPath,
+      atual,
+      snapshot: UPDATE ? atual : snapshot,
+      snapshotExiste,
+      fonte: UPDATE ? atual : snapshot,
+      arquivos,
+      gerado: new Map<string, string>(),
+    };
+  });
 
-if (process.env.UPDATE_DTO_SNAPSHOT === '1') {
-  fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(atual, null, 2) + '\n');
-  Object.assign(snapshot, atual);
-  for (const k of Object.keys(snapshot)) if (!(k in atual)) delete snapshot[k];
-}
+const genFile = (d: Dominio, f: string) => path.join(d.genDir, f.replace(/\.ts$/, '.gen.ts'));
+/** Todo `.gen.ts` esperado em `my-app/types/contracts`, como caminho relativo `<domínio>/<arquivo>`. */
+const esperadosGlobais = new Set(
+  dominios.flatMap((d) => Object.keys(d.fonte).map((f) => `${d.nome}/${path.basename(genFile(d, f))}`)),
+);
+const genExistentes = (): string[] =>
+  fs.existsSync(CONTRACTS_DIR)
+    ? fs
+        .readdirSync(CONTRACTS_DIR, { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .flatMap((e) =>
+          fs
+            .readdirSync(path.join(CONTRACTS_DIR, e.name))
+            .filter((g) => g.endsWith('.gen.ts'))
+            .map((g) => `${e.name}/${g}`),
+        )
+    : [];
 
-// Fonte dos `.gen.ts`: no UPDATE, `atual`; fora dele, o snapshot COMITADO (o `.gen.ts` tem de
-// bater com o JSON que o revisor leu, não com o DTO do working tree).
-const UPDATE = process.env.UPDATE_DTO_SNAPSHOT === '1';
-const fonte: ShapeMap = UPDATE ? atual : snapshot;
-const gerado = new Map<string, string>();
-
-beforeAll(async () => {
-  for (const f of Object.keys(fonte)) gerado.set(f, await render(fonte[f]));
+beforeAll(() => {
   if (!UPDATE) return;
-  fs.mkdirSync(GEN_DIR, { recursive: true });
-  for (const [f, txt] of gerado) fs.writeFileSync(genFile(f), txt);
-  const esperados = new Set([...gerado.keys()].map((f) => path.basename(genFile(f))));
-  for (const g of fs.readdirSync(GEN_DIR)) {
-    if (g.endsWith('.gen.ts') && !esperados.has(g)) fs.rmSync(path.join(GEN_DIR, g));
+  for (const rel of genExistentes()) {
+    if (!esperadosGlobais.has(rel)) fs.rmSync(path.join(CONTRACTS_DIR, rel));
   }
 });
 
-describe('contrato da fronteira — shape dos DTOs Zod de accounting', () => {
-  it('o snapshot comitado existe', () => {
-    expect(snapshotExiste || process.env.UPDATE_DTO_SNAPSHOT === '1').toBe(true);
-  });
+for (const d of dominios) {
+  describe(`contrato da fronteira — shape dos DTOs Zod de ${d.nome}`, () => {
+    beforeAll(async () => {
+      for (const f of Object.keys(d.fonte)) d.gerado.set(f, await render(d.fonte[f]));
+      if (!UPDATE) return;
+      fs.mkdirSync(d.genDir, { recursive: true });
+      for (const [f, txt] of d.gerado) fs.writeFileSync(genFile(d, f), txt);
+    });
 
-  it.each(Object.keys(fonte).sort())('%s: o .gen.ts do FE bate com o snapshot', (file) => {
-    const p = genFile(file);
-    expect(
-      fs.existsSync(p)
-        ? eol(fs.readFileSync(p, 'utf8'))
-        : 'GEN AUSENTE — rode UPDATE_DTO_SNAPSHOT=1 e comite my-app/types/contracts',
-    ).toBe(gerado.get(file));
-  });
+    it('o snapshot comitado existe', () => {
+      expect(d.snapshotExiste || UPDATE).toBe(true);
+    });
 
-  it('não há .gen.ts órfão em my-app/types/contracts/accounting', () => {
-    const esperados = new Set(Object.keys(fonte).map((f) => path.basename(genFile(f))));
-    const orfaos = fs.existsSync(GEN_DIR)
-      ? fs.readdirSync(GEN_DIR).filter((g) => g.endsWith('.gen.ts') && !esperados.has(g))
-      : [];
+    it('o domínio tem ao menos 1 schema Zod (piso: coletor vazio é a armadilha do resultado plausível)', () => {
+      expect(Object.values(d.atual).reduce((n, m) => n + Object.keys(m).length, 0)).toBeGreaterThanOrEqual(1);
+    });
+
+    it.each(Object.keys(d.fonte).sort())('%s: o .gen.ts do FE bate com o snapshot', (file) => {
+      const p = genFile(d, file);
+      expect(
+        fs.existsSync(p)
+          ? eol(fs.readFileSync(p, 'utf8'))
+          : 'GEN AUSENTE — rode UPDATE_DTO_SNAPSHOT=1 e comite my-app/types/contracts',
+      ).toBe(d.gerado.get(file));
+    });
+
+    it(`não há .gen.ts órfão em my-app/types/contracts/${d.nome}`, () => {
+      const esperados = new Set(Object.keys(d.fonte).map((f) => path.basename(genFile(d, f))));
+      const orfaos = fs.existsSync(d.genDir)
+        ? fs.readdirSync(d.genDir).filter((g) => g.endsWith('.gen.ts') && !esperados.has(g))
+        : [];
+      expect(orfaos).toEqual([]);
+    });
+
+    it.each(d.arquivos)('%s bate com o snapshot (mudou de propósito? UPDATE_DTO_SNAPSHOT=1 e comite o diff)', (file) => {
+      expect(d.atual[file] ?? 'ARQUIVO SUMIU DO DIRETÓRIO (remova-o do snapshot no mesmo PR)').toEqual(
+        d.snapshot[file] ?? 'ARQUIVO NOVO SEM SNAPSHOT (rode UPDATE_DTO_SNAPSHOT=1 e comite)',
+      );
+    });
+  });
+}
+
+describe('contrato da fronteira — varredura de todos os domínios', () => {
+  it('não há pasta de contrato sem domínio (domínio removido deixa .gen.ts órfão)', () => {
+    const orfaos = genExistentes().filter((rel) => !esperadosGlobais.has(rel));
     expect(orfaos).toEqual([]);
   });
 
-  it.each(arquivos)('%s bate com o snapshot (mudou de propósito? UPDATE_DTO_SNAPSHOT=1 e comite o diff)', (file) => {
-    expect(atual[file] ?? 'ARQUIVO SUMIU DO DIRETÓRIO (remova-o do snapshot no mesmo PR)').toEqual(
-      snapshot[file] ?? 'ARQUIVO NOVO SEM SNAPSHOT (rode UPDATE_DTO_SNAPSHOT=1 e comite)',
-    );
-  });
-
-  it('sanidade do coletor: enxerga uma quantidade plausível de schemas (não é glob vazio)', () => {
-    const totalSchemas = Object.values(atual).reduce((n, m) => n + Object.keys(m).length, 0);
-    // 21 arquivos de DTO hoje; um coletor quebrado devolvendo 0/poucos é a armadilha do
-    // resultado plausível — o piso é deliberadamente folgado para não quebrar por remoção
+  it('sanidade do coletor: enxerga uma quantidade plausível de domínios e schemas (não é glob vazio)', () => {
+    const contabil = dominios.find((d) => d.nome === 'accounting');
+    const totalSchemas = Object.values(contabil?.atual ?? {}).reduce((n, m) => n + Object.keys(m).length, 0);
+    // 21 arquivos de DTO contábeis hoje; um coletor quebrado devolvendo 0/poucos é a armadilha
+    // do resultado plausível — o piso é deliberadamente folgado para não quebrar por remoção
     // legítima, mas mata o zero silencioso.
-    expect(Object.keys(atual).length).toBeGreaterThanOrEqual(15);
+    expect(Object.keys(contabil?.atual ?? {}).length).toBeGreaterThanOrEqual(15);
     expect(totalSchemas).toBeGreaterThanOrEqual(40);
+    // 17 domínios com `dtos/` hoje (G7 do plano); piso folgado.
+    expect(dominios.length).toBeGreaterThanOrEqual(10);
   });
 });
