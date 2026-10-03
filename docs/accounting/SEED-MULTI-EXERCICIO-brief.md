@@ -107,6 +107,10 @@ Derivados sem decisão nova: compra de mercadoria D 1.1.6 / C 1.1.1 ≥ CMV no m
 exigência do item 5 "CMV × 1.1.6"); senha dos tenants via `SEED_ACCOUNTING_PASSWORD` (mesma convenção do
 `SEED_ADMIN_PASSWORD` do `prisma/seed.ts`, nunca reescrita); `--unit-id` default `seed-unit` é a BASE: cada tenant ganha `seed-unit-presumido` / `seed-unit-real` (dois bindings do salão na mesma unidade colidem em `sale.finalized` e o boot aborta — achado no boot real 24/09).
 
+> **[ERRATA 2026-10-03 — BE-INCR-SEED-UNIDADE-E-ENV itens 9–11]** `--unit-id` passou a ser o **NOME** da unidade, não mais o id do razão: o
+> seed instala o salão inteiro e cria a unidade pelo `SystemProvisioningService`; o razão fica sob o **id gerado** (linha de `units`),
+> impresso no relatório e no "próximo passo" do `activate-salon-binding`. O nome da unidade continua `seed-unit-presumido` / `seed-unit-real`.
+
 ## 5. Achados fora de escopo
 
 1. `seed.ts` reescreve a senha do admin a cada `db:seed` (memória) — não tocar aqui.

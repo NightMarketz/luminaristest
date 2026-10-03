@@ -134,17 +134,23 @@ export function useSalesData(tables: IDynamicTable[]) {
         saleId: string,
         payment: { paymentMethod: SalePaymentMethod; paymentReference?: string; packageId?: string },
     ) => runSaleTransition(saleId, (tableId) =>
-        salesService.paySale({ tableId, saleId, ...payment })
+        salesService.paySale({
+            tableId,
+            saleId,
+            paymentMethod: payment.paymentMethod,
+            paymentReference: payment.paymentReference,
+            packageId: payment.packageId,
+        })
     ), [runSaleTransition]);
 
     const cancelSale = useCallback((saleId: string, reason?: string) =>
         runSaleTransition(saleId, (tableId) =>
-            salesService.cancelSale({ tableId, saleId, ...(reason ? { reason } : {}) })
+            salesService.cancelSale({ tableId, saleId, reason: reason || undefined })
         ), [runSaleTransition]);
 
     const returnSale = useCallback((saleId: string, reason?: string) =>
         runSaleTransition(saleId, (tableId) =>
-            salesService.returnSale({ tableId, saleId, ...(reason ? { reason } : {}) })
+            salesService.returnSale({ tableId, saleId, reason: reason || undefined })
         ), [runSaleTransition]);
 
     const isLoading = isLoadingSales || isLoadingItems || isLoadingRelations;

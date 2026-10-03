@@ -6832,6 +6832,88 @@
       ]
     }
   },
+  "ProductDestinationDto.ts": {
+    "UpsertProductDestinationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination": {
+          "type": "string",
+          "enum": [
+            "REVENDA",
+            "INSUMO_SERVICO"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "productRef",
+        "destination"
+      ],
+      "additionalProperties": false
+    },
+    "ListProductDestinationsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "ProductDestinationParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "productRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "productRef"
+      ],
+      "additionalProperties": false
+    },
+    "ProductDestinationViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "productRef": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string",
+          "enum": [
+            "REVENDA",
+            "INSUMO_SERVICO"
+          ]
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "productRef",
+        "destination",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
   "ReceiptDto.ts": {
     "ReceiptRequestSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

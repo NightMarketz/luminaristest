@@ -1,5 +1,10 @@
 import { apiClient } from '../api/api-client';
-import { IUser, UpdateUserDto } from '../../types/User';
+import { IUser } from '../../types/User';
+import type {
+  CreateUserInput,
+  UpdatePreferencesInput,
+  UpdateUserInput,
+} from '@/types/contracts/users/UserDto.gen';
 
 interface PaginationMetadata { page: number; limit: number; total: number; hasMore?: boolean; totalPages?: number; totalCount?: number }
 
@@ -31,14 +36,14 @@ export const UserService = {
   /**
    * Creates a new user.
    */
-  async createUser(payload: Partial<UpdateUserDto>): Promise<IUser> {
+  async createUser(payload: CreateUserInput): Promise<IUser> {
     return apiClient.post<IUser>('/users', payload);
   },
 
   /**
    * Updates a user profile.
    */
-  async updateProfile(userId: string, data: Partial<UpdateUserDto>): Promise<IUser> {
+  async updateProfile(userId: string, data: UpdateUserInput): Promise<IUser> {
     const response = await apiClient.put<{ success: boolean; data?: IUser; id?: string }>(`/users/${userId}`, data);
     return (response as { data?: IUser }).data || (response as unknown as IUser);
   },
@@ -62,13 +67,14 @@ export const UserService = {
    * Specialized method to change user role (ADMIN test feature).
    */
   async changeRole(userId: string, role: string): Promise<IUser> {
-    return this.updateProfile(userId, { role: role as import('../../types/Role').Role });
+    // ponytail: `role` vem do botão de promoção (USER|ADMIN); o servidor devolve 400 se divergir do contrato gerado.
+    return this.updateProfile(userId, { role: role as UpdateUserInput['role'] });
   },
 
   /**
    * Updates the authenticated user's locale/currency preferences.
    */
-  async updatePreferences(data: { locale?: string; currency?: string }): Promise<{ success: boolean; data: IUser }> {
+  async updatePreferences(data: UpdatePreferencesInput): Promise<{ success: boolean; data: IUser }> {
     return apiClient.patch('/users/me/preferences', data);
   },
 };

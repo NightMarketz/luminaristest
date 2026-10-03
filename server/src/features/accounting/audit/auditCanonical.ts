@@ -144,6 +144,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
+  // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a) — destinação padrão por produto: productRef (id) + enum
+  'product_destination.set':     ['productRef', 'destination'],
+  'product_destination.cleared': ['productRef', 'destination'],
   // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, BRIEF item 10) — perfil da EMPRESA: só ano/enum/boolean/id. O
   // declarante (nome/CNPJ/endereço/e-mail), NIRE, nº de ordem e natureza do livro (texto) ficam FORA do evento.
   'company_fiscal_profile.updated': ['anoCalendario', 'regime', 'grandePorte', 'inativa', 'aporteInvestidorAnjo', 'livroCaixaSemEscrituracao', 'distribuicaoAcimaBase',

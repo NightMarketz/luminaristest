@@ -1,6 +1,16 @@
 import { getCookie } from 'cookies-next';
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type {
+  AdvanceStageInput,
+  ConvertLeadInput,
+  CreateProposalInput,
+  RecordNoShowInput,
+} from '@/types/contracts/crm/CrmPipelineDto.gen';
+import type {
+  AdvanceOpportunityInput,
+  ConvertLeadToOpportunityInput,
+} from '@/types/contracts/crm/CrmOpportunityDto.gen';
 
 /**
  * CRM service — wraps the dedicated server-side orchestration endpoints
@@ -8,69 +18,21 @@ import { notify } from '../notifications/notify';
  * backend (CrmPipelineService); this is a thin typed client over it.
  */
 
-export interface AdvanceStagePayload {
-  leadId: string;
-  stageId: string;
-  meetingAt?: string;
-  amount?: number;
-  currency?: 'BRL' | 'USD' | 'EUR';
-  winProbability?: number;
-}
+// Contrato gerado (crm/CrmPipelineDto, crm/CrmOpportunityDto) — nunca espelho à mão.
+// `AdvanceStage`/`AdvanceOpportunity` são .strict(): `stageType`/`status` do cliente = 400, o FE não manda.
+export type AdvanceStagePayload = AdvanceStageInput;
 
-export interface CreateProposalPayload {
-  leadId: string;
-  amount: number;
-  currency?: 'BRL' | 'USD' | 'EUR';
-  winProbability?: number;
-  estimatedCloseDate?: string;
-}
+export type CreateProposalPayload = CreateProposalInput;
 
-export interface NoShowPayload {
-  leadId: string;
-  option: 'reschedule' | 'revert';
-  rescheduleAt?: string;
-  previousStageId?: string;
-}
+export type NoShowPayload = RecordNoShowInput;
 
-export interface ConvertLeadPayload {
-  leadId: string;
-  account: {
-    name: string;
-    segment?: string;
-    size?: string;
-    website?: string;
-    taxId?: string;
-    city?: string;
-    state?: string;
-  };
-  contact?: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    jobTitle?: string;
-    role?: string;
-  };
-}
+export type ConvertLeadPayload = ConvertLeadInput;
 
 /** Advance a first-class opportunity to a target stage (mirror of AdvanceStagePayload). */
-export interface AdvanceOpportunityPayload {
-  opportunityId: string;
-  stageId: string;
-  amount?: number;
-  currency?: 'BRL' | 'USD' | 'EUR';
-  winProbability?: number;
-}
+export type AdvanceOpportunityPayload = AdvanceOpportunityInput;
 
 /** Create an opportunity from a lead (mirror of ConvertLeadPayload). The lead stays Open. */
-export interface ConvertLeadToOpportunityPayload {
-  leadId: string;
-  name: string;
-  pipelineId: string;
-  stageId?: string;
-  amount?: number;
-  currency?: 'BRL' | 'USD' | 'EUR';
-  accountId?: string;
-}
+export type ConvertLeadToOpportunityPayload = ConvertLeadToOpportunityInput;
 
 type ApiResult<T = unknown> = { success: boolean; data: T };
 

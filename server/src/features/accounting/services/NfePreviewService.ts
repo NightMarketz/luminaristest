@@ -7,7 +7,9 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { FiscalProfileService } from './FiscalProfileService';
 import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
-import { resolveDestinations, type ItemDestinationMapping } from '../models/itemDestination';
+import { defaultByProductRefFrom, resolveDestinations, type ItemDestinationMapping } from '../models/itemDestination';
+import type { IProductDestinationDefaultRepository } from '../repositories/IProductDestinationDefaultRepository';
+import { mappedProductRefs } from './NfeImportService';
 
 /**
  * NfePreviewService — dry-run do parser da NF-e (BE-INCR-NFE-PREVIEW, rodada 2a). Existe para a tela
@@ -25,7 +27,7 @@ import { resolveDestinations, type ItemDestinationMapping } from '../models/item
  * NÃO escreve, NÃO abre transação, NÃO emite evento de auditoria.
  *
  * ITEM-DESTINATION item 14 (F-ID-8 a): `itemMappings` opcional passa pelo MESMO `resolveDestinations` e pelos
- * mesmos `destinos` do import — preview = import a seco. Sem mapeamento, todo item sai REVENDA/FALLBACK e o
+ * mesmos `destinos` do import — preview = import a seco, inclusive a origem PRODUTO (PR-2, a mesma query de defaults). Sem mapeamento, todo item sai REVENDA/FALLBACK e o
  * número é o de antes. Item sem mapeamento NÃO é rejeitado aqui (o D6 é do import).
  */
 export class NfePreviewService {
@@ -33,6 +35,7 @@ export class NfePreviewService {
     private readonly payableRepo: IPayableRepository,
     private readonly policy: IAccountingPolicy,
     private readonly fiscalProfile: FiscalProfileService,
+    private readonly productDestinationDefaults: IProductDestinationDefaultRepository,
   ) {}
 
   async preview(
@@ -48,7 +51,12 @@ export class NfePreviewService {
     // X6 (F-X6-6 a): sem perfil fiscal o preview NÃO inventa custo — 400 nomeado, igual ao import.
     const regime = await this.fiscalProfile.requireCostRegime(scope);
     const costed = parsed.itens.filter((it) => it.indTot !== '0');
-    const resolved = resolveDestinations(costed, new Map<string, ItemDestinationMapping>(itemMappings.map((m) => [m.cProd, m])));
+    const defaults = await this.productDestinationDefaults.findManyByProductRefs(scope, mappedProductRefs(itemMappings));
+    const resolved = resolveDestinations(
+      costed,
+      new Map<string, ItemDestinationMapping>(itemMappings.map((m) => [m.cProd, m])),
+      defaultByProductRefFrom(defaults),
+    );
     const custo = acquisitionCost(parsed, costed, regime, resolved.byNItem);
     return toNfePreview(parsed, existing?.id ?? null, custo, resolved);
   }

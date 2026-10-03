@@ -98,12 +98,18 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > **[EMENDA 2026-09-24 — SEED-MY] Alvo = seed multi-exercício (`db:seed:accounting`).** O `dev.db` é
 > seed de testes (decisão do dono 12/09). Depois do `npm run db:backup`, rode
 > `cd server && SEED_ACCOUNTING_PASSWORD=<senha> npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup`:
-> cria os tenants `seed-presumido`/`seed-real` (unidades `seed-unit-presumido` / `seed-unit-real` — uma por tenant) com o chart completo (19 contas,
+> cria os tenants `seed-presumido`/`seed-real` (uma unidade por tenant, de **nome** `seed-unit-presumido` / `seed-unit-real` — o `unitId` é o **id gerado**, impresso pelo seed) com o salão instalado e o chart completo (19 contas,
 > `1.1.6/3.3/4.2` inclusas), 2025 encerrado + `HARD_CLOSED`, 2026 `OPEN` até o mês corrente, AP/AR e
 > `FiscalProfile` por regime; sai 1 se o tie-out não fechar. Em seguida rode o
 > `activate-salon-binding.mjs` impresso pelo comando para cada tenant (o seed não ativa binding). Com isso o
 > P0.2b (completar chart + abrir mês) fica coberto para esses tenants. A 2ª passada (Lucro Real) usa
 > `seed-real`.
+>
+> **[EMENDA 2026-10-03 — SEED-UNITS, F-S1c → a] Re-semear.** Um `dev.db` semeado ANTES do BE-INCR-SEED-UNIDADE-E-ENV tem o razão sob o id
+> literal `seed-unit-*` (que a tela não oferece). Depois do `npm run db:backup`, **re-semeie** (o comando acima) e rode o
+> `activate-salon-binding.mjs` com o **novo** `unitId` impresso para cada tenant; os lançamentos e bindings antigos sob `seed-unit-*`
+> ficam (órfãos, sem colisão — F-P5). Atenção: se o usuário `seed-*` já tem tabelas e nenhuma unidade com o nome pedido, o seed **recusa**
+> com mensagem nomeada (não instala o sistema uma 2ª vez).
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -148,8 +154,8 @@ cd my-app && npm run build && npm start
 ```
 
 Server em `http://localhost:3001`, app em `http://localhost:3000`. Logue na aplicação e abra
-**Contabilidade → aba Compliance**; escolha a unidade no seletor. Para o `unitId` do passo 1, abra
-DevTools → Network e leia o parâmetro `unitId=` de qualquer request da tela.
+**Contabilidade → aba Compliance**; escolha no seletor a unidade `seed-unit-presumido` (ou `seed-unit-real` no `seed-real`). Para o
+`unitId` do passo 1, use o impresso pelo seed (ou abra DevTools → Network e leia o parâmetro `unitId=` de qualquer request da tela).
 
 ### Dados que precisam ser levantados antes de gerar ECD/ECF (P6) — formatos validados pelo backend
 
