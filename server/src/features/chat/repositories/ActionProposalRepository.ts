@@ -45,4 +45,8 @@ export class ActionProposalRepository implements IActionProposalRepository {
             },
         });
     }
+
+    async deleteByUserId(userId: string): Promise<void> {
+        await prisma.actionProposal.deleteMany({ where: { userId } });
+    }
 }

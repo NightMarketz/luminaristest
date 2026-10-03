@@ -18,7 +18,7 @@ páginas e a comunicação no service.
 | `getDocumentById(docId)` | Detalhe de um documento. |
 | `uploadDocument(formData)` | Upload (multipart) — cria o documento e dispara o processamento. |
 | `getTokenCost(formData)` | Estimativa de custo antes do upload. |
-| `getQdrantStatus()` · `getQdrantPoints(docId)` · `triggerQdrantInjection(docId)` | Status/pontos no vetor store e reinjeção. |
+| `getQdrantStatus()` · `getQdrantPoints(docId)` | Status/pontos no vetor store. |
 | `deleteDocument(docId)` | Remove o documento (e seus dados). |
 
 > Processamento, extração e busca semântica acontecem no **backend** (feature

@@ -231,3 +231,26 @@ export class PackageExpiryNfsePendingError extends AppError {
     Object.setPrototypeOf(this, PackageExpiryNfsePendingError.prototype);
   }
 }
+
+/**
+ * BE-INCR-SEED-UNIDADE-E-ENV (item 2) — onboarding: a unidade ou o perfil fiscal não nasceu e o sistema recém-instalado
+ * foi DESFEITO (compensação). Um novo create não esbarra no 403 one-shot. `message` já vem montada pelo
+ * `SystemProvisioningService` (o HTTP do `POST /dashboard/create` a devolve em `error`).
+ */
+export class OnboardingRolledBackError extends AppError {
+  constructor(message: string) {
+    super(message, 500, 'ONBOARDING_ROLLED_BACK');
+    Object.setPrototypeOf(this, OnboardingRolledBackError.prototype);
+  }
+}
+
+/**
+ * Compensação do onboarding FALHOU: o sistema instalado ficou de pé sem unidade/perfil. O usuário precisa de
+ * "Resetar sistema" antes de tentar de novo. Distinto de `OnboardingRolledBackError` — OUTRO modo de falha, OUTRO código.
+ */
+export class OnboardingRollbackFailedError extends AppError {
+  constructor(message: string) {
+    super(message, 500, 'ONBOARDING_ROLLBACK_FAILED');
+    Object.setPrototypeOf(this, OnboardingRollbackFailedError.prototype);
+  }
+}

@@ -1,5 +1,7 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
+import type { RegisterPaymentInput } from '@/types/contracts/sales/RegisterPaymentDto.gen';
+import type { CancelSaleInput, ReturnSaleInput } from '@/types/contracts/sales/SalesCancellationDto.gen';
 
 /**
  * Sales lifecycle service — thin typed client over the DEDICATED sale-transition endpoints
@@ -16,7 +18,8 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
-export type SalePaymentMethod = 'Credit Card' | 'Debit Card' | 'Cash' | 'Pix' | 'Package Balance';
+// Contrato gerado (sales/RegisterPaymentDto) — nunca espelho à mão.
+export type SalePaymentMethod = RegisterPaymentInput['paymentMethod'];
 
 export const SALE_PAYMENT_METHODS: readonly SalePaymentMethod[] = [
   'Cash',
@@ -26,22 +29,8 @@ export const SALE_PAYMENT_METHODS: readonly SalePaymentMethod[] = [
   'Package Balance',
 ];
 
-export interface PaySalePayload {
-  tableId: string;
-  saleId: string;
-  paymentMethod: SalePaymentMethod;
-  /** ISO datetime; server defaults to "now" when omitted. */
-  paidAt?: string;
-  paymentReference?: string;
-  /** REQUIRED iff paymentMethod === 'Package Balance'; FORBIDDEN otherwise (server superRefine). */
-  packageId?: string;
-}
-
-export interface CancelOrReturnSalePayload {
-  tableId: string;
-  saleId: string;
-  reason?: string;
-}
+/** REQUIRED packageId iff paymentMethod === 'Package Balance'; FORBIDDEN otherwise (server superRefine — não está no tipo). */
+export type PaySalePayload = RegisterPaymentInput;
 
 /** The endpoints return the updated raw DynamicTable row — treat as opaque and refetch. */
 type RawSaleRow = { id: string; data: Record<string, unknown> };
@@ -55,14 +44,14 @@ export const salesService = {
   },
 
   /** Cancel a Finalized sale — reverses the revenue entry via the reversal bridge. */
-  async cancelSale(payload: CancelOrReturnSalePayload): Promise<RawSaleRow> {
+  async cancelSale(payload: CancelSaleInput): Promise<RawSaleRow> {
     const res = await apiClient.post<ApiEnvelope<RawSaleRow>>('/sales/cancel', payload);
     notify('Venda cancelada.', 'success', CTX);
     return res.data;
   },
 
   /** Return a Finalized sale — books the 3.2 contra-revenue (original entry untouched). */
-  async returnSale(payload: CancelOrReturnSalePayload): Promise<RawSaleRow> {
+  async returnSale(payload: ReturnSaleInput): Promise<RawSaleRow> {
     const res = await apiClient.post<ApiEnvelope<RawSaleRow>>('/sales/return', payload);
     notify('Devolução registrada.', 'success', CTX);
     return res.data;

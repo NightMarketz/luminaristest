@@ -107,7 +107,7 @@ Classificação: **[D]** direto · **[F-x]** depende do fork x · **[P]** preced
 ### Bens (`FixedAsset`)
 
 6. **[P F-FE-2]** Lista em `<table>` (não `GenericTable`): código, descrição, classe (nome resolvido do
-   cache de classes), custo, depreciação acumulada, valor líquido (`cost − opening − accumulated`, só
+   cache de classes), custo, depreciação acumulada, valor líquido (`cost − accumulated` — a acumulada já inclui a abertura; `cost − opening − accumulated` descontaria 2×, corrigido em 03/10 pelo review do PR-1 —, só
    exibição), status (badge), aquisição/ativação (`formatDate`).
 7. **[D]** Filtros server-side `status` e `classId` (o BE já filtra); **paginação client-side** com
    `StandardPagination` sobre o array (o BE devolve tudo, `FixedAssetService.ts:65-68`).

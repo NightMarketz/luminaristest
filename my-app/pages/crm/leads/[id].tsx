@@ -57,10 +57,10 @@ function LeadDetailInner() {
       await CrmService.advanceStage({
         leadId: lead.id,
         stageId: nextStage.id,
-        ...(meetingAt ? { meetingAt } : {}),
-        ...(capture
-          ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
-          : {}),
+        meetingAt: meetingAt || undefined,
+        amount: capture?.amount,
+        currency: capture?.currency,
+        winProbability: capture?.winProbability,
       });
       await reload();
     } catch (err) {

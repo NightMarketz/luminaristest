@@ -27,11 +27,12 @@ import { AgingPanel } from './components/AgingPanel';
 import { CashForecastPanel } from './components/CashForecastPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
+import { FixedAssetsPanel } from './components/FixedAssetsPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes';
+type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -62,6 +63,8 @@ const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'nfe',            labelKey: 'view.tabs.nfe',            label: 'NF-e' },
   { id: 'compliance',     labelKey: 'view.tabs.compliance',     label: 'Compliance' },
   { id: 'dimensoes',      labelKey: 'view.tabs.dimensoes',      label: 'Dimensões' },
+  // F-FAFE-4(a) ratificado: aba própria (22ª) — imobilizado não é título a pagar; o vínculo com AP é só a origem NF-e.
+  { id: 'imobilizado',    labelKey: 'view.tabs.imobilizado',    label: 'Imobilizado' },
 ];
 
 /**
@@ -367,6 +370,11 @@ export function AccountingView() {
       {/* ── Dimensões (centro de custo / projeto) tab ──────────────────────── */}
       {activeTab === 'dimensoes' && unitId && (
         <DimensionsPanel unitId={unitId} />
+      )}
+
+      {/* ── Imobilizado (C8: bens / classes / taxas / contas) tab — FE-INCR-FIXED-ASSETS ─── */}
+      {activeTab === 'imobilizado' && unitId && (
+        <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} />
       )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}

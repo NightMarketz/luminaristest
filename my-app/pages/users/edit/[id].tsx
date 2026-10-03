@@ -13,6 +13,7 @@ import type { GetServerSidePropsContext, GetServerSidePropsResult, InferGetServe
 import { getCookie } from 'cookies-next';
 import { NextPage } from 'next';
 import { UserService } from '../../../lib/services/user.service';
+import type { UpdateUserInput } from '@/types/contracts/users/UserDto.gen';
 import { resolveErrorMessage } from '../../../lib/utils/error-handler';
 
 export const getServerSideProps = async (context: GetServerSidePropsContext) => {
@@ -32,9 +33,8 @@ interface UserEditFormData {
   role?: Role;
 }
 
-interface UserUpdatePayload extends Partial<IUser> {
-  password?: string;
-}
+// Contrato gerado (users/UserDto) — nunca espelho à mão; `Partial<IUser>` era tipo de resposta.
+type UserUpdatePayload = UpdateUserInput;
 
 interface ApiErrorResponse {
   message: string;
@@ -198,7 +198,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
     }
 
     try {
-      const updatedUser = await UserService.updateProfile(userId, updatePayload as Parameters<typeof UserService.updateProfile>[1]);
+      const updatedUser = await UserService.updateProfile(userId, updatePayload);
 
       if (!updatedUser) {
         throw new Error(t('userEditInvalidResponseData', 'Invalid data structure in API response'));

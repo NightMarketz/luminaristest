@@ -18,4 +18,8 @@ export class KnowledgeGraphRepository implements IKnowledgeGraphRepository {
             create: { userId, data: payload }
         });
     }
+
+    async deleteByUserId(userId: string): Promise<void> {
+        await prisma.knowledgeGraph.deleteMany({ where: { userId } });
+    }
 }

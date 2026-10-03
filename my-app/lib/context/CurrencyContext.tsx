@@ -4,6 +4,7 @@ import React, { createContext, useContext, useCallback, ReactNode } from 'react'
 import { useAuth } from './AuthContext';
 
 import { UserService } from '../services/user.service';
+import type { UpdatePreferencesInput } from '@/types/contracts/users/UserDto.gen';
 
 // ─────────────────────────────────────────────
 // Supported currencies
@@ -86,7 +87,8 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     updateAuth({ ...user, currency: newCurrency });
 
     try {
-      await UserService.updatePreferences({ currency: newCurrency });
+      // ponytail: `newCurrency` vem de SUPPORTED_CURRENCIES; o servidor devolve 400 se divergir do contrato gerado.
+      await UserService.updatePreferences({ currency: newCurrency as UpdatePreferencesInput['currency'] });
     } catch (err) {
       console.error('[CurrencyContext] Failed to save currency preference:', err);
       // Revert on failure

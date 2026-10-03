@@ -1,0 +1,148 @@
+{
+  "ChatMessageDto.ts": {
+    "ListChatMessagesQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "instanceId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "page": {
+          "default": 1,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "pageSize": {
+          "default": 20,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "instanceId"
+      ]
+    },
+    "ChatMessageSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant",
+            "system"
+          ]
+        },
+        "chatInstanceId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "createdAt": {},
+        "updatedAt": {}
+      },
+      "required": [
+        "id",
+        "content",
+        "role",
+        "chatInstanceId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CreateChatMessageSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "chatInstanceId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "content",
+        "chatInstanceId"
+      ]
+    },
+    "UpdateChatMessageSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "chatInstanceId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "documentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ChatMessageSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "user",
+            "assistant",
+            "system"
+          ]
+        },
+        "createdAt": {}
+      },
+      "required": [
+        "id",
+        "content",
+        "role",
+        "createdAt"
+      ]
+    }
+  }
+}

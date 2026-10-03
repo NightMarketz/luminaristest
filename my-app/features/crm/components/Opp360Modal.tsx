@@ -72,9 +72,9 @@ export function Opp360Modal({ isOpen, onClose, opportunity, stages, ownerNames, 
       await CrmService.advanceOpportunity({
         opportunityId: opportunity.id,
         stageId: nextStage.id,
-        ...(capture
-          ? { amount: capture.amount, currency: capture.currency, winProbability: capture.winProbability }
-          : {}),
+        amount: capture?.amount,
+        currency: capture?.currency,
+        winProbability: capture?.winProbability,
       });
       await onChanged();
       onClose();
