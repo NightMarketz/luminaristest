@@ -7,7 +7,7 @@ import { resolveAccountingScope } from '../features/accounting/scope/AccountingS
 import { makeUploadMiddleware } from '../lib/uploadSecurity';
 import {
   ExportRequestSchema,
-  JobScopeQuerySchema,
+  JobGovernanceQuerySchema,
   JobRowsQuerySchema,
   ImportUploadSchema,
   CommitImportSchema,
@@ -105,13 +105,13 @@ export const getDataExchangeJob = async (req: Request, res: Response) => {
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = JobScopeQuerySchema.safeParse(req.query);
+    const parsed = JobGovernanceQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getDataExchangeExportService().getJob(scope, req.params.jobId);
     return res.json({ success: true, data });
   } catch (error) {
@@ -198,13 +198,13 @@ export const downloadDataExchangeArtifact = async (req: Request, res: Response) 
     const user = getUserContextFromRequest(req);
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const parsed = JobScopeQuerySchema.safeParse(req.query);
+    const parsed = JobGovernanceQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
 
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const { absPath, fileName, mimeType } = await getFactory()
       .getDataExchangeExportService()
       .getArtifactForDownload(scope, req.params.jobId);

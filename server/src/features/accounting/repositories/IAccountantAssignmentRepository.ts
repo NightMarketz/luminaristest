@@ -28,7 +28,8 @@ export interface TransitionPatch {
 export interface IAccountantAssignmentRepository {
   findActive(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<ActiveAccountant | null>;
   findPending(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<AccountantAssignment | null>;
-  findActiveForAccountant(accountantUserId: string, unitId: string): Promise<ActiveAccountant | null>;
+  /** ACTIVE do par (contador, dono) naquele `unitId` — o par identifica a atribuição (um contador atende N donos). */
+  findActiveForPair(accountantUserId: string, ownerUserId: string, unitId: string): Promise<ActiveAccountant | null>;
   findById(id: string, tx?: Prisma.TransactionClient): Promise<AccountantAssignment | null>;
   listByScope(scope: AccountingScope): Promise<AccountantAssignment[]>;
   listLiveForAccountant(accountantUserId: string): Promise<Array<AccountantAssignment & { ownerEmail: string }>>;

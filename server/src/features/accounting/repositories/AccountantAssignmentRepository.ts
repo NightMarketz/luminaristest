@@ -43,9 +43,13 @@ export class AccountantAssignmentRepository implements IAccountantAssignmentRepo
     });
   }
 
-  public async findActiveForAccountant(accountantUserId: string, unitId: string): Promise<ActiveAccountant | null> {
+  public async findActiveForPair(
+    accountantUserId: string,
+    ownerUserId: string,
+    unitId: string,
+  ): Promise<ActiveAccountant | null> {
     const a = await prisma.accountantAssignment.findFirst({
-      where: { accountantUserId, unitId, status: 'ACTIVE', deletedAt: null },
+      where: { accountantUserId, userId: ownerUserId, unitId, status: 'ACTIVE', deletedAt: null },
     });
     return a ? toActive(a) : null;
   }

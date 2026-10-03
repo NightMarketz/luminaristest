@@ -131,6 +131,7 @@ export const AdjustmentEntrySchema = z
  *         reviewerName: { type: string, minLength: 3, maxLength: 120 }
  *         reviewerCrc:  { type: string, description: "Máscara CFC UF-NNNNNN/O-D, transferido/secundário com sufixo ' T-UF'/' S-UF' (mesma do contato, #305)" }
  *         statement:    { type: string, maxLength: 500 }
+ *         ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário" }
  */
 export const SignOffReviewSchema = z
   .object({
@@ -149,6 +150,7 @@ export const SignOffReviewSchema = z
         return parsed.normalized;
       }),
     statement: z.string().min(1).max(500),
+    ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
   })
   .strict();
 
@@ -161,9 +163,14 @@ export const SignOffReviewSchema = z
  *       properties:
  *         unitId: { type: string }
  *         reason: { type: string, maxLength: 500 }
+ *         ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário" }
  */
 export const RejectReviewSchema = z
-  .object({ unitId: z.string().min(1), reason: z.string().min(1).max(500) })
+  .object({
+    unitId: z.string().min(1),
+    reason: z.string().min(1).max(500),
+    ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
+  })
   .strict();
 
 /** @openapi
@@ -196,14 +203,19 @@ export const ReplaceReviewJobsSchema = z
  *         unitId: { type: string }
  *         year:   { type: integer }
  *         status: { type: string, enum: [OPEN, SIGNED_OFF, REJECTED] }
+ *         ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário" }
  */
 export const ListReviewsQuerySchema = z.object({
   unitId: z.string().min(1),
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   status: z.enum(REVIEW_STATUSES).optional(),
+  ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
 });
 
-export const ReviewScopeQuerySchema = z.object({ unitId: z.string().min(1) });
+export const ReviewScopeQuerySchema = z.object({
+  unitId: z.string().min(1),
+  ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
+});
 
 export type OpenReviewInput = z.infer<typeof OpenReviewSchema>;
 export type AddFindingInput = z.infer<typeof AddFindingSchema>;

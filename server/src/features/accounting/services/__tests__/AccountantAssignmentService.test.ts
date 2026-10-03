@@ -29,7 +29,7 @@ interface Opts {
   pending?: AccountantAssignment | null;
   active?: ActiveAccountant | null;
   byId?: AccountantAssignment | null;
-  forAccountant?: ActiveAccountant | null;
+  forPair?: ActiveAccountant | null;
 }
 
 function build(opts: Opts = {}) {
@@ -38,11 +38,11 @@ function build(opts: Opts = {}) {
   );
   const create = jest.fn(async (d: Record<string, unknown>) => row({ ...d, id: 'asg-new' }));
   const findActive = jest.fn(async () => opts.active ?? null);
-  const findActiveForAccountant = jest.fn(async () => opts.forAccountant ?? null);
+  const findActiveForPair = jest.fn(async () => opts.forPair ?? null);
   const repo = {
     findActive,
     findPending: jest.fn(async () => opts.pending ?? null),
-    findActiveForAccountant,
+    findActiveForPair,
     findById: jest.fn(async () => (opts.byId === undefined ? row() : opts.byId)),
     listByScope: jest.fn(async () => [row()]),
     listLiveForAccountant: jest.fn(async () => [{ ...row(), ownerEmail: 'dono@ex.com' }]),
@@ -61,7 +61,7 @@ function build(opts: Opts = {}) {
   const append = jest.fn(async (_tx: unknown, _scope: unknown, _input: { eventType: string; actorUserId: string; payload: Record<string, unknown> }) => undefined);
   const audit = { append } as unknown as AuditService;
   const service = new AccountantAssignmentService(repo, contactRepo, userRepo, new AccountingPolicy(), audit);
-  return { service, transition, create, append, findActiveForAccountant };
+  return { service, transition, create, append, findActiveForPair };
 }
 
 const invite = { unitId: 'unit-1', accountingContactId: 'ct-1', accountantEmail: 'contador@ex.com' };
@@ -185,27 +185,39 @@ describe('AccountantAssignmentService', () => {
   });
 
   describe('resolveGovernanceScope (item 5, 17g)', () => {
-    it('sem atribuição ACTIVE do ator: igual a resolveAccountingScope', async () => {
-      const { service } = build({ forAccountant: null });
+    it('sem ownerUserId (ou = ator): igual a resolveAccountingScope, sem consultar atribuição', async () => {
+      const { service, findActiveForPair } = build();
       await expect(service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1')).resolves.toEqual(
         resolveAccountingScope({ userId: 'contador' }, 'unit-1'),
       );
+      await expect(service.resolveGovernanceScope({ userId: 'dono' }, 'unit-1', 'dono')).resolves.toEqual(
+        resolveAccountingScope({ userId: 'dono' }, 'unit-1'),
+      );
+      expect(findActiveForPair).not.toHaveBeenCalled();
     });
 
-    it('com ACTIVE no unitId: escopo do dono com o contador como ator', async () => {
-      const { service, findActiveForAccountant } = build({
-        forAccountant: { id: 'asg-1', ownerUserId: 'dono', unitId: 'unit-1', accountantUserId: 'contador', crcNumber: 'SP-123456/O-1' },
+    it('ownerUserId sem ACTIVE do par: 403 ACCOUNTANT_NOT_ASSIGNED (nunca cai no escopo do ator)', async () => {
+      const { service } = build({ forPair: null });
+      await expect(service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1', 'dono')).rejects.toMatchObject({
+        statusCode: 403,
+        errorCode: 'ACCOUNTANT_NOT_ASSIGNED',
       });
-      const s = await service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1');
+    });
+
+    it('ownerUserId com ACTIVE do par: escopo do dono com o contador como ator', async () => {
+      const { service, findActiveForPair } = build({
+        forPair: { id: 'asg-1', ownerUserId: 'dono', unitId: 'unit-1', accountantUserId: 'contador', crcNumber: 'SP-123456/O-1' },
+      });
+      const s = await service.resolveGovernanceScope({ userId: 'contador' }, 'unit-1', 'dono');
       expect(s).toEqual({ ...resolveAccountingScope({ userId: 'dono' }, 'unit-1'), actorUserId: 'contador' });
-      expect(findActiveForAccountant).toHaveBeenCalledWith('contador', 'unit-1');
+      expect(findActiveForPair).toHaveBeenCalledWith('contador', 'dono', 'unit-1');
     });
   });
 
   it('listMine devolve a view com ownerEmail, sem slots nem ids de autoria', async () => {
     const { service } = build();
     const [v] = await service.listMine('contador');
-    expect(v).toMatchObject({ id: 'asg-1', status: 'PENDING', ownerEmail: 'dono@ex.com', crcNumber: 'SP-123456/O-1' });
+    expect(v).toMatchObject({ id: 'asg-1', status: 'PENDING', ownerEmail: 'dono@ex.com', ownerUserId: row().userId, crcNumber: 'SP-123456/O-1' });
     expect(v).not.toHaveProperty('pendingSlot');
     expect(v).not.toHaveProperty('createdById');
   });

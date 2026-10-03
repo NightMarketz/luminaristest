@@ -15,6 +15,10 @@ seed?: string
 export interface JobScopeQueryInput {
 unitId: string
 }
+export interface JobGovernanceQueryInput {
+unitId: string
+ownerUserId?: string
+}
 export interface JobRowsQueryInput {
 unitId: string
 status?: ("VALID" | "INVALID" | "COMMITTED" | "SKIPPED")
