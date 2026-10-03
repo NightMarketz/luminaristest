@@ -134,6 +134,15 @@ describe('FixedAssetsPanel', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Contas salvas.');
   });
 
+  it('"Contas": com o GET /settings falho o Salvar fica desabilitado (não apaga contas já configuradas com null)', async () => {
+    vi.mocked(accountingService.getSettings).mockRejectedValue({ error: 'falha de rede', status: 500 });
+    render(<FixedAssetsPanel unitId="u1" />);
+    goTo('Contas');
+    expect(await screen.findByText('falha de rede')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar' })).toBeDisabled();
+    expect(accountingService.updateSettings).not.toHaveBeenCalled();
+  });
+
   it('"Taxas": origem + link "fonte"; "mostrar ocultas" pede includeHidden=true; ocultar confirma e nunca apaga', async () => {
     vi.mocked(fixedAssetsService.hideRate).mockResolvedValue(rate({ hiddenAt: '2026-10-03T00:00:00.000Z' }));
     render(<FixedAssetsPanel unitId="u1" />);

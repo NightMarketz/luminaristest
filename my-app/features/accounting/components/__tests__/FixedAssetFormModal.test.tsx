@@ -136,6 +136,20 @@ describe('FixedAssetFormModal', () => {
     expect(wire(fixedAssetsService.updateAsset, 1)).toEqual({ unitId: 'u1', assetId: 'fa1', description: 'Notebook 14"' });
   });
 
+  it('edição: trocar a taxa do catálogo manda rateId E o annualRateBp dela (o BE não recalcula a taxa a partir do rateId)', async () => {
+    const onSuccess = vi.fn();
+    // bem ligado a uma taxa de 10% (rate-0, fora da lista visível); o operador escolhe rate-1 (20%)
+    render(<FixedAssetFormModal isOpen onClose={() => {}} unitId="u1" classes={classes} editing={asset({ rateId: 'rate-0', annualRateBp: 1000 })} onSuccess={onSuccess} />);
+    const combo = screen.getByRole('combobox', { name: 'Taxa do catálogo' });
+    await waitFor(() => expect(combo).not.toHaveAttribute('placeholder', 'Carregando catálogo…'));
+    fireEvent.change(combo, { target: { value: 'rate-1' } });
+    fireEvent.blur(combo);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(wire(fixedAssetsService.updateAsset, 1)).toEqual({ unitId: 'u1', assetId: 'fa1', rateId: 'rate-1', annualRateBp: 2000 });
+  });
+
   it('erro do BE no salvar aparece por resolveError e o modal fica aberto', async () => {
     vi.mocked(fixedAssetsService.createAsset).mockRejectedValue({ error: 'Código já existe.', status: 400 });
     const onSuccess = vi.fn();

@@ -114,8 +114,13 @@ export function toCreatePayload(unitId: string, f: AssetFormState): CreateFixedA
   };
 }
 
-/** PUT só com o que mudou (+ `unitId`/`assetId`). `null` limpa NCM e a taxa contábil. */
-export function toUpdatePayload(unitId: string, original: FixedAsset, f: AssetFormState): UpdateFixedAssetInput {
+/**
+ * PUT só com o que mudou (+ `unitId`/`assetId`). `null` limpa NCM e a taxa contábil.
+ * Trocar a taxa do catálogo manda TAMBÉM o `annualRateBp` dela: o `updateAsset` do BE grava só o que recebe e NÃO recalcula
+ * a taxa a partir do `rateId` (a depreciação lê `annualRateBp`) — sem isso o bem ficaria ligado à taxa nova e depreciaria
+ * pela antiga, em silêncio (achado do review independente; o `UpdateFixedAssetSchema` não tem XOR).
+ */
+export function toUpdatePayload(unitId: string, original: FixedAsset, f: AssetFormState, rates: DepreciationRate[]): UpdateFixedAssetInput {
   const ncm = f.ncmPrefix.trim();
   const cost = parseBrl(f.cost);
   const residual = parseBrl(f.residual);
@@ -124,6 +129,7 @@ export function toUpdatePayload(unitId: string, original: FixedAsset, f: AssetFo
   const bookBp = f.bookDiverges ? percentToBp(f.bookPercent) : null;
   const bookJust = f.bookDiverges ? f.bookJustification.trim() : null;
   const rateIdChanged = f.rateMode === 'catalog' && f.rateId !== original.rateId;
+  const pickedRateBp = rateIdChanged ? rates.find((r) => r.id === f.rateId)?.annualRateBp : undefined;
   const bpChanged = f.rateMode === 'explicit' && (bp !== original.annualRateBp || original.rateId !== null);
   return {
     unitId,
@@ -137,7 +143,7 @@ export function toUpdatePayload(unitId: string, original: FixedAsset, f: AssetFo
     residualValueCents: residual !== original.residualValueCents ? residual : undefined,
     acquiredAt: f.acquiredAt !== original.acquiredAt.slice(0, 10) ? f.acquiredAt : undefined,
     rateId: rateIdChanged ? f.rateId : undefined,
-    annualRateBp: bpChanged ? bp : undefined,
+    annualRateBp: bpChanged ? bp : pickedRateBp,
     bookAnnualRateBp: bookBp !== original.bookAnnualRateBp ? bookBp : undefined,
     bookRateJustification: bookJust !== original.bookRateJustification ? bookJust : undefined,
   };
@@ -198,7 +204,7 @@ export function FixedAssetFormModal({ isOpen, onClose, unitId, classes, editing,
     setBusy(true);
     setError(null);
     try {
-      if (editing) await fixedAssetsService.updateAsset(editing.id, toUpdatePayload(unitId, editing, form));
+      if (editing) await fixedAssetsService.updateAsset(editing.id, toUpdatePayload(unitId, editing, form, rates));
       else await fixedAssetsService.createAsset(toCreatePayload(unitId, form));
       onSuccess();
       onClose();

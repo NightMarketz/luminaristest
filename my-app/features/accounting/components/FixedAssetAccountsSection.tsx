@@ -39,6 +39,8 @@ export function FixedAssetAccountsSection({ unitId, accounts }: FixedAssetAccoun
   const { t, tRef } = useAccountingT();
   const [form, setForm] = useState<FormState>({ depreciationExpenseAccountId: '', disposalGainAccountId: '', disposalLossAccountId: '' });
   const [loading, setLoading] = useState(true);
+  // Só salva depois de ler a configuração: com o GET falho o form fica vazio e um Salvar limparia as contas já configuradas (`null`).
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -51,6 +53,7 @@ export function FixedAssetAccountsSection({ unitId, accounts }: FixedAssetAccoun
       .getSettings(unitId)
       .then((s) => {
         if (cancelled) return;
+        setLoaded(true);
         setForm({
           depreciationExpenseAccountId: s.depreciationExpenseAccountId ?? '',
           disposalGainAccountId: s.disposalGainAccountId ?? '',
@@ -105,7 +108,7 @@ export function FixedAssetAccountsSection({ unitId, accounts }: FixedAssetAccoun
       <button
         type="button"
         onClick={() => void save()}
-        disabled={busy || loading}
+        disabled={busy || loading || !loaded}
         className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
       >
         {busy ? t('fixedAssets.saving', 'Salvando…') : t('fixedAssets.save', 'Salvar')}
