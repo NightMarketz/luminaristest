@@ -22,13 +22,16 @@ veredicto: PASSOU (aguarda OK do dono para merge)
 - mutação minha: `releitura: null` em toView → integração 3/4 vermelhos; revisor: removeu gravação de `resultJson` no repo → 3/4 vermelhos; trocou tentativa corrente por `attempts[0]` → unit 1/3 vermelho
 - `node scripts/plano-vault.mjs check` → vault íntegro
 
-### Lacunas de spec
-nenhuma.
+### Lacunas de spec e pontos a conhecer
+Lacunas de spec que bloqueiam o PR-1: **nenhuma**. Pontos a conhecer (não bloqueiam; o 1 e o 2 pedem atenção do PR-2 / da próxima sessão):
+1. **Reenvio zera a releitura.** Depois de `reenviar` a tentativa corrente muda e `releitura` volta a `null` (literal na spec, item 10: "tentativa corrente"). O BRIEF não diz se a tela do PR-2 deve mostrar a releitura de uma tentativa anterior; se quiser, é decisão do dono — o PR-2 não deve presumir.
+2. **CI Linux é o teste final.** Tudo foi rodado no Windows (SQLite serializa aqui, não na CI); o BRIEF §8 exige CI Linux verde.
+3. **Asserts trocados no teste existente.** Os 2 asserts de `FiscalDocumentLifecycleService.manual.test.ts` que liam `view.releitura` passaram a ler o `resultJson` da transição (consequência do item 11; o repo ali é falso).
+4. **Rodadas concorrentes de `test:integration` colidem no SQLite** (`no such table`, 149 falhas espúrias). Só a rodada única vale (94 suítes / 795 ✓).
+5. **Custo não medido** nesta sessão.
 
 ### Achados fora de escopo
-- Os 2 asserts de `FiscalDocumentLifecycleService.manual.test.ts` que liam `view.releitura` passaram a ler o `resultJson` da transição (consequência do item 11, o repo ali é falso).
-- Depois de um reenvio a tentativa corrente muda e `releitura` volta a `null` (literal na spec: "tentativa corrente"); o PR-2 deve saber disso.
-- Operacional: 2 rodadas concorrentes de `test:integration` no mesmo worktree colidem no SQLite (`no such table`, 149 falhas espúrias); só a rodada única vale. A CI Linux ainda é o teste final (memória windows-serializa-sqlite-ci-linux-nao).
+nenhum.
 
 ### Linha de fold pós-merge
 id: FE-INCR-DFE · estado: planned (PR-0 e PR-2 pendentes) · estado_detalhe: "+ PR-1 (itens 10–13) mergeado" · prs: [479]
