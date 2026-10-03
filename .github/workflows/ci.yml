@@ -80,9 +80,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # Integração em 4: com 3, o shard mais pesado levava 6 min contra ~3 dos outros
+      # (o split do Jest é por arquivo, não por tempo).
       matrix:
-        project: [unit, integration]
-        shard: [1/3, 2/3, 3/3]
+        include:
+          - { project: unit, shard: 1/3 }
+          - { project: unit, shard: 2/3 }
+          - { project: unit, shard: 3/3 }
+          - { project: integration, shard: 1/4 }
+          - { project: integration, shard: 2/4 }
+          - { project: integration, shard: 3/4 }
+          - { project: integration, shard: 4/4 }
     defaults:
       run:
         working-directory: server
