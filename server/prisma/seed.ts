@@ -1,3 +1,6 @@
+// Sem override: o ambiente exportado VENCE o .env (diferente de src/config/env.ts, que usa override fora de teste) —
+// senão um DATABASE_URL exportado para um banco de ensaio seria trocado em silêncio e o upsert da senha cairia no banco errado.
+import 'dotenv/config';
 import { PrismaClient } from '../generated/prisma';
 import bcrypt from 'bcryptjs';
 
