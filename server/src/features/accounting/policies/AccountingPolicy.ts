@@ -1,5 +1,5 @@
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { IAccountingPolicy } from './IAccountingPolicy';
+import type { ActiveAccountant, IAccountingPolicy } from './IAccountingPolicy';
 
 /**
  * Implementation of the accounting policy. Any authenticated user operates within their
@@ -174,8 +174,36 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManage(scope);
   }
 
-  canSignOffReview(scope: AccountingScope): boolean {
-    return this.canManage(scope);
+  canSignOffReview(scope: AccountingScope, active: ActiveAccountant | null): boolean {
+    if (active) return this.isActiveAccountant(scope, active);
+    return scope.ownerUserId === scope.actorUserId && this.canManage(scope);
+  }
+
+  // BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 4). O corpo de canClosePeriod e da família
+  // (configurações, perfil fiscal, imobilizado) NÃO muda (F-GOV-3 a).
+  canManageAccountantAssignment(scope: AccountingScope): boolean {
+    return !!scope.actorUserId && scope.ownerUserId === scope.actorUserId;
+  }
+
+  canRespondToAssignment(actorUserId: string, a: { accountantUserId: string }): boolean {
+    return !!actorUserId && actorUserId === a.accountantUserId;
+  }
+
+  canEndAssignment(actorUserId: string, a: { userId: string; accountantUserId: string }): boolean {
+    return !!actorUserId && (actorUserId === a.userId || actorUserId === a.accountantUserId);
+  }
+
+  canReopenPeriod(scope: AccountingScope, active: ActiveAccountant | null): boolean {
+    if (active) return this.isActiveAccountant(scope, active);
+    return scope.ownerUserId === scope.actorUserId && this.canClosePeriod(scope);
+  }
+
+  private isActiveAccountant(scope: AccountingScope, active: ActiveAccountant): boolean {
+    return (
+      !!scope.actorUserId &&
+      scope.actorUserId === active.accountantUserId &&
+      scope.ownerUserId === active.ownerUserId
+    );
   }
 
   // SoD dinâmica (ADR-INCR-APPROVAL F3, re-ratificado fork-a-fork 2026-07-14): OFF enquanto

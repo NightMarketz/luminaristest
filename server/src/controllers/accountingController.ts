@@ -22,6 +22,7 @@ import {
 } from '../features/accounting/dtos/PostingDto';
 import { ReceiptRequestSchema } from '../features/accounting/dtos/ReceiptDto';
 import { CashFlowStatementQuerySchema } from '../features/accounting/dtos/cashFlowReport.dto';
+import { GovernanceOwnerSchema } from '../features/accounting/dtos/AccountantAssignmentDto';
 import { PeriodComparisonSchema } from '../features/accounting/dtos/periodComparison.dto';
 import { DailyJournalRequestSchema } from '../features/accounting/dtos/dailyJournal.dto';
 import { AgingReportQuerySchema } from '../features/accounting/dtos/aging.dto';
@@ -535,7 +536,10 @@ export const listPeriods = async (req: Request, res: Response) => {
     if (!unitId) throw new ValidationError('unitId é obrigatório.');
     const year = parseInt(req.query.year as string, 10);
     if (!year || isNaN(year)) throw new ValidationError('year é obrigatório e deve ser inteiro.');
-    const scope = resolveAccountingScope(user, unitId);
+    const owner = GovernanceOwnerSchema.safeParse(req.query);
+    if (!owner.success) return res.status(400).json({ success: false, error: owner.error.flatten() });
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId, owner.data.ownerUserId);
     const data = await getFactory().getPeriodService().listPeriods(scope, year);
     return res.json({ success: true, data });
   } catch (error) {
@@ -591,7 +595,10 @@ export const openPeriod = async (req: Request, res: Response) => {
     if (!user) throw new UnauthorizedError();
     const unitId = req.body?.unitId;
     if (!unitId) throw new ValidationError('unitId é obrigatório.');
-    const scope = resolveAccountingScope(user, unitId);
+    const owner = GovernanceOwnerSchema.safeParse(req.body ?? {});
+    if (!owner.success) return res.status(400).json({ success: false, error: owner.error.flatten() });
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, unitId, owner.data.ownerUserId);
     const data = await getFactory().getPeriodService().openPeriod(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -681,7 +688,8 @@ export const reopenPeriod = async (req: Request, res: Response) => {
     if (!parsed.success) {
       return res.status(400).json({ success: false, error: parsed.error.flatten() });
     }
-    const scope = resolveAccountingScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getPeriodService().reopenPeriod(scope, req.params.id, parsed.data.reason);
     return res.json({ success: true, data });
   } catch (error) {

@@ -1,4 +1,5 @@
 import prisma from '../../../lib/prisma';
+import { ConflictError } from '../../../lib/errors';
 import type { AccountingPeriod, AccountingPeriodStatus, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
@@ -57,20 +58,30 @@ export class AccountingPeriodRepository implements IAccountingPeriodRepository {
     actorUserId: string,
     reason: string | undefined,
     tx: Prisma.TransactionClient,
-    fromStatus?: AccountingPeriodStatus | null,
+    fromStatus: AccountingPeriodStatus,
   ): Promise<AccountingPeriod> {
     const { userId, unitId } = accountingScopeWhere(scope);
 
     const isOpening = nextStatus === 'OPEN';
     const isClosing = nextStatus === 'SOFT_CLOSED' || nextStatus === 'HARD_CLOSED';
 
-    const updated = await tx.accountingPeriod.update({
-      where: { userId_unitId_year_month: { userId, unitId, year, month } },
+    // CAS (item 11): o status checado fora da tx pode ter mudado — 0 linhas = outra transição venceu.
+    const { count } = await tx.accountingPeriod.updateMany({
+      where: { userId, unitId, year, month, status: fromStatus },
       data: {
         status: nextStatus,
         ...(isOpening ? { openedAt: new Date(), openedById: actorUserId } : {}),
         ...(isClosing ? { closedAt: new Date(), closedById: actorUserId } : {}),
       },
+    });
+    if (count === 0) {
+      throw new ConflictError(
+        `Período ${year}/${String(month).padStart(2, '0')} mudou de status (esperado ${fromStatus}) — recarregue e tente de novo.`,
+        'PERIOD_STATUS_CHANGED',
+      );
+    }
+    const updated = await tx.accountingPeriod.findUniqueOrThrow({
+      where: { userId_unitId_year_month: { userId, unitId, year, month } },
     });
 
     await tx.accountingPeriodTransition.create({
@@ -78,7 +89,7 @@ export class AccountingPeriodRepository implements IAccountingPeriodRepository {
         userId,
         unitId,
         periodId: updated.id,
-        fromStatus: fromStatus ?? null,
+        fromStatus,
         toStatus: nextStatus,
         actorUserId,
         reason: reason ?? null,

@@ -24,3 +24,10 @@ export const LEDGER_STATUSES = ['Posted', 'Reconciled', 'Reversed'];
  */
 export const REVIEW_STATUSES = ['OPEN', 'SIGNED_OFF', 'REJECTED'] as const;
 export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
+
+/**
+ * BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 1): estados da atribuição do contador
+ * responsável. Três bastam — quem encerrou e por quê ficam em `endedById`/`endReason`.
+ */
+export const ASSIGNMENT_STATUSES = ['PENDING', 'ACTIVE', 'ENDED'] as const;
+export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
