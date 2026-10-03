@@ -83,6 +83,14 @@ describe('seedAccountingFixtureCli (integração)', () => {
     const profiles = await prisma.fiscalProfile.findMany({ where: { unitId: { in: [presumido.unitId, real.unitId] } } });
     expect(Object.fromEntries(profiles.map((p) => [p.userId, p.regimeTributario]))).toEqual({ [presumido.userId]: 'PRESUMIDO', [real.userId]: 'REAL' });
 
+    // F-P4 (item 9): o seed passa o regime ao `provision` ⇒ nasce o perfil fiscal da EMPRESA do ano corrente (fuso do escopo)
+    const anoAgora = Number(scopeToday({ timeZone: 'America/Sao_Paulo' }).slice(0, 4));
+    const empresa = await prisma.companyFiscalProfile.findMany({ where: { userId: { in: [presumido.userId, real.userId] } } });
+    expect(Object.fromEntries(empresa.map((p) => [p.userId, [p.regime, p.anoCalendario]]))).toEqual({
+      [presumido.userId]: ['PRESUMIDO', anoAgora],
+      [real.userId]: ['REAL', anoAgora],
+    });
+
     const countsBefore = await Promise.all([prisma.journalEntry.count(), prisma.payable.count(), prisma.receivable.count(), prisma.user.count()]);
     const tablesBefore = await Promise.all(first.map((r) => tabelasDe(r.userId)));
 
