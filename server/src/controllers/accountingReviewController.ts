@@ -43,8 +43,8 @@ export const listReviews = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ListReviewsQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getAccountingReviewService().listReviews(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -59,8 +59,8 @@ export const getReview = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = ReviewScopeQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getAccountingReviewService().getReview(scope, req.params.id);
     return res.json({ success: true, data });
   } catch (error) {
@@ -139,8 +139,8 @@ export const signOffReview = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = SignOffReviewSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getAccountingReviewService().signOff(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
@@ -155,8 +155,8 @@ export const rejectReview = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const parsed = RejectReviewSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo.
-    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId);
+    // GOV-CONTADOR (F-GOV-7 a+): escopo delegado ao contador responsável ativo do par (contador, ownerUserId).
+    const scope = await getFactory().getAccountantAssignmentService().resolveGovernanceScope(user, parsed.data.unitId, parsed.data.ownerUserId);
     const data = await getFactory().getAccountingReviewService().reject(scope, req.params.id, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {

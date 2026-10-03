@@ -53,10 +53,12 @@ unitId: string
 reviewerName: string
 reviewerCrc: string
 statement: string
+ownerUserId?: string
 }
 export interface RejectReviewInput {
 unitId: string
 reason: string
+ownerUserId?: string
 }
 export interface ReplaceReviewJobsInput {
 unitId: string
@@ -67,7 +69,9 @@ export interface ListReviewsQueryInput {
 unitId: string
 year?: number
 status?: ("OPEN" | "SIGNED_OFF" | "REJECTED")
+ownerUserId?: string
 }
 export interface ReviewScopeQueryInput {
 unitId: string
+ownerUserId?: string
 }

@@ -797,6 +797,10 @@
           "statement": {
             "type": "string",
             "maxLength": 500
+          },
+          "ownerUserId": {
+            "type": "string",
+            "description": "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário"
           }
         }
       },
@@ -813,6 +817,10 @@
           "reason": {
             "type": "string",
             "maxLength": 500
+          },
+          "ownerUserId": {
+            "type": "string",
+            "description": "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário"
           }
         }
       },
@@ -853,6 +861,10 @@
               "SIGNED_OFF",
               "REJECTED"
             ]
+          },
+          "ownerUserId": {
+            "type": "string",
+            "description": "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário"
           }
         }
       },
@@ -2976,6 +2988,10 @@
           },
           "reason": {
             "type": "string"
+          },
+          "ownerUserId": {
+            "type": "string",
+            "description": "GOV-CONTADOR: dono que o contador responsável atende; ausente = escopo do próprio usuário"
           }
         }
       },
@@ -4776,6 +4792,15 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED"
           }
         ],
         "responses": {
@@ -4904,6 +4929,10 @@
                 "properties": {
                   "unitId": {
                     "type": "string"
+                  },
+                  "ownerUserId": {
+                    "type": "string",
+                    "description": "GOV-CONTADOR: dono que o contador responsavel atende"
                   }
                 }
               }
@@ -11644,6 +11673,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED"
           }
         ],
         "responses": {
@@ -11702,6 +11740,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED"
           }
         ],
         "responses": {
@@ -19355,7 +19402,7 @@
     },
     "/api/accounting/accountant-assignments/mine": {
       "get": {
-        "summary": "Atribuições PENDING e ACTIVE do contador logado, com o e-mail do dono",
+        "summary": "Atribuições PENDING e ACTIVE do contador logado, com o e-mail e o id do dono (ownerUserId, o que vai nos 9 handlers do F-GOV-7)",
         "tags": [
           "Accounting"
         ],
@@ -19927,6 +19974,15 @@
                 "REJECTED"
               ]
             }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED"
           }
         ],
         "responses": {
@@ -19972,6 +20028,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "ownerUserId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED"
           }
         ],
         "responses": {

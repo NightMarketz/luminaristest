@@ -60,6 +60,9 @@ export const EndAccountantAssignmentSchema = z
 export type InviteAccountantInput = z.infer<typeof InviteAccountantSchema>;
 export type EndAccountantAssignmentInput = z.infer<typeof EndAccountantAssignmentSchema>;
 
+/** `ownerUserId` dos handlers do F-GOV-7 que não têm DTO próprio (listPeriods na query, openPeriod no body). */
+export const GovernanceOwnerSchema = z.object({ ownerUserId: z.string().min(1).optional() });
+
 /** Resposta (datas ISO; instantes, não date-only — §4.3). */
 export interface AccountantAssignmentView {
   id: string;
@@ -77,4 +80,5 @@ export interface AccountantAssignmentView {
 
 export interface MyAccountantAssignmentView extends AccountantAssignmentView {
   ownerEmail: string;
+  ownerUserId: string; // GOV-CONTADOR: o que o contador manda como `ownerUserId` nos 9 handlers do F-GOV-7
 }

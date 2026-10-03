@@ -2173,6 +2173,7 @@
  *       parameters:
  *         - { in: path, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: true, schema: { type: integer } }
+ *         - { in: query, name: ownerUserId, required: false, schema: { type: string }, description: "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED" }
  *       responses:
  *         '200':
  *           description: List of accounting periods
@@ -2227,6 +2228,7 @@
  *               required: [unitId]
  *               properties:
  *                 unitId: { type: string }
+ *                 ownerUserId: { type: string, description: "GOV-CONTADOR: dono que o contador responsavel atende" }
  *       responses:
  *         '200': { description: Period opened }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -2763,6 +2765,7 @@
  *       parameters:
  *         - { in: path, name: jobId, required: true, schema: { type: string } }
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: ownerUserId, required: false, schema: { type: string }, description: "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED" }
  *       responses:
  *         '200':
  *           description: Job summary
@@ -2784,6 +2787,7 @@
  *       parameters:
  *         - { in: path, name: jobId, required: true, schema: { type: string } }
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: ownerUserId, required: false, schema: { type: string }, description: "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED" }
  *       responses:
  *         '200':
  *           description: Artifact stream
@@ -5742,7 +5746,7 @@
  *
  *   /api/accounting/accountant-assignments/mine:
  *     get:
- *       summary: Atribuições PENDING e ACTIVE do contador logado, com o e-mail do dono
+ *       summary: Atribuições PENDING e ACTIVE do contador logado, com o e-mail e o id do dono (ownerUserId, o que vai nos 9 handlers do F-GOV-7)
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       responses:
@@ -5964,6 +5968,7 @@ export {};
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer } }
  *         - { in: query, name: status, required: false, schema: { type: string, enum: [OPEN, SIGNED_OFF, REJECTED] } }
+ *         - { in: query, name: ownerUserId, required: false, schema: { type: string }, description: "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED" }
  *       responses:
  *         '200': { description: 'AccountingReview[]' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -5978,6 +5983,7 @@ export {};
  *       parameters:
  *         - { in: path, name: id, required: true, schema: { type: string } }
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: ownerUserId, required: false, schema: { type: string }, description: "GOV-CONTADOR: dono que o contador responsavel atende; ausente = escopo do proprio usuario; sem atribuicao ACTIVE do par = 403 ACCOUNTANT_NOT_ASSIGNED" }
  *       responses:
  *         '200': { description: 'review + findings[{ finding, targetAuditEvents }]' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }

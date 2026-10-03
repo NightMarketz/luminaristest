@@ -63,7 +63,7 @@ veredicto: PR pronto para o dono; review independente PASS WITH NOTES
 - O revisor gravou 3 logs (`npmci.log`, `unit.log`, `integ.log`) em `.claude/worktrees/`, fora da worktree dele. Apaguei esses três pelo nome que ele informou. Se outra sessão usava os mesmos nomes, o conteúdo dela já tinha sido sobrescrito por ele.
 
 ### Fold pós-merge (não aplicado; vault só recebeu a autorização)
-`id: GOV-CONTADOR` · `estado: done` (ou `inflight` até o merge) · `estado_detalhe: "+ 03/10: BE mergeado (PR #482) — atribuição com aceite, 2 caminhos de reabertura e sign-off/reject governados, setStatus CAS; lacuna aberta: resolver por (contador, unitId) sem dono"` · `prs: [482]`
+`id: GOV-CONTADOR` · `estado: done` (ou `inflight` até o merge) · `estado_detalhe: "+ 03/10: BE mergeado (PR #482) — atribuição com aceite, 2 caminhos de reabertura e sign-off/reject governados, setStatus CAS; resolver pelo par (contador, ownerUserId) — fork do dono aplicado no mesmo PR"` · `prs: [482]`
 
 ## PROVA
 
@@ -83,3 +83,20 @@ PROVA:
     sha256: ad04d73992682e99db7f5a1d59a0fe4b4423e2d6db6a333ef64c673c6298a426
 VEREDITO: (prova-runner)
 ```
+
+## Adendo 03/10 — fork do resolver aplicado (lacuna fechada no próprio #482)
+
+Decisão do dono (chat, 03/10/2026, questionário): "Um contador deveria poder atender inumeros clientes, sem
+problemas temos que ter o id do contador e o id do dono que geram uma identificação"; "contador só tem acesso a
+info de dono, não tem como ter livro proprio"; par inválido → 403; parâmetro `ownerUserId`.
+
+- `resolveGovernanceScope(user, unitId, ownerUserId?)`: ausente ou = ator → escopo de sempre; de outro usuário →
+  exige ACTIVE do par (contador, dono, unitId), senão 403 `ACCOUNTANT_NOT_ASSIGNED`. Sem delegação automática.
+- Repo `findActiveForAccountant` → `findActiveForPair` (`where` com `userId: ownerUserId`).
+- `ownerUserId` opcional nos 9 handlers (DTOs + `GovernanceOwnerSchema` + `JobGovernanceQuerySchema`);
+  `GET /accountant-assignments/mine` devolve `ownerUserId` (achado do review: sem ele o cliente não sabe o que mandar).
+- Prova: unit 3715 passaram (3 pulados, 1 pendente); integração 820/820; tsc server + my-app + test:types limpos;
+  mutação — tirar `userId: ownerUserId` do `where` derruba o teste "um contador atende N donos no mesmo unitId".
+- Review independente (agente isolado): PASS WITH NOTES; nota 1 (`/mine` sem id do dono) aplicada; nota 2: o `/rows`
+  e outras queries não-strict descartam `ownerUserId` em silêncio (404 enganoso, sem vazamento) — pré-existente, não tratado.
+- GAP-MAP: linha do resolver e fila 16 → [CORRIGIDO]. Os outros 3 achados seguem [ABERTO].

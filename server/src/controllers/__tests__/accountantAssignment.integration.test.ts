@@ -57,10 +57,13 @@ async function atribuir(): Promise<string> {
   return inv.body.data.id;
 }
 
-const reabrir = (actor: Actor, id: string) =>
-  request(app).post(`/api/accounting/periods/${id}/reopen`).set(authHeader(actor)).send({ unitId: UNIT, periodId: id });
-const abrir = (actor: Actor, id: string) =>
-  request(app).post(`/api/accounting/periods/${id}/open`).set(authHeader(actor)).send({ unitId: UNIT });
+// `owner` = o dono que o contador atende (o par contador×dono identifica a atribuição — decisão do dono 03/10/2026).
+const reabrir = (actor: Actor, id: string, owner?: Actor) =>
+  request(app).post(`/api/accounting/periods/${id}/reopen`).set(authHeader(actor))
+    .send({ unitId: UNIT, periodId: id, ...(owner && { ownerUserId: owner.id }) });
+const abrir = (actor: Actor, id: string, owner?: Actor) =>
+  request(app).post(`/api/accounting/periods/${id}/open`).set(authHeader(actor))
+    .send({ unitId: UNIT, ...(owner && { ownerUserId: owner.id }) });
 
 describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', () => {
   beforeAll(() => pushTestSchema(), 120000);
@@ -100,7 +103,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     it('contador delegado → 200 no livro do dono', async () => {
       await atribuir();
       const p = await periodo(dono.id, 3, 'SOFT_CLOSED');
-      const r = await call(contador, p.id);
+      const r = await call(contador, p.id, dono);
       expect(r.status).toBe(200);
       expect(await statusDe(p.id)).toBe('OPEN');
     });
@@ -118,7 +121,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
     const p = await periodo(dono.id, 5, 'SOFT_CLOSED');
 
     expect((await reabrir(dono, p.id)).status).toBe(403);
-    expect((await reabrir(contador, p.id)).status).toBe(200);
+    expect((await reabrir(contador, p.id, dono)).status).toBe(200);
 
     const reopened = await prisma.auditEvent.findFirst({ where: { eventType: 'period.reopened', targetId: p.id } });
     expect(reopened).toMatchObject({ actorUserId: contador.id, scopeUserId: dono.id, unitId: UNIT });
@@ -135,11 +138,15 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
   it('o contador lê os períodos do dono pelo resolver delegado; um terceiro vê só o próprio silo', async () => {
     await atribuir();
     await periodo(dono.id, 6, 'OPEN');
-    const doContador = await request(app).get(`/api/accounting/${UNIT}/periods?year=${ANO}`).set(authHeader(contador));
+    const url = `/api/accounting/${UNIT}/periods?year=${ANO}&ownerUserId=${dono.id}`;
+    const doContador = await request(app).get(url).set(authHeader(contador));
     expect(doContador.status).toBe(200);
     expect(doContador.body.data.map((x: { userId: string }) => x.userId)).toEqual([dono.id]);
     const doTerceiro = await request(app).get(`/api/accounting/${UNIT}/periods?year=${ANO}`).set(authHeader(terceiro));
     expect(doTerceiro.body.data).toEqual([]);
+    const terceiroForcando = await request(app).get(url).set(authHeader(terceiro));
+    expect(terceiroForcando.status).toBe(403);
+    expect(terceiroForcando.body.code).toBe('ACCOUNTANT_NOT_ASSIGNED');
   });
 
   it('I-9: ADMIN sem atribuição recebe o próprio silo — não reabre o período do dono', async () => {
@@ -178,7 +185,7 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
 
     const mine = await request(app).get('/api/accounting/accountant-assignments/mine').set(authHeader(contador));
     expect(mine.status).toBe(200);
-    expect(mine.body.data).toEqual([expect.objectContaining({ id, status: 'PENDING', ownerEmail: 'gov-dono@test.local' })]);
+    expect(mine.body.data).toEqual([expect.objectContaining({ id, status: 'PENDING', ownerEmail: 'gov-dono@test.local', ownerUserId: dono.id })]);
 
     const acceptUrl = `/api/accounting/accountant-assignments/${id}/accept`;
     expect((await request(app).post(acceptUrl).set(authHeader(contador)).send({})).status).toBe(400);
@@ -234,28 +241,53 @@ describe('BE-INCR-ACCOUNTANT-GOVERNANCE — contador responsável pelo HTTP', ()
   });
 
   // ─────────────────────────────────────────────── 17g — resolver contra o banco real (review do #482, achado 2)
-  it('17g: PENDING e ENDED não delegam; ACTIVE delega só no unitId dela', async () => {
+  it('17g: só ACTIVE do par (contador, ownerUserId) no unitId delega; sem ownerUserId = escopo próprio; senão 403', async () => {
     const svc = getFactory().getAccountantAssignmentService();
     const contato = await criarContato(dono.id);
     const base = {
       userId: dono.id, unitId: UNIT, accountantUserId: contador.id, accountingContactId: contato.id,
       crcNumber: 'SP-123456/O-1', crcUf: 'SP', createdById: dono.id,
     };
-    const proprio = resolveAccountingScope({ userId: contador.id }, UNIT);
+    const naoAtribuido = { statusCode: 403, errorCode: 'ACCOUNTANT_NOT_ASSIGNED' };
 
     const pend = await prisma.accountantAssignment.create({ data: { ...base, status: 'PENDING', pendingSlot: 'PENDING' } });
-    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(proprio);
+    await expect(svc.resolveGovernanceScope({ userId: contador.id }, UNIT, dono.id)).rejects.toMatchObject(naoAtribuido);
 
     await prisma.accountantAssignment.update({ where: { id: pend.id }, data: { status: 'ENDED', pendingSlot: null } });
-    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(proprio);
+    await expect(svc.resolveGovernanceScope({ userId: contador.id }, UNIT, dono.id)).rejects.toMatchObject(naoAtribuido);
 
     await prisma.accountantAssignment.create({ data: { ...base, status: 'ACTIVE', activeSlot: 'ACTIVE' } });
-    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual({
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT, dono.id)).toEqual({
       ...resolveAccountingScope({ userId: dono.id }, UNIT), actorUserId: contador.id,
     });
-    expect(await svc.resolveGovernanceScope({ userId: contador.id }, 'outra-unidade')).toEqual(
-      resolveAccountingScope({ userId: contador.id }, 'outra-unidade'),
-    );
+    await expect(svc.resolveGovernanceScope({ userId: contador.id }, 'outra-unidade', dono.id)).rejects.toMatchObject(naoAtribuido);
+    // Sem ownerUserId (ou = o próprio ator) não há delegação automática: o escopo de sempre.
+    expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT)).toEqual(resolveAccountingScope({ userId: contador.id }, UNIT));
+    expect(await svc.resolveGovernanceScope({ userId: dono.id }, UNIT, dono.id)).toEqual(resolveAccountingScope({ userId: dono.id }, UNIT));
+  });
+
+  it('um contador atende N donos no mesmo unitId: cada ownerUserId leva ao livro do próprio dono', async () => {
+    const dono2 = await criarUsuario('gov-dono-2');
+    const svc = getFactory().getAccountantAssignmentService();
+    for (const d of [dono, dono2]) {
+      const contato = await criarContato(d.id);
+      await prisma.accountantAssignment.create({
+        data: {
+          userId: d.id, unitId: UNIT, accountantUserId: contador.id, accountingContactId: contato.id,
+          crcNumber: 'SP-123456/O-1', crcUf: 'SP', createdById: d.id, status: 'ACTIVE', activeSlot: 'ACTIVE',
+        },
+      });
+    }
+    for (const d of [dono, dono2]) {
+      expect(await svc.resolveGovernanceScope({ userId: contador.id }, UNIT, d.id)).toEqual({
+        ...resolveAccountingScope({ userId: d.id }, UNIT), actorUserId: contador.id,
+      });
+    }
+    const p1 = await periodo(dono.id, 9, 'SOFT_CLOSED');
+    const p2 = await periodo(dono2.id, 9, 'SOFT_CLOSED');
+    expect((await reabrir(contador, p2.id, dono2)).status).toBe(200);
+    expect(await statusDe(p2.id)).toBe('OPEN');
+    expect(await statusDe(p1.id)).toBe('SOFT_CLOSED');
   });
 
   // ─────────────────────────────────────────────── 17d — CAS do período

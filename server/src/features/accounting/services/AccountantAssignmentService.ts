@@ -51,7 +51,8 @@ function scopeFromAssignment(a: AccountantAssignment, actorUserId: string): Acco
  * - Toda transição de estado é CAS no repo; o aceite que substitui um contador encerra o anterior NA MESMA tx
  *   (sem janela destravada).
  * - `resolveGovernanceScope` é o resolver delegado dos 9 handlers do F-GOV-7 (a+). `resolveAccountingScope`
- *   não muda.
+ *   não muda. A atribuição é identificada pelo par (contador, dono) — o cliente informa `ownerUserId`; um
+ *   contador atende N donos e não tem livro próprio (decisão do dono, chat 03/10/2026).
  */
 export class AccountantAssignmentService {
   constructor(
@@ -62,10 +63,21 @@ export class AccountantAssignmentService {
     private readonly auditService: AuditService,
   ) {}
 
-  /** Item 5: ACTIVE do ator naquele `unitId` → escopo do dono com o contador como ator; senão o escopo de sempre. */
-  async resolveGovernanceScope(user: { userId: string }, unitId: string): Promise<AccountingScope> {
-    const active = await this.assignmentRepo.findActiveForAccountant(user.userId, unitId);
-    if (!active) return resolveAccountingScope(user, unitId);
+  /**
+   * Item 5: sem `ownerUserId` (ou = ator) → o escopo de sempre. Com `ownerUserId` de outro usuário → exige ACTIVE do
+   * par (ator, dono) naquele `unitId` e devolve o escopo do dono com o contador como ator; senão 403
+   * ACCOUNTANT_NOT_ASSIGNED — nunca cai em silêncio no escopo do ator.
+   */
+  async resolveGovernanceScope(
+    user: { userId: string },
+    unitId: string,
+    ownerUserId?: string,
+  ): Promise<AccountingScope> {
+    if (!ownerUserId || ownerUserId === user.userId) return resolveAccountingScope(user, unitId);
+    const active = await this.assignmentRepo.findActiveForPair(user.userId, ownerUserId, unitId);
+    if (!active) {
+      throw new AppError('Você não é o contador responsável ativo deste dono nesta unidade.', 403, 'ACCOUNTANT_NOT_ASSIGNED');
+    }
     return { ...resolveAccountingScope({ userId: active.ownerUserId }, unitId), actorUserId: user.userId };
   }
 
@@ -210,9 +222,9 @@ export class AccountantAssignmentService {
     return this.assignmentRepo.listByScope(scope);
   }
 
-  /** Item 9: PENDING + ACTIVE do contador, com `ownerEmail` para ele saber em que livro agir. */
+  /** Item 9: PENDING + ACTIVE do contador, com `ownerEmail` + `ownerUserId` para ele saber (e dizer) em que livro agir. */
   async listMine(actorUserId: string): Promise<MyAccountantAssignmentView[]> {
     const rows = await this.assignmentRepo.listLiveForAccountant(actorUserId);
-    return rows.map(({ ownerEmail, ...a }) => ({ ...toAccountantAssignmentView(a), ownerEmail }));
+    return rows.map(({ ownerEmail, ...a }) => ({ ...toAccountantAssignmentView(a), ownerEmail, ownerUserId: a.userId }));
   }
 }

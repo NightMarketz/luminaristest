@@ -142,6 +142,11 @@ export type ExportRequestDto = z.infer<typeof ExportRequestSchema>;
 /** Query for job-scoped GET endpoints (job summary, artifact download). */
 export const JobScopeQuerySchema = z.object({ unitId: z.string().min(1) });
 
+/** Job summary + download (2 dos 9 handlers do F-GOV-7): o escopo MAIS o dono que o contador atende. */
+export const JobGovernanceQuerySchema = JobScopeQuerySchema.extend({
+  ownerUserId: z.string().min(1).optional(), // GOV-CONTADOR: o dono que o contador atende (par contador×dono)
+});
+
 /**
  * Query de `GET /jobs/:jobId/rows` — o escopo MAIS o filtro `status`.
  *

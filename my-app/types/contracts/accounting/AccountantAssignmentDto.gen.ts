@@ -14,3 +14,6 @@ declaresWrittenContract: true
 export interface EndAccountantAssignmentInput {
 reason: string
 }
+export interface GovernanceOwnerInput {
+ownerUserId?: string
+}

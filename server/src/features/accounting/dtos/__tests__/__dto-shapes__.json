@@ -68,6 +68,16 @@
         "reason"
       ],
       "additionalProperties": false
+    },
+    "GovernanceOwnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   },
   "AccountingContactDto.ts": {
@@ -681,6 +691,10 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 500
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -703,6 +717,10 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 500
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -753,6 +771,10 @@
             "SIGNED_OFF",
             "REJECTED"
           ]
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -764,6 +786,10 @@
       "type": "object",
       "properties": {
         "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
           "type": "string",
           "minLength": 1
         }
@@ -1889,6 +1915,23 @@
       "type": "object",
       "properties": {
         "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "JobGovernanceQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
           "type": "string",
           "minLength": 1
         }
@@ -6862,6 +6905,10 @@
         },
         "reason": {
           "type": "string"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
