@@ -35,6 +35,7 @@ import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { expiryCompetence, parseExpiryMovementKey } from '../../packages/models/validity';
 import { centsFromDb } from '../models/money';
 import { findLc116 } from '../models/lc116ListaNacional';
+import type { ReleituraJson } from '../../../lib/nfseReadback';
 
 export const DFE_EMITTED_EVENT = 'dfe.emitted';
 
@@ -84,6 +85,22 @@ export interface FiscalDocumentView {
   attempts: Array<{ attemptNo: number; ref: string; sentAt: string; resultStatus: string | null }>;
   /** BE-INCR-DFE (item 30) — pendências que exigem ação humana; nunca resolvidas automaticamente. */
   pendencias: string[];
+  /** FE-INCR-DFE PR-1 (item 10) — ids dos anexos (só existem em produção); `null` em homologação. */
+  xmlAttachmentId: string | null;
+  pdfAttachmentId: string | null;
+  /** FE-INCR-DFE PR-1 (item 10) — releitura da tentativa corrente (retorno manual); `null` sem retorno ou sem releitura. Sem PII (toReleituraJson). */
+  releitura: ReleituraJson['releitura'] | null;
+}
+
+/** `resultJson` nulo, inválido ou sem `releitura` ⇒ `null` (nunca lança — a view não pode quebrar por dado legado). */
+function readReleitura(resultJson: string | null | undefined): ReleituraJson['releitura'] | null {
+  if (!resultJson) return null;
+  try {
+    const parsed = JSON.parse(resultJson) as { releitura?: ReleituraJson['releitura'] } | null;
+    return parsed?.releitura ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function centsToMoneyString(cents: number): string {
@@ -983,6 +1000,9 @@ export class FiscalDocumentEmissionService {
         resultStatus: a.resultStatus,
       })),
       pendencias,
+      xmlAttachmentId: doc.xmlAttachmentId ?? null,
+      pdfAttachmentId: doc.pdfAttachmentId ?? null,
+      releitura: readReleitura(doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo)?.resultJson),
     };
   }
 }

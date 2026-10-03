@@ -20,6 +20,7 @@ import payableRoutes from './payables';
 import receivableRoutes from './receivables';
 import dimensionRoutes from './dimensions';
 import counterpartyRoutes from './counterparties';
+import paymentAccountRoutes from './paymentAccounts';
 import nfeRoutes from './nfe';
 import dfeRoutes from './dfe';
 import entryApprovalRoutes from './entryApprovals';
@@ -82,6 +83,7 @@ router.use('/package-balances', packageBalanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);
 router.use('/bank-settlements', bankSettlementRoutes); // BE-INCR-BANK-SETTLEMENT (nó F7)
 router.use('/lalur', lalurRoutes);
+router.use('/payment-accounts', paymentAccountRoutes); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1
 
 export { router };
 

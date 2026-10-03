@@ -445,3 +445,72 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 - **`storageKey` carrega `unitId` no caminho em disco** — vazamento de layout já tratado (não sai no
   DTO); só registra que o layout de storage não segue o re-key.
 - **Correção "31 → 47" no BRIEF do I1** e na linha do plano — fold, não edição desta sessão.
+
+---
+
+## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **RATIFICADAS 2026-10-03, correção sem "executa"**
+
+> ✅ **Ratificação por questionário em 2026-10-03**
+> ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):
+> - L-RK-1 → (a) · L-RK-2 → (a) · L-RK-3 → (b) · L-RK-4 → (a) · L-RK-5 → (b);
+> - `ProductDestinationDefault` → REKEY (inventário 48 = 46 + 2);
+> - F-RKL-1 → (a).
+>
+> A correção vai em **PR novo depois do merge do #480** (o dono divergiu da recomendação, que era corrigir no
+> mesmo PR). O BRIEF está em [`BE-INCR-UNIT-REKEY-LACUNAS-brief.md`](../accounting/BE-INCR-UNIT-REKEY-LACUNAS-brief.md),
+> sem "executa". Os parágrafos abaixo ficam como registro da abertura das lacunas.
+>
+> **Emenda ao item 15 (L-RK-1 a):** "sem o flag → exit 1" passa a ser "sem o flag → **exit 2** (args inválidos, §5)".
+> "Com arquivo inexistente, inválido ou velho → exit 1" fica como está.
+
+> Registradas, não decididas (regra 2 da `sessao-feature`). Origem: a implementação (L-RK-1) e o review independente
+> do PR #480, veredito PASS-COM-RESSALVAS (L-RK-2..5). O código do PR segue a letra atual em cada uma. Nenhuma
+> opção abaixo está escolhida. A recomendação, quando houver, é do agente e não ratifica nada.
+
+- **L-RK-1 · Exit code sem `--backup-path` — a spec se contradiz.** O §5 declara `backupPath: z.string().min(1)`
+  obrigatório no Zod, e o item 7 diz "Args inválidos → exit 2". O item 15 diz "sem o flag → exit 1".
+  - Opções: (a) exit 2, args inválidos (o que o PR faz); (b) `backupPath` opcional no Zod e exit 1 como pré-condição,
+    junto com `BACKUP_MISSING`.
+  - Teste atual: assere só o que as duas leituras têm em comum, "≠ 0 e nada escrito".
+  - Sem recomendação: as duas leituras recusam e nenhuma escreve.
+
+- **L-RK-2 · O item 17(b) não verifica para onde o `unitId` foi.** A letra pede "hash por tabela de todas as colunas
+  **exceto `unitId`**", e com isso a coluna que o re-key muda fica sem verificação nenhuma.
+  - Verificado pelo revisor: depois de um `--apply`, ele devolveu uma conta ao `unitId` legado e mudou o `unitId` de
+    uma conta de **outro dono** para `HIJACKED`. O `--verify` saiu com exit 0 e `failures: []`.
+  - Opções: (a) acrescentar ao 17(b), linha a linha nas 45 REKEY, que o `unitId` fica igual, a menos que a linha fosse
+    `(dono, legado)` no pré e seja `(dono, novo)` no pós; (b) manter a letra e o passo 7 do runbook deixa de valer como
+    prova do mapeamento.
+  - Recomendação do agente: (a), porque sem ela o item 17 não cumpre o próprio objetivo.
+
+- **L-RK-3 · O `--verify` não sabe quem foi re-chaveado quando o legado não tem cadeia de auditoria.** O item 17 não
+  diz como o verify descobre os pares `(dono, legado → novo)`. O PR os deriva dos eventos `unit.rekeyed` que só existem
+  no pós. Pela leitura do §5 (`auditAnchor: … | null`), um legado sem `audit_chain_heads` não gera evento. Nesse caso o
+  verify devolve `rekeyed: []` e pula duas checagens: que a linha nova é de `units` do dono e o item (e).
+  - Verificado pelo revisor. O `--self-check` do wrapper cai exatamente nesse caso.
+  - Opções:
+    - (a) `--verify` recebe o mapa explícito: `--pairs <owner>:<legado>:<novo>`, colado da saída do item 14;
+    - (b) o verify infere os pares pelo diff pré × pós: linha REKEY que mudou de `unitId` e unidade nova em `units`;
+    - (c) a âncora sempre existe, com `fromHeadHash = GENESIS_HASH` e `fromNextSeq = "1"` quando não há cadeia legada.
+      Isso muda a leitura do `| null` do §5.
+  - Sem recomendação: (c) muda contrato, (a) muda a interface, (b) só pega par que tenha linha movida.
+
+- **L-RK-4 · Nada dentro da tx exige "≥ 1 linha movida".** A classificação e o `NOTHING_TO_DO` (item 13) rodam fora
+  da tx do item 9, e o item 10 só compara contagens tabela a tabela. Com dois `--apply` simultâneos para o mesmo
+  legado, a 2ª tx criaria uma 2ª unidade com 0 linhas re-chaveadas, mais uma âncora.
+  - Suspeita: o revisor raciocinou sobre o caso, não o executou.
+  - O item 18 / F-RK-10 (a) mitiga: servidor parado e um operador só.
+  - Opções: (a) dentro da tx, abortar quando a soma de `before` der 0; (b) aceitar como teto do F-RK-10 (a) e
+    registrar no runbook.
+  - Recomendação do agente: (a), porque é uma linha e fecha a classe "gate fora da tx" (`authoritative-gate-inside-tx`).
+
+- **L-RK-5 · Unidade real apagada (soft delete) é classificada como `LEGACY`.** O item 5 exige linha **viva**
+  (`deletedAt IS NULL`), então o id de uma `units` do próprio dono que foi apagada cai em `LEGACY`. Um `--apply` sobre
+  ela criaria uma 3ª unidade em vez de reviver a apagada.
+  - Verificado pelo revisor (P3). É a letra do item 5.
+  - Opções: (a) manter, e o runbook manda conferir antes de aplicar; (b) nova classe `DELETED_REAL_UNIT` com recusa
+    (exit 1).
+  - Sem recomendação.
+
+Lacuna de **teste**, não de spec (vai junto com o patch que fechar L-RK-2/3): o teste do item 8 cobre o pipeline, mas
+não o estoque semeado para a unidade nova (o fixture `beautySalon` não tem produto).

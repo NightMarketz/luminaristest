@@ -104,9 +104,9 @@ const transitionData = (repo: { transition: jest.Mock }) => repo.transition.mock
 describe('retornoManual — item 11', () => {
   it('XML igual à DPS enviada → AUTHORIZED, série/número/chave do XML, guarda de status na escrita, releitura IGUAL auditada', async () => {
     const { service, repo, documentAttachmentService, postingService, auditService } = makeService(manualDoc());
-    const view = await service.retornoManual(SCOPE, 'doc-m', XML_OK);
-    expect(view.releitura).toEqual({ status: 'IGUAL', divergencias: [] });
+    await service.retornoManual(SCOPE, 'doc-m', XML_OK);
     const t = transitionData(repo);
+    expect(JSON.parse((t.attemptResult as { resultJson: string }).resultJson).releitura).toEqual({ status: 'IGUAL', divergencias: [] });
     expect(t).toMatchObject({ status: 'AUTHORIZED', serie: 70001, numero: 15n, nNFSe: '42', chaveOuCodigo: CHAVE, whenStatusIn: ['SENT', 'PROCESSING'] });
     expect(JSON.parse((t.attemptResult as { resultJson: string }).resultJson).releitura.status).toBe('IGUAL');
     expect(documentAttachmentService.upload).toHaveBeenCalledTimes(1); // só o XML (sem PDF)
@@ -129,9 +129,10 @@ describe('retornoManual — item 11', () => {
 
   it('divergência de CONTEÚDO (valor digitado errado no portal) → AUTHORIZED_DIVERGENT, a nota existe e é registrada (F-MAN-2 c)', async () => {
     const { service, repo, postingService } = makeService(manualDoc({}, dpsEnviada({ vServ: '160.00' })));
-    const view = await service.retornoManual(SCOPE, 'doc-m', XML_OK);
-    expect(view.releitura.status).toBe('DIVERGENTE');
-    expect(view.releitura.divergencias).toEqual([{ campo: 'vServ', grupo: 'conteudo', tipo: 'diferente', enviado: '16000', autorizado: '15000' }]);
+    await service.retornoManual(SCOPE, 'doc-m', XML_OK);
+    const releitura = JSON.parse((transitionData(repo).attemptResult as { resultJson: string }).resultJson).releitura;
+    expect(releitura.status).toBe('DIVERGENTE');
+    expect(releitura.divergencias).toEqual([{ campo: 'vServ', grupo: 'conteudo', tipo: 'diferente', enviado: '16000', autorizado: '15000' }]);
     expect(transitionData(repo).status).toBe('AUTHORIZED_DIVERGENT');
     expect(postingService.attachSourceDocument).toHaveBeenCalledTimes(1); // o razão aponta para a nota que o fisco vê
   });

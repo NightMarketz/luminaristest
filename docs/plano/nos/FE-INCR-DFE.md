@@ -3,10 +3,11 @@ id: "FE-INCR-DFE"
 tipo: "fe"
 dominio: "fiscal"
 titulo: "Tela da emissão de DF-e"
-estado: "planned"
-estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS · 02/10: F-FE-DFE-6..9 ratificados, todos (a) — nenhum fork pendente; F-MCE-1 (a) acrescenta o passo 8 ao runbook do PR-2; sem 'executa'"
+estado: "inflight"
+estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS · 02/10: F-FE-DFE-6..9 ratificados, todos (a) — nenhum fork pendente; F-MCE-1 (a) acrescenta o passo 8 ao runbook do PR-2; sem 'executa' · 03/10: PR-1 (itens 10–13, toque no BE: view expõe releitura + ids de XML/PDF) MERGEADO (#479, f3724401) — resta PR-0 (espera o SEED-UNITS em main) e PR-2; retorno em .claude/retornos/fe-incr-dfe-pr1.md; lacunas no GAP-MAP (N3 releitura pós-reenvio, N4 rodadas concorrentes de integração)"
 depende_de: ["[[X10b]]", "[[DFE-MANUAL]]"]
-autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')"
+autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa'); 03/10 dono em chat: \"Executa o PR-1 do FE-INCR-DFE\" — só o PR-1 (itens 10–13, toque no BE); PR-0 espera o SEED-UNITS em main, PR-2 fora; emissão real fora; sem merge sem OK"
+prs: ["#479"]
 ancora_sdd: "§M5 · §M0 fold 18/09"
 perfil_previsto: "sonnet-alto"
 perfil_evidencia: "regra 1 não casa (F-FE-DFE-6..9 ratificados 02/10); regra 2 não casa (o PR-1 só expõe a view: sem lançamento, tributo, saldo ou migração); regra 4: 29 itens, BE+FE. Por PR: PR-0 e PR-2 = sonnet-alto; PR-1 (itens 10–13, só BE) = sonnet-medio. Fila: depois do SEED-UNITS"
@@ -18,6 +19,7 @@ atualizado: "2026-10-02"
 **Autorização:** dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')  
 **Depende de:** [[X10b]], [[DFE-MANUAL]]  
 **Desbloqueia:** —  
+**PRs:** #479 (PR-1)  
 **Âncora no SDD consolidado:** §M5 · §M0 fold 18/09
 
 ## Evidência
@@ -35,6 +37,10 @@ atualizado: "2026-10-02"
   dá download, e só em produção. Fork **F-MCE-1** (✅ ratificado 02/10 → a), em [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](../../accounting/MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1.
 - **Ratificação 02/10** ([[D-2026-10-02-FE-INCR-DFE-FORKS]]): F-FE-DFE-6..9 → (a), todos na recomendação. F-MCE-1 (a)
   ([[D-2026-10-02-MAPA-COBERTURA-FORKS]]) acrescenta o passo 8 ao runbook do PR-2. Nenhum fork pendente; não é "executa".
+
+## Fold 03/10
+
+- **PR-1 mergeado** ([#479](https://github.com/NightMarketz/luminaristest/pull/479), `f3724401`), autorizado pelo dono em chat 03/10 ("Executa o PR-1…"): itens 10–13 do BRIEF, só BE. Review independente (Opus, worktree isolada) PASS. Estado `planned` → `inflight` (há PR em `main`; PR-0 e PR-2 pendentes). Retorno: `.claude/retornos/fe-incr-dfe-pr1.md`; lacunas no GAP-MAP (Nível 3: `releitura` volta a `null` após o reenvio — decisão do dono antes do PR-2; Nível 4: rodadas concorrentes de `test:integration`).
 
 ## Docs
 

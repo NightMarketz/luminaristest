@@ -354,7 +354,7 @@ export class FiscalDocumentLifecycleService {
     documentId: string,
     xml: Buffer,
     pdf?: Buffer,
-  ): Promise<FiscalDocumentView & { releitura: ReleituraJson['releitura'] }> {
+  ): Promise<FiscalDocumentView> {
     if (!this.policy.canEmitFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para registrar o retorno de documento fiscal.');
     }
@@ -422,7 +422,7 @@ export class FiscalDocumentLifecycleService {
         },
       },
     ));
-    return { ...(await this.emissionService.getById(scope, documentId)), releitura: releitura.releitura };
+    return this.emissionService.getById(scope, documentId);
   }
 
   /**

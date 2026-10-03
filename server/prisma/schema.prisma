@@ -467,6 +467,7 @@ model Account {
   scopeSettingsDepreciationExpenseOf AccountingScopeSettings[] @relation("ScopeSettingsDepreciationExpense") // despesa de depreciação (4.x)
   scopeSettingsDisposalGainOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalGain") // ganho na baixa de imobilizado
   scopeSettingsDisposalLossOf        AccountingScopeSettings[] @relation("ScopeSettingsDisposalLoss") // perda na baixa de imobilizado
+  paymentAccountsGl                  PaymentAccount[]          @relation("PaymentAccountGl") // folha do saldo no provedor (BE-INCR-PAYMENT-PROVIDER PR-1, P1-3)
   createdAt                          DateTime                  @default(now())
   updatedAt                          DateTime                  @updatedAt
   deletedAt                          DateTime?
@@ -2151,4 +2152,35 @@ model LalurEntryJournalEntry {
   @@id([entryId, journalEntryId])
   @@index([journalEntryId])
   @@map("lalur_entry_journal_entries")
+}
+
+// BE-INCR-PAYMENT-PROVIDER PR-1 (nó F5; ADR-INCR-PAYMENT-PROVIDER-COLLECTION PP-D2; BRIEF §4.1) — conta de
+// pagamento no provedor (MP primeiro). Tenancy AccountingScope (userId + unitId); soft-delete. A credencial
+// fica cifrada (AES-256-GCM, AAD = id; lib/secretBox.ts) e NUNCA sai (PP-D7): a leitura expõe só
+// `credentialSetAt` e `accessTokenLast4`. `glAccountId` é IMUTÁVEL depois de criada (P1-3): o extrato do
+// provedor importa contra ela; trocar de conta = nova PaymentAccount. No máximo uma ACTIVE por
+// (userId, unitId, provider) — gate dentro da tx do serviço (P1-4), não constraint.
+model PaymentAccount {
+  id                   String    @id @default(cuid())
+  userId               String
+  unitId               String
+  provider             String // PAYMENT_PROVIDERS = ['MERCADO_PAGO'] (BANK_CNAB entra com o 2º adaptador)
+  label                String
+  glAccountId          String // FK Account folha, Restrict — IMUTÁVEL (P1-3)
+  glAccount            Account   @relation("PaymentAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict)
+  providerAccountRef   String? // MP: user_id do vendedor (informativo; nunca roteia — PP-D4 item 1)
+  configJson           String // z.discriminatedUnion('provider') — P1-5
+  credentialCiphertext Bytes? // iv ‖ tag ‖ ct; AAD = id (P1-1/P1-8)
+  credentialKeyVersion Int?
+  credentialSetAt      DateTime?
+  credentialExpiresAt  DateTime? // OWN: sempre null (a doc do MP não declara validade, M12) — OAuth futuro
+  accessTokenLast4     String? // única projeção legível (PP-D7)
+  status               String // DRAFT | ACTIVE | CREDENTIAL_INVALID | DISABLED
+  createdById          String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  @@index([userId, unitId, provider, status])
+  @@map("payment_accounts")
 }
