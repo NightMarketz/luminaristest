@@ -60,15 +60,15 @@ describe('FixedAssetsSection', () => {
   // Dreno: respostas em voo não podem aterrissar depois do teardown do jsdom.
   afterEach(async () => { await new Promise((r) => setTimeout(r, 0)); cleanup(); });
 
-  it('lista: classe resolvida, valor líquido = custo − abertura − acumulada, marca "da NF-e", data date-only sem voltar um dia', async () => {
+  it('lista: classe resolvida, valor líquido = custo − acumulada (a acumulada já inclui a abertura), marca "da NF-e", data date-only sem voltar um dia', async () => {
     vi.mocked(fixedAssetsService.listAssets).mockResolvedValue([
-      asset({ id: 'a', code: 'PC-01', status: 'ACTIVE', activatedAt: '2026-03-01T00:00:00.000Z', openingAccumulatedCents: 100000, accumulatedDepreciationCents: 50000, payableId: 'p1' }),
+      asset({ id: 'a', code: 'PC-01', status: 'ACTIVE', activatedAt: '2026-03-01T00:00:00.000Z', openingAccumulatedCents: 100000, accumulatedDepreciationCents: 150000, payableId: 'p1' }),
     ]);
     renderSection();
     await screen.findByText('PC-01');
     const tr = row('PC-01');
     expect(within(tr).getByText('Máquinas')).toBeInTheDocument();
-    expect(within(tr).getByText(/3\.500,00/)).toBeInTheDocument(); // 5.000 − 1.000 − 500
+    expect(within(tr).getByText(/3\.500,00/)).toBeInTheDocument(); // acumulada coerente com o BE = abertura 1.000 + 1 quota 500 ⇒ líquido 5.000 − 1.500
     expect(within(tr).getByText('da NF-e')).toBeInTheDocument();
     expect(within(tr).getAllByText('01/03/2026')).toHaveLength(2); // aquisição + ativação
     expect(fixedAssetsService.listAssets).toHaveBeenCalledWith({ unitId: 'u1', status: undefined, classId: undefined });
