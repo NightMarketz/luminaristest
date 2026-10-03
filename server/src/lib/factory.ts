@@ -28,6 +28,7 @@ import { ReceivableRepository } from '../features/accounting/repositories/Receiv
 import { DimensionRepository } from '../features/accounting/repositories/DimensionRepository';
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
+import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
@@ -103,6 +104,7 @@ import { DynamicTableProductRefLookup } from '../features/accounting/services/Pr
 import { DynamicTablePhysicalStockSync } from '../features/accounting/services/PhysicalStockSync';
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
+import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -192,6 +194,7 @@ import type { IJournalEntryRepository } from '../features/accounting/repositorie
 import type { IPostingRepository } from '../features/accounting/repositories/IPostingRepository';
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
+import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
@@ -411,6 +414,7 @@ export class ApplicationFactory {
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
+    paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     depreciationRate: IDepreciationRateRepository;
@@ -492,6 +496,7 @@ export class ApplicationFactory {
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
     accountingContact: AccountingContactService;
+    paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     nfePreview: NfePreviewService;
@@ -553,6 +558,7 @@ export class ApplicationFactory {
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
+      paymentAccount: new PaymentAccountRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       depreciationRate: new DepreciationRateRepository(),
@@ -1141,6 +1147,12 @@ export class ApplicationFactory {
         auditService,
         this.policies.accounting,
       ),
+      paymentAccount: new PaymentAccountService(
+        this.repositories.paymentAccount,
+        this.repositories.account,
+        auditService,
+        this.policies.accounting,
+      ),
       accountingDelivery: new AccountingDeliveryService(
         this.repositories.accountingDelivery,
         this.repositories.accountingContact,
@@ -1315,6 +1327,7 @@ export class ApplicationFactory {
   public getTieOutDiagnosticService = (): TieOutDiagnosticService => this.services.tieOutDiagnostic;
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
+  public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;

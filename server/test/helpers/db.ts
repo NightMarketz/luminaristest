@@ -129,6 +129,8 @@ export async function resetDb(): Promise<void> {
   // depreciationRate não referencia account, mas cai junto por proximidade temática.
   await prisma.fixedAssetClass.deleteMany();
   await prisma.depreciationRate.deleteMany();
+  // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1: payment_accounts tem FK Restrict para account — cai antes dele.
+  await prisma.paymentAccount.deleteMany();
 
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();
