@@ -1,0 +1,55 @@
+# RETORNO — PACOTE-VALIDADE (BE-INCR-PACOTE-VALIDADE)
+
+tarefa: executar o BRIEF (§3 + §5.2; §5.3 novo) — código e testes; produção só após o PE-6
+agente: sessão principal (sessao-feature), worktree be-incr-pacote-validade-c5934d; review por Agent isolado (general-purpose, model opus, worktree própria)
+autorização: dono, 2026-10-03 — "Executa o BE-INCR-PACOTE-VALIDADE — código e testes; não vai a produção antes do PE-6" (registrada no `autorizacao` do nó, commit 5d4a92b0)
+base: origin/main d6530790 (main andou 1 commit de docs depois — #476, sem conflito: `git merge-tree` limpo)
+branch / PR: feat/be-incr-pacote-validade · NightMarketz/luminaristest#483 (aberto, NÃO mergeado — merge só com OK do dono)
+modelo: opus-5.5
+perfil-previsto: opus-medio
+rodadas-de-review: 1 — PASS com ressalvas (5 achados: 2 médios, 3 baixos; nenhum corrigido — a instrução era parar após o review)
+custo: US$ 29.70 · claude-opus-5-5 US$ 29.70 · 459 min (scripts/session-cost.mjs; inclui o revisor como subagente)
+veredicto: PASS com ressalvas (revisor independente) — aguardando o dono
+
+### Lacunas de spec (registradas e perguntadas; o dono respondeu em 03/10 — BRIEF §5.3)
+- L1 NFS-e do vencido cancelada → **reemite** (letra do §5.2; contra a recomendação)
+- L2 reenvio de NFS-e do vencido rejeitada → remonta pelo vencimento
+- L7 `xDescServ` → "Pacote <nome> — saldo não utilizado, vencido em <expiresOn>"
+- L8 `cIndOp` → 030101
+
+### Decisões de materialização (não são forks; declaradas para o review)
+- Guarda 9.1 usa o mesmo predicado do passe de consumo, **sem** a marca d'água (a listagem marcada nunca veria um consumo 2 dias depois). O revisor confirmou.
+- `prólogo IF NOT EXISTS` (§5.2 13a) não existe para `ADD COLUMN` no SQLite → 2 migrações de 1 statement cada (precedente 20261002120000).
+- `AccountRole` ganhou o 10º papel `receita-nao-uso` (contrato do arquétipo no §4.3); `ROLE_ALLOWED_NATURES['receita-nao-uso'] = Revenue`.
+- Pendência do vencimento usa `sourceId` = chave do movimento em todos os estágios (guarda, lançamento, nota); rescan de chave cujo prazo mudou resolve.
+- Perfil fiscal ausente = emissão não aplicável (não pendência).
+
+### Checks executados
+- `cd server && npx tsc --noEmit` → 0
+- `npm run test:unit` → 3583 passed, 3 skipped, 1 todo
+- `npm run test:integration` → 797/799; as 2 falhas eram `BindingCompileService.eventCoverage` (o item 12 manda atualizar) — atualizado; re-rodado com o E2E: 14/14
+- E2E `pacoteValidade.e2e.integration.test.ts` (SQLite real, 8 testes): item 17 inteiro (7000 em 3.4, 2.1.1 = 0, nota = 3.4), sem CPF, VENDA, TOCTOU, guardas 9.1/9.2, 2ª rodada no-op, item 4 HTTP 400 sem escrita, item 5, item 16
+- `cd my-app && npx tsc --noEmit` → 0; `npm run test:types` → 0
+- `node scripts/smoke-migration-gate.mjs --db <dev.db real>` → OK (3 migrações na cópia, original intocado)
+- `npm run docs:generate` → 227 paths (inalterado)
+- Medido (§7): dev.db real tem 0 saldos vivos e 0 linhas de catálogo de pacote → o backfill não tocaria nada lá
+
+### Gates de envio OPS-001
+- Caso adversarial tentado: o E2E inicial passou com uma divergência que EU plantei (débito sem liquidação na unidade B); o tie-out acusou 2 em vez de 1 — corrigi o cenário para o fluxo real (receita + liquidação + débito re-dirigido).
+- Checagem que teria falhado se errado: sem a guarda 9.1/9.2 os saldos de F/G vão a 0 (E2E assere 2000/3000 e zero movimentos); sem a regra DRE 3.4 o teste da DRE dá 7000 em vez de 14000; sem a 3.4 fora do Presumido o teste da ECF não reprova.
+- Risco principal: achado 1 do review (nota do vencido pode ancorar na venda errada após recompra) e PE-1..PE-6 abertos.
+
+### Achados do review independente (NÃO corrigidos — decisão do dono)
+1. **Média** — `getExpiryContext` escolhe o crédito mais novo no momento da emissão; se a nota ficou pendente e o cliente recompra, a nota sai com `saleId` da venda nova (`PackageBalanceService.ts:228-233`). Correção provável: créditos com `createdAt ≤ movimento.createdAt`.
+2. **Média** — `emissaoForaDoMes = BLOQUEAR` + carência de +2 faz parte das notas ficar pendente para sempre (competência no último dia do mês, job no dia 1). Lacuna de spec.
+3. **Baixa/média** — dois vencimentos com a mesma `expiresOn` no mesmo saldo colidem na chave do movimento → P2002 vira "idempotente" e o saldo fica > 0 sem pendência. Plausível, não reproduzido.
+4. **Baixa** — guarda 9.2 não vê venda de origem soft-deletada. Lacuna (BRIEF fala só de Cancelled/Returned).
+5. **Baixa** — guarda 9.1 pode bloquear para sempre com código "transitório" (débito impossível); o teste E2E de F não discrimina a escolha sem marca d'água.
+
+### Fora de escopo (registrado)
+- `ListPackageBalancesQuerySchema` segue sem `.strict()` (BRIEF §8).
+- O item 18 cita o snapshot de shape para `ArchetypeKeySchema` e a query de package-balances, mas o `dtoShapeSnapshot` só lê `features/accounting/dtos` — cobri o enum com teste exato em `AccountingBindingDto.test.ts`.
+- 3 suítes de unit com SQLite real (`PostingRepository.concurrency/moneyOverflow`, `renameDataMigrationGuard`) falharam uma vez por colisão concorrente no Windows e passam isoladas — ambiente, fora do diff.
+
+### Fold pós-merge (docs/plano/README.md)
+id: PACOTE-VALIDADE · estado: done (após merge) · estado_detalhe: "03/10: executado em #483 (código + testes); produção só após PE-6; recompilar bindings Active por unidade" · prs: [483]
