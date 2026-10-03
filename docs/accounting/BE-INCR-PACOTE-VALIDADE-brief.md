@@ -7,6 +7,11 @@
 - **Autorização:** dono, 29/09/2026, questionário da entrevista: *"Validade por pacote"*. O campo `autorizacao`
   da nota diz: *"decisão de produto; BRIEF próprio (sem 'executa')"*. **Autoriza este BRIEF, não o código.** A
   `sessao-feature` exige, além disto, os forks do §5 ratificados e um "executa" citável (ORCH-006).
+- **Forks F-PV-1..11 ✅ RATIFICADOS 2026-10-02** pelo dono, por questionário, mais os sub-forks F-PV-3b, 9b, 9c e 9d
+  que as respostas abriram. **Três contra a recomendação: F-PV-3 (b) backfill, F-PV-9 (b) NFS-e do vencido em
+  `CONSUMO`, F-PV-9c (b) emissão automática no job.** Efeitos no checklist: §5.2. Registro:
+  [`D-2026-10-02-PACOTE-VALIDADE-FORKS`](../plano/decisoes/D-2026-10-02-PACOTE-VALIDADE-FORKS.md). PE-1..PE-6
+  continuam dado externo (contador e jurídico). Não é "executa".
 - **Decisão de produto, nas palavras da nota:** o pacote ganha prazo. Quando vence, o saldo do passivo 2.1.1
   (Pacotes Pré-pagos) vira receita por não uso. O tratamento contábil do vencido é **pendente de validação
   externa (contador)** e entra no follow-up (§6).
@@ -37,7 +42,8 @@
 
 **O que muda na premissa da nota:** "hoje não há vencimento" continua verdade no comportamento, mas os **dois
 campos já existem** (P1). O incremento é de **aplicação**, com **zero migração de schema** (`expiresAt`
-existe; `kind` é `String`). O que é novo: a regra, o job, o lançamento e o evento.
+existe; `kind` é `String`). ⟨corr 02/10⟩ O F-PV-9b (a) acrescenta **uma** migração aditiva: `FiscalProfile.pacoteCTribNac`
+(+ `pacoteCNBS`), §5.2. O que é novo: a regra, o job, o lançamento e o evento.
 
 ## 2. Fronteira com o vizinho E-1 (decisão 17: só registro)
 
@@ -320,7 +326,7 @@ export const ReconcilePendingReasonCode = z.enum([
 
 `sourceType: 'sale.package.expired'` · `sourceId: 'expiry:<balanceId>:<expiresOn>'` · data pelo F-PV-5.
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ✅ RATIFICADOS 2026-10-02 (tabela original abaixo; escolhas e efeitos em §5.1–§5.2)
 
 | Ref | Pergunta | (a) | (b) | (c) | Recomendação |
 |---|---|---|---|---|---|
@@ -335,6 +341,87 @@ export const ReconcilePendingReasonCode = z.enum([
 | **F-PV-9** | Efeito fiscal do vencimento | **Nenhum documento nem evento fiscal neste incremento.** O efeito vira pendência externa (PE-3/4/5) e insumo do PRE-ADR IBS/CBS da onda 3 | Emitir NFS-e do valor vencido quando o perfil for `CONSUMO` | Bloquear o vencimento de quem tem `pacoteFatoGerador = CONSUMO` até o contador | **(a)**: em `VENDA`, a NFS-e já saiu no valor cheio (P11). Em `CONSUMO`, se o ISS incide sobre serviço não prestado é pergunta municipal e do contador. O IBS/CBS não tem apuração no produto (M5 diferido), e se o § 5º se aplica é interpretação (P14). (b) emitiria documento com base em suposição. (c) deixaria o passivo aberto para sempre, que é o problema que a decisão 18 resolve **Pesquisa 29/09:** (a) mantido. Achados: o regulamento da CBS existe (Decreto 12.955/2026, art. 11 § 6º remete o não fornecimento ao art. 57); a partir de 2027, o Simples reconhece a receita na emissão do documento fiscal (Res. CGSN 190/2026); o STF (Tema 581) aceita "disponibilidade" como serviço tributável pelo ISS, o que é contra-argumento para o PE-4. Nada disso autoriza emitir documento no vencimento sem o contador. [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §§3–5, [jurisprudência](PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md) §§4–5 |
 | **F-PV-10** | Evento de auditoria | **Nenhum eventType novo.** O `entry.posted` do lançamento (`sourceType`/`sourceId`) mais o movimento append-only bastam, como no crédito e no débito de hoje (P12) | `package.balance_expired: ['balanceId','expiresOn','amountCents']` na allowlist, na mesma mudança | — | **(a)**: é simétrico com o crédito e o débito, que também não auditam. O `customerId` é id de linha, não PII, mas não há consumidor da trilha para esse evento |
 | **F-PV-11** | Aviso ao cliente | **Passivo**: a validade aparece na leitura (`expiresAt`, já existe) + filtro `expiresOnOrBefore` para o operador listar o que vai vencer | Ativo: notificar o cliente antes de vencer (e-mail/WhatsApp) | Nada além do que existe | **(a)**: não existe canal de saída (P13), e criar um é frente nova (§8). O **dever de informar a validade na compra** é obrigação legal a confirmar (PE-6) e mora na tela de venda (nó de FE) **Pesquisa 29/09:** o risco pesa a favor de (b) no futuro. O STJ julga abusiva a perda integral do valor pago antecipadamente (REsp 1.321.655; retenção até 20% no REsp 1.580.278). A validade de vale-presente só foi aceita quando informada com destaque (TJRS 70080293178, fonte secundária). Recomendação continua (a) neste incremento, porque não há canal de envio. O destaque da validade na venda (CDC art. 54 § 4º) passa a ser pré-requisito do nó de FE, e o jurídico decide se o aviso ativo vira obrigatório. [jurisprudência](PESQUISA-JURISPRUDENCIA-PACOTE-VALIDADE-2026-09-29.md) §6 |
+
+### 5.1 RATIFICAÇÃO — 2026-10-02 (dono, questionário; pedido: *"rodada de ratificação por questionário dos forks pendentes"*)
+
+| Fork | Escolha do dono | Contra a recomendação? |
+|---|---|---|
+| F-PV-1 | (a) prazo no catálogo, copiado no crédito; feriado: cláusula "dias corridos" afasta o CC art. 132 § 1º (sem calendário) até o PE-6 | não |
+| F-PV-2 | (a) por saldo, com junção na recompra (vale o maior prazo) | não |
+| **F-PV-3** | **(b) backfill dos saldos vendidos antes do deploy** | **SIM** |
+| F-PV-3b *(novo)* | (a) o prazo do backfill conta do deploy: `expiresAt = lastValidDay(dataDoBackfill, N)` | não |
+| F-PV-4 | (a) folha nova 3.4 + regra DRE provisória + fora do Presumido | não |
+| F-PV-5 | (a) competência `expiresOn + 1` | não |
+| F-PV-6 | (a) evento `sale.package.expired` pelo binding; recompilação por runbook do dono | não |
+| F-PV-7 | (a) passe novo no reconcile | não |
+| F-PV-8 | (a) origem estornada não vence (`PACKAGE_ORIGIN_REVERSED`) | não |
+| **F-PV-9** | **(b) emitir NFS-e do valor vencido quando o perfil é `CONSUMO`** | **SIM** |
+| F-PV-9b *(novo)* | (a) `cTribNac` do pacote em campo do perfil fiscal da unidade (`pacoteCTribNac` + `pacoteCNBS?`) | não |
+| **F-PV-9c** *(novo)* | **(b) emissão automática no passe do job** (reabre F-DFE-3 a só para este caso) | **SIM** |
+| F-PV-9d *(novo)* | (a) `saleId` = venda de origem mais recente do saldo; `saleKey` = `movementKey` | não |
+| F-PV-10 | (a) nenhum eventType novo | não |
+| F-PV-11 | (a) aviso passivo + filtro `expiresOnOrBefore` | não |
+
+### 5.2 Efeitos no checklist (a `sessao-feature` lê isto junto com o §3; onde divergir, vale isto)
+
+**F-PV-3 (b) + F-PV-3b (a) — backfill.**
+- **Item 2a (novo).** CLI de uma vez, idempotente (`jobs/backfillPackageValidityCli.ts`, molde de
+  `seedAccountingFixtureCli.ts`), rodado pelo dono como passo de runbook depois do deploy. Não é migração de dado,
+  porque o smoke-gate S6 reprova backfill por desenho (memória `smoke-gate-s6-x-migracao-de-dado`).
+- **Alvo:** saldos com `expiresAt null`, `balanceCents > 0` e `deletedAt null` cujo pacote tem `validityDays ≥ 1`
+  **hoje** no catálogo. Pacote com `null`/`0` continua sem validade.
+- **Valor:** `expiresAt = lastValidDay(scopeToday, validityDays)`. Pelo 3b (a),
+  `max(dataDaVenda + N, dataDoBackfill + N)` é sempre `dataDoBackfill + N`. Nenhum saldo antigo vence no
+  primeiro passe.
+- **Idempotência:** a 2ª execução não muda nada (o filtro `expiresAt null` já exclui).
+- **Teste:** saldo legado com N = 30 → `expiresAt = hoje + 30`; pacote sem validade → `null`; 2ª execução → 0 linhas.
+- **Risco declarado (contra a recomendação):** quem comprou antes do deploy comprou sem prazo informado. CDC art. 46
+  e TJDFT Ac. 1992212 ([pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §6). O 3b (a) dá o prazo inteiro a
+  partir da regra, mas não supre a informação na compra. Isso agrava o **PE-6** (jurídico), que fica como
+  pré-condição de rodar o CLI em produção.
+- **Item 1:** o "sem retroatividade" do teste do item 2 (saldo legado `null` continua `null`) **sai**. Passa a valer
+  só para saldo legado de pacote **sem** `validityDays`.
+- **§7:** o insumo "quantos saldos vivos e quantas linhas do catálogo com prazo no `dev.db`" passa a pesar. Medir
+  antes do runbook do CLI.
+
+**F-PV-9 (b) + 9b (a) + 9c (b) + 9d (a) — NFS-e do vencido em `CONSUMO`.**
+- **Item 13a (novo).** `FiscalProfile.pacoteCTribNac String?` e `pacoteCNBS String?`, em migração aditiva com o
+  prólogo `IF NOT EXISTS` (memória `migracao-sqlite-nao-e-transacional`).
+  - Validados como o `ServiceFiscalProfile`: `cTribNac` de 6 dígitos na lista nacional (`lc116ListaNacional.ts`),
+    `cNBS` de 9.
+  - Entram no `UpsertFiscalProfileSchema`, no snapshot de shape e na allowlist `fiscal_profile.updated`.
+  - Preenchidos com o contador: a NFS-e do vencido não sai sem eles.
+  - **Fecha a mesma lacuna do pacote `VENDA`** (`FiscalDocumentEmissionService.ts:437-443`, "BRIEF não define o
+    cTribNac do pacote"). A recusa de lá passa a exigir o campo, em vez de recusar sempre.
+- **Item 14a (novo), dentro do passe do item 14.** Só depois de `expireDue` **e** do lançamento
+  `sale.package.expired` gravado, e só quando o perfil da unidade tem `pacoteFatoGerador = 'CONSUMO'`. O passe
+  chama a emissão (`FiscalDocumentEmissionService`, caminho novo de âncora):
+  - **âncora:** o `JournalEntry` `('sale.package.expired', movementKey)`;
+  - **`saleId`:** a venda de origem mais recente do saldo (o crédito mais novo). A nota aparece na tela dessa venda;
+  - **`saleKey`:** o `movementKey`, o que dá uma nota por vencimento pela unicidade `(saleKey, kind, cTribNac)`;
+  - **`dCompet`:** `expiresOn + 1` (F-PV-5);
+  - **`vServCents`:** `releasedCents`, com tie-out exato contra o crédito 3.4;
+  - **`cTribNac`/`cNBS`:** os do perfil (9b);
+  - **tomador:** o cliente do saldo, com CPF/CNPJ válido (F-DFE-7 b).
+
+  No modo `manual` o documento nasce `SENT` com ficha, e o operador conclui no portal como qualquer NFS-e.
+  `VENDA` não emite no vencimento: a nota já saiu cheia na venda (P11).
+- **Item 9.5 (nova guarda, depois do lançamento, sem desfazer nada).** Faltante de emissão vira pendência com
+  código próprio `PACKAGE_EXPIRY_NFSE_PENDING` (transitória) e motivo nomeado. Faltantes possíveis: perfil sem
+  `pacoteCTribNac`, cliente sem CPF/CNPJ, porta desabilitada. O vencimento e o lançamento **ficam**: a nota é efeito
+  posterior, não gate. Re-drive: passe que lista movimentos `expiry` de perfil `CONSUMO` sem `FiscalDocument` de
+  `saleKey = movementKey`. Idempotente pela unicidade do documento.
+- **Item 15:** o enum ganha `PACKAGE_EXPIRY_NFSE_PENDING`.
+- **Item 17:** o tie-out ganha a nota (`vServCents == 3.4`) e os casos "cliente sem CPF → pendência, saldo
+  vencido assim mesmo" e "perfil `VENDA` → nenhuma nota".
+- **Gatilho:** o F-DFE-3 (a), manual, fica reaberto **só** para este caso, por decisão do dono. Venda e consumo
+  seguem manuais.
+- **Risco declarado (contra a recomendação):** pela letra, não há ISS sobre serviço não prestado em `CONSUMO` (LC
+  116 art. 1º; RISS-SP art. 1º, **PE-4**). O STF Tema 581 é contra-argumento, não autorização. Emitir pode tributar o
+  que não é fato gerador. Até o contador responder o PE-4, a nota sai **com o `cTribNac` que o contador puser no
+  perfil**. Sem o campo, nada sai (pendência nomeada). É esse o ponto de controle.
+- **Fronteira:** o item 13a toca o modelo do [[X10b]]/DFE (`FiscalProfile`) e o caminho `VENDA` do
+  `EmissionService`. A `sessao-feature` deste nó leva o toque inteiro. Nenhum outro BRIEF o reivindica.
 
 ## 6. Pendente de validação externa (follow-up; nada disto entra no checklist como decidido)
 

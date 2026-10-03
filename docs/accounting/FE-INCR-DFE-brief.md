@@ -1,7 +1,8 @@
 # BRIEF — FE-INCR-DFE (tela da emissão manual de NFS-e: perfil fiscal, ficha espelho do portal, retorno pelo XML, rejeição/reenvio, cancelamento) — nó FE-INCR-DFE
 
 > **Estado: BRIEF pronto.** Os 5 forks de 29/09 estão transcritos como **decididos** (§0). Os forks novos
-> F-FE-DFE-6..9 estão em **RATIFICAÇÃO PENDENTE** (§4). Produzido por `sessao-planejamento` em 2026-09-29 contra
+> F-FE-DFE-6..9 **✅ RATIFICADOS 2026-10-02** pelo dono, por questionário, todos na recomendação (a) (§4;
+> [`D-2026-10-02-FE-INCR-DFE-FORKS`](../plano/decisoes/D-2026-10-02-FE-INCR-DFE-FORKS.md)). Produzido por `sessao-planejamento` em 2026-09-29 contra
 > `origin/main` **`9dd690b3`** (#438) e a nota de decisão do PR #440 (branch `claude/docs-decisoes-2026-09-29`,
 > `b5398c87`). Não contém código de aplicação. **Implementação exige "executa" do dono** (ORCH-006) e, na fila,
 > vem **depois do [`SEED-UNITS`](../plano/nos/SEED-UNITS.md)** (decisão 2 de 29/09).
@@ -423,7 +424,7 @@ releitura: ReleituraJson['releitura'] | null;
 
 ---
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — ✅ RATIFICADOS 2026-10-02
 
 ### F-FE-DFE-6 — Onde vivem as telas de perfil fiscal (PR-0)
 
@@ -432,7 +433,7 @@ releitura: ReleituraJson['releitura'] | null;
 - **(c)** Dentro de "Compliance", junto com Lalur/SPED/revisão.
 - **Recomendação: (a).** O perfil serve à NF-e de compra (X6) **e** à NFS-e de venda; em (b) a configuração some
   dentro de uma aba de importação, e "Compliance" já tem 5 painéis empilhados (`AccountingView.tsx:357-365`).
-  Delegável. **PENDENTE.**
+  Delegável. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-FE-DFE-7 — Município do local da prestação sem tabela IBGE → nome
 
@@ -444,7 +445,7 @@ nomes no repositório (`git ls-files | grep -i "ibge\|municip"` = 0).
 - **(c)** Campo "nome do município" no perfil fiscal da unidade.
 - **Recomendação: (a).** O salão presta no próprio município, e o 1º cliente está em SP capital. (b) é insumo novo
   (5.570 linhas) para um caso que o 1º cliente não tem; (c) duplica dado que o portal já sabe. Reabrir se o runbook
-  (PV-4) mostrar que a busca não aceita o código. **PENDENTE.**
+  (PV-4) mostrar que a busca não aceita o código. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-FE-DFE-8 — Endereço do tomador
 
@@ -456,7 +457,7 @@ O guia marca CEP e endereço como "Obrigatório" para "Tomador no Brasil" (G7). 
 - **(c)** A DPS passa a levar `toma/end` — muda o X10b e depende do Anexo A UF → IBGE (a lacuna F-DFE-14).
 - **Recomendação: (a) até o runbook medir (PV-3).** A obrigatoriedade na tabela do guia conflita com o leiaute
   (`toma/end` 0-1 no Anexo I); só o portal ao vivo decide. Se o portal exigir, (b) é o passo seguinte, e (c) só entra
-  com o F-DFE-14. **PENDENTE.**
+  com o F-DFE-14. **✅ RATIFICADO 02/10 → (a).**
 
 ### F-FE-DFE-9 — Cancelamento manual se o portal não entregar o XML do evento
 
@@ -472,7 +473,20 @@ uma decisão ratificada; este BRIEF só o registra.
 - **Recomendação: (a).** O guia pode estar defasado em relação ao portal. Verificar custa um passo do runbook, e
   construir contra o contrato atual não gera retrabalho: se o dono mudar, o arquivo só deixa de ser obrigatório.
   **Custo de (a) se o guia estiver certo:** até a reabertura, o cliente cancela no portal e o documento fica
-  `AUTHORIZED` no Luminaris, com proveniência viva no razão. **PENDENTE.**
+  `AUTHORIZED` no Luminaris, com proveniência viva no razão. **✅ RATIFICADO 02/10 → (a).** O F-MAN-5 (a) segue valendo; o PV-1
+  do runbook decide se o dono o reabre.
+
+### RATIFICAÇÃO — 2026-10-02 (dono, questionário; pedido: *"rodada de ratificação por questionário dos forks pendentes"*)
+
+| Fork | Escolha do dono | Contra a recomendação? | Efeito no BRIEF |
+|---|---|---|---|
+| F-FE-DFE-6 | (a) aba nova "Perfil fiscal" no `AccountingView` | não | item 2 como escrito; o PR-0 fica sem fork (espera o SEED-UNITS e o "executa") |
+| F-FE-DFE-7 | (a) código IBGE + instrução "mesmo município do emitente" | não | §3.4, linha do local da prestação; IA-1 (Anexo A) segue desnecessário; reabre se o PV-4 falhar |
+| F-FE-DFE-8 | (a) a ficha mostra só o que a DPS tem | não | §3.4, linha do endereço do tomador, vira instrução; o PV-3 decide se (b) entra depois |
+| F-FE-DFE-9 | (a) manter o F-MAN-5 (a) e medir no runbook | não | item 23 como escrito (XML do evento obrigatório); o PV-1 é o gatilho de reabertura |
+
+Com os quatro, o PR-2 fica sem fork pendente. Junto, o F-COB-1 (a) do [`MAPA-COBERTURA`](MAPA-COBERTURA-EMISSAO-2026-10-02.md)
+§3.1 acrescenta um passo ao runbook do item 29 (§5, passo 8).
 
 ---
 
@@ -504,6 +518,8 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
 5. Rejeição: o portal recusa → rejeição registrada → reenvio → ficha da tentativa 2.
 6. Cancelamento da nota 2 pelo portal ("Cancelar", não "Substituir") → XML do evento (PV-1) → documento `CANCELLED`.
 7. Desfecho em 3 estados e assinatura: **do dono**.
+8. (F-COB-1 a, 02/10) O portal envia a nota ao tomador quando o e-mail dele está no cadastro? Colar o que o portal
+   mostrou ou enviou. Só medição: a entrega segue fora do produto (o operador baixa e repassa).
 
 ---
 
@@ -534,8 +550,8 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
    `crm-shared-table-loader-fetch-all`).
 8. **A8 — Entregar a nota ao tomador (e-mail ou WhatsApp) não está planejado** (registro de 02/10). A tela só
    oferece "Baixar XML" e "Baixar DANFSe" (item 24), e só em produção (F5); o servidor não tem transporte de
-   e-mail. Fork **F-COB-1**, pendente do dono, em [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1. A recomendação de lá acrescenta um passo ao
-   runbook do item 29: conferir se o portal envia a nota ao tomador.
+   e-mail. Fork **F-COB-1** do [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1:
+   **✅ ratificado 02/10 → (a)** — fora do produto; o passo 8 do runbook (§5) mede se o portal envia.
 
 ---
 
@@ -543,9 +559,9 @@ branco com um passo por pendência; não preenche evidência, não marca desfech
 
 | PR | Itens | Toca | Depende de | Pronto quando |
 |---|---|---|---|---|
-| **PR-0** | 1–9 | `my-app` (service, 2 painéis, aba, i18n, testes) + seção do RUNBOOK-H2 | SEED-UNITS em `main`; "executa"; F-FE-DFE-6 | gates do item 9 verdes, CI verde |
+| **PR-0** | 1–9 | `my-app` (service, 2 painéis, aba, i18n, testes) + seção do RUNBOOK-H2 | SEED-UNITS em `main`; "executa" (F-FE-DFE-6 ✅ a) | gates do item 9 verdes, CI verde |
 | **PR-1** | 10–13 | `server` (`toView`, `retornoManual`, teste unit + integração) | "executa" | `tsc` + unit + integração verdes na CI Linux (memória `windows-serializa-sqlite-ci-linux-nao`) |
-| **PR-2** | 14–29 | `my-app` (service, botão, seção, ficha, formulários, i18n, testes) + `RUNBOOK-H2-DFE-MANUAL.md` | PR-0 e PR-1 em `main`; F-FE-DFE-7/8/9 | gates do item 28 verdes; runbook em branco commitado |
+| **PR-2** | 14–29 | `my-app` (service, botão, seção, ficha, formulários, i18n, testes) + `RUNBOOK-H2-DFE-MANUAL.md` | PR-0 e PR-1 em `main` (F-FE-DFE-7/8/9 ✅ a) | gates do item 28 verdes; runbook em branco commitado |
 | **Gate** | — | humano | PR-2 | runbook assinado pelo dono (Fase D do plano) |
 
 Fold depois de cada merge: nota do nó (`estado`, `prs`) + `node scripts/plano-vault.mjs index` e `check`.
