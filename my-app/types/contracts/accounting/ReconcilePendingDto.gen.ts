@@ -1,9 +1,9 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
-export type ReconcilePendingReasonCodeInput = ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID")
+export type ReconcilePendingReasonCodeInput = ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID" | "NO_MAPPER_FOR_UNIT" | "PACKAGE_CONSUMPTION_PENDING" | "PACKAGE_ORIGIN_REVERSED" | "PACKAGE_EXPIRY_NFSE_PENDING")
 export interface ListReconcilePendingQueryDtoInput {
 unitId: string
-reasonCode?: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID")
+reasonCode?: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID" | "NO_MAPPER_FOR_UNIT" | "PACKAGE_CONSUMPTION_PENDING" | "PACKAGE_ORIGIN_REVERSED" | "PACKAGE_EXPIRY_NFSE_PENDING")
 includeResolved?: (boolean | ("true" | "false"))
 cursor?: string
 limit?: number
@@ -19,7 +19,7 @@ export interface ReconcilePendingItemViewDtoInput {
 id: string
 sourceType: string
 sourceId: string
-reasonCode: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID")
+reasonCode: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID" | "NO_MAPPER_FOR_UNIT" | "PACKAGE_CONSUMPTION_PENDING" | "PACKAGE_ORIGIN_REVERSED" | "PACKAGE_EXPIRY_NFSE_PENDING")
 reasonDetail: string
 firstSeenAt: string
 lastSeenAt: string
@@ -31,7 +31,7 @@ items: {
 id: string
 sourceType: string
 sourceId: string
-reasonCode: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID")
+reasonCode: ("FAILED" | "ACCOUNTING_PERIOD_NOT_OPEN" | "MAX_CENTS_EXCEEDED" | "OPENING_ENTRY_MISSING" | "MISSING_PAID_WITH_PACKAGE_ID" | "NO_MAPPER_FOR_UNIT" | "PACKAGE_CONSUMPTION_PENDING" | "PACKAGE_ORIGIN_REVERSED" | "PACKAGE_EXPIRY_NFSE_PENDING")
 reasonDetail: string
 firstSeenAt: string
 lastSeenAt: string

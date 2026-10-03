@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isLc116Codigo } from '../models/lc116ListaNacional';
 
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — DTOs do perfil fiscal (BRIEF §2 + EMENDA 2026-09-15). `.strict()`.
@@ -52,6 +53,16 @@ export const UpsertFiscalProfileSchema = z
     issAliquotaBp: z.number().int().min(0).max(500).nullable().optional(),
     issRetidoTomadorPj: z.boolean().default(false),
     pacoteFatoGerador: z.enum(PACOTE_FATO_GERADOR).default('CONSUMO'),
+    // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a): o código do PACOTE para a NFS-e (pacote VENDA e saldo vencido em
+    // CONSUMO) — validado como o ServiceFiscalProfile: cTribNac [195] 6 dígitos na lista nacional, cNBS [198] 9.
+    // Do contador (PE-4): sem ele a nota do pacote não sai (pendência nomeada).
+    pacoteCTribNac: z
+      .string()
+      .regex(/^\d{6}$/)
+      .refine(isLc116Codigo, 'pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)')
+      .nullable()
+      .optional(),
+    pacoteCNBS: z.string().regex(/^\d{9}$/).nullable().optional(),
     ibsCbsInformar: z.boolean().optional(), // default depende do regime (SIMPLES => false) — resolvido no serviço
     ibsCbsCst: z.string().regex(/^\d{3}$/).nullable().optional(),
     ibsCbsClassTrib: z.string().regex(/^\d{6}$/).nullable().optional(),

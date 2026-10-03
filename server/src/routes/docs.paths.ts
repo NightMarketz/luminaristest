@@ -4367,8 +4367,9 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: customerId, required: false, schema: { type: string } }
+ *         - { in: query, name: expiresOnOrBefore, required: false, schema: { type: string, format: date }, description: 'BE-INCR-PACOTE-VALIDADE (F-PV-11 a) — só saldos com validade (expiresAt) até esta data; YYYY-MM-DD real, senão 400' }
  *       responses:
- *         '200': { description: 'balances (CustomerPackageBalance[] — id, unitId, customerId, packageId, balanceCents, expiresAt)' }
+ *         '200': { description: 'balances (CustomerPackageBalance[] — id, unitId, customerId, packageId, balanceCents, expiresAt = último dia válido, date-only à meia-noite UTC; null = sem validade)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
@@ -4384,7 +4385,7 @@
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
- *         - { in: query, name: reasonCode, required: false, schema: { type: string, enum: [FAILED, ACCOUNTING_PERIOD_NOT_OPEN, MAX_CENTS_EXCEEDED, OPENING_ENTRY_MISSING, MISSING_PAID_WITH_PACKAGE_ID] } }
+ *         - { in: query, name: reasonCode, required: false, schema: { type: string, enum: [FAILED, ACCOUNTING_PERIOD_NOT_OPEN, MAX_CENTS_EXCEEDED, OPENING_ENTRY_MISSING, MISSING_PAID_WITH_PACKAGE_ID, NO_MAPPER_FOR_UNIT, PACKAGE_CONSUMPTION_PENDING, PACKAGE_ORIGIN_REVERSED, PACKAGE_EXPIRY_NFSE_PENDING] } }
  *         - { in: query, name: includeResolved, required: false, schema: { type: boolean }, description: 'default false — só pendentes' }
  *         - { in: query, name: cursor, required: false, schema: { type: string } }
  *         - { in: query, name: limit, required: false, schema: { type: integer } }
@@ -4650,6 +4651,8 @@
  *                 issAliquotaBp: { type: integer, nullable: true, description: '5a — só município NÃO conveniado; ≤ 500 (E0595)' }
  *                 issRetidoTomadorPj: { type: boolean, default: false, description: '5b' }
  *                 pacoteFatoGerador: { type: string, enum: [CONSUMO, VENDA], default: CONSUMO, description: '5c' }
+ *                 pacoteCTribNac: { type: string, nullable: true, pattern: '^\d{6}$', description: 'BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a) — cTribNac do pacote (lista nacional); NFS-e do pacote VENDA e do saldo vencido em CONSUMO' }
+ *                 pacoteCNBS: { type: string, nullable: true, pattern: '^\d{9}$', description: 'BE-INCR-PACOTE-VALIDADE 13a — cNBS do pacote (Anexo B)' }
  *                 ibsCbsInformar: { type: boolean, description: '5d — default true fora do SIMPLES' }
  *                 ibsCbsCst: { type: string, nullable: true }
  *                 ibsCbsClassTrib: { type: string, nullable: true, description: 'prefixo 3 dígitos = CST (E0959)' }

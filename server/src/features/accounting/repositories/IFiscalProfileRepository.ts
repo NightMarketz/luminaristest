@@ -21,6 +21,9 @@ export interface FiscalProfileData {
   issAliquotaBp?: number | null;
   issRetidoTomadorPj: boolean;
   pacoteFatoGerador: string;
+  // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a) — cTribNac/cNBS do pacote (NFS-e do pacote VENDA e do vencido em CONSUMO)
+  pacoteCTribNac?: string | null;
+  pacoteCNBS?: string | null;
   ibsCbsInformar: boolean;
   ibsCbsCst?: string | null;
   ibsCbsClassTrib?: string | null;

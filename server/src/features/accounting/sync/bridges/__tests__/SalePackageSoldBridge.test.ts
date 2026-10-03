@@ -6,6 +6,8 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
 // mocked repository).
 const findTableByInternalName = jest.fn();
 const findRowsByFieldValue = jest.fn();
+const existsByIdInTable = jest.fn();
+const findDataById = jest.fn();
 const sync = jest.fn();
 const creditFromSale = jest.fn();
 const loggerWarn = jest.fn();
@@ -14,7 +16,7 @@ const loggerError = jest.fn();
 jest.mock('../../../../../lib/factory', () => ({
   __esModule: true,
   getFactory: () => ({
-    getDynamicTableRepository: () => ({ findTableByInternalName, findRowsByFieldValue }),
+    getDynamicTableRepository: () => ({ findTableByInternalName, findRowsByFieldValue, existsByIdInTable, findDataById }),
     getAccountingSyncService: () => ({ sync }),
     getPackageBalanceService: () => ({ creditFromSale }),
   }),
@@ -44,7 +46,11 @@ const productItems = [{ data: { type: 'Product', productId: 'p-1', saleId: 'sale
 describe('SalePackageSoldBridge.maybeSyncSalePackageSold', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    findTableByInternalName.mockResolvedValue(salesTable());
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) =>
+      name === 'packages' ? { id: 'tbl-packages', internalName: 'packages' } : salesTable(),
+    );
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockResolvedValue({ id: 'pkg-1', data: { name: 'Pacote 10 escovas', validityDays: 30 } });
     findRowsByFieldValue.mockResolvedValue(packageItems); // all-Package by default
     sync.mockResolvedValue({ entryId: 'entry-pkg-1' });
     creditFromSale.mockResolvedValue(undefined);
@@ -67,7 +73,31 @@ describe('SalePackageSoldBridge.maybeSyncSalePackageSold', () => {
     await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow());
     expect(creditFromSale).toHaveBeenCalledTimes(1);
     const [, cmd] = creditFromSale.mock.calls[0];
-    expect(cmd).toEqual({ customerId: 'cust-1', packageId: 'pkg-1', saleId: 'sale-1', amountCents: 50000 });
+    // BE-INCR-PACOTE-VALIDADE item 2/3: the catalog's validityDays travels with the credit, and the sale day
+    // is the same accounting day the posting uses (scopeDay — an ISO instant is read in the scope's zone).
+    expect(cmd).toEqual({
+      customerId: 'cust-1',
+      packageId: 'pkg-1',
+      saleId: 'sale-1',
+      amountCents: 50000,
+      saleDate: '2026-06-25',
+      validityDays: 30,
+    });
+  });
+
+  it('catálogo sem a linha do pacote → validityDays null + warn (nunca inventa prazo)', async () => {
+    existsByIdInTable.mockResolvedValue(false);
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ date: '2026-06-26' }));
+    const [, cmd] = creditFromSale.mock.calls[0];
+    expect(cmd).toMatchObject({ saleDate: '2026-06-26', validityDays: null });
+    expect(loggerWarn).toHaveBeenCalledWith('Package catalog row not found — no validity applied', { packageId: 'pkg-1' });
+  });
+
+  it.each([[-1], [1.5], ['30']])('validityDays inválido (%p) → null + warn', async (bad) => {
+    findDataById.mockResolvedValue({ id: 'pkg-1', data: { validityDays: bad } });
+    await maybeSyncSalePackageSold(actor, SALES_TABLE_ID, finalizedRow({ date: '2026-06-26' }));
+    expect(creditFromSale.mock.calls[0][1]).toMatchObject({ validityDays: null });
+    expect(loggerWarn).toHaveBeenCalledWith('Package validityDays is not an integer ≥ 0 — no validity applied', expect.anything());
   });
 
   it('skips the balance credit (but still posts) when there are multiple distinct packageIds', async () => {

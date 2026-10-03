@@ -1,10 +1,19 @@
 import { Prisma } from 'generated/prisma';
 import type { CustomerPackageBalance } from 'generated/prisma';
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { ForbiddenError, PackageBalanceExpiredError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
 import { centsFromDb } from '../../accounting/models/money';
+import { scopeToday } from '../../accounting/models/dates';
 import type { IPackageBalanceRepository } from '../repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../policies/IPackageBalancePolicy';
+import {
+  expiresAtToDb,
+  expiresOnFromDb,
+  expiryMovementKey,
+  isDueForExpiry,
+  isExpiredForConsumption,
+  lastValidDay,
+} from '../models/validity';
 
 /** One balance mutation tied to a sale (origin credit or consumption debit). */
 export interface PackageMovementCommand {
@@ -14,16 +23,36 @@ export interface PackageMovementCommand {
   amountCents: number;
 }
 
+/** BE-INCR-PACOTE-VALIDADE item 2: the origin credit also carries the validity of the purchase. */
+export interface PackageCreditCommand extends PackageMovementCommand {
+  /** 'YYYY-MM-DD' — sale.data.date (already date-only in the preset). */
+  saleDate: string;
+  /** From the catalog (F-PV-1 a, copied at credit time); null/0 = no validity. */
+  validityDays: number | null;
+}
+
+/** Item 6: what one expiry released (the movement fixes the amount; the posting comes after). */
+export interface ExpireDueResult {
+  /** 'expiry:<balanceId>:<expiresOn>' — stored in PackageBalanceMovement.saleId. */
+  movementKey: string;
+  /** > 0, safe integer. */
+  amountCents: number;
+  /** 'YYYY-MM-DD' (last valid day). */
+  expiresOn: string;
+}
+
 /**
  * PackageBalanceService — prepaid-package balance orchestration (Incremento G).
  *
- * Lives ABOVE the DynamicTable engine (never injected into it). Two write paths:
- *  - creditFromSale: package-sale origin grants balance (paired with the C 2.1.1 posting).
- *  - debitForConsumption: Package Balance consumption draws balance down.
- * Both are idempotent per (saleId, kind): the append-only movement is the gate — its
- * unique key turns a reconcile re-drive (or a race) into a no-op. The balanceCents >= 0
- * invariant is enforced atomically by the repository's conditional decrement, so a debit
- * never produces a negative balance. Money is INTEGER CENTS at every boundary.
+ * Lives ABOVE the DynamicTable engine (never injected into it). Write paths:
+ *  - creditFromSale: package-sale origin grants balance (paired with the C 2.1.1 posting) and writes
+ *    the validity (BE-INCR-PACOTE-VALIDADE item 2, junction rule F-PV-2 a) in the same tx.
+ *  - debitForConsumption: Package Balance consumption draws balance down (never checks validity —
+ *    item 5: a consumption that passed the pre-check on a valid day is legitimate even if re-driven later).
+ *  - expireDue: the remaining balance of an expired customer × package is released (item 6).
+ * All idempotent per (saleId, kind): the append-only movement is the gate — its unique key turns a
+ * reconcile re-drive (or a race) into a no-op. The balanceCents >= 0 invariant is enforced atomically
+ * by the repository's conditional decrement. Money is INTEGER CENTS at every boundary.
  */
 export class PackageBalanceService {
   constructor(
@@ -33,13 +62,15 @@ export class PackageBalanceService {
 
   /**
    * Grants balance from a finalized package sale. Idempotent: a second call for the same
-   * saleId is a no-op (movement gate), whether from a retry or reconcile.
+   * saleId is a no-op (movement gate), whether from a retry or reconcile — so the validity a
+   * re-drive would compute never moves an already-applied credit.
    */
-  public async creditFromSale(scope: AccountingScope, cmd: PackageMovementCommand): Promise<void> {
+  public async creditFromSale(scope: AccountingScope, cmd: PackageCreditCommand): Promise<void> {
     if (!this.policy.canMutate(scope)) {
       throw new ForbiddenError('Sem permissão para creditar saldo de pacote.');
     }
     this.assertAmount(cmd.amountCents);
+    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays);
 
     // Fast path: already applied — skip the transaction entirely.
     const existing = await this.repo.findMovement(scope, cmd.saleId, 'credit');
@@ -62,7 +93,18 @@ export class PackageBalanceService {
           },
           tx,
         );
-        await this.repo.upsertCredit(scope, cmd.customerId, cmd.packageId, cmd.amountCents, tx);
+        // F-PV-2 a — junction, read IN the tx: an empty (or new) balance takes the new validity; a balance
+        // with something left keeps the LONGER one, where null (no limit) beats any date.
+        const prior = await this.repo.findBalance(scope, cmd.customerId, cmd.packageId, tx);
+        const expiresOn = this.joinValidity(prior, purchaseLastDay);
+        await this.repo.upsertCredit(
+          scope,
+          cmd.customerId,
+          cmd.packageId,
+          cmd.amountCents,
+          expiresAtToDb(expiresOn),
+          tx,
+        );
       });
     } catch (error) {
       if (this.isUniqueViolation(error)) return; // concurrent credit already applied
@@ -73,7 +115,7 @@ export class PackageBalanceService {
   /**
    * Draws balance down for a Package Balance consumption. Idempotent per saleId. Throws
    * ValidationError (insufficient) if the balance cannot cover the amount — in which case
-   * the transaction rolls back and no movement is recorded.
+   * the transaction rolls back and no movement is recorded. Does NOT check the validity (item 5).
    */
   public async debitForConsumption(
     scope: AccountingScope,
@@ -121,8 +163,81 @@ export class PackageBalanceService {
   }
 
   /**
-   * Pre-write sufficiency check for the consumption path (fast user feedback before the
-   * sale is marked Paid). The authoritative guard is still the atomic debit.
+   * Item 6 — releases the whole remaining balance of an expired customer × package, in ONE tx: re-reads
+   * the balance, checks it is due (grace of item 8, `today ≥ expiresOn + 2`), appends the `expiry`
+   * movement (it FIXES the amount) and decrements with the existing conditional `tryDecrement`.
+   * The journal entry comes AFTER, re-drivable (item 11) — 2 commits, as the credit/debit today.
+   * Not due, nothing left or no validity → null. A duplicate (P2002) → null (already expired).
+   */
+  public async expireDue(
+    scope: AccountingScope,
+    balanceId: string,
+    today: string,
+  ): Promise<ExpireDueResult | null> {
+    if (!this.policy.canMutate(scope)) {
+      throw new ForbiddenError('Sem permissão para vencer saldo de pacote.');
+    }
+    try {
+      return await this.repo.runTransaction(async (tx) => {
+        const balance = await this.repo.findBalanceById(scope, balanceId, tx);
+        if (!balance) return null;
+        const expiresOn = expiresOnFromDb(balance.expiresAt);
+        if (expiresOn == null || !isDueForExpiry(expiresOn, today)) return null;
+        const amountCents = centsFromDb(balance.balanceCents);
+        if (amountCents <= 0) return null;
+        const movementKey = expiryMovementKey(balance.id, expiresOn);
+        await this.repo.createMovement(
+          {
+            userId: scope.ownerUserId,
+            unitId: scope.unitId,
+            customerId: balance.customerId,
+            packageId: balance.packageId,
+            saleId: movementKey,
+            kind: 'expiry',
+            deltaCents: amountCents,
+          },
+          tx,
+        );
+        const applied = await this.repo.tryDecrement(scope, balance.customerId, balance.packageId, amountCents, tx);
+        if (!applied) {
+          // Unreachable while the read and the decrement share the tx; loud if a future change breaks that.
+          throw new Error(`expireDue: decremento condicional recusado no saldo ${balance.id}.`);
+        }
+        return { movementKey, amountCents, expiresOn };
+      });
+    } catch (error) {
+      if (this.isUniqueViolation(error)) return null;
+      throw error;
+    }
+  }
+
+  /**
+   * Read-only context of one expiry (BE-INCR-PACOTE-VALIDADE §5.2 item 14a / F-PV-9d a): who, how much and
+   * the anchor sale of the expiry NFS-e — the NEWEST origin credit of the balance. Null when the movement
+   * does not exist. Used by the fiscal emission (and its reenvio), which never touches the subledger itself.
+   */
+  public async getExpiryContext(
+    scope: AccountingScope,
+    movementKey: string,
+  ): Promise<{ customerId: string; packageId: string; releasedCents: number; originSaleId: string | null } | null> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Sem permissão para ler saldo de pacote.');
+    }
+    const movement = await this.repo.findMovement(scope, movementKey, 'expiry');
+    if (!movement) return null;
+    const credits = await this.repo.listCreditMovements(scope, movement.customerId, movement.packageId);
+    return {
+      customerId: movement.customerId,
+      packageId: movement.packageId,
+      releasedCents: centsFromDb(movement.deltaCents),
+      originSaleId: credits[0]?.saleId ?? null,
+    };
+  }
+
+  /**
+   * Pre-write check for the consumption path (fast user feedback before the sale is marked Paid).
+   * Refuses an expired balance (item 4, from `expiresOn + 1` in the scope's day) and an insufficient one.
+   * The authoritative sufficiency guard is still the atomic debit.
    */
   public async assertSufficient(
     scope: AccountingScope,
@@ -135,6 +250,10 @@ export class PackageBalanceService {
     }
     this.assertAmount(amountCents);
     const balance = await this.repo.findBalance(scope, customerId, packageId);
+    const expiresOn = expiresOnFromDb(balance?.expiresAt ?? null);
+    if (isExpiredForConsumption(expiresOn, scopeToday(scope))) {
+      throw new PackageBalanceExpiredError(customerId, packageId, expiresOn!);
+    }
     const current = centsFromDb(balance?.balanceCents ?? 0n);
     if (current < amountCents) {
       throw new ValidationError(
@@ -156,15 +275,29 @@ export class PackageBalanceService {
     return centsFromDb(balance?.balanceCents ?? 0n);
   }
 
-  /** Lists balances under the scope, optionally filtered to one customer. */
+  /**
+   * Lists balances under the scope, optionally filtered to one customer and/or to the ones whose
+   * validity ends on or before `expiresOnOrBefore` ('YYYY-MM-DD', F-PV-11 a).
+   */
   public async listBalances(
     scope: AccountingScope,
-    customerId?: string,
+    filter: { customerId?: string; expiresOnOrBefore?: string } = {},
   ): Promise<CustomerPackageBalance[]> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Sem permissão para ler saldo de pacote.');
     }
-    return this.repo.listBalances(scope, customerId);
+    return this.repo.listBalances(scope, {
+      customerId: filter.customerId,
+      expiresOnOrBefore: expiresAtToDb(filter.expiresOnOrBefore ?? null) ?? undefined,
+    });
+  }
+
+  /** F-PV-2 a: balance 0 / new row → the purchase's validity; balance > 0 → the longer one (null wins). */
+  private joinValidity(prior: CustomerPackageBalance | null, purchaseLastDay: string | null): string | null {
+    if (!prior || centsFromDb(prior.balanceCents) <= 0) return purchaseLastDay;
+    const current = expiresOnFromDb(prior.expiresAt);
+    if (current == null || purchaseLastDay == null) return null;
+    return current > purchaseLastDay ? current : purchaseLastDay; // 'YYYY-MM-DD' compares lexically
   }
 
   /** Money boundary: cents must be a positive, safe integer — never a float. */

@@ -28,9 +28,9 @@ describe('CLINIC_BINDING_V1 — CONTROLE', () => {
 describe('CLINIC_BINDING_V1 — cobertura dos 5 sourceTypes classe-1 (F-P2-8a)', () => {
   const eventKeys = CLINIC_BINDING_V1.eventBindings.map((eb) => eb.eventKey);
 
-  it('cobre exatamente os 5 sourceTypes — os mesmos do vertical 1, nunca um vocabulário próprio (F-P2-6a)', () => {
+  it('cobre exatamente os 5 sourceTypes + o vencimento de pacote — os mesmos do vertical 1, nunca um vocabulário próprio (F-P2-6a)', () => {
     expect(eventKeys.sort()).toEqual(
-      ['sale.package.sold', 'sale.cogs', 'sale.finalized', 'sale.returned', 'sale.settled'].sort(),
+      ['sale.package.expired', 'sale.package.sold', 'sale.cogs', 'sale.finalized', 'sale.returned', 'sale.settled'].sort(),
     );
   });
 
@@ -87,6 +87,7 @@ describe('CLINIC_BINDING_V1 — compiledFromHash é determinístico', () => {
       { code: '3.1', nature: 'Revenue', acceptsEntries: true },
       { code: '3.2', nature: 'Revenue', acceptsEntries: true },
       { code: '3.3', nature: 'Revenue', acceptsEntries: true },
+      { code: '3.4', nature: 'Revenue', acceptsEntries: true }, // BE-INCR-PACOTE-VALIDADE
       { code: '4.2', nature: 'Expense', acceptsEntries: true },
     ]);
     expect(CLINIC_BINDING_V1.compiledFromHash).toBe(recomputed);

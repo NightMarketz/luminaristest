@@ -891,7 +891,7 @@ model CustomerPackageBalance {
   customerId   String // customer (DynamicTable row id; scoped string, not a FK)
   packageId    String // package from the catalog (DynamicTable row id; scoped string, not a FK)
   balanceCents BigInt    @default(0)
-  expiresAt    DateTime? // reserved for future expiry; NOT enforced in the G MVP
+  expiresAt    DateTime? // BE-INCR-PACOTE-VALIDADE: last valid day (date-only, UTC midnight); null = no validity. Copied from the catalog at credit time (F-PV-1 a), junction on re-purchase (F-PV-2 a)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
@@ -903,7 +903,7 @@ model CustomerPackageBalance {
 }
 
 // Append-only movement log (one credit at package-sale origin, one debit per
-// consumption). This is the idempotency trap: the unique (userId, unitId, saleId,
+// consumption, one expiry when the validity ends — BE-INCR-PACOTE-VALIDADE item 7). This is the idempotency trap: the unique (userId, unitId, saleId,
 // kind) closes the double-credit / double-debit window that reconcile re-drives
 // would otherwise open. `deltaCents` is always > 0; the sign comes from `kind`.
 model PackageBalanceMovement {
@@ -913,8 +913,8 @@ model PackageBalanceMovement {
   unitId     String
   customerId String
   packageId  String
-  saleId     String // the sale (DynamicTable row id) that originated this movement
-  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption)
+  saleId     String // the sale (DynamicTable row id) that originated this movement; for 'expiry' the key 'expiry:<balanceId>:<expiresOn>'
+  kind       String // 'credit' (package-sale origin) | 'debit' (Package Balance consumption) | 'expiry' (remaining balance released)
   deltaCents BigInt // always > 0; direction is given by `kind`
   createdAt  DateTime @default(now())
 
@@ -1347,6 +1347,8 @@ model FiscalProfile {
   issAliquotaBp                      Int? // pAliq [312] em basis points (≤ 500 = 5%, E0595); SÓ município NÃO conveniado (E0617/E0618) — pendente contador (5a)
   issRetidoTomadorPj                 Boolean   @default(false) // 5b — tpRetISSQN=2 para tomador CNPJ (exige endereço, E0237) — pendente contador
   pacoteFatoGerador                  String    @default("CONSUMO") // 5c — CONSUMO | VENDA (F-DFE-9 a = CONSUMO) — pendente contador
+  pacoteCTribNac                     String? // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a): cTribNac do pacote (lista nacional) — NFS-e do pacote VENDA e do vencido em CONSUMO; do contador
+  pacoteCNBS                         String? // idem, cNBS 9 dígitos (Anexo B) — obrigatório só com ibsCbsInformar
   ibsCbsInformar                     Boolean   @default(true) // 5d — grupo IBSCBS [336]; SIMPLES => false (leiaute: só 2027)
   ibsCbsCst                          String? // gIBSCBS/CST [405] 3 dígitos — tabela fora do corpus (BRIEF §6) — pendente contador (1b)
   ibsCbsClassTrib                    String? // gIBSCBS/cClassTrib [406] 6 dígitos, prefixo = CST (E0959)
@@ -1740,9 +1742,9 @@ model ReconcilePendingItem {
   userId       String // scope owner (AccountingScope.ownerUserId); FK User — cascade (operational data, not the audit trail; mirrors Counterparty/AccountingBinding, not AuditEvent's no-cascade exception)
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   unitId       String // business unit (scoped string, not a FK)
-  sourceType   String // 'crm.opportunity.won' | 'sale.finalized' | 'sale.cancelled' | 'sale.returned' | 'sale.settled' | 'sale.cogs' | 'sale.package.sold' | 'sale.package.consumption'
+  sourceType   String // 'crm.opportunity.won' | 'sale.finalized' | 'sale.cancelled' | 'sale.returned' | 'sale.settled' | 'sale.cogs' | 'sale.package.sold' | 'sale.package.consumption' | 'sale.package.expired' (sourceId = 'expiry:<balanceId>:<expiresOn>')
   sourceId     String // origin key (opportunityId | saleId), same identity the reconcile pass already uses
-  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r)
+  reasonCode   String // alfabeto = ReconcilePendingReasonCode (ReconcilePendingDto.ts) — FAILED | ACCOUNTING_PERIOD_NOT_OPEN | MAX_CENTS_EXCEEDED | OPENING_ENTRY_MISSING | MISSING_PAID_WITH_PACKAGE_ID (C7r) | NO_MAPPER_FOR_UNIT | PACKAGE_CONSUMPTION_PENDING | PACKAGE_ORIGIN_REVERSED | PACKAGE_EXPIRY_NFSE_PENDING (BE-INCR-PACOTE-VALIDADE)
   reasonDetail String // error message captured at classification time
   firstSeenAt  DateTime  @default(now())
   lastSeenAt   DateTime  @updatedAt
