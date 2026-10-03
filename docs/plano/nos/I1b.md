@@ -24,6 +24,8 @@ depende_de: []
 
 ## Docs
 
+- **Lacunas abertas 03/10 (PR #480):** [`ADR-INCR-UNIT-REKEY-migration.md` §10](../../adr/ADR-INCR-UNIT-REKEY-migration.md) — L-RK-1..5, decisão do dono pendente
+
 - [`docs/accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md`](../../accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md)
 - [`docs/accounting/ONBOARDING-WIZARD-plano-grafo-brief.md`](../../accounting/ONBOARDING-WIZARD-plano-grafo-brief.md)
 

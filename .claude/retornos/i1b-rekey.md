@@ -80,6 +80,8 @@ Suspeitas que o revisor não executou:
 
 ## Lacunas de spec
 
+> Documentadas na spec em 03/10: ADR-INCR-UNIT-REKEY §10 (L-RK-1 = L1; L-RK-2 = R1; L-RK-3 = R2; L-RK-4 e L-RK-5 = as duas suspeitas do revisor). Todas com opções e nenhuma decidida.
+
 - **L1 (aberta, sua decisão):** sem `--backup-path`, o §5 manda exit **2** (`backupPath` obrigatório no Zod) e o item
   15 manda exit **1** ("sem o flag → exit 1"). O código segue o §5. O teste assere só o que as duas leituras têm em
   comum: recusa e nada escrito. Para fechar: (a) manter o exit 2, ou (b) tornar o campo opcional no Zod e devolver
