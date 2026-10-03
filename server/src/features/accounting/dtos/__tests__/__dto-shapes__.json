@@ -1,4 +1,85 @@
 {
+  "AccountantAssignmentDto.ts": {
+    "InviteAccountantSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountingContactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accountantEmail": {
+          "type": "string",
+          "maxLength": 254,
+          "format": "email",
+          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "accountingContactId",
+        "accountantEmail"
+      ],
+      "additionalProperties": false
+    },
+    "ListAccountantAssignmentsQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "AcceptAccountantAssignmentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "declaresWrittenContract": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "declaresWrittenContract"
+      ],
+      "additionalProperties": false
+    },
+    "EndAccountantAssignmentSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "GovernanceOwnerSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
   "AccountingContactDto.ts": {
     "RegisterContactSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -610,6 +691,10 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 500
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -632,6 +717,10 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 500
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -682,6 +771,10 @@
             "SIGNED_OFF",
             "REJECTED"
           ]
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -693,6 +786,10 @@
       "type": "object",
       "properties": {
         "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
           "type": "string",
           "minLength": 1
         }
@@ -1818,6 +1915,23 @@
       "type": "object",
       "properties": {
         "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ]
+    },
+    "JobGovernanceQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ownerUserId": {
           "type": "string",
           "minLength": 1
         }
@@ -6791,6 +6905,10 @@
         },
         "reason": {
           "type": "string"
+        },
+        "ownerUserId": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
