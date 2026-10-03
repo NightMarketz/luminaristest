@@ -23,6 +23,7 @@ veredicto: PASSOU (aguarda OK do dono para merge)
 - `node scripts/plano-vault.mjs check` → vault íntegro
 
 ### Lacunas de spec e pontos a conhecer
+> **Destino: GAP-MAP** (`docs/operating-manual/GAP-MAP.md`). Os pontos 1 (Nível 3) e 4 (Nível 4) viraram linha lá; 2, 3 e 5 não são lacuna (verificação pendente na CI, ajuste de teste, custo) e ficam só aqui.
 Lacunas de spec que bloqueiam o PR-1: **nenhuma**. Pontos a conhecer (não bloqueiam; o 1 e o 2 pedem atenção do PR-2 / da próxima sessão):
 1. **Reenvio zera a releitura.** Depois de `reenviar` a tentativa corrente muda e `releitura` volta a `null` (literal na spec, item 10: "tentativa corrente"). O BRIEF não diz se a tela do PR-2 deve mostrar a releitura de uma tentativa anterior; se quiser, é decisão do dono — o PR-2 não deve presumir.
 2. **CI Linux é o teste final.** Tudo foi rodado no Windows (SQLite serializa aqui, não na CI); o BRIEF §8 exige CI Linux verde.
