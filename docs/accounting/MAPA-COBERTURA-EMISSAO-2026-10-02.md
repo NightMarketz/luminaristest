@@ -91,10 +91,11 @@ real tinha 0 `FiscalDocument` em 28/09 — [`BE-INCR-DFE-TPAMB-brief.md`](BE-INC
 Três viram fork do dono — **✅ RATIFICADOS 2026-10-02**, todos na recomendação
 ([`D-2026-10-02-MAPA-COBERTURA-FORKS`](../plano/decisoes/D-2026-10-02-MAPA-COBERTURA-FORKS.md)). O quarto é só medição.
 
-> **Colisão de ID:** já existe um **F-COB-1** de 10/09 (catálogo de adições/exclusões, nó X12 — "F-COB-1 → b").
-> Os três daqui são citados como "F-COB-n (mapa 02/10)" quando houver risco de confusão.
+> **ID renomeado em 02/10 (dono, questionário):** estes três nasceram como "F-COB-1..3" e colidiam com o
+> **F-COB-1** de 10/09 (catálogo de adições/exclusões, nó X12 — "F-COB-1 → b"). Passaram a **F-MCE-1..3**
+> (Mapa de Cobertura da Emissão). O F-COB-1 do X12 não muda.
 
-### 3.1 F-COB-1 — Entregar a nota ao tomador (e-mail ou WhatsApp)
+### 3.1 F-MCE-1 — Entregar a nota ao tomador (e-mail ou WhatsApp)
 
 **Fatos**
 
@@ -125,7 +126,7 @@ Três viram fork do dono — **✅ RATIFICADOS 2026-10-02**, todos na recomenda�
 **Quem decide:** o dono. **Toca:** [`FE-INCR-DFE`](../plano/nos/FE-INCR-DFE.md) (achado A8 do BRIEF) e o gate
 [`D5`](../plano/gates/D5.md).
 
-### 3.2 F-COB-2 — Captura de NFS-e tomadas e busca sem parceiro
+### 3.2 F-MCE-2 — Captura de NFS-e tomadas e busca sem parceiro
 
 **Fatos**
 
@@ -148,7 +149,7 @@ Três viram fork do dono — **✅ RATIFICADOS 2026-10-02**, todos na recomenda�
 **✅ RATIFICADO 02/10 → (b):** o BRIEF do passo G.2 inclui o evento `nfsen_recebida` ao lado do `nfe_recebida`.
 **Quem decide:** o dono. **Toca:** Fase G do plano de emissão.
 
-### 3.3 F-COB-3 — Como o A1 do cliente chega à Focus
+### 3.3 F-MCE-3 — Como o A1 do cliente chega à Focus
 
 **Fatos**
 
@@ -210,7 +211,7 @@ Nada aqui é novo; são ponteiros para quem abrir o BRIEF do X10i ou reabrir a d
 | Documento | Mudança |
 |---|---|
 | [`FE-INCR-DFE-brief.md`](FE-INCR-DFE-brief.md) §7 | achado A8 (entrega ao tomador) |
-| [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](PLANO-EMISSAO-FISCAL-2026-09-27.md), "Achados fora de escopo" | item 4, com os três forks F-COB |
+| [`PLANO-EMISSAO-FISCAL-2026-09-27.md`](PLANO-EMISSAO-FISCAL-2026-09-27.md), "Achados fora de escopo" | item 4, com os três forks F-MCE |
 | Notas [`X10i`](../plano/nos/X10i.md), [`FE-INCR-DFE`](../plano/nos/FE-INCR-DFE.md) e [`D5`](../plano/gates/D5.md) | seção "Fold 02/10" no corpo; frontmatter intocado (nenhum estado mudou) |
 | [`09-integracoes-e-ecossistema`](../plano/destino/09-integracoes-e-ecossistema.md) | duas marcas `⟨corr 02/10⟩`: emissão direta fora por decisão; entrega ao tomador sem decisão |
 | [`README.md`](README.md) §6 | linha para este mapa |

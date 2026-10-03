@@ -14,7 +14,9 @@ atualizado: "2026-10-02"
 abaixo (dono, 02/10). Só decisão: não escreva código nem BRIEF novo, não dê 'executa'."* Frontmatter de
 [[GOV-CONTADOR]] conferido antes: os cinco seguiam pendentes. Cada pergunta levou a base legal da coluna "O que a lei
 diz" do BRIEF §5.
-**Não é "executa"** (ORCH-006). **F-GOV-1** (consulta ao CRC-SP) continua do dono, fora do código.
+**Não é "executa"** (ORCH-006). **F-GOV-1** (consulta ao CRC-SP) continua do dono, fora do código. Em 02/10 (2ª sessão)
+a pergunta foi montada em [`CONSULTA-CRC-SP-2026-10-02-F-GOV-1.md`](../../accounting/CONSULTA-CRC-SP-2026-10-02-F-GOV-1.md),
+com o efeito do F-GOV-11 (a) abaixo como ponto a validar. O dono envia. Nada aqui foi decidido nem marcado como resolvido.
 
 Documento dos forks: [`BE-INCR-ACCOUNTANT-GOVERNANCE-brief.md`](../../accounting/BE-INCR-ACCOUNTANT-GOVERNANCE-brief.md)
 §5 (texto e base legal) e §5.3 (escolhas e efeitos).
