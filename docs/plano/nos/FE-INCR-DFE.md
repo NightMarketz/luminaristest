@@ -4,17 +4,17 @@ tipo: "fe"
 dominio: "fiscal"
 titulo: "Tela da emissão de DF-e"
 estado: "planned"
-estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS"
+estado_detalhe: "Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS · 02/10: F-FE-DFE-6..9 ratificados, todos (a) — nenhum fork pendente; F-COB-1 (a) acrescenta o passo 8 ao runbook do PR-2; sem 'executa'"
 depende_de: ["[[X10b]]", "[[DFE-MANUAL]]"]
 autorizacao: "dono em chat 27/09: \"planeje com granularidade…\" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')"
 ancora_sdd: "§M5 · §M0 fold 18/09"
-perfil_previsto: "precisa-de-planejamento"
-perfil_evidencia: "regra 1 (BRIEF lido na íntegra): F-FE-DFE-6..9 pendentes. Depois deles: sonnet-alto (regra 4: 29 itens, BE+FE). Por PR: PR-1 (itens 10–13, só BE, sem fork pendente nem migração) = sonnet-medio; PR-0 espera só o F-6; PR-2 espera F-7/8/9. Fila: depois do SEED-UNITS"
-atualizado: "2026-10-01"
+perfil_previsto: "sonnet-alto"
+perfil_evidencia: "regra 1 não casa (F-FE-DFE-6..9 ratificados 02/10); regra 2 não casa (o PR-1 só expõe a view: sem lançamento, tributo, saldo ou migração); regra 4: 29 itens, BE+FE. Por PR: PR-0 e PR-2 = sonnet-alto; PR-1 (itens 10–13, só BE) = sonnet-medio. Fila: depois do SEED-UNITS"
+atualizado: "2026-10-02"
 ---
 # FE-INCR-DFE — Tela da emissão de DF-e
 
-**Estado:** `planned` — Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS  
+**Estado:** `planned` — Fase C do PLANO-EMISSAO-FISCAL-2026-09-27: botão de emitir, ficha espelho do portal (copiar por campo, no formato do portal), upload do XML com releitura na tela e cancelamento manual. BRIEF depois dos forks F-MAN do DFE-MANUAL; as telas a imitar vêm do guia oficial do emissor web v1.2 (4 passos, tabela de campos — insumo 0.6 fechado 27/09) · 29/09: 1º cliente = Simples em SP capital → esta tela é o caminho legal da NFS-e (Emissor Nacional exclusivo desde 01/11/2026). Forks do BRIEF decididos: PR-0 com as telas de perfil fiscal (unidade + serviço — sem elas nenhuma venda emite); toque no BE para persistir a releitura e expor ids de XML/PDF; botão no SaleDetailPanel; upload por input file (padrão NfePanel); ambiente derivado da view com aviso se divergir do /status. Fila: logo depois do SEED-UNITS · 02/10: F-FE-DFE-6..9 ratificados, todos (a) — nenhum fork pendente; F-COB-1 (a) acrescenta o passo 8 ao runbook do PR-2; sem 'executa'  
 **Autorização:** dono em chat 27/09: "planeje com granularidade…" — plano (Fase C); o BRIEF abre depois dos forks F-MAN; sem 'executa'; 29/09: BRIEF com os 5 forks decididos + download do Guia do Emissor Web v1.2 autorizado (sem 'executa')  
 **Depende de:** [[X10b]], [[DFE-MANUAL]]  
 **Desbloqueia:** —  
@@ -32,10 +32,12 @@ atualizado: "2026-10-01"
 ## Fold 02/10
 
 - Registro, sem mudança de estado: achado **A8** no BRIEF (§7) — entregar a nota ao tomador não está planejado; a tela só
-  dá download, e só em produção. Fork **F-COB-1**, pendente do dono, em [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](../../accounting/MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1.
+  dá download, e só em produção. Fork **F-COB-1** (✅ ratificado 02/10 → a), em [`MAPA-COBERTURA-EMISSAO-2026-10-02.md`](../../accounting/MAPA-COBERTURA-EMISSAO-2026-10-02.md) §3.1.
+- **Ratificação 02/10** ([[D-2026-10-02-FE-INCR-DFE-FORKS]]): F-FE-DFE-6..9 → (a), todos na recomendação. F-COB-1 (a)
+  ([[D-2026-10-02-MAPA-COBERTURA-FORKS]]) acrescenta o passo 8 ao runbook do PR-2. Nenhum fork pendente; não é "executa".
 
 ## Docs
 
-- [`docs/accounting/FE-INCR-DFE-brief.md`](../../accounting/FE-INCR-DFE-brief.md) — BRIEF (29/09, passo C.1): 29 itens em 3 PRs (PR-0 perfil fiscal da unidade e dos serviços → PR-1 toque no BE → PR-2 tela), contratos, mapa DPS → portal pelo Guia do Emissor Web v1.2, PV-1..10 para o `RUNBOOK-H2-DFE-MANUAL`. Forks F-FE-DFE-1..5 decididos em 29/09; **F-FE-DFE-6..9 PENDENTES** (o 9 reabre o F-MAN-5 se o portal não entregar o XML do evento — guia p. 80). Sem 'executa'; na fila, depois do [[SEED-UNITS]]
+- [`docs/accounting/FE-INCR-DFE-brief.md`](../../accounting/FE-INCR-DFE-brief.md) — BRIEF (29/09, passo C.1): 29 itens em 3 PRs (PR-0 perfil fiscal da unidade e dos serviços → PR-1 toque no BE → PR-2 tela), contratos, mapa DPS → portal pelo Guia do Emissor Web v1.2, PV-1..10 para o `RUNBOOK-H2-DFE-MANUAL`. Forks F-FE-DFE-1..5 decididos em 29/09; **F-FE-DFE-6..9 ✅ ratificados 02/10, todos (a)** ([[D-2026-10-02-FE-INCR-DFE-FORKS]]; o 9 mantém o F-MAN-5 a e mede no PV-1). Sem 'executa'; na fila, depois do [[SEED-UNITS]]
 - [`docs/accounting/BE-INCR-DFE-MANUAL-brief.md`](../../accounting/BE-INCR-DFE-MANUAL-brief.md) — rotas consumidas (itens 11–14) e forks F-MAN-1..5
 - [`docs/accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md`](../../accounting/PLANO-EMISSAO-FISCAL-2026-09-27.md) — Fase C

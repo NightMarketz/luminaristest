@@ -88,7 +88,11 @@ real tinha 0 `FiscalDocument` em 28/09 — [`BE-INCR-DFE-TPAMB-brief.md`](BE-INC
 
 ## 3. Pontos que faltavam na documentação
 
-Três viram fork do dono (**RATIFICAÇÃO PENDENTE**, com recomendação). O quarto é só medição.
+Três viram fork do dono — **✅ RATIFICADOS 2026-10-02**, todos na recomendação
+([`D-2026-10-02-MAPA-COBERTURA-FORKS`](../plano/decisoes/D-2026-10-02-MAPA-COBERTURA-FORKS.md)). O quarto é só medição.
+
+> **Colisão de ID:** já existe um **F-COB-1** de 10/09 (catálogo de adições/exclusões, nó X12 — "F-COB-1 → b").
+> Os três daqui são citados como "F-COB-n (mapa 02/10)" quando houver risco de confusão.
 
 ### 3.1 F-COB-1 — Entregar a nota ao tomador (e-mail ou WhatsApp)
 
@@ -116,6 +120,8 @@ Três viram fork do dono (**RATIFICAÇÃO PENDENTE**, com recomendação). O qua
 
 **Recomendação: (a) agora, e medir (b) sem custo de código** — uma linha no D5 (pergunta à Focus) e um passo no
 `RUNBOOK-H2-DFE-MANUAL` (o portal envia?). Reabrir para (c) se o cliente pedir envio automático.
+**✅ RATIFICADO 02/10 → (a)** (o operador repassa; (b) é medido no D5 e no passo 8 do `RUNBOOK-H2-DFE-MANUAL`,
+[`FE-INCR-DFE-brief.md`](FE-INCR-DFE-brief.md) §5).
 **Quem decide:** o dono. **Toca:** [`FE-INCR-DFE`](../plano/nos/FE-INCR-DFE.md) (achado A8 do BRIEF) e o gate
 [`D5`](../plano/gates/D5.md).
 
@@ -139,6 +145,7 @@ Três viram fork do dono (**RATIFICAÇÃO PENDENTE**, com recomendação). O qua
 - **(c)** Upload manual do XML da NFS-e tomada, sem parceiro, virando título a pagar (irmão do import de NF-e).
 
 **Recomendação: (b)**, como linha do BRIEF de G.2; (c) só se aparecer cliente sem Focus que precise.
+**✅ RATIFICADO 02/10 → (b):** o BRIEF do passo G.2 inclui o evento `nfsen_recebida` ao lado do `nfe_recebida`.
 **Quem decide:** o dono. **Toca:** Fase G do plano de emissão.
 
 ### 3.3 F-COB-3 — Como o A1 do cliente chega à Focus
@@ -159,6 +166,8 @@ Três viram fork do dono (**RATIFICAÇÃO PENDENTE**, com recomendação). O qua
   pelo servidor, o que pede regra escrita sobre trânsito × guarda (D1 fala de guarda).
 
 **Recomendação: (a).** Mantém o D1 sem interpretação. **Quem decide:** o dono, depois de conferir o painel no D5.
+**✅ RATIFICADO 02/10 → (a)** — confirma o F-NFCE-8 (a) do X10a ("CSC e A1 cadastrados pelo cliente no painel da
+Focus"). A conferência do painel continua no D5 (pergunta 1); se o painel não aceitar, o fork volta ao dono.
 **Toca:** BRIEF `BE-INCR-DFE-FOCUS` (passo E.3) e o gate [`D5`](../plano/gates/D5.md).
 
 ### 3.4 O que faltaria para emitir NFS-e direto no Emissor Nacional (medição, não fork)
