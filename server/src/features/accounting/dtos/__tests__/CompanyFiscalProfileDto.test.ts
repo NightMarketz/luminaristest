@@ -77,3 +77,39 @@ describe('CreateCompanySignerSchema (item 8)', () => {
     expect(CreateCompanySignerSchema.safeParse({ ...signer, qualifEcd: '305' }).success).toBe(false); // 305 não existe (a tabela da p. 202 prevalece sobre o exemplo 9)
   });
 });
+
+describe('UpsertCompanyFiscalProfileSchema — X7 Fase A (BRIEF itens 1, 2, 2b)', () => {
+  it('forma: SIMPLES/MEI com forma ⇒ recusa; PRESUMIDO + ANUAL ⇒ recusa; ANUAL ⇒ recusa nesta fase (Fase B); TRIMESTRAL ok', () => {
+    expect(ok({ regime: 'SIMPLES', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(false);
+    expect(ok({ regime: 'MEI', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(false);
+    expect(ok({ regime: 'PRESUMIDO', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(false);
+    const anualReal = UpsertCompanyFiscalProfileSchema.safeParse({ ...base, regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' });
+    expect(anualReal.success).toBe(false);
+    expect(JSON.stringify(anualReal.error?.issues)).toContain('forma anual é da Fase B');
+    expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(true);
+    expect(ok({ regime: 'PRESUMIDO', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(true);
+    expect(ok({ regime: 'REAL' })).toBe(true); // nula ⇒ TRIMESTRAL efetivo (no service)
+  });
+
+  it('lucroRealObrigatorio só no REAL', () => {
+    expect(ok({ regime: 'REAL', lucroRealObrigatorio: true })).toBe(true);
+    expect(ok({ regime: 'PRESUMIDO', lucroRealObrigatorio: false })).toBe(false);
+  });
+
+  it('datas de atividade: date-only com calendário validado (regex sozinho não basta)', () => {
+    expect(ok({ regime: 'PRESUMIDO', inicioAtividadeEm: '2026-05-10', encerramentoAtividadeEm: '2026-11-30' })).toBe(true);
+    expect(ok({ regime: 'PRESUMIDO', inicioAtividadeEm: '2026-02-30' })).toBe(false);
+    expect(ok({ regime: 'PRESUMIDO', encerramentoAtividadeEm: '30/11/2026' })).toBe(false);
+  });
+
+  it('liminar LC 224 (F-TA-5 a): suspenso sem processo ⇒ "informe o processo da liminar"; processo ≤ 60 caracteres', () => {
+    const r = UpsertCompanyFiscalProfileSchema.safeParse({ ...base, regime: 'PRESUMIDO', lc224AcrescimoSuspenso: true });
+    expect(r.success).toBe(false);
+    expect(JSON.stringify(r.error?.issues)).toContain('informe o processo da liminar');
+    expect(ok({ regime: 'PRESUMIDO', lc224AcrescimoSuspenso: true, lc224LiminarReferencia: '5001234-56.2026.4.03.6100' })).toBe(true);
+    expect(ok({ regime: 'PRESUMIDO', lc224AcrescimoSuspenso: true, lc224LiminarReferencia: 'x'.repeat(61) })).toBe(false);
+    expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'PRESUMIDO' })).toMatchObject({
+      formaApuracaoIrpjCsll: null, lucroRealObrigatorio: null, lc224AcrescimoSuspenso: false, lc224LiminarReferencia: null,
+    });
+  });
+});

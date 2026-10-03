@@ -74,6 +74,7 @@ export const MASKABLE_FREE_TEXT_KEYS: Record<string, readonly string[]> = {
   'delivery.failed':              ['reason'],
   // BE-INCR-REVIEW-LAYER (nó C11, item 12): motivo da rejeição da revisão — mesma classe.
   'review.rejected':              ['reason'],
+  'accountant_assignment.ended':  ['reason'], // GOV-CONTADOR: motivo do encerramento é texto livre
   // BE-INCR-BANK-SETTLEMENT (nó F7): motivo da rejeição digitado pelo operador — mesma classe.
   'bank_settlement.rejected':     ['reason'],
 };

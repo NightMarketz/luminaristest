@@ -1,7 +1,10 @@
 import type { CompanyFiscalProfile, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
-/** Colunas graváveis do perfil da empresa (X13, BRIEF §4.1) — sem ecfRecibo/regimeTravadoEm (PR-2, F-XP-5 a). */
+/**
+ * Colunas graváveis do perfil da empresa (X13, BRIEF §4.1) — sem ecfRecibo/regimeTravadoEm (PR-2, F-XP-5 a) e sem
+ * `formaApuracaoTravadaEm` (X7: só a confirmação da apuração grava, na própria tx — F-X7-5 a).
+ */
 export interface CompanyFiscalProfileData {
   regime: string;
   grandePorte: boolean | null;
@@ -18,6 +21,13 @@ export interface CompanyFiscalProfileData {
   ecfIndRecReceita: string | null;
   contadorContactId: string | null;
   representanteLegalSignerId: string | null;
+  // X7 Fase A (BRIEF itens 1, 2, 2b)
+  formaApuracaoIrpjCsll: string | null;
+  lucroRealObrigatorio: boolean | null;
+  inicioAtividadeEm: string | null;
+  encerramentoAtividadeEm: string | null;
+  lc224AcrescimoSuspenso: boolean;
+  lc224LiminarReferencia: string | null;
 }
 
 /**

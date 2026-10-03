@@ -46,6 +46,11 @@ export interface FiscalProfileView extends CostRegime {
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
   insumoExpenseAccountId: string | null;
+  // X7 Fase A (BRIEF item 3, F-TA-6 a)
+  irpjDespesaAccountId: string | null;
+  csllDespesaAccountId: string | null;
+  irpjRecolherAccountId: string | null;
+  csllRecolherAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -149,6 +154,11 @@ export class FiscalProfileService {
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar');
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
     if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço');
+    // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
+    if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ');
+    if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL');
+    if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher');
+    if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher');
     const { unitId: _unitId, ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
@@ -179,6 +189,11 @@ export class FiscalProfileService {
           icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
           pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
           insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
+          // X7 item 3 (F-TA-6 a): contas da provisão — só ids
+          irpjDespesaAccountId: row.irpjDespesaAccountId ?? '',
+          csllDespesaAccountId: row.csllDespesaAccountId ?? '',
+          irpjRecolherAccountId: row.irpjRecolherAccountId ?? '',
+          csllRecolherAccountId: row.csllRecolherAccountId ?? '',
           // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
           codMun: row.codMun ?? '',
           dpsSerie: String(row.dpsSerie),
@@ -224,6 +239,16 @@ export class FiscalProfileService {
     }
   }
 
+  /** X7 item 3 (F-TA-6 a): análogo ao `assertAssetAccount` — o imposto a recolher é passivo (`nature = Liability`). */
+  private async assertLiabilityAccount(scope: AccountingScope, id: string, label: string): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
+    if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
+    if (account.nature !== 'Liability') {
+      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Liability (imposto a recolher é passivo — BRIEF X7 item 3).`);
+    }
+  }
+
   private toView(row: FiscalProfile, regimeEmpresa: RegimeEmpresa | null): FiscalProfileView {
     return {
       unitId: row.unitId,
@@ -236,6 +261,10 @@ export class FiscalProfileService {
       icmsRecuperavelAccountId: row.icmsRecuperavelAccountId,
       pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId,
       insumoExpenseAccountId: row.insumoExpenseAccountId,
+      irpjDespesaAccountId: row.irpjDespesaAccountId,
+      csllDespesaAccountId: row.csllDespesaAccountId,
+      irpjRecolherAccountId: row.irpjRecolherAccountId,
+      csllRecolherAccountId: row.csllRecolherAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

@@ -146,6 +146,21 @@ export class AccountingPeriodNotOpenError extends AppError {
 }
 
 /**
+ * BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 13): há contador responsável ativo no escopo e
+ * só ele reabre período ou assina/rejeita a revisão (F-GOV-3 a).
+ */
+export class AccountantRequiredError extends AppError {
+  constructor(action: 'reabrir o período' | 'assinar ou rejeitar a revisão') {
+    super(
+      `Este escopo tem contador responsável ativo — só ele pode ${action}.`,
+      403,
+      'ACCOUNTANT_REQUIRED',
+    );
+    Object.setPrototypeOf(this, AccountantRequiredError.prototype);
+  }
+}
+
+/**
  * BE-INCR-BINDING-FEEDER (F-FEEDER-3 → composite key). Raised by `AccountingSyncService`'s
  * constructor when two mapper registrations resolve to the SAME `unitId:sourceType` composite
  * key — two `Active` bindings of the SAME business unit emitting the SAME `eventKey`. This is a

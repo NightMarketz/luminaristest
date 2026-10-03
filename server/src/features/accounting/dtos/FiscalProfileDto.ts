@@ -41,6 +41,11 @@ export const UpsertFiscalProfileSchema = z
     pisCofinsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa (Expense, folha) do insumo do serviço — código do contador.
     insumoExpenseAccountId: z.string().min(1).nullable().optional(),
+    // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 3, F-TA-6 a): contas da provisão de IRPJ/CSLL — código do contador (P-5).
+    irpjDespesaAccountId: z.string().min(1).nullable().optional(),
+    csllDespesaAccountId: z.string().min(1).nullable().optional(),
+    irpjRecolherAccountId: z.string().min(1).nullable().optional(),
+    csllRecolherAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

@@ -74,7 +74,7 @@ vazamento só vale se a captura de log funcionar, então ele assere que o 503 an
 
 ## Linha de fold (pós-merge, `docs/plano/README.md`)
 
-`id: F5` · `estado: in_progress` · `estado_detalhe: "PR-1 (cifra + PaymentAccount) mergeado em #484; PR-2 (cobrança +
+`id: F5` · `estado: inflight` (o enum do vault não tem `in_progress`; aplicado no fold pós-merge) · `estado_detalhe: "PR-1 (cifra + PaymentAccount) mergeado em #484; PR-2 (cobrança +
 MP + webhook) e PR-3 (relatório + F7, espera a sonda) sem executa"` · `prs: [#484]`
 
 ## Vieses declarados (T8)

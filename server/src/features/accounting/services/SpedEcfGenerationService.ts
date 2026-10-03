@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
+import { ForbiddenError, ConflictError } from '../../../lib/errors';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -12,20 +12,8 @@ import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepos
 import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
-import { LEDGER_STATUSES } from '../models/ledgerStatus';
-import { CLOSING_SOURCE_TYPE } from '../models/closing';
+import { receitaBrutaPorAtividade, receitaBrutaPorAtividadeSemGate } from './receitaBrutaPorAtividade';
 import { buildEcfFile, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
-
-/**
- * Ledger account codes that map to a presunção activity line (ADR §Emenda FASE 2
- * ponto 5). These are the ONLY accounts whose receita bruta the ECF segregates;
- * any OTHER Revenue-nature account with movement fails the exhaustiveness gate.
- *   3.1 Receita de Serviços        → serviço (P200(8) 32% IRPJ, P400(4) 32% CSLL)
- *   3.3 Receita de Revenda de Merc. → revenda (P200(4) 8% IRPJ,  P400(2) 12% CSLL)
- */
-const SERVICO_ACCOUNT_CODE = '3.1';
-const REVENDA_ACCOUNT_CODE = '3.3';
-const PRESUNCAO_ACCOUNT_CODES = new Set([SERVICO_ACCOUNT_CODE, REVENDA_ACCOUNT_CODE]);
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -89,53 +77,17 @@ export class SpedEcfGenerationService {
       });
     }
 
+    // ── Gate de exaustividade da receita no ANO (D6 corrigido) + receita bruta segregada por TRIMESTRE ──
+    // BE-INCR-TAX-ASSESSMENT item 6: extraído para `receitaBrutaPorAtividade` (reuso pelo X7), mesmo comportamento —
+    // uma leitura no ano para o gate, uma por trimestre para a segregação (3.1 serviço / 3.3 revenda, ≥ 0).
     const accounts = await this.accountRepo.findManyByUnit(scope);
-    const accountByCode = new Map(accounts.map((a) => [a.code, a]));
-
-    // Movimento anual por conta (uma leitura) — base do gate de exaustividade.
     const yearFrom = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
     const yearTo = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
-    const yearTotals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
-      from: yearFrom,
-      to: yearTo,
-      excludeSourceTypes: [CLOSING_SOURCE_TYPE],
-    });
-    const movedById = new Map(yearTotals.map((t) => [t.accountId, t.creditCents - t.debitCents]));
-
-    // ── Gate de exaustividade da receita (D6 corrigido) ──
-    // Conta natureza Revenue, analítica, com movimento no ano e código ∉ {3.1, 3.3}
-    // ⇒ sua receita escaparia da base presumida. Falha ALTO (nunca drop silencioso).
-    const unmapped = accounts
-      .filter(
-        (a) =>
-          a.nature === 'Revenue' &&
-          a.acceptsEntries &&
-          !PRESUNCAO_ACCOUNT_CODES.has(a.code) &&
-          (movedById.get(a.id) ?? 0) !== 0,
-      )
-      .map((a) => ({ code: a.code, name: a.name }));
-    if (unmapped.length > 0) {
-      throw new ValidationError(
-        'Receita não segregável por atividade: contas de receita sem linha de presunção (3.1 serviço / 3.3 revenda). ' +
-          'Reclassifique-as ou estenda o mapa de presunção antes de gerar a ECF.',
-        { unmappedRevenueAccounts: unmapped },
-      );
-    }
-
-    // ── Receita bruta segregada por trimestre ──
-    const servico = accountByCode.get(SERVICO_ACCOUNT_CODE);
-    const revenda = accountByCode.get(REVENDA_ACCOUNT_CODE);
+    const deps = { accountRepo: this.accountRepo, postingRepo: this.postingRepo };
+    await receitaBrutaPorAtividade(deps, scope, yearFrom, yearTo, accounts);
     const quarters: EcfQuarter[] = [];
     for (const w of windows) {
-      const totals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
-        from: w.from,
-        to: w.to,
-        excludeSourceTypes: [CLOSING_SOURCE_TYPE],
-      });
-      const byId = new Map(totals.map((t) => [t.accountId, t.creditCents - t.debitCents]));
-      // Receita bruta = crédito líquido (devoluções/descontos entram como débito). ≥ 0.
-      const servicoCents = servico ? Math.max(0, byId.get(servico.id) ?? 0) : 0;
-      const revendaCents = revenda ? Math.max(0, byId.get(revenda.id) ?? 0) : 0;
+      const { servicoCents, revendaCents } = await receitaBrutaPorAtividadeSemGate(this.postingRepo, scope, accounts, w.from, w.to);
       quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents, revendaCents });
     }
 

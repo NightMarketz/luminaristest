@@ -32,6 +32,10 @@ export interface IAccountingPeriodRepository {
   /**
    * Transition a period to a new status AND write an AccountingPeriodTransition row
    * in the SAME transaction. tx is mandatory — caller owns the transaction.
+   *
+   * CAS no status (BE-INCR-ACCOUNTANT-GOVERNANCE, BRIEF item 11): só escreve se a linha ainda está em
+   * `fromStatus`; senão `ConflictError('PERIOD_STATUS_CHANGED')` — um HARD_CLOSED confirmado no meio nunca
+   * volta a OPEN.
    */
   setStatus(
     scope: AccountingScope,
@@ -41,7 +45,7 @@ export interface IAccountingPeriodRepository {
     actorUserId: string,
     reason: string | undefined,
     tx: Prisma.TransactionClient,
-    fromStatus?: AccountingPeriodStatus | null,
+    fromStatus: AccountingPeriodStatus,
   ): Promise<AccountingPeriod>;
 
   /** List all periods for a fiscal year ordered by month asc. */
