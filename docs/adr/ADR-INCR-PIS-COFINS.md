@@ -88,7 +88,7 @@ X7 (29/09). **I** = inferido.
 | Pagamento **até o dia 25 do mês seguinte** | IN 2.121 art. 114 (Lei 10.637 art. 10; Lei 10.833 art. 11) | V-fonte |
 | Retenção sofrida deduz do valor a pagar | IN 2.121 art. 120 | V-fonte |
 | **Salão-parceiro:** a cota-parte do profissional-parceiro **não entra na receita bruta** do salão, mesmo com nota unificada; o contrato de parceria é escrito e homologado (§ 8º) | Lei 12.592/2012 art. 1º-A §§ 2º, 3º, 5º e 8º (incl. Lei 13.352/2016) | V-fonte |
-| Códigos de débito (6 dígitos, DCTF): **PIS cumulativo 8109/02**, **Cofins cumulativa 2172/01**, **PIS não cumulativo 6912/01**, **Cofins não cumulativa 5856/01** | Receita, "DCTF — Tabelas de códigos/extensões", PIS/Pasep (atualizada 27/02/2024) e Cofins (27/07/2023) | V-fonte (atenção: o PIS cumulativo é **/02**, não /01). Que o MIT use a mesma tabela é I (igual ao X7 §9 item 2) |
+| Códigos de débito (6 dígitos, DCTF): **PIS cumulativo 8109/02**, **Cofins cumulativa 2172/01**, **PIS não cumulativo 6912/01**, **Cofins não cumulativa 5856/01** | Receita, "DCTF — Tabelas de códigos/extensões", PIS/Pasep (atualizada 27/02/2024) e Cofins (27/07/2023) | V-fonte (atenção: o PIS cumulativo é **/02**, não /01). **Confirmado no MIT** pelo `ADR-INCR-DCTFWEB-MIT` §3 (Manual do MIT §10.1: PIS `8109-02`/`6912-01`, Cofins `2172-01`/`5856-01`) — V-fonte, lido pela sessão do X9 |
 | DCTFWeb: PIS e Cofins entram pelo **MIT** (arts. 8º–9º); prazo no último dia útil do mês seguinte (art. 6º) | IN RFB 2.237/2024 | V-X7 (relido 02/10 no BRIEF X7-A) |
 | EFD-Contribuições: **mensal**, gerada **centralizada na matriz**, até o **10º dia útil do 2º mês subsequente**; obrigatória no Real desde 2012 e no Presumido desde 2013; Simples dispensado; o código do M205/M605 é o de 6 dígitos da DCTF | Guia Prático da EFD-Contribuições v1.35 (jun/2021), Seção 3 e Registros M205/M605, citando a IN RFB 1.252/2012 | V-fonte (o Guia; a IN 1.252 **não** foi aberta) |
 | EFD do Presumido por competência pode consolidar a receita por CST no **F550** (sem documento a documento) | Guia v1.35, Registro F550 | V-fonte |
@@ -218,7 +218,7 @@ export const PisCofinsPreviewSchema = z.object({
 1. **Contas** da provisão (despesa PIS/Cofins, PIS/Cofins a recolher) e o referencial — contador (F-X8-4).
 2. **Exclusões e receitas financeiras:** se o razão do cliente estorna cancelamento/devolução na própria conta de receita
    (D3) e se há receita financeira relevante no Real (art. 789) — contador.
-3. **Código no MIT:** que o MIT aceite exatamente a tabela DCTF (I; mesma pendência do X7 §9 item 2).
+3. ~~Código no MIT~~ — **resolvido** em 03/10: o `ADR-INCR-DCTFWEB-MIT` §3 leu os 4 códigos na tabela do Manual do MIT §10.1.
 4. **Oráculo do número:** a 1ª apuração real conferida pelo contador e, se F-X8-1 → (b), pelo PVA da EFD-Contribuições.
    Gate humano (RUNBOOK-FORMAT): o agente prepara em branco; não preenche, não marca desfecho, não assina.
 5. **Art. 126 sob o Real:** se a clínica do P2 é "clínica médica" (art. 126 IX a) — contador.

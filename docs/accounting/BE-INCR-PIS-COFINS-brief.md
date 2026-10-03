@@ -273,7 +273,7 @@ e o reconcile do X7, reusados).
    financeiras** no Real (art. 789) — contador. Hoje o gate do item 7 recusa receita fora de `3.1`/`3.3`.
 3. **P-3 "Mês da aquisição"** = `dhEmi` (`Payable.issueDate`) ou data de entrada? A lei diz *"adquiridos no mês"* (art. 3º
    § 1º I). Usa-se `issueDate` (o que existe); o contador confirma.
-4. **P-4 Códigos no MIT** = tabela DCTF (I) — mesma pendência do X7.
+4. ~~**P-4 Códigos no MIT**~~ — **resolvido** (03/10): o `ADR-INCR-DCTFWEB-MIT` §3 confirma os 4 códigos no Manual do MIT §10.1.
 5. **P-5 Oráculo:** 1ª apuração real conferida pelo contador (gate humano, RUNBOOK-FORMAT; o agente não preenche, não
    marca desfecho, não assina).
 6. **P-6 Salão-parceiro:** o contrato homologado (Lei 12.592 art. 1º-A § 8º) — o sistema só exige um `documento`; a
