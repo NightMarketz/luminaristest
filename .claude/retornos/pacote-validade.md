@@ -73,3 +73,12 @@ id: PACOTE-VALIDADE · estado: done (após merge) · estado_detalhe: "03/10: exe
 - O passo "Assert no leaked handles" (`jest --detectOpenHandles --runInBand`, todas as suítes num processo) morreu por heap (~4 GB) em 2 de 3 runs do `500ec008` (run 37139821632 push + re-run; o 37139824079 pull_request passou). Os testes estavam verdes nas duas quedas (unit 3713, integração 813/813). Registrado no GAP-MAP Nível 4 a pedido do dono ("registra o OOM do test:leaks no gap map").
 - Mitigação aplicada a pedido do dono ("aplica o NODE_OPTIONS no passo do test:leaks"): `env: NODE_OPTIONS: --max-old-space-size=8192` só nesse passo de `.github/workflows/ci.yml` (repo público → runner `ubuntu-latest` com 16 GB de RAM). A linha do GAP-MAP passa a [PARCIAL]: o teto subiu, mas o pico de heap no `main` e a retenção por `--detectOpenHandles` seguem sem medida.
 - Prova de que resolveu: só o próximo run da CI deste PR (o push é o teste — não há como provar o teto de 8 GB localmente no Windows).
+
+### 3º merge de `origin/main` (Auto-fix, 03/10) — `b840e6b3`
+- Conflitos só no vault do plano:
+  - `docs/plano/nos/PACOTE-VALIDADE.md`: o `main` (#498, "wip fold") já tinha dobrado o nó para `inflight` com `prs: ["#483"]`, mas com a autorização antiga ("sem 'executa'"). Resolução: `estado`/`estado_detalhe`/`prs` do `main` + a autorização "Executa…" de 03/10 deste lado (frontmatter e corpo).
+  - `docs/plano/_INDEX.md`: base do `main` + `node scripts/plano-vault.mjs index`; `check` → íntegro.
+- O merge trouxe o conserto do `main` (#493: `PaymentAccount` → REKEY no CLI do I1b) — as 6 falhas herdadas do `rekeyLegacyUnitCli.integration.test.ts` saem daqui.
+- `ci.yml`: o `main` trocou o passo único do `test:leaks` por jest em shards com `--detectOpenHandles`; o merge automático pôs o `NODE_OPTIONS=--max-old-space-size=8192` no passo novo ("Run tests + assert no leaked handles"). A prova do OOM agora vem dos shards.
+- Migrações: a nova do `main` (`20261003130000_add_accountant_assignments`) ordena ANTES das minhas (`add_a` < `add_f`) — ordem correta, sem renomear.
+- Checks depois do merge: `tsc` server 0; `docs:generate` 236 paths (`openapi.json` regenerado entra no merge); unit 3858 passed + 1 falha no flaky de concorrência conhecido (`nextEntryNumber`, fora do diff); `pacoteValidade` + `rekeyLegacyUnitCli`: 18/18. Integração completa NÃO rodada localmente nesta rodada — fica para a CI do PR.
