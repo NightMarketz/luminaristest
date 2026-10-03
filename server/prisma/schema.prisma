@@ -53,6 +53,8 @@ model User {
   accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
   companyFiscalProfiles   CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners          CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
+  assignmentsOwned        AccountantAssignment[]    @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
+  assignmentsAsAccountant AccountantAssignment[]    @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   accountingReviews       AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
@@ -1814,6 +1816,7 @@ model AccountingContact {
   // não tem array nativo; `null` = nenhum perfil salvo ainda (GET devolve `kinds: []`).
   packageProfile           Json?
   companyFiscalProfiles    CompanyFiscalProfile[] // X13: contador do perfil da empresa (FK Restrict)
+  accountantAssignments    AccountantAssignment[] // GOV-CONTADOR: fonte do CRC da atribuição (FK Restrict)
 
   @@index([userId, unitId])
   @@index([deletedAt])
@@ -2150,6 +2153,44 @@ model LalurEntryJournalEntry {
   @@id([entryId, journalEntryId])
   @@index([journalEntryId])
   @@map("lalur_entry_journal_entries")
+}
+
+// BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF §4.3; F-GOV-2 a, F-GOV-8 a, F-GOV-11 a): contador
+// responsável por escopo (userId+unitId), com aceite e vigência. A atribuição ACTIVE tranca reabertura de
+// período e assinatura/rejeição da revisão (F-GOV-3 a); sem ACTIVE, nada muda (F-GOV-4 a).
+// - `activeSlot`/`pendingSlot`: 'ACTIVE'/'PENDING' enquanto naquele estado, senão NULL — "no máximo 1 ACTIVE e
+//   1 PENDING por escopo" via @@unique com NULL distinto no SQLite (precedente AccountingReview), não índice
+//   parcial. O slot volta a NULL em toda saída de estado.
+// - FK Restrict nos dois User e no contato: trilha de responsabilidade não some com o usuário.
+// - crcNumber/crcUf: snapshot do contato na criação (o contato é editável) — imutável na linha.
+// - Vigência em instantes (aceite/encerramento), não date-only.
+model AccountantAssignment {
+  id                  String            @id @default(cuid())
+  userId              String // dono do escopo (ownerUserId)
+  user                User              @relation("AssignmentOwner", fields: [userId], references: [id], onDelete: Restrict)
+  unitId              String
+  accountantUserId    String // login do contador
+  accountant          User              @relation("AssignmentAccountant", fields: [accountantUserId], references: [id], onDelete: Restrict)
+  accountingContactId String // fonte do CRC e do J930 (signatário 900)
+  accountingContact   AccountingContact @relation(fields: [accountingContactId], references: [id], onDelete: Restrict)
+  crcNumber           String // snapshot normalizado (parseCrcNumber)
+  crcUf               String // snapshot
+  status              String // PENDING | ACTIVE | ENDED (ASSIGNMENT_STATUSES)
+  activeSlot          String?
+  pendingSlot         String?
+  activeFrom          DateTime? // instante do aceite
+  activeUntil         DateTime? // instante do encerramento
+  createdById         String
+  endedById           String?
+  endReason           String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletedAt           DateTime? // contrato §2; nenhuma rota apaga — histórico encerra, não some
+
+  @@unique([userId, unitId, activeSlot])
+  @@unique([userId, unitId, pendingSlot])
+  @@index([accountantUserId, status])
+  @@map("accountant_assignments")
 }
 
 // BE-INCR-PAYMENT-PROVIDER PR-1 (nó F5; ADR-INCR-PAYMENT-PROVIDER-COLLECTION PP-D2; BRIEF §4.1) — conta de

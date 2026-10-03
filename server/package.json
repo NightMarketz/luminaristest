@@ -32,7 +32,7 @@
     "test:integration": "jest --selectProjects integration --runInBand --forceExit",
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:watch": "jest --selectProjects unit --watch",
-    "test:leaks": "jest --detectOpenHandles --runInBand"
+    "test:leaks": "node --max-old-space-size=6144 node_modules/jest/bin/jest.js --detectOpenHandles --runInBand"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",

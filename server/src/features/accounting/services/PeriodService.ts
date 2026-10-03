@@ -1,8 +1,9 @@
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { AccountantRequiredError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingPeriod } from 'generated/prisma';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
-import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant, IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -20,6 +21,11 @@ import type { AccountingScope } from '../scope/AccountingScope';
  *
  * Every transition writes an AccountingPeriodTransition row in the same tx (via repo).
  * Posting gates live in PostingService, not here.
+ *
+ * Reabertura (BE-INCR-ACCOUNTANT-GOVERNANCE, BRIEF item 10): os DOIS caminhos que levam SOFT_CLOSED → OPEN
+ * (`reopenPeriod` e `openPeriod` a partir de SOFT_CLOSED) passam por `canReopenPeriod(scope, active)` em dois
+ * níveis — preflight fora da tx e releitura da atribuição ACTIVE com `tx` dentro do `runTransaction`, antes do
+ * `setStatus` (que é CAS no status, item 11). `openPeriod` a partir de FUTURE segue em `canClosePeriod`.
  */
 export class PeriodService {
   constructor(
@@ -27,7 +33,17 @@ export class PeriodService {
     private readonly policy: IAccountingPolicy,
     private readonly postingRepo: IPostingRepository,
     private readonly auditService: AuditService,
+    private readonly assignmentRepo: IAccountantAssignmentRepository,
   ) {}
+
+  /** Item 10: gate da reabertura — mesmo predicado no preflight e na releitura com `tx`. */
+  private assertCanReopen(scope: AccountingScope, active: ActiveAccountant | null): void {
+    if (!this.policy.canReopenPeriod(scope, active)) {
+      throw active
+        ? new AccountantRequiredError('reabrir o período')
+        : new ForbiddenError('Você não tem permissão para reabrir períodos contábeis.');
+    }
+  }
 
   /** Idempotently create 12 FUTURE periods for the given fiscal year. */
   async seedYear(scope: AccountingScope, year: number): Promise<AccountingPeriod[]> {
@@ -56,14 +72,19 @@ export class PeriodService {
       );
     }
     const fromStatus = period.status;
+    const isReopen = fromStatus === 'SOFT_CLOSED';
+    if (isReopen) this.assertCanReopen(scope, await this.assignmentRepo.findActive(scope));
     return this.postingRepo.runTransaction(async (tx) => {
+      // GATE AUTORITATIVO — a atribuição pode ter mudado entre o preflight e a tx.
+      const active = await this.assignmentRepo.findActive(scope, tx);
+      if (isReopen) this.assertCanReopen(scope, active);
       const updated = await this.periodRepo.setStatus(scope, period.year, period.month, 'OPEN', scope.actorUserId, undefined, tx, fromStatus);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType:   'period.opened',
         targetType:  'accounting_period',
         targetId:    period.id,
-        payload:     { year: period.year, month: period.month, fromStatus, toStatus: 'OPEN' },
+        payload:     { year: period.year, month: period.month, fromStatus, toStatus: 'OPEN', ...(active ? { assignmentId: active.id } : {}) },
       });
       return updated;
     });
@@ -139,9 +160,7 @@ export class PeriodService {
     periodId: string,
     reason?: string,
   ): Promise<AccountingPeriod> {
-    if (!this.policy.canClosePeriod(scope)) {
-      throw new ForbiddenError('Você não tem permissão para gerenciar períodos contábeis.');
-    }
+    this.assertCanReopen(scope, await this.assignmentRepo.findActive(scope));
     const period = await this.periodRepo.findById(scope, periodId);
     if (!period) {
       throw new ValidationError(`Período '${periodId}' não encontrado.`);
@@ -158,13 +177,16 @@ export class PeriodService {
     }
     const fromStatus = period.status;
     return this.postingRepo.runTransaction(async (tx) => {
+      // GATE AUTORITATIVO — a atribuição pode ter mudado entre o preflight e a tx.
+      const active = await this.assignmentRepo.findActive(scope, tx);
+      this.assertCanReopen(scope, active);
       const updated = await this.periodRepo.setStatus(scope, period.year, period.month, 'OPEN', scope.actorUserId, reason, tx, fromStatus);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType:   'period.reopened',
         targetType:  'accounting_period',
         targetId:    period.id,
-        payload:     { year: period.year, month: period.month, fromStatus, toStatus: 'OPEN', reason },
+        payload:     { year: period.year, month: period.month, fromStatus, toStatus: 'OPEN', reason, ...(active ? { assignmentId: active.id } : {}) },
       });
       return updated;
     });
