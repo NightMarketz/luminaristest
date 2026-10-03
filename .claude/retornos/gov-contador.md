@@ -13,7 +13,7 @@ veredicto: PR pronto para o dono; review independente PASS WITH NOTES
 
 ### Checklist §3 (status por item)
 1. ASSIGNMENT_STATUSES + eventTypes — ✅ `models/ledgerStatus.ts`, `models/AccountantAssignment.model.ts`
-2. Migração aditiva com slots anuláveis em @@unique, IF NOT EXISTS, resetDb antes do contato — ✅ `20261003120000_add_accountant_assignments`, `test/helpers/db.ts`
+2. Migração aditiva com slots anuláveis em @@unique, IF NOT EXISTS, resetDb antes do contato — ✅ `20261003130000_add_accountant_assignments`, `test/helpers/db.ts`
 3. Repositório com transition CAS (ASSIGNMENT_STATUS_CHANGED) — ✅
 4. Policy pura (5 métodos; fallback com owner === actor; família de canClosePeriod intocada) — ✅
 5. resolveGovernanceScope nos 9 handlers (F-GOV-7 a+) — ✅; resolveAccountingScope inalterado
@@ -48,7 +48,7 @@ veredicto: PR pronto para o dono; review independente PASS WITH NOTES
 - **Meus vieses:** escrevi os testes depois do código (não TDD). Por isso fiz as mutações acima. A cobertura de HTTP da revisão (sign-off pelo app) fica no nível unit, com a policy real; nenhuma revisão real com jobs passa pelo HTTP neste PR.
 
 ### Lacunas de spec (registradas; nada escolhido)
-> Documentadas no GAP-MAP (`docs/operating-manual/GAP-MAP.md`), Nível 3, linhas 76–79 (os 4 achados) e fila item 16 (resolver), em 03/10, com o comando que prova cada status.
+> Documentadas no GAP-MAP (`docs/operating-manual/GAP-MAP.md`), Nível 3, linhas 80–83 (os 4 achados) e fila item 16 (resolver), em 03/10, com o comando que prova cada status.
 1. **Resolver ambíguo por `(accountantUserId, unitId)`** (achado 1 do review). O item 5 diz "ACTIVE com accountantUserId = user e aquele unitId", sem dono. `unitId` não é validado como pertencente a um usuário (I-7), e os seeds reusam literais como `seed-unit`.
    - Se o mesmo contador estiver ACTIVE para dois donos no mesmo `unitId`, o `findFirst` escolhe uma das linhas sem critério.
    - Se o contador tiver livro próprio no mesmo `unitId`, os 9 handlers o redirecionam ao livro do cliente.
