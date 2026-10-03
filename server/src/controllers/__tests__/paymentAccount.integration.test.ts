@@ -166,6 +166,15 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
     expect(JSON.parse(upd[0].payload)).toEqual({ paymentAccountId: a1, fromStatus: 'DISABLED', toStatus: 'DISABLED' });
     expect(dump(upd)).not.toContain('MP antiga');
     expect((await prisma.paymentAccount.findUniqueOrThrow({ where: { id: a1 } })).glAccountId).toBe(folhaId);
+
+    // caminho de sucesso DISABLED → ACTIVE: libera a vaga e reativa ⇒ 200 + 2º `.updated`
+    expect((await patch(a2, { status: 'DISABLED' })).status).toBe(200);
+    const reactivated = await patch(a1, { status: 'ACTIVE' });
+    expect(reactivated.status).toBe(200);
+    expect(reactivated.body.data.status).toBe('ACTIVE');
+    const upd2 = await eventos('payment_account.updated');
+    expect(upd2).toHaveLength(2);
+    expect(JSON.parse(upd2[1].payload)).toEqual({ paymentAccountId: a1, fromStatus: 'DISABLED', toStatus: 'ACTIVE' });
   });
 
   it('cross-tenant ⇒ 404; DELETE é soft e a 2ª chamada é 404; sem evento de audit (P1-9)', async () => {

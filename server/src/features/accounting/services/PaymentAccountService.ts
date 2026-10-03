@@ -78,11 +78,12 @@ export class PaymentAccountService {
   // ── Comandos ───────────────────────────────────────────────────────────────
   async create(scope: AccountingScope, dto: CreatePaymentAccountInput): Promise<PaymentAccountView> {
     this.assertManage(scope);
-    const gl = await this.accountRepo.findById(scope, dto.glAccountId);
-    if (!gl || gl.deletedAt) throw new ValidationError(`Conta contábil '${dto.glAccountId}' não existe neste escopo.`);
-    if (!gl.acceptsEntries) throw new ValidationError(`Conta contábil '${gl.code}' não aceita lançamentos (não é folha).`);
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.repo.runTransaction(async (tx) => {
+      // Folha re-checada DENTRO da tx (server/CLAUDE.md gate 5): a FK Restrict só garante existência.
+      const gl = await this.accountRepo.findById(scope, dto.glAccountId, tx);
+      if (!gl || gl.deletedAt) throw new ValidationError(`Conta contábil '${dto.glAccountId}' não existe neste escopo.`);
+      if (!gl.acceptsEntries) throw new ValidationError(`Conta contábil '${gl.code}' não aceita lançamentos (não é folha).`);
       const created = await this.repo.create(
         {
           userId,
