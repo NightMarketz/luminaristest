@@ -447,6 +447,21 @@ export const ReconcilePendingReasonCode = z.enum([
 - **Fronteira:** o item 13a toca o modelo do [[X10b]]/DFE (`FiscalProfile`) e o caminho `VENDA` do
   `EmissionService`. A `sessao-feature` deste nó leva o toque inteiro. Nenhum outro BRIEF o reivindica.
 
+### 5.3 Emenda da triagem do PE-6 — 2026-10-04 ([`D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO`](../plano/decisoes/D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO.md))
+
+Onde divergir do §5.1/§5.2, vale isto. Resposta na íntegra: [`RESPOSTA-JURIDICO-2026-10-04-PACOTE-VALIDADE.md`](RESPOSTA-JURIDICO-2026-10-04-PACOTE-VALIDADE.md).
+
+- **F-PV-3 volta para (a), sem retroatividade** (F-JUR-2). O bloco "F-PV-3 (b) + 3b + 3c + 3d + 3e" do §5.2 fica
+  **supersedido**: sai o item 2a (job no boot, marca no `JobWatermark`) e volta o teste "saldo legado `null` continua
+  `null`" (item 1). **Delta D1** do #483.
+- **Sub-ponto de feriado do F-PV-1 reaberto e decidido** (F-JUR-6): `lastValidDay` empurra o último dia que cair em
+  feriado **nacional** para o dia útil seguinte (CC art. 132 § 1º). A lista é transcrita da lei vigente. Estaduais e
+  municipais ficam fora, com teto `ponytail:`. **Delta D2** do #483.
+- **Trava do PE-6 (3d) cai** (F-JUR-0, PE-6 fechado pelo dono). Entra a **pré-condição de deploy F-JUR-4**: o nó FE
+  vizinho (§8) com validade em destaque na venda e no comprovante, fonte ≥ corpo 12 e **aceite registrado**.
+- **Sem mudança:** item 13, 100% para a 3.4 (F-JUR-3); F-PV-11 (a) (pergunta 5, confirma); `validityDays` sem piso
+  (F-JUR-1, só orientação no §6).
+
 ## 6. Pendente de validação externa (follow-up; nada disto entra no checklist como decidido)
 
 | # | Pergunta | A quem | Pesa em |
@@ -456,7 +471,7 @@ export const ReconcilePendingReasonCode = z.enum([
 | **PE-3** | **Simples Nacional (1º cliente):** a receita por não uso compõe a receita bruta do PGDAS-D? Em qual anexo? Na lei: desde 2025 a receita bruta inclui "as demais receitas da atividade" (LC 123 art. 3º § 1º, redação da LC 214). **A partir de 2027**, a receita é auferida na **emissão do documento fiscal**, inclusive para adiantamento, e o regime de caixa acaba (Res. CGSN 190/2026 art. 2º §§ 8º–9º-A). Com `CONSUMO`, o saldo vencido nunca é faturado. [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §3 | contador | Insumo do PRE-ADR Simples/MEI da onda 3 (decisão 8) |
 | **PE-4** | ISS/NFS-e em SP capital com `pacoteFatoGerador = CONSUMO`: o valor vencido (serviço não prestado) gera ISS ou NFS-e? Em `VENDA`, confirmar que nada muda. Na lei: o fato gerador é a **prestação** (LC 116 art. 1º; RISS-SP art. 1º). Pela letra, não há ISS sobre a parte vencida em `CONSUMO`. [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §4 | contador / município | F-PV-9 |
 | **PE-5** | IBS/CBS (2027+): o vencimento sem uso é "não ocorra o fornecimento" do art. 10 § 5º (redação vigente → regras do cancelamento, com estorno da antecipação)? Ou o valor retido é contraprestação tributável? **O regulamento da CBS existe** (Decreto 12.955/2026): art. 11 § 6º → art. 57, e o art. 57 § 1º II define o cancelamento como "desfazimento de operação antes do fornecimento". A dúvida é se vencer é "desfazimento". [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §5 | contador (e o PRE-ADR IBS/CBS) | F-PV-9; fork V5 do dossiê §4 |
-| **PE-6** | Direito do consumidor: é válida a cláusula de validade em serviço pré-pago? Há prazo mínimo? Como informar na compra? A contagem do prazo está certa (F-PV-1)? Pesquisa de 29/09: **não localizei lei específica**. Valem o CDC (arts. 6º III, 46, 51 IV e § 1º, 54 § 4º) e o CC (arts. 132 e § 1º do feriado, 211, 884). Indícios secundários aceitam a validade se ela for informada com destaque. [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §6 | jurídico | F-PV-1, F-PV-3, F-PV-11 |
+| **PE-6** | Direito do consumidor: é válida a cláusula de validade em serviço pré-pago? Há prazo mínimo? Como informar na compra? A contagem do prazo está certa (F-PV-1)? Pesquisa de 29/09: **não localizei lei específica**. Valem o CDC (arts. 6º III, 46, 51 IV e § 1º, 54 § 4º) e o CC (arts. 132 e § 1º do feriado, 211, 884). Indícios secundários aceitam a validade se ela for informada com destaque. [pesquisa](PESQUISA-LEGAL-PACOTE-VALIDADE-2026-09-29.md) §6 | jurídico | F-PV-1, F-PV-3, F-PV-11 — ✅ **triado 04/10** (§5.3): dossiê sem prazo mínimo legal; **orientação: validade ≥ 12 meses é a mais defensável** (TJRS, vale-presente de 12 meses; "Noventa dias fica longe desse parâmetro") |
 
 A skill `luminaris-contador-liaison` monta o pacote do pedido PE-1..PE-5. **O dono envia.**
 
