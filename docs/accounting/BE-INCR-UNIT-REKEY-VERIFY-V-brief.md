@@ -1,8 +1,10 @@
 # BRIEF — BE-INCR-UNIT-REKEY-VERIFY-V (nó I1b): regra (v) e cabeças do pré no `--verify` do re-key
 
-> **Status:** BRIEF pronto. **Forks: 0 abertos**; as duas direções foram ratificadas em
-> [`D-2026-10-04-I1B-RESSALVAS-501`](../plano/decisoes/D-2026-10-04-I1B-RESSALVAS-501.md). **Não tem "executa"**: a
-> `sessao-feature` só roda com autorização de código citável. Produzido em 2026-10-04, depois do merge do #501.
+> **Status:** ✅ **IMPLEMENTADO no PR #503** (`sessao-feature`, autorização do dono no chat em 2026-10-04: *"executa o
+> código das L-RK-6/7"*). Itens 1–6 feitos; o item 7 (rastreio) foi feito no mesmo PR. Par vermelho→verde: os 2
+> testes-guarda saem com exit 0 contra `93af35b1` e passam depois (14/14). **Forks: 0 abertos**; as duas direções foram
+> ratificadas em [`D-2026-10-04-I1B-RESSALVAS-501`](../plano/decisoes/D-2026-10-04-I1B-RESSALVAS-501.md). Produzido em
+> 2026-10-04, depois do merge do #501.
 
 ## 0. Contexto fixo
 
