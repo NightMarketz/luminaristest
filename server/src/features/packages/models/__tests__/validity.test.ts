@@ -3,6 +3,7 @@ import {
   expiryMovementKey,
   isDueForExpiry,
   isExpiredForConsumption,
+  isNationalHoliday,
   lastValidDay,
   parseExpiryMovementKey,
 } from '../validity';
@@ -25,6 +26,40 @@ describe('lastValidDay (item 1)', () => {
     expect(() => lastValidDay('2026-03-01', -1)).toThrow();
     expect(() => lastValidDay('2026-03-01', 1.5)).toThrow();
     expect(() => lastValidDay('2026-02-30', 1)).toThrow();
+  });
+});
+
+describe('feriado nacional prorroga o último dia (CC 132 § 1º, F-JUR-6)', () => {
+  it('cai em 25/12 → 26/12', () => {
+    expect(lastValidDay('2026-11-25', 30)).toBe('2026-12-26'); // 25/12/2026 é sexta
+  });
+  it('feriado seguido de domingo pula o domingo: 15/11/2025 (sábado) → 17/11', () => {
+    // 15/11/2025 é sábado, 16/11 domingo → 1º dia útil = segunda 17/11
+    expect(lastValidDay('2025-10-16', 30)).toBe('2025-11-17');
+  });
+  it('feriados encadeados: 20/11 (≥ 2024) sobre 21/11', () => {
+    expect(lastValidDay('2026-10-21', 30)).toBe('2026-11-21'); // 20/11/2026 sexta → 21/11 sábado (útil)
+  });
+  it('dia comum e domingo comum não mudam', () => {
+    expect(lastValidDay('2026-03-01', 30)).toBe('2026-03-31');
+    expect(lastValidDay('2026-03-01', 4)).toBe('2026-03-05');
+    expect(lastValidDay('2026-02-01', 7)).toBe('2026-02-08'); // domingo, não é feriado
+  });
+  it('lista fixa da lei; Sexta-feira da Paixão e Carnaval fora; 20/11 só a partir de 2024', () => {
+    for (const d of ['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '12-25']) {
+      expect(isNationalHoliday(`2027-${d}`)).toBe(true);
+    }
+    expect(isNationalHoliday('2026-04-03')).toBe(false); // Sexta-feira da Paixão 2026
+    expect(isNationalHoliday('2026-02-17')).toBe(false); // Carnaval 2026
+    expect(isNationalHoliday('2024-11-20')).toBe(true);
+    expect(isNationalHoliday('2023-11-20')).toBe(false);
+  });
+  it('domingos de eleição (1º e último de outubro, anos pares) são feriado; ímpar não', () => {
+    expect(isNationalHoliday('2026-10-04')).toBe(true); // 1º turno 2026
+    expect(isNationalHoliday('2026-10-25')).toBe(true); // 2º turno 2026
+    expect(isNationalHoliday('2026-10-11')).toBe(false); // domingo do meio
+    expect(isNationalHoliday('2027-10-03')).toBe(false); // ano ímpar
+    expect(lastValidDay('2026-09-04', 30)).toBe('2026-10-05'); // vence no domingo de eleição → segunda
   });
 });
 

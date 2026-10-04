@@ -91,21 +91,6 @@ export class PackageBalanceRepository implements IPackageBalanceRepository {
     return prisma.packageBalanceMovement.findMany({ where: { kind }, orderBy: { createdAt: 'asc' } });
   }
 
-  public async listBackfillCandidates(): Promise<CustomerPackageBalance[]> {
-    return prisma.customerPackageBalance.findMany({
-      where: { expiresAt: null, balanceCents: { gt: 0 }, deletedAt: null },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  public async setExpiresAtIfNull(scope: AccountingScope, balanceId: string, expiresAt: Date): Promise<boolean> {
-    const { count } = await prisma.customerPackageBalance.updateMany({
-      where: { ...accountingScopeWhere(scope), id: balanceId, expiresAt: null, deletedAt: null },
-      data: { expiresAt },
-    });
-    return count === 1;
-  }
-
   public async tryDecrement(
     scope: AccountingScope,
     customerId: string,

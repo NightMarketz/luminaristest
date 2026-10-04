@@ -7,7 +7,6 @@ import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
 import { dfePollScheduler } from './jobs/DfePollScheduler';
-import { runPackageValidityBackfillOnBoot } from './jobs/packageValidityBackfill.job';
 import { DocumentStatus } from './features/documents/models/Document.model';
 
 const PORT = process.env.PORT || 3001;
@@ -49,10 +48,6 @@ async function bootstrap(): Promise<void> {
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
     accountingSyncScheduler.start();
     dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
-    // BE-INCR-PACOTE-VALIDADE §5.2 item 2a (F-PV-3c b): backfill da validade dos saldos anteriores ao deploy,
-    // uma vez por boot, idempotente (marca no JobWatermark). Fire-and-forget: loga e engole o próprio erro.
-    // Trava do PE-6 (F-PV-3d) é do DEPLOY: este código não vai a produção antes do parecer do jurídico.
-    runPackageValidityBackfillOnBoot().catch((err) => logger.error('Package validity backfill aborted', { err }));
   });
 }
 

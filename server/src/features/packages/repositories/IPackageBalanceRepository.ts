@@ -100,17 +100,10 @@ export interface IPackageBalanceRepository {
    * every tenant and rebuilds the scope from the row). Never exposed over HTTP.
    *  - `listExpiryCandidates`: live balances with a validity and something left (item 14).
    *  - `listMovementsOfKind`: every movement of a kind (item 11 re-drive of `expiry`).
-   *  - `listBackfillCandidates`: live balances without validity and something left (item 2a).
    */
   listExpiryCandidates(): Promise<CustomerPackageBalance[]>;
   listMovementsOfKind(kind: PackageMovementKind): Promise<PackageBalanceMovement[]>;
-  listBackfillCandidates(): Promise<CustomerPackageBalance[]>;
 
-  /**
-   * Backfill (item 2a): writes `expiresAt` ONLY while it is still null (conditional update — a credit
-   * that landed meanwhile already set it). Returns true when applied.
-   */
-  setExpiresAtIfNull(scope: AccountingScope, balanceId: string, expiresAt: Date): Promise<boolean>;
 
   /** Appends one movement (throws P2002 if the idempotency key already exists). */
   createMovement(

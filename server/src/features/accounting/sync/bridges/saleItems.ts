@@ -105,7 +105,7 @@ export async function isAllPackageSale(userId: string, saleId: string): Promise<
 /**
  * BE-INCR-PACOTE-VALIDADE (BRIEF item 3) — the ONE source of a package's `validityDays`, read from the
  * tenant's `packages` catalog row through the DynamicTable REPOSITORY (never the service — §2.1). Used by
- * both credit call sites (the package-sold bridge and the reconcile origin pass) and by the backfill job.
+ * both credit call sites (the package-sold bridge and the reconcile origin pass).
  * Missing catalog/row, or a value that is not an integer ≥ 0 → null + warn: a validity is NEVER invented.
  * An absent/null field is a package without validity → null, silently.
  */
