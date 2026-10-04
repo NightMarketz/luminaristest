@@ -476,6 +476,15 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
       if (toOf.has(k)) failures.push(`(b) par ambíguo: (${p.ownerUserId}, ${p.from}) foi para ${toOf.get(k)} e para ${p.to}`);
       else toOf.set(k, p.to);
     }
+    // L-RK-6 — regra (v): cada `(dono, to)` vem de exatamente um `from` (o CLI cria uma unidade por invocação).
+    const fromsOf = new Map<string, string[]>();
+    for (const p of pairs) {
+      const k = ownerUnit(p.ownerUserId, p.to);
+      fromsOf.set(k, [...(fromsOf.get(k) ?? []), p.from]);
+    }
+    for (const [k, froms] of fromsOf) {
+      if (froms.length > 1) failures.push(`(b) ${k.replace('\u0000', '/')}: regra (v) — destino recebeu mais de uma origem (${froms.join(', ')})`);
+    }
 
     // (a) fora do inventário REKEY: multiconjunto idêntico, salvo as 3 especiais.
     for (const t of postTables) {
@@ -555,12 +564,18 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
     const orphan = newEvents.filter((r) => !consumed.has(String(r.id)));
     if (orphan.length) failures.push(`(a) audit_events: ${orphan.length} evento(s) novo(s) sem par inferido`);
     const anchoredCount = rekeyed.filter((k) => k.anchored).length;
-    const postHeads = await tableRows(db, 'audit_chain_heads');
-    for (const r of postHeads) {
-      const prev = preHeads.get(headKey(r));
-      if (prev && stable(prev) !== stable(r)) failures.push(`(a) audit_chain_heads ${headKey(r).replace('\u0000', '/')}: cabeça do pré alterada`);
+    // L-RK-7 — pré intacto por chave (item 17 a); cabeça nova só a `(dono, to)` de par ancorado.
+    const postHeads = new Map((await tableRows(db, 'audit_chain_heads')).map((r) => [headKey(r), r]));
+    const anchoredTo = new Set(rekeyed.filter((k) => k.anchored).map((k) => ownerUnit(k.ownerUserId, k.to)));
+    for (const [k, prev] of preHeads) {
+      const r = postHeads.get(k);
+      if (!r) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça do pré sumiu`);
+      else if (stable(prev) !== stable(r)) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça do pré alterada`);
     }
-    if (postHeads.length !== preHeads.size + anchoredCount) failures.push(`(a) audit_chain_heads: esperado +${anchoredCount}, achei +${postHeads.length - preHeads.size}`);
+    for (const k of postHeads.keys()) {
+      if (!preHeads.has(k) && !anchoredTo.has(k)) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça nova sem par ancorado`);
+    }
+    if (postHeads.size !== preHeads.size + anchoredCount) failures.push(`(a) audit_chain_heads: esperado +${anchoredCount}, achei +${postHeads.size - preHeads.size}`);
 
     // (c) integridade.
     const integrity = (await db.$queryRawUnsafe<{ integrity_check: string }[]>('PRAGMA integrity_check')).map((r) => r.integrity_check).join('; ');
