@@ -124,6 +124,7 @@ export async function resetDb(): Promise<void> {
   await prisma.accountantAssignment.deleteMany(); // GOV-CONTADOR — antes do accountingContact e do user (FK Restrict)
   // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13): o perfil da empresa tem FK RESTRICT para o contador e para o
   // signatário — cai ANTES dos dois; o signatário cai antes do User.
+  await prisma.taxAssessment.deleteMany(); // X7 Fase A — apurações IRPJ/CSLL (FK Cascade do User; limpa explícito)
   await prisma.companyFiscalProfile.deleteMany();
   await prisma.companySigner.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
