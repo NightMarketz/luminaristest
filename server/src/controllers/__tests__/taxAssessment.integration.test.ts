@@ -184,6 +184,39 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     expect((await request(app).get(BASE).set(authHeader(dono)).query({ anoCalendario: 2026 })).status).toBe(400); // unitId obrigatório
   });
 
+  it('item 14 (review): supersedesIds parcial ⇒ 409 sem mexer em nada; cascata com 2 posteriores; substituir T04 não pede reconfirmação', async () => {
+    const dono = await novoDono('PRESUMIDO');
+    await lancar(dono, UNIT, '2026-02-10', 100_000_00);
+    for (const p of ['T01', 'T02', 'T03', 'T04']) {
+      const prev = await preview(dono, p);
+      expect((await confirm(dono, p, prev.body.data.irpj.aPagarCents, prev.body.data.csll.aPagarCents)).status).toBe(201);
+    }
+    const vivos = async (p: string) => (await linhas(dono)).filter((r) => r.periodo === p && r.status === 'CONFIRMED');
+    const t02 = await vivos('T02');
+    const parcial = await confirm(dono, 'T02', '0', '0', { supersedesIds: [t02.find((r) => r.tributo === 'IRPJ')!.id] });
+    expect(parcial.status).toBe(409);
+    expect(JSON.stringify(parcial.body)).toContain('TAX_ASSESSMENT_ALREADY_CONFIRMED');
+    expect((await linhas(dono)).filter((r) => r.status === 'SUPERSEDED')).toHaveLength(0);
+
+    const sub = await confirm(dono, 'T02', '0', '0', { supersedesIds: t02.map((r) => r.id) });
+    expect(sub.status).toBe(201);
+    expect(sub.body.data.reconfirmar).toEqual(['T03', 'T04']);
+    for (const p of ['T03', 'T04']) {
+      expect((await confirm(dono, p, '0', '0')).status).toBe(201);
+    }
+    const t04 = await confirm(dono, 'T04', '0', '0', { supersedesIds: (await vivos('T04')).map((r) => r.id) });
+    expect(t04.status).toBe(201);
+    expect(t04.body.data.reconfirmar).toEqual([]);
+  });
+
+  it('item 10/13 (review): REAL sem lucroRealObrigatorio ⇒ 400 "perfil incompleto"', async () => {
+    const dono = await novoDono('REAL');
+    await prisma.lalurParteBClosing.create({ data: { userId: dono.id, unitId: UNIT, year: 2026, quarter: 'T01', balancesSha256: 'x' } });
+    const r = await preview(dono, 'T01');
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('perfil incompleto');
+  });
+
   it('23 e / item 14: a trava nasce na tx — falha forçada depois da trava ⇒ nem apuração nem trava', async () => {
     const dono = await novoDono('PRESUMIDO');
     await lancar(dono, UNIT, '2026-02-10', 1_000_000_00);
