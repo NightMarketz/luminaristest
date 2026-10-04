@@ -45,6 +45,7 @@ import { FixedAssetClassRepository } from '../features/accounting/repositories/F
 import { FixedAssetRepository } from '../features/accounting/repositories/FixedAssetRepository';
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
+import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 
 // Features - Policies
@@ -130,6 +131,7 @@ import { DepreciationService } from '../features/accounting/services/Depreciatio
 import { FiscalDocumentEmissionService } from '../features/accounting/services/FiscalDocumentEmissionService';
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
+import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
@@ -229,6 +231,7 @@ import type { IFixedAssetClassRepository } from '../features/accounting/reposito
 import type { IFixedAssetRepository } from '../features/accounting/repositories/IFixedAssetRepository';
 import type { IFiscalDocumentRepository } from '../features/accounting/repositories/IFiscalDocumentRepository';
 import type { ILalurRepository } from '../features/accounting/repositories/ILalurRepository';
+import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
@@ -423,6 +426,7 @@ export class ApplicationFactory {
     companySigner: ICompanySignerRepository; // X13
     fiscalDocument: IFiscalDocumentRepository;
     lalur: ILalurRepository;
+    taxAssessment: ITaxAssessmentRepository; // X7 Fase A
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     accountingDelivery: IAccountingDeliveryRepository;
@@ -508,6 +512,7 @@ export class ApplicationFactory {
     fiscalDocumentEmission: FiscalDocumentEmissionService;
     fiscalDocumentLifecycle: FiscalDocumentLifecycleService;
     lalur: LalurService;
+    taxAssessment: TaxAssessmentService; // X7 Fase A
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     accountingDelivery: AccountingDeliveryService;
@@ -573,6 +578,7 @@ export class ApplicationFactory {
       companySigner: new CompanySignerRepository(),
       fiscalDocument: new FiscalDocumentRepository(),
       lalur: new LalurRepository(),
+      taxAssessment: new TaxAssessmentRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
@@ -1173,6 +1179,19 @@ export class ApplicationFactory {
       // F-3C-2 a): LÊ a DRE (`incomeStatement`) para derivar o PF/BC no fechamento do trimestre — leitura,
       // nunca escrita no razão.
       lalur: lalurService,
+      // X7 Fase A (BRIEF itens 12–14, 17): lê perfil da PJ, contas da provisão da unidade, razão (receita/resultado)
+      // e e-Lalur; escreve só as próprias apurações + a trava da forma no perfil (F-X7-5 a).
+      taxAssessment: new TaxAssessmentService(
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.account,
+        this.repositories.posting,
+        this.repositories.lalur,
+        accountingReportService,
+        auditService,
+        this.policies.accounting,
+      ),
       // BE-INCR-CONTADOR-DELIVERY (nó C6): cadastro do contador + log de entrega do pacote
       // ECD/ECF. O serviço de entrega consome os repos JÁ existentes de data-exchange (jobs de
       // origem) e de período (gate F-CD7-a dos 12 meses) — não instancia repo próprio nem toca
@@ -1404,6 +1423,7 @@ export class ApplicationFactory {
   public getFiscalDocumentLifecycleService = (): FiscalDocumentLifecycleService => this.services.fiscalDocumentLifecycle;
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
+  public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;

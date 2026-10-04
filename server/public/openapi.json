@@ -18085,6 +18085,315 @@
         }
       }
     },
+    "/api/accounting/tax-assessments/preview": {
+      "post": {
+        "summary": "Compute the quarterly IRPJ and CSLL assessment without persisting it (X7 Fase A, item 13)",
+        "description": "Lucro Presumido (with the LC 224 increase, IN RFB 2.305/2025 art. 15) or Lucro Real quarterly (e-Lalur Parte A, 30% loss-offset cap). Returns both taxes with the calculation memory, provisaoContasConfiguradas and warnings. 400 for SIMPLES/MEI, annual form (Fase B), missing company profile for the year, or another unit of the company with ledger movement in the quarter (F-X7-7 a).",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "periodo"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2025
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "enum": [
+                      "T01",
+                      "T02",
+                      "T03",
+                      "T04"
+                    ]
+                  },
+                  "deducoes": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "tributo",
+                        "tipo",
+                        "valorCents"
+                      ],
+                      "properties": {
+                        "tributo": {
+                          "type": "string",
+                          "enum": [
+                            "IRPJ",
+                            "CSLL"
+                          ]
+                        },
+                        "tipo": {
+                          "type": "string",
+                          "enum": [
+                            "IRRF",
+                            "CSLL_RETIDA",
+                            "OUTRA"
+                          ]
+                        },
+                        "valorCents": {
+                          "type": "string",
+                          "pattern": "^\\d+$"
+                        },
+                        "documento": {
+                          "type": "string",
+                          "maxLength": 120
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TaxAssessmentPreviewView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-assessments": {
+      "post": {
+        "summary": "Confirm the quarterly IRPJ and CSLL assessment (X7 Fase A, item 14 — commit 1)",
+        "description": "Recomputes and, inside one transaction, checks expectedAPagarCents (409 when it changed), one live CONFIRMED per company, year, tax and quarter (409 unless supersedesIds names it), the quarter chain (409 when a previous quarter is missing or was superseded after the following one), the regime of the year and locks the assessment form on the company profile. Audited as tax.assessment.confirmed and tax.assessment.superseded.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "anoCalendario",
+                  "periodo",
+                  "expectedAPagarCents"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "anoCalendario": {
+                    "type": "integer",
+                    "minimum": 2025
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "enum": [
+                      "T01",
+                      "T02",
+                      "T03",
+                      "T04"
+                    ]
+                  },
+                  "deducoes": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "expectedAPagarCents": {
+                    "type": "object",
+                    "required": [
+                      "IRPJ",
+                      "CSLL"
+                    ],
+                    "properties": {
+                      "IRPJ": {
+                        "type": "string"
+                      },
+                      "CSLL": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "supersedesIds": {
+                    "type": "array",
+                    "maxItems": 2,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "TaxAssessmentView[] (IRPJ, CSLL)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "Stale amount, already confirmed, quarter chain or regime mismatch"
+          }
+        }
+      },
+      "get": {
+        "summary": "List the company's confirmed and superseded IRPJ/CSLL assessments of a year (X7 Fase A, item 17)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "anoCalendario",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "periodo",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "T01",
+                "T02",
+                "T03",
+                "T04"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CONFIRMED",
+                "SUPERSEDED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxAssessmentView[] with memory and provisaoPendente"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-assessments/{id}": {
+      "get": {
+        "summary": "One IRPJ/CSLL assessment with its calculation memory (X7 Fase A, item 17)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TaxAssessmentView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
     "/api/accounting/company-fiscal-profile/{ano}/copiar-de/{anoAnterior}": {
       "post": {
         "summary": "Copy the company fiscal profile from a previous year (F-XP-2/3 a)",

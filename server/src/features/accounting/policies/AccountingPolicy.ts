@@ -84,6 +84,15 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
+  // X7 item 19: mesmo predicado do e-Lalur (o GOV-CONTADOR troca os dois).
+  canManageTaxAssessment(scope: AccountingScope): boolean {
+    return this.canManageLalur(scope);
+  }
+
+  canReadTaxAssessment(scope: AccountingScope): boolean {
+    return this.canReadLalur(scope);
+  }
+
   canManageInventory(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }

@@ -40,5 +40,10 @@ export interface ICompanyFiscalProfileRepository {
   softDelete(scope: AccountingScope, ano: number, tx?: Prisma.TransactionClient): Promise<number>;
   /** PR-2 item 16 (F-XP-5 a): grava o recibo da ECF transmitida e trava o regime do ano. */
   setEcfTransmitida(scope: AccountingScope, ano: number, recibo: string, travadoEm: Date, tx?: Prisma.TransactionClient): Promise<CompanyFiscalProfile>;
+  /**
+   * X7 item 14 (F-X7-5 a): trava a forma de apuração na tx da 1ª confirmação do ano. CAS `where formaApuracaoTravadaEm
+   * is null` — chamada com a trava já gravada não muda nada (devolve 0).
+   */
+  travarFormaApuracao(scope: AccountingScope, ano: number, travadoEm: Date, tx?: Prisma.TransactionClient): Promise<number>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

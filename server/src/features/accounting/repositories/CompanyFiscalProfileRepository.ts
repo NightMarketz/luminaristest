@@ -37,6 +37,14 @@ export class CompanyFiscalProfileRepository implements ICompanyFiscalProfileRepo
     });
   }
 
+  public async travarFormaApuracao(scope: AccountingScope, ano: number, travadoEm: Date, tx?: Prisma.TransactionClient): Promise<number> {
+    const r = await this.db(tx).companyFiscalProfile.updateMany({
+      where: { userId: scope.ownerUserId, anoCalendario: ano, deletedAt: null, formaApuracaoTravadaEm: null },
+      data: { formaApuracaoTravadaEm: travadoEm },
+    });
+    return r.count;
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

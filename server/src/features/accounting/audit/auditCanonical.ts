@@ -158,6 +158,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // BE-INCR-AUDIT-FREETEXT-MASK) e as datas de atividade ficam FORA.
     'formaApuracaoIrpjCsll', 'formaApuracaoTravadaEm', 'lucroRealObrigatorio', 'lc224AcrescimoSuspenso'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
+  // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 22): só ids, enums e centavos como string — sem PII. O nº do
+  // documento das deduções (texto livre) fica só na memória da apuração, FORA do evento.
+  'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao'],
+  'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
   // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
   'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],
   // X13 (item 10; F-OBP-9 a) — signatário da empresa: só as qualificações (códigos de tabela). Nome/CPF/e-mail/fone

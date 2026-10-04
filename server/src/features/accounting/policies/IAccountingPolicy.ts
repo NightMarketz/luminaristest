@@ -89,6 +89,15 @@ export interface IAccountingPolicy {
   /** Can list/read the e-Lalur/e-Lacs store; the ECF Real generator keeps `canRead` (BE-INCR-SPED-ECF-FASE3B). */
   canReadLalur(scope: AccountingScope): boolean;
 
+  /**
+   * X7 Fase A (BRIEF item 19): confirmar, substituir e reconciliar a provisão de uma apuração de IRPJ/CSLL. Mesmo
+   * predicado de `canManageLalur` até o GOV-CONTADOR trocar.
+   */
+  canManageTaxAssessment(scope: AccountingScope): boolean;
+
+  /** X7 Fase A (BRIEF item 19): preview e leitura das apurações. Mesmo predicado de `canReadLalur`. */
+  canReadTaxAssessment(scope: AccountingScope): boolean;
+
   /** Can trigger a re-scan of the reconcile pending-items table (BE-INCR-RECONCILE-PENDING, nó C7). */
   canManageReconcilePending(scope: AccountingScope): boolean;
 

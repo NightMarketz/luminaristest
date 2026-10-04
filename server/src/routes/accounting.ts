@@ -169,6 +169,12 @@ import {
   listProductDestinations,
   upsertProductDestination,
 } from '../controllers/productDestinationController';
+import {
+  confirmTaxAssessment,
+  getTaxAssessment,
+  listTaxAssessments,
+  previewTaxAssessment,
+} from '../controllers/taxAssessmentController';
 
 const router = Router();
 
@@ -383,6 +389,13 @@ router.put('/fixed-assets/:id', updateFixedAsset);
 router.delete('/fixed-assets/:id', deleteFixedAsset);
 router.post('/fixed-assets/:id/activate', activateFixedAsset);
 router.post('/fixed-assets/:id/dispose', disposeFixedAsset);
+
+// BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 13/14/17) — apuração trimestral de IRPJ/CSLL. `/preview`
+// (estático) antes de /tax-assessments/:id.
+router.post('/tax-assessments/preview', previewTaxAssessment);
+router.post('/tax-assessments', confirmTaxAssessment);
+router.get('/tax-assessments', listTaxAssessments);
+router.get('/tax-assessments/:id', getTaxAssessment);
 
 // Accounting period management (INCR-1).
 // NOTE: /:unitId/periods must come before /periods/:id routes to avoid param clash.
