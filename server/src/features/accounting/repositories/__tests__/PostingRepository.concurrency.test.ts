@@ -29,6 +29,10 @@ describe('nextEntryNumber — SQLite real DB, same partition', () => {
       // socket_timeout=60: SQLite serializes writers; 50 concurrent txs need more than the 5s default.
       // connection_limit=1: single-writer SQLite doesn't benefit from a pool.
       datasources: { db: { url: `file:${dbPath}?socket_timeout=60&connection_limit=1` } },
+      // maxWait: as 50 txs fazem FILA na conexão única; o default de 2 s para obter a conexão estourou no CI
+      // ("Unable to start a transaction in the given time", run 37163479760) quando o shard rodou sob mais carga.
+      // O teste prova numeração sem buraco/duplicata, não latência — a fila pode demorar.
+      transactionOptions: { maxWait: 30_000, timeout: 30_000 },
     });
     await db.user.create({
       data: {
