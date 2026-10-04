@@ -118,6 +118,9 @@ async function selfCheck() {
     ok((await db.posting.count({ where: { userId: owner, unitId: rows[0]?.id } })) === 2, 'as 2 partidas estão sob a unidade nova');
     const v = step('--verify', runTs(['--verify', '--against', backup], env));
     ok(v.code === 0 && /"ok": true/.test(v.out), '--verify pré × pós ok');
+    // L-RK-3 (b): este legado não tem trilha — o par vem do diff, não de unit.rekeyed.
+    const rekeyed = v.code === 0 ? JSON.parse(v.out.slice(v.out.indexOf('{'))).rekeyed : [];
+    ok(rekeyed.length === 1 && rekeyed[0].from === legacy && rekeyed[0].rows > 0, `--verify infere 1 par do legado sem trilha (achei ${rekeyed.length})`);
   } finally {
     await db.$disconnect();
     rmSync(work, { recursive: true, force: true });
