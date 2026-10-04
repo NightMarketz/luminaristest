@@ -99,6 +99,8 @@ async function seedLegacy(owner: string, unitId: string): Promise<void> {
 }
 
 const rekeyInv = () => buildInventory().filter((t) => t.cls === 'REKEY');
+/** As duas tabelas REKEY sem `id` (a PK inclui o unitId) — BRIEF de lacunas §0. */
+const NO_ID_TABLES = ['journal_entry_sequences', 'fiscal_document_sequences'];
 async function rowsUnder(owner: string, unitId: string): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
   for (const t of rekeyInv()) {
@@ -241,10 +243,9 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     const velho = await backup();
     fs.utimesSync(velho, new Date('2000-01-01'), new Date('2000-01-01'));
     const before = await dbDigest();
-    // Sem o flag: o §5 exige backupPath no Zod (exit 2); o item 15 diz exit 1 — LACUNA L1 do retorno. Assere-se o que
-    // as duas leituras têm em comum: recusa e nada escrito.
+    // Sem o flag: args inválidos, exit 2 (L-RK-1 → a; o item 15 do ADR foi emendado).
     const sem = await cli(['--apply', '--owner-user-id', o.id, '--from', 'legacy-backup', '--name', 'X']);
-    expect(sem.code).not.toBe(0);
+    expect(sem.code).toBe(2);
     const inexistente = await cli(applyArgs(o.id, 'legacy-backup', path.join(work, 'nao-existe.db')));
     const invalido = await cli(applyArgs(o.id, 'legacy-backup', lixo));
     const antigo = await cli(applyArgs(o.id, 'legacy-backup', velho));
@@ -274,6 +275,9 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     const legacyBefore = await rowsUnder(o.id, 'legacy-ok');
     const legacyHead = await prisma.auditChainHead.findUniqueOrThrow({ where: { scopeUserId_unitId: { scopeUserId: o.id, unitId: 'legacy-ok' } } });
     const storageKeyBefore = (await prisma.accountingDataExchangeJob.findFirstOrThrow({ where: { userId: o.id, unitId: 'legacy-ok' } })).storageKey;
+    // Item 11 do BRIEF de lacunas: 1 produto antes do --apply → o UnitAutoStockPlugin semeia estoque para a unidade nova.
+    const productsTable = await prisma.dynamicTable.findFirstOrThrow({ where: { userId: o.id, internalName: 'products' } });
+    const product = await prisma.dynamicTableData.create({ data: { dynamicTableId: productsTable.id, data: { name: 'Escova' } } });
     const pre = await backup();
     const info = jest.spyOn(logger, 'info');
 
@@ -289,6 +293,11 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     expect(units[1]).toMatchObject({ id: to, data: { name: 'Filial Legada', type: 'Franchise', isActive: true } });
     expect(Object.keys(units[1].data as object).sort()).toEqual(expect.arrayContaining(['name', 'isActive']));
     expect((await pipelinesFor(o.id, to)).map((p) => (p.data as { name: string }).name)).toEqual(['Pipeline Padrão']);
+    const productUnitsTable = await prisma.dynamicTable.findFirstOrThrow({ where: { userId: o.id, internalName: 'productUnits' } });
+    const stock = (await prisma.dynamicTableData.findMany({ where: { dynamicTableId: productUnitsTable.id } }))
+      .map((r) => r.data as { productId: string; unitId: string; stock: number })
+      .filter((d) => d.unitId === to);
+    expect(stock).toEqual([expect.objectContaining({ productId: product.id, unitId: to, stock: 0 })]);
 
     // item 9/10: tudo do legado foi para o id novo, contagens batem, storageKey intacto.
     expect(await rowsUnder(o.id, 'legacy-ok')).toEqual({});
@@ -313,7 +322,9 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     const v = await cli(['--verify', '--against', pre]);
     expect(v.code).toBe(0);
     const report = JSON.parse(v.out.slice(v.out.indexOf('{')));
-    expect(report).toMatchObject({ ok: true, failures: [], rekeyed: [{ ownerUserId: o.id, from: 'legacy-ok', to }] });
+    // Pares inferidos pelo diff (L-RK-3 b). `rows` só conta as tabelas com `id` (as 2 sem `id` ficam no multiconjunto).
+    const moved = Object.entries(legacyBefore).filter(([t]) => !NO_ID_TABLES.includes(t)).reduce((s, [, c]) => s + c, 0);
+    expect(report).toMatchObject({ ok: true, failures: [], rekeyed: [{ ownerUserId: o.id, from: 'legacy-ok', to, rows: moved, anchored: true }] });
     expect(report.dynamicTableDataAdded[o.unitsTableId]).toBe(1);
 
     // item 13: 2ª execução → NOTHING_TO_DO, nada novo (1 unidade, 1 evento, 1 pipeline).
@@ -330,4 +341,100 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     expect(bad.code).toBe(1);
     expect(bad.out).toMatch(/\(a\) User: conteúdo mudou/);
   }, 180000);
+
+  it('L-RK-2, P1a/P1b do revisor do #480 (itens 12–13): conta devolvida ao legado → regra (iv); linha de outro dono → HIJACKED → regra (ii)', async () => {
+    const o = await onboardedOwner();
+    await seedLegacy(o.id, 'legacy-p1');
+    const outro = await prisma.user.create({ data: { name: 'rk-outro', username: 'rk-outro', email: 'rk-outro@test.local', password: 'x', role: 'USER' } });
+    const contaOutro = await prisma.account.create({ data: { userId: outro.id, unitId: 'legacy-outro', code: '1', name: 'x', nature: 'Asset', acceptsEntries: true } });
+    const pre = await backup();
+    const r = await cli(applyArgs(o.id, 'legacy-p1', pre));
+    expect(r.code).toBe(0);
+    const to: string = JSON.parse(r.out.split('\n').filter((l) => l.startsWith('{"event":"unit_rekeyed"')).pop() as string).to;
+
+    const conta = await prisma.account.findFirstOrThrow({ where: { userId: o.id, unitId: to, code: '1.1.1' } });
+    await prisma.$executeRawUnsafe('UPDATE accounts SET "unitId" = ? WHERE id = ?', 'legacy-p1', conta.id);
+    const p1a = await cli(['--verify', '--against', pre]);
+    await prisma.$executeRawUnsafe('UPDATE accounts SET "unitId" = ? WHERE id = ?', to, conta.id);
+    expect(p1a.code).toBe(1);
+    expect(p1a.out).toMatch(/regra \(iv\)/);
+
+    await prisma.$executeRawUnsafe('UPDATE accounts SET "unitId" = ? WHERE id = ?', 'HIJACKED', contaOutro.id);
+    const p1b = await cli(['--verify', '--against', pre]);
+    await prisma.$executeRawUnsafe('UPDATE accounts SET "unitId" = ? WHERE id = ?', 'legacy-outro', contaOutro.id);
+    expect(p1b.code).toBe(1);
+    expect(p1b.out).toMatch(/legacy-outro → HIJACKED\): regra \(ii\)/);
+    expect((await cli(['--verify', '--against', pre])).code).toBe(0); // as duas adulterações desfeitas → verde
+  }, 120000);
+
+  it('L-RK-4 (item 2): legado esvaziado entre o preflight e a tx → gate in-tx faz rollback e NOTHING_TO_DO', async () => {
+    const o = await onboardedOwner();
+    await seedLegacy(o.id, 'legacy-race');
+    const bk = await backup();
+    const unitsBefore = (await unitRows(o.unitsTableId)).length;
+    const eventsBefore = await prisma.auditEvent.count({ where: { eventType: UNIT_REKEYED_EVENT, scopeUserId: o.id } });
+    const pipesTable = await prisma.dynamicTable.findFirstOrThrow({ where: { userId: o.id, internalName: 'leadPipelines' } });
+    const pipesBefore = await prisma.dynamicTableData.count({ where: { dynamicTableId: pipesTable.id } });
+
+    const r = await cli(applyArgs(o.id, 'legacy-race', bk), {
+      onBeforeTx: async () => {
+        for (const t of rekeyInv()) {
+          await prisma.$executeRawUnsafe(`UPDATE "${t.table}" SET "unitId" = ? WHERE "${t.ownerColumn}" = ? AND "unitId" = ?`, 'legacy-race-movido', o.id, 'legacy-race');
+        }
+      },
+    });
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('NOTHING_TO_DO');
+    expect(await unitRows(o.unitsTableId)).toHaveLength(unitsBefore);
+    expect(await prisma.auditEvent.count({ where: { eventType: UNIT_REKEYED_EVENT, scopeUserId: o.id } })).toBe(eventsBefore);
+    expect(await prisma.dynamicTableData.count({ where: { dynamicTableId: pipesTable.id } })).toBe(pipesBefore);
+  }, 120000);
+
+  it('L-RK-5 (itens 3–4): units APAGADA do dono → DELETED_REAL_UNIT no --plan, exit 1 no --apply; de OUTRO dono → UNIT_OWNER_MISMATCH (F-RKL-1 a)', async () => {
+    const a = await onboardedOwner();
+    const apagada = await prisma.dynamicTableData.create({ data: { dynamicTableId: a.unitsTableId, data: { name: 'Fechada', isActive: false }, deletedAt: new Date() } });
+    await seedLegacy(a.id, apagada.id);
+
+    const bk = await backup();
+    const before = await dbDigest();
+    const p = await cli(['--plan']);
+    expect(p.code).toBe(0);
+    const rows: { ownerUserId: string; unitId: string; status: string }[] = JSON.parse(p.out.slice(p.out.indexOf('{'))).rows;
+    expect(rows.find((x) => x.ownerUserId === a.id && x.unitId === apagada.id)?.status).toBe('DELETED_REAL_UNIT');
+    const ap = await cli(applyArgs(a.id, apagada.id, bk));
+    expect(ap.code).toBe(1);
+    expect(ap.out).toContain('DELETED_REAL_UNIT');
+    expect(await dbDigest()).toEqual(before);
+
+    const b = await onboardedOwner();
+    const intruso = await prisma.account.create({ data: { userId: b.id, unitId: apagada.id, code: '1', name: 'x', nature: 'Asset', acceptsEntries: true } });
+    try {
+      const bk2 = await backup();
+      const before2 = await dbDigest();
+      const p2 = await cli(['--plan']);
+      const ap2 = await cli(applyArgs(b.id, apagada.id, bk2));
+      expect([p2.code, ap2.code]).toEqual([1, 1]);
+      expect(p2.out).toContain('UNIT_OWNER_MISMATCH');
+      expect(ap2.out).toContain('UNIT_OWNER_MISMATCH');
+      expect(await dbDigest()).toEqual(before2);
+    } finally {
+      await prisma.account.delete({ where: { id: intruso.id } });
+    }
+  }, 120000);
+
+  it('L-RK-3, P2 do revisor do #480 (item 14): legado SEM trilha → --verify exit 0 com o par inferido, sem âncora', async () => {
+    const o = await onboardedOwner();
+    await prisma.account.create({ data: { userId: o.id, unitId: 'legacy-sem-trilha', code: '1', name: 'Caixa', nature: 'Asset', acceptsEntries: true } });
+    await prisma.account.create({ data: { userId: o.id, unitId: 'legacy-sem-trilha', code: '2', name: 'Banco', nature: 'Asset', acceptsEntries: true } });
+    const pre = await backup();
+    const r = await cli(applyArgs(o.id, 'legacy-sem-trilha', pre));
+    expect(r.code).toBe(0);
+    const result = JSON.parse(r.out.split('\n').filter((l) => l.startsWith('{"event":"unit_rekeyed"')).pop() as string);
+    expect(result.auditAnchor).toBeNull();
+
+    const v = await cli(['--verify', '--against', pre]);
+    expect(v.code).toBe(0);
+    const report = JSON.parse(v.out.slice(v.out.indexOf('{')));
+    expect(report.rekeyed).toEqual([{ ownerUserId: o.id, from: 'legacy-sem-trilha', to: result.to, rows: 2, anchored: false }]);
+  }, 120000);
 });

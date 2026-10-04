@@ -448,7 +448,12 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 
 ---
 
-## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **RATIFICADAS 2026-10-03, correção sem "executa"**
+## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **FECHADAS no PR #501 (código; merge pendente do OK do dono)**
+
+> ✅ **FECHADO — PR #501** (`sessao-feature`, autorização do dono no chat em 2026-10-03: *"Executa o código das lacunas
+> L-RK-1..5 do I1b"*). As 5 lacunas e o item 11 do BRIEF foram implementados com teste. O par vermelho→verde está no
+> mesmo PR: 5 testes vermelhos contra o CLI do #480, 12/12 verdes depois. O que segue sem prova é a execução no `dev.db`
+> real (`RUNBOOK-I1B-UNIT-REKEY.md`, gate humano). O passo 7 do runbook passa a valer como prova depois do merge do #501.
 
 > ✅ **Ratificação por questionário em 2026-10-03**
 > ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):
