@@ -134,6 +134,8 @@ export async function resetDb(): Promise<void> {
   await prisma.depreciationRate.deleteMany();
   // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1: payment_accounts tem FK Restrict para account — cai antes dele.
   await prisma.paymentAccount.deleteMany();
+  // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
+  await prisma.taxAssessment.deleteMany();
 
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();

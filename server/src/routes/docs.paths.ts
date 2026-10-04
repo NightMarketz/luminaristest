@@ -6225,4 +6225,79 @@ export {};
  *         '409': { description: 'payment_account_already_active' }
  *         '503': { description: 'payment_credential_key_missing' }
  */
+/**
+ * @openapi
+ * paths:
+ *   /api/accounting/tax-assessments/preview:
+ *     post:
+ *       summary: Preview the quarterly IRPJ/CSLL assessment (BE-INCR-TAX-ASSESSMENT Fase A PR-2, X7 item 13)
+ *       description: >-
+ *         Calcula IRPJ e CSLL juntos (Presumido ou Real trimestral) e não persiste. 400 para SIMPLES/MEI (DAS),
+ *         forma ANUAL (Fase B), perfil do ano ausente e outra unidade da PJ com movimento no período.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/TaxAssessmentPreviewInput' }
+ *       responses:
+ *         '200': { description: 'TaxAssessmentPreviewView (irpj, csll, provisaoContasConfiguradas, avisos)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/accounting/tax-assessments:
+ *     get:
+ *       summary: List the IRPJ/CSLL assessments of the company in a year (X7 item 17)
+ *       description: >-
+ *         Lista da PJ inteira; unitId só resolve escopo/policy. Cada linha traz a memória e provisaoPendente.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: anoCalendario, required: true, schema: { type: integer } }
+ *         - { in: query, name: periodo, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: status, required: false, schema: { type: string, enum: [CONFIRMED, SUPERSEDED] } }
+ *       responses:
+ *         '200': { description: 'TaxAssessmentView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *     post:
+ *       summary: Confirm the quarterly IRPJ/CSLL assessment (commit 1, X7 item 14)
+ *       description: >-
+ *         Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
+ *         por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava
+ *         a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar).
+ *         A provisão contábil é do PR-3.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/TaxAssessmentConfirmInput' }
+ *       responses:
+ *         '201': { description: 'TaxAssessmentConfirmView (irpj, csll, reconfirmar)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '409': { description: 'TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE' }
+ *
+ *   /api/accounting/tax-assessments/{id}:
+ *     get:
+ *       summary: Read one IRPJ/CSLL assessment with its calculation memory (X7 item 17)
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'TaxAssessmentView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ */
 export {};
