@@ -9,6 +9,9 @@
 > 6 na recomendação e **F-TB-5 → (b) divergente** (o 16% do prestador exclusivo é modelado; itens 3b e 9). Registro:
 > [`D-2026-10-02-X7-FASE-B-FORKS`](../plano/decisoes/D-2026-10-02-X7-FASE-B-FORKS.md). Nenhum item vira código sem
 > "executa" do dono (ORCH-006).
+> **Emenda 03/10 (fatiamento):** o **F-TB-8 → (a)** substitui as fronteiras do F-TB-7. São **4 PRs seriais**, e o
+> `ANUAL` só fica selecionável no último (§3.1;
+> [`D-2026-10-03-X7-FASE-B-FATIAMENTO`](../plano/decisoes/D-2026-10-03-X7-FASE-B-FATIAMENTO.md)).
 >
 > **Alcance e risco, ditos antes de tudo:**
 > - A Fase B depende da Fase A **inteira mergeada** (A-PR-1..3), e a Fase A ainda **não tem código**: `formaApuracao`
@@ -133,7 +136,8 @@ Notação:
 
 ### Perfil e parâmetros
 
-1. **[D, B1] `ANUAL` liberado.** O A-1 deixa de recusar `ANUAL` (*"forma anual é da Fase B"*).
+1. **[D, B1] `ANUAL` liberado.** O A-1 deixa de recusar `ANUAL` (*"forma anual é da Fase B"*). Isso só acontece no
+   **PR-4** (F-TB-8.1, §3.1); até lá a recusa fica e os testes semeiam o perfil pelo repositório.
    - Continuam valendo:
      - `PRESUMIDO` + `ANUAL` ⇒ 400;
      - `SIMPLES`/`MEI` ⇒ 400;
@@ -459,7 +463,7 @@ export const TaxAssessmentPreviewSchema = FaseA.TaxAssessmentPreviewSchema.exten
 | `…/lalur/*` | `quarter` aceita `A00..A12`; `livro` aceita `n620`/`n660` |
 | geração da ECF Real | `formaApur` opcional/derivado |
 
-## 3. Forks — ✅ RATIFICADOS 02/10 ([D-2026-10-02-X7-FASE-B-FORKS](../plano/decisoes/D-2026-10-02-X7-FASE-B-FORKS.md))
+## 3. Forks — ✅ RATIFICADOS 02/10 ([D-2026-10-02-X7-FASE-B-FORKS](../plano/decisoes/D-2026-10-02-X7-FASE-B-FORKS.md)) e 03/10 (F-TB-8, [D-2026-10-03-X7-FASE-B-FATIAMENTO](../plano/decisoes/D-2026-10-03-X7-FASE-B-FATIAMENTO.md))
 
 | Fork | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|
@@ -469,7 +473,30 @@ export const TaxAssessmentPreviewSchema = FaseA.TaxAssessmentPreviewSchema.exten
 | **F-TB-4** Balancete × fechamento do mês | **(b)** exige os meses 01..m−1 fechados; o mês m fica aberto para a provisão · (a) só aviso | ✅ **(b), dono 02/10.** O balancete só vale com o Diário escriturado até o pagamento (IN 1.700 art. 52 § 4º). O fechamento impede o lançamento retroativo que descasaria balancete × ECD. Exigir o mês m fechado travaria a provisão (o `postEntry` só lança em `OPEN`) | alto em (a): balancete desconsiderado e multa de ofício |
 | **F-TB-5** 16% do prestador exclusivo na estimativa | (a) não modelar; 32%, e o ajuste devolve o excesso · **(b)** modelar a IN 1.700 art. 33 §§ 7º–10 (Lei 9.250 art. 40) | ✅ **(b), dono 02/10 — DIVERGENTE da recomendação (a).** Itens 3b e 9. O argumento do (a) era *"pagar a mais na estimativa é recuperável no ajuste"*, e o salão que vende produto nem se qualifica (o item 9 recusa a declaração com revenda) | baixo em (a); em (b), o risco é a aritmética da diferença postergada (teste-tabela do item 9) |
 | **F-TB-6** Trocar a forma com o e-Lalur do ano preenchido | **(a)** o perfil recusa (400), listando · (b) permite | ✅ **(a), dono 02/10.** Evita linha órfã que a ECF recusaria depois (item 21) | baixo |
-| **F-TB-7** Fatiamento | **(a)** 3 PRs seriais depois da Fase A: **PR-1** itens 1–10 e 12 (perfil, parâmetros, janelas, e-Lalur, funções puras; sem mudança de rota) · **PR-2** itens 11 e 13–17 (model, DTO, ordem, trava, gate de fechamento, provisão) · **PR-3** itens 18–24 (ECF anual + emenda do ADR da ECF) · (b) 1 PR | ✅ **(a), dono 02/10.** É o molde do F-TA-10. O PR-1 se verifica só com teste-tabela; o PR-3 se isola pela regressão byte a byte (26 k) | baixo |
+| **F-TB-7** Fatiamento | **(a)** 3 PRs seriais depois da Fase A: **PR-1** itens 1–10 e 12 (perfil, parâmetros, janelas, e-Lalur, funções puras; sem mudança de rota) · **PR-2** itens 11 e 13–17 (model, DTO, ordem, trava, gate de fechamento, provisão) · **PR-3** itens 18–24 (ECF anual + emenda do ADR da ECF) · (b) 1 PR | ✅ **(a), dono 02/10.** É o molde do F-TA-10. O PR-1 se verifica só com teste-tabela; o PR-3 se isola pela regressão byte a byte (26 k). **Fronteiras substituídas pelo F-TB-8 (03/10)** | baixo |
+| **F-TB-8** Fatiamento (emenda o F-TB-7) | **(a)** 4 PRs seriais: PR-1 funções puras, PR-2 e-Lalur anual, PR-3 model/fluxo/provisão, PR-4 ECF anual + liberação do `ANUAL` (§3.1) · (b) os 3 do F-TB-7, só distribuindo os itens 25/26 · (c) 1 PR. **F-TB-8.1:** o `ANUAL` fica selecionável só no último PR · ou no PR-1 | ✅ **(a) + ANUAL no último PR, dono 03/10.** No F-TB-7, o PR-1 juntava as funções puras com o item 12, que muda o e-Lalur, um serviço vivo, e assim deixava de ser verificável só com teste-tabela, como no molde. Os itens 25/26 não tinham PR. Com o `ANUAL` liberado cedo, um `main` intermediário deixaria uma PJ `ANUAL` gerar a ECF `T` (**I**) | baixo: 1 ciclo de PR/CI a mais |
+
+### 3.1 Divisão em PRs (F-TB-8 → a; F-TB-8.1 → último PR)
+
+Pré-condição de todos: os 3 PRs da Fase A estão mergeados (F-TA-10 → a; instrução do dono, 03/10). A série é
+serial, porque cada PR consome o anterior. Cada PR exige o seu próprio "executa" (ORCH-006). O item 25 vai em cada
+PR, na parte que o diff daquele PR aciona.
+
+| PR | Itens | Testes do item 26 | Gates do item 25 acionados | Verificável por |
+|---|---|---|---|---|
+| **PR-1** parâmetros + janelas + funções puras, sem rota e sem mudança de serviço vivo | 3, 3b (campo do perfil + migração aditiva + trava), 4, 7, 8 (cálculo; o gate de fechamento é do item 15), 9, 10 (cálculo, com `estimativasPagas` como entrada) | d, e, f, h, i (parte do cálculo) | snapshot `CompanyFiscalProfileDto`; allowlist `company_fiscal_profile.updated` (+`prestadoraExclusivaServicos`) | teste-tabela, como o PR-1 da Fase A (#478) |
+| **PR-2** e-Lalur anual | 12 (`LALUR_PERIODOS`, período × forma, Parte B só no `A00`, continuidade entre exercícios, ramo `A0m` de `assertCompensacaoCabe`, M312 por `periodoBounds`, livros `n620`/`n660`) | a, g + **regressão**: as suítes do e-Lalur trimestral continuam verdes sem editar asserções | snapshot dos 5 schemas de `LalurDto.ts`; enums `quarter`/`livro` em `docs.paths.ts` (+0 paths) | integração do `LalurService`, com o perfil `ANUAL` semeado pelo repositório |
+| **PR-3** model + fluxo + provisão | 5, 6, 11, 13, 14, 15, 16, 17 | b, c, m | migração aditiva (`diferencaPostergadaCents`; 2 FKs de saldo negativo); snapshot dos DTOs da apuração; allowlist `tax.assessment.confirmed` (+`modo`, +`diferencaPostergadaCents`) e `fiscal_profile.updated` (+2 FKs); enums `periodo`/`modo` (+0 paths) | integração das rotas da Fase A com períodos `Axx` |
+| **PR-4** ECF anual + liberação do `ANUAL` | **1, 2**, 18, 19, 20, 21, 22, 23, 24 (emenda do ADR da ECF) | j, k, l | snapshot `SpedEcfRealDto` e `CompanyFiscalProfileDto`; catálogo N620/N660 regenerado (com a parada do item 22) | regressão byte a byte da ECF trimestral (26 k) + teste de perfil (26 l) |
+
+- **Por que os itens 1 e 2 vão no PR-4 (F-TB-8.1):** cada `main` intermediário fica fechado para a PJ `ANUAL`.
+  Antes do PR-4, o DTO recusa `ANUAL`. Assim não existe estado em que uma PJ `ANUAL` feche a Parte B trimestral e gere
+  a ECF com `FORMA_APUR = T`, nem em que lance `A0m` no e-Lalur sem apuração que o consuma.
+- **Custo assumido:** do PR-1 ao PR-3, os testes semeiam o perfil `ANUAL` direto pelo repositório, sem passar pelo
+  DTO. O caminho real do perfil só é testado no PR-4 (26 l).
+- **Paradas herdadas, que continuam valendo dentro de cada PR:** a do item 22 (abas existentes mudaram na
+  regeneração), a do item 23 (L100/L300 nos meses `B`) e as do §5.2/§5.4 (nomes da Fase A conferidos no código depois
+  do merge dela).
 
 ## 4. Pendente de validação externa (não entra no checklist como decidido)
 
