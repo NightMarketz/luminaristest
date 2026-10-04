@@ -2,7 +2,8 @@
  * TaxAssessmentService — apuração trimestral de IRPJ/CSLL (nó X7, Fase A). FIRST-CLASS PRISMA.
  *
  * atomicUntil: postEntry
- *   commit 1 — razão: reverseEntry da provisão viva de cada substituída (cadeia `supersedesId` + posteriores da cascata;
+ *   commit 1 — razão: reverseEntry da provisão viva de cada linha SUPERSEDED do mesmo (PJ, ano, tributo, período) —
+ *              substituídas e posteriores da cascata, com ou sem `supersedesId` apontando para elas;
  *              tx própria, idempotente) e depois postEntry(sourceType='tax.assessment.provision', sourceId=<id da
  *              apuração>) no último dia do trimestre (BRIEF item 15, "commit 2"); gate de período dentro de cada tx; a
  *              provisão é achada pela FONTE, não pelo vínculo
@@ -14,7 +15,8 @@
  *   reconcile — POST /tax-assessments/:id/provisao completa o que faltar; nada já feito é refeito (sem gate de período)
  *              teste: taxAssessmentProvision.integration.test.ts › "item 16 + ADR §13 item 11: reconcile completa e é idempotente — 2ª chamada sem lançamento novo, mesmo provisaoEntryId"
  *   fora da tx — a confirmação (BRIEF item 14, "commit 1") commita ANTES, em runTransaction próprio; falha da provisão não a desfaz
- *              teste: taxAssessment.integration.test.ts › "23(e)"
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (cascata × estorno falho): reconfirmar o posterior estorna a provisão órfã antes de postar — nunca 2 vivas"
  */
 import type { CompanyFiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
@@ -332,20 +334,17 @@ export class TaxAssessmentService {
 
   /**
    * Item 15 (F-X7-4 a). A provisão cai no razão da UNIDADE LIDA (`row.unitId`, F-X7-7 a). (1) estorna a provisão viva de
-   * toda a cadeia `supersedesId` — antes de postar a nova, para nunca haver duas vivas; (2) se pendente (L-C), reaproveita
+   * TODA linha SUPERSEDED do mesmo (PJ, ano, tributo, período) — antes de postar a nova, para nunca haver duas vivas. Não
+   * basta a cadeia `supersedesId`: o posterior que caiu na cascata do #504 é reconfirmado com `supersedesId = null`, e a
+   * provisão dele, se o estorno falhou na confirmação que o derrubou, ficaria órfã (review independente do PR-3 v2,
+   * achado 1). Falha aqui ⇒ a nova não é postada (L-C); (2) se pendente (L-C), reaproveita
    * o lançamento já postado pela fonte (crash entre post e CAS) ou posta D despesa / C a recolher pelo `devidoCents` no
    * último dia do trimestre; (3) CAS do `provisaoEntryId`.
    */
   private async provisionar(scope: AccountingScope, row: TaxAssessment): Promise<TaxAssessment> {
     const owner = scope.ownerUserId;
-    const vistos = new Set<string>([row.id]); // a cadeia é acíclica por construção; o Set só blinda contra laço
-    for (let id = row.supersedesId; id && !vistos.has(id); ) {
-      vistos.add(id);
-      const sub = await this.repo.findById(owner, id);
-      if (!sub) break;
-      await this.estornarProvisaoViva(scope, sub);
-      id = sub.supersedesId;
-    }
+    const caidas = await this.repo.findMany(owner, { anoCalendario: row.anoCalendario, periodo: row.periodo, status: 'SUPERSEDED' });
+    for (const sub of caidas.filter((r) => r.tributo === row.tributo)) await this.estornarProvisaoViva(scope, sub);
     if (!provisaoPendente(row)) return row;
 
     const s: AccountingScope = { ...scope, unitId: row.unitId };

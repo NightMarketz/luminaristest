@@ -207,6 +207,30 @@ describe('X7 PR-3 — provisão (2 commits), reconcile e encerramento', () => {
     await fecharMarco(U, 2030, 'OPEN');
   });
 
+  it('item 15 (cascata × estorno falho): reconfirmar o posterior estorna a provisão órfã antes de postar — nunca 2 vivas', async () => {
+    const U = 'u-x7p-cascata';
+    await cenario(U, 2037);
+    await ApplicationFactory.getInstance().getPostingService().postEntry(scopeOf(U), {
+      unitId: U, date: '2037-05-10', sourceType: 'manual', description: 'Serviço T02',
+      lines: [{ accountCode: '1.1.1', debitCents: 5_000_000, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: 5_000_000 }],
+    });
+    const t01 = (await confirmar(U, 2037)).views;
+    await confirmar(U, 2037, 'T02');
+    // junho fechado: substituir o T01 derruba o T02 (cascata), mas o estorno da provisão do T02 falha
+    await prisma.accountingPeriod.updateMany({ where: { userId: dono.id, unitId: U, year: 2037, month: 6 }, data: { status: 'HARD_CLOSED' } });
+    await confirmar(U, 2037, 'T01', { supersedesIds: t01.map((v) => v.id) });
+    const t02Antigo = await prisma.taxAssessment.findMany({ where: { unitId: U, periodo: 'T02', status: 'SUPERSEDED' } });
+    expect(t02Antigo).toHaveLength(2);
+    // reconfirmar o T02 com junho ainda fechado: o estorno da órfã falha ⇒ a nova NÃO é postada (L-C)
+    const ainda = (await confirmar(U, 2037, 'T02')).views;
+    expect(ainda.every((v) => v.provisaoPendente)).toBe(true);
+    await prisma.accountingPeriod.updateMany({ where: { userId: dono.id, unitId: U, year: 2037, month: 6 }, data: { status: 'OPEN' } });
+    for (const v of ainda) expect((await reconcile(U, v.id)).status).toBe(200);
+    const confirmadas = await prisma.taxAssessment.findMany({ where: { unitId: U, status: 'CONFIRMED' } });
+    const vivas = await prisma.journalEntry.findMany({ where: { unitId: U, sourceType: PROVISION, status: 'Posted' } });
+    expect(vivas.map((e) => e.sourceId).sort()).toEqual(confirmadas.map((c) => c.id).sort());
+  });
+
   it('23(a): no Real, a base é a mesma antes e depois da provisão (guarda de circularidade)', async () => {
     const U = 'u-x7p-real';
     await cenario(U, 2034, { regime: 'REAL' });
