@@ -29,6 +29,7 @@ import { DimensionRepository } from '../features/accounting/repositories/Dimensi
 import { CounterpartyRepository } from '../features/accounting/repositories/CounterpartyRepository';
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
+import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
@@ -108,6 +109,7 @@ import { CounterpartyService } from '../features/accounting/services/Counterpart
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
+import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -202,6 +204,7 @@ import type { IPostingRepository } from '../features/accounting/repositories/IPo
 import type { IAccountingPeriodRepository } from '../features/accounting/repositories/IAccountingPeriodRepository';
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
+import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
@@ -425,6 +428,7 @@ export class ApplicationFactory {
     lalur: ILalurRepository;
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
+    taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -510,6 +514,7 @@ export class ApplicationFactory {
     lalur: LalurService;
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
+    taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
@@ -575,6 +580,7 @@ export class ApplicationFactory {
       lalur: new LalurRepository(),
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
+      taxAssessment: new TaxAssessmentRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -1190,6 +1196,18 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
       ),
+      // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
+      taxAssessment: new TaxAssessmentService(
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.account,
+        this.repositories.posting,
+        this.repositories.lalur,
+        accountingReportService,
+        this.policies.accounting,
+        auditService,
+      ),
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,
         this.repositories.account,
@@ -1379,6 +1397,7 @@ export class ApplicationFactory {
   public getCounterpartyService = (): CounterpartyService => this.services.counterparty;
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
+  public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
