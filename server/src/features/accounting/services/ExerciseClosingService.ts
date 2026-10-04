@@ -21,6 +21,8 @@ import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { JournalEntryWithPostings } from '../repositories/IJournalEntryRepository';
 import type { PostingService } from './PostingService';
 import type { PostEntryInput } from '../dtos/PostingDto';
+import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
+import { provisaoPendente } from './TaxAssessmentService';
 
 /**
  * ExerciseClosingService — year-end result closing (encerramento/apuração do resultado),
@@ -46,6 +48,7 @@ export class ExerciseClosingService {
     private readonly postingRepo: IPostingRepository,
     private readonly posting: PostingService,
     private readonly policy: IAccountingPolicy,
+    private readonly taxAssessmentRepo: ITaxAssessmentRepository,
   ) {}
 
   /**
@@ -57,6 +60,18 @@ export class ExerciseClosingService {
   public async closeExercise(scope: AccountingScope, year: number): Promise<JournalEntryWithPostings> {
     if (!this.policy.canPost(scope)) {
       throw new ForbiddenError('Você não tem permissão para encerrar o exercício.');
+    }
+
+    // X7 Fase A item 18 (F-TA-8 a): sem a provisão de IRPJ/CSLL, a DRE e a ECD do ano saem sem imposto (ADR §7). Decisão
+    // do dono 04/10 (L-D): QUALQUER apuração da PJ no ano bloqueia, não só as da unidade que encerra. Pendente = L-C.
+    const pendentes = (await this.taxAssessmentRepo.findConfirmedByYear(scope.ownerUserId, year)).filter(provisaoPendente);
+    if (pendentes.length > 0) {
+      const ids = pendentes.map((a) => a.id);
+      throw new ValidationError(
+        `Há apuração(ões) de IRPJ/CSLL de ${year} confirmada(s) com a provisão pendente: ${ids.join(', ')}. ` +
+          'Configure as contas e reconcilie (POST /accounting/tax-assessments/:id/provisao) antes de encerrar.',
+        { taxAssessmentIds: ids },
+      );
     }
 
     // Pre-closing result of THIS exercise: the current-year window [1 Jan .. 31 Dec], EXCLUDING

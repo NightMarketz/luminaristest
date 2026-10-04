@@ -1106,6 +1106,7 @@ export class ApplicationFactory {
         this.repositories.posting,
         postingService,
         this.policies.accounting,
+        this.repositories.taxAssessment, // X7 PR-3 item 18 (F-TA-8 a): recusa encerrar com provisão pendente
       ),
       payable: payableService,
       receivable: receivableService,
@@ -1207,6 +1208,7 @@ export class ApplicationFactory {
         accountingReportService,
         this.policies.accounting,
         auditService,
+        postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
       ),
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,

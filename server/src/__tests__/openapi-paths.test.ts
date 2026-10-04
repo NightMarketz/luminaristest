@@ -99,8 +99,8 @@ const { options } = require('../../scripts/generate-openapi');
 // +3 (BE-INCR-PAYMENT-PROVIDER PR-1, P1-6/P1-9): /payment-accounts (GET+POST), /payment-accounts/{id}
 //    (GET+PATCH+DELETE), /payment-accounts/{id}/credential (PUT) — 3 PATHS e 6 OPERAÇÕES (229 → 232).
 // +3 (BE-INCR-TAX-ASSESSMENT Fase A PR-2, X7 item 20): /accounting/tax-assessments (GET+POST), /preview (POST),
-//    /{id} (GET) — 236 → 239. O /{id}/provisao é do PR-3.
-const BASELINE = 239; // +4: /accounting/accountant-assignments (+/mine, /{id}/accept, /{id}/end — GOV-CONTADOR) · +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
+//    /{id} (GET) — 236 → 239. X7 Fase A PR-3: /{id}/provisao (reconcile, item 16) — 239 → 240.
+const BASELINE = 240; // +4: /accounting/accountant-assignments (+/mine, /{id}/accept, /{id}/end — GOV-CONTADOR) · +1: GET /accounting/sped/qualif-assinante (FE-INCR-SPED-SIGNERS) · +1: GET /accounting/delivery (FE-INCR-DELIVERY PR-D1)
 
 describe('OpenAPI @openapi path coverage', () => {
   it('exposes at least BASELINE paths (guards the swagger-jsdoc `: ` drop bug)', () => {
