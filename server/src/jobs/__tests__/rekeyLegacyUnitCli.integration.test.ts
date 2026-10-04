@@ -437,4 +437,38 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     const report = JSON.parse(v.out.slice(v.out.indexOf('{')));
     expect(report.rekeyed).toEqual([{ ownerUserId: o.id, from: 'legacy-sem-trilha', to: result.to, rows: 2, anchored: false }]);
   }, 120000);
+
+  it('L-RK-6 (BRIEF VERIFY-V itens 1–2): dois legados sem trilha fundidos no mesmo `to` → --verify exit 1 pela regra (v)', async () => {
+    const o = await onboardedOwner();
+    await prisma.account.create({ data: { userId: o.id, unitId: 'legacy-v-a', code: '1', name: 'Caixa', nature: 'Asset', acceptsEntries: true } });
+    await prisma.account.create({ data: { userId: o.id, unitId: 'legacy-v-b', code: '2', name: 'Banco', nature: 'Asset', acceptsEntries: true } });
+    const pre = await backup();
+    const r = await cli(applyArgs(o.id, 'legacy-v-a', pre));
+    expect(r.code).toBe(0);
+    const to: string = JSON.parse(r.out.split('\n').filter((l) => l.startsWith('{"event":"unit_rekeyed"')).pop() as string).to;
+    expect((await cli(['--verify', '--against', pre])).code).toBe(0);
+
+    // Adulteração manual: as linhas de B vão para o `to` de A.
+    await prisma.$executeRawUnsafe('UPDATE accounts SET "unitId" = ? WHERE "userId" = ? AND "unitId" = ?', to, o.id, 'legacy-v-b');
+    const v = await cli(['--verify', '--against', pre]);
+    expect(v.code).toBe(1);
+    expect(v.out).toMatch(/regra \(v\).*legacy-v-a.*legacy-v-b/);
+  }, 120000);
+
+  it('L-RK-7 (BRIEF VERIFY-V itens 3–5): cabeça do pré trocada por uma falsa (contagem igual) → --verify exit 1 citando a que sumiu', async () => {
+    const o = await onboardedOwner();
+    await seedLegacy(o.id, 'legacy-head');
+    const pre = await backup();
+    expect((await cli(['--verify', '--against', pre])).code).toBe(0); // sem --apply, sem adulteração → verde
+
+    await prisma.$executeRawUnsafe('UPDATE audit_chain_heads SET "unitId" = ? WHERE "scopeUserId" = ? AND "unitId" = ?', 'cabeca-falsa', o.id, 'legacy-head');
+    try {
+      const v = await cli(['--verify', '--against', pre]);
+      expect(v.code).toBe(1);
+      expect(v.out).toContain(`(a) audit_chain_heads ${o.id}/legacy-head: cabeça do pré sumiu`);
+      expect(v.out).toContain(`(a) audit_chain_heads ${o.id}/cabeca-falsa: cabeça nova sem par ancorado`);
+    } finally {
+      await prisma.$executeRawUnsafe('UPDATE audit_chain_heads SET "unitId" = ? WHERE "scopeUserId" = ? AND "unitId" = ?', 'legacy-head', o.id, 'cabeca-falsa');
+    }
+  }, 120000);
 });

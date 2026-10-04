@@ -455,11 +455,12 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 > mesmo PR: 5 testes vermelhos contra o CLI do #480, 12/12 verdes depois. O que segue sem prova é a execução no `dev.db`
 > real (`RUNBOOK-I1B-UNIT-REKEY.md`, gate humano). O passo 7 do runbook passa a valer como prova depois do merge do #501.
 >
-> **Ressalvas do review do #501 (2026-10-04), abertas:** L-RK-6, regra (v): cada `to` vem de exatamente um `from`
+> **Ressalvas do review do #501 (2026-10-04) — ✅ FECHADAS no PR #503:** L-RK-6, regra (v): cada `to` vem de exatamente um `from`
 > (fusão de dois legados sem trilha passa hoje); L-RK-7: toda cabeça de `audit_chain_heads` do pré tem de existir no
 > pós (uma cabeça trocada por falsa passa hoje). Decididas em
 > [`D-2026-10-04-I1B-RESSALVAS-501`](../plano/decisoes/D-2026-10-04-I1B-RESSALVAS-501.md); BRIEF
-> [`BE-INCR-UNIT-REKEY-VERIFY-V-brief.md`](../accounting/BE-INCR-UNIT-REKEY-VERIFY-V-brief.md), sem "executa".
+> [`BE-INCR-UNIT-REKEY-VERIFY-V-brief.md`](../accounting/BE-INCR-UNIT-REKEY-VERIFY-V-brief.md). Código e 2 testes-guarda no
+> PR #503 (autorização do dono no chat em 2026-10-04): vermelhos contra `93af35b1`, 14/14 verdes depois.
 
 > ✅ **Ratificação por questionário em 2026-10-03**
 > ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):
