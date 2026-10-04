@@ -15,6 +15,7 @@ const at = (iso: string) => new Date(iso);
 const PERFIL_REAL = {
   regime: 'REAL', formaApuracaoIrpjCsll: 'TRIMESTRAL', ecfIndAliqCsll: '1', ecfIndRecReceita: '2', lucroRealObrigatorio: false,
   inicioAtividadeEm: null, encerramentoAtividadeEm: null, lc224AcrescimoSuspenso: false, lc224LiminarReferencia: null,
+  updatedAt: new Date('2026-01-05T00:00:00Z'),
 };
 
 function row(over: Partial<TaxAssessment>): TaxAssessment {
@@ -27,7 +28,7 @@ function row(over: Partial<TaxAssessment>): TaxAssessment {
   } as TaxAssessment;
 }
 
-function build(opts: { perfil?: Record<string, unknown>; confirmados?: TaxAssessment[]; confirmadosNaTx?: TaxAssessment[]; canManage?: boolean } = {}) {
+function build(opts: { perfil?: Record<string, unknown>; perfilNaTx?: Record<string, unknown> | null; confirmados?: TaxAssessment[]; confirmadosNaTx?: TaxAssessment[]; canManage?: boolean } = {}) {
   const created: unknown[] = [];
   const repo = {
     findMany: jest.fn(async (_s: unknown, _f: unknown, tx?: unknown) => (tx ? (opts.confirmadosNaTx ?? opts.confirmados ?? []) : (opts.confirmados ?? []))),
@@ -41,7 +42,11 @@ function build(opts: { perfil?: Record<string, unknown>; confirmados?: TaxAssess
     findOtherUnitsWithMovement: jest.fn(async () => []),
     runTransaction: jest.fn(async (fn: (tx: unknown) => unknown) => fn('TX')),
   };
-  const companyProfileRepo = { findByYear: jest.fn(async () => ({ ...PERFIL_REAL, ...opts.perfil })), travarFormaApuracao: jest.fn(async () => 1) };
+  const companyProfileRepo = {
+    findByYear: jest.fn(async (_s: unknown, _ano: number, tx?: unknown) =>
+      tx && opts.perfilNaTx !== undefined ? (opts.perfilNaTx && { ...PERFIL_REAL, ...opts.perfilNaTx }) : { ...PERFIL_REAL, ...opts.perfil }),
+    travarFormaApuracao: jest.fn(async () => 1),
+  };
   const fiscalProfileRepo = { findByScope: jest.fn(async () => ({ irpjDespesaAccountId: 'desp-irpj', csllDespesaAccountId: 'desp-csll', irpjRecolherAccountId: 'rec-irpj', csllRecolherAccountId: 'rec-csll' })) };
   const lalurRepo = {
     findManyEntries: jest.fn(async () => [
@@ -116,6 +121,16 @@ describe('TaxAssessmentService (X7 PR-2)', () => {
     const b = build({ confirmados: t01, confirmadosNaTx: [...t01.map((r) => ({ ...r, id: `${r.id}-novo` }))] });
     const dto = await confirmDto(b, { periodo: 'T02' });
     await expect(b.svc.confirm(scope, dto)).rejects.toMatchObject({ errorCode: 'TAX_ASSESSMENT_STALE' });
+  });
+
+  it('item 14 (achado 1 do review): perfil alterado ou apagado entre o cálculo e a tx ⇒ 409, sem trava nem linha', async () => {
+    for (const perfilNaTx of [{ regime: 'REAL', updatedAt: new Date('2026-01-06T00:00:00Z') }, null]) {
+      const b = build({ perfilNaTx });
+      const dto = await confirmDto(b);
+      await expect(b.svc.confirm(scope, dto)).rejects.toMatchObject({ errorCode: 'TAX_ASSESSMENT_STALE' });
+      expect(b.companyProfileRepo.travarFormaApuracao).not.toHaveBeenCalled();
+      expect(b.repo.create).not.toHaveBeenCalled();
+    }
   });
 
   it('item 19: confirmar exige manage', async () => {

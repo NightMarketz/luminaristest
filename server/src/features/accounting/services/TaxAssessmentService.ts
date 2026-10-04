@@ -217,6 +217,12 @@ export class TaxAssessmentService {
         throw new ConflictError('Um trimestre anterior mudou durante a confirmação — refaça o preview.', 'TAX_ASSESSMENT_STALE');
       }
 
+      // O cálculo leu o perfil fora da tx: relê dentro dela, senão um PUT/DELETE concorrente passa pelo gate de regime e
+      // a trava fica gravada sobre um perfil que não é o que gerou o número (achado 1 do review independente do PR-2).
+      const perfilTx = await this.companyProfileRepo.findByYear(scope, ano, tx);
+      if (!perfilTx || perfilTx.updatedAt.getTime() !== c.perfil.updatedAt.getTime()) {
+        throw new ConflictError(`O perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça o preview.`, 'TAX_ASSESSMENT_STALE');
+      }
       const outroRegime = confirmados.find((r) => r.regime !== c.perfil.regime);
       if (outroRegime) {
         throw new ConflictError(
