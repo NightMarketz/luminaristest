@@ -124,4 +124,25 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     // FK Restrict: a conta configurada não some por hard-delete
     await expect(prisma.account.delete({ where: { id: desp.id } })).rejects.toThrow();
   });
+
+  it('X7 Fase B item 16 (F-TB-3 a): 2 contas de saldo negativo a compensar só como Asset folha; evento com os ids; omitidas no PUT ficam', async () => {
+    const neg = await conta('1.2.9.1', 'Asset');
+    const negCsll = await conta('1.2.9.2', 'Asset');
+    const sintetica = await conta('1.2.9', 'Asset', false);
+    const passivo = await conta('2.1.9.3', 'Liability');
+
+    const recusa = await putUnidade({ irpjSaldoNegativoAccountId: passivo.id }); // passivo como saldo a compensar
+    expect(recusa.status).toBe(400);
+    expect(JSON.stringify(recusa.body)).toContain('esperado Asset');
+    expect((await putUnidade({ csllSaldoNegativoAccountId: sintetica.id })).status).toBe(400); // não é folha
+    expect((await putUnidade({ csllSaldoNegativoAccountId: 'nao-existe' })).status).toBe(400);
+
+    const ok = await putUnidade({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    expect(ok.status).toBe(200);
+    expect(ok.body.data).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    expect(await ultimoEvento('fiscal_profile.updated')).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    // a tela do perfil fiscal não envia os campos novos: omitidos, o PUT os preserva
+    const semCampos = await putUnidade({});
+    expect(semCampos.body.data).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+  });
 });
