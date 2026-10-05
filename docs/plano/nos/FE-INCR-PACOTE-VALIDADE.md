@@ -33,3 +33,6 @@ BRIEF BE-INCR-PACOTE-VALIDADE ("mostrar a validade no cadastro do pacote, na ven
   há comprovante de venda, mas há pipeline de PDF), 16 itens em 3 PRs, contratos (`PackageValidityAcceptance`,
   notice com hash, rotas de aceite e do PDF, texto v1), forks ✅ ratificados (§5.1), PE-FE-1..3 (jurídico, sobre a
   forma), insumos ausentes I1..I4. Não autoriza código: exige "executa".
+- [`docs/accounting/PACOTE-VALIDADE-PENDENCIAS-brief.md`](../../accounting/PACOTE-VALIDADE-PENDENCIAS-brief.md) — BRIEF 05/10 das pendências depois do
+  PR #530 (mensagem do saldo vencido, "quem" do aceite, data da receita, data D-1 na UI, ordem até o deploy); forks F-PP-1..7 ✅
+  ratificados por delegação ([[D-2026-10-05-PACOTE-VALIDADE-PENDENCIAS-FORKS]]). Não autoriza código: exige "executa".
