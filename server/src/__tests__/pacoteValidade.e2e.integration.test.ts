@@ -18,6 +18,7 @@ import { resolveAccountingScope } from '@/features/accounting/scope/AccountingSc
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, scopeToday } from '@/features/accounting/models/dates';
 import { centsFromDb } from '@/features/accounting/models/money';
+import { lastValidDay } from '@/features/packages/models/validity';
 import { LEDGER_STATUSES } from '@/features/accounting/models/ledgerStatus';
 import { maybeSyncSalePackageSold } from '@/features/accounting/sync/bridges/SalePackageSoldBridge';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
@@ -135,7 +136,9 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
 
     today = scopeToday(scopeOf('x'));
     const saleDateA = addDays(today, -10);
-    expiresOnA = addDays(saleDateA, 30);
+    // O esperado vem da MESMA regra do produto (D2: feriado nacional / domingo de eleição empurram o último dia).
+    // Somar 30 dias corridos aqui quebrava o teste nos dias em que hoje+20 cai num desses (ex.: 25/10/2026, 2º turno).
+    expiresOnA = lastValidDay(saleDateA, 30)!;
     dueDay = addDays(expiresOnA, 2);
     const ym = (d: string) => d.slice(0, 7);
     const monthsA = [ym(saleDateA), ym(today), ym(addDays(expiresOnA, 1))];
@@ -145,7 +148,8 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     pkg30 = (await row('packages', { name: '10 escovas', price: 100, validityDays: 30 })).id;
 
     UNIT_A = await newUnit('A', monthsA);
-    UNIT_B = await newUnit('B', [ym(addDays(today, -40)), ym(addDays(today, -15)), ym(addDays(today, -9)), ym(today)]);
+    const expiresOnB = lastValidDay(addDays(today, -40), 30)!; // ~hoje − 10 (prorrogado se cair em feriado)
+    UNIT_B = await newUnit('B', [ym(addDays(today, -40)), ym(addDays(today, -15)), ym(addDays(expiresOnB, 1)), ym(today)]);
     UNIT_C = await newUnit('C', monthsA);
     UNIT_D = await newUnit('D', monthsA);
     UNIT_E = await newUnit('E', monthsA);
@@ -381,15 +385,15 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const ok = await request(app)
       .get('/api/package-balances')
       .set(authHeader(user))
-      .query({ unitId: UNIT_A, expiresOnOrBefore: addDays(today, 29) });
+      .query({ unitId: UNIT_A, expiresOnOrBefore: addDays(lastValidDay(today, 30)!, -1) });
     expect(ok.status).toBe(200);
-    expect(ok.body.data.balances).toHaveLength(0); // recompra com saldo 0 reiniciou: vence em hoje + 30
+    expect(ok.body.data.balances).toHaveLength(0); // recompra com saldo 0 reiniciou: vence em lastValidDay(hoje, 30)
     const hit = await request(app)
       .get('/api/package-balances')
       .set(authHeader(user))
-      .query({ unitId: UNIT_A, expiresOnOrBefore: addDays(today, 30) });
+      .query({ unitId: UNIT_A, expiresOnOrBefore: lastValidDay(today, 30)! });
     expect(hit.body.data.balances).toHaveLength(1);
-    expect(hit.body.data.balances[0].expiresAt.slice(0, 10)).toBe(addDays(today, 30));
+    expect(hit.body.data.balances[0].expiresAt.slice(0, 10)).toBe(lastValidDay(today, 30));
     const bad = await request(app).get('/api/package-balances').set(authHeader(user)).query({ unitId: UNIT_A, expiresOnOrBefore: '2026-02-30' });
     expect(bad.status).toBe(400);
   });
