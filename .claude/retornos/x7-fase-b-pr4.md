@@ -68,7 +68,7 @@ base: 0b26abc5 (origin/main, 05/10 — inclui o #529, PR-3)
 - `npm run docs:generate` → 247 paths (antes 247)
 - `npm run test:unit` → 279 suítes, 3986 passed
 - `npm run test:integration` → 113 suítes, 929 passed (antes do fix do review)
-- depois do fix do review: ver o PR (rodada completa repetida)
+- depois do fix do review (`2468efc`): `tsc` 0 · `npm run test:unit` → 279 suítes, 3987 passed · `npm run test:integration` → 113 suítes, 930 passed
 - Sem migração neste PR (sem `smoke:migration`).
 
 ### Fold pronto (pós-merge, não aplicado)
