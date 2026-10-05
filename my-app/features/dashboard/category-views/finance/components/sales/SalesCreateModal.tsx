@@ -23,6 +23,10 @@ import { usePackageCatalog } from '../../hooks/sales/usePackageCatalog';
 import { SaleItemsManager } from './create/SaleItemsManager';
 import { PaymentTermChips } from './create/inputs';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
+import { notify } from '@/lib/notifications/notify';
+import { hasValidity, packageAcceptancesService, toAcceptanceInput } from '@/lib/services/packageAcceptances.service';
+import { useValidityNotice } from '../../hooks/sales/useValidityNotice';
+import { PackageValidityPrompt, isValidityAcceptable } from './PackageValidityPrompt';
 import type { SaleItemsVariant, SalesCreateModalProps } from './create/types';
 import type { WizardVariant } from '../../types/sales.types';
 import type { PackageSaleIssue } from '../../utils/packageSale';
@@ -162,6 +166,15 @@ export default function SalesCreateModal({
 
     const isPackageSale = wizardState.variant === 'packages';
 
+    // FE-INCR-PACOTE-VALIDADE (itens 10-11): a validade (texto do servidor) da compra em curso, e o checkbox do operador.
+    // Trocar pacote, data ou unidade refaz a busca e desmarca o aceite: o texto mostrado é o da compra de agora.
+    const chosenPackageId = isPackageSale ? wizardState.items.find(i => i.packageId)?.packageId : undefined;
+    const { state: noticeState, reload: reloadNotice } = useValidityNotice(wizardState.unitId, chosenPackageId, wizardState.date);
+    const [validityAccepted, setValidityAccepted] = useState(false);
+    const noticeKey = noticeState.status === 'ready' ? `${noticeState.notice.saleDate}|${noticeState.notice.textSha256 ?? ''}` : noticeState.status;
+    useEffect(() => { setValidityAccepted(false); }, [noticeKey, chosenPackageId, wizardState.unitId]);
+    const validityReady = isValidityAcceptable(!!chosenPackageId, noticeState, validityAccepted);
+
     const paymentMethodOptions = useMemo(() => {
         return salesFields.find(f => f.name === 'paymentMethod')?.options ?? [];
     }, [salesFields]);
@@ -213,7 +226,20 @@ export default function SalesCreateModal({
         }
         setSubmitError(null);
         try {
-            await submit(salesTable.id, saleItemsTable.id, finalize);
+            const saleId = await submit(salesTable.id, saleItemsTable.id, finalize);
+            // Item 11: venda e itens já existem; o aceite é a 3ª chamada, com versão + hash do texto MOSTRADO. Se falhar
+            // (inclusive 409 PACKAGE_NOTICE_CHANGED) a venda fica criada e o detalhe mostra o selo "aceite não registrado".
+            if (noticeState.status === 'ready' && hasValidity(noticeState.notice)) {
+                try {
+                    await packageAcceptancesService.create(toAcceptanceInput(wizardState.unitId, saleId, noticeState.notice));
+                } catch {
+                    notify(
+                        t('finance_view:sales.validity.accept_failed', 'A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.'),
+                        'warning',
+                        t('finance_view:sales.validity.title', 'Validade do pacote'),
+                    );
+                }
+            }
             onCreated();
             onClose();
         } catch (err: unknown) {
@@ -222,7 +248,7 @@ export default function SalesCreateModal({
                 : t('common:unknownErrorOccurred', 'Erro desconhecido');
             setSubmitError(msg);
         }
-    }, [canSubmit, packageIssue, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t]);
+    }, [canSubmit, packageIssue, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t, noticeState, wizardState.unitId]);
 
     const tabs = useMemo(() => [
         { id: 0 as const, label: t('finance_view:sales.modal.tab_general', 'Cabeçalho') },
@@ -499,6 +525,21 @@ export default function SalesCreateModal({
                             formatCurrency={formatCurrency}
                         />
                     )}
+
+                    {/* Validade do pacote em destaque + aceite (F-JUR-4) — só na variante Pacotes, com o pacote escolhido */}
+                    {activeTab === 1 && chosenPackageId && (
+                        <div className="mt-6" data-testid="package-validity-section">
+                            <p className={`${SECTION_HEADER_CLASS} mb-2`}>
+                                {t('finance_view:sales.validity.title', 'Validade do pacote')}
+                            </p>
+                            <PackageValidityPrompt
+                                state={noticeState}
+                                accepted={validityAccepted}
+                                onAcceptedChange={setValidityAccepted}
+                                onRetry={reloadNotice}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* ─── Footer (frosted glass) ─── */}
@@ -526,14 +567,14 @@ export default function SalesCreateModal({
                             /* Tab 1 → Salvar Rascunho + Finalizar Venda */
                             <>
                                 <button
-                                    disabled={!canSubmit || wizardState.isSubmitting}
+                                    disabled={!canSubmit || !validityReady || wizardState.isSubmitting}
                                     onClick={() => handleSubmit(false)}
                                     className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 >
                                     {t('finance_view:sales.modal.btn_draft', 'Salvar Rascunho')}
                                 </button>
                                 <button
-                                    disabled={!canSubmit || wizardState.isSubmitting}
+                                    disabled={!canSubmit || !validityReady || wizardState.isSubmitting}
                                     onClick={() => handleSubmit(true)}
                                     className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none transition-all duration-200 flex items-center gap-2"
                                 >

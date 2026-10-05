@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import { SALE_PAYMENT_METHODS, type SalePaymentMethod } from '@/lib/services/sales.service';
 import { packageBalancesService, type CustomerPackageBalance } from '@/lib/services/packageBalances.service';
+import { formatDateBR, scopeToday } from '@/features/dashboard/shared/utils/formatters';
 import type { SaleRecord } from '../../types/sales.types';
 
 /**
@@ -62,7 +63,11 @@ export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfi
         return () => { alive = false; };
     }, [isOpen, unitId, customerId, soldPackageId]);
 
-    const hasPackages = balances.length > 0;
+    // FE-INCR-PACOTE-VALIDADE item 8: saldo com validade vencida aparece desabilitado (UX; a autoridade é o 400 do servidor).
+    // `expiresOn` é date-only `YYYY-MM-DD` e `scopeToday()` também → a comparação de string é a de calendário.
+    const today = scopeToday();
+    const isExpired = (b: CustomerPackageBalance) => b.expiresOn != null && b.expiresOn < today;
+    const hasPackages = balances.some((b) => !isExpired(b));
     const selectedBalance = useMemo(
         () => balances.find((b) => b.packageId === packageId) ?? null,
         [balances, packageId],
@@ -165,14 +170,27 @@ export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfi
                         >
                             <option value="">{t('finance_view:sales.payment.package_placeholder', 'Selecione o pacote…')}</option>
                             {balances.map((b) => (
-                                <option key={b.id} value={b.packageId}>
+                                <option key={b.id} value={b.packageId} disabled={isExpired(b)}>
                                     {t('finance_view:sales.payment.package_option', 'Pacote {{id}} — saldo {{balance}}', {
                                         id: b.packageId.slice(0, 8),
                                         balance: formatCurrency(b.balanceCents / 100),
                                     })}
+                                    {' — '}
+                                    {b.expiresOn == null
+                                        ? t('finance_view:sales.payment.no_validity', 'sem validade')
+                                        : isExpired(b)
+                                        ? t('finance_view:sales.payment.expired_on', 'vencido em {{date}}', { date: formatDateBR(b.expiresOn) })
+                                        : t('finance_view:sales.payment.expires_on', 'vence em {{date}}', { date: formatDateBR(b.expiresOn) })}
                                 </option>
                             ))}
                         </select>
+                        {selectedBalance && (
+                            <p data-testid="selected-balance-validity" className="mt-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+                                {selectedBalance.expiresOn == null
+                                    ? t('finance_view:sales.payment.no_validity_sentence', 'Este saldo não tem validade.')
+                                    : t('finance_view:sales.payment.validity_sentence', 'Este saldo vence em {{date}}.', { date: formatDateBR(selectedBalance.expiresOn) })}
+                            </p>
+                        )}
                         {packageInsufficient && (
                             <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                                 {t('finance_view:sales.payment.insufficient', 'Saldo do pacote insuficiente para o total da venda.')}

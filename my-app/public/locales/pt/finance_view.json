@@ -168,7 +168,30 @@
         "credit_card": "Cartão de crédito",
         "debit_card": "Cartão de débito",
         "package_balance": "Saldo de pacote"
-      }
+      },
+      "no_validity": "sem validade",
+      "expired_on": "vencido em {{date}}",
+      "expires_on": "vence em {{date}}",
+      "no_validity_sentence": "Este saldo não tem validade.",
+      "validity_sentence": "Este saldo vence em {{date}}."
+    },
+    "validity": {
+      "title": "Validade do pacote",
+      "until": "Válido até {{date}}",
+      "loading": "Carregando a validade do pacote…",
+      "load_error": "Não foi possível carregar a validade do pacote. Sem ela a venda não pode ser registrada.",
+      "load_error_detail": "Não foi possível carregar o aceite desta venda.",
+      "retry": "Tentar de novo",
+      "none": "Sem validade",
+      "accept_label": "Li este texto ao cliente e ele concordou",
+      "accept_failed": "A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.",
+      "download_receipt": "Baixar comprovante (PDF)",
+      "accepted_by": "Aceite registrado por {{who}} em {{when}} (texto {{version}})",
+      "not_registered": "Aceite não registrado",
+      "register": "Registrar aceite",
+      "confirm_register": "Confirmar aceite",
+      "balance_differs": "O saldo do cliente neste pacote vence em {{date}} (junta compras anteriores).",
+      "balance_expires": "O saldo do cliente neste pacote vence em {{date}}."
     }
   },
   "status": {

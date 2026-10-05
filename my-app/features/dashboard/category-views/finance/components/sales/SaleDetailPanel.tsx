@@ -8,6 +8,7 @@ import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 import { useRenderTypedValue } from '@/features/dashboard/shared/hooks/useRenderTypedValue';
 import { StatusBadge, PaymentBadge, AboveCatalogBadge } from './SalesTable';
+import { PackageSaleValidity } from './PackageSaleValidity';
 import { SaleRecord, SaleItemRecord } from '../../types/sales.types';
 
 // Convert camelCase field name to a readable label: "salesChannel" → "Sales Channel"
@@ -91,6 +92,12 @@ export default function SaleDetailPanel({
     const subtotal = Number(sale.subtotal) || computedSubtotal || 0;
     const total = Number(sale.totalAmount) || subtotal || 0;
 
+    // FE-INCR-PACOTE-VALIDADE item 12: venda de UM pacote (todos os itens com packageId) mostra validade e aceite.
+    const packageIds = Array.from(new Set(filteredItems.map((it) => (it.packageId ? String(it.packageId) : '')).filter(Boolean)));
+    const isPackageSale = filteredItems.length > 0 && filteredItems.every((it) => !!it.packageId) && packageIds.length === 1;
+    const saleDateOnly = /^\d{4}-\d{2}-\d{2}/.test(String(sale.date || '')) ? String(sale.date).slice(0, 10) : '';
+    const unitIdValue = String(sale.unitId || '');
+
     return (
         <div className="rounded-xl border border-gray-200/70 dark:border-gray-800/70 bg-white dark:bg-neutral-900">
             {confirmNode}
@@ -151,7 +158,8 @@ export default function SaleDetailPanel({
                     <div className="space-y-1">
                         <div className="text-sm text-gray-600 dark:text-gray-400">{t('finance_view:sales.labels.date', 'Data')}</div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {formatDateBR(sale.date)}
+                            {/* Data da venda é date-only (o motor a grava como ISO à meia-noite UTC): o dia escrito, nunca o instante em UTC-3 */}
+                            {formatDateBR(saleDateOnly || sale.date)}
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -184,6 +192,18 @@ export default function SaleDetailPanel({
                         <div className="text-base font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(total)}</div>
                     </div>
                 </div>
+
+                {isPackageSale && unitIdValue && saleDateOnly && (
+                    <PackageSaleValidity
+                        key={sale.id}
+                        unitId={unitIdValue}
+                        saleId={sale.id}
+                        packageId={packageIds[0]}
+                        saleDate={saleDateOnly}
+                        customerId={sale.customerId ? String(sale.customerId) : undefined}
+                        isFinalized={isFinalized}
+                    />
+                )}
 
                 {/* Dynamic Extra Fields — isTableSchema guard replaces (schema as any) cast */}
                 {table?.schema && isTableSchema(table.schema) && (

@@ -48,6 +48,7 @@ import { FixedAssetRepository } from '../features/accounting/repositories/FixedA
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
+import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
 
 // Features - Policies
 import { ChatInstancePolicy } from '../features/chatInstances/policies/ChatInstancePolicy';
@@ -61,6 +62,7 @@ import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPol
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
 import { PackageBalancePolicy } from '../features/packages/policies/PackageBalancePolicy';
+import { PackageAcceptancePolicy } from '../features/packages/policies/PackageAcceptancePolicy';
 
 // Features - Services
 import { ChatInstanceService } from '../features/chatInstances/services/ChatInstanceService';
@@ -135,6 +137,7 @@ import { FiscalDocumentEmissionService } from '../features/accounting/services/F
 import { FiscalDocumentLifecycleService } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
+import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
@@ -238,6 +241,8 @@ import type { ILalurRepository } from '../features/accounting/repositories/ILalu
 import type { IAccountingPolicy } from '../features/accounting/policies/IAccountingPolicy';
 import type { IPackageBalanceRepository } from '../features/packages/repositories/IPackageBalanceRepository';
 import type { IPackageBalancePolicy } from '../features/packages/policies/IPackageBalancePolicy';
+import type { IPackageAcceptanceRepository } from '../features/packages/repositories/IPackageAcceptanceRepository';
+import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPackageAcceptancePolicy';
 
 /**
  * BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — constrói o array de `IAccountingEventMapper`
@@ -412,6 +417,7 @@ export class ApplicationFactory {
     reconciliation: IReconciliationRepository;
     dataExchange: IDataExchangeRepository;
     packageBalance: IPackageBalanceRepository;
+    packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
     sourceProvenance: ISourceProvenanceRepository;
     referentialMapping: IReferentialMappingRepository;
     referentialAccount: IReferentialAccountRepository;
@@ -454,6 +460,7 @@ export class ApplicationFactory {
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
     packageBalance: IPackageBalancePolicy;
+    packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
   };
 
   public readonly services: {
@@ -525,6 +532,7 @@ export class ApplicationFactory {
     accountingPolicyVersion: AccountingPolicyVersionService; // GOV-CONTADOR política versionada
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
+    packageAcceptance: PackageAcceptanceService; // FE-INCR-PACOTE-VALIDADE
     presetSync: PresetSyncService;
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
@@ -566,6 +574,7 @@ export class ApplicationFactory {
       reconciliation: new ReconciliationRepository(),
       dataExchange: new DataExchangeRepository(),
       packageBalance: new PackageBalanceRepository(),
+      packageAcceptance: new PackageAcceptanceRepository(),
       sourceProvenance: new SourceProvenanceRepository(),
       referentialMapping: new ReferentialMappingRepository(),
       referentialAccount: new ReferentialAccountRepository(),
@@ -609,6 +618,7 @@ export class ApplicationFactory {
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
       packageBalance: new PackageBalancePolicy(),
+      packageAcceptance: new PackageAcceptancePolicy(),
     };
 
     // Services (handling inter-dependencies)
@@ -1248,6 +1258,12 @@ export class ApplicationFactory {
       ),
       accountingReview: accountingReviewService,
       packageBalance: packageBalanceService,
+      packageAcceptance: new PackageAcceptanceService(
+        this.repositories.packageAcceptance,
+        this.policies.packageAcceptance,
+        this.repositories.dynamicTable,
+        this.repositories.user,
+      ),
       presetSync: presetSyncService,
       moduleInstall: moduleInstallService,
       attachment: new AttachmentService(this.repositories.attachment, this.policies.attachment),
@@ -1448,6 +1464,7 @@ export class ApplicationFactory {
   public getFiscalDocumentRepository = (): IFiscalDocumentRepository => this.repositories.fiscalDocument;
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
+  public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

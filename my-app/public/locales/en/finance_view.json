@@ -168,7 +168,30 @@
         "credit_card": "Credit card",
         "debit_card": "Debit card",
         "package_balance": "Package balance"
-      }
+      },
+      "no_validity": "no validity",
+      "expired_on": "expired on {{date}}",
+      "expires_on": "expires on {{date}}",
+      "no_validity_sentence": "This balance has no validity.",
+      "validity_sentence": "This balance expires on {{date}}."
+    },
+    "validity": {
+      "title": "Package validity",
+      "until": "Valid until {{date}}",
+      "loading": "Loading the package validity…",
+      "load_error": "The package validity could not be loaded. Without it the sale cannot be recorded.",
+      "load_error_detail": "The acceptance of this sale could not be loaded.",
+      "retry": "Try again",
+      "none": "No validity",
+      "accept_label": "I read this text to the customer and they agreed",
+      "accept_failed": "The sale was created, but the validity acceptance was not recorded. Open the sale and record the acceptance.",
+      "download_receipt": "Download receipt (PDF)",
+      "accepted_by": "Acceptance recorded by {{who}} on {{when}} (text {{version}})",
+      "not_registered": "Acceptance not recorded",
+      "register": "Record acceptance",
+      "confirm_register": "Confirm acceptance",
+      "balance_differs": "The customer's balance on this package expires on {{date}} (it merges earlier purchases).",
+      "balance_expires": "The customer's balance on this package expires on {{date}}."
     }
   },
   "status": {

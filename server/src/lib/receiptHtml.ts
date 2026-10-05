@@ -27,7 +27,7 @@ export interface ReceiptData {
 }
 
 /** Escapes the five HTML-significant chars — description/account names are user-controlled. */
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -40,9 +40,9 @@ function escapeHtml(s: string): string {
 // (NOT toLocaleString — it silently drops the separator on a small-ICU Node). cents arrive here
 // as plain `number` (BE-INCR-MONEY-BIGINT/F-W2B-3: the bigint->number conversion — guarded by
 // `centsFromDb`, models/money.ts — already happened at the repository/service read boundary
-// before this function is ever called). Promote to a shared server-side formatter only if a 2nd
-// consumer appears (memory reuse-criterion-blind-to-reinlined-technique).
-function centsToBRL(cents: number): string {
+// before this function is ever called). Exported since the 2nd consumer appeared — lib/packageSaleReceiptHtml.ts
+// (FE-INCR-PACOTE-VALIDADE) — instead of re-inlining it (memory reuse-criterion-blind-to-reinlined-technique).
+export function centsToBRL(cents: number): string {
   const neg = cents < 0;
   const abs = Math.abs(cents);
   const reais = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');

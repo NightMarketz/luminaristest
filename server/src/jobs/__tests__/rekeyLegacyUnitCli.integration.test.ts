@@ -146,10 +146,10 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     fs.rmSync(work, { recursive: true, force: true });
   });
 
-  it('item 2: inventário do DMMF = 52 models com unitId, classificação fechada 50 REKEY + 2 KEEP, toda REKEY com userId', () => {
+  it('item 2: inventário do DMMF = 53 models com unitId, classificação fechada 51 REKEY + 2 KEEP, toda REKEY com userId', () => {
     // 47 na medição do ADR (26/09) + ProductDestinationDefault (#481) + PaymentAccount (#484) + AccountantAssignment (#482). Model novo com unitId derruba este teste até ser classificado.
     const inv = buildInventory();
-    expect(inv).toHaveLength(52); // +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada)
+    expect(inv).toHaveLength(53); // +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada) · +1 PackageValidityAcceptance (FE-INCR-PACOTE-VALIDADE)
     expect(inv.filter((t) => t.cls === 'REKEY').map((t) => t.model).sort()).toEqual([...REKEY_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'KEEP').map((t) => t.model).sort()).toEqual([...KEEP_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'REKEY').every((t) => t.ownerColumn === 'userId')).toBe(true);

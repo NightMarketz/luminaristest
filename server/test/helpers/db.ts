@@ -85,6 +85,7 @@ export async function resetDb(): Promise<void> {
   await prisma.journalEntrySequence.deleteMany();
   await prisma.customerPackageBalance.deleteMany();
   await prisma.packageBalanceMovement.deleteMany();
+  await prisma.packageValidityAcceptance.deleteMany(); // FE-INCR-PACOTE-VALIDADE: prova append-only, sem FK — folha pura
   await prisma.accountingBinding.deleteMany();
   await prisma.reconcilePendingItem.deleteMany();
   // BE-INCR-FIXED-ASSETS (nó C8): nada referencia FixedAsset por FK — folha pura; cai antes de
