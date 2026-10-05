@@ -54,6 +54,11 @@ export interface FiscalProfileView extends CostRegime {
   csllDespesaAccountId: string | null;
   irpjRecolherAccountId: string | null;
   csllRecolherAccountId: string | null;
+  // X8 (BRIEF item 2, F-PCB-1 b)
+  pisDespesaAccountId: string | null;
+  cofinsDespesaAccountId: string | null;
+  pisRecolherAccountId: string | null;
+  cofinsRecolherAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -154,6 +159,12 @@ export class FiscalProfileService {
         'fiscal_profile_missing: perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile) — nenhum custo é calculado sem ele (F-X6-6 a).',
       );
     }
+    // X8 item 1b (F-PCB-5 a): linha gravada antes do refine do item 1 com o par ilegal não credita — 400 até o PUT corrigir.
+    if (row.regimeTributario === 'PRESUMIDO' && row.pisCofinsRegime === 'NAO_CUMULATIVO') {
+      throw new ValidationError(
+        'fiscal_profile_regime_incoerente: o perfil fiscal da unidade está em PRESUMIDO com pisCofinsRegime=NAO_CUMULATIVO — o Presumido é cumulativo (IN RFB 2.121/2022 art. 122) e não credita PIS/COFINS na compra. Corrija com PUT /api/accounting/fiscal-profile (pisCofinsRegime=CUMULATIVO).',
+      );
+    }
     return this.toView(row, await this.regimeEmpresaHoje(scope));
   }
 
@@ -182,6 +193,11 @@ export class FiscalProfileService {
     if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
     if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher', tx);
     if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher', tx);
+    // X8 item 2 (F-PCB-1 b): provisão de PIS/Cofins — despesa = Expense (não dedução da receita), a recolher = Liability.
+    if (input.pisDespesaAccountId) await this.assertExpenseAccount(scope, input.pisDespesaAccountId, 'despesa de PIS', tx);
+    if (input.cofinsDespesaAccountId) await this.assertExpenseAccount(scope, input.cofinsDespesaAccountId, 'despesa de COFINS', tx);
+    if (input.pisRecolherAccountId) await this.assertLiabilityAccount(scope, input.pisRecolherAccountId, 'PIS a recolher', tx);
+    if (input.cofinsRecolherAccountId) await this.assertLiabilityAccount(scope, input.cofinsRecolherAccountId, 'COFINS a recolher', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -231,6 +247,11 @@ export class FiscalProfileService {
         csllDespesaAccountId: row.csllDespesaAccountId ?? '',
         irpjRecolherAccountId: row.irpjRecolherAccountId ?? '',
         csllRecolherAccountId: row.csllRecolherAccountId ?? '',
+        // X8 item 2: contas da provisão de PIS/Cofins — só ids
+        pisDespesaAccountId: row.pisDespesaAccountId ?? '',
+        cofinsDespesaAccountId: row.cofinsDespesaAccountId ?? '',
+        pisRecolherAccountId: row.pisRecolherAccountId ?? '',
+        cofinsRecolherAccountId: row.cofinsRecolherAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -282,7 +303,7 @@ export class FiscalProfileService {
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Liability') {
-      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Liability (imposto a recolher é passivo — BRIEF X7 item 3).`);
+      throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Liability (imposto a recolher é passivo — BRIEF X7 item 3 / X8 item 2).`);
     }
   }
 
@@ -302,6 +323,10 @@ export class FiscalProfileService {
       csllDespesaAccountId: row.csllDespesaAccountId,
       irpjRecolherAccountId: row.irpjRecolherAccountId,
       csllRecolherAccountId: row.csllRecolherAccountId,
+      pisDespesaAccountId: row.pisDespesaAccountId,
+      cofinsDespesaAccountId: row.cofinsDespesaAccountId,
+      pisRecolherAccountId: row.pisRecolherAccountId,
+      cofinsRecolherAccountId: row.cofinsRecolherAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

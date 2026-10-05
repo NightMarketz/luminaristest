@@ -43,6 +43,9 @@ recoverableTaxLines?: {
 accountId: string
 amountCents: number
 kind: ("ICMS" | "PIS_COFINS")
+baseCents?: number
+pisCents?: number
+cofinsCents?: number
 }[]
 attachmentId?: string
 }

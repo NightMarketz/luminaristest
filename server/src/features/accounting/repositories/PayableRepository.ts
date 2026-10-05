@@ -5,6 +5,7 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
 import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
+import { separarCreditoPisCofins, type CreditoPisCofinsNota } from '../models/pisCofinsParams';
 import type {
   CreatePayableData,
   CreatePaymentData,
@@ -110,6 +111,38 @@ export class PayableRepository implements IPayableRepository {
       },
       orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
     });
+  }
+
+  public async findPisCofinsCredits(
+    scope: AccountingScope,
+    from: string,
+    to: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CreditoPisCofinsNota[]> {
+    const rows = await (tx ?? prisma).payable.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        issueDate: { gte: `${from}T00:00:00.000Z`, lte: `${to}T00:00:00.000Z` },
+        recoverableTaxLines: { contains: '"PIS_COFINS"' },
+      },
+      orderBy: [{ issueDate: 'asc' }, { createdAt: 'asc' }],
+    });
+    const out: CreditoPisCofinsNota[] = [];
+    for (const row of rows) {
+      const lines = JSON.parse(row.recoverableTaxLines!) as { kind: string; amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number }[];
+      const line = lines.find((l) => l.kind === 'PIS_COFINS');
+      if (!line) continue;
+      out.push({
+        payableId: row.id,
+        documentNumber: row.documentNumber,
+        issueDate: row.issueDate.toISOString().slice(0, 10),
+        amountCents: line.amountCents,
+        ...separarCreditoPisCofins(line),
+      });
+    }
+    return out;
   }
 
   public async claimForPayment(

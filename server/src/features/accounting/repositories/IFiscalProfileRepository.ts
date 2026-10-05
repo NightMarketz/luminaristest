@@ -15,6 +15,11 @@ export interface FiscalProfileData {
   csllDespesaAccountId?: string | null;
   irpjRecolherAccountId?: string | null;
   csllRecolherAccountId?: string | null;
+  // X8 (BRIEF item 2, F-PCB-1 b)
+  pisDespesaAccountId?: string | null;
+  cofinsDespesaAccountId?: string | null;
+  pisRecolherAccountId?: string | null;
+  cofinsRecolherAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;
