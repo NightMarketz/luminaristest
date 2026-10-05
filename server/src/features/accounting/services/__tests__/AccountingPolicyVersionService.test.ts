@@ -8,7 +8,7 @@
  * Contrato: o payload da proposta conserva o `superRefine` do PUT (no Zod 4, `.omit()` o descarta).
  */
 import type { Prisma } from 'generated/prisma';
-import { AccountantRequiredError, PolicyApprovalRequiredError } from '../../../../lib/errors';
+import { AccountantRequiredError, PolicyApprovalRequiredError, PolicyNoAccountantError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import type { ActiveAccountant } from '../../policies/IAccountingPolicy';
 import { resolveAccountingScope, type AccountingScope } from '../../scope/AccountingScope';
@@ -125,6 +125,18 @@ describe('15c — approve: atribuição encerrada entre o preflight e a tx → 4
     await svc.approve(delegated, 'pv-1');
     expect(pv.transition).toHaveBeenCalledWith('pv-1', 'PROPOSED', 'APPLIED', expect.objectContaining({ assignmentId: 'asg-1', decidedById: 'contador' }), TX);
     expect(fiscal.applyInTx).toHaveBeenCalledWith(delegated, expect.objectContaining({ pisCofinsCreditFromSimplesSupplier: false }), TX, 'pv-1');
+  });
+});
+
+describe('15c — propose: atribuição encerrada entre o preflight e a tx → 409 POLICY_NO_ACCOUNTANT, nada criado', () => {
+  it('propose', async () => {
+    const pv = policyVersionRepo();
+    const fiscal = { validate: jest.fn() } as unknown as FiscalProfileService;
+    const svc = new AccountingPolicyVersionService(pv, assignmentRepo(active, null), policy, audit, fiscal, {} as AccountingScopeSettingsService, accounts, lalur);
+    const dto = ProposePolicyVersionSchema.parse({ unitId: 'unit-1', target: 'FISCAL_PROFILE', payload: PERFIL });
+    await expect(svc.propose(owner, dto)).rejects.toBeInstanceOf(PolicyNoAccountantError);
+    expect(pv.create).not.toHaveBeenCalled();
+    expect(pv.transition).not.toHaveBeenCalled();
   });
 });
 

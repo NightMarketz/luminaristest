@@ -92,6 +92,8 @@ export class AccountingPolicyVersionService {
     // 7.4: sem contador não há quem aprove (F-GOV-4 a: use o PUT).
     if (!(await this.assignmentRepo.findActive(scope))) throw new PolicyNoAccountantError();
     return this.repo.runTransaction(async (tx) => {
+      // Releitura autoritativa (preâmbulo do §3: todo gate em dois níveis) — atribuição encerrada entre o preflight e a tx.
+      if (!(await this.assignmentRepo.findActive(scope, tx))) throw new PolicyNoAccountantError();
       const pending = await this.repo.findPending(scope, dto.target, tx);
       if (pending) {
         // F-POL-6 (a): libera o slot ANTES de criar a nova (o @@unique do slot seguraria a 2ª PROPOSED).
