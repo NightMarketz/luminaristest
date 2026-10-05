@@ -1,6 +1,6 @@
 # ADR-INCR-SPED-ECF-FASE3 — ECF em Lucro Real (Blocos L/M/N + `HASH_ECF_ANTERIOR` + `0010` parametrizável)
 
-- **Status:** **Accepted — forks fechados; Parte B (item 13 / BRIEF 3C) normatizada (EMENDA 2026-09-12, 3ª — D-P1..D-P4 + correções C1..C4, ao final); model do Fork 4→(b) normatizado (EMENDA 2026-09-11, 2ª — D-M1..D-M5).** [EMENDA 2026-09-12] BRIEF 3C 5/5 forks → (a) e 4 correções de forma (C1 linha-pai de fechamento · C2 `parentId` não-nulo nos filhos · C3 âncora implícita + guarda de continuidade · C4 PF/BC sem conta ⇒ 400) ratificados por dono, em sessão, 2026-09-12 (questionário); implementação autorizada na mesma data: *"sessao-feature do 3C — EMENDA 3ª ao ADR antes do model"*. [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
+- **Status:** **Accepted — forks fechados; restrição F-M8 (só trimestral) RETIRADA pela EMENDA 2026-10-05 (4ª, X7 Fase B item 24 — ao final); Parte B (item 13 / BRIEF 3C) normatizada (EMENDA 2026-09-12, 3ª — D-P1..D-P4 + correções C1..C4, ao final); model do Fork 4→(b) normatizado (EMENDA 2026-09-11, 2ª — D-M1..D-M5).** [EMENDA 2026-09-12] BRIEF 3C 5/5 forks → (a) e 4 correções de forma (C1 linha-pai de fechamento · C2 `parentId` não-nulo nos filhos · C3 âncora implícita + guarda de continuidade · C4 PF/BC sem conta ⇒ 400) ratificados por dono, em sessão, 2026-09-12 (questionário); implementação autorizada na mesma data: *"sessao-feature do 3C — EMENDA 3ª ao ADR antes do model"*. [EMENDA 2026-09-11] Forks 2→(d), 3→(a), 4→(b), 6→(b) e 7→(a) ratificados por dono, em sessão, 2026-09-11 (questionário); detalhe e fontes na EMENDA ao final. BRIEF de execução: `docs/accounting/BE-INCR-SPED-ECF-FASE3B-blocos-LMN-brief.md`. **Implementação do restante segue exigindo autorização própria (ORCH-006).** Antes: **Accepted (parcial — esqueleto).** [EMENDA 2026-09-02] Forks 1 e 5 ratificados e o esqueleto (itens `[direto]` + `[cond:Fork 1]` + `[cond:Fork 5]` do BRIEF) autorizado por dono, em sessão, 2026-09-02: *"Ratifico Fork 1 (dedicado) e Fork 5 (trimestral), implementa o esqueleto. Dispara tbm mais passos que são de estruturação e não dessas decisões que estão pendentes somente de configs que dependem de informações de leis"*. Forks 2, 3 e 4 seguem `RATIFICAÇÃO PENDENTE`; blocos L/M/N permanecem marcadores vazios e `FORMA_TRIB` do Real entrou como parâmetro do DTO sem default e, na mesma data, ganhou **default `'1'`** ratificado pelo dono (artefato: `BE-INCR-SPED-ECF-layout-transcription.md:85`, Manual p. 13 §1.3; §5 item 6 fechado). Esqueleto **implementado** na PR #263 (`6af66557`; fold no cabeçalho do BRIEF). Antes: **Proposed.** Produzido em `sessao-planejamento` (preparação apenas — ORCH-006). **Nenhum
   código escrito, nenhuma branch criada.** Este ADR NÃO ratifica nenhum dos forks que lista — cada um
   segue **RATIFICAÇÃO PENDENTE** do dono. A execução (código) exige autorização própria, distinta desta.
 - **Date:** 2026-09-02
@@ -318,6 +318,8 @@ a apuração **trimestral** ratificada no Fork 5→(a) deixa de ser "escolha ain
 qualificação de cliente** — *o módulo atende Lucro Real com apuração trimestral; tenant em estimativa mensal
 de IRPJ/CSLL fica fora até segunda ordem*. O futuro `ADR-INCR-TAX-ASSESSMENT` herda esta restrição. Reabrir
 exige ADR + sinal humano (regra §1 do master map). Zero código.
+**[RETIRADA em 2026-10-05 — EMENDA 4ª, ao final:** o F-M8 foi reaberto pelo F-X7-1 → (a) no
+`ADR-INCR-TAX-ASSESSMENT` e a ECF passa a gerar a forma anual (X7 Fase B PR-4).**]**
 
 Registrado na mesma data como achado de triagem (T5): `ECF_COD_VER = '0012'` é **constante** em
 `server/src/lib/ecf.ts:43`; os fatos geradores de 2026 saem em Leiaute 13 — parametrizar por ano-calendário
@@ -638,3 +640,28 @@ real. Cadeia `Route → Controller → LalurService → LalurRepository → Pris
 (`lalur.movement_{created,updated,archived}`, `lalur.parte_b_{closed,reopened}`). `ecfReal.ts` ganha
 `buildM312/M315/M362/M365/M410/M415/M500/M510`; `M010.VL_SALDO_INI` passa a vir de C3. Tela =
 `FE-INCR-LALUR` (botão "fechar trimestre" + diagnóstico), separada.
+
+## EMENDA (2026-10-05, 4ª) — X7 Fase B item 24: retirada a restrição do F-M8; ECF do Lucro Real anual
+
+**Autorização:** dono, chat, 2026-10-05: *"Executa o PR-4 da Fase B do X7"* (sessao-feature). Spec:
+`docs/accounting/BE-INCR-TAX-ASSESSMENT-B-brief.md` §1 itens 1, 2 e 18–24 e §3.1 (F-TB-8 → a, `ANUAL` só no último
+PR). Origem da reabertura: F-X7-1 → (a) (dono, 29/09) no [`ADR-INCR-TAX-ASSESSMENT`](ADR-INCR-TAX-ASSESSMENT.md) —
+trimestral **e** anual por estimativa, por cliente. A EMENDA de 2026-09-03 (restrição de produto) deixa de valer: o
+módulo atende o Lucro Real trimestral e o anual.
+
+O que muda no gerador (o Fork 5 → (a) continua sendo o caminho do trimestral, byte a byte — teste 26 k):
+
+| Ponto | Trimestral (inalterado) | Anual (novo) | Fonte |
+|---|---|---|---|
+| `0010.FORMA_APUR` | `T` | `A` — vem do **perfil efetivo do ano** (`CompanyFiscalProfile`); informado ≠ perfil ⇒ 400 | BRIEF B item 18 (D1) |
+| `0010.FORMA_TRIB_PER` | do DTO | derivado (`R` no trimestre com mês em atividade, `0` fora) e conferido com o DTO (400 se diverge) | item 18; decisão do dono 05/10 (lacuna 1 do PR-4); Manual p.72 |
+| `0010.MES_BAL_RED` | vazio (REGRA_NAO_PREENCHER_TRIMESTRAL) | 12 posições do `modo` confirmado de cada mês (`E`/`B`; fora de atividade `0`); exige IRPJ e CSLL confirmados em todo mês em atividade | item 18; Manual pp.72 e 76 |
+| L030 / M030 | T01..T04 | `A00` + um `A0m` por mês `B` | item 19; Manual pp.222 e 242 |
+| N030 | T01..T04 | `A00` + um `A0m` por mês `B` **ou** `E` | item 19; Manual p.278 |
+| `DT_INI`/`DT_FIN` do `A0m` | — | período em curso (01/01 ou início de atividade → fim do mês) | item 19 → item 4 (**I**: o Manual só diz "até o mês") |
+| Parte B | 4 fechamentos trimestrais | o fechamento `A00`; M410/M500/M510 só sob o M030 `A00` | item 20; IN RFB 1.700/2017 art. 50 II |
+| Linha do e-Lalur num período sem registro de período no arquivo | — | 400 (lalur/lacs fora de mês `B`; livro N fora de `B`/`E`) | item 21; decisão do dono 05/10 (lacuna 3 do PR-4) |
+| Bloco N | N500/N630/N670 | + N620/N660 (linhas `E`) sob o N030 do mês; catálogo com as abas N620/N660 da planilha `366b8d9030a0` (as 5 abas existentes não mudaram) | item 22; Manual pp.47–48 |
+| Bloco L | Fork 6 → (b): sem L100/L300 | idem — o PVA recupera L100 do K155/K156 também nos meses `B` (K030 aceita `A0m`, p.143; "saldos finais não são editáveis", p.223) | item 23 (parada não disparada) |
+
+Pendente de oráculo: o arquivo anual só tem prova quando o PVA validar (H1b/X5 — P-B9 do BRIEF B).

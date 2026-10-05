@@ -22,8 +22,9 @@ import { DeclarantSchema, SignerSchema, refineEcfSigners, refineEcfRectification
  *    `/^[0RPAES]{4}$/`. `'PPPP'` é VÁLIDO no Manual — o que vaza é o DEFAULT, não o valor.
  *  - `codVer` (0000.COD_VER) — OPCIONAL, override do caller (Fork 7→(a)); ausente ⇒ tabela
  *    ano→leiaute em `lib/ecf.ts` (`resolveEcfCodVer`), erro explícito para ano sem leiaute.
- *  - `formaApur` (0010.FORMA_APUR) — Fork 5→(a) Trimestral ratificado ⇒ enum fechado `['T']`
- *    com default `'T'`; entra como parâmetro (BRIEF item 9), não como constante do serializer.
+ *  - `formaApur` (0010.FORMA_APUR) — X7 Fase B PR-4 (BRIEF B item 18): vem do PERFIL EFETIVO do ano
+ *    (`'A'` se ANUAL, senão `'T'`); opcional aqui, e informado ≠ perfil ⇒ 400 no serviço. No `'A'`,
+ *    `formaTribPer` também é derivado e conferido (decisão do dono, 05/10 — lacuna 1 do PR-4).
  *  - `indAliqCsll`/`indRecReceita` — mesmo shape e defaults do Presumido (reuso direto).
  *
  * O que NÃO existe aqui e NÃO deve existir (BRIEF 3B §2.1): `hashEcfAnterior` — Fork 2→(d), Manual
@@ -42,8 +43,8 @@ const FiscalRealSchema = z
       .regex(/^[0RPAES]{4}$/, 'FORMA_TRIB_PER = 4 posições em [0;R;P;A;E;S], uma por trimestre (Manual pp.71-72).'),
     // 0000.COD_VER — override opcional (Fork 7→(a)); 4 dígitos como '0012'.
     codVer: z.string().regex(/^\d{4}$/, 'COD_VER = 4 dígitos (ex.: 0012).').optional(),
-    // 0010.FORMA_APUR — Fork 5→(a): Trimestral.
-    formaApur: z.enum(['T']).default('T'),
+    // 0010.FORMA_APUR — derivado do perfil do ano (X7 Fase B item 18); informado e diferente ⇒ 400 no serviço.
+    formaApur: z.enum(['T', 'A']).optional(),
     // 0020.IND_ALIQ_CSLL — ECF ≥ 2019 ∈ {1 (9%), 4 (15%)} (REGRA_PREENCHIMENTO_IND_ALIQ_CSSL).
     indAliqCsll: z.enum(['1', '4']).default('1'),
     // 0010.IND_REC_RECEITA — 2 = Regime de Competência (default; mantém a ECD).

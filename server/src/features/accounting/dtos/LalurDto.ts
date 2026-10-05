@@ -160,7 +160,7 @@ export function refineLalurLine(l: LineShape, ctx: z.RefinementCtx): void {
  *         year:           { type: integer, example: 2025 }
  *         quarter:        { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] }
  *         livro:          { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670], description: "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n620/n630/n660/n670 = linhas E do Bloco N. n620/n660 só em A01..A12 e, até o catálogo N620/N660 entrar (X7 Fase B PR-4), todo write nelas é 400; n630/n670 só em T0x/A00" }
- *         codigo:         { type: string, description: "Código da linha na Tabela Dinâmica (aba M300A/M350A/N500/N630A/N670). Só linha tipo E, vigente no ano — senão 400 com código e motivo." }
+ *         codigo:         { type: string, description: "Código da linha na Tabela Dinâmica (aba M300A/M350A/N500/N620/N630A/N660/N670). Só linha tipo E, vigente no ano — senão 400 com código e motivo." }
  *         valorCents:     { type: integer, minimum: 0, maximum: 2147483647, description: "Sempre ≥ 0 — a direção (adição/exclusão) vem do TIPO_LANCAMENTO derivado do catálogo (Manual p.244)." }
  *         histLancamento: { type: string, maxLength: 500, description: "M300.HIST_LAN_LAL; obrigatório com indRelacao=4; proibido em livro N" }
  *         indRelacao:     { type: string, enum: ['1','2','3','4'], description: "M300.IND_RELACAO — obrigatório em lalur/lacs, proibido em livro N. 1=Parte B · 2=conta contábil · 3=ambas · 4=sem relacionamento" }

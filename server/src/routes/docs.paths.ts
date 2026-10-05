@@ -2561,15 +2561,21 @@
  *         (ISO-8859-1) artifact as an EXPORT job of kind EXPORT_SPED_ECF_REAL (dedicated route,
  *         ADR-INCR-SPED-ECF-FASE3 Fork 1; BRIEF 3B Forks 2-d, 3-a, 4-b, 6-b, 7-a). Block 0 is
  *         parametrized from fiscal (FORMA_TRIB defaults to 1; FORMA_TRIB_PER is REQUIRED, 4 chars in
- *         [0RPAES], one per quarter, no server default; FORMA_APUR is T, quarterly). COD_VER is
+ *         [0RPAES], one per quarter, no server default; FORMA_APUR comes from the company fiscal profile of
+ *         the year - A when the effective form is ANUAL, else T - and an informed value that differs is a 400;
+ *         in A, FORMA_TRIB_PER is derived too (R in a quarter with a month in activity, else 0) and must match,
+ *         and MES_BAL_RED comes from the confirmed tax assessments of each month in activity, E or B
+ *         (X7 Fase B PR-4, BRIEF-B items 18-21)). COD_VER is
  *         resolved from the calendar year (2025 = 0012) or overridden by fiscal.codVer - a year with
  *         no known layout is a 400, never a guessed code. HASH_ECF_ANTERIOR is emitted empty (the PVA
  *         fills it when the previous ECF is recovered). Block L carries L030 periods only (L100/L300
  *         are recovered by the PVA from K155/K156). Blocks M and N are read from the e-Lalur store
  *         (/api/lalur): M010 per Parte B account, M030 per quarter with M300/M350 lines (+ M305/M355
- *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
- *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
- *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
+ *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N620/N630/N660/N670
+ *         that carry a value - the PVA computes every CNA/CA line. In the annual form, L030/M030 = A00 + one
+ *         A0m per month B, N030 = A00 + one A0m per month B or E; generating needs the A00 Parte B closing and
+ *         every month in activity confirmed, and an e-Lalur line in a period the file does not emit is a 400.
+ *         The request body never carries adjustments. Download via /data-exchange/jobs/{jobId}/download.
  *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
  *         body overrides). 400 REGIME_DIVERGENTE when the profile is not REAL and 400
  *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES.
@@ -2612,7 +2618,7 @@
  *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, default 1 (Lucro Real)' }
  *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 chars in [0RPAES], one per quarter (Manual pp.71-72), no default' }
  *                     codVer:         { type: string, description: '0000.COD_VER override, 4 digits (e.g. 0012); absent = resolved by calendar year' }
- *                     formaApur:      { type: string, enum: ['T'], description: 'T = trimestral (Fork 5)' }
+ *                     formaApur:      { type: string, enum: ['T', 'A'], description: 'optional - derived from the fiscal profile of the year (A = ANUAL, else T); informed and different is a 400 (X7 Fase B item 18)' }
  *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }
  *                 signers:
@@ -3994,7 +4000,7 @@
  *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0. X7 Fase B (BRIEF B
  *         item 12): quarter accepts T01..T04 only when the year's effective form is TRIMESTRAL (also with no
  *         profile) and A00..A12 only when ANUAL; A0m before the start of activity is 400; n620/n660 only in
- *         A01..A12 (400 on every write until their catalog sheets land, PR-4); n630/n670 only in T0x/A00.
+ *         A01..A12, validated against the N620/N660 sheets (catalog landed in X7 Fase B PR-4, item 22); n630/n670 only in T0x/A00.
  *         A compensation (P) in A0m is capped by the Parte B account's opening balance of the year.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]

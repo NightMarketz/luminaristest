@@ -24,7 +24,6 @@ import {
   findLinha,
   findParteBPadrao,
   isLalurMes,
-  isLivroSemCatalogo,
   isParteALivro,
   isPrejuizoIndicador,
   linhasDoLivro,
@@ -148,7 +147,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCas
  *
  * What the service proves that the DTO cannot (depends on the catalog fixture, item 9 — every refusal
  * is a 400 carrying the code and the reason, never a silent drop; classe FAIL-1 do PR #66):
- *  - `codigo` exists in the sheet of `livro` (M300A/M350A/N500/N630A/N670);
+ *  - `codigo` exists in the sheet of `livro` (M300A/M350A/N500/N620/N630A/N660/N670);
  *  - the row is an ENTRY line (`tipo = E`) — CNA/CA/R are computed/labels by the PVA (Fork 3→a);
  *  - the row is in force for `year` (DT_INI ≤ year ≤ DT_FIM);
  *  - REGRA_IND_RELACAO (p.247, literal): TIPO_LANCAMENTO = P ⇒ IND_RELACAO = 1;
@@ -227,13 +226,6 @@ export class LalurService {
   // ── Catalog gate (item 9) ────────────────────────────────────────────────
   /** Resolves (livro, codigo, year) against the fixture; throws 400 with code + reason. */
   public static resolveLinha(livro: LalurLivro, codigo: string, year: number) {
-    if (isLivroSemCatalogo(livro)) {
-      // Decisão do dono, 05/10 (lacuna 2 do PR-2): o livro existe, mas sem as abas N620/N660 no catálogo nenhum código
-      // é validável — entram no X7 Fase B PR-4 (BRIEF B item 22; insumo §5.1).
-      throw new ValidationError(
-        `Livro '${livro}': o catálogo das abas N620/N660 (Tabelas Dinâmicas) ainda não foi transcrito — nenhuma linha é aceita até o X7 Fase B PR-4 (BRIEF B item 22).`,
-      );
-    }
     const row = findLinha(livro, codigo);
     if (!row) {
       throw new ValidationError(`Código '${codigo}' não existe na tabela dinâmica do livro '${livro}' (Leiaute 12).`);

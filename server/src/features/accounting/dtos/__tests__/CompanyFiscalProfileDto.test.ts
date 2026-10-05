@@ -51,11 +51,11 @@ describe('UpsertCompanyFiscalProfileSchema (item 5)', () => {
     expect(ok({ regime: 'MEI', foo: 1 })).toBe(false);
   });
 
-  it('X7 Fase B item 3b: prestadoraExclusivaServicos boolean, default false; ANUAL segue recusado (F-TB-8.1)', () => {
+  it('X7 Fase B item 3b: prestadoraExclusivaServicos boolean, default false; ANUAL liberado no PR-4 (F-TB-8.1)', () => {
     expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'REAL' }).prestadoraExclusivaServicos).toBe(false);
     expect(ok({ regime: 'REAL', prestadoraExclusivaServicos: true })).toBe(true);
     expect(ok({ regime: 'REAL', prestadoraExclusivaServicos: 'sim' })).toBe(false);
-    expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(false);
+    expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL', prestadoraExclusivaServicos: true })).toBe(true);
   });
 
   it('cópia: anoAnterior diferente de ano; ano ≥ 2014 (ECF desde 2014)', () => {
@@ -86,13 +86,14 @@ describe('CreateCompanySignerSchema (item 8)', () => {
 });
 
 describe('UpsertCompanyFiscalProfileSchema — X7 Fase A (BRIEF itens 1, 2, 2b)', () => {
-  it('forma: SIMPLES/MEI com forma ⇒ recusa; PRESUMIDO + ANUAL ⇒ recusa; ANUAL ⇒ recusa nesta fase (Fase B); TRIMESTRAL ok', () => {
+  it('forma: SIMPLES/MEI com forma ⇒ recusa; PRESUMIDO + ANUAL ⇒ recusa; REAL + ANUAL ok (Fase B PR-4, item 1); TRIMESTRAL ok', () => {
     expect(ok({ regime: 'SIMPLES', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(false);
     expect(ok({ regime: 'MEI', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(false);
-    expect(ok({ regime: 'PRESUMIDO', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(false);
-    const anualReal = UpsertCompanyFiscalProfileSchema.safeParse({ ...base, regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' });
-    expect(anualReal.success).toBe(false);
-    expect(JSON.stringify(anualReal.error?.issues)).toContain('forma anual é da Fase B');
+    expect(ok({ regime: 'SIMPLES', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(false);
+    const presumidoAnual = UpsertCompanyFiscalProfileSchema.safeParse({ ...base, regime: 'PRESUMIDO', formaApuracaoIrpjCsll: 'ANUAL' });
+    expect(presumidoAnual.success).toBe(false);
+    expect(JSON.stringify(presumidoAnual.error?.issues)).toContain('Lucro Presumido é só trimestral');
+    expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(true);
     expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(true);
     expect(ok({ regime: 'PRESUMIDO', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toBe(true);
     expect(ok({ regime: 'REAL' })).toBe(true); // nula ⇒ TRIMESTRAL efetivo (no service)

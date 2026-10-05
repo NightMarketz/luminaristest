@@ -9,12 +9,16 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
 import type { ILalurRepository, LalurEntryWithRelations, LalurMovementWithRelations } from '../repositories/ILalurRepository';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcfRealRequestDto } from '../dtos/SpedEcfRealDto';
 import { quarterWindows } from './SpedEcfGenerationService';
 import { serializeEcf, resolveEcfCodVer } from '../../../lib/ecf';
 import { natureToCodNat } from './SpedGenerationService';
-import { LALUR_QUARTERS, findParteBPadrao, isPrejuizoIndicador, type LalurLivro } from '../models/Lalur.model';
+import { LALUR_MESES, findParteBPadrao, isLalurMes, isPrejuizoIndicador, periodoBounds, periodosParteB, type LalurLivro, type LalurMes } from '../models/Lalur.model';
+import { mesesEmAtividade } from '../models/taxAssessmentCalcAnual';
+import { formaEfetiva } from './CompanyFiscalProfileService';
 import { LalurService } from './LalurService';
 import { toMagnitude } from './lalurParteBBalances';
 import {
@@ -29,6 +33,50 @@ import {
 
 /** O que a geração precisa do `LalurService` (ECF 3C): diagnóstico (item 11) e abertura C3 do M010. */
 export type LalurParteBReader = Pick<LalurService, 'diagnoseYear' | 'openingBalances'>;
+
+/** X7 Fase B PR-4 (item 18): o perfil do ano (forma, datas de atividade) e as apurações confirmadas — só leitura. */
+export type EcfRealProfileReader = Pick<ICompanyFiscalProfileRepository, 'findByYear'>;
+export type EcfRealAssessmentReader = Pick<ITaxAssessmentRepository, 'findConfirmedByYear'>;
+
+/** O que o 0010 e os períodos da ECF anual derivam do perfil e das apurações confirmadas (X7 Fase B itens 18–19). */
+export interface EcfRealAnual {
+  /** 0010.MES_BAL_RED — 12 posições `[0;E;B]` (Manual p.72). */
+  mesBalRed: string;
+  /** 0010.FORMA_TRIB_PER — 'R' no trimestre com algum mês em atividade, senão '0' (item 18). */
+  formaTribPer: string;
+  /** L030/M030: A00 + um A0m por mês `B` (pp.222 e 242). */
+  periods: EcfRealPeriod[];
+  /** N030: A00 + um A0m por mês `B` ou `E` (p.278). */
+  periodsN: EcfRealPeriod[];
+}
+
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+/**
+ * X7 Fase B PR-4 (BRIEF B itens 18–19), função pura. `modos[m]` = o `modo` confirmado do mês m em atividade
+ * (`ESTIMATIVA_RECEITA` → `E`, `BALANCETE_SUSPENSAO_REDUCAO` → `B`); mês fora de atividade → `0` (p.72). A ordem dos
+ * períodos é a da lista de valores válidos do PER_APUR (A00, A01..A12 — pp.241/277). `dtIni`/`dtFin` do `A0m` = o
+ * período em curso de `periodoBounds` (item 19 → item 4; o Manual só diz "até o mês").
+ */
+export function derivarEcfAnual(year: number, inicioAtividadeEm: string | null, meses: number[], modos: Map<number, string>): EcfRealAnual {
+  const mesBalRed = Array.from({ length: 12 }, (_, i) => {
+    const m = i + 1;
+    if (!meses.includes(m)) return '0';
+    return modos.get(m) === 'BALANCETE_SUSPENSAO_REDUCAO' ? 'B' : 'E';
+  }).join('');
+  const formaTribPer = [0, 1, 2, 3].map((q) => (meses.some((m) => Math.ceil(m / 3) === q + 1) ? 'R' : '0')).join('');
+  const period = (perApur: 'A00' | LalurMes): EcfRealPeriod => {
+    const { from, to } = periodoBounds(year, perApur, inicioAtividadeEm);
+    return { perApur, dtIni: isoDay(from), dtFin: isoDay(to) };
+  };
+  const mesesCom = (marcas: string) => LALUR_MESES.filter((_, i) => marcas.includes(mesBalRed[i]));
+  return {
+    mesBalRed,
+    formaTribPer,
+    periods: [period('A00'), ...mesesCom('B').map(period)],
+    periodsN: [period('A00'), ...mesesCom('BE').map(period)],
+  };
+}
 
 /** `kind` do job de export do Real (BRIEF item 4 — coluna String, zero migração). */
 export const SPED_ECF_REAL_JOB_KIND = 'EXPORT_SPED_ECF_REAL';
@@ -52,6 +100,12 @@ export const SPED_ECF_REAL_JOB_KIND = 'EXPORT_SPED_ECF_REAL';
  *  - HASH_ECF_ANTERIOR: vazio (Fork 2→(d), p.70) — o PVA preenche na recuperação.
  * Não computa base/IRPJ/adicional/CSLL (linhas CNA/CA são do PVA — Fork 3→(a)).
  *
+ * ── X7 Fase B PR-4 (BRIEF B itens 18–23; EMENDA 4ª do ADR, 2026-10-05) ──
+ *  - FORMA_APUR vem do perfil efetivo do ano (`'A'` se ANUAL); no anual, FORMA_TRIB_PER é derivado e conferido,
+ *    MES_BAL_RED sai dos `modo` confirmados (`TaxAssessment`, só leitura), L030/M030 = A00 + meses `B`, N030 = A00 +
+ *    meses `B`/`E`, a Parte B exige o fechamento A00 e linha do e-Lalur fora dos períodos emitidos é 400.
+ *  - O trimestral sai byte a byte igual ao de antes (teste 26 k).
+ *
  * ── ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª; BRIEF 3C) ──
  *  - Geração exige os 4 trimestres da Parte B FECHADOS (item 11; 400 nomeando o primeiro aberto) e roda o
  *    diagnóstico materializado × recomputado — divergência ⇒ 400 "refeche", nunca arquivo silenciosamente errado.
@@ -73,7 +127,30 @@ export class SpedEcfRealGenerationService {
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
     private readonly lalurService: LalurParteBReader,
+    private readonly profiles: EcfRealProfileReader,
+    private readonly assessments: EcfRealAssessmentReader,
   ) {}
+
+  /**
+   * X7 Fase B PR-4 (item 18): no `ANUAL`, gerar exige os meses em atividade com IRPJ e CSLL `CONFIRMED`; senão 400
+   * listando os meses. Devolve o `modo` de cada mês (as 2 linhas de uma confirmação têm o mesmo `modo` — teste 26 c).
+   */
+  private async modosConfirmados(scope: AccountingScope, year: number, meses: number[]): Promise<Map<number, string>> {
+    const rows = await this.assessments.findConfirmedByYear(scope.ownerUserId, year);
+    const modos = new Map<number, string>();
+    const faltam: string[] = [];
+    for (const m of meses) {
+      const doMes = rows.filter((r) => r.periodo === LALUR_MESES[m - 1]);
+      if (!['IRPJ', 'CSLL'].every((t) => doMes.some((r) => r.tributo === t))) faltam.push(LALUR_MESES[m - 1]);
+      else modos.set(m, doMes[0].modo);
+    }
+    if (faltam.length > 0) {
+      throw new ValidationError(
+        `Confirme a apuração de IRPJ e CSLL de ${faltam.join(', ')}/${year} antes de gerar a ECF anual — o 0010.MES_BAL_RED sai do modo confirmado de cada mês em atividade (X7 BRIEF B item 18).`,
+      );
+    }
+    return modos;
+  }
 
   /**
    * Resolve UMA linha persistida contra o catálogo (item 8/9). A linha já passou pelo gate do
@@ -127,6 +204,27 @@ export class SpedEcfRealGenerationService {
       }
     }
     return line;
+  }
+
+  /**
+   * X7 Fase B PR-4 (item 21 + lacuna 3, decisão do dono 05/10): na ECF anual, toda linha do e-Lalur tem de cair num
+   * período que o arquivo emite — senão 400, nunca arquivo silenciosamente incompleto:
+   *  - `lalur`/`lacs` em `A0m` com o mês fora de `B`: seria M300/M350 sem M030 (p.242);
+   *  - `n620`/`n660` em mês fora de `B`/`E`: seria N620/N660 sem N030 (p.278);
+   *  - `n500` (ou qualquer livro N) em mês `0`: idem (lacuna 3 do PR-4).
+   */
+  public static assertLinhasNosPeriodos(entries: LalurEntryWithRelations[], year: number, mesBalRed: string, periods: EcfRealPeriod[], periodsN: EcfRealPeriod[]): void {
+    const m = new Set<string>(periods.map((p) => p.perApur));
+    const n = new Set<string>(periodsN.map((p) => p.perApur));
+    for (const e of entries) {
+      const parteA = e.livro === 'lalur' || e.livro === 'lacs';
+      if ((parteA ? m : n).has(e.quarter)) continue;
+      const marca = isLalurMes(e.quarter) ? mesBalRed[LALUR_MESES.indexOf(e.quarter)] : '—';
+      throw new ValidationError(
+        `Ajuste ${e.id} (livro '${e.livro}', código ${e.codigo}) em ${e.quarter}/${year} não tem ${parteA ? 'M030' : 'N030'} no arquivo: o mês está marcado '${marca}' no MES_BAL_RED ` +
+          `(${parteA ? 'M300/M350 só nos meses B — Manual p.242' : 'N030 só nos meses B ou E — Manual p.278'}; X7 BRIEF B item 21) — arquive a linha ou confirme o mês no modo certo.`,
+      );
+    }
   }
 
   /** Item 17: texto livre com '|' nomeado por registro + identificador (M300/M350 ajuste, M010 conta, M410 movimento, M315/M415 processo). */
@@ -188,19 +286,50 @@ export class SpedEcfRealGenerationService {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }
 
-    // ── Períodos (Fork 5→(a)) — L030/M030/N030 derivados do Bloco 0 ──
-    const periods: EcfRealPeriod[] = quarterWindows(year).map((w) => ({
-      perApur: w.perApur as EcfRealPeriod['perApur'],
-      dtIni: w.dtIni,
-      dtFin: w.dtFin,
-    }));
+    // ── X7 Fase B PR-4 (item 18): FORMA_APUR vem do perfil EFETIVO do ano — 'A' se ANUAL, senão 'T' (sem perfil
+    // inclusive, como o e-Lalur: D-2026-10-05-X7-FASE-B-PR2-LACUNAS §1). Informado e diferente ⇒ 400.
+    const perfil = await this.profiles.findByYear(scope, year);
+    const formaApur: 'T' | 'A' = perfil && formaEfetiva(perfil.regime, perfil.formaApuracaoIrpjCsll) === 'ANUAL' ? 'A' : 'T';
+    if (dto.fiscal.formaApur !== undefined && dto.fiscal.formaApur !== formaApur) {
+      throw new ValidationError(
+        `formaApur '${dto.fiscal.formaApur}' diverge do perfil fiscal de ${year}, que dá '${formaApur}' (${formaApur === 'A' ? 'anual' : 'trimestral'}) — a forma mora no perfil (X7 BRIEF B item 18).`,
+      );
+    }
 
-    // ── Parte B fechada (ECF 3C item 11): os 4 trimestres materializados, sem divergência ──
+    // ── Períodos — trimestral (Fork 5→(a)): T01..T04 derivados do Bloco 0; anual (itens 18–19): do perfil + apurações ──
+    let periods: EcfRealPeriod[];
+    let periodsN: EcfRealPeriod[] | undefined;
+    let formaTribPer = dto.fiscal.formaTribPer;
+    let mesBalRed: string | undefined;
+    if (formaApur === 'A') {
+      const meses = mesesEmAtividade(year, perfil!.inicioAtividadeEm, perfil!.encerramentoAtividadeEm);
+      const anual = derivarEcfAnual(year, perfil!.inicioAtividadeEm, meses, await this.modosConfirmados(scope, year, meses));
+      // Decisão do dono, 05/10 (lacuna 1 do PR-4): no anual o FORMA_TRIB_PER é derivado; o informado tem de bater.
+      if (dto.fiscal.formaTribPer !== anual.formaTribPer) {
+        throw new ValidationError(
+          `formaTribPer '${dto.fiscal.formaTribPer}' diverge do derivado para a forma anual de ${year}: '${anual.formaTribPer}' ('R' no trimestre com mês em atividade, '0' fora — X7 BRIEF B item 18; Manual p.72).`,
+        );
+      }
+      ({ periods, periodsN, formaTribPer, mesBalRed } = anual);
+    } else {
+      periods = quarterWindows(year).map((w) => ({
+        perApur: w.perApur as EcfRealPeriod['perApur'],
+        dtIni: w.dtIni,
+        dtFin: w.dtFin,
+      }));
+    }
+    const periodosDaParteB = periodosParteB(formaApur === 'A' ? 'ANUAL' : 'TRIMESTRAL');
+
+    // ── Parte B fechada (ECF 3C item 11; X7 Fase B item 20): os 4 trimestres — ou o A00 no anual — materializados ──
     const closings = await this.lalurRepo.findClosingsForYear(scope, year);
     const closedQ = new Set(closings.map((c) => c.quarter));
-    const firstOpen = LALUR_QUARTERS.find((q) => !closedQ.has(q));
+    const firstOpen = periodosDaParteB.find((q) => !closedQ.has(q));
     if (firstOpen) {
-      throw new ValidationError(`Feche a Parte B do e-Lalur/e-Lacs de ${firstOpen}/${year} (e dos trimestres seguintes) antes de gerar a ECF — o M500 e o E020 do exercício seguinte saem da materialização (Manual p.271).`);
+      throw new ValidationError(
+        formaApur === 'A'
+          ? `Feche a Parte B do e-Lalur/e-Lacs de A00/${year} antes de gerar a ECF anual — na forma anual a Parte B só fecha no A00 (IN RFB 1.700/2017 art. 50 II; X7 BRIEF B item 20).`
+          : `Feche a Parte B do e-Lalur/e-Lacs de ${firstOpen}/${year} (e dos trimestres seguintes) antes de gerar a ECF — o M500 e o E020 do exercício seguinte saem da materialização (Manual p.271).`,
+      );
     }
     const diag = await this.lalurService.diagnoseYear(scope, year);
     if (diag.divergences.length > 0) {
@@ -212,6 +341,7 @@ export class SpedEcfRealGenerationService {
 
     // ── e-Lalur/e-Lacs (Fork 4→(b)): o gerador LÊ do model ──
     const entries = await this.lalurRepo.findEntriesForYear(scope, year);
+    if (mesBalRed !== undefined) SpedEcfRealGenerationService.assertLinhasNosPeriodos(entries, year, mesBalRed, periods, periodsN!);
     const lalur = entries.map(SpedEcfRealGenerationService.toSerializerLine);
     const yearEnd = `${year}-12-31`;
     // REGRA_MENOR_IGUAL_DT_FIN (p.237): M010.DT_AP_LAL ≤ 0000.DT_FIN — conta nascida depois do exercício
@@ -239,7 +369,7 @@ export class SpedEcfRealGenerationService {
 
     // ── M410 (item 5) — PF/BC `user` e `system` no mesmo período/tributo é ambiguidade (item 6) ──
     const movementsRaw = await this.lalurRepo.findMovementsForYear(scope, year);
-    for (const q of LALUR_QUARTERS) {
+    for (const q of periodosDaParteB) {
       for (const t of ['I', 'C'] as const) {
         const pf = movementsRaw.filter((m) => m.quarter === q && m.codTributo === t && isPrejuizoIndicador(m.indicador));
         if (pf.some((m) => m.origem === 'user') && pf.some((m) => m.origem === 'system')) {
@@ -287,8 +417,9 @@ export class SpedEcfRealGenerationService {
       },
       fiscal: {
         formaTrib: dto.fiscal.formaTrib,
-        formaTribPer: dto.fiscal.formaTribPer,
-        formaApur: dto.fiscal.formaApur,
+        formaTribPer,
+        formaApur,
+        mesBalRed,
         indRecReceita: dto.fiscal.indRecReceita,
       },
       params: { indAliqCsll: dto.fiscal.indAliqCsll },
@@ -301,6 +432,7 @@ export class SpedEcfRealGenerationService {
         fone: s.fone,
       })),
       periods,
+      periodsN,
       lalur,
       parteB,
       movements,

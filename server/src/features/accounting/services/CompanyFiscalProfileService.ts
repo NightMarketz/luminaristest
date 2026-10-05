@@ -9,6 +9,8 @@ import type { IAccountingContactRepository } from '../repositories/IAccountingCo
 import type { AuditService } from './AuditService';
 import type { AccountingReportService } from './AccountingReportService';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import type { ILalurRepository } from '../repositories/ILalurRepository';
+import { LALUR_MESES, LALUR_QUARTERS } from '../models/Lalur.model';
 import { scopeToday } from '../models/dates';
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
@@ -106,6 +108,8 @@ export class CompanyFiscalProfileService {
     // PR-2: unidades do dono (F-XP-8 a) e BP/DRE do exercício anterior para o aviso de grande porte (F-XP-6 a).
     private readonly fiscalProfileRepo: IFiscalProfileRepository,
     private readonly reportService: AccountingReportService,
+    // X7 Fase B PR-4 (BRIEF B item 2, F-TB-6 a): o e-Lalur do ano, em todas as unidades do dono — só leitura.
+    private readonly lalurRepo: Pick<ILalurRepository, 'countByOwnerYearPeriods'>,
   ) {}
 
   async get(scope: AccountingScope, ano: number): Promise<CompanyFiscalProfileView | null> {
@@ -130,6 +134,7 @@ export class CompanyFiscalProfileService {
         );
       }
       if (atual) assertFormaNaoTravada(atual, data, ano);
+      await this.assertTrocaDeFormaSemLalur(scope, ano, atual, data, tx);
       await this.assertRefs(scope, data, tx);
       const row = await this.repo.upsert(scope, ano, data, tx);
       await this.auditUpdated(tx, scope, row);
@@ -140,6 +145,33 @@ export class CompanyFiscalProfileService {
           : [];
       return { ...toView(row), unidadesDivergentes };
     });
+  }
+
+  /**
+   * X7 Fase B PR-4 (BRIEF B item 2, F-TB-6 a): trocar `TRIMESTRAL ↔ ANUAL` com o e-Lalur do ano preenchido nos períodos
+   * da forma antiga ⇒ 400, listando período, livro e quantidade — a linha ficaria órfã e a ECF a recusaria (item 21).
+   * A forma comparada é a do e-Lalur: `ANUAL` só com a forma efetiva `ANUAL`; qualquer outro caso, inclusive sem perfil,
+   * é `TRIMESTRAL` (D-2026-10-05-X7-FASE-B-PR2-LACUNAS §1). Olha todas as unidades do dono (lacuna 2 do PR-4). Roda
+   * dentro da tx do upsert; depois da trava, o item 1 já recusou a troca.
+   */
+  private async assertTrocaDeFormaSemLalur(
+    scope: AccountingScope,
+    ano: number,
+    atual: CompanyFiscalProfile | null,
+    data: CompanyFiscalProfileData,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
+    const formaLalur = (regime: string | undefined, forma: string | null) => (regime && formaEfetiva(regime, forma) === 'ANUAL' ? 'ANUAL' : 'TRIMESTRAL');
+    const antiga = formaLalur(atual?.regime, atual?.formaApuracaoIrpjCsll ?? null);
+    if (antiga === formaLalur(data.regime, data.formaApuracaoIrpjCsll)) return;
+    const periodos = antiga === 'ANUAL' ? ['A00', ...LALUR_MESES] : [...LALUR_QUARTERS];
+    const achados = await this.lalurRepo.countByOwnerYearPeriods(scope.ownerUserId, ano, periodos, tx);
+    if (achados.length > 0) {
+      const lista = achados.map((a) => `${a.periodo} ${a.livro}: ${a.quantidade}`).join('; ');
+      throw new ValidationError(
+        `FORMA_COM_LALUR: ${ano} tem e-Lalur na forma ${antiga} (${lista}) — arquive as linhas e os movimentos e reabra os fechamentos antes de trocar a forma (X7 BRIEF B item 2).`,
+      );
+    }
   }
 
   /** PR-2 item 16 (F-XP-5 a): o operador informa o recibo da ECF transmitida no PVA; o regime do ano trava. */

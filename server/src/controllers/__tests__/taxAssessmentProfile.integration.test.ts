@@ -36,7 +36,7 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     await prisma.$disconnect();
   });
 
-  it('item 1: grava forma/obrigatoriedade/datas; ANUAL ⇒ 400 "Fase B"; evento com os 3 campos e sem datas', async () => {
+  it('item 1: grava forma/obrigatoriedade/datas; ANUAL só no REAL (Fase B PR-4); evento com os 3 campos e sem datas', async () => {
     const r = await put(2026, {
       regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false,
       inicioAtividadeEm: '2026-02-01', lc224LiminarReferencia: null,
@@ -46,9 +46,13 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     const ev = await ultimoEvento('company_fiscal_profile.updated');
     expect(ev).toMatchObject({ formaApuracaoIrpjCsll: 'TRIMESTRAL', formaApuracaoTravadaEm: '', lucroRealObrigatorio: 'false', lc224AcrescimoSuspenso: 'false' });
     expect(ev).not.toHaveProperty('inicioAtividadeEm');
-    const anual = await put(2026, { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL' });
-    expect(anual.status).toBe(400);
-    expect(JSON.stringify(anual.body)).toContain('forma anual é da Fase B');
+    // Fase B PR-4 (BRIEF B item 1, F-TB-8.1): o ANUAL do REAL passa pelo DTO real; o do PRESUMIDO segue 400
+    const anual = await put(2031, { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: false });
+    expect(anual.status).toBe(200);
+    expect(anual.body.data).toMatchObject({ formaApuracaoIrpjCsll: 'ANUAL' });
+    const presumido = await put(2031, { regime: 'PRESUMIDO', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL' });
+    expect(presumido.status).toBe(400);
+    expect(JSON.stringify(presumido.body)).toContain('Lucro Presumido é só trimestral');
   });
 
   it('item 1 (D2): travado ⇒ PUT que troca regime/forma/obrigatoriedade 400; mesma forma efetiva passa; DELETE 400', async () => {

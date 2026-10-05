@@ -10325,10 +10325,10 @@
               "pattern": "^\\d{4}$"
             },
             "formaApur": {
-              "default": "T",
               "type": "string",
               "enum": [
-                "T"
+                "T",
+                "A"
               ]
             },
             "indAliqCsll": {
