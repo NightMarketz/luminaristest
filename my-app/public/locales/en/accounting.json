@@ -1316,7 +1316,8 @@
       "manageSuppliers": "manage suppliers",
       "dueDate": "Due date (optional)",
       "importing": "Sending…",
-      "import": "Import"
+      "import": "Import",
+      "ratesLink": "see depreciation rates"
     },
     "preview": {
       "emitter": "Emitter",
@@ -1330,12 +1331,18 @@
       "xProd": "Description",
       "qty": "Qty",
       "vProd": "Amount",
-      "product": "Catalogue product",
+      "product": "Product / asset class",
       "choose": "Choose product…",
       "remembered": "remembered",
       "forget": "forget",
       "suggested": "suggested",
-      "notInTotal": "not part of the total — will be ignored"
+      "notInTotal": "not part of the total — will be ignored",
+      "kind": "Type",
+      "kindProduct": "Product",
+      "kindAsset": "Fixed asset",
+      "chooseClass": "Choose class…",
+      "noClasses": "No asset class registered.",
+      "registerClass": "register class"
     },
     "ignored": {
       "indTot-0": "not part of the note total (indTot = 0)"

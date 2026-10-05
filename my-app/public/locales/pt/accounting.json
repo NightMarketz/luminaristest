@@ -1316,7 +1316,8 @@
       "manageSuppliers": "gerenciar fornecedores",
       "dueDate": "Vencimento (opcional)",
       "importing": "Enviando…",
-      "import": "Importar"
+      "import": "Importar",
+      "ratesLink": "ver taxas de depreciação"
     },
     "preview": {
       "emitter": "Emitente",
@@ -1330,12 +1331,18 @@
       "xProd": "Descrição",
       "qty": "Qtd",
       "vProd": "Valor",
-      "product": "Produto no catálogo",
+      "product": "Produto / classe de bem",
       "choose": "Escolher produto…",
       "remembered": "lembrado",
       "forget": "esquecer",
       "suggested": "sugerido",
-      "notInTotal": "não compõe o total — será ignorado"
+      "notInTotal": "não compõe o total — será ignorado",
+      "kind": "Tipo",
+      "kindProduct": "Produto",
+      "kindAsset": "Imobilizado",
+      "chooseClass": "Escolher classe…",
+      "noClasses": "Nenhuma classe de bem cadastrada.",
+      "registerClass": "cadastrar classe"
     },
     "ignored": {
       "indTot-0": "não compõe o total da nota (indTot = 0)"

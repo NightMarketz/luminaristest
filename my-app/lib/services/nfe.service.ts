@@ -1,6 +1,7 @@
 import { notify } from '../notifications/notify';
 import { multipartAuthHeaders, multipartBaseUrl, multipartParseError } from './multipart';
 import type { Payable } from './accountsPayable.service';
+import type { ImportNfePurchaseInput } from '@/types/contracts/accounting/NfeDto.gen';
 
 /**
  * NF-e client (FE-INCR-NFE, rodada 2b) — thin typed client over the three multipart endpoints of
@@ -65,10 +66,16 @@ export interface NfePreview {
   existingPayableId: string | null;
 }
 
-export interface NfeItemMapping {
-  cProd: string;
-  productRef: string;
-}
+type GenMapping = ImportNfePurchaseInput['itemMappings'][number];
+
+/**
+ * Item mapping, narrowed from the generated contract (every field optional there) to the XOR the server
+ * imposes (`NfeDto.ts`): a product OR a fixed-asset class, never both/neither. `destination` is deliberately
+ * absent — with `classId` the server already resolves IMOBILIZADO/OVERRIDE (FE-INCR-FIXED-ASSETS PR-2, F-FAFE-2).
+ */
+export type NfeItemMapping =
+  | (Pick<GenMapping, 'cProd'> & { productRef: string; classId?: never })
+  | (Pick<GenMapping, 'cProd'> & { classId: string; productRef?: never });
 
 export interface NfeIgnoredItem {
   nItem: number;
@@ -102,7 +109,8 @@ export interface PreviewNfeParams {
 
 export interface ImportPurchaseNfeParams {
   unitId: string;
-  itemMappings: NfeItemMapping[];
+  /** Non-empty (`.min(1)` of the generated contract) — build with `nonEmpty()`. */
+  itemMappings: [NfeItemMapping, ...NfeItemMapping[]];
   counterpartyId?: string;
   dueDate?: string;
 }
