@@ -116,9 +116,9 @@ describe('/api/lalur — forma ANUAL (X7 Fase B PR-2, item 12)', () => {
     const sys = await prisma.lalurParteBMovement.findMany({ where: { unitId: UNIT, origem: 'system', deletedAt: null } });
     expect(sys.map((m) => [m.quarter, m.indicador, m.valorCents])).toEqual([['A00', 'BC', 1000n]]);
     expect(a00.body.data.quarter).toBe('A00');
-    const bal = (a00.body.data.balances as Array<{ parteBId: string; sdIniCents: string | number; sdFimCents: string | number }>).find((b) => b.parteBId === pf.id)!;
-    // abertura 50.000 D; a compensação do A03 NÃO move a Parte B; +10 do M410 DB no A00 (o PF derivado depende do razão)
-    expect(Number(bal.sdIniCents)).toBe(50000);
+    const bal = (a00.body.data.balances as Array<Record<string, string | number>>).find((b) => b.parteBId === pf.id)!;
+    // abertura 50.000 D; a P de 50.000 do A03 NÃO move a Parte B (vlParteA 0); só o M410 DB de 10 do A00 (vlParteB)
+    expect([Number(bal.sdIniCents), Number(bal.vlParteACents), Number(bal.vlParteBCents), bal.indVlParteB, Number(bal.sdFimCents)]).toEqual([50000, 0, 10, 'D', 50010]);
     const diag = await request(app).get('/api/lalur/parte-b/balances').set(authHeader(dono)).query({ unitId: UNIT, year: 2025 });
     expect(diag.status).toBe(200);
     expect(diag.body.data.periods.map((p: { quarter: string }) => p.quarter)).toEqual(['A00']);

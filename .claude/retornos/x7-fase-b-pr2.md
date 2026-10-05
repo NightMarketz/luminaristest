@@ -5,6 +5,7 @@ autorizacao: dono, chat, 05/10/2026 — "Executa o PR-2 da Fase B do X7 (dono, 0
 agente: sessão principal (sessao-feature), worktree x7-fase-b-pr2-5919d1, branch claude/x7-fase-b-pr2-5919d1; review por Agent isolado (worktree própria)
 base: f487ec1f (origin/main, 05/10)
 modelo: opus-5.5
+rodadas-de-review: 1 — PASS COM RESSALVAS (agente isolado, worktree própria, sem transcript), 0 defeito de código; 3 achados não-bloqueantes: 2 de teste corrigidos no 2º commit, 1 julgamento (edição do LalurDto.test legítima)
 
 ### Decisões do dono tomadas nesta sessão (questionário, 05/10 — antes de qualquer código)
 Das lacunas 1–6 do PR-1, **1, 2 e 3 são do PR-3** e **4** (`A00` = ano cheio) só fixa a janela do M312 no `A00`; não tocam o PR-2. **5 e 6 tocam**, e a leitura do código achou mais duas:
@@ -44,11 +45,18 @@ Das lacunas 1–6 do PR-1, **1, 2 e 3 são do PR-3** e **4** (`A00` = ano cheio)
 ### Achados fora de escopo
 - `npm run docs:generate` + `UPDATE_DTO_SNAPSHOT=1` reescrevem os `__dto-shapes__.json` das outras features só em fim de linha (LF×CRLF, `core.autocrlf=true`); ficaram fora do commit.
 
+### Review independente
+- Veredito **PASS COM RESSALVAS**. Rodou tsc, unit inteiro (3921), integração do e-Lalur (27/27) + `spedController.ecfReal` e `taxAssessment.integration` (14/14) e 8 casos adversariais em arquivo temporário (conta criada no ano com P ⇒ 400; adição A não sobe o teto; P em conta de outro tributo ⇒ 400; A00 não subtrai setembro; mensagens trimestrais sem perfil idênticas a `f487ec1f`; SIMPLES/PRESUMIDO/MEI ⇒ trimestral; início em 15/12 ⇒ A11 400, A12/A00 passam; perfil lido com `TX`).
+- Achado 1 (comentário afirmava o que o teste não assere, `lalurController.anual.integration.test.ts`) → **corrigido**: o teste assere `vlParteA = 0`, `vlParteB = 10 D` e `sdFim = 50.010`.
+- Achado 2 (o teste do A00 não discriminava "subtrair o trimestre anterior") → **corrigido**: semeia YTD de setembro = −99.999; com subtração o PF sumiria e o teste falharia.
+- Achado 3: a edição do `LalurDto.test` foi julgada legítima (a asserção antiga contradiz o item 12; a intenção ficou com `A13`).
+- Ressalva do revisor: não rodou o `tsc` do my-app (rodado por mim, exit 0) nem a integração inteira (rodada por mim, 897/897).
+
 ### Checks executados
 - `cd server && npx tsc --noEmit` → 0; `cd my-app && npx tsc --noEmit` → 0
 - `npm run test:unit` → 275 suítes, 3921 passed
 - `jest --selectProjects integration --runInBand lalurController` → 3 suítes, 27/27
-- `npm run test:integration` → (preencher)
+- `npm run test:integration` → 108 suítes, 897 passed (rodada única, 371 s)
 - openapi: 244 paths antes e depois
 
 ### Fold pronto (pós-merge, não aplicado)

@@ -487,7 +487,7 @@ describe('X7 Fase B item 12 — Parte B só no A00 (IN RFB 1.700 art. 50 II)', (
   });
 
   it('fecha só o A00: sdIni = abertura, as linhas dos A0m não movem a Parte B, o PF sai do resultado do ano; fechar A03 ou T04 ⇒ 400', async () => {
-    const { svc, repo } = build({ perfis: { 2025: ANUAL }, netResult: { '2025-12-31': '-40000' } });
+    const { svc, repo } = build({ perfis: { 2025: ANUAL }, netResult: { '2025-09-30': '-99999', '2025-12-31': '-40000' } }); // o A00 é o YTD de 31/12, sem subtrair setembro
     const pf = acc({ codCtaB: 'PF', codPbRfb: '1000', saldoIniCents: 500_000n, indSaldoIni: 'D' });
     const prov = acc({ codCtaB: 'PROV', codPbRfb: '1010' });
     repo.accounts.push(pf, prov, acc({ codCtaB: 'BC', codPbRfb: '1003', codTributo: 'C' }));
