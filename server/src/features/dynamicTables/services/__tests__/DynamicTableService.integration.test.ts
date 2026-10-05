@@ -11,10 +11,8 @@
  * NOTE: kept as a SINGLE file on purpose — all cases share one SQLite file, so running them in
  * one worker avoids cross-file DB races. Split into per-worker DBs only if this grows too large.
  */
-import { execSync } from 'child_process';
-import path from 'path';
-import fs from 'fs';
 import prisma from '@/lib/prisma';
+import { pushTestSchema } from '@test/helpers/db';
 import { DynamicTableRepository } from '@/features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTablePolicy } from '@/features/dynamicTables/policies/DynamicTablePolicy';
 import { DynamicTableService } from '@/features/dynamicTables/services/DynamicTableService';
@@ -24,7 +22,6 @@ import { Role } from '@/features/users/models/User.model';
 import { ForbiddenError, ValidationError } from '@/lib/errors';
 import type { UserContext } from '@/lib/authUtils';
 
-const SERVER_DIR = path.resolve(__dirname, '../../../../..');
 
 const service = new DynamicTableService(new DynamicTableRepository(), new DynamicTablePolicy());
 
@@ -62,15 +59,7 @@ const create = (user: UserContext, tableId: string, data: any) =>
 const update = (user: UserContext, dataId: string, data: any) =>
   service.updateTableData(user, dataId, { data } as any);
 
-beforeAll(() => {
-  const dbFile = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
-  for (const f of [dbFile, `${dbFile}-journal`]) if (fs.existsSync(f)) fs.truncateSync(f, 0); // truncar, não apagar: ver pushTestSchema (EBUSY no Windows)
-  execSync('npx prisma db push --skip-generate --accept-data-loss', {
-    cwd: SERVER_DIR,
-    env: { ...process.env, DATABASE_URL: 'file:./test-integration.db' },
-    stdio: 'inherit',
-  });
-}, 120000);
+beforeAll(() => pushTestSchema(), 120000);
 
 afterEach(async () => {
   const ids = [...seededUserIds];

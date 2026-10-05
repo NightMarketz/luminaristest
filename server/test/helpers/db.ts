@@ -3,11 +3,12 @@
  *
  * All integration tests share one isolated SQLite file (test-integration.db, pointed at by
  * test/jest.setupEnv.ts). The integration Jest project runs --runInBand, so files never race on it.
- *  - pushTestSchema(): create the file fresh from schema.prisma (call once, in beforeAll).
+ *  - pushTestSchema(): create the file fresh from schema.prisma via a cached template (call once, in beforeAll).
  *  - resetDb():        wipe all rows between tests (call in afterEach) — FK-safe order.
  *  - disconnectDb():   close the Prisma connection (call in afterAll).
  */
 import { execSync } from 'child_process';
+import { createHash } from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import prisma from '@/lib/prisma';
@@ -15,19 +16,40 @@ import prisma from '@/lib/prisma';
 const SERVER_DIR = path.resolve(__dirname, '../..'); // test/helpers -> server
 const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
 
-/** Empties any existing test DB and recreates the schema via `prisma db push`. */
+/**
+ * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
+ * integração copia o resultado (ms). Antes eram 83 pushes por execução da suíte. O hash do schema.prisma no nome
+ * invalida o modelo sozinho quando o schema muda.
+ * ponytail: modelos de hashes antigos ficam em prisma/ (gitignored, *.db) — apague à mão se incomodar.
+ */
+function templateDb(): string {
+  const schema = fs.readFileSync(path.join(SERVER_DIR, 'prisma', 'schema.prisma'));
+  const hash = createHash('sha1').update(schema).digest('hex').slice(0, 12);
+  const template = path.join(SERVER_DIR, 'prisma', `test-integration.template-${hash}.db`);
+  if (!fs.existsSync(template)) {
+    // Push num nome temporário + rename: um modelo pela metade (push abortado) nunca fica com o nome definitivo.
+    const tmpName = `test-integration.template-${hash}.${process.pid}.tmp.db`;
+    execSync('npx prisma db push --skip-generate --accept-data-loss', {
+      cwd: SERVER_DIR,
+      env: { ...process.env, DATABASE_URL: `file:./${tmpName}` },
+      stdio: 'inherit',
+    });
+    fs.renameSync(path.join(SERVER_DIR, 'prisma', tmpName), template);
+  }
+  return template;
+}
+
+/** Empties any existing test DB and recreates the schema (copied from the template, see templateDb()). */
 export function pushTestSchema(): void {
-  for (const f of [DB_FILE, `${DB_FILE}-journal`]) {
+  const template = templateDb();
+  for (const f of [DB_FILE, `${DB_FILE}-journal`, `${DB_FILE}-wal`, `${DB_FILE}-shm`]) {
     // Truncar, não apagar: no Windows o SQLite abre sem FILE_SHARE_DELETE e o engine do Prisma de uma suíte anterior
     // (mesmo processo jest, já desconectado) ainda segura o handle → unlink = EBUSY. Truncar é permitido e um arquivo
-    // vazio é um SQLite vazio; o `db push` abaixo recria o schema.
+    // vazio é um SQLite vazio. -wal/-shm também: o app liga WAL (lib/prisma), e um WAL velho ao lado do arquivo novo
+    // não pode sobrar.
     if (fs.existsSync(f)) fs.truncateSync(f, 0);
   }
-  execSync('npx prisma db push --skip-generate --accept-data-loss', {
-    cwd: SERVER_DIR,
-    env: { ...process.env, DATABASE_URL: 'file:./test-integration.db' },
-    stdio: 'inherit',
-  });
+  fs.copyFileSync(template, DB_FILE);
 }
 
 /**

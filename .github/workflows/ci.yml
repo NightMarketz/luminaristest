@@ -115,6 +115,18 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
+      # Cache de transformação do Jest entre runs. O 1º arquivo de cada shard que importa o app (makeApp)
+      # compilava o grafo inteiro a frio — bankSettlementController pagava 43 s, sendo 3,5 s de teste.
+      # Chave por sha (sempre salva a versão nova) + restore-keys por shard (recupera a última). Entrada
+      # velha é inofensiva: o Jest indexa cada arquivo pelo conteúdo + config, não pelo nome.
+      - name: Restore Jest cache
+        uses: actions/cache@v4
+        with:
+          path: server/.jest-cache
+          key: jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-
+
       - name: Run tests + assert no leaked handles
         shell: bash
         # GAP-MAP Nível 4 "CI — test:leaks estoura a heap": todas as suítes num processo só bateram o teto
@@ -124,7 +136,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -uo pipefail
-          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles 2>&1 | tee jest.log
+          npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles --cacheDirectory=.jest-cache 2>&1 | tee jest.log
           status=${PIPESTATUS[0]}
           if grep -q "Jest has detected the following" jest.log; then
             echo "::error::Open handle vazado — algum teste não fecha um recurso async (TECH-DEBT-TEST-001)."
