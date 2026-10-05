@@ -90,6 +90,21 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     expect(JSON.stringify(semProcesso.body)).toContain('informe o processo da liminar');
   });
 
+  it('Fase B item 3b (F-TB-5 b): prestadoraExclusivaServicos grava e audita; com a forma travada, trocar ⇒ 400', async () => {
+    const livre = await put(2028, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, prestadoraExclusivaServicos: true });
+    expect(livre.status).toBe(200);
+    expect(livre.body.data.prestadoraExclusivaServicos).toBe(true);
+    expect((await ultimoEvento('company_fiscal_profile.updated')).prestadoraExclusivaServicos).toBe('true');
+    await prisma.companyFiscalProfile.update({
+      where: { userId_anoCalendario: { userId: dono.id, anoCalendario: 2028 } },
+      data: { formaApuracaoTravadaEm: new Date('2028-02-27T12:00:00Z') },
+    });
+    const troca = await put(2028, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, prestadoraExclusivaServicos: false });
+    expect(troca.status).toBe(400);
+    expect(JSON.stringify(troca.body)).toContain('prestadoraExclusivaServicos');
+    expect((await put(2028, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, prestadoraExclusivaServicos: true })).status).toBe(200);
+  });
+
   it('item 3 (F-TA-6 a): 4 contas da provisão com natureza checada; evento com os ids', async () => {
     const desp = await conta('4.9.1', 'Expense');
     const despCsll = await conta('4.9.2', 'Expense');

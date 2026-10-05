@@ -51,6 +51,8 @@ export interface CompanyFiscalProfileView {
   encerramentoAtividadeEm: string | null;
   lc224AcrescimoSuspenso: boolean;
   lc224LiminarReferencia: string | null;
+  // X7 Fase B (BRIEF B item 3b)
+  prestadoraExclusivaServicos: boolean;
   updatedAt: string;
 }
 
@@ -321,6 +323,7 @@ export class CompanyFiscalProfileService {
         formaApuracaoTravadaEm: row.formaApuracaoTravadaEm ? row.formaApuracaoTravadaEm.toISOString() : '',
         lucroRealObrigatorio: b(row.lucroRealObrigatorio),
         lc224AcrescimoSuspenso: String(row.lc224AcrescimoSuspenso),
+        prestadoraExclusivaServicos: String(row.prestadoraExclusivaServicos), // X7 Fase B item 3b
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -346,7 +349,8 @@ export function formaEfetiva(regime: string, forma: string | null): string | nul
 /**
  * X7 item 1 (D2, F-X7-5 a): com `formaApuracaoTravadaEm` preenchido, o PUT não troca forma, regime nem
  * obrigatoriedade do Real — as apurações confirmadas copiam o regime (item 12). A chave da liminar (item 2b) e as
- * demais colunas seguem editáveis.
+ * demais colunas seguem editáveis. Fase B item 3b (F-TB-5 b): `prestadoraExclusivaServicos` também trava — os meses
+ * confirmados copiam a premissa do 16%, mesma razão do `regime`.
  */
 function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalProfileData, ano: number): void {
   if (!atual.formaApuracaoTravadaEm) return;
@@ -354,6 +358,7 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
   if (atual.regime !== data.regime) trocou.push('regime');
   if (formaEfetiva(atual.regime, atual.formaApuracaoIrpjCsll) !== formaEfetiva(data.regime, data.formaApuracaoIrpjCsll)) trocou.push('formaApuracaoIrpjCsll');
   if (atual.lucroRealObrigatorio !== data.lucroRealObrigatorio) trocou.push('lucroRealObrigatorio');
+  if (atual.prestadoraExclusivaServicos !== data.prestadoraExclusivaServicos) trocou.push('prestadoraExclusivaServicos');
   if (trocou.length > 0) {
     throw new ValidationError(
       `FORMA_TRAVADA: ${ano} tem apuração de IRPJ/CSLL confirmada desde ${atual.formaApuracaoTravadaEm.toISOString().slice(0, 10)} — ${trocou.join(', ')} não muda(m) no ano (ADR-INCR-TAX-ASSESSMENT D2; IN RFB 1.700/2017 art. 54).`,
@@ -384,6 +389,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     encerramentoAtividadeEm: input.encerramentoAtividadeEm,
     lc224AcrescimoSuspenso: input.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: input.lc224LiminarReferencia,
+    prestadoraExclusivaServicos: input.prestadoraExclusivaServicos,
   };
 }
 
@@ -410,6 +416,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     encerramentoAtividadeEm: row.encerramentoAtividadeEm,
     lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: row.lc224LiminarReferencia,
+    prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
   };
 }
 
@@ -438,6 +445,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     encerramentoAtividadeEm: row.encerramentoAtividadeEm,
     lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: row.lc224LiminarReferencia,
+    prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

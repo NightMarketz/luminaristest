@@ -28,6 +28,8 @@ export interface CompanyFiscalProfileData {
   encerramentoAtividadeEm: string | null;
   lc224AcrescimoSuspenso: boolean;
   lc224LiminarReferencia: string | null;
+  // X7 Fase B (BRIEF B item 3b)
+  prestadoraExclusivaServicos: boolean;
 }
 
 /**

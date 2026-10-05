@@ -36,7 +36,8 @@ export type MemoriaLinha = z.infer<typeof MemoriaLinhaSchema>;
 export const PERIODOS_TRIMESTRAIS = ['T01', 'T02', 'T03', 'T04'] as const;
 export type PeriodoTrimestral = (typeof PERIODOS_TRIMESTRAIS)[number];
 export type TributoApuracao = 'IRPJ' | 'CSLL';
-export type ModoApuracao = 'PRESUMIDO' | 'REAL_TRIMESTRAL';
+/** Fase B (BRIEF B item 11; nomes do ADR §6): + os 3 modos do Real anual. */
+export type ModoApuracao = 'PRESUMIDO' | 'REAL_TRIMESTRAL' | 'ESTIMATIVA_RECEITA' | 'BALANCETE_SUSPENSAO_REDUCAO' | 'AJUSTE_ANUAL';
 
 /** Dedução informada pelo operador (F-X7-11 a; shape do `TaxAssessmentPreviewSchema.deducoes` do contrato §2). */
 export interface DeducaoInformada {
@@ -90,16 +91,16 @@ export function trimestresEmAtividade(ano: number, inicioAtividadeEm: string | n
   });
 }
 
-function valorLinha(memoria: MemoriaLinha[], codigo: string, periodo: string): bigint {
+export function valorLinha(memoria: MemoriaLinha[], codigo: string, periodo: string): bigint {
   const l = memoria.find((m) => m.codigo === codigo);
   if (!l) throw new ValidationError(`memória confirmada de ${periodo} sem a linha ${codigo}.`);
   return BigInt(l.valorCents);
 }
 
-const temLinha = (memoria: MemoriaLinha[], codigo: string): boolean => memoria.some((m) => m.codigo === codigo);
-const maxZero = (v: bigint): bigint => (v > 0n ? v : 0n);
+export const temLinha = (memoria: MemoriaLinha[], codigo: string): boolean => memoria.some((m) => m.codigo === codigo);
+export const maxZero = (v: bigint): bigint => (v > 0n ? v : 0n);
 const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
-const linha = (codigo: string, descricao: string, valorCents: bigint, fonte: string): MemoriaLinha => ({
+export const linha = (codigo: string, descricao: string, valorCents: bigint, fonte: string): MemoriaLinha => ({
   codigo,
   descricao,
   valorCents: valorCents.toString(),
@@ -252,7 +253,7 @@ export interface EntradaPresumido {
 }
 
 /** D8: alíquota da CSLL do perfil; nula ⇒ 400 (perfil incompleto). */
-function aliquotaCsll(ind: string | null): { valor: number; fonte: string } {
+export function aliquotaCsll(ind: string | null): { valor: number; fonte: string } {
   const a = ind ? ALIQUOTA_CSLL_BP[ind] : undefined;
   if (!a) throw new ValidationError('perfil incompleto: informe ecf.indAliqCsll (alíquota da CSLL) no perfil fiscal da empresa do ano (ADR D8).');
   return a;
@@ -299,29 +300,35 @@ function basePresumido(
   return { baseCents: base, devidoCents: imposto.devidoCents, memoria: [...memoria, ...imposto.memoria] };
 }
 
-/** IRPJ = 15% + adicional de 10% sobre o que exceder R$ 20.000 × 3 (D7); CSLL = alíquota do perfil (D8). */
-function impostoSobreBase(
+/**
+ * IRPJ = 15% + adicional de 10% sobre o que exceder R$ 20.000 × `meses` (D7: 3 no trimestre; Fase B: 1 na estimativa,
+ * n no balancete, os meses em atividade no ajuste); CSLL = alíquota do perfil (D8). `codigoDevido` = código da linha
+ * do devido (o balancete grava `DEVIDO_PERIODO_EM_CURSO`, Fase B item 8).
+ */
+export function impostoSobreBase(
   tributo: TributoApuracao,
   dataFim: string,
   base: bigint,
   aliqCsll: { valor: number; fonte: string } | null,
+  meses: bigint = MESES_TRIMESTRE,
+  codigoDevido = 'DEVIDO',
 ): { devidoCents: bigint; memoria: MemoriaLinha[] } {
   if (tributo === 'CSLL') {
     const a = aliqCsll!;
     const v = mulBp(base, a.valor);
-    return { devidoCents: v, memoria: [linha('ALIQUOTA', `Base × ${a.valor / 100}%`, v, a.fonte), linha('DEVIDO', 'CSLL devida', v, a.fonte)] };
+    return { devidoCents: v, memoria: [linha('ALIQUOTA', `Base × ${a.valor / 100}%`, v, a.fonte), linha(codigoDevido, 'CSLL devida', v, a.fonte)] };
   }
   const aliq = linhaVigente('IRPJ_ALIQ', dataFim)!;
   const adicAliq = linhaVigente('IRPJ_ADIC_ALIQ', dataFim)!;
   const limiteMes = linhaVigente('IRPJ_ADIC_LIMITE_MES_CENTS', dataFim)!;
   const normal = mulBp(base, aliq.valor);
-  const adicional = mulBp(maxZero(base - BigInt(limiteMes.valor) * MESES_TRIMESTRE), adicAliq.valor);
+  const adicional = mulBp(maxZero(base - BigInt(limiteMes.valor) * meses), adicAliq.valor);
   return {
     devidoCents: normal + adicional,
     memoria: [
       linha('ALIQUOTA', `Base × ${aliq.valor / 100}%`, normal, aliq.fonte),
-      linha('ADICIONAL', `${adicAliq.valor / 100}% × (base − ${limiteMes.valor} centavos × 3 meses)`, adicional, limiteMes.fonte),
-      linha('DEVIDO', 'IRPJ devido', normal + adicional, aliq.fonte),
+      linha('ADICIONAL', `${adicAliq.valor / 100}% × (base − ${limiteMes.valor} centavos × ${meses} meses)`, adicional, limiteMes.fonte),
+      linha(codigoDevido, 'IRPJ devido', normal + adicional, aliq.fonte),
     ],
   };
 }
@@ -429,14 +436,36 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
     codigoReceita = CODIGOS_RECEITA.CSLL_REAL_TRIMESTRAL;
   }
   const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.perfil.ecfIndAliqCsll) : null;
-  const livro = e.tributo === 'IRPJ' ? 'lalur' : 'lacs';
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
+  const ajustes = ajustesParteA(e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
+  const memoria: MemoriaLinha[] = [
+    linha('LAIR', 'Resultado antes de IRPJ/CSLL no trimestre (sem encerramento, sem as despesas da provisão)', e.resultadoAntesCents, 'ADR-INCR-TAX-ASSESSMENT D4'),
+  ];
+  if (!e.contasProvisaoConfiguradas) {
+    memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
+  }
+  memoria.push(...ajustes.memoria);
+  const imposto = impostoSobreBase(e.tributo, dataFim, ajustes.base, aliqCsll);
+  memoria.push(...imposto.memoria);
+  return fecharComDeducoes(e.tributo, 'REAL_TRIMESTRAL', codigoReceita, ajustes.base, imposto.devidoCents, 0n, e.deducoes, memoria);
+}
 
+/**
+ * Parte A do Real (trimestral e, na Fase B, balancete e ajuste anual): L = resultado + Σ `A` − Σ `E`; C = Σ `P`; D6
+ * por tributo; base = max(0, L − C). Devolve as linhas ADICOES..BASE da memória.
+ */
+export function ajustesParteA(
+  tributo: TributoApuracao,
+  resultadoAntesCents: bigint,
+  linhasParteA: { codigo: string; valorCents: bigint }[],
+  dataFim: string,
+): { base: bigint; memoria: MemoriaLinha[] } {
+  const livro = tributo === 'IRPJ' ? 'lalur' : 'lacs';
   let adicoes = 0n;
   let exclusoes = 0n;
   let compensacao = 0n;
   const linhasP: string[] = [];
-  for (const l of e.linhasParteA) {
+  for (const l of linhasParteA) {
     const cat = findLinha(livro, l.codigo);
     if (!cat || cat.tipo !== 'E') throw new ValidationError(`linha ${livro}/${l.codigo} não é linha de entrada (E) da tabela dinâmica.`);
     if (cat.tipoLanc === 'A') adicoes += l.valorCents;
@@ -446,33 +475,25 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
       if (l.valorCents > 0n) linhasP.push(l.codigo);
     } else throw new ValidationError(`linha ${livro}/${l.codigo} tem TIPO LANÇ ${cat.tipoLanc} — fora de A/E/P.`);
   }
-  const lucroAjustado = e.resultadoAntesCents + adicoes - exclusoes;
+  const lucroAjustado = resultadoAntesCents + adicoes - exclusoes;
   const teto = linhaVigente('COMPENSACAO_TETO', dataFim)!;
   const tetoCents = lucroAjustado > 0n ? mulBp(lucroAjustado, teto.valor) : 0n;
   if (compensacao > tetoCents) {
     throw new ValidationError(
-      `${e.tributo}: compensação de ${compensacao} centavos (linha(s) ${livro}/${linhasP.join(', ')}) acima do teto de ${tetoCents} centavos ` +
+      `${tributo}: compensação de ${compensacao} centavos (linha(s) ${livro}/${linhasP.join(', ')}) acima do teto de ${tetoCents} centavos ` +
         `(${teto.valor / 100}% do lucro ajustado de ${lucroAjustado} centavos — ${teto.fonte}).`,
     );
   }
   const base = maxZero(lucroAjustado - compensacao);
   const memoria: MemoriaLinha[] = [
-    linha('LAIR', 'Resultado antes de IRPJ/CSLL no trimestre (sem encerramento, sem as despesas da provisão)', e.resultadoAntesCents, 'ADR-INCR-TAX-ASSESSMENT D4'),
-  ];
-  if (!e.contasProvisaoConfiguradas) {
-    memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
-  }
-  memoria.push(
     linha('ADICOES', `Σ linhas A do ${livro}`, adicoes, F_M300),
     linha('EXCLUSOES', `Σ linhas E do ${livro}`, exclusoes, F_M300),
     linha('LUCRO_AJUSTADO', 'Lucro ajustado (LAIR + adições − exclusões)', lucroAjustado, F_M300),
     linha('COMPENSACAO', `Σ linhas P do ${livro}`, compensacao, F_M300),
     linha('COMPENSACAO_TETO', `${teto.valor / 100}% do lucro ajustado`, tetoCents, teto.fonte),
     linha('BASE', 'Lucro real / base de cálculo (≥ 0)', base, F_M300),
-  );
-  const imposto = impostoSobreBase(e.tributo, dataFim, base, aliqCsll);
-  memoria.push(...imposto.memoria);
-  return fecharComDeducoes(e.tributo, 'REAL_TRIMESTRAL', codigoReceita, base, imposto.devidoCents, 0n, e.deducoes, memoria);
+  ];
+  return { base, memoria };
 }
 
 // ─── Item 11 — deduções (F-X7-11 a) + excedente (F-TA-9 a / § 7º) ────────────────────────────────────────────
@@ -482,7 +503,7 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
  * SALDO_NEGATIVO (restituição/compensação fora do sistema — F-TA-9 a; IN 2.305 art. 15 § 7º). Só as deduções do
  * próprio tributo entram. Incentivos (PAT etc.) ficam fora, declarados (ADR F-X7-11).
  */
-function fecharComDeducoes(
+export function fecharComDeducoes(
   tributo: TributoApuracao,
   modo: ModoApuracao,
   codigoReceita: string,
@@ -492,14 +513,7 @@ function fecharComDeducoes(
   deducoes: DeducaoInformada[],
   memoria: MemoriaLinha[],
 ): ResultadoApuracao {
-  let deducoesCents = 0n;
-  deducoes
-    .filter((d) => d.tributo === tributo)
-    .forEach((d, i) => {
-      const v = BigInt(d.valorCents);
-      deducoesCents += v;
-      memoria.push(linha(`DEDUCAO_${i + 1}`, `${d.tipo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
-    });
+  const deducoesCents = somarDeducoes(tributo, deducoes, memoria);
   const liquido = devido - deducoesCents - acertoT04;
   const aPagar = maxZero(liquido);
   const saldoNegativo = maxZero(-liquido);
@@ -520,4 +534,17 @@ function fecharComDeducoes(
     memoria,
     tabelaVersao: TAX_ASSESSMENT_TABELA_VERSAO,
   };
+}
+
+/** Item 11 — soma as deduções informadas do próprio tributo e grava uma linha `DEDUCAO_n` por dedução. */
+export function somarDeducoes(tributo: TributoApuracao, deducoes: DeducaoInformada[], memoria: MemoriaLinha[]): bigint {
+  let total = 0n;
+  deducoes
+    .filter((d) => d.tributo === tributo)
+    .forEach((d, i) => {
+      const v = BigInt(d.valorCents);
+      total += v;
+      memoria.push(linha(`DEDUCAO_${i + 1}`, `${d.tipo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
+    });
+  return total;
 }

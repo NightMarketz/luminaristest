@@ -16,6 +16,9 @@ import { isValidDateOnly } from '../models/dates';
  *  - `lucroRealObrigatorio` só no REAL (contrato §2: "só REAL: 0220 × 3373");
  *  - `lc224AcrescimoSuspenso = true` exige `lc224LiminarReferencia` (F-TA-5 a);
  *  - datas de atividade date-only com calendário validado (F-TA-4 b).
+ * BE-INCR-TAX-ASSESSMENT Fase B (nó X7, BRIEF B item 3b; F-TB-5 b): `prestadoraExclusivaServicos` — a declaração da
+ * PJ × ano de que se enquadra na IN RFB 1.700/2017 art. 33 § 7º (16% na estimativa). A trava é do service. `ANUAL`
+ * segue recusado até o PR-4 da Fase B (F-TB-8.1).
  * `declarante` (F-XP-2 → a): os campos de 0000/0030 que hoje vêm no corpo de cada geração, TODOS opcionais aqui —
  * o que falta aparece em `faltantes` do endpoint de obrigações. Regex/limites espelham `SpedEcdDto`/`SpedEcfDto`.
  */
@@ -100,6 +103,7 @@ export const UpsertCompanyFiscalProfileSchema = z
     encerramentoAtividadeEm: dateOnly('encerramentoAtividadeEm').nullable().default(null),
     lc224AcrescimoSuspenso: z.boolean().default(false),
     lc224LiminarReferencia: z.string().trim().min(1).max(60).nullable().default(null),
+    prestadoraExclusivaServicos: z.boolean().default(false),
   })
   .strict()
   .superRefine((v, ctx) => {

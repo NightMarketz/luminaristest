@@ -1391,43 +1391,46 @@ model FiscalProfile {
 // escopo/policy. Diz quais obrigações SPED se aplicam (models/obrigacoesPorRegime.ts) e guarda o que hoje é
 // redigitado a cada geração ECD/ECF. Soft-delete; o upsert REVIVE a linha (mesma @@unique) — padrão FiscalProfile.
 model CompanyFiscalProfile {
-  id                         String             @id @default(cuid())
-  userId                     String
-  user                       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  anoCalendario              Int
-  regime                     String // MEI | SIMPLES | PRESUMIDO | REAL (models/regimeEmpresa.ts)
-  grandePorte                Boolean? // null = "não sei" (F-OBP-5 c) — Lei 11.638 art. 3º p.ú.
-  inativa                    Boolean            @default(false) // IN 2.003 art. 3º §1º III; IN 2.004 art. 1º §1º III
-  aporteInvestidorAnjo       Boolean? // IN 2.003 art. 3º §2º
-  livroCaixaSemEscrituracao  Boolean? // só PRESUMIDO — IN 2.003 art. 3º §1º V
-  distribuicaoAcimaBase      Boolean? // só PRESUMIDO — IN 2.003 art. 3º §3º
-  declarante                 Json? // F-XP-2 a: 0000/0030 (nome, cnpj, endereço, IE, IM, codMun…) — shape em CompanyFiscalProfileDto
-  ecdIndNire                 String? // '0' | '1'
-  ecdNire                    String?
-  ecdNumOrd                  String?
-  ecdNatLivr                 String?
-  ecfIndAliqCsll             String? // '1' (9%) | '4' (15%) — só PRESUMIDO/REAL
-  ecfIndRecReceita           String? // '1' caixa | '2' competência
-  contadorContactId          String?
-  contadorContact            AccountingContact? @relation(fields: [contadorContactId], references: [id], onDelete: Restrict)
-  representanteLegalSignerId String?
-  representanteLegalSigner   CompanySigner?     @relation(fields: [representanteLegalSignerId], references: [id], onDelete: Restrict)
-  ecfRecibo                  String? // F-XP-5 a — preenchido no PR-2
-  regimeTravadoEm            DateTime? // F-XP-5 a — PR-2 (IN 2.004 art. 7º §2º)
+  id                          String             @id @default(cuid())
+  userId                      String
+  user                        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anoCalendario               Int
+  regime                      String // MEI | SIMPLES | PRESUMIDO | REAL (models/regimeEmpresa.ts)
+  grandePorte                 Boolean? // null = "não sei" (F-OBP-5 c) — Lei 11.638 art. 3º p.ú.
+  inativa                     Boolean            @default(false) // IN 2.003 art. 3º §1º III; IN 2.004 art. 1º §1º III
+  aporteInvestidorAnjo        Boolean? // IN 2.003 art. 3º §2º
+  livroCaixaSemEscrituracao   Boolean? // só PRESUMIDO — IN 2.003 art. 3º §1º V
+  distribuicaoAcimaBase       Boolean? // só PRESUMIDO — IN 2.003 art. 3º §3º
+  declarante                  Json? // F-XP-2 a: 0000/0030 (nome, cnpj, endereço, IE, IM, codMun…) — shape em CompanyFiscalProfileDto
+  ecdIndNire                  String? // '0' | '1'
+  ecdNire                     String?
+  ecdNumOrd                   String?
+  ecdNatLivr                  String?
+  ecfIndAliqCsll              String? // '1' (9%) | '4' (15%) — só PRESUMIDO/REAL
+  ecfIndRecReceita            String? // '1' caixa | '2' competência
+  contadorContactId           String?
+  contadorContact             AccountingContact? @relation(fields: [contadorContactId], references: [id], onDelete: Restrict)
+  representanteLegalSignerId  String?
+  representanteLegalSigner    CompanySigner?     @relation(fields: [representanteLegalSignerId], references: [id], onDelete: Restrict)
+  ecfRecibo                   String? // F-XP-5 a — preenchido no PR-2
+  regimeTravadoEm             DateTime? // F-XP-5 a — PR-2 (IN 2.004 art. 7º §2º)
   // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 1, 2, 2b) — forma de apuração do IRPJ/CSLL (ADR D1/D2),
   // atividade no ano (IN RFB 2.305 art. 15 § 9º, F-TA-4 b) e chave da liminar contra a LC 224 (F-TA-5 a).
-  formaApuracaoIrpjCsll      String? // TRIMESTRAL | ANUAL — Fase A aceita só TRIMESTRAL; REAL + null ⇒ TRIMESTRAL
-  formaApuracaoTravadaEm     DateTime? // gravado na tx da 1ª confirmação do ano (F-X7-5 a, PR-2)
-  lucroRealObrigatorio       Boolean? // só REAL: código 0220 (obrigada) × 3373 (optante)
-  inicioAtividadeEm          String? // YYYY-MM-DD, calendário validado
-  encerramentoAtividadeEm    String? // YYYY-MM-DD, calendário validado
-  lc224AcrescimoSuspenso     Boolean            @default(false) // liminar do cliente; fora da trava da forma
-  lc224LiminarReferencia     String? // nº do processo; obrigatório se suspenso (fora da auditoria)
-  createdById                String?
-  updatedById                String?
-  createdAt                  DateTime           @default(now())
-  updatedAt                  DateTime           @updatedAt
-  deletedAt                  DateTime?
+  formaApuracaoIrpjCsll       String? // TRIMESTRAL | ANUAL — Fase A aceita só TRIMESTRAL; REAL + null ⇒ TRIMESTRAL
+  formaApuracaoTravadaEm      DateTime? // gravado na tx da 1ª confirmação do ano (F-X7-5 a, PR-2)
+  lucroRealObrigatorio        Boolean? // só REAL: código 0220 (obrigada) × 3373 (optante)
+  inicioAtividadeEm           String? // YYYY-MM-DD, calendário validado
+  encerramentoAtividadeEm     String? // YYYY-MM-DD, calendário validado
+  lc224AcrescimoSuspenso      Boolean            @default(false) // liminar do cliente; fora da trava da forma
+  lc224LiminarReferencia      String? // nº do processo; obrigatório se suspenso (fora da auditoria)
+  // X7 Fase B (BRIEF B item 3b, F-TB-5 b) — declaração da PJ × ano: prestadora EXCLUSIVA de serviços em geral (IN RFB
+  // 1.700/2017 art. 33 § 7º; fora do parágrafo único da Lei 9.250/1995 art. 40). Trava junto com a forma.
+  prestadoraExclusivaServicos Boolean            @default(false)
+  createdById                 String?
+  updatedById                 String?
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
+  deletedAt                   DateTime?
 
   @@unique([userId, anoCalendario])
   @@index([contadorContactId])

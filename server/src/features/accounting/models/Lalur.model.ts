@@ -34,6 +34,33 @@ export function quarterBounds(year: number, quarter: LalurQuarter): { from: Date
   return { from, to };
 }
 
+/**
+ * X7 Fase B (BRIEF B item 4; F-TB-1 a) — períodos do Real anual no vocabulário do `PER_APUR` da ECF (Manual p.128):
+ * `A01..A12` = balancete/estimativa do mês, `A00` = o ano. O e-Lalur só passa a aceitá-los no PR-2 (item 12).
+ */
+export const LALUR_MESES = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12'] as const;
+export type LalurMes = (typeof LALUR_MESES)[number];
+export type LalurPeriodo = LalurQuarter | 'A00' | LalurMes;
+
+/** Item 4 — janela do mês `m` (1..12) sozinho: é a da receita bruta da estimativa (item 5). */
+export function mesBounds(year: number, m: number): { from: Date; to: Date } {
+  return { from: new Date(Date.UTC(year, m - 1, 1)), to: new Date(Date.UTC(year, m, 0, 23, 59, 59, 999)) };
+}
+
+/**
+ * Item 4 — janela do período (UTC, `to` às 23:59:59.999Z como `quarterBounds`):
+ *  - `T0x`: `quarterBounds`;
+ *  - `A0m`: o PERÍODO EM CURSO, de 01/01 — ou `inicioAtividadeEm`, se cair no ano (F-TA-4 b) — ao último dia de m
+ *    (IN RFB 1.700/2017 art. 49 I; Manual da ECF p.128, "balanço até o mês");
+ *  - `A00`: o ano.
+ */
+export function periodoBounds(year: number, periodo: LalurPeriodo, inicioAtividadeEm?: string | null): { from: Date; to: Date } {
+  if ((LALUR_QUARTERS as readonly string[]).includes(periodo)) return quarterBounds(year, periodo as LalurQuarter);
+  if (periodo === 'A00') return { from: new Date(Date.UTC(year, 0, 1)), to: mesBounds(year, 12).to };
+  const inicio = inicioAtividadeEm?.startsWith(`${year}-`) ? new Date(`${inicioAtividadeEm}T00:00:00.000Z`) : new Date(Date.UTC(year, 0, 1));
+  return { from: inicio, to: mesBounds(year, Number(periodo.slice(1))).to };
+}
+
 /** M300.IND_RELACAO (Manual p.245): 1 Parte B · 2 conta contábil · 3 ambas · 4 sem relacionamento. */
 export const LALUR_IND_RELACAO = ['1', '2', '3', '4'] as const;
 export type LalurIndRelacao = (typeof LALUR_IND_RELACAO)[number];

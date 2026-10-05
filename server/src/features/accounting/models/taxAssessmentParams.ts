@@ -9,7 +9,7 @@
  */
 
 /** Versão desta tabela — gravada em `TaxAssessment.tabelaVersao` (D3). Mudou linha ⇒ muda a versão. */
-export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-03';
+export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-04'; // Fase B PR-1: + 16% do prestador exclusivo (item 3b)
 
 export type ChaveParametro =
   | 'IRPJ_ALIQ'
@@ -20,7 +20,9 @@ export type ChaveParametro =
   | 'COMPENSACAO_TETO'
   | 'LC224_ACRESCIMO_IRPJ'
   | 'LC224_ACRESCIMO_CSLL'
-  | 'LC224_LIMITE_TRIMESTRE_CENTS';
+  | 'LC224_LIMITE_TRIMESTRE_CENTS'
+  | 'PRESUNCAO_IRPJ_REDUZIDA'
+  | 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS';
 
 export type AtividadePresuncao = 'SERVICO' | 'REVENDA';
 
@@ -35,6 +37,7 @@ export interface ParametroApuracao {
 // vigenteDesde das linhas-base = data do ato citado (só importa que preceda o 1º ano apurável, 2025).
 const LEI_9249 = '1996-01-01'; // Lei 9.249/1995, efeitos a partir de 01/01/1996 (art. 36)
 const IN_1700 = '2017-03-16';
+const LEI_9250 = '1996-01-01'; // Lei 9.250/1995 (dez/1995) — só importa preceder o 1º ano apurável (artigo de vigência não relido)
 
 export const PARAMETROS_APURACAO: readonly ParametroApuracao[] = [
   { chave: 'IRPJ_ALIQ', valor: 1500, fonte: 'IN RFB 1.700/2017 art. 29 caput', vigenteDesde: IN_1700 },
@@ -48,6 +51,9 @@ export const PARAMETROS_APURACAO: readonly ParametroApuracao[] = [
   { chave: 'LC224_ACRESCIMO_IRPJ', valor: 1000, fonte: 'IN RFB 2.305/2025 art. 14 e art. 3º I (IRPJ desde 01/01/2026)', vigenteDesde: '2026-01-01' },
   { chave: 'LC224_ACRESCIMO_CSLL', valor: 1000, fonte: 'IN RFB 2.305/2025 art. 14 e art. 3º II (CSLL desde 01/04/2026)', vigenteDesde: '2026-04-01' },
   { chave: 'LC224_LIMITE_TRIMESTRE_CENTS', valor: 125_000_000, fonte: 'IN RFB 2.305/2025 art. 15 § 2º (redação da IN 2.306/2026)', vigenteDesde: '2026-01-01' },
+  // Fase B (BRIEF B item 3b, F-TB-5 b) — estimativa do IRPJ da PJ exclusivamente prestadora de serviços em geral.
+  { chave: 'PRESUNCAO_IRPJ_REDUZIDA', valor: 1600, fonte: 'IN RFB 1.700/2017 art. 33 § 7º; Lei 9.250/1995 art. 40', vigenteDesde: LEI_9250 },
+  { chave: 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', valor: 12_000_000, fonte: 'IN RFB 1.700/2017 art. 33 § 7º; Lei 9.250/1995 art. 40 (R$ 120.000,00 no ano)', vigenteDesde: LEI_9250 },
 ];
 
 const ACRESCIMO_LC224: ReadonlySet<ChaveParametro> = new Set(['LC224_ACRESCIMO_IRPJ', 'LC224_ACRESCIMO_CSLL']);
@@ -90,6 +96,15 @@ export const CODIGOS_RECEITA = {
   IRPJ_REAL_TRIMESTRAL_OPTANTE: '337301',
   CSLL_PRESUMIDO: '237201',
   CSLL_REAL_TRIMESTRAL: '601201',
+  // Fase B (BRIEF B item 3; ADR §3) — Real anual. O mês por balancete com redução usa o código da estimativa (P-B2).
+  IRPJ_ESTIMATIVA_OBRIGADA: '236201',
+  IRPJ_ESTIMATIVA_OPTANTE: '599301',
+  CSLL_ESTIMATIVA: '248401',
+  IRPJ_AJUSTE_ANUAL_OBRIGADA: '243001',
+  IRPJ_AJUSTE_ANUAL_OPTANTE: '245601',
+  CSLL_AJUSTE_ANUAL: '677301',
+  IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA: '236202',
+  IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE: '599302',
 } as const;
 
 /**
