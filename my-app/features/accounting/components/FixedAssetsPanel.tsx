@@ -21,6 +21,8 @@ export interface FixedAssetsPanelProps {
   /** O razão mudou (depreciação, reconciliação, ativação, baixa) — recarrega o balancete. */
   onLedgerChange?: () => void;
   onNavigateToPeriods?: () => void;
+  /** Seção aberta ao montar (a NF-e leva o operador a "Classes"/"Taxas" — FE-INCR-FIXED-ASSETS PR-2). */
+  initialSection?: FixedAssetsSectionId;
 }
 
 /**
@@ -28,9 +30,9 @@ export interface FixedAssetsPanelProps {
  * Classes, Taxas e Contas. Dono do cache de classes e do plano de contas (contas folha, por id) que as seções
  * dividem. Shape = `<table>` + `Modal` como os demais painéis CRUD da contabilidade (F-FE-2 → a / F-FAFE-7 → a).
  */
-export function FixedAssetsPanel({ unitId, onLedgerChange, onNavigateToPeriods }: FixedAssetsPanelProps) {
+export function FixedAssetsPanel({ unitId, onLedgerChange, onNavigateToPeriods, initialSection = 'bens' }: FixedAssetsPanelProps) {
   const { t, tRef } = useAccountingT();
-  const [section, setSection] = useState<FixedAssetsSectionId>('bens');
+  const [section, setSection] = useState<FixedAssetsSectionId>(initialSection);
   const [classes, setClasses] = useState<FixedAssetClass[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [classesError, setClassesError] = useState<string | null>(null);

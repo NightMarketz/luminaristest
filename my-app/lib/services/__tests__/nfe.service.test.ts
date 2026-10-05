@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { nfeService } from '../nfe.service';
+import { nfeService, type NfeItemMapping } from '../nfe.service';
 import { notify } from '../../notifications/notify';
 
 /**
@@ -62,6 +62,22 @@ describe('nfeService', () => {
     await nfeService.importPurchaseNfe({ unitId: 'u1', itemMappings: [{ cProd: 'A', productRef: 'prod-a' }] }, xml);
     expect(Array.from(lastCall().form.keys()).sort()).toEqual(['file', 'itemMappings', 'unitId']);
   });
+
+  it('importPurchaseNfe: item de imobilizado viaja como { cProd, classId } — sem productRef nem destination (FE-INCR-FIXED-ASSETS PR-2)', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({ payable: { id: 'p3' }, ignoredItems: [] }));
+    await nfeService.importPurchaseNfe(
+      { unitId: 'u1', itemMappings: [{ cProd: 'A', productRef: 'prod-a' }, { cProd: 'B', classId: 'cls-1' }] },
+      xml,
+    );
+    expect(lastCall().form.get('itemMappings')).toBe(JSON.stringify([{ cProd: 'A', productRef: 'prod-a' }, { cProd: 'B', classId: 'cls-1' }]));
+    // o XOR do BE é checado em tempo de compilação (npm run test:types): os dois juntos / destination não compilam
+    // @ts-expect-error productRef e classId juntos
+    const both: NfeItemMapping = { cProd: 'C', productRef: 'p', classId: 'c' };
+    // @ts-expect-error destination não faz parte desta fatia
+    const withDestination: NfeItemMapping = { cProd: 'D', classId: 'c', destination: 'IMOBILIZADO' };
+    expect([both, withDestination]).toHaveLength(2);
+  });
+
 
   it('reconcileSaleNfe: file + unitId + saleId, notifies on success', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(okResponse({ matched: true, divergences: [] }));

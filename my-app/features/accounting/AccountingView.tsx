@@ -27,7 +27,7 @@ import { AgingPanel } from './components/AgingPanel';
 import { CashForecastPanel } from './components/CashForecastPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
-import { FixedAssetsPanel } from './components/FixedAssetsPanel';
+import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
@@ -130,6 +130,9 @@ export function AccountingView() {
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
   const activeTab: Tab = governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab;
   const setActiveTab = setRawTab;
+  // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
+  const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
+  useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
   const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
 
   function switchContext(next: string) {
@@ -443,7 +446,14 @@ export function AccountingView() {
 
       {/* ── NF-e (compra → AP + estoque; venda → proveniência) tab — FE-INCR-NFE ─── */}
       {activeTab === 'nfe' && unitId && (
-        <NfePanel unitId={unitId} onLedgerChange={reload} onNavigateTab={(tab) => setActiveTab(tab)} />
+        <NfePanel
+          unitId={unitId}
+          onLedgerChange={reload}
+          onNavigateTab={(tab, section) => {
+            if (section) setFixedAssetsSection(section);
+            setActiveTab(tab);
+          }}
+        />
       )}
 
       {/* ── Compliance (mapeamento referencial RFB + e-Lalur + geração SPED) tab ── */}
@@ -470,7 +480,7 @@ export function AccountingView() {
 
       {/* ── Imobilizado (C8: bens / classes / taxas / contas) tab — FE-INCR-FIXED-ASSETS ─── */}
       {activeTab === 'imobilizado' && unitId && (
-        <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} />
+        <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} initialSection={fixedAssetsSection} />
       )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}

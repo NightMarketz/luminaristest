@@ -63,11 +63,12 @@ vi.mock('../components/DailyJournalPanel', () => ({ DailyJournalPanel: () => nul
 vi.mock('../components/CounterpartiesPanel', () => ({ CounterpartiesPanel: () => null }));
 vi.mock('../components/DimensionsPanel', () => ({ DimensionsPanel: () => null }));
 vi.mock('../components/NfePanel', () => ({
-  NfePanel: () => React.createElement('div', { 'data-testid': 'nfe-panel-mock' }),
+  NfePanel: (p: { onNavigateTab?: (tab: 'imobilizado', section: 'classes') => void }) =>
+    React.createElement('button', { 'data-testid': 'nfe-panel-mock', onClick: () => p.onNavigateTab?.('imobilizado', 'classes') }, 'nfe'),
 }));
 vi.mock('../components/FixedAssetsPanel', () => ({
-  FixedAssetsPanel: (p: { onNavigateToPeriods?: () => void }) =>
-    React.createElement('button', { 'data-testid': 'fixed-assets-panel-mock', onClick: p.onNavigateToPeriods }, 'fa'),
+  FixedAssetsPanel: (p: { onNavigateToPeriods?: () => void; initialSection?: string }) =>
+    React.createElement('button', { 'data-testid': 'fixed-assets-panel-mock', 'data-section': p.initialSection, onClick: p.onNavigateToPeriods }, 'fa'),
 }));
 vi.mock('../components/JournalEntryModal', () => ({ JournalEntryModal: () => null }));
 
@@ -171,5 +172,18 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
     fireEvent.click(await screen.findByRole('tab', { name: 'Imobilizado' }));
     fireEvent.click(await screen.findByTestId('fixed-assets-panel-mock'));
     await waitFor(() => expect(screen.getByRole('tab', { name: /Períodos/ })).toHaveAttribute('aria-selected', 'true'));
+  });
+
+  it('"cadastrar classe" da NF-e abre Imobilizado já em Classes; revisita manual pela barra volta a Bens (item 29)', async () => {
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: /NF-e/ }));
+    fireEvent.click(await screen.findByTestId('nfe-panel-mock'));
+    const panel = await screen.findByTestId('fixed-assets-panel-mock');
+    expect(screen.getByRole('tab', { name: 'Imobilizado' })).toHaveAttribute('aria-selected', 'true');
+    expect(panel).toHaveAttribute('data-section', 'classes');
+    fireEvent.click(screen.getByRole('tab', { name: /NF-e/ }));
+    await screen.findByTestId('nfe-panel-mock');
+    fireEvent.click(screen.getByRole('tab', { name: 'Imobilizado' }));
+    expect(await screen.findByTestId('fixed-assets-panel-mock')).toHaveAttribute('data-section', 'bens');
   });
 });
