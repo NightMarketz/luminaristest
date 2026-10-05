@@ -235,8 +235,10 @@ export class NoActiveAccountingBindingsError extends AppError {
 
 /** Pré-check de consumo (item 4): saldo vencido não paga venda — 400 antes de qualquer escrita. */
 export class PackageBalanceExpiredError extends AppError {
-  constructor(customerId: string, packageId: string, expiresOn: string) {
-    super(`Saldo de pacote vencido em ${expiresOn} (cliente ${customerId}, pacote ${packageId}).`, 400, 'PACKAGE_BALANCE_EXPIRED');
+  /** `expiresOn` = último dia válido, 'YYYY-MM-DD'. A mensagem é a que o operador lê no toast: só a data, DD/MM/AAAA (F-PP-1 a). */
+  constructor(expiresOn: string) {
+    const [y, m, d] = expiresOn.split('-');
+    super(`Saldo de pacote vencido em ${d}/${m}/${y}.`, 400, 'PACKAGE_BALANCE_EXPIRED');
     Object.setPrototypeOf(this, PackageBalanceExpiredError.prototype);
   }
 }

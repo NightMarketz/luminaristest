@@ -40,7 +40,7 @@ const SALES_TABLE = 'tbl-sales';
 const SALE = { id: 'sale-1', dynamicTableId: SALES_TABLE, data: { unitId: 'unit-1', customerId: 'cust-1', date: '2026-11-25', totalAmount: 250 } };
 const NOTICE = buildValidityNotice('2026-11-25', 30)!;
 
-function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPackageAcceptancePolicy>; createError?: unknown } = {}) {
+function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPackageAcceptancePolicy>; createError?: unknown; user?: { name: string | null; username: string } | null } = {}) {
   const repo = {
     findBySale: jest.fn(async () => ('existing' in opts ? opts.existing : null)),
     create: jest.fn(async (_s: AccountingScope, d: Record<string, unknown>) => {
@@ -62,7 +62,7 @@ function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPac
     findDataById: jest.fn(async (id: string) => rows[id] ?? null),
     existsByIdInTable: jest.fn(async (id: string, t: string) => rows[id]?.dynamicTableId === t),
   };
-  const users = { getUserById: jest.fn(async () => ({ id: 'actor-1', name: 'Bia', username: 'bia' })) };
+  const users = { getUserById: jest.fn(async () => ('user' in opts ? opts.user : { id: 'actor-1', name: 'Bia', username: 'bia' })) };
   const svc = new PackageAcceptanceService(
     repo as unknown as IPackageAcceptanceRepository,
     policy,
@@ -179,6 +179,25 @@ describe('PackageAcceptanceService.create (item 4)', () => {
     const { svc, dt } = build({ policy: { canRecord: () => false } });
     await expect(svc.create(scope, input)).rejects.toBeInstanceOf(ForbiddenError);
     expect(dt.findTableByInternalName).not.toHaveBeenCalled();
+  });
+});
+
+describe('PackageAcceptanceService — acceptedByLabel (F-PP-2 a)', () => {
+  const stored = {
+    id: 'acc-1', saleId: 'sale-1', customerId: 'cust-1', packageId: 'pkg-1',
+    saleDate: new Date('2026-11-25T00:00:00.000Z'), validityDays: 30, expiresOn: new Date('2026-12-26T00:00:00.000Z'),
+    textVersion: 'v1', textShown: 't', textSha256: 'h', acceptedByUserId: 'actor-1', acceptedAt: new Date('2026-11-25T15:00:00.000Z'),
+  };
+
+  it('a resposta do POST e a do GET trazem o nome (name), não só o id', async () => {
+    const created = await build().svc.create(scope, input);
+    expect(created).toMatchObject({ acceptedByUserId: 'actor-1', acceptedByLabel: 'Bia' });
+    expect(await build({ existing: stored }).svc.getBySale(scope, 'sale-1')).toMatchObject({ acceptedByLabel: 'Bia' });
+  });
+
+  it('usuário sem name cai no username; usuário que não existe mais cai no id', async () => {
+    expect((await build({ existing: stored, user: { name: null, username: 'bia.recepcao' } }).svc.getBySale(scope, 'sale-1'))!.acceptedByLabel).toBe('bia.recepcao');
+    expect((await build({ existing: stored, user: null }).svc.getBySale(scope, 'sale-1'))!.acceptedByLabel).toBe('actor-1');
   });
 });
 

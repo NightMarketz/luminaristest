@@ -89,5 +89,7 @@ export interface PackageAcceptanceResponse {
   textShown: string;
   textSha256: string;
   acceptedByUserId: string;
+  /** name || username do usuário (o mesmo critério do PDF); o id se o usuário não existe mais — F-PP-2 (a). */
+  acceptedByLabel: string;
   acceptedAt: string; // ISO
 }

@@ -123,7 +123,7 @@ export function PackageSaleValidity({ unitId, saleId, packageId, saleDate, custo
                     <PackageValidityNotice text={acceptance.textShown} expiresOn={acceptance.expiresOn} />
                     <p data-testid="package-acceptance-record" className="text-xs text-neutral-600 dark:text-neutral-400">
                         {t('finance_view:sales.validity.accepted_by', 'Aceite registrado por {{who}} em {{when}} (texto {{version}})', {
-                            who: acceptance.acceptedByUserId,
+                            who: acceptance.acceptedByLabel,
                             when: new Date(acceptance.acceptedAt).toLocaleString('pt-BR'),
                             version: acceptance.textVersion,
                         })}

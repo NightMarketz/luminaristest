@@ -256,7 +256,7 @@ describe('itens 12 e 13 — detalhe da venda de pacote', () => {
         );
     const acceptance = {
         id: 'acc-1', saleId: 's1', customerId: 'c1', packageId: 'pkg1', saleDate: '2026-11-25', validityDays: 30, expiresOn: '2026-12-26',
-        textVersion: 'v1', textShown: 'TEXTO GRAVADO NA VENDA', textSha256: 'a'.repeat(64), acceptedByUserId: 'user-77', acceptedAt: '2026-11-25T15:00:00.000Z',
+        textVersion: 'v1', textShown: 'TEXTO GRAVADO NA VENDA', textSha256: 'a'.repeat(64), acceptedByUserId: 'user-77', acceptedByLabel: 'Bia (recepção)', acceptedAt: '2026-11-25T15:00:00.000Z',
     };
 
     beforeEach(() => vi.mocked(packageBalancesService.listBalances).mockResolvedValue([]));
@@ -269,7 +269,8 @@ describe('itens 12 e 13 — detalhe da venda de pacote', () => {
         expect(text.className).toMatch(/\btext-base\b/);
         expect(text.className).toMatch(/\bfont-semibold\b/);
         const rec = screen.getByTestId('package-acceptance-record').textContent ?? '';
-        expect(rec).toContain('user-77');
+        expect(rec).toContain('Bia (recepção)');
+        expect(rec).not.toContain('user-77'); // o cuid não é "quem" (F-PP-2 a)
         expect(rec).toContain('texto v1');
         expect(screen.queryByTestId('package-acceptance-missing')).toBeNull();
         expect(packageAcceptancesService.getNotice).not.toHaveBeenCalled();
