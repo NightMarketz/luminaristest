@@ -91,7 +91,7 @@ export class SpedEcfRealGenerationService {
       throw new ValidationError(`Ajuste ${e.id}: ${err instanceof Error ? err.message : String(err)}`);
     }
     const line: EcfRealLalurLine = {
-      livro,
+      livro: livro as EcfRealLalurLine['livro'], // n620/n660 não chegam aqui: `resolveLinha` os recusa até o catálogo do X7 Fase B PR-4
       perApur: e.quarter,
       codigo: e.codigo,
       descricao: row.descricao,

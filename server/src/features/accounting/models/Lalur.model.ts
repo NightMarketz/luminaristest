@@ -8,8 +8,12 @@ import catalogJson from '../fixtures/ecf-l12-linhas.json';
  * `scripts/ecf-tabelas-dinamicas-to-catalog.mjs` — item 10). No line code is typed here.
  */
 
-/** `livro` discriminator: which ECF register a LalurEntry feeds (BRIEF §2.1). */
-export const LALUR_LIVROS = ['lalur', 'lacs', 'n500', 'n630', 'n670'] as const;
+/**
+ * `livro` discriminator: which ECF register a LalurEntry feeds (BRIEF §2.1). X7 Fase B PR-2 (BRIEF B item 12):
+ * `n620`/`n660` = linhas `E` de N620/N660, só em `A01..A12` (Manual pp.47–48). As abas N620/N660 só entram no
+ * catálogo no PR-4 (item 22): até lá todo write nesses livros é 400 (decisão do dono, 05/10 — lacuna 2 do PR-2).
+ */
+export const LALUR_LIVROS = ['lalur', 'lacs', 'n500', 'n620', 'n630', 'n660', 'n670'] as const;
 export type LalurLivro = (typeof LALUR_LIVROS)[number];
 
 /** Livros whose lines carry M300/M350 fields (IND_RELACAO, filhos M305/M310) — D-M3. */
@@ -40,7 +44,25 @@ export function quarterBounds(year: number, quarter: LalurQuarter): { from: Date
  */
 export const LALUR_MESES = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12'] as const;
 export type LalurMes = (typeof LALUR_MESES)[number];
-export type LalurPeriodo = LalurQuarter | 'A00' | LalurMes;
+/**
+ * PR-2 (item 12; F-X7-6 a): todos os períodos do e-Lalur. A coluna do banco continua `quarter` — nome herdado do
+ * trimestral, guarda também `A00..A12` (sem migração).
+ */
+export const LALUR_PERIODOS = [...LALUR_QUARTERS, 'A00', ...LALUR_MESES] as const;
+export type LalurPeriodo = (typeof LALUR_PERIODOS)[number];
+export const isLalurMes = (p: string): p is LalurMes => (LALUR_MESES as readonly string[]).includes(p);
+export const isLalurQuarter = (p: string): p is LalurQuarter => (LALUR_QUARTERS as readonly string[]).includes(p);
+
+/**
+ * Item 12 — forma de apuração do e-Lalur no ano. `ANUAL` só quando a forma EFETIVA do perfil do ano é `ANUAL`;
+ * qualquer outro caso (TRIMESTRAL, forma nula, regime sem forma, ou ano sem perfil) é `TRIMESTRAL`, como antes
+ * da Fase B (decisão do dono, 05/10 — lacuna 1 do PR-2: preserva o e-Lalur trimestral sem perfil cadastrado).
+ */
+export type LalurForma = 'TRIMESTRAL' | 'ANUAL';
+/** Item 12 — períodos em que a Parte B se move (e fecha) no ano: `T01..T04` ou só `A00` (IN RFB 1.700 art. 50 II). */
+export const periodosParteB = (forma: LalurForma): readonly LalurPeriodo[] => (forma === 'ANUAL' ? (['A00'] as const) : LALUR_QUARTERS);
+/** Item 12 — o período pertence à forma? `T0x` só no trimestral; `A00..A12` só no anual. */
+export const periodoDaForma = (periodo: string, forma: LalurForma): boolean => isLalurQuarter(periodo) === (forma === 'TRIMESTRAL');
 
 /** Item 4 — janela do mês `m` (1..12) sozinho: é a da receita bruta da estimativa (item 5). */
 export function mesBounds(year: number, m: number): { from: Date; to: Date } {
@@ -154,8 +176,12 @@ interface EcfCatalog {
 
 export const ECF_L12_CATALOG = catalogJson as unknown as EcfCatalog;
 
+/** Livros sem aba no catálogo vigente: N620/N660 entram no PR-4 (BRIEF B item 22; insumo §5.1). */
+export const LALUR_LIVROS_SEM_CATALOGO = ['n620', 'n660'] as const;
+export const isLivroSemCatalogo = (livro: string): livro is 'n620' | 'n660' => (LALUR_LIVROS_SEM_CATALOGO as readonly string[]).includes(livro);
+
 /** livro → aba do XLSX (BRIEF §2.4). */
-export const LIVRO_ABA: Record<LalurLivro, keyof Omit<EcfCatalog['abas'], 'PARTEB_PADRAO'>> = {
+export const LIVRO_ABA: Record<Exclude<LalurLivro, 'n620' | 'n660'>, keyof Omit<EcfCatalog['abas'], 'PARTEB_PADRAO'>> = {
   lalur: 'M300A',
   lacs: 'M350A',
   n500: 'N500',
@@ -181,14 +207,14 @@ for (const aba of ['M300A', 'M350A', 'N500', 'N630A', 'N670'] as const) {
 }
 const parteBPadrao = new Map(ECF_L12_CATALOG.abas.PARTEB_PADRAO.map((r) => [r.codigo, r]));
 
-/** Catalog row for (livro, codigo), or undefined when the code is not in that sheet. */
+/** Catalog row for (livro, codigo), or undefined when the code is not in that sheet (or the livro has no sheet yet). */
 export function findLinha(livro: LalurLivro, codigo: string): EcfLinhaCatalogo | undefined {
-  return byAba.get(LIVRO_ABA[livro])?.get(codigo);
+  return isLivroSemCatalogo(livro) ? undefined : byAba.get(LIVRO_ABA[livro])?.get(codigo);
 }
 
-/** Every catalog row of a livro (tests iterate CNA/CA to prove they are never emitted — item 14). */
+/** Every catalog row of a livro (tests iterate CNA/CA to prove they are never emitted — item 14). `[]` sem aba. */
 export function linhasDoLivro(livro: LalurLivro): EcfLinhaCatalogo[] {
-  return ECF_L12_CATALOG.abas[LIVRO_ABA[livro]];
+  return isLivroSemCatalogo(livro) ? [] : ECF_L12_CATALOG.abas[LIVRO_ABA[livro]];
 }
 
 /** PARTEB_PADRAO row for a COD_PB_RFB, or undefined. */

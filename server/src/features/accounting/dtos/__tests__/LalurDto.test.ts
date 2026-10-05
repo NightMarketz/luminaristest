@@ -69,8 +69,10 @@ describe('CreateLalurEntrySchema — forma', () => {
     expect(CreateLalurEntrySchema.safeParse({ ...base, indRelacao: '4', histLancamento: 'x', descricao: 'Custos' }).success).toBe(false);
     expect(CreateLalurEntrySchema.safeParse({ ...base, indRelacao: '4', histLancamento: 'x', tipoLancamento: 'A' }).success).toBe(false);
   });
-  it('quarter fora de T01..T04 e livro fora do enum são 400', () => {
-    failsOn(CreateLalurEntrySchema, { ...base, indRelacao: '4', histLancamento: 'x', quarter: 'A00' }, 'quarter');
+  it('quarter fora de T01..T04/A00..A12 e livro fora do enum são 400', () => {
+    // X7 Fase B PR-2 (BRIEF B item 12): A00..A12 entram no enum; período × forma do ano é do serviço
+    expect(CreateLalurEntrySchema.safeParse({ ...base, indRelacao: '4', histLancamento: 'x', quarter: 'A00' }).success).toBe(true);
+    failsOn(CreateLalurEntrySchema, { ...base, indRelacao: '4', histLancamento: 'x', quarter: 'A13' }, 'quarter');
     failsOn(CreateLalurEntrySchema, { ...base, indRelacao: '4', histLancamento: 'x', livro: 'm300' }, 'livro');
   });
   it('UpdateLalurEntrySchema: chave (codigo/quarter/year/livro) não é editável — .strict() recusa', () => {

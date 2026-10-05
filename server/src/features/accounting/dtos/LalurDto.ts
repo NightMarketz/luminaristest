@@ -9,7 +9,7 @@ import {
   LALUR_IND_SALDO,
   LALUR_LIVROS,
   LALUR_MOV_INDICADORES,
-  LALUR_QUARTERS,
+  LALUR_PERIODOS,
   LALUR_TRIBUTOS,
   isParteALivro,
   isPrejuizoIndicador,
@@ -94,7 +94,8 @@ const journalEntryIdsSet = z
 /** Campos de uma linha (sem unitId) — reusados por create e update. */
 const lineFields = {
   year: z.number().int().gte(2015).lte(2100),
-  quarter: z.enum(LALUR_QUARTERS),
+  // X7 Fase B PR-2 (item 12): T01..T04 e A00..A12; o nome `quarter` é herança. Período × forma do ano é do serviço.
+  quarter: z.enum(LALUR_PERIODOS),
   livro: z.enum(LALUR_LIVROS),
   codigo: z.string().min(1).max(32), // validado contra o catálogo no serviço (item 9)
   valorCents: cents('valorCents'),
@@ -157,8 +158,8 @@ export function refineLalurLine(l: LineShape, ctx: z.RefinementCtx): void {
  *       properties:
  *         unitId:         { type: string }
  *         year:           { type: integer, example: 2025 }
- *         quarter:        { type: string, enum: [T01, T02, T03, T04] }
- *         livro:          { type: string, enum: [lalur, lacs, n500, n630, n670], description: "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n630/n670 = linhas E do Bloco N" }
+ *         quarter:        { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] }
+ *         livro:          { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670], description: "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n620/n630/n660/n670 = linhas E do Bloco N. n620/n660 só em A01..A12 e, até o catálogo N620/N660 entrar (X7 Fase B PR-4), todo write nelas é 400; n630/n670 só em T0x/A00" }
  *         codigo:         { type: string, description: "Código da linha na Tabela Dinâmica (aba M300A/M350A/N500/N630A/N670). Só linha tipo E, vigente no ano — senão 400 com código e motivo." }
  *         valorCents:     { type: integer, minimum: 0, maximum: 2147483647, description: "Sempre ≥ 0 — a direção (adição/exclusão) vem do TIPO_LANCAMENTO derivado do catálogo (Manual p.244)." }
  *         histLancamento: { type: string, maxLength: 500, description: "M300.HIST_LAN_LAL; obrigatório com indRelacao=4; proibido em livro N" }
@@ -218,7 +219,7 @@ export const ArchiveLalurSchema = z.object({ unitId: z.string().min(1) }).strict
 export const ListLalurEntriesQuerySchema = z.object({
   unitId: z.string().min(1),
   year: z.coerce.number().int().gte(2015).lte(2100).optional(),
-  quarter: z.enum(LALUR_QUARTERS).optional(),
+  quarter: z.enum(LALUR_PERIODOS).optional(),
   livro: z.enum(LALUR_LIVROS).optional(),
   // queryBoolean, não z.coerce.boolean(): `?includeArchived=false` devolveria os arquivados.
   includeArchived: queryBoolean(),
@@ -326,7 +327,7 @@ export function refineLalurMovement(m: MovementShape, ctx: z.RefinementCtx): voi
  *         unitId:          { type: string }
  *         parteBId:        { type: string, description: "id de LalurParteBAccount viva, mesmo escopo (M410.COD_CTA_B — obrigatório no nosso DTO)" }
  *         year:            { type: integer, example: 2025 }
- *         quarter:         { type: string, enum: [T01, T02, T03, T04], description: "o M030 sob o qual a linha sai" }
+ *         quarter:         { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12], description: "o M030 sob o qual a linha sai; na forma ANUAL só A00 — A01..A12 ⇒ 400 (IN RFB 1.700 art. 50 II)" }
  *         indicador:       { type: string, enum: [CR, DB, PF, BC], description: "M410.IND_VAL_LAN_LALB_PB — CR crédito · DB débito · PF prejuízo do exercício · BC base negativa da CSLL" }
  *         valorCents:      { type: integer, minimum: 0 }
  *         contrapartidaId: { type: string, description: "M410.COD_CTA_B_CTP — conta da Parte B destino da transferência; PROIBIDO com PF/BC (REGRA_NAO_PREENCHER_CTP); mesmo tributo (REGRA_MESMO_TRIBUTO)" }
@@ -339,7 +340,7 @@ export const CreateLalurParteBMovementSchema = z
     unitId: z.string().min(1),
     parteBId: z.string().min(1),
     year: z.number().int().gte(2015).lte(2100),
-    quarter: z.enum(LALUR_QUARTERS),
+    quarter: z.enum(LALUR_PERIODOS),
     ...movementFields,
   })
   .strict()
@@ -377,7 +378,7 @@ export const UpdateLalurParteBMovementSchema = z
 export const ListLalurParteBMovementsQuerySchema = z.object({
   unitId: z.string().min(1),
   year: z.coerce.number().int().gte(2015).lte(2100).optional(),
-  quarter: z.enum(LALUR_QUARTERS).optional(),
+  quarter: z.enum(LALUR_PERIODOS).optional(),
   parteBId: z.string().min(1).optional(),
   includeArchived: queryBoolean(),
 });
@@ -394,13 +395,13 @@ export const ListLalurParteBMovementsQuerySchema = z.object({
  *       properties:
  *         unitId:  { type: string }
  *         year:    { type: integer, example: 2025 }
- *         quarter: { type: string, enum: [T01, T02, T03, T04] }
+ *         quarter: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] }
  */
 export const LalurParteBPeriodSchema = z
   .object({
     unitId: z.string().min(1),
     year: z.number().int().gte(2015).lte(2100),
-    quarter: z.enum(LALUR_QUARTERS),
+    quarter: z.enum(LALUR_PERIODOS),
   })
   .strict();
 

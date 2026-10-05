@@ -7,8 +7,8 @@ numProc: string
 export interface CreateLalurEntryInput {
 unitId: string
 year: number
-quarter: ("T01" | "T02" | "T03" | "T04")
-livro: ("lalur" | "lacs" | "n500" | "n630" | "n670")
+quarter: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
+livro: ("lalur" | "lacs" | "n500" | "n620" | "n630" | "n660" | "n670")
 codigo: string
 valorCents: number
 histLancamento?: string
@@ -52,8 +52,8 @@ unitId: string
 export interface ListLalurEntriesQueryInput {
 unitId: string
 year?: number
-quarter?: ("T01" | "T02" | "T03" | "T04")
-livro?: ("lalur" | "lacs" | "n500" | "n630" | "n670")
+quarter?: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
+livro?: ("lalur" | "lacs" | "n500" | "n620" | "n630" | "n660" | "n670")
 includeArchived?: (boolean | ("true" | "false"))
 }
 export interface CreateLalurParteBAccountInput {
@@ -87,7 +87,7 @@ export interface CreateLalurParteBMovementInput {
 unitId: string
 parteBId: string
 year: number
-quarter: ("T01" | "T02" | "T03" | "T04")
+quarter: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
 valorCents: number
 indicador: ("CR" | "DB" | "PF" | "BC")
 contrapartidaId?: string
@@ -119,14 +119,14 @@ numProc: string
 export interface ListLalurParteBMovementsQueryInput {
 unitId: string
 year?: number
-quarter?: ("T01" | "T02" | "T03" | "T04")
+quarter?: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
 parteBId?: string
 includeArchived?: (boolean | ("true" | "false"))
 }
 export interface LalurParteBPeriodInput {
 unitId: string
 year: number
-quarter: ("T01" | "T02" | "T03" | "T04")
+quarter: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
 }
 export interface LalurParteBBalancesQueryInput {
 unitId: string
@@ -134,7 +134,7 @@ year: number
 }
 export interface LalurCatalogQueryInput {
 unitId: string
-livro?: ("lalur" | "lacs" | "n500" | "n630" | "n670")
+livro?: ("lalur" | "lacs" | "n500" | "n620" | "n630" | "n660" | "n670")
 aba?: "PARTEB_PADRAO"
 year?: number
 q?: string
