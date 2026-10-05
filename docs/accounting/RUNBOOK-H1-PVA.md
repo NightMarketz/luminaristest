@@ -110,6 +110,28 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > `activate-salon-binding.mjs` com o **novo** `unitId` impresso para cada tenant; os lançamentos e bindings antigos sob `seed-unit-*`
 > ficam (órfãos, sem colisão — F-P5). Atenção: se o usuário `seed-*` já tem tabelas e nenhuma unidade com o nome pedido, o seed **recusa**
 > com mensagem nomeada (não instala o sistema uma 2ª vez).
+>
+> **[EMENDA 2026-10-05 — preflight `luminaris-gate-copilot` pós-#487] A ordem acima está incompleta para o `dev.db` de hoje.**
+> Medido em 05/10 sobre cópia do `dev.db` real (md5 `9de3277d…`, original intocado): (i) **4 migrações pendentes**
+> (`20261003130000_add_fiscal_profile_pacote_ctribnac`, `20261003130100_add_fiscal_profile_pacote_cnbs`,
+> `20261004130000_add_company_fiscal_profile_prestadora_exclusiva`, `20261004150000_add_accounting_policy_versions`) —
+> `smoke-migration-gate.mjs` PASS na cópia; (ii) o Prisma client do checkout principal estava velho — `db:seed:accounting`
+> e `activate-salon-binding.mjs` morrem com `TSError` (`generated/prisma` sem `AccountingPolicyVersion`); (iii)
+> `seed-presumido`/`seed-real` têm **0 tabelas dinâmicas** ⇒ o seed instala o salão + unidade (não cai na recusa);
+> (iv) usuário já existente **não tem a senha reescrita** (`ensureUser`) — `SEED_ACCOUNTING_PASSWORD` é ignorado, logue
+> com a senha de hoje. Ordem completa (checkout principal em `main`, server e app **parados**, Git Bash):
+>
+> 1. `cd server && npm run db:backup` — espera `backup gerado: …` + `integrity_check: ok`.
+> 2. `npx prisma migrate deploy` — espera as pendentes aplicadas; `npx prisma migrate status` = up to date.
+> 3. `npx prisma generate` — sem isto os passos 4 e 5 dão `TSError`.
+> 4. `npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup` — espera JSON com 2 relatórios de `unitId`
+>    **gerado** (não `seed-unit-*`), `closedYears: [2025]`, duas linhas "próximo passo" e `OK: … tie-out fechado.`
+> 5. Da raiz do repo, as **duas** linhas "próximo passo" impressas (`node scripts/activate-salon-binding.mjs
+>    --owner-user-id <userId> --unit-id <unitId novo>`) — espera `alvo: …\server\prisma\prisma\dev.db` e
+>    `OK: binding 'beautySalon' ativado`. O script acha o banco pelo `server/.env` (via client gerado), sem `--db`.
+> 6. "Subir o ambiente" abaixo; logado como `seed-presumido`, o seletor da Contabilidade mostra `seed-unit-presumido`.
+>
+> EVIDÊNCIA da re-semeadura: [saídas dos passos 1–5 coladas pelo executor]
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -132,8 +154,9 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > positivo: 30 postings valor-a-valor iguais; índice `…_type_name_key` → `…_type_nameNormalized_key`)
 > → P0.2b: contas `1.1.6`/`3.3`/`4.2` criadas + `2026/09` `OPEN` → `activate-salon-binding.mjs`
 > `OK: binding 'beautySalon' ativado — versão 1` → `node dist/server.js` (build de produção, `c96e2227`)
-> `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. **P2b está satisfeito
-> neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**
+> `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. ~~**P2b está satisfeito
+> neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**~~ *(Superado
+> em 05/10: havia 4 migrações pendentes — rode o `migrate deploy` conforme a EMENDA 2026-10-05 acima.)*
 
 ### Subir o ambiente (build de produção)
 
