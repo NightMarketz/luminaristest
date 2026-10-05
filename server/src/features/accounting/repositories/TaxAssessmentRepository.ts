@@ -41,6 +41,14 @@ export class TaxAssessmentRepository implements ITaxAssessmentRepository {
     return r.count;
   }
 
+  public async setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean> {
+    const r = await prisma.taxAssessment.updateMany({
+      where: { id, userId: ownerUserId, deletedAt: null, provisaoEntryId: null },
+      data: { provisaoEntryId: entryId },
+    });
+    return r.count === 1;
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }

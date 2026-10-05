@@ -43,5 +43,7 @@ export interface ITaxAssessmentRepository {
   findConfirmedByYear(ownerUserId: string, anoCalendario: number, tx?: Prisma.TransactionClient): Promise<TaxAssessment[]>;
   /** `CONFIRMED` → `SUPERSEDED` com CAS no status; devolve quantas linhas mudaram. */
   markSuperseded(ownerUserId: string, ids: string[], tx: Prisma.TransactionClient): Promise<number>;
+  /** PR-3, "commit 3" do BRIEF (item 15): CAS `where provisaoEntryId is null`; `false` se outra chamada já vinculou. */
+  setProvisaoEntryId(ownerUserId: string, id: string, entryId: string): Promise<boolean>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

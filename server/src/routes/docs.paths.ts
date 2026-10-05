@@ -2653,6 +2653,8 @@
  *         registers. Blocks with 400 when there is no result balance to close; the period
  *         gate surfaces its own error when December is not open. Reopen by reversing the
  *         returned entry via POST /accounting/reverse (that frees the idempotency key).
+ *         Also 400 (details.taxAssessmentIds) when any IRPJ/CSLL assessment of the company in the year is
+ *         CONFIRMED with its provision pending (X7 item 18, F-TA-8 a).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -6287,6 +6289,35 @@ export {};
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '409': { description: 'TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE' }
+ *
+ *   /api/accounting/tax-assessments/{id}/provisao:
+ *     post:
+ *       summary: Reconcile the ledger provision of an IRPJ/CSLL assessment (X7 Fase A, item 16)
+ *       description: >-
+ *         Completes whatever the confirmation left pending: reverses the live provision of the superseded
+ *         assessments, posts the provision (debit expense / credit tax payable, amount = devidoCents, last day of the
+ *         quarter, idempotent by source) and links provisaoEntryId. Nothing already done is redone, so calling it again
+ *         changes nothing. On a SUPERSEDED assessment it only reverses its own live provision. 400 when the provision
+ *         accounts are not configured on the unit fiscal profile or the period is closed.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *       responses:
+ *         '200': { description: 'TaxAssessmentView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/accounting/tax-assessments/{id}:
  *     get:
