@@ -973,6 +973,7 @@ export class ApplicationFactory {
       auditService,
       this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
       accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
+      this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
     );
     this.services = {
       bankSettlement: bankSettlementService,
@@ -1132,6 +1133,9 @@ export class ApplicationFactory {
         this.repositories.dataExchange,
         auditService,
         lalurService,
+        // X7 Fase B PR-4 (item 18): forma do ano (FORMA_APUR) e modos confirmados (MES_BAL_RED) — só leitura.
+        this.repositories.companyFiscalProfile,
+        this.repositories.taxAssessment,
       ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,

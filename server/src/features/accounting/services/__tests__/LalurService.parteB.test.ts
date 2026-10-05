@@ -455,19 +455,22 @@ describe('X7 Fase B item 12 — período × forma do ano', () => {
     await outroAno.svc.createEntry(scope, linha('A01'));
   });
 
-  it('livros do Bloco N por período: n620/n660 fora de A01..A12 e n630/n670 em A0m ⇒ 400; n620/n660 no mês ⇒ 400 de catálogo ausente (lacuna 2 do PR-2)', async () => {
+  it('livros do Bloco N por período: n620/n660 fora de A01..A12 e n630/n670 em A0m ⇒ 400; n620/n660 no mês resolvem contra as abas N620/N660 (catálogo do PR-4, item 22)', async () => {
     const { svc, repo } = build({ perfis: { 2025: ANUAL } });
     const n = (livro: string, quarter: string) => ({ unitId: 'unit-1', year: 2025, quarter, livro, codigo: '1', valorCents: 1 }) as never;
     await expect(svc.createEntry(scope, n('n620', 'A00'))).rejects.toThrow(/Livro 'n620' só existe nos meses A01..A12/);
     await expect(svc.createEntry(scope, n('n660', 'T01'))).rejects.toThrow(/Livro 'n660' só existe nos meses A01..A12/);
     await expect(svc.createEntry(scope, n('n630', 'A03'))).rejects.toThrow(/Livro 'n630' só existe em T01..T04 e A00/);
     await expect(svc.createEntry(scope, n('n670', 'A12'))).rejects.toThrow(/Livro 'n670' só existe em T01..T04 e A00/);
-    await expect(svc.createEntry(scope, n('n620', 'A03'))).rejects.toThrow(/catálogo das abas N620\/N660 .* ainda não foi transcrito/);
-    await expect(svc.createEntry(scope, n('n660', 'A12'))).rejects.toThrow(/catálogo das abas N620\/N660/);
+    await expect(svc.createEntry(scope, n('n620', 'A03'))).rejects.toThrow(/linha CNA — calculada\/rótulo do PVA/);
     expect(repo.entries).toHaveLength(0);
+    // X7 Fase B PR-4 (item 22): a recusa provisória da lacuna 2 do PR-2 caiu — linha E das abas N620/N660 entra no mês
+    await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A03', livro: 'n620', codigo: '21', valorCents: 1 } as never);
+    await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A12', livro: 'n660', codigo: '14', valorCents: 1 } as never);
+    expect(repo.entries).toHaveLength(2);
     // controle positivo: n630 no A00 da forma anual passa (código E do N630A)
     await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A00', livro: 'n630', codigo: '6', valorCents: 1 } as never);
-    expect(svc.catalog(scope, { unitId: 'unit-1', livro: 'n620', year: 2025 } as never).rows).toEqual([]);
+    expect(svc.catalog(scope, { unitId: 'unit-1', livro: 'n620', year: 2025 } as never).rows.map((r) => r.codigo)).toContain('21');
   });
 });
 

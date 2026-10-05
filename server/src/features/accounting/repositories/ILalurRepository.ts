@@ -120,6 +120,13 @@ export interface LalurProcessoData {
  * (ownerUserId + unitId). Both entities soft-archive (deletedAt + rename-on-key, D-M2); reads default to
  * live rows (deletedAt: null) unless includeArchived. Tx-aware so audit + write commit atomically (T8).
  */
+/** Contagem por (período, livro) — item 2 da Fase B do X7. */
+export interface LalurPeriodoContagem {
+  periodo: string;
+  livro: string;
+  quantidade: number;
+}
+
 export interface ILalurRepository {
   // Entries (Parte A + Bloco N)
   createEntry(data: CreateLalurEntryData, tx?: Prisma.TransactionClient): Promise<LalurEntry>;
@@ -152,6 +159,12 @@ export interface ILalurRepository {
   findClosingsForYear(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<LalurClosingWithBalances[]>;
   /** Whether ANY closing exists in an exercise strictly before `year` (C3 continuity guard). */
   existsClosingBefore(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<boolean>;
+  /**
+   * X7 Fase B PR-4 (BRIEF B item 2, F-TB-6 a): o que o e-Lalur do ANO tem nos `periodos` dados, em TODAS as unidades do
+   * dono — a forma é da empresa (decisão do dono, 05/10 — lacuna 2 do PR-4). Linhas e movimentos vivos, por (período,
+   * livro); movimentos vêm com `livro = 'parteB'` e fechamentos com `livro = 'fechamento'`. Só leitura.
+   */
+  countByOwnerYearPeriods(ownerUserId: string, year: number, periodos: readonly string[], tx?: Prisma.TransactionClient): Promise<LalurPeriodoContagem[]>;
   createClosing(
     data: { userId: string; unitId: string; year: number; quarter: string; balancesSha256: string; closedById: string | null },
     balances: CreateLalurParteBBalanceData[],

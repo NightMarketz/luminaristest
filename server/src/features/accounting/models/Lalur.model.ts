@@ -10,8 +10,8 @@ import catalogJson from '../fixtures/ecf-l12-linhas.json';
 
 /**
  * `livro` discriminator: which ECF register a LalurEntry feeds (BRIEF §2.1). X7 Fase B PR-2 (BRIEF B item 12):
- * `n620`/`n660` = linhas `E` de N620/N660, só em `A01..A12` (Manual pp.47–48). As abas N620/N660 só entram no
- * catálogo no PR-4 (item 22): até lá todo write nesses livros é 400 (decisão do dono, 05/10 — lacuna 2 do PR-2).
+ * `n620`/`n660` = linhas `E` de N620/N660, só em `A01..A12` (Manual pp.47–48). As abas N620/N660 entraram no
+ * catálogo no PR-4 (item 22); até ele, todo write nesses livros era 400 (decisão do dono, 05/10 — lacuna 2 do PR-2).
  */
 export const LALUR_LIVROS = ['lalur', 'lacs', 'n500', 'n620', 'n630', 'n660', 'n670'] as const;
 export type LalurLivro = (typeof LALUR_LIVROS)[number];
@@ -144,7 +144,7 @@ export const LALUR_PARTE_B_ARCHIVED = 'lalur.parte_b_archived';
 
 // ─── Catálogo das Tabelas Dinâmicas (Leiaute 12) ────────────────────────────
 
-/** One row of a Tabela Dinâmica sheet (M300A/M350A/N500/N630A/N670). */
+/** One row of a Tabela Dinâmica sheet (M300A/M350A/N500/N620/N630A/N660/N670). */
 export interface EcfLinhaCatalogo {
   codigo: string;
   descricao: string;
@@ -165,27 +165,29 @@ export interface EcfParteBPadrao {
   dtFim: string | null;
 }
 
+/** Abas de linhas lidas por `scripts/ecf-tabelas-dinamicas-to-catalog.mjs` (`ABAS_LINHAS`). */
+export const ECF_ABAS_LINHAS = ['M300A', 'M350A', 'N500', 'N620', 'N630A', 'N660', 'N670'] as const;
+export type EcfAbaLinhas = (typeof ECF_ABAS_LINHAS)[number];
+
 interface EcfCatalog {
   origem: string;
   sha256: string;
   leiaute: string;
-  abas: Record<'M300A' | 'M350A' | 'N500' | 'N630A' | 'N670', EcfLinhaCatalogo[]> & {
+  abas: Record<EcfAbaLinhas, EcfLinhaCatalogo[]> & {
     PARTEB_PADRAO: EcfParteBPadrao[];
   };
 }
 
 export const ECF_L12_CATALOG = catalogJson as unknown as EcfCatalog;
 
-/** Livros sem aba no catálogo vigente: N620/N660 entram no PR-4 (BRIEF B item 22; insumo §5.1). */
-export const LALUR_LIVROS_SEM_CATALOGO = ['n620', 'n660'] as const;
-export const isLivroSemCatalogo = (livro: string): livro is 'n620' | 'n660' => (LALUR_LIVROS_SEM_CATALOGO as readonly string[]).includes(livro);
-
-/** livro → aba do XLSX (BRIEF §2.4). */
-export const LIVRO_ABA: Record<Exclude<LalurLivro, 'n620' | 'n660'>, keyof Omit<EcfCatalog['abas'], 'PARTEB_PADRAO'>> = {
+/** livro → aba do XLSX (BRIEF §2.4; N620/N660 no X7 Fase B PR-4, BRIEF B item 22). */
+export const LIVRO_ABA: Record<LalurLivro, EcfAbaLinhas> = {
   lalur: 'M300A',
   lacs: 'M350A',
   n500: 'N500',
+  n620: 'N620',
   n630: 'N630A',
+  n660: 'N660',
   n670: 'N670',
 };
 
@@ -197,7 +199,7 @@ const byAba = new Map<string, Map<string, EcfLinhaCatalogo>>();
  * spec no relatório da sessão; o teste do catálogo fixa a lista para que uma planilha nova a mova à vista.
  */
 export const ECF_L12_CODIGOS_DUPLICADOS: string[] = [];
-for (const aba of ['M300A', 'M350A', 'N500', 'N630A', 'N670'] as const) {
+for (const aba of ECF_ABAS_LINHAS) {
   const m = new Map<string, EcfLinhaCatalogo>();
   for (const r of ECF_L12_CATALOG.abas[aba]) {
     if (m.has(r.codigo)) ECF_L12_CODIGOS_DUPLICADOS.push(`${aba}/${r.codigo}`);
@@ -207,14 +209,14 @@ for (const aba of ['M300A', 'M350A', 'N500', 'N630A', 'N670'] as const) {
 }
 const parteBPadrao = new Map(ECF_L12_CATALOG.abas.PARTEB_PADRAO.map((r) => [r.codigo, r]));
 
-/** Catalog row for (livro, codigo), or undefined when the code is not in that sheet (or the livro has no sheet yet). */
+/** Catalog row for (livro, codigo), or undefined when the code is not in that sheet. */
 export function findLinha(livro: LalurLivro, codigo: string): EcfLinhaCatalogo | undefined {
-  return isLivroSemCatalogo(livro) ? undefined : byAba.get(LIVRO_ABA[livro])?.get(codigo);
+  return byAba.get(LIVRO_ABA[livro])?.get(codigo);
 }
 
-/** Every catalog row of a livro (tests iterate CNA/CA to prove they are never emitted — item 14). `[]` sem aba. */
+/** Every catalog row of a livro (tests iterate CNA/CA to prove they are never emitted — item 14). */
 export function linhasDoLivro(livro: LalurLivro): EcfLinhaCatalogo[] {
-  return isLivroSemCatalogo(livro) ? [] : ECF_L12_CATALOG.abas[LIVRO_ABA[livro]];
+  return ECF_L12_CATALOG.abas[LIVRO_ABA[livro]];
 }
 
 /** PARTEB_PADRAO row for a COD_PB_RFB, or undefined. */

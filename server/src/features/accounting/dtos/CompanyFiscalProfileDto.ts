@@ -12,13 +12,14 @@ import { isValidDateOnly } from '../models/dates';
  *  - `livroCaixaSemEscrituracao`/`distribuicaoAcimaBase` só no PRESUMIDO (IN RFB 2.003/2021 art. 3º §1º V e §3º);
  *  - `ecd.nire` só com `ecd.indNire = '1'`.
  * BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 1, 2, 2b; ADR D1):
- *  - `formaApuracaoIrpjCsll` em SIMPLES/MEI ⇒ 400; PRESUMIDO + ANUAL ⇒ 400; nesta fase ANUAL ⇒ 400 (Fase B, item B1);
+ *  - `formaApuracaoIrpjCsll` em SIMPLES/MEI ⇒ 400; PRESUMIDO + ANUAL ⇒ 400 (o `ANUAL` do REAL é da Fase B, item 1);
  *  - `lucroRealObrigatorio` só no REAL (contrato §2: "só REAL: 0220 × 3373");
  *  - `lc224AcrescimoSuspenso = true` exige `lc224LiminarReferencia` (F-TA-5 a);
  *  - datas de atividade date-only com calendário validado (F-TA-4 b).
  * BE-INCR-TAX-ASSESSMENT Fase B (nó X7, BRIEF B item 3b; F-TB-5 b): `prestadoraExclusivaServicos` — a declaração da
- * PJ × ano de que se enquadra na IN RFB 1.700/2017 art. 33 § 7º (16% na estimativa). A trava é do service. `ANUAL`
- * segue recusado até o PR-4 da Fase B (F-TB-8.1).
+ * PJ × ano de que se enquadra na IN RFB 1.700/2017 art. 33 § 7º (16% na estimativa). A trava é do service. Fase B
+ * PR-4 (BRIEF B item 1, F-TB-8.1): `ANUAL` liberado no REAL; a troca de forma com o e-Lalur do ano preenchido é do
+ * service (item 2).
  * `declarante` (F-XP-2 → a): os campos de 0000/0030 que hoje vêm no corpo de cada geração, TODOS opcionais aqui —
  * o que falta aparece em `faltantes` do endpoint de obrigações. Regex/limites espelham `SpedEcdDto`/`SpedEcfDto`.
  */
@@ -124,12 +125,8 @@ export const UpsertCompanyFiscalProfileSchema = z
     // X7 item 1 (ADR D1)
     if (semEcf && v.formaApuracaoIrpjCsll !== null) {
       ctx.addIssue({ code: 'custom', path: ['formaApuracaoIrpjCsll'], message: `Regime ${v.regime} não apura IRPJ/CSLL por forma trimestral/anual (ADR-INCR-TAX-ASSESSMENT D1).` });
-    } else if (v.formaApuracaoIrpjCsll === 'ANUAL') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['formaApuracaoIrpjCsll'],
-        message: v.regime === 'PRESUMIDO' ? 'Lucro Presumido é só trimestral (ADR-INCR-TAX-ASSESSMENT D1).' : 'forma anual é da Fase B.',
-      });
+    } else if (v.formaApuracaoIrpjCsll === 'ANUAL' && v.regime === 'PRESUMIDO') {
+      ctx.addIssue({ code: 'custom', path: ['formaApuracaoIrpjCsll'], message: 'Lucro Presumido é só trimestral (ADR-INCR-TAX-ASSESSMENT D1).' });
     }
     if (v.regime !== 'REAL' && v.lucroRealObrigatorio !== null) {
       ctx.addIssue({ code: 'custom', path: ['lucroRealObrigatorio'], message: 'lucroRealObrigatorio só se aplica ao Lucro Real (código 0220 × 3373).' });

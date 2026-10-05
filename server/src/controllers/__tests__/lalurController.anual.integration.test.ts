@@ -90,13 +90,14 @@ describe('/api/lalur — forma ANUAL (X7 Fase B PR-2, item 12)', () => {
     expect(String(abril.body.message)).toMatch(/fora do período A03\/2025/);
   });
 
-  it('livros N por período: n630 em A03 e n620 em T0x/A00 ⇒ 400; n620 em A03 ⇒ 400 de catálogo ausente (até o PR-4)', async () => {
-    const n = (livro: string, quarter: string) => request(app).post('/api/lalur/entries').set(authHeader(dono)).send({ unitId: UNIT, year: 2025, quarter, livro, codigo: '1', valorCents: 1 });
+  it('livros N por período: n630 em A03 e n620 em T0x/A00 ⇒ 400; n620 em A03 resolve contra a aba N620 (catálogo do PR-4)', async () => {
+    const n = (livro: string, quarter: string, codigo = '1') => request(app).post('/api/lalur/entries').set(authHeader(dono)).send({ unitId: UNIT, year: 2025, quarter, livro, codigo, valorCents: 1 });
     expect((await n('n630', 'A03')).status).toBe(400);
     expect((await n('n620', 'A00')).status).toBe(400);
-    const semCatalogo = await n('n620', 'A03');
-    expect(semCatalogo.status).toBe(400);
-    expect(String(semCatalogo.body.message)).toMatch(/catálogo das abas N620\/N660/);
+    const cna = await n('n620', 'A03');
+    expect(cna.status).toBe(400);
+    expect(String(cna.body.message)).toMatch(/linha CNA/);
+    expect((await n('n620', 'A03', '21')).status).toBe(201); // linha E do N620 (IRRF)
   });
 
   it('Parte B fecha só no A00: A03 e T04 ⇒ 400; A00 fecha e o diagnóstico lista só o A00, sem divergência', async () => {

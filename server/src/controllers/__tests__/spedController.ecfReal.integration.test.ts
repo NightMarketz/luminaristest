@@ -157,7 +157,7 @@ describe('POST /api/accounting/sped/ecf/real/generate — contrato HTTP (esquele
     expect(await prisma.accountingDataExchangeJob.count()).toBe(antes);
   });
 
-  it('400 quando fiscal está ausente e quando formaApur não é T (Fork 5 anual não ratificado)', async () => {
+  it('400 quando fiscal está ausente e quando formaApur = A diverge do perfil (sem perfil ANUAL ⇒ T; X7 Fase B item 18)', async () => {
     const antes = await prisma.accountingDataExchangeJob.count();
     const { fiscal: _omit, ...semFiscal } = body();
     expect((await post(donoA, semFiscal)).status).toBe(400);

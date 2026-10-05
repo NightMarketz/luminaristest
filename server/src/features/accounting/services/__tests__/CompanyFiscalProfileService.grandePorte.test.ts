@@ -13,7 +13,7 @@ function build(ativoCents: number, receitaCents: number, status: 'OK' | 'WARNING
   const balanceSheet = jest.fn(async () => ({ reportStatus: status, assets: { totalCents: String(ativoCents), accounts: [] } }));
   const incomeStatement = jest.fn(async () => ({ reportStatus: status, grossRevenue: { totalCents: String(-receitaCents), accounts: [] } }));
   const report = { balanceSheet, incomeStatement } as unknown as AccountingReportService;
-  const svc = new CompanyFiscalProfileService({} as never, {} as never, {} as never, {} as never, {} as never, {} as never, report);
+  const svc = new CompanyFiscalProfileService({} as never, {} as never, {} as never, {} as never, {} as never, {} as never, report, {} as never);
   return { svc, balanceSheet, incomeStatement };
 }
 
