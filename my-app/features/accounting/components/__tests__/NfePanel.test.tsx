@@ -214,6 +214,35 @@ describe('NfePanel', () => {
     expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'SHAMP-500': 'prod-shamp' });
   });
 
+  it('produto sugerido trocado para "Imobilizado" não vai para a memória (só o que foi de fato enviado como productRef) (item 30)', async () => {
+    vi.mocked(nfeService.previewNfe).mockResolvedValue(preview());
+    vi.mocked(nfeService.importPurchaseNfe).mockResolvedValue({ payable: { id: 'pay-1', amountCents: 13333 } as never, ignoredItems: [] });
+    render(<NfePanel unitId="u1" />);
+    await waitFor(() => expect(fixedAssetsService.listClasses).toHaveBeenCalled());
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await screen.findByTestId('nfe-preview');
+    expect((screen.getByTestId('nfe-item-select-SHAMP-500') as HTMLSelectElement).value).toBe('prod-shamp'); // sugerido
+    fireEvent.change(screen.getByTestId('nfe-item-kind-SHAMP-500'), { target: { value: 'imobilizado' } });
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-SHAMP-500') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-SHAMP-500'), { target: { value: 'cls-maq' } });
+    fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
+    fireEvent.click(screen.getByTestId('nfe-import-btn'));
+    await waitFor(() => expect(nfeService.importPurchaseNfe).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByTestId('nfe-preview')).toBeNull());
+    expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'MASC-300': 'prod-dup-a' });
+  });
+
+  it('abrir outra nota sem importar zera Tipo e classe da anterior (item 28)', async () => {
+    await renderWithPreview();
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-MASC-300') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-MASC-300'), { target: { value: 'cls-maq' } });
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await waitFor(() => expect(nfeService.previewNfe).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect((screen.getByTestId('nfe-item-kind-MASC-300') as HTMLSelectElement).value).toBe('produto'));
+    expect(screen.queryByTestId('nfe-item-class-MASC-300')).toBeNull();
+  });
+
   it('o Tipo escolhido manda: com "Imobilizado" o produto já mapeado não vale, e voltar a "Produto" o restaura (item 28)', async () => {
     await renderWithPreview();
     fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
