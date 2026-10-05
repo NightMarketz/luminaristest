@@ -6339,8 +6339,11 @@ export {};
  *     post:
  *       summary: Preview the quarterly IRPJ/CSLL assessment (BE-INCR-TAX-ASSESSMENT Fase A PR-2, X7 item 13)
  *       description: >-
- *         Calcula IRPJ e CSLL juntos (Presumido ou Real trimestral) e não persiste. 400 para SIMPLES/MEI (DAS),
- *         forma ANUAL (Fase B), perfil do ano ausente e outra unidade da PJ com movimento no período.
+ *         Calcula IRPJ e CSLL juntos (Presumido ou Real trimestral; X7 Fase B: Real anual - estimativa por receita
+ *         bruta ou balancete de suspensão/redução em A01..A12, conforme modoMensal, e ajuste anual em A00) e não
+ *         persiste. 400 para SIMPLES/MEI (DAS), período fora da forma do perfil do ano (T0x só TRIMESTRAL, A0x só
+ *         ANUAL), perfil do ano ausente e outra unidade da PJ com movimento na janela lida. O balancete avisa (não
+ *         recusa) os meses anteriores ainda abertos.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -6364,7 +6367,7 @@ export {};
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: anoCalendario, required: true, schema: { type: integer } }
- *         - { in: query, name: periodo, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: periodo, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
  *         - { in: query, name: status, required: false, schema: { type: string, enum: [CONFIRMED, SUPERSEDED] } }
  *       responses:
  *         '200': { description: 'TaxAssessmentView[]' }
@@ -6377,7 +6380,9 @@ export {};
  *         Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
  *         por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava
  *         a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar).
- *         A provisão contábil é do PR-3.
+ *         X7 Fase B: nos meses A0m a ordem é mensal e a cascata derruba os meses seguintes e o A00; o balancete
+ *         exige os meses anteriores em atividade fechados (400). Depois do commit, a provisão no razão é best-effort
+ *         (pendente fica visível em provisaoPendente).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -6398,7 +6403,9 @@ export {};
  *       description: >-
  *         Completes whatever the confirmation left pending: reverses the live provision of the superseded
  *         assessments, posts the provision (debit expense / credit tax payable, amount = devidoCents, last day of the
- *         quarter, idempotent by source) and links provisaoEntryId. Nothing already done is redone, so calling it again
+ *         quarter, idempotent by source) and links provisaoEntryId. X7 Fase B: month A0m posts devido + diferença
+ *         postergada on the last day of the month; A00 posts only the difference to what the months provisioned, on
+ *         31/12 - negative = debit the negative balance to offset (Asset) / credit expense; zero posts nothing. Nothing already done is redone, so calling it again
  *         changes nothing. On a SUPERSEDED assessment it only reverses its own live provision. 400 when the provision
  *         accounts are not configured on the unit fiscal profile or the period is closed.
  *       tags: [Accounting]

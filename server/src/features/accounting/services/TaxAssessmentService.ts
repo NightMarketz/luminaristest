@@ -5,11 +5,14 @@
  *   commit 1 — razão: reverseEntry da provisão viva de cada linha SUPERSEDED do mesmo (PJ, ano, tributo, período) —
  *              substituídas e posteriores da cascata, com ou sem `supersedesId` apontando para elas;
  *              tx própria, idempotente) e depois postEntry(sourceType='tax.assessment.provision', sourceId=<id da
- *              apuração>) no último dia do trimestre (BRIEF item 15, "commit 2"); gate de período dentro de cada tx; a
- *              provisão é achada pela FONTE, não pelo vínculo
+ *              apuração>) no último dia do período — trimestre, mês A0m ou 31/12 no A00 (BRIEF item 15, "commit 2"; Fase B
+ *              item 16) —; gate de período dentro de cada tx; a provisão é achada pela FONTE, não pelo vínculo. Valor =
+ *              `valorProvisao` (devido + diferença postergada; no A00 a diferença do ajuste, com sinal: < 0 ⇒ D saldo
+ *              negativo a compensar / C despesa)
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição): estorna a provisão da substituída e a dos posteriores da cascata, e posta a da nova"
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição × vínculo perdido): a substituída postada sem provisaoEntryId é estornada — 1 provisão viva por tributo"
+ *              teste: taxAssessmentAnual.integration.test.ts › "item 16 + 26 (m): A00 com ajuste negativo debita o saldo negativo e credita a despesa; o LAIR do item 6 não muda"
  *   commit 2 — subrazão: CAS provisaoEntryId `where null` (BRIEF item 15, "commit 3"), sem tx de razão
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
  *   reconcile — POST /tax-assessments/:id/provisao completa o que faltar; nada já feito é refeito (sem gate de período)
@@ -29,6 +32,7 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { ILalurRepository } from '../repositories/ILalurRepository';
+import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { AccountingReportService } from './AccountingReportService';
@@ -44,24 +48,66 @@ import {
   apurarRealTrimestral,
   fimDoTrimestre,
   trimestresEmAtividade,
+  valorLinha,
   type MemoriaAnterior,
   type MemoriaLinha,
   type PeriodoTrimestral,
-  type ResultadoApuracao,
   type TributoApuracao,
 } from '../models/taxAssessmentCalc';
+import {
+  PROVISAO_AJUSTE_ANUAL,
+  apurarAjusteAnual,
+  apurarBalancete,
+  apurarEstimativaReceitaBruta,
+  fimDoMes,
+  mesesEmAtividade,
+  type MesConfirmado,
+  type ModoMensal,
+  type ReceitaMes,
+  type ResultadoApuracaoAnual,
+} from '../models/taxAssessmentCalcAnual';
+import { isLalurMes, mesBounds, periodoBounds, type LalurMes } from '../models/Lalur.model';
 
 export const TAX_ASSESSMENT_CONFIRMED = 'tax.assessment.confirmed';
 /** `sourceType` da provisão (item 15): chave de idempotência = id da apuração. */
 export const TAX_ASSESSMENT_PROVISION_SOURCE_TYPE = 'tax.assessment.provision';
 
+type LinhaProvisao = Pick<TaxAssessment, 'periodo' | 'devidoCents' | 'diferencaPostergadaCents' | 'memoria'>;
+
 /**
- * Decisão do dono 04/10 (lacuna L-C do PR-3): pendente ⇔ CONFIRMED ∧ devido > 0 ∧ sem lançamento. Devido 0 não tem o que
- * provisionar (o `postEntry` recusa lançamento zerado) e não bloqueia o encerramento.
+ * Item 15 da Fase A + item 16 da Fase B (F-TB-3 a) — o que a linha provisiona, com sinal: trimestre e mês A0m = devido +
+ * diferença postergada (só no IRPJ do mês do excesso); `A00` = devido anual − o que os meses provisionaram, lido da
+ * memória confirmada (`PROVISAO_AJUSTE_ANUAL`): > 0 ⇒ D despesa / C a recolher; < 0 ⇒ D saldo negativo / C despesa.
  */
-export function provisaoPendente(row: Pick<TaxAssessment, 'status' | 'devidoCents' | 'provisaoEntryId'>): boolean {
-  return row.status === 'CONFIRMED' && row.devidoCents > 0n && row.provisaoEntryId === null;
+export function valorProvisao(row: LinhaProvisao): bigint {
+  if (row.periodo === 'A00') return valorLinha(MemoriaCalculoSchema.parse(row.memoria), PROVISAO_AJUSTE_ANUAL, row.periodo);
+  return row.devidoCents + row.diferencaPostergadaCents;
 }
+
+/**
+ * Decisão do dono 04/10 (lacuna L-C do PR-3 da Fase A), generalizada na Fase B: pendente ⇔ CONFIRMED ∧ valor da provisão
+ * ≠ 0 ∧ sem lançamento. Valor 0 (suspensão do balancete, ajuste igual aos meses) não tem o que provisionar (o `postEntry`
+ * recusa lançamento zerado) e não bloqueia o encerramento.
+ */
+export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId'>): boolean {
+  return row.status === 'CONFIRMED' && row.provisaoEntryId === null && valorProvisao(row) !== 0n;
+}
+
+/**
+ * Ordem dos períodos no ano (F-TA-3 a; Fase B item 13): `T01..T04` ou `A01..A12` e, por último, o `A00` — o ajuste
+ * depende de todos os meses, e substituir um mês derruba também o `A00` (cascata).
+ */
+const ordem = (p: string): number => (p === 'A00' ? 13 : isLalurMes(p) ? Number(p.slice(1)) : PERIODOS_TRIMESTRAIS.indexOf(p as PeriodoTrimestral));
+
+/** Data da provisão e do estorno (itens 15/16): fim do trimestre, do mês `A0m`, ou 31/12 no `A00`. */
+export function fimDoPeriodo(ano: number, periodo: string): string {
+  if (periodo === 'A00') return `${ano}-12-31`;
+  if (isLalurMes(periodo)) return fimDoMes(ano, Number(periodo.slice(1)));
+  return fimDoTrimestre(ano, periodo as PeriodoTrimestral);
+}
+
+/** Item 15 (F-TB-4 b): mês fechado = `SOFT_CLOSED` ou `HARD_CLOSED`; não semeado conta como aberto (`monthsCovered`). */
+const FECHADO = new Set(['SOFT_CLOSED', 'HARD_CLOSED']);
 export const TAX_ASSESSMENT_SUPERSEDED = 'tax.assessment.superseded';
 
 const TRIBUTOS: readonly TributoApuracao[] = ['IRPJ', 'CSLL'];
@@ -77,6 +123,8 @@ export interface TaxAssessmentView {
   deducoesCents: string;
   aPagarCents: string;
   saldoNegativoCents: string;
+  /** Fase B item 17 (F-TB-5 b): só no IRPJ do mês do excesso do 16%. */
+  diferencaPostergadaCents: string;
   status: 'CONFIRMED' | 'SUPERSEDED';
   supersedesId: string | null;
   provisaoPendente: boolean;
@@ -104,15 +152,14 @@ export interface TaxAssessmentConfirmView {
 interface Calculo {
   perfil: CompanyFiscalProfile;
   forma: string;
-  irpj: ResultadoApuracao;
-  csll: ResultadoApuracao;
+  irpj: ResultadoApuracaoAnual;
+  csll: ResultadoApuracaoAnual;
   provisaoContasConfiguradas: boolean;
   avisos: string[];
   /** Ids das memórias CONFIRMED anteriores que o cálculo leu (F-TA-3 a) — re-checados dentro da tx. */
   anterioresIds: string[];
 }
 
-const idx = (p: string): number => PERIODOS_TRIMESTRAIS.indexOf(p as PeriodoTrimestral);
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7; BRIEF itens 12–14, 17, 19) — prévia, confirmação (commit 1) e leitura
@@ -130,6 +177,12 @@ const idx = (p: string): number => PERIODOS_TRIMESTRAIS.indexOf(p as PeriodoTrim
  * Cascata (decisão do dono, 04/10, lacuna do F-TA-3 "força reconfirmar os seguintes"): substituir Tq marca
  * SUPERSEDED também as linhas CONFIRMED dos trimestres posteriores, sem substituta, e devolve a lista em
  * `reconfirmar`; a ordem do F-TA-3 obriga reconfirmá-los em sequência. Com 409 puro não haveria saída.
+ *
+ * Fase B PR-3 (BRIEF B itens 5, 6, 11, 13–17): os mesmos endpoints aceitam `A00..A12` na forma `ANUAL` — estimativa
+ * por receita bruta ou balancete de suspensão/redução no mês (`modoMensal`), ajuste anual no `A00`. A cascata vale
+ * para os meses (decisão do dono 05/10, [[D-2026-10-05-X7-FASE-B-PR3-LACUNAS]] 2, contra o 409 da letra do item 13):
+ * substituir `A0k` derruba `A0(k+1)..A12` e o `A00`. O balancete exige os meses anteriores em atividade fechados,
+ * dentro da tx (item 15, F-TB-4 b).
  */
 export class TaxAssessmentService {
   constructor(
@@ -143,6 +196,8 @@ export class TaxAssessmentService {
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
     private readonly postingService: PostingService,
+    /** Fase B item 15 (F-TB-4 b): status dos meses anteriores ao balancete, lido dentro da tx da confirmação. */
+    private readonly periodRepo: Pick<IAccountingPeriodRepository, 'findByYearMonth'>,
   ) {}
 
   /** Item 13 — calcula IRPJ e CSLL juntos (BRIEF item 13, art. 31 § 7º) e não persiste. */
@@ -165,7 +220,7 @@ export class TaxAssessmentService {
         throw new ConflictError(`o perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
       }
       const confirmados = await this.repo.findConfirmedByYear(owner, ano, tx);
-      const anteriores = confirmados.filter((r) => idx(r.periodo) < idx(periodo));
+      const anteriores = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
       if (!mesmoConjunto(anteriores.map((r) => r.id), c.anterioresIds)) {
         throw new ConflictError(`as apurações confirmadas anteriores a ${periodo}/${ano} mudaram — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
       }
@@ -181,14 +236,28 @@ export class TaxAssessmentService {
         }
       }
 
-      // Ordem dos trimestres (F-TA-3 a): Tq exige T(q−1) CONFIRMED nos 2 tributos, salvo T01 ou T(q−1) fora da atividade.
-      const q = idx(periodo);
-      if (q > 0) {
-        const anterior = PERIODOS_TRIMESTRAIS[q - 1];
-        const emAtividade = trimestresEmAtividade(ano, perfilTx.inicioAtividadeEm, perfilTx.encerramentoAtividadeEm);
-        const faltam = emAtividade.includes(anterior) ? TRIBUTOS.filter((t) => !anteriores.some((r) => r.periodo === anterior && r.tributo === t)) : [];
+      // Ordem (F-TA-3 a; Fase B item 13): Tq exige T(q−1) e A0m exige A0(m−1) CONFIRMED nos 2 tributos, salvo o 1º
+      // período ou o anterior fora da atividade. O A00 exige todos os meses — a função pura do ajuste recusa (item 10).
+      const q = ordem(periodo);
+      const anterior = periodoAnterior(periodo);
+      if (anterior) {
+        const emAtividade = isLalurMes(periodo)
+          ? mesesEmAtividade(ano, perfilTx.inicioAtividadeEm, perfilTx.encerramentoAtividadeEm).map(nomeMes)
+          : trimestresEmAtividade(ano, perfilTx.inicioAtividadeEm, perfilTx.encerramentoAtividadeEm);
+        const faltam = (emAtividade as string[]).includes(anterior) ? TRIBUTOS.filter((t) => !anteriores.some((r) => r.periodo === anterior && r.tributo === t)) : [];
         if (faltam.length > 0) {
           throw new ConflictError(`confirme ${anterior}/${ano} (${faltam.join(', ')}) antes de ${periodo} (BRIEF X7 F-TA-3 a).`, 'TAX_ASSESSMENT_ORDER');
+        }
+      }
+
+      // Item 15 (F-TB-4 b), gate autoritativo DENTRO da tx: o balancete de A0m exige os meses 01..m−1 em atividade da
+      // unidade lida fechados (o Diário escriturado — IN 1.700 art. 52 § 4º). O mês m pode estar aberto (provisão).
+      if (input.modoMensal === 'BALANCETE') {
+        const abertos = await this.mesesAbertosAntes(scope, ano, periodo as LalurMes, perfilTx, tx);
+        if (abertos.length > 0) {
+          throw new ValidationError(
+            `balancete de ${periodo}/${ano}: feche antes os meses ${abertos.join(', ')} da unidade (SOFT_CLOSED ou HARD_CLOSED) — o balancete só vale com o Diário escriturado (IN RFB 1.700/2017 art. 52 § 4º; X7 BRIEF B item 15).`,
+          );
         }
       }
 
@@ -208,7 +277,7 @@ export class TaxAssessmentService {
       }
 
       // Cascata: os trimestres posteriores CONFIRMED caem junto (decisão do dono, 04/10).
-      const posteriores = supersedes.length > 0 ? confirmados.filter((r) => idx(r.periodo) > q) : [];
+      const posteriores = supersedes.length > 0 ? confirmados.filter((r) => ordem(r.periodo) > q) : [];
 
       // Regime igual ao das confirmações do ano que continuam vivas (item 14).
       const outroRegime = confirmados.filter((r) => !supersedes.includes(r.id) && !posteriores.includes(r) && r.regime !== perfilTx.regime);
@@ -249,6 +318,7 @@ export class TaxAssessmentService {
             deducoesCents: r.deducoesCents,
             aPagarCents: r.aPagarCents,
             saldoNegativoCents: r.saldoNegativoCents,
+            diferencaPostergadaCents: r.diferencaPostergadaCents,
             memoria: MemoriaCalculoSchema.parse(r.memoria) as Prisma.InputJsonValue,
             tabelaVersao: r.tabelaVersao,
             status: 'CONFIRMED',
@@ -272,6 +342,8 @@ export class TaxAssessmentService {
             aPagarCents: row.aPagarCents.toString(),
             devidoCents: row.devidoCents.toString(),
             tabelaVersao: row.tabelaVersao,
+            modo: row.modo, // Fase B item 25 (allowlist): o modo do mês e a diferença postergada entram na trilha
+            diferencaPostergadaCents: row.diferencaPostergadaCents.toString(),
           },
         });
       }
@@ -358,20 +430,27 @@ export class TaxAssessmentService {
       const fp = await this.fiscalProfileRepo.findByScope(s);
       const ids =
         row.tributo === 'IRPJ'
-          ? { despesa: fp?.irpjDespesaAccountId, recolher: fp?.irpjRecolherAccountId }
-          : { despesa: fp?.csllDespesaAccountId, recolher: fp?.csllRecolherAccountId };
+          ? { despesa: fp?.irpjDespesaAccountId, recolher: fp?.irpjRecolherAccountId, saldoNegativo: fp?.irpjSaldoNegativoAccountId }
+          : { despesa: fp?.csllDespesaAccountId, recolher: fp?.csllRecolherAccountId, saldoNegativo: fp?.csllSaldoNegativoAccountId };
+      const valorSinal = valorProvisao(row);
       const despesa = await this.contaDaProvisao(s, ids.despesa, `despesa de ${row.tributo}`);
-      const recolher = await this.contaDaProvisao(s, ids.recolher, `${row.tributo} a recolher`);
-      const valor = Number(row.devidoCents);
+      // Fase B item 16 (F-TB-3 a): ajuste anual abaixo do que os meses provisionaram ⇒ D saldo negativo a compensar
+      // (Asset, P-B8) / C despesa. A guarda de circularidade do item 6 exclui a conta de despesa: o LAIR não muda.
+      const outra =
+        valorSinal > 0n
+          ? await this.contaDaProvisao(s, ids.recolher, `${row.tributo} a recolher`)
+          : await this.contaDaProvisao(s, ids.saldoNegativo, `saldo negativo de ${row.tributo} a compensar`);
+      const valor = Number(valorSinal > 0n ? valorSinal : -valorSinal);
+      const [debito, credito] = valorSinal > 0n ? [despesa, outra] : [outra, despesa];
       entry = await this.postingService.postEntry(s, {
         unitId: s.unitId,
-        date: fimDoTrimestre(row.anoCalendario, row.periodo as PeriodoTrimestral),
-        description: `Provisão de ${row.tributo} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
+        date: fimDoPeriodo(row.anoCalendario, row.periodo),
+        description: `Provisão de ${row.tributo}${row.periodo === 'A00' ? ' (ajuste anual)' : ''} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
         sourceType: TAX_ASSESSMENT_PROVISION_SOURCE_TYPE,
         sourceId: row.id,
         lines: [
-          { accountCode: despesa, debitCents: valor, creditCents: 0 },
-          { accountCode: recolher, debitCents: 0, creditCents: valor },
+          { accountCode: debito, debitCents: valor, creditCents: 0 },
+          { accountCode: credito, debitCents: 0, creditCents: valor },
         ],
       });
     }
@@ -387,7 +466,7 @@ export class TaxAssessmentService {
     await this.postingService.reverseEntry(s, {
       unitId: s.unitId,
       lancamentoId: entry.id,
-      reversalPostingDate: fimDoTrimestre(row.anoCalendario, row.periodo as PeriodoTrimestral),
+      reversalPostingDate: fimDoPeriodo(row.anoCalendario, row.periodo),
       reason: `apuração ${row.id} substituída`,
     });
   }
@@ -425,9 +504,18 @@ export class TaxAssessmentService {
     }
     if (perfil.regime !== 'PRESUMIDO' && perfil.regime !== 'REAL') throw new ValidationError(`regime '${perfil.regime}' sem apuração trimestral.`);
     const forma = formaEfetiva(perfil.regime, perfil.formaApuracaoIrpjCsll);
-    if (forma !== 'TRIMESTRAL') throw new ValidationError('forma anual é da Fase B (ADR-INCR-TAX-ASSESSMENT, BRIEF B item B1).');
+    // Fase B item 11: Txx exige a forma TRIMESTRAL e Axx a ANUAL, contra o perfil efetivo do ano.
+    const anual = periodo === 'A00' || isLalurMes(periodo);
+    if (forma !== (anual ? 'ANUAL' : 'TRIMESTRAL')) {
+      throw new ValidationError(`${periodo}/${ano}: o período ${anual ? 'anual' : 'trimestral'} exige a forma ${anual ? 'ANUAL' : 'TRIMESTRAL'} no perfil fiscal da empresa do ano (forma efetiva: ${forma ?? 'nenhuma'}) — X7 BRIEF B item 11.`);
+    }
 
-    const w = quarterWindows(ano)[idx(periodo)];
+    // A janela que o cálculo LÊ: trimestre; mês (receita bruta); período em curso (balancete); ano (A00).
+    const w = !anual
+      ? quarterWindows(ano)[ordem(periodo)]
+      : input.modoMensal === 'RECEITA_BRUTA'
+        ? mesBounds(ano, Number(periodo.slice(1)))
+        : periodoBounds(ano, periodo as 'A00' | LalurMes, perfil.inicioAtividadeEm);
     const outras = (await this.postingRepo.unitIdsWithMovement(scope.ownerUserId, LEDGER_STATUSES, w.from, w.to)).filter((u) => u !== scope.unitId);
     if (outras.length > 0) {
       throw new ValidationError(`outra unidade da PJ com movimento em ${periodo}/${ano}: a apuração consolidada é da Fase C (ADR F-X7-7 a).`, {
@@ -444,13 +532,19 @@ export class TaxAssessmentService {
     }
 
     const confirmados = await this.repo.findConfirmedByYear(scope.ownerUserId, ano);
-    const anterioresRows = confirmados.filter((r) => idx(r.periodo) < idx(periodo));
+    const anterioresRows = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
     const anteriores = (t: TributoApuracao): MemoriaAnterior[] =>
       anterioresRows.filter((r) => r.tributo === t).map((r) => ({ periodo: r.periodo as PeriodoTrimestral, memoria: MemoriaCalculoSchema.parse(r.memoria) }));
     const deducoes = input.deducoes;
+    const anterioresIds = anterioresRows.map((r) => r.id);
 
-    let irpj: ResultadoApuracao;
-    let csll: ResultadoApuracao;
+    if (anual) {
+      const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos);
+      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds };
+    }
+
+    let irpj: ResultadoApuracaoAnual;
+    let csll: ResultadoApuracaoAnual;
     if (perfil.regime === 'PRESUMIDO') {
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, w.from, w.to);
       const base = {
@@ -461,8 +555,8 @@ export class TaxAssessmentService {
         perfil,
         deducoes,
       };
-      irpj = apurarPresumidoTrimestral({ ...base, tributo: 'IRPJ', anteriores: anteriores('IRPJ') });
-      csll = apurarPresumidoTrimestral({ ...base, tributo: 'CSLL', anteriores: anteriores('CSLL') });
+      irpj = { ...apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', anteriores: anteriores('IRPJ') }), diferencaPostergadaCents: 0n };
+      csll = { ...apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', anteriores: anteriores('CSLL') }), diferencaPostergadaCents: 0n };
     } else {
       const contasDespesa = despesaIds.length === 2;
       if (!contasDespesa) avisos.push('guarda de circularidade sem contas configuradas: o resultado inclui eventual despesa de IRPJ/CSLL já lançada (BRIEF X7 item 7).');
@@ -471,10 +565,103 @@ export class TaxAssessmentService {
       const linhas = async (livro: string) =>
         (await this.lalurRepo.findManyEntries(scope, { year: ano, quarter: periodo, livro, includeArchived: false })).map((l) => ({ codigo: l.codigo, valorCents: l.valorCents }));
       const base = { ano, periodo, resultadoAntesCents: resultado, contasProvisaoConfiguradas: contasDespesa, parteBFechada, perfil, deducoes };
-      irpj = apurarRealTrimestral({ ...base, tributo: 'IRPJ', linhasParteA: await linhas('lalur') });
-      csll = apurarRealTrimestral({ ...base, tributo: 'CSLL', linhasParteA: await linhas('lacs') });
+      irpj = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', linhasParteA: await linhas('lalur') }), diferencaPostergadaCents: 0n };
+      csll = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', linhasParteA: await linhas('lacs') }), diferencaPostergadaCents: 0n };
     }
-    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds: anterioresRows.map((r) => r.id) };
+    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds };
+  }
+
+  /**
+   * Fase B (itens 5–10): lê razão, e-Lalur e os meses confirmados e chama as funções puras do PR-1. IRPJ e CSLL saem do
+   * MESMO ramo — o modo do mês é um só (art. 31 § 7º; art. 47 § 1º; invariante 9 do ADR).
+   */
+  private async calcularAnual(
+    scope: AccountingScope,
+    input: TaxAssessmentPreviewInput,
+    perfil: CompanyFiscalProfile,
+    w: { from: Date; to: Date },
+    despesaIds: string[],
+    anterioresRows: TaxAssessment[],
+    avisos: string[],
+  ): Promise<{ irpj: ResultadoApuracaoAnual; csll: ResultadoApuracaoAnual }> {
+    const { anoCalendario: ano, periodo, deducoes } = input;
+    const meses = (t: TributoApuracao): MesConfirmado[] => anterioresRows.filter((r) => r.tributo === t && isLalurMes(r.periodo)).map(toMesConfirmado);
+    const contasDespesa = despesaIds.length === 2;
+    const realDoPeriodo = async () => {
+      if (!contasDespesa) avisos.push('guarda de circularidade sem contas configuradas: o resultado inclui eventual despesa de IRPJ/CSLL já lançada (BRIEF X7 item 7).');
+      const resultado = BigInt(await this.reportService.resultadoAntesIrpjCsll(scope, w.from, w.to, despesaIds));
+      const linhas = async (livro: string) =>
+        (await this.lalurRepo.findManyEntries(scope, { year: ano, quarter: periodo, livro, includeArchived: false })).map((l) => ({ codigo: l.codigo, valorCents: l.valorCents }));
+      return { resultadoAntesCents: resultado, contasProvisaoConfiguradas: contasDespesa, linhasIrpj: await linhas('lalur'), linhasCsll: await linhas('lacs') };
+    };
+
+    if (periodo === 'A00') {
+      const r = await realDoPeriodo();
+      const parteBFechada = !!(await this.lalurRepo.findClosing(scope, ano, 'A00'));
+      const base = { ano, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, parteBFechada, perfil, deducoes, estimativasPagas: input.estimativasPagas };
+      const irpj = apurarAjusteAnual({ ...base, tributo: 'IRPJ', linhasParteA: r.linhasIrpj, meses: meses('IRPJ') });
+      const csll = apurarAjusteAnual({ ...base, tributo: 'CSLL', linhasParteA: r.linhasCsll, meses: meses('CSLL') });
+      const fp = await this.fiscalProfileRepo.findByScope(scope);
+      for (const [t, res, conta] of [['IRPJ', irpj, fp?.irpjSaldoNegativoAccountId], ['CSLL', csll, fp?.csllSaldoNegativoAccountId]] as const) {
+        if (!conta && valorLinha(res.memoria, PROVISAO_AJUSTE_ANUAL, periodo) < 0n) {
+          avisos.push(`${t}: ajuste abaixo do provisionado nos meses e conta de saldo negativo a compensar não configurada — a provisão ficará pendente (BRIEF X7 B item 16).`);
+        }
+      }
+      return { irpj, csll };
+    }
+
+    const mes = periodo as LalurMes;
+    const m = Number(mes.slice(1));
+    // Item 9 (e decisão 1 do PR-3): só o IRPJ do prestador exclusivo lê a receita dos meses anteriores do ano.
+    const receitaDoMes = async (k: number): Promise<ReceitaMes> => {
+      const b = mesBounds(ano, k);
+      const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, b.from, b.to);
+      return { periodo: nomeMes(k), servicoCents: BigInt(rec.servicoCents), revendaCents: BigInt(rec.revendaCents) };
+    };
+    const receitasAnteriores = async (): Promise<ReceitaMes[]> => {
+      if (!perfil.prestadoraExclusivaServicos) return [];
+      const ks = mesesEmAtividade(ano, perfil.inicioAtividadeEm, perfil.encerramentoAtividadeEm).filter((k) => k < m);
+      return Promise.all(ks.map(receitaDoMes));
+    };
+
+    if (input.modoMensal === 'RECEITA_BRUTA') {
+      const rec = await receitaDoMes(m);
+      const anteriores = await receitasAnteriores();
+      const base = { ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
+      return {
+        irpj: apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', confirmados: meses('IRPJ') }),
+        csll: apurarEstimativaReceitaBruta({ ...base, tributo: 'CSLL', confirmados: meses('CSLL') }),
+      };
+    }
+
+    // BALANCETE — o gate dos meses fechados é da confirmação (item 15); a prévia só avisa.
+    const abertos = await this.mesesAbertosAntes(scope, ano, mes, perfil);
+    if (abertos.length > 0) avisos.push(`balancete de ${mes}/${ano}: meses ainda abertos (${abertos.join(', ')}) — a confirmação exige-os fechados (BRIEF X7 B item 15).`);
+    const r = await realDoPeriodo();
+    const receita = perfil.prestadoraExclusivaServicos ? { receitaMes: await receitaDoMes(m), receitasMesesAnteriores: await receitasAnteriores() } : {};
+    const base = { ano, periodo: mes, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, perfil, deducoes };
+    return {
+      irpj: apurarBalancete({ ...base, tributo: 'IRPJ', linhasParteA: r.linhasIrpj, anteriores: meses('IRPJ'), ...receita }),
+      csll: apurarBalancete({ ...base, tributo: 'CSLL', linhasParteA: r.linhasCsll, anteriores: meses('CSLL') }),
+    };
+  }
+
+  /** Item 15: meses 01..m−1 em atividade da unidade lida que não estão `SOFT_CLOSED`/`HARD_CLOSED` (não semeado = aberto). */
+  private async mesesAbertosAntes(
+    scope: AccountingScope,
+    ano: number,
+    periodo: LalurMes,
+    perfil: Pick<CompanyFiscalProfile, 'inicioAtividadeEm' | 'encerramentoAtividadeEm'>,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string[]> {
+    const m = Number(periodo.slice(1));
+    const ks = mesesEmAtividade(ano, perfil.inicioAtividadeEm, perfil.encerramentoAtividadeEm).filter((k) => k < m);
+    const abertos: string[] = [];
+    for (const k of ks) {
+      const p = await this.periodRepo.findByYearMonth(scope, ano, k, tx);
+      if (!p || !FECHADO.has(p.status)) abertos.push(nomeMes(k));
+    }
+    return abertos;
   }
 
   private assertRead(scope: AccountingScope): void {
@@ -486,11 +673,35 @@ export class TaxAssessmentService {
   }
 }
 
+const nomeMes = (k: number): LalurMes => `A${String(k).padStart(2, '0')}` as LalurMes;
+
+/** O período que precisa estar confirmado antes (F-TA-3 a; item 13): T(q−1), A0(m−1); nenhum no 1º e no A00. */
+function periodoAnterior(periodo: string): string | null {
+  if (periodo === 'A00') return null;
+  if (isLalurMes(periodo)) return periodo === 'A01' ? null : nomeMes(Number(periodo.slice(1)) - 1);
+  const q = PERIODOS_TRIMESTRAIS.indexOf(periodo as PeriodoTrimestral);
+  return q > 0 ? PERIODOS_TRIMESTRAIS[q - 1] : null;
+}
+
+function toMesConfirmado(r: TaxAssessment): MesConfirmado {
+  return {
+    id: r.id,
+    periodo: r.periodo as LalurMes,
+    tributo: r.tributo as TributoApuracao,
+    modo: r.modo as ModoMensal,
+    devidoCents: r.devidoCents,
+    deducoesCents: r.deducoesCents,
+    aPagarCents: r.aPagarCents,
+    diferencaPostergadaCents: r.diferencaPostergadaCents,
+    memoria: MemoriaCalculoSchema.parse(r.memoria),
+  };
+}
+
 function mesmoConjunto(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((x) => b.includes(x));
 }
 
-function toPreviewLinha(r: ResultadoApuracao, periodo: string): TaxAssessmentPreviewLinha {
+function toPreviewLinha(r: ResultadoApuracaoAnual, periodo: string): TaxAssessmentPreviewLinha {
   return {
     tributo: r.tributo,
     periodo,
@@ -501,6 +712,7 @@ function toPreviewLinha(r: ResultadoApuracao, periodo: string): TaxAssessmentPre
     deducoesCents: r.deducoesCents.toString(),
     aPagarCents: r.aPagarCents.toString(),
     saldoNegativoCents: r.saldoNegativoCents.toString(),
+    diferencaPostergadaCents: r.diferencaPostergadaCents.toString(),
     tabelaVersao: r.tabelaVersao,
     memoria: r.memoria,
   };
@@ -518,6 +730,7 @@ function toView(row: TaxAssessment): TaxAssessmentView {
     deducoesCents: row.deducoesCents.toString(),
     aPagarCents: row.aPagarCents.toString(),
     saldoNegativoCents: row.saldoNegativoCents.toString(),
+    diferencaPostergadaCents: row.diferencaPostergadaCents.toString(),
     status: row.status as 'CONFIRMED' | 'SUPERSEDED',
     supersedesId: row.supersedesId,
     provisaoPendente: provisaoPendente(row),

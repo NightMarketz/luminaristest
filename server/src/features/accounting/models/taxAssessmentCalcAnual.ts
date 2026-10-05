@@ -180,7 +180,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
       descServico = `Receita de serviço × ${reduzida.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`;
       fonteServico = reduzida.fonte;
     } else if (acumuladaAnterior <= BigInt(limite.valor)) {
-      diferenca = diferencaPostergada16(e, m);
+      diferenca = diferencaPostergada16(e.ano, e.confirmados, m);
     }
   }
 
@@ -194,28 +194,30 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const imposto = impostoSobreBase(e.tributo, dataFim, base, aliqCsll, 1n);
   memoria.push(...imposto.memoria);
   const r = fecharComDeducoes(e.tributo, 'ESTIMATIVA_RECEITA', codigoReceita, base, imposto.devidoCents, 0n, e.deducoes, memoria);
-  if (diferenca) {
-    const cod = codigoReceitaAnual('IRPJ', 'DIFERENCA_POSTERGADA_16', e.perfil.lucroRealObrigatorio);
-    const mesSeguinte = m === 12 ? `01/${e.ano + 1}` : `${pad2(m + 1)}/${e.ano}`;
-    r.memoria.push(
-      ...diferenca.linhas,
-      linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, diferenca.total, F_16_8),
-      linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 33 §§ 9º–10'),
-    );
-  }
+  if (diferenca) r.memoria.push(...memoriaDiferenca(diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
   return { ...r, diferencaPostergadaCents: diferenca?.total ?? 0n };
 }
 
+function memoriaDiferenca(d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, m: number, lucroRealObrigatorio: boolean | null): MemoriaLinha[] {
+  const cod = codigoReceitaAnual('IRPJ', 'DIFERENCA_POSTERGADA_16', lucroRealObrigatorio);
+  const mesSeguinte = m === 12 ? `01/${ano + 1}` : `${pad2(m + 1)}/${ano}`;
+  return [
+    ...d.linhas,
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, d.total, F_16_8),
+    linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 33 §§ 9º–10'),
+  ];
+}
+
 /** Item 9 — § 8º: "em relação a cada mês transcorrido", lido das memórias confirmadas (mesma razão do F-TA-3 a). */
-function diferencaPostergada16(e: EntradaEstimativa, mExcesso: number): { total: bigint; linhas: MemoriaLinha[] } {
+function diferencaPostergada16(ano: number, confirmados: MesConfirmado[], mExcesso: number): { total: bigint; linhas: MemoriaLinha[] } {
   let total = 0n;
   const linhas: MemoriaLinha[] = [];
-  const meses = e.confirmados
+  const meses = confirmados
     .filter((c) => c.tributo === 'IRPJ' && c.modo === 'ESTIMATIVA_RECEITA' && numMes(c.periodo) < mExcesso && temLinha(c.memoria, 'PRESUNCAO_REDUZIDA_16'))
     .sort((a, b) => numMes(a.periodo) - numMes(b.periodo));
   for (const c of meses) {
     const k = numMes(c.periodo);
-    const dataFimK = fimDoMes(e.ano, k);
+    const dataFimK = fimDoMes(ano, k);
     const pS = linhaVigente('PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
     const base32 = mulBp(valorLinha(c.memoria, 'RECEITA_SERVICO', c.periodo), pS.valor);
     const devido32 = impostoSobreBase('IRPJ', dataFimK, base32, null, 1n).devidoCents;
@@ -243,6 +245,12 @@ export interface EntradaBalancete {
   anteriores: MesConfirmado[];
   perfil: PerfilApuracaoAnual;
   deducoes: DeducaoInformada[];
+  /**
+   * X7 Fase B PR-3 (decisão do dono 05/10, [[D-2026-10-05-X7-FASE-B-PR3-LACUNAS]] 1) — receita do mês m e dos meses
+   * anteriores do ano: só o IRPJ do prestador exclusivo lê, para achar o mês do excesso m* do 16% (item 9).
+   */
+  receitaMes?: ReceitaMes;
+  receitasMesesAnteriores?: ReceitaMes[];
 }
 
 /**
@@ -253,6 +261,11 @@ export interface EntradaBalancete {
  * = max(0, período − anteriores): 0 ⇒ `SUSPENSAO` (art. 47 I/III; prejuízo desde janeiro, art. 48 p.ú., cai aqui);
  * > 0 ⇒ `REDUCAO` (II/IV). O gate de fechamento dos meses anteriores é do item 15 (PR-3); o teto pela Parte B, do
  * item 12 (PR-2).
+ *
+ * Mês do excesso por balancete (decisão do dono 05/10, contra a recomendação de 400): se m é o m* do 16% (prestador
+ * exclusivo, receita acumulada passa do limite em m), o balancete CALCULA e grava a diferença postergada dos meses
+ * k < m* confirmados a 16% (IN 1.700 art. 33 § 8º), com a mesma conta do item 9; ela entra nos "anteriores" dos
+ * balancetes seguintes. Se o balancete já absorve a diferença (cobrança em dobro) é o P-B6, do contador.
  */
 export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   const m = numMes(e.periodo);
@@ -290,7 +303,20 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
       : linha('REDUCAO', 'Devido do mês = devido do período em curso − devido dos meses anteriores', devidoMes, 'IN RFB 1.700/2017 art. 47 II e IV'),
   );
   const r = fecharComDeducoes(e.tributo, 'BALANCETE_SUSPENSAO_REDUCAO', codigoReceita, ajustes.base, devidoMes, 0n, e.deducoes, memoria);
-  return { ...r, diferencaPostergadaCents: 0n };
+  const diferenca = e.tributo === 'IRPJ' && e.perfil.prestadoraExclusivaServicos && e.receitaMes ? excessoNoBalancete(e, m, dataFim, r.memoria) : null;
+  if (diferenca) r.memoria.push(...memoriaDiferenca(diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
+  return { ...r, diferencaPostergadaCents: diferenca?.total ?? 0n };
+}
+
+/** Decisão 1 do PR-3: a diferença do § 8º quando m é o mês do excesso (mesma regra de m* do item 9); senão null. */
+function excessoNoBalancete(e: EntradaBalancete, m: number, dataFim: string, memoria: MemoriaLinha[]): { total: bigint; linhas: MemoriaLinha[] } | null {
+  const anteriores = (e.receitasMesesAnteriores ?? []).filter((r) => numMes(r.periodo) < m);
+  const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
+  const acumulada = acumuladaAnterior + e.receitaMes!.servicoCents + e.receitaMes!.revendaCents;
+  const limite = linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
+  if (!(acumuladaAnterior <= BigInt(limite.valor) && acumulada > BigInt(limite.valor))) return null;
+  memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
+  return diferencaPostergada16(e.ano, e.anteriores, m);
 }
 
 // ─── Item 10 — ajuste anual (B6; F-TB-2 b) ───────────────────────────────────────────────────────────────────
@@ -321,6 +347,8 @@ export interface EntradaAjusteAnual {
 }
 
 const F_ART2_4 = 'Lei 9.430/1996 art. 2º § 4º';
+/** Código da linha da memória do `A00` com o valor (com sinal) da provisão do ajuste — item 16. */
+export const PROVISAO_AJUSTE_ANUAL = 'PROVISAO_AJUSTE_ANUAL';
 
 /**
  * Item 10 (B6) — `A00`, modo `AJUSTE_ANUAL`. Pré-condições: todos os meses em atividade confirmados e a Parte B do
@@ -404,6 +432,13 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   if (saldoNegativo > 0n) {
     memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo — restituição/compensação fora do sistema', saldoNegativo, 'Lei 9.430/1996 art. 6º § 1º II'));
   }
+  // X7 Fase B PR-3 (item 16, F-TB-3 a): o A00 provisiona só a diferença entre o devido anual e o que os meses já
+  // provisionaram (devido + diferença postergada). Com sinal: > 0 ⇒ D despesa / C a recolher; < 0 ⇒ D saldo negativo
+  // a compensar / C despesa; 0 ⇒ nada.
+  const provisionadoMeses = meses.reduce((s, c) => s + c.devidoCents + c.diferencaPostergadaCents, 0n);
+  memoria.push(
+    linha(PROVISAO_AJUSTE_ANUAL, 'Provisão do ajuste = devido anual − Σ (devido + diferença postergada) dos meses confirmados', imposto.devidoCents - provisionadoMeses, 'BRIEF X7 B item 16; F-TB-3 (a)'),
+  );
   return {
     tributo: e.tributo,
     modo: 'AJUSTE_ANUAL',
