@@ -12,6 +12,7 @@
  */
 
 import { getFactory } from '../../../../lib/factory';
+import logger from '../../../../lib/logger';
 
 export type SaleItemsKind = 'Product' | 'Service' | 'Package' | 'Mixed' | 'Empty';
 
@@ -99,6 +100,30 @@ export async function loadSalePackageInfo(userId: string, saleId: string): Promi
 /** True only when every item is a Package item (the prepaid-origin routing condition). */
 export async function isAllPackageSale(userId: string, saleId: string): Promise<boolean> {
   return (await loadSalePackageInfo(userId, saleId)).kind === 'Package';
+}
+
+/**
+ * BE-INCR-PACOTE-VALIDADE (BRIEF item 3) — the ONE source of a package's `validityDays`, read from the
+ * tenant's `packages` catalog row through the DynamicTable REPOSITORY (never the service — §2.1). Used by
+ * both credit call sites (the package-sold bridge and the reconcile origin pass).
+ * Missing catalog/row, or a value that is not an integer ≥ 0 → null + warn: a validity is NEVER invented.
+ * An absent/null field is a package without validity → null, silently.
+ */
+export async function loadPackageValidityDays(userId: string, packageId: string): Promise<number | null> {
+  const repo = getFactory().getDynamicTableRepository();
+  const catalog = await repo.findTableByInternalName(userId, 'packages');
+  const row = catalog && (await repo.existsByIdInTable(packageId, catalog.id)) ? await repo.findDataById(packageId) : null;
+  if (!row) {
+    logger.warn('Package catalog row not found — no validity applied', { packageId });
+    return null;
+  }
+  const value = (row.data as Record<string, unknown> | null)?.validityDays;
+  if (value == null) return null;
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+    logger.warn('Package validityDays is not an integer ≥ 0 — no validity applied', { packageId, value });
+    return null;
+  }
+  return value;
 }
 
 /** One Service-typed line of a sale, for the DPS assembly (BE-INCR-DFE, BRIEF item 15). */

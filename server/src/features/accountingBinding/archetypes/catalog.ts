@@ -5,6 +5,7 @@ import { reversalArchetype } from './ReversalArchetype';
 import { performanceLiabilityArchetype } from './PerformanceLiabilityArchetype';
 import { cogsArchetype } from './CogsArchetype';
 import { subledgerCreateReceivableArchetype } from './SubledgerCreateReceivableArchetype';
+import { performanceLiabilityReleaseArchetype } from './PerformanceLiabilityReleaseArchetype';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4/5 do BRIEF) — catálogo concreto de arquétipos.
@@ -21,7 +22,8 @@ import { subledgerCreateReceivableArchetype } from './SubledgerCreateReceivableA
  * Fechado por construção: um `Map` privado, sem método de inserção exposto — `get('chave
  * desconhecida')` devolve `undefined` (nunca lança, nunca cria), `all()` devolve sempre os mesmos
  * 6 itens. Congelar aqui é o que torna a checagem #1 do validador ("arquétipo existe") uma simples
- * comparação, não uma consulta a fonte mutável.
+ * comparação, não uma consulta a fonte mutável. (BE-INCR-PACOTE-VALIDADE item 12: 7º item,
+ * `performance_liability_release`.)
  */
 const ARCHETYPES: ReadonlyMap<string, Archetype> = new Map<string, Archetype>([
   ['revenue_recognition', revenueRecognitionArchetype],
@@ -30,6 +32,8 @@ const ARCHETYPES: ReadonlyMap<string, Archetype> = new Map<string, Archetype>([
   ['performance_liability', performanceLiabilityArchetype],
   ['cogs', cogsArchetype],
   ['subledger_command', subledgerCreateReceivableArchetype],
+  // BE-INCR-PACOTE-VALIDADE (item 12): baixa do passivo de pacote vencido sem uso (D 2.1.1 / C 3.4).
+  ['performance_liability_release', performanceLiabilityReleaseArchetype],
 ]);
 
 export class StaticArchetypeCatalog implements ArchetypeCatalog {

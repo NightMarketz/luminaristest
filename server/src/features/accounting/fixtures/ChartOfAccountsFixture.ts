@@ -66,6 +66,12 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // net revenue (Σ crédito − débito over Revenue accounts) is REDUCED by returns.
   { code: '3.2', name: 'Devoluções de Vendas', nature: 'Revenue', acceptsEntries: true },
   { code: '3.3', name: 'Receita de Revenda de Mercadorias', nature: 'Revenue', acceptsEntries: true },
+  // Receita por não uso (BE-INCR-PACOTE-VALIDADE, F-PV-4 a): the remaining prepaid balance of an expired
+  // package is released from 2.1.1 into this Revenue leaf (D 2.1.1 / C 3.4). Kept SEPARATE from 3.1 so the
+  // accountant's answer (PE-1/2/3) changes only the mapping, never reclassifies history (ACC-018). NOT in
+  // the ECF-Presumido presumption set: an ECF with movement here fails the exhaustiveness gate until PE-2.
+  // Sibling leaf under `3` — zero migration (create-if-missing by code).
+  { code: '3.4', name: 'Receita de Pacotes Não Utilizados', nature: 'Revenue', acceptsEntries: true },
   { code: '4', name: 'Despesa', nature: 'Expense', acceptsEntries: false },
   { code: '4.1', name: 'Despesas Operacionais', nature: 'Expense', acceptsEntries: true },
   // Custo das Mercadorias Vendidas (INCR-INVENTORY / ADR-INCR-INVENTORY F-INV0 → a, D7): the CMV leaf.
@@ -109,3 +115,9 @@ export const ESTOQUES_CODE = '1.1.6';
  * by CODE (stable), never by name.
  */
 export const CMV_CODE = '4.2';
+
+/**
+ * "Receita de Pacotes Não Utilizados" leaf (BE-INCR-PACOTE-VALIDADE, F-PV-4 a). The package-expiry posting
+ * credits it (D 2.1.1 / C 3.4). DRE section provisional until the accountant (PE-1). Resolved by CODE.
+ */
+export const RECEITA_NAO_USO_CODE = '3.4';

@@ -1,5 +1,6 @@
 import type { FiscalDocument } from 'generated/prisma';
-import { ForbiddenError, ValidationError } from '../../../lib/errors';
+import { Prisma } from 'generated/prisma';
+import { ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
@@ -29,6 +30,9 @@ import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import { scopeToday } from '../models/dates';
+import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
+import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { expiryCompetence, parseExpiryMovementKey } from '../../packages/models/validity';
 import { centsFromDb } from '../models/money';
 import { findLc116 } from '../models/lc116ListaNacional';
 import type { ReleituraJson } from '../../../lib/nfseReadback';
@@ -202,80 +206,150 @@ export class FiscalDocumentEmissionService {
 
     const created: FiscalDocumentWithAttempts[] = [];
     for (const group of assembly.groups) {
-      const doc = await this.repo.runTransaction(async (tx) => {
-        let numero: bigint | null = null;
-        if (!selection.port.capabilities.numbersDps) {
-          numero = await this.repo.nextNumber(scope, kind, assembly.serie, tx);
-        }
-        let payload: DpsPayload | DpsManualPayload;
-        if (selection.port.capabilities.numbersDps) {
-          // BE-INCR-DFE-MANUAL (item 8, F-MAN-4 a): quem numera é o adaptador/portal — a DPS sai SEM id/serie/nDPS.
-          payload = DpsManualPayloadSchema.parse(toManualDps(group.payload));
-        } else {
-          const numerada = { ...group.payload };
-          if (numero != null) {
-            numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero) };
-          }
-          payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
-        }
-        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
-        const createdDoc = await this.repo.createSent(
-          scope,
-          {
-            kind,
-            saleId,
-            cTribNac: group.cTribNac,
-            anchorEntryId: assembly.anchorEntryId,
-            ambiente: selection.ambiente as DfeAmbiente,
-            partner: selection.port.name,
-            serie: assembly.serie,
-            numero,
-            dCompet: assembly.dCompet,
-            vServCents: BigInt(group.vServCents),
-            tpRetISSQN: assembly.tpRetISSQN,
-            payloadJson: JSON.stringify(payload),
-          },
-          tx,
-        );
-        await this.auditService.append(tx, scope, {
-          actorUserId: scope.actorUserId,
-          eventType: DFE_EMITTED_EVENT,
-          targetType: 'fiscal_document',
-          targetId: createdDoc.id,
-          payload: {
-            documentId: createdDoc.id,
-            kind,
-            attemptNo: 1,
-            ref: attemptRef(createdDoc.id, 1),
-            vServCents: String(group.vServCents),
-            ambiente: selection.ambiente ?? '',
-          },
-        });
-        return createdDoc;
-      });
-
-      // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx. Resultado imediato
-      // NÃO é aplicado aqui (item 24 é PR-3) — só a FALHA de rede é gravada (mesmo status SENT).
-      try {
-        await selection.port.emitir({
-          kind,
-          ref: attemptRef(doc.id, 1),
-          ambiente: selection.ambiente as DfeAmbiente,
-          cnpjEmitente: assembly.cnpjEmitente,
-          partnerAccountRef: assembly.partnerAccountRef,
-          payload: JSON.parse(doc.attempts[0].payloadJson),
-        });
-      } catch (emitError) {
-        const message = emitError instanceof Error ? emitError.message : String(emitError);
-        logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa 2 automática', {
-          documentId: doc.id,
-          error: message,
-        });
-        await this.repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: 'dfe_emitir_failed', message }]) });
-      }
-      created.push(doc);
+      created.push(await this.createAndSend(scope, selection, kind, { ...assembly, saleId, group }));
     }
     return created.map((d) => this.toView(d));
+  }
+
+  /**
+   * BE-INCR-PACOTE-VALIDADE (§5.2 itens 14a e 9.5; F-PV-9 b, 9b a, 9c b, 9d a) — a NFS-e do saldo de pacote
+   * VENCIDO, emitida pelo passe do job (não pelo operador), só quando o perfil da unidade é
+   * `pacoteFatoGerador = 'CONSUMO'` (em `VENDA` a nota já saiu cheia na venda — P11). Âncora = o lançamento
+   * `('sale.package.expired', movementKey)`; `saleId` = a venda de origem mais recente do saldo; `saleKey` =
+   * `movementKey` (uma nota por vencimento); `dCompet` = `expiresOn + 1` (F-PV-5 a); `vServCents` = o valor
+   * vencido, com tie-out exato contra o crédito 3.4.
+   *
+   * Desfechos: `not_applicable` (sem perfil, ou perfil ≠ CONSUMO), `exists` (já há documento com este
+   * `saleKey` — inclusive em corrida, P2002), `emitted`. Faltante (perfil sem `pacoteCTribNac`, cliente sem
+   * CPF/CNPJ, porta desabilitada…) → `PackageExpiryNfsePendingError` com o motivo nomeado: o vencimento e o
+   * lançamento FICAM, a nota é efeito posterior, não gate. Risco declarado no BRIEF (PE-4): sem o
+   * `pacoteCTribNac` que o contador põe no perfil, nada sai — é o ponto de controle.
+   *
+   * L1 (dono, 03/10 — letra do §5.2): o re-drive procura documento por `saleKey`; o cancelamento renomeia o
+   * `saleKey` (`FiscalDocumentLifecycleService`), então uma nota de vencido CANCELADA é reemitida no tick seguinte.
+   */
+  async emitPackageExpiry(scope: AccountingScope, movementKey: string): Promise<'emitted' | 'exists' | 'not_applicable'> {
+    if (!this.policy.canEmitFiscalDocument(scope)) {
+      throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
+    }
+    const fiscalProfile = await this.fiscalProfileService.get(scope);
+    if (!fiscalProfile || fiscalProfile.pacoteFatoGerador !== 'CONSUMO') return 'not_applicable';
+    if (await this.repo.findBySaleKey(scope, movementKey, 'NFSE')) return 'exists';
+
+    const selection = selectDfeEmissor(process.env);
+    let assembly: Awaited<ReturnType<FiscalDocumentEmissionService['assembleExpiry']>>;
+    try {
+      assembly = await this.assembleExpiry(scope, movementKey, selection.ambiente);
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        const faltantes = (error.details as { faltantes?: string[] } | null)?.faltantes;
+        throw new PackageExpiryNfsePendingError(movementKey, Array.isArray(faltantes) ? faltantes : [error.message]);
+      }
+      throw error;
+    }
+    try {
+      await this.createAndSend(scope, selection, 'NFSE', assembly);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'exists';
+      throw error;
+    }
+    return 'emitted';
+  }
+
+  /**
+   * Cria o documento em SENT + tentativa 1 + `dfe.emitted` numa tx e chama a porta PÓS-COMMIT (extraído do
+   * laço de `emit`, sem mudança de comportamento, para servir também a `emitPackageExpiry`).
+   */
+  private async createAndSend(
+    scope: AccountingScope,
+    selection: ReturnType<typeof selectDfeEmissor>,
+    kind: FiscalDocumentKind,
+    args: {
+      saleId: string;
+      saleKey?: string;
+      group: { cTribNac: string; vServCents: number; payload: DpsPayload };
+      anchorEntryId: string;
+      serie: number;
+      dCompet: string;
+      tpRetISSQN: number;
+      cnpjEmitente: string;
+      partnerAccountRef: string | null;
+    },
+  ): Promise<FiscalDocumentWithAttempts> {
+    const { group } = args;
+    const doc = await this.repo.runTransaction(async (tx) => {
+      let numero: bigint | null = null;
+      if (!selection.port.capabilities.numbersDps) {
+        numero = await this.repo.nextNumber(scope, kind, args.serie, tx);
+      }
+      let payload: DpsPayload | DpsManualPayload;
+      if (selection.port.capabilities.numbersDps) {
+        // BE-INCR-DFE-MANUAL (item 8, F-MAN-4 a): quem numera é o adaptador/portal — a DPS sai SEM id/serie/nDPS.
+        payload = DpsManualPayloadSchema.parse(toManualDps(group.payload));
+      } else {
+        const numerada = { ...group.payload };
+        if (numero != null) {
+          numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero) };
+        }
+        payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
+      }
+      assertTpAmb(payload, selection.ambiente as DfeAmbiente);
+      const createdDoc = await this.repo.createSent(
+        scope,
+        {
+          kind,
+          saleId: args.saleId,
+          ...(args.saleKey ? { saleKey: args.saleKey } : {}),
+          cTribNac: group.cTribNac,
+          anchorEntryId: args.anchorEntryId,
+          ambiente: selection.ambiente as DfeAmbiente,
+          partner: selection.port.name,
+          serie: args.serie,
+          numero,
+          dCompet: args.dCompet,
+          vServCents: BigInt(group.vServCents),
+          tpRetISSQN: args.tpRetISSQN,
+          payloadJson: JSON.stringify(payload),
+        },
+        tx,
+      );
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: DFE_EMITTED_EVENT,
+        targetType: 'fiscal_document',
+        targetId: createdDoc.id,
+        payload: {
+          documentId: createdDoc.id,
+          kind,
+          attemptNo: 1,
+          ref: attemptRef(createdDoc.id, 1),
+          vServCents: String(group.vServCents),
+          ambiente: selection.ambiente ?? '',
+        },
+      });
+      return createdDoc;
+    });
+
+    // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx. Resultado imediato
+    // NÃO é aplicado aqui (item 24 é PR-3) — só a FALHA de rede é gravada (mesmo status SENT).
+    try {
+      await selection.port.emitir({
+        kind,
+        ref: attemptRef(doc.id, 1),
+        ambiente: selection.ambiente as DfeAmbiente,
+        cnpjEmitente: args.cnpjEmitente,
+        partnerAccountRef: args.partnerAccountRef,
+        payload: JSON.parse(doc.attempts[0].payloadJson),
+      });
+    } catch (emitError) {
+      const message = emitError instanceof Error ? emitError.message : String(emitError);
+      logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa 2 automática', {
+        documentId: doc.id,
+        error: message,
+      });
+      await this.repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: 'dfe_emitir_failed', message }]) });
+    }
+    return doc;
   }
 
   /**
@@ -383,7 +457,20 @@ export class FiscalDocumentEmissionService {
     kind: FiscalDocumentKind,
     cTribNac: string,
     ambiente: DfeAmbiente,
+    saleKey?: string,
   ): Promise<{ vServCents: number; payload: DpsPayload; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    // BE-INCR-PACOTE-VALIDADE (L2, dono 03/10): a nota de saldo vencido (saleKey = chave do movimento) remonta
+    // pelo vencimento, nunca pela venda de origem (que é 100% pacote e recusaria em CONSUMO).
+    if (saleKey && parseExpiryMovementKey(saleKey)) {
+      const expiry = await this.assembleExpiry(scope, saleKey, ambiente);
+      if (expiry.group.cTribNac !== cTribNac) {
+        throw new ValidationError(
+          `emissao_bloqueada: o cTribNac do pacote no perfil mudou desde a emissão original ('${cTribNac}' → '${expiry.group.cTribNac}').`,
+          { faltantes: [`cTribNac '${cTribNac}' ausente na remontagem`] },
+        );
+      }
+      return { ...expiry.group, cnpjEmitente: expiry.cnpjEmitente, partnerAccountRef: expiry.partnerAccountRef };
+    }
     const assembly = await this.assemble(scope, saleId, kind, ambiente);
     const group = assembly.groups.find((g) => g.cTribNac === cTribNac);
     if (!group) {
@@ -452,12 +539,9 @@ export class FiscalDocumentEmissionService {
       if (fiscalProfile?.pacoteFatoGerador !== 'VENDA') {
         faltantes.push("venda 100% pacote: emissão só com FiscalProfile.pacoteFatoGerador = 'VENDA' (pacote emite no consumo por padrão)");
       } else {
-        // LACUNA DE SPEC: o BRIEF (item 21) não define qual cTribNac representa o pacote em si — só
-        // diz de onde vem o valor (débito 1.1.2) e a descrição (nome do pacote). Sem um código real da
-        // lista nacional, emitir inventaria um dado fiscal — recusa loud em vez de placeholder.
-        faltantes.push(
-          "pacote VENDA: BRIEF não define o cTribNac do pacote (item 21) — lacuna de spec, decisão do dono pendente",
-        );
+        // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a, confirmado na 2ª rodada de 02/10): o cTribNac do pacote vem
+        // do perfil fiscal da unidade (`pacoteCTribNac`, do contador). Sem ele, a recusa continua — nomeada.
+        faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile));
         pacoteVenda = true;
         anchorSourceType = 'sale.package.sold';
       }
@@ -566,10 +650,8 @@ export class FiscalDocumentEmissionService {
       ? [{ serviceRef: '', description: String(saleData.description ?? 'Pacote'), quantity: 1, unitPrice: ledgerCents / 100 }]
       : serviceLines;
     for (const line of linesForGrouping) {
-      const profile = pacoteVenda
-        ? ({ cTribNac: fiscalProfile!.regimeTributario === 'SIMPLES' ? '' : '', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null, xDescServ: null } as unknown as ServiceFiscalProfileView)
-        : profileByServiceRef.get(line.serviceRef)!;
-      const cTribNac = pacoteVenda ? this.packageCTribNac(fiscalProfile!) : profile.cTribNac;
+      const profile = pacoteVenda ? this.pacoteServiceProfile(fiscalProfile!) : profileByServiceRef.get(line.serviceRef)!;
+      const cTribNac = profile.cTribNac;
       const existing = groupsMap.get(cTribNac);
       if (existing) {
         existing.lines.push(line);
@@ -624,12 +706,158 @@ export class FiscalDocumentEmissionService {
     };
   }
 
-  private packageCTribNac(fp: { regimeTributario: string }): string {
-    void fp;
-    // ponytail: pacote VENDA não tem serviço específico associado — usa uma chave própria,
-    // válida como código de 6 dígitos formal só para o agrupamento interno (nunca vai à rede
-    // sem que o operador cadastre um ServiceFiscalProfile real para o pacote — lacuna nomeada).
-    return '000000';
+  /**
+   * BE-INCR-PACOTE-VALIDADE (13a/14a) — o "perfil de serviço" do pacote, que não tem serviço ligado: códigos do
+   * perfil fiscal da UNIDADE (`pacoteCTribNac`/`pacoteCNBS`, do contador) e `cIndOp` = o padrão do salão
+   * `030101` (L8, dono 03/10 — o mesmo do caminho pacote VENDA; pendente do contador junto com o PE-5).
+   */
+  private pacoteServiceProfile(fp: { pacoteCTribNac: string | null; pacoteCNBS: string | null }): ServiceFiscalProfileView {
+    return {
+      serviceRef: '',
+      cTribNac: fp.pacoteCTribNac ?? '',
+      cTribNacDescricao: '',
+      cTribMun: null,
+      cNBS: fp.pacoteCNBS,
+      cIndOp: IND_OP_DEFAULT_SALAO,
+      cLocPrestacao: null,
+      xDescServ: null,
+      updatedAt: '',
+    };
+  }
+
+  /** Faltantes dos códigos do pacote no perfil (13a): `pacoteCTribNac` sempre; `pacoteCNBS` com ibsCbsInformar (E0322). */
+  private pacoteCodigoFaltantes(fp: { pacoteCTribNac: string | null; pacoteCNBS: string | null; ibsCbsInformar: boolean }): string[] {
+    const faltantes: string[] = [];
+    if (!fp.pacoteCTribNac) {
+      faltantes.push("perfil fiscal da unidade: falta 'pacoteCTribNac' (cTribNac do pacote — do contador)");
+    } else if (!findLc116(fp.pacoteCTribNac)) {
+      faltantes.push(`perfil fiscal da unidade: pacoteCTribNac '${fp.pacoteCTribNac}' não consta da lista nacional (LC 116)`);
+    }
+    if (fp.ibsCbsInformar && !fp.pacoteCNBS) {
+      faltantes.push("perfil fiscal da unidade: falta 'pacoteCNBS' (obrigatório com ibsCbsInformar, E0322)");
+    }
+    return faltantes;
+  }
+
+  /**
+   * BE-INCR-PACOTE-VALIDADE (§5.2 item 14a) — monta a DPS da NFS-e do saldo vencido a partir do que está
+   * persistido (movimento `expiry`, lançamento âncora, perfil, cliente, unidade). Mesmas pré-condições de
+   * perfil/tomador/emitente/porta da emissão de venda; faltante → `ValidationError` com `faltantes` (o mesmo
+   * contrato de `assemble`, que o reenvio já entende). Não confere se o documento já existe: isso é de quem chama.
+   */
+  private async assembleExpiry(
+    scope: AccountingScope,
+    movementKey: string,
+    ambiente: DfeAmbiente | null,
+  ): Promise<{
+    saleId: string;
+    saleKey: string;
+    group: { cTribNac: string; vServCents: number; payload: DpsPayload };
+    anchorEntryId: string;
+    serie: number;
+    dCompet: string;
+    tpRetISSQN: number;
+    cnpjEmitente: string;
+    partnerAccountRef: string | null;
+  }> {
+    const parsed = parseExpiryMovementKey(movementKey);
+    if (!parsed) throw new Error(`assembleExpiry: chave de vencimento inválida '${movementKey}'.`);
+    const faltantes: string[] = [];
+
+    const fiscalProfile = await this.fiscalProfileService.get(scope);
+    if (!fiscalProfile) {
+      faltantes.push('perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile)');
+    } else {
+      if (!fiscalProfile.emissao.completo) {
+        faltantes.push(...fiscalProfile.emissao.faltantes.map((f) => `perfil fiscal da unidade: falta '${f}'`));
+      }
+      faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile));
+    }
+
+    const context = await getFactory().getPackageBalanceService().getExpiryContext(scope, movementKey);
+    if (!context) throw new Error(`assembleExpiry: movimento de vencimento '${movementKey}' não existe.`);
+    if (!context.originSaleId) faltantes.push('saldo sem crédito de origem — sem venda para ancorar a nota');
+
+    // Tomador: o cliente do saldo, com CPF/CNPJ válido por DV (F-DFE-7 b).
+    const dynamicTableRepo = getFactory().getDynamicTableRepository();
+    const customersTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'customers');
+    const customerRow =
+      customersTable && (await dynamicTableRepo.existsByIdInTable(context.customerId, customersTable.id))
+        ? await dynamicTableRepo.findDataById(context.customerId)
+        : null;
+    const customerData = (customerRow?.data ?? {}) as Record<string, unknown>;
+    const taxId = this.classifyTaxId(String(customerData.taxId ?? ''));
+    if (!taxId) faltantes.push(`cliente '${context.customerId}': taxId ausente ou inválido por dígito verificador`);
+    const tomador = taxId ? { ...taxId, xNome: String(customerData.name ?? '') } : null;
+
+    if (fiscalProfile?.issRetidoTomadorPj) {
+      faltantes.push(
+        'issRetidoTomadorPj=true exige toma/end (Anexo A UF->IBGE) — lacuna de spec, não implementado nesta fatia (F-DFE-14)',
+      );
+    }
+
+    const dCompet = expiryCompetence(parsed.expiresOn);
+    const today = scopeToday(scope);
+    if (fiscalProfile?.emissaoForaDoMes === 'BLOQUEAR' && dCompet.slice(0, 7) !== today.slice(0, 7)) {
+      faltantes.push(`competência ${dCompet} fora do mês corrente (${today.slice(0, 7)}) e emissaoForaDoMes=BLOQUEAR`);
+    }
+
+    const selection = selectDfeEmissor(process.env);
+    if (!selection.enabled) faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
+
+    const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');
+    const unitRow = unitsTable ? await dynamicTableRepo.findDataById(scope.unitId) : null;
+    const unitCnpj = stripCnpjMask(String((unitRow?.data as Record<string, unknown> | undefined)?.cnpj ?? '')).toUpperCase();
+    if (!unitCnpj || !isValidCnpj(unitCnpj)) faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
+
+    const anchor = await this.journalEntryRepo.findBySource(scope, 'sale.package.expired', movementKey);
+    if (!anchor) faltantes.push("lançamento âncora 'sale.package.expired' ausente — o vencimento não foi contabilizado ainda");
+
+    if (faltantes.length > 0) {
+      throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
+    }
+    if (ambiente === null) throw new Error('dfe_tpamb_invariant: montagem sem ambiente com a porta habilitada.');
+
+    // Tie-out exato (§5.2 14a): o valor da nota É o vencido, e tem de bater com o crédito 3.4 do lançamento.
+    const ledgerCents = await this.sumPostings(scope, anchor!.postings, RECEITA_NAO_USO_CODE, 'credit');
+    if (ledgerCents !== context.releasedCents) {
+      throw new Error(
+        `assembleExpiry: tie-out quebrado — vencido ${context.releasedCents} × crédito 3.4 ${ledgerCents} (${movementKey}).`,
+      );
+    }
+
+    // L7 (dono, 03/10): "Pacote <nome no catálogo> — saldo não utilizado, vencido em <expiresOn>".
+    const packagesTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'packages');
+    const packageRow =
+      packagesTable && (await dynamicTableRepo.existsByIdInTable(context.packageId, packagesTable.id))
+        ? await dynamicTableRepo.findDataById(context.packageId)
+        : null;
+    const packageName = String((packageRow?.data as Record<string, unknown> | undefined)?.name ?? '').trim();
+    const xDescServ = `${packageName ? `Pacote ${packageName}` : 'Pacote'} — saldo não utilizado, vencido em ${parsed.expiresOn}`;
+
+    const fp = fiscalProfile!;
+    const profile = this.pacoteServiceProfile(fp);
+    const payload = this.buildPayload({
+      fp,
+      cnpjEmitente: unitCnpj,
+      group: { cTribNac: profile.cTribNac, lines: [], profile },
+      vServCents: context.releasedCents,
+      xDescServ,
+      dCompet,
+      tomador,
+      ambiente,
+    });
+    return {
+      saleId: context.originSaleId!,
+      saleKey: movementKey,
+      group: { cTribNac: profile.cTribNac, vServCents: context.releasedCents, payload },
+      anchorEntryId: anchor!.id,
+      serie: fp.dpsSerie,
+      dCompet,
+      tpRetISSQN: fp.issRetidoTomadorPj ? 2 : 1,
+      cnpjEmitente: unitCnpj,
+      partnerAccountRef: fp.partnerAccountRef,
+    };
   }
 
   private buildPayload(args: {

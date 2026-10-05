@@ -117,6 +117,11 @@ jobs:
 
       - name: Run tests + assert no leaked handles
         shell: bash
+        # GAP-MAP Nível 4 "CI — test:leaks estoura a heap": todas as suítes num processo só bateram o teto
+        # padrão (~4 GB) em 2 de 3 runs do #483 — o OOM mascara o próprio sinal deste passo. 8 GB de heap
+        # cabem no runner público ubuntu-latest (16 GB de RAM). Dono, 2026-10-03: "aplica o NODE_OPTIONS".
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -uo pipefail
           npx jest --selectProjects "${{ matrix.project }}" --shard="${{ matrix.shard }}" --detectOpenHandles 2>&1 | tee jest.log

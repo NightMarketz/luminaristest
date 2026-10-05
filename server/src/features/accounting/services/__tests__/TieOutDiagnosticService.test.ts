@@ -12,7 +12,7 @@
  *    (balanced=false, differenceCents com o sinal certo, status DIVERGENT);
  *  - 1.1.2: o lado "subrazão" é o AGREGADO salão+CRM (total − residual-sem-feeders) — salão
  *    sozinho NÃO fecha; partida estranha (lançamento manual em 1.1.2) vira exatamente o residual;
- *  - a 2ª chamada de groupByAccount recebe excludeSourceTypes com TODOS os 6 feeders PDV
+ *  - a 2ª chamada de groupByAccount recebe excludeSourceTypes com TODOS os 7 feeders PDV
  *    (crm.opportunity.won + sale.*) — teria falhado se a exclusão não fosse passada;
  *  - sinal por natureza: 2.1.2 fecha pelo saldo CREDOR (crédito − débito), 1.1.5/1.1.2 pelo DEVEDOR;
  *  - LEDGER_STATUSES (nunca só 'Posted') é o filtro de status das duas agregações;
@@ -206,7 +206,7 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
     expect(inv.controlAccountName).toBe('Estoques');
   });
 
-  it('passa LEDGER_STATUSES às duas agregações e excludeSourceTypes com TODOS os 6 feeders PDV na 2ª', async () => {
+  it('passa LEDGER_STATUSES às duas agregações e excludeSourceTypes com TODOS os 7 feeders PDV na 2ª', async () => {
     const { svc, postingRepo } = buildService(BALANCED);
     await svc.tieOut(scope);
 
@@ -224,6 +224,7 @@ describe('TieOutDiagnosticService.tieOut — fixture cross-nature balanceada', (
       [
         'crm.opportunity.won',
         'sale.package.sold',
+        'sale.package.expired', // BE-INCR-PACOTE-VALIDADE — exaustividade (não toca a 1.1.2)
         'sale.cogs',
         'sale.finalized',
         'sale.returned',

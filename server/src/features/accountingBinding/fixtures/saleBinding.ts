@@ -46,6 +46,7 @@ const SALE_CHART_SNAPSHOT: ChartAccountSnapshot[] = [
   { code: '3.1', nature: 'Revenue', acceptsEntries: true }, // Receita de Serviços
   { code: '3.2', nature: 'Revenue', acceptsEntries: true }, // Devoluções de Vendas (contra-receita)
   { code: '3.3', nature: 'Revenue', acceptsEntries: true }, // Receita de Revenda de Mercadorias
+  { code: '3.4', nature: 'Revenue', acceptsEntries: true }, // Receita de Pacotes Não Utilizados (BE-INCR-PACOTE-VALIDADE, F-PV-4 a)
   { code: '4.2', nature: 'Expense', acceptsEntries: true }, // Custo das Mercadorias Vendidas
 ];
 
@@ -65,6 +66,7 @@ export const SALE_OPERATIONAL_SCHEMA_SNAPSHOT: Record<string, unknown> = {
   'sale.returned': ['amount', 'dimension'],
   'sale.package.sold': ['amount', 'dimension'],
   'sale.cogs': ['costCents', 'dimension'],
+  'sale.package.expired': ['releasedCents', 'dimension'], // BE-INCR-PACOTE-VALIDADE item 12
 };
 
 const BINDING_VERSION = 1;
@@ -172,6 +174,24 @@ const candidate: AccountingBindingV1 = {
         { role: 'custo-mercadoria-vendida', accountCode: '4.2' },
         // C 1.1.6 (Estoques) — SaleCogsMapper.ts:30
         { role: 'estoque', accountCode: '1.1.6' },
+      ],
+    },
+    // BE-INCR-PACOTE-VALIDADE (item 12, F-PV-6 a) — pacote vencido sem uso: baixa do passivo (centavos exatos
+    // do movimento `expiry`). Bindings Active já gravados recompilam pelo POST /accounting-binding/compile
+    // (runbook do dono, por unidade); até lá o job pula com NO_MAPPER_FOR_UNIT antes de tocar o saldo.
+    {
+      eventKey: 'sale.package.expired',
+      archetypeKey: 'performance_liability_release',
+      descriptionTemplate: 'Pacote vencido sem uso — {sourceId}',
+      fieldSlots: [
+        { slotName: 'releasedCents', sourceField: 'event.releasedCents', transform: 'identity' },
+        { slotName: 'dimension', sourceField: 'event.dimension', transform: 'identity' },
+      ],
+      roleSlots: [
+        // D 2.1.1 (Pacotes Pré-pagos)
+        { role: 'passivo-diferido', accountCode: '2.1.1' },
+        // C 3.4 (Receita de Pacotes Não Utilizados) — F-PV-4 a, provisória até o PE-1
+        { role: 'receita-nao-uso', accountCode: '3.4' },
       ],
     },
   ],

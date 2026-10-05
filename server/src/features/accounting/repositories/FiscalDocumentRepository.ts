@@ -74,6 +74,10 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findFirst({ where: { chaveOuCodigo, userId: scope.ownerUserId, deletedAt: null } });
   }
 
+  public async findBySaleKey(scope: AccountingScope, saleKey: string, kind: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
+    return this.db(tx).fiscalDocument.findFirst({ where: { ...accountingScopeWhere(scope), saleKey, kind, deletedAt: null } });
+  }
+
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
     const { payloadJson, ...doc } = data;
@@ -82,7 +86,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         userId,
         unitId,
         ...doc,
-        saleKey: data.saleId,
+        saleKey: data.saleKey ?? data.saleId,
         status: 'SENT',
         currentAttemptNo: 1,
         createdById: scope.actorUserId,

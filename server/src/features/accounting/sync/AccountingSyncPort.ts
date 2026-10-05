@@ -30,7 +30,8 @@ export type AccountingEvent = {
     | 'sale.cogs'
     | 'sale.returned'
     | 'sale.settled'
-    | 'sale.package.sold';
+    | 'sale.package.sold'
+    | 'sale.package.expired';
   /** The source record id. JournalEntry.sourceId (idempotency axis 2). */
   sourceId: string;
   /** Tenancy unit of the SOURCE record — never defaulted or inferred elsewhere. */
@@ -63,6 +64,13 @@ export type AccountingEvent = {
    * (never `amount`); the value never crosses a float boundary.
    */
   costCents?: number;
+  /**
+   * Package expiry only (BE-INCR-PACOTE-VALIDADE item 10, `sale.package.expired`): the liability released
+   * when a prepaid balance expires unused, ALREADY in integer cents (the `expiry` movement of the subledger,
+   * `PackageBalanceService.expireDue`). Only the `performance_liability_release` archetype reads it; the
+   * value never crosses a float (precedent: `costCents` of `sale.cogs`).
+   */
+  releasedCents?: number;
 };
 
 /** Result of a sync: the (possibly pre-existing, via idempotency) journal entry id. */
@@ -230,6 +238,32 @@ export function buildSaleSettledEvent(fields: {
     currency: fields.currency,
     occurredAt: fields.occurredAt,
     paymentMethod: fields.paymentMethod,
+    label: fields.label,
+  };
+}
+
+/**
+ * Pure builder for the "package expired" event (BE-INCR-PACOTE-VALIDADE item 10) — shared by the expiry
+ * pass and the posting re-drive (item 11) so both emit identical events. `sourceId` is the expiry movement
+ * key (`expiry:<balanceId>:<expiresOn>`), so `@@unique([userId,unitId,sourceType,sourceId])` makes the
+ * posting idempotent per expiry. `occurredAt` = `expiresOn + 1` (F-PV-5 a). `amount` is unused (0): the
+ * mapper reads `releasedCents`.
+ */
+export function buildSalePackageExpiredEvent(fields: {
+  movementKey: string;
+  unitId: string;
+  releasedCents: number;
+  occurredAt: string;
+  label: string;
+}): AccountingEvent {
+  return {
+    sourceType: 'sale.package.expired',
+    sourceId: fields.movementKey,
+    unitId: fields.unitId,
+    amount: 0,
+    releasedCents: fields.releasedCents,
+    currency: 'BRL',
+    occurredAt: fields.occurredAt,
     label: fields.label,
   };
 }

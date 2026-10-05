@@ -3,4 +3,5 @@
 export interface ListPackageBalancesQueryInput {
 unitId: string
 customerId?: string
+expiresOnOrBefore?: string
 }

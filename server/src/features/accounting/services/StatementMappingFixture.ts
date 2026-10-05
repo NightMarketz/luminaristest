@@ -1,4 +1,4 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v3';
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v4';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -22,6 +22,9 @@ export const STATEMENT_MAPPING_RULES = [
   // without this rule findMappingRule returns undefined and the DRE silently drops it, so the
   // income statement underreports and J150 diverges from I355 (closing closes 3.3 by nature).
   { id: 'dre.gross_rev_resale', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.3' }, section: 'grossRevenue', sign: 'credit_positive', order: 105 },
+  // Receita de Pacotes Não Utilizados (3.4, BE-INCR-PACOTE-VALIDADE F-PV-4 a) — PROVISÓRIA até o contador
+  // (PE-1: receita bruta, outras receitas operacionais ou outra). Sem regra, a conta sumiria da DRE em silêncio.
+  { id: 'dre.gross_rev_breakage', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.4' }, section: 'grossRevenue', sign: 'credit_positive', order: 106 },
   { id: 'dre.deductions', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.2' },  section: 'revenueDeductions', sign: 'credit_negative',  order: 110 },
   // Custo das Mercadorias Vendidas (4.2, INCR-INVENTORY Body 2). MUST precede the nature-only
   // dre.expenses rule in this array so findMappingRule (first-match) routes 4.2 to costOfGoodsSold

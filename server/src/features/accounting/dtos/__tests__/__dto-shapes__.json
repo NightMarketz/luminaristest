@@ -4072,6 +4072,28 @@
             "VENDA"
           ]
         },
+        "pacoteCTribNac": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{6}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pacoteCNBS": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{9}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "ibsCbsInformar": {
           "type": "boolean"
         },
@@ -7386,7 +7408,11 @@
         "ACCOUNTING_PERIOD_NOT_OPEN",
         "MAX_CENTS_EXCEEDED",
         "OPENING_ENTRY_MISSING",
-        "MISSING_PAID_WITH_PACKAGE_ID"
+        "MISSING_PAID_WITH_PACKAGE_ID",
+        "NO_MAPPER_FOR_UNIT",
+        "PACKAGE_CONSUMPTION_PENDING",
+        "PACKAGE_ORIGIN_REVERSED",
+        "PACKAGE_EXPIRY_NFSE_PENDING"
       ]
     },
     "ListReconcilePendingQueryDto": {
@@ -7404,7 +7430,11 @@
             "ACCOUNTING_PERIOD_NOT_OPEN",
             "MAX_CENTS_EXCEEDED",
             "OPENING_ENTRY_MISSING",
-            "MISSING_PAID_WITH_PACKAGE_ID"
+            "MISSING_PAID_WITH_PACKAGE_ID",
+            "NO_MAPPER_FOR_UNIT",
+            "PACKAGE_CONSUMPTION_PENDING",
+            "PACKAGE_ORIGIN_REVERSED",
+            "PACKAGE_EXPIRY_NFSE_PENDING"
           ]
         },
         "includeResolved": {
@@ -7479,7 +7509,11 @@
             "ACCOUNTING_PERIOD_NOT_OPEN",
             "MAX_CENTS_EXCEEDED",
             "OPENING_ENTRY_MISSING",
-            "MISSING_PAID_WITH_PACKAGE_ID"
+            "MISSING_PAID_WITH_PACKAGE_ID",
+            "NO_MAPPER_FOR_UNIT",
+            "PACKAGE_CONSUMPTION_PENDING",
+            "PACKAGE_ORIGIN_REVERSED",
+            "PACKAGE_EXPIRY_NFSE_PENDING"
           ]
         },
         "reasonDetail": {
@@ -7545,7 +7579,11 @@
                   "ACCOUNTING_PERIOD_NOT_OPEN",
                   "MAX_CENTS_EXCEEDED",
                   "OPENING_ENTRY_MISSING",
-                  "MISSING_PAID_WITH_PACKAGE_ID"
+                  "MISSING_PAID_WITH_PACKAGE_ID",
+                  "NO_MAPPER_FOR_UNIT",
+                  "PACKAGE_CONSUMPTION_PENDING",
+                  "PACKAGE_ORIGIN_REVERSED",
+                  "PACKAGE_EXPIRY_NFSE_PENDING"
                 ]
               },
               "reasonDetail": {

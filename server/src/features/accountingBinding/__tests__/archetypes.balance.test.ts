@@ -19,8 +19,8 @@ const lancamentoArchetypes = archetypeCatalog
   .filter((a): a is LancamentoArchetype => a.kind === 'postEntry');
 
 describe('Arquétipos classe 1 (postEntry) — balanceamento por construção', () => {
-  it('o catálogo real tem os 5 arquétipos classe-1 do corpus', () => {
-    expect(lancamentoArchetypes).toHaveLength(5);
+  it('o catálogo real tem os 5 arquétipos classe-1 do corpus + a baixa por vencimento (BE-INCR-PACOTE-VALIDADE)', () => {
+    expect(lancamentoArchetypes).toHaveLength(6);
   });
 
   it.each(lancamentoArchetypes.map((a) => [a.name, a] as const))(
@@ -108,14 +108,24 @@ describe('Arquétipos classe 1 (postEntry) — balanceamento por construção', 
       'custo-mercadoria-vendida',
       'estoque',
     ]);
+
+    // BE-INCR-PACOTE-VALIDADE (item 12): D passivo-diferido (2.1.1) / C receita-nao-uso (3.4).
+    expect(byName.get('passivo-performance-baixa')?.sourceType).toBe('sale.package.expired');
+    expect(byName.get('passivo-performance-baixa')?.lines.map((l) => [l.role, l.side])).toEqual([
+      ['passivo-diferido', 'debit'],
+      ['receita-nao-uso', 'credit'],
+    ]);
   });
 
-  it('o slot moneyCentsExact (cmv) é distinto do slot moneyReais (amount) dos demais 4 arquétipos', () => {
+  it('os slots moneyCentsExact (cmv, baixa do pacote) são distintos do slot moneyReais (amount) dos demais 4 arquétipos', () => {
     const cogs = lancamentoArchetypes.find((a) => a.name === 'cmv')!;
     expect(cogs.slots.some((s) => s.type === 'moneyCentsExact' && s.name === 'costCents')).toBe(true);
     expect(cogs.slots.some((s) => s.name === 'amount')).toBe(false);
+    const release = lancamentoArchetypes.find((a) => a.name === 'passivo-performance-baixa')!;
+    expect(release.slots.some((s) => s.type === 'moneyCentsExact' && s.name === 'releasedCents')).toBe(true);
+    expect(release.slots.some((s) => s.name === 'amount')).toBe(false);
 
-    const others = lancamentoArchetypes.filter((a) => a.name !== 'cmv');
+    const others = lancamentoArchetypes.filter((a) => a.name !== 'cmv' && a.name !== 'passivo-performance-baixa');
     for (const archetype of others) {
       expect(archetype.slots.some((s) => s.type === 'moneyReais' && s.name === 'amount')).toBe(true);
     }

@@ -143,7 +143,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
-    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
+    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],

@@ -203,6 +203,50 @@ export class NoActiveAccountingBindingsError extends AppError {
   }
 }
 
+// ── BE-INCR-PACOTE-VALIDADE (BRIEF §4.2) — erros de código próprio (memória erro-especifico-para-skip-em-job):
+// o passe de vencimento classifica pelo `errorCode`, nunca pela classe base.
+
+/** Pré-check de consumo (item 4): saldo vencido não paga venda — 400 antes de qualquer escrita. */
+export class PackageBalanceExpiredError extends AppError {
+  constructor(customerId: string, packageId: string, expiresOn: string) {
+    super(`Saldo de pacote vencido em ${expiresOn} (cliente ${customerId}, pacote ${packageId}).`, 400, 'PACKAGE_BALANCE_EXPIRED');
+    Object.setPrototypeOf(this, PackageBalanceExpiredError.prototype);
+  }
+}
+
+/** Guarda 9.1 do job: consumo pago ainda sem débito no saldo — pendência transitória. */
+export class PackageConsumptionPendingError extends AppError {
+  constructor(balanceId: string, saleId: string) {
+    super(`Vencimento adiado: consumo da venda ${saleId} ainda sem débito no saldo ${balanceId}.`, 409, 'PACKAGE_CONSUMPTION_PENDING');
+    Object.setPrototypeOf(this, PackageConsumptionPendingError.prototype);
+  }
+}
+
+/** Guarda 9.2 do job (F-PV-8 a): crédito de venda cancelada/devolvida — pendência poison até o E-1. */
+export class PackageOriginReversedError extends AppError {
+  constructor(balanceId: string, saleId: string) {
+    super(`Vencimento bloqueado: a venda de origem ${saleId} do saldo ${balanceId} foi cancelada/devolvida (E-1).`, 409, 'PACKAGE_ORIGIN_REVERSED');
+    Object.setPrototypeOf(this, PackageOriginReversedError.prototype);
+  }
+}
+
+/** Guarda 9.3 do job (F-PV-6 a): a unidade não tem mapper para o evento — o binding Active precisa recompilar.
+ *  Nome e código são os que o I5 (F-I5-1 a) ratificou; quem executar primeiro cria, o outro reusa. */
+export class NoMapperForUnitError extends AppError {
+  constructor(unitId: string, sourceType: string) {
+    super(`Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' (recompile o binding).`, 409, 'NO_MAPPER_FOR_UNIT');
+    Object.setPrototypeOf(this, NoMapperForUnitError.prototype);
+  }
+}
+
+/** Item 9.5 (§5.2): faltante para emitir a NFS-e do vencido — pendência transitória; o vencimento fica. */
+export class PackageExpiryNfsePendingError extends AppError {
+  constructor(movementKey: string, faltantes: string[]) {
+    super(`NFS-e do vencimento ${movementKey} pendente: ${faltantes.join('; ')}.`, 409, 'PACKAGE_EXPIRY_NFSE_PENDING');
+    Object.setPrototypeOf(this, PackageExpiryNfsePendingError.prototype);
+  }
+}
+
 /**
  * BE-INCR-SEED-UNIDADE-E-ENV (item 2) — onboarding: a unidade ou o perfil fiscal não nasceu e o sistema recém-instalado
  * foi DESFEITO (compensação). Um novo create não esbarra no 403 one-shot. `message` já vem montada pelo

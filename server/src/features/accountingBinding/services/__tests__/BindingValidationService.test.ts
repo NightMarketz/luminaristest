@@ -452,6 +452,7 @@ describe('CORREÇÃO — papel com sub-chave caixa-por-metodo:<método> (finding
       '3.1': { code: '3.1', nature: 'Revenue', acceptsEntries: true },
       '3.2': { code: '3.2', nature: 'Revenue', acceptsEntries: true },
       '3.3': { code: '3.3', nature: 'Revenue', acceptsEntries: true },
+      '3.4': { code: '3.4', nature: 'Revenue', acceptsEntries: true }, // BE-INCR-PACOTE-VALIDADE (sale.package.expired)
       '4.2': { code: '4.2', nature: 'Expense', acceptsEntries: true },
     });
     const svc = new BindingValidationService(archetypeCatalog, chart, fakePostingValidatePort());

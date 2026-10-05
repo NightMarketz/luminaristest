@@ -46,6 +46,8 @@ const POS_FEEDER_SOURCE_TYPE_MAP: Record<
   'sale.package.sold': true,
   // CMV (INCR-INVENTORY): movimenta 4.2/1.1.6, nunca a 1.1.2 — presença aqui é só exaustividade.
   'sale.cogs': true,
+  // Pacote vencido (BE-INCR-PACOTE-VALIDADE): movimenta 2.1.1/3.4, nunca a 1.1.2 — só exaustividade.
+  'sale.package.expired': true,
 };
 
 export const POS_FEEDER_SOURCE_TYPES = Object.keys(POS_FEEDER_SOURCE_TYPE_MAP) as Array<

@@ -93,6 +93,7 @@ const ROLE_ALLOWED_NATURES: Readonly<Record<AccountRole, readonly string[]>> = {
   'passivo-adiantamento': ['Liability'],
   'custo-mercadoria-vendida': ['Expense'],
   estoque: ['Asset'],
+  'receita-nao-uso': ['Revenue'], // BE-INCR-PACOTE-VALIDADE — 3.4 Receita de Pacotes Não Utilizados (Revenue)
 };
 
 /**

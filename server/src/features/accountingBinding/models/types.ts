@@ -28,7 +28,10 @@ export type AccountRole =
   | 'passivo-diferido'
   | 'passivo-adiantamento'
   | 'custo-mercadoria-vendida'
-  | 'estoque';
+  | 'estoque'
+  // BE-INCR-PACOTE-VALIDADE (BRIEF §4.3, contrato do arquétipo `performance_liability_release`): a receita
+  // de pacote vencido sem uso — conta 3.4, provisória até o contador (PE-1).
+  | 'receita-nao-uso';
 
 /** Lista em runtime da union acima — única fonte de verdade para checagens de pertinência
  *  (ex.: "todo `role` usado pelos arquétipos pertence à union", teste do item 3 do BRIEF). */
@@ -42,6 +45,7 @@ export const ACCOUNT_ROLES: readonly AccountRole[] = [
   'passivo-adiantamento',
   'custo-mercadoria-vendida',
   'estoque',
+  'receita-nao-uso',
 ] as const;
 
 // ---------------------------------------------------------------------------------------------

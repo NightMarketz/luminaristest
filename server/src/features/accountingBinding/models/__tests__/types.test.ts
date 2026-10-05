@@ -17,7 +17,9 @@
 import { ACCOUNT_ROLES, type AccountRole } from '../types';
 
 describe('ACCOUNT_ROLES — congelamento F-BP-3(a)', () => {
-  it('tem exatamente os 9 papéis do dossiê, sem duplicata', () => {
+  // BE-INCR-PACOTE-VALIDADE (BRIEF §4.3, contrato do arquétipo performance_liability_release): +1 papel,
+  // 'receita-nao-uso' — o congelamento F-BP-3a vale para a Fase 0; o 10º entra por spec ratificada.
+  it('tem exatamente os 9 papéis do dossiê + receita-nao-uso, sem duplicata', () => {
     const expected = [
       'controle-recebível',
       'receita-serviço',
@@ -28,9 +30,10 @@ describe('ACCOUNT_ROLES — congelamento F-BP-3(a)', () => {
       'passivo-adiantamento',
       'custo-mercadoria-vendida',
       'estoque',
+      'receita-nao-uso',
     ];
-    expect(ACCOUNT_ROLES).toHaveLength(9);
-    expect(new Set(ACCOUNT_ROLES).size).toBe(9); // sem duplicata
+    expect(ACCOUNT_ROLES).toHaveLength(10);
+    expect(new Set(ACCOUNT_ROLES).size).toBe(10); // sem duplicata
     expect([...ACCOUNT_ROLES].sort()).toEqual([...expected].sort());
   });
 });
@@ -48,6 +51,7 @@ function assertExhaustiveAccountRole(role: AccountRole): void {
     case 'passivo-adiantamento':
     case 'custo-mercadoria-vendida':
     case 'estoque':
+    case 'receita-nao-uso':
       return;
     default: {
       const _exhaustive: never = role;

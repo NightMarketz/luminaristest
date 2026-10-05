@@ -21,7 +21,7 @@ import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
 import { scopeDay } from '../../models/dates';
 import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
-import { loadSalePackageInfo } from './saleItems';
+import { loadPackageValidityDays, loadSalePackageInfo } from './saleItems';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -91,13 +91,17 @@ export async function maybeSyncSalePackageSold(
     // defensively here too. creditFromSale is idempotent per (saleId,'credit').
     const customerId = typeof data.customerId === 'string' ? data.customerId : '';
     if (itemsInfo.packageIds.length === 1 && customerId) {
+      // BE-INCR-PACOTE-VALIDADE (item 2/3, F-PV-1 a): the catalog's validity is copied at credit time.
+      const packageId = itemsInfo.packageIds[0];
       await getFactory()
         .getPackageBalanceService()
         .creditFromSale(scope, {
           customerId,
-          packageId: itemsInfo.packageIds[0],
+          packageId,
           saleId: row.id,
           amountCents: Math.round(totalAmount * 100),
+          saleDate: event.occurredAt,
+          validityDays: await loadPackageValidityDays(actor.userId, packageId),
         });
     } else {
       logger.warn('Package sale balance credit skipped — need exactly one packageId and a customerId', {

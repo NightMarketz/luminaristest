@@ -29,6 +29,12 @@ export interface CreateSentFiscalDocumentData {
   tpRetISSQN: number;
   /** payload da tentativa 1 (imutável — ADR §9.1). */
   payloadJson: string;
+  /**
+   * BE-INCR-PACOTE-VALIDADE (§5.2 item 14a, F-PV-9d a): chave de unicidade do documento. Ausente = `saleId`
+   * (toda NFS-e de venda); a NFS-e do saldo vencido usa a chave do movimento `expiry:<balanceId>:<expiresOn>`
+   * — uma nota por vencimento pela `@@unique([userId, unitId, saleKey, kind, cTribNac])`.
+   */
+  saleKey?: string;
 }
 
 export interface AppendAttemptData {
@@ -99,6 +105,8 @@ export interface IFiscalDocumentRepository {
    * da tx do retorno manual (guarda autoritativa: a mesma nota não autoriza dois documentos).
    */
   findByChaveOuCodigo(scope: AccountingScope, chaveOuCodigo: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
+  /** BE-INCR-PACOTE-VALIDADE (§5.2 item 9.5) — documento (deletedAt null, qualquer status) com este `saleKey`/kind. */
+  findBySaleKey(scope: AccountingScope, saleKey: string, kind: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null>;
   /** Cria documento em SENT + tentativa 1 (`ref = <id>:1`). */
   createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts>;
   appendAttempt(scope: AccountingScope, data: AppendAttemptData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentAttempt>;

@@ -92,7 +92,7 @@ describe('computeEventCoverage — função pura', () => {
     const schemaReduzido = { 'sale.finalized': CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT['sale.finalized'] };
     const report = computeEventCoverage(UNIT, 'aestheticClinic', schemaReduzido, CLINIC_BINDING_V1.eventBindings);
     expect(report.missing).toEqual([]);
-    expect(report.orphan.sort()).toEqual(['sale.cogs', 'sale.package.sold', 'sale.returned', 'sale.settled']);
+    expect(report.orphan.sort()).toEqual(['sale.cogs', 'sale.package.expired', 'sale.package.sold', 'sale.returned', 'sale.settled']);
   });
 });
 
@@ -108,14 +108,14 @@ describe('BindingCompileService.compile() — gate de cobertura em SQLite real',
     await prisma.$disconnect();
   });
 
-  it('binding COMPLETO da clínica (5/5 eventos) → auto-ativa, coverage.missing vazio', async () => {
+  it('binding COMPLETO da clínica (6/6 eventos — inclui sale.package.expired, BE-INCR-PACOTE-VALIDADE) → auto-ativa, coverage.missing vazio', async () => {
     const service = buildService();
     const result = await service.compile(escopo(), clinicInput({ sectorKey: 'setor-cobertura-completa' }));
 
     expect(result.status).toBe('Active');
     expect(result.coverage.missing).toEqual([]);
     expect(result.coverage.boundEventKeys.sort()).toEqual(
-      ['sale.cogs', 'sale.finalized', 'sale.package.sold', 'sale.returned', 'sale.settled'].sort(),
+      ['sale.cogs', 'sale.finalized', 'sale.package.expired', 'sale.package.sold', 'sale.returned', 'sale.settled'].sort(),
     );
   });
 
