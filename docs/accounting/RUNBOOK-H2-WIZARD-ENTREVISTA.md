@@ -9,8 +9,7 @@
 
 Executor: [nome — humano]           Data: [____]
 Autorização: dono, 2026-09-07 — "Corrige o 401 mandando o Bearer no hook" (correção) e "Pode seguir a
-ordem natural" (este sign-off é o item 1 da ordem). Rastreio: `ACCOUNTING-MASTER-MAP.md` §5.1 Bloco A,
-item 4 (sign-offs de browser) — acrescentar "wizard Entrevista com IA" à lista; `GAP-MAP.md` Nível 3,
+ordem natural" (este sign-off é o item 1 da ordem). Rastreio: nota [`docs/plano/gates/H2.md`](../plano/gates/H2.md) (ex-master map §5.1 Bloco A, item 4 — sign-offs de browser; emenda 05/10, dono em chat, 05/10: *"Pode emendar os 4"*) — acrescentar "wizard Entrevista com IA" à lista; `GAP-MAP.md` Nível 3,
 linha do wizard (status `[CORRIGIDO 2026-09-07]` → `[CORRIGIDO + SIGN-OFF <data>]`).
 
 ---
