@@ -67,11 +67,11 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    e nada de "ACEITE NÃO REGISTRADO". Colher a assinatura do cliente no papel (F-FE-PV-3 b) e guardar.
    EVIDÊNCIA: [o PDF anexado + foto/scan da cláusula impressa com a régua do tamanho]
 
-7. Criar outra venda do pacote com validade e **fechar a janela sem aceitar** não é possível pelo wizard (o botão não
-   habilita); então: criar a venda pela tabela genérica (Packages → Sales) **sem** passar pelo wizard e abrir o detalhe.
+7. Venda sem aceite: o wizard não deixa salvar sem o checkbox, então crie uma venda do pacote com validade **pela tabela
+   genérica** (Sales + Sale Items, sem passar pelo wizard) e abra o detalhe.
    Resultado esperado: selo vermelho "Aceite não registrado", a validade em destaque e o botão "Registrar aceite". Clicar,
-   marcar o checkbox e "Confirmar aceite": o selo some e o aceite aparece. Baixar o PDF **antes** de registrar numa outra
-   venda igual: a cláusula leva a marca **ACEITE NÃO REGISTRADO**.
+   marcar o checkbox e "Confirmar aceite": o selo some e o aceite aparece. Em **outra** venda igual, ainda sem aceite,
+   baixar o PDF: a cláusula leva a marca **ACEITE NÃO REGISTRADO**.
    EVIDÊNCIA: [screenshot do selo + do botão + do aceite depois; o PDF com a marca]
 
 8. Venda do pacote **sem validade**: wizard → pacote sem validade.
