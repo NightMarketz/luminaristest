@@ -132,14 +132,18 @@ export class PayableRepository implements IPayableRepository {
     const out: CreditoPisCofinsNota[] = [];
     for (const row of rows) {
       const lines = JSON.parse(row.recoverableTaxLines!) as { kind: string; amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number }[];
-      const line = lines.find((l) => l.kind === 'PIS_COFINS');
-      if (!line) continue;
+      // O DTO aceita até 2 linhas PIS_COFINS num POST manual: soma todas, como o `payable.created` (review #521, achado 1).
+      const partes = lines.filter((l) => l.kind === 'PIS_COFINS').map((l) => ({ amountCents: l.amountCents, ...separarCreditoPisCofins(l) }));
+      if (partes.length === 0) continue;
       out.push({
         payableId: row.id,
         documentNumber: row.documentNumber,
         issueDate: row.issueDate.toISOString().slice(0, 10),
-        amountCents: line.amountCents,
-        ...separarCreditoPisCofins(line),
+        amountCents: partes.reduce((a, p) => a + p.amountCents, 0),
+        baseCents: partes.every((p) => p.baseCents !== null) ? partes.reduce((a, p) => a + p.baseCents!, 0) : null,
+        pisCents: partes.reduce((a, p) => a + p.pisCents, 0),
+        cofinsCents: partes.reduce((a, p) => a + p.cofinsCents, 0),
+        derivado: partes.some((p) => p.derivado),
       });
     }
     return out;

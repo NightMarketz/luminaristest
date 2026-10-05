@@ -26,7 +26,7 @@ describe('acquisitionCost — crédito PIS × Cofins separado (X8 item 5)', () =
     for (const it of c.itens) expect(it.creditoPisCents + it.creditoCofinsCents).toBe(it.creditoPisCofinsCents);
   });
 
-  it('sem crédito (cumulativo, Simples, fornecedor do Simples) ⇒ as duas parcelas são 0', () => {
+  it('sem crédito (unidade no cumulativo ou no Simples) ⇒ as duas parcelas são 0', () => {
     for (const r of [regime({ pisCofinsRegime: 'CUMULATIVO' }), regime({ pisCofinsRegime: 'SIMPLES' })]) {
       const c = acquisitionCost(NFE, ITENS, r);
       expect([c.creditoPisCents, c.creditoCofinsCents, c.creditoPisCofinsCents]).toEqual([0, 0, 0]);

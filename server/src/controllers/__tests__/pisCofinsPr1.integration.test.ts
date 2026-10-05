@@ -137,8 +137,23 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
     await prisma.payable.create({ data: { ...base, unitId: 'outra-unidade', documentNumber: 'OUTRA', issueDate: new Date('2025-07-15T00:00:00.000Z'), recoverableTaxLines: linhaAntiga(500) } });
     await prisma.payable.create({ data: { ...base, documentNumber: 'SO-ICMS', issueDate: new Date('2025-07-15T00:00:00.000Z'), recoverableTaxLines: JSON.stringify([{ accountId: 'x', accountCode: '1.1.8', amountCents: 500, kind: 'ICMS' }]) } });
 
+    // review #521 achado 1: duas linhas PIS_COFINS (POST manual, o DTO aceita até 2) ⇒ soma as duas (500 + 300 = 800)
+    const duas = await prisma.payable.create({
+      data: {
+        ...base, documentNumber: 'DUAS', issueDate: new Date('2025-07-20T00:00:00.000Z'),
+        recoverableTaxLines: JSON.stringify([
+          { accountId: accounts['1.1.9'], accountCode: '1.1.9', amountCents: 500, kind: 'PIS_COFINS' },
+          { accountId: accounts['1.1.9'], accountCode: '1.1.9', amountCents: 300, kind: 'PIS_COFINS' },
+        ]),
+      },
+    });
+
     const creditos = await new PayableRepository().findPisCofinsCredits(scope(), '2025-07-01', '2025-07-31');
-    expect(creditos).toEqual([
+    // 500 × 165/925 = 89,19 → 89; 300 × 165/925 = 53,51 → 54
+    expect(creditos.find((c) => c.payableId === duas.id)).toEqual({
+      payableId: duas.id, documentNumber: 'DUAS', issueDate: '2025-07-20', amountCents: 800, baseCents: null, pisCents: 89 + 54, cofinsCents: 800 - 143, derivado: true,
+    });
+    expect(creditos.filter((c) => c.payableId !== duas.id)).toEqual([
       { payableId: nova.id, documentNumber: nova.documentNumber, issueDate: '2025-07-10', amountCents: 784, baseCents: 8473, pisCents: 140, cofinsCents: 644, derivado: false },
       // 784 × 165 / 925 = 139,85… → 140 (half-up); Cofins = 784 − 140
       { payableId: antiga.id, documentNumber: 'ANTIGA', issueDate: '2025-07-31', amountCents: 784, baseCents: null, pisCents: 140, cofinsCents: 644, derivado: true },
