@@ -106,12 +106,18 @@ describe('item 8 — saldo com validade no pagamento', () => {
         expect(strong.className).toMatch(/\bfont-semibold\b/);
     });
 
-    it('vencido: aparece desabilitado com "vencido em DD/MM/AAAA"; sem nenhum saldo válido, a forma de pagamento fica indisponível', async () => {
-        vi.mocked(packageBalancesService.listBalances).mockResolvedValue([bal('pkgOld0001', '2020-01-15')]);
+    it('só saldos vencidos: a forma fica disponível e o vencido aparece desabilitado com "vencido em DD/MM/AAAA"', async () => {
+        const sel = await open([bal('pkgOld0001', '2020-01-15')]);
+        expect(option(sel, 'pkgOld0001').disabled).toBe(true);
+        expect(option(sel, 'pkgOld0001').textContent).toContain('vencido em 15/01/2020');
+    });
+
+    it('sem nenhum saldo: a forma "Saldo de pacote" fica indisponível', async () => {
+        vi.mocked(packageBalancesService.listBalances).mockResolvedValue([]);
         render(<SalePaymentModal sale={{ id: 's1', unitId: 'u1', customerId: 'c1', totalAmount: 100 } as SaleRecord} isOpen onClose={() => {}} onConfirm={async () => {}} />);
         await waitFor(() => expect(packageBalancesService.listBalances).toHaveBeenCalled());
         const method = screen.getAllByRole('combobox')[0] as HTMLSelectElement;
-        await waitFor(() => expect(Array.from(method.options).find((o) => o.value === 'Package Balance')?.disabled).toBe(true));
+        expect(Array.from(method.options).find((o) => o.value === 'Package Balance')?.disabled).toBe(true);
     });
 
     it('vencido ao lado de um válido: o vencido é a opção desabilitada, com a data', async () => {

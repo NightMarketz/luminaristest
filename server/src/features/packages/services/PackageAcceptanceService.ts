@@ -163,7 +163,8 @@ export class PackageAcceptanceService {
         customerName,
         packageName,
         amountCents: Math.round(facts.totalAmount * 100),
-        saleDate: facts.saleDate,
+        // Com aceite, a data impressa é a gravada junto da cláusula (a venda pode ter sido editada depois — I4).
+        saleDate: accepted ? (expiresOnFromDb(accepted.saleDate) as string) : facts.saleDate,
         clause,
         acceptance,
       }),

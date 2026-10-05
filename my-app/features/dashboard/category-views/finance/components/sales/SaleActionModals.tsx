@@ -67,7 +67,8 @@ export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfi
     // `expiresOn` é date-only `YYYY-MM-DD` e `scopeToday()` também → a comparação de string é a de calendário.
     const today = scopeToday();
     const isExpired = (b: CustomerPackageBalance) => b.expiresOn != null && b.expiresOn < today;
-    const hasPackages = balances.some((b) => !isExpired(b));
+    // Há saldo (mesmo todo vencido) → a forma fica disponível e a lista mostra "vencido em …" desabilitado; sem nenhum saldo, indisponível.
+    const hasPackages = balances.length > 0;
     const selectedBalance = useMemo(
         () => balances.find((b) => b.packageId === packageId) ?? null,
         [balances, packageId],

@@ -217,7 +217,7 @@ describe('PackageAcceptanceService.getBySale (item 5)', () => {
 
 describe('PackageAcceptanceService.generateReceipt (item 13)', () => {
   it('com aceite: a cláusula é o textShown GRAVADO (não o re-renderizado) e traz o aceite', async () => {
-    const row = { id: 'acc-1', textShown: 'TEXTO GRAVADO ANTIGO', textVersion: 'v1', acceptedByUserId: 'actor-1', acceptedAt: new Date('2026-11-25T15:00:00.000Z') };
+    const row = { id: 'acc-1', textShown: 'TEXTO GRAVADO ANTIGO', textVersion: 'v1', saleDate: new Date('2026-11-25T00:00:00.000Z'), acceptedByUserId: 'actor-1', acceptedAt: new Date('2026-11-25T15:00:00.000Z') };
     const { svc } = build({ existing: row });
     const out = await svc.generateReceipt(scope, 'sale-1');
     const html = out.buffer.toString();
@@ -230,6 +230,13 @@ describe('PackageAcceptanceService.generateReceipt (item 13)', () => {
     expect(html).toContain('Matriz');
     expect(html).toContain('R$ 250,00');
     expect(html).not.toContain('ACEITE NÃO REGISTRADO');
+  });
+
+  it('com aceite: a data da venda impressa é a GRAVADA no aceite, não a da venda editada depois (I4)', async () => {
+    const row = { id: 'acc-1', textShown: 'T', textVersion: 'v1', saleDate: new Date('2026-11-20T00:00:00.000Z'), acceptedByUserId: 'actor-1', acceptedAt: new Date('2026-11-20T15:00:00.000Z') };
+    const html = (await build({ existing: row }).svc.generateReceipt(scope, 'sale-1')).buffer.toString();
+    expect(html).toContain('20/11/2026');
+    expect(html).not.toContain('25/11/2026');
   });
 
   it('sem aceite: a cláusula é o notice de agora, com a marca ACEITE NÃO REGISTRADO', async () => {

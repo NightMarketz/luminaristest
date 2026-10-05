@@ -43,6 +43,8 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
     expect(created.status).toBe(201);
     const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
     tables = { sales: await byName('sales'), saleItems: await byName('saleItems'), packages: await byName('packages'), customers: await byName('customers'), units: await byName('units') };
+    // O intruso TAMBÉM instala o preset: o 404 que ele recebe vem do pertencimento da linha à tabela do tenant, não de "sem tabela".
+    expect((await request(app).post('/api/dashboard/create').set(authHeader(intruder)).send({ suiteKey: 'beautySalon', unit: { name: 'Outra' } })).status).toBe(201);
     unitId = (await row('units', { name: 'Unidade Centro' })).id;
     customerId = (await row('customers', { name: 'Ana Souza' })).id;
     pkg30 = (await row('packages', { name: 'Pacote 10 escovas', price: 250, validityDays: 30 })).id;
