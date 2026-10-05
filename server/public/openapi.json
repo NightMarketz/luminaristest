@@ -1785,7 +1785,20 @@
               "T01",
               "T02",
               "T03",
-              "T04"
+              "T04",
+              "A00",
+              "A01",
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A06",
+              "A07",
+              "A08",
+              "A09",
+              "A10",
+              "A11",
+              "A12"
             ]
           },
           "livro": {
@@ -1794,10 +1807,12 @@
               "lalur",
               "lacs",
               "n500",
+              "n620",
               "n630",
+              "n660",
               "n670"
             ],
-            "description": "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n630/n670 = linhas E do Bloco N"
+            "description": "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n620/n630/n660/n670 = linhas E do Bloco N. n620/n660 só em A01..A12 e, até o catálogo N620/N660 entrar (X7 Fase B PR-4), todo write nelas é 400; n630/n670 só em T0x/A00"
           },
           "codigo": {
             "type": "string",
@@ -2046,9 +2061,22 @@
               "T01",
               "T02",
               "T03",
-              "T04"
+              "T04",
+              "A00",
+              "A01",
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A06",
+              "A07",
+              "A08",
+              "A09",
+              "A10",
+              "A11",
+              "A12"
             ],
-            "description": "o M030 sob o qual a linha sai"
+            "description": "o M030 sob o qual a linha sai; na forma ANUAL só A00 — A01..A12 ⇒ 400 (IN RFB 1.700 art. 50 II)"
           },
           "indicador": {
             "type": "string",
@@ -2159,7 +2187,20 @@
               "T01",
               "T02",
               "T03",
-              "T04"
+              "T04",
+              "A00",
+              "A01",
+              "A02",
+              "A03",
+              "A04",
+              "A05",
+              "A06",
+              "A07",
+              "A08",
+              "A09",
+              "A10",
+              "A11",
+              "A12"
             ]
           }
         }
@@ -15037,7 +15078,9 @@
                 "lalur",
                 "lacs",
                 "n500",
+                "n620",
                 "n630",
+                "n660",
                 "n670"
               ]
             }
@@ -15127,7 +15170,20 @@
                 "T01",
                 "T02",
                 "T03",
-                "T04"
+                "T04",
+                "A00",
+                "A01",
+                "A02",
+                "A03",
+                "A04",
+                "A05",
+                "A06",
+                "A07",
+                "A08",
+                "A09",
+                "A10",
+                "A11",
+                "A12"
               ]
             }
           },
@@ -15141,7 +15197,9 @@
                 "lalur",
                 "lacs",
                 "n500",
+                "n620",
                 "n630",
+                "n660",
                 "n670"
               ]
             }
@@ -15166,7 +15224,7 @@
       },
       "post": {
         "summary": "Register one adjustment line (validated against the Leiaute 12 catalog)",
-        "description": "codigo must exist in the Tabela Dinamica sheet of the livro, be an ENTRY line (tipo E - CNA/CA/R are computed by the PVA) and be in force for the year; otherwise 400 with the code and the reason (never a silent drop). indRelacao conditionals mirror REGRA_RELACAO_INEXISTENTE (Manual p.247); TIPO_LANCAMENTO=P forces indRelacao=1 (REGRA_IND_RELACAO). Lines of livro n500/n630/n670 carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0.",
+        "description": "codigo must exist in the Tabela Dinamica sheet of the livro, be an ENTRY line (tipo E - CNA/CA/R are computed by the PVA) and be in force for the year; otherwise 400 with the code and the reason (never a silent drop). indRelacao conditionals mirror REGRA_RELACAO_INEXISTENTE (Manual p.247); TIPO_LANCAMENTO=P forces indRelacao=1 (REGRA_IND_RELACAO). Lines of livro n500/n630/n670 carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0. X7 Fase B (BRIEF B item 12): quarter accepts T01..T04 only when the year's effective form is TRIMESTRAL (also with no profile) and A00..A12 only when ANUAL; A0m before the start of activity is 400; n620/n660 only in A01..A12 (400 on every write until their catalog sheets land, PR-4); n630/n670 only in T0x/A00. A compensation (P) in A0m is capped by the Parte B account's opening balance of the year.",
         "tags": [
           "Accounting"
         ],
@@ -15509,7 +15567,20 @@
                 "T01",
                 "T02",
                 "T03",
-                "T04"
+                "T04",
+                "A00",
+                "A01",
+                "A02",
+                "A03",
+                "A04",
+                "A05",
+                "A06",
+                "A07",
+                "A08",
+                "A09",
+                "A10",
+                "A11",
+                "A12"
               ]
             }
           },
@@ -15670,7 +15741,7 @@
     "/api/lalur/parte-b/close": {
       "post": {
         "summary": "Close a Parte B quarter — materialize the M500 balances and derive PF/BC (Fork N-1 a)",
-        "description": "Requires the previous quarter closed (T01 requires the previous exercise fully closed when any earlier closing exists — continuity guard C3) and no later quarter closed. Re-closing recomputes. Derives the PF (IRPJ) / BC (CSLL) movement of the quarter from the ledger result + Parte A lines (Fork F-3C-2 a): base below zero with no prejuizo account (COD_PB_RFB 1000/1003) is 400; more than one is 400 (ambiguous). A compensation (P) that exceeds the account balance is 400 (item 13). Emits lalur.parte_b_closed with the sha256 of the balance set (never the values).",
+        "description": "Requires the previous quarter closed (T01 requires the previous exercise fully closed when any earlier closing exists — continuity guard C3) and no later quarter closed. Re-closing recomputes. Derives the PF (IRPJ) / BC (CSLL) movement of the quarter from the ledger result + Parte A lines (Fork F-3C-2 a): base below zero with no prejuizo account (COD_PB_RFB 1000/1003) is 400; more than one is 400 (ambiguous). A compensation (P) that exceeds the account balance is 400 (item 13). Emits lalur.parte_b_closed with the sha256 of the balance set (never the values). X7 Fase B (BRIEF B item 12): when the year's effective form is ANUAL only A00 closes (A01..A12 and T0x are 400; IN RFB 1.700 art. 50 II), and the exercise continuity links the last period of N (T04 or A00) to the first of N+1.",
         "tags": [
           "Accounting"
         ],

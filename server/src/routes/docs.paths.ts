@@ -3957,7 +3957,7 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer }, description: required with livro }
- *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670] } }
  *         - { in: query, name: aba, required: false, schema: { type: string, enum: [PARTEB_PADRAO] } }
  *         - { in: query, name: tributo, required: false, schema: { type: string, enum: [I, C] } }
  *         - { in: query, name: q, required: false, schema: { type: string, minLength: 2 } }
@@ -3978,8 +3978,8 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer } }
- *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
- *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670] } }
  *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
  *       responses:
  *         '200': { description: 'adjustment lines' }
@@ -3991,7 +3991,11 @@
  *         are computed by the PVA) and be in force for the year; otherwise 400 with the code and the
  *         reason (never a silent drop). indRelacao conditionals mirror REGRA_RELACAO_INEXISTENTE (Manual
  *         p.247); TIPO_LANCAMENTO=P forces indRelacao=1 (REGRA_IND_RELACAO). Lines of livro n500/n630/n670
- *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0.
+ *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0. X7 Fase B (BRIEF B
+ *         item 12): quarter accepts T01..T04 only when the year's effective form is TRIMESTRAL (also with no
+ *         profile) and A00..A12 only when ANUAL; A0m before the start of activity is 400; n620/n660 only in
+ *         A01..A12 (400 on every write until their catalog sheets land, PR-4); n630/n670 only in T0x/A00.
+ *         A compensation (P) in A0m is capped by the Parte B account's opening balance of the year.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4117,7 +4121,7 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer } }
- *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
  *         - { in: query, name: parteBId, required: false, schema: { type: string } }
  *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
  *       responses:
@@ -4186,7 +4190,9 @@
  *         Derives the PF (IRPJ) / BC (CSLL) movement of the quarter from the ledger result + Parte A lines
  *         (Fork F-3C-2 a): base below zero with no prejuizo account (COD_PB_RFB 1000/1003) is 400; more than
  *         one is 400 (ambiguous). A compensation (P) that exceeds the account balance is 400 (item 13).
- *         Emits lalur.parte_b_closed with the sha256 of the balance set (never the values).
+ *         Emits lalur.parte_b_closed with the sha256 of the balance set (never the values). X7 Fase B (BRIEF B
+ *         item 12): when the year's effective form is ANUAL only A00 closes (A01..A12 and T0x are 400; IN RFB
+ *         1.700 art. 50 II), and the exercise continuity links the last period of N (T04 or A00) to the first of N+1.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:

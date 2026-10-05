@@ -759,6 +759,7 @@ export class ApplicationFactory {
       auditService,
       this.policies.accounting,
       accountingReportService,
+      this.repositories.companyFiscalProfile, // X7 Fase B (item 12): forma do ano + início de atividade — só leitura
     );
 
     const presetSyncService = new PresetSyncService(
