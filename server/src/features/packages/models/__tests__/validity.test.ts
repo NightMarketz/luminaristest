@@ -37,7 +37,7 @@ describe('feriado nacional prorroga o último dia (CC 132 § 1º, F-JUR-6)', () 
     // 15/11/2025 é sábado, 16/11 domingo → 1º dia útil = segunda 17/11
     expect(lastValidDay('2025-10-16', 30)).toBe('2025-11-17');
   });
-  it('feriados encadeados: 20/11 (≥ 2024) sobre 21/11', () => {
+  it('20/11 (Consciência Negra, feriado nacional ≥ 2024) numa sexta → o último dia vai para o sábado 21/11 (útil)', () => {
     expect(lastValidDay('2026-10-21', 30)).toBe('2026-11-21'); // 20/11/2026 sexta → 21/11 sábado (útil)
   });
   it('dia comum e domingo comum não mudam', () => {
