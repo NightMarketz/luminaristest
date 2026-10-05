@@ -3,6 +3,7 @@ import { useAccountingT } from '../lib/useAccountingT';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { accountingService } from '../../../lib/services/accounting.service';
 import type { TrialBalanceReport } from '../../../lib/services/accounting.service';
+import type { GovernanceScope } from '../governance/GovernanceScope';
 
 export interface UnitOption {
   id: string;
@@ -24,7 +25,10 @@ interface RowLike {
  * currently-selected unit. Units come from the `units` DynamicTable (the only
  * coupling to DynamicTable — the accounting data itself is first-class Prisma).
  */
-export function useAccountingData() {
+export function useAccountingData(governance?: GovernanceScope) {
+  // Modo cliente (F-FE-GOV-1 b): `getTrialBalance` não é um dos 9 handlers do F-GOV-7 — resolveria o escopo do
+  // PRÓPRIO contador. Sem balancete aqui; as unidades próprias seguem carregando (o "Meus livros" volta a elas).
+  const delegated = !!governance;
   // Só `tRef` aqui: este hook não renderiza nada — todo uso de `t` está dentro de
   // efeito/callback, e é exatamente aí que a identidade instável morde
   // (ver `../lib/useAccountingT`).
@@ -78,7 +82,7 @@ export function useAccountingData() {
   }, [tRef]);
 
   const loadReport = useCallback(async (uid: string) => {
-    if (!uid) {
+    if (!uid || delegated) {
       setReport(null);
       return;
     }
@@ -93,7 +97,7 @@ export function useAccountingData() {
     } finally {
       setLoadingReport(false);
     }
-  }, [tRef]);
+  }, [tRef, delegated]);
 
   useEffect(() => {
     if (unitId) loadReport(unitId);

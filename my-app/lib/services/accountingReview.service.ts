@@ -75,18 +75,20 @@ export interface ReviewDetail {
 }
 
 const enc = encodeURIComponent;
-const q = (unitId: string) => `?unitId=${enc(unitId)}`;
+const q = (unitId: string, ownerUserId?: string) => `?unitId=${enc(unitId)}${ownerUserId ? `&ownerUserId=${enc(ownerUserId)}` : ''}`;
 
 export const accountingReviewService = {
-  async list(unitId: string, filter: { year?: number; status?: ReviewStatus } = {}): Promise<AccountingReview[]> {
+  /** `ownerUserId` (opcional, F-GOV-7): o contador lê as revisões do livro do cliente. */
+  async list(unitId: string, filter: { year?: number; status?: ReviewStatus } = {}, ownerUserId?: string): Promise<AccountingReview[]> {
     let qs = q(unitId);
     if (filter.year !== undefined) qs += `&year=${filter.year}`;
     if (filter.status) qs += `&status=${filter.status}`;
+    if (ownerUserId) qs += `&ownerUserId=${enc(ownerUserId)}`;
     return (await apiClient.get<Envelope<AccountingReview[]>>(`/accounting/reviews${qs}`)).data;
   },
 
-  async get(id: string, unitId: string): Promise<ReviewDetail> {
-    return (await apiClient.get<Envelope<ReviewDetail>>(`/accounting/reviews/${enc(id)}${q(unitId)}`)).data;
+  async get(id: string, unitId: string, ownerUserId?: string): Promise<ReviewDetail> {
+    return (await apiClient.get<Envelope<ReviewDetail>>(`/accounting/reviews/${enc(id)}${q(unitId, ownerUserId)}`)).data;
   },
 
   async open(body: OpenReviewInput): Promise<AccountingReview> {

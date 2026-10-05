@@ -21,6 +21,11 @@ vi.mock('../../../../lib/services/accounting.service', () => ({
   },
 }));
 
+// Os painéis leem a atribuição do escopo (modo dono) — sem rede nos testes antigos.
+vi.mock('../../../../lib/services/accountantAssignments.service', () => ({
+  accountantAssignmentsService: { listByScope: vi.fn(async () => []), listMine: vi.fn(async () => []) },
+}));
+
 const period = (month: number, status: AccountingPeriod['status']): AccountingPeriod => ({
   id: `p${month}`, userId: 'o1', unitId: 'u1', year: 2026, month, status,
   openedAt: null, closedAt: null, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z',

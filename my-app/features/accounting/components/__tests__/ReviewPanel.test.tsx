@@ -35,6 +35,11 @@ vi.mock('../../../../lib/services/accounting.service', () => ({
   accountingService: { getAccounts: vi.fn(async () => ({ accounts: [{ id: 'a1', code: '1.1', name: 'Caixa', acceptsEntries: true, nature: 'Asset' }] })) },
 }));
 
+// Os painéis leem a atribuição do escopo (modo dono) — sem rede nos testes antigos.
+vi.mock('../../../../lib/services/accountantAssignments.service', () => ({
+  accountantAssignmentsService: { listByScope: vi.fn(async () => []), listMine: vi.fn(async () => []) },
+}));
+
 const review = (o: Partial<AccountingReview> = {}): AccountingReview => ({
   id: 'r1', unitId: 'u1', year: 2025, ecdJobId: 'jobecd000001', ecfJobId: null, status: 'OPEN', reviewerUserId: 'o',
   reviewerName: null, reviewerCrc: null, statement: null, closeReason: null, openedAt: '2025-06-01T12:00:00.000Z', updatedAt: '', closedAt: null, ...o,
