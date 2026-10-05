@@ -4,6 +4,8 @@
 > `docs/operating-manual/RUNBOOK-FORMAT.md`. O agente **não** preenche EVIDÊNCIA, **não** marca desfecho e **não**
 > assina — runbook sem assinatura de executor humano é nulo (ADR-INCR-UNIT-REKEY §4 comportamento 16).
 
+> **Execução de 2026-10-04:** registro em `RUNBOOK-I1B-UNIT-REKEY.rascunho-2026-10-04.md` + assinatura do dono pelo chat (`docs/plano/decisoes/D-2026-10-04-I1B-RUNBOOK-ASSINADO.md`). Este arquivo segue como modelo em branco.
+
 Executor: ____________________ (humano)           Data: ____________
 
 Autorização: **dono, 2026-10-04 (chat):** "Preenche pra a autorização, começa o runbook" — autoriza a execução
