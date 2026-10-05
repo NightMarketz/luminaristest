@@ -56,6 +56,7 @@ model User {
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
   assignmentsOwned        AccountantAssignment[]    @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
   assignmentsAsAccountant AccountantAssignment[]    @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
+  policyVersionsOwned     AccountingPolicyVersion[] @relation("PolicyVersionOwner") // GOV-CONTADOR — política versionada (F-GOV-6 b)
   accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
   accountingReviews       AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
   lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
@@ -2211,11 +2212,45 @@ model AccountantAssignment {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
   deletedAt           DateTime? // contrato §2; nenhuma rota apaga — histórico encerra, não some
+  policyVersions      AccountingPolicyVersion[] // BE-INCR-ACCOUNTING-POLICY-VERSION: contador que decidiu (FK Restrict)
 
   @@unique([userId, unitId, activeSlot])
   @@unique([userId, unitId, pendingSlot])
   @@index([accountantUserId, status])
   @@map("accountant_assignments")
+}
+
+// BE-INCR-ACCOUNTING-POLICY-VERSION (nó GOV-CONTADOR, F-GOV-6 b; BRIEF item 2, §4.3; F-POL-1 a) — registro ao lado das
+// tabelas vivas: `FiscalProfile`/`AccountingScopeSettings` continuam a fonte dos leitores; aqui ficam propostas,
+// decisões e o snapshot aplicado. "O que valia em T" = a última APPLIED com decidedAt ≤ T (F-POL-5 a). No máximo 1
+// PROPOSED por (userId, unitId, target) = UNIQUE com coluna-slot anulável (precedente accountant_assignments).
+// `payload` NUNCA carrega `unitId` (condição do REKEY no rekeyLegacyUnitCli). FK Restrict: trilha de aprovação.
+model AccountingPolicyVersion {
+  id              String                @id @default(cuid())
+  userId          String // dono do escopo
+  user            User                  @relation("PolicyVersionOwner", fields: [userId], references: [id], onDelete: Restrict)
+  unitId          String
+  target          String // FISCAL_PROFILE | SCOPE_SETTINGS (POLICY_TARGETS)
+  version         Int // monotônico por (userId, unitId, target); conta também rejeitadas/substituídas
+  status          String // PROPOSED | APPLIED | REJECTED | SUPERSEDED (POLICY_VERSION_STATUSES)
+  pendingSlot     String? // 'PROPOSED' enquanto PROPOSED, senão NULL
+  payload         Json // parse do schema do alvo, SEM unitId
+  appliedSnapshot Json? // view completa depois da aplicação; null fora de APPLIED
+  proposedById    String? // null = nasceu de PUT direto sem contador
+  decidedById     String?
+  assignmentId    String? // atribuição do contador que aprovou/rejeitou
+  assignment      AccountantAssignment? @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  decisionReason  String?
+  decidedAt       DateTime?
+  supersededById  String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime? // contrato §2; nenhuma rota apaga — trilha de aprovação
+
+  @@unique([userId, unitId, target, version])
+  @@unique([userId, unitId, target, pendingSlot])
+  @@index([userId, unitId, target, status])
+  @@map("accounting_policy_versions")
 }
 
 // BE-INCR-PAYMENT-PROVIDER PR-1 (nó F5; ADR-INCR-PAYMENT-PROVIDER-COLLECTION PP-D2; BRIEF §4.1) — conta de

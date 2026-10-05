@@ -16,6 +16,8 @@ import type { IServiceFiscalProfileRepository, ServiceFiscalProfileData } from '
 import type { IAccountRepository } from '../../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../../policies/IAccountingPolicy';
 import type { AuditService } from '../AuditService';
+import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
+import type { IAccountingPolicyVersionRepository } from '../../repositories/IAccountingPolicyVersionRepository';
 import type { FiscalProfile, Prisma, ServiceFiscalProfile } from 'generated/prisma';
 
 const scope: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
@@ -56,7 +58,18 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; reg
   const companyRepo = {
     findByYear: jest.fn(async () => (opts.regimeEmpresa ? { regime: opts.regimeEmpresa } : null)),
   } as unknown as ICompanyFiscalProfileRepository;
-  return { svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo), repo, append, companyRepo, accounts };
+  // GOV-CONTADOR política versionada: sem contador ativo (F-GOV-4 a) — o PUT aplica e grava a versão APPLIED.
+  const assignmentRepo = { findActive: jest.fn(async () => null) } as unknown as IAccountantAssignmentRepository;
+  const policyVersionRepo = {
+    findPending: jest.fn(async () => null),
+    nextVersion: jest.fn(async () => 1),
+    create: jest.fn(async () => ({ id: 'pv-1' })),
+    setAppliedSnapshot: jest.fn(async () => ({ id: 'pv-1' })),
+  } as unknown as IAccountingPolicyVersionRepository;
+  return {
+    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo),
+    repo, append, companyRepo, accounts,
+  };
 }
 
 describe('fiscalProfileEmissaoStatus (BRIEF item 7 — função pura)', () => {

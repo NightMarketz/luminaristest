@@ -33,6 +33,7 @@ import { TaxAssessmentRepository } from '../features/accounting/repositories/Tax
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
+import { AccountingPolicyVersionRepository } from '../features/accounting/repositories/AccountingPolicyVersionRepository';
 import { InventoryRepository } from '../features/accounting/repositories/InventoryRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import { BankSettlementRepository } from '../features/accounting/repositories/BankSettlementRepository';
@@ -108,6 +109,7 @@ import { DynamicTablePhysicalStockSync } from '../features/accounting/services/P
 import { CounterpartyService } from '../features/accounting/services/CounterpartyService';
 import { AccountingContactService } from '../features/accounting/services/AccountingContactService';
 import { AccountantAssignmentService } from '../features/accounting/services/AccountantAssignmentService';
+import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
@@ -208,6 +210,7 @@ import type { ITaxAssessmentRepository } from '../features/accounting/repositori
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
+import type { IAccountingPolicyVersionRepository } from '../features/accounting/repositories/IAccountingPolicyVersionRepository';
 import type { IAuditRepository } from '../features/accounting/repositories/IAuditRepository';
 import type { IDocumentAttachmentRepository } from '../features/accounting/repositories/IDocumentAttachmentRepository';
 import type { IReconciliationRepository } from '../features/accounting/repositories/IReconciliationRepository';
@@ -432,6 +435,7 @@ export class ApplicationFactory {
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
+    accountingPolicyVersion: IAccountingPolicyVersionRepository; // GOV-CONTADOR política versionada
     depreciationRate: IDepreciationRateRepository;
     fixedAssetClass: IFixedAssetClassRepository;
     fixedAsset: IFixedAssetRepository;
@@ -518,6 +522,7 @@ export class ApplicationFactory {
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
+    accountingPolicyVersion: AccountingPolicyVersionService; // GOV-CONTADOR política versionada
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     presetSync: PresetSyncService;
@@ -584,6 +589,7 @@ export class ApplicationFactory {
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
+      accountingPolicyVersion: new AccountingPolicyVersionRepository(),
       depreciationRate: new DepreciationRateRepository(),
       fixedAssetClass: new FixedAssetClassRepository(),
       fixedAsset: new FixedAssetRepository(),
@@ -853,6 +859,8 @@ export class ApplicationFactory {
       this.policies.accounting,
       auditService,
       this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
+      this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
+      this.repositories.accountingPolicyVersion,
     );
     // BE-INCR-FIXED-ASSETS (nó C8, Bloco A) — tabela de taxas de depreciação, seed lazy do Anexo III.
     const depreciationRateSeedService = new DepreciationRateSeedService(this.repositories.depreciationRate);
@@ -905,6 +913,8 @@ export class ApplicationFactory {
       this.repositories.account,
       this.repositories.lalur,
       this.policies.accounting,
+      this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
+      this.repositories.accountingPolicyVersion,
     );
     // BE-INCR-FIXED-ASSETS (nó C8, PR-2) — classes de bem + ativos + comandos activate/dispose.
     const fixedAssetClassService = new FixedAssetClassService(
@@ -956,6 +966,17 @@ export class ApplicationFactory {
     this.services = {
       bankSettlement: bankSettlementService,
       accountingScopeSettings: accountingScopeSettingsService,
+      // BE-INCR-ACCOUNTING-POLICY-VERSION (GOV-CONTADOR, F-GOV-6 b): proposta/aprovação/rejeição de parâmetro governado.
+      accountingPolicyVersion: new AccountingPolicyVersionService(
+        this.repositories.accountingPolicyVersion,
+        this.repositories.accountantAssignment,
+        this.policies.accounting,
+        auditService,
+        fiscalProfileService,
+        accountingScopeSettingsService,
+        this.repositories.account,
+        this.repositories.lalur,
+      ),
       // BE-INCR-NFE-COST-REGIME (nó X6): perfil fiscal por escopo — o NfeImportService/NfePreviewService o LÊ
       // (requireCostRegime, F-X6-6 a) e nunca o escreve.
       fiscalProfile: fiscalProfileService,
@@ -1404,6 +1425,7 @@ export class ApplicationFactory {
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;
   public getAccountantAssignmentService = (): AccountantAssignmentService => this.services.accountantAssignment;
+  public getAccountingPolicyVersionService = (): AccountingPolicyVersionService => this.services.accountingPolicyVersion;
   public getInventoryService = (): InventoryService => this.services.inventory;
   public getNfeImportService = (): NfeImportService => this.services.nfeImport;
   public getNfeSaleReconciliationService = (): NfeSaleReconciliationService =>

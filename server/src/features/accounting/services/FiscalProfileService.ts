@@ -8,7 +8,10 @@ import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { scopeToday } from '../models/dates';
 import type { AuditService } from './AuditService';
-import type { UpsertFiscalProfileInput } from '../dtos/FiscalProfileDto';
+import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
+import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';
+import { applyDirectInTx, assertNoActiveAccountant } from './policyVersionApply';
+import type { UpsertFiscalProfileInput, FiscalProfilePolicyPayload } from '../dtos/FiscalProfileDto';
 import type { CostRegime } from '../../../lib/nfeCost';
 import type { FiscalProfile, Prisma } from 'generated/prisma';
 
@@ -115,6 +118,8 @@ export function fiscalProfileEmissaoStatus(
  * BE-INCR-DFE (itens 6–7): campos do emitente + D1f configurável; `ibsCbsInformar` default por regime
  * (SIMPLES => false — leiaute [336]: "para optantes do Simples Nacional … só a partir de 2027"); todo PUT
  * marca `d1fConfirmado = true` (o operador viu os defaults).
+ * BE-INCR-ACCOUNTING-POLICY-VERSION (itens 5–6): parâmetro governado — com contador ACTIVE o PUT dá 409 e a mudança
+ * vai por proposta; toda aplicação (PUT ou aprovação) passa por `applyInTx` e grava uma versão APPLIED.
  */
 export class FiscalProfileService {
   constructor(
@@ -124,6 +129,9 @@ export class FiscalProfileService {
     private readonly auditService: AuditService,
     // X13 PR-2 (itens 15/17): regime da EMPRESA no ano corrente — consistência da unidade e bloqueio de emissão MEI.
     private readonly companyRepo: ICompanyFiscalProfileRepository,
+    // GOV-CONTADOR política versionada (item 13): gate do PUT com contador ativo + versão APPLIED.
+    private readonly assignmentRepo: IAccountantAssignmentRepository,
+    private readonly policyVersionRepo: IAccountingPolicyVersionRepository,
   ) {}
 
   /** Regime da empresa no ano corrente (fuso do escopo), ou `null` sem perfil da empresa naquele ano. */
@@ -151,76 +159,105 @@ export class FiscalProfileService {
 
   async upsert(scope: AccountingScope, input: UpsertFiscalProfileInput): Promise<FiscalProfileView> {
     if (!this.policy.canManageFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal.');
-    if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar');
-    if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
-    if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço');
+    const { unitId: _unitId, ...payload } = input;
+    await assertNoActiveAccountant(this.assignmentRepo, scope); // preflight (item 6)
+    return this.repo.runTransaction(async (tx) => {
+      await assertNoActiveAccountant(this.assignmentRepo, scope, tx); // autoritativo, dentro da tx
+      return applyDirectInTx(this.policyVersionRepo, scope, 'FISCAL_PROFILE', payload, tx, (policyVersionId) =>
+        this.applyInTx(scope, payload, tx, policyVersionId),
+      );
+    });
+  }
+
+  /**
+   * Asserções do perfil (contas do escopo + regime da empresa), só leitura. A proposta usa sem `tx` (item 7.3, erro
+   * rápido para o dono); `applyInTx` reusa dentro da tx. Devolve o regime da empresa no ano corrente.
+   */
+  async validate(scope: AccountingScope, input: FiscalProfilePolicyPayload, tx?: Prisma.TransactionClient): Promise<RegimeEmpresa | null> {
+    if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
+    if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
+    if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
-    if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ');
-    if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL');
-    if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher');
-    if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher');
-    const { unitId: _unitId, ibsCbsInformar, ...rest } = input;
+    if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
+    if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
+    if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher', tx);
+    if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher', tx);
+    // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
+    const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
+    if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
+      throw new ValidationError(
+        `regime_divergente_da_empresa: a empresa está em ${regimeEmpresa} no ano corrente — a unidade deve ser ${regimeUnidadeEsperado(regimeEmpresa)}, não ${input.regimeTributario}.`,
+      );
+    }
+    return regimeEmpresa;
+  }
+
+  /**
+   * BE-INCR-ACCOUNTING-POLICY-VERSION item 5: o único caminho de escrita — `PUT` sem contador e aprovação do contador.
+   * Re-valida dentro da tx (conta apagada ou regime da empresa mudado entre proposta e aprovação → 400, tx volta).
+   * O `actor` do `fiscal_profile.updated` é o ator do escopo (o contador, na aprovação); o `scopeUserId`, o dono.
+   */
+  async applyInTx(
+    scope: AccountingScope,
+    input: FiscalProfilePolicyPayload,
+    tx: Prisma.TransactionClient,
+    policyVersionId: string,
+  ): Promise<FiscalProfileView> {
+    const regimeEmpresa = await this.validate(scope, input, tx);
+    const { ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
       ibsCbsInformar: ibsCbsInformar ?? input.regimeTributario !== 'SIMPLES',
       d1fConfirmado: true,
     };
-    return this.repo.runTransaction(async (tx) => {
-      // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
-      const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
-      if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
-        throw new ValidationError(
-          `regime_divergente_da_empresa: a empresa está em ${regimeEmpresa} no ano corrente — a unidade deve ser ${regimeUnidadeEsperado(regimeEmpresa)}, não ${input.regimeTributario}.`,
-        );
-      }
-      const row = await this.repo.upsert(scope, data, tx);
-      await this.auditService.append(tx, scope, {
-        actorUserId: scope.actorUserId,
-        eventType: FISCAL_PROFILE_UPDATED,
-        targetType: 'fiscal_profile',
-        targetId: row.id,
-        payload: {
-          regimeTributario: row.regimeTributario,
-          icmsContribuinte: String(row.icmsContribuinte),
-          pisCofinsRegime: row.pisCofinsRegime,
-          pisCofinsCreditExcludesIcms: String(row.pisCofinsCreditExcludesIcms),
-          pisCofinsCreditIncludesIpi: String(row.pisCofinsCreditIncludesIpi),
-          pisCofinsCreditFromSimplesSupplier: String(row.pisCofinsCreditFromSimplesSupplier),
-          icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
-          pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
-          insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
-          // X7 item 3 (F-TA-6 a): contas da provisão — só ids
-          irpjDespesaAccountId: row.irpjDespesaAccountId ?? '',
-          csllDespesaAccountId: row.csllDespesaAccountId ?? '',
-          irpjRecolherAccountId: row.irpjRecolherAccountId ?? '',
-          csllRecolherAccountId: row.csllRecolherAccountId ?? '',
-          // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
-          codMun: row.codMun ?? '',
-          dpsSerie: String(row.dpsSerie),
-          regEspTrib: String(row.regEspTrib),
-          regApTribSN: row.regApTribSN == null ? '' : String(row.regApTribSN),
-          issAliquotaBp: row.issAliquotaBp == null ? '' : String(row.issAliquotaBp),
-          issRetidoTomadorPj: String(row.issRetidoTomadorPj),
-          pacoteFatoGerador: row.pacoteFatoGerador,
-          // BE-INCR-PACOTE-VALIDADE 13a: códigos da lista nacional/NBS — sem texto livre
-          pacoteCTribNac: row.pacoteCTribNac ?? '',
-          pacoteCNBS: row.pacoteCNBS ?? '',
-          ibsCbsInformar: String(row.ibsCbsInformar),
-          ibsCbsCst: row.ibsCbsCst ?? '',
-          ibsCbsClassTrib: row.ibsCbsClassTrib ?? '',
-          pTotTribFedCent: row.pTotTribFedCent == null ? '' : String(row.pTotTribFedCent),
-          pTotTribEstCent: row.pTotTribEstCent == null ? '' : String(row.pTotTribEstCent),
-          pTotTribMunCent: row.pTotTribMunCent == null ? '' : String(row.pTotTribMunCent),
-          pTotTribSNCent: row.pTotTribSNCent == null ? '' : String(row.pTotTribSNCent),
-          emissaoForaDoMes: row.emissaoForaDoMes,
-        },
-      });
-      return this.toView(row, regimeEmpresa);
+    const row = await this.repo.upsert(scope, data, tx);
+    await this.auditService.append(tx, scope, {
+      actorUserId: scope.actorUserId,
+      eventType: FISCAL_PROFILE_UPDATED,
+      targetType: 'fiscal_profile',
+      targetId: row.id,
+      payload: {
+        regimeTributario: row.regimeTributario,
+        icmsContribuinte: String(row.icmsContribuinte),
+        pisCofinsRegime: row.pisCofinsRegime,
+        pisCofinsCreditExcludesIcms: String(row.pisCofinsCreditExcludesIcms),
+        pisCofinsCreditIncludesIpi: String(row.pisCofinsCreditIncludesIpi),
+        pisCofinsCreditFromSimplesSupplier: String(row.pisCofinsCreditFromSimplesSupplier),
+        icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
+        pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
+        insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
+        // X7 item 3 (F-TA-6 a): contas da provisão — só ids
+        irpjDespesaAccountId: row.irpjDespesaAccountId ?? '',
+        csllDespesaAccountId: row.csllDespesaAccountId ?? '',
+        irpjRecolherAccountId: row.irpjRecolherAccountId ?? '',
+        csllRecolherAccountId: row.csllRecolherAccountId ?? '',
+        // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
+        codMun: row.codMun ?? '',
+        dpsSerie: String(row.dpsSerie),
+        regEspTrib: String(row.regEspTrib),
+        regApTribSN: row.regApTribSN == null ? '' : String(row.regApTribSN),
+        issAliquotaBp: row.issAliquotaBp == null ? '' : String(row.issAliquotaBp),
+        issRetidoTomadorPj: String(row.issRetidoTomadorPj),
+        pacoteFatoGerador: row.pacoteFatoGerador,
+        // BE-INCR-PACOTE-VALIDADE 13a: códigos da lista nacional/NBS — sem texto livre
+        pacoteCTribNac: row.pacoteCTribNac ?? '',
+        pacoteCNBS: row.pacoteCNBS ?? '',
+        ibsCbsInformar: String(row.ibsCbsInformar),
+        ibsCbsCst: row.ibsCbsCst ?? '',
+        ibsCbsClassTrib: row.ibsCbsClassTrib ?? '',
+        pTotTribFedCent: row.pTotTribFedCent == null ? '' : String(row.pTotTribFedCent),
+        pTotTribEstCent: row.pTotTribEstCent == null ? '' : String(row.pTotTribEstCent),
+        pTotTribMunCent: row.pTotTribMunCent == null ? '' : String(row.pTotTribMunCent),
+        pTotTribSNCent: row.pTotTribSNCent == null ? '' : String(row.pTotTribSNCent),
+        emissaoForaDoMes: row.emissaoForaDoMes,
+        policyVersionId, // GOV-CONTADOR (item 14): a versão que aplicou esta escrita
+      },
     });
+    return this.toView(row, regimeEmpresa);
   }
 
-  private async assertAssetAccount(scope: AccountingScope, id: string, label: string): Promise<void> {
-    const account = await this.accountRepo.findById(scope, id);
+  private async assertAssetAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Asset') {
@@ -230,8 +267,8 @@ export class FiscalProfileService {
 
   /** ITEM-DESTINATION item 20 (F-ID-5 a): análogo ao `assertAssetAccount` — o insumo do serviço vai para
    *  DESPESA na entrada (F-ID-3 a), então a conta é folha de resultado `nature = Expense` do escopo. */
-  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string): Promise<void> {
-    const account = await this.accountRepo.findById(scope, id);
+  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Expense') {
@@ -240,8 +277,8 @@ export class FiscalProfileService {
   }
 
   /** X7 item 3 (F-TA-6 a): análogo ao `assertAssetAccount` — o imposto a recolher é passivo (`nature = Liability`). */
-  private async assertLiabilityAccount(scope: AccountingScope, id: string, label: string): Promise<void> {
-    const account = await this.accountRepo.findById(scope, id);
+  private async assertLiabilityAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Liability') {

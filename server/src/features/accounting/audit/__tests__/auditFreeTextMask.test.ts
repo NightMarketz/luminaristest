@@ -59,7 +59,8 @@ describe('MASKABLE_FREE_TEXT_KEYS — contrato contra PAYLOAD_ALLOWLIST', () => 
   // deliberadamente congelada: um eventType novo com campo livre falha aqui até ser declarado.
   // + 1 de BE-INCR-BANK-SETTLEMENT (`bank_settlement.rejected.reason`, motivo do operador ao rejeitar).
   // + 1 de BE-INCR-REVIEW-LAYER (`review.rejected.reason`, motivo da rejeição da revisão — item 12).
-  it('cobre os 17 eventTypes de campo livre (13 do BRIEF + delivery.failed + bank_settlement.rejected + review.rejected + accountant_assignment.ended)', () => {
+  // + 1 de BE-INCR-ACCOUNTING-POLICY-VERSION (`policy_version.rejected.reason`, motivo da rejeição do contador — item 14).
+  it('cobre os 18 eventTypes de campo livre (13 do BRIEF + delivery.failed + bank_settlement.rejected + review.rejected + accountant_assignment.ended + policy_version.rejected)', () => {
     expect(Object.keys(MASKABLE_FREE_TEXT_KEYS).sort()).toEqual(
       [
         'entry.draft_updated',
@@ -79,6 +80,7 @@ describe('MASKABLE_FREE_TEXT_KEYS — contrato contra PAYLOAD_ALLOWLIST', () => 
         'bank_settlement.rejected',
         'review.rejected',
         'accountant_assignment.ended',
+        'policy_version.rejected',
       ].sort(),
     );
   });

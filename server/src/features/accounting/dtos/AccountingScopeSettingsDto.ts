@@ -24,3 +24,7 @@ export const UpdateAccountingScopeSettingsSchema = z
   })
   .strict();
 export type UpdateAccountingScopeSettingsInput = z.infer<typeof UpdateAccountingScopeSettingsSchema>;
+
+/** Payload da proposta de política (BE-INCR-ACCOUNTING-POLICY-VERSION item 7.2): o patch do PUT sem `unitId`. */
+export const ScopeSettingsPolicyPayloadSchema = UpdateAccountingScopeSettingsSchema.omit({ unitId: true }).strict();
+export type ScopeSettingsPolicyPayload = z.infer<typeof ScopeSettingsPolicyPayloadSchema>;

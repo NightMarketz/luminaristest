@@ -12,3 +12,11 @@ disposalGainAccountId?: (string | null)
 disposalLossAccountId?: (string | null)
 depreciationParteBAccountId?: (string | null)
 }
+export interface ScopeSettingsPolicyPayloadInput {
+bankChargeExpenseAccountId?: (string | null)
+bankChargeIncomeAccountId?: (string | null)
+depreciationExpenseAccountId?: (string | null)
+disposalGainAccountId?: (string | null)
+disposalLossAccountId?: (string | null)
+depreciationParteBAccountId?: (string | null)
+}

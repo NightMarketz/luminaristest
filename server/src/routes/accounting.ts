@@ -117,6 +117,13 @@ import {
   listAccountantAssignments,
   listMyAccountantAssignments,
 } from '../controllers/accountantAssignmentController';
+import {
+  approvePolicyVersion,
+  getPolicyVersion,
+  listPolicyVersions,
+  proposePolicyVersion,
+  rejectPolicyVersion,
+} from '../controllers/accountingPolicyVersionController';
 import rateLimit from 'express-rate-limit';
 import { getUserContextFromRequest } from '../lib/authUtils';
 import { getAccountingSettings, updateAccountingSettings } from '../controllers/accountingSettingsController';
@@ -329,6 +336,14 @@ router.get('/accountant-assignments', listAccountantAssignments);
 router.get('/accountant-assignments/mine', listMyAccountantAssignments);
 router.post('/accountant-assignments/:id/accept', acceptAccountantAssignment);
 router.post('/accountant-assignments/:id/end', endAccountantAssignment);
+
+// Política versionada com aprovação do contador (BE-INCR-ACCOUNTING-POLICY-VERSION, GOV-CONTADOR) — segmento estático,
+// antes de /:unitId/periods.
+router.post('/policy-versions', proposePolicyVersion);
+router.get('/policy-versions', listPolicyVersions);
+router.get('/policy-versions/:id', getPolicyVersion);
+router.post('/policy-versions/:id/approve', approvePolicyVersion);
+router.post('/policy-versions/:id/reject', rejectPolicyVersion);
 
 // Configuração por escopo (AccountingScopeSettings, 2026-09-15) — segmento estático, antes de /:unitId/periods.
 router.get('/settings', getAccountingSettings);
