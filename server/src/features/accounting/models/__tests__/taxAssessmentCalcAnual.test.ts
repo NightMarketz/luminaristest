@@ -303,5 +303,9 @@ describe('item 10 — ajuste anual (B6; F-TB-2 b)', () => {
     expect(() => ajuste({ meses: meses().filter((c) => c.periodo !== 'A07') })).toThrow(/faltam A07/);
     const r = ajuste({ meses: meses().slice(2), perfil: { ...PERFIL, inicioAtividadeEm: '2026-03-01' } });
     expect(v(r, 'ADICIONAL')).toBe(String(R(18_400))); // 10% × (384.000 − 200.000)
+    // mês fora da atividade vindo na entrada não conta como pago (review, achado 4)
+    const comForaDeAtividade = ajuste({ perfil: { ...PERFIL, inicioAtividadeEm: '2026-03-01' } });
+    expect(v(comForaDeAtividade, 'ESTIMATIVA_PAGA_A01')).toBeUndefined();
+    expect(comForaDeAtividade.deducoesCents).toBe(R(60_000));
   });
 });

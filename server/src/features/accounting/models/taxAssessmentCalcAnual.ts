@@ -337,7 +337,7 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
     throw new ValidationError(`Feche a Parte B do e-Lalur/e-Lacs de A00/${e.ano} antes do ajuste anual (mesma pré-condição da ECF).`);
   }
   const ativos = mesesEmAtividade(e.ano, e.perfil.inicioAtividadeEm, e.perfil.encerramentoAtividadeEm);
-  const meses = e.meses.filter((c) => c.tributo === e.tributo);
+  const meses = e.meses.filter((c) => c.tributo === e.tributo && ativos.includes(numMes(c.periodo)));
   const faltam = ativos.filter((k) => !meses.some((c) => numMes(c.periodo) === k)).map(nomeMes);
   if (faltam.length > 0) {
     throw new ValidationError(`${e.tributo}: confirme os meses em atividade antes do ajuste anual de ${e.ano} — faltam ${faltam.join(', ')}.`);
