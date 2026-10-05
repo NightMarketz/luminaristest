@@ -71,3 +71,17 @@ export const getTaxAssessment = async (req: Request, res: Response) => {
     return handleApiError(error, res);
   }
 };
+
+/** POST /api/accounting/tax-assessments/:id/provisao — reconcile idempotente da provisão (PR-3, item 16). */
+export const reconcileTaxAssessmentProvisao = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const b = TaxAssessmentScopeQuerySchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await getFactory().getTaxAssessmentService().reconcileProvisao(resolveAccountingScope(user, b.data.unitId), req.params.id);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};

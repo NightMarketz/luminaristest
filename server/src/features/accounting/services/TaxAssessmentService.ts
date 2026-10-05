@@ -1,5 +1,26 @@
+/**
+ * TaxAssessmentService — apuração trimestral de IRPJ/CSLL (nó X7, Fase A). FIRST-CLASS PRISMA.
+ *
+ * atomicUntil: postEntry
+ *   commit 1 — razão: reverseEntry da provisão viva de cada linha SUPERSEDED do mesmo (PJ, ano, tributo, período) —
+ *              substituídas e posteriores da cascata, com ou sem `supersedesId` apontando para elas;
+ *              tx própria, idempotente) e depois postEntry(sourceType='tax.assessment.provision', sourceId=<id da
+ *              apuração>) no último dia do trimestre (BRIEF item 15, "commit 2"); gate de período dentro de cada tx; a
+ *              provisão é achada pela FONTE, não pelo vínculo
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição): estorna a provisão da substituída e a dos posteriores da cascata, e posta a da nova"
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição × vínculo perdido): a substituída postada sem provisaoEntryId é estornada — 1 provisão viva por tributo"
+ *   commit 2 — subrazão: CAS provisaoEntryId `where null` (BRIEF item 15, "commit 3"), sem tx de razão
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
+ *   reconcile — POST /tax-assessments/:id/provisao completa o que faltar; nada já feito é refeito (sem gate de período)
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 16 + ADR §13 item 11: reconcile completa e é idempotente — 2ª chamada sem lançamento novo, mesmo provisaoEntryId"
+ *   fora da tx — a confirmação (BRIEF item 14, "commit 1") commita ANTES, em runTransaction próprio; falha da provisão não a desfaz
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
+ *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (cascata × estorno falho): reconfirmar o posterior estorna a provisão órfã antes de postar — nunca 2 vivas"
+ */
 import type { CompanyFiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { ITaxAssessmentRepository } from '../repositories/ITaxAssessmentRepository';
@@ -9,6 +30,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { ILalurRepository } from '../repositories/ILalurRepository';
 import type { AuditService } from './AuditService';
+import type { PostingService } from './PostingService';
 import type { AccountingReportService } from './AccountingReportService';
 import type { TaxAssessmentConfirmInput, TaxAssessmentListQuery, TaxAssessmentPreviewInput } from '../dtos/TaxAssessmentDto';
 import { formaEfetiva } from './CompanyFiscalProfileService';
@@ -20,6 +42,7 @@ import {
   PERIODOS_TRIMESTRAIS,
   apurarPresumidoTrimestral,
   apurarRealTrimestral,
+  fimDoTrimestre,
   trimestresEmAtividade,
   type MemoriaAnterior,
   type MemoriaLinha,
@@ -29,6 +52,16 @@ import {
 } from '../models/taxAssessmentCalc';
 
 export const TAX_ASSESSMENT_CONFIRMED = 'tax.assessment.confirmed';
+/** `sourceType` da provisão (item 15): chave de idempotência = id da apuração. */
+export const TAX_ASSESSMENT_PROVISION_SOURCE_TYPE = 'tax.assessment.provision';
+
+/**
+ * Decisão do dono 04/10 (lacuna L-C do PR-3): pendente ⇔ CONFIRMED ∧ devido > 0 ∧ sem lançamento. Devido 0 não tem o que
+ * provisionar (o `postEntry` recusa lançamento zerado) e não bloqueia o encerramento.
+ */
+export function provisaoPendente(row: Pick<TaxAssessment, 'status' | 'devidoCents' | 'provisaoEntryId'>): boolean {
+  return row.status === 'CONFIRMED' && row.devidoCents > 0n && row.provisaoEntryId === null;
+}
 export const TAX_ASSESSMENT_SUPERSEDED = 'tax.assessment.superseded';
 
 const TRIBUTOS: readonly TributoApuracao[] = ['IRPJ', 'CSLL'];
@@ -86,8 +119,8 @@ const idx = (p: string): number => PERIODOS_TRIMESTRAIS.indexOf(p as PeriodoTrim
  * da apuração trimestral de IRPJ/CSLL. A aritmética é das funções puras do PR-1 (`taxAssessmentCalc`); aqui só se lê
  * perfil, razão, e-Lalur e memórias confirmadas, e se grava.
  *
- * A provisão (commits 2/3, item 15), o reconcile (item 16) e o encerramento (item 18) são do PR-3: a linha
- * confirmada nasce com `provisaoEntryId = null`, logo `provisaoPendente = true` até lá.
+ * PR-3 (itens 15, 16): depois do commit 1, a provisão no razão em best-effort (ver o cabeçalho `atomicUntil`) e o
+ * reconcile. O encerramento × provisão pendente (item 18) mora no `ExerciseClosingService`.
  *
  * Confirmação (item 14): recalcula FORA da tx e abre UMA `runTransaction` com todos os gates autoritativos dentro
  * (memória `authoritative-gate-inside-tx`): perfil igual ao lido no cálculo, memórias anteriores iguais, CAS do a
@@ -109,6 +142,7 @@ export class TaxAssessmentService {
     private readonly reportService: AccountingReportService,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    private readonly postingService: PostingService,
   ) {}
 
   /** Item 13 — calcula IRPJ e CSLL juntos (BRIEF item 13, art. 31 § 7º) e não persiste. */
@@ -125,7 +159,7 @@ export class TaxAssessmentService {
     const { anoCalendario: ano, periodo } = input;
     const owner = scope.ownerUserId;
 
-    return this.repo.runTransaction(async (tx) => {
+    const r = await this.repo.runTransaction(async (tx) => {
       const perfilTx = await this.companyProfileRepo.findByYear(scope, ano, tx);
       if (!perfilTx || perfilTx.updatedAt.getTime() !== c.perfil.updatedAt.getTime()) {
         throw new ConflictError(`o perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
@@ -256,12 +290,114 @@ export class TaxAssessmentService {
           },
         });
       }
-      return {
-        irpj: toView(gravadas.IRPJ),
-        csll: toView(gravadas.CSLL),
-        reconfirmar: [...new Set(posteriores.map((r) => r.periodo))].sort(),
-      };
+      return { gravadas, cair, reconfirmar: [...new Set(posteriores.map((r) => r.periodo))].sort() };
     });
+
+    // Item 15 — commits 2/3 do BRIEF, best-effort DEPOIS do commit 1: falha ⇒ a confirmação fica, motivo no log.
+    // Primeiro estorna as provisões de TUDO que caiu (substituídas + posteriores da cascata), depois provisiona as novas.
+    for (const s of r.cair) await this.bestEffort(s.id, () => this.estornarProvisaoViva(scope, s));
+    const irpj = await this.bestEffort(r.gravadas.IRPJ.id, () => this.provisionar(scope, r.gravadas.IRPJ));
+    const csll = await this.bestEffort(r.gravadas.CSLL.id, () => this.provisionar(scope, r.gravadas.CSLL));
+    return { irpj: toView(irpj ?? r.gravadas.IRPJ), csll: toView(csll ?? r.gravadas.CSLL), reconfirmar: r.reconfirmar };
+  }
+
+  /** Item 15: "falha em qualquer passo ⇒ a confirmação fica". O erro inteiro (stack) vai ao log; nunca relança. */
+  private async bestEffort<T>(assessmentId: string, fn: () => Promise<T>): Promise<T | null> {
+    try {
+      return await fn();
+    } catch (error) {
+      logger.warn('Tax assessment: provisão pendente (a confirmação fica; reconcile em POST /tax-assessments/:id/provisao)', {
+        assessmentId,
+        motivo: error instanceof Error ? error.message : String(error),
+        error,
+      });
+      return null;
+    }
+  }
+
+  /**
+   * Item 16 — POST /accounting/tax-assessments/:id/provisao (reconcile): completa o que faltar. Idempotente: estorno e
+   * `postEntry` são idempotentes, nada já feito é refeito e o CAS só vincula se estiver nulo. Aqui os erros (período
+   * fechado, conta não configurada) sobem ao chamador — não há commit 1 a proteger. Linha SUPERSEDED: a única coisa que
+   * pode faltar é o estorno da própria provisão.
+   */
+  async reconcileProvisao(scope: AccountingScope, id: string): Promise<TaxAssessmentView> {
+    this.assertManage(scope);
+    const row = await this.repo.findById(scope.ownerUserId, id);
+    if (!row) throw new NotFoundError(`Apuração '${id}' não encontrada.`);
+    if (row.status !== 'CONFIRMED') {
+      await this.estornarProvisaoViva(scope, row);
+      return toView(row);
+    }
+    return toView(await this.provisionar(scope, row));
+  }
+
+  /**
+   * Item 15 (F-X7-4 a). A provisão cai no razão da UNIDADE LIDA (`row.unitId`, F-X7-7 a). (1) estorna a provisão viva de
+   * TODA linha SUPERSEDED do mesmo (PJ, ano, tributo, período) — antes de postar a nova, para nunca haver duas vivas. Não
+   * basta a cadeia `supersedesId`: o posterior que caiu na cascata do #504 é reconfirmado com `supersedesId = null`, e a
+   * provisão dele, se o estorno falhou na confirmação que o derrubou, ficaria órfã (review independente do PR-3 v2,
+   * achado 1). Falha aqui ⇒ a nova não é postada (L-C); (2) se pendente (L-C), reaproveita
+   * o lançamento já postado pela fonte (crash entre post e CAS) ou posta D despesa / C a recolher pelo `devidoCents` no
+   * último dia do trimestre; (3) CAS do `provisaoEntryId`.
+   */
+  private async provisionar(scope: AccountingScope, row: TaxAssessment): Promise<TaxAssessment> {
+    const owner = scope.ownerUserId;
+    const caidas = await this.repo.findMany(owner, { anoCalendario: row.anoCalendario, periodo: row.periodo, status: 'SUPERSEDED' });
+    for (const sub of caidas.filter((r) => r.tributo === row.tributo)) await this.estornarProvisaoViva(scope, sub);
+    if (!provisaoPendente(row)) return row;
+
+    const s: AccountingScope = { ...scope, unitId: row.unitId };
+    let entry = await this.postingService.findEntryBySource(s, TAX_ASSESSMENT_PROVISION_SOURCE_TYPE, row.id);
+    if (entry && (entry.reversedById || entry.status !== 'Posted')) {
+      // A fonte é a chave de idempotência do `postEntry`: um lançamento estornado fora do fluxo não pode ser re-postado
+      // nem vinculado (re-verificação do review do PR-3, ADV5). Corrigir = substituir a apuração.
+      throw new ValidationError(`A provisão da apuração '${row.id}' (${entry.id}) foi estornada fora do fluxo — substitua a apuração para provisionar de novo.`);
+    }
+    if (!entry) {
+      const fp = await this.fiscalProfileRepo.findByScope(s);
+      const ids =
+        row.tributo === 'IRPJ'
+          ? { despesa: fp?.irpjDespesaAccountId, recolher: fp?.irpjRecolherAccountId }
+          : { despesa: fp?.csllDespesaAccountId, recolher: fp?.csllRecolherAccountId };
+      const despesa = await this.contaDaProvisao(s, ids.despesa, `despesa de ${row.tributo}`);
+      const recolher = await this.contaDaProvisao(s, ids.recolher, `${row.tributo} a recolher`);
+      const valor = Number(row.devidoCents);
+      entry = await this.postingService.postEntry(s, {
+        unitId: s.unitId,
+        date: fimDoTrimestre(row.anoCalendario, row.periodo as PeriodoTrimestral),
+        description: `Provisão de ${row.tributo} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
+        sourceType: TAX_ASSESSMENT_PROVISION_SOURCE_TYPE,
+        sourceId: row.id,
+        lines: [
+          { accountCode: despesa, debitCents: valor, creditCents: 0 },
+          { accountCode: recolher, debitCents: 0, creditCents: valor },
+        ],
+      });
+    }
+    await this.repo.setProvisaoEntryId(owner, row.id, entry.id); // false ⇒ outra chamada já vinculou; a releitura mostra
+    return (await this.repo.findById(owner, row.id)) ?? row;
+  }
+
+  /** Estorna a provisão da linha (achada pela fonte), se existir e ainda estiver viva. Já estornada ⇒ nada, sem gate de período. */
+  private async estornarProvisaoViva(scope: AccountingScope, row: TaxAssessment): Promise<void> {
+    const s: AccountingScope = { ...scope, unitId: row.unitId };
+    const entry = await this.postingService.findEntryBySource(s, TAX_ASSESSMENT_PROVISION_SOURCE_TYPE, row.id);
+    if (!entry || entry.reversedById || entry.status !== 'Posted') return;
+    await this.postingService.reverseEntry(s, {
+      unitId: s.unitId,
+      lancamentoId: entry.id,
+      reversalPostingDate: fimDoTrimestre(row.anoCalendario, row.periodo as PeriodoTrimestral),
+      reason: `apuração ${row.id} substituída`,
+    });
+  }
+
+  /** F-TA-7 (a): conta ausente ⇒ erro com o motivo (a confirmação fica pendente; o reconcile devolve 400). */
+  private async contaDaProvisao(scope: AccountingScope, id: string | null | undefined, rotulo: string): Promise<string> {
+    if (!id) throw new ValidationError(`Conta de ${rotulo} não configurada no perfil fiscal da unidade (F-TA-7).`);
+    const account = await this.accountRepo.findById(scope, id);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta de ${rotulo} '${id}' não existe neste escopo.`);
+    return account.code;
   }
 
   /** Item 17 — lista da PJ no ano (o `unitId` do escopo só resolve policy). */
@@ -384,7 +520,7 @@ function toView(row: TaxAssessment): TaxAssessmentView {
     saldoNegativoCents: row.saldoNegativoCents.toString(),
     status: row.status as 'CONFIRMED' | 'SUPERSEDED',
     supersedesId: row.supersedesId,
-    provisaoPendente: row.status === 'CONFIRMED' && row.provisaoEntryId === null,
+    provisaoPendente: provisaoPendente(row),
     tabelaVersao: row.tabelaVersao,
     memoria: MemoriaCalculoSchema.parse(row.memoria),
     confirmedAt: row.confirmedAt.toISOString(),
