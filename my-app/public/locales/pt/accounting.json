@@ -32,7 +32,8 @@
       "contrapartes": "Contrapartes",
       "aprovacoes": "Aprovações",
       "nfe": "NF-e",
-      "imobilizado": "Imobilizado"
+      "imobilizado": "Imobilizado",
+      "perfilFiscal": "Perfil fiscal"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -2190,6 +2191,142 @@
       "label": "Livro",
       "own": "Meus livros",
       "clients": "Clientes que atendo"
+    }
+  },
+  "fiscalProfile": {
+    "error": {
+      "load": "Não foi possível carregar o perfil fiscal.",
+      "save": "Não foi possível salvar o perfil fiscal.",
+      "regimeRequired": "Escolha o regime tributário.",
+      "pisCofinsRegimeRequired": "Escolha o regime de PIS/COFINS.",
+      "dpsSerieInvalid": "A série da DPS deve ser um número inteiro.",
+      "pctInvalid": "Percentual inválido — use o formato 2,00 (até 2 casas)."
+    },
+    "noAccount": "— nenhuma —",
+    "unit": {
+      "title": "Perfil fiscal da unidade",
+      "subtitle": "Serve à NF-e de compra (custo) e à NFS-e de venda. Salvar substitui o perfil inteiro."
+    },
+    "loading": "Carregando…",
+    "missing": "Sem perfil fiscal: nenhuma venda emite NFS-e até você salvar este formulário.",
+    "emissao": {
+      "completo": "Pronto para emitir NFS-e",
+      "incompleto": "Perfil incompleto para emitir NFS-e",
+      "faltantes": "O que falta",
+      "pending": "Valores do contador ainda não confirmados (D1f) — salvar este formulário os confirma:"
+    },
+    "group": {
+      "regime": "Regime",
+      "emitente": "Emitente da NFS-e",
+      "iss": "ISS",
+      "totTrib": "Tributos aproximados (%)",
+      "ibsCbs": "IBS/CBS",
+      "emissao": "Emissão",
+      "cost": "Custo de compra (NF-e)"
+    },
+    "field": {
+      "regimeTributario": "Regime tributário",
+      "pisCofinsRegime": "Regime de PIS/COFINS",
+      "icmsContribuinte": "Contribuinte de ICMS",
+      "codMun": "Município do emitente (código IBGE, 7 dígitos)",
+      "inscricaoMunicipal": "Inscrição municipal",
+      "cnae": "CNAE",
+      "regEspTrib": "Regime especial de tributação (0–9)",
+      "regApTribSN": "Regime de apuração pelo Simples",
+      "dpsSerie": "Série da DPS",
+      "issAliquota": "Alíquota do ISS (%)",
+      "issRetidoTomadorPj": "ISS retido pelo tomador pessoa jurídica",
+      "pTotTribSN": "Simples Nacional",
+      "pTotTribFed": "Federal",
+      "pTotTribEst": "Estadual",
+      "pTotTribMun": "Municipal",
+      "ibsCbsInformar": "Informar IBS/CBS na NFS-e",
+      "ibsCbsCst": "CST (3 dígitos)",
+      "ibsCbsClassTrib": "cClassTrib (6 dígitos, começa pelo CST)",
+      "emissaoForaDoMes": "Competência fora do mês",
+      "pacoteFatoGerador": "Fato gerador do pacote",
+      "partnerAccountRef": "Conta no parceiro emissor",
+      "creditExcludesIcms": "Crédito de PIS/COFINS exclui o ICMS da base",
+      "creditIncludesIpi": "Crédito de PIS/COFINS inclui o IPI (regra fixa: não)",
+      "creditFromSimplesSupplier": "Crédito sobre compra de fornecedor do Simples",
+      "icmsRecuperavelAccountId": "Conta de ICMS a recuperar",
+      "pisCofinsRecuperavelAccountId": "Conta de PIS/COFINS a recuperar"
+    },
+    "select": "— selecione —",
+    "regime": {
+      "SIMPLES": "Simples Nacional",
+      "PRESUMIDO": "Lucro Presumido",
+      "REAL": "Lucro Real"
+    },
+    "pisCofins": {
+      "SIMPLES": "Simples",
+      "CUMULATIVO": "Cumulativo",
+      "NAO_CUMULATIVO": "Não cumulativo"
+    },
+    "simplesNote": "Simples Nacional: ICMS fora e PIS/COFINS pelo Simples — regra atual do sistema; revisão no X10a.",
+    "regApTribSN": {
+      "1": "1 — tudo pelo Simples",
+      "2": "2 — federais pelo Simples e ISS pela NFS-e",
+      "3": "3 — tudo pela NFS-e"
+    },
+    "dpsSerieNote": "No modo manual o portal numera a DPS (Guia do Emissor Web, G3) — a série só vale para outro parceiro.",
+    "issRetidoWarn": "Atenção: a emissão recusa hoje — falta o endereço do tomador (F-DFE-14).",
+    "foraDoMes": {
+      "AVISAR": "Avisar",
+      "BLOQUEAR": "Bloquear"
+    },
+    "fatoGerador": {
+      "CONSUMO": "Consumo",
+      "VENDA": "Venda"
+    },
+    "saving": "Salvando…",
+    "save": "Salvar",
+    "service": {
+      "error": {
+        "load": "Não foi possível carregar os serviços.",
+        "save": "Não foi possível salvar o perfil do serviço.",
+        "delete": "Não foi possível remover o perfil do serviço."
+      },
+      "delete": {
+        "title": "Remover perfil fiscal do serviço",
+        "message": "sem o perfil, as vendas deste serviço deixam de emitir NFS-e. Remover?",
+        "confirm": "Remover"
+      },
+      "title": "Perfis fiscais dos serviços",
+      "subtitle": "Código de tributação nacional, NBS e local da prestação de cada serviço. Sem perfil, a venda do serviço não emite NFS-e.",
+      "empty": "Nenhum serviço cadastrado.",
+      "col": {
+        "name": "Serviço",
+        "cTribNac": "Código de tributação",
+        "cNBS": "NBS",
+        "cIndOp": "Indicador da operação",
+        "actions": "Ações"
+      },
+      "noProfile": "sem perfil",
+      "edit": "Editar",
+      "configure": "Configurar",
+      "remove": "Excluir",
+      "modal": {
+        "title": "Perfil fiscal do serviço"
+      },
+      "field": {
+        "cTribNac": "Código de tributação nacional (aceita 01.07.01)",
+        "cTribMun": "Código complementar do município (3 dígitos)",
+        "cNBS": "NBS (9 dígitos)",
+        "cIndOp": "Indicador da operação (vazio = padrão do salão)",
+        "cLocPrestacao": "Município da prestação (IBGE, 7 dígitos)",
+        "xDescServ": "Descrição do serviço na nota"
+      }
+    },
+    "cancel": "Cancelar",
+    "faltante": {
+      "codMun": "Município do emitente (código IBGE)",
+      "pTotTribSNCent": "Tributos aproximados — Simples Nacional (%)",
+      "pTotTribFedCent": "Tributos aproximados — federal (%)",
+      "pTotTribEstCent": "Tributos aproximados — estadual (%)",
+      "pTotTribMunCent": "Tributos aproximados — municipal (%)",
+      "ibsCbsCst": "IBS/CBS — CST",
+      "ibsCbsClassTrib": "IBS/CBS — cClassTrib"
     }
   }
 }
