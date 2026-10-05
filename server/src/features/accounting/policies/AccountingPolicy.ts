@@ -1,5 +1,6 @@
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { ActiveAccountant, IAccountingPolicy } from './IAccountingPolicy';
+import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 
 /**
  * Implementation of the accounting policy. Any authenticated user operates within their
@@ -205,6 +206,20 @@ export class AccountingPolicy implements IAccountingPolicy {
   canReopenPeriod(scope: AccountingScope, active: ActiveAccountant | null): boolean {
     if (active) return this.isActiveAccountant(scope, active);
     return scope.ownerUserId === scope.actorUserId && this.canClosePeriod(scope);
+  }
+
+  // BE-INCR-ACCOUNTING-POLICY-VERSION (nó GOV-CONTADOR, BRIEF item 4).
+  canProposePolicyVersion(scope: AccountingScope, target: PolicyTarget): boolean {
+    if (!scope.actorUserId || scope.ownerUserId !== scope.actorUserId) return false;
+    return target === 'FISCAL_PROFILE' ? this.canManageFiscalProfile(scope) : this.canManageAccountingSettings(scope);
+  }
+
+  canDecidePolicyVersion(scope: AccountingScope, active: ActiveAccountant | null): boolean {
+    return !!active && this.isActiveAccountant(scope, active);
+  }
+
+  canReadPolicyVersions(scope: AccountingScope, active: ActiveAccountant | null): boolean {
+    return (!!scope.actorUserId && scope.ownerUserId === scope.actorUserId) || this.canDecidePolicyVersion(scope, active);
   }
 
   private isActiveAccountant(scope: AccountingScope, active: ActiveAccountant): boolean {

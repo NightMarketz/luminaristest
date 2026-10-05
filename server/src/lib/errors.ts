@@ -150,13 +150,40 @@ export class AccountingPeriodNotOpenError extends AppError {
  * só ele reabre período ou assina/rejeita a revisão (F-GOV-3 a).
  */
 export class AccountantRequiredError extends AppError {
-  constructor(action: 'reabrir o período' | 'assinar ou rejeitar a revisão') {
+  constructor(action: 'reabrir o período' | 'assinar ou rejeitar a revisão' | 'aprovar ou rejeitar a versão de política') {
     super(
       `Este escopo tem contador responsável ativo — só ele pode ${action}.`,
       403,
       'ACCOUNTANT_REQUIRED',
     );
     Object.setPrototypeOf(this, AccountantRequiredError.prototype);
+  }
+}
+
+/**
+ * BE-INCR-ACCOUNTING-POLICY-VERSION (F-POL-3 a + F-POL-4 b): com contador responsável ativo, o `PUT` de parâmetro
+ * governado não aplica — falha alto (409) e aponta a rota de proposta.
+ */
+export class PolicyApprovalRequiredError extends AppError {
+  constructor() {
+    super(
+      'Este escopo tem contador responsável ativo — a mudança precisa da aprovação dele. Proponha em POST /api/accounting/policy-versions.',
+      409,
+      'POLICY_APPROVAL_REQUIRED',
+    );
+    Object.setPrototypeOf(this, PolicyApprovalRequiredError.prototype);
+  }
+}
+
+/** BE-INCR-ACCOUNTING-POLICY-VERSION (item 7.4): proposta sem contador ativo — não há quem aprove (F-GOV-4 a). */
+export class PolicyNoAccountantError extends AppError {
+  constructor() {
+    super(
+      'Este escopo não tem contador responsável ativo — não há quem aprove. Use o PUT do parâmetro para aplicar direto.',
+      409,
+      'POLICY_NO_ACCOUNTANT',
+    );
+    Object.setPrototypeOf(this, PolicyNoAccountantError.prototype);
   }
 }
 

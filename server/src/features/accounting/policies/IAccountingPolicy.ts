@@ -1,4 +1,5 @@
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 
 /** Atribuição ACTIVE do contador responsável, como a policy a enxerga (BE-INCR-ACCOUNTANT-GOVERNANCE §4.2). */
 export interface ActiveAccountant {
@@ -160,6 +161,15 @@ export interface IAccountingPolicy {
    * delegado cuja atribuição foi encerrada entre o resolver e a tx.
    */
   canReopenPeriod(scope: AccountingScope, active: ActiveAccountant | null): boolean;
+
+  /**
+   * BE-INCR-ACCOUNTING-POLICY-VERSION (nó GOV-CONTADOR, BRIEF item 4). Puros; o corpo dos `canManage…` não muda (P-14).
+   * Propor: o dono no próprio livro, com o `canManage…` do alvo. Decidir: só o contador ACTIVE do par (F-GOV-7 a+:
+   * aprova ou rejeita, não propõe). Ler: o dono ou esse contador.
+   */
+  canProposePolicyVersion(scope: AccountingScope, target: PolicyTarget): boolean;
+  canDecidePolicyVersion(scope: AccountingScope, active: ActiveAccountant | null): boolean;
+  canReadPolicyVersions(scope: AccountingScope, active: ActiveAccountant | null): boolean;
 
   /**
    * Whether dynamic segregation of duties (approver ≠ creator/submitter) is ENFORCED for this

@@ -143,7 +143,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
-    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes'],
+    'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
+    'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
   'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao'],
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
@@ -214,6 +215,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'accountant_assignment.invited':  ['assignmentId', 'accountingContactId', 'crcNumber', 'crcUf'],
   'accountant_assignment.accepted': ['assignmentId', 'supersededAssignmentId'],
   'accountant_assignment.ended':    ['assignmentId', 'fromStatus', 'endedBy', 'reason'],
+  // BE-INCR-ACCOUNTING-POLICY-VERSION (item 14): só ids e números — o `payload` da proposta fica na linha da versão,
+  // NUNCA no evento. `reason` da rejeição é texto livre → MASKABLE_FREE_TEXT_KEYS.
+  'policy_version.proposed': ['policyVersionId', 'target', 'version', 'supersededId'],
+  'policy_version.applied':  ['policyVersionId', 'target', 'version', 'assignmentId'],
+  'policy_version.rejected': ['policyVersionId', 'target', 'version', 'reason'],
   // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b) — e-Lalur/e-Lacs store. Ids, catalog codes and cents
   // only: `histLancamento` (M300.HIST_LAN_LAL, free text typed by the operator) and the Parte B
   // `descricao` NEVER enter the hash-chained trail (item 18: sem PII, sem texto livre).

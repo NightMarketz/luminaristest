@@ -31,3 +31,10 @@ export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
  */
 export const ASSIGNMENT_STATUSES = ['PENDING', 'ACTIVE', 'ENDED'] as const;
 export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
+
+/**
+ * BE-INCR-ACCOUNTING-POLICY-VERSION (nó GOV-CONTADOR, BRIEF item 1): estados da versão de política. `PROPOSED` é o
+ * único que aceita decisão; os outros três são terminais (trilha de aprovação, sem DELETE).
+ */
+export const POLICY_VERSION_STATUSES = ['PROPOSED', 'APPLIED', 'REJECTED', 'SUPERSEDED'] as const;
+export type PolicyVersionStatus = (typeof POLICY_VERSION_STATUSES)[number];

@@ -28,7 +28,10 @@ const pct2Cent = z.number().int().min(0).max(9999); // 1-2V2 => 0.00..99.99 em c
 
 export const FiscalProfileScopeQuerySchema = z.object({ unitId: z.string().min(1) }).strict();
 
-export const UpsertFiscalProfileSchema = z
+// BE-INCR-ACCOUNTING-POLICY-VERSION: forma base SEM o refine — no Zod 4, `.omit()` sobre um objeto refinado devolve
+// o objeto SEM o `superRefine` (medido 04/10). A proposta (`FiscalProfilePolicyPayloadSchema`) e o PUT reaplicam o
+// mesmo `refineFiscalProfile`; a forma do PUT não muda.
+const FiscalProfileFields = z
   .object({
     unitId: z.string().min(1),
     regimeTributario: z.enum(REGIMES_TRIBUTARIOS),
@@ -77,50 +80,59 @@ export const UpsertFiscalProfileSchema = z
     pTotTribSNCent: pct2Cent.nullable().optional(),
     emissaoForaDoMes: z.enum(EMISSAO_FORA_DO_MES).default('AVISAR'),
   })
-  .strict()
-  .superRefine((v, ctx) => {
-    if (v.regimeTributario === 'SIMPLES' && (v.icmsContribuinte || v.pisCofinsRegime !== 'SIMPLES')) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['regimeTributario'],
-        message: 'Simples Nacional não apura ICMS/PIS/COFINS pelo regime normal (LC 123/2006 art. 23): icmsContribuinte=false e pisCofinsRegime=SIMPLES.',
-      });
-    }
-    if (v.regimeTributario !== 'SIMPLES' && v.pisCofinsRegime === 'SIMPLES') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['pisCofinsRegime'],
-        message: 'pisCofinsRegime=SIMPLES só cabe em regimeTributario=SIMPLES.',
-      });
-    }
-    const simples = v.regimeTributario === 'SIMPLES';
-    if (!simples && (v.regApTribSN != null || v.pTotTribSNCent != null)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [v.regApTribSN != null ? 'regApTribSN' : 'pTotTribSNCent'],
-        message: 'regApTribSN e pTotTribSNCent só cabem em regimeTributario=SIMPLES (leiaute DPS [141]/[335]; RN E0713).',
-      });
-    }
-    if (simples && (v.pTotTribFedCent != null || v.pTotTribEstCent != null || v.pTotTribMunCent != null)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['pTotTribFedCent'],
-        message: 'pTotTrib{Fed,Est,Mun}Cent não cabem em regimeTributario=SIMPLES (RN E0712: ME/EPP usa pTotTribSN).',
-      });
-    }
-    if (v.pisCofinsCreditIncludesIpi) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['pisCofinsCreditIncludesIpi'],
-        message: 'IPI não integra a base do crédito de PIS/COFINS (STJ Tema 1.373) — regra fixa, só aceita false.',
-      });
-    }
-    if (v.ibsCbsCst != null && v.ibsCbsClassTrib != null && !v.ibsCbsClassTrib.startsWith(v.ibsCbsCst)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['ibsCbsClassTrib'],
-        message: 'Os 3 primeiros dígitos de cClassTrib devem ser iguais ao CST (RN E0959).',
-      });
-    }
-  });
+  .strict();
+
+type FiscalProfileFieldsOutput = Omit<z.output<typeof FiscalProfileFields>, 'unitId'>;
+
+function refineFiscalProfile(v: FiscalProfileFieldsOutput, ctx: z.RefinementCtx): void {
+  if (v.regimeTributario === 'SIMPLES' && (v.icmsContribuinte || v.pisCofinsRegime !== 'SIMPLES')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['regimeTributario'],
+      message: 'Simples Nacional não apura ICMS/PIS/COFINS pelo regime normal (LC 123/2006 art. 23): icmsContribuinte=false e pisCofinsRegime=SIMPLES.',
+    });
+  }
+  if (v.regimeTributario !== 'SIMPLES' && v.pisCofinsRegime === 'SIMPLES') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['pisCofinsRegime'],
+      message: 'pisCofinsRegime=SIMPLES só cabe em regimeTributario=SIMPLES.',
+    });
+  }
+  const simples = v.regimeTributario === 'SIMPLES';
+  if (!simples && (v.regApTribSN != null || v.pTotTribSNCent != null)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [v.regApTribSN != null ? 'regApTribSN' : 'pTotTribSNCent'],
+      message: 'regApTribSN e pTotTribSNCent só cabem em regimeTributario=SIMPLES (leiaute DPS [141]/[335]; RN E0713).',
+    });
+  }
+  if (simples && (v.pTotTribFedCent != null || v.pTotTribEstCent != null || v.pTotTribMunCent != null)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['pTotTribFedCent'],
+      message: 'pTotTrib{Fed,Est,Mun}Cent não cabem em regimeTributario=SIMPLES (RN E0712: ME/EPP usa pTotTribSN).',
+    });
+  }
+  if (v.pisCofinsCreditIncludesIpi) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['pisCofinsCreditIncludesIpi'],
+      message: 'IPI não integra a base do crédito de PIS/COFINS (STJ Tema 1.373) — regra fixa, só aceita false.',
+    });
+  }
+  if (v.ibsCbsCst != null && v.ibsCbsClassTrib != null && !v.ibsCbsClassTrib.startsWith(v.ibsCbsCst)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['ibsCbsClassTrib'],
+      message: 'Os 3 primeiros dígitos de cClassTrib devem ser iguais ao CST (RN E0959).',
+    });
+  }
+}
+
+export const UpsertFiscalProfileSchema = FiscalProfileFields.superRefine(refineFiscalProfile);
 export type UpsertFiscalProfileInput = z.infer<typeof UpsertFiscalProfileSchema>;
+
+/** Payload da proposta de política (BRIEF item 7.2): o schema do PUT sem `unitId`, com o MESMO refine. */
+export const FiscalProfilePolicyPayloadSchema = FiscalProfileFields.omit({ unitId: true }).strict().superRefine(refineFiscalProfile);
+export type FiscalProfilePolicyPayload = z.infer<typeof FiscalProfilePolicyPayloadSchema>;
