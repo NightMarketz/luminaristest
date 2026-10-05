@@ -32,7 +32,8 @@
       "contrapartes": "Counterparties",
       "aprovacoes": "Approvals",
       "nfe": "NF-e",
-      "imobilizado": "Fixed assets"
+      "imobilizado": "Fixed assets",
+      "perfilFiscal": "Tax profile"
     },
     "error": {
       "units": "Failed to load units.",
@@ -2197,6 +2198,142 @@
       "label": "Book",
       "own": "My books",
       "clients": "Clients I serve"
+    }
+  },
+  "fiscalProfile": {
+    "cancel": "Cancel",
+    "dpsSerieNote": "In manual mode the portal numbers the DPS (Emissor Web guide, G3) — the series only applies to another partner.",
+    "emissao": {
+      "completo": "Unit profile complete",
+      "faltantes": "What is missing",
+      "incompleto": "Unit profile incomplete",
+      "pending": "Accountant values not yet confirmed (D1f) — saving this form confirms them:"
+    },
+    "error": {
+      "load": "Could not load the tax profile.",
+      "save": "Could not save the tax profile.",
+      "regimeRequired": "Choose the tax regime.",
+      "pisCofinsRegimeRequired": "Choose the PIS/COFINS regime.",
+      "dpsSerieInvalid": "The DPS series must be an integer.",
+      "pctInvalid": "Invalid percentage — use the format 2,00 (up to 2 decimals)."
+    },
+    "faltante": {
+      "codMun": "Issuer municipality (IBGE code)",
+      "pTotTribSNCent": "Approximate taxes — Simples Nacional (%)",
+      "pTotTribFedCent": "Approximate taxes — federal (%)",
+      "pTotTribEstCent": "Approximate taxes — state (%)",
+      "pTotTribMunCent": "Approximate taxes — municipal (%)",
+      "ibsCbsCst": "IBS/CBS — CST",
+      "ibsCbsClassTrib": "IBS/CBS — cClassTrib"
+    },
+    "fatoGerador": {
+      "CONSUMO": "Consumption",
+      "VENDA": "Sale"
+    },
+    "field": {
+      "cnae": "CNAE",
+      "codMun": "Issuer municipality (IBGE code, 7 digits)",
+      "creditExcludesIcms": "PIS/COFINS credit excludes ICMS from the base",
+      "creditFromSimplesSupplier": "Credit on purchases from a Simples supplier",
+      "creditIncludesIpi": "PIS/COFINS credit includes IPI (fixed rule: no)",
+      "dpsSerie": "DPS series",
+      "emissaoForaDoMes": "Out-of-month accrual date",
+      "ibsCbsClassTrib": "cClassTrib (6 digits, starts with the CST)",
+      "ibsCbsCst": "CST (3 digits)",
+      "ibsCbsInformar": "Report IBS/CBS on the NFS-e",
+      "icmsContribuinte": "ICMS taxpayer",
+      "icmsRecuperavelAccountId": "Recoverable ICMS account",
+      "inscricaoMunicipal": "Municipal registration",
+      "issAliquota": "ISS rate (%)",
+      "issRetidoTomadorPj": "ISS withheld by a corporate customer",
+      "pTotTribEst": "State",
+      "pTotTribFed": "Federal",
+      "pTotTribMun": "Municipal",
+      "pTotTribSN": "Simples Nacional",
+      "pacoteFatoGerador": "Package taxable event",
+      "partnerAccountRef": "Account at the issuing partner",
+      "pisCofinsRecuperavelAccountId": "Recoverable PIS/COFINS account",
+      "pisCofinsRegime": "PIS/COFINS regime",
+      "regApTribSN": "Simples tax-assessment regime",
+      "regEspTrib": "Special tax regime (0–9)",
+      "regimeTributario": "Tax regime"
+    },
+    "foraDoMes": {
+      "AVISAR": "Warn",
+      "BLOQUEAR": "Block"
+    },
+    "group": {
+      "cost": "Purchase cost (NF-e)",
+      "emissao": "Issuing",
+      "emitente": "NFS-e issuer",
+      "ibsCbs": "IBS/CBS",
+      "iss": "ISS",
+      "regime": "Regime",
+      "totTrib": "Approximate taxes (%)"
+    },
+    "issRetidoWarn": "Heads-up: issuing is refused today — the customer address is missing (F-DFE-14).",
+    "loading": "Loading…",
+    "missing": "No tax profile: no sale issues an NFS-e until you save this form.",
+    "noAccount": "— none —",
+    "pisCofins": {
+      "CUMULATIVO": "Cumulative",
+      "NAO_CUMULATIVO": "Non-cumulative",
+      "SIMPLES": "Simples"
+    },
+    "regApTribSN": {
+      "1": "1 — everything through Simples",
+      "2": "2 — federal taxes through Simples, ISS through the NFS-e",
+      "3": "3 — everything through the NFS-e"
+    },
+    "regime": {
+      "PRESUMIDO": "Presumed profit",
+      "REAL": "Actual profit",
+      "SIMPLES": "Simples Nacional"
+    },
+    "save": "Save",
+    "saving": "Saving…",
+    "select": "— select —",
+    "service": {
+      "col": {
+        "actions": "Actions",
+        "cIndOp": "Operation indicator",
+        "cNBS": "NBS",
+        "cTribNac": "Tax code",
+        "name": "Service"
+      },
+      "configure": "Set up",
+      "delete": {
+        "confirm": "Remove",
+        "message": "without the profile, sales of this service stop issuing NFS-e. Remove?",
+        "title": "Remove the service tax profile"
+      },
+      "edit": "Edit",
+      "empty": "No services registered.",
+      "error": {
+        "delete": "Could not remove the service profile.",
+        "load": "Could not load the services.",
+        "save": "Could not save the service profile."
+      },
+      "field": {
+        "cIndOp": "Operation indicator (empty = salon default)",
+        "cLocPrestacao": "Service municipality (IBGE, 7 digits)",
+        "cNBS": "NBS (9 digits)",
+        "cTribMun": "Municipal complementary code (3 digits)",
+        "cTribNac": "National tax code (accepts 01.07.01)",
+        "xDescServ": "Service description on the invoice"
+      },
+      "modal": {
+        "title": "Service tax profile"
+      },
+      "noProfile": "no profile",
+      "remove": "Delete",
+      "subtitle": "National tax code, NBS and place of service for each service. Without a profile, the service sale does not issue an NFS-e.",
+      "title": "Service tax profiles"
+    },
+    "simplesNote": "Simples Nacional: no ICMS and PIS/COFINS through Simples — current system rule; revisit in X10a.",
+    "unit": {
+      "subtitle": "Feeds the purchase NF-e (cost) and the sales NFS-e. Saving replaces the whole profile.",
+      "title": "Unit tax profile"
     }
   }
 }

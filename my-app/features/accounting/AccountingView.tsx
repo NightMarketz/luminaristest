@@ -28,6 +28,8 @@ import { CashForecastPanel } from './components/CashForecastPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
+import { FiscalProfilePanel } from './components/FiscalProfilePanel';
+import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
@@ -39,7 +41,7 @@ import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -72,6 +74,8 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'dimensoes',      labelKey: 'view.tabs.dimensoes',      label: 'Dimensões' },
   // F-FAFE-4(a) ratificado: aba própria (22ª) — imobilizado não é título a pagar; o vínculo com AP é só a origem NF-e.
   { id: 'imobilizado',    labelKey: 'view.tabs.imobilizado',    label: 'Imobilizado' },
+  // F-FE-DFE-6(a) ratificado 02/10: aba própria — o perfil serve à NF-e de compra (X6) E à NFS-e de venda.
+  { id: 'perfil-fiscal',  labelKey: 'view.tabs.perfilFiscal',   label: 'Perfil fiscal' },
 ];
 
 /**
@@ -481,6 +485,14 @@ export function AccountingView() {
       {/* ── Imobilizado (C8: bens / classes / taxas / contas) tab — FE-INCR-FIXED-ASSETS ─── */}
       {activeTab === 'imobilizado' && unitId && (
         <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} initialSection={fixedAssetsSection} />
+      )}
+
+      {/* ── Perfil fiscal (unidade + serviços) tab — FE-INCR-DFE PR-0 ─────── */}
+      {activeTab === 'perfil-fiscal' && unitId && (
+        <div className="space-y-8">
+          <FiscalProfilePanel unitId={unitId} />
+          <ServiceFiscalProfilesPanel unitId={unitId} />
+        </div>
       )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}
