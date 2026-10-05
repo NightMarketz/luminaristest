@@ -123,6 +123,8 @@ export function AccountingView() {
     useAccountingData(governance);
   useEffect(() => { setOwnUnitsEmpty(!loadingUnits && units.length === 0); }, [loadingUnits, units.length]);
   const unitId = governance ? governance.unitId : ownUnitId;
+  // Remonta os painéis delegáveis a cada troca de livro: resposta atrasada e formulário aberto de um contexto não podem aparecer no outro.
+  const contextKey = governance ? governance.assignmentId : OWN_CONTEXT;
 
   const [rawTab, setRawTab] = useState<Tab>('balancete');
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
@@ -317,7 +319,7 @@ export function AccountingView() {
 
       {/* ── Períodos tab ───────────────────────────────────────────────────── */}
       {activeTab === 'periodos' && unitId && (
-        <PeriodsPanel unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
+        <PeriodsPanel key={contextKey} unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
       )}
 
       {/* ── Lançamentos tab ────────────────────────────────────────────────── */}
@@ -448,7 +450,7 @@ export function AccountingView() {
       {activeTab === 'compliance' && unitId && (
         governance ? (
           // Ramo próprio do modo cliente (item 8.2): SÓ a revisão. Um painel novo posto na pilha abaixo não vaza pra cá.
-          <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} governance={governance} onAssignmentLost={leaveClient} />
+          <ReviewPanel key={contextKey} unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} governance={governance} onAssignmentLost={leaveClient} />
         ) : (
           <div className="space-y-8">
             <CompliancePanel unitId={unitId} />

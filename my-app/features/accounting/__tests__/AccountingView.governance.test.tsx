@@ -66,10 +66,12 @@ vi.mock('../components/JournalEntryModal', () => ({ JournalEntryModal: () => nul
 vi.mock('../governance/AccountantAssignmentSection', () => ({ AccountantAssignmentSection: () => <div data-testid="owner-section" /> }));
 
 // Os dois painéis delegados: o stub expõe a prop `governance` recebida.
+let periodsMounts = 0;
 vi.mock('../components/PeriodsPanel', () => ({
-  PeriodsPanel: (p: { governance?: { ownerUserId: string } }) => (
-    <div data-testid="periods-panel" data-owner={p.governance?.ownerUserId ?? ''} />
-  ),
+  PeriodsPanel: (p: { governance?: { ownerUserId: string } }) => {
+    const [mount] = React.useState(() => ++periodsMounts);
+    return <div data-testid="periods-panel" data-owner={p.governance?.ownerUserId ?? ''} data-mount={mount} />;
+  },
 }));
 vi.mock('../components/ReviewPanel', () => ({
   ReviewPanel: (p: { governance?: { ownerUserId: string } }) => (
@@ -180,6 +182,19 @@ describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
     await waitFor(() => expect(accountingService.getTrialBalance).toHaveBeenCalledTimes(2));
     expect(screen.queryByTestId('client-mode-strip')).not.toBeInTheDocument();
     expect(screen.getAllByRole('tab')).toHaveLength(TABS.length);
+  });
+
+  it('trocar de livro REMONTA o painel de Períodos (resposta atrasada/formulário aberto não passam de um contexto ao outro)', async () => {
+    mockUnits(['u1']);
+    vi.mocked(accountantAssignmentsService.listMine).mockResolvedValue([row({})]);
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Períodos' }));
+    const own = screen.getByTestId('periods-panel').getAttribute('data-mount');
+    fireEvent.change(await screen.findByLabelText('Livro'), { target: { value: 'a1' } });
+    const client = (await screen.findByTestId('periods-panel')).getAttribute('data-mount');
+    expect(client).not.toBe(own);
+    fireEvent.change(screen.getByLabelText('Livro'), { target: { value: 'own' } });
+    await waitFor(() => expect(screen.getByTestId('periods-panel').getAttribute('data-mount')).not.toBe(client));
   });
 
   it('13c2: convite PENDING aparece no banner com "Aceitar", nos dois modos', async () => {
