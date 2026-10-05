@@ -11,6 +11,7 @@ modelo: opus-5.5
 2. **Item 13 × Fase A**: **cascata**, como os trimestres (não o 409 da letra) — substituir `A0k` derruba `A0(k+1)..A12` e o `A00`, estorna as provisões deles e devolve `reconfirmar`.
 3. **RETIDO_MESES** (lacuna 2 do PR-1): mantém todas as deduções dos meses (P-B10).
 4. **`estimativasPagas` repetida** (lacuna 3 do PR-1): o DTO recusa com 400.
+5. **Achado 1 do review (datas de atividade editáveis depois da trava)** — 2º questionário, 05/10: **trava** `inicioAtividadeEm`/`encerramentoAtividadeEm` junto com a forma (400 `FORMA_TRAVADA`), **neste PR**. Toca o perfil da empresa (nó vizinho), autorizado pela resposta. Fecha também o mesmo buraco nos trimestres da Fase A.
 
 ### Checklist (BRIEF B §1)
 | # | Comportamento | Status | Teste |
@@ -42,11 +43,19 @@ modelo: opus-5.5
 - Registro (não bloqueia): (a) o valor da provisão do `A00` mora numa linha nova da memória (`PROVISAO_AJUSTE_ANUAL`) — o item 16 define o valor, não onde guardá-lo; (b) no balancete de m\* não se aplica a recusa de revenda do item 9 (a decisão 1 só manda calcular a diferença); (c) aviso na prévia do A00 quando o ajuste é negativo e a conta de saldo negativo não está configurada (a provisão fica pendente, F-TA-7 a herdado).
 
 ### Asserções pré-existentes alteradas (com o motivo)
+- `taxAssessmentProfile.integration.test.ts` (Fase A, item 1 D2 e item 2b): as **entradas** passaram a reenviar `inicioAtividadeEm: '2026-02-01'` (o PUT é substituição total e a data agora trava); nenhuma asserção mudou.
 - `taxAssessment.integration.test.ts` (Fase A, 23 f): T01 com perfil ANUAL segue **400**; a mensagem esperada mudou de "forma anual é da Fase B" para "o período trimestral exige a forma TRIMESTRAL" (item 11).
 - `TaxAssessmentDto.test.ts`: "período só T01..T04" (A01 ⇒ 400) passava por acidente (falta de `modoMensal`); virou T05 ⇒ 400, e os casos `A0x` foram para o bloco novo.
 
 ### Achados fora de escopo
 - O FE do perfil fiscal não mostra nem reenvia as 2 contas novas; omitidas no PUT, o Prisma as preserva (`undefined` não escreve). Tela é nó vizinho.
+
+### Review independente
+- Veredito **PASS COM RESSALVAS**, 0 defeito no fluxo pedido. Rodou tsc, unit inteiro, integração `taxAssessment` (32/32), `closing`, `fiscalProfile`, `accountingPolicyVersion`, e 3 casos executados em arquivo temporário (m\* por balancete no serviço com a conta conferida; mês não semeado no gate; A00 × início de atividade).
+- Achado 1 (latente até o PR-4): `inicioAtividadeEm` editável depois da trava deixa confirmar o A10 depois do A00 vivo, que não o conta → **decisão 5 acima; corrigido** com teste vermelho→verde (`taxAssessmentProfile.integration` "achado 1 do review").
+- Achado 2: o cabeçalho `atomicUntil` citava um nome de teste que não existe → **corrigido** (`03ab98f8`).
+- Achado 3: faltava teste da validação `Asset` das 2 contas novas → **corrigido** (`03ab98f8`, inclui a prova de que omitir os campos no PUT os preserva).
+- Achado 4 (observação, desenho herdado da Fase A): substituir um mês já FECHADO não estorna a provisão antiga e deixa a nova pendente; com o item 15, isso fica frequente no anual. O encerramento bloqueia com provisão pendente — sem perda silenciosa. Registrado, não alterado.
 
 ### Checks executados
 - `cd server && npx tsc --noEmit` → 0; `cd my-app && npx tsc --noEmit` → 0; `npm run test:types` → 0

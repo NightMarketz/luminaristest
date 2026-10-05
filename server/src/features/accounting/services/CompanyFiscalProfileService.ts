@@ -350,7 +350,9 @@ export function formaEfetiva(regime: string, forma: string | null): string | nul
  * X7 item 1 (D2, F-X7-5 a): com `formaApuracaoTravadaEm` preenchido, o PUT não troca forma, regime nem
  * obrigatoriedade do Real — as apurações confirmadas copiam o regime (item 12). A chave da liminar (item 2b) e as
  * demais colunas seguem editáveis. Fase B item 3b (F-TB-5 b): `prestadoraExclusivaServicos` também trava — os meses
- * confirmados copiam a premissa do 16%, mesma razão do `regime`.
+ * confirmados copiam a premissa do 16%, mesma razão do `regime`. Fase B PR-3 (achado 1 do review independente; decisão
+ * do dono 05/10): as datas de atividade também travam — mudá-las cria ou some com períodos em atividade depois de
+ * confirmações (ex.: antecipar o início e confirmar o A10 com A11, A12 e o A00 já confirmados, sem o A00 contá-lo).
  */
 function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalProfileData, ano: number): void {
   if (!atual.formaApuracaoTravadaEm) return;
@@ -359,6 +361,8 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
   if (formaEfetiva(atual.regime, atual.formaApuracaoIrpjCsll) !== formaEfetiva(data.regime, data.formaApuracaoIrpjCsll)) trocou.push('formaApuracaoIrpjCsll');
   if (atual.lucroRealObrigatorio !== data.lucroRealObrigatorio) trocou.push('lucroRealObrigatorio');
   if (atual.prestadoraExclusivaServicos !== data.prestadoraExclusivaServicos) trocou.push('prestadoraExclusivaServicos');
+  if (atual.inicioAtividadeEm !== data.inicioAtividadeEm) trocou.push('inicioAtividadeEm');
+  if (atual.encerramentoAtividadeEm !== data.encerramentoAtividadeEm) trocou.push('encerramentoAtividadeEm');
   if (trocou.length > 0) {
     throw new ValidationError(
       `FORMA_TRAVADA: ${ano} tem apuração de IRPJ/CSLL confirmada desde ${atual.formaApuracaoTravadaEm.toISOString().slice(0, 10)} — ${trocou.join(', ')} não muda(m) no ano (ADR-INCR-TAX-ASSESSMENT D2; IN RFB 1.700/2017 art. 54).`,
