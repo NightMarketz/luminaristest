@@ -159,7 +159,7 @@ const fieldComponentMap: Record<string, ComponentType<FieldComponentProps>> = {
 const currencyFieldNames = new Set(['price', 'salePrice', 'unitPrice', 'cost', 'amount', 'discount', 'subtotal', 'total', 'sellingPrice']);
 
 function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors = {}, formError, onChange, isSubmitting }: DynamicFormProps) {
-  const { t } = useTranslation(['database', 'common']);
+  const { t, i18n } = useTranslation(['database', 'common']);
   const [formData, setFormData] = useState<Record<string, unknown>>(initialData);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
 
@@ -237,6 +237,14 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
   };
 
+  // FE-INCR-PACOTE-VALIDADE (item 14, dono 05/10: override no front): orientação sob o campo, por NOME do campo, só
+  // quando existe a chave `database:field_descriptions.<campo>` — o mesmo mecanismo do rótulo (`database:fields.<campo>`).
+  // O `description` do schema NÃO é desenhado: o PresetSync é aditivo e não o propaga às tabelas já criadas (I2).
+  function fieldHint(name: string): string | null {
+    const key = `database:field_descriptions.${name}`;
+    return i18n?.exists?.(key) ? String(t(key)) : null;
+  }
+
   function renderField(field: ISchemaField) {
     const isCurrency = field.type === 'number' && (currencyFieldNames.has(field.name) || /price|amount|total|subtotal|valor|pre(ç|c)o/i.test(field.name));
     const isWorkSchedule = (field.type === 'json' && /workSchedule|schedule|horario/i.test(field.name));
@@ -307,6 +315,9 @@ function DynamicForm({ schema, onSubmit, onClose, initialData = {}, fieldErrors 
           )}
         </label>
         <FieldComponent {...componentProps} />
+        {fieldHint(field.name) && (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{fieldHint(field.name)}</p>
+        )}
         {hasError && (
           <p id={errorId} className="mt-1 text-[11px] text-red-600 font-bold uppercase tracking-tight" role="alert">
             {t(`common:errors.${combinedErrors[field.name]}`, combinedErrors[field.name])}

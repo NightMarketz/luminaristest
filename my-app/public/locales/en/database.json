@@ -106,7 +106,8 @@
         "engagementRate": "Engagement Rate",
         "associatedProducts": "Associated Products",
         "qualifiedEmployees": "Qualified Employees",
-        "consumedProducts": "Consumed Products"
+        "consumedProducts": "Consumed Products",
+        "validityDays": "Validity (days)"
     },
     "options": {
         "Low": "Low",
@@ -243,5 +244,8 @@
             "activities_count": "{{count}} activities",
             "on_request": "On Request"
         }
+    },
+    "field_descriptions": {
+        "validityDays": "Term in calendar days from the purchase. A validity of 12 months or more is the most defensible; 0 or empty = no validity."
     }
 }
