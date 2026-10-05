@@ -545,7 +545,8 @@
       "error": {
         "generic": "Erro ao encerrar o exercício."
       }
-    }
+    },
+    "emptyYearDelegated": "Nenhum período criado para {{year}} neste livro."
   },
   "ledger": {
     "accountLabel": "Conta",
@@ -1618,7 +1619,9 @@
       "reject": "Rejeitar",
       "replaceJobs": "Trocar jobs",
       "signOff": "Assinar",
-      "view": "Abrir"
+      "view": "Abrir",
+      "downloadEcd": "Baixar ECD",
+      "downloadEcf": "Baixar ECF"
     },
     "adjustment": {
       "periodHint": "A data do acerto precisa de período OPEN — extemporâneo é permitido.",
@@ -1650,7 +1653,8 @@
     "empty": "Nenhuma revisão neste recorte.",
     "error": {
       "generic": "Não foi possível concluir a operação.",
-      "load": "Erro ao carregar as revisões."
+      "load": "Erro ao carregar as revisões.",
+      "download": "Não foi possível baixar o arquivo."
     },
     "filter": {
       "allStatus": "Todos os status",
@@ -2114,5 +2118,78 @@
     "subtitle": "Bens, classes, taxas de depreciação e as contas que a depreciação mensal e a baixa usam.",
     "title": "Imobilizado",
     "yes": "Sim"
+  },
+  "governance": {
+    "error": {
+      "accountantRequired": "Este escopo tem contador responsável ativo ({{name}}, {{crc}}). Só ele reabre períodos e assina revisões. Para fazer você mesmo, encerre a atribuição na aba Compliance.",
+      "notAssigned": "Sua atribuição com este cliente não está mais ativa.",
+      "crcMismatch": "O CRC informado não confere com o da atribuição ({{crc}}).",
+      "periodChanged": "O período mudou de estado enquanto você agia; recarregado.",
+      "userNotFound": "Não há usuário cadastrado com este e-mail. O contador precisa criar a conta antes do convite.",
+      "selfAssignment": "Você não pode se atribuir como contador do próprio escopo.",
+      "pendingExists": "Já existe um convite pendente para este escopo. Encerre-o antes de convidar de novo.",
+      "assignmentChanged": "O convite mudou de estado; recarregue a tela.",
+      "generic": "Não foi possível concluir a operação.",
+      "load": "Erro ao carregar as atribuições do contador."
+    },
+    "banner": {
+      "active": "Contador responsável ativo: {{name}} ({{crc}}). Só ele reabre períodos e assina revisões; para fazer você mesmo, encerre a atribuição na aba Compliance."
+    },
+    "invite": {
+      "title": "Convidar contador responsável",
+      "submit": "Convidar",
+      "contact": "Contador do cadastro",
+      "pickContact": "Selecione o contador…",
+      "noContacts": "Nenhum contador cadastrado neste escopo. Cadastre um na seção \"Contadores\" logo abaixo.",
+      "email": "E-mail do contador (conta já cadastrada)"
+    },
+    "end": {
+      "title": "Encerrar atribuição",
+      "submit": "Encerrar",
+      "warnOwner": "Encerrar devolve a você a reabertura e a assinatura de todos os períodos, inclusive os que este contador cobriu.",
+      "warnAccountant": "Encerrar devolve ao dono do livro a reabertura e a assinatura de todos os períodos, inclusive os que você cobriu. Você perde o acesso a este livro.",
+      "reason": "Motivo (obrigatório)"
+    },
+    "accept": {
+      "title": "Aceitar atribuição",
+      "submit": "Aceitar",
+      "hint": "Ao aceitar, você passa a reabrir períodos e assinar revisões no livro de {{owner}}. A Res. CFC 1.590 (arts. 1º e 5º) exige contrato escrito de prestação de serviços.",
+      "declare": "Declaro que existe contrato escrito de prestação de serviços com este cliente."
+    },
+    "section": {
+      "title": "Contador responsável",
+      "subtitle": "Com um contador ativo, só ele reabre períodos e assina revisões deste escopo.",
+      "invite": "Convidar",
+      "active": "Ativo: {{name}} · {{crc}} · desde {{since}}",
+      "pending": "Convite pendente: {{name}} · {{crc}} — aguardando o aceite do contador.",
+      "none": "Sem contador responsável neste escopo.",
+      "endActive": "Encerrar atribuição",
+      "endPending": "Cancelar convite"
+    },
+    "col": {
+      "status": "Status",
+      "contact": "Contador",
+      "crc": "CRC",
+      "validity": "Vigência",
+      "endReason": "Motivo do encerramento"
+    },
+    "status": {
+      "PENDING": "Pendente",
+      "ACTIVE": "Ativa",
+      "ENDED": "Encerrada"
+    },
+    "pending": {
+      "title": "Convites de contador responsável",
+      "accept": "Aceitar"
+    },
+    "client": {
+      "strip": "Você está no livro de {{owner}} — unidade {{unit}}",
+      "end": "Encerrar atribuição"
+    },
+    "context": {
+      "label": "Livro",
+      "own": "Meus livros",
+      "clients": "Clientes que atendo"
+    }
   }
 }

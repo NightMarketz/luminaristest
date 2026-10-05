@@ -87,6 +87,9 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+/** `&ownerUserId=…` só no modo contador; ausente, a URL fica idêntica à de sempre. */
+const ownerQs = (ownerUserId?: string) => (ownerUserId ? `&ownerUserId=${encodeURIComponent(ownerUserId)}` : '');
+
 /** Parse a non-OK fetch response into `{ error, status }` so callers can branch on status. */
 async function parseError(response: Response): Promise<Record<string, unknown>> {
   let body: Record<string, unknown> = {};
@@ -139,10 +142,10 @@ export const dataExchangeService = {
     return res.data;
   },
 
-  /** Job summary (scoped). */
-  async getJob(jobId: string, unitId: string): Promise<DataExchangeJob> {
+  /** Job summary (scoped). `ownerUserId` (opcional, F-GOV-7): o contador lê o job do cliente. */
+  async getJob(jobId: string, unitId: string, ownerUserId?: string): Promise<DataExchangeJob> {
     const res = await apiClient.get<Envelope<DataExchangeJob>>(
-      `/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}?unitId=${encodeURIComponent(unitId)}`,
+      `/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}?unitId=${encodeURIComponent(unitId)}${ownerQs(ownerUserId)}`,
     );
     return res.data;
   },
@@ -186,10 +189,10 @@ export const dataExchangeService = {
     return res.data;
   },
 
-  /** Download an export/template artifact by job id. */
-  async downloadArtifact(jobId: string, unitId: string, fileName: string): Promise<void> {
+  /** Download an export/template artifact by job id. `ownerUserId` (opcional, F-GOV-7): modo contador. */
+  async downloadArtifact(jobId: string, unitId: string, fileName: string, ownerUserId?: string): Promise<void> {
     await streamDownload(
-      `${baseUrl()}/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}/download?unitId=${encodeURIComponent(unitId)}`,
+      `${baseUrl()}/accounting/data-exchange/jobs/${encodeURIComponent(jobId)}/download?unitId=${encodeURIComponent(unitId)}${ownerQs(ownerUserId)}`,
       fileName,
     );
   },

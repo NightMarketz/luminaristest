@@ -545,7 +545,8 @@
       "error": {
         "generic": "Failed to close the fiscal year."
       }
-    }
+    },
+    "emptyYearDelegated": "No periods created for {{year}} in this book."
   },
   "ledger": {
     "accountLabel": "Account",
@@ -1618,7 +1619,9 @@
       "reject": "Reject",
       "replaceJobs": "Replace files",
       "signOff": "Sign off",
-      "view": "Open"
+      "view": "Open",
+      "downloadEcd": "Download ECD",
+      "downloadEcf": "Download ECF"
     },
     "adjustment": {
       "periodHint": "The adjustment date needs an OPEN period — late posting is allowed.",
@@ -1650,7 +1653,8 @@
     "empty": "No reviews in this selection.",
     "error": {
       "generic": "The operation could not be completed.",
-      "load": "Error loading the reviews."
+      "load": "Error loading the reviews.",
+      "download": "Could not download the file."
     },
     "filter": {
       "allStatus": "All statuses",
@@ -2114,5 +2118,78 @@
     "subtitle": "Assets, classes, depreciation rates and the accounts that monthly depreciation and disposal use.",
     "title": "Fixed assets",
     "yes": "Yes"
+  },
+  "governance": {
+    "error": {
+      "accountantRequired": "This scope has an active responsible accountant ({{name}}, {{crc}}). Only they can reopen periods and sign reviews. To do it yourself, end the assignment in the Compliance tab.",
+      "notAssigned": "Your assignment with this client is no longer active.",
+      "crcMismatch": "The CRC entered does not match the assignment CRC ({{crc}}).",
+      "periodChanged": "The period changed state while you were acting; reloaded.",
+      "userNotFound": "No user is registered with this e-mail. The accountant must create the account before the invitation.",
+      "selfAssignment": "You cannot assign yourself as accountant of your own scope.",
+      "pendingExists": "There is already a pending invitation for this scope. End it before inviting again.",
+      "assignmentChanged": "The invitation changed state; reload the screen.",
+      "generic": "Could not complete the operation.",
+      "load": "Error loading the accountant assignments."
+    },
+    "banner": {
+      "active": "Active responsible accountant: {{name}} ({{crc}}). Only they can reopen periods and sign reviews; to do it yourself, end the assignment in the Compliance tab."
+    },
+    "invite": {
+      "title": "Invite responsible accountant",
+      "submit": "Invite",
+      "contact": "Accountant from the registry",
+      "pickContact": "Select the accountant…",
+      "noContacts": "No accountant registered in this scope. Register one in the \"Accountants\" section just below.",
+      "email": "Accountant e-mail (account already registered)"
+    },
+    "end": {
+      "title": "End assignment",
+      "submit": "End",
+      "warnOwner": "Ending gives back to you the reopening and signing of every period, including the ones this accountant covered.",
+      "warnAccountant": "Ending gives back to the book's owner the reopening and signing of every period, including the ones you covered. You lose access to this book.",
+      "reason": "Reason (required)"
+    },
+    "accept": {
+      "title": "Accept assignment",
+      "submit": "Accept",
+      "hint": "By accepting, you can reopen periods and sign reviews in {{owner}}'s book. CFC Resolution 1,590 (arts. 1 and 5) requires a written service contract.",
+      "declare": "I declare that a written service contract exists with this client."
+    },
+    "section": {
+      "title": "Responsible accountant",
+      "subtitle": "With an active accountant, only they can reopen periods and sign reviews in this scope.",
+      "invite": "Invite",
+      "active": "Active: {{name}} · {{crc}} · since {{since}}",
+      "pending": "Pending invitation: {{name}} · {{crc}} — waiting for the accountant to accept.",
+      "none": "No responsible accountant in this scope.",
+      "endActive": "End assignment",
+      "endPending": "Cancel invitation"
+    },
+    "col": {
+      "status": "Status",
+      "contact": "Accountant",
+      "crc": "CRC",
+      "validity": "Validity",
+      "endReason": "End reason"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "ACTIVE": "Active",
+      "ENDED": "Ended"
+    },
+    "pending": {
+      "title": "Responsible accountant invitations",
+      "accept": "Accept"
+    },
+    "client": {
+      "strip": "You are in {{owner}}'s book — unit {{unit}}",
+      "end": "End assignment"
+    },
+    "context": {
+      "label": "Book",
+      "own": "My books",
+      "clients": "Clients I serve"
+    }
   }
 }

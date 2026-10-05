@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { FiBookOpen, FiCheckCircle, FiAlertTriangle, FiPlusCircle } from 'react-icons/fi';
 import { useAccountingData } from './hooks/useAccountingData';
@@ -31,11 +31,18 @@ import { FixedAssetsPanel } from './components/FixedAssetsPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
+import {
+  accountantAssignmentsService,
+  type MyAccountantAssignmentView,
+} from '../../lib/services/accountantAssignments.service';
+import { toGovernanceScope } from './governance/GovernanceScope';
+import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
+import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 
-type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
-const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
+export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'balancete',      labelKey: 'view.tabs.balancete',      label: 'Balancete' },
   { id: 'periodos',       labelKey: 'view.tabs.periodos',       label: 'Períodos' },
   { id: 'lancamentos',    labelKey: 'view.tabs.lancamentos',    label: 'Lançamentos' },
@@ -68,16 +75,72 @@ const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
 ];
 
 /**
+ * Abas do modo cliente (F-FE-GOV-1 b, BRIEF item 8.1): lista de PERMITIDAS, não de proibidas — uma aba nova
+ * acrescentada ao `TABS` fica ESCONDIDA por padrão no modo cliente até alguém pô-la aqui de propósito.
+ */
+export const DELEGATED_TABS: readonly Tab[] = ['periodos', 'compliance'];
+
+const OWN_CONTEXT = 'own';
+
+/**
  * Accounting workspace — first-class Prisma double-entry module. Picks a business
  * unit (the second tenancy axis) and shows its trial balance (balancete), journal
  * entries, and chart of accounts as tabs.
  */
 export function AccountingView() {
   const { t } = useTranslation('accounting');
-  const { units, unitId, setUnitId, report, loadingUnits, loadingReport, error, reload } =
-    useAccountingData();
+  // ── Modo cliente (FE-INCR-ACCOUNTANT-GOVERNANCE itens 6–8) ───────────────────────────────────────────────
+  // A carteira do usuário como contador (`/mine`) é lida UMA vez, no mount; erro ou lista vazia = a tela de sempre.
+  const [assignments, setAssignments] = useState<MyAccountantAssignmentView[]>([]);
+  const [assignmentsLoaded, setAssignmentsLoaded] = useState(false);
+  // `null` = o usuário ainda não escolheu (vale o default do item 6.4); `'own'` = Meus livros; senão o id da atribuição.
+  const [chosenContext, setChosenContext] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<Tab>('balancete');
+  const reloadAssignments = useCallback(async () => {
+    try {
+      setAssignments(await accountantAssignmentsService.listMine());
+    } catch {
+      setAssignments([]);
+    } finally {
+      setAssignmentsLoaded(true);
+    }
+  }, []);
+  useEffect(() => { void reloadAssignments(); }, [reloadAssignments]);
+
+  const activeAssignments = useMemo(() => assignments.filter((a) => a.status === 'ACTIVE'), [assignments]);
+  const pendingAssignments = useMemo(() => assignments.filter((a) => a.status === 'PENDING'), [assignments]);
+
+  // `governance` é montado ANTES do hook de dados, que precisa saber se pula o balancete: as unidades próprias
+  // (para o default do item 6.4) vêm do próprio hook, então o default lê `ownUnits` num 2º passo, abaixo.
+  const [ownUnitsEmpty, setOwnUnitsEmpty] = useState(false);
+  const selectedAssignment = useMemo(() => {
+    const wanted = chosenContext ?? (assignmentsLoaded && ownUnitsEmpty ? activeAssignments[0]?.id ?? OWN_CONTEXT : OWN_CONTEXT);
+    return activeAssignments.find((a) => a.id === wanted) ?? null;
+  }, [activeAssignments, chosenContext, assignmentsLoaded, ownUnitsEmpty]);
+  const governance = useMemo(() => (selectedAssignment ? toGovernanceScope(selectedAssignment) : undefined), [selectedAssignment]);
+
+  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, reload } =
+    useAccountingData(governance);
+  useEffect(() => { setOwnUnitsEmpty(!loadingUnits && units.length === 0); }, [loadingUnits, units.length]);
+  const unitId = governance ? governance.unitId : ownUnitId;
+
+  const [rawTab, setRawTab] = useState<Tab>('balancete');
+  // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
+  const activeTab: Tab = governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab;
+  const setActiveTab = setRawTab;
+  const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
+
+  function switchContext(next: string) {
+    setChosenContext(next);
+    setRawTab('periodos'); // a aba anterior pode não existir no outro modo (item 8.6)
+  }
+  // `ACCOUNTANT_NOT_ASSIGNED` / encerramento: volta a "Meus livros" e recarrega a carteira (itens 6.6 e 12).
+  const leaveClient = useCallback(() => {
+    setChosenContext(OWN_CONTEXT);
+    setRawTab('periodos');
+    void reloadAssignments();
+  }, [reloadAssignments]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalAccounts, setModalAccounts] = useState<AccountOption[]>([]);
   const [modalDimensionCatalog, setModalDimensionCatalog] = useState<DimensionCatalogEntry[]>([]);
@@ -101,7 +164,8 @@ export function AccountingView() {
   }, [pendingCounterpartyFilter]);
 
   function openNewEntryModal() {
-    if (!unitId) return;
+    // Modo cliente: `getAccounts`/`listCatalog` não são dos 9 handlers (item 8.4) — e a aba Balancete nem monta.
+    if (!unitId || governance) return;
     // Fetch accounts (required) and the dimension catalog (best-effort, for optional per-line tagging).
     accountingService
       .getAccounts(unitId)
@@ -134,6 +198,26 @@ export function AccountingView() {
           </div>
         </div>
 
+        {activeAssignments.length > 0 && (
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-neutral-400">{t('governance.context.label', 'Livro')}</span>
+            <select
+              aria-label={t('governance.context.label', 'Livro')}
+              value={selectedAssignment ? selectedAssignment.id : OWN_CONTEXT}
+              onChange={(e) => switchContext(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-emerald-500 focus:outline-none"
+            >
+              <option value={OWN_CONTEXT}>{t('governance.context.own', 'Meus livros')}</option>
+              <optgroup label={t('governance.context.clients', 'Clientes que atendo')}>
+                {activeAssignments.map((a) => (
+                  <option key={a.id} value={a.id}>{clientLabel(a)}</option>
+                ))}
+              </optgroup>
+            </select>
+          </label>
+        )}
+
+        {!governance && (
         <label className="flex items-center gap-2 text-sm">
           <span className="text-neutral-400">{t('view.unit', 'Unidade')}</span>
           <select
@@ -151,7 +235,11 @@ export function AccountingView() {
             ))}
           </select>
         </label>
+        )}
       </header>
+
+      <PendingInvitesBanner pending={pendingAssignments} onAccepted={() => void reloadAssignments()} />
+      {governance && <ClientModeStrip governance={governance} onEnded={leaveClient} />}
 
       {/* ── Tab bar ────────────────────────────────────────────────────────── */}
       <div
@@ -159,7 +247,7 @@ export function AccountingView() {
         role="tablist"
         aria-label={t('view.title', 'Contabilidade')}
       >
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
@@ -188,7 +276,7 @@ export function AccountingView() {
       )}
 
       {/* ── Error banner ───────────────────────────────────────────────────── */}
-      {error && (
+      {error && !governance && (
         <div className="mb-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
           {error}
         </div>
@@ -229,7 +317,7 @@ export function AccountingView() {
 
       {/* ── Períodos tab ───────────────────────────────────────────────────── */}
       {activeTab === 'periodos' && unitId && (
-        <PeriodsPanel unitId={unitId} />
+        <PeriodsPanel unitId={unitId} governance={governance} onAssignmentLost={leaveClient} />
       )}
 
       {/* ── Lançamentos tab ────────────────────────────────────────────────── */}
@@ -358,13 +446,19 @@ export function AccountingView() {
 
       {/* ── Compliance (mapeamento referencial RFB + e-Lalur + geração SPED) tab ── */}
       {activeTab === 'compliance' && unitId && (
-        <div className="space-y-8">
-          <CompliancePanel unitId={unitId} />
-          <LalurPanel unitId={unitId} />
-          <SpedGenerationPanel unitId={unitId} />
-          <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
-          <DeliveryPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
-        </div>
+        governance ? (
+          // Ramo próprio do modo cliente (item 8.2): SÓ a revisão. Um painel novo posto na pilha abaixo não vaza pra cá.
+          <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} governance={governance} onAssignmentLost={leaveClient} />
+        ) : (
+          <div className="space-y-8">
+            <CompliancePanel unitId={unitId} />
+            <LalurPanel unitId={unitId} />
+            <SpedGenerationPanel unitId={unitId} />
+            <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
+            <AccountantAssignmentSection unitId={unitId} />
+            <DeliveryPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
+          </div>
+        )
       )}
 
       {/* ── Dimensões (centro de custo / projeto) tab ──────────────────────── */}

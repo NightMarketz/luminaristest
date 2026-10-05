@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'next-i18next';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { accountingService, type AccountingPeriod, type JournalEntry, type PeriodStatus } from '../../../lib/services/accounting.service';
 import { CloseExerciseModal } from './CloseExerciseModal';
+import { useAccountingT } from '../lib/useAccountingT';
+import type { GovernanceScope } from '../governance/GovernanceScope';
+import { resolveGovernanceError } from '../governance/governanceError';
+import { useActiveAssignment } from '../governance/useActiveAssignment';
+import { ActiveAssignmentBanner, activeAssignmentVars } from '../governance/ActiveAssignmentBanner';
 
 // Fallback pt-BR labels; rendered via t(`periods.months.<n>`) / t(`periods.status.<status>`)
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -15,10 +19,25 @@ const STATUS_CHIP: Record<PeriodStatus, { label: string; className: string }> = 
 
 interface Props {
   unitId: string;
+  /**
+   * Modo cliente (contador no livro do dono, F-FE-GOV-1 b): repassa `ownerUserId` nos 3 handlers delegados
+   * (F-GOV-7) e ESCONDE o resto — semear, fechar parcial/definitivo e encerrar exercício não estão entre os 9 e
+   * resolveriam o escopo do próprio contador (BRIEF itens 8.4 e 9). Ausente = comportamento de sempre.
+   */
+  governance?: GovernanceScope;
+  /** `ACCOUNTANT_NOT_ASSIGNED`: a atribuição acabou — o pai volta a "Meus livros" e recarrega a carteira. */
+  onAssignmentLost?: () => void;
 }
 
-export function PeriodsPanel({ unitId }: Props) {
-  const { t } = useTranslation('accounting');
+export function PeriodsPanel({ unitId, governance, onAssignmentLost }: Props) {
+  const { t, tRef } = useAccountingT();
+  const ownerUserId = governance?.ownerUserId;
+  const active = useActiveAssignment(unitId, !governance);
+  // Refs: o pai pode recriar o callback / o objeto a cada render; o `load` não pode re-disparar por isso.
+  const assignmentLostRef = useRef(onAssignmentLost);
+  assignmentLostRef.current = onAssignmentLost;
+  const varsRef = useRef<Record<string, string>>({});
+  varsRef.current = activeAssignmentVars(active, governance);
   const [year, setYear] = useState(new Date().getFullYear());
   const [periods, setPeriods] = useState<AccountingPeriod[]>([]);
   const [loading, setLoading] = useState(false);
@@ -27,19 +46,26 @@ export function PeriodsPanel({ unitId }: Props) {
   const [acting, setActing] = useState(false);
   const [closeExerciseOpen, setCloseExerciseOpen] = useState(false);
 
+  /** Mensagem do erro (códigos nomeados do §1 traduzidos); `ACCOUNTANT_NOT_ASSIGNED` devolve o contador a "Meus livros". */
+  const fail = useCallback((err: unknown, fallback: string): string => {
+    const { message, code } = resolveGovernanceError(err, tRef.current, fallback, varsRef.current);
+    if (code === 'ACCOUNTANT_NOT_ASSIGNED') assignmentLostRef.current?.();
+    return message;
+  }, [tRef]);
+
   const load = useCallback(async () => {
     if (!unitId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await accountingService.listPeriods(unitId, year);
+      const data = await accountingService.listPeriods(unitId, year, ownerUserId);
       setPeriods(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('periods.error.load', 'Erro ao carregar períodos.'));
+      setError(fail(err, tRef.current('periods.error.load', 'Erro ao carregar períodos.')));
     } finally {
       setLoading(false);
     }
-  }, [unitId, year]);
+  }, [unitId, year, ownerUserId, tRef, fail]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -50,7 +76,7 @@ export function PeriodsPanel({ unitId }: Props) {
       await accountingService.seedYear(unitId, year);
       await load();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('periods.error.seed', 'Erro ao semear períodos.'));
+      setError(fail(err, t('periods.error.seed', 'Erro ao semear períodos.')));
     } finally {
       setActing(false);
     }
@@ -60,14 +86,21 @@ export function PeriodsPanel({ unitId }: Props) {
     setActing(true);
     setError(null);
     try {
-      if (action === 'open')       await accountingService.openPeriod(period.id, unitId);
+      if (action === 'open')       await accountingService.openPeriod(period.id, unitId, ownerUserId);
       if (action === 'soft-close') await accountingService.softClosePeriod(period.id, unitId, reason);
       if (action === 'hard-close') await accountingService.hardClosePeriod(period.id, unitId, reason);
-      if (action === 'reopen')     await accountingService.reopenPeriod(period.id, unitId, reason);
+      if (action === 'reopen')     await accountingService.reopenPeriod(period.id, unitId, reason, ownerUserId);
       setReasonInput(null);
       await load();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t('periods.error.transition', 'Erro na transição de período.'));
+      const message = fail(err, t('periods.error.transition', 'Erro na transição de período.'));
+      setError(message);
+      // CAS do período perdido: a tela envelheceu — recarrega e mantém a mensagem (o `load` limpa o erro ao começar).
+      if ((err as { code?: string } | null)?.code === 'PERIOD_STATUS_CHANGED') {
+        setReasonInput(null);
+        await load();
+        setError(message);
+      }
     } finally {
       setActing(false);
     }
@@ -78,6 +111,8 @@ export function PeriodsPanel({ unitId }: Props) {
 
   return (
     <div className="space-y-5">
+      {!governance && <ActiveAssignmentBanner active={active} />}
+
       {/* Year picker + seed */}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm">
@@ -93,7 +128,7 @@ export function PeriodsPanel({ unitId }: Props) {
           </select>
         </label>
 
-        {!loading && !hasPeriods && (
+        {!governance && !loading && !hasPeriods && (
           <button
             type="button"
             onClick={() => void handleSeedYear()}
@@ -107,13 +142,15 @@ export function PeriodsPanel({ unitId }: Props) {
         {/* Always visible — the backend is the authority on the period gate (assertPeriodOpen);
             duplicating that check here would just create a second copy that can drift. A closed
             December surfaces as a legible 422 from accountingService.closeExercise. */}
-        <button
-          type="button"
-          onClick={() => setCloseExerciseOpen(true)}
-          className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-        >
-          {t('periods.closeExercise.button', 'Encerrar exercício {{year}}', { year })}
-        </button>
+        {!governance && (
+          <button
+            type="button"
+            onClick={() => setCloseExerciseOpen(true)}
+            className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+          >
+            {t('periods.closeExercise.button', 'Encerrar exercício {{year}}', { year })}
+          </button>
+        )}
       </div>
 
       {error && (
@@ -128,7 +165,9 @@ export function PeriodsPanel({ unitId }: Props) {
 
       {!loading && !hasPeriods && !error && (
         <div className="py-12 text-center text-neutral-500">
-          {t('periods.emptyYear', 'Nenhum período criado para {{year}}. Clique em "Semear {{year}}" para inicializar.', { year })}
+          {governance
+            ? t('periods.emptyYearDelegated', 'Nenhum período criado para {{year}} neste livro.', { year })
+            : t('periods.emptyYear', 'Nenhum período criado para {{year}}. Clique em "Semear {{year}}" para inicializar.', { year })}
         </div>
       )}
 
@@ -155,7 +194,7 @@ export function PeriodsPanel({ unitId }: Props) {
                       <ActionButton label={t('periods.action.open', 'Abrir')} color="emerald" disabled={acting}
                         onClick={() => void handleAction(period, 'open')} />
                     )}
-                    {status === 'OPEN' && (
+                    {!governance && status === 'OPEN' && (
                       <>
                         <ActionButton label={t('periods.action.softClose', 'Fechar parcial')} color="amber" disabled={acting}
                           onClick={() => setReasonInput({ periodId: period.id, action: 'soft-close', value: '' })} />
@@ -167,8 +206,10 @@ export function PeriodsPanel({ unitId }: Props) {
                       <>
                         <ActionButton label={t('periods.action.reopen', 'Reabrir')} color="emerald" disabled={acting}
                           onClick={() => setReasonInput({ periodId: period.id, action: 'reopen', value: '' })} />
-                        <ActionButton label={t('periods.action.hardClose', 'Fechar definitivo')} color="red" disabled={acting}
-                          onClick={() => setReasonInput({ periodId: period.id, action: 'hard-close', value: '' })} />
+                        {!governance && (
+                          <ActionButton label={t('periods.action.hardClose', 'Fechar definitivo')} color="red" disabled={acting}
+                            onClick={() => setReasonInput({ periodId: period.id, action: 'hard-close', value: '' })} />
+                        )}
                       </>
                     )}
                   </div>

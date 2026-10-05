@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiPlusCircle } from 'react-icons/fi';
 import { Modal } from '../../../components/ui/Modal';
 import {
@@ -10,6 +10,10 @@ import { dataExchangeService, type DataExchangeJobListItem } from '../../../lib/
 import type { OpenReviewInput } from '@/types/contracts/accounting/AccountingReviewDto.gen';
 import { resolveError } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
+import type { GovernanceScope } from '../governance/GovernanceScope';
+import { resolveGovernanceError } from '../governance/governanceError';
+import { useActiveAssignment } from '../governance/useActiveAssignment';
+import { ActiveAssignmentBanner } from '../governance/ActiveAssignmentBanner';
 import { scopeToday } from '../lib/formatDate';
 import { Field, inputClass } from './SpedGenerationPanel';
 import { ReviewDetailModal, type ReviewOwnerTab } from './ReviewDetailModal';
@@ -70,6 +74,13 @@ export interface ReviewPanelProps {
   unitId: string;
   /** "Abrir o dado no painel dono" dos achados DATA_EDIT/acerto (precedente `NfePanel.onNavigateTab`). */
   onNavigateTab: (tab: ReviewOwnerTab) => void;
+  /**
+   * Modo cliente (contador no livro do dono, F-FE-GOV-1 b): repassa `ownerUserId` em `list`/`get`/`signOff`/
+   * `reject` (F-GOV-7) e ESCONDE tudo o que escreve no razão ou chama fora dos 9 handlers (BRIEF item 10).
+   */
+  governance?: GovernanceScope;
+  /** `ACCOUNTANT_NOT_ASSIGNED`: a atribuição acabou — o pai volta a "Meus livros" e recarrega a carteira. */
+  onAssignmentLost?: () => void;
 }
 
 /**
@@ -77,8 +88,13 @@ export interface ReviewPanelProps {
  * detalhe num `Modal` largo). Fluxo: achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é
  * editado). Um 403 na lista mostra o aviso e nada mais (item 13).
  */
-export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
+export function ReviewPanel({ unitId, onNavigateTab, governance, onAssignmentLost }: ReviewPanelProps) {
   const { t, tRef } = useAccountingT();
+  const ownerUserId = governance?.ownerUserId;
+  const active = useActiveAssignment(unitId, !governance);
+  // Ref: o pai pode recriar o callback a cada render; o `fetchReviews` não pode re-disparar por isso.
+  const assignmentLostRef = useRef(onAssignmentLost);
+  assignmentLostRef.current = onAssignmentLost;
   const currentYear = Number(scopeToday().slice(0, 4));
   const [year, setYear] = useState(currentYear);
   const [status, setStatus] = useState<ReviewStatus | ''>('');
@@ -91,13 +107,15 @@ export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
   const fetchReviews = useCallback(async () => {
     if (!unitId) return;
     try {
-      setReviews(await accountingReviewService.list(unitId, { year, status: status || undefined }));
+      setReviews(await accountingReviewService.list(unitId, { year, status: status || undefined }, ownerUserId));
       setError(null);
     } catch (err: unknown) {
       if (isForbidden(err)) setForbidden(true);
-      setError(resolveError(err, tRef.current('review.error.load', 'Erro ao carregar as revisões.')));
+      const { message, code } = resolveGovernanceError(err, tRef.current, tRef.current('review.error.load', 'Erro ao carregar as revisões.'), {});
+      if (code === 'ACCOUNTANT_NOT_ASSIGNED') assignmentLostRef.current?.();
+      setError(message);
     }
-  }, [unitId, year, status, tRef]);
+  }, [unitId, year, status, ownerUserId, tRef]);
 
   useEffect(() => { void fetchReviews(); }, [fetchReviews]);
 
@@ -117,12 +135,14 @@ export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
           <h2 className="mb-1 text-lg font-semibold text-neutral-200">{t('review.title', 'Revisão profissional')}</h2>
           <p className="text-sm text-neutral-500">{t('review.subtitle', 'Achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é editado).')}</p>
         </div>
-        {!forbidden && (
+        {!forbidden && !governance && (
           <button type="button" onClick={() => setOpenModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500">
             <FiPlusCircle size={14} /> {t('review.open', 'Abrir revisão')}
           </button>
         )}
       </div>
+
+      {!governance && <div className="mb-3"><ActiveAssignmentBanner active={active} /></div>}
 
       {error && <div role="alert" className="mb-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{error}</div>}
 
@@ -177,14 +197,16 @@ export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
         </>
       )}
 
-      <OpenReviewModal
-        isOpen={openModal}
-        onClose={() => setOpenModal(false)}
-        unitId={unitId}
-        initialYear={year}
-        onDone={() => { setOpenModal(false); void fetchReviews(); }}
-        onConflict={() => void fetchReviews()}
-      />
+      {!governance && (
+        <OpenReviewModal
+          isOpen={openModal}
+          onClose={() => setOpenModal(false)}
+          unitId={unitId}
+          initialYear={year}
+          onDone={() => { setOpenModal(false); void fetchReviews(); }}
+          onConflict={() => void fetchReviews()}
+        />
+      )}
       {detailId && (
         <ReviewDetailModal
           reviewId={detailId}
@@ -192,6 +214,9 @@ export function ReviewPanel({ unitId, onNavigateTab }: ReviewPanelProps) {
           onClose={() => setDetailId(null)}
           onChanged={() => void fetchReviews()}
           onNavigateTab={(tab) => { setDetailId(null); onNavigateTab(tab); }}
+          governance={governance}
+          active={active}
+          onAssignmentLost={onAssignmentLost}
         />
       )}
     </section>

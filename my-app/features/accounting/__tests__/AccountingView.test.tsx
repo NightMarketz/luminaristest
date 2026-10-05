@@ -33,6 +33,11 @@ vi.mock('../hooks/useAccountingData', () => ({
 vi.mock('../../../lib/services/accounting.service', () => ({
   accountingService: { getAccounts: vi.fn() },
 }));
+// Os painéis leem a atribuição do escopo (modo dono) — sem rede nos testes antigos.
+vi.mock('../../../lib/services/accountantAssignments.service', () => ({
+  accountantAssignmentsService: { listByScope: vi.fn(async () => []), listMine: vi.fn(async () => []) },
+}));
+
 vi.mock('../../../lib/services/dimensions.service', () => ({
   dimensionsService: { listCatalog: vi.fn() },
 }));

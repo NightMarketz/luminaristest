@@ -10,6 +10,7 @@ import type {
   ClosePeriodInput,
   ReopenPeriodInput,
 } from '@/types/contracts/accounting/PostingDto.gen';
+import type { GovernanceOwnerInput } from '@/types/contracts/accounting/AccountantAssignmentDto.gen';
 import type { CloseExerciseInput } from '@/types/contracts/accounting/ClosingDto.gen';
 import type { UpdateAccountingScopeSettingsInput } from '@/types/contracts/accounting/AccountingScopeSettingsDto.gen';
 import type {
@@ -799,9 +800,12 @@ export const accountingService = {
 
   // ── Accounting periods ──────────────────────────────────────────────────────
 
-  /** List accounting periods for a unit and year. */
-  async listPeriods(unitId: string, year: number): Promise<AccountingPeriod[]> {
-    const qs = buildQuery({ year: String(year) });
+  /**
+   * List accounting periods for a unit and year. `ownerUserId` (opcional): o contador lê o livro do
+   * cliente — um dos 9 handlers do F-GOV-7; ausente, a chamada é idêntica à de sempre.
+   */
+  async listPeriods(unitId: string, year: number, ownerUserId?: string): Promise<AccountingPeriod[]> {
+    const qs = buildQuery({ year: String(year), ownerUserId });
     const res = await apiClient.get<ApiEnvelope<AccountingPeriod[]>>(`/accounting/${encodeURIComponent(unitId)}/periods${qs}`);
     return res.data;
   },
@@ -827,10 +831,11 @@ export const accountingService = {
     return res.data;
   },
 
-  /** Transition a period to OPEN. */
-  async openPeriod(periodId: string, unitId: string): Promise<AccountingPeriod> {
-    // Sem tipo gerado: `openPeriod` lê `req.body.unitId` sem DTO Zod (GAP-MAP Nível 3, [ABERTO]).
-    const body: { unitId: string } = { unitId };
+  /** Transition a period to OPEN. `ownerUserId` (opcional): modo contador (F-GOV-7). */
+  async openPeriod(periodId: string, unitId: string, ownerUserId?: string): Promise<AccountingPeriod> {
+    // Sem tipo gerado: `openPeriod` lê `req.body.unitId` sem DTO Zod (GAP-MAP Nível 3, [ABERTO]);
+    // `ownerUserId` tem o `GovernanceOwnerInput` gerado (`AccountantAssignmentDto.gen`).
+    const body: { unitId: string } & GovernanceOwnerInput = ownerUserId ? { unitId, ownerUserId } : { unitId };
     const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/open`, body);
     notify('Período aberto.', 'success', 'Contabilidade');
     return res.data;
@@ -852,9 +857,9 @@ export const accountingService = {
     return res.data;
   },
 
-  /** Transition a SOFT_CLOSED period back to OPEN. */
-  async reopenPeriod(periodId: string, unitId: string, reason?: string): Promise<AccountingPeriod> {
-    const body: ReopenPeriodInput = { unitId, periodId, reason };
+  /** Transition a SOFT_CLOSED period back to OPEN. `ownerUserId` (opcional): modo contador (F-GOV-7). */
+  async reopenPeriod(periodId: string, unitId: string, reason?: string, ownerUserId?: string): Promise<AccountingPeriod> {
+    const body: ReopenPeriodInput = ownerUserId ? { unitId, periodId, reason, ownerUserId } : { unitId, periodId, reason };
     const res = await apiClient.post<ApiEnvelope<AccountingPeriod>>(`/accounting/periods/${periodId}/reopen`, body);
     notify('Período reaberto.', 'success', 'Contabilidade');
     return res.data;

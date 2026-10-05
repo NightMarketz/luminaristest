@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal } from '../../../components/ui/Modal';
 import {
   REVIEW_REGISTERS,
@@ -14,12 +14,17 @@ import { accountingService, type Account } from '../../../lib/services/accountin
 import type {
   AddFindingInput,
   AdjustmentEntryInput,
+  RejectReviewInput,
   ReplaceReviewJobsInput,
   ResolveFindingInput,
   SignOffReviewInput,
 } from '@/types/contracts/accounting/AccountingReviewDto.gen';
-import { resolveError } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
+import type { GovernanceScope } from '../governance/GovernanceScope';
+import { resolveGovernanceError } from '../governance/governanceError';
+import { activeAssignmentVars } from '../governance/ActiveAssignmentBanner';
+import type { ActiveAssignment } from '../governance/useActiveAssignment';
+import { dataExchangeService } from '../../../lib/services/dataExchange.service';
 import { Field, inputClass } from './SpedGenerationPanel';
 import { JournalEntryModal, type JournalEntrySubmitValue } from './JournalEntryModal';
 import { JobPicker, formatTimestamp, shortId } from './ReviewPanel';
@@ -70,6 +75,14 @@ export interface ReviewDetailModalProps {
   /** Recarrega a lista do painel depois de cada comando. */
   onChanged: () => void;
   onNavigateTab: (tab: ReviewOwnerTab) => void;
+  /**
+   * Modo cliente (BRIEF item 10): `ownerUserId` em `get`/`signOff`/`reject`/download; some tudo o que escreve no
+   * razão ou cai fora dos 9 handlers (achado, resolver, acerto, trocar jobs, `getAccounts`, `listJobs`).
+   */
+  governance?: GovernanceScope;
+  /** Atribuição ACTIVE do escopo (modo próprio) — só alimenta `{{name}}`/`{{crc}}` do `ACCOUNTANT_REQUIRED`. */
+  active?: ActiveAssignment | null;
+  onAssignmentLost?: () => void;
 }
 
 /**
@@ -78,8 +91,13 @@ export interface ReviewDetailModalProps {
  * decide, nenhum cálculo local de "resolvido depois da geração"). O acerto reusa o `JournalEntryModal`
  * (F-FE-RV-4 → a) com `reverseOriginal` no slot `extraFields`, só para I200 (o BE recusa fora disso).
  */
-export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavigateTab }: ReviewDetailModalProps) {
+export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavigateTab, governance, active = null, onAssignmentLost }: ReviewDetailModalProps) {
   const { t, tRef } = useAccountingT();
+  const ownerUserId = governance?.ownerUserId;
+  const delegated = !!governance;
+  // Ref: o pai pode recriar o callback a cada render; o `load` não pode re-disparar por isso.
+  const assignmentLostRef = useRef(onAssignmentLost);
+  assignmentLostRef.current = onAssignmentLost;
   const [detail, setDetail] = useState<ReviewDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<Action | null>(null);
@@ -87,17 +105,33 @@ export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavi
 
   const load = useCallback(async () => {
     try {
-      setDetail(await accountingReviewService.get(reviewId, unitId));
+      setDetail(await accountingReviewService.get(reviewId, unitId, ownerUserId));
       setError(null);
     } catch (err: unknown) {
-      setError(resolveError(err, tRef.current('review.error.load', 'Erro ao carregar as revisões.')));
+      const { message, code } = resolveGovernanceError(err, tRef.current, tRef.current('review.error.load', 'Erro ao carregar as revisões.'));
+      if (code === 'ACCOUNTANT_NOT_ASSIGNED') assignmentLostRef.current?.();
+      setError(message);
     }
-  }, [reviewId, unitId, tRef]);
+  }, [reviewId, unitId, ownerUserId, tRef]);
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
+    // Modo cliente: `getAccounts` não é um dos 9 handlers (resolveria o escopo do contador) e só os modais de
+    // resolver/acerto o usam, escondidos aqui.
+    if (delegated) return;
     accountingService.getAccounts(unitId).then((r) => setAccounts(r.accounts)).catch(() => setAccounts([]));
-  }, [unitId]);
+  }, [unitId, delegated]);
+
+  /** Baixar o par em revisão — a leitura que o F-GOV-7 (a+) deu ao contador ("assina o que consegue ler"); nos dois modos. */
+  const download = async (jobId: string, fileName: string) => {
+    try {
+      await dataExchangeService.downloadArtifact(jobId, unitId, fileName, ownerUserId);
+    } catch (err: unknown) {
+      const { message, code } = resolveGovernanceError(err, tRef.current, tRef.current('review.error.download', 'Não foi possível baixar o arquivo.'));
+      if (code === 'ACCOUNTANT_NOT_ASSIGNED') assignmentLostRef.current?.();
+      setError(message);
+    }
+  };
 
   const done = () => { setAction(null); void load(); onChanged(); };
   const review = detail?.review;
@@ -118,10 +152,20 @@ export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavi
               <span>{t(`review.status.${review.status}`, review.status)}</span>
               <span data-testid="review-blockers" data-count={openBlockers}>{t('review.detail.blockers', '{{n}} BLOCKER abertos', { n: openBlockers })}</span>
             </div>
+            {(review.ecdJobId || review.ecfJobId) && (
+              <div className="flex flex-wrap gap-2" data-testid="review-downloads">
+                {review.ecdJobId && (
+                  <button type="button" onClick={() => void download(review.ecdJobId as string, `sped-ecd-${review.year}.txt`)} className={smallBtn}>{t('review.action.downloadEcd', 'Baixar ECD')}</button>
+                )}
+                {review.ecfJobId && (
+                  <button type="button" onClick={() => void download(review.ecfJobId as string, `sped-ecf-${review.year}.txt`)} className={smallBtn}>{t('review.action.downloadEcf', 'Baixar ECF')}</button>
+                )}
+              </div>
+            )}
             {isOpen && (
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => setAction({ kind: 'addFinding' })} className={smallBtn}>{t('review.action.addFinding', 'Adicionar achado')}</button>
-                <button type="button" onClick={() => setAction({ kind: 'replaceJobs' })} className={smallBtn}>{t('review.action.replaceJobs', 'Trocar jobs')}</button>
+                {!delegated && <button type="button" onClick={() => setAction({ kind: 'addFinding' })} className={smallBtn}>{t('review.action.addFinding', 'Adicionar achado')}</button>}
+                {!delegated && <button type="button" onClick={() => setAction({ kind: 'replaceJobs' })} className={smallBtn}>{t('review.action.replaceJobs', 'Trocar jobs')}</button>}
                 <button type="button" onClick={() => setAction({ kind: 'signOff' })} disabled={openBlockers > 0} className={`${smallBtn} disabled:cursor-not-allowed disabled:opacity-40`}>{t('review.action.signOff', 'Assinar')}</button>
                 <button type="button" onClick={() => setAction({ kind: 'reject' })} className={`${smallBtn} hover:border-red-800 hover:text-red-300`}>{t('review.action.reject', 'Rejeitar')}</button>
               </div>
@@ -161,7 +205,7 @@ export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavi
                               <div className="space-y-0.5">
                                 <div>{t(`review.resolution.${f.resolution}`, f.resolution)} · {formatTimestamp(f.resolvedAt)}</div>
                                 {f.resolutionNote && <div className="text-neutral-400">{f.resolutionNote}</div>}
-                                {target && TARGET_TAB[target] && (
+                                {!delegated && target && TARGET_TAB[target] && (
                                   <button type="button" onClick={() => onNavigateTab(TARGET_TAB[target])} className="underline">
                                     {t('review.finding.openOwner', 'Abrir {{type}} {{id}} no painel dono', { type: target, id: shortId(f.resolutionTargetId) })}
                                   </button>
@@ -173,7 +217,7 @@ export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavi
                             )}
                           </td>
                           <td className={td}>
-                            {isOpen && !f.resolution && (
+                            {!delegated && isOpen && !f.resolution && (
                               <div className="flex flex-wrap gap-1">
                                 <button type="button" onClick={() => setAction({ kind: 'dataEdit', finding: f })} className={smallBtn}>{t('review.action.dataEdit', 'Apontar dado editado')}</button>
                                 <button type="button" onClick={() => setAction({ kind: 'adjustment', finding: f })} className={smallBtn}>{t('review.action.adjustment', 'Lançar acerto')}</button>
@@ -201,9 +245,9 @@ export function ReviewDetailModal({ reviewId, unitId, onClose, onChanged, onNavi
       )}
       {review && action?.kind === 'replaceJobs' && <ReplaceJobsModal reviewId={review.id} unitId={unitId} year={review.year} onClose={() => setAction(null)} onDone={done} />}
       {review && action?.kind === 'signOff' && (
-        <SignOffModal reviewId={review.id} unitId={unitId} openBlockers={openBlockers} onClose={() => setAction(null)} onDone={done} onReplaceJobs={() => setAction({ kind: 'replaceJobs' })} />
+        <SignOffModal reviewId={review.id} unitId={unitId} openBlockers={openBlockers} onClose={() => setAction(null)} onDone={done} onReplaceJobs={() => setAction({ kind: 'replaceJobs' })} governance={governance} active={active} onAssignmentLost={onAssignmentLost} />
       )}
-      {review && action?.kind === 'reject' && <RejectModal reviewId={review.id} unitId={unitId} onClose={() => setAction(null)} onDone={done} />}
+      {review && action?.kind === 'reject' && <RejectModal reviewId={review.id} unitId={unitId} onClose={() => setAction(null)} onDone={done} governance={governance} active={active} onAssignmentLost={onAssignmentLost} />}
     </Modal>
   );
 }
@@ -258,8 +302,8 @@ function CommandModal({
   );
 }
 
-function useCommand(onDone: () => void) {
-  const { t } = useAccountingT();
+function useCommand(onDone: () => void, ctx?: { vars?: Record<string, string>; onAssignmentLost?: () => void }) {
+  const { t, tRef } = useAccountingT();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastError, setLastError] = useState<unknown>(null);
@@ -271,7 +315,9 @@ function useCommand(onDone: () => void) {
       onDone();
     } catch (err: unknown) {
       setLastError(err);
-      setError(resolveError(err, t('review.error.generic', 'Não foi possível concluir a operação.')));
+      const { message, code } = resolveGovernanceError(err, tRef.current, t('review.error.generic', 'Não foi possível concluir a operação.'), ctx?.vars);
+      if (code === 'ACCOUNTANT_NOT_ASSIGNED') ctx?.onAssignmentLost?.();
+      setError(message);
     } finally {
       setBusy(false);
     }
@@ -464,6 +510,9 @@ function SignOffModal({
   onClose,
   onDone,
   onReplaceJobs,
+  governance,
+  active,
+  onAssignmentLost,
 }: {
   reviewId: string;
   unitId: string;
@@ -471,15 +520,20 @@ function SignOffModal({
   onClose: () => void;
   onDone: () => void;
   onReplaceJobs: () => void;
+  governance?: GovernanceScope;
+  active?: ActiveAssignment | null;
+  onAssignmentLost?: () => void;
 }) {
   const { t } = useAccountingT();
   const [reviewerName, setReviewerName] = useState('');
-  const [reviewerCrc, setReviewerCrc] = useState('');
+  // F-FE-GOV-3 (a): no modo cliente o CRC é o snapshot da atribuição, só-leitura — o único valor que o servidor aceita (F-GOV-9 a).
+  const [reviewerCrc, setReviewerCrc] = useState(governance?.crcNumber ?? '');
   const [statement, setStatement] = useState('');
-  const cmd = useCommand(onDone);
+  const cmd = useCommand(onDone, { vars: activeAssignmentVars(active ?? null, governance), onAssignmentLost });
   const valid = openBlockers === 0 && reviewerName.trim().length >= 3 && reviewerName.trim().length <= 120 && reviewerCrc.trim() !== '' && statement.trim().length >= 1 && statement.trim().length <= 500;
   const submit = () => {
     const body: SignOffReviewInput = { unitId, reviewerName: reviewerName.trim(), reviewerCrc: reviewerCrc.trim(), statement: statement.trim() };
+    if (governance) body.ownerUserId = governance.ownerUserId;
     void cmd.run(() => accountingReviewService.signOff(reviewId, body));
   };
   return (
@@ -490,7 +544,7 @@ function SignOffModal({
       onSubmit={submit}
       onClose={onClose}
       error={cmd.error}
-      extraError={isConflict(cmd.lastError, 'REVIEW_STALE') && (
+      extraError={!governance && isConflict(cmd.lastError, 'REVIEW_STALE') && (
         <button type="button" onClick={onReplaceJobs} className="underline">{t('review.action.replaceJobs', 'Trocar jobs')}</button>
       )}
     >
@@ -499,7 +553,7 @@ function SignOffModal({
         <input value={reviewerName} maxLength={120} onChange={(e) => setReviewerName(e.target.value)} className={inputClass} />
       </Field>
       <Field label={t('review.signOff.crc', 'CRC')}>
-        <input value={reviewerCrc} onChange={(e) => setReviewerCrc(e.target.value)} placeholder="SP-123456/O-1" className={inputClass} />
+        <input value={reviewerCrc} readOnly={!!governance} onChange={(e) => setReviewerCrc(e.target.value)} placeholder="SP-123456/O-1" className={inputClass} />
         <span className="text-neutral-500">{t('review.signOff.crcHint', 'Máscara CFC UF-NNNNNN/O-D.')}</span>
       </Field>
       <Field label={t('review.signOff.statement', 'Declaração')}>
@@ -510,17 +564,38 @@ function SignOffModal({
 }
 
 /** Item 12: rejeitar — terminal. */
-function RejectModal({ reviewId, unitId, onClose, onDone }: { reviewId: string; unitId: string; onClose: () => void; onDone: () => void }) {
+function RejectModal({
+  reviewId,
+  unitId,
+  onClose,
+  onDone,
+  governance,
+  active,
+  onAssignmentLost,
+}: {
+  reviewId: string;
+  unitId: string;
+  onClose: () => void;
+  onDone: () => void;
+  governance?: GovernanceScope;
+  active?: ActiveAssignment | null;
+  onAssignmentLost?: () => void;
+}) {
   const { t } = useAccountingT();
   const [reason, setReason] = useState('');
-  const cmd = useCommand(onDone);
+  const cmd = useCommand(onDone, { vars: activeAssignmentVars(active ?? null, governance), onAssignmentLost });
+  const submit = () => {
+    const body: RejectReviewInput = { unitId, reason: reason.trim() };
+    if (governance) body.ownerUserId = governance.ownerUserId;
+    void cmd.run(() => accountingReviewService.reject(reviewId, body));
+  };
   return (
     <CommandModal
       title={t('review.action.reject', 'Rejeitar')}
       danger
       busy={cmd.busy}
       canSubmit={reason.trim().length >= 1 && reason.trim().length <= 500}
-      onSubmit={() => void cmd.run(() => accountingReviewService.reject(reviewId, { unitId, reason: reason.trim() }))}
+      onSubmit={submit}
       onClose={onClose}
       error={cmd.error}
     >
