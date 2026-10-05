@@ -63,6 +63,7 @@ modelo: opus-5.5
 - `npm run smoke:migration -- --db <dev.db real>` → OK, 5 migrações na cópia sem perda, original intocado
 - `npm run docs:generate` → 244 paths (antes 244)
 - `npm run test:unit` → 275 suítes, 3927 passed · `npm run test:integration` → 109 suítes, 905 passed (rodada única)
+- depois dos achados 1–3 (`03ab98f8`, `9c281ea4`): `npm run test:unit` → 275 suítes, 3927 passed · `npm run test:integration` → 109 suítes, **907** passed (rodada única; +2 testes)
 
 ### Fold pronto (pós-merge, não aplicado)
 `id: X7` · `estado: inflight` · `estado_detalhe: + "05/10: Fase B PR-3 mergeado no #<n> (itens 5, 6, 11, 13–17: estimativa por receita bruta, balancete com gate de meses fechados, ajuste anual, cascata mensal, provisão mensal + diferença do A00 com saldo negativo; ANUAL segue não selecionável). Decisões do dono 05/10 em D-2026-10-05-X7-FASE-B-PR3-LACUNAS. Próximo: PR-4 (ECF anual + liberação do ANUAL), exige 'executa'"` · `prs: + "#<n>"`
