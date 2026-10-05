@@ -42,8 +42,13 @@ let today: string;
 const addDays = (d: string, n: number) => dateOnlyFromDayNumber(dayNumberFromDateOnly(d) + n);
 const scopeOf = (unitId: string): AccountingScope => resolveAccountingScope({ userId: user.id }, unitId);
 
+/**
+ * Grava a linha como o MOTOR a grava: o campo `date` (date-only) vira ISO à meia-noite UTC (`2026-11-25T00:00:00.000Z`). Gravar
+ * `YYYY-MM-DD` por Prisma escondia o defeito das pontes que liam o ISO como instante (FIX-SALE-DATE-AS-WRITTEN, regra de fixture).
+ */
 async function row(table: keyof typeof tables, data: Record<string, unknown>) {
-  return prisma.dynamicTableData.create({ data: { dynamicTableId: tables[table], data: data as never } });
+  const stored = typeof data.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.date) ? { ...data, date: `${data.date}T00:00:00.000Z` } : data;
+  return prisma.dynamicTableData.create({ data: { dynamicTableId: tables[table], data: stored as never } });
 }
 
 async function newUnit(name: string, months: string[]) {
