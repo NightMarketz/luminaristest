@@ -16,7 +16,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
-import { scopeDay } from '../../models/dates';
+import { saleDayAsWritten } from '../../models/dates';
 import { buildSaleCogsEvent, buildSaleFinalizedEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadSalePackageInfo } from './saleItems';
 import type { AccountingScope } from '../../scope/AccountingScope';
@@ -85,10 +85,10 @@ export async function maybeSyncSaleFinalized(
     }
 
     const currency = typeof data.currency === 'string' ? data.currency : 'BRL';
-    // Scope resolvido ANTES da data: `scopeDay` precisa do fuso. `data.date` é 'date' no preset (já
-    // dia-calendário ⇒ passa intacto); o fallback é "agora", que sem fuso postaria em D+1 à noite.
+    // Scope resolvido ANTES da data: o fallback "agora" precisa do fuso (sem ele postaria em D+1 à noite). `data.date` é
+    // um DIA (o motor o grava como ISO à meia-noite UTC): lê-se como escrito — `scopeDay` o recuaria para o dia anterior.
     const scope = resolveAccountingScope(actor, unitId);
-    const occurredAt = scopeDay(scope, typeof data.date === 'string' ? data.date : undefined);
+    const occurredAt = saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined);
     const event = buildSaleFinalizedEvent({
       saleId: row.id,
       unitId,
