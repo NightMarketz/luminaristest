@@ -1,9 +1,20 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Portão do Scheduler do React (guarda do flake da CI da main, run 37350169269): o Scheduler captura `setImmediate` ao
+// carregar, então o embrulho tem de vir antes dos imports (`vi.hoisted`). Desligado, é transparente; ligado, adia cada
+// rodada do Scheduler em 2 ms — o `setTimeout(0)` com que o RTL encerra o `findBy*` passa a chegar antes dela.
+const schedulerGate = vi.hoisted(() => {
+    const realSetImmediate = globalThis.setImmediate;
+    const gate = { slow: false };
+    globalThis.setImmediate = ((cb: (...args: unknown[]) => void, ...args: unknown[]) =>
+        gate.slow ? setTimeout(cb, 2, ...args) : realSetImmediate(cb, ...args)) as unknown as typeof setImmediate;
+    return gate;
+});
+
 // Shim obrigatório (jsx "preserve" + runtime clássico) — nunca em código de produção.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent, within, act } from '@testing-library/react';
 import SalesCreateModal from '../SalesCreateModal';
 import SaleDetailPanel from '../SaleDetailPanel';
 import { SalePaymentModal } from '../SaleActionModals';
@@ -149,7 +160,7 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         fireEvent.change(screen.getByTestId('rel-customerId'), { target: { value: 'c1' } });
         fireEvent.click(screen.getByText('Próximo'));
         fireEvent.click(screen.getByText('add-item'));
-        fireEvent.click(screen.getByText('pick-package'));
+        await act(async () => { fireEvent.click(screen.getByText('pick-package')); });
         await screen.findByTestId('package-validity-notice');
     };
     const finalizeBtn = () => screen.getByText('Finalizar Venda').closest('button') as HTMLButtonElement;
@@ -189,6 +200,24 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         await screen.findByText('Válido até 27/12/2026');
         expect((screen.getByLabelText('Li este texto ao cliente e ele concordou') as HTMLInputElement).checked).toBe(false);
         expect(finalizeBtn().disabled).toBe(true);
+    });
+
+    // Flake da CI da main (run 37350169269, "trocar a data…" :181): numa máquina lenta o Scheduler cede entre o commit que
+    // mostra o aviso e o efeito que zera o aceite; o `findByTestId` resolve no commit, o clique entra com o efeito pendente
+    // e o React o descarrega antes de aplicar o clique — o `false` do efeito vence o `true` do clique. Condição reproduzida:
+    // `performance.now` anda 10 ms por leitura (o quadro de 5 ms do Scheduler estoura) + o portão do topo do arquivo.
+    it('guarda: o aceite marcado logo depois de openPackageSale() não é desfeito pelo efeito pendente (Scheduler lento)', async () => {
+        let now = 0;
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 10));
+        schedulerGate.slow = true;
+        try {
+            await openPackageSale();
+            fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
+            expect(finalizeBtn().disabled).toBe(false);
+        } finally {
+            schedulerGate.slow = false;
+            clock.mockRestore();
+        }
     });
 
     it('pacote sem validade: mostra "Sem validade", sem checkbox e sem travar a venda', async () => {
