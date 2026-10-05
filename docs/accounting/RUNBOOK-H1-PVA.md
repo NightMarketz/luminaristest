@@ -121,7 +121,13 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > **[EMENDA 2026-10-05 — preflight `luminaris-gate-copilot` pós-#487] A ordem acima está incompleta para o `dev.db` de hoje.**
 > Medido em 05/10 sobre cópia do `dev.db` real (md5 `9de3277d…`, original intocado): (i) **4 migrações pendentes**
 > (`20261003130000_add_fiscal_profile_pacote_ctribnac`, `20261003130100_add_fiscal_profile_pacote_cnbs`,
-> `20261004130000_add_company_fiscal_profile_prestadora_exclusiva`, `20261004150000_add_accounting_policy_versions`) —
+> `20261004130000_add_company_fiscal_profile_prestadora_exclusiva`, `20261004150000_add_accounting_policy_versions`) *[emenda do número, 05/10 — dono: "pode emendar o número de migrações do H1"; delta `d8616a4..3829fd3`
+> do gate-copilot: a lista acima é a de um checkout anterior às duas migrações de 05/10. Em `main` (`3829fd3`) espere
+> **6 pendentes** — as 4 acima + `20261005120000_add_package_validity_acceptances` (#530) e
+> `20261005120000_add_tax_assessment_anual_fields` (#529) —, ou **7** se `20261004120000_add_tax_assessments` (#504) também
+> não estiver aplicada (inferido: ela é anterior às 4 medidas e não apareceu na medição, logo deve já estar no banco).
+> As 3 são só aditivas (`CREATE … IF NOT EXISTS` / `ADD COLUMN` com default ou anulável), lidas, não executadas. O critério
+> do passo 2 é `migrate status` = up to date, não a contagem; diverge só migração fora destas 7]* —
 > `smoke-migration-gate.mjs` PASS na cópia; (ii) o Prisma client do checkout principal estava velho — `db:seed:accounting`
 > e `activate-salon-binding.mjs` morrem com `TSError` (`generated/prisma` sem `AccountingPolicyVersion`); (iii)
 > `seed-presumido`/`seed-real` têm **0 tabelas dinâmicas** ⇒ o seed instala o salão + unidade (não cai na recusa);
@@ -163,7 +169,7 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > `OK: binding 'beautySalon' ativado — versão 1` → `node dist/server.js` (build de produção, `c96e2227`)
 > `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. ~~**P2b está satisfeito
 > neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**~~ *(Superado
-> em 05/10: havia 4 migrações pendentes — rode o `migrate deploy` conforme a EMENDA 2026-10-05 acima.)*
+> em 05/10: havia migrações pendentes (4 medidas; 6–7 em `main` de 05/10, ver a EMENDA) — rode o `migrate deploy` conforme a EMENDA 2026-10-05 acima.)*
 
 ### Subir o ambiente (build de produção)
 
