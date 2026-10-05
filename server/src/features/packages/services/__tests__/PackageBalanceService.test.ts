@@ -207,6 +207,8 @@ describe('PackageBalanceService', () => {
       expect(err).toBeInstanceOf(PackageBalanceExpiredError);
       expect((err as PackageBalanceExpiredError).errorCode).toBe('PACKAGE_BALANCE_EXPIRED');
       expect((err as PackageBalanceExpiredError).statusCode).toBe(400);
+      // F-PP-1 (a): o operador lê só a data em DD/MM/AAAA — sem id de cliente, sem id de pacote, sem ISO.
+      expect((err as PackageBalanceExpiredError).message).toBe('Saldo de pacote vencido em 31/03/2026.');
     });
 
     it('21h de 31/03 em BRT ainda é 31/03 (UTC já é 01/04) — consome', async () => {

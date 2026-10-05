@@ -286,7 +286,7 @@ export class PackageBalanceService {
     const balance = await this.repo.findBalance(scope, customerId, packageId);
     const expiresOn = expiresOnFromDb(balance?.expiresAt ?? null);
     if (isExpiredForConsumption(expiresOn, scopeToday(scope))) {
-      throw new PackageBalanceExpiredError(customerId, packageId, expiresOn!);
+      throw new PackageBalanceExpiredError(expiresOn!);
     }
     const current = centsFromDb(balance?.balanceCents ?? 0n);
     if (current < amountCents) {

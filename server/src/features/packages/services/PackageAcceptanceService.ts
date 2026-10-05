@@ -95,7 +95,7 @@ export class PackageAcceptanceService {
         textSha256: notice.textSha256,
         acceptedByUserId: scope.actorUserId,
       });
-      return this.toResponse(row);
+      return this.toResponse(row, await this.userLabel(row.acceptedByUserId));
     } catch (err) {
       // Two concurrent accepts of the same sale: the @@unique is the gate, the pre-check above only gives the fast 409.
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
@@ -109,7 +109,7 @@ export class PackageAcceptanceService {
   public async getBySale(scope: AccountingScope, saleId: string): Promise<PackageAcceptanceResponse | null> {
     this.assertCanRead(scope);
     const row = await this.repo.findBySale(scope, saleId);
-    return row ? this.toResponse(row) : null;
+    return row ? this.toResponse(row, await this.userLabel(row.acceptedByUserId)) : null;
   }
 
   /**
@@ -125,9 +125,8 @@ export class PackageAcceptanceService {
     let acceptance: { acceptedByLabel: string; acceptedAt: Date; textVersion: string } | null = null;
     if (accepted) {
       clause = accepted.textShown;
-      const actor = await this.userRepo.getUserById(accepted.acceptedByUserId);
       acceptance = {
-        acceptedByLabel: actor?.name || actor?.username || accepted.acceptedByUserId,
+        acceptedByLabel: await this.userLabel(accepted.acceptedByUserId),
         acceptedAt: accepted.acceptedAt,
         textVersion: accepted.textVersion,
       };
@@ -212,7 +211,13 @@ export class PackageAcceptanceService {
     return typeof name === 'string' && name ? name : rowId;
   }
 
-  private toResponse(row: PackageValidityAcceptance): PackageAcceptanceResponse {
+  /** "Quem" legível: `name || username`; o id se o usuário não existe mais. Uma fonte para o PDF e para a resposta (F-PP-2 a). */
+  private async userLabel(userId: string): Promise<string> {
+    const user = await this.userRepo.getUserById(userId);
+    return user?.name || user?.username || userId;
+  }
+
+  private toResponse(row: PackageValidityAcceptance, acceptedByLabel: string): PackageAcceptanceResponse {
     return {
       id: row.id,
       saleId: row.saleId,
@@ -225,6 +230,7 @@ export class PackageAcceptanceService {
       textShown: row.textShown,
       textSha256: row.textSha256,
       acceptedByUserId: row.acceptedByUserId,
+      acceptedByLabel,
       acceptedAt: row.acceptedAt.toISOString(),
     };
   }

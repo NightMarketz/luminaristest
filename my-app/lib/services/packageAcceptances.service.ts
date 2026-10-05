@@ -37,6 +37,8 @@ export interface PackageAcceptance {
   textShown: string;
   textSha256: string;
   acceptedByUserId: string;
+  /** name || username de quem registrou (o id se o usuário não existe mais) — é o que o detalhe mostra. */
+  acceptedByLabel: string;
   acceptedAt: string;
 }
 

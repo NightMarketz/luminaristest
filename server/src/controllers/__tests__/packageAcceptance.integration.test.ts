@@ -89,13 +89,13 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
       expect(created.status).toBe(201);
       expect(created.body.data).toMatchObject({
         saleId, customerId, packageId: pkg30, saleDate: SALE_DATE, validityDays: 30, expiresOn: '2026-12-26',
-        textVersion: 'v1', textShown: notice().text, textSha256: notice().textSha256, acceptedByUserId: user.id,
+        textVersion: 'v1', textShown: notice().text, textSha256: notice().textSha256, acceptedByUserId: user.id, acceptedByLabel: 'Bia',
       });
       expect(new Date(created.body.data.acceptedAt).getTime()).toBeGreaterThan(Date.now() - 60_000);
 
       const got = await request(app).get('/api/package-acceptances').query({ unitId, saleId }).set(authHeader(user));
       expect(got.status).toBe(200);
-      expect(got.body.data).toMatchObject({ saleId, textShown: notice().text, acceptedByUserId: user.id });
+      expect(got.body.data).toMatchObject({ saleId, textShown: notice().text, acceptedByUserId: user.id, acceptedByLabel: 'Bia' });
     });
 
     it('2º aceite da mesma venda → 409 PACKAGE_ACCEPTANCE_EXISTS, e continua uma linha só', async () => {
