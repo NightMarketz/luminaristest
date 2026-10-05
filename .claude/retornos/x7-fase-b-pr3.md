@@ -55,6 +55,7 @@ modelo: opus-5.5
 - Achado 1 (latente até o PR-4): `inicioAtividadeEm` editável depois da trava deixa confirmar o A10 depois do A00 vivo, que não o conta → **decisão 5 acima; corrigido** com teste vermelho→verde (`taxAssessmentProfile.integration` "achado 1 do review").
 - Achado 2: o cabeçalho `atomicUntil` citava um nome de teste que não existe → **corrigido** (`03ab98f8`).
 - Achado 3: faltava teste da validação `Asset` das 2 contas novas → **corrigido** (`03ab98f8`, inclui a prova de que omitir os campos no PUT os preserva).
+- **2ª rodada (delta `bdf648c3..ca0cce18`): PASS.** O revisor provou o teste novo vermelho contra o código anterior ao fix (400 esperado, 200 recebido) e verde depois; varreu os caminhos de escrita do perfil (upsert com a trava em-tx, copyFrom 409, remove recusado, onboarding antes da 1ª confirmação) — nenhum outro muda as datas depois da trava. Observação: não há como destravar (erro de digitação na data depois da 1ª confirmação não se corrige pela API, como o regime). Sugestão para o PR-4: no teste 26 (l), um caso `ANUAL` travado com troca de data.
 - Achado 4 (observação, desenho herdado da Fase A): substituir um mês já FECHADO não estorna a provisão antiga e deixa a nova pendente; com o item 15, isso fica frequente no anual. O encerramento bloqueia com provisão pendente — sem perda silenciosa. Registrado, não alterado.
 
 ### Checks executados
