@@ -88,3 +88,17 @@ id: PACOTE-VALIDADE · estado: done (após merge) · estado_detalhe: "03/10: exe
 - **D1 (F-JUR-2, F-PV-3 volta a a):** removidos `jobs/packageValidityBackfill.job.ts` + teste, a chamada no boot (`server.ts`) e `listBackfillCandidates`/`setExpiresAtIfNull` (repo + interface; únicos chamadores eram o job). O teste "saldo `null` com saldo > 0 continua `null`" já existia (`PackageBalanceService.test.ts:126`). O merge não grava mais nada no 1º boot.
 - **D2 (F-JUR-6):** `lastValidDay` prorroga o último dia que cair em feriado nacional até o próximo dia que não é feriado nem domingo (CC 132 § 1º). Lista transcrita do Planalto em 04/10: Lei 662/1949 art. 1º (red. Lei 10.607/2002), Lei 6.802/1980 (12/10), Lei 14.759/2023 (20/11, ≥ 2024). Sexta-feira da Paixão fora (Lei 9.093/1995 art. 2º, municipal). **Lacuna de spec aberta e decidida no meio:** Código Eleitoral art. 380 + CF arts. 28/29/77 → domingos de eleição (1º e último de outubro, anos pares); dono escolheu **os dois turnos**, contra a recomendação (só o 1º). Estaduais/municipais fora (`ponytail:`).
 - Checks: `tsc` server 0; unit de `packages`/`jobs`/`sync` verdes; `npm run test:integration` 856/856 (104 suítes, em série). Unit completa NÃO rodada localmente — fica para a CI. Branch atrás do `main` (#504), não trazido (sessão de integração).
+
+### 4º merge de `main` (Auto-fix, 04/10) — `fa9a27f5`
+- Sobre o commit do delta D1+D2 (`071bda48`, outra sessão). Conflitos só em documentação:
+  - BRIEF: os dois lados criaram um "§5.3". A emenda da triagem do PE-6 (#506) ficou §5.3 (a nota do nó e este retorno já a citam por esse número); as lacunas L1/L2/L7/L8 desta execução viraram **§5.4**, e as referências acima foram ajustadas.
+  - Nota do nó: tudo do `main` + a autorização "Executa…" de 03/10; `_INDEX.md` regenerado, vault íntegro.
+- Checks: `tsc` 0; `docs:generate` 239 paths; unit 3865 passed + 1 flaky de concorrência conhecido; `pacoteValidade` + `rekeyLegacyUnitCli` 24/24.
+
+### #483 mergeado (05/10 02:09, head `1a6342dc`, merge `2d1ddbe5`) e follow-up #512
+- O review independente do delta D1+D2 deu FAIL só por um teste dependente de data (pedido do dono, repassado pela sessão "GOV BRIEFs e merges múltiplos"): o e2e somava 30 dias corridos para o vencimento esperado; com o D2 (feriado nacional / domingo de eleição prorrogam) divergia do `lastValidDay` quando hoje+20/+30 caía num desses dias — 19 datas nos próximos 365 dias, a 1ª em 05/10/2026 (25/10 = 2º turno).
+- Como o #483 já estava mergeado, a correção saiu em PR novo: **NightMarketz/luminaristest#512** (`fix/e2e-pacote-validade-feriado`, base `main`, NÃO mergeado). Só teste, código de aplicação intocado:
+  - esperado derivado de `lastValidDay`: vencimento da unidade A, mês de competência da unidade B, as duas consultas `expiresOnOrBefore` do item 16;
+  - `validity.test.ts`: renomeado o caso "feriados encadeados: 20/11 sobre 21/11" (não testa encadeamento — 20/11/2026 é sexta → sábado).
+- Prova (hook temporário só no `Date`, timers reais, não commitado): versão anterior com `Date` = 05/10/2026 → 6 falhas (`Expected "2026-10-25" / Received "2026-10-26"`); versão nova com 05/10, 13/10, 26/10/2026 e hoje → 10/10; 05/10 re-provado sobre o `main` atual. `tsc` 0; unit `validity` verde.
+- Incidente: o 1º push recriou `feat/be-incr-pacote-validade` (apagada no merge) só com esse commit sobre base antiga; a branch remota foi apagada de novo — o commit vive no #512.
