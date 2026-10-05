@@ -19,15 +19,19 @@
 > Sobre o parecer de 04/10 (validade de pacote pré-pago): o sistema já informa a validade e registra o aceite. Preciso que você
 > confira **a forma** — o texto, o tamanho da letra e a prova do aceite — antes de implantar.
 >
-> **O que o salão faz na venda do pacote:** o atendente vê, em caixa com borda e letra em negrito, o texto abaixo (a data é
+> **O que o salão faz na venda do pacote:** o atendente vê, em caixa com borda e letra em negrito (peso 600 na tela, 16px), o texto abaixo (a data é
 > calculada pelo sistema, e se o último dia cair em feriado nacional ele vai até o dia útil seguinte):
 >
 > > *VALIDADE DO PACOTE: este pacote vale por 30 dias corridos a contar da data da compra (25/11/2026). Último dia para usar:
 > > 26/12/2026. Se o prazo terminar em feriado nacional, ele vai até o dia útil seguinte, e a data acima já considera isso. O saldo
 > > não usado até essa data não será devolvido nem trocado por dinheiro.*
 >
-> O atendente só consegue concluir a venda **depois de marcar** "Li este texto ao cliente e ele concordou". O sistema grava quem
-> registrou, quando (relógio do servidor), o texto exato mostrado e um código que prova que o texto não mudou. Há também um
+> Na tela, os botões de salvar a venda só habilitam **depois de marcar** "Li este texto ao cliente e ele concordou". O sistema grava
+> quem registrou, quando (relógio do servidor), o texto exato mostrado e um código que prova que o texto não mudou. **Ressalva:** a
+> trava é da tela, não do servidor. O aceite é gravado logo depois de criar a venda; se essa gravação falhar (rede, por exemplo), a
+> venda fica criada, o sistema avisa e a venda passa a mostrar "Aceite não registrado" com um botão para registrar depois (o
+> comprovante dessa venda sai com a marca "ACEITE NÃO REGISTRADO"). Uma venda criada por fora da tela (planilha, API) também não
+> passa pela trava. Há também um
 > **comprovante em PDF** com o mesmo texto em caixa, em negrito e em corpo 12pt, o registro do aceite e uma linha para a
 > **assinatura do cliente** no papel, que o salão guarda.
 >
