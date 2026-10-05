@@ -5,8 +5,9 @@
 > (`docs/operating-manual/RUNBOOK-FORMAT.md`).
 
 Executor: [nome — humano]           Data: [____]
-Autorização: fila §5.1 Bloco A item 3 do `docs/accounting/ACCOUNTING-MASTER-MAP.md` (gate aberto)
-Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
+Autorização: dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" — campo `autorizacao` de
+[`docs/plano/gates/H1.md`](../plano/gates/H1.md) *(emenda 05/10; antes: fila §5.1 Bloco A item 3 do master map, já sem arquivo)*
+Rastreio a atualizar no fim: nota [`docs/plano/gates/H1.md`](../plano/gates/H1.md) (ex-master map §5.1 Bloco A, item 3)
 
 ---
 
@@ -40,7 +41,13 @@ Download → SPED. As duas páginas:
 | Validador | Página oficial | Arquivo Windows x64 (vigente em 2026-09-07) | Bytes | Página "Atualizado em" |
 |---|---|---|---|---|
 | **ECD** (Sped Contábil) | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecd> | [`SPEDContabil_w64-10.4.1.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/SpedContabil/SPEDContabil_w64-10.4.1.exe) | 129.667.328 | 19/05/2026 |
-| **ECF** | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecf> | [`SpedEcf_w64-12.2.6.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/ECF/SpedEcf_w64-12.2.6.exe) | 143.753.984 | **03/09/2026** |
+| **ECF** | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecf> | [`SpedEcf_w64-12.2.7.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/ECF/SpedEcf_w64-12.2.7.exe) | 143.751.424 | **18/09/2026** |
+
+> **[EMENDA 2026-10-05 — dono: "Pode emendar, junta o cabeçalho também"]** A ECF passou de 12.2.6 para **12.2.7**: página
+> oficial "Atualizado em 18/09/2026 10h54", `Content-Length` 143.751.424 e cabeçalho `MZ` conferidos pelo agente em 05/10
+> (nada instalado nem executado). A 12.2.6 (143.753.984 bytes, página de 03/09) é a que a reconciliação de 17/09
+> registrou como instalada — **está superada**: baixe e instale a 12.2.7 antes do passo 6. A ECD segue 10.4.1 (página
+> de 19/05, conferida em 05/10). A cópia local de 07/09 em `luminaris-gates` tem o `.exe` da ECF velho.
 
 As páginas também oferecem `w32` (Windows 32 bits) e Linux (`.sh`, exige `chmod +x` segundo a
 própria página). O atalho `gov.br/sped → Centrais de Conteúdo → Downloads → "Validador ECD/ECF"`
@@ -49,7 +56,7 @@ redireciona para as mesmas páginas. Cópia local baixada em 2026-09-07:
 
 **Leitura de versão (grau: inferido, confirmar no "Sobre"):** o major do validador da ECF (**12**.x)
 acompanha o **Leiaute 12** do Manual; a página da ECF foi atualizada em **03/09/2026**, quatro dias
-antes desta emenda — se ao abrir o programa a versão for maior que 12.2.6, a página oficial é a
+antes desta emenda — se ao abrir o programa a versão for maior que 12.2.7 (vigente desde 18/09, emenda 05/10), a página oficial é a
 verdade e este quadro é histórico. Para a ECD, o número (10.4.1) **não** é o número do leiaute da
 ECD; não infira nada dele.
 
@@ -69,7 +76,7 @@ continua sendo do dono; a evidência está na página 1 do arquivo.
    a cópia local antiga.
 2. Execute `SPEDContabil_w64-10.4.1.exe` como o usuário que vai rodar o H1 (o programa grava a base
    local do validador no perfil desse usuário). Aceite o diretório padrão.
-3. Execute `SpedEcf_w64-12.2.6.exe` da mesma forma. São **dois programas independentes**; o da ECF
+3. Execute `SpedEcf_w64-12.2.7.exe` da mesma forma. São **dois programas independentes**; o da ECF
    não substitui nem contém o da ECD.
 4. Abra cada um, vá em **Ajuda → Sobre** (ou equivalente) e anote a versão exibida.
 5. Se o programa oferecer **atualização automática** ao abrir, aceite e anote a versão final — o que

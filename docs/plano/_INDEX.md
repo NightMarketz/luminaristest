@@ -54,7 +54,7 @@
 | [[H2]] | Sign-off de browser (inclui upload OFX/CNAB/NF-e por clique, wizard) | human-open — Runbooks em branco. 28/09: os passos 6–11 (vendas na tela do salão, conferidas no razão) precisam do tenant do seed com o salão instalado — [[SEED-UNITS]] (F-S1b → salão inteiro) — e da correção do seletor de unidade (productUnits). Ordem do dono: H1 → H2 → M2 · 29/09: seletor de unidade corrigido no #438; falta o SEED-UNITS (F-S1b → salão inteiro) | [[SEED-UNITS]], [[H1]] ✗ | — |
 | [[H3]] | Sign-off / prova do P2 clínica (ECD do vertical 2 PVA-limpa) | human-open — Runbook em branco | [[P2]], [[H1]] ✗ | — |
 | [[M2]] | Host + 1º deploy (VPS, 1 instância por cliente, BYOK; conta de emissão por unidade R8) | human-open — Alvo decidido 22/08; **VPS contratada (dono, 26/09)**; runbook em branco. Ordem do dono: H1 → H2 → M2 | [[H2]] ✗ | — |
-| [[P4]] | Instalar validadores (PVA ECD/ECF) | human-open — PVA 10.4.1/12.2.6 instalados (i4jparams.conf, reconciliação 17/09); evidência do P4 segue do dono | — | — |
+| [[P4]] | Instalar validadores (PVA ECD/ECF) | human-open — PVA 10.4.1/12.2.6 instalados (i4jparams.conf, reconciliação 17/09); evidência do P4 segue do dono · 05/10: ECF vigente passou a 12.2.7 (página de 18/09) — a 12.2.6 instalada está superada; reinstalar antes do H1 | — | — |
 
 ### Contábil
 
