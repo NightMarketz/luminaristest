@@ -4,7 +4,7 @@
 
 | Âncora | Notas |
 | --- | --- |
-| — | [[PACOTE-VALIDADE]] |
+| — | [[FE-INCR-PACOTE-VALIDADE]] · [[FE-INCR-VENDA-PACOTE]] · [[PACOTE-VALIDADE]] |
 | §18.2 | [[X10i]] |
 | §III.1 · §III.3 §1 | [[GET-DATA-EXCHANGE-JOBS]] |
 | §III.1 · §M5.1 (apontadores) | [[ENVIO-PEDIDO-CONTADOR]] |
