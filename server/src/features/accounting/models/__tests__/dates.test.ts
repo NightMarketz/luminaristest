@@ -9,7 +9,7 @@
  * `jest.setSystemTime` é o oráculo: sem congelar o relógio, este teste passaria/falharia conforme a
  * hora em que a suíte roda — exatamente a razão pela qual o defeito sobreviveu.
  */
-import { isValidDateOnly, scopeDay, scopeToday } from '../dates';
+import { calendarDayAsWritten, isValidDateOnly, saleDayAsWritten, scopeDay, scopeToday } from '../dates';
 import { ValidationError } from '../../../../lib/errors';
 
 const BRT = { timeZone: 'America/Sao_Paulo' };
@@ -121,5 +121,30 @@ describe('isValidDateOnly — o regex sozinho não valida o calendário', () => 
     expect(isValidDateOnly('2026-8-13')).toBe(false);
     expect(isValidDateOnly('2026-08-13T00:00:00Z')).toBe(false);
     expect(isValidDateOnly('')).toBe(false);
+  });
+});
+
+describe('calendarDayAsWritten / saleDayAsWritten — o campo `date` do motor é um DIA, não um instante', () => {
+  const scope = { timeZone: 'America/Sao_Paulo' };
+
+  it('o ISO à meia-noite UTC que o motor grava volta como o MESMO dia (scopeDay recuaria para 24/11)', () => {
+    expect(scopeDay(scope, '2026-11-25T00:00:00.000Z')).toBe('2026-11-24'); // o defeito que este helper evita
+    expect(calendarDayAsWritten('2026-11-25T00:00:00.000Z')).toBe('2026-11-25');
+    expect(calendarDayAsWritten('2026-11-25T00:00:00Z')).toBe('2026-11-25');
+    expect(calendarDayAsWritten('2026-11-25')).toBe('2026-11-25');
+  });
+
+  it('lixo, dia impossível e instante fora da meia-noite lançam ValidationError', () => {
+    for (const bad of ['lixo', '2026-02-30', '2026-02-30T00:00:00.000Z', '2026-11-25T23:30:00.000Z', '2026-11-25T00:00:00-03:00']) {
+      expect(() => calendarDayAsWritten(bad)).toThrow(ValidationError);
+    }
+  });
+
+  it('saleDayAsWritten: as duas formas do motor como escritas; qualquer outra coisa segue o scopeDay de antes (sem regressão)', () => {
+    expect(saleDayAsWritten(scope, '2026-11-25T00:00:00.000Z')).toBe('2026-11-25');
+    expect(saleDayAsWritten(scope, '2026-11-25')).toBe('2026-11-25');
+    expect(saleDayAsWritten(scope, '2026-11-25T23:30:00.000Z')).toBe(scopeDay(scope, '2026-11-25T23:30:00.000Z'));
+    expect(saleDayAsWritten(scope, undefined)).toBe(scopeToday(scope));
+    expect(() => saleDayAsWritten(scope, 'lixo')).toThrow(ValidationError);
   });
 });

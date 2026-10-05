@@ -274,6 +274,32 @@ export class PackageExpiryNfsePendingError extends AppError {
   }
 }
 
+// ── FE-INCR-PACOTE-VALIDADE (BRIEF §4.4) — aceite da validade do pacote (F-JUR-4): códigos próprios.
+
+/** Item 1: a venda já tem aceite (append-only, um por venda) — 409 antes de qualquer escrita. */
+export class PackageAcceptanceExistsError extends AppError {
+  constructor(saleId: string) {
+    super(`A venda ${saleId} já tem aceite de validade registrado.`, 409, 'PACKAGE_ACCEPTANCE_EXISTS');
+    Object.setPrototypeOf(this, PackageAcceptanceExistsError.prototype);
+  }
+}
+
+/** Item 4: o texto/data mostrados não são mais os que o servidor renderiza agora (hash diferente). */
+export class PackageNoticeChangedError extends AppError {
+  constructor(saleId: string) {
+    super(`O texto da validade mudou entre a exibição e o aceite (venda ${saleId}). Releia e aceite de novo.`, 409, 'PACKAGE_NOTICE_CHANGED');
+    Object.setPrototypeOf(this, PackageNoticeChangedError.prototype);
+  }
+}
+
+/** Itens 4 e 13: pacote sem validade (catálogo `validityDays` ausente ou 0) não tem o que aceitar nem comprovar. */
+export class PackageWithoutValidityError extends AppError {
+  constructor(packageId: string) {
+    super(`O pacote ${packageId} não tem validade: não há texto de validade para aceitar.`, 400, 'PACKAGE_WITHOUT_VALIDITY');
+    Object.setPrototypeOf(this, PackageWithoutValidityError.prototype);
+  }
+}
+
 /**
  * BE-INCR-SEED-UNIDADE-E-ENV (item 2) — onboarding: a unidade ou o perfil fiscal não nasceu e o sistema recém-instalado
  * foi DESFEITO (compensação). Um novo create não esbarra no 403 one-shot. `message` já vem montada pelo

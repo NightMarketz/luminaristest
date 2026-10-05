@@ -935,6 +935,32 @@ model PackageBalanceMovement {
   @@map("package_balance_movements")
 }
 
+// FE-INCR-PACOTE-VALIDADE (F-JUR-4, F-FE-PV-2 c; BRIEF §4.1) — PROVA de que a validade foi informada ao cliente na
+// compra: quem registrou, quando (relógio do servidor), o texto exato mostrado e o hash. APPEND-ONLY: uma linha por
+// venda, sem update/delete/soft-delete e sem rota que os faça (é prova, não cadastro — mesma exceção do log de
+// movimentos). Sem FK com cascade: apagar usuário não pode apagar a prova (memória audit-log-no-fk-cascade); por isso
+// userId/acceptedByUserId são escalares. Tabela da venda e do cliente são DynamicTable → saleId/customerId também.
+model PackageValidityAcceptance {
+  id               String   @id @default(cuid())
+  userId           String // tenant (eixo 1)
+  unitId           String // eixo 2
+  saleId           String // linha da DynamicTable de vendas
+  customerId       String // da venda, lido no servidor
+  packageId        String // do item Package, lido no servidor
+  saleDate         DateTime // date-only, meia-noite UTC (P15 do BE BRIEF)
+  validityDays     Int // do catálogo, lido no servidor
+  expiresOn        DateTime // date-only; lastValidDay(saleDate, validityDays)
+  textVersion      String // 'v1'
+  textShown        String // texto exato renderizado e mostrado
+  textSha256       String
+  acceptedByUserId String // "quem": o usuário autenticado que registrou
+  acceptedAt       DateTime @default(now()) // "quando": relógio do servidor
+
+  @@unique([userId, unitId, saleId])
+  @@index([userId, unitId, customerId])
+  @@map("package_validity_acceptances")
+}
+
 // Contas a Pagar (Accounts Payable) — INCR-AP / ADR-INCR-AP. FIRST-CLASS PRISMA (financial
 // invariant ⇒ Prisma, never DynamicTable — CLAUDE.md STOP block, Contract §2.1). Records the
 // obligation to a supplier (a nota) and its payment, with the DUAL fato gerador booked through

@@ -55,8 +55,8 @@ describe('item 2 — índice do catálogo', () => {
 describe('item 7 — o pacote vendido não paga a si mesmo', () => {
     it('a lista de saldos da venda do pacote B não mostra o B', async () => {
         vi.mocked(packageBalancesService.listBalances).mockResolvedValue([
-            { id: 'b1', customerId: 'c1', packageId: 'pkgA0000', unitId: 'u1', balanceCents: 50000 },
-            { id: 'b2', customerId: 'c1', packageId: 'pkgB0000', unitId: 'u1', balanceCents: 30000 },
+            { id: 'b1', customerId: 'c1', packageId: 'pkgA0000', unitId: 'u1', balanceCents: 50000, expiresOn: null },
+            { id: 'b2', customerId: 'c1', packageId: 'pkgB0000', unitId: 'u1', balanceCents: 30000, expiresOn: null },
         ]);
         render(
             <SalePaymentModal

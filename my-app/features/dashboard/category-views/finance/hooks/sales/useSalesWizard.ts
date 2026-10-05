@@ -56,7 +56,8 @@ export interface UseSalesWizardReturn {
     packageIssue: PackageSaleIssue | null;
 
     // Submission
-    submit: (salesTableId: string, saleItemsTableId: string, finalize?: boolean) => Promise<void>;
+    /** Cria venda + itens e devolve o id da venda (o aceite da validade — FE-INCR-PACOTE-VALIDADE item 11 — precisa dele) */
+    submit: (salesTableId: string, saleItemsTableId: string, finalize?: boolean) => Promise<string>;
     reset: () => void;
 }
 
@@ -247,7 +248,7 @@ export function useSalesWizard(options: UseSalesWizardOptions = {}): UseSalesWiz
         salesTableId: string,
         saleItemsTableId: string,
         finalize: boolean = false
-    ): Promise<void> => {
+    ): Promise<string> => {
         const s = stateRef.current;
 
         // Recompute totals from snapshot to avoid stale closure on subtotal/totalAmount
@@ -277,8 +278,9 @@ export function useSalesWizard(options: UseSalesWizardOptions = {}): UseSalesWiz
                 ...(s.variant === 'packages' && canFlagRef.current ? { aboveCatalogPrice: aboveCatalog } : {}),
             };
 
-            await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
+            const saleId = await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
             setState(prev => ({ ...prev, isSubmitting: false }));
+            return saleId;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Erro ao criar venda';
             setState(prev => ({ ...prev, isSubmitting: false, error: message }));

@@ -1,4 +1,91 @@
 {
+  "PackageAcceptanceDto.ts": {
+    "ValidityNoticeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "packageId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleDate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "packageId",
+        "saleDate"
+      ],
+      "additionalProperties": false
+    },
+    "CreatePackageAcceptanceSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "textVersion": {
+          "type": "string",
+          "const": "v1"
+        },
+        "textSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "saleId",
+        "textVersion",
+        "textSha256"
+      ],
+      "additionalProperties": false
+    },
+    "GetPackageAcceptanceQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "saleId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId",
+        "saleId"
+      ],
+      "additionalProperties": false
+    },
+    "PackageSaleReceiptQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "PackageBalanceDto.ts": {
     "ListPackageBalancesQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

@@ -19,7 +19,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
-import { scopeDay } from '../../models/dates';
+import { saleDayAsWritten } from '../../models/dates';
 import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadPackageValidityDays, loadSalePackageInfo } from './saleItems';
 
@@ -81,7 +81,9 @@ export async function maybeSyncSalePackageSold(
       unitId,
       amount: totalAmount,
       currency: typeof data.currency === 'string' ? data.currency : 'BRL',
-      occurredAt: scopeDay(scope, typeof data.date === 'string' ? data.date : undefined),
+      // `data.date` é um DIA (o motor o grava como ISO à meia-noite UTC): lê-se como escrito — `scopeDay` o faria recuar para
+      // o dia anterior e o saldo venceria antes do último dia que o cliente aceitou (FE-INCR-PACOTE-VALIDADE, achado B1).
+      occurredAt: saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined),
       label: `Pacote pré-pago — Venda ${row.id}`,
     });
     await getFactory().getAccountingSyncService().sync(scope, event);

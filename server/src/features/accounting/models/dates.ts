@@ -21,6 +21,33 @@ export function isValidDateOnly(s: string): boolean {
 }
 
 /**
+ * Dia-calendário de um campo `date` de DynamicTable, LIDO COMO ESCRITO. O motor normaliza o campo `date` (date-only)
+ * para ISO à meia-noite UTC (`2026-11-25T00:00:00.000Z`): isso é um DIA, não um instante — `scopeDay` o converteria para
+ * o dia anterior em Brasília (24/11). Aceita `YYYY-MM-DD` ou esse ISO; devolve os 10 primeiros caracteres se forem um
+ * calendário real; senão lança `ValidationError` (nunca inventa "hoje" em cima de lixo).
+ * ponytail: prefixo literal; um datetime com offset fora da meia-noite não é a convenção do campo `date`.
+ * Memória motor-grava-date-como-iso-utc-scopeday-recua-um-dia.
+ */
+export function calendarDayAsWritten(value: string): string {
+  const day = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}(T00:00:00(\.000)?Z)?$/.test(value) || !isValidDateOnly(day)) {
+    throw new ValidationError(`Data de venda inválida: '${value}'.`);
+  }
+  return day;
+}
+
+/**
+ * Dia da venda para as pontes de pacote: o campo `date` lido COMO ESCRITO (`calendarDayAsWritten`) quando está numa das
+ * duas formas do motor; qualquer outra coisa (instante real, ausente) segue o caminho anterior, `scopeDay` — sem regressão
+ * para dado que não é da convenção do campo `date`.
+ */
+export function saleDayAsWritten(scope: { timeZone: string }, value?: string): string {
+  return value !== undefined && /^\d{4}-\d{2}-\d{2}(T00:00:00(\.000)?Z)?$/.test(value)
+    ? calendarDayAsWritten(value)
+    : scopeDay(scope, value);
+}
+
+/**
  * Dia-calendário `YYYY-MM-DD` de um INSTANTE, no fuso do ESCOPO — nunca em UTC.
  *
  * Por que não `.toISOString().slice(0,10)`: o produto opera em UTC-3, então das 21:00 às 23:59 BRT o
