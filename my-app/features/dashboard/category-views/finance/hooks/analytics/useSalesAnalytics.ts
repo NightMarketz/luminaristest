@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { normalizeRows } from '../../utils/normalizers';
+import { lineQuantity } from '../../utils/packageSale';
 
 import { SaleRecord, SaleItemRecord, SalesAnalytics } from '../../types/sales.types';
 
@@ -62,8 +63,7 @@ export function useSalesAnalytics(
         for (const it of itemsList) {
             const saleId = String(it.saleId || '');
             if (!saleId) continue;
-            const isProduct = !!it.productId && !it.serviceId;
-            const qty = isProduct ? Number(it.quantity || 1) : 1;
+            const qty = lineQuantity(it);
             const price = Number(it.unitPrice || 0);
             saleIdToSubtotal[saleId] = (saleIdToSubtotal[saleId] || 0) + qty * price;
         }

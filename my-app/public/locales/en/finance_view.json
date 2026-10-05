@@ -63,7 +63,10 @@
       "name": "Product/Service",
       "quantity": "Qty",
       "price": "Price",
-      "none_found": "No items."
+      "none_found": "No items.",
+      "package": "Package",
+      "add_package": "Add package",
+      "type_package": "Package"
     },
     "table": {
       "list_title": "Sales list",
@@ -90,6 +93,14 @@
       "no_items": "No items.",
       "select_sale": "Select a sale to view details."
     },
+    "package": {
+      "customer_required": "A package needs a registered customer: the balance is kept in their name.",
+      "one_package": "A sale carries a single package. For another package, create another sale.",
+      "not_in_catalog": "This package's catalog price has not loaded yet. Wait or reload the page.",
+      "below_catalog": "To charge less than the catalog price, use the Discount field.",
+      "above_catalog_unsupported": "A sale above the catalog price needs the \"Above catalog\" flag, which this sales table does not have yet. Ask an administrator to sync the sales table with its preset.",
+      "above_catalog_tag": "Above catalog"
+    },
     "modal": {
       "title": "New Sale",
       "subtitle": "Fill in information to register a sale",
@@ -99,6 +110,7 @@
       "sale_type": "Sale Type",
       "products": "Products",
       "services": "Services",
+      "packages": "Packages",
       "date": "Date",
       "unit": "Unit",
       "simple_customer": "One-off customer",

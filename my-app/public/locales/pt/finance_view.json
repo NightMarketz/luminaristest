@@ -63,7 +63,10 @@
       "name": "Produto/Serviço",
       "quantity": "Qtd",
       "price": "Preço",
-      "none_found": "Nenhum item."
+      "none_found": "Nenhum item.",
+      "package": "Pacote",
+      "add_package": "Adicionar pacote",
+      "type_package": "Pacote"
     },
     "table": {
       "list_title": "Lista de vendas",
@@ -90,6 +93,14 @@
       "no_items": "Nenhum item.",
       "select_sale": "Selecione uma venda para ver detalhes."
     },
+    "package": {
+      "customer_required": "Pacote precisa de cliente cadastrado: o saldo fica no nome dele.",
+      "one_package": "Uma venda leva um único pacote. Para outro pacote, crie outra venda.",
+      "not_in_catalog": "O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.",
+      "below_catalog": "Para cobrar menos que o catálogo, use o campo Desconto.",
+      "above_catalog_unsupported": "Venda acima do catálogo exige a marca \"Acima do catálogo\", que esta tabela de vendas ainda não tem. Peça ao administrador para sincronizar a tabela de vendas com o preset.",
+      "above_catalog_tag": "Acima do catálogo"
+    },
     "modal": {
       "title": "Nova Venda",
       "subtitle": "Preencha as informações para registrar uma venda",
@@ -99,6 +110,7 @@
       "sale_type": "Tipo de Venda",
       "products": "Produtos",
       "services": "Serviços",
+      "packages": "Pacotes",
       "date": "Data",
       "unit": "Unidade",
       "simple_customer": "Cliente avulso",

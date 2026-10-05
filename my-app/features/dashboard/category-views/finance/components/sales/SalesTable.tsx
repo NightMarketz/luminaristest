@@ -52,6 +52,16 @@ export function PaymentBadge({ status }: { status?: string }) {
     );
 }
 
+/** F-FE-VP-1b: venda com pacote acima do preço do catálogo */
+export function AboveCatalogBadge() {
+    const { t } = useTranslation(['finance_view']);
+    return (
+        <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            {t('finance_view:sales.package.above_catalog_tag', 'Acima do catálogo')}
+        </span>
+    );
+}
+
 interface SalesTableProps {
     sales: SaleRecord[];
     selectedSaleId?: string | null;
@@ -192,7 +202,10 @@ export default function SalesTable({
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
-                                                <StatusBadge status={sale.status} />
+                                                <span className="inline-flex gap-1.5">
+                                                    <StatusBadge status={sale.status} />
+                                                    {sale.aboveCatalogPrice === true && <AboveCatalogBadge />}
+                                                </span>
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm">
                                                 <PaymentBadge status={sale.paymentStatus} />

@@ -9,8 +9,15 @@
  */
 
 import { useState, useCallback, useMemo, useRef } from 'react';
-import type { NewSaleItem, SalesWizardState, SaleData } from '../../types';
+import type { NewSaleItem, SalesWizardState, SaleData, WizardVariant } from '../../types';
 import { FinanceService } from '../../services/FinanceService';
+import {
+    lineQuantity,
+    isAboveCatalog,
+    packageSaleIssue,
+    type PackageCatalog,
+    type PackageSaleIssue,
+} from '../../utils/packageSale';
 import { scopeToday } from '../../../../shared/utils/formatters';
 
 // ─────────────────────────────────────────────────────────────
@@ -30,7 +37,7 @@ export interface UseSalesWizardReturn {
     setSimpleCustomerName: (name: string) => void;
     setPaymentMethod: (method: string) => void;
     setPaymentTermDays: (days: number) => void;
-    setVariant: (variant: 'products' | 'services') => void;
+    setVariant: (variant: WizardVariant) => void;
     setDiscount: (amount: number) => void;
 
     // Item management
@@ -45,6 +52,8 @@ export interface UseSalesWizardReturn {
 
     // Validation
     canSubmit: boolean;
+    /** Impedimento da venda de pacote (null fora da variante `packages`) */
+    packageIssue: PackageSaleIssue | null;
 
     // Submission
     submit: (salesTableId: string, saleItemsTableId: string, finalize?: boolean) => Promise<void>;
@@ -78,15 +87,30 @@ const createInitialState = (): SalesWizardState => ({
 // Hook
 // ─────────────────────────────────────────────────────────────
 
+export interface UseSalesWizardOptions {
+    /** Índice do catálogo de pacotes (usePackageCatalog) — preço de referência da variante `packages` */
+    packageCatalog?: PackageCatalog;
+    /** A tabela de vendas tem o campo `aboveCatalogPrice` (F-FE-VP-1b) */
+    canFlagAboveCatalog?: boolean;
+}
+
+const EMPTY_CATALOG: PackageCatalog = {};
+
 /**
  * Hook para gerenciar o wizard de criação de vendas
  */
-export function useSalesWizard(): UseSalesWizardReturn {
+export function useSalesWizard(options: UseSalesWizardOptions = {}): UseSalesWizardReturn {
+    const packageCatalog = options.packageCatalog ?? EMPTY_CATALOG;
+    const canFlagAboveCatalog = options.canFlagAboveCatalog ?? false;
     const [state, setState] = useState<SalesWizardState>(createInitialState);
 
     // Ref de snapshot — permite que submit leia o estado atual sem dependência estável quebrada
     const stateRef = useRef(state);
     stateRef.current = state;
+    const catalogRef = useRef(packageCatalog);
+    catalogRef.current = packageCatalog;
+    const canFlagRef = useRef(canFlagAboveCatalog);
+    canFlagRef.current = canFlagAboveCatalog;
 
     // ─────────────────────────────────────────────────────────────
     // Header Setters
@@ -109,7 +133,11 @@ export function useSalesWizard(): UseSalesWizardReturn {
     }, []);
 
     const setSimpleCustomer = useCallback((simpleCustomer: boolean) => {
-        setState(prev => ({ ...prev, simpleCustomer, customerId: simpleCustomer ? '' : prev.customerId }));
+        setState(prev => {
+            // Pacote exige cliente cadastrado: o saldo fica no nome dele (BRIEF item 5, V7)
+            if (simpleCustomer && prev.variant === 'packages') return prev;
+            return { ...prev, simpleCustomer, customerId: simpleCustomer ? '' : prev.customerId };
+        });
     }, []);
 
     const setSimpleCustomerName = useCallback((simpleCustomerName: string) => {
@@ -128,9 +156,15 @@ export function useSalesWizard(): UseSalesWizardReturn {
         setState(prev => ({ ...prev, discountAmount }));
     }, []);
 
-    // Variant setter — clears items on change to enforce type homogeneity (backend rule)
-    const setVariant = useCallback((variant: 'products' | 'services') => {
-        setState(prev => ({ ...prev, variant, items: [] }));
+    // Variant setter — clears items on change to enforce type homogeneity (backend rule).
+    // Pacote desliga o cliente avulso (item 5).
+    const setVariant = useCallback((variant: WizardVariant) => {
+        setState(prev => ({
+            ...prev,
+            variant,
+            items: [],
+            ...(variant === 'packages' ? { simpleCustomer: false, simpleCustomerName: '' } : {}),
+        }));
     }, []);
 
     // ─────────────────────────────────────────────────────────────
@@ -139,7 +173,7 @@ export function useSalesWizard(): UseSalesWizardReturn {
 
     const addItem = useCallback(() => {
         setState(prev => {
-            const itemType = prev.variant === 'services' ? 'Service' : 'Product';
+            const itemType = prev.variant === 'services' ? 'Service' : prev.variant === 'packages' ? 'Package' : 'Product';
             const newItem: NewSaleItem = {
                 id: `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
                 itemType,
@@ -171,11 +205,7 @@ export function useSalesWizard(): UseSalesWizardReturn {
     // ─────────────────────────────────────────────────────────────
 
     const subtotal = useMemo(() => {
-        return state.items.reduce((sum, item) => {
-            const qty = item.itemType === 'Product' ? Number(item.quantity || 1) : 1;
-            const price = Number(item.unitPrice || 0);
-            return sum + qty * price;
-        }, 0);
+        return state.items.reduce((sum, item) => sum + lineQuantity(item) * Number(item.unitPrice || 0), 0);
     }, [state.items]);
 
     const totalAmount = useMemo(
@@ -189,18 +219,25 @@ export function useSalesWizard(): UseSalesWizardReturn {
     // Validation
     // ─────────────────────────────────────────────────────────────
 
+    const packageIssue = useMemo(
+        () => state.variant === 'packages'
+            ? packageSaleIssue(state.items, state.customerId, packageCatalog, canFlagAboveCatalog)
+            : null,
+        [state.variant, state.items, state.customerId, packageCatalog, canFlagAboveCatalog]
+    );
+
     const canSubmit = useMemo(() => {
         if (!state.unitId) return false;
         if (!state.simpleCustomer && !state.customerId) return false;
         if (state.items.length === 0) return false;
-        const isProduct = state.variant !== 'services';
+        if (packageIssue) return false;
+        const idField = state.variant === 'services' ? 'serviceId' : state.variant === 'packages' ? 'packageId' : 'productId';
         return state.items.every(item => {
-            if (isProduct && !item.productId) return false;
-            if (!isProduct && !item.serviceId) return false;
+            if (!item[idField]) return false;
             if (Number(item.unitPrice || 0) <= 0) return false;
             return true;
         });
-    }, [state.unitId, state.simpleCustomer, state.customerId, state.items, state.variant]);
+    }, [state.unitId, state.simpleCustomer, state.customerId, state.items, state.variant, packageIssue]);
 
     // ─────────────────────────────────────────────────────────────
     // Submission — useRef snapshot pattern: deps vazios, referência estável
@@ -214,11 +251,11 @@ export function useSalesWizard(): UseSalesWizardReturn {
         const s = stateRef.current;
 
         // Recompute totals from snapshot to avoid stale closure on subtotal/totalAmount
-        const sub = s.items.reduce((acc, item) => {
-            const qty = item.itemType === 'Product' ? Number(item.quantity || 1) : 1;
-            return acc + qty * Number(item.unitPrice || 0);
-        }, 0);
+        const sub = s.items.reduce((acc, item) => acc + lineQuantity(item) * Number(item.unitPrice || 0), 0);
         const total = Math.max(0, sub - (s.discountAmount || 0));
+        // F-FE-VP-1b: flag na venda, sem guardar o preço do catálogo. Só vai quando a tabela tem o
+        // campo (`canFlagAboveCatalog`); sem ele, a venda acima já foi barrada por `packageIssue`.
+        const aboveCatalog = s.variant === 'packages' && s.items.some(i => isAboveCatalog(i, catalogRef.current));
 
         setState(prev => ({ ...prev, isSubmitting: true, error: null }));
 
@@ -237,6 +274,7 @@ export function useSalesWizard(): UseSalesWizardReturn {
                 paymentMethod: s.paymentMethod || undefined,
                 paymentTermDays: s.paymentTermDays || undefined,
                 notes: s.notes || undefined,
+                ...(s.variant === 'packages' && canFlagRef.current ? { aboveCatalogPrice: aboveCatalog } : {}),
             };
 
             await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
@@ -275,6 +313,7 @@ export function useSalesWizard(): UseSalesWizardReturn {
         totalAmount,
         itemCount,
         canSubmit,
+        packageIssue,
         submit,
         reset,
     };

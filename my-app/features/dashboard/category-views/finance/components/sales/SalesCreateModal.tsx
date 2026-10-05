@@ -19,10 +19,13 @@ import { HiArrowRight } from 'react-icons/hi';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import { isTableSchema, type IDynamicTable } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { useSalesWizard } from '../../hooks/sales/useSalesWizard';
+import { usePackageCatalog } from '../../hooks/sales/usePackageCatalog';
 import { SaleItemsManager } from './create/SaleItemsManager';
 import { PaymentTermChips } from './create/inputs';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import type { SaleItemsVariant, SalesCreateModalProps } from './create/types';
+import type { WizardVariant } from '../../types/sales.types';
+import type { PackageSaleIssue } from '../../utils/packageSale';
 
 // ─────────────────────────────────────────────────────────────
 // Module-level constants
@@ -44,6 +47,22 @@ function detectSchemaVariant(saleItemsTable?: IDynamicTable | null): SaleItemsVa
     if (names.has('serviceId')) return 'services';
     return 'products';
 }
+
+/** Pacote só existe na tabela de itens mista (preset `SalesItemsMixed`, V2/V3). */
+export function wizardVariantsFor(saleItemsTable?: IDynamicTable | null): WizardVariant[] {
+    const schema = saleItemsTable?.schema;
+    if (!isTableSchema(schema) || detectSchemaVariant(saleItemsTable) !== 'mixed') return [];
+    const hasPackage = schema.fields.some(f => f.name === 'packageId');
+    return hasPackage ? ['products', 'services', 'packages'] : ['products', 'services'];
+}
+
+const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
+    customer_required: ['finance_view:sales.package.customer_required', 'Pacote precisa de cliente cadastrado: o saldo fica no nome dele.'],
+    mixed_packages: ['finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.'],
+    package_not_in_catalog: ['finance_view:sales.package.not_in_catalog', 'O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.'],
+    below_catalog: ['finance_view:sales.package.below_catalog', 'Para cobrar menos que o catálogo, use o campo Desconto.'],
+    above_catalog_unsupported: ['finance_view:sales.package.above_catalog_unsupported', 'Venda acima do catálogo exige a marca "Acima do catálogo", que esta tabela de vendas ainda não tem. Peça ao administrador para sincronizar a tabela de vendas com o preset.'],
+};
 
 // ─────────────────────────────────────────────────────────────
 // Sub-components
@@ -92,6 +111,30 @@ export default function SalesCreateModal({
     const { t } = useTranslation(['finance_view', 'common']);
     const formatCurrency = useFormatCurrency();
 
+    // ── Schema analysis ───────────────────────────────────────
+
+    const schemaVariant = useMemo(() => detectSchemaVariant(saleItemsTable), [saleItemsTable]);
+    const variantOptions = useMemo(() => wizardVariantsFor(saleItemsTable), [saleItemsTable]);
+
+    const salesFields = useMemo(
+        () => isTableSchema(salesTable?.schema) ? salesTable!.schema.fields : [],
+        [salesTable]
+    );
+
+    const saleItemsFields = useMemo(
+        () => isTableSchema(saleItemsTable?.schema) ? saleItemsTable!.schema.fields : [],
+        [saleItemsTable]
+    );
+
+    const packageTargetTable = useMemo(
+        () => variantOptions.includes('packages')
+            ? saleItemsFields.find(f => f.name === 'packageId')?.relation?.targetTable ?? ''
+            : '',
+        [variantOptions, saleItemsFields]
+    );
+    const packageCatalog = usePackageCatalog(packageTargetTable);
+    const canFlagAboveCatalog = salesFields.some(f => f.name === 'aboveCatalogPrice');
+
     // ── Wizard hook — destructure for stable references ──────
     const {
         state: wizardState,
@@ -113,22 +156,11 @@ export default function SalesCreateModal({
         totalAmount,
         itemCount,
         canSubmit,
+        packageIssue,
         submit,
-    } = useSalesWizard();
+    } = useSalesWizard({ packageCatalog, canFlagAboveCatalog });
 
-    // ── Schema analysis ───────────────────────────────────────
-
-    const schemaVariant = useMemo(() => detectSchemaVariant(saleItemsTable), [saleItemsTable]);
-
-    const salesFields = useMemo(
-        () => isTableSchema(salesTable?.schema) ? salesTable!.schema.fields : [],
-        [salesTable]
-    );
-
-    const saleItemsFields = useMemo(
-        () => isTableSchema(saleItemsTable?.schema) ? saleItemsTable!.schema.fields : [],
-        [saleItemsTable]
-    );
+    const isPackageSale = wizardState.variant === 'packages';
 
     const paymentMethodOptions = useMemo(() => {
         return salesFields.find(f => f.name === 'paymentMethod')?.options ?? [];
@@ -173,8 +205,10 @@ export default function SalesCreateModal({
 
     const handleSubmit = useCallback(async (finalize: boolean) => {
         if (!canSubmit) {
-            setActiveTab(headerHasMissingFields ? 0 : 1);
-            setSubmitError(t('finance_view:sales.modal.error_fill_fields', 'Preencha todos os campos obrigatórios.'));
+            setActiveTab(headerHasMissingFields || packageIssue === 'customer_required' ? 0 : 1);
+            setSubmitError(packageIssue
+                ? t(...PACKAGE_ISSUE_KEYS[packageIssue])
+                : t('finance_view:sales.modal.error_fill_fields', 'Preencha todos os campos obrigatórios.'));
             return;
         }
         setSubmitError(null);
@@ -188,7 +222,7 @@ export default function SalesCreateModal({
                 : t('common:unknownErrorOccurred', 'Erro desconhecido');
             setSubmitError(msg);
         }
-    }, [canSubmit, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t]);
+    }, [canSubmit, packageIssue, headerHasMissingFields, submit, salesTable.id, saleItemsTable.id, onCreated, onClose, t]);
 
     const tabs = useMemo(() => [
         { id: 0 as const, label: t('finance_view:sales.modal.tab_general', 'Cabeçalho') },
@@ -295,7 +329,7 @@ export default function SalesCreateModal({
                                         {t('finance_view:sales.modal.sale_type', 'Tipo de Venda')}
                                     </p>
                                     <div className="flex p-1.5 bg-gray-100 dark:bg-neutral-800 rounded-2xl w-fit gap-1 mt-2">
-                                        {(['products', 'services'] as const).map(v => (
+                                        {variantOptions.map(v => (
                                             <button
                                                 key={v}
                                                 type="button"
@@ -308,7 +342,9 @@ export default function SalesCreateModal({
                                             >
                                                 {v === 'products'
                                                     ? t('finance_view:sales.modal.products', 'Produtos')
-                                                    : t('finance_view:sales.modal.services', 'Serviços')}
+                                                    : v === 'services'
+                                                    ? t('finance_view:sales.modal.services', 'Serviços')
+                                                    : t('finance_view:sales.modal.packages', 'Pacotes')}
                                             </button>
                                         ))}
                                     </div>
@@ -358,11 +394,17 @@ export default function SalesCreateModal({
                                 <p className={SECTION_HEADER_CLASS}>
                                     {t('finance_view:sales.modal.section_customer', 'Cliente')}
                                 </p>
-                                <Switch
-                                    checked={wizardState.simpleCustomer}
-                                    onChange={setSimpleCustomer}
-                                    label={t('finance_view:sales.modal.simple_customer', 'Cliente avulso (sem cadastro)')}
-                                />
+                                {isPackageSale ? (
+                                    <p className="text-xs text-gray-500 dark:text-neutral-400">
+                                        {t(...PACKAGE_ISSUE_KEYS.customer_required)}
+                                    </p>
+                                ) : (
+                                    <Switch
+                                        checked={wizardState.simpleCustomer}
+                                        onChange={setSimpleCustomer}
+                                        label={t('finance_view:sales.modal.simple_customer', 'Cliente avulso (sem cadastro)')}
+                                    />
+                                )}
                                 {wizardState.simpleCustomer ? (
                                     <input
                                         type="text"
@@ -445,6 +487,8 @@ export default function SalesCreateModal({
                             unitId={wizardState.unitId}
                             saleItemsFields={saleItemsFields}
                             stockIndex={stockIndex}
+                            packageCatalog={packageCatalog}
+                            packageIssue={packageIssue}
                             onAddItem={addItem}
                             onRemoveItem={removeItem}
                             onUpdateItem={updateItem}
