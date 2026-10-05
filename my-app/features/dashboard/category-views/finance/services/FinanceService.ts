@@ -8,6 +8,24 @@
 
 import { DynamicTableService } from '@/lib/services/dynamic-table.service';
 import type { SaleData, SaleItemData, NewSaleItem } from '@/features/dashboard/category-views/finance/types/sales.types';
+import { lineQuantity } from '../utils/packageSale';
+
+/** Item do wizard → linha da tabela de itens. Retorno declarado: chave extra não escapa (regra do mapper). */
+export function toSaleItemPayload(saleId: string, item: NewSaleItem): SaleItemData {
+    return {
+        saleId,
+        productId: item.productId ?? undefined,
+        serviceId: item.serviceId ?? undefined,
+        packageId: item.packageId ?? undefined,
+        type: item.itemType,
+        quantity: lineQuantity(item),
+        unitPrice: item.unitPrice || 0,
+        commission: item.commission ?? undefined,
+        responsibleEmployeeId: item.responsibleEmployeeId ?? undefined,
+        appointmentId: item.appointmentId ?? undefined,
+        description: item.description ?? undefined,
+    };
+}
 
 export class FinanceService {
     /**
@@ -28,22 +46,9 @@ export class FinanceService {
         }
 
         // 2. Create Sale Items in parallel (or sequential if preferred for reliability)
-        const itemPromises = items.map(item => {
-            const itemPayload: SaleItemData = {
-                saleId,
-                productId: item.productId ?? undefined,
-                serviceId: item.serviceId ?? undefined,
-                type: item.itemType,
-                quantity: item.itemType === 'Product' ? (item.quantity || 1) : 1,
-                unitPrice: item.unitPrice || 0,
-                commission: item.commission ?? undefined,
-                responsibleEmployeeId: item.responsibleEmployeeId ?? undefined,
-                appointmentId: item.appointmentId ?? undefined,
-                description: item.description ?? undefined,
-            };
-
-            return DynamicTableService.createRecord(saleItemsTableId, { data: itemPayload });
-        });
+        const itemPromises = items.map(item =>
+            DynamicTableService.createRecord(saleItemsTableId, { data: toSaleItemPayload(saleId, item) })
+        );
 
         await Promise.all(itemPromises);
 

@@ -21,6 +21,8 @@ import type { SaleRecord } from '../../types/sales.types';
 
 interface SalePaymentModalProps {
     sale: SaleRecord | null;
+    /** Venda de pacote: o pacote vendido não aparece como saldo para pagar a própria compra (FE-INCR-VENDA-PACOTE item 7) */
+    soldPackageId?: string;
     isOpen: boolean;
     onClose: () => void;
     onConfirm: (payment: {
@@ -30,7 +32,7 @@ interface SalePaymentModalProps {
     }) => Promise<void>;
 }
 
-export function SalePaymentModal({ sale, isOpen, onClose, onConfirm }: SalePaymentModalProps) {
+export function SalePaymentModal({ sale, soldPackageId, isOpen, onClose, onConfirm }: SalePaymentModalProps) {
     const { t } = useTranslation(['finance_view', 'common']);
     const formatCurrency = useFormatCurrency();
     const [method, setMethod] = useState<SalePaymentMethod | ''>('');
@@ -55,10 +57,10 @@ export function SalePaymentModal({ sale, isOpen, onClose, onConfirm }: SalePayme
         let alive = true;
         packageBalancesService
             .listBalances(unitId, customerId)
-            .then((rows) => { if (alive) setBalances(rows.filter((b) => b.balanceCents > 0)); })
+            .then((rows) => { if (alive) setBalances(rows.filter((b) => b.balanceCents > 0 && b.packageId !== soldPackageId)); })
             .catch(() => { /* erro notificado pelo apiClient; sem pacote é estado válido */ });
         return () => { alive = false; };
-    }, [isOpen, unitId, customerId]);
+    }, [isOpen, unitId, customerId, soldPackageId]);
 
     const hasPackages = balances.length > 0;
     const selectedBalance = useMemo(

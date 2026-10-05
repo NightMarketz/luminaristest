@@ -12,6 +12,12 @@
 /** Tipos de variante de itens de venda */
 export type SaleItemsVariant = 'products' | 'services' | 'mixed';
 
+/** Tipo de item escolhido no wizard (o servidor exige venda homogênea) */
+export type WizardVariant = 'products' | 'services' | 'packages';
+
+/** Valores do campo `type` da tabela de itens (preset `itemType`) */
+export type SaleItemKind = 'Product' | 'Service' | 'Package';
+
 // ─────────────────────────────────────────────────────────────
 // Sale Record Types
 // ─────────────────────────────────────────────────────────────
@@ -31,6 +37,8 @@ export interface SaleData {
     paymentMethod?: string;
     paymentTermDays?: number;
     notes?: string;
+    /** FE-INCR-VENDA-PACOTE F-FE-VP-1b: algum pacote saiu acima do preço do catálogo */
+    aboveCatalogPrice?: boolean;
     [key: string]: unknown;
 }
 
@@ -42,8 +50,9 @@ export interface SaleItemData {
     saleId?: string;
     productId?: string;
     serviceId?: string;
-    type?: 'Product' | 'Service';
-    itemType?: 'Product' | 'Service';
+    packageId?: string;
+    type?: SaleItemKind;
+    itemType?: SaleItemKind;
     quantity?: number;
     unitPrice?: number;
     commission?: number;
@@ -63,9 +72,10 @@ export type SaleItemRecord = SaleItemData & { id: string };
 /** Item temporário no wizard de criação de venda */
 export interface NewSaleItem {
     id: string; // ID temporário para gerenciamento no wizard
-    itemType?: 'Product' | 'Service';
+    itemType?: SaleItemKind;
     productId?: string;
     serviceId?: string;
+    packageId?: string;
     quantity?: number;
     unitPrice?: number;
     commission?: number;
@@ -93,7 +103,7 @@ export interface SalesWizardState {
     paymentMethod: string;
     paymentTermDays: number;
     discountAmount: number;
-    variant: 'products' | 'services'; // User-selected item type (for mixed schemas)
+    variant: WizardVariant; // User-selected item type (for mixed schemas)
     // Items
     items: NewSaleItem[];
     // UI State

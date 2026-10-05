@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom';
 import { useStableT } from '../../../../lib/hooks/useStableT';
 import { fetchRelatedTableData, formatRelatedDisplayValue } from '../shared/relation-utils.client';
+import type { IDynamicTableData } from '../shared/dynamic-tables.client';
 
 interface RelationSelectorProps {
   name: string;
@@ -12,6 +13,8 @@ interface RelationSelectorProps {
   className?: string;
   disabled?: boolean;
   multiple?: boolean;
+  /** Esconde registros da lista (ex.: pacote inativo). Precisa de referência estável — refaz a carga ao mudar. */
+  filterRecord?: (record: IDynamicTableData) => boolean;
 }
 
 /**
@@ -25,7 +28,8 @@ function RelationSelector({
   required = false,
   className = '',
   disabled = false,
-  multiple = false
+  multiple = false,
+  filterRecord
 }: RelationSelectorProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +59,7 @@ function RelationSelector({
         setIsLoading(false);
         return;
       }
-      setOptions(relatedData.map(record => ({
+      setOptions((filterRecord ? relatedData.filter(filterRecord) : relatedData).map(record => ({
         value: record.id,
         label: formatRelatedDisplayValue(record)
       })));
@@ -64,7 +68,7 @@ function RelationSelector({
     } finally {
       setIsLoading(false);
     }
-  }, [targetTable, tRef]);
+  }, [targetTable, tRef, filterRecord]);
 
   useEffect(() => {
     loadRelatedData();

@@ -90,6 +90,7 @@ export function useSalesData(tables: IDynamicTable[]) {
     const unitNameMap     = useMemo(() => mapToRecord(salesLookups.unitId),     [salesLookups]);
     const productNameMap  = useMemo(() => mapToRecord(itemsLookups.productId),  [itemsLookups]);
     const serviceNameMap  = useMemo(() => mapToRecord(itemsLookups.serviceId),  [itemsLookups]);
+    const packageNameMap  = useMemo(() => mapToRecord(itemsLookups.packageId),  [itemsLookups]);
 
     // 8. Mutation: updateSale
     const [updating, setUpdating] = useState<string | null>(null);
@@ -164,6 +165,7 @@ export function useSalesData(tables: IDynamicTable[]) {
         stockIndex,
         productNameMap,
         serviceNameMap,
+        packageNameMap,
         customerNameMap,
         unitNameMap,
         isLoading,

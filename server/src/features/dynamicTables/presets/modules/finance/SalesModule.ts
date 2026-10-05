@@ -84,6 +84,17 @@ export const salesModule = {
           'Automatically flagged when the customer is in a loyalty lifecycle stage (used for recurring-revenue KPIs).',
       },
       { ...campaignId, description: 'Marketing campaign linked to the sale (used for incremental revenue analysis).' },
+      // FE-INCR-VENDA-PACOTE F-FE-VP-1b (dono, 05/10): flag na venda, sem guardar o preço do catálogo.
+      // Gravado pelo wizard; pela API/tabela genérica não é verificado (BRIEF §8).
+      {
+        name: 'aboveCatalogPrice',
+        label: 'Above catalog price',
+        type: 'boolean',
+        required: false,
+        defaultValue: false,
+        searchable: false,
+        description: 'Set by the sale wizard when a prepaid package was sold above its catalog price.',
+      },
       // --- Cancellation / return audit (Incremento D / D2-Q10) — JSON columns, no migration.
       // readOnly: only the SalesCancellationService (isSystem) writes these on transition.
       {

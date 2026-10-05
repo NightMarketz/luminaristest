@@ -7,7 +7,7 @@ import { formatDateBR } from '@/features/dashboard/shared/utils/formatters';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 import { useRenderTypedValue } from '@/features/dashboard/shared/hooks/useRenderTypedValue';
-import { StatusBadge, PaymentBadge } from './SalesTable';
+import { StatusBadge, PaymentBadge, AboveCatalogBadge } from './SalesTable';
 import { SaleRecord, SaleItemRecord } from '../../types/sales.types';
 
 // Convert camelCase field name to a readable label: "salesChannel" → "Sales Channel"
@@ -26,6 +26,7 @@ interface SaleDetailPanelProps {
     isUpdating?: string | null;
     productNameMap: Record<string, string>;
     serviceNameMap: Record<string, string>;
+    packageNameMap?: Record<string, string>;
     customerNameMap: Record<string, string>;
     unitNameMap: Record<string, string>;
     onUpdateSale: (saleId: string, payload: Record<string, unknown>, successMessage?: string) => Promise<void>;
@@ -47,6 +48,7 @@ export default function SaleDetailPanel({
     isUpdating,
     productNameMap,
     serviceNameMap,
+    packageNameMap = {},
     customerNameMap,
     unitNameMap,
     onUpdateSale,
@@ -155,6 +157,7 @@ export default function SaleDetailPanel({
                     <div className="flex gap-2">
                         <StatusBadge status={sale.status} />
                         <PaymentBadge status={sale.paymentStatus} />
+                        {sale.aboveCatalogPrice === true && <AboveCatalogBadge />}
                     </div>
                 </div>
 
@@ -189,7 +192,7 @@ export default function SaleDetailPanel({
                             .filter(f => ![
                                 'id', 'date', 'status', 'paymentStatus', 'subtotal', 'totalAmount',
                                 'customerId', 'unitId', 'simpleCustomer', 'simpleCustomerName', 'notes',
-                                'paymentMethod', 'paymentTermDays'
+                                'paymentMethod', 'paymentTermDays', 'aboveCatalogPrice'
                             ].includes(f.name))
                             .map(f => {
                                 // SaleData has [key: string]: unknown — cast to Record avoids `any`
@@ -243,8 +246,10 @@ export default function SaleDetailPanel({
                                 ) : (
                                     filteredItems.map((item) => {
                                         const isProduct = !!item.productId && !item.serviceId;
-                                        const itemType = item.type || (isProduct ? 'Product' : 'Service');
-                                        const itemName = isProduct
+                                        const itemType = item.type || (item.packageId ? 'Package' : isProduct ? 'Product' : 'Service');
+                                        const itemName = item.packageId
+                                            ? packageNameMap[String(item.packageId)] || item.packageId
+                                            : isProduct
                                             ? productNameMap[String(item.productId)] || item.productId || '—'
                                             : serviceNameMap[String(item.serviceId)] || item.serviceId || '—';
 

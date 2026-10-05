@@ -12,6 +12,7 @@ import { SalePaymentModal, SaleReasonModal } from '../components/sales/SaleActio
 import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 import { useTranslation } from 'next-i18next';
 import { useFilterPersistence } from '../../shared/hooks/useFilterPersistence';
+import { lineQuantity } from '../utils/packageSale';
 
 
 interface SalesViewProps {
@@ -44,6 +45,7 @@ export function SalesView({
         refetchItems,
         productNameMap,
         serviceNameMap,
+        packageNameMap,
         customerNameMap,
         unitNameMap,
         salesList,
@@ -130,13 +132,15 @@ export function SalesView({
         if (!selectedSale) return 0;
         return itemsList
             .filter((it) => String(it.saleId || '') === String(selectedSale.id))
-            .reduce((sum, it) => {
-                const isProduct = !!it.productId && !it.serviceId;
-                const qty = isProduct ? Number(it.quantity || 1) : 1;
-                const price = Number(it.unitPrice || 0);
-                return sum + qty * price;
-            }, 0);
+            .reduce((sum, it) => sum + lineQuantity(it) * Number(it.unitPrice || 0), 0);
     }, [selectedSale, itemsList]);
+
+    // Item 7 (F-FE-VP-2): na venda de pacote, o pacote vendido não paga a si mesmo
+    const soldPackageId = useMemo(() => {
+        if (!saleToPay) return undefined;
+        const item = itemsList.find((it) => String(it.saleId || '') === String(saleToPay.id) && it.packageId);
+        return item?.packageId ? String(item.packageId) : undefined;
+    }, [saleToPay, itemsList]);
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50 dark:bg-black">
@@ -199,6 +203,7 @@ export function SalesView({
                         isUpdating={updating}
                         productNameMap={productNameMap}
                         serviceNameMap={serviceNameMap}
+                        packageNameMap={packageNameMap}
                         customerNameMap={customerNameMap}
                         unitNameMap={unitNameMap}
                         onUpdateSale={updateSale}
@@ -213,6 +218,7 @@ export function SalesView({
             {draftCancelConfirmNode}
             <SalePaymentModal
                 sale={saleToPay}
+                soldPackageId={soldPackageId}
                 isOpen={saleToPay != null}
                 onClose={() => setSaleToPay(null)}
                 onConfirm={async (payment) => {

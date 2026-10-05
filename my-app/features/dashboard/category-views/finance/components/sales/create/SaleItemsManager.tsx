@@ -2,11 +2,13 @@
 
 import React, { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
-import { HiX, HiShoppingCart, HiCog } from 'react-icons/hi';
+import { HiX, HiShoppingCart, HiCog, HiGift } from 'react-icons/hi';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
 import { QuantityInput, CurrencyInput } from './inputs';
-import type { SchemaField, SaleItemsVariant, StockIndexEntry } from './types';
-import type { NewSaleItem } from '../../../types/sales.types';
+import type { SchemaField, StockIndexEntry } from './types';
+import type { NewSaleItem, WizardVariant } from '../../../types/sales.types';
+import type { IDynamicTableData } from '../../../../../components/shared/dynamic-tables.client';
+import { isBelowCatalog, lineQuantity, type PackageCatalog, type PackageSaleIssue } from '../../../utils/packageSale';
 
 // ─────────────────────────────────────────────────────────────
 // Module-level constants
@@ -16,16 +18,22 @@ const SELECTOR_CLASS = 'w-full min-w-[140px] px-3 py-2 bg-white dark:bg-neutral-
 
 const TH_CLASS = 'px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400';
 
+// Pacote inativo não é escolhível (BRIEF item 3; I1 = filtro opcional no RelationSelector, dono 05/10).
+// Módulo-level: referência estável, o seletor não refaz a carga a cada render.
+const isActivePackage = (record: IDynamicTableData) => (record.data as Record<string, unknown> | undefined)?.active !== false;
+
 // ─────────────────────────────────────────────────────────────
 // Props
 // ─────────────────────────────────────────────────────────────
 
 interface SaleItemsManagerProps {
     items: NewSaleItem[];
-    variant: SaleItemsVariant;
+    variant: WizardVariant;
     unitId: string;
     saleItemsFields: SchemaField[];
     stockIndex: Record<string, StockIndexEntry>;
+    packageCatalog?: PackageCatalog;
+    packageIssue?: PackageSaleIssue | null;
     onAddItem: () => void;
     onRemoveItem: (tempId: string) => void;
     onUpdateItem: (tempId: string, patch: Partial<NewSaleItem>) => void;
@@ -44,6 +52,7 @@ interface SaleItemsManagerProps {
  * SaleItemsManager — ERP-grade table for sale items.
  * Products: Produto | Qtd | Preço Unit. | Total | [×]
  * Services: Serviço | Responsável | Preço | Total | [×]
+ * Packages: Pacote | Qtd | Preço Unit. | Total | [×]
  */
 export function SaleItemsManager({
     items,
@@ -51,6 +60,8 @@ export function SaleItemsManager({
     unitId,
     saleItemsFields,
     stockIndex,
+    packageCatalog = {},
+    packageIssue = null,
     onAddItem,
     onRemoveItem,
     onUpdateItem,
@@ -61,14 +72,23 @@ export function SaleItemsManager({
     formatCurrency,
 }: SaleItemsManagerProps) {
     const { t } = useTranslation(['finance_view', 'common']);
-    const isProduct = variant !== 'services';
+    const isProduct = variant === 'products';
+    const isPackage = variant === 'packages';
+    const hasQuantity = !!(isProduct || isPackage);
 
     // Memoizado — recalcula só quando o schema da tabela de itens muda
-    const { productTargetTable, serviceTargetTable, employeeTargetTable } = useMemo(() => ({
+    const { productTargetTable, serviceTargetTable, packageTargetTable, employeeTargetTable } = useMemo(() => ({
         productTargetTable:  saleItemsFields.find(f => f.name === 'productId')?.relation?.targetTable ?? '',
         serviceTargetTable:  saleItemsFields.find(f => f.name === 'serviceId')?.relation?.targetTable ?? '',
+        packageTargetTable:  saleItemsFields.find(f => f.name === 'packageId')?.relation?.targetTable ?? '',
         employeeTargetTable: saleItemsFields.find(f => f.name === 'responsibleEmployeeId')?.relation?.targetTable ?? '',
     }), [saleItemsFields]);
+
+    const addLabel = isPackage
+        ? t('finance_view:sales.items.add_package', 'Adicionar pacote')
+        : isProduct
+        ? t('finance_view:sales.items.add_product', 'Adicionar produto')
+        : t('finance_view:sales.items.add_service', 'Adicionar serviço');
 
     return (
         <div className="space-y-5">
@@ -77,7 +97,9 @@ export function SaleItemsManager({
             {items.length === 0 ? (
                 <div className="py-14 flex flex-col items-center gap-4 border-2 border-dashed border-gray-200 dark:border-gray-700/60 rounded-2xl">
                     <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center">
-                        {isProduct
+                        {isPackage
+                            ? <HiGift size={22} className="text-gray-400 dark:text-gray-500" />
+                            : isProduct
                             ? <HiShoppingCart size={22} className="text-gray-400 dark:text-gray-500" />
                             : <HiCog size={22} className="text-gray-400 dark:text-gray-500" />}
                     </div>
@@ -94,9 +116,7 @@ export function SaleItemsManager({
                         className="px-5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-sm font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
                     >
                         +&nbsp;
-                        {isProduct
-                            ? t('finance_view:sales.items.add_product', 'Adicionar produto')
-                            : t('finance_view:sales.items.add_service', 'Adicionar serviço')}
+                        {addLabel}
                     </button>
                 </div>
             ) : (
@@ -107,16 +127,18 @@ export function SaleItemsManager({
                             <thead>
                                 <tr className="bg-gray-50/80 dark:bg-neutral-800/80 border-b border-gray-200/60 dark:border-gray-800">
                                     <th className={TH_CLASS}>
-                                        {isProduct
+                                        {isPackage
+                                            ? t('finance_view:sales.items.package', 'Pacote')
+                                            : isProduct
                                             ? t('finance_view:sales.items.product', 'Produto')
                                             : t('finance_view:sales.items.service', 'Serviço')}
                                     </th>
-                                    {isProduct && (
+                                    {hasQuantity && (
                                         <th className={`${TH_CLASS} w-28`}>
                                             {t('finance_view:sales.items.quantity', 'Qtd')}
                                         </th>
                                     )}
-                                    {!isProduct && !!employeeTargetTable && (
+                                    {variant === 'services' && !!employeeTargetTable && (
                                         <th className={`${TH_CLASS} w-44`}>
                                             {t('finance_view:sales.items.responsible', 'Responsável')}
                                         </th>
@@ -132,9 +154,8 @@ export function SaleItemsManager({
                             </thead>
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60 bg-white dark:bg-neutral-900">
                                 {items.map(item => {
-                                    const lineTotal = isProduct
-                                        ? (item.quantity || 1) * (item.unitPrice || 0)
-                                        : (item.unitPrice || 0);
+                                    const lineTotal = lineQuantity(item) * (item.unitPrice || 0);
+                                    const belowCatalog = isPackage && isBelowCatalog(item, packageCatalog);
                                     // Compute stock availability directly from stockIndex — no intermediate stockInfo state needed
                                     const stockEntry = (isProduct && item.productId && unitId)
                                         ? stockIndex[`${item.productId}|${unitId}`] : null;
@@ -145,11 +166,19 @@ export function SaleItemsManager({
                                             {/* Product / Service selector */}
                                             <td className="px-4 py-2 align-top">
                                                 <RelationSelector
-                                                    name={isProduct ? 'productId' : 'serviceId'}
-                                                    value={(isProduct ? item.productId : item.serviceId) || ''}
+                                                    name={isPackage ? 'packageId' : isProduct ? 'productId' : 'serviceId'}
+                                                    value={(isPackage ? item.packageId : isProduct ? item.productId : item.serviceId) || ''}
+                                                    filterRecord={isPackage ? isActivePackage : undefined}
                                                     onChange={(_: string, v: string | string[] | null) => {
                                                         const val = String(v || '');
-                                                        if (isProduct) {
+                                                        if (isPackage) {
+                                                            // F-FE-VP-1: o preço vem do catálogo (editável só para cima)
+                                                            const entry = packageCatalog[val];
+                                                            onUpdateItem(item.id, {
+                                                                packageId: val,
+                                                                ...(entry ? { unitPrice: entry.price } : {}),
+                                                            });
+                                                        } else if (isProduct) {
                                                             // Batch productId + salePrice into a single setState call
                                                             const entry = stockIndex[`${val}|${unitId}`];
                                                             onUpdateItem(item.id, {
@@ -160,7 +189,7 @@ export function SaleItemsManager({
                                                             onUpdateItem(item.id, { serviceId: val });
                                                         }
                                                     }}
-                                                    targetTable={isProduct ? productTargetTable : serviceTargetTable}
+                                                    targetTable={isPackage ? packageTargetTable : isProduct ? productTargetTable : serviceTargetTable}
                                                     className={SELECTOR_CLASS}
                                                 />
                                                 {/* Stock availability badge — tight margin to avoid row-height bloat */}
@@ -177,8 +206,8 @@ export function SaleItemsManager({
                                                 )}
                                             </td>
 
-                                            {/* Quantity — products only */}
-                                            {isProduct && (
+                                            {/* Quantity — products and packages (F-FE-VP-3 b) */}
+                                            {hasQuantity && (
                                                 <td className="px-4 py-2 w-28">
                                                     <QuantityInput
                                                         value={item.quantity || 1}
@@ -189,7 +218,7 @@ export function SaleItemsManager({
                                             )}
 
                                             {/* Responsible employee — services only */}
-                                            {!isProduct && !!employeeTargetTable && (
+                                            {variant === 'services' && !!employeeTargetTable && (
                                                 <td className="px-4 py-2 w-44">
                                                     <RelationSelector
                                                         name="responsibleEmployeeId"
@@ -209,6 +238,11 @@ export function SaleItemsManager({
                                                     value={item.unitPrice || 0}
                                                     onChange={price => onUpdateItem(item.id, { unitPrice: price })}
                                                 />
+                                                {belowCatalog && (
+                                                    <p className="mt-0.5 text-[10px] font-semibold text-red-500 dark:text-red-400">
+                                                        {t('finance_view:sales.package.below_catalog', 'Para cobrar menos que o catálogo, use o campo Desconto.')}
+                                                    </p>
+                                                )}
                                             </td>
 
                                             {/* Line total */}
@@ -241,10 +275,13 @@ export function SaleItemsManager({
                         <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xs font-black flex-shrink-0">
                             +
                         </span>
-                        {isProduct
-                            ? t('finance_view:sales.items.add_product', 'Adicionar produto')
-                            : t('finance_view:sales.items.add_service', 'Adicionar serviço')}
+                        {addLabel}
                     </button>
+                    {isPackage && packageIssue === 'mixed_packages' && (
+                        <p className="text-xs font-semibold text-red-500 dark:text-red-400 px-1">
+                            {t('finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.')}
+                        </p>
+                    )}
                 </>
             )}
 
