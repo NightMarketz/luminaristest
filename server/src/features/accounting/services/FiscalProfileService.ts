@@ -54,6 +54,8 @@ export interface FiscalProfileView extends CostRegime {
   csllDespesaAccountId: string | null;
   irpjRecolherAccountId: string | null;
   csllRecolherAccountId: string | null;
+  irpjSaldoNegativoAccountId: string | null;
+  csllSaldoNegativoAccountId: string | null;
   partnerAccountRef: string | null;
   codMun: string | null;
   inscricaoMunicipal: string | null;
@@ -182,6 +184,9 @@ export class FiscalProfileService {
     if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
     if (input.irpjRecolherAccountId) await this.assertLiabilityAccount(scope, input.irpjRecolherAccountId, 'IRPJ a recolher', tx);
     if (input.csllRecolherAccountId) await this.assertLiabilityAccount(scope, input.csllRecolherAccountId, 'CSLL a recolher', tx);
+    // X7 Fase B item 16 (F-TB-3 a): o ajuste anual negativo debita o saldo negativo a compensar — ativo (Asset).
+    if (input.irpjSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.irpjSaldoNegativoAccountId, 'saldo negativo de IRPJ a compensar', tx);
+    if (input.csllSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.csllSaldoNegativoAccountId, 'saldo negativo de CSLL a compensar', tx);
     // X13 PR-2 item 15 (F-OBP-1 a): a unidade segue o regime da EMPRESA no ano corrente (MEI/SIMPLES → SIMPLES).
     const regimeEmpresa = await this.regimeEmpresaHoje(scope, tx);
     if (regimeEmpresa && regimeUnidadeEsperado(regimeEmpresa) !== input.regimeTributario) {
@@ -231,6 +236,8 @@ export class FiscalProfileService {
         csllDespesaAccountId: row.csllDespesaAccountId ?? '',
         irpjRecolherAccountId: row.irpjRecolherAccountId ?? '',
         csllRecolherAccountId: row.csllRecolherAccountId ?? '',
+        irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId ?? '',
+        csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
         codMun: row.codMun ?? '',
         dpsSerie: String(row.dpsSerie),
@@ -302,6 +309,8 @@ export class FiscalProfileService {
       csllDespesaAccountId: row.csllDespesaAccountId,
       irpjRecolherAccountId: row.irpjRecolherAccountId,
       csllRecolherAccountId: row.csllRecolherAccountId,
+      irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId,
+      csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId,
       partnerAccountRef: row.partnerAccountRef,
       codMun: row.codMun,
       inscricaoMunicipal: row.inscricaoMunicipal,

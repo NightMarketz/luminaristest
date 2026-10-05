@@ -30,6 +30,7 @@ const ACCOUNT_KEYS: Record<PolicyTarget, readonly string[]> = {
   FISCAL_PROFILE: [
     'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId', 'insumoExpenseAccountId',
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId',
+    'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16
   ],
   SCOPE_SETTINGS: [
     'bankChargeExpenseAccountId', 'bankChargeIncomeAccountId', 'depreciationExpenseAccountId',

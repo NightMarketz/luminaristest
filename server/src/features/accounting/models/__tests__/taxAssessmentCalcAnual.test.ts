@@ -309,3 +309,62 @@ describe('item 10 — ajuste anual (B6; F-TB-2 b)', () => {
     expect(comForaDeAtividade.deducoesCents).toBe(R(60_000));
   });
 });
+
+// ═══ X7 Fase B PR-3 — decisão do dono 05/10 ([[D-2026-10-05-X7-FASE-B-PR3-LACUNAS]] 1) + item 16 ═══════════════════
+
+describe('PR-3, decisão 1 — balancete no mês do excesso m* calcula e grava a diferença postergada (IN 1.700 art. 33 § 8º)', () => {
+  const PREST = { ...PERFIL, prestadoraExclusivaServicos: true };
+  // 1–6 por receita bruta a 18.000/mês a 16% (acumulada A06 = 108.000 ≤ 120.000): 2.880 × 15% = 432 cada (item 9)
+  const seis = (): MesConfirmado[] => apurarMeses(Array.from({ length: 6 }, () => ({ servico: 18_000 })), 'IRPJ', PREST).map((r, i) => confirmar(r, A(i + 1)));
+  const receitas = (n: number) => Array.from({ length: n }, (_, j) => ({ periodo: A(j + 1), servicoCents: R(18_000), revendaCents: 0n }));
+  const balancete = (m: number, anteriores: MesConfirmado[], o: Partial<EntradaBalancete> = {}): ResultadoApuracaoAnual =>
+    apurarBalancete({
+      ano: 2026, periodo: A(m), tributo: 'IRPJ', resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
+      anteriores, perfil: PREST, deducoes: [], receitaMes: { periodo: A(m), servicoCents: R(18_000), revendaCents: 0n },
+      receitasMesesAnteriores: receitas(m - 1), ...o,
+    });
+
+  it('A07 por balancete cruza o limite (108.000 → 126.000): diferença = 6 × (864 − 432) = 2.592, código 599302, fora do a pagar', () => {
+    const r = balancete(7, seis());
+    expect(r.modo).toBe('BALANCETE_SUSPENSAO_REDUCAO');
+    expect(r.devidoCents).toBe(0n); // LAIR 0 ⇒ suspensão
+    expect(r.diferencaPostergadaCents).toBe(R(2_592));
+    expect(v(r, 'RECEITA_ACUMULADA_ANO')).toBe(String(R(126_000)));
+    expect(v(r, 'DIFERENCA_POSTERGADA_A01')).toBe(String(R(432)));
+    expect(r.memoria.find((l) => l.codigo === 'DIFERENCA_POSTERGADA')?.descricao).toContain('599302');
+    expect(r.aPagarCents).toBe(0n);
+    expect(MemoriaCalculoSchema.safeParse(r.memoria).success).toBe(true);
+  });
+
+  it('a diferença do A07 entra nos "anteriores" do balancete seguinte: 6 × 432 + 0 + 2.592 = 5.184', () => {
+    const ms = seis();
+    ms.push(confirmar(balancete(7, ms), A(7)));
+    const a08 = balancete(8, ms);
+    expect(v(a08, 'DEVIDO_MESES_ANTERIORES')).toBe(String(R(5_184)));
+    expect(a08.diferencaPostergadaCents).toBe(0n); // A08 não é m*: a acumulada anterior já passou do limite
+  });
+
+  it('sem cruzamento no mês, CSLL ou sem a declaração: nenhuma diferença', () => {
+    expect(balancete(6, seis().slice(0, 5)).diferencaPostergadaCents).toBe(0n); // acumulada A06 = 108.000 ≤ limite
+    expect(balancete(7, seis(), { tributo: 'CSLL' }).diferencaPostergadaCents).toBe(0n);
+    expect(balancete(7, seis(), { perfil: PERFIL }).diferencaPostergadaCents).toBe(0n);
+  });
+});
+
+describe('PR-3, item 16 — o A00 grava na memória o valor da provisão do ajuste (devido anual − Σ devido + diferença dos meses)', () => {
+  const meses = (): MesConfirmado[] => apurarMeses(Array.from({ length: 12 }, () => ({ servico: 100_000 }))).map((r, i) => confirmar(r, A(i + 1)));
+  const ajuste = (ms: MesConfirmado[], lair: number): ResultadoApuracaoAnual =>
+    apurarAjusteAnual({ ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(lair), contasProvisaoConfiguradas: true, linhasParteA: [], parteBFechada: true, meses: ms, perfil: PERFIL, deducoes: [] });
+
+  it('igual aos meses ⇒ 0; mês suspenso ⇒ positivo; lucro anual menor ⇒ negativo; a diferença postergada conta como provisionado', () => {
+    expect(v(ajuste(meses(), 384_000), 'PROVISAO_AJUSTE_ANUAL')).toBe('0');
+    const suspenso = meses();
+    suspenso[5] = { ...suspenso[5], modo: 'BALANCETE_SUSPENSAO_REDUCAO', devidoCents: 0n, aPagarCents: 0n };
+    expect(v(ajuste(suspenso, 384_000), 'PROVISAO_AJUSTE_ANUAL')).toBe(String(R(6_000)));
+    // LAIR 240.000: 15% = 36.000, sem adicional (240.000 − 20.000 × 12 = 0) ⇒ 36.000 − 72.000 = −36.000
+    expect(v(ajuste(meses(), 240_000), 'PROVISAO_AJUSTE_ANUAL')).toBe(String(-R(36_000)));
+    const comDif = meses();
+    comDif[6] = { ...comDif[6], diferencaPostergadaCents: R(1_000) };
+    expect(v(ajuste(comDif, 384_000), 'PROVISAO_AJUSTE_ANUAL')).toBe(String(-R(1_000)));
+  });
+});

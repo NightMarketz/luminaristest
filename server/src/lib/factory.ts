@@ -1231,6 +1231,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
+        this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       ),
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,
