@@ -157,12 +157,13 @@ describe('AccountingView — aba NF-e (FE-INCR-NFE V4/V18)', () => {
 });
 
 describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () => {
-  it('a barra de abas tem "Imobilizado" (22ª, depois de Dimensões) e clicar nela renderiza o FixedAssetsPanel', async () => {
+  it('a barra de abas tem "Imobilizado" (22ª, depois de Dimensões; a 23ª é Perfil fiscal — FE-INCR-DFE PR-0) e clicar nela renderiza o FixedAssetsPanel', async () => {
     render(<AccountingView />);
     const tabs = await screen.findAllByRole('tab');
-    expect(tabs).toHaveLength(22);
-    expect(tabs[tabs.length - 1]).toHaveTextContent('Imobilizado');
-    fireEvent.click(tabs[tabs.length - 1]);
+    expect(tabs).toHaveLength(23);
+    expect(tabs[21]).toHaveTextContent('Imobilizado');
+    expect(tabs[22]).toHaveTextContent('Perfil fiscal');
+    fireEvent.click(tabs[21]);
     expect(await screen.findByTestId('fixed-assets-panel-mock')).toBeInTheDocument();
   });
 
