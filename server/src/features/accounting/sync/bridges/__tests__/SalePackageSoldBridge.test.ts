@@ -74,13 +74,15 @@ describe('SalePackageSoldBridge.maybeSyncSalePackageSold', () => {
     expect(creditFromSale).toHaveBeenCalledTimes(1);
     const [, cmd] = creditFromSale.mock.calls[0];
     // BE-INCR-PACOTE-VALIDADE item 2/3: the catalog's validityDays travels with the credit, and the sale day
-    // is the same accounting day the posting uses (scopeDay — an ISO instant is read in the scope's zone).
+    // is the same accounting day the posting uses — the `date` field read AS WRITTEN (the engine stores it as ISO at UTC
+    // midnight; `scopeDay` made it 25/06 and the balance expired 2 days before the day the customer accepted —
+    // FE-INCR-PACOTE-VALIDADE, reviewer finding B1; dono 05/10 chose to fix the validity AND the posting date).
     expect(cmd).toEqual({
       customerId: 'cust-1',
       packageId: 'pkg-1',
       saleId: 'sale-1',
       amountCents: 50000,
-      saleDate: '2026-06-25',
+      saleDate: '2026-06-26',
       validityDays: 30,
     });
   });

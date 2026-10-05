@@ -102,7 +102,7 @@ import { JournalEntryRepository } from '../features/accounting/repositories/Jour
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { loadPackageValidityDays, loadSalePackageInfo } from '../features/accounting/sync/bridges/saleItems';
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
-import { scopeDay } from '../features/accounting/models/dates';
+import { saleDayAsWritten } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
 import { JobWatermarkRepository } from './JobWatermarkRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
@@ -1154,8 +1154,8 @@ export async function reconcileSalePackageOrigin(
             packageId: sale.packageId,
             saleId: sale.saleId,
             amountCents: Math.round(sale.amount * 100),
-            // Same accounting day the bridge uses (`scopeDay`: a date-only `date` passes intact).
-            saleDate: scopeDay(scope, sale.occurredAt),
+            // Same day the bridge uses: the sale `date` read AS WRITTEN (the engine stores it as ISO at UTC midnight).
+            saleDate: saleDayAsWritten(scope, sale.occurredAt),
             validityDays: await deps.loadValidityDays(sale.ownerUserId, sale.packageId),
           });
           logger.info('Reconcile credited package balance', { saleId: sale.saleId });

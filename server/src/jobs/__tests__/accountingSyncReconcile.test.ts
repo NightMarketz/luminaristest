@@ -618,9 +618,9 @@ describe('reconcileSalePackageOrigin', () => {
     expect((d.sync as jest.Mock).mock.calls[0][1].sourceType).toBe('sale.package.sold');
     expect(d.creditBalance).toHaveBeenCalledWith(expect.anything(), {
       customerId: 'cust-1', packageId: 'pkg-1', saleId: 'sale-1', amountCents: 50000,
-      // BE-INCR-PACOTE-VALIDADE item 3 (2ª chamada de crédito): o validityDays do catálogo e o dia da venda no
-      // fuso do escopo (o mesmo scopeDay da ponte).
-      saleDate: '2026-06-25', validityDays: 30,
+      // BE-INCR-PACOTE-VALIDADE item 3 (2ª chamada de crédito): o validityDays do catálogo e o dia da venda LIDO COMO
+      // ESCRITO (o mesmo da ponte; o ISO UTC do motor não recua para 25/06 — FE-INCR-PACOTE-VALIDADE, achado B1).
+      saleDate: '2026-06-26', validityDays: 30,
     });
     expect(d.loadValidityDays).toHaveBeenCalledWith('owner-1', 'pkg-1');
     expect(s.synced).toBe(1);

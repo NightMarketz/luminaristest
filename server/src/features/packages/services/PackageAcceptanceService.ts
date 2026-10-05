@@ -11,7 +11,7 @@ import {
 import { htmlToPdf } from '../../../lib/pdf';
 import { packageSaleReceiptHtml } from '../../../lib/packageSaleReceiptHtml';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
-import { isValidDateOnly } from '../../accounting/models/dates';
+import { calendarDayAsWritten } from '../../accounting/models/dates';
 import { loadPackageValidityDays, loadSalePackageInfo } from '../../accounting/sync/bridges/saleItems';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
@@ -26,21 +26,6 @@ export interface PackageSaleReceiptArtifact {
   buffer: Buffer;
   fileName: string;
   mimeType: string;
-}
-
-/**
- * The sale's calendar day, as the DynamicTable engine stores it: the preset field is `date` (date-only), but the engine
- * normalizes it to an ISO at UTC midnight (`2026-11-25T00:00:00.000Z`). Read the day AS WRITTEN — converting that instant
- * to America/Sao_Paulo (`scopeDay`) would give 24/11 and the hash of the text the operator saw would never match
- * (found verifying the production build, 05/10). Memory date-only-rendering-utc-shift-class-bug.
- * ponytail: the literal 10-char prefix; a datetime with a non-midnight offset is out of the field's convention.
- */
-function calendarDateOf(value: unknown): string {
-  const day = typeof value === 'string' ? value.slice(0, 10) : '';
-  if (!/^\d{4}-\d{2}-\d{2}/.test(String(value)) || !isValidDateOnly(day)) {
-    throw new ValidationError('Venda sem data válida: a validade não pode ser calculada.');
-  }
-  return day;
 }
 
 /** What a package sale resolves to: everything the server trusts — read from the sale and the catalog, never from the FE. */
@@ -197,7 +182,7 @@ export class PackageAcceptanceService {
     }
     const customerId = typeof data.customerId === 'string' ? data.customerId : '';
     if (!customerId) throw new ValidationError('Venda de pacote sem cliente: não há quem aceitar a validade.');
-    const saleDate = calendarDateOf(data.date);
+    const saleDate = calendarDayAsWritten(typeof data.date === 'string' ? data.date : '');
     const totalAmount = Number(data.totalAmount);
     if (!Number.isFinite(totalAmount) || totalAmount <= 0) throw new ValidationError('Venda sem valor total válido.');
 
