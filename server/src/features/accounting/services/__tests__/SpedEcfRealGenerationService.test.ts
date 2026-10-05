@@ -585,4 +585,21 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
       expect(createJob).not.toHaveBeenCalled();
     }
   });
+
+  it('defesa (dono 05/10, achado do review): órfão de troca de forma ⇒ 400 nas 2 formas, nenhum job', async () => {
+    const mov = (quarter: string) =>
+      ({ id: `mv-${quarter}`, userId: 'owner-1', unitId: 'unit-1', parteBId: 'pb-1', year: 2025, quarter, codTributo: 'I', valorCents: 1n, indicador: 'CR',
+        contrapartidaId: null, historico: 'x', indLanAnt: 'N', origem: 'user', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+        parteB: parteBIrpj, contrapartida: null, processos: [] }) as unknown as LalurMovementWithRelations;
+    const casos: Array<[Parameters<typeof buildService>[0], ReturnType<typeof makeDto>, RegExp]> = [
+      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /Ajuste o1 .* em A03\/2025 não pertence à ECF trimestral/],
+      [{ entries: [], movements: [mov('A00')] }, makeDto(), /Movimento mv-A00 .* em A00\/2025 não pertence à forma trimestral/],
+      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /Movimento mv-T02 .* em T02\/2025 não pertence à forma anual/],
+    ];
+    for (const [m, dto, msg] of casos) {
+      const { service, createJob } = buildService(m);
+      await expect(service.generate(scope, dto)).rejects.toThrow(msg);
+      expect(createJob).not.toHaveBeenCalled();
+    }
+  });
 });

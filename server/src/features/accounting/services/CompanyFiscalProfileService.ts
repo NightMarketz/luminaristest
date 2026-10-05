@@ -152,18 +152,20 @@ export class CompanyFiscalProfileService {
    * da forma antiga ⇒ 400, listando período, livro e quantidade — a linha ficaria órfã e a ECF a recusaria (item 21).
    * A forma comparada é a do e-Lalur: `ANUAL` só com a forma efetiva `ANUAL`; qualquer outro caso, inclusive sem perfil,
    * é `TRIMESTRAL` (D-2026-10-05-X7-FASE-B-PR2-LACUNAS §1). Olha todas as unidades do dono (lacuna 2 do PR-4). Roda
-   * dentro da tx do upsert; depois da trava, o item 1 já recusou a troca.
+   * dentro da tx de quem troca: o upsert, a cópia de outro ano e a exclusão (perfil ausente = TRIMESTRAL) — os dois
+   * últimos pelo achado do review independente (decisão do dono, 05/10). Depois da trava, o item 1 já recusou a troca.
    */
   private async assertTrocaDeFormaSemLalur(
     scope: AccountingScope,
     ano: number,
-    atual: CompanyFiscalProfile | null,
-    data: CompanyFiscalProfileData,
+    atual: Pick<CompanyFiscalProfile, 'regime' | 'formaApuracaoIrpjCsll'> | null,
+    novo: Pick<CompanyFiscalProfileData, 'regime' | 'formaApuracaoIrpjCsll'> | null,
     tx: Prisma.TransactionClient,
   ): Promise<void> {
-    const formaLalur = (regime: string | undefined, forma: string | null) => (regime && formaEfetiva(regime, forma) === 'ANUAL' ? 'ANUAL' : 'TRIMESTRAL');
-    const antiga = formaLalur(atual?.regime, atual?.formaApuracaoIrpjCsll ?? null);
-    if (antiga === formaLalur(data.regime, data.formaApuracaoIrpjCsll)) return;
+    const formaLalur = (p: { regime: string; formaApuracaoIrpjCsll: string | null } | null) =>
+      p && formaEfetiva(p.regime, p.formaApuracaoIrpjCsll) === 'ANUAL' ? 'ANUAL' : 'TRIMESTRAL';
+    const antiga = formaLalur(atual);
+    if (antiga === formaLalur(novo)) return;
     const periodos = antiga === 'ANUAL' ? ['A00', ...LALUR_MESES] : [...LALUR_QUARTERS];
     const achados = await this.lalurRepo.countByOwnerYearPeriods(scope.ownerUserId, ano, periodos, tx);
     if (achados.length > 0) {
@@ -247,6 +249,8 @@ export class CompanyFiscalProfileService {
       if (atual?.formaApuracaoTravadaEm) {
         throw new ValidationError(`FORMA_TRAVADA: o perfil de ${ano} tem apuração de IRPJ/CSLL confirmada e não pode ser excluído (ADR-INCR-TAX-ASSESSMENT D2).`);
       }
+      // X7 Fase B PR-4 (item 2 + achado do review, decisão do dono 05/10): sem perfil o e-Lalur volta a TRIMESTRAL.
+      await this.assertTrocaDeFormaSemLalur(scope, ano, atual, null, tx);
       const n = await this.repo.softDelete(scope, ano, tx);
       if (n === 0) throw new NotFoundError(`company_fiscal_profile_missing: sem perfil fiscal da empresa para ${ano}.`);
       await this.auditService.append(tx, scope, {
@@ -273,6 +277,8 @@ export class CompanyFiscalProfileService {
         throw new ConflictError(`company_fiscal_profile_exists: já existe perfil fiscal da empresa para ${ano} — edite pelo PUT.`);
       }
       const data: CompanyFiscalProfileData = { ...rowToData(origem), ecdNumOrd: null };
+      // X7 Fase B PR-4 (item 2 + achado do review, decisão do dono 05/10): o ano sem perfil é TRIMESTRAL no e-Lalur.
+      await this.assertTrocaDeFormaSemLalur(scope, ano, null, data, tx);
       await this.assertRefs(scope, data, tx);
       const row = await this.repo.upsert(scope, ano, data, tx);
       await this.auditUpdated(tx, scope, row, anoAnterior);

@@ -660,7 +660,8 @@ O que muda no gerador (o Fork 5 → (a) continua sendo o caminho do trimestral, 
 | N030 | T01..T04 | `A00` + um `A0m` por mês `B` **ou** `E` | item 19; Manual p.278 |
 | `DT_INI`/`DT_FIN` do `A0m` | — | período em curso (01/01 ou início de atividade → fim do mês) | item 19 → item 4 (**I**: o Manual só diz "até o mês") |
 | Parte B | 4 fechamentos trimestrais | o fechamento `A00`; M410/M500/M510 só sob o M030 `A00` | item 20; IN RFB 1.700/2017 art. 50 II |
-| Linha do e-Lalur num período sem registro de período no arquivo | — | 400 (lalur/lacs fora de mês `B`; livro N fora de `B`/`E`) | item 21; decisão do dono 05/10 (lacuna 3 do PR-4) |
+| Linha do e-Lalur num período sem registro de período no arquivo | 400 (linha `A0x` órfã de troca de forma) | 400 (lalur/lacs fora de mês `B`; livro N fora de `B`/`E`) | item 21; decisões do dono 05/10 (lacuna 3 e achado do review do PR-4) |
+| Movimento da Parte B fora dos períodos da forma | 400 (`A00`) | 400 (`T0x`) | item 20; decisão do dono 05/10 (achado do review do PR-4) |
 | Bloco N | N500/N630/N670 | + N620/N660 (linhas `E`) sob o N030 do mês; catálogo com as abas N620/N660 da planilha `366b8d9030a0` (as 5 abas existentes não mudaram) | item 22; Manual pp.47–48 |
 | Bloco L | Fork 6 → (b): sem L100/L300 | idem — o PVA recupera L100 do K155/K156 também nos meses `B` (K030 aceita `A0m`, p.143; "saldos finais não são editáveis", p.223) | item 23 (parada não disparada) |
 

@@ -18,12 +18,14 @@ base: 0b26abc5 (origin/main, 05/10 — inclui o #529, PR-3)
 1. **FORMA_TRIB_PER no anual** (lacuna 1): derivado (`R` no trimestre com mês em atividade, `0` fora) **e conferido** com o informado — diverge ⇒ 400 com o esperado. O DTO continua exigindo o campo (o trimestral não muda).
 2. **Item 2 × unidades** (lacuna 2): a busca do e-Lalur da forma antiga olha **todas as unidades do dono** (a forma é da empresa). Método novo, só leitura, no repositório do e-Lalur.
 3. **`n500` em mês `0`** (lacuna 3): **400 na geração**, mesma família do item 21 — linha do e-Lalur num período sem registro de período no arquivo.
+4. **Achado do review (item 2 contornável)** — 2º questionário, 05/10: **gate também na cópia de outro ano e na exclusão + defesa na ECF** (opção além da recomendação). A cópia (`copiar-de`) e a exclusão de um perfil ANUAL trocam a forma do e-Lalur sem passar pelo `upsert`; agora dão o mesmo 400 `FORMA_COM_LALUR`. E a geração recusa (400) linha do e-Lalur ou movimento da Parte B fora dos períodos da forma do ano, nas duas formas — o trimestral sem órfão continua byte a byte igual.
 
 ### Checklist (BRIEF B §1, itens do PR-4)
 | # | Comportamento | Status | Teste |
 |---|---|---|---|
 | 1 | `ANUAL` liberado no REAL; `PRESUMIDO` + `ANUAL`, `SIMPLES`/`MEI` seguem 400; trava inalterada | ✅ | CompanyFiscalProfileDto.test (2 casos); taxAssessmentProfile.integration "item 1" (PUT 2031 ANUAL 200, PRESUMIDO 400); formaLalur.integration |
-| 2 | Troca `TRIMESTRAL ↔ ANUAL` com e-Lalur do ano (linha, movimento ou fechamento vivos) nos períodos da forma antiga ⇒ 400 listando período/livro/quantidade; todas as unidades (dec. 2); dentro da tx do upsert | ✅ | **26 l** — companyFiscalProfile.formaLalur.integration (2 sentidos, linha em outra unidade, arquivar destrava) |
+| 2 | Troca `TRIMESTRAL ↔ ANUAL` com e-Lalur do ano (linha, movimento ou fechamento vivos) nos períodos da forma antiga ⇒ 400 listando período/livro/quantidade; todas as unidades (dec. 2); dentro da tx do upsert — e da cópia e da exclusão (dec. 4) | ✅ | **26 l** — companyFiscalProfile.formaLalur.integration (2 sentidos, linha em outra unidade, arquivar destrava; copiar-de e DELETE ⇒ 400, vermelho sem o fix: 200) |
+| dec. 4 | ECF: linha do e-Lalur fora dos períodos emitidos (também no trimestral) e movimento da Parte B fora dos períodos da forma ⇒ 400, antes de qualquer job | ✅ | SpedEcfRealGenerationService.test "defesa … órfão de troca de forma" (3 casos) |
 | 18 | `FORMA_APUR` do perfil efetivo (`A` se ANUAL; sem perfil ⇒ `T`); DTO `formaApur` opcional `T`/`A`, informado ≠ perfil ⇒ 400; `FORMA_TRIB_PER` derivado + conferido (dec. 1); `MES_BAL_RED` dos `modo` confirmados; meses em atividade sem IRPJ+CSLL `CONFIRMED` ⇒ 400 listando; leitura do `TaxAssessment` pela interface do repositório | ✅ | SpedEcfRealGenerationService.test "formaApur informado ≠ perfil", "item 18: mês … sem confirmados", "início de atividade em maio" |
 | 19 | `perApur` aceita `A00..A12`; L030/M030 = A00 + meses `B`; N030 = A00 + meses `B`/`E`; `A0m` = período em curso | ✅ | **26 j** ('EEBEEEBEEEEE' ⇒ L/M = A00,A03,A07; N = A00 + 12) |
 | 20 | No anual, exige o fechamento `A00` (não os 4 trimestrais); M410/M500 só sob o `A00` | ✅ | "item 20" |
@@ -56,14 +58,18 @@ base: 0b26abc5 (origin/main, 05/10 — inclui o #529, PR-3)
 - O `0000.DT_INI` fixo em 01/01 (lacuna (c)) impede a ECF do ano de início de atividade com situação especial — trimestral e anual.
 
 ### Review independente
-- (preenchido depois do review)
+- Veredito **PASS COM RESSALVAS**. Itens 18–24 e testes 26 j/k/l corretos; catálogo conferido (mesmo sha que a RFB serve hoje; 5 abas + PARTEB_PADRAO idênticas); todos os gates da geração antes do `createJob`; consulta por dono exclui arquivados; asserções editadas só as que a mudança da spec exige.
+- **Defeito 1 (real):** o gate do item 2 só no `upsert` — `copiar-de` (201) e `DELETE` de perfil ANUAL (200) trocavam a forma com linha viva, e a ECF trimestral descartava a linha `A03` em silêncio (provado com testes descartáveis do revisor). → **decisão 4 do dono; corrigido** com teste vermelho→verde.
+- Observação (pré-existente): `periodoBounds('A00')` vai sempre de 01/01 a 31/12, mesmo com início/fim de atividade no ano.
+- Observação de ambiente: com `generated` em symlink, a integração usa o `test-integration.db` do checkout principal (compartilhado entre sessões).
 
 ### Checks executados
 - `cd server && npx tsc --noEmit` → 0; `cd my-app && npx tsc --noEmit` → 0; `npm run test:types` → 0
 - `npm run docs:generate` → 247 paths (antes 247)
 - `npm run test:unit` → 279 suítes, 3986 passed
-- `npm run test:integration` → (preenchido ao fim da rodada)
+- `npm run test:integration` → 113 suítes, 929 passed (antes do fix do review)
+- depois do fix do review: ver o PR (rodada completa repetida)
 - Sem migração neste PR (sem `smoke:migration`).
 
 ### Fold pronto (pós-merge, não aplicado)
-`id: X7` · `estado: inflight` · `estado_detalhe: + "05/10: Fase B PR-4 mergeado no #<n> (itens 1, 2, 18–24: ANUAL selecionável no perfil; troca de forma com e-Lalur do ano ⇒ 400 em todas as unidades; ECF anual com FORMA_APUR do perfil, MES_BAL_RED dos modos confirmados, L/M030 = A00 + meses B, N030 = A00 + B/E, Parte B no A00; catálogo N620/N660; emenda 4ª do ADR da ECF retira o F-M8). Fase B completa. Decisões do dono 05/10 (lacunas 1–3 do PR-4): FORMA_TRIB_PER derivado e conferido; item 2 olha todas as unidades; n500 em mês 0 ⇒ 400. Oráculo do número segue H1b/X5 × PVA (P-B9)"` · `autorizacao: + "dono, 2026-10-05: 'Executa o PR-4 da Fase B do X7'"` · `prs: + "#<n>"` · nota de decisão nova `D-2026-10-05-X7-FASE-B-PR4-LACUNAS` (as 3 acima)
+`id: X7` · `estado: inflight` · `estado_detalhe: + "05/10: Fase B PR-4 mergeado no #<n> (itens 1, 2, 18–24: ANUAL selecionável no perfil; troca de forma com e-Lalur do ano ⇒ 400 em todas as unidades; ECF anual com FORMA_APUR do perfil, MES_BAL_RED dos modos confirmados, L/M030 = A00 + meses B, N030 = A00 + B/E, Parte B no A00; catálogo N620/N660; emenda 4ª do ADR da ECF retira o F-M8). Fase B completa. Decisões do dono 05/10 (lacunas 1–3 do PR-4 + achado do review): FORMA_TRIB_PER derivado e conferido; item 2 olha todas as unidades e vale também na cópia e na exclusão do perfil; n500 em mês 0 ⇒ 400; ECF recusa órfão de troca de forma nas 2 formas. Oráculo do número segue H1b/X5 × PVA (P-B9)"` · `autorizacao: + "dono, 2026-10-05: 'Executa o PR-4 da Fase B do X7'"` · `prs: + "#<n>"` · nota de decisão nova `D-2026-10-05-X7-FASE-B-PR4-LACUNAS` (as 4 acima)

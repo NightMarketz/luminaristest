@@ -64,4 +64,20 @@ describe('perfil fiscal × e-Lalur do ano (X7 Fase B PR-4, itens 1–2; teste 26
     expect(perfil?.formaApuracaoIrpjCsll).toBe('ANUAL');
     expect((await lalur('T02')).status).toBe(400); // período × forma (item 12) segue valendo
   });
+
+  it('achado do review (dono 05/10): copiar de outro ano e excluir também trocam a forma ⇒ mesmo 400', async () => {
+    // excluir o ANUAL de 2027 (com A03 vivo) devolveria o ano a TRIMESTRAL
+    const del = await request(app).delete(`/api/accounting/company-fiscal-profile/${ANO}?unitId=${UNIT_PERFIL}`).set(authHeader(dono));
+    expect(del.status).toBe(400);
+    expect(String(del.body.message)).toMatch(/FORMA_COM_LALUR: 2027 tem e-Lalur na forma ANUAL \(A03 lalur: 1\)/);
+    // copiar o ANUAL de 2027 para 2028, que tem linha T01 sem perfil
+    const t01 = await request(app).post('/api/lalur/entries').set(authHeader(dono)).send({
+      unitId: UNIT_LALUR, year: 2028, quarter: 'T01', livro: 'lalur', codigo: '7', valorCents: 1000, indRelacao: '4', histLancamento: 'nd',
+    });
+    expect(t01.status).toBe(201);
+    const copia = await request(app).post(`/api/accounting/company-fiscal-profile/2028/copiar-de/${ANO}`).set(authHeader(dono)).send({ unitId: UNIT_PERFIL });
+    expect(copia.status).toBe(400);
+    expect(String(copia.body.message)).toMatch(/FORMA_COM_LALUR: 2028 tem e-Lalur na forma TRIMESTRAL \(T01 lalur: 1\)/);
+    expect(await prisma.companyFiscalProfile.count({ where: { userId: dono.id, anoCalendario: 2028, deletedAt: null } })).toBe(0);
+  });
 });

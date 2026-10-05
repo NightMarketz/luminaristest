@@ -207,18 +207,25 @@ export class SpedEcfRealGenerationService {
   }
 
   /**
-   * X7 Fase B PR-4 (item 21 + lacuna 3, decisão do dono 05/10): na ECF anual, toda linha do e-Lalur tem de cair num
-   * período que o arquivo emite — senão 400, nunca arquivo silenciosamente incompleto:
+   * X7 Fase B PR-4 (item 21 + lacuna 3, decisão do dono 05/10): toda linha do e-Lalur tem de cair num período que o
+   * arquivo emite — senão 400, nunca arquivo silenciosamente incompleto:
    *  - `lalur`/`lacs` em `A0m` com o mês fora de `B`: seria M300/M350 sem M030 (p.242);
    *  - `n620`/`n660` em mês fora de `B`/`E`: seria N620/N660 sem N030 (p.278);
-   *  - `n500` (ou qualquer livro N) em mês `0`: idem (lacuna 3 do PR-4).
+   *  - `n500` (ou qualquer livro N) em mês `0`: idem (lacuna 3 do PR-4);
+   *  - no trimestral, linha em `A00..A12` (órfã de uma troca de forma) — defesa em profundidade pedida pelo dono
+   *    (05/10) sobre o achado do review; o trimestral sem órfã sai byte a byte igual (26 k).
    */
-  public static assertLinhasNosPeriodos(entries: LalurEntryWithRelations[], year: number, mesBalRed: string, periods: EcfRealPeriod[], periodsN: EcfRealPeriod[]): void {
+  public static assertLinhasNosPeriodos(entries: LalurEntryWithRelations[], year: number, mesBalRed: string | undefined, periods: EcfRealPeriod[], periodsN: EcfRealPeriod[]): void {
     const m = new Set<string>(periods.map((p) => p.perApur));
     const n = new Set<string>(periodsN.map((p) => p.perApur));
     for (const e of entries) {
       const parteA = e.livro === 'lalur' || e.livro === 'lacs';
       if ((parteA ? m : n).has(e.quarter)) continue;
+      if (mesBalRed === undefined) {
+        throw new ValidationError(
+          `Ajuste ${e.id} (livro '${e.livro}', código ${e.codigo}) em ${e.quarter}/${year} não pertence à ECF trimestral (T01..T04) — linha de uma forma anual anterior; arquive-a antes de gerar (X7 BRIEF B itens 2 e 21).`,
+        );
+      }
       const marca = isLalurMes(e.quarter) ? mesBalRed[LALUR_MESES.indexOf(e.quarter)] : '—';
       throw new ValidationError(
         `Ajuste ${e.id} (livro '${e.livro}', código ${e.codigo}) em ${e.quarter}/${year} não tem ${parteA ? 'M030' : 'N030'} no arquivo: o mês está marcado '${marca}' no MES_BAL_RED ` +
@@ -341,7 +348,7 @@ export class SpedEcfRealGenerationService {
 
     // ── e-Lalur/e-Lacs (Fork 4→(b)): o gerador LÊ do model ──
     const entries = await this.lalurRepo.findEntriesForYear(scope, year);
-    if (mesBalRed !== undefined) SpedEcfRealGenerationService.assertLinhasNosPeriodos(entries, year, mesBalRed, periods, periodsN!);
+    SpedEcfRealGenerationService.assertLinhasNosPeriodos(entries, year, mesBalRed, periods, periodsN ?? periods);
     const lalur = entries.map(SpedEcfRealGenerationService.toSerializerLine);
     const yearEnd = `${year}-12-31`;
     // REGRA_MENOR_IGUAL_DT_FIN (p.237): M010.DT_AP_LAL ≤ 0000.DT_FIN — conta nascida depois do exercício
@@ -369,6 +376,14 @@ export class SpedEcfRealGenerationService {
 
     // ── M410 (item 5) — PF/BC `user` e `system` no mesmo período/tributo é ambiguidade (item 6) ──
     const movementsRaw = await this.lalurRepo.findMovementsForYear(scope, year);
+    // X7 Fase B PR-4 (defesa pedida pelo dono 05/10 sobre o achado do review): movimento da Parte B fora dos períodos em
+    // que ela se move nesta forma (órfão de uma troca de forma) sairia do M410 em silêncio ⇒ 400.
+    const orfao = movementsRaw.find((m) => !(periodosDaParteB as readonly string[]).includes(m.quarter));
+    if (orfao) {
+      throw new ValidationError(
+        `Movimento ${orfao.id} da Parte B (conta '${orfao.parteB.codCtaB}') em ${orfao.quarter}/${year} não pertence à forma ${formaApur === 'A' ? 'anual (só A00)' : 'trimestral (T01..T04)'} — arquive-o antes de gerar (IN RFB 1.700/2017 art. 50 II; X7 BRIEF B itens 2 e 20).`,
+      );
+    }
     for (const q of periodosDaParteB) {
       for (const t of ['I', 'C'] as const) {
         const pf = movementsRaw.filter((m) => m.quarter === q && m.codTributo === t && isPrejuizoIndicador(m.indicador));
