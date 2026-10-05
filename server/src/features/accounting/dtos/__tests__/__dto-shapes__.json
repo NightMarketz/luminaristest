@@ -2179,6 +2179,10 @@
               "type": "null"
             }
           ]
+        },
+        "prestadoraExclusivaServicos": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [

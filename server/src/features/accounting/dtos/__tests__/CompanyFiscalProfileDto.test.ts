@@ -51,6 +51,13 @@ describe('UpsertCompanyFiscalProfileSchema (item 5)', () => {
     expect(ok({ regime: 'MEI', foo: 1 })).toBe(false);
   });
 
+  it('X7 Fase B item 3b: prestadoraExclusivaServicos boolean, default false; ANUAL segue recusado (F-TB-8.1)', () => {
+    expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'REAL' }).prestadoraExclusivaServicos).toBe(false);
+    expect(ok({ regime: 'REAL', prestadoraExclusivaServicos: true })).toBe(true);
+    expect(ok({ regime: 'REAL', prestadoraExclusivaServicos: 'sim' })).toBe(false);
+    expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' })).toBe(false);
+  });
+
   it('cópia: anoAnterior diferente de ano; ano ≥ 2014 (ECF desde 2014)', () => {
     expect(CompanyFiscalProfileCopyParamSchema.safeParse({ ano: '2026', anoAnterior: '2025' }).success).toBe(true);
     expect(CompanyFiscalProfileCopyParamSchema.safeParse({ ano: '2026', anoAnterior: '2026' }).success).toBe(false);

@@ -157,7 +157,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'ecdIndNire', 'ecfIndAliqCsll', 'ecfIndRecReceita', 'contadorContactId', 'representanteLegalSignerId', 'copiadoDe',
     // X7 Fase A (BRIEF itens 1 e 2b): enum/data/boolean. A referência da liminar (texto livre, classe
     // BE-INCR-AUDIT-FREETEXT-MASK) e as datas de atividade ficam FORA.
-    'formaApuracaoIrpjCsll', 'formaApuracaoTravadaEm', 'lucroRealObrigatorio', 'lc224AcrescimoSuspenso'],
+    'formaApuracaoIrpjCsll', 'formaApuracaoTravadaEm', 'lucroRealObrigatorio', 'lc224AcrescimoSuspenso',
+    // X7 Fase B (BRIEF B item 3b, F-TB-5 b): boolean da declaração de prestadora exclusiva.
+    'prestadoraExclusivaServicos'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
