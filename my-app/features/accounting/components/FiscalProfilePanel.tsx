@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 import { fiscalProfileService, type FiscalProfileView } from '../../../lib/services/fiscalProfile.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
@@ -57,8 +57,12 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Troca de unidade com resposta em voo: só a última carga vale (a da unidade antiga não pode preencher o formulário
+  // que o PUT depois grava na unidade nova — review independente, A1). Cada `load` toma um número; resposta velha é descartada.
+  const reqRef = useRef(0);
 
   const load = useCallback(async () => {
+    const req = ++reqRef.current;
     setLoading(true);
     setLoadError(null);
     try {
@@ -66,13 +70,15 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
         fiscalProfileService.getUnitProfile(unitId),
         accountingService.getAccounts(unitId).then((r) => r.accounts).catch((): Account[] => []),
       ]);
+      if (req !== reqRef.current) return;
       setView(profile);
       setForm(toFiscalProfileForm(profile));
       setAccounts(accs.filter((a) => a.nature === 'Asset' && a.acceptsEntries));
     } catch (e: unknown) {
+      if (req !== reqRef.current) return;
       setLoadError(resolveError(e, tRef.current('fiscalProfile.error.load', 'Não foi possível carregar o perfil fiscal.')));
     } finally {
-      setLoading(false);
+      if (req === reqRef.current) setLoading(false);
     }
   }, [unitId, tRef]);
   useEffect(() => { void load(); }, [load]);
@@ -95,13 +101,16 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
       setSaveError(tRef.current(`fiscalProfile.error.${built.error}`, FORM_ERROR_LABEL[built.error]));
       return;
     }
+    const req = reqRef.current;
     setSaving(true);
     setSaveError(null);
     try {
       const saved = await fiscalProfileService.putUnitProfile(built.body);
+      if (req !== reqRef.current) return;
       setView(saved);
       setForm(toFiscalProfileForm(saved));
     } catch (e: unknown) {
+      if (req !== reqRef.current) return;
       setSaveError(resolveError(e, tRef.current('fiscalProfile.error.save', 'Não foi possível salvar o perfil fiscal.')));
     } finally {
       setSaving(false);
@@ -146,11 +155,11 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
             <div className="mb-4 space-y-2">
               {view.emissao.completo ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/15 px-3 py-1 text-xs font-medium text-emerald-400">
-                  <FiCheckCircle size={14} /> {t('fiscalProfile.emissao.completo', 'Pronto para emitir NFS-e')}
+                  <FiCheckCircle size={14} /> {t('fiscalProfile.emissao.completo', 'Perfil da unidade completo')}
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-600/15 px-3 py-1 text-xs font-medium text-amber-400">
-                  <FiAlertTriangle size={14} /> {t('fiscalProfile.emissao.incompleto', 'Perfil incompleto para emitir NFS-e')}
+                  <FiAlertTriangle size={14} /> {t('fiscalProfile.emissao.incompleto', 'Perfil da unidade incompleto')}
                 </span>
               )}
               {view.emissao.faltantes.length > 0 && (

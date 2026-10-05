@@ -104,6 +104,21 @@ describe('ServiceFiscalProfilesPanel', () => {
     expect(within(rowOf('Corte')).getByText('060101')).toBeInTheDocument();
   });
 
+  it('troca de unidade com resposta atrasada: a lista de perfis da unidade antiga não pinta a da nova (review A1)', async () => {
+    let resolveA!: (v: ServiceFiscalProfileView[]) => void;
+    vi.mocked(fiscalProfileService.listServiceProfiles).mockImplementation((id: string) =>
+      id === 'uA' ? new Promise<ServiceFiscalProfileView[]>((r) => { resolveA = r; }) : Promise.resolve([]),
+    );
+    const { rerender } = render(<ServiceFiscalProfilesPanel unitId="uA" />);
+    rerender(<ServiceFiscalProfilesPanel unitId="uB" />);
+    await screen.findByText('Corte');
+    expect(within(rowOf('Corte')).getByText('sem perfil')).toBeInTheDocument();
+    resolveA([profile()]); // chega DEPOIS da resposta de uB
+    await new Promise((r) => setTimeout(r, 0));
+    expect(within(rowOf('Corte')).getByText('sem perfil')).toBeInTheDocument();
+    expect(within(rowOf('Corte')).queryByText('060101')).not.toBeInTheDocument();
+  });
+
   it('sem serviços cadastrados mostra o vazio; erro de carga aparece', async () => {
     vi.mocked(loadServiceOptions).mockResolvedValue([]);
     vi.mocked(fiscalProfileService.listServiceProfiles).mockResolvedValue([]);

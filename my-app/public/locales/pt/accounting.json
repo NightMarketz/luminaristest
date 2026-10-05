@@ -2210,8 +2210,8 @@
     "loading": "Carregando…",
     "missing": "Sem perfil fiscal: nenhuma venda emite NFS-e até você salvar este formulário.",
     "emissao": {
-      "completo": "Pronto para emitir NFS-e",
-      "incompleto": "Perfil incompleto para emitir NFS-e",
+      "completo": "Perfil da unidade completo",
+      "incompleto": "Perfil da unidade incompleto",
       "faltantes": "O que falta",
       "pending": "Valores do contador ainda não confirmados (D1f) — salvar este formulário os confirma:"
     },

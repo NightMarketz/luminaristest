@@ -114,7 +114,7 @@ describe('FiscalProfilePanel', () => {
       view({ emissao: { completo: false, faltantes: ['codMun', 'regime MEI — emissão fora do escopo (opSimpNac=2)'], pendingExternalValidation: ['issAliquotaBp'] } }),
     );
     await ready();
-    expect(screen.getByText('Perfil incompleto para emitir NFS-e')).toBeInTheDocument();
+    expect(screen.getByText('Perfil da unidade incompleto')).toBeInTheDocument();
     const list = screen.getByRole('list', { name: 'O que falta' });
     expect(within(list).getByText('Município do emitente (código IBGE)')).toBeInTheDocument();
     expect(within(list).getByText('regime MEI — emissão fora do escopo (opSimpNac=2)')).toBeInTheDocument();
@@ -148,6 +148,23 @@ describe('FiscalProfilePanel', () => {
     expect(screen.queryByText(/a emissão recusa hoje/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('ISS retido pelo tomador pessoa jurídica'));
     expect(screen.getByText(/a emissão recusa hoje/)).toBeInTheDocument();
+  });
+
+  it('troca de unidade com resposta atrasada: a unidade antiga NÃO preenche o formulário nem vai no PUT da nova (review A1)', async () => {
+    let resolveA!: (v: FiscalProfileView) => void;
+    vi.mocked(fiscalProfileService.getUnitProfile).mockImplementation((id: string) =>
+      id === 'uA' ? new Promise<FiscalProfileView>((r) => { resolveA = r; }) : Promise.resolve(view({ unitId: 'uB', dpsSerie: 2 })),
+    );
+    vi.mocked(fiscalProfileService.putUnitProfile).mockResolvedValue(view({ unitId: 'uB', dpsSerie: 2 }));
+    const { rerender } = render(<FiscalProfilePanel unitId="uA" />);
+    rerender(<FiscalProfilePanel unitId="uB" />);
+    await waitFor(() => expect(screen.getByLabelText('Série da DPS')).toHaveValue('2'));
+    resolveA(view({ unitId: 'uA', dpsSerie: 99 })); // chega DEPOIS da resposta de uB
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByLabelText('Série da DPS')).toHaveValue('2');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+    await waitFor(() => expect(fiscalProfileService.putUnitProfile).toHaveBeenCalledTimes(1));
+    expect(wire(fiscalProfileService.putUnitProfile)).toMatchObject({ unitId: 'uB', dpsSerie: 2 });
   });
 
   it('IPI no crédito de PIS/COFINS fica desmarcado e desabilitado (regra fixa do DTO)', async () => {

@@ -2197,9 +2197,9 @@
     "cancel": "Cancel",
     "dpsSerieNote": "In manual mode the portal numbers the DPS (Emissor Web guide, G3) — the series only applies to another partner.",
     "emissao": {
-      "completo": "Ready to issue NFS-e",
+      "completo": "Unit profile complete",
       "faltantes": "What is missing",
-      "incompleto": "Profile incomplete for issuing NFS-e",
+      "incompleto": "Unit profile incomplete",
       "pending": "Accountant values not yet confirmed (D1f) — saving this form confirms them:"
     },
     "error": {

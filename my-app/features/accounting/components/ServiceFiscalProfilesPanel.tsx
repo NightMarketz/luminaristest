@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { fiscalProfileService, type ServiceFiscalProfileView } from '../../../lib/services/fiscalProfile.service';
 import { Modal } from '../../../components/ui/Modal';
@@ -41,18 +41,24 @@ export function ServiceFiscalProfilesPanel({ unitId }: ServiceFiscalProfilesPane
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const { confirm, confirmNode } = useConfirmModal();
+  // Mesma guarda do FiscalProfilePanel (review A1): o `serviceRef` é o id da linha de `services`, igual entre unidades —
+  // resposta da unidade antiga não pode pintar nem editar a lista da nova. Só a última carga vale.
+  const reqRef = useRef(0);
 
   const load = useCallback(async () => {
+    const req = ++reqRef.current;
     setLoading(true);
     setLoadError(null);
     try {
       const [svcs, list] = await Promise.all([loadServiceOptions(), fiscalProfileService.listServiceProfiles(unitId)]);
+      if (req !== reqRef.current) return;
       setServices(svcs);
       setProfiles(Object.fromEntries(list.map((p) => [p.serviceRef, p])));
     } catch (e: unknown) {
+      if (req !== reqRef.current) return;
       setLoadError(resolveError(e, tRef.current('fiscalProfile.service.error.load', 'Não foi possível carregar os serviços.')));
     } finally {
-      setLoading(false);
+      if (req === reqRef.current) setLoading(false);
     }
   }, [unitId, tRef]);
   useEffect(() => { void load(); }, [load]);
@@ -68,13 +74,16 @@ export function ServiceFiscalProfilesPanel({ unitId }: ServiceFiscalProfilesPane
 
   async function save() {
     if (!editing) return;
+    const req = reqRef.current;
     setSaving(true);
     setFormError(null);
     try {
       const saved = await fiscalProfileService.putServiceProfile(editing.id, toUpsertServiceFiscalProfile(unitId, form));
+      if (req !== reqRef.current) return;
       setProfiles((p) => ({ ...p, [saved.serviceRef]: saved }));
       setEditing(null);
     } catch (e: unknown) {
+      if (req !== reqRef.current) return;
       setFormError(resolveError(e, tRef.current('fiscalProfile.service.error.save', 'Não foi possível salvar o perfil do serviço.')));
     } finally {
       setSaving(false);
@@ -89,13 +98,16 @@ export function ServiceFiscalProfilesPanel({ unitId }: ServiceFiscalProfilesPane
       confirmLabel: t('fiscalProfile.service.delete.confirm', 'Remover'),
       variant: 'danger',
       onConfirm: async () => {
+        const req = reqRef.current;
         try {
           await fiscalProfileService.deleteServiceProfile(service.id, unitId);
+          if (req !== reqRef.current) return;
           setProfiles((p) => {
             const { [service.id]: _removed, ...rest } = p;
             return rest;
           });
         } catch (e: unknown) {
+          if (req !== reqRef.current) return;
           setActionError(resolveError(e, tRef.current('fiscalProfile.service.error.delete', 'Não foi possível remover o perfil do serviço.')));
         }
       },
