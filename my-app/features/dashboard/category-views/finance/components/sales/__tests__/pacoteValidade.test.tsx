@@ -14,7 +14,7 @@ const schedulerGate = vi.hoisted(() => {
 
 // Shim obrigatório (jsx "preserve" + runtime clássico) — nunca em código de produção.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent, within, act } from '@testing-library/react';
 import SalesCreateModal from '../SalesCreateModal';
 import SaleDetailPanel from '../SaleDetailPanel';
 import { SalePaymentModal } from '../SaleActionModals';
@@ -160,7 +160,7 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         fireEvent.change(screen.getByTestId('rel-customerId'), { target: { value: 'c1' } });
         fireEvent.click(screen.getByText('Próximo'));
         fireEvent.click(screen.getByText('add-item'));
-        fireEvent.click(screen.getByText('pick-package'));
+        await act(async () => { fireEvent.click(screen.getByText('pick-package')); });
         await screen.findByTestId('package-validity-notice');
     };
     const finalizeBtn = () => screen.getByText('Finalizar Venda').closest('button') as HTMLButtonElement;
