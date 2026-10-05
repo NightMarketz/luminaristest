@@ -10,7 +10,8 @@ import { DynamicTableService } from '@/lib/services/dynamic-table.service';
 import type { SaleData, SaleItemData, NewSaleItem } from '@/features/dashboard/category-views/finance/types/sales.types';
 import { lineQuantity } from '../utils/packageSale';
 
-/** Item do wizard → linha da tabela de itens. Retorno declarado: chave extra não escapa (regra do mapper). */
+/** Item do wizard → linha da tabela de itens (função com retorno declarado, regra do mapper do my-app/CLAUDE.md).
+ *  ponytail: `SaleItemData` tem index signature — o retorno declarado não barra chave extra; o shape é este literal. */
 export function toSaleItemPayload(saleId: string, item: NewSaleItem): SaleItemData {
     return {
         saleId,

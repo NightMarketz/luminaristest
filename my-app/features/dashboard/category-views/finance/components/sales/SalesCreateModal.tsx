@@ -59,6 +59,7 @@ export function wizardVariantsFor(saleItemsTable?: IDynamicTable | null): Wizard
 const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
     customer_required: ['finance_view:sales.package.customer_required', 'Pacote precisa de cliente cadastrado: o saldo fica no nome dele.'],
     mixed_packages: ['finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.'],
+    package_not_in_catalog: ['finance_view:sales.package.not_in_catalog', 'O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.'],
     below_catalog: ['finance_view:sales.package.below_catalog', 'Para cobrar menos que o catálogo, use o campo Desconto.'],
     above_catalog_unsupported: ['finance_view:sales.package.above_catalog_unsupported', 'Venda acima do catálogo exige a marca "Acima do catálogo", que esta tabela de vendas ainda não tem. Peça ao administrador para sincronizar a tabela de vendas com o preset.'],
 };

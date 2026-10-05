@@ -40,6 +40,7 @@ export function isBelowCatalog(item: NewSaleItem, catalog: PackageCatalog): bool
 export type PackageSaleIssue =
     | 'customer_required'          // item 5: o saldo fica no nome do cliente (V7)
     | 'mixed_packages'             // item 4: um packageId por venda (V4)
+    | 'package_not_in_catalog'     // sem o preço de referência as regras 3a/3b não valem: recusa (review 05/10)
     | 'below_catalog'              // item 3a
     | 'above_catalog_unsupported'; // item 3b × I3: tabela de vendas sem o campo aboveCatalogPrice
 
@@ -57,6 +58,9 @@ export function packageSaleIssue(
     if (!customerId) return 'customer_required';
     const ids = new Set(items.map(i => i.packageId).filter(Boolean));
     if (ids.size > 1) return 'mixed_packages';
+    // Catálogo que falhou, ainda carregando ou desatualizado: sem referência não há como garantir
+    // "abaixo do catálogo nunca sai" nem a marca acima do catálogo.
+    if (items.some(i => i.packageId && !catalog[i.packageId])) return 'package_not_in_catalog';
     if (items.some(i => isBelowCatalog(i, catalog))) return 'below_catalog';
     if (!canFlagAboveCatalog && items.some(i => isAboveCatalog(i, catalog))) return 'above_catalog_unsupported';
     return null;

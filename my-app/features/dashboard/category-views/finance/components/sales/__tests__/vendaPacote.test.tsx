@@ -7,6 +7,7 @@ import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/re
 import { wizardVariantsFor } from '../SalesCreateModal';
 import { SalePaymentModal } from '../SaleActionModals';
 import SaleDetailPanel from '../SaleDetailPanel';
+import SalesTable from '../SalesTable';
 import { buildPackageCatalog } from '../../../hooks/sales/usePackageCatalog';
 import { packageBalancesService } from '@/lib/services/packageBalances.service';
 import type { IDynamicTable, IDynamicTableData } from '@/features/dashboard/components/shared/dynamic-tables.client';
@@ -73,6 +74,29 @@ describe('item 7 — o pacote vendido não paga a si mesmo', () => {
         const values = Array.from(screen.getAllByRole('combobox')[1].querySelectorAll('option')).map(o => o.value);
         expect(values).toContain('pkgA0000');
         expect(values).not.toContain('pkgB0000');
+    });
+});
+
+describe('item 3b — etiqueta na lista de vendas', () => {
+    it('aparece só na venda com aboveCatalogPrice true', () => {
+        const noop = () => {};
+        render(
+            <SalesTable
+                sales={[
+                    { id: 's1', status: 'Finalized', paymentStatus: 'Pending', totalAmount: 320, aboveCatalogPrice: true },
+                    { id: 's2', status: 'Finalized', paymentStatus: 'Pending', totalAmount: 300, aboveCatalogPrice: false },
+                ] as SaleRecord[]}
+                saleIdToSubtotal={{}}
+                customerNameMap={{}}
+                onSelectSale={noop}
+                onUpdateSale={async () => {}}
+                onRequestPay={noop}
+                onRequestCancel={noop}
+                onRequestReturn={noop}
+                onRefresh={noop}
+            />,
+        );
+        expect(screen.getAllByText('Acima do catálogo')).toHaveLength(1);
     });
 });
 

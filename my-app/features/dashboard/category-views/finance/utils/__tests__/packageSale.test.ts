@@ -42,6 +42,10 @@ describe('packageSaleIssue', () => {
         expect(packageSaleIssue([pkg(), pkg({ id: 't2', packageId: 'pkgB', unitPrice: 500 })], 'c1', catalog, true)).toBe('mixed_packages');
         expect(packageSaleIssue([pkg(), pkg({ id: 't2' })], 'c1', catalog, true)).toBeNull();
     });
+    it('pacote fora do catálogo carregado → package_not_in_catalog (a regra de preço não fica muda)', () => {
+        expect(packageSaleIssue([pkg({ packageId: 'x', unitPrice: 1 })], 'c1', catalog, true)).toBe('package_not_in_catalog');
+        expect(packageSaleIssue([pkg({ unitPrice: 100 })], 'c1', {}, true)).toBe('package_not_in_catalog');
+    });
     it('abaixo do catálogo → below_catalog (item 3a)', () => {
         expect(packageSaleIssue([pkg({ unitPrice: 250 })], 'c1', catalog, true)).toBe('below_catalog');
     });

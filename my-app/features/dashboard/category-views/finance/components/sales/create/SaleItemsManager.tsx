@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 import { HiX, HiShoppingCart, HiCog, HiGift } from 'react-icons/hi';
 import RelationSelector from '@/features/dashboard/components/forms/RelationSelector';
@@ -83,6 +83,15 @@ export function SaleItemsManager({
         packageTargetTable:  saleItemsFields.find(f => f.name === 'packageId')?.relation?.targetTable ?? '',
         employeeTargetTable: saleItemsFields.find(f => f.name === 'responsibleEmployeeId')?.relation?.targetTable ?? '',
     }), [saleItemsFields]);
+
+    // Pacote escolhido antes de o catálogo chegar: preenche o preço quando ele chega (só se ainda vazio)
+    useEffect(() => {
+        if (!isPackage) return;
+        for (const item of items) {
+            const entry = item.packageId ? packageCatalog[item.packageId] : undefined;
+            if (entry && !item.unitPrice) onUpdateItem(item.id, { unitPrice: entry.price });
+        }
+    }, [isPackage, items, packageCatalog, onUpdateItem]);
 
     const addLabel = isPackage
         ? t('finance_view:sales.items.add_package', 'Adicionar pacote')

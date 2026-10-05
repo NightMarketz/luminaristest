@@ -96,6 +96,7 @@
     "package": {
       "customer_required": "Pacote precisa de cliente cadastrado: o saldo fica no nome dele.",
       "one_package": "Uma venda leva um único pacote. Para outro pacote, crie outra venda.",
+      "not_in_catalog": "O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.",
       "below_catalog": "Para cobrar menos que o catálogo, use o campo Desconto.",
       "above_catalog_unsupported": "Venda acima do catálogo exige a marca \"Acima do catálogo\", que esta tabela de vendas ainda não tem. Peça ao administrador para sincronizar a tabela de vendas com o preset.",
       "above_catalog_tag": "Acima do catálogo"
