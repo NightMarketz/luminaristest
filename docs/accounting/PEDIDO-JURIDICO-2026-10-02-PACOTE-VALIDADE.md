@@ -10,6 +10,11 @@
 > Ou seja, o PE-6 é **pré-condição do deploy**, e com ele do backfill (registro:
 > [`D-2026-10-02-PACOTE-VALIDADE-FORKS`](../plano/decisoes/D-2026-10-02-PACOTE-VALIDADE-FORKS.md)).
 
+> **Correção 03/10 (antes do envio):** o rascunho de 02/10 dizia que "o sistema mostra a validade na consulta do saldo".
+> No código do #483 isso só vale na API (`GET /api/package-balances` devolve `expiresAt`). O cliente do front
+> (`packageBalancesService`) descarta o campo, e o modal de venda mostra só o saldo. O texto e a pergunta 5 foram
+> ajustados para o jurídico não opinar sobre uma premissa falsa.
+
 ---
 
 ## Texto para enviar
@@ -19,8 +24,9 @@
 > Preciso de um parecer sobre **prazo de validade em pacote pré-pago de serviços** (salão de beleza; consumidor
 > pessoa física). Como funciona: o cliente compra um crédito, por exemplo R$ 500, e vai usando em serviços. A partir de
 > agora, o pacote passa a ter prazo (por exemplo, 90 dias). **Quando o prazo vence, o saldo que sobrou deixa de valer e
-> fica com o salão** (vira receita). O sistema mostra a validade na consulta do saldo. Ainda não existe aviso ativo
-> (e-mail/WhatsApp) antes de vencer.
+> fica com o salão** (vira receita). A data de validade fica registrada em cada saldo, e o salão consegue listar o que vai
+> vencer. Hoje ela **não aparece em nenhuma tela nem no comprovante**, e o cliente não recebe aviso (e-mail/WhatsApp)
+> antes de vencer.
 >
 > Duas decisões já tomadas aumentam o risco e dependem do seu parecer **antes de entrar em produção**:
 > - os **saldos vendidos antes** da regra também vão ganhar prazo, contado a partir do dia em que a regra entrar
@@ -37,8 +43,8 @@
 >    (REsp 1.321.655; retenção de até 20% no REsp 1.580.278). O vencimento com 100% retido se enquadra nisso? Precisamos
 >    devolver parte, ou limitar a retenção?
 > 4. **Como informar na compra:** o que basta? Destaque no comprovante/contrato (CDC art. 54 § 4º)? Aceite expresso?
-> 5. **Aviso antes de vencer:** é obrigatório avisar o cliente (e-mail/WhatsApp) antes do vencimento, ou basta a
->    validade estar visível na consulta do saldo?
+> 5. **Aviso antes de vencer:** é obrigatório avisar o cliente (e-mail/WhatsApp) antes do vencimento, ou basta
+>    informar a validade no momento da compra?
 > 6. **Contagem do prazo:** contamos em dias corridos (venda 01/03 + 30 dias = vale até 31/03). Se o último dia cair em
 >    feriado, o Código Civil (art. 132 § 1º) empurra para o dia útil seguinte, "salvo disposição convencional em
 >    contrário". Uma cláusula "validade em dias corridos" afasta isso? Ou precisamos tratar feriados?
@@ -77,3 +83,9 @@ do dono, 02/10). O código pode ser construído e testado; o deploy espera.
 Chame o agente com "triagem da resposta do jurídico". Cada item vira **dado**, **crítica** (fork ao dono) ou
 **confirmação**. O parecer não é sign-off do incremento: ele destrava o deploy na nota de decisão quando a triagem o
 registrar.
+
+## Triagem — 04/10/2026
+
+Resposta recebida e triada: [`RESPOSTA-JURIDICO-2026-10-04-PACOTE-VALIDADE.md`](RESPOSTA-JURIDICO-2026-10-04-PACOTE-VALIDADE.md)
+→ [`D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO`](../plano/decisoes/D-2026-10-04-PACOTE-VALIDADE-TRIAGEM-JURIDICO.md).
+O jurídico recebeu a versão de 02/10 (antes da correção acima); nenhuma resposta se apoiou na premissa corrigida.

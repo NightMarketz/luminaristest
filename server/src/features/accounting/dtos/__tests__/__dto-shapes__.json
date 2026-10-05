@@ -9406,6 +9406,258 @@
       ]
     }
   },
+  "TaxAssessmentDto.ts": {
+    "TaxAssessmentDeducaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRPJ",
+            "CSLL"
+          ]
+        },
+        "tipo": {
+          "type": "string",
+          "enum": [
+            "IRRF",
+            "CSLL_RETIDA",
+            "OUTRA"
+          ]
+        },
+        "valorCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        "documento": {
+          "type": "string",
+          "maxLength": 120
+        }
+      },
+      "required": [
+        "tributo",
+        "tipo",
+        "valorCents"
+      ],
+      "additionalProperties": false
+    },
+    "TaxAssessmentPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 9007199254740991
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "deducoes": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "IRPJ",
+                  "CSLL"
+                ]
+              },
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "IRRF",
+                  "CSLL_RETIDA",
+                  "OUTRA"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tributo",
+              "tipo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo"
+      ],
+      "additionalProperties": false
+    },
+    "TaxAssessmentConfirmSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 9007199254740991
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "deducoes": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "IRPJ",
+                  "CSLL"
+                ]
+              },
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "IRRF",
+                  "CSLL_RETIDA",
+                  "OUTRA"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tributo",
+              "tipo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "expectedAPagarCents": {
+          "type": "object",
+          "properties": {
+            "IRPJ": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "CSLL": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          },
+          "required": [
+            "IRPJ",
+            "CSLL"
+          ],
+          "additionalProperties": false
+        },
+        "supersedesIds": {
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo",
+        "expectedAPagarCents"
+      ],
+      "additionalProperties": false
+    },
+    "TaxAssessmentListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "T01",
+            "T02",
+            "T03",
+            "T04"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "SUPERSEDED"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario"
+      ],
+      "additionalProperties": false
+    },
+    "TaxAssessmentScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
   "aging.dto.ts": {
     "AgingReportQuerySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

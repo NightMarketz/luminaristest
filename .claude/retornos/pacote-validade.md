@@ -1,6 +1,6 @@
 # RETORNO — PACOTE-VALIDADE (BE-INCR-PACOTE-VALIDADE)
 
-tarefa: executar o BRIEF (§3 + §5.2; §5.3 novo) — código e testes; produção só após o PE-6
+tarefa: executar o BRIEF (§3 + §5.2; §5.4 novo — lacunas) — código e testes; produção só após o PE-6
 agente: sessão principal (sessao-feature), worktree be-incr-pacote-validade-c5934d; review por Agent isolado (general-purpose, model opus, worktree própria)
 autorização: dono, 2026-10-03 — "Executa o BE-INCR-PACOTE-VALIDADE — código e testes; não vai a produção antes do PE-6" (registrada no `autorizacao` do nó, commit 5d4a92b0)
 base: origin/main d6530790 (main andou 1 commit de docs depois — #476, sem conflito: `git merge-tree` limpo)
@@ -11,7 +11,7 @@ rodadas-de-review: 1 — PASS com ressalvas (5 achados: 2 médios, 3 baixos). De
 custo: US$ 29.70 · claude-opus-5-5 US$ 29.70 · 459 min (scripts/session-cost.mjs; inclui o revisor como subagente)
 veredicto: PASS com ressalvas (revisor independente) — aguardando o dono
 
-### Lacunas de spec (registradas e perguntadas; o dono respondeu em 03/10 — BRIEF §5.3)
+### Lacunas de spec (registradas e perguntadas; o dono respondeu em 03/10 — BRIEF §5.4; o §5.3 é a triagem do PE-6, #506)
 - L1 NFS-e do vencido cancelada → **reemite** (letra do §5.2; contra a recomendação)
 - L2 reenvio de NFS-e do vencido rejeitada → remonta pelo vencimento
 - L7 `xDescServ` → "Pacote <nome> — saldo não utilizado, vencido em <expiresOn>"

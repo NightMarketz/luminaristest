@@ -57,6 +57,7 @@ export const REKEY_MODELS = [
   'PaymentAccount', // #484 (F5 PR-1): conta do provedor por unidade; AAD da cifra = id, não unitId → REKEY (dono, 03/10)
   'AccountantAssignment', // #482 (GOV-CONTADOR): contador responsável do escopo, sem hash → REKEY pelo critério do F-RK-5 (KEEP só para a trilha);
   //   deixá-la no unitId antigo tiraria o contador ativo da unidade re-chaveada e destravaria a reabertura em silêncio
+  'TaxAssessment', // X7 Fase A PR-2: apuração IRPJ/CSLL; `unitId` = unidade lida (proveniência), sem hash → REKEY pelo critério do F-RK-5
 ] as const;
 
 /**
@@ -112,7 +113,7 @@ export const Args = z.discriminatedUnion('mode', [
 ]);
 export type CliArgs = z.infer<typeof Args>;
 
-export type PlanStatus = 'SKIP_REAL_UNIT' | 'LEGACY' | 'EXCLUDED_TENANT';
+export type PlanStatus = 'SKIP_REAL_UNIT' | 'DELETED_REAL_UNIT' | 'LEGACY' | 'EXCLUDED_TENANT'; // DELETED_REAL_UNIT: L-RK-5 (b)
 export type PlanRow = { ownerUserId: string; unitId: string; status: PlanStatus; tables: Record<string, number> };
 export type ApplyResult = {
   event: 'unit_rekeyed';
@@ -181,18 +182,21 @@ const stable = (v: unknown) => JSON.stringify(v, (_k, x) => {
 });
 
 async function tableRows(db: PrismaClient, table: string): Promise<Record<string, unknown>[]> {
-  return db.$queryRawUnsafe<Record<string, unknown>[]>(`SELECT * FROM ${q(table)} ORDER BY rowid`);
+  return db.$queryRawUnsafe<Record<string, unknown>[]>(`SELECT * FROM ${q(table)}`);
 }
 
-/** sha256 de todas as linhas (ordem de rowid), sem as colunas omitidas. Base do md5-do-banco dos testes e do --verify. */
+/** Linhas como JSON estável, ordenadas: multiconjunto independente de rowid (L-RK-2 item 8 — a cópia pode renumerar). */
+const multiset = (rows: Record<string, unknown>[]) => rows.map(stable).sort();
+
+/** sha256 do multiconjunto de linhas, sem as colunas omitidas. Base do md5-do-banco dos testes e do --verify. */
 export async function tableDigest(db: PrismaClient, table: string, omit: string[] = []): Promise<{ count: number; sha256: string }> {
-  const rows = await tableRows(db, table);
-  const h = createHash('sha256');
-  for (const r of rows) {
+  const rows = (await tableRows(db, table)).map((r) => {
     const copy = { ...r };
     for (const c of omit) delete copy[c];
-    h.update(stable(copy)).update('\n');
-  }
+    return copy;
+  });
+  const h = createHash('sha256');
+  for (const line of multiset(rows)) h.update(line).update('\n');
   return { count: rows.length, sha256: h.digest('hex') };
 }
 
@@ -262,12 +266,18 @@ async function unitsTableOf(db: Db, owner: string) {
   return db.dynamicTable.findFirst({ where: { userId: owner, internalName: 'units' } });
 }
 
-/** Item 5 / item 6. `UNIT_OWNER_MISMATCH` é exit 1 em qualquer modo (nada escrito). */
+/**
+ * Item 5 / item 6 + L-RK-5 (b). Precedência: units viva do dono → SKIP_REAL_UNIT; units de OUTRO dono, viva ou
+ * apagada (F-RKL-1 a) → `UNIT_OWNER_MISMATCH`, exit 1 em qualquer modo (nada escrito); units apagada do dono →
+ * DELETED_REAL_UNIT; depois EXCLUDED_TENANT / LEGACY.
+ */
 export async function classify(db: Db, owner: string, unitId: string): Promise<PlanStatus> {
-  const row = await db.dynamicTableData.findFirst({ where: { id: unitId, deletedAt: null }, include: { dynamicTable: true } });
+  const row = await db.dynamicTableData.findUnique({ where: { id: unitId }, include: { dynamicTable: true } });
   if (row && row.dynamicTable.internalName === 'units') {
-    if (row.dynamicTable.userId === owner) return 'SKIP_REAL_UNIT';
-    throw new CliError(1, 'UNIT_OWNER_MISMATCH', `unitId '${unitId}' é linha de units de OUTRO dono (${row.dynamicTable.userId}), não de '${owner}'.`);
+    if (row.dynamicTable.userId !== owner) {
+      throw new CliError(1, 'UNIT_OWNER_MISMATCH', `unitId '${unitId}' é linha de units${row.deletedAt ? ' (apagada)' : ''} de OUTRO dono (${row.dynamicTable.userId}), não de '${owner}'.`);
+    }
+    return row.deletedAt ? 'DELETED_REAL_UNIT' : 'SKIP_REAL_UNIT';
   }
   if ((EXCLUDED_UNIT_IDS as readonly string[]).includes(unitId)) return 'EXCLUDED_TENANT';
   if (!(await unitsTableOf(db, owner))) return 'EXCLUDED_TENANT';
@@ -303,7 +313,12 @@ export async function plan(db: PrismaClient, inv: InventoryEntry[]): Promise<Pla
 export interface ApplyOptions {
   /** Costura de teste do item 10 (falha injetada na N-ésima tabela). Nunca usada pelo `main`. */
   onTableRekeyed?: (table: string, index: number) => void | Promise<void>;
+  /** Costura de teste da L-RK-4 (item 2): roda entre o preflight e a tx. Nunca usada pelo `main`. */
+  onBeforeTx?: () => void | Promise<void>;
 }
+
+/** Rollback do gate in-tx da L-RK-4: lançado dentro da tx, vira `NOTHING_TO_DO` fora dela. */
+class NothingMoved extends Error {}
 
 export type ApplyOutcome = { status: 'NOTHING_TO_DO' | 'SKIP_REAL_UNIT' } | { status: 'APPLIED'; result: ApplyResult };
 
@@ -325,10 +340,14 @@ export async function apply(
   const { ownerUserId: owner, from } = args;
   const status = await classify(db, owner, from);
   if (status === 'SKIP_REAL_UNIT') return { status };
+  if (status === 'DELETED_REAL_UNIT') {
+    throw new CliError(1, 'DELETED_REAL_UNIT', `'${from}' é linha APAGADA de units do próprio dono — o --apply recusa (L-RK-5 b); restaure ou trate a unidade antes.`);
+  }
   if (status === 'EXCLUDED_TENANT') {
     throw new CliError(1, 'NO_UNITS_TABLE', `'${from}' é EXCLUDED_TENANT (dono sem tabela units, ou seed-unit-* excluído pelo F-RK-2 a) — o CLI nunca cria tabela dinâmica.`);
   }
   // Item 13: o legado só "existe" enquanto houver linha REKEY com ele — a trilha (KEEP) fica sob ele para sempre.
+  // Preflight: a decisão autoritativa é o gate dentro da tx (L-RK-4 a), abaixo.
   if (Object.keys(await rekeyCounts(db, inv, owner, from)).length === 0) return { status: 'NOTHING_TO_DO' };
 
   const user = await db.user.findUnique({ where: { id: owner } });
@@ -339,6 +358,7 @@ export async function apply(
   const dynamicTables = factory.getDynamicTableService();
   const audit = factory.getAuditService();
   const rekey = inv.filter((t) => t.cls === 'REKEY');
+  await opts.onBeforeTx?.();
 
   const result = await db.$transaction(async (tx) => {
     // Item 8 (F-RK-8 b): caminho normal — plugins de afterCreate (pipeline, estoque) rodam NESTA tx.
@@ -364,6 +384,8 @@ export async function apply(
       const left = await count(tx, t, owner, from);
       if (left !== 0) throw new CliError(1, 'COUNT_MISMATCH', `${t.table}: ${left} linha(s) ainda sob '${from}' — rollback total.`);
     }
+    // L-RK-4 (a): Σ before = 0 dentro da tx → rollback (a linha de units e os plugins somem) e NOTHING_TO_DO.
+    if (Object.values(tables).reduce((s, t) => s + t.before, 0) === 0) throw new NothingMoved();
 
     // Itens 11–12 (F-RK-5 a, F-RK-6 b): a cadeia legada não muda; a nova nasce com o evento âncora em seq=1.
     // Sem cabeça legada não há cadeia a ancorar → `auditAnchor: null` (contrato §5).
@@ -382,7 +404,11 @@ export async function apply(
     }
     const out: ApplyResult = { event: 'unit_rekeyed', ownerUserId: owner, from, to, tables, auditAnchor };
     return out;
-  }, { timeout: TX_TIMEOUT_MS, maxWait: 10_000 });
+  }, { timeout: TX_TIMEOUT_MS, maxWait: 10_000 }).catch((e: unknown) => {
+    if (e instanceof NothingMoved) return null;
+    throw e;
+  });
+  if (!result) return { status: 'NOTHING_TO_DO' };
 
   // Item 14: rastreio só após o COMMIT.
   logger.info('unit_rekeyed', { ...result });
@@ -393,15 +419,19 @@ function sortKeys<T>(o: Record<string, T>): Record<string, T> {
   return Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
 }
 
-// ─────────────────────────────────────────────────────────────── --verify (item 17)
+// ─────────────────────────────────────────────────────────────── --verify (item 17 + L-RK-2 a / L-RK-3 b)
 
 export interface VerifyReport {
   ok: boolean;
   failures: string[];
-  rekeyed: { ownerUserId: string; from: string; to: string }[];
+  /** Pares inferidos pelo diff pré × pós (L-RK-3 b) — não dependem de `unit.rekeyed`. `rows` = linhas movidas. */
+  rekeyed: { ownerUserId: string; from: string; to: string; rows: number; anchored: boolean }[];
   dynamicTableDataAdded: Record<string, number>;
   checks: Record<string, string>;
 }
+
+type Row = Record<string, unknown>;
+const ownerUnit = (owner: string, unitId: string) => `${owner}\u0000${unitId}`;
 
 /** Pré (backup) × pós (banco atual). Toda divergência fora do esperado vira `failures`. */
 export async function verify(db: PrismaClient, inv: InventoryEntry[], against: string): Promise<VerifyReport> {
@@ -410,64 +440,144 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
   const failures: string[] = [];
   const checks: Record<string, string> = {};
   try {
-    const rekeyTables = new Set(inv.filter((t) => t.cls === 'REKEY').map((t) => t.table));
+    const rekeyInv = inv.filter((t) => t.cls === 'REKEY');
+    const rekeyTables = new Set(rekeyInv.map((t) => t.table));
     const SPECIAL = new Set(['dynamic_table_data', 'audit_events', 'audit_chain_heads']);
     const [preTables, postTables] = [await userTables(pre), await userTables(db)];
     if (stable(preTables) !== stable(postTables)) failures.push('conjunto de tabelas difere entre pré e pós');
+    const snap = new Map<string, { a: Row[]; b: Row[] }>();
+    for (const t of rekeyInv) snap.set(t.table, { a: await tableRows(pre, t.table), b: await tableRows(db, t.table) });
 
-    // Quem foi re-chaveado: os `unit.rekeyed` que só existem no pós.
-    const preEvents = new Map((await tableRows(pre, 'audit_events')).map((r) => [String(r.id), stable(r)]));
-    const postEvents = await tableRows(db, 'audit_events');
-    const newEvents = postEvents.filter((r) => !preEvents.has(String(r.id)));
-    const rekeyed = newEvents.filter((r) => r.eventType === UNIT_REKEYED_EVENT).map((r) => ({
-      ownerUserId: String(r.scopeUserId), from: String(JSON.parse(String(r.payload)).fromUnitId), to: String(r.unitId),
-    }));
+    // Item 5 — pares inferidos: nas tabelas REKEY com `id`, casar pré × pós por id; todo `unitId` mudado gera um par.
+    // As duas tabelas sem `id` (PK contém o unitId) ficam só com o multiconjunto do item 7.
+    const moves = new Map<string, { ownerUserId: string; from: string; to: string; rows: number }>();
+    for (const t of rekeyInv) {
+      const { a, b } = snap.get(t.table)!;
+      const sample = a[0] ?? b[0];
+      if (!sample || !('id' in sample)) continue;
+      const postById = new Map(b.map((r) => [String(r.id), r]));
+      const preIds = new Set(a.map((r) => String(r.id)));
+      for (const r of a) {
+        const p = postById.get(String(r.id));
+        if (!p) { failures.push(`(b) ${t.table} ${String(r.id)}: linha do pré removida`); continue; }
+        if (p.unitId === r.unitId) continue;
+        const [o1, o2] = [String(r[t.ownerColumn]), String(p[t.ownerColumn])];
+        if (o1 !== o2) { failures.push(`(b) ${t.table} ${String(r.id)}: regra (i) — o dono mudou (${o1} → ${o2})`); continue; }
+        const key = `${ownerUnit(o1, String(r.unitId))}\u0000${String(p.unitId)}`;
+        const m = moves.get(key) ?? { ownerUserId: o1, from: String(r.unitId), to: String(p.unitId), rows: 0 };
+        m.rows++;
+        moves.set(key, m);
+      }
+      for (const r of b) if (!preIds.has(String(r.id))) failures.push(`(b) ${t.table} ${String(r.id)}: linha criada no pós`);
+    }
+    const pairs = [...moves.values()].sort((x, y) => (x.ownerUserId + x.from + x.to).localeCompare(y.ownerUserId + y.from + y.to));
+    const toOf = new Map<string, string>();
+    for (const p of pairs) {
+      const k = ownerUnit(p.ownerUserId, p.from);
+      if (toOf.has(k)) failures.push(`(b) par ambíguo: (${p.ownerUserId}, ${p.from}) foi para ${toOf.get(k)} e para ${p.to}`);
+      else toOf.set(k, p.to);
+    }
+    // L-RK-6 — regra (v): cada `(dono, to)` vem de exatamente um `from` (o CLI cria uma unidade por invocação).
+    const fromsOf = new Map<string, string[]>();
+    for (const p of pairs) {
+      const k = ownerUnit(p.ownerUserId, p.to);
+      fromsOf.set(k, [...(fromsOf.get(k) ?? []), p.from]);
+    }
+    for (const [k, froms] of fromsOf) {
+      if (froms.length > 1) failures.push(`(b) ${k.replace('\u0000', '/')}: regra (v) — destino recebeu mais de uma origem (${froms.join(', ')})`);
+    }
 
-    // (a) fora do inventário REKEY: byte-idêntica, salvo as 3 especiais.
+    // (a) fora do inventário REKEY: multiconjunto idêntico, salvo as 3 especiais.
     for (const t of postTables) {
       if (rekeyTables.has(t) || SPECIAL.has(t) || !preTables.includes(t)) continue;
       const [a, b] = [await tableDigest(pre, t), await tableDigest(db, t)];
       if (a.sha256 !== b.sha256) failures.push(`(a) ${t}: conteúdo mudou (pré ${a.count} linhas, pós ${b.count})`);
     }
-    // dynamic_table_data: linhas do pré intactas; acréscimos contados por tabela dinâmica; +1 em units por unidade.
+    // dynamic_table_data: linhas do pré intactas; acréscimos contados por tabela dinâmica.
     const preDtd = new Map((await tableRows(pre, 'dynamic_table_data')).map((r) => [String(r.id), stable(r)]));
     const added: Record<string, number> = {};
+    const addedIds = new Set<string>();
     let seenDtd = 0;
     for (const r of await tableRows(db, 'dynamic_table_data')) {
       const prev = preDtd.get(String(r.id));
-      if (prev === undefined) { added[String(r.dynamicTableId)] = (added[String(r.dynamicTableId)] ?? 0) + 1; continue; }
+      if (prev === undefined) { added[String(r.dynamicTableId)] = (added[String(r.dynamicTableId)] ?? 0) + 1; addedIds.add(String(r.id)); continue; }
       seenDtd++;
       if (prev !== stable(r)) failures.push(`(a) dynamic_table_data ${String(r.id)}: linha do pré alterada`);
     }
     if (seenDtd !== preDtd.size) failures.push(`(a) dynamic_table_data: ${preDtd.size - seenDtd} linha(s) do pré sumiram`);
-    for (const k of rekeyed) {
-      const unitRow = await db.dynamicTableData.findFirst({ where: { id: k.to }, include: { dynamicTable: true } });
-      if (!unitRow || unitRow.dynamicTable.internalName !== 'units' || unitRow.dynamicTable.userId !== k.ownerUserId) {
-        failures.push(`(a) unidade nova ${k.to} não é linha de units do dono ${k.ownerUserId}`);
+
+    // Item 6 — validade de cada par (+ item 10: todo `to` está entre os acréscimos de dynamic_table_data).
+    for (const p of pairs) {
+      const label = `par (${p.ownerUserId}, ${p.from} → ${p.to})`;
+      const unitRow = await db.dynamicTableData.findUnique({ where: { id: p.to }, include: { dynamicTable: true } });
+      if (!unitRow || unitRow.deletedAt || unitRow.dynamicTable.internalName !== 'units' || unitRow.dynamicTable.userId !== p.ownerUserId
+        || preDtd.has(p.to) || !addedIds.has(p.to)) {
+        failures.push(`(b) ${label}: regra (ii) — destino não é units viva do dono criada depois do pré`);
+      }
+      const fromRow = await pre.dynamicTableData.findUnique({ where: { id: p.from }, include: { dynamicTable: true } });
+      if (fromRow && !fromRow.deletedAt && fromRow.dynamicTable.internalName === 'units') {
+        failures.push(`(b) ${label}: regra (iii) — origem era units viva no pré`);
+      }
+      const left = rekeyInv.reduce((s, t) => s + snap.get(t.table)!.b.filter((r) => String(r[t.ownerColumn]) === p.ownerUserId && String(r.unitId) === p.from).length, 0);
+      if (left) failures.push(`(b) ${label}: regra (iv) — ${left} linha(s) REKEY ainda sob a origem no pós`);
+    }
+
+    // Item 7 — multiconjunto exato em toda tabela REKEY (inclusive as sem `id`): pré com os pares aplicados = pós.
+    for (const t of rekeyInv) {
+      const { a, b } = snap.get(t.table)!;
+      const expected = a.map((r) => {
+        const to = toOf.get(ownerUnit(String(r[t.ownerColumn]), String(r.unitId)));
+        return to === undefined ? r : { ...r, unitId: to };
+      });
+      if (stable(multiset(expected)) !== stable(multiset(b))) {
+        failures.push(`(b) ${t.table}: multiconjunto do pós ≠ pré com os pares aplicados (pré ${a.length}, pós ${b.length})`);
       }
     }
-    // audit_events / audit_chain_heads: pré intacto; acréscimo = 1 evento âncora e 1 cabeça por unidade nova.
+
+    // Item 9 — âncora coerente com os pares. Pré intacto; evento novo só o unit.rekeyed de par com cabeça no pré.
+    const preEvents = new Map((await tableRows(pre, 'audit_events')).map((r) => [String(r.id), stable(r)]));
+    const postEvents = await tableRows(db, 'audit_events');
+    const newEvents = postEvents.filter((r) => !preEvents.has(String(r.id)));
     for (const r of postEvents) {
       const prev = preEvents.get(String(r.id));
       if (prev !== undefined && prev !== stable(r)) failures.push(`(a) audit_events ${String(r.id)}: evento do pré alterado`);
     }
     if (postEvents.length - newEvents.length !== preEvents.size) failures.push('(a) audit_events: evento do pré sumiu');
-    if (newEvents.length !== rekeyed.length) failures.push(`(a) audit_events: ${newEvents.length - rekeyed.length} evento(s) novo(s) além dos unit.rekeyed`);
-    if (newEvents.some((r) => num(r.seq) !== 1)) failures.push('(a) audit_events: unit.rekeyed fora de seq=1');
-    const headKey = (r: Record<string, unknown>) => `${String(r.scopeUserId)}\u0000${String(r.unitId)}`;
+    const headKey = (r: Row) => ownerUnit(String(r.scopeUserId), String(r.unitId));
     const preHeads = new Map((await tableRows(pre, 'audit_chain_heads')).map((r) => [headKey(r), r]));
-    const postHeads = await tableRows(db, 'audit_chain_heads');
-    for (const r of postHeads) {
-      const prev = preHeads.get(headKey(r));
-      if (prev && stable(prev) !== stable(r)) failures.push(`(a) audit_chain_heads ${headKey(r).replace('\u0000', '/')}: cabeça do pré alterada`);
+    const consumed = new Set<string>();
+    const rekeyed: VerifyReport['rekeyed'] = [];
+    for (const p of pairs) {
+      const preHead = preHeads.get(ownerUnit(p.ownerUserId, p.from));
+      const mine = newEvents.filter((r) => String(r.scopeUserId) === p.ownerUserId && String(r.unitId) === p.to);
+      for (const r of mine) consumed.add(String(r.id));
+      if (preHead) {
+        const ev = mine[0];
+        const payload = ev ? JSON.parse(String(ev.payload)) as Record<string, unknown> : {};
+        const anchorOk = mine.length === 1 && ev.eventType === UNIT_REKEYED_EVENT && num(ev.seq) === 1 && payload.fromUnitId === p.from
+          && payload.fromHeadHash === String(preHead.headHash) && payload.fromNextSeq === String(preHead.nextSeq).replace(/n$/, '');
+        if (!anchorOk) failures.push(`(a) audit_events: par ${p.from} → ${p.to} exige 1 unit.rekeyed seq=1 com a cabeça do pré (achei ${mine.length} evento(s))`);
+      } else if (mine.length) {
+        failures.push(`(a) audit_events: par ${p.from} → ${p.to} sem cabeça no pré, mas com ${mine.length} evento(s) novo(s)`);
+      }
+      rekeyed.push({ ...p, anchored: preHead !== undefined });
     }
-    if (postHeads.length !== preHeads.size + rekeyed.length) failures.push(`(a) audit_chain_heads: esperado +${rekeyed.length}, achei +${postHeads.length - preHeads.size}`);
+    const orphan = newEvents.filter((r) => !consumed.has(String(r.id)));
+    if (orphan.length) failures.push(`(a) audit_events: ${orphan.length} evento(s) novo(s) sem par inferido`);
+    const anchoredCount = rekeyed.filter((k) => k.anchored).length;
+    // L-RK-7 — pré intacto por chave (item 17 a); cabeça nova só a `(dono, to)` de par ancorado.
+    const postHeads = new Map((await tableRows(db, 'audit_chain_heads')).map((r) => [headKey(r), r]));
+    const anchoredTo = new Set(rekeyed.filter((k) => k.anchored).map((k) => ownerUnit(k.ownerUserId, k.to)));
+    for (const [k, prev] of preHeads) {
+      const r = postHeads.get(k);
+      if (!r) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça do pré sumiu`);
+      else if (stable(prev) !== stable(r)) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça do pré alterada`);
+    }
+    for (const k of postHeads.keys()) {
+      if (!preHeads.has(k) && !anchoredTo.has(k)) failures.push(`(a) audit_chain_heads ${k.replace('\u0000', '/')}: cabeça nova sem par ancorado`);
+    }
+    if (postHeads.size !== preHeads.size + anchoredCount) failures.push(`(a) audit_chain_heads: esperado +${anchoredCount}, achei +${postHeads.size - preHeads.size}`);
 
-    // (b) REKEY: contagem igual e hash de todas as colunas exceto unitId idêntico.
-    for (const t of rekeyTables) {
-      const [a, b] = [await tableDigest(pre, t, ['unitId']), await tableDigest(db, t, ['unitId'])];
-      if (a.count !== b.count || a.sha256 !== b.sha256) failures.push(`(b) ${t}: pré ${a.count}/${a.sha256.slice(0, 12)} ≠ pós ${b.count}/${b.sha256.slice(0, 12)}`);
-    }
     // (c) integridade.
     const integrity = (await db.$queryRawUnsafe<{ integrity_check: string }[]>('PRAGMA integrity_check')).map((r) => r.integrity_check).join('; ');
     checks.integrity_check = integrity;
@@ -480,10 +590,10 @@ export async function verify(db: PrismaClient, inv: InventoryEntry[], against: s
       'SELECT "entryId" FROM postings GROUP BY "entryId" HAVING SUM("debitCents") <> SUM("creditCents")');
     checks.s8_unbalanced_entries = String(unbalanced.length);
     if (unbalanced.length) failures.push(`(d) S8: ${unbalanced.length} lançamento(s) desbalanceado(s)`);
-    // (e) item 11: cadeia legada selada com a mesma cabeça; cadeia nova íntegra.
+    // (e) item 11, para TODO par: cadeia legada selada com a mesma cabeça; cadeia nova íntegra.
     const audit = ApplicationFactory.getInstance().getAuditService();
     for (const k of rekeyed) {
-      const preHead = preHeads.get(`${k.ownerUserId}\u0000${k.from}`);
+      const preHead = preHeads.get(ownerUnit(k.ownerUserId, k.from));
       const legacy = await audit.verifyAuditChain(resolveAccountingScope({ userId: k.ownerUserId }, k.from));
       const expectedLast = preHead ? BigInt(String(preHead.nextSeq).replace(/n$/, '')) - 1n : null;
       if (!legacy.ok || legacy.lastSeq !== expectedLast || legacy.headHash !== (preHead ? String(preHead.headHash) : null)) {

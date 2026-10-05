@@ -102,6 +102,12 @@ export interface IPostingRepository {
   ): Promise<number>;
 
   /**
+   * Unidades do DONO (todas, não só a do escopo) com ao menos uma posting cujo lançamento tem um dos `statuses` e
+   * data em [from, to] — X7 item 13 (F-X7-7 a: outra unidade da PJ com movimento no período ⇒ 400).
+   */
+  unitIdsWithMovement(ownerUserId: string, statuses: string[], from: Date, to: Date): Promise<string[]>;
+
+  /**
    * Atomically increments the JournalEntrySequence counter for (scope, fiscalYear)
    * and returns the new last value. Must be called inside a transaction.
    * Rollback of the outer tx also rolls back the increment — gapless transactional.

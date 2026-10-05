@@ -448,7 +448,19 @@ lançamento; nenhum valor, data ou natureza muda (comportamento 17 b prova). **V
 
 ---
 
-## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **RATIFICADAS 2026-10-03, correção sem "executa"**
+## 10. Lacunas abertas pela `sessao-feature` (2026-10-03, PR #480) — **FECHADAS no PR #501 (mergeado 2026-10-04, `93af35b1`)**
+
+> ✅ **FECHADO — PR #501** (`sessao-feature`, autorização do dono no chat em 2026-10-03: *"Executa o código das lacunas
+> L-RK-1..5 do I1b"*). As 5 lacunas e o item 11 do BRIEF foram implementados com teste. O par vermelho→verde está no
+> mesmo PR: 5 testes vermelhos contra o CLI do #480, 12/12 verdes depois. O que segue sem prova é a execução no `dev.db`
+> real (`RUNBOOK-I1B-UNIT-REKEY.md`, gate humano). O passo 7 do runbook passa a valer como prova depois do merge do #501.
+>
+> **Ressalvas do review do #501 (2026-10-04) — ✅ FECHADAS no PR #503:** L-RK-6, regra (v): cada `to` vem de exatamente um `from`
+> (fusão de dois legados sem trilha passa hoje); L-RK-7: toda cabeça de `audit_chain_heads` do pré tem de existir no
+> pós (uma cabeça trocada por falsa passa hoje). Decididas em
+> [`D-2026-10-04-I1B-RESSALVAS-501`](../plano/decisoes/D-2026-10-04-I1B-RESSALVAS-501.md); BRIEF
+> [`BE-INCR-UNIT-REKEY-VERIFY-V-brief.md`](../accounting/BE-INCR-UNIT-REKEY-VERIFY-V-brief.md). Código e 2 testes-guarda no
+> PR #503 (autorização do dono no chat em 2026-10-04): vermelhos contra `93af35b1`, 14/14 verdes depois.
 
 > ✅ **Ratificação por questionário em 2026-10-03**
 > ([`D-2026-10-03-I1B-LACUNAS-L-RK`](../plano/decisoes/D-2026-10-03-I1B-LACUNAS-L-RK.md)):

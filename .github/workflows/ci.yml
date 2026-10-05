@@ -247,6 +247,11 @@ jobs:
           [ "$fail" = 0 ] && echo "OK: camada de governança OPS-001 presente."
           exit "$fail"
 
+      # _INDEX/_ANCORAS são gerados e o driver `regen` engole conflito neles (.gitattributes);
+      # este passo pega o esquecimento de rodar scripts/regen-generated.sh depois do merge.
+      - name: Plano vault íntegro (_INDEX/_ANCORAS em dia, links resolvem)
+        run: node scripts/plano-vault.mjs check
+
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes
   # (contrato §4: superfícies dark = neutral-*). Em vez de reprovar nelas (refactor =
   # fatia própria), este job falha SÓ quando a mudança INTRODUZ um `zinc-` novo — mesmo

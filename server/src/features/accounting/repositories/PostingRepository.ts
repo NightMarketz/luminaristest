@@ -85,6 +85,14 @@ export class PostingRepository implements IPostingRepository {
     }));
   }
 
+  public async unitIdsWithMovement(ownerUserId: string, statuses: string[], from: Date, to: Date): Promise<string[]> {
+    const rows = await prisma.posting.groupBy({
+      by: ['unitId'],
+      where: { userId: ownerUserId, entry: { status: { in: statuses }, date: { gte: from, lte: to } } },
+    });
+    return rows.map((r) => r.unitId).sort();
+  }
+
   public async sumCreditsBySourcePrefix(
     scope: AccountingScope,
     sourceType: string,

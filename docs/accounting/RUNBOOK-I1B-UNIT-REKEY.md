@@ -6,9 +6,9 @@
 
 Executor: ____________________ (humano)           Data: ____________
 
-Autorização: execução do CLI contra o `dev.db` real **ainda não autorizada** — o "executa" de 2026-10-03 cobre só o
-CLI e os testes (nota `docs/plano/nos/I1b.md`, campo `autorizacao`). Preencher com a decisão do dono que pedir esta
-execução (doc + data): ____________________
+Autorização: **dono, 2026-10-04 (chat):** "Preenche pra a autorização, começa o runbook" — autoriza a execução
+deste runbook contra o `dev.db` real (`server/prisma/prisma/dev.db`), após o desbloqueio de migrações do mesmo dia
+(`migrate status` = 58, up to date). Escopo: só os passos deste runbook; L-RK-6/7 seguem sem 'executa'.
 
 Spec: `docs/adr/ADR-INCR-UNIT-REKEY-migration.md` §4 (itens 15–18), §6 (F-RK-1..12 fechados em 02/10).
 
