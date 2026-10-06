@@ -16,6 +16,9 @@
 >
 > **EMENDA 06/10 (§7):** 8 leituras estritas do PR-2 ratificadas pelo dono; o PR-2 (#554) só entra em `main` junto com o
 > PR-3 (risco D6). [D-2026-10-06-X8-PR2-LACUNAS-E-MERGE](../plano/decisoes/D-2026-10-06-X8-PR2-LACUNAS-E-MERGE.md).
+>
+> **EMENDA 06/10 (§8):** lacunas L-1..L-3 do PR-3 decididas; L-2 muda o item 17 (o saldo credor anterior consumido
+> também é baixado do "a recuperar"). [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
 
 ---
 
@@ -314,3 +317,19 @@ das lacunas desta spec (`.claude/retornos/x8-pis-cofins-pr2.md`, "Lacunas de spe
 **Risco D6 e ordem de merge (decisão do dono):** até o PR-3 (itens 17–19), uma apuração confirmada com débito > 0 fica sem
 provisão e bloqueia o encerramento do ano (`ExerciseClosingService`), e o reconcile a recusa (guarda D4). Decisão:
 *"Mergear PR-2 e PR-3 juntos"* — **o PR-2 (#554) não entra em `main` antes do PR-3 do X8.**
+
+## 8. EMENDA 06/10 — lacunas do PR-3 (item 17) decididas
+
+**Autorização:** dono, chat, 2026-10-06, questionário, sobre as lacunas do executor do PR-3 (#556,
+`.claude/retornos/x8-pis-cofins-pr3.md`). Registro: [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
+Não reabre F-PCB-1..5; a L-2 **altera** o item 17 (antes: só a parte do item 6 era baixada).
+
+| # | Lacuna (item 17) | Decisão |
+|---|---|---|
+| L-1 | "crédito da NF-e aproveitado no mês" | **(a)** `min(CREDITO_NFE + CREDITO_NFE_DERIVADO, débito)` — a NF-e do mês consome primeiro |
+| L-2 | saldo credor anterior consumido no mês | **Baixar também:** + D PIS/COFINS a recolher / C PIS/COFINS a recuperar pelo saldo anterior usado (parcial ⇒ só o usado; sem débito ⇒ 0; só no não cumulativo), para o "a recolher" bater com o DARF |
+| L-3 | forma do lançamento | Um lançamento por tributo/mês, até 6 pernas; chave de idempotência = a apuração; reconcile repetido não duplica |
+
+**Aberta (L-4, leitura do executor):** ordem de consumo NF-e do mês → outros créditos do mês → saldo anterior (a ordem da
+memória). **Risco (L-5):** a parte "outros" do saldo anterior nunca passou pelo ativo; a baixa pode deixar o "a recuperar"
+credor — contador.

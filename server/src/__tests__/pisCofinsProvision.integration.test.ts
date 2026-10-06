@@ -9,7 +9,10 @@
  *  - Real M01/2026, serviço R$ 100,00 ⇒ débito PIS 1,65 / Cofins 7,60; NF-e do mês PIS 10,00 / Cofins 46,00 ⇒ crédito da
  *    NF-e aproveitado = min(NF-e, débito) = 1,65 / 7,60 (o resto — saldo credor 8,35 / 38,40 — fica no ativo).
  *    M02, serviço R$ 100.000,00 ⇒ débito 1.650,00 / 7.600,00; NF-e de fevereiro 165,00 / 835,00 ⇒ aproveitado 165,00 /
- *    835,00; saldo credor de janeiro (8,35 / 38,40) e outros créditos NÃO são lançados (F-PCB-3 a; retorno L-2).
+ *    835,00; saldo credor de janeiro consumido (8,35 / 38,40) também sai do "a recuperar" (L-2 → "baixar também o saldo
+ *    usado", dono 06/10) ⇒ "a recolher" líquido = DARF. Outros créditos e retenções NÃO são lançados (F-PCB-3 a).
+ *  - Real M01/2026 (1º mês), serviço R$ 100,00, sem NF-e, saldo informado PIS 1,00 / Cofins 10,00 ⇒ PIS consome 1,00 todo
+ *    (a pagar 0,65); Cofins consome só 7,60 dos 10,00 (parcial; saldo credor 2,40 fica no ativo).
  */
 import request from 'supertest';
 import prisma from '@/lib/prisma';
@@ -95,6 +98,8 @@ async function confirmar(dono: Dono, periodo: string, extra: { supersedesIds?: s
 const reconcile = (dono: Dono, id: string) => request(app).post(`${BASE}/${id}/provisao`).set(authHeader(dono)).send({ unitId: U });
 const provisoes = (dono: Dono) =>
   prisma.journalEntry.findMany({ where: { userId: dono.id, sourceType: PROVISION }, include: { postings: { include: { account: true } } }, orderBy: { createdAt: 'asc' } });
+const aRecolher = (e: { postings: Array<{ account: { code: string }; debitCents: bigint | number; creditCents: bigint | number }> }, code: string) =>
+  e.postings.filter((p) => p.account.code === code).reduce((s, p) => s + Number(p.creditCents) - Number(p.debitCents), 0);
 const pernas = (e: { postings: Array<{ account: { code: string }; debitCents: bigint | number; creditCents: bigint | number }> }) =>
   e.postings.map((p) => [p.account.code, Number(p.debitCents), Number(p.creditCents)]).sort();
 
@@ -127,7 +132,7 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     expect(pernas(entries.find((e) => e.sourceId === cofins.id)!)).toEqual([['2.1.9.4', 0, 300_000], ['4.9.4', 300_000, 0]]);
   });
 
-  it('item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior não é lançado', async () => {
+  it('item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior consumido também é baixado', async () => {
     const { dono } = await cenario('REAL');
     await receita(dono, '2026-01-15', 10_000);
     await nota(dono, '2026-01-10', 1_000, 4_600);
@@ -144,10 +149,35 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const [pis02] = await confirmar(dono, 'M02');
     expect(pis02.aPagarCents).toBe(String(165_000 - 16_500 - 835));
     const e02 = (await provisoes(dono)).find((e) => e.sourceId === pis02.id)!;
-    expect(pernas(e02)).toEqual([['1.1.9', 0, 16_500], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 16_500, 0], ['4.9.3', 165_000, 0]]);
-    // F-PCB-3 (a): o "a recolher" fica acima do DARF pelo saldo credor de janeiro (835), que a memória lista.
-    const liquido = e02.postings.filter((p) => p.account.code === '2.1.9.3').reduce((s, p) => s + Number(p.creditCents) - Number(p.debitCents), 0);
-    expect(liquido - Number(pis02.aPagarCents)).toBe(835);
+    // L-3: um lançamento, 6 pernas — despesa/a recolher, baixa da NF-e (16.500) e baixa do saldo de janeiro (835)
+    expect(pernas(e02)).toEqual([
+      ['1.1.9', 0, 16_500], ['1.1.9', 0, 835], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 16_500, 0], ['2.1.9.3', 835, 0], ['4.9.3', 165_000, 0],
+    ]);
+    // L-2: o "a recolher" líquido do mês = o DARF (a pagar)
+    expect(aRecolher(e02, '2.1.9.3')).toBe(Number(pis02.aPagarCents));
+  });
+
+  it('item 17 / L-2 (saldo parcialmente consumido): 1º mês com saldo informado — baixa só a parte usada; "a recolher" = DARF nos 2 tributos', async () => {
+    const { dono } = await cenario('REAL');
+    await receita(dono, '2026-01-15', 10_000);
+    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' } });
+    expect(p.status).toBe(200);
+    const r = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
+      unitId: U, anoCalendario: 2026, periodo: 'M01', saldoCredorAnterior: { PIS: '100', COFINS: '1000' },
+      expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents },
+    });
+    expect(r.status).toBe(201);
+    expect([r.body.data.pis.aPagarCents, r.body.data.cofins.aPagarCents, r.body.data.cofins.saldoNegativoCents]).toEqual(['65', '0', '240']);
+    const entries = await provisoes(dono);
+    const pis = entries.find((e) => e.sourceId === r.body.data.pis.id)!;
+    const cofins = entries.find((e) => e.sourceId === r.body.data.cofins.id)!;
+    expect(pernas(pis)).toEqual([['1.1.9', 0, 100], ['2.1.9.3', 0, 165], ['2.1.9.3', 100, 0], ['4.9.3', 165, 0]]);
+    expect(pernas(cofins)).toEqual([['1.1.9', 0, 760], ['2.1.9.4', 0, 760], ['2.1.9.4', 760, 0], ['4.9.4', 760, 0]]);
+    expect(aRecolher(pis, '2.1.9.3')).toBe(65);
+    expect(aRecolher(cofins, '2.1.9.4')).toBe(0);
+    // reconcile repetido não duplica (L-3: chave = apuração)
+    for (const v of [r.body.data.pis, r.body.data.cofins]) expect((await reconcile(dono, v.id)).status).toBe(200);
+    expect(await provisoes(dono)).toHaveLength(2);
   });
 
   it('item 17 (F-TA-7): conta a recuperar ausente com crédito da NF-e ⇒ pendente; reconcile 400 nomeando a conta; depois provisiona', async () => {

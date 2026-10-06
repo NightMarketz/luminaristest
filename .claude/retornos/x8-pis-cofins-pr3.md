@@ -8,7 +8,9 @@ agente: subagente (sessao-feature), worktree agent-a263424acc7694473, branch `cl
 base: `origin/claude/x8-pis-cofins-pr2` `bec77ac1` (PR-2 do X8, sobre main `6ac4381d`; X7 PR-3 #509 em main)
 modelo: opus-5.5
 rodadas-de-review: 0 — review independente NÃO despachado (regra ⛔ do CLAUDE.md; o dono decide)
-veredicto: fatia completa, gates verdes; NÃO mergear sem OK do dono
+veredicto: fatia completa + rodada 2 (L-2 do dono: baixa também o saldo usado), gates verdes; NÃO mergear sem OK do dono
+rodada 2: dono, chat, 2026-10-06, questionário — L-1 (a), L-2 "Baixar também o saldo usado", L-3 ratificado
+  ([[D-2026-10-06-X8-PR3-LACUNAS]]; EMENDA §8 do BRIEF); base rebaseada em `e1d7321c` (docs do #554)
 
 ## Checklist (BRIEF §1)
 | Item | Estado | Onde / teste |
@@ -20,6 +22,7 @@ veredicto: fatia completa, gates verdes; NÃO mergear sem OK do dono
 | 17 falha ⇒ pendente, commit 1 intacto; CAS do `provisaoEntryId`; substituição = reverseEntry + postEntry; `atomicUntil` | feito (reuso do mecanismo do X7, sem 2ª cópia) | testes "commit 2 — CAS", "substituição", "F-TA-7"; cabeçalho do `TaxAssessmentService` com as linhas X8 |
 | 18 reconcile = rota do X7; 2ª chamada asserida (sem lançamento novo, mesmo `provisaoEntryId`) | feito | teste "itens 18 + 19" |
 | 19 encerramento × provisão pendente cobre linha PIS | feito | teste "itens 18 + 19" (ids PIS/COFINS no `details.taxAssessmentIds`; encerra depois do reconcile) |
+| 17 / L-2 (rodada 2): + D a recolher / C a recuperar = saldo credor anterior consumido (parcial ⇒ só o usado; sem débito ⇒ 0; só não cumulativo) | feito | `saldoAnteriorAproveitado`; testes "item 17 (não cumulativo)" (6 pernas, a recolher = DARF), "item 17 / L-2 (saldo parcialmente consumido)"; unit `pisCofinsProvisaoConsumo.test.ts` |
 
 Contratos: nenhum DTO novo nem alterado (o reconcile e a confirmação devolvem a mesma `TaxAssessmentView`); snapshot de
 shape e tipos gerados intactos. openapi: só a descrição do `POST /tax-assessments/{id}/provisao` (paths 249, sem mudança).
@@ -47,7 +50,7 @@ Allowlist: nenhum eventType novo (o `postEntry` audita como no X7).
 - **E2** (V) `fimDoPeriodo` do X7 não conhecia `M01..M12` (cairia no ramo trimestral). Alargado.
 - **E3** (V) A mensagem do encerramento dizia só "IRPJ/CSLL". Alargada (texto; nenhum teste assertava o texto).
 
-## Lacunas de spec — decididas nesta sessão (ratificar)
+## Lacunas de spec — rodada 1 (DECIDIDAS pelo dono 06/10: L-1 (a), L-2 "baixar também o saldo usado" — implementado na rodada 2, L-3 ratificado)
 1. **L-1** "crédito da NF-e aproveitado no mês (a parte do item 6 efetivamente usada)" = `min(CREDITO_NFE +
    CREDITO_NFE_DERIVADO, débito)` — a NF-e é consumida ANTES dos outros créditos e do saldo credor anterior (ordem da
    memória). Alternativa: FIFO (saldo anterior primeiro), que baixaria menos do ativo no mês. (I)
@@ -57,16 +60,24 @@ Allowlist: nenhum eventType novo (o `postEntry` audita como no X7).
 3. **L-3** A provisão de cada tributo é UM lançamento de 2 ou 4 pernas (a conta a recolher aparece a débito e a crédito no
    não cumulativo), porque `sourceId` = id da linha é a chave de idempotência — 1 entry por fonte. (V: o `postEntry` aceita)
 
+## Lacunas novas da rodada 2 (abertas)
+4. **L-4** (I) ordem de consumo = a da memória: NF-e do mês → outros créditos do mês → saldo anterior. Com outros créditos
+   no mês, baixa-se menos saldo (unit "L-4"). Alternativa: saldo antes dos outros.
+5. **L-5** (I, risco) o saldo credor anterior pode conter crédito de "outros" (energia/aluguel) de meses anteriores, que
+   nunca passou pelo "a recuperar" — a baixa pode deixar a conta credora. Contador (P-1/P-5).
+
 ## Achados fora de escopo
 - (f) e (g) do PR-2 seguem com lançamento manual no lugar da provisão (provam a natureza `Expense`, que é a mesma).
 - P-1..P-6 do BRIEF §4 seguem abertos; um teste verde prova a aritmética, não a lei.
 
 ## Linha de fold (pós-merge, não aplicada)
 `id: X8` · `estado: done` (se PR-2 e PR-3 mergearem juntos; X9 consome) · `estado_detalhe: + "06/10: PR-2 #554 + PR-3 #<n>
-MERGEADOS juntos — itens 7–23; L-1..L-3 do PR-3 a ratificar"` · `prs: + #554, #<n>`
+MERGEADOS juntos — itens 7–23; L-4/L-5 abertas"` · `prs: + #554, #556`. Já aplicado no branch (rodada 2, a pedido do
+coordenador): autorização do PR-3 e a decisão L-1..L-3 na nota X8 + `D-2026-10-06-X8-PR3-LACUNAS` + EMENDA §8; `prs`/`estado` ficam para o fold pós-merge.
 
 ## Arquivos
-- novo: `server/src/__tests__/pisCofinsProvision.integration.test.ts`
+- novos: `server/src/__tests__/pisCofinsProvision.integration.test.ts`, `server/src/features/accounting/services/__tests__/pisCofinsProvisaoConsumo.test.ts`,
+  `docs/plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md`; alterados na rodada 2: BRIEF (EMENDA §8), `docs/plano/nos/X8.md`, `_INDEX.md`
 - alterados: `TaxAssessmentService.ts`, `PisCofinsAssessmentService.ts`, `ExerciseClosingService.ts`, `lib/factory.ts`,
   `routes/docs.paths.ts`, `public/openapi.json`, `controllers/__tests__/pisCofins.integration.test.ts`
 
@@ -85,3 +96,19 @@ Sabotagens rodadas (verificado), cada uma revertida depois (grep SABOTAGEM = 0):
 1. `creditoNfeAproveitado` sempre 0 ⇒ `pisCofinsProvision` 2 falhas / 4 passes ("item 17 (não cumulativo)", "F-TA-7").
 2. guarda D4 reposta no `reconcileProvisao` ⇒ 3 falhas / 3 passes ("F-TA-7", "itens 18 + 19", "commit 2 — CAS").
 Restaurado ⇒ 6/6.
+
+### PROVA — rodada 2 (L-2)
+```
+$ cd server && npx tsc --noEmit                                   → exit 0
+$ cd server && npx jest --selectProjects unit --forceExit         → exit 0 (285 suites, 4016 passed, 3 skipped, 1 todo)
+$ cd server && npx jest --selectProjects integration --runInBand --forceExit --testPathPatterns pisCofinsProvision → 7 passed
+$ cd server && npm run test:integration                           → exit 0 (116 suites, 948 passed)
+$ node scripts/plano-vault.mjs index                              → exit 0 ("índice regenerado")
+$ node scripts/plano-vault.mjs check                              → exit 0 ("vault íntegro")
+```
+Lançamento no cenário do 835 (PIS M02, Real): 6 pernas — D 4.9.3 165.000 / C 2.1.9.3 165.000; D 2.1.9.3 16.500 / C 1.1.9
+16.500 (NF-e); D 2.1.9.3 835 / C 1.1.9 835 (saldo de janeiro) ⇒ "a recolher" líquido 147.665 = a pagar (DARF).
+Saldo parcial (M01, saldo informado PIS 100 / Cofins 1.000, débito 165 / 760): baixa 100 / 760; a recolher 65 / 0 = DARF;
+reconcile repetido não duplica.
+Sabotagem 3 (verificado, revertida; grep SABOTAGEM = 0): saldo consumido zerado ⇒ integração 2 falhas / 5 passes
+("item 17 (não cumulativo)", "item 17 / L-2 (saldo parcialmente consumido)") e unit 2 falhas / 3 passes ("parcial", "L-4").
