@@ -50,6 +50,9 @@ export interface ItemCost {
   custoBrutoCents: number;
   creditoIcmsCents: number;
   creditoPisCofinsCents: number;
+  /** X8 item 5 (F-X8-7 a): as duas parcelas de `creditoPisCofinsCents` (= pis + cofins, exato). */
+  creditoPisCents: number;
+  creditoCofinsCents: number;
   basePisCofinsCents: number;
   /** custoBruto − créditos — o que valoriza o estoque (1.1.6). */
   custoLiquidoCents: number;
@@ -66,6 +69,9 @@ export interface AcquisitionCost {
   custoInsumoCents: number;
   creditoIcmsCents: number;
   creditoPisCofinsCents: number;
+  /** X8 item 5 (F-X8-7 a): Σ por item de bp(base,165) e bp(base,760) — somados, exatamente `creditoPisCofinsCents`. */
+  creditoPisCents: number;
+  creditoCofinsCents: number;
   /** Σ das bases pós-exceções — o número que o contador confere (regra (j)). */
   baseCreditoPisCofinsCents: number;
   regimeAplicado: 'NAO_CONTRIBUINTE' | 'CONTRIBUINTE_ICMS';
@@ -141,7 +147,8 @@ export function acquisitionCost(
 
     let classe: ItemCost['classe'] = 'SEM_REGIME';
     let base = 0;
-    let creditoPisCofins = 0;
+    let creditoPis = 0;
+    let creditoCofins = 0;
     if (pisCofinsAtivo) {
       const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins });
       classe = c.classe;
@@ -151,7 +158,8 @@ export function acquisitionCost(
           it.vProdCents - it.vDescCents - descRest[i] + it.vFreteCents + freteRest[i] + it.vSegCents + segRest[i] + it.vOutroCents + outroRest[i];
         if (regime.pisCofinsCreditExcludesIcms) base -= it.vICMSCents;
         if (base < 0) base = 0;
-        creditoPisCofins = bp(base, PIS_CREDIT_BP) + bp(base, COFINS_CREDIT_BP);
+        creditoPis = bp(base, PIS_CREDIT_BP);
+        creditoCofins = bp(base, COFINS_CREDIT_BP);
         if (c.alerta) warnings.push(`item ${it.nItem} (${it.cProd}): ${c.alerta}`);
       } else if (c.classe === 'UNKNOWN') {
         warnings.push(`item ${it.nItem} (${it.cProd}): sem crédito de PIS/COFINS — ${c.motivo}`);
@@ -161,12 +169,15 @@ export function acquisitionCost(
         warnings.push(`item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — sem crédito de PIS/COFINS até a validação da pendência P-1 (posição da RFB × contador)`);
       }
     }
+    const creditoPisCofins = creditoPis + creditoCofins;
     const custoLiquido = custoBruto - creditoIcms - creditoPisCofins;
-    return { nItem: it.nItem, cProd: it.cProd, custoBrutoCents: custoBruto, creditoIcmsCents: creditoIcms, creditoPisCofinsCents: creditoPisCofins, basePisCofinsCents: base, custoLiquidoCents: custoLiquido, classe, destination };
+    return { nItem: it.nItem, cProd: it.cProd, custoBrutoCents: custoBruto, creditoIcmsCents: creditoIcms, creditoPisCofinsCents: creditoPisCofins, creditoPisCents: creditoPis, creditoCofinsCents: creditoCofins, basePisCofinsCents: base, custoLiquidoCents: custoLiquido, classe, destination };
   });
 
   const creditoIcmsCents = out.reduce((a, it) => a + it.creditoIcmsCents, 0);
   const creditoPisCofinsCents = out.reduce((a, it) => a + it.creditoPisCofinsCents, 0);
+  const creditoPisCents = out.reduce((a, it) => a + it.creditoPisCents, 0);
+  const creditoCofinsCents = out.reduce((a, it) => a + it.creditoCofinsCents, 0);
   const baseCreditoPisCofinsCents = out.reduce((a, it) => a + it.basePisCofinsCents, 0);
   return {
     custoBrutoCents: bruto,
@@ -174,6 +185,8 @@ export function acquisitionCost(
     custoInsumoCents: out.filter((it) => it.destination === 'INSUMO_SERVICO').reduce((a, it) => a + it.custoLiquidoCents, 0),
     creditoIcmsCents,
     creditoPisCofinsCents,
+    creditoPisCents,
+    creditoCofinsCents,
     baseCreditoPisCofinsCents,
     regimeAplicado,
     pisCofinsAplicado: pisCofinsAtivo ? 'NAO_CUMULATIVO' : 'SEM_CREDITO',

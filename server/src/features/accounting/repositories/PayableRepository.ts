@@ -5,6 +5,7 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
 import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
+import { separarCreditoPisCofins, type CreditoPisCofinsNota } from '../models/pisCofinsParams';
 import type {
   CreatePayableData,
   CreatePaymentData,
@@ -110,6 +111,42 @@ export class PayableRepository implements IPayableRepository {
       },
       orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
     });
+  }
+
+  public async findPisCofinsCredits(
+    scope: AccountingScope,
+    from: string,
+    to: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<CreditoPisCofinsNota[]> {
+    const rows = await (tx ?? prisma).payable.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        deletedAt: null,
+        status: { not: 'CANCELLED' },
+        issueDate: { gte: `${from}T00:00:00.000Z`, lte: `${to}T00:00:00.000Z` },
+        recoverableTaxLines: { contains: '"PIS_COFINS"' },
+      },
+      orderBy: [{ issueDate: 'asc' }, { createdAt: 'asc' }],
+    });
+    const out: CreditoPisCofinsNota[] = [];
+    for (const row of rows) {
+      const lines = JSON.parse(row.recoverableTaxLines!) as { kind: string; amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number }[];
+      // O DTO aceita até 2 linhas PIS_COFINS num POST manual: soma todas, como o `payable.created` (review #521, achado 1).
+      const partes = lines.filter((l) => l.kind === 'PIS_COFINS').map((l) => ({ amountCents: l.amountCents, ...separarCreditoPisCofins(l) }));
+      if (partes.length === 0) continue;
+      out.push({
+        payableId: row.id,
+        documentNumber: row.documentNumber,
+        issueDate: row.issueDate.toISOString().slice(0, 10),
+        amountCents: partes.reduce((a, p) => a + p.amountCents, 0),
+        baseCents: partes.every((p) => p.baseCents !== null) ? partes.reduce((a, p) => a + p.baseCents!, 0) : null,
+        pisCents: partes.reduce((a, p) => a + p.pisCents, 0),
+        cofinsCents: partes.reduce((a, p) => a + p.cofinsCents, 0),
+        derivado: partes.some((p) => p.derivado),
+      });
+    }
+    return out;
   }
 
   public async claimForPayment(

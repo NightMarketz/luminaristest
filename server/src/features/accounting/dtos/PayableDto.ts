@@ -78,8 +78,23 @@ const recoverableTaxLine = z
     accountId: z.string().min(1),
     amountCents: cents,
     kind: z.enum(['ICMS', 'PIS_COFINS']),
+    // X8 item 5 (F-X8-7 a): na linha PIS_COFINS, a base e as duas parcelas (pisCents + cofinsCents = amountCents).
+    baseCents: z.number().int().min(0).max(MAX_CENTS).optional(),
+    pisCents: z.number().int().min(0).max(MAX_CENTS).optional(),
+    cofinsCents: z.number().int().min(0).max(MAX_CENTS).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((l, ctx) => {
+    const split = [l.baseCents, l.pisCents, l.cofinsCents].some((v) => v !== undefined);
+    if (split && l.kind !== 'PIS_COFINS') {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'baseCents/pisCents/cofinsCents só cabem na linha PIS_COFINS.', path: ['kind'] });
+    }
+    if ((l.pisCents === undefined) !== (l.cofinsCents === undefined)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'pisCents e cofinsCents vêm juntos.', path: ['pisCents'] });
+    } else if (l.pisCents !== undefined && l.pisCents + l.cofinsCents! !== l.amountCents) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `pisCents (${l.pisCents}) + cofinsCents (${l.cofinsCents}) deve igualar amountCents (${l.amountCents}).`, path: ['pisCents'] });
+    }
+  });
 
 const inventoryItem = z
   .object({

@@ -78,6 +78,17 @@ import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
  * - cancel = estorno (reverseEntry) in an open period + row lifecycle flip (ACC-018/T5), never a
  *   destructive edit; rename-on-delete frees the business key (D3).
  */
+/** Linha de `Payable.recoverableTaxLines` (JSON). X8 item 5: a PIS_COFINS carrega base e parcelas quando a nota as tem. */
+type RecoverableLineRow = {
+  accountId: string;
+  accountCode: string;
+  amountCents: number;
+  kind: string;
+  baseCents?: number;
+  pisCents?: number;
+  cofinsCents?: number;
+};
+
 /** Read shape of a title with its balance (BRIEF §2): `remainingCents` is DERIVED, never persisted twice. */
 export type PayableWithBalance = PayableWithPayments & { remainingCents: bigint };
 
@@ -1231,15 +1242,16 @@ export class PayableService implements IFixedAssetDraftRedriver {
   private async resolveRecoverableLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
-  ): Promise<{ accountId: string; accountCode: string; amountCents: number; kind: string }[]> {
-    const out: { accountId: string; accountCode: string; amountCents: number; kind: string }[] = [];
+  ): Promise<RecoverableLineRow[]> {
+    const out: RecoverableLineRow[] = [];
     for (const line of dto.recoverableTaxLines ?? []) {
       const account = await this.accountRepo.findById(scope, line.accountId);
       if (!account || account.deletedAt) throw new ValidationError(`Conta a recuperar '${line.accountId}' não existe neste escopo.`);
       if (!account.acceptsEntries || account.nature !== 'Asset') {
         throw new ValidationError(`Conta a recuperar '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
       }
-      out.push({ accountId: account.id, accountCode: account.code, amountCents: line.amountCents, kind: line.kind });
+      const { baseCents, pisCents, cofinsCents } = line; // X8 item 5: persistidos quando presentes (JSON, sem migração)
+      out.push({ accountId: account.id, accountCode: account.code, amountCents: line.amountCents, kind: line.kind, ...(pisCents !== undefined ? { baseCents, pisCents, cofinsCents } : {}) });
     }
     return out;
   }

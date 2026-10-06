@@ -468,6 +468,10 @@ model Account {
   csllDespesaOf                      FiscalProfile[]           @relation("FiscalProfileCsllDespesa") // X7 F-TA-6 a
   irpjRecolherOf                     FiscalProfile[]           @relation("FiscalProfileIrpjRecolher") // X7 F-TA-6 a
   csllRecolherOf                     FiscalProfile[]           @relation("FiscalProfileCsllRecolher") // X7 F-TA-6 a
+  pisDespesaOf                       FiscalProfile[]           @relation("FiscalProfilePisDespesa") // X8 item 2 (F-PCB-1 b)
+  cofinsDespesaOf                    FiscalProfile[]           @relation("FiscalProfileCofinsDespesa") // X8 item 2 (F-PCB-1 b)
+  pisRecolherOf                      FiscalProfile[]           @relation("FiscalProfilePisRecolher") // X8 item 2
+  cofinsRecolherOf                   FiscalProfile[]           @relation("FiscalProfileCofinsRecolher") // X8 item 2
   irpjSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileIrpjSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   csllSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileCsllSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
@@ -1381,6 +1385,15 @@ model FiscalProfile {
   irpjRecolherAccount                Account?  @relation("FiscalProfileIrpjRecolher", fields: [irpjRecolherAccountId], references: [id], onDelete: Restrict)
   csllRecolherAccountId              String? // Liability
   csllRecolherAccount                Account?  @relation("FiscalProfileCsllRecolher", fields: [csllRecolherAccountId], references: [id], onDelete: Restrict)
+  // BE-INCR-PIS-COFINS (nó X8, BRIEF item 2, F-PCB-1 b): contas da provisão de PIS/Cofins — código do contador (P-1)
+  pisDespesaAccountId                String? // Expense (F-PCB-1 b: despesa, não dedução da receita)
+  pisDespesaAccount                  Account?  @relation("FiscalProfilePisDespesa", fields: [pisDespesaAccountId], references: [id], onDelete: Restrict)
+  cofinsDespesaAccountId             String? // Expense
+  cofinsDespesaAccount               Account?  @relation("FiscalProfileCofinsDespesa", fields: [cofinsDespesaAccountId], references: [id], onDelete: Restrict)
+  pisRecolherAccountId               String? // Liability
+  pisRecolherAccount                 Account?  @relation("FiscalProfilePisRecolher", fields: [pisRecolherAccountId], references: [id], onDelete: Restrict)
+  cofinsRecolherAccountId            String? // Liability
+  cofinsRecolherAccount              Account?  @relation("FiscalProfileCofinsRecolher", fields: [cofinsRecolherAccountId], references: [id], onDelete: Restrict)
   // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual — Asset, código do contador (P-B8)
   irpjSaldoNegativoAccountId         String? // Asset
   irpjSaldoNegativoAccount           Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)
