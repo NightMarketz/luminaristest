@@ -1050,4 +1050,13 @@ export const accountingService = {
       `recibo-${entryId}.pdf`,
     );
   },
+
+  /**
+   * Download de um anexo de documento (XML/DANFSe da NFS-e — FE-INCR-DFE item 24) — `GET /accounting/attachments/:id`,
+   * genérico por id + escopo (`DocumentAttachmentService.ts:195-205`). Mesma técnica do `downloadReceipt`.
+   */
+  async downloadDocumentAttachment(id: string, unitId: string, fileName: string): Promise<void> {
+    const qs = buildQuery({ unitId });
+    await reconStreamDownload(`${reconBaseUrl()}/accounting/attachments/${encodeURIComponent(id)}${qs}`, fileName);
+  },
 };
