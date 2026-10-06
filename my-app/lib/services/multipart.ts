@@ -59,3 +59,25 @@ export async function postMultipart<T>(path: string, form: FormData): Promise<T>
   const res = (await response.json()) as Envelope<T>;
   return res.data;
 }
+
+/**
+ * Stream a binary GET (e.g. a PDF receipt) to a browser download via a transient object URL. Extracted BY MOVE from
+ * `accounting.service.ts` (`reconStreamDownload`) when the package-sale receipt became its 2nd consumer
+ * (FE-INCR-PACOTE-VALIDADE). `dataExchange.service.ts` still carries its own copy (out-of-scope finding).
+ */
+export async function multipartStreamDownload(url: string, fileName: string): Promise<void> {
+  const response = await fetch(url, { method: 'GET', headers: multipartAuthHeaders() });
+  if (!response.ok) throw await multipartParseError(response);
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = fileName || 'download';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}

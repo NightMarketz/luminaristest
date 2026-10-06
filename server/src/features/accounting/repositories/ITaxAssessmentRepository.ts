@@ -16,6 +16,8 @@ export interface CreateTaxAssessmentData {
   deducoesCents: bigint;
   aPagarCents: bigint;
   saldoNegativoCents: bigint;
+  /** X7 Fase B (F-TB-5 b): só no IRPJ do mês do excesso do 16%; 0 nos demais. */
+  diferencaPostergadaCents: bigint;
   memoria: Prisma.InputJsonValue;
   tabelaVersao: string;
   status: string;

@@ -88,6 +88,9 @@ interface Mocks {
   divergences?: LalurParteBBalancesDiagnostic['divergences'];
   /** abertura C3 por conta (default: a coluna saldoIni com sinal — nenhum exercício anterior fechado). */
   opening?: Map<string, bigint>;
+  /** X7 Fase B PR-4: perfil fiscal do ano (default: sem perfil ⇒ trimestral) e apurações confirmadas. */
+  perfil?: Record<string, unknown> | null;
+  confirmados?: Array<{ periodo: string; tributo: string; modo: string }>;
 }
 
 /** 4 fechamentos vazios (tenant sem saldo materializado) — C1: o fato "fechado" é a linha-pai. */
@@ -123,7 +126,10 @@ function buildService(m: Mocks = {}) {
   const append = jest.fn(async () => undefined);
   const audit = { append } as never;
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService);
+  const profiles = { findByYear: jest.fn(async () => m.perfil ?? null) } as never;
+  const assessments = { findConfirmedByYear: jest.fn(async () => m.confirmados ?? []) } as never;
+
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments);
   return { service, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 
@@ -449,5 +455,151 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
   it('item 19: conta contábil soft-deletada depois do ajuste ⇒ 400 nomeando ajuste e conta (não sai no M310)', async () => {
     const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 1n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue', deletedAt: new Date() }, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
     await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/Ajuste e1: a conta contábil '3\.1\.1' foi arquivada/);
+  });
+});
+
+// ─── X7 Fase B PR-4 (BRIEF B itens 18–21; testes 26 j e 26 k) ─────────────────────────────────────────────
+
+describe('X7 Fase B PR-4 — teste 26 k: a ECF trimestral sai byte a byte igual à de antes do PR-4', () => {
+  const sha = () => require('node:crypto').createHash('sha256').update(savedBuffers[savedBuffers.length - 1]).digest('hex') as string;
+  const closingsWith = (balances: Array<Record<string, unknown>>) =>
+    makeClosings(balances.map((b) => ({ id: 'bal', closingId: 'cl', parteB: parteBIrpj, sdIniCents: 0n, indSdIni: 'C', vlParteACents: 0n, indVlParteA: 'C', vlParteBCents: 0n, indVlParteB: 'C', sdFimCents: 0n, indSdFim: 'C', ...b })) as never);
+  async function regressaoTrimestral(perfil: Record<string, unknown> | null, dto = makeDto()): Promise<[string, string]> {
+    await buildService({ perfil }).service.generate(scope, dto);
+    const comAjustes = sha();
+    const movement = {
+      id: 'mv-1', userId: 'owner-1', unitId: 'unit-1', parteBId: 'pb-1', year: 2025, quarter: 'T02', codTributo: 'I', valorCents: 12345n, indicador: 'PF',
+      contrapartidaId: null, historico: 'Prejuízo do período', indLanAnt: 'N', origem: 'system', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+      parteB: parteBIrpj, contrapartida: null, processos: [{ id: 'p1', parentId: 'mv-1', entryId: null, movementId: 'mv-1', indProc: '1', numProc: '0001' }],
+    } as unknown as LalurMovementWithRelations;
+    await buildService({
+      perfil,
+      movements: [movement],
+      closings: closingsWith([{ sdIniCents: 500000n, indSdIni: 'D', vlParteBCents: 12345n, indVlParteB: 'D', sdFimCents: 512345n, indSdFim: 'D' }]),
+    }).service.generate(scope, dto);
+    return [comAjustes, sha()];
+  }
+  // sha256 dos 2 arquivos gerados pelo código de origin/main (0b26abc5) com estes mesmos fixtures, antes do PR-4.
+  const ANTES = ['249625b5c36cb3904c63ccb39291425c2beee5e48be1ccbc63538e3fa94979b4', '57dbea7f64ce04ada05802e0dc930faa68fc29fca1cdbe7a613205360832fd2d'];
+
+  it('sem perfil, com perfil REAL trimestral (forma nula ou TRIMESTRAL) e com formaApur omitido: os mesmos bytes de antes', async () => {
+    expect(await regressaoTrimestral(null)).toEqual(ANTES);
+    expect(await regressaoTrimestral({ regime: 'REAL', formaApuracaoIrpjCsll: null })).toEqual(ANTES);
+    expect(await regressaoTrimestral({ regime: 'REAL', formaApuracaoIrpjCsll: 'TRIMESTRAL' })).toEqual(ANTES);
+    const semForma = makeDto();
+    delete (semForma.fiscal as { formaApur?: string }).formaApur;
+    expect(await regressaoTrimestral(null, semForma)).toEqual(ANTES);
+  });
+});
+
+describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
+  const ANUAL = { regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL', inicioAtividadeEm: null, encerramentoAtividadeEm: null };
+  const MESES = ['A01', 'A02', 'A03', 'A04', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12'];
+  /** IRPJ + CSLL confirmados por mês, no modo da marca (E/B) de `mesBalRed`; '0' = sem confirmação. */
+  const confirmados = (mesBalRed: string) =>
+    MESES.flatMap((periodo, i) =>
+      mesBalRed[i] === '0' ? [] : ['IRPJ', 'CSLL'].map((tributo) => ({ periodo, tributo, modo: mesBalRed[i] === 'B' ? 'BALANCETE_SUSPENSAO_REDUCAO' : 'ESTIMATIVA_RECEITA' })),
+    );
+  const closingA00 = () => [{ ...makeClosings()[3], quarter: 'A00' }] as LalurClosingWithBalances[];
+  const anualDto = (formaTribPer = 'RRRR') => makeDto({ fiscal: { formaTrib: '1', formaTribPer, indAliqCsll: '1', indRecReceita: '2' } } as never);
+  const linha = (id: string, quarter: string, livro: string, codigo: string, valorCents: bigint) =>
+    ({ ...baseEntry, id, quarter, livro, codigo, valorCents, indRelacao: livro === 'lalur' || livro === 'lacs' ? '4' : null }) as unknown as LalurEntryWithRelations;
+
+  it("teste 26 j: MES_BAL_RED = 'EEBEEEBEEEEE' ⇒ L030 e M030 = A00 + 2; N030 = A00 + 12; 0010 com FORMA_APUR 'A' e o MES_BAL_RED", async () => {
+    const { service } = buildService({ perfil: ANUAL, confirmados: confirmados('EEBEEEBEEEEE'), closings: closingA00(), entries: [] });
+    await service.generate(scope, anualDto());
+    const lines = producedLines();
+    expect(lines).toContain('|0010||N|1|A|01|RRRR|EEBEEEBEEEEE|C||||2|');
+    const per = (reg: string) => lines.filter((l) => l.startsWith(`|${reg}|`)).map((l) => l.split('|')[4]);
+    expect(per('L030')).toEqual(['A00', 'A03', 'A07']);
+    expect(per('M030')).toEqual(['A00', 'A03', 'A07']);
+    expect(per('N030')).toEqual(['A00', ...MESES]);
+    // A0m = período em curso (item 19 → item 4); A00 = o ano
+    expect(lines).toContain('|M030|01012025|31122025|A00|');
+    expect(lines).toContain('|M030|01012025|31032025|A03|');
+    expect(lines).toContain('|N030|01012025|31052025|A05|');
+  });
+
+  it('formaApur informado ≠ perfil ⇒ 400 nos 2 sentidos, antes de qualquer job', async () => {
+    const anual = buildService({ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00() });
+    await expect(anual.service.generate(scope, makeDto())).rejects.toThrow(/formaApur 'T' diverge do perfil fiscal de 2025, que dá 'A'/);
+    const trimestral = buildService({ perfil: { regime: 'REAL', formaApuracaoIrpjCsll: 'TRIMESTRAL' } });
+    await expect(trimestral.service.generate(scope, makeDto({ fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'A', indAliqCsll: '1', indRecReceita: '2' } }))).rejects.toThrow(/formaApur 'A' diverge do perfil fiscal de 2025, que dá 'T'/);
+    expect(anual.createJob).not.toHaveBeenCalled();
+    expect(trimestral.createJob).not.toHaveBeenCalled();
+  });
+
+  it('item 18: mês em atividade sem IRPJ e CSLL confirmados ⇒ 400 listando os meses', async () => {
+    const rows = confirmados('EEEEEEEEEEEE').filter((r) => !(r.periodo === 'A04' || (r.periodo === 'A09' && r.tributo === 'CSLL')));
+    const { service, createJob } = buildService({ perfil: ANUAL, confirmados: rows, closings: closingA00() });
+    await expect(service.generate(scope, anualDto())).rejects.toThrow(/Confirme a apuração de IRPJ e CSLL de A04, A09\/2025/);
+    expect(createJob).not.toHaveBeenCalled();
+  });
+
+  it('item 18 (lacuna 1 do PR-4): início de atividade em maio ⇒ FORMA_TRIB_PER 0RRR, meses antes = 0, A0m começa no início; o informado diferente ⇒ 400', async () => {
+    const perfil = { ...ANUAL, inicioAtividadeEm: '2025-05-10' };
+    const marcas = '0000EEBEEEEE';
+    const { service } = buildService({ perfil, confirmados: confirmados(marcas), closings: closingA00(), entries: [] });
+    await expect(service.generate(scope, anualDto('RRRR'))).rejects.toThrow(/formaTribPer 'RRRR' diverge do derivado para a forma anual de 2025: '0RRR'/);
+    await service.generate(scope, anualDto('0RRR'));
+    const lines = producedLines();
+    expect(lines).toContain(`|0010||N|1|A|01|0RRR|${marcas}|C||||2|`);
+    expect(lines).toContain('|M030|10052025|31072025|A07|');
+    expect(lines.filter((l) => l.startsWith('|N030|')).map((l) => l.split('|')[4])).toEqual(['A00', 'A05', 'A06', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12']);
+  });
+
+  it('item 20: no anual a geração exige o fechamento A00 da Parte B, não os 4 trimestrais', async () => {
+    const semA00 = buildService({ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE') }); // default: T01..T04 fechados
+    await expect(semA00.service.generate(scope, anualDto())).rejects.toThrow(/Feche a Parte B do e-Lalur\/e-Lacs de A00\/2025 antes de gerar a ECF anual/);
+  });
+
+  it('itens 21/22 (+ lacuna 3): N620/N660 sob o N030 do mês, N630 sob o A00, M300 no mês B; linha em mês sem registro de período ⇒ 400', async () => {
+    const perfil = { ...ANUAL, encerramentoAtividadeEm: '2025-10-15' };
+    const marcas = 'EEBEEEEEEE00';
+    const base = [
+      linha('n1', 'A01', 'n620', '21', 1500n),
+      linha('n2', 'A03', 'n660', '14', 700n),
+      linha('n3', 'A00', 'n630', '6', 1000n),
+      linha('m1', 'A03', 'lalur', '7', 2500n),
+    ];
+    const ok = buildService({ perfil, confirmados: confirmados(marcas), closings: closingA00(), entries: base });
+    await ok.service.generate(scope, anualDto());
+    const lines = producedLines();
+    const iA01 = lines.indexOf('|N030|01012025|31012025|A01|');
+    expect(lines[iA01 + 1]).toMatch(/^\|N620\|21\|.*\|15,00\|$/);
+    const iN03 = lines.indexOf('|N030|01012025|31032025|A03|');
+    expect(lines[iN03 + 1]).toMatch(/^\|N660\|14\|.*\|7,00\|$/);
+    const iA00 = lines.indexOf('|N030|01012025|31122025|A00|');
+    expect(lines[iA00 + 1]).toMatch(/^\|N630\|6\|/);
+    const iM03 = lines.indexOf('|M030|01012025|31032025|A03|');
+    expect(lines[iM03 + 1]).toMatch(/^\|M300\|7\|/);
+
+    const casos: Array<[LalurEntryWithRelations, RegExp]> = [
+      [linha('x1', 'A04', 'lalur', '7', 1n), /Ajuste x1 \(livro 'lalur', código 7\) em A04\/2025 não tem M030 no arquivo: o mês está marcado 'E'/],
+      [linha('x2', 'A11', 'n620', '21', 1n), /Ajuste x2 \(livro 'n620', código 21\) em A11\/2025 não tem N030 no arquivo: o mês está marcado '0'/],
+      [linha('x3', 'A12', 'n500', '1', 1n), /Ajuste x3 \(livro 'n500', código 1\) em A12\/2025 não tem N030/],
+    ];
+    for (const [extra, msg] of casos) {
+      const { service, createJob } = buildService({ perfil, confirmados: confirmados(marcas), closings: closingA00(), entries: [...base, extra] });
+      await expect(service.generate(scope, anualDto())).rejects.toThrow(msg);
+      expect(createJob).not.toHaveBeenCalled();
+    }
+  });
+
+  it('defesa (dono 05/10, achado do review): órfão de troca de forma ⇒ 400 nas 2 formas, nenhum job', async () => {
+    const mov = (quarter: string) =>
+      ({ id: `mv-${quarter}`, userId: 'owner-1', unitId: 'unit-1', parteBId: 'pb-1', year: 2025, quarter, codTributo: 'I', valorCents: 1n, indicador: 'CR',
+        contrapartidaId: null, historico: 'x', indLanAnt: 'N', origem: 'user', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
+        parteB: parteBIrpj, contrapartida: null, processos: [] }) as unknown as LalurMovementWithRelations;
+    const casos: Array<[Parameters<typeof buildService>[0], ReturnType<typeof makeDto>, RegExp]> = [
+      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /Ajuste o1 .* em A03\/2025 não pertence à ECF trimestral/],
+      [{ entries: [], movements: [mov('A00')] }, makeDto(), /Movimento mv-A00 .* em A00\/2025 não pertence à forma trimestral/],
+      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /Movimento mv-T02 .* em T02\/2025 não pertence à forma anual/],
+    ];
+    for (const [m, dto, msg] of casos) {
+      const { service, createJob } = buildService(m);
+      await expect(service.generate(scope, dto)).rejects.toThrow(msg);
+      expect(createJob).not.toHaveBeenCalled();
+    }
   });
 });

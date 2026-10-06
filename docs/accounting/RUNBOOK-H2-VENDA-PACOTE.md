@@ -52,6 +52,16 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    (Network sem `POST`). Remover a 2ª linha.
    EVIDÊNCIA: [screenshot da mensagem + Network vazio]
 
+> **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*] "Finalizar Venda" do wizard quebrado — vale para os passos 5–7.** Na `main`
+> de 05/10 o wizard cria a venda já `Finalized` e só depois os itens, que `assertParentSaleNotFinalized` recusa
+> (`FinanceService.createSaleWithItems` + `useSalesWizard.ts:270`; F11 do `PACOTE-VALIDADE-PENDENCIAS-brief.md`; o fix está
+> em sessão própria). Até ele entrar: no wizard, **Salvar Rascunho**; depois, na lista de vendas ou no detalhe, **Finalizar**
+> (`PUT` com `status: 'Finalized'`, `SalesTable.tsx:240` / `SaleDetailPanel.tsx:116`). No Network aparece o `POST` da venda
+> (`Draft`), os `POST` dos itens e o `PUT` de finalização — o evento de finalização deve sair deste `PUT` (inferido pelo agente; o lançamento no razão é a prova). Se o "Finalizar Venda" do
+> wizard for clicado por engano, a venda órfã (finalizada, sem itens) é **achado**, não falha deste passo: anote e siga.
+> Quando o fix do wizard estiver em `main`, esta emenda cai e vale o texto original.
+> Nos passos 3–4 nada é enviado (a recusa é local), então o botão do wizard pode ser clicado ali.
+
 5. Desconto `0`, quantidade `2`, preço `320,00`; **Finalizar Venda**.
    Resultado esperado: subtotal `640,00`; no Network, `POST` da venda com `"aboveCatalogPrice": true` e `POST` do
    item com `"type": "Package"`, `"packageId"`, `"quantity": 2`, `"unitPrice": 320`. Na lista, a venda mostra a

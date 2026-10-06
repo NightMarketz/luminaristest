@@ -116,7 +116,10 @@ class FakeRepo {
   deleteClosing = async (id: string) => { this.closings = this.closings.filter((c) => c.id !== id); };
 }
 
-function build(over: { netResult?: Record<string, string> } = {}) {
+/** X7 Fase B (item 12): perfil da empresa por ano — ausente ⇒ e-Lalur trimestral (lacuna 1 do PR-2). */
+type PerfilAno = { regime: string; formaApuracaoIrpjCsll: string | null; inicioAtividadeEm?: string | null };
+
+function build(over: { netResult?: Record<string, string>; perfis?: Record<number, PerfilAno> } = {}) {
   const repo = new FakeRepo();
   const accountRepo = { findById: jest.fn(async (_s: unknown, id: string) => ({ id, code: '3.1.1', nature: 'Revenue' })) };
   const events: Array<{ eventType: string; payload: Record<string, unknown> }> = [];
@@ -124,8 +127,9 @@ function build(over: { netResult?: Record<string, string> } = {}) {
   const policy = { canManageLalur: () => true, canReadLalur: () => true };
   // DRE YTD closing-exclusive por data-fim: default resultado 0 em todo trimestre
   const reports = { incomeStatement: jest.fn(async (_s: unknown, asOf: Date) => ({ netResult: { amountCents: over.netResult?.[asOf.toISOString().slice(0, 10)] ?? '0' } })) };
-  const svc = new LalurService(repo as unknown as ILalurRepository, accountRepo as never, audit as never, policy as never, reports as never);
-  return { svc, repo, events, reports, accountRepo };
+  const profiles = { findByYear: jest.fn(async (_s: unknown, ano: number) => (over.perfis?.[ano] ? { inicioAtividadeEm: null, ...over.perfis[ano] } : null)) };
+  const svc = new LalurService(repo as unknown as ILalurRepository, accountRepo as never, audit as never, policy as never, reports as never, profiles as never);
+  return { svc, repo, events, reports, accountRepo, profiles };
 }
 
 const bal = (c: LalurClosingWithBalances, id: string) => c.balances.find((b) => b.parteBId === id)!;
@@ -413,5 +417,162 @@ describe('review independente 2026-09-12 — M2/M3/M4/M5 (cada um falhava antes 
     const e = await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T04', livro: 'n630', codigo: '6', valorCents: 1 });
     await expect(svc.updateEntry(scope, e.id, { unitId: 'unit-1', processos: [{ indProc: '1', numProc: 'X' }] })).rejects.toThrow(/processos não existe em linha do Bloco N/);
     expect(repo.entries.find((x) => x.id === e.id)!.valorCents).toBe(1n);
+  });
+});
+
+// ═══ X7 Fase B PR-2 — e-Lalur anual (BRIEF B item 12; testes 26 a e 26 g) ═════════════════════════════════
+// O `ANUAL` ainda não é selecionável pelo DTO do perfil (F-TB-8.1: só no PR-4) — o perfil vem semeado pelo stub.
+const ANUAL: PerfilAno = { regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL' };
+const TRIM: PerfilAno = { regime: 'REAL', formaApuracaoIrpjCsll: null }; // REAL + forma nula ⇒ TRIMESTRAL efetivo (ADR D1)
+const linha = (quarter: string, over: Record<string, unknown> = {}) =>
+  ({ unitId: 'unit-1', year: 2025, quarter, livro: 'lalur', codigo: '7', valorCents: 1_000, indRelacao: '4', histLancamento: 'nd', ...over }) as never;
+
+describe('X7 Fase B item 12 — período × forma do ano', () => {
+  it('sem perfil do ano e com REAL trimestral: T0x passa e A00..A12 é 400; com ANUAL: A0x passa e T0x é 400', async () => {
+    const sem = build();
+    await sem.svc.createEntry(scope, linha('T01'));
+    await expect(sem.svc.createEntry(scope, linha('A03'))).rejects.toThrow(/Período A03 não pertence à forma TRIMESTRAL de 2025/);
+
+    const trim = build({ perfis: { 2025: TRIM } });
+    await trim.svc.createEntry(scope, linha('T02'));
+    await expect(trim.svc.createEntry(scope, linha('A00'))).rejects.toThrow(/não pertence à forma TRIMESTRAL/);
+
+    const anual = build({ perfis: { 2025: ANUAL } });
+    await anual.svc.createEntry(scope, linha('A03'));
+    await anual.svc.createEntry(scope, linha('A00'));
+    await expect(anual.svc.createEntry(scope, linha('T01'))).rejects.toThrow(/Período T01 não pertence à forma ANUAL de 2025/);
+    expect(anual.repo.entries.map((e) => e.quarter)).toEqual(['A03', 'A00']);
+    // o perfil é lido DENTRO da tx (a forma muda até a trava)
+    expect(anual.profiles.findByYear).toHaveBeenCalledWith(scope, 2025, TX);
+  });
+
+  it('A0m antes do mês de início de atividade no ano ⇒ 400; o mês de início passa; início em outro ano não restringe (lacuna 3 do PR-2)', async () => {
+    const { svc } = build({ perfis: { 2025: { ...ANUAL, inicioAtividadeEm: '2025-05-10' } } });
+    await expect(svc.createEntry(scope, linha('A04'))).rejects.toThrow(/A04\/2025 é anterior ao início de atividade \(2025-05-10\)/);
+    await svc.createEntry(scope, linha('A05'));
+    await svc.createEntry(scope, linha('A00'));
+    const outroAno = build({ perfis: { 2025: { ...ANUAL, inicioAtividadeEm: '2019-07-01' } } });
+    await outroAno.svc.createEntry(scope, linha('A01'));
+  });
+
+  it('livros do Bloco N por período: n620/n660 fora de A01..A12 e n630/n670 em A0m ⇒ 400; n620/n660 no mês resolvem contra as abas N620/N660 (catálogo do PR-4, item 22)', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL } });
+    const n = (livro: string, quarter: string) => ({ unitId: 'unit-1', year: 2025, quarter, livro, codigo: '1', valorCents: 1 }) as never;
+    await expect(svc.createEntry(scope, n('n620', 'A00'))).rejects.toThrow(/Livro 'n620' só existe nos meses A01..A12/);
+    await expect(svc.createEntry(scope, n('n660', 'T01'))).rejects.toThrow(/Livro 'n660' só existe nos meses A01..A12/);
+    await expect(svc.createEntry(scope, n('n630', 'A03'))).rejects.toThrow(/Livro 'n630' só existe em T01..T04 e A00/);
+    await expect(svc.createEntry(scope, n('n670', 'A12'))).rejects.toThrow(/Livro 'n670' só existe em T01..T04 e A00/);
+    await expect(svc.createEntry(scope, n('n620', 'A03'))).rejects.toThrow(/linha CNA — calculada\/rótulo do PVA/);
+    expect(repo.entries).toHaveLength(0);
+    // X7 Fase B PR-4 (item 22): a recusa provisória da lacuna 2 do PR-2 caiu — linha E das abas N620/N660 entra no mês
+    await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A03', livro: 'n620', codigo: '21', valorCents: 1 } as never);
+    await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A12', livro: 'n660', codigo: '14', valorCents: 1 } as never);
+    expect(repo.entries).toHaveLength(2);
+    // controle positivo: n630 no A00 da forma anual passa (código E do N630A)
+    await svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'A00', livro: 'n630', codigo: '6', valorCents: 1 } as never);
+    expect(svc.catalog(scope, { unitId: 'unit-1', livro: 'n620', year: 2025 } as never).rows.map((r) => r.codigo)).toContain('21');
+  });
+});
+
+describe('X7 Fase B item 12 — Parte B só no A00 (IN RFB 1.700 art. 50 II)', () => {
+  const mov = (quarter: string, parteBId: string) =>
+    ({ unitId: 'unit-1', parteBId, year: 2025, quarter, indicador: 'DB', valorCents: 5, historico: 'x', indLanAnt: 'N' }) as never;
+
+  it('26 (a): movimento da Parte B em A05 ⇒ 400 e nada gravado; no A00 passa; em T01 da forma anual ⇒ 400', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL } });
+    const pf = acc({ codCtaB: 'PF', saldoIniCents: 1_000n });
+    repo.accounts.push(pf);
+    await expect(svc.createMovement(scope, mov('A05', pf.id))).rejects.toThrow(/Movimento da Parte B em A05 não é permitido.*art\. 50 II/);
+    await expect(svc.createMovement(scope, mov('T01', pf.id))).rejects.toThrow(/não pertence à forma ANUAL/);
+    expect(repo.movements).toHaveLength(0);
+    await svc.createMovement(scope, mov('A00', pf.id));
+    expect(repo.movements.map((m) => m.quarter)).toEqual(['A00']);
+  });
+
+  it('fecha só o A00: sdIni = abertura, as linhas dos A0m não movem a Parte B, o PF sai do resultado do ano; fechar A03 ou T04 ⇒ 400', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL }, netResult: { '2025-09-30': '-99999', '2025-12-31': '-40000' } }); // o A00 é o YTD de 31/12, sem subtrair setembro
+    const pf = acc({ codCtaB: 'PF', codPbRfb: '1000', saldoIniCents: 500_000n, indSaldoIni: 'D' });
+    const prov = acc({ codCtaB: 'PROV', codPbRfb: '1010' });
+    repo.accounts.push(pf, prov, acc({ codCtaB: 'BC', codPbRfb: '1003', codTributo: 'C' }));
+    // balancete: compensação + adição relacionada à Parte B no A03 — a Parte B NÃO se move por elas
+    await svc.createEntry(scope, linha('A03', { codigo: '173', valorCents: 200_000, indRelacao: '1', parteBId: pf.id, histLancamento: undefined }));
+    await svc.createEntry(scope, linha('A03', { valorCents: 9_999, indRelacao: '1', parteBId: prov.id, histLancamento: undefined }));
+    // ajuste anual: adição de 10.000 relacionada à PROV no A00
+    await svc.createEntry(scope, linha('A00', { valorCents: 10_000, indRelacao: '1', parteBId: prov.id, histLancamento: undefined }));
+
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'A03' as never })).rejects.toThrow(/A Parte B não fecha em A03/);
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T04' })).rejects.toThrow(/não pertence à forma ANUAL/);
+
+    const c = await svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'A00' as never });
+    expect(c.quarter).toBe('A00');
+    // PF: abertura 500.000 D; base do ano = −40.000 + 10.000 (adição A00) = −30.000 ⇒ PF system 30.000 (D)
+    expect(bal(c, pf.id)).toMatchObject({ sdIniCents: 500_000n, vlParteACents: 0n, vlParteBCents: 30_000n, indVlParteB: 'D', sdFimCents: 530_000n });
+    expect(bal(c, prov.id)).toMatchObject({ vlParteACents: 10_000n, indVlParteA: 'D', sdFimCents: 10_000n });
+    // PF do IRPJ (−30.000) e BC da CSLL (lacs sem ajuste: −40.000), ambos sob o A00
+    expect(repo.movements.filter((m) => m.origem === 'system').map((m) => [m.quarter, m.indicador, m.valorCents])).toEqual([['A00', 'PF', 30_000n], ['A00', 'BC', 40_000n]]);
+
+    const diag = await svc.diagnoseYear(scope, 2025);
+    expect(diag.periods.map((p) => p.quarter)).toEqual(['A00']);
+    expect(diag.divergences).toEqual([]);
+    await svc.reopenParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'A00' as never });
+    expect(repo.closings).toHaveLength(0);
+  });
+
+  it('continuidade entre exercícios com formas diferentes: 2024 ANUAL (A00) → 2025 trimestral (T01) → 2026 ANUAL (A00)', async () => {
+    const { svc, repo } = build({ perfis: { 2024: ANUAL, 2026: ANUAL } }); // 2025 sem perfil ⇒ trimestral
+    const pf = acc({ codCtaB: 'PF', saldoIniCents: 1_000n, dtCriacao: new Date('2023-12-31T00:00:00.000Z') });
+    repo.accounts.push(pf);
+    await svc.createMovement(scope, { ...(mov('A00', pf.id) as object), year: 2024, valorCents: 7 } as never);
+    await svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'A00' as never });
+    // 2025/T01 abre do saldo final de 2024/A00 (1.007), não da coluna (1.000)
+    const t1 = await svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01' });
+    expect(bal(t1, pf.id).sdIniCents).toBe(1_007n);
+    // o A00 de 2024 não reabre/refecha com o T01 de 2025 fechado (ordem limpa cruza o exercício)
+    await expect(svc.reopenParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'A00' as never })).rejects.toThrow(/T01\/2025 está fechado sobre o saldo final de A00\/2024/);
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'A00' as never })).rejects.toThrow(/T01\/2025 já está fechado sobre o saldo final de A00\/2024/);
+    // 2026 ANUAL com 2025 fechado só até T01 ⇒ 400 pedindo os 4 trimestres de 2025
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2026, quarter: 'A00' as never })).rejects.toThrow(/Feche os quatro trimestres de 2025/);
+    for (const q of ['T02', 'T03', 'T04'] as const) await svc.closeParteB(scope, { unitId: 'unit-1', year: 2025, quarter: q });
+    const a00 = await svc.closeParteB(scope, { unitId: 'unit-1', year: 2026, quarter: 'A00' as never });
+    expect(bal(a00, pf.id).sdIniCents).toBe(1_007n);
+    await expect(svc.reopenParteB(scope, { unitId: 'unit-1', year: 2025, quarter: 'T04' })).rejects.toThrow(/A00\/2026 está fechado sobre o saldo final de T04\/2025/);
+  });
+
+  it('2025 ANUAL sem o A00 fechado e 2026 sobre ela ⇒ 400 pedindo o A00 de 2025', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL } });
+    repo.accounts.push(acc({ codCtaB: 'PF', dtCriacao: new Date('2024-12-31T00:00:00.000Z') }));
+    await svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: 'T01' }); // existe fechamento anterior
+    await expect(svc.closeParteB(scope, { unitId: 'unit-1', year: 2026, quarter: 'T01' })).rejects.toThrow(/Feche o A00 de 2025 antes de operar a Parte B de 2026/);
+  });
+});
+
+describe('X7 Fase B item 12 — teto da compensação P em A0m = saldo da Parte B no início do ano (26 g)', () => {
+  it('P em A03 acima da abertura ⇒ 400 e write desfeito; igual à abertura passa; A03 e A04 não somam (cada balancete do zero)', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL } });
+    const pf = acc({ codCtaB: 'PF', codPbRfb: '1000', saldoIniCents: 50_000n, indSaldoIni: 'D' });
+    repo.accounts.push(pf);
+    const p = (quarter: string, valorCents: number) => linha(quarter, { codigo: '173', valorCents, indRelacao: '1', parteBId: pf.id, histLancamento: undefined });
+    // hoje este caso passaria em silêncio: rec.get('A03') é undefined (BRIEF B §Contexto)
+    await expect(svc.createEntry(scope, p('A03', 50_001))).rejects.toThrow(/Compensação excede o saldo da conta da Parte B 'PF' no início de 2025 \(A03\/2025\)/);
+    expect(repo.entries).toHaveLength(0);
+    await svc.createEntry(scope, p('A03', 50_000));
+    await svc.createEntry(scope, p('A04', 50_000)); // o balancete de abril é o acumulado do ano; não soma com março
+    // a mesma conta no mesmo A03 soma: 50.000 + 1 > abertura
+    await expect(svc.createEntry(scope, linha('A03', { codigo: '174', valorCents: 1, indRelacao: '1', parteBId: pf.id, histLancamento: undefined }))).rejects.toThrow(/Compensação excede/);
+    // o update que sobe acima da abertura também cai
+    const a4 = repo.entries.find((e) => e.quarter === 'A04')!;
+    await expect(svc.updateEntry(scope, a4.id, { unitId: 'unit-1', valorCents: 60_000 })).rejects.toThrow(/Compensação excede/);
+    expect(repo.entries.find((e) => e.id === a4.id)!.valorCents).toBe(50_000n);
+  });
+
+  it('a abertura do teto segue a continuidade: com 2024/T04 fechado, vale o saldo final dele, não a coluna', async () => {
+    const { svc, repo } = build({ perfis: { 2025: ANUAL } });
+    const pf = acc({ codCtaB: 'PF', codPbRfb: '1000', saldoIniCents: 50_000n, dtCriacao: new Date('2023-12-31T00:00:00.000Z') });
+    repo.accounts.push(pf);
+    await svc.createMovement(scope, { unitId: 'unit-1', parteBId: pf.id, year: 2024, quarter: 'T01', indicador: 'CR', valorCents: 20_000, historico: 'x', indLanAnt: 'N' } as never);
+    for (const q of ['T01', 'T02', 'T03', 'T04'] as const) await svc.closeParteB(scope, { unitId: 'unit-1', year: 2024, quarter: q });
+    const p = (valorCents: number) => linha('A02', { codigo: '173', valorCents, indRelacao: '1', parteBId: pf.id, histLancamento: undefined });
+    await expect(svc.createEntry(scope, p(30_001))).rejects.toThrow(/Compensação excede/); // 50.000 − 20.000 = 30.000
+    await svc.createEntry(scope, p(30_000));
   });
 });

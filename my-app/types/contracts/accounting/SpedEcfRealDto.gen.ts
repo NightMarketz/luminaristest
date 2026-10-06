@@ -22,7 +22,7 @@ fiscal: {
 formaTrib?: string
 formaTribPer: string
 codVer?: string
-formaApur?: "T"
+formaApur?: ("T" | "A")
 indAliqCsll?: ("1" | "4")
 indRecReceita?: ("1" | "2")
 }

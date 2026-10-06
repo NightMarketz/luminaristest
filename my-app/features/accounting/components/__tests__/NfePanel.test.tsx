@@ -4,6 +4,7 @@ import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-li
 import { NfePanel, loadFinalizedSales } from '../NfePanel';
 import { nfeService, type NfePreview } from '../../../../lib/services/nfe.service';
 import { counterpartiesService } from '../../../../lib/services/counterparties.service';
+import { fixedAssetsService } from '../../../../lib/services/fixedAssets.service';
 import { DynamicTableService } from '../../../../lib/services/dynamic-table.service';
 import { loadProductOptions } from '../../lib/loadProductOptions';
 import { NFE_MAPPING_MEMORY_KEY } from '../../lib/nfeMappingMemory';
@@ -20,6 +21,9 @@ vi.mock('../../../../lib/services/counterparties.service', () => ({
 }));
 vi.mock('../../../../lib/services/dynamic-table.service', () => ({
   DynamicTableService: { getTables: vi.fn(), getTableData: vi.fn() },
+}));
+vi.mock('../../../../lib/services/fixedAssets.service', () => ({
+  fixedAssetsService: { listClasses: vi.fn() },
 }));
 vi.mock('../../lib/loadProductOptions', () => ({ loadProductOptions: vi.fn() }));
 
@@ -68,6 +72,9 @@ describe('NfePanel', () => {
     vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue([
       { id: 'cp-tax', userId: 'u', unitId: 'u1', type: 'SUPPLIER', name: 'Outro Nome', ref: null, taxId: '12345678000195', createdById: null, createdAt: '', updatedAt: '', deletedAt: null },
       { id: 'cp-name', userId: 'u', unitId: 'u1', type: 'SUPPLIER', name: 'Distribuidora Exemplo Ltda', ref: null, taxId: null, createdById: null, createdAt: '', updatedAt: '', deletedAt: null },
+    ]);
+    vi.mocked(fixedAssetsService.listClasses).mockResolvedValue([
+      { id: 'cls-maq', code: 'MAQ', name: 'Máquinas e equipamentos', depreciable: true, costAccountId: 'acc-1', accumulatedDepreciationAccountId: 'acc-2' },
     ]);
     vi.mocked(DynamicTableService.getTables).mockResolvedValue({ data: [salesTable] } as never);
     vi.mocked(DynamicTableService.getTableData).mockResolvedValue({ data: salesRows } as never);
@@ -175,6 +182,114 @@ describe('NfePanel', () => {
     expect(onLedgerChange).toHaveBeenCalled();
     expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'SHAMP-500': 'prod-shamp', 'MASC-300': 'prod-dup-a' });
     expect(screen.queryByTestId('nfe-preview')).toBeNull();
+  });
+
+  // ───────────────────────── FE-INCR-FIXED-ASSETS PR-2 (itens 27–31): item "Imobilizado" → classId
+  it('item "Imobilizado" + item "Produto" → payload com um classId e um productRef, sem destination; memória só do produto (itens 27, 28, 30)', async () => {
+    vi.mocked(nfeService.previewNfe).mockResolvedValue(preview());
+    vi.mocked(nfeService.importPurchaseNfe).mockResolvedValue({ payable: { id: 'pay-1', amountCents: 13333 } as never, ignoredItems: [] });
+    render(<NfePanel unitId="u1" />);
+    await waitFor(() => expect(fixedAssetsService.listClasses).toHaveBeenCalledWith('u1'));
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await screen.findByTestId('nfe-preview');
+    expect((screen.getByTestId('nfe-item-kind-SHAMP-500') as HTMLSelectElement).value).toBe('produto'); // padrão = comportamento de hoje
+    expect(screen.queryByTestId('nfe-item-kind-BRINDE')).toBeNull(); // indTot=0: sem controle
+
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    expect(screen.queryByTestId('nfe-item-select-MASC-300')).toBeNull();
+    expect(screen.getByTestId('nfe-import-btn')).toBeDisabled(); // MASC-300 sem classe
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-MASC-300') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-MASC-300'), { target: { value: 'cls-maq' } });
+    expect(screen.getByTestId('nfe-import-btn')).not.toBeDisabled();
+    fireEvent.click(screen.getByTestId('nfe-import-btn'));
+
+    await waitFor(() => expect(nfeService.importPurchaseNfe).toHaveBeenCalledTimes(1));
+    const sent = vi.mocked(nfeService.importPurchaseNfe).mock.calls[0][0].itemMappings;
+    expect(sent).toStrictEqual([
+      { cProd: 'SHAMP-500', productRef: 'prod-shamp' },
+      { cProd: 'MASC-300', classId: 'cls-maq' },
+    ]);
+    // F-FAFE-6 → a: o imobilizado não é lembrado, o produto sim
+    await waitFor(() => expect(screen.queryByTestId('nfe-preview')).toBeNull());
+    expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'SHAMP-500': 'prod-shamp' });
+  });
+
+  it('produto sugerido trocado para "Imobilizado" não vai para a memória (só o que foi de fato enviado como productRef) (item 30)', async () => {
+    vi.mocked(nfeService.previewNfe).mockResolvedValue(preview());
+    vi.mocked(nfeService.importPurchaseNfe).mockResolvedValue({ payable: { id: 'pay-1', amountCents: 13333 } as never, ignoredItems: [] });
+    render(<NfePanel unitId="u1" />);
+    await waitFor(() => expect(fixedAssetsService.listClasses).toHaveBeenCalled());
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await screen.findByTestId('nfe-preview');
+    expect((screen.getByTestId('nfe-item-select-SHAMP-500') as HTMLSelectElement).value).toBe('prod-shamp'); // sugerido
+    fireEvent.change(screen.getByTestId('nfe-item-kind-SHAMP-500'), { target: { value: 'imobilizado' } });
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-SHAMP-500') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-SHAMP-500'), { target: { value: 'cls-maq' } });
+    fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
+    fireEvent.click(screen.getByTestId('nfe-import-btn'));
+    await waitFor(() => expect(nfeService.importPurchaseNfe).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByTestId('nfe-preview')).toBeNull());
+    expect(JSON.parse(window.localStorage.getItem(NFE_MAPPING_MEMORY_KEY) ?? '{}')['12345678000195']).toEqual({ 'MASC-300': 'prod-dup-a' });
+  });
+
+  it('abrir outra nota sem importar zera Tipo e classe da anterior (item 28)', async () => {
+    await renderWithPreview();
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-MASC-300') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-MASC-300'), { target: { value: 'cls-maq' } });
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await waitFor(() => expect(nfeService.previewNfe).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect((screen.getByTestId('nfe-item-kind-MASC-300') as HTMLSelectElement).value).toBe('produto'));
+    expect(screen.queryByTestId('nfe-item-class-MASC-300')).toBeNull();
+  });
+
+  it('o Tipo escolhido manda: com "Imobilizado" o produto já mapeado não vale, e voltar a "Produto" o restaura (item 28)', async () => {
+    await renderWithPreview();
+    fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
+    expect(screen.getByTestId('nfe-import-btn')).not.toBeDisabled();
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    expect(screen.getByTestId('nfe-import-btn')).toBeDisabled();
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'produto' } });
+    expect(screen.getByTestId('nfe-import-btn')).not.toBeDisabled();
+  });
+
+  it('sem classe cadastrada → estado vazio com "cadastrar classe" que navega para Imobilizado › Classes (item 29)', async () => {
+    vi.mocked(fixedAssetsService.listClasses).mockResolvedValue([]);
+    vi.mocked(nfeService.previewNfe).mockResolvedValue(preview());
+    const onNavigateTab = vi.fn();
+    render(<NfePanel unitId="u1" onNavigateTab={onNavigateTab} />);
+    await waitFor(() => expect(fixedAssetsService.listClasses).toHaveBeenCalled());
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await screen.findByTestId('nfe-preview');
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    const empty = screen.getByTestId('nfe-item-no-classes-MASC-300');
+    fireEvent.click(within(empty).getByRole('button', { name: /cadastrar classe/ }));
+    expect(onNavigateTab).toHaveBeenCalledWith('imobilizado', 'classes');
+  });
+
+  it('erro de taxa por NCM no import aparece (resolveError) com link para Imobilizado › Taxas; sem item imobilizado não leva o link (item 29)', async () => {
+    vi.mocked(nfeService.previewNfe).mockResolvedValue(preview());
+    vi.mocked(nfeService.importPurchaseNfe).mockRejectedValue({
+      status: 400,
+      error: "Nenhuma taxa de depreciação do Anexo III casa com o NCM '84159000' do item 'MASC-300' — cadastre uma taxa CUSTOM antes de importar esta NF-e.",
+    });
+    const onNavigateTab = vi.fn();
+    render(<NfePanel unitId="u1" onNavigateTab={onNavigateTab} />);
+    await waitFor(() => expect(fixedAssetsService.listClasses).toHaveBeenCalled());
+    pickFile(screen.getByTestId('nfe-purchase-file') as HTMLInputElement);
+    await screen.findByTestId('nfe-preview');
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'imobilizado' } });
+    await waitFor(() => expect((screen.getByTestId('nfe-item-class-MASC-300') as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId('nfe-item-class-MASC-300'), { target: { value: 'cls-maq' } });
+    fireEvent.click(screen.getByTestId('nfe-import-btn'));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/NCM '84159000'/);
+    fireEvent.click(screen.getByTestId('nfe-rates-link'));
+    expect(onNavigateTab).toHaveBeenCalledWith('imobilizado', 'taxas');
+
+    // mesma mensagem, mas nenhum item é imobilizado → sem link
+    fireEvent.change(screen.getByTestId('nfe-item-kind-MASC-300'), { target: { value: 'produto' } });
+    fireEvent.change(screen.getByTestId('nfe-item-select-MASC-300'), { target: { value: 'prod-dup-a' } });
+    expect(screen.queryByTestId('nfe-rates-link')).toBeNull();
   });
 
   it('erro do servidor no preview e no import aparece como mensagem (resolveError)', async () => {

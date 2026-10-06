@@ -46,8 +46,11 @@ import {
  *    depois, sob o mesmo M030, M410 (+M415) por movimento da Parte B (pp.268/270), M500 por conta
  *    (p.271) e M510 por conta-padrão (p.273) — ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª). A ordem
  *    intra-período é a hierárquica da p.236; o PVA confirma (BRIEF 3C §4 item 3). + M990.
- *  - Bloco N (Fork 3→(a)): N001(IND_DAD=0) + N030 por período + só as linhas `E` de N500/N630/N670 com
- *    valor informado (o PVA computa as CNA/CA — alíquota, adicional, teto da LC 224/25) + N990.
+ *  - Bloco N (Fork 3→(a)): N001(IND_DAD=0) + N030 por período + só as linhas `E` de N500/N620/N630/N660/N670
+ *    com valor informado (o PVA computa as CNA/CA — alíquota, adicional, teto da LC 224/25) + N990.
+ *  - Forma ANUAL (X7 Fase B, BRIEF B itens 18–22): 0010.FORMA_APUR = 'A' + MES_BAL_RED; L030/M030 = `periods`
+ *    (A00 + meses `B`) e N030 = `periodsN` (A00 + meses `B` ou `E`) — Manual pp.222, 242 e 278. N620/N660 saem sob
+ *    o N030 do mês; N630/N670 sob o A00 (pp.47–48).
  *    Nenhuma alíquota aqui (o teste faz grep neste arquivo).
  *  - Bloco P: marcador vazio — é do Presumido, "outro regime" para o Real (p.41). Q/S/T/U/V/W/X/Y: idem.
  *  - Bloco 9: contagem em 2ª passada, auto-referente (mesma regra da ECD/Presumido).
@@ -61,8 +64,10 @@ export interface EcfRealFiscalInput {
   formaTrib: string;
   /** 0010.FORMA_TRIB_PER — 4 posições `[0RPAES]` (item 2; sem default). */
   formaTribPer: string;
-  /** 0010.FORMA_APUR — 'T' (Fork 5→(a) Trimestral). */
-  formaApur: 'T';
+  /** 0010.FORMA_APUR — 'T' (Fork 5→(a) Trimestral) ou 'A' (anual, X7 Fase B item 18 — derivado do perfil do ano). */
+  formaApur: 'T' | 'A';
+  /** 0010.MES_BAL_RED — 12 posições `[0;E;B]` quando `formaApur = 'A'`; ausente no 'T' (REGRA_NAO_PREENCHER_TRIMESTRAL, p.76). */
+  mesBalRed?: string;
   /** 0010.IND_REC_RECEITA — '1'/'2'. */
   indRecReceita: string;
 }
@@ -72,9 +77,14 @@ export interface EcfRealParamsInput {
   indAliqCsll: string;
 }
 
-/** Um período de apuração (L030/M030/N030) — Fork 5→(a): T01..T04. */
+/** PER_APUR (pp.241/277): T01..T04 no trimestral; A00..A12 no anual (X7 Fase B item 19). */
+export type EcfRealPerApur =
+  | 'T01' | 'T02' | 'T03' | 'T04'
+  | 'A00' | 'A01' | 'A02' | 'A03' | 'A04' | 'A05' | 'A06' | 'A07' | 'A08' | 'A09' | 'A10' | 'A11' | 'A12';
+
+/** Um período de apuração (L030/M030/N030). */
 export interface EcfRealPeriod {
-  perApur: 'T01' | 'T02' | 'T03' | 'T04';
+  perApur: EcfRealPerApur;
   dtIni: string; // ISO
   dtFin: string; // ISO
 }
@@ -86,7 +96,7 @@ export interface EcfRealPeriod {
  * é derivada de `tipoLancamento` (REGRA_PEA p.250 + conversão de REGRA_VALOR_DETALHADO p.246).
  */
 export interface EcfRealLalurLine {
-  livro: 'lalur' | 'lacs' | 'n500' | 'n630' | 'n670';
+  livro: 'lalur' | 'lacs' | 'n500' | 'n620' | 'n630' | 'n660' | 'n670';
   perApur: string;
   codigo: string;
   descricao: string;
@@ -158,7 +168,9 @@ export interface EcfRealFileInput {
   fiscal: EcfRealFiscalInput;
   params: EcfRealParamsInput;
   signers: Reg0930Signer[]; // ≥1 contador (900) + ≥1 não-contador
-  periods: EcfRealPeriod[]; // T01→T04 (ordenados)
+  periods: EcfRealPeriod[]; // L030/M030 — T01→T04, ou A00 + meses `B` (ordenados)
+  /** N030 — ausente ⇒ `periods` (trimestral). No anual: A00 + meses `B` ou `E` (p.278, X7 Fase B item 19). */
+  periodsN?: EcfRealPeriod[];
   lalur: EcfRealLalurLine[]; // vazio ⇒ M/N só com 001/010/030/990
   parteB: EcfRealParteBAccount[]; // vazio ⇒ sem M010
   /** M410 (ECF 3C) — ausente/vazio ⇒ nenhum M410. Já ordenados pelo serviço (quarter, codCtaB, createdAt, id). */
@@ -365,10 +377,10 @@ export function buildM510(b: EcfRealParteBPadraoBalance): string {
 }
 
 /**
- * N500 (p.280) / N630 (p.298) / N670 (p.307) — linha `E` informada pela PJ (4 campos): REG, CODIGO,
- * DESCRICAO, VALOR. Só linhas `E`; toda CNA/CA é do PVA (Fork 3→(a)).
+ * N500 (p.280) / N620 (p.296) / N630 (p.298) / N660 (p.305) / N670 (p.307) — linha `E` informada pela PJ (4 campos):
+ * REG, CODIGO, DESCRICAO, VALOR. Só linhas `E`; toda CNA/CA é do PVA (Fork 3→(a)).
  */
-export function buildNLine(reg: 'N500' | 'N630' | 'N670', l: EcfRealLalurLine): string {
+export function buildNLine(reg: 'N500' | 'N620' | 'N630' | 'N660' | 'N670', l: EcfRealLalurLine): string {
   return spedLine([reg, l.codigo, l.descricao, centsToSpedDecimal(l.valorCents)]);
 }
 
@@ -442,6 +454,7 @@ export function buildEcfRealFile(input: EcfRealFileInput): string[] {
       formaTrib: input.fiscal.formaTrib,
       formaApur: input.fiscal.formaApur,
       formaTribPer: input.fiscal.formaTribPer,
+      mesBalRed: input.fiscal.mesBalRed,
       indRecReceita: input.fiscal.indRecReceita,
     }),
   );
@@ -473,12 +486,14 @@ export function buildEcfRealFile(input: EcfRealFileInput): string[] {
   }
   const blockM = dataBlock('M001', 'M990', bodyM);
 
-  // ── Bloco N (Fork 3→(a)): períodos + só linhas E com valor ──
+  // ── Bloco N (Fork 3→(a)): períodos + só linhas E com valor, na ordem dos registros (p.48) ──
   const bodyN: string[] = [];
-  for (const p of input.periods) {
+  for (const p of input.periodsN ?? input.periods) {
     bodyN.push(buildPeriodReg('N030', p));
     for (const l of byPeriod('n500', p.perApur)) bodyN.push(buildNLine('N500', l));
+    for (const l of byPeriod('n620', p.perApur)) bodyN.push(buildNLine('N620', l));
     for (const l of byPeriod('n630', p.perApur)) bodyN.push(buildNLine('N630', l));
+    for (const l of byPeriod('n660', p.perApur)) bodyN.push(buildNLine('N660', l));
     for (const l of byPeriod('n670', p.perApur)) bodyN.push(buildNLine('N670', l));
   }
   const blockN = dataBlock('N001', 'N990', bodyN);

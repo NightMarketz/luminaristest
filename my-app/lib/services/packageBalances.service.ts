@@ -17,6 +17,8 @@ export interface CustomerPackageBalance {
   packageId: string;
   unitId: string;
   balanceCents: number;
+  /** Último dia válido, `YYYY-MM-DD` (date-only); null = sem validade. Formate com `formatDateBR`, nunca `new Date(iso)`. */
+  expiresOn: string | null;
 }
 
 interface RawBalance {
@@ -25,6 +27,8 @@ interface RawBalance {
   packageId: string;
   unitId: string;
   balanceCents: number | string;
+  /** FE-INCR-PACOTE-VALIDADE (F1): `expiresAt` chega como ISO à meia-noite UTC (date-only); null = sem validade. */
+  expiresAt?: string | null;
 }
 
 export const packageBalancesService = {
@@ -40,6 +44,7 @@ export const packageBalancesService = {
       packageId: b.packageId,
       unitId: b.unitId,
       balanceCents: Number(b.balanceCents),
+      expiresOn: b.expiresAt ? b.expiresAt.slice(0, 10) : null,
     }));
   },
 };

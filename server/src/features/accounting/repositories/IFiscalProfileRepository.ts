@@ -20,6 +20,8 @@ export interface FiscalProfileData {
   cofinsDespesaAccountId?: string | null;
   pisRecolherAccountId?: string | null;
   cofinsRecolherAccountId?: string | null;
+  irpjSaldoNegativoAccountId?: string | null; // X7 Fase B item 16
+  csllSaldoNegativoAccountId?: string | null;
   partnerAccountRef?: string | null;
   // BE-INCR-DFE (BRIEF item 1) — emitente + D1f configurável
   codMun?: string | null;

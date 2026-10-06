@@ -6,7 +6,8 @@
 // Molde: `server/scripts/rfb-referential-to-catalog.mjs` (INCR-9B) — o script NÃO contém nenhum código
 // de linha: só recorta colunas do arquivo oficial. Dado fiscal nunca é digitado de memória.
 //
-// Abas lidas (BRIEF §2.4 + lacuna 7): M300A, M350A (Parte A: TIPO + TIPO LANÇ), N500, N630A, N670
+// Abas lidas (BRIEF §2.4 + lacuna 7): M300A, M350A (Parte A: TIPO + TIPO LANÇ), N500, N620, N630A, N660, N670
+// (N620/N660 = estimativa mensal, X7 BRIEF B item 22)
 // (Bloco N: TIPO), PARTEB_PADRAO (M010.COD_PB_RFB por tributo). TODAS as linhas entram (E/CNA/CA/R) —
 // o serviço precisa distinguir "código inexistente" de "código que não é entrada" (item 9), e o teste
 // do item 14 itera as CNA/CA para provar que NÃO são emitidas.
@@ -27,7 +28,7 @@ const ExcelJS = require('exceljs');
 export const XLSX_PATH = path.join(process.cwd(), 'docs', 'accounting', 'fontes-oficiais', 'RFB-Tabelas-Dinamicas-ECF-Leiaute-12.xlsx');
 export const OUT_PATH = path.join(process.cwd(), 'server', 'src', 'features', 'accounting', 'fixtures', 'ecf-l12-linhas.json');
 
-const ABAS_LINHAS = ['M300A', 'M350A', 'N500', 'N630A', 'N670'];
+const ABAS_LINHAS = ['M300A', 'M350A', 'N500', 'N620', 'N630A', 'N660', 'N670'];
 
 const cell = (x) => {
   if (x == null) return '';

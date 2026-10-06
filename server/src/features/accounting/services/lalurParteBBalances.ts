@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { LalurQuarter } from '../models/Lalur.model';
+import type { LalurPeriodo } from '../models/Lalur.model';
 import { LALUR_QUARTERS, isPrejuizoIndicador } from '../models/Lalur.model';
 
 /**
@@ -94,7 +94,7 @@ export function computeQuarter(
 }
 
 export interface QuarterInput {
-  quarter: LalurQuarter;
+  quarter: LalurPeriodo;
   movesA: readonly ParteAMove[];
   movesB: readonly ParteBMove[];
 }
@@ -102,17 +102,19 @@ export interface QuarterInput {
 /**
  * Encadeia os trimestres de um exercício a partir do saldo de abertura (`openingByAccount`):
  * `sdIni(T01) = opening`, `sdIni(Tn) = sdFim(Tn−1)`. Devolve um mapa por trimestre; só os trimestres
- * presentes em `quarters` (ordenados por T01..T04 aqui, independente da ordem de entrada).
+ * presentes em `quarters` (ordenados por T01..T04 aqui, independente da ordem de entrada). X7 Fase B (item 12):
+ * `order` = os períodos da Parte B do ano — `T01..T04` (default) ou `[A00]` na forma anual.
  */
 export function chainYear(
   accountIds: readonly string[],
   openingByAccount: ReadonlyMap<string, bigint>,
   quarters: readonly QuarterInput[],
-): Map<LalurQuarter, Map<string, QuarterBalance>> {
+  order: readonly LalurPeriodo[] = LALUR_QUARTERS,
+): Map<LalurPeriodo, Map<string, QuarterBalance>> {
   const byQ = new Map(quarters.map((q) => [q.quarter, q]));
-  const out = new Map<LalurQuarter, Map<string, QuarterBalance>>();
+  const out = new Map<LalurPeriodo, Map<string, QuarterBalance>>();
   let sdIni: ReadonlyMap<string, bigint> = openingByAccount;
-  for (const quarter of LALUR_QUARTERS) {
+  for (const quarter of order) {
     const q = byQ.get(quarter);
     if (!q) break; // exercício parcialmente fechado: para no primeiro trimestre ausente
     const balances = computeQuarter(accountIds, sdIni, q.movesA, q.movesB);

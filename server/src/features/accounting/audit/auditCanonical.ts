@@ -143,6 +143,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2 (F-PCB-1 b)
+    'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
@@ -164,7 +165,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
-  'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao'],
+  'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao',
+    'modo', 'diferencaPostergadaCents'], // X7 Fase B item 25: enum + centavos em string
   'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
   // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
   'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],

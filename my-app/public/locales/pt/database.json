@@ -106,7 +106,8 @@
         "engagementRate": "Taxa de Engajamento",
         "associatedProducts": "Produtos Associados",
         "qualifiedEmployees": "Funcionários Qualificados",
-        "consumedProducts": "Produtos Consumidos"
+        "consumedProducts": "Produtos Consumidos",
+        "validityDays": "Validade (dias)"
     },
     "options": {
         "Low": "Baixo",
@@ -243,5 +244,8 @@
             "activities_count": "{{count}} atividades",
             "on_request": "Sob consulta"
         }
+    },
+    "field_descriptions": {
+        "validityDays": "Prazo em dias corridos a partir da compra. Validade de 12 meses ou mais é a mais defensável; 0 ou vazio = sem validade."
     }
 }

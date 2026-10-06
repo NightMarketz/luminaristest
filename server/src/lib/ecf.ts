@@ -151,6 +151,7 @@ export interface Reg0010Input {
   formaApur?: string; // 'T' Trimestral (default)
   codQualifPj?: string; // '01' PJ em Geral (default)
   formaTribPer?: string; // 'PPPP' 4 trimestres Presumido (default)
+  mesBalRed?: string; // 12 posições [0;E;B] só com FORMA_APUR='A' (Manual p.72; X7 Fase B item 18) — vazio (default) no 'T'
   tipEscPre?: string; // 'C' obrigada/facultativa à ECD com recuperação (default)
   indRecReceita?: string; // '2' Regime de Competência (default — mantém ECD)
   optRefis?: string; // 'N' (default)
@@ -176,7 +177,7 @@ export function build0010(i: Reg0010Input = {}): string {
     i.formaApur ?? 'T',
     i.codQualifPj ?? '01',
     i.formaTribPer ?? 'PPPP',
-    EMPTY, // MES_BAL_RED (vazio p/ FORMA_APUR='T')
+    i.mesBalRed ?? EMPTY, // MES_BAL_RED (vazio p/ FORMA_APUR='T'; REGRA_MES_BAL_RED_OBRIGATORIO no 'A', p.76)
     i.tipEscPre ?? 'C',
     EMPTY, // TIP_ENT (imunes/isentas)
     EMPTY, // FORMA_APUR_I (imunes/isentas)

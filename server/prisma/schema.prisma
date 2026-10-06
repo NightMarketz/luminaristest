@@ -15,57 +15,57 @@ datasource db {
 }
 
 model User {
-  id                      String                    @id @default(cuid())
-  name                    String?
-  username                String                    @unique
-  email                   String                    @unique
-  password                String
-  role                    Role                      @default(USER)
-  locale                  String                    @default("en") // 'en' | 'pt'
-  currency                String                    @default("BRL") // 'BRL' | 'USD' | 'EUR'
-  onboardingCompletedAt   DateTime? // T0 do time-to-first-ECD — gravado na tx de installPresetAsSystem (ADR-P2 emenda R7, F-I2-1 → a)
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @updatedAt
-  dashboardLayouts        DashboardLayout[] // multi-tab dashboards (fork feature/back-end)
-  chatInstances           ChatInstance[] // Relation to ChatInstance
-  documents               Document[] // Relation to Document
-  dynamicTables           DynamicTable[] // Relation to DynamicTable
-  knowledgeGraph          KnowledgeGraph? // Relation to KnowledgeGraph
-  actionProposals         ActionProposal[] // Relation to ActionProposal
-  crmAttachments          CrmAttachment[] // Relation to CrmAttachment
-  savedTableViews         SavedTableView[] // Relation to SavedTableView
-  accounts                Account[] // Relation to Account (accounting)
-  journalEntries          JournalEntry[] // Relation to JournalEntry (accounting)
-  postings                Posting[] // Relation to Posting (accounting)
-  referentialMappings     ReferentialMapping[] // Relation to ReferentialMapping (ECD/ECF referential chart, INCR-9)
-  customerPackageBalances CustomerPackageBalance[] // Relation to CustomerPackageBalance (prepaid packages)
-  packageBalanceMovements PackageBalanceMovement[] // Relation to PackageBalanceMovement (prepaid packages)
-  payables                Payable[] // Relation to Payable (accounts payable / contas a pagar, INCR-AP)
-  receivables             Receivable[] // Relation to Receivable (accounts receivable / contas a receber, INCR-AR)
-  dimensionDefinitions    DimensionDefinition[] // Relation to DimensionDefinition (cost-center/project dimensions, INCR-DIM)
-  counterparties          Counterparty[] // Relation to Counterparty (supplier/customer catalog, INCR-COUNTERPARTY)
-  inventoryItems          InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
-  accountingBindings      AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
-  reconcilePendingItems   ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
-  bankSettlementItems     BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
-  accountingScopeSettings AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
-  fiscalProfiles          FiscalProfile[] // Relation to FiscalProfile (BE-INCR-NFE-COST-REGIME, nó X6)
-  accountingContacts      AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
-  companyFiscalProfiles   CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
-  companySigners          CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
+  id                         String                      @id @default(cuid())
+  name                       String?
+  username                   String                      @unique
+  email                      String                      @unique
+  password                   String
+  role                       Role                        @default(USER)
+  locale                     String                      @default("en") // 'en' | 'pt'
+  currency                   String                      @default("BRL") // 'BRL' | 'USD' | 'EUR'
+  onboardingCompletedAt      DateTime? // T0 do time-to-first-ECD — gravado na tx de installPresetAsSystem (ADR-P2 emenda R7, F-I2-1 → a)
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  dashboardLayouts           DashboardLayout[] // multi-tab dashboards (fork feature/back-end)
+  chatInstances              ChatInstance[] // Relation to ChatInstance
+  documents                  Document[] // Relation to Document
+  dynamicTables              DynamicTable[] // Relation to DynamicTable
+  knowledgeGraph             KnowledgeGraph? // Relation to KnowledgeGraph
+  actionProposals            ActionProposal[] // Relation to ActionProposal
+  crmAttachments             CrmAttachment[] // Relation to CrmAttachment
+  savedTableViews            SavedTableView[] // Relation to SavedTableView
+  accounts                   Account[] // Relation to Account (accounting)
+  journalEntries             JournalEntry[] // Relation to JournalEntry (accounting)
+  postings                   Posting[] // Relation to Posting (accounting)
+  referentialMappings        ReferentialMapping[] // Relation to ReferentialMapping (ECD/ECF referential chart, INCR-9)
+  customerPackageBalances    CustomerPackageBalance[] // Relation to CustomerPackageBalance (prepaid packages)
+  packageBalanceMovements    PackageBalanceMovement[] // Relation to PackageBalanceMovement (prepaid packages)
+  payables                   Payable[] // Relation to Payable (accounts payable / contas a pagar, INCR-AP)
+  receivables                Receivable[] // Relation to Receivable (accounts receivable / contas a receber, INCR-AR)
+  dimensionDefinitions       DimensionDefinition[] // Relation to DimensionDefinition (cost-center/project dimensions, INCR-DIM)
+  counterparties             Counterparty[] // Relation to Counterparty (supplier/customer catalog, INCR-COUNTERPARTY)
+  inventoryItems             InventoryItem[] // Relation to InventoryItem (perpetual inventory subledger, INCR-INVENTORY)
+  accountingBindings         AccountingBinding[] // Relation to AccountingBinding (A Prensa, BE-INCR-BINDING-PRESS)
+  reconcilePendingItems      ReconcilePendingItem[] // Relation to ReconcilePendingItem (BE-INCR-RECONCILE-PENDING, nó C7)
+  bankSettlementItems        BankSettlementItem[] // Relation to BankSettlementItem (BE-INCR-BANK-SETTLEMENT, nó F7)
+  accountingScopeSettings    AccountingScopeSettings[] // Relation to AccountingScopeSettings (config por escopo, F7 Fase C)
+  fiscalProfiles             FiscalProfile[] // Relation to FiscalProfile (BE-INCR-NFE-COST-REGIME, nó X6)
+  accountingContacts         AccountingContact[] // Relation to AccountingContact (contador destinatário, BE-INCR-CONTADOR-DELIVERY)
+  companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
+  companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   taxAssessments             TaxAssessment[] // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, item 12) — apuração IRPJ/CSLL da PJ
-  assignmentsOwned        AccountantAssignment[]    @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
-  assignmentsAsAccountant AccountantAssignment[]    @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
-  policyVersionsOwned     AccountingPolicyVersion[] @relation("PolicyVersionOwner") // GOV-CONTADOR — política versionada (F-GOV-6 b)
-  accountingDeliveryLogs  AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
-  accountingReviews       AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
-  lalurEntries            LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
-  lalurParteBAccounts     LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
-  lalurParteBMovements    LalurParteBMovement[] // Relation to LalurParteBMovement (M410, ECF Fase 3C)
-  lalurParteBClosings     LalurParteBClosing[] // Relation to LalurParteBClosing (fechamento trimestral da Parte B, ECF Fase 3C)
-  fixedAssetClasses       FixedAssetClass[] // Relation to FixedAssetClass (BE-INCR-FIXED-ASSETS, nó C8)
-  depreciationRates       DepreciationRate[] // Relation to DepreciationRate (BE-INCR-FIXED-ASSETS, nó C8)
-  fixedAssets             FixedAsset[] // Relation to FixedAsset (BE-INCR-FIXED-ASSETS, nó C8)
+  assignmentsOwned           AccountantAssignment[]      @relation("AssignmentOwner") // BE-INCR-ACCOUNTANT-GOVERNANCE (GOV-CONTADOR) — dono do escopo
+  assignmentsAsAccountant    AccountantAssignment[]      @relation("AssignmentAccountant") // GOV-CONTADOR — login do contador
+  policyVersionsOwned        AccountingPolicyVersion[]   @relation("PolicyVersionOwner") // GOV-CONTADOR — política versionada (F-GOV-6 b)
+  accountingDeliveryLogs     AccountingDeliveryLog[] // Relation to AccountingDeliveryLog (entrega ECD/ECF ao contador)
+  accountingReviews          AccountingReview[] // BE-INCR-REVIEW-LAYER (C11) — FK Restrict: trilha legal não cai com o usuário
+  lalurEntries               LalurEntry[] // Relation to LalurEntry (e-Lalur/e-Lacs Parte A + linhas E do Bloco N, ECF Fase 3B)
+  lalurParteBAccounts        LalurParteBAccount[] // Relation to LalurParteBAccount (M010, Parte B do e-Lalur/e-Lacs)
+  lalurParteBMovements       LalurParteBMovement[] // Relation to LalurParteBMovement (M410, ECF Fase 3C)
+  lalurParteBClosings        LalurParteBClosing[] // Relation to LalurParteBClosing (fechamento trimestral da Parte B, ECF Fase 3C)
+  fixedAssetClasses          FixedAssetClass[] // Relation to FixedAssetClass (BE-INCR-FIXED-ASSETS, nó C8)
+  depreciationRates          DepreciationRate[] // Relation to DepreciationRate (BE-INCR-FIXED-ASSETS, nó C8)
+  fixedAssets                FixedAsset[] // Relation to FixedAsset (BE-INCR-FIXED-ASSETS, nó C8)
   productDestinationDefaults ProductDestinationDefault[] // Relation to ProductDestinationDefault (ITEM-DESTINATION PR-2, F-ID-2 a)
 }
 
@@ -472,6 +472,8 @@ model Account {
   cofinsDespesaOf                    FiscalProfile[]           @relation("FiscalProfileCofinsDespesa") // X8 item 2 (F-PCB-1 b)
   pisRecolherOf                      FiscalProfile[]           @relation("FiscalProfilePisRecolher") // X8 item 2
   cofinsRecolherOf                   FiscalProfile[]           @relation("FiscalProfileCofinsRecolher") // X8 item 2
+  irpjSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileIrpjSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
+  csllSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileCsllSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
@@ -937,6 +939,32 @@ model PackageBalanceMovement {
   @@map("package_balance_movements")
 }
 
+// FE-INCR-PACOTE-VALIDADE (F-JUR-4, F-FE-PV-2 c; BRIEF §4.1) — PROVA de que a validade foi informada ao cliente na
+// compra: quem registrou, quando (relógio do servidor), o texto exato mostrado e o hash. APPEND-ONLY: uma linha por
+// venda, sem update/delete/soft-delete e sem rota que os faça (é prova, não cadastro — mesma exceção do log de
+// movimentos). Sem FK com cascade: apagar usuário não pode apagar a prova (memória audit-log-no-fk-cascade); por isso
+// userId/acceptedByUserId são escalares. Tabela da venda e do cliente são DynamicTable → saleId/customerId também.
+model PackageValidityAcceptance {
+  id               String   @id @default(cuid())
+  userId           String // tenant (eixo 1)
+  unitId           String // eixo 2
+  saleId           String // linha da DynamicTable de vendas
+  customerId       String // da venda, lido no servidor
+  packageId        String // do item Package, lido no servidor
+  saleDate         DateTime // date-only, meia-noite UTC (P15 do BE BRIEF)
+  validityDays     Int // do catálogo, lido no servidor
+  expiresOn        DateTime // date-only; lastValidDay(saleDate, validityDays)
+  textVersion      String // 'v1'
+  textShown        String // texto exato renderizado e mostrado
+  textSha256       String
+  acceptedByUserId String // "quem": o usuário autenticado que registrou
+  acceptedAt       DateTime @default(now()) // "quando": relógio do servidor
+
+  @@unique([userId, unitId, saleId])
+  @@index([userId, unitId, customerId])
+  @@map("package_validity_acceptances")
+}
+
 // Contas a Pagar (Accounts Payable) — INCR-AP / ADR-INCR-AP. FIRST-CLASS PRISMA (financial
 // invariant ⇒ Prisma, never DynamicTable — CLAUDE.md STOP block, Contract §2.1). Records the
 // obligation to a supplier (a nota) and its payment, with the DUAL fato gerador booked through
@@ -1366,6 +1394,11 @@ model FiscalProfile {
   pisRecolherAccount                 Account?  @relation("FiscalProfilePisRecolher", fields: [pisRecolherAccountId], references: [id], onDelete: Restrict)
   cofinsRecolherAccountId            String? // Liability
   cofinsRecolherAccount              Account?  @relation("FiscalProfileCofinsRecolher", fields: [cofinsRecolherAccountId], references: [id], onDelete: Restrict)
+  // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual — Asset, código do contador (P-B8)
+  irpjSaldoNegativoAccountId         String? // Asset
+  irpjSaldoNegativoAccount           Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)
+  csllSaldoNegativoAccountId         String? // Asset
+  csllSaldoNegativoAccount           Account?  @relation("FiscalProfileCsllSaldoNegativo", fields: [csllSaldoNegativoAccountId], references: [id], onDelete: Restrict)
   partnerAccountRef                  String? // R8 item 2: conta de emissão no parceiro POR UNIDADE — reservado; BE-INCR-DFE preenche
   // BE-INCR-DFE (nó X10b, BRIEF item 1) — emitente (ADR-DFE D5) + itens 5a–5f do contador como CONFIG
   // (D-X10b-2: default = recomendação do ADR, ambos os ramos implementados). Nullable/default => a linha X6
@@ -2207,14 +2240,14 @@ model LalurEntryJournalEntry {
 // - crcNumber/crcUf: snapshot do contato na criação (o contato é editável) — imutável na linha.
 // - Vigência em instantes (aceite/encerramento), não date-only.
 model AccountantAssignment {
-  id                  String            @id @default(cuid())
+  id                  String                    @id @default(cuid())
   userId              String // dono do escopo (ownerUserId)
-  user                User              @relation("AssignmentOwner", fields: [userId], references: [id], onDelete: Restrict)
+  user                User                      @relation("AssignmentOwner", fields: [userId], references: [id], onDelete: Restrict)
   unitId              String
   accountantUserId    String // login do contador
-  accountant          User              @relation("AssignmentAccountant", fields: [accountantUserId], references: [id], onDelete: Restrict)
+  accountant          User                      @relation("AssignmentAccountant", fields: [accountantUserId], references: [id], onDelete: Restrict)
   accountingContactId String // fonte do CRC e do J930 (signatário 900)
-  accountingContact   AccountingContact @relation(fields: [accountingContactId], references: [id], onDelete: Restrict)
+  accountingContact   AccountingContact         @relation(fields: [accountingContactId], references: [id], onDelete: Restrict)
   crcNumber           String // snapshot normalizado (parseCrcNumber)
   crcUf               String // snapshot
   status              String // PENDING | ACTIVE | ENDED (ASSIGNMENT_STATUSES)
@@ -2225,8 +2258,8 @@ model AccountantAssignment {
   createdById         String
   endedById           String?
   endReason           String?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
   deletedAt           DateTime? // contrato §2; nenhuma rota apaga — histórico encerra, não some
   policyVersions      AccountingPolicyVersion[] // BE-INCR-ACCOUNTING-POLICY-VERSION: contador que decidiu (FK Restrict)
 
@@ -2305,32 +2338,33 @@ model PaymentAccount {
 // F-X7-7 a). "Um só CONFIRMED por (PJ, ano, tributo, período)" é gate DENTRO da tx da confirmação, NÃO @@unique
 // (classe unique-de-idempotencia × soft-delete: a substituição precisa de 2 linhas no mesmo período).
 model TaxAssessment {
-  id                 String    @id @default(cuid())
-  userId             String // a PJ (R8)
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId             String // unidade lida (proveniência, F-X7-7 a)
-  anoCalendario      Int
-  tributo            String // IRPJ | CSLL
-  regime             String // PRESUMIDO | REAL — cópia do perfil
-  forma              String // TRIMESTRAL (Fase A)
-  periodo            String // T01..T04 (Fase A)
-  modo               String // PRESUMIDO | REAL_TRIMESTRAL (Fase A)
-  codigoReceita      String // 6 dígitos: 208901 | 022001 | 337301 | 237201 | 601201
-  baseCents          BigInt
-  devidoCents        BigInt
-  deducoesCents      BigInt
-  aPagarCents        BigInt
-  saldoNegativoCents BigInt    @default(0) // F-TA-9 (a) e § 7º da IN 2.305
-  memoria            Json // MemoriaLinha[] — MemoriaCalculoSchema
-  tabelaVersao       String
-  status             String // CONFIRMED | SUPERSEDED
-  supersedesId       String?
-  provisaoEntryId    String? // PR-3 (commit 3 da provisão)
-  confirmedById      String
-  confirmedAt        DateTime
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
+  id                       String    @id @default(cuid())
+  userId                   String // a PJ (R8)
+  user                     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId                   String // unidade lida (proveniência, F-X7-7 a)
+  anoCalendario            Int
+  tributo                  String // IRPJ | CSLL
+  regime                   String // PRESUMIDO | REAL — cópia do perfil
+  forma                    String // TRIMESTRAL | ANUAL (Fase B)
+  periodo                  String // T01..T04 | A00..A12 (Fase B, F-TB-1 a)
+  modo                     String // PRESUMIDO | REAL_TRIMESTRAL | ESTIMATIVA_RECEITA | BALANCETE_SUSPENSAO_REDUCAO | AJUSTE_ANUAL
+  codigoReceita            String // 6 dígitos: 208901 | 022001 | 337301 | 237201 | 601201
+  baseCents                BigInt
+  devidoCents              BigInt
+  deducoesCents            BigInt
+  aPagarCents              BigInt
+  saldoNegativoCents       BigInt    @default(0) // F-TA-9 (a) e § 7º da IN 2.305
+  diferencaPostergadaCents BigInt    @default(0) // X7 Fase B (F-TB-5 b) — só IRPJ, só no mês do excesso do 16%; código 236202 | 599302
+  memoria                  Json // MemoriaLinha[] — MemoriaCalculoSchema
+  tabelaVersao             String
+  status                   String // CONFIRMED | SUPERSEDED
+  supersedesId             String?
+  provisaoEntryId          String? // PR-3 (commit 3 da provisão)
+  confirmedById            String
+  confirmedAt              DateTime
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  deletedAt                DateTime?
 
   @@index([userId, anoCalendario, tributo, periodo])
   @@map("tax_assessments")

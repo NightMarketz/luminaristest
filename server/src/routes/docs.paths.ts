@@ -2561,15 +2561,21 @@
  *         (ISO-8859-1) artifact as an EXPORT job of kind EXPORT_SPED_ECF_REAL (dedicated route,
  *         ADR-INCR-SPED-ECF-FASE3 Fork 1; BRIEF 3B Forks 2-d, 3-a, 4-b, 6-b, 7-a). Block 0 is
  *         parametrized from fiscal (FORMA_TRIB defaults to 1; FORMA_TRIB_PER is REQUIRED, 4 chars in
- *         [0RPAES], one per quarter, no server default; FORMA_APUR is T, quarterly). COD_VER is
+ *         [0RPAES], one per quarter, no server default; FORMA_APUR comes from the company fiscal profile of
+ *         the year - A when the effective form is ANUAL, else T - and an informed value that differs is a 400;
+ *         in A, FORMA_TRIB_PER is derived too (R in a quarter with a month in activity, else 0) and must match,
+ *         and MES_BAL_RED comes from the confirmed tax assessments of each month in activity, E or B
+ *         (X7 Fase B PR-4, BRIEF-B items 18-21)). COD_VER is
  *         resolved from the calendar year (2025 = 0012) or overridden by fiscal.codVer - a year with
  *         no known layout is a 400, never a guessed code. HASH_ECF_ANTERIOR is emitted empty (the PVA
  *         fills it when the previous ECF is recovered). Block L carries L030 periods only (L100/L300
  *         are recovered by the PVA from K155/K156). Blocks M and N are read from the e-Lalur store
  *         (/api/lalur): M010 per Parte B account, M030 per quarter with M300/M350 lines (+ M305/M355
- *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N630/N670
- *         that carry a value - the PVA computes every CNA/CA line. The request body never carries
- *         adjustments. Download via /data-exchange/jobs/{jobId}/download.
+ *         and M310/M360 children by IND_RELACAO), N030 per quarter with the E lines of N500/N620/N630/N660/N670
+ *         that carry a value - the PVA computes every CNA/CA line. In the annual form, L030/M030 = A00 + one
+ *         A0m per month B, N030 = A00 + one A0m per month B or E; generating needs the A00 Parte B closing and
+ *         every month in activity confirmed, and an e-Lalur line in a period the file does not emit is a 400.
+ *         The request body never carries adjustments. Download via /data-exchange/jobs/{jobId}/download.
  *         X13 PR-2 - prefilled from the company fiscal profile of the year (perfilFiscal.sobrescritos lists
  *         body overrides). 400 REGIME_DIVERGENTE when the profile is not REAL and 400
  *         OBRIGACAO_NAO_SE_APLICA for MEI or SIMPLES.
@@ -2612,7 +2618,7 @@
  *                     formaTrib:      { type: string, description: '0010.FORMA_TRIB, 1 digit, default 1 (Lucro Real)' }
  *                     formaTribPer:   { type: string, description: '0010.FORMA_TRIB_PER, 4 chars in [0RPAES], one per quarter (Manual pp.71-72), no default' }
  *                     codVer:         { type: string, description: '0000.COD_VER override, 4 digits (e.g. 0012); absent = resolved by calendar year' }
- *                     formaApur:      { type: string, enum: ['T'], description: 'T = trimestral (Fork 5)' }
+ *                     formaApur:      { type: string, enum: ['T', 'A'], description: 'optional - derived from the fiscal profile of the year (A = ANUAL, else T); informed and different is a 400 (X7 Fase B item 18)' }
  *                     indAliqCsll:    { type: string, enum: ['1', '4'], description: '1 = 9 percent' }
  *                     indRecReceita:  { type: string, enum: ['1', '2'], description: '2 = competencia' }
  *                 signers:
@@ -3957,7 +3963,7 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer }, description: required with livro }
- *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670] } }
  *         - { in: query, name: aba, required: false, schema: { type: string, enum: [PARTEB_PADRAO] } }
  *         - { in: query, name: tributo, required: false, schema: { type: string, enum: [I, C] } }
  *         - { in: query, name: q, required: false, schema: { type: string, minLength: 2 } }
@@ -3978,8 +3984,8 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer } }
- *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
- *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n630, n670] } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
+ *         - { in: query, name: livro, required: false, schema: { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670] } }
  *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
  *       responses:
  *         '200': { description: 'adjustment lines' }
@@ -3991,7 +3997,11 @@
  *         are computed by the PVA) and be in force for the year; otherwise 400 with the code and the
  *         reason (never a silent drop). indRelacao conditionals mirror REGRA_RELACAO_INEXISTENTE (Manual
  *         p.247); TIPO_LANCAMENTO=P forces indRelacao=1 (REGRA_IND_RELACAO). Lines of livro n500/n630/n670
- *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0.
+ *         carry no indRelacao/parteBId/accountId/histLancamento. valorCents is always >= 0. X7 Fase B (BRIEF B
+ *         item 12): quarter accepts T01..T04 only when the year's effective form is TRIMESTRAL (also with no
+ *         profile) and A00..A12 only when ANUAL; A0m before the start of activity is 400; n620/n660 only in
+ *         A01..A12, validated against the N620/N660 sheets (catalog landed in X7 Fase B PR-4, item 22); n630/n670 only in T0x/A00.
+ *         A compensation (P) in A0m is capped by the Parte B account's opening balance of the year.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4117,7 +4127,7 @@
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: year, required: false, schema: { type: integer } }
- *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: quarter, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
  *         - { in: query, name: parteBId, required: false, schema: { type: string } }
  *         - { in: query, name: includeArchived, required: false, schema: { type: boolean } }
  *       responses:
@@ -4186,7 +4196,9 @@
  *         Derives the PF (IRPJ) / BC (CSLL) movement of the quarter from the ledger result + Parte A lines
  *         (Fork F-3C-2 a): base below zero with no prejuizo account (COD_PB_RFB 1000/1003) is 400; more than
  *         one is 400 (ambiguous). A compensation (P) that exceeds the account balance is 400 (item 13).
- *         Emits lalur.parte_b_closed with the sha256 of the balance set (never the values).
+ *         Emits lalur.parte_b_closed with the sha256 of the balance set (never the values). X7 Fase B (BRIEF B
+ *         item 12): when the year's effective form is ANUAL only A00 closes (A01..A12 and T0x are 400; IN RFB
+ *         1.700 art. 50 II), and the exercise continuity links the last period of N (T04 or A00) to the first of N+1.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -4379,6 +4391,79 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/package-acceptances/notice:
+ *     get:
+ *       summary: Texto e data de validade que a tela de venda deve mostrar para um pacote (FE-INCR-PACOTE-VALIDADE)
+ *       description: >-
+ *         Fonte unica do texto legal versionado e do ultimo dia valido (com feriado nacional). validityDays vem do catalogo
+ *         no servidor. Pacote sem validade devolve text, expiresOn e textSha256 nulos. Pacote fora do catalogo do tenant e 404.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: packageId, required: true, schema: { type: string } }
+ *         - { in: query, name: saleDate, required: true, schema: { type: string, format: date }, description: 'YYYY-MM-DD real, senao 400' }
+ *       responses:
+ *         '200': { description: 'validityDays, saleDate, expiresOn, textVersion, text, textSha256' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *
+ *   /api/package-acceptances:
+ *     post:
+ *       summary: Registra o aceite da validade do pacote de uma venda (append-only, um por venda)
+ *       description: >-
+ *         O servidor so confia no FE para textVersion e textSha256. Le a venda, o cliente e a data da venda e o
+ *         validityDays do catalogo, re-renderiza o texto e compara o hash. Hash diferente e 409 PACKAGE_NOTICE_CHANGED;
+ *         segundo aceite da mesma venda e 409 PACKAGE_ACCEPTANCE_EXISTS; pacote sem validade e 400 PACKAGE_WITHOUT_VALIDITY.
+ *         Nao existe PUT nem DELETE - a linha e prova.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/CreatePackageAcceptance' }
+ *       responses:
+ *         '201': { description: 'Aceite gravado (PackageAcceptanceResponse)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
+ *         '409': { description: 'PACKAGE_ACCEPTANCE_EXISTS ou PACKAGE_NOTICE_CHANGED' }
+ *     get:
+ *       summary: Aceite de uma venda de pacote, ou null
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: saleId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'PackageAcceptanceResponse ou null' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *
+ *   /api/package-acceptances/{saleId}/receipt:
+ *     get:
+ *       summary: Comprovante da venda de pacote (PDF) com a validade em destaque e o aceite
+ *       description: >-
+ *         PDF pelo pipeline de lib/pdf.ts. A clausula sai em 12pt negrito dentro de caixa com borda, com o aceite
+ *         (quem, quando, versao do texto) e linha de assinatura do cliente. Sem aceite, a clausula leva a marca
+ *         ACEITE NAO REGISTRADO. Venda que nao e de um unico pacote ou pacote sem validade e 400.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: saleId, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'PDF (application/pdf, attachment)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/reconcile-pending:
  *     get:
@@ -6333,8 +6418,11 @@ export {};
  *     post:
  *       summary: Preview the quarterly IRPJ/CSLL assessment (BE-INCR-TAX-ASSESSMENT Fase A PR-2, X7 item 13)
  *       description: >-
- *         Calcula IRPJ e CSLL juntos (Presumido ou Real trimestral) e não persiste. 400 para SIMPLES/MEI (DAS),
- *         forma ANUAL (Fase B), perfil do ano ausente e outra unidade da PJ com movimento no período.
+ *         Calcula IRPJ e CSLL juntos (Presumido ou Real trimestral; X7 Fase B: Real anual - estimativa por receita
+ *         bruta ou balancete de suspensão/redução em A01..A12, conforme modoMensal, e ajuste anual em A00) e não
+ *         persiste. 400 para SIMPLES/MEI (DAS), período fora da forma do perfil do ano (T0x só TRIMESTRAL, A0x só
+ *         ANUAL), perfil do ano ausente e outra unidade da PJ com movimento na janela lida. O balancete avisa (não
+ *         recusa) os meses anteriores ainda abertos.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -6358,7 +6446,7 @@ export {};
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: anoCalendario, required: true, schema: { type: integer } }
- *         - { in: query, name: periodo, required: false, schema: { type: string, enum: [T01, T02, T03, T04] } }
+ *         - { in: query, name: periodo, required: false, schema: { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] } }
  *         - { in: query, name: status, required: false, schema: { type: string, enum: [CONFIRMED, SUPERSEDED] } }
  *       responses:
  *         '200': { description: 'TaxAssessmentView[]' }
@@ -6371,7 +6459,9 @@ export {};
  *         Recalcula e grava as 2 linhas (IRPJ, CSLL) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED
  *         por período (409; substituir = supersedesIds), ordem dos trimestres (409), regime igual (409) - e trava
  *         a forma de apuração do ano. Substituir um trimestre marca SUPERSEDED os posteriores (reconfirmar).
- *         A provisão contábil é do PR-3.
+ *         X7 Fase B: nos meses A0m a ordem é mensal e a cascata derruba os meses seguintes e o A00; o balancete
+ *         exige os meses anteriores em atividade fechados (400). Depois do commit, a provisão no razão é best-effort
+ *         (pendente fica visível em provisaoPendente).
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       requestBody:
@@ -6392,7 +6482,9 @@ export {};
  *       description: >-
  *         Completes whatever the confirmation left pending: reverses the live provision of the superseded
  *         assessments, posts the provision (debit expense / credit tax payable, amount = devidoCents, last day of the
- *         quarter, idempotent by source) and links provisaoEntryId. Nothing already done is redone, so calling it again
+ *         quarter, idempotent by source) and links provisaoEntryId. X7 Fase B: month A0m posts devido + diferença
+ *         postergada on the last day of the month; A00 posts only the difference to what the months provisioned, on
+ *         31/12 - negative = debit the negative balance to offset (Asset) / credit expense; zero posts nothing. Nothing already done is redone, so calling it again
  *         changes nothing. On a SUPERSEDED assessment it only reverses its own live provision. 400 when the provision
  *         accounts are not configured on the unit fiscal profile or the period is closed.
  *       tags: [Accounting]

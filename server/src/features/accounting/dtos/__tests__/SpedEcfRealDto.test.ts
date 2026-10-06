@@ -150,12 +150,12 @@ describe('SpedEcfRealRequestSchema — 0010 parametrizado, sem dígito de regime
     }
   });
 
-  it('formaApur: Fork 5→(a) Trimestral — default T, e só T é aceito', () => {
+  it('formaApur (X7 Fase B item 18): opcional — derivado do perfil no serviço; aceita T e A, recusa o resto', () => {
     const parsed = SpedEcfRealRequestSchema.safeParse(valid);
     expect(parsed.success).toBe(true);
-    if (parsed.success) expect(parsed.data.fiscal.formaApur).toBe('T');
-    // Anual (Fork 5→(b)) não foi ratificado: qualquer outro código é 400.
-    failsOn({ ...valid, fiscal: { ...fiscal, formaApur: 'A' } }, 'fiscal');
+    if (parsed.success) expect(parsed.data.fiscal.formaApur).toBeUndefined();
+    expect(SpedEcfRealRequestSchema.safeParse({ ...valid, fiscal: { ...fiscal, formaApur: 'A' } }).success).toBe(true);
+    failsOn({ ...valid, fiscal: { ...fiscal, formaApur: 'X' } }, 'fiscal');
   });
 
   it('indAliqCsll/indRecReceita: mesmos defaults do Presumido (1 = 9% / 2 = competência)', () => {

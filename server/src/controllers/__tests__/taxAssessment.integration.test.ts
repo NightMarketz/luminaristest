@@ -79,7 +79,7 @@ describe('X7 PR-2 — apuração IRPJ/CSLL: prévia, confirmação, leitura', ()
     const anual = await novoDono('REAL', { formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: false }); // só o DTO do PUT barra ANUAL
     const a = await preview(anual, 'T01');
     expect(a.status).toBe(400);
-    expect(JSON.stringify(a.body)).toContain('forma anual é da Fase B');
+    expect(JSON.stringify(a.body)).toContain('o período trimestral exige a forma TRIMESTRAL'); // X7 Fase B item 11: T0x na forma ANUAL segue 400
   });
 
   it('23 g / item 13: outra unidade da PJ com movimento no período ⇒ 400 listando as unidades; fora do período não conta', async () => {

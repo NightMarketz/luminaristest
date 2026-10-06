@@ -20,7 +20,9 @@
 > releitura geral do passo 5.
 
 Executor: [nome — humano]           Data: [____]
-Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17) + fila §5.1 Bloco A item 4.
+Autorização: decisão do dono "vamos fechar o bloco A" (2026-08-17); a autorização de execução vive no campo `autorizacao` de
+[`docs/plano/gates/H2.md`](../plano/gates/H2.md) *(emenda 05/10 — dono em chat, 05/10: *"Pode emendar os 4"*; antes: fila §5.1 Bloco A item 4 do master map, já sem arquivo)*.
+Rastreio a atualizar no fim: nota [`docs/plano/gates/H2.md`](../plano/gates/H2.md).
 Pré-condições (verificar antes de começar):
 - **[EMENDA 2026-09-24 — SEED-MY] Alvo = seed multi-exercício (`db:seed:accounting`).** O `dev.db` é
   seed de testes (decisão do dono 12/09). Depois do `npm run db:backup`, rode
@@ -32,6 +34,11 @@ Pré-condições (verificar antes de começar):
   P0.2b (completar chart + abrir mês) fica coberto para esses tenants. A 2ª passada (Lucro Real) usa
   `seed-real`. Um `dev.db` semeado antes do BE-INCR-SEED-UNIDADE-E-ENV precisa ser **re-semeado** depois do backup (e o
   `activate-salon-binding.mjs` rodado com o novo `unitId`) — ver a EMENDA 2026-10-03 do RUNBOOK-H1-PVA.
+  **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*]** A ordem válida é a da **EMENDA 2026-10-05 do RUNBOOK-H1-PVA** (P0 de boot, #527):
+  `db:backup` → `prisma migrate deploy` (até `migrate status` = up to date) → **`npx prisma generate`** (sem ele o seed e o
+  binding morrem com `TSError`) → `db:seed:accounting` → `activate-salon-binding.mjs` com o `unitId` novo. O
+  `SEED_ACCOUNTING_PASSWORD` acima é **ignorado** para usuário que já existe (`ensureUser`): logue com a senha de hoje.
+  O P0 é o mesmo do H1 — feito para o H1, não repita aqui.
 - **[EMENDA 2026-08-27 — P0, BLOQUEIA O `npm start`; verificar ANTES de tudo]** Desde o PR #213
   (`cd853d2e`, 2026-08-25 — depois de este runbook ser escrito), `bootstrap()` em
   [server.ts:36](../../server/src/server.ts:36) **aguarda o alimentador de bindings antes do
@@ -113,6 +120,15 @@ Pré-condições (verificar antes de começar):
 > confirmado em `server/src/features/accounting/sync/AccountingSyncPort.ts` e nos mappers
 > `Sale*Mapper.ts`). Cada ocorrência abaixo ganha a forma atual entre parênteses. O resultado
 > esperado de cada passo (contas D/C) NÃO muda — é só o nome do evento que trocou.
+
+> **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*] "Finalizar Venda" do wizard quebrado — feche a venda em 2 cliques.** Na `main`
+> de 05/10 o wizard cria a venda já `Finalized` e só depois os itens, que `assertParentSaleNotFinalized` recusa
+> (`FinanceService.createSaleWithItems` + `useSalesWizard.ts:270`; F11 do `PACOTE-VALIDADE-PENDENCIAS-brief.md`; o fix está
+> em sessão própria). Até ele entrar: no wizard, **Salvar Rascunho**; depois, na lista de vendas ou no detalhe, **Finalizar**
+> (`PUT` com `status: 'Finalized'`, `SalesTable.tsx:240` / `SaleDetailPanel.tsx:116`). No Network aparece o `POST` da venda
+> (`Draft`), os `POST` dos itens e o `PUT` de finalização — o evento de finalização deve sair deste `PUT` (inferido pelo agente; o lançamento no razão é a prova). Se o "Finalizar Venda" do
+> wizard for clicado por engano, a venda órfã (finalizada, sem itens) é **achado**, não falha deste passo: anote e siga.
+> Quando o fix do wizard estiver em `main`, esta emenda cai e vale o texto original.
 
 6. Na tela do salão, criar (se preciso) a unidade Salão de Beleza e fechar uma **venda só de
    serviço** (sem item de produto/estoque) — evento `salon.sale.finalized` (hoje: `sale.finalized`, PR #222).
@@ -376,6 +392,46 @@ Desfecho do passo 21 (marcar UM):
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 21): ____________
+
+### [EMENDA 2026-10-05] Passo 22 — Perfil fiscal da unidade e dos serviços (FE-INCR-DFE PR-0)
+
+> Preparado por agente em 2026-10-05, **em branco** (`FE-INCR-DFE-brief.md` item 9). A aba "Perfil fiscal" é a porta
+> de entrada da emissão de NFS-e: sem o perfil da unidade e o de cada serviço nenhuma venda emite. Mesmas pré-condições
+> dos passos 12–14 (commit do merge do PR-0 ou posterior, **build de produção**, cópia do `dev.db`), mais: tenant com
+> unidade real (seed re-semeado depois do SEED-UNITS, #487) e pelo menos um serviço no catálogo. Em cada linha: executar
+> a ação uma vez e colar print + (onde indicado) status e corpo do request no Network.
+
+22. Resultado esperado em todas: 2xx nas escritas, console sem erro.
+    - a) Aba **Perfil fiscal** aparece depois de Imobilizado, com os dois painéis (unidade em cima, serviços embaixo).
+      Se o usuário também atende clientes como contador: no modo cliente a aba **não** aparece. EVIDÊNCIA: [ ]
+    - b) Unidade **sem** perfil: formulário em branco e o aviso "nenhuma venda emite NFS-e". (Um toast vermelho do
+      `apiClient` com "Perfil fiscal da unidade não cadastrado" pode aparecer junto — é o 404 esperado; anotar se
+      aparecer.) EVIDÊNCIA: [ ]
+    - c) Escolher Simples Nacional: ICMS desabilitado e PIS/COFINS travado em "Simples". Trocar para Lucro Presumido:
+      some o campo do Simples e aparecem Federal/Estadual/Municipal. EVIDÊNCIA: [ ]
+    - d) Preencher município (IBGE 7 dígitos), série da DPS (use **7**), ISS `2,00`, tributos aproximados `15,50`,
+      "Competência fora do mês" = **Bloquear**; salvar. No Network: PUT com `issAliquotaBp: 200`, `pTotTribSNCent:
+      1550`, `dpsSerie: 7`, `emissaoForaDoMes: "BLOQUEAR"` e **todos** os demais campos do perfil presentes.
+      EVIDÊNCIA: [corpo do PUT]
+    - e) Recarregar a página (F5), reabrir a aba: os valores voltam; salvar de novo sem mexer em nada — o corpo do PUT
+      é o mesmo e série 7 / Bloquear continuam. EVIDÊNCIA: [corpo do 2º PUT + print]
+    - f) O selo "Pronto para emitir NFS-e" ou a lista "O que falta" confere com o que foi preenchido; o aviso de valores
+      do contador (D1f) some depois do primeiro salvamento. EVIDÊNCIA: [ ]
+    - g) Serviços: cada serviço do catálogo aparece; os sem perfil mostram "sem perfil". Configurar um colando
+      `01.07.01` no código de tributação: sai salvo como `010701` com a descrição da lista nacional ao lado. Corpo do
+      PUT sem `cIndOp` quando o campo ficou vazio. EVIDÊNCIA: [print + corpo do PUT]
+    - h) Código fora da lista nacional (ex.: `99.99.99`): o erro do servidor aparece inteiro no modal, que continua
+      aberto. EVIDÊNCIA: [ ]
+    - i) Excluir o perfil de um serviço: pede confirmação; confirmando, a linha volta a "sem perfil" e o DELETE leva o
+      `unitId` na query. EVIDÊNCIA: [ ]
+    - j) (Só se houver contador ACTIVE na unidade) Salvar o perfil da unidade: a mensagem do servidor sobre contador
+      responsável aparece inteira, sem esconder o formulário. EVIDÊNCIA: [ ]
+
+Desfecho do passo 22 (marcar UM):
+[ ] PASSOU — a) a j) com evidência conferindo com o esperado
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 22): ____________
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado

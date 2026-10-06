@@ -5,8 +5,9 @@
 > (`docs/operating-manual/RUNBOOK-FORMAT.md`).
 
 Executor: [nome — humano]           Data: [____]
-Autorização: fila §5.1 Bloco A item 3 do `docs/accounting/ACCOUNTING-MASTER-MAP.md` (gate aberto)
-Rastreio a atualizar no fim: master map §5.1 Bloco A, item 3
+Autorização: dono em chat, 24/09: "pode seguir pro H1" / "assinei o X2, pode seguir pro H1" — campo `autorizacao` de
+[`docs/plano/gates/H1.md`](../plano/gates/H1.md) *(emenda 05/10; antes: fila §5.1 Bloco A item 3 do master map, já sem arquivo)*
+Rastreio a atualizar no fim: nota [`docs/plano/gates/H1.md`](../plano/gates/H1.md) (ex-master map §5.1 Bloco A, item 3)
 
 ---
 
@@ -40,7 +41,13 @@ Download → SPED. As duas páginas:
 | Validador | Página oficial | Arquivo Windows x64 (vigente em 2026-09-07) | Bytes | Página "Atualizado em" |
 |---|---|---|---|---|
 | **ECD** (Sped Contábil) | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecd> | [`SPEDContabil_w64-10.4.1.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/SpedContabil/SPEDContabil_w64-10.4.1.exe) | 129.667.328 | 19/05/2026 |
-| **ECF** | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecf> | [`SpedEcf_w64-12.2.6.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/ECF/SpedEcf_w64-12.2.6.exe) | 143.753.984 | **03/09/2026** |
+| **ECF** | <https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/download/sped/ecf> | [`SpedEcf_w64-12.2.7.exe`](https://servicos.receita.fazenda.gov.br/publico/programas/Sped/ECF/SpedEcf_w64-12.2.7.exe) | 143.751.424 | **18/09/2026** |
+
+> **[EMENDA 2026-10-05 — dono: "Pode emendar, junta o cabeçalho também"]** A ECF passou de 12.2.6 para **12.2.7**: página
+> oficial "Atualizado em 18/09/2026 10h54", `Content-Length` 143.751.424 e cabeçalho `MZ` conferidos pelo agente em 05/10
+> (nada instalado nem executado). A 12.2.6 (143.753.984 bytes, página de 03/09) é a que a reconciliação de 17/09
+> registrou como instalada — **está superada**: baixe e instale a 12.2.7 antes do passo 6. A ECD segue 10.4.1 (página
+> de 19/05, conferida em 05/10). A cópia local de 07/09 em `luminaris-gates` tem o `.exe` da ECF velho.
 
 As páginas também oferecem `w32` (Windows 32 bits) e Linux (`.sh`, exige `chmod +x` segundo a
 própria página). O atalho `gov.br/sped → Centrais de Conteúdo → Downloads → "Validador ECD/ECF"`
@@ -49,7 +56,7 @@ redireciona para as mesmas páginas. Cópia local baixada em 2026-09-07:
 
 **Leitura de versão (grau: inferido, confirmar no "Sobre"):** o major do validador da ECF (**12**.x)
 acompanha o **Leiaute 12** do Manual; a página da ECF foi atualizada em **03/09/2026**, quatro dias
-antes desta emenda — se ao abrir o programa a versão for maior que 12.2.6, a página oficial é a
+antes desta emenda — se ao abrir o programa a versão for maior que 12.2.7 (vigente desde 18/09, emenda 05/10), a página oficial é a
 verdade e este quadro é histórico. Para a ECD, o número (10.4.1) **não** é o número do leiaute da
 ECD; não infira nada dele.
 
@@ -69,7 +76,7 @@ continua sendo do dono; a evidência está na página 1 do arquivo.
    a cópia local antiga.
 2. Execute `SPEDContabil_w64-10.4.1.exe` como o usuário que vai rodar o H1 (o programa grava a base
    local do validador no perfil desse usuário). Aceite o diretório padrão.
-3. Execute `SpedEcf_w64-12.2.6.exe` da mesma forma. São **dois programas independentes**; o da ECF
+3. Execute `SpedEcf_w64-12.2.7.exe` da mesma forma. São **dois programas independentes**; o da ECF
    não substitui nem contém o da ECD.
 4. Abra cada um, vá em **Ajuda → Sobre** (ou equivalente) e anote a versão exibida.
 5. Se o programa oferecer **atualização automática** ao abrir, aceite e anote a versão final — o que
@@ -110,6 +117,34 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > `activate-salon-binding.mjs` com o **novo** `unitId` impresso para cada tenant; os lançamentos e bindings antigos sob `seed-unit-*`
 > ficam (órfãos, sem colisão — F-P5). Atenção: se o usuário `seed-*` já tem tabelas e nenhuma unidade com o nome pedido, o seed **recusa**
 > com mensagem nomeada (não instala o sistema uma 2ª vez).
+>
+> **[EMENDA 2026-10-05 — preflight `luminaris-gate-copilot` pós-#487] A ordem acima está incompleta para o `dev.db` de hoje.**
+> Medido em 05/10 sobre cópia do `dev.db` real (md5 `9de3277d…`, original intocado): (i) **4 migrações pendentes**
+> (`20261003130000_add_fiscal_profile_pacote_ctribnac`, `20261003130100_add_fiscal_profile_pacote_cnbs`,
+> `20261004130000_add_company_fiscal_profile_prestadora_exclusiva`, `20261004150000_add_accounting_policy_versions`) *[emenda do número, 05/10 — dono: "pode emendar o número de migrações do H1"; delta `d8616a4..3829fd3`
+> do gate-copilot: a lista acima é a de um checkout anterior às duas migrações de 05/10. Em `main` (`3829fd3`) espere
+> **6 pendentes** — as 4 acima + `20261005120000_add_package_validity_acceptances` (#530) e
+> `20261005120000_add_tax_assessment_anual_fields` (#529) —, ou **7** se `20261004120000_add_tax_assessments` (#504) também
+> não estiver aplicada (inferido: ela é anterior às 4 medidas e não apareceu na medição, logo deve já estar no banco).
+> As 3 são só aditivas (`CREATE … IF NOT EXISTS` / `ADD COLUMN` com default ou anulável), lidas, não executadas. O critério
+> do passo 2 é `migrate status` = up to date, não a contagem; diverge só migração fora destas 7]* —
+> `smoke-migration-gate.mjs` PASS na cópia; (ii) o Prisma client do checkout principal estava velho — `db:seed:accounting`
+> e `activate-salon-binding.mjs` morrem com `TSError` (`generated/prisma` sem `AccountingPolicyVersion`); (iii)
+> `seed-presumido`/`seed-real` têm **0 tabelas dinâmicas** ⇒ o seed instala o salão + unidade (não cai na recusa);
+> (iv) usuário já existente **não tem a senha reescrita** (`ensureUser`) — `SEED_ACCOUNTING_PASSWORD` é ignorado, logue
+> com a senha de hoje. Ordem completa (checkout principal em `main`, server e app **parados**, Git Bash):
+>
+> 1. `cd server && npm run db:backup` — espera `backup gerado: …` + `integrity_check: ok`.
+> 2. `npx prisma migrate deploy` — espera as pendentes aplicadas; `npx prisma migrate status` = up to date.
+> 3. `npx prisma generate` — sem isto os passos 4 e 5 dão `TSError`.
+> 4. `npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup` — espera JSON com 2 relatórios de `unitId`
+>    **gerado** (não `seed-unit-*`), `closedYears: [2025]`, duas linhas "próximo passo" e `OK: … tie-out fechado.`
+> 5. Da raiz do repo, as **duas** linhas "próximo passo" impressas (`node scripts/activate-salon-binding.mjs
+>    --owner-user-id <userId> --unit-id <unitId novo>`) — espera `alvo: …\server\prisma\prisma\dev.db` e
+>    `OK: binding 'beautySalon' ativado`. O script acha o banco pelo `server/.env` (via client gerado), sem `--db`.
+> 6. "Subir o ambiente" abaixo; logado como `seed-presumido`, o seletor da Contabilidade mostra `seed-unit-presumido`.
+>
+> EVIDÊNCIA da re-semeadura: [saídas dos passos 1–5 coladas pelo executor]
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -132,8 +167,9 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 > positivo: 30 postings valor-a-valor iguais; índice `…_type_name_key` → `…_type_nameNormalized_key`)
 > → P0.2b: contas `1.1.6`/`3.3`/`4.2` criadas + `2026/09` `OPEN` → `activate-salon-binding.mjs`
 > `OK: binding 'beautySalon' ativado — versão 1` → `node dist/server.js` (build de produção, `c96e2227`)
-> `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. **P2b está satisfeito
-> neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**
+> `Luminaris Server running on http://localhost:3001`, `/health` `database: ok`. ~~**P2b está satisfeito
+> neste banco; não repita o `migrate deploy` — `prisma migrate status` diz "up to date".**~~ *(Superado
+> em 05/10: havia migrações pendentes (4 medidas; 6–7 em `main` de 05/10, ver a EMENDA) — rode o `migrate deploy` conforme a EMENDA 2026-10-05 acima.)*
 
 ### Subir o ambiente (build de produção)
 

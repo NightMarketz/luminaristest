@@ -60,6 +60,8 @@ export const REKEY_MODELS = [
   'TaxAssessment', // X7 Fase A PR-2: apuração IRPJ/CSLL; `unitId` = unidade lida (proveniência), sem hash → REKEY pelo critério do F-RK-5
   'AccountingPolicyVersion', // GOV-CONTADOR (BE-INCR-ACCOUNTING-POLICY-VERSION item 2): parâmetro do escopo, sem hash; o payload não
   //   carrega `unitId` (item 7) → REKEY pelo F-RK-5. Deixá-la no unitId antigo tiraria do escopo re-chaveado o histórico de quem aprovou
+  'PackageValidityAcceptance', // FE-INCR-PACOTE-VALIDADE (F-JUR-4): prova do aceite por venda; o `textSha256` cobre só o texto (sem unitId) → REKEY pelo F-RK-5.
+  //   Deixá-la no unitId antigo separaria a prova da venda re-chaveada (o `saleId` segue a unidade nova)
 ] as const;
 
 /**

@@ -64,9 +64,9 @@ describe('SaleSalesAccountingBridge.maybeSyncSaleFinalized', () => {
       sourceId: 'sale-1',
       unitId: 'unit-1',
       amount: 250,
-      // A ponte agora resolve o INSTANTE em dia-calendário no fuso do escopo: meia-noite UTC de 25/06
-      // é 24/06 21:00 em BRT, logo a venda pertence ao dia 24 — a fixture antes fixava o dia UTC.
-      occurredAt: '2026-06-24',
+      // `date` é um DIA e o motor o grava como ISO à meia-noite UTC: a ponte o lê COMO ESCRITO (25/06). Tratá-lo como
+      // instante o recuava para 24/06 (21:00 BRT) — defeito FIX-SALE-DATE-AS-WRITTEN, F-PP-3 (b) ratificado 05/10.
+      occurredAt: '2026-06-25',
     });
   });
 

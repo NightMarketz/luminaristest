@@ -1,4 +1,4 @@
-import { multipartAuthHeaders, multipartBaseUrl, multipartParseError } from './multipart';
+import { multipartAuthHeaders, multipartBaseUrl, multipartParseError, multipartStreamDownload } from './multipart';
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
 import type {
@@ -637,28 +637,8 @@ export interface CashForecastQuery {
 const reconBaseUrl = multipartBaseUrl;
 const reconAuthHeaders = multipartAuthHeaders;
 const reconParseError = multipartParseError;
-
-/**
- * Stream a binary GET (e.g. the PDF receipt) to a browser download via a transient
- * object URL. Same technique as `dataExchangeService`'s `streamDownload` (BE-INCR-6) —
- * reuses the `recon*` fetch helpers above instead of duplicating them.
- */
-async function reconStreamDownload(url: string, fileName: string): Promise<void> {
-  const response = await fetch(url, { method: 'GET', headers: reconAuthHeaders() });
-  if (!response.ok) throw await reconParseError(response);
-  const blob = await response.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = fileName || 'download';
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
+// Moved to `multipart.ts` (FE-INCR-PACOTE-VALIDADE: the package-sale receipt PDF is its 2nd consumer).
+const reconStreamDownload = multipartStreamDownload;
 
 /** Build a `?a=x&b=y` query string, dropping undefined/empty values and encoding. */
 function buildQuery(params: Record<string, string | undefined>): string {

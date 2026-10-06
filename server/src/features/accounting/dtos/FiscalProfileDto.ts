@@ -54,6 +54,9 @@ const FiscalProfileFields = z
     cofinsDespesaAccountId: z.string().min(1).nullable().optional(),
     pisRecolherAccountId: z.string().min(1).nullable().optional(),
     cofinsRecolherAccountId: z.string().min(1).nullable().optional(),
+    // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
+    irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
+    csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     partnerAccountRef: z.string().min(1).max(120).nullable().optional(),
     // BE-INCR-DFE — emitente (ADR-DFE D5)
     codMun: ibge7.nullable().optional(),

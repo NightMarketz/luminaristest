@@ -6,11 +6,15 @@ import { counterpartiesService, type Counterparty } from '../../../lib/services/
 import {
   nfeService,
   type NfeIgnoredItem,
+  type NfeItemMapping,
   type NfePreview,
   type NfeSaleReconciliationReport,
 } from '../../../lib/services/nfe.service';
+import { fixedAssetsService, type FixedAssetClass } from '../../../lib/services/fixedAssets.service';
+import { nonEmpty } from '../../../lib/utils/nonEmpty';
 import { loadProductOptions, type ProductOption } from '../lib/loadProductOptions';
 import { forgetNfeMapping, recallNfeMappings, rememberNfeMappings } from '../lib/nfeMappingMemory';
+import type { FixedAssetsSectionId } from './FixedAssetsPanel';
 import { formatCents } from '../lib/formatCents';
 import { formatDate } from '../lib/formatDate';
 import { resolveError } from '../lib/resolveError';
@@ -33,11 +37,13 @@ interface NfePanelProps {
   unitId: string;
   /** Refetch do balancete após o import (o import cria 1 Payable + entradas de estoque). */
   onLedgerChange?: () => void;
-  /** Navegar para a aba Contrapartes (link "gerenciar fornecedores"). */
-  onNavigateTab?: (tab: 'contrapartes') => void;
+  /** Navegar para outra aba: Contrapartes ("gerenciar fornecedores") ou Imobilizado ("cadastrar classe"/taxas), já na seção. */
+  onNavigateTab?: (tab: 'contrapartes' | 'imobilizado', section?: FixedAssetsSectionId) => void;
 }
 
 type MappingOrigin = 'lembrado' | 'sugerido' | '';
+/** Tipo do item (F-FAFE-1/2 → a): o operador declara; a tela não lê CFOP. */
+type ItemKind = 'produto' | 'imobilizado';
 
 export interface SaleOption {
   id: string;
@@ -64,6 +70,14 @@ function normalizeName(s: string): string {
     .replace(/\s+/g, ' ')
     .toLowerCase();
 }
+
+/** XOR do servidor: `classId` (imobilizado) OU `productRef` (produto) — nunca `destination` (o BE resolve com `classId`). */
+function toItemMapping(cProd: string, kind: ItemKind, productRef: string, classId: string): NfeItemMapping {
+  return kind === 'imobilizado' ? { cProd, classId } : { cProd, productRef };
+}
+
+/** Erro de taxa por NCM (`resolveRateForNcm`) — as 3 mensagens do servidor citam "NCM". */
+const RATE_ERROR = /\bNCM\b/;
 
 function emitterDoc(preview: NfePreview): string {
   return preview.emit.cnpj ?? preview.emit.cpf ?? '';
@@ -110,7 +124,11 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
   const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
   const [preview, setPreview] = useState<NfePreview | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [classes, setClasses] = useState<FixedAssetClass[]>([]);
   const [mappings, setMappings] = useState<Record<string, string>>({});
+  // Tipo por cProd (ausente = 'produto') e classe escolhida — o mapeamento é por cProd, como o do BE.
+  const [kinds, setKinds] = useState<Record<string, ItemKind>>({});
+  const [classIds, setClassIds] = useState<Record<string, string>>({});
   const [origins, setOrigins] = useState<Record<string, MappingOrigin>>({});
   const [counterpartyId, setCounterpartyId] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -128,9 +146,11 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
     let alive = true;
     const prods = loadProductOptions().catch((): ProductOption[] => []);
     const cps = counterpartiesService.listCounterparties({ unitId, type: 'SUPPLIER' }).catch((): Counterparty[] => []);
+    const cls = fixedAssetsService.listClasses(unitId).catch((): FixedAssetClass[] => []);
     listsRef.current = Promise.all([prods, cps]);
     prods.then((opts) => alive && setProducts(opts));
     cps.then((list) => alive && setCounterparties(list));
+    cls.then((list) => alive && setClasses(list));
     return () => {
       alive = false;
     };
@@ -138,7 +158,10 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
 
   const costedItems = useMemo(() => (preview?.itens ?? []).filter((it) => it.indTot === '1'), [preview]);
   const costedCProds = useMemo(() => Array.from(new Set(costedItems.map((it) => it.cProd))), [costedItems]);
-  const allMapped = costedCProds.length > 0 && costedCProds.every((c) => (mappings[c] ?? '') !== '');
+  const kindOf = (cProd: string): ItemKind => kinds[cProd] ?? 'produto';
+  const chosenRef = (cProd: string): string => (kindOf(cProd) === 'imobilizado' ? classIds[cProd] : mappings[cProd]) ?? '';
+  const allMapped = costedCProds.length > 0 && costedCProds.every((c) => chosenRef(c) !== '');
+  const hasAssetItem = costedCProds.some((c) => kindOf(c) === 'imobilizado');
   const canImport = !!preview && !preview.alreadyImported && allMapped && !submitting;
 
   /** lembrado > sugerido > vazio (F-FENFE-4 → c). */
@@ -170,6 +193,8 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
     }
     setMappings(next);
     setOrigins(nextOrigins);
+    setKinds({});
+    setClassIds({});
   }
 
   function preselectCounterparty(p: NfePreview, suppliers: Counterparty[]) {
@@ -208,12 +233,19 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
     setError(null);
     setSubmitting(true);
     try {
-      const itemMappings = costedCProds.map((cProd) => ({ cProd, productRef: mappings[cProd] }));
+      const itemMappings = nonEmpty(
+        costedCProds.map((cProd): NfeItemMapping => toItemMapping(cProd, kindOf(cProd), mappings[cProd] ?? '', classIds[cProd] ?? '')),
+      );
+      if (!itemMappings) return;
       const result = await nfeService.importPurchaseNfe(
         { unitId, itemMappings, counterpartyId: counterpartyId || undefined, dueDate: dueDate || undefined },
         file,
       );
-      rememberNfeMappings(emitterDoc(preview), itemMappings);
+      // F-FAFE-6 → a: a memória segue só `productRef`; item "Imobilizado" nunca é lembrado.
+      rememberNfeMappings(
+        emitterDoc(preview),
+        costedCProds.filter((c) => kindOf(c) === 'produto').map((cProd): { cProd: string; productRef: string } => ({ cProd, productRef: mappings[cProd] })),
+      );
       setNotice(
         t('nfe.purchase.success', 'NF-e importada: conta a pagar {{doc}} de {{amount}}.', {
           doc: result.payable.documentNumber ?? result.payable.id,
@@ -225,6 +257,8 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
       setFile(null);
       setMappings({});
       setOrigins({});
+      setKinds({});
+      setClassIds({});
       setDueDate('');
       onLedgerChange?.();
     } catch (err) {
@@ -237,6 +271,10 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
   function setMapping(cProd: string, productRef: string) {
     setMappings((m) => ({ ...m, [cProd]: productRef }));
     setOrigins((o) => ({ ...o, [cProd]: '' }));
+  }
+
+  function setKind(cProd: string, kind: ItemKind) {
+    setKinds((k) => ({ ...k, [cProd]: kind }));
   }
 
   function forget(cProd: string) {
@@ -262,7 +300,16 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
         </button>
       </div>
 
-      {error && <div className="rounded-xl border border-red-800 bg-red-950/40 px-3 py-2 text-sm text-red-200" role="alert">{error}</div>}
+      {error && (
+        <div className="rounded-xl border border-red-800 bg-red-950/40 px-3 py-2 text-sm text-red-200" role="alert">
+          {error}
+          {hasAssetItem && RATE_ERROR.test(error) && onNavigateTab && (
+            <button type="button" className="ml-2 text-emerald-400 hover:underline" onClick={() => onNavigateTab('imobilizado', 'taxas')} data-testid="nfe-rates-link">
+              {t('nfe.purchase.ratesLink', 'ver taxas de depreciação')}
+            </button>
+          )}
+        </div>
+      )}
       {notice && <div className="rounded-xl border border-emerald-800 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200" role="status">{notice}</div>}
       {ignored.length > 0 && (
         <div className="rounded-xl border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-200" data-testid="nfe-ignored">
@@ -307,13 +354,15 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
                   <th className="px-3 py-2">{t('nfe.items.xProd', 'Descrição')}</th>
                   <th className="px-3 py-2">{t('nfe.items.qty', 'Qtd')}</th>
                   <th className="px-3 py-2">{t('nfe.items.vProd', 'Valor')}</th>
-                  <th className="px-3 py-2">{t('nfe.items.product', 'Produto no catálogo')}</th>
+                  <th className="px-3 py-2">{t('nfe.items.kind', 'Tipo')}</th>
+                  <th className="px-3 py-2">{t('nfe.items.product', 'Produto / classe de bem')}</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.itens.map((it) => {
                   const costed = it.indTot === '1';
                   const origin = origins[it.cProd] ?? '';
+                  const asset = kindOf(it.cProd) === 'imobilizado';
                   return (
                     <tr key={it.nItem} className="border-t border-neutral-800" data-testid={`nfe-item-row-${it.nItem}`}>
                       <td className="px-3 py-2 text-neutral-400">{it.nItem}</td>
@@ -322,7 +371,46 @@ function NfePurchaseSection({ unitId, onLedgerChange, onNavigateTab }: NfePanelP
                       <td className="px-3 py-2 text-neutral-300">{it.qCom} {it.uCom}</td>
                       <td className="px-3 py-2 text-neutral-300">{formatCents(it.vProdCents)}</td>
                       <td className="px-3 py-2">
-                        {costed ? (
+                        {costed && (
+                          <select
+                            value={kindOf(it.cProd)}
+                            onChange={(e) => setKind(it.cProd, e.target.value === 'imobilizado' ? 'imobilizado' : 'produto')}
+                            className={inputClass}
+                            disabled={preview.alreadyImported}
+                            data-testid={`nfe-item-kind-${it.cProd}`}
+                          >
+                            <option value="produto">{t('nfe.items.kindProduct', 'Produto')}</option>
+                            <option value="imobilizado">{t('nfe.items.kindAsset', 'Imobilizado')}</option>
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {costed && asset ? (
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={classIds[it.cProd] ?? ''}
+                              onChange={(e) => setClassIds((c) => ({ ...c, [it.cProd]: e.target.value }))}
+                              className={inputClass}
+                              disabled={preview.alreadyImported}
+                              data-testid={`nfe-item-class-${it.cProd}`}
+                            >
+                              <option value="">{t('nfe.items.chooseClass', 'Escolher classe…')}</option>
+                              {classes.map((c) => (
+                                <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
+                              ))}
+                            </select>
+                            {classes.length === 0 && (
+                              <span className="text-xs text-neutral-400" data-testid={`nfe-item-no-classes-${it.cProd}`}>
+                                {t('nfe.items.noClasses', 'Nenhuma classe de bem cadastrada.')}{' '}
+                                {onNavigateTab && (
+                                  <button type="button" className="text-emerald-400 hover:underline" onClick={() => onNavigateTab('imobilizado', 'classes')}>
+                                    {t('nfe.items.registerClass', 'cadastrar classe')}
+                                  </button>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        ) : costed ? (
                           <div className="flex items-center gap-2">
                             <select
                               value={mappings[it.cProd] ?? ''}

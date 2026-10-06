@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
-import type { IDynamicTable } from '../../../../components/shared/dynamic-tables.client';
+import type { IDynamicTable, IDynamicTableData } from '../../../../components/shared/dynamic-tables.client';
 import { useTableData } from '../../../../components/shared/dynamic-tables.client';
 import { normalizeRows } from '../../utils/normalizers';
 import { useSalesAnalytics } from '../analytics/useSalesAnalytics';
@@ -18,6 +18,16 @@ import type { StockIndexEntry } from '../../components/sales/create/types';
 
 function mapToRecord(m?: Map<string, string>): Record<string, string> {
     return m ? Object.fromEntries(m) : {};
+}
+
+/**
+ * O motor grava o campo `date` (date-only) como ISO à meia-noite UTC (`2026-12-01T00:00:00.000Z`); lido como instante, em UTC-3 vira
+ * o dia anterior às 21h. Só essa forma é reduzida a `YYYY-MM-DD` — qualquer outro valor (instante real, ausente) passa intacto.
+ */
+const ENGINE_DAY_ISO = /^\d{4}-\d{2}-\d{2}T00:00:00(\.000)?Z$/;
+function withWrittenDay(row: IDynamicTableData): IDynamicTableData {
+    const date = row.data?.date;
+    return typeof date === 'string' && ENGINE_DAY_ISO.test(date) ? { ...row, data: { ...row.data, date: date.slice(0, 10) } } : row;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -41,10 +51,12 @@ export function useSalesData(tables: IDynamicTable[]) {
 
     // 3. Fetch de dados
     const {
-        records: saleRecords,
+        records: rawSaleRecords,
         isLoading: isLoadingSales,
         refetch
     } = useTableData(salesTable?.id || '');
+    // A data da venda entra no módulo como o DIA escrito (todos os consumidores — lista, filtro de período, analítica — já leem certo).
+    const saleRecords = useMemo(() => (rawSaleRecords || []).map(withWrittenDay), [rawSaleRecords]);
 
     const {
         table: saleItemsData,

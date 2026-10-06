@@ -22,7 +22,7 @@
 import { getFactory } from '../../../../lib/factory';
 import logger from '../../../../lib/logger';
 import { resolveAccountingScope } from '../../scope/AccountingScope';
-import { scopeDay } from '../../models/dates';
+import { saleDayAsWritten, scopeDay } from '../../models/dates';
 import { buildSaleSettledEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { isAllPackageSale } from './saleItems';
 
@@ -113,14 +113,11 @@ export async function maybeSyncSaleSettled(
       // `paidAt` é 'datetime' no preset e RegisterPaymentService grava `new Date().toISOString()` —
       // um INSTANTE, não um dia. Resolver o dia no fuso do escopo: um pagamento às 21h BRT
       // liquidava em D+1, e na virada de mês caía em outro período contábil.
-      occurredAt: scopeDay(
-        scope,
+      // O fallback `data.date` é um DIA (ISO à meia-noite UTC do motor): lê-se como escrito (`saleDayAsWritten`).
+      occurredAt:
         typeof data.paidAt === 'string'
-          ? data.paidAt
-          : typeof data.date === 'string'
-            ? data.date
-            : undefined,
-      ),
+          ? scopeDay(scope, data.paidAt)
+          : saleDayAsWritten(scope, typeof data.date === 'string' ? data.date : undefined),
       paymentMethod,
       label: `Liquidação ${row.id}`,
     });

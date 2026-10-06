@@ -36,7 +36,7 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     await prisma.$disconnect();
   });
 
-  it('item 1: grava forma/obrigatoriedade/datas; ANUAL ⇒ 400 "Fase B"; evento com os 3 campos e sem datas', async () => {
+  it('item 1: grava forma/obrigatoriedade/datas; ANUAL só no REAL (Fase B PR-4); evento com os 3 campos e sem datas', async () => {
     const r = await put(2026, {
       regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false,
       inicioAtividadeEm: '2026-02-01', lc224LiminarReferencia: null,
@@ -46,9 +46,13 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     const ev = await ultimoEvento('company_fiscal_profile.updated');
     expect(ev).toMatchObject({ formaApuracaoIrpjCsll: 'TRIMESTRAL', formaApuracaoTravadaEm: '', lucroRealObrigatorio: 'false', lc224AcrescimoSuspenso: 'false' });
     expect(ev).not.toHaveProperty('inicioAtividadeEm');
-    const anual = await put(2026, { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL' });
-    expect(anual.status).toBe(400);
-    expect(JSON.stringify(anual.body)).toContain('forma anual é da Fase B');
+    // Fase B PR-4 (BRIEF B item 1, F-TB-8.1): o ANUAL do REAL passa pelo DTO real; o do PRESUMIDO segue 400
+    const anual = await put(2031, { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL', lucroRealObrigatorio: false });
+    expect(anual.status).toBe(200);
+    expect(anual.body.data).toMatchObject({ formaApuracaoIrpjCsll: 'ANUAL' });
+    const presumido = await put(2031, { regime: 'PRESUMIDO', ecf: ECF, formaApuracaoIrpjCsll: 'ANUAL' });
+    expect(presumido.status).toBe(400);
+    expect(JSON.stringify(presumido.body)).toContain('Lucro Presumido é só trimestral');
   });
 
   it('item 1 (D2): travado ⇒ PUT que troca regime/forma/obrigatoriedade 400; mesma forma efetiva passa; DELETE 400', async () => {
@@ -56,7 +60,8 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
       where: { userId_anoCalendario: { userId: dono.id, anoCalendario: 2026 } },
       data: { formaApuracaoTravadaEm: new Date('2026-04-30T12:00:00Z') },
     });
-    const travado = { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false };
+    // inicioAtividadeEm reenviado: PUT é substituição total, e a data também trava (X7 Fase B PR-3)
+    const travado = { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-01' };
     for (const troca of [{ regime: 'PRESUMIDO', lucroRealObrigatorio: null }, { lucroRealObrigatorio: true }]) {
       const r = await put(2026, { ...travado, ...troca });
       expect(r.status).toBe(400);
@@ -78,14 +83,14 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
 
   it('item 2b: a chave da liminar muda com a forma travada; evento leva o booleano e NUNCA o processo', async () => {
     const r = await put(2026, {
-      regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, lc224AcrescimoSuspenso: true, lc224LiminarReferencia: '5001234-56.2026.4.03.6100',
+      regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-01', lc224AcrescimoSuspenso: true, lc224LiminarReferencia: '5001234-56.2026.4.03.6100',
     });
     expect(r.status).toBe(200);
     expect(r.body.data).toMatchObject({ lc224AcrescimoSuspenso: true, lc224LiminarReferencia: '5001234-56.2026.4.03.6100' });
     const ev = await ultimoEvento('company_fiscal_profile.updated');
     expect(ev.lc224AcrescimoSuspenso).toBe('true');
     expect(JSON.stringify(ev)).not.toContain('5001234');
-    const semProcesso = await put(2026, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, lc224AcrescimoSuspenso: true });
+    const semProcesso = await put(2026, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, inicioAtividadeEm: '2026-02-01', lc224AcrescimoSuspenso: true });
     expect(semProcesso.status).toBe(400);
     expect(JSON.stringify(semProcesso.body)).toContain('informe o processo da liminar');
   });
@@ -103,6 +108,23 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     expect(troca.status).toBe(400);
     expect(JSON.stringify(troca.body)).toContain('prestadoraExclusivaServicos');
     expect((await put(2028, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, prestadoraExclusivaServicos: true })).status).toBe(200);
+  });
+
+  it('X7 Fase B PR-3 (achado 1 do review; decisão do dono 05/10): travado ⇒ as datas de atividade não mudam (400); as mesmas passam', async () => {
+    const base = { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false, inicioAtividadeEm: '2029-11-01', encerramentoAtividadeEm: null };
+    expect((await put(2029, base)).status).toBe(200);
+    await prisma.companyFiscalProfile.update({
+      where: { userId_anoCalendario: { userId: dono.id, anoCalendario: 2029 } },
+      data: { formaApuracaoTravadaEm: new Date('2029-12-31T12:00:00Z') },
+    });
+    // antecipar o início criaria um período "novo" antes dos já confirmados (o A10 depois do A00)
+    for (const [troca, campo] of [[{ inicioAtividadeEm: '2029-10-01' }, 'inicioAtividadeEm'], [{ inicioAtividadeEm: null }, 'inicioAtividadeEm'], [{ encerramentoAtividadeEm: '2029-12-15' }, 'encerramentoAtividadeEm']] as const) {
+      const r = await put(2029, { ...base, ...troca });
+      expect(r.status).toBe(400);
+      expect(JSON.stringify(r.body)).toContain(`FORMA_TRAVADA`);
+      expect(JSON.stringify(r.body)).toContain(campo);
+    }
+    expect((await put(2029, base)).status).toBe(200); // as mesmas datas passam
   });
 
   it('item 3 (F-TA-6 a): 4 contas da provisão com natureza checada; evento com os ids', async () => {
@@ -123,5 +145,26 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     expect(await ultimoEvento('fiscal_profile.updated')).toMatchObject({ irpjDespesaAccountId: desp.id, csllRecolherAccountId: recCsll.id });
     // FK Restrict: a conta configurada não some por hard-delete
     await expect(prisma.account.delete({ where: { id: desp.id } })).rejects.toThrow();
+  });
+
+  it('X7 Fase B item 16 (F-TB-3 a): 2 contas de saldo negativo a compensar só como Asset folha; evento com os ids; omitidas no PUT ficam', async () => {
+    const neg = await conta('1.2.9.1', 'Asset');
+    const negCsll = await conta('1.2.9.2', 'Asset');
+    const sintetica = await conta('1.2.9', 'Asset', false);
+    const passivo = await conta('2.1.9.3', 'Liability');
+
+    const recusa = await putUnidade({ irpjSaldoNegativoAccountId: passivo.id }); // passivo como saldo a compensar
+    expect(recusa.status).toBe(400);
+    expect(JSON.stringify(recusa.body)).toContain('esperado Asset');
+    expect((await putUnidade({ csllSaldoNegativoAccountId: sintetica.id })).status).toBe(400); // não é folha
+    expect((await putUnidade({ csllSaldoNegativoAccountId: 'nao-existe' })).status).toBe(400);
+
+    const ok = await putUnidade({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    expect(ok.status).toBe(200);
+    expect(ok.body.data).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    expect(await ultimoEvento('fiscal_profile.updated')).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
+    // a tela do perfil fiscal não envia os campos novos: omitidos, o PUT os preserva
+    const semCampos = await putUnidade({});
+    expect(semCampos.body.data).toMatchObject({ irpjSaldoNegativoAccountId: neg.id, csllSaldoNegativoAccountId: negCsll.id });
   });
 });

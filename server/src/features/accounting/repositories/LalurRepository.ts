@@ -13,6 +13,7 @@ import type {
   LalurEntryWithRelations,
   LalurMovementFilter,
   LalurMovementWithRelations,
+  LalurPeriodoContagem,
   LalurProcessoData,
 } from './ILalurRepository';
 
@@ -156,6 +157,21 @@ export class LalurRepository implements ILalurRepository {
   public async existsClosingBefore(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<boolean> {
     const n = await (tx ?? prisma).lalurParteBClosing.count({ where: { ...accountingScopeWhere(scope), year: { lt: year } } });
     return n > 0;
+  }
+
+  public async countByOwnerYearPeriods(ownerUserId: string, year: number, periodos: readonly string[], tx?: Prisma.TransactionClient): Promise<LalurPeriodoContagem[]> {
+    const db = tx ?? prisma;
+    const where = { userId: ownerUserId, year, quarter: { in: [...periodos] } };
+    const [entries, movements, closings] = await Promise.all([
+      db.lalurEntry.groupBy({ by: ['quarter', 'livro'], where: { ...where, deletedAt: null }, _count: { _all: true } }),
+      db.lalurParteBMovement.groupBy({ by: ['quarter'], where: { ...where, deletedAt: null }, _count: { _all: true } }),
+      db.lalurParteBClosing.groupBy({ by: ['quarter'], where, _count: { _all: true } }),
+    ]);
+    return [
+      ...entries.map((r) => ({ periodo: r.quarter, livro: r.livro, quantidade: r._count._all })),
+      ...movements.map((r) => ({ periodo: r.quarter, livro: 'parteB', quantidade: r._count._all })),
+      ...closings.map((r) => ({ periodo: r.quarter, livro: 'fechamento', quantidade: r._count._all })),
+    ].sort((x, y) => x.periodo.localeCompare(y.periodo) || x.livro.localeCompare(y.livro));
   }
 
   public async createClosing(

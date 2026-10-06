@@ -36,6 +36,24 @@ Pré-condições (verificar antes de começar):
   exit code, com `--self-check` cobrindo caminho feliz e falha forjada sem tocar banco do projeto).
   Falta só o pipeline de CI/CD concreto que o dispare no host provisionado (ADR §7 item 1, aberto).
 
+> **[EMENDA 2026-10-05 — autorizada pelo dono em chat: *"Pode emendar o runbook M2 com os 3 passos novos"*]**
+> Três pré-condições novas, cada uma com passo próprio e EVIDÊNCIA (passos 2–4 abaixo; os antigos 2–4 viraram 5–7):
+> - **I4 — nenhum tenant com venda real postada antes do deploy** (insumo I4 do
+>   [`PACOTE-VALIDADE-PENDENCIAS-brief.md`](PACOTE-VALIDADE-PENDENCIAS-brief.md) §7; condição do F-PP-4 em
+>   [`D-2026-10-05-PACOTE-VALIDADE-PENDENCIAS-FORKS`](../plano/decisoes/D-2026-10-05-PACOTE-VALIDADE-PENDENCIAS-FORKS.md)).
+>   **Não é o nó `[[I4]]` do vault** (onboarding activate-default) — mesmo nome, coisa diferente. Se houver venda real,
+>   o F-PP-4 volta ao dono (estorno + relançamento) e este runbook termina em BLOQUEADO.
+> - **Migrações de 05/10 aplicadas pelo `deploy:migrate` ANTES de subir o servidor.** São **duas** pastas com o mesmo
+>   timestamp: `20261005120000_add_package_validity_acceptances` (#530) e `20261005120000_add_tax_assessment_anual_fields`
+>   (#529), ambas aditivas. O compose não migra (por desenho); servidor de pé sem elas quebra em runtime nas colunas/tabela
+>   novas. **Não existe mais backfill no boot** — removido no delta D1 do #483 (`2d1ddbe5`); subir o servidor não grava
+>   prazo em saldo antigo.
+> - **Chave da cifra das credenciais de pagamento** (`PAYMENT_CREDENTIAL_KEYS` + `PAYMENT_CREDENTIAL_KEY_ACTIVE`;
+>   [BRIEF do F5](BE-INCR-PAYMENT-PROVIDER-brief.md) §6.3, P1-2; fold 02/10 de `docs/plano/gates/M2.md`). Sem ela o
+>   servidor **sobe** e a cobrança responde 503 (`server/src/lib/secretBox.ts:33-40`) — não trava o boot, trava a 1ª
+>   credencial do Mercado Pago. Backup da chave **separado** do backup do `.db`. Onde a chave mora além do env
+>   (cofre/KMS) continua decisão deste gate.
+
 ### A5 — o que a auditoria de 2026-08-15 mediu sobre voltar atrás (triagem ratificada 2026-08-20)
 
 Três fatos verificados em `main` `3a761812`. Não são recomendação de alvo; são o que o executor
@@ -108,16 +126,40 @@ Fatos observados no worktree — não é recomendação de alvo (decisão do don
    (registrado no precedente INCR-COUNTERPARTY-NOTNULL: semear antes se necessário).
    EVIDÊNCIA: [saída completa do comando]
 
-2. Deploy do server e do front no alvo; subir os processos.
+2. **I4 — conferir que não há venda real postada.** No banco do alvo (antes de migrar), rodar:
+   `sqlite3 <caminho do .db do alvo> "SELECT u.username, je.sourceType, COUNT(*), MIN(je.date), MAX(je.date) FROM journal_entries je JOIN \"User\" u ON u.id = je.userId WHERE je.sourceType LIKE 'sale.%' AND je.status IN ('Posted','Reconciled') GROUP BY 1, 2;"`
+   Resultado esperado: 0 linhas, ou só usernames de tenant do seed (o executor declara, por nome, que cada um é seed).
+   Qualquer tenant real na saída → parar: desfecho BLOQUEADO (pré-condição I4) e o F-PP-4 volta ao dono.
+   EVIDÊNCIA: [saída completa da query + a declaração por username]
+
+3. **Migrar ANTES de subir o servidor** (processo do server ainda parado ou na versão anterior). No host, com
+   `server/` instalado (`npm ci` + `npx prisma generate` — o script carrega `server/generated/prisma`) e o
+   `DATABASE_URL` do alvo no ambiente: `cd server && npm run deploy:migrate -- --backup-dir <dir de backup>`.
+   Depois: `sqlite3 <caminho do .db do alvo> "SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations WHERE migration_name LIKE '20261005120000_%';"`
+   Resultado esperado: exit 0 do `deploy:migrate` (backup criado, `integrity_check` ok, `foreign_key_check` vazio,
+   nenhuma tabela perde linha); a query devolve **2 linhas** (`…_add_package_validity_acceptances` e
+   `…_add_tax_assessment_anual_fields`), ambas com `finished_at` preenchido e `rolled_back_at` vazio.
+   Exit ≠ 0 → restaurar do backup que o script indicou; não subir o servidor.
+   EVIDÊNCIA: [saída completa do `deploy:migrate` + caminho do backup + saída da query]
+
+4. **Provisionar a chave da cifra no env da instância.** Gerar (fora do repo, sem colar o valor em lugar nenhum):
+   `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` → definir
+   `PAYMENT_CREDENTIAL_KEYS="1:<base64>"` e `PAYMENT_CREDENTIAL_KEY_ACTIVE=1` no env da instância; guardar a chave em
+   backup **separado** do backup do `.db`. Conferir no mesmo ambiente do processo do server, sem imprimir a chave:
+   `node -e "const e=process.env;console.log(e.PAYMENT_CREDENTIAL_KEYS.split(',').map(x=>{const[v,b]=x.split(':');return v+':'+Buffer.from(b,'base64').length+'B'}).join(','),'active='+e.PAYMENT_CREDENTIAL_KEY_ACTIVE)"`
+   Resultado esperado: `1:32B active=1`.
+   EVIDÊNCIA: [saída da conferência (NUNCA a chave) + onde fica o backup da chave (local, não o conteúdo)]
+
+5. Deploy do server e do front no alvo; subir os processos.
    Resultado esperado: processos de pé, `/api` respondendo autenticado.
    EVIDÊNCIA: [comandos usados + resposta de um endpoint autenticado]
 
-3. Smoke-launch do Chromium no host: gerar um recibo PDF no ambiente implantado (caminho
+6. Smoke-launch do Chromium no host: gerar um recibo PDF no ambiente implantado (caminho
    puppeteer real).
    Resultado esperado: PDF gerado sem erro de launch.
    EVIDÊNCIA: [o PDF ou o log do launch]
 
-4. `cd server && npm run logs:errors` após alguns minutos de uso real.
+7. `cd server && npm run logs:errors` após alguns minutos de uso real.
    Resultado esperado: sem erro novo.
    EVIDÊNCIA: [saída do comando]
 

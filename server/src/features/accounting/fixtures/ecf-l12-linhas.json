@@ -5938,6 +5938,336 @@
         "dtFim": null
       }
     ],
+    "N620": [
+      {
+        "codigo": "1",
+        "descricao": "Base de Cálculo do Imposto de Renda",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "2",
+        "descricao": "IMPOSTO DE RENDA APURADO",
+        "tipo": "R",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "3",
+        "descricao": "A Alíquota de 15%",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "4",
+        "descricao": "Adicional",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "5",
+        "descricao": "Diferença de IR Devida pela Mudança de Coeficiente sobre a Receita Bruta",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "6",
+        "descricao": "DEDUÇÕES",
+        "tipo": "R",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "7",
+        "descricao": "(-) Operações de Caráter Cultural e Artístico",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "7.1",
+        "descricao": "(-)Operações de Caráter Cultural e Artístico - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "9",
+        "descricao": "(-) Programa de Alimentação do Trabalhador",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "9.1",
+        "descricao": "(-)Programa de Alimentação do Trabalhador - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "10",
+        "descricao": "(-) Desenvolvimento Tecnológico Industrial / Agropecuário",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "11",
+        "descricao": "(-) Atividade Audiovisual",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "11.1",
+        "descricao": "(-)Atividade Audiovisual - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "12",
+        "descricao": "(-) Fundos dos Direitos da Criança e do Adolescente",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "12.1",
+        "descricao": "(-)Fundos dos Direitos da Criança e do Adolescente - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "13",
+        "descricao": "(-) Fundos Nacional, Estaduais ou Municipais do Idoso (Lei nº 12.213/2010, art. 3º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "13.1",
+        "descricao": "(-)Fundos Nacional, Estaduais ou Municipais do Idoso (Lei nº 12.213/2010, art. 3º) - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "14",
+        "descricao": "(-) Atividades de Caráter Desportivo",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "14.1",
+        "descricao": "(-)Atividades de Caráter Desportivo - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "15",
+        "descricao": "(-) Programa Nacional de Apoio à Atenção Oncológica - PRONON (Lei nº 12.715/2012, arts. 1º e 4º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "15.1",
+        "descricao": "(-)Programa Nacional de Apoio à Atenção Oncológica - PRONON (Lei nº 12.715/2012, arts. 1º e 4º) - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "16",
+        "descricao": "(-) Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência - PRONAS/PCD (Lei nº 12.715/2012, arts. 3º e 4º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "16.1",
+        "descricao": "(-)Programa Nacional de Apoio à Atenção da Saúde da Pessoa com Deficiência - PRONAS/PCD (Lei nº 12.715/2012, arts. 3º e 4º) - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "17",
+        "descricao": "(-) Valor da Remuneração da Prorrogação da Licença-Maternidade e da Licença-Paternidade (Lei nº 11.770/2008, art. 5º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17001",
+        "descricao": "(-)Valor da Remuneração da Prorrogação da Licença-Maternidade e da Licença-Paternidade (Lei nº 11.770/2008, art. 5º) - LC 224/25",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17.01",
+        "descricao": "(-) Crédito Presumido de 9% Sobre a Parcela dos Lucros Auferidos no Exterior (Art. 28, da Instrução Normativa 1.520/2014)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17.05",
+        "descricao": "(-) Programa Rota 2030 - Mobilidade e Logística - Despesa Operacional do Período (Art. 11 da Lei nº 13.755/2018)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2019-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17.06",
+        "descricao": "(-) Programa Rota 2030 - Mobilidade e Logística - Parcela Excedente de Períodos Anteriores (Art. 11, § 3º da Lei nº 13.755/2018)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2019-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "18",
+        "descricao": "(-) Isenção e Redução do Imposto",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "19",
+        "descricao": "(-) Redução por Reinvestimento",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "20",
+        "descricao": "(-) Imposto de Renda Devido em Meses Anteriores",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "20.01",
+        "descricao": "(-) Imposto de Renda Devido no Mês Antes de Retenções e Pagamentos",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "21",
+        "descricao": "(-) Imposto de Renda Retido na Fonte",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "22",
+        "descricao": "(-) Imposto Pago no Exterior sobre Lucros, Rendimentos e Ganhos de Capital",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "23",
+        "descricao": "(-) Imposto de Renda Retido na Fonte por Órgãos, Autarquias e Fundações Federais (Lei nº 9.430/1996, art. 64)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "24",
+        "descricao": "(-) Imposto de Renda Retido na Fonte pelas Demais Entidades da Administração Pública Federal (Lei n° 10.833/2003, art. 34)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "25",
+        "descricao": "(-) Imposto de Renda Pago sobre Ganhos no Mercado de Renda Variável",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "25.01",
+        "descricao": "(-) Imposto Sobre a Renda Pago no Exterior pela Controlada Direta ou Indireta, no Caso do Art. 87 da Lei nº 12.973/2014",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "25.02",
+        "descricao": "(-) Imposto Sobre a Renda Retido na Fonte no Exterior Incidente Sobre os Dividendos no Caso do Art. 88 da Lei nº 12.973/2014",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "26",
+        "descricao": "IMPOSTO DE RENDA DEVIDO NO MÊS",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "27",
+        "descricao": "Imposto Pago a Título de Estimativa Mensal que Exceda ao Legalmente Determinado",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2021-01-01",
+        "dtFim": null
+      }
+    ],
     "N630A": [
       {
         "codigo": "1",
@@ -6297,6 +6627,272 @@
         "tipo": "CNA",
         "tipoLanc": null,
         "dtIni": "2023-01-01",
+        "dtFim": null
+      }
+    ],
+    "N660": [
+      {
+        "codigo": "0.53",
+        "descricao": "Total das Receitas Brutas Computadas no Balanço do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2020-03-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.54",
+        "descricao": "Total das Receitas Brutas do Mês de Março até o Final do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2020-03-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.55",
+        "descricao": "Total das Receitas Brutas Computadas no Balanço do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2021-07-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.56",
+        "descricao": "Total das Receitas Brutas do Mês de Julho até o Final do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2021-07-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.57",
+        "descricao": "Total das Receitas Brutas Computadas no Balanço do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2022-08-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.58",
+        "descricao": "Total das Receitas Brutas do Mês de Agosto até o Final do Período",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2022-08-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "0.6",
+        "descricao": "Cálculo da CSLL - Diferentes Alíquotas no Ano",
+        "tipo": "R",
+        "tipoLanc": null,
+        "dtIni": "2026-04-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "0.61",
+        "descricao": "Base de Cálculo de janeiro a março",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2026-04-01",
+        "dtFim": "2026-12-31"
+      },
+      {
+        "codigo": "1",
+        "descricao": "CÁLCULO DA CSLL",
+        "tipo": "R",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "2",
+        "descricao": "Base de Cálculo da CSLL",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "3",
+        "descricao": "CSLL Apurada",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "4",
+        "descricao": "DEDUÇÕES",
+        "tipo": "R",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "5",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração Relativo ao Prouni",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "6",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração de Eventos da Fifa",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "7",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração da Atividade de Serviços - SPE - Eventos da Fifa",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "8",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração de Eventos do CIO",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "9",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração da Atividade de Serviços - SPE - Eventos do CIO",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "9.20",
+        "descricao": "(-) Isenção sobre o Lucro da Exploração do Programa Emergencial de Retomada do Setor de Eventos (Perse)",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2021-01-01",
+        "dtFim": "2025-03-31"
+      },
+      {
+        "codigo": "10",
+        "descricao": "(-) Recuperação de Crédito de CSLL (MP nº 1.807/1999, art. 8º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "11",
+        "descricao": "(-) Créditos sobre Depreciação de Bens do Ativo Imobilizado (Lei nº 11.051/2004, art. 1º)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "11.01",
+        "descricao": "(-) Programa Rota 2030 - Mobilidade e Logística - Despesa Operacional do Período (Art. 11 da Lei nº 13.755/2018)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2019-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "11.02",
+        "descricao": "(-) Programa Rota 2030 - Mobilidade e Logística - Parcela Excedente de Períodos Anteriores (Art. 11, § 3º da Lei nº 13.755/2018)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2019-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "12",
+        "descricao": "(-) CSLL Devida em Meses Anteriores",
+        "tipo": "CA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "12.01",
+        "descricao": "CSLL Devida no Mês Antes de Retenções e Pagamentos",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "13",
+        "descricao": "(-) Imposto Pago no Exterior sobre Lucros, Rendimentos e Ganhos de Capital (MP nº 1.858-6/1999, art. 19)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "14",
+        "descricao": "(-) CSLL Retida na Fonte por Órgãos, Autarquias e Fundações Federais (Lei nº 9.430/1996, art. 64)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "15",
+        "descricao": "(-) CSLL Retida na Fonte pelas Demais Entidades da Administração Pública Federal (Lei n° 10.833/2003, art. 34)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "16",
+        "descricao": "(-) CSLL Retida na Fonte por Pessoas Jurídicas de Direito Privado (Lei n° 10.833/2003, art. 30)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17",
+        "descricao": "(-) CSLL Retida na Fonte por Órgãos, Autarquias e Fundações dos Estados, Distrito Federal e Municípios (Lei n° 10.833/2003, art. 33)",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17.01",
+        "descricao": "(-) Imposto Sobre a Renda Pago no Exterior pela Controlada Direta ou Indireta, no Caso do Art. 87 da Lei nº 12.973/2014",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "17.02",
+        "descricao": "(-) Imposto Sobre a Renda Retido na Fonte no Exterior Incidente Sobre os Dividendos no Caso do Art. 88 da Lei nº 12.973/2014",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "18",
+        "descricao": "CSLL DEVIDA NO MÊS",
+        "tipo": "CNA",
+        "tipoLanc": null,
+        "dtIni": "2015-01-01",
+        "dtFim": null
+      },
+      {
+        "codigo": "19",
+        "descricao": "CSLL Paga a Título de Estimativa Mensal que Exceda a Legalmente Determinada",
+        "tipo": "E",
+        "tipoLanc": null,
+        "dtIni": "2021-01-01",
         "dtFim": null
       }
     ],

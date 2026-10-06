@@ -27,7 +27,9 @@ import { AgingPanel } from './components/AgingPanel';
 import { CashForecastPanel } from './components/CashForecastPanel';
 import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
-import { FixedAssetsPanel } from './components/FixedAssetsPanel';
+import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
+import { FiscalProfilePanel } from './components/FiscalProfilePanel';
+import { ServiceFiscalProfilesPanel } from './components/ServiceFiscalProfilesPanel';
 import { JournalEntryModal, type AccountOption } from './components/JournalEntryModal';
 import { accountingService } from '../../lib/services/accounting.service';
 import { dimensionsService, type DimensionCatalogEntry } from '../../lib/services/dimensions.service';
@@ -39,7 +41,7 @@ import { toGovernanceScope } from './governance/GovernanceScope';
 import { AccountantAssignmentSection } from './governance/AccountantAssignmentSection';
 import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance/ClientModeBars';
 
-export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado';
+export type Tab = 'balancete' | 'periodos' | 'lancamentos' | 'aprovacoes' | 'contas-a-pagar' | 'contas-a-receber' | 'aging' | 'fluxo-de-caixa-projetado' | 'contrapartes' | 'razao' | 'plano-de-contas' | 'bp' | 'dre' | 'dfc' | 'comparativo' | 'diario' | 'importacao-exportacao' | 'conciliacao' | 'nfe' | 'compliance' | 'dimensoes' | 'imobilizado' | 'perfil-fiscal';
 
 // label = i18n fallback (current pt-BR); rendered via t(`view.tabs.<id>`, label)
 export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
@@ -72,6 +74,8 @@ export const TABS: Array<{ id: Tab; labelKey: string; label: string }> = [
   { id: 'dimensoes',      labelKey: 'view.tabs.dimensoes',      label: 'Dimensões' },
   // F-FAFE-4(a) ratificado: aba própria (22ª) — imobilizado não é título a pagar; o vínculo com AP é só a origem NF-e.
   { id: 'imobilizado',    labelKey: 'view.tabs.imobilizado',    label: 'Imobilizado' },
+  // F-FE-DFE-6(a) ratificado 02/10: aba própria — o perfil serve à NF-e de compra (X6) E à NFS-e de venda.
+  { id: 'perfil-fiscal',  labelKey: 'view.tabs.perfilFiscal',   label: 'Perfil fiscal' },
 ];
 
 /**
@@ -130,6 +134,9 @@ export function AccountingView() {
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
   const activeTab: Tab = governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab;
   const setActiveTab = setRawTab;
+  // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
+  const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
+  useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
   const visibleTabs = governance ? TABS.filter((tab) => DELEGATED_TABS.includes(tab.id)) : TABS;
 
   function switchContext(next: string) {
@@ -443,7 +450,14 @@ export function AccountingView() {
 
       {/* ── NF-e (compra → AP + estoque; venda → proveniência) tab — FE-INCR-NFE ─── */}
       {activeTab === 'nfe' && unitId && (
-        <NfePanel unitId={unitId} onLedgerChange={reload} onNavigateTab={(tab) => setActiveTab(tab)} />
+        <NfePanel
+          unitId={unitId}
+          onLedgerChange={reload}
+          onNavigateTab={(tab, section) => {
+            if (section) setFixedAssetsSection(section);
+            setActiveTab(tab);
+          }}
+        />
       )}
 
       {/* ── Compliance (mapeamento referencial RFB + e-Lalur + geração SPED) tab ── */}
@@ -470,7 +484,15 @@ export function AccountingView() {
 
       {/* ── Imobilizado (C8: bens / classes / taxas / contas) tab — FE-INCR-FIXED-ASSETS ─── */}
       {activeTab === 'imobilizado' && unitId && (
-        <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} />
+        <FixedAssetsPanel unitId={unitId} onLedgerChange={reload} onNavigateToPeriods={() => setActiveTab('periodos')} initialSection={fixedAssetsSection} />
+      )}
+
+      {/* ── Perfil fiscal (unidade + serviços) tab — FE-INCR-DFE PR-0 ─────── */}
+      {activeTab === 'perfil-fiscal' && unitId && (
+        <div className="space-y-8">
+          <FiscalProfilePanel unitId={unitId} />
+          <ServiceFiscalProfilesPanel unitId={unitId} />
+        </div>
       )}
 
       {/* ── New Entry Modal ────────────────────────────────────────────────── */}

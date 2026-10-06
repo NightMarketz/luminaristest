@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { normalizeRows } from '../../utils/normalizers';
 import { lineQuantity } from '../../utils/packageSale';
+import { parseDayOrInstant } from '../../utils/periodFilters';
 
 import { SaleRecord, SaleItemRecord, SalesAnalytics } from '../../types/sales.types';
 
@@ -41,7 +42,7 @@ export function useSalesAnalytics(
         const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
         for (const s of salesList) {
-            const d = s.date ? new Date(s.date) : null;
+            const d = s.date ? parseDayOrInstant(String(s.date)) : null;
             if (!d || d < start) continue;
 
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;

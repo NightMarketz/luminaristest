@@ -235,8 +235,10 @@ export class NoActiveAccountingBindingsError extends AppError {
 
 /** Pré-check de consumo (item 4): saldo vencido não paga venda — 400 antes de qualquer escrita. */
 export class PackageBalanceExpiredError extends AppError {
-  constructor(customerId: string, packageId: string, expiresOn: string) {
-    super(`Saldo de pacote vencido em ${expiresOn} (cliente ${customerId}, pacote ${packageId}).`, 400, 'PACKAGE_BALANCE_EXPIRED');
+  /** `expiresOn` = último dia válido, 'YYYY-MM-DD'. A mensagem é a que o operador lê no toast: só a data, DD/MM/AAAA (F-PP-1 a). */
+  constructor(expiresOn: string) {
+    const [y, m, d] = expiresOn.split('-');
+    super(`Saldo de pacote vencido em ${d}/${m}/${y}.`, 400, 'PACKAGE_BALANCE_EXPIRED');
     Object.setPrototypeOf(this, PackageBalanceExpiredError.prototype);
   }
 }
@@ -271,6 +273,32 @@ export class PackageExpiryNfsePendingError extends AppError {
   constructor(movementKey: string, faltantes: string[]) {
     super(`NFS-e do vencimento ${movementKey} pendente: ${faltantes.join('; ')}.`, 409, 'PACKAGE_EXPIRY_NFSE_PENDING');
     Object.setPrototypeOf(this, PackageExpiryNfsePendingError.prototype);
+  }
+}
+
+// ── FE-INCR-PACOTE-VALIDADE (BRIEF §4.4) — aceite da validade do pacote (F-JUR-4): códigos próprios.
+
+/** Item 1: a venda já tem aceite (append-only, um por venda) — 409 antes de qualquer escrita. */
+export class PackageAcceptanceExistsError extends AppError {
+  constructor(saleId: string) {
+    super(`A venda ${saleId} já tem aceite de validade registrado.`, 409, 'PACKAGE_ACCEPTANCE_EXISTS');
+    Object.setPrototypeOf(this, PackageAcceptanceExistsError.prototype);
+  }
+}
+
+/** Item 4: o texto/data mostrados não são mais os que o servidor renderiza agora (hash diferente). */
+export class PackageNoticeChangedError extends AppError {
+  constructor(saleId: string) {
+    super(`O texto da validade mudou entre a exibição e o aceite (venda ${saleId}). Releia e aceite de novo.`, 409, 'PACKAGE_NOTICE_CHANGED');
+    Object.setPrototypeOf(this, PackageNoticeChangedError.prototype);
+  }
+}
+
+/** Itens 4 e 13: pacote sem validade (catálogo `validityDays` ausente ou 0) não tem o que aceitar nem comprovar. */
+export class PackageWithoutValidityError extends AppError {
+  constructor(packageId: string) {
+    super(`O pacote ${packageId} não tem validade: não há texto de validade para aceitar.`, 400, 'PACKAGE_WITHOUT_VALIDITY');
+    Object.setPrototypeOf(this, PackageWithoutValidityError.prototype);
   }
 }
 

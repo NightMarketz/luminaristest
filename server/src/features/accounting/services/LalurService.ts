@@ -23,12 +23,17 @@ import {
   TRIBUTO_PREJUIZO_INDICADOR,
   findLinha,
   findParteBPadrao,
+  isLalurMes,
   isParteALivro,
   isPrejuizoIndicador,
   linhasDoLivro,
-  quarterBounds,
+  periodoBounds,
+  periodoDaForma,
+  periodosParteB,
   vigenteNoAno,
+  type LalurForma,
   type LalurLivro,
+  type LalurPeriodo,
   type LalurQuarter,
   type LalurTributo,
 } from '../models/Lalur.model';
@@ -50,6 +55,8 @@ import type {
 } from '../dtos/LalurDto';
 import type { ILalurRepository, LalurClosingWithBalances, LalurEntryWithRelations, LalurMovementWithRelations } from '../repositories/ILalurRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import { formaEfetiva } from './CompanyFiscalProfileService';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingReportService } from './AccountingReportService';
@@ -76,7 +83,7 @@ export type LalurReportReader = Pick<AccountingReportService, 'incomeStatement' 
 export interface LalurParteBBalancesDiagnostic {
   year: number;
   periods: Array<{
-    quarter: LalurQuarter;
+    quarter: LalurPeriodo;
     closed: boolean;
     closedAt?: string;
     accounts: Array<{
@@ -88,7 +95,7 @@ export interface LalurParteBBalancesDiagnostic {
       divergent: boolean;
     }>;
   }>;
-  divergences: Array<{ quarter: LalurQuarter; codCtaB: string; codTributo: string; field: string; materialized: string; recomputed: string }>;
+  divergences: Array<{ quarter: LalurPeriodo; codCtaB: string; codTributo: string; field: string; materialized: string; recomputed: string }>;
   /**
    * X4-14 (BRIEF 3C item 14, EMENDA §2.4 2026-09-15): ajuste da Parte A com relação contábil (indRelacao
    * 2|3) cujo `valorCents` não iguala nenhum dos 4 agregados K155/K355 da conta no trimestre E que não cita
@@ -97,7 +104,7 @@ export interface LalurParteBBalancesDiagnostic {
    */
   warnings: Array<{
     code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT';
-    quarter: LalurQuarter;
+    quarter: LalurPeriodo;
     livro: string;
     codigo: string;
     entryId: string;
@@ -112,6 +119,13 @@ export interface BalanceView { sdIni: string; vlA: string; vlB: string; sdFim: s
 const view = (b: QuarterBalance): BalanceView => ({ sdIni: String(b.sdIni), vlA: String(b.vlA), vlB: String(b.vlB), sdFim: String(b.sdFim) });
 const BALANCE_FIELDS = ['sdIni', 'vlA', 'vlB', 'sdFim'] as const;
 const qIndex = (q: string) => (LALUR_QUARTERS as readonly string[]).indexOf(q);
+
+/** O que o e-Lalur lê do perfil da empresa no ano (X7 Fase B, BRIEF B item 12): forma efetiva e início de atividade. */
+export type LalurProfileReader = Pick<ICompanyFiscalProfileRepository, 'findByYear'>;
+interface FormaDoAno {
+  forma: LalurForma;
+  inicioAtividadeEm: string | null;
+}
 
 /** Rename-on-key at archive (D-M2): frees the @@unique so the same code can be re-registered. */
 export const deletedLalurCodigo = (id: string, codigo: string) => `deleted:${id}:${codigo}`;
@@ -133,7 +147,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCas
  *
  * What the service proves that the DTO cannot (depends on the catalog fixture, item 9 — every refusal
  * is a 400 carrying the code and the reason, never a silent drop; classe FAIL-1 do PR #66):
- *  - `codigo` exists in the sheet of `livro` (M300A/M350A/N500/N630A/N670);
+ *  - `codigo` exists in the sheet of `livro` (M300A/M350A/N500/N620/N630A/N660/N670);
  *  - the row is an ENTRY line (`tipo = E`) — CNA/CA/R are computed/labels by the PVA (Fork 3→a);
  *  - the row is in force for `year` (DT_INI ≤ year ≤ DT_FIM);
  *  - REGRA_IND_RELACAO (p.247, literal): TIPO_LANCAMENTO = P ⇒ IND_RELACAO = 1;
@@ -152,7 +166,62 @@ export class LalurService {
     private readonly policy: IAccountingPolicy,
     /** DRE YTD closing-exclusive — resultado do trimestre para a base do PF/BC (Fork F-3C-2 a, D-P3.3). */
     private readonly reports: LalurReportReader,
+    /** X7 Fase B (item 12): forma do ano (período × forma, períodos da Parte B, continuidade) e início de atividade. */
+    private readonly profiles: LalurProfileReader,
   ) {}
+
+  // ── Período × forma (X7 Fase B, BRIEF B item 12) ─────────────────────────
+  /**
+   * Forma do e-Lalur no ano: `ANUAL` só com a forma EFETIVA do perfil do ano = `ANUAL`; senão `TRIMESTRAL` — inclusive
+   * sem perfil cadastrado, que é o e-Lalur de antes da Fase B (decisão do dono, 05/10 — lacuna 1 do PR-2).
+   */
+  private async formaDoAno(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<FormaDoAno> {
+    const p = await this.profiles.findByYear(scope, year, tx);
+    return {
+      forma: p && formaEfetiva(p.regime, p.formaApuracaoIrpjCsll) === 'ANUAL' ? 'ANUAL' : 'TRIMESTRAL',
+      inicioAtividadeEm: p?.inicioAtividadeEm ?? null,
+    };
+  }
+
+  /**
+   * Item 12 — gate do período contra o perfil do ano, DENTRO da tx do write (a forma muda até a trava):
+   *  - `T0x` só em `TRIMESTRAL`, `A00..A12` só em `ANUAL`;
+   *  - `A0m` com m antes do mês de início de atividade no ano ⇒ 400 (decisão do dono, 05/10 — lacuna 3 do PR-2: a
+   *    apuração recusa o mês fora de atividade, e a janela do período em curso ficaria invertida).
+   */
+  private async assertPeriodoDoAno(scope: AccountingScope, year: number, periodo: string, tx: Prisma.TransactionClient): Promise<FormaDoAno> {
+    const f = await this.formaDoAno(scope, year, tx);
+    if (!periodoDaForma(periodo, f.forma)) {
+      throw new ValidationError(
+        `Período ${periodo} não pertence à forma ${f.forma} de ${year}: T01..T04 só na forma trimestral, A00..A12 só na anual (perfil fiscal da empresa do ano; X7 BRIEF B item 12).`,
+      );
+    }
+    if (isLalurMes(periodo) && f.inicioAtividadeEm?.startsWith(`${year}-`) && Number(periodo.slice(1)) < Number(f.inicioAtividadeEm.slice(5, 7))) {
+      throw new ValidationError(
+        `Período ${periodo}/${year} é anterior ao início de atividade (${f.inicioAtividadeEm}): o período em curso começa no mês de início (IN RFB 1.700/2017 art. 49 I; X7 BRIEF B item 12).`,
+      );
+    }
+    return f;
+  }
+
+  /** Item 12 — livros do Bloco N por período (Manual da ECF pp.47–48): N620/N660 só em `A01..A12`; N630/N670 nunca neles. */
+  public static assertLivroNoPeriodo(livro: LalurLivro, periodo: string): void {
+    if ((livro === 'n620' || livro === 'n660') && !isLalurMes(periodo)) {
+      throw new ValidationError(`Livro '${livro}' só existe nos meses A01..A12 da forma anual (Manual da ECF pp.47–48); em ${periodo}, use n630/n670.`);
+    }
+    if ((livro === 'n630' || livro === 'n670') && isLalurMes(periodo)) {
+      throw new ValidationError(`Livro '${livro}' só existe em T01..T04 e A00 (Manual da ECF pp.47–48); em ${periodo}, use n620/n660.`);
+    }
+  }
+
+  /** Item 12 (teste 26 a): no balancete não cabe registro na Parte B (IN RFB 1.700 art. 50 II; invariante 7 do ADR). */
+  public static assertSemParteBNoBalancete(periodo: string): void {
+    if (isLalurMes(periodo)) {
+      throw new ValidationError(
+        `Movimento da Parte B em ${periodo} não é permitido: no balancete de suspensão/redução os ajustes ficam só na Parte A, sem registro na Parte B (IN RFB 1.700/2017 art. 50 II) — a Parte B se move no A00.`,
+      );
+    }
+  }
 
   // ── Catalog gate (item 9) ────────────────────────────────────────────────
   /** Resolves (livro, codigo, year) against the fixture; throws 400 with code + reason. */
@@ -256,13 +325,21 @@ export class LalurService {
   /**
    * M312/M362 (Fork F-3C-3 a, D-P3.4): cada `journalEntryId` existe no escopo, está POSTADO (`entryNumber`
    * não-nulo — NUM_LCTO é Obrig.=Sim, p.254; nulo em Draft/PendingApproval) e sua data cai na janela do
-   * trimestre do ajuste. Reversed permanece elegível (lançamento e estorno estão ambos no I200).
+   * trimestre do ajuste. Reversed permanece elegível (lançamento e estorno estão ambos no I200). X7 Fase B (item 12):
+   * a janela é `periodoBounds` — em `A0m`, o período em curso (01/01 ou início de atividade → fim de m).
    */
-  private async validateJournalLinks(scope: AccountingScope, ids: string[], year: number, quarter: string, tx?: Prisma.TransactionClient): Promise<void> {
+  private async validateJournalLinks(
+    scope: AccountingScope,
+    ids: string[],
+    year: number,
+    quarter: string,
+    inicioAtividadeEm: string | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     if (ids.length === 0) return;
     const found = await this.repo.findJournalEntriesForLinks(scope, ids, tx);
     const byId = new Map(found.map((j) => [j.id, j]));
-    const w = quarterWindows(year).find((x) => x.perApur === quarter)!;
+    const w = periodoBounds(year, quarter as LalurPeriodo, inicioAtividadeEm);
     for (const id of ids) {
       const j = byId.get(id);
       if (!j) throw new NotFoundError(`Lançamento contábil '${id}' não foi encontrado.`);
@@ -280,8 +357,27 @@ export class LalurService {
    * Roda DEPOIS do write, dentro da tx (o recompute enxerga a linha nova; lançar aqui desfaz o write).
    */
   private async assertCompensacaoCabe(scope: AccountingScope, year: number, quarter: string, parteBId: string, tx: Prisma.TransactionClient): Promise<void> {
+    if (isLalurMes(quarter)) {
+      // X7 Fase B (item 12, teste 26 g): a Parte B não se move até o A00 (IN RFB 1.700 art. 50 II), então o teto da
+      // compensação no balancete é o saldo da conta no INÍCIO do ano. Cada balancete recalcula do zero (art. 50 I): só
+      // as linhas P do próprio A0m contam, e os meses não somam (decisão do dono, 05/10 — lacuna 4 do PR-2). Sem este
+      // ramo, `rec.get('A0m')` é undefined e a checagem passaria em silêncio.
+      const accounts = await this.accountsOfYear(scope, year, tx);
+      const opening = await this.openingBalances(scope, year, accounts, tx);
+      const movesP: ParteAMove[] = (await this.repo.findEntriesForYear(scope, year, tx))
+        .filter((e) => e.quarter === quarter && e.parteBId === parteBId && isParteALivro(e.livro) && findLinha(e.livro, e.codigo)?.tipoLanc === 'P')
+        .map((e) => ({ parteBId, tipoLanc: 'P', valorCents: e.valorCents }));
+      const b = computeQuarter([parteBId], opening, movesP, []).get(parteBId)!;
+      if (b.sdFim < 0n) {
+        const acc = await this.repo.findParteBById(scope, parteBId, tx);
+        throw new ValidationError(
+          `Compensação excede o saldo da conta da Parte B '${acc?.codCtaB ?? parteBId}' no início de ${year} (${quarter}/${year}): saldo ficaria ${toMagnitude(b.sdFim).cents} C — no balancete a Parte B não se move até o A00 (IN RFB 1.700 art. 50 II; X7 BRIEF B item 12).`,
+        );
+      }
+      return;
+    }
     const rec = await this.recomputeYear(scope, year, tx);
-    const b = rec.get(quarter as LalurQuarter)?.get(parteBId);
+    const b = rec.get(quarter as LalurPeriodo)?.get(parteBId);
     if (b && b.sdFim < 0n) {
       const acc = await this.repo.findParteBById(scope, parteBId, tx);
       throw new ValidationError(
@@ -318,12 +414,14 @@ export class LalurService {
       parteBId: dto.parteBId ?? null,
       accountId: dto.accountId ?? null,
     };
+    LalurService.assertLivroNoPeriodo(dto.livro, dto.quarter);
     LalurService.resolveLinha(dto.livro, dto.codigo, dto.year); // catálogo: fora da tx (fixture, não estado)
     const { userId, unitId } = accountingScopeWhere(scope);
     try {
       return await this.repo.runTransaction(async (tx) => {
+        const { inicioAtividadeEm } = await this.assertPeriodoDoAno(scope, dto.year, dto.quarter, tx); // X7 item 12, em-tx
         await this.validateLineRefs(scope, line, tx); // item 16: refs re-lidas DENTRO da tx
-        await this.validateJournalLinks(scope, dto.journalEntryIds ?? [], dto.year, dto.quarter, tx);
+        await this.validateJournalLinks(scope, dto.journalEntryIds ?? [], dto.year, dto.quarter, inicioAtividadeEm, tx);
         const created = await this.repo.createEntry(
           {
             userId,
@@ -399,8 +497,9 @@ export class LalurService {
     };
 
     return this.repo.runTransaction(async (tx) => {
+      const { inicioAtividadeEm } = await this.assertPeriodoDoAno(scope, existing.year, existing.quarter, tx); // X7 item 12
       await this.validateLineRefs(scope, refs, tx); // item 16
-      await this.validateJournalLinks(scope, dto.journalEntryIds ?? [], existing.year, existing.quarter, tx);
+      await this.validateJournalLinks(scope, dto.journalEntryIds ?? [], existing.year, existing.quarter, inicioAtividadeEm, tx);
       const updated = await this.repo.updateEntry(
         scope,
         id,
@@ -615,7 +714,9 @@ export class LalurService {
   async createMovement(scope: AccountingScope, dto: CreateLalurParteBMovementInput): Promise<LalurParteBMovement> {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const { userId, unitId } = accountingScopeWhere(scope);
+    LalurService.assertSemParteBNoBalancete(dto.quarter);
     return this.repo.runTransaction(async (tx) => {
+      await this.assertPeriodoDoAno(scope, dto.year, dto.quarter, tx); // X7 item 12, em-tx
       const conta = await this.repo.findParteBById(scope, dto.parteBId, tx);
       if (!conta || conta.deletedAt) throw new NotFoundError(`Conta da Parte B '${dto.parteBId}' não foi encontrada.`);
       if (dto.contrapartidaId) await this.validateContrapartida(scope, conta, dto.contrapartidaId, tx);
@@ -665,7 +766,9 @@ export class LalurService {
     };
     const check = z.object({}).passthrough().superRefine((_, ctx) => refineLalurMovement(merged, ctx)).safeParse({});
     if (!check.success) throw new ValidationError(check.error.issues.map((i) => i.message).join(' '));
+    LalurService.assertSemParteBNoBalancete(existing.quarter);
     return this.repo.runTransaction(async (tx) => {
+      await this.assertPeriodoDoAno(scope, existing.year, existing.quarter, tx); // X7 item 12
       const conta = await this.repo.findParteBById(scope, existing.parteBId, tx);
       if (!conta || conta.deletedAt) throw new NotFoundError(`Conta da Parte B '${existing.parteBId}' não foi encontrada.`);
       if (merged.contrapartidaId) await this.validateContrapartida(scope, conta, merged.contrapartidaId, tx);
@@ -748,44 +851,57 @@ export class LalurService {
   }
 
   /**
-   * C3 — sdIni(N, T01) por conta: `balance(N−1, T04).sdFim` se o T04 de N−1 estiver fechado; senão a coluna
-   * (âncora). Guarda de continuidade: existe fechamento em exercício < N e (N−1, T04) NÃO está fechado ⇒ 400.
+   * C3 — sdIni(N, 1º período) por conta: `balance(N−1, último período).sdFim` se ele estiver fechado; senão a coluna
+   * (âncora). Guarda de continuidade: existe fechamento em exercício < N e o último período de N−1 NÃO está fechado
+   * ⇒ 400. X7 Fase B (item 12): o último período de N−1 segue a forma de N−1 (`T04` ou `A00`), e a de N pode ser outra.
    */
   public async openingBalances(scope: AccountingScope, year: number, accounts: LalurParteBAccount[], tx?: Prisma.TransactionClient): Promise<Map<string, bigint>> {
-    const prev = await this.repo.findClosing(scope, year - 1, 'T04', tx);
+    const formaAnt = (await this.formaDoAno(scope, year - 1, tx)).forma;
+    const ultimo = periodosParteB(formaAnt).at(-1)!;
+    const prev = await this.repo.findClosing(scope, year - 1, ultimo, tx);
     if (!prev && (await this.repo.existsClosingBefore(scope, year, tx))) {
       throw new ValidationError(
-        `Feche os quatro trimestres de ${year - 1} antes de operar a Parte B de ${year}: o saldo inicial de ${year} é o saldo final de ${year - 1}/T04 (Manual p.271, REGRA_SALDOS_M010_E020).`,
+        formaAnt === 'ANUAL'
+          ? `Feche o A00 de ${year - 1} antes de operar a Parte B de ${year}: o saldo inicial de ${year} é o saldo final de ${year - 1}/A00 (Manual p.271, REGRA_SALDOS_M010_E020).`
+          : `Feche os quatro trimestres de ${year - 1} antes de operar a Parte B de ${year}: o saldo inicial de ${year} é o saldo final de ${year - 1}/T04 (Manual p.271, REGRA_SALDOS_M010_E020).`,
       );
     }
     const fromPrev = new Map(prev?.balances.map((b) => [b.parteBId, signed(b.sdFimCents, b.indSdFim)]) ?? []);
     return new Map(accounts.map((a) => [a.id, fromPrev.get(a.id) ?? LalurService.anchorOpening(a, year)]));
   }
 
-  /** Movimentos do exercício agrupados por trimestre, já na forma da aritmética pura. */
-  private movesByQuarter(entries: LalurEntryWithRelations[], movements: LalurMovementWithRelations[]) {
-    const out = new Map<LalurQuarter, { movesA: ParteAMove[]; movesB: ParteBMove[] }>(LALUR_QUARTERS.map((q) => [q, { movesA: [], movesB: [] }]));
+  /**
+   * Movimentos do exercício agrupados pelos períodos da Parte B (`T01..T04` ou `[A00]`), já na forma da aritmética
+   * pura. Na forma anual, as linhas dos `A0m` ficam de fora: a Parte B não se move no balancete (IN RFB 1.700 art. 50 II).
+   */
+  private movesByQuarter(entries: LalurEntryWithRelations[], movements: LalurMovementWithRelations[], periods: readonly LalurPeriodo[]) {
+    const out = new Map<LalurPeriodo, { movesA: ParteAMove[]; movesB: ParteBMove[] }>(periods.map((q) => [q, { movesA: [], movesB: [] }]));
     for (const e of entries) {
-      if (!e.parteBId || !isParteALivro(e.livro)) continue;
+      if (!e.parteBId || !isParteALivro(e.livro) || !out.has(e.quarter as LalurPeriodo)) continue;
       const row = findLinha(e.livro, e.codigo);
       if (!row?.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo (livro ${e.livro}).`);
-      out.get(e.quarter as LalurQuarter)?.movesA.push({ parteBId: e.parteBId, tipoLanc: row.tipoLanc, valorCents: e.valorCents });
+      out.get(e.quarter as LalurPeriodo)!.movesA.push({ parteBId: e.parteBId, tipoLanc: row.tipoLanc, valorCents: e.valorCents });
     }
     for (const m of movements) {
-      out.get(m.quarter as LalurQuarter)?.movesB.push({ parteBId: m.parteBId, contrapartidaId: m.contrapartidaId, indicador: m.indicador, valorCents: m.valorCents });
+      out.get(m.quarter as LalurPeriodo)?.movesB.push({ parteBId: m.parteBId, contrapartidaId: m.contrapartidaId, indicador: m.indicador, valorCents: m.valorCents });
     }
     return out;
   }
 
-  /** Recompute encadeado do exercício inteiro a partir da abertura (C3) sobre o store ATUAL — o lado "recomputed" do diagnóstico. */
-  public async recomputeYear(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<Map<LalurQuarter, Map<string, QuarterBalance>>> {
+  /**
+   * Recompute encadeado do exercício inteiro a partir da abertura (C3) sobre o store ATUAL — o lado "recomputed" do
+   * diagnóstico. X7 Fase B (item 12): itera os períodos da Parte B da forma do ano.
+   */
+  public async recomputeYear(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<Map<LalurPeriodo, Map<string, QuarterBalance>>> {
+    const periods = periodosParteB((await this.formaDoAno(scope, year, tx)).forma);
     const accounts = await this.accountsOfYear(scope, year, tx);
     const opening = await this.openingBalances(scope, year, accounts, tx);
-    const byQ = this.movesByQuarter(await this.repo.findEntriesForYear(scope, year, tx), await this.repo.findMovementsForYear(scope, year, tx));
+    const byQ = this.movesByQuarter(await this.repo.findEntriesForYear(scope, year, tx), await this.repo.findMovementsForYear(scope, year, tx), periods);
     return chainYear(
       accounts.map((a) => a.id),
       opening,
-      LALUR_QUARTERS.map((q) => ({ quarter: q, ...byQ.get(q)! })),
+      periods.map((q) => ({ quarter: q, ...byQ.get(q)! })),
+      periods,
     );
   }
 
@@ -793,11 +909,12 @@ export class LalurService {
    * Resultado contábil do trimestre (D-P3.3): DRE YTD closing-exclusive, fim T − fim T−1. Lido FORA da tx do
    * fechamento — o razão não é escrito por ela (D-P4) e o report service usa o client fora da tx.
    */
-  private async resultadoDoTrimestre(scope: AccountingScope, year: number, quarter: LalurQuarter): Promise<bigint> {
+  private async resultadoDoTrimestre(scope: AccountingScope, year: number, quarter: LalurPeriodo): Promise<bigint> {
     const windows = quarterWindows(year);
-    const qi = qIndex(quarter);
+    // X7 Fase B (item 12): o `A00` é o ano — o YTD em 31/12, sem período anterior a descontar.
+    const qi = quarter === 'A00' ? 3 : qIndex(quarter);
     const ytd = BigInt((await this.reports.incomeStatement(scope, windows[qi].to)).netResult.amountCents);
-    const prev = qi === 0 ? 0n : BigInt((await this.reports.incomeStatement(scope, windows[qi - 1].to)).netResult.amountCents);
+    const prev = qi === 0 || quarter === 'A00' ? 0n : BigInt((await this.reports.incomeStatement(scope, windows[qi - 1].to)).netResult.amountCents);
     return ytd - prev;
   }
 
@@ -806,7 +923,7 @@ export class LalurService {
    * linhas vivas do livro do tributo no período. `P` e `L` não entram. `entries` vêm da MESMA leitura em-tx que
    * alimenta os saldos (review M4: base e vlA de um só snapshot).
    */
-  public static baseDoTributo(resultado: bigint, quarter: LalurQuarter, tributo: LalurTributo, entries: LalurEntryWithRelations[]): bigint {
+  public static baseDoTributo(resultado: bigint, quarter: LalurPeriodo, tributo: LalurTributo, entries: LalurEntryWithRelations[]): bigint {
     let base = resultado;
     const livro = TRIBUTO_LIVRO[tributo];
     for (const e of entries) {
@@ -825,23 +942,28 @@ export class LalurService {
   async closeParteB(scope: AccountingScope, dto: LalurParteBPeriodInput): Promise<LalurClosingWithBalances> {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const { year, quarter } = dto;
-    const qi = qIndex(quarter);
+    LalurService.assertParteBFechaNoPeriodo(quarter);
     // Só o RESULTADO vem de fora da tx (razão); as linhas A/E entram em-tx junto com os saldos (M4).
     const resultado = await this.resultadoDoTrimestre(scope, year, quarter);
 
     const { userId, unitId } = accountingScopeWhere(scope);
     return this.repo.runTransaction(async (tx) => {
+      const { forma } = await this.assertPeriodoDoAno(scope, year, quarter, tx); // X7 item 12, em-tx
+      const periods = periodosParteB(forma);
+      const qi = periods.indexOf(quarter);
       const closings = await this.repo.findClosingsForYear(scope, year, tx);
       const byQ = new Map(closings.map((c) => [c.quarter, c]));
-      const later = LALUR_QUARTERS.slice(qi + 1).find((q) => byQ.has(q));
+      const later = periods.slice(qi + 1).find((q) => byQ.has(q));
       if (later) throw new ValidationError(`${later}/${year} já está fechado — reabra-o antes de (re)fechar ${quarter}/${year} (ordem limpa, p.271).`);
-      // M3: "período posterior" cruza o exercício — o T04 de N é o sdIni do T01 de N+1 (C3).
-      if (quarter === 'T04' && (await this.repo.findClosing(scope, year + 1, 'T01', tx))) {
-        throw new ValidationError(`T01/${year + 1} já está fechado sobre o saldo final de T04/${year} — reabra-o antes de refechar T04/${year} (REGRA_SALDOS_M010_E020, p.237).`);
+      // M3: "período posterior" cruza o exercício — o último período de N é o sdIni do 1º de N+1 (C3); X7 item 12:
+      // cada ano na sua forma (T04 ou A00 → T01 ou A00).
+      const primeiroSeguinte = qi === periods.length - 1 ? await this.primeiroPeriodoFechado(scope, year + 1, tx) : null;
+      if (primeiroSeguinte) {
+        throw new ValidationError(`${primeiroSeguinte}/${year + 1} já está fechado sobre o saldo final de ${quarter}/${year} — reabra-o antes de refechar ${quarter}/${year} (REGRA_SALDOS_M010_E020, p.237).`);
       }
       const entriesTx = await this.repo.findEntriesForYear(scope, year, tx);
       const bases = new Map<LalurTributo, bigint>(LALUR_TRIBUTOS.map((t) => [t, LalurService.baseDoTributo(resultado, quarter, t, entriesTx)]));
-      const prevQ = qi > 0 ? LALUR_QUARTERS[qi - 1] : null;
+      const prevQ = qi > 0 ? periods[qi - 1] : null;
       if (prevQ && !byQ.has(prevQ)) throw new ValidationError(`Feche ${prevQ}/${year} antes de ${quarter}/${year}: o saldo inicial do período é o saldo final do anterior (Manual p.271).`);
 
       const accounts = await this.accountsOfYear(scope, year, tx);
@@ -892,7 +1014,7 @@ export class LalurService {
       }
 
       // ── Saldos do período (item 7) ──
-      const byQuarter = this.movesByQuarter(await this.repo.findEntriesForYear(scope, year, tx), await this.repo.findMovementsForYear(scope, year, tx));
+      const byQuarter = this.movesByQuarter(await this.repo.findEntriesForYear(scope, year, tx), await this.repo.findMovementsForYear(scope, year, tx), periods);
       const { movesA, movesB } = byQuarter.get(quarter)!;
       const balances = computeQuarter(accounts.map((a) => a.id), sdIni, movesA, movesB);
       // item 13: conta que recebeu compensação (P) não pode virar credora
@@ -932,15 +1054,17 @@ export class LalurService {
   async reopenParteB(scope: AccountingScope, dto: LalurParteBPeriodInput): Promise<{ year: number; quarter: string; reopened: true }> {
     if (!this.policy.canManageLalur(scope)) throw new ForbiddenError('Você não tem permissão para gerir o e-Lalur.');
     const { year, quarter } = dto;
-    const qi = qIndex(quarter);
     return this.repo.runTransaction(async (tx) => {
+      const periods = periodosParteB((await this.assertPeriodoDoAno(scope, year, quarter, tx)).forma); // X7 item 12
+      const qi = periods.indexOf(quarter);
       const closings = await this.repo.findClosingsForYear(scope, year, tx);
       const target = closings.find((c) => c.quarter === quarter);
       if (!target) throw new NotFoundError(`${quarter}/${year} não está fechado.`);
-      const later = LALUR_QUARTERS.slice(qi + 1).find((q) => closings.some((c) => c.quarter === q));
+      const later = periods.slice(qi + 1).find((q) => closings.some((c) => c.quarter === q));
       if (later) throw new ValidationError(`${later}/${year} está fechado — reabra-o antes de reabrir ${quarter}/${year} (ordem limpa, p.271).`);
-      if (quarter === 'T04' && (await this.repo.findClosing(scope, year + 1, 'T01', tx))) {
-        throw new ValidationError(`T01/${year + 1} está fechado sobre o saldo final de T04/${year} — reabra-o antes (ordem limpa cruza o exercício, C3).`);
+      const primeiroSeguinte = qi === periods.length - 1 ? await this.primeiroPeriodoFechado(scope, year + 1, tx) : null;
+      if (primeiroSeguinte) {
+        throw new ValidationError(`${primeiroSeguinte}/${year + 1} está fechado sobre o saldo final de ${quarter}/${year} — reabra-o antes (ordem limpa cruza o exercício, C3).`);
       }
       await this.repo.deleteClosing(target.id, tx);
       await this.auditService.append(tx, scope, {
@@ -963,14 +1087,28 @@ export class LalurService {
     return this.diagnoseYear(scope, params.year);
   }
 
+  /** X7 item 12 — o 1º período da Parte B de `year` (na forma DAQUELE ano), se estiver fechado; senão null. */
+  private async primeiroPeriodoFechado(scope: AccountingScope, year: number, tx: Prisma.TransactionClient): Promise<LalurPeriodo | null> {
+    const primeiro = periodosParteB((await this.formaDoAno(scope, year, tx)).forma)[0];
+    return (await this.repo.findClosing(scope, year, primeiro, tx)) ? primeiro : null;
+  }
+
+  /** X7 item 12 — a Parte B não fecha em `A01..A12`: no balancete não há registro nela (IN RFB 1.700 art. 50 II). */
+  public static assertParteBFechaNoPeriodo(periodo: string): void {
+    if (isLalurMes(periodo)) {
+      throw new ValidationError(`A Parte B não fecha em ${periodo}: na forma anual ela só se move e fecha no A00 (IN RFB 1.700/2017 art. 50 II; X7 BRIEF B item 12).`);
+    }
+  }
+
   public async diagnoseYear(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<LalurParteBBalancesDiagnostic> {
     const closings = await this.repo.findClosingsForYear(scope, year, tx);
     const byQ = new Map(closings.map((c) => [c.quarter, c]));
     const accounts = await this.accountsOfYear(scope, year, tx);
     const accById = new Map(accounts.map((a) => [a.id, a]));
     const recomputed = await this.recomputeYear(scope, year, tx);
+    const { forma, inicioAtividadeEm } = await this.formaDoAno(scope, year, tx);
     const out: LalurParteBBalancesDiagnostic = { year, periods: [], divergences: [], warnings: [] };
-    for (const quarter of LALUR_QUARTERS) {
+    for (const quarter of periodosParteB(forma)) {
       const closing = byQ.get(quarter);
       const rec = recomputed.get(quarter) ?? new Map<string, QuarterBalance>();
       const mat = new Map(closing?.balances.map((b) => [b.parteBId, { parteBId: b.parteBId, sdIni: signed(b.sdIniCents, b.indSdIni), vlA: signed(b.vlParteACents, b.indVlParteA), vlB: signed(b.vlParteBCents, b.indVlParteB), sdFim: signed(b.sdFimCents, b.indSdFim) } as QuarterBalance]) ?? []);
@@ -1001,7 +1139,7 @@ export class LalurService {
       });
       out.periods.push({ quarter, closed: Boolean(closing), closedAt: closing?.closedAt.toISOString(), accounts: rows });
     }
-    out.warnings = await this.partialAdjustmentWarnings(scope, year, tx);
+    out.warnings = await this.partialAdjustmentWarnings(scope, year, inicioAtividadeEm, tx);
     return out;
   }
 
@@ -1009,6 +1147,7 @@ export class LalurService {
   private async partialAdjustmentWarnings(
     scope: AccountingScope,
     year: number,
+    inicioAtividadeEm: string | null,
     tx?: Prisma.TransactionClient,
   ): Promise<LalurParteBBalancesDiagnostic['warnings']> {
     const entries = await this.repo.findEntriesForYear(scope, year, tx);
@@ -1019,7 +1158,7 @@ export class LalurService {
       if (!e.accountId || !e.account || !isParteALivro(e.livro as LalurLivro) || e.journalLinks.length > 0) continue;
       let quarterAgg = byQuarter.get(e.quarter);
       if (!quarterAgg) {
-        const { from, to } = quarterBounds(year, e.quarter as LalurQuarter);
+        const { from, to } = periodoBounds(year, e.quarter as LalurPeriodo, inicioAtividadeEm); // X7 item 12: A0m = período em curso
         quarterAgg = await this.reports.accountAggregates(scope, from, to);
         byQuarter.set(e.quarter, quarterAgg);
       }
@@ -1035,7 +1174,7 @@ export class LalurService {
       if (candidates.includes(valor)) continue;
       warnings.push({
         code: 'M312_MISSING_FOR_PARTIAL_ADJUSTMENT',
-        quarter: e.quarter as LalurQuarter,
+        quarter: e.quarter as LalurPeriodo,
         livro: e.livro,
         codigo: e.codigo,
         entryId: e.id,
