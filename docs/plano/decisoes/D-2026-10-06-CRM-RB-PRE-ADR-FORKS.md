@@ -29,6 +29,7 @@ Origem: `docs/adr/PRE-ADR-CRM-REPORT-BUILDER.md` §3 (PR #550). O PRE-ADR passa 
 - **6º achado (A6):** com várias medidas o agregador soma tudo num único `value` (`AggregatePipelineProcessor.ts:319-350`).
 - **Forks novos PENDENTES:** F-RB9 (`sort` por medida: implementar × recusar), F-RB10 (várias medidas), F-RB11 (fuso de
   `datetime`/`_createdAt`). O nó segue `planned` até a ratificação deles; o perfil `opus-medio` vale depois.
+  **Ratificados no mesmo dia** (F-RB9 a, F-RB10 a, F-RB11 b): [[D-2026-10-06-CRM-RB-EMENDA-FORKS]].
 - Correção ao PRE-ADR: `closedAt` é `datetime`, não só-dia (`OpportunitiesModule.ts:113`); o exemplo "ganhos por mês"
   cai no F-RB11, não na regra do dia escrito.
 - O conserto do valor de pipeline na visão geral (`useCrmData.ts`) nasce como instrumentação → correção, fora do CRM-RB,
