@@ -9,6 +9,7 @@ import {
   TaxAssessmentPreviewSchema,
   TaxAssessmentScopeQuerySchema,
 } from '../features/accounting/dtos/TaxAssessmentDto';
+import { PisCofinsConfirmSchema, PisCofinsPreviewSchema } from '../features/accounting/dtos/PisCofinsDto';
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, itens 13, 14, 17) — borda HTTP fina: auth → Zod safeParse → escopo →
@@ -81,6 +82,34 @@ export const reconcileTaxAssessmentProvisao = async (req: Request, res: Response
     if (!b.success) return bad(res, b.error.flatten());
     const data = await getFactory().getTaxAssessmentService().reconcileProvisao(resolveAccountingScope(user, b.data.unitId), req.params.id);
     return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/accounting/tax-assessments/pis-cofins/preview — PIS/Cofins do mês (X8 PR-2, item 13); não persiste. */
+export const previewPisCofins = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const b = PisCofinsPreviewSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await getFactory().getPisCofinsAssessmentService().preview(resolveAccountingScope(user, b.data.unitId), b.data);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** POST /api/accounting/tax-assessments/pis-cofins — confirmação de PIS/Cofins do mês (X8 PR-2, item 14, commit 1). */
+export const confirmPisCofins = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const b = PisCofinsConfirmSchema.safeParse(req.body);
+    if (!b.success) return bad(res, b.error.flatten());
+    const data = await getFactory().getPisCofinsAssessmentService().confirm(resolveAccountingScope(user, b.data.unitId), b.data);
+    return res.status(201).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

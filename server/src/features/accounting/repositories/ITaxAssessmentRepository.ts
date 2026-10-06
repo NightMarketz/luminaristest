@@ -29,6 +29,8 @@ export interface CreateTaxAssessmentData {
 export interface TaxAssessmentFilter {
   anoCalendario: number;
   periodo?: string;
+  /** X8 PR-2 (BRIEF X8 item 16): IRPJ | CSLL | PIS | COFINS. */
+  tributo?: string;
   status?: string;
 }
 

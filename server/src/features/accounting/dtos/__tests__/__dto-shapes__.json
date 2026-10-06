@@ -7885,6 +7885,333 @@
       ]
     }
   },
+  "PisCofinsDto.ts": {
+    "PisCofinsPreviewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 2026
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ]
+        },
+        "ajustesBase": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "ALIQUOTA_ZERO_REVENDA",
+                  "COTA_PARTE_PARCEIRO"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tipo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "outrosCreditos": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inciso": {
+                "type": "string",
+                "enum": [
+                  "III_ENERGIA",
+                  "IV_ALUGUEL_PJ",
+                  "V_ARRENDAMENTO",
+                  "VI_VII_DEPRECIACAO",
+                  "IX_FRETE_VENDA"
+                ]
+              },
+              "baseCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "inciso",
+              "baseCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "retencoes": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "PIS",
+                  "COFINS"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tributo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "saldoCredorAnterior": {
+          "type": "object",
+          "properties": {
+            "PIS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "COFINS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          },
+          "required": [
+            "PIS",
+            "COFINS"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo"
+      ],
+      "additionalProperties": false
+    },
+    "PisCofinsConfirmSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 2026
+        },
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ]
+        },
+        "ajustesBase": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tipo": {
+                "type": "string",
+                "enum": [
+                  "ALIQUOTA_ZERO_REVENDA",
+                  "COTA_PARTE_PARCEIRO"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tipo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "outrosCreditos": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "inciso": {
+                "type": "string",
+                "enum": [
+                  "III_ENERGIA",
+                  "IV_ALUGUEL_PJ",
+                  "V_ARRENDAMENTO",
+                  "VI_VII_DEPRECIACAO",
+                  "IX_FRETE_VENDA"
+                ]
+              },
+              "baseCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "inciso",
+              "baseCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "retencoes": {
+          "default": [],
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "PIS",
+                  "COFINS"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "documento": {
+                "type": "string",
+                "maxLength": 120
+              }
+            },
+            "required": [
+              "tributo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "saldoCredorAnterior": {
+          "type": "object",
+          "properties": {
+            "PIS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "COFINS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          },
+          "required": [
+            "PIS",
+            "COFINS"
+          ],
+          "additionalProperties": false
+        },
+        "expectedAPagarCents": {
+          "type": "object",
+          "properties": {
+            "PIS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "COFINS": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            }
+          },
+          "required": [
+            "PIS",
+            "COFINS"
+          ],
+          "additionalProperties": false
+        },
+        "supersedesIds": {
+          "maxItems": 2,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "periodo",
+        "expectedAPagarCents"
+      ],
+      "additionalProperties": false
+    }
+  },
   "PostingDto.ts": {
     "PostEntryLineSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -11012,7 +11339,28 @@
             "A09",
             "A10",
             "A11",
-            "A12"
+            "A12",
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ]
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRPJ",
+            "CSLL",
+            "PIS",
+            "COFINS"
           ]
         },
         "status": {

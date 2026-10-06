@@ -114,6 +114,7 @@ import { AccountantAssignmentService } from '../features/accounting/services/Acc
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
+import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
 import { InventoryService } from '../features/accounting/services/InventoryService';
@@ -526,6 +527,7 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
+    pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
     accountantAssignment: AccountantAssignmentService; // GOV-CONTADOR
@@ -1247,6 +1249,17 @@ export class ApplicationFactory {
         postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
         this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       ),
+      // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
+      pisCofinsAssessment: new PisCofinsAssessmentService(
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.account,
+        this.repositories.posting,
+        this.repositories.payable, // item 6 (PR-1): crédito de PIS/Cofins das NF-e do mês, só leitura
+        this.policies.accounting,
+        auditService,
+      ),
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,
         this.repositories.account,
@@ -1443,6 +1456,7 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
+  public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;
   public getAccountingReviewService = (): AccountingReviewService => this.services.accountingReview;

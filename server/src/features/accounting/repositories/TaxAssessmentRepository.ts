@@ -18,6 +18,7 @@ export class TaxAssessmentRepository implements ITaxAssessmentRepository {
         userId: ownerUserId,
         anoCalendario: filter.anoCalendario,
         ...(filter.periodo ? { periodo: filter.periodo } : {}),
+        ...(filter.tributo ? { tributo: filter.tributo } : {}),
         ...(filter.status ? { status: filter.status } : {}),
         deletedAt: null,
       },

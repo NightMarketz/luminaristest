@@ -13,6 +13,9 @@
 > **Simples** (400 aqui). O X8 é régua de ~3 meses de fato gerador. Pelo F-X8-1 → (a), **não há gerador de
 > EFD-Contribuições**: a saída é a apuração persistida, a provisão no razão e o valor para o X9. Um teste verde prova a
 > aritmética contra a tabela, não contra a lei — o oráculo é o contador (ADR §9 item 4).
+>
+> **EMENDA 06/10 (§7):** 8 leituras estritas do PR-2 ratificadas pelo dono; o PR-2 (#554) só entra em `main` junto com o
+> PR-3 (risco D6). [D-2026-10-06-X8-PR2-LACUNAS-E-MERGE](../plano/decisoes/D-2026-10-06-X8-PR2-LACUNAS-E-MERGE.md).
 
 ---
 
@@ -290,3 +293,24 @@ e o reconcile do X7, reusados).
    3 meses já estiverem provisionados. O X7 não avisa disso. Registro para o X7, sem mudança aqui.
 2. **Salão-parceiro na origem** (ADR §11 item 1) e **pneus 40.11/40.13** fora da tabela monofásica (ADR §11 item 2).
 3. **Gerador de EFD-Contribuições** — diferido pelo F-X8-1 → (a); volta só com autorização nova.
+
+## 7. EMENDA 06/10 — leituras do PR-2 ratificadas e ordem de merge
+
+**Autorização:** dono, chat, 2026-10-06, questionário — ratifica as 8 leituras estritas que o executor do PR-2 (#554) fez
+das lacunas desta spec (`.claude/retornos/x8-pis-cofins-pr2.md`, "Lacunas de spec") e decide o risco D6. Registro:
+[D-2026-10-06-X8-PR2-LACUNAS-E-MERGE](../plano/decisoes/D-2026-10-06-X8-PR2-LACUNAS-E-MERGE.md). Não reabre F-PCB-1..5.
+
+| # | Lacuna (item) | Leitura ratificada |
+|---|---|---|
+| 1 | "1º mês apurado" (item 11) | M(x−1) não confirmado **e** nenhum mês anterior confirmado no mesmo ano. Janeiro sem dezembro anterior conta como 1º mês (o operador informa o saldo). Confirmar um mês **anterior** a um já confirmado ⇒ 409 "de trás para frente" (generaliza o item 14) |
+| 2 | Ordem (itens 11 e 13) | O 409 de ordem vale também na **prévia**, não só na confirmação (sem M(x−1) não há saldo credor) |
+| 3 | Perfil fiscal (item 9) | Perfil fiscal da **unidade** ausente ⇒ 400 (a spec listava só o da PJ) |
+| 4 | `provisaoContasConfiguradas` (item 13) | No não cumulativo, exige as 4 contas **e** `pisCofinsRecuperavelAccountId` ("PIS/Cofins a recuperar"), que o PR-3 credita |
+| 5 | Crédito anterior no cumulativo (itens 8 e 11) | `saldoCredorAnterior` informado > 0 no cumulativo ⇒ 400; saldo **lido** > 0 no cumulativo (troca de regime entre anos) é ignorado com aviso |
+| 6 | Memória (§2) | Linhas `AJUSTE_*_n`, `CREDITO_<INCISO>_n`, `RETENCAO_n`, `RETENCAO_EXCEDENTE`, `CREDITO_NFE` agregado (contagem de notas na descrição); `deducoesCents` = créditos + retenções |
+| 7 | Shape da resposta (itens 13–14) | Prévia e confirmação com chaves `pis`/`cofins` (o X7 usa `irpj`/`csll`) |
+| 8 | Colunas gravadas (item 12) | `TaxAssessment.regime` = regime da PJ do ano; `tabelaVersao` = `pis-cofins-2026-10-06` |
+
+**Risco D6 e ordem de merge (decisão do dono):** até o PR-3 (itens 17–19), uma apuração confirmada com débito > 0 fica sem
+provisão e bloqueia o encerramento do ano (`ExerciseClosingService`), e o reconcile a recusa (guarda D4). Decisão:
+*"Mergear PR-2 e PR-3 juntos"* — **o PR-2 (#554) não entra em `main` antes do PR-3 do X8.**
