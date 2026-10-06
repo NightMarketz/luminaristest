@@ -760,6 +760,20 @@ export class ApplicationFactory {
       this.repositories.journalEntry,
       this.policies.accounting
     );
+    // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
+    const taxAssessmentService = new TaxAssessmentService(
+      this.repositories.taxAssessment,
+      this.repositories.companyFiscalProfile,
+      this.repositories.fiscalProfile,
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.lalur,
+      accountingReportService,
+      this.policies.accounting,
+      auditService,
+      postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
+      this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
+    );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
     // só para VALIDAR `accountId` (M310.COD_CTA ∈ J050); nunca posta no razão. ECF 3C (Fork F-3C-2 a):
@@ -1236,19 +1250,7 @@ export class ApplicationFactory {
         auditService,
       ),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
-      taxAssessment: new TaxAssessmentService(
-        this.repositories.taxAssessment,
-        this.repositories.companyFiscalProfile,
-        this.repositories.fiscalProfile,
-        this.repositories.account,
-        this.repositories.posting,
-        this.repositories.lalur,
-        accountingReportService,
-        this.policies.accounting,
-        auditService,
-        postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
-        this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
-      ),
+      taxAssessment: taxAssessmentService,
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: new PisCofinsAssessmentService(
         this.repositories.taxAssessment,
@@ -1259,6 +1261,7 @@ export class ApplicationFactory {
         this.repositories.payable, // item 6 (PR-1): crédito de PIS/Cofins das NF-e do mês, só leitura
         this.policies.accounting,
         auditService,
+        taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
       ),
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,
