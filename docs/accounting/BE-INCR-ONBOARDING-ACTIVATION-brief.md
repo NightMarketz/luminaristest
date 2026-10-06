@@ -7,12 +7,44 @@
 > `D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE`):** F-I4-1 → **(a)** · F-I4-2 → **(b)** · F-I4-3 → **(a)** ·
 > F-I5-1 → **(a)** · F-I5-2 → **(b)**.
 >
-> **Forks novos, abertos por esta leitura (RATIFICAÇÃO PENDENTE):** F-I4-4 (recarga dos mappers depois da
-> ativação), F-I4-5 (o wizard mostra o resultado contábil?), F-I5-3 (quando um miss é `NO_MAPPER_FOR_UNIT`),
-> F-I5-4 (forma da tela). **Nenhum se auto-ratifica.** O F-I4-4 decide se o I4 cumpre o objetivo: sem ele, a
+> **Forks ratificados (dono, chat, 2026-10-06, por questionário —
+> [`D-2026-10-06-I5-FORKS-F-I5-3-4`](../plano/decisoes/D-2026-10-06-I5-FORKS-F-I5-3-4.md)):** F-I5-3 → **(a)**
+> *"Todo miss de mapper"* — **contra a recomendação (b)** · F-I5-4 → **(a)** aba "Pendências" (recomendação).
+> Consequências do F-I5-3 (a) aplicadas nos itens 2, 3, 4, 18 e na §4; tensão com a memória
+> `erro-especifico-para-skip-em-job` escrita na §5. Fatos novos de `main` (#483) na **EMENDA 06/10** abaixo.
+>
+> **Forks ainda PENDENTES:** F-I4-4 (recarga dos mappers depois da ativação), F-I4-5 (o wizard mostra o
+> resultado contábil?). **Nenhum se auto-ratifica.** O F-I4-4 decide se o I4 cumpre o objetivo: sem ele, a
 > unidade recém-ativada só lança depois de reiniciar o processo (§1, linha 5).
 >
-> **Autoriza planejar, não executar.** Código exige *"executa"* (ORCH-006).
+> **Autoriza planejar, não executar.** Código exige *"executa"* (ORCH-006). Não há *"executa"* para o I5 nem
+> para o I4 em 06/10.
+
+> **EMENDA 06/10 — o que o #483 (`2d1ddbe5`, BE-INCR-PACOTE-VALIDADE) já pôs em `main` (V, por leitura em
+> `origin/main` `6ac4381d`).** O BRIEF é de 29/09 e não sabia:
+> 1. `NoMapperForUnitError` **já existe** em `server/src/lib/errors.ts:262-269`, criado pelo passe de vencimento
+>    do pacote (guarda 9.3, F-PV-6 a), com o comentário *"Nome e código são os que o I5 (F-I5-1 a) ratificou;
+>    quem executar primeiro cria, o outro reusa"*. Diferenças em relação ao item 1: status **409** (não 500) e
+>    mensagem *"… na unidade 'u' (recompile o binding)."*. **O item 1 vira reuso**: o executor não cria a classe;
+>    a mensagem é revista pelo item 2 (abaixo). O status não afeta a skip-list (que testa `errorCode`).
+> 2. O enum `ReconcilePendingReasonCode` **já tem** `NO_MAPPER_FOR_UNIT` (`ReconcilePendingDto.ts:24`) e mais três
+>    códigos do pacote — **9 valores**, não 5. Snapshot de DTO, `ReconcilePendingDto.gen.ts` e o enum de
+>    `docs.paths.ts:4479` já estão materializados. **O item 4 vira verificação** (o gate `dtoShapeSnapshot` segue
+>    verde sem regenerar; muda só o comentário do enum, ver item 4).
+> 3. `AccountingSyncService.hasMapper(unitId, sourceType)` **já existe** (`AccountingSyncService.ts:96`, mesma
+>    resolução do `sync()`), consumido pela guarda 9.3 do job (`accountingSyncReconcile.job.ts:1507`).
+> 4. **O que segue por fazer:** o `sync()` ainda lança `ValidationError` no miss
+>    (`AccountingSyncService.ts:128`), e `SYNC_SKIP_ERROR_CODES` (`AccountingSyncPort.ts:99`) ainda **não** tem
+>    `NO_MAPPER_FOR_UNIT`. Itens 2, 3, 5, 6 e 7 continuam inteiros.
+> 5. **O sentido que o #483 deu ao código já é o do F-I5-3 (a):** no passe do pacote, `NO_MAPPER_FOR_UNIT`
+>    dispara quando o binding `Active` da unidade **não tem o evento** (comentário do enum: *"o binding Active
+>    da unidade não tem o evento; resolve ao recompilar"*). Com (b) o mesmo código teria dois sentidos no mesmo
+>    relatório; com (a) é um sentido só — "nenhum mapper para (unidade, evento)", qualquer que seja a causa.
+> 6. **O fecho da §4 ficou falso (lado I4, registro sem decidir):** desde o #485 (`4a3c5eae`, FE-CONTRACT-TYPES
+>    PR-3) `features/accountingBinding/dtos/__tests__/__dto-shapes__.json` existe e há
+>    `my-app/types/contracts/accountingBinding/*.gen.ts`. Um `OnboardingAccountingResultSchema` posto em
+>    `ActivateDefaultBindingDto.ts` (item 14) **entra** no snapshot e gera `.gen.ts`; o PR-2 regenera o snapshot e
+>    o PR-4 pode usar `import type` em vez de tipar à mão.
 
 ## 0. Contexto fixo
 
@@ -93,29 +125,42 @@ este BRIEF, com o teste de cada item escrito e vermelho **antes** do código.
 
 ### PR-1 — I5 backend: classificar "sem mapper"
 
-1. **Erro específico.** `NoMapperForUnitError extends AppError`, status 500, `errorCode 'NO_MAPPER_FOR_UNIT'`,
-   em `lib/errors.ts`, ao lado de `NoActiveAccountingBindingsError`. A mensagem cita `unitId` e `sourceType`.
-   Estende `AppError`, não `ValidationError`, porque `ValidationError` fixa o `errorCode` (`errors.ts:72`).
+1. **Erro específico — REUSO (EMENDA 06/10).** `NoMapperForUnitError extends AppError`, `errorCode
+   'NO_MAPPER_FOR_UNIT'`, **já existe** em `lib/errors.ts:262-269` (#483, status 409). Não recriar. Estende
+   `AppError`, não `ValidationError`, porque `ValidationError` fixa o `errorCode` (`errors.ts:72`).
    *Teste:* `syncSkipErrorCode(new NoMapperForUnitError('u','sale.finalized')) === 'NO_MAPPER_FOR_UNIT'`.
-2. **Quem lança.** `AccountingSyncService.sync` lança o erro novo no miss. O alcance depende do **F-I5-3**; a
-   recomendação é (b): só quando a unidade não tem **nenhum** mapper registrado. Um miss numa unidade que tem
-   binding continua `ValidationError` e cai em `FAILED`, porque é bug de cobertura e deve ser ruidoso.
-   *Testes em `AccountingSyncService.test.ts`:*
-   - o caso da `:265-282` ("unit-b sem registro") passa a esperar `NoMapperForUnitError`;
-   - o caso novo "unit-a registrada, evento sem mapper" continua `ValidationError`;
-   - o caso da `:152-159` (registro global, evento aposentado) continua `ValidationError`.
-   Com F-I5-3 (a), os três passam a esperar o erro novo.
-3. **Skip-list.** `SYNC_SKIP_ERROR_CODES` ganha `'NO_MAPPER_FOR_UNIT'`. O JSDoc (`AccountingSyncPort.ts:81-90`)
-   ganha o bullet *"transitório por ação de admin: ativar o binding da unidade; depois recarga (F-I4-4) e rescan"*.
+2. **Quem lança — F-I5-3 → (a), RATIFICADO 06/10 (contra a recomendação).** `AccountingSyncService.sync` lança
+   `NoMapperForUnitError(event.unitId, event.sourceType)` em **todo** miss de mapper (`AccountingSyncService.ts:128`
+   hoje lança `ValidationError`). Não há `Set<unitId>` nem distinção "unidade sem nenhum mapper" × "unidade com
+   binding, evento sem mapper".
+   **Consequência registrada:** um evento sem mapper numa unidade com binding `Active` — o bug de cobertura que o
+   gate do `compile()` existe para impedir — também vira pendência visível `NO_MAPPER_FOR_UNIT` (`blocked`, `warn`
+   na ponte), e **não** `FAILED` com `logger.error`. O mesmo vale para o registro global com evento aposentado.
+   O sinal ruidoso desse bug passa a ser a linha na aba Pendências (item 18), não o log de erro. Tensão com a
+   memória `erro-especifico-para-skip-em-job` na §5.
+   **Mensagem:** a de hoje (*"(recompile o binding)"*) serve à unidade com binding; a do §4 de 29/09 (*"a
+   contabilidade desta unidade não está ativa"*) serve à unidade sem binding. Com (a) a mensagem tem de valer para
+   as duas causas e não afirmar qual — *"Nenhum mapper registrado para o evento 'X' na unidade 'Y' — a
+   contabilidade da unidade não está ativa ou o binding não cobre o evento."* Muda o texto de uma classe que o
+   #483 consome; nenhum arquivo de `server/src` cita *"recompile o binding"* fora de `errors.ts` (V, grep 06/10),
+   então nenhum teste assere o texto atual.
+   *Testes em `AccountingSyncService.test.ts`:* os três passam a esperar `NoMapperForUnitError`:
+   - o caso da `:265-282` ("unit-b sem registro");
+   - o caso novo "unit-a registrada, evento sem mapper";
+   - o caso da `:152-159` (registro global, evento aposentado).
+   (Linhas de 29/09 — reconferir na execução.)
+3. **Skip-list.** `SYNC_SKIP_ERROR_CODES` ganha `'NO_MAPPER_FOR_UNIT'`. O JSDoc (`AccountingSyncPort.ts:81-98`)
+   ganha o bullet *"sem mapper para (unidade, evento): ou a unidade não tem binding `Active` (ativar o binding;
+   depois recarga — F-I4-4 — e rescan), ou o binding não cobre o evento (bug de cobertura do `compile()`:
+   recompilar). Pulado por decisão do dono (F-I5-3 a) — a pendência é o sinal, não o log"*.
    *Teste-guarda novo:* todo valor de `SYNC_SKIP_ERROR_CODES` está em `ReconcilePendingReasonCode.options`.
    Ele fecha o cast não checado da §0 e vale para códigos futuros.
-4. **Enum e contrato.** `ReconcilePendingReasonCode` ganha `'NO_MAPPER_FOR_UNIT'`, com comentário "transitório".
-   Materializar na mesma mudança:
-   - `UPDATE_DTO_SNAPSHOT=1` regenera `__dto-shapes__.json` e `ReconcilePendingDto.gen.ts`;
-   - o enum de `docs.paths.ts:4334`;
-   - `npm run docs:generate` regenera `public/openapi.json`;
-   - o comentário de `schema.prisma:1742`, sem migração.
-   *Gates:* `dtoShapeSnapshot` e `openapi-paths` verdes, e o path-count não muda.
+4. **Enum e contrato — JÁ EM `main` (EMENDA 06/10).** `ReconcilePendingReasonCode` já tem `'NO_MAPPER_FOR_UNIT'`
+   (#483), e snapshot, `.gen.ts` e `docs.paths.ts:4479` já o trazem. Resta: o comentário do valor
+   (`ReconcilePendingDto.ts:24`) passa a nomear as duas causas do F-I5-3 (a) — unidade sem binding `Active` ou
+   binding sem o evento — e o comentário de `schema.prisma` (coluna `String`, sem migração) confere com o enum.
+   *Gates:* `dtoShapeSnapshot` e `openapi-paths` verdes **sem** regenerar (comentário não muda shape), e o
+   path-count não muda.
 5. **Pontes ao vivo.** Com o código na lista, as 4 pontes de venda registram `logger.warn` "skipped" em vez de
    `logger.error`, sem nenhuma outra mudança. *Teste (`SaleSalesAccountingBridge.test.ts`):* com o `sync`
    rejeitando `NoMapperForUnitError`, espera-se `warn` com `code:'NO_MAPPER_FOR_UNIT'` e `error` não chamado.
@@ -194,7 +239,7 @@ este BRIEF, com o teste de cada item escrito e vermelho **antes** do código.
 17. **Serviço.** `my-app/lib/services/reconcilePending.service.ts` com `list(query)` e `rescan(body)`.
     Query e body usam `import type` de `ReconcilePendingDto.gen`. As respostas são tipadas à mão (padrão D11,
     como `bankSettlement.service.ts`). *Teste vitest do serviço:* URL, query e body.
-18. **Tela (forma pelo F-I5-4, PENDENTE; o texto segue a recomendação (a)).** `ReconcilePendingPanel.tsx`
+18. **Tela (F-I5-4 → (a), RATIFICADO 06/10).** `ReconcilePendingPanel.tsx`
     numa aba nova `pendencias` do `AccountingView`. Colunas: origem (`sourceType`), id, motivo (rótulo i18n por
     código), detalhe, primeira e última vez vistas, tentativas.
     - Filtros: por motivo e "mostrar resolvidas" (`includeResolved`).
@@ -202,10 +247,15 @@ este BRIEF, com o teste de cada item escrito e vermelho **antes** do código.
       reuso decide na execução, com a justificativa no relatório.
     - Botão "Re-varrer": chama `rescan({ unitId })`, mostra `attempted/resolved/stillPending` por `notify` e
       recarrega. 403 via `resolveErrorWithCode`.
-    - O rótulo de `NO_MAPPER_FOR_UNIT` diz o que fazer: *"a contabilidade desta unidade não está ativa"*.
+    - O rótulo de `NO_MAPPER_FOR_UNIT` diz o que fazer **nas duas causas** do F-I5-3 (a): *"sem regra
+      contábil para este evento nesta unidade — ative a contabilidade da unidade ou recompile o binding; depois,
+      Re-varrer"*. Não afirmar "a contabilidade não está ativa": com (a), a linha também aparece numa unidade
+      `Active` cujo binding não cobre o evento (bug de cobertura).
+    - A tela da LAC-B (`FE-INCR-BINDING-ACTIVATION`, BRIEF de 06/10) é o lugar de "ativar"; o vínculo entre as
+      duas telas é decidido lá (fork F-BA-3 daquele BRIEF), não aqui.
     - Reuso canônico conforme `my-app/CLAUDE.md`: `neutral-*`, `rounded-2xl`.
 19. **i18n:** paridade pt/en em `public/locales/{pt,en}/accounting.json`: `view.tabs.pendencias`, os rótulos dos
-    **6** códigos e os textos da tela.
+    **9** códigos do enum em `main` (EMENDA 06/10: eram 6 em 29/09; o #483 somou 3 do pacote) e os textos da tela.
 20. **Testes vitest do painel:** lista renderizada; rótulo do código novo; "Re-varrer" chama o serviço e
     recarrega; estado vazio. Espere o **DOM**, não a chamada (memória
     `handler-async-closure-stale-x-waitfor-tohavebeencalled`).
@@ -233,25 +283,26 @@ Nenhum Service, Repo, Policy ou rota nova. A integração cross-módulo fica no 
 ## 4. Contratos esboçados
 
 ```ts
-// lib/errors.ts (PR-1)
+// lib/errors.ts — JÁ EXISTE (#483, status 409); PR-1 só revê a mensagem (item 2, F-I5-3 a)
 export class NoMapperForUnitError extends AppError {
   constructor(unitId: string, sourceType: string) {
     super(`Nenhum mapper registrado para o evento '${sourceType}' na unidade '${unitId}' — ` +
-          `a contabilidade desta unidade não está ativa.`, 500, 'NO_MAPPER_FOR_UNIT');
+          `a contabilidade da unidade não está ativa ou o binding não cobre o evento.`, 409, 'NO_MAPPER_FOR_UNIT');
     Object.setPrototypeOf(this, NoMapperForUnitError.prototype);
   }
 }
+
+// AccountingSyncService.sync (PR-1) — F-I5-3 (a): todo miss
+if (!mapper) throw new NoMapperForUnitError(event.unitId, event.sourceType);
 
 // features/accounting/sync/AccountingSyncPort.ts (PR-1)
 export const SYNC_SKIP_ERROR_CODES =
   ['ACCOUNTING_PERIOD_NOT_OPEN', 'MAX_CENTS_EXCEEDED', 'NO_MAPPER_FOR_UNIT'] as const;
 
-// features/accounting/dtos/ReconcilePendingDto.ts (PR-1) — muda o contrato gerado
-export const ReconcilePendingReasonCode = z.enum([
-  'FAILED', 'ACCOUNTING_PERIOD_NOT_OPEN', 'MAX_CENTS_EXCEEDED',
-  'OPENING_ENTRY_MISSING', 'MISSING_PAID_WITH_PACKAGE_ID',
-  'NO_MAPPER_FOR_UNIT', // transitório — resolve quando a unidade ganha binding Active (I4) + recarga + rescan
-]);
+// features/accounting/dtos/ReconcilePendingDto.ts — o valor JÁ ESTÁ no enum (#483; 9 valores em main).
+// PR-1 só reescreve o comentário:
+  'NO_MAPPER_FOR_UNIT', // sem mapper para (unidade, evento): unidade sem binding Active (ativar + recarga + rescan)
+                        // ou binding que não cobre o evento (recompilar). F-I5-3 (a): todo miss.
 
 // features/accountingBinding/dtos/ActivateDefaultBindingDto.ts (PR-2) — reusa ActivationBlockingIssueSchema
 export const ONBOARDING_ACCOUNTING_STATUSES = ['Active', 'Draft', 'not-applicable'] as const;
@@ -290,7 +341,7 @@ varre (ele varre só `features/accounting/dtos/`). Não gera `.gen.ts`. O PR-4, 
   contrato gerado.
 - **F-I5-2 → (b):** linha visível na UI. A tabela e a rota existem desde o #296; falta a tela (PR-3).
 
-### Novos — RATIFICAÇÃO PENDENTE
+### Novos de 29/09 — F-I4-4 e F-I4-5 com RATIFICAÇÃO PENDENTE
 
 - **F-I4-4 · a unidade recém-ativada lança sem reiniciar?** O registro de mappers é só do boot (F-FEEDER-5).
   Sem recarga, o I4 grava `Active` e as vendas continuam sem mapper até o próximo boot.
@@ -316,22 +367,35 @@ varre (ele varre só `features/accounting/dtos/`). Não gera `.gen.ts`. O PR-4, 
   **Recomendação: (b).** Um campo devolvido e nunca lido é a classe `param-aceito-e-ignorado-e-bug` do lado da
   saída. Com (a), um tenant `Draft` só descobre na primeira venda travada. O custo é 3 chamadores e 1 chave i18n.
   **PENDENTE.**
-- **F-I5-3 · quando o miss é `NO_MAPPER_FOR_UNIT`?**
-  - **(a)** Todo miss de mapper.
-  - **(b)** Só quando a unidade não tem nenhum mapper registrado. Um evento sem mapper numa unidade com binding
-    `Active` continua `ValidationError` e cai em `FAILED`, ruidoso.
+- **F-I5-3** e **F-I5-4**: ratificados em 06/10 — ver a subseção abaixo.
 
-  **Recomendação: (b).** O caso ratificado é *"venda de tenant sem binding"*. A outra metade é a falha que o gate
-  de cobertura do `compile()` existe para impedir: se acontecer, é bug. Pular com `warn` violaria a memória
-  `erro-especifico-para-skip-em-job` ("skip só com erro de code próprio que não esconde bug"). O custo é um
-  `Set<unitId>` montado no construtor. **PENDENTE.**
-- **F-I5-4 · forma da tela.**
-  - **(a)** Aba própria "Pendências" com filtros, resolvidas e botão "Re-varrer" (rota e policy existem).
-  - **(b)** Seção só de leitura dentro de uma aba existente (Conciliação).
+### Ratificados — 2026-10-06, por questionário ([`D-2026-10-06-I5-FORKS-F-I5-3-4`](../plano/decisoes/D-2026-10-06-I5-FORKS-F-I5-3-4.md))
 
-  **Recomendação: (a).** Sem "Re-varrer" na tela, uma `NO_MAPPER_FOR_UNIT` resolvida pela ativação só sai da
-  lista por chamada HTTP manual. O único chamador de `findUnresolved` e de `retryOneReconcilePendingItem` é o
-  `ReconcilePendingService.rescan`, então o job não re-dirige linhas fora da janela (V, grep). **PENDENTE.**
+- **F-I5-3 · quando o miss é `NO_MAPPER_FOR_UNIT`? → (a) "Todo miss de mapper" — CONTRA a recomendação (b).**
+  - Opções apresentadas: **(a)** todo miss de mapper · **(b)** só quando a unidade não tem nenhum mapper
+    registrado; um evento sem mapper numa unidade com binding `Active` continuaria `ValidationError` → `FAILED`.
+  - Recomendação de 29/09 era (b): o caso ratificado é *"venda de tenant sem binding"*, e a outra metade é a
+    falha que o gate de cobertura do `compile()` existe para impedir.
+  - **Consequência (aplicada no item 2):** um evento sem mapper numa unidade com binding `Active` (bug de
+    cobertura do `compile()`) também vira pendência visível `NO_MAPPER_FOR_UNIT` — `blocked`, `warn` na ponte —
+    em vez de `FAILED` com `logger.error`. A mensagem do erro e o rótulo da tela deixam de afirmar a causa
+    (itens 2 e 18). Simplifica o PR-1: sem `Set<unitId>` no construtor.
+  - **Tensão com a memória `erro-especifico-para-skip-em-job`, escrita:** a memória exige skip só com erro de
+    `code` próprio *"que não esconde bug"*. A **letra** fica cumprida — o skip testa `errorCode ===
+    'NO_MAPPER_FOR_UNIT'`, nunca `ValidationError` — e o evento pulado vai ao relatório de reconcile (linha em
+    `reconcile_pending_items`), que é o outro requisito da memória. O **espírito** fica tensionado: o código
+    próprio agora cobre também uma classe de bug (cobertura do binding), que deixa de ser ruidosa no log. O que
+    impede o "engolir defeito": (1) a linha é visível e persistente na aba Pendências (F-I5-4 a), com motivo e
+    contagem de tentativas; (2) a marca d'água avança desde o #296, então não há loop; (3) o gate de cobertura do
+    `compile()` continua sendo a defesa primária — o skip só cobre o que escapar dele. **Risco aceito:** um bug
+    de cobertura só é notado quando alguém abre a aba, não por alerta de log.
+  - Fato de `main` a favor de (a) (EMENDA 06/10, ponto 5): o #483 já usa o código no sentido "binding `Active`
+    sem o evento"; (a) mantém um sentido só.
+- **F-I5-4 · forma da tela → (a) aba própria "Pendências"** com filtros, resolvidas e botão "Re-varrer"
+  (**recomendação**). Opção recusada: (b) seção só de leitura dentro da Conciliação. O motivo da recomendação
+  segue valendo: sem "Re-varrer" na tela, uma `NO_MAPPER_FOR_UNIT` resolvida pela ativação só sai da lista por
+  chamada HTTP manual; o único chamador de `findUnresolved` e de `retryOneReconcilePendingItem` é o
+  `ReconcilePendingService.rescan` (V, grep de 29/09).
 
 ## 6. Pendente de validação externa
 
