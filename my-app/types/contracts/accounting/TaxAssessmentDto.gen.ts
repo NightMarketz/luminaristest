@@ -68,7 +68,8 @@ supersedesIds?: string[]
 export interface TaxAssessmentListQueryInput {
 unitId: string
 anoCalendario: number
-periodo?: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12")
+periodo?: ("T01" | "T02" | "T03" | "T04" | "A00" | "A01" | "A02" | "A03" | "A04" | "A05" | "A06" | "A07" | "A08" | "A09" | "A10" | "A11" | "A12" | "M01" | "M02" | "M03" | "M04" | "M05" | "M06" | "M07" | "M08" | "M09" | "M10" | "M11" | "M12")
+tributo?: ("IRPJ" | "CSLL" | "PIS" | "COFINS")
 status?: ("CONFIRMED" | "SUPERSEDED")
 }
 export interface TaxAssessmentScopeQueryInput {

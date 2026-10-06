@@ -2855,6 +2855,189 @@
           }
         }
       },
+      "PisCofinsPreviewInput": {
+        "type": "object",
+        "required": [
+          "unitId",
+          "anoCalendario",
+          "periodo"
+        ],
+        "properties": {
+          "unitId": {
+            "type": "string",
+            "description": "Unidade lida (proveniência; outra unidade da PJ com movimento no mês ⇒ 400)"
+          },
+          "anoCalendario": {
+            "type": "integer",
+            "minimum": 2025,
+            "maximum": 2026,
+            "description": "2027+ ⇒ 400 (PIS/Cofins revogados — LC 214/2025 art. 542)"
+          },
+          "periodo": {
+            "type": "string",
+            "enum": [
+              "M01",
+              "M02",
+              "M03",
+              "M04",
+              "M05",
+              "M06",
+              "M07",
+              "M08",
+              "M09",
+              "M10",
+              "M11",
+              "M12"
+            ]
+          },
+          "ajustesBase": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "tipo",
+                "valorCents"
+              ],
+              "properties": {
+                "tipo": {
+                  "type": "string",
+                  "enum": [
+                    "ALIQUOTA_ZERO_REVENDA",
+                    "COTA_PARTE_PARCEIRO"
+                  ],
+                  "description": "Σ ≤ revenda / serviço do mês; COTA_PARTE_PARCEIRO exige documento (contrato de parceria)"
+                },
+                "valorCents": {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                },
+                "documento": {
+                  "type": "string",
+                  "maxLength": 120
+                }
+              }
+            }
+          },
+          "outrosCreditos": {
+            "type": "array",
+            "maxItems": 50,
+            "description": "Só no não cumulativo (Lei 10.833 art. 3º); no cumulativo ⇒ 400",
+            "items": {
+              "type": "object",
+              "required": [
+                "inciso",
+                "baseCents"
+              ],
+              "properties": {
+                "inciso": {
+                  "type": "string",
+                  "enum": [
+                    "III_ENERGIA",
+                    "IV_ALUGUEL_PJ",
+                    "V_ARRENDAMENTO",
+                    "VI_VII_DEPRECIACAO",
+                    "IX_FRETE_VENDA"
+                  ]
+                },
+                "baseCents": {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                },
+                "documento": {
+                  "type": "string",
+                  "maxLength": 120
+                }
+              }
+            }
+          },
+          "retencoes": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "tributo",
+                "valorCents"
+              ],
+              "properties": {
+                "tributo": {
+                  "type": "string",
+                  "enum": [
+                    "PIS",
+                    "COFINS"
+                  ]
+                },
+                "valorCents": {
+                  "type": "string",
+                  "pattern": "^[0-9]+$"
+                },
+                "documento": {
+                  "type": "string",
+                  "maxLength": 120
+                }
+              }
+            }
+          },
+          "saldoCredorAnterior": {
+            "type": "object",
+            "required": [
+              "PIS",
+              "COFINS"
+            ],
+            "description": "Só no 1º mês apurado no sistema (F-PCB-2 a); nos demais ⇒ 400",
+            "properties": {
+              "PIS": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+              },
+              "COFINS": {
+                "type": "string",
+                "pattern": "^[0-9]+$"
+              }
+            }
+          }
+        }
+      },
+      "PisCofinsConfirmInput": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PisCofinsPreviewInput"
+          },
+          {
+            "type": "object",
+            "required": [
+              "expectedAPagarCents"
+            ],
+            "properties": {
+              "expectedAPagarCents": {
+                "type": "object",
+                "required": [
+                  "PIS",
+                  "COFINS"
+                ],
+                "properties": {
+                  "PIS": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  },
+                  "COFINS": {
+                    "type": "string",
+                    "pattern": "^[0-9]+$"
+                  }
+                }
+              },
+              "supersedesIds": {
+                "type": "array",
+                "maxItems": 2,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
       "PostEntryLine": {
         "type": "object",
         "required": [
@@ -21577,7 +21760,7 @@
     },
     "/api/accounting/tax-assessments": {
       "get": {
-        "summary": "List the IRPJ/CSLL assessments of the company in a year (X7 item 17)",
+        "summary": "List the IRPJ/CSLL (and PIS/Cofins, X8 PR-2) assessments of the company in a year (X7 item 17)",
         "description": "Lista da PJ inteira; unitId só resolve escopo/policy. Cada linha traz a memória e provisaoPendente.",
         "tags": [
           "Accounting"
@@ -21627,7 +21810,34 @@
                 "A09",
                 "A10",
                 "A11",
-                "A12"
+                "A12",
+                "M01",
+                "M02",
+                "M03",
+                "M04",
+                "M05",
+                "M06",
+                "M07",
+                "M08",
+                "M09",
+                "M10",
+                "M11",
+                "M12"
+              ]
+            },
+            "description": "M01..M12 = PIS/Cofins mensal (X8 PR-2)"
+          },
+          {
+            "in": "query",
+            "name": "tributo",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "IRPJ",
+                "CSLL",
+                "PIS",
+                "COFINS"
               ]
             }
           },
@@ -21695,6 +21905,88 @@
           },
           "409": {
             "description": "TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER, _REGIME ou _STALE"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-assessments/pis-cofins/preview": {
+      "post": {
+        "summary": "Preview the monthly PIS/Cofins assessment (BE-INCR-PIS-COFINS PR-2, X8 item 13)",
+        "description": "Calcula PIS e Cofins do mês juntos e não persiste - Presumido cumulativo (0,65%/3%), Real não cumulativo (1,65%/7,6%) com o crédito das NF-e do mês, outros créditos do art. 3º, saldo credor do mês anterior e retenções. 400 para SIMPLES/MEI (DAS), 2027+ (revogados), perfil do ano ausente, regime de caixa, pisCofinsRegime da unidade divergente do regime da empresa, outra unidade da PJ com movimento no mês, ajustes acima da receita da atividade. 409 quando o mês anterior do mesmo ano não está confirmado.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PisCofinsPreviewInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PisCofinsPreviewView (pis, cofins, provisaoContasConfiguradas, avisos)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "TAX_ASSESSMENT_ORDER"
+          }
+        }
+      }
+    },
+    "/api/accounting/tax-assessments/pis-cofins": {
+      "post": {
+        "summary": "Confirm the monthly PIS/Cofins assessment (commit 1, X8 item 14)",
+        "description": "Recalcula e grava as 2 linhas (PIS, COFINS) numa tx com os gates - CAS do a pagar (409), um só CONFIRMED por (PJ, ano, tributo, mês) (409; substituir = supersedesIds), ordem sequencial dos meses (409) e substituição de trás para frente (409 se o mês seguinte já está confirmado). Sem provisão no razão neste PR (provisaoPendente = true; a provisão é o PR-3 do X8). Leitura pelos GET de /tax-assessments.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PisCofinsConfirmInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PisCofinsConfirmView (pis, cofins)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "409": {
+            "description": "TAX_ASSESSMENT_CAS, _ALREADY_CONFIRMED, _SUPERSEDES, _ORDER ou _STALE"
           }
         }
       }

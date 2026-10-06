@@ -67,6 +67,7 @@ import {
   type ResultadoApuracaoAnual,
 } from '../models/taxAssessmentCalcAnual';
 import { isLalurMes, mesBounds, periodoBounds, type LalurMes } from '../models/Lalur.model';
+import type { TributoPisCofins } from '../models/pisCofinsParams';
 
 export const TAX_ASSESSMENT_CONFIRMED = 'tax.assessment.confirmed';
 /** `sourceType` da provisão (item 15): chave de idempotência = id da apuração. */
@@ -111,10 +112,17 @@ const FECHADO = new Set(['SOFT_CLOSED', 'HARD_CLOSED']);
 export const TAX_ASSESSMENT_SUPERSEDED = 'tax.assessment.superseded';
 
 const TRIBUTOS: readonly TributoApuracao[] = ['IRPJ', 'CSLL'];
+/**
+ * X8 PR-2 (BRIEF X8 item 12, F-X8-2 a): a tabela `tax_assessments` guarda também PIS/COFINS (`M01..M12`). Os gates e
+ * cálculos de IRPJ/CSLL leem só as próprias linhas — uma linha de PIS confirmada em paralelo não pode virar
+ * "anterior mudou" (409 espúrio) nem entrar na checagem de regime.
+ */
+const doIrpjCsll = (r: TaxAssessment): boolean => (TRIBUTOS as readonly string[]).includes(r.tributo);
 
 export interface TaxAssessmentView {
   id: string;
-  tributo: TributoApuracao;
+  /** X8 PR-2: a leitura serve também PIS/COFINS (BRIEF X8 item 16). */
+  tributo: TributoApuracao | TributoPisCofins;
   periodo: string;
   modo: string;
   codigoReceita: string;
@@ -219,7 +227,7 @@ export class TaxAssessmentService {
       if (!perfilTx || perfilTx.updatedAt.getTime() !== c.perfil.updatedAt.getTime()) {
         throw new ConflictError(`o perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
       }
-      const confirmados = await this.repo.findConfirmedByYear(owner, ano, tx);
+      const confirmados = (await this.repo.findConfirmedByYear(owner, ano, tx)).filter(doIrpjCsll);
       const anteriores = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
       if (!mesmoConjunto(anteriores.map((r) => r.id), c.anterioresIds)) {
         throw new ConflictError(`as apurações confirmadas anteriores a ${periodo}/${ano} mudaram — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
@@ -397,6 +405,11 @@ export class TaxAssessmentService {
     this.assertManage(scope);
     const row = await this.repo.findById(scope.ownerUserId, id);
     if (!row) throw new NotFoundError(`Apuração '${id}' não encontrada.`);
+    // X8 PR-2: a provisão de PIS/Cofins (contas, 2º par do não cumulativo) é o PR-3 do X8 (itens 17–18). Sem esta
+    // guarda o reconcile postaria a linha de PIS/COFINS nas contas da CSLL (o ramo `else` abaixo).
+    if (!doIrpjCsll(row)) {
+      throw new ValidationError(`Apuração '${id}' é de ${row.tributo}: a provisão de PIS/Cofins ainda não existe (BE-INCR-PIS-COFINS PR-3, itens 17–18).`);
+    }
     if (row.status !== 'CONFIRMED') {
       await this.estornarProvisaoViva(scope, row);
       return toView(row);
@@ -482,7 +495,7 @@ export class TaxAssessmentService {
   /** Item 17 — lista da PJ no ano (o `unitId` do escopo só resolve policy). */
   async list(scope: AccountingScope, query: TaxAssessmentListQuery): Promise<TaxAssessmentView[]> {
     this.assertRead(scope);
-    const rows = await this.repo.findMany(scope.ownerUserId, { anoCalendario: query.anoCalendario, periodo: query.periodo, status: query.status });
+    const rows = await this.repo.findMany(scope.ownerUserId, { anoCalendario: query.anoCalendario, periodo: query.periodo, tributo: query.tributo, status: query.status });
     return rows.map(toView);
   }
 
@@ -531,7 +544,7 @@ export class TaxAssessmentService {
       avisos.push('contas da provisão de IRPJ/CSLL não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X7 F-TA-7 a).');
     }
 
-    const confirmados = await this.repo.findConfirmedByYear(scope.ownerUserId, ano);
+    const confirmados = (await this.repo.findConfirmedByYear(scope.ownerUserId, ano)).filter(doIrpjCsll);
     const anterioresRows = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
     const anteriores = (t: TributoApuracao): MemoriaAnterior[] =>
       anterioresRows.filter((r) => r.tributo === t).map((r) => ({ periodo: r.periodo as PeriodoTrimestral, memoria: MemoriaCalculoSchema.parse(r.memoria) }));
@@ -718,10 +731,11 @@ function toPreviewLinha(r: ResultadoApuracaoAnual, periodo: string): TaxAssessme
   };
 }
 
-function toView(row: TaxAssessment): TaxAssessmentView {
+/** Exportada para o `PisCofinsAssessmentService` (X8 PR-2): a mesma vista serve as linhas de PIS/COFINS. */
+export function toView(row: TaxAssessment): TaxAssessmentView {
   return {
     id: row.id,
-    tributo: row.tributo as TributoApuracao,
+    tributo: row.tributo as TaxAssessmentView['tributo'],
     periodo: row.periodo,
     modo: row.modo,
     codigoReceita: row.codigoReceita,
