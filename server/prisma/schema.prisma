@@ -476,6 +476,8 @@ model Account {
   csllSaldoNegativoOf                FiscalProfile[]           @relation("FiscalProfileCsllSaldoNegativo") // X7 Fase B item 16 (F-TB-3 a)
   pisCofinsRecuperavelOf             FiscalProfile[]           @relation("FiscalProfilePisCofinsRecuperavel") // X6 F-X6-8 a: crédito de PIS/COFINS a recuperar
   pisCofinsCreditoOutrosOf           FiscalProfile[]           @relation("FiscalProfilePisCofinsCreditoOutros") // X8 PR-3 (L-5)
+  pisCofinsRetidoCompensarOf         FiscalProfile[]           @relation("FiscalProfilePisCofinsRetidoCompensar") // X8 PR-3 (retenções)
+  pisCofinsRetencaoConciliarOf       FiscalProfile[]           @relation("FiscalProfilePisCofinsRetencaoConciliar") // X8 PR-3 (retenções)
   lalurEntries                       LalurEntry[]              @relation("LalurEntryAccount") // ajuste da Parte A com relação contábil (M310/M360.COD_CTA, ECF Fase 3B)
   fixedAssetClassCostOf              FixedAssetClass[]         @relation("FixedAssetClassCost") // conta do bem (1.2.x, BE-INCR-FIXED-ASSETS)
   fixedAssetClassAccumulatedOf       FixedAssetClass[]         @relation("FixedAssetClassAccumulatedDepreciation") // conta de depreciação acumulada (1.2.9.x)
@@ -1398,6 +1400,11 @@ model FiscalProfile {
   // X8 PR-3 (L-5, dono 06/10): redutora de despesa (Expense) — D PIS/COFINS a recuperar / C esta, pelos outros créditos do mês
   pisCofinsCreditoOutrosAccountId    String?
   pisCofinsCreditoOutrosAccount      Account?  @relation("FiscalProfilePisCofinsCreditoOutros", fields: [pisCofinsCreditoOutrosAccountId], references: [id], onDelete: Restrict)
+  // X8 PR-3 (retenções, dono 06/10): D retido a compensar (Asset) / C retenções a conciliar com clientes (Asset redutora)
+  pisCofinsRetidoCompensarAccountId  String?
+  pisCofinsRetidoCompensarAccount    Account?  @relation("FiscalProfilePisCofinsRetidoCompensar", fields: [pisCofinsRetidoCompensarAccountId], references: [id], onDelete: Restrict)
+  pisCofinsRetencaoConciliarAccountId String?
+  pisCofinsRetencaoConciliarAccount  Account?  @relation("FiscalProfilePisCofinsRetencaoConciliar", fields: [pisCofinsRetencaoConciliarAccountId], references: [id], onDelete: Restrict)
   // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual — Asset, código do contador (P-B8)
   irpjSaldoNegativoAccountId         String? // Asset
   irpjSaldoNegativoAccount           Account?  @relation("FiscalProfileIrpjSaldoNegativo", fields: [irpjSaldoNegativoAccountId], references: [id], onDelete: Restrict)

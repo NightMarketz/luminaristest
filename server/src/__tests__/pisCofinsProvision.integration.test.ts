@@ -32,6 +32,8 @@ type Dono = { id: string; username: string };
 
 const CONTAS = [
   { code: '1.1.1', name: 'Banco', nature: 'Asset' },
+  { code: '1.1.7', name: 'Retenções de PIS/Cofins a conciliar com clientes (redutora)', nature: 'Asset' },
+  { code: '1.1.8', name: 'PIS/Cofins retido a compensar', nature: 'Asset' },
   { code: '1.1.9', name: 'PIS/COFINS a recuperar', nature: 'Asset' },
   { code: '2.3.1', name: 'Lucros ou Prejuízos Acumulados', nature: 'Equity' },
   { code: '3.1', name: 'Receita de Serviços', nature: 'Revenue' },
@@ -62,7 +64,9 @@ async function cenario(regime: 'PRESUMIDO' | 'REAL', contas: 'todas' | 'sem-recu
     data: {
       userId: dono.id, unitId: U, regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO',
       ...(contas === 'nenhuma' ? {} : provisao),
-      ...(contas === 'todas' ? { pisCofinsRecuperavelAccountId: ids['1.1.9'], pisCofinsCreditoOutrosAccountId: ids['4.9.5'] } : {}),
+      ...(contas === 'todas'
+        ? { pisCofinsRecuperavelAccountId: ids['1.1.9'], pisCofinsCreditoOutrosAccountId: ids['4.9.5'], pisCofinsRetidoCompensarAccountId: ids['1.1.8'], pisCofinsRetencaoConciliarAccountId: ids['1.1.7'] }
+        : {}),
     },
   });
   return { dono, ids, scope: resolveAccountingScope({ userId: dono.id }, U) };
@@ -193,6 +197,49 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     // o "a recuperar" (débito − crédito) nunca fica credor: termina em 0 depois de fevereiro
     const recuperar = todas.flatMap((e) => e.postings).filter((p) => p.account.code === '1.1.9').reduce((s, p) => s + Number(p.debitCents) - Number(p.creditCents), 0);
     expect(recuperar).toBe(0);
+  });
+
+  it('retenções (dono 06/10): D retido a compensar / C a conciliar com clientes + baixa contra o a recolher — 10 pernas no Real; excedente fica no ativo no Presumido; a recolher = DARF', async () => {
+    const { dono } = await cenario('REAL');
+    await receita(dono, '2026-05-10', 1_000_000);
+    const extra = {
+      outrosCreditos: [{ inciso: 'IV_ALUGUEL_PJ', baseCents: '200000', documento: 'contrato de locação' }],
+      retencoes: [{ tributo: 'PIS', valorCents: '650', documento: 'NFS-e 12' }, { tributo: 'COFINS', valorCents: '1000', documento: 'NFS-e 12' }],
+    };
+    const p = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M05', ...extra });
+    expect(p.body.data.provisaoContasConfiguradas).toBe(true);
+    const r = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
+      unitId: U, anoCalendario: 2026, periodo: 'M05', ...extra, expectedAPagarCents: { PIS: p.body.data.pis.aPagarCents, COFINS: p.body.data.cofins.aPagarCents },
+    });
+    expect(r.status).toBe(201);
+    // PIS: débito 16.500 − aluguel 3.300 − retenção 650 = 12.550; Cofins: 76.000 − 15.200 − 1.000 = 59.800
+    expect([r.body.data.pis.aPagarCents, r.body.data.cofins.aPagarCents]).toEqual(['12550', '59800']);
+    const e = await provisoes(dono);
+    const pis = e.find((x) => x.sourceId === r.body.data.pis.id)!;
+    expect(pernas(pis)).toEqual([
+      ['1.1.7', 0, 650], ['1.1.8', 0, 650], ['1.1.8', 650, 0], ['1.1.9', 0, 3_300], ['1.1.9', 3_300, 0],
+      ['2.1.9.3', 0, 16_500], ['2.1.9.3', 3_300, 0], ['2.1.9.3', 650, 0], ['4.9.3', 16_500, 0], ['4.9.5', 0, 3_300],
+    ]);
+    expect(aRecolher(pis, '2.1.9.3')).toBe(12_550);
+    expect(aRecolher(e.find((x) => x.sourceId === r.body.data.cofins.id)!, '2.1.9.4')).toBe(59_800);
+    // idempotente: reconcile 2× não lança de novo
+    for (const v of [r.body.data.pis, r.body.data.cofins, r.body.data.pis]) expect((await reconcile(dono, v.id)).status).toBe(200);
+    expect(await provisoes(dono)).toHaveLength(2);
+
+    // Presumido com retenção acima do devido: a pagar 0; o excedente (350) fica no retido a compensar
+    const pres = await cenario('PRESUMIDO');
+    await receita(pres.dono, '2026-05-10', 100_000);
+    const ret = { retencoes: [{ tributo: 'PIS', valorCents: '1000' }] };
+    const pp = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(pres.dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M05', ...ret });
+    const rr = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(pres.dono)).send({
+      unitId: U, anoCalendario: 2026, periodo: 'M05', ...ret, expectedAPagarCents: { PIS: pp.body.data.pis.aPagarCents, COFINS: pp.body.data.cofins.aPagarCents },
+    });
+    expect(rr.body.data.pis.aPagarCents).toBe('0');
+    const ePis = (await provisoes(pres.dono)).find((x) => x.sourceId === rr.body.data.pis.id)!;
+    expect(pernas(ePis)).toEqual([['1.1.7', 0, 1_000], ['1.1.8', 0, 650], ['1.1.8', 1_000, 0], ['2.1.9.3', 0, 650], ['2.1.9.3', 650, 0], ['4.9.3', 650, 0]]);
+    expect(aRecolher(ePis, '2.1.9.3')).toBe(0);
+    const retido = ePis.postings.filter((x) => x.account.code === '1.1.8').reduce((s, x) => s + Number(x.debitCents) - Number(x.creditCents), 0);
+    expect(retido).toBe(350);
   });
 
   it('item 17 / L-2 (saldo parcialmente consumido): 1º mês com saldo informado — baixa só a parte usada; "a recolher" = DARF nos 2 tributos', async () => {

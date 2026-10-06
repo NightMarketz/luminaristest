@@ -37,12 +37,20 @@ describe('X8 PR-3 — consumo do crédito na provisão (L-1, L-2, L-4)', () => {
 
   it('L-5: outros créditos do mês entram inteiros no a recuperar e consomem depois da NF-e', () => {
     const r = row(NC, 1000, [linha('CREDITO_NFE', 300), linha('CREDITO_III_ENERGIA_1', 900), linha('SALDO_CREDOR_ANTERIOR', 50)]);
-    expect(consumoPisCofins(r)).toEqual({ outrosDoMes: 900n, nfe: 300n, outros: 700n, saldoAnterior: 0n });
+    expect(consumoPisCofins(r)).toEqual({ outrosDoMes: 900n, nfe: 300n, outros: 700n, saldoAnterior: 0n, retencoesDoMes: 0n, retencoes: 0n });
+  });
+
+  it('retenções: abatem depois dos créditos; excedente não é baixado; valem também no cumulativo', () => {
+    const nc = row(NC, 1000, [linha('CREDITO_NFE', 600), linha('RETENCAO_1', 300), linha('RETENCAO_2', 300), linha('RETENCAO_EXCEDENTE', 200)]);
+    expect(consumoPisCofins(nc)).toMatchObject({ nfe: 600n, retencoesDoMes: 600n, retencoes: 400n });
+    const cum = row('PIS_COFINS_CUMULATIVO', 650, [linha('RETENCAO_1', 1000)]);
+    expect(consumoPisCofins(cum)).toMatchObject({ nfe: 0n, retencoesDoMes: 1000n, retencoes: 650n });
   });
 
   it('L-5: mês sem débito mas com outros créditos ⇒ provisão pendente (há o reconhecimento a lançar)', () => {
     const base = { status: 'CONFIRMED', provisaoEntryId: null, diferencaPostergadaCents: 0n };
     expect(provisaoPendente({ ...row(NC, 0, [linha('CREDITO_IV_ALUGUEL_PJ_1', 500)]), ...base })).toBe(true);
     expect(provisaoPendente({ ...row(NC, 0, [linha('CREDITO_NFE', 500)]), ...base })).toBe(false);
+    expect(provisaoPendente({ ...row('PIS_COFINS_CUMULATIVO', 0, [linha('RETENCAO_1', 500)]), ...base })).toBe(true); // retenção sem débito
   });
 });

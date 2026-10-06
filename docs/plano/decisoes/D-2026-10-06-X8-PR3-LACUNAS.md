@@ -2,9 +2,9 @@
 id: "D-2026-10-06-X8-PR3-LACUNAS"
 tipo: "decisao"
 dominio: "fiscal"
-titulo: "X8 PR-3: lacunas L-1..L-5 da provisão de PIS/Cofins decididas (L-2 baixa o saldo usado; L-5 lança os outros créditos — reabre em parte o F-PCB-3 a)"
+titulo: "X8 PR-3: lacunas L-1..L-5 + retenções da provisão de PIS/Cofins decididas (L-2 baixa o saldo usado; L-5 e retenções reabrem o F-PCB-3 a inteiro)"
 estado: "decided"
-autorizacao: "dono, chat, 2026-10-06, questionário — L-1 (a) ratificado; L-2 'Baixar também o saldo usado'; L-3 ratificado; 2ª rodada: L-4 (a) ratificado; L-5 'Lançar outros créditos no PR-3'"
+autorizacao: "dono, chat, 2026-10-06, questionário — L-1 (a) ratificado; L-2 'Baixar também o saldo usado'; L-3 ratificado; 2ª rodada: L-4 (a) ratificado; L-5 'Lançar outros créditos no PR-3'; 3ª rodada: 'sim, os dois' — smoke:migration numa cópia do dev.db real + retenções lançadas como na L-5"
 atualizado: "2026-10-06"
 ---
 # D-2026-10-06-X8-PR3-LACUNAS — PR-3 do [[X8]]
@@ -39,15 +39,30 @@ Detalhe na EMENDA §8 de `docs/accounting/BE-INCR-PIS-COFINS-brief.md`.
   D a recuperar / C redutora pelos outros créditos do mês; a baixa do crédito consumido passa a ser uma só (NF-e + outros
   + saldo anterior). `provisaoContasConfiguradas` exige a redutora quando o mês tem outros créditos. Mês sem débito com
   outros créditos também provisiona (o reconhecimento). Retenções continuam sem lançamento (a parte não reaberta do F-PCB-3).
-- **Residual (declarado):** o saldo credor anterior **informado** pelo operador no 1º mês (F-PCB-2 a) nunca foi lançado
-  pelo sistema; a baixa dele só não deixa o "a recuperar" credor se o saldo de abertura o tiver posto no ativo. Retenções
-  seguem fora do razão (o "a recolher" fica acima do DARF pelo valor delas).
+
+## 3. 3ª rodada (dono, chat, 06/10: "sim, os dois") — retenções e smoke
+
+- **Retenções → lançadas, como a L-5 — REABRE O RESTO do F-PCB-3 (a)** (o F-PCB-3 a fica inteiramente reaberto). Nos 2
+  regimes, no mesmo lançamento da provisão: D PIS/Cofins **retido a compensar** (Asset, `pisCofinsRetidoCompensarAccountId`)
+  / C **retenções a conciliar com clientes** (Asset redutora de clientes, transitória — `pisCofinsRetencaoConciliarAccountId`)
+  pelas retenções do mês, e D a recolher / C retido a compensar pela parte abatida. O excedente (retenção acima do devido
+  depois dos créditos) fica no retido a compensar (compensação fora do sistema, F-TA-9 a). "a recolher" líquido = DARF.
+- **Fonte da contrapartida:** no padrão contábil a retenção nasce no recebimento — D Banco / D tributo retido a compensar
+  / C Clientes (prática contábil; grau **inferido**); a base legal da retenção é Lei 10.833/2003 arts. 30, 31 e 36 (retenção na fonte de PIS 0,65% / Cofins 3% sobre serviços pagos por PJ; o valor retido é antecipação do devido) e IN SRF 459/2004 — grau **inferido** (não relidas na fonte nesta sessão). Como o
+  recebimento líquido está FORA do sistema, a contrapartida do reconhecimento é uma transitória redutora de clientes, a
+  conciliar com o título a receber (proposta do executor, grau **inferido**; validação externa P-8 do BRIEF).
+- **Teto da L-3 ajustado de 6 para 10 pernas** (um lançamento por tributo/mês continua): despesa/a recolher, a recuperar/
+  redutora (L-5), baixa do crédito consumido, retido/a conciliar, baixa da retenção.
+- **Smoke de migração** numa cópia do dev.db real: PASS (registro no retorno do PR-3, bloco PROVA rodada 4).
+- **Saldo informado no 1º mês → validação externa P-7** do BRIEF (o contador confirma o saldo de abertura do "a recuperar").
 
 ## Consequências
 
-- O PR-3 (#556) lança até 6 pernas por tributo/mês (despesa/a recolher; a recuperar/redutora; uma baixa); testes provam
+- O PR-3 (#556) lança até 10 pernas por tributo/mês (despesa/a recolher; a recuperar/redutora; baixa do crédito; retido/a
+  conciliar; baixa da retenção); testes provam
   "a recolher" líquido = DARF no cenário do saldo de janeiro (835 centavos), no saldo parcialmente consumido e no mês
   seguinte a outros créditos — com o "a recuperar" terminando em 0, nunca credor.
-- Contrato: campo novo `pisCofinsCreditoOutrosAccountId` no perfil fiscal (DTO, snapshot, tipos gerados do FE, allowlist
-  `fiscal_profile.updated`, migração aditiva de 1 coluna).
+- Contrato: 3 campos novos no perfil fiscal — `pisCofinsCreditoOutrosAccountId`, `pisCofinsRetidoCompensarAccountId`,
+  `pisCofinsRetencaoConciliarAccountId` (DTO, snapshot, tipos gerados do FE, allowlist `fiscal_profile.updated`, migração
+  aditiva `20261006120000_add_pis_cofins_provisao_pr3_accounts` com 3 `ADD COLUMN`).
 - PR-2 (#554) e PR-3 (#556) continuam entrando em `main` juntos ([[D-2026-10-06-X8-PR2-LACUNAS-E-MERGE]]).

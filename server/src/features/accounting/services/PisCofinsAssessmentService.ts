@@ -345,10 +345,12 @@ export class PisCofinsAssessmentService {
       fp.pisRecolherAccountId &&
       fp.cofinsRecolherAccountId &&
       (modalidade === 'CUMULATIVO' || fp.pisCofinsRecuperavelAccountId) &&
-      (!temOutros || fp.pisCofinsCreditoOutrosAccountId)
+      (!temOutros || fp.pisCofinsCreditoOutrosAccountId) &&
+      // retenções (dono 06/10): retido a compensar + transitória a conciliar, nos 2 regimes
+      (input.retencoes.every((r) => BigInt(r.valorCents) === 0n) || (fp.pisCofinsRetidoCompensarAccountId && fp.pisCofinsRetencaoConciliarAccountId))
     );
     if (!provisaoContasConfiguradas) {
-      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17; com outros créditos no mês, também a redutora pisCofinsCreditoOutrosAccountId).');
+      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17; com outros créditos no mês, também a redutora pisCofinsCreditoOutrosAccountId; com retenções, as contas de retido a compensar e a conciliar).');
     }
     if (input.ajustesBase.length === 0 && rec.revendaCents > 0) {
       avisos.push('ajustes não informados: a base tributa toda a receita (revenda com alíquota zero e cota-parte do parceiro só saem se informadas — BRIEF X8 item 13).');

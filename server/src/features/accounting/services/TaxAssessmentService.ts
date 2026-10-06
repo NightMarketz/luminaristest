@@ -15,7 +15,9 @@
  *              teste: taxAssessmentAnual.integration.test.ts › "26 (m): A00 abaixo do provisionado ⇒ D saldo negativo a compensar / C despesa em 31/12, e o LAIR do item 6 não muda"
  *              X8 PR-3 (BRIEF X8 item 17): linhas PIS/COFINS `M01..M12` — fim do mês; D despesa / C a recolher = débito e,
  *              no não cumulativo, + D a recuperar / C redutora = outros créditos do mês e + D a recolher / C a recuperar =
- *              crédito consumido (`consumoPisCofins`); chamado pelo `PisCofinsAssessmentService` via `provisionarAposConfirmacao`
+ *              crédito consumido (`consumoPisCofins`); nos 2 regimes, + D retido a compensar / C a conciliar = retenções e
+ *              + D a recolher / C retido = parte abatida; chamado pelo `PisCofinsAssessmentService` via `provisionarAposConfirmacao`
+ *              teste: pisCofinsProvision.integration.test.ts › "retenções (dono 06/10): D retido a compensar / C a conciliar com clientes + baixa contra o a recolher — 10 pernas no Real; excedente fica no ativo no Presumido; a recolher = DARF"
  *              teste: pisCofinsProvision.integration.test.ts › "item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior consumido também é baixado"
  *              teste: pisCofinsProvision.integration.test.ts › "item 17 / L-5: outros créditos entram no a recuperar; o mês seguinte consome o saldo que os inclui — a recuperar nunca credor, a recolher = DARF"
  *              teste: pisCofinsProvision.integration.test.ts › "item 17 (substituição): estorna a provisão da substituída e posta a da nova — 1 provisão viva por tributo; período fechado ⇒ confirmação fica, pendente"
@@ -109,6 +111,10 @@ export interface ConsumoPisCofins {
   outros: bigint;
   /** L-2: saldo credor anterior consumido, por último. */
   saldoAnterior: bigint;
+  /** Retenções (dono 06/10): as sofridas no mês (`RETENCAO_n`) — entram no "retido a compensar" (nos 2 regimes). */
+  retencoesDoMes: bigint;
+  /** Retenções abatidas do que sobrou do débito depois dos créditos; o excedente fica no "retido a compensar". */
+  retencoes: bigint;
 }
 
 const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
@@ -123,18 +129,28 @@ const CREDITO_NFE_CODIGOS = ['CREDITO_NFE', 'CREDITO_NFE_DERIVADO'];
  *    parcial ⇒ só o usado; mês sem débito ⇒ nada consumido.
  */
 export function consumoPisCofins(row: LinhaPisCofins): ConsumoPisCofins {
-  if (row.modo !== MODO_PIS_COFINS.NAO_CUMULATIVO) return { outrosDoMes: 0n, nfe: 0n, outros: 0n, saldoAnterior: 0n };
+  const zero: ConsumoPisCofins = { outrosDoMes: 0n, nfe: 0n, outros: 0n, saldoAnterior: 0n, retencoesDoMes: 0n, retencoes: 0n };
+  const ehPisCofins = row.modo === MODO_PIS_COFINS.NAO_CUMULATIVO || row.modo === MODO_PIS_COFINS.CUMULATIVO;
+  if (!ehPisCofins) return zero;
   const memoria = MemoriaCalculoSchema.parse(row.memoria);
   const soma = (pred: (codigo: string) => boolean) => memoria.filter((m) => pred(m.codigo)).reduce((s, m) => s + BigInt(m.valorCents), 0n);
-  const nfeMes = soma((c) => CREDITO_NFE_CODIGOS.includes(c));
-  const outrosDoMes = soma((c) => c.startsWith('CREDITO_') && !CREDITO_NFE_CODIGOS.includes(c));
-  const saldo = soma((c) => c === 'SALDO_CREDOR_ANTERIOR');
+  const retencoesDoMes = soma((c) => /^RETENCAO_\d+$/.test(c));
   let restante = row.devidoCents;
-  const nfe = minB(nfeMes, restante);
-  restante -= nfe;
-  const outros = minB(outrosDoMes, restante);
-  restante -= outros;
-  return { outrosDoMes, nfe, outros, saldoAnterior: minB(saldo, restante) };
+  let c = zero;
+  if (row.modo === MODO_PIS_COFINS.NAO_CUMULATIVO) {
+    const nfeMes = soma((c) => CREDITO_NFE_CODIGOS.includes(c));
+    const outrosDoMes = soma((c) => c.startsWith('CREDITO_') && !CREDITO_NFE_CODIGOS.includes(c));
+    const saldo = soma((c) => c === 'SALDO_CREDOR_ANTERIOR');
+    const nfe = minB(nfeMes, restante);
+    restante -= nfe;
+    const outros = minB(outrosDoMes, restante);
+    restante -= outros;
+    const saldoAnterior = minB(saldo, restante);
+    restante -= saldoAnterior;
+    c = { ...c, outrosDoMes, nfe, outros, saldoAnterior };
+  }
+  // A ordem da função pura (`apurarPisCofinsMensal`): a pagar = max(0, débito − créditos − retenções).
+  return { ...c, retencoesDoMes, retencoes: minB(retencoesDoMes, restante) };
 }
 
 /** L-1 (a): crédito da NF-e do mês consumido. */
@@ -151,7 +167,9 @@ export const saldoAnteriorAproveitado = (row: LinhaPisCofins): bigint => consumo
  */
 export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId' | 'modo'>): boolean {
   if (row.status !== 'CONFIRMED' || row.provisaoEntryId !== null) return false;
-  return valorProvisao(row) !== 0n || consumoPisCofins(row).outrosDoMes > 0n;
+  if (valorProvisao(row) !== 0n) return true;
+  const c = consumoPisCofins(row);
+  return c.outrosDoMes > 0n || c.retencoesDoMes > 0n; // dono 06/10: retenção sem débito também é reconhecida
 }
 
 /**
@@ -566,8 +584,9 @@ export class TaxAssessmentService {
    *  - não cumulativo (`consumoPisCofins`, decisões do dono 06/10): + D a recuperar / C redutora de despesa
    *    (`pisCofinsCreditoOutrosAccountId`) = outros créditos do mês (L-5) e + D a recolher / C a recuperar = crédito
    *    consumido (NF-e + outros + saldo anterior; L-1/L-2/L-4); o crédito não consumido (saldo credor) fica no ativo;
-   *  - retenções NÃO são lançadas (F-PCB-3 a, na parte não reaberta) — ficam na memória.
-   * Um lançamento por tributo/mês, até 6 pernas; linha zerada não entra (L-3).
+   *  - retenções (nos 2 regimes; dono 06/10, reabre o resto do F-PCB-3 a): + D retido a compensar / C retenções a
+   *    conciliar com clientes = retenções do mês e + D a recolher / C retido a compensar = parte abatida.
+   * Um lançamento por tributo/mês, até 10 pernas (teto da L-3 ajustado de 6 para 10); linha zerada não entra.
    */
   private async linhasPisCofins(s: AccountingScope, row: TaxAssessment, fp: FiscalProfile | null): Promise<LinhaLancamento[]> {
     const pis = row.tributo === 'PIS';
@@ -587,9 +606,22 @@ export class TaxAssessmentService {
       const v = Number(c.outrosDoMes);
       lines.push({ accountCode: await recuperavel(), debitCents: v, creditCents: 0 }, { accountCode: redutora, debitCents: 0, creditCents: v });
     }
-    // L-1/L-2/L-4: baixa do "a recuperar" pelo crédito consumido (NF-e + outros + saldo anterior) — um par só (L-3: ≤ 6 pernas).
+    // L-1/L-2/L-4: baixa do "a recuperar" pelo crédito consumido (NF-e + outros + saldo anterior) — um par só.
     if (baixa > 0) {
       lines.push({ accountCode: await recolher(), debitCents: baixa, creditCents: 0 }, { accountCode: await recuperavel(), debitCents: 0, creditCents: baixa });
+    }
+    // Retenções (dono 06/10; reabre o resto do F-PCB-3 a): reconhecimento D retido a compensar / C retenções a conciliar
+    // com clientes (transitória — o fato gerador, o recebimento líquido, está fora do sistema) e baixa D a recolher / C
+    // retido a compensar pela parte abatida. O excedente fica no ativo (compensação fora do sistema, F-TA-9 a).
+    const retido = async () => this.contaDaProvisao(s, fp?.pisCofinsRetidoCompensarAccountId, 'PIS/COFINS retido a compensar');
+    if (c.retencoesDoMes > 0n) {
+      const conciliar = await this.contaDaProvisao(s, fp?.pisCofinsRetencaoConciliarAccountId, 'retenções de PIS/COFINS a conciliar com clientes');
+      const v = Number(c.retencoesDoMes);
+      lines.push({ accountCode: await retido(), debitCents: v, creditCents: 0 }, { accountCode: conciliar, debitCents: 0, creditCents: v });
+    }
+    if (c.retencoes > 0n) {
+      const v = Number(c.retencoes);
+      lines.push({ accountCode: await recolher(), debitCents: v, creditCents: 0 }, { accountCode: await retido(), debitCents: 0, creditCents: v });
     }
     return lines;
   }

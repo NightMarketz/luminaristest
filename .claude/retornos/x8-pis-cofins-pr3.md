@@ -8,7 +8,7 @@ agente: subagente (sessao-feature), worktree agent-a263424acc7694473, branch `cl
 base: `origin/claude/x8-pis-cofins-pr2` `bec77ac1` (PR-2 do X8, sobre main `6ac4381d`; X7 PR-3 #509 em main)
 modelo: opus-5.5
 rodadas-de-review: 0 — review independente NÃO despachado (regra ⛔ do CLAUDE.md; o dono decide)
-veredicto: fatia completa + rodadas 2 (L-2) e 3 (L-4 ratificado; L-5 lança outros créditos — reabre em parte o F-PCB-3 a), gates verdes; NÃO mergear sem OK do dono
+veredicto: fatia completa + rodadas 2 (L-2), 3 (L-4/L-5) e 4 (retenções lançadas — reabre o resto do F-PCB-3 a; smoke:migration PASS), gates verdes; NÃO mergear sem OK do dono
 rodada 2: dono, chat, 2026-10-06, questionário — L-1 (a), L-2 "Baixar também o saldo usado", L-3 ratificado
   ([[D-2026-10-06-X8-PR3-LACUNAS]]; EMENDA §8 do BRIEF); base rebaseada em `e1d7321c` (docs do #554)
 
@@ -136,8 +136,7 @@ Cenário do 835 (PIS M02): D 4.9.3 165.000 / C 2.1.9.3 165.000; D 2.1.9.3 17.335
 
 Residuais (I): (1) saldo credor anterior INFORMADO no 1º mês (F-PCB-2 a) nunca passou pelo razão do sistema — a baixa só
 não deixa o "a recuperar" credor se o saldo de abertura o pôs no ativo; (2) retenções seguem fora do razão (parte não
-reaberta do F-PCB-3 a) ⇒ "a recolher" acima do DARF pelo valor delas; (3) `npm run smoke:migration` NÃO rodado (exige
-cópia do dev.db real; a instrução desta tarefa veda o dev.db real) — migração = 1 coluna nullable aditiva.
+reaberta do F-PCB-3 a) ⇒ "a recolher" acima do DARF pelo valor delas; (3) [rodada 4: smoke:migration RODADO, PASS — ver abaixo].
 
 ### PROVA — rodada 3
 ```
@@ -153,3 +152,54 @@ $ node scripts/plano-vault.mjs index && node scripts/plano-vault.mjs check → "
 ```
 Sabotagem 4 (verificado, revertida; grep SABOTAGEM = 0): reconhecimento dos outros créditos desligado ⇒ `pisCofinsProvision`
 1 falha / 7 passes ("item 17 / L-5 …": as pernas a recuperar/redutora somem).
+
+## Rodada 4 — retenções + smoke (dono, chat, 06/10: "sim, os dois")
+Reabre o resto do F-PCB-3 (a) (o F-PCB-3 a fica inteiramente reaberto).
+- **Lançamento (nos 2 regimes), ainda um por tributo/mês:** + D PIS/Cofins retido a compensar (`pisCofinsRetidoCompensarAccountId`,
+  Asset) / C retenções a conciliar com clientes (`pisCofinsRetencaoConciliarAccountId`, Asset redutora — transitória) =
+  retenções do mês (`RETENCAO_n`); + D a recolher / C retido a compensar = parte abatida (`min(retenções, débito − crédito
+  consumido)`, a mesma ordem da função pura). Excedente fica no retido a compensar (F-TA-9 a). Retenção sem débito também
+  deixa a provisão pendente (há o reconhecimento). **Teto da L-3: 6 → 10 pernas** (declarado; um lançamento só mantido).
+- **Fonte da contrapartida:** padrão contábil = a retenção nasce no recebimento (D Banco / D tributo retido a compensar /
+  C Clientes) — grau **inferido** (prática contábil, não relida em norma nesta sessão); base legal da retenção: Lei
+  10.833/2003 arts. 30, 31 e 36 e IN SRF 459/2004 — **inferido** (não relidas na fonte nesta sessão). Como o recebimento
+  líquido está fora do sistema, a contrapartida do reconhecimento é uma **transitória redutora de clientes** a conciliar
+  com o título — proposta do executor, **inferido** → validação externa **P-8** (BRIEF §4).
+- **Contrato:** +2 campos no perfil fiscal (DTO, view, `assertAssetAccount` nos dois, allowlist `fiscal_profile.updated`,
+  `ACCOUNT_KEYS`, snapshot + `.gen.ts`), juntados à migração de hoje, renomeada para
+  `20261006120000_add_pis_cofins_provisao_pr3_accounts` (3 `ADD COLUMN`; ainda não mergeada). `provisaoContasConfiguradas`
+  exige as duas quando o mês tem retenção.
+- **Saldo informado no 1º mês → P-7** (BRIEF §4, validação externa do contador).
+
+Lançamento no teste de retenções (Real, M05, receita 10.000,00, aluguel 2.000,00, retenção PIS 6,50 / Cofins 10,00), PIS:
+D 4.9.3 16.500 / C 2.1.9.3 16.500; D 1.1.9 3.300 / C 4.9.5 3.300; D 2.1.9.3 3.300 / C 1.1.9 3.300; D 1.1.8 650 / C 1.1.7 650;
+D 2.1.9.3 650 / C 1.1.8 650 — 10 pernas; "a recolher" 12.550 = DARF (Cofins 59.800 = DARF). Reconcile 3× ⇒ 2 lançamentos.
+Presumido M05 (receita 1.000,00, retenção PIS 10,00 > débito 6,50): D 4.9.3 650 / C 2.1.9.3 650; D 1.1.8 1.000 / C 1.1.7 1.000;
+D 2.1.9.3 650 / C 1.1.8 650 ⇒ "a recolher" 0 = DARF; retido a compensar fica com 350 (excedente).
+
+### PROVA — rodada 4
+```
+$ cp server/prisma/prisma/dev.db{,-wal,-shm} <scratchpad>/devdb-copy/     (original 7.548.928 bytes; isca de fora = 0 byte)
+$ md5 original antes  = 21051e9022784f2bca1c4d244fe32432
+$ cd server && npm run smoke:migration -- --db <scratchpad>/devdb-copy/dev.db     → exit 0
+    original: <scratchpad>\devdb-copy\dev.db (md5 21051e9022784f2bca1c4d244fe32432)
+    migrações aplicadas na cópia: 2
+    tabelas=76 · journal_entries=1477 · postings=2966 · accounts=126 · audit_events=2753
+    OK: 2 migração(ões) aplicada(s) na cópia sem perda. Original intocado (S1).
+    (log inteiro sha256 d566cf5144fc703f9e88ca68ac2f293bd320417e72f5c0bbdafd073772341036; S1–S8 sem falha, sem aviso)
+$ md5 original depois = 21051e9022784f2bca1c4d244fe32432 (nunca escrito)
+$ cd server && npx tsc --noEmit                                   → exit 0
+$ cd server && UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot → 203 passed (outros 15 __dto-shapes__ só CRLF, descartados)
+$ cd server && npx jest --selectProjects unit --forceExit         → exit 0 (285 suites, 4019 passed, 3 skipped, 1 todo)
+$ cd server && npm run test:integration                           → exit 0 (116 suites, 950 passed)
+$ cd server && npm run docs:generate                              → Paths 249 (diff só CRLF, descartado)
+$ cd my-app && npx tsc --noEmit                                   → exit 0
+$ cd my-app && npm run test:types                                 → exit 0
+$ node scripts/plano-vault.mjs index && node scripts/plano-vault.mjs check → "índice regenerado" / "vault íntegro" (exit 0)
+```
+As 2 migrações pendentes na cópia: a deste PR e uma anterior ainda não aplicada no dev.db local (inferido — o script não as
+nomeia). Sabotagem 5 (verificado, revertida; grep SABOTAGEM = 0): retenção abatida zerada ⇒ integração 1 falha / 8 passes
+("retenções (dono 06/10) …") e unit 1 falha / 7 passes ("retenções: abatem depois dos créditos …").
+
+Residuais (rodada 4): P-7 (saldo informado no 1º mês) e P-8 (contrapartida transitória da retenção) com o contador; a
+transitória 1.1.7 fica credora até alguém conciliar com o título a receber (o sistema não faz essa baixa).

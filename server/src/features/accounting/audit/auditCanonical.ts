@@ -143,7 +143,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2 (F-PCB-1 b)
-    'pisCofinsCreditoOutrosAccountId', // X8 PR-3 (L-5, dono 06/10)
+    'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções; dono 06/10)
     'irpjSaldoNegativoAccountId', 'csllSaldoNegativoAccountId', // X7 Fase B item 16 (F-TB-3 a)
     // BE-INCR-DFE (item 9): enum/boolean/int como string — IM/CNAE (texto livre) ficam FORA do evento
     'codMun', 'dpsSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
