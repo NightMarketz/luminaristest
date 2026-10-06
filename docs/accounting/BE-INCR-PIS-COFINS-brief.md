@@ -17,8 +17,8 @@
 > **EMENDA 06/10 (§7):** 8 leituras estritas do PR-2 ratificadas pelo dono; o PR-2 (#554) só entra em `main` junto com o
 > PR-3 (risco D6). [D-2026-10-06-X8-PR2-LACUNAS-E-MERGE](../plano/decisoes/D-2026-10-06-X8-PR2-LACUNAS-E-MERGE.md).
 >
-> **EMENDA 06/10 (§8):** lacunas L-1..L-3 do PR-3 decididas; L-2 muda o item 17 (o saldo credor anterior consumido
-> também é baixado do "a recuperar"). [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
+> **EMENDA 06/10 (§8):** lacunas L-1..L-5 do PR-3 decididas; L-2 muda o item 17 (o saldo credor anterior consumido
+> também é baixado do "a recuperar") e L-5 **reabre em parte o F-PCB-3 (a)** (outros créditos lançados no "a recuperar"). [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
 
 ---
 
@@ -330,6 +330,9 @@ Não reabre F-PCB-1..5; a L-2 **altera** o item 17 (antes: só a parte do item 6
 | L-2 | saldo credor anterior consumido no mês | **Baixar também:** + D PIS/COFINS a recolher / C PIS/COFINS a recuperar pelo saldo anterior usado (parcial ⇒ só o usado; sem débito ⇒ 0; só no não cumulativo), para o "a recolher" bater com o DARF |
 | L-3 | forma do lançamento | Um lançamento por tributo/mês, até 6 pernas; chave de idempotência = a apuração; reconcile repetido não duplica |
 
-**Aberta (L-4, leitura do executor):** ordem de consumo NF-e do mês → outros créditos do mês → saldo anterior (a ordem da
-memória). **Risco (L-5):** a parte "outros" do saldo anterior nunca passou pelo ativo; a baixa pode deixar o "a recuperar"
-credor — contador.
+| L-4 | ordem de consumo | **(a)** NF-e do mês → outros créditos do mês → saldo anterior (a ordem da memória) |
+| L-5 | outros créditos (art. 3º III–IX) × "a recuperar" | **Lançar no PR-3** — **reabre em parte o F-PCB-3 (a)**: D PIS/Cofins a recuperar / C redutora de despesa (`pisCofinsCreditoOutrosAccountId`, conta nova do perfil, `Expense` — nunca receita; ECF intocada, F-PCB-1 b). Fonte do dono: prática contábil citando o ADI SRF 3/2007. A baixa do crédito consumido vira um par só (NF-e + outros + saldo). `provisaoContasConfiguradas` exige a redutora quando há outros créditos no mês |
+
+**Parte do F-PCB-3 (a) que fica:** retenções não são lançadas (o "a recolher" fica acima do DARF pelo valor delas).
+**Residual:** saldo credor anterior **informado** no 1º mês (F-PCB-2 a) nunca passou pelo razão do sistema — a baixa dele
+depende do saldo de abertura do "a recuperar".

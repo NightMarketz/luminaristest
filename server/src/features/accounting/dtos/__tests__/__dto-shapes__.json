@@ -634,6 +634,17 @@
                     }
                   ]
                 },
+                "pisCofinsCreditoOutrosAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "irpjSaldoNegativoAccountId": {
                   "anyOf": [
                     {
@@ -4692,6 +4703,17 @@
             }
           ]
         },
+        "pisCofinsCreditoOutrosAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "irpjSaldoNegativoAccountId": {
           "anyOf": [
             {
@@ -5067,6 +5089,17 @@
           ]
         },
         "cofinsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pisCofinsCreditoOutrosAccountId": {
           "anyOf": [
             {
               "type": "string",

@@ -8,7 +8,7 @@ agente: subagente (sessao-feature), worktree agent-a263424acc7694473, branch `cl
 base: `origin/claude/x8-pis-cofins-pr2` `bec77ac1` (PR-2 do X8, sobre main `6ac4381d`; X7 PR-3 #509 em main)
 modelo: opus-5.5
 rodadas-de-review: 0 — review independente NÃO despachado (regra ⛔ do CLAUDE.md; o dono decide)
-veredicto: fatia completa + rodada 2 (L-2 do dono: baixa também o saldo usado), gates verdes; NÃO mergear sem OK do dono
+veredicto: fatia completa + rodadas 2 (L-2) e 3 (L-4 ratificado; L-5 lança outros créditos — reabre em parte o F-PCB-3 a), gates verdes; NÃO mergear sem OK do dono
 rodada 2: dono, chat, 2026-10-06, questionário — L-1 (a), L-2 "Baixar também o saldo usado", L-3 ratificado
   ([[D-2026-10-06-X8-PR3-LACUNAS]]; EMENDA §8 do BRIEF); base rebaseada em `e1d7321c` (docs do #554)
 
@@ -60,7 +60,7 @@ Allowlist: nenhum eventType novo (o `postEntry` audita como no X7).
 3. **L-3** A provisão de cada tributo é UM lançamento de 2 ou 4 pernas (a conta a recolher aparece a débito e a crédito no
    não cumulativo), porque `sourceId` = id da linha é a chave de idempotência — 1 entry por fonte. (V: o `postEntry` aceita)
 
-## Lacunas novas da rodada 2 (abertas)
+## Lacunas da rodada 2 — DECIDIDAS na rodada 3 (dono 06/10: L-4 (a); L-5 "Lançar outros créditos no PR-3")
 4. **L-4** (I) ordem de consumo = a da memória: NF-e do mês → outros créditos do mês → saldo anterior. Com outros créditos
    no mês, baixa-se menos saldo (unit "L-4"). Alternativa: saldo antes dos outros.
 5. **L-5** (I, risco) o saldo credor anterior pode conter crédito de "outros" (energia/aluguel) de meses anteriores, que
@@ -112,3 +112,44 @@ Saldo parcial (M01, saldo informado PIS 100 / Cofins 1.000, débito 165 / 760): 
 reconcile repetido não duplica.
 Sabotagem 3 (verificado, revertida; grep SABOTAGEM = 0): saldo consumido zerado ⇒ integração 2 falhas / 5 passes
 ("item 17 (não cumulativo)", "item 17 / L-2 (saldo parcialmente consumido)") e unit 2 falhas / 3 passes ("parcial", "L-4").
+
+## Rodada 3 — L-5 (dono, chat, 06/10, questionário: L-4 (a); L-5 "Lançar outros créditos no PR-3")
+Reabre em parte o F-PCB-3 (a); fonte do dono: prática contábil citando o ADI SRF 3/2007 (D a recuperar / C despesa, nunca receita).
+- **Lançamento (não cumulativo), um por tributo/mês, até 6 pernas, linha zerada omitida:** D despesa / C a recolher = débito;
+  D PIS/COFINS a recuperar / C redutora (`pisCofinsCreditoOutrosAccountId`) = outros créditos do mês; D a recolher / C a
+  recuperar = crédito consumido (NF-e + outros + saldo anterior, nessa ordem — `consumoPisCofins`). A baixa virou UM par
+  (antes, um por origem) para caber nas 6 pernas da L-3.
+- **Pendência:** `provisaoPendente` também é true num mês sem débito com outros créditos (há o reconhecimento a lançar) —
+  senão o saldo credor que eles geram seria baixado depois sem nunca ter entrado no ativo. Vale para o encerramento (item 19).
+- **Contrato (V):** campo novo `pisCofinsCreditoOutrosAccountId` no perfil fiscal da unidade — `UpsertFiscalProfileSchema`,
+  `FiscalProfileView`, `assertExpenseAccount`, allowlist `fiscal_profile.updated`, `ACCOUNT_KEYS` da policy version,
+  `__dto-shapes__.json` (accounting) + `FiscalProfileDto.gen.ts`/`AccountingPolicyVersionDto.gen.ts`; migração aditiva
+  `20261006120000_add_pis_cofins_credito_outros_account` (1 `ADD COLUMN`, FK Restrict; SQLite não tem `ADD COLUMN IF NOT
+  EXISTS` — 1 statement, sem meio-aplicado; precedente do PR-1). openapi sem mudança (o perfil não é enumerado; diff só CRLF descartado).
+- `provisaoContasConfiguradas` exige a redutora quando o mês tem outros créditos > 0 (teste L-5).
+
+Lançamentos no teste L-5 (Real, aluguel R$ 1.000,00 em janeiro; débito jan 165 / 760; fev 1.650 / 7.600):
+- PIS M01: D 4.9.3 165 / C 2.1.9.3 165; D 1.1.9 1.650 / C 4.9.5 1.650; D 2.1.9.3 165 / C 1.1.9 165 — saldo credor 1.485.
+- PIS M02: D 4.9.3 1.650 / C 2.1.9.3 1.650; D 2.1.9.3 1.485 / C 1.1.9 1.485 ⇒ a recolher 165 = DARF; Cofins 760 = DARF.
+- "a recuperar" (1.1.9) somado nos 2 meses e 2 tributos = 0 (nunca credor).
+Cenário do 835 (PIS M02): D 4.9.3 165.000 / C 2.1.9.3 165.000; D 2.1.9.3 17.335 / C 1.1.9 17.335 ⇒ a recolher 147.665 = DARF.
+
+Residuais (I): (1) saldo credor anterior INFORMADO no 1º mês (F-PCB-2 a) nunca passou pelo razão do sistema — a baixa só
+não deixa o "a recuperar" credor se o saldo de abertura o pôs no ativo; (2) retenções seguem fora do razão (parte não
+reaberta do F-PCB-3 a) ⇒ "a recolher" acima do DARF pelo valor delas; (3) `npm run smoke:migration` NÃO rodado (exige
+cópia do dev.db real; a instrução desta tarefa veda o dev.db real) — migração = 1 coluna nullable aditiva.
+
+### PROVA — rodada 3
+```
+$ cd server && npx tsc --noEmit                                   → exit 0
+$ cd server && UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot → 203 passed (diff só no accounting; os outros 15 __dto-shapes__ só CRLF, descartados)
+$ cd server && npx jest --selectProjects unit --forceExit         → exit 0 (285 suites, 4018 passed, 3 skipped, 1 todo)
+$ cd server && npx jest --selectProjects integration --runInBand --forceExit --testPathPatterns pisCofins → 19 passed
+$ cd server && npm run test:integration                           → exit 0 (116 suites, 949 passed)
+$ cd server && npm run docs:generate                              → Paths 249, Operations 307 (sem diff de conteúdo)
+$ cd my-app && npx tsc --noEmit                                   → exit 0
+$ cd my-app && npm run test:types                                 → exit 0
+$ node scripts/plano-vault.mjs index && node scripts/plano-vault.mjs check → "índice regenerado" / "vault íntegro" (exit 0)
+```
+Sabotagem 4 (verificado, revertida; grep SABOTAGEM = 0): reconhecimento dos outros créditos desligado ⇒ `pisCofinsProvision`
+1 falha / 7 passes ("item 17 / L-5 …": as pernas a recuperar/redutora somem).

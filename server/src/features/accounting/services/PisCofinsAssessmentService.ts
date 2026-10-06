@@ -337,15 +337,18 @@ export class PisCofinsAssessmentService {
       saldoAnterior: origem,
     });
 
+    // PR-3 (L-5, dono 06/10): mês com outros créditos > 0 exige também a redutora que os recebe na provisão.
+    const temOutros = TRIBUTOS_PIS_COFINS.some((t) => resultado[t].memoria.some((l) => /^CREDITO_/.test(l.codigo) && !l.codigo.startsWith('CREDITO_NFE') && BigInt(l.valorCents) > 0n));
     const provisaoContasConfiguradas = !!(
       fp.pisDespesaAccountId &&
       fp.cofinsDespesaAccountId &&
       fp.pisRecolherAccountId &&
       fp.cofinsRecolherAccountId &&
-      (modalidade === 'CUMULATIVO' || fp.pisCofinsRecuperavelAccountId)
+      (modalidade === 'CUMULATIVO' || fp.pisCofinsRecuperavelAccountId) &&
+      (!temOutros || fp.pisCofinsCreditoOutrosAccountId)
     );
     if (!provisaoContasConfiguradas) {
-      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17).');
+      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17; com outros créditos no mês, também a redutora pisCofinsCreditoOutrosAccountId).');
     }
     if (input.ajustesBase.length === 0 && rec.revendaCents > 0) {
       avisos.push('ajustes não informados: a base tributa toda a receita (revenda com alíquota zero e cota-parte do parceiro só saem se informadas — BRIEF X8 item 13).');

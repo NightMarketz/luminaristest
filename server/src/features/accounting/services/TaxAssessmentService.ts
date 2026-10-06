@@ -14,9 +14,10 @@
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição × vínculo perdido): a substituída postada sem provisaoEntryId é estornada — 1 provisão viva por tributo"
  *              teste: taxAssessmentAnual.integration.test.ts › "26 (m): A00 abaixo do provisionado ⇒ D saldo negativo a compensar / C despesa em 31/12, e o LAIR do item 6 não muda"
  *              X8 PR-3 (BRIEF X8 item 17): linhas PIS/COFINS `M01..M12` — fim do mês; D despesa / C a recolher = débito e,
- *              no não cumulativo, + D a recolher / C a recuperar = `creditoNfeAproveitado` e `saldoAnteriorAproveitado` (chamado pelo
- *              `PisCofinsAssessmentService` via `provisionarAposConfirmacao`)
+ *              no não cumulativo, + D a recuperar / C redutora = outros créditos do mês e + D a recolher / C a recuperar =
+ *              crédito consumido (`consumoPisCofins`); chamado pelo `PisCofinsAssessmentService` via `provisionarAposConfirmacao`
  *              teste: pisCofinsProvision.integration.test.ts › "item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior consumido também é baixado"
+ *              teste: pisCofinsProvision.integration.test.ts › "item 17 / L-5: outros créditos entram no a recuperar; o mês seguinte consome o saldo que os inclui — a recuperar nunca credor, a recolher = DARF"
  *              teste: pisCofinsProvision.integration.test.ts › "item 17 (substituição): estorna a provisão da substituída e posta a da nova — 1 provisão viva por tributo; período fechado ⇒ confirmação fica, pendente"
  *   commit 2 — subrazão: CAS provisaoEntryId `where null` (BRIEF item 15, "commit 3"), sem tx de razão
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
@@ -96,49 +97,61 @@ export function valorProvisao(row: LinhaProvisao): bigint {
 
 type LinhaLancamento = { accountCode: string; debitCents: number; creditCents: number };
 
-/**
- * BRIEF X8 item 17 — "crédito da NF-e aproveitado no mês (a parte do item 6 efetivamente usada; o saldo credor fica no
- * ativo)": crédito da NF-e do mês (`CREDITO_NFE` + `CREDITO_NFE_DERIVADO`, ambos do item 6) limitado ao débito do mês —
- * a NF-e é consumida antes dos outros créditos e do saldo credor anterior. Só no não cumulativo; no cumulativo, 0.
- * L-1 → (a), ratificado (dono, 06/10, [[D-2026-10-06-X8-PR3-LACUNAS]]).
- */
-export function creditoNfeAproveitado(row: Pick<TaxAssessment, 'modo' | 'periodo' | 'devidoCents' | 'memoria'>): bigint {
-  return consumoDoMes(row).nfe;
-}
+type LinhaPisCofins = Pick<TaxAssessment, 'modo' | 'periodo' | 'devidoCents' | 'memoria'>;
 
-/**
- * L-2 → "baixar também o saldo usado" (dono, 06/10, [[D-2026-10-06-X8-PR3-LACUNAS]]): o saldo credor anterior
- * (`SALDO_CREDOR_ANTERIOR`, lido de M(x−1) ou informado no 1º mês) consumido no mês também sai do "a recuperar", para o
- * "a recolher" bater com o DARF. Ordem de consumo = a da memória: NF-e do mês → outros créditos do mês → saldo anterior
- * (L-4 desta sessão). Saldo parcialmente consumido ⇒ só a parte usada; mês sem débito ⇒ 0. Só no não cumulativo.
- */
-export function saldoAnteriorAproveitado(row: Pick<TaxAssessment, 'modo' | 'periodo' | 'devidoCents' | 'memoria'>): bigint {
-  return consumoDoMes(row).saldoAnterior;
+/** O que a provisão de PIS/COFINS do mês reconhece e baixa no "a recuperar" (BRIEF X8 item 17 + L-1..L-5). */
+export interface ConsumoPisCofins {
+  /** L-5: outros créditos do mês (art. 3º III–IX, informados) — entram no "a recuperar" (D a recuperar / C redutora). */
+  outrosDoMes: bigint;
+  /** L-1 (a): crédito da NF-e do mês consumido (a NF-e consome primeiro). */
+  nfe: bigint;
+  /** L-4 (a): outros créditos do mês consumidos, depois da NF-e. */
+  outros: bigint;
+  /** L-2: saldo credor anterior consumido, por último. */
+  saldoAnterior: bigint;
 }
 
 const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 const CREDITO_NFE_CODIGOS = ['CREDITO_NFE', 'CREDITO_NFE_DERIVADO'];
 
-function consumoDoMes(row: Pick<TaxAssessment, 'modo' | 'periodo' | 'devidoCents' | 'memoria'>): { nfe: bigint; saldoAnterior: bigint } {
-  if (row.modo !== MODO_PIS_COFINS.NAO_CUMULATIVO) return { nfe: 0n, saldoAnterior: 0n };
+/**
+ * BRIEF X8 item 17 com as decisões do dono de 06/10 ([[D-2026-10-06-X8-PR3-LACUNAS]]), só no não cumulativo (no
+ * cumulativo tudo é 0 — sem crédito, EMENDA §7 leitura 5):
+ *  - L-5 (reabre em parte o F-PCB-3 a; prática citando ADI SRF 3/2007): os outros créditos do mês entram no "a
+ *    recuperar" — D PIS/COFINS a recuperar / C redutora de despesa (`pisCofinsCreditoOutrosAccountId`), nunca receita;
+ *  - consumo contra o débito na ordem da memória (L-1 a, L-4 a): NF-e do mês → outros do mês → saldo anterior (L-2);
+ *    parcial ⇒ só o usado; mês sem débito ⇒ nada consumido.
+ */
+export function consumoPisCofins(row: LinhaPisCofins): ConsumoPisCofins {
+  if (row.modo !== MODO_PIS_COFINS.NAO_CUMULATIVO) return { outrosDoMes: 0n, nfe: 0n, outros: 0n, saldoAnterior: 0n };
   const memoria = MemoriaCalculoSchema.parse(row.memoria);
   const soma = (pred: (codigo: string) => boolean) => memoria.filter((m) => pred(m.codigo)).reduce((s, m) => s + BigInt(m.valorCents), 0n);
   const nfeMes = soma((c) => CREDITO_NFE_CODIGOS.includes(c));
-  const outros = soma((c) => c.startsWith('CREDITO_') && !CREDITO_NFE_CODIGOS.includes(c));
+  const outrosDoMes = soma((c) => c.startsWith('CREDITO_') && !CREDITO_NFE_CODIGOS.includes(c));
   const saldo = soma((c) => c === 'SALDO_CREDOR_ANTERIOR');
-  const debito = row.devidoCents;
-  const nfe = minB(nfeMes, debito);
-  const restante = maxZero(debito - nfe - outros);
-  return { nfe, saldoAnterior: minB(saldo, restante) };
+  let restante = row.devidoCents;
+  const nfe = minB(nfeMes, restante);
+  restante -= nfe;
+  const outros = minB(outrosDoMes, restante);
+  restante -= outros;
+  return { outrosDoMes, nfe, outros, saldoAnterior: minB(saldo, restante) };
 }
+
+/** L-1 (a): crédito da NF-e do mês consumido. */
+export const creditoNfeAproveitado = (row: LinhaPisCofins): bigint => consumoPisCofins(row).nfe;
+/** L-2: saldo credor anterior consumido no mês. */
+export const saldoAnteriorAproveitado = (row: LinhaPisCofins): bigint => consumoPisCofins(row).saldoAnterior;
 
 /**
  * Decisão do dono 04/10 (lacuna L-C do PR-3 da Fase A), generalizada na Fase B: pendente ⇔ CONFIRMED ∧ valor da provisão
  * ≠ 0 ∧ sem lançamento. Valor 0 (suspensão do balancete, ajuste igual aos meses) não tem o que provisionar (o `postEntry`
- * recusa lançamento zerado) e não bloqueia o encerramento.
+ * recusa lançamento zerado) e não bloqueia o encerramento. X8 PR-3 (L-5): um mês de PIS/COFINS sem débito mas com outros
+ * créditos tem o que lançar (o reconhecimento no "a recuperar") — senão o saldo credor que eles geram seria baixado
+ * depois sem nunca ter entrado no ativo.
  */
-export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId'>): boolean {
-  return row.status === 'CONFIRMED' && row.provisaoEntryId === null && valorProvisao(row) !== 0n;
+export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId' | 'modo'>): boolean {
+  if (row.status !== 'CONFIRMED' || row.provisaoEntryId !== null) return false;
+  return valorProvisao(row) !== 0n || consumoPisCofins(row).outrosDoMes > 0n;
 }
 
 /**
@@ -550,24 +563,33 @@ export class TaxAssessmentService {
   /**
    * BRIEF X8 item 17 (F-X8-4 a, F-PCB-1 b, F-PCB-3 a) — provisão de PIS/COFINS do mês:
    *  - D despesa (`pis|cofinsDespesaAccountId`, Expense) / C a recolher (`pis|cofinsRecolherAccountId`) = débito bruto;
-   *  - não cumulativo: + D a recolher / C `pisCofinsRecuperavelAccountId` = crédito DA NF-E aproveitado no mês
-   *    (`creditoNfeAproveitado`); o resto do crédito da NF-e (saldo credor) fica no ativo;
-   *  - outros créditos, saldo credor anterior e retenções NÃO são lançados (F-PCB-3 a) — ficam na memória.
+   *  - não cumulativo (`consumoPisCofins`, decisões do dono 06/10): + D a recuperar / C redutora de despesa
+   *    (`pisCofinsCreditoOutrosAccountId`) = outros créditos do mês (L-5) e + D a recolher / C a recuperar = crédito
+   *    consumido (NF-e + outros + saldo anterior; L-1/L-2/L-4); o crédito não consumido (saldo credor) fica no ativo;
+   *  - retenções NÃO são lançadas (F-PCB-3 a, na parte não reaberta) — ficam na memória.
+   * Um lançamento por tributo/mês, até 6 pernas; linha zerada não entra (L-3).
    */
   private async linhasPisCofins(s: AccountingScope, row: TaxAssessment, fp: FiscalProfile | null): Promise<LinhaLancamento[]> {
     const pis = row.tributo === 'PIS';
-    const despesa = await this.contaDaProvisao(s, pis ? fp?.pisDespesaAccountId : fp?.cofinsDespesaAccountId, `despesa de ${row.tributo}`);
-    const recolher = await this.contaDaProvisao(s, pis ? fp?.pisRecolherAccountId : fp?.cofinsRecolherAccountId, `${row.tributo} a recolher`);
+    const c = consumoPisCofins(row);
     const debito = Number(row.devidoCents);
-    const lines: LinhaLancamento[] = [
-      { accountCode: despesa, debitCents: debito, creditCents: 0 },
-      { accountCode: recolher, debitCents: 0, creditCents: debito },
-    ];
-    // L-3 (ratificado): um lançamento por tributo/mês, até 6 pernas — um par por baixa do "a recuperar".
-    for (const usado of [creditoNfeAproveitado(row), saldoAnteriorAproveitado(row)].map(Number)) {
-      if (usado <= 0) continue;
-      const recuperavel = await this.contaDaProvisao(s, fp?.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
-      lines.push({ accountCode: recolher, debitCents: usado, creditCents: 0 }, { accountCode: recuperavel, debitCents: 0, creditCents: usado });
+    const baixa = Number(c.nfe + c.outros + c.saldoAnterior);
+    const lines: LinhaLancamento[] = [];
+    const recolher = async () => this.contaDaProvisao(s, pis ? fp?.pisRecolherAccountId : fp?.cofinsRecolherAccountId, `${row.tributo} a recolher`);
+    const recuperavel = async () => this.contaDaProvisao(s, fp?.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
+    if (debito > 0) {
+      const despesa = await this.contaDaProvisao(s, pis ? fp?.pisDespesaAccountId : fp?.cofinsDespesaAccountId, `despesa de ${row.tributo}`);
+      lines.push({ accountCode: despesa, debitCents: debito, creditCents: 0 }, { accountCode: await recolher(), debitCents: 0, creditCents: debito });
+    }
+    // L-5: reconhecimento dos outros créditos do mês no ativo — C redutora de despesa (Expense), nunca receita.
+    if (c.outrosDoMes > 0n) {
+      const redutora = await this.contaDaProvisao(s, fp?.pisCofinsCreditoOutrosAccountId, 'créditos de PIS/COFINS sobre despesas (redutora)');
+      const v = Number(c.outrosDoMes);
+      lines.push({ accountCode: await recuperavel(), debitCents: v, creditCents: 0 }, { accountCode: redutora, debitCents: 0, creditCents: v });
+    }
+    // L-1/L-2/L-4: baixa do "a recuperar" pelo crédito consumido (NF-e + outros + saldo anterior) — um par só (L-3: ≤ 6 pernas).
+    if (baixa > 0) {
+      lines.push({ accountCode: await recolher(), debitCents: baixa, creditCents: 0 }, { accountCode: await recuperavel(), debitCents: 0, creditCents: baixa });
     }
     return lines;
   }

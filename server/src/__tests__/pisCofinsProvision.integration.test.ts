@@ -10,7 +10,10 @@
  *    NF-e aproveitado = min(NF-e, débito) = 1,65 / 7,60 (o resto — saldo credor 8,35 / 38,40 — fica no ativo).
  *    M02, serviço R$ 100.000,00 ⇒ débito 1.650,00 / 7.600,00; NF-e de fevereiro 165,00 / 835,00 ⇒ aproveitado 165,00 /
  *    835,00; saldo credor de janeiro consumido (8,35 / 38,40) também sai do "a recuperar" (L-2 → "baixar também o saldo
- *    usado", dono 06/10) ⇒ "a recolher" líquido = DARF. Outros créditos e retenções NÃO são lançados (F-PCB-3 a).
+ *    usado", dono 06/10) — uma baixa só de 173,35 no PIS ⇒ "a recolher" líquido = DARF. Retenções não são lançadas.
+ *  - L-5 (dono 06/10): Real, aluguel de R$ 1.000,00 em janeiro (PIS 16,50 / Cofins 76,00) contra débito 1,65 / 7,60 ⇒
+ *    D a recuperar / C redutora 16,50 / 76,00, baixa 1,65 / 7,60, saldo credor 14,85 / 68,40; fevereiro com débito
+ *    16,50 / 76,00 consome o saldo inteiro ⇒ "a recuperar" termina em 0 (nunca credor) e "a recolher" = DARF.
  *  - Real M01/2026 (1º mês), serviço R$ 100,00, sem NF-e, saldo informado PIS 1,00 / Cofins 10,00 ⇒ PIS consome 1,00 todo
  *    (a pagar 0,65); Cofins consome só 7,60 dos 10,00 (parcial; saldo credor 2,40 fica no ativo).
  */
@@ -34,6 +37,7 @@ const CONTAS = [
   { code: '3.1', name: 'Receita de Serviços', nature: 'Revenue' },
   { code: '4.9.3', name: 'PIS', nature: 'Expense' },
   { code: '4.9.4', name: 'Cofins', nature: 'Expense' },
+  { code: '4.9.5', name: 'Créditos de PIS/Cofins s/ despesas (redutora)', nature: 'Expense' },
   { code: '2.1.9.3', name: 'PIS a recolher', nature: 'Liability' },
   { code: '2.1.9.4', name: 'Cofins a recolher', nature: 'Liability' },
 ];
@@ -58,7 +62,7 @@ async function cenario(regime: 'PRESUMIDO' | 'REAL', contas: 'todas' | 'sem-recu
     data: {
       userId: dono.id, unitId: U, regimeTributario: regime, pisCofinsRegime: regime === 'REAL' ? 'NAO_CUMULATIVO' : 'CUMULATIVO',
       ...(contas === 'nenhuma' ? {} : provisao),
-      ...(contas === 'todas' ? { pisCofinsRecuperavelAccountId: ids['1.1.9'] } : {}),
+      ...(contas === 'todas' ? { pisCofinsRecuperavelAccountId: ids['1.1.9'], pisCofinsCreditoOutrosAccountId: ids['4.9.5'] } : {}),
     },
   });
   return { dono, ids, scope: resolveAccountingScope({ userId: dono.id }, U) };
@@ -149,12 +153,46 @@ describe('X8 PR-3 — provisão de PIS/Cofins (2 commits), reconcile e encerrame
     const [pis02] = await confirmar(dono, 'M02');
     expect(pis02.aPagarCents).toBe(String(165_000 - 16_500 - 835));
     const e02 = (await provisoes(dono)).find((e) => e.sourceId === pis02.id)!;
-    // L-3: um lançamento, 6 pernas — despesa/a recolher, baixa da NF-e (16.500) e baixa do saldo de janeiro (835)
-    expect(pernas(e02)).toEqual([
-      ['1.1.9', 0, 16_500], ['1.1.9', 0, 835], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 16_500, 0], ['2.1.9.3', 835, 0], ['4.9.3', 165_000, 0],
-    ]);
+    // L-3: um lançamento — despesa/a recolher e UMA baixa do crédito consumido: NF-e (16.500) + saldo de janeiro (835)
+    expect(pernas(e02)).toEqual([['1.1.9', 0, 17_335], ['2.1.9.3', 0, 165_000], ['2.1.9.3', 17_335, 0], ['4.9.3', 165_000, 0]]);
     // L-2: o "a recolher" líquido do mês = o DARF (a pagar)
     expect(aRecolher(e02, '2.1.9.3')).toBe(Number(pis02.aPagarCents));
+  });
+
+  it('item 17 / L-5: outros créditos entram no a recuperar; o mês seguinte consome o saldo que os inclui — a recuperar nunca credor, a recolher = DARF', async () => {
+    const { dono, ids } = await cenario('REAL');
+    await receita(dono, '2026-01-15', 10_000);
+    const outros = { outrosCreditos: [{ inciso: 'IV_ALUGUEL_PJ', baseCents: '100000', documento: 'contrato de locação' }] };
+    // item 13 + L-5: sem a redutora, a prévia avisa que a provisão ficará pendente
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: U }, data: { pisCofinsCreditoOutrosAccountId: null } });
+    const sem = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros });
+    expect(sem.body.data.provisaoContasConfiguradas).toBe(false);
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: U }, data: { pisCofinsCreditoOutrosAccountId: ids['4.9.5'] } });
+
+    const p1 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros });
+    expect(p1.body.data.provisaoContasConfiguradas).toBe(true);
+    const c1 = await request(app).post(`${BASE}/pis-cofins`).set(authHeader(dono)).send({
+      unitId: U, anoCalendario: 2026, periodo: 'M01', ...outros, expectedAPagarCents: { PIS: p1.body.data.pis.aPagarCents, COFINS: p1.body.data.cofins.aPagarCents },
+    });
+    expect(c1.status).toBe(201);
+    expect([c1.body.data.pis.saldoNegativoCents, c1.body.data.cofins.saldoNegativoCents]).toEqual(['1485', '6840']);
+    const e1 = await provisoes(dono);
+    expect(pernas(e1.find((e) => e.sourceId === c1.body.data.pis.id)!)).toEqual([
+      ['1.1.9', 0, 165], ['1.1.9', 1_650, 0], ['2.1.9.3', 0, 165], ['2.1.9.3', 165, 0], ['4.9.3', 165, 0], ['4.9.5', 0, 1_650],
+    ]);
+
+    await receita(dono, '2026-02-15', 100_000);
+    const [pis02, cofins02] = await confirmar(dono, 'M02');
+    expect([pis02.aPagarCents, cofins02.aPagarCents]).toEqual(['165', '760']);
+    const todas = await provisoes(dono);
+    const e2pis = todas.find((e) => e.sourceId === pis02.id)!;
+    const e2cofins = todas.find((e) => e.sourceId === cofins02.id)!;
+    expect(pernas(e2pis)).toEqual([['1.1.9', 0, 1_485], ['2.1.9.3', 0, 1_650], ['2.1.9.3', 1_485, 0], ['4.9.3', 1_650, 0]]);
+    expect(aRecolher(e2pis, '2.1.9.3')).toBe(165);
+    expect(aRecolher(e2cofins, '2.1.9.4')).toBe(760);
+    // o "a recuperar" (débito − crédito) nunca fica credor: termina em 0 depois de fevereiro
+    const recuperar = todas.flatMap((e) => e.postings).filter((p) => p.account.code === '1.1.9').reduce((s, p) => s + Number(p.debitCents) - Number(p.creditCents), 0);
+    expect(recuperar).toBe(0);
   });
 
   it('item 17 / L-2 (saldo parcialmente consumido): 1º mês com saldo informado — baixa só a parte usada; "a recolher" = DARF nos 2 tributos', async () => {

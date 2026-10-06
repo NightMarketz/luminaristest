@@ -2,9 +2,9 @@
 id: "D-2026-10-06-X8-PR3-LACUNAS"
 tipo: "decisao"
 dominio: "fiscal"
-titulo: "X8 PR-3: lacunas L-1..L-3 da provisão de PIS/Cofins decididas (L-2 muda o código: baixa também o saldo credor usado)"
+titulo: "X8 PR-3: lacunas L-1..L-5 da provisão de PIS/Cofins decididas (L-2 baixa o saldo usado; L-5 lança os outros créditos — reabre em parte o F-PCB-3 a)"
 estado: "decided"
-autorizacao: "dono, chat, 2026-10-06, questionário — L-1 (a) ratificado; L-2 'Baixar também o saldo usado'; L-3 ratificado"
+autorizacao: "dono, chat, 2026-10-06, questionário — L-1 (a) ratificado; L-2 'Baixar também o saldo usado'; L-3 ratificado; 2ª rodada: L-4 (a) ratificado; L-5 'Lançar outros créditos no PR-3'"
 atualizado: "2026-10-06"
 ---
 # D-2026-10-06-X8-PR3-LACUNAS — PR-3 do [[X8]]
@@ -28,16 +28,26 @@ Origem: `.claude/retornos/x8-pis-cofins-pr3.md` (branch do PR #556), seção "La
 
 Detalhe na EMENDA §8 de `docs/accounting/BE-INCR-PIS-COFINS-brief.md`.
 
-## 2. Leitura nova, aberta (do executor, ao implementar a L-2)
+## 2. 2ª rodada (dono, chat, 06/10, questionário) — L-4 e L-5
 
-- **L-4 (pendente de ratificação):** ordem de consumo = a da memória — NF-e do mês → outros créditos do mês (art. 3º
-  III–IX, informados) → saldo credor anterior. Com outros créditos no mês, a baixa do saldo é menor do que seria se o
-  saldo consumisse antes deles. Os outros créditos seguem sem lançamento (F-PCB-3 a).
-- **L-5 (risco, pendente):** o saldo credor anterior pode conter crédito de "outros" de meses anteriores, que nunca passou
-  pelo "a recuperar"; a baixa dele pode deixar a conta a recuperar com saldo credor. Oráculo = contador (P-1/P-5).
+- **L-4 → (a), ratificado.** Ordem de consumo = a da memória: NF-e do mês → outros créditos do mês (art. 3º III–IX,
+  informados) → saldo credor anterior.
+- **L-5 → "Lançar outros créditos no PR-3" — REABRE EM PARTE o F-PCB-3 (a).** Padrão de mercado: todo crédito do não
+  cumulativo entra no "a recuperar". Fonte indicada pelo dono: prática contábil citando o ADI SRF 3/2007 — D PIS/Cofins a
+  recuperar / C despesa (redutora), **nunca contra receita**. Implementação: conta nova no perfil fiscal da unidade,
+  `pisCofinsCreditoOutrosAccountId` (`Expense`, redutora; a ECF continua intocada — F-PCB-1 b), e a provisão do mês lança
+  D a recuperar / C redutora pelos outros créditos do mês; a baixa do crédito consumido passa a ser uma só (NF-e + outros
+  + saldo anterior). `provisaoContasConfiguradas` exige a redutora quando o mês tem outros créditos. Mês sem débito com
+  outros créditos também provisiona (o reconhecimento). Retenções continuam sem lançamento (a parte não reaberta do F-PCB-3).
+- **Residual (declarado):** o saldo credor anterior **informado** pelo operador no 1º mês (F-PCB-2 a) nunca foi lançado
+  pelo sistema; a baixa dele só não deixa o "a recuperar" credor se o saldo de abertura o tiver posto no ativo. Retenções
+  seguem fora do razão (o "a recolher" fica acima do DARF pelo valor delas).
 
 ## Consequências
 
-- O PR-3 (#556) passa a lançar até 6 pernas por tributo/mês; testes provam "a recolher" líquido = DARF no cenário do saldo
-  de janeiro (835 centavos) e no saldo parcialmente consumido.
+- O PR-3 (#556) lança até 6 pernas por tributo/mês (despesa/a recolher; a recuperar/redutora; uma baixa); testes provam
+  "a recolher" líquido = DARF no cenário do saldo de janeiro (835 centavos), no saldo parcialmente consumido e no mês
+  seguinte a outros créditos — com o "a recuperar" terminando em 0, nunca credor.
+- Contrato: campo novo `pisCofinsCreditoOutrosAccountId` no perfil fiscal (DTO, snapshot, tipos gerados do FE, allowlist
+  `fiscal_profile.updated`, migração aditiva de 1 coluna).
 - PR-2 (#554) e PR-3 (#556) continuam entrando em `main` juntos ([[D-2026-10-06-X8-PR2-LACUNAS-E-MERGE]]).

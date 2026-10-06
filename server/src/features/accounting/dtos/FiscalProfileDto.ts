@@ -54,6 +54,8 @@ const FiscalProfileFields = z
     cofinsDespesaAccountId: z.string().min(1).nullable().optional(),
     pisRecolherAccountId: z.string().min(1).nullable().optional(),
     cofinsRecolherAccountId: z.string().min(1).nullable().optional(),
+    // X8 PR-3 (L-5, dono 06/10): redutora de despesa (Expense) — contrapartida dos outros créditos do não cumulativo.
+    pisCofinsCreditoOutrosAccountId: z.string().min(1).nullable().optional(),
     // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
     irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
