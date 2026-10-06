@@ -1048,6 +1048,7 @@
       "load": "Erro ao carregar o balancete comparativo."
     },
     "empty": "Selecione as duas datas e clique em \"Gerar comparativo\" para visualizar a variação.",
+    "noRows": "Sem dados.",
     "columns": {
       "account": "Conta",
       "current": "Atual",
@@ -1072,6 +1073,7 @@
       "load": "Erro ao carregar o Livro Diário."
     },
     "empty": "Selecione o intervalo e clique em \"Gerar Livro Diário\" para visualizar os lançamentos.",
+    "noEntries": "Sem lançamentos no intervalo.",
     "entry": {
       "number": "Lançamento nº {{number}}",
       "date": "Data",
@@ -2288,6 +2290,7 @@
     },
     "saving": "Salvando…",
     "save": "Salvar",
+    "saveProfile": "Salvar perfil",
     "service": {
       "error": {
         "load": "Não foi possível carregar os serviços.",

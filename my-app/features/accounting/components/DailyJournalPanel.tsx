@@ -92,7 +92,7 @@ export function DailyJournalPanel({ unitId }: { unitId: string }) {
         <div className="space-y-4">
           <div className="text-sm text-neutral-400">{t('dailyJournal.range.label', '{{from}} a {{to}}', { from: formatDate(report.from), to: formatDate(report.to) })}</div>
           {report.entries.length === 0
-            ? <div className="py-8 text-center text-sm text-neutral-600">{t('dailyJournal.empty', 'Sem lançamentos no intervalo.')}</div>
+            ? <div className="py-8 text-center text-sm text-neutral-600">{t('dailyJournal.noEntries', 'Sem lançamentos no intervalo.')}</div>
             : report.entries.map((e) => <EntryCard key={e.entryNumber} entry={e} />)}
         </div>
       )}
