@@ -60,7 +60,9 @@
     "back": "← Overview",
     "no_stages": "No stages configured.",
     "empty_stage": "No records",
-    "new_lead": "New Lead"
+    "new_lead": "New Lead",
+    "search_placeholder": "Search by name…",
+    "search_label": "Search lead"
   },
   "owner_filter": {
     "label": "Owner",
@@ -156,7 +158,15 @@
     "no_tasks": "No tasks.",
     "new_task": "+ New task",
     "notes": "Notes",
-    "attachments": "Attachments"
+    "attachments": "Attachments",
+    "active_proposal": "Active Proposal",
+    "proposal_amount": "Negotiated Amount",
+    "proposal_amount_tbd": "Price on request",
+    "proposal_win": "Win Probability",
+    "proposal_win_suffix": "chance",
+    "proposal_eta": "Expected Close",
+    "proposal_eta_tbd": "Undefined",
+    "timeline": "Timeline"
   },
   "notes": {
     "placeholder": "Write a note…",
@@ -238,5 +248,20 @@
     "loading": "Loading…",
     "count": "{{count}} meetings found",
     "event_title": "Meeting - {{name}}"
+  },
+  "noshow": {
+    "button": "No-show",
+    "title": "Record meeting no-show",
+    "prompt": "How do you want to proceed?",
+    "reschedule": "Reschedule",
+    "revert": "Back to previous stage",
+    "new_date": "New meeting date"
+  },
+  "timeline": {
+    "not_available": "Timeline not available.",
+    "empty": "No activity.",
+    "stage_change": "Stage change",
+    "today": "Today",
+    "yesterday": "Yesterday"
   }
 }

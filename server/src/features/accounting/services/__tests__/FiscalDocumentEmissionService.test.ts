@@ -822,3 +822,58 @@ describe('FiscalDocumentEmissionService — pendências do status divergente e f
     });
   });
 });
+
+// GAP-MAP L-PR2-1 / L-PR2-2 (achadas em 06/10 na verificação de browser do PR-2 do FE-INCR-DFE, PR #547).
+// Testes-guarda: VERMELHOS até a sessão de correção. Autorização: dono em chat 06/10 ("Autorizo as duas").
+describe('FiscalDocumentEmissionService — GAP-MAP L-PR2 (verificação de browser 06/10)', () => {
+  const SRV = { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } };
+  const POSTINGS = [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }];
+  let saleDate: string;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    saleDate = todayDateOnly();
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date: saleDate } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([
+      { data: { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 } },
+    ]);
+  });
+
+  it('L-PR2-1: venda gravada pelo motor com date ISO UTC — infDPS.dCompet sai date-only com o dia escrito', async () => {
+    // O motor DynamicTable grava `date` como ISO UTC (memória motor-grava-date-como-iso-utc): é isto que a venda
+    // criada pela tela carrega. O dia escrito é o slice(0, 10). A fixture date-only das suítes acima escondia a lacuna.
+    saleDate = '2026-10-06T00:00:00.000Z';
+    const { service } = makeService({ serviceProfiles: SRV, ledgerPostings: POSTINGS });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    // Hoje sai '2026-10-06T00:00:00.000Z' e o emit morre em DpsPayloadSchema ([108] /^\d{4}-\d{2}-\d{2}$/) → 400.
+    expect(result.payloads[0].infDPS.dCompet).toBe('2026-10-06');
+  });
+
+  it('L-PR2-2: reenvio de documento REJECTED remonta — o próprio rejeitado não conta como documento vivo', async () => {
+    // findLiveBySale exclui só CANCELLED: o documento REJECTED que está sendo reenviado volta na lista.
+    // (A emissão nova com documento SENT/REJECTED vivo continua bloqueada — teste 'já existe documento vivo…' acima.)
+    const { service } = makeService({
+      serviceProfiles: SRV,
+      ledgerPostings: POSTINGS,
+      liveDocs: [{ id: 'doc-rejeitado', status: 'REJECTED', cTribNac: '060101' }],
+    });
+    await expect(service.reassembleGroupForReenvio(SCOPE, SALE_ID, 'NFSE', '060101', 'homologacao')).resolves.toMatchObject({
+      vServCents: 10000,
+    });
+  });
+});

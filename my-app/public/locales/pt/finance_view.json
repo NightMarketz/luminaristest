@@ -192,7 +192,8 @@
       "confirm_register": "Confirmar aceite",
       "balance_differs": "O saldo do cliente neste pacote vence em {{date}} (junta compras anteriores).",
       "balance_expires": "O saldo do cliente neste pacote vence em {{date}}."
-    }
+    },
+    "emitNfse": "Emitir NFS-e"
   },
   "status": {
     "draft": "Rascunho",

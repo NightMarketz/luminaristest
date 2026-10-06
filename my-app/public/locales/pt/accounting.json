@@ -1048,6 +1048,7 @@
       "load": "Erro ao carregar o balancete comparativo."
     },
     "empty": "Selecione as duas datas e clique em \"Gerar comparativo\" para visualizar a variação.",
+    "noRows": "Sem dados.",
     "columns": {
       "account": "Conta",
       "current": "Atual",
@@ -1072,6 +1073,7 @@
       "load": "Erro ao carregar o Livro Diário."
     },
     "empty": "Selecione o intervalo e clique em \"Gerar Livro Diário\" para visualizar os lançamentos.",
+    "noEntries": "Sem lançamentos no intervalo.",
     "entry": {
       "number": "Lançamento nº {{number}}",
       "date": "Data",
@@ -2288,6 +2290,7 @@
     },
     "saving": "Salvando…",
     "save": "Salvar",
+    "saveProfile": "Salvar perfil",
     "service": {
       "error": {
         "load": "Não foi possível carregar os serviços.",
@@ -2334,6 +2337,209 @@
       "pTotTribMunCent": "Tributos aproximados — municipal (%)",
       "ibsCbsCst": "IBS/CBS — CST",
       "ibsCbsClassTrib": "IBS/CBS — cClassTrib"
+    }
+  },
+  "dfe": {
+    "ambiente": {
+      "homologacao": "Homologação",
+      "producao": "Produção"
+    },
+    "campo": {
+      "IBSCBS_CST": "CST do IBS/CBS",
+      "IBSCBS_cClassTrib": "cClassTrib do IBS/CBS",
+      "cLocPrestacao": "Local da prestação",
+      "cNBS": "Item da NBS",
+      "cTribNac": "Código de Tributação Nacional",
+      "dCompet": "Data de competência",
+      "pAliq": "Alíquota",
+      "prest_CNPJ": "CNPJ do emitente",
+      "toma_doc": "CPF/CNPJ do tomador",
+      "tpRetISSQN": "Retenção do ISSQN",
+      "vDescCond": "Desconto condicionado",
+      "vDescIncond": "Desconto incondicionado",
+      "vServ": "Valor do serviço"
+    },
+    "cancel": "Cancelar",
+    "cancelamento": {
+      "cMotivo": "Motivo",
+      "error": "Não foi possível registrar o cancelamento.",
+      "instr": "No portal, use \"Cancelar\" — não \"Substituir\": a substituição gera outro evento, que o Luminaris não lê. Depois, baixe o XML do evento e envie aqui.",
+      "same": "Use o mesmo motivo e o mesmo texto que você digitou no portal.",
+      "selectXml": "Selecionar XML do evento",
+      "submit": "Registrar cancelamento",
+      "title": "Registrar cancelamento da NFS-e",
+      "xMotivo": "Justificativa (15 a 255 caracteres)"
+    },
+    "card": {
+      "automatico": "Emissão automática pelo parceiro.",
+      "cancelar": "Cancelar",
+      "downloadPdf": "Baixar DANFSe",
+      "downloadXml": "Baixar XML",
+      "ficha": "Ficha",
+      "nNFSe": "NFS-e nº",
+      "reenviar": "Reenviar",
+      "rejeicao": "Registrar rejeição",
+      "semSubstituto": "Sem substituta: emita de novo pelo botão, se a venda continuar valendo.",
+      "xmlNaoGuardado": "Nota autorizada, mas o XML não foi guardado; guarde o arquivo — a correção automática vem com o BE-INCR-DFE-ANEXO-PENDENTE."
+    },
+    "close": "Fechar",
+    "download": {
+      "error": "Não foi possível baixar o arquivo."
+    },
+    "emit": {
+      "competencia": "A competência da venda é de outro mês — confira se a emissão fora do mês é permitida.",
+      "confirm": "Confirmar",
+      "docs": "Documentos a emitir (um por código de serviço):",
+      "error": {
+        "emit": "Não foi possível emitir.",
+        "preview": "Não foi possível conferir a venda para emissão."
+      },
+      "faltantes": "A venda ainda não pode emitir. Falta:",
+      "tieOut": "O total da nota difere do valor contabilizado da venda ({{ledger}}). Confira antes de emitir.",
+      "title": "Emitir NFS-e",
+      "total": "Total dos serviços:"
+    },
+    "error": {
+      "load": "Não foi possível carregar os documentos fiscais."
+    },
+    "ficha": {
+      "ambienteDivergente": "O servidor está em {{server}}, este documento é de {{doc}} — emita no ambiente do documento.",
+      "attempt": "tentativa",
+      "conferido": "conferido na volta",
+      "copied": "Copiado",
+      "copy": "Copiar",
+      "error": "Não foi possível carregar a ficha.",
+      "field": {
+        "beneficio": "Benefício municipal / dedução",
+        "cIntContrib": "Código interno do contribuinte",
+        "cLocEmi": "Município do emitente",
+        "cLocPrestacao": "Local da prestação — Município",
+        "cNBS": "Item da NBS",
+        "cTribMun": "Código Complementar do Município",
+        "cTribNac": "Código de Tributação Nacional",
+        "dCompet": "Data de Competência",
+        "emitente": "Emitente da NFS-e",
+        "emitir": "Resumo + \"Emitir NFS-e\"",
+        "exigibilidade": "Exigibilidade suspensa?",
+        "ibsCbsClassTrib": "IBS/CBS — cClassTrib",
+        "ibsCbsCst": "IBS/CBS — CST",
+        "imunidade": "Imunidade, exportação ou não incidência?",
+        "informarDps": "Informar a DPS",
+        "intermediario": "Intermediário",
+        "opSimpNac": "Opção no Simples Nacional",
+        "pAliq": "Alíquota",
+        "pTotTribEst": "Valor aproximado dos tributos — Estadual (%)",
+        "pTotTribFed": "Valor aproximado dos tributos — Federal (%)",
+        "pTotTribMun": "Valor aproximado dos tributos — Municipal (%)",
+        "pTotTribSN": "Valor aproximado dos tributos — Simples Nacional (%)",
+        "prestCnpj": "CPF/CNPJ do emitente",
+        "regApTribSN": "Regime de Apuração Tributária pelo SN",
+        "regEspTrib": "Regime Especial de Tributação",
+        "tomaDoc": "CPF/CNPJ do tomador",
+        "tomaEnd": "Endereço do tomador",
+        "tomaNome": "Nome/Razão Social",
+        "tomador": "Tomador do Serviço",
+        "tpRetISSQN": "Retenção do ISSQN",
+        "tribFed": "Tributação federal",
+        "tribISSQN": "Tributação do ISSQN",
+        "vDescCond": "Desconto condicionado",
+        "vDescIncond": "Desconto incondicionado",
+        "vServ": "Valor do Serviço prestado",
+        "xDescServ": "Descrição do Serviço"
+      },
+      "homologacaoSemLink": "Homologação: use o ambiente de produção restrita do portal (endereço a confirmar no runbook — PV-7).",
+      "howto": "Use a Emissão Completa do portal. Copie cada valor no campo de mesmo nome; os marcados \"conferido na volta\" são comparados com o XML autorizado.",
+      "instr": {
+        "brasil": "Marque Brasil.",
+        "cIntContrib": "Se o portal exigir, use o identificador da venda.",
+        "emitir": "Confira o resumo e clique em \"Emitir NFS-e\". Depois, \"Baixar XML\" (e o DANFSe) e envie o arquivo aqui embaixo.",
+        "endereco": "Se o portal pedir, digite o endereço a partir do cadastro do cliente — a DPS do Luminaris não o leva.",
+        "fedNormal": "Não informe PIS/COFINS.",
+        "fedSimples": "Já preenchida pelo Simples — não altere.",
+        "informarDps": "Não marque — o portal numera a DPS.",
+        "mesmoMunicipio": "O mesmo município do emitente.",
+        "nao": "Não.",
+        "naoInformado": "Não informado.",
+        "prestador": "Marque Prestador.",
+        "retidoSim": "Sim, retido pelo tomador.",
+        "tributavel": "Operação tributável."
+      },
+      "note": {
+        "aliquota": "conferência — o portal pode calcular",
+        "cadastro": "o portal pode recuperar do cadastro",
+        "conferencia": "conferência — o portal preenche",
+        "pv5": "percentual — forma de informar a conferir no runbook (PV-5)",
+        "pv9": "rótulo do portal a conferir no runbook (PV-9)"
+      },
+      "opSimpNac": {
+        "1": "1 — Não optante",
+        "3": "3 — Optante ME/EPP"
+      },
+      "portalLink": "Abrir o Emissor Nacional",
+      "section": {
+        "emitir": "4. Emitir NFS-e",
+        "pessoas": "1. Pessoas",
+        "servico": "2. Serviço",
+        "valores": "3. Valores"
+      },
+      "title": "Ficha para o Emissor Nacional"
+    },
+    "loading": "Carregando…",
+    "motivo": {
+      "1": "Erro na emissão",
+      "2": "Serviço não prestado",
+      "9": "Outros"
+    },
+    "pendencia": {
+      "cancelled_without_replacement": "Nota cancelada sem substituta — emita de novo pelo botão, se a venda continuar valendo.",
+      "releitura_divergente": "A nota autorizada diverge do que foi enviado — só sai cancelando e emitindo de novo.",
+      "sale_cancelled_with_live_document": "A venda foi cancelada, mas esta nota continua válida — cancele a nota no portal e registre aqui."
+    },
+    "reenviar": {
+      "error": "Não foi possível reenviar.",
+      "hint": "Corrija o perfil fiscal ou a venda antes de reenviar — a DPS é remontada."
+    },
+    "rejeicao": {
+      "add": "Adicionar erro",
+      "code": "Código",
+      "error": "Não foi possível registrar a rejeição.",
+      "hint": "Copie o código e a mensagem que o portal mostrou, um erro por linha.",
+      "message": "Mensagem",
+      "remove": "Remover linha",
+      "submit": "Registrar rejeição",
+      "title": "Registrar rejeição do portal"
+    },
+    "releitura": {
+      "ausente": "— (ausente)",
+      "col": {
+        "autorizado": "Autorizado",
+        "campo": "Campo",
+        "enviado": "Enviado"
+      },
+      "divergente": "Releitura: a nota autorizada DIVERGE do que foi enviado.",
+      "igual": "Releitura: a nota autorizada é igual ao que foi enviado.",
+      "pii": "— (dado pessoal, não exibido)"
+    },
+    "retorno": {
+      "error": "Não foi possível registrar o retorno.",
+      "hint": "Depois de emitir no portal, baixe o XML da NFS-e (e o DANFSe, se quiser) e envie aqui.",
+      "selectPdf": "DANFSe (PDF, opcional)",
+      "selectXml": "Selecionar XML da NFS-e",
+      "send": "Registrar retorno",
+      "title": "Retorno do portal"
+    },
+    "section": {
+      "empty": "Nenhum documento fiscal emitido para esta venda.",
+      "title": "Documentos fiscais"
+    },
+    "sending": "Enviando…",
+    "status": {
+      "AUTHORIZED": "Autorizada",
+      "AUTHORIZED_DIVERGENT": "Autorizada com divergência",
+      "CANCELLED": "Cancelada",
+      "PROCESSING": "Em processamento",
+      "REJECTED": "Rejeitada",
+      "SENT": "Aguardando retorno do portal"
     }
   }
 }

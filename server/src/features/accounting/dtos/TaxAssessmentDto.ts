@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { PERIODOS_TRIMESTRAIS } from '../models/taxAssessmentCalc';
 import { LALUR_MESES } from '../models/Lalur.model';
+import { PERIODOS_PIS_COFINS } from '../models/pisCofinsCalc';
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, BRIEF itens 13, 14, 17; contrato §2) — `.strict()`, centavos como
@@ -121,12 +122,16 @@ export const TaxAssessmentConfirmSchema = TaxAssessmentPreviewFields.extend({
   .superRefine(refinePeriodo);
 export type TaxAssessmentConfirmInput = z.infer<typeof TaxAssessmentConfirmSchema>;
 
-/** Sem boolean em query string (classe z.coerce.boolean). */
+/**
+ * Sem boolean em query string (classe z.coerce.boolean). X8 PR-2 (BRIEF X8 itens 12 e 16): a leitura serve também as
+ * linhas de PIS/Cofins — `periodo` aceita `M01..M12` e o filtro `tributo` aceita PIS/COFINS.
+ */
 export const TaxAssessmentListQuerySchema = z
   .object({
     unitId: z.string().min(1),
     anoCalendario: z.coerce.number().int(),
-    periodo: Periodo.optional(),
+    periodo: z.enum([...PERIODOS_APURACAO, ...PERIODOS_PIS_COFINS]).optional(),
+    tributo: z.enum(['IRPJ', 'CSLL', 'PIS', 'COFINS']).optional(),
     status: z.enum(['CONFIRMED', 'SUPERSEDED']).optional(),
   })
   .strict();

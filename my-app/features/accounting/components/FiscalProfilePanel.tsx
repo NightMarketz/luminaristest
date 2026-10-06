@@ -370,7 +370,7 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
             >
-              {saving ? t('fiscalProfile.saving', 'Salvando…') : t('fiscalProfile.save', 'Salvar perfil')}
+              {saving ? t('fiscalProfile.saving', 'Salvando…') : t('fiscalProfile.saveProfile', 'Salvar perfil')}
             </button>
           </div>
         </>

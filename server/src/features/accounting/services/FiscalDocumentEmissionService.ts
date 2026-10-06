@@ -471,7 +471,7 @@ export class FiscalDocumentEmissionService {
       }
       return { ...expiry.group, cnpjEmitente: expiry.cnpjEmitente, partnerAccountRef: expiry.partnerAccountRef };
     }
-    const assembly = await this.assemble(scope, saleId, kind, ambiente);
+    const assembly = await this.assemble(scope, saleId, kind, ambiente, true);
     const group = assembly.groups.find((g) => g.cTribNac === cTribNac);
     if (!group) {
       throw new ValidationError(
@@ -489,6 +489,7 @@ export class FiscalDocumentEmissionService {
     saleId: string,
     kind: FiscalDocumentKind,
     ambiente: DfeAmbiente | null,
+    reenvio = false,
   ): Promise<{
     groups: Array<{ cTribNac: string; vServCents: number; payload: DpsPayload }>;
     ledgerCents: number;
@@ -600,10 +601,10 @@ export class FiscalDocumentEmissionService {
     }
 
     // (vi) nenhum documento vivo para (venda, kind, cTribNac) — checado por grupo abaixo.
-    const liveDocs = validSale ? await this.repo.findLiveBySale(scope, saleId, kind) : [];
+    const liveDocs = validSale && !reenvio ? await this.repo.findLiveBySale(scope, saleId, kind) : [];
 
     // (vii) emissaoForaDoMes = BLOQUEAR e competência cruzou o mês.
-    const dCompet = typeof saleData.date === 'string' ? saleData.date : '';
+    const dCompet = typeof saleData.date === 'string' ? saleData.date.slice(0, 10) : '';
     const today = scopeToday(scope);
     const competenciaCruzouMes = Boolean(dCompet) && dCompet.slice(0, 7) !== today.slice(0, 7);
     if (fiscalProfile?.emissaoForaDoMes === 'BLOQUEAR' && competenciaCruzouMes) {
