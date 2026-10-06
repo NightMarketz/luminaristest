@@ -634,6 +634,28 @@
                     }
                   ]
                 },
+                "irpjSaldoNegativoAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "csllSaldoNegativoAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "partnerAccountRef": {
                   "anyOf": [
                     {
@@ -4670,6 +4692,28 @@
             }
           ]
         },
+        "irpjSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "partnerAccountRef": {
           "anyOf": [
             {
@@ -5023,6 +5067,28 @@
           ]
         },
         "cofinsRecolherAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "irpjSaldoNegativoAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "csllSaldoNegativoAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -5788,7 +5854,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "livro": {
@@ -5797,7 +5876,9 @@
             "lalur",
             "lacs",
             "n500",
+            "n620",
             "n630",
+            "n660",
             "n670"
           ]
         },
@@ -6011,7 +6092,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "livro": {
@@ -6020,7 +6114,9 @@
             "lalur",
             "lacs",
             "n500",
+            "n620",
             "n630",
+            "n660",
             "n670"
           ]
         },
@@ -6228,7 +6324,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "valorCents": {
@@ -6400,7 +6509,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "parteBId": {
@@ -6445,7 +6567,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         }
       },
@@ -6489,7 +6624,9 @@
             "lalur",
             "lacs",
             "n500",
+            "n620",
             "n630",
+            "n660",
             "n670"
           ]
         },
@@ -10335,10 +10472,10 @@
               "pattern": "^\\d{4}$"
             },
             "formaApur": {
-              "default": "T",
               "type": "string",
               "enum": [
-                "T"
+                "T",
+                "A"
               ]
             },
             "indAliqCsll": {
@@ -10477,6 +10614,46 @@
     }
   },
   "TaxAssessmentDto.ts": {
+    "EstimativaPagaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "periodo": {
+          "type": "string",
+          "enum": [
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
+          ]
+        },
+        "tributo": {
+          "type": "string",
+          "enum": [
+            "IRPJ",
+            "CSLL"
+          ]
+        },
+        "valorCents": {
+          "type": "string",
+          "pattern": "^\\d+$"
+        }
+      },
+      "required": [
+        "periodo",
+        "tributo",
+        "valorCents"
+      ],
+      "additionalProperties": false
+    },
     "TaxAssessmentDeducaoSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10531,7 +10708,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "deducoes": {
@@ -10572,6 +10762,56 @@
             ],
             "additionalProperties": false
           }
+        },
+        "modoMensal": {
+          "type": "string",
+          "enum": [
+            "RECEITA_BRUTA",
+            "BALANCETE"
+          ]
+        },
+        "estimativasPagas": {
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "periodo": {
+                "type": "string",
+                "enum": [
+                  "A01",
+                  "A02",
+                  "A03",
+                  "A04",
+                  "A05",
+                  "A06",
+                  "A07",
+                  "A08",
+                  "A09",
+                  "A10",
+                  "A11",
+                  "A12"
+                ]
+              },
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "IRPJ",
+                  "CSLL"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              }
+            },
+            "required": [
+              "periodo",
+              "tributo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -10600,7 +10840,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "deducoes": {
@@ -10637,6 +10890,56 @@
             "required": [
               "tributo",
               "tipo",
+              "valorCents"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "modoMensal": {
+          "type": "string",
+          "enum": [
+            "RECEITA_BRUTA",
+            "BALANCETE"
+          ]
+        },
+        "estimativasPagas": {
+          "maxItems": 24,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "periodo": {
+                "type": "string",
+                "enum": [
+                  "A01",
+                  "A02",
+                  "A03",
+                  "A04",
+                  "A05",
+                  "A06",
+                  "A07",
+                  "A08",
+                  "A09",
+                  "A10",
+                  "A11",
+                  "A12"
+                ]
+              },
+              "tributo": {
+                "type": "string",
+                "enum": [
+                  "IRPJ",
+                  "CSLL"
+                ]
+              },
+              "valorCents": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              }
+            },
+            "required": [
+              "periodo",
+              "tributo",
               "valorCents"
             ],
             "additionalProperties": false
@@ -10696,7 +10999,20 @@
             "T01",
             "T02",
             "T03",
-            "T04"
+            "T04",
+            "A00",
+            "A01",
+            "A02",
+            "A03",
+            "A04",
+            "A05",
+            "A06",
+            "A07",
+            "A08",
+            "A09",
+            "A10",
+            "A11",
+            "A12"
           ]
         },
         "status": {
