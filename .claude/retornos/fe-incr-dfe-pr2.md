@@ -2,7 +2,7 @@
 
 tarefa: tela de emissão manual de NFS-e no detalhe da venda — service `dfe.service`, botão "Emitir NFS-e" + preview, seção "Documentos fiscais" com ações por status, ficha espelho do portal, retorno pelo XML com releitura, rejeição/reenvio, cancelamento manual, downloads, i18n, testes, `RUNBOOK-H2-DFE-MANUAL.md` em branco. Emissão real fora.
 autorizacao: dono em chat, 06/10/2026: "Executa o PR-2 do FE-INCR-DFE — sessao-feature; emissão real fora; merge só com meu OK" (ratificado com "Dispara em sequencia aqui tudo em opus medio"). Ainda NÃO registrada no campo `autorizacao` de `docs/plano/nos/FE-INCR-DFE.md` (fold é pós-merge).
-sessao: sessao-feature · branch `claude/fe-incr-dfe-pr2` de origin/main `cd338e0c` · NÃO mergeado
+sessao: sessao-feature · branch `claude/fe-incr-dfe-pr2` de origin/main `cd338e0c` · PR https://github.com/NightMarketz/luminaristest/pull/547 (aberto, NÃO mergeado)
 modelo: claude-opus-5-5
 perfil-previsto: sonnet-alto
 rodadas-de-review: 0 — review independente não despachado nesta sessão (pendente; a sessão-feature pede agente isolado)
@@ -80,4 +80,4 @@ cobertos pelos testes vitest e pelo runbook).
   the details…" (o `resolveError` não humaniza esse formato).
 
 ### Linha de fold pós-merge
-id: FE-INCR-DFE · estado: a decidir no fold (os 3 PRs em main; resta o gate humano do runbook e as L-PR2-1/2 do BE) · estado_detalhe: "+ PR-2 (itens 14–29) mergeado; RUNBOOK-H2-DFE-MANUAL em branco; L-PR2-1/2 (BE) bloqueiam o uso real" · prs: [479, 524, <PR-2>]
+id: FE-INCR-DFE · estado: a decidir no fold (os 3 PRs em main; resta o gate humano do runbook e as L-PR2-1/2 do BE) · estado_detalhe: "+ PR-2 (itens 14–29) mergeado; RUNBOOK-H2-DFE-MANUAL em branco; L-PR2-1/2 (BE) bloqueiam o uso real" · prs: [479, 524, 547]
