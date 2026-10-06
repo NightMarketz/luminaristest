@@ -426,7 +426,8 @@ describe('X6 — custo por regime (BE-INCR-NFE-COST-REGIME, itens 6/8/10 + F-X6-
     expect(input.inventoryItems!.reduce((a, it) => a + it.valueCents, 0)).toBe(19333 - 3300 - 784);
     expect(input.recoverableTaxLines).toEqual([
       { accountId: 'acc-icms', amountCents: 3300, kind: 'ICMS' },
-      { accountId: 'acc-pc', amountCents: 784, kind: 'PIS_COFINS' },
+      // X8 item 5 (F-X8-7 a; edição autorizada pelo dono 05/10): base e parcelas na linha; pis + cofins = amountCents.
+      { accountId: 'acc-pc', amountCents: 784, kind: 'PIS_COFINS', baseCents: 8473, pisCents: 140, cofinsCents: 644 },
     ]);
     // item 1 (TRIBUTADO) carrega o crédito de PIS/COFINS; itens 2/3 (monofásicos) só o de ICMS
     expect(input.inventoryItems!.map((it) => it.valueCents)).toEqual([10545 - 1800 - 784, 5272 - 900, 3516 - 600]);

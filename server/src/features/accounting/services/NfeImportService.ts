@@ -202,7 +202,15 @@ export class NfeImportService {
           `recoverable_account_not_configured: a nota gera ${custo.creditoPisCofinsCents} centavos de crédito de PIS/COFINS e o perfil fiscal não tem pisCofinsRecuperavelAccountId (PUT /api/accounting/fiscal-profile — código é do contador).`,
         );
       }
-      lines.push({ accountId: regime.pisCofinsRecuperavelAccountId, amountCents: custo.creditoPisCofinsCents, kind: 'PIS_COFINS' });
+      // X8 item 5 (F-X8-7 a): PIS e Cofins separados na linha (JSON, sem migração) — o entry não muda (mesmo amountCents).
+      lines.push({
+        accountId: regime.pisCofinsRecuperavelAccountId,
+        amountCents: custo.creditoPisCofinsCents,
+        kind: 'PIS_COFINS',
+        baseCents: custo.baseCreditoPisCofinsCents,
+        pisCents: custo.creditoPisCents,
+        cofinsCents: custo.creditoCofinsCents,
+      });
     }
     return lines;
   }

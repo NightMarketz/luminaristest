@@ -49,6 +49,11 @@ const FiscalProfileFields = z
     csllDespesaAccountId: z.string().min(1).nullable().optional(),
     irpjRecolherAccountId: z.string().min(1).nullable().optional(),
     csllRecolherAccountId: z.string().min(1).nullable().optional(),
+    // BE-INCR-PIS-COFINS (nó X8, BRIEF item 2, F-PCB-1 b): contas da provisão de PIS/Cofins — código do contador (P-1).
+    pisDespesaAccountId: z.string().min(1).nullable().optional(),
+    cofinsDespesaAccountId: z.string().min(1).nullable().optional(),
+    pisRecolherAccountId: z.string().min(1).nullable().optional(),
+    cofinsRecolherAccountId: z.string().min(1).nullable().optional(),
     // X7 Fase B (BRIEF B item 16, F-TB-3 a): saldo negativo a compensar do ajuste anual (Asset) — código do contador (P-B8).
     irpjSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
     csllSaldoNegativoAccountId: z.string().min(1).nullable().optional(),
@@ -100,6 +105,15 @@ function refineFiscalProfile(v: FiscalProfileFieldsOutput, ctx: z.RefinementCtx)
       code: z.ZodIssueCode.custom,
       path: ['pisCofinsRegime'],
       message: 'pisCofinsRegime=SIMPLES só cabe em regimeTributario=SIMPLES.',
+    });
+  }
+  // BE-INCR-PIS-COFINS (nó X8, BRIEF item 1, F-X8-3 a): o Presumido é cumulativo (IN RFB 2.121/2022 art. 122).
+  // REAL + CUMULATIVO segue aceito aqui (receitas do art. 126); a apuração do X8 recusa na prévia (item 9).
+  if (v.regimeTributario === 'PRESUMIDO' && v.pisCofinsRegime === 'NAO_CUMULATIVO') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['pisCofinsRegime'],
+      message: 'Lucro Presumido apura PIS/COFINS no regime cumulativo (IN RFB 2.121/2022 art. 122): pisCofinsRegime=NAO_CUMULATIVO não cabe em regimeTributario=PRESUMIDO.',
     });
   }
   const simples = v.regimeTributario === 'SIMPLES';
