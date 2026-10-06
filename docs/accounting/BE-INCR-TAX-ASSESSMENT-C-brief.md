@@ -5,7 +5,8 @@
 > **reusa sem redesenhar** o `TaxAssessment` das Fases A/B (mergeadas: #478, #504, #509, #518, #525, #529, #539).
 > "A-n"/"B-n" = item n dos BRIEFs [A](BE-INCR-TAX-ASSESSMENT-A-brief.md)/[B](BE-INCR-TAX-ASSESSMENT-B-brief.md);
 > "E-n" = item n do [BRIEF da emenda 3.4 do C6b](BE-INCR-CONTADOR-PACKAGE-EMENDA-3-4-brief.md).
-> **Este documento NÃO escreve código e NÃO ratifica fork.** Forks **F-TC-1..7 PENDENTES** (§3). Nenhum item vira
+> **Este documento NÃO escreve código.** Forks **F-TC-1..7 ✅ RATIFICADOS em 06/10** por questionário, todos na
+> recomendação ([D-2026-10-06-X7-FASE-C-FORKS](../plano/decisoes/D-2026-10-06-X7-FASE-C-FORKS.md); §3). Nenhum item vira
 > código sem "executa" do dono (ORCH-006).
 >
 > **Alcance e risco, ditos antes de tudo:**
@@ -213,17 +214,19 @@ findForIssReport(scope: AccountingScope, from: string /*AAAA-MM-DD*/, to: string
 
 ---
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — ✅ RATIFICADOS 06/10 ([D-2026-10-06-X7-FASE-C-FORKS](../plano/decisoes/D-2026-10-06-X7-FASE-C-FORKS.md))
+
+Dono, chat, 2026-10-06, questionário: as 7 cédulas na recomendação. A coluna "Recomendação" abaixo é a decisão.
 
 | Fork | Pergunta | Caminhos | Recomendação e porquê | Custo de errar |
 |---|---|---|---|---|
-| **F-TC-1** | De onde vem o **município** do ISS de cada nota? | **(a)** `cLocPrestacao` do `payloadJson` da tentativa corrente (imutável, S12) · (b) coluna nova `cLocPrestacao` no `FiscalDocument` (migração aditiva + backfill do payload) · (c) perfil atual (`ServiceFiscalProfile.cLocPrestacao ?? FiscalProfile.codMun`) | **(a)**: é o que foi efetivamente enviado, sem migração. O (c) muda o passado quando o perfil muda (S13). O (b) é o (a) materializado; só vale se o relatório ficar lento (não medido). **Ressalva:** local da prestação ≠ município de incidência em exceções da LC 116 (P-C2) | médio em (c): ISS atribuído ao município errado em retroativo |
-| **F-TC-2** | Nota **autorizada sem `vIssCents`** (S11: só o retorno preenche) | **(a)** soma zero e conta em `documentosSemIss`, com aviso na linha-meta · (b) calcula `baseIss × aliqIssBp` · (c) 422 no relatório inteiro | **(a)**: o F-X7-12 manda somar o que está nos documentos, sem calcular; (b) seria cálculo de ISS sem fonte legal no ADR (alíquota municipal, Simples). (c) bloqueia o relatório por um documento | médio em (b): ISS inventado |
-| **F-TC-3** | Nota **cancelada** depois da competência | **(a)** status atual: `CANCELLED` sai (cancelamento anula a nota) · (b) reconstrói pela data: entra se `cancelledAt` > fim da janela | **(a)**: para o ISS a nota cancelada não é fato gerador declarável (**I**, P-C4); o relatório não é "posição na data". O (b) é a mesma classe do aging com `asOf` passado (E-§9 item 4) e só faz sentido se o contador pedir foto histórica | baixo |
-| **F-TC-4** | `AUTHORIZED_DIVERGENT` (releitura divergente, F-MAN-2 c) | **(a)** entra, com coluna `divergentes` (contagem) · (b) fica fora · (c) 422 até resolver | **(a)**: a nota existe no fisco; esconder subdeclara. A contagem deixa o contador ver | médio em (b) |
-| **F-TC-5** | Qual apuração entra na janela da memória? | **(a)** `periodoBounds` ⊆ janela (`A00` só numa janela que cubra o ano) · (b) interseção não vazia · (c) por `confirmedAt` | **(a)**: casa com a regra do pacote (extra ⊆ núcleo, E-S4) e evita meio trimestre. (c) mistura competências | baixo |
-| **F-TC-6** | Resumo da apuração na planilha | **(a)** linhas `RESUMO` (base/devido/deduções/aPagar/saldo negativo/diferença postergada) antes das `MEMORIA` da mesma apuração · (b) só a memória (o resumo já está nela?) | **(a)**: não está provado que toda memória tenha linha de `aPagar` com código estável (**I**, não li todas as funções que a montam); o resumo vem das colunas do model (S1), sem depender disso | baixo |
-| **F-TC-7** | Superfície do relatório de ISS | (a) rota JSON `GET /accounting/reports/iss` · **(b)** kind `EXPORT_ISS_BY_COMPETENCE` (CSV/XLSX, entregável) · (c) os dois | **(b)**: zero path novo, reusa o exportador canônico e entra no pacote, que é onde o contador consome. Tela própria é FE (nó vizinho); se vier, aí sim (c). Precedente: a emenda 3.4 também não abriu rota JSON (F-C6bE-10) | baixo |
+| **F-TC-1** | De onde vem o **município** do ISS de cada nota? | **(a)** `cLocPrestacao` do `payloadJson` da tentativa corrente (imutável, S12) · (b) coluna nova `cLocPrestacao` no `FiscalDocument` (migração aditiva + backfill do payload) · (c) perfil atual (`ServiceFiscalProfile.cLocPrestacao ?? FiscalProfile.codMun`) | ✅ **(a), dono 06/10.** **(a)**: é o que foi efetivamente enviado, sem migração. O (c) muda o passado quando o perfil muda (S13). O (b) é o (a) materializado; só vale se o relatório ficar lento (não medido). **Ressalva:** local da prestação ≠ município de incidência em exceções da LC 116 (P-C2) | médio em (c): ISS atribuído ao município errado em retroativo |
+| **F-TC-2** | Nota **autorizada sem `vIssCents`** (S11: só o retorno preenche) | **(a)** soma zero e conta em `documentosSemIss`, com aviso na linha-meta · (b) calcula `baseIss × aliqIssBp` · (c) 422 no relatório inteiro | ✅ **(a), dono 06/10.** **(a)**: o F-X7-12 manda somar o que está nos documentos, sem calcular; (b) seria cálculo de ISS sem fonte legal no ADR (alíquota municipal, Simples). (c) bloqueia o relatório por um documento | médio em (b): ISS inventado |
+| **F-TC-3** | Nota **cancelada** depois da competência | **(a)** status atual: `CANCELLED` sai (cancelamento anula a nota) · (b) reconstrói pela data: entra se `cancelledAt` > fim da janela | ✅ **(a), dono 06/10.** **(a)**: para o ISS a nota cancelada não é fato gerador declarável (**I**, P-C4); o relatório não é "posição na data". O (b) é a mesma classe do aging com `asOf` passado (E-§9 item 4) e só faz sentido se o contador pedir foto histórica | baixo |
+| **F-TC-4** | `AUTHORIZED_DIVERGENT` (releitura divergente, F-MAN-2 c) | **(a)** entra, com coluna `divergentes` (contagem) · (b) fica fora · (c) 422 até resolver | ✅ **(a), dono 06/10.** **(a)**: a nota existe no fisco; esconder subdeclara. A contagem deixa o contador ver | médio em (b) |
+| **F-TC-5** | Qual apuração entra na janela da memória? | **(a)** `periodoBounds` ⊆ janela (`A00` só numa janela que cubra o ano) · (b) interseção não vazia · (c) por `confirmedAt` | ✅ **(a), dono 06/10.** **(a)**: casa com a regra do pacote (extra ⊆ núcleo, E-S4) e evita meio trimestre. (c) mistura competências | baixo |
+| **F-TC-6** | Resumo da apuração na planilha | **(a)** linhas `RESUMO` (base/devido/deduções/aPagar/saldo negativo/diferença postergada) antes das `MEMORIA` da mesma apuração · (b) só a memória (o resumo já está nela?) | ✅ **(a), dono 06/10.** **(a)**: não está provado que toda memória tenha linha de `aPagar` com código estável (**I**, não li todas as funções que a montam); o resumo vem das colunas do model (S1), sem depender disso | baixo |
+| **F-TC-7** | Superfície do relatório de ISS | (a) rota JSON `GET /accounting/reports/iss` · **(b)** kind `EXPORT_ISS_BY_COMPETENCE` (CSV/XLSX, entregável) · (c) os dois | ✅ **(b), dono 06/10.** **(b)**: zero path novo, reusa o exportador canônico e entra no pacote, que é onde o contador consome. Tela própria é FE (nó vizinho); se vier, aí sim (c). Precedente: a emenda 3.4 também não abriu rota JSON (F-C6bE-10) | baixo |
 
 ### 3.1 Divisão em PRs (proposta; o dono pode juntar sem custo)
 
