@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { isTableSchema, type IDynamicTable } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { formatDateBR } from '@/features/dashboard/shared/utils/formatters';
@@ -10,6 +10,9 @@ import { useRenderTypedValue } from '@/features/dashboard/shared/hooks/useRender
 import { StatusBadge, PaymentBadge, AboveCatalogBadge } from './SalesTable';
 import { PackageSaleValidity } from './PackageSaleValidity';
 import { SaleRecord, SaleItemRecord } from '../../types/sales.types';
+import { EmitNfseButton } from '@/features/accounting/components/dfe/EmitNfseButton';
+import { FiscalDocumentsSection } from '@/features/accounting/components/dfe/FiscalDocumentsSection';
+import type { FiscalDocumentView } from '@/lib/services/dfe.service';
 
 // Convert camelCase field name to a readable label: "salesChannel" → "Sales Channel"
 function formatFieldLabel(name: string): string {
@@ -61,6 +64,8 @@ export default function SaleDetailPanel({
     const formatCurrency = useFormatCurrency();
     const renderTypedValue = useRenderTypedValue();
     const { confirmNode, confirm } = useConfirmModal();
+    // FE-INCR-DFE item 15: o que o botão "Emitir NFS-e" acabou de criar, amarrado à venda (trocar de venda não reabre a ficha).
+    const [emitted, setEmitted] = useState<{ saleId: string; docs: FiscalDocumentView[] } | null>(null);
     const filteredItems = useMemo(() => {
         if (!sale) return [];
         return items.filter((it) => String(it.saleId || '') === String(sale.id));
@@ -138,6 +143,16 @@ export default function SaleDetailPanel({
                             {t('finance_view:sales.return', 'Devolver')}
                         </button>
                     )}
+                    {/* FE-INCR-DFE item 15 (F-FE-DFE-3): componente da contabilidade, só montado aqui */}
+                    {unitIdValue && (
+                        <EmitNfseButton
+                            unitId={unitIdValue}
+                            saleId={sale.id}
+                            isFinalized={isFinalized}
+                            label={t('finance_view:sales.emitNfse', 'Emitir NFS-e')}
+                            onEmitted={(docs) => setEmitted({ saleId: sale.id, docs })}
+                        />
+                    )}
                     {/* Pagar só existe para Finalized — o settlement do backend recusa Draft. */}
                     {isFinalized && !isPaid && (
                         <button
@@ -202,6 +217,16 @@ export default function SaleDetailPanel({
                         saleDate={saleDateOnly}
                         customerId={sale.customerId ? String(sale.customerId) : undefined}
                         isFinalized={isFinalized}
+                    />
+                )}
+
+                {/* FE-INCR-DFE item 16: documentos fiscais da venda (rascunho não tem documento) */}
+                {unitIdValue && (isFinalized || isCancelled || isReturned) && (
+                    <FiscalDocumentsSection
+                        key={sale.id}
+                        unitId={unitIdValue}
+                        saleId={sale.id}
+                        emitted={emitted?.saleId === sale.id ? emitted.docs : null}
                     />
                 )}
 

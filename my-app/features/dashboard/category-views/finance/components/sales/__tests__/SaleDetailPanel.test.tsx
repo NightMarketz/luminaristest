@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Shim obrigatório (jsx "preserve" + runtime clássico) — nunca em código de produção.
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { dfeService } from '@/lib/services/dfe.service';
 import SaleDetailPanel from '../SaleDetailPanel';
 import type { SaleRecord } from '../../../types/sales.types';
 
@@ -15,6 +16,13 @@ import type { SaleRecord } from '../../../types/sales.types';
  * bate no immutableAfter da venda Finalized e nunca posta o settlement. Este teste falha lá.
  */
 
+// FE-INCR-DFE PR-2: o painel monta a emissão de NFS-e — sem isto a seção bate na rede do jsdom.
+vi.mock('@/lib/services/dfe.service', () => ({
+  dfeService: {
+    getStatus: vi.fn(async () => ({ enabled: true, partner: 'manual', ambiente: 'homologacao' })),
+    listBySale: vi.fn(async () => []),
+  },
+}));
 vi.mock('@/lib/context/CurrencyContext', () => ({
   useFormatCurrency: () => (v: number) => `R$ ${v.toFixed(2)}`,
 }));
@@ -100,5 +108,21 @@ describe('SaleDetailPanel — ações da venda vão às rotas dedicadas (LAC-A)'
     expect(screen.queryByRole('button', { name: 'Pagar' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Devolver' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cancelar' })).toBeNull();
+  });
+});
+
+describe('SaleDetailPanel — emissão de NFS-e (FE-INCR-DFE item 15–16)', () => {
+  it('venda Finalized com o emissor habilitado: botão "Emitir NFS-e" e a seção "Documentos fiscais" da venda', async () => {
+    renderPanel(sale());
+    expect(await screen.findByRole('button', { name: 'Emitir NFS-e' })).toBeTruthy();
+    expect(await screen.findByText('Nenhum documento fiscal emitido para esta venda.')).toBeTruthy();
+    expect(dfeService.listBySale).toHaveBeenCalledWith('unit-1', 'sale-1');
+  });
+
+  it('venda não finalizada (Draft): sem botão e sem a seção', async () => {
+    renderPanel(sale({ status: 'Draft' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole('button', { name: 'Emitir NFS-e' })).toBeNull();
+    expect(screen.queryByTestId('fiscal-documents-section')).toBeNull();
   });
 });
