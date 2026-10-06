@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Shim obrigatório (jsx "preserve" + runtime clássico) — nunca em código de produção.
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 import { dfeService } from '@/lib/services/dfe.service';
 import SaleDetailPanel from '../SaleDetailPanel';
 import type { SaleRecord } from '../../../types/sales.types';
@@ -21,6 +21,8 @@ vi.mock('@/lib/services/dfe.service', () => ({
   dfeService: {
     getStatus: vi.fn(async () => ({ enabled: true, partner: 'manual', ambiente: 'homologacao' })),
     listBySale: vi.fn(async () => []),
+    preview: vi.fn(),
+    emit: vi.fn(),
   },
 }));
 vi.mock('@/lib/context/CurrencyContext', () => ({
@@ -124,5 +126,35 @@ describe('SaleDetailPanel — emissão de NFS-e (FE-INCR-DFE item 15–16)', () 
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByRole('button', { name: 'Emitir NFS-e' })).toBeNull();
     expect(screen.queryByTestId('fiscal-documents-section')).toBeNull();
+  });
+});
+
+// GAP-MAP L-PR2-R1 (review independente do #547, 06/10): o EmitNfseButton não tem `key` por venda — a prévia
+// pedida na venda A sobrevive à troca para a B, e "Confirmar" chama emit({ saleId: B }) com os totais de A.
+// Teste-guarda: VERMELHO até a sessão de correção. Autorização: dono em chat 06/10.
+describe('SaleDetailPanel — emissão de NFS-e ao trocar de venda (GAP-MAP L-PR2-R1)', () => {
+  it('a prévia pedida na venda A não abre a confirmação de emissão depois que o painel passa para a venda B', async () => {
+    let resolvePreview: (v: unknown) => void = () => {};
+    vi.mocked(dfeService.preview).mockImplementation(() => new Promise((r) => { resolvePreview = r; }) as never);
+    const props = (s: SaleRecord) => ({
+      sale: s, table: null, items: [], computedSubtotal: 0, isUpdating: null,
+      productNameMap: {}, serviceNameMap: {}, customerNameMap: {}, unitNameMap: {},
+      onUpdateSale: vi.fn(async () => {}), onRequestPay: vi.fn(), onRequestCancel: vi.fn(), onRequestReturn: vi.fn(),
+    });
+    const { rerender } = render(<SaleDetailPanel {...props(sale({ id: 'sale-A' }))} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Emitir NFS-e' }));
+    expect(dfeService.preview).toHaveBeenCalledWith({ unitId: 'unit-1', saleId: 'sale-A', kind: 'NFSE' });
+
+    // O operador seleciona outra venda com a prévia de A ainda em voo; depois ela chega.
+    rerender(<SaleDetailPanel {...props(sale({ id: 'sale-B', totalAmount: 999 }))} />);
+    await act(async () => {
+      resolvePreview({
+        ok: true, faltantes: [], competenciaAlerta: false, payloads: [{}],
+        tieOut: { vServCents: '10000', ledgerCents: '10000', matches: true },
+      });
+    });
+
+    // Com a prévia de A na tela da B, "Confirmar" emitiria a NFS-e da venda B com os totais de A.
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).toBeNull();
   });
 });
