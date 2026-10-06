@@ -16,6 +16,10 @@
 >
 > **EMENDA 06/10 (§7):** 8 leituras estritas do PR-2 ratificadas pelo dono; o PR-2 (#554) só entra em `main` junto com o
 > PR-3 (risco D6). [D-2026-10-06-X8-PR2-LACUNAS-E-MERGE](../plano/decisoes/D-2026-10-06-X8-PR2-LACUNAS-E-MERGE.md).
+>
+> **EMENDA 06/10 (§8):** lacunas L-1..L-5 do PR-3 decididas; L-2 muda o item 17 (o saldo credor anterior consumido
+> também é baixado do "a recuperar"); L-5 e as retenções **reabrem o F-PCB-3 (a) inteiro** (outros créditos no "a
+> recuperar", retenções no "retido a compensar"). [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
 
 ---
 
@@ -281,6 +285,11 @@ e o reconcile do X7, reusados).
    marca desfecho, não assina).
 6. **P-6 Salão-parceiro:** o contrato homologado (Lei 12.592 art. 1º-A § 8º) — o sistema só exige um `documento`; a
    validade é do contador.
+7. **P-7 Saldo credor anterior informado no 1º mês** (F-PCB-2 a; EMENDA §8): o sistema baixa do "a recuperar" a parte
+   consumida, mas esse saldo nunca passou pelo razão do sistema — o contador confirma que o saldo de abertura do "a
+   recuperar" o contém (senão a conta fica credora).
+8. **P-8 Contrapartida da retenção** (EMENDA §8): a transitória "retenções a conciliar com clientes" é proposta do
+   executor (o recebimento líquido está fora do sistema); o contador valida e reclassifica contra o título a receber.
 
 ## 5. Insumos ausentes
 
@@ -314,3 +323,23 @@ das lacunas desta spec (`.claude/retornos/x8-pis-cofins-pr2.md`, "Lacunas de spe
 **Risco D6 e ordem de merge (decisão do dono):** até o PR-3 (itens 17–19), uma apuração confirmada com débito > 0 fica sem
 provisão e bloqueia o encerramento do ano (`ExerciseClosingService`), e o reconcile a recusa (guarda D4). Decisão:
 *"Mergear PR-2 e PR-3 juntos"* — **o PR-2 (#554) não entra em `main` antes do PR-3 do X8.**
+
+## 8. EMENDA 06/10 — lacunas do PR-3 (item 17) decididas
+
+**Autorização:** dono, chat, 2026-10-06, questionário, sobre as lacunas do executor do PR-3 (#556,
+`.claude/retornos/x8-pis-cofins-pr3.md`). Registro: [D-2026-10-06-X8-PR3-LACUNAS](../plano/decisoes/D-2026-10-06-X8-PR3-LACUNAS.md).
+Não reabre F-PCB-1..5; a L-2 **altera** o item 17 (antes: só a parte do item 6 era baixada).
+
+| # | Lacuna (item 17) | Decisão |
+|---|---|---|
+| L-1 | "crédito da NF-e aproveitado no mês" | **(a)** `min(CREDITO_NFE + CREDITO_NFE_DERIVADO, débito)` — a NF-e do mês consome primeiro |
+| L-2 | saldo credor anterior consumido no mês | **Baixar também:** + D PIS/COFINS a recolher / C PIS/COFINS a recuperar pelo saldo anterior usado (parcial ⇒ só o usado; sem débito ⇒ 0; só no não cumulativo), para o "a recolher" bater com o DARF |
+| L-3 | forma do lançamento | Um lançamento por tributo/mês, até 6 pernas; chave de idempotência = a apuração; reconcile repetido não duplica |
+
+| L-4 | ordem de consumo | **(a)** NF-e do mês → outros créditos do mês → saldo anterior (a ordem da memória) |
+| L-5 | outros créditos (art. 3º III–IX) × "a recuperar" | **Lançar no PR-3** — **reabre em parte o F-PCB-3 (a)**: D PIS/Cofins a recuperar / C redutora de despesa (`pisCofinsCreditoOutrosAccountId`, conta nova do perfil, `Expense` — nunca receita; ECF intocada, F-PCB-1 b). Fonte do dono: prática contábil citando o ADI SRF 3/2007. A baixa do crédito consumido vira um par só (NF-e + outros + saldo). `provisaoContasConfiguradas` exige a redutora quando há outros créditos no mês |
+
+| Retenções | retenções sofridas no mês × razão (3ª rodada, dono 06/10: "sim, os dois") | **Lançar, como a L-5 — reabre o resto do F-PCB-3 (a)**: nos 2 regimes, D PIS/Cofins retido a compensar (`pisCofinsRetidoCompensarAccountId`, Asset) / C retenções a conciliar com clientes (`pisCofinsRetencaoConciliarAccountId`, Asset redutora, transitória — o recebimento líquido está fora do sistema) e D a recolher / C retido pela parte abatida; excedente fica no ativo. Fonte: Lei 10.833 arts. 30, 31 e 36; IN SRF 459/2004 (inferido); contrapartida = proposta do executor (P-8) |
+
+Teto da L-3 ajustado para **10 pernas** por lançamento (um por tributo/mês). "a recolher" líquido = DARF.
+**Residual:** saldo credor anterior **informado** no 1º mês nunca passou pelo razão do sistema — validação externa **P-7**.

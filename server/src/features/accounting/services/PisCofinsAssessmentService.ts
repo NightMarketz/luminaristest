@@ -1,8 +1,10 @@
 /**
  * PisCofinsAssessmentService — apuração MENSAL de PIS/Cofins (nó X8, BE-INCR-PIS-COFINS PR-2). FIRST-CLASS PRISMA.
  *
- * Sem `postEntry` neste PR: a provisão (BRIEF itens 17–19, 2 commits + reconcile, cabeçalho `atomicUntil`) é do PR-3
- * (F-PCB-4 a). A confirmação aqui é UMA `runTransaction` (commit 1 do X7 item 14) e nada mais.
+ * A confirmação é UMA `runTransaction` (commit 1 do X7 item 14). PR-3 (BRIEF itens 17–19): DEPOIS dela, a provisão
+ * (bridge no molde do X7 item 15 — 2 commits, best-effort, estorno da substituída) é delegada ao
+ * `TaxAssessmentService.provisionarAposConfirmacao`, que é quem chama `postEntry` e carrega o cabeçalho `atomicUntil`;
+ * o reconcile é a rota do X7 (item 18) e o encerramento × provisão pendente é o do X7 (item 19). Nenhum `postEntry` aqui.
  *
  * Reusa (F-X8-2 a): o model e o repositório `TaxAssessment` do X7 (sem migração), a policy `canRead/ManageTaxAssessment`
  * (item 15), os eventType `tax.assessment.confirmed`/`.superseded` (itens 14 e 22), `receitaBrutaPorAtividade` com o
@@ -21,7 +23,7 @@ import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { AuditService } from './AuditService';
 import type { PisCofinsConfirmInput, PisCofinsPreviewInput } from '../dtos/PisCofinsDto';
 import { receitaBrutaPorAtividade } from './receitaBrutaPorAtividade';
-import { TAX_ASSESSMENT_CONFIRMED, TAX_ASSESSMENT_SUPERSEDED, toView, type TaxAssessmentPreviewLinha, type TaxAssessmentView } from './TaxAssessmentService';
+import { TAX_ASSESSMENT_CONFIRMED, TAX_ASSESSMENT_SUPERSEDED, toView, type TaxAssessmentPreviewLinha, type TaxAssessmentService, type TaxAssessmentView } from './TaxAssessmentService';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { MemoriaCalculoSchema } from '../models/taxAssessmentCalc';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
@@ -131,6 +133,8 @@ export class PisCofinsAssessmentService {
     private readonly payableRepo: Pick<IPayableRepository, 'findPisCofinsCredits'>,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** PR-3 (item 17): a provisão em 2 commits do X7, reusada — não há 2ª implementação do bridge. */
+    private readonly provisao: Pick<TaxAssessmentService, 'provisionarAposConfirmacao'>,
   ) {}
 
   /** Item 13 — calcula PIS e Cofins juntos (D1) e não persiste. */
@@ -153,7 +157,7 @@ export class PisCofinsAssessmentService {
     const owner = scope.ownerUserId;
     const m = mesDoPeriodo(periodo);
 
-    const gravadas = await this.repo.runTransaction(async (tx) => {
+    const { out: gravadas, vivos: cair } = await this.repo.runTransaction(async (tx) => {
       const perfilTx = await this.companyProfileRepo.findByYear(scope, ano, tx);
       if (!perfilTx || perfilTx.updatedAt.getTime() !== c.perfil.updatedAt.getTime()) {
         throw new ConflictError(`o perfil fiscal da empresa de ${ano} mudou durante a confirmação — refaça a prévia.`, 'TAX_ASSESSMENT_STALE');
@@ -269,9 +273,11 @@ export class PisCofinsAssessmentService {
           },
         });
       }
-      return out;
+      return { out, vivos };
     });
-    return { pis: toView(gravadas.PIS), cofins: toView(gravadas.COFINS) };
+    // Item 17 — commits 2/3, best-effort DEPOIS do commit 1: estorna a provisão das substituídas e provisiona as novas.
+    const [pis, cofins] = await this.provisao.provisionarAposConfirmacao(scope, cair, [gravadas.PIS, gravadas.COFINS]);
+    return { pis: toView(pis), cofins: toView(cofins) };
   }
 
   /** Lê perfis, razão, NF-e do mês e M(x−1) e chama a função pura. Recusas do item 9 (400) e a ordem do item 11 (409). */
@@ -331,15 +337,20 @@ export class PisCofinsAssessmentService {
       saldoAnterior: origem,
     });
 
+    // PR-3 (L-5, dono 06/10): mês com outros créditos > 0 exige também a redutora que os recebe na provisão.
+    const temOutros = TRIBUTOS_PIS_COFINS.some((t) => resultado[t].memoria.some((l) => /^CREDITO_/.test(l.codigo) && !l.codigo.startsWith('CREDITO_NFE') && BigInt(l.valorCents) > 0n));
     const provisaoContasConfiguradas = !!(
       fp.pisDespesaAccountId &&
       fp.cofinsDespesaAccountId &&
       fp.pisRecolherAccountId &&
       fp.cofinsRecolherAccountId &&
-      (modalidade === 'CUMULATIVO' || fp.pisCofinsRecuperavelAccountId)
+      (modalidade === 'CUMULATIVO' || fp.pisCofinsRecuperavelAccountId) &&
+      (!temOutros || fp.pisCofinsCreditoOutrosAccountId) &&
+      // retenções (dono 06/10): retido a compensar + transitória a conciliar, nos 2 regimes
+      (input.retencoes.every((r) => BigInt(r.valorCents) === 0n) || (fp.pisCofinsRetidoCompensarAccountId && fp.pisCofinsRetencaoConciliarAccountId))
     );
     if (!provisaoContasConfiguradas) {
-      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17).');
+      avisos.push('contas da provisão de PIS/Cofins não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X8 itens 2 e 17; com outros créditos no mês, também a redutora pisCofinsCreditoOutrosAccountId; com retenções, as contas de retido a compensar e a conciliar).');
     }
     if (input.ajustesBase.length === 0 && rec.revendaCents > 0) {
       avisos.push('ajustes não informados: a base tributa toda a receita (revenda com alíquota zero e cota-parte do parceiro só saem se informadas — BRIEF X8 item 13).');

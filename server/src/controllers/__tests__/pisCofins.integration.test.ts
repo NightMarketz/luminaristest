@@ -9,7 +9,8 @@
  *    (PIS 1,00 / Cofins 2,00) ⇒ crédito 12,65 / 55,60 ⇒ a pagar 0, saldo credor 11,00 / 48,00.
  *    M02, serviço R$ 100.000,00 ⇒ 1.650,00 − 11,00 = 1.639,00; 7.600,00 − 48,00 = 7.552,00.
  *  - X7 Presumido T01 com os R$ 100.000,00 de março: base 32% = 32.000,00; IRPJ 4.800,00; CSLL 9% = 2.880,00.
- * Os itens 17–19 (provisão) são do PR-3: (f) e (g) usam um lançamento manual D despesa / C a recolher no lugar dela.
+ * Os itens 17–19 (provisão) estão em `pisCofinsProvision.integration.test.ts` (PR-3); (f) e (g) seguem com um lançamento
+ * manual D despesa / C a recolher de mesma forma (o que provam é a natureza Expense da conta, não o bridge).
  */
 import { readFile } from 'node:fs/promises';
 import request from 'supertest';
@@ -134,10 +135,11 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     expect(um.status).toBe(200);
     expect(mem(um.body.data.memoria, 'DEBITO')).toBe('300000');
 
-    // A provisão é do PR-3: o reconcile do X7 recusa a linha de PIS (não posta nas contas da CSLL).
+    // PR-3 (item 18): o reconcile do X7 serve a linha de PIS; sem as contas de PIS/Cofins no perfil ⇒ 400 nomeando a
+    // conta (F-TA-7), nunca as contas da CSLL.
     const rec = await request(app).post(`${BASE}/${ok.body.data.pis.id}/provisao`).set(authHeader(dono)).send({ unitId: UNIT });
     expect(rec.status).toBe(400);
-    expect(corpo(rec)).toContain('PR-3');
+    expect(corpo(rec)).toContain('despesa de PIS');
     expect(await prisma.journalEntry.count({ where: { userId: dono.id, sourceType: 'tax.assessment.provision' } })).toBe(0);
 
     // O X7 não enxerga as linhas de PIS/Cofins: o T01 de IRPJ/CSLL confirma normalmente.

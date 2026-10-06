@@ -13,15 +13,25 @@
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição): estorna a provisão da substituída e a dos posteriores da cascata, e posta a da nova"
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (substituição × vínculo perdido): a substituída postada sem provisaoEntryId é estornada — 1 provisão viva por tributo"
  *              teste: taxAssessmentAnual.integration.test.ts › "26 (m): A00 abaixo do provisionado ⇒ D saldo negativo a compensar / C despesa em 31/12, e o LAIR do item 6 não muda"
+ *              X8 PR-3 (BRIEF X8 item 17): linhas PIS/COFINS `M01..M12` — fim do mês; D despesa / C a recolher = débito e,
+ *              no não cumulativo, + D a recuperar / C redutora = outros créditos do mês e + D a recolher / C a recuperar =
+ *              crédito consumido (`consumoPisCofins`); nos 2 regimes, + D retido a compensar / C a conciliar = retenções e
+ *              + D a recolher / C retido = parte abatida; chamado pelo `PisCofinsAssessmentService` via `provisionarAposConfirmacao`
+ *              teste: pisCofinsProvision.integration.test.ts › "retenções (dono 06/10): D retido a compensar / C a conciliar com clientes + baixa contra o a recolher — 10 pernas no Real; excedente fica no ativo no Presumido; a recolher = DARF"
+ *              teste: pisCofinsProvision.integration.test.ts › "item 17 (não cumulativo): + D a recolher / C PIS/COFINS a recuperar = crédito da NF-e aproveitado; saldo credor anterior consumido também é baixado"
+ *              teste: pisCofinsProvision.integration.test.ts › "item 17 / L-5: outros créditos entram no a recuperar; o mês seguinte consome o saldo que os inclui — a recuperar nunca credor, a recolher = DARF"
+ *              teste: pisCofinsProvision.integration.test.ts › "item 17 (substituição): estorna a provisão da substituída e posta a da nova — 1 provisão viva por tributo; período fechado ⇒ confirmação fica, pendente"
  *   commit 2 — subrazão: CAS provisaoEntryId `where null` (BRIEF item 15, "commit 3"), sem tx de razão
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
+ *              teste: pisCofinsProvision.integration.test.ts › "item 17 (commit 2 — CAS): crash entre o postEntry e o CAS ⇒ pendente; reconcile reaproveita o lançamento (sem 2º)"
  *   reconcile — POST /tax-assessments/:id/provisao completa o que faltar; nada já feito é refeito (sem gate de período)
  *              teste: taxAssessmentProvision.integration.test.ts › "item 16 + ADR §13 item 11: reconcile completa e é idempotente — 2ª chamada sem lançamento novo, mesmo provisaoEntryId"
+ *              teste: pisCofinsProvision.integration.test.ts › "itens 18 + 19 (D4 + D6 do PR-2): mês confirmado com débito > 0 e provisão pendente bloqueia o encerramento; o reconcile (2×, idempotente) provisiona e o encerramento passa"
  *   fora da tx — a confirmação (BRIEF item 14, "commit 1") commita ANTES, em runTransaction próprio; falha da provisão não a desfaz
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (cascata × estorno falho): reconfirmar o posterior estorna a provisão órfã antes de postar — nunca 2 vivas"
  */
-import type { CompanyFiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
+import type { CompanyFiscalProfile, FiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -47,6 +57,7 @@ import {
   apurarPresumidoTrimestral,
   apurarRealTrimestral,
   fimDoTrimestre,
+  maxZero,
   trimestresEmAtividade,
   valorLinha,
   type MemoriaAnterior,
@@ -68,6 +79,7 @@ import {
 } from '../models/taxAssessmentCalcAnual';
 import { isLalurMes, mesBounds, periodoBounds, type LalurMes } from '../models/Lalur.model';
 import type { TributoPisCofins } from '../models/pisCofinsParams';
+import { MODO_PIS_COFINS, isPeriodoPisCofins } from '../models/pisCofinsCalc';
 
 export const TAX_ASSESSMENT_CONFIRMED = 'tax.assessment.confirmed';
 /** `sourceType` da provisão (item 15): chave de idempotência = id da apuração. */
@@ -85,13 +97,79 @@ export function valorProvisao(row: LinhaProvisao): bigint {
   return row.devidoCents + row.diferencaPostergadaCents;
 }
 
+type LinhaLancamento = { accountCode: string; debitCents: number; creditCents: number };
+
+type LinhaPisCofins = Pick<TaxAssessment, 'modo' | 'periodo' | 'devidoCents' | 'memoria'>;
+
+/** O que a provisão de PIS/COFINS do mês reconhece e baixa no "a recuperar" (BRIEF X8 item 17 + L-1..L-5). */
+export interface ConsumoPisCofins {
+  /** L-5: outros créditos do mês (art. 3º III–IX, informados) — entram no "a recuperar" (D a recuperar / C redutora). */
+  outrosDoMes: bigint;
+  /** L-1 (a): crédito da NF-e do mês consumido (a NF-e consome primeiro). */
+  nfe: bigint;
+  /** L-4 (a): outros créditos do mês consumidos, depois da NF-e. */
+  outros: bigint;
+  /** L-2: saldo credor anterior consumido, por último. */
+  saldoAnterior: bigint;
+  /** Retenções (dono 06/10): as sofridas no mês (`RETENCAO_n`) — entram no "retido a compensar" (nos 2 regimes). */
+  retencoesDoMes: bigint;
+  /** Retenções abatidas do que sobrou do débito depois dos créditos; o excedente fica no "retido a compensar". */
+  retencoes: bigint;
+}
+
+const minB = (a: bigint, b: bigint): bigint => (a < b ? a : b);
+const CREDITO_NFE_CODIGOS = ['CREDITO_NFE', 'CREDITO_NFE_DERIVADO'];
+
+/**
+ * BRIEF X8 item 17 com as decisões do dono de 06/10 ([[D-2026-10-06-X8-PR3-LACUNAS]]), só no não cumulativo (no
+ * cumulativo tudo é 0 — sem crédito, EMENDA §7 leitura 5):
+ *  - L-5 (reabre em parte o F-PCB-3 a; prática citando ADI SRF 3/2007): os outros créditos do mês entram no "a
+ *    recuperar" — D PIS/COFINS a recuperar / C redutora de despesa (`pisCofinsCreditoOutrosAccountId`), nunca receita;
+ *  - consumo contra o débito na ordem da memória (L-1 a, L-4 a): NF-e do mês → outros do mês → saldo anterior (L-2);
+ *    parcial ⇒ só o usado; mês sem débito ⇒ nada consumido.
+ */
+export function consumoPisCofins(row: LinhaPisCofins): ConsumoPisCofins {
+  const zero: ConsumoPisCofins = { outrosDoMes: 0n, nfe: 0n, outros: 0n, saldoAnterior: 0n, retencoesDoMes: 0n, retencoes: 0n };
+  const ehPisCofins = row.modo === MODO_PIS_COFINS.NAO_CUMULATIVO || row.modo === MODO_PIS_COFINS.CUMULATIVO;
+  if (!ehPisCofins) return zero;
+  const memoria = MemoriaCalculoSchema.parse(row.memoria);
+  const soma = (pred: (codigo: string) => boolean) => memoria.filter((m) => pred(m.codigo)).reduce((s, m) => s + BigInt(m.valorCents), 0n);
+  const retencoesDoMes = soma((c) => /^RETENCAO_\d+$/.test(c));
+  let restante = row.devidoCents;
+  let c = zero;
+  if (row.modo === MODO_PIS_COFINS.NAO_CUMULATIVO) {
+    const nfeMes = soma((c) => CREDITO_NFE_CODIGOS.includes(c));
+    const outrosDoMes = soma((c) => c.startsWith('CREDITO_') && !CREDITO_NFE_CODIGOS.includes(c));
+    const saldo = soma((c) => c === 'SALDO_CREDOR_ANTERIOR');
+    const nfe = minB(nfeMes, restante);
+    restante -= nfe;
+    const outros = minB(outrosDoMes, restante);
+    restante -= outros;
+    const saldoAnterior = minB(saldo, restante);
+    restante -= saldoAnterior;
+    c = { ...c, outrosDoMes, nfe, outros, saldoAnterior };
+  }
+  // A ordem da função pura (`apurarPisCofinsMensal`): a pagar = max(0, débito − créditos − retenções).
+  return { ...c, retencoesDoMes, retencoes: minB(retencoesDoMes, restante) };
+}
+
+/** L-1 (a): crédito da NF-e do mês consumido. */
+export const creditoNfeAproveitado = (row: LinhaPisCofins): bigint => consumoPisCofins(row).nfe;
+/** L-2: saldo credor anterior consumido no mês. */
+export const saldoAnteriorAproveitado = (row: LinhaPisCofins): bigint => consumoPisCofins(row).saldoAnterior;
+
 /**
  * Decisão do dono 04/10 (lacuna L-C do PR-3 da Fase A), generalizada na Fase B: pendente ⇔ CONFIRMED ∧ valor da provisão
  * ≠ 0 ∧ sem lançamento. Valor 0 (suspensão do balancete, ajuste igual aos meses) não tem o que provisionar (o `postEntry`
- * recusa lançamento zerado) e não bloqueia o encerramento.
+ * recusa lançamento zerado) e não bloqueia o encerramento. X8 PR-3 (L-5): um mês de PIS/COFINS sem débito mas com outros
+ * créditos tem o que lançar (o reconhecimento no "a recuperar") — senão o saldo credor que eles geram seria baixado
+ * depois sem nunca ter entrado no ativo.
  */
-export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId'>): boolean {
-  return row.status === 'CONFIRMED' && row.provisaoEntryId === null && valorProvisao(row) !== 0n;
+export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'status' | 'provisaoEntryId' | 'modo'>): boolean {
+  if (row.status !== 'CONFIRMED' || row.provisaoEntryId !== null) return false;
+  if (valorProvisao(row) !== 0n) return true;
+  const c = consumoPisCofins(row);
+  return c.outrosDoMes > 0n || c.retencoesDoMes > 0n; // dono 06/10: retenção sem débito também é reconhecida
 }
 
 /**
@@ -100,10 +178,13 @@ export function provisaoPendente(row: LinhaProvisao & Pick<TaxAssessment, 'statu
  */
 const ordem = (p: string): number => (p === 'A00' ? 13 : isLalurMes(p) ? Number(p.slice(1)) : PERIODOS_TRIMESTRAIS.indexOf(p as PeriodoTrimestral));
 
-/** Data da provisão e do estorno (itens 15/16): fim do trimestre, do mês `A0m`, ou 31/12 no `A00`. */
+/**
+ * Data da provisão e do estorno (itens 15/16): fim do trimestre, do mês `A0m`, ou 31/12 no `A00`. X8 PR-3 (BRIEF X8 item
+ * 17): `M01..M12` de PIS/Cofins ⇒ último dia do mês.
+ */
 export function fimDoPeriodo(ano: number, periodo: string): string {
   if (periodo === 'A00') return `${ano}-12-31`;
-  if (isLalurMes(periodo)) return fimDoMes(ano, Number(periodo.slice(1)));
+  if (isLalurMes(periodo) || isPeriodoPisCofins(periodo)) return fimDoMes(ano, Number(periodo.slice(1)));
   return fimDoTrimestre(ano, periodo as PeriodoTrimestral);
 }
 
@@ -373,12 +454,22 @@ export class TaxAssessmentService {
       return { gravadas, cair, reconfirmar: [...new Set(posteriores.map((r) => r.periodo))].sort() };
     });
 
-    // Item 15 — commits 2/3 do BRIEF, best-effort DEPOIS do commit 1: falha ⇒ a confirmação fica, motivo no log.
-    // Primeiro estorna as provisões de TUDO que caiu (substituídas + posteriores da cascata), depois provisiona as novas.
-    for (const s of r.cair) await this.bestEffort(s.id, () => this.estornarProvisaoViva(scope, s));
-    const irpj = await this.bestEffort(r.gravadas.IRPJ.id, () => this.provisionar(scope, r.gravadas.IRPJ));
-    const csll = await this.bestEffort(r.gravadas.CSLL.id, () => this.provisionar(scope, r.gravadas.CSLL));
-    return { irpj: toView(irpj ?? r.gravadas.IRPJ), csll: toView(csll ?? r.gravadas.CSLL), reconfirmar: r.reconfirmar };
+    const [irpj, csll] = await this.provisionarAposConfirmacao(scope, r.cair, [r.gravadas.IRPJ, r.gravadas.CSLL]);
+    return { irpj: toView(irpj), csll: toView(csll), reconfirmar: r.reconfirmar };
+  }
+
+  /**
+   * Item 15 — commits 2/3 do BRIEF, best-effort DEPOIS do commit 1: falha ⇒ a confirmação fica, motivo no log. Primeiro
+   * estorna as provisões de TUDO que caiu (substituídas + posteriores da cascata), depois provisiona as novas. Devolve as
+   * novas relidas (ou a linha do commit 1, se a provisão falhou). Pública para o `PisCofinsAssessmentService` (BRIEF X8
+   * item 17: "bridge no molde do X7 item 15") — o mesmo mecanismo, sem uma 2ª cópia do 2-commits.
+   */
+  async provisionarAposConfirmacao(scope: AccountingScope, cair: TaxAssessment[], novas: TaxAssessment[]): Promise<TaxAssessment[]> {
+    this.assertManage(scope);
+    for (const s of cair) await this.bestEffort(s.id, () => this.estornarProvisaoViva(scope, s));
+    const out: TaxAssessment[] = [];
+    for (const n of novas) out.push((await this.bestEffort(n.id, () => this.provisionar(scope, n))) ?? n);
+    return out;
   }
 
   /** Item 15: "falha em qualquer passo ⇒ a confirmação fica". O erro inteiro (stack) vai ao log; nunca relança. */
@@ -405,11 +496,8 @@ export class TaxAssessmentService {
     this.assertManage(scope);
     const row = await this.repo.findById(scope.ownerUserId, id);
     if (!row) throw new NotFoundError(`Apuração '${id}' não encontrada.`);
-    // X8 PR-2: a provisão de PIS/Cofins (contas, 2º par do não cumulativo) é o PR-3 do X8 (itens 17–18). Sem esta
-    // guarda o reconcile postaria a linha de PIS/COFINS nas contas da CSLL (o ramo `else` abaixo).
-    if (!doIrpjCsll(row)) {
-      throw new ValidationError(`Apuração '${id}' é de ${row.tributo}: a provisão de PIS/Cofins ainda não existe (BE-INCR-PIS-COFINS PR-3, itens 17–18).`);
-    }
+    // X8 PR-3 (BRIEF X8 item 18): a mesma rota serve as linhas de PIS/COFINS — `contasDaProvisao` escolhe as contas pelo
+    // tributo (a guarda de 400 do PR-2 do X8 saiu).
     if (row.status !== 'CONFIRMED') {
       await this.estornarProvisaoViva(scope, row);
       return toView(row);
@@ -441,30 +529,14 @@ export class TaxAssessmentService {
     }
     if (!entry) {
       const fp = await this.fiscalProfileRepo.findByScope(s);
-      const ids =
-        row.tributo === 'IRPJ'
-          ? { despesa: fp?.irpjDespesaAccountId, recolher: fp?.irpjRecolherAccountId, saldoNegativo: fp?.irpjSaldoNegativoAccountId }
-          : { despesa: fp?.csllDespesaAccountId, recolher: fp?.csllRecolherAccountId, saldoNegativo: fp?.csllSaldoNegativoAccountId };
-      const valorSinal = valorProvisao(row);
-      const despesa = await this.contaDaProvisao(s, ids.despesa, `despesa de ${row.tributo}`);
-      // Fase B item 16 (F-TB-3 a): ajuste anual abaixo do que os meses provisionaram ⇒ D saldo negativo a compensar
-      // (Asset, P-B8) / C despesa. A guarda de circularidade do item 6 exclui a conta de despesa: o LAIR não muda.
-      const outra =
-        valorSinal > 0n
-          ? await this.contaDaProvisao(s, ids.recolher, `${row.tributo} a recolher`)
-          : await this.contaDaProvisao(s, ids.saldoNegativo, `saldo negativo de ${row.tributo} a compensar`);
-      const valor = Number(valorSinal > 0n ? valorSinal : -valorSinal);
-      const [debito, credito] = valorSinal > 0n ? [despesa, outra] : [outra, despesa];
+      const lines = doIrpjCsll(row) ? await this.linhasIrpjCsll(s, row, fp) : await this.linhasPisCofins(s, row, fp);
       entry = await this.postingService.postEntry(s, {
         unitId: s.unitId,
         date: fimDoPeriodo(row.anoCalendario, row.periodo),
         description: `Provisão de ${row.tributo}${row.periodo === 'A00' ? ' (ajuste anual)' : ''} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
         sourceType: TAX_ASSESSMENT_PROVISION_SOURCE_TYPE,
         sourceId: row.id,
-        lines: [
-          { accountCode: debito, debitCents: valor, creditCents: 0 },
-          { accountCode: credito, debitCents: 0, creditCents: valor },
-        ],
+        lines,
       });
     }
     await this.repo.setProvisaoEntryId(owner, row.id, entry.id); // false ⇒ outra chamada já vinculou; a releitura mostra
@@ -482,6 +554,76 @@ export class TaxAssessmentService {
       reversalPostingDate: fimDoPeriodo(row.anoCalendario, row.periodo),
       reason: `apuração ${row.id} substituída`,
     });
+  }
+
+  /** Item 15 (Fase A) + item 16 (Fase B): D despesa / C a recolher pelo valor da provisão; com sinal negativo, D saldo negativo / C despesa. */
+  private async linhasIrpjCsll(s: AccountingScope, row: TaxAssessment, fp: FiscalProfile | null): Promise<LinhaLancamento[]> {
+    const ids =
+      row.tributo === 'IRPJ'
+        ? { despesa: fp?.irpjDespesaAccountId, recolher: fp?.irpjRecolherAccountId, saldoNegativo: fp?.irpjSaldoNegativoAccountId }
+        : { despesa: fp?.csllDespesaAccountId, recolher: fp?.csllRecolherAccountId, saldoNegativo: fp?.csllSaldoNegativoAccountId };
+    const valorSinal = valorProvisao(row);
+    const despesa = await this.contaDaProvisao(s, ids.despesa, `despesa de ${row.tributo}`);
+    // Fase B item 16 (F-TB-3 a): ajuste anual abaixo do que os meses provisionaram ⇒ D saldo negativo a compensar
+    // (Asset, P-B8) / C despesa. A guarda de circularidade do item 6 exclui a conta de despesa: o LAIR não muda.
+    const outra =
+      valorSinal > 0n
+        ? await this.contaDaProvisao(s, ids.recolher, `${row.tributo} a recolher`)
+        : await this.contaDaProvisao(s, ids.saldoNegativo, `saldo negativo de ${row.tributo} a compensar`);
+    const valor = Number(valorSinal > 0n ? valorSinal : -valorSinal);
+    const [debito, credito] = valorSinal > 0n ? [despesa, outra] : [outra, despesa];
+    return [
+      { accountCode: debito, debitCents: valor, creditCents: 0 },
+      { accountCode: credito, debitCents: 0, creditCents: valor },
+    ];
+  }
+
+  /**
+   * BRIEF X8 item 17 (F-X8-4 a, F-PCB-1 b, F-PCB-3 a) — provisão de PIS/COFINS do mês:
+   *  - D despesa (`pis|cofinsDespesaAccountId`, Expense) / C a recolher (`pis|cofinsRecolherAccountId`) = débito bruto;
+   *  - não cumulativo (`consumoPisCofins`, decisões do dono 06/10): + D a recuperar / C redutora de despesa
+   *    (`pisCofinsCreditoOutrosAccountId`) = outros créditos do mês (L-5) e + D a recolher / C a recuperar = crédito
+   *    consumido (NF-e + outros + saldo anterior; L-1/L-2/L-4); o crédito não consumido (saldo credor) fica no ativo;
+   *  - retenções (nos 2 regimes; dono 06/10, reabre o resto do F-PCB-3 a): + D retido a compensar / C retenções a
+   *    conciliar com clientes = retenções do mês e + D a recolher / C retido a compensar = parte abatida.
+   * Um lançamento por tributo/mês, até 10 pernas (teto da L-3 ajustado de 6 para 10); linha zerada não entra.
+   */
+  private async linhasPisCofins(s: AccountingScope, row: TaxAssessment, fp: FiscalProfile | null): Promise<LinhaLancamento[]> {
+    const pis = row.tributo === 'PIS';
+    const c = consumoPisCofins(row);
+    const debito = Number(row.devidoCents);
+    const baixa = Number(c.nfe + c.outros + c.saldoAnterior);
+    const lines: LinhaLancamento[] = [];
+    const recolher = async () => this.contaDaProvisao(s, pis ? fp?.pisRecolherAccountId : fp?.cofinsRecolherAccountId, `${row.tributo} a recolher`);
+    const recuperavel = async () => this.contaDaProvisao(s, fp?.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar');
+    if (debito > 0) {
+      const despesa = await this.contaDaProvisao(s, pis ? fp?.pisDespesaAccountId : fp?.cofinsDespesaAccountId, `despesa de ${row.tributo}`);
+      lines.push({ accountCode: despesa, debitCents: debito, creditCents: 0 }, { accountCode: await recolher(), debitCents: 0, creditCents: debito });
+    }
+    // L-5: reconhecimento dos outros créditos do mês no ativo — C redutora de despesa (Expense), nunca receita.
+    if (c.outrosDoMes > 0n) {
+      const redutora = await this.contaDaProvisao(s, fp?.pisCofinsCreditoOutrosAccountId, 'créditos de PIS/COFINS sobre despesas (redutora)');
+      const v = Number(c.outrosDoMes);
+      lines.push({ accountCode: await recuperavel(), debitCents: v, creditCents: 0 }, { accountCode: redutora, debitCents: 0, creditCents: v });
+    }
+    // L-1/L-2/L-4: baixa do "a recuperar" pelo crédito consumido (NF-e + outros + saldo anterior) — um par só.
+    if (baixa > 0) {
+      lines.push({ accountCode: await recolher(), debitCents: baixa, creditCents: 0 }, { accountCode: await recuperavel(), debitCents: 0, creditCents: baixa });
+    }
+    // Retenções (dono 06/10; reabre o resto do F-PCB-3 a): reconhecimento D retido a compensar / C retenções a conciliar
+    // com clientes (transitória — o fato gerador, o recebimento líquido, está fora do sistema) e baixa D a recolher / C
+    // retido a compensar pela parte abatida. O excedente fica no ativo (compensação fora do sistema, F-TA-9 a).
+    const retido = async () => this.contaDaProvisao(s, fp?.pisCofinsRetidoCompensarAccountId, 'PIS/COFINS retido a compensar');
+    if (c.retencoesDoMes > 0n) {
+      const conciliar = await this.contaDaProvisao(s, fp?.pisCofinsRetencaoConciliarAccountId, 'retenções de PIS/COFINS a conciliar com clientes');
+      const v = Number(c.retencoesDoMes);
+      lines.push({ accountCode: await retido(), debitCents: v, creditCents: 0 }, { accountCode: conciliar, debitCents: 0, creditCents: v });
+    }
+    if (c.retencoes > 0n) {
+      const v = Number(c.retencoes);
+      lines.push({ accountCode: await recolher(), debitCents: v, creditCents: 0 }, { accountCode: await retido(), debitCents: 0, creditCents: v });
+    }
+    return lines;
   }
 
   /** F-TA-7 (a): conta ausente ⇒ erro com o motivo (a confirmação fica pendente; o reconcile devolve 400). */

@@ -21993,8 +21993,8 @@
     },
     "/api/accounting/tax-assessments/{id}/provisao": {
       "post": {
-        "summary": "Reconcile the ledger provision of an IRPJ/CSLL assessment (X7 Fase A, item 16)",
-        "description": "Completes whatever the confirmation left pending: reverses the live provision of the superseded assessments, posts the provision (debit expense / credit tax payable, amount = devidoCents, last day of the quarter, idempotent by source) and links provisaoEntryId. X7 Fase B: month A0m posts devido + diferença postergada on the last day of the month; A00 posts only the difference to what the months provisioned, on 31/12 - negative = debit the negative balance to offset (Asset) / credit expense; zero posts nothing. Nothing already done is redone, so calling it again changes nothing. On a SUPERSEDED assessment it only reverses its own live provision. 400 when the provision accounts are not configured on the unit fiscal profile or the period is closed.",
+        "summary": "Reconcile the ledger provision of an IRPJ/CSLL or PIS/COFINS assessment (X7 Fase A item 16; X8 item 18)",
+        "description": "Completes whatever the confirmation left pending: reverses the live provision of the superseded assessments, posts the provision (debit expense / credit tax payable, amount = devidoCents, last day of the quarter, idempotent by source) and links provisaoEntryId. X7 Fase B: month A0m posts devido + diferença postergada on the last day of the month; A00 posts only the difference to what the months provisioned, on 31/12 - negative = debit the negative balance to offset (Asset) / credit expense; zero posts nothing. Nothing already done is redone, so calling it again changes nothing. On a SUPERSEDED assessment it only reverses its own live provision. X8 PR-3: PIS/COFINS (M01..M12) posts debit expense / credit tax payable = gross debit on the last day of the month and, in the non-cumulative regime, debit tax payable / credit PIS/COFINS recoverable = the NF-e credit used in the month. 400 when the provision accounts are not configured on the unit fiscal profile or the period is closed.",
         "tags": [
           "Accounting"
         ],
