@@ -4,7 +4,9 @@
 > Complementa o [BRIEF de 02/09](FE-INCR-BINDING-ACTIVATION-brief.md) (itens 1–3 e 5 entregues no #389) no seu
 > **item 4** ("UI mínima conforme F-B1"), que nunca ganhou spec.
 >
-> **Forks deste BRIEF: F-BA-1..6, todos RATIFICAÇÃO PENDENTE.** Nenhum se auto-ratifica.
+> **Forks deste BRIEF: F-BA-1..6 ✅ RATIFICADOS em 06/10** por questionário ([D-2026-10-06-LAC-B-TELA-FORKS](../plano/decisoes/D-2026-10-06-LAC-B-TELA-FORKS.md)): 1 a · 2 a (condicional
+> ao F-I4-4 → a′) · 3 **b** · 4 a · 5 a · 6 a — todos na recomendação. O F-BA-2 volta ao dono se o F-I4-4 for decidido
+> diferente de (a′).
 > **Autoriza planejar, não executar.** Código exige *"executa"* (ORCH-006). O *"executa"* de 01/10 dado à LAC-B
 > é anterior a esta spec e não a cobre sem confirmação do dono (ver §0, divergência 2).
 
@@ -100,14 +102,14 @@ F-BA-3 for (b).
    'error', activeSectorKey?, reload }` a partir do `listActive`. Troca de unidade descarta resposta atrasada
    (mesma regra do `contextKey` da `AccountingView`). *Teste:* lista vazia ⇒ `inactive`; uma linha ⇒ `active`
    com o setor; erro ⇒ `error` sem esconder a tela.
-3. **Superfície (F-BA-1, PENDENTE; o texto segue a recomendação (a)).** Faixa (`Alert` canônico) na
+3. **Superfície (F-BA-1 → a, ratificado 06/10).** Faixa (`Alert` canônico) na
    `AccountingView`, abaixo do cabeçalho e acima das abas, **só** quando `state === 'inactive'`: *"A contabilidade
    automática desta unidade não está ativa — as vendas não geram lançamento."* + botão **"Ativar contabilidade"**.
    Some quando `active`. `neutral-*`, `rounded-2xl`.
 4. **Modo cliente fora (direto, sem fork).** Com `governance` definido a faixa não renderiza e o hook não chama a
    rota: a ativação grava no silo **do chamador** (`resolveBindingScope(user, unitId)`), não no do cliente.
    *Teste:* com `governance`, nenhum `GET /accounting-binding` e nenhuma faixa.
-5. **Confirmação (F-BA-6, PENDENTE; o texto segue a recomendação (a)).** `ConfirmModal` antes da chamada,
+5. **Confirmação (F-BA-6 → a, ratificado 06/10).** `ConfirmModal` antes da chamada,
    listando o que será feito: setor (F-BA-5); *"instala o plano de contas padrão se o da unidade estiver vazio"*;
    *"abre o período do mês corrente se ainda não existir"*. Confirmar ⇒ `activateDefault({ unitId, sectorKey,
    installChartIfEmpty: true, openCurrentPeriodIfMissing: true })` — as mesmas flags do onboarding (item 10 do
@@ -121,14 +123,14 @@ F-BA-3 for (b).
    - 400/403/409 ⇒ `resolveError` (mensagem do BE), sem fechar a faixa.
    *Teste:* um caso por ramo; espere o **DOM**, não a chamada (memória
    `handler-async-closure-stale-x-waitfor-tohavebeencalled`).
-7. **Recarga dos mappers (F-BA-2, PENDENTE; o texto segue a recomendação (a)).** Com F-BA-2 (a) a tela não
+7. **Recarga dos mappers (F-BA-2 → a, ratificado 06/10; condicional ao F-I4-4 → a′).** Com F-BA-2 (a) a tela não
    faz nada além do item 6: a recarga é do BE (F-I4-4 → a′). Se o dono decidir F-BA-2 (c), o sucesso diz
    *"as vendas desta unidade passam a ser lançadas após o próximo reinício do servidor"*.
-8. **Pendências (F-BA-3, PENDENTE; o texto segue a recomendação (b)).** No sucesso, link **"Ver pendências da
+8. **Pendências (F-BA-3 → b, ratificado 06/10).** No sucesso, link **"Ver pendências da
    unidade"** para a aba `pendencias` (F-I5-4 a), onde fica o "Re-varrer". O link só renderiza se a aba existir em
    `TABS` (o PR-1 pode entrar antes do I5 PR-3 sem link quebrado). *Teste:* com a aba, o link troca a aba; sem
    ela, não renderiza.
-9. **Setor (F-BA-5, PENDENTE; o texto segue a recomendação (a)).** Seletor com os setores do registry (salão,
+9. **Setor (F-BA-5 → a, ratificado 06/10).** Seletor com os setores do registry (salão,
    clínica), rótulos i18n, padrão salão. Lista no FE espelhando o registry — duplicação declarada (não há rota de
    setores); um teste vitest fixa os dois valores, e um setor novo no BE sem o FE só deixa de aparecer na tela.
    Com PR-0, o 409 `BINDING_SECTOR_CONFLICT` aparece pelo item 6.
@@ -174,7 +176,9 @@ export class BindingSectorConflictError extends AppError {   // 409, 'BINDING_SE
 }
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+## 5. Forks — ✅ RATIFICADOS 06/10 ([D-2026-10-06-LAC-B-TELA-FORKS](../plano/decisoes/D-2026-10-06-LAC-B-TELA-FORKS.md))
+
+Dono, chat, 2026-10-06, questionário. Todas as cédulas na recomendação. **PR-0 entra** (F-BA-5 a).
 
 - **F-BA-1 · onde a ativação aparece?**
   - **(a)** Faixa na `AccountingView`, acima das abas, só quando a unidade selecionada não tem binding `Active`.
@@ -182,7 +186,7 @@ export class BindingSectorConflictError extends AppError {   // 409, 'BINDING_SE
   - **(c)** Cartão dentro da aba "Plano de Contas".
   - **Recomendação: (a).** O problema só existe enquanto a unidade está inativa, e quem está em qualquer aba
     precisa saber que as vendas não lançam. (b) esconde o aviso atrás de uma aba que ninguém abre sem saber; (c)
-    amarra a um painel que não é o objeto. A faixa some sozinha quando resolve. **PENDENTE.**
+    amarra a um painel que não é o objeto. A faixa some sozinha quando resolve. ✅ **(a), dono 06/10.**
 - **F-BA-2 · a unidade ativada pela tela lança sem reiniciar?** Mesma causa do F-I4-4 (registro só do boot).
   - **(a)** A tela depende do **F-I4-4 → (a′)** do BRIEF I4/I5 (recarga no caminho comum `compile()` → `Active`,
     que cobre `/activate-default`): um conserto, uma decisão. A tela não muda.
@@ -193,14 +197,15 @@ export class BindingSectorConflictError extends AppError {   // 409, 'BINDING_SE
   - **Recomendação: (a).** É o conserto de classe que o BRIEF I4/I5 já descreveu. Sem ele a tela entrega um
     `Active` que não lança — o "verde que não opera" que aquele BRIEF nomeia como risco principal. Se o F-I4-4
     for decidido em (a) ou (b), este fork volta ao dono (não cai sozinho em (c)). Atenção: com a recarga em
-    runtime, uma colisão de setor (F-BA-5) passa a falhar na recarga em vez de no boot. **PENDENTE.**
+    runtime, uma colisão de setor (F-BA-5) passa a falhar na recarga em vez de no boot. ✅ **(a), dono 06/10 — depende do F-I4-4 → (a′).** O F-I4-4 segue PENDENTE no
+    BRIEF I4/I5; se for decidido diferente de (a′), este fork volta ao dono.
 - **F-BA-3 · a tela e a aba Pendências (F-I5-4 a).** A pendência `NO_MAPPER_FOR_UNIT` das vendas anteriores à
   ativação só sai com "Re-varrer".
   - **(a)** A própria faixa ganha "Re-varrer" no sucesso (chama `rescan({ unitId })`).
   - **(b)** A faixa só leva à aba Pendências; o "Re-varrer" vive lá (item 8).
   - **(c)** Rescan automático logo depois do `Active`.
   - **Recomendação: (b).** O F-I5-4 (a) já pôs o "Re-varrer" num lugar; dois botões para o mesmo efeito são dois
-    donos. (c) dispara antes da recarga (F-BA-2) e não resolve nada sem ela. **PENDENTE.**
+    donos. (c) dispara antes da recarga (F-BA-2) e não resolve nada sem ela. ✅ **(b), dono 06/10** — só o link para a aba Pendências.
 - **F-BA-4 · o botão manual e a ativação automática do I4 coexistem?**
   - **(a)** Sim, para sempre: a faixa aparece para **qualquer** unidade sem binding `Active` — onboarding que
     devolveu `Draft` (F-I4-2 b), unidade criada depois como linha da tabela `units` (que nunca passa pelo
@@ -211,7 +216,7 @@ export class BindingSectorConflictError extends AppError {   // 409, 'BINDING_SE
     segunda unidade de um tenant não passa pelo onboarding, e o I4 não a cobre. (c) pede persistir um estado que
     o próprio `GET /accounting-binding` já responde. **Quem aparece onde:** onboarding (I4) = automático, sem
     clique; `AccountingView` = faixa só quando falta; F-I4-5 (b), se ratificado, avisa no wizard e pode apontar
-    para a mesma faixa. **PENDENTE.**
+    para a mesma faixa. ✅ **(a), dono 06/10** — convive sempre com o I4.
 - **F-BA-5 · setor e a 2ª ativação na mesma unidade.** `already-active` é por setor, e salão e clínica têm os
   mesmos 6 eventos: ativar o outro setor grava um 2º `Active` e o próximo boot aborta para **todos** os tenants
   da instância (§1 linha 5; inferido por leitura de três pontos, não executado).
@@ -221,14 +226,18 @@ export class BindingSectorConflictError extends AppError {   // 409, 'BINDING_SE
   - **(c)** Seletor sem guarda no BE; a tela esconde o seletor quando há `Active` (guarda só no front).
   - **Recomendação: (a).** A tela é o que torna o 2º setor alcançável por clique; a guarda tem de estar onde a
     gravação acontece, não no front. (b) não serve à clínica (P2). Amplia o escopo para um item BE na rota do I3 —
-    por isso é fork, não item direto. **PENDENTE.**
+    por isso é fork, não item direto. ✅ **(a), dono 06/10** — seletor + guarda 409 no PR-0.
+    **O CLI continua SEM guarda:** `activateAccountingBindingCli` chama `BindingCompileService.compile()` direto
+    (`activateAccountingBindingCli.ts:138-139`), e o PR-0 só guarda a rota `/activate-default` (o `POST /compile` também
+    fica fora). Por esses caminhos, o risco de um 2º binding `Active` na mesma unidade derrubar o boot da instância
+    **persiste** — lacuna para o GAP-MAP, inferida por leitura (não executada).
 - **F-BA-6 · as flags `installChartIfEmpty` / `openCurrentPeriodIfMissing`.**
   - **(a)** Um `ConfirmModal` lista os efeitos e a confirmação manda as duas `true` (igual ao I4).
   - **(b)** Primeira chamada sem flags; a tela mostra os bloqueantes `CHART_OF_ACCOUNTS_EMPTY` /
     `ACCOUNTING_PERIOD_NOT_OPEN` com um botão por efeito e reenvia com a flag escolhida.
   - **Recomendação: (a).** O F-B2 pede flag **explícita**, *"nunca silenciosamente"*: o modal que nomeia os dois
     efeitos é o consentimento explícito, em um clique. (b) dá o mesmo resultado em até três chamadas, sem ganho
-    de controle (não há outro plano de contas a escolher pela tela). **PENDENTE.**
+    de controle (não há outro plano de contas a escolher pela tela). ✅ **(a), dono 06/10** — a confirmação lista os 2 efeitos e manda as flags `true`.
 
 ## 6. Pendente de validação externa
 
@@ -249,7 +258,11 @@ fixtures de binding e o plano canônico, validados nos gates que já os cobrem (
 
 - **2º setor na mesma unidade derruba o boot da instância** — alcançável **hoje** pela API (`POST
   /activate-default` com `sectorKey` diferente, `POST /compile` e o CLI com `--sector-key`). Candidato ao GAP-MAP independentemente da tela;
-  o PR-0 só existe se o F-BA-5 for (a).
+  o PR-0 só existe se o F-BA-5 for (a). **06/10:** F-BA-5 → (a) ratificado, o PR-0 entra — mas só fecha a rota
+  `/activate-default`. **O CLI continua SEM guarda:** `activateAccountingBindingCli` chama `BindingCompileService.compile()` direto
+  (`activateAccountingBindingCli.ts:138-139`), e o PR-0 só guarda a rota `/activate-default` (o `POST /compile` também
+  fica fora). Por esses caminhos, o risco de um 2º binding `Active` na mesma unidade derrubar o boot da instância
+  **persiste** — lacuna para o GAP-MAP, inferida por leitura (não executada).
 - **Mês UTC × fuso:** a rota abre o mês **UTC**. Uma ativação nas últimas 3 h do mês em BRT abre o mês seguinte,
   e as vendas daquela noite caem em `ACCOUNTING_PERIOD_NOT_OPEN` (mesmo achado do BRIEF I4/I5 §8). A tela não sabe
   qual mês o servidor vai abrir antes da resposta.
