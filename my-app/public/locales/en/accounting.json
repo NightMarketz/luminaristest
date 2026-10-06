@@ -2338,5 +2338,208 @@
       "subtitle": "Feeds the purchase NF-e (cost) and the sales NFS-e. Saving replaces the whole profile.",
       "title": "Unit tax profile"
     }
+  },
+  "dfe": {
+    "ambiente": {
+      "homologacao": "Homologation",
+      "producao": "Production"
+    },
+    "campo": {
+      "IBSCBS_CST": "IBS/CBS CST",
+      "IBSCBS_cClassTrib": "IBS/CBS cClassTrib",
+      "cLocPrestacao": "Place of service",
+      "cNBS": "NBS item",
+      "cTribNac": "National Taxation Code",
+      "dCompet": "Accrual date",
+      "pAliq": "Rate",
+      "prest_CNPJ": "Issuer CNPJ",
+      "toma_doc": "Customer CPF/CNPJ",
+      "tpRetISSQN": "ISSQN withholding",
+      "vDescCond": "Conditional discount",
+      "vDescIncond": "Unconditional discount",
+      "vServ": "Service amount"
+    },
+    "cancel": "Cancel",
+    "cancelamento": {
+      "cMotivo": "Reason",
+      "error": "Could not record the cancellation.",
+      "instr": "On the portal, use \"Cancelar\" (Cancel) — not \"Substituir\" (Replace): replacement creates a different event that Luminaris does not read. Then download the event XML and upload it here.",
+      "same": "Use the same reason and the same text you typed on the portal.",
+      "selectXml": "Select event XML",
+      "submit": "Record cancellation",
+      "title": "Record NFS-e cancellation",
+      "xMotivo": "Justification (15 to 255 characters)"
+    },
+    "card": {
+      "automatico": "Issued automatically by the partner.",
+      "cancelar": "Cancel",
+      "downloadPdf": "Download DANFSe",
+      "downloadXml": "Download XML",
+      "ficha": "Form",
+      "nNFSe": "NFS-e no.",
+      "reenviar": "Resend",
+      "rejeicao": "Record rejection",
+      "semSubstituto": "No replacement: issue again with the button if the sale still stands.",
+      "xmlNaoGuardado": "Invoice authorized, but the XML was not stored; keep the file — the automatic fix comes with BE-INCR-DFE-ANEXO-PENDENTE."
+    },
+    "close": "Close",
+    "download": {
+      "error": "Could not download the file."
+    },
+    "emit": {
+      "competencia": "The sale accrual date is in another month — check whether issuing outside the month is allowed.",
+      "confirm": "Confirm",
+      "docs": "Documents to issue (one per service code):",
+      "error": {
+        "emit": "Could not issue.",
+        "preview": "Could not check the sale for issuing."
+      },
+      "faltantes": "The sale cannot be issued yet. Missing:",
+      "tieOut": "The invoice total differs from the sale amount posted to the ledger ({{ledger}}). Check before issuing.",
+      "title": "Issue NFS-e",
+      "total": "Services total:"
+    },
+    "error": {
+      "load": "Could not load the tax documents."
+    },
+    "ficha": {
+      "ambienteDivergente": "The server is in {{server}}, this document is from {{doc}} — issue it in the document environment.",
+      "attempt": "attempt",
+      "conferido": "checked on return",
+      "copied": "Copied",
+      "copy": "Copy",
+      "error": "Could not load the form.",
+      "field": {
+        "beneficio": "Municipal benefit / deduction",
+        "cIntContrib": "Taxpayer internal code",
+        "cLocEmi": "Issuer municipality",
+        "cLocPrestacao": "Place of service — Municipality",
+        "cNBS": "NBS item",
+        "cTribMun": "Municipal complementary code",
+        "cTribNac": "National Taxation Code",
+        "dCompet": "Accrual date",
+        "emitente": "NFS-e issuer",
+        "emitir": "Summary + \"Emitir NFS-e\"",
+        "exigibilidade": "Suspended enforceability?",
+        "ibsCbsClassTrib": "IBS/CBS — cClassTrib",
+        "ibsCbsCst": "IBS/CBS — CST",
+        "imunidade": "Immunity, export or non-incidence?",
+        "informarDps": "Provide the DPS",
+        "intermediario": "Intermediary",
+        "opSimpNac": "Simples Nacional option",
+        "pAliq": "Rate",
+        "pTotTribEst": "Approximate taxes — State (%)",
+        "pTotTribFed": "Approximate taxes — Federal (%)",
+        "pTotTribMun": "Approximate taxes — Municipal (%)",
+        "pTotTribSN": "Approximate taxes — Simples Nacional (%)",
+        "prestCnpj": "Issuer CPF/CNPJ",
+        "regApTribSN": "Simples Nacional tax calculation regime",
+        "regEspTrib": "Special taxation regime",
+        "tomaDoc": "Customer CPF/CNPJ",
+        "tomaEnd": "Customer address",
+        "tomaNome": "Name/Company name",
+        "tomador": "Service customer",
+        "tpRetISSQN": "ISSQN withholding",
+        "tribFed": "Federal taxation",
+        "tribISSQN": "ISSQN taxation",
+        "vDescCond": "Conditional discount",
+        "vDescIncond": "Unconditional discount",
+        "vServ": "Service amount",
+        "xDescServ": "Service description"
+      },
+      "homologacaoSemLink": "Homologation: use the portal restricted-production environment (address to be confirmed in the runbook — PV-7).",
+      "howto": "Use the portal \"Emissão Completa\". Copy each value into the field with the same name; the ones marked \"checked on return\" are compared with the authorized XML.",
+      "instr": {
+        "brasil": "Select Brasil.",
+        "cIntContrib": "If the portal requires it, use the sale identifier.",
+        "emitir": "Check the summary and click \"Emitir NFS-e\". Then \"Baixar XML\" (and the DANFSe) and upload the file below.",
+        "endereco": "If the portal asks, type the address from the customer record — the Luminaris DPS does not carry it.",
+        "fedNormal": "Do not provide PIS/COFINS.",
+        "fedSimples": "Already filled by Simples — do not change.",
+        "informarDps": "Do not check — the portal numbers the DPS.",
+        "mesmoMunicipio": "The same municipality as the issuer.",
+        "nao": "No.",
+        "naoInformado": "Not provided.",
+        "prestador": "Select Prestador (service provider).",
+        "retidoSim": "Yes, withheld by the customer.",
+        "tributavel": "Taxable operation."
+      },
+      "note": {
+        "aliquota": "check — the portal may compute it",
+        "cadastro": "the portal may fetch it from its records",
+        "conferencia": "check — filled by the portal",
+        "pv5": "percentage — how to enter it is checked in the runbook (PV-5)",
+        "pv9": "portal label to be checked in the runbook (PV-9)"
+      },
+      "opSimpNac": {
+        "1": "1 — Not opted in",
+        "3": "3 — Opted in ME/EPP"
+      },
+      "portalLink": "Open the Emissor Nacional",
+      "section": {
+        "emitir": "4. Issue NFS-e",
+        "pessoas": "1. Parties",
+        "servico": "2. Service",
+        "valores": "3. Amounts"
+      },
+      "title": "Form for the Emissor Nacional"
+    },
+    "loading": "Loading…",
+    "motivo": {
+      "1": "Issuing error",
+      "2": "Service not rendered",
+      "9": "Other"
+    },
+    "pendencia": {
+      "cancelled_without_replacement": "Invoice cancelled without a replacement — issue again with the button if the sale still stands.",
+      "releitura_divergente": "The authorized invoice differs from what was sent — the only way out is to cancel and issue again.",
+      "sale_cancelled_with_live_document": "The sale was cancelled, but this invoice is still valid — cancel it on the portal and record it here."
+    },
+    "reenviar": {
+      "error": "Could not resend.",
+      "hint": "Fix the tax profile or the sale before resending — the DPS is rebuilt."
+    },
+    "rejeicao": {
+      "add": "Add error",
+      "code": "Code",
+      "error": "Could not record the rejection.",
+      "hint": "Copy the code and the message the portal showed, one error per line.",
+      "message": "Message",
+      "remove": "Remove line",
+      "submit": "Record rejection",
+      "title": "Record portal rejection"
+    },
+    "releitura": {
+      "ausente": "— (absent)",
+      "col": {
+        "autorizado": "Authorized",
+        "campo": "Field",
+        "enviado": "Sent"
+      },
+      "divergente": "Readback: the authorized invoice DIFFERS from what was sent.",
+      "igual": "Readback: the authorized invoice matches what was sent.",
+      "pii": "— (personal data, not shown)"
+    },
+    "retorno": {
+      "error": "Could not record the return.",
+      "hint": "After issuing on the portal, download the NFS-e XML (and the DANFSe, if you want) and upload it here.",
+      "selectPdf": "DANFSe (PDF, optional)",
+      "selectXml": "Select NFS-e XML",
+      "send": "Record return",
+      "title": "Portal return"
+    },
+    "section": {
+      "empty": "No tax document issued for this sale.",
+      "title": "Tax documents"
+    },
+    "sending": "Sending…",
+    "status": {
+      "AUTHORIZED": "Authorized",
+      "AUTHORIZED_DIVERGENT": "Authorized with divergence",
+      "CANCELLED": "Cancelled",
+      "PROCESSING": "Processing",
+      "REJECTED": "Rejected",
+      "SENT": "Waiting for the portal return"
+    }
   }
 }

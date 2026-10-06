@@ -275,6 +275,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     'inventory_view',
     'products_view',
     'finance_view',
+    // FE-INCR-DFE PR-2: o detalhe da venda monta a emissão de NFS-e (features/accounting/components/dfe, chaves `dfe.*`)
+    'accounting',
     'analytics',
     'chatMessages'
   ]);
