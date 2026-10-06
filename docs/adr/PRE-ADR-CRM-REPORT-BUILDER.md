@@ -1,10 +1,13 @@
 # PRE-ADR-CRM-REPORT-BUILDER — Builder de relatórios/dashboards self-service do CRM: abertura do nó CRM-RB
 
 - **Data:** 2026-10-06
-- **Status:** **Proposed — RATIFICAÇÃO PENDENTE.** Nenhum fork novo decidido aqui; nenhum código autorizado.
+- **Status:** **Accepted — 2026-10-06.** F-RBP1..3 ratificados pelo dono (chat, 2026-10-06, questionário), todos na
+  recomendação ([D-2026-10-06-CRM-RB-PRE-ADR-FORKS](../plano/decisoes/D-2026-10-06-CRM-RB-PRE-ADR-FORKS.md)). Nenhum código autorizado: o nó continua exigindo
+  "executa" próprio.
 - **Autorização:** dono, chat, 2026-10-06: *"Autorizo escrever o PRE-ADR do CRM-RB — sem 'executa'"* (ratificado com
   *"Dispara em sequencia aqui tudo em opus medio"*). Cobre **só** este PRE-ADR. Não cobre código, BRIEF novo, emenda do
-  BRIEF nem ratificar fork.
+  BRIEF nem ratificar fork. **Ratificação e emenda (06/10):** dono, chat, 2026-10-06, questionário — F-RBP1..3 → (a) e
+  *"Sim, emendar"* (emenda do BRIEF do CRM-RB cobrindo A1–A5, feita no BRIEF §9 neste mesmo PR).
 - **Por que existe:** o [`README` do vault](../plano/README.md) exige PRE-ADR ratificado antes de nó novo em `nos/`. O
   [[CRM-RB]] nasceu em 26/09 por instrução, com autorização citável mas sem PRE-ADR; o dono decidiu em 26/09
   (AskUserQuestion) que o nó segue `planned` e que o PRE-ADR é passo próprio, antes do "executa". Este é esse passo.
@@ -69,7 +72,12 @@ Nenhum reabre fork ratificado. Todos mudam **como** um item ratificado se cumpre
 implementar a ordenação por medida no serviço; teto por leitura em lotes; join com tabela ausente vira 4xx nomeado. A4 vira
 um caso de teste do item 7. Este PRE-ADR **não** edita o BRIEF (fora da autorização).
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+**06/10 — emenda feita.** O dono autorizou a emenda (*"Sim, emendar"*); ela está no §9 do BRIEF, neste PR. Ao escrevê-la
+apareceu um 6º achado (**A6**, verificado em `AggregatePipelineProcessor.ts:319-350`): com mais de uma medida, o agregador
+**soma todas as medidas num único `value`** por ponto (`count` + `sum` + `avg` viram um número só). O que não era decidível
+por regra virou fork PENDENTE no BRIEF (F-RB9 ordenação, F-RB10 várias medidas, F-RB11 fuso dos carimbos de hora).
+
+## 3. Forks — ✅ RATIFICADOS 2026-10-06 (dono, chat, questionário; todos na recomendação)
 
 ### F-RBP1 — Perfil de execução: a regra 2 vale pela letra ou só para invariante?
 
@@ -90,7 +98,7 @@ A nota do nó prevê `opus-medio` "pela letra" da regra 2 e registra a ambiguida
 | **(b)** objetivo: a regra 2 só vale com invariante | `sonnet-alto` (regra 4) | a migração SQLite não transacional e o job com rede externa ficam com o perfil mais barato |
 | **(c)** emendar a regra no `classificador.md` para separar "migração" de "invariante" | depende da redação | mexe numa regra do dono por causa de um nó |
 
-**Recomendação: (a).** A regra é do dono, e o parêntese nomeia a migração de forma explícita. Lê-la pelo "objetivo" seria
+✅ **Ratificado: (a) `opus-medio`, dono 06/10.** **Recomendação: (a).** A regra é do dono, e o parêntese nomeia a migração de forma explícita. Lê-la pelo "objetivo" seria
 o agente reescrever a regra. As duas migrações têm risco próprio (memória `migracao-sqlite-nao-e-transacional`), e o job
 da PTAX é o primeiro `fetch` do servidor a uma API pública (BRIEF §6). O *"tudo em opus medio"* de 06/10 vale para as
 sessões disparadas hoje, não como perfil do executor; por isso a pergunta continua aberta. **Risco de viés:** a
@@ -106,7 +114,7 @@ O BRIEF já separa o item 16 (remover `custom-kpis`) num PR próprio. Os outros 
 | **(b)** dois PRs: builder + fx juntos; `custom-kpis` à parte | 2 |
 | **(c)** o builder sem conversão primeiro (itens 1-19); a conversão e o fx depois (20-26) | 3 |
 
-**Recomendação: (a).** O PR-1 não depende de nada e tem a parte com rede externa e migração. Testado sozinho, ele chega
+✅ **Ratificado: (a) 3 PRs — fx → builder → remoção do `custom-kpis`, dono 06/10.** **Recomendação: (a).** O PR-1 não depende de nada e tem a parte com rede externa e migração. Testado sozinho, ele chega
 pronto para o item 24 do PR-2 e para o ADR de moeda que vai reusá-lo. (c) adia justamente a visão convertida que o dono
 pediu em 29/09.
 
@@ -133,6 +141,8 @@ pediu em 29/09.
 | **(c)** os dois convivem, com rótulos distintos ("pipeline de leads" × "pipeline de oportunidades") | dois números na tela, cada um com uma definição |
 | **(d)** adiar até o ADR lead × oportunidade ser ratificado | a divergência de hoje continua visível ao usuário |
 
+✅ **Ratificado: (a), dono 06/10** — pipeline = oportunidades abertas, por moeda; sem a tabela de oportunidades, leads
+abertos. O conserto da visão geral é instrumentação → correção, **com autorização própria**, fora deste nó.
 **Recomendação: (a).** A decisão de 25/09 já escolheu a fonte ("ganhos, win rate, ticket e receita vêm de
 `crmOpportunities`"), e só a visão geral não acompanhou. Pipeline é negócio em aberto, e Won já foi ganho. É compatível
 com a direção do §9.2 do ADR lead × oportunidade, então não precisa esperar por ele, como (d) proporia. Qualquer caminho

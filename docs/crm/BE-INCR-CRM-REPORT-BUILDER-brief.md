@@ -6,6 +6,10 @@
 > Resta pendente só o valor de pipeline (§4.2, não bloqueia); antes do "executa" falta o PRE-ADR do nó (decidido em 26/09).
 > Histórico (26/09): o builder é a resposta ao `F-AD5` do [`ADR-ANALYTICS-DEFS`](../adr/ADR-ANALYTICS-DEFS-write-unblock.md);
 > F-RB1=(a) contorna o `F-AD0=(c)` (Prisma), F-AD0 segue congelado.
+> **Emenda 2026-10-06 (§9):** absorve os achados A1–A5 do [`PRE-ADR-CRM-REPORT-BUILDER`](../adr/PRE-ADR-CRM-REPORT-BUILDER.md)
+> (**Accepted** 06/10) e um 6º (A6), autorizada pelo dono (*"Sim, emendar"*, chat, 2026-10-06). PRE-ADR ratificado:
+> perfil `opus-medio`, **3 PRs** (fx → builder → remoção do `custom-kpis`), §4.2 decidida (a). **Forks novos F-RB9..11
+> PENDENTES** (§9.2) — o "executa" espera a ratificação deles.
 
 ## 0. Formulário
 
@@ -34,14 +38,14 @@
   - `docs/adr/ADR-ANALYTICS-DEFS-write-unblock.md` — F-AD0=(c) congelar (ratificado 01/08); F-AD5 (a tela) **ABERTO**; F-AD6=(a) manter `custom-kpis` até F-AD5 fechar.
   - `server/src/features/analytics/schemas/KpiSchema.ts` + `POST /api/analytics/custom-kpis` — KPI escalar stateless, zero consumidor FE (E12).
   - `server/src/features/crm/services/CrmAnalyticsService.ts` — bundle **fixo** (funil/fonte/status/BANT/propostas/atividades) sobre `leads`; reusa processors `analytics/kpis/crm`.
-  - Precedentes Prisma de config por usuário sobre tabela dinâmica: `SavedTableView` (`schema.prisma:69`, `tableId` sem FK, `config Json`, soft-delete) e `DashboardLayout` (`schema.prisma:104`, grid `positions[].widgetConfig`).
+  - Precedentes Prisma de config por usuário sobre tabela dinâmica: `SavedTableView` (`schema.prisma:74`, `tableId` sem FK, `config Json`, soft-delete) e `DashboardLayout` (`schema.prisma:109`, grid `positions[].widgetConfig`).
   - **Emenda 29/09 (lidos em `origin/main` `9dd690b3`):** campos monetários e de moeda dos presets —
     `LeadsModule.ts:82-97` (`latestProposalAmount` currency + `latestProposalCurrency` select BRL/USD/EUR, **opcional, sem default**),
     `LeadProposalsModule.ts:23-30` (`amount` + `currency` **obrigatória**), `OpportunitiesModule.ts:77-94` (`amount` + `currency`
     opcional, **default BRL**); `closedAt` só em `crmOpportunities` (`OpportunitiesModule.ts:113`); nomes internos das tabelas em
     `presets/modules/registry.ts:66-115,173-178`; `CURRENCIES = ['BRL','USD','EUR']` em `server/src/features/crm/constants.ts:1`;
     `AggregatePipelineProcessor.ts:133-148` (valor nulo de dimensão vira chave `''`) e `:153` (`sum` = `Number` puro);
-    precedente de tabela global de fonte oficial `ReferentialAccount` (`schema.prisma:516`); scheduler `DfePollScheduler`
+    precedente de tabela global de fonte oficial `ReferentialAccount` (`schema.prisma:533`); scheduler `DfePollScheduler`
     (`server/src/jobs/DfePollScheduler.ts:1-9`, ligado em `server.ts:50`); `fetch` nativo com `AbortController` (`app.ts:92`).
     API PTAX do BCB **consultada ao vivo em 29/09** (§8).
 - **Nós vizinhos:** consome o motor `analytics` (PipelineSpec) e as tabelas CRM (`leads`, `crmOpportunities`, `leadActivities`, `leadProposals`, `crmAccounts`, `crmContacts`); [[I8]] condiciona quais estão instaladas. FE canônico: `AnalyticsDashboard`/`ChartRenderer`/`DashboardKpiCard` (golden ref do roadmap §Fase 4). Consumidor: tela do CRM (`FE-INCR-CRM-REPORT-BUILDER`, nó vizinho — **fora** deste BRIEF, regra BE-por-padrão).
@@ -90,7 +94,7 @@
     Q4 é dado de infraestrutura do negócio, não configurável pelo usuário? SIM — cotação oficial copiada de fonte pública.
     => Prisma. DynamicTable reprova também no efeito: a taxa oficial viraria linha editável pelo usuário na tela do motor.
 - Tenancy: GLOBAL, sem userId — a PTAX é um fato público igual para todo tenant. Precedente do mesmo shape:
-    `ReferentialAccount` (schema.prisma:516 — plano referencial da RFB, global, @@unique de importação, sem soft-delete).
+    `ReferentialAccount` (schema.prisma:533 — plano referencial da RFB, global, @@unique de importação, sem soft-delete).
 - Soft-delete: não se aplica — append-only, sem rota de escrita nem de delete (mesmo precedente).
 - Integração: lida pelo CrmReportService (serviço de aplicação); nada entra no motor DT (AC-2.1-B1/B4 intactos).
 - Módulo: NEUTRO, server/src/features/fx/ (não features/crm) — o ADR de moeda e o monitor de câmbio vão reusar
@@ -124,11 +128,13 @@ resolvido** pela 8a, **F-RB8b–8e fechados por regra** (um só caminho razoáve
    F-RB4=(c) usa só o papel global `ADMIN` que já existe (mesmo eixo do `canView` do motor, `DynamicTablePolicy`),
    sem modelo de equipe, sem compartilhamento par-a-par. Se a execução precisar de "equipe", PARE: é D4.
 4. **DTO Zod `.strict()`** (§3) — `CreateCrmReportSchema`, `UpdateCrmReportSchema` (partial + refine não-vazio, cuidado Zod 4 `.partial()` × `.default()`: nenhum `.default()` no create — memória `zod4-partial-aplica-default-reseta-campo`), `RunCrmReportSchema`. Teste de snapshot de shape + testes de refine (source whitelist, measures ≥1, campo inexistente).
-5. **Whitelist de fonte**: `source` só pode ser tabela CRM do próprio usuário (F-RB3 define o conjunto). Resolução por `internalName` (padrão `CrmAnalyticsService.resolveTable`), nunca `tableId` arbitrário vindo do cliente sem checagem de posse. Teste: `tableId` de outro usuário → 404.
+5. **Whitelist de fonte**: `source` só pode ser tabela CRM do próprio usuário (F-RB3 define o conjunto). Resolução por `internalName` (padrão `CrmAnalyticsService.resolveTable`), nunca `tableId` arbitrário vindo do cliente sem checagem de posse. Teste: `tableId` de outro usuário → 404. **Emenda 06/10 (§9 E3):** tabela de join não instalada → erro nomeado, nunca vazio.
 6. **Validação de campos contra o schema vivo da tabela** no save **e** no run: campo inexistente → `400 REPORT_FIELD_NOT_FOUND` com o nome do campo (fecha a classe E8 "descarta em silêncio" para este caminho). Teste: salvar ok → renomear campo no schema → run devolve erro nomeado, não série vazia.
-7. **Service `CrmReportService.run(user, id | spec)`** — traduz `ReportSpec` → `PipelineSpec` e executa via `AggregatePipelineProcessor` (reuso; nada de agregador novo). Saída = `RunCrmReportOutput` (§3): `points: ChartDataPoint[]` (mesmo contrato do `CrmAnalyticsBundle`, consumível por `ChartRenderer`) — a verdade, por moeda (F-RB8) — e, só com `convertTo`, o bloco `converted` à parte (item 24). Teste: fixture com 3 leads em 2 status → contagem por status bate.
+7. **Service `CrmReportService.run(user, id | spec)`** — traduz `ReportSpec` → `PipelineSpec` e executa via `AggregatePipelineProcessor` (reuso; nada de agregador novo). Saída = `RunCrmReportOutput` (§3): `points: ChartDataPoint[]` (mesmo contrato do `CrmAnalyticsBundle`, consumível por `ChartRenderer`) — a verdade, por moeda (F-RB8) — e, só com `convertTo`, o bloco `converted` à parte (item 24). Teste: fixture com 3 leads em 2 status → contagem por status bate. **Emenda 06/10:** ordenação e `limit` (§9 E1, F-RB9),
+   várias medidas (§9 E6, F-RB10), período (§9 E4, F-RB11).
 8. **Preview sem salvar** (`POST /api/crm/reports/run` com spec inline) — mesmo caminho do item 7. Teste: spec inválido → 400 na fronteira.
-9. **Limites** (F-RB5=(a), teto conservador): `limit` de pontos na saída e teto de linhas lidas; acima → `422 REPORT_TOO_LARGE`, nunca truncamento silencioso. Teste nos dois lados do teto.
+9. **Limites** (F-RB5=(a), teto conservador): `limit` de pontos na saída e teto de linhas lidas; acima → `422 REPORT_TOO_LARGE`, nunca truncamento silencioso. Teste nos dois lados do teto. **Emenda 06/10 (§9 E2):** o teto é checado **durante** a
+   leitura em lotes (`getTableDataStream`), parando no teto — nunca depois de carregar a tabela inteira.
 10. **Rotas** `GET/POST /api/crm/reports`, `GET/PUT/DELETE /api/crm/reports/:id`, `POST /api/crm/reports/run`, `POST /api/crm/reports/:id/run` — registro em 2 toques (`routes/crm*` + `docs.paths.ts`), auth deny-by-default. Gate: guard de path-count do openapi atualizado + `public/openapi.json` regenerado. O F-RB8 **não** cria rota (a taxa viaja dentro do `run`).
 11. **Factory** — `getCrmReportService()` no `lib/factory`; emenda 29/09: `getPtaxRateRepository()` e `getPtaxClient()` também. Sem `new` de repo dentro de service.
 12. **Dashboard** (F-RB2=(a)): widget `crmReport` no `DashboardLayout` existente, `widgetConfig: { reportId }`. Validação do `reportId` no service (o DTO do layout tem `widgetConfig: z.any()`). Teste: widget com `reportId` apagado → erro nomeado; `reportId` alheio → 404 (ADMIN: visível, F-RB4).
@@ -247,7 +253,8 @@ export const ReportSpecSchema = z.object({
   }).strict()).max(2).optional(),            // F-RB5
   filters: z.array(ReportFilterSchema).max(10).optional(),
   dimensions: z.array(ReportDimensionSchema).max(2).optional(),
-  measures: z.array(ReportMeasureSchema).min(1).max(4),
+  measures: z.array(ReportMeasureSchema).min(1).max(4), // Emenda 06/10: o agregador soma as medidas num value só (§9 A6) — F-RB10 PENDENTE
+  // Emenda 06/10: o agregador ignora by/key (§9 E1) — forma final depende do F-RB9 (PENDENTE)
   sort: z.object({ by: z.enum(['dimension', 'measure']), key: z.string().optional(), dir: z.enum(['asc', 'desc']).optional() }).strict().optional(),
   limit: z.number().int().min(1).max(500).optional(),
   convertTo: z.literal('BRL').optional(), // F-RB8: pede a visão convertida À PARTE; sem .default() (Zod 4 × partial)
@@ -324,7 +331,7 @@ model CrmReportDefinition {
   @@map("crm_report_definitions")
 }
 
-// F-RB8 (emenda 29/09) — global, append-only (precedente ReferentialAccount, schema.prisma:516)
+// F-RB8 (emenda 29/09) — global, append-only (precedente ReferentialAccount, schema.prisma:533)
 model PtaxRate {
   id         String   @id @default(cuid())
   currency   String   // ISO 4217: 'USD' | 'EUR' (CURRENCIES − BRL, crm/constants.ts:1)
@@ -369,7 +376,7 @@ vetar"), que não vetou. Colunas de caminhos e recomendação mantidas como regi
 | **F-RB8e** | PTAX de **compra** ou de **venda**? | **(a)** venda; **(b)** compra; **(c)** média das duas | **(a)** — é a referência usual de mercado ("PTAX venda") — **não verificado**, convenção. A diferença é imaterial para exibição: 0,0006 R$/US$ (≈0,01%) nas amostras de 24–28/09 (verificado). As duas são guardadas, então trocar não exige migração | ✅ **FECHADO por regra 29/09** — (a); imaterial e reversível sem migração; dono avisado, sem veto |
 | **F-RB8f** | A tabela de taxas **colide** com a rejeitada [`R-multimoeda`](../plano/rejeitadas/R-multimoeda.md) (ledger BRL-only; slot `exchangeRate` no `AccountingScope`)? Pelo protocolo do vault, colisão com rejeitada = ADR antes | **(a)** não colide: é exibição do CRM, sem lançamento; a tabela tem o nome da fonte (`PtaxRate`), não o do slot contábil, e a contabilidade não a lê (item 26); **(b)** colide → ADR antes do "executa" | **(a)** — a rejeição é sobre moeda **no razão**; nada aqui toca `features/accounting`. O lugar onde multi-moeda contábil de fato morde é outro (§7: o ganho em USD vira título a receber em R$) — esse, sim, é território da R-multimoeda | ✅ **RESOLVIDO pela 8a (29/09)** — (a) para este nó; a parte contábil vai explicitamente para o ADR de moeda, que reabre a R-multimoeda e deve reusar a `PtaxRate` (módulo neutro `features/fx`, item 26) |
 
-### 4.2 Decisão ortogonal PENDENTE — fonte e filtro do "valor de pipeline" (não é deste nó)
+### 4.2 Decisão ortogonal ✅ DECIDIDA 06/10 (F-RBP3 → a) — fonte e filtro do "valor de pipeline" (não é deste nó)
 
 Registrada a pedido do dono (29/09). **Não bloqueia o builder:** no builder, o usuário escolhe a fonte e o filtro de forma
 explícita, e os templates do F-RB7 não somam dinheiro (item 13). Corrigir exige autorização própria (instrumentação →
@@ -437,7 +444,13 @@ correção); aqui só fica listado.
   `crmOpportunities`"); a visão geral é que não acompanhou. E "pipeline" é o que está em aberto: Won já foi ganho.
   **Qualquer caminho herda o F-RB8:** o card hoje mostra um número só, e terá de mostrar um por moeda (e, se o dono quiser,
   a conversão à parte). O conserto é maior que uma linha.
-- **Status:** ⏳ PENDENTE (dono).
+- **Status:** ✅ **(a), dono, chat, 2026-10-06, questionário** (F-RBP3 do PRE-ADR): pipeline = oportunidades abertas, por
+  moeda; sem a tabela de oportunidades, leads abertos. O conserto da visão geral é instrumentação → correção, com
+  autorização própria, fora deste nó.
+
+### 4.3 Forks novos da emenda 06/10 — PENDENTES
+
+F-RB9 (ordenação), F-RB10 (várias medidas) e F-RB11 (fuso dos carimbos de hora): ver §9.2.
 
 ## 5. Pendente de validação externa
 
@@ -448,7 +461,7 @@ correção); aqui só fica listado.
 ## 6. Insumos ausentes
 
 - Volume real de linhas CRM por tenant (para o teto do F-RB5) — medir no `dev.db` real (`server/prisma/prisma/dev.db`) na execução.
-- Confirmar se `AggregatePipelineProcessor` aplica `sort`/`limit` e `period` sobre `_createdAt` sintético (lido só até a resolução de fonte, linhas 179-280).
+- ~~Confirmar se `AggregatePipelineProcessor` aplica `sort`/`limit` e `period` sobre `_createdAt` sintético (lido só até a resolução de fonte, linhas 179-280).~~ **Resolvido 06/10 (§9):** `limit` sim; `sort` só pelo nome; `period` no fuso do processo.
 - ~~Nomes internos exatos das tabelas de propostas/contas/contatos após [[I8]] (whitelist F-RB3).~~ **Resolvido 29/09:**
   `leadProposals`, `crmAccounts`, `crmContacts` (`presets/modules/registry.ts:77,89,102,175-177`); o [[I8]] só condiciona quais
   estão instaladas (módulos selecionáveis).
@@ -529,3 +542,66 @@ nome inventado não aparece no `grep`); o comportamento do fim de semana e do "a
 - **Caso adversarial tentado contra "realizado = CRM à mão"** (a opção mais barata): contradiz a imutabilidade do Won
   decidida em 25/09 (`OpportunitiesModule.ts:116`, "edits would drift CRM × ledger") e cria uma segunda fonte do valor
   recebido. O dono escolheu o ADR, o que mantém uma fonte só.
+
+## 9. Emenda 2026-10-06 — achados do PRE-ADR (A1–A5) + A6
+
+**Autorização (literal):** dono, chat, 2026-10-06, questionário — *"Sim, emendar"* (emenda do BRIEF cobrindo os achados
+do [`PRE-ADR-CRM-REPORT-BUILDER`](../adr/PRE-ADR-CRM-REPORT-BUILDER.md)), junto com F-RBP1..3 → (a)
+([D-2026-10-06-CRM-RB-PRE-ADR-FORKS](../plano/decisoes/D-2026-10-06-CRM-RB-PRE-ADR-FORKS.md)). **Sem "executa".** Não
+reabre F-RB1..F-RB8. Código relido em `76d1a432` (caminhos sob `server/src/`). O que a regra decide entra direto (E1–E5);
+o que não decide vira fork PENDENTE (§9.2).
+
+### 9.1 Itens da emenda
+
+- **E0 — Fatiamento (F-RBP2 → a).** **PR-1** `features/fx` (itens 20–23 e 26); **PR-2** o builder (itens 1–15, 17–19,
+  24–25); **PR-3** remoção do `custom-kpis` (item 16). Cada PR exige o próprio "executa".
+- **E1 — `sort` aceito e ignorado (A1; item 7, §3).** Verificado: o agregador ordena sempre pelo nome e só lê `dir`
+  (`features/analytics/dynamic/processors/AggregatePipelineProcessor.ts:419-423`), e corta o `limit` logo depois
+  (`:425-428`). Pela regra (memória `param-aceito-e-ignorado-e-bug`), o v1 **não pode** aceitar `by: 'measure'` e
+  devolver a ordem por nome: ou implementa, ou 400. Qual dos dois é o **F-RB9**. Direto, valha o que valer: o teste do
+  item 7 inclui um caso com `sort` e confere a ordem dos pontos.
+- **E2 — teto do F-RB5 durante a leitura (A2; item 9).** Verificado: `getAllTableData` → `findAllDataByTableId` é
+  `findMany` sem `take` (`DynamicTableService.ts:627-630`, `DynamicTableRepository.ts:131-136`). Regra: o
+  `CrmReportService` lê **toda** tabela que o `run` usa (fonte, joins e alvos de relação das dimensões) por
+  `getTableDataStream(user, tableId, batchSize)` (`DynamicTableService.ts:633-636`, que checa permissão pelo
+  `getTableById`), com **um contador só** para o `run`, e para de pedir lotes quando passa do teto → `422 REPORT_TOO_LARGE
+  {rowsRead, cap}`. O teto conta linhas lidas, antes dos filtros (os filtros rodam em memória no agregador). Os campos
+  sintéticos `_createdAt`/`_updatedAt` são injetados como no `loadRows` de hoje (`CrmAnalyticsService.ts:48-53`).
+  Testes: tabela com teto + 1 linhas → 422 e o repositório falso registra que **não** foi pedido o lote seguinte ao
+  estouro; fonte + join que só juntas passam do teto → 422; no teto exato → 200. O motor não muda.
+- **E3 — join com tabela não instalada (A3; itens 5 e 6).** Verificado: o molde atual devolve `rows: []` quando a tabela
+  não existe (`CrmAnalyticsService.ts:68-71`), e o agregador **engole** erro na leitura da fonte e dos alvos de relação
+  (`AggregatePipelineProcessor.ts:212-214`, `:223-225`, `:265-267`, `logger.warn` + segue). Lançar dentro do callback não basta.
+  Regra (classe E8 do item 6): o serviço resolve a fonte **e** cada tabela de join **antes** de chamar o agregador e
+  lança `moduleNotInstalled(internalName)` (`features/crm/services/CrmPipelineService.ts:22`, mesmo erro da fonte
+  principal); o agregador recebe só tabelas já carregadas (as do E2). Teste: join com `crmOpportunities` ausente → erro
+  nomeado com o `internalName`, nunca 200 com série vazia.
+- **E4 — período (A4; item 7).** Verificado: `formatPeriod` faz `new Date(...)` e usa `getFullYear`/`getMonth`/`getDate`
+  locais (`AggregatePipelineProcessor.ts:64-90`). **Corrige o PRE-ADR:** `crmOpportunities.closedAt` é `datetime`
+  (`features/dynamicTables/presets/modules/crm/OpportunitiesModule.ts:113`), não só-dia. Os dois casos:
+  - **Campo `date` (só-dia)**, ex. `estimatedCloseDate` (`OpportunitiesModule.ts:104`) — decidido por regra (memória
+    `motor-grava-date-como-iso-utc-scopeday-recua-um-dia`): o balde vem do **dia escrito** (`slice(0, 10)` da string),
+    nunca de `new Date` + getter local. O serviço monta o balde ele mesmo (campo derivado entregue ao agregador como
+    dimensão `field`), sem tocar no `formatPeriod`. Teste com o ISO real (`2026-03-01T00:00:00.000Z`) e o processo em
+    `TZ=America/Sao_Paulo` → mês `2026-03`.
+  - **Campo `datetime` e os sintéticos `_createdAt`/`_updatedAt`** — em qual fuso cai o balde não é decidível por regra:
+    **F-RB11**.
+- **E5 — citações (A5).** `SavedTableView` → `schema.prisma:74`, `DashboardLayout` → `:109`, `ReferentialAccount` →
+  `:533` (corrigidas no corpo). GAP-MAP do valor de pipeline: a linha andou (o PRE-ADR cita `:127`; procure pelo título).
+- **E6 — várias medidas viram um número só (A6, achado desta emenda).** Verificado: no laço de agregação, toda medida soma
+  no mesmo `total` (`AggregatePipelineProcessor.ts:319-350`), e o ponto sai com um `value` só (`:394-399`). Um relatório
+  com `count` + `sum(amount)` devolve a soma dos dois. Afeta o F-RB5 (até 4 medidas) e o item 24 (a `avg` convertida usa
+  uma `count` interna). Como resolver é o **F-RB10**. Direto, valha o que valer: nenhuma saída pode somar medidas
+  diferentes num mesmo número (teste: `count` + `sum` sobre 2 linhas de 10 e 20 → nunca `32`).
+
+### 9.2 Forks — PENDENTES (levar ao dono por questionário)
+
+| Fork | Pergunta | Caminhos | Recomendação e porquê | Custo de errar |
+|---|---|---|---|---|
+| **F-RB9** | `sort.by: 'measure'`: implementar ou recusar? | **(a)** implementar no serviço: ordena os pontos pelo valor da medida `key` (alias; obrigatório se houver mais de uma medida, senão 400), desempate pelo nome; serviço aplica `sort` **e** `limit` depois da agregação e não repassa o `limit` ao agregador (que corta antes) · (b) tirar `by`/`key` do v1: `sort` vira `{ dir }` por nome e o `.strict()` devolve 400 para `by` | **(a)**: "top N por valor" é o uso central de um builder de relatório, e é ordenação de poucos pontos em memória, sem tocar no motor. (b) é menos código, mas tira a ordenação útil | baixo em (b): o usuário perde o top N por valor |
+| **F-RB10** | Várias medidas no mesmo relatório (A6) | **(a)** o serviço chama o agregador uma vez por medida sobre as mesmas linhas já carregadas e devolve `series: Array<{ measure, points: ChartDataPoint[] }>` (com 1 medida, 1 série) · (b) v1 com 1 medida (`.max(1)`), reabrindo em parte o F-RB5; a `count` interna do item 24 roda numa chamada à parte · (c) mudar o agregador para devolver um valor por medida | **(a)**: mantém o F-RB5 como ratificado, não mexe no agregador (que os KPIs existentes usam) e cada série segue `ChartDataPoint[]`, o que o `ChartRenderer` já consome. Custo: a saída do §3 muda de `points` para `series` (snapshot do item 25 e o FE vizinho) | médio em (c): mexe em processador compartilhado; alto se nada for feito (número errado) |
+| **F-RB11** | Fuso do balde de período para `datetime` e `_createdAt`/`_updatedAt` | **(a)** fixo em Brasília (`America/Sao_Paulo`), a mesma referência do F-RB8a · (b) `timeZone` IANA do cliente no `run`, validado (precedente: `CrmAnalyticsInput.timeZone`, `CrmAnalyticsService.ts:66`, default `'UTC'`) · (c) UTC | **(b)** com default `America/Sao_Paulo`: segue o precedente do próprio módulo e acerta o mês de quem está fora de Brasília; o default em Brasília evita o erro de UTC perto da meia-noite. Custo: o mesmo relatório salvo pode dar baldes diferentes para dois usuários em fusos diferentes | baixo a médio: em (c), ganho às 22h do dia 31 cai no mês seguinte |
+
+**Vieses (T8):** recomendei implementar onde o custo é pequeno (F-RB9, F-RB10), o que pode subestimar o trabalho do FE
+vizinho com `series`; o F-RB11 (b) carrega um default que difere do precedente (`'UTC'`). Não executei nada: E1–E6 são
+leitura de código; o efeito do E4 em produção é inferido (sem execução).
