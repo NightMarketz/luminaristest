@@ -64,11 +64,12 @@ export class ExerciseClosingService {
 
     // X7 Fase A item 18 (F-TA-8 a): sem a provisão de IRPJ/CSLL, a DRE e a ECD do ano saem sem imposto (ADR §7). Decisão
     // do dono 04/10 (L-D): QUALQUER apuração da PJ no ano bloqueia, não só as da unidade que encerra. Pendente = L-C.
+    // X8 item 19 (precedente F-TA-8 a): vale igual para as linhas mensais de PIS/COFINS da mesma tabela.
     const pendentes = (await this.taxAssessmentRepo.findConfirmedByYear(scope.ownerUserId, year)).filter(provisaoPendente);
     if (pendentes.length > 0) {
       const ids = pendentes.map((a) => a.id);
       throw new ValidationError(
-        `Há apuração(ões) de IRPJ/CSLL de ${year} confirmada(s) com a provisão pendente: ${ids.join(', ')}. ` +
+        `Há apuração(ões) de tributo (IRPJ/CSLL/PIS/Cofins) de ${year} confirmada(s) com a provisão pendente: ${ids.join(', ')}. ` +
           'Configure as contas e reconcilie (POST /accounting/tax-assessments/:id/provisao) antes de encerrar.',
         { taxAssessmentIds: ids },
       );
