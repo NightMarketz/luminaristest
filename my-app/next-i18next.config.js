@@ -5,6 +5,6 @@ module.exports = {
     locales: ['en', 'pt'],
   },
   defaultNS: 'common',
-  ns: ['common', 'database', 'analytics', 'chatMessages', 'finance_view', 'inventory_view', 'products_view'],
+  ns: ['common', 'database', 'analytics', 'chatMessages', 'finance_view', 'inventory_view', 'products_view', 'accounting'],
   reloadOnPrerender: process.env.NODE_ENV === 'development',
 };

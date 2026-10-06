@@ -80,7 +80,7 @@ export function PeriodComparisonPanel({ unitId }: { unitId: string }) {
                   </tr>
                 ))}
                 {report.rows.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-6 text-center text-xs text-neutral-600">{t('periodComparison.empty', 'Sem dados.')}</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-6 text-center text-xs text-neutral-600">{t('periodComparison.noRows', 'Sem dados.')}</td></tr>
                 )}
               </tbody>
             </table>

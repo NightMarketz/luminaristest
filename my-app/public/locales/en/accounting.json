@@ -1048,6 +1048,7 @@
       "load": "Failed to load comparative trial balance."
     },
     "empty": "Select both dates and click \"Generate comparison\" to view the variation.",
+    "noRows": "No data.",
     "columns": {
       "account": "Account",
       "current": "Current",
@@ -1072,6 +1073,7 @@
       "load": "Failed to load the General Journal."
     },
     "empty": "Select the range and click \"Generate Journal\" to view the entries.",
+    "noEntries": "No entries in the range.",
     "entry": {
       "number": "Entry no. {{number}}",
       "date": "Date",
@@ -2291,6 +2293,7 @@
       "SIMPLES": "Simples Nacional"
     },
     "save": "Save",
+    "saveProfile": "Save profile",
     "saving": "Saving…",
     "select": "— select —",
     "service": {
