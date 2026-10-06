@@ -146,6 +146,7 @@ export default function SaleDetailPanel({
                     {/* FE-INCR-DFE item 15 (F-FE-DFE-3): componente da contabilidade, só montado aqui */}
                     {unitIdValue && (
                         <EmitNfseButton
+                            key={sale.id}
                             unitId={unitIdValue}
                             saleId={sale.id}
                             isFinalized={isFinalized}
