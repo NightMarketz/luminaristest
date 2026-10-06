@@ -15,6 +15,13 @@ import type { SaleRecord, SaleItemRecord } from '../../../types/sales.types';
 
 /** FE-INCR-VENDA-PACOTE — itens 1, 2, 3b, 7 e 8 do BRIEF. */
 
+// FE-INCR-DFE PR-2: o painel monta a emissão de NFS-e — sem isto a seção bate na rede do jsdom.
+vi.mock('@/lib/services/dfe.service', () => ({
+  dfeService: {
+    getStatus: vi.fn(async () => ({ enabled: true, partner: 'manual', ambiente: 'homologacao' })),
+    listBySale: vi.fn(async () => []),
+  },
+}));
 vi.mock('@/lib/context/CurrencyContext', () => ({
     useFormatCurrency: () => (v: number) => `R$ ${v.toFixed(2)}`,
 }));

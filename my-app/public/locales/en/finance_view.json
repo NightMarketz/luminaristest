@@ -192,7 +192,8 @@
       "confirm_register": "Confirm acceptance",
       "balance_differs": "The customer's balance on this package expires on {{date}} (it merges earlier purchases).",
       "balance_expires": "The customer's balance on this package expires on {{date}}."
-    }
+    },
+    "emitNfse": "Issue NFS-e"
   },
   "status": {
     "draft": "Draft",

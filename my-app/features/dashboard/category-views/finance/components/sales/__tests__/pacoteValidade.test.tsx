@@ -34,6 +34,13 @@ vi.mock('next-i18next', () => ({
             String(typeof def === 'string' ? def : _key).replace(/\{\{(\w+)\}\}/g, (_m, k: string) => String(opts?.[k] ?? '')),
     }),
 }));
+// FE-INCR-DFE PR-2: o painel monta a emissão de NFS-e — sem isto a seção bate na rede do jsdom.
+vi.mock('@/lib/services/dfe.service', () => ({
+  dfeService: {
+    getStatus: vi.fn(async () => ({ enabled: true, partner: 'manual', ambiente: 'homologacao' })),
+    listBySale: vi.fn(async () => []),
+  },
+}));
 vi.mock('@/lib/context/CurrencyContext', () => ({ useFormatCurrency: () => (v: number) => `R$ ${v.toFixed(2)}` }));
 vi.mock('@/features/dashboard/shared/hooks/useRenderTypedValue', () => ({ useRenderTypedValue: () => (v: unknown) => String(v) }));
 vi.mock('@/lib/notifications/notify', () => ({ notify: vi.fn() }));

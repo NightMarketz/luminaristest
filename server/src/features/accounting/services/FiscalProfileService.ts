@@ -59,6 +59,9 @@ export interface FiscalProfileView extends CostRegime {
   cofinsDespesaAccountId: string | null;
   pisRecolherAccountId: string | null;
   cofinsRecolherAccountId: string | null;
+  pisCofinsCreditoOutrosAccountId: string | null; // X8 PR-3 (L-5)
+  pisCofinsRetidoCompensarAccountId: string | null; // X8 PR-3 (retenções)
+  pisCofinsRetencaoConciliarAccountId: string | null; // X8 PR-3 (retenções)
   irpjSaldoNegativoAccountId: string | null;
   csllSaldoNegativoAccountId: string | null;
   partnerAccountRef: string | null;
@@ -200,6 +203,11 @@ export class FiscalProfileService {
     if (input.cofinsDespesaAccountId) await this.assertExpenseAccount(scope, input.cofinsDespesaAccountId, 'despesa de COFINS', tx);
     if (input.pisRecolherAccountId) await this.assertLiabilityAccount(scope, input.pisRecolherAccountId, 'PIS a recolher', tx);
     if (input.cofinsRecolherAccountId) await this.assertLiabilityAccount(scope, input.cofinsRecolherAccountId, 'COFINS a recolher', tx);
+    // X8 PR-3 (L-5, dono 06/10): contrapartida dos outros créditos — redutora de despesa (Expense), fora do gate da ECF (F-PCB-1 b).
+    if (input.pisCofinsCreditoOutrosAccountId) await this.assertExpenseAccount(scope, input.pisCofinsCreditoOutrosAccountId, 'créditos de PIS/COFINS sobre despesas', tx);
+    // X8 PR-3 (retenções, dono 06/10): retido a compensar = ativo; retenções a conciliar = ativo redutor de clientes.
+    if (input.pisCofinsRetidoCompensarAccountId) await this.assertAssetAccount(scope, input.pisCofinsRetidoCompensarAccountId, 'PIS/COFINS retido a compensar', tx);
+    if (input.pisCofinsRetencaoConciliarAccountId) await this.assertAssetAccount(scope, input.pisCofinsRetencaoConciliarAccountId, 'retenções de PIS/COFINS a conciliar com clientes', tx);
     // X7 Fase B item 16 (F-TB-3 a): o ajuste anual negativo debita o saldo negativo a compensar — ativo (Asset).
     if (input.irpjSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.irpjSaldoNegativoAccountId, 'saldo negativo de IRPJ a compensar', tx);
     if (input.csllSaldoNegativoAccountId) await this.assertAssetAccount(scope, input.csllSaldoNegativoAccountId, 'saldo negativo de CSLL a compensar', tx);
@@ -257,6 +265,9 @@ export class FiscalProfileService {
         cofinsDespesaAccountId: row.cofinsDespesaAccountId ?? '',
         pisRecolherAccountId: row.pisRecolherAccountId ?? '',
         cofinsRecolherAccountId: row.cofinsRecolherAccountId ?? '',
+        pisCofinsCreditoOutrosAccountId: row.pisCofinsCreditoOutrosAccountId ?? '', // X8 PR-3 (L-5)
+        pisCofinsRetidoCompensarAccountId: row.pisCofinsRetidoCompensarAccountId ?? '', // X8 PR-3 (retenções)
+        pisCofinsRetencaoConciliarAccountId: row.pisCofinsRetencaoConciliarAccountId ?? '',
         irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId ?? '',
         csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId ?? '',
         // BE-INCR-DFE (item 9): enum/boolean/int como string — sem texto livre (IM/CNAE ficam fora do evento)
@@ -334,6 +345,9 @@ export class FiscalProfileService {
       cofinsDespesaAccountId: row.cofinsDespesaAccountId,
       pisRecolherAccountId: row.pisRecolherAccountId,
       cofinsRecolherAccountId: row.cofinsRecolherAccountId,
+      pisCofinsCreditoOutrosAccountId: row.pisCofinsCreditoOutrosAccountId,
+      pisCofinsRetidoCompensarAccountId: row.pisCofinsRetidoCompensarAccountId,
+      pisCofinsRetencaoConciliarAccountId: row.pisCofinsRetencaoConciliarAccountId,
       irpjSaldoNegativoAccountId: row.irpjSaldoNegativoAccountId,
       csllSaldoNegativoAccountId: row.csllSaldoNegativoAccountId,
       partnerAccountRef: row.partnerAccountRef,

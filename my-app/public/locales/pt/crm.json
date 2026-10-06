@@ -60,7 +60,9 @@
     "back": "← Visão Geral",
     "no_stages": "Nenhuma etapa configurada.",
     "empty_stage": "Sem registros",
-    "new_lead": "Novo Lead"
+    "new_lead": "Novo Lead",
+    "search_placeholder": "Buscar por nome…",
+    "search_label": "Buscar lead"
   },
   "owner_filter": {
     "label": "Vendedor",
@@ -156,7 +158,15 @@
     "no_tasks": "Nenhuma tarefa.",
     "new_task": "+ Nova tarefa",
     "notes": "Notas",
-    "attachments": "Anexos"
+    "attachments": "Anexos",
+    "active_proposal": "Proposta Ativa",
+    "proposal_amount": "Valor Negociado",
+    "proposal_amount_tbd": "Preço sob consulta",
+    "proposal_win": "Probabilidade de Fechamento",
+    "proposal_win_suffix": "de chance",
+    "proposal_eta": "Previsão de Encerramento",
+    "proposal_eta_tbd": "Indefinida",
+    "timeline": "Linha do Tempo"
   },
   "notes": {
     "placeholder": "Escreva uma nota…",
@@ -238,5 +248,20 @@
     "loading": "Carregando…",
     "count": "{{count}} reuniões encontradas",
     "event_title": "Reunião - {{name}}"
+  },
+  "noshow": {
+    "button": "Não compareceu",
+    "title": "Registrar falta na reunião",
+    "prompt": "Como deseja proceder?",
+    "reschedule": "Reagendar",
+    "revert": "Voltar para etapa anterior",
+    "new_date": "Nova data da reunião"
+  },
+  "timeline": {
+    "not_available": "Linha do tempo não disponível.",
+    "empty": "Nenhuma atividade.",
+    "stage_change": "Mudança de etapa",
+    "today": "Hoje",
+    "yesterday": "Ontem"
   }
 }
