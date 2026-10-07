@@ -8,6 +8,12 @@
 > **Este documento NÃO escreve código.** Os forks F-X9-1..6 não são reabertos. Os forks novos **F-MIT-1..3 foram ✅
 > RATIFICADOS em 03/10** por questionário, todos na recomendação (§3). Registro: [`D-2026-10-03-X9-MIT-EXPORT-FORKS`](../plano/decisoes/D-2026-10-03-X9-MIT-EXPORT-FORKS.md). Nenhum item vira código sem "executa" do dono (ORCH-006).
 >
+> **Correção de 06/10 (dono, chat: *"corrige o BRIEF do X9"*), depois do #560 (BE-INCR-TAX-PRESUMIDO-16):** o
+> Presumido passou a gravar `diferencaPostergadaCents` na linha IRPJ `208901` do trimestre do excesso do 16% (F-P16-2,
+> dono 06/10: a coluna que este BRIEF já lê). Mudam a linha X7-A do C1, o item 3 (mapeamento `208901`→`208902`, que
+> entra no **PR-1**, onde a linha 208901 é exportada) e a §4 (P-M5: `2089-02` na tabela do MIT não conferido). Nenhum
+> fork reaberto.
+>
 > **Alcance e risco, ditos antes de tudo:**
 > - **Nada daqui tem o que ler antes do PR-2 da Fase A do X7** (model `TaxAssessment` e confirmação). Hoje
 >   `TaxAssessment` não existe em `server/` (grep V em `d6530790`). O X8 e a Fase B do X7 também não têm código.
@@ -50,7 +56,7 @@
 
   | Origem | `tributo` | `periodo` | `modo` | `codigoReceita` | Campos lidos |
   |---|---|---|---|---|---|
-  | X7-A (A-12) | IRPJ, CSLL | `T01..T04` | `PRESUMIDO`, `REAL_TRIMESTRAL` | 208901, 022001, 337301, 237201, 601201 | `aPagarCents`, `status`, `deletedAt`, `anoCalendario` |
+  | X7-A (A-12) | IRPJ, CSLL | `T01..T04` | `PRESUMIDO`, `REAL_TRIMESTRAL` | 208901, 022001, 337301, 237201, 601201 | `aPagarCents`, `status`, `deletedAt`, `anoCalendario` + `diferencaPostergadaCents` (só IRPJ 208901, trimestre do excesso do 16%; código 208902 — #560, correção 06/10) |
   | X7-B (B-11) | IRPJ, CSLL | `A01..A12`, `A00` | `ESTIMATIVA_RECEITA`, `BALANCETE_SUSPENSAO_REDUCAO`, `AJUSTE_ANUAL` | 236201, 599301, 248401, 243001, 245601, 677301 | + `diferencaPostergadaCents` (só IRPJ, mês do excesso; código 236202/599302, B-3) |
   | X8 (P-12) | PIS, COFINS | `M01..M12` | `PIS_COFINS_CUMULATIVO`, `PIS_COFINS_NAO_CUMULATIVO` | 810902, 217201, 691201, 585601 | `aPagarCents` (o `saldoNegativoCents` é saldo credor e **não** é débito) |
 
@@ -116,6 +122,11 @@ o `TaxAssessment` pela interface do repositório do X7 (precedente B-18); não e
      **segundo** débito, código `236202` se o `codigoReceita` é `236201`, `599302` se é `599301` (a constante de
      códigos da Fase B, importada — não duplicada). Outro `codigoReceita` com diferença > 0 ⇒ erro de programa
      (invariante quebrada no X7), não 4xx.
+   - **[D, correção 06/10, #560] Diferença postergada do 16% no Presumido** (**PR-1**): linha IRPJ `208901` com
+     `diferencaPostergadaCents > 0` gera o segundo débito `208902` (`CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16`,
+     importada), no mesmo PA da linha `208901`. Sem isso, o PR-1 cairia no "erro de programa" acima para todo cliente
+     com o 16%. **Teste:** trimestre do excesso ⇒ `208901` e `208902` em sequência no grupo `Irpj`; trimestre sem
+     excesso ⇒ só `208901`. O código ainda não foi conferido na tabela do MIT (P-M5).
    - **[D] Ajuste anual** (PR-4): débito de `A00` leva `AnoDebito = anoCalendario` da apuração (leiaute p. 8).
 4. **[D, leiaute p. 5] Zero débito ⇒ 422.** Apurações confirmadas existem, mas todas com `aPagarCents = 0` (retenção ≥
    devido, F-TA-9 a; suspensão por balancete, B-8) ⇒ 422 *"nenhum débito a exportar neste mês"*. O leiaute exige ao
@@ -330,6 +341,7 @@ não assina). Novas:
 | P-M1 | Mês só com suspensão (balancete com devido 0) ou só com retenção ≥ devido: a DCTFWeb do mês é "sem movimento" ou a PJ informa algo no MIT? | O item 4 recusa (422), porque o leiaute exige ≥ 1 débito; a pergunta é o que o usuário faz no e-CAC | contador |
 | P-M2 | Os Dados Iniciais do PA de março de Y+1 (que leva o `A00` de Y) vêm do perfil de Y+1, e o MIT aceita `2430`/`6773` com `TributacaoLucro` ≠ 1 nesse ano (troca Real anual → Presumido/trimestral)? | O leiaute só torna `AnoDebito` obrigatório com `TributacaoLucro = 1`, e o MIT filtra códigos pelos Dados Iniciais (Manual §4) | 1ª importação real / contador |
 | P-M3 | `AnoDebito` mandado também quando não é obrigatório (débito anual com `TributacaoLucro` ≠ 1) é aceito ou recusado? | A coluna "obrigatório" do leiaute veio embaralhada do `pdftotext` (viés 1 do ADR) | 1ª importação real (P-6) |
+| P-M5 | `2089-02` (diferença postergada do 16% no Presumido, IN 1.700 art. 215 § 11) está na tabela de códigos do MIT? O ADR do X9 §3 lista só `2089-01`; o `2089-02` vem da tabela da DCTF (grau C no BRIEF PRESUMIDO-16 §4 item 1) | Se o MIT recusar, o arquivo do trimestre do excesso não importa | contador / 1ª importação |
 | P-M4 | Balancete **com redução** usa o código da estimativa (`236201`/`248401`) no MIT | É o P-B2 da Fase B; o Manual §4.3 só diz que, **sem** a marcação, o código da estimativa é obrigatório | contador / 1ª importação |
 
 ## 5. Insumos ausentes
