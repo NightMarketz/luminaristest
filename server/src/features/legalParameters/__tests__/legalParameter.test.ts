@@ -4,13 +4,15 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, legalParamsSeedRows } from '@test/helpers/legalParams';
+import anexoFixture from '../../accounting/fixtures/anexo-iii-in-1700-2017.json';
 import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LinhaLegal } from '../models/legalParameter';
 import { erroDeFormato, type LinhaParaFormato } from '../models/formatoLinha';
 import { LegalParameterPolicy } from '../policies/LegalParameterPolicy';
 
 const MIGRATION = path.resolve(__dirname, '../../../../prisma/migrations/20261007150000_add_legal_parameters/migration.sql');
 const MIGRATION_V2 = path.resolve(__dirname, '../../../../prisma/migrations/20261007160000_add_legal_parameters_v2/migration.sql');
+const MIGRATION_V3 = path.resolve(__dirname, '../../../../prisma/migrations/20261007170000_legal_parameters_v3_depreciacao/migration.sql');
 const norm = (s: string) => s.replace(/\r\n/g, '\n');
 
 describe('semente da migração (item 6)', () => {
@@ -40,8 +42,37 @@ describe('semente da migração (item 6)', () => {
     }
   });
 
-  it('PR-2: TABELAS_MIGRADAS = todas menos DEPRECIACAO_ANEXO_III (PR-3)', () => {
-    expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual(['DEPRECIACAO_ANEXO_III']);
+  it('PR-3: TABELAS_MIGRADAS = todas (DEPRECIACAO_ANEXO_III aberta)', () => {
+    expect(LEGAL_PARAMETER_TABELAS.filter((t) => !TABELAS_MIGRADAS.has(t))).toEqual([]);
+  });
+
+  it('PR-3: o migration.sql v3 carrega o texto de prisma/data/legal_parameters_v3.sql, byte a byte', () => {
+    expect(norm(fs.readFileSync(MIGRATION_V3, 'utf8'))).toContain(norm(fs.readFileSync(LEGAL_PARAMS_SEED_FILE_V3, 'utf8')).trimEnd());
+  });
+
+  it('PR-3 (item 9, paridade): as 222 linhas DEPRECIACAO_ANEXO_III são o fixture do Anexo III, linha a linha', () => {
+    const v3 = legalParamsSeedRows().filter((r) => r.id.startsWith('lp3-'));
+    expect(v3.every((r) => r.tabela === 'DEPRECIACAO_ANEXO_III' && r.status === 'PUBLISHED' && r.vigenteDesde === '2017-01-01' && r.vigenteAte === null)).toBe(true);
+    const fixture = (anexoFixture as { sha256: string; rows: { ncm: string | null; sourceRow: number | null; description: string; lifeYears: number; annualRateBp: number; source: string; justification?: string }[] });
+    const doBanco = v3.map((r) => {
+      const j = JSON.parse(r.valorJson ?? 'null') as Record<string, unknown>;
+      return { ncm: j.ncm, sourceRow: r.chave === 'NOTA' ? null : Number(r.chave), description: j.description, lifeYears: j.lifeYears, annualRateBp: j.annualRateBp, source: r.discriminador, ...(j.justification ? { justification: j.justification } : {}) };
+    });
+    expect(doBanco).toEqual(fixture.rows);
+    for (const r of v3) {
+      expect([r.id, r.valorInt, r.valorTexto, r.fonte.startsWith('IN RFB 1.700/2017, Anexo III')]).toEqual([r.id, null, null, true]);
+      const linha = { ...r, tabela: 'DEPRECIACAO_ANEXO_III', valorJson: JSON.parse(r.valorJson ?? 'null') as unknown } as LinhaParaFormato;
+      expect([r.id, erroDeFormato(linha)]).toEqual([r.id, null]);
+    }
+  });
+
+  it('PR-3: formato DEPRECIACAO_ANEXO_III recusa taxa fora de 1..10000, discriminador CUSTOM e chave não numérica', () => {
+    const base = { tabela: 'DEPRECIACAO_ANEXO_III' as const, chave: '2', discriminador: 'ANEXO_III_IN_1700_2017', valorJson: { annualRateBp: 1000, ncm: null, description: 'X', lifeYears: 10 } };
+    expect(erroDeFormato(base)).toBeNull();
+    expect(erroDeFormato({ ...base, valorJson: { ...base.valorJson, annualRateBp: 0 } })).not.toBeNull();
+    expect(erroDeFormato({ ...base, discriminador: 'CUSTOM' })).not.toBeNull();
+    expect(erroDeFormato({ ...base, chave: 'X1' })).not.toBeNull();
+    expect(erroDeFormato({ ...base, valorJson: undefined, valorInt: 1000 })).not.toBeNull();
   });
 
   it('20 linhas: 14 TAX_ASSESSMENT (13 + ARREDONDAMENTO), 2 CSLL_ALIQUOTA, 4 PIS_COFINS; ids únicos; todas PUBLISHED com fonte', () => {

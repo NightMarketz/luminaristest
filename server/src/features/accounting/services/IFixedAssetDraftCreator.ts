@@ -22,7 +22,9 @@ export interface ResolvedFixedAssetItem {
   costCents: number;
   ncm?: string;
   qty: number;
-  rateId: string;
+  /** BE-INCR-LEGAL-PARAMS PR-3 (L-1): uma das duas — CUSTOM do escopo (`rateId`) ou Anexo de plataforma. */
+  rateId: string | null;
+  legalParameterId: string | null;
   annualRateBp: number;
 }
 

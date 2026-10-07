@@ -16,14 +16,6 @@ export class DepreciationRateRepository implements IDepreciationRateRepository {
     return (tx ?? prisma).depreciationRate.create({ data });
   }
 
-  public async createMany(
-    data: CreateDepreciationRateData[],
-    tx?: Prisma.TransactionClient,
-  ): Promise<number> {
-    const result = await (tx ?? prisma).depreciationRate.createMany({ data });
-    return result.count;
-  }
-
   public async findById(
     scope: AccountingScope,
     id: string,
@@ -41,13 +33,6 @@ export class DepreciationRateRepository implements IDepreciationRateRepository {
       where: { ...accountingScopeWhere(scope), ...(includeHidden ? {} : { hiddenAt: null }) },
       orderBy: [{ source: 'asc' }, { sourceRow: 'asc' }],
     });
-  }
-
-  public async hasAnexoSeed(scope: AccountingScope, tx?: Prisma.TransactionClient): Promise<boolean> {
-    const count = await (tx ?? prisma).depreciationRate.count({
-      where: { ...accountingScopeWhere(scope), source: { not: 'CUSTOM' } },
-    });
-    return count > 0;
   }
 
   public async hide(

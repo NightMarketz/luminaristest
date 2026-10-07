@@ -4,6 +4,8 @@
  * `quotaCumulativa`/`lifeMonths` só ganham chamador real no `runMonth` do PR-3 (Bloco C).
  */
 import { ValidationError } from '../../../lib/errors';
+import { DepreciacaoAnexoJson } from '../../legalParameters/models/formatoLinha';
+import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export const FIXED_ASSET_STATUSES = ['PENDING_ACTIVATION', 'ACTIVE', 'FULLY_DEPRECIATED', 'DISPOSED'] as const;
 export type FixedAssetStatus = (typeof FIXED_ASSET_STATUSES)[number];
@@ -55,6 +57,67 @@ export interface NcmRateCandidate {
 }
 
 /**
+ * BE-INCR-LEGAL-PARAMS PR-3 (item 9, D-3; questionário do dono 07/10: "União no mesmo shape") — uma taxa do catálogo
+ * como a rota de taxas a devolve, venha da PLATAFORMA (Anexo III, `legal_parameters`) ou do ESCOPO (CUSTOM,
+ * `depreciation_rates`). `origem` diz qual coluna do bem a guarda: `legalParameterId` ou `rateId` (L-1).
+ */
+export interface TaxaDepreciacaoView {
+  id: string;
+  origem: 'PLATAFORMA' | 'ESCOPO';
+  ncm: string | null;
+  sourceRow: number | null;
+  description: string;
+  lifeYears: number;
+  annualRateBp: number;
+  source: string;
+  sourceUrl: string | null;
+  sourceSha256: string | null;
+  justification: string | null;
+  hiddenAt: string | null;
+  createdAt: string;
+}
+
+/** Linha de plataforma com os campos que a view mostra além do lookup (`fonteUrl`/`fonteSha256`/`createdAt`). */
+export type LinhaAnexoIII = LinhaLegal & { fonteUrl: string | null; fonteSha256: string | null; createdAt: Date };
+
+/**
+ * PR-3 — as linhas DEPRECIACAO_ANEXO_III em vigor na `data` como taxas do catálogo. `chave` = `sourceRow` (ou `NOTA`
+ * nas 2 Notas, que não têm linha na fonte), `discriminador` = `source`, o resto no `valorJson` (formatoLinha.ts).
+ */
+export function taxasAnexoIII(linhas: readonly LinhaAnexoIII[], data: string): TaxaDepreciacaoView[] {
+  return linhasVigentesDaTabela(linhas, 'DEPRECIACAO_ANEXO_III', data).map((l) => {
+    const v = DepreciacaoAnexoJson.parse(JSON.parse(l.valorJson ?? 'null'));
+    return {
+      id: l.id,
+      origem: 'PLATAFORMA',
+      ncm: v.ncm,
+      sourceRow: l.chave === 'NOTA' ? null : Number(l.chave),
+      description: v.description,
+      lifeYears: v.lifeYears,
+      annualRateBp: v.annualRateBp,
+      source: l.discriminador ?? '',
+      sourceUrl: l.fonteUrl,
+      sourceSha256: l.fonteSha256,
+      justification: v.justification ?? null,
+      hiddenAt: null,
+      createdAt: l.createdAt.toISOString(),
+    };
+  });
+}
+
+/** PR-3 (L-1) — onde o bem grava a taxa escolhida: Anexo de plataforma ⇒ `legalParameterId`; CUSTOM ⇒ `rateId`. */
+export interface TaxaEscolhida {
+  rateId: string | null;
+  legalParameterId: string | null;
+  annualRateBp: number;
+}
+
+export const taxaEscolhidaDe = (t: Pick<TaxaDepreciacaoView, 'id' | 'origem' | 'annualRateBp'>): TaxaEscolhida =>
+  t.origem === 'PLATAFORMA'
+    ? { rateId: null, legalParameterId: t.id, annualRateBp: t.annualRateBp }
+    : { rateId: t.id, legalParameterId: null, annualRateBp: t.annualRateBp };
+
+/**
  * BE-INCR-FIXED-ASSETS PR-5 (fork "annualRateBp do rascunho", decisão do dono 23/09 + review
  * independente do PR #366, achado 2): deriva a taxa de depreciação do NCM de um item pelo Anexo
  * III. FUNÇÃO PURA — chamada tanto por `PayableService.resolveFixedAssetLines` (validação ANTES do
@@ -74,7 +137,7 @@ export interface NcmRateCandidate {
  * com a MESMA taxa (linha repetida) não são ambíguos — o primeiro serve.
  */
 export function resolveRateForNcm(
-  rates: NcmRateCandidate[],
+  rates: readonly NcmRateCandidate[],
   ncmRaw: string | undefined,
   itemLabel: string,
 ): { rateId: string; annualRateBp: number } {

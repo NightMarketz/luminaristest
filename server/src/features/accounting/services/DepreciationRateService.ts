@@ -5,35 +5,73 @@ import type { UpsertDepreciationRateInput } from '../dtos/DepreciationRateDto';
 import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
-import type { DepreciationRateSeedService } from './DepreciationRateSeedService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
+import { taxaEscolhidaDe, taxasAnexoIII, type TaxaDepreciacaoView, type TaxaEscolhida } from '../models/FixedAsset.model';
+import type { ITaxaDepreciacaoCatalogo } from './ITaxaDepreciacaoCatalogo';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
+
+/** O que este serviço lê do `LegalParameterService` (F-LP-4 a: a fotografia, nunca o banco direto). */
+export interface FotografiaLegal {
+  fotografia(tabelas: readonly ['DEPRECIACAO_ANEXO_III']): Promise<Parameters<typeof taxasAnexoIII>[0]>;
+}
+
+function viewDeCustom(r: DepreciationRate): TaxaDepreciacaoView {
+  return {
+    id: r.id,
+    origem: 'ESCOPO',
+    ncm: r.ncm,
+    sourceRow: r.sourceRow,
+    description: r.description,
+    lifeYears: r.lifeYears,
+    annualRateBp: r.annualRateBp,
+    source: r.source,
+    sourceUrl: r.sourceUrl,
+    sourceSha256: r.sourceSha256,
+    justification: r.justification,
+    hiddenAt: r.hiddenAt?.toISOString() ?? null,
+    createdAt: r.createdAt.toISOString(),
+  };
+}
 
 /**
  * DepreciationRateService — tabela de taxas de depreciação (BE-INCR-FIXED-ASSETS, nó C8, Bloco A).
  * FIRST-CLASS PRISMA. Leitura sob `canRead`; escrita (criar CUSTOM, ocultar) sob
  * `canManageFixedAssets` (BRIEF item 11 — mesma régua de quem fecha período).
  *
- * Linhas ANEXO_* são imutáveis por CONSTRUÇÃO (parecer D4): não existe rota de edição nesta fatia
- * (PR-1) — `createCustomRate` sempre nasce `source='CUSTOM'`, nunca toca uma linha existente.
- * `hideRate` é a única mutação sobre uma linha ANEXO_*, e é soft (`hiddenAt`) — nunca apaga, porque
- * um `FixedAsset` (PR-2) pode ter feito snapshot da taxa e a linha continua legível pelo id.
+ * BE-INCR-LEGAL-PARAMS PR-3 (item 9, D-3): o Anexo III não é mais semeado por escopo — é a tabela de plataforma
+ * DEPRECIACAO_ANEXO_III, que uma publicação muda para todos os clientes. `depreciation_rates` guarda só CUSTOM. A
+ * lista devolve os dois no mesmo shape (`origem` diz de onde veio); só CUSTOM se oculta (dono 07/10: "só CUSTOM se
+ * oculta" — linha do Anexo não está em `depreciation_rates`, logo `hideRate` dá 404).
  */
-export class DepreciationRateService {
+export class DepreciationRateService implements ITaxaDepreciacaoCatalogo {
   constructor(
     private readonly rateRepo: IDepreciationRateRepository,
-    private readonly seedService: DepreciationRateSeedService,
+    private readonly legalParams: FotografiaLegal,
     private readonly auditService: AuditService,
     private readonly policy: IAccountingPolicy,
   ) {}
 
-  /** Gatilho LAZY do seed (item 3): a 1ª leitura do escopo semeia o Anexo antes de listar. */
-  async listRates(scope: AccountingScope, includeHidden: boolean): Promise<DepreciationRate[]> {
+  async listRates(scope: AccountingScope, includeHidden: boolean): Promise<TaxaDepreciacaoView[]> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler as taxas de depreciação.');
     }
-    await this.seedService.seed(scope);
-    return this.rateRepo.findManyByUnit(scope, includeHidden);
+    return this.catalogo(scope, includeHidden);
+  }
+
+  /** Anexo III em vigor HOJE (o catálogo de quem escolhe agora a taxa de um bem novo) + CUSTOM do escopo. */
+  async catalogo(scope: AccountingScope, includeHidden: boolean): Promise<TaxaDepreciacaoView[]> {
+    const anexo = taxasAnexoIII(await this.legalParams.fotografia(['DEPRECIACAO_ANEXO_III']), hojeDateOnly());
+    const custom = await this.rateRepo.findManyByUnit(scope, includeHidden);
+    return [...anexo, ...custom.map(viewDeCustom)];
+  }
+
+  async resolverTaxa(scope: AccountingScope, id: string): Promise<TaxaEscolhida> {
+    const custom = await this.rateRepo.findById(scope, id);
+    if (custom) return taxaEscolhidaDe(viewDeCustom(custom));
+    const anexo = taxasAnexoIII(await this.legalParams.fotografia(['DEPRECIACAO_ANEXO_III']), hojeDateOnly()).find((t) => t.id === id);
+    if (!anexo) throw new NotFoundError(`Taxa de depreciação '${id}' não foi encontrada.`);
+    return taxaEscolhidaDe(anexo);
   }
 
   async createCustomRate(

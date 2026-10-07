@@ -22,7 +22,7 @@ const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
  * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica.
  */
 // BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2), aplicadas em ordem.
-const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
+const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql', 'legal_parameters_v3.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de

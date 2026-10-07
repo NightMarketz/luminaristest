@@ -58,6 +58,22 @@ export const Lc116ServicoJson = z
   })
   .strict();
 
+/**
+ * PR-3 (item 9; questionário do dono 07/10: "chave=sourceRow, disc=source") — linha do Anexo III. `valorInt` = taxa
+ * anual em bp; o resto do que o bem e a lista de taxas mostram vai no JSON. As 2 Notas não têm `sourceRow` na fonte:
+ * chave `NOTA`, distinguidas pelo discriminador.
+ */
+export const DEPRECIACAO_ANEXO_III_FONTES = ['ANEXO_III_IN_1700_2017', 'ANEXO_III_NOTA_1', 'ANEXO_III_NOTA_2'] as const;
+export const DepreciacaoAnexoJson = z
+  .object({
+    annualRateBp: z.number().int().min(1).max(10_000),
+    ncm: z.string().trim().min(1).nullable(),
+    description: texto,
+    lifeYears: z.number().int().min(1),
+    justification: texto.optional(),
+  })
+  .strict();
+
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
   valor: Valor;
@@ -121,6 +137,15 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
         semDisc(l) && ((l.chave === 'ECD' && /^\d+\.\d{2}$/.test(l.valorTexto ?? '')) || (l.chave === 'ECF' && /^\d{4}$/.test(l.valorTexto ?? ''))),
         'chave ECD (valorTexto 9.99) ou ECF (valorTexto de 4 dígitos)',
       ),
+  },
+  DEPRECIACAO_ANEXO_III: {
+    valor: 'json',
+    checar: (l) =>
+      so(
+        (/^\d+$/.test(l.chave) || l.chave === 'NOTA') && (DEPRECIACAO_ANEXO_III_FONTES as readonly string[]).includes(l.discriminador ?? ''),
+        'chave = linha da fonte (sourceRow) ou NOTA; discriminador ANEXO_III_IN_1700_2017|ANEXO_III_NOTA_1|ANEXO_III_NOTA_2',
+      ) ??
+      jsonOk(DepreciacaoAnexoJson, l.valorJson, 'valorJson = { annualRateBp: 1..10000, ncm: string|null, description, lifeYears ≥ 1, justification? }'),
   },
   FERIADO_NACIONAL: {
     valor: 'texto',

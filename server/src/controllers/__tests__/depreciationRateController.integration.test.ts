@@ -1,9 +1,9 @@
 /**
  * CONTRATO HTTP de /api/accounting/depreciation-rates (BE-INCR-FIXED-ASSETS, nó C8, Bloco A) — app
  * Express REAL sobre supertest + SQLite REAL (molde: `accountingContactController.integration.test.ts`).
- * Prova a FIAÇÃO (auth deny-by-default → rota → DTO → controller → serviço → Prisma) e o item 3
- * (seed lazy + idempotência) e o item 2 (CUSTOM nasce sem chave de negócio; ANEXO_* é oculto, não
- * apagado) de ponta a ponta — não é substituto do teste unitário de serviço, que já cobre a lógica
+ * Prova a FIAÇÃO (auth deny-by-default → rota → DTO → controller → serviço → Prisma), o catálogo
+ * Anexo III de PLATAFORMA + CUSTOM (BE-INCR-LEGAL-PARAMS PR-3, item 9) e o item 2 (CUSTOM nasce sem
+ * chave de negócio; só CUSTOM se oculta) de ponta a ponta — não é substituto do teste unitário de serviço, que já cobre a lógica
  * fina com dublês.
  */
 import request from 'supertest';
@@ -38,18 +38,21 @@ describe('/api/accounting/depreciation-rates — contrato HTTP', () => {
     expect((await request(app).post('/api/accounting/depreciation-rates/x/hide').send({})).status).toBe(401);
   });
 
-  it('CONTROLE: GET semeia o Anexo LAZY (222 linhas) e a 2ª chamada não duplica (item 3)', async () => {
+  it('CONTROLE (PR-3): GET devolve as 222 linhas do Anexo de PLATAFORMA sem semear nada no escopo', async () => {
     const first = await request(app).get('/api/accounting/depreciation-rates').set(authHeader(dono)).query({ unitId: UNIT });
     expect(first.status).toBe(200);
     expect(first.body.data).toHaveLength(222);
+    expect(first.body.data.every((r: { origem: string }) => r.origem === 'PLATAFORMA')).toBe(true);
     const anexo = first.body.data.filter((r: { source: string }) => r.source === 'ANEXO_III_IN_1700_2017');
-    const notas = first.body.data.filter((r: { source: string }) => r.source !== 'ANEXO_III_IN_1700_2017');
     expect(anexo).toHaveLength(220);
-    expect(notas).toHaveLength(2);
+    expect(await prisma.depreciationRate.count({ where: { userId: dono.id } })).toBe(0); // sem seed por escopo (D-3)
+  });
 
-    const second = await request(app).get('/api/accounting/depreciation-rates').set(authHeader(dono)).query({ unitId: UNIT });
-    expect(second.status).toBe(200);
-    expect(second.body.data).toHaveLength(222); // idempotente — não duplicou
+  it('PR-3: linha do Anexo (plataforma) não se oculta pelo escopo — 404, e segue na lista', async () => {
+    const res = await request(app).post('/api/accounting/depreciation-rates/lp3-dep-anexo-2/hide').set(authHeader(dono)).send({ unitId: UNIT });
+    expect(res.status).toBe(404);
+    const list = await request(app).get('/api/accounting/depreciation-rates').set(authHeader(dono)).query({ unitId: UNIT });
+    expect(list.body.data.some((r: { id: string }) => r.id === 'lp3-dep-anexo-2')).toBe(true);
   });
 
   it('POST cria CUSTOM (201), audita e não colide com nenhuma linha do Anexo (F-FA10 → a: sem chave de negócio)', async () => {
@@ -59,6 +62,8 @@ describe('/api/accounting/depreciation-rates — contrato HTTP', () => {
       .send({ unitId: UNIT, ncm: '9999.99', description: 'Torno CNC importado', lifeYears: 8, annualRateBp: 1250, justification: 'Laudo técnico do fabricante' });
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ source: 'CUSTOM', sourceRow: null, ncm: '9999.99', annualRateBp: 1250 });
+    const list = await request(app).get('/api/accounting/depreciation-rates').set(authHeader(dono)).query({ unitId: UNIT });
+    expect(list.body.data.find((r: { id: string }) => r.id === res.body.data.id)).toMatchObject({ origem: 'ESCOPO', source: 'CUSTOM' });
 
     // criar uma SEGUNDA CUSTOM com o mesmo ncm/descrição não colide (sem @@unique de negócio para CUSTOM)
     const second = await request(app)

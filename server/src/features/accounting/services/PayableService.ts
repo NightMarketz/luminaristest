@@ -41,8 +41,8 @@ import type {
 import type { IPayableRepository, PayableWithPayments } from '../repositories/IPayableRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IFixedAssetClassRepository } from '../repositories/IFixedAssetClassRepository';
-import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
-import { resolveRateForNcm } from '../models/FixedAsset.model';
+import type { ITaxaDepreciacaoCatalogo } from './ITaxaDepreciacaoCatalogo';
+import { resolveRateForNcm, taxaEscolhidaDe } from '../models/FixedAsset.model';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { ISourceProvenanceRepository } from '../repositories/ISourceProvenanceRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -132,7 +132,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     private readonly fixedAssetClassRepo?: IFixedAssetClassRepository,
     // OPTIONAL (review #366, achado 1): catálogo de taxas VIVAS para `resolveRateForNcm` — a
     // validação por NCM roda ANTES do tx1 (ver `resolveFixedAssetLines`), nunca só no rascunho.
-    private readonly depreciationRateRepo?: IDepreciationRateRepository,
+    private readonly depreciationRateCatalog?: ITaxaDepreciacaoCatalogo, // PR-3: Anexo de plataforma + CUSTOM
     // OPTIONAL (BE-INCR-FIXED-ASSETS PR-5, item 22/28): lê o `SourceDocument.rawJson` da
     // recognition para o re-drive de rascunho relê-la (`redriveFixedAssetDrafts`) — nunca uma 2ª
     // cópia do breakdown na linha do Payable (decisão do dono 23/09).
@@ -1282,7 +1282,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
       );
     }
-    if (!this.depreciationRateRepo) {
+    if (!this.depreciationRateCatalog) {
       throw new ValidationError(
         'Compra com itens de imobilizado requer o catálogo de taxas de depreciação configurado (wiring pendente).',
       );
@@ -1290,7 +1290,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
     const items = dto.fixedAssetItems ?? [];
     if (items.length === 0) return [];
     // O catálogo de taxas VIVAS é lido UMA vez para todos os itens (evita N queries idênticas).
-    const rates = await this.depreciationRateRepo.findManyByUnit(scope, false);
+    // BE-INCR-LEGAL-PARAMS PR-3: Anexo III de plataforma (vigente hoje) + CUSTOM vivas do escopo.
+    const rates = await this.depreciationRateCatalog.catalogo(scope, false);
     const out: ResolvedFixedAssetItem[] = [];
     for (const [index, item] of items.entries()) {
       const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
@@ -1304,7 +1305,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
       if (!account.acceptsEntries) {
         throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
       }
-      const { rateId, annualRateBp } = resolveRateForNcm(rates, item.ncm, item.cProd);
+      const { rateId: escolhida } = resolveRateForNcm(rates, item.ncm, item.cProd);
+      const { rateId, legalParameterId, annualRateBp } = taxaEscolhidaDe(rates.find((r) => r.id === escolhida)!);
       out.push({
         classId: klass.id,
         accountCode: account.code,
@@ -1318,6 +1320,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         ncm: item.ncm,
         qty: item.qty ?? 1,
         rateId,
+        legalParameterId,
         annualRateBp,
       });
     }
