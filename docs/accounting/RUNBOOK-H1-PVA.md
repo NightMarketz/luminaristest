@@ -185,6 +185,19 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 >
 > Leitura: o `dev.db` já estava re-semeado antes desta rodada (0 lançamentos criados, bindings já ativos);
 > a rodada aplicou as migrações pendentes.
+>
+> Passo 6 (2026-10-07, build de produção do `main` 080cb4dd — `server: npm run start` :3001, `my-app: next start` :3000;
+> login `seed-presumido`; texto da página `/pt/accounting` extraído pelo agente):
+>
+> ```text
+> Contabilidade · Razão de partida dobrada — balancete por unidade
+> Unidade: seed-unit-presumido        (única opção do seletor; id cmuw4yqxg001jcii0iz2yb9rw)
+> Balancete · Balanceado (Σdébito = Σcrédito)
+> Total  R$ 1.189.235,62  R$ 1.189.235,62  R$ 0,00   (= tieOut do seed: 118923562 centavos)
+> ```
+>
+> Nota: a senha do `seed-presumido` era aleatória (criado sem `SEED_ACCOUNTING_PASSWORD`); redefinida pelo dono em
+> 2026-10-07 só no `dev.db`. Qdrant fora do ar no boot (só RAG; não afeta a Contabilidade).
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
