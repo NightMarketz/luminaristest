@@ -1,4 +1,9 @@
 // Features - Repositories
+import { LegalParameterRepository } from '../features/legalParameters/repositories/LegalParameterRepository';
+import { LegalParameterPolicy } from '../features/legalParameters/policies/LegalParameterPolicy';
+import { LegalParameterService } from '../features/legalParameters/services/LegalParameterService';
+import type { ILegalParameterRepository } from '../features/legalParameters/repositories/ILegalParameterRepository';
+import type { ILegalParameterPolicy } from '../features/legalParameters/policies/ILegalParameterPolicy';
 import { ChatInstanceRepository } from '../features/chatInstances/repositories/ChatInstanceRepository';
 import { ChatMessageRepository } from '../features/chatMessages/repositories/ChatMessageRepository';
 import { ChunkRepository } from '../features/documents/repositories/ChunkRepository';
@@ -422,6 +427,7 @@ export class ApplicationFactory {
     dataExchange: IDataExchangeRepository;
     packageBalance: IPackageBalanceRepository;
     packageAcceptance: IPackageAcceptanceRepository; // FE-INCR-PACOTE-VALIDADE
+    legalParameter: ILegalParameterRepository; // BE-INCR-LEGAL-PARAMS PR-1
     sourceProvenance: ISourceProvenanceRepository;
     referentialMapping: IReferentialMappingRepository;
     referentialAccount: IReferentialAccountRepository;
@@ -466,6 +472,7 @@ export class ApplicationFactory {
     accounting: IAccountingPolicy;
     packageBalance: IPackageBalancePolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
+    legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
   };
 
   public readonly services: {
@@ -540,6 +547,7 @@ export class ApplicationFactory {
     nfePreview: NfePreviewService;
     packageBalance: PackageBalanceService;
     packageAcceptance: PackageAcceptanceService; // FE-INCR-PACOTE-VALIDADE
+    legalParameter: LegalParameterService; // BE-INCR-LEGAL-PARAMS PR-1
     presetSync: PresetSyncService;
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
@@ -582,6 +590,7 @@ export class ApplicationFactory {
       dataExchange: new DataExchangeRepository(),
       packageBalance: new PackageBalanceRepository(),
       packageAcceptance: new PackageAcceptanceRepository(),
+      legalParameter: new LegalParameterRepository(),
       sourceProvenance: new SourceProvenanceRepository(),
       referentialMapping: new ReferentialMappingRepository(),
       referentialAccount: new ReferentialAccountRepository(),
@@ -627,6 +636,7 @@ export class ApplicationFactory {
       accounting: new AccountingPolicy(),
       packageBalance: new PackageBalancePolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
+      legalParameter: new LegalParameterPolicy(),
     };
 
     // Services (handling inter-dependencies)
@@ -766,6 +776,8 @@ export class ApplicationFactory {
       this.repositories.journalEntry,
       this.policies.accounting
     );
+    // BE-INCR-LEGAL-PARAMS PR-1: coeficientes de lei de plataforma — hoisted porque X7 e X8 leem a fotografia (F-LP-4 a).
+    const legalParameterService = new LegalParameterService(this.repositories.legalParameter, this.policies.legalParameter, auditService);
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
     const taxAssessmentService = new TaxAssessmentService(
       this.repositories.taxAssessment,
@@ -779,6 +791,7 @@ export class ApplicationFactory {
       auditService,
       postingService, // X7 PR-3: provisão + estorno na substituição (itens 15/16)
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
@@ -1277,7 +1290,9 @@ export class ApplicationFactory {
         this.policies.accounting,
         auditService,
         taxAssessmentService, // X8 PR-3 (item 17): a provisão em 2 commits do X7, reusada
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia PIS_COFINS
       ),
+      legalParameter: legalParameterService,
       paymentAccount: new PaymentAccountService(
         this.repositories.paymentAccount,
         this.repositories.account,
@@ -1504,6 +1519,7 @@ export class ApplicationFactory {
   public getLalurService = (): LalurService => this.services.lalur;
   public getPackageBalanceService = (): PackageBalanceService => this.services.packageBalance;
   public getPackageAcceptanceService = (): PackageAcceptanceService => this.services.packageAcceptance;
+  public getLegalParameterService = (): LegalParameterService => this.services.legalParameter;
   public getPresetSyncService = (): PresetSyncService => this.services.presetSync;
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;

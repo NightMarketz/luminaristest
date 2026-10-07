@@ -151,6 +151,7 @@ model ChatMessage {
 enum Role {
   USER
   ADMIN
+  PLATFORM_ADMIN // BE-INCR-LEGAL-PARAMS (F-LP-2 b): publica coeficientes de lei para todos os clientes; concedido só por CLI (L-2)
   // Add other roles as needed (e.g., EDITOR, MODERATOR)
 }
 
@@ -2401,4 +2402,35 @@ model MitExport {
 
   @@index([userId, anoCalendario, mes])
   @@map("mit_exports")
+}
+
+// BE-INCR-LEGAL-PARAMS (nó LEGAL-PARAMS, BRIEF §3 itens 1–4, §4) — coeficiente/tabela de lei como dado de PLATAFORMA:
+// sem userId/unitId, vale para todos os clientes. Append-only: só `status` muda (L-6); correção = linha nova com
+// `supersedesId` (L-7). Guarda números e listas, nunca lógica (R-motor-regras). Sem FK: `proposedById`/`publishedById`
+// são string simples (a linha da migração nasce sem usuário).
+model LegalParameter {
+  id            String    @id @default(cuid())
+  tabela        String // enum fechado do item 2 (validado no DTO)
+  chave         String
+  discriminador String?
+  valorInt      Int? // bp ou centavos
+  valorTexto    String?
+  valorJson     String?
+  fonte         String // não vazia (item 3)
+  fonteUrl      String?
+  fonteSha256   String?
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive; null = sem fim
+  status        String // 'DRAFT' | 'PUBLISHED' | 'REVOKED'
+  supersedesId  String?
+  motivo        String
+  proposedById  String
+  publishedById String?
+  publishedAt   DateTime?
+  revokedById   String?
+  revokedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([tabela, chave, status])
+  @@map("legal_parameters")
 }

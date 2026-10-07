@@ -7,8 +7,12 @@
  * O número que sai daqui só tem oráculo quando o H1 (Presumido) ou o X5 (Real) conciliam X7 × PVA (F-X7-2 a, P-9):
  * um teste verde prova a aritmética contra esta tabela, não contra a lei.
  */
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 
-/** Versão desta tabela — gravada em `TaxAssessment.tabelaVersao` (D3). Mudou linha ⇒ muda a versão. */
+/**
+ * Versão gravada em `TaxAssessment.tabelaVersao` (D3). BE-INCR-LEGAL-PARAMS PR-1: as linhas moram no banco; esta
+ * string continua sendo a gravada até o item 7 (PR-4) trocar por ids + hash das linhas usadas.
+ */
 export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-06'; // BE-INCR-TAX-PRESUMIDO-16 item 1: 16% também no Presumido (art. 215 § 10)
 
 export type ChaveParametro =
@@ -32,58 +36,86 @@ export interface ParametroApuracao {
   valor: number; // bp, ou centavos nos *_CENTS
   fonte: string;
   vigenteDesde: string; // YYYY-MM-DD
+  vigenteAte?: string; // YYYY-MM-DD inclusive (BE-INCR-LEGAL-PARAMS: a linha de banco pode ter fim)
 }
 
-// vigenteDesde das linhas-base = data do ato citado (só importa que preceda o 1º ano apurável, 2025).
-const LEI_9249 = '1996-01-01'; // Lei 9.249/1995, efeitos a partir de 01/01/1996 (art. 36)
-const IN_1700 = '2017-03-16';
-const LEI_9250 = '1996-01-01'; // Lei 9.250/1995 (dez/1995) — só importa preceder o 1º ano apurável (artigo de vigência não relido)
+/**
+ * BE-INCR-LEGAL-PARAMS PR-1 (BRIEF §3 itens 4–6; F-LP-4 a) — a "fotografia" das linhas que o serviço lê da tabela de
+ * plataforma (`legal_parameters`, tabelas `TAX_ASSESSMENT` e `CSLL_ALIQUOTA`) e passa às funções puras. As linhas em
+ * código saíram na migração (cópia byte a byte, teste de paridade `legalParameterParity.integration.test.ts`).
+ */
+export interface TabelaApuracao {
+  linhas: readonly ParametroApuracao[];
+  /** D8 — alíquota da CSLL pelo `CompanyFiscalProfile.ecfIndAliqCsll` (uma fonte só), vigente no fim do período. */
+  aliquotaCsll: (ind: string, data: string) => { valor: number; fonte: string } | undefined;
+}
 
-export const PARAMETROS_APURACAO: readonly ParametroApuracao[] = [
-  { chave: 'IRPJ_ALIQ', valor: 1500, fonte: 'IN RFB 1.700/2017 art. 29 caput', vigenteDesde: IN_1700 },
-  { chave: 'IRPJ_ADIC_ALIQ', valor: 1000, fonte: 'IN RFB 1.700/2017 art. 29 § 1º', vigenteDesde: IN_1700 },
-  { chave: 'IRPJ_ADIC_LIMITE_MES_CENTS', valor: 2_000_000, fonte: 'IN RFB 1.700/2017 art. 29 §§ 1º–2º (R$ 20.000,00 × meses do período)', vigenteDesde: IN_1700 },
-  { chave: 'PRESUNCAO_IRPJ', atividade: 'SERVICO', valor: 3200, fonte: 'Lei 9.249/1995 art. 15 § 1º III a', vigenteDesde: LEI_9249 },
-  { chave: 'PRESUNCAO_IRPJ', atividade: 'REVENDA', valor: 800, fonte: 'Lei 9.249/1995 art. 15 caput', vigenteDesde: LEI_9249 },
-  { chave: 'PRESUNCAO_CSLL', atividade: 'SERVICO', valor: 3200, fonte: 'Lei 9.249/1995 art. 20 (32% p/ as atividades do art. 15 § 1º III)', vigenteDesde: LEI_9249 },
-  { chave: 'PRESUNCAO_CSLL', atividade: 'REVENDA', valor: 1200, fonte: 'Lei 9.249/1995 art. 20 caput', vigenteDesde: LEI_9249 },
-  { chave: 'COMPENSACAO_TETO', valor: 3000, fonte: 'IN RFB 1.700/2017 art. 64', vigenteDesde: IN_1700 },
-  { chave: 'LC224_ACRESCIMO_IRPJ', valor: 1000, fonte: 'IN RFB 2.305/2025 art. 14 e art. 3º I (IRPJ desde 01/01/2026)', vigenteDesde: '2026-01-01' },
-  { chave: 'LC224_ACRESCIMO_CSLL', valor: 1000, fonte: 'IN RFB 2.305/2025 art. 14 e art. 3º II (CSLL desde 01/04/2026)', vigenteDesde: '2026-04-01' },
-  { chave: 'LC224_LIMITE_TRIMESTRE_CENTS', valor: 125_000_000, fonte: 'IN RFB 2.305/2025 art. 15 § 2º (redação da IN 2.306/2026)', vigenteDesde: '2026-01-01' },
-  // Fase B (BRIEF B item 3b, F-TB-5 b) — estimativa do IRPJ da PJ exclusivamente prestadora de serviços em geral.
-  { chave: 'PRESUNCAO_IRPJ_REDUZIDA', valor: 1600, fonte: 'IN RFB 1.700/2017 art. 33 § 7º e art. 215 § 10; Lei 9.250/1995 art. 40', vigenteDesde: LEI_9250 },
-  { chave: 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', valor: 12_000_000, fonte: 'IN RFB 1.700/2017 art. 33 § 7º e art. 215 § 10; Lei 9.250/1995 art. 40 (R$ 120.000,00 no ano)', vigenteDesde: LEI_9250 },
-];
+const CHAVES: ReadonlySet<string> = new Set<ChaveParametro>([
+  'IRPJ_ALIQ', 'IRPJ_ADIC_ALIQ', 'IRPJ_ADIC_LIMITE_MES_CENTS', 'PRESUNCAO_IRPJ', 'PRESUNCAO_CSLL', 'COMPENSACAO_TETO',
+  'LC224_ACRESCIMO_IRPJ', 'LC224_ACRESCIMO_CSLL', 'LC224_LIMITE_TRIMESTRE_CENTS', 'PRESUNCAO_IRPJ_REDUZIDA',
+  'RECEITA_LIMITE_REDUZIDA_ANO_CENTS',
+]);
+
+/**
+ * Monta a fotografia a partir das linhas vigentes da plataforma (já sem as substituídas/revogadas — o serviço filtra).
+ * A linha `ARREDONDAMENTO` (item 10 do inventário) só é aceita como `HALF_UP`: é a regra que `arred` implementa;
+ * outro valor publicado seria uma regra que o código não tem ⇒ erro explícito (fail-closed), nunca silêncio.
+ */
+export function tabelaApuracaoDe(linhas: readonly LinhaLegal[]): TabelaApuracao {
+  const apuracao: ParametroApuracao[] = [];
+  const csll: LinhaLegal[] = [];
+  for (const l of linhas) {
+    if (l.tabela === 'CSLL_ALIQUOTA') csll.push(l);
+    if (l.tabela !== 'TAX_ASSESSMENT') continue;
+    if (l.chave === 'ARREDONDAMENTO') {
+      if (l.valorTexto !== 'HALF_UP') throw new Error(`taxAssessmentParams: ARREDONDAMENTO publicado como ${l.valorTexto ?? '∅'} — só HALF_UP é implementado (F-TA-2 a)`);
+      continue;
+    }
+    if (!CHAVES.has(l.chave) || l.valorInt === null) throw new Error(`taxAssessmentParams: linha ${l.id} (${l.chave}) fora do formato de TAX_ASSESSMENT`);
+    apuracao.push({
+      chave: l.chave as ChaveParametro,
+      ...(l.discriminador ? { atividade: l.discriminador as AtividadePresuncao } : {}),
+      valor: l.valorInt,
+      fonte: l.fonte,
+      vigenteDesde: l.vigenteDesde,
+      ...(l.vigenteAte ? { vigenteAte: l.vigenteAte } : {}),
+    });
+  }
+  return {
+    linhas: apuracao,
+    aliquotaCsll: (ind, data) => {
+      const l = maisRecente(csll.filter((c) => c.chave === ind && c.valorInt !== null && dentro(c, data)));
+      return l ? { valor: l.valorInt!, fonte: l.fonte } : undefined;
+    },
+  };
+}
+
+const dentro = (l: { vigenteDesde: string; vigenteAte?: string | null }, data: string): boolean =>
+  l.vigenteDesde <= data && (!l.vigenteAte || data <= l.vigenteAte);
+
+function maisRecente<T extends { vigenteDesde: string }>(ls: T[]): T | undefined {
+  let melhor: T | undefined;
+  for (const l of ls) if (!melhor || l.vigenteDesde > melhor.vigenteDesde) melhor = l;
+  return melhor;
+}
 
 const ACRESCIMO_LC224: ReadonlySet<ChaveParametro> = new Set(['LC224_ACRESCIMO_IRPJ', 'LC224_ACRESCIMO_CSLL']);
 
-/** Linha vigente em `dataFimDoPeriodo` (a de `vigenteDesde` mais recente ≤ data), ou `undefined`. */
-export function linhaVigente(chave: ChaveParametro, dataFimDoPeriodo: string, atividade?: AtividadePresuncao): ParametroApuracao | undefined {
-  let melhor: ParametroApuracao | undefined;
-  for (const p of PARAMETROS_APURACAO) {
-    if (p.chave !== chave || p.atividade !== atividade || p.vigenteDesde > dataFimDoPeriodo) continue;
-    if (!melhor || p.vigenteDesde > melhor.vigenteDesde) melhor = p;
-  }
-  return melhor;
+/** Linha vigente em `dataFimDoPeriodo` (a de `vigenteDesde` mais recente ≤ data, sem ter vencido), ou `undefined`. */
+export function linhaVigente(t: TabelaApuracao, chave: ChaveParametro, dataFimDoPeriodo: string, atividade?: AtividadePresuncao): ParametroApuracao | undefined {
+  return maisRecente(t.linhas.filter((p) => p.chave === chave && p.atividade === atividade && dentro(p, dataFimDoPeriodo)));
 }
 
 /**
  * Lookup puro (item 4). Sem linha vigente: o acréscimo da LC 224 vale 0 (antes da vigência); qualquer outra chave é
- * erro de programação (a tabela cobre todo ano apurável).
+ * erro explícito (a tabela cobre todo ano apurável).
  */
-export function parametroVigente(chave: ChaveParametro, dataFimDoPeriodo: string, atividade?: AtividadePresuncao): number {
-  const p = linhaVigente(chave, dataFimDoPeriodo, atividade);
+export function parametroVigente(t: TabelaApuracao, chave: ChaveParametro, dataFimDoPeriodo: string, atividade?: AtividadePresuncao): number {
+  const p = linhaVigente(t, chave, dataFimDoPeriodo, atividade);
   if (p) return p.valor;
   if (ACRESCIMO_LC224.has(chave)) return 0;
   throw new Error(`taxAssessmentParams: sem linha vigente de ${chave}${atividade ? `/${atividade}` : ''} em ${dataFimDoPeriodo}`);
 }
-
-/** D8 — alíquota da CSLL pelo `CompanyFiscalProfile.ecfIndAliqCsll` (uma fonte só). */
-export const ALIQUOTA_CSLL_BP: Readonly<Record<string, { valor: number; fonte: string }>> = {
-  '1': { valor: 900, fonte: 'Lei 7.689/1988 art. 3º III' },
-  '4': { valor: 1500, fonte: 'Lei 7.689/1988 art. 3º I' },
-};
 
 /**
  * Códigos de receita (6 dígitos = código + variação), fonte: Receita, "DCTF — Tabelas de códigos" IRPJ e CSLL

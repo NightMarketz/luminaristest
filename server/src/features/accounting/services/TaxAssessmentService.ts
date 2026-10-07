@@ -31,6 +31,8 @@
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (commit 1 — razão): período fechado ⇒ a confirmação fica, provisão pendente, nenhum lançamento"
  *              teste: taxAssessmentProvision.integration.test.ts › "item 15 (cascata × estorno falho): reconfirmar o posterior estorna a provisão órfã antes de postar — nunca 2 vivas"
  */
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { tabelaApuracaoDe, type TabelaApuracao } from '../models/taxAssessmentParams';
 import type { CompanyFiscalProfile, FiscalProfile, Prisma, TaxAssessment } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
@@ -287,6 +289,8 @@ export class TaxAssessmentService {
     private readonly postingService: PostingService,
     /** Fase B item 15 (F-TB-4 b): status dos meses anteriores ao balancete, lido dentro da tx da confirmação. */
     private readonly periodRepo: Pick<IAccountingPeriodRepository, 'findByYearMonth'>,
+    /** BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a): a fotografia dos coeficientes de lei que as funções puras recebem. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Item 13 — calcula IRPJ e CSLL juntos (BRIEF item 13, art. 31 § 7º) e não persiste. */
@@ -686,6 +690,7 @@ export class TaxAssessmentService {
       avisos.push('contas da provisão de IRPJ/CSLL não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X7 F-TA-7 a).');
     }
 
+    const tabela = tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA']));
     const confirmados = (await this.repo.findConfirmedByYear(scope.ownerUserId, ano)).filter(doIrpjCsll);
     const anterioresRows = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
     const anteriores = (t: TributoApuracao): MemoriaAnterior[] =>
@@ -694,7 +699,7 @@ export class TaxAssessmentService {
     const anterioresIds = anterioresRows.map((r) => r.id);
 
     if (anual) {
-      const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos);
+      const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos, tabela);
       return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds };
     }
 
@@ -703,6 +708,7 @@ export class TaxAssessmentService {
     if (perfil.regime === 'PRESUMIDO') {
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, w.from, w.to);
       const base = {
+        tabela,
         ano,
         periodo,
         receitaServicoCents: BigInt(rec.servicoCents),
@@ -720,7 +726,7 @@ export class TaxAssessmentService {
       const parteBFechada = !!(await this.lalurRepo.findClosing(scope, ano, periodo));
       const linhas = async (livro: string) =>
         (await this.lalurRepo.findManyEntries(scope, { year: ano, quarter: periodo, livro, includeArchived: false })).map((l) => ({ codigo: l.codigo, valorCents: l.valorCents }));
-      const base = { ano, periodo, resultadoAntesCents: resultado, contasProvisaoConfiguradas: contasDespesa, parteBFechada, perfil, deducoes };
+      const base = { tabela, ano, periodo, resultadoAntesCents: resultado, contasProvisaoConfiguradas: contasDespesa, parteBFechada, perfil, deducoes };
       irpj = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', linhasParteA: await linhas('lalur') }), diferencaPostergadaCents: 0n };
       csll = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', linhasParteA: await linhas('lacs') }), diferencaPostergadaCents: 0n };
     }
@@ -739,6 +745,7 @@ export class TaxAssessmentService {
     despesaIds: string[],
     anterioresRows: TaxAssessment[],
     avisos: string[],
+    tabela: TabelaApuracao,
   ): Promise<{ irpj: ResultadoApuracaoAnual; csll: ResultadoApuracaoAnual }> {
     const { anoCalendario: ano, periodo, deducoes } = input;
     const meses = (t: TributoApuracao): MesConfirmado[] => anterioresRows.filter((r) => r.tributo === t && isLalurMes(r.periodo)).map(toMesConfirmado);
@@ -754,7 +761,7 @@ export class TaxAssessmentService {
     if (periodo === 'A00') {
       const r = await realDoPeriodo();
       const parteBFechada = !!(await this.lalurRepo.findClosing(scope, ano, 'A00'));
-      const base = { ano, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, parteBFechada, perfil, deducoes, estimativasPagas: input.estimativasPagas };
+      const base = { tabela, ano, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, parteBFechada, perfil, deducoes, estimativasPagas: input.estimativasPagas };
       const irpj = apurarAjusteAnual({ ...base, tributo: 'IRPJ', linhasParteA: r.linhasIrpj, meses: meses('IRPJ') });
       const csll = apurarAjusteAnual({ ...base, tributo: 'CSLL', linhasParteA: r.linhasCsll, meses: meses('CSLL') });
       const fp = await this.fiscalProfileRepo.findByScope(scope);
@@ -783,7 +790,7 @@ export class TaxAssessmentService {
     if (input.modoMensal === 'RECEITA_BRUTA') {
       const rec = await receitaDoMes(m);
       const anteriores = await receitasAnteriores();
-      const base = { ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
+      const base = { tabela, ano, periodo: mes, receitaServicoCents: rec.servicoCents, receitaRevendaCents: rec.revendaCents, receitasMesesAnteriores: anteriores, perfil, deducoes };
       return {
         irpj: apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', confirmados: meses('IRPJ') }),
         csll: apurarEstimativaReceitaBruta({ ...base, tributo: 'CSLL', confirmados: meses('CSLL') }),
@@ -795,7 +802,7 @@ export class TaxAssessmentService {
     if (abertos.length > 0) avisos.push(`balancete de ${mes}/${ano}: meses ainda abertos (${abertos.join(', ')}) — a confirmação exige-os fechados (BRIEF X7 B item 15).`);
     const r = await realDoPeriodo();
     const receita = perfil.prestadoraExclusivaServicos ? { receitaMes: await receitaDoMes(m), receitasMesesAnteriores: await receitasAnteriores() } : {};
-    const base = { ano, periodo: mes, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, perfil, deducoes };
+    const base = { tabela, ano, periodo: mes, resultadoAntesCents: r.resultadoAntesCents, contasProvisaoConfiguradas: r.contasProvisaoConfiguradas, perfil, deducoes };
     return {
       irpj: apurarBalancete({ ...base, tributo: 'IRPJ', linhasParteA: r.linhasIrpj, anteriores: meses('IRPJ'), ...receita }),
       csll: apurarBalancete({ ...base, tributo: 'CSLL', linhasParteA: r.linhasCsll, anteriores: meses('CSLL') }),

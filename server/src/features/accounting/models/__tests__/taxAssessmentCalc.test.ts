@@ -19,6 +19,9 @@ import {
   type ResultadoApuracao,
   type TributoApuracao,
 } from '../taxAssessmentCalc';
+import { tabelaApuracaoSemente } from '@test/helpers/legalParams';
+
+const tabela = tabelaApuracaoSemente(); // BE-INCR-LEGAL-PARAMS PR-1: a fotografia da semente da migração
 
 const R = (reais: number): bigint => BigInt(Math.round(reais * 100));
 const PERFIL: PerfilApuracaoPresumido = {
@@ -47,6 +50,7 @@ function apurarAno(
     const rec = receitas[periodo];
     if (!rec) continue;
     const r = apurarPresumidoTrimestral({
+      tabela,
       ano,
       periodo,
       tributo,
@@ -234,7 +238,7 @@ describe('Presumido — 16% do prestador exclusivo (BE-INCR-TAX-PRESUMIDO-16)', 
     const comRevendaAntes = { periodo: 'T01' as const, memoria: t01.memoria.map((m) => (m.codigo === 'RECEITA_REVENDA' ? { ...m, valorCents: '100' } : m)) };
     expect(() =>
       apurarPresumidoTrimestral({
-        ano: 2026, periodo: 'T02', tributo: 'IRPJ', receitaServicoCents: R(1_000), receitaRevendaCents: 0n,
+        tabela, ano: 2026, periodo: 'T02', tributo: 'IRPJ', receitaServicoCents: R(1_000), receitaRevendaCents: 0n,
         perfil: { ...PERFIL, ...P16 }, anteriores: [comRevendaAntes], deducoes: [],
       }),
     ).toThrow(ValidationError);
@@ -286,14 +290,14 @@ describe('deduções (item 11, F-X7-11 a; F-TA-9 a)', () => {
       { tributo: 'CSLL', tipo: 'CSLL_RETIDA', valorCents: String(R(999)) },
     ];
     const r = apurarPresumidoTrimestral({
-      ano: 2025, periodo: 'T01', tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n,
+      tabela, ano: 2025, periodo: 'T01', tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n,
       perfil: PERFIL, anteriores: [], deducoes,
     });
     expect(r.deducoesCents).toBe(R(2_000));
     expect(r.aPagarCents).toBe(R(2_800));
     expect(r.memoria.find((m) => m.codigo === 'DEDUCAO_2')?.descricao).toBe('OUTRA — DARF 123');
     const acima = apurarPresumidoTrimestral({
-      ano: 2025, periodo: 'T01', tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n,
+      tabela, ano: 2025, periodo: 'T01', tributo: 'IRPJ', receitaServicoCents: R(100_000), receitaRevendaCents: 0n,
       perfil: PERFIL, anteriores: [], deducoes: [{ tributo: 'IRPJ', tipo: 'IRRF', valorCents: String(R(5_000)) }],
     });
     expect(acima.aPagarCents).toBe(0n);
@@ -304,7 +308,7 @@ describe('deduções (item 11, F-X7-11 a; F-TA-9 a)', () => {
 
 describe('Real trimestral (item 10; 23 c/d)', () => {
   const base: EntradaReal = {
-    ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
+    tabela, ano: 2026, periodo: 'T01', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
     linhasParteA: [], parteBFechada: true, perfil: { ecfIndAliqCsll: '4', lucroRealObrigatorio: false }, deducoes: [],
   };
 

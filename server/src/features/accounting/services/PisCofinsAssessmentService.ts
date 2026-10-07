@@ -28,7 +28,8 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { MemoriaCalculoSchema } from '../models/taxAssessmentCalc';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
-import type { TributoPisCofins } from '../models/pisCofinsParams';
+import { tabelaPisCofinsDe, type TributoPisCofins } from '../models/pisCofinsParams';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import {
   TRIBUTOS_PIS_COFINS,
   apurarPisCofinsMensal,
@@ -135,6 +136,8 @@ export class PisCofinsAssessmentService {
     private readonly auditService: AuditService,
     /** PR-3 (item 17): a provisão em 2 commits do X7, reusada — não há 2ª implementação do bridge. */
     private readonly provisao: Pick<TaxAssessmentService, 'provisionarAposConfirmacao'>,
+    /** BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a): a fotografia das alíquotas de PIS/Cofins que a função pura recebe. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Item 13 — calcula PIS e Cofins juntos (D1) e não persiste. */
@@ -287,7 +290,8 @@ export class PisCofinsAssessmentService {
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
     if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de apurar PIS/Cofins.`);
     const modalidade = modalidadeDoRegime(perfil.regime); // SIMPLES/MEI ⇒ 400 (DAS)
-    parametrosDoMes(ano, periodo, modalidade); // ≥ 2027-01 ⇒ 400 (a função pura repete; aqui a recusa vem antes de ler o razão)
+    const tabela = tabelaPisCofinsDe(await this.legalParams.fotografia(['PIS_COFINS']));
+    parametrosDoMes(tabela, ano, periodo, modalidade); // ≥ 2027-01 ⇒ 400 (a função pura repete; aqui a recusa vem antes de ler o razão)
     if (perfil.ecfIndRecReceita === '1') {
       throw new ValidationError('regime de caixa (ecf.indRecReceita = 1): PIS/Cofins seguem o critério do IRPJ/CSLL e o caixa está fora (IN RFB 2.121/2022 art. 127; ADR-INCR-PIS-COFINS D6).');
     }
@@ -325,6 +329,7 @@ export class PisCofinsAssessmentService {
       origem = { tipo: 'NENHUM' };
     }
     const resultado = apurarPisCofinsMensal({
+      tabela,
       ano,
       periodo,
       modalidade,

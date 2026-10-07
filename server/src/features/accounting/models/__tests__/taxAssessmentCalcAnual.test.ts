@@ -19,6 +19,9 @@ import {
   type ResultadoApuracaoAnual,
 } from '../taxAssessmentCalcAnual';
 import type { TributoApuracao } from '../taxAssessmentCalc';
+import { tabelaApuracaoSemente } from '@test/helpers/legalParams';
+
+const tabela = tabelaApuracaoSemente(); // BE-INCR-LEGAL-PARAMS PR-1: a fotografia da semente da migração
 
 const R = (reais: number): bigint => BigInt(Math.round(reais * 100));
 const A = (m: number): LalurMes => `A${String(m).padStart(2, '0')}` as LalurMes;
@@ -53,11 +56,11 @@ function apurarMeses(meses: Mes[], tributo: TributoApuracao = 'IRPJ', perfil: Pa
     const r =
       'balancete' in mes
         ? apurarBalancete({
-            ano: 2026, periodo, tributo, resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
+            tabela, ano: 2026, periodo, tributo, resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
             anteriores: [...confirmados], perfil: { ...PERFIL, ...perfil }, deducoes: [],
           })
         : apurarEstimativaReceitaBruta({
-            ano: 2026, periodo, tributo, receitaServicoCents: R(mes.servico), receitaRevendaCents: R(mes.revenda ?? 0),
+            tabela, ano: 2026, periodo, tributo, receitaServicoCents: R(mes.servico), receitaRevendaCents: R(mes.revenda ?? 0),
             receitasMesesAnteriores, confirmados: [...confirmados], perfil: { ...PERFIL, ...perfil }, deducoes: [],
           });
     out.push(r);
@@ -68,7 +71,7 @@ function apurarMeses(meses: Mes[], tributo: TributoApuracao = 'IRPJ', perfil: Pa
 
 describe('item 3 — códigos de receita (ADR §3)', () => {
   it('cada modo × lucroRealObrigatorio resolve exatamente um código; IRPJ com obrigatoriedade nula ⇒ 400', () => {
-    const tabela: [TributoApuracao, 'ESTIMATIVA' | 'AJUSTE_ANUAL' | 'DIFERENCA_POSTERGADA_16', boolean, string][] = [
+    const codigos: [TributoApuracao, 'ESTIMATIVA' | 'AJUSTE_ANUAL' | 'DIFERENCA_POSTERGADA_16', boolean, string][] = [
       ['IRPJ', 'ESTIMATIVA', true, '236201'],
       ['IRPJ', 'ESTIMATIVA', false, '599301'],
       ['IRPJ', 'AJUSTE_ANUAL', true, '243001'],
@@ -80,12 +83,12 @@ describe('item 3 — códigos de receita (ADR §3)', () => {
       ['CSLL', 'AJUSTE_ANUAL', true, '677301'],
       ['CSLL', 'AJUSTE_ANUAL', false, '677301'],
     ];
-    for (const [t, c, o, cod] of tabela) expect(codigoReceitaAnual(t, c, o)).toBe(cod);
+    for (const [t, c, o, cod] of codigos) expect(codigoReceitaAnual(t, c, o)).toBe(cod);
     expect(() => codigoReceitaAnual('IRPJ', 'ESTIMATIVA', null)).toThrow(ValidationError);
     expect(codigoReceitaAnual('CSLL', 'ESTIMATIVA', null)).toBe('248401');
     // o balancete com redução usa o código da estimativa (P-B2)
     const bal = apurarBalancete({
-      ano: 2026, periodo: 'A01', tributo: 'IRPJ', resultadoAntesCents: R(10_000), contasProvisaoConfiguradas: true,
+      tabela, ano: 2026, periodo: 'A01', tributo: 'IRPJ', resultadoAntesCents: R(10_000), contasProvisaoConfiguradas: true,
       linhasParteA: [], anteriores: [], perfil: { ...PERFIL, lucroRealObrigatorio: true }, deducoes: [],
     });
     expect(bal.codigoReceita).toBe('236201');
@@ -113,7 +116,7 @@ describe('item 7 — estimativa por receita bruta (B2)', () => {
     // serviço 100.000 × 32% = 32.000 + revenda 50.000 × 8% = 4.000 ⇒ base 36.000
     // IRPJ = 5.400 + 10% × (36.000 − 20.000) = 1.600 ⇒ 7.000 (Lei 9.430 art. 2º §§ 1º–2º; IN 1.700 art. 42)
     const base = {
-      ano: 2026, periodo: 'A07' as LalurMes, receitaServicoCents: R(100_000), receitaRevendaCents: R(50_000),
+      tabela, ano: 2026, periodo: 'A07' as LalurMes, receitaServicoCents: R(100_000), receitaRevendaCents: R(50_000),
       receitasMesesAnteriores: [], confirmados: [], perfil: PERFIL,
     };
     const irpj = apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', deducoes: [{ tributo: 'IRPJ', tipo: 'IRRF', valorCents: '50000' }] });
@@ -148,7 +151,7 @@ describe('item 7 — estimativa por receita bruta (B2)', () => {
 describe('item 8 — balancete de suspensão/redução (B3)', () => {
   const bal = (o: Partial<EntradaBalancete>): ResultadoApuracaoAnual =>
     apurarBalancete({
-      ano: 2026, periodo: 'A03', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
+      tabela, ano: 2026, periodo: 'A03', tributo: 'IRPJ', resultadoAntesCents: R(100_000), contasProvisaoConfiguradas: true,
       linhasParteA: [], anteriores: [], perfil: PERFIL, deducoes: [], ...o,
     });
   const mesConf = (periodo: LalurMes, devido: number, tributo: TributoApuracao = 'IRPJ', dif = 0): MesConfirmado => ({
@@ -258,7 +261,7 @@ describe('item 10 — ajuste anual (B6; F-TB-2 b)', () => {
   const meses = (): MesConfirmado[] => apurarMeses(Array.from({ length: 12 }, () => ({ servico: 100_000 }))).map((r, i) => confirmar(r, A(i + 1)));
   const ajuste = (o: Partial<EntradaAjusteAnual>): ResultadoApuracaoAnual =>
     apurarAjusteAnual({
-      ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(384_000), contasProvisaoConfiguradas: true, linhasParteA: [],
+      tabela, ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(384_000), contasProvisaoConfiguradas: true, linhasParteA: [],
       parteBFechada: true, meses: meses(), perfil: PERFIL, deducoes: [], ...o,
     });
 
@@ -319,7 +322,7 @@ describe('PR-3, decisão 1 — balancete no mês do excesso m* calcula e grava a
   const receitas = (n: number) => Array.from({ length: n }, (_, j) => ({ periodo: A(j + 1), servicoCents: R(18_000), revendaCents: 0n }));
   const balancete = (m: number, anteriores: MesConfirmado[], o: Partial<EntradaBalancete> = {}): ResultadoApuracaoAnual =>
     apurarBalancete({
-      ano: 2026, periodo: A(m), tributo: 'IRPJ', resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
+      tabela, ano: 2026, periodo: A(m), tributo: 'IRPJ', resultadoAntesCents: R(0), contasProvisaoConfiguradas: true, linhasParteA: [],
       anteriores, perfil: PREST, deducoes: [], receitaMes: { periodo: A(m), servicoCents: R(18_000), revendaCents: 0n },
       receitasMesesAnteriores: receitas(m - 1), ...o,
     });
@@ -354,7 +357,7 @@ describe('PR-3, decisão 1 — balancete no mês do excesso m* calcula e grava a
 describe('PR-3, item 16 — o A00 grava na memória o valor da provisão do ajuste (devido anual − Σ devido + diferença dos meses)', () => {
   const meses = (): MesConfirmado[] => apurarMeses(Array.from({ length: 12 }, () => ({ servico: 100_000 }))).map((r, i) => confirmar(r, A(i + 1)));
   const ajuste = (ms: MesConfirmado[], lair: number): ResultadoApuracaoAnual =>
-    apurarAjusteAnual({ ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(lair), contasProvisaoConfiguradas: true, linhasParteA: [], parteBFechada: true, meses: ms, perfil: PERFIL, deducoes: [] });
+    apurarAjusteAnual({ tabela, ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(lair), contasProvisaoConfiguradas: true, linhasParteA: [], parteBFechada: true, meses: ms, perfil: PERFIL, deducoes: [] });
 
   it('igual aos meses ⇒ 0; mês suspenso ⇒ positivo; lucro anual menor ⇒ negativo; a diferença postergada conta como provisionado', () => {
     expect(v(ajuste(meses(), 384_000), 'PROVISAO_AJUSTE_ANUAL')).toBe('0');

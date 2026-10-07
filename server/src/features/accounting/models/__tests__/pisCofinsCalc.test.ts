@@ -5,13 +5,15 @@
  */
 import { apurarPisCofinsMensal, modalidadeDoRegime, type EntradaPisCofins } from '../pisCofinsCalc';
 import type { CreditoPisCofinsNota } from '../pisCofinsParams';
+import { tabelaPisCofinsSemente } from '@test/helpers/legalParams';
 
 const valor = (memoria: { codigo: string; valorCents: string }[], codigo: string) => memoria.find((m) => m.codigo === codigo)?.valorCents;
 const nota = (pisCents: number, cofinsCents: number, derivado = false): CreditoPisCofinsNota => ({
   payableId: `p-${pisCents}`, documentNumber: null, issueDate: '2026-03-10', amountCents: pisCents + cofinsCents, baseCents: null, pisCents, cofinsCents, derivado,
 });
+const tabela = tabelaPisCofinsSemente(); // BE-INCR-LEGAL-PARAMS PR-1: a fotografia da semente da migração
 const entrada = (e: Partial<EntradaPisCofins>): EntradaPisCofins => ({
-  ano: 2026, periodo: 'M03', modalidade: 'CUMULATIVO', receitaServicoCents: 10_000_000n, receitaRevendaCents: 0n,
+  tabela, ano: 2026, periodo: 'M03', modalidade: 'CUMULATIVO', receitaServicoCents: 10_000_000n, receitaRevendaCents: 0n,
   ajustesBase: [], outrosCreditos: [], retencoes: [], creditosNfe: [], saldoAnterior: { tipo: 'NENHUM' }, ...e,
 });
 
