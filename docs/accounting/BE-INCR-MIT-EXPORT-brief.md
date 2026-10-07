@@ -366,6 +366,22 @@ não assina). Novas:
    (2362-02/5993-02) promovem para V-fonte. Não edito os documentos do X7.
 4. **Alerta de prazo** (art. 6º), **arquivo no pacote do contador** (C6b) e **FE da exportação**: fora (ADR §11; o FE
    é `FE-INCR-*` próprio).
+5. **Lacuna L-X9-1 (07/10, achado do review do PR-1 #562; registrada a pedido do dono) — DCTFWEB da PJ inativa cobra
+   dado que nada usa.** Com o item 14 como escrito, a linha DCTFWEB de uma PJ **inativa** em REAL/PRESUMIDO sai
+   `CONDICIONAL` (F-MIT-3 a) e, por isso, cobra `declarante.cnpj` e `contadorContactId` — o perfil fica `INCOMPLETO`.
+   - **Por que não tem base:** (i) a lei não exige contador como responsável — o leiaute 1.0 e o Manual do MIT §3.5 só
+     obrigam o CPF de quem preenche (V-ADR 02/10); o contador é escolha de produto (F-X9-3 a); (ii) a inativa não tem
+     apuração, então o X9 nunca gera arquivo para ela (item 4/D7) — a razão do item 14 ("o que o arquivo do X9 exige")
+     não se aplica; (iii) a DCTFWeb sem movimento é gerada pelos eventos de fechamento do eSocial/EFD-Reinf, não pelo
+     MIT (fonte **secundária**: apostila CRC-CE "DCTFWeb/MIT", ago/2026, citando a IN RFB 2.237/2024).
+   - **Caminhos:** (a) `faltantes = []` na DCTFWEB quando `inativa = true` (recomendado — some o falso `INCOMPLETO`);
+     (b) manter como está (letra do item 14). **DECISÃO PENDENTE do dono.** Depois de decidido (a): teste-guarda
+     vermelho (`sessao-instrumentacao`) → fix mínimo em `CompanyFiscalProfileService.obligations` (`sessao-correcao`).
+   - **Junto, sem mudar status:** a pergunta da linha inativa (*"Este ano contém o 1º mês sem movimento?"*) não cobre os
+     outros dois gatilhos da entrega sem movimento (início da obrigatoriedade e início de atividade — mesma fonte
+     secundária). Ajuste de texto, se o dono quiser.
+   - **Pendente de leitura primária:** IN 2.237 arts. 3º, 4º e 6º § 2º no Sijut (a sessão de 07/10 não conseguiu
+     abrir o Sijut nem baixar o Manual do MIT fora do navegador).
 
 ## 7. Gates de envio [OPS-001]
 
