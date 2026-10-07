@@ -301,7 +301,8 @@ export class CompanyFiscalProfileService {
       if (o.obrigacao === 'DCTFWEB') {
         // BRIEF X9 item 14: nunca herda condicoes.* nem DECLARANTE_ECF; cobra só o que o arquivo do MIT exige (itens 7–8),
         // e só em REAL/PRESUMIDO — no SIMPLES/MEI o X9 não gera arquivo (D10).
-        if (cobra && (view.regime === 'REAL' || view.regime === 'PRESUMIDO')) {
+        // L-X9-1 (a, dono 07/10): inativa não tem apuração ⇒ o X9 não gera arquivo, nada a cobrar.
+        if (cobra && !view.inativa && (view.regime === 'REAL' || view.regime === 'PRESUMIDO')) {
           if (view.declarante?.cnpj === undefined) faltantes.push('declarante.cnpj');
           if (!contadorVivo) faltantes.push('contadorContactId');
         }
