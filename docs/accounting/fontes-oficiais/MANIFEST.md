@@ -41,7 +41,7 @@ que citava o antigo precisa ser reconferido.
 | lei-10865-2004 | PIS/COFINS-Importacao e aliquotas por produto (monofasico. F-X6-7 a) | Lei 10.865/2004 | `Lei-10865-2004.html` | 389.869 | `5c7376321f17` |
 | lei-9718-1998 | Monofasico — combustiveis (art. 4. F-X6-7 a) | Lei 9.718/1998 | `Lei-9718-1998.html` | 196.422 | `a71cf61cb7b3` |
 | lei-13097-2015 | Monofasico — bebidas frias (art. 14 NCM; arts. 17/28/29/30 credito) | Lei 13.097/2015 | `Lei-13097-2015-bebidas-frias.html` | 638.654 | `c6679a9a9fa3` |
-| lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4) | Lei Complementar 123/2006 | `LC-123-2006-Simples.html` | 1.620.693 | `316d1f9c07ff` |
+| lc-123-2006 | Simples Nacional — sem credito pelo regime normal (art. 23; §4 f4); Anexos I–V (X14 PR-1) | Lei Complementar 123/2006 — **rebaixada 2026-10-07** (Planalto reeditou: sha anterior `316d1f9c07ff`) | `LC-123-2006-Simples.html` | 1.622.252 | `07ee7d3adc22` |
 | tabela-4310-efd | Monofasico — correspondencia PRODUTO -> NCM dos combustiveis (o que a Lei 9.718 art. 4 nao traz) | Tabela 4.3.10 da EFD-Contribuicoes, versao 1.25 (30.03.2026) | `TABELA-4310-EFD-CONTRIBUICOES-v1.25.txt` | 85.624 | `f6a000e5e898` |
 | moc70-visao-geral | SIG-NFE — padrao de assinatura digital da NF-e 4.00 (§4.2.3-4.2.5) | Manual de Orientacao ao Contribuinte (MOC) versao 7.0 — Visao Geral, NF-e e NFC-e | `MOC-7.0-Visao-Geral.pdf` | 4.304.647 | `f664dcf94b77` |
 | moc70-anexo-i | SIG-NFE — regras de rejeicao do certificado/assinatura (E/F) e quem assina por serie (B07) | MOC 7.0 Anexo I — Leiaute e Regras de Validacao da NF-e e NFC-e | `MOC-7.0-Anexo-I.pdf` | 4.106.196 | `5eb4cf2010b1` |
@@ -125,7 +125,9 @@ que citava o antigo precisa ser reconferido.
   (`2710.11.59`, 01/2011-31/12/2011), que existe no `.doc` (1 ocorrencia no stream `WordDocument`). As linhas
   VIGENTES conferem uma a uma; para historico de linha encerrada, leia o `.doc` pelo sha256 acima, nao este `.txt`.
 - **lc-214-2025** — <https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm> — baixada 2026-09-27 (V5 da Fase 0),
-  5.402.213 bytes, sha256 `ddeafec2054c`. **Nao commitada** (5,4 MB de HTML): o trecho que interessa esta transcrito em
+  5.402.213 bytes, sha256 `ddeafec2054c`. **Rebaixada 2026-10-07** para o X14 PR-1 (Anexos XVIII–XXII): 5.403.613 bytes, sha256
+  `6b869c5b421c958bf598ca20b2a88e11147f221495a91aa4bae435cb106464b4` (`LC-214-2025.html`, nao commitada); o texto vigente
+  dos anexos esta em `TRANSCRICAO-SIMPLES-ANEXOS-LC123-LC214-2026-10-07.txt` (gerado por `scripts/gen-simples-anexos.mjs --transcrever`). **Nao commitada** (5,4 MB de HTML): o trecho que interessa esta transcrito em
   `TRANSCRICAO-LC214-art10-pagamento-antecipado-2026-09-27.md` (art. 10 caput, §§ 1o III, 3o, 4o, 5o, 7o — redacao
   vigente, ja com a LC 227/2026). O host recusa conexao sem `User-Agent` de navegador.
 - **moc70-visao-geral** — <https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=LrBx7WT9PuA=> — baixado 2026-09-26
