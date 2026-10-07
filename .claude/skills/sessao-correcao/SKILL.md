@@ -88,8 +88,11 @@ Nada além disso.
 
 **Autorização quando a lacuna é nó do vault.** Lacuna priorizada pode ter nota em `docs/plano/nos/PASSO-*.md`
 (ex.: GAP-MAP 7 = `PASSO-11`): aí a autorização é o campo `autorizacao` dela — vazio = não roteia
-(ORCH-006). A nota não entra no diff (regra 1); o relatório traz a linha de fold para o fold pós-merge do
-`docs/plano/README.md`.
+(ORCH-006). O fold da nota entra no próprio PR, via `node scripts/plano-vault.mjs fold <NÓ> --pr <n>`
+(`docs/plano/README.md` §Fold) — é a única edição permitida fora da localização.
+
+**Nível de cerimônia — [OPS-006]** (`.claude/skills/_OPERATING-GATES.md`): no nível leve, o teste-guarda
+chega no commit `test:` do mesmo PR, e esta sessão entra com o commit `fix:` em seguida.
 
 **Comandos do passo 1 e 3:**
 

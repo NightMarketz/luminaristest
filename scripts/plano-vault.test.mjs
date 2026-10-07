@@ -1,10 +1,10 @@
 // node --test scripts/plano-vault.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { check, buildIndex, loadVault, parseNote } from './plano-vault.mjs';
+import { check, buildIndex, loadVault, parseNote, fold } from './plano-vault.mjs';
 
 function note(fm, body = '') {
   return ['---', ...Object.entries(fm).map(([k, v]) => `${k}: ${JSON.stringify(v)}`), '---', body, ''].join('\n');
@@ -77,4 +77,27 @@ test('dependência pontilhada "[[A]]?" resolve para A', () => {
 
 test('frontmatter com valor não-JSON falha alto', () => {
   assert.throws(() => parseNote('---\nid: sem aspas\n---\n'));
+});
+
+test('fold grava estado/prs/atualizado no frontmatter e no cabeçalho; índice segue íntegro', () => {
+  const body = '# B\n\n**Estado:** `ready`  \n**PRs:** —  \n\nver [[A]]\n';
+  const B = { id: 'B', tipo: 'regua', dominio: 'contabil', titulo: 'b', estado: 'ready', estado_detalhe: 'x', depende_de: ['[[A]]'], prs: ['#1'] };
+  const dir = vault({ ...base, 'nos/B.md': note(B, body) });
+  writeIndex(dir);
+  fold(dir, 'B', { pr: 7, estado: 'done', hoje: '2026-10-07' });
+  fold(dir, 'B', { pr: 7, hoje: '2026-10-07' }); // repetir no mesmo PR não duplica
+  const { fm, body: b } = parseNote(readFileSync(join(dir, 'nos/B.md'), 'utf8'));
+  assert.equal(fm.estado, 'done');
+  assert.deepEqual(fm.prs, ['#1', '#7']);
+  assert.equal(fm.atualizado, '2026-10-07');
+  assert.match(b, /\*\*Estado:\*\* `done` — x/);
+  assert.match(b, /\*\*PRs:\*\* #1, #7/);
+  assert.deepEqual(check(dir), []);
+});
+
+test('fold recusa nó inexistente, estado inválido e PR ausente', () => {
+  const dir = vault(base);
+  assert.throws(() => fold(dir, 'ZZ', { pr: 1 }), /não existe/);
+  assert.throws(() => fold(dir, 'B', { pr: 1, estado: 'review' }), /inválido/);
+  assert.throws(() => fold(dir, 'B', { pr: NaN }), /--pr/);
 });

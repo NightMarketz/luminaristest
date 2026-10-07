@@ -45,12 +45,15 @@ de `depende_de`).
   `precisa-de-planejamento`). É **previsão, não decisão**; a calibração vem do `perfil-previsto` × `custo` dos
   retornos. Só em nó com BRIEF; em nó `done`, refere-se à emenda aberta citada na evidência.
 
-## Fold (depois de cada merge)
+## Fold (no próprio PR do trabalho, antes do push)
 
-1. Edite o frontmatter da nota do nó (`estado`, `estado_detalhe`, `prs`, `atualizado`) **e** as linhas
-   `**Estado:**`/`**PRs:**` do cabeçalho do corpo, que o espelham (o `check` não as confere — o frontmatter
-   vence se divergirem). `done` só com merge em `main`: estado = trabalho por evidência.
-2. `node scripts/plano-vault.mjs index` — regenera índice e régua.
+Desde 2026-10-07 o fold entra no PR que faz o trabalho — não há mais PR `docs(plano): fold do #N` separado
+(F-2.1/F-2.2 de `docs/operating-manual/CERIMONIA-POR-RISCO-brief.md`).
+
+1. `node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]` — grava `estado`, `prs` e `atualizado`
+   no frontmatter e no cabeçalho espelhado (`**Estado:**`/`**PRs:**`), depois regenera índice e régua.
+   O PR que fecha o nó já grava `--estado done`: só chega a `main` se for mergeado, então `main` nunca mente.
+2. `estado_detalhe` continua à mão (é texto, não estado), seguido de `node scripts/plano-vault.mjs index`.
 3. `node scripts/plano-vault.mjs check` — tem de sair 0 (links, dependências, índice em dia).
 4. Decisão nova do dono → nota em `decisoes/` citando a cédula.
 
