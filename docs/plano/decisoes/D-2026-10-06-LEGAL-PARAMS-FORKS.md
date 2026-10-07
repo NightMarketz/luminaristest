@@ -9,7 +9,7 @@ atualizado: "2026-10-06"
 ---
 # D-2026-10-06-LEGAL-PARAMS-FORKS — cédulas da sessão de ratificação
 
-**Estado:** `decided` (F-LP: 9/9 + F-LP-9 decidido antes no mesmo dia; F-P16: 4/4).
+**Estado:** `decided` (F-LP: 10/10 + F-LP-9 decidido antes no mesmo dia; F-P16: 4/4).
 **Autorização:** dono, chat, 06/10/2026: *"Commita, abre o PR e ratifica os forks por questionário"*. As respostas
 vieram pelo AskUserQuestion: o agente apresentou e o dono decidiu. **Não é "executa"** (ORCH-006).
 Documentos: [`BE-INCR-LEGAL-PARAMS-brief.md`](../../accounting/BE-INCR-LEGAL-PARAMS-brief.md) §5 e
@@ -31,6 +31,7 @@ Documentos: [`BE-INCR-LEGAL-PARAMS-brief.md`](../../accounting/BE-INCR-LEGAL-PAR
 | F-LP-6 suspensão LC 224 | *"A plataforma vai atualizar os dados fiscais de acordo com a lei sempre, contador apenas valida quando for sair pra fora da plataforma"* (Other) | ✅ (b) **fica como está** (sem aprovação do contador na flag), mais o **princípio** registrado abaixo |
 | F-LP-7 tela | *"BRIEF de tela separado (Recomendado)"* | ✅ (a) `FE-INCR-LEGAL-PARAMS` |
 | F-LP-8 linhas `ANEXO_*` já semeadas | *"Migrar e apagar"* | ✅ (b) — **contra a recomendação (a)**; consequências no BRIEF (item 9) |
+| F-LP-10 forma do "apagar" (nasceu do F-LP-8) | *"Apagar de vez"* | ✅ (b) delete físico depois do repoint — **contra a recomendação (a) soft-delete**, padrão da casa |
 
 ### Princípio do dono (F-LP-6), vale como regra citável
 > *"A plataforma vai atualizar os dados fiscais de acordo com a lei sempre, contador apenas valida quando for sair pra

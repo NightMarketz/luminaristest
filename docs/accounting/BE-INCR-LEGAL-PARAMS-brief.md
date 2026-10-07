@@ -212,7 +212,7 @@ export const ProposeLegalParameterSchema = z.object({
 interface ParametrosUsados { ids: string[]; sha256: string }
 ```
 
-## 5. Forks — ratificados 06/10 (questionário), exceto F-LP-10 (novo, PENDENTE)
+## 5. Forks — ratificados 06/10 (questionário), incluindo o F-LP-10
 
 | Fork | Caminhos | Recomendação | Status |
 |---|---|---|---|
@@ -225,7 +225,7 @@ interface ParametrosUsados { ids: string[]; sha256: string }
 | **F-LP-6** Quem liga a suspensão da LC 224 (D-2; a flag já existe) | (a) a mudança de `lc224AcrescimoSuspenso` passa pela política versionada, com o contador aprovando · (b) fica como está (edição do perfil, auditada) | **(a).** Desligar um acréscimo de imposto é decisão que o contador valida (tese do produto); a política versionada hoje cobre `FiscalProfile` da unidade, não `CompanyFiscalProfile` (`AccountingPolicyVersionService.ts:29`) — o alvo novo é parte do trabalho | ✅ **fica como está** + princípio do dono: *"A plataforma vai atualizar os dados fiscais de acordo com a lei sempre, contador apenas valida quando for sair pra fora da plataforma"* — [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
 | **F-LP-7** Escopo de tela | (a) BRIEF FE separado (`FE-INCR-LEGAL-PARAMS`) · (b) sem tela, publicação por CLI | **(a)** para a lista e o histórico; a publicação pode começar por CLI se o FE atrasar | ✅ (a) `FE-INCR-LEGAL-PARAMS` — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
 | **F-LP-8** Linhas `ANEXO_*` já semeadas em `DepreciationRate` (D-3) | (a) ficam como estão (são referenciadas por snapshot) e deixam de ser lidas para bem novo · (b) migrar e apagar | **(a).** Apagar quebra a leitura do bem antigo (`hiddenAt` existe justamente para isso) | ✅ **(b) contra a recomendação** — migrar e apagar; ver item 9 e F-LP-10 — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
-| **F-LP-10** Forma do "apagar" do F-LP-8 | (a) soft-delete (`hiddenAt`, já existe no model) depois do repoint · (b) delete físico depois do repoint | **(a).** O contrato da casa é soft-delete (CLAUDE.md, padrões de camada); o efeito para o usuário é o mesmo (a linha some da lista) e o histórico fica | PENDENTE |
+| **F-LP-10** Forma do "apagar" do F-LP-8 | (a) soft-delete (`hiddenAt`, já existe no model) depois do repoint · (b) delete físico depois do repoint | **(a).** O contrato da casa é soft-delete (CLAUDE.md, padrões de camada); o efeito para o usuário é o mesmo (a linha some da lista) e o histórico fica | ✅ **(b) contra a recomendação** — delete físico, só depois do repoint (item 9, ordem obrigatória) — dono, chat, 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
 | **F-LP-9** D-1 — 16% no Presumido | (a) reabrir o F-X7-14 e modelar o art. 215 §§ 10–11 · (b) manter 32% e corrigir só o texto do ADR · (c) adiar até haver cliente que se qualifique | ✅ **Dono, chat, 2026-10-06 (questionário): "Errata + BRIEF do 16%"** — errata aplicada no ADR; BRIEF em [`BE-INCR-TAX-PRESUMIDO-16-brief.md`](BE-INCR-TAX-PRESUMIDO-16-brief.md) (forks F-P16 pendentes; sem 'executa') | DECIDIDO |
 
 ## 6. Pendente de validação externa (contador ou fonte primária)
