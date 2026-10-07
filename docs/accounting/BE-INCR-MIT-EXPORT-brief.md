@@ -375,7 +375,7 @@ não assina). Novas:
      não se aplica; (iii) a DCTFWeb sem movimento é gerada pelos eventos de fechamento do eSocial/EFD-Reinf, não pelo
      MIT (fonte **secundária**: apostila CRC-CE "DCTFWeb/MIT", ago/2026, citando a IN RFB 2.237/2024).
    - **Caminhos:** (a) `faltantes = []` na DCTFWEB quando `inativa = true` (recomendado — some o falso `INCOMPLETO`);
-     (b) manter como está (letra do item 14). **DECISÃO PENDENTE do dono.** Depois de decidido (a): teste-guarda
+     (b) manter como está (letra do item 14). ✅ **DECIDIDO (a) — dono, chat, 07/10: *"caminho (a)"*.** Próximo: teste-guarda
      vermelho (`sessao-instrumentacao`) → fix mínimo em `CompanyFiscalProfileService.obligations` (`sessao-correcao`).
    - **Junto, sem mudar status:** a pergunta da linha inativa (*"Este ano contém o 1º mês sem movimento?"*) não cobre os
      outros dois gatilhos da entrega sem movimento (início da obrigatoriedade e início de atividade — mesma fonte
