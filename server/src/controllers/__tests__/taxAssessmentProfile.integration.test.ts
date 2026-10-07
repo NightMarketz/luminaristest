@@ -110,6 +110,22 @@ describe('X7 PR-1 — perfil (itens 1, 2b) e contas da provisão (item 3)', () =
     expect((await put(2028, { regime: 'REAL', ecf: ECF, lucroRealObrigatorio: false, prestadoraExclusivaServicos: true })).status).toBe(200);
   });
 
+  it('PRESUMIDO-16 (F-P16-1 a): declaraNaoProfissaoRegulamentada grava, audita e trava junto com a flag', async () => {
+    const corpo = { regime: 'PRESUMIDO', ecf: ECF, prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true };
+    expect((await put(2037, { regime: 'PRESUMIDO', ecf: ECF, prestadoraExclusivaServicos: true })).status).toBe(400);
+    const livre = await put(2037, corpo);
+    expect(livre.status).toBe(200);
+    expect(livre.body.data.declaraNaoProfissaoRegulamentada).toBe(true);
+    expect((await ultimoEvento('company_fiscal_profile.updated')).declaraNaoProfissaoRegulamentada).toBe('true');
+    await prisma.companyFiscalProfile.update({
+      where: { userId_anoCalendario: { userId: dono.id, anoCalendario: 2037 } },
+      data: { formaApuracaoTravadaEm: new Date('2037-04-27T12:00:00Z') },
+    });
+    const troca = await put(2037, { ...corpo, prestadoraExclusivaServicos: false, declaraNaoProfissaoRegulamentada: false });
+    expect(troca.status).toBe(400);
+    expect(JSON.stringify(troca.body)).toContain('declaraNaoProfissaoRegulamentada');
+  });
+
   it('X7 Fase B PR-3 (achado 1 do review; decisão do dono 05/10): travado ⇒ as datas de atividade não mudam (400); as mesmas passam', async () => {
     const base = { regime: 'REAL', ecf: ECF, formaApuracaoIrpjCsll: 'TRIMESTRAL', lucroRealObrigatorio: false, inicioAtividadeEm: '2029-11-01', encerramentoAtividadeEm: null };
     expect((await put(2029, base)).status).toBe(200);

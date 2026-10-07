@@ -401,6 +401,8 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
   if (formaEfetiva(atual.regime, atual.formaApuracaoIrpjCsll) !== formaEfetiva(data.regime, data.formaApuracaoIrpjCsll)) trocou.push('formaApuracaoIrpjCsll');
   if (atual.lucroRealObrigatorio !== data.lucroRealObrigatorio) trocou.push('lucroRealObrigatorio');
   if (atual.prestadoraExclusivaServicos !== data.prestadoraExclusivaServicos) trocou.push('prestadoraExclusivaServicos');
+  // PRESUMIDO-16 (F-P16-1 a): a confirmação é condição do 16% já confirmado — trava junto com a flag (review independente).
+  if (atual.declaraNaoProfissaoRegulamentada !== data.declaraNaoProfissaoRegulamentada) trocou.push('declaraNaoProfissaoRegulamentada');
   if (atual.inicioAtividadeEm !== data.inicioAtividadeEm) trocou.push('inicioAtividadeEm');
   if (atual.encerramentoAtividadeEm !== data.encerramentoAtividadeEm) trocou.push('encerramentoAtividadeEm');
   if (trocou.length > 0) {
