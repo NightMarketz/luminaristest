@@ -51,6 +51,8 @@ describe('X13 PR-3 — regime e porte no onboarding', () => {
         // condições ainda sem resposta no onboarding ⇒ a ECD do Presumido fica CONDICIONAL (IN 2.003 art. 3º)
         expect.objectContaining({ obrigacao: 'ECD', status: 'CONDICIONAL' }),
         expect.objectContaining({ obrigacao: 'ECF', status: 'OBRIGATORIA' }),
+        // X9 item 13: DCTFWEB no fim da lista (decisão do dono 06/10)
+        expect.objectContaining({ obrigacao: 'DCTFWEB', status: 'OBRIGATORIA' }),
       ],
     });
     const perfil = await prisma.companyFiscalProfile.findUniqueOrThrow({ where: { userId_anoCalendario: { userId: u.id, anoCalendario: HOJE } } });
@@ -66,7 +68,7 @@ describe('X13 PR-3 — regime e porte no onboarding', () => {
     const u = await novoUsuario();
     const r = await criar(u, { fiscal: { regime: 'MEI' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.fiscal.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['FACULTATIVA', 'NAO_SE_APLICA']);
+    expect(r.body.data.fiscal.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['FACULTATIVA', 'NAO_SE_APLICA', 'CONDICIONAL']); // + DCTFWEB do MEI (X9 item 13)
   });
 
   it('item 19: NAO_SEI ou sem bloco fiscal → pendente, nenhum perfil criado', async () => {

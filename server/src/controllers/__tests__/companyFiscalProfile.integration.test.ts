@@ -63,6 +63,8 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     expect(r.body.data.obrigacoes).toEqual([
       expect.objectContaining({ obrigacao: 'ECD', status: 'FACULTATIVA', faltantes: [] }),
       expect.objectContaining({ obrigacao: 'ECF', status: 'NAO_SE_APLICA', faltantes: [] }),
+      // X9 item 13–14: DCTFWEB no fim (decisão do dono 06/10); MEI CONDICIONAL, sem faltantes (o X9 não gera, D10)
+      expect.objectContaining({ obrigacao: 'DCTFWEB', status: 'CONDICIONAL', faltantes: [] }),
     ]);
   });
 
@@ -121,7 +123,7 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     expect(g.body.data).toMatchObject({ ano: 2025, regime: 'PRESUMIDO', ecd: { numOrd: '7' }, declarante: { cnpj: '12345678000195' } });
     const r = await obrigacoes(2025);
     expect(r.body.data.perfil).toBe('COMPLETO');
-    expect(r.body.data.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['OBRIGATORIA', 'OBRIGATORIA']);
+    expect(r.body.data.obrigacoes.map((o: { status: string }) => o.status)).toEqual(['OBRIGATORIA', 'OBRIGATORIA', 'OBRIGATORIA']); // + DCTFWEB (X9 item 13)
     const ev = await eventos('company_fiscal_profile.updated');
     const ultimo = dump(ev[ev.length - 1]);
     for (const pii of ['Salao Bela', '12345678000195', 'contato@bela', 'DIARIO GERAL']) expect(ultimo).not.toContain(pii);
@@ -162,5 +164,18 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     expect((await put(2024, { regime: 'SIMPLES' })).status).toBe(200);
     expect(await prisma.companyFiscalProfile.count({ where: { userId: dono.id, anoCalendario: 2024 } })).toBe(1);
     expect((await eventos('company_fiscal_profile.deleted')).length).toBe(1);
+  });
+
+  it('X9 item 14: DCTFWEB nunca herda condicoes.* nem o declarante da ECF; cobra CNPJ e contador só em REAL/PRESUMIDO', async () => {
+    const dctfweb = async (ano: number) => (await obrigacoes(ano)).body.data.obrigacoes.find((o: { obrigacao: string }) => o.obrigacao === 'DCTFWEB');
+    // SIMPLES com condições nulas: a ECD fica CONDICIONAL com condicoes.*, a DCTFWEB não cobra nada (o X9 não gera, D10)
+    expect((await put(2028, { regime: 'SIMPLES' })).status).toBe(200);
+    expect(await dctfweb(2028)).toMatchObject({ status: 'OBRIGATORIA', faltantes: [] });
+    // REAL com declarante completo e sem contador ⇒ só o contador falta
+    expect((await put(2029, { regime: 'REAL', declarante: DECLARANTE_COMPLETO })).status).toBe(200);
+    expect(await dctfweb(2029)).toMatchObject({ status: 'OBRIGATORIA', faltantes: ['contadorContactId'] });
+    // sem declarante e com contador ⇒ só o CNPJ falta
+    expect((await put(2029, { regime: 'REAL', contadorContactId: contadorId })).status).toBe(200);
+    expect(await dctfweb(2029)).toMatchObject({ faltantes: ['declarante.cnpj'] });
   });
 });

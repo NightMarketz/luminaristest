@@ -298,7 +298,14 @@ export class CompanyFiscalProfileService {
     const obrigacoes = resolverObrigacoes({ regime: view.regime, inativa: view.inativa, condicoes: view.condicoes }).map((o) => {
       const cobra = o.status === 'OBRIGATORIA' || o.status === 'CONDICIONAL';
       const faltantes: string[] = [];
-      if (cobra) {
+      if (o.obrigacao === 'DCTFWEB') {
+        // BRIEF X9 item 14: nunca herda condicoes.* nem DECLARANTE_ECF; cobra só o que o arquivo do MIT exige (itens 7–8),
+        // e só em REAL/PRESUMIDO — no SIMPLES/MEI o X9 não gera arquivo (D10).
+        if (cobra && (view.regime === 'REAL' || view.regime === 'PRESUMIDO')) {
+          if (view.declarante?.cnpj === undefined) faltantes.push('declarante.cnpj');
+          if (!contadorVivo) faltantes.push('contadorContactId');
+        }
+      } else if (cobra) {
         if (o.status === 'CONDICIONAL') {
           for (const [k, v] of Object.entries(view.condicoes)) if (v === null) faltantes.push(`condicoes.${k}`);
         }

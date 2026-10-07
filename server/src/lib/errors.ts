@@ -146,6 +146,18 @@ export class AccountingPeriodNotOpenError extends AppError {
 }
 
 /**
+ * BE-INCR-MIT-EXPORT (nó X9, BRIEF itens 4–5; ADR-INCR-DCTFWEB-MIT D7): o PA não tem o que exportar no MIT — sem
+ * apuração confirmada, só débitos zero, ou forma ainda não suportada. 422 com código próprio (lacuna do PR-1 decidida
+ * pelo dono em 06/10: classe nova, não ValidationError 400). A mensagem diz qual dos casos.
+ */
+export class MitNadaAExportarError extends AppError {
+  constructor(message: string) {
+    super(message, 422, 'MIT_NADA_A_EXPORTAR');
+    Object.setPrototypeOf(this, MitNadaAExportarError.prototype);
+  }
+}
+
+/**
  * BE-INCR-ACCOUNTANT-GOVERNANCE (nó GOV-CONTADOR, BRIEF item 13): há contador responsável ativo no escopo e
  * só ele reabre período ou assina/rejeita a revisão (F-GOV-3 a).
  */
