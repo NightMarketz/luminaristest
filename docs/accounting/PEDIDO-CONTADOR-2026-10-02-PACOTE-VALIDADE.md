@@ -40,7 +40,9 @@
 > - (a) Concorda em reconhecer tudo no vencimento? Ou prefere o **método proporcional** (ir reconhecendo a parte que
 >   se espera que não será usada ao longo do uso)?
 > - (b) Em que conta e em que linha da DRE essa receita deve ficar (receita bruta de serviços, outras receitas
->   operacionais, outra)?
+>   operacionais, outra)? E qual o **código da conta referencial da RFB** (Plano Referencial da ECD, ano-calendário
+>   2025, PJ em geral) para essa conta? Hoje as nossas receitas estão assim: receita de serviços → 3.01.01.01.01.06;
+>   revenda de mercadorias → 3.01.01.01.01.05. *(Incluído em 07/10: sem esse código a ECD não é gerada.)*
 > - (c) A data de competência (dia seguinte ao último dia válido) está certa? Pacote válido até 31/12 viraria receita
 >   de 01/01 do ano seguinte.
 >
@@ -73,7 +75,7 @@ Fonte das perguntas: BRIEF §6 (PE-1..PE-5), §5.1–§5.2 (ratificação de 02/
 | 1b | **PE-4** + F-PV-9b | `cTribNac` (6 dígitos) e `cNBS` (9 dígitos) do pacote | `cTribNac` existe em `lc116ListaNacional.ts`; `cNBS` tem 9 dígitos; o contador diz se o mesmo par serve à venda (`VENDA`) e ao vencimento | **dado** → valor do `FiscalProfile.pacoteCTribNac`/`pacoteCNBS` (item 13a), preenchido pelo dono no perfil. Também destrava o pacote `VENDA` (`FiscalDocumentEmissionService.ts:437-445`) |
 | 2 | **PE-1 (iv)** | Norma seguida: CPC 47 / NBC TG 1000 / NBC TG 1002 | Uma das três, nomeada | **NBC TG 1002 + adoção do 23.7** → frente nova (BRIEF §8), fork ao dono. **CPC 47 ou PME** → confirma o desenho (T5: "confirma, nada muda") |
 | 3a | PE-1 (i) | Reconhecer no vencimento (B46, 2º ramo) × proporcional (B46, 1º ramo) | Uma das duas | **proporcional** → crítica: muda o modelo do F-PV-4/5; fork ao dono |
-| 3b | PE-1 (ii) | Conta e linha da DRE | Conta e seção nomeadas | **dado** → mapeamento da folha 3.4 e regra DRE do item 13 (provisórios por desenho: F-PV-4 a) |
+| 3b | PE-1 (ii) | Conta e linha da DRE **+ código referencial RFB da 3.4** (emenda 07/10) | Conta e seção nomeadas; código referencial existente no catálogo 2025 (`GET /referential/catalog`) e analítico | **dado** → mapeamento da folha 3.4 e regra DRE do item 13 (provisórios por desenho: F-PV-4 a). **Bloqueia o H1** (07/10): sem o código a cobertura fica 14/15 e `POST /sped/ecd/generate` dá 400 `unmappedAccounts: [3.4]` (os dois tenants do seed) |
 | 3c | PE-1 (iii) | Competência `expiresOn + 1` | sim/não; se não, a data que ele quer | **não** → emenda do F-PV-5 pelo dono |
 | 4a, 4b | PE-3 | Simples: receita bruta do PGDAS-D, anexo, efeito de 2027 | Sim/não + anexo | Insumo do PRE-ADR Simples/MEI da onda 3 (decisão 8); não muda o checklist |
 | 5a | PE-5 | IBS/CBS no vencido | Leitura nomeada (cancelamento × contraprestação) | Insumo do PRE-ADR IBS/CBS (fork V5 do dossiê §4) |

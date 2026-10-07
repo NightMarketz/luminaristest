@@ -432,6 +432,38 @@ de idempotência para um novo encerramento).
 
 EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 
+> Preenchida pelo agente sob comando do dono (2026-10-07), tenant `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`
+> (variante seed da emenda 24/09 — conferir, não chamar). Leitura do `dev.db` real (Prisma), não screenshot:
+>
+> ```text
+> P7-seed  GET /api/accounting/cmuw4yqxg001jcii0iz2yb9rw/periods?year=2025
+>          1..12: HARD_CLOSED (todos os 12 meses)
+> passo 1  journal_entries where unitId=cmuw4yqxg001jcii0iz2yb9rw and sourceType contains 'clos':
+>          id cmuw4yz7y01arcii049qrb7vj · 2025-12-31 · "Encerramento do exercício 2025 — apuração do resultado"
+>          sourceType closing · sourceId 2025 · status Posted
+>          pernas (débito/crédito em centavos): 3.1 16248790/0 · 3.3 4893996/0 · 4.1 0/7515345 · 4.2 0/2550807 · 2.3.1 0/11076634
+>          (Σdébito 21142786 = Σcrédito 21142786)
+> ```
+>
+> **P5 — achado de 07/10 (não estava no plano):** a re-semeadura (SEED-UNITS) moveu o razão para a unidade gerada,
+> mas os 14 mapeamentos referenciais (versão `2025`) ficaram sob o id literal antigo `seed-unit-presumido` /
+> `seed-unit-real`, e o plano de contas também é por unidade (ids novos). Com o OK do dono ("Pode seguir com a (a)"),
+> o agente copiou os 14 mapeamentos para a unidade nova **casando pelo código da conta**, sem escolha contábil nova,
+> via `POST /api/accounting/referential/mappings/batch` (HTTP 200, nos dois tenants). Cobertura depois da cópia:
+>
+> ```text
+> GET /referential/coverage?unitId=cmuw4yqxg001jcii0iz2yb9rw&version=2025 → mappedCount 14 / leafAccountCount 15 · ready false
+>     unmappedAccounts: [3.4 "Receita de Pacotes Não Utilizados" (Revenue)]
+> GET /referential/coverage?unitId=cmuw4z7zj02ehcii0st3unfr4&version=2025 → 14/15 · ready false · unmapped [3.4]
+> POST /sped/ecd/generate (seed-presumido, 2025) → HTTP 400 VALIDATION_ERROR
+>     "Cobertura referencial incompleta: mapeie todas as contas analíticas antes de gerar a ECD." unmappedAccounts [3.4]
+> ```
+>
+> A 3.4 entrou com a PACOTE-VALIDADE e nunca teve código referencial; o código é dado humano (D1/D10), não do agente.
+> **P5 não se sustenta até o contador responder** — pergunta incluída no item 3b do
+> [`PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md`](PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md) (dono, 07/10).
+> Com o código: `PUT /referential/mappings` da 3.4 nas duas unidades → cobertura 15/15 → passo 3.
+
 ### 2. Conferir que o encerramento entrou no razão
 
 Na aplicação, aba **Balancete** (e DRE) do ano-calendário: as contas de resultado devem estar zeradas
