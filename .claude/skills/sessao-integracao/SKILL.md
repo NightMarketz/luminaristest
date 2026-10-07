@@ -117,8 +117,8 @@ toca `docs/plano/`).
 ("nunca edite à mão", `docs/plano/README.md`): dois folds sempre conflitam neles. Se entrarem na lista de
 superfícies conhecidas, a regra coerente é a do openapi abaixo — resolver as notas, regenerar com
 `node scripts/plano-vault.mjs index`, gate `check` exit 0. Conflito no frontmatter da **mesma nota** (dois
-folds no mesmo nó) é superfície nova (regra 3). O fold pós-merge não é desta sessão (regra 1): o relatório
-lista nó + merge para quem faz o fold.
+folds no mesmo nó) é superfície nova (regra 3). O fold já vem no PR do trabalho (`plano-vault.mjs fold`,
+desde 2026-10-07); se faltar, o relatório lista nó + merge — esta sessão não o escreve (regra 1).
 
 **Armadilhas de histórico que a regra 4 cobre:**
 

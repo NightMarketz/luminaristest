@@ -35,8 +35,10 @@ seguinte**, que vai bater na regra 3 dela e parar.
   decisão do dono sobre a lista, sem aparato novo). Se a lacuna virou nó do vault
   (`docs/plano/nos/PASSO-*.md` — ex.: GAP-MAP 7 = `PASSO-11`), a autorização é o campo `autorizacao` da
   nota; vazio = não roteia (ORCH-006).
-- **Nó do vault, se houver:** o passo 4 atualiza o GAP-MAP; a nota do nó **não** — o relatório traz a
-  linha de fold (`estado_detalhe` com caminho do teste + PR) para o fold pós-merge do `docs/plano/README.md`.
+- **Nó do vault, se houver:** o passo 4 atualiza o GAP-MAP **e** roda o fold no próprio PR
+  (`node scripts/plano-vault.mjs fold <NÓ> --pr <n>`, `docs/plano/README.md` §Fold).
+- **Nível de cerimônia:** aplique [OPS-006] (`.claude/skills/_OPERATING-GATES.md`). No nível leve esta
+  sessão e a `sessao-correcao` saem num só PR: commit `test:` (vermelho) e depois `fix:`.
 - **Comportamento correto esperado:** uma frase. Se houver mais de uma leitura possível, **pare** — a
   regra 5 diz que interpretar comportamento esperado é decisão do dono.
 

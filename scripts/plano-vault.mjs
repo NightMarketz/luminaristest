@@ -3,6 +3,8 @@
 //   node scripts/plano-vault.mjs index   → reescreve docs/plano/_INDEX.md e docs/plano/_ANCORAS.md
 //   node scripts/plano-vault.mjs check   → exit 1 se link [[x]] não resolve, frontmatter inválido,
 //                                          dependência para nó inexistente ou índice desatualizado.
+//   node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]
+//                                        → grava estado/prs/atualizado (frontmatter + cabeçalho) e reindexa.
 // Frontmatter: uma chave por linha, valor em JSON (JSON é YAML válido; o Obsidian lê como propriedade).
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative, basename, dirname, resolve } from 'node:path';
@@ -161,6 +163,33 @@ export function check(vault = VAULT) {
   return errs;
 }
 
+const ESTADOS = [...OPEN, 'done', 'decided'];
+
+// Fold no próprio PR (OPS-005 / F-2.1): o frontmatter é a fonte; as linhas **Estado:**/**PRs:** do corpo
+// são reescritas a partir dele. Depois regenera o índice.
+export function fold(vault, id, { pr, estado, hoje = new Date().toISOString().slice(0, 10) }) {
+  if (!Number.isInteger(pr) || pr <= 0) throw new Error('--pr <n> obrigatório (inteiro)');
+  if (estado && !ESTADOS.includes(estado)) throw new Error(`estado "${estado}" inválido — use ${ESTADOS.join('|')}`);
+  const n = loadVault(vault).find((x) => x.fm?.id === id);
+  if (!n) throw new Error(`nó "${id}" não existe no vault`);
+  const fm = { ...n.fm, estado: estado ?? n.fm.estado, atualizado: hoje };
+  fm.prs = [...new Set([...(n.fm.prs ?? []), `#${pr}`])];
+  const detalhe = fm.estado_detalhe ? ` — ${fm.estado_detalhe}` : '';
+  const body = n.body
+    .replace(/^\*\*Estado:\*\*.*$/m, `**Estado:** \`${fm.estado}\`${detalhe}  `)
+    .replace(/^\*\*PRs:\*\*.*$/m, `**PRs:** ${fm.prs.join(', ')}  `);
+  // Reescreve só as chaves tocadas, no estilo das notas (array com ", "), preservando ordem e fim de linha.
+  const fmt = (v) => (Array.isArray(v) ? `[${v.map((x) => JSON.stringify(x)).join(', ')}]` : JSON.stringify(v));
+  const text = readFileSync(n.file, 'utf8');
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const raw = Object.fromEntries(text.replace(/\r\n/g, '\n').split('\n---\n')[0].split('\n').slice(1)
+    .filter((l) => l.includes(':')).map((l) => [l.slice(0, l.indexOf(':')).trim(), l.slice(l.indexOf(':') + 1).trim()]));
+  const head = Object.keys(fm).map((k) => `${k}: ${['estado', 'prs', 'atualizado'].includes(k) ? fmt(fm[k]) : raw[k]}`);
+  writeFileSync(n.file, ['---', ...head, '---', ''].join('\n').concat(body).replace(/\n/g, eol));
+  for (const [name, content] of Object.entries(buildIndex(loadVault(vault)))) writeFileSync(join(vault, name), content);
+  return fm;
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const cmd = process.argv[2];
   if (cmd === 'index') {
@@ -171,8 +200,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     for (const e of errs) console.error(e);
     console.log(errs.length ? `${errs.length} problema(s)` : 'vault íntegro');
     process.exit(errs.length ? 1 : 0);
+  } else if (cmd === 'fold') {
+    const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : undefined; };
+    try {
+      const fm = fold(VAULT, process.argv[3], { pr: Number(arg('--pr')), estado: arg('--estado') });
+      console.log(`fold ${fm.id}: estado=${fm.estado} prs=${fm.prs.join(',')}`);
+    } catch (e) { console.error(e.message); process.exit(1); }
   } else {
-    console.error('uso: node scripts/plano-vault.mjs index|check');
+    console.error('uso: node scripts/plano-vault.mjs index|check|fold <NÓ> --pr <n> [--estado <e>]');
     process.exit(2);
   }
 }

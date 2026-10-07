@@ -149,7 +149,6 @@ nem ignore.
 **Review independente não é opcional:** PASS emitido pela mesma sequência que implementou é rejeitado;
 delegue a agente isolado.
 
-**Vault do plano fora do diff da feature (regra 1).** Só edite `docs/plano/` se a spec ou o plano do
-orquestrador listar o passo de closeout (ORCH-007); o procedimento está no `luminaris-implementer`. Sem esse
-passo, o relatório final traz a linha de fold pronta (`id`, `estado`, `estado_detalhe`, `prs`) para o fold
-pós-merge do `docs/plano/README.md`.
+**Fold do vault no próprio PR.** A única edição permitida em `docs/plano/` é o fold do nó desta feature:
+`node scripts/plano-vault.mjs fold <NÓ> --pr <n> [--estado <e>]` antes do push (`docs/plano/README.md`
+§Fold; ratificado 2026-10-07, F-2.1/F-2.2 de `docs/operating-manual/CERIMONIA-POR-RISCO-brief.md`).

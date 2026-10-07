@@ -9,7 +9,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Bar de qualidade / camadas:** `.claude/skills/_ARCHITECTURE-CONTRACT.md`
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
-- **Disciplina operacional do agente (OPS-001..004):** `.claude/skills/_OPERATING-GATES.md`
+- **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo
@@ -33,15 +33,12 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 
 ## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
 
-Removidos: `scripts/bancada-gate.mjs`, `scripts/review-ledger-check.mjs`, todo o `docs/audit/`
-(34 arquivos) e os dois passos do `ci.yml`. **Não os recrie.** Recuperáveis em `b617d8f1`.
+Removidos `docs/audit/`, `bancada-gate.mjs`, `review-ledger-check.mjs` e os passos do `ci.yml`. **Não os recrie.**
 
 **Regra permanente:** enquanto houver item do Bloco A (gates humanos/dado externo em `docs/plano/gates/`, ex-master map §5.1) com **oráculo
 externo** aberto há mais de 14 dias (hoje: **4 de 4**), **não monte aparato de auditoria novo** — nem
-gate, nem rodada, nem mais um revisor. A medida que fundamenta isso: 5 rodadas, 31 itens triados, **17
-sobre o próprio instrumento**, **0 linha de código de aplicação alterada** — contra 28 linhas de uma
-única sessão de navegador contra o `dev.db` real. O gargalo é PVA / NF-e real / contador / implantar,
-e nenhum deles se resolve com mais processo.
+gate, nem rodada, nem mais um revisor. O gargalo é PVA / NF-e real / contador / implantar (medida em
+`docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
@@ -71,44 +68,17 @@ Regra completa + anti-padrões proibidos em `.claude/skills/_ARCHITECTURE-CONTRA
 
 ## Antes de escrever código — reflexo obrigatório
 
-**1. Pergunte ao codebase-memory se o canônico já existe.** Isto é o degrau "reuse antes de recriar"
-(Contrato §0) e a Etapa 1 do critério de reuso feitos por evidência, não por chute:
-
-| Pergunta | Ferramenta cbm |
-|---|---|
-| Já existe algo com esse nome/forma? | `search_graph` (name/label/file_pattern) |
-| Existe um quase-clone (ilha) que eu deveria reusar? | `semantic_query` + edges `SIMILAR_TO` / `SEMANTICALLY_RELATED` |
-| O outro lado está vivo ou é legacy? (Etapa 2) | `trace_path` (in-degree) + `change_count` / `last_modified` |
-| Qual o blast radius do meu diff antes de fechar? | `detect_changes` |
-
-> **[CBM-001] Papel do cbm — localizador estrutural, NÃO fonte de verdade.** O grafo reduz o espaço de busca
-> (símbolos, dependências, call paths, blast radius, arquitetura); a evidência final é **sempre código/teste/git**.
-> Regra dura: **nenhuma conclusão comportamental se sustenta só no grafo** — todo resultado do cbm que vira
-> afirmação sobre o que o código *faz* tem de ser confirmado lendo o arquivo (e o teste, quando aplicável).
-> Use **cbm-primeiro para localizar** ("quem chama X?", "onde isto é implementado?", "o que quebra se eu mudar Y?",
-> "qual a arquitetura deste domínio?"); use **`Read`/`Grep`/teste direto para confirmar** (condição exata,
-> string/config, o que um teste afirma, contexto integral do arquivo, geração dinâmica/reflexão). Isto **refina**
-> o hook de SessionStart ("cbm FIRST for ANY exploration"): cbm-first vale para *localização estrutural*, não para
-> busca exaustiva de call sites nem leitura de contexto integral — aí a leitura nativa ganha (evidência própria:
-> `cbm-indegree-underreports-frontend`, composição JSX não é aresta `CALLS`). `manage_adr`/`delete_project` ficam
-> fora do uso do agente; ADR/incidente são editados direto no vault de governança.
+**1. Pergunte ao codebase-memory se o canônico já existe** (`search_graph`, `semantic_query`, `trace_path`,
+`detect_changes`). **[CBM-001]: o cbm localiza, não prova** — toda conclusão sobre o que o código *faz* se
+confirma lendo o arquivo/teste. Tabela e regra integral em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
 
 **2. Reuse o canônico** listado no §0 (GenericTable, Modal, StandardPagination, AnalyticsDashboard,
 CrmPipelineService…). Bespoke só com divergência de **shape ou posse** sancionada pelo critério de reuso,
-justificada no relatório. Projeto indexado como `C-Users-smurf-Downloads-Luminaris`.
+justificada no relatório.
 
-## Ponytail × este projeto
-
-O ponytail (modo lazy, sempre ativo) e este projeto **concordam** no núcleo — menos código, reuse antes de
-recriar, YAGNI — e o codebase-memory é o que torna esse instinto fundamentado. Mas com uma fronteira clara:
-
-- **Padrões de camada NÃO são over-engineering.** A cadeia `Route → Controller → Service → Repository → Prisma`
-  (+ Policy), injeção via **Factory**, **DTO Zod**, **soft-delete** e **registro de rota em 2 toques** (`index.ts` + `docs.paths.ts`; auth é deny-by-default no middleware) são
-  *requisitos do projeto* (Contrato §2/§3). Caem na própria regra do ponytail de "nunca simplificar o que foi
-  explicitamente pedido / segurança". **Não** inline uma policy, **não** pule um DTO, **não** corte o factory
-  "pra ser enxuto".
-- O ponytail morde no **código solto** (um helper, um fix pontual) — aí sim, seja mínimo.
-- Em dúvida entre enxugar e seguir o padrão da camada → **o contrato prevalece**.
+**3. Padrão de camada não é over-engineering** (ponytail × projeto): Route→Controller→Service→Repository→Prisma
+(+ Policy), Factory, DTO Zod, soft-delete e rota em 2 toques são requisito (Contrato §2/§3). O minimalismo
+morde só no código solto; em dúvida, **o contrato prevalece**.
 
 ## Gates rápidos (o resto está no contrato)
 
@@ -116,12 +86,9 @@ recriar, YAGNI — e o codebase-memory é o que torna esse instinto fundamentado
 - `neutral-*`, **nunca** `zinc-*`; cards `rounded-2xl`/`3xl`; zero `any` evitável.
 - Telas atrás de `withAuth` → verifique contra **build de produção**, não `next dev`.
 - Tocou `.claude/skills/**` → `node .claude/skills/skill-audit/skill-audit.mjs run` antes de fechar
-  (0 findings é gate). **Predicado de ambiente:** desde o PR #203 o SG-005 pergunta o destino
-  (`GITHUB_REF_NAME`/`GITHUB_BASE_REF` = main na CI, além do checkout local em `main`) — a CI de PR
-  morde; 0 findings **local** fora dessas condições segue não provando o push com skill `draft`.
-  Classe geral: gate cujo predicado lê ambiente (branch, worktree, modo de sessão, fuso, SO) se prova
-  **na condição que falha**, ou declara-se "o push/CI é o teste" — nunca trate verde fora da condição
-  como evidência.
+  (0 findings é gate). Gate cujo predicado lê ambiente se prova **na condição que falha** — detalhe
+  (SG-005, #203) em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
+- Nível de cerimônia por risco (leve × completo): **[OPS-006]** em `.claude/skills/_OPERATING-GATES.md`.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 
@@ -138,13 +105,7 @@ teto **[OPS-002]**: pare de aprofundar, converta em checagem (executar → teste
 ler fonte), declare o aberto — nunca blefe continuidade. Detalhe + OPS-003/004 em
 `.claude/skills/_OPERATING-GATES.md`.
 
-## Política de raciocínio [T1–T8] — durante o trabalho (detalhe em REASONING-TRAITS.md)
+## Política de raciocínio [T1–T8]
 
-1. Nomeie o **objetivo sob a letra** do pedido; se divergem, responda ao objetivo e avise.
-2. Claim inverificável → converta em artefato checável por fora, ou declare inverificável.
-3. Regra que você criar **se aplica primeiro a você**; declare onde falha em si mesma.
-4. Decisão que vai se repetir: formule a regra na 1ª vez, **cite-a** nas seguintes.
-5. Input que só confirma o existente não vira texto novo — registre "confirma" e siga.
-6. Sobre trabalho já ~certo: **patches no que falha, nunca rewrite**.
-7. Instrução que alguém vai rodar = passos numerados; aforismo só como índice.
-8. O risco final da entrega **inclui seus próprios vieses**, nomeados.
+Objetivo sob a letra, claim checável, regra vale primeiro pra você, patch não rewrite, vieses nomeados —
+lista e detalhe em `docs/operating-manual/REASONING-TRAITS.md` (resumo em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`).
