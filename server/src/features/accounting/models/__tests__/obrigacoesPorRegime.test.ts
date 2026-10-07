@@ -18,15 +18,21 @@ describe('regimeEmpresa (item 2)', () => {
   });
 });
 
-describe('matriz ECD/ECF × 4 regimes (item 3) — só linhas com fonte verificada', () => {
-  it('tem exatamente 8 linhas (ECD e ECF para MEI, SIMPLES, PRESUMIDO, REAL), cada uma com fonte e vigência', () => {
-    expect(OBRIGACOES_POR_REGIME).toHaveLength(8);
+describe('matriz ECD/ECF/DCTFWEB × 4 regimes (item 3; X9 item 13) — só linhas com fonte verificada', () => {
+  // X9 item 13 (F-X9-6 a): 8 → 12 linhas, DCTFWEB por regime — mudança esperada, não regressão.
+  it('tem exatamente 12 linhas (ECD, ECF e DCTFWEB para MEI, SIMPLES, PRESUMIDO, REAL), cada uma com fonte e vigência', () => {
+    expect(OBRIGACOES_POR_REGIME).toHaveLength(12);
     for (const r of REGIMES_EMPRESA) {
-      expect(OBRIGACOES_POR_REGIME.filter((l) => l.regime === r).map((l) => l.obrigacao).sort()).toEqual(['ECD', 'ECF']);
+      expect(OBRIGACOES_POR_REGIME.filter((l) => l.regime === r).map((l) => l.obrigacao).sort()).toEqual(['DCTFWEB', 'ECD', 'ECF']);
     }
     for (const l of OBRIGACOES_POR_REGIME) {
-      expect(l.fonte).toMatch(/IN RFB 2\.00[34]\/2021/);
-      expect(l.vigenteDesde).toBe('2021-01-18');
+      if (l.obrigacao === 'DCTFWEB') {
+        expect(l.fonte).toMatch(/IN RFB 2\.237\/2024/);
+        expect(l.vigenteDesde).toBe('2025-01-01');
+      } else {
+        expect(l.fonte).toMatch(/IN RFB 2\.00[34]\/2021/);
+        expect(l.vigenteDesde).toBe('2021-01-18');
+      }
     }
   });
 
@@ -39,6 +45,10 @@ describe('matriz ECD/ECF × 4 regimes (item 3) — só linhas com fonte verifica
     ['ECF', 'PRESUMIDO', 'OBRIGATORIA', 'IN 2.004 art. 1º caput'],
     ['ECF', 'SIMPLES', 'NAO_SE_APLICA', 'IN 2.004 art. 1º §1º I'],
     ['ECF', 'MEI', 'NAO_SE_APLICA', 'IN 2.004 art. 1º §1º I + LC 123 art. 18-A §1º'],
+    ['DCTFWEB', 'REAL', 'OBRIGATORIA', 'IN 2.237 art. 3º I'],
+    ['DCTFWEB', 'PRESUMIDO', 'OBRIGATORIA', 'IN 2.237 art. 3º I'],
+    ['DCTFWEB', 'SIMPLES', 'OBRIGATORIA', 'IN 2.237 art. 3º I'],
+    ['DCTFWEB', 'MEI', 'CONDICIONAL', 'IN 2.237 art. 3º IX; art. 4º IX'],
   ] as const)('%s × %s, condições todas "não" → %s (%s)', (obrigacao, regime, esperado, _fonte) => {
     expect(status(regime)[obrigacao].status).toBe(esperado);
   });
@@ -50,6 +60,30 @@ describe('resolvedor (item 4) — precedência IN 2.003 art. 3º §§1º–3º e
       const s = status(r, { aporteInvestidorAnjo: true }, true);
       expect(s.ECD).toMatchObject({ status: 'NAO_SE_APLICA', fonte: 'IN RFB 2.003/2021 art. 3º §1º III' });
       expect(s.ECF).toMatchObject({ status: 'NAO_SE_APLICA', fonte: 'IN RFB 2.004/2021 art. 1º §1º III' });
+    }
+  });
+
+  it('X9 item 13 (F-X9-6 a): DCTFWEB do MEI → CONDICIONAL com a pergunta do art. 3º IX; dos demais, a fonte do art. 3º I', () => {
+    expect(status('MEI').DCTFWEB).toEqual({
+      obrigacao: 'DCTFWEB',
+      status: 'CONDICIONAL',
+      fonte: 'IN RFB 2.237/2024 art. 3º IX; art. 4º IX',
+      perguntaPendente: 'O MEI contratou segurado, reteve IR ou está em outra hipótese do art. 3º IX?',
+    });
+    expect(status('REAL').DCTFWEB).toEqual({ obrigacao: 'DCTFWEB', status: 'OBRIGATORIA', fonte: 'IN RFB 2.237/2024 art. 3º I; art. 6º § 2º II (sem movimento)' });
+  });
+
+  it('X9 item 13 (F-MIT-3 a): inativa → DCTFWEB CONDICIONAL com a fonte do art. 4º, em todo regime; ECD/ECF com as fontes de antes', () => {
+    for (const r of REGIMES_EMPRESA) {
+      const s = status(r, {}, true);
+      expect(s.DCTFWEB).toEqual({
+        obrigacao: 'DCTFWEB',
+        status: 'CONDICIONAL',
+        fonte: 'IN RFB 2.237/2024 art. 4º (sem dispensa para inativa) e art. 6º § 2º II',
+        perguntaPendente: 'Este ano contém o 1º mês sem movimento? Se sim, entregue a DCTFWeb desse mês; nos seguintes, fica dispensada',
+      });
+      expect(s.ECD).toEqual({ obrigacao: 'ECD', status: 'NAO_SE_APLICA', fonte: 'IN RFB 2.003/2021 art. 3º §1º III' });
+      expect(s.ECF).toEqual({ obrigacao: 'ECF', status: 'NAO_SE_APLICA', fonte: 'IN RFB 2.004/2021 art. 1º §1º III' });
     }
   });
 
