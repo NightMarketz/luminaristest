@@ -1064,7 +1064,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         const result = await this.fixedAssetDraftCreator.createDraftFromPayable(
           scope,
           payable,
-          parsed.fixedAssetItems,
+          await this.taxaPosLegalParams(scope, parsed.fixedAssetItems),
           doc.id,
         );
         created += result.created;
@@ -1076,6 +1076,25 @@ export class PayableService implements IFixedAssetDraftRedriver {
       }
     }
     return created;
+  }
+
+  /**
+   * BE-INCR-LEGAL-PARAMS PR-3 (review independente, achado 1): `rawJson` gravado ANTES do PR-3 não tem
+   * `legalParameterId`, e o `rateId` dele aponta para uma linha ANEXO_* por escopo que a migração apagou (só sobram
+   * as referenciadas por bem — este item ainda não tinha bem). Sem isto o rascunho falharia no FK em toda passada.
+   * Item assim é reconduzido pelo MESMO casamento por NCM do create (`resolveRateForNcm`) no catálogo atual; um
+   * `rateId` CUSTOM que ainda existe fica como está. Item já no formato do PR-3 passa intacto.
+   */
+  private async taxaPosLegalParams(scope: AccountingScope, items: ResolvedFixedAssetItem[]): Promise<ResolvedFixedAssetItem[]> {
+    const legado = (i: ResolvedFixedAssetItem) => i.legalParameterId === undefined && !!i.rateId;
+    if (!items.some(legado) || !this.depreciationRateCatalog) return items;
+    const rates = await this.depreciationRateCatalog.catalogo(scope, true);
+    return items.map((item) => {
+      if (!legado(item)) return item;
+      if (rates.some((r) => r.origem === 'ESCOPO' && r.id === item.rateId)) return { ...item, legalParameterId: null };
+      const { rateId: escolhida } = resolveRateForNcm(rates, item.ncm, item.cProd);
+      return { ...item, ...taxaEscolhidaDe(rates.find((r) => r.id === escolhida)!), annualRateBp: item.annualRateBp };
+    });
   }
 
   // ---------------------------------------------------------------------------

@@ -1259,6 +1259,35 @@ describe('PayableService.createPayable — modo 4 (fixedAssetItems, debita class
   });
 });
 
+// ── BE-INCR-LEGAL-PARAMS PR-3 (review independente, achado 1): rawJson de antes do PR-3 ──
+describe('PayableService.redriveMissingDrafts — rawJson gravado antes do PR-3', () => {
+  it('rateId de linha ANEXO_* apagada pela migração é reconduzido ao Anexo de plataforma pelo NCM; CUSTOM vivo fica', async () => {
+    const { service, payableRepo, fixedAssetDraftCreator, sourceProvenanceRepo, findEntryBySource } = build({
+      ratesByNcm: [
+        { id: 'lp3-dep-anexo-8452', ncm: '8452', annualRateBp: 1000, hiddenAt: null },
+        { id: 'custom-vivo', ncm: '9999', annualRateBp: 2500, hiddenAt: null, origem: 'ESCOPO' },
+      ],
+    });
+    const payable = { ...payableRow(), id: 'pay-legado', inventoryMultiItem: true };
+    payableRepo.findAllActive.mockResolvedValueOnce([payable]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => ({ id: 'entry-legado' }));
+    const base = { classId: 'class-maq', accountCode: '4.1', costCents: 85000, qty: 1 };
+    const items = [
+      { ...base, cProd: 'MAQ-1', sourceItemRef: '1', ncm: '8452.10', rateId: 'anexo-por-escopo-apagado', annualRateBp: 1000 },
+      { ...base, cProd: 'MAQ-2', sourceItemRef: '2', ncm: '9999.00', rateId: 'custom-vivo', annualRateBp: 2500 },
+    ];
+    (sourceProvenanceRepo.findSourcesByEntry as jest.Mock).mockResolvedValueOnce([
+      { sourceDocumentId: 'doc-legado', sourceDocument: { id: 'doc-legado', rawJson: JSON.stringify({ fixedAssetItems: items }) } },
+    ]);
+
+    await service.redriveMissingDrafts(scope);
+
+    const enviados = (fixedAssetDraftCreator.createDraftFromPayable as jest.Mock).mock.calls[0][2] as Record<string, unknown>[];
+    expect(enviados[0]).toMatchObject({ rateId: null, legalParameterId: 'lp3-dep-anexo-8452', annualRateBp: 1000 });
+    expect(enviados[1]).toMatchObject({ rateId: 'custom-vivo', legalParameterId: null, annualRateBp: 2500 });
+  });
+});
+
 // ── BE-INCR-FIXED-ASSETS PR-5 (Passo 28/29, F-FA12 → a): redriveMissingDrafts (IFixedAssetDraftRedriver) ──
 describe('PayableService.redriveMissingDrafts — gancho do reconcile (item 13/28)', () => {
   it('relê o SourceDocument.rawJson da recognition e chama createDraftFromPayable', async () => {
