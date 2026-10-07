@@ -10,6 +10,8 @@ import { tabelaApuracaoDe, type TabelaApuracao } from '@/features/accounting/mod
 import { tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
 
 export const LEGAL_PARAMS_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_v1.sql');
+/** BE-INCR-SIMPLES-NACIONAL PR-1 — gerado por `scripts/gen-simples-anexos.mjs`; a migração carrega o mesmo texto. */
+export const SIMPLES_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v1.sql');
 
 type Valor = string | number | null;
 
@@ -47,14 +49,14 @@ function tokens(lista: string): Valor[] {
   return out;
 }
 
-export function legalParamsSeedRows(): LinhaLegal[] {
+export function legalParamsSeedRows(arquivo: string = LEGAL_PARAMS_SEED_FILE): LinhaLegal[] {
   return fs
-    .readFileSync(LEGAL_PARAMS_SEED_FILE, 'utf8')
+    .readFileSync(arquivo, 'utf8')
     .split(/\r?\n/)
     .filter((l) => l.startsWith('INSERT'))
     .map((l) => {
       const m = /^INSERT OR IGNORE INTO "legal_parameters" \((.*)\) VALUES \((.*)\);$/.exec(l);
-      if (!m) throw new Error(`legal_parameters_v1.sql: linha fora do formato: ${l.slice(0, 80)}`);
+      if (!m) throw new Error(`${path.basename(arquivo)}: linha fora do formato: ${l.slice(0, 80)}`);
       const cols = tokens(m[1]) as string[];
       const vals = tokens(m[2]);
       const r = Object.fromEntries(cols.map((c, k) => [c, vals[k]])) as Record<string, Valor>;

@@ -19,6 +19,14 @@ export const LEGAL_PARAMETER_TABELAS = [
   'DEPRECIACAO_ANEXO_III',
   'LEIAUTE_SPED',
   'FERIADO_NACIONAL',
+  // BE-INCR-SIMPLES-NACIONAL PR-1 (nó X14, BRIEF item 1; F-SN-2 → b): tabelas do Simples no canônico, sem model novo.
+  'SIMPLES_ANEXO_FAIXA',
+  'SIMPLES_ANEXO_REPARTICAO',
+  'SIMPLES_TETO_ISS',
+  'SIMPLES_ENQUADRAMENTO',
+  'SIMPLES_LIMITE',
+  'SIMEI_VALOR',
+  'SALARIO_MINIMO',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 
@@ -26,7 +34,18 @@ export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
  * Tabelas cujo consumidor já lê do banco (emenda §9 L-4: PR-1 = IRPJ/CSLL e PIS/Cofins). Propor linha de outra tabela
  * ⇒ 400: publicaria um número que nenhum cálculo lê ainda (PR-2/PR-3 abrem as demais).
  */
-export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'PIS_COFINS']);
+export const TABELAS_MIGRADAS: ReadonlySet<LegalParameterTabela> = new Set([
+  'TAX_ASSESSMENT',
+  'CSLL_ALIQUOTA',
+  'PIS_COFINS',
+  'SIMPLES_ANEXO_FAIXA',
+  'SIMPLES_ANEXO_REPARTICAO',
+  'SIMPLES_TETO_ISS',
+  'SIMPLES_ENQUADRAMENTO',
+  'SIMPLES_LIMITE',
+  'SIMEI_VALOR',
+  'SALARIO_MINIMO',
+]);
 
 export const LEGAL_PARAMETER_STATUS = ['DRAFT', 'PUBLISHED', 'REVOKED'] as const;
 export type LegalParameterStatus = (typeof LEGAL_PARAMETER_STATUS)[number];

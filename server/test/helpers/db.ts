@@ -19,9 +19,12 @@ const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
 /**
  * BE-INCR-LEGAL-PARAMS PR-1 (BRIEF item 14): coeficientes de lei são dado de PLATAFORMA que a migração semeia. O
  * `db push` não roda migração, então o modelo aplica o mesmo arquivo de dados que o `migration.sql` carrega
- * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica.
+ * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica. BE-INCR-SIMPLES-NACIONAL PR-1
+ * acrescenta o segundo arquivo (tabelas do Simples, `simplesAnexosSeed.test.ts`).
  */
-const LEGAL_PARAMS_SEED = path.join(SERVER_DIR, 'prisma', 'data', 'legal_parameters_v1.sql');
+const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_simples_v1.sql'].map((f) =>
+  path.join(SERVER_DIR, 'prisma', 'data', f),
+);
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
@@ -31,7 +34,9 @@ const LEGAL_PARAMS_SEED = path.join(SERVER_DIR, 'prisma', 'data', 'legal_paramet
  */
 function templateDb(): string {
   const schema = fs.readFileSync(path.join(SERVER_DIR, 'prisma', 'schema.prisma'));
-  const hash = createHash('sha1').update(schema).update(fs.readFileSync(LEGAL_PARAMS_SEED)).digest('hex').slice(0, 12);
+  const h = createHash('sha1').update(schema);
+  for (const f of LEGAL_PARAMS_SEEDS) h.update(fs.readFileSync(f));
+  const hash = h.digest('hex').slice(0, 12);
   const template = path.join(SERVER_DIR, 'prisma', `test-integration.template-${hash}.db`);
   if (!fs.existsSync(template)) {
     // Push num nome temporário + rename: um modelo pela metade (push abortado) nunca fica com o nome definitivo.
@@ -41,7 +46,9 @@ function templateDb(): string {
       env: { ...process.env, DATABASE_URL: `file:./${tmpName}` },
       stdio: 'inherit',
     });
-    execSync(`npx prisma db execute --file "${LEGAL_PARAMS_SEED}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    for (const f of LEGAL_PARAMS_SEEDS) {
+      execSync(`npx prisma db execute --file "${f}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    }
     fs.renameSync(path.join(SERVER_DIR, 'prisma', tmpName), template);
   }
   return template;
@@ -193,7 +200,7 @@ export async function resetDb(): Promise<void> {
 }
 
 function legalParamsSeedStatements(): string[] {
-  return fs.readFileSync(LEGAL_PARAMS_SEED, 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT'));
+  return LEGAL_PARAMS_SEEDS.flatMap((f) => fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT')));
 }
 
 export async function disconnectDb(): Promise<void> {
