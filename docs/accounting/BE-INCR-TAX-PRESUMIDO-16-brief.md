@@ -89,14 +89,14 @@ prestadoraExclusivaServicos: boolean;
 Nenhuma rota, DTO de entrada ou model Prisma novo é esperado. Se F-P16-2 → (b), nasce uma linha de `TaxAssessment` com
 outro código de receita; isso será detalhado na ratificação.
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — RATIFICADOS 06/10 (questionário)
 
 | Fork | Caminhos | Recomendação | Status |
 |---|---|---|---|
-| **F-P16-0** Reabrir o F-X7-14 | (a) reabrir: o 16% passa a valer no Presumido para quem marcar a flag · (b) manter (a) do F-X7-14, com este BRIEF guardado para quando houver cliente | **(a).** A premissa da ratificação caiu (errata). O cliente-alvo (salão) **não** se qualifica se vende produto, mas um salão só de serviço com receita ≤ R$ 120 mil se qualifica e paga o dobro do IRPJ de presunção | PENDENTE |
-| **F-P16-1** Declaração da flag | (a) o perfil exige marcar "não é sociedade de profissão regulamentada nem hospitalar/transporte" ao ligar a flag (campo booleano de confirmação, auditado) · (b) só texto de ajuda | **(a).** A exclusão é legal e o sistema não consegue checar; a confirmação explícita fica na trilha de auditoria | PENDENTE |
-| **F-P16-2** Como a diferença postergada sai | (a) linha da memória do trimestre do excesso, somada ao devido, com o código 2089/02 informado na memória · (b) apuração separada (outro `TaxAssessment` com código 2089/02), porque a DCTFWeb declara por código | **(b) se o X9 (DCTFWeb/MIT) já lê por linha de apuração; senão (a).** Insumo ausente: a Fase C (X9) ainda não fixou a leitura (§5) | PENDENTE |
-| **F-P16-3** LC 224 com a flag ligada | (a) 16% roda antes; o acréscimo, se houver, incide sobre a presunção efetiva · (b) flag ligada + receita acima de R$ 1,25 mi/trimestre ⇒ 400 (combinação impossível no limite de R$ 120 mil) | **(b).** A combinação é impossível dentro da lei; um 400 explica melhor que uma conta que nunca roda | PENDENTE |
+| **F-P16-0** Reabrir o F-X7-14 | (a) reabrir: o 16% passa a valer no Presumido para quem marcar a flag · (b) manter (a) do F-X7-14, com este BRIEF guardado para quando houver cliente | **(a).** A premissa da ratificação caiu (errata). O cliente-alvo (salão) **não** se qualifica se vende produto, mas um salão só de serviço com receita ≤ R$ 120 mil se qualifica e paga o dobro do IRPJ de presunção | ✅ (a) — F-X7-14 reaberto — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-P16-1** Declaração da flag | (a) o perfil exige marcar "não é sociedade de profissão regulamentada nem hospitalar/transporte" ao ligar a flag (campo booleano de confirmação, auditado) · (b) só texto de ajuda | **(a).** A exclusão é legal e o sistema não consegue checar; a confirmação explícita fica na trilha de auditoria | ✅ (a) — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-P16-2** Como a diferença postergada sai | (a) linha da memória do trimestre do excesso, somada ao devido, com o código 2089/02 informado na memória · (b) apuração separada (outro `TaxAssessment` com código 2089/02), porque a DCTFWeb declara por código | **(b) se o X9 (DCTFWeb/MIT) já lê por linha de apuração; senão (a).** Insumo ausente: a Fase C (X9) ainda não fixou a leitura (§5) | ✅ condicionado à leitura do X9 — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-P16-3** LC 224 com a flag ligada | (a) 16% roda antes; o acréscimo, se houver, incide sobre a presunção efetiva · (b) flag ligada + receita acima de R$ 1,25 mi/trimestre ⇒ 400 (combinação impossível no limite de R$ 120 mil) | **(b).** A combinação é impossível dentro da lei; um 400 explica melhor que uma conta que nunca roda | ✅ (b) 400 — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
 
 ## 4. Pendente de validação externa
 

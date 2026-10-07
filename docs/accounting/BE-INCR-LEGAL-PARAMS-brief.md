@@ -129,9 +129,21 @@ são requisitos (Contrato §2/§3), não opção.
    (dupla checagem).
 9. **Depreciação (D-3).** O Anexo III passa a ser uma tabela de plataforma (`DEPRECIACAO_ANEXO_III`). O
    `DepreciationRate` por escopo fica só com as linhas `CUSTOM`. O snapshot da taxa no bem (`FixedAsset.annualRateBp`)
-   não muda. → **F-LP-8** (o que fazer com as linhas `ANEXO_*` já semeadas).
-10. **Efeito em apuração já confirmada quando sai uma linha nova retroativa.** O sistema nunca recalcula sozinho;
-    marca as apurações afetadas com o aviso "parâmetro mudou depois da confirmação". → **F-LP-5**.
+   não muda. **F-LP-8 → (b), ratificado 06/10: migrar e apagar** as linhas `ANEXO_*` por escopo. Ordem obrigatória:
+   (1) cada `FixedAsset` que aponta para uma linha `ANEXO_*` passa a apontar para a linha de plataforma equivalente
+   (mesmo `sourceRow`); (2) só então a linha por escopo sai. O `annualRateBp` gravado no bem não muda. Teste: bem
+   antigo lê a mesma taxa antes e depois; nenhuma referência pendurada. A forma de "apagar" é o **F-LP-10**.
+10. **Linha nova retroativa ⇒ recálculo automático (F-LP-5 → b, ratificado 06/10).** Ao publicar uma linha cuja
+    vigência alcança período com apuração `CONFIRMED`, o sistema reconfirma a apuração com os parâmetros novos pela
+    cascata existente (nova versão `supersedes` a anterior; provisão antiga estornada, nova postada — `atomicUntil`
+    do `TaxAssessmentService`, sem padrão novo). Restrições que **não** são escolha (invariantes já em `main`):
+    - período `SOFT_CLOSED`/`HARD_CLOSED` ⇒ a reconfirmação fica, a provisão fica **pendente** e aparece (gate de
+      período dentro da tx; teste "período fechado ⇒ confirmação fica, provisão pendente");
+    - apuração já entregue/paga: a diferença vira aviso visível na apuração ("valor mudou depois do pagamento"); o
+      sistema não emite guia complementar sozinho (fora deste nó).
+    - o recálculo roda em job idempotente, não na requisição de publicação (publicar não pode falhar por um período
+      fechado de um cliente). Teste: publicar linha retroativa ⇒ apuração do período vira nova versão; período
+      fechado ⇒ pendente; 2ª execução do job ⇒ nada novo.
 11. **Rotas:** `GET /api/legal-parameters` (lista, filtro por tabela e data; qualquer autenticado),
     `GET /api/legal-parameters/vigente` (lookup), `POST /api/legal-parameters` (propor),
     `POST /api/legal-parameters/:id/publish`, `POST /api/legal-parameters/:id/revoke`. Registro em 2 toques
@@ -200,19 +212,20 @@ export const ProposeLegalParameterSchema = z.object({
 interface ParametrosUsados { ids: string[]; sha256: string }
 ```
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ratificados 06/10 (questionário), exceto F-LP-10 (novo, PENDENTE)
 
 | Fork | Caminhos | Recomendação | Status |
 |---|---|---|---|
-| **F-LP-0** Registro no vault | (a) criar a nota `docs/plano/nos/LEGAL-PARAMS.md` num fold (`README.md` §Fold), domínio fiscal, fora da régua · (b) anexar ao nó X7 | **(a).** O item atravessa X7, X8, C8, NF-e e pacote; anexar a um nó só esconde o alcance | PENDENTE |
-| **F-LP-1** Ordem de execução | (a) correções D-1/D-3 antes da migração · (b) migração primeiro, correções depois como mudança de dado · (c) juntas | **Parcial, dono, chat, 2026-10-06 (questionário):** D-3 → *"Esperar a tabela no banco"* (resolve pelo item 9, sem instrumentação antes); D-1 segue em BRIEF próprio. A ordem geral continua pendente | PENDENTE (parcial) |
-| **F-LP-2** Quem publica | (a) reusa `Role.ADMIN` (`schema.prisma:150`) · (b) papel novo `PLATFORM_ADMIN` | **(b).** Hoje `ADMIN` gere usuários (`middleware/auth.ts:137`); publicar alíquota para todos os clientes é outro poder e merece papel próprio | PENDENTE |
-| **F-LP-3** Dupla checagem na publicação | (a) quem propõe não publica (maker-checker) · (b) um admin faz tudo | **(a).** Erro numa linha atinge todos os clientes de uma vez; é o mesmo padrão do CONT-06 | PENDENTE |
-| **F-LP-4** Como o cálculo recebe os parâmetros | (a) o serviço monta a fotografia e passa às funções puras · (b) as funções consultam o serviço | **(a).** Mantém `taxAssessmentCalc*`/`pisCofinsCalc` puros e com os testes atuais; (b) põe I/O no cálculo | PENDENTE |
-| **F-LP-5** Linha retroativa × apuração confirmada | (a) só aviso, recálculo manual pelo usuário/contador · (b) recálculo automático para `SUPERSEDED` · (c) proibir publicar retroativo | **(a).** O recálculo já existe pela cascata do X7 e passa pelo contador; (b) muda provisão no razão sem ninguém olhar — contra a tese do produto | PENDENTE |
-| **F-LP-6** Quem liga a suspensão da LC 224 (D-2; a flag já existe) | (a) a mudança de `lc224AcrescimoSuspenso` passa pela política versionada, com o contador aprovando · (b) fica como está (edição do perfil, auditada) | **(a).** Desligar um acréscimo de imposto é decisão que o contador valida (tese do produto); a política versionada hoje cobre `FiscalProfile` da unidade, não `CompanyFiscalProfile` (`AccountingPolicyVersionService.ts:29`) — o alvo novo é parte do trabalho | PENDENTE |
-| **F-LP-7** Escopo de tela | (a) BRIEF FE separado (`FE-INCR-LEGAL-PARAMS`) · (b) sem tela, publicação por CLI | **(a)** para a lista e o histórico; a publicação pode começar por CLI se o FE atrasar | PENDENTE |
-| **F-LP-8** Linhas `ANEXO_*` já semeadas em `DepreciationRate` (D-3) | (a) ficam como estão (são referenciadas por snapshot) e deixam de ser lidas para bem novo · (b) migrar e apagar | **(a).** Apagar quebra a leitura do bem antigo (`hiddenAt` existe justamente para isso) | PENDENTE |
+| **F-LP-0** Registro no vault | (a) criar a nota `docs/plano/nos/LEGAL-PARAMS.md` num fold (`README.md` §Fold), domínio fiscal, fora da régua · (b) anexar ao nó X7 | **(a).** O item atravessa X7, X8, C8, NF-e e pacote; anexar a um nó só esconde o alcance | ✅ (a) — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-1** Ordem de execução | (a) correções D-1/D-3 antes da migração · (b) migração primeiro, correções depois como mudança de dado · (c) juntas | **Parcial, dono, chat, 2026-10-06 (questionário):** D-3 → *"Esperar a tabela no banco"* (resolve pelo item 9, sem instrumentação antes); D-1 segue em BRIEF próprio. A ordem geral continua pendente | ✅ (a) — dono 06/10; D-3 espera a migração, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-2** Quem publica | (a) reusa `Role.ADMIN` (`schema.prisma:150`) · (b) papel novo `PLATFORM_ADMIN` | **(b).** Hoje `ADMIN` gere usuários (`middleware/auth.ts:137`); publicar alíquota para todos os clientes é outro poder e merece papel próprio | ✅ (b) `PLATFORM_ADMIN` — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-3** Dupla checagem na publicação | (a) quem propõe não publica (maker-checker) · (b) um admin faz tudo | **(a).** Erro numa linha atinge todos os clientes de uma vez; é o mesmo padrão do CONT-06 | ✅ **(b) contra a recomendação** — um admin faz tudo; auditoria registra quem — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-4** Como o cálculo recebe os parâmetros | (a) o serviço monta a fotografia e passa às funções puras · (b) as funções consultam o serviço | **(a).** Mantém `taxAssessmentCalc*`/`pisCofinsCalc` puros e com os testes atuais; (b) põe I/O no cálculo | ✅ (a) — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-5** Linha retroativa × apuração confirmada | (a) só aviso, recálculo manual pelo usuário/contador · (b) recálculo automático para `SUPERSEDED` · (c) proibir publicar retroativo | **(a).** O recálculo já existe pela cascata do X7 e passa pelo contador; (b) muda provisão no razão sem ninguém olhar — contra a tese do produto | ✅ **(b) contra a recomendação** — recálculo automático; consequências no item 10 — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-6** Quem liga a suspensão da LC 224 (D-2; a flag já existe) | (a) a mudança de `lc224AcrescimoSuspenso` passa pela política versionada, com o contador aprovando · (b) fica como está (edição do perfil, auditada) | **(a).** Desligar um acréscimo de imposto é decisão que o contador valida (tese do produto); a política versionada hoje cobre `FiscalProfile` da unidade, não `CompanyFiscalProfile` (`AccountingPolicyVersionService.ts:29`) — o alvo novo é parte do trabalho | ✅ **fica como está** + princípio do dono: *"A plataforma vai atualizar os dados fiscais de acordo com a lei sempre, contador apenas valida quando for sair pra fora da plataforma"* — [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-7** Escopo de tela | (a) BRIEF FE separado (`FE-INCR-LEGAL-PARAMS`) · (b) sem tela, publicação por CLI | **(a)** para a lista e o histórico; a publicação pode começar por CLI se o FE atrasar | ✅ (a) `FE-INCR-LEGAL-PARAMS` — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-8** Linhas `ANEXO_*` já semeadas em `DepreciationRate` (D-3) | (a) ficam como estão (são referenciadas por snapshot) e deixam de ser lidas para bem novo · (b) migrar e apagar | **(a).** Apagar quebra a leitura do bem antigo (`hiddenAt` existe justamente para isso) | ✅ **(b) contra a recomendação** — migrar e apagar; ver item 9 e F-LP-10 — dono 06/10, [D-2026-10-06-LEGAL-PARAMS-FORKS](../plano/decisoes/D-2026-10-06-LEGAL-PARAMS-FORKS.md) |
+| **F-LP-10** Forma do "apagar" do F-LP-8 | (a) soft-delete (`hiddenAt`, já existe no model) depois do repoint · (b) delete físico depois do repoint | **(a).** O contrato da casa é soft-delete (CLAUDE.md, padrões de camada); o efeito para o usuário é o mesmo (a linha some da lista) e o histórico fica | PENDENTE |
 | **F-LP-9** D-1 — 16% no Presumido | (a) reabrir o F-X7-14 e modelar o art. 215 §§ 10–11 · (b) manter 32% e corrigir só o texto do ADR · (c) adiar até haver cliente que se qualifique | ✅ **Dono, chat, 2026-10-06 (questionário): "Errata + BRIEF do 16%"** — errata aplicada no ADR; BRIEF em [`BE-INCR-TAX-PRESUMIDO-16-brief.md`](BE-INCR-TAX-PRESUMIDO-16-brief.md) (forks F-P16 pendentes; sem 'executa') | DECIDIDO |
 
 ## 6. Pendente de validação externa (contador ou fonte primária)
