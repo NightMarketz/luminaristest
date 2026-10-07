@@ -46,6 +46,7 @@ import {
 } from '../sped';
 import { createHash } from 'crypto';
 
+import { COD_VER_ECD_SEMENTE } from '@test/helpers/legalParams';
 describe('sped serializer primitives', () => {
   describe('centsToSpedDecimal — money, no float, unsigned magnitude', () => {
     it('formats cents as decimal BR with comma and 2 places', () => {
@@ -162,7 +163,7 @@ describe('register builders', () => {
   });
 
   it('I010 = REG, IND_ESC, COD_VER_LC (p. 108)', () => {
-    expect(buildI010('G')).toBe('|I010|G|9.00|');
+    expect(buildI010('G', COD_VER_ECD_SEMENTE)).toBe('|I010|G|9.00|');
   });
 
   it('I030 carries QTD_LIN and DNRC_ABERT fixed text (pp. 113-114)', () => {
@@ -419,6 +420,7 @@ function minimalInput(): EcdFileInput {
   return {
     declarant,
     indEsc: 'G',
+    codVerLc: COD_VER_ECD_SEMENTE,
     book: { numOrd: '1', natLivr: 'DIARIO GERAL', dtExSocial: '2026-12-31' },
     accounts: [
       { account: { dtAlt: '2026-01-01', codNat: '01', indCta: 'S', nivel: 1, codCta: '1', cta: 'ATIVO' } },

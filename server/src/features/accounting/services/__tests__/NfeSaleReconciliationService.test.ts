@@ -23,6 +23,7 @@ jest.mock('../../../../lib/logger', () => ({
 
 import logger from '../../../../lib/logger';
 import { parseNfe } from '../../../../lib/nfe';
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const parseNfeMock = parseNfe as jest.MockedFunction<typeof parseNfe>;
 
 const scope: AccountingScope = {
@@ -117,7 +118,7 @@ function build(
   const svc = new NfeSaleReconciliationService(
     journalEntryRepo as any,
     postingService as any,
-    policy as any,
+    policy as any, legalParamsSemente,
   );
   return { svc, journalEntryRepo, postingService, policy };
 }

@@ -9,6 +9,7 @@ import type { OnboardingFiscalInput } from '../../accounting/dtos/CompanyFiscalP
 import { anoCorrente } from '../../accounting/services/CompanyFiscalProfileService';
 import type { CompanyFiscalProfileService } from '../../accounting/services/CompanyFiscalProfileService';
 import type { ObrigacaoResolvida } from '../../accounting/models/obrigacoesPorRegime';
+import { scopeToday } from '../../accounting/models/dates';
 import { resolveAccountingScope } from '../../accounting/scope/AccountingScope';
 import type { IActionProposalRepository } from '../../chat/repositories/IActionProposalRepository';
 import type { IKnowledgeGraphRepository } from '../../chat/repositories/IKnowledgeGraphRepository';
@@ -20,7 +21,7 @@ export type ProvisioningTableService = Pick<
   'getTablesForUser' | 'installPresetAsSystem' | 'createTableData' | 'deleteAllTablesForUser'
 >;
 /** O que o serviço usa do perfil fiscal da empresa. */
-export type ProvisioningFiscalService = Pick<CompanyFiscalProfileService, 'upsert' | 'resolverObrigacoesDoAno'>;
+export type ProvisioningFiscalService = Pick<CompanyFiscalProfileService, 'upsert' | 'resolverObrigacoesEm'>;
 
 export interface ProvisionInput {
   /** Já montado (Rápido via `buildQuickPreset`, Controle Total pelo controller). */
@@ -142,7 +143,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
     try {
       const input = UpsertCompanyFiscalProfileSchema.parse({ unitId, regime, grandePorte: fiscal.grandePorte ?? null });
       const perfil = await this.companyFiscalProfile.upsert(scope, ano, input);
-      return { status: 'criado', ano, obrigacoes: await this.companyFiscalProfile.resolverObrigacoesDoAno(ano, { regime, inativa: perfil.inativa, condicoes: perfil.condicoes }) };
+      return { status: 'criado', ano, obrigacoes: await this.companyFiscalProfile.resolverObrigacoesEm(scopeToday(scope), { regime, inativa: perfil.inativa, condicoes: perfil.condicoes }) };
     } catch (error) {
       logger.error(`Onboarding: falha ao criar o perfil fiscal da empresa do usuário ${ctx.userId} — compensando.`, { error });
       throw await this.compensate(ctx, error, {

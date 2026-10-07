@@ -117,11 +117,13 @@ export class CompanyFiscalProfileService {
   ) {}
 
   /**
-   * PR-2 — a matriz vigente no último dia do ano-calendário, aplicada ao perfil. Também é o que o onboarding chama
-   * (SystemProvisioningService) para não montar a fotografia por conta própria.
+   * PR-2 — a matriz vigente em `data` aplicada ao perfil. Também é o que o onboarding chama (SystemProvisioningService)
+   * para não montar a fotografia por conta própria. Os chamadores passam HOJE (fuso do escopo): a matriz em código não
+   * lia vigência, e filtrar pelo ano do perfil tiraria a DCTFWEB (vigente desde 2025) de um perfil de 2024 — mudança
+   * de comportamento que esta cópia não decide (relatório do PR-2, "Lacunas de spec").
    */
-  async resolverObrigacoesDoAno(ano: number, perfil: PerfilParaObrigacoes): Promise<ObrigacaoResolvida[]> {
-    return resolverObrigacoes(perfil, matrizObrigacoesDe(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), `${ano}-12-31`));
+  async resolverObrigacoesEm(data: string, perfil: PerfilParaObrigacoes): Promise<ObrigacaoResolvida[]> {
+    return resolverObrigacoes(perfil, matrizObrigacoesDe(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), data));
   }
 
   async get(scope: AccountingScope, ano: number): Promise<CompanyFiscalProfileView | null> {
@@ -306,7 +308,7 @@ export class CompanyFiscalProfileService {
     const contadorVivo = view.contadorContactId ? !!(await this.contactRepo.findById(scope, view.contadorContactId)) : false;
     const representanteVivo = view.representanteLegalSignerId ? !!(await this.signerRepo.findById(scope, view.representanteLegalSignerId)) : false;
 
-    const obrigacoes = (await this.resolverObrigacoesDoAno(ano, { regime: view.regime, inativa: view.inativa, condicoes: view.condicoes })).map((o) => {
+    const obrigacoes = (await this.resolverObrigacoesEm(scopeToday(scope), { regime: view.regime, inativa: view.inativa, condicoes: view.condicoes })).map((o) => {
       const cobra = o.status === 'OBRIGATORIA' || o.status === 'CONDICIONAL';
       const faltantes: string[] = [];
       if (o.obrigacao === 'DCTFWEB') {

@@ -13,6 +13,7 @@ import { ImportNfePurchaseSchema, NfePreviewSchema, PreviewNfeSchema } from '../
 import { toNfePreview } from '../../services/NfePreviewService';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
+import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 const FIXTURE_DIR = join(__dirname, '../../../../lib/__tests__/fixtures/nfe');
 const PURCHASE = readFileSync(join(FIXTURE_DIR, 'purchase-multi-item.SYNTHETIC.xml'), 'utf8');
 const SALE = readFileSync(join(FIXTURE_DIR, 'sale.SYNTHETIC.xml'), 'utf8');
@@ -126,7 +127,7 @@ describe('ImportNfePurchaseSchema — itemMapping XOR (productRef estoque × cla
 const custoNeutro = (parsed: ReturnType<typeof parseNfe>) =>
   acquisitionCost(parsed, parsed.itens.filter((it) => it.indTot !== '0'), {
     icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false,
-  });
+  }, undefined, LEGAIS_SEMENTE);
 
 describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   it.each([
@@ -134,7 +135,7 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
     ['venda', () => SALE],
     ['compra com CNPJ alfanumérico', alnumVariant],
   ])('o ParsedNfe do fixture de %s passa após toNfePreview', (_n, read) => {
-    const preview = toNfePreview(parseNfe(read()), null, custoNeutro(parseNfe(read())));
+    const preview = toNfePreview(parseNfe(read(), LEGAIS_SEMENTE), null, custoNeutro(parseNfe(read(), LEGAIS_SEMENTE)));
     const parsed = NfePreviewSchema.safeParse(preview);
     expect(parsed.success).toBe(true);
     if (parsed.success) {
@@ -146,7 +147,7 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   });
 
   it('é .strict() em todo nível: campo a mais no topo, no item e no protocolo falha', () => {
-    const base = toNfePreview(parseNfe(PURCHASE), null, custoNeutro(parseNfe(PURCHASE)));
+    const base = toNfePreview(parseNfe(PURCHASE, LEGAIS_SEMENTE), null, custoNeutro(parseNfe(PURCHASE, LEGAIS_SEMENTE)));
     expect(NfePreviewSchema.safeParse({ ...base, extra: 1 }).success).toBe(false);
     expect(
       NfePreviewSchema.safeParse({ ...base, itens: [{ ...base.itens[0], custo: 1 }, ...base.itens.slice(1)] })
@@ -156,7 +157,7 @@ describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {
   });
 
   it('centavos são inteiros não negativos e a chave respeita o regex da NT 2026.004', () => {
-    const base = toNfePreview(parseNfe(PURCHASE), 'pay-1', custoNeutro(parseNfe(PURCHASE)));
+    const base = toNfePreview(parseNfe(PURCHASE, LEGAIS_SEMENTE), 'pay-1', custoNeutro(parseNfe(PURCHASE, LEGAIS_SEMENTE)));
     expect(NfePreviewSchema.safeParse({ ...base, totais: { ...base.totais, vNFCents: 193.33 } }).success).toBe(false);
     // letra fora das posições 7–20 (aqui na 1ª) viola [0-9]{6}[A-Z0-9]{12}[0-9]{26}
     expect(NfePreviewSchema.safeParse({ ...base, chaveAcesso: 'A' + base.chaveAcesso.slice(1) }).success).toBe(false);

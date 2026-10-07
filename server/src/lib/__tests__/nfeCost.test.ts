@@ -3,6 +3,7 @@ import { join } from 'path';
 import { parseNfe } from '../nfe';
 import { acquisitionCost, custoBrutoCents, rateio, type CostRegime } from '../nfeCost';
 
+import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — itens 7, 8, 9, 10, 11 + EMENDA 2026-09-15 (F-X6-3 b, F-X6-7 a).
  * Fixture `purchase-pis-cofins.SYNTHETIC.xml`: emitente CRT=3; item 1 NCM 6302.60.00 CST 01 (TRIBUTADO),
@@ -17,7 +18,7 @@ import { acquisitionCost, custoBrutoCents, rateio, type CostRegime } from '../nf
  *   ICMS recuperável do contribuinte = 1800 + 900 + 600 = 3300
  */
 const read = (f: string) => readFileSync(join(__dirname, 'fixtures/nfe', f), 'utf8');
-const NFE = parseNfe(read('purchase-pis-cofins.SYNTHETIC.xml'), { allowHomologacao: true });
+const NFE = parseNfe(read('purchase-pis-cofins.SYNTHETIC.xml'), LEGAIS_SEMENTE, { allowHomologacao: true });
 const ITENS = NFE.itens.filter((it) => it.indTot !== '0');
 
 const regime = (over: Partial<CostRegime> = {}): CostRegime => ({
@@ -39,7 +40,7 @@ describe('acquisitionCost — X6 por regime', () => {
   });
 
   it('item 7 — não-contribuinte + CUMULATIVO: fórmula de hoje intacta (19333), zero crédito', () => {
-    const c = acquisitionCost(NFE, ITENS, regime());
+    const c = acquisitionCost(NFE, ITENS, regime(), undefined, LEGAIS_SEMENTE);
     expect(c.custoBrutoCents).toBe(19333);
     expect(c.custoEstoqueCents).toBe(19333);
     expect([c.creditoIcmsCents, c.creditoPisCofinsCents]).toEqual([0, 0]);
@@ -48,7 +49,7 @@ describe('acquisitionCost — X6 por regime', () => {
   });
 
   it('item 8 — contribuinte de ICMS: sai a Σ vICMS dos itens (3300), bruto continua 19333 (passivo)', () => {
-    const c = acquisitionCost(NFE, ITENS, regime({ icmsContribuinte: true }));
+    const c = acquisitionCost(NFE, ITENS, regime({ icmsContribuinte: true }), undefined, LEGAIS_SEMENTE);
     expect(c.custoBrutoCents).toBe(19333);
     expect(c.creditoIcmsCents).toBe(3300);
     expect(c.custoEstoqueCents).toBe(16033);
@@ -56,7 +57,7 @@ describe('acquisitionCost — X6 por regime', () => {
   });
 
   it('item 10/11 — NAO_CUMULATIVO com defaults: crédito só no item TRIBUTADO (784 sobre base 8473); monofásico pela tabela e CST 04 pela nota ficam de fora', () => {
-    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }));
+    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), undefined, LEGAIS_SEMENTE);
     expect(c.pisCofinsAplicado).toBe('NAO_CUMULATIVO');
     expect(c.itens.map((i) => i.classe)).toEqual(['TRIBUTADO', 'MONOFASICO', 'MONOFASICO']);
     expect(c.itens[0].basePisCofinsCents).toBe(8473);
@@ -68,23 +69,23 @@ describe('acquisitionCost — X6 por regime', () => {
 
   // ERRATA 2026-09-25 (triagem P1, STJ Tema 1.373): IPI saiu da base como regra fixa — a flag de IPI não soma mais.
   it('a flag de ICMS muda a base de forma determinística (+1800); a de IPI não soma (regra fixa)', () => {
-    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditExcludesIcms: false, pisCofinsCreditIncludesIpi: true }));
+    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditExcludesIcms: false, pisCofinsCreditIncludesIpi: true }), undefined, LEGAIS_SEMENTE);
     expect(c.itens[0].basePisCofinsCents).toBe(8473 + 1800);
   });
 
   it('fornecedor do Simples (CRT=1) com a flag OFF: crédito 0 + warning; com a flag ON: crédito normal', () => {
     const simples = { ...NFE, emit: { ...NFE.emit, crt: '1' } };
-    const off = acquisitionCost(simples, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }));
+    const off = acquisitionCost(simples, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), undefined, LEGAIS_SEMENTE);
     expect(off.creditoPisCofinsCents).toBe(0);
     expect(off.pisCofinsAplicado).toBe('SEM_CREDITO');
     expect(off.warnings.join(' ')).toMatch(/Simples Nacional/);
-    const on = acquisitionCost(simples, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditFromSimplesSupplier: true }));
+    const on = acquisitionCost(simples, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditFromSimplesSupplier: true }), undefined, LEGAIS_SEMENTE);
     expect(on.creditoPisCofinsCents).toBe(784);
   });
 
   it('item sem grupo Q/S → UNKNOWN: sem crédito e warning nomeando o item (default conservador)', () => {
     const semQ = ITENS.map((it, i) => (i === 0 ? { ...it, cstPis: null, cstCofins: null } : it));
-    const c = acquisitionCost(NFE, semQ, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }));
+    const c = acquisitionCost(NFE, semQ, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), undefined, LEGAIS_SEMENTE);
     expect(c.itens[0].classe).toBe('UNKNOWN');
     expect(c.creditoPisCofinsCents).toBe(0);
     expect(c.warnings.some((w) => /item 1 .*CST ausente/.test(w))).toBe(true);
@@ -92,7 +93,7 @@ describe('acquisitionCost — X6 por regime', () => {
 
   it('item 9 — invariante do rateio: Σ custoLiquido_item === custoEstoqueCents e Σ bruto_item === bruto, nos 3 regimes', () => {
     for (const r of [regime(), regime({ icmsContribuinte: true }), regime({ icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO' })]) {
-      const c = acquisitionCost(NFE, ITENS, r);
+      const c = acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE);
       expect(c.itens.reduce((a, i) => a + i.custoLiquidoCents, 0)).toBe(c.custoEstoqueCents);
       expect(c.itens.reduce((a, i) => a + i.custoBrutoCents, 0)).toBe(c.custoBrutoCents);
     }
@@ -105,19 +106,19 @@ describe('acquisitionCost — X6 por regime', () => {
   const comCstNoItem1 = (cst: string) => ITENS.map((it, i) => (i === 0 ? { ...it, cstPis: cst, cstCofins: cst } : it));
 
   it('GAP C-1 — NCM fora da tabela + CST 04 na nota: o NCM decide → TRIBUTADO (crédito 784) + alerta de CST divergente (triagem P5)', () => {
-    const c = acquisitionCost(NFE, comCstNoItem1('04'), naoCumul);
+    const c = acquisitionCost(NFE, comCstNoItem1('04'), naoCumul, undefined, LEGAIS_SEMENTE);
     expect({ classe: c.itens[0].classe, credito: c.itens[0].creditoPisCofinsCents, alertaCst04: c.warnings.some((w) => /item 1\b.*CST 04/.test(w)) })
       .toEqual({ classe: 'TRIBUTADO', credito: 784, alertaCst04: true });
   });
 
   it('GAP C-3 — NCM comum + CST 02: crédito 1,65% + 7,6% sobre base sem ICMS e sem IPI (8473 → 784), alerta mantido (triagem item 8)', () => {
-    const c = acquisitionCost(NFE, comCstNoItem1('02'), naoCumul);
+    const c = acquisitionCost(NFE, comCstNoItem1('02'), naoCumul, undefined, LEGAIS_SEMENTE);
     expect({ base: c.itens[0].basePisCofinsCents, credito: c.itens[0].creditoPisCofinsCents, alertaCst02: c.warnings.some((w) => /item 1\b.*CST 02/.test(w)) })
       .toEqual({ base: 8473, credito: 784, alertaCst02: true });
   });
 
   it('GAP IPI-BASE — vIPI > 0: IPI fora da base do crédito como regra FIXA, mesmo com a flag ligada (STJ Tema 1.373, triagem P1)', () => {
-    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditIncludesIpi: true }));
+    const c = acquisitionCost(NFE, ITENS, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditIncludesIpi: true }), undefined, LEGAIS_SEMENTE);
     expect(c.itens[0].basePisCofinsCents).toBe(8473);
   });
 
@@ -139,17 +140,17 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
 
   it('item 4 — destinos todo REVENDA dá saída IDÊNTICA à chamada sem destinos (igualdade profunda), nos 3 regimes', () => {
     for (const r of [regime(), regime({ icmsContribuinte: true }), real]) {
-      expect(acquisitionCost(NFE, ITENS, r, dest({ 1: 'REVENDA', 2: 'REVENDA', 3: 'REVENDA' }))).toEqual(acquisitionCost(NFE, ITENS, r));
+      expect(acquisitionCost(NFE, ITENS, r, dest({ 1: 'REVENDA', 2: 'REVENDA', 3: 'REVENDA' }), LEGAIS_SEMENTE)).toEqual(acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE));
     }
-    const c = acquisitionCost(NFE, ITENS, real);
+    const c = acquisitionCost(NFE, ITENS, real, undefined, LEGAIS_SEMENTE);
     expect(c.itens.map((i) => i.destination)).toEqual(['REVENDA', 'REVENDA', 'REVENDA']);
     expect(c.custoInsumoCents).toBe(0);
   });
 
   it('item 5 — contribuinte: INSUMO_SERVICO não credita o vICMS (fica no custo); a mesma nota como REVENDA credita', () => {
     const r = regime({ icmsContribuinte: true });
-    const revenda = acquisitionCost(NFE, ITENS, r);
-    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }));
+    const revenda = acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE);
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(revenda.itens[0].creditoIcmsCents).toBe(1800);
     expect(insumo.itens[0].creditoIcmsCents).toBe(0);
     expect(insumo.itens[0].custoLiquidoCents - revenda.itens[0].custoLiquidoCents).toBe(1800);
@@ -159,20 +160,20 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
 
   it('item 6 — PIS/COFINS de insumo TRIBUTADO: mesma base e mesmo crédito da REVENDA (784 sobre 8473)', () => {
     const r = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
-    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }));
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(insumo.itens[0].basePisCofinsCents).toBe(8473);
     expect(insumo.itens[0].creditoPisCofinsCents).toBe(784);
-    expect(insumo.itens[0].creditoPisCofinsCents).toBe(acquisitionCost(NFE, ITENS, r).itens[0].creditoPisCofinsCents);
+    expect(insumo.itens[0].creditoPisCofinsCents).toBe(acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE).itens[0].creditoPisCofinsCents);
   });
 
   it('item 7 (c, até a P-1) — insumo MONOFÁSICO: crédito 0 + warning que cita a pendência; REVENDA monofásica segue 0 sem esse warning', () => {
     const r = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
-    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }));
+    const insumo = acquisitionCost(NFE, ITENS, r, dest({ 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(insumo.itens[1].classe).toBe('MONOFASICO');
     expect([insumo.itens[1].creditoPisCofinsCents, insumo.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
     expect(insumo.warnings.filter((w) => /insumo monofásico/.test(w))).toHaveLength(2);
     expect(insumo.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico .*P-1/);
-    const revenda = acquisitionCost(NFE, ITENS, r);
+    const revenda = acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE);
     expect([revenda.itens[1].creditoPisCofinsCents, revenda.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
     expect(revenda.warnings.join(' ')).not.toMatch(/insumo monofásico/);
   });
@@ -181,7 +182,7 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
   // caso que muda quando a P-1 fechar e o F-ID-4 virar (a) — CST 02 (fabricante/importador) passará a creditar.
   it('item 7 (c) — insumo MONOFÁSICO por NCM com CST 02: crédito 0 + warning (até a P-1)', () => {
     const itens = ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: '02', cstCofins: '02' } : it));
-    const c = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), dest({ 2: 'INSUMO_SERVICO' }));
+    const c = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), dest({ 2: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(c.itens[1].classe).toBe('MONOFASICO');
     expect(c.itens[1].creditoPisCofinsCents).toBe(0);
     expect(c.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico/);
@@ -189,19 +190,19 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
 
   it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
     const mix = dest({ 1: 'INSUMO_SERVICO', 2: 'REVENDA', 3: 'INSUMO_SERVICO' });
-    const c = acquisitionCost(NFE, ITENS, real, mix);
+    const c = acquisitionCost(NFE, ITENS, real, mix, LEGAIS_SEMENTE);
     expect(c.itens.reduce((a, i) => a + i.custoLiquidoCents, 0)).toBe(c.custoEstoqueCents);
     expect(c.custoInsumoCents).toBe(c.itens[0].custoLiquidoCents + c.itens[2].custoLiquidoCents);
     for (const r of [regime({ pisCofinsRegime: 'SIMPLES' }), regime({ pisCofinsRegime: 'CUMULATIVO' })]) {
-      const m = acquisitionCost(NFE, ITENS, r, mix);
+      const m = acquisitionCost(NFE, ITENS, r, mix, LEGAIS_SEMENTE);
       expect([m.creditoIcmsCents, m.creditoPisCofinsCents]).toEqual([0, 0]);
-      expect(m.custoEstoqueCents).toBe(acquisitionCost(NFE, ITENS, r).custoEstoqueCents);
+      expect(m.custoEstoqueCents).toBe(acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE).custoEstoqueCents);
     }
   });
 
   it('EMENDA item 21 (decisão do dono 02/10) — IMOBILIZADO credita como hoje (mesmo ramo da REVENDA); só o rótulo muda', () => {
-    const imob = acquisitionCost(NFE, ITENS, real, dest({ 1: 'IMOBILIZADO' }));
-    const hoje = acquisitionCost(NFE, ITENS, real);
+    const imob = acquisitionCost(NFE, ITENS, real, dest({ 1: 'IMOBILIZADO' }), LEGAIS_SEMENTE);
+    const hoje = acquisitionCost(NFE, ITENS, real, undefined, LEGAIS_SEMENTE);
     expect(imob.itens[0]).toEqual({ ...hoje.itens[0], destination: 'IMOBILIZADO' });
     expect(imob.custoInsumoCents).toBe(0);
   });

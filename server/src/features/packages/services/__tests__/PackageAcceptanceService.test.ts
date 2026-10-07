@@ -17,6 +17,7 @@ import {
 import { loadPackageValidityDays, loadSalePackageInfo } from '../../../accounting/sync/bridges/saleItems';
 import { htmlToPdf } from '../../../../lib/pdf';
 
+import { FERIADOS_SEMENTE, legalParamsSemente } from '@test/helpers/legalParams';
 jest.mock('../../../accounting/sync/bridges/saleItems', () => ({
   loadSalePackageInfo: jest.fn(),
   loadPackageValidityDays: jest.fn(),
@@ -38,7 +39,7 @@ const scope: AccountingScope = {
 
 const SALES_TABLE = 'tbl-sales';
 const SALE = { id: 'sale-1', dynamicTableId: SALES_TABLE, data: { unitId: 'unit-1', customerId: 'cust-1', date: '2026-11-25', totalAmount: 250 } };
-const NOTICE = buildValidityNotice('2026-11-25', 30)!;
+const NOTICE = buildValidityNotice('2026-11-25', 30, FERIADOS_SEMENTE)!;
 
 function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPackageAcceptancePolicy>; createError?: unknown; user?: { name: string | null; username: string } | null } = {}) {
   const repo = {
@@ -67,7 +68,7 @@ function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPac
     repo as unknown as IPackageAcceptanceRepository,
     policy,
     dt as unknown as IDynamicTableRepository,
-    users as unknown as IUserRepository,
+    users as unknown as IUserRepository, legalParamsSemente,
   );
   return { svc, repo, dt };
 }

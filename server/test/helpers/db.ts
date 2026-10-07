@@ -174,8 +174,13 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): tax_assessments só referencia User (Cascade) — sem ordem de FK.
   await prisma.taxAssessment.deleteMany();
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).
-  await prisma.legalParameter.deleteMany();
-  for (const stmt of legalParamsSeedStatements()) await prisma.$executeRawUnsafe(stmt);
+  // PR-2: 529 INSERTs um a um por teste estouravam o hook de 5 s. Linha semeada só muda de STATUS (emenda §9 L-6),
+  // então basta apagar as que o teste criou e devolver as semeadas a PUBLISHED; ids fixos = a semente.
+  await prisma.legalParameter.deleteMany({ where: { id: { notIn: legalParamsSeedIds() } } });
+  await prisma.legalParameter.updateMany({ where: { status: { not: 'PUBLISHED' } }, data: { status: 'PUBLISHED', revokedById: null, revokedAt: null } });
+  if ((await prisma.legalParameter.count()) !== legalParamsSeedIds().length) {
+    for (const stmt of legalParamsSeedStatements()) await prisma.$executeRawUnsafe(stmt); // banco sem a semente: reaplica
+  }
   // PR-2 (L-8): reaquece o cache com o banco recém-semeado — o DTO estático o lê de forma síncrona.
   invalidateLegalParameterCache();
   const publicadas = await prisma.legalParameter.findMany({ where: { status: 'PUBLISHED' } });
@@ -196,6 +201,11 @@ export async function resetDb(): Promise<void> {
   await prisma.actionProposal.deleteMany();
   await prisma.knowledgeGraph.deleteMany();
   await prisma.user.deleteMany();
+}
+
+let seedIds: string[] | undefined;
+function legalParamsSeedIds(): string[] {
+  return (seedIds ??= legalParamsSeedStatements().map((l) => /VALUES \('([^']+)'/.exec(l)![1]));
 }
 
 function legalParamsSeedStatements(): string[] {

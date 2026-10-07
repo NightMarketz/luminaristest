@@ -75,7 +75,7 @@ export interface AcquisitionCost {
   custoInsumoCents: number;
   creditoIcmsCents: number;
   creditoPisCofinsCents: number;
-  /** X8 item 5 (F-X8-7 a): Σ por item de bp(base,165) e bp(base,760) — somados, exatamente `creditoPisCofinsCents`. */
+  /** X8 item 5 (F-X8-7 a): Σ por item de bp(base, pisBp) e bp(base, cofinsBp) (tabela PIS_COFINS) — somados, exatamente `creditoPisCofinsCents`. */
   creditoPisCents: number;
   creditoCofinsCents: number;
   /** Σ das bases pós-exceções — o número que o contador confere (regra (j)). */

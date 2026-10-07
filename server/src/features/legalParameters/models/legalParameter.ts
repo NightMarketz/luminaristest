@@ -100,5 +100,7 @@ export function linhasVigentesDaTabela<T extends LinhaLegal>(linhas: readonly T[
 export class SemLinhaVigenteError extends ValidationError {
   constructor(tabela: string, data: string, chave?: string) {
     super(`Sem linha vigente de ${tabela}${chave ? `/${chave}` : ''} em ${data} (parâmetros legais da plataforma).`);
+    Object.setPrototypeOf(this, SemLinhaVigenteError.prototype); // ValidationError fixa o próprio protótipo
+    this.name = 'SemLinhaVigenteError';
   }
 }

@@ -9,6 +9,7 @@ import { join } from 'path';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { RAZAO_CREDITO_SEMENTE } from '@test/helpers/legalParams';
 import { PayableRepository } from '@/features/accounting/repositories/PayableRepository';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 
@@ -148,7 +149,7 @@ describe('X8 PR-1 — regime coerente, contas da provisão, crédito PIS × Cofi
       },
     });
 
-    const creditos = await new PayableRepository().findPisCofinsCredits(scope(), '2025-07-01', '2025-07-31');
+    const creditos = await new PayableRepository().findPisCofinsCredits(scope(), '2025-07-01', '2025-07-31', RAZAO_CREDITO_SEMENTE);
     // 500 × 165/925 = 89,19 → 89; 300 × 165/925 = 53,51 → 54
     expect(creditos.find((c) => c.payableId === duas.id)).toEqual({
       payableId: duas.id, documentNumber: 'DUAS', issueDate: '2025-07-20', amountCents: 800, baseCents: null, pisCents: 89 + 54, cofinsCents: 800 - 143, derivado: true,

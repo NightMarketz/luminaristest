@@ -3,7 +3,11 @@
  * e Anexo C): contagem, chave por ordinal da fonte, códigos do salão e incidência EP do grupo 6 (que sustenta
  * `cLocPrestacao` default = codMun do prestador). Se o MANIFEST mudar de hash, regenerar e ajustar aqui.
  */
-import { LC116_LISTA_NACIONAL, findLc116, isLc116Codigo } from '../lc116ListaNacional';
+import { findLc116, isLc116Codigo } from '../lc116ListaNacional';
+import { LISTA_LC116_SEMENTE } from '@test/helpers/legalParams';
+
+// BE-INCR-LEGAL-PARAMS PR-2: a lista mora na tabela LC116_SERVICO; a guarda roda sobre a semente da migração.
+const LC116_LISTA_NACIONAL = [...LISTA_LC116_SEMENTE.values()];
 import { IND_OP, IND_OP_DEFAULT_SALAO, isIndOp } from '../indOp';
 
 describe('LC116_LISTA_NACIONAL (Anexo I, MUN.INCID_INFO.SERV.)', () => {
@@ -17,21 +21,21 @@ describe('LC116_LISTA_NACIONAL (Anexo I, MUN.INCID_INFO.SERV.)', () => {
   });
 
   it('salão: 060101 (l.73) e 060201 (l.74) existem, com incidência EP e sem grupo obrigatório', () => {
-    expect(findLc116('060101')).toMatchObject({ linha: 73, li: ['EP'], grupo: null });
-    expect(findLc116('060201')).toMatchObject({ linha: 74, li: ['EP'], grupo: null });
-    expect(findLc116('060201')?.descricao).toMatch(/^Esteticistas/);
+    expect(findLc116('060101', LISTA_LC116_SEMENTE)).toMatchObject({ linha: 73, li: ['EP'], grupo: null });
+    expect(findLc116('060201', LISTA_LC116_SEMENTE)).toMatchObject({ linha: 74, li: ['EP'], grupo: null });
+    expect(findLc116('060201', LISTA_LC116_SEMENTE)?.descricao).toMatch(/^Esteticistas/);
   });
 
   it('isLc116Codigo: exige zero à esquerda; código inexistente é falso', () => {
-    expect(isLc116Codigo('060101')).toBe(true);
-    expect(isLc116Codigo('60101')).toBe(false);
-    expect(isLc116Codigo('069999')).toBe(false);
+    expect(isLc116Codigo('060101', LISTA_LC116_SEMENTE)).toBe(true);
+    expect(isLc116Codigo('60101', LISTA_LC116_SEMENTE)).toBe(false);
+    expect(isLc116Codigo('069999', LISTA_LC116_SEMENTE)).toBe(false);
   });
 
   it('grupos obrigatórios transcritos: 070601 exige obra, 120601 exige atvEvento (fora do MVP — BRIEF §1)', () => {
-    expect(findLc116('070601')?.grupo).toBe('obra');
-    expect(findLc116('120601')?.grupo).toBe('atvEvento');
-    expect(findLc116('120601')?.li).toEqual(['LP']);
+    expect(findLc116('070601', LISTA_LC116_SEMENTE)?.grupo).toBe('obra');
+    expect(findLc116('120601', LISTA_LC116_SEMENTE)?.grupo).toBe('atvEvento');
+    expect(findLc116('120601', LISTA_LC116_SEMENTE)?.li).toEqual(['LP']);
   });
 });
 

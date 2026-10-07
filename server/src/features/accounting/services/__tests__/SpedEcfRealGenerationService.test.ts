@@ -29,6 +29,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const sendAlertWebhook = jest.fn();
 jest.mock('../../../../lib/alertWebhook', () => ({
   __esModule: true,
@@ -129,7 +130,7 @@ function buildService(m: Mocks = {}) {
   const profiles = { findByYear: jest.fn(async () => m.perfil ?? null) } as never;
   const assessments = { findConfirmedByYear: jest.fn(async () => m.confirmados ?? []) } as never;
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments);
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, legalParamsSemente);
   return { service, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 

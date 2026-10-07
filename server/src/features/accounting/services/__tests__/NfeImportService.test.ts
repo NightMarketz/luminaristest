@@ -8,6 +8,7 @@ import type { ImportNfePurchaseInput } from '../../dtos/NfeDto';
 import type { Payable } from 'generated/prisma';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const scope = resolveAccountingScope({ userId: 'owner-1' }, 'unit-1');
 
 // The multi-item COMPRA fixture (F0-3). Values were chosen so desconto+frete+IPI do NOT divide exact
@@ -96,7 +97,7 @@ function build(opts: Opts = {}) {
     counterpartyRepo as never,
     policy as never,
     fiscalProfile as never,
-    { findManyByProductRefs: async () => [] } as never,
+    { findManyByProductRefs: async () => [] } as never, legalParamsSemente,
   );
   return { service, createPayable, counterpartyRepo };
 }

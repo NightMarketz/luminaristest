@@ -20,6 +20,7 @@ import type { IAccountantAssignmentRepository } from '../../repositories/IAccoun
 import type { IAccountingPolicyVersionRepository } from '../../repositories/IAccountingPolicyVersionRepository';
 import type { FiscalProfile, Prisma, ServiceFiscalProfile } from 'generated/prisma';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const scope: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
 
 function rowFrom(data: Partial<FiscalProfileData> & { regimeTributario: string }): FiscalProfile {
@@ -147,7 +148,7 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     } as unknown as IServiceFiscalProfileRepository;
     const policy = { canReadFiscalProfile: jest.fn(() => true), canManageServiceFiscalProfile: jest.fn(() => opts.canManage ?? true) } as unknown as IAccountingPolicy;
     const append = jest.fn(async () => undefined);
-    return { svc: new ServiceFiscalProfileService(repo, policy, { append } as unknown as AuditService), repo, append };
+    return { svc: new ServiceFiscalProfileService(repo, policy, { append } as unknown as AuditService, legalParamsSemente), repo, append };
   }
 
   it('upsert idempotente devolve a view com a descrição da lista nacional e audita só códigos', async () => {
