@@ -1,7 +1,7 @@
 # PRE-ADR-SIMPLES-NACIONAL-CALCULO — Apuração mensal do Simples Nacional (ME/EPP): anexos, fator R, segregação, DAS/PGDAS-D e DEFIS
 
 - **Data:** 2026-09-29
-- **Status:** **Proposed — RATIFICAÇÃO PENDENTE.** Nenhum fork decidido; nenhum código autorizado.
+- **Status:** **Accepted (2026-10-07)** — F-SN-0..13 ratificados em `docs/plano/decisoes/D-2026-10-07-SIMPLES-FORKS.md` (divergem da recomendação: F-SN-0 → b, F-SN-2 → b, F-SN-12 → b). O §8 deixou de ser pedido ao contador (regra do dono: decide-se pela lei). Nenhum código autorizado sem "executa".
 - **Autorização:** decisão **8** de `docs/plano/decisoes/D-2026-09-29-ENTREVISTA-ONDAS-E-1O-CLIENTE.md` — *"Qual PRE-ADR
   da onda 3 primeiro → **Simples/MEI** (PGDAS-D/DAS/DEFIS, anexos, fator R); IBS/CBS 2027 em seguida"* (dono, 29/09:
   *"Simples/MEI primeiro"*). A mesma nota diz: *"'Planejar' autoriza BRIEF/ADR; código continua exigindo 'executa'
