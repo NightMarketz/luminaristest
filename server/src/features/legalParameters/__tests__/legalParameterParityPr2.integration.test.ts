@@ -35,7 +35,7 @@ describe('BE-INCR-LEGAL-PARAMS PR-2 item 6 — paridade tabela em código × ban
     pushTestSchema();
     await resetDb();
     fot = await tabelas(['CODIGO_RECEITA', 'PIS_COFINS', 'PIS_COFINS_MONOFASICO_NCM', 'CST_PIS_COFINS', 'CFOP_IMOBILIZADO', 'NFE_CSTAT_AUTORIZADA', 'OBRIGACAO_REGIME', 'LC116_SERVICO', 'ISS_LIMITE', 'LEIAUTE_SPED', 'FERIADO_NACIONAL']);
-  });
+  }, 60000); // resetDb reaplica a semente v1..v3 (~730 INSERTs) quando o banco não a tem — memória timeout-5s-integracao
   afterAll(() => disconnectDb());
 
   it('CODIGO_RECEITA (itens 9/14): IRPJ/CSLL com mesmo código e fonte em toda data; PIS/Cofins presos à vigência da alíquota', () => {
