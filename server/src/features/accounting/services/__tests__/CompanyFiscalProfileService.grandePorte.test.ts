@@ -7,13 +7,14 @@ import { CompanyFiscalProfileService } from '../CompanyFiscalProfileService';
 import type { AccountingReportService } from '../AccountingReportService';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const scope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' } as AccountingScope;
 
 function build(ativoCents: number, receitaCents: number, status: 'OK' | 'WARNING' | 'INVALID' = 'OK') {
   const balanceSheet = jest.fn(async () => ({ reportStatus: status, assets: { totalCents: String(ativoCents), accounts: [] } }));
   const incomeStatement = jest.fn(async () => ({ reportStatus: status, grossRevenue: { totalCents: String(-receitaCents), accounts: [] } }));
   const report = { balanceSheet, incomeStatement } as unknown as AccountingReportService;
-  const svc = new CompanyFiscalProfileService({} as never, {} as never, {} as never, {} as never, {} as never, {} as never, report, {} as never);
+  const svc = new CompanyFiscalProfileService({} as never, {} as never, {} as never, {} as never, {} as never, {} as never, report, {} as never, legalParamsSemente);
   return { svc, balanceSheet, incomeStatement };
 }
 

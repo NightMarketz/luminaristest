@@ -1,3 +1,4 @@
+import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 /**
  * ITEM-DESTINATION (BE-INCR-ITEM-DESTINATION BRIEF §2, item 1 + EMENDA 29/09 item 21) — destinação declarada
  * pelo COMPRADOR na entrada. O XML do fornecedor não a traz: o `prod/CFOP` é o da operação do emitente (achado
@@ -31,8 +32,11 @@ export type ItemDestinationOrigin = (typeof ITEM_DESTINATION_ORIGINS)[number];
 
 /** CFOPs de ENTRADA de imobilizado. Desde a EMENDA 29/09 (item 23) NÃO roteiam — o XML do fornecedor traz o
  *  CFOP da saída dele (MOC 7.0 Anexo I, I08-10); só uma nota de entrada própria traz 1551/2551, e aí um item
- *  mapeado com `productRef` gera warning, nunca a rota. */
-export const FIXED_ASSET_CFOPS: ReadonlySet<string> = new Set(['1551', '2551']);
+ *  mapeado com `productRef` gera warning, nunca a rota. BE-INCR-LEGAL-PARAMS PR-2: a lista mora na tabela
+ *  `CFOP_IMOBILIZADO` (item 17; D-7 — 3551 — é pendência de contador, não corrigida); o serviço monta a fotografia. */
+export function cfopsImobilizadoDe(linhas: readonly LinhaLegal[], data: string): ReadonlySet<string> {
+  return new Set(linhasVigentesDaTabela(linhas, 'CFOP_IMOBILIZADO', data).map((l) => l.chave));
+}
 
 /** O que o operador declarou para um `cProd` (o `itemMapping` do import/preview). */
 export interface ItemDestinationMapping {
@@ -57,7 +61,8 @@ export interface ResolvedItemDestination {
 export function resolveDestinations(
   itens: ReadonlyArray<{ nItem: number; cProd: string; cfop: string }>,
   mappingByCProd: ReadonlyMap<string, ItemDestinationMapping>,
-  defaultByProductRef: ReadonlyMap<string, ProductDestinationDefaultValue> = new Map(),
+  defaultByProductRef: ReadonlyMap<string, ProductDestinationDefaultValue>,
+  cfopsImobilizado: ReadonlySet<string>,
 ): { byNItem: Map<number, ItemDestination>; destinacoes: ResolvedItemDestination[]; warnings: string[] } {
   const byNItem = new Map<number, ItemDestination>();
   const destinacoes: ResolvedItemDestination[] = [];
@@ -79,7 +84,7 @@ export function resolveDestinations(
     } else {
       warnings.push(`item ${it.nItem} (${it.cProd}): sem destinação declarada — tratado como REVENDA (FALLBACK); marque INSUMO_SERVICO se o item é usado no serviço`);
     }
-    if (m?.productRef != null && FIXED_ASSET_CFOPS.has(it.cfop)) {
+    if (m?.productRef != null && cfopsImobilizado.has(it.cfop)) {
       warnings.push(`item ${it.nItem} (${it.cProd}): CFOP ${it.cfop} — CFOP de imobilizado mapeado como estoque/insumo — confira`);
     }
     byNItem.set(it.nItem, destination);

@@ -1,3 +1,4 @@
+import { SemLinhaVigenteError, linhaLegalVigente, type LinhaLegal } from '../features/legalParameters/models/legalParameter';
 import { isValidDateOnly } from '../features/accounting/models/dates';
 
 /**
@@ -123,8 +124,16 @@ export function countRegisters(lines: string[]): { byRegister: Map<string, numbe
 // pure and carries no domain-classification logic (D2).
 
 const EMPTY = '';
-/** Layout version code for I010.COD_VER_LC — Leiaute 9 (manual capa / p. 108). */
-export const SPED_LAYOUT_VERSION = '9.00';
+/**
+ * I010.COD_VER_LC — BE-INCR-LEGAL-PARAMS PR-2 (item 24, D-8): o código do leiaute mora na tabela de plataforma
+ * `LEIAUTE_SPED` (chave `ECD`; hoje Leiaute 9 = `9.00`, manual capa / p. 108), resolvido pelo serviço na data final da
+ * escrituração e passado em `EcdFileInput.codVerLc`. Leiaute novo = linha nova, sem mudança de código.
+ */
+export function resolveEcdCodVerLc(linhas: readonly LinhaLegal[], data: string): string {
+  const l = linhaLegalVigente(linhas, 'LEIAUTE_SPED', 'ECD', data);
+  if (!l?.valorTexto) throw new SemLinhaVigenteError('LEIAUTE_SPED', data, 'ECD');
+  return l.valorTexto;
+}
 
 /** Block-opening register (0001/I001/J001/9001): REG + IND_DAD. IND_DAD "0" =
  * bloco COM dados (MVP always has data). Manual pp. 108 (I001), 169 (J001),
@@ -216,8 +225,8 @@ export function build0007(i: Reg0007Input): string {
 // ── Bloco I ──
 
 /** I010 — Identificação da escrituração (3 campos). REG, IND_ESC, COD_VER_LC.
- * Manual p. 108. IND_ESC='G' (Diário Geral), COD_VER_LC=9.00 (Leiaute 9). */
-export function buildI010(indEsc: string, codVerLc: string = SPED_LAYOUT_VERSION): string {
+ * Manual p. 108. IND_ESC='G' (Diário Geral), COD_VER_LC da tabela `LEIAUTE_SPED` (`resolveEcdCodVerLc`). */
+export function buildI010(indEsc: string, codVerLc: string): string {
   return spedLine(['I010', indEsc, codVerLc]);
 }
 
@@ -798,6 +807,7 @@ export interface EcdFileInput {
   declarant: Reg0000Input;
   extraInscriptions?: Reg0007Input[];
   indEsc: string; // I010 (G)
+  codVerLc: string; // I010.COD_VER_LC — `resolveEcdCodVerLc` (tabela LEIAUTE_SPED)
   book: {
     numOrd: string;
     natLivr: string;
@@ -873,7 +883,7 @@ export function buildEcdFile(input: EcdFileInput): string[] {
   // ── Bloco I ──
   const blockI: string[] = [];
   blockI.push(buildBlockOpen('I001'));
-  blockI.push(buildI010(input.indEsc));
+  blockI.push(buildI010(input.indEsc, input.codVerLc));
   blockI.push(buildI030({ ...i030Base, qtdLin: TOTAL_PLACEHOLDER }));
   const i030Index = blockI.length - 1;
   // Plano de contas: I050 + (I051 referencial) + (I052 aglutinação) por conta analítica.

@@ -15,6 +15,7 @@ import {
   type MitDebito,
 } from '../mit';
 import { MitNadaAExportarError } from '../errors';
+import { tabelaApuracaoSemente } from '@test/helpers/legalParams';
 
 const ap = (o: Partial<ApuracaoParaMit> & Pick<ApuracaoParaMit, 'id' | 'tributo' | 'codigoReceita'>): ApuracaoParaMit => ({
   anoCalendario: 2026,
@@ -33,6 +34,7 @@ const entrada = (o: Partial<EntradaMit> = {}): EntradaMit => ({
   perfil: { cnpj: '12345678000195', regime: 'PRESUMIDO', forma: 'TRIMESTRAL' },
   responsavel: { cpf: '52998224725', phone: '11987654321', email: 'contador@escritorio.com' },
   apuracoes: [IRPJ(), CSLL()],
+  tabela: tabelaApuracaoSemente(), // BE-INCR-LEGAL-PARAMS PR-2: CODIGO_RECEITA da semente
   ...o,
 });
 const arquivo = (o: Partial<EntradaMit> = {}) => JSON.parse(montarArquivoMit(entrada(o)).conteudo);

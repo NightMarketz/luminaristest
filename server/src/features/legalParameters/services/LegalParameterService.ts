@@ -10,8 +10,9 @@ import type {
   ProposeLegalParameterInput,
   VigenteLegalParameterQuery,
 } from '../dtos/LegalParameterDto';
-import { TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
-import { cachedPublished, invalidateLegalParameterCache, storePublished } from './legalParameterCache';
+import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
+import { TEM_REGRA_DE_FORMATO, erroDeFormato } from '../models/formatoLinha';
+import { cachedPublished, storePublished } from './legalParameterCache';
 
 /**
  * Emenda §9 L-5 — a corrente de auditoria da PLATAFORMA: mesma tabela e mesmo hash encadeado da casa, num escopo fixo
@@ -26,8 +27,16 @@ export const PLATFORM_AUDIT_SCOPE: AccountingScope = {
   timeZone: 'America/Sao_Paulo',
 };
 
-/** Formato do valor por tabela migrada (PR-1). `ARREDONDAMENTO` é a única linha de texto do TAX_ASSESSMENT. */
+/**
+ * Formato do valor por tabela migrada. PR-1: `ARREDONDAMENTO` é a única linha de texto do TAX_ASSESSMENT. PR-2: as
+ * demais tabelas pela regra de `formatoLinha.ts` (§4 — `valorJson` com schema por tabela).
+ */
 function exigirFormato(d: ProposeLegalParameterInput): void {
+  if (TEM_REGRA_DE_FORMATO(d.tabela)) {
+    const erro = erroDeFormato(d);
+    if (erro) throw new ValidationError(erro);
+    return;
+  }
   const texto = d.tabela === 'TAX_ASSESSMENT' && d.chave === 'ARREDONDAMENTO';
   if (texto ? d.valorTexto === undefined : d.valorInt === undefined) {
     throw new ValidationError(`${d.tabela}/${d.chave}: o valor desta tabela é ${texto ? 'valorTexto' : 'valorInt'} (bp ou centavos).`);
@@ -72,7 +81,8 @@ function toView(r: LegalParameter): LegalParameterView {
  * muda, L-6). Cada mudança grava um evento na corrente da plataforma, na mesma tx (L-5).
  *
  * `fotografia` (item 5, F-LP-4 a) é a leitura que os cálculos recebem: linhas em vigor das tabelas pedidas, do cache.
- * O cache só é invalidado DEPOIS do commit — uma tx desfeita não deixa leitura nova à vista.
+ * O cache só é reaquecido DEPOIS do commit — uma tx desfeita não deixa leitura nova à vista (PR-2, L-8: reaquecer em
+ * vez de esvaziar, porque o DTO estático lê o cache de forma síncrona).
  */
 export class LegalParameterService {
   constructor(
@@ -97,6 +107,16 @@ export class LegalParameterService {
       for (const t of faltam) storePublished(t, lidas.filter((l) => l.tabela === t));
     }
     return linhasEmVigor(tabelas.flatMap((t) => cachedPublished(t) ?? []));
+  }
+
+  /**
+   * Emenda §9 L-8 (dono, 07/10: "DTO lê o cache síncrono") — carrega TODAS as tabelas no cache. Roda no boot (antes
+   * do `listen`) e depois de cada publicação/revogação, para que o DTO estático nunca encontre o cache frio.
+   */
+  async aquecer(): Promise<void> {
+    // Lê tudo e só então troca tabela a tabela: o cache nunca fica frio no meio (um DTO concorrente leria o antigo).
+    const lidas = await this.repo.findPublished(LEGAL_PARAMETER_TABELAS);
+    for (const t of LEGAL_PARAMETER_TABELAS) storePublished(t, lidas.filter((l) => l.tabela === t));
   }
 
   async list(actor: LegalParameterActor, q: ListLegalParametersQuery): Promise<LegalParameterView[]> {
@@ -189,7 +209,7 @@ export class LegalParameterService {
       });
       return { ...linha, status: 'PUBLISHED', publishedById: actor.userId, publishedAt: at };
     });
-    invalidateLegalParameterCache();
+    await this.aquecer();
     return toView(row);
   }
 
@@ -210,7 +230,7 @@ export class LegalParameterService {
       });
       return { ...linha, status: 'REVOKED', revokedById: actor.userId, revokedAt: at };
     });
-    invalidateLegalParameterCache();
+    await this.aquecer();
     return toView(row);
   }
 }

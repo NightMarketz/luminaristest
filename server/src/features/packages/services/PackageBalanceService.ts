@@ -1,4 +1,5 @@
 import { Prisma } from 'generated/prisma';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CustomerPackageBalance } from 'generated/prisma';
 import { ForbiddenError, PackageBalanceExpiredError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
@@ -58,6 +59,8 @@ export class PackageBalanceService {
   constructor(
     private readonly repo: IPackageBalanceRepository,
     private readonly policy: IPackageBalancePolicy,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (L-9; F-LP-4 a): fotografia `FERIADO_NACIONAL` para o último dia válido. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -74,7 +77,7 @@ export class PackageBalanceService {
     // Fast path: already applied — skip the transaction entirely.
     const existing = await this.repo.findMovement(scope, cmd.saleId, 'credit');
     if (existing) return;
-    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays);
+    const purchaseLastDay = lastValidDay(cmd.saleDate, cmd.validityDays, await this.legalParams.fotografia(['FERIADO_NACIONAL']));
 
     try {
       await this.repo.runTransaction(async (tx) => {

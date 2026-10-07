@@ -25,6 +25,7 @@ import { SERVICE_REVENUE_ACCOUNT } from '../../sync/mappers/revenueSplit';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -131,7 +132,7 @@ function makeService(opts: {
     fiscalProfileService as never,
     serviceFiscalProfileService as never,
     policy as never,
-    auditService as never,
+    auditService as never, legalParamsSemente,
   );
   return { service, repo, accountRepo, journalEntryRepo, fiscalProfileService, serviceFiscalProfileService, policy, auditService };
 }

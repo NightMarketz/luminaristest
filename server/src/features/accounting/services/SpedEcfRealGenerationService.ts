@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
@@ -96,7 +97,7 @@ export const SPED_ECF_REAL_JOB_KIND = 'EXPORT_SPED_ECF_REAL';
  *    `findManyParteB` — e resolve cada linha contra o catálogo (`findLinha`): DESCRICAO copiada da
  *    tabela, TIPO_LANCAMENTO derivado (item 8), `accountId` → `Account.code` (= I050/J050.COD_CTA da
  *    ECD, p.252) + `natureToCodNat` para o sinal do M310 (N-2). O DTO de geração NÃO carrega ajustes.
- *  - 0000.COD_VER: `resolveEcfCodVer(year, dto.fiscal.codVer)` (Fork 7→(a)) — ano sem leiaute é erro.
+ *  - 0000.COD_VER: `resolveEcfCodVer(year, fotografia LEIAUTE_SPED, dto.fiscal.codVer)` (Fork 7→(a)) — ano sem leiaute é erro.
  *  - HASH_ECF_ANTERIOR: vazio (Fork 2→(d), p.70) — o PVA preenche na recuperação.
  * Não computa base/IRPJ/adicional/CSLL (linhas CNA/CA são do PVA — Fork 3→(a)).
  *
@@ -129,6 +130,8 @@ export class SpedEcfRealGenerationService {
     private readonly lalurService: LalurParteBReader,
     private readonly profiles: EcfRealProfileReader,
     private readonly assessments: EcfRealAssessmentReader,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LEIAUTE_SPED` (0000.COD_VER do ano). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -288,7 +291,7 @@ export class SpedEcfRealGenerationService {
     // para a OpenAPI "a year with no known layout is a 400" ser verdade em produção — review I-1).
     let codVer: string;
     try {
-      codVer = resolveEcfCodVer(year, dto.fiscal.codVer);
+      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']), dto.fiscal.codVer);
     } catch (e) {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }

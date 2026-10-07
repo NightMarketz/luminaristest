@@ -34,7 +34,8 @@ import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { expiryCompetence, parseExpiryMovementKey } from '../../packages/models/validity';
 import { centsFromDb } from '../models/money';
-import { findLc116 } from '../models/lc116ListaNacional';
+import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { ReleituraJson } from '../../../lib/nfseReadback';
 
 export const DFE_EMITTED_EVENT = 'dfe.emitted';
@@ -139,7 +140,13 @@ export class FiscalDocumentEmissionService {
     private readonly serviceFiscalProfileService: ServiceFiscalProfileService,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (cTribNac na lista nacional). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
+
+  private async lc116(scope: AccountingScope): Promise<ListaLc116> {
+    return listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), scopeToday(scope));
+  }
 
   /** GET /api/nfe/dfe/status (item 13). */
   getStatus(): { enabled: boolean; partner: string | null; ambiente: DfeAmbiente | null; reason?: string; capabilities?: DfeEmissorPort['capabilities'] } {
@@ -508,6 +515,7 @@ export class FiscalDocumentEmissionService {
     }
 
     const faltantes: string[] = [];
+    const lc116 = await this.lc116(scope);
 
     // (i) venda existe e está Finalized; (ii) kind ≠ Empty, all-Package só se pacoteFatoGerador='VENDA'.
     const dynamicTableRepo = getFactory().getDynamicTableRepository();
@@ -542,7 +550,7 @@ export class FiscalDocumentEmissionService {
       } else {
         // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a, confirmado na 2ª rodada de 02/10): o cTribNac do pacote vem
         // do perfil fiscal da unidade (`pacoteCTribNac`, do contador). Sem ele, a recusa continua — nomeada.
-        faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile));
+        faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile, lc116));
         pacoteVenda = true;
         anchorSourceType = 'sale.package.sold';
       }
@@ -562,7 +570,7 @@ export class FiscalDocumentEmissionService {
         if (fiscalProfile?.ibsCbsInformar && !profile.cNBS) {
           faltantes.push(`serviço '${line.serviceRef}': falta cNBS (obrigatório com ibsCbsInformar, E0322)`);
         }
-        if (!findLc116(profile.cTribNac)) {
+        if (!findLc116(profile.cTribNac, lc116)) {
           faltantes.push(`serviço '${line.serviceRef}': cTribNac '${profile.cTribNac}' não consta da lista nacional (LC 116)`);
         }
       } catch {
@@ -727,11 +735,11 @@ export class FiscalDocumentEmissionService {
   }
 
   /** Faltantes dos códigos do pacote no perfil (13a): `pacoteCTribNac` sempre; `pacoteCNBS` com ibsCbsInformar (E0322). */
-  private pacoteCodigoFaltantes(fp: { pacoteCTribNac: string | null; pacoteCNBS: string | null; ibsCbsInformar: boolean }): string[] {
+  private pacoteCodigoFaltantes(fp: { pacoteCTribNac: string | null; pacoteCNBS: string | null; ibsCbsInformar: boolean }, lc116: ListaLc116): string[] {
     const faltantes: string[] = [];
     if (!fp.pacoteCTribNac) {
       faltantes.push("perfil fiscal da unidade: falta 'pacoteCTribNac' (cTribNac do pacote — do contador)");
-    } else if (!findLc116(fp.pacoteCTribNac)) {
+    } else if (!findLc116(fp.pacoteCTribNac, lc116)) {
       faltantes.push(`perfil fiscal da unidade: pacoteCTribNac '${fp.pacoteCTribNac}' não consta da lista nacional (LC 116)`);
     }
     if (fp.ibsCbsInformar && !fp.pacoteCNBS) {
@@ -764,6 +772,7 @@ export class FiscalDocumentEmissionService {
     const parsed = parseExpiryMovementKey(movementKey);
     if (!parsed) throw new Error(`assembleExpiry: chave de vencimento inválida '${movementKey}'.`);
     const faltantes: string[] = [];
+    const lc116 = await this.lc116(scope);
 
     const fiscalProfile = await this.fiscalProfileService.get(scope);
     if (!fiscalProfile) {
@@ -772,7 +781,7 @@ export class FiscalDocumentEmissionService {
       if (!fiscalProfile.emissao.completo) {
         faltantes.push(...fiscalProfile.emissao.faltantes.map((f) => `perfil fiscal da unidade: falta '${f}'`));
       }
-      faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile));
+      faltantes.push(...this.pacoteCodigoFaltantes(fiscalProfile, lc116));
     }
 
     const context = await getFactory().getPackageBalanceService().getExpiryContext(scope, movementKey);

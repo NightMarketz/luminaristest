@@ -19,6 +19,7 @@ import type { AccountingScope } from '../../scope/AccountingScope';
 import type { Payable } from 'generated/prisma';
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const FIXTURE_DIR = join(__dirname, '../../../../lib/__tests__/fixtures/nfe');
 const PURCHASE = readFileSync(join(FIXTURE_DIR, 'purchase-multi-item.SYNTHETIC.xml'), 'utf8');
 const CHAVE = '35250712345678000195550010000000011000000012';
@@ -42,7 +43,7 @@ function build(opts: { existing?: Payable | null; canManage?: boolean; canReconc
       icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null,
     }),
   } as never;
-  return { service: new NfePreviewService(payableRepo, policy, fiscalProfile, NO_DEFAULTS), findByDocumentNumber };
+  return { service: new NfePreviewService(payableRepo, policy, fiscalProfile, NO_DEFAULTS, legalParamsSemente), findByDocumentNumber };
 }
 
 describe('NfePreviewService.preview', () => {
@@ -120,7 +121,7 @@ describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)
       { findByDocumentNumber: async () => null } as unknown as IPayableRepository,
       { canManagePayable: () => true, canReconcile: () => false } as unknown as IAccountingPolicy,
       { requireCostRegime: async () => profile } as never,
-      NO_DEFAULTS,
+      NO_DEFAULTS, legalParamsSemente,
     );
 
   it('sem mapeamento: tudo REVENDA/FALLBACK, custoInsumoCents 0 e números iguais aos de hoje', async () => {
@@ -141,7 +142,7 @@ describe('NfePreviewService.preview — destinação por item (ITEM-DESTINATION)
       { findById: async () => null } as never,
       { canManagePayable: () => true } as never,
       { requireCostRegime: async () => profile } as never,
-      NO_DEFAULTS,
+      NO_DEFAULTS, legalParamsSemente,
     );
     const imported = await importSvc.importPurchase(scope, PC, { unitId: 'unit-1', itemMappings: MAPPINGS });
 
@@ -183,7 +184,7 @@ describe('NfePreviewService.preview — default por produto (ITEM-DESTINATION PR
       { findByDocumentNumber: async () => null } as unknown as IPayableRepository,
       { canManagePayable: () => true, canReconcile: () => false } as unknown as IAccountingPolicy,
       { requireCostRegime: async () => profile } as never,
-      pd.repo,
+      pd.repo, legalParamsSemente,
     ).preview(scope, PC, MAPPINGS);
     expect(NfePreviewSchema.safeParse(preview).success).toBe(true);
     expect(preview.custo.destinacoes.map((d) => `${d.cProd}:${d.destination}/${d.origem}`)).toEqual([
@@ -202,7 +203,7 @@ describe('NfePreviewService.preview — default por produto (ITEM-DESTINATION PR
       { findById: async () => null } as never,
       { canManagePayable: () => true } as never,
       { requireCostRegime: async () => profile } as never,
-      importDefaults.repo,
+      importDefaults.repo, legalParamsSemente,
     ).importPurchase(scope, PC, { unitId: 'unit-1', itemMappings: MAPPINGS });
 
     expect(importDefaults.findManyByProductRefs).toHaveBeenCalledTimes(1);

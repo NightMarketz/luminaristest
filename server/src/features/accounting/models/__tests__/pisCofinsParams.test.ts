@@ -2,9 +2,8 @@
  * BE-INCR-PIS-COFINS PR-1 (nó X8, BRIEF itens 3, 4 e 6) — tabela versionada com revogação em 2027 e a divisão PIS ×
  * Cofins do crédito da NF-e (parcelas gravadas ou derivadas por 165:760 com o `arred` do X7).
  */
-import { COFINS_CREDIT_BP, PIS_CREDIT_BP } from '../../../../lib/nfeCost';
 import { parametroPisCofinsVigente, separarCreditoPisCofins } from '../pisCofinsParams';
-import { tabelaPisCofinsSemente } from '@test/helpers/legalParams';
+import { RAZAO_CREDITO_SEMENTE, tabelaPisCofinsSemente } from '@test/helpers/legalParams';
 
 // BE-INCR-LEGAL-PARAMS PR-1: as alíquotas moram no banco; a semente da migração é a fotografia destes testes.
 const PARAMETROS_PIS_COFINS = tabelaPisCofinsSemente();
@@ -32,25 +31,25 @@ describe('tabela de parâmetros (item 3)', () => {
     const v = (t: 'PIS' | 'COFINS', m: 'CUMULATIVO' | 'NAO_CUMULATIVO') => parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, t, m, '2026-06-30')!;
     expect([v('PIS', 'CUMULATIVO').aliquotaBp, v('PIS', 'CUMULATIVO').codigoReceita]).toEqual([65, '810902']);
     expect([v('COFINS', 'CUMULATIVO').aliquotaBp, v('COFINS', 'CUMULATIVO').codigoReceita]).toEqual([300, '217201']);
-    expect([v('PIS', 'NAO_CUMULATIVO').aliquotaBp, v('PIS', 'NAO_CUMULATIVO').codigoReceita]).toEqual([PIS_CREDIT_BP, '691201']);
-    expect([v('COFINS', 'NAO_CUMULATIVO').aliquotaBp, v('COFINS', 'NAO_CUMULATIVO').codigoReceita]).toEqual([COFINS_CREDIT_BP, '585601']);
+    expect([v('PIS', 'NAO_CUMULATIVO').aliquotaBp, v('PIS', 'NAO_CUMULATIVO').codigoReceita]).toEqual([RAZAO_CREDITO_SEMENTE.pisBp, '691201']);
+    expect([v('COFINS', 'NAO_CUMULATIVO').aliquotaBp, v('COFINS', 'NAO_CUMULATIVO').codigoReceita]).toEqual([RAZAO_CREDITO_SEMENTE.cofinsBp, '585601']);
   });
 });
 
 describe('divisão PIS × Cofins do crédito da NF-e (itens 4 e 6)', () => {
   it('linha com as parcelas ⇒ usa como estão', () => {
-    expect(separarCreditoPisCofins({ amountCents: 784, baseCents: 8473, pisCents: 140, cofinsCents: 644 }))
+    expect(separarCreditoPisCofins({ amountCents: 784, baseCents: 8473, pisCents: 140, cofinsCents: 644 }, RAZAO_CREDITO_SEMENTE))
       .toEqual({ baseCents: 8473, pisCents: 140, cofinsCents: 644, derivado: false });
   });
 
   it('linha antiga ⇒ DERIVADO: PIS = half-up de amount × 165/925, Cofins = resto, soma = amount', () => {
-    expect(separarCreditoPisCofins({ amountCents: 925 })).toEqual({ baseCents: null, pisCents: 165, cofinsCents: 760, derivado: true });
+    expect(separarCreditoPisCofins({ amountCents: 925 }, RAZAO_CREDITO_SEMENTE)).toEqual({ baseCents: null, pisCents: 165, cofinsCents: 760, derivado: true });
     // 37 × 165 / 925 = 6,6 → 7: truncar daria 6 — prova que é o arredondamento do X7, não um piso
-    expect(separarCreditoPisCofins({ amountCents: 37 })).toMatchObject({ pisCents: 7, cofinsCents: 30 });
-    expect(separarCreditoPisCofins({ amountCents: 14 })).toMatchObject({ pisCents: 2, cofinsCents: 12 }); // 2,497… → 2
-    expect(separarCreditoPisCofins({ amountCents: 0 })).toMatchObject({ pisCents: 0, cofinsCents: 0 });
+    expect(separarCreditoPisCofins({ amountCents: 37 }, RAZAO_CREDITO_SEMENTE)).toMatchObject({ pisCents: 7, cofinsCents: 30 });
+    expect(separarCreditoPisCofins({ amountCents: 14 }, RAZAO_CREDITO_SEMENTE)).toMatchObject({ pisCents: 2, cofinsCents: 12 }); // 2,497… → 2
+    expect(separarCreditoPisCofins({ amountCents: 0 }, RAZAO_CREDITO_SEMENTE)).toMatchObject({ pisCents: 0, cofinsCents: 0 });
     for (const amount of [1, 2, 3, 17, 784, 99_999, 123_456_789]) {
-      const s = separarCreditoPisCofins({ amountCents: amount });
+      const s = separarCreditoPisCofins({ amountCents: amount }, RAZAO_CREDITO_SEMENTE);
       expect(s.pisCents + s.cofinsCents).toBe(amount);
       expect(Math.abs(s.pisCents - (amount * 165) / 925)).toBeLessThanOrEqual(0.5);
     }

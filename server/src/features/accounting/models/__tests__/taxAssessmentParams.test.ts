@@ -1,7 +1,7 @@
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 4–5) — tabela de parâmetros versionada e arredondamento único.
  */
-import { CODIGOS_RECEITA, TAX_ASSESSMENT_TABELA_VERSAO, arred, linhaVigente, mulBp, parametroVigente, tabelaApuracaoDe } from '../taxAssessmentParams';
+import { TAX_ASSESSMENT_TABELA_VERSAO, arred, linhaVigente, mulBp, parametroVigente, tabelaApuracaoDe } from '../taxAssessmentParams';
 import { legalParamsSeedRows, tabelaApuracaoSemente } from '@test/helpers/legalParams';
 
 // BE-INCR-LEGAL-PARAMS PR-1: as linhas moram no banco; a semente da migração é a fotografia destes testes.
@@ -35,7 +35,7 @@ describe('BE-INCR-TAX-PRESUMIDO-16 itens 1 e 6', () => {
     expect(linhaVigente(T, 'PRESUNCAO_IRPJ_REDUZIDA', '2026-03-31')).toMatchObject({ valor: 1600, fonte: expect.stringContaining('art. 215 § 10') });
     expect(linhaVigente(T, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', '2026-03-31')).toMatchObject({ valor: 12_000_000, fonte: expect.stringContaining('art. 215 § 10') });
     expect(TAX_ASSESSMENT_TABELA_VERSAO).toBe('2026-10-06');
-    expect(CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16).toBe('208902');
+    expect(T.codigoReceita('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16', '2026-03-31').codigo).toBe('208902');
   });
 });
 

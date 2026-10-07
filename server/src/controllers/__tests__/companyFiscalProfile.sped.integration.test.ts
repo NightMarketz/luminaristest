@@ -14,7 +14,9 @@ const PERFIL = '/api/accounting/company-fiscal-profile';
 const HOJE = anoCorrente({ timeZone: 'America/Sao_Paulo' } as never);
 // Anos RELATIVOS ao corrente: o ano corrente fica livre para os itens 15/17 (o item 16 trava ANO).
 const ANO = HOJE - 1;
-const SEM_PERFIL = HOJE - 2;
+// BE-INCR-LEGAL-PARAMS PR-2 (emenda §9 L-10): o leiaute da ECD só tem linha desde 2025-01-01 — o ano sem perfil precisa
+// ser ≥ 2025 (2024 agora é 400 "sem linha vigente de LEIAUTE_SPED"). HOJE e HOJE − 1 já têm perfil neste arquivo.
+const SEM_PERFIL = HOJE + 1;
 const ANO_SIMPLES = HOJE - 3;
 
 let dono: { id: string; username: string };

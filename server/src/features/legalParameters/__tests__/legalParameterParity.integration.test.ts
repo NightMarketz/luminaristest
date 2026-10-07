@@ -69,7 +69,7 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
   afterAll(() => disconnectDb());
 
   it('TAX_ASSESSMENT: mesmo valor e mesma fonte em toda chave × atividade × data', async () => {
-    const t = tabelaApuracaoDe(await getFactory().getLegalParameterService().fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA']));
+    const t = tabelaApuracaoDe(await getFactory().getLegalParameterService().fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']));
     const pares = [...new Set(ANTIGA_APURACAO.map((p) => `${p.chave}|${p.atividade ?? ''}`))];
     let comparados = 0;
     for (const par of pares) {
@@ -87,7 +87,7 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
   });
 
   it('CSLL_ALIQUOTA: indicadores 1 e 4 com mesmo valor e fonte em toda data apurável; indicador ausente segue ausente', async () => {
-    const t = tabelaApuracaoDe(await getFactory().getLegalParameterService().fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA']));
+    const t = tabelaApuracaoDe(await getFactory().getLegalParameterService().fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']));
     for (const data of DATAS) {
       for (const ind of ['1', '4']) expect(t.aliquotaCsll(ind, data)).toEqual(ANTIGA_CSLL[ind]);
       for (const ind of ['2', '3']) expect(t.aliquotaCsll(ind, data)).toBeUndefined();
@@ -95,7 +95,7 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
   });
 
   it('PIS_COFINS: mesma alíquota, código, fonte e vigência em todo tributo × modalidade × data (2027 não resolve)', async () => {
-    const t = tabelaPisCofinsDe(await getFactory().getLegalParameterService().fotografia(['PIS_COFINS']));
+    const t = tabelaPisCofinsDe(await getFactory().getLegalParameterService().fotografia(['PIS_COFINS', 'CODIGO_RECEITA']));
     for (const a of ANTIGA_PIS_COFINS) {
       for (const data of DATAS) {
         const antiga = a.vigenteDesde <= data && data <= a.vigenteAte ? a : undefined;

@@ -6,8 +6,9 @@ import type { IPayableRepository } from '../repositories/IPayableRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { FiscalProfileService } from './FiscalProfileService';
-import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
-import { defaultByProductRefFrom, resolveDestinations, type ItemDestinationMapping } from '../models/itemDestination';
+import { TABELAS_LEGAIS_NFE, acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { cfopsImobilizadoDe, defaultByProductRefFrom, resolveDestinations, type ItemDestinationMapping } from '../models/itemDestination';
 import type { IProductDestinationDefaultRepository } from '../repositories/IProductDestinationDefaultRepository';
 import { mappedProductRefs } from './NfeImportService';
 
@@ -36,6 +37,8 @@ export class NfePreviewService {
     private readonly policy: IAccountingPolicy,
     private readonly fiscalProfile: FiscalProfileService,
     private readonly productDestinationDefaults: IProductDestinationDefaultRepository,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia das tabelas legais da NF-e (cStat, CFOP, CST, NCM, PIS/Cofins). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   async preview(
@@ -46,7 +49,8 @@ export class NfePreviewService {
     if (!this.policy.canManagePayable(scope) && !this.policy.canReconcile(scope)) {
       throw new ForbiddenError('Você não tem permissão para pré-visualizar NF-e.');
     }
-    const parsed = parseNfe(xml);
+    const legais = await this.legalParams.fotografia(TABELAS_LEGAIS_NFE);
+    const parsed = parseNfe(xml, legais);
     const existing = await this.payableRepo.findByDocumentNumber(scope, parsed.chaveAcesso);
     // X6 (F-X6-6 a): sem perfil fiscal o preview NÃO inventa custo — 400 nomeado, igual ao import.
     const regime = await this.fiscalProfile.requireCostRegime(scope);
@@ -56,8 +60,9 @@ export class NfePreviewService {
       costed,
       new Map<string, ItemDestinationMapping>(itemMappings.map((m) => [m.cProd, m])),
       defaultByProductRefFrom(defaults),
+      cfopsImobilizadoDe(legais, parsed.ide.dhEmiDate),
     );
-    const custo = acquisitionCost(parsed, costed, regime, resolved.byNItem);
+    const custo = acquisitionCost(parsed, costed, regime, resolved.byNItem, legais);
     return toNfePreview(parsed, existing?.id ?? null, custo, resolved);
   }
 }
@@ -71,6 +76,8 @@ export function toNfePreview(
   resolved: Pick<ReturnType<typeof resolveDestinations>, 'destinacoes' | 'warnings'> = resolveDestinations(
     parsed.itens.filter((it) => it.indTot !== '0'),
     new Map(),
+    new Map(),
+    new Set(), // sem mapeamento não há productRef — o aviso de CFOP de imobilizado não dispara
   ),
 ): NfePreview {
   const { chNFe: _chNFe, ...protocolo } = parsed.protocolo;

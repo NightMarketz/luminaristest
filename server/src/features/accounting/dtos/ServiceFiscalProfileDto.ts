@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isLc116Codigo } from '../models/lc116ListaNacional';
+import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
 import { isIndOp, IND_OP_DEFAULT_SALAO } from '../models/indOp';
 
 /**
@@ -16,7 +16,7 @@ export const ServiceFiscalProfileParamsSchema = z.object({ serviceRef: z.string(
 export const UpsertServiceFiscalProfileSchema = z
   .object({
     unitId: z.string().min(1),
-    cTribNac: z.string().regex(/^\d{6}$/).refine(isLc116Codigo, 'cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)'),
+    cTribNac: z.string().regex(/^\d{6}$/).refine((c) => isLc116Codigo(c, listaLc116DoCache()), 'cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)'),
     cTribMun: z.string().regex(/^\d{3}$/).nullable().optional(),
     cNBS: z.string().regex(/^\d{9}$/).nullable().optional(),
     cIndOp: z.string().regex(/^\d{6}$/).refine(isIndOp, 'cIndOp fora da tabela de indicadores de operação (Anexo C)').default(IND_OP_DEFAULT_SALAO),

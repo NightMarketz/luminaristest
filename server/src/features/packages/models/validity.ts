@@ -1,4 +1,5 @@
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly, isValidDateOnly } from '../../accounting/models/dates';
+import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 /**
  * BE-INCR-PACOTE-VALIDADE (BRIEF §3 itens 1 e 8) — regra do prazo, pura. Datas são dia-calendário
@@ -11,13 +12,15 @@ import { dateOnlyFromDayNumber, dayNumberFromDateOnly, isValidDateOnly } from '.
  */
 
 /**
- * Feriados nacionais fixos (MM-DD), transcritos do Planalto em 04/10/2026:
- * Lei 662/1949 art. 1º (redação da Lei 10.607/2002), Lei 6.802/1980 art. 1º (12/10) e
- * Lei 14.759/2023 art. 1º (20/11, publicada em 22/12/2023 → vale de 2024 em diante).
- * Sexta-feira da Paixão é feriado religioso declarado em lei MUNICIPAL (Lei 9.093/1995 art. 2º) → fora.
+ * Feriados nacionais fixos (MM-DD), transcritos do Planalto em 04/10/2026: Lei 662/1949 art. 1º (redação da Lei
+ * 10.607/2002), Lei 6.802/1980 art. 1º (12/10) e Lei 14.759/2023 art. 1º (20/11, vale de 2024 em diante). Sexta-feira
+ * da Paixão é feriado religioso declarado em lei MUNICIPAL (Lei 9.093/1995 art. 2º) → fora.
+ *
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 26; emenda §9 L-9): a lista mora na tabela de plataforma `FERIADO_NACIONAL` (chave
+ * MM-DD, fonte e vigência por linha — o 20/11 desde 2024). O serviço monta a fotografia e a passa aqui (F-LP-4 a);
+ * feriado novo por lei = linha nova. Os domingos de eleição são REGRA (data móvel), não lista — ficam em código.
  */
-const FIXED_NATIONAL_HOLIDAYS = ['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '12-25'];
-const ZUMBI_FROM_YEAR = 2024;
+export type FeriadosNacionais = readonly LinhaLegal[];
 
 /** Domingo = 0 (Date.getUTCDay). */
 function weekdayOf(dayNumber: number): number {
@@ -39,26 +42,25 @@ function isElectionSunday(dayNumber: number, dateOnly: string): boolean {
  * ponytail: só feriado NACIONAL. Estaduais e municipais (inclusive Sexta-feira da Paixão e Corpus Christi)
  * ficam fora; o upgrade é um calendário por unidade (F-JUR-6, opção recusada).
  */
-export function isNationalHoliday(dateOnly: string): boolean {
+export function isNationalHoliday(dateOnly: string, feriados: FeriadosNacionais): boolean {
   const mmdd = dateOnly.slice(5);
-  if (FIXED_NATIONAL_HOLIDAYS.includes(mmdd)) return true;
-  if (mmdd === '11-20' && parseInt(dateOnly.slice(0, 4), 10) >= ZUMBI_FROM_YEAR) return true;
+  if (linhasVigentesDaTabela(feriados, 'FERIADO_NACIONAL', dateOnly).some((l) => l.chave === mmdd)) return true;
   return isElectionSunday(dayNumberFromDateOnly(dateOnly), dateOnly);
 }
 
 /** `null`/`0` = sem validade (o preset aceita 0). `N ≥ 1` → `saleDate + N`, prorrogado se cair em feriado. */
-export function lastValidDay(saleDate: string, validityDays: number | null): string | null {
+export function lastValidDay(saleDate: string, validityDays: number | null, feriados: FeriadosNacionais): string | null {
   if (validityDays == null || validityDays === 0) return null;
   if (!Number.isInteger(validityDays) || validityDays < 0) {
     throw new Error(`validityDays inválido: ${validityDays}`);
   }
   if (!isValidDateOnly(saleDate)) throw new Error(`data inválida: '${saleDate}'`);
   let day = dayNumberFromDateOnly(saleDate) + validityDays;
-  if (!isNationalHoliday(dateOnlyFromDayNumber(day))) return dateOnlyFromDayNumber(day);
+  if (!isNationalHoliday(dateOnlyFromDayNumber(day), feriados)) return dateOnlyFromDayNumber(day);
   // CC 132 § 1º: "seguinte dia útil" = o próximo que não é feriado nacional nem domingo (premissa da nota
   // D-2026-10-04 §Delta D2; sábado conta como útil).
   do day++;
-  while (isNationalHoliday(dateOnlyFromDayNumber(day)) || weekdayOf(day) === 0);
+  while (isNationalHoliday(dateOnlyFromDayNumber(day), feriados) || weekdayOf(day) === 0);
   return dateOnlyFromDayNumber(day);
 }
 

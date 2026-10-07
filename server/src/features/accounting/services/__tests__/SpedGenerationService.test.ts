@@ -17,6 +17,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const sendAlertWebhook = jest.fn();
 jest.mock('../../../../lib/alertWebhook', () => ({
   __esModule: true,
@@ -183,7 +184,7 @@ function buildService(m: Mocks = {}) {
   const audit = { append } as never;
 
   const service = new SpedGenerationService(
-    accountRepo, postingRepo, journalEntryRepo, referential, reports, policy, repo, audit,
+    accountRepo, postingRepo, journalEntryRepo, referential, reports, policy, repo, audit, legalParamsSemente,
   );
   return {
     service, createJob, updateJob, groupByAccount, findManyForExport, append, policy,

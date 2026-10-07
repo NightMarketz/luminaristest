@@ -28,7 +28,9 @@ import {
   type RegJ100Line,
   type RegJ150Line,
   sanitizeRtfForSped,
+  resolveEcdCodVerLc,
 } from '../../../lib/sped';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { CLOSING_SOURCE_TYPE, IND_LCTO_ENCERRAMENTO } from '../models/closing';
 import {
   ecdIdentQualifParaEmissao,
@@ -96,6 +98,8 @@ export class SpedGenerationService {
     private readonly policy: IAccountingPolicy,
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LEIAUTE_SPED` (I010.COD_VER_LC). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -496,6 +500,7 @@ export class SpedGenerationService {
         codPlanRef: dto.declarant.codPlanRef,
       },
       indEsc: 'G', // Diário Geral (D4)
+      codVerLc: resolveEcdCodVerLc(await this.legalParams.fotografia(['LEIAUTE_SPED']), dtFin),
       book: {
         numOrd: dto.book.numOrd,
         natLivr: dto.book.natLivr,

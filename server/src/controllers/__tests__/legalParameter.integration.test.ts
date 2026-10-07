@@ -86,7 +86,7 @@ describe('BE-INCR-LEGAL-PARAMS PR-1 — /api/legal-parameters', () => {
 
   it('item 8 + item 5 — publicar faz a linha valer no lookup E na fotografia dos cálculos (cache invalidado); revogar volta', async () => {
     const svc = getFactory().getLegalParameterService();
-    const aliq = async (data: string) => parametroVigente(tabelaApuracaoDe(await svc.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA'])), 'IRPJ_ALIQ', data);
+    const aliq = async (data: string) => parametroVigente(tabelaApuracaoDe(await svc.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA'])), 'IRPJ_ALIQ', data);
     expect(await aliq('2027-03-31')).toBe(1500); // aquece o cache
     const id = await propor();
     expect(await aliq('2027-03-31')).toBe(1500); // DRAFT não vale
