@@ -30,6 +30,7 @@ import { CounterpartyRepository } from '../features/accounting/repositories/Coun
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
+import { MitExportRepository } from '../features/accounting/repositories/MitExportRepository';
 import { AccountingDeliveryRepository } from '../features/accounting/repositories/AccountingDeliveryRepository';
 import { AccountingReviewRepository } from '../features/accounting/repositories/AccountingReviewRepository';
 import { AccountantAssignmentRepository } from '../features/accounting/repositories/AccountantAssignmentRepository';
@@ -114,6 +115,7 @@ import { AccountantAssignmentService } from '../features/accounting/services/Acc
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
+import { MitExportService } from '../features/accounting/services/MitExportService';
 import { PisCofinsAssessmentService } from '../features/accounting/services/PisCofinsAssessmentService';
 import { AccountingDeliveryService } from '../features/accounting/services/AccountingDeliveryService';
 import { AccountingReviewService } from '../features/accounting/services/AccountingReviewService';
@@ -211,6 +213,7 @@ import type { IAccountingPeriodRepository } from '../features/accounting/reposit
 import type { IAccountingContactRepository } from '../features/accounting/repositories/IAccountingContactRepository';
 import type { IPaymentAccountRepository } from '../features/accounting/repositories/IPaymentAccountRepository';
 import type { ITaxAssessmentRepository } from '../features/accounting/repositories/ITaxAssessmentRepository';
+import type { IMitExportRepository } from '../features/accounting/repositories/IMitExportRepository';
 import type { IAccountingDeliveryRepository } from '../features/accounting/repositories/IAccountingDeliveryRepository';
 import type { IAccountingReviewRepository } from '../features/accounting/repositories/IAccountingReviewRepository';
 import type { IAccountantAssignmentRepository } from '../features/accounting/repositories/IAccountantAssignmentRepository';
@@ -439,6 +442,7 @@ export class ApplicationFactory {
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
+    mitExport: IMitExportRepository; // X9 PR-2
     accountingDelivery: IAccountingDeliveryRepository;
     accountingReview: IAccountingReviewRepository;
     accountantAssignment: IAccountantAssignmentRepository; // GOV-CONTADOR
@@ -527,6 +531,7 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
+    mitExport: MitExportService; // X9 PR-2
     pisCofinsAssessment: PisCofinsAssessmentService; // X8 PR-2
     accountingDelivery: AccountingDeliveryService;
     accountingReview: AccountingReviewService;
@@ -597,6 +602,7 @@ export class ApplicationFactory {
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
       taxAssessment: new TaxAssessmentRepository(),
+      mitExport: new MitExportRepository(),
       accountingDelivery: new AccountingDeliveryRepository(),
       accountingReview: new AccountingReviewRepository(),
       accountantAssignment: new AccountantAssignmentRepository(),
@@ -1251,6 +1257,15 @@ export class ApplicationFactory {
       ),
       // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7): prévia/confirmação/leitura da apuração IRPJ/CSLL trimestral.
       taxAssessment: taxAssessmentService,
+      // BE-INCR-MIT-EXPORT PR-2 (nó X9): arquivo JSON do MIT a partir das apurações confirmadas (só lê o X7).
+      mitExport: new MitExportService(
+        this.repositories.mitExport,
+        this.repositories.taxAssessment,
+        this.repositories.companyFiscalProfile,
+        this.repositories.accountingContact,
+        this.policies.accounting,
+        auditService,
+      ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: new PisCofinsAssessmentService(
         this.repositories.taxAssessment,
@@ -1459,6 +1474,7 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
+  public getMitExportService = (): MitExportService => this.services.mitExport;
   public getPisCofinsAssessmentService = (): PisCofinsAssessmentService => this.services.pisCofinsAssessment;
   public getAccountingDeliveryService = (): AccountingDeliveryService =>
     this.services.accountingDelivery;

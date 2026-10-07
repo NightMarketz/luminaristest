@@ -171,6 +171,8 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'tax.assessment.confirmed': ['assessmentId', 'tributo', 'periodo', 'anoCalendario', 'aPagarCents', 'devidoCents', 'tabelaVersao',
     'modo', 'diferencaPostergadaCents'], // X7 Fase B item 25: enum + centavos em string
   'tax.assessment.superseded': ['assessmentId', 'supersededById', 'tributo', 'periodo', 'anoCalendario'],
+  // BE-INCR-MIT-EXPORT PR-2 (nó X9, item 16; D12, invariante 9) — sem CPF, e-mail, telefone nem conteúdo do arquivo.
+  'tax.mit_export.generated': ['mitExportId', 'anoCalendario', 'mes', 'sha256', 'apuracaoIds'],
   // X13 PR-2 item 16 (F-XP-5 a): o recibo da ECF é número de controle da RFB, não PII.
   'company_fiscal_profile.ecf_transmitted': ['anoCalendario', 'ecfRecibo', 'regime'],
   // X13 (item 10; F-OBP-9 a) — signatário da empresa: só as qualificações (códigos de tabela). Nome/CPF/e-mail/fone

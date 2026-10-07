@@ -6760,6 +6760,54 @@
       ]
     }
   },
+  "MitExportDto.ts": {
+    "MitExportRequestSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 9007199254740991
+        },
+        "mes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario",
+        "mes"
+      ],
+      "additionalProperties": false
+    },
+    "MitExportListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anoCalendario": {
+          "type": "integer",
+          "minimum": 2025,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "unitId",
+        "anoCalendario"
+      ],
+      "additionalProperties": false
+    }
+  },
   "NfeDto.ts": {
     "ImportNfePurchaseSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
