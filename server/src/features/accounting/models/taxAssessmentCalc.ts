@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { ValidationError } from '../../../lib/errors';
 import { findLinha } from './Lalur.model';
 import {
-  ALIQUOTA_CSLL_BP,
   CODIGOS_RECEITA,
   CODIGOS_RECEITA_FONTE,
   TAX_ASSESSMENT_TABELA_VERSAO,
@@ -11,6 +10,7 @@ import {
   mulBp,
   parametroVigente,
   type ParametroApuracao,
+  type TabelaApuracao,
 } from './taxAssessmentParams';
 
 /**
@@ -122,6 +122,8 @@ const F_15_5 = 'IN RFB 2.305/2025 art. 15 § 5º';
 const F_15_9 = 'IN RFB 2.305/2025 art. 15 § 9º';
 
 export interface EntradaLc224 {
+  /** BE-INCR-LEGAL-PARAMS (F-LP-4 a): fotografia das linhas de plataforma, montada pelo serviço. */
+  tabela: TabelaApuracao;
   ano: number;
   periodo: PeriodoTrimestral;
   receitaTrimestreCents: bigint;
@@ -167,7 +169,7 @@ export interface ResultadoLc224 {
  */
 export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
-  const limiteParam = linhaVigente('LC224_LIMITE_TRIMESTRE_CENTS', dataFim);
+  const limiteParam = linhaVigente(e.tabela, 'LC224_LIMITE_TRIMESTRE_CENTS', dataFim);
   if (!limiteParam) return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
 
   const limite = BigInt(limiteParam.valor);
@@ -246,6 +248,7 @@ export interface PerfilApuracaoPresumido {
 }
 
 export interface EntradaPresumido {
+  tabela: TabelaApuracao; // BE-INCR-LEGAL-PARAMS (F-LP-4 a)
   ano: number;
   periodo: PeriodoTrimestral;
   tributo: TributoApuracao;
@@ -258,8 +261,8 @@ export interface EntradaPresumido {
 }
 
 /** D8: alíquota da CSLL do perfil; nula ⇒ 400 (perfil incompleto). */
-export function aliquotaCsll(ind: string | null): { valor: number; fonte: string } {
-  const a = ind ? ALIQUOTA_CSLL_BP[ind] : undefined;
+export function aliquotaCsll(t: TabelaApuracao, ind: string | null, dataFim: string): { valor: number; fonte: string } {
+  const a = ind ? t.aliquotaCsll(ind, dataFim) : undefined;
   if (!a) throw new ValidationError('perfil incompleto: informe ecf.indAliqCsll (alíquota da CSLL) no perfil fiscal da empresa do ano (ADR D8).');
   return a;
 }
@@ -274,6 +277,7 @@ const ACRESCIMO = { IRPJ: 'LC224_ACRESCIMO_IRPJ', CSLL: 'LC224_ACRESCIMO_CSLL' }
  * atividade no trimestre (§§ 1º II e 6º).
  */
 function basePresumido(
+  t: TabelaApuracao,
   tributo: TributoApuracao,
   dataFim: string,
   receitaServico: bigint,
@@ -286,15 +290,15 @@ function basePresumido(
   const receita = receitaServico + receitaRevenda;
   const excServico = receita > 0n ? arred(excedente * receitaServico, receita) : 0n;
   const excRevenda = excedente - excServico;
-  const acrescimo = suspenso ? 0 : parametroVigente(ACRESCIMO[tributo], dataFim);
-  const pS = reduzida16 ?? linhaVigente(PRESUNCAO[tributo], dataFim, 'SERVICO')!;
-  const pR = linhaVigente(PRESUNCAO[tributo], dataFim, 'REVENDA')!;
+  const acrescimo = suspenso ? 0 : parametroVigente(t, ACRESCIMO[tributo], dataFim);
+  const pS = reduzida16 ?? linhaVigente(t, PRESUNCAO[tributo], dataFim, 'SERVICO')!;
+  const pR = linhaVigente(t, PRESUNCAO[tributo], dataFim, 'REVENDA')!;
   const presS = mulBp(receitaServico, pS.valor);
   const presR = mulBp(receitaRevenda, pR.valor);
   const acrS = mulBp(excServico, pS.valor, acrescimo);
   const acrR = mulBp(excRevenda, pR.valor, acrescimo);
   const base = presS + presR + acrS + acrR;
-  const fonteAcr = linhaVigente(ACRESCIMO[tributo], dataFim)?.fonte ?? `${ACRESCIMO[tributo]} sem linha vigente (acréscimo 0)`;
+  const fonteAcr = linhaVigente(t, ACRESCIMO[tributo], dataFim)?.fonte ?? `${ACRESCIMO[tributo]} sem linha vigente (acréscimo 0)`;
   const memoria = [
     reduzida16
       ? linha('PRESUNCAO_REDUZIDA_16', `Receita de serviço × ${pS.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`, presS, F_215_10)
@@ -304,7 +308,7 @@ function basePresumido(
     linha('LC224_ACRESCIMO_REVENDA', `Parcela excedente da revenda (${excRevenda} centavos) × ${pR.valor / 100}% × ${acrescimo / 100}%`, acrR, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
     linha('BASE', 'Base de cálculo', base, 'Lei 9.430/1996 art. 25 I'),
   ];
-  const imposto = impostoSobreBase(tributo, dataFim, base, aliqCsll);
+  const imposto = impostoSobreBase(t, tributo, dataFim, base, aliqCsll);
   return { baseCents: base, devidoCents: imposto.devidoCents, memoria: [...memoria, ...imposto.memoria] };
 }
 
@@ -314,6 +318,7 @@ function basePresumido(
  * do devido (o balancete grava `DEVIDO_PERIODO_EM_CURSO`, Fase B item 8).
  */
 export function impostoSobreBase(
+  t: TabelaApuracao,
   tributo: TributoApuracao,
   dataFim: string,
   base: bigint,
@@ -326,9 +331,9 @@ export function impostoSobreBase(
     const v = mulBp(base, a.valor);
     return { devidoCents: v, memoria: [linha('ALIQUOTA', `Base × ${a.valor / 100}%`, v, a.fonte), linha(codigoDevido, 'CSLL devida', v, a.fonte)] };
   }
-  const aliq = linhaVigente('IRPJ_ALIQ', dataFim)!;
-  const adicAliq = linhaVigente('IRPJ_ADIC_ALIQ', dataFim)!;
-  const limiteMes = linhaVigente('IRPJ_ADIC_LIMITE_MES_CENTS', dataFim)!;
+  const aliq = linhaVigente(t, 'IRPJ_ALIQ', dataFim)!;
+  const adicAliq = linhaVigente(t, 'IRPJ_ADIC_ALIQ', dataFim)!;
+  const limiteMes = linhaVigente(t, 'IRPJ_ADIC_LIMITE_MES_CENTS', dataFim)!;
   const normal = mulBp(base, aliq.valor);
   const adicional = mulBp(maxZero(base - BigInt(limiteMes.valor) * meses), adicAliq.valor);
   return {
@@ -374,11 +379,11 @@ function regra16(
       'declarou prestadora exclusiva de serviços, mas há receita de revenda no ano — exclusividade é condição do 16% (IN RFB 1.700/2017 art. 215 § 10).',
     );
   }
-  const limite = linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
+  const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   const acumuladaAnterior = e.anteriores.reduce((s, a) => s + receitaDaMemoria(a), 0n);
   const acumulada = acumuladaAnterior + receitaTrimestre;
   const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
-  if (acumulada <= BigInt(limite.valor)) return { reduzida16: linhaVigente('PRESUNCAO_IRPJ_REDUZIDA', dataFim)!, memoria, diferenca: null };
+  if (acumulada <= BigInt(limite.valor)) return { reduzida16: linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!, memoria, diferenca: null };
   if (acumuladaAnterior > BigInt(limite.valor)) return { memoria, diferenca: null }; // item 5: o excesso já foi cobrado antes
   return { memoria, diferenca: diferencaPostergada16Trimestral(e) };
 }
@@ -390,8 +395,8 @@ function diferencaPostergada16Trimestral(e: EntradaPresumido): { total: bigint; 
   const trimestres = e.anteriores.filter((a) => temLinha(a.memoria, 'PRESUNCAO_REDUZIDA_16')).sort((a, b) => a.periodo.localeCompare(b.periodo));
   for (const a of trimestres) {
     const dataFimK = fimDoTrimestre(e.ano, a.periodo);
-    const pS = linhaVigente('PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
-    const devido32 = impostoSobreBase('IRPJ', dataFimK, mulBp(valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo), pS.valor), null).devidoCents;
+    const pS = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
+    const devido32 = impostoSobreBase(e.tabela, 'IRPJ', dataFimK, mulBp(valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo), pS.valor), null).devidoCents;
     const devido = valorLinha(a.memoria, 'DEVIDO', a.periodo);
     total += devido32 - devido;
     linhas.push(
@@ -417,7 +422,7 @@ function memoriaDiferencaTrimestral(d: { total: bigint; linhas: MemoriaLinha[] }
  * `diferencaPostergadaCents` da linha 208901 (F-P16-2, dono 06/10: a coluna que o X9 lê).
  */
 export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuracao & { diferencaPostergadaCents: bigint } {
-  const aliqCsll = aliquotaCsll(e.perfil.ecfIndAliqCsll);
+  const aliqCsll = aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, fimDoTrimestre(e.ano, e.periodo));
   if (e.perfil.ecfIndRecReceita === '1') {
     throw new ValidationError(
       'Presumido pelo regime de caixa (ecf.indRecReceita = 1) fica fora da Fase A: a segregação lê o razão por competência (IN RFB 1.700/2017 art. 223).',
@@ -426,6 +431,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
   const receita = e.receitaServicoCents + e.receitaRevendaCents;
   const lc = parcelaExcedenteLc224({
+    tabela: e.tabela,
     ano: e.ano,
     periodo: e.periodo,
     receitaTrimestreCents: receita,
@@ -446,7 +452,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
       linha('LC224_SUSPENSO', `Acréscimo da LC 224 suspenso por liminar (processo ${e.perfil.lc224LiminarReferencia ?? '—'}); limite e sobra continuam contados`, 0n, 'F-TA-5 (a) — chave do perfil fiscal da empresa'),
     );
   }
-  const calc = basePresumido(e.tributo, dataFim, e.receitaServicoCents, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
+  const calc = basePresumido(e.tabela, e.tributo, dataFim, e.receitaServicoCents, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
   memoria.push(...calc.memoria);
 
   // § 5º I-b / II-b: recalcula os trimestres anteriores com a parcela excedente' e deduz a diferença no T04.
@@ -455,6 +461,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     for (const r of lc.t04.excedentesRecalculados) {
       const a = e.anteriores.find((x) => x.periodo === r.periodo)!;
       const recalc = basePresumido(
+        e.tabela,
         e.tributo,
         fimDoTrimestre(e.ano, a.periodo),
         valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo),
@@ -483,6 +490,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
 // ─── Item 10 — Real trimestral ────────────────────────────────────────────────────────────────────────────────
 
 export interface EntradaReal {
+  tabela: TabelaApuracao; // BE-INCR-LEGAL-PARAMS (F-LP-4 a)
   ano: number;
   periodo: PeriodoTrimestral;
   tributo: TributoApuracao;
@@ -518,9 +526,9 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
   } else {
     codigoReceita = CODIGOS_RECEITA.CSLL_REAL_TRIMESTRAL;
   }
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.perfil.ecfIndAliqCsll) : null;
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
-  const ajustes = ajustesParteA(e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
+  const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
   const memoria: MemoriaLinha[] = [
     linha('LAIR', 'Resultado antes de IRPJ/CSLL no trimestre (sem encerramento, sem as despesas da provisão)', e.resultadoAntesCents, 'ADR-INCR-TAX-ASSESSMENT D4'),
   ];
@@ -528,7 +536,7 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
   memoria.push(...ajustes.memoria);
-  const imposto = impostoSobreBase(e.tributo, dataFim, ajustes.base, aliqCsll);
+  const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll);
   memoria.push(...imposto.memoria);
   return fecharComDeducoes(e.tributo, 'REAL_TRIMESTRAL', codigoReceita, ajustes.base, imposto.devidoCents, 0n, e.deducoes, memoria);
 }
@@ -538,6 +546,7 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
  * por tributo; base = max(0, L − C). Devolve as linhas ADICOES..BASE da memória.
  */
 export function ajustesParteA(
+  t: TabelaApuracao,
   tributo: TributoApuracao,
   resultadoAntesCents: bigint,
   linhasParteA: { codigo: string; valorCents: bigint }[],
@@ -559,7 +568,7 @@ export function ajustesParteA(
     } else throw new ValidationError(`linha ${livro}/${l.codigo} tem TIPO LANÇ ${cat.tipoLanc} — fora de A/E/P.`);
   }
   const lucroAjustado = resultadoAntesCents + adicoes - exclusoes;
-  const teto = linhaVigente('COMPENSACAO_TETO', dataFim)!;
+  const teto = linhaVigente(t, 'COMPENSACAO_TETO', dataFim)!;
   const tetoCents = lucroAjustado > 0n ? mulBp(lucroAjustado, teto.valor) : 0n;
   if (compensacao > tetoCents) {
     throw new ValidationError(

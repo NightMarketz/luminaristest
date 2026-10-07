@@ -254,3 +254,18 @@ interface ParametrosUsados { ids: string[]; sha256: string }
 - **Simples Nacional:** não há cálculo de DAS no código. A mudança de 2027 (LC 214) está no PRE-ADR #452; não entra aqui.
 - **Leiaute da DPS da NFS-e** (v1.01) e a lista LC 116 gerada dele: versão nova do leiaute exige regerar
   (`lc116ListaNacional.ts:9`). A tabela de banco resolve o dado, não a mudança de leiaute (estrutura).
+
+## 9. Emenda 07/10 — lacunas da execução (questionário)
+
+> **Autorização de execução (dono, chat, 2026-10-07):** *"Executa o BE-INCR-LEGAL-PARAMS"* — `sessao-feature`.
+> As lacunas abaixo apareceram no passo 1 da sessão e foram decididas pelo dono por questionário no mesmo dia.
+
+| # | Lacuna | Decisão (resposta literal) |
+|---|---|---|
+| L-1 | Item 9: `FixedAsset.rateId` é FK para `DepreciationRate` (`onDelete: Restrict`); linha de `LegalParameter` não pode ser alvo | *"Coluna nova no bem"* — `FixedAsset.legalParameterId`; `rateId` vira null nos bens repontados; só então as `ANEXO_*` saem. `annualRateBp` não muda |
+| L-2 | F-LP-2: como alguém recebe `PLATFORM_ADMIN` | *"Comando de terminal"* — script no servidor; sem rota na API |
+| L-3 | Item 10: o que dispara o job e quais apurações entram | *"Dispara na publicação + varredura"* — publicar enfileira; agendador varre pendentes; IRPJ/CSLL **e** PIS/Cofins |
+| L-4 | Fatiamento | *"4 PRs em sequência"* — PR-1 plataforma + papel + migração IRPJ/CSLL e PIS/Cofins com paridade · PR-2 demais tabelas + remoção das constantes · PR-3 depreciação · PR-4 snapshot por apuração + job de recálculo |
+| L-5 | Item 8: em que corrente de auditoria entram os eventos de plataforma | *"Corrente própria da plataforma"* — escopo fixo `PLATFORM` / `legal-parameters` |
+| L-6 | "Linha publicada nunca muda" × `revoke` | *"Só o status muda"* — `PUBLISHED → REVOKED`; valor, fonte e vigência ficam |
+| L-7 | `supersedesId` tira a antiga do lookup? | *"Sim, a substituída sai"* — mesma tabela/chave/discriminador obrigatória |

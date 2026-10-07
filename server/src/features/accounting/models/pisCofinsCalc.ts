@@ -68,6 +68,8 @@ export type OrigemSaldoAnterior =
   | { tipo: 'NENHUM' };
 
 export interface EntradaPisCofins {
+  /** BE-INCR-LEGAL-PARAMS (F-LP-4 a): fotografia das linhas `PIS_COFINS` em vigor, montada pelo serviço. */
+  tabela: readonly ParametroPisCofins[];
   ano: number;
   periodo: PeriodoPisCofins;
   modalidade: ModalidadePisCofins;
@@ -98,7 +100,7 @@ export interface ResultadoPisCofins {
   tabelaVersao: string;
 }
 
-/** Versão da tabela `pisCofinsParams.ts` gravada em cada apuração (molde `TAX_ASSESSMENT_TABELA_VERSAO`). */
+/** Versão gravada em cada apuração (molde `TAX_ASSESSMENT_TABELA_VERSAO`); ids + hash no item 7 (PR-4). */
 export const PIS_COFINS_TABELA_VERSAO = 'pis-cofins-2026-10-06';
 
 const F_BASE: Record<ModalidadePisCofins, string> = {
@@ -127,10 +129,15 @@ export function modalidadeDoRegime(regime: string): ModalidadePisCofins {
 }
 
 /** Item 3 / ADR D9: linha vigente no último dia do mês; sem linha ⇒ 400 (revogação a partir de 2027-01). */
-export function parametrosDoMes(ano: number, periodo: PeriodoPisCofins, modalidade: ModalidadePisCofins): Record<TributoPisCofins, ParametroPisCofins> {
+export function parametrosDoMes(
+  tabela: readonly ParametroPisCofins[],
+  ano: number,
+  periodo: PeriodoPisCofins,
+  modalidade: ModalidadePisCofins,
+): Record<TributoPisCofins, ParametroPisCofins> {
   const data = fimDoMes(ano, mesDoPeriodo(periodo));
-  const pis = parametroPisCofinsVigente('PIS', modalidade, data);
-  const cofins = parametroPisCofinsVigente('COFINS', modalidade, data);
+  const pis = parametroPisCofinsVigente(tabela, 'PIS', modalidade, data);
+  const cofins = parametroPisCofinsVigente(tabela, 'COFINS', modalidade, data);
   if (!pis || !cofins) {
     throw new ValidationError(`${periodo}/${ano}: PIS/Cofins revogados a partir de 2027-01 (${PIS_COFINS_REVOGACAO_FONTE}) — CBS é da onda 3.`);
   }
@@ -167,7 +174,7 @@ function validarAjustes(e: EntradaPisCofins): void {
  * Cumulativo com `outrosCreditos` ou com saldo credor anterior INFORMADO > 0 ⇒ 400 ("cumulativo não tem crédito").
  */
 export function apurarPisCofinsMensal(e: EntradaPisCofins): Record<TributoPisCofins, ResultadoPisCofins> {
-  const params = parametrosDoMes(e.ano, e.periodo, e.modalidade);
+  const params = parametrosDoMes(e.tabela, e.ano, e.periodo, e.modalidade);
   const naoCumulativo = e.modalidade === 'NAO_CUMULATIVO';
   if (!naoCumulativo) {
     if (e.outrosCreditos.length > 0) throw new ValidationError('outrosCreditos: o cumulativo não tem crédito (IN RFB 2.121/2022 art. 122; BRIEF X8 item 8).');

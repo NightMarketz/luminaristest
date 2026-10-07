@@ -15,7 +15,7 @@ import {
   type ResultadoApuracao,
   type TributoApuracao,
 } from './taxAssessmentCalc';
-import { CODIGOS_RECEITA, CODIGOS_RECEITA_FONTE, TAX_ASSESSMENT_TABELA_VERSAO, linhaVigente, mulBp } from './taxAssessmentParams';
+import { CODIGOS_RECEITA, CODIGOS_RECEITA_FONTE, TAX_ASSESSMENT_TABELA_VERSAO, linhaVigente, mulBp, type TabelaApuracao } from './taxAssessmentParams';
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase B PR-1 (nó X7, BRIEF B itens 3, 7, 8, 9, 10; F-TB-8 a) — funções PURAS do Lucro Real
@@ -113,6 +113,7 @@ export interface ReceitaMes {
 }
 
 export interface EntradaEstimativa {
+  tabela: TabelaApuracao; // BE-INCR-LEGAL-PARAMS (F-LP-4 a)
   ano: number;
   periodo: LalurMes;
   tributo: TributoApuracao;
@@ -143,11 +144,11 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const m = numMes(e.periodo);
   assertMesEmAtividade(e.ano, m, e.perfil);
   const codigoReceita = codigoReceitaAnual(e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.perfil.ecfIndAliqCsll) : null;
   const dataFim = fimDoMes(e.ano, m);
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const chave = e.tributo === 'IRPJ' ? 'PRESUNCAO_IRPJ' : 'PRESUNCAO_CSLL';
-  const pS = linhaVigente(chave, dataFim, 'SERVICO')!;
-  const pR = linhaVigente(chave, dataFim, 'REVENDA')!;
+  const pS = linhaVigente(e.tabela, chave, dataFim, 'SERVICO')!;
+  const pR = linhaVigente(e.tabela, chave, dataFim, 'REVENDA')!;
 
   const memoria: MemoriaLinha[] = [
     linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês (conta 3.1)', e.receitaServicoCents, F_ART2),
@@ -171,8 +172,8 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
     }
     const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
     const acumulada = acumuladaAnterior + e.receitaServicoCents + e.receitaRevendaCents;
-    const limite = linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
-    const reduzida = linhaVigente('PRESUNCAO_IRPJ_REDUZIDA', dataFim)!;
+    const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
+    const reduzida = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!;
     memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
     if (acumulada <= BigInt(limite.valor)) {
       presServico = mulBp(e.receitaServicoCents, reduzida.valor);
@@ -180,7 +181,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
       descServico = `Receita de serviço × ${reduzida.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`;
       fonteServico = reduzida.fonte;
     } else if (acumuladaAnterior <= BigInt(limite.valor)) {
-      diferenca = diferencaPostergada16(e.ano, e.confirmados, m);
+      diferenca = diferencaPostergada16(e.tabela, e.ano, e.confirmados, m);
     }
   }
 
@@ -191,7 +192,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
     linha('PRESUNCAO_REVENDA', `Receita de revenda × ${pR.valor / 100}%`, presRevenda, pR.fonte),
     linha('BASE', 'Base de cálculo estimada do mês', base, F_ART2),
   );
-  const imposto = impostoSobreBase(e.tributo, dataFim, base, aliqCsll, 1n);
+  const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, base, aliqCsll, 1n);
   memoria.push(...imposto.memoria);
   const r = fecharComDeducoes(e.tributo, 'ESTIMATIVA_RECEITA', codigoReceita, base, imposto.devidoCents, 0n, e.deducoes, memoria);
   if (diferenca) r.memoria.push(...memoriaDiferenca(diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
@@ -209,7 +210,7 @@ function memoriaDiferenca(d: { total: bigint; linhas: MemoriaLinha[] }, ano: num
 }
 
 /** Item 9 — § 8º: "em relação a cada mês transcorrido", lido das memórias confirmadas (mesma razão do F-TA-3 a). */
-function diferencaPostergada16(ano: number, confirmados: MesConfirmado[], mExcesso: number): { total: bigint; linhas: MemoriaLinha[] } {
+function diferencaPostergada16(t: TabelaApuracao, ano: number, confirmados: MesConfirmado[], mExcesso: number): { total: bigint; linhas: MemoriaLinha[] } {
   let total = 0n;
   const linhas: MemoriaLinha[] = [];
   const meses = confirmados
@@ -218,9 +219,9 @@ function diferencaPostergada16(ano: number, confirmados: MesConfirmado[], mExces
   for (const c of meses) {
     const k = numMes(c.periodo);
     const dataFimK = fimDoMes(ano, k);
-    const pS = linhaVigente('PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
+    const pS = linhaVigente(t, 'PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
     const base32 = mulBp(valorLinha(c.memoria, 'RECEITA_SERVICO', c.periodo), pS.valor);
-    const devido32 = impostoSobreBase('IRPJ', dataFimK, base32, null, 1n).devidoCents;
+    const devido32 = impostoSobreBase(t, 'IRPJ', dataFimK, base32, null, 1n).devidoCents;
     const dif = devido32 - c.devidoCents;
     total += dif;
     linhas.push(
@@ -233,6 +234,7 @@ function diferencaPostergada16(ano: number, confirmados: MesConfirmado[], mExces
 // ─── Item 8 — balancete de suspensão/redução (B3) ────────────────────────────────────────────────────────────
 
 export interface EntradaBalancete {
+  tabela: TabelaApuracao; // BE-INCR-LEGAL-PARAMS (F-LP-4 a)
   ano: number;
   periodo: LalurMes;
   tributo: TributoApuracao;
@@ -271,11 +273,11 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   const m = numMes(e.periodo);
   const ativos = assertMesEmAtividade(e.ano, m, e.perfil);
   const codigoReceita = codigoReceitaAnual(e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.perfil.ecfIndAliqCsll) : null;
   const dataFim = fimDoMes(e.ano, m);
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const n = m - ativos[0] + 1;
 
-  const ajustes = ajustesParteA(e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
+  const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
   const memoria: MemoriaLinha[] = [
     linha('LAIR_PERIODO_EM_CURSO', `Resultado antes de IRPJ/CSLL de ${nomeMes(ativos[0])} a ${e.periodo} (sem encerramento, sem as despesas da provisão)`, e.resultadoAntesCents, 'IN RFB 1.700/2017 art. 49 I e § 1º'),
   ];
@@ -283,7 +285,7 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
   memoria.push(...ajustes.memoria, linha('MESES_PERIODO', `Meses do período em curso (quantidade, não centavos)`, BigInt(n), 'IN RFB 1.700/2017 art. 29 § 1º; art. 49 II'));
-  const periodo = impostoSobreBase(e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(n), 'DEVIDO_PERIODO_EM_CURSO');
+  const periodo = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(n), 'DEVIDO_PERIODO_EM_CURSO');
   memoria.push(...periodo.memoria);
 
   const lidos = e.anteriores.filter((c) => c.tributo === e.tributo && numMes(c.periodo) < m).sort((a, b) => numMes(a.periodo) - numMes(b.periodo));
@@ -313,10 +315,10 @@ function excessoNoBalancete(e: EntradaBalancete, m: number, dataFim: string, mem
   const anteriores = (e.receitasMesesAnteriores ?? []).filter((r) => numMes(r.periodo) < m);
   const acumuladaAnterior = anteriores.reduce((s, r) => s + r.servicoCents + r.revendaCents, 0n);
   const acumulada = acumuladaAnterior + e.receitaMes!.servicoCents + e.receitaMes!.revendaCents;
-  const limite = linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
+  const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   if (!(acumuladaAnterior <= BigInt(limite.valor) && acumulada > BigInt(limite.valor))) return null;
   memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
-  return diferencaPostergada16(e.ano, e.anteriores, m);
+  return diferencaPostergada16(e.tabela, e.ano, e.anteriores, m);
 }
 
 // ─── Item 10 — ajuste anual (B6; F-TB-2 b) ───────────────────────────────────────────────────────────────────
@@ -328,6 +330,7 @@ export interface EstimativaPaga {
 }
 
 export interface EntradaAjusteAnual {
+  tabela: TabelaApuracao; // BE-INCR-LEGAL-PARAMS (F-LP-4 a)
   ano: number;
   tributo: TributoApuracao;
   /** Item 6 — `resultadoAntesIrpjCsll` do ano (`periodoBounds(ano, 'A00')`). */
@@ -371,10 +374,10 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
     throw new ValidationError(`${e.tributo}: confirme os meses em atividade antes do ajuste anual de ${e.ano} — faltam ${faltam.join(', ')}.`);
   }
   const codigoReceita = codigoReceitaAnual(e.tributo, 'AJUSTE_ANUAL', e.perfil.lucroRealObrigatorio);
-  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.perfil.ecfIndAliqCsll) : null;
   const dataFim = `${e.ano}-12-31`;
+  const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
 
-  const ajustes = ajustesParteA(e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
+  const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
   const memoria: MemoriaLinha[] = [
     linha('LAIR', 'Resultado antes de IRPJ/CSLL do ano (sem encerramento, sem as despesas da provisão)', e.resultadoAntesCents, 'IN RFB 1.700/2017 art. 31 §§ 3º–4º'),
   ];
@@ -382,7 +385,7 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
   memoria.push(...ajustes.memoria);
-  const imposto = impostoSobreBase(e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(ativos.length));
+  const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(ativos.length));
   memoria.push(...imposto.memoria);
 
   // (IV) estimativas pagas

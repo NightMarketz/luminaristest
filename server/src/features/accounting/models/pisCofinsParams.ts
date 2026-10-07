@@ -4,11 +4,13 @@
  * vazia), `vigenteDesde` e `vigenteAte = '2026-12-31'`: PIS e Cofins são revogados a partir de 01/01/2027 (LC 214/2025
  * art. 542; efeito pelo art. 544 III). Sem linha vigente ⇒ o chamador (prévia, item 9) responde 400.
  *
- * Alíquotas em pontos-base. As do não cumulativo são as MESMAS constantes do crédito da NF-e (`nfeCost.ts`): mesmo
- * número, mesma lei — importadas, não duplicadas.
+ * Alíquotas em pontos-base. BE-INCR-LEGAL-PARAMS PR-1: as linhas moram em `legal_parameters` (tabela `PIS_COFINS`).
+ * As do não cumulativo (165/760) ainda coexistem com `PIS_CREDIT_BP`/`COFINS_CREDIT_BP` de `nfeCost.ts`, usadas abaixo
+ * na divisão do crédito — a remoção dessas constantes é o item 13 (PR-2); o teste de paridade amarra os números.
  */
 import { COFINS_CREDIT_BP, PIS_CREDIT_BP } from '../../../lib/nfeCost';
 import { arred } from './taxAssessmentParams';
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export type TributoPisCofins = 'PIS' | 'COFINS';
 export type ModalidadePisCofins = 'CUMULATIVO' | 'NAO_CUMULATIVO';
@@ -24,26 +26,50 @@ export interface ParametroPisCofins {
   vigenteAte: string; // YYYY-MM-DD, inclusive
 }
 
-/** Revogação (LC 214/2025 art. 542; art. 544 III): último dia com PIS/Cofins. */
-export const PIS_COFINS_VIGENTE_ATE = '2026-12-31';
+/** Revogação (LC 214/2025 art. 542; art. 544 III). O último dia (2026-12-31) é o `vigenteAte` das linhas `PIS_COFINS`. */
 export const PIS_COFINS_REVOGACAO_FONTE = 'LC 214/2025 art. 542 (efeito: art. 544 III)';
 
-// vigenteDesde = data do ato citado; só importa que preceda o 1º ano apurável (2025) — artigo de vigência não relido.
-const IN_2121 = '2022-12-15';
-const CODIGOS_FONTE = 'Receita Federal, DCTF — Tabelas de códigos de receita PIS (27/02/2024) e Cofins (27/07/2023)';
+/**
+ * Códigos de receita por tributo × modalidade (tabela `CODIGO_RECEITA` do inventário, item 14). BE-INCR-LEGAL-PARAMS
+ * PR-1 migrou só as ALÍQUOTAS (`PIS_COFINS`); os códigos vão para o banco no PR-2 (emenda §9 L-4).
+ */
+export const CODIGOS_RECEITA_PIS_COFINS: Readonly<Record<`${TributoPisCofins}|${ModalidadePisCofins}`, string>> = {
+  'PIS|CUMULATIVO': '810902',
+  'COFINS|CUMULATIVO': '217201',
+  'PIS|NAO_CUMULATIVO': '691201',
+  'COFINS|NAO_CUMULATIVO': '585601',
+};
 
-export const PARAMETROS_PIS_COFINS: readonly ParametroPisCofins[] = [
-  { tributo: 'PIS', modalidade: 'CUMULATIVO', aliquotaBp: 65, codigoReceita: '810902', fonte: `IN RFB 2.121/2022 art. 128; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: PIS_COFINS_VIGENTE_ATE },
-  { tributo: 'COFINS', modalidade: 'CUMULATIVO', aliquotaBp: 300, codigoReceita: '217201', fonte: `IN RFB 2.121/2022 art. 128; Lei 9.718/1998 art. 8º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: PIS_COFINS_VIGENTE_ATE },
-  { tributo: 'PIS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: PIS_CREDIT_BP, codigoReceita: '691201', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.637/2002 art. 2º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: PIS_COFINS_VIGENTE_ATE },
-  { tributo: 'COFINS', modalidade: 'NAO_CUMULATIVO', aliquotaBp: COFINS_CREDIT_BP, codigoReceita: '585601', fonte: `IN RFB 2.121/2022 art. 150; Lei 10.833/2003 art. 2º; ${CODIGOS_FONTE}`, vigenteDesde: IN_2121, vigenteAte: PIS_COFINS_VIGENTE_ATE },
-];
+/**
+ * BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a) — fotografia das linhas `PIS_COFINS` em vigor (chave = tributo, discriminador
+ * = modalidade, `valorInt` = alíquota em bp), montada pelo serviço. As linhas em código saíram na migração.
+ */
+export function tabelaPisCofinsDe(linhas: readonly LinhaLegal[]): readonly ParametroPisCofins[] {
+  return linhas
+    .filter((l) => l.tabela === 'PIS_COFINS')
+    .map((l) => {
+      const tributo = l.chave as TributoPisCofins;
+      const modalidade = l.discriminador as ModalidadePisCofins;
+      const codigoReceita = CODIGOS_RECEITA_PIS_COFINS[`${tributo}|${modalidade}`];
+      if (!codigoReceita || l.valorInt === null) throw new Error(`pisCofinsParams: linha ${l.id} (${l.chave}/${l.discriminador ?? '∅'}) fora do formato de PIS_COFINS`);
+      // Sem `vigenteAte` na linha = sem fim publicado; a revogação (LC 214) é a linha que o publica.
+      return { tributo, modalidade, aliquotaBp: l.valorInt, codigoReceita, fonte: l.fonte, vigenteDesde: l.vigenteDesde, vigenteAte: l.vigenteAte ?? '9999-12-31' };
+    });
+}
 
 /** Linha vigente em `data` (date-only; a apuração consulta o último dia do mês), ou `undefined` (antes ou depois da vigência). */
-export function parametroPisCofinsVigente(tributo: TributoPisCofins, modalidade: ModalidadePisCofins, data: string): ParametroPisCofins | undefined {
-  return PARAMETROS_PIS_COFINS.find(
-    (p) => p.tributo === tributo && p.modalidade === modalidade && p.vigenteDesde <= data && data <= p.vigenteAte,
-  );
+export function parametroPisCofinsVigente(
+  tabela: readonly ParametroPisCofins[],
+  tributo: TributoPisCofins,
+  modalidade: ModalidadePisCofins,
+  data: string,
+): ParametroPisCofins | undefined {
+  let melhor: ParametroPisCofins | undefined;
+  for (const p of tabela) {
+    if (p.tributo !== tributo || p.modalidade !== modalidade || p.vigenteDesde > data || data > p.vigenteAte) continue;
+    if (!melhor || p.vigenteDesde > melhor.vigenteDesde) melhor = p;
+  }
+  return melhor;
 }
 
 /** Crédito de PIS/Cofins de uma nota de compra no mês (BRIEF item 6) — a entrada da memória `CREDITO_NFE` do PR-2. */

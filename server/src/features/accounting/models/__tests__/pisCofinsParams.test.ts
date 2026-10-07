@@ -3,7 +3,11 @@
  * Cofins do crédito da NF-e (parcelas gravadas ou derivadas por 165:760 com o `arred` do X7).
  */
 import { COFINS_CREDIT_BP, PIS_CREDIT_BP } from '../../../../lib/nfeCost';
-import { PARAMETROS_PIS_COFINS, parametroPisCofinsVigente, separarCreditoPisCofins } from '../pisCofinsParams';
+import { parametroPisCofinsVigente, separarCreditoPisCofins } from '../pisCofinsParams';
+import { tabelaPisCofinsSemente } from '@test/helpers/legalParams';
+
+// BE-INCR-LEGAL-PARAMS PR-1: as alíquotas moram no banco; a semente da migração é a fotografia destes testes.
+const PARAMETROS_PIS_COFINS = tabelaPisCofinsSemente();
 
 describe('tabela de parâmetros (item 3)', () => {
   it('toda linha tem fonte não vazia, vigenteDesde date-only e vigenteAte 2026-12-31 (LC 214 art. 542)', () => {
@@ -16,16 +20,16 @@ describe('tabela de parâmetros (item 3)', () => {
   });
 
   it('dezembro de 2026 resolve; janeiro de 2027 não resolve (revogados)', () => {
-    expect(parametroPisCofinsVigente('PIS', 'CUMULATIVO', '2026-12-31')).toBeDefined();
-    expect(parametroPisCofinsVigente('COFINS', 'NAO_CUMULATIVO', '2026-12-31')).toBeDefined();
+    expect(parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, 'PIS', 'CUMULATIVO', '2026-12-31')).toBeDefined();
+    expect(parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, 'COFINS', 'NAO_CUMULATIVO', '2026-12-31')).toBeDefined();
     for (const data of ['2027-01-01', '2027-01-31']) {
-      expect(parametroPisCofinsVigente('PIS', 'CUMULATIVO', data)).toBeUndefined();
-      expect(parametroPisCofinsVigente('COFINS', 'NAO_CUMULATIVO', data)).toBeUndefined();
+      expect(parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, 'PIS', 'CUMULATIVO', data)).toBeUndefined();
+      expect(parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, 'COFINS', 'NAO_CUMULATIVO', data)).toBeUndefined();
     }
   });
 
   it('alíquotas e códigos DCTF; o não cumulativo reusa as constantes do crédito da NF-e', () => {
-    const v = (t: 'PIS' | 'COFINS', m: 'CUMULATIVO' | 'NAO_CUMULATIVO') => parametroPisCofinsVigente(t, m, '2026-06-30')!;
+    const v = (t: 'PIS' | 'COFINS', m: 'CUMULATIVO' | 'NAO_CUMULATIVO') => parametroPisCofinsVigente(PARAMETROS_PIS_COFINS, t, m, '2026-06-30')!;
     expect([v('PIS', 'CUMULATIVO').aliquotaBp, v('PIS', 'CUMULATIVO').codigoReceita]).toEqual([65, '810902']);
     expect([v('COFINS', 'CUMULATIVO').aliquotaBp, v('COFINS', 'CUMULATIVO').codigoReceita]).toEqual([300, '217201']);
     expect([v('PIS', 'NAO_CUMULATIVO').aliquotaBp, v('PIS', 'NAO_CUMULATIVO').codigoReceita]).toEqual([PIS_CREDIT_BP, '691201']);

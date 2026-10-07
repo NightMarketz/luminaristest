@@ -1,0 +1,164 @@
+{
+  "LegalParameterDto.ts": {
+    "ProposeLegalParameterSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tabela": {
+          "type": "string",
+          "enum": [
+            "TAX_ASSESSMENT",
+            "CSLL_ALIQUOTA",
+            "CODIGO_RECEITA",
+            "PIS_COFINS",
+            "PIS_COFINS_MONOFASICO_NCM",
+            "CST_PIS_COFINS",
+            "CFOP_IMOBILIZADO",
+            "NFE_CSTAT_AUTORIZADA",
+            "OBRIGACAO_REGIME",
+            "LC116_SERVICO",
+            "ISS_LIMITE",
+            "DEPRECIACAO_ANEXO_III",
+            "LEIAUTE_SPED",
+            "FERIADO_NACIONAL"
+          ]
+        },
+        "chave": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "discriminador": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "valorInt": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "valorTexto": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "valorJson": {},
+        "fonte": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "fonteUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "fonteSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{12,64}$"
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "type": "string"
+        },
+        "supersedesId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "tabela",
+        "chave",
+        "fonte",
+        "vigenteDesde",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "ListLegalParametersQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tabela": {
+          "type": "string",
+          "enum": [
+            "TAX_ASSESSMENT",
+            "CSLL_ALIQUOTA",
+            "CODIGO_RECEITA",
+            "PIS_COFINS",
+            "PIS_COFINS_MONOFASICO_NCM",
+            "CST_PIS_COFINS",
+            "CFOP_IMOBILIZADO",
+            "NFE_CSTAT_AUTORIZADA",
+            "OBRIGACAO_REGIME",
+            "LC116_SERVICO",
+            "ISS_LIMITE",
+            "DEPRECIACAO_ANEXO_III",
+            "LEIAUTE_SPED",
+            "FERIADO_NACIONAL"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "DRAFT",
+            "PUBLISHED",
+            "REVOKED"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "VigenteLegalParameterQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tabela": {
+          "type": "string",
+          "enum": [
+            "TAX_ASSESSMENT",
+            "CSLL_ALIQUOTA",
+            "CODIGO_RECEITA",
+            "PIS_COFINS",
+            "PIS_COFINS_MONOFASICO_NCM",
+            "CST_PIS_COFINS",
+            "CFOP_IMOBILIZADO",
+            "NFE_CSTAT_AUTORIZADA",
+            "OBRIGACAO_REGIME",
+            "LC116_SERVICO",
+            "ISS_LIMITE",
+            "DEPRECIACAO_ANEXO_III",
+            "LEIAUTE_SPED",
+            "FERIADO_NACIONAL"
+          ]
+        },
+        "chave": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "data": {
+          "type": "string"
+        },
+        "discriminador": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "tabela",
+        "chave",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

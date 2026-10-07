@@ -33,6 +33,7 @@ import bankSettlementRoutes from './bankSettlements';
 import lalurRoutes from './lalur';
 import taxAssessmentRoutes from './taxAssessments';
 import mitExportRoutes from './mitExports';
+import legalParameterRoutes from './legalParameters';
 
 const router = Router();
 
@@ -73,6 +74,7 @@ router.use('/analytics/definitions', analyticsDefinitionsRoutes);
 router.use('/crm', crmRoutes);
 router.use('/accounting/tax-assessments', taxAssessmentRoutes); // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7) — antes de /accounting
 router.use('/accounting/mit-exports', mitExportRoutes); // BE-INCR-MIT-EXPORT PR-2 (nó X9) — antes de /accounting
+router.use('/legal-parameters', legalParameterRoutes); // BE-INCR-LEGAL-PARAMS PR-1 — coeficientes de lei da plataforma
 router.use('/accounting', accountingRoutes);
 router.use('/accounting-binding', accountingBindingRoutes);
 router.use('/payables', payableRoutes);
