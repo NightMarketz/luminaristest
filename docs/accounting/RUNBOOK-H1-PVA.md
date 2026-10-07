@@ -85,6 +85,22 @@ continua sendo do dono; a evidência está na página 1 do arquivo.
 EVIDÊNCIA P4: [screenshot do "Sobre" de cada validador com a versão legível + `dir` (ou `ls -l`) da
 pasta `luminaris-gates` mostrando os 4 arquivos com os bytes do quadro]
 
+> Preenchida pelo agente sob comando do dono (2026-10-07). **ECF:** screenshot do "Sobre" colado pelo dono no
+> chat em 2026-10-07 — "Sped ECF · Versão: 12.2.7". **ECD:** screenshot do "Sobre" colado pelo dono no chat
+> em 2026-10-07 — "Sped Contábil · Versão: 10.4.1 · Versão JVM Utilizada: 21.0.3".
+> Leitura do agente (`.install4j/i4jparams.conf`, `applicationVersion`), medida antes e depois da reinstalação:
+>
+> ```text
+> antes (2026-10-07):  SpedContabil 10.4.1 · SpedECF 12.2.6 (i4jparams de 2026-09-14; registro "Escrituração Digital ECF 12.2.6")
+> depois (2026-10-07): SpedContabil: applicationVersion="10.4.1"
+>                      SpedECF: applicationVersion="12.2.7"   (.install4j/* regravado em 2026-10-07)
+> ls -l Downloads/luminaris-gates:
+>   867240     Ato_Conjunto_RFB_CGIBS_4_2026.pdf
+>   6410931    Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf
+>   129667328  SPEDContabil_w64-10.4.1.exe
+>   143753984  SpedEcf_w64-12.2.6.exe        ← o instalador 12.2.7 NÃO está nesta pasta (baixado em outro lugar)
+> ```
+
 **O que cada validador faz no fluxo deste runbook** (para não importar no programa errado):
 
 | Passo | Programa | Entrada | Saída que vira evidência |
@@ -144,7 +160,44 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 >    `OK: binding 'beautySalon' ativado`. O script acha o banco pelo `server/.env` (via client gerado), sem `--db`.
 > 6. "Subir o ambiente" abaixo; logado como `seed-presumido`, o seletor da Contabilidade mostra `seed-unit-presumido`.
 >
-> EVIDÊNCIA da re-semeadura: [saídas dos passos 1–5 coladas pelo executor]
+> EVIDÊNCIA da re-semeadura (passos 1–5; preenchida pelo agente sob comando do dono, 2026-10-07 — checkout
+> principal em `main` 080cb4dd; o passo 6 é do dono, na tela):
+>
+> ```text
+> 1. backup gerado: C:\Users\smurf\Downloads\Luminaris\server\prisma\backups\dev-20261007154732.db
+>    integrity_check: ok
+>    journal_entries: fonte=1477 · cópia=1477
+> 2. prisma migrate deploy: All migrations have been successfully applied. (incl. 20261007120000_add_mit_exports)
+>    prisma migrate status: Database schema is up to date!
+> 3. prisma generate: ok
+> 4. npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup
+>    seed-presumido · userId cmufn7n590000cixkxbls0agh · unitId cmuw4yqxg001jcii0iz2yb9rw
+>    seed-real      · userId cmufn7te50279cixko3lvgj5x · unitId cmuw4z7zj02ehcii0st3unfr4
+>    seed-real: entriesCreated 0 · entriesExisting 100 · closedYears [2025]
+>    seed-real tieOut 2025-12-31: debitCents 71339559 = creditCents 71339559 · trialBalanceBalanced true · balanceSheetBalanced true
+>    seed-real tieOut 2026-10-07: debitCents 112477535 = creditCents 112477535 · trialBalanceBalanced true · balanceSheetBalanced true
+>    seed-presumido tieOut (último): debitCents 118923562 = creditCents 118923562 · balanced true
+>    OK: seed multi-exercício aplicado e tie-out fechado.
+> 5. node scripts/activate-salon-binding.mjs (as 2 linhas "próximo passo"):
+>    JÁ ATIVO: binding 'beautySalon' (unidade 'cmuw4yqxg001jcii0iz2yb9rw') já é Active — versão 1, id cmuw4zxq90001ci6g5xdmykwh. Nada a fazer (idempotente).
+>    JÁ ATIVO: binding 'beautySalon' (unidade 'cmuw4z7zj02ehcii0st3unfr4') já é Active — versão 1, id cmuw5077k0001ci9g5qlnwxfq. Nada a fazer (idempotente).
+> ```
+>
+> Leitura: o `dev.db` já estava re-semeado antes desta rodada (0 lançamentos criados, bindings já ativos);
+> a rodada aplicou as migrações pendentes.
+>
+> Passo 6 (2026-10-07, build de produção do `main` 080cb4dd — `server: npm run start` :3001, `my-app: next start` :3000;
+> login `seed-presumido`; texto da página `/pt/accounting` extraído pelo agente):
+>
+> ```text
+> Contabilidade · Razão de partida dobrada — balancete por unidade
+> Unidade: seed-unit-presumido        (única opção do seletor; id cmuw4yqxg001jcii0iz2yb9rw)
+> Balancete · Balanceado (Σdébito = Σcrédito)
+> Total  R$ 1.189.235,62  R$ 1.189.235,62  R$ 0,00   (= tieOut do seed: 118923562 centavos)
+> ```
+>
+> Nota: a senha do `seed-presumido` era aleatória (criado sem `SEED_ACCOUNTING_PASSWORD`); redefinida pelo dono em
+> 2026-10-07 só no `dev.db`. Qdrant fora do ar no boot (só RAG; não afeta a Contabilidade).
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -378,6 +431,38 @@ Para desfazer: estorne o lançamento retornado via `POST /api/accounting/reverse
 de idempotência para um novo encerramento).
 
 EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
+
+> Preenchida pelo agente sob comando do dono (2026-10-07), tenant `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`
+> (variante seed da emenda 24/09 — conferir, não chamar). Leitura do `dev.db` real (Prisma), não screenshot:
+>
+> ```text
+> P7-seed  GET /api/accounting/cmuw4yqxg001jcii0iz2yb9rw/periods?year=2025
+>          1..12: HARD_CLOSED (todos os 12 meses)
+> passo 1  journal_entries where unitId=cmuw4yqxg001jcii0iz2yb9rw and sourceType contains 'clos':
+>          id cmuw4yz7y01arcii049qrb7vj · 2025-12-31 · "Encerramento do exercício 2025 — apuração do resultado"
+>          sourceType closing · sourceId 2025 · status Posted
+>          pernas (débito/crédito em centavos): 3.1 16248790/0 · 3.3 4893996/0 · 4.1 0/7515345 · 4.2 0/2550807 · 2.3.1 0/11076634
+>          (Σdébito 21142786 = Σcrédito 21142786)
+> ```
+>
+> **P5 — achado de 07/10 (não estava no plano):** a re-semeadura (SEED-UNITS) moveu o razão para a unidade gerada,
+> mas os 14 mapeamentos referenciais (versão `2025`) ficaram sob o id literal antigo `seed-unit-presumido` /
+> `seed-unit-real`, e o plano de contas também é por unidade (ids novos). Com o OK do dono ("Pode seguir com a (a)"),
+> o agente copiou os 14 mapeamentos para a unidade nova **casando pelo código da conta**, sem escolha contábil nova,
+> via `POST /api/accounting/referential/mappings/batch` (HTTP 200, nos dois tenants). Cobertura depois da cópia:
+>
+> ```text
+> GET /referential/coverage?unitId=cmuw4yqxg001jcii0iz2yb9rw&version=2025 → mappedCount 14 / leafAccountCount 15 · ready false
+>     unmappedAccounts: [3.4 "Receita de Pacotes Não Utilizados" (Revenue)]
+> GET /referential/coverage?unitId=cmuw4z7zj02ehcii0st3unfr4&version=2025 → 14/15 · ready false · unmapped [3.4]
+> POST /sped/ecd/generate (seed-presumido, 2025) → HTTP 400 VALIDATION_ERROR
+>     "Cobertura referencial incompleta: mapeie todas as contas analíticas antes de gerar a ECD." unmappedAccounts [3.4]
+> ```
+>
+> A 3.4 entrou com a PACOTE-VALIDADE e nunca teve código referencial; o código é dado humano (D1/D10), não do agente.
+> **P5 não se sustenta até o contador responder** — pergunta incluída no item 3b do
+> [`PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md`](PEDIDO-CONTADOR-2026-10-02-PACOTE-VALIDADE.md) (dono, 07/10).
+> Com o código: `PUT /referential/mappings` da 3.4 nas duas unidades → cobertura 15/15 → passo 3.
 
 ### 2. Conferir que o encerramento entrou no razão
 
