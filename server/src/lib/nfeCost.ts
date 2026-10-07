@@ -29,11 +29,17 @@
  *    crédito (decisão do dono, 02/10).
  */
 import type { NfeItem, NfeTotais, ParsedNfe } from './nfe';
-import { classifyPisCofinsItem } from '../features/accounting/models/pisCofinsMonofasicoNcm';
+import { classifyPisCofinsItem, tabelaPisCofinsItemDe } from '../features/accounting/models/pisCofinsMonofasicoNcm';
+import { razaoCreditoPisCofins } from '../features/accounting/models/pisCofinsParams';
+import type { LinhaLegal } from '../features/legalParameters/models/legalParameter';
 import type { ItemDestination } from '../features/accounting/models/itemDestination';
 
-export const PIS_CREDIT_BP = 165; // 1,65% — Lei 10.637/2002 art. 2º
-export const COFINS_CREDIT_BP = 760; // 7,6% — Lei 10.833/2003 art. 2º
+/**
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a) — as alíquotas do crédito (PIS 1,65% / COFINS 7,6%, tabela
+ * `PIS_COFINS` NAO_CUMULATIVO), a tabela de NCM monofásico e as listas de CST vêm da fotografia `legais` que o serviço
+ * monta, vigentes na emissão da nota (`dhEmi`). Só são lidas quando há crédito a calcular (regime não cumulativo).
+ */
+export const TABELAS_LEGAIS_NFE = ['NFE_CSTAT_AUTORIZADA', 'CFOP_IMOBILIZADO', 'CST_PIS_COFINS', 'PIS_COFINS_MONOFASICO_NCM', 'PIS_COFINS'] as const;
 
 export interface CostRegime {
   icmsContribuinte: boolean;
@@ -110,10 +116,11 @@ function bp(value: number, basisPoints: number): number {
  * `emitCrt` = `emit/CRT` da nota ('1' = Simples Nacional).
  */
 export function acquisitionCost(
-  nfe: Pick<ParsedNfe, 'totais' | 'emit'>,
+  nfe: Pick<ParsedNfe, 'totais' | 'emit' | 'ide'>,
   itens: NfeItem[],
   regime: CostRegime,
-  destinos?: ReadonlyMap<number, ItemDestination>,
+  destinos: ReadonlyMap<number, ItemDestination> | undefined,
+  legais: readonly LinhaLegal[],
 ): AcquisitionCost {
   const warnings: string[] = [];
   const bruto = custoBrutoCents(nfe.totais);
@@ -137,6 +144,8 @@ export function acquisitionCost(
     warnings.push(`emitente no Simples Nacional (CRT=${nfe.emit.crt}) e crédito em compra do Simples não habilitado (default conservador) — crédito de PIS/COFINS = 0 nesta nota`);
   }
 
+  const razao = pisCofinsAtivo ? razaoCreditoPisCofins(legais, nfe.ide.dhEmiDate) : null;
+  const tabelaItem = pisCofinsAtivo ? tabelaPisCofinsItemDe(legais, nfe.ide.dhEmiDate) : null;
   const out: ItemCost[] = itens.map((it, i) => {
     const custoBruto = brutoPorItem[i];
     const destination = destinos?.get(it.nItem) ?? 'REVENDA';
@@ -149,8 +158,8 @@ export function acquisitionCost(
     let base = 0;
     let creditoPis = 0;
     let creditoCofins = 0;
-    if (pisCofinsAtivo) {
-      const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins });
+    if (razao && tabelaItem) {
+      const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins }, tabelaItem);
       classe = c.classe;
       if (c.classe === 'TRIBUTADO') {
         // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 14.592); IPI nunca (P1)
@@ -158,8 +167,8 @@ export function acquisitionCost(
           it.vProdCents - it.vDescCents - descRest[i] + it.vFreteCents + freteRest[i] + it.vSegCents + segRest[i] + it.vOutroCents + outroRest[i];
         if (regime.pisCofinsCreditExcludesIcms) base -= it.vICMSCents;
         if (base < 0) base = 0;
-        creditoPis = bp(base, PIS_CREDIT_BP);
-        creditoCofins = bp(base, COFINS_CREDIT_BP);
+        creditoPis = bp(base, razao.pisBp);
+        creditoCofins = bp(base, razao.cofinsBp);
         if (c.alerta) warnings.push(`item ${it.nItem} (${it.cProd}): ${c.alerta}`);
       } else if (c.classe === 'UNKNOWN') {
         warnings.push(`item ${it.nItem} (${it.cProd}): sem crédito de PIS/COFINS — ${c.motivo}`);

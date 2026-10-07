@@ -10,6 +10,9 @@ import { tabelaApuracaoDe, type TabelaApuracao } from '@/features/accounting/mod
 import { tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
 
 export const LEGAL_PARAMS_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_v1.sql');
+/** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2];
 
 type Valor = string | number | null;
 
@@ -48,13 +51,11 @@ function tokens(lista: string): Valor[] {
 }
 
 export function legalParamsSeedRows(): LinhaLegal[] {
-  return fs
-    .readFileSync(LEGAL_PARAMS_SEED_FILE, 'utf8')
-    .split(/\r?\n/)
+  return LEGAL_PARAMS_SEED_FILES.flatMap((f) => fs.readFileSync(f, 'utf8').split(/\r?\n/)
     .filter((l) => l.startsWith('INSERT'))
     .map((l) => {
       const m = /^INSERT OR IGNORE INTO "legal_parameters" \((.*)\) VALUES \((.*)\);$/.exec(l);
-      if (!m) throw new Error(`legal_parameters_v1.sql: linha fora do formato: ${l.slice(0, 80)}`);
+      if (!m) throw new Error(`legal_parameters_v*.sql: linha fora do formato: ${l.slice(0, 80)}`);
       const cols = tokens(m[1]) as string[];
       const vals = tokens(m[2]);
       const r = Object.fromEntries(cols.map((c, k) => [c, vals[k]])) as Record<string, Valor>;
@@ -72,7 +73,13 @@ export function legalParamsSeedRows(): LinhaLegal[] {
         status: r.status as string,
         supersedesId: r.supersedesId as string | null,
       };
-    });
+    }));
+}
+
+/** Fotografia da semente (o que `LegalParameterService.fotografia` devolve do banco recém-migrado), só das tabelas pedidas. */
+export function fotografiaSemente(tabelas?: readonly string[]): LinhaLegal[] {
+  const rows = legalParamsSeedRows();
+  return tabelas ? rows.filter((r) => tabelas.includes(r.tabela)) : rows;
 }
 
 /** Fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA da semente — o que o serviço passa às funções puras do X7. */

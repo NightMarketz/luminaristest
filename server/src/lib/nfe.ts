@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { linhasVigentesDaTabela, type LinhaLegal } from '../features/legalParameters/models/legalParameter';
 import { ValidationError } from './errors';
 import { NFE_CHAVE_REGEX, isValidNfeChave } from './cnpj';
 import { verifyNfeSignature } from './nfeSignature';
@@ -105,7 +106,6 @@ export interface ParseNfeOptions {
   allowHomologacao?: boolean;
 }
 
-const AUTHORIZED_CSTAT = new Set(['100', '150']); // MOC §4.4.1 — só autorizadas (D5)
 
 // fast-xml-parser: mantém tudo string (parseTagValue:false) p/ preservar a aritmética de string do
 // dinheiro e o reslice literal da data; ignora prefixos de namespace e força `det` a ser sempre array
@@ -269,7 +269,11 @@ function readTotais(icmsTot: Record<string, unknown>): NfeTotais {
  * chave/DOCTYPE). Accepts root `nfeProc` (nota processada) OR a bare `NFe` (which, lacking a
  * `protNFe`, is rejected as "sem autorização").
  */
-export function parseNfe(input: string | Buffer, options: ParseNfeOptions = {}): ParsedNfe {
+/**
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a): `legais` = fotografia com `NFE_CSTAT_AUTORIZADA` (MOC §4.4.1, D5),
+ * montada pelo serviço; o cStat é conferido contra a lista vigente na data do protocolo (`dhRecbto`).
+ */
+export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], options: ParseNfeOptions = {}): ParsedNfe {
   const xml = (typeof input === 'string' ? input : input.toString('utf8')).trim();
 
   // XXE / billion-laughs (F0-2 §8.8): rejeita DTD antes de qualquer parse. Nenhuma entidade externa.
@@ -340,9 +344,12 @@ export function parseNfe(input: string | Buffer, options: ParseNfeOptions = {}):
     throw new ValidationError('NF-e sem protocolo de autorização (protNFe ausente) — rejeitada.');
   }
   const cStat = reqStr(infProt.cStat, 'protNFe/infProt/cStat');
-  if (!AUTHORIZED_CSTAT.has(cStat)) {
+  const autorizadas = linhasVigentesDaTabela(legais, 'NFE_CSTAT_AUTORIZADA', dateOnly(reqStr(infProt.dhRecbto, 'protNFe/infProt/dhRecbto'), 'protNFe/infProt/dhRecbto'))
+    .map((l) => l.chave)
+    .sort();
+  if (!autorizadas.includes(cStat)) {
     throw new ValidationError(
-      `NF-e com cStat "${cStat}" não está autorizada (aceita só 100/150) — rejeitada.`,
+      `NF-e com cStat "${cStat}" não está autorizada (aceita só ${autorizadas.join('/')}) — rejeitada.`,
     );
   }
   const chNFe = reqStr(infProt.chNFe, 'protNFe/infProt/chNFe');

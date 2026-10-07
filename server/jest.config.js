@@ -7,7 +7,7 @@
 const base = {
     preset: 'ts-jest',
     testEnvironment: 'node',
-    setupFiles: ['<rootDir>/test/jest.setupEnv.ts'],
+    setupFiles: ['<rootDir>/test/jest.setupEnv.ts', '<rootDir>/test/jest.legalParamsCache.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^@server/(.*)$': '<rootDir>/src/$1',

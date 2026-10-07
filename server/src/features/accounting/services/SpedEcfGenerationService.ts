@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ForbiddenError, ConflictError } from '../../../lib/errors';
+import { ForbiddenError, ConflictError, ValidationError } from '../../../lib/errors';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
 import * as storage from '../../../lib/attachmentStorage';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -13,7 +13,8 @@ import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
 import { receitaBrutaPorAtividade, receitaBrutaPorAtividadeSemGate } from './receitaBrutaPorAtividade';
-import { buildEcfFile, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
+import { buildEcfFile, resolveEcfCodVer, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -56,6 +57,8 @@ export class SpedEcfGenerationService {
     private readonly policy: IAccountingPolicy,
     private readonly repo: IDataExchangeRepository,
     private readonly audit: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LEIAUTE_SPED` (0000.COD_VER do ano). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
@@ -91,8 +94,16 @@ export class SpedEcfGenerationService {
       quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents, revendaCents });
     }
 
+    // Item 25: ano sem leiaute é 400 explícito (a lib lança Error puro — mesmo tratamento do SpedEcfRealGenerationService).
+    let codVer: string;
+    try {
+      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']));
+    } catch (e) {
+      throw new ValidationError(e instanceof Error ? e.message : String(e));
+    }
     const input: EcfFileInput = {
       declarant: {
+        codVer,
         cnpj: dto.declarant.cnpj,
         nome: dto.declarant.nome,
         dtIni: `${year}-01-01`,

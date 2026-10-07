@@ -15,7 +15,8 @@ import { scopeToday } from '../models/dates';
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { PerfilParaPrefill } from '../models/spedPerfilPrefill';
 import type { CompanyDeclarante, UpsertCompanyFiscalProfileInput } from '../dtos/CompanyFiscalProfileDto';
-import { resolverObrigacoes } from '../models/obrigacoesPorRegime';
+import { matrizObrigacoesDe, resolverObrigacoes, type ObrigacaoResolvida, type PerfilParaObrigacoes } from '../models/obrigacoesPorRegime';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 
@@ -111,7 +112,17 @@ export class CompanyFiscalProfileService {
     private readonly reportService: AccountingReportService,
     // X7 Fase B PR-4 (BRIEF B item 2, F-TB-6 a): o e-Lalur do ano, em todas as unidades do dono — só leitura.
     private readonly lalurRepo: Pick<ILalurRepository, 'countByOwnerYearPeriods'>,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `OBRIGACAO_REGIME` (matriz regime × obrigação). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
+
+  /**
+   * PR-2 — a matriz vigente no último dia do ano-calendário, aplicada ao perfil. Também é o que o onboarding chama
+   * (SystemProvisioningService) para não montar a fotografia por conta própria.
+   */
+  async resolverObrigacoesDoAno(ano: number, perfil: PerfilParaObrigacoes): Promise<ObrigacaoResolvida[]> {
+    return resolverObrigacoes(perfil, matrizObrigacoesDe(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), `${ano}-12-31`));
+  }
 
   async get(scope: AccountingScope, ano: number): Promise<CompanyFiscalProfileView | null> {
     this.assertRead(scope);
@@ -295,7 +306,7 @@ export class CompanyFiscalProfileService {
     const contadorVivo = view.contadorContactId ? !!(await this.contactRepo.findById(scope, view.contadorContactId)) : false;
     const representanteVivo = view.representanteLegalSignerId ? !!(await this.signerRepo.findById(scope, view.representanteLegalSignerId)) : false;
 
-    const obrigacoes = resolverObrigacoes({ regime: view.regime, inativa: view.inativa, condicoes: view.condicoes }).map((o) => {
+    const obrigacoes = (await this.resolverObrigacoesDoAno(ano, { regime: view.regime, inativa: view.inativa, condicoes: view.condicoes })).map((o) => {
       const cobra = o.status === 'OBRIGATORIA' || o.status === 'CONDICIONAL';
       const faltantes: string[] = [];
       if (o.obrigacao === 'DCTFWEB') {

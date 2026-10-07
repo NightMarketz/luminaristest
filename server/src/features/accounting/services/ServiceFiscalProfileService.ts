@@ -5,7 +5,9 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { AuditService } from './AuditService';
 import type { UpsertServiceFiscalProfileInput } from '../dtos/ServiceFiscalProfileDto';
-import { findLc116 } from '../models/lc116ListaNacional';
+import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
+import { scopeToday } from '../models/dates';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 
 export const SERVICE_FISCAL_PROFILE_UPDATED = 'service_fiscal_profile.updated';
 export const SERVICE_FISCAL_PROFILE_DELETED = 'service_fiscal_profile.deleted';
@@ -34,24 +36,32 @@ export class ServiceFiscalProfileService {
     private readonly repo: IServiceFiscalProfileRepository,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (descrição do cTribNac na view). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
+
+  private async lc116(scope: AccountingScope): Promise<ListaLc116> {
+    return listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), scopeToday(scope));
+  }
 
   async list(scope: AccountingScope): Promise<ServiceFiscalProfileView[]> {
     if (!this.policy.canReadFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para ler o perfil fiscal de serviços.');
     const rows = await this.repo.listByScope(scope);
-    return rows.map((r) => this.toView(r));
+    const lista = await this.lc116(scope);
+    return rows.map((r) => this.toView(r, lista));
   }
 
   async get(scope: AccountingScope, serviceRef: string): Promise<ServiceFiscalProfileView> {
     if (!this.policy.canReadFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para ler o perfil fiscal de serviços.');
     const row = await this.repo.findByServiceRef(scope, serviceRef);
     if (!row) throw new NotFoundError(`Perfil fiscal do serviço '${serviceRef}' não cadastrado.`);
-    return this.toView(row);
+    return this.toView(row, await this.lc116(scope));
   }
 
   async upsert(scope: AccountingScope, serviceRef: string, input: UpsertServiceFiscalProfileInput): Promise<ServiceFiscalProfileView> {
     if (!this.policy.canManageServiceFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal de serviços.');
     const { unitId: _unitId, ...data } = input;
+    const lista = await this.lc116(scope);
     return this.repo.runTransaction(async (tx) => {
       const row = await this.repo.upsert(scope, serviceRef, data, tx);
       await this.auditService.append(tx, scope, {
@@ -68,7 +78,7 @@ export class ServiceFiscalProfileService {
           cLocPrestacao: row.cLocPrestacao ?? '',
         },
       });
-      return this.toView(row);
+      return this.toView(row, lista);
     });
   }
 
@@ -88,11 +98,11 @@ export class ServiceFiscalProfileService {
     });
   }
 
-  private toView(row: ServiceFiscalProfile): ServiceFiscalProfileView {
+  private toView(row: ServiceFiscalProfile, lista: ListaLc116): ServiceFiscalProfileView {
     return {
       serviceRef: row.serviceRef,
       cTribNac: row.cTribNac,
-      cTribNacDescricao: findLc116(row.cTribNac)?.descricao ?? '',
+      cTribNacDescricao: findLc116(row.cTribNac, lista)?.descricao ?? '',
       cTribMun: row.cTribMun,
       cNBS: row.cNBS,
       cIndOp: row.cIndOp,

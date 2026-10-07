@@ -1,6 +1,8 @@
 import type { MitExport } from 'generated/prisma';
 import { ConflictError, ForbiddenError, ValidationError } from '../../../lib/errors';
 import { apuracoesDoPa, montarArquivoMit } from '../../../lib/mit';
+import { tabelaApuracaoDe } from '../models/taxAssessmentParams';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IMitExportRepository } from '../repositories/IMitExportRepository';
@@ -31,6 +33,8 @@ export class MitExportService {
     private readonly contactRepo: Pick<IAccountingContactRepository, 'findById'>,
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `CODIGO_RECEITA` para o código da diferença postergada. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Item 10 — POST /api/accounting/mit-exports. */
@@ -69,6 +73,7 @@ export class MitExportService {
       perfil: { cnpj, regime: perfil.regime, forma },
       responsavel: { cpf: contador.cpf, phone: contador.phone, email: contador.email },
       apuracoes,
+      tabela: tabelaApuracaoDe(await this.legalParams.fotografia(['CODIGO_RECEITA'])),
     });
 
     const row = await this.repo.runTransaction(async (tx) => {

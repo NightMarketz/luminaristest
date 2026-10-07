@@ -28,7 +28,7 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { MemoriaCalculoSchema } from '../models/taxAssessmentCalc';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
-import { tabelaPisCofinsDe, type TributoPisCofins } from '../models/pisCofinsParams';
+import { razaoCreditoPisCofins, tabelaPisCofinsDe, type TributoPisCofins } from '../models/pisCofinsParams';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import {
   TRIBUTOS_PIS_COFINS,
@@ -290,7 +290,8 @@ export class PisCofinsAssessmentService {
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
     if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de apurar PIS/Cofins.`);
     const modalidade = modalidadeDoRegime(perfil.regime); // SIMPLES/MEI ⇒ 400 (DAS)
-    const tabela = tabelaPisCofinsDe(await this.legalParams.fotografia(['PIS_COFINS']));
+    const linhasLegais = await this.legalParams.fotografia(['PIS_COFINS', 'CODIGO_RECEITA']);
+    const tabela = tabelaPisCofinsDe(linhasLegais);
     parametrosDoMes(tabela, ano, periodo, modalidade); // ≥ 2027-01 ⇒ 400 (a função pura repete; aqui a recusa vem antes de ler o razão)
     if (perfil.ecfIndRecReceita === '1') {
       throw new ValidationError('regime de caixa (ecf.indRecReceita = 1): PIS/Cofins seguem o critério do IRPJ/CSLL e o caixa está fora (IN RFB 2.121/2022 art. 127; ADR-INCR-PIS-COFINS D6).');
@@ -317,7 +318,7 @@ export class PisCofinsAssessmentService {
 
     const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo }, scope, w.from, w.to);
     const mm = String(m).padStart(2, '0');
-    const creditosNfe = modalidade === 'NAO_CUMULATIVO' ? await this.payableRepo.findPisCofinsCredits(scope, `${ano}-${mm}-01`, fimDoMes(ano, m)) : [];
+    const creditosNfe = modalidade === 'NAO_CUMULATIVO' ? await this.payableRepo.findPisCofinsCredits(scope, `${ano}-${mm}-01`, fimDoMes(ano, m), razaoCreditoPisCofins(linhasLegais, fimDoMes(ano, m))) : [];
 
     const avisos: string[] = [];
     // No cumulativo o saldo credor lido do mês anterior (que também foi cumulativo) é sempre 0; se não for, avisa.

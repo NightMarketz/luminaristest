@@ -1,4 +1,5 @@
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import logger from '../../../lib/logger';
 import { parseNfe } from '../../../lib/nfe';
 import { centsFromDb } from '../models/money';
@@ -67,6 +68,8 @@ export class NfeSaleReconciliationService {
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly postingService: PostingService,
     private readonly policy: IAccountingPolicy,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `NFE_CSTAT_AUTORIZADA` para o parser. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -83,7 +86,7 @@ export class NfeSaleReconciliationService {
 
     // Parser PURO — rejeita loud (cStat != 100/150, modelo != 55, homologação, DTD/XXE, chave).
     // Nenhuma regra de negócio aqui: só normalização (T3/T10).
-    const nfe = parseNfe(input.xml);
+    const nfe = parseNfe(input.xml, await this.legalParams.fotografia(['NFE_CSTAT_AUTORIZADA']));
 
     // ÂNCORA (F-NFE8 → (a)) — a venda tem de estar lançada; o operador fornece o saleId. Casar por
     // valor/data seria heurística que anexa à venda errada num salão com vendas repetidas no dia.

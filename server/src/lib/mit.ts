@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import type { TaxAssessment } from 'generated/prisma';
-import { CODIGOS_RECEITA } from '../features/accounting/models/taxAssessmentParams';
+import type { TabelaApuracao } from '../features/accounting/models/taxAssessmentParams';
 import { MitNadaAExportarError } from './errors';
 
 /**
@@ -47,6 +47,8 @@ export type EntradaMit = {
   perfil: { cnpj: string; regime: 'PRESUMIDO' | 'REAL'; forma: 'TRIMESTRAL' | 'ANUAL' }; // do ano do PA
   responsavel: { cpf: string; phone?: string | null; email?: string | null };
   apuracoes: ApuracaoParaMit[]; // já filtradas por apuracoesDoPa
+  /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia com a tabela `CODIGO_RECEITA` (o serviço monta). */
+  tabela: Pick<TabelaApuracao, 'codigoReceita'>;
 };
 export type SaidaMit = { nomeArquivo: string; conteudo: string; sha256: string; avisos: string[]; apuracaoIds: string[] };
 
@@ -91,9 +93,9 @@ const valorDebito = (cents: bigint): number => Number(cents) / 100;
  * (`208901` ⇒ `208902`, correção 06/10 / #560; P-M5: o `2089-02` não foi conferido na tabela do MIT). O
  * `236201`/`599301` da Fase B entra no PR-4; até lá, outro código com diferença > 0 é invariante quebrada no X7.
  */
-const CODIGO_DIFERENCA_POSTERGADA: Readonly<Record<string, string>> = {
-  [CODIGOS_RECEITA.IRPJ_PRESUMIDO]: CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16,
-};
+function codigoDiferencaPostergada(t: EntradaMit['tabela'], data: string): Readonly<Record<string, string>> {
+  return { [t.codigoReceita('IRPJ_PRESUMIDO', data).codigo]: t.codigoReceita('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16', data).codigo };
+}
 
 /** Item 2 (D5) — grupo de `Debitos` por tributo, na ordem do leiaute 1.0 (pp. 5–6). */
 const GRUPOS = [
@@ -120,6 +122,8 @@ export function montarArquivoMit(e: EntradaMit): SaidaMit {
     if (!tributosConhecidos.has(a.tributo)) throw new Error(`montarArquivoMit: tributo fora do PR-1 (${a.tributo}, apuração ${a.id})`);
   }
 
+  // PR-2: os códigos vêm da tabela de plataforma, vigentes no último dia do PA.
+  const CODIGO_DIFERENCA_POSTERGADA = codigoDiferencaPostergada(e.tabela, new Date(Date.UTC(e.ano, e.mes, 0)).toISOString().slice(0, 10));
   // Itens 2–3: IdDebito contínuo na apuração inteira, não por grupo (invariante 1).
   let id = 0;
   const debitos: MitArquivo['Debitos'] = {};

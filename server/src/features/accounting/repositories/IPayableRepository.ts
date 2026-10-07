@@ -1,6 +1,6 @@
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { CreditoPisCofinsNota } from '../models/pisCofinsParams';
+import type { CreditoPisCofinsNota, RazaoCreditoPisCofins } from '../models/pisCofinsParams';
 
 /** A Payable with its payment children eagerly loaded (used by the cancel/remaining guards). */
 export type PayableWithPayments = Payable & { payments: PayablePayment[] };
@@ -112,7 +112,7 @@ export interface IPayableRepository {
    * `issueDate` em `[from, to]` (date-only, inclusivo), `status ≠ CANCELLED`, `deletedAt` nulo e linha `PIS_COFINS`
    * em `recoverableTaxLines`. Uma entrada por nota, ordenada por `issueDate`; nota sem as parcelas ⇒ `derivado`.
    */
-  findPisCofinsCredits(scope: AccountingScope, from: string, to: string, tx?: Prisma.TransactionClient): Promise<CreditoPisCofinsNota[]>;
+  findPisCofinsCredits(scope: AccountingScope, from: string, to: string, razao: RazaoCreditoPisCofins, tx?: Prisma.TransactionClient): Promise<CreditoPisCofinsNota[]>;
 
   /**
    * Sum-CAS of BE-INCR-PARTIAL-SETTLEMENT (ADR §3, corrected form): ONE `updateMany` where

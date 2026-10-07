@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { isLc116Codigo } from '../models/lc116ListaNacional';
+import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
+import { issAliquotaMaxBpDoCache } from '../models/issLimite';
 
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — DTOs do perfil fiscal (BRIEF §2 + EMENDA 2026-09-15). `.strict()`.
@@ -72,7 +73,15 @@ const FiscalProfileFields = z
     regEspTrib: z.number().int().min(0).max(9).default(0),
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR
-    issAliquotaBp: z.number().int().min(0).max(500).nullable().optional(),
+    // BE-INCR-LEGAL-PARAMS PR-2 (item 22; L-8): o máximo vem da tabela ISS_LIMITE (cache síncrono). D-4 (mínimo de 2%)
+    // é pendência de contador — não corrigida.
+    issAliquotaBp: z
+      .number()
+      .int()
+      .min(0)
+      .refine((v) => v <= issAliquotaMaxBpDoCache(), { message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' })
+      .nullable()
+      .optional(),
     issRetidoTomadorPj: z.boolean().default(false),
     pacoteFatoGerador: z.enum(PACOTE_FATO_GERADOR).default('CONSUMO'),
     // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a): o código do PACOTE para a NFS-e (pacote VENDA e saldo vencido em
@@ -81,7 +90,7 @@ const FiscalProfileFields = z
     pacoteCTribNac: z
       .string()
       .regex(/^\d{6}$/)
-      .refine(isLc116Codigo, 'pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)')
+      .refine((c) => isLc116Codigo(c, listaLc116DoCache()), 'pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)')
       .nullable()
       .optional(),
     pacoteCNBS: z.string().regex(/^\d{9}$/).nullable().optional(),

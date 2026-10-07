@@ -7,7 +7,8 @@
  * O número que sai daqui só tem oráculo quando o H1 (Presumido) ou o X5 (Real) conciliam X7 × PVA (F-X7-2 a, P-9):
  * um teste verde prova a aritmética contra esta tabela, não contra a lei.
  */
-import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import type { NomeCodigoReceita } from '../../legalParameters/models/formatoLinha';
 
 /**
  * Versão gravada em `TaxAssessment.tabelaVersao` (D3). BE-INCR-LEGAL-PARAMS PR-1: as linhas moram no banco; esta
@@ -48,6 +49,8 @@ export interface TabelaApuracao {
   linhas: readonly ParametroApuracao[];
   /** D8 — alíquota da CSLL pelo `CompanyFiscalProfile.ecfIndAliqCsll` (uma fonte só), vigente no fim do período. */
   aliquotaCsll: (ind: string, data: string) => { valor: number; fonte: string } | undefined;
+  /** PR-2 — código de receita IRPJ/CSLL vigente na data (tabela `CODIGO_RECEITA`); sem linha ⇒ erro explícito (400). */
+  codigoReceita: (nome: NomeCodigoReceita, data: string) => CodigoReceitaVigente;
 }
 
 const CHAVES: ReadonlySet<string> = new Set<ChaveParametro>([
@@ -64,8 +67,10 @@ const CHAVES: ReadonlySet<string> = new Set<ChaveParametro>([
 export function tabelaApuracaoDe(linhas: readonly LinhaLegal[]): TabelaApuracao {
   const apuracao: ParametroApuracao[] = [];
   const csll: LinhaLegal[] = [];
+  const codigos: LinhaLegal[] = [];
   for (const l of linhas) {
     if (l.tabela === 'CSLL_ALIQUOTA') csll.push(l);
+    if (l.tabela === 'CODIGO_RECEITA' && l.discriminador === null && l.valorTexto !== null) codigos.push(l);
     if (l.tabela !== 'TAX_ASSESSMENT') continue;
     if (l.chave === 'ARREDONDAMENTO') {
       if (l.valorTexto !== 'HALF_UP') throw new Error(`taxAssessmentParams: ARREDONDAMENTO publicado como ${l.valorTexto ?? '∅'} — só HALF_UP é implementado (F-TA-2 a)`);
@@ -86,6 +91,11 @@ export function tabelaApuracaoDe(linhas: readonly LinhaLegal[]): TabelaApuracao 
     aliquotaCsll: (ind, data) => {
       const l = maisRecente(csll.filter((c) => c.chave === ind && c.valorInt !== null && dentro(c, data)));
       return l ? { valor: l.valorInt!, fonte: l.fonte } : undefined;
+    },
+    codigoReceita: (nome, data) => {
+      const l = maisRecente(codigos.filter((c) => c.chave === nome && dentro(c, data)));
+      if (!l) throw new SemLinhaVigenteError('CODIGO_RECEITA', data, nome);
+      return { codigo: l.valorTexto!, fonte: l.fonte };
     },
   };
 }
@@ -118,28 +128,14 @@ export function parametroVigente(t: TabelaApuracao, chave: ChaveParametro, dataF
 }
 
 /**
- * Códigos de receita (6 dígitos = código + variação), fonte: Receita, "DCTF — Tabelas de códigos" IRPJ e CSLL
- * (12/03/2024), ADR §3. Que o MIT use a mesma tabela é inferido (P-8).
+ * Códigos de receita (6 dígitos = código + variação) — BE-INCR-LEGAL-PARAMS PR-2: moram na tabela de plataforma
+ * `CODIGO_RECEITA` (itens 9 e 14 do inventário; nomes em `formatoLinha.ts`), com a fonte por linha. Que o MIT use a
+ * mesma tabela é inferido (P-8).
  */
-export const CODIGOS_RECEITA_FONTE = 'Receita Federal, DCTF — Tabelas de códigos de receita IRPJ e CSLL (12/03/2024)';
-export const CODIGOS_RECEITA = {
-  IRPJ_PRESUMIDO: '208901',
-  IRPJ_REAL_TRIMESTRAL_OBRIGADA: '022001',
-  IRPJ_REAL_TRIMESTRAL_OPTANTE: '337301',
-  CSLL_PRESUMIDO: '237201',
-  CSLL_REAL_TRIMESTRAL: '601201',
-  // Fase B (BRIEF B item 3; ADR §3) — Real anual. O mês por balancete com redução usa o código da estimativa (P-B2).
-  IRPJ_ESTIMATIVA_OBRIGADA: '236201',
-  IRPJ_ESTIMATIVA_OPTANTE: '599301',
-  CSLL_ESTIMATIVA: '248401',
-  IRPJ_AJUSTE_ANUAL_OBRIGADA: '243001',
-  IRPJ_AJUSTE_ANUAL_OPTANTE: '245601',
-  CSLL_AJUSTE_ANUAL: '677301',
-  IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA: '236202',
-  IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE: '599302',
-  // BE-INCR-TAX-PRESUMIDO-16 item 6 — diferença postergada do 16% no Presumido (2089/02; grau C, §4 item 1 do BRIEF).
-  IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16: '208902',
-} as const;
+export interface CodigoReceitaVigente {
+  codigo: string;
+  fonte: string;
+}
 
 /**
  * F-TA-2 (a) — A ÚNICA função de arredondamento da apuração: meia unidade para cima (half-up) de `num / den` ao

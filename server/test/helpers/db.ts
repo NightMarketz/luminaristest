@@ -12,7 +12,7 @@ import { createHash } from 'crypto';
 import path from 'path';
 import fs from 'fs';
 import prisma from '@/lib/prisma';
-import { invalidateLegalParameterCache } from '@/features/legalParameters/services/legalParameterCache';
+import { invalidateLegalParameterCache, storePublished } from '@/features/legalParameters/services/legalParameterCache';
 
 const SERVER_DIR = path.resolve(__dirname, '../..'); // test/helpers -> server
 const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
@@ -21,7 +21,8 @@ const DB_FILE = path.join(SERVER_DIR, 'prisma', 'test-integration.db');
  * `db push` não roda migração, então o modelo aplica o mesmo arquivo de dados que o `migration.sql` carrega
  * (teste-guarda de igualdade em legalParameterSeed.test.ts) e o `resetDb()` o reaplica.
  */
-const LEGAL_PARAMS_SEED = path.join(SERVER_DIR, 'prisma', 'data', 'legal_parameters_v1.sql');
+// BE-INCR-LEGAL-PARAMS: uma semente por PR de migração (v1 = PR-1, v2 = PR-2), aplicadas em ordem.
+const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_v2.sql'].map((f) => path.join(SERVER_DIR, 'prisma', 'data', f));
 
 /**
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
@@ -31,7 +32,7 @@ const LEGAL_PARAMS_SEED = path.join(SERVER_DIR, 'prisma', 'data', 'legal_paramet
  */
 function templateDb(): string {
   const schema = fs.readFileSync(path.join(SERVER_DIR, 'prisma', 'schema.prisma'));
-  const hash = createHash('sha1').update(schema).update(fs.readFileSync(LEGAL_PARAMS_SEED)).digest('hex').slice(0, 12);
+  const hash = createHash('sha1').update(schema).update(LEGAL_PARAMS_SEEDS.map((f) => fs.readFileSync(f, 'utf8')).join('')).digest('hex').slice(0, 12);
   const template = path.join(SERVER_DIR, 'prisma', `test-integration.template-${hash}.db`);
   if (!fs.existsSync(template)) {
     // Push num nome temporário + rename: um modelo pela metade (push abortado) nunca fica com o nome definitivo.
@@ -41,7 +42,9 @@ function templateDb(): string {
       env: { ...process.env, DATABASE_URL: `file:./${tmpName}` },
       stdio: 'inherit',
     });
-    execSync(`npx prisma db execute --file "${LEGAL_PARAMS_SEED}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    for (const seed of LEGAL_PARAMS_SEEDS) {
+      execSync(`npx prisma db execute --file "${seed}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    }
     fs.renameSync(path.join(SERVER_DIR, 'prisma', tmpName), template);
   }
   return template;
@@ -173,7 +176,10 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-LEGAL-PARAMS PR-1: sem FK — volta ao estado da migração (linhas criadas/revogadas pelo teste somem).
   await prisma.legalParameter.deleteMany();
   for (const stmt of legalParamsSeedStatements()) await prisma.$executeRawUnsafe(stmt);
+  // PR-2 (L-8): reaquece o cache com o banco recém-semeado — o DTO estático o lê de forma síncrona.
   invalidateLegalParameterCache();
+  const publicadas = await prisma.legalParameter.findMany({ where: { status: 'PUBLISHED' } });
+  for (const t of new Set(publicadas.map((l) => l.tabela))) storePublished(t, publicadas.filter((l) => l.tabela === t));
 
   // Accounting — root of the module's FK tree (only User still references it).
   await prisma.account.deleteMany();
@@ -193,7 +199,7 @@ export async function resetDb(): Promise<void> {
 }
 
 function legalParamsSeedStatements(): string[] {
-  return fs.readFileSync(LEGAL_PARAMS_SEED, 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT'));
+  return LEGAL_PARAMS_SEEDS.flatMap((f) => fs.readFileSync(f, 'utf8').split(/\r?\n/).filter((l) => l.startsWith('INSERT')));
 }
 
 export async function disconnectDb(): Promise<void> {

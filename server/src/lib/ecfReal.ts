@@ -164,7 +164,7 @@ export interface EcfRealParteBAccount {
 }
 
 export interface EcfRealFileInput {
-  declarant: Reg0000Input & Reg0030Input;
+  declarant: Omit<Reg0000Input, 'codVer'> & Reg0030Input; // COD_VER vem em `codVer` (resolvido pelo serviço)
   fiscal: EcfRealFiscalInput;
   params: EcfRealParamsInput;
   signers: Reg0930Signer[]; // ≥1 contador (900) + ≥1 não-contador
