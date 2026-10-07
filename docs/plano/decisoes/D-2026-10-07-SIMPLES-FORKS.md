@@ -64,3 +64,9 @@ Anexo III sem ISS.
    receita** junto com os demais tributos do DAS. Não há partição por tributo no lançamento.
 3. **Fatos do cliente** (opção caixa em 2026, uso de parceria, histórico de 12 meses, NCMs revendidos): não são
    interpretação de lei; vêm do cadastro/importação do próprio cliente no sistema.
+
+## Emenda — forks do BRIEF (07/10, mesmo dia)
+
+B-1 *"Model próprio"* → a apuração do Simples/MEI vive em `SimplesApuracao`, **não** no `TaxAssessment`:
+**F-SN-13 passa de (a) para (b)**. B-2 → (a), B-3 → (a)+(b), B-4 → (b). Cédulas no
+[`BE-INCR-SIMPLES-NACIONAL-brief.md`](../../accounting/BE-INCR-SIMPLES-NACIONAL-brief.md) §4.

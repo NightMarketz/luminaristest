@@ -30,7 +30,7 @@
 |---|---|---|
 | **PR-1** | Tabelas de lei no `LegalParameter` + cálculo puro (sem persistência, sem rota nova) | 1–9 |
 | **PR-2** | Entradas: histórico pré-adoção, folha declarada, segregação manual, parceria, opção IBS/CBS; subrazão fiscal de receita + tie-out | 10–16 |
-| **PR-3** | Apuração ME/EPP persistida no `TaxAssessment`, rotas, registro do DAS oficial, provisão, matriz de obrigações | 17–24 |
+| **PR-3** | Apuração ME/EPP persistida em `SimplesApuracao` (model próprio, B-1), rotas, registro do DAS oficial, provisão, matriz de obrigações | 17–24 |
 | **PR-4** | MEI (SIMEI + DASN-SIMEI), DEFIS espelho, saídas para documentos (ISS retido, `pTotTribSN`, `opSimpNac=2`), conferência NFS-e × receita | 25–31 |
 
 ## 2. Checklist de comportamentos (cada um testável isoladamente)
@@ -91,9 +91,11 @@
 18. `GET /api/accounting/simples/apuracoes/:competencia` — espelho do PGDAS-D na árvore do manual (6.5 atividade e
     segregação; 6.6 qualificação por tributo) + DAS oficial registrado + divergência (F-SN-8 → b).
 19. `PUT /api/accounting/simples/apuracoes/:competencia/das` — registra o DAS oficial (número, valor, vencimento dia
-    20, PDF como `SourceDocument`) e **persiste** a apuração no `TaxAssessment` (`tributo='SIMPLES_DAS'`,
-    `periodo='M01'..'M12'`, `memoria` = cálculo + repartição + atividades, `tabelaVersao` = ids das linhas
-    `LegalParameter` usadas). Novo registro na mesma competência = `SUPERSEDED` + linha nova com `supersedesId`.
+    20, PDF como `SourceDocument`) e **persiste** a apuração no model próprio **`SimplesApuracao`** (B-1 → c, emenda o F-SN-13 → b):
+    (PJ, unidade, competência, `regime` SIMPLES|MEI, valor oficial, número, vencimento, `sourceDocumentId`, total
+    calculado, divergência, `memoria` Json, `tabelaVersao` = ids das linhas `LegalParameter`, `status`
+    CONFIRMED|SUPERSEDED, `supersedesId`, `provisaoEntryId`, soft-delete). Reusa só o molde de ciclo de vida e de
+    provisão do `TaxAssessment`. Novo registro na mesma competência = `SUPERSEDED` + linha nova com `supersedesId`.
 20. **Gate dentro do tx**: competência com tie-out divergente, `RBT12_INCOMPLETO` ou `ATIVIDADE_SEM_ANEXO` ⇒ 422
     re-checado dentro do `runTransaction` (memória `authoritative-gate-inside-tx`).
 21. **Provisão** (F-SN-10 → a, molde F-X7-4): débito "Simples Nacional (DAS) — dedução da receita" × crédito
@@ -114,7 +116,7 @@
 ### PR-4 — MEI, DEFIS, saídas
 25. **SIMEI** (F-SN-0 → b): DAS mensal fixo = 5% de `SALARIO_MINIMO` vigente + R$ 1 (se contribuinte de ICMS) +
     R$ 5 (se contribuinte de ISS), conforme o enquadramento do Anexo XI (Res. 140 art. 101). Registro do DAS oficial pela
-    mesma rota do item 19 com `tributo='SIMEI_DAS'`; provisão pelo mesmo molde.
+    mesma rota do item 19 (`SimplesApuracao.regime='MEI'`); provisão pelo mesmo molde.
 26. **Limites do MEI**: receita anual acumulada > R$ 81.000 (proporcional no ano de início) ⇒ alerta de desenquadramento
     com os efeitos do art. 115 (até 20% de excesso × acima de 20%).
 27. **DASN-SIMEI espelho anual**: receita bruta total, parcela sujeita a ICMS, contratação de empregado (art. 109 I–III).
@@ -187,7 +189,12 @@ Rotas (2 toques, deny-by-default): `PUT /api/accounting/simples/historico/:compe
 · `GET /api/accounting/simples/apuracoes/:competencia` · `PUT /api/accounting/simples/apuracoes/:competencia/das`
 · `GET /api/accounting/simples/defis/:ano` · `GET /api/accounting/simples/dasn-simei/:ano`.
 
-## 4. Forks novos do BRIEF — RATIFICAÇÃO PENDENTE
+## 4. Forks novos do BRIEF — RATIFICADOS (dono, chat, 2026-10-07, questionário)
+
+Respostas literais: B-1 *"Model próprio"* → **(c)** (diverge; emenda o F-SN-13 de (a) para (b)) · B-2 *"Só ao
+registrar o DAS oficial (Recomendado)"* → (a) · B-3 *"Profissional no item + declaração interina (Recomendado)"* →
+(a) + (b) · B-4 *"Manter digitado; cálculo sugere (Recomendado)"* → (b). Consequência do B-1: o `TaxAssessment` não
+muda; não há migração de `codigoReceita`.
 
 **B-1 — `TaxAssessment.codigoReceita` para o DAS.** O campo é `String` obrigatório (6 dígitos DCTF); o DAS não tem
 código de receita nesse sentido.
