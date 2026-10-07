@@ -22,7 +22,10 @@ O formato abaixo tem três propriedades que um prompt não teria, e cada uma res
 
 - **PODE preparar:** redigir os passos, verificar e listar as pré-condições, apurar comandos e caminhos,
   e depois **entregar o runbook em branco** ao humano.
-- **NÃO PODE:** preencher EVIDÊNCIA, marcar desfecho, ou assinar. Runbook sem assinatura de executor
+- **PODE preencher EVIDÊNCIA, sob comando do dono no chat** (dono, 2026-10-07), só com a saída literal
+  de comando que o próprio agente executou na sessão — nunca paráfrase, nunca o que só o humano viu
+  (tela, PVA).
+- **NÃO PODE:** marcar desfecho, ou assinar. Runbook sem assinatura de executor
   humano é **nulo** — não vale como gate fechado, não promove nó de mapa, não libera deploy.
 
 ## Os cinco runbooks e onde o desfecho é registrado

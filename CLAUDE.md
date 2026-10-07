@@ -27,9 +27,11 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada
-  (nunca frase), desfecho em 3 estados, assinatura humana. **Agente pode preparar o runbook em branco;
-  não pode preencher evidência, marcar desfecho nem assinar** — runbook sem assinatura é nulo.
-  Agente não substitui oráculo.
+  (nunca frase), desfecho em 3 estados, assinatura humana. **Agente prepara o runbook e, sob comando
+  do dono no chat, preenche a EVIDÊNCIA com a saída literal de comando que ELE executou na sessão**
+  (dono, chat, 2026-10-07: "agora quem preenche é vc com meu comando"). **Desfecho e assinatura seguem
+  só do dono** — runbook sem assinatura é nulo. Agente não substitui oráculo: a tela, o PVA e o
+  julgamento do resultado continuam do humano.
 
 ## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
 

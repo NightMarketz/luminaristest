@@ -85,6 +85,22 @@ continua sendo do dono; a evidência está na página 1 do arquivo.
 EVIDÊNCIA P4: [screenshot do "Sobre" de cada validador com a versão legível + `dir` (ou `ls -l`) da
 pasta `luminaris-gates` mostrando os 4 arquivos com os bytes do quadro]
 
+> Preenchida pelo agente sob comando do dono (2026-10-07). **ECF:** screenshot do "Sobre" colado pelo dono no
+> chat em 2026-10-07 — "Sped ECF · Versão: 12.2.7". **ECD:** screenshot do "Sobre" colado pelo dono no chat
+> em 2026-10-07 — "Sped Contábil · Versão: 10.4.1 · Versão JVM Utilizada: 21.0.3".
+> Leitura do agente (`.install4j/i4jparams.conf`, `applicationVersion`), medida antes e depois da reinstalação:
+>
+> ```text
+> antes (2026-10-07):  SpedContabil 10.4.1 · SpedECF 12.2.6 (i4jparams de 2026-09-14; registro "Escrituração Digital ECF 12.2.6")
+> depois (2026-10-07): SpedContabil: applicationVersion="10.4.1"
+>                      SpedECF: applicationVersion="12.2.7"   (.install4j/* regravado em 2026-10-07)
+> ls -l Downloads/luminaris-gates:
+>   867240     Ato_Conjunto_RFB_CGIBS_4_2026.pdf
+>   6410931    Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf
+>   129667328  SPEDContabil_w64-10.4.1.exe
+>   143753984  SpedEcf_w64-12.2.6.exe        ← o instalador 12.2.7 NÃO está nesta pasta (baixado em outro lugar)
+> ```
+
 **O que cada validador faz no fluxo deste runbook** (para não importar no programa errado):
 
 | Passo | Programa | Entrada | Saída que vira evidência |
@@ -144,7 +160,31 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 >    `OK: binding 'beautySalon' ativado`. O script acha o banco pelo `server/.env` (via client gerado), sem `--db`.
 > 6. "Subir o ambiente" abaixo; logado como `seed-presumido`, o seletor da Contabilidade mostra `seed-unit-presumido`.
 >
-> EVIDÊNCIA da re-semeadura: [saídas dos passos 1–5 coladas pelo executor]
+> EVIDÊNCIA da re-semeadura (passos 1–5; preenchida pelo agente sob comando do dono, 2026-10-07 — checkout
+> principal em `main` 080cb4dd; o passo 6 é do dono, na tela):
+>
+> ```text
+> 1. backup gerado: C:\Users\smurf\Downloads\Luminaris\server\prisma\backups\dev-20261007154732.db
+>    integrity_check: ok
+>    journal_entries: fonte=1477 · cópia=1477
+> 2. prisma migrate deploy: All migrations have been successfully applied. (incl. 20261007120000_add_mit_exports)
+>    prisma migrate status: Database schema is up to date!
+> 3. prisma generate: ok
+> 4. npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup
+>    seed-presumido · userId cmufn7n590000cixkxbls0agh · unitId cmuw4yqxg001jcii0iz2yb9rw
+>    seed-real      · userId cmufn7te50279cixko3lvgj5x · unitId cmuw4z7zj02ehcii0st3unfr4
+>    seed-real: entriesCreated 0 · entriesExisting 100 · closedYears [2025]
+>    seed-real tieOut 2025-12-31: debitCents 71339559 = creditCents 71339559 · trialBalanceBalanced true · balanceSheetBalanced true
+>    seed-real tieOut 2026-10-07: debitCents 112477535 = creditCents 112477535 · trialBalanceBalanced true · balanceSheetBalanced true
+>    seed-presumido tieOut (último): debitCents 118923562 = creditCents 118923562 · balanced true
+>    OK: seed multi-exercício aplicado e tie-out fechado.
+> 5. node scripts/activate-salon-binding.mjs (as 2 linhas "próximo passo"):
+>    JÁ ATIVO: binding 'beautySalon' (unidade 'cmuw4yqxg001jcii0iz2yb9rw') já é Active — versão 1, id cmuw4zxq90001ci6g5xdmykwh. Nada a fazer (idempotente).
+>    JÁ ATIVO: binding 'beautySalon' (unidade 'cmuw4z7zj02ehcii0st3unfr4') já é Active — versão 1, id cmuw5077k0001ci9g5qlnwxfq. Nada a fazer (idempotente).
+> ```
+>
+> Leitura: o `dev.db` já estava re-semeado antes desta rodada (0 lançamentos criados, bindings já ativos);
+> a rodada aplicou as migrações pendentes.
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
