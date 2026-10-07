@@ -77,6 +77,7 @@ encerramentoAtividadeEm?: (string | null)
 lc224AcrescimoSuspenso?: boolean
 lc224LiminarReferencia?: (string | null)
 prestadoraExclusivaServicos?: boolean
+declaraNaoProfissaoRegulamentada?: boolean
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")

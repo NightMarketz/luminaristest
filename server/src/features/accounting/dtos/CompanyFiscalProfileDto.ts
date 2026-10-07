@@ -105,6 +105,7 @@ export const UpsertCompanyFiscalProfileSchema = z
     lc224AcrescimoSuspenso: z.boolean().default(false),
     lc224LiminarReferencia: z.string().trim().min(1).max(60).nullable().default(null),
     prestadoraExclusivaServicos: z.boolean().default(false),
+    declaraNaoProfissaoRegulamentada: z.boolean().default(false),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -134,6 +135,15 @@ export const UpsertCompanyFiscalProfileSchema = z
     // X7 item 2b (F-TA-5 a)
     if (v.lc224AcrescimoSuspenso && !v.lc224LiminarReferencia) {
       ctx.addIssue({ code: 'custom', path: ['lc224LiminarReferencia'], message: 'informe o processo da liminar' });
+    }
+    // BE-INCR-TAX-PRESUMIDO-16 item 11 (F-P16-1 a)
+    if (v.regime === 'PRESUMIDO' && v.prestadoraExclusivaServicos && !v.declaraNaoProfissaoRegulamentada) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['declaraNaoProfissaoRegulamentada'],
+        message:
+          'confirme que a empresa não é sociedade de profissão legalmente regulamentada nem presta serviço hospitalar ou de transporte — sem isso o 16% não se aplica (Lei 9.250/1995 art. 40 parágrafo único).',
+      });
     }
   });
 

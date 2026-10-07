@@ -9,7 +9,7 @@
  */
 
 /** Versão desta tabela — gravada em `TaxAssessment.tabelaVersao` (D3). Mudou linha ⇒ muda a versão. */
-export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-04'; // Fase B PR-1: + 16% do prestador exclusivo (item 3b)
+export const TAX_ASSESSMENT_TABELA_VERSAO = '2026-10-06'; // BE-INCR-TAX-PRESUMIDO-16 item 1: 16% também no Presumido (art. 215 § 10)
 
 export type ChaveParametro =
   | 'IRPJ_ALIQ'
@@ -52,8 +52,8 @@ export const PARAMETROS_APURACAO: readonly ParametroApuracao[] = [
   { chave: 'LC224_ACRESCIMO_CSLL', valor: 1000, fonte: 'IN RFB 2.305/2025 art. 14 e art. 3º II (CSLL desde 01/04/2026)', vigenteDesde: '2026-04-01' },
   { chave: 'LC224_LIMITE_TRIMESTRE_CENTS', valor: 125_000_000, fonte: 'IN RFB 2.305/2025 art. 15 § 2º (redação da IN 2.306/2026)', vigenteDesde: '2026-01-01' },
   // Fase B (BRIEF B item 3b, F-TB-5 b) — estimativa do IRPJ da PJ exclusivamente prestadora de serviços em geral.
-  { chave: 'PRESUNCAO_IRPJ_REDUZIDA', valor: 1600, fonte: 'IN RFB 1.700/2017 art. 33 § 7º; Lei 9.250/1995 art. 40', vigenteDesde: LEI_9250 },
-  { chave: 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', valor: 12_000_000, fonte: 'IN RFB 1.700/2017 art. 33 § 7º; Lei 9.250/1995 art. 40 (R$ 120.000,00 no ano)', vigenteDesde: LEI_9250 },
+  { chave: 'PRESUNCAO_IRPJ_REDUZIDA', valor: 1600, fonte: 'IN RFB 1.700/2017 art. 33 § 7º e art. 215 § 10; Lei 9.250/1995 art. 40', vigenteDesde: LEI_9250 },
+  { chave: 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', valor: 12_000_000, fonte: 'IN RFB 1.700/2017 art. 33 § 7º e art. 215 § 10; Lei 9.250/1995 art. 40 (R$ 120.000,00 no ano)', vigenteDesde: LEI_9250 },
 ];
 
 const ACRESCIMO_LC224: ReadonlySet<ChaveParametro> = new Set(['LC224_ACRESCIMO_IRPJ', 'LC224_ACRESCIMO_CSLL']);
@@ -105,6 +105,8 @@ export const CODIGOS_RECEITA = {
   CSLL_AJUSTE_ANUAL: '677301',
   IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA: '236202',
   IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE: '599302',
+  // BE-INCR-TAX-PRESUMIDO-16 item 6 — diferença postergada do 16% no Presumido (2089/02; grau C, §4 item 1 do BRIEF).
+  IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16: '208902',
 } as const;
 
 /**

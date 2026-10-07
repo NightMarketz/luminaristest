@@ -710,8 +710,9 @@ export class TaxAssessmentService {
         perfil,
         deducoes,
       };
-      irpj = { ...apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', anteriores: anteriores('IRPJ') }), diferencaPostergadaCents: 0n };
-      csll = { ...apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', anteriores: anteriores('CSLL') }), diferencaPostergadaCents: 0n };
+      // BE-INCR-TAX-PRESUMIDO-16 (F-P16-2): a diferença postergada do 16% vem da função pura, na coluna que o X9 lê.
+      irpj = apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', anteriores: anteriores('IRPJ') });
+      csll = apurarPresumidoTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', anteriores: anteriores('CSLL') });
     } else {
       const contasDespesa = despesaIds.length === 2;
       if (!contasDespesa) avisos.push('guarda de circularidade sem contas configuradas: o resultado inclui eventual despesa de IRPJ/CSLL já lançada (BRIEF X7 item 7).');

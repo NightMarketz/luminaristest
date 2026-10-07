@@ -28,6 +28,8 @@ const PERFIL: PerfilApuracaoPresumido = {
   lc224LiminarReferencia: null,
   inicioAtividadeEm: null,
   encerramentoAtividadeEm: null,
+  prestadoraExclusivaServicos: false,
+  declaraNaoProfissaoRegulamentada: false,
 };
 const v = (r: ResultadoApuracao, codigo: string): string | undefined => r.memoria.find((m) => m.codigo === codigo)?.valorCents;
 
@@ -38,8 +40,8 @@ function apurarAno(
   perfil: Partial<PerfilApuracaoPresumido> = {},
   deducoes: DeducaoInformada[] = [],
   ano = 2026,
-): Record<string, ResultadoApuracao> {
-  const out: Record<string, ResultadoApuracao> = {};
+): Record<string, ReturnType<typeof apurarPresumidoTrimestral>> {
+  const out: Record<string, ReturnType<typeof apurarPresumidoTrimestral>> = {};
   const anteriores: MemoriaAnterior[] = [];
   for (const periodo of ['T01', 'T02', 'T03', 'T04'] as const) {
     const rec = receitas[periodo];
@@ -202,6 +204,76 @@ describe('Presumido trimestral (item 8) e LC 224 (item 9)', () => {
       lc224LiminarReferencia: 'proc-1',
     });
     expect(v(ano.T04, 'LC224_ACERTO_T04')).toBe('0');
+  });
+});
+
+/**
+ * BE-INCR-TAX-PRESUMIDO-16 (F-P16-0 a; IN RFB 1.700/2017 art. 215 §§ 10–13) — 16% do IRPJ do prestador exclusivo no
+ * Presumido. Conta à mão no comentário; o oráculo do número é o H1 × PVA (§4 item 3 do BRIEF).
+ */
+describe('Presumido — 16% do prestador exclusivo (BE-INCR-TAX-PRESUMIDO-16)', () => {
+  const P16 = { prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true };
+
+  it('item 2: acumulada ≤ R$ 120 mil ⇒ IRPJ a 16% com a fonte do art. 215 § 10; a CSLL continua 32%', () => {
+    // serviço 30.000 × 16% = 4.800; IRPJ 15% = 720,00 (adicional 0). CSLL: 30.000 × 32% = 9.600 × 9% = 864,00
+    const irpj = apurarAno({ T01: [30_000, 0] }, 'IRPJ', P16).T01;
+    expect(irpj.baseCents).toBe(R(4_800));
+    expect(irpj.devidoCents).toBe(R(720));
+    expect(irpj.memoria.find((m) => m.codigo === 'PRESUNCAO_REDUZIDA_16')?.fonte).toMatch(/art\. 215 § 10/);
+    expect(v(irpj, 'PRESUNCAO_SERVICO')).toBeUndefined();
+    expect(irpj.diferencaPostergadaCents).toBe(0n);
+    const csll = apurarAno({ T01: [30_000, 0] }, 'CSLL', P16).T01;
+    expect(csll.baseCents).toBe(R(9_600));
+    expect(csll.devidoCents).toBe(R(864));
+    expect(v(csll, 'PRESUNCAO_REDUZIDA_16')).toBeUndefined();
+  });
+
+  it('item 3: revenda no ano com a flag ⇒ 400 (art. 215 § 10); no trimestre atual ou num anterior', () => {
+    expect(() => apurarAno({ T01: [30_000, 1] }, 'IRPJ', P16)).toThrow(/exclusividade.*art\. 215 § 10/);
+    const t01 = apurarAno({ T01: [30_000, 0] }, 'IRPJ', P16).T01;
+    const comRevendaAntes = { periodo: 'T01' as const, memoria: t01.memoria.map((m) => (m.codigo === 'RECEITA_REVENDA' ? { ...m, valorCents: '100' } : m)) };
+    expect(() =>
+      apurarPresumidoTrimestral({
+        ano: 2026, periodo: 'T02', tributo: 'IRPJ', receitaServicoCents: R(1_000), receitaRevendaCents: 0n,
+        perfil: { ...PERFIL, ...P16 }, anteriores: [comRevendaAntes], deducoes: [],
+      }),
+    ).toThrow(ValidationError);
+  });
+
+  it('itens 4 e 6: 1º trimestre acima do limite ⇒ 32% + diferença postergada dos trimestres a 16% (208902, vencimento)', () => {
+    // T01 = T02 = 60.000 (acumulada 120.000 = limite, ainda 16%): base 9.600, IRPJ 1.440,00 cada.
+    // T03 = 10.000 (acumulada 130.000): base 3.200, IRPJ 480,00; diferença = 2 × (60.000 × 32% × 15% − 1.440) = 2 × 1.440
+    const ano = apurarAno({ T01: [60_000, 0], T02: [60_000, 0], T03: [10_000, 0] }, 'IRPJ', P16);
+    expect(ano.T02.devidoCents).toBe(R(1_440));
+    expect(v(ano.T02, 'PRESUNCAO_REDUZIDA_16')).toBe(String(R(9_600)));
+    expect(ano.T03.devidoCents).toBe(R(480));
+    expect(v(ano.T03, 'PRESUNCAO_SERVICO')).toBe(String(R(3_200)));
+    expect(v(ano.T03, 'DIFERENCA_POSTERGADA_T01')).toBe(String(R(1_440)));
+    expect(v(ano.T03, 'DIFERENCA_POSTERGADA_T02')).toBe(String(R(1_440)));
+    expect(ano.T03.diferencaPostergadaCents).toBe(R(2_880));
+    expect(ano.T03.codigoReceita).toBe('208901');
+    expect(ano.T03.aPagarCents).toBe(R(480)); // a diferença vai na coluna (2º débito no X9), não no a pagar do 208901
+    expect(ano.T03.memoria.find((m) => m.codigo === 'DIFERENCA_POSTERGADA')?.descricao).toContain('208902');
+    expect(ano.T03.memoria.find((m) => m.codigo === 'DIFERENCA_POSTERGADA_VENCIMENTO')?.descricao).toContain('10/2026');
+    expect(MemoriaCalculoSchema.safeParse(ano.T03.memoria).success).toBe(true);
+  });
+
+  it('item 5: trimestre depois do excesso ⇒ 32% sem nova diferença', () => {
+    const ano = apurarAno({ T01: [60_000, 0], T02: [60_000, 0], T03: [10_000, 0], T04: [10_000, 0] }, 'IRPJ', P16);
+    expect(ano.T04.devidoCents).toBe(R(480));
+    expect(ano.T04.diferencaPostergadaCents).toBe(0n);
+    expect(v(ano.T04, 'DIFERENCA_POSTERGADA')).toBeUndefined();
+  });
+
+  it('F-P16-1 (a): flag sem a confirmação da Lei 9.250 art. 40 p.ú. ⇒ 400; sem a flag nada muda', () => {
+    expect(() => apurarAno({ T01: [30_000, 0] }, 'IRPJ', { prestadoraExclusivaServicos: true })).toThrow(/art\. 40 parágrafo único/);
+    expect(apurarAno({ T01: [30_000, 0] }, 'IRPJ').T01.baseCents).toBe(R(9_600)); // 32%
+  });
+
+  it('item 10 / F-P16-3 (b): flag + receita do trimestre acima do limite da LC 224 ⇒ 400 nos dois tributos; antes da LC 224, não', () => {
+    expect(() => apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16)).toThrow(/F-P16-3/);
+    expect(() => apurarAno({ T01: [1_300_000, 0] }, 'CSLL', P16)).toThrow(/F-P16-3/);
+    expect(apurarAno({ T01: [1_300_000, 0] }, 'IRPJ', P16, [], 2025).T01.diferencaPostergadaCents).toBe(0n);
   });
 });
 

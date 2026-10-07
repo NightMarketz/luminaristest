@@ -1,7 +1,7 @@
 /**
  * BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF itens 4–5) — tabela de parâmetros versionada e arredondamento único.
  */
-import { PARAMETROS_APURACAO, arred, mulBp, parametroVigente } from '../taxAssessmentParams';
+import { CODIGOS_RECEITA, PARAMETROS_APURACAO, TAX_ASSESSMENT_TABELA_VERSAO, arred, linhaVigente, mulBp, parametroVigente } from '../taxAssessmentParams';
 
 describe('tabela de parâmetros (item 4)', () => {
   it('toda linha tem fonte não vazia e vigenteDesde date-only', () => {
@@ -23,6 +23,15 @@ describe('tabela de parâmetros (item 4)', () => {
     expect(parametroVigente('PRESUNCAO_IRPJ', '2026-03-31', 'REVENDA')).toBe(800);
     expect(parametroVigente('PRESUNCAO_CSLL', '2026-03-31', 'REVENDA')).toBe(1200);
     expect(() => parametroVigente('IRPJ_ALIQ', '1990-12-31')).toThrow(/sem linha vigente/);
+  });
+});
+
+describe('BE-INCR-TAX-PRESUMIDO-16 itens 1 e 6', () => {
+  it('as linhas do 16% citam também o art. 215 § 10 (valor igual); versão nova; código 208902', () => {
+    expect(linhaVigente('PRESUNCAO_IRPJ_REDUZIDA', '2026-03-31')).toMatchObject({ valor: 1600, fonte: expect.stringContaining('art. 215 § 10') });
+    expect(linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', '2026-03-31')).toMatchObject({ valor: 12_000_000, fonte: expect.stringContaining('art. 215 § 10') });
+    expect(TAX_ASSESSMENT_TABELA_VERSAO).toBe('2026-10-06');
+    expect(CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16).toBe('208902');
   });
 });
 

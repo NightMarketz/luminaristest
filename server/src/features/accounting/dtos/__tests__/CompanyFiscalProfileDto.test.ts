@@ -58,6 +58,14 @@ describe('UpsertCompanyFiscalProfileSchema (item 5)', () => {
     expect(ok({ regime: 'REAL', formaApuracaoIrpjCsll: 'ANUAL', prestadoraExclusivaServicos: true })).toBe(true);
   });
 
+  it('PRESUMIDO-16 F-P16-1 (a): no PRESUMIDO a flag exige declaraNaoProfissaoRegulamentada (Lei 9.250 art. 40 p.ú.)', () => {
+    const r = UpsertCompanyFiscalProfileSchema.safeParse({ ...base, regime: 'PRESUMIDO', prestadoraExclusivaServicos: true });
+    expect(r.success).toBe(false);
+    expect(JSON.stringify(r.error?.issues)).toContain('art. 40 parágrafo único');
+    expect(ok({ regime: 'PRESUMIDO', prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true })).toBe(true);
+    expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'PRESUMIDO' }).declaraNaoProfissaoRegulamentada).toBe(false);
+  });
+
   it('cópia: anoAnterior diferente de ano; ano ≥ 2014 (ECF desde 2014)', () => {
     expect(CompanyFiscalProfileCopyParamSchema.safeParse({ ano: '2026', anoAnterior: '2025' }).success).toBe(true);
     expect(CompanyFiscalProfileCopyParamSchema.safeParse({ ano: '2026', anoAnterior: '2026' }).success).toBe(false);

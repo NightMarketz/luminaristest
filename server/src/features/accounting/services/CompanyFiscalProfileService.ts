@@ -55,6 +55,7 @@ export interface CompanyFiscalProfileView {
   lc224LiminarReferencia: string | null;
   // X7 Fase B (BRIEF B item 3b)
   prestadoraExclusivaServicos: boolean;
+  declaraNaoProfissaoRegulamentada: boolean; // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a)
   updatedAt: string;
 }
 
@@ -362,6 +363,7 @@ export class CompanyFiscalProfileService {
         lucroRealObrigatorio: b(row.lucroRealObrigatorio),
         lc224AcrescimoSuspenso: String(row.lc224AcrescimoSuspenso),
         prestadoraExclusivaServicos: String(row.prestadoraExclusivaServicos), // X7 Fase B item 3b
+        declaraNaoProfissaoRegulamentada: String(row.declaraNaoProfissaoRegulamentada), // PRESUMIDO-16 (F-P16-1 a)
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -399,6 +401,8 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
   if (formaEfetiva(atual.regime, atual.formaApuracaoIrpjCsll) !== formaEfetiva(data.regime, data.formaApuracaoIrpjCsll)) trocou.push('formaApuracaoIrpjCsll');
   if (atual.lucroRealObrigatorio !== data.lucroRealObrigatorio) trocou.push('lucroRealObrigatorio');
   if (atual.prestadoraExclusivaServicos !== data.prestadoraExclusivaServicos) trocou.push('prestadoraExclusivaServicos');
+  // PRESUMIDO-16 (F-P16-1 a): a confirmação é condição do 16% já confirmado — trava junto com a flag (review independente).
+  if (atual.declaraNaoProfissaoRegulamentada !== data.declaraNaoProfissaoRegulamentada) trocou.push('declaraNaoProfissaoRegulamentada');
   if (atual.inicioAtividadeEm !== data.inicioAtividadeEm) trocou.push('inicioAtividadeEm');
   if (atual.encerramentoAtividadeEm !== data.encerramentoAtividadeEm) trocou.push('encerramentoAtividadeEm');
   if (trocou.length > 0) {
@@ -432,6 +436,7 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     lc224AcrescimoSuspenso: input.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: input.lc224LiminarReferencia,
     prestadoraExclusivaServicos: input.prestadoraExclusivaServicos,
+    declaraNaoProfissaoRegulamentada: input.declaraNaoProfissaoRegulamentada,
   };
 }
 
@@ -459,6 +464,7 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: row.lc224LiminarReferencia,
     prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
+    declaraNaoProfissaoRegulamentada: row.declaraNaoProfissaoRegulamentada,
   };
 }
 
@@ -488,6 +494,7 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     lc224AcrescimoSuspenso: row.lc224AcrescimoSuspenso,
     lc224LiminarReferencia: row.lc224LiminarReferencia,
     prestadoraExclusivaServicos: row.prestadoraExclusivaServicos,
+    declaraNaoProfissaoRegulamentada: row.declaraNaoProfissaoRegulamentada,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
