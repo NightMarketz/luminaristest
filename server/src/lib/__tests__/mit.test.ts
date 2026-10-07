@@ -12,6 +12,7 @@ import {
   AVISO_MIT_SEM_PIS_COFINS,
   type ApuracaoParaMit,
   type EntradaMit,
+  type MitDebito,
 } from '../mit';
 import { MitNadaAExportarError } from '../errors';
 
@@ -37,7 +38,7 @@ const entrada = (o: Partial<EntradaMit> = {}): EntradaMit => ({
 const arquivo = (o: Partial<EntradaMit> = {}) => JSON.parse(montarArquivoMit(entrada(o)).conteudo);
 const debitos = (o: Partial<EntradaMit> = {}) => {
   const d = arquivo(o).Debitos;
-  return Object.entries(d).flatMap(([grupo, g]) => (g as { ListaDebitos: object[] }).ListaDebitos.map((x) => ({ grupo, ...x })));
+  return Object.entries(d).flatMap(([grupo, g]) => (g as { ListaDebitos: MitDebito[] }).ListaDebitos.map((x) => ({ grupo, ...x })));
 };
 
 describe('item 1 — apuracoesDoPa (D2/D4; invariantes 5 e 6)', () => {
