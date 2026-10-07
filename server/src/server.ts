@@ -35,6 +35,9 @@ let httpServer: Server | undefined;
  */
 async function bootstrap(): Promise<void> {
   await ApplicationFactory.getInstance().initializeAccountingSyncFromBindings();
+  // BE-INCR-LEGAL-PARAMS PR-2 (emenda §9 L-8): o DTO estático (LC 116, ISS máximo) lê o cache de parâmetros legais de
+  // forma síncrona — aquecido ANTES do listen; cache frio é erro explícito, nunca lista vazia.
+  await ApplicationFactory.getInstance().getLegalParameterService().aquecer();
 
   httpServer = app.listen(PORT, () => {
     console.log(`Luminaris Server running on http://localhost:${PORT}`);

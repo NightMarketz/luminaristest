@@ -4,13 +4,17 @@
  * (`docs/accounting/fontes-oficiais/IN-RFB-2003-2021-ECD.txt` art. 3º; `…2004-2021-ECF.txt` art. 1º) e
  * LC 123/2006 art. 18-A §1º (MEI é optante do Simples).
  */
-import { OBRIGACOES_POR_REGIME, resolverObrigacoes } from '../obrigacoesPorRegime';
+import { resolverObrigacoes } from '../obrigacoesPorRegime';
 import type { CondicoesPerfil } from '../obrigacoesPorRegime';
 import { REGIMES_EMPRESA, regimeUnidadeEsperado } from '../regimeEmpresa';
 
+import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
+
+// BE-INCR-LEGAL-PARAMS PR-2: a matriz mora na tabela OBRIGACAO_REGIME; a guarda roda sobre a semente da migração.
+const OBRIGACOES_POR_REGIME = MATRIZ_OBRIGACOES_SEMENTE;
 const NENHUMA: CondicoesPerfil = { aporteInvestidorAnjo: false, livroCaixaSemEscrituracao: false, distribuicaoAcimaBase: false };
 const status = (regime: (typeof REGIMES_EMPRESA)[number], condicoes: Partial<CondicoesPerfil> = {}, inativa = false) =>
-  Object.fromEntries(resolverObrigacoes({ regime, inativa, condicoes: { ...NENHUMA, ...condicoes } }).map((o) => [o.obrigacao, o]));
+  Object.fromEntries(resolverObrigacoes({ regime, inativa, condicoes: { ...NENHUMA, ...condicoes } }, MATRIZ_OBRIGACOES_SEMENTE).map((o) => [o.obrigacao, o]));
 
 describe('regimeEmpresa (item 2)', () => {
   it('MEI e SIMPLES → unidade SIMPLES; PRESUMIDO e REAL → o próprio (LC 123 art. 18-A §1º)', () => {

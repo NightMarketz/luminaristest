@@ -13,6 +13,7 @@ import { ApplicationFactory } from '@/lib/factory';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { lastValidDay } from '@/features/packages/models/validity';
 
+import { FERIADOS_SEMENTE } from '@test/helpers/legalParams';
 const app = makeApp();
 const CNPJ = '11222333000181';
 const SALE_DAY = '2026-11-25'; // + 30 = 25/12 (feriado) → 26/12/2026
@@ -66,7 +67,7 @@ describe('venda de pacote criada pelo motor (date em ISO UTC) — validade do sa
     const finalized = await request(app).put(`/api/dynamic-tables/${tables.sales}/data/${saleId}`).set(auth).send({ data: { status: 'Finalized' } });
     expect(finalized.status).toBe(200);
 
-    const expected = lastValidDay(SALE_DAY, 30)!; // 2026-12-26: a MESMA regra que o aceite grava
+    const expected = lastValidDay(SALE_DAY, 30, FERIADOS_SEMENTE)!; // 2026-12-26: a MESMA regra que o aceite grava
     const balance = await prisma.customerPackageBalance.findFirstOrThrow({ where: { userId: user.id, unitId, customerId, packageId } });
     expect(balance.expiresAt?.toISOString().slice(0, 10)).toBe(expected);
 

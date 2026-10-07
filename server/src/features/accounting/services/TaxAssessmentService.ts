@@ -690,7 +690,7 @@ export class TaxAssessmentService {
       avisos.push('contas da provisão de IRPJ/CSLL não configuradas no perfil fiscal da unidade — a provisão ficará pendente (BRIEF X7 F-TA-7 a).');
     }
 
-    const tabela = tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA']));
+    const tabela = tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT', 'CSLL_ALIQUOTA', 'CODIGO_RECEITA']));
     const confirmados = (await this.repo.findConfirmedByYear(scope.ownerUserId, ano)).filter(doIrpjCsll);
     const anterioresRows = confirmados.filter((r) => ordem(r.periodo) < ordem(periodo));
     const anteriores = (t: TributoApuracao): MemoriaAnterior[] =>

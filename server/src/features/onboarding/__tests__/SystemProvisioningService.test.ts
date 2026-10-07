@@ -3,6 +3,8 @@
  * ordem (i)→(iv); guarda one-shot (policy) sem instalar nada; compensação em falha da unidade e do perfil fiscal;
  * `NAO_SEI`/ausente → `pendente`; purga que falha → `OnboardingRollbackFailedError`.
  */
+import { resolverObrigacoes, type PerfilParaObrigacoes } from '@/features/accounting/models/obrigacoesPorRegime';
+import { MATRIZ_OBRIGACOES_SEMENTE } from '@test/helpers/legalParams';
 import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import { Role } from '../../users/models/User.model';
@@ -45,6 +47,8 @@ function build(opts: { tablesBefore?: number; unitFails?: boolean; fiscalFails?:
       if (opts.fiscalFails) throw new Error('perfil recusado');
       return { inativa: false, condicoes: {} };
     }),
+    // BE-INCR-LEGAL-PARAMS PR-2: a matriz vem do serviço da contabilidade (fotografia OBRIGACAO_REGIME) — aqui, a semente.
+    resolverObrigacoesEm: jest.fn(async (_data: string, perfil: PerfilParaObrigacoes) => resolverObrigacoes(perfil, MATRIZ_OBRIGACOES_SEMENTE)),
   };
   const actionProposals = { deleteByUserId: jest.fn(async () => void calls.push('purge:proposals')) };
   const knowledgeGraphs = { deleteByUserId: jest.fn(async () => void calls.push('purge:graph')) };

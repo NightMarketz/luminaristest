@@ -35,6 +35,8 @@ module.exports = {
         {
             ...base,
             displayName: 'unit',
+            // BE-INCR-LEGAL-PARAMS PR-2 (L-8): cache de parâmetros legais aquecido pela semente (o boot o aquece pelo banco).
+            setupFiles: [...base.setupFiles, '<rootDir>/test/jest.legalParamsCache.ts'],
             testMatch: [
                 '**/__tests__/**/*.spec.ts',
                 '**/__tests__/**/*.test.ts',
@@ -49,7 +51,7 @@ module.exports = {
             ...base,
             displayName: 'integration',
             testMatch: ['**/__tests__/**/*.integration.test.ts'],
-            setupFilesAfterEnv: ['<rootDir>/test/jest.integrationTeardown.ts'],
+            setupFilesAfterEnv: ['<rootDir>/test/jest.integrationTeardown.ts', '<rootDir>/test/jest.integrationLegalParams.ts'],
             testPathIgnorePatterns: ['/node_modules/', '/legacy_kpis/'],
         },
     ],

@@ -6,8 +6,13 @@
  * no Planalto (LC 123 art. 18-A §1º, baixado 24/09). EFD-Contribuições, PGDAS-D, DEFIS, DASN-SIMEI e EFD ICMS/IPI
  * ficam FORA até ter fonte (F-XP-7 a; BRIEF §5 item 1). A DCTFWeb entrou com o X9 (BE-INCR-MIT-EXPORT item 13,
  * F-X9-6 a; IN RFB 2.237/2024 relida no Sijut em 03/10).
+ *
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 20): as linhas da matriz moram na tabela de plataforma `OBRIGACAO_REGIME` (chave =
+ * obrigação, discriminador = regime, `valorJson` = status base, condições, pergunta e status da inativa), cópia byte a
+ * byte com a mesma fonte e vigência. O serviço monta a fotografia; a função pura recebe a matriz.
  */
 import type { RegimeEmpresa } from './regimeEmpresa';
+import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export const STATUS_OBRIGACAO = ['OBRIGATORIA', 'CONDICIONAL', 'FACULTATIVA', 'NAO_SE_APLICA'] as const;
 export type StatusObrigacao = (typeof STATUS_OBRIGACAO)[number];
@@ -21,7 +26,7 @@ export interface CondicoesPerfil {
   distribuicaoAcimaBase: boolean | null;
 }
 
-interface Condicao {
+export interface Condicao {
   chave: keyof CondicoesPerfil;
   /** Status quando a resposta é `true`. Condições são avaliadas em ordem; a primeira `true` decide. */
   quandoTrue: StatusObrigacao;
@@ -43,96 +48,21 @@ export interface LinhaMatriz {
   inativa: { status: StatusObrigacao; fonte: string; pergunta?: string };
 }
 
-const INATIVA_ECD = 'IN RFB 2.003/2021 art. 3º §1º III';
-const INATIVA_ECF = 'IN RFB 2.004/2021 art. 1º §1º III';
-const VIGENCIA_IN_2021 = '2021-01-18';
-const INATIVA_ECD_LINHA = { status: 'NAO_SE_APLICA', fonte: INATIVA_ECD } as const;
-const INATIVA_ECF_LINHA = { status: 'NAO_SE_APLICA', fonte: INATIVA_ECF } as const;
-
-// DCTFWEB (BRIEF X9 item 13, F-X9-6 a; IN RFB 2.237/2024 — V-fonte 03/10). Vigência = 1º PA da DCTFWeb do MIT.
-const VIGENCIA_DCTFWEB = '2025-01-01';
-const DCTFWEB_FONTE = 'IN RFB 2.237/2024 art. 3º I; art. 6º § 2º II (sem movimento)';
-/** F-MIT-3 a: o art. 4º não dispensa a inativa; o art. 6º § 2º II torna a entrega condicional ao 1º mês sem movimento. */
-const INATIVA_DCTFWEB = {
-  status: 'CONDICIONAL',
-  fonte: 'IN RFB 2.237/2024 art. 4º (sem dispensa para inativa) e art. 6º § 2º II',
-  pergunta: 'Este ano contém o 1º mês sem movimento? Se sim, entregue a DCTFWeb desse mês; nos seguintes, fica dispensada',
-} as const;
-
-const APORTE: Condicao = {
-  chave: 'aporteInvestidorAnjo',
-  quandoTrue: 'OBRIGATORIA',
-  pergunta: 'A empresa recebeu aporte de investidor-anjo (LC 123 arts. 61-A a 61-D)?',
-  fonte: 'IN RFB 2.003/2021 art. 3º §2º',
-};
-const DISTRIBUICAO: Condicao = {
-  chave: 'distribuicaoAcimaBase',
-  quandoTrue: 'OBRIGATORIA',
-  pergunta: 'Distribuiu lucro sem IRRF acima da base presumida diminuída dos tributos?',
-  fonte: 'IN RFB 2.003/2021 art. 3º §3º',
-};
-const LIVRO_CAIXA: Condicao = {
-  chave: 'livroCaixaSemEscrituracao',
-  quandoTrue: 'FACULTATIVA',
-  pergunta: 'A empresa cumpre o parágrafo único do art. 45 da Lei 8.981/1995 (livro caixa)?',
-  fonte: 'IN RFB 2.003/2021 art. 3º §1º V e §6º',
-};
+/** A ordem da matriz (ECD, ECF; DCTFWEB no fim — lacuna do X9 PR-1 decidida pelo dono em 06/10). */
+const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB'];
 
 /**
- * Linhas verificadas (BRIEF §4.2). Na ECD do Presumido a ordem das condições É a precedência do BRIEF item 4:
- * aporte/distribuição (§2º/§3º afastam a dispensa) vêm ANTES do livro caixa (§1º V). Sem nenhuma `true`, o
- * status base vale — mas só se TODAS as condições da linha foram respondidas; senão é CONDICIONAL.
- * MEI não tem a condição de aporte: o §2º fala em "microempresa ou empresa de pequeno porte" e falta fonte
- * que inclua o MEI (BRIEF §5 item 2).
+ * Fotografia → matriz vigente em `data`. Na ECD do Presumido a ordem das condições (guardada na linha) É a precedência
+ * do BRIEF item 4: aporte/distribuição (§2º/§3º afastam a dispensa) vêm ANTES do livro caixa (§1º V).
  */
-export const OBRIGACOES_POR_REGIME: readonly LinhaMatriz[] = [
-  { obrigacao: 'ECD', regime: 'REAL', statusBase: 'OBRIGATORIA', condicoes: [], fonte: 'IN RFB 2.003/2021 art. 3º caput', vigenteDesde: VIGENCIA_IN_2021, inativa: INATIVA_ECD_LINHA },
-  {
-    obrigacao: 'ECD',
-    regime: 'PRESUMIDO',
-    statusBase: 'OBRIGATORIA',
-    condicoes: [APORTE, DISTRIBUICAO, LIVRO_CAIXA],
-    fonte: 'IN RFB 2.003/2021 art. 3º caput, §1º V, §§2º, 3º e 6º',
-    vigenteDesde: VIGENCIA_IN_2021,
-    inativa: INATIVA_ECD_LINHA,
-  },
-  { obrigacao: 'ECD', regime: 'SIMPLES', statusBase: 'FACULTATIVA', condicoes: [APORTE], fonte: 'IN RFB 2.003/2021 art. 3º §1º I, §2º e §6º', vigenteDesde: VIGENCIA_IN_2021, inativa: INATIVA_ECD_LINHA },
-  {
-    obrigacao: 'ECD',
-    regime: 'MEI',
-    statusBase: 'FACULTATIVA',
-    condicoes: [],
-    fonte: 'IN RFB 2.003/2021 art. 3º §1º I e §6º + LC 123/2006 art. 18-A §1º',
-    vigenteDesde: VIGENCIA_IN_2021,
-    inativa: INATIVA_ECD_LINHA,
-  },
-  { obrigacao: 'ECF', regime: 'REAL', statusBase: 'OBRIGATORIA', condicoes: [], fonte: 'IN RFB 2.004/2021 art. 1º caput e §2º', vigenteDesde: VIGENCIA_IN_2021, inativa: INATIVA_ECF_LINHA },
-  { obrigacao: 'ECF', regime: 'PRESUMIDO', statusBase: 'OBRIGATORIA', condicoes: [], fonte: 'IN RFB 2.004/2021 art. 1º caput', vigenteDesde: VIGENCIA_IN_2021, inativa: INATIVA_ECF_LINHA },
-  { obrigacao: 'ECF', regime: 'SIMPLES', statusBase: 'NAO_SE_APLICA', condicoes: [], fonte: 'IN RFB 2.004/2021 art. 1º §1º I', vigenteDesde: VIGENCIA_IN_2021, inativa: INATIVA_ECF_LINHA },
-  {
-    obrigacao: 'ECF',
-    regime: 'MEI',
-    statusBase: 'NAO_SE_APLICA',
-    condicoes: [],
-    fonte: 'IN RFB 2.004/2021 art. 1º §1º I + LC 123/2006 art. 18-A §1º',
-    vigenteDesde: VIGENCIA_IN_2021,
-    inativa: INATIVA_ECF_LINHA,
-  },
-  // DCTFWEB no fim da matriz (lacuna do PR-1 decidida pelo dono em 06/10): a ordem ECD, ECF de hoje não muda.
-  { obrigacao: 'DCTFWEB', regime: 'REAL', statusBase: 'OBRIGATORIA', condicoes: [], fonte: DCTFWEB_FONTE, vigenteDesde: VIGENCIA_DCTFWEB, inativa: INATIVA_DCTFWEB },
-  { obrigacao: 'DCTFWEB', regime: 'PRESUMIDO', statusBase: 'OBRIGATORIA', condicoes: [], fonte: DCTFWEB_FONTE, vigenteDesde: VIGENCIA_DCTFWEB, inativa: INATIVA_DCTFWEB },
-  { obrigacao: 'DCTFWEB', regime: 'SIMPLES', statusBase: 'OBRIGATORIA', condicoes: [], fonte: DCTFWEB_FONTE, vigenteDesde: VIGENCIA_DCTFWEB, inativa: INATIVA_DCTFWEB },
-  {
-    obrigacao: 'DCTFWEB',
-    regime: 'MEI',
-    statusBase: 'CONDICIONAL',
-    condicoes: [],
-    fonte: 'IN RFB 2.237/2024 art. 3º IX; art. 4º IX',
-    perguntaBase: 'O MEI contratou segurado, reteve IR ou está em outra hipótese do art. 3º IX?',
-    vigenteDesde: VIGENCIA_DCTFWEB,
-    inativa: INATIVA_DCTFWEB,
-  },
-];
+export function matrizObrigacoesDe(linhas: readonly LinhaLegal[], data: string): LinhaMatriz[] {
+  return linhasVigentesDaTabela(linhas, 'OBRIGACAO_REGIME', data)
+    .map((l): LinhaMatriz => {
+      const v = JSON.parse(l.valorJson ?? '{}') as Omit<LinhaMatriz, 'obrigacao' | 'regime' | 'fonte' | 'vigenteDesde'>;
+      return { obrigacao: l.chave as ObrigacaoSped, regime: l.discriminador as RegimeEmpresa, ...v, fonte: l.fonte, vigenteDesde: l.vigenteDesde };
+    })
+    .sort((a, b) => ORDEM_OBRIGACOES.indexOf(a.obrigacao) - ORDEM_OBRIGACOES.indexOf(b.obrigacao));
+}
 
 export interface PerfilParaObrigacoes {
   regime: RegimeEmpresa;
@@ -155,8 +85,8 @@ export interface ObrigacaoResolvida {
  * Presumido com aporte `null` e distribuição `true` → OBRIGATORIA (os dois dão OBRIGATORIA — "aporte OU
  * distribuição", BRIEF item 4); com aporte `null` e livro caixa `true` → CONDICIONAL (o aporte afastaria a dispensa).
  */
-export function resolverObrigacoes(perfil: PerfilParaObrigacoes): ObrigacaoResolvida[] {
-  return OBRIGACOES_POR_REGIME.filter((l) => l.regime === perfil.regime).map((linha) => {
+export function resolverObrigacoes(perfil: PerfilParaObrigacoes, matriz: readonly LinhaMatriz[]): ObrigacaoResolvida[] {
+  return matriz.filter((l) => l.regime === perfil.regime).map((linha) => {
     if (perfil.inativa) {
       const { status, fonte, pergunta } = linha.inativa;
       return pergunta ? { obrigacao: linha.obrigacao, status, fonte, perguntaPendente: pergunta } : { obrigacao: linha.obrigacao, status, fonte };

@@ -23,6 +23,7 @@ import { cnpjCheckDigits, isValidCnpj, isValidNfeChave, nfeChaveCheckDigit } fro
 // sob teste ser o que falha, não a assinatura (F-SIG-4 b). Mutação em protNFe fica fora do escopo assinado.
 import { signNfeForTest } from '@test/helpers/nfeSignature';
 
+import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 const FIXTURE_DIR = join(__dirname, 'fixtures', 'nfe');
 const readFixture = (name: string) => readFileSync(join(FIXTURE_DIR, name), 'utf8');
 
@@ -31,14 +32,14 @@ const SALE = readFixture('sale.SYNTHETIC.xml');
 
 describe('parseNfe — compra multi-item (fixture sintético)', () => {
   it('preserva os 3 itens da compra (array, não colapsa)', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     expect(nfe.itens).toHaveLength(3);
     expect(nfe.itens.map((i) => i.nItem)).toEqual([1, 2, 3]);
     expect(nfe.itens.map((i) => i.cProd)).toEqual(['SHAMP-500', 'COND-500', 'MASC-300']);
   });
 
   it('converte 13v2 para centavos exatos por aritmética de string (sem drift de float)', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     // itens
     expect(nfe.itens[0].vProdCents).toBe(10000); // 100.00
     expect(nfe.itens[1].vProdCents).toBe(5000); // 50.00
@@ -54,14 +55,14 @@ describe('parseNfe — compra multi-item (fixture sintético)', () => {
   });
 
   it('preserva qCom/vUnCom com decimais variáveis como string crua (não trunca a 2 casas)', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     expect(nfe.itens[0].qCom).toBe('10.0000');
     expect(nfe.itens[0].vUnComStr).toBe('10.0000000000');
     expect(nfe.itens[2].vUnComStr).toBe('11.1100000000');
   });
 
   it('extrai e valida a chave de acesso (@Id.slice(3) == protNFe/chNFe)', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     expect(nfe.chaveAcesso).toBe('35250712345678000195550010000000011000000012');
     expect(nfe.chaveAcesso).toHaveLength(44);
     expect(nfe.protocolo.chNFe).toBe(nfe.chaveAcesso);
@@ -69,13 +70,13 @@ describe('parseNfe — compra multi-item (fixture sintético)', () => {
   });
 
   it('data por reslice literal (YYYY-MM-DD), nunca new Date()', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     expect(nfe.ide.dhEmiDate).toBe('2025-07-10');
     expect(nfe.protocolo.dhRecbtoDate).toBe('2025-07-10');
   });
 
   it('extrai emitente e destinatário (CNPJ/nome), tpNF informativo, mod 55', () => {
-    const nfe = parseNfe(PURCHASE);
+    const nfe = parseNfe(PURCHASE, LEGAIS_SEMENTE);
     expect(nfe.emit.cnpj).toBe('12345678000195');
     expect(nfe.emit.nome).toBe('DISTRIBUIDORA DE COSMETICOS EXEMPLO LTDA');
     expect(nfe.dest.cnpj).toBe('98765432000198');
@@ -88,7 +89,7 @@ describe('parseNfe — compra multi-item (fixture sintético)', () => {
 
 describe('parseNfe — venda de 1 item (fixture sintético)', () => {
   it('nota de item único → itens.length === 1 (ainda array)', () => {
-    const nfe = parseNfe(SALE);
+    const nfe = parseNfe(SALE, LEGAIS_SEMENTE);
     expect(Array.isArray(nfe.itens)).toBe(true);
     expect(nfe.itens).toHaveLength(1);
     expect(nfe.itens[0].cProd).toBe('SHAMP-500');
@@ -101,42 +102,42 @@ describe('parseNfe — venda de 1 item (fixture sintético)', () => {
 describe('parseNfe — gates de rejeição (rejeita loud)', () => {
   it('cStat 110 (denegada) → rejeita', () => {
     const mutated = PURCHASE.replace('<cStat>100</cStat>', '<cStat>110</cStat>');
-    expect(() => parseNfe(mutated)).toThrow(ValidationError);
-    expect(() => parseNfe(mutated)).toThrow(/cStat/);
+    expect(() => parseNfe(mutated, LEGAIS_SEMENTE)).toThrow(ValidationError);
+    expect(() => parseNfe(mutated, LEGAIS_SEMENTE)).toThrow(/cStat/);
   });
 
   it('XML truncado → rejeita', () => {
     const truncated = PURCHASE.slice(0, Math.floor(PURCHASE.length / 2));
-    expect(() => parseNfe(truncated)).toThrow(ValidationError);
+    expect(() => parseNfe(truncated, LEGAIS_SEMENTE)).toThrow(ValidationError);
   });
 
   it('documento com <!DOCTYPE → rejeita (XXE / billion-laughs)', () => {
     const withDoctype =
       '<?xml version="1.0"?>\n<!DOCTYPE nfeProc [<!ENTITY x "y">]>\n' + PURCHASE.split('\n').slice(1).join('\n');
-    expect(() => parseNfe(withDoctype)).toThrow(ValidationError);
-    expect(() => parseNfe(withDoctype)).toThrow(/DOCTYPE/);
+    expect(() => parseNfe(withDoctype, LEGAIS_SEMENTE)).toThrow(ValidationError);
+    expect(() => parseNfe(withDoctype, LEGAIS_SEMENTE)).toThrow(/DOCTYPE/);
   });
 
   it('NF-e sem protNFe (NFe avulsa) → rejeita por falta de autorização', () => {
     // Remove o bloco de protocolo inteiro — sobra a NFe processada sem protNFe.
     const noProt = PURCHASE.replace(/<protNFe[\s\S]*?<\/protNFe>/, '');
-    expect(() => parseNfe(noProt)).toThrow(/protocolo|autoriza/i);
+    expect(() => parseNfe(noProt, LEGAIS_SEMENTE)).toThrow(/protocolo|autoriza/i);
   });
 
   it('modelo != 55 (ex.: NFC-e 65) → rejeita', () => {
     const mod65 = signNfeForTest(PURCHASE.replace('<mod>55</mod>', '<mod>65</mod>'));
-    expect(() => parseNfe(mod65)).toThrow(/modelo/i);
+    expect(() => parseNfe(mod65, LEGAIS_SEMENTE)).toThrow(/modelo/i);
   });
 
   it('homologação (tpAmb=2) rejeita por default; aceita sob flag explícita', () => {
     const homolog = signNfeForTest(PURCHASE.replace('<tpAmb>1</tpAmb>', '<tpAmb>2</tpAmb>'));
-    expect(() => parseNfe(homolog)).toThrow(/homologa/i);
+    expect(() => parseNfe(homolog, LEGAIS_SEMENTE)).toThrow(/homologa/i);
     // sob flag de teste, passa (chave/cStat ainda válidos)
-    expect(parseNfe(homolog, { allowHomologacao: true }).ide.mod).toBe('55');
+    expect(parseNfe(homolog, LEGAIS_SEMENTE, { allowHomologacao: true }).ide.mod).toBe('55');
   });
 
   it('aceita Buffer além de string', () => {
-    const nfe = parseNfe(Buffer.from(PURCHASE, 'utf8'));
+    const nfe = parseNfe(Buffer.from(PURCHASE, 'utf8'), LEGAIS_SEMENTE);
     expect(nfe.itens).toHaveLength(3);
   });
 });
@@ -163,7 +164,7 @@ describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)
     ['compra', () => PURCHASE],
     ['venda', () => SALE],
   ])('fixture de %s: chave.slice(6,20) == emit/CNPJ, cDV confere e o CNPJ tem DV válido', (_n, read) => {
-    const nfe = parseNfe(read());
+    const nfe = parseNfe(read(), LEGAIS_SEMENTE);
     expect(nfe.chaveAcesso.slice(6, 20)).toBe(nfe.emit.cnpj);
     expect(isValidNfeChave(nfe.chaveAcesso)).toBe(true);
     expect(isValidCnpj(nfe.emit.cnpj as string)).toBe(true);
@@ -172,7 +173,7 @@ describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)
   it('aceita NF-e com CNPJ ALFANUMÉRICO do emitente (variante sintética gerada; chave 35250912ABC34501DE35…)', () => {
     const { xml, chave, cnpj } = alnumVariant();
     expect(chave).toBe('35250912ABC34501DE35550010000000031000000030');
-    const nfe = parseNfe(xml);
+    const nfe = parseNfe(xml, LEGAIS_SEMENTE);
     expect(nfe.chaveAcesso).toBe(chave);
     expect(nfe.emit.cnpj).toBe(cnpj);
     expect(nfe.chaveAcesso.slice(6, 20)).toBe(cnpj);
@@ -181,20 +182,20 @@ describe('parseNfe — coerência chave × CNPJ × cDV (BE-INCR-CNPJ-ALFA, E2 h)
 
   it('rejeita chave fora do formato (letra fora das posições 7–20)', () => {
     const bad = signNfeForTest(PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '3525071234567800019555001000000001100000001A'));
-    expect(() => parseNfe(bad)).toThrow(ValidationError);
-    expect(() => parseNfe(bad)).toThrow(/44 posições/);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(ValidationError);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(/44 posições/);
   });
 
   it('rejeita cDV errado (a chave antiga do fixture, …017, morre aqui)', () => {
     const bad = signNfeForTest(PURCHASE.replace(/35250712345678000195550010000000011000000012/g, '35250712345678000195550010000000011000000017'));
-    expect(() => parseNfe(bad)).toThrow(ValidationError);
-    expect(() => parseNfe(bad)).toThrow(/dígito verificador da chave/);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(ValidationError);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(/dígito verificador da chave/);
   });
 
   it('rejeita CNPJ do emitente que diverge das posições 7–20 da chave', () => {
     const bad = signNfeForTest(PURCHASE.replace('<CNPJ>12345678000195</CNPJ>', '<CNPJ>98765432000198</CNPJ>'));
-    expect(() => parseNfe(bad)).toThrow(ValidationError);
-    expect(() => parseNfe(bad)).toThrow(/diverge de emit\/CNPJ/);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(ValidationError);
+    expect(() => parseNfe(bad, LEGAIS_SEMENTE)).toThrow(/diverge de emit\/CNPJ/);
   });
 });
 
@@ -209,7 +210,7 @@ describe('parseNfe — compra com leiaute completo (fictícia, E9 reescopado)', 
   const FULL = readFixture('purchase-full-layout.SYNTHETIC.xml');
 
   it('chave e CNPJs fictícios passam nos mesmos validadores de uma nota real', () => {
-    const nfe = parseNfe(FULL);
+    const nfe = parseNfe(FULL, LEGAIS_SEMENTE);
     expect(nfe.chaveAcesso).toBe('35260911222333000181550010000123451482135790');
     expect(isValidNfeChave(nfe.chaveAcesso)).toBe(true);
     expect(isValidCnpj(nfe.emit.cnpj!)).toBe(true);
@@ -220,7 +221,7 @@ describe('parseNfe — compra com leiaute completo (fictícia, E9 reescopado)', 
   });
 
   it('lê item a item: frete/desconto por item, ST do ICMS10, IPITrib × IPINT, CST de PIS/COFINS', () => {
-    const [shampoo, toalha, luva] = parseNfe(FULL).itens;
+    const [shampoo, toalha, luva] = parseNfe(FULL, LEGAIS_SEMENTE).itens;
     expect(shampoo).toMatchObject({
       nItem: 1, cProd: 'SHAMP-1L', ncm: '33051000', cfop: '1403', qCom: '12.0000', vUnComStr: '18.5000000000',
       vProdCents: 22200, vDescCents: 600, vFreteCents: 750,
@@ -231,7 +232,7 @@ describe('parseNfe — compra com leiaute completo (fictícia, E9 reescopado)', 
   });
 
   it('totais fecham a fórmula D3: custo bruto = vNF (544,89), Σ itens = totais', () => {
-    const nfe = parseNfe(FULL);
+    const nfe = parseNfe(FULL, LEGAIS_SEMENTE);
     expect(nfe.totais).toMatchObject({
       vProdCents: 51500, vDescCents: 1000, vFreteCents: 1500, vIPICents: 995, vSTCents: 1494, vICMSCents: 9360, vNFCents: 54489,
     });

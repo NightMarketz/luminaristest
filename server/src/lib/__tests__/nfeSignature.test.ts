@@ -11,6 +11,7 @@ import { parseNfe } from '../nfe';
 import { ValidationError } from '../errors';
 import { makeTestCert, signNfeForTest } from '@test/helpers/nfeSignature';
 
+import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 const FIXTURE_DIR = join(__dirname, 'fixtures', 'nfe');
 const PURCHASE = readFileSync(join(FIXTURE_DIR, 'purchase-multi-item.SYNTHETIC.xml'), 'utf8');
 const ID = 'NFe35250712345678000195550010000000011000000012';
@@ -199,11 +200,11 @@ describe('verifyNfeSignature — NFA-e assinada pela SEFAZ (procEmi=1, decisão 
 
 describe('parseNfe — B4 a verificação roda antes de qualquer campo', () => {
   it('nota adulterada é recusada pela assinatura antes do gate que ela violaria', () => {
-    expect(() => parseNfe(SIGNED.replace('<mod>55</mod>', '<mod>65</mod>'))).toThrow(/assinatura digital não confere/);
+    expect(() => parseNfe(SIGNED.replace('<mod>55</mod>', '<mod>65</mod>'), LEGAIS_SEMENTE)).toThrow(/assinatura digital não confere/);
   });
 
   it('parseNfe não tem opção que desligue a verificação (F-SIG-4 b)', () => {
     const semAssinatura = SIGNED.replace(signatureBlock(SIGNED), '');
-    expect(() => parseNfe(semAssinatura, { allowHomologacao: true })).toThrow(/ausente/);
+    expect(() => parseNfe(semAssinatura, LEGAIS_SEMENTE, { allowHomologacao: true })).toThrow(/ausente/);
   });
 });

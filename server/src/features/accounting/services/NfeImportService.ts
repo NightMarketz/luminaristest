@@ -6,8 +6,9 @@ import type { CreatePayableInput } from '../dtos/PayableDto';
 import type { ImportNfePurchaseInput } from '../dtos/NfeDto';
 import type { PayableService } from './PayableService';
 import type { FiscalProfileService } from './FiscalProfileService';
-import { acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
-import { defaultByProductRefFrom, resolveDestinations, type ItemDestination, type ItemDestinationMapping, type ResolvedItemDestination } from '../models/itemDestination';
+import { TABELAS_LEGAIS_NFE, acquisitionCost, type AcquisitionCost } from '../../../lib/nfeCost';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import { cfopsImobilizadoDe, defaultByProductRefFrom, resolveDestinations, type ItemDestination, type ItemDestinationMapping, type ResolvedItemDestination } from '../models/itemDestination';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { IProductDestinationDefaultRepository } from '../repositories/IProductDestinationDefaultRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -76,6 +77,8 @@ export class NfeImportService {
     private readonly policy: IAccountingPolicy,
     private readonly fiscalProfile: FiscalProfileService,
     private readonly productDestinationDefaults: IProductDestinationDefaultRepository,
+    /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia das tabelas legais da NF-e (cStat, CFOP, CST, NCM, PIS/Cofins). */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /**
@@ -95,7 +98,8 @@ export class NfeImportService {
     }
 
     // Parse (PURE) — rejects loud on cStat∉{100,150}, mod≠55, homologação, DTD/XXE, chave mismatch (D5).
-    const nfe = parseNfe(xml);
+    const legais = await this.legalParams.fotografia(TABELAS_LEGAIS_NFE);
+    const nfe = parseNfe(xml, legais);
 
     // Counterparty D6 — NEVER auto-create the emitente. If the operator confirmed a counterpartyId,
     // re-scope it (defense-in-depth; createPayable re-scopes again) and require a live SUPPLIER. Absent,
@@ -117,8 +121,8 @@ export class NfeImportService {
     const costed = nfe.itens.filter((it) => it.indTot !== '0');
     // ITEM-DESTINATION PR-2 (item 9, F-ID-2 a): UMA query de defaults por unidade + productRefs mapeados.
     const defaults = await this.productDestinationDefaults.findManyByProductRefs(scope, mappedProductRefs(dto.itemMappings));
-    const resolved = resolveDestinations(costed, mappingByCProd, defaultByProductRefFrom(defaults));
-    const custo = acquisitionCost(nfe, costed, regime, resolved.byNItem);
+    const resolved = resolveDestinations(costed, mappingByCProd, defaultByProductRefFrom(defaults), cfopsImobilizadoDe(legais, nfe.ide.dhEmiDate));
+    const custo = acquisitionCost(nfe, costed, regime, resolved.byNItem, legais);
     const custoTotalCents = custo.custoBrutoCents;
     if (custoTotalCents <= 0) {
       throw new ValidationError('NF-e de compra com custo de aquisição não positivo — rejeitada.');

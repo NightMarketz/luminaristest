@@ -2,11 +2,10 @@ import { z } from 'zod';
 import { ValidationError } from '../../../lib/errors';
 import { findLinha } from './Lalur.model';
 import {
-  CODIGOS_RECEITA,
-  CODIGOS_RECEITA_FONTE,
   TAX_ASSESSMENT_TABELA_VERSAO,
   arred,
   linhaVigente,
+  type CodigoReceitaVigente,
   mulBp,
   parametroVigente,
   type ParametroApuracao,
@@ -406,11 +405,12 @@ function diferencaPostergada16Trimestral(e: EntradaPresumido): { total: bigint; 
   return { total, linhas };
 }
 
-function memoriaDiferencaTrimestral(d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, periodo: PeriodoTrimestral): MemoriaLinha[] {
+function memoriaDiferencaTrimestral(t: TabelaApuracao, d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, periodo: PeriodoTrimestral): MemoriaLinha[] {
+  const cod = t.codigoReceita('IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16', fimDoTrimestre(ano, periodo)).codigo;
   const mesSeguinte = periodo === 'T04' ? `01/${ano + 1}` : `${String(Number(periodo.slice(1)) * 3 + 1).padStart(2, '0')}/${ano}`;
   return [
     ...d.linhas,
-    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16})`, d.total, F_215_11),
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, d.total, F_215_11),
     linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 215 §§ 12–13'),
   ];
 }
@@ -481,9 +481,9 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
       ),
     );
   }
-  const codigoReceita = e.tributo === 'IRPJ' ? CODIGOS_RECEITA.IRPJ_PRESUMIDO : CODIGOS_RECEITA.CSLL_PRESUMIDO;
+  const codigoReceita = e.tabela.codigoReceita(e.tributo === 'IRPJ' ? 'IRPJ_PRESUMIDO' : 'CSLL_PRESUMIDO', dataFim);
   const r = fecharComDeducoes(e.tributo, 'PRESUMIDO', codigoReceita, calc.baseCents, calc.devidoCents, acerto, e.deducoes, memoria);
-  if (r16.diferenca) r.memoria.push(...memoriaDiferencaTrimestral(r16.diferenca, e.ano, e.periodo));
+  if (r16.diferenca) r.memoria.push(...memoriaDiferencaTrimestral(e.tabela, r16.diferenca, e.ano, e.periodo));
   return { ...r, diferencaPostergadaCents: r16.diferenca?.total ?? 0n };
 }
 
@@ -517,14 +517,14 @@ export function apurarRealTrimestral(e: EntradaReal): ResultadoApuracao {
   if (!e.parteBFechada) {
     throw new ValidationError(`Feche a Parte B do e-Lalur/e-Lacs de ${e.periodo}/${e.ano} antes de apurar o Real (mesma pré-condição da ECF).`);
   }
-  let codigoReceita: string;
+  let codigoReceita: CodigoReceitaVigente;
   if (e.tributo === 'IRPJ') {
     if (e.perfil.lucroRealObrigatorio === null) {
       throw new ValidationError('perfil incompleto: informe lucroRealObrigatorio no perfil fiscal da empresa do ano (código 0220 × 3373).');
     }
-    codigoReceita = e.perfil.lucroRealObrigatorio ? CODIGOS_RECEITA.IRPJ_REAL_TRIMESTRAL_OBRIGADA : CODIGOS_RECEITA.IRPJ_REAL_TRIMESTRAL_OPTANTE;
+    codigoReceita = e.tabela.codigoReceita(e.perfil.lucroRealObrigatorio ? 'IRPJ_REAL_TRIMESTRAL_OBRIGADA' : 'IRPJ_REAL_TRIMESTRAL_OPTANTE', fimDoTrimestre(e.ano, e.periodo));
   } else {
-    codigoReceita = CODIGOS_RECEITA.CSLL_REAL_TRIMESTRAL;
+    codigoReceita = e.tabela.codigoReceita('CSLL_REAL_TRIMESTRAL', fimDoTrimestre(e.ano, e.periodo));
   }
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
   const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
@@ -598,7 +598,7 @@ export function ajustesParteA(
 export function fecharComDeducoes(
   tributo: TributoApuracao,
   modo: ModoApuracao,
-  codigoReceita: string,
+  codigoReceita: CodigoReceitaVigente,
   base: bigint,
   devido: bigint,
   acertoT04: bigint,
@@ -609,7 +609,7 @@ export function fecharComDeducoes(
   const liquido = devido - deducoesCents - acertoT04;
   const aPagar = maxZero(liquido);
   const saldoNegativo = maxZero(-liquido);
-  memoria.push(linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita} (${CODIGOS_RECEITA_FONTE})`));
+  memoria.push(linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`));
   if (saldoNegativo > 0n) {
     const fonte = acertoT04 > 0n ? 'IN RFB 2.305/2025 art. 15 § 7º — pedido fora do sistema' : 'F-TA-9 (a) — restituição/compensação fora do sistema';
     memoria.push(linha('SALDO_NEGATIVO', 'Deduções acima do devido — restituição/compensação fora do sistema', saldoNegativo, fonte));
@@ -617,7 +617,7 @@ export function fecharComDeducoes(
   return {
     tributo,
     modo,
-    codigoReceita,
+    codigoReceita: codigoReceita.codigo,
     baseCents: base,
     devidoCents: devido,
     deducoesCents,

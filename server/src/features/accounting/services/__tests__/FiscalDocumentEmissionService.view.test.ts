@@ -4,6 +4,7 @@
  */
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const SCOPE = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
 
 jest.mock('../../../../lib/factory', () => ({
@@ -25,7 +26,7 @@ async function view(over: Record<string, unknown>, attempts: ReturnType<typeof a
     cancelledAt: null, errorsJson: null, sourceDocumentId: null, xmlAttachmentId: null, pdfAttachmentId: null, attempts, ...over,
   };
   const repo = { findById: async () => doc, listBySale: async () => [doc] };
-  const svc = new FiscalDocumentEmissionService(repo as never, null as never, null as never, null as never, null as never, { canReadFiscalDocument: () => true } as never, null as never);
+  const svc = new FiscalDocumentEmissionService(repo as never, null as never, null as never, null as never, null as never, { canReadFiscalDocument: () => true } as never, null as never, legalParamsSemente);
   return svc.getById(SCOPE as never, 'd');
 }
 

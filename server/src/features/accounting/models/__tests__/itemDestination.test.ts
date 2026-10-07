@@ -1,5 +1,6 @@
 import { defaultByProductRefFrom, resolveDestinations } from '../itemDestination';
 
+import { CFOPS_IMOBILIZADO_SEMENTE } from '@test/helpers/legalParams';
 /**
  * ITEM-DESTINATION item 9 (resolver puro) + EMENDA 29/09 itens 22–23. PR-1 (BRIEF §7): sem a origem PRODUTO —
  * a destinação vem do override do `itemMapping` (o `classId` é a declaração de IMOBILIZADO) ou cai em
@@ -19,7 +20,7 @@ describe('resolveDestinations', () => {
         ['TINTA', { productRef: 'tinta-1', destination: 'INSUMO_SERVICO' as const }],
         ['MAQ', { classId: 'class-1' }],
         ['SHAMPOO', { productRef: 'shampoo-1' }],
-      ]),
+      ]), new Map(), CFOPS_IMOBILIZADO_SEMENTE,
     );
     expect(r.destinacoes).toEqual([
       { nItem: 1, cProd: 'TINTA', destination: 'INSUMO_SERVICO', origem: 'OVERRIDE' },
@@ -32,7 +33,7 @@ describe('resolveDestinations', () => {
   });
 
   it('sem mapeamento algum (preview cru): tudo REVENDA/FALLBACK', () => {
-    const r = resolveDestinations(itens, new Map());
+    const r = resolveDestinations(itens, new Map(), new Map(), CFOPS_IMOBILIZADO_SEMENTE);
     expect(r.destinacoes.map((d) => `${d.destination}/${d.origem}`)).toEqual(Array(3).fill('REVENDA/FALLBACK'));
   });
 
@@ -42,7 +43,7 @@ describe('resolveDestinations', () => {
       new Map([
         ['MAQ', { productRef: 'maq-1', destination: 'REVENDA' as const }],
         ['X', { productRef: 'x-1', destination: 'INSUMO_SERVICO' as const }],
-      ]),
+      ]), new Map(), CFOPS_IMOBILIZADO_SEMENTE,
     );
     expect(r.destinacoes.map((d) => d.destination)).toEqual(['REVENDA', 'INSUMO_SERVICO']);
     expect(r.warnings.filter((w) => /CFOP de imobilizado mapeado como estoque\/insumo — confira/.test(w))).toHaveLength(2);
@@ -66,7 +67,7 @@ describe('resolveDestinations — default por produto', () => {
       new Map([
         ['tinta-1', 'INSUMO_SERVICO' as const],
         ['oxi-1', 'INSUMO_SERVICO' as const],
-      ]),
+      ]), CFOPS_IMOBILIZADO_SEMENTE,
     );
     expect(r.destinacoes).toEqual([
       { nItem: 1, cProd: 'TINTA', destination: 'REVENDA', origem: 'OVERRIDE' },
@@ -81,7 +82,7 @@ describe('resolveDestinations — default por produto', () => {
     const r = resolveDestinations(
       [{ nItem: 1, cProd: 'MAQ', cfop: '5102' }, { nItem: 2, cProd: 'SOLTO', cfop: '5102' }],
       new Map([['MAQ', { classId: 'class-1' }]]),
-      new Map([['maq-1', 'REVENDA' as const]]),
+      new Map([['maq-1', 'REVENDA' as const]]), CFOPS_IMOBILIZADO_SEMENTE,
     );
     expect(r.destinacoes.map((d) => `${d.destination}/${d.origem}`)).toEqual(['IMOBILIZADO/OVERRIDE', 'REVENDA/FALLBACK']);
   });

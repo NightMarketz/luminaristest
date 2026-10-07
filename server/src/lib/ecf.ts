@@ -1,3 +1,4 @@
+import { linhaLegalVigente, type LinhaLegal } from '../features/legalParameters/models/legalParameter';
 import { spedLine, centsToSpedDecimal, spedDate } from './sped';
 
 /**
@@ -43,18 +44,18 @@ export const ECF_TIPO_ESC = 'LECF';
  * `'0012'` chutado. O exemplo do Manual (p. 67) mostra '0011' (exemplo não atualizado — bug conhecido
  * de exemplo). Quando o Leiaute 13 for publicado: uma linha aqui + o corpus.
  */
-/** Código do Leiaute 12 (AC 2025). NÃO é mais o que `build0000` escreve por conta própria — é uma entrada da tabela. */
-export const ECF_COD_VER = '0012';
-export const ECF_COD_VER_BY_YEAR: Readonly<Record<number, string>> = { 2025: ECF_COD_VER };
-
-/** Resolve o COD_VER do ano; `override` (caller) vence a tabela. Ano desconhecido ⇒ throw. */
-export function resolveEcfCodVer(year: number, override?: string): string {
+/**
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 25; item 13 — sai `ECF_COD_VER_BY_YEAR`): a tabela por ano mora em `LEIAUTE_SPED`
+ * (chave `ECF`, uma linha por ano-calendário com vigência 01/01..31/12). `override` (caller) vence a tabela; ano sem
+ * linha ⇒ throw (o serviço traduz em 400).
+ */
+export function resolveEcfCodVer(year: number, linhas: readonly LinhaLegal[], override?: string): string {
   if (override) return override;
-  const v = ECF_COD_VER_BY_YEAR[year];
+  const v = linhaLegalVigente(linhas, 'LEIAUTE_SPED', 'ECF', `${year}-12-31`)?.valorTexto;
   if (!v) {
     throw new Error(
-      `ECF_COD_VER desconhecido para o ano-calendário ${year}: o leiaute desse ano não está na tabela ` +
-        `ECF_COD_VER_BY_YEAR (lib/ecf.ts) — publique o Manual do leiaute no corpus e registre o código; ` +
+      `ECF_COD_VER desconhecido para o ano-calendário ${year}: o leiaute desse ano não está na tabela de plataforma ` +
+        `LEIAUTE_SPED (parâmetros legais) — publique o Manual do leiaute no corpus e a linha ECF do ano; ` +
         `ou informe fiscal.codVer explicitamente.`,
     );
   }
@@ -114,8 +115,8 @@ export interface Reg0000Input {
   retificadora?: string; // 'N' original (default)
   numRec?: string; // hash recibo ECF anterior — vazio p/ original
   tipEcf?: string; // '0' não-SCP (default)
-  /** 0000.COD_VER — override do caller; ausente ⇒ resolvido pelo ano de `dtIni` (item 4, Fork 7→a). */
-  codVer?: string;
+  /** 0000.COD_VER — já resolvido pelo serviço (`resolveEcfCodVer`: override do caller ou tabela LEIAUTE_SPED). */
+  codVer: string;
 }
 
 /**
@@ -130,7 +131,7 @@ export function build0000(i: Reg0000Input): string {
   return spedLine([
     '0000',
     ECF_TIPO_ESC,
-    resolveEcfCodVer(Number(i.dtIni.slice(0, 4)), i.codVer),
+    i.codVer,
     i.cnpj,
     i.nome,
     i.indSitIniPer ?? '0',
@@ -473,15 +474,16 @@ export function __selfCheck(): void {
   assert(buildBlockOpen('C001', false) === '|C001|1|', 'empty block open');
   assert(buildBlockOpen('P001', true) === '|P001|0|', 'data block open');
   assert(build0010() === '|0010||N|5|T|01|PPPP||C||||2|', '0010 presumido default');
-  assert(resolveEcfCodVer(2025) === '0012', 'cod_ver 2025');
-  assert(resolveEcfCodVer(2030, '0099') === '0099', 'cod_ver override');
+  const leiaute = [{ id: 'x', tabela: 'LEIAUTE_SPED', chave: 'ECF', discriminador: null, valorInt: null, valorTexto: '0098', valorJson: null, fonte: 'selfCheck', vigenteDesde: '2025-01-01', vigenteAte: '2025-12-31', status: 'PUBLISHED', supersedesId: null }];
+  assert(resolveEcfCodVer(2025, leiaute) === '0098', 'cod_ver da tabela');
+  assert(resolveEcfCodVer(2030, leiaute, '0099') === '0099', 'cod_ver override');
   let threw = false;
-  try { resolveEcfCodVer(1999); } catch { threw = true; }
+  try { resolveEcfCodVer(2026, leiaute); } catch { threw = true; }
   assert(threw, 'cod_ver ano desconhecido lança');
   // Determinismo: mesma entrada ⇒ mesma saída.
   const input: EcfFileInput = {
     declarant: {
-      cnpj: '11111111000191', nome: 'SALAO TESTE',
+      cnpj: '11111111000191', nome: 'SALAO TESTE', codVer: '0098',
       dtIni: '2025-01-01', dtFin: '2025-12-31',
       codNat: '2062', cnaeFiscal: '9602501', endereco: 'RUA X', num: '1',
       bairro: 'CENTRO', uf: 'DF', codMun: '5300108', cep: '70000000', email: 'a@b.com',

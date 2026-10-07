@@ -9,6 +9,7 @@ import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { buildValidityNotice } from '@/features/packages/models/validityNotice';
 import { scopeToday } from '@/features/accounting/models/dates';
 
+import { FERIADOS_SEMENTE } from '@test/helpers/legalParams';
 jest.mock('@/lib/pdf', () => ({ htmlToPdf: jest.fn(async (html: string) => Buffer.from(`%PDF-stub ${html}`)) }));
 
 const app = makeApp();
@@ -55,7 +56,7 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
     await prisma.$disconnect();
   });
 
-  const notice = () => buildValidityNotice(SALE_DATE, 30)!;
+  const notice = () => buildValidityNotice(SALE_DATE, 30, FERIADOS_SEMENTE)!;
 
   describe('GET /notice', () => {
     it('devolve o texto v1, a data com feriado e o hash', async () => {
@@ -164,7 +165,7 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
     it('a data de hoje não interfere: o aceite usa a data da VENDA (não "hoje")', async () => {
       const today = scopeToday({ timeZone: 'America/Sao_Paulo' });
       const s = await packageSale(pkg30, { date: today });
-      const n = buildValidityNotice(today, 30)!;
+      const n = buildValidityNotice(today, 30, FERIADOS_SEMENTE)!;
       const res = await request(app).post('/api/package-acceptances').set(authHeader(user)).send({ unitId, saleId: s, textVersion: 'v1', textSha256: n.textSha256 });
       expect(res.status).toBe(201);
       expect(res.body.data.saleDate).toBe(today);

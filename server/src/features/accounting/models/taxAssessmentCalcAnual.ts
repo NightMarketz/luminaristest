@@ -15,7 +15,7 @@ import {
   type ResultadoApuracao,
   type TributoApuracao,
 } from './taxAssessmentCalc';
-import { CODIGOS_RECEITA, CODIGOS_RECEITA_FONTE, TAX_ASSESSMENT_TABELA_VERSAO, linhaVigente, mulBp, type TabelaApuracao } from './taxAssessmentParams';
+import { TAX_ASSESSMENT_TABELA_VERSAO, linhaVigente, mulBp, type CodigoReceitaVigente, type TabelaApuracao } from './taxAssessmentParams';
 
 /**
  * BE-INCR-TAX-ASSESSMENT Fase B PR-1 (nó X7, BRIEF B itens 3, 7, 8, 9, 10; F-TB-8 a) — funções PURAS do Lucro Real
@@ -87,18 +87,24 @@ export type CodigoAnual = 'ESTIMATIVA' | 'AJUSTE_ANUAL' | 'DIFERENCA_POSTERGADA_
  * Item 3. A estimativa por receita bruta e o balancete usam o código da estimativa (P-B2). IRPJ com
  * `lucroRealObrigatorio` nulo ⇒ 400 (A-1); a diferença postergada do 16% é só do IRPJ (item 9).
  */
-export function codigoReceitaAnual(tributo: TributoApuracao, codigo: CodigoAnual, lucroRealObrigatorio: boolean | null): string {
+export function codigoReceitaAnual(
+  t: TabelaApuracao,
+  data: string,
+  tributo: TributoApuracao,
+  codigo: CodigoAnual,
+  lucroRealObrigatorio: boolean | null,
+): CodigoReceitaVigente {
   if (tributo === 'CSLL') {
     if (codigo === 'DIFERENCA_POSTERGADA_16') throw new Error('codigoReceitaAnual: a diferença postergada do 16% é só do IRPJ');
-    return codigo === 'ESTIMATIVA' ? CODIGOS_RECEITA.CSLL_ESTIMATIVA : CODIGOS_RECEITA.CSLL_AJUSTE_ANUAL;
+    return t.codigoReceita(codigo === 'ESTIMATIVA' ? 'CSLL_ESTIMATIVA' : 'CSLL_AJUSTE_ANUAL', data);
   }
   if (lucroRealObrigatorio === null) {
     throw new ValidationError('perfil incompleto: informe lucroRealObrigatorio no perfil fiscal da empresa do ano (código obrigada × optante).');
   }
   const o = lucroRealObrigatorio;
-  if (codigo === 'ESTIMATIVA') return o ? CODIGOS_RECEITA.IRPJ_ESTIMATIVA_OBRIGADA : CODIGOS_RECEITA.IRPJ_ESTIMATIVA_OPTANTE;
-  if (codigo === 'AJUSTE_ANUAL') return o ? CODIGOS_RECEITA.IRPJ_AJUSTE_ANUAL_OBRIGADA : CODIGOS_RECEITA.IRPJ_AJUSTE_ANUAL_OPTANTE;
-  return o ? CODIGOS_RECEITA.IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA : CODIGOS_RECEITA.IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE;
+  if (codigo === 'ESTIMATIVA') return t.codigoReceita(o ? 'IRPJ_ESTIMATIVA_OBRIGADA' : 'IRPJ_ESTIMATIVA_OPTANTE', data);
+  if (codigo === 'AJUSTE_ANUAL') return t.codigoReceita(o ? 'IRPJ_AJUSTE_ANUAL_OBRIGADA' : 'IRPJ_AJUSTE_ANUAL_OPTANTE', data);
+  return t.codigoReceita(o ? 'IRPJ_DIFERENCA_POSTERGADA_16_OBRIGADA' : 'IRPJ_DIFERENCA_POSTERGADA_16_OPTANTE', data);
 }
 
 // ─── Itens 7 e 9 — estimativa por receita bruta (B2) + 16% do prestador exclusivo (F-TB-5 b) ─────────────────
@@ -143,8 +149,8 @@ export interface EntradaEstimativa {
 export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApuracaoAnual {
   const m = numMes(e.periodo);
   assertMesEmAtividade(e.ano, m, e.perfil);
-  const codigoReceita = codigoReceitaAnual(e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
   const dataFim = fimDoMes(e.ano, m);
+  const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
   const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const chave = e.tributo === 'IRPJ' ? 'PRESUNCAO_IRPJ' : 'PRESUNCAO_CSLL';
   const pS = linhaVigente(e.tabela, chave, dataFim, 'SERVICO')!;
@@ -195,12 +201,12 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, base, aliqCsll, 1n);
   memoria.push(...imposto.memoria);
   const r = fecharComDeducoes(e.tributo, 'ESTIMATIVA_RECEITA', codigoReceita, base, imposto.devidoCents, 0n, e.deducoes, memoria);
-  if (diferenca) r.memoria.push(...memoriaDiferenca(diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
+  if (diferenca) r.memoria.push(...memoriaDiferenca(e.tabela, diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
   return { ...r, diferencaPostergadaCents: diferenca?.total ?? 0n };
 }
 
-function memoriaDiferenca(d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, m: number, lucroRealObrigatorio: boolean | null): MemoriaLinha[] {
-  const cod = codigoReceitaAnual('IRPJ', 'DIFERENCA_POSTERGADA_16', lucroRealObrigatorio);
+function memoriaDiferenca(t: TabelaApuracao, d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, m: number, lucroRealObrigatorio: boolean | null): MemoriaLinha[] {
+  const cod = codigoReceitaAnual(t, fimDoMes(ano, m), 'IRPJ', 'DIFERENCA_POSTERGADA_16', lucroRealObrigatorio).codigo;
   const mesSeguinte = m === 12 ? `01/${ano + 1}` : `${pad2(m + 1)}/${ano}`;
   return [
     ...d.linhas,
@@ -272,8 +278,8 @@ export interface EntradaBalancete {
 export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   const m = numMes(e.periodo);
   const ativos = assertMesEmAtividade(e.ano, m, e.perfil);
-  const codigoReceita = codigoReceitaAnual(e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
   const dataFim = fimDoMes(e.ano, m);
+  const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'ESTIMATIVA', e.perfil.lucroRealObrigatorio);
   const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
   const n = m - ativos[0] + 1;
 
@@ -306,7 +312,7 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   );
   const r = fecharComDeducoes(e.tributo, 'BALANCETE_SUSPENSAO_REDUCAO', codigoReceita, ajustes.base, devidoMes, 0n, e.deducoes, memoria);
   const diferenca = e.tributo === 'IRPJ' && e.perfil.prestadoraExclusivaServicos && e.receitaMes ? excessoNoBalancete(e, m, dataFim, r.memoria) : null;
-  if (diferenca) r.memoria.push(...memoriaDiferenca(diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
+  if (diferenca) r.memoria.push(...memoriaDiferenca(e.tabela, diferenca, e.ano, m, e.perfil.lucroRealObrigatorio));
   return { ...r, diferencaPostergadaCents: diferenca?.total ?? 0n };
 }
 
@@ -373,8 +379,8 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   if (faltam.length > 0) {
     throw new ValidationError(`${e.tributo}: confirme os meses em atividade antes do ajuste anual de ${e.ano} — faltam ${faltam.join(', ')}.`);
   }
-  const codigoReceita = codigoReceitaAnual(e.tributo, 'AJUSTE_ANUAL', e.perfil.lucroRealObrigatorio);
   const dataFim = `${e.ano}-12-31`;
+  const codigoReceita = codigoReceitaAnual(e.tabela, dataFim, e.tributo, 'AJUSTE_ANUAL', e.perfil.lucroRealObrigatorio);
   const aliqCsll = e.tributo === 'CSLL' ? aliquotaCsll(e.tabela, e.perfil.ecfIndAliqCsll, dataFim) : null;
 
   const ajustes = ajustesParteA(e.tabela, e.tributo, e.resultadoAntesCents, e.linhasParteA, dataFim);
@@ -427,7 +433,7 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   const saldoNegativo = maxZero(-saldo);
   memoria.push(
     linha('SALDO_AJUSTE', 'Devido anual − estimativas pagas − retenções', saldo, F_ART2_4),
-    linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita} (${CODIGOS_RECEITA_FONTE})`),
+    linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`),
   );
   if (aPagar > 0n) {
     memoria.push(linha('VENCIMENTO_QUOTA_UNICA', `Quota única até o último dia útil de março/${e.ano + 1}, Selic desde 1º/fev (informativo)`, 0n, 'Lei 9.430/1996 art. 6º §§ 1º–2º'));
@@ -445,7 +451,7 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   return {
     tributo: e.tributo,
     modo: 'AJUSTE_ANUAL',
-    codigoReceita,
+    codigoReceita: codigoReceita.codigo,
     baseCents: ajustes.base,
     devidoCents: imposto.devidoCents,
     deducoesCents,

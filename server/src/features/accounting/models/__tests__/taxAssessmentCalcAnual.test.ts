@@ -83,9 +83,9 @@ describe('item 3 — códigos de receita (ADR §3)', () => {
       ['CSLL', 'AJUSTE_ANUAL', true, '677301'],
       ['CSLL', 'AJUSTE_ANUAL', false, '677301'],
     ];
-    for (const [t, c, o, cod] of codigos) expect(codigoReceitaAnual(t, c, o)).toBe(cod);
-    expect(() => codigoReceitaAnual('IRPJ', 'ESTIMATIVA', null)).toThrow(ValidationError);
-    expect(codigoReceitaAnual('CSLL', 'ESTIMATIVA', null)).toBe('248401');
+    for (const [t, c, o, cod] of codigos) expect(codigoReceitaAnual(tabela, '2026-12-31', t, c, o).codigo).toBe(cod);
+    expect(() => codigoReceitaAnual(tabela, '2026-12-31', 'IRPJ', 'ESTIMATIVA', null)).toThrow(ValidationError);
+    expect(codigoReceitaAnual(tabela, '2026-12-31', 'CSLL', 'ESTIMATIVA', null).codigo).toBe('248401');
     // o balancete com redução usa o código da estimativa (P-B2)
     const bal = apurarBalancete({
       tabela, ano: 2026, periodo: 'A01', tributo: 'IRPJ', resultadoAntesCents: R(10_000), contasProvisaoConfiguradas: true,

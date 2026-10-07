@@ -31,6 +31,7 @@ import {
   type ReconcilePendingCaptureItem,
 } from '@/jobs/accountingSyncReconcile.job';
 
+import { FERIADOS_SEMENTE } from '@test/helpers/legalParams';
 const app = makeApp();
 const CPF = '11144477735'; // DV válido
 const CNPJ = '11222333000181'; // DV válido
@@ -143,7 +144,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const saleDateA = addDays(today, -10);
     // O esperado vem da MESMA regra do produto (D2: feriado nacional / domingo de eleição empurram o último dia).
     // Somar 30 dias corridos aqui quebrava o teste nos dias em que hoje+20 cai num desses (ex.: 25/10/2026, 2º turno).
-    expiresOnA = lastValidDay(saleDateA, 30)!;
+    expiresOnA = lastValidDay(saleDateA, 30, FERIADOS_SEMENTE)!;
     dueDay = addDays(expiresOnA, 2);
     const ym = (d: string) => d.slice(0, 7);
     const monthsA = [ym(saleDateA), ym(today), ym(addDays(expiresOnA, 1))];
@@ -153,7 +154,7 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     pkg30 = (await row('packages', { name: '10 escovas', price: 100, validityDays: 30 })).id;
 
     UNIT_A = await newUnit('A', monthsA);
-    const expiresOnB = lastValidDay(addDays(today, -40), 30)!; // ~hoje − 10 (prorrogado se cair em feriado)
+    const expiresOnB = lastValidDay(addDays(today, -40), 30, FERIADOS_SEMENTE)!; // ~hoje − 10 (prorrogado se cair em feriado)
     UNIT_B = await newUnit('B', [ym(addDays(today, -40)), ym(addDays(today, -15)), ym(addDays(expiresOnB, 1)), ym(today)]);
     UNIT_C = await newUnit('C', monthsA);
     UNIT_D = await newUnit('D', monthsA);
@@ -390,15 +391,15 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const ok = await request(app)
       .get('/api/package-balances')
       .set(authHeader(user))
-      .query({ unitId: UNIT_A, expiresOnOrBefore: addDays(lastValidDay(today, 30)!, -1) });
+      .query({ unitId: UNIT_A, expiresOnOrBefore: addDays(lastValidDay(today, 30, FERIADOS_SEMENTE)!, -1) });
     expect(ok.status).toBe(200);
     expect(ok.body.data.balances).toHaveLength(0); // recompra com saldo 0 reiniciou: vence em lastValidDay(hoje, 30)
     const hit = await request(app)
       .get('/api/package-balances')
       .set(authHeader(user))
-      .query({ unitId: UNIT_A, expiresOnOrBefore: lastValidDay(today, 30)! });
+      .query({ unitId: UNIT_A, expiresOnOrBefore: lastValidDay(today, 30, FERIADOS_SEMENTE)! });
     expect(hit.body.data.balances).toHaveLength(1);
-    expect(hit.body.data.balances[0].expiresAt.slice(0, 10)).toBe(lastValidDay(today, 30));
+    expect(hit.body.data.balances[0].expiresAt.slice(0, 10)).toBe(lastValidDay(today, 30, FERIADOS_SEMENTE));
     const bad = await request(app).get('/api/package-balances').set(authHeader(user)).query({ unitId: UNIT_A, expiresOnOrBefore: '2026-02-30' });
     expect(bad.status).toBe(400);
   });

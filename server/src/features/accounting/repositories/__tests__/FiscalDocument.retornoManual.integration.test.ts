@@ -14,6 +14,7 @@ import { FiscalDocumentEmissionService } from '@/features/accounting/services/Fi
 import { FiscalDocumentLifecycleService } from '@/features/accounting/services/FiscalDocumentLifecycleService';
 import { resolveAccountingScope } from '@/features/accounting/scope/AccountingScope';
 
+import { legalParamsSemente } from '@test/helpers/legalParams';
 const UNIT = 'unit-retorno';
 const DONO = 'u-retorno';
 const scope = resolveAccountingScope({ userId: DONO }, UNIT);
@@ -43,7 +44,7 @@ function dps(vServ: string, tomaCpf = '12345678909') {
 describe('retorno manual → GET /documents/:id (FE-INCR-DFE PR-1, itens 10–13) — SQLite real', () => {
   const repo = new FiscalDocumentRepository();
   const policy = { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true, canCancelFiscalDocument: () => true };
-  const emission = new FiscalDocumentEmissionService(repo, null as never, null as never, null as never, null as never, policy as never, null as never);
+  const emission = new FiscalDocumentEmissionService(repo, null as never, null as never, null as never, null as never, policy as never, null as never, legalParamsSemente);
   const lifecycle = new FiscalDocumentLifecycleService(
     repo,
     emission,

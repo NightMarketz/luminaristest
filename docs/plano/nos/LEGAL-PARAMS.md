@@ -4,12 +4,12 @@ tipo: "plataforma"
 dominio: "fiscal"
 titulo: "Coeficientes de lei em tabela de plataforma versionada + pente fino contra a lei (BE-INCR-LEGAL-PARAMS)"
 estado: "inflight"
-estado_detalhe: "07/10: 'executa' do dono; PR-1 de 4 (L-4) — tabela `legal_parameters` + papel PLATFORM_ADMIN (CLI) + rotas + migração byte a byte de TAX_ASSESSMENT/CSLL_ALIQUOTA/PIS_COFINS com teste de paridade; cálculos do X7/X8 recebem a fotografia (F-LP-4 a). Faltam PR-2 (demais tabelas + constantes), PR-3 (depreciação, L-1), PR-4 (snapshot por apuração + recálculo, L-3). Pendências de contador: D-4/D-6/D-7 e itens grau C"
+estado_detalhe: "07/10: PR-1 (#569) mergeado; PR-2 (#572) — demais tabelas (CODIGO_RECEITA, NCM monofásico, CST, CFOP, cStat, obrigações, LC116, ISS, leiautes SPED, feriados) + remoção das constantes soltas, paridade + guarda do item 13; lacunas L-8..L-11 por questionário. Faltam PR-3 (depreciação, L-1) e PR-4 (snapshot por apuração + recálculo, L-3). Pendências de contador: D-4/D-6/D-7 e itens grau C"
 depende_de: []
 autorizacao: "dono, chat, 2026-10-06: \"Autorizo planejar o pente fino + BRIEF — sessao-planejamento, sem executa\"; ratificação por questionário no mesmo dia — sem 'executa' · EXECUTA: dono, chat, 2026-10-07: \"Executa o BE-INCR-LEGAL-PARAMS\" — sessao-feature; lacunas L-1..L-7 por questionário ([[D-2026-10-07-LEGAL-PARAMS-EXECUCAO]])"
 ancora_sdd: "—"
 atualizado: "2026-10-07"
-prs: ["#569"]
+prs: ["#569", "#572"]
 ---
 # LEGAL-PARAMS — coeficientes de lei em tabela de plataforma versionada
 

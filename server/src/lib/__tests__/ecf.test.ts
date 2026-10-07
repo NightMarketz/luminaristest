@@ -24,12 +24,14 @@ import {
   serializeEcf,
   __selfCheck,
   P_LINE,
-  ECF_COD_VER,
+  resolveEcfCodVer,
   type EcfFileInput,
 } from '../ecf';
+import { LEGAIS_SEMENTE } from '@test/helpers/legalParams';
 
 const sampleInput = (): EcfFileInput => ({
   declarant: {
+    codVer: resolveEcfCodVer(2025, LEGAIS_SEMENTE), // BE-INCR-LEGAL-PARAMS PR-2: tabela LEIAUTE_SPED
     cnpj: '11111111000191',
     nome: 'SALAO TESTE LTDA',
     dtIni: '2025-01-01',
@@ -102,8 +104,9 @@ describe('ecf primitives', () => {
     expect(line.split('|').length).toBe(34);
   });
 
-  it('COD_VER is 0012 (leiaute 12)', () => {
-    expect(ECF_COD_VER).toBe('0012');
+  it('COD_VER 2025 = 0012 (leiaute 12), lido da tabela LEIAUTE_SPED; 2026 sem linha ⇒ throw', () => {
+    expect(resolveEcfCodVer(2025, LEGAIS_SEMENTE)).toBe('0012');
+    expect(() => resolveEcfCodVer(2026, LEGAIS_SEMENTE)).toThrow(/LEIAUTE_SPED/);
   });
 });
 

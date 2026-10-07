@@ -689,22 +689,27 @@ export class ApplicationFactory {
 
     // Sale payment transition (Incremento D / D1) — same orchestration shape as
     // salesCancellationService; the post-commit settlement is applied via SaleSettlementBridge.
+    const auditService = new AuditService(
+      this.repositories.audit,
+      this.repositories.posting,
+      this.policies.accounting,
+      this.repositories.counterparty,
+    );
+
+    // BE-INCR-LEGAL-PARAMS PR-1: coeficientes de lei de plataforma — hoisted porque X7 e X8 leem a fotografia (F-LP-4 a);
+    // PR-2: subiu de novo (com o auditService) porque o saldo de pacote lê a fotografia FERIADO_NACIONAL.
+    const legalParameterService = new LegalParameterService(this.repositories.legalParameter, this.policies.legalParameter, auditService);
+
     const packageBalanceService = new PackageBalanceService(
       this.repositories.packageBalance,
-      this.policies.packageBalance
+      this.policies.packageBalance,
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL
     );
 
     const registerPaymentService = new RegisterPaymentService(
       dynamicTableService,
       this.repositories.dynamicTable,
       packageBalanceService
-    );
-
-    const auditService = new AuditService(
-      this.repositories.audit,
-      this.repositories.posting,
-      this.policies.accounting,
-      this.repositories.counterparty,
     );
 
     const postingService = new PostingService(
@@ -776,8 +781,6 @@ export class ApplicationFactory {
       this.repositories.journalEntry,
       this.policies.accounting
     );
-    // BE-INCR-LEGAL-PARAMS PR-1: coeficientes de lei de plataforma — hoisted porque X7 e X8 leem a fotografia (F-LP-4 a).
-    const legalParameterService = new LegalParameterService(this.repositories.legalParameter, this.policies.legalParameter, auditService);
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
     const taxAssessmentService = new TaxAssessmentService(
       this.repositories.taxAssessment,
@@ -922,6 +925,7 @@ export class ApplicationFactory {
       this.repositories.serviceFiscalProfile,
       this.policies.accounting,
       auditService,
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
     );
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
@@ -932,6 +936,7 @@ export class ApplicationFactory {
       serviceFiscalProfileService,
       this.policies.accounting,
       auditService,
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
     );
     // Extraído como const própria (não só inline no literal abaixo) porque
     // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
@@ -1009,6 +1014,7 @@ export class ApplicationFactory {
       this.repositories.fiscalProfile, // PR-2: unidades divergentes (F-XP-8 a)
       accountingReportService, // PR-2: aviso de grande porte (F-XP-6 a)
       this.repositories.lalur, // X7 Fase B PR-4 item 2 (F-TB-6 a): troca de forma com o e-Lalur do ano preenchido
+      legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia OBRIGACAO_REGIME
     );
     this.services = {
       bankSettlement: bankSettlementService,
@@ -1151,6 +1157,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         this.repositories.dataExchange,
         auditService,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECD)
       ),
       spedEcf: new SpedEcfGenerationService(
         this.repositories.account,
@@ -1158,6 +1165,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         this.repositories.dataExchange,
         auditService,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:
@@ -1171,6 +1179,7 @@ export class ApplicationFactory {
         // X7 Fase B PR-4 (item 18): forma do ano (FORMA_APUR) e modos confirmados (MES_BAL_RED) — só leitura.
         this.repositories.companyFiscalProfile,
         this.repositories.taxAssessment,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
       ),
       exerciseClosing: new ExerciseClosingService(
         this.repositories.account,
@@ -1225,11 +1234,13 @@ export class ApplicationFactory {
         this.policies.accounting,
         fiscalProfileService, // X6: lê o perfil (F-X6-6 a)
         this.repositories.productDestinationDefault, // ITEM-DESTINATION PR-2 (item 19): origem PRODUTO
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia das tabelas legais da NF-e
       ),
       nfeSaleReconciliation: new NfeSaleReconciliationService(
         this.repositories.journalEntry,
         postingService,
         this.policies.accounting,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia NFE_CSTAT_AUTORIZADA
       ),
       // BE-INCR-NFE-PREVIEW: dry-run do parser + indicador de idempotência (F-PREV-3 → b); sem escrita.
       nfePreview: new NfePreviewService(
@@ -1237,6 +1248,7 @@ export class ApplicationFactory {
         this.policies.accounting,
         fiscalProfileService,
         this.repositories.productDestinationDefault, // ITEM-DESTINATION PR-2 (item 19): o mesmo resolver do import
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia das tabelas legais da NF-e
       ),
       // BE-INCR-RECONCILE-PENDING (nó C7, Fork 3-b): HTTP-facing half only (list/rescan). The
       // WRITE path (reportPending/reportResolved) is wired directly in accountingSyncReconcile.job.ts,
@@ -1278,6 +1290,7 @@ export class ApplicationFactory {
         this.repositories.accountingContact,
         this.policies.accounting,
         auditService,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia CODIGO_RECEITA
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: new PisCofinsAssessmentService(
@@ -1315,6 +1328,7 @@ export class ApplicationFactory {
         this.policies.packageAcceptance,
         this.repositories.dynamicTable,
         this.repositories.user,
+        legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia FERIADO_NACIONAL
       ),
       presetSync: presetSyncService,
       moduleInstall: moduleInstallService,

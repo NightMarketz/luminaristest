@@ -5,12 +5,11 @@
  * art. 542; efeito pelo art. 544 III). Sem linha vigente ⇒ o chamador (prévia, item 9) responde 400.
  *
  * Alíquotas em pontos-base. BE-INCR-LEGAL-PARAMS PR-1: as linhas moram em `legal_parameters` (tabela `PIS_COFINS`).
- * As do não cumulativo (165/760) ainda coexistem com `PIS_CREDIT_BP`/`COFINS_CREDIT_BP` de `nfeCost.ts`, usadas abaixo
- * na divisão do crédito — a remoção dessas constantes é o item 13 (PR-2); o teste de paridade amarra os números.
+ * PR-2 (item 13): os códigos de receita vêm da tabela `CODIGO_RECEITA` e a divisão do crédito derivado lê as alíquotas
+ * do não cumulativo desta mesma tabela — as constantes `PIS_CREDIT_BP`/`COFINS_CREDIT_BP` de `nfeCost.ts` saíram.
  */
-import { COFINS_CREDIT_BP, PIS_CREDIT_BP } from '../../../lib/nfeCost';
 import { arred } from './taxAssessmentParams';
-import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { SemLinhaVigenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 export type TributoPisCofins = 'PIS' | 'COFINS';
 export type ModalidadePisCofins = 'CUMULATIVO' | 'NAO_CUMULATIVO';
@@ -30,19 +29,9 @@ export interface ParametroPisCofins {
 export const PIS_COFINS_REVOGACAO_FONTE = 'LC 214/2025 art. 542 (efeito: art. 544 III)';
 
 /**
- * Códigos de receita por tributo × modalidade (tabela `CODIGO_RECEITA` do inventário, item 14). BE-INCR-LEGAL-PARAMS
- * PR-1 migrou só as ALÍQUOTAS (`PIS_COFINS`); os códigos vão para o banco no PR-2 (emenda §9 L-4).
- */
-export const CODIGOS_RECEITA_PIS_COFINS: Readonly<Record<`${TributoPisCofins}|${ModalidadePisCofins}`, string>> = {
-  'PIS|CUMULATIVO': '810902',
-  'COFINS|CUMULATIVO': '217201',
-  'PIS|NAO_CUMULATIVO': '691201',
-  'COFINS|NAO_CUMULATIVO': '585601',
-};
-
-/**
  * BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a) — fotografia das linhas `PIS_COFINS` em vigor (chave = tributo, discriminador
- * = modalidade, `valorInt` = alíquota em bp), montada pelo serviço. As linhas em código saíram na migração.
+ * = modalidade, `valorInt` = alíquota em bp), montada pelo serviço. As linhas em código saíram na migração. PR-2: o
+ * código de receita é a linha `CODIGO_RECEITA` de mesma chave/discriminador vigente no início da linha de alíquota.
  */
 export function tabelaPisCofinsDe(linhas: readonly LinhaLegal[]): readonly ParametroPisCofins[] {
   return linhas
@@ -50,7 +39,7 @@ export function tabelaPisCofinsDe(linhas: readonly LinhaLegal[]): readonly Param
     .map((l) => {
       const tributo = l.chave as TributoPisCofins;
       const modalidade = l.discriminador as ModalidadePisCofins;
-      const codigoReceita = CODIGOS_RECEITA_PIS_COFINS[`${tributo}|${modalidade}`];
+      const codigoReceita = linhaLegalVigente(linhas, 'CODIGO_RECEITA', tributo, l.vigenteDesde, modalidade)?.valorTexto;
       if (!codigoReceita || l.valorInt === null) throw new Error(`pisCofinsParams: linha ${l.id} (${l.chave}/${l.discriminador ?? '∅'}) fora do formato de PIS_COFINS`);
       // Sem `vigenteAte` na linha = sem fim publicado; a revogação (LC 214) é a linha que o publica.
       return { tributo, modalidade, aliquotaBp: l.valorInt, codigoReceita, fonte: l.fonte, vigenteDesde: l.vigenteDesde, vigenteAte: l.vigenteAte ?? '9999-12-31' };
@@ -85,14 +74,34 @@ export interface CreditoPisCofinsNota {
   derivado: boolean;
 }
 
+/** Alíquotas do crédito do não cumulativo (bp) — a razão da divisão do crédito derivado (item 6). */
+export interface RazaoCreditoPisCofins {
+  pisBp: number;
+  cofinsBp: number;
+}
+
 /**
- * Item 6 (F-X8-7 a): linha `PIS_COFINS` com `pisCents`/`cofinsCents` ⇒ usa; sem ⇒ PIS = `arred(amount × 165 / 925)`
- * (item 4: a função half-up única do X7, F-TA-2 a), Cofins = resto — a soma é sempre `amountCents`.
+ * PR-2 (item 13) — PIS/Cofins NAO_CUMULATIVO vigentes em `data` (linhas `PIS_COFINS` da fotografia); sem linha ⇒ erro
+ * explícito (400). Substitui `PIS_CREDIT_BP`/`COFINS_CREDIT_BP` (nfeCost) no crédito da NF-e e na divisão derivada.
  */
-export function separarCreditoPisCofins(line: { amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number }): Pick<CreditoPisCofinsNota, 'baseCents' | 'pisCents' | 'cofinsCents' | 'derivado'> {
+export function razaoCreditoPisCofins(linhas: readonly LinhaLegal[], data: string): RazaoCreditoPisCofins {
+  const pis = linhaLegalVigente(linhas, 'PIS_COFINS', 'PIS', data, 'NAO_CUMULATIVO');
+  const cofins = linhaLegalVigente(linhas, 'PIS_COFINS', 'COFINS', data, 'NAO_CUMULATIVO');
+  if (pis?.valorInt == null || cofins?.valorInt == null) throw new SemLinhaVigenteError('PIS_COFINS', data, `${pis ? 'COFINS' : 'PIS'}/NAO_CUMULATIVO`);
+  return { pisBp: pis.valorInt, cofinsBp: cofins.valorInt };
+}
+
+/**
+ * Item 6 (F-X8-7 a): linha `PIS_COFINS` com `pisCents`/`cofinsCents` ⇒ usa; sem ⇒ PIS = `arred(amount × pis / (pis +
+ * cofins))` (165/925 hoje; item 4: a função half-up única do X7, F-TA-2 a), Cofins = resto — a soma é sempre `amountCents`.
+ */
+export function separarCreditoPisCofins(
+  line: { amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number },
+  razao: RazaoCreditoPisCofins,
+): Pick<CreditoPisCofinsNota, 'baseCents' | 'pisCents' | 'cofinsCents' | 'derivado'> {
   if (line.pisCents !== undefined && line.cofinsCents !== undefined) {
     return { baseCents: line.baseCents ?? null, pisCents: line.pisCents, cofinsCents: line.cofinsCents, derivado: false };
   }
-  const pis = Number(arred(BigInt(line.amountCents) * BigInt(PIS_CREDIT_BP), BigInt(PIS_CREDIT_BP + COFINS_CREDIT_BP)));
+  const pis = Number(arred(BigInt(line.amountCents) * BigInt(razao.pisBp), BigInt(razao.pisBp + razao.cofinsBp)));
   return { baseCents: null, pisCents: pis, cofinsCents: line.amountCents - pis, derivado: true };
 }

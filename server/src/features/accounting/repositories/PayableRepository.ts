@@ -5,7 +5,7 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
 import { PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
-import { separarCreditoPisCofins, type CreditoPisCofinsNota } from '../models/pisCofinsParams';
+import { separarCreditoPisCofins, type CreditoPisCofinsNota, type RazaoCreditoPisCofins } from '../models/pisCofinsParams';
 import type {
   CreatePayableData,
   CreatePaymentData,
@@ -117,6 +117,7 @@ export class PayableRepository implements IPayableRepository {
     scope: AccountingScope,
     from: string,
     to: string,
+    razao: RazaoCreditoPisCofins,
     tx?: Prisma.TransactionClient,
   ): Promise<CreditoPisCofinsNota[]> {
     const rows = await (tx ?? prisma).payable.findMany({
@@ -133,7 +134,7 @@ export class PayableRepository implements IPayableRepository {
     for (const row of rows) {
       const lines = JSON.parse(row.recoverableTaxLines!) as { kind: string; amountCents: number; baseCents?: number; pisCents?: number; cofinsCents?: number }[];
       // O DTO aceita até 2 linhas PIS_COFINS num POST manual: soma todas, como o `payable.created` (review #521, achado 1).
-      const partes = lines.filter((l) => l.kind === 'PIS_COFINS').map((l) => ({ amountCents: l.amountCents, ...separarCreditoPisCofins(l) }));
+      const partes = lines.filter((l) => l.kind === 'PIS_COFINS').map((l) => ({ amountCents: l.amountCents, ...separarCreditoPisCofins(l, razao) }));
       if (partes.length === 0) continue;
       out.push({
         payableId: row.id,

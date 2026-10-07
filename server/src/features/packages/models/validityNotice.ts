@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { isValidDateOnly } from '../../accounting/models/dates';
-import { lastValidDay } from './validity';
+import { lastValidDay, type FeriadosNacionais } from './validity';
 
 /**
  * FE-INCR-PACOTE-VALIDADE (BRIEF §3 item 2, §4.3; F-FE-PV-4 a/7 a) — texto da validade do pacote, puro e versionado.
@@ -49,11 +49,11 @@ export interface ValidityNotice extends ValidityNoticeInput {
 
 /**
  * Notice de uma compra, ou `null` se o pacote não tem validade (`null`/`0`). `saleDate` precisa ser calendário real.
- * Quem chama (serviço) traz `validityDays` do catálogo — esta função não lê nada.
+ * Quem chama (serviço) traz `validityDays` do catálogo e a fotografia `FERIADO_NACIONAL` — esta função não lê nada.
  */
-export function buildValidityNotice(saleDate: string, validityDays: number | null): ValidityNotice | null {
+export function buildValidityNotice(saleDate: string, validityDays: number | null, feriados: FeriadosNacionais): ValidityNotice | null {
   if (!isValidDateOnly(saleDate)) throw new Error(`data inválida: '${saleDate}'`);
-  const expiresOn = lastValidDay(saleDate, validityDays);
+  const expiresOn = lastValidDay(saleDate, validityDays, feriados);
   if (expiresOn == null || validityDays == null) return null;
   const text = renderValidityNotice({ validityDays, saleDate, expiresOn });
   return { validityDays, saleDate, expiresOn, textVersion: PACKAGE_VALIDITY_NOTICE_VERSION, text, textSha256: validityNoticeSha256(text) };

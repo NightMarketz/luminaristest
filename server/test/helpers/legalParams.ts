@@ -4,14 +4,23 @@
  * `legalParameterSeed.test.ts` garante que o `migration.sql` carrega este texto.
  */
 import fs from 'fs';
+import type { LegalParameter } from 'generated/prisma';
 import path from 'path';
 import type { LinhaLegal } from '@/features/legalParameters/models/legalParameter';
 import { tabelaApuracaoDe, type TabelaApuracao } from '@/features/accounting/models/taxAssessmentParams';
-import { tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
+import { razaoCreditoPisCofins, tabelaPisCofinsDe, type ParametroPisCofins } from '@/features/accounting/models/pisCofinsParams';
+import { tabelaPisCofinsItemDe } from '@/features/accounting/models/pisCofinsMonofasicoNcm';
+import { cfopsImobilizadoDe } from '@/features/accounting/models/itemDestination';
+import { matrizObrigacoesDe } from '@/features/accounting/models/obrigacoesPorRegime';
+import { listaLc116De } from '@/features/accounting/models/lc116ListaNacional';
+import { resolveEcdCodVerLc } from '@/lib/sped';
 
 export const LEGAL_PARAMS_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_v1.sql');
 /** BE-INCR-SIMPLES-NACIONAL PR-1 — gerado por `scripts/gen-simples-anexos.mjs`; a migração carrega o mesmo texto. */
 export const SIMPLES_SEED_FILE = path.resolve(__dirname, '../../prisma/data/legal_parameters_simples_v1.sql');
+/** PR-2: as tabelas restantes (exceto DEPRECIACAO_ANEXO_III, PR-3). Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_v2.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2];
 
 type Valor = string | number | null;
 
@@ -49,14 +58,12 @@ function tokens(lista: string): Valor[] {
   return out;
 }
 
-export function legalParamsSeedRows(arquivo: string = LEGAL_PARAMS_SEED_FILE): LinhaLegal[] {
-  return fs
-    .readFileSync(arquivo, 'utf8')
-    .split(/\r?\n/)
+export function legalParamsSeedRows(arquivos: string | readonly string[] = LEGAL_PARAMS_SEED_FILES): LinhaLegal[] {
+  return (typeof arquivos === 'string' ? [arquivos] : arquivos).flatMap((f) => fs.readFileSync(f, 'utf8').split(/\r?\n/)
     .filter((l) => l.startsWith('INSERT'))
     .map((l) => {
       const m = /^INSERT OR IGNORE INTO "legal_parameters" \((.*)\) VALUES \((.*)\);$/.exec(l);
-      if (!m) throw new Error(`${path.basename(arquivo)}: linha fora do formato: ${l.slice(0, 80)}`);
+      if (!m) throw new Error(`${path.basename(f)}: linha fora do formato: ${l.slice(0, 80)}`);
       const cols = tokens(m[1]) as string[];
       const vals = tokens(m[2]);
       const r = Object.fromEntries(cols.map((c, k) => [c, vals[k]])) as Record<string, Valor>;
@@ -74,7 +81,13 @@ export function legalParamsSeedRows(arquivo: string = LEGAL_PARAMS_SEED_FILE): L
         status: r.status as string,
         supersedesId: r.supersedesId as string | null,
       };
-    });
+    }));
+}
+
+/** Fotografia da semente (o que `LegalParameterService.fotografia` devolve do banco recém-migrado), só das tabelas pedidas. */
+export function fotografiaSemente(tabelas?: readonly string[]): LinhaLegal[] {
+  const rows = legalParamsSeedRows();
+  return tabelas ? rows.filter((r) => tabelas.includes(r.tabela)) : rows;
 }
 
 /** Fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA da semente — o que o serviço passa às funções puras do X7. */
@@ -86,3 +99,20 @@ export function tabelaApuracaoSemente(): TabelaApuracao {
 export function tabelaPisCofinsSemente(): readonly ParametroPisCofins[] {
   return tabelaPisCofinsDe(legalParamsSeedRows());
 }
+
+/** Dublê do `LegalParameterService` para testes unitários de serviço: a fotografia é a semente da migração. */
+export const legalParamsSemente = {
+  // A semente tem só os campos de `LinhaLegal`; os serviços só leem esses (o resto do model é auditoria/publicação).
+  fotografia: async (tabelas: readonly string[]): Promise<LegalParameter[]> => fotografiaSemente(tabelas) as unknown as LegalParameter[],
+};
+
+// ─── BE-INCR-LEGAL-PARAMS PR-2 — as fotografias que os serviços passam às funções puras, montadas da semente ──────
+// (datas ≥ 2025-01-01: emenda §9 L-10 — as tabelas sem vigência em código começam no 1º ano apurável).
+export const LEGAIS_SEMENTE: readonly LinhaLegal[] = fotografiaSemente();
+export const FERIADOS_SEMENTE: readonly LinhaLegal[] = fotografiaSemente(['FERIADO_NACIONAL']);
+export const TABELA_ITEM_SEMENTE = tabelaPisCofinsItemDe(LEGAIS_SEMENTE, '2026-01-01');
+export const CFOPS_IMOBILIZADO_SEMENTE = cfopsImobilizadoDe(LEGAIS_SEMENTE, '2026-01-01');
+export const RAZAO_CREDITO_SEMENTE = razaoCreditoPisCofins(LEGAIS_SEMENTE, '2026-01-31');
+export const MATRIZ_OBRIGACOES_SEMENTE = matrizObrigacoesDe(LEGAIS_SEMENTE, '2026-12-31');
+export const LISTA_LC116_SEMENTE = listaLc116De(LEGAIS_SEMENTE, '2026-01-01');
+export const COD_VER_ECD_SEMENTE = resolveEcdCodVerLc(LEGAIS_SEMENTE, '2025-12-31');
