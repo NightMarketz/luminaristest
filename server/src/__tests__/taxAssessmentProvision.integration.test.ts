@@ -267,4 +267,60 @@ describe('X7 PR-3 — provisão (2 commits), reconcile e encerramento', () => {
     const entry = await closing.closeExercise(scopeOf(U), 2035);
     expect(entry.sourceType).toBe('closing');
   });
+
+  /**
+   * BE-INCR-TAX-PRESUMIDO-16 itens 8 e 9. Conta de mão: T01 = 100.000 (acumulada ≤ 120.000) ⇒ 16% ⇒ base 16.000,
+   * IRPJ 2.400,00. T02 = 30.000 (acumulada 130.000) ⇒ 32% ⇒ base 9.600, IRPJ 1.440,00; diferença do T01 = 4.800 −
+   * 2.400 = 2.400,00. Provisão do IRPJ do T02 = 1.440 + 2.400 = 3.840,00.
+   */
+  describe('PRESUMIDO-16 — diferença postergada na provisão e na cascata', () => {
+    const U = 'u-p16';
+    const ANO = 2040;
+    const servico = (date: string, cents: number) =>
+      ApplicationFactory.getInstance().getPostingService().postEntry(scopeOf(U), {
+        unitId: U, date, sourceType: 'manual', description: 'Serviço',
+        lines: [{ accountCode: '1.1.1', debitCents: cents, creditCents: 0 }, { accountCode: '3.1', debitCents: 0, creditCents: cents }],
+      });
+    const irpjDe = (periodo: string) => prisma.taxAssessment.findFirstOrThrow({ where: { unitId: U, tributo: 'IRPJ', periodo, status: 'CONFIRMED' } });
+    const valorProvisao = async (id: string) =>
+      Number((await provisoes(U)).find((e) => e.sourceId === id && e.status === 'Posted')!.postings.find((p) => p.account.code === '4.9.1')!.debitCents);
+
+    beforeAll(async () => {
+      await cenario(U, ANO);
+      await prisma.companyFiscalProfile.updateMany({
+        where: { userId: dono.id, anoCalendario: ANO },
+        data: { prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true },
+      });
+      await servico(`${ANO}-05-10`, 3_000_000);
+    });
+
+    it('item 8: o trimestre do excesso provisiona devido + diferença (1 lançamento); reconcile idempotente', async () => {
+      await confirmar(U, ANO, 'T01');
+      const t01 = await irpjDe('T01');
+      expect(t01.devidoCents).toBe(240_000n);
+      expect(await valorProvisao(t01.id)).toBe(240_000);
+      await confirmar(U, ANO, 'T02');
+      const t02 = await irpjDe('T02');
+      expect(t02.devidoCents).toBe(144_000n);
+      expect(t02.diferencaPostergadaCents).toBe(240_000n);
+      expect(t02.codigoReceita).toBe('208901');
+      expect(await valorProvisao(t02.id)).toBe(384_000);
+      const n = (await provisoes(U)).length;
+      for (let i = 0; i < 2; i++) expect((await reconcile(U, t02.id)).status).toBe(200);
+      expect((await provisoes(U)).length).toBe(n);
+    });
+
+    it('item 9: reconfirmar o T01 acima do limite ⇒ o excesso passa ao T01 (sem diferença) e o T02 cai na cascata', async () => {
+      await servico(`${ANO}-03-10`, 3_000_000); // T01 = 130.000 > 120.000
+      const antigas = await prisma.taxAssessment.findMany({ where: { unitId: U, status: 'CONFIRMED', periodo: 'T01' } });
+      const t02Antigo = await irpjDe('T02');
+      await confirmar(U, ANO, 'T01', { supersedesIds: antigas.map((a) => a.id) });
+      const t01 = await irpjDe('T01');
+      expect(t01.devidoCents).toBe(624_000n); // 130.000 × 32% × 15%
+      expect(t01.diferencaPostergadaCents).toBe(0n);
+      expect((await prisma.taxAssessment.findUniqueOrThrow({ where: { id: t02Antigo.id } })).status).toBe('SUPERSEDED');
+      await confirmar(U, ANO, 'T02');
+      expect((await irpjDe('T02')).diferencaPostergadaCents).toBe(0n);
+    });
+  });
 });

@@ -30,6 +30,7 @@ export interface CompanyFiscalProfileData {
   lc224LiminarReferencia: string | null;
   // X7 Fase B (BRIEF B item 3b)
   prestadoraExclusivaServicos: boolean;
+  declaraNaoProfissaoRegulamentada: boolean; // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a)
 }
 
 /**

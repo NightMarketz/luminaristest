@@ -2282,6 +2282,10 @@
         "prestadoraExclusivaServicos": {
           "default": false,
           "type": "boolean"
+        },
+        "declaraNaoProfissaoRegulamentada": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [

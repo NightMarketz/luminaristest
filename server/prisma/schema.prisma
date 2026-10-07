@@ -1484,6 +1484,9 @@ model CompanyFiscalProfile {
   // X7 Fase B (BRIEF B item 3b, F-TB-5 b) — declaração da PJ × ano: prestadora EXCLUSIVA de serviços em geral (IN RFB
   // 1.700/2017 art. 33 § 7º; fora do parágrafo único da Lei 9.250/1995 art. 40). Trava junto com a forma.
   prestadoraExclusivaServicos Boolean            @default(false)
+  // BE-INCR-TAX-PRESUMIDO-16 (F-P16-1 a) — confirmação: não é profissão regulamentada, hospitalar nem transporte
+  // (Lei 9.250/1995 art. 40 p.ú.). Exigida com a flag acima no PRESUMIDO; auditada.
+  declaraNaoProfissaoRegulamentada Boolean       @default(false)
   createdById                 String?
   updatedById                 String?
   createdAt                   DateTime           @default(now())

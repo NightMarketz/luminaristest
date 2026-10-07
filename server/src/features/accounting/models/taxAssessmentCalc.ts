@@ -10,6 +10,7 @@ import {
   linhaVigente,
   mulBp,
   parametroVigente,
+  type ParametroApuracao,
 } from './taxAssessmentParams';
 
 /**
@@ -238,6 +239,10 @@ export interface PerfilApuracaoPresumido {
   lc224LiminarReferencia: string | null;
   inicioAtividadeEm: string | null;
   encerramentoAtividadeEm: string | null;
+  /** BE-INCR-TAX-PRESUMIDO-16 item 2 (F-P16-0 a) — a mesma flag da estimativa do Real anual. */
+  prestadoraExclusivaServicos: boolean;
+  /** F-P16-1 (a) — confirmação de que a PJ não é profissão regulamentada, hospitalar nem transporte (Lei 9.250 art. 40 p.ú.). */
+  declaraNaoProfissaoRegulamentada: boolean;
 }
 
 export interface EntradaPresumido {
@@ -276,12 +281,13 @@ function basePresumido(
   excedente: bigint,
   suspenso: boolean,
   aliqCsll: { valor: number; fonte: string },
+  reduzida16?: ParametroApuracao, // PRESUMIDO-16 item 2: substitui a presunção de serviço do IRPJ
 ): { baseCents: bigint; devidoCents: bigint; memoria: MemoriaLinha[] } {
   const receita = receitaServico + receitaRevenda;
   const excServico = receita > 0n ? arred(excedente * receitaServico, receita) : 0n;
   const excRevenda = excedente - excServico;
   const acrescimo = suspenso ? 0 : parametroVigente(ACRESCIMO[tributo], dataFim);
-  const pS = linhaVigente(PRESUNCAO[tributo], dataFim, 'SERVICO')!;
+  const pS = reduzida16 ?? linhaVigente(PRESUNCAO[tributo], dataFim, 'SERVICO')!;
   const pR = linhaVigente(PRESUNCAO[tributo], dataFim, 'REVENDA')!;
   const presS = mulBp(receitaServico, pS.valor);
   const presR = mulBp(receitaRevenda, pR.valor);
@@ -290,7 +296,9 @@ function basePresumido(
   const base = presS + presR + acrS + acrR;
   const fonteAcr = linhaVigente(ACRESCIMO[tributo], dataFim)?.fonte ?? `${ACRESCIMO[tributo]} sem linha vigente (acréscimo 0)`;
   const memoria = [
-    linha('PRESUNCAO_SERVICO', `Receita de serviço × ${pS.valor / 100}%`, presS, pS.fonte),
+    reduzida16
+      ? linha('PRESUNCAO_REDUZIDA_16', `Receita de serviço × ${pS.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`, presS, F_215_10)
+      : linha('PRESUNCAO_SERVICO', `Receita de serviço × ${pS.valor / 100}%`, presS, pS.fonte),
     linha('PRESUNCAO_REVENDA', `Receita de revenda × ${pR.valor / 100}%`, presR, pR.fonte),
     linha('LC224_ACRESCIMO_SERVICO', `Parcela excedente do serviço (${excServico} centavos) × ${pS.valor / 100}% × ${acrescimo / 100}%`, acrS, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
     linha('LC224_ACRESCIMO_REVENDA', `Parcela excedente da revenda (${excRevenda} centavos) × ${pR.valor / 100}% × ${acrescimo / 100}%`, acrR, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
@@ -333,11 +341,82 @@ export function impostoSobreBase(
   };
 }
 
+const F_215_10 = 'IN RFB 1.700/2017 art. 215 § 10; Lei 9.250/1995 art. 40';
+const F_215_11 = 'IN RFB 1.700/2017 art. 215 § 11';
+
+/**
+ * BE-INCR-TAX-PRESUMIDO-16 (F-P16-0 a) — só IRPJ, com `prestadoraExclusivaServicos`: revenda no ano ⇒ 400 (item 3);
+ * acumulada do ano até o trimestre ≤ limite ⇒ 16% (item 2); no 1º trimestre acima do limite, 32% e a diferença
+ * postergada dos trimestres a 16% (item 4, § 11); depois, 32% sem nova diferença (item 5). Pré-condições (400), nos
+ * dois tributos: a confirmação do F-P16-1 (a) e a LC 224 (F-P16-3 b: receita do trimestre acima do limite com a flag).
+ */
+function regra16(
+  e: EntradaPresumido,
+  dataFim: string,
+  lc: { vigente: boolean; limiteTrimestreCents: bigint },
+): { reduzida16?: ParametroApuracao; memoria: MemoriaLinha[]; diferenca: { total: bigint; linhas: MemoriaLinha[] } | null } {
+  if (!e.perfil.prestadoraExclusivaServicos) return { memoria: [], diferenca: null };
+  if (!e.perfil.declaraNaoProfissaoRegulamentada) {
+    throw new ValidationError(
+      'declarou prestadora exclusiva de serviços sem confirmar que não é sociedade de profissão legalmente regulamentada nem prestadora de serviço hospitalar ou de transporte (Lei 9.250/1995 art. 40 parágrafo único; F-P16-1).',
+    );
+  }
+  const receitaTrimestre = e.receitaServicoCents + e.receitaRevendaCents;
+  if (lc.vigente && receitaTrimestre > lc.limiteTrimestreCents) {
+    throw new ValidationError(
+      `declarou prestadora exclusiva de serviços (16% até R$ 120.000,00 no ano, IN RFB 1.700/2017 art. 215 § 10) com receita do trimestre acima do limite da LC 224 (${lc.limiteTrimestreCents} centavos): combinação impossível — revise a declaração no perfil fiscal (F-P16-3).`,
+    );
+  }
+  if (e.tributo !== 'IRPJ') return { memoria: [], diferenca: null }; // a CSLL não tem redução (art. 215 § 10 fala só do IRPJ)
+  const revendaAno = e.anteriores.reduce((s, a) => s + valorLinha(a.memoria, 'RECEITA_REVENDA', a.periodo), 0n) + e.receitaRevendaCents;
+  if (revendaAno > 0n) {
+    throw new ValidationError(
+      'declarou prestadora exclusiva de serviços, mas há receita de revenda no ano — exclusividade é condição do 16% (IN RFB 1.700/2017 art. 215 § 10).',
+    );
+  }
+  const limite = linhaVigente('RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
+  const acumuladaAnterior = e.anteriores.reduce((s, a) => s + receitaDaMemoria(a), 0n);
+  const acumulada = acumuladaAnterior + receitaTrimestre;
+  const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
+  if (acumulada <= BigInt(limite.valor)) return { reduzida16: linhaVigente('PRESUNCAO_IRPJ_REDUZIDA', dataFim)!, memoria, diferenca: null };
+  if (acumuladaAnterior > BigInt(limite.valor)) return { memoria, diferenca: null }; // item 5: o excesso já foi cobrado antes
+  return { memoria, diferenca: diferencaPostergada16Trimestral(e) };
+}
+
+/** Item 4 — § 11: "em relação a cada trimestre transcorrido", lido das memórias confirmadas (F-TA-3 a). */
+function diferencaPostergada16Trimestral(e: EntradaPresumido): { total: bigint; linhas: MemoriaLinha[] } {
+  let total = 0n;
+  const linhas: MemoriaLinha[] = [];
+  const trimestres = e.anteriores.filter((a) => temLinha(a.memoria, 'PRESUNCAO_REDUZIDA_16')).sort((a, b) => a.periodo.localeCompare(b.periodo));
+  for (const a of trimestres) {
+    const dataFimK = fimDoTrimestre(e.ano, a.periodo);
+    const pS = linhaVigente('PRESUNCAO_IRPJ', dataFimK, 'SERVICO')!;
+    const devido32 = impostoSobreBase('IRPJ', dataFimK, mulBp(valorLinha(a.memoria, 'RECEITA_SERVICO', a.periodo), pS.valor), null).devidoCents;
+    const devido = valorLinha(a.memoria, 'DEVIDO', a.periodo);
+    total += devido32 - devido;
+    linhas.push(
+      linha(`DIFERENCA_POSTERGADA_${a.periodo}`, `${a.periodo}: IRPJ a ${pS.valor / 100}% (${devido32} centavos) − devido confirmado (${devido} centavos)`, devido32 - devido, F_215_11),
+    );
+  }
+  return { total, linhas };
+}
+
+function memoriaDiferencaTrimestral(d: { total: bigint; linhas: MemoriaLinha[] }, ano: number, periodo: PeriodoTrimestral): MemoriaLinha[] {
+  const mesSeguinte = periodo === 'T04' ? `01/${ano + 1}` : `${String(Number(periodo.slice(1)) * 3 + 1).padStart(2, '0')}/${ano}`;
+  return [
+    ...d.linhas,
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${CODIGOS_RECEITA.IRPJ_PRESUMIDO_DIFERENCA_POSTERGADA_16})`, d.total, F_215_11),
+    linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 215 §§ 12–13'),
+  ];
+}
+
 /**
  * Item 8 (A4) — Presumido trimestral. Recusas (400): `ecfIndAliqCsll` nulo (D8); `ecfIndRecReceita = '1'` (caixa —
  * IN 1.700 art. 223, fora da Fase A). A receita fora de 3.1/3.3 já foi recusada pelo gate do item 6.
+ * BE-INCR-TAX-PRESUMIDO-16: o 16% do prestador exclusivo (`regra16`); a diferença postergada sai na coluna
+ * `diferencaPostergadaCents` da linha 208901 (F-P16-2, dono 06/10: a coluna que o X9 lê).
  */
-export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuracao {
+export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuracao & { diferencaPostergadaCents: bigint } {
   const aliqCsll = aliquotaCsll(e.perfil.ecfIndAliqCsll);
   if (e.perfil.ecfIndRecReceita === '1') {
     throw new ValidationError(
@@ -355,9 +434,11 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     encerramentoAtividadeEm: e.perfil.encerramentoAtividadeEm,
   });
   const suspenso = e.perfil.lc224AcrescimoSuspenso;
+  const r16 = regra16(e, dataFim, lc);
   const memoria: MemoriaLinha[] = [
     linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre (conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre (conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    ...r16.memoria,
     ...lc.memoria,
   ];
   if (suspenso && lc.vigente) {
@@ -365,7 +446,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
       linha('LC224_SUSPENSO', `Acréscimo da LC 224 suspenso por liminar (processo ${e.perfil.lc224LiminarReferencia ?? '—'}); limite e sobra continuam contados`, 0n, 'F-TA-5 (a) — chave do perfil fiscal da empresa'),
     );
   }
-  const calc = basePresumido(e.tributo, dataFim, e.receitaServicoCents, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll);
+  const calc = basePresumido(e.tributo, dataFim, e.receitaServicoCents, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, r16.reduzida16);
   memoria.push(...calc.memoria);
 
   // § 5º I-b / II-b: recalcula os trimestres anteriores com a parcela excedente' e deduz a diferença no T04.
@@ -394,7 +475,9 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     );
   }
   const codigoReceita = e.tributo === 'IRPJ' ? CODIGOS_RECEITA.IRPJ_PRESUMIDO : CODIGOS_RECEITA.CSLL_PRESUMIDO;
-  return fecharComDeducoes(e.tributo, 'PRESUMIDO', codigoReceita, calc.baseCents, calc.devidoCents, acerto, e.deducoes, memoria);
+  const r = fecharComDeducoes(e.tributo, 'PRESUMIDO', codigoReceita, calc.baseCents, calc.devidoCents, acerto, e.deducoes, memoria);
+  if (r16.diferenca) r.memoria.push(...memoriaDiferencaTrimestral(r16.diferenca, e.ano, e.periodo));
+  return { ...r, diferencaPostergadaCents: r16.diferenca?.total ?? 0n };
 }
 
 // ─── Item 10 — Real trimestral ────────────────────────────────────────────────────────────────────────────────
