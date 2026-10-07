@@ -178,4 +178,12 @@ describe('X13 PR-1 — perfil fiscal da empresa, signatários e obrigações', (
     expect((await put(2029, { regime: 'REAL', contadorContactId: contadorId })).status).toBe(200);
     expect(await dctfweb(2029)).toMatchObject({ faltantes: ['declarante.cnpj'] });
   });
+
+  it('L-X9-1 (a, dono 07/10): DCTFWEB da PJ inativa em REAL/PRESUMIDO não cobra CNPJ nem contador — o X9 não gera arquivo sem apuração', async () => {
+    const dctfweb = async (ano: number) => (await obrigacoes(ano)).body.data.obrigacoes.find((o: { obrigacao: string }) => o.obrigacao === 'DCTFWEB');
+    for (const [ano, regime] of [[2030, 'REAL'], [2031, 'PRESUMIDO']] as const) {
+      expect((await put(ano, { regime, inativa: true })).status).toBe(200);
+      expect(await dctfweb(ano)).toMatchObject({ status: 'CONDICIONAL', faltantes: [] });
+    }
+  });
 });
