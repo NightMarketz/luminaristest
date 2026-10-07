@@ -114,6 +114,7 @@ describe('item 4 — enquadramento', () => {
       } catch (x) {
         return x;
       }
+      return undefined;
     })();
     expect(e).toBeInstanceOf(AtividadeSemAnexoError);
     expect(e).toMatchObject({ statusCode: 422, errorCode: 'ATIVIDADE_SEM_ANEXO' });

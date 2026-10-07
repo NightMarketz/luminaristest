@@ -43,8 +43,13 @@ function templateDb(): string {
       env: { ...process.env, DATABASE_URL: `file:./${tmpName}` },
       stdio: 'inherit',
     });
-    for (const seed of LEGAL_PARAMS_SEEDS) {
-      execSync(`npx prisma db execute --file "${seed}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    // Um `db execute` só (cada `npx` custa ~1–2 s; três estouravam o timeout de 5 s do beforeAll no CI).
+    const seedTmp = path.join(SERVER_DIR, 'prisma', `${tmpName}.seed.sql`);
+    fs.writeFileSync(seedTmp, LEGAL_PARAMS_SEEDS.map((f) => fs.readFileSync(f, 'utf8')).join('\n'));
+    try {
+      execSync(`npx prisma db execute --file "${seedTmp}" --url "file:${path.join(SERVER_DIR, 'prisma', tmpName)}"`, { cwd: SERVER_DIR, stdio: 'inherit' });
+    } finally {
+      fs.rmSync(seedTmp, { force: true });
     }
     fs.renameSync(path.join(SERVER_DIR, 'prisma', tmpName), template);
   }
